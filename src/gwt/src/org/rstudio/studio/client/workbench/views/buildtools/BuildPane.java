@@ -1,7 +1,7 @@
 /*
  * BuildPane.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -24,6 +24,7 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 
 import org.rstudio.core.client.CodeNavigationTarget;
+import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.events.HasSelectionCommitHandlers;
 import org.rstudio.core.client.events.SelectionCommitEvent;
 import org.rstudio.core.client.events.SelectionCommitHandler;
@@ -31,6 +32,7 @@ import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.CheckableMenuItem;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.core.client.widget.ToolbarButton;
+import org.rstudio.core.client.widget.ToolbarMenuButton;
 import org.rstudio.core.client.widget.ToolbarPopupMenu;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.compile.CompileOutput;
@@ -64,15 +66,14 @@ public class BuildPane extends WorkbenchPane
    @Override
    protected Toolbar createMainToolbar()
    {
-      Toolbar toolbar = new Toolbar();
+      Toolbar toolbar = new Toolbar("Build Tab");
       
       SessionInfo sessionInfo =  session_.getSessionInfo();
       String type = sessionInfo.getBuildToolsType();
       boolean pkg = type == SessionInfo.BUILD_TOOLS_PACKAGE;
       boolean makefile = type == SessionInfo.BUILD_TOOLS_MAKEFILE;
       boolean website = type == SessionInfo.BUILD_TOOLS_WEBSITE;
-      
-      
+
       // always include build all
       ToolbarButton buildAllButton = commands_.buildAll().createToolbarButton();
       if (website)
@@ -92,7 +93,9 @@ public class BuildPane extends WorkbenchPane
       if (sessionInfo.getBuildToolsBookdownWebsite())
       {
          BookdownBuildPopupMenu buildPopupMenu = new BookdownBuildPopupMenu();
-         ToolbarButton buildMenuButton = new ToolbarButton(buildPopupMenu, true);
+         ToolbarMenuButton buildMenuButton = new ToolbarMenuButton(ToolbarButton.NoText,
+               "Build book options", buildPopupMenu, true);
+         ElementIds.assignElementId(buildMenuButton, ElementIds.BUILD_BOOKDOWN_MENUBUTTON);
          toolbar.addLeftWidget(buildMenuButton);
       }
       
@@ -136,10 +139,12 @@ public class BuildPane extends WorkbenchPane
          moreMenu.addItem(commands_.buildToolsProjectSetup().createMenuItem(false));
          
          // add more menu
-         ToolbarButton moreButton = new ToolbarButton(
-                                      "More",
-                                      new ImageResource2x(StandardIcons.INSTANCE.more_actions2x()),
-                                      moreMenu);
+         ToolbarMenuButton moreButton = new ToolbarMenuButton(
+               "More",
+               ToolbarButton.NoTitle,
+               new ImageResource2x(StandardIcons.INSTANCE.more_actions2x()),
+               moreMenu);
+         ElementIds.assignElementId(moreButton, ElementIds.BUILD_MORE_MENUBUTTON);
          toolbar.addLeftWidget(moreButton);
       }
       
@@ -153,13 +158,12 @@ public class BuildPane extends WorkbenchPane
    class BookdownBuildPopupMenu extends ToolbarPopupMenu
    {
       @Override
-      public void getDynamicPopupMenu(final 
-            ToolbarPopupMenu.DynamicPopupMenuCallback callback)
+      public void getDynamicPopupMenu(final ToolbarPopupMenu.DynamicPopupMenuCallback callback)
       {
          clearItems();
          
-         server_.getBookdownFormats(new SimpleRequestCallback<BookdownFormats>() {
-
+         server_.getBookdownFormats(new SimpleRequestCallback<BookdownFormats>()
+         {
             @Override
             public void onResponseReceived(BookdownFormats formats)
             {
@@ -168,12 +172,11 @@ public class BuildPane extends WorkbenchPane
                MenuItem allMenu = new FormatMenuItem(
                   "all", "All Formats", defaultFormat == "all");
                addItem(allMenu);
-               addSeparator();    
-               for (int i = 0; i<allFormats.length(); i++)
+               addSeparator();
+               for (int i = 0; i < allFormats.length(); i++)
                {
                   String format = allFormats.get(i);
-                  addItem(new FormatMenuItem(format, 
-                                             defaultFormat == format));
+                  addItem(new FormatMenuItem(format, defaultFormat == format));
                }
                callback.onPopupMenu(BookdownBuildPopupMenu.this);
             }
@@ -214,9 +217,9 @@ public class BuildPane extends WorkbenchPane
             SelectionCommitEvent.fire(buildSubType(), format_);
          }
          
-         private String format_;
-         private String label_;
-         private boolean isChecked_;
+         private final String format_;
+         private final String label_;
+         private final boolean isChecked_;
       }
    }
    
@@ -256,7 +259,7 @@ public class BuildPane extends WorkbenchPane
    @Override
    public void buildCompleted()
    {
-      compilePanel_.compileCompleted();  
+      compilePanel_.compileCompleted();
    }
    
    @Override
@@ -302,14 +305,14 @@ public class BuildPane extends WorkbenchPane
    @Override
    public void scrollToBottom()
    {
-      compilePanel_.scrollToBottom();   
+      compilePanel_.scrollToBottom();
    }
  
-   private Commands commands_;
-   private Session session_;
-   private BuildServerOperations server_;
+   private final Commands commands_;
+   private final Session session_;
+   private final BuildServerOperations server_;
    private String errorsBuildType_;
-   
-   CompilePanel compilePanel_;
+
+   private final CompilePanel compilePanel_;
 
 }

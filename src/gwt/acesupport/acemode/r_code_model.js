@@ -1,7 +1,7 @@
 /*
  * r_code_model.js
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-12 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -1191,6 +1191,7 @@ var RCodeModel = function(session, tokenizer,
    };
 
    this.getFoldWidget = function(session, foldStyle, row) {
+
       var foldToken = this.$getFoldToken(session, foldStyle, row);
       if (foldToken == null)
          return "";
@@ -1995,12 +1996,12 @@ var RCodeModel = function(session, tokenizer,
 
    this.$onDocChange = function(evt)
    {
-      this.$invalidateRow(evt.start.row);
       if (evt.action === "insert")
          this.$insertNewRows(evt.start.row, evt.end.row - evt.start.row);
       else
          this.$removeRows(evt.start.row, evt.end.row - evt.start.row);
 
+      this.$invalidateRow(evt.start.row);
       this.$scopes.invalidateFrom(evt.start);
    };
    

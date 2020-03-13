@@ -28,6 +28,7 @@
 .themedPopupPanel {
    margin: -6px;
    margin-top: 0px;
+   z-index: 99999;
 }
 
 @sprite .themedPopupPanel .popupTopLeft, .menuPopupTopLeft, .suggestPopupTopLeft {
@@ -53,7 +54,7 @@
 }
 
 .themedPopupPanel .popupMiddleLeft {
-	min-width: value('popupMiddleLeft.getWidth', 'px'); /* don't let the browser collapse the table cell if there's no space */
+   min-width: value('popupMiddleLeft.getWidth', 'px'); /* don't let the browser collapse the table cell if there's no space */
 }
 @sprite .themedPopupPanel .popupMiddleRight, .menuPopupMiddleRight, .suggestPopupMiddleRight {
    gwt-image: 'popupMiddleRight';

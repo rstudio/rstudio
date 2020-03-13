@@ -3,9 +3,9 @@
 @external rstudio-themes-flat;
 
 .searchWidget {
-	margin-left: 20px;
+   margin-left: 20px;
 }
 
 .rstudio-themes-flat .searchWidget {
-	margin-top: -2px;
+   margin-top: -2px;
 }

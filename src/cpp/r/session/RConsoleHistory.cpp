@@ -1,7 +1,7 @@
 /*
  * RConsoleHistory.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -19,12 +19,13 @@
 #include <boost/function.hpp>
 #include <boost/tokenizer.hpp>
 
-#include <core/Error.hpp>
-#include <core/FilePath.hpp>
+#include <shared_core/Error.hpp>
+#include <shared_core/FilePath.hpp>
 #include <core/FileSerializer.hpp>
 #include <core/system/System.hpp>
 #include <core/system/Environment.hpp>
-#include <core/SafeConvert.hpp>
+#include <shared_core/SafeConvert.hpp>
+#include <gsl/gsl>
 
 using namespace rstudio::core;
 
@@ -54,8 +55,7 @@ void ConsoleHistory::setCapacityFromRHistsize()
    std::string histSize = core::system::getenv("R_HISTSIZE");
    if (!histSize.empty())
    {
-      setCapacity(
-         safe_convert::stringTo<std::size_t>(histSize, capacity()));
+      setCapacity(safe_convert::stringTo<int>(histSize, capacity()));
    }
 }
 
@@ -144,7 +144,7 @@ void ConsoleHistory::asJson(json::Array* pHistoryArray) const
 {
    const_iterator it = begin();
    while(it != end())
-      pHistoryArray->push_back(*it++);
+      pHistoryArray->push_back(json::Value(*it++));
 }
       
 Error ConsoleHistory::loadFromFile(const FilePath& filePath,

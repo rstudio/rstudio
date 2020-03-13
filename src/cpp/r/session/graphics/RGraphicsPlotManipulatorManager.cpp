@@ -1,7 +1,7 @@
 /*
  * RGraphicsPlotManipulatorManager.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-12 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -22,7 +22,7 @@
 #include <boost/function.hpp>
 
 #include <core/Log.hpp>
-#include <core/Error.hpp>
+#include <shared_core/Error.hpp>
 
 #include <r/RExec.hpp>
 #include <r/RErrorCategory.hpp>
@@ -41,22 +41,28 @@ namespace graphics {
 namespace {
 
 void setManipulatorJsonValue(SEXP manipulatorSEXP,
-                             const json::Member& object)
+                             const std::string& objectName,
+                             const json::Value& objectValue)
 {
    // get the actual value to assign
    r::exec::RFunction setFunction("manipulate:::setManipulatorValue");
    setFunction.addParam(manipulatorSEXP);
-   setFunction.addParam(object.name());
-   setFunction.addParam(object.value());
+   setFunction.addParam(objectName);
+   setFunction.addParam(objectValue);
    Error error = setFunction.call();
    if (error)
       LOG_ERROR(error);
 }
 
+void setManipulatorJsonValue(SEXP manipulatorSEXP,
+                             const json::Object::Member& in_object)
+{
+   setManipulatorJsonValue(manipulatorSEXP, in_object.getName(), in_object.getValue());
+}
+
 void setManipulatorValueToFalse(SEXP manipulatorSEXP, const std::string& name)
 {
-   setManipulatorJsonValue(manipulatorSEXP,
-                           json::Member(name, json::toJsonValue(false)));
+   setManipulatorJsonValue(manipulatorSEXP, name, json::toJsonValue(false));
 }
 
 
@@ -152,33 +158,11 @@ Error PlotManipulatorManager::initialize(
    // save reference to device conversion function
    convert_ = convert;
 
-   // register R entry points for this class
-   R_CallMethodDef execManipulatorMethodDef ;
-   execManipulatorMethodDef.name = "rs_executeAndAttachManipulator" ;
-   execManipulatorMethodDef.fun = (DL_FUNC) rs_executeAndAttachManipulator;
-   execManipulatorMethodDef.numArgs = 1;
-   r::routines::addCallMethod(execManipulatorMethodDef);
-
-   // register has active manipulator routine
-   R_CallMethodDef hasActiveManipulatorMethodDef ;
-   hasActiveManipulatorMethodDef.name = "rs_hasActiveManipulator" ;
-   hasActiveManipulatorMethodDef.fun = (DL_FUNC) rs_hasActiveManipulator;
-   hasActiveManipulatorMethodDef.numArgs = 0;
-   r::routines::addCallMethod(hasActiveManipulatorMethodDef);
-
-   // register active manipulator routine
-   R_CallMethodDef activeManipulatorMethodDef ;
-   activeManipulatorMethodDef.name = "rs_activeManipulator" ;
-   activeManipulatorMethodDef.fun = (DL_FUNC) rs_activeManipulator;
-   activeManipulatorMethodDef.numArgs = 0;
-   r::routines::addCallMethod(activeManipulatorMethodDef);
-
-   // register ensure manipulator saved routine
-   R_CallMethodDef ensureManipulatorSavedMethodDef ;
-   ensureManipulatorSavedMethodDef.name = "rs_ensureManipulatorSaved" ;
-   ensureManipulatorSavedMethodDef.fun = (DL_FUNC) rs_ensureManipulatorSaved;
-   ensureManipulatorSavedMethodDef.numArgs = 0;
-   r::routines::addCallMethod(ensureManipulatorSavedMethodDef);
+   // register .Call methods
+   RS_REGISTER_CALL_METHOD(rs_executeAndAttachManipulator);
+   RS_REGISTER_CALL_METHOD(rs_hasActiveManipulator);
+   RS_REGISTER_CALL_METHOD(rs_activeManipulator);
+   RS_REGISTER_CALL_METHOD(rs_ensureManipulatorSaved);
 
    return Success();
 }

@@ -1,7 +1,7 @@
 /*
  * SelectWidget.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -23,13 +23,14 @@ import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.HasVerticalAlignment;
 import com.google.gwt.user.client.ui.HorizontalPanel;
-import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.ListBox;
 import com.google.gwt.user.client.ui.Panel;
 import com.google.gwt.user.client.ui.Widget;
 
 public class SelectWidget extends Composite
 {
+   public static String ExternalLabel = null;
+
    public SelectWidget(String label)
    {
       this(label, null, false);
@@ -63,7 +64,17 @@ public class SelectWidget extends Composite
       this(label, options, values, isMultipleSelect, 
            horizontalLayout, listOnLeft, false);
    }
-   
+
+   /**
+    * @param label label text, or empty string (supplied later via setLabel), or ExternalLabel if
+    *              a label will be associated outside this control
+    * @param options
+    * @param values
+    * @param isMultipleSelect
+    * @param horizontalLayout
+    * @param listOnLeft
+    * @param fillContainer
+    */
    public SelectWidget(String label,
                        String[] options,
                        String[] values,
@@ -91,7 +102,14 @@ public class SelectWidget extends Composite
       if (horizontalLayout)
       {
          horizontalPanel_ = new HorizontalPanel();
-         label_ = new Label(label);
+         if (label != ExternalLabel)
+         {
+            label_ = new FormLabel(label, listBox_);
+         }
+         else
+         {
+            label_ = new FormLabel(""); // to maintain layout
+         }
          if (listOnLeft)
          {
             horizontalPanel_.add(listBox_);
@@ -102,15 +120,20 @@ public class SelectWidget extends Composite
             horizontalPanel_.add(label_);
             horizontalPanel_.add(listBox_);
          }
-        
-         horizontalPanel_.setCellVerticalAlignment(
-                                          label_, 
-                                          HasVerticalAlignment.ALIGN_MIDDLE);
+
+         horizontalPanel_.setCellVerticalAlignment(label_, HasVerticalAlignment.ALIGN_MIDDLE);
          panel = horizontalPanel_;
       }
       else
       {
-         label_ = new Label(label, true);
+         if (label != ExternalLabel)
+         {
+            label_ = new FormLabel(label, listBox_, true);
+         }
+         else
+         {
+            label_ = new FormLabel("", true); // to maintain layout
+         }
          flowPanel_ = new FlowPanel();
          flowPanel_.add(label_);
          panel = flowPanel_;
@@ -224,6 +247,6 @@ public class SelectWidget extends Composite
    
    private HorizontalPanel horizontalPanel_ = null;
    private FlowPanel flowPanel_ = null;
-   private Label label_ = null;
+   private FormLabel label_ = null;
    private final ListBox listBox_;
 }

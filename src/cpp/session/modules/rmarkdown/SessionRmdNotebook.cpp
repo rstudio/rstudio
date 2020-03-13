@@ -1,7 +1,7 @@
 /*
  * SessionRmdNotebook.cpp
  *
- * Copyright (C) 2009-16 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -29,7 +29,6 @@
 
 #include <iostream>
 
-#include <boost/foreach.hpp>
 #include <boost/format.hpp>
 
 #include <r/RJson.hpp>
@@ -37,14 +36,15 @@
 
 #include <core/Exec.hpp>
 #include <core/Algorithm.hpp>
-#include <core/json/Json.hpp>
+#include <shared_core/json/Json.hpp>
 #include <core/json/JsonRpc.hpp>
 #include <core/StringUtils.hpp>
 #include <core/system/System.hpp>
 
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionOptions.hpp>
-#include <session/SessionUserSettings.hpp>
+
+#include <session/prefs/UserState.hpp>
 
 #define kFinishedReplay      0
 #define kFinishedInteractive 1
@@ -73,7 +73,7 @@ void replayChunkOutputs(const std::string& docPath, const std::string& docId,
    if (singleChunkId.empty())
    {
       // find all the chunks and play them back to the client
-      BOOST_FOREACH(const std::string& chunkId, chunkIds)
+      for (const std::string& chunkId : chunkIds)
       {
          enqueueChunkOutput(docPath, docId, chunkId, notebookCtxId(), requestId);
       }
@@ -143,7 +143,7 @@ void emitOutputFinished(const std::string& docId, const std::string& chunkId,
 
 bool fixChunkFilename(int, const core::FilePath& path)
 {
-   std::string name = path.filename();
+   std::string name = path.getFilename();
    if (name.empty())
       return true;
    
@@ -160,7 +160,7 @@ bool fixChunkFilename(int, const core::FilePath& path)
    // rename file if we had to change it
    if (transformed != name)
    {
-      FilePath target = path.parent().childPath(transformed);
+      FilePath target = path.getParent().completeChildPath(transformed);
       Error error = path.move(target);
       if (error)
          LOG_ERROR(error);
@@ -184,11 +184,11 @@ void onDeferredInit(bool)
    
    // Fix up chunk entries in the cache that were generated
    // with leading spaces on Windows
-   FilePath patchPath = root.complete("patch-chunk-names");
+   FilePath patchPath = root.completePath("patch-chunk-names");
    if (!patchPath.exists())
    {
       patchPath.ensureFile();
-      Error error = root.childrenRecursive(fixChunkFilename);
+      Error error = root.getChildrenRecursive(fixChunkFilename);
       if (error)
          LOG_ERROR(error);
    }
@@ -210,7 +210,7 @@ Events& events()
 // session should write to it.
 std::string notebookCtxId()
 {
-   return userSettings().contextId() + module_context::activeSession().id();
+   return prefs::userState().contextId() + module_context::activeSession().id();
 }
 
 Error initialize()

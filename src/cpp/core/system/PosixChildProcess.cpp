@@ -1,7 +1,7 @@
 /*
  * PosixChildProcess.cpp
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -35,7 +35,7 @@
 #include <boost/asio.hpp>
 #include <boost/bind.hpp>
 
-#include <core/Error.hpp>
+#include <shared_core/Error.hpp>
 #include <core/Log.hpp>
 #include <core/system/PosixChildProcess.hpp>
 #include <core/system/PosixSystem.hpp>
@@ -98,7 +98,7 @@ void closePipe(int* pipeDescriptors, const ErrorLocation& location)
    closePipe(pipeDescriptors[WRITE], location);
 }
 
-Error readPipe(int pipeFd, std::string* pOutput, bool *pEOF = NULL)
+Error readPipe(int pipeFd, std::string* pOutput, bool *pEOF = nullptr)
 {
    // default to not eof
    if (pEOF)
@@ -250,9 +250,9 @@ void ChildProcess::init(const std::string& command,
    args.push_back("-c");
 
    std::string realCommand = command;
-   if (!options.stdOutFile.empty())
+   if (!options.stdOutFile.isEmpty())
       realCommand += " > " + shell_utils::escape(options.stdOutFile);
-   if (!options.stdErrFile.empty())
+   if (!options.stdErrFile.isEmpty())
       realCommand += " 2> " + shell_utils::escape(options.stdErrFile);
    args.push_back(realCommand);
 
@@ -262,14 +262,14 @@ void ChildProcess::init(const std::string& command,
 // Initialize for an interactive terminal
 void ChildProcess::init(const ProcessOptions& options)
 {
-   if (!options.stdOutFile.empty() || !options.stdErrFile.empty())
+   if (!options.stdOutFile.isEmpty() || !options.stdErrFile.isEmpty())
    {
       LOG_ERROR_MESSAGE(
                "stdOutFile/stdErrFile options cannot be used with interactive terminal");
    }
 
    options_ = options;
-   exe_ = options_.shellPath.absolutePath();
+   exe_ = options_.shellPath.getAbsolutePath();
    args_ = options_.args;
 }
 
@@ -447,7 +447,7 @@ Error ChildProcess::run()
    args.insert(args.end(), args_.begin(), args_.end());
    using core::system::ProcessArgs;
    ProcessArgs* pProcessArgs = new ProcessArgs(args);
-   ProcessArgs* pEnvironment = NULL;
+   ProcessArgs* pEnvironment = nullptr;
 
    // get rlimit for max files
    // in the thread-safe fork approach, this needs to be provided
@@ -475,12 +475,12 @@ Error ChildProcess::run()
    {
       // fetch the user to switch to before forking, as the method is not
       // async signal safe and could cause lockups
-      core::system::user::User user;
-      Error error = core::system::user::userFromUsername(options_.runAsUser, &user);
+      core::system::User user;
+      error = User::getUserFromIdentifier(options_.runAsUser, user);
       if (error)
          return error;
 
-      runAsUser = user.userId;
+      runAsUser = user.getUserId();
    }
 
    if (options_.threadSafe && options_.pseudoterminal)
@@ -493,8 +493,8 @@ Error ChildProcess::run()
    // pseudoterminal mode: fork using the special forkpty call
    if (options_.pseudoterminal)
    {
-      char* nullName = NULL;
-      struct termios* nullTermp = NULL;
+      char* nullName = nullptr;
+      struct termios* nullTermp = nullptr;
       struct winsize winSize;
       winSize.ws_col = options_.pseudoterminal.get().cols;
       winSize.ws_row = options_.pseudoterminal.get().rows;
@@ -710,12 +710,12 @@ Error ChildProcess::run()
             // intentionally fail forward (see note above)
          }
 
-         if (!options_.workingDir.empty())
+         if (!options_.workingDir.isEmpty())
          {
-            if (::chdir(options_.workingDir.absolutePath().c_str()))
+            if (::chdir(options_.workingDir.getAbsolutePath().c_str()))
             {
                std::string message = "Error changing directory: '";
-               message += options_.workingDir.absolutePath().c_str();
+               message += options_.workingDir.getAbsolutePath().c_str();
                message += "'";
                LOG_ERROR(systemError(errno, message.c_str(), ERROR_LOCATION));
             }
@@ -836,6 +836,7 @@ Error ChildProcess::run()
       }
 
       delete pProcessArgs;
+      delete pEnvironment;
 
       if (options_.threadSafe)
       {
@@ -918,7 +919,7 @@ AsyncChildProcess::AsyncChildProcess(const std::string& exe,
    : ChildProcess(), pAsyncImpl_(new AsyncImpl())
 {
    init(exe, args, options);
-   if (!options.stdOutFile.empty() || !options.stdErrFile.empty())
+   if (!options.stdOutFile.isEmpty() || !options.stdErrFile.isEmpty())
    {
       LOG_WARNING_MESSAGE(
                "stdOutFile/stdErrFile options cannot be used with runProgram");
@@ -1013,9 +1014,9 @@ void AsyncChildProcess::poll()
       pAsyncImpl_->pSubprocPoll_.reset(new ChildProcessSubprocPoll(
          pImpl_->pid,
          kResetRecentDelay, kCheckSubprocDelay, kCheckCwdDelay,
-         options().reportHasSubprocs ? core::system::getSubprocesses : NULL,
+         options().reportHasSubprocs ? core::system::getSubprocesses : nullptr,
          options().subprocWhitelist,
-         options().trackCwd ? core::system::currentWorkingDir : NULL));
+         options().trackCwd ? core::system::currentWorkingDir : nullptr));
 
       if (callbacks_.onStarted)
          callbacks_.onStarted(*this);
@@ -1654,7 +1655,7 @@ pid_t AsioAsyncChildProcess::pid() const
 namespace {
 
 Error forkAndRunImpl(const boost::function<int(void)>& func,
-                     const boost::optional<user::User>& user)
+                     const boost::optional<User>& user)
 {
    pid_t pid = ::fork();
    if (pid < 0)
@@ -1677,11 +1678,11 @@ Error forkAndRunImpl(const boost::function<int(void)>& func,
                ::_exit(res);
          }
 
-         if (user.get().userId != 0)
+         if (user.get().getUserId() != 0)
          {
             // non root user requested
             // drop privilege to match UID of requested user
-            int res = signal_safe::permanentlyDropPriv(user.get().userId);
+            int res = signal_safe::permanentlyDropPriv(user.get().getUserId());
             if (res != 0)
                ::_exit(res);
          }
@@ -1720,13 +1721,13 @@ Error forkAndRunImpl(const boost::function<int(void)>& func,
 Error forkAndRun(const boost::function<int(void)>& func,
                  const std::string& runAs)
 {
-   boost::optional<user::User> optionalUser;
+   boost::optional<User> optionalUser;
 
    if (!runAs.empty())
    {
       // get uid of user to switch to
-      user::User user;
-      Error error = user::userFromUsername(runAs, &user);
+      User user;
+      Error error = User::getUserFromIdentifier(runAs, user);
       if (error)
          return error;
 
@@ -1738,11 +1739,11 @@ Error forkAndRun(const boost::function<int(void)>& func,
 
 Error forkAndRunPrivileged(const boost::function<int(void)>& func)
 {
-   user::User user = {};
-   user.userId = 0;
-   boost::optional<user::User> optionalUser = user;
-
-   return forkAndRunImpl(func, optionalUser);
+   User rootUser;
+   Error error = User::getUserFromIdentifier(UidType(0), rootUser);
+   if (error)
+      return error;
+   return forkAndRunImpl(func, rootUser);
 }
 
 } // namespace system

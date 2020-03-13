@@ -1,7 +1,7 @@
 /*
  * RToolsInfo.cpp
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -16,7 +16,6 @@
 #include <core/Version.hpp>
 #include <core/r_util/RToolsInfo.hpp>
 
-#include <boost/foreach.hpp>
 #include <boost/format.hpp>
 #include <boost/algorithm/string.hpp>
 
@@ -39,7 +38,7 @@ namespace {
 
 std::string asRBuildPath(const FilePath& filePath)
 {
-   std::string path = filePath.absolutePath();
+   std::string path = filePath.getAbsolutePath();
    boost::algorithm::replace_all(path, "\\", "/");
    if (!boost::algorithm::ends_with(path, "/"))
       path += "/";
@@ -49,14 +48,14 @@ std::string asRBuildPath(const FilePath& filePath)
 std::vector<std::string> gcc463ClangArgs(const FilePath& installPath)
 {
    std::vector<std::string> clangArgs;
-   clangArgs.push_back("-I" + installPath.childPath(
-      "gcc-4.6.3/i686-w64-mingw32/include").absolutePath());
+   clangArgs.push_back("-I" + installPath.completeChildPath(
+      "gcc-4.6.3/i686-w64-mingw32/include").getAbsolutePath());
 
-   clangArgs.push_back("-I" + installPath.childPath(
-      "gcc-4.6.3/include/c++/4.6.3").absolutePath());
+   clangArgs.push_back("-I" + installPath.completeChildPath(
+      "gcc-4.6.3/include/c++/4.6.3").getAbsolutePath());
 
-   std::string bits = "-I" + installPath.childPath(
-      "gcc-4.6.3/include/c++/4.6.3/i686-w64-mingw32").absolutePath();
+   std::string bits = "-I" + installPath.completeChildPath(
+      "gcc-4.6.3/include/c++/4.6.3/i686-w64-mingw32").getAbsolutePath();
 #ifdef _WIN64
    bits += "/64";
 #endif
@@ -161,7 +160,7 @@ RToolsInfo::RToolsInfo(const std::string& name,
       relativePathEntries.push_back("bin");
 
       // set environment variables
-      FilePath gccPath = installPath_.childPath("mingw_$(WIN)/bin");
+      FilePath gccPath = installPath_.completeChildPath("mingw_$(WIN)/bin");
       environmentVars.push_back(
             std::make_pair("BINPREF", asRBuildPath(gccPath)));
 
@@ -177,16 +176,16 @@ RToolsInfo::RToolsInfo(const std::string& name,
       boost::format mgwIncFmt("%1%/%2%-w64-mingw32/include");
       std::string mgwInc = boost::str(mgwIncFmt % baseDir % arch);
       clangArgs.push_back(
-            "-I" + installPath.childPath(mgwInc).absolutePath());
+            "-I" + installPath.completeChildPath(mgwInc).getAbsolutePath());
 
       std::string cppInc = mgwInc + "/c++";
       clangArgs.push_back(
-            "-I" + installPath.childPath(cppInc).absolutePath());
+            "-I" + installPath.completeChildPath(cppInc).getAbsolutePath());
 
       boost::format bitsIncFmt("%1%/%2%-w64-mingw32");
       std::string bitsInc = boost::str(bitsIncFmt % cppInc % arch);
       clangArgs.push_back(
-            "-I" + installPath.childPath(bitsInc).absolutePath());
+            "-I" + installPath.completeChildPath(bitsInc).getAbsolutePath());
    }
 
    // build version predicate and path list if we can
@@ -195,9 +194,9 @@ RToolsInfo::RToolsInfo(const std::string& name,
       boost::format fmt("getRversion() >= \"%1%\" && getRversion() <= \"%2%\"");
       versionPredicate_ = boost::str(fmt % versionMin % versionMax);
 
-      BOOST_FOREACH(const std::string& relativePath, relativePathEntries)
+      for (const std::string& relativePath : relativePathEntries)
       {
-         pathEntries_.push_back(installPath_.childPath(relativePath));
+         pathEntries_.push_back(installPath_.completeChildPath(relativePath));
       }
 
       clangArgs_ = clangArgs;
@@ -218,11 +217,11 @@ std::ostream& operator<<(std::ostream& os, const RToolsInfo& info)
 {
    os << "Rtools " << info.name() << std::endl;
    os << info.versionPredicate() << std::endl;
-   BOOST_FOREACH(const FilePath& pathEntry, info.pathEntries())
+   for (const FilePath& pathEntry : info.pathEntries())
    {
      os << pathEntry << std::endl;
    }
-   BOOST_FOREACH(const core::system::Option& var, info.environmentVars())
+   for (const core::system::Option& var : info.environmentVars())
    {
       os << var.first << "=" << var.second << std::endl;
    }
@@ -242,7 +241,7 @@ Error scanRegistryForRTools(HKEY key,
                              KEY_READ | KEY_WOW64_32KEY);
    if (error)
    {
-      if (error.code() != boost::system::errc::no_such_file_or_directory)
+      if (error != systemError(boost::system::errc::no_such_file_or_directory, ErrorLocation()))
          return error;
       else
          return Success();
@@ -280,26 +279,31 @@ Error scanRegistryForRTools(HKEY key,
    return Success();
 }
 
-Error scanRegistryForRTools(bool usingMingwGcc49,
-                            std::vector<RToolsInfo>* pRTools)
+void scanRegistryForRTools(bool usingMingwGcc49,
+                           std::vector<RToolsInfo>* pRTools)
 {
    // try HKLM first (backwards compatible with previous code)
-   Error error = scanRegistryForRTools(HKEY_LOCAL_MACHINE,
-                                       usingMingwGcc49,
-                                       pRTools);
+   Error error = scanRegistryForRTools(
+            HKEY_LOCAL_MACHINE,
+            usingMingwGcc49,
+            pRTools);
+
    if (error)
-      return error;
+      LOG_ERROR(error);
 
    // try HKCU as a fallback
    if (pRTools->empty())
-      return scanRegistryForRTools(HKEY_CURRENT_USER,
-                                   usingMingwGcc49,
-                                   pRTools);
-   else
-      return Success();
+   {
+      Error error = scanRegistryForRTools(
+               HKEY_CURRENT_USER,
+               usingMingwGcc49,
+               pRTools);
+      if (error)
+         LOG_ERROR(error);
+   }
 }
 
-Error scanFoldersForRTools(bool usingMingwGcc49, std::vector<RToolsInfo>* pRTools)
+void scanFoldersForRTools(bool usingMingwGcc49, std::vector<RToolsInfo>* pRTools)
 {
    // look for Rtools as installed by RStudio
    std::string systemDrive = core::system::getenv("SYSTEMDRIVE");
@@ -308,42 +312,34 @@ Error scanFoldersForRTools(bool usingMingwGcc49, std::vector<RToolsInfo>* pRTool
    // ensure it exists (may not exist if the user has not installed
    // any copies of Rtools through RStudio yet)
    if (!buildDirRoot.exists())
-      return Success();
+      return;
 
    // find sub-directories
    std::vector<FilePath> buildDirs;
-   Error error = buildDirRoot.children(&buildDirs);
+   Error error = buildDirRoot.getChildren(buildDirs);
    if (error)
       LOG_ERROR(error);
 
    // infer Rtools information from each directory
    for (const FilePath& buildDir : buildDirs)
    {
-      RToolsInfo toolsInfo(buildDir.filename(), buildDir, usingMingwGcc49);
+      RToolsInfo toolsInfo(buildDir.getFilename(), buildDir, usingMingwGcc49);
       if (toolsInfo.isRecognized())
          pRTools->push_back(toolsInfo);
       else
-         LOG_WARNING_MESSAGE("Unknown Rtools version: " + buildDir.filename());
+         LOG_WARNING_MESSAGE("Unknown Rtools version: " + buildDir.getFilename());
    }
-
-   return Success();
 }
 
 } // end anonymous namespace
 
-Error scanForRTools(bool usingMingwGcc49, std::vector<RToolsInfo>* pRTools)
+void scanForRTools(bool usingMingwGcc49, std::vector<RToolsInfo>* pRTools)
 {
-   Error error;
    std::vector<RToolsInfo> rtoolsInfo;
 
    // scan for Rtools
-   error = scanRegistryForRTools(usingMingwGcc49, &rtoolsInfo);
-   if (error)
-      return error;
-
-   error = scanFoldersForRTools(usingMingwGcc49, &rtoolsInfo);
-   if (error)
-      return error;
+   scanRegistryForRTools(usingMingwGcc49, &rtoolsInfo);
+   scanFoldersForRTools(usingMingwGcc49, &rtoolsInfo);
 
    // remove duplicates
    std::set<FilePath> knownPaths;
@@ -362,9 +358,6 @@ Error scanForRTools(bool usingMingwGcc49, std::vector<RToolsInfo>* pRTools)
    {
       return Version(lhs.name()) < Version(rhs.name());
    });
-
-   // we're done!
-   return Success();
 }
 
 } // namespace r_util

@@ -1,7 +1,7 @@
 /*
  * UnsavedChangesItem.java
  *
- * Copyright (C) 2009-15 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -15,7 +15,7 @@
 package org.rstudio.studio.client.workbench.model;
 
 import com.google.gwt.core.client.JavaScriptObject;
-import com.google.gwt.resources.client.ImageResource;
+import org.rstudio.studio.client.common.filetypes.FileIcon;
 
 public class UnsavedChangesItem extends JavaScriptObject
    implements UnsavedChangesTarget
@@ -31,7 +31,7 @@ public class UnsavedChangesItem extends JavaScriptObject
    }
 
    public final native static UnsavedChangesItem create(String id,
-         ImageResource icon, String title, String path) /*-{
+         FileIcon icon, String title, String path) /*-{
       return {
          "id"   : id,
          "icon" : icon,
@@ -46,7 +46,7 @@ public class UnsavedChangesItem extends JavaScriptObject
    }-*/;
 
    @Override
-   public final native ImageResource getIcon() /*-{
+   public final native FileIcon getIcon() /*-{
       return this.icon;
    }-*/;
 

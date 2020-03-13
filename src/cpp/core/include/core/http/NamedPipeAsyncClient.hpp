@@ -1,7 +1,7 @@
 /*
  * NamedPipeAsyncClient.hpp
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -21,8 +21,8 @@
 #include <boost/asio/io_service.hpp>
 #include <boost/asio/windows/stream_handle.hpp>
 
-#include <core/Error.hpp>
-#include <core/FilePath.hpp>
+#include <shared_core/Error.hpp>
+#include <shared_core/FilePath.hpp>
 
 #include <core/http/AsyncClient.hpp>
 
@@ -67,16 +67,16 @@ private:
       {
          // connect to named pipe
          HANDLE hPipe = ::CreateFileA(
-                  pipeName_.c_str(),		// pipe name
+                  pipeName_.c_str(),      // pipe name
                   GENERIC_READ |          // allow reading
                   GENERIC_WRITE,          // allow writing
                   0,                      // no sharing
-                  NULL,                   // default security attributes
+                  nullptr,                // default security attributes
                   OPEN_EXISTING,          // opens existing
                   FILE_FLAG_OVERLAPPED |  // allow overlapped io
                   SECURITY_SQOS_PRESENT | // custom security attribs
                   SECURITY_IDENTIFICATION,// impersonate identity only
-                  NULL);               	// no template file
+                  nullptr);               // no template file
 
          // handle connection error if necessary)
          if (hPipe == INVALID_HANDLE_VALUE)

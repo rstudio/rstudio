@@ -1,7 +1,7 @@
 /*
  * Application.java
  *
- * Copyright (C) 2009-19 by RStudio, Inc.
+ * Copyright (C) 2009-20 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -26,8 +26,6 @@ import com.google.gwt.dom.client.Style.Display;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.logical.shared.CloseEvent;
 import com.google.gwt.event.logical.shared.CloseHandler;
-import com.google.gwt.event.logical.shared.ValueChangeEvent;
-import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.http.client.URL;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Timer;
@@ -50,10 +48,12 @@ import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.events.BarrierReleasedEvent;
 import org.rstudio.core.client.events.BarrierReleasedHandler;
+import org.rstudio.core.client.widget.ModalDialogTracker;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.ApplicationQuit.QuitContext;
 import org.rstudio.studio.client.application.events.*;
+import org.rstudio.studio.client.application.events.AriaLiveStatusEvent.Timing;
 import org.rstudio.studio.client.application.model.InvalidSessionInfo;
 import org.rstudio.studio.client.application.model.ProductEditionInfo;
 import org.rstudio.studio.client.application.model.ProductInfo;
@@ -83,7 +83,8 @@ import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.model.SessionOpener;
 import org.rstudio.studio.client.workbench.model.SessionUtils;
-import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserState;
 
 @Singleton
 public class Application implements ApplicationEventHandlers
@@ -103,7 +104,8 @@ public class Application implements ApplicationEventHandlers
                       ApplicationUncaughtExceptionHandler uncaughtExHandler,
                       ApplicationTutorialApi tutorialApi,
                       SessionOpener sessionOpener,
-                      Provider<UIPrefs> uiPrefs,
+                      Provider<UserPrefs> userPrefs,
+                      Provider<UserState> userState,
                       Provider<Workbench> workbench,
                       Provider<EventBus> eventBusProvider,
                       Provider<ClientStateUpdater> clientStateUpdater,
@@ -123,7 +125,8 @@ public class Application implements ApplicationEventHandlers
       clientStateUpdater_ = clientStateUpdater;
       server_ = server;
       sessionOpener_ = sessionOpener;
-      uiPrefs_ = uiPrefs;
+      userPrefs_ = userPrefs;
+      userState_ = userState;
       workbench_ = workbench;
       eventBusProvider_ = eventBusProvider;
       pClientInit_ = pClientInit;
@@ -145,7 +148,7 @@ public class Application implements ApplicationEventHandlers
       events.addHandler(ReloadWithLastChanceSaveEvent.TYPE, this);
       events.addHandler(QuitEvent.TYPE, this);
       events.addHandler(SuicideEvent.TYPE, this);
-      events.addHandler(SessionAbendWarningEvent.TYPE, this);    
+      events.addHandler(SessionAbendWarningEvent.TYPE, this);
       events.addHandler(SessionSerializationEvent.TYPE, this);
       events.addHandler(SessionRelaunchEvent.TYPE, this);
       events.addHandler(ServerUnavailableEvent.TYPE, this);
@@ -154,6 +157,8 @@ public class Application implements ApplicationEventHandlers
       events.addHandler(InvalidSessionEvent.TYPE, this);
       events.addHandler(SwitchToRVersionEvent.TYPE, this);
       events.addHandler(SessionInitEvent.TYPE, this);
+      events.addHandler(FileUploadEvent.TYPE, this);
+      events.addHandler(AriaLiveStatusEvent.TYPE, this);
       
       // register for uncaught exceptions
       uncaughtExHandler.register();
@@ -177,39 +182,37 @@ public class Application implements ApplicationEventHandlers
          public void onResponseReceived(final SessionInfo sessionInfo)
          {
             // initialize workbench after verifying agreement
-            verifyAgreement(sessionInfo, new Operation() {
-               public void execute()
+            verifyAgreement(sessionInfo, () ->
+            {
+               // if this is a switch project then wait to dismiss the
+               // loading progress animation for 10 seconds. typically
+               // this will be enough time to switch projects. if it
+               // isn't then it's nice to reveal whatever progress
+               // operation or error state is holding up the switch
+               // directly to the user
+               if (ApplicationAction.isSwitchProject())
                {
-                  // if this is a switch project then wait to dismiss the 
-                  // loading progress animation for 10 seconds. typically
-                  // this will be enough time to switch projects. if it
-                  // isn't then it's nice to reveal whatever progress 
-                  // operation or error state is holding up the switch
-                  // directly to the user
-                  if (ApplicationAction.isSwitchProject())
-                  {
-                     new Timer() {
-                        @Override
-                        public void run()
-                        {
-                           dismissLoadingProgress.execute();
-                        }   
-                     }.schedule(10000);  
-                  }
-                  else
-                  {
-                     dismissLoadingProgress.execute();
-                  }
-                  
-                  session_.setSessionInfo(sessionInfo);
-                  
-                  // load MathJax
-                  MathJaxLoader.ensureMathJaxLoaded();
-                  
-                  // initialize workbench
-                  initializeWorkbench();
+                  new Timer() {
+                     @Override
+                     public void run()
+                     {
+                        dismissLoadingProgress.execute();
+                     }
+                  }.schedule(10000);
                }
-            }); 
+               else
+               {
+                  dismissLoadingProgress.execute();
+               }
+
+               session_.setSessionInfo(sessionInfo);
+
+               // load MathJax
+               MathJaxLoader.ensureMathJaxLoaded();
+
+               // initialize workbench
+               initializeWorkbench();
+            });
          }
 
          public void onError(ServerError error)
@@ -280,30 +283,34 @@ public class Application implements ApplicationEventHandlers
    }
    
    @Handler
+   public void onFocusMainToolbar()
+   {
+      view_.focusToolbar();
+   }
+
+   @Handler
+   void onSignOut()
+   {
+      events_.fireEvent(new LogoutRequestedEvent());
+   }
+
+   @Handler
    void onShowAboutDialog()
    {
-      if (aboutDialog_ == null)
+      server_.getProductInfo(new ServerRequestCallback<ProductInfo>()
       {
-         server_.getProductInfo(new ServerRequestCallback<ProductInfo>()
+         @Override
+         public void onResponseReceived(ProductInfo info)
          {
-            @Override
-            public void onResponseReceived(ProductInfo info)
-            {
-               aboutDialog_ = new AboutDialog(info);
-               aboutDialog_.showModal();
-            }
-            @Override
-            public void onError(ServerError error)
-            {
-               Debug.logError(error);
-            }
-         });
-      }
-      else
-      {
-         aboutDialog_.center();
-         aboutDialog_.showModal();
-      }
+            AboutDialog about = new AboutDialog(info);
+            about.showModal();
+         }
+         @Override
+         public void onError(ServerError error)
+         {
+            Debug.logError(error);
+         }
+      });
    }
    
    @Handler
@@ -314,18 +321,51 @@ public class Application implements ApplicationEventHandlers
          pEdition_.get().showLicense();
       }
    }
+
+   @Handler
+   void onShowSessionServerOptionsDialog()
+   {
+      if (pEdition_.get() != null)
+      {
+         pEdition_.get().showSessionServerOptionsDialog();
+      }
+   }
    
+   @Override
    public void onUnauthorized(UnauthorizedEvent event)
    {
-      navigateToSignIn();
-   }   
+      // if the user is currently uploading a file (which potentially takes a long time)
+      // and we were to navigate them, they would be unable to complete the upload
+      if (!fileUploadInProgress_)
+      {
+         server_.disconnect();
+         navigateToSignIn();
+      }
+   }
+
+   @Override
+   public void onFileUpload(FileUploadEvent event)
+   {
+      fileUploadInProgress_ = event.inProgress();
+   }
    
+   @Override
+   public void onAriaLiveStatus(AriaLiveStatusEvent event)
+   {
+      int delayMs = (event.getTiming() == Timing.IMMEDIATE) ?
+            0 : userPrefs_.get().typingStatusDelayMs().getValue();
+      if (!ModalDialogTracker.dispatchAriaLiveStatus(event.getMessage(), delayMs, event.getSeverity()))
+         view_.reportStatus(event.getMessage(), delayMs, event.getSeverity());
+   }
+
+   @Override
    public void onServerOffline(ServerOfflineEvent event)
    {
       cleanupWorkbench();
       view_.showApplicationOffline();
    }
     
+   @Override
    public void onLogoutRequested(LogoutRequestedEvent event)
    {
       cleanupWorkbench();
@@ -344,6 +384,12 @@ public class Application implements ApplicationEventHandlers
       // append the form to the document and submit it
       DocumentEx.get().getBody().appendChild(form);
       form.submit();
+
+      if (Desktop.isRemoteDesktop())
+      {
+         // let the desktop application know that we are signing out
+         Desktop.getFrame().signOut();
+      }
    }
    
    @Handler
@@ -436,6 +482,7 @@ public class Application implements ApplicationEventHandlers
       SuperDevMode.reload();
    }
    
+   @Override
    public void onSessionSerialization(SessionSerializationEvent event)
    {
       switch(event.getAction().getType())
@@ -456,6 +503,7 @@ public class Application implements ApplicationEventHandlers
                           0);   // no timeout
          break;
       case SessionSerializationAction.SUSPEND_SESSION:
+         events_.fireEvent(new ApplicationTutorialEvent(ApplicationTutorialEvent.SESSION_SUSPEND));
          view_.showSerializationProgress(
                           "Backing up R session...",
                           true,    // modal, inputs will fall dead anyway
@@ -481,6 +529,7 @@ public class Application implements ApplicationEventHandlers
       }
    }
 
+   @Override
    public void onSessionRelaunch(SessionRelaunchEvent event)
    {
       switch (event.getType())
@@ -515,6 +564,7 @@ public class Application implements ApplicationEventHandlers
       }
    }
    
+   @Override
    public void onServerUnavailable(ServerUnavailableEvent event)
    {
       view_.hideSerializationProgress();
@@ -541,6 +591,7 @@ public class Application implements ApplicationEventHandlers
       });
    }
 
+   @Override
    public void onReload(ReloadEvent event)
    {
       cleanupWorkbench();
@@ -548,6 +599,7 @@ public class Application implements ApplicationEventHandlers
       reloadWindowWithDelay(false);
    }
    
+   @Override
    public void onReloadWithLastChanceSave(ReloadWithLastChanceSaveEvent event)
    {
       Barrier barrier = new Barrier();
@@ -585,6 +637,7 @@ public class Application implements ApplicationEventHandlers
       }
    }
    
+   @Override
    public void onQuit(QuitEvent event)
    {
       cleanupWorkbench();
@@ -608,7 +661,13 @@ public class Application implements ApplicationEventHandlers
             {
                view_.showApplicationQuit();
             }
-            
+
+            if (Desktop.isRemoteDesktop())
+            {
+               // inform the desktop application that the remote session has finished quitting
+               Desktop.getFrame().onSessionQuit();
+            }
+
             // attempt to close the window if this is a quit
             // action (may or may not be able to depending on 
             // how it was created)
@@ -624,7 +683,8 @@ public class Application implements ApplicationEventHandlers
             }
             else if (session_.getSessionInfo().getShowUserHomePage())
             {
-               loadUserHomePage();
+               if (!Desktop.isRemoteDesktop())
+                  loadUserHomePage();
             }
          }
       }
@@ -663,18 +723,21 @@ public class Application implements ApplicationEventHandlers
       }.schedule(100);
    }
    
+   @Override
    public void onSuicide(SuicideEvent event)
    { 
       cleanupWorkbench();
       view_.showApplicationSuicide(event.getMessage());
    }
    
+   @Override
    public void onClientDisconnected(ClientDisconnectedEvent event)
    {
       cleanupWorkbench();
       view_.showApplicationDisconnected();
    }
    
+   @Override
    public void onInvalidClientVersion(InvalidClientVersionEvent event)
    {
       cleanupWorkbench();
@@ -682,6 +745,7 @@ public class Application implements ApplicationEventHandlers
    }
    
 
+   @Override
    public void onInvalidSession(InvalidSessionEvent event)
    {
       // calculate the url without the scope
@@ -706,6 +770,7 @@ public class Application implements ApplicationEventHandlers
       navigateWindowWithDelay(baseURL);
    }
 
+   @Override
    public void onSessionAbendWarning(SessionAbendWarningEvent event)
    {
       view_.showSessionAbendWarning();
@@ -767,40 +832,33 @@ public class Application implements ApplicationEventHandlers
             agreement.getContents(),
              
             // bail to sign in page if the user doesn't confirm
-            new Operation()
+            () ->
             {
-               public void execute()
+               if (Desktop.isDesktop())
                {
-                  if (Desktop.isDesktop())
-                  {
-                     Desktop.getFrame().setPendingQuit(
-                                       DesktopFrame.PENDING_QUIT_AND_EXIT);
-                     server_.quitSession(false,
-                                         null,
-                                         null,
-                                         GWT.getHostPageBaseURL(),
-                                         new SimpleRequestCallback<Boolean>());
-                  }
-                  else
-                     navigateToSignIn();
+                  Desktop.getFrame().setPendingQuit(
+                                    DesktopFrame.PENDING_QUIT_AND_EXIT);
+                  server_.quitSession(false,
+                                      null,
+                                      null,
+                                      GWT.getHostPageBaseURL(),
+                                      new SimpleRequestCallback<Boolean>());
                }
+               else
+                  navigateToSignIn();
             },
-        
+
             // user confirmed
-            new Operation() {
-               public void execute()
-               {
-                  // call verified operation
-                  verifiedOperation.execute();
-                  
-                  // record agreement on server
-                  server_.acceptAgreement(agreement, 
-                                          new VoidServerRequestCallback());
-               } 
+            () ->
+            {
+               // call verified operation
+               verifiedOperation.execute();
+
+               // record agreement on server
+               server_.acceptAgreement(agreement,
+                                       new VoidServerRequestCallback());
             }
-            
          );
-         
       }
       else
       {
@@ -870,11 +928,19 @@ public class Application implements ApplicationEventHandlers
       {
          removeProjectCommands();
       }
-      
+
+      if (Desktop.isDesktop() && !Desktop.isRemoteDesktop())
+         commands_.signOut().remove();
+      else if (!sessionInfo.getShowIdentity() || !sessionInfo.getAllowFullUI())
+         commands_.signOut().remove();
+
       if (!sessionInfo.getLauncherJobsEnabled())
       {
          removeJobLauncherCommands();
       }
+
+      // only enable suspendSession() in devmode
+      commands_.suspendSession().setVisible(SuperDevMode.isActive());
 
       if (!sessionInfo.getAllowPackageInstallation())
       {
@@ -895,7 +961,7 @@ public class Application implements ApplicationEventHandlers
       }
       
       // disable external publishing if requested
-      if (!SessionUtils.showExternalPublishUi(session_, uiPrefs_.get()))
+      if (!SessionUtils.showExternalPublishUi(session_, userState_.get()))
       {
          commands_.publishHTML().remove();
       } 
@@ -909,7 +975,7 @@ public class Application implements ApplicationEventHandlers
          commands_.knitWithParameters().remove();
          
       // show the correct set of data import commands
-      if (uiPrefs_.get().useDataImport().getValue())
+      if (userPrefs_.get().useDataimport().getValue())
       {
          commands_.importDatasetFromFile().remove();
          commands_.importDatasetFromURL().remove();
@@ -918,10 +984,7 @@ public class Application implements ApplicationEventHandlers
          commands_.importDatasetFromSAV().setVisible(false);
          commands_.importDatasetFromSAS().setVisible(false);
          commands_.importDatasetFromStata().setVisible(false);
-         commands_.importDatasetFromXML().setVisible(false);
-         commands_.importDatasetFromODBC().setVisible(false);
-         commands_.importDatasetFromJDBC().setVisible(false);
-         
+
          try
          {
             String rVersion = sessionInfo.getRVersionsInfo().getRVersion();
@@ -934,28 +997,11 @@ public class Application implements ApplicationEventHandlers
                commands_.importDatasetFromSAV().setVisible(true);
                commands_.importDatasetFromSAS().setVisible(true);
                commands_.importDatasetFromStata().setVisible(true);
-               
-               commands_.importDatasetFromXML().setVisible(true);
-            }
-            if (ApplicationUtils.compareVersions(rVersion, "3.0.0") >= 0)
-            {
-               commands_.importDatasetFromODBC().setVisible(true);
-            }
-            if (ApplicationUtils.compareVersions(rVersion, "2.4.0") >= 0)
-            {
-               commands_.importDatasetFromJDBC().setVisible(true);
             }
          }
          catch (Exception e)
          {
          }
-         
-         // Removing data import dialogs that are NYI
-         commands_.importDatasetFromXML().remove();
-         commands_.importDatasetFromJSON().remove();
-         commands_.importDatasetFromJDBC().remove();
-         commands_.importDatasetFromODBC().remove();
-         commands_.importDatasetFromMongo().remove();
       }
       else
       {
@@ -966,13 +1012,22 @@ public class Application implements ApplicationEventHandlers
          commands_.importDatasetFromSAS().remove();
          commands_.importDatasetFromStata().remove();
          commands_.importDatasetFromXLS().remove();
-         commands_.importDatasetFromXML().remove();
-         commands_.importDatasetFromJSON().remove();
-         commands_.importDatasetFromJDBC().remove();
-         commands_.importDatasetFromODBC().remove();
-         commands_.importDatasetFromMongo().remove();
       }
-   
+
+      if (userPrefs_.get().ariaApplicationRole().getValue())
+      {
+         Element el = Document.get().getElementById("rstudio_container");
+         if (el == null)
+         {
+            // some satellite windows don't have "rstudio_container"
+            el = view_.getWidget().getElement();
+         }
+
+         // "application" role prioritizes application keyboard handling
+         // over screen-reader shortcuts
+         el.setAttribute("role", "application");
+      } 
+
       // If no project, ensure we show the product-edition title; if there is a project
       // open this was already done
       if (!Desktop.isDesktop() &&
@@ -987,15 +1042,31 @@ public class Application implements ApplicationEventHandlers
       view_.showWorkbenchView(wb.getMainView().asWidget());
       
       // hide zoom in and zoom out in web mode
-      if (!Desktop.isDesktop())
+      if (!Desktop.hasDesktopFrame())
       {
          commands_.zoomActualSize().remove();
          commands_.zoomIn().remove();
          commands_.zoomOut().remove();
       }
       
+      // remove main menu commands in desktop mode
+      if (Desktop.hasDesktopFrame())
+      {
+         commands_.showFileMenu().remove();
+         commands_.showEditMenu().remove();
+         commands_.showCodeMenu().remove();
+         commands_.showViewMenu().remove();
+         commands_.showPlotsMenu().remove();
+         commands_.showSessionMenu().remove();
+         commands_.showBuildMenu().remove();
+         commands_.showDebugMenu().remove();
+         commands_.showProfileMenu().remove();
+         commands_.showToolsMenu().remove();
+         commands_.showHelpMenu().remove();
+      }
+      
       // show new session when appropriate
-      if (!Desktop.isDesktop())
+      if (!Desktop.hasDesktopFrame())
       {
          if (sessionInfo.getMultiSession())
             commands_.newSession().setMenuLabel("New Session...");
@@ -1009,26 +1080,21 @@ public class Application implements ApplicationEventHandlers
          if (!pEdition_.get().proLicense())
             commands_.rstudioSupport().remove();
          
-         // only show License menu command in Desktop Pro
-         if (!pEdition_.get().proLicense() || !Desktop.isDesktop())
+         // pro-only menu items
+         if (!pEdition_.get().proLicense() || !Desktop.hasDesktopFrame())
          {
             commands_.showLicenseDialog().remove();
+            commands_.showSessionServerOptionsDialog().remove();
          }
       }
       
       // toolbar (must be after call to showWorkbenchView because
       // showing the toolbar repositions the workbench view widget)
-      showToolbar( uiPrefs_.get().toolbarVisible().getValue());
+      showToolbar(userPrefs_.get().toolbarVisible().getValue(), false);
       
       // sync to changes in the toolbar visibility state
-      uiPrefs_.get().toolbarVisible().addValueChangeHandler(
-                                          new ValueChangeHandler<Boolean>() {
-         @Override
-         public void onValueChange(ValueChangeEvent<Boolean> event)
-         {
-            showToolbar(event.getValue());
-         }
-      });
+      userPrefs_.get().toolbarVisible().addValueChangeHandler(
+            valueChangeEvent -> showToolbar(valueChangeEvent.getValue(), true));
    
       clientStateUpdaterInstance_ = clientStateUpdater_.get();
       
@@ -1094,14 +1160,14 @@ public class Application implements ApplicationEventHandlers
    
    private void setToolbarPref(boolean showToolbar)
    {
-      uiPrefs_.get().toolbarVisible().setGlobalValue(showToolbar);
-      uiPrefs_.get().writeUIPrefs();
+      userPrefs_.get().toolbarVisible().setGlobalValue(showToolbar);
+      userPrefs_.get().writeUserPrefs();
    }
    
-   private void showToolbar(boolean showToolbar)
+   private void showToolbar(boolean showToolbar, boolean announce)
    {
       // show or hide the toolbar
-      view_.showToolbar(showToolbar);
+      view_.showToolbar(showToolbar, announce);
          
       // manage commands
       commands_.showToolbar().setVisible(!showToolbar);
@@ -1139,6 +1205,11 @@ public class Application implements ApplicationEventHandlers
       commands_.interruptTerminal().remove();
       commands_.sendTerminalToEditor().remove();
       commands_.sendToTerminal().remove();
+      commands_.showTerminalOptions().remove();
+      commands_.openNewTerminalAtEditorLocation().remove();
+      commands_.sendFilenameToTerminal().remove();
+      commands_.openNewTerminalAtFilePaneLocation().remove();
+      commands_.setTerminalToCurrentDirectory().remove();
    }
 
    private void removeProjectCommands()
@@ -1168,12 +1239,31 @@ public class Application implements ApplicationEventHandlers
 
    private void removeJobLauncherCommands()
    {
-      commands_.startLauncherJob().remove();
-      commands_.sourceAsLauncherJob().remove();
-      commands_.runSelectionAsLauncherJob().remove();
-      commands_.activateLauncherJobs().remove();
-      commands_.sortLauncherJobsRecorded().remove();
-      commands_.sortLauncherJobsState().remove();
+      // we will not remove the launcher commands if we have session servers defined
+      Command removeCommands = () ->
+      {
+         commands_.startLauncherJob().remove();
+         commands_.sourceAsLauncherJob().remove();
+         commands_.runSelectionAsLauncherJob().remove();
+         commands_.activateLauncherJobs().remove();
+         commands_.sortLauncherJobsRecorded().remove();
+         commands_.sortLauncherJobsState().remove();
+      };
+
+      if (Desktop.hasDesktopFrame())
+      {
+         Desktop.getFrame().getSessionServers(servers ->
+         {
+            if (servers.length() == 0)
+            {
+               removeCommands.execute();
+            }
+         });
+      }
+      else
+      {
+         removeCommands.execute();
+      }
    }
 
    private void pauseClientStateUpdater()
@@ -1197,7 +1287,8 @@ public class Application implements ApplicationEventHandlers
    private final Provider<ClientStateUpdater> clientStateUpdater_;
    private final Server server_;
    private final SessionOpener sessionOpener_;
-   private final Provider<UIPrefs> uiPrefs_;
+   private final Provider<UserPrefs> userPrefs_;
+   private final Provider<UserState> userState_;
    private final Provider<Workbench> workbench_;
    private final Provider<EventBus> eventBusProvider_;
    private final Provider<ApplicationClientInit> pClientInit_;
@@ -1205,8 +1296,8 @@ public class Application implements ApplicationEventHandlers
    private final Provider<ApplicationInterrupt> pApplicationInterrupt_;
    private final Provider<ProductEditionInfo> pEdition_;
    private final Provider<ApplicationThemes> pAppThemes_;
-   
-   private AboutDialog aboutDialog_;
+
+   private boolean fileUploadInProgress_ = false;
    
    private final String CSRF_TOKEN_FIELD = "csrf-token";
 

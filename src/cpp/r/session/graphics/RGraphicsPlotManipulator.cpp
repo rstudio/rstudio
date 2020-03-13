@@ -1,7 +1,7 @@
 /*
  * RGraphicsPlotManipulator.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-12 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -15,8 +15,8 @@
 
 #include "RGraphicsPlotManipulator.hpp"
 
-#include <core/Error.hpp>
-#include <core/FilePath.hpp>
+#include <shared_core/Error.hpp>
+#include <shared_core/FilePath.hpp>
 
 #include <r/RExec.hpp>
 #include <r/RJson.hpp>
@@ -59,7 +59,7 @@ Error PlotManipulator::save(const FilePath& filePath) const
    // call manipulator save
    r::exec::RFunction manipSave("manipulate:::manipulatorSave");
    manipSave.addParam(sexp_.get());
-   manipSave.addParam(filePath.absolutePath());
+   manipSave.addParam(filePath.getAbsolutePath());
    return manipSave.call();
 }
 
@@ -67,7 +67,7 @@ Error PlotManipulator::load(const FilePath& filePath)
 {
    // call manipulator load
    r::exec::RFunction manipLoad("manipulate:::manipulatorLoad");
-   manipLoad.addParam(filePath.absolutePath());
+   manipLoad.addParam(filePath.getAbsolutePath());
    r::sexp::Protect rProtect;
    SEXP manipSEXP;
    Error error = manipLoad.call(&manipSEXP, &rProtect);

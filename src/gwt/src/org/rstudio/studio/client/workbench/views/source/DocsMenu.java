@@ -1,7 +1,7 @@
 /*
  * DocsMenu.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -15,7 +15,6 @@
 package org.rstudio.studio.client.workbench.views.source;
 
 import com.google.gwt.dom.client.Style.FontStyle;
-import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.MenuItem;
 import com.google.gwt.user.client.ui.PopupPanel;
@@ -28,6 +27,7 @@ import org.rstudio.core.client.command.DisabledMenuItem;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.common.filetypes.FileIcon;
 import org.rstudio.studio.client.workbench.views.source.events.DocTabActivatedEvent;
 import org.rstudio.studio.client.workbench.views.source.events.DocTabsChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.events.DocTabsChangedHandler;
@@ -78,7 +78,7 @@ public class DocsMenu extends AppMenuBar
       panel_ = panel;
    }
 
-   public void setDocs(String[] ids, ImageResource[] icons, String[] names, String[] paths)
+   public void setDocs(String[] ids, FileIcon[] icons, String[] names, String[] paths)
    {
       clearItems();
       
@@ -98,7 +98,7 @@ public class DocsMenu extends AppMenuBar
 
       for (int i = 0; i < icons.length; i++)
       {
-         String label = AppCommand.formatMenuLabel(icons[i],
+         String label = AppCommand.formatMenuLabel(icons[i].getImageResource(),
                                                    names[i] + "\u00A0\u00A0\u00A0",
                                                    null);
          final int tabIndex = i;

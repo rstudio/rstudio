@@ -1,7 +1,7 @@
 /*
  * Request.cpp
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -15,9 +15,12 @@
 
 #include <core/http/Request.hpp>
 
+#include <gsl/gsl>
+
 #include <boost/tokenizer.hpp>
 #include <boost/asio/buffer.hpp>
 #include <boost/algorithm/string/predicate.hpp>
+#include <boost/algorithm/string/join.hpp>
 
 #include <core/Log.hpp>
 #include <core/Thread.hpp>
@@ -134,6 +137,17 @@ std::string Request::cookieValue(const std::string& name) const
    return util::fieldValue(cookies_, name);
 }
 
+void Request::addCookie(const std::string& name, const std::string& value)
+{
+   cookies_.push_back(std::make_pair(name, value));
+   std::vector<std::string> cookies;
+   for (const auto cookie: cookies_)
+   {
+      cookies.push_back(cookie.first + "=" + cookie.second); 
+   }
+   setHeader("Cookie", boost::algorithm::join(cookies, "; ")); 
+}
+
 std::string Request::cookieValueFromHeader(const std::string& headerName) const
 {
    std::string value = headerValue(headerName);
@@ -186,7 +200,7 @@ std::string Request::queryParamValue(const std::string& name) const
 void Request::setBody(const std::string& body)
 {
    body_ = body;
-   setContentLength(static_cast<int>(body_.length()));
+   setContentLength(gsl::narrow_cast<int>(body_.length()));
 }
    
 void Request::debugPrintUri(const std::string& caption) const

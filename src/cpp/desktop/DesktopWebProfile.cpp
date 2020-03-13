@@ -1,7 +1,7 @@
 /*
  * DesktopWebProfile.cpp
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -67,8 +67,16 @@ private:
 } // end anonymous namespace
 
 WebProfile::WebProfile(const QUrl& baseUrl, QObject* parent)
-   : QWebEngineProfile(parent)
+   : QWebEngineProfile(QString::fromUtf8("rstudio-desktop"), parent)
 {
+   // force an in-memory cache of web resources
+   // otherwise, multiple windows / pages attempting to access
+   // or mutate the disk cache at the same time can cause
+   // data corruption to occur
+   //
+   // https://github.com/rstudio/rstudio/issues/6201
+   setHttpCacheType(QWebEngineProfile::MemoryHttpCache);
+   
    sharedSecret_ = core::system::getenv("RS_SHARED_SECRET");
    setBaseUrl(baseUrl);
 }

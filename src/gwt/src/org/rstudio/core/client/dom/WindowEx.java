@@ -1,7 +1,7 @@
 /*
  * WindowEx.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-12 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -43,6 +43,14 @@ public class WindowEx extends JavaScriptObject
    protected WindowEx()
    {
    }
+   
+   public final native String getName() /*-{
+      return this.name;
+   }-*/;
+   
+   public final native double getDevicePixelRatio() /*-{
+      return this.devicePixelRatio;
+   }-*/;
 
    public final native void focus() /*-{
       this.focus();
@@ -91,12 +99,12 @@ public class WindowEx extends JavaScriptObject
       this.location.reload(true);
    }-*/;
   
-   public final native void setLocationHref(String helpURL) /*-{
-      this.location.href = helpURL ;
+   public final native void setLocationHref(String url) /*-{
+      this.location.href = url ;
    }-*/;
 
-   public final native void replaceLocationHref(String helpURL) /*-{
-      this.location.replace(helpURL) ;
+   public final native void replaceLocationHref(String url) /*-{
+      this.location.replace(url) ;
    }-*/;
    
    public final native void replaceHistoryState(String url) /*-{

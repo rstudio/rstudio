@@ -1,7 +1,7 @@
 /*
  * FadeInAnimation.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -27,7 +27,7 @@ public class FadeInAnimation extends Animation
                           double targetOpacity,
                           Command callback)
    {
-      this(new ArrayList<Widget>(), targetOpacity, callback);
+      this(new ArrayList<>(), targetOpacity, callback);
       widgets_.add(widget);
    }
 
@@ -61,6 +61,7 @@ public class FadeInAnimation extends Animation
       for (Widget w : widgets_)
       {
          w.getElement().getStyle().setOpacity(targetOpacity_);
+         w.setVisible(true);
       }
       if (callback_ != null)
          callback_.execute();

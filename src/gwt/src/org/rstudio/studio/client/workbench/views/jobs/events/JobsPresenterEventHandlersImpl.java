@@ -1,7 +1,7 @@
 /*
  * JobsPresenterEventHandlersImpl.java
  *
- * Copyright (C) 2009-19 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -19,7 +19,9 @@ import com.google.inject.Inject;
 import com.google.inject.Provider;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.JsArrayUtil;
+import org.rstudio.core.client.SessionServer;
 import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.server.ServerError;
@@ -30,6 +32,7 @@ import org.rstudio.studio.client.workbench.views.jobs.model.JobManager;
 import org.rstudio.studio.client.workbench.views.jobs.model.JobOutput;
 import org.rstudio.studio.client.workbench.views.jobs.model.JobState;
 import org.rstudio.studio.client.workbench.views.jobs.model.JobsServerOperations;
+import org.rstudio.studio.client.workbench.views.jobs.model.LauncherJobManager;
 import org.rstudio.studio.client.workbench.views.jobs.view.JobsDisplay;
 
 import java.util.ArrayList;
@@ -53,11 +56,13 @@ public class JobsPresenterEventHandlersImpl implements JobsPresenterEventHandler
    private void initialize(JobsServerOperations server,
                            GlobalDisplay globalDisplay,
                            Provider<JobManager> pJobManager,
+                           Provider<LauncherJobManager> pLauncherJobManager,
                            EventBus eventBus)
    {
       server_ = server;
       globalDisplay_ = globalDisplay;
       pJobManager_ = pJobManager;
+      pLauncherJobManager_ = pLauncherJobManager;
       eventBus_ = eventBus;
    }
    
@@ -114,11 +119,11 @@ public class JobsPresenterEventHandlersImpl implements JobsPresenterEventHandler
       {
          if (event.selected())
          {
-            selectJob(event.id(), event.animate());
+            selectJob(event.id(), event.animate(), job.type == JobConstants.JOB_TYPE_LAUNCHER);
          }
          else
          {
-            unselectJob(event.id(), event.animate());
+            unselectJob(event.id(), event.animate(), job.type == JobConstants.JOB_TYPE_LAUNCHER);
          }
       }
    }
@@ -144,13 +149,20 @@ public class JobsPresenterEventHandlersImpl implements JobsPresenterEventHandler
       display_.setInitialJobs(jobs);
    }
 
-   private void unselectJob(final String id, boolean animate)
+   private void unselectJob(final String id, boolean animate, boolean isLauncherJob)
    {
-      server_.setJobListening(id, false, new ServerRequestCallback<JsArray<JobOutput>>()
+      boolean bypassLauncherCall = (isLauncherJob && getSessionServer() != null);
+
+      server_.setJobListening(id, false, bypassLauncherCall, new ServerRequestCallback<JsArray<JobOutput>>()
       {
          @Override
          public void onResponseReceived(JsArray<JobOutput> output)
          {
+            if (bypassLauncherCall && Desktop.hasDesktopFrame())
+            {
+               Desktop.getFrame().stopLauncherJobOutputStream(id);
+            }
+
             display_.hideJobOutput(id, animate);
          }
          
@@ -166,13 +178,20 @@ public class JobsPresenterEventHandlersImpl implements JobsPresenterEventHandler
       });
    }
    
-   private void selectJob(final String id, boolean animate)
+   private void selectJob(final String id, boolean animate, boolean isLauncherJob)
    {
-      server_.setJobListening(id, true, new ServerRequestCallback<JsArray<JobOutput>>()
+      boolean bypassLauncherCall = (isLauncherJob && getSessionServer() != null);
+
+      server_.setJobListening(id, true, bypassLauncherCall, new ServerRequestCallback<JsArray<JobOutput>>()
       {
          @Override
          public void onResponseReceived(JsArray<JobOutput> output)
          {
+            if (bypassLauncherCall && Desktop.hasDesktopFrame())
+            {
+               Desktop.getFrame().startLauncherJobOutputStream(id);
+            }
+
             display_.showJobOutput(id, output, animate);
          }
          
@@ -186,6 +205,11 @@ public class JobsPresenterEventHandlersImpl implements JobsPresenterEventHandler
          }
       });
    }
+
+   private SessionServer getSessionServer()
+   {
+      return pLauncherJobManager_.get().getSessionServer();
+   }
    
    private final int jobType_;
    private final JobsDisplay display_;
@@ -194,5 +218,6 @@ public class JobsPresenterEventHandlersImpl implements JobsPresenterEventHandler
    private JobsServerOperations server_;
    private GlobalDisplay globalDisplay_;
    private Provider<JobManager> pJobManager_;
+   private Provider<LauncherJobManager> pLauncherJobManager_;
    private EventBus eventBus_;
 }

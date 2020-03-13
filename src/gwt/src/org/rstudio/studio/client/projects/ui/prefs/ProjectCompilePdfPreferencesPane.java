@@ -1,7 +1,7 @@
 /*
  * ProjectCompilePdfPreferencesPane.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-20 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,8 +14,10 @@
  */
 package org.rstudio.studio.client.projects.ui.prefs;
 
+import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.prefs.PreferencesDialogBaseResources;
+import org.rstudio.core.client.prefs.RestartRequirement;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.HelpButton;
 import org.rstudio.core.client.widget.ProgressIndicator;
@@ -81,13 +83,13 @@ public class ProjectCompilePdfPreferencesPane extends ProjectPreferencesPane
    }
 
    @Override
-   public boolean onApply(RProjectOptions options)
+   public RestartRequirement onApply(RProjectOptions options)
    {
       RProjectConfig config = options.getConfig();
       config.setDefaultSweaveEngine(defaultSweaveEngine_.getValue());
       config.setDefaultLatexProgram(defaultLatexProgram_.getValue());
       config.setRootDocument(rootDoc_.getText().trim());
-      return false;
+      return new RestartRequirement();
    }
    
    private void addHeader(String caption)
@@ -107,7 +109,9 @@ public class ProjectCompilePdfPreferencesPane extends ProjectPreferencesPane
          super("Compile PDF root document:", 
                "(Current Document)", 
                "Browse...", 
-               new HelpButton("pdf_root_document"),
+               new HelpButton("pdf_root_document", "Get help on Compile PDF root document"),
+               ElementIds.TextBoxButtonId.PDF_ROOT,
+               true,
                null);
          
          // allow user to set the value to empty string

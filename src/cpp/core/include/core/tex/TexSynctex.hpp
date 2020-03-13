@@ -1,7 +1,7 @@
 /*
  * TexSynctex.hpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-12 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -29,7 +29,7 @@
 #include <boost/utility.hpp>
 #include <boost/scoped_ptr.hpp>
 
-#include <core/FilePath.hpp>
+#include <shared_core/FilePath.hpp>
 
 namespace rstudio {
 namespace core {
@@ -50,7 +50,7 @@ public:
 
    // COPYING: via compiler
 
-   bool empty() const { return file().empty(); }
+   bool empty() const { return file().isEmpty(); }
 
    const FilePath& file() const { return file_; }
 

@@ -1,7 +1,7 @@
 /*
  * SessionJobs.cpp
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -15,7 +15,7 @@
 
 #include <string>
 
-#include <core/Error.hpp>
+#include <shared_core/Error.hpp>
 #include <core/Exec.hpp>
 #include <core/system/System.hpp>
 
@@ -78,6 +78,16 @@ SEXP rs_addJob(SEXP nameSEXP, SEXP statusSEXP, SEXP progressUnitsSEXP, SEXP acti
    // return job id
    r::sexp::Protect protect;
    return r::sexp::create(pJob->id(), &protect);
+}
+
+SEXP rs_isJobRunning(SEXP jobSEXP)
+{
+   boost::shared_ptr<Job> pJob;
+   if (!lookupJob(jobSEXP, &pJob))
+      return R_NilValue;
+   
+   r::sexp::Protect protect;
+   return r::sexp::create(!pJob->complete(), &protect);
 }
 
 SEXP rs_removeJob(SEXP jobSEXP)
@@ -211,7 +221,7 @@ SEXP rs_runScriptJob(SEXP path, SEXP name, SEXP encoding, SEXP dir, SEXP importE
    if (workingDir.empty())
    {
       // default working dir to parent directory of script
-      workingDir = scriptPath.parent().absolutePath();
+      workingDir = scriptPath.getParent().getAbsolutePath();
    }
 
    FilePath workingDirPath(workingDir);
@@ -226,7 +236,7 @@ SEXP rs_runScriptJob(SEXP path, SEXP name, SEXP encoding, SEXP dir, SEXP importE
    if (jobName.empty())
    {
       // no name was supplied for the job, so derive one from the filename
-      jobName = scriptFilePath.filename();
+      jobName = scriptFilePath.getFilename();
    }
 
    std::string id;
@@ -245,13 +255,13 @@ SEXP rs_stopScriptJob(SEXP sexpId)
 {
    std::string id = r::sexp::safeAsString(sexpId);
    Error error = stopScriptJob(id);
-   if (error.code() == boost::system::errc::no_such_file_or_directory)
+   if (error == systemError(boost::system::errc::no_such_file_or_directory, ErrorLocation()))
    {
       r::exec::error("The script job '" + id + "' was not found.");
    }
    else if (error)
    {
-      r::exec::error("Error while stopping script job: " + error.summary());
+      r::exec::error("Error while stopping script job: " + error.getSummary());
    }
    return R_NilValue;
 }
@@ -359,8 +369,8 @@ Error setJobListening(const json::JsonRpcRequest& request,
 {
    // extract job ID
    std::string id;
-   bool listening;
-   Error error = json::readParams(request.params, &id, &listening);
+   bool listening, bypassLauncherCall;
+   Error error = json::readParams(request.params, &id, &listening, &bypassLauncherCall);
    if (error)
       return error;
 
@@ -369,7 +379,7 @@ Error setJobListening(const json::JsonRpcRequest& request,
    if (!lookupJob(id, &pJob))
       return Error(json::errc::ParamInvalid, ERROR_LOCATION);
 
-   if (pJob->type() == JobType::JobTypeLauncher)
+   if (pJob->type() == JobType::JobTypeLauncher && !bypassLauncherCall)
       modules::overlay::streamLauncherOutput(id, listening);
 
    // if listening started, return the output so far
@@ -443,6 +453,7 @@ core::Error initialize()
    // register API handlers
    RS_REGISTER_CALL_METHOD(rs_addJob);
    RS_REGISTER_CALL_METHOD(rs_removeJob);
+   RS_REGISTER_CALL_METHOD(rs_isJobRunning);
    RS_REGISTER_CALL_METHOD(rs_setJobProgress);
    RS_REGISTER_CALL_METHOD(rs_addJobProgress);
    RS_REGISTER_CALL_METHOD(rs_setJobStatus);

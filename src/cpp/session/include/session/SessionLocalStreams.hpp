@@ -1,7 +1,7 @@
 /*
  * SessionLocalStreams.hpp
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -18,13 +18,15 @@
 
 #include <string>
 
-#include <core/Error.hpp>
-#include <core/FilePath.hpp>
+#include <shared_core/Error.hpp>
+#include <shared_core/FilePath.hpp>
+
+#include <core/system/Environment.hpp>
 #include <core/system/System.hpp>
 
 #include <core/http/LocalStreamSocketUtils.hpp>
 
-#define kSessionLocalStreamsDir "/tmp/rstudio-rsession"
+#define kSessionTmpDirEnvVar     "RS_SESSION_TMP_DIR"
 
 namespace rstudio {
 namespace session {
@@ -32,14 +34,15 @@ namespace local_streams {
 
 inline core::Error ensureStreamsDir()
 {
-   core::FilePath sessionStreamsPath(kSessionLocalStreamsDir);
+   core::FilePath sessionStreamsPath(core::system::getenv(kSessionTmpDirEnvVar));
    return core::http::initializeStreamDir(sessionStreamsPath);
 }
    
 inline core::FilePath streamPath(const std::string& file)
 {
-   core::FilePath path = core::FilePath(kSessionLocalStreamsDir).complete(file);
-   core::Error error = core::http::initializeStreamDir(path.parent());
+   core::FilePath sessionStreamsPath(core::system::getenv(kSessionTmpDirEnvVar));
+   core::FilePath path = sessionStreamsPath.completePath(file);
+   core::Error error = core::http::initializeStreamDir(path.getParent());
    if (error)
       LOG_ERROR(error);
    return path;

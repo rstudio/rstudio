@@ -1,7 +1,7 @@
 /*
  * ConfigUtils.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-12 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -22,8 +22,8 @@
 #include <boost/algorithm/string/trim.hpp>
 #include <boost/algorithm/string/replace.hpp>
 
-#include <core/Error.hpp>
-#include <core/FilePath.hpp>
+#include <shared_core/Error.hpp>
+#include <shared_core/FilePath.hpp>
 #include <core/FileSerializer.hpp>
 
 namespace rstudio {
@@ -66,7 +66,7 @@ Error extractVariables(const FilePath& file, Variables* pVariables)
 {
    // return path not found if necessary
    if (!file.exists())
-      return core::pathNotFoundError(file.absolutePath(), ERROR_LOCATION);
+      return core::pathNotFoundError(file.getAbsolutePath(), ERROR_LOCATION);
 
    // read in the file
    std::string contents;

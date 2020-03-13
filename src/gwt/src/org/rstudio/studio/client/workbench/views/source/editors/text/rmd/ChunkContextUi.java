@@ -1,7 +1,7 @@
 /*
  * ChunkContextUi.java
  *
- * Copyright (C) 2009-16 by RStudio, Inc.
+ * Copyright (C) 2009-16 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -20,7 +20,6 @@ import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.GlobalDisplay;
-import org.rstudio.studio.client.common.r.knitr.RMarkdownChunkHeaderParser;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.PopupPositioner;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.PinnedLineWidget;
@@ -30,6 +29,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditing
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.LineWidget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
+import org.rstudio.studio.client.workbench.views.source.editors.text.assist.RChunkHeaderParser;
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.display.ChunkOptionsPopupPanel;
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.display.CustomEngineChunkOptionsPopupPanel;
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.display.DefaultChunkOptionsPopupPanel;
@@ -213,10 +213,7 @@ public class ChunkContextUi implements ChunkContextToolbar.Host
    private String getEngine(int row)
    {
       String line = target_.getDocDisplay().getLine(row);
-
-      Map<String, String> options = 
-         RMarkdownChunkHeaderParser.parse(line);
-      
+      Map<String, String> options = RChunkHeaderParser.parse(line);
       String engine = StringUtil.stringValue(options.get("engine"));
       return engine;
    }

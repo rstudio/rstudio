@@ -1,7 +1,7 @@
 /*
  * PlumberAPI.java
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -35,11 +35,10 @@ import org.rstudio.studio.client.plumber.events.LaunchPlumberAPIEvent;
 import org.rstudio.studio.client.plumber.events.PlumberAPIStatusEvent;
 import org.rstudio.studio.client.plumber.model.PlumberAPIParams;
 import org.rstudio.studio.client.plumber.model.PlumberRunCmd;
-import org.rstudio.studio.client.plumber.model.PlumberViewerType;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.commands.Commands;
-import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.views.console.events.ConsoleBusyEvent;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
 import org.rstudio.studio.client.workbench.views.environment.events.DebugModeChangedEvent;
@@ -66,7 +65,7 @@ public class PlumberAPI implements PlumberAPIStatusEvent.Handler,
    public PlumberAPI(EventBus eventBus, 
                      Commands commands,
                      Binder binder,
-                     Provider<UIPrefs> pPrefs,
+                     Provider<UserPrefs> pPrefs,
                      final SatelliteManager satelliteManager, 
                      PlumberServerOperations server,
                      GlobalDisplay display,
@@ -80,7 +79,7 @@ public class PlumberAPI implements PlumberAPIStatusEvent.Handler,
       server_ = server;
       display_ = display;
       isBusy_ = false;
-      currentViewType_ = PlumberViewerType.PLUMBER_VIEWER_NONE;
+      currentViewType_ = UserPrefs.PLUMBER_VIEWER_TYPE_NONE;
       dependencyManager_ = dependencyManager;
       interrupt_ = interrupt;
       
@@ -106,11 +105,11 @@ public class PlumberAPI implements PlumberAPIStatusEvent.Handler,
          currentViewType_ = event.getParams().getViewerType();
 
          // open the window to view the API if needed
-         if (currentViewType_ == PlumberViewerType.PLUMBER_VIEWER_WINDOW)
+         if (currentViewType_ == UserPrefs.PLUMBER_VIEWER_TYPE_WINDOW)
          {
             activateWindow(event.getParams());
          }
-         else if (currentViewType_ == PlumberViewerType.PLUMBER_VIEWER_BROWSER)
+         else if (currentViewType_ == UserPrefs.PLUMBER_VIEWER_TYPE_BROWSER)
          {
             display_.openWindow(event.getParams().getUrl());
          }
@@ -143,7 +142,7 @@ public class PlumberAPI implements PlumberAPIStatusEvent.Handler,
       // if the browser is up and R stops being busy, presume it's because the
       // API has stopped
       if (!isBusy_ && params_ != null && 
-          params_.getViewerType() == PlumberViewerType.PLUMBER_VIEWER_BROWSER)
+          params_.getViewerType() == UserPrefs.PLUMBER_VIEWER_TYPE_BROWSER)
       {
          params_.setState(PlumberAPIParams.STATE_STOPPED);
          eventBus_.fireEvent(new PlumberAPIStatusEvent(params_));
@@ -157,7 +156,7 @@ public class PlumberAPI implements PlumberAPIStatusEvent.Handler,
       // browser, automatically return to the API by activating the window.
       if (!event.debugging() && 
           params_ != null &&
-          currentViewType_ == PlumberViewerType.PLUMBER_VIEWER_WINDOW) 
+          currentViewType_ == UserPrefs.PLUMBER_VIEWER_TYPE_WINDOW) 
       {
          satelliteManager_.activateSatelliteWindow(PlumberAPISatellite.NAME);
       }
@@ -171,7 +170,7 @@ public class PlumberAPI implements PlumberAPIStatusEvent.Handler,
       // PlumberAPIStatusEvent that allows the rest of the UI a chance
       // to react to the API's termination.
       if (event.getStatus() == RestartStatusEvent.RESTART_INITIATED &&
-          currentViewType_ == PlumberViewerType.PLUMBER_VIEWER_WINDOW)
+          currentViewType_ == UserPrefs.PLUMBER_VIEWER_TYPE_WINDOW)
       {
             satelliteManager_.closeSatelliteWindow(PlumberAPISatellite.NAME);
       }
@@ -197,26 +196,26 @@ public class PlumberAPI implements PlumberAPIStatusEvent.Handler,
    @Handler
    public void onPlumberRunInPane()
    {
-      setPlumberViewerType(PlumberViewerType.PLUMBER_VIEWER_PANE);
+      setPlumberViewerType(UserPrefs.PLUMBER_VIEWER_TYPE_PANE);
    }
    
    @Handler
    public void onPlumberRunInViewer()
    {
-      setPlumberViewerType(PlumberViewerType.PLUMBER_VIEWER_WINDOW);
+      setPlumberViewerType(UserPrefs.PLUMBER_VIEWER_TYPE_WINDOW);
    }
 
    @Handler
    public void onPlumberRunInBrowser()
    {
-      setPlumberViewerType(PlumberViewerType.PLUMBER_VIEWER_BROWSER);
+      setPlumberViewerType(UserPrefs.PLUMBER_VIEWER_TYPE_BROWSER);
    }
    
    @Override
    public void onInterruptStatus(InterruptStatusEvent event)
    {
       // If API is stopped via Console, ensure Satellite is closed
-      if (currentViewType_ == PlumberViewerType.PLUMBER_VIEWER_WINDOW)
+      if (currentViewType_ == UserPrefs.PLUMBER_VIEWER_TYPE_WINDOW)
       {
             satelliteManager_.closeSatelliteWindow(PlumberAPISatellite.NAME);
       }
@@ -228,17 +227,17 @@ public class PlumberAPI implements PlumberAPIStatusEvent.Handler,
       if (fileDir.equals(currentAppPath()))
       {
          // The API being launched is the one already running; open and reload the API.
-         if (currentViewType_ == PlumberViewerType.PLUMBER_VIEWER_WINDOW)
+         if (currentViewType_ == UserPrefs.PLUMBER_VIEWER_TYPE_WINDOW)
          {
             satelliteManager_.dispatchCommand(commands_.reloadPlumberAPI(), PlumberAPISatellite.NAME);
             activateWindow();
          } 
-         else if (currentViewType_ == PlumberViewerType.PLUMBER_VIEWER_PANE &&
+         else if (currentViewType_ == UserPrefs.PLUMBER_VIEWER_TYPE_PANE &&
                   commands_.viewerRefresh().isEnabled())
          {
             commands_.viewerRefresh().execute();
          }
-         else if (currentViewType_ == PlumberViewerType.PLUMBER_VIEWER_BROWSER)
+         else if (currentViewType_ == UserPrefs.PLUMBER_VIEWER_TYPE_BROWSER)
          {
             eventBus_.fireEvent(new PlumberAPIStatusEvent(params_));
          }
@@ -333,11 +332,11 @@ public class PlumberAPI implements PlumberAPIStatusEvent.Handler,
       ); 
    }-*/;
 
-   private void setPlumberViewerType(int viewerType)
+   private void setPlumberViewerType(String viewerType)
    {
-      UIPrefs prefs = pPrefs_.get();
+      UserPrefs prefs = pPrefs_.get();
       prefs.plumberViewerType().setGlobalValue(viewerType);
-      prefs.writeUIPrefs();
+      prefs.writeUserPrefs();
 
       // if we have a running Plumber API and the viewer type has changed, 
       // snap the API into the new location
@@ -345,10 +344,10 @@ public class PlumberAPI implements PlumberAPIStatusEvent.Handler,
       {
          // if transitioning away from the pane or the window, close down
          // the old instance
-         if (currentViewType_ == PlumberViewerType.PLUMBER_VIEWER_PANE ||
-             currentViewType_ == PlumberViewerType.PLUMBER_VIEWER_WINDOW) 
+         if (currentViewType_ == UserPrefs.PLUMBER_VIEWER_TYPE_PANE ||
+             currentViewType_ == UserPrefs.PLUMBER_VIEWER_TYPE_WINDOW) 
          {
-            if (currentViewType_ == PlumberViewerType.PLUMBER_VIEWER_WINDOW)
+            if (currentViewType_ == UserPrefs.PLUMBER_VIEWER_TYPE_WINDOW)
             {
                stopOnNextClose_ = false;
                satelliteManager_.closeSatelliteWindow(PlumberAPISatellite.NAME);
@@ -363,9 +362,9 @@ public class PlumberAPI implements PlumberAPIStatusEvent.Handler,
          currentViewType_ = viewerType;
          params_.setViewerType(viewerType);
          
-         if (currentViewType_ == PlumberViewerType.PLUMBER_VIEWER_PANE ||
-             currentViewType_ == PlumberViewerType.PLUMBER_VIEWER_WINDOW ||
-             currentViewType_ == PlumberViewerType.PLUMBER_VIEWER_BROWSER)
+         if (currentViewType_ == UserPrefs.PLUMBER_VIEWER_TYPE_PANE ||
+             currentViewType_ == UserPrefs.PLUMBER_VIEWER_TYPE_WINDOW ||
+             currentViewType_ == UserPrefs.PLUMBER_VIEWER_TYPE_BROWSER)
          {
             eventBus_.fireEvent(new PlumberAPIStatusEvent(params_));
          }
@@ -431,7 +430,7 @@ public class PlumberAPI implements PlumberAPIStatusEvent.Handler,
    private final SatelliteManager satelliteManager_;
    private final DependencyManager dependencyManager_;
    private final Commands commands_;
-   private final Provider<UIPrefs> pPrefs_;
+   private final Provider<UserPrefs> pPrefs_;
    private final PlumberServerOperations server_;
    private final GlobalDisplay display_;
    private final ApplicationInterrupt interrupt_;
@@ -441,5 +440,5 @@ public class PlumberAPI implements PlumberAPIStatusEvent.Handler,
    private boolean isBusy_;
    private boolean stopOnNextClose_ = true;
    private String satelliteClosePath_ = null;
-   private int currentViewType_;
+   private String currentViewType_;
 }

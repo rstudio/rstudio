@@ -1,7 +1,7 @@
 /*
  * SessionConsoleProcessSocket.hpp
  *
- * Copyright (C) 2009-19 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -26,12 +26,14 @@
 #include <boost/asio.hpp>
 #include <boost/asio/strand.hpp>
 
-#include <core/Error.hpp>
+#include <shared_core/Error.hpp>
 #include <core/Thread.hpp>
 
 #include <websocketpp/config/asio_no_tls.hpp>
 #include <websocketpp/server.hpp>
 #include <websocketpp/frame.hpp>
+
+#include "SessionConsoleProcessConnectionCallbacks.hpp"
 
 namespace rstudio {
 namespace session {
@@ -42,28 +44,10 @@ namespace console_process {
 // speed communication of input/output for interactive terminals
 // spawned by the server, and displayed in the client.
 //
-// ConsoleProcessSocketConnectionCallbacks are related to connections.
-// Each connections made will supply a unique set of these callbacks,
-// and will receive callbacks only related to that connection.
-//
 // Each connection MUST be made with a URL ending with /xxxx/ where "xxxx"
 // is some textual unique handle for that connection. In practice, this is
 // the terminal handle string used elsewhere in the codebase. This uniqueId
 // is used to dispatch callbacks, and to send output to the right connection.
-//
-// IMPORTANT: Callbacks are dispatched on a background thread.
-
-struct ConsoleProcessSocketConnectionCallbacks
-{
-   // invoked when input arrives on the socket
-   boost::function<void (const std::string& input)> onReceivedInput;
-
-   // invoked when connection opens
-   boost::function<void()> onConnectionOpened;
-
-   // invoked when connection closes
-   boost::function<void ()> onConnectionClosed;
-};
 
 typedef websocketpp::server<websocketpp::config::asio> terminalServer;
 typedef terminalServer::message_ptr terminalMessage_ptr;

@@ -1,7 +1,7 @@
 /*
  * SecureCookie.hpp
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -68,10 +68,20 @@ void set(const std::string& name,
          http::Response* pResponse,
          bool secure);
 
+void set(const std::string& name,
+         const std::string& value,
+         const http::Request& request,
+         const boost::posix_time::time_duration& validDuration,
+         const boost::optional<boost::posix_time::time_duration>& expiresFromNow,
+         const std::string& path,
+         http::Response* pResponse,
+         bool secure);
+
 void remove(const http::Request& request,
             const std::string& name,
             const std::string& path,
-            core::http::Response* pResponse);
+            core::http::Response* pResponse,
+            bool secure);
 
 // initialize with default secure cookie key file
 core::Error initialize();

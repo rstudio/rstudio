@@ -1,7 +1,7 @@
 /*
  * CodeSearch.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-12 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -146,7 +146,7 @@ public class CodeSearch
         @Override
         public void onFileChange(FileChangeEvent event)
         {           
-           // if this was an R file then invalide the cache
+           // if this was an R file then invalidate the cache
            CodeSearchOracle oracle = display_.getSearchOracle();
            if (oracle.hasCachedResults())
            {

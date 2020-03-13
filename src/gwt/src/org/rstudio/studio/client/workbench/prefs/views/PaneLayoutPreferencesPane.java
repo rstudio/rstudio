@@ -1,7 +1,7 @@
 /*
  * PaneLayoutPreferencesPane.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.prefs.views;
 
+import com.google.gwt.aria.client.Roles;
 import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.event.dom.client.ChangeEvent;
 import com.google.gwt.event.dom.client.ChangeHandler;
@@ -22,13 +23,18 @@ import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.resources.client.ImageResource;
-import com.google.gwt.user.client.ui.*;
+import com.google.gwt.user.client.ui.CheckBox;
+import com.google.gwt.user.client.ui.Composite;
+import com.google.gwt.user.client.ui.Label;
+import com.google.gwt.user.client.ui.ListBox;
+import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.inject.Inject;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.prefs.RestartRequirement;
 import org.rstudio.core.client.resources.ImageResource2x;
-import org.rstudio.studio.client.workbench.prefs.model.RPrefs;
-import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
+import org.rstudio.core.client.widget.LayoutGrid;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.ui.PaneConfig;
 
 import java.util.ArrayList;
@@ -89,7 +95,7 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
    {
       ModuleList()
       {
-         checkBoxes_ = new ArrayList<CheckBox>();
+         checkBoxes_ = new ArrayList<>();
          VerticalPanel panel = new VerticalPanel();
          for (String module : PaneConfig.getAllTabs())
          {
@@ -110,7 +116,7 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
 
       public ArrayList<Boolean> getSelectedIndices()
       {
-         ArrayList<Boolean> results = new ArrayList<Boolean>();
+         ArrayList<Boolean> results = new ArrayList<>();
          for (CheckBox checkBox : checkBoxes_)
             results.add(checkBox.getValue());
          return results;
@@ -124,7 +130,7 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
 
       public ArrayList<String> getValue()
       {
-         ArrayList<String> value = new ArrayList<String>();
+         ArrayList<String> value = new ArrayList<>();
          for (CheckBox checkBox : checkBoxes_)
          {
             if (checkBox.getValue())
@@ -151,19 +157,23 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
 
    @Inject
    public PaneLayoutPreferencesPane(PreferencesDialogResources res,
-                                    UIPrefs uiPrefs)
+                                    UserPrefs userPrefs)
    {
       res_ = res;
-      uiPrefs_ = uiPrefs;
+      userPrefs_ = userPrefs;
 
       add(new Label("Choose the layout of the panes in RStudio by selecting from the controls in each quadrant.", true));
 
       String[] allPanes = PaneConfig.getAllPanes();
 
       leftTop_ = new ListBox();
+      Roles.getListboxRole().setAriaLabelProperty(leftTop_.getElement(), "Top left quadrant");
       leftBottom_ = new ListBox();
+      Roles.getListboxRole().setAriaLabelProperty(leftBottom_.getElement(), "Bottom left quadrant");
       rightTop_ = new ListBox();
+      Roles.getListboxRole().setAriaLabelProperty(rightTop_.getElement(), "Top right quadrant");
       rightBottom_ = new ListBox();
+      Roles.getListboxRole().setAriaLabelProperty(rightBottom_.getElement(), "Bottom right quadrant");
       allPanes_ = new ListBox[]{leftTop_, leftBottom_, rightTop_, rightBottom_};
       for (ListBox lb : allPanes_)
       {
@@ -171,11 +181,11 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
             lb.addItem(value);
       }
 
-      PaneConfig value = uiPrefs.paneConfig().getGlobalValue();
+      PaneConfig value = userPrefs.panes().getGlobalValue().cast();
       if (value == null || !value.validateAndAutoCorrect())
-         uiPrefs.paneConfig().setGlobalValue(PaneConfig.createDefault(), false);
+         userPrefs.panes().setGlobalValue(PaneConfig.createDefault(), false);
 
-      JsArrayString origPanes = uiPrefs.paneConfig().getGlobalValue().getPanes();
+      JsArrayString origPanes = userPrefs.panes().getGlobalValue().getQuadrants();
       for (int i = 0; i < 4; i++)
       {
          boolean success = selectByValue(allPanes_[i], origPanes.get(i));
@@ -201,7 +211,7 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
             }
          });
 
-      Grid grid = new Grid(2, 2);
+      LayoutGrid grid = new LayoutGrid(2, 2);
       grid.addStyleName(res.styles().paneLayoutTable());
       grid.setCellSpacing(8);
       grid.setCellPadding(6);
@@ -219,9 +229,9 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
                                             rightTopPanel_, rightBottomPanel_};
 
       tabSet1ModuleList_ = new ModuleList();
-      tabSet1ModuleList_.setValue(toArrayList(uiPrefs.paneConfig().getGlobalValue().getTabSet1()));
+      tabSet1ModuleList_.setValue(toArrayList(userPrefs.panes().getGlobalValue().getTabSet1()));
       tabSet2ModuleList_ = new ModuleList();
-      tabSet2ModuleList_.setValue(toArrayList(uiPrefs.paneConfig().getGlobalValue().getTabSet2()));
+      tabSet2ModuleList_.setValue(toArrayList(userPrefs.panes().getGlobalValue().getTabSet2()));
 
       ValueChangeHandler<ArrayList<Boolean>> vch = new ValueChangeHandler<ArrayList<Boolean>>()
       {
@@ -247,7 +257,7 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
             else
             {
                ArrayList<Boolean> indices = source.getSelectedIndices();
-               ArrayList<Boolean> otherIndices = new ArrayList<Boolean>();
+               ArrayList<Boolean> otherIndices = new ArrayList<>();
                for (Boolean b : indices)
                   otherIndices.add(!b);
                other.setSelectedIndices(otherIndices);
@@ -291,14 +301,14 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
    }
    
    @Override
-   protected void initialize(RPrefs prefs)
+   protected void initialize(UserPrefs prefs)
    {
    }
 
    @Override
-   public boolean onApply(RPrefs rPrefs)
+   public RestartRequirement onApply(UserPrefs rPrefs)
    {
-      boolean restartRequired = super.onApply(rPrefs);
+      RestartRequirement restartRequirement = super.onApply(rPrefs);
 
       if (dirty_)
       {
@@ -320,7 +330,7 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
          // This needs to be saved so that when the user executes the 
          // Console on Left/Right commands we know whether to position 
          // the Console on the Top or Bottom
-         PaneConfig prevConfig = uiPrefs_.paneConfig().getGlobalValue();
+         PaneConfig prevConfig = userPrefs_.panes().getGlobalValue().cast();
          boolean consoleLeftOnTop = prevConfig.getConsoleLeftOnTop();
          boolean consoleRightOnTop = prevConfig.getConsoleRightOnTop();
          final String kConsole = "Console";
@@ -333,13 +343,13 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
          else if (panes.get(3) == kConsole)
             consoleRightOnTop = false;
          
-         uiPrefs_.paneConfig().setGlobalValue(PaneConfig.create(
+         userPrefs_.panes().setGlobalValue(PaneConfig.create(
                panes, tabSet1, tabSet2, consoleLeftOnTop, consoleRightOnTop));
 
          dirty_ = false;
       }
 
-      return restartRequired;
+      return restartRequirement;
    }
 
    @Override
@@ -371,14 +381,14 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
 
    private ArrayList<String> toArrayList(JsArrayString strings)
    {
-      ArrayList<String> results = new ArrayList<String>();
+      ArrayList<String> results = new ArrayList<>();
       for (int i = 0; i < strings.length(); i++)
          results.add(strings.get(i));
       return results;
    }
 
    private final PreferencesDialogResources res_;
-   private final UIPrefs uiPrefs_;
+   private final UserPrefs userPrefs_;
    private final ListBox leftTop_;
    private final ListBox leftBottom_;
    private final ListBox rightTop_;

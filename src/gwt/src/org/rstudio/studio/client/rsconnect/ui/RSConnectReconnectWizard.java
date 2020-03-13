@@ -1,7 +1,7 @@
 /*
  * RSConnectReconnectWizard.java
  *
- * Copyright (C) 2009-15 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.rsconnect.ui;
 
+import com.google.gwt.aria.client.Roles;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.core.client.widget.Wizard;
@@ -33,7 +34,7 @@ public class RSConnectReconnectWizard
          String serverUrl,
          ProgressOperationWithInput<NewRSConnectAccountResult> onCompleted) 
    {
-      super("Reconnect Account", "Connect Account",
+      super("Reconnect Account", "Connect Account", Roles.getDialogRole(),
             new NewRSConnectAccountInput(server, display), 
             new NewRSConnectAuthPage(),
             onCompleted);

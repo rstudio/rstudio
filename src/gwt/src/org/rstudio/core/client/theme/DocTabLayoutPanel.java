@@ -2,7 +2,7 @@
  * 
  * DocTabLayoutPanel.java
  *
- * Copyright (C) 2009-15 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -40,7 +40,9 @@ import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.common.filetypes.FileIcon;
 import org.rstudio.studio.client.common.satellite.Satellite;
+import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.views.source.SourceWindowManager;
 import org.rstudio.studio.client.workbench.views.source.events.DocTabDragInitiatedEvent;
 import org.rstudio.studio.client.workbench.views.source.events.DocTabDragStartedEvent;
@@ -65,7 +67,6 @@ import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.DragStartEvent;
 import com.google.gwt.event.dom.client.DragStartHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
-import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Event;
@@ -104,7 +105,7 @@ public class DocTabLayoutPanel
                             int padding,
                             int rightMargin)
    {
-      super(BAR_HEIGHT, Style.Unit.PX);
+      super(BAR_HEIGHT, Style.Unit.PX, "Documents");
       closeableTabs_ = closeableTabs;
       padding_ = padding;
       rightMargin_ = rightMargin;
@@ -113,10 +114,11 @@ public class DocTabLayoutPanel
       addStyleName(styles_.moduleTabPanel());
       dragManager_ = new DragManager();
       
-      // listen for global drag events (these are broadcasted from other windows
+      // listen for global drag events (these are broadcast from other windows
       // to notify us of incoming drags)
       events_ = RStudioGinjector.INSTANCE.getEventBus();
       events_.addHandler(DocTabDragStartedEvent.TYPE, dragManager_);
+      commands_ = RStudioGinjector.INSTANCE.getCommands();
 
       // sink drag-related events on the tab bar element; unfortunately
       // GWT does not provide bits for the drag-related events, and 
@@ -150,7 +152,7 @@ public class DocTabLayoutPanel
    }
    
    public void add(final Widget child,
-                   ImageResource icon,
+                   FileIcon icon,
                    String docId,
                    final String text,
                    String tooltip,
@@ -235,8 +237,17 @@ public class DocTabLayoutPanel
    @Override
    public void selectTab(int index)
    {
-      super.selectTab(index);
-      ensureSelectedTabIsVisible(true);
+      // select the tab, but don't fire events (we need to fire our own)
+      super.selectTab(index, false);
+      
+      // determine whether focus is currently inside the container
+      boolean focused = DomUtils.contains(getElement(), DomUtils.getActiveElement());
+     
+      // fire our own selection event
+      fireEvent(new DocTabSelectionEvent(index, focused));
+      
+      // ensure the newly selected tab is visible
+      ensureSelectedTabIsVisible(!RStudioGinjector.INSTANCE.getUserPrefs().reducedMotion().getValue());
    }
 
    public void ensureSelectedTabIsVisible(boolean animate)
@@ -361,7 +372,7 @@ public class DocTabLayoutPanel
          return false;
 
       fireEvent(new TabClosedEvent(index));
-      ensureSelectedTabIsVisible(true);
+      ensureSelectedTabIsVisible(!RStudioGinjector.INSTANCE.getUserPrefs().reducedMotion().getValue());
       return true;
    }
 
@@ -504,13 +515,12 @@ public class DocTabLayoutPanel
             JsObject evt = event.cast();
             double delta = evt.getDouble(event.getType() == "wheel" ?
                   "deltaY" : "wheelDeltaY");
-            
-            // translate wheel scroll into tab selection; don't wrap
-            int idx = getSelectedIndex();
-            if (delta > 0 && idx < (getWidgetCount() - 1))
-               selectTab(idx + 1);
-            else if (delta < 0 && idx > 0)
-               selectTab(idx - 1);
+
+            // translate wheel scroll into tab selection
+            if (delta > 0)
+               commands_.nextTab().execute();
+            else if (delta < 0)
+               commands_.previousTab().execute();
          }
       }
 
@@ -775,8 +785,7 @@ public class DocTabLayoutPanel
 
             // skip the element we're dragging and elements that are not tabs
             Element ele = (Element)node;
-            if (ele == dragElement_ || 
-                ele.getClassName().indexOf("gwt-TabLayoutPanelTab") < 0)
+            if (ele == dragElement_ || !ele.getClassName().contains("gwt-TabLayoutPanelTab"))
             {
                continue;
             }
@@ -924,7 +933,7 @@ public class DocTabLayoutPanel
                   initDragParams_, null, destPos_));
          }
          
-         if (Desktop.isDesktop())
+         if (Desktop.hasDesktopFrame())
          {
             // on desktop, we call back to discover whether the cursor is
             // currently outside of any RStudio window; in such a case we
@@ -1038,7 +1047,7 @@ public class DocTabLayoutPanel
 
    private class DocTab extends Composite
    {
-      private DocTab(ImageResource icon,
+      private DocTab(FileIcon icon,
                      String docId,
                      String title,
                      String tooltip,
@@ -1106,6 +1115,7 @@ public class DocTabLayoutPanel
          Image img = new Image(new ImageResource2x(ThemeResources.INSTANCE.closeTab2x()));
          img.setStylePrimaryName(styles_.closeTabButton());
          img.addStyleName(ThemeStyles.INSTANCE.handCursor());
+         img.setAltText("Close document tab");
          contentPanel_.add(img);
 
          layoutPanel.add(contentPanel_);
@@ -1116,7 +1126,7 @@ public class DocTabLayoutPanel
 
          initWidget(layoutPanel);
 
-         this.sinkEvents(Event.ONCLICK);
+         sinkEvents(Event.ONMOUSEDOWN | Event.ONMOUSEUP);
          closeHandler_ = closeHandler;
          closeElement_ = img.getElement();
       }
@@ -1138,7 +1148,7 @@ public class DocTabLayoutPanel
          contentPanel_.setTitle(tooltip);
       }
 
-      public void replaceIcon(ImageResource icon)
+      public void replaceIcon(FileIcon icon)
       {
          if (contentPanel_.getWidget(0) instanceof Image)
             contentPanel_.remove(0);
@@ -1150,39 +1160,48 @@ public class DocTabLayoutPanel
          return docId_;
       }
       
-      private Image imageForIcon(ImageResource icon)
+      private Image imageForIcon(FileIcon icon)
       {
-         Image image = new Image(icon);
+         Image image = new Image(icon.getImageResource());
          image.setStylePrimaryName(styles_.docTabIcon());
+         image.setAltText(icon.getDescription());
          return image;
       }
 
       @Override
       public void onBrowserEvent(Event event) 
       {  
-         switch(DOM.eventGetType(event))
+         switch (DOM.eventGetType(event))
          {
-            case Event.ONCLICK:
+         
+         case Event.ONMOUSEDOWN:
+            clickTarget_ = Element.as(event.getEventTarget());
+            break;
+
+         case Event.ONMOUSEUP:
+            if (Element.as(event.getEventTarget()) != clickTarget_)
+               break;
+            
+            boolean isCloseRequest =
+                  event.getButton() == Event.BUTTON_MIDDLE ||
+                  (event.getButton() == Event.BUTTON_LEFT && clickTarget_ == closeElement_);
+
+            if (isCloseRequest)
             {
-               // tabs can be closed by (a) middle mouse (anywhere), or (b)
-               // left click on close element
-               if (event.getButton() == Event.BUTTON_MIDDLE || 
-                   (Element.as(event.getEventTarget()) == closeElement_ &&
-                    event.getButton() == Event.BUTTON_LEFT))
-               {
-                  closeHandler_.onTabClose();
-                  event.stopPropagation();
-                  event.preventDefault();
-               }
-               break;   
+               event.stopPropagation();
+               event.preventDefault();
+               closeHandler_.onTabClose();
             }
+            break;
+            
          }
+         
          super.onBrowserEvent(event);
       }
-
       
-      private TabCloseObserver closeHandler_;
-      private Element closeElement_;
+      private final TabCloseObserver closeHandler_;
+      private final Element closeElement_;
+      private Element clickTarget_;
       private final Label label_;
       private final String docId_;
 
@@ -1190,7 +1209,7 @@ public class DocTabLayoutPanel
    }
 
    public void replaceDocName(int index,
-                              ImageResource icon,
+                              FileIcon icon,
                               String title,
                               String tooltip)
    {
@@ -1289,10 +1308,11 @@ public class DocTabLayoutPanel
 
    private final boolean closeableTabs_;
    private final EventBus events_;
+   private final Commands commands_;
    
-   private int padding_;
-   private int rightMargin_;
+   private final int padding_;
+   private final int rightMargin_;
    private final ThemeStyles styles_;
    private Animation currentAnimation_;
-   private DragManager dragManager_;
+   private final DragManager dragManager_;
 }

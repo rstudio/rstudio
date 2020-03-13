@@ -1,7 +1,7 @@
 /*
  * DocumentEx.java
  *
- * Copyright (C) 2009-16 by RStudio, Inc.
+ * Copyright (C) 2009-16 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -15,11 +15,17 @@
 package org.rstudio.core.client.dom;
 
 import com.google.gwt.dom.client.Document;
+import com.google.gwt.dom.client.Element;
 
 public class DocumentEx extends Document
 {
    protected DocumentEx()
    {
+   }
+   
+   public static DocumentEx get()
+   {
+      return (DocumentEx) Document.get();
    }
    
    public final native boolean hasFocus() /*-{
@@ -28,6 +34,11 @@ public class DocumentEx extends Document
 
    public final native String getReadyState() /*-{
       return this.readyState || null;
+   }-*/;
+   
+   public final native Element[] elementsFromPoint(int x, int y)
+   /*-{
+      return this.elementsFromPoint(x, y);
    }-*/;
    
    public static final String STATE_UNINITIALIZED = "uninitialized";

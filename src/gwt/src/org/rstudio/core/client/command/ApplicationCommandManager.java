@@ -1,7 +1,7 @@
 /*
  * ApplicationCommandManager.java
  *
- * Copyright (C) 2009-19 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -18,7 +18,7 @@ import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.Pair;
 import org.rstudio.core.client.command.EditorCommandManager.EditorKeyBindings;
 import org.rstudio.core.client.command.KeyMap.KeyMapType;
-import org.rstudio.core.client.files.FileBacked;
+import org.rstudio.core.client.files.ConfigFileBacked;
 import org.rstudio.core.client.events.ExecuteAppCommandEvent;
 import org.rstudio.core.client.events.RStudioKeybindingsChangedEvent;
 import org.rstudio.studio.client.RStudioGinjector;
@@ -42,7 +42,7 @@ public class ApplicationCommandManager
    {
       RStudioGinjector.INSTANCE.injectMembers(this);
       
-      bindings_ = new FileBacked<EditorKeyBindings>(
+      bindings_ = new ConfigFileBacked<EditorKeyBindings>(
             server_,
             KEYBINDINGS_PATH,
             false,
@@ -189,10 +189,10 @@ public class ApplicationCommandManager
       });
    }
    
-   private final FileBacked<EditorKeyBindings> bindings_;
+   private final ConfigFileBacked<EditorKeyBindings> bindings_;
    
    public static final String KEYBINDINGS_PATH =
-         "~/.R/rstudio/keybindings/rstudio_bindings.json";
+         "keybindings/rstudio_bindings.json";
    
    // Injected ----
    private EventBus events_;

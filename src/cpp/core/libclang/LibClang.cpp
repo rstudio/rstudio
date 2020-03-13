@@ -1,7 +1,7 @@
 /*
  * LibClang.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -19,12 +19,11 @@
 #include <vector>
 
 #include <boost/regex.hpp>
-#include <boost/foreach.hpp>
 
 #include <core/Log.hpp>
-#include <core/FilePath.hpp>
+#include <shared_core/FilePath.hpp>
 #include <core/RegexUtils.hpp>
-#include <core/SafeConvert.hpp>
+#include <shared_core/SafeConvert.hpp>
 
 #include <core/system/LibraryLoader.hpp>
 
@@ -54,9 +53,9 @@ std::vector<std::string> defaultCompileArgs(LibraryVersion version)
 
    // we need to add in the associated libclang headers as
    // they are not discovered / used by default during compilation
-   FilePath llvmPath = s_libraryPath.parent().parent();
+   FilePath llvmPath = s_libraryPath.getParent().getParent();
    boost::format fmt("%1%/lib/clang/%2%/include");
-   fmt % llvmPath.absolutePath() % version.asString();
+   fmt % llvmPath.getAbsolutePath() % version.asString();
    std::string includePath = fmt.str();
    if (FilePath(includePath).exists())
      compileArgs.push_back(std::string("-I") + includePath);
@@ -94,10 +93,15 @@ std::vector<std::string> systemClangVersions()
    std::vector<std::string> clangVersions;
    
 #if defined(__APPLE__)
+   // NOTE: the version of libclang.dylib bundled with Xcode
+   // doesn't seem to work well when loaded as a library
+   // (there seems to be extra orchestration required to get
+   // include paths set up; easier to just depend on command
+   // line tools since we request their installation in other
+   // contexts)
    clangVersions = {
-      "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/libclang.dylib",
       "/Library/Developer/CommandLineTools/usr/lib/libclang.dylib",
-      "/usr/local/opt/llvm/lib/libclang.dylib"
+      "/usr/local/opt/llvm/lib/libclang.dylib",
    };
 #elif defined(__unix__)
    // default set of versions
@@ -116,14 +120,14 @@ std::vector<std::string> systemClangVersions()
          continue;
       
       std::vector<FilePath> directories;
-      Error error = prefixPath.children(&directories);
+      Error error = prefixPath.getChildren(directories);
       if (error)
          LOG_ERROR(error);
 
       // generate a path for each 'llvm' directory
       for (const FilePath& path : directories)
-         if (path.filename().find("llvm") == 0)
-            clangVersions.push_back(path.complete("lib/libclang.so.1").absolutePath());
+         if (path.getFilename().find("llvm") == 0)
+            clangVersions.push_back(path.completePath("lib/libclang.so.1").getAbsolutePath());
    }
 #endif
    
@@ -165,13 +169,13 @@ bool LibClang::load(EmbeddedLibrary embedded,
    std::vector<std::string> sysVersions = systemClangVersions();
    versions.insert(versions.end(), sysVersions.begin(), sysVersions.end());
 
-   BOOST_FOREACH(const std::string& version, versions)
+   for (const std::string& version : versions)
    {
       FilePath versionPath(version);
       ostr << versionPath << std::endl;
       if (versionPath.exists())
       {
-         Error error = tryLoad(versionPath.absolutePath(), requiredVersion);
+         Error error = tryLoad(versionPath.getAbsolutePath(), requiredVersion);
          if (!error)
          {
             // if this was the embedded version then record it
@@ -553,7 +557,7 @@ Error LibClang::tryLoad(const std::string& libraryPath,
 
 Error LibClang::unload()
 {
-   if (pLib_ != NULL)
+   if (pLib_ != nullptr)
    {
       Error error = core::system::closeLibrary(pLib_);
       if (error)
@@ -562,7 +566,7 @@ Error LibClang::unload()
       }
       else
       {
-         pLib_ = NULL;
+         pLib_ = nullptr;
          return Success();
       }
    }
@@ -584,7 +588,7 @@ LibraryVersion LibClang::version() const
    std::vector<boost::regex> patterns;
    patterns.push_back(boost::regex("LLVM " + verRegex));
    patterns.push_back(boost::regex(verRegex));
-   BOOST_FOREACH(boost::regex re, patterns)
+   for (boost::regex re : patterns)
    {
       boost::smatch match;
       if (regex_utils::search(versionString, match, re))

@@ -1,7 +1,7 @@
 /*
  * SessionModuleContext.mm
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-12 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -34,51 +34,12 @@ namespace rstudio {
 namespace session {
 namespace module_context {
 
-bool isOSXMavericks()
-{
-   NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
-
-   NSDictionary *systemVersionDictionary =
-       [NSDictionary dictionaryWithContentsOfFile:
-           @"/System/Library/CoreServices/SystemVersion.plist"];
-
-   NSString *systemVersion =
-       [systemVersionDictionary objectForKey:@"ProductVersion"];
-
-   std::string version(
-         [systemVersion cStringUsingEncoding:NSASCIIStringEncoding]);
-
-   [pool release];
-
-   return boost::algorithm::starts_with(version, "10.9") ||
-          boost::algorithm::starts_with(version, "10.10");
-}
-
-bool hasOSXMavericksDeveloperTools()
-{
-   if (isOSXMavericks())
-   {
-      core::system::ProcessResult result;
-      Error error = core::system::runCommand("xcode-select -p",
-                                             core::system::ProcessOptions(),
-                                             &result);
-      if (!error && (result.exitStatus == EXIT_SUCCESS))
-         return true;
-      else
-         return false;
-   }
-   else
-   {
-      return false;
-   }
-}
-
 Error copyImageToCocoaPasteboard(const FilePath& imagePath)
 {
    NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
 
    NSString* path = [NSString stringWithUTF8String:
-                     imagePath.absolutePath().c_str()];
+                     imagePath.getAbsolutePath().c_str()];
    
    NSImage* image = [[NSImage alloc] initWithContentsOfFile: path];
    

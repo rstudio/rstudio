@@ -1,7 +1,7 @@
 /*
  * DataImportOptionsUiXls.java
  *
- * Copyright (C) 2009-16 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -15,6 +15,7 @@
 
 package org.rstudio.studio.client.workbench.views.environment.dataimport;
 
+import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.studio.client.application.ApplicationUtils;
 import org.rstudio.studio.client.common.HelpLink;
 import org.rstudio.studio.client.workbench.views.environment.dataimport.model.DataImportAssembleResponse;
@@ -50,7 +51,7 @@ public class DataImportOptionsUiXls extends DataImportOptionsUi
       initDefaults();
       initEvents();
 
-      rangeTextBox_.getElement().setPropertyString("placeholder", "A1:D10");
+      DomUtils.setPlaceholder(rangeTextBox_, "A1:D10");
    }
    
    @Override

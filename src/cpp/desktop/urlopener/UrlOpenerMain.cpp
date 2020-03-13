@@ -1,7 +1,7 @@
 /*
  * UrlOpenerMain.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -28,7 +28,8 @@ int main(int argc, char** argv)
    try
    {
       // initialize log
-      initializeSystemLog("urlopener", rstudio::core::system::kLogLevelWarning);
+      rstudio::core::log::setProgramId("urlopener");
+      rstudio::core::system::initializeSystemLog("urlopener", rstudio::core::log::LogLevel::WARN);
 
       // check arguments
       if (argc < 2)
@@ -38,12 +39,13 @@ int main(int argc, char** argv)
       }
 
       // shell execute
-      DWORD ret = (DWORD) ::ShellExecute(NULL,
-                                         "open",
-                                         argv[1],
-                                         NULL,
-                                         NULL,
-                                         SW_SHOW);
+      int ret = static_cast<int>(reinterpret_cast<uintptr_t>(
+            ::ShellExecute(nullptr,
+                           "open",
+                           argv[1],
+                           nullptr,
+                           nullptr,
+                           SW_SHOW)));
 
       // check for error
       if(ret <= 32)

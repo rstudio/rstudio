@@ -1,7 +1,7 @@
 #
 # SessionDataViewer.R
 #
-# Copyright (C) 2009-18 by RStudio, Inc.
+# Copyright (C) 2009-20 by RStudio, PBC
 #
 # Unless you have received this program directly from RStudio pursuant
 # to the terms of a commercial license agreement with RStudio, then
@@ -249,13 +249,15 @@
     {
       # create a temporary frame to hold the value; this is necessary because
       # "x" is a function argument and therefore a promise whose value won't
-      # be bound via substitute() below
-      coerced <- x
+      # be bound via substitute() below. we use a random-looking name so we 
+      # can spot it later when relabeling columns.
+      `__RSTUDIO_VIEWER_COLUMN__` <- x
 
       # perform the actual coercion in the global environment; this is 
       # necessary because we want to honor as.data.frame overrides of packages
       # which are loaded after tools:rstudio in the search path
-      frame <- eval(substitute(as.data.frame(coerced, optional = TRUE)), 
+      frame <- eval(substitute(as.data.frame(`__RSTUDIO_VIEWER_COLUMN__`, 
+                                             optional = TRUE)), 
                     envir = globalenv())
     },
     error = function(e)
@@ -265,7 +267,7 @@
     # as.data.frame uses the name of its argument to label unlabeled columns,
     # so label these back to the original name
     if (!is.null(frame) && !is.null(names(frame)))
-      names(frame)[names(frame) == "x"] <- name
+      names(frame)[names(frame) == "__RSTUDIO_VIEWER_COLUMN__"] <- name
     x <- frame 
   }
 
@@ -554,8 +556,9 @@
 })
 
 .rs.addFunction("viewHook", function(original, x, title) {
-   # remember the expression from which the data was generated
-   expr <- deparse(substitute(x))
+   
+  # remember the expression from which the data was generated
+   expr <- deparse(substitute(x), backtick = TRUE)
 
    # generate title if necessary (from deparsed expr)
    if (missing(title))

@@ -1,7 +1,7 @@
 /*
  * DesktopMain.cpp
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-20 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -23,10 +23,13 @@
 #include <boost/scoped_ptr.hpp>
 
 #include <core/CrashHandler.hpp>
+#include <core/FileSerializer.hpp>
+#include <core/json/JsonRpc.hpp>
 #include <core/Log.hpp>
+#include <core/ProgramStatus.hpp>
 #include <core/Version.hpp>
 #include <core/system/FileScanner.hpp>
-#include <core/SafeConvert.hpp>
+#include <shared_core/SafeConvert.hpp>
 #include <core/StringUtils.hpp>
 #include <core/system/System.hpp>
 #include <core/system/Environment.hpp>
@@ -38,12 +41,19 @@
 #include "DesktopDetectRHome.hpp"
 #include "DesktopUtils.hpp"
 #include "DesktopSessionLauncher.hpp"
+#include "RemoteDesktopSessionLauncherOverlay.hpp"
 #include "DesktopProgressActivator.hpp"
 #include "DesktopNetworkProxyFactory.hpp"
 #include "DesktopActivationOverlay.hpp"
+#include "DesktopSessionServersOverlay.hpp"
 
 #ifdef _WIN32
+#include <core/system/RegistryKey.hpp>
 #include <Windows.h>
+#endif
+
+#ifdef Q_OS_LINUX
+#include <core/system/PosixSystem.hpp>
 #endif
 
 QProcess* pRSessionProcess;
@@ -89,11 +99,11 @@ Error removeStaleOptionsLockfile()
    if (!appDataPath.exists())
       return Success();
 
-   FilePath lockFilePath = appDataPath.childPath("RStudio/desktop.ini.lock");
+   FilePath lockFilePath = appDataPath.completeChildPath("RStudio/desktop.ini.lock");
    if (!lockFilePath.exists())
       return Success();
 
-   double diff = ::difftime(::time(NULL), lockFilePath.lastWriteTime());
+   double diff = ::difftime(::time(nullptr), lockFilePath.getLastWriteTime());
    if (diff < 10)
       return Success();
 
@@ -129,9 +139,9 @@ void initializeWorkingDirectory(int argc,
       if (filePath.exists())
       {
          if (filePath.isDirectory())
-            workingDir = filePath.absolutePath();
+            workingDir = filePath.getAbsolutePath();
          else
-            workingDir = filePath.parent().absolutePath();
+            workingDir = filePath.getParent().getAbsolutePath();
       }
    }
 
@@ -155,7 +165,7 @@ void initializeWorkingDirectory(int argc,
       if (!error)
       {
          if (!exePath.isWithin(currentPath))
-            workingDir = currentPath.absolutePath();
+            workingDir = currentPath.getAbsolutePath();
       }
       else
       {
@@ -169,7 +179,7 @@ void initializeWorkingDirectory(int argc,
       if (core::system::stdoutIsTerminal() &&
          (currentPath != core::system::userHomePath()))
       {
-         workingDir = currentPath.absolutePath();
+         workingDir = currentPath.getAbsolutePath();
       }
 
 #endif
@@ -183,7 +193,7 @@ void initializeWorkingDirectory(int argc,
 
 void setInitialProject(const FilePath& projectFile, QString* pFilename)
 {
-   core::system::setenv(kRStudioInitialProject, projectFile.absolutePath());
+   core::system::setenv(kRStudioInitialProject, projectFile.getAbsolutePath());
    pFilename->clear();
 }
 
@@ -197,14 +207,14 @@ void initializeStartupEnvironment(QString* pFilename)
    FilePath filePath(pFilename->toUtf8().constData());
    if (filePath.exists())
    {
-      std::string ext = filePath.extensionLowerCase();
+      std::string ext = filePath.getExtensionLowerCase();
 
       // if it is a directory or just an .rdata file then we can see
       // whether there is a project file we can automatically attach to
       if (filePath.isDirectory())
       {
          FilePath projectFile = r_util::projectFromDirectory(filePath);
-         if (!projectFile.empty())
+         if (!projectFile.isEmpty())
          {
             setInitialProject(projectFile, pFilename);
          }
@@ -215,7 +225,7 @@ void initializeStartupEnvironment(QString* pFilename)
       }
       else if (ext == ".rdata" || ext == ".rda")
       {
-         core::system::setenv(kRStudioInitialEnvironment, filePath.absolutePath());
+         core::system::setenv(kRStudioInitialEnvironment, filePath.getAbsolutePath());
          pFilename->clear();
       }
 
@@ -240,7 +250,7 @@ bool isNonProjectFilename(const QString &filename)
       return false;
 
    FilePath filePath(filename.toUtf8().constData());
-   return filePath.exists() && filePath.extensionLowerCase() != ".rproj";
+   return filePath.exists() && filePath.getExtensionLowerCase() != ".rproj";
 }
 
 bool useRemoteDevtoolsDebugging()
@@ -281,13 +291,51 @@ QString inferDefaultRenderingEngine()
 
 #ifdef Q_OS_WIN
 
-QString inferDefaultRenderingEngine()
+namespace {
+
+bool isRemoteSession()
 {
    if (::GetSystemMetrics(SM_REMOTESESSION))
-   {
-       // use software rendering over remote desktop
-       return QStringLiteral("software");
-   }
+      return true;
+   
+   core::system::RegistryKey key;
+   Error error = key.open(
+            HKEY_LOCAL_MACHINE,
+            "SYSTEM\\CurrentControlSet\\Control\\Terminal Server\\",
+            KEY_READ);
+   
+   if (error)
+      return false;
+   
+   DWORD dwGlassSessionId;
+   DWORD cbGlassSessionId = sizeof(dwGlassSessionId);
+   DWORD dwType;
+
+   LONG lResult = RegQueryValueEx(
+            key.handle(),
+            "GlassSessionId",
+            NULL, // lpReserved
+            &dwType,
+            (BYTE*) &dwGlassSessionId,
+            &cbGlassSessionId);
+
+   if (lResult != ERROR_SUCCESS)
+      return false;
+   
+   DWORD dwCurrentSessionId;
+   if (ProcessIdToSessionId(GetCurrentProcessId(), &dwCurrentSessionId))
+      return dwCurrentSessionId != dwGlassSessionId;
+   
+   return false;
+   
+}
+
+} // end anonymous namespace
+
+QString inferDefaultRenderingEngine()
+{
+   if (isRemoteSession())
+      return QStringLiteral("software");
 
    // prefer software rendering for certain graphics cards
    std::vector<std::string> blacklist = {
@@ -301,7 +349,7 @@ QString inferDefaultRenderingEngine()
    device.cb = sizeof(DISPLAY_DEVICE);
 
    DWORD i = 0;
-   while (::EnumDisplayDevices(NULL, i++, &device, 0))
+   while (::EnumDisplayDevices(nullptr, i++, &device, 0))
    {
       // skip non-primary device
       if ((device.StateFlags & DISPLAY_DEVICE_PRIMARY_DEVICE) == 0)
@@ -379,6 +427,36 @@ void initializeRenderingEngine(std::vector<char*>* pArguments)
    }
 }
 
+boost::optional<SessionServer> getLaunchServerFromUrl(const std::string& url)
+{
+   auto iter = std::find_if(sessionServerSettings().servers().begin(),
+                            sessionServerSettings().servers().end(),
+                            [&](const SessionServer& server) { return server.url() == url; });
+
+   if (iter != sessionServerSettings().servers().end())
+   {
+      SessionServer server = *iter;
+      return boost::optional<SessionServer>(server);
+   }
+
+   return boost::optional<SessionServer>();
+}
+
+ProgramStatus initializeOptions(const QStringList& arguments)
+{
+   return ProgramStatus::run();
+}
+
+std::string getSessionServer()
+{
+   return std::string();
+}
+
+std::string getSessionUrl()
+{
+   return std::string();
+}
+
 } // anonymous namespace
 
 int main(int argc, char* argv[])
@@ -403,7 +481,18 @@ int main(int argc, char* argv[])
 
       } while (dir.cdUp());
 #endif
-      
+
+      // look for a version check request; if we have one, just do that and exit
+      static char versionCheck[] = "--version";
+      for (const auto arg: arguments)
+      {
+         if (::strcmp(arg, versionCheck) == 0)
+         {
+            std::cout << RSTUDIO_VERSION << std::endl;
+            return 0;
+         }
+      }
+
       initializeLang();
       initializeRenderingEngine(&arguments);
       
@@ -424,7 +513,7 @@ int main(int argc, char* argv[])
 
       // initialize log
       core::system::initializeLog("rdesktop",
-                                  core::system::kLogLevelWarning,
+                                  core::log::LogLevel::WARN,
                                   desktop::userLogPath());
 
       // ignore SIGPIPE
@@ -445,6 +534,13 @@ int main(int argc, char* argv[])
 
       // set application attributes
       QCoreApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
+
+      // don't synthesize mouse events for unhandled tablet events,
+      // as this causes tablet clicks to be duplicated (effectively
+      // leading to single clicks registering as double clicks)
+      //
+      // https://bugreports.qt.io/browse/QTBUG-76347
+      QCoreApplication::setAttribute(Qt::AA_SynthesizeMouseForUnhandledTabletEvents, false);
       
       // enable viewport meta (allows us to control / restrict
       // certain touch gestures)
@@ -467,9 +563,8 @@ int main(int argc, char* argv[])
       // https://github.com/rstudio/rstudio/issues/1990)
       bool accessibility = desktop::options().enableAccessibility();
 
-      if (!accessibility && core::system::getenv("RSTUDIO_ACCESSIBILITY").empty())
+      if (!accessibility)
       {
-         // only disable if (a) pref indicates we should, and (b) override env var is not set
          static char disableRendererAccessibility[] = "--disable-renderer-accessibility";
          arguments.push_back(disableRendererAccessibility);
       }
@@ -544,12 +639,25 @@ int main(int argc, char* argv[])
       }
 #endif
 
-#if defined(Q_OS_LINUX) && (QT_VERSION == QT_VERSION_CHECK(5, 10, 1))
+#if defined(Q_OS_LINUX) 
+
+      static char noSandbox[] = "--no-sandbox";
+
+#if (QT_VERSION == QT_VERSION_CHECK(5, 10, 1))
       // workaround for Qt 5.10.1 bug "Could not find QtWebEngineProcess"
       // https://bugreports.qt.io/browse/QTBUG-67023
       // https://bugreports.qt.io/browse/QTBUG-66346
-      static char noSandbox[] = "--no-sandbox";
       arguments.push_back(noSandbox);
+
+#else
+      // is this root? if so, we need --no-sandbox on Linux. 
+      // see https://crbug.com/638180.
+      if (core::system::effectiveUserIsRoot())
+      {
+         arguments.push_back(noSandbox);
+      }
+#endif
+
 #endif
       
       // allow users to supply extra command-line arguments
@@ -598,35 +706,78 @@ int main(int argc, char* argv[])
       }
 
       // if we have a filename and it is NOT a project file then see
-      // if we can open it within an existing instance
+      // if we can open it within an existing instance - we do not attempt
+      // to do this if opening an rdprsp file since that should start a remote session
+      bool forceLocalStart = false;
+      FilePath openFile(filename.toUtf8().constData());
+      std::string sessionUrl, serverUrl;
       if (isNonProjectFilename(filename))
       {
-         if (pAppLaunch->sendMessage(filename))
-            return 0;
+         if (openFile.getExtensionLowerCase() == ".rdprsp")
+         {
+            std::string contents;
+            Error error = readStringFromFile(openFile, &contents);
+            if (error)
+            {
+               LOG_ERROR(error);
+            }
+            else
+            {
+               json::Value val;
+               error = val.parse(contents);
+               if (error)
+               {
+                  log::logError(error, ERROR_LOCATION);
+               }
+               else
+               {
+                  if (!val.isObject())
+                  {
+                     LOG_ERROR_MESSAGE("Invalid .rdprsp file");
+                  }
+                  else
+                  {
+                     error = json::readObject(val.getObject(),
+                                              "sessionUrl", &sessionUrl,
+                                              "serverUrl", &serverUrl);
+                     if (error)
+                     {
+                        LOG_ERROR(error);
+                     }
+                  }
+               }
+            }
+         }
+         else
+         {
+            if (pAppLaunch->sendMessage(filename))
+               return 0;
+         }
       }
       else
       {
+         forceLocalStart = !filename.isEmpty();
+
          // try to register ourselves as a peer for others
          pAppLaunch->attemptToRegisterPeer();
       }
 
       // init options from command line
       desktop::options().initFromCommandLine(pApp->arguments());
+      ProgramStatus status = initializeOptions(pApp->arguments());
+      if (status.exit())
+         return status.exitCode();
 
       // reset log if we are in run-diagnostics mode
       if (desktop::options().runDiagnostics())
       {
          desktop::reattachConsoleIfNecessary();
-         initializeStderrLog("rdesktop", core::system::kLogLevelWarning);
+         core::system::initializeStderrLog("rdesktop", core::log::LogLevel::WARN);
       }
 
       initializeSharedSecret();
       initializeWorkingDirectory(argc, argv, filename);
       initializeStartupEnvironment(&filename);
-
-      Options& options = desktop::options();
-      if (!prepareEnvironment(options))
-         return 1;
 
       // get install path
       FilePath installPath;
@@ -637,60 +788,266 @@ int main(int argc, char* argv[])
          return EXIT_FAILURE;
       }
 
-#ifdef _WIN32
-      RVersion version = detectRVersion(false);
-#endif
-
       // calculate paths to config file, rsession, and desktop scripts
       FilePath confPath, sessionPath, scriptsPath;
       bool devMode = false;
 
       // check for debug configuration
       FilePath currentPath = FilePath::safeCurrentPath(installPath);
-      if (currentPath.complete("conf/rdesktop-dev.conf").exists())
+      if (currentPath.completePath("conf/rdesktop-dev.conf").exists())
       {
-         confPath = currentPath.complete("conf/rdesktop-dev.conf");
-         sessionPath = currentPath.complete("session/rsession");
-         scriptsPath = currentPath.complete("desktop");
+         confPath = currentPath.completePath("conf/rdesktop-dev.conf");
+         sessionPath = currentPath.completePath("session/rsession");
+         scriptsPath = currentPath.completePath("desktop");
          devMode = true;
       }
 
       // if there is no conf path then release mode
-      if (confPath.empty())
+      if (confPath.isEmpty())
       {
          // default paths (then tweak)
-         sessionPath = installPath.complete("bin/rsession");
-         scriptsPath = installPath.complete("bin");
+         sessionPath = installPath.completePath("bin/rsession");
+         scriptsPath = installPath.completePath("bin");
 
          // check for running in a bundle on OSX
 #ifdef __APPLE__
-         if (installPath.complete("Info.plist").exists())
+         if (installPath.completePath("Info.plist").exists())
          {
-            sessionPath = installPath.complete("MacOS/rsession");
-            scriptsPath = installPath.complete("MacOS");
+            sessionPath = installPath.completePath("MacOS/rsession");
+            scriptsPath = installPath.completePath("MacOS");
          }
 #endif
       }
+
+      // set the scripts path in options
+      desktop::options().setScriptsPath(scriptsPath);
+
+      Options& options = desktop::options();
+      if (!prepareEnvironment(options))
+         return 1;
+
+#ifdef _WIN32
+      RVersion version = detectRVersion(false);
+      if (devMode)
+      {
+         if (version.architecture() == ArchX86 &&
+             installPath.completePath("session/x86").exists())
+         {
+            sessionPath = installPath.completePath("session/x86/rsession");
+         }
+      }
+      else
+      {
+         // check for win32 binary on windows
+          if (version.architecture() == ArchX86 &&
+             installPath.completePath("bin/x86").exists())
+         {
+            sessionPath = installPath.completePath("bin/x86/rsession");
+         }
+      }
+#endif
+
       core::system::fixupExecutablePath(&sessionPath);
 
       auto* pProxyFactory = new NetworkProxyFactory();
       QNetworkProxyFactory::setApplicationProxyFactory(pProxyFactory);
 
-      // set the scripts path in options
-      desktop::options().setScriptsPath(scriptsPath);
+      // determine where the session should be launched
+      boost::optional<SessionServer> launchServer;
+      bool forceSessionServerLaunch = false;
+      std::string sessionServer = getSessionServer();
+      if (!sessionServer.empty())
+      {
+         forceSessionServerLaunch = true;
 
-      // launch session
-      SessionLauncher sessionLauncher(sessionPath, confPath, filename, pAppLaunch.get());
-      sessionLauncher.launchFirstSession(installPath, devMode, pApp->arguments());
+         // launched with a specific session server selected
+         // such as opening a new session in another window
+         launchServer = getLaunchServerFromUrl(sessionServer);
+         if (!launchServer)
+         {
+            // if we don't have an entry for the server URL, something is horribly wrong
+            // just show an error and exit
+            showError(nullptr,
+                      QString::fromUtf8("Invalid session server"),
+                      QString::fromStdString("Session server " + sessionServer + " does not exist"),
+                      QString::null);
+            return EXIT_FAILURE;
+         }
+      }
 
-      ProgressActivator progressActivator;
+      if (!serverUrl.empty())
+      {
+         forceSessionServerLaunch = true;
 
-      int result = pApp->exec();
+         launchServer = getLaunchServerFromUrl(serverUrl);
+         if (!launchServer)
+         {
+            // it's possible we were told to open an rdprsp file but we don't have the
+            // server defined locally - that's okay - just create one for now
+            launchServer = SessionServer(std::string(), serverUrl);
+         }
+      }
 
-      desktop::activation().releaseLicense();
-      options.cleanUpScratchTempDir();
+      if (forceLocalStart)
+         forceSessionServerLaunch = true;
 
-      return result;
+      bool forceShowSessionLocationDialog = (qApp->queryKeyboardModifiers() & Qt::AltModifier);
+      bool forceReuseSession = false;
+
+      while (true)
+      {
+         SessionLocation location = forceShowSessionLocationDialog ?
+                  SessionLocation::Ask :
+                  sessionServerSettings().sessionLocation();
+
+         if (!forceSessionServerLaunch)
+         {
+            switch (location)
+            {
+               case SessionLocation::Server:
+                  if (sessionServerSettings().servers().size() != 0)
+                  {
+                     // remote launch on default server
+                     auto iter = std::find_if(sessionServerSettings().servers().begin(),
+                                              sessionServerSettings().servers().end(),
+                                              [](const SessionServer& server) { return server.isDefault(); });
+
+                     if (iter == sessionServerSettings().servers().end())
+                     {
+                        // somehow, no default was specified
+                        // log an error and launch session on the first server in the list
+                        launchServer = sessionServerSettings().servers().at(0);
+                        LOG_ERROR_MESSAGE("No default session server specified. Using first server");
+                     }
+                     else
+                        launchServer = *iter;
+                  }
+                  break;
+
+               case SessionLocation::Ask:
+                  if (sessionServerSettings().servers().size() != 0)
+                  {
+                     // display session location chooser dialog
+                     LaunchLocationResult result = sessionServers().showSessionLaunchLocationDialog();
+                     if (result.dialogResult == QDialog::Rejected)
+                        return EXIT_SUCCESS;
+
+                     launchServer = result.sessionServer;
+                  }
+                  break;
+
+               case SessionLocation::Locally:
+               default:
+                  break;
+            }
+         }
+
+         // keep the launcher object alive for the program's duration
+         boost::shared_ptr<void> pSessionLauncher;
+         bool remoteLaunch = false;
+         if (!launchServer)
+         {
+            // launch a local session
+            SessionLauncher* pLauncher = new SessionLauncher(sessionPath, confPath, filename, pAppLaunch.get());
+            pLauncher->launchFirstSession(installPath, devMode, pApp->arguments());
+            pSessionLauncher.reset(pLauncher);
+         }
+         else
+         {
+            remoteLaunch = true;
+
+            // launch a remote session
+            // first, check to make sure the server is reachable/valid
+            Error error = launchServer->test();
+            if (error)
+            {
+               LOG_ERROR(error);
+
+               bool continueConnecting =
+                     showYesNoDialog(QMessageBox::Warning,
+                                     nullptr,
+                                     QString::fromUtf8("Server Error"),
+                                     QString::fromUtf8("There was an error while attempting to run "
+                                                       "prelaunch diagnostics for this server. "
+                                                       "Do you want to attempt to connect anyway?"),
+                                     QString::fromStdString(error.getProperty("description")),
+                                     false);
+
+               if (!continueConnecting)
+               {
+                  if (forceSessionServerLaunch)
+                     return EXIT_FAILURE;
+
+                  forceShowSessionLocationDialog = true;
+                  continue;
+               }
+            }
+
+            RemoteDesktopSessionLauncher* pLauncher;
+
+            if (sessionUrl.empty())
+               sessionUrl = getSessionUrl();
+
+            if (sessionUrl.empty())
+            {
+               pLauncher = new RemoteDesktopSessionLauncher(launchServer.get(),
+                                                            pAppLaunch.get(),
+                                                            forceSessionServerLaunch && !forceReuseSession);
+            }
+            else
+            {
+               pLauncher = new RemoteDesktopSessionLauncher(launchServer.get(),
+                                                            pAppLaunch.get(),
+                                                            sessionUrl);
+            }
+
+            pLauncher->launchFirstSession(installPath, devMode, pApp->arguments());
+            pSessionLauncher.reset(pLauncher);
+         }
+
+         ProgressActivator progressActivator;
+
+         int result = pApp->exec();
+
+         desktop::activation().releaseLicense();
+         options.cleanUpScratchTempDir();
+
+         boost::optional<SessionServer> pendingReconnect = sessionServers().getPendingSessionServerReconnect();
+         if (pendingReconnect.has_value())
+         {
+            // we need to reconnect to the specified session server
+            forceSessionServerLaunch = true;
+            const SessionServer& server = pendingReconnect.get();
+            if (server.label().empty())
+            {
+               // reconnect to a local session
+               launchServer = boost::none;
+            }
+            else
+            {
+               // reconnect to the specified session
+               launchServer = getLaunchServerFromUrl(server.url());
+               sessionUrl.clear();
+               forceReuseSession = true;
+            }
+
+            // clear activation's cached main window to allow relaunching of sessions
+            desktop::activation().setMainWindow(nullptr);
+            continue;
+         }
+
+         // check to see if we had a remote launch error - if so, show the launch location dialog
+         if (remoteLaunch &&
+             boost::static_pointer_cast<RemoteDesktopSessionLauncher>(pSessionLauncher)->failedToLaunch())
+         {
+            forceSessionServerLaunch = false;
+            forceShowSessionLocationDialog = true;
+            desktop::activation().setMainWindow(nullptr);
+            continue;
+         }
+
+         return result;
+      }
    }
    CATCH_UNEXPECTED_EXCEPTION
 }

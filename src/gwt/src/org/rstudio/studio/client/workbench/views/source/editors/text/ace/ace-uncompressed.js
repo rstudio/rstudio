@@ -1038,10 +1038,15 @@ EventEmitter._signal = function(eventName, e) {
 
 EventEmitter.once = function(eventName, callback) {
     var _self = this;
-    callback && this.addEventListener(eventName, function newCallback() {
+    this.addEventListener(eventName, function newCallback() {
         _self.removeEventListener(eventName, newCallback);
         callback.apply(null, arguments);
     });
+    if (!callback) {
+        return new Promise(function(resolve) {
+            callback = resolve;
+        });
+    }
 };
 
 
@@ -1665,10 +1670,8 @@ var Anchor = exports.Anchor = function(doc, row, column) {
 
 });
 
-define("ace/lib/keys",["require","exports","module","ace/lib/fixoldbrowsers","ace/lib/oop"], function(require, exports, module) {
+define("ace/lib/keys",["require","exports","module","ace/lib/oop"], function(require, exports, module) {
 "use strict";
-
-require("./fixoldbrowsers");
 
 var oop = require("./oop");
 var Keys = (function() {
@@ -1796,22 +1799,22 @@ exports.getOS = function() {
         return exports.OS.WINDOWS;
     }
 };
-if (typeof navigator != "object")
-    return;
+var _navigator = typeof navigator == "object" ? navigator : {};
 
-var os = (navigator.platform.match(/mac|win|linux/i) || ["other"])[0].toLowerCase();
-var ua = navigator.userAgent;
+var os = (/mac|win|linux/i.exec(_navigator.platform) || ["other"])[0].toLowerCase();
+var ua = _navigator.userAgent || "";
+var appName = _navigator.appName || "";
 exports.isWin = (os == "win");
 exports.isMac = (os == "mac");
 exports.isLinux = (os == "linux");
 exports.isIE = 
-    (navigator.appName == "Microsoft Internet Explorer" || navigator.appName.indexOf("MSAppHost") >= 0)
+    (appName == "Microsoft Internet Explorer" || appName.indexOf("MSAppHost") >= 0)
     ? parseFloat((ua.match(/(?:MSIE |Trident\/[0-9]+[\.0-9]+;.*rv:)([0-9]+[\.0-9]+)/)||[])[1])
     : parseFloat((ua.match(/(?:Trident\/[0-9]+[\.0-9]+;.*rv:)([0-9]+[\.0-9]+)/)||[])[1]); // for ie
     
 exports.isOldIE = exports.isIE && exports.isIE < 9;
 exports.isGecko = exports.isMozilla = ua.match(/ Gecko\/\d+/);
-exports.isOpera = window.opera && Object.prototype.toString.call(window.opera) == "[object Opera]";
+exports.isOpera = typeof opera == "object" && Object.prototype.toString.call(window.opera) == "[object Opera]";
 exports.isWebKit = parseFloat(ua.split("WebKit/")[1]) || undefined;
 
 exports.isChrome = parseFloat(ua.split(" Chrome/")[1]) || undefined;
@@ -2187,13 +2190,18 @@ exports.hasCssString = function(id, doc) {
     }
 };
 
-exports.importCssString = function importCssString(cssText, id, container) {
-    var root = container && container.getRootNode
-        ? container.getRootNode()
-        : document;
+exports.importCssString = function importCssString(cssText, id, target) {
+    var container = target;
+    if (!target || !target.getRootNode) {
+        container = document;
+    } else {
+        container = target.getRootNode();
+        if (!container || container == target)
+            container = document;
+    }
     
-    var doc = root.ownerDocument || root;
-    if (id && exports.hasCssString(id, root))
+    var doc = container.ownerDocument || container;
+    if (id && exports.hasCssString(id, container))
         return null;
     
     if (id)
@@ -2204,9 +2212,9 @@ exports.importCssString = function importCssString(cssText, id, container) {
     if (id)
         style.id = id;
 
-    if (root == doc)
-        root = exports.getDocumentHead(doc);
-    root.insertBefore(style, root.firstChild);
+    if (container == doc)
+        container = exports.getDocumentHead(doc);
+    container.insertBefore(style, container.firstChild);
 };
 
 exports.importCssStylsheet = function(uri, doc) {
@@ -2430,6 +2438,13 @@ var AppConfig = function() {
     };
 
     this.setDefaultValue = function(path, name, value) {
+        if (!path) {
+            for (path in this.$defaultOptions)
+                if (this.$defaultOptions[path][name])
+                    break;
+            if (!this.$defaultOptions[path][name])
+                return false;
+        }
         var opts = this.$defaultOptions[path] || (this.$defaultOptions[path] = {});
         if (opts[name]) {
             if (opts.forwardTo)
@@ -2475,7 +2490,9 @@ var options = {
     themePath: null,
     basePath: "",
     suffix: ".js",
-    $moduleUrls: {}
+    $moduleUrls: {},
+    loadWorkerFromBlob: true,
+    sharedPopups: false
 };
 
 exports.get = function(key) {
@@ -2486,10 +2503,10 @@ exports.get = function(key) {
 };
 
 exports.set = function(key, value) {
-    if (!options.hasOwnProperty(key))
+    if (options.hasOwnProperty(key))
+        options[key] = value;
+    else if (this.setDefaultValue("", key, value) == false)
         throw new Error("Unknown config key: " + key);
-
-    options[key] = value;
 };
 
 exports.all = function() {
@@ -2635,6 +2652,8 @@ exports.init = init;
 function deHyphenate(str) {
     return str.replace(/-(.)/g, function(m, m1) { return m1.toUpperCase(); });
 }
+
+exports.version = "1.4.5";
 
 });
 
@@ -2920,7 +2939,7 @@ var Tokenizer = function(rules) {
                     if (token.type)
                         tokens.push(token);
                     token = {
-                        value: line.substring(lastIndex, lastIndex += 2000),
+                        value: line.substring(lastIndex, lastIndex += 500),
                         type: "overflow"
                     };
                 }
@@ -3228,7 +3247,7 @@ var AbapHighlightRules = function() {
             {token : "constant.numeric", regex: "[+-]?\\d+\\b"},
             {token : "variable.parameter", regex : /sy|pa?\d\d\d\d\|t\d\d\d\.|innnn/}, 
             {token : "keyword", regex : compoundKeywords}, 
-            {token : "variable.parameter", regex : /\w+-\w+(?:-\w+)*/}, 
+            {token : "variable.parameter", regex : /\w+-\w[\-\w]*/},
             {token : keywordMapper, regex : "\\b\\w+\\b"},
             {caseInsensitive: true}
         ],
@@ -3836,6 +3855,9 @@ var CstyleBehaviour = function(options) {
                         return null; // before or after alphanumeric
                     if (rightChar && !/[\s;,.})\]\\]/.test(rightChar))
                         return null; // there is rightChar and it isn't closing
+                    var charBefore = line[cursor.column - 2];
+                    if (leftChar == quote &&  (charBefore == quote || wordRe.test(charBefore)))
+                        return null;
                     pair = true;
                 }
                 return {
@@ -4218,7 +4240,7 @@ var Mode = function() {
     };
 
     this.$delegator = function(method, args, defaultHandler) {
-        var state = args[0];
+        var state = args[0] || "start";
         if (typeof state != "string") {
             if (Array.isArray(state[2])) {
                 var language = state[2][state[2].length - 1];
@@ -4226,7 +4248,7 @@ var Mode = function() {
                 if (mode)
                     return mode[method].apply(mode, [state[1]].concat([].slice.call(args, 1)));
             }
-            state = state[0];
+            state = state[0] || "start";
         }
             
         for (var i = 0; i < this.$embeds.length; i++) {
@@ -5705,7 +5727,7 @@ var CirruHighlightRules = function() {
             next: 'line'
         }, {
             token: 'support.function',
-            regex: /[^\(\)"\s]+/,
+            regex: /[^\(\)"\s{}\[\]]+/,
             next: 'line'
         }, {
             token: 'string.quoted.double',
@@ -5750,7 +5772,7 @@ var CirruHighlightRules = function() {
             next: 'start'
         }, {
             token: 'variable.parameter',
-            regex: /[^\(\)"\s]+/
+            regex: /[^\(\)"\s{}\[\]]+/
         }, {
             token: 'storage.modifier',
             regex: /\(/,
@@ -6426,41 +6448,23 @@ function $workerBlob(workerUrl) {
 function createWorker(workerUrl) {
     if (typeof Worker == "undefined")
         return { postMessage: function() {}, terminate: function() {} };
-    var blob = $workerBlob(workerUrl);
-    var URL = window.URL || window.webkitURL;
-    var blobURL = URL.createObjectURL(blob);
-    return new Worker(blobURL);
+    if (config.get("loadWorkerFromBlob")) {
+        var blob = $workerBlob(workerUrl);
+        var URL = window.URL || window.webkitURL;
+        var blobURL = URL.createObjectURL(blob);
+        return new Worker(blobURL);
+    }
+    return new Worker(workerUrl);
 }
 
-var WorkerClient = function(topLevelNamespaces, mod, classname, workerUrl, importScripts) {
+var WorkerClient = function(worker) {
+    if (!worker.postMessage)
+        worker = this.$createWorkerFromOldConfig.apply(this, arguments);
+
+    this.$worker = worker;
     this.$sendDeltaQueue = this.$sendDeltaQueue.bind(this);
     this.changeListener = this.changeListener.bind(this);
     this.onMessage = this.onMessage.bind(this);
-    if (require.nameToUrl && !require.toUrl)
-        require.toUrl = require.nameToUrl;
-    
-    if (config.get("packaged") || !require.toUrl) {
-        workerUrl = workerUrl || config.moduleUrl(mod, "worker");
-    } else {
-        var normalizePath = this.$normalizePath;
-        workerUrl = workerUrl || normalizePath(require.toUrl("ace/worker/worker.js", null, "_"));
-
-        var tlns = {};
-        topLevelNamespaces.forEach(function(ns) {
-            tlns[ns] = normalizePath(require.toUrl(ns, null, "_").replace(/(\.js)?(\?.*)?$/, ""));
-        });
-    }
-
-    this.$worker = createWorker(workerUrl);
-    if (importScripts) {
-        this.send("importScripts", importScripts);
-    }
-    this.$worker.postMessage({
-        init : true,
-        tlns : tlns,
-        module : mod,
-        classname : classname
-    });
 
     this.callbackId = 1;
     this.callbacks = {};
@@ -6471,6 +6475,35 @@ var WorkerClient = function(topLevelNamespaces, mod, classname, workerUrl, impor
 (function(){
 
     oop.implement(this, EventEmitter);
+
+    this.$createWorkerFromOldConfig = function(topLevelNamespaces, mod, classname, workerUrl, importScripts) {
+        if (require.nameToUrl && !require.toUrl)
+            require.toUrl = require.nameToUrl;
+
+        if (config.get("packaged") || !require.toUrl) {
+            workerUrl = workerUrl || config.moduleUrl(mod, "worker");
+        } else {
+            var normalizePath = this.$normalizePath;
+            workerUrl = workerUrl || normalizePath(require.toUrl("ace/worker/worker.js", null, "_"));
+
+            var tlns = {};
+            topLevelNamespaces.forEach(function(ns) {
+                tlns[ns] = normalizePath(require.toUrl(ns, null, "_").replace(/(\.js)?(\?.*)?$/, ""));
+            });
+        }
+
+        this.$worker = createWorker(workerUrl);
+        if (importScripts) {
+            this.send("importScripts", importScripts);
+        }
+        this.$worker.postMessage({
+            init : true,
+            tlns : tlns,
+            module : mod,
+            classname : classname
+        });
+        return this.$worker;
+    };
 
     this.onMessage = function(e) {
         var msg = e.data;
@@ -6578,32 +6611,28 @@ var WorkerClient = function(topLevelNamespaces, mod, classname, workerUrl, impor
 
 
 var UIWorkerClient = function(topLevelNamespaces, mod, classname) {
-    this.$sendDeltaQueue = this.$sendDeltaQueue.bind(this);
-    this.changeListener = this.changeListener.bind(this);
-    this.callbackId = 1;
-    this.callbacks = {};
-    this.messageBuffer = [];
-
     var main = null;
     var emitSync = false;
     var sender = Object.create(EventEmitter);
-    var _self = this;
 
-    this.$worker = {};
-    this.$worker.terminate = function() {};
-    this.$worker.postMessage = function(e) {
-        _self.messageBuffer.push(e);
-        if (main) {
+    var messageBuffer = [];
+    var workerClient = new WorkerClient({
+        messageBuffer: messageBuffer,
+        terminate: function() {},
+        postMessage: function(e) {
+            messageBuffer.push(e);
+            if (!main) return;
             if (emitSync)
                 setTimeout(processNext);
             else
                 processNext();
         }
-    };
-    this.setEmitSync = function(val) { emitSync = val; };
+    });
+
+    workerClient.setEmitSync = function(val) { emitSync = val; };
 
     var processNext = function() {
-        var msg = _self.messageBuffer.shift();
+        var msg = messageBuffer.shift();
         if (msg.command)
             main[msg.command].apply(main, msg.args);
         else if (msg.event)
@@ -6611,7 +6640,7 @@ var UIWorkerClient = function(topLevelNamespaces, mod, classname) {
     };
 
     sender.postMessage = function(msg) {
-        _self.onMessage({data: msg});
+        workerClient.onMessage({data: msg});
     };
     sender.callback = function(data, callbackId) {
         this.postMessage({type: "call", id: callbackId, data: data});
@@ -6622,12 +6651,12 @@ var UIWorkerClient = function(topLevelNamespaces, mod, classname) {
 
     config.loadModule(["worker", mod], function(Main) {
         main = new Main[classname](sender);
-        while (_self.messageBuffer.length)
+        while (messageBuffer.length)
             processNext();
     });
-};
 
-UIWorkerClient.prototype = WorkerClient.prototype;
+    return workerClient;
+};
 
 exports.UIWorkerClient = UIWorkerClient;
 exports.WorkerClient = WorkerClient;
@@ -7626,11 +7655,7 @@ var CssCompletions = function() {
             this.defineCompletions();
         }
 
-        var token = session.getTokenAt(pos.row, pos.column);
-
-        if (!token)
-            return [];
-        if (state==='ruleset'){
+        if (state==='ruleset' || session.$mode.$id == "ace/mode/scss") {
             var line = session.getLine(pos.row).substr(0, pos.column);
             if (/:[^;]+$/.test(line)) {
                 /([\w\-]+):[^:]*$/.test(line);
@@ -9122,7 +9147,7 @@ var TextHighlightRules = require("./text_highlight_rules").TextHighlightRules;
 var CSharpHighlightRules = function() {
     var keywordMapper = this.createKeywordMapper({
         "variable.language": "this",
-        "keyword": "abstract|event|new|struct|as|explicit|null|switch|base|extern|object|this|bool|false|operator|throw|break|finally|out|true|byte|fixed|override|try|case|float|params|typeof|catch|for|private|uint|char|foreach|protected|ulong|checked|goto|public|unchecked|class|if|readonly|unsafe|const|implicit|ref|ushort|continue|in|return|using|decimal|int|sbyte|virtual|default|interface|sealed|volatile|delegate|internal|partial|short|void|do|is|sizeof|while|double|lock|stackalloc|else|long|static|enum|namespace|string|var|dynamic",
+        "keyword": "abstract|async|await|event|new|struct|as|explicit|null|switch|base|extern|object|this|bool|false|operator|throw|break|finally|out|true|byte|fixed|override|try|case|float|params|typeof|catch|for|private|uint|char|foreach|protected|ulong|checked|goto|public|unchecked|class|if|readonly|unsafe|const|implicit|ref|ushort|continue|in|return|using|decimal|int|sbyte|virtual|default|interface|sealed|volatile|delegate|internal|partial|short|void|do|is|sizeof|while|double|lock|stackalloc|else|long|static|enum|namespace|string|var|dynamic",
         "constant.language": "null|true|false"
     }, "identifier");
 
@@ -10048,12 +10073,17 @@ var DartHighlightRules = function() {
         "storage.type.primitive.dart": storageType
     }, "identifier");
 
-    var stringfill = {
+    var stringfill = [{
+        token : "constant.language.escape",
+        regex : /\\./
+    }, {
+        token : "text",
+        regex : /\$(?:\w+|{[^"'}]+})?/
+    }, {
         defaultToken : "string"
-    };
+    }];
 
-    this.$rules = 
-        {
+    this.$rules = {
     "start": [
         {
             token : "comment",
@@ -10166,30 +10196,34 @@ var DartHighlightRules = function() {
     "qdoc" : [
         {
             token : "string",
-            regex : ".*?'''",
+            regex : "'''",
             next : "start"
-        }, stringfill],
+        }
+    ].concat(stringfill),
 
     "qqdoc" : [
         {
             token : "string",
-            regex : '.*?"""',
+            regex : '"""',
             next : "start"
-        }, stringfill],
+        }
+    ].concat(stringfill),
 
     "qstring" : [
         {
             token : "string",
-            regex : "[^\\\\']*(?:\\\\.[^\\\\']*)*'",
+            regex : "'|$",
             next : "start"
-        }, stringfill],
+        }
+    ].concat(stringfill),
 
     "qqstring" : [
         {
             token : "string",
-            regex : '[^\\\\"]*(?:\\\\.[^\\\\"]*)*"',
+            regex : '"|$',
             next : "start"
-        }, stringfill]
+        }
+    ].concat(stringfill)
 };
 
     this.embedRules(DocCommentHighlightRules, "doc-",
@@ -10335,7 +10369,7 @@ oop.inherits(FoldMode, BaseFoldMode);
         }
         if (row == start.row + 1)
             return;
-        return  Range.fromPoints(start, {row: row - 1, column: line.length});
+        return new Range(start.row, start.column, row - 1, line.length);
     };
 
 }).call(FoldMode.prototype);
@@ -10352,7 +10386,7 @@ var FoldMode = require("./folding/diff").FoldMode;
 
 var Mode = function() {
     this.HighlightRules = HighlightRules;
-    this.foldingRules = new FoldMode(["diff", "index", "\\+{3}", "@@|\\*{5}"], "i");
+    this.foldingRules = new FoldMode(["diff", "@@|\\*{5}"], "i");
 };
 oop.inherits(Mode, TextMode);
 
@@ -15194,77 +15228,17 @@ oop.inherits(MarkdownHighlightRules, TextHighlightRules);
 exports.MarkdownHighlightRules = MarkdownHighlightRules;
 });
 
-define("ace/mode/scss_highlight_rules",["require","exports","module","ace/lib/oop","ace/lib/lang","ace/mode/text_highlight_rules"], function(require, exports, module) {
+define("ace/mode/scss_highlight_rules",["require","exports","module","ace/lib/oop","ace/lib/lang","ace/mode/text_highlight_rules","ace/mode/css_highlight_rules"], function(require, exports, module) {
 "use strict";
 
 var oop = require("../lib/oop");
 var lang = require("../lib/lang");
 var TextHighlightRules = require("./text_highlight_rules").TextHighlightRules;
+var CssHighlightRules = require("./css_highlight_rules");
 
 var ScssHighlightRules = function() {
     
-    var properties = lang.arrayToMap( (function () {
-
-        var browserPrefix = ("-webkit-|-moz-|-o-|-ms-|-svg-|-pie-|-khtml-").split("|");
-        
-        var prefixProperties = ("appearance|background-clip|background-inline-policy|background-origin|" + 
-             "background-size|binding|border-bottom-colors|border-left-colors|" + 
-             "border-right-colors|border-top-colors|border-end|border-end-color|" + 
-             "border-end-style|border-end-width|border-image|border-start|" + 
-             "border-start-color|border-start-style|border-start-width|box-align|" + 
-             "box-direction|box-flex|box-flexgroup|box-ordinal-group|box-orient|" + 
-             "box-pack|box-sizing|column-count|column-gap|column-width|column-rule|" + 
-             "column-rule-width|column-rule-style|column-rule-color|float-edge|" + 
-             "font-feature-settings|font-language-override|force-broken-image-icon|" + 
-             "image-region|margin-end|margin-start|opacity|outline|outline-color|" + 
-             "outline-offset|outline-radius|outline-radius-bottomleft|" + 
-             "outline-radius-bottomright|outline-radius-topleft|outline-radius-topright|" + 
-             "outline-style|outline-width|padding-end|padding-start|stack-sizing|" + 
-             "tab-size|text-blink|text-decoration-color|text-decoration-line|" + 
-             "text-decoration-style|transform|transform-origin|transition|" + 
-             "transition-delay|transition-duration|transition-property|" + 
-             "transition-timing-function|user-focus|user-input|user-modify|user-select|" +
-             "window-shadow|border-radius").split("|");
-        
-        var properties = ("azimuth|background-attachment|background-color|background-image|" +
-            "background-position|background-repeat|background|border-bottom-color|" +
-            "border-bottom-style|border-bottom-width|border-bottom|border-collapse|" +
-            "border-color|border-left-color|border-left-style|border-left-width|" +
-            "border-left|border-right-color|border-right-style|border-right-width|" +
-            "border-right|border-spacing|border-style|border-top-color|" +
-            "border-top-style|border-top-width|border-top|border-width|border|bottom|" +
-            "box-shadow|box-sizing|caption-side|clear|clip|color|content|counter-increment|" +
-            "counter-reset|cue-after|cue-before|cue|cursor|direction|display|" +
-            "elevation|empty-cells|float|font-family|font-size-adjust|font-size|" +
-            "font-stretch|font-style|font-variant|font-weight|font|height|left|" +
-            "letter-spacing|line-height|list-style-image|list-style-position|" +
-            "list-style-type|list-style|margin-bottom|margin-left|margin-right|" +
-            "margin-top|marker-offset|margin|marks|max-height|max-width|min-height|" +
-            "min-width|opacity|orphans|outline-color|" +
-            "outline-style|outline-width|outline|overflow|overflow-x|overflow-y|padding-bottom|" +
-            "padding-left|padding-right|padding-top|padding|page-break-after|" +
-            "page-break-before|page-break-inside|page|pause-after|pause-before|" +
-            "pause|pitch-range|pitch|play-during|position|quotes|richness|right|" +
-            "size|speak-header|speak-numeral|speak-punctuation|speech-rate|speak|" +
-            "stress|table-layout|text-align|text-decoration|text-indent|" +
-            "text-shadow|text-transform|top|unicode-bidi|vertical-align|" +
-            "visibility|voice-family|volume|white-space|widows|width|word-spacing|" +
-            "z-index").split("|");
-        var ret = [];
-        for (var i=0, ln=browserPrefix.length; i<ln; i++) {
-            Array.prototype.push.apply(
-                ret,
-                (( browserPrefix[i] + prefixProperties.join("|" + browserPrefix[i]) ).split("|"))
-            );
-        }
-        Array.prototype.push.apply(ret, prefixProperties);
-        Array.prototype.push.apply(ret, properties);
-        
-        return ret;
-        
-    })() );
-    
-
+    var properties = lang.arrayToMap(CssHighlightRules.supportType.split("|"));
 
     var functions = lang.arrayToMap(
         ("hsl|hsla|rgb|rgba|url|attr|counter|counters|abs|adjust_color|adjust_hue|" +
@@ -15274,56 +15248,9 @@ var ScssHighlightRules = function() {
          "scale_color|transparentize|type_of|unit|unitless|unquote").split("|")
     );
 
-    var constants = lang.arrayToMap(
-        ("absolute|all-scroll|always|armenian|auto|baseline|below|bidi-override|" +
-        "block|bold|bolder|border-box|both|bottom|break-all|break-word|capitalize|center|" +
-        "char|circle|cjk-ideographic|col-resize|collapse|content-box|crosshair|dashed|" +
-        "decimal-leading-zero|decimal|default|disabled|disc|" +
-        "distribute-all-lines|distribute-letter|distribute-space|" +
-        "distribute|dotted|double|e-resize|ellipsis|fixed|georgian|groove|" +
-        "hand|hebrew|help|hidden|hiragana-iroha|hiragana|horizontal|" +
-        "ideograph-alpha|ideograph-numeric|ideograph-parenthesis|" +
-        "ideograph-space|inactive|inherit|inline-block|inline|inset|inside|" +
-        "inter-ideograph|inter-word|italic|justify|katakana-iroha|katakana|" +
-        "keep-all|left|lighter|line-edge|line-through|line|list-item|loose|" +
-        "lower-alpha|lower-greek|lower-latin|lower-roman|lowercase|lr-tb|ltr|" +
-        "medium|middle|move|n-resize|ne-resize|newspaper|no-drop|no-repeat|" +
-        "nw-resize|none|normal|not-allowed|nowrap|oblique|outset|outside|" +
-        "overline|pointer|progress|relative|repeat-x|repeat-y|repeat|right|" +
-        "ridge|row-resize|rtl|s-resize|scroll|se-resize|separate|small-caps|" +
-        "solid|square|static|strict|super|sw-resize|table-footer-group|" +
-        "table-header-group|tb-rl|text-bottom|text-top|text|thick|thin|top|" +
-        "transparent|underline|upper-alpha|upper-latin|upper-roman|uppercase|" +
-        "vertical-ideographic|vertical-text|visible|w-resize|wait|whitespace|" +
-        "zero").split("|")
-    );
+    var constants = lang.arrayToMap(CssHighlightRules.supportConstant.split("|"));
 
-    var colors = lang.arrayToMap(
-        ("aliceblue|antiquewhite|aqua|aquamarine|azure|beige|bisque|black|" +
-        "blanchedalmond|blue|blueviolet|brown|burlywood|cadetblue|" +
-        "chartreuse|chocolate|coral|cornflowerblue|cornsilk|crimson|cyan|" +
-        "darkblue|darkcyan|darkgoldenrod|darkgray|darkgreen|darkgrey|" +
-        "darkkhaki|darkmagenta|darkolivegreen|darkorange|darkorchid|darkred|" +
-        "darksalmon|darkseagreen|darkslateblue|darkslategray|darkslategrey|" +
-        "darkturquoise|darkviolet|deeppink|deepskyblue|dimgray|dimgrey|" +
-        "dodgerblue|firebrick|floralwhite|forestgreen|fuchsia|gainsboro|" +
-        "ghostwhite|gold|goldenrod|gray|green|greenyellow|grey|honeydew|" +
-        "hotpink|indianred|indigo|ivory|khaki|lavender|lavenderblush|" +
-        "lawngreen|lemonchiffon|lightblue|lightcoral|lightcyan|" +
-        "lightgoldenrodyellow|lightgray|lightgreen|lightgrey|lightpink|" +
-        "lightsalmon|lightseagreen|lightskyblue|lightslategray|" +
-        "lightslategrey|lightsteelblue|lightyellow|lime|limegreen|linen|" +
-        "magenta|maroon|mediumaquamarine|mediumblue|mediumorchid|" +
-        "mediumpurple|mediumseagreen|mediumslateblue|mediumspringgreen|" +
-        "mediumturquoise|mediumvioletred|midnightblue|mintcream|mistyrose|" +
-        "moccasin|navajowhite|navy|oldlace|olive|olivedrab|orange|orangered|" +
-        "orchid|palegoldenrod|palegreen|paleturquoise|palevioletred|" +
-        "papayawhip|peachpuff|peru|pink|plum|powderblue|purple|rebeccapurple|" +
-        "red|rosybrown|royalblue|saddlebrown|salmon|sandybrown|seagreen|" +
-        "seashell|sienna|silver|skyblue|slateblue|slategray|slategrey|snow|" +
-        "springgreen|steelblue|tan|teal|thistle|tomato|turquoise|violet|" +
-        "wheat|white|whitesmoke|yellow|yellowgreen").split("|")
-    );
+    var colors = lang.arrayToMap(CssHighlightRules.supportConstantColor.split("|"));
     
     var keywords = lang.arrayToMap(
         ("@mixin|@extend|@include|@import|@media|@debug|@warn|@if|@for|@each|@while|@else|@font-face|@-webkit-keyframes|if|and|!default|module|def|end|declare").split("|")
@@ -15369,7 +15296,7 @@ var ScssHighlightRules = function() {
                 next : "qstring"
             }, {
                 token : "constant.numeric",
-                regex : numRe + "(?:em|ex|px|cm|mm|in|pt|pc|deg|rad|grad|ms|s|hz|khz|%)"
+                regex : numRe + "(?:ch|cm|deg|em|ex|fr|gd|grad|Hz|in|kHz|mm|ms|pc|pt|px|rad|rem|s|turn|vh|vmax|vmin|vm|vw|%)"
             }, {
                 token : "constant.numeric", // hex6 color
                 regex : "#[a-f0-9]{6}"
@@ -15995,16 +15922,76 @@ oop.inherits(JavaHighlightRules, TextHighlightRules);
 exports.JavaHighlightRules = JavaHighlightRules;
 });
 
-define("ace/mode/java",["require","exports","module","ace/lib/oop","ace/mode/javascript","ace/mode/java_highlight_rules"], function(require, exports, module) {
+define("ace/mode/folding/java",["require","exports","module","ace/lib/oop","ace/mode/folding/cstyle","ace/range"], function(require, exports, module) {
+"use strict";
+
+var oop = require("../../lib/oop");
+var CStyleFoldMode = require("./cstyle").FoldMode;
+var Range = require("../../range").Range;
+
+var FoldMode = exports.FoldMode = function() {};
+oop.inherits(FoldMode, CStyleFoldMode);
+
+(function() {
+    this.importRegex = /^import /;
+    this.getCStyleFoldWidget = this.getFoldWidget;
+    this.getFoldWidget = function(session, foldStyle, row) {
+        if (foldStyle === "markbegin") {
+            var line = session.getLine(row);
+            if (this.importRegex.test(line)) {
+                if (row == 0 || !this.importRegex.test(session.getLine(row - 1)))
+                    return "start";
+            }
+        }
+
+        return this.getCStyleFoldWidget(session, foldStyle, row);
+    };
+    
+    this.getCstyleFoldWidgetRange = this.getFoldWidgetRange;
+    this.getFoldWidgetRange = function(session, foldStyle, row, forceMultiline) {
+        var line = session.getLine(row);
+        var match = line.match(this.importRegex);
+        if (!match || foldStyle !== "markbegin")
+            return this.getCstyleFoldWidgetRange(session, foldStyle, row, forceMultiline);
+
+        var startColumn = match[0].length;
+        var maxRow = session.getLength();
+        var startRow = row;
+        var endRow = row;
+
+        while (++row < maxRow) {
+            var line = session.getLine(row);
+            if (line.match(/^\s*$/))
+                continue;
+
+            if (!line.match(this.importRegex))
+                break;
+
+            endRow = row;
+        }
+
+        if (endRow > startRow) {
+            var endColumn = session.getLine(endRow).length;
+            return new Range(startRow, startColumn, endRow, endColumn);
+        }
+    };
+
+}).call(FoldMode.prototype);
+
+});
+
+define("ace/mode/java",["require","exports","module","ace/lib/oop","ace/mode/javascript","ace/mode/java_highlight_rules","ace/mode/folding/java"], function(require, exports, module) {
 "use strict";
 
 var oop = require("../lib/oop");
 var JavaScriptMode = require("./javascript").Mode;
 var JavaHighlightRules = require("./java_highlight_rules").JavaHighlightRules;
+var JavaFoldMode = require("./folding/java").FoldMode;
 
 var Mode = function() {
     JavaScriptMode.call(this);
     this.HighlightRules = JavaHighlightRules;
+    this.foldingRules = new JavaFoldMode();
 };
 oop.inherits(Mode, JavaScriptMode);
 
@@ -16527,6 +16514,87 @@ exports.Mode = Mode;
 
 });
 
+define("ace/mode/behaviour/liquid",["require","exports","module","ace/lib/oop","ace/mode/behaviour","ace/mode/behaviour/xml","ace/token_iterator","ace/lib/lang"], function(require, exports, module) {
+    "use strict";
+    
+    var oop = require("../../lib/oop");
+    var Behaviour = require("../behaviour").Behaviour;
+    var XmlBehaviour = require("./xml").XmlBehaviour;
+    var TokenIterator = require("../../token_iterator").TokenIterator;
+    var lang = require("../../lib/lang");
+    
+    function is(token, type) {
+        return token && token.type.lastIndexOf(type + ".xml") > -1;
+    }
+    
+    var LiquidBehaviour = function () {
+        XmlBehaviour.call(this);
+        this.add("autoBraceTagClosing","insertion", function (state, action, editor, session, text) {
+            if (text == '}') {
+                var position = editor.getSelectionRange().start;
+                var iterator = new TokenIterator(session, position.row, position.column);
+                var token = iterator.getCurrentToken() || iterator.stepBackward();
+                if (!token || !( token.value.trim() === '%' || is(token, "tag-name") || is(token, "tag-whitespace") || is(token, "attribute-name") || is(token, "attribute-equals") || is(token, "attribute-value")))
+                    return;
+                if (is(token, "reference.attribute-value"))
+                    return;
+
+                if (is(token, "attribute-value")) {
+                    var tokenEndColumn = iterator.getCurrentTokenColumn() + token.value.length;
+                    if (position.column < tokenEndColumn)
+                        return;
+                    if (position.column == tokenEndColumn) {
+                        var nextToken = iterator.stepForward();
+                        if (nextToken && is(nextToken, "attribute-value"))
+                            return;
+                        iterator.stepBackward();
+                    }
+                }
+                if (/{%\s*%/.test(session.getLine(position.row))) return;
+                if (/^\s*}/.test(session.getLine(position.row).slice(position.column)))
+                    return;
+                while (!token.type != 'keyword.block') {
+                    token = iterator.stepBackward();
+                    if (token.value == '{%') {
+                        while(true) {
+                            token = iterator.stepForward();
+
+                            if (token.type === 'keyword.block') {
+                                break;
+                            } else if (token.value.trim() == '%') {
+                                token = null;
+                                break;
+                            }
+                        }
+                        break; 
+                    }
+                }
+                if (!token ) return ;
+                var tokenRow = iterator.getCurrentTokenRow();
+                var tokenColumn = iterator.getCurrentTokenColumn();
+                if (is(iterator.stepBackward(), "end-tag-open"))
+                return;
+                
+                var element = token.value;
+                if (tokenRow == position.row)
+                    element = element.substring(0, position.column - tokenColumn);
+    
+                if (this.voidElements.hasOwnProperty(element.toLowerCase()))
+                     return;
+                return {
+                   text: "}" + "{% end" + element + " %}",
+                   selection: [1, 1]
+                };
+            }
+        });
+    
+    };
+
+    oop.inherits(LiquidBehaviour, Behaviour);
+    
+    exports.LiquidBehaviour = LiquidBehaviour;
+    });
+
 define("ace/mode/liquid_highlight_rules",["require","exports","module","ace/lib/oop","ace/mode/text_highlight_rules","ace/mode/html_highlight_rules"], function(require, exports, module) {
 "use strict";
 
@@ -16547,6 +16615,7 @@ var LiquidHighlightRules = function() {
         "cycle|for|endfor|in|reversed|if|endif|else|elsif|include|endinclude|unless|endunless|" +
         "style|text|image|widget|plugin|marker|endmarker|tablerow|endtablerow"
     );
+    var blocks = 'for|if|case|capture|unless|tablerow|marker|comment';
 
     var builtinVariables = 'forloop|tablerowloop';
 
@@ -16555,6 +16624,7 @@ var LiquidHighlightRules = function() {
     var keywordMapper = this.createKeywordMapper({
         "variable.language": builtinVariables,
         "keyword": keywords,
+        "keyword.block": blocks,
         "support.function": functions,
         "keyword.definition": definitions
     }, "identifier");
@@ -16619,24 +16689,28 @@ oop.inherits(LiquidHighlightRules, TextHighlightRules);
 exports.LiquidHighlightRules = LiquidHighlightRules;
 });
 
-define("ace/mode/liquid",["require","exports","module","ace/lib/oop","ace/mode/text","ace/mode/liquid_highlight_rules","ace/mode/matching_brace_outdent"], function(require, exports, module) {
+define("ace/mode/liquid",["require","exports","module","ace/lib/oop","ace/mode/text","ace/mode/html","ace/mode/html_completions","ace/mode/behaviour/liquid","ace/mode/liquid_highlight_rules","ace/mode/matching_brace_outdent"], function(require, exports, module) {
 
 var oop = require("../lib/oop");
 var TextMode = require("./text").Mode;
+var HtmlMode = require("./html").Mode;
+var HtmlCompletions = require("./html_completions").HtmlCompletions;
+var LiquidBehaviour = require("./behaviour/liquid").LiquidBehaviour;
 var LiquidHighlightRules = require("./liquid_highlight_rules").LiquidHighlightRules;
 var MatchingBraceOutdent = require("./matching_brace_outdent").MatchingBraceOutdent;
 
 var Mode = function() {
     this.HighlightRules = LiquidHighlightRules;
     this.$outdent = new MatchingBraceOutdent();
-    this.$behaviour = this.$defaultBehaviour;
+    this.$behaviour = new LiquidBehaviour();
+    this.$completer = new HtmlCompletions();
 };
 oop.inherits(Mode, TextMode);
 
 (function() {
-
     this.blockComment = {start: "<!--", end: "-->"};
-
+    this.voidElements = new HtmlMode().voidElements;
+    
     this.getNextLineIndent = function(state, line, tab) {
         var indent = this.$getIndent(line);
 
@@ -17590,7 +17664,7 @@ oop.inherits(FoldMode, BaseFoldMode);
         }
     };
 
-    this.luaBlock = function(session, row, column) {
+    this.luaBlock = function(session, row, column, tokenRange) {
         var stream = new TokenIterator(session, row, column);
         var indentKeywords = {
             "function": 1,
@@ -17632,6 +17706,12 @@ oop.inherits(FoldMode, BaseFoldMode);
                     stack.unshift(token.value);
             }
         }
+
+        if (!token)
+            return null;
+
+        if (tokenRange)
+            return stream.getCurrentTokenRange();
 
         var row = stream.getCurrentTokenRow();
         if (dir === -1)
@@ -17742,17 +17822,31 @@ oop.inherits(Mode, TextMode);
         return (tokens[0].type == "keyword" && outdentKeywords.indexOf(tokens[0].value) != -1);
     };
 
-    this.autoOutdent = function(state, session, row) {
-        var prevLine = session.getLine(row - 1);
-        var prevIndent = this.$getIndent(prevLine).length;
-        var prevTokens = this.getTokenizer().getLineTokens(prevLine, "start").tokens;
-        var tabLength = session.getTabString().length;
-        var expectedIndent = prevIndent + tabLength * getNetIndentLevel(prevTokens);
-        var curIndent = this.$getIndent(session.getLine(row)).length;
-        if (curIndent <= expectedIndent) {
-            return;
+    this.getMatching = function(session, row, column) {
+        if (row == undefined) {
+            var pos = session.selection.lead;
+            column = pos.column;
+            row = pos.row;
         }
-        session.outdentRows(new Range(row, 0, row + 2, 0));
+
+        var startToken = session.getTokenAt(row, column);
+        if (startToken && startToken.value in indentKeywords)
+            return this.foldingRules.luaBlock(session, row, column, true);
+    };
+
+    this.autoOutdent = function(state, session, row) {
+        var line = session.getLine(row);
+        var column = line.match(/^\s*/)[0].length;
+        if (!column || !row) return;
+
+        var startRange = this.getMatching(session, row, column + 1);
+        if (!startRange || startRange.start.row == row)
+             return;
+        var indent = this.$getIndent(session.getLine(startRange.start.row));
+        if (indent.length != column) {
+            session.replace(new Range(row, 0, row, column), indent);
+            session.outdentRows(new Range(row + 1, 0, row + 1, 0));
+        }
     };
 
     this.createWorker = function(session) {
@@ -17849,11 +17943,10 @@ oop.inherits(Mode, HtmlMode);
 exports.Mode = Mode;
 });
 
-define("ace/mode/lucene_highlight_rules",["require","exports","module","ace/lib/oop","ace/lib/lang","ace/mode/text_highlight_rules"], function(require, exports, module) {
+define("ace/mode/lucene_highlight_rules",["require","exports","module","ace/lib/oop","ace/mode/text_highlight_rules"], function(require, exports, module) {
 "use strict";
 
 var oop = require("../lib/oop");
-var lang = require("../lib/lang");
 var TextHighlightRules = require("./text_highlight_rules").TextHighlightRules;
 
 var LuceneHighlightRules = function() {
@@ -17861,7 +17954,7 @@ var LuceneHighlightRules = function() {
         "start" : [
             {
                 token: "constant.language.escape",
-                regex: /\\[\+\-&\|!\(\)\{\}\[\]^"~\*\?:\\]/
+                regex: /\\[\-+&|!(){}\[\]^"~*?:\\]/
             }, {
                 token: "constant.character.negation",
                 regex: "\\-"
@@ -17887,17 +17980,86 @@ var LuceneHighlightRules = function() {
                 token: "paren.rparen",
                 regex: "[\\)\\}\\]]"
             }, {
-                token: "keyword",
-                regex: "(?:[^\\s:]+|\\\\ )*[^\\\\]:"
+                token: "keyword.operator",
+                regex: /[><=^]/
             }, {
-                token: "string",           // " string
-                regex: '"(?:\\\\"|[^"])*"'
+                token: "constant.numeric",
+                regex: /\d[\d.-]*/
+            }, {
+                token: "string",
+                regex: /"(?:\\"|[^"])*"/
+            }, {
+                token: "keyword",
+                regex: /(?:\\.|[^\s\-+&|!(){}\[\]^"~*?:\\])+:/,
+                next: "maybeRegex"
             }, {
                 token: "term",
-                regex: "\\w+"
+                regex: /\w+/
             }, {
                 token: "text",
-                regex: "\\s+"
+                regex: /\s+/
+            }
+        ],
+        "maybeRegex": [{
+            token: "text",
+            regex: /\s+/
+        }, {
+            token: "string.regexp.start",
+            regex: "/",
+            next: "regex"
+        }, {
+            regex: "",
+            next: "start"
+        }],
+        "regex": [
+            {
+                token: "regexp.keyword.operator",
+                regex: "\\\\(?:u[\\da-fA-F]{4}|x[\\da-fA-F]{2}|.)"
+            }, {
+                token: "string.regexp.end",
+                regex: "/[sxngimy]*",
+                next: "no_regex"
+            }, {
+                token : "invalid",
+                regex: /\{\d+\b,?\d*\}[+*]|[+*$^?][+*]|[$^][?]|\?{3,}/
+            }, {
+                token : "constant.language.escape",
+                regex: /\(\?[:=!]|\)|\{\d+\b,?\d*\}|[+*]\?|[()$^+*?.]/
+            }, {
+                token: "constant.language.escape",
+                regex: "<\d+-\d+>|[~&@]"
+            }, {
+                token : "constant.language.delimiter",
+                regex: /\|/
+            }, {
+                token: "constant.language.escape",
+                regex: /\[\^?/,
+                next: "regex_character_class"
+            }, {
+                token: "empty",
+                regex: "$",
+                next: "no_regex"
+            }, {
+                defaultToken: "string.regexp"
+            }
+        ],
+        "regex_character_class": [
+            {
+                token: "regexp.charclass.keyword.operator",
+                regex: "\\\\(?:u[\\da-fA-F]{4}|x[\\da-fA-F]{2}|.)"
+            }, {
+                token: "constant.language.escape",
+                regex: "]",
+                next: "regex"
+            }, {
+                token: "constant.language.escape",
+                regex: "-"
+            }, {
+                token: "empty",
+                regex: "$",
+                next: "no_regex"
+            }, {
+                defaultToken: "string.regexp.charachterclass"
             }
         ]
     };
@@ -18139,7 +18301,7 @@ oop.inherits(FoldMode, BaseFoldMode);
             var ch = token.value[0];
             if (ch == "=") return 6;
             if (ch == "-") return 5;
-            return 7 - token.value.search(/[^#]/);
+            return 7 - token.value.search(/[^#]|$/);
         }
 
         if (isHeading(row)) {
@@ -18201,6 +18363,7 @@ oop.inherits(Mode, TextMode);
 (function() {
     this.type = "text";
     this.blockComment = {start: "<!--", end: "-->"};
+    this.$quotes = {'"': '"', "`": "`"};
 
     this.getNextLineIndent = function(state, line, tab) {
         if (state == "listblock") {
@@ -20590,74 +20753,92 @@ var oop = require("../lib/oop");
 var TextHighlightRules = require("./text_highlight_rules").TextHighlightRules;
 
 var PascalHighlightRules = function() {
+    var keywordMapper = this.createKeywordMapper({
+        "keyword.control": "absolute|abstract|all|and|and_then|array|as|asm|attribute|begin|bindable|case|class" +
+            "|const|constructor|destructor|div|do|do|else|end|except|export|exports|external|far|file|finalization" +
+            "|finally|for|forward|goto|if|implementation|import|in|inherited|initialization|interface|interrupt|is" +
+            "|label|library|mod|module|name|near|nil|not|object|of|only|operator|or|or_else|otherwise|packed|pow|private" +
+            "|program|property|protected|public|published|qualified|record|repeat|resident|restricted|segment|set|shl|shr" +
+            "|then|to|try|type|unit|until|uses|value|var|view|virtual|while|with|xor"
+    }, "identifier", true);
 
-    this.$rules = { start: 
-       [ { caseInsensitive: true,
-           token: 'keyword.control.pascal',
-           regex: '\\b(?:(absolute|abstract|all|and|and_then|array|as|asm|attribute|begin|bindable|case|class|const|constructor|destructor|div|do|do|else|end|except|export|exports|external|far|file|finalization|finally|for|forward|goto|if|implementation|import|in|inherited|initialization|interface|interrupt|is|label|library|mod|module|name|near|nil|not|object|of|only|operator|or|or_else|otherwise|packed|pow|private|program|property|protected|public|published|qualified|record|repeat|resident|restricted|segment|set|shl|shr|then|to|try|type|unit|until|uses|value|var|view|virtual|while|with|xor))\\b' },
-         { caseInsensitive: true,           
-           token: 
-            [ 'variable.pascal', "text",
-              'storage.type.prototype.pascal',
-              'entity.name.function.prototype.pascal' ],
-           regex: '\\b(function|procedure)(\\s+)(\\w+)(\\.\\w+)?(?=(?:\\(.*?\\))?;\\s*(?:attribute|forward|external))' },
-         { caseInsensitive: true,
-           token: 
-            [ 'variable.pascal', "text",
-              'storage.type.function.pascal',
-              'entity.name.function.pascal' ],
-           regex: '\\b(function|procedure)(\\s+)(\\w+)(\\.\\w+)?' },
-         { token: 'constant.numeric.pascal',
-           regex: '\\b((0(x|X)[0-9a-fA-F]*)|(([0-9]+\\.?[0-9]*)|(\\.[0-9]+))((e|E)(\\+|-)?[0-9]+)?)(L|l|UL|ul|u|U|F|f|ll|LL|ull|ULL)?\\b' },
-         { token: 'punctuation.definition.comment.pascal',
-           regex: '--.*$',
-           push_: 
-            [ { token: 'comment.line.double-dash.pascal.one',
-                regex: '$',
-                next: 'pop' },
-              { defaultToken: 'comment.line.double-dash.pascal.one' } ] },
-         { token: 'punctuation.definition.comment.pascal',
-           regex: '//.*$',
-           push_: 
-            [ { token: 'comment.line.double-slash.pascal.two',
-                regex: '$',
-                next: 'pop' },
-              { defaultToken: 'comment.line.double-slash.pascal.two' } ] },
-         { token: 'punctuation.definition.comment.pascal',
-           regex: '\\(\\*',
-           push: 
-            [ { token: 'punctuation.definition.comment.pascal',
-                regex: '\\*\\)',
-                next: 'pop' },
-              { defaultToken: 'comment.block.pascal.one' } ] },
-         { token: 'punctuation.definition.comment.pascal',
-           regex: '\\{',
-           push: 
-            [ { token: 'punctuation.definition.comment.pascal',
-                regex: '\\}',
-                next: 'pop' },
-              { defaultToken: 'comment.block.pascal.two' } ] },
-         { token: 'punctuation.definition.string.begin.pascal',
-           regex: '"',
-           push: 
-            [ { token: 'constant.character.escape.pascal', regex: '\\\\.' },
-              { token: 'punctuation.definition.string.end.pascal',
+    this.$rules = {
+        start: [{
+                caseInsensitive: true,
+                token: ['variable', "text",
+                    'storage.type.prototype',
+                    'entity.name.function.prototype'
+                ],
+                regex: '\\b(function|procedure)(\\s+)(\\w+)(\\.\\w+)?(?=(?:\\(.*?\\))?;\\s*(?:attribute|forward|external))'
+            }, {
+                caseInsensitive: true,
+                token: ['variable', "text", 'storage.type.function', 'entity.name.function'],
+                regex: '\\b(function|procedure)(\\s+)(\\w+)(\\.\\w+)?'
+            }, {
+                caseInsensitive: true,
+                token: keywordMapper,
+                regex: /\b[a-z_]+\b/
+            }, {
+                token: 'constant.numeric',
+                regex: '\\b((0(x|X)[0-9a-fA-F]*)|(([0-9]+\\.?[0-9]*)|(\\.[0-9]+))((e|E)(\\+|-)?[0-9]+)?)(L|l|UL|ul|u|U|F|f|ll|LL|ull|ULL)?\\b'
+            }, {
+                token: 'punctuation.definition.comment',
+                regex: '--.*$'
+            }, {
+                token: 'punctuation.definition.comment',
+                regex: '//.*$'
+            }, {
+                token: 'punctuation.definition.comment',
+                regex: '\\(\\*',
+                push: [{
+                        token: 'punctuation.definition.comment',
+                        regex: '\\*\\)',
+                        next: 'pop'
+                    },
+                    { defaultToken: 'comment.block.one' }
+                ]
+            }, {
+                token: 'punctuation.definition.comment',
+                regex: '\\{',
+                push: [{
+                        token: 'punctuation.definition.comment',
+                        regex: '\\}',
+                        next: 'pop'
+                    },
+                    { defaultToken: 'comment.block.two' }
+                ]
+            }, {
+                token: 'punctuation.definition.string.begin',
                 regex: '"',
-                next: 'pop' },
-              { defaultToken: 'string.quoted.double.pascal' } ]
-            },
-         { token: 'punctuation.definition.string.begin.pascal',
-           regex: '\'',
-           push: 
-            [ { token: 'constant.character.escape.apostrophe.pascal',
-                regex: '\'\'' },
-              { token: 'punctuation.definition.string.end.pascal',
+                push: [{ token: 'constant.character.escape', regex: '\\\\.' },
+                    {
+                        token: 'punctuation.definition.string.end',
+                        regex: '"',
+                        next: 'pop'
+                    },
+                    { defaultToken: 'string.quoted.double' }
+                ]
+            }, {
+                token: 'punctuation.definition.string.begin',
                 regex: '\'',
-                next: 'pop' },
-              { defaultToken: 'string.quoted.single.pascal' } ] },
-          { token: 'keyword.operator',
-           regex: '[+\\-;,/*%]|:=|=' } ] };
-    
+                push: [{
+                        token: 'constant.character.escape.apostrophe',
+                        regex: '\'\''
+                    },
+                    {
+                        token: 'punctuation.definition.string.end',
+                        regex: '\'',
+                        next: 'pop'
+                    },
+                    { defaultToken: 'string.quoted.single' }
+                ]
+            }, {
+                token: 'keyword.operator',
+                regex: '[+\\-;,/*%]|:=|='
+            }
+        ]
+    };
+
     this.normalizeRules();
 };
 
@@ -20900,7 +21081,7 @@ var PythonHighlightRules = function() {
     var keywords = (
         "and|as|assert|break|class|continue|def|del|elif|else|except|exec|" +
         "finally|for|from|global|if|import|in|is|lambda|not|or|pass|print|" +
-        "raise|return|try|while|with|yield|async|await"
+        "raise|return|try|while|with|yield|async|await|nonlocal"
     );
 
     var builtinConstants = (
@@ -20910,12 +21091,13 @@ var PythonHighlightRules = function() {
     var builtinFunctions = (
         "abs|divmod|input|open|staticmethod|all|enumerate|int|ord|str|any|" +
         "eval|isinstance|pow|sum|basestring|execfile|issubclass|print|super|" +
-        "binfile|iter|property|tuple|bool|filter|len|range|type|bytearray|" +
+        "binfile|bin|iter|property|tuple|bool|filter|len|range|type|bytearray|" +
         "float|list|raw_input|unichr|callable|format|locals|reduce|unicode|" +
         "chr|frozenset|long|reload|vars|classmethod|getattr|map|repr|xrange|" +
         "cmp|globals|max|reversed|zip|compile|hasattr|memoryview|round|" +
-        "__import__|complex|hash|min|set|apply|delattr|help|next|setattr|" +
-        "buffer|dict|hex|object|slice|coerce|dir|id|oct|sorted|intern"
+        "__import__|complex|hash|min|apply|delattr|help|next|setattr|set|" +
+        "buffer|dict|hex|object|slice|coerce|dir|id|oct|sorted|intern|" +
+        "ascii|breakpoint|bytes"
     );
     var keywordMapper = this.createKeywordMapper({
         "invalid.deprecated": "debugger",
@@ -20925,8 +21107,10 @@ var PythonHighlightRules = function() {
         "keyword": keywords
     }, "identifier");
 
-    var strPre = "(?:r|u|ur|R|U|UR|Ur|uR)?";
-
+    var strPre = "[uU]?";
+    var strRawPre = "[rR]";
+    var strFormatPre = "[fF]";
+    var strRawFormatPre = "(?:[rR][fF]|[fF][rR])";
     var decimalInteger = "(?:(?:[1-9]\\d*)|(?:0))";
     var octInteger = "(?:0[oO]?[0-7]+)";
     var hexInteger = "(?:0[xX][\\dA-Fa-f]+)";
@@ -20937,10 +21121,10 @@ var PythonHighlightRules = function() {
     var fraction = "(?:\\.\\d+)";
     var intPart = "(?:\\d+)";
     var pointFloat = "(?:(?:" + intPart + "?" + fraction + ")|(?:" + intPart + "\\.))";
-    var exponentFloat = "(?:(?:" + pointFloat + "|" +  intPart + ")" + exponent + ")";
+    var exponentFloat = "(?:(?:" + pointFloat + "|" + intPart + ")" + exponent + ")";
     var floatNumber = "(?:" + exponentFloat + "|" + pointFloat + ")";
 
-    var stringEscape =  "\\\\(x[0-9A-Fa-f]{2}|[0-7]{3}|[\\\\abfnrtv'\"]|U[0-9A-Fa-f]{8}|u[0-9A-Fa-f]{4})";
+    var stringEscape = "\\\\(x[0-9A-Fa-f]{2}|[0-7]{3}|[\\\\abfnrtv'\"]|U[0-9A-Fa-f]{8}|u[0-9A-Fa-f]{4})";
 
     this.$rules = {
         "start" : [ {
@@ -20963,82 +21147,313 @@ var PythonHighlightRules = function() {
             regex : strPre + "'(?=.)",
             next : "qstring"
         }, {
-            token : "constant.numeric", // imaginary
-            regex : "(?:" + floatNumber + "|\\d+)[jJ]\\b"
+            token: "string",
+            regex: strRawPre + '"{3}',
+            next: "rawqqstring3"
         }, {
-            token : "constant.numeric", // float
-            regex : floatNumber
+            token: "string", 
+            regex: strRawPre + '"(?=.)',
+            next: "rawqqstring"
         }, {
-            token : "constant.numeric", // long integer
-            regex : integer + "[lL]\\b"
+            token: "string",
+            regex: strRawPre + "'{3}",
+            next: "rawqstring3"
         }, {
-            token : "constant.numeric", // integer
-            regex : integer + "\\b"
+            token: "string",
+            regex: strRawPre + "'(?=.)",
+            next: "rawqstring"
         }, {
-            token : keywordMapper,
-            regex : "[a-zA-Z_$][a-zA-Z0-9_$]*\\b"
+            token: "string",
+            regex: strFormatPre + '"{3}',
+            next: "fqqstring3"
         }, {
-            token : "keyword.operator",
-            regex : "\\+|\\-|\\*|\\*\\*|\\/|\\/\\/|%|<<|>>|&|\\||\\^|~|<|>|<=|=>|==|!=|<>|="
+            token: "string",
+            regex: strFormatPre + '"(?=.)',
+            next: "fqqstring"
         }, {
-            token : "paren.lparen",
-            regex : "[\\[\\(\\{]"
+            token: "string",
+            regex: strFormatPre + "'{3}",
+            next: "fqstring3"
         }, {
-            token : "paren.rparen",
-            regex : "[\\]\\)\\}]"
+            token: "string",
+            regex: strFormatPre + "'(?=.)",
+            next: "fqstring"
+        },{
+            token: "string",
+            regex: strRawFormatPre + '"{3}',
+            next: "rfqqstring3"
         }, {
-            token : "text",
-            regex : "\\s+"
-        } ],
-        "qqstring3" : [ {
-            token : "constant.language.escape",
-            regex : stringEscape
+            token: "string",
+            regex: strRawFormatPre + '"(?=.)',
+            next: "rfqqstring"
         }, {
-            token : "string", // multi line """ string end
-            regex : '"{3}',
-            next : "start"
+            token: "string",
+            regex: strRawFormatPre + "'{3}",
+            next: "rfqstring3"
         }, {
-            defaultToken : "string"
-        } ],
-        "qstring3" : [ {
-            token : "constant.language.escape",
-            regex : stringEscape
+            token: "string",
+            regex: strRawFormatPre + "'(?=.)",
+            next: "rfqstring"
         }, {
-            token : "string",  // multi line ''' string end
-            regex : "'{3}",
-            next : "start"
+            token: "keyword.operator",
+            regex: "\\+|\\-|\\*|\\*\\*|\\/|\\/\\/|%|@|<<|>>|&|\\||\\^|~|<|>|<=|=>|==|!=|<>|="
         }, {
-            defaultToken : "string"
-        } ],
-        "qqstring" : [{
-            token : "constant.language.escape",
-            regex : stringEscape
+            token: "punctuation",
+            regex: ",|:|;|\\->|\\+=|\\-=|\\*=|\\/=|\\/\\/=|%=|@=|&=|\\|=|^=|>>=|<<=|\\*\\*="
         }, {
-            token : "string",
-            regex : "\\\\$",
-            next  : "qqstring"
+            token: "paren.lparen",
+            regex: "[\\[\\(\\{]"
         }, {
-            token : "string",
-            regex : '"|$',
-            next  : "start"
+            token: "paren.rparen",
+            regex: "[\\]\\)\\}]"
+        }, {
+            token: "text",
+            regex: "\\s+"
+        }, {
+            include: "constants"
+        }],
+        "qqstring3": [{
+            token: "constant.language.escape",
+            regex: stringEscape
+        }, {
+            token: "string", // multi line """ string end
+            regex: '"{3}',
+            next: "start"
         }, {
             defaultToken: "string"
         }],
-        "qstring" : [{
-            token : "constant.language.escape",
-            regex : stringEscape
+        "qstring3": [{
+            token: "constant.language.escape",
+            regex: stringEscape
         }, {
-            token : "string",
-            regex : "\\\\$",
-            next  : "qstring"
-        }, {
-            token : "string",
-            regex : "'|$",
-            next  : "start"
+            token: "string",  // multi line ''' string end
+            regex: "'{3}",
+            next: "start"
         }, {
             defaultToken: "string"
+        }],
+        "qqstring": [{
+            token: "constant.language.escape",
+            regex: stringEscape
+        }, {
+            token: "string",
+            regex: "\\\\$",
+            next: "qqstring"
+        }, {
+            token: "string",
+            regex: '"|$',
+            next: "start"
+        }, {
+            defaultToken: "string"
+        }],
+        "qstring": [{
+            token: "constant.language.escape",
+            regex: stringEscape
+        }, {
+            token: "string",
+            regex: "\\\\$",
+            next: "qstring"
+        }, {
+            token: "string",
+            regex: "'|$",
+            next: "start"
+        }, {
+            defaultToken: "string"
+        }],
+        "rawqqstring3": [{
+            token: "string", // multi line """ string end
+            regex: '"{3}',
+            next: "start"
+        }, {
+            defaultToken: "string"
+        }],
+        "rawqstring3": [{
+            token: "string",  // multi line ''' string end
+            regex: "'{3}",
+            next: "start"
+        }, {
+            defaultToken: "string"
+        }],
+        "rawqqstring": [{
+            token: "string",
+            regex: "\\\\$",
+            next: "rawqqstring"
+        }, {
+            token: "string",
+            regex: '"|$',
+            next: "start"
+        }, {
+            defaultToken: "string"
+        }],
+        "rawqstring": [{
+            token: "string",
+            regex: "\\\\$",
+            next: "rawqstring"
+        }, {
+            token: "string",
+            regex: "'|$",
+            next: "start"
+        }, {
+            defaultToken: "string"
+        }],
+        "fqqstring3": [{
+            token: "constant.language.escape",
+            regex: stringEscape
+        }, {
+            token: "string", // multi line """ string end
+            regex: '"{3}',
+            next: "start"
+        }, {
+            token: "paren.lparen",
+            regex: "{",
+            push: "fqstringParRules"
+        }, {
+            defaultToken: "string"
+        }],
+        "fqstring3": [{
+            token: "constant.language.escape",
+            regex: stringEscape
+        }, {
+            token: "string",  // multi line ''' string end
+            regex: "'{3}",
+            next: "start"
+        }, {
+            token: "paren.lparen",
+            regex: "{",
+            push: "fqstringParRules"
+        }, {
+            defaultToken: "string"
+        }],
+        "fqqstring": [{
+            token: "constant.language.escape",
+            regex: stringEscape
+        }, {
+            token: "string",
+            regex: "\\\\$",
+            next: "fqqstring"
+        }, {
+            token: "string",
+            regex: '"|$',
+            next: "start"
+        }, {
+            token: "paren.lparen",
+            regex: "{",
+            push: "fqstringParRules"
+        }, {
+            defaultToken: "string"
+        }],
+        "fqstring": [{
+            token: "constant.language.escape",
+            regex: stringEscape
+        }, {
+            token: "string",
+            regex: "'|$",
+            next: "start"
+        }, {
+            token: "paren.lparen",
+            regex: "{",
+            push: "fqstringParRules"
+        }, {
+            defaultToken: "string"
+        }],
+        "rfqqstring3": [{
+            token: "string", // multi line """ string end
+            regex: '"{3}',
+            next: "start"
+        }, {
+            token: "paren.lparen",
+            regex: "{",
+            push: "fqstringParRules"
+        }, {
+            defaultToken: "string"
+        }],
+        "rfqstring3": [{
+            token: "string",  // multi line ''' string end
+            regex: "'{3}",
+            next: "start"
+        }, {
+            token: "paren.lparen",
+            regex: "{",
+            push: "fqstringParRules"
+        }, {
+            defaultToken: "string"
+        }],
+        "rfqqstring": [{
+            token: "string",
+            regex: "\\\\$",
+            next: "rfqqstring"
+        }, {
+            token: "string",
+            regex: '"|$',
+            next: "start"
+        }, {
+            token: "paren.lparen",
+            regex: "{",
+            push: "fqstringParRules"
+        }, {
+            defaultToken: "string"
+        }],
+        "rfqstring": [{
+            token: "string",
+            regex: "'|$",
+            next: "start"
+        }, {
+            token: "paren.lparen",
+            regex: "{",
+            push: "fqstringParRules"
+        }, {
+            defaultToken: "string"
+        }],
+        "fqstringParRules": [{//TODO: nested {}
+            token: "paren.lparen",
+            regex: "[\\[\\(]"
+        }, {
+            token: "paren.rparen",
+            regex: "[\\]\\)]"
+        }, {
+            token: "string",
+            regex: "\\s+"
+        }, {
+            token: "string",
+            regex: "'(.)*'"
+        }, {
+            token: "string",
+            regex: '"(.)*"'
+        }, {
+            token: "function.support",
+            regex: "(!s|!r|!a)"
+        }, {
+            include: "constants"
+        },{
+            token: 'paren.rparen',
+            regex: "}",
+            next: 'pop'
+        },{
+            token: 'paren.lparen',
+            regex: "{",
+            push: "fqstringParRules"
+        }],
+        "constants": [{
+            token: "constant.numeric", // imaginary
+            regex: "(?:" + floatNumber + "|\\d+)[jJ]\\b"
+        }, {
+            token: "constant.numeric", // float
+            regex: floatNumber
+        }, {
+            token: "constant.numeric", // long integer
+            regex: integer + "[lL]\\b"
+        }, {
+            token: "constant.numeric", // integer
+            regex: integer + "\\b"
+        }, {
+            token: ["punctuation", "function.support"],// method
+            regex: "(\\.)([a-zA-Z_]+)\\b"
+        }, {
+            token: keywordMapper,
+            regex: "[a-zA-Z_$][a-zA-Z0-9_$]*\\b"
         }]
     };
+    this.normalizeRules();
 };
 
 oop.inherits(PythonHighlightRules, TextHighlightRules);
@@ -21747,857 +22162,857 @@ var HtmlHighlightRules = require("./html_highlight_rules").HtmlHighlightRules;
 var PhpLangHighlightRules = function() {
     var docComment = DocCommentHighlightRules;
     var builtinFunctions = lang.arrayToMap(
-        ('abs|acos|acosh|addcslashes|addslashes|aggregate|aggregate_info|aggregate_methods|aggregate_methods_by_list|aggregate_methods_by_regexp|' +
-        'aggregate_properties|aggregate_properties_by_list|aggregate_properties_by_regexp|aggregation_info|amqpconnection|amqpexchange|amqpqueue|' +
-        'apache_child_terminate|apache_get_modules|apache_get_version|apache_getenv|apache_lookup_uri|apache_note|apache_request_headers|' +
-        'apache_reset_timeout|apache_response_headers|apache_setenv|apc_add|apc_bin_dump|apc_bin_dumpfile|apc_bin_load|apc_bin_loadfile|' +
-        'apc_cache_info|apc_cas|apc_clear_cache|apc_compile_file|apc_dec|apc_define_constants|apc_delete|apc_delete_file|apc_exists|apc_fetch|' +
-        'apc_inc|apc_load_constants|apc_sma_info|apc_store|apciterator|apd_breakpoint|apd_callstack|apd_clunk|apd_continue|apd_croak|' +
-        'apd_dump_function_table|apd_dump_persistent_resources|apd_dump_regular_resources|apd_echo|apd_get_active_symbols|apd_set_pprof_trace|' +
-        'apd_set_session|apd_set_session_trace|apd_set_session_trace_socket|appenditerator|array|array_change_key_case|array_chunk|array_combine|' +
-        'array_count_values|array_diff|array_diff_assoc|array_diff_key|array_diff_uassoc|array_diff_ukey|array_fill|array_fill_keys|array_filter|' +
-        'array_flip|array_intersect|array_intersect_assoc|array_intersect_key|array_intersect_uassoc|array_intersect_ukey|array_key_exists|' +
-        'array_keys|array_map|array_merge|array_merge_recursive|array_multisort|array_pad|array_pop|array_product|array_push|array_rand|' +
-        'array_reduce|array_replace|array_replace_recursive|array_reverse|array_search|array_shift|array_slice|array_splice|array_sum|array_udiff|' +
-        'array_udiff_assoc|array_udiff_uassoc|array_uintersect|array_uintersect_assoc|array_uintersect_uassoc|array_unique|array_unshift|' +
-        'array_values|array_walk|array_walk_recursive|arrayaccess|arrayiterator|arrayobject|arsort|asin|asinh|asort|assert|assert_options|atan|' +
-        'atan2|atanh|audioproperties|badfunctioncallexception|badmethodcallexception|base64_decode|base64_encode|base_convert|basename|' +
-        'bbcode_add_element|bbcode_add_smiley|bbcode_create|bbcode_destroy|bbcode_parse|bbcode_set_arg_parser|bbcode_set_flags|bcadd|bccomp|bcdiv|' +
-        'bcmod|bcmul|bcompiler_load|bcompiler_load_exe|bcompiler_parse_class|bcompiler_read|bcompiler_write_class|bcompiler_write_constant|' +
-        'bcompiler_write_exe_footer|bcompiler_write_file|bcompiler_write_footer|bcompiler_write_function|bcompiler_write_functions_from_file|' +
-        'bcompiler_write_header|bcompiler_write_included_filename|bcpow|bcpowmod|bcscale|bcsqrt|bcsub|bin2hex|bind_textdomain_codeset|bindec|' +
-        'bindtextdomain|bson_decode|bson_encode|bumpValue|bzclose|bzcompress|bzdecompress|bzerrno|bzerror|bzerrstr|bzflush|bzopen|bzread|bzwrite|' +
-        'cachingiterator|cairo|cairo_create|cairo_font_face_get_type|cairo_font_face_status|cairo_font_options_create|cairo_font_options_equal|' +
-        'cairo_font_options_get_antialias|cairo_font_options_get_hint_metrics|cairo_font_options_get_hint_style|' +
-        'cairo_font_options_get_subpixel_order|cairo_font_options_hash|cairo_font_options_merge|cairo_font_options_set_antialias|' +
-        'cairo_font_options_set_hint_metrics|cairo_font_options_set_hint_style|cairo_font_options_set_subpixel_order|cairo_font_options_status|' +
-        'cairo_format_stride_for_width|cairo_image_surface_create|cairo_image_surface_create_for_data|cairo_image_surface_create_from_png|' +
-        'cairo_image_surface_get_data|cairo_image_surface_get_format|cairo_image_surface_get_height|cairo_image_surface_get_stride|' +
-        'cairo_image_surface_get_width|cairo_matrix_create_scale|cairo_matrix_create_translate|cairo_matrix_invert|cairo_matrix_multiply|' +
-        'cairo_matrix_rotate|cairo_matrix_transform_distance|cairo_matrix_transform_point|cairo_matrix_translate|cairo_pattern_add_color_stop_rgb|' +
-        'cairo_pattern_add_color_stop_rgba|cairo_pattern_create_for_surface|cairo_pattern_create_linear|cairo_pattern_create_radial|' +
-        'cairo_pattern_create_rgb|cairo_pattern_create_rgba|cairo_pattern_get_color_stop_count|cairo_pattern_get_color_stop_rgba|' +
-        'cairo_pattern_get_extend|cairo_pattern_get_filter|cairo_pattern_get_linear_points|cairo_pattern_get_matrix|' +
-        'cairo_pattern_get_radial_circles|cairo_pattern_get_rgba|cairo_pattern_get_surface|cairo_pattern_get_type|cairo_pattern_set_extend|' +
-        'cairo_pattern_set_filter|cairo_pattern_set_matrix|cairo_pattern_status|cairo_pdf_surface_create|cairo_pdf_surface_set_size|' +
-        'cairo_ps_get_levels|cairo_ps_level_to_string|cairo_ps_surface_create|cairo_ps_surface_dsc_begin_page_setup|' +
-        'cairo_ps_surface_dsc_begin_setup|cairo_ps_surface_dsc_comment|cairo_ps_surface_get_eps|cairo_ps_surface_restrict_to_level|' +
-        'cairo_ps_surface_set_eps|cairo_ps_surface_set_size|cairo_scaled_font_create|cairo_scaled_font_extents|cairo_scaled_font_get_ctm|' +
-        'cairo_scaled_font_get_font_face|cairo_scaled_font_get_font_matrix|cairo_scaled_font_get_font_options|cairo_scaled_font_get_scale_matrix|' +
-        'cairo_scaled_font_get_type|cairo_scaled_font_glyph_extents|cairo_scaled_font_status|cairo_scaled_font_text_extents|' +
-        'cairo_surface_copy_page|cairo_surface_create_similar|cairo_surface_finish|cairo_surface_flush|cairo_surface_get_content|' +
-        'cairo_surface_get_device_offset|cairo_surface_get_font_options|cairo_surface_get_type|cairo_surface_mark_dirty|' +
-        'cairo_surface_mark_dirty_rectangle|cairo_surface_set_device_offset|cairo_surface_set_fallback_resolution|cairo_surface_show_page|' +
-        'cairo_surface_status|cairo_surface_write_to_png|cairo_svg_surface_create|cairo_svg_surface_restrict_to_version|' +
-        'cairo_svg_version_to_string|cairoantialias|cairocontent|cairocontext|cairoexception|cairoextend|cairofillrule|cairofilter|cairofontface|' +
-        'cairofontoptions|cairofontslant|cairofonttype|cairofontweight|cairoformat|cairogradientpattern|cairohintmetrics|cairohintstyle|' +
-        'cairoimagesurface|cairolineargradient|cairolinecap|cairolinejoin|cairomatrix|cairooperator|cairopath|cairopattern|cairopatterntype|' +
-        'cairopdfsurface|cairopslevel|cairopssurface|cairoradialgradient|cairoscaledfont|cairosolidpattern|cairostatus|cairosubpixelorder|' +
-        'cairosurface|cairosurfacepattern|cairosurfacetype|cairosvgsurface|cairosvgversion|cairotoyfontface|cal_days_in_month|cal_from_jd|cal_info|' +
-        'cal_to_jd|calcul_hmac|calculhmac|call_user_func|call_user_func_array|call_user_method|call_user_method_array|callbackfilteriterator|ceil|' +
-        'chdb|chdb_create|chdir|checkdate|checkdnsrr|chgrp|chmod|chop|chown|chr|chroot|chunk_split|class_alias|class_exists|class_implements|' +
-        'class_parents|class_uses|classkit_import|classkit_method_add|classkit_method_copy|classkit_method_redefine|classkit_method_remove|' +
-        'classkit_method_rename|clearstatcache|clone|closedir|closelog|collator|com|com_addref|com_create_guid|com_event_sink|com_get|' +
-        'com_get_active_object|com_invoke|com_isenum|com_load|com_load_typelib|com_message_pump|com_print_typeinfo|com_propget|com_propput|' +
-        'com_propset|com_release|com_set|compact|connection_aborted|connection_status|connection_timeout|constant|construct|construct|construct|' +
-        'convert_cyr_string|convert_uudecode|convert_uuencode|copy|cos|cosh|count|count_chars|countable|counter_bump|counter_bump_value|' +
-        'counter_create|counter_get|counter_get_meta|counter_get_named|counter_get_value|counter_reset|counter_reset_value|crack_check|' +
-        'crack_closedict|crack_getlastmessage|crack_opendict|crc32|create_function|crypt|ctype_alnum|ctype_alpha|ctype_cntrl|ctype_digit|' +
-        'ctype_graph|ctype_lower|ctype_print|ctype_punct|ctype_space|ctype_upper|ctype_xdigit|cubrid_affected_rows|cubrid_bind|' +
-        'cubrid_client_encoding|cubrid_close|cubrid_close_prepare|cubrid_close_request|cubrid_col_get|cubrid_col_size|cubrid_column_names|' +
-        'cubrid_column_types|cubrid_commit|cubrid_connect|cubrid_connect_with_url|cubrid_current_oid|cubrid_data_seek|cubrid_db_name|' +
-        'cubrid_disconnect|cubrid_drop|cubrid_errno|cubrid_error|cubrid_error_code|cubrid_error_code_facility|cubrid_error_msg|cubrid_execute|' +
-        'cubrid_fetch|cubrid_fetch_array|cubrid_fetch_assoc|cubrid_fetch_field|cubrid_fetch_lengths|cubrid_fetch_object|cubrid_fetch_row|' +
-        'cubrid_field_flags|cubrid_field_len|cubrid_field_name|cubrid_field_seek|cubrid_field_table|cubrid_field_type|cubrid_free_result|' +
-        'cubrid_get|cubrid_get_autocommit|cubrid_get_charset|cubrid_get_class_name|cubrid_get_client_info|cubrid_get_db_parameter|' +
-        'cubrid_get_server_info|cubrid_insert_id|cubrid_is_instance|cubrid_list_dbs|cubrid_load_from_glo|cubrid_lob_close|cubrid_lob_export|' +
-        'cubrid_lob_get|cubrid_lob_send|cubrid_lob_size|cubrid_lock_read|cubrid_lock_write|cubrid_move_cursor|cubrid_new_glo|cubrid_next_result|' +
-        'cubrid_num_cols|cubrid_num_fields|cubrid_num_rows|cubrid_ping|cubrid_prepare|cubrid_put|cubrid_query|cubrid_real_escape_string|' +
-        'cubrid_result|cubrid_rollback|cubrid_save_to_glo|cubrid_schema|cubrid_send_glo|cubrid_seq_drop|cubrid_seq_insert|cubrid_seq_put|' +
-        'cubrid_set_add|cubrid_set_autocommit|cubrid_set_db_parameter|cubrid_set_drop|cubrid_unbuffered_query|cubrid_version|curl_close|' +
-        'curl_copy_handle|curl_errno|curl_error|curl_exec|curl_getinfo|curl_init|curl_multi_add_handle|curl_multi_close|curl_multi_exec|' +
-        'curl_multi_getcontent|curl_multi_info_read|curl_multi_init|curl_multi_remove_handle|curl_multi_select|curl_setopt|curl_setopt_array|' +
-        'curl_version|current|cyrus_authenticate|cyrus_bind|cyrus_close|cyrus_connect|cyrus_query|cyrus_unbind|date|date_add|date_create|' +
-        'date_create_from_format|date_date_set|date_default_timezone_get|date_default_timezone_set|date_diff|date_format|date_get_last_errors|' +
-        'date_interval_create_from_date_string|date_interval_format|date_isodate_set|date_modify|date_offset_get|date_parse|date_parse_from_format|' +
-        'date_sub|date_sun_info|date_sunrise|date_sunset|date_time_set|date_timestamp_get|date_timestamp_set|date_timezone_get|date_timezone_set|' +
-        'dateinterval|dateperiod|datetime|datetimezone|db2_autocommit|db2_bind_param|db2_client_info|db2_close|db2_column_privileges|db2_columns|' +
-        'db2_commit|db2_conn_error|db2_conn_errormsg|db2_connect|db2_cursor_type|db2_escape_string|db2_exec|db2_execute|db2_fetch_array|' +
-        'db2_fetch_assoc|db2_fetch_both|db2_fetch_object|db2_fetch_row|db2_field_display_size|db2_field_name|db2_field_num|db2_field_precision|' +
-        'db2_field_scale|db2_field_type|db2_field_width|db2_foreign_keys|db2_free_result|db2_free_stmt|db2_get_option|db2_last_insert_id|' +
-        'db2_lob_read|db2_next_result|db2_num_fields|db2_num_rows|db2_pclose|db2_pconnect|db2_prepare|db2_primary_keys|db2_procedure_columns|' +
-        'db2_procedures|db2_result|db2_rollback|db2_server_info|db2_set_option|db2_special_columns|db2_statistics|db2_stmt_error|db2_stmt_errormsg|' +
-        'db2_table_privileges|db2_tables|dba_close|dba_delete|dba_exists|dba_fetch|dba_firstkey|dba_handlers|dba_insert|dba_key_split|dba_list|' +
-        'dba_nextkey|dba_open|dba_optimize|dba_popen|dba_replace|dba_sync|dbase_add_record|dbase_close|dbase_create|dbase_delete_record|' +
-        'dbase_get_header_info|dbase_get_record|dbase_get_record_with_names|dbase_numfields|dbase_numrecords|dbase_open|dbase_pack|' +
-        'dbase_replace_record|dbplus_add|dbplus_aql|dbplus_chdir|dbplus_close|dbplus_curr|dbplus_errcode|dbplus_errno|dbplus_find|dbplus_first|' +
-        'dbplus_flush|dbplus_freealllocks|dbplus_freelock|dbplus_freerlocks|dbplus_getlock|dbplus_getunique|dbplus_info|dbplus_last|dbplus_lockrel|' +
-        'dbplus_next|dbplus_open|dbplus_prev|dbplus_rchperm|dbplus_rcreate|dbplus_rcrtexact|dbplus_rcrtlike|dbplus_resolve|dbplus_restorepos|' +
-        'dbplus_rkeys|dbplus_ropen|dbplus_rquery|dbplus_rrename|dbplus_rsecindex|dbplus_runlink|dbplus_rzap|dbplus_savepos|dbplus_setindex|' +
-        'dbplus_setindexbynumber|dbplus_sql|dbplus_tcl|dbplus_tremove|dbplus_undo|dbplus_undoprepare|dbplus_unlockrel|dbplus_unselect|' +
-        'dbplus_update|dbplus_xlockrel|dbplus_xunlockrel|dbx_close|dbx_compare|dbx_connect|dbx_error|dbx_escape_string|dbx_fetch_row|dbx_query|' +
-        'dbx_sort|dcgettext|dcngettext|deaggregate|debug_backtrace|debug_print_backtrace|debug_zval_dump|decbin|dechex|decoct|define|' +
-        'define_syslog_variables|defined|deg2rad|delete|dgettext|die|dio_close|dio_fcntl|dio_open|dio_read|dio_seek|dio_stat|dio_tcsetattr|' +
-        'dio_truncate|dio_write|dir|directoryiterator|dirname|disk_free_space|disk_total_space|diskfreespace|dl|dngettext|dns_check_record|' +
-        'dns_get_mx|dns_get_record|dom_import_simplexml|domainexception|domattr|domattribute_name|domattribute_set_value|domattribute_specified|' +
-        'domattribute_value|domcharacterdata|domcomment|domdocument|domdocument_add_root|domdocument_create_attribute|' +
-        'domdocument_create_cdata_section|domdocument_create_comment|domdocument_create_element|domdocument_create_element_ns|' +
-        'domdocument_create_entity_reference|domdocument_create_processing_instruction|domdocument_create_text_node|domdocument_doctype|' +
-        'domdocument_document_element|domdocument_dump_file|domdocument_dump_mem|domdocument_get_element_by_id|domdocument_get_elements_by_tagname|' +
-        'domdocument_html_dump_mem|domdocument_xinclude|domdocumentfragment|domdocumenttype|domdocumenttype_entities|' +
-        'domdocumenttype_internal_subset|domdocumenttype_name|domdocumenttype_notations|domdocumenttype_public_id|domdocumenttype_system_id|' +
-        'domelement|domelement_get_attribute|domelement_get_attribute_node|domelement_get_elements_by_tagname|domelement_has_attribute|' +
-        'domelement_remove_attribute|domelement_set_attribute|domelement_set_attribute_node|domelement_tagname|domentity|domentityreference|' +
-        'domexception|domimplementation|domnamednodemap|domnode|domnode_add_namespace|domnode_append_child|domnode_append_sibling|' +
-        'domnode_attributes|domnode_child_nodes|domnode_clone_node|domnode_dump_node|domnode_first_child|domnode_get_content|' +
-        'domnode_has_attributes|domnode_has_child_nodes|domnode_insert_before|domnode_is_blank_node|domnode_last_child|domnode_next_sibling|' +
-        'domnode_node_name|domnode_node_type|domnode_node_value|domnode_owner_document|domnode_parent_node|domnode_prefix|domnode_previous_sibling|' +
-        'domnode_remove_child|domnode_replace_child|domnode_replace_node|domnode_set_content|domnode_set_name|domnode_set_namespace|' +
-        'domnode_unlink_node|domnodelist|domnotation|domprocessinginstruction|domprocessinginstruction_data|domprocessinginstruction_target|' +
-        'domtext|domxml_new_doc|domxml_open_file|domxml_open_mem|domxml_version|domxml_xmltree|domxml_xslt_stylesheet|domxml_xslt_stylesheet_doc|' +
-        'domxml_xslt_stylesheet_file|domxml_xslt_version|domxpath|domxsltstylesheet_process|domxsltstylesheet_result_dump_file|' +
-        'domxsltstylesheet_result_dump_mem|dotnet|dotnet_load|doubleval|each|easter_date|easter_days|echo|empty|emptyiterator|' +
-        'enchant_broker_describe|enchant_broker_dict_exists|enchant_broker_free|enchant_broker_free_dict|enchant_broker_get_error|' +
-        'enchant_broker_init|enchant_broker_list_dicts|enchant_broker_request_dict|enchant_broker_request_pwl_dict|enchant_broker_set_ordering|' +
-        'enchant_dict_add_to_personal|enchant_dict_add_to_session|enchant_dict_check|enchant_dict_describe|enchant_dict_get_error|' +
-        'enchant_dict_is_in_session|enchant_dict_quick_check|enchant_dict_store_replacement|enchant_dict_suggest|end|ereg|ereg_replace|eregi|' +
-        'eregi_replace|error_get_last|error_log|error_reporting|errorexception|escapeshellarg|escapeshellcmd|eval|event_add|event_base_free|' +
-        'event_base_loop|event_base_loopbreak|event_base_loopexit|event_base_new|event_base_priority_init|event_base_set|event_buffer_base_set|' +
-        'event_buffer_disable|event_buffer_enable|event_buffer_fd_set|event_buffer_free|event_buffer_new|event_buffer_priority_set|' +
-        'event_buffer_read|event_buffer_set_callback|event_buffer_timeout_set|event_buffer_watermark_set|event_buffer_write|event_del|event_free|' +
-        'event_new|event_set|exception|exec|exif_imagetype|exif_read_data|exif_tagname|exif_thumbnail|exit|exp|expect_expectl|expect_popen|explode|' +
-        'expm1|export|export|extension_loaded|extract|ezmlm_hash|fam_cancel_monitor|fam_close|fam_monitor_collection|fam_monitor_directory|' +
-        'fam_monitor_file|fam_next_event|fam_open|fam_pending|fam_resume_monitor|fam_suspend_monitor|fbsql_affected_rows|fbsql_autocommit|' +
-        'fbsql_blob_size|fbsql_change_user|fbsql_clob_size|fbsql_close|fbsql_commit|fbsql_connect|fbsql_create_blob|fbsql_create_clob|' +
-        'fbsql_create_db|fbsql_data_seek|fbsql_database|fbsql_database_password|fbsql_db_query|fbsql_db_status|fbsql_drop_db|fbsql_errno|' +
-        'fbsql_error|fbsql_fetch_array|fbsql_fetch_assoc|fbsql_fetch_field|fbsql_fetch_lengths|fbsql_fetch_object|fbsql_fetch_row|' +
-        'fbsql_field_flags|fbsql_field_len|fbsql_field_name|fbsql_field_seek|fbsql_field_table|fbsql_field_type|fbsql_free_result|' +
-        'fbsql_get_autostart_info|fbsql_hostname|fbsql_insert_id|fbsql_list_dbs|fbsql_list_fields|fbsql_list_tables|fbsql_next_result|' +
-        'fbsql_num_fields|fbsql_num_rows|fbsql_password|fbsql_pconnect|fbsql_query|fbsql_read_blob|fbsql_read_clob|fbsql_result|fbsql_rollback|' +
-        'fbsql_rows_fetched|fbsql_select_db|fbsql_set_characterset|fbsql_set_lob_mode|fbsql_set_password|fbsql_set_transaction|fbsql_start_db|' +
-        'fbsql_stop_db|fbsql_table_name|fbsql_tablename|fbsql_username|fbsql_warnings|fclose|fdf_add_doc_javascript|fdf_add_template|fdf_close|' +
-        'fdf_create|fdf_enum_values|fdf_errno|fdf_error|fdf_get_ap|fdf_get_attachment|fdf_get_encoding|fdf_get_file|fdf_get_flags|fdf_get_opt|' +
-        'fdf_get_status|fdf_get_value|fdf_get_version|fdf_header|fdf_next_field_name|fdf_open|fdf_open_string|fdf_remove_item|fdf_save|' +
-        'fdf_save_string|fdf_set_ap|fdf_set_encoding|fdf_set_file|fdf_set_flags|fdf_set_javascript_action|fdf_set_on_import_javascript|fdf_set_opt|' +
-        'fdf_set_status|fdf_set_submit_form_action|fdf_set_target_frame|fdf_set_value|fdf_set_version|feof|fflush|fgetc|fgetcsv|fgets|fgetss|file|' +
-        'file_exists|file_get_contents|file_put_contents|fileatime|filectime|filegroup|fileinode|filemtime|fileowner|fileperms|filepro|' +
-        'filepro_fieldcount|filepro_fieldname|filepro_fieldtype|filepro_fieldwidth|filepro_retrieve|filepro_rowcount|filesize|filesystemiterator|' +
-        'filetype|filter_has_var|filter_id|filter_input|filter_input_array|filter_list|filter_var|filter_var_array|filteriterator|finfo_buffer|' +
-        'finfo_close|finfo_file|finfo_open|finfo_set_flags|floatval|flock|floor|flush|fmod|fnmatch|fopen|forward_static_call|' +
-        'forward_static_call_array|fpassthru|fprintf|fputcsv|fputs|fread|frenchtojd|fribidi_log2vis|fscanf|fseek|fsockopen|fstat|ftell|ftok|' +
-        'ftp_alloc|ftp_cdup|ftp_chdir|ftp_chmod|ftp_close|ftp_connect|ftp_delete|ftp_exec|ftp_fget|ftp_fput|ftp_get|ftp_get_option|ftp_login|' +
-        'ftp_mdtm|ftp_mkdir|ftp_nb_continue|ftp_nb_fget|ftp_nb_fput|ftp_nb_get|ftp_nb_put|ftp_nlist|ftp_pasv|ftp_put|ftp_pwd|ftp_quit|ftp_raw|' +
-        'ftp_rawlist|ftp_rename|ftp_rmdir|ftp_set_option|ftp_site|ftp_size|ftp_ssl_connect|ftp_systype|ftruncate|func_get_arg|func_get_args|' +
-        'func_num_args|function_exists|fwrite|gc_collect_cycles|gc_disable|gc_enable|gc_enabled|gd_info|gearmanclient|gearmanjob|gearmantask|' +
-        'gearmanworker|geoip_continent_code_by_name|geoip_country_code3_by_name|geoip_country_code_by_name|geoip_country_name_by_name|' +
-        'geoip_database_info|geoip_db_avail|geoip_db_filename|geoip_db_get_all_info|geoip_id_by_name|geoip_isp_by_name|geoip_org_by_name|' +
-        'geoip_record_by_name|geoip_region_by_name|geoip_region_name_by_code|geoip_time_zone_by_country_and_region|getMeta|getNamed|getValue|' +
-        'get_browser|get_called_class|get_cfg_var|get_class|get_class_methods|get_class_vars|get_current_user|get_declared_classes|' +
-        'get_declared_interfaces|get_declared_traits|get_defined_constants|get_defined_functions|get_defined_vars|get_extension_funcs|get_headers|' +
-        'get_html_translation_table|get_include_path|get_included_files|get_loaded_extensions|get_magic_quotes_gpc|get_magic_quotes_runtime|' +
-        'get_meta_tags|get_object_vars|get_parent_class|get_required_files|get_resource_type|getallheaders|getconstant|getconstants|getconstructor|' +
-        'getcwd|getdate|getdefaultproperties|getdoccomment|getendline|getenv|getextension|getextensionname|getfilename|gethostbyaddr|gethostbyname|' +
-        'gethostbynamel|gethostname|getimagesize|getinterfacenames|getinterfaces|getlastmod|getmethod|getmethods|getmodifiers|getmxrr|getmygid|' +
-        'getmyinode|getmypid|getmyuid|getname|getnamespacename|getopt|getparentclass|getproperties|getproperty|getprotobyname|getprotobynumber|' +
-        'getrandmax|getrusage|getservbyname|getservbyport|getshortname|getstartline|getstaticproperties|getstaticpropertyvalue|gettext|' +
-        'gettimeofday|gettype|glob|globiterator|gmagick|gmagickdraw|gmagickpixel|gmdate|gmmktime|gmp_abs|gmp_add|gmp_and|gmp_clrbit|gmp_cmp|' +
-        'gmp_com|gmp_div|gmp_div_q|gmp_div_qr|gmp_div_r|gmp_divexact|gmp_fact|gmp_gcd|gmp_gcdext|gmp_hamdist|gmp_init|gmp_intval|gmp_invert|' +
-        'gmp_jacobi|gmp_legendre|gmp_mod|gmp_mul|gmp_neg|gmp_nextprime|gmp_or|gmp_perfect_square|gmp_popcount|gmp_pow|gmp_powm|gmp_prob_prime|' +
-        'gmp_random|gmp_scan0|gmp_scan1|gmp_setbit|gmp_sign|gmp_sqrt|gmp_sqrtrem|gmp_strval|gmp_sub|gmp_testbit|gmp_xor|gmstrftime|' +
-        'gnupg_adddecryptkey|gnupg_addencryptkey|gnupg_addsignkey|gnupg_cleardecryptkeys|gnupg_clearencryptkeys|gnupg_clearsignkeys|gnupg_decrypt|' +
-        'gnupg_decryptverify|gnupg_encrypt|gnupg_encryptsign|gnupg_export|gnupg_geterror|gnupg_getprotocol|gnupg_import|gnupg_init|gnupg_keyinfo|' +
-        'gnupg_setarmor|gnupg_seterrormode|gnupg_setsignmode|gnupg_sign|gnupg_verify|gopher_parsedir|grapheme_extract|grapheme_stripos|' +
-        'grapheme_stristr|grapheme_strlen|grapheme_strpos|grapheme_strripos|grapheme_strrpos|grapheme_strstr|grapheme_substr|gregoriantojd|' +
-        'gupnp_context_get_host_ip|gupnp_context_get_port|gupnp_context_get_subscription_timeout|gupnp_context_host_path|gupnp_context_new|' +
-        'gupnp_context_set_subscription_timeout|gupnp_context_timeout_add|gupnp_context_unhost_path|gupnp_control_point_browse_start|' +
-        'gupnp_control_point_browse_stop|gupnp_control_point_callback_set|gupnp_control_point_new|gupnp_device_action_callback_set|' +
-        'gupnp_device_info_get|gupnp_device_info_get_service|gupnp_root_device_get_available|gupnp_root_device_get_relative_location|' +
-        'gupnp_root_device_new|gupnp_root_device_set_available|gupnp_root_device_start|gupnp_root_device_stop|gupnp_service_action_get|' +
-        'gupnp_service_action_return|gupnp_service_action_return_error|gupnp_service_action_set|gupnp_service_freeze_notify|gupnp_service_info_get|' +
-        'gupnp_service_info_get_introspection|gupnp_service_introspection_get_state_variable|gupnp_service_notify|gupnp_service_proxy_action_get|' +
-        'gupnp_service_proxy_action_set|gupnp_service_proxy_add_notify|gupnp_service_proxy_callback_set|gupnp_service_proxy_get_subscribed|' +
-        'gupnp_service_proxy_remove_notify|gupnp_service_proxy_set_subscribed|gupnp_service_thaw_notify|gzclose|gzcompress|gzdecode|gzdeflate|' +
-        'gzencode|gzeof|gzfile|gzgetc|gzgets|gzgetss|gzinflate|gzopen|gzpassthru|gzputs|gzread|gzrewind|gzseek|gztell|gzuncompress|gzwrite|' +
-        'halt_compiler|haruannotation|haruannotation_setborderstyle|haruannotation_sethighlightmode|haruannotation_seticon|' +
-        'haruannotation_setopened|harudestination|harudestination_setfit|harudestination_setfitb|harudestination_setfitbh|harudestination_setfitbv|' +
-        'harudestination_setfith|harudestination_setfitr|harudestination_setfitv|harudestination_setxyz|harudoc|harudoc_addpage|' +
-        'harudoc_addpagelabel|harudoc_construct|harudoc_createoutline|harudoc_getcurrentencoder|harudoc_getcurrentpage|harudoc_getencoder|' +
-        'harudoc_getfont|harudoc_getinfoattr|harudoc_getpagelayout|harudoc_getpagemode|harudoc_getstreamsize|harudoc_insertpage|harudoc_loadjpeg|' +
-        'harudoc_loadpng|harudoc_loadraw|harudoc_loadttc|harudoc_loadttf|harudoc_loadtype1|harudoc_output|harudoc_readfromstream|' +
-        'harudoc_reseterror|harudoc_resetstream|harudoc_save|harudoc_savetostream|harudoc_setcompressionmode|harudoc_setcurrentencoder|' +
-        'harudoc_setencryptionmode|harudoc_setinfoattr|harudoc_setinfodateattr|harudoc_setopenaction|harudoc_setpagelayout|harudoc_setpagemode|' +
-        'harudoc_setpagesconfiguration|harudoc_setpassword|harudoc_setpermission|harudoc_usecnsencodings|harudoc_usecnsfonts|' +
-        'harudoc_usecntencodings|harudoc_usecntfonts|harudoc_usejpencodings|harudoc_usejpfonts|harudoc_usekrencodings|harudoc_usekrfonts|' +
-        'haruencoder|haruencoder_getbytetype|haruencoder_gettype|haruencoder_getunicode|haruencoder_getwritingmode|haruexception|harufont|' +
-        'harufont_getascent|harufont_getcapheight|harufont_getdescent|harufont_getencodingname|harufont_getfontname|harufont_gettextwidth|' +
-        'harufont_getunicodewidth|harufont_getxheight|harufont_measuretext|haruimage|haruimage_getbitspercomponent|haruimage_getcolorspace|' +
-        'haruimage_getheight|haruimage_getsize|haruimage_getwidth|haruimage_setcolormask|haruimage_setmaskimage|haruoutline|' +
-        'haruoutline_setdestination|haruoutline_setopened|harupage|harupage_arc|harupage_begintext|harupage_circle|harupage_closepath|' +
-        'harupage_concat|harupage_createdestination|harupage_createlinkannotation|harupage_createtextannotation|harupage_createurlannotation|' +
-        'harupage_curveto|harupage_curveto2|harupage_curveto3|harupage_drawimage|harupage_ellipse|harupage_endpath|harupage_endtext|' +
-        'harupage_eofill|harupage_eofillstroke|harupage_fill|harupage_fillstroke|harupage_getcharspace|harupage_getcmykfill|harupage_getcmykstroke|' +
-        'harupage_getcurrentfont|harupage_getcurrentfontsize|harupage_getcurrentpos|harupage_getcurrenttextpos|harupage_getdash|' +
-        'harupage_getfillingcolorspace|harupage_getflatness|harupage_getgmode|harupage_getgrayfill|harupage_getgraystroke|harupage_getheight|' +
-        'harupage_gethorizontalscaling|harupage_getlinecap|harupage_getlinejoin|harupage_getlinewidth|harupage_getmiterlimit|harupage_getrgbfill|' +
-        'harupage_getrgbstroke|harupage_getstrokingcolorspace|harupage_gettextleading|harupage_gettextmatrix|harupage_gettextrenderingmode|' +
-        'harupage_gettextrise|harupage_gettextwidth|harupage_gettransmatrix|harupage_getwidth|harupage_getwordspace|harupage_lineto|' +
-        'harupage_measuretext|harupage_movetextpos|harupage_moveto|harupage_movetonextline|harupage_rectangle|harupage_setcharspace|' +
-        'harupage_setcmykfill|harupage_setcmykstroke|harupage_setdash|harupage_setflatness|harupage_setfontandsize|harupage_setgrayfill|' +
-        'harupage_setgraystroke|harupage_setheight|harupage_sethorizontalscaling|harupage_setlinecap|harupage_setlinejoin|harupage_setlinewidth|' +
-        'harupage_setmiterlimit|harupage_setrgbfill|harupage_setrgbstroke|harupage_setrotate|harupage_setsize|harupage_setslideshow|' +
-        'harupage_settextleading|harupage_settextmatrix|harupage_settextrenderingmode|harupage_settextrise|harupage_setwidth|harupage_setwordspace|' +
-        'harupage_showtext|harupage_showtextnextline|harupage_stroke|harupage_textout|harupage_textrect|hasconstant|hash|hash_algos|hash_copy|' +
-        'hash_file|hash_final|hash_hmac|hash_hmac_file|hash_init|hash_update|hash_update_file|hash_update_stream|hasmethod|hasproperty|header|' +
-        'header_register_callback|header_remove|headers_list|headers_sent|hebrev|hebrevc|hex2bin|hexdec|highlight_file|highlight_string|' +
-        'html_entity_decode|htmlentities|htmlspecialchars|htmlspecialchars_decode|http_build_cookie|http_build_query|http_build_str|http_build_url|' +
-        'http_cache_etag|http_cache_last_modified|http_chunked_decode|http_date|http_deflate|http_get|http_get_request_body|' +
-        'http_get_request_body_stream|http_get_request_headers|http_head|http_inflate|http_match_etag|http_match_modified|' +
-        'http_match_request_header|http_negotiate_charset|http_negotiate_content_type|http_negotiate_language|http_parse_cookie|http_parse_headers|' +
-        'http_parse_message|http_parse_params|http_persistent_handles_clean|http_persistent_handles_count|http_persistent_handles_ident|' +
-        'http_post_data|http_post_fields|http_put_data|http_put_file|http_put_stream|http_redirect|http_request|http_request_body_encode|' +
-        'http_request_method_exists|http_request_method_name|http_request_method_register|http_request_method_unregister|http_response_code|' +
-        'http_send_content_disposition|http_send_content_type|http_send_data|http_send_file|http_send_last_modified|http_send_status|' +
-        'http_send_stream|http_support|http_throttle|httpdeflatestream|httpdeflatestream_construct|httpdeflatestream_factory|' +
-        'httpdeflatestream_finish|httpdeflatestream_flush|httpdeflatestream_update|httpinflatestream|httpinflatestream_construct|' +
-        'httpinflatestream_factory|httpinflatestream_finish|httpinflatestream_flush|httpinflatestream_update|httpmessage|httpmessage_addheaders|' +
-        'httpmessage_construct|httpmessage_detach|httpmessage_factory|httpmessage_fromenv|httpmessage_fromstring|httpmessage_getbody|' +
-        'httpmessage_getheader|httpmessage_getheaders|httpmessage_gethttpversion|httpmessage_getparentmessage|httpmessage_getrequestmethod|' +
-        'httpmessage_getrequesturl|httpmessage_getresponsecode|httpmessage_getresponsestatus|httpmessage_gettype|httpmessage_guesscontenttype|' +
-        'httpmessage_prepend|httpmessage_reverse|httpmessage_send|httpmessage_setbody|httpmessage_setheaders|httpmessage_sethttpversion|' +
-        'httpmessage_setrequestmethod|httpmessage_setrequesturl|httpmessage_setresponsecode|httpmessage_setresponsestatus|httpmessage_settype|' +
-        'httpmessage_tomessagetypeobject|httpmessage_tostring|httpquerystring|httpquerystring_construct|httpquerystring_get|httpquerystring_mod|' +
-        'httpquerystring_set|httpquerystring_singleton|httpquerystring_toarray|httpquerystring_tostring|httpquerystring_xlate|httprequest|' +
-        'httprequest_addcookies|httprequest_addheaders|httprequest_addpostfields|httprequest_addpostfile|httprequest_addputdata|' +
-        'httprequest_addquerydata|httprequest_addrawpostdata|httprequest_addssloptions|httprequest_clearhistory|httprequest_construct|' +
-        'httprequest_enablecookies|httprequest_getcontenttype|httprequest_getcookies|httprequest_getheaders|httprequest_gethistory|' +
-        'httprequest_getmethod|httprequest_getoptions|httprequest_getpostfields|httprequest_getpostfiles|httprequest_getputdata|' +
-        'httprequest_getputfile|httprequest_getquerydata|httprequest_getrawpostdata|httprequest_getrawrequestmessage|' +
-        'httprequest_getrawresponsemessage|httprequest_getrequestmessage|httprequest_getresponsebody|httprequest_getresponsecode|' +
-        'httprequest_getresponsecookies|httprequest_getresponsedata|httprequest_getresponseheader|httprequest_getresponseinfo|' +
-        'httprequest_getresponsemessage|httprequest_getresponsestatus|httprequest_getssloptions|httprequest_geturl|httprequest_resetcookies|' +
-        'httprequest_send|httprequest_setcontenttype|httprequest_setcookies|httprequest_setheaders|httprequest_setmethod|httprequest_setoptions|' +
-        'httprequest_setpostfields|httprequest_setpostfiles|httprequest_setputdata|httprequest_setputfile|httprequest_setquerydata|' +
-        'httprequest_setrawpostdata|httprequest_setssloptions|httprequest_seturl|httprequestpool|httprequestpool_attach|httprequestpool_construct|' +
-        'httprequestpool_destruct|httprequestpool_detach|httprequestpool_getattachedrequests|httprequestpool_getfinishedrequests|' +
-        'httprequestpool_reset|httprequestpool_send|httprequestpool_socketperform|httprequestpool_socketselect|httpresponse|httpresponse_capture|' +
-        'httpresponse_getbuffersize|httpresponse_getcache|httpresponse_getcachecontrol|httpresponse_getcontentdisposition|' +
-        'httpresponse_getcontenttype|httpresponse_getdata|httpresponse_getetag|httpresponse_getfile|httpresponse_getgzip|httpresponse_getheader|' +
-        'httpresponse_getlastmodified|httpresponse_getrequestbody|httpresponse_getrequestbodystream|httpresponse_getrequestheaders|' +
-        'httpresponse_getstream|httpresponse_getthrottledelay|httpresponse_guesscontenttype|httpresponse_redirect|httpresponse_send|' +
-        'httpresponse_setbuffersize|httpresponse_setcache|httpresponse_setcachecontrol|httpresponse_setcontentdisposition|' +
-        'httpresponse_setcontenttype|httpresponse_setdata|httpresponse_setetag|httpresponse_setfile|httpresponse_setgzip|httpresponse_setheader|' +
-        'httpresponse_setlastmodified|httpresponse_setstream|httpresponse_setthrottledelay|httpresponse_status|hw_array2objrec|hw_changeobject|' +
-        'hw_children|hw_childrenobj|hw_close|hw_connect|hw_connection_info|hw_cp|hw_deleteobject|hw_docbyanchor|hw_docbyanchorobj|' +
-        'hw_document_attributes|hw_document_bodytag|hw_document_content|hw_document_setcontent|hw_document_size|hw_dummy|hw_edittext|hw_error|' +
-        'hw_errormsg|hw_free_document|hw_getanchors|hw_getanchorsobj|hw_getandlock|hw_getchildcoll|hw_getchildcollobj|hw_getchilddoccoll|' +
-        'hw_getchilddoccollobj|hw_getobject|hw_getobjectbyquery|hw_getobjectbyquerycoll|hw_getobjectbyquerycollobj|hw_getobjectbyqueryobj|' +
-        'hw_getparents|hw_getparentsobj|hw_getrellink|hw_getremote|hw_getremotechildren|hw_getsrcbydestobj|hw_gettext|hw_getusername|hw_identify|' +
-        'hw_incollections|hw_info|hw_inscoll|hw_insdoc|hw_insertanchors|hw_insertdocument|hw_insertobject|hw_mapid|hw_modifyobject|hw_mv|' +
-        'hw_new_document|hw_objrec2array|hw_output_document|hw_pconnect|hw_pipedocument|hw_root|hw_setlinkroot|hw_stat|hw_unlock|hw_who|' +
-        'hwapi_attribute|hwapi_attribute_key|hwapi_attribute_langdepvalue|hwapi_attribute_value|hwapi_attribute_values|hwapi_checkin|' +
-        'hwapi_checkout|hwapi_children|hwapi_content|hwapi_content_mimetype|hwapi_content_read|hwapi_copy|hwapi_dbstat|hwapi_dcstat|' +
-        'hwapi_dstanchors|hwapi_dstofsrcanchor|hwapi_error_count|hwapi_error_reason|hwapi_find|hwapi_ftstat|hwapi_hgcsp|hwapi_hwstat|' +
-        'hwapi_identify|hwapi_info|hwapi_insert|hwapi_insertanchor|hwapi_insertcollection|hwapi_insertdocument|hwapi_link|hwapi_lock|hwapi_move|' +
-        'hwapi_new_content|hwapi_object|hwapi_object_assign|hwapi_object_attreditable|hwapi_object_count|hwapi_object_insert|hwapi_object_new|' +
-        'hwapi_object_remove|hwapi_object_title|hwapi_object_value|hwapi_objectbyanchor|hwapi_parents|hwapi_reason_description|hwapi_reason_type|' +
-        'hwapi_remove|hwapi_replace|hwapi_setcommittedversion|hwapi_srcanchors|hwapi_srcsofdst|hwapi_unlock|hwapi_user|hwapi_userlist|hypot|' +
-        'ibase_add_user|ibase_affected_rows|ibase_backup|ibase_blob_add|ibase_blob_cancel|ibase_blob_close|ibase_blob_create|ibase_blob_echo|' +
-        'ibase_blob_get|ibase_blob_import|ibase_blob_info|ibase_blob_open|ibase_close|ibase_commit|ibase_commit_ret|ibase_connect|ibase_db_info|' +
-        'ibase_delete_user|ibase_drop_db|ibase_errcode|ibase_errmsg|ibase_execute|ibase_fetch_assoc|ibase_fetch_object|ibase_fetch_row|' +
-        'ibase_field_info|ibase_free_event_handler|ibase_free_query|ibase_free_result|ibase_gen_id|ibase_maintain_db|ibase_modify_user|' +
-        'ibase_name_result|ibase_num_fields|ibase_num_params|ibase_param_info|ibase_pconnect|ibase_prepare|ibase_query|ibase_restore|' +
-        'ibase_rollback|ibase_rollback_ret|ibase_server_info|ibase_service_attach|ibase_service_detach|ibase_set_event_handler|ibase_timefmt|' +
-        'ibase_trans|ibase_wait_event|iconv|iconv_get_encoding|iconv_mime_decode|iconv_mime_decode_headers|iconv_mime_encode|iconv_set_encoding|' +
-        'iconv_strlen|iconv_strpos|iconv_strrpos|iconv_substr|id3_get_frame_long_name|id3_get_frame_short_name|id3_get_genre_id|id3_get_genre_list|' +
-        'id3_get_genre_name|id3_get_tag|id3_get_version|id3_remove_tag|id3_set_tag|id3v2attachedpictureframe|id3v2frame|id3v2tag|idate|' +
-        'idn_to_ascii|idn_to_unicode|idn_to_utf8|ifx_affected_rows|ifx_blobinfile_mode|ifx_byteasvarchar|ifx_close|ifx_connect|ifx_copy_blob|' +
-        'ifx_create_blob|ifx_create_char|ifx_do|ifx_error|ifx_errormsg|ifx_fetch_row|ifx_fieldproperties|ifx_fieldtypes|ifx_free_blob|' +
-        'ifx_free_char|ifx_free_result|ifx_get_blob|ifx_get_char|ifx_getsqlca|ifx_htmltbl_result|ifx_nullformat|ifx_num_fields|ifx_num_rows|' +
-        'ifx_pconnect|ifx_prepare|ifx_query|ifx_textasvarchar|ifx_update_blob|ifx_update_char|ifxus_close_slob|ifxus_create_slob|ifxus_free_slob|' +
-        'ifxus_open_slob|ifxus_read_slob|ifxus_seek_slob|ifxus_tell_slob|ifxus_write_slob|ignore_user_abort|iis_add_server|iis_get_dir_security|' +
-        'iis_get_script_map|iis_get_server_by_comment|iis_get_server_by_path|iis_get_server_rights|iis_get_service_state|iis_remove_server|' +
-        'iis_set_app_settings|iis_set_dir_security|iis_set_script_map|iis_set_server_rights|iis_start_server|iis_start_service|iis_stop_server|' +
-        'iis_stop_service|image2wbmp|image_type_to_extension|image_type_to_mime_type|imagealphablending|imageantialias|imagearc|imagechar|' +
-        'imagecharup|imagecolorallocate|imagecolorallocatealpha|imagecolorat|imagecolorclosest|imagecolorclosestalpha|imagecolorclosesthwb|' +
-        'imagecolordeallocate|imagecolorexact|imagecolorexactalpha|imagecolormatch|imagecolorresolve|imagecolorresolvealpha|imagecolorset|' +
-        'imagecolorsforindex|imagecolorstotal|imagecolortransparent|imageconvolution|imagecopy|imagecopymerge|imagecopymergegray|' +
-        'imagecopyresampled|imagecopyresized|imagecreate|imagecreatefromgd|imagecreatefromgd2|imagecreatefromgd2part|imagecreatefromgif|' +
-        'imagecreatefromjpeg|imagecreatefrompng|imagecreatefromstring|imagecreatefromwbmp|imagecreatefromxbm|imagecreatefromxpm|' +
-        'imagecreatetruecolor|imagedashedline|imagedestroy|imageellipse|imagefill|imagefilledarc|imagefilledellipse|imagefilledpolygon|' +
-        'imagefilledrectangle|imagefilltoborder|imagefilter|imagefontheight|imagefontwidth|imageftbbox|imagefttext|imagegammacorrect|imagegd|' +
-        'imagegd2|imagegif|imagegrabscreen|imagegrabwindow|imageinterlace|imageistruecolor|imagejpeg|imagelayereffect|imageline|imageloadfont|' +
-        'imagepalettecopy|imagepng|imagepolygon|imagepsbbox|imagepsencodefont|imagepsextendfont|imagepsfreefont|imagepsloadfont|imagepsslantfont|' +
-        'imagepstext|imagerectangle|imagerotate|imagesavealpha|imagesetbrush|imagesetpixel|imagesetstyle|imagesetthickness|imagesettile|' +
-        'imagestring|imagestringup|imagesx|imagesy|imagetruecolortopalette|imagettfbbox|imagettftext|imagetypes|imagewbmp|imagexbm|imagick|' +
-        'imagick_adaptiveblurimage|imagick_adaptiveresizeimage|imagick_adaptivesharpenimage|imagick_adaptivethresholdimage|imagick_addimage|' +
-        'imagick_addnoiseimage|imagick_affinetransformimage|imagick_animateimages|imagick_annotateimage|imagick_appendimages|imagick_averageimages|' +
-        'imagick_blackthresholdimage|imagick_blurimage|imagick_borderimage|imagick_charcoalimage|imagick_chopimage|imagick_clear|imagick_clipimage|' +
-        'imagick_clippathimage|imagick_clone|imagick_clutimage|imagick_coalesceimages|imagick_colorfloodfillimage|imagick_colorizeimage|' +
-        'imagick_combineimages|imagick_commentimage|imagick_compareimagechannels|imagick_compareimagelayers|imagick_compareimages|' +
-        'imagick_compositeimage|imagick_construct|imagick_contrastimage|imagick_contraststretchimage|imagick_convolveimage|imagick_cropimage|' +
-        'imagick_cropthumbnailimage|imagick_current|imagick_cyclecolormapimage|imagick_decipherimage|imagick_deconstructimages|' +
-        'imagick_deleteimageartifact|imagick_despeckleimage|imagick_destroy|imagick_displayimage|imagick_displayimages|imagick_distortimage|' +
-        'imagick_drawimage|imagick_edgeimage|imagick_embossimage|imagick_encipherimage|imagick_enhanceimage|imagick_equalizeimage|' +
-        'imagick_evaluateimage|imagick_extentimage|imagick_flattenimages|imagick_flipimage|imagick_floodfillpaintimage|imagick_flopimage|' +
-        'imagick_frameimage|imagick_fximage|imagick_gammaimage|imagick_gaussianblurimage|imagick_getcolorspace|imagick_getcompression|' +
-        'imagick_getcompressionquality|imagick_getcopyright|imagick_getfilename|imagick_getfont|imagick_getformat|imagick_getgravity|' +
-        'imagick_gethomeurl|imagick_getimage|imagick_getimagealphachannel|imagick_getimageartifact|imagick_getimagebackgroundcolor|' +
-        'imagick_getimageblob|imagick_getimageblueprimary|imagick_getimagebordercolor|imagick_getimagechanneldepth|' +
-        'imagick_getimagechanneldistortion|imagick_getimagechanneldistortions|imagick_getimagechannelextrema|imagick_getimagechannelmean|' +
-        'imagick_getimagechannelrange|imagick_getimagechannelstatistics|imagick_getimageclipmask|imagick_getimagecolormapcolor|' +
-        'imagick_getimagecolors|imagick_getimagecolorspace|imagick_getimagecompose|imagick_getimagecompression|imagick_getimagecompressionquality|' +
-        'imagick_getimagedelay|imagick_getimagedepth|imagick_getimagedispose|imagick_getimagedistortion|imagick_getimageextrema|' +
-        'imagick_getimagefilename|imagick_getimageformat|imagick_getimagegamma|imagick_getimagegeometry|imagick_getimagegravity|' +
-        'imagick_getimagegreenprimary|imagick_getimageheight|imagick_getimagehistogram|imagick_getimageindex|imagick_getimageinterlacescheme|' +
-        'imagick_getimageinterpolatemethod|imagick_getimageiterations|imagick_getimagelength|imagick_getimagemagicklicense|imagick_getimagematte|' +
-        'imagick_getimagemattecolor|imagick_getimageorientation|imagick_getimagepage|imagick_getimagepixelcolor|imagick_getimageprofile|' +
-        'imagick_getimageprofiles|imagick_getimageproperties|imagick_getimageproperty|imagick_getimageredprimary|imagick_getimageregion|' +
-        'imagick_getimagerenderingintent|imagick_getimageresolution|imagick_getimagesblob|imagick_getimagescene|imagick_getimagesignature|' +
-        'imagick_getimagesize|imagick_getimagetickspersecond|imagick_getimagetotalinkdensity|imagick_getimagetype|imagick_getimageunits|' +
-        'imagick_getimagevirtualpixelmethod|imagick_getimagewhitepoint|imagick_getimagewidth|imagick_getinterlacescheme|imagick_getiteratorindex|' +
-        'imagick_getnumberimages|imagick_getoption|imagick_getpackagename|imagick_getpage|imagick_getpixeliterator|imagick_getpixelregioniterator|' +
-        'imagick_getpointsize|imagick_getquantumdepth|imagick_getquantumrange|imagick_getreleasedate|imagick_getresource|imagick_getresourcelimit|' +
-        'imagick_getsamplingfactors|imagick_getsize|imagick_getsizeoffset|imagick_getversion|imagick_hasnextimage|imagick_haspreviousimage|' +
-        'imagick_identifyimage|imagick_implodeimage|imagick_labelimage|imagick_levelimage|imagick_linearstretchimage|imagick_liquidrescaleimage|' +
-        'imagick_magnifyimage|imagick_mapimage|imagick_mattefloodfillimage|imagick_medianfilterimage|imagick_mergeimagelayers|imagick_minifyimage|' +
-        'imagick_modulateimage|imagick_montageimage|imagick_morphimages|imagick_mosaicimages|imagick_motionblurimage|imagick_negateimage|' +
-        'imagick_newimage|imagick_newpseudoimage|imagick_nextimage|imagick_normalizeimage|imagick_oilpaintimage|imagick_opaquepaintimage|' +
-        'imagick_optimizeimagelayers|imagick_orderedposterizeimage|imagick_paintfloodfillimage|imagick_paintopaqueimage|' +
-        'imagick_painttransparentimage|imagick_pingimage|imagick_pingimageblob|imagick_pingimagefile|imagick_polaroidimage|imagick_posterizeimage|' +
-        'imagick_previewimages|imagick_previousimage|imagick_profileimage|imagick_quantizeimage|imagick_quantizeimages|imagick_queryfontmetrics|' +
-        'imagick_queryfonts|imagick_queryformats|imagick_radialblurimage|imagick_raiseimage|imagick_randomthresholdimage|imagick_readimage|' +
-        'imagick_readimageblob|imagick_readimagefile|imagick_recolorimage|imagick_reducenoiseimage|imagick_removeimage|imagick_removeimageprofile|' +
-        'imagick_render|imagick_resampleimage|imagick_resetimagepage|imagick_resizeimage|imagick_rollimage|imagick_rotateimage|' +
-        'imagick_roundcorners|imagick_sampleimage|imagick_scaleimage|imagick_separateimagechannel|imagick_sepiatoneimage|' +
-        'imagick_setbackgroundcolor|imagick_setcolorspace|imagick_setcompression|imagick_setcompressionquality|imagick_setfilename|' +
-        'imagick_setfirstiterator|imagick_setfont|imagick_setformat|imagick_setgravity|imagick_setimage|imagick_setimagealphachannel|' +
-        'imagick_setimageartifact|imagick_setimagebackgroundcolor|imagick_setimagebias|imagick_setimageblueprimary|imagick_setimagebordercolor|' +
-        'imagick_setimagechanneldepth|imagick_setimageclipmask|imagick_setimagecolormapcolor|imagick_setimagecolorspace|imagick_setimagecompose|' +
-        'imagick_setimagecompression|imagick_setimagecompressionquality|imagick_setimagedelay|imagick_setimagedepth|imagick_setimagedispose|' +
-        'imagick_setimageextent|imagick_setimagefilename|imagick_setimageformat|imagick_setimagegamma|imagick_setimagegravity|' +
-        'imagick_setimagegreenprimary|imagick_setimageindex|imagick_setimageinterlacescheme|imagick_setimageinterpolatemethod|' +
-        'imagick_setimageiterations|imagick_setimagematte|imagick_setimagemattecolor|imagick_setimageopacity|imagick_setimageorientation|' +
-        'imagick_setimagepage|imagick_setimageprofile|imagick_setimageproperty|imagick_setimageredprimary|imagick_setimagerenderingintent|' +
-        'imagick_setimageresolution|imagick_setimagescene|imagick_setimagetickspersecond|imagick_setimagetype|imagick_setimageunits|' +
-        'imagick_setimagevirtualpixelmethod|imagick_setimagewhitepoint|imagick_setinterlacescheme|imagick_setiteratorindex|imagick_setlastiterator|' +
-        'imagick_setoption|imagick_setpage|imagick_setpointsize|imagick_setresolution|imagick_setresourcelimit|imagick_setsamplingfactors|' +
-        'imagick_setsize|imagick_setsizeoffset|imagick_settype|imagick_shadeimage|imagick_shadowimage|imagick_sharpenimage|imagick_shaveimage|' +
-        'imagick_shearimage|imagick_sigmoidalcontrastimage|imagick_sketchimage|imagick_solarizeimage|imagick_spliceimage|imagick_spreadimage|' +
-        'imagick_steganoimage|imagick_stereoimage|imagick_stripimage|imagick_swirlimage|imagick_textureimage|imagick_thresholdimage|' +
-        'imagick_thumbnailimage|imagick_tintimage|imagick_transformimage|imagick_transparentpaintimage|imagick_transposeimage|' +
-        'imagick_transverseimage|imagick_trimimage|imagick_uniqueimagecolors|imagick_unsharpmaskimage|imagick_valid|imagick_vignetteimage|' +
-        'imagick_waveimage|imagick_whitethresholdimage|imagick_writeimage|imagick_writeimagefile|imagick_writeimages|imagick_writeimagesfile|' +
-        'imagickdraw|imagickdraw_affine|imagickdraw_annotation|imagickdraw_arc|imagickdraw_bezier|imagickdraw_circle|imagickdraw_clear|' +
-        'imagickdraw_clone|imagickdraw_color|imagickdraw_comment|imagickdraw_composite|imagickdraw_construct|imagickdraw_destroy|' +
-        'imagickdraw_ellipse|imagickdraw_getclippath|imagickdraw_getcliprule|imagickdraw_getclipunits|imagickdraw_getfillcolor|' +
-        'imagickdraw_getfillopacity|imagickdraw_getfillrule|imagickdraw_getfont|imagickdraw_getfontfamily|imagickdraw_getfontsize|' +
-        'imagickdraw_getfontstyle|imagickdraw_getfontweight|imagickdraw_getgravity|imagickdraw_getstrokeantialias|imagickdraw_getstrokecolor|' +
-        'imagickdraw_getstrokedasharray|imagickdraw_getstrokedashoffset|imagickdraw_getstrokelinecap|imagickdraw_getstrokelinejoin|' +
-        'imagickdraw_getstrokemiterlimit|imagickdraw_getstrokeopacity|imagickdraw_getstrokewidth|imagickdraw_gettextalignment|' +
-        'imagickdraw_gettextantialias|imagickdraw_gettextdecoration|imagickdraw_gettextencoding|imagickdraw_gettextundercolor|' +
-        'imagickdraw_getvectorgraphics|imagickdraw_line|imagickdraw_matte|imagickdraw_pathclose|imagickdraw_pathcurvetoabsolute|' +
-        'imagickdraw_pathcurvetoquadraticbezierabsolute|imagickdraw_pathcurvetoquadraticbezierrelative|' +
-        'imagickdraw_pathcurvetoquadraticbeziersmoothabsolute|imagickdraw_pathcurvetoquadraticbeziersmoothrelative|imagickdraw_pathcurvetorelative|' +
-        'imagickdraw_pathcurvetosmoothabsolute|imagickdraw_pathcurvetosmoothrelative|imagickdraw_pathellipticarcabsolute|' +
-        'imagickdraw_pathellipticarcrelative|imagickdraw_pathfinish|imagickdraw_pathlinetoabsolute|imagickdraw_pathlinetohorizontalabsolute|' +
-        'imagickdraw_pathlinetohorizontalrelative|imagickdraw_pathlinetorelative|imagickdraw_pathlinetoverticalabsolute|' +
-        'imagickdraw_pathlinetoverticalrelative|imagickdraw_pathmovetoabsolute|imagickdraw_pathmovetorelative|imagickdraw_pathstart|' +
-        'imagickdraw_point|imagickdraw_polygon|imagickdraw_polyline|imagickdraw_pop|imagickdraw_popclippath|imagickdraw_popdefs|' +
-        'imagickdraw_poppattern|imagickdraw_push|imagickdraw_pushclippath|imagickdraw_pushdefs|imagickdraw_pushpattern|imagickdraw_rectangle|' +
-        'imagickdraw_render|imagickdraw_rotate|imagickdraw_roundrectangle|imagickdraw_scale|imagickdraw_setclippath|imagickdraw_setcliprule|' +
-        'imagickdraw_setclipunits|imagickdraw_setfillalpha|imagickdraw_setfillcolor|imagickdraw_setfillopacity|imagickdraw_setfillpatternurl|' +
-        'imagickdraw_setfillrule|imagickdraw_setfont|imagickdraw_setfontfamily|imagickdraw_setfontsize|imagickdraw_setfontstretch|' +
-        'imagickdraw_setfontstyle|imagickdraw_setfontweight|imagickdraw_setgravity|imagickdraw_setstrokealpha|imagickdraw_setstrokeantialias|' +
-        'imagickdraw_setstrokecolor|imagickdraw_setstrokedasharray|imagickdraw_setstrokedashoffset|imagickdraw_setstrokelinecap|' +
-        'imagickdraw_setstrokelinejoin|imagickdraw_setstrokemiterlimit|imagickdraw_setstrokeopacity|imagickdraw_setstrokepatternurl|' +
-        'imagickdraw_setstrokewidth|imagickdraw_settextalignment|imagickdraw_settextantialias|imagickdraw_settextdecoration|' +
-        'imagickdraw_settextencoding|imagickdraw_settextundercolor|imagickdraw_setvectorgraphics|imagickdraw_setviewbox|imagickdraw_skewx|' +
-        'imagickdraw_skewy|imagickdraw_translate|imagickpixel|imagickpixel_clear|imagickpixel_construct|imagickpixel_destroy|imagickpixel_getcolor|' +
-        'imagickpixel_getcolorasstring|imagickpixel_getcolorcount|imagickpixel_getcolorvalue|imagickpixel_gethsl|imagickpixel_issimilar|' +
-        'imagickpixel_setcolor|imagickpixel_setcolorvalue|imagickpixel_sethsl|imagickpixeliterator|imagickpixeliterator_clear|' +
-        'imagickpixeliterator_construct|imagickpixeliterator_destroy|imagickpixeliterator_getcurrentiteratorrow|' +
-        'imagickpixeliterator_getiteratorrow|imagickpixeliterator_getnextiteratorrow|imagickpixeliterator_getpreviousiteratorrow|' +
-        'imagickpixeliterator_newpixeliterator|imagickpixeliterator_newpixelregioniterator|imagickpixeliterator_resetiterator|' +
-        'imagickpixeliterator_setiteratorfirstrow|imagickpixeliterator_setiteratorlastrow|imagickpixeliterator_setiteratorrow|' +
-        'imagickpixeliterator_synciterator|imap_8bit|imap_alerts|imap_append|imap_base64|imap_binary|imap_body|imap_bodystruct|imap_check|' +
-        'imap_clearflag_full|imap_close|imap_create|imap_createmailbox|imap_delete|imap_deletemailbox|imap_errors|imap_expunge|imap_fetch_overview|' +
-        'imap_fetchbody|imap_fetchheader|imap_fetchmime|imap_fetchstructure|imap_fetchtext|imap_gc|imap_get_quota|imap_get_quotaroot|imap_getacl|' +
-        'imap_getmailboxes|imap_getsubscribed|imap_header|imap_headerinfo|imap_headers|imap_last_error|imap_list|imap_listmailbox|imap_listscan|' +
-        'imap_listsubscribed|imap_lsub|imap_mail|imap_mail_compose|imap_mail_copy|imap_mail_move|imap_mailboxmsginfo|imap_mime_header_decode|' +
-        'imap_msgno|imap_num_msg|imap_num_recent|imap_open|imap_ping|imap_qprint|imap_rename|imap_renamemailbox|imap_reopen|' +
-        'imap_rfc822_parse_adrlist|imap_rfc822_parse_headers|imap_rfc822_write_address|imap_savebody|imap_scan|imap_scanmailbox|imap_search|' +
-        'imap_set_quota|imap_setacl|imap_setflag_full|imap_sort|imap_status|imap_subscribe|imap_thread|imap_timeout|imap_uid|imap_undelete|' +
-        'imap_unsubscribe|imap_utf7_decode|imap_utf7_encode|imap_utf8|implementsinterface|implode|import_request_variables|in_array|include|' +
-        'include_once|inclued_get_data|inet_ntop|inet_pton|infiniteiterator|ingres_autocommit|ingres_autocommit_state|ingres_charset|ingres_close|' +
-        'ingres_commit|ingres_connect|ingres_cursor|ingres_errno|ingres_error|ingres_errsqlstate|ingres_escape_string|ingres_execute|' +
-        'ingres_fetch_array|ingres_fetch_assoc|ingres_fetch_object|ingres_fetch_proc_return|ingres_fetch_row|ingres_field_length|ingres_field_name|' +
-        'ingres_field_nullable|ingres_field_precision|ingres_field_scale|ingres_field_type|ingres_free_result|ingres_next_error|ingres_num_fields|' +
-        'ingres_num_rows|ingres_pconnect|ingres_prepare|ingres_query|ingres_result_seek|ingres_rollback|ingres_set_environment|' +
-        'ingres_unbuffered_query|ini_alter|ini_get|ini_get_all|ini_restore|ini_set|innamespace|inotify_add_watch|inotify_init|inotify_queue_len|' +
-        'inotify_read|inotify_rm_watch|interface_exists|intl_error_name|intl_get_error_code|intl_get_error_message|intl_is_failure|' +
-        'intldateformatter|intval|invalidargumentexception|invoke|invokeargs|ip2long|iptcembed|iptcparse|is_a|is_array|is_bool|is_callable|is_dir|' +
-        'is_double|is_executable|is_file|is_finite|is_float|is_infinite|is_int|is_integer|is_link|is_long|is_nan|is_null|is_numeric|is_object|' +
-        'is_readable|is_real|is_resource|is_scalar|is_soap_fault|is_string|is_subclass_of|is_uploaded_file|is_writable|is_writeable|isabstract|' +
-        'iscloneable|isdisabled|isfinal|isinstance|isinstantiable|isinterface|isinternal|isiterateable|isset|issubclassof|isuserdefined|iterator|' +
-        'iterator_apply|iterator_count|iterator_to_array|iteratoraggregate|iteratoriterator|java_last_exception_clear|java_last_exception_get|' +
-        'jddayofweek|jdmonthname|jdtofrench|jdtogregorian|jdtojewish|jdtojulian|jdtounix|jewishtojd|join|jpeg2wbmp|json_decode|json_encode|' +
-        'json_last_error|jsonserializable|judy|judy_type|judy_version|juliantojd|kadm5_chpass_principal|kadm5_create_principal|' +
-        'kadm5_delete_principal|kadm5_destroy|kadm5_flush|kadm5_get_policies|kadm5_get_principal|kadm5_get_principals|kadm5_init_with_password|' +
-        'kadm5_modify_principal|key|krsort|ksort|lcfirst|lcg_value|lchgrp|lchown|ldap_8859_to_t61|ldap_add|ldap_bind|ldap_close|ldap_compare|' +
-        'ldap_connect|ldap_count_entries|ldap_delete|ldap_dn2ufn|ldap_err2str|ldap_errno|ldap_error|ldap_explode_dn|ldap_first_attribute|' +
-        'ldap_first_entry|ldap_first_reference|ldap_free_result|ldap_get_attributes|ldap_get_dn|ldap_get_entries|ldap_get_option|ldap_get_values|' +
-        'ldap_get_values_len|ldap_list|ldap_mod_add|ldap_mod_del|ldap_mod_replace|ldap_modify|ldap_next_attribute|ldap_next_entry|' +
-        'ldap_next_reference|ldap_parse_reference|ldap_parse_result|ldap_read|ldap_rename|ldap_sasl_bind|ldap_search|ldap_set_option|' +
-        'ldap_set_rebind_proc|ldap_sort|ldap_start_tls|ldap_t61_to_8859|ldap_unbind|lengthexception|levenshtein|libxml_clear_errors|' +
-        'libxml_disable_entity_loader|libxml_get_errors|libxml_get_last_error|libxml_set_streams_context|libxml_use_internal_errors|libxmlerror|' +
-        'limititerator|link|linkinfo|list|locale|localeconv|localtime|log|log10|log1p|logicexception|long2ip|lstat|ltrim|lzf_compress|' +
-        'lzf_decompress|lzf_optimized_for|m_checkstatus|m_completeauthorizations|m_connect|m_connectionerror|m_deletetrans|m_destroyconn|' +
-        'm_destroyengine|m_getcell|m_getcellbynum|m_getcommadelimited|m_getheader|m_initconn|m_initengine|m_iscommadelimited|m_maxconntimeout|' +
-        'm_monitor|m_numcolumns|m_numrows|m_parsecommadelimited|m_responsekeys|m_responseparam|m_returnstatus|m_setblocking|m_setdropfile|m_setip|' +
-        'm_setssl|m_setssl_cafile|m_setssl_files|m_settimeout|m_sslcert_gen_hash|m_transactionssent|m_transinqueue|m_transkeyval|m_transnew|' +
-        'm_transsend|m_uwait|m_validateidentifier|m_verifyconnection|m_verifysslcert|magic_quotes_runtime|mail|' +
-        'mailparse_determine_best_xfer_encoding|mailparse_msg_create|mailparse_msg_extract_part|mailparse_msg_extract_part_file|' +
-        'mailparse_msg_extract_whole_part_file|mailparse_msg_free|mailparse_msg_get_part|mailparse_msg_get_part_data|mailparse_msg_get_structure|' +
-        'mailparse_msg_parse|mailparse_msg_parse_file|mailparse_rfc822_parse_addresses|mailparse_stream_encode|mailparse_uudecode_all|main|max|' +
-        'maxdb_affected_rows|maxdb_autocommit|maxdb_bind_param|maxdb_bind_result|maxdb_change_user|maxdb_character_set_name|maxdb_client_encoding|' +
-        'maxdb_close|maxdb_close_long_data|maxdb_commit|maxdb_connect|maxdb_connect_errno|maxdb_connect_error|maxdb_data_seek|maxdb_debug|' +
-        'maxdb_disable_reads_from_master|maxdb_disable_rpl_parse|maxdb_dump_debug_info|maxdb_embedded_connect|maxdb_enable_reads_from_master|' +
-        'maxdb_enable_rpl_parse|maxdb_errno|maxdb_error|maxdb_escape_string|maxdb_execute|maxdb_fetch|maxdb_fetch_array|maxdb_fetch_assoc|' +
-        'maxdb_fetch_field|maxdb_fetch_field_direct|maxdb_fetch_fields|maxdb_fetch_lengths|maxdb_fetch_object|maxdb_fetch_row|maxdb_field_count|' +
-        'maxdb_field_seek|maxdb_field_tell|maxdb_free_result|maxdb_get_client_info|maxdb_get_client_version|maxdb_get_host_info|maxdb_get_metadata|' +
-        'maxdb_get_proto_info|maxdb_get_server_info|maxdb_get_server_version|maxdb_info|maxdb_init|maxdb_insert_id|maxdb_kill|maxdb_master_query|' +
-        'maxdb_more_results|maxdb_multi_query|maxdb_next_result|maxdb_num_fields|maxdb_num_rows|maxdb_options|maxdb_param_count|maxdb_ping|' +
-        'maxdb_prepare|maxdb_query|maxdb_real_connect|maxdb_real_escape_string|maxdb_real_query|maxdb_report|maxdb_rollback|' +
-        'maxdb_rpl_parse_enabled|maxdb_rpl_probe|maxdb_rpl_query_type|maxdb_select_db|maxdb_send_long_data|maxdb_send_query|maxdb_server_end|' +
-        'maxdb_server_init|maxdb_set_opt|maxdb_sqlstate|maxdb_ssl_set|maxdb_stat|maxdb_stmt_affected_rows|maxdb_stmt_bind_param|' +
-        'maxdb_stmt_bind_result|maxdb_stmt_close|maxdb_stmt_close_long_data|maxdb_stmt_data_seek|maxdb_stmt_errno|maxdb_stmt_error|' +
-        'maxdb_stmt_execute|maxdb_stmt_fetch|maxdb_stmt_free_result|maxdb_stmt_init|maxdb_stmt_num_rows|maxdb_stmt_param_count|maxdb_stmt_prepare|' +
-        'maxdb_stmt_reset|maxdb_stmt_result_metadata|maxdb_stmt_send_long_data|maxdb_stmt_sqlstate|maxdb_stmt_store_result|maxdb_store_result|' +
-        'maxdb_thread_id|maxdb_thread_safe|maxdb_use_result|maxdb_warning_count|mb_check_encoding|mb_convert_case|mb_convert_encoding|' +
-        'mb_convert_kana|mb_convert_variables|mb_decode_mimeheader|mb_decode_numericentity|mb_detect_encoding|mb_detect_order|mb_encode_mimeheader|' +
-        'mb_encode_numericentity|mb_encoding_aliases|mb_ereg|mb_ereg_match|mb_ereg_replace|mb_ereg_search|mb_ereg_search_getpos|' +
-        'mb_ereg_search_getregs|mb_ereg_search_init|mb_ereg_search_pos|mb_ereg_search_regs|mb_ereg_search_setpos|mb_eregi|mb_eregi_replace|' +
-        'mb_get_info|mb_http_input|mb_http_output|mb_internal_encoding|mb_language|mb_list_encodings|mb_output_handler|mb_parse_str|' +
-        'mb_preferred_mime_name|mb_regex_encoding|mb_regex_set_options|mb_send_mail|mb_split|mb_strcut|mb_strimwidth|mb_stripos|mb_stristr|' +
-        'mb_strlen|mb_strpos|mb_strrchr|mb_strrichr|mb_strripos|mb_strrpos|mb_strstr|mb_strtolower|mb_strtoupper|mb_strwidth|' +
-        'mb_substitute_character|mb_substr|mb_substr_count|mcrypt_cbc|mcrypt_cfb|mcrypt_create_iv|mcrypt_decrypt|mcrypt_ecb|' +
-        'mcrypt_enc_get_algorithms_name|mcrypt_enc_get_block_size|mcrypt_enc_get_iv_size|mcrypt_enc_get_key_size|mcrypt_enc_get_modes_name|' +
-        'mcrypt_enc_get_supported_key_sizes|mcrypt_enc_is_block_algorithm|mcrypt_enc_is_block_algorithm_mode|mcrypt_enc_is_block_mode|' +
-        'mcrypt_enc_self_test|mcrypt_encrypt|mcrypt_generic|mcrypt_generic_deinit|mcrypt_generic_end|mcrypt_generic_init|mcrypt_get_block_size|' +
-        'mcrypt_get_cipher_name|mcrypt_get_iv_size|mcrypt_get_key_size|mcrypt_list_algorithms|mcrypt_list_modes|mcrypt_module_close|' +
-        'mcrypt_module_get_algo_block_size|mcrypt_module_get_algo_key_size|mcrypt_module_get_supported_key_sizes|mcrypt_module_is_block_algorithm|' +
-        'mcrypt_module_is_block_algorithm_mode|mcrypt_module_is_block_mode|mcrypt_module_open|mcrypt_module_self_test|mcrypt_ofb|md5|md5_file|' +
-        'mdecrypt_generic|memcache|memcache_debug|memcached|memory_get_peak_usage|memory_get_usage|messageformatter|metaphone|method_exists|mhash|' +
-        'mhash_count|mhash_get_block_size|mhash_get_hash_name|mhash_keygen_s2k|microtime|mime_content_type|min|ming_keypress|' +
-        'ming_setcubicthreshold|ming_setscale|ming_setswfcompression|ming_useconstants|ming_useswfversion|mkdir|mktime|money_format|mongo|' +
-        'mongobindata|mongocode|mongocollection|mongoconnectionexception|mongocursor|mongocursorexception|mongocursortimeoutexception|mongodate|' +
-        'mongodb|mongodbref|mongoexception|mongogridfs|mongogridfscursor|mongogridfsexception|mongogridfsfile|mongoid|mongoint32|mongoint64|' +
-        'mongomaxkey|mongominkey|mongoregex|mongotimestamp|move_uploaded_file|mpegfile|mqseries_back|mqseries_begin|mqseries_close|mqseries_cmit|' +
-        'mqseries_conn|mqseries_connx|mqseries_disc|mqseries_get|mqseries_inq|mqseries_open|mqseries_put|mqseries_put1|mqseries_set|' +
-        'mqseries_strerror|msession_connect|msession_count|msession_create|msession_destroy|msession_disconnect|msession_find|msession_get|' +
-        'msession_get_array|msession_get_data|msession_inc|msession_list|msession_listvar|msession_lock|msession_plugin|msession_randstr|' +
-        'msession_set|msession_set_array|msession_set_data|msession_timeout|msession_uniq|msession_unlock|msg_get_queue|msg_queue_exists|' +
-        'msg_receive|msg_remove_queue|msg_send|msg_set_queue|msg_stat_queue|msql|msql_affected_rows|msql_close|msql_connect|msql_create_db|' +
-        'msql_createdb|msql_data_seek|msql_db_query|msql_dbname|msql_drop_db|msql_error|msql_fetch_array|msql_fetch_field|msql_fetch_object|' +
-        'msql_fetch_row|msql_field_flags|msql_field_len|msql_field_name|msql_field_seek|msql_field_table|msql_field_type|msql_fieldflags|' +
-        'msql_fieldlen|msql_fieldname|msql_fieldtable|msql_fieldtype|msql_free_result|msql_list_dbs|msql_list_fields|msql_list_tables|' +
-        'msql_num_fields|msql_num_rows|msql_numfields|msql_numrows|msql_pconnect|msql_query|msql_regcase|msql_result|msql_select_db|msql_tablename|' +
-        'mssql_bind|mssql_close|mssql_connect|mssql_data_seek|mssql_execute|mssql_fetch_array|mssql_fetch_assoc|mssql_fetch_batch|' +
-        'mssql_fetch_field|mssql_fetch_object|mssql_fetch_row|mssql_field_length|mssql_field_name|mssql_field_seek|mssql_field_type|' +
-        'mssql_free_result|mssql_free_statement|mssql_get_last_message|mssql_guid_string|mssql_init|mssql_min_error_severity|' +
-        'mssql_min_message_severity|mssql_next_result|mssql_num_fields|mssql_num_rows|mssql_pconnect|mssql_query|mssql_result|mssql_rows_affected|' +
-        'mssql_select_db|mt_getrandmax|mt_rand|mt_srand|multipleiterator|mysql_affected_rows|mysql_client_encoding|mysql_close|mysql_connect|' +
-        'mysql_create_db|mysql_data_seek|mysql_db_name|mysql_db_query|mysql_drop_db|mysql_errno|mysql_error|mysql_escape_string|mysql_fetch_array|' +
-        'mysql_fetch_assoc|mysql_fetch_field|mysql_fetch_lengths|mysql_fetch_object|mysql_fetch_row|mysql_field_flags|mysql_field_len|' +
-        'mysql_field_name|mysql_field_seek|mysql_field_table|mysql_field_type|mysql_free_result|mysql_get_client_info|mysql_get_host_info|' +
-        'mysql_get_proto_info|mysql_get_server_info|mysql_info|mysql_insert_id|mysql_list_dbs|mysql_list_fields|mysql_list_processes|' +
-        'mysql_list_tables|mysql_num_fields|mysql_num_rows|mysql_pconnect|mysql_ping|mysql_query|mysql_real_escape_string|mysql_result|' +
-        'mysql_select_db|mysql_set_charset|mysql_stat|mysql_tablename|mysql_thread_id|mysql_unbuffered_query|mysqli|mysqli_affected_rows|' +
-        'mysqli_autocommit|mysqli_bind_param|mysqli_bind_result|mysqli_cache_stats|mysqli_change_user|mysqli_character_set_name|' +
-        'mysqli_client_encoding|mysqli_close|mysqli_commit|mysqli_connect|mysqli_connect_errno|mysqli_connect_error|mysqli_data_seek|' +
-        'mysqli_debug|mysqli_disable_reads_from_master|mysqli_disable_rpl_parse|mysqli_driver|mysqli_dump_debug_info|mysqli_embedded_server_end|' +
-        'mysqli_embedded_server_start|mysqli_enable_reads_from_master|mysqli_enable_rpl_parse|mysqli_errno|mysqli_error|mysqli_escape_string|' +
-        'mysqli_execute|mysqli_fetch|mysqli_fetch_all|mysqli_fetch_array|mysqli_fetch_assoc|mysqli_fetch_field|mysqli_fetch_field_direct|' +
-        'mysqli_fetch_fields|mysqli_fetch_lengths|mysqli_fetch_object|mysqli_fetch_row|mysqli_field_count|mysqli_field_seek|mysqli_field_tell|' +
-        'mysqli_free_result|mysqli_get_charset|mysqli_get_client_info|mysqli_get_client_stats|mysqli_get_client_version|mysqli_get_connection_stats|' +
-        'mysqli_get_host_info|mysqli_get_metadata|mysqli_get_proto_info|mysqli_get_server_info|mysqli_get_server_version|mysqli_get_warnings|' +
-        'mysqli_info|mysqli_init|mysqli_insert_id|mysqli_kill|mysqli_link_construct|mysqli_master_query|mysqli_more_results|mysqli_multi_query|' +
-        'mysqli_next_result|mysqli_num_fields|mysqli_num_rows|mysqli_options|mysqli_param_count|mysqli_ping|mysqli_poll|mysqli_prepare|' +
-        'mysqli_query|mysqli_real_connect|mysqli_real_escape_string|mysqli_real_query|mysqli_reap_async_query|mysqli_refresh|mysqli_report|' +
-        'mysqli_result|mysqli_rollback|mysqli_rpl_parse_enabled|mysqli_rpl_probe|mysqli_rpl_query_type|mysqli_select_db|mysqli_send_long_data|' +
-        'mysqli_send_query|mysqli_set_charset|mysqli_set_local_infile_default|mysqli_set_local_infile_handler|mysqli_set_opt|mysqli_slave_query|' +
-        'mysqli_sqlstate|mysqli_ssl_set|mysqli_stat|mysqli_stmt|mysqli_stmt_affected_rows|mysqli_stmt_attr_get|mysqli_stmt_attr_set|' +
-        'mysqli_stmt_bind_param|mysqli_stmt_bind_result|mysqli_stmt_close|mysqli_stmt_data_seek|mysqli_stmt_errno|mysqli_stmt_error|' +
-        'mysqli_stmt_execute|mysqli_stmt_fetch|mysqli_stmt_field_count|mysqli_stmt_free_result|mysqli_stmt_get_result|mysqli_stmt_get_warnings|' +
-        'mysqli_stmt_init|mysqli_stmt_insert_id|mysqli_stmt_next_result|mysqli_stmt_num_rows|mysqli_stmt_param_count|mysqli_stmt_prepare|' +
-        'mysqli_stmt_reset|mysqli_stmt_result_metadata|mysqli_stmt_send_long_data|mysqli_stmt_sqlstate|mysqli_stmt_store_result|mysqli_store_result|' +
-        'mysqli_thread_id|mysqli_thread_safe|mysqli_use_result|mysqli_warning|mysqli_warning_count|mysqlnd_ms_get_stats|' +
-        'mysqlnd_ms_query_is_select|mysqlnd_ms_set_user_pick_server|mysqlnd_qc_change_handler|mysqlnd_qc_clear_cache|mysqlnd_qc_get_cache_info|' +
-        'mysqlnd_qc_get_core_stats|mysqlnd_qc_get_handler|mysqlnd_qc_get_query_trace_log|mysqlnd_qc_set_user_handlers|natcasesort|natsort|' +
-        'ncurses_addch|ncurses_addchnstr|ncurses_addchstr|ncurses_addnstr|ncurses_addstr|ncurses_assume_default_colors|ncurses_attroff|' +
-        'ncurses_attron|ncurses_attrset|ncurses_baudrate|ncurses_beep|ncurses_bkgd|ncurses_bkgdset|ncurses_border|ncurses_bottom_panel|' +
-        'ncurses_can_change_color|ncurses_cbreak|ncurses_clear|ncurses_clrtobot|ncurses_clrtoeol|ncurses_color_content|ncurses_color_set|' +
-        'ncurses_curs_set|ncurses_def_prog_mode|ncurses_def_shell_mode|ncurses_define_key|ncurses_del_panel|ncurses_delay_output|ncurses_delch|' +
-        'ncurses_deleteln|ncurses_delwin|ncurses_doupdate|ncurses_echo|ncurses_echochar|ncurses_end|ncurses_erase|ncurses_erasechar|ncurses_filter|' +
-        'ncurses_flash|ncurses_flushinp|ncurses_getch|ncurses_getmaxyx|ncurses_getmouse|ncurses_getyx|ncurses_halfdelay|ncurses_has_colors|' +
-        'ncurses_has_ic|ncurses_has_il|ncurses_has_key|ncurses_hide_panel|ncurses_hline|ncurses_inch|ncurses_init|ncurses_init_color|' +
-        'ncurses_init_pair|ncurses_insch|ncurses_insdelln|ncurses_insertln|ncurses_insstr|ncurses_instr|ncurses_isendwin|ncurses_keyok|' +
-        'ncurses_keypad|ncurses_killchar|ncurses_longname|ncurses_meta|ncurses_mouse_trafo|ncurses_mouseinterval|ncurses_mousemask|ncurses_move|' +
-        'ncurses_move_panel|ncurses_mvaddch|ncurses_mvaddchnstr|ncurses_mvaddchstr|ncurses_mvaddnstr|ncurses_mvaddstr|ncurses_mvcur|' +
-        'ncurses_mvdelch|ncurses_mvgetch|ncurses_mvhline|ncurses_mvinch|ncurses_mvvline|ncurses_mvwaddstr|ncurses_napms|ncurses_new_panel|' +
-        'ncurses_newpad|ncurses_newwin|ncurses_nl|ncurses_nocbreak|ncurses_noecho|ncurses_nonl|ncurses_noqiflush|ncurses_noraw|' +
-        'ncurses_pair_content|ncurses_panel_above|ncurses_panel_below|ncurses_panel_window|ncurses_pnoutrefresh|ncurses_prefresh|ncurses_putp|' +
-        'ncurses_qiflush|ncurses_raw|ncurses_refresh|ncurses_replace_panel|ncurses_reset_prog_mode|ncurses_reset_shell_mode|ncurses_resetty|' +
-        'ncurses_savetty|ncurses_scr_dump|ncurses_scr_init|ncurses_scr_restore|ncurses_scr_set|ncurses_scrl|ncurses_show_panel|ncurses_slk_attr|' +
-        'ncurses_slk_attroff|ncurses_slk_attron|ncurses_slk_attrset|ncurses_slk_clear|ncurses_slk_color|ncurses_slk_init|ncurses_slk_noutrefresh|' +
-        'ncurses_slk_refresh|ncurses_slk_restore|ncurses_slk_set|ncurses_slk_touch|ncurses_standend|ncurses_standout|ncurses_start_color|' +
-        'ncurses_termattrs|ncurses_termname|ncurses_timeout|ncurses_top_panel|ncurses_typeahead|ncurses_ungetch|ncurses_ungetmouse|' +
-        'ncurses_update_panels|ncurses_use_default_colors|ncurses_use_env|ncurses_use_extended_names|ncurses_vidattr|ncurses_vline|ncurses_waddch|' +
-        'ncurses_waddstr|ncurses_wattroff|ncurses_wattron|ncurses_wattrset|ncurses_wborder|ncurses_wclear|ncurses_wcolor_set|ncurses_werase|' +
-        'ncurses_wgetch|ncurses_whline|ncurses_wmouse_trafo|ncurses_wmove|ncurses_wnoutrefresh|ncurses_wrefresh|ncurses_wstandend|' +
-        'ncurses_wstandout|ncurses_wvline|newinstance|newinstanceargs|newt_bell|newt_button|newt_button_bar|newt_centered_window|newt_checkbox|' +
-        'newt_checkbox_get_value|newt_checkbox_set_flags|newt_checkbox_set_value|newt_checkbox_tree|newt_checkbox_tree_add_item|' +
-        'newt_checkbox_tree_find_item|newt_checkbox_tree_get_current|newt_checkbox_tree_get_entry_value|newt_checkbox_tree_get_multi_selection|' +
-        'newt_checkbox_tree_get_selection|newt_checkbox_tree_multi|newt_checkbox_tree_set_current|newt_checkbox_tree_set_entry|' +
-        'newt_checkbox_tree_set_entry_value|newt_checkbox_tree_set_width|newt_clear_key_buffer|newt_cls|newt_compact_button|' +
-        'newt_component_add_callback|newt_component_takes_focus|newt_create_grid|newt_cursor_off|newt_cursor_on|newt_delay|newt_draw_form|' +
-        'newt_draw_root_text|newt_entry|newt_entry_get_value|newt_entry_set|newt_entry_set_filter|newt_entry_set_flags|newt_finished|newt_form|' +
-        'newt_form_add_component|newt_form_add_components|newt_form_add_hot_key|newt_form_destroy|newt_form_get_current|newt_form_run|' +
-        'newt_form_set_background|newt_form_set_height|newt_form_set_size|newt_form_set_timer|newt_form_set_width|newt_form_watch_fd|' +
-        'newt_get_screen_size|newt_grid_add_components_to_form|newt_grid_basic_window|newt_grid_free|newt_grid_get_size|newt_grid_h_close_stacked|' +
-        'newt_grid_h_stacked|newt_grid_place|newt_grid_set_field|newt_grid_simple_window|newt_grid_v_close_stacked|newt_grid_v_stacked|' +
-        'newt_grid_wrapped_window|newt_grid_wrapped_window_at|newt_init|newt_label|newt_label_set_text|newt_listbox|newt_listbox_append_entry|' +
-        'newt_listbox_clear|newt_listbox_clear_selection|newt_listbox_delete_entry|newt_listbox_get_current|newt_listbox_get_selection|' +
-        'newt_listbox_insert_entry|newt_listbox_item_count|newt_listbox_select_item|newt_listbox_set_current|newt_listbox_set_current_by_key|' +
-        'newt_listbox_set_data|newt_listbox_set_entry|newt_listbox_set_width|newt_listitem|newt_listitem_get_data|newt_listitem_set|' +
-        'newt_open_window|newt_pop_help_line|newt_pop_window|newt_push_help_line|newt_radio_get_current|newt_radiobutton|newt_redraw_help_line|' +
-        'newt_reflow_text|newt_refresh|newt_resize_screen|newt_resume|newt_run_form|newt_scale|newt_scale_set|newt_scrollbar_set|' +
-        'newt_set_help_callback|newt_set_suspend_callback|newt_suspend|newt_textbox|newt_textbox_get_num_lines|newt_textbox_reflowed|' +
-        'newt_textbox_set_height|newt_textbox_set_text|newt_vertical_scrollbar|newt_wait_for_key|newt_win_choice|newt_win_entries|newt_win_menu|' +
-        'newt_win_message|newt_win_messagev|newt_win_ternary|next|ngettext|nl2br|nl_langinfo|norewinditerator|normalizer|notes_body|notes_copy_db|' +
-        'notes_create_db|notes_create_note|notes_drop_db|notes_find_note|notes_header_info|notes_list_msgs|notes_mark_read|notes_mark_unread|' +
-        'notes_nav_create|notes_search|notes_unread|notes_version|nsapi_request_headers|nsapi_response_headers|nsapi_virtual|nthmac|number_format|' +
-        'numberformatter|oauth|oauth_get_sbs|oauth_urlencode|oauthexception|oauthprovider|ob_clean|ob_deflatehandler|ob_end_clean|ob_end_flush|' +
-        'ob_etaghandler|ob_flush|ob_get_clean|ob_get_contents|ob_get_flush|ob_get_length|ob_get_level|ob_get_status|ob_gzhandler|ob_iconv_handler|' +
-        'ob_implicit_flush|ob_inflatehandler|ob_list_handlers|ob_start|ob_tidyhandler|oci_bind_array_by_name|oci_bind_by_name|oci_cancel|' +
-        'oci_client_version|oci_close|oci_collection_append|oci_collection_assign|oci_collection_element_assign|oci_collection_element_get|' +
-        'oci_collection_free|oci_collection_max|oci_collection_size|oci_collection_trim|oci_commit|oci_connect|oci_define_by_name|oci_error|' +
-        'oci_execute|oci_fetch|oci_fetch_all|oci_fetch_array|oci_fetch_assoc|oci_fetch_object|oci_fetch_row|oci_field_is_null|oci_field_name|' +
-        'oci_field_precision|oci_field_scale|oci_field_size|oci_field_type|oci_field_type_raw|oci_free_statement|oci_internal_debug|oci_lob_append|' +
-        'oci_lob_close|oci_lob_copy|oci_lob_eof|oci_lob_erase|oci_lob_export|oci_lob_flush|oci_lob_free|oci_lob_getbuffering|oci_lob_import|' +
-        'oci_lob_is_equal|oci_lob_load|oci_lob_read|oci_lob_rewind|oci_lob_save|oci_lob_savefile|oci_lob_seek|oci_lob_setbuffering|oci_lob_size|' +
-        'oci_lob_tell|oci_lob_truncate|oci_lob_write|oci_lob_writetemporary|oci_lob_writetofile|oci_new_collection|oci_new_connect|oci_new_cursor|' +
-        'oci_new_descriptor|oci_num_fields|oci_num_rows|oci_parse|oci_password_change|oci_pconnect|oci_result|oci_rollback|oci_server_version|' +
-        'oci_set_action|oci_set_client_identifier|oci_set_client_info|oci_set_edition|oci_set_module_name|oci_set_prefetch|oci_statement_type|' +
-        'ocibindbyname|ocicancel|ocicloselob|ocicollappend|ocicollassign|ocicollassignelem|ocicollgetelem|ocicollmax|ocicollsize|ocicolltrim|' +
-        'ocicolumnisnull|ocicolumnname|ocicolumnprecision|ocicolumnscale|ocicolumnsize|ocicolumntype|ocicolumntyperaw|ocicommit|ocidefinebyname|' +
-        'ocierror|ociexecute|ocifetch|ocifetchinto|ocifetchstatement|ocifreecollection|ocifreecursor|ocifreedesc|ocifreestatement|ociinternaldebug|' +
-        'ociloadlob|ocilogoff|ocilogon|ocinewcollection|ocinewcursor|ocinewdescriptor|ocinlogon|ocinumcols|ociparse|ociplogon|ociresult|' +
-        'ocirollback|ocirowcount|ocisavelob|ocisavelobfile|ociserverversion|ocisetprefetch|ocistatementtype|ociwritelobtofile|ociwritetemporarylob|' +
-        'octdec|odbc_autocommit|odbc_binmode|odbc_close|odbc_close_all|odbc_columnprivileges|odbc_columns|odbc_commit|odbc_connect|odbc_cursor|' +
-        'odbc_data_source|odbc_do|odbc_error|odbc_errormsg|odbc_exec|odbc_execute|odbc_fetch_array|odbc_fetch_into|odbc_fetch_object|' +
-        'odbc_fetch_row|odbc_field_len|odbc_field_name|odbc_field_num|odbc_field_precision|odbc_field_scale|odbc_field_type|odbc_foreignkeys|' +
-        'odbc_free_result|odbc_gettypeinfo|odbc_longreadlen|odbc_next_result|odbc_num_fields|odbc_num_rows|odbc_pconnect|odbc_prepare|' +
-        'odbc_primarykeys|odbc_procedurecolumns|odbc_procedures|odbc_result|odbc_result_all|odbc_rollback|odbc_setoption|odbc_specialcolumns|' +
-        'odbc_statistics|odbc_tableprivileges|odbc_tables|openal_buffer_create|openal_buffer_data|openal_buffer_destroy|openal_buffer_get|' +
-        'openal_buffer_loadwav|openal_context_create|openal_context_current|openal_context_destroy|openal_context_process|openal_context_suspend|' +
-        'openal_device_close|openal_device_open|openal_listener_get|openal_listener_set|openal_source_create|openal_source_destroy|' +
-        'openal_source_get|openal_source_pause|openal_source_play|openal_source_rewind|openal_source_set|openal_source_stop|openal_stream|opendir|' +
-        'openlog|openssl_cipher_iv_length|openssl_csr_export|openssl_csr_export_to_file|openssl_csr_get_public_key|openssl_csr_get_subject|' +
-        'openssl_csr_new|openssl_csr_sign|openssl_decrypt|openssl_dh_compute_key|openssl_digest|openssl_encrypt|openssl_error_string|' +
-        'openssl_free_key|openssl_get_cipher_methods|openssl_get_md_methods|openssl_get_privatekey|openssl_get_publickey|openssl_open|' +
-        'openssl_pkcs12_export|openssl_pkcs12_export_to_file|openssl_pkcs12_read|openssl_pkcs7_decrypt|openssl_pkcs7_encrypt|openssl_pkcs7_sign|' +
-        'openssl_pkcs7_verify|openssl_pkey_export|openssl_pkey_export_to_file|openssl_pkey_free|openssl_pkey_get_details|openssl_pkey_get_private|' +
-        'openssl_pkey_get_public|openssl_pkey_new|openssl_private_decrypt|openssl_private_encrypt|openssl_public_decrypt|openssl_public_encrypt|' +
-        'openssl_random_pseudo_bytes|openssl_seal|openssl_sign|openssl_verify|openssl_x509_check_private_key|openssl_x509_checkpurpose|' +
-        'openssl_x509_export|openssl_x509_export_to_file|openssl_x509_free|openssl_x509_parse|openssl_x509_read|ord|outeriterator|' +
-        'outofboundsexception|outofrangeexception|output_add_rewrite_var|output_reset_rewrite_vars|overflowexception|overload|override_function|' +
-        'ovrimos_close|ovrimos_commit|ovrimos_connect|ovrimos_cursor|ovrimos_exec|ovrimos_execute|ovrimos_fetch_into|ovrimos_fetch_row|' +
-        'ovrimos_field_len|ovrimos_field_name|ovrimos_field_num|ovrimos_field_type|ovrimos_free_result|ovrimos_longreadlen|ovrimos_num_fields|' +
-        'ovrimos_num_rows|ovrimos_prepare|ovrimos_result|ovrimos_result_all|ovrimos_rollback|pack|parentiterator|parse_ini_file|parse_ini_string|' +
-        'parse_str|parse_url|parsekit_compile_file|parsekit_compile_string|parsekit_func_arginfo|passthru|pathinfo|pclose|pcntl_alarm|pcntl_exec|' +
-        'pcntl_fork|pcntl_getpriority|pcntl_setpriority|pcntl_signal|pcntl_signal_dispatch|pcntl_sigprocmask|pcntl_sigtimedwait|pcntl_sigwaitinfo|' +
-        'pcntl_wait|pcntl_waitpid|pcntl_wexitstatus|pcntl_wifexited|pcntl_wifsignaled|pcntl_wifstopped|pcntl_wstopsig|pcntl_wtermsig|' +
-        'pdf_activate_item|pdf_add_annotation|pdf_add_bookmark|pdf_add_launchlink|pdf_add_locallink|pdf_add_nameddest|pdf_add_note|pdf_add_outline|' +
-        'pdf_add_pdflink|pdf_add_table_cell|pdf_add_textflow|pdf_add_thumbnail|pdf_add_weblink|pdf_arc|pdf_arcn|pdf_attach_file|pdf_begin_document|' +
-        'pdf_begin_font|pdf_begin_glyph|pdf_begin_item|pdf_begin_layer|pdf_begin_page|pdf_begin_page_ext|pdf_begin_pattern|pdf_begin_template|' +
-        'pdf_begin_template_ext|pdf_circle|pdf_clip|pdf_close|pdf_close_image|pdf_close_pdi|pdf_close_pdi_page|pdf_closepath|' +
-        'pdf_closepath_fill_stroke|pdf_closepath_stroke|pdf_concat|pdf_continue_text|pdf_create_3dview|pdf_create_action|pdf_create_annotation|' +
-        'pdf_create_bookmark|pdf_create_field|pdf_create_fieldgroup|pdf_create_gstate|pdf_create_pvf|pdf_create_textflow|pdf_curveto|' +
-        'pdf_define_layer|pdf_delete|pdf_delete_pvf|pdf_delete_table|pdf_delete_textflow|pdf_encoding_set_char|pdf_end_document|pdf_end_font|' +
-        'pdf_end_glyph|pdf_end_item|pdf_end_layer|pdf_end_page|pdf_end_page_ext|pdf_end_pattern|pdf_end_template|pdf_endpath|pdf_fill|' +
-        'pdf_fill_imageblock|pdf_fill_pdfblock|pdf_fill_stroke|pdf_fill_textblock|pdf_findfont|pdf_fit_image|pdf_fit_pdi_page|pdf_fit_table|' +
-        'pdf_fit_textflow|pdf_fit_textline|pdf_get_apiname|pdf_get_buffer|pdf_get_errmsg|pdf_get_errnum|pdf_get_font|pdf_get_fontname|' +
-        'pdf_get_fontsize|pdf_get_image_height|pdf_get_image_width|pdf_get_majorversion|pdf_get_minorversion|pdf_get_parameter|' +
-        'pdf_get_pdi_parameter|pdf_get_pdi_value|pdf_get_value|pdf_info_font|pdf_info_matchbox|pdf_info_table|pdf_info_textflow|pdf_info_textline|' +
-        'pdf_initgraphics|pdf_lineto|pdf_load_3ddata|pdf_load_font|pdf_load_iccprofile|pdf_load_image|pdf_makespotcolor|pdf_moveto|pdf_new|' +
-        'pdf_open_ccitt|pdf_open_file|pdf_open_gif|pdf_open_image|pdf_open_image_file|pdf_open_jpeg|pdf_open_memory_image|pdf_open_pdi|' +
-        'pdf_open_pdi_document|pdf_open_pdi_page|pdf_open_tiff|pdf_pcos_get_number|pdf_pcos_get_stream|pdf_pcos_get_string|pdf_place_image|' +
-        'pdf_place_pdi_page|pdf_process_pdi|pdf_rect|pdf_restore|pdf_resume_page|pdf_rotate|pdf_save|pdf_scale|pdf_set_border_color|' +
-        'pdf_set_border_dash|pdf_set_border_style|pdf_set_char_spacing|pdf_set_duration|pdf_set_gstate|pdf_set_horiz_scaling|pdf_set_info|' +
-        'pdf_set_info_author|pdf_set_info_creator|pdf_set_info_keywords|pdf_set_info_subject|pdf_set_info_title|pdf_set_layer_dependency|' +
-        'pdf_set_leading|pdf_set_parameter|pdf_set_text_matrix|pdf_set_text_pos|pdf_set_text_rendering|pdf_set_text_rise|pdf_set_value|' +
-        'pdf_set_word_spacing|pdf_setcolor|pdf_setdash|pdf_setdashpattern|pdf_setflat|pdf_setfont|pdf_setgray|pdf_setgray_fill|pdf_setgray_stroke|' +
-        'pdf_setlinecap|pdf_setlinejoin|pdf_setlinewidth|pdf_setmatrix|pdf_setmiterlimit|pdf_setpolydash|pdf_setrgbcolor|pdf_setrgbcolor_fill|' +
-        'pdf_setrgbcolor_stroke|pdf_shading|pdf_shading_pattern|pdf_shfill|pdf_show|pdf_show_boxed|pdf_show_xy|pdf_skew|pdf_stringwidth|pdf_stroke|' +
-        'pdf_suspend_page|pdf_translate|pdf_utf16_to_utf8|pdf_utf32_to_utf16|pdf_utf8_to_utf16|pdo|pdo_cubrid_schema|pdo_pgsqllobcreate|' +
-        'pdo_pgsqllobopen|pdo_pgsqllobunlink|pdo_sqlitecreateaggregate|pdo_sqlitecreatefunction|pdoexception|pdostatement|pfsockopen|' +
-        'pg_affected_rows|pg_cancel_query|pg_client_encoding|pg_close|pg_connect|pg_connection_busy|pg_connection_reset|pg_connection_status|' +
-        'pg_convert|pg_copy_from|pg_copy_to|pg_dbname|pg_delete|pg_end_copy|pg_escape_bytea|pg_escape_string|pg_execute|pg_fetch_all|' +
-        'pg_fetch_all_columns|pg_fetch_array|pg_fetch_assoc|pg_fetch_object|pg_fetch_result|pg_fetch_row|pg_field_is_null|pg_field_name|' +
-        'pg_field_num|pg_field_prtlen|pg_field_size|pg_field_table|pg_field_type|pg_field_type_oid|pg_free_result|pg_get_notify|pg_get_pid|' +
-        'pg_get_result|pg_host|pg_insert|pg_last_error|pg_last_notice|pg_last_oid|pg_lo_close|pg_lo_create|pg_lo_export|pg_lo_import|pg_lo_open|' +
-        'pg_lo_read|pg_lo_read_all|pg_lo_seek|pg_lo_tell|pg_lo_unlink|pg_lo_write|pg_meta_data|pg_num_fields|pg_num_rows|pg_options|' +
-        'pg_parameter_status|pg_pconnect|pg_ping|pg_port|pg_prepare|pg_put_line|pg_query|pg_query_params|pg_result_error|pg_result_error_field|' +
-        'pg_result_seek|pg_result_status|pg_select|pg_send_execute|pg_send_prepare|pg_send_query|pg_send_query_params|pg_set_client_encoding|' +
-        'pg_set_error_verbosity|pg_trace|pg_transaction_status|pg_tty|pg_unescape_bytea|pg_untrace|pg_update|pg_version|php_check_syntax|' +
-        'php_ini_loaded_file|php_ini_scanned_files|php_logo_guid|php_sapi_name|php_strip_whitespace|php_uname|phpcredits|phpinfo|phpversion|pi|' +
-        'png2wbmp|popen|pos|posix_access|posix_ctermid|posix_errno|posix_get_last_error|posix_getcwd|posix_getegid|posix_geteuid|posix_getgid|' +
-        'posix_getgrgid|posix_getgrnam|posix_getgroups|posix_getlogin|posix_getpgid|posix_getpgrp|posix_getpid|posix_getppid|posix_getpwnam|' +
-        'posix_getpwuid|posix_getrlimit|posix_getsid|posix_getuid|posix_initgroups|posix_isatty|posix_kill|posix_mkfifo|posix_mknod|posix_setegid|' +
-        'posix_seteuid|posix_setgid|posix_setpgid|posix_setsid|posix_setuid|posix_strerror|posix_times|posix_ttyname|posix_uname|pow|preg_filter|' +
-        'preg_grep|preg_last_error|preg_match|preg_match_all|preg_quote|preg_replace|preg_replace_callback|preg_split|prev|print|print_r|' +
-        'printer_abort|printer_close|printer_create_brush|printer_create_dc|printer_create_font|printer_create_pen|printer_delete_brush|' +
-        'printer_delete_dc|printer_delete_font|printer_delete_pen|printer_draw_bmp|printer_draw_chord|printer_draw_elipse|printer_draw_line|' +
-        'printer_draw_pie|printer_draw_rectangle|printer_draw_roundrect|printer_draw_text|printer_end_doc|printer_end_page|printer_get_option|' +
-        'printer_list|printer_logical_fontheight|printer_open|printer_select_brush|printer_select_font|printer_select_pen|printer_set_option|' +
-        'printer_start_doc|printer_start_page|printer_write|printf|proc_close|proc_get_status|proc_nice|proc_open|proc_terminate|property_exists|' +
-        'ps_add_bookmark|ps_add_launchlink|ps_add_locallink|ps_add_note|ps_add_pdflink|ps_add_weblink|ps_arc|ps_arcn|ps_begin_page|' +
-        'ps_begin_pattern|ps_begin_template|ps_circle|ps_clip|ps_close|ps_close_image|ps_closepath|ps_closepath_stroke|ps_continue_text|ps_curveto|' +
-        'ps_delete|ps_end_page|ps_end_pattern|ps_end_template|ps_fill|ps_fill_stroke|ps_findfont|ps_get_buffer|ps_get_parameter|ps_get_value|' +
-        'ps_hyphenate|ps_include_file|ps_lineto|ps_makespotcolor|ps_moveto|ps_new|ps_open_file|ps_open_image|ps_open_image_file|' +
-        'ps_open_memory_image|ps_place_image|ps_rect|ps_restore|ps_rotate|ps_save|ps_scale|ps_set_border_color|ps_set_border_dash|' +
-        'ps_set_border_style|ps_set_info|ps_set_parameter|ps_set_text_pos|ps_set_value|ps_setcolor|ps_setdash|ps_setflat|ps_setfont|ps_setgray|' +
-        'ps_setlinecap|ps_setlinejoin|ps_setlinewidth|ps_setmiterlimit|ps_setoverprintmode|ps_setpolydash|ps_shading|ps_shading_pattern|ps_shfill|' +
-        'ps_show|ps_show2|ps_show_boxed|ps_show_xy|ps_show_xy2|ps_string_geometry|ps_stringwidth|ps_stroke|ps_symbol|ps_symbol_name|' +
-        'ps_symbol_width|ps_translate|pspell_add_to_personal|pspell_add_to_session|pspell_check|pspell_clear_session|pspell_config_create|' +
-        'pspell_config_data_dir|pspell_config_dict_dir|pspell_config_ignore|pspell_config_mode|pspell_config_personal|pspell_config_repl|' +
-        'pspell_config_runtogether|pspell_config_save_repl|pspell_new|pspell_new_config|pspell_new_personal|pspell_save_wordlist|' +
-        'pspell_store_replacement|pspell_suggest|putenv|px_close|px_create_fp|px_date2string|px_delete|px_delete_record|px_get_field|px_get_info|' +
-        'px_get_parameter|px_get_record|px_get_schema|px_get_value|px_insert_record|px_new|px_numfields|px_numrecords|px_open_fp|px_put_record|' +
-        'px_retrieve_record|px_set_blob_file|px_set_parameter|px_set_tablename|px_set_targetencoding|px_set_value|px_timestamp2string|' +
-        'px_update_record|qdom_error|qdom_tree|quoted_printable_decode|quoted_printable_encode|quotemeta|rad2deg|radius_acct_open|' +
-        'radius_add_server|radius_auth_open|radius_close|radius_config|radius_create_request|radius_cvt_addr|radius_cvt_int|radius_cvt_string|' +
-        'radius_demangle|radius_demangle_mppe_key|radius_get_attr|radius_get_vendor_attr|radius_put_addr|radius_put_attr|radius_put_int|' +
-        'radius_put_string|radius_put_vendor_addr|radius_put_vendor_attr|radius_put_vendor_int|radius_put_vendor_string|' +
-        'radius_request_authenticator|radius_send_request|radius_server_secret|radius_strerror|rand|range|rangeexception|rar_wrapper_cache_stats|' +
-        'rararchive|rarentry|rarexception|rawurldecode|rawurlencode|read_exif_data|readdir|readfile|readgzfile|readline|readline_add_history|' +
-        'readline_callback_handler_install|readline_callback_handler_remove|readline_callback_read_char|readline_clear_history|' +
-        'readline_completion_function|readline_info|readline_list_history|readline_on_new_line|readline_read_history|readline_redisplay|' +
-        'readline_write_history|readlink|realpath|realpath_cache_get|realpath_cache_size|recode|recode_file|recode_string|recursivearrayiterator|' +
-        'recursivecachingiterator|recursivecallbackfilteriterator|recursivedirectoryiterator|recursivefilteriterator|recursiveiterator|' +
-        'recursiveiteratoriterator|recursiveregexiterator|recursivetreeiterator|reflection|reflectionclass|reflectionexception|reflectionextension|' +
-        'reflectionfunction|reflectionfunctionabstract|reflectionmethod|reflectionobject|reflectionparameter|reflectionproperty|reflector|' +
-        'regexiterator|register_shutdown_function|register_tick_function|rename|rename_function|require|require_once|reset|resetValue|' +
-        'resourcebundle|restore_error_handler|restore_exception_handler|restore_include_path|return|rewind|rewinddir|rmdir|round|rpm_close|' +
-        'rpm_get_tag|rpm_is_valid|rpm_open|rpm_version|rrd_create|rrd_error|rrd_fetch|rrd_first|rrd_graph|rrd_info|rrd_last|rrd_lastupdate|' +
-        'rrd_restore|rrd_tune|rrd_update|rrd_xport|rrdcreator|rrdgraph|rrdupdater|rsort|rtrim|runkit_class_adopt|runkit_class_emancipate|' +
-        'runkit_constant_add|runkit_constant_redefine|runkit_constant_remove|runkit_function_add|runkit_function_copy|runkit_function_redefine|' +
-        'runkit_function_remove|runkit_function_rename|runkit_import|runkit_lint|runkit_lint_file|runkit_method_add|runkit_method_copy|' +
-        'runkit_method_redefine|runkit_method_remove|runkit_method_rename|runkit_return_value_used|runkit_sandbox_output_handler|' +
-        'runkit_superglobals|runtimeexception|samconnection_commit|samconnection_connect|samconnection_constructor|samconnection_disconnect|' +
-        'samconnection_errno|samconnection_error|samconnection_isconnected|samconnection_peek|samconnection_peekall|samconnection_receive|' +
-        'samconnection_remove|samconnection_rollback|samconnection_send|samconnection_setDebug|samconnection_subscribe|samconnection_unsubscribe|' +
-        'sammessage_body|sammessage_constructor|sammessage_header|sca_createdataobject|sca_getservice|sca_localproxy_createdataobject|' +
-        'sca_soapproxy_createdataobject|scandir|sdo_das_changesummary_beginlogging|sdo_das_changesummary_endlogging|' +
-        'sdo_das_changesummary_getchangeddataobjects|sdo_das_changesummary_getchangetype|sdo_das_changesummary_getoldcontainer|' +
-        'sdo_das_changesummary_getoldvalues|sdo_das_changesummary_islogging|sdo_das_datafactory_addpropertytotype|sdo_das_datafactory_addtype|' +
-        'sdo_das_datafactory_getdatafactory|sdo_das_dataobject_getchangesummary|sdo_das_relational_applychanges|sdo_das_relational_construct|' +
-        'sdo_das_relational_createrootdataobject|sdo_das_relational_executepreparedquery|sdo_das_relational_executequery|' +
-        'sdo_das_setting_getlistindex|sdo_das_setting_getpropertyindex|sdo_das_setting_getpropertyname|sdo_das_setting_getvalue|' +
-        'sdo_das_setting_isset|sdo_das_xml_addtypes|sdo_das_xml_create|sdo_das_xml_createdataobject|sdo_das_xml_createdocument|' +
-        'sdo_das_xml_document_getrootdataobject|sdo_das_xml_document_getrootelementname|sdo_das_xml_document_getrootelementuri|' +
-        'sdo_das_xml_document_setencoding|sdo_das_xml_document_setxmldeclaration|sdo_das_xml_document_setxmlversion|sdo_das_xml_loadfile|' +
-        'sdo_das_xml_loadstring|sdo_das_xml_savefile|sdo_das_xml_savestring|sdo_datafactory_create|sdo_dataobject_clear|' +
-        'sdo_dataobject_createdataobject|sdo_dataobject_getcontainer|sdo_dataobject_getsequence|sdo_dataobject_gettypename|' +
-        'sdo_dataobject_gettypenamespaceuri|sdo_exception_getcause|sdo_list_insert|sdo_model_property_getcontainingtype|' +
-        'sdo_model_property_getdefault|sdo_model_property_getname|sdo_model_property_gettype|sdo_model_property_iscontainment|' +
-        'sdo_model_property_ismany|sdo_model_reflectiondataobject_construct|sdo_model_reflectiondataobject_export|' +
-        'sdo_model_reflectiondataobject_getcontainmentproperty|sdo_model_reflectiondataobject_getinstanceproperties|' +
-        'sdo_model_reflectiondataobject_gettype|sdo_model_type_getbasetype|sdo_model_type_getname|sdo_model_type_getnamespaceuri|' +
-        'sdo_model_type_getproperties|sdo_model_type_getproperty|sdo_model_type_isabstracttype|sdo_model_type_isdatatype|sdo_model_type_isinstance|' +
-        'sdo_model_type_isopentype|sdo_model_type_issequencedtype|sdo_sequence_getproperty|sdo_sequence_insert|sdo_sequence_move|seekableiterator|' +
-        'sem_acquire|sem_get|sem_release|sem_remove|serializable|serialize|session_cache_expire|session_cache_limiter|session_commit|' +
-        'session_decode|session_destroy|session_encode|session_get_cookie_params|session_id|session_is_registered|session_module_name|session_name|' +
-        'session_pgsql_add_error|session_pgsql_get_error|session_pgsql_get_field|session_pgsql_reset|session_pgsql_set_field|session_pgsql_status|' +
-        'session_regenerate_id|session_register|session_save_path|session_set_cookie_params|session_set_save_handler|session_start|' +
-        'session_unregister|session_unset|session_write_close|setCounterClass|set_error_handler|set_exception_handler|set_file_buffer|' +
-        'set_include_path|set_magic_quotes_runtime|set_socket_blocking|set_time_limit|setcookie|setlocale|setproctitle|setrawcookie|' +
-        'setstaticpropertyvalue|setthreadtitle|settype|sha1|sha1_file|shell_exec|shm_attach|shm_detach|shm_get_var|shm_has_var|shm_put_var|' +
-        'shm_remove|shm_remove_var|shmop_close|shmop_delete|shmop_open|shmop_read|shmop_size|shmop_write|show_source|shuffle|signeurlpaiement|' +
-        'similar_text|simplexml_import_dom|simplexml_load_file|simplexml_load_string|simplexmlelement|simplexmliterator|sin|sinh|sizeof|sleep|snmp|' +
-        'snmp2_get|snmp2_getnext|snmp2_real_walk|snmp2_set|snmp2_walk|snmp3_get|snmp3_getnext|snmp3_real_walk|snmp3_set|snmp3_walk|' +
-        'snmp_get_quick_print|snmp_get_valueretrieval|snmp_read_mib|snmp_set_enum_print|snmp_set_oid_numeric_print|snmp_set_oid_output_format|' +
-        'snmp_set_quick_print|snmp_set_valueretrieval|snmpget|snmpgetnext|snmprealwalk|snmpset|snmpwalk|snmpwalkoid|soapclient|soapfault|' +
-        'soapheader|soapparam|soapserver|soapvar|socket_accept|socket_bind|socket_clear_error|socket_close|socket_connect|socket_create|' +
-        'socket_create_listen|socket_create_pair|socket_get_option|socket_get_status|socket_getpeername|socket_getsockname|socket_last_error|' +
-        'socket_listen|socket_read|socket_recv|socket_recvfrom|socket_select|socket_send|socket_sendto|socket_set_block|socket_set_blocking|' +
-        'socket_set_nonblock|socket_set_option|socket_set_timeout|socket_shutdown|socket_strerror|socket_write|solr_get_version|solrclient|' +
-        'solrclientexception|solrdocument|solrdocumentfield|solrexception|solrgenericresponse|solrillegalargumentexception|' +
-        'solrillegaloperationexception|solrinputdocument|solrmodifiableparams|solrobject|solrparams|solrpingresponse|solrquery|solrqueryresponse|' +
-        'solrresponse|solrupdateresponse|solrutils|sort|soundex|sphinxclient|spl_autoload|spl_autoload_call|spl_autoload_extensions|' +
-        'spl_autoload_functions|spl_autoload_register|spl_autoload_unregister|spl_classes|spl_object_hash|splbool|spldoublylinkedlist|splenum|' +
-        'splfileinfo|splfileobject|splfixedarray|splfloat|splheap|splint|split|spliti|splmaxheap|splminheap|splobjectstorage|splobserver|' +
-        'splpriorityqueue|splqueue|splstack|splstring|splsubject|spltempfileobject|spoofchecker|sprintf|sql_regcase|sqlite3|sqlite3result|' +
-        'sqlite3stmt|sqlite_array_query|sqlite_busy_timeout|sqlite_changes|sqlite_close|sqlite_column|sqlite_create_aggregate|' +
-        'sqlite_create_function|sqlite_current|sqlite_error_string|sqlite_escape_string|sqlite_exec|sqlite_factory|sqlite_fetch_all|' +
-        'sqlite_fetch_array|sqlite_fetch_column_types|sqlite_fetch_object|sqlite_fetch_single|sqlite_fetch_string|sqlite_field_name|' +
-        'sqlite_has_more|sqlite_has_prev|sqlite_key|sqlite_last_error|sqlite_last_insert_rowid|sqlite_libencoding|sqlite_libversion|sqlite_next|' +
-        'sqlite_num_fields|sqlite_num_rows|sqlite_open|sqlite_popen|sqlite_prev|sqlite_query|sqlite_rewind|sqlite_seek|sqlite_single_query|' +
-        'sqlite_udf_decode_binary|sqlite_udf_encode_binary|sqlite_unbuffered_query|sqlite_valid|sqrt|srand|sscanf|ssdeep_fuzzy_compare|' +
-        'ssdeep_fuzzy_hash|ssdeep_fuzzy_hash_filename|ssh2_auth_hostbased_file|ssh2_auth_none|ssh2_auth_password|ssh2_auth_pubkey_file|' +
-        'ssh2_connect|ssh2_exec|ssh2_fetch_stream|ssh2_fingerprint|ssh2_methods_negotiated|ssh2_publickey_add|ssh2_publickey_init|' +
-        'ssh2_publickey_list|ssh2_publickey_remove|ssh2_scp_recv|ssh2_scp_send|ssh2_sftp|ssh2_sftp_lstat|ssh2_sftp_mkdir|ssh2_sftp_readlink|' +
-        'ssh2_sftp_realpath|ssh2_sftp_rename|ssh2_sftp_rmdir|ssh2_sftp_stat|ssh2_sftp_symlink|ssh2_sftp_unlink|ssh2_shell|ssh2_tunnel|stat|' +
-        'stats_absolute_deviation|stats_cdf_beta|stats_cdf_binomial|stats_cdf_cauchy|stats_cdf_chisquare|stats_cdf_exponential|stats_cdf_f|' +
-        'stats_cdf_gamma|stats_cdf_laplace|stats_cdf_logistic|stats_cdf_negative_binomial|stats_cdf_noncentral_chisquare|stats_cdf_noncentral_f|' +
-        'stats_cdf_poisson|stats_cdf_t|stats_cdf_uniform|stats_cdf_weibull|stats_covariance|stats_den_uniform|stats_dens_beta|stats_dens_cauchy|' +
-        'stats_dens_chisquare|stats_dens_exponential|stats_dens_f|stats_dens_gamma|stats_dens_laplace|stats_dens_logistic|' +
-        'stats_dens_negative_binomial|stats_dens_normal|stats_dens_pmf_binomial|stats_dens_pmf_hypergeometric|stats_dens_pmf_poisson|stats_dens_t|' +
-        'stats_dens_weibull|stats_harmonic_mean|stats_kurtosis|stats_rand_gen_beta|stats_rand_gen_chisquare|stats_rand_gen_exponential|' +
-        'stats_rand_gen_f|stats_rand_gen_funiform|stats_rand_gen_gamma|stats_rand_gen_ibinomial|stats_rand_gen_ibinomial_negative|' +
-        'stats_rand_gen_int|stats_rand_gen_ipoisson|stats_rand_gen_iuniform|stats_rand_gen_noncenral_chisquare|stats_rand_gen_noncentral_f|' +
-        'stats_rand_gen_noncentral_t|stats_rand_gen_normal|stats_rand_gen_t|stats_rand_get_seeds|stats_rand_phrase_to_seeds|stats_rand_ranf|' +
-        'stats_rand_setall|stats_skew|stats_standard_deviation|stats_stat_binomial_coef|stats_stat_correlation|stats_stat_gennch|' +
-        'stats_stat_independent_t|stats_stat_innerproduct|stats_stat_noncentral_t|stats_stat_paired_t|stats_stat_percentile|stats_stat_powersum|' +
-        'stats_variance|stomp|stomp_connect_error|stomp_version|stompexception|stompframe|str_getcsv|str_ireplace|str_pad|str_repeat|str_replace|' +
-        'str_rot13|str_shuffle|str_split|str_word_count|strcasecmp|strchr|strcmp|strcoll|strcspn|stream_bucket_append|stream_bucket_make_writeable|' +
-        'stream_bucket_new|stream_bucket_prepend|stream_context_create|stream_context_get_default|stream_context_get_options|' +
-        'stream_context_get_params|stream_context_set_default|stream_context_set_option|stream_context_set_params|stream_copy_to_stream|' +
-        'stream_encoding|stream_filter_append|stream_filter_prepend|stream_filter_register|stream_filter_remove|stream_get_contents|' +
-        'stream_get_filters|stream_get_line|stream_get_meta_data|stream_get_transports|stream_get_wrappers|stream_is_local|' +
-        'stream_notification_callback|stream_register_wrapper|stream_resolve_include_path|stream_select|stream_set_blocking|stream_set_read_buffer|' +
-        'stream_set_timeout|stream_set_write_buffer|stream_socket_accept|stream_socket_client|stream_socket_enable_crypto|stream_socket_get_name|' +
-        'stream_socket_pair|stream_socket_recvfrom|stream_socket_sendto|stream_socket_server|stream_socket_shutdown|stream_supports_lock|' +
-        'stream_wrapper_register|stream_wrapper_restore|stream_wrapper_unregister|streamwrapper|strftime|strip_tags|stripcslashes|stripos|' +
-        'stripslashes|stristr|strlen|strnatcasecmp|strnatcmp|strncasecmp|strncmp|strpbrk|strpos|strptime|strrchr|strrev|strripos|strrpos|strspn|' +
-        'strstr|strtok|strtolower|strtotime|strtoupper|strtr|strval|substr|substr_compare|substr_count|substr_replace|svm|svmmodel|svn_add|' +
-        'svn_auth_get_parameter|svn_auth_set_parameter|svn_blame|svn_cat|svn_checkout|svn_cleanup|svn_client_version|svn_commit|svn_delete|' +
-        'svn_diff|svn_export|svn_fs_abort_txn|svn_fs_apply_text|svn_fs_begin_txn2|svn_fs_change_node_prop|svn_fs_check_path|' +
-        'svn_fs_contents_changed|svn_fs_copy|svn_fs_delete|svn_fs_dir_entries|svn_fs_file_contents|svn_fs_file_length|svn_fs_is_dir|svn_fs_is_file|' +
-        'svn_fs_make_dir|svn_fs_make_file|svn_fs_node_created_rev|svn_fs_node_prop|svn_fs_props_changed|svn_fs_revision_prop|svn_fs_revision_root|' +
-        'svn_fs_txn_root|svn_fs_youngest_rev|svn_import|svn_log|svn_ls|svn_mkdir|svn_repos_create|svn_repos_fs|svn_repos_fs_begin_txn_for_commit|' +
-        'svn_repos_fs_commit_txn|svn_repos_hotcopy|svn_repos_open|svn_repos_recover|svn_revert|svn_status|svn_update|swf_actiongeturl|' +
-        'swf_actiongotoframe|swf_actiongotolabel|swf_actionnextframe|swf_actionplay|swf_actionprevframe|swf_actionsettarget|swf_actionstop|' +
-        'swf_actiontogglequality|swf_actionwaitforframe|swf_addbuttonrecord|swf_addcolor|swf_closefile|swf_definebitmap|swf_definefont|' +
-        'swf_defineline|swf_definepoly|swf_definerect|swf_definetext|swf_endbutton|swf_enddoaction|swf_endshape|swf_endsymbol|swf_fontsize|' +
-        'swf_fontslant|swf_fonttracking|swf_getbitmapinfo|swf_getfontinfo|swf_getframe|swf_labelframe|swf_lookat|swf_modifyobject|swf_mulcolor|' +
-        'swf_nextid|swf_oncondition|swf_openfile|swf_ortho|swf_ortho2|swf_perspective|swf_placeobject|swf_polarview|swf_popmatrix|swf_posround|' +
-        'swf_pushmatrix|swf_removeobject|swf_rotate|swf_scale|swf_setfont|swf_setframe|swf_shapearc|swf_shapecurveto|swf_shapecurveto3|' +
-        'swf_shapefillbitmapclip|swf_shapefillbitmaptile|swf_shapefilloff|swf_shapefillsolid|swf_shapelinesolid|swf_shapelineto|swf_shapemoveto|' +
-        'swf_showframe|swf_startbutton|swf_startdoaction|swf_startshape|swf_startsymbol|swf_textwidth|swf_translate|swf_viewport|swfaction|' +
-        'swfbitmap|swfbutton|swfdisplayitem|swffill|swffont|swffontchar|swfgradient|swfmorph|swfmovie|swfprebuiltclip|swfshape|swfsound|' +
-        'swfsoundinstance|swfsprite|swftext|swftextfield|swfvideostream|swish_construct|swish_getmetalist|swish_getpropertylist|swish_prepare|' +
-        'swish_query|swishresult_getmetalist|swishresult_stem|swishresults_getparsedwords|swishresults_getremovedstopwords|swishresults_nextresult|' +
-        'swishresults_seekresult|swishsearch_execute|swishsearch_resetlimit|swishsearch_setlimit|swishsearch_setphrasedelimiter|' +
-        'swishsearch_setsort|swishsearch_setstructure|sybase_affected_rows|sybase_close|sybase_connect|sybase_data_seek|' +
-        'sybase_deadlock_retry_count|sybase_fetch_array|sybase_fetch_assoc|sybase_fetch_field|sybase_fetch_object|sybase_fetch_row|' +
-        'sybase_field_seek|sybase_free_result|sybase_get_last_message|sybase_min_client_severity|sybase_min_error_severity|' +
-        'sybase_min_message_severity|sybase_min_server_severity|sybase_num_fields|sybase_num_rows|sybase_pconnect|sybase_query|sybase_result|' +
-        'sybase_select_db|sybase_set_message_handler|sybase_unbuffered_query|symlink|sys_get_temp_dir|sys_getloadavg|syslog|system|tag|tan|tanh|' +
-        'tcpwrap_check|tempnam|textdomain|tidy|tidy_access_count|tidy_config_count|tidy_diagnose|tidy_error_count|tidy_get_error_buffer|' +
-        'tidy_get_output|tidy_load_config|tidy_reset_config|tidy_save_config|tidy_set_encoding|tidy_setopt|tidy_warning_count|tidynode|time|' +
-        'time_nanosleep|time_sleep_until|timezone_abbreviations_list|timezone_identifiers_list|timezone_location_get|timezone_name_from_abbr|' +
-        'timezone_name_get|timezone_offset_get|timezone_open|timezone_transitions_get|timezone_version_get|tmpfile|token_get_all|token_name|' +
-        'tokyotyrant|tokyotyrantquery|tokyotyranttable|tostring|tostring|touch|trait_exists|transliterator|traversable|trigger_error|trim|uasort|ucfirst|' +
-        'ucwords|udm_add_search_limit|udm_alloc_agent|udm_alloc_agent_array|udm_api_version|udm_cat_list|udm_cat_path|udm_check_charset|' +
-        'udm_check_stored|udm_clear_search_limits|udm_close_stored|udm_crc32|udm_errno|udm_error|udm_find|udm_free_agent|udm_free_ispell_data|' +
-        'udm_free_res|udm_get_doc_count|udm_get_res_field|udm_get_res_param|udm_hash32|udm_load_ispell_data|udm_open_stored|udm_set_agent_param|' +
-        'uksort|umask|underflowexception|unexpectedvalueexception|uniqid|unixtojd|unlink|unpack|unregister_tick_function|unserialize|unset|' +
-        'urldecode|urlencode|use_soap_error_handler|user_error|usleep|usort|utf8_decode|utf8_encode|v8js|v8jsexception|var_dump|var_export|variant|' +
-        'variant_abs|variant_add|variant_and|variant_cast|variant_cat|variant_cmp|variant_date_from_timestamp|variant_date_to_timestamp|' +
-        'variant_div|variant_eqv|variant_fix|variant_get_type|variant_idiv|variant_imp|variant_int|variant_mod|variant_mul|variant_neg|variant_not|' +
-        'variant_or|variant_pow|variant_round|variant_set|variant_set_type|variant_sub|variant_xor|version_compare|vfprintf|virtual|' +
-        'vpopmail_add_alias_domain|vpopmail_add_alias_domain_ex|vpopmail_add_domain|vpopmail_add_domain_ex|vpopmail_add_user|vpopmail_alias_add|' +
-        'vpopmail_alias_del|vpopmail_alias_del_domain|vpopmail_alias_get|vpopmail_alias_get_all|vpopmail_auth_user|vpopmail_del_domain|' +
-        'vpopmail_del_domain_ex|vpopmail_del_user|vpopmail_error|vpopmail_passwd|vpopmail_set_user_quota|vprintf|vsprintf|w32api_deftype|' +
-        'w32api_init_dtype|w32api_invoke_function|w32api_register_function|w32api_set_call_method|wddx_add_vars|wddx_deserialize|wddx_packet_end|' +
-        'wddx_packet_start|wddx_serialize_value|wddx_serialize_vars|win32_continue_service|win32_create_service|win32_delete_service|' +
-        'win32_get_last_control_message|win32_pause_service|win32_ps_list_procs|win32_ps_stat_mem|win32_ps_stat_proc|win32_query_service_status|' +
-        'win32_set_service_status|win32_start_service|win32_start_service_ctrl_dispatcher|win32_stop_service|wincache_fcache_fileinfo|' +
-        'wincache_fcache_meminfo|wincache_lock|wincache_ocache_fileinfo|wincache_ocache_meminfo|wincache_refresh_if_changed|' +
-        'wincache_rplist_fileinfo|wincache_rplist_meminfo|wincache_scache_info|wincache_scache_meminfo|wincache_ucache_add|wincache_ucache_cas|' +
-        'wincache_ucache_clear|wincache_ucache_dec|wincache_ucache_delete|wincache_ucache_exists|wincache_ucache_get|wincache_ucache_inc|' +
-        'wincache_ucache_info|wincache_ucache_meminfo|wincache_ucache_set|wincache_unlock|wordwrap|xattr_get|xattr_list|xattr_remove|xattr_set|' +
-        'xattr_supported|xdiff_file_bdiff|xdiff_file_bdiff_size|xdiff_file_bpatch|xdiff_file_diff|xdiff_file_diff_binary|xdiff_file_merge3|' +
-        'xdiff_file_patch|xdiff_file_patch_binary|xdiff_file_rabdiff|xdiff_string_bdiff|xdiff_string_bdiff_size|xdiff_string_bpatch|' +
-        'xdiff_string_diff|xdiff_string_diff_binary|xdiff_string_merge3|xdiff_string_patch|xdiff_string_patch_binary|xdiff_string_rabdiff|' +
-        'xhprof_disable|xhprof_enable|xhprof_sample_disable|xhprof_sample_enable|xml_error_string|xml_get_current_byte_index|' +
-        'xml_get_current_column_number|xml_get_current_line_number|xml_get_error_code|xml_parse|xml_parse_into_struct|xml_parser_create|' +
-        'xml_parser_create_ns|xml_parser_free|xml_parser_get_option|xml_parser_set_option|xml_set_character_data_handler|xml_set_default_handler|' +
-        'xml_set_element_handler|xml_set_end_namespace_decl_handler|xml_set_external_entity_ref_handler|xml_set_notation_decl_handler|' +
-        'xml_set_object|xml_set_processing_instruction_handler|xml_set_start_namespace_decl_handler|xml_set_unparsed_entity_decl_handler|xmlreader|' +
-        'xmlrpc_decode|xmlrpc_decode_request|xmlrpc_encode|xmlrpc_encode_request|xmlrpc_get_type|xmlrpc_is_fault|xmlrpc_parse_method_descriptions|' +
-        'xmlrpc_server_add_introspection_data|xmlrpc_server_call_method|xmlrpc_server_create|xmlrpc_server_destroy|' +
-        'xmlrpc_server_register_introspection_callback|xmlrpc_server_register_method|xmlrpc_set_type|xmlwriter_end_attribute|xmlwriter_end_cdata|' +
-        'xmlwriter_end_comment|xmlwriter_end_document|xmlwriter_end_dtd|xmlwriter_end_dtd_attlist|xmlwriter_end_dtd_element|' +
-        'xmlwriter_end_dtd_entity|xmlwriter_end_element|xmlwriter_end_pi|xmlwriter_flush|xmlwriter_full_end_element|xmlwriter_open_memory|' +
-        'xmlwriter_open_uri|xmlwriter_output_memory|xmlwriter_set_indent|xmlwriter_set_indent_string|xmlwriter_start_attribute|' +
-        'xmlwriter_start_attribute_ns|xmlwriter_start_cdata|xmlwriter_start_comment|xmlwriter_start_document|xmlwriter_start_dtd|' +
-        'xmlwriter_start_dtd_attlist|xmlwriter_start_dtd_element|xmlwriter_start_dtd_entity|xmlwriter_start_element|xmlwriter_start_element_ns|' +
-        'xmlwriter_start_pi|xmlwriter_text|xmlwriter_write_attribute|xmlwriter_write_attribute_ns|xmlwriter_write_cdata|xmlwriter_write_comment|' +
-        'xmlwriter_write_dtd|xmlwriter_write_dtd_attlist|xmlwriter_write_dtd_element|xmlwriter_write_dtd_entity|xmlwriter_write_element|' +
-        'xmlwriter_write_element_ns|xmlwriter_write_pi|xmlwriter_write_raw|xpath_eval|xpath_eval_expression|xpath_new_context|xpath_register_ns|' +
-        'xpath_register_ns_auto|xptr_eval|xptr_new_context|xslt_backend_info|xslt_backend_name|xslt_backend_version|xslt_create|xslt_errno|' +
-        'xslt_error|xslt_free|xslt_getopt|xslt_process|xslt_set_base|xslt_set_encoding|xslt_set_error_handler|xslt_set_log|xslt_set_object|' +
-        'xslt_set_sax_handler|xslt_set_sax_handlers|xslt_set_scheme_handler|xslt_set_scheme_handlers|xslt_setopt|xsltprocessor|yaml_emit|' +
-        'yaml_emit_file|yaml_parse|yaml_parse_file|yaml_parse_url|yaz_addinfo|yaz_ccl_conf|yaz_ccl_parse|yaz_close|yaz_connect|yaz_database|' +
-        'yaz_element|yaz_errno|yaz_error|yaz_es|yaz_es_result|yaz_get_option|yaz_hits|yaz_itemorder|yaz_present|yaz_range|yaz_record|yaz_scan|' +
-        'yaz_scan_result|yaz_schema|yaz_search|yaz_set_option|yaz_sort|yaz_syntax|yaz_wait|yp_all|yp_cat|yp_err_string|yp_errno|yp_first|' +
-        'yp_get_default_domain|yp_master|yp_match|yp_next|yp_order|zend_logo_guid|zend_thread_id|zend_version|zip_close|zip_entry_close|' +
-        'zip_entry_compressedsize|zip_entry_compressionmethod|zip_entry_filesize|zip_entry_name|zip_entry_open|zip_entry_read|zip_open|zip_read|' +
-        'ziparchive|ziparchive_addemptydir|ziparchive_addfile|ziparchive_addfromstring|ziparchive_close|ziparchive_deleteindex|' +
-        'ziparchive_deletename|ziparchive_extractto|ziparchive_getarchivecomment|ziparchive_getcommentindex|ziparchive_getcommentname|' +
-        'ziparchive_getfromindex|ziparchive_getfromname|ziparchive_getnameindex|ziparchive_getstatusstring|ziparchive_getstream|' +
-        'ziparchive_locatename|ziparchive_open|ziparchive_renameindex|ziparchive_renamename|ziparchive_setCommentName|ziparchive_setarchivecomment|' +
-        'ziparchive_setcommentindex|ziparchive_statindex|ziparchive_statname|ziparchive_unchangeall|ziparchive_unchangearchive|' +
-        'ziparchive_unchangeindex|ziparchive_unchangename|zlib_get_coding_type').split('|')
+'abs|acos|acosh|addcslashes|addslashes|aggregate|aggregate_info|aggregate_methods|aggregate_methods_by_list|aggregate_methods_by_regexp|\
+aggregate_properties|aggregate_properties_by_list|aggregate_properties_by_regexp|aggregation_info|amqpconnection|amqpexchange|amqpqueue|\
+apache_child_terminate|apache_get_modules|apache_get_version|apache_getenv|apache_lookup_uri|apache_note|apache_request_headers|\
+apache_reset_timeout|apache_response_headers|apache_setenv|apc_add|apc_bin_dump|apc_bin_dumpfile|apc_bin_load|apc_bin_loadfile|\
+apc_cache_info|apc_cas|apc_clear_cache|apc_compile_file|apc_dec|apc_define_constants|apc_delete|apc_delete_file|apc_exists|apc_fetch|\
+apc_inc|apc_load_constants|apc_sma_info|apc_store|apciterator|apd_breakpoint|apd_callstack|apd_clunk|apd_continue|apd_croak|\
+apd_dump_function_table|apd_dump_persistent_resources|apd_dump_regular_resources|apd_echo|apd_get_active_symbols|apd_set_pprof_trace|\
+apd_set_session|apd_set_session_trace|apd_set_session_trace_socket|appenditerator|array|array_change_key_case|array_chunk|array_combine|\
+array_count_values|array_diff|array_diff_assoc|array_diff_key|array_diff_uassoc|array_diff_ukey|array_fill|array_fill_keys|array_filter|\
+array_flip|array_intersect|array_intersect_assoc|array_intersect_key|array_intersect_uassoc|array_intersect_ukey|array_key_exists|\
+array_keys|array_map|array_merge|array_merge_recursive|array_multisort|array_pad|array_pop|array_product|array_push|array_rand|\
+array_reduce|array_replace|array_replace_recursive|array_reverse|array_search|array_shift|array_slice|array_splice|array_sum|array_udiff|\
+array_udiff_assoc|array_udiff_uassoc|array_uintersect|array_uintersect_assoc|array_uintersect_uassoc|array_unique|array_unshift|\
+array_values|array_walk|array_walk_recursive|arrayaccess|arrayiterator|arrayobject|arsort|asin|asinh|asort|assert|assert_options|atan|\
+atan2|atanh|audioproperties|badfunctioncallexception|badmethodcallexception|base64_decode|base64_encode|base_convert|basename|\
+bbcode_add_element|bbcode_add_smiley|bbcode_create|bbcode_destroy|bbcode_parse|bbcode_set_arg_parser|bbcode_set_flags|bcadd|bccomp|bcdiv|\
+bcmod|bcmul|bcompiler_load|bcompiler_load_exe|bcompiler_parse_class|bcompiler_read|bcompiler_write_class|bcompiler_write_constant|\
+bcompiler_write_exe_footer|bcompiler_write_file|bcompiler_write_footer|bcompiler_write_function|bcompiler_write_functions_from_file|\
+bcompiler_write_header|bcompiler_write_included_filename|bcpow|bcpowmod|bcscale|bcsqrt|bcsub|bin2hex|bind_textdomain_codeset|bindec|\
+bindtextdomain|bson_decode|bson_encode|bumpValue|bzclose|bzcompress|bzdecompress|bzerrno|bzerror|bzerrstr|bzflush|bzopen|bzread|bzwrite|\
+cachingiterator|cairo|cairo_create|cairo_font_face_get_type|cairo_font_face_status|cairo_font_options_create|cairo_font_options_equal|\
+cairo_font_options_get_antialias|cairo_font_options_get_hint_metrics|cairo_font_options_get_hint_style|\
+cairo_font_options_get_subpixel_order|cairo_font_options_hash|cairo_font_options_merge|cairo_font_options_set_antialias|\
+cairo_font_options_set_hint_metrics|cairo_font_options_set_hint_style|cairo_font_options_set_subpixel_order|cairo_font_options_status|\
+cairo_format_stride_for_width|cairo_image_surface_create|cairo_image_surface_create_for_data|cairo_image_surface_create_from_png|\
+cairo_image_surface_get_data|cairo_image_surface_get_format|cairo_image_surface_get_height|cairo_image_surface_get_stride|\
+cairo_image_surface_get_width|cairo_matrix_create_scale|cairo_matrix_create_translate|cairo_matrix_invert|cairo_matrix_multiply|\
+cairo_matrix_rotate|cairo_matrix_transform_distance|cairo_matrix_transform_point|cairo_matrix_translate|cairo_pattern_add_color_stop_rgb|\
+cairo_pattern_add_color_stop_rgba|cairo_pattern_create_for_surface|cairo_pattern_create_linear|cairo_pattern_create_radial|\
+cairo_pattern_create_rgb|cairo_pattern_create_rgba|cairo_pattern_get_color_stop_count|cairo_pattern_get_color_stop_rgba|\
+cairo_pattern_get_extend|cairo_pattern_get_filter|cairo_pattern_get_linear_points|cairo_pattern_get_matrix|\
+cairo_pattern_get_radial_circles|cairo_pattern_get_rgba|cairo_pattern_get_surface|cairo_pattern_get_type|cairo_pattern_set_extend|\
+cairo_pattern_set_filter|cairo_pattern_set_matrix|cairo_pattern_status|cairo_pdf_surface_create|cairo_pdf_surface_set_size|\
+cairo_ps_get_levels|cairo_ps_level_to_string|cairo_ps_surface_create|cairo_ps_surface_dsc_begin_page_setup|\
+cairo_ps_surface_dsc_begin_setup|cairo_ps_surface_dsc_comment|cairo_ps_surface_get_eps|cairo_ps_surface_restrict_to_level|\
+cairo_ps_surface_set_eps|cairo_ps_surface_set_size|cairo_scaled_font_create|cairo_scaled_font_extents|cairo_scaled_font_get_ctm|\
+cairo_scaled_font_get_font_face|cairo_scaled_font_get_font_matrix|cairo_scaled_font_get_font_options|cairo_scaled_font_get_scale_matrix|\
+cairo_scaled_font_get_type|cairo_scaled_font_glyph_extents|cairo_scaled_font_status|cairo_scaled_font_text_extents|\
+cairo_surface_copy_page|cairo_surface_create_similar|cairo_surface_finish|cairo_surface_flush|cairo_surface_get_content|\
+cairo_surface_get_device_offset|cairo_surface_get_font_options|cairo_surface_get_type|cairo_surface_mark_dirty|\
+cairo_surface_mark_dirty_rectangle|cairo_surface_set_device_offset|cairo_surface_set_fallback_resolution|cairo_surface_show_page|\
+cairo_surface_status|cairo_surface_write_to_png|cairo_svg_surface_create|cairo_svg_surface_restrict_to_version|\
+cairo_svg_version_to_string|cairoantialias|cairocontent|cairocontext|cairoexception|cairoextend|cairofillrule|cairofilter|cairofontface|\
+cairofontoptions|cairofontslant|cairofonttype|cairofontweight|cairoformat|cairogradientpattern|cairohintmetrics|cairohintstyle|\
+cairoimagesurface|cairolineargradient|cairolinecap|cairolinejoin|cairomatrix|cairooperator|cairopath|cairopattern|cairopatterntype|\
+cairopdfsurface|cairopslevel|cairopssurface|cairoradialgradient|cairoscaledfont|cairosolidpattern|cairostatus|cairosubpixelorder|\
+cairosurface|cairosurfacepattern|cairosurfacetype|cairosvgsurface|cairosvgversion|cairotoyfontface|cal_days_in_month|cal_from_jd|cal_info|\
+cal_to_jd|calcul_hmac|calculhmac|call_user_func|call_user_func_array|call_user_method|call_user_method_array|callbackfilteriterator|ceil|\
+chdb|chdb_create|chdir|checkdate|checkdnsrr|chgrp|chmod|chop|chown|chr|chroot|chunk_split|class_alias|class_exists|class_implements|\
+class_parents|class_uses|classkit_import|classkit_method_add|classkit_method_copy|classkit_method_redefine|classkit_method_remove|\
+classkit_method_rename|clearstatcache|clone|closedir|closelog|collator|com|com_addref|com_create_guid|com_event_sink|com_get|\
+com_get_active_object|com_invoke|com_isenum|com_load|com_load_typelib|com_message_pump|com_print_typeinfo|com_propget|com_propput|\
+com_propset|com_release|com_set|compact|connection_aborted|connection_status|connection_timeout|constant|construct|construct|construct|\
+convert_cyr_string|convert_uudecode|convert_uuencode|copy|cos|cosh|count|count_chars|countable|counter_bump|counter_bump_value|\
+counter_create|counter_get|counter_get_meta|counter_get_named|counter_get_value|counter_reset|counter_reset_value|crack_check|\
+crack_closedict|crack_getlastmessage|crack_opendict|crc32|create_function|crypt|ctype_alnum|ctype_alpha|ctype_cntrl|ctype_digit|\
+ctype_graph|ctype_lower|ctype_print|ctype_punct|ctype_space|ctype_upper|ctype_xdigit|cubrid_affected_rows|cubrid_bind|\
+cubrid_client_encoding|cubrid_close|cubrid_close_prepare|cubrid_close_request|cubrid_col_get|cubrid_col_size|cubrid_column_names|\
+cubrid_column_types|cubrid_commit|cubrid_connect|cubrid_connect_with_url|cubrid_current_oid|cubrid_data_seek|cubrid_db_name|\
+cubrid_disconnect|cubrid_drop|cubrid_errno|cubrid_error|cubrid_error_code|cubrid_error_code_facility|cubrid_error_msg|cubrid_execute|\
+cubrid_fetch|cubrid_fetch_array|cubrid_fetch_assoc|cubrid_fetch_field|cubrid_fetch_lengths|cubrid_fetch_object|cubrid_fetch_row|\
+cubrid_field_flags|cubrid_field_len|cubrid_field_name|cubrid_field_seek|cubrid_field_table|cubrid_field_type|cubrid_free_result|\
+cubrid_get|cubrid_get_autocommit|cubrid_get_charset|cubrid_get_class_name|cubrid_get_client_info|cubrid_get_db_parameter|\
+cubrid_get_server_info|cubrid_insert_id|cubrid_is_instance|cubrid_list_dbs|cubrid_load_from_glo|cubrid_lob_close|cubrid_lob_export|\
+cubrid_lob_get|cubrid_lob_send|cubrid_lob_size|cubrid_lock_read|cubrid_lock_write|cubrid_move_cursor|cubrid_new_glo|cubrid_next_result|\
+cubrid_num_cols|cubrid_num_fields|cubrid_num_rows|cubrid_ping|cubrid_prepare|cubrid_put|cubrid_query|cubrid_real_escape_string|\
+cubrid_result|cubrid_rollback|cubrid_save_to_glo|cubrid_schema|cubrid_send_glo|cubrid_seq_drop|cubrid_seq_insert|cubrid_seq_put|\
+cubrid_set_add|cubrid_set_autocommit|cubrid_set_db_parameter|cubrid_set_drop|cubrid_unbuffered_query|cubrid_version|curl_close|\
+curl_copy_handle|curl_errno|curl_error|curl_exec|curl_getinfo|curl_init|curl_multi_add_handle|curl_multi_close|curl_multi_exec|\
+curl_multi_getcontent|curl_multi_info_read|curl_multi_init|curl_multi_remove_handle|curl_multi_select|curl_setopt|curl_setopt_array|\
+curl_version|current|cyrus_authenticate|cyrus_bind|cyrus_close|cyrus_connect|cyrus_query|cyrus_unbind|date|date_add|date_create|\
+date_create_from_format|date_date_set|date_default_timezone_get|date_default_timezone_set|date_diff|date_format|date_get_last_errors|\
+date_interval_create_from_date_string|date_interval_format|date_isodate_set|date_modify|date_offset_get|date_parse|date_parse_from_format|\
+date_sub|date_sun_info|date_sunrise|date_sunset|date_time_set|date_timestamp_get|date_timestamp_set|date_timezone_get|date_timezone_set|\
+dateinterval|dateperiod|datetime|datetimezone|db2_autocommit|db2_bind_param|db2_client_info|db2_close|db2_column_privileges|db2_columns|\
+db2_commit|db2_conn_error|db2_conn_errormsg|db2_connect|db2_cursor_type|db2_escape_string|db2_exec|db2_execute|db2_fetch_array|\
+db2_fetch_assoc|db2_fetch_both|db2_fetch_object|db2_fetch_row|db2_field_display_size|db2_field_name|db2_field_num|db2_field_precision|\
+db2_field_scale|db2_field_type|db2_field_width|db2_foreign_keys|db2_free_result|db2_free_stmt|db2_get_option|db2_last_insert_id|\
+db2_lob_read|db2_next_result|db2_num_fields|db2_num_rows|db2_pclose|db2_pconnect|db2_prepare|db2_primary_keys|db2_procedure_columns|\
+db2_procedures|db2_result|db2_rollback|db2_server_info|db2_set_option|db2_special_columns|db2_statistics|db2_stmt_error|db2_stmt_errormsg|\
+db2_table_privileges|db2_tables|dba_close|dba_delete|dba_exists|dba_fetch|dba_firstkey|dba_handlers|dba_insert|dba_key_split|dba_list|\
+dba_nextkey|dba_open|dba_optimize|dba_popen|dba_replace|dba_sync|dbase_add_record|dbase_close|dbase_create|dbase_delete_record|\
+dbase_get_header_info|dbase_get_record|dbase_get_record_with_names|dbase_numfields|dbase_numrecords|dbase_open|dbase_pack|\
+dbase_replace_record|dbplus_add|dbplus_aql|dbplus_chdir|dbplus_close|dbplus_curr|dbplus_errcode|dbplus_errno|dbplus_find|dbplus_first|\
+dbplus_flush|dbplus_freealllocks|dbplus_freelock|dbplus_freerlocks|dbplus_getlock|dbplus_getunique|dbplus_info|dbplus_last|dbplus_lockrel|\
+dbplus_next|dbplus_open|dbplus_prev|dbplus_rchperm|dbplus_rcreate|dbplus_rcrtexact|dbplus_rcrtlike|dbplus_resolve|dbplus_restorepos|\
+dbplus_rkeys|dbplus_ropen|dbplus_rquery|dbplus_rrename|dbplus_rsecindex|dbplus_runlink|dbplus_rzap|dbplus_savepos|dbplus_setindex|\
+dbplus_setindexbynumber|dbplus_sql|dbplus_tcl|dbplus_tremove|dbplus_undo|dbplus_undoprepare|dbplus_unlockrel|dbplus_unselect|\
+dbplus_update|dbplus_xlockrel|dbplus_xunlockrel|dbx_close|dbx_compare|dbx_connect|dbx_error|dbx_escape_string|dbx_fetch_row|dbx_query|\
+dbx_sort|dcgettext|dcngettext|deaggregate|debug_backtrace|debug_print_backtrace|debug_zval_dump|decbin|dechex|decoct|define|\
+define_syslog_variables|defined|deg2rad|delete|dgettext|die|dio_close|dio_fcntl|dio_open|dio_read|dio_seek|dio_stat|dio_tcsetattr|\
+dio_truncate|dio_write|dir|directoryiterator|dirname|disk_free_space|disk_total_space|diskfreespace|dl|dngettext|dns_check_record|\
+dns_get_mx|dns_get_record|dom_import_simplexml|domainexception|domattr|domattribute_name|domattribute_set_value|domattribute_specified|\
+domattribute_value|domcharacterdata|domcomment|domdocument|domdocument_add_root|domdocument_create_attribute|\
+domdocument_create_cdata_section|domdocument_create_comment|domdocument_create_element|domdocument_create_element_ns|\
+domdocument_create_entity_reference|domdocument_create_processing_instruction|domdocument_create_text_node|domdocument_doctype|\
+domdocument_document_element|domdocument_dump_file|domdocument_dump_mem|domdocument_get_element_by_id|domdocument_get_elements_by_tagname|\
+domdocument_html_dump_mem|domdocument_xinclude|domdocumentfragment|domdocumenttype|domdocumenttype_entities|\
+domdocumenttype_internal_subset|domdocumenttype_name|domdocumenttype_notations|domdocumenttype_public_id|domdocumenttype_system_id|\
+domelement|domelement_get_attribute|domelement_get_attribute_node|domelement_get_elements_by_tagname|domelement_has_attribute|\
+domelement_remove_attribute|domelement_set_attribute|domelement_set_attribute_node|domelement_tagname|domentity|domentityreference|\
+domexception|domimplementation|domnamednodemap|domnode|domnode_add_namespace|domnode_append_child|domnode_append_sibling|\
+domnode_attributes|domnode_child_nodes|domnode_clone_node|domnode_dump_node|domnode_first_child|domnode_get_content|\
+domnode_has_attributes|domnode_has_child_nodes|domnode_insert_before|domnode_is_blank_node|domnode_last_child|domnode_next_sibling|\
+domnode_node_name|domnode_node_type|domnode_node_value|domnode_owner_document|domnode_parent_node|domnode_prefix|domnode_previous_sibling|\
+domnode_remove_child|domnode_replace_child|domnode_replace_node|domnode_set_content|domnode_set_name|domnode_set_namespace|\
+domnode_unlink_node|domnodelist|domnotation|domprocessinginstruction|domprocessinginstruction_data|domprocessinginstruction_target|\
+domtext|domxml_new_doc|domxml_open_file|domxml_open_mem|domxml_version|domxml_xmltree|domxml_xslt_stylesheet|domxml_xslt_stylesheet_doc|\
+domxml_xslt_stylesheet_file|domxml_xslt_version|domxpath|domxsltstylesheet_process|domxsltstylesheet_result_dump_file|\
+domxsltstylesheet_result_dump_mem|dotnet|dotnet_load|doubleval|each|easter_date|easter_days|echo|empty|emptyiterator|\
+enchant_broker_describe|enchant_broker_dict_exists|enchant_broker_free|enchant_broker_free_dict|enchant_broker_get_error|\
+enchant_broker_init|enchant_broker_list_dicts|enchant_broker_request_dict|enchant_broker_request_pwl_dict|enchant_broker_set_ordering|\
+enchant_dict_add_to_personal|enchant_dict_add_to_session|enchant_dict_check|enchant_dict_describe|enchant_dict_get_error|\
+enchant_dict_is_in_session|enchant_dict_quick_check|enchant_dict_store_replacement|enchant_dict_suggest|end|ereg|ereg_replace|eregi|\
+eregi_replace|error_get_last|error_log|error_reporting|errorexception|escapeshellarg|escapeshellcmd|eval|event_add|event_base_free|\
+event_base_loop|event_base_loopbreak|event_base_loopexit|event_base_new|event_base_priority_init|event_base_set|event_buffer_base_set|\
+event_buffer_disable|event_buffer_enable|event_buffer_fd_set|event_buffer_free|event_buffer_new|event_buffer_priority_set|\
+event_buffer_read|event_buffer_set_callback|event_buffer_timeout_set|event_buffer_watermark_set|event_buffer_write|event_del|event_free|\
+event_new|event_set|exception|exec|exif_imagetype|exif_read_data|exif_tagname|exif_thumbnail|exit|exp|expect_expectl|expect_popen|explode|\
+expm1|export|export|extension_loaded|extract|ezmlm_hash|fam_cancel_monitor|fam_close|fam_monitor_collection|fam_monitor_directory|\
+fam_monitor_file|fam_next_event|fam_open|fam_pending|fam_resume_monitor|fam_suspend_monitor|fbsql_affected_rows|fbsql_autocommit|\
+fbsql_blob_size|fbsql_change_user|fbsql_clob_size|fbsql_close|fbsql_commit|fbsql_connect|fbsql_create_blob|fbsql_create_clob|\
+fbsql_create_db|fbsql_data_seek|fbsql_database|fbsql_database_password|fbsql_db_query|fbsql_db_status|fbsql_drop_db|fbsql_errno|\
+fbsql_error|fbsql_fetch_array|fbsql_fetch_assoc|fbsql_fetch_field|fbsql_fetch_lengths|fbsql_fetch_object|fbsql_fetch_row|\
+fbsql_field_flags|fbsql_field_len|fbsql_field_name|fbsql_field_seek|fbsql_field_table|fbsql_field_type|fbsql_free_result|\
+fbsql_get_autostart_info|fbsql_hostname|fbsql_insert_id|fbsql_list_dbs|fbsql_list_fields|fbsql_list_tables|fbsql_next_result|\
+fbsql_num_fields|fbsql_num_rows|fbsql_password|fbsql_pconnect|fbsql_query|fbsql_read_blob|fbsql_read_clob|fbsql_result|fbsql_rollback|\
+fbsql_rows_fetched|fbsql_select_db|fbsql_set_characterset|fbsql_set_lob_mode|fbsql_set_password|fbsql_set_transaction|fbsql_start_db|\
+fbsql_stop_db|fbsql_table_name|fbsql_tablename|fbsql_username|fbsql_warnings|fclose|fdf_add_doc_javascript|fdf_add_template|fdf_close|\
+fdf_create|fdf_enum_values|fdf_errno|fdf_error|fdf_get_ap|fdf_get_attachment|fdf_get_encoding|fdf_get_file|fdf_get_flags|fdf_get_opt|\
+fdf_get_status|fdf_get_value|fdf_get_version|fdf_header|fdf_next_field_name|fdf_open|fdf_open_string|fdf_remove_item|fdf_save|\
+fdf_save_string|fdf_set_ap|fdf_set_encoding|fdf_set_file|fdf_set_flags|fdf_set_javascript_action|fdf_set_on_import_javascript|fdf_set_opt|\
+fdf_set_status|fdf_set_submit_form_action|fdf_set_target_frame|fdf_set_value|fdf_set_version|feof|fflush|fgetc|fgetcsv|fgets|fgetss|file|\
+file_exists|file_get_contents|file_put_contents|fileatime|filectime|filegroup|fileinode|filemtime|fileowner|fileperms|filepro|\
+filepro_fieldcount|filepro_fieldname|filepro_fieldtype|filepro_fieldwidth|filepro_retrieve|filepro_rowcount|filesize|filesystemiterator|\
+filetype|filter_has_var|filter_id|filter_input|filter_input_array|filter_list|filter_var|filter_var_array|filteriterator|finfo_buffer|\
+finfo_close|finfo_file|finfo_open|finfo_set_flags|floatval|flock|floor|flush|fmod|fnmatch|fopen|forward_static_call|\
+forward_static_call_array|fpassthru|fprintf|fputcsv|fputs|fread|frenchtojd|fribidi_log2vis|fscanf|fseek|fsockopen|fstat|ftell|ftok|\
+ftp_alloc|ftp_cdup|ftp_chdir|ftp_chmod|ftp_close|ftp_connect|ftp_delete|ftp_exec|ftp_fget|ftp_fput|ftp_get|ftp_get_option|ftp_login|\
+ftp_mdtm|ftp_mkdir|ftp_nb_continue|ftp_nb_fget|ftp_nb_fput|ftp_nb_get|ftp_nb_put|ftp_nlist|ftp_pasv|ftp_put|ftp_pwd|ftp_quit|ftp_raw|\
+ftp_rawlist|ftp_rename|ftp_rmdir|ftp_set_option|ftp_site|ftp_size|ftp_ssl_connect|ftp_systype|ftruncate|func_get_arg|func_get_args|\
+func_num_args|function_exists|fwrite|gc_collect_cycles|gc_disable|gc_enable|gc_enabled|gd_info|gearmanclient|gearmanjob|gearmantask|\
+gearmanworker|geoip_continent_code_by_name|geoip_country_code3_by_name|geoip_country_code_by_name|geoip_country_name_by_name|\
+geoip_database_info|geoip_db_avail|geoip_db_filename|geoip_db_get_all_info|geoip_id_by_name|geoip_isp_by_name|geoip_org_by_name|\
+geoip_record_by_name|geoip_region_by_name|geoip_region_name_by_code|geoip_time_zone_by_country_and_region|getMeta|getNamed|getValue|\
+get_browser|get_called_class|get_cfg_var|get_class|get_class_methods|get_class_vars|get_current_user|get_declared_classes|\
+get_declared_interfaces|get_declared_traits|get_defined_constants|get_defined_functions|get_defined_vars|get_extension_funcs|get_headers|\
+get_html_translation_table|get_include_path|get_included_files|get_loaded_extensions|get_magic_quotes_gpc|get_magic_quotes_runtime|\
+get_meta_tags|get_object_vars|get_parent_class|get_required_files|get_resource_type|getallheaders|getconstant|getconstants|getconstructor|\
+getcwd|getdate|getdefaultproperties|getdoccomment|getendline|getenv|getextension|getextensionname|getfilename|gethostbyaddr|gethostbyname|\
+gethostbynamel|gethostname|getimagesize|getinterfacenames|getinterfaces|getlastmod|getmethod|getmethods|getmodifiers|getmxrr|getmygid|\
+getmyinode|getmypid|getmyuid|getname|getnamespacename|getopt|getparentclass|getproperties|getproperty|getprotobyname|getprotobynumber|\
+getrandmax|getrusage|getservbyname|getservbyport|getshortname|getstartline|getstaticproperties|getstaticpropertyvalue|gettext|\
+gettimeofday|gettype|glob|globiterator|gmagick|gmagickdraw|gmagickpixel|gmdate|gmmktime|gmp_abs|gmp_add|gmp_and|gmp_clrbit|gmp_cmp|\
+gmp_com|gmp_div|gmp_div_q|gmp_div_qr|gmp_div_r|gmp_divexact|gmp_fact|gmp_gcd|gmp_gcdext|gmp_hamdist|gmp_init|gmp_intval|gmp_invert|\
+gmp_jacobi|gmp_legendre|gmp_mod|gmp_mul|gmp_neg|gmp_nextprime|gmp_or|gmp_perfect_square|gmp_popcount|gmp_pow|gmp_powm|gmp_prob_prime|\
+gmp_random|gmp_scan0|gmp_scan1|gmp_setbit|gmp_sign|gmp_sqrt|gmp_sqrtrem|gmp_strval|gmp_sub|gmp_testbit|gmp_xor|gmstrftime|\
+gnupg_adddecryptkey|gnupg_addencryptkey|gnupg_addsignkey|gnupg_cleardecryptkeys|gnupg_clearencryptkeys|gnupg_clearsignkeys|gnupg_decrypt|\
+gnupg_decryptverify|gnupg_encrypt|gnupg_encryptsign|gnupg_export|gnupg_geterror|gnupg_getprotocol|gnupg_import|gnupg_init|gnupg_keyinfo|\
+gnupg_setarmor|gnupg_seterrormode|gnupg_setsignmode|gnupg_sign|gnupg_verify|gopher_parsedir|grapheme_extract|grapheme_stripos|\
+grapheme_stristr|grapheme_strlen|grapheme_strpos|grapheme_strripos|grapheme_strrpos|grapheme_strstr|grapheme_substr|gregoriantojd|\
+gupnp_context_get_host_ip|gupnp_context_get_port|gupnp_context_get_subscription_timeout|gupnp_context_host_path|gupnp_context_new|\
+gupnp_context_set_subscription_timeout|gupnp_context_timeout_add|gupnp_context_unhost_path|gupnp_control_point_browse_start|\
+gupnp_control_point_browse_stop|gupnp_control_point_callback_set|gupnp_control_point_new|gupnp_device_action_callback_set|\
+gupnp_device_info_get|gupnp_device_info_get_service|gupnp_root_device_get_available|gupnp_root_device_get_relative_location|\
+gupnp_root_device_new|gupnp_root_device_set_available|gupnp_root_device_start|gupnp_root_device_stop|gupnp_service_action_get|\
+gupnp_service_action_return|gupnp_service_action_return_error|gupnp_service_action_set|gupnp_service_freeze_notify|gupnp_service_info_get|\
+gupnp_service_info_get_introspection|gupnp_service_introspection_get_state_variable|gupnp_service_notify|gupnp_service_proxy_action_get|\
+gupnp_service_proxy_action_set|gupnp_service_proxy_add_notify|gupnp_service_proxy_callback_set|gupnp_service_proxy_get_subscribed|\
+gupnp_service_proxy_remove_notify|gupnp_service_proxy_set_subscribed|gupnp_service_thaw_notify|gzclose|gzcompress|gzdecode|gzdeflate|\
+gzencode|gzeof|gzfile|gzgetc|gzgets|gzgetss|gzinflate|gzopen|gzpassthru|gzputs|gzread|gzrewind|gzseek|gztell|gzuncompress|gzwrite|\
+halt_compiler|haruannotation|haruannotation_setborderstyle|haruannotation_sethighlightmode|haruannotation_seticon|\
+haruannotation_setopened|harudestination|harudestination_setfit|harudestination_setfitb|harudestination_setfitbh|harudestination_setfitbv|\
+harudestination_setfith|harudestination_setfitr|harudestination_setfitv|harudestination_setxyz|harudoc|harudoc_addpage|\
+harudoc_addpagelabel|harudoc_construct|harudoc_createoutline|harudoc_getcurrentencoder|harudoc_getcurrentpage|harudoc_getencoder|\
+harudoc_getfont|harudoc_getinfoattr|harudoc_getpagelayout|harudoc_getpagemode|harudoc_getstreamsize|harudoc_insertpage|harudoc_loadjpeg|\
+harudoc_loadpng|harudoc_loadraw|harudoc_loadttc|harudoc_loadttf|harudoc_loadtype1|harudoc_output|harudoc_readfromstream|\
+harudoc_reseterror|harudoc_resetstream|harudoc_save|harudoc_savetostream|harudoc_setcompressionmode|harudoc_setcurrentencoder|\
+harudoc_setencryptionmode|harudoc_setinfoattr|harudoc_setinfodateattr|harudoc_setopenaction|harudoc_setpagelayout|harudoc_setpagemode|\
+harudoc_setpagesconfiguration|harudoc_setpassword|harudoc_setpermission|harudoc_usecnsencodings|harudoc_usecnsfonts|\
+harudoc_usecntencodings|harudoc_usecntfonts|harudoc_usejpencodings|harudoc_usejpfonts|harudoc_usekrencodings|harudoc_usekrfonts|\
+haruencoder|haruencoder_getbytetype|haruencoder_gettype|haruencoder_getunicode|haruencoder_getwritingmode|haruexception|harufont|\
+harufont_getascent|harufont_getcapheight|harufont_getdescent|harufont_getencodingname|harufont_getfontname|harufont_gettextwidth|\
+harufont_getunicodewidth|harufont_getxheight|harufont_measuretext|haruimage|haruimage_getbitspercomponent|haruimage_getcolorspace|\
+haruimage_getheight|haruimage_getsize|haruimage_getwidth|haruimage_setcolormask|haruimage_setmaskimage|haruoutline|\
+haruoutline_setdestination|haruoutline_setopened|harupage|harupage_arc|harupage_begintext|harupage_circle|harupage_closepath|\
+harupage_concat|harupage_createdestination|harupage_createlinkannotation|harupage_createtextannotation|harupage_createurlannotation|\
+harupage_curveto|harupage_curveto2|harupage_curveto3|harupage_drawimage|harupage_ellipse|harupage_endpath|harupage_endtext|\
+harupage_eofill|harupage_eofillstroke|harupage_fill|harupage_fillstroke|harupage_getcharspace|harupage_getcmykfill|harupage_getcmykstroke|\
+harupage_getcurrentfont|harupage_getcurrentfontsize|harupage_getcurrentpos|harupage_getcurrenttextpos|harupage_getdash|\
+harupage_getfillingcolorspace|harupage_getflatness|harupage_getgmode|harupage_getgrayfill|harupage_getgraystroke|harupage_getheight|\
+harupage_gethorizontalscaling|harupage_getlinecap|harupage_getlinejoin|harupage_getlinewidth|harupage_getmiterlimit|harupage_getrgbfill|\
+harupage_getrgbstroke|harupage_getstrokingcolorspace|harupage_gettextleading|harupage_gettextmatrix|harupage_gettextrenderingmode|\
+harupage_gettextrise|harupage_gettextwidth|harupage_gettransmatrix|harupage_getwidth|harupage_getwordspace|harupage_lineto|\
+harupage_measuretext|harupage_movetextpos|harupage_moveto|harupage_movetonextline|harupage_rectangle|harupage_setcharspace|\
+harupage_setcmykfill|harupage_setcmykstroke|harupage_setdash|harupage_setflatness|harupage_setfontandsize|harupage_setgrayfill|\
+harupage_setgraystroke|harupage_setheight|harupage_sethorizontalscaling|harupage_setlinecap|harupage_setlinejoin|harupage_setlinewidth|\
+harupage_setmiterlimit|harupage_setrgbfill|harupage_setrgbstroke|harupage_setrotate|harupage_setsize|harupage_setslideshow|\
+harupage_settextleading|harupage_settextmatrix|harupage_settextrenderingmode|harupage_settextrise|harupage_setwidth|harupage_setwordspace|\
+harupage_showtext|harupage_showtextnextline|harupage_stroke|harupage_textout|harupage_textrect|hasconstant|hash|hash_algos|hash_copy|\
+hash_file|hash_final|hash_hmac|hash_hmac_file|hash_init|hash_update|hash_update_file|hash_update_stream|hasmethod|hasproperty|header|\
+header_register_callback|header_remove|headers_list|headers_sent|hebrev|hebrevc|hex2bin|hexdec|highlight_file|highlight_string|\
+html_entity_decode|htmlentities|htmlspecialchars|htmlspecialchars_decode|http_build_cookie|http_build_query|http_build_str|http_build_url|\
+http_cache_etag|http_cache_last_modified|http_chunked_decode|http_date|http_deflate|http_get|http_get_request_body|\
+http_get_request_body_stream|http_get_request_headers|http_head|http_inflate|http_match_etag|http_match_modified|\
+http_match_request_header|http_negotiate_charset|http_negotiate_content_type|http_negotiate_language|http_parse_cookie|http_parse_headers|\
+http_parse_message|http_parse_params|http_persistent_handles_clean|http_persistent_handles_count|http_persistent_handles_ident|\
+http_post_data|http_post_fields|http_put_data|http_put_file|http_put_stream|http_redirect|http_request|http_request_body_encode|\
+http_request_method_exists|http_request_method_name|http_request_method_register|http_request_method_unregister|http_response_code|\
+http_send_content_disposition|http_send_content_type|http_send_data|http_send_file|http_send_last_modified|http_send_status|\
+http_send_stream|http_support|http_throttle|httpdeflatestream|httpdeflatestream_construct|httpdeflatestream_factory|\
+httpdeflatestream_finish|httpdeflatestream_flush|httpdeflatestream_update|httpinflatestream|httpinflatestream_construct|\
+httpinflatestream_factory|httpinflatestream_finish|httpinflatestream_flush|httpinflatestream_update|httpmessage|httpmessage_addheaders|\
+httpmessage_construct|httpmessage_detach|httpmessage_factory|httpmessage_fromenv|httpmessage_fromstring|httpmessage_getbody|\
+httpmessage_getheader|httpmessage_getheaders|httpmessage_gethttpversion|httpmessage_getparentmessage|httpmessage_getrequestmethod|\
+httpmessage_getrequesturl|httpmessage_getresponsecode|httpmessage_getresponsestatus|httpmessage_gettype|httpmessage_guesscontenttype|\
+httpmessage_prepend|httpmessage_reverse|httpmessage_send|httpmessage_setbody|httpmessage_setheaders|httpmessage_sethttpversion|\
+httpmessage_setrequestmethod|httpmessage_setrequesturl|httpmessage_setresponsecode|httpmessage_setresponsestatus|httpmessage_settype|\
+httpmessage_tomessagetypeobject|httpmessage_tostring|httpquerystring|httpquerystring_construct|httpquerystring_get|httpquerystring_mod|\
+httpquerystring_set|httpquerystring_singleton|httpquerystring_toarray|httpquerystring_tostring|httpquerystring_xlate|httprequest|\
+httprequest_addcookies|httprequest_addheaders|httprequest_addpostfields|httprequest_addpostfile|httprequest_addputdata|\
+httprequest_addquerydata|httprequest_addrawpostdata|httprequest_addssloptions|httprequest_clearhistory|httprequest_construct|\
+httprequest_enablecookies|httprequest_getcontenttype|httprequest_getcookies|httprequest_getheaders|httprequest_gethistory|\
+httprequest_getmethod|httprequest_getoptions|httprequest_getpostfields|httprequest_getpostfiles|httprequest_getputdata|\
+httprequest_getputfile|httprequest_getquerydata|httprequest_getrawpostdata|httprequest_getrawrequestmessage|\
+httprequest_getrawresponsemessage|httprequest_getrequestmessage|httprequest_getresponsebody|httprequest_getresponsecode|\
+httprequest_getresponsecookies|httprequest_getresponsedata|httprequest_getresponseheader|httprequest_getresponseinfo|\
+httprequest_getresponsemessage|httprequest_getresponsestatus|httprequest_getssloptions|httprequest_geturl|httprequest_resetcookies|\
+httprequest_send|httprequest_setcontenttype|httprequest_setcookies|httprequest_setheaders|httprequest_setmethod|httprequest_setoptions|\
+httprequest_setpostfields|httprequest_setpostfiles|httprequest_setputdata|httprequest_setputfile|httprequest_setquerydata|\
+httprequest_setrawpostdata|httprequest_setssloptions|httprequest_seturl|httprequestpool|httprequestpool_attach|httprequestpool_construct|\
+httprequestpool_destruct|httprequestpool_detach|httprequestpool_getattachedrequests|httprequestpool_getfinishedrequests|\
+httprequestpool_reset|httprequestpool_send|httprequestpool_socketperform|httprequestpool_socketselect|httpresponse|httpresponse_capture|\
+httpresponse_getbuffersize|httpresponse_getcache|httpresponse_getcachecontrol|httpresponse_getcontentdisposition|\
+httpresponse_getcontenttype|httpresponse_getdata|httpresponse_getetag|httpresponse_getfile|httpresponse_getgzip|httpresponse_getheader|\
+httpresponse_getlastmodified|httpresponse_getrequestbody|httpresponse_getrequestbodystream|httpresponse_getrequestheaders|\
+httpresponse_getstream|httpresponse_getthrottledelay|httpresponse_guesscontenttype|httpresponse_redirect|httpresponse_send|\
+httpresponse_setbuffersize|httpresponse_setcache|httpresponse_setcachecontrol|httpresponse_setcontentdisposition|\
+httpresponse_setcontenttype|httpresponse_setdata|httpresponse_setetag|httpresponse_setfile|httpresponse_setgzip|httpresponse_setheader|\
+httpresponse_setlastmodified|httpresponse_setstream|httpresponse_setthrottledelay|httpresponse_status|hw_array2objrec|hw_changeobject|\
+hw_children|hw_childrenobj|hw_close|hw_connect|hw_connection_info|hw_cp|hw_deleteobject|hw_docbyanchor|hw_docbyanchorobj|\
+hw_document_attributes|hw_document_bodytag|hw_document_content|hw_document_setcontent|hw_document_size|hw_dummy|hw_edittext|hw_error|\
+hw_errormsg|hw_free_document|hw_getanchors|hw_getanchorsobj|hw_getandlock|hw_getchildcoll|hw_getchildcollobj|hw_getchilddoccoll|\
+hw_getchilddoccollobj|hw_getobject|hw_getobjectbyquery|hw_getobjectbyquerycoll|hw_getobjectbyquerycollobj|hw_getobjectbyqueryobj|\
+hw_getparents|hw_getparentsobj|hw_getrellink|hw_getremote|hw_getremotechildren|hw_getsrcbydestobj|hw_gettext|hw_getusername|hw_identify|\
+hw_incollections|hw_info|hw_inscoll|hw_insdoc|hw_insertanchors|hw_insertdocument|hw_insertobject|hw_mapid|hw_modifyobject|hw_mv|\
+hw_new_document|hw_objrec2array|hw_output_document|hw_pconnect|hw_pipedocument|hw_root|hw_setlinkroot|hw_stat|hw_unlock|hw_who|\
+hwapi_attribute|hwapi_attribute_key|hwapi_attribute_langdepvalue|hwapi_attribute_value|hwapi_attribute_values|hwapi_checkin|\
+hwapi_checkout|hwapi_children|hwapi_content|hwapi_content_mimetype|hwapi_content_read|hwapi_copy|hwapi_dbstat|hwapi_dcstat|\
+hwapi_dstanchors|hwapi_dstofsrcanchor|hwapi_error_count|hwapi_error_reason|hwapi_find|hwapi_ftstat|hwapi_hgcsp|hwapi_hwstat|\
+hwapi_identify|hwapi_info|hwapi_insert|hwapi_insertanchor|hwapi_insertcollection|hwapi_insertdocument|hwapi_link|hwapi_lock|hwapi_move|\
+hwapi_new_content|hwapi_object|hwapi_object_assign|hwapi_object_attreditable|hwapi_object_count|hwapi_object_insert|hwapi_object_new|\
+hwapi_object_remove|hwapi_object_title|hwapi_object_value|hwapi_objectbyanchor|hwapi_parents|hwapi_reason_description|hwapi_reason_type|\
+hwapi_remove|hwapi_replace|hwapi_setcommittedversion|hwapi_srcanchors|hwapi_srcsofdst|hwapi_unlock|hwapi_user|hwapi_userlist|hypot|\
+ibase_add_user|ibase_affected_rows|ibase_backup|ibase_blob_add|ibase_blob_cancel|ibase_blob_close|ibase_blob_create|ibase_blob_echo|\
+ibase_blob_get|ibase_blob_import|ibase_blob_info|ibase_blob_open|ibase_close|ibase_commit|ibase_commit_ret|ibase_connect|ibase_db_info|\
+ibase_delete_user|ibase_drop_db|ibase_errcode|ibase_errmsg|ibase_execute|ibase_fetch_assoc|ibase_fetch_object|ibase_fetch_row|\
+ibase_field_info|ibase_free_event_handler|ibase_free_query|ibase_free_result|ibase_gen_id|ibase_maintain_db|ibase_modify_user|\
+ibase_name_result|ibase_num_fields|ibase_num_params|ibase_param_info|ibase_pconnect|ibase_prepare|ibase_query|ibase_restore|\
+ibase_rollback|ibase_rollback_ret|ibase_server_info|ibase_service_attach|ibase_service_detach|ibase_set_event_handler|ibase_timefmt|\
+ibase_trans|ibase_wait_event|iconv|iconv_get_encoding|iconv_mime_decode|iconv_mime_decode_headers|iconv_mime_encode|iconv_set_encoding|\
+iconv_strlen|iconv_strpos|iconv_strrpos|iconv_substr|id3_get_frame_long_name|id3_get_frame_short_name|id3_get_genre_id|id3_get_genre_list|\
+id3_get_genre_name|id3_get_tag|id3_get_version|id3_remove_tag|id3_set_tag|id3v2attachedpictureframe|id3v2frame|id3v2tag|idate|\
+idn_to_ascii|idn_to_unicode|idn_to_utf8|ifx_affected_rows|ifx_blobinfile_mode|ifx_byteasvarchar|ifx_close|ifx_connect|ifx_copy_blob|\
+ifx_create_blob|ifx_create_char|ifx_do|ifx_error|ifx_errormsg|ifx_fetch_row|ifx_fieldproperties|ifx_fieldtypes|ifx_free_blob|\
+ifx_free_char|ifx_free_result|ifx_get_blob|ifx_get_char|ifx_getsqlca|ifx_htmltbl_result|ifx_nullformat|ifx_num_fields|ifx_num_rows|\
+ifx_pconnect|ifx_prepare|ifx_query|ifx_textasvarchar|ifx_update_blob|ifx_update_char|ifxus_close_slob|ifxus_create_slob|ifxus_free_slob|\
+ifxus_open_slob|ifxus_read_slob|ifxus_seek_slob|ifxus_tell_slob|ifxus_write_slob|ignore_user_abort|iis_add_server|iis_get_dir_security|\
+iis_get_script_map|iis_get_server_by_comment|iis_get_server_by_path|iis_get_server_rights|iis_get_service_state|iis_remove_server|\
+iis_set_app_settings|iis_set_dir_security|iis_set_script_map|iis_set_server_rights|iis_start_server|iis_start_service|iis_stop_server|\
+iis_stop_service|image2wbmp|image_type_to_extension|image_type_to_mime_type|imagealphablending|imageantialias|imagearc|imagechar|\
+imagecharup|imagecolorallocate|imagecolorallocatealpha|imagecolorat|imagecolorclosest|imagecolorclosestalpha|imagecolorclosesthwb|\
+imagecolordeallocate|imagecolorexact|imagecolorexactalpha|imagecolormatch|imagecolorresolve|imagecolorresolvealpha|imagecolorset|\
+imagecolorsforindex|imagecolorstotal|imagecolortransparent|imageconvolution|imagecopy|imagecopymerge|imagecopymergegray|\
+imagecopyresampled|imagecopyresized|imagecreate|imagecreatefromgd|imagecreatefromgd2|imagecreatefromgd2part|imagecreatefromgif|\
+imagecreatefromjpeg|imagecreatefrompng|imagecreatefromstring|imagecreatefromwbmp|imagecreatefromxbm|imagecreatefromxpm|\
+imagecreatetruecolor|imagedashedline|imagedestroy|imageellipse|imagefill|imagefilledarc|imagefilledellipse|imagefilledpolygon|\
+imagefilledrectangle|imagefilltoborder|imagefilter|imagefontheight|imagefontwidth|imageftbbox|imagefttext|imagegammacorrect|imagegd|\
+imagegd2|imagegif|imagegrabscreen|imagegrabwindow|imageinterlace|imageistruecolor|imagejpeg|imagelayereffect|imageline|imageloadfont|\
+imagepalettecopy|imagepng|imagepolygon|imagepsbbox|imagepsencodefont|imagepsextendfont|imagepsfreefont|imagepsloadfont|imagepsslantfont|\
+imagepstext|imagerectangle|imagerotate|imagesavealpha|imagesetbrush|imagesetpixel|imagesetstyle|imagesetthickness|imagesettile|\
+imagestring|imagestringup|imagesx|imagesy|imagetruecolortopalette|imagettfbbox|imagettftext|imagetypes|imagewbmp|imagexbm|imagick|\
+imagick_adaptiveblurimage|imagick_adaptiveresizeimage|imagick_adaptivesharpenimage|imagick_adaptivethresholdimage|imagick_addimage|\
+imagick_addnoiseimage|imagick_affinetransformimage|imagick_animateimages|imagick_annotateimage|imagick_appendimages|imagick_averageimages|\
+imagick_blackthresholdimage|imagick_blurimage|imagick_borderimage|imagick_charcoalimage|imagick_chopimage|imagick_clear|imagick_clipimage|\
+imagick_clippathimage|imagick_clone|imagick_clutimage|imagick_coalesceimages|imagick_colorfloodfillimage|imagick_colorizeimage|\
+imagick_combineimages|imagick_commentimage|imagick_compareimagechannels|imagick_compareimagelayers|imagick_compareimages|\
+imagick_compositeimage|imagick_construct|imagick_contrastimage|imagick_contraststretchimage|imagick_convolveimage|imagick_cropimage|\
+imagick_cropthumbnailimage|imagick_current|imagick_cyclecolormapimage|imagick_decipherimage|imagick_deconstructimages|\
+imagick_deleteimageartifact|imagick_despeckleimage|imagick_destroy|imagick_displayimage|imagick_displayimages|imagick_distortimage|\
+imagick_drawimage|imagick_edgeimage|imagick_embossimage|imagick_encipherimage|imagick_enhanceimage|imagick_equalizeimage|\
+imagick_evaluateimage|imagick_extentimage|imagick_flattenimages|imagick_flipimage|imagick_floodfillpaintimage|imagick_flopimage|\
+imagick_frameimage|imagick_fximage|imagick_gammaimage|imagick_gaussianblurimage|imagick_getcolorspace|imagick_getcompression|\
+imagick_getcompressionquality|imagick_getcopyright|imagick_getfilename|imagick_getfont|imagick_getformat|imagick_getgravity|\
+imagick_gethomeurl|imagick_getimage|imagick_getimagealphachannel|imagick_getimageartifact|imagick_getimagebackgroundcolor|\
+imagick_getimageblob|imagick_getimageblueprimary|imagick_getimagebordercolor|imagick_getimagechanneldepth|\
+imagick_getimagechanneldistortion|imagick_getimagechanneldistortions|imagick_getimagechannelextrema|imagick_getimagechannelmean|\
+imagick_getimagechannelrange|imagick_getimagechannelstatistics|imagick_getimageclipmask|imagick_getimagecolormapcolor|\
+imagick_getimagecolors|imagick_getimagecolorspace|imagick_getimagecompose|imagick_getimagecompression|imagick_getimagecompressionquality|\
+imagick_getimagedelay|imagick_getimagedepth|imagick_getimagedispose|imagick_getimagedistortion|imagick_getimageextrema|\
+imagick_getimagefilename|imagick_getimageformat|imagick_getimagegamma|imagick_getimagegeometry|imagick_getimagegravity|\
+imagick_getimagegreenprimary|imagick_getimageheight|imagick_getimagehistogram|imagick_getimageindex|imagick_getimageinterlacescheme|\
+imagick_getimageinterpolatemethod|imagick_getimageiterations|imagick_getimagelength|imagick_getimagemagicklicense|imagick_getimagematte|\
+imagick_getimagemattecolor|imagick_getimageorientation|imagick_getimagepage|imagick_getimagepixelcolor|imagick_getimageprofile|\
+imagick_getimageprofiles|imagick_getimageproperties|imagick_getimageproperty|imagick_getimageredprimary|imagick_getimageregion|\
+imagick_getimagerenderingintent|imagick_getimageresolution|imagick_getimagesblob|imagick_getimagescene|imagick_getimagesignature|\
+imagick_getimagesize|imagick_getimagetickspersecond|imagick_getimagetotalinkdensity|imagick_getimagetype|imagick_getimageunits|\
+imagick_getimagevirtualpixelmethod|imagick_getimagewhitepoint|imagick_getimagewidth|imagick_getinterlacescheme|imagick_getiteratorindex|\
+imagick_getnumberimages|imagick_getoption|imagick_getpackagename|imagick_getpage|imagick_getpixeliterator|imagick_getpixelregioniterator|\
+imagick_getpointsize|imagick_getquantumdepth|imagick_getquantumrange|imagick_getreleasedate|imagick_getresource|imagick_getresourcelimit|\
+imagick_getsamplingfactors|imagick_getsize|imagick_getsizeoffset|imagick_getversion|imagick_hasnextimage|imagick_haspreviousimage|\
+imagick_identifyimage|imagick_implodeimage|imagick_labelimage|imagick_levelimage|imagick_linearstretchimage|imagick_liquidrescaleimage|\
+imagick_magnifyimage|imagick_mapimage|imagick_mattefloodfillimage|imagick_medianfilterimage|imagick_mergeimagelayers|imagick_minifyimage|\
+imagick_modulateimage|imagick_montageimage|imagick_morphimages|imagick_mosaicimages|imagick_motionblurimage|imagick_negateimage|\
+imagick_newimage|imagick_newpseudoimage|imagick_nextimage|imagick_normalizeimage|imagick_oilpaintimage|imagick_opaquepaintimage|\
+imagick_optimizeimagelayers|imagick_orderedposterizeimage|imagick_paintfloodfillimage|imagick_paintopaqueimage|\
+imagick_painttransparentimage|imagick_pingimage|imagick_pingimageblob|imagick_pingimagefile|imagick_polaroidimage|imagick_posterizeimage|\
+imagick_previewimages|imagick_previousimage|imagick_profileimage|imagick_quantizeimage|imagick_quantizeimages|imagick_queryfontmetrics|\
+imagick_queryfonts|imagick_queryformats|imagick_radialblurimage|imagick_raiseimage|imagick_randomthresholdimage|imagick_readimage|\
+imagick_readimageblob|imagick_readimagefile|imagick_recolorimage|imagick_reducenoiseimage|imagick_removeimage|imagick_removeimageprofile|\
+imagick_render|imagick_resampleimage|imagick_resetimagepage|imagick_resizeimage|imagick_rollimage|imagick_rotateimage|\
+imagick_roundcorners|imagick_sampleimage|imagick_scaleimage|imagick_separateimagechannel|imagick_sepiatoneimage|\
+imagick_setbackgroundcolor|imagick_setcolorspace|imagick_setcompression|imagick_setcompressionquality|imagick_setfilename|\
+imagick_setfirstiterator|imagick_setfont|imagick_setformat|imagick_setgravity|imagick_setimage|imagick_setimagealphachannel|\
+imagick_setimageartifact|imagick_setimagebackgroundcolor|imagick_setimagebias|imagick_setimageblueprimary|imagick_setimagebordercolor|\
+imagick_setimagechanneldepth|imagick_setimageclipmask|imagick_setimagecolormapcolor|imagick_setimagecolorspace|imagick_setimagecompose|\
+imagick_setimagecompression|imagick_setimagecompressionquality|imagick_setimagedelay|imagick_setimagedepth|imagick_setimagedispose|\
+imagick_setimageextent|imagick_setimagefilename|imagick_setimageformat|imagick_setimagegamma|imagick_setimagegravity|\
+imagick_setimagegreenprimary|imagick_setimageindex|imagick_setimageinterlacescheme|imagick_setimageinterpolatemethod|\
+imagick_setimageiterations|imagick_setimagematte|imagick_setimagemattecolor|imagick_setimageopacity|imagick_setimageorientation|\
+imagick_setimagepage|imagick_setimageprofile|imagick_setimageproperty|imagick_setimageredprimary|imagick_setimagerenderingintent|\
+imagick_setimageresolution|imagick_setimagescene|imagick_setimagetickspersecond|imagick_setimagetype|imagick_setimageunits|\
+imagick_setimagevirtualpixelmethod|imagick_setimagewhitepoint|imagick_setinterlacescheme|imagick_setiteratorindex|imagick_setlastiterator|\
+imagick_setoption|imagick_setpage|imagick_setpointsize|imagick_setresolution|imagick_setresourcelimit|imagick_setsamplingfactors|\
+imagick_setsize|imagick_setsizeoffset|imagick_settype|imagick_shadeimage|imagick_shadowimage|imagick_sharpenimage|imagick_shaveimage|\
+imagick_shearimage|imagick_sigmoidalcontrastimage|imagick_sketchimage|imagick_solarizeimage|imagick_spliceimage|imagick_spreadimage|\
+imagick_steganoimage|imagick_stereoimage|imagick_stripimage|imagick_swirlimage|imagick_textureimage|imagick_thresholdimage|\
+imagick_thumbnailimage|imagick_tintimage|imagick_transformimage|imagick_transparentpaintimage|imagick_transposeimage|\
+imagick_transverseimage|imagick_trimimage|imagick_uniqueimagecolors|imagick_unsharpmaskimage|imagick_valid|imagick_vignetteimage|\
+imagick_waveimage|imagick_whitethresholdimage|imagick_writeimage|imagick_writeimagefile|imagick_writeimages|imagick_writeimagesfile|\
+imagickdraw|imagickdraw_affine|imagickdraw_annotation|imagickdraw_arc|imagickdraw_bezier|imagickdraw_circle|imagickdraw_clear|\
+imagickdraw_clone|imagickdraw_color|imagickdraw_comment|imagickdraw_composite|imagickdraw_construct|imagickdraw_destroy|\
+imagickdraw_ellipse|imagickdraw_getclippath|imagickdraw_getcliprule|imagickdraw_getclipunits|imagickdraw_getfillcolor|\
+imagickdraw_getfillopacity|imagickdraw_getfillrule|imagickdraw_getfont|imagickdraw_getfontfamily|imagickdraw_getfontsize|\
+imagickdraw_getfontstyle|imagickdraw_getfontweight|imagickdraw_getgravity|imagickdraw_getstrokeantialias|imagickdraw_getstrokecolor|\
+imagickdraw_getstrokedasharray|imagickdraw_getstrokedashoffset|imagickdraw_getstrokelinecap|imagickdraw_getstrokelinejoin|\
+imagickdraw_getstrokemiterlimit|imagickdraw_getstrokeopacity|imagickdraw_getstrokewidth|imagickdraw_gettextalignment|\
+imagickdraw_gettextantialias|imagickdraw_gettextdecoration|imagickdraw_gettextencoding|imagickdraw_gettextundercolor|\
+imagickdraw_getvectorgraphics|imagickdraw_line|imagickdraw_matte|imagickdraw_pathclose|imagickdraw_pathcurvetoabsolute|\
+imagickdraw_pathcurvetoquadraticbezierabsolute|imagickdraw_pathcurvetoquadraticbezierrelative|\
+imagickdraw_pathcurvetoquadraticbeziersmoothabsolute|imagickdraw_pathcurvetoquadraticbeziersmoothrelative|imagickdraw_pathcurvetorelative|\
+imagickdraw_pathcurvetosmoothabsolute|imagickdraw_pathcurvetosmoothrelative|imagickdraw_pathellipticarcabsolute|\
+imagickdraw_pathellipticarcrelative|imagickdraw_pathfinish|imagickdraw_pathlinetoabsolute|imagickdraw_pathlinetohorizontalabsolute|\
+imagickdraw_pathlinetohorizontalrelative|imagickdraw_pathlinetorelative|imagickdraw_pathlinetoverticalabsolute|\
+imagickdraw_pathlinetoverticalrelative|imagickdraw_pathmovetoabsolute|imagickdraw_pathmovetorelative|imagickdraw_pathstart|\
+imagickdraw_point|imagickdraw_polygon|imagickdraw_polyline|imagickdraw_pop|imagickdraw_popclippath|imagickdraw_popdefs|\
+imagickdraw_poppattern|imagickdraw_push|imagickdraw_pushclippath|imagickdraw_pushdefs|imagickdraw_pushpattern|imagickdraw_rectangle|\
+imagickdraw_render|imagickdraw_rotate|imagickdraw_roundrectangle|imagickdraw_scale|imagickdraw_setclippath|imagickdraw_setcliprule|\
+imagickdraw_setclipunits|imagickdraw_setfillalpha|imagickdraw_setfillcolor|imagickdraw_setfillopacity|imagickdraw_setfillpatternurl|\
+imagickdraw_setfillrule|imagickdraw_setfont|imagickdraw_setfontfamily|imagickdraw_setfontsize|imagickdraw_setfontstretch|\
+imagickdraw_setfontstyle|imagickdraw_setfontweight|imagickdraw_setgravity|imagickdraw_setstrokealpha|imagickdraw_setstrokeantialias|\
+imagickdraw_setstrokecolor|imagickdraw_setstrokedasharray|imagickdraw_setstrokedashoffset|imagickdraw_setstrokelinecap|\
+imagickdraw_setstrokelinejoin|imagickdraw_setstrokemiterlimit|imagickdraw_setstrokeopacity|imagickdraw_setstrokepatternurl|\
+imagickdraw_setstrokewidth|imagickdraw_settextalignment|imagickdraw_settextantialias|imagickdraw_settextdecoration|\
+imagickdraw_settextencoding|imagickdraw_settextundercolor|imagickdraw_setvectorgraphics|imagickdraw_setviewbox|imagickdraw_skewx|\
+imagickdraw_skewy|imagickdraw_translate|imagickpixel|imagickpixel_clear|imagickpixel_construct|imagickpixel_destroy|imagickpixel_getcolor|\
+imagickpixel_getcolorasstring|imagickpixel_getcolorcount|imagickpixel_getcolorvalue|imagickpixel_gethsl|imagickpixel_issimilar|\
+imagickpixel_setcolor|imagickpixel_setcolorvalue|imagickpixel_sethsl|imagickpixeliterator|imagickpixeliterator_clear|\
+imagickpixeliterator_construct|imagickpixeliterator_destroy|imagickpixeliterator_getcurrentiteratorrow|\
+imagickpixeliterator_getiteratorrow|imagickpixeliterator_getnextiteratorrow|imagickpixeliterator_getpreviousiteratorrow|\
+imagickpixeliterator_newpixeliterator|imagickpixeliterator_newpixelregioniterator|imagickpixeliterator_resetiterator|\
+imagickpixeliterator_setiteratorfirstrow|imagickpixeliterator_setiteratorlastrow|imagickpixeliterator_setiteratorrow|\
+imagickpixeliterator_synciterator|imap_8bit|imap_alerts|imap_append|imap_base64|imap_binary|imap_body|imap_bodystruct|imap_check|\
+imap_clearflag_full|imap_close|imap_create|imap_createmailbox|imap_delete|imap_deletemailbox|imap_errors|imap_expunge|imap_fetch_overview|\
+imap_fetchbody|imap_fetchheader|imap_fetchmime|imap_fetchstructure|imap_fetchtext|imap_gc|imap_get_quota|imap_get_quotaroot|imap_getacl|\
+imap_getmailboxes|imap_getsubscribed|imap_header|imap_headerinfo|imap_headers|imap_last_error|imap_list|imap_listmailbox|imap_listscan|\
+imap_listsubscribed|imap_lsub|imap_mail|imap_mail_compose|imap_mail_copy|imap_mail_move|imap_mailboxmsginfo|imap_mime_header_decode|\
+imap_msgno|imap_num_msg|imap_num_recent|imap_open|imap_ping|imap_qprint|imap_rename|imap_renamemailbox|imap_reopen|\
+imap_rfc822_parse_adrlist|imap_rfc822_parse_headers|imap_rfc822_write_address|imap_savebody|imap_scan|imap_scanmailbox|imap_search|\
+imap_set_quota|imap_setacl|imap_setflag_full|imap_sort|imap_status|imap_subscribe|imap_thread|imap_timeout|imap_uid|imap_undelete|\
+imap_unsubscribe|imap_utf7_decode|imap_utf7_encode|imap_utf8|implementsinterface|implode|import_request_variables|in_array|include|\
+include_once|inclued_get_data|inet_ntop|inet_pton|infiniteiterator|ingres_autocommit|ingres_autocommit_state|ingres_charset|ingres_close|\
+ingres_commit|ingres_connect|ingres_cursor|ingres_errno|ingres_error|ingres_errsqlstate|ingres_escape_string|ingres_execute|\
+ingres_fetch_array|ingres_fetch_assoc|ingres_fetch_object|ingres_fetch_proc_return|ingres_fetch_row|ingres_field_length|ingres_field_name|\
+ingres_field_nullable|ingres_field_precision|ingres_field_scale|ingres_field_type|ingres_free_result|ingres_next_error|ingres_num_fields|\
+ingres_num_rows|ingres_pconnect|ingres_prepare|ingres_query|ingres_result_seek|ingres_rollback|ingres_set_environment|\
+ingres_unbuffered_query|ini_alter|ini_get|ini_get_all|ini_restore|ini_set|innamespace|inotify_add_watch|inotify_init|inotify_queue_len|\
+inotify_read|inotify_rm_watch|interface_exists|intl_error_name|intl_get_error_code|intl_get_error_message|intl_is_failure|\
+intldateformatter|intval|invalidargumentexception|invoke|invokeargs|ip2long|iptcembed|iptcparse|is_a|is_array|is_bool|is_callable|is_dir|\
+is_double|is_executable|is_file|is_finite|is_float|is_infinite|is_int|is_integer|is_link|is_long|is_nan|is_null|is_numeric|is_object|\
+is_readable|is_real|is_resource|is_scalar|is_soap_fault|is_string|is_subclass_of|is_uploaded_file|is_writable|is_writeable|isabstract|\
+iscloneable|isdisabled|isfinal|isinstance|isinstantiable|isinterface|isinternal|isiterateable|isset|issubclassof|isuserdefined|iterator|\
+iterator_apply|iterator_count|iterator_to_array|iteratoraggregate|iteratoriterator|java_last_exception_clear|java_last_exception_get|\
+jddayofweek|jdmonthname|jdtofrench|jdtogregorian|jdtojewish|jdtojulian|jdtounix|jewishtojd|join|jpeg2wbmp|json_decode|json_encode|\
+json_last_error|jsonserializable|judy|judy_type|judy_version|juliantojd|kadm5_chpass_principal|kadm5_create_principal|\
+kadm5_delete_principal|kadm5_destroy|kadm5_flush|kadm5_get_policies|kadm5_get_principal|kadm5_get_principals|kadm5_init_with_password|\
+kadm5_modify_principal|key|krsort|ksort|lcfirst|lcg_value|lchgrp|lchown|ldap_8859_to_t61|ldap_add|ldap_bind|ldap_close|ldap_compare|\
+ldap_connect|ldap_count_entries|ldap_delete|ldap_dn2ufn|ldap_err2str|ldap_errno|ldap_error|ldap_explode_dn|ldap_first_attribute|\
+ldap_first_entry|ldap_first_reference|ldap_free_result|ldap_get_attributes|ldap_get_dn|ldap_get_entries|ldap_get_option|ldap_get_values|\
+ldap_get_values_len|ldap_list|ldap_mod_add|ldap_mod_del|ldap_mod_replace|ldap_modify|ldap_next_attribute|ldap_next_entry|\
+ldap_next_reference|ldap_parse_reference|ldap_parse_result|ldap_read|ldap_rename|ldap_sasl_bind|ldap_search|ldap_set_option|\
+ldap_set_rebind_proc|ldap_sort|ldap_start_tls|ldap_t61_to_8859|ldap_unbind|lengthexception|levenshtein|libxml_clear_errors|\
+libxml_disable_entity_loader|libxml_get_errors|libxml_get_last_error|libxml_set_streams_context|libxml_use_internal_errors|libxmlerror|\
+limititerator|link|linkinfo|list|locale|localeconv|localtime|log|log10|log1p|logicexception|long2ip|lstat|ltrim|lzf_compress|\
+lzf_decompress|lzf_optimized_for|m_checkstatus|m_completeauthorizations|m_connect|m_connectionerror|m_deletetrans|m_destroyconn|\
+m_destroyengine|m_getcell|m_getcellbynum|m_getcommadelimited|m_getheader|m_initconn|m_initengine|m_iscommadelimited|m_maxconntimeout|\
+m_monitor|m_numcolumns|m_numrows|m_parsecommadelimited|m_responsekeys|m_responseparam|m_returnstatus|m_setblocking|m_setdropfile|m_setip|\
+m_setssl|m_setssl_cafile|m_setssl_files|m_settimeout|m_sslcert_gen_hash|m_transactionssent|m_transinqueue|m_transkeyval|m_transnew|\
+m_transsend|m_uwait|m_validateidentifier|m_verifyconnection|m_verifysslcert|magic_quotes_runtime|mail|\
+mailparse_determine_best_xfer_encoding|mailparse_msg_create|mailparse_msg_extract_part|mailparse_msg_extract_part_file|\
+mailparse_msg_extract_whole_part_file|mailparse_msg_free|mailparse_msg_get_part|mailparse_msg_get_part_data|mailparse_msg_get_structure|\
+mailparse_msg_parse|mailparse_msg_parse_file|mailparse_rfc822_parse_addresses|mailparse_stream_encode|mailparse_uudecode_all|main|max|\
+maxdb_affected_rows|maxdb_autocommit|maxdb_bind_param|maxdb_bind_result|maxdb_change_user|maxdb_character_set_name|maxdb_client_encoding|\
+maxdb_close|maxdb_close_long_data|maxdb_commit|maxdb_connect|maxdb_connect_errno|maxdb_connect_error|maxdb_data_seek|maxdb_debug|\
+maxdb_disable_reads_from_master|maxdb_disable_rpl_parse|maxdb_dump_debug_info|maxdb_embedded_connect|maxdb_enable_reads_from_master|\
+maxdb_enable_rpl_parse|maxdb_errno|maxdb_error|maxdb_escape_string|maxdb_execute|maxdb_fetch|maxdb_fetch_array|maxdb_fetch_assoc|\
+maxdb_fetch_field|maxdb_fetch_field_direct|maxdb_fetch_fields|maxdb_fetch_lengths|maxdb_fetch_object|maxdb_fetch_row|maxdb_field_count|\
+maxdb_field_seek|maxdb_field_tell|maxdb_free_result|maxdb_get_client_info|maxdb_get_client_version|maxdb_get_host_info|maxdb_get_metadata|\
+maxdb_get_proto_info|maxdb_get_server_info|maxdb_get_server_version|maxdb_info|maxdb_init|maxdb_insert_id|maxdb_kill|maxdb_master_query|\
+maxdb_more_results|maxdb_multi_query|maxdb_next_result|maxdb_num_fields|maxdb_num_rows|maxdb_options|maxdb_param_count|maxdb_ping|\
+maxdb_prepare|maxdb_query|maxdb_real_connect|maxdb_real_escape_string|maxdb_real_query|maxdb_report|maxdb_rollback|\
+maxdb_rpl_parse_enabled|maxdb_rpl_probe|maxdb_rpl_query_type|maxdb_select_db|maxdb_send_long_data|maxdb_send_query|maxdb_server_end|\
+maxdb_server_init|maxdb_set_opt|maxdb_sqlstate|maxdb_ssl_set|maxdb_stat|maxdb_stmt_affected_rows|maxdb_stmt_bind_param|\
+maxdb_stmt_bind_result|maxdb_stmt_close|maxdb_stmt_close_long_data|maxdb_stmt_data_seek|maxdb_stmt_errno|maxdb_stmt_error|\
+maxdb_stmt_execute|maxdb_stmt_fetch|maxdb_stmt_free_result|maxdb_stmt_init|maxdb_stmt_num_rows|maxdb_stmt_param_count|maxdb_stmt_prepare|\
+maxdb_stmt_reset|maxdb_stmt_result_metadata|maxdb_stmt_send_long_data|maxdb_stmt_sqlstate|maxdb_stmt_store_result|maxdb_store_result|\
+maxdb_thread_id|maxdb_thread_safe|maxdb_use_result|maxdb_warning_count|mb_check_encoding|mb_convert_case|mb_convert_encoding|\
+mb_convert_kana|mb_convert_variables|mb_decode_mimeheader|mb_decode_numericentity|mb_detect_encoding|mb_detect_order|mb_encode_mimeheader|\
+mb_encode_numericentity|mb_encoding_aliases|mb_ereg|mb_ereg_match|mb_ereg_replace|mb_ereg_search|mb_ereg_search_getpos|\
+mb_ereg_search_getregs|mb_ereg_search_init|mb_ereg_search_pos|mb_ereg_search_regs|mb_ereg_search_setpos|mb_eregi|mb_eregi_replace|\
+mb_get_info|mb_http_input|mb_http_output|mb_internal_encoding|mb_language|mb_list_encodings|mb_output_handler|mb_parse_str|\
+mb_preferred_mime_name|mb_regex_encoding|mb_regex_set_options|mb_send_mail|mb_split|mb_strcut|mb_strimwidth|mb_stripos|mb_stristr|\
+mb_strlen|mb_strpos|mb_strrchr|mb_strrichr|mb_strripos|mb_strrpos|mb_strstr|mb_strtolower|mb_strtoupper|mb_strwidth|\
+mb_substitute_character|mb_substr|mb_substr_count|mcrypt_cbc|mcrypt_cfb|mcrypt_create_iv|mcrypt_decrypt|mcrypt_ecb|\
+mcrypt_enc_get_algorithms_name|mcrypt_enc_get_block_size|mcrypt_enc_get_iv_size|mcrypt_enc_get_key_size|mcrypt_enc_get_modes_name|\
+mcrypt_enc_get_supported_key_sizes|mcrypt_enc_is_block_algorithm|mcrypt_enc_is_block_algorithm_mode|mcrypt_enc_is_block_mode|\
+mcrypt_enc_self_test|mcrypt_encrypt|mcrypt_generic|mcrypt_generic_deinit|mcrypt_generic_end|mcrypt_generic_init|mcrypt_get_block_size|\
+mcrypt_get_cipher_name|mcrypt_get_iv_size|mcrypt_get_key_size|mcrypt_list_algorithms|mcrypt_list_modes|mcrypt_module_close|\
+mcrypt_module_get_algo_block_size|mcrypt_module_get_algo_key_size|mcrypt_module_get_supported_key_sizes|mcrypt_module_is_block_algorithm|\
+mcrypt_module_is_block_algorithm_mode|mcrypt_module_is_block_mode|mcrypt_module_open|mcrypt_module_self_test|mcrypt_ofb|md5|md5_file|\
+mdecrypt_generic|memcache|memcache_debug|memcached|memory_get_peak_usage|memory_get_usage|messageformatter|metaphone|method_exists|mhash|\
+mhash_count|mhash_get_block_size|mhash_get_hash_name|mhash_keygen_s2k|microtime|mime_content_type|min|ming_keypress|\
+ming_setcubicthreshold|ming_setscale|ming_setswfcompression|ming_useconstants|ming_useswfversion|mkdir|mktime|money_format|mongo|\
+mongobindata|mongocode|mongocollection|mongoconnectionexception|mongocursor|mongocursorexception|mongocursortimeoutexception|mongodate|\
+mongodb|mongodbref|mongoexception|mongogridfs|mongogridfscursor|mongogridfsexception|mongogridfsfile|mongoid|mongoint32|mongoint64|\
+mongomaxkey|mongominkey|mongoregex|mongotimestamp|move_uploaded_file|mpegfile|mqseries_back|mqseries_begin|mqseries_close|mqseries_cmit|\
+mqseries_conn|mqseries_connx|mqseries_disc|mqseries_get|mqseries_inq|mqseries_open|mqseries_put|mqseries_put1|mqseries_set|\
+mqseries_strerror|msession_connect|msession_count|msession_create|msession_destroy|msession_disconnect|msession_find|msession_get|\
+msession_get_array|msession_get_data|msession_inc|msession_list|msession_listvar|msession_lock|msession_plugin|msession_randstr|\
+msession_set|msession_set_array|msession_set_data|msession_timeout|msession_uniq|msession_unlock|msg_get_queue|msg_queue_exists|\
+msg_receive|msg_remove_queue|msg_send|msg_set_queue|msg_stat_queue|msql|msql_affected_rows|msql_close|msql_connect|msql_create_db|\
+msql_createdb|msql_data_seek|msql_db_query|msql_dbname|msql_drop_db|msql_error|msql_fetch_array|msql_fetch_field|msql_fetch_object|\
+msql_fetch_row|msql_field_flags|msql_field_len|msql_field_name|msql_field_seek|msql_field_table|msql_field_type|msql_fieldflags|\
+msql_fieldlen|msql_fieldname|msql_fieldtable|msql_fieldtype|msql_free_result|msql_list_dbs|msql_list_fields|msql_list_tables|\
+msql_num_fields|msql_num_rows|msql_numfields|msql_numrows|msql_pconnect|msql_query|msql_regcase|msql_result|msql_select_db|msql_tablename|\
+mssql_bind|mssql_close|mssql_connect|mssql_data_seek|mssql_execute|mssql_fetch_array|mssql_fetch_assoc|mssql_fetch_batch|\
+mssql_fetch_field|mssql_fetch_object|mssql_fetch_row|mssql_field_length|mssql_field_name|mssql_field_seek|mssql_field_type|\
+mssql_free_result|mssql_free_statement|mssql_get_last_message|mssql_guid_string|mssql_init|mssql_min_error_severity|\
+mssql_min_message_severity|mssql_next_result|mssql_num_fields|mssql_num_rows|mssql_pconnect|mssql_query|mssql_result|mssql_rows_affected|\
+mssql_select_db|mt_getrandmax|mt_rand|mt_srand|multipleiterator|mysql_affected_rows|mysql_client_encoding|mysql_close|mysql_connect|\
+mysql_create_db|mysql_data_seek|mysql_db_name|mysql_db_query|mysql_drop_db|mysql_errno|mysql_error|mysql_escape_string|mysql_fetch_array|\
+mysql_fetch_assoc|mysql_fetch_field|mysql_fetch_lengths|mysql_fetch_object|mysql_fetch_row|mysql_field_flags|mysql_field_len|\
+mysql_field_name|mysql_field_seek|mysql_field_table|mysql_field_type|mysql_free_result|mysql_get_client_info|mysql_get_host_info|\
+mysql_get_proto_info|mysql_get_server_info|mysql_info|mysql_insert_id|mysql_list_dbs|mysql_list_fields|mysql_list_processes|\
+mysql_list_tables|mysql_num_fields|mysql_num_rows|mysql_pconnect|mysql_ping|mysql_query|mysql_real_escape_string|mysql_result|\
+mysql_select_db|mysql_set_charset|mysql_stat|mysql_tablename|mysql_thread_id|mysql_unbuffered_query|mysqli|mysqli_affected_rows|\
+mysqli_autocommit|mysqli_bind_param|mysqli_bind_result|mysqli_cache_stats|mysqli_change_user|mysqli_character_set_name|\
+mysqli_client_encoding|mysqli_close|mysqli_commit|mysqli_connect|mysqli_connect_errno|mysqli_connect_error|mysqli_data_seek|\
+mysqli_debug|mysqli_disable_reads_from_master|mysqli_disable_rpl_parse|mysqli_driver|mysqli_dump_debug_info|mysqli_embedded_server_end|\
+mysqli_embedded_server_start|mysqli_enable_reads_from_master|mysqli_enable_rpl_parse|mysqli_errno|mysqli_error|mysqli_escape_string|\
+mysqli_execute|mysqli_fetch|mysqli_fetch_all|mysqli_fetch_array|mysqli_fetch_assoc|mysqli_fetch_field|mysqli_fetch_field_direct|\
+mysqli_fetch_fields|mysqli_fetch_lengths|mysqli_fetch_object|mysqli_fetch_row|mysqli_field_count|mysqli_field_seek|mysqli_field_tell|\
+mysqli_free_result|mysqli_get_charset|mysqli_get_client_info|mysqli_get_client_stats|mysqli_get_client_version|mysqli_get_connection_stats|\
+mysqli_get_host_info|mysqli_get_metadata|mysqli_get_proto_info|mysqli_get_server_info|mysqli_get_server_version|mysqli_get_warnings|\
+mysqli_info|mysqli_init|mysqli_insert_id|mysqli_kill|mysqli_link_construct|mysqli_master_query|mysqli_more_results|mysqli_multi_query|\
+mysqli_next_result|mysqli_num_fields|mysqli_num_rows|mysqli_options|mysqli_param_count|mysqli_ping|mysqli_poll|mysqli_prepare|\
+mysqli_query|mysqli_real_connect|mysqli_real_escape_string|mysqli_real_query|mysqli_reap_async_query|mysqli_refresh|mysqli_report|\
+mysqli_result|mysqli_rollback|mysqli_rpl_parse_enabled|mysqli_rpl_probe|mysqli_rpl_query_type|mysqli_select_db|mysqli_send_long_data|\
+mysqli_send_query|mysqli_set_charset|mysqli_set_local_infile_default|mysqli_set_local_infile_handler|mysqli_set_opt|mysqli_slave_query|\
+mysqli_sqlstate|mysqli_ssl_set|mysqli_stat|mysqli_stmt|mysqli_stmt_affected_rows|mysqli_stmt_attr_get|mysqli_stmt_attr_set|\
+mysqli_stmt_bind_param|mysqli_stmt_bind_result|mysqli_stmt_close|mysqli_stmt_data_seek|mysqli_stmt_errno|mysqli_stmt_error|\
+mysqli_stmt_execute|mysqli_stmt_fetch|mysqli_stmt_field_count|mysqli_stmt_free_result|mysqli_stmt_get_result|mysqli_stmt_get_warnings|\
+mysqli_stmt_init|mysqli_stmt_insert_id|mysqli_stmt_next_result|mysqli_stmt_num_rows|mysqli_stmt_param_count|mysqli_stmt_prepare|\
+mysqli_stmt_reset|mysqli_stmt_result_metadata|mysqli_stmt_send_long_data|mysqli_stmt_sqlstate|mysqli_stmt_store_result|mysqli_store_result|\
+mysqli_thread_id|mysqli_thread_safe|mysqli_use_result|mysqli_warning|mysqli_warning_count|mysqlnd_ms_get_stats|\
+mysqlnd_ms_query_is_select|mysqlnd_ms_set_user_pick_server|mysqlnd_qc_change_handler|mysqlnd_qc_clear_cache|mysqlnd_qc_get_cache_info|\
+mysqlnd_qc_get_core_stats|mysqlnd_qc_get_handler|mysqlnd_qc_get_query_trace_log|mysqlnd_qc_set_user_handlers|natcasesort|natsort|\
+ncurses_addch|ncurses_addchnstr|ncurses_addchstr|ncurses_addnstr|ncurses_addstr|ncurses_assume_default_colors|ncurses_attroff|\
+ncurses_attron|ncurses_attrset|ncurses_baudrate|ncurses_beep|ncurses_bkgd|ncurses_bkgdset|ncurses_border|ncurses_bottom_panel|\
+ncurses_can_change_color|ncurses_cbreak|ncurses_clear|ncurses_clrtobot|ncurses_clrtoeol|ncurses_color_content|ncurses_color_set|\
+ncurses_curs_set|ncurses_def_prog_mode|ncurses_def_shell_mode|ncurses_define_key|ncurses_del_panel|ncurses_delay_output|ncurses_delch|\
+ncurses_deleteln|ncurses_delwin|ncurses_doupdate|ncurses_echo|ncurses_echochar|ncurses_end|ncurses_erase|ncurses_erasechar|ncurses_filter|\
+ncurses_flash|ncurses_flushinp|ncurses_getch|ncurses_getmaxyx|ncurses_getmouse|ncurses_getyx|ncurses_halfdelay|ncurses_has_colors|\
+ncurses_has_ic|ncurses_has_il|ncurses_has_key|ncurses_hide_panel|ncurses_hline|ncurses_inch|ncurses_init|ncurses_init_color|\
+ncurses_init_pair|ncurses_insch|ncurses_insdelln|ncurses_insertln|ncurses_insstr|ncurses_instr|ncurses_isendwin|ncurses_keyok|\
+ncurses_keypad|ncurses_killchar|ncurses_longname|ncurses_meta|ncurses_mouse_trafo|ncurses_mouseinterval|ncurses_mousemask|ncurses_move|\
+ncurses_move_panel|ncurses_mvaddch|ncurses_mvaddchnstr|ncurses_mvaddchstr|ncurses_mvaddnstr|ncurses_mvaddstr|ncurses_mvcur|\
+ncurses_mvdelch|ncurses_mvgetch|ncurses_mvhline|ncurses_mvinch|ncurses_mvvline|ncurses_mvwaddstr|ncurses_napms|ncurses_new_panel|\
+ncurses_newpad|ncurses_newwin|ncurses_nl|ncurses_nocbreak|ncurses_noecho|ncurses_nonl|ncurses_noqiflush|ncurses_noraw|\
+ncurses_pair_content|ncurses_panel_above|ncurses_panel_below|ncurses_panel_window|ncurses_pnoutrefresh|ncurses_prefresh|ncurses_putp|\
+ncurses_qiflush|ncurses_raw|ncurses_refresh|ncurses_replace_panel|ncurses_reset_prog_mode|ncurses_reset_shell_mode|ncurses_resetty|\
+ncurses_savetty|ncurses_scr_dump|ncurses_scr_init|ncurses_scr_restore|ncurses_scr_set|ncurses_scrl|ncurses_show_panel|ncurses_slk_attr|\
+ncurses_slk_attroff|ncurses_slk_attron|ncurses_slk_attrset|ncurses_slk_clear|ncurses_slk_color|ncurses_slk_init|ncurses_slk_noutrefresh|\
+ncurses_slk_refresh|ncurses_slk_restore|ncurses_slk_set|ncurses_slk_touch|ncurses_standend|ncurses_standout|ncurses_start_color|\
+ncurses_termattrs|ncurses_termname|ncurses_timeout|ncurses_top_panel|ncurses_typeahead|ncurses_ungetch|ncurses_ungetmouse|\
+ncurses_update_panels|ncurses_use_default_colors|ncurses_use_env|ncurses_use_extended_names|ncurses_vidattr|ncurses_vline|ncurses_waddch|\
+ncurses_waddstr|ncurses_wattroff|ncurses_wattron|ncurses_wattrset|ncurses_wborder|ncurses_wclear|ncurses_wcolor_set|ncurses_werase|\
+ncurses_wgetch|ncurses_whline|ncurses_wmouse_trafo|ncurses_wmove|ncurses_wnoutrefresh|ncurses_wrefresh|ncurses_wstandend|\
+ncurses_wstandout|ncurses_wvline|newinstance|newinstanceargs|newt_bell|newt_button|newt_button_bar|newt_centered_window|newt_checkbox|\
+newt_checkbox_get_value|newt_checkbox_set_flags|newt_checkbox_set_value|newt_checkbox_tree|newt_checkbox_tree_add_item|\
+newt_checkbox_tree_find_item|newt_checkbox_tree_get_current|newt_checkbox_tree_get_entry_value|newt_checkbox_tree_get_multi_selection|\
+newt_checkbox_tree_get_selection|newt_checkbox_tree_multi|newt_checkbox_tree_set_current|newt_checkbox_tree_set_entry|\
+newt_checkbox_tree_set_entry_value|newt_checkbox_tree_set_width|newt_clear_key_buffer|newt_cls|newt_compact_button|\
+newt_component_add_callback|newt_component_takes_focus|newt_create_grid|newt_cursor_off|newt_cursor_on|newt_delay|newt_draw_form|\
+newt_draw_root_text|newt_entry|newt_entry_get_value|newt_entry_set|newt_entry_set_filter|newt_entry_set_flags|newt_finished|newt_form|\
+newt_form_add_component|newt_form_add_components|newt_form_add_hot_key|newt_form_destroy|newt_form_get_current|newt_form_run|\
+newt_form_set_background|newt_form_set_height|newt_form_set_size|newt_form_set_timer|newt_form_set_width|newt_form_watch_fd|\
+newt_get_screen_size|newt_grid_add_components_to_form|newt_grid_basic_window|newt_grid_free|newt_grid_get_size|newt_grid_h_close_stacked|\
+newt_grid_h_stacked|newt_grid_place|newt_grid_set_field|newt_grid_simple_window|newt_grid_v_close_stacked|newt_grid_v_stacked|\
+newt_grid_wrapped_window|newt_grid_wrapped_window_at|newt_init|newt_label|newt_label_set_text|newt_listbox|newt_listbox_append_entry|\
+newt_listbox_clear|newt_listbox_clear_selection|newt_listbox_delete_entry|newt_listbox_get_current|newt_listbox_get_selection|\
+newt_listbox_insert_entry|newt_listbox_item_count|newt_listbox_select_item|newt_listbox_set_current|newt_listbox_set_current_by_key|\
+newt_listbox_set_data|newt_listbox_set_entry|newt_listbox_set_width|newt_listitem|newt_listitem_get_data|newt_listitem_set|\
+newt_open_window|newt_pop_help_line|newt_pop_window|newt_push_help_line|newt_radio_get_current|newt_radiobutton|newt_redraw_help_line|\
+newt_reflow_text|newt_refresh|newt_resize_screen|newt_resume|newt_run_form|newt_scale|newt_scale_set|newt_scrollbar_set|\
+newt_set_help_callback|newt_set_suspend_callback|newt_suspend|newt_textbox|newt_textbox_get_num_lines|newt_textbox_reflowed|\
+newt_textbox_set_height|newt_textbox_set_text|newt_vertical_scrollbar|newt_wait_for_key|newt_win_choice|newt_win_entries|newt_win_menu|\
+newt_win_message|newt_win_messagev|newt_win_ternary|next|ngettext|nl2br|nl_langinfo|norewinditerator|normalizer|notes_body|notes_copy_db|\
+notes_create_db|notes_create_note|notes_drop_db|notes_find_note|notes_header_info|notes_list_msgs|notes_mark_read|notes_mark_unread|\
+notes_nav_create|notes_search|notes_unread|notes_version|nsapi_request_headers|nsapi_response_headers|nsapi_virtual|nthmac|number_format|\
+numberformatter|oauth|oauth_get_sbs|oauth_urlencode|oauthexception|oauthprovider|ob_clean|ob_deflatehandler|ob_end_clean|ob_end_flush|\
+ob_etaghandler|ob_flush|ob_get_clean|ob_get_contents|ob_get_flush|ob_get_length|ob_get_level|ob_get_status|ob_gzhandler|ob_iconv_handler|\
+ob_implicit_flush|ob_inflatehandler|ob_list_handlers|ob_start|ob_tidyhandler|oci_bind_array_by_name|oci_bind_by_name|oci_cancel|\
+oci_client_version|oci_close|oci_collection_append|oci_collection_assign|oci_collection_element_assign|oci_collection_element_get|\
+oci_collection_free|oci_collection_max|oci_collection_size|oci_collection_trim|oci_commit|oci_connect|oci_define_by_name|oci_error|\
+oci_execute|oci_fetch|oci_fetch_all|oci_fetch_array|oci_fetch_assoc|oci_fetch_object|oci_fetch_row|oci_field_is_null|oci_field_name|\
+oci_field_precision|oci_field_scale|oci_field_size|oci_field_type|oci_field_type_raw|oci_free_statement|oci_internal_debug|oci_lob_append|\
+oci_lob_close|oci_lob_copy|oci_lob_eof|oci_lob_erase|oci_lob_export|oci_lob_flush|oci_lob_free|oci_lob_getbuffering|oci_lob_import|\
+oci_lob_is_equal|oci_lob_load|oci_lob_read|oci_lob_rewind|oci_lob_save|oci_lob_savefile|oci_lob_seek|oci_lob_setbuffering|oci_lob_size|\
+oci_lob_tell|oci_lob_truncate|oci_lob_write|oci_lob_writetemporary|oci_lob_writetofile|oci_new_collection|oci_new_connect|oci_new_cursor|\
+oci_new_descriptor|oci_num_fields|oci_num_rows|oci_parse|oci_password_change|oci_pconnect|oci_result|oci_rollback|oci_server_version|\
+oci_set_action|oci_set_client_identifier|oci_set_client_info|oci_set_edition|oci_set_module_name|oci_set_prefetch|oci_statement_type|\
+ocibindbyname|ocicancel|ocicloselob|ocicollappend|ocicollassign|ocicollassignelem|ocicollgetelem|ocicollmax|ocicollsize|ocicolltrim|\
+ocicolumnisnull|ocicolumnname|ocicolumnprecision|ocicolumnscale|ocicolumnsize|ocicolumntype|ocicolumntyperaw|ocicommit|ocidefinebyname|\
+ocierror|ociexecute|ocifetch|ocifetchinto|ocifetchstatement|ocifreecollection|ocifreecursor|ocifreedesc|ocifreestatement|ociinternaldebug|\
+ociloadlob|ocilogoff|ocilogon|ocinewcollection|ocinewcursor|ocinewdescriptor|ocinlogon|ocinumcols|ociparse|ociplogon|ociresult|\
+ocirollback|ocirowcount|ocisavelob|ocisavelobfile|ociserverversion|ocisetprefetch|ocistatementtype|ociwritelobtofile|ociwritetemporarylob|\
+octdec|odbc_autocommit|odbc_binmode|odbc_close|odbc_close_all|odbc_columnprivileges|odbc_columns|odbc_commit|odbc_connect|odbc_cursor|\
+odbc_data_source|odbc_do|odbc_error|odbc_errormsg|odbc_exec|odbc_execute|odbc_fetch_array|odbc_fetch_into|odbc_fetch_object|\
+odbc_fetch_row|odbc_field_len|odbc_field_name|odbc_field_num|odbc_field_precision|odbc_field_scale|odbc_field_type|odbc_foreignkeys|\
+odbc_free_result|odbc_gettypeinfo|odbc_longreadlen|odbc_next_result|odbc_num_fields|odbc_num_rows|odbc_pconnect|odbc_prepare|\
+odbc_primarykeys|odbc_procedurecolumns|odbc_procedures|odbc_result|odbc_result_all|odbc_rollback|odbc_setoption|odbc_specialcolumns|\
+odbc_statistics|odbc_tableprivileges|odbc_tables|openal_buffer_create|openal_buffer_data|openal_buffer_destroy|openal_buffer_get|\
+openal_buffer_loadwav|openal_context_create|openal_context_current|openal_context_destroy|openal_context_process|openal_context_suspend|\
+openal_device_close|openal_device_open|openal_listener_get|openal_listener_set|openal_source_create|openal_source_destroy|\
+openal_source_get|openal_source_pause|openal_source_play|openal_source_rewind|openal_source_set|openal_source_stop|openal_stream|opendir|\
+openlog|openssl_cipher_iv_length|openssl_csr_export|openssl_csr_export_to_file|openssl_csr_get_public_key|openssl_csr_get_subject|\
+openssl_csr_new|openssl_csr_sign|openssl_decrypt|openssl_dh_compute_key|openssl_digest|openssl_encrypt|openssl_error_string|\
+openssl_free_key|openssl_get_cipher_methods|openssl_get_md_methods|openssl_get_privatekey|openssl_get_publickey|openssl_open|\
+openssl_pkcs12_export|openssl_pkcs12_export_to_file|openssl_pkcs12_read|openssl_pkcs7_decrypt|openssl_pkcs7_encrypt|openssl_pkcs7_sign|\
+openssl_pkcs7_verify|openssl_pkey_export|openssl_pkey_export_to_file|openssl_pkey_free|openssl_pkey_get_details|openssl_pkey_get_private|\
+openssl_pkey_get_public|openssl_pkey_new|openssl_private_decrypt|openssl_private_encrypt|openssl_public_decrypt|openssl_public_encrypt|\
+openssl_random_pseudo_bytes|openssl_seal|openssl_sign|openssl_verify|openssl_x509_check_private_key|openssl_x509_checkpurpose|\
+openssl_x509_export|openssl_x509_export_to_file|openssl_x509_free|openssl_x509_parse|openssl_x509_read|ord|outeriterator|\
+outofboundsexception|outofrangeexception|output_add_rewrite_var|output_reset_rewrite_vars|overflowexception|overload|override_function|\
+ovrimos_close|ovrimos_commit|ovrimos_connect|ovrimos_cursor|ovrimos_exec|ovrimos_execute|ovrimos_fetch_into|ovrimos_fetch_row|\
+ovrimos_field_len|ovrimos_field_name|ovrimos_field_num|ovrimos_field_type|ovrimos_free_result|ovrimos_longreadlen|ovrimos_num_fields|\
+ovrimos_num_rows|ovrimos_prepare|ovrimos_result|ovrimos_result_all|ovrimos_rollback|pack|parentiterator|parse_ini_file|parse_ini_string|\
+parse_str|parse_url|parsekit_compile_file|parsekit_compile_string|parsekit_func_arginfo|passthru|pathinfo|pclose|pcntl_alarm|pcntl_exec|\
+pcntl_fork|pcntl_getpriority|pcntl_setpriority|pcntl_signal|pcntl_signal_dispatch|pcntl_sigprocmask|pcntl_sigtimedwait|pcntl_sigwaitinfo|\
+pcntl_wait|pcntl_waitpid|pcntl_wexitstatus|pcntl_wifexited|pcntl_wifsignaled|pcntl_wifstopped|pcntl_wstopsig|pcntl_wtermsig|\
+pdf_activate_item|pdf_add_annotation|pdf_add_bookmark|pdf_add_launchlink|pdf_add_locallink|pdf_add_nameddest|pdf_add_note|pdf_add_outline|\
+pdf_add_pdflink|pdf_add_table_cell|pdf_add_textflow|pdf_add_thumbnail|pdf_add_weblink|pdf_arc|pdf_arcn|pdf_attach_file|pdf_begin_document|\
+pdf_begin_font|pdf_begin_glyph|pdf_begin_item|pdf_begin_layer|pdf_begin_page|pdf_begin_page_ext|pdf_begin_pattern|pdf_begin_template|\
+pdf_begin_template_ext|pdf_circle|pdf_clip|pdf_close|pdf_close_image|pdf_close_pdi|pdf_close_pdi_page|pdf_closepath|\
+pdf_closepath_fill_stroke|pdf_closepath_stroke|pdf_concat|pdf_continue_text|pdf_create_3dview|pdf_create_action|pdf_create_annotation|\
+pdf_create_bookmark|pdf_create_field|pdf_create_fieldgroup|pdf_create_gstate|pdf_create_pvf|pdf_create_textflow|pdf_curveto|\
+pdf_define_layer|pdf_delete|pdf_delete_pvf|pdf_delete_table|pdf_delete_textflow|pdf_encoding_set_char|pdf_end_document|pdf_end_font|\
+pdf_end_glyph|pdf_end_item|pdf_end_layer|pdf_end_page|pdf_end_page_ext|pdf_end_pattern|pdf_end_template|pdf_endpath|pdf_fill|\
+pdf_fill_imageblock|pdf_fill_pdfblock|pdf_fill_stroke|pdf_fill_textblock|pdf_findfont|pdf_fit_image|pdf_fit_pdi_page|pdf_fit_table|\
+pdf_fit_textflow|pdf_fit_textline|pdf_get_apiname|pdf_get_buffer|pdf_get_errmsg|pdf_get_errnum|pdf_get_font|pdf_get_fontname|\
+pdf_get_fontsize|pdf_get_image_height|pdf_get_image_width|pdf_get_majorversion|pdf_get_minorversion|pdf_get_parameter|\
+pdf_get_pdi_parameter|pdf_get_pdi_value|pdf_get_value|pdf_info_font|pdf_info_matchbox|pdf_info_table|pdf_info_textflow|pdf_info_textline|\
+pdf_initgraphics|pdf_lineto|pdf_load_3ddata|pdf_load_font|pdf_load_iccprofile|pdf_load_image|pdf_makespotcolor|pdf_moveto|pdf_new|\
+pdf_open_ccitt|pdf_open_file|pdf_open_gif|pdf_open_image|pdf_open_image_file|pdf_open_jpeg|pdf_open_memory_image|pdf_open_pdi|\
+pdf_open_pdi_document|pdf_open_pdi_page|pdf_open_tiff|pdf_pcos_get_number|pdf_pcos_get_stream|pdf_pcos_get_string|pdf_place_image|\
+pdf_place_pdi_page|pdf_process_pdi|pdf_rect|pdf_restore|pdf_resume_page|pdf_rotate|pdf_save|pdf_scale|pdf_set_border_color|\
+pdf_set_border_dash|pdf_set_border_style|pdf_set_char_spacing|pdf_set_duration|pdf_set_gstate|pdf_set_horiz_scaling|pdf_set_info|\
+pdf_set_info_author|pdf_set_info_creator|pdf_set_info_keywords|pdf_set_info_subject|pdf_set_info_title|pdf_set_layer_dependency|\
+pdf_set_leading|pdf_set_parameter|pdf_set_text_matrix|pdf_set_text_pos|pdf_set_text_rendering|pdf_set_text_rise|pdf_set_value|\
+pdf_set_word_spacing|pdf_setcolor|pdf_setdash|pdf_setdashpattern|pdf_setflat|pdf_setfont|pdf_setgray|pdf_setgray_fill|pdf_setgray_stroke|\
+pdf_setlinecap|pdf_setlinejoin|pdf_setlinewidth|pdf_setmatrix|pdf_setmiterlimit|pdf_setpolydash|pdf_setrgbcolor|pdf_setrgbcolor_fill|\
+pdf_setrgbcolor_stroke|pdf_shading|pdf_shading_pattern|pdf_shfill|pdf_show|pdf_show_boxed|pdf_show_xy|pdf_skew|pdf_stringwidth|pdf_stroke|\
+pdf_suspend_page|pdf_translate|pdf_utf16_to_utf8|pdf_utf32_to_utf16|pdf_utf8_to_utf16|pdo|pdo_cubrid_schema|pdo_pgsqllobcreate|\
+pdo_pgsqllobopen|pdo_pgsqllobunlink|pdo_sqlitecreateaggregate|pdo_sqlitecreatefunction|pdoexception|pdostatement|pfsockopen|\
+pg_affected_rows|pg_cancel_query|pg_client_encoding|pg_close|pg_connect|pg_connection_busy|pg_connection_reset|pg_connection_status|\
+pg_convert|pg_copy_from|pg_copy_to|pg_dbname|pg_delete|pg_end_copy|pg_escape_bytea|pg_escape_string|pg_execute|pg_fetch_all|\
+pg_fetch_all_columns|pg_fetch_array|pg_fetch_assoc|pg_fetch_object|pg_fetch_result|pg_fetch_row|pg_field_is_null|pg_field_name|\
+pg_field_num|pg_field_prtlen|pg_field_size|pg_field_table|pg_field_type|pg_field_type_oid|pg_free_result|pg_get_notify|pg_get_pid|\
+pg_get_result|pg_host|pg_insert|pg_last_error|pg_last_notice|pg_last_oid|pg_lo_close|pg_lo_create|pg_lo_export|pg_lo_import|pg_lo_open|\
+pg_lo_read|pg_lo_read_all|pg_lo_seek|pg_lo_tell|pg_lo_unlink|pg_lo_write|pg_meta_data|pg_num_fields|pg_num_rows|pg_options|\
+pg_parameter_status|pg_pconnect|pg_ping|pg_port|pg_prepare|pg_put_line|pg_query|pg_query_params|pg_result_error|pg_result_error_field|\
+pg_result_seek|pg_result_status|pg_select|pg_send_execute|pg_send_prepare|pg_send_query|pg_send_query_params|pg_set_client_encoding|\
+pg_set_error_verbosity|pg_trace|pg_transaction_status|pg_tty|pg_unescape_bytea|pg_untrace|pg_update|pg_version|php_check_syntax|\
+php_ini_loaded_file|php_ini_scanned_files|php_logo_guid|php_sapi_name|php_strip_whitespace|php_uname|phpcredits|phpinfo|phpversion|pi|\
+png2wbmp|popen|pos|posix_access|posix_ctermid|posix_errno|posix_get_last_error|posix_getcwd|posix_getegid|posix_geteuid|posix_getgid|\
+posix_getgrgid|posix_getgrnam|posix_getgroups|posix_getlogin|posix_getpgid|posix_getpgrp|posix_getpid|posix_getppid|posix_getpwnam|\
+posix_getpwuid|posix_getrlimit|posix_getsid|posix_getuid|posix_initgroups|posix_isatty|posix_kill|posix_mkfifo|posix_mknod|posix_setegid|\
+posix_seteuid|posix_setgid|posix_setpgid|posix_setsid|posix_setuid|posix_strerror|posix_times|posix_ttyname|posix_uname|pow|preg_filter|\
+preg_grep|preg_last_error|preg_match|preg_match_all|preg_quote|preg_replace|preg_replace_callback|preg_split|prev|print|print_r|\
+printer_abort|printer_close|printer_create_brush|printer_create_dc|printer_create_font|printer_create_pen|printer_delete_brush|\
+printer_delete_dc|printer_delete_font|printer_delete_pen|printer_draw_bmp|printer_draw_chord|printer_draw_elipse|printer_draw_line|\
+printer_draw_pie|printer_draw_rectangle|printer_draw_roundrect|printer_draw_text|printer_end_doc|printer_end_page|printer_get_option|\
+printer_list|printer_logical_fontheight|printer_open|printer_select_brush|printer_select_font|printer_select_pen|printer_set_option|\
+printer_start_doc|printer_start_page|printer_write|printf|proc_close|proc_get_status|proc_nice|proc_open|proc_terminate|property_exists|\
+ps_add_bookmark|ps_add_launchlink|ps_add_locallink|ps_add_note|ps_add_pdflink|ps_add_weblink|ps_arc|ps_arcn|ps_begin_page|\
+ps_begin_pattern|ps_begin_template|ps_circle|ps_clip|ps_close|ps_close_image|ps_closepath|ps_closepath_stroke|ps_continue_text|ps_curveto|\
+ps_delete|ps_end_page|ps_end_pattern|ps_end_template|ps_fill|ps_fill_stroke|ps_findfont|ps_get_buffer|ps_get_parameter|ps_get_value|\
+ps_hyphenate|ps_include_file|ps_lineto|ps_makespotcolor|ps_moveto|ps_new|ps_open_file|ps_open_image|ps_open_image_file|\
+ps_open_memory_image|ps_place_image|ps_rect|ps_restore|ps_rotate|ps_save|ps_scale|ps_set_border_color|ps_set_border_dash|\
+ps_set_border_style|ps_set_info|ps_set_parameter|ps_set_text_pos|ps_set_value|ps_setcolor|ps_setdash|ps_setflat|ps_setfont|ps_setgray|\
+ps_setlinecap|ps_setlinejoin|ps_setlinewidth|ps_setmiterlimit|ps_setoverprintmode|ps_setpolydash|ps_shading|ps_shading_pattern|ps_shfill|\
+ps_show|ps_show2|ps_show_boxed|ps_show_xy|ps_show_xy2|ps_string_geometry|ps_stringwidth|ps_stroke|ps_symbol|ps_symbol_name|\
+ps_symbol_width|ps_translate|pspell_add_to_personal|pspell_add_to_session|pspell_check|pspell_clear_session|pspell_config_create|\
+pspell_config_data_dir|pspell_config_dict_dir|pspell_config_ignore|pspell_config_mode|pspell_config_personal|pspell_config_repl|\
+pspell_config_runtogether|pspell_config_save_repl|pspell_new|pspell_new_config|pspell_new_personal|pspell_save_wordlist|\
+pspell_store_replacement|pspell_suggest|putenv|px_close|px_create_fp|px_date2string|px_delete|px_delete_record|px_get_field|px_get_info|\
+px_get_parameter|px_get_record|px_get_schema|px_get_value|px_insert_record|px_new|px_numfields|px_numrecords|px_open_fp|px_put_record|\
+px_retrieve_record|px_set_blob_file|px_set_parameter|px_set_tablename|px_set_targetencoding|px_set_value|px_timestamp2string|\
+px_update_record|qdom_error|qdom_tree|quoted_printable_decode|quoted_printable_encode|quotemeta|rad2deg|radius_acct_open|\
+radius_add_server|radius_auth_open|radius_close|radius_config|radius_create_request|radius_cvt_addr|radius_cvt_int|radius_cvt_string|\
+radius_demangle|radius_demangle_mppe_key|radius_get_attr|radius_get_vendor_attr|radius_put_addr|radius_put_attr|radius_put_int|\
+radius_put_string|radius_put_vendor_addr|radius_put_vendor_attr|radius_put_vendor_int|radius_put_vendor_string|\
+radius_request_authenticator|radius_send_request|radius_server_secret|radius_strerror|rand|range|rangeexception|rar_wrapper_cache_stats|\
+rararchive|rarentry|rarexception|rawurldecode|rawurlencode|read_exif_data|readdir|readfile|readgzfile|readline|readline_add_history|\
+readline_callback_handler_install|readline_callback_handler_remove|readline_callback_read_char|readline_clear_history|\
+readline_completion_function|readline_info|readline_list_history|readline_on_new_line|readline_read_history|readline_redisplay|\
+readline_write_history|readlink|realpath|realpath_cache_get|realpath_cache_size|recode|recode_file|recode_string|recursivearrayiterator|\
+recursivecachingiterator|recursivecallbackfilteriterator|recursivedirectoryiterator|recursivefilteriterator|recursiveiterator|\
+recursiveiteratoriterator|recursiveregexiterator|recursivetreeiterator|reflection|reflectionclass|reflectionexception|reflectionextension|\
+reflectionfunction|reflectionfunctionabstract|reflectionmethod|reflectionobject|reflectionparameter|reflectionproperty|reflector|\
+regexiterator|register_shutdown_function|register_tick_function|rename|rename_function|require|require_once|reset|resetValue|\
+resourcebundle|restore_error_handler|restore_exception_handler|restore_include_path|return|rewind|rewinddir|rmdir|round|rpm_close|\
+rpm_get_tag|rpm_is_valid|rpm_open|rpm_version|rrd_create|rrd_error|rrd_fetch|rrd_first|rrd_graph|rrd_info|rrd_last|rrd_lastupdate|\
+rrd_restore|rrd_tune|rrd_update|rrd_xport|rrdcreator|rrdgraph|rrdupdater|rsort|rtrim|runkit_class_adopt|runkit_class_emancipate|\
+runkit_constant_add|runkit_constant_redefine|runkit_constant_remove|runkit_function_add|runkit_function_copy|runkit_function_redefine|\
+runkit_function_remove|runkit_function_rename|runkit_import|runkit_lint|runkit_lint_file|runkit_method_add|runkit_method_copy|\
+runkit_method_redefine|runkit_method_remove|runkit_method_rename|runkit_return_value_used|runkit_sandbox_output_handler|\
+runkit_superglobals|runtimeexception|samconnection_commit|samconnection_connect|samconnection_constructor|samconnection_disconnect|\
+samconnection_errno|samconnection_error|samconnection_isconnected|samconnection_peek|samconnection_peekall|samconnection_receive|\
+samconnection_remove|samconnection_rollback|samconnection_send|samconnection_setDebug|samconnection_subscribe|samconnection_unsubscribe|\
+sammessage_body|sammessage_constructor|sammessage_header|sca_createdataobject|sca_getservice|sca_localproxy_createdataobject|\
+sca_soapproxy_createdataobject|scandir|sdo_das_changesummary_beginlogging|sdo_das_changesummary_endlogging|\
+sdo_das_changesummary_getchangeddataobjects|sdo_das_changesummary_getchangetype|sdo_das_changesummary_getoldcontainer|\
+sdo_das_changesummary_getoldvalues|sdo_das_changesummary_islogging|sdo_das_datafactory_addpropertytotype|sdo_das_datafactory_addtype|\
+sdo_das_datafactory_getdatafactory|sdo_das_dataobject_getchangesummary|sdo_das_relational_applychanges|sdo_das_relational_construct|\
+sdo_das_relational_createrootdataobject|sdo_das_relational_executepreparedquery|sdo_das_relational_executequery|\
+sdo_das_setting_getlistindex|sdo_das_setting_getpropertyindex|sdo_das_setting_getpropertyname|sdo_das_setting_getvalue|\
+sdo_das_setting_isset|sdo_das_xml_addtypes|sdo_das_xml_create|sdo_das_xml_createdataobject|sdo_das_xml_createdocument|\
+sdo_das_xml_document_getrootdataobject|sdo_das_xml_document_getrootelementname|sdo_das_xml_document_getrootelementuri|\
+sdo_das_xml_document_setencoding|sdo_das_xml_document_setxmldeclaration|sdo_das_xml_document_setxmlversion|sdo_das_xml_loadfile|\
+sdo_das_xml_loadstring|sdo_das_xml_savefile|sdo_das_xml_savestring|sdo_datafactory_create|sdo_dataobject_clear|\
+sdo_dataobject_createdataobject|sdo_dataobject_getcontainer|sdo_dataobject_getsequence|sdo_dataobject_gettypename|\
+sdo_dataobject_gettypenamespaceuri|sdo_exception_getcause|sdo_list_insert|sdo_model_property_getcontainingtype|\
+sdo_model_property_getdefault|sdo_model_property_getname|sdo_model_property_gettype|sdo_model_property_iscontainment|\
+sdo_model_property_ismany|sdo_model_reflectiondataobject_construct|sdo_model_reflectiondataobject_export|\
+sdo_model_reflectiondataobject_getcontainmentproperty|sdo_model_reflectiondataobject_getinstanceproperties|\
+sdo_model_reflectiondataobject_gettype|sdo_model_type_getbasetype|sdo_model_type_getname|sdo_model_type_getnamespaceuri|\
+sdo_model_type_getproperties|sdo_model_type_getproperty|sdo_model_type_isabstracttype|sdo_model_type_isdatatype|sdo_model_type_isinstance|\
+sdo_model_type_isopentype|sdo_model_type_issequencedtype|sdo_sequence_getproperty|sdo_sequence_insert|sdo_sequence_move|seekableiterator|\
+sem_acquire|sem_get|sem_release|sem_remove|serializable|serialize|session_cache_expire|session_cache_limiter|session_commit|\
+session_decode|session_destroy|session_encode|session_get_cookie_params|session_id|session_is_registered|session_module_name|session_name|\
+session_pgsql_add_error|session_pgsql_get_error|session_pgsql_get_field|session_pgsql_reset|session_pgsql_set_field|session_pgsql_status|\
+session_regenerate_id|session_register|session_save_path|session_set_cookie_params|session_set_save_handler|session_start|\
+session_unregister|session_unset|session_write_close|setCounterClass|set_error_handler|set_exception_handler|set_file_buffer|\
+set_include_path|set_magic_quotes_runtime|set_socket_blocking|set_time_limit|setcookie|setlocale|setproctitle|setrawcookie|\
+setstaticpropertyvalue|setthreadtitle|settype|sha1|sha1_file|shell_exec|shm_attach|shm_detach|shm_get_var|shm_has_var|shm_put_var|\
+shm_remove|shm_remove_var|shmop_close|shmop_delete|shmop_open|shmop_read|shmop_size|shmop_write|show_source|shuffle|signeurlpaiement|\
+similar_text|simplexml_import_dom|simplexml_load_file|simplexml_load_string|simplexmlelement|simplexmliterator|sin|sinh|sizeof|sleep|snmp|\
+snmp2_get|snmp2_getnext|snmp2_real_walk|snmp2_set|snmp2_walk|snmp3_get|snmp3_getnext|snmp3_real_walk|snmp3_set|snmp3_walk|\
+snmp_get_quick_print|snmp_get_valueretrieval|snmp_read_mib|snmp_set_enum_print|snmp_set_oid_numeric_print|snmp_set_oid_output_format|\
+snmp_set_quick_print|snmp_set_valueretrieval|snmpget|snmpgetnext|snmprealwalk|snmpset|snmpwalk|snmpwalkoid|soapclient|soapfault|\
+soapheader|soapparam|soapserver|soapvar|socket_accept|socket_bind|socket_clear_error|socket_close|socket_connect|socket_create|\
+socket_create_listen|socket_create_pair|socket_get_option|socket_get_status|socket_getpeername|socket_getsockname|socket_last_error|\
+socket_listen|socket_read|socket_recv|socket_recvfrom|socket_select|socket_send|socket_sendto|socket_set_block|socket_set_blocking|\
+socket_set_nonblock|socket_set_option|socket_set_timeout|socket_shutdown|socket_strerror|socket_write|solr_get_version|solrclient|\
+solrclientexception|solrdocument|solrdocumentfield|solrexception|solrgenericresponse|solrillegalargumentexception|\
+solrillegaloperationexception|solrinputdocument|solrmodifiableparams|solrobject|solrparams|solrpingresponse|solrquery|solrqueryresponse|\
+solrresponse|solrupdateresponse|solrutils|sort|soundex|sphinxclient|spl_autoload|spl_autoload_call|spl_autoload_extensions|\
+spl_autoload_functions|spl_autoload_register|spl_autoload_unregister|spl_classes|spl_object_hash|splbool|spldoublylinkedlist|splenum|\
+splfileinfo|splfileobject|splfixedarray|splfloat|splheap|splint|split|spliti|splmaxheap|splminheap|splobjectstorage|splobserver|\
+splpriorityqueue|splqueue|splstack|splstring|splsubject|spltempfileobject|spoofchecker|sprintf|sql_regcase|sqlite3|sqlite3result|\
+sqlite3stmt|sqlite_array_query|sqlite_busy_timeout|sqlite_changes|sqlite_close|sqlite_column|sqlite_create_aggregate|\
+sqlite_create_function|sqlite_current|sqlite_error_string|sqlite_escape_string|sqlite_exec|sqlite_factory|sqlite_fetch_all|\
+sqlite_fetch_array|sqlite_fetch_column_types|sqlite_fetch_object|sqlite_fetch_single|sqlite_fetch_string|sqlite_field_name|\
+sqlite_has_more|sqlite_has_prev|sqlite_key|sqlite_last_error|sqlite_last_insert_rowid|sqlite_libencoding|sqlite_libversion|sqlite_next|\
+sqlite_num_fields|sqlite_num_rows|sqlite_open|sqlite_popen|sqlite_prev|sqlite_query|sqlite_rewind|sqlite_seek|sqlite_single_query|\
+sqlite_udf_decode_binary|sqlite_udf_encode_binary|sqlite_unbuffered_query|sqlite_valid|sqrt|srand|sscanf|ssdeep_fuzzy_compare|\
+ssdeep_fuzzy_hash|ssdeep_fuzzy_hash_filename|ssh2_auth_hostbased_file|ssh2_auth_none|ssh2_auth_password|ssh2_auth_pubkey_file|\
+ssh2_connect|ssh2_exec|ssh2_fetch_stream|ssh2_fingerprint|ssh2_methods_negotiated|ssh2_publickey_add|ssh2_publickey_init|\
+ssh2_publickey_list|ssh2_publickey_remove|ssh2_scp_recv|ssh2_scp_send|ssh2_sftp|ssh2_sftp_lstat|ssh2_sftp_mkdir|ssh2_sftp_readlink|\
+ssh2_sftp_realpath|ssh2_sftp_rename|ssh2_sftp_rmdir|ssh2_sftp_stat|ssh2_sftp_symlink|ssh2_sftp_unlink|ssh2_shell|ssh2_tunnel|stat|\
+stats_absolute_deviation|stats_cdf_beta|stats_cdf_binomial|stats_cdf_cauchy|stats_cdf_chisquare|stats_cdf_exponential|stats_cdf_f|\
+stats_cdf_gamma|stats_cdf_laplace|stats_cdf_logistic|stats_cdf_negative_binomial|stats_cdf_noncentral_chisquare|stats_cdf_noncentral_f|\
+stats_cdf_poisson|stats_cdf_t|stats_cdf_uniform|stats_cdf_weibull|stats_covariance|stats_den_uniform|stats_dens_beta|stats_dens_cauchy|\
+stats_dens_chisquare|stats_dens_exponential|stats_dens_f|stats_dens_gamma|stats_dens_laplace|stats_dens_logistic|\
+stats_dens_negative_binomial|stats_dens_normal|stats_dens_pmf_binomial|stats_dens_pmf_hypergeometric|stats_dens_pmf_poisson|stats_dens_t|\
+stats_dens_weibull|stats_harmonic_mean|stats_kurtosis|stats_rand_gen_beta|stats_rand_gen_chisquare|stats_rand_gen_exponential|\
+stats_rand_gen_f|stats_rand_gen_funiform|stats_rand_gen_gamma|stats_rand_gen_ibinomial|stats_rand_gen_ibinomial_negative|\
+stats_rand_gen_int|stats_rand_gen_ipoisson|stats_rand_gen_iuniform|stats_rand_gen_noncenral_chisquare|stats_rand_gen_noncentral_f|\
+stats_rand_gen_noncentral_t|stats_rand_gen_normal|stats_rand_gen_t|stats_rand_get_seeds|stats_rand_phrase_to_seeds|stats_rand_ranf|\
+stats_rand_setall|stats_skew|stats_standard_deviation|stats_stat_binomial_coef|stats_stat_correlation|stats_stat_gennch|\
+stats_stat_independent_t|stats_stat_innerproduct|stats_stat_noncentral_t|stats_stat_paired_t|stats_stat_percentile|stats_stat_powersum|\
+stats_variance|stomp|stomp_connect_error|stomp_version|stompexception|stompframe|str_getcsv|str_ireplace|str_pad|str_repeat|str_replace|\
+str_rot13|str_shuffle|str_split|str_word_count|strcasecmp|strchr|strcmp|strcoll|strcspn|stream_bucket_append|stream_bucket_make_writeable|\
+stream_bucket_new|stream_bucket_prepend|stream_context_create|stream_context_get_default|stream_context_get_options|\
+stream_context_get_params|stream_context_set_default|stream_context_set_option|stream_context_set_params|stream_copy_to_stream|\
+stream_encoding|stream_filter_append|stream_filter_prepend|stream_filter_register|stream_filter_remove|stream_get_contents|\
+stream_get_filters|stream_get_line|stream_get_meta_data|stream_get_transports|stream_get_wrappers|stream_is_local|\
+stream_notification_callback|stream_register_wrapper|stream_resolve_include_path|stream_select|stream_set_blocking|stream_set_read_buffer|\
+stream_set_timeout|stream_set_write_buffer|stream_socket_accept|stream_socket_client|stream_socket_enable_crypto|stream_socket_get_name|\
+stream_socket_pair|stream_socket_recvfrom|stream_socket_sendto|stream_socket_server|stream_socket_shutdown|stream_supports_lock|\
+stream_wrapper_register|stream_wrapper_restore|stream_wrapper_unregister|streamwrapper|strftime|strip_tags|stripcslashes|stripos|\
+stripslashes|stristr|strlen|strnatcasecmp|strnatcmp|strncasecmp|strncmp|strpbrk|strpos|strptime|strrchr|strrev|strripos|strrpos|strspn|\
+strstr|strtok|strtolower|strtotime|strtoupper|strtr|strval|substr|substr_compare|substr_count|substr_replace|svm|svmmodel|svn_add|\
+svn_auth_get_parameter|svn_auth_set_parameter|svn_blame|svn_cat|svn_checkout|svn_cleanup|svn_client_version|svn_commit|svn_delete|\
+svn_diff|svn_export|svn_fs_abort_txn|svn_fs_apply_text|svn_fs_begin_txn2|svn_fs_change_node_prop|svn_fs_check_path|\
+svn_fs_contents_changed|svn_fs_copy|svn_fs_delete|svn_fs_dir_entries|svn_fs_file_contents|svn_fs_file_length|svn_fs_is_dir|svn_fs_is_file|\
+svn_fs_make_dir|svn_fs_make_file|svn_fs_node_created_rev|svn_fs_node_prop|svn_fs_props_changed|svn_fs_revision_prop|svn_fs_revision_root|\
+svn_fs_txn_root|svn_fs_youngest_rev|svn_import|svn_log|svn_ls|svn_mkdir|svn_repos_create|svn_repos_fs|svn_repos_fs_begin_txn_for_commit|\
+svn_repos_fs_commit_txn|svn_repos_hotcopy|svn_repos_open|svn_repos_recover|svn_revert|svn_status|svn_update|swf_actiongeturl|\
+swf_actiongotoframe|swf_actiongotolabel|swf_actionnextframe|swf_actionplay|swf_actionprevframe|swf_actionsettarget|swf_actionstop|\
+swf_actiontogglequality|swf_actionwaitforframe|swf_addbuttonrecord|swf_addcolor|swf_closefile|swf_definebitmap|swf_definefont|\
+swf_defineline|swf_definepoly|swf_definerect|swf_definetext|swf_endbutton|swf_enddoaction|swf_endshape|swf_endsymbol|swf_fontsize|\
+swf_fontslant|swf_fonttracking|swf_getbitmapinfo|swf_getfontinfo|swf_getframe|swf_labelframe|swf_lookat|swf_modifyobject|swf_mulcolor|\
+swf_nextid|swf_oncondition|swf_openfile|swf_ortho|swf_ortho2|swf_perspective|swf_placeobject|swf_polarview|swf_popmatrix|swf_posround|\
+swf_pushmatrix|swf_removeobject|swf_rotate|swf_scale|swf_setfont|swf_setframe|swf_shapearc|swf_shapecurveto|swf_shapecurveto3|\
+swf_shapefillbitmapclip|swf_shapefillbitmaptile|swf_shapefilloff|swf_shapefillsolid|swf_shapelinesolid|swf_shapelineto|swf_shapemoveto|\
+swf_showframe|swf_startbutton|swf_startdoaction|swf_startshape|swf_startsymbol|swf_textwidth|swf_translate|swf_viewport|swfaction|\
+swfbitmap|swfbutton|swfdisplayitem|swffill|swffont|swffontchar|swfgradient|swfmorph|swfmovie|swfprebuiltclip|swfshape|swfsound|\
+swfsoundinstance|swfsprite|swftext|swftextfield|swfvideostream|swish_construct|swish_getmetalist|swish_getpropertylist|swish_prepare|\
+swish_query|swishresult_getmetalist|swishresult_stem|swishresults_getparsedwords|swishresults_getremovedstopwords|swishresults_nextresult|\
+swishresults_seekresult|swishsearch_execute|swishsearch_resetlimit|swishsearch_setlimit|swishsearch_setphrasedelimiter|\
+swishsearch_setsort|swishsearch_setstructure|sybase_affected_rows|sybase_close|sybase_connect|sybase_data_seek|\
+sybase_deadlock_retry_count|sybase_fetch_array|sybase_fetch_assoc|sybase_fetch_field|sybase_fetch_object|sybase_fetch_row|\
+sybase_field_seek|sybase_free_result|sybase_get_last_message|sybase_min_client_severity|sybase_min_error_severity|\
+sybase_min_message_severity|sybase_min_server_severity|sybase_num_fields|sybase_num_rows|sybase_pconnect|sybase_query|sybase_result|\
+sybase_select_db|sybase_set_message_handler|sybase_unbuffered_query|symlink|sys_get_temp_dir|sys_getloadavg|syslog|system|tag|tan|tanh|\
+tcpwrap_check|tempnam|textdomain|tidy|tidy_access_count|tidy_config_count|tidy_diagnose|tidy_error_count|tidy_get_error_buffer|\
+tidy_get_output|tidy_load_config|tidy_reset_config|tidy_save_config|tidy_set_encoding|tidy_setopt|tidy_warning_count|tidynode|time|\
+time_nanosleep|time_sleep_until|timezone_abbreviations_list|timezone_identifiers_list|timezone_location_get|timezone_name_from_abbr|\
+timezone_name_get|timezone_offset_get|timezone_open|timezone_transitions_get|timezone_version_get|tmpfile|token_get_all|token_name|\
+tokyotyrant|tokyotyrantquery|tokyotyranttable|tostring|tostring|touch|trait_exists|transliterator|traversable|trigger_error|trim|uasort|ucfirst|\
+ucwords|udm_add_search_limit|udm_alloc_agent|udm_alloc_agent_array|udm_api_version|udm_cat_list|udm_cat_path|udm_check_charset|\
+udm_check_stored|udm_clear_search_limits|udm_close_stored|udm_crc32|udm_errno|udm_error|udm_find|udm_free_agent|udm_free_ispell_data|\
+udm_free_res|udm_get_doc_count|udm_get_res_field|udm_get_res_param|udm_hash32|udm_load_ispell_data|udm_open_stored|udm_set_agent_param|\
+uksort|umask|underflowexception|unexpectedvalueexception|uniqid|unixtojd|unlink|unpack|unregister_tick_function|unserialize|unset|\
+urldecode|urlencode|use_soap_error_handler|user_error|usleep|usort|utf8_decode|utf8_encode|v8js|v8jsexception|var_dump|var_export|variant|\
+variant_abs|variant_add|variant_and|variant_cast|variant_cat|variant_cmp|variant_date_from_timestamp|variant_date_to_timestamp|\
+variant_div|variant_eqv|variant_fix|variant_get_type|variant_idiv|variant_imp|variant_int|variant_mod|variant_mul|variant_neg|variant_not|\
+variant_or|variant_pow|variant_round|variant_set|variant_set_type|variant_sub|variant_xor|version_compare|vfprintf|virtual|\
+vpopmail_add_alias_domain|vpopmail_add_alias_domain_ex|vpopmail_add_domain|vpopmail_add_domain_ex|vpopmail_add_user|vpopmail_alias_add|\
+vpopmail_alias_del|vpopmail_alias_del_domain|vpopmail_alias_get|vpopmail_alias_get_all|vpopmail_auth_user|vpopmail_del_domain|\
+vpopmail_del_domain_ex|vpopmail_del_user|vpopmail_error|vpopmail_passwd|vpopmail_set_user_quota|vprintf|vsprintf|w32api_deftype|\
+w32api_init_dtype|w32api_invoke_function|w32api_register_function|w32api_set_call_method|wddx_add_vars|wddx_deserialize|wddx_packet_end|\
+wddx_packet_start|wddx_serialize_value|wddx_serialize_vars|win32_continue_service|win32_create_service|win32_delete_service|\
+win32_get_last_control_message|win32_pause_service|win32_ps_list_procs|win32_ps_stat_mem|win32_ps_stat_proc|win32_query_service_status|\
+win32_set_service_status|win32_start_service|win32_start_service_ctrl_dispatcher|win32_stop_service|wincache_fcache_fileinfo|\
+wincache_fcache_meminfo|wincache_lock|wincache_ocache_fileinfo|wincache_ocache_meminfo|wincache_refresh_if_changed|\
+wincache_rplist_fileinfo|wincache_rplist_meminfo|wincache_scache_info|wincache_scache_meminfo|wincache_ucache_add|wincache_ucache_cas|\
+wincache_ucache_clear|wincache_ucache_dec|wincache_ucache_delete|wincache_ucache_exists|wincache_ucache_get|wincache_ucache_inc|\
+wincache_ucache_info|wincache_ucache_meminfo|wincache_ucache_set|wincache_unlock|wordwrap|xattr_get|xattr_list|xattr_remove|xattr_set|\
+xattr_supported|xdiff_file_bdiff|xdiff_file_bdiff_size|xdiff_file_bpatch|xdiff_file_diff|xdiff_file_diff_binary|xdiff_file_merge3|\
+xdiff_file_patch|xdiff_file_patch_binary|xdiff_file_rabdiff|xdiff_string_bdiff|xdiff_string_bdiff_size|xdiff_string_bpatch|\
+xdiff_string_diff|xdiff_string_diff_binary|xdiff_string_merge3|xdiff_string_patch|xdiff_string_patch_binary|xdiff_string_rabdiff|\
+xhprof_disable|xhprof_enable|xhprof_sample_disable|xhprof_sample_enable|xml_error_string|xml_get_current_byte_index|\
+xml_get_current_column_number|xml_get_current_line_number|xml_get_error_code|xml_parse|xml_parse_into_struct|xml_parser_create|\
+xml_parser_create_ns|xml_parser_free|xml_parser_get_option|xml_parser_set_option|xml_set_character_data_handler|xml_set_default_handler|\
+xml_set_element_handler|xml_set_end_namespace_decl_handler|xml_set_external_entity_ref_handler|xml_set_notation_decl_handler|\
+xml_set_object|xml_set_processing_instruction_handler|xml_set_start_namespace_decl_handler|xml_set_unparsed_entity_decl_handler|xmlreader|\
+xmlrpc_decode|xmlrpc_decode_request|xmlrpc_encode|xmlrpc_encode_request|xmlrpc_get_type|xmlrpc_is_fault|xmlrpc_parse_method_descriptions|\
+xmlrpc_server_add_introspection_data|xmlrpc_server_call_method|xmlrpc_server_create|xmlrpc_server_destroy|\
+xmlrpc_server_register_introspection_callback|xmlrpc_server_register_method|xmlrpc_set_type|xmlwriter_end_attribute|xmlwriter_end_cdata|\
+xmlwriter_end_comment|xmlwriter_end_document|xmlwriter_end_dtd|xmlwriter_end_dtd_attlist|xmlwriter_end_dtd_element|\
+xmlwriter_end_dtd_entity|xmlwriter_end_element|xmlwriter_end_pi|xmlwriter_flush|xmlwriter_full_end_element|xmlwriter_open_memory|\
+xmlwriter_open_uri|xmlwriter_output_memory|xmlwriter_set_indent|xmlwriter_set_indent_string|xmlwriter_start_attribute|\
+xmlwriter_start_attribute_ns|xmlwriter_start_cdata|xmlwriter_start_comment|xmlwriter_start_document|xmlwriter_start_dtd|\
+xmlwriter_start_dtd_attlist|xmlwriter_start_dtd_element|xmlwriter_start_dtd_entity|xmlwriter_start_element|xmlwriter_start_element_ns|\
+xmlwriter_start_pi|xmlwriter_text|xmlwriter_write_attribute|xmlwriter_write_attribute_ns|xmlwriter_write_cdata|xmlwriter_write_comment|\
+xmlwriter_write_dtd|xmlwriter_write_dtd_attlist|xmlwriter_write_dtd_element|xmlwriter_write_dtd_entity|xmlwriter_write_element|\
+xmlwriter_write_element_ns|xmlwriter_write_pi|xmlwriter_write_raw|xpath_eval|xpath_eval_expression|xpath_new_context|xpath_register_ns|\
+xpath_register_ns_auto|xptr_eval|xptr_new_context|xslt_backend_info|xslt_backend_name|xslt_backend_version|xslt_create|xslt_errno|\
+xslt_error|xslt_free|xslt_getopt|xslt_process|xslt_set_base|xslt_set_encoding|xslt_set_error_handler|xslt_set_log|xslt_set_object|\
+xslt_set_sax_handler|xslt_set_sax_handlers|xslt_set_scheme_handler|xslt_set_scheme_handlers|xslt_setopt|xsltprocessor|yaml_emit|\
+yaml_emit_file|yaml_parse|yaml_parse_file|yaml_parse_url|yaz_addinfo|yaz_ccl_conf|yaz_ccl_parse|yaz_close|yaz_connect|yaz_database|\
+yaz_element|yaz_errno|yaz_error|yaz_es|yaz_es_result|yaz_get_option|yaz_hits|yaz_itemorder|yaz_present|yaz_range|yaz_record|yaz_scan|\
+yaz_scan_result|yaz_schema|yaz_search|yaz_set_option|yaz_sort|yaz_syntax|yaz_wait|yp_all|yp_cat|yp_err_string|yp_errno|yp_first|\
+yp_get_default_domain|yp_master|yp_match|yp_next|yp_order|zend_logo_guid|zend_thread_id|zend_version|zip_close|zip_entry_close|\
+zip_entry_compressedsize|zip_entry_compressionmethod|zip_entry_filesize|zip_entry_name|zip_entry_open|zip_entry_read|zip_open|zip_read|\
+ziparchive|ziparchive_addemptydir|ziparchive_addfile|ziparchive_addfromstring|ziparchive_close|ziparchive_deleteindex|\
+ziparchive_deletename|ziparchive_extractto|ziparchive_getarchivecomment|ziparchive_getcommentindex|ziparchive_getcommentname|\
+ziparchive_getfromindex|ziparchive_getfromname|ziparchive_getnameindex|ziparchive_getstatusstring|ziparchive_getstream|\
+ziparchive_locatename|ziparchive_open|ziparchive_renameindex|ziparchive_renamename|ziparchive_setCommentName|ziparchive_setarchivecomment|\
+ziparchive_setcommentindex|ziparchive_statindex|ziparchive_statname|ziparchive_unchangeall|ziparchive_unchangearchive|\
+ziparchive_unchangeindex|ziparchive_unchangename|zlib_get_coding_type'.split('|')
     );
     var keywords = lang.arrayToMap(
-        ('abstract|and|array|as|break|case|catch|class|clone|const|continue|declare|default|do|else|elseif|enddeclare|endfor|endforeach|endif|' +
-        'endswitch|endwhile|extends|final|for|foreach|function|global|goto|if|implements|interface|instanceof|namespace|new|or|private|protected|' +
-        'public|static|switch|throw|trait|try|use|var|while|xor').split('|')
+'abstract|and|array|as|break|callable|case|catch|class|clone|const|continue|declare|default|do|else|elseif|enddeclare|endfor|endforeach|\
+endif|endswitch|endwhile|extends|final|finally|for|foreach|function|global|goto|if|implements|instanceof|insteadof|interface|namespace|new|or|private|protected|\
+public|static|switch|throw|trait|try|use|var|while|xor|yield'.split('|')
     );
     var languageConstructs = lang.arrayToMap(
-        ('die|echo|empty|exit|eval|include|include_once|isset|list|require|require_once|return|print|unset').split('|')
+        ('__halt_compiler|die|echo|empty|exit|eval|include|include_once|isset|list|require|require_once|return|print|unset').split('|')
     );
 
     var builtinConstants = lang.arrayToMap(
-        ('true|TRUE|false|FALSE|null|NULL|__CLASS__|__DIR__|__FILE__|__LINE__|__METHOD__|__FUNCTION__|__NAMESPACE__').split('|')
+        ('true|TRUE|false|FALSE|null|NULL|__CLASS__|__DIR__|__FILE__|__LINE__|__METHOD__|__FUNCTION__|__NAMESPACE__|__TRAIT__').split('|')
     );
 
     var builtinVariables = lang.arrayToMap(
-        ('$GLOBALS|$_SERVER|$_GET|$_POST|$_FILES|$_REQUEST|$_SESSION|$_ENV|$_COOKIE|$php_errormsg|$HTTP_RAW_POST_DATA|' +
-        '$http_response_header|$argc|$argv').split('|')
+'$GLOBALS|$_SERVER|$_GET|$_POST|$_FILES|$_REQUEST|$_SESSION|$_ENV|$_COOKIE|$php_errormsg|$HTTP_RAW_POST_DATA|\
+$http_response_header|$argc|$argv'.split('|')
     );
     var builtinFunctionsDeprecated = lang.arrayToMap(
-        ('key_exists|cairo_matrix_create_scale|cairo_matrix_create_translate|call_user_method|call_user_method_array|com_addref|com_get|' +
-        'com_invoke|com_isenum|com_load|com_release|com_set|connection_timeout|cubrid_load_from_glo|cubrid_new_glo|cubrid_save_to_glo|' +
-        'cubrid_send_glo|define_syslog_variables|dl|ereg|ereg_replace|eregi|eregi_replace|hw_documentattributes|hw_documentbodytag|' +
-        'hw_documentsize|hw_outputdocument|imagedashedline|maxdb_bind_param|maxdb_bind_result|maxdb_client_encoding|maxdb_close_long_data|' +
-        'maxdb_execute|maxdb_fetch|maxdb_get_metadata|maxdb_param_count|maxdb_send_long_data|mcrypt_ecb|mcrypt_generic_end|mime_content_type|' +
-        'mysql_createdb|mysql_dbname|mysql_db_query|mysql_drop_db|mysql_dropdb|mysql_escape_string|mysql_fieldflags|mysql_fieldflags|' +
-        'mysql_fieldname|mysql_fieldtable|mysql_fieldtype|mysql_freeresult|mysql_listdbs|mysql_list_fields|mysql_listfields|mysql_list_tables|' +
-        'mysql_listtables|mysql_numfields|mysql_numrows|mysql_selectdb|mysql_tablename|mysqli_bind_param|mysqli_bind_result|' +
-        'mysqli_disable_reads_from_master|mysqli_disable_rpl_parse|mysqli_enable_reads_from_master|mysqli_enable_rpl_parse|mysqli_execute|' +
-        'mysqli_fetch|mysqli_get_metadata|mysqli_master_query|mysqli_param_count|mysqli_rpl_parse_enabled|mysqli_rpl_probe|mysqli_rpl_query_type|' +
-        'mysqli_send_long_data|mysqli_send_query|mysqli_slave_query|ocibindbyname|ocicancel|ocicloselob|ocicollappend|ocicollassign|' +
-        'ocicollassignelem|ocicollgetelem|ocicollmax|ocicollsize|ocicolltrim|ocicolumnisnull|ocicolumnname|ocicolumnprecision|ocicolumnscale|' +
-        'ocicolumnsize|ocicolumntype|ocicolumntyperaw|ocicommit|ocidefinebyname|ocierror|ociexecute|ocifetch|ocifetchinto|ocifetchstatement|' +
-        'ocifreecollection|ocifreecursor|ocifreedesc|ocifreestatement|ociinternaldebug|ociloadlob|ocilogoff|ocilogon|ocinewcollection|' +
-        'ocinewcursor|ocinewdescriptor|ocinlogon|ocinumcols|ociparse|ociplogon|ociresult|ocirollback|ocirowcount|ocisavelob|ocisavelobfile|' +
-        'ociserverversion|ocisetprefetch|ocistatementtype|ociwritelobtofile|ociwritetemporarylob|PDF_add_annotation|PDF_add_bookmark|' +
-        'PDF_add_launchlink|PDF_add_locallink|PDF_add_note|PDF_add_outline|PDF_add_pdflink|PDF_add_weblink|PDF_attach_file|PDF_begin_page|' +
-        'PDF_begin_template|PDF_close_pdi|PDF_close|PDF_findfont|PDF_get_font|PDF_get_fontname|PDF_get_fontsize|PDF_get_image_height|' +
-        'PDF_get_image_width|PDF_get_majorversion|PDF_get_minorversion|PDF_get_pdi_parameter|PDF_get_pdi_value|PDF_open_ccitt|PDF_open_file|' +
-        'PDF_open_gif|PDF_open_image_file|PDF_open_image|PDF_open_jpeg|PDF_open_pdi|PDF_open_tiff|PDF_place_image|PDF_place_pdi_page|' +
-        'PDF_set_border_color|PDF_set_border_dash|PDF_set_border_style|PDF_set_char_spacing|PDF_set_duration|PDF_set_horiz_scaling|' +
-        'PDF_set_info_author|PDF_set_info_creator|PDF_set_info_keywords|PDF_set_info_subject|PDF_set_info_title|PDF_set_leading|' +
-        'PDF_set_text_matrix|PDF_set_text_rendering|PDF_set_text_rise|PDF_set_word_spacing|PDF_setgray_fill|PDF_setgray_stroke|PDF_setgray|' +
-        'PDF_setpolydash|PDF_setrgbcolor_fill|PDF_setrgbcolor_stroke|PDF_setrgbcolor|PDF_show_boxed|php_check_syntax|px_set_tablename|' +
-        'px_set_targetencoding|runkit_sandbox_output_handler|session_is_registered|session_register|session_unregister' +
-        'set_magic_quotes_runtime|magic_quotes_runtime|set_socket_blocking|socket_set_blocking|set_socket_timeout|socket_set_timeout|split|spliti|' +
-        'sql_regcase').split('|')
+'key_exists|cairo_matrix_create_scale|cairo_matrix_create_translate|call_user_method|call_user_method_array|com_addref|com_get|\
+com_invoke|com_isenum|com_load|com_release|com_set|connection_timeout|cubrid_load_from_glo|cubrid_new_glo|cubrid_save_to_glo|\
+cubrid_send_glo|define_syslog_variables|dl|ereg|ereg_replace|eregi|eregi_replace|hw_documentattributes|hw_documentbodytag|\
+hw_documentsize|hw_outputdocument|imagedashedline|maxdb_bind_param|maxdb_bind_result|maxdb_client_encoding|maxdb_close_long_data|\
+maxdb_execute|maxdb_fetch|maxdb_get_metadata|maxdb_param_count|maxdb_send_long_data|mcrypt_ecb|mcrypt_generic_end|mime_content_type|\
+mysql_createdb|mysql_dbname|mysql_db_query|mysql_drop_db|mysql_dropdb|mysql_escape_string|mysql_fieldflags|mysql_fieldflags|\
+mysql_fieldname|mysql_fieldtable|mysql_fieldtype|mysql_freeresult|mysql_listdbs|mysql_list_fields|mysql_listfields|mysql_list_tables|\
+mysql_listtables|mysql_numfields|mysql_numrows|mysql_selectdb|mysql_tablename|mysqli_bind_param|mysqli_bind_result|\
+mysqli_disable_reads_from_master|mysqli_disable_rpl_parse|mysqli_enable_reads_from_master|mysqli_enable_rpl_parse|mysqli_execute|\
+mysqli_fetch|mysqli_get_metadata|mysqli_master_query|mysqli_param_count|mysqli_rpl_parse_enabled|mysqli_rpl_probe|mysqli_rpl_query_type|\
+mysqli_send_long_data|mysqli_send_query|mysqli_slave_query|ocibindbyname|ocicancel|ocicloselob|ocicollappend|ocicollassign|\
+ocicollassignelem|ocicollgetelem|ocicollmax|ocicollsize|ocicolltrim|ocicolumnisnull|ocicolumnname|ocicolumnprecision|ocicolumnscale|\
+ocicolumnsize|ocicolumntype|ocicolumntyperaw|ocicommit|ocidefinebyname|ocierror|ociexecute|ocifetch|ocifetchinto|ocifetchstatement|\
+ocifreecollection|ocifreecursor|ocifreedesc|ocifreestatement|ociinternaldebug|ociloadlob|ocilogoff|ocilogon|ocinewcollection|\
+ocinewcursor|ocinewdescriptor|ocinlogon|ocinumcols|ociparse|ociplogon|ociresult|ocirollback|ocirowcount|ocisavelob|ocisavelobfile|\
+ociserverversion|ocisetprefetch|ocistatementtype|ociwritelobtofile|ociwritetemporarylob|PDF_add_annotation|PDF_add_bookmark|\
+PDF_add_launchlink|PDF_add_locallink|PDF_add_note|PDF_add_outline|PDF_add_pdflink|PDF_add_weblink|PDF_attach_file|PDF_begin_page|\
+PDF_begin_template|PDF_close_pdi|PDF_close|PDF_findfont|PDF_get_font|PDF_get_fontname|PDF_get_fontsize|PDF_get_image_height|\
+PDF_get_image_width|PDF_get_majorversion|PDF_get_minorversion|PDF_get_pdi_parameter|PDF_get_pdi_value|PDF_open_ccitt|PDF_open_file|\
+PDF_open_gif|PDF_open_image_file|PDF_open_image|PDF_open_jpeg|PDF_open_pdi|PDF_open_tiff|PDF_place_image|PDF_place_pdi_page|\
+PDF_set_border_color|PDF_set_border_dash|PDF_set_border_style|PDF_set_char_spacing|PDF_set_duration|PDF_set_horiz_scaling|\
+PDF_set_info_author|PDF_set_info_creator|PDF_set_info_keywords|PDF_set_info_subject|PDF_set_info_title|PDF_set_leading|\
+PDF_set_text_matrix|PDF_set_text_rendering|PDF_set_text_rise|PDF_set_word_spacing|PDF_setgray_fill|PDF_setgray_stroke|PDF_setgray|\
+PDF_setpolydash|PDF_setrgbcolor_fill|PDF_setrgbcolor_stroke|PDF_setrgbcolor|PDF_show_boxed|php_check_syntax|px_set_tablename|\
+px_set_targetencoding|runkit_sandbox_output_handler|session_is_registered|session_register|session_unregister\
+set_magic_quotes_runtime|magic_quotes_runtime|set_socket_blocking|socket_set_blocking|set_socket_timeout|socket_set_timeout|split|spliti|\
+sql_regcase'.split('|')
     );
 
     var keywordsDeprecated = lang.arrayToMap(
@@ -31739,7 +32154,7 @@ var functionMap = {
     ],
     "xmlwriter_write_element_ns": [
         "bool xmlwriter_write_element_ns(resource xmlwriter, string prefix, string name, string uri[, string content])",
-        "Write full namesapced element tag - returns FALSE on error"
+        "Write full namespaced element tag - returns FALSE on error"
     ],
     "xmlwriter_write_pi": [
         "bool xmlwriter_write_pi(resource xmlwriter, string target, string content)",
@@ -33207,6 +33622,8 @@ var RustHighlightRules = function() {
            regex: '\'[a-zA-Z_][a-zA-Z0-9_]*(?![\\\'])' },
          { token: 'string.quoted.single.source.rust',
            regex: "'(?:[^'\\\\]|" + stringEscape + ")'" },
+         { token: 'identifier',
+           regex:  /r#[a-zA-Z_][a-zA-Z0-9_]*\b/ },
          {
             stateName: "bracketedComment",
             onMatch : function(value, currentState, stack){
@@ -33246,7 +33663,7 @@ var RustHighlightRules = function() {
                 regex: stringEscape },
               { defaultToken: 'string.quoted.double.source.rust' } ] },
          { token: [ 'keyword.source.rust', 'text', 'entity.name.function.source.rust' ],
-           regex: '\\b(fn)(\\s+)([a-zA-Z_][a-zA-Z0-9_]*)' },
+           regex: '\\b(fn)(\\s+)((?:r#)?[a-zA-Z_][a-zA-Z0-9_]*)' },
          { token: 'support.constant', regex: '\\b[a-zA-Z_][\\w\\d]*::' },
          { token: 'keyword.source.rust',
            regex: '\\b(?:abstract|alignof|as|become|box|break|catch|continue|const|crate|default|do|dyn|else|enum|extern|for|final|if|impl|in|let|loop|macro|match|mod|move|mut|offsetof|override|priv|proc|pub|pure|ref|return|self|sizeof|static|struct|super|trait|type|typeof|union|unsafe|unsized|use|virtual|where|while|yield)\\b' },
@@ -33944,7 +34361,7 @@ oop.inherits(Mode, TextMode);
 exports.Mode = Mode;
 });
 
-define("ace/mode/scss",["require","exports","module","ace/lib/oop","ace/mode/text","ace/mode/scss_highlight_rules","ace/mode/matching_brace_outdent","ace/mode/behaviour/css","ace/mode/folding/cstyle"], function(require, exports, module) {
+define("ace/mode/scss",["require","exports","module","ace/lib/oop","ace/mode/text","ace/mode/scss_highlight_rules","ace/mode/matching_brace_outdent","ace/mode/behaviour/css","ace/mode/folding/cstyle","ace/mode/css_completions"], function(require, exports, module) {
 "use strict";
 
 var oop = require("../lib/oop");
@@ -33953,11 +34370,14 @@ var ScssHighlightRules = require("./scss_highlight_rules").ScssHighlightRules;
 var MatchingBraceOutdent = require("./matching_brace_outdent").MatchingBraceOutdent;
 var CssBehaviour = require("./behaviour/css").CssBehaviour;
 var CStyleFoldMode = require("./folding/cstyle").FoldMode;
+var CssCompletions = require("./css_completions").CssCompletions;
+
 
 var Mode = function() {
     this.HighlightRules = ScssHighlightRules;
     this.$outdent = new MatchingBraceOutdent();
     this.$behaviour = new CssBehaviour();
+    this.$completer = new CssCompletions();
     this.foldingRules = new CStyleFoldMode();
 };
 oop.inherits(Mode, TextMode);
@@ -33989,6 +34409,11 @@ oop.inherits(Mode, TextMode);
     this.autoOutdent = function(state, doc, row) {
         this.$outdent.autoOutdent(doc, row);
     };
+    
+    this.getCompletions = function(state, session, pos, prefix) {
+        return this.$completer.getCompletions(state, session, pos, prefix);
+    };
+
 
     this.$id = "ace/mode/scss";
 }).call(Mode.prototype);
@@ -34537,7 +34962,7 @@ var SqlHighlightRules = function() {
 
     var keywords = (
         "select|insert|update|delete|from|where|and|or|group|by|order|limit|offset|having|as|case|" +
-        "when|else|end|type|left|right|join|on|outer|desc|asc|union|create|table|primary|key|if|" +
+        "when|then|else|end|type|left|right|join|on|outer|desc|asc|union|create|table|primary|key|if|" +
         "foreign|not|references|default|null|inner|cross|natural|database|drop|grant"
     );
 
@@ -34966,6 +35391,9 @@ var TclHighlightRules = function() {
             }, {
                 token : "paren.rparen",
                 regex : "[\\])}]"
+            }, {
+                token : "paren.lparen",
+                regex : "[[({]"
             }, {
                 token : "support.function",
                 regex : "!|\\$|%|&|\\*|\\-\\-|\\-|\\+\\+|\\+|~|===|==|=|!=|!==|<=|>=|<<=|>>=|>>>=|<>|<|>|!|&&|\\|\\||\\?\\:|\\*=|%=|\\+=|\\-=|&=|\\^=|{\\*}|;|::"
@@ -39200,20 +39628,25 @@ var YamlHighlightRules = function() {
                 regex : '["](?:(?:\\\\.)|(?:[^"\\\\]))*?["]'
             }, {
                 token : "string", // multi line string start
-                regex : /[|>][-+\d\s]*$/,
+                regex : /[|>][-+\d]*(?:$|\s+(?:$|#))/,
                 onMatch: function(val, state, stack, line) {
-                    var indent = /^\s*/.exec(line)[0];
-                    if (stack.length < 1) {
-                        stack.push(this.next);
+                    line = line.replace(/ #.*/, "");
+                    var indent = /^ *((:\s*)?-(\s*[^|>])?)?/.exec(line)[0]
+                        .replace(/\S\s*$/, "").length;
+                    var indentationIndicator = parseInt(/\d+[\s+-]*$/.exec(line));
+                    
+                    if (indentationIndicator) {
+                        indent += indentationIndicator - 1;
+                        this.next = "mlString";
                     } else {
-                        stack[0] = "mlString";
+                        this.next = "mlStringPre";
                     }
-
-                    if (stack.length < 2) {
-                        stack.push(indent.length);
-                    }
-                    else {
-                        stack[1] = indent.length;
+                    if (!stack.length) {
+                        stack.push(this.next);
+                        stack.push(indent);
+                    } else {
+                        stack[0] = this.next;
+                        stack[1] = indent;
                     }
                     return this.token;
                 },
@@ -39241,13 +39674,39 @@ var YamlHighlightRules = function() {
                 regex : /[^\s,:\[\]\{\}]+/
             }
         ],
+        "mlStringPre" : [
+            {
+                token : "indent",
+                regex : /^ *$/
+            }, {
+                token : "indent",
+                regex : /^ */,
+                onMatch: function(val, state, stack) {
+                    var curIndent = stack[1];
+
+                    if (curIndent >= val.length) {
+                        this.next = "start";
+                        stack.shift();
+                        stack.shift();
+                    }
+                    else {
+                        stack[1] = val.length - 1;
+                        this.next = stack[0] = "mlString";
+                    }
+                    return this.token;
+                },
+                next : "mlString"
+            }, {
+                defaultToken : "string"
+            }
+        ],
         "mlString" : [
             {
                 token : "indent",
-                regex : /^\s*$/
+                regex : /^ *$/
             }, {
                 token : "indent",
-                regex : /^\s*/,
+                regex : /^ */,
                 onMatch: function(val, state, stack) {
                     var curIndent = stack[1];
 
@@ -39402,30 +39861,6 @@ exports.capture = function(el, eventHandler, releaseCaptureHandler) {
     exports.addListener(document, "dragstart", onMouseUp, true);
     
     return onMouseUp;
-};
-
-exports.addTouchMoveListener = function (el, callback) {
-    var startx, starty;
-    exports.addListener(el, "touchstart", function (e) {
-        var touches = e.touches;
-        var touchObj = touches[0];
-        startx = touchObj.clientX;
-        starty = touchObj.clientY;
-    });
-    exports.addListener(el, "touchmove", function (e) {
-        var touches = e.touches;
-        if (touches.length > 1) return;
-        
-        var touchObj = touches[0];
-
-        e.wheelX = startx - touchObj.clientX;
-        e.wheelY = starty - touchObj.clientY;
-
-        startx = touchObj.clientX;
-        starty = touchObj.clientY;
-
-        callback(e);
-    });
 };
 
 exports.addMouseWheelListener = function(el, callback) {
@@ -39695,477 +40130,7 @@ else
     };
 });
 
-define("ace/keyboard/textinput_ios",["require","exports","module","ace/lib/event","ace/lib/useragent","ace/lib/dom","ace/lib/lang","ace/lib/keys"], function(require, exports, module) {
-"use strict";
-
-var event = require("../lib/event");
-var useragent = require("../lib/useragent");
-var dom = require("../lib/dom");
-var lang = require("../lib/lang");
-var KEYS = require("../lib/keys");
-var MODS = KEYS.KEY_MODS;
-var BROKEN_SETDATA = useragent.isChrome < 18;
-var USE_IE_MIME_TYPE =  useragent.isIE;
-
-var TextInput = function(parentNode, host) {
-    var self = this;
-    var text = dom.createElement("textarea");
-    text.className = useragent.isIOS ? "ace_text-input ace_text-input-ios" : "ace_text-input";
-
-    if (useragent.isTouchPad)
-        text.setAttribute("x-palm-disable-auto-cap", true);
-
-    text.setAttribute("wrap", "off");
-    text.setAttribute("autocorrect", "off");
-    text.setAttribute("autocapitalize", "off");
-    text.setAttribute("spellcheck", false);
-
-    text.style.opacity = "0";
-    parentNode.insertBefore(text, parentNode.firstChild);
-
-    var PLACEHOLDER = "\n aaaa a\n";
-
-    var copied = false;
-    var cut = false;
-    var pasted = false;
-    var inComposition = false;
-    var tempStyle = '';
-    var isSelectionEmpty = true;
-    try { var isFocused = document.activeElement === text; } catch(e) {}
-    
-    event.addListener(text, "blur", function(e) {
-        host.onBlur(e);
-        isFocused = false;
-    });
-    event.addListener(text, "focus", function(e) {
-        isFocused = true;
-        host.onFocus(e);
-        resetSelection();
-    });
-    this.focus = function() {
-        if (tempStyle) return text.focus();
-        text.style.position = "fixed";
-        text.focus();
-    };
-    this.blur = function() {
-        text.blur();
-    };
-    this.isFocused = function() {
-        return isFocused;
-    };
-    var syncSelection = lang.delayedCall(function() {
-        isFocused && resetSelection(isSelectionEmpty);
-    });
-    var syncValue = lang.delayedCall(function() {
-         if (!inComposition) {
-            text.value = PLACEHOLDER;
-            isFocused && resetSelection();
-         }
-    });
-
-    function resetSelection(isEmpty) {
-        if (inComposition)
-            return;
-        inComposition = true;
-        
-        if (inputHandler) {
-            selectionStart = 0;
-            selectionEnd = isEmpty ? 0 : text.value.length - 1;
-        } else {
-            var selectionStart = 4;
-            var selectionEnd = 5;
-        }
-        try {
-            text.setSelectionRange(selectionStart, selectionEnd);
-        } catch(e) {}
-        
-        inComposition = false;
-    }
-
-    function resetValue() {
-        if (inComposition)
-            return;
-        text.value = PLACEHOLDER;
-        if (useragent.isWebKit)
-            syncValue.schedule();
-    }
-
-    useragent.isWebKit || host.addEventListener('changeSelection', function() {
-        if (host.selection.isEmpty() != isSelectionEmpty) {
-            isSelectionEmpty = !isSelectionEmpty;
-            syncSelection.schedule();
-        }
-    });
-
-    resetValue();
-    if (isFocused)
-        host.onFocus();
-
-
-    var isAllSelected = function(text) {
-        return text.selectionStart === 0 && text.selectionEnd === text.value.length;
-    };
-
-    var onSelect = function(e) {
-        if (isAllSelected(text)) {
-            host.selectAll();
-            resetSelection();
-        } else if (inputHandler) {
-            resetSelection(host.selection.isEmpty());
-        }
-    };
-
-    var inputHandler = null;
-    this.setInputHandler = function(cb) {inputHandler = cb;};
-    this.getInputHandler = function() {return inputHandler;};
-    var afterContextMenu = false;
-    
-    var sendText = function(data) {
-        if (text.selectionStart === 4 && text.selectionEnd === 5) {
-          return;
-        }
-        if (inputHandler) {
-            data = inputHandler(data);
-            inputHandler = null;
-        }
-        if (pasted) {
-            resetSelection();
-            if (data)
-                host.onPaste(data);
-            pasted = false;
-        } else if (data == PLACEHOLDER.substr(0) && text.selectionStart === 4) {
-            if (afterContextMenu)
-                host.execCommand("del", {source: "ace"});
-            else // some versions of android do not fire keydown when pressing backspace
-                host.execCommand("backspace", {source: "ace"});
-        } else if (!copied) {
-            if (data.substring(0, 9) == PLACEHOLDER && data.length > PLACEHOLDER.length)
-                data = data.substr(9);
-            else if (data.substr(0, 4) == PLACEHOLDER.substr(0, 4))
-                data = data.substr(4, data.length - PLACEHOLDER.length + 1);
-            else if (data.charAt(data.length - 1) == PLACEHOLDER.charAt(0))
-                data = data.slice(0, -1);
-            if (data == PLACEHOLDER.charAt(0)) {
-            } else if (data.charAt(data.length - 1) == PLACEHOLDER.charAt(0))
-                data = data.slice(0, -1);
-            
-            if (data)
-                host.onTextInput(data);
-        }
-        if (copied) {
-          copied = false;
-        }
-        if (afterContextMenu)
-            afterContextMenu = false;
-    };
-    var onInput = function(e) {
-        if (inComposition)
-            return;
-        var data = text.value;
-        sendText(data);
-        resetValue();
-    };
-    
-    var handleClipboardData = function(e, data, forceIEMime) {
-        var clipboardData = e.clipboardData || window.clipboardData;
-        if (!clipboardData || BROKEN_SETDATA)
-            return;
-        var mime = USE_IE_MIME_TYPE || forceIEMime ? "Text" : "text/plain";
-        try {
-            if (data) {
-                return clipboardData.setData(mime, data) !== false;
-            } else {
-                return clipboardData.getData(mime);
-            }
-        } catch(e) {
-            if (!forceIEMime)
-                return handleClipboardData(e, data, true);
-        }
-    };
-
-    var doCopy = function(e, isCut) {
-        var data = host.getCopyText();
-        if (!data)
-            return event.preventDefault(e);
-
-        if (handleClipboardData(e, data)) {
-            if (useragent.isIOS) {
-                cut = isCut;
-                text.value = "\n aa" + data + "a a\n";
-                text.setSelectionRange(4, 4 + data.length);
-                copied = {
-                    value: data
-                };
-            }
-            isCut ? host.onCut() : host.onCopy();
-            if (!useragent.isIOS) event.preventDefault(e);
-        } else {
-            copied = true;
-            text.value = data;
-            text.select();
-            setTimeout(function(){
-                copied = false;
-                resetValue();
-                resetSelection();
-                isCut ? host.onCut() : host.onCopy();
-            });
-        }
-    };
-    
-    var onCut = function(e) {
-        doCopy(e, true);
-    };
-    
-    var onCopy = function(e) {
-        doCopy(e, false);
-    };
-    
-    var onPaste = function(e) {
-        var data = handleClipboardData(e);
-        if (typeof data == "string") {
-            if (data)
-                host.onPaste(data, e);
-            if (useragent.isIE)
-                setTimeout(resetSelection);
-            event.preventDefault(e);
-        }
-        else {
-            text.value = "";
-            pasted = true;
-        }
-    };
-
-    event.addCommandKeyListener(text, host.onCommandKey.bind(host));
-
-    event.addListener(text, "select", onSelect);
-
-    event.addListener(text, "input", onInput);
-
-    event.addListener(text, "cut", onCut);
-    event.addListener(text, "copy", onCopy);
-    event.addListener(text, "paste", onPaste);
-    var onCompositionStart = function(e) {
-        if (inComposition || !host.onCompositionStart || host.$readOnly) 
-            return;
-        inComposition = {};
-        inComposition.canUndo = host.session.$undoManager;
-        host.onCompositionStart();
-        setTimeout(onCompositionUpdate, 0);
-        host.on("mousedown", onCompositionEnd);
-        if (inComposition.canUndo && !host.selection.isEmpty()) {
-            host.insert("");
-            host.session.markUndoGroup();
-            host.selection.clearSelection();
-        }
-        host.session.markUndoGroup();
-    };
-
-    var onCompositionUpdate = function() {
-        if (!inComposition || !host.onCompositionUpdate || host.$readOnly)
-            return;
-        var val = text.value.replace(/\x01/g, "");
-        if (inComposition.lastValue === val) return;
-        
-        host.onCompositionUpdate(val);
-        if (inComposition.lastValue)
-            host.undo();
-        if (inComposition.canUndo)
-            inComposition.lastValue = val;
-        if (inComposition.lastValue) {
-            var r = host.selection.getRange();
-            host.insert(inComposition.lastValue);
-            host.session.markUndoGroup();
-            inComposition.range = host.selection.getRange();
-            host.selection.setRange(r);
-            host.selection.clearSelection();
-        }
-    };
-
-    var onCompositionEnd = function(e) {
-        if (!host.onCompositionEnd || host.$readOnly) return;
-        var c = inComposition;
-        inComposition = false;
-        var timer = setTimeout(function() {
-            timer = null;
-            var str = text.value.replace(/\x01/g, "");
-            if (inComposition)
-                return;
-            else if (str == c.lastValue)
-                resetValue();
-            else if (!c.lastValue && str) {
-                resetValue();
-                sendText(str);
-            }
-        });
-        inputHandler = function compositionInputHandler(str) {
-            if (timer)
-                clearTimeout(timer);
-            str = str.replace(/\x01/g, "");
-            if (str == c.lastValue)
-                return "";
-            if (c.lastValue && timer)
-                host.undo();
-            return str;
-        };
-        host.onCompositionEnd();
-        host.removeListener("mousedown", onCompositionEnd);
-        if (e.type == "compositionend" && c.range) {
-            host.selection.setRange(c.range);
-        }
-        var needsOnInput =
-            (!!useragent.isChrome && useragent.isChrome >= 53) ||
-            (!!useragent.isWebKit && useragent.isWebKit >= 603);
-
-        if (needsOnInput) {
-          onInput();
-        }
-    };
-    
-    
-
-    var syncComposition = lang.delayedCall(onCompositionUpdate, 50);
-
-    event.addListener(text, "compositionstart", onCompositionStart);
-    event.addListener(text, "compositionupdate", function(){syncComposition.schedule();});
-    event.addListener(text, "keyup", function(){syncComposition.schedule();});
-    event.addListener(text, "keydown", function(){syncComposition.schedule();});
-    event.addListener(text, "compositionend", onCompositionEnd);
-
-    this.getElement = function() {
-        return text;
-    };
-
-    this.setReadOnly = function(readOnly) {
-       text.readOnly = readOnly;
-    };
-
-    this.onContextMenu = function(e) {
-        afterContextMenu = true;
-        resetSelection(host.selection.isEmpty());
-        host._emit("nativecontextmenu", {target: host, domEvent: e});
-        this.moveToMouse(e, true);
-    };
-    
-    this.moveToMouse = function(e, bringToFront) {
-        if (!tempStyle)
-            tempStyle = text.style.cssText;
-        text.style.cssText = (bringToFront ? "z-index:100000;" : "")
-            + "height:" + text.style.height + ";"
-            + (useragent.isIE ? "opacity:0.1;" : "");
-
-        var rect = host.container.getBoundingClientRect();
-        var style = dom.computedStyle(host.container);
-        var top = rect.top + (parseInt(style.borderTopWidth) || 0);
-        var left = rect.left + (parseInt(rect.borderLeftWidth) || 0);
-        var maxTop = rect.bottom - top - text.clientHeight -2;
-        var move = function(e) {
-            text.style.left = e.clientX - left - 2 + "px";
-            text.style.top = Math.min(e.clientY - top - 2, maxTop) + "px";
-        }; 
-        move(e);
-
-        if (e.type != "mousedown")
-            return;
-
-        if (host.renderer.$keepTextAreaAtCursor)
-            host.renderer.$keepTextAreaAtCursor = null;
-
-        clearTimeout(closeTimeout);
-        if (useragent.isWin)
-            event.capture(host.container, move, onContextMenuClose);
-    };
-
-    this.onContextMenuClose = onContextMenuClose;
-    var closeTimeout;
-    function onContextMenuClose() {
-        clearTimeout(closeTimeout);
-        closeTimeout = setTimeout(function () {
-            if (tempStyle) {
-                text.style.cssText = tempStyle;
-                tempStyle = '';
-            }
-            if (host.renderer.$keepTextAreaAtCursor == null) {
-                host.renderer.$keepTextAreaAtCursor = true;
-                host.renderer.$moveTextAreaToCursor();
-            }
-        }, 0);
-    }
-
-    var onContextMenu = function(e) {
-        host.textInput.onContextMenu(e);
-        onContextMenuClose();
-    };
-    event.addListener(text, "mouseup", onContextMenu);
-    event.addListener(text, "mousedown", function(e) {
-        e.preventDefault();
-        onContextMenuClose();
-    });
-    event.addListener(host.renderer.scroller, "contextmenu", onContextMenu);
-    event.addListener(text, "contextmenu", onContextMenu);
-    
-    if (useragent.isIOS) {
-        var typingResetTimeout = null;
-        var typing = false;
-
-        parentNode.addEventListener("keydown", function (e) {
-            if (typingResetTimeout) clearTimeout(typingResetTimeout);
-            typing = true;
-        });
-
-        parentNode.addEventListener("keyup", function (e) {
-            typingResetTimeout = setTimeout(function () {
-                typing = false;
-            }, 100);
-        });
-        var detectArrowKeys = function(e) {
-            if (document.activeElement !== text) return;
-            if (typing) return;
-          
-            if (cut) {
-                return setTimeout(function () {
-                    cut = false;
-                }, 100);
-            }
-            var selectionStart = text.selectionStart;
-            var selectionEnd = text.selectionEnd;
-            text.setSelectionRange(4, 5);
-            if (selectionStart == selectionEnd) {
-                switch (selectionStart) {
-                    case 0: host.onCommandKey(null, 0, KEYS.up); break;
-                    case 1: host.onCommandKey(null, 0, KEYS.home); break;
-                    case 2: host.onCommandKey(null, MODS.option, KEYS.left); break;
-                    case 4: host.onCommandKey(null, 0, KEYS.left); break;
-                    case 5: host.onCommandKey(null, 0, KEYS.right); break;
-                    case 7: host.onCommandKey(null, MODS.option, KEYS.right); break;
-                    case 8: host.onCommandKey(null, 0, KEYS.end); break;
-                    case 9: host.onCommandKey(null, 0, KEYS.down); break;
-                }
-            } else {
-                switch (selectionEnd) {
-                    case 6: host.onCommandKey(null, MODS.shift, KEYS.right); break;
-                    case 7: host.onCommandKey(null, MODS.shift | MODS.option, KEYS.right); break;
-                    case 8: host.onCommandKey(null, MODS.shift, KEYS.end); break;
-                    case 9: host.onCommandKey(null, MODS.shift, KEYS.down); break;
-                }
-                switch (selectionStart) {
-                    case 0: host.onCommandKey(null, MODS.shift, KEYS.up); break;
-                    case 1: host.onCommandKey(null, MODS.shift, KEYS.home); break;
-                    case 2: host.onCommandKey(null, MODS.shift | MODS.option, KEYS.left); break;
-                    case 3: host.onCommandKey(null, MODS.shift, KEYS.left); break;
-                }
-            }
-        };
-        document.addEventListener("selectionchange", detectArrowKeys);
-        host.on("destroy", function() {
-            document.removeEventListener("selectionchange", detectArrowKeys);
-        });
-    }
-};
-
-exports.TextInput = TextInput;
-});
-
-define("ace/keyboard/textinput",["require","exports","module","ace/lib/event","ace/lib/useragent","ace/lib/dom","ace/lib/lang","ace/keyboard/textinput_ios"], function(require, exports, module) {
+define("ace/keyboard/textinput",["require","exports","module","ace/lib/event","ace/lib/useragent","ace/lib/dom","ace/lib/lang","ace/lib/keys"], function(require, exports, module) {
 "use strict";
 
 var event = require("../lib/event");
@@ -40177,11 +40142,12 @@ var USE_IE_MIME_TYPE =  useragent.isIE;
 var HAS_FOCUS_ARGS = useragent.isChrome > 63;
 var MAX_LINE_LENGTH = 400;
 
-var TextInputIOS = require("./textinput_ios").TextInput;
+var KEYS = require("../lib/keys");
+var MODS = KEYS.KEY_MODS;
+var isIOS = useragent.isIOS;
+var valueResetRegex = isIOS ? /\s/ : /\n/;
+
 var TextInput = function(parentNode, host) {
-    if (useragent.isIOS)
-        return TextInputIOS.call(this, parentNode, host);
-    
     var text = dom.createElement("textarea");
     text.className = "ace_text-input";
 
@@ -40220,19 +40186,31 @@ var TextInput = function(parentNode, host) {
     event.addListener(text, "focus", function(e) {
         if (ignoreFocusEvents) return;
         isFocused = true;
+        if (useragent.isEdge) {
+            try {
+                if (!document.hasFocus())
+                    return;
+            } catch(e) {}
+        }
         host.onFocus(e);
-        resetSelection();
+        if (useragent.isEdge)
+            setTimeout(resetSelection);
+        else
+            resetSelection();
     });
     this.$focusScroll = false;
     this.focus = function() {
         if (tempStyle || HAS_FOCUS_ARGS || this.$focusScroll == "browser")
             return text.focus({ preventScroll: true });
-        if (!document.documentElement.contains(text))
-            return;
+
         var top = text.style.top;
         text.style.position = "fixed";
         text.style.top = "0px";
-        var isTransformed = text.getBoundingClientRect().top != 0;
+        try {
+            var isTransformed = text.getBoundingClientRect().top != 0;
+        } catch(e) {
+            return;
+        }
         var ancestors = [];
         if (isTransformed) {
             var t = text.parentElement;
@@ -40274,7 +40252,25 @@ var TextInput = function(parentNode, host) {
         resetSelection();
     });
     
-    function resetSelection() {
+    var resetSelection = isIOS
+    ? function(value) {
+        if (!isFocused || (copied && !value) || sendingText) return;
+        if (!value) 
+            value = "";
+        var newValue = "\n ab" + value + "cde fg\n";
+        if (newValue != text.value)
+            text.value = lastValue = newValue;
+        
+        var selectionStart = 4;
+        var selectionEnd = 4 + (value.length || (host.selection.isEmpty() ? 0 : 1));
+
+        if (lastSelectionStart != selectionStart || lastSelectionEnd != selectionEnd) {
+            text.setSelectionRange(selectionStart, selectionEnd);
+        }
+        lastSelectionStart = selectionStart;
+        lastSelectionEnd = selectionEnd;
+    }
+    : function() {
         if (inComposition || sendingText)
             return;
         if (!isFocused && !afterContextMenu)
@@ -40320,7 +40316,11 @@ var TextInput = function(parentNode, host) {
             lastSelectionStart = text.selectionStart;
             lastSelectionEnd = text.selectionEnd;
         }
-        if (lastSelectionEnd != selectionEnd || lastSelectionStart != selectionStart) {
+        if (
+            lastSelectionEnd != selectionEnd 
+            || lastSelectionStart != selectionStart 
+            || text.selectionEnd != lastSelectionEnd // on ie edge selectionEnd changes silently after the initialization
+        ) {
             try {
                 text.setSelectionRange(selectionStart, selectionEnd);
                 lastSelectionStart = selectionStart;
@@ -40328,7 +40328,7 @@ var TextInput = function(parentNode, host) {
             } catch(e){}
         }
         inComposition = false;
-    }
+    };
 
     if (isFocused)
         host.onFocus();
@@ -40417,7 +40417,7 @@ var TextInput = function(parentNode, host) {
             return onCompositionUpdate();
         var data = text.value;
         var inserted = sendText(data, true);
-        if (data.length > MAX_LINE_LENGTH + 100 || /\n/.test(inserted))
+        if (data.length > MAX_LINE_LENGTH + 100 || valueResetRegex.test(inserted))
             resetSelection();
     };
     
@@ -40444,6 +40444,13 @@ var TextInput = function(parentNode, host) {
             return event.preventDefault(e);
 
         if (handleClipboardData(e, data)) {
+            if (isIOS) {
+                resetSelection(data);
+                copied = data;
+                setTimeout(function () {
+                    copied = false;
+                }, 10);
+            }
             isCut ? host.onCut() : host.onCopy();
             event.preventDefault(e);
         } else {
@@ -40634,16 +40641,14 @@ var TextInput = function(parentNode, host) {
         var left = rect.left + (parseInt(rect.borderLeftWidth) || 0);
         var maxTop = rect.bottom - top - text.clientHeight -2;
         var move = function(e) {
-            text.style.left = e.clientX - left - 2 + "px";
-            text.style.top = Math.min(e.clientY - top - 2, maxTop) + "px";
+            dom.translate(text, e.clientX - left - 2, Math.min(e.clientY - top - 2, maxTop));
         }; 
         move(e);
 
         if (e.type != "mousedown")
             return;
 
-        if (host.renderer.$keepTextAreaAtCursor)
-            host.renderer.$keepTextAreaAtCursor = null;
+        host.renderer.$isMousePressed = true;
 
         clearTimeout(closeTimeout);
         if (useragent.isWin)
@@ -40659,10 +40664,9 @@ var TextInput = function(parentNode, host) {
                 text.style.cssText = tempStyle;
                 tempStyle = '';
             }
-            if (host.renderer.$keepTextAreaAtCursor == null) {
-                host.renderer.$keepTextAreaAtCursor = true;
+            host.renderer.$isMousePressed = false;
+            if (host.renderer.$keepTextAreaAtCursor)
                 host.renderer.$moveTextAreaToCursor();
-            }
         }, 0);
     }
 
@@ -40677,6 +40681,87 @@ var TextInput = function(parentNode, host) {
     });
     event.addListener(host.renderer.scroller, "contextmenu", onContextMenu);
     event.addListener(text, "contextmenu", onContextMenu);
+    
+    if (isIOS)
+        addIosSelectionHandler(parentNode, host, text);
+
+    function addIosSelectionHandler(parentNode, host, text) {
+        var typingResetTimeout = null;
+        var typing = false;
+ 
+        text.addEventListener("keydown", function (e) {
+            if (typingResetTimeout) clearTimeout(typingResetTimeout);
+            typing = true;
+        }, true);
+
+        text.addEventListener("keyup", function (e) {
+            typingResetTimeout = setTimeout(function () {
+                typing = false;
+            }, 100);
+        }, true);
+        var detectArrowKeys = function(e) {
+            if (document.activeElement !== text) return;
+            if (typing || inComposition || host.$mouseHandler.isMousePressed) return;
+
+            if (copied) {
+                return;
+            }
+            var selectionStart = text.selectionStart;
+            var selectionEnd = text.selectionEnd;
+            
+            var key = null;
+            var modifier = 0;
+            console.log(selectionStart, selectionEnd);
+            if (selectionStart == 0) {
+                key = KEYS.up;
+            } else if (selectionStart == 1) {
+                key = KEYS.home;
+            } else if (selectionEnd > lastSelectionEnd && lastValue[selectionEnd] == "\n") {
+                key = KEYS.end;
+            } else if (selectionStart < lastSelectionStart && lastValue[selectionStart - 1] == " ") {
+                key = KEYS.left;
+                modifier = MODS.option;
+            } else if (
+                selectionStart < lastSelectionStart
+                || (
+                    selectionStart == lastSelectionStart 
+                    && lastSelectionEnd != lastSelectionStart
+                    && selectionStart == selectionEnd
+                )
+            ) {
+                key = KEYS.left;
+            } else if (selectionEnd > lastSelectionEnd && lastValue.slice(0, selectionEnd).split("\n").length > 2) {
+                key = KEYS.down;
+            } else if (selectionEnd > lastSelectionEnd && lastValue[selectionEnd - 1] == " ") {
+                key = KEYS.right;
+                modifier = MODS.option;
+            } else if (
+                selectionEnd > lastSelectionEnd
+                || (
+                    selectionEnd == lastSelectionEnd 
+                    && lastSelectionEnd != lastSelectionStart
+                    && selectionStart == selectionEnd
+                )
+            ) {
+                key = KEYS.right;
+            }
+            
+            if (selectionStart !== selectionEnd)
+                modifier |= MODS.shift;
+
+            if (key) {
+                host.onCommandKey(null, modifier, key);
+                lastSelectionStart = selectionStart;
+                lastSelectionEnd = selectionEnd;
+                resetSelection("");
+            }
+        };
+        document.addEventListener("selectionchange", detectArrowKeys);
+        host.on("destroy", function() {
+            document.removeEventListener("selectionchange", detectArrowKeys);
+        });
+    }
+
 };
 
 exports.TextInput = TextInput;
@@ -40688,7 +40773,7 @@ define("ace/mouse/default_handlers",["require","exports","module","ace/lib/usera
 var useragent = require("../lib/useragent");
 
 var DRAG_OFFSET = 0; // pixels
-var SCROLL_COOLDOWN_T = 250; // milliseconds
+var SCROLL_COOLDOWN_T = 550; // milliseconds
 
 function DefaultHandlers(mouseHandler) {
     mouseHandler.$clickSelection = null;
@@ -40699,7 +40784,6 @@ function DefaultHandlers(mouseHandler) {
     editor.setDefaultHandler("tripleclick", this.onTripleClick.bind(mouseHandler));
     editor.setDefaultHandler("quadclick", this.onQuadClick.bind(mouseHandler));
     editor.setDefaultHandler("mousewheel", this.onMouseWheel.bind(mouseHandler));
-    editor.setDefaultHandler("touchmove", this.onTouchMove.bind(mouseHandler));
 
     var exports = ["select", "startSelect", "selectEnd", "selectAllEnd", "selectByWordsEnd",
         "selectByLinesEnd", "dragWait", "dragWaitEnd", "focusWait"];
@@ -40913,8 +40997,8 @@ function DefaultHandlers(mouseHandler) {
         if (canScroll) {
             prevScroll.allowed = t;
         } else if (t - prevScroll.allowed < SCROLL_COOLDOWN_T) {
-            var isSlower = Math.abs(vx) <= 1.1 * Math.abs(prevScroll.vx)
-                && Math.abs(vy) <= 1.1 * Math.abs(prevScroll.vy);
+            var isSlower = Math.abs(vx) <= 1.5 * Math.abs(prevScroll.vx)
+                && Math.abs(vy) <= 1.5 * Math.abs(prevScroll.vy);
             if (isSlower) {
                 canScroll = true;
                 prevScroll.allowed = t;
@@ -40932,10 +41016,6 @@ function DefaultHandlers(mouseHandler) {
             editor.renderer.scrollBy(ev.wheelX * ev.speed, ev.wheelY * ev.speed);
             return ev.stop();
         }
-    };
-    
-    this.onTouchMove = function(ev) {
-        this.editor._emit("mousewheel", ev);
     };
 
 }).call(DefaultHandlers.prototype);
@@ -41335,7 +41415,7 @@ function DragdropHandler(mouseHandler) {
             var dropEffect = e.dataTransfer.dropEffect;
             if (!dragOperation && dropEffect == "move")
                 editor.session.remove(editor.getSelectionRange());
-            editor.renderer.$cursorLayer.setBlinking(true);
+            editor.$resetCursorStyle();
         }
         this.editor.unsetStyle("ace_dragging");
         this.editor.renderer.setCursorStyle("");
@@ -41500,7 +41580,7 @@ function DragdropHandler(mouseHandler) {
         dragSelectionMarker = null;
         editor.selection.fromOrientedRange(range);
         if (editor.isFocused() && !isInternal)
-            editor.renderer.$cursorLayer.setBlinking(!editor.getReadOnly());
+            editor.$resetCursorStyle();
         range = null;
         dragCursor = null;
         counter = 0;
@@ -41563,7 +41643,7 @@ function DragdropHandler(mouseHandler) {
     };
 
     this.dragReadyEnd = function(e) {
-        this.editor.renderer.$cursorLayer.setBlinking(!this.editor.getReadOnly());
+        this.editor.$resetCursorStyle();
         this.editor.unsetStyle("ace_dragging");
         this.editor.renderer.setCursorStyle("");
         this.dragWaitEnd();
@@ -41639,7 +41719,210 @@ exports.DragdropHandler = DragdropHandler;
 
 });
 
-define("ace/mouse/mouse_handler",["require","exports","module","ace/lib/event","ace/lib/useragent","ace/mouse/default_handlers","ace/mouse/default_gutter_handler","ace/mouse/mouse_event","ace/mouse/dragdrop_handler","ace/config"], function(require, exports, module) {
+define("ace/mouse/touch_handler",["require","exports","module","ace/mouse/mouse_event"], function(require, exports, module) {
+"use strict";
+
+var MouseEvent = require("./mouse_event").MouseEvent;
+
+exports.addTouchListeners = function(el, editor) {
+    var mode = "scroll";
+    var startX;
+    var startY;
+    var touchStartT;
+    var lastT;
+    var longTouchTimer;
+    var animationTimer;
+    var animationSteps = 0;
+    var pos;
+    var clickCount = 0;
+    var vX = 0;
+    var vY = 0;
+    var pressed;
+    function handleLongTap() {
+        longTouchTimer = null;
+        clearTimeout(longTouchTimer);
+        if (editor.selection.isEmpty())
+            editor.selection.moveToPosition(pos);
+        mode = "wait";
+    }
+    function switchToSelectionMode() {
+        longTouchTimer = null;
+        clearTimeout(longTouchTimer);
+        editor.selection.moveToPosition(pos);
+        var range = clickCount >= 2
+            ? editor.selection.getLineRange(pos.row)
+            : editor.session.getBracketRange(pos);
+        if (range && !range.isEmpty()) {
+            editor.selection.setRange(range);
+        } else {
+            editor.selection.selectWord();
+        }
+        mode = "wait";
+    }
+    el.addEventListener("contextmenu", function(e) {
+        if (!pressed) return;
+        var textarea = editor.textInput.getElement();
+        textarea.focus();
+    });
+    el.addEventListener("touchstart", function (e) {
+        var touches = e.touches;
+        if (longTouchTimer || touches.length > 1) {
+            clearTimeout(longTouchTimer);
+            longTouchTimer = null;
+            mode = "zoom";
+            return;
+        }
+        
+        pressed = editor.$mouseHandler.isMousePressed = true;
+        var touchObj = touches[0];
+        startX = touchObj.clientX;
+        startY = touchObj.clientY;
+        vX = vY = 0;
+
+        e.clientX = touchObj.clientX;
+        e.clientY = touchObj.clientY;
+
+        var t = e.timeStamp;
+        lastT = t;
+        
+        var ev = new MouseEvent(e, editor);
+        pos = ev.getDocumentPosition();
+
+        if (t - touchStartT < 500 && touches.length == 1 && !animationSteps) {
+            clickCount++;
+            e.preventDefault();
+            e.button = 0;
+            switchToSelectionMode();
+        } else {
+            clickCount = 0;
+            longTouchTimer = setTimeout(handleLongTap, 450);
+            var cursor = editor.selection.cursor;
+            var anchor = editor.selection.isEmpty() ? cursor : editor.selection.anchor;
+            
+            var cursorPos = editor.renderer.$cursorLayer.getPixelPosition(cursor, true);
+            var anchorPos = editor.renderer.$cursorLayer.getPixelPosition(anchor, true);
+            var rect = editor.renderer.scroller.getBoundingClientRect();
+            var h = editor.renderer.layerConfig.lineHeight;
+            var w = editor.renderer.layerConfig.lineHeight;
+            var weightedDistance = function(x, y) {
+                x = x / w;
+                y = y / h - 0.75;
+                return x * x + y * y;
+            };
+            
+            var diff1 = weightedDistance(
+                e.clientX - rect.left - cursorPos.left,
+                e.clientY - rect.top - cursorPos.top
+            );
+            var diff2 = weightedDistance(
+                e.clientX - rect.left - anchorPos.left,
+                e.clientY - rect.top - anchorPos.top
+            );
+            if (diff1 < 3.5 && diff2 < 3.5)
+                mode = diff1 > diff2 ? "cursor" : "anchor";
+                
+            if (diff2 < 3.5)
+                mode = "anchor";
+            else if (diff1 < 3.5)
+                mode = "cursor";
+            else
+                mode = "scroll";
+        }
+        touchStartT = t;
+    });
+
+    el.addEventListener("touchend", function (e) {
+        pressed = editor.$mouseHandler.isMousePressed = false;
+        if (animationTimer) clearInterval(animationTimer);
+        if (mode == "zoom") {
+            mode = "";
+            animationSteps = 0;
+        } else if (longTouchTimer) {
+            editor.selection.moveToPosition(pos);
+            animationSteps = 0;
+        } else if (mode == "scroll") {
+            animate();
+            e.preventDefault();
+        }
+        clearTimeout(longTouchTimer);
+        longTouchTimer = null;
+    });
+    el.addEventListener("touchmove", function (e) {
+        if (longTouchTimer) {
+            clearTimeout(longTouchTimer);
+            longTouchTimer = null;
+        }
+        var touches = e.touches;
+        if (touches.length > 1 || mode == "zoom") return;
+
+        var touchObj = touches[0];
+
+        var wheelX = startX - touchObj.clientX;
+        var wheelY = startY - touchObj.clientY;
+
+        if (mode == "wait") {
+            if (wheelX * wheelX + wheelY * wheelY > 4)
+                mode = "cursor";
+            else
+                return e.preventDefault();
+        }
+
+        startX = touchObj.clientX;
+        startY = touchObj.clientY;
+
+        e.clientX = touchObj.clientX;
+        e.clientY = touchObj.clientY;
+
+        var t = e.timeStamp;
+        var dt = t - lastT;
+        lastT = t;
+        if (mode == "scroll") {
+            var mouseEvent = new MouseEvent(e, editor);
+            mouseEvent.speed = 1;
+            mouseEvent.wheelX = wheelX;
+            mouseEvent.wheelY = wheelY;
+            if (10 * Math.abs(wheelX) < Math.abs(wheelY)) wheelX = 0;
+            if (10 * Math.abs(wheelY) < Math.abs(wheelX)) wheelY = 0;
+            if (dt != 0) {
+                vX = wheelX / dt;
+                vY = wheelY / dt;
+            }
+            editor._emit("mousewheel", mouseEvent);
+            if (!mouseEvent.propagationStopped) {
+                vX = vY = 0;
+            }
+        }
+        else {
+            var ev = new MouseEvent(e, editor);
+            var pos = ev.getDocumentPosition();
+            if (mode == "cursor")
+                editor.selection.moveCursorToPosition(pos);
+            else if (mode == "anchor")
+                editor.selection.setSelectionAnchor(pos.row, pos.column);
+            editor.renderer.scrollCursorIntoView(pos);
+            e.preventDefault();
+        }
+    });
+
+    function animate() {
+        animationSteps += 60;
+        animationTimer = setInterval(function() {
+            if (animationSteps-- <= 0) {
+                clearInterval(animationTimer);
+                animationTimer = null;
+            }
+            if (Math.abs(vX) < 0.01) vX = 0;
+            if (Math.abs(vY) < 0.01) vY = 0;
+            if (animationSteps < 20) vX = 0.9 * vX;
+            if (animationSteps < 20) vY = 0.9 * vY;
+            editor.renderer.scrollBy(10 * vX, 10 * vY);
+        }, 10);
+    }
+};
+
+});
+
+define("ace/mouse/mouse_handler",["require","exports","module","ace/lib/event","ace/lib/useragent","ace/mouse/default_handlers","ace/mouse/default_gutter_handler","ace/mouse/mouse_event","ace/mouse/dragdrop_handler","ace/mouse/touch_handler","ace/config"], function(require, exports, module) {
 "use strict";
 
 var event = require("../lib/event");
@@ -41648,6 +41931,7 @@ var DefaultHandlers = require("./default_handlers").DefaultHandlers;
 var DefaultGutterHandler = require("./default_gutter_handler").GutterHandler;
 var MouseEvent = require("./mouse_event").MouseEvent;
 var DragdropHandler = require("./dragdrop_handler").DragdropHandler;
+var addTouchListeners = require("./touch_handler").addTouchListeners;
 var config = require("../config");
 
 var MouseHandler = function(editor) {
@@ -41676,7 +41960,7 @@ var MouseHandler = function(editor) {
         editor.textInput && editor.textInput.getElement()
     ].filter(Boolean), [400, 300, 250], this, "onMouseEvent");
     event.addMouseWheelListener(editor.container, this.onMouseWheel.bind(this, "mousewheel"));
-    event.addTouchMoveListener(editor.container, this.onTouchMove.bind(this, "touchmove"));
+    addTouchListeners(editor.container, editor);
 
     var gutterEl = editor.renderer.$gutter;
     event.addListener(gutterEl, "mousedown", this.onMouseEvent.bind(this, "guttermousedown"));
@@ -41729,14 +42013,6 @@ var MouseHandler = function(editor) {
         this.editor._emit(name, mouseEvent);
     };
     
-    this.onTouchMove = function (name, e) {
-        var mouseEvent = new MouseEvent(e, this.editor);
-        mouseEvent.speed = 1;//this.$scrollSpeed * 2;
-        mouseEvent.wheelX = e.wheelX;
-        mouseEvent.wheelY = e.wheelY;
-        this.editor._emit(name, mouseEvent);
-    };
-
     this.setState = function(state) {
         this.state = state;
     };
@@ -41748,8 +42024,7 @@ var MouseHandler = function(editor) {
         this.isMousePressed = true;
         var editor = this.editor;
         var renderer = this.editor.renderer;
-        if (renderer.$keepTextAreaAtCursor)
-            renderer.$keepTextAreaAtCursor = null;
+        renderer.$isMousePressed = true;
 
         var self = this;
         var onMouseMove = function(e) {
@@ -41770,11 +42045,9 @@ var MouseHandler = function(editor) {
             onCaptureInterval();
             self[self.state + "End"] && self[self.state + "End"](e);
             self.state = "";
-            if (renderer.$keepTextAreaAtCursor == null) {
-                renderer.$keepTextAreaAtCursor = true;
+            self.isMousePressed = renderer.$isMousePressed = false;
+            if (renderer.$keepTextAreaAtCursor)
                 renderer.$moveTextAreaToCursor();
-            }
-            self.isMousePressed = false;
             self.$onCaptureMouseMove = self.releaseMouse = null;
             e && self.onMouseEvent("mouseup", e);
             editor.endOperation();
@@ -41853,7 +42126,7 @@ function FoldHandler(editor) {
         var target = e.domEvent && e.domEvent.target;
         if (target && dom.hasCssClass(target, "ace_inline_button")) {
             if (dom.hasCssClass(target, "ace_toggle_wrap")) {
-                session.setOption("wrap", true);
+                session.setOption("wrap", !session.getUseWrapMode());
                 editor.renderer.scrollCursorIntoView();
             }
         }
@@ -42370,6 +42643,7 @@ var BidiHandler = function(session) {
     this.EOL = "\xAC";
     this.showInvisibles = true;
     this.isRtlDir = false;
+    this.$isRtl = false;
     this.line = "";
     this.wrapIndent = 0;
     this.EOF = "\xB6";
@@ -42447,7 +42721,7 @@ var BidiHandler = function(session) {
 
         this.wrapIndent = 0;
         this.line = this.session.getLine(docRow);
-        this.isRtlDir = this.line.charAt(0) === this.RLE;
+        this.isRtlDir = this.$isRtl || this.line.charAt(0) === this.RLE;
         if (this.session.$useWrapMode) {
             var splits = this.session.$wrapData[docRow];
             if (splits) {
@@ -42480,7 +42754,7 @@ var BidiHandler = function(session) {
         });
 
         if (this.isRtlDir) {
-            this.fontMetrics.$main.innerHTML = (this.line.charAt(this.line.length - 1) == bidiUtil.DOT) ? this.line.substr(0, this.line.length - 1) : this.line;
+            this.fontMetrics.$main.textContent = (this.line.charAt(this.line.length - 1) == bidiUtil.DOT) ? this.line.substr(0, this.line.length - 1) : this.line;
             this.rtlLineOffset = this.contentWidth - this.fontMetrics.$main.getBoundingClientRect().width;
         }
     };
@@ -42526,6 +42800,7 @@ var BidiHandler = function(session) {
     };
 
     this.isRtlLine = function(row) {
+        if (this.$isRtl) return true;
         if (row != undefined)
             return (this.session.getLine(row).charAt(0) == this.RLE);
         else
@@ -43230,7 +43505,7 @@ var Selection = function(session) {
 
     this.fromJSON = function(data) {
         if (data.start == undefined) {
-            if (this.rangeList) {
+            if (this.rangeList && data.length > 1) {
                 this.toSingleRange(data[0]);
                 for (var i = data.length; i--; ) {
                     var r = Range.fromPoints(data[i].start, data[i].end);
@@ -43723,7 +43998,7 @@ var BackgroundTokenizer = function(tokenizer, editor) {
                 currentLine++;
             } while (self.lines[currentLine]);
             processedLines ++;
-            if ((processedLines % 5 === 0) && (new Date() - workerStart) > 20) {                
+            if ((processedLines % 5 === 0) && (new Date() - workerStart) > 20) {
                 self.running = setTimeout(self.$worker, 20);
                 break;
             }
@@ -44302,17 +44577,16 @@ var RangeList = function() {
                 if (r.start.row > endRow)
                     break;
                     
-                if (r.end.row < endRow) {
+                if (r.end.row < endRow
+                    && (
+                        startRow < r.end.row 
+                        || startRow == r.end.row && start.column < r.end.column
+                    )
+                ) {
                     r.end.row = startRow;
                     r.end.column = start.column;
                 }
-                   
-                if (r.start.row < endRow || r.start.row == endRow && r.start.column <= end.colum) {
-                    r.start.row = startRow;
-                    r.start.column = start.column;
-                }
-    
-                if (r.end.row == endRow) {
+                else if (r.end.row == endRow) {
                     if (r.end.column <= end.column) {
                         if (lineDif || r.end.column > start.column) {
                             r.end.column = start.column;
@@ -44324,7 +44598,20 @@ var RangeList = function() {
                         r.end.row += lineDif;
                     }
                 }
-                if (r.start.row == endRow) {
+                else if (r.end.row > endRow) {
+                    r.end.row += lineDif;
+                }
+                
+                if (r.start.row < endRow
+                    && (
+                        startRow < r.start.row 
+                        || startRow == r.start.row && start.column < r.start.column
+                    )
+                ) {
+                    r.start.row = startRow;
+                    r.start.column = start.column;
+                }
+                else if (r.start.row == endRow) {
                     if (r.start.column <= end.column) {
                         if (lineDif || r.start.column > start.column) {
                             r.start.column = start.column;
@@ -44335,6 +44622,9 @@ var RangeList = function() {
                         r.start.column += colDiff;
                         r.start.row += lineDif;
                     }
+                }
+                else if (r.start.row > endRow) {
+                    r.start.row += lineDif;
                 }
             }
         }
@@ -44353,10 +44643,9 @@ var RangeList = function() {
 exports.RangeList = RangeList;
 });
 
-define("ace/edit_session/fold",["require","exports","module","ace/range","ace/range_list","ace/lib/oop"], function(require, exports, module) {
+define("ace/edit_session/fold",["require","exports","module","ace/range_list","ace/lib/oop"], function(require, exports, module) {
 "use strict";
 
-var Range = require("../range").Range;
 var RangeList = require("../range_list").RangeList;
 var oop = require("../lib/oop");
 var Fold = exports.Fold = function(range, placeholder) {
@@ -44398,9 +44687,6 @@ oop.inherits(Fold, RangeList);
     this.addSubFold = function(fold) {
         if (this.range.isEqual(fold))
             return;
-
-        if (!this.range.containsRange(fold))
-            throw new Error("A fold can't intersect already existing fold" + fold.range + this.range);
         consumeRange(fold, this.start);
 
         var row = fold.start.row, column = fold.start.column;
@@ -44410,21 +44696,26 @@ oop.inherits(Fold, RangeList);
                 break;
         }
         var afterStart = this.subFolds[i];
+        var firstConsumed = 0;
 
-        if (cmp == 0)
-            return afterStart.addSubFold(fold);
+        if (cmp == 0) {
+            if (afterStart.range.containsRange(fold))
+                return afterStart.addSubFold(fold);
+            else
+                firstConsumed = 1;
+        }
         var row = fold.range.end.row, column = fold.range.end.column;
         for (var j = i, cmp = -1; j < this.subFolds.length; j++) {
             cmp = this.subFolds[j].range.compare(row, column);
             if (cmp != 1)
                 break;
         }
-        var afterEnd = this.subFolds[j];
-
-        if (cmp == 0)
-            throw new Error("A fold can't intersect already existing fold" + fold.range + this.range);
-
+        if (cmp == 0)  j++;
         var consumedFolds = this.subFolds.splice(i, j - i, fold);
+        var last = cmp == 0 ? consumedFolds.length - 1 : consumedFolds.length;
+        for (var k = firstConsumed; k < last; k++) {
+            fold.addSubFold(consumedFolds[k]);
+        }
         fold.setFoldLine(this.foldLine);
 
         return fold;
@@ -44473,14 +44764,14 @@ function Folding() {
 
         var folds = foldLine.folds;
         for (var i = 0; i < folds.length; i++) {
-            var fold = folds[i];
-            if (fold.range.contains(row, column)) {
-                if (side == 1 && fold.range.isEnd(row, column)) {
+            var range = folds[i].range;
+            if (range.contains(row, column)) {
+                if (side == 1 && range.isEnd(row, column) && !range.isEmpty()) {
                     continue;
-                } else if (side == -1 && fold.range.isStart(row, column)) {
+                } else if (side == -1 && range.isStart(row, column) && !range.isEmpty()) {
                     continue;
                 }
-                return fold;
+                return folds[i];
             }
         }
     };
@@ -44659,9 +44950,6 @@ function Folding() {
         var startColumn = fold.start.column;
         var endRow = fold.end.row;
         var endColumn = fold.end.column;
-        if (!(startRow < endRow || 
-            startRow == endRow && startColumn <= endColumn - 2))
-            throw new Error("The range has to be at least 2 characters width");
 
         var startFold = this.getFoldAt(startRow, startColumn, 1);
         var endFold = this.getFoldAt(endRow, endColumn, -1);
@@ -45276,7 +45564,9 @@ function BracketMatch() {
         "]": "[",
         "[": "]",
         "{": "}",
-        "}": "{"
+        "}": "{",
+        "<": ">",
+        ">": "<"
     };
 
     this.$findOpeningBracket = function(bracket, position, typeRe) {
@@ -46714,7 +47004,7 @@ EditSession.$uid = 0;
         }
     };
     this.getScreenTabSize = function(screenColumn) {
-        return this.$tabSize - screenColumn % this.$tabSize;
+        return this.$tabSize - (screenColumn % this.$tabSize | 0);
     };
 
 
@@ -47085,12 +47375,13 @@ config.defineOptions(EditSession.prototype, "session", {
     useSoftTabs: {initialValue: true},
     tabSize: {
         set: function(tabSize) {
-            if (isNaN(tabSize) || this.$tabSize === tabSize) return;
-
-            this.$modified = true;
-            this.$rowLengthCache = [];
-            this.$tabSize = tabSize;
-            this._signal("changeTabSize");
+            tabSize = parseInt(tabSize);
+            if (tabSize > 0 && this.$tabSize !== tabSize) {
+                this.$modified = true;
+                this.$rowLengthCache = [];
+                this.$tabSize = tabSize;
+                this._signal("changeTabSize");
+            }
         },
         initialValue: 4,
         handlesSet: true
@@ -47579,23 +47870,24 @@ exports.commands = [{
     readOnly: true
 }, {
     name: "selectall",
+    description: "Select all",
     bindKey: bindKey("Ctrl-A", "Command-A"),
     exec: function(editor) { editor.selectAll(); },
     readOnly: true
 }, {
     name: "centerselection",
+    description: "Center selection",
     bindKey: bindKey(null, "Ctrl-L"),
     exec: function(editor) { editor.centerSelection(); },
     readOnly: true
 }, {
     name: "gotoline",
+    description: "Go to line...",
     bindKey: bindKey("Ctrl-L", "Command-L"),
     exec: function(editor, line) {
-        if (typeof line !== "number")
-            line = parseInt(prompt("Enter line number:"), 10);
-        if (!isNaN(line)) {
+        if (typeof line === "number" && !isNaN(line))
             editor.gotoLine(line);
-        }
+        editor.prompt({ $type: "gotoLine" });
     },
     readOnly: true
 }, {
@@ -47628,12 +47920,14 @@ exports.commands = [{
     readOnly: true
 }, {
     name: "foldall",
+    description: "Fold all",
     bindKey: bindKey(null, "Ctrl-Command-Option-0"),
     exec: function(editor) { editor.session.foldAll(); },
     scrollIntoView: "center",
     readOnly: true
 }, {
     name: "foldOther",
+    description: "Fold other",
     bindKey: bindKey("Alt-0", "Command-Option-0"),
     exec: function(editor) { 
         editor.session.foldAll();
@@ -47643,12 +47937,14 @@ exports.commands = [{
     readOnly: true
 }, {
     name: "unfoldall",
+    description: "Unfold all",
     bindKey: bindKey("Alt-Shift-0", "Command-Option-Shift-0"),
     exec: function(editor) { editor.session.unfold(); },
     scrollIntoView: "center",
     readOnly: true
 }, {
     name: "findnext",
+    description: "Find next",
     bindKey: bindKey("Ctrl-K", "Command-G"),
     exec: function(editor) { editor.findNext(); },
     multiSelectAction: "forEach",
@@ -47656,6 +47952,7 @@ exports.commands = [{
     readOnly: true
 }, {
     name: "findprevious",
+    description: "Find previous",
     bindKey: bindKey("Ctrl-Shift-K", "Command-Shift-G"),
     exec: function(editor) { editor.findPrevious(); },
     multiSelectAction: "forEach",
@@ -47663,6 +47960,7 @@ exports.commands = [{
     readOnly: true
 }, {
     name: "selectOrFindNext",
+    description: "Select or find next",
     bindKey: bindKey("Alt-K", "Ctrl-G"),
     exec: function(editor) {
         if (editor.selection.isEmpty())
@@ -47673,6 +47971,7 @@ exports.commands = [{
     readOnly: true
 }, {
     name: "selectOrFindPrevious",
+    description: "Select or find previous",
     bindKey: bindKey("Alt-Shift-K", "Ctrl-Shift-G"),
     exec: function(editor) { 
         if (editor.selection.isEmpty())
@@ -47683,6 +47982,7 @@ exports.commands = [{
     readOnly: true
 }, {
     name: "find",
+    description: "Find",
     bindKey: bindKey("Ctrl-F", "Command-F"),
     exec: function(editor) {
         config.loadModule("ace/ext/searchbox", function(e) {e.Search(editor);});
@@ -47690,11 +47990,13 @@ exports.commands = [{
     readOnly: true
 }, {
     name: "overwrite",
+    description: "Overwrite",
     bindKey: "Insert",
     exec: function(editor) { editor.toggleOverwrite(); },
     readOnly: true
 }, {
     name: "selecttostart",
+    description: "Select to start",
     bindKey: bindKey("Ctrl-Shift-Home", "Command-Shift-Home|Command-Shift-Up"),
     exec: function(editor) { editor.getSelection().selectFileStart(); },
     multiSelectAction: "forEach",
@@ -47703,6 +48005,7 @@ exports.commands = [{
     aceCommandGroup: "fileJump"
 }, {
     name: "gotostart",
+    description: "Go to start",
     bindKey: bindKey("Ctrl-Home", "Command-Home|Command-Up"),
     exec: function(editor) { editor.navigateFileStart(); },
     multiSelectAction: "forEach",
@@ -47711,6 +48014,7 @@ exports.commands = [{
     aceCommandGroup: "fileJump"
 }, {
     name: "selectup",
+    description: "Select up",
     bindKey: bindKey("Shift-Up", "Shift-Up|Ctrl-Shift-P"),
     exec: function(editor) { editor.getSelection().selectUp(); },
     multiSelectAction: "forEach",
@@ -47718,6 +48022,7 @@ exports.commands = [{
     readOnly: true
 }, {
     name: "golineup",
+    description: "Go line up",
     bindKey: bindKey("Up", "Up|Ctrl-P"),
     exec: function(editor, args) { editor.navigateUp(args.times); },
     multiSelectAction: "forEach",
@@ -47725,6 +48030,7 @@ exports.commands = [{
     readOnly: true
 }, {
     name: "selecttoend",
+    description: "Select to end",
     bindKey: bindKey("Ctrl-Shift-End", "Command-Shift-End|Command-Shift-Down"),
     exec: function(editor) { editor.getSelection().selectFileEnd(); },
     multiSelectAction: "forEach",
@@ -47733,6 +48039,7 @@ exports.commands = [{
     aceCommandGroup: "fileJump"
 }, {
     name: "gotoend",
+    description: "Go to end",
     bindKey: bindKey("Ctrl-End", "Command-End|Command-Down"),
     exec: function(editor) { editor.navigateFileEnd(); },
     multiSelectAction: "forEach",
@@ -47741,6 +48048,7 @@ exports.commands = [{
     aceCommandGroup: "fileJump"
 }, {
     name: "selectdown",
+    description: "Select down",
     bindKey: bindKey("Shift-Down", "Shift-Down|Ctrl-Shift-N"),
     exec: function(editor) { editor.getSelection().selectDown(); },
     multiSelectAction: "forEach",
@@ -47748,6 +48056,7 @@ exports.commands = [{
     readOnly: true
 }, {
     name: "golinedown",
+    description: "Go line down",
     bindKey: bindKey("Down", "Down|Ctrl-N"),
     exec: function(editor, args) { editor.navigateDown(args.times); },
     multiSelectAction: "forEach",
@@ -47755,6 +48064,7 @@ exports.commands = [{
     readOnly: true
 }, {
     name: "selectwordleft",
+    description: "Select word left",
     bindKey: bindKey("Ctrl-Shift-Left", "Option-Shift-Left"),
     exec: function(editor) { editor.getSelection().selectWordLeft(); },
     multiSelectAction: "forEach",
@@ -47762,6 +48072,7 @@ exports.commands = [{
     readOnly: true
 }, {
     name: "gotowordleft",
+    description: "Go to word left",
     bindKey: bindKey("Ctrl-Left", "Option-Left"),
     exec: function(editor) { editor.navigateWordLeft(); },
     multiSelectAction: "forEach",
@@ -47769,6 +48080,7 @@ exports.commands = [{
     readOnly: true
 }, {
     name: "selecttolinestart",
+    description: "Select to line start",
     bindKey: bindKey("Alt-Shift-Left", "Command-Shift-Left|Ctrl-Shift-A"),
     exec: function(editor) { editor.getSelection().selectLineStart(); },
     multiSelectAction: "forEach",
@@ -47776,6 +48088,7 @@ exports.commands = [{
     readOnly: true
 }, {
     name: "gotolinestart",
+    description: "Go to line start",
     bindKey: bindKey("Alt-Left|Home", "Command-Left|Home|Ctrl-A"),
     exec: function(editor) { editor.navigateLineStart(); },
     multiSelectAction: "forEach",
@@ -47783,6 +48096,7 @@ exports.commands = [{
     readOnly: true
 }, {
     name: "selectleft",
+    description: "Select left",
     bindKey: bindKey("Shift-Left", "Shift-Left|Ctrl-Shift-B"),
     exec: function(editor) { editor.getSelection().selectLeft(); },
     multiSelectAction: "forEach",
@@ -47790,6 +48104,7 @@ exports.commands = [{
     readOnly: true
 }, {
     name: "gotoleft",
+    description: "Go to left",
     bindKey: bindKey("Left", "Left|Ctrl-B"),
     exec: function(editor, args) { editor.navigateLeft(args.times); },
     multiSelectAction: "forEach",
@@ -47797,6 +48112,7 @@ exports.commands = [{
     readOnly: true
 }, {
     name: "selectwordright",
+    description: "Select word right",
     bindKey: bindKey("Ctrl-Shift-Right", "Option-Shift-Right"),
     exec: function(editor) { editor.getSelection().selectWordRight(); },
     multiSelectAction: "forEach",
@@ -47804,6 +48120,7 @@ exports.commands = [{
     readOnly: true
 }, {
     name: "gotowordright",
+    description: "Go to word right",
     bindKey: bindKey("Ctrl-Right", "Option-Right"),
     exec: function(editor) { editor.navigateWordRight(); },
     multiSelectAction: "forEach",
@@ -47811,6 +48128,7 @@ exports.commands = [{
     readOnly: true
 }, {
     name: "selecttolineend",
+    description: "Select to line end",
     bindKey: bindKey("Alt-Shift-Right", "Command-Shift-Right|Shift-End|Ctrl-Shift-E"),
     exec: function(editor) { editor.getSelection().selectLineEnd(); },
     multiSelectAction: "forEach",
@@ -47818,6 +48136,7 @@ exports.commands = [{
     readOnly: true
 }, {
     name: "gotolineend",
+    description: "Go to line end",
     bindKey: bindKey("Alt-Right|End", "Command-Right|End|Ctrl-E"),
     exec: function(editor) { editor.navigateLineEnd(); },
     multiSelectAction: "forEach",
@@ -47825,6 +48144,7 @@ exports.commands = [{
     readOnly: true
 }, {
     name: "selectright",
+    description: "Select right",
     bindKey: bindKey("Shift-Right", "Shift-Right"),
     exec: function(editor) { editor.getSelection().selectRight(); },
     multiSelectAction: "forEach",
@@ -47832,6 +48152,7 @@ exports.commands = [{
     readOnly: true
 }, {
     name: "gotoright",
+    description: "Go to right",
     bindKey: bindKey("Right", "Right|Ctrl-F"),
     exec: function(editor, args) { editor.navigateRight(args.times); },
     multiSelectAction: "forEach",
@@ -47839,46 +48160,55 @@ exports.commands = [{
     readOnly: true
 }, {
     name: "selectpagedown",
+    description: "Select page down",
     bindKey: "Shift-PageDown",
     exec: function(editor) { editor.selectPageDown(); },
     readOnly: true
 }, {
     name: "pagedown",
+    description: "Page down",
     bindKey: bindKey(null, "Option-PageDown"),
     exec: function(editor) { editor.scrollPageDown(); },
     readOnly: true
 }, {
     name: "gotopagedown",
+    description: "Go to page down",
     bindKey: bindKey("PageDown", "PageDown|Ctrl-V"),
     exec: function(editor) { editor.gotoPageDown(); },
     readOnly: true
 }, {
     name: "selectpageup",
+    description: "Select page up",
     bindKey: "Shift-PageUp",
     exec: function(editor) { editor.selectPageUp(); },
     readOnly: true
 }, {
     name: "pageup",
+    description: "Page up",
     bindKey: bindKey(null, "Option-PageUp"),
     exec: function(editor) { editor.scrollPageUp(); },
     readOnly: true
 }, {
     name: "gotopageup",
+    description: "Go to page up",
     bindKey: "PageUp",
     exec: function(editor) { editor.gotoPageUp(); },
     readOnly: true
 }, {
     name: "scrollup",
+    description: "Scroll up",
     bindKey: bindKey("Ctrl-Up", null),
     exec: function(e) { e.renderer.scrollBy(0, -2 * e.renderer.layerConfig.lineHeight); },
     readOnly: true
 }, {
     name: "scrolldown",
+    description: "Scroll down",
     bindKey: bindKey("Ctrl-Down", null),
     exec: function(e) { e.renderer.scrollBy(0, 2 * e.renderer.layerConfig.lineHeight); },
     readOnly: true
 }, {
     name: "selectlinestart",
+    description: "Select line start",
     bindKey: "Shift-Home",
     exec: function(editor) { editor.getSelection().selectLineStart(); },
     multiSelectAction: "forEach",
@@ -47886,6 +48216,7 @@ exports.commands = [{
     readOnly: true
 }, {
     name: "selectlineend",
+    description: "Select line end",
     bindKey: "Shift-End",
     exec: function(editor) { editor.getSelection().selectLineEnd(); },
     multiSelectAction: "forEach",
@@ -47893,16 +48224,19 @@ exports.commands = [{
     readOnly: true
 }, {
     name: "togglerecording",
+    description: "Toggle recording",
     bindKey: bindKey("Ctrl-Alt-E", "Command-Option-E"),
     exec: function(editor) { editor.commands.toggleRecording(editor); },
     readOnly: true
 }, {
     name: "replaymacro",
+    description: "Replay macro",
     bindKey: bindKey("Ctrl-Shift-E", "Command-Shift-E"),
     exec: function(editor) { editor.commands.replay(editor); },
     readOnly: true
 }, {
     name: "jumptomatching",
+    description: "Jump to matching",
     bindKey: bindKey("Ctrl-P", "Ctrl-P"),
     exec: function(editor) { editor.jumpToMatching(); },
     multiSelectAction: "forEach",
@@ -47910,6 +48244,7 @@ exports.commands = [{
     readOnly: true
 }, {
     name: "selecttomatching",
+    description: "Select to matching",
     bindKey: bindKey("Ctrl-Shift-P", "Ctrl-Shift-P"),
     exec: function(editor) { editor.jumpToMatching(true); },
     multiSelectAction: "forEach",
@@ -47917,6 +48252,7 @@ exports.commands = [{
     readOnly: true
 }, {
     name: "expandToMatching",
+    description: "Expand to matching",
     bindKey: bindKey("Ctrl-Shift-M", "Ctrl-Shift-M"),
     exec: function(editor) { editor.jumpToMatching(true, true); },
     multiSelectAction: "forEach",
@@ -47924,18 +48260,21 @@ exports.commands = [{
     readOnly: true
 }, {
     name: "passKeysToBrowser",
+    description: "Pass keys to browser",
     bindKey: bindKey(null, null),
     exec: function() {},
     passEvent: true,
     readOnly: true
 }, {
     name: "copy",
+    description: "Copy",
     exec: function(editor) {
     },
     readOnly: true
 },
 {
     name: "cut",
+    description: "Cut",
     exec: function(editor) {
         var cutLine = editor.$copyWithEmptySelection && editor.selection.isEmpty();
         var range = cutLine ? editor.selection.getLineRange() : editor.selection.getRange();
@@ -47949,94 +48288,111 @@ exports.commands = [{
     multiSelectAction: "forEach"
 }, {
     name: "paste",
+    description: "Paste",
     exec: function(editor, args) {
         editor.$handlePaste(args);
     },
     scrollIntoView: "cursor"
 }, {
     name: "removeline",
+    description: "Remove line",
     bindKey: bindKey("Ctrl-D", "Command-D"),
     exec: function(editor) { editor.removeLines(); },
     scrollIntoView: "cursor",
     multiSelectAction: "forEachLine"
 }, {
     name: "duplicateSelection",
+    description: "Duplicate selection",
     bindKey: bindKey("Ctrl-Shift-D", "Command-Shift-D"),
     exec: function(editor) { editor.duplicateSelection(); },
     scrollIntoView: "cursor",
     multiSelectAction: "forEach"
 }, {
     name: "sortlines",
+    description: "Sort lines",
     bindKey: bindKey("Ctrl-Alt-S", "Command-Alt-S"),
     exec: function(editor) { editor.sortLines(); },
     scrollIntoView: "selection",
     multiSelectAction: "forEachLine"
 }, {
     name: "togglecomment",
+    description: "Toggle comment",
     bindKey: bindKey("Ctrl-/", "Command-/"),
     exec: function(editor) { editor.toggleCommentLines(); },
     multiSelectAction: "forEachLine",
     scrollIntoView: "selectionPart"
 }, {
     name: "toggleBlockComment",
+    description: "Toggle block comment",
     bindKey: bindKey("Ctrl-Shift-/", "Command-Shift-/"),
     exec: function(editor) { editor.toggleBlockComment(); },
     multiSelectAction: "forEach",
     scrollIntoView: "selectionPart"
 }, {
     name: "modifyNumberUp",
+    description: "Modify number up",
     bindKey: bindKey("Ctrl-Shift-Up", "Alt-Shift-Up"),
     exec: function(editor) { editor.modifyNumber(1); },
     scrollIntoView: "cursor",
     multiSelectAction: "forEach"
 }, {
     name: "modifyNumberDown",
+    description: "Modify number down",
     bindKey: bindKey("Ctrl-Shift-Down", "Alt-Shift-Down"),
     exec: function(editor) { editor.modifyNumber(-1); },
     scrollIntoView: "cursor",
     multiSelectAction: "forEach"
 }, {
     name: "replace",
+    description: "Replace",
     bindKey: bindKey("Ctrl-H", "Command-Option-F"),
     exec: function(editor) {
         config.loadModule("ace/ext/searchbox", function(e) {e.Search(editor, true);});
     }
 }, {
     name: "undo",
+    description: "Undo",
     bindKey: bindKey("Ctrl-Z", "Command-Z"),
     exec: function(editor) { editor.undo(); }
 }, {
     name: "redo",
+    description: "Redo",
     bindKey: bindKey("Ctrl-Shift-Z|Ctrl-Y", "Command-Shift-Z|Command-Y"),
     exec: function(editor) { editor.redo(); }
 }, {
     name: "copylinesup",
+    description: "Copy lines up",
     bindKey: bindKey("Alt-Shift-Up", "Command-Option-Up"),
     exec: function(editor) { editor.copyLinesUp(); },
     scrollIntoView: "cursor"
 }, {
     name: "movelinesup",
+    description: "Move lines up",
     bindKey: bindKey("Alt-Up", "Option-Up"),
     exec: function(editor) { editor.moveLinesUp(); },
     scrollIntoView: "cursor"
 }, {
     name: "copylinesdown",
+    description: "Copy lines down",
     bindKey: bindKey("Alt-Shift-Down", "Command-Option-Down"),
     exec: function(editor) { editor.copyLinesDown(); },
     scrollIntoView: "cursor"
 }, {
     name: "movelinesdown",
+    description: "Move lines down",
     bindKey: bindKey("Alt-Down", "Option-Down"),
     exec: function(editor) { editor.moveLinesDown(); },
     scrollIntoView: "cursor"
 }, {
     name: "del",
+    description: "Delete",
     bindKey: bindKey("Delete", "Delete|Ctrl-D|Shift-Delete"),
     exec: function(editor) { editor.remove("right"); },
     multiSelectAction: "forEach",
     scrollIntoView: "cursor"
 }, {
     name: "backspace",
+    description: "Backspace",
     bindKey: bindKey(
         "Shift-Backspace|Backspace",
         "Ctrl-Backspace|Shift-Backspace|Backspace|Ctrl-H"
@@ -48046,6 +48402,7 @@ exports.commands = [{
     scrollIntoView: "cursor"
 }, {
     name: "cut_or_delete",
+    description: "Cut or delete",
     bindKey: bindKey("Shift-Delete", null),
     exec: function(editor) { 
         if (editor.selection.isEmpty()) {
@@ -48058,18 +48415,21 @@ exports.commands = [{
     scrollIntoView: "cursor"
 }, {
     name: "removetolinestart",
+    description: "Remove to line start",
     bindKey: bindKey("Alt-Backspace", "Command-Backspace"),
     exec: function(editor) { editor.removeToLineStart(); },
     multiSelectAction: "forEach",
     scrollIntoView: "cursor"
 }, {
     name: "removetolineend",
+    description: "Remove to line end",
     bindKey: bindKey("Alt-Delete", "Ctrl-K|Command-Delete"),
     exec: function(editor) { editor.removeToLineEnd(); },
     multiSelectAction: "forEach",
     scrollIntoView: "cursor"
 }, {
     name: "removetolinestarthard",
+    description: "Remove to line start hard",
     bindKey: bindKey("Ctrl-Shift-Backspace", null),
     exec: function(editor) {
         var range = editor.selection.getRange();
@@ -48080,6 +48440,7 @@ exports.commands = [{
     scrollIntoView: "cursor"
 }, {
     name: "removetolineendhard",
+    description: "Remove to line end hard",
     bindKey: bindKey("Ctrl-Shift-Delete", null),
     exec: function(editor) {
         var range = editor.selection.getRange();
@@ -48090,47 +48451,55 @@ exports.commands = [{
     scrollIntoView: "cursor"
 }, {
     name: "removewordleft",
+    description: "Remove word left",
     bindKey: bindKey("Ctrl-Backspace", "Alt-Backspace|Ctrl-Alt-Backspace"),
     exec: function(editor) { editor.removeWordLeft(); },
     multiSelectAction: "forEach",
     scrollIntoView: "cursor"
 }, {
     name: "removewordright",
+    description: "Remove word right",
     bindKey: bindKey("Ctrl-Delete", "Alt-Delete"),
     exec: function(editor) { editor.removeWordRight(); },
     multiSelectAction: "forEach",
     scrollIntoView: "cursor"
 }, {
     name: "outdent",
+    description: "Outdent",
     bindKey: bindKey("Shift-Tab", "Shift-Tab"),
     exec: function(editor) { editor.blockOutdent(); },
     multiSelectAction: "forEach",
     scrollIntoView: "selectionPart"
 }, {
     name: "indent",
+    description: "Indent",
     bindKey: bindKey("Tab", "Tab"),
     exec: function(editor) { editor.indent(); },
     multiSelectAction: "forEach",
     scrollIntoView: "selectionPart"
 }, {
     name: "blockoutdent",
+    description: "Block outdent",
     bindKey: bindKey("Ctrl-[", "Ctrl-["),
     exec: function(editor) { editor.blockOutdent(); },
     multiSelectAction: "forEachLine",
     scrollIntoView: "selectionPart"
 }, {
     name: "blockindent",
+    description: "Block indent",
     bindKey: bindKey("Ctrl-]", "Ctrl-]"),
     exec: function(editor) { editor.blockIndent(); },
     multiSelectAction: "forEachLine",
     scrollIntoView: "selectionPart"
 }, {
     name: "insertstring",
+    description: "Insert string",
     exec: function(editor, str) { editor.insert(str); },
     multiSelectAction: "forEach",
     scrollIntoView: "cursor"
 }, {
     name: "inserttext",
+    description: "Insert text",
     exec: function(editor, args) {
         editor.insert(lang.stringRepeat(args.text  || "", args.times || 1));
     },
@@ -48138,30 +48507,35 @@ exports.commands = [{
     scrollIntoView: "cursor"
 }, {
     name: "splitline",
+    description: "Split line",
     bindKey: bindKey(null, "Ctrl-O"),
     exec: function(editor) { editor.splitLine(); },
     multiSelectAction: "forEach",
     scrollIntoView: "cursor"
 }, {
     name: "transposeletters",
+    description: "Transpose letters",
     bindKey: bindKey("Alt-Shift-X", "Ctrl-T"),
     exec: function(editor) { editor.transposeLetters(); },
     multiSelectAction: function(editor) {editor.transposeSelections(1); },
     scrollIntoView: "cursor"
 }, {
     name: "touppercase",
+    description: "To uppercase",
     bindKey: bindKey("Ctrl-U", "Ctrl-U"),
     exec: function(editor) { editor.toUpperCase(); },
     multiSelectAction: "forEach",
     scrollIntoView: "cursor"
 }, {
     name: "tolowercase",
+    description: "To lowercase",
     bindKey: bindKey("Ctrl-Shift-U", "Ctrl-Shift-U"),
     exec: function(editor) { editor.toLowerCase(); },
     multiSelectAction: "forEach",
     scrollIntoView: "cursor"
 }, {
     name: "expandtoline",
+    description: "Expand to line",
     bindKey: bindKey("Ctrl-Shift-L", "Command-Shift-L"),
     exec: function(editor) {
         var range = editor.selection.getRange();
@@ -48175,6 +48549,7 @@ exports.commands = [{
     readOnly: true
 }, {
     name: "joinlines",
+    description: "Join lines",
     bindKey: bindKey(null, null),
     exec: function(editor) {
         var isBackwards = editor.selection.isBackwards();
@@ -48212,6 +48587,7 @@ exports.commands = [{
     readOnly: true
 }, {
     name: "invertSelection",
+    description: "Invert selection",
     bindKey: bindKey(null, null),
     exec: function(editor) {
         var endRow = editor.session.doc.getLength() - 1;
@@ -48247,6 +48623,22 @@ exports.commands = [{
     },
     readOnly: true,
     scrollIntoView: "none"
+}, {
+    name: "openCommandPallete",
+    description: "Open command pallete",
+    bindKey: bindKey("F1", "F1"),
+    exec: function(editor) {
+        editor.prompt({ $type: "commands" });
+    },
+    readOnly: true
+}, {
+    name: "modeSelect",
+    description: "Change language mode...",
+    bindKey: bindKey(null, null),
+    exec: function(editor) {
+        editor.prompt({ $type: "modes" });
+    },
+    readOnly: true
 }];
 
 });
@@ -48258,7 +48650,7 @@ module.exports = { lineMode: false };
 
 });
 
-define("ace/editor",["require","exports","module","ace/lib/fixoldbrowsers","ace/mode/abap","ace/mode/actionscript","ace/mode/ada","ace/mode/applescript","ace/mode/asciidoc","ace/mode/autohotkey","ace/mode/batchfile","ace/mode/behaviour","ace/mode/c9search","ace/mode/cirru","ace/mode/clojure","ace/mode/cobol","ace/mode/coffee","ace/mode/coldfusion","ace/mode/csharp","ace/mode/css","ace/mode/curly","ace/mode/d","ace/mode/dart","ace/mode/diff","ace/mode/django","ace/mode/dockerfile","ace/mode/dot","ace/mode/eiffel","ace/mode/","ace/mode/elixir","ace/mode/elm","ace/mode/erlang","ace/mode/forth","ace/mode/ftl","ace/mode/gcode","ace/mode/gherkin","ace/mode/gitignore","ace/mode/glsl","ace/mode/golang","ace/mode/groovy","ace/mode/haml","ace/mode/handlebars","ace/mode/haskell","ace/mode/haxe","ace/mode/html","ace/mode/ini","ace/mode/io","ace/mode/jack","ace/mode/jade","ace/mode/java","ace/mode/javascript","ace/modeon","ace/modeoniq","ace/modep","ace/modex","ace/mode/julia","ace/mode/latex","ace/mode/less","ace/mode/liquid","ace/mode/lisp","ace/mode/livescript","ace/mode/logiql","ace/mode/lsl","ace/mode/lua","ace/mode/luapage","ace/mode/lucene","ace/mode/makefile","ace/mode/markdown","ace/mode/mask","ace/mode/matlab","ace/mode/mel","ace/mode/mushcode","ace/mode/mysql","ace/mode/nix","ace/mode/objectivec","ace/mode/ocaml","ace/mode/pascal","ace/mode/perl","ace/mode/pgsql","ace/mode/php","ace/mode/powershell","ace/mode/praat","ace/mode/prolog","ace/mode/properties","ace/mode/protobuf","ace/mode/python","ace/mode/ruby","ace/mode/rust","ace/mode/sass","ace/mode/scad","ace/mode/scala","ace/mode/scheme","ace/mode/scss","ace/mode/sh","ace/mode/sjs","ace/mode/smarty","ace/mode/snippets","ace/mode/space","ace/mode/sql","ace/mode/stylus","ace/mode/svg","ace/mode/tcl","ace/mode/tex","ace/mode/text","ace/mode/textile","ace/mode/toml","ace/mode/twig","ace/mode/typescript","ace/mode/vala","ace/mode/vbscript","ace/mode/velocity","ace/mode/verilog","ace/mode/vhdl","ace/mode/xml","ace/mode/xquery","ace/mode/yaml","ace/lib/oop","ace/lib/dom","ace/lib/lang","ace/lib/useragent","ace/keyboard/textinput","ace/mouse/mouse_handler","ace/mouse/fold_handler","ace/keyboard/keybinding","ace/edit_session","ace/search","ace/range","ace/lib/event_emitter","ace/commands/command_manager","ace/commands/default_commands","ace/config","ace/token_iterator","ace/clipboard"], function(require, exports, module) {
+define("ace/editor",["require","exports","module","ace/lib/fixoldbrowsers","ace/mode/abap","ace/mode/actionscript","ace/mode/ada","ace/mode/applescript","ace/mode/asciidoc","ace/mode/autohotkey","ace/mode/batchfile","ace/mode/behaviour","ace/mode/c9search","ace/mode/cirru","ace/mode/clojure","ace/mode/cobol","ace/mode/coffee","ace/mode/coldfusion","ace/mode/csharp","ace/mode/css","ace/mode/curly","ace/mode/d","ace/mode/dart","ace/mode/diff","ace/mode/django","ace/mode/dockerfile","ace/mode/dot","ace/mode/eiffel","ace/mode/elixir","ace/mode/elm","ace/mode/erlang","ace/mode/forth","ace/mode/ftl","ace/mode/gcode","ace/mode/gherkin","ace/mode/gitignore","ace/mode/glsl","ace/mode/golang","ace/mode/groovy","ace/mode/haml","ace/mode/handlebars","ace/mode/haskell","ace/mode/haxe","ace/mode/html","ace/mode/ini","ace/mode/io","ace/mode/jack","ace/mode/jade","ace/mode/java","ace/mode/javascript","ace/mode/julia","ace/mode/latex","ace/mode/less","ace/mode/liquid","ace/mode/lisp","ace/mode/livescript","ace/mode/logiql","ace/mode/lsl","ace/mode/lua","ace/mode/luapage","ace/mode/lucene","ace/mode/makefile","ace/mode/markdown","ace/mode/mask","ace/mode/matlab","ace/mode/mel","ace/mode/mushcode","ace/mode/mysql","ace/mode/nix","ace/mode/objectivec","ace/mode/ocaml","ace/mode/pascal","ace/mode/perl","ace/mode/pgsql","ace/mode/php","ace/mode/powershell","ace/mode/praat","ace/mode/prolog","ace/mode/properties","ace/mode/protobuf","ace/mode/python","ace/mode/ruby","ace/mode/rust","ace/mode/sass","ace/mode/scad","ace/mode/scala","ace/mode/scheme","ace/mode/scss","ace/mode/sh","ace/mode/sjs","ace/mode/smarty","ace/mode/snippets","ace/mode/space","ace/mode/sql","ace/mode/stylus","ace/mode/svg","ace/mode/tcl","ace/mode/tex","ace/mode/text","ace/mode/textile","ace/mode/toml","ace/mode/twig","ace/mode/typescript","ace/mode/vala","ace/mode/vbscript","ace/mode/velocity","ace/mode/verilog","ace/mode/vhdl","ace/mode/xml","ace/mode/xquery","ace/mode/yaml","ace/lib/oop","ace/lib/dom","ace/lib/lang","ace/lib/useragent","ace/keyboard/textinput","ace/mouse/mouse_handler","ace/mouse/fold_handler","ace/keyboard/keybinding","ace/edit_session","ace/search","ace/range","ace/lib/event_emitter","ace/commands/command_manager","ace/commands/default_commands","ace/config","ace/token_iterator","ace/clipboard"], function(require, exports, module) {
 "use strict";
 
 require("./lib/fixoldbrowsers");
@@ -48287,7 +48679,6 @@ require("./mode/django");
 require("./mode/dockerfile");
 require("./mode/dot");
 require("./mode/eiffel");
-require("./mode/");
 require("./mode/elixir");
 require("./mode/elm");
 require("./mode/erlang");
@@ -48310,10 +48701,6 @@ require("./mode/jack");
 require("./mode/jade");
 require("./mode/java");
 require("./mode/javascript");
-require("./modeon");
-require("./modeoniq");
-require("./modep");
-require("./modex");
 require("./mode/julia");
 require("./mode/latex");
 require("./mode/less");
@@ -49357,7 +49744,8 @@ Editor.$uid = 0;
     this.removeToLineStart = function() {
         if (this.selection.isEmpty())
             this.selection.selectLineStart();
-
+        if (this.selection.isEmpty())
+            this.selection.selectLeft();
         this.session.remove(this.getSelectionRange());
         this.clearSelection();
     };
@@ -50252,6 +50640,12 @@ Editor.$uid = 0;
         cursorLayer.isBlinking = !this.$readOnly && style != "wide";
         dom.setCssClass(cursorLayer.element, "ace_slim-cursors", /slim/.test(style));
     };
+    this.prompt = function(message, options, callback) {
+        var editor = this;
+        config.loadModule("./ext/prompt", function (module) {
+            module.prompt(editor, message, options, callback);
+        });
+    };
 
 }).call(Editor.prototype);
 
@@ -50685,7 +51079,7 @@ var SnippetManager = function() {
                 return;
 
             var value = tokens.slice(i + 1, i1);
-            var isNested = value.some(function(t) {return typeof t === "object";});          
+            var isNested = value.some(function(t) {return typeof t === "object";});
             if (isNested && !ts.value) {
                 ts.value = value;
             } else if (value.length && (!ts.value || typeof ts.value !== "string")) {
@@ -55226,7 +55620,888 @@ exports.scope = "less";
 define("ace/snippets/liquid",["require","exports","module"], function(require, exports, module) {
 "use strict";
 
-exports.snippetText =undefined;
+exports.snippetText = "\n\
+# liquid specific snippets\n\
+snippet ife\n\
+	{% if ${1:condition} %}\n\
+\n\
+	{% else %}\n\
+\n\
+	{% endif %}\n\
+snippet if\n\
+	{% if ${1:condition} %}\n\
+		\n\
+	{% endif %}\n\
+snippet for\n\
+	{% for in ${1:iterator} %}\n\
+\n\
+	{% endfor %}\n\
+snippet capture\n\
+	{% capture ${1} %}\n\
+\n\
+	{% endcapture %}\n\
+snippet comment\n\
+	{% comment %}\n\
+	  ${1:comment}\n\
+	{% endcomment %}\n\
+\n\
+# Include html.snippets\n\
+# Some useful Unicode entities\n\
+# Non-Breaking Space\n\
+snippet nbs\n\
+	&nbsp;\n\
+# ←\n\
+snippet left\n\
+	&#x2190;\n\
+# →\n\
+snippet right\n\
+	&#x2192;\n\
+# ↑\n\
+snippet up\n\
+	&#x2191;\n\
+# ↓\n\
+snippet down\n\
+	&#x2193;\n\
+# ↩\n\
+snippet return\n\
+	&#x21A9;\n\
+# ⇤\n\
+snippet backtab\n\
+	&#x21E4;\n\
+# ⇥\n\
+snippet tab\n\
+	&#x21E5;\n\
+# ⇧\n\
+snippet shift\n\
+	&#x21E7;\n\
+# ⌃\n\
+snippet ctrl\n\
+	&#x2303;\n\
+# ⌅\n\
+snippet enter\n\
+	&#x2305;\n\
+# ⌘\n\
+snippet cmd\n\
+	&#x2318;\n\
+# ⌥\n\
+snippet option\n\
+	&#x2325;\n\
+# ⌦\n\
+snippet delete\n\
+	&#x2326;\n\
+# ⌫\n\
+snippet backspace\n\
+	&#x232B;\n\
+# ⎋\n\
+snippet esc\n\
+	&#x238B;\n\
+# Generic Doctype\n\
+snippet doctype HTML 4.01 Strict\n\
+	<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01//EN\"\n\
+	\"http://www.w3.org/TR/html4/strict.dtd\">\n\
+snippet doctype HTML 4.01 Transitional\n\
+	<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//EN\"\n\
+	\"http://www.w3.org/TR/html4/loose.dtd\">\n\
+snippet doctype HTML 5\n\
+	<!DOCTYPE HTML>\n\
+snippet doctype XHTML 1.0 Frameset\n\
+	<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Strict//EN\"\n\
+	\"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd\">\n\
+snippet doctype XHTML 1.0 Strict\n\
+	<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Strict//EN\"\n\
+	\"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd\">\n\
+snippet doctype XHTML 1.0 Transitional\n\
+	<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Transitional//EN\"\n\
+	\"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd\">\n\
+snippet doctype XHTML 1.1\n\
+	<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.1//EN\"\n\
+	\"http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd\">\n\
+# HTML Doctype 4.01 Strict\n\
+snippet docts\n\
+	<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01//EN\"\n\
+	\"http://www.w3.org/TR/html4/strict.dtd\">\n\
+# HTML Doctype 4.01 Transitional\n\
+snippet doct\n\
+	<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//EN\"\n\
+	\"http://www.w3.org/TR/html4/loose.dtd\">\n\
+# HTML Doctype 5\n\
+snippet doct5\n\
+	<!DOCTYPE html>\n\
+# XHTML Doctype 1.0 Frameset\n\
+snippet docxf\n\
+	<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Frameset//EN\"\n\
+	\"http://www.w3.org/TR/xhtml1/DTD/xhtml1-frameset.dtd\">\n\
+# XHTML Doctype 1.0 Strict\n\
+snippet docxs\n\
+	<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Strict//EN\"\n\
+	\"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd\">\n\
+# XHTML Doctype 1.0 Transitional\n\
+snippet docxt\n\
+	<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Transitional//EN\"\n\
+	\"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd\">\n\
+# XHTML Doctype 1.1\n\
+snippet docx\n\
+	<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.1//EN\"\n\
+	\"http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd\">\n\
+# html5shiv\n\
+snippet html5shiv\n\
+	<!--[if lte IE 8]>\n\
+		<script src=\"https://cdnjs.cloudflare.com/ajax/libs/html5shiv/3.7.3/html5shiv.min.js\"></script>\n\
+	<![endif]-->\n\
+snippet html5printshiv\n\
+	<!--[if lte IE 8]>\n\
+		<script src=\"https://cdnjs.cloudflare.com/ajax/libs/html5shiv/3.7.3/html5shiv-printshiv.min.js\"></script>\n\
+	<![endif]-->\n\
+# Attributes\n\
+snippet attr\n\
+	${1:attribute}=\"${2:property}\"\n\
+snippet attr+\n\
+	${1:attribute}=\"${2:property}\" attr+${3}\n\
+snippet .\n\
+	class=\"${1}\"${2}\n\
+snippet #\n\
+	id=\"${1}\"${2}\n\
+snippet alt\n\
+	alt=\"${1}\"${2}\n\
+snippet charset\n\
+	charset=\"${1:utf-8}\"${2}\n\
+snippet data\n\
+	data-${1}=\"${2:$1}\"${3}\n\
+snippet for\n\
+	for=\"${1}\"${2}\n\
+snippet height\n\
+	height=\"${1}\"${2}\n\
+snippet href\n\
+	href=\"${1:#}\"${2}\n\
+snippet lang\n\
+	lang=\"${1:en}\"${2}\n\
+snippet media\n\
+	media=\"${1}\"${2}\n\
+snippet name\n\
+	name=\"${1}\"${2}\n\
+snippet rel\n\
+	rel=\"${1}\"${2}\n\
+snippet scope\n\
+	scope=\"${1:row}\"${2}\n\
+snippet src\n\
+	src=\"${1}\"${2}\n\
+snippet title=\n\
+	title=\"${1}\"${2}\n\
+snippet type\n\
+	type=\"${1}\"${2}\n\
+snippet value\n\
+	value=\"${1}\"${2}\n\
+snippet width\n\
+	width=\"${1}\"${2}\n\
+# Elements\n\
+snippet a\n\
+	<a href=\"${1:#}\">${2:$1}</a>\n\
+snippet a.\n\
+	<a class=\"${1}\" href=\"${2:#}\">${3:$1}</a>\n\
+snippet a#\n\
+	<a id=\"${1}\" href=\"${2:#}\">${3:$1}</a>\n\
+snippet a:ext\n\
+	<a href=\"http://${1:example.com}\">${2:$1}</a>\n\
+snippet a:mail\n\
+	<a href=\"mailto:${1:joe@example.com}?subject=${2:feedback}\">${3:email me}</a>\n\
+snippet abbr\n\
+	<abbr title=\"${1}\">${2}</abbr>\n\
+snippet address\n\
+	<address>\n\
+		${1}\n\
+	</address>\n\
+snippet area\n\
+	<area shape=\"${1:rect}\" coords=\"${2}\" href=\"${3}\" alt=\"${4}\" />\n\
+snippet area+\n\
+	<area shape=\"${1:rect}\" coords=\"${2}\" href=\"${3}\" alt=\"${4}\" />\n\
+	area+${5}\n\
+snippet area:c\n\
+	<area shape=\"circle\" coords=\"${1}\" href=\"${2}\" alt=\"${3}\" />\n\
+snippet area:d\n\
+	<area shape=\"default\" coords=\"${1}\" href=\"${2}\" alt=\"${3}\" />\n\
+snippet area:p\n\
+	<area shape=\"poly\" coords=\"${1}\" href=\"${2}\" alt=\"${3}\" />\n\
+snippet area:r\n\
+	<area shape=\"rect\" coords=\"${1}\" href=\"${2}\" alt=\"${3}\" />\n\
+snippet article\n\
+	<article>\n\
+		${1}\n\
+	</article>\n\
+snippet article.\n\
+	<article class=\"${1}\">\n\
+		${2}\n\
+	</article>\n\
+snippet article#\n\
+	<article id=\"${1}\">\n\
+		${2}\n\
+	</article>\n\
+snippet aside\n\
+	<aside>\n\
+		${1}\n\
+	</aside>\n\
+snippet aside.\n\
+	<aside class=\"${1}\">\n\
+		${2}\n\
+	</aside>\n\
+snippet aside#\n\
+	<aside id=\"${1}\">\n\
+		${2}\n\
+	</aside>\n\
+snippet audio\n\
+	<audio src=\"${1}>${2}</audio>\n\
+snippet b\n\
+	<b>${1}</b>\n\
+snippet base\n\
+	<base href=\"${1}\" target=\"${2}\" />\n\
+snippet bdi\n\
+	<bdi>${1}</bdo>\n\
+snippet bdo\n\
+	<bdo dir=\"${1}\">${2}</bdo>\n\
+snippet bdo:l\n\
+	<bdo dir=\"ltr\">${1}</bdo>\n\
+snippet bdo:r\n\
+	<bdo dir=\"rtl\">${1}</bdo>\n\
+snippet blockquote\n\
+	<blockquote>\n\
+		${1}\n\
+	</blockquote>\n\
+snippet body\n\
+	<body>\n\
+		${1}\n\
+	</body>\n\
+snippet br\n\
+	<br />${1}\n\
+snippet button\n\
+	<button type=\"${1:submit}\">${2}</button>\n\
+snippet button.\n\
+	<button class=\"${1:button}\" type=\"${2:submit}\">${3}</button>\n\
+snippet button#\n\
+	<button id=\"${1}\" type=\"${2:submit}\">${3}</button>\n\
+snippet button:s\n\
+	<button type=\"submit\">${1}</button>\n\
+snippet button:r\n\
+	<button type=\"reset\">${1}</button>\n\
+snippet canvas\n\
+	<canvas>\n\
+		${1}\n\
+	</canvas>\n\
+snippet caption\n\
+	<caption>${1}</caption>\n\
+snippet cite\n\
+	<cite>${1}</cite>\n\
+snippet code\n\
+	<code>${1}</code>\n\
+snippet col\n\
+	<col />${1}\n\
+snippet col+\n\
+	<col />\n\
+	col+${1}\n\
+snippet colgroup\n\
+	<colgroup>\n\
+		${1}\n\
+	</colgroup>\n\
+snippet colgroup+\n\
+	<colgroup>\n\
+		<col />\n\
+		col+${1}\n\
+	</colgroup>\n\
+snippet command\n\
+	<command type=\"command\" label=\"${1}\" icon=\"${2}\" />\n\
+snippet command:c\n\
+	<command type=\"checkbox\" label=\"${1}\" icon=\"${2}\" />\n\
+snippet command:r\n\
+	<command type=\"radio\" radiogroup=\"${1}\" label=\"${2}\" icon=\"${3}\" />\n\
+snippet datagrid\n\
+	<datagrid>\n\
+		${1}\n\
+	</datagrid>\n\
+snippet datalist\n\
+	<datalist>\n\
+		${1}\n\
+	</datalist>\n\
+snippet datatemplate\n\
+	<datatemplate>\n\
+		${1}\n\
+	</datatemplate>\n\
+snippet dd\n\
+	<dd>${1}</dd>\n\
+snippet dd.\n\
+	<dd class=\"${1}\">${2}</dd>\n\
+snippet dd#\n\
+	<dd id=\"${1}\">${2}</dd>\n\
+snippet del\n\
+	<del>${1}</del>\n\
+snippet details\n\
+	<details>${1}</details>\n\
+snippet dfn\n\
+	<dfn>${1}</dfn>\n\
+snippet dialog\n\
+	<dialog>\n\
+		${1}\n\
+	</dialog>\n\
+snippet div\n\
+	<div>\n\
+		${1}\n\
+	</div>\n\
+snippet div.\n\
+	<div class=\"${1}\">\n\
+		${2}\n\
+	</div>\n\
+snippet div#\n\
+	<div id=\"${1}\">\n\
+		${2}\n\
+	</div>\n\
+snippet dl\n\
+	<dl>\n\
+		${1}\n\
+	</dl>\n\
+snippet dl.\n\
+	<dl class=\"${1}\">\n\
+		${2}\n\
+	</dl>\n\
+snippet dl#\n\
+	<dl id=\"${1}\">\n\
+		${2}\n\
+	</dl>\n\
+snippet dl+\n\
+	<dl>\n\
+		<dt>${1}</dt>\n\
+		<dd>${2}</dd>\n\
+		dt+${3}\n\
+	</dl>\n\
+snippet dt\n\
+	<dt>${1}</dt>\n\
+snippet dt.\n\
+	<dt class=\"${1}\">${2}</dt>\n\
+snippet dt#\n\
+	<dt id=\"${1}\">${2}</dt>\n\
+snippet dt+\n\
+	<dt>${1}</dt>\n\
+	<dd>${2}</dd>\n\
+	dt+${3}\n\
+snippet em\n\
+	<em>${1}</em>\n\
+snippet embed\n\
+	<embed src=${1} type=\"${2} />\n\
+snippet fieldset\n\
+	<fieldset>\n\
+		${1}\n\
+	</fieldset>\n\
+snippet fieldset.\n\
+	<fieldset class=\"${1}\">\n\
+		${2}\n\
+	</fieldset>\n\
+snippet fieldset#\n\
+	<fieldset id=\"${1}\">\n\
+		${2}\n\
+	</fieldset>\n\
+snippet fieldset+\n\
+	<fieldset>\n\
+		<legend><span>${1}</span></legend>\n\
+		${2}\n\
+	</fieldset>\n\
+	fieldset+${3}\n\
+snippet figcaption\n\
+	<figcaption>${1}</figcaption>\n\
+snippet figure\n\
+	<figure>${1}</figure>\n\
+snippet footer\n\
+	<footer>\n\
+		${1}\n\
+	</footer>\n\
+snippet footer.\n\
+	<footer class=\"${1}\">\n\
+		${2}\n\
+	</footer>\n\
+snippet footer#\n\
+	<footer id=\"${1}\">\n\
+		${2}\n\
+	</footer>\n\
+snippet form\n\
+	<form action=\"${1}\" method=\"${2:get}\" accept-charset=\"utf-8\">\n\
+		${3}\n\
+	</form>\n\
+snippet form.\n\
+	<form class=\"${1}\" action=\"${2}\" method=\"${3:get}\" accept-charset=\"utf-8\">\n\
+		${4}\n\
+	</form>\n\
+snippet form#\n\
+	<form id=\"${1}\" action=\"${2}\" method=\"${3:get}\" accept-charset=\"utf-8\">\n\
+		${4}\n\
+	</form>\n\
+snippet h1\n\
+	<h1>${1}</h1>\n\
+snippet h1.\n\
+	<h1 class=\"${1}\">${2}</h1>\n\
+snippet h1#\n\
+	<h1 id=\"${1}\">${2}</h1>\n\
+snippet h2\n\
+	<h2>${1}</h2>\n\
+snippet h2.\n\
+	<h2 class=\"${1}\">${2}</h2>\n\
+snippet h2#\n\
+	<h2 id=\"${1}\">${2}</h2>\n\
+snippet h3\n\
+	<h3>${1}</h3>\n\
+snippet h3.\n\
+	<h3 class=\"${1}\">${2}</h3>\n\
+snippet h3#\n\
+	<h3 id=\"${1}\">${2}</h3>\n\
+snippet h4\n\
+	<h4>${1}</h4>\n\
+snippet h4.\n\
+	<h4 class=\"${1}\">${2}</h4>\n\
+snippet h4#\n\
+	<h4 id=\"${1}\">${2}</h4>\n\
+snippet h5\n\
+	<h5>${1}</h5>\n\
+snippet h5.\n\
+	<h5 class=\"${1}\">${2}</h5>\n\
+snippet h5#\n\
+	<h5 id=\"${1}\">${2}</h5>\n\
+snippet h6\n\
+	<h6>${1}</h6>\n\
+snippet h6.\n\
+	<h6 class=\"${1}\">${2}</h6>\n\
+snippet h6#\n\
+	<h6 id=\"${1}\">${2}</h6>\n\
+snippet head\n\
+	<head>\n\
+		<meta http-equiv=\"content-type\" content=\"text/html; charset=utf-8\" />\n\
+\n\
+		<title>${1:`substitute(Filename('', 'Page Title'), '^.', '\\u&', '')`}</title>\n\
+		${2}\n\
+	</head>\n\
+snippet header\n\
+	<header>\n\
+		${1}\n\
+	</header>\n\
+snippet header.\n\
+	<header class=\"${1}\">\n\
+		${2}\n\
+	</header>\n\
+snippet header#\n\
+	<header id=\"${1}\">\n\
+		${2}\n\
+	</header>\n\
+snippet hgroup\n\
+	<hgroup>\n\
+		${1}\n\
+	</hgroup>\n\
+snippet hgroup.\n\
+	<hgroup class=\"${1}>\n\
+		${2}\n\
+	</hgroup>\n\
+snippet hr\n\
+	<hr />${1}\n\
+snippet html\n\
+	<html>\n\
+	${1}\n\
+	</html>\n\
+snippet xhtml\n\
+	<html xmlns=\"http://www.w3.org/1999/xhtml\">\n\
+	${1}\n\
+	</html>\n\
+snippet html5\n\
+	<!DOCTYPE html>\n\
+	<html>\n\
+		<head>\n\
+			<meta http-equiv=\"content-type\" content=\"text/html; charset=utf-8\" />\n\
+			<title>${1:`substitute(Filename('', 'Page Title'), '^.', '\\u&', '')`}</title>\n\
+			${2:meta}\n\
+		</head>\n\
+		<body>\n\
+			${3:body}\n\
+		</body>\n\
+	</html>\n\
+snippet xhtml5\n\
+	<!DOCTYPE html>\n\
+	<html xmlns=\"http://www.w3.org/1999/xhtml\">\n\
+		<head>\n\
+			<meta http-equiv=\"content-type\" content=\"application/xhtml+xml; charset=utf-8\" />\n\
+			<title>${1:`substitute(Filename('', 'Page Title'), '^.', '\\u&', '')`}</title>\n\
+			${2:meta}\n\
+		</head>\n\
+		<body>\n\
+			${3:body}\n\
+		</body>\n\
+	</html>\n\
+snippet i\n\
+	<i>${1}</i>\n\
+snippet iframe\n\
+	<iframe src=\"${1}\" frameborder=\"0\"></iframe>${2}\n\
+snippet iframe.\n\
+	<iframe class=\"${1}\" src=\"${2}\" frameborder=\"0\"></iframe>${3}\n\
+snippet iframe#\n\
+	<iframe id=\"${1}\" src=\"${2}\" frameborder=\"0\"></iframe>${3}\n\
+snippet img\n\
+	<img src=\"${1}\" alt=\"${2}\" />${3}\n\
+snippet img.\n\
+	<img class=\"${1}\" src=\"${2}\" alt=\"${3}\" />${4}\n\
+snippet img#\n\
+	<img id=\"${1}\" src=\"${2}\" alt=\"${3}\" />${4}\n\
+snippet input\n\
+	<input type=\"${1:text/submit/hidden/button/image}\" name=\"${2}\" id=\"${3:$2}\" value=\"${4}\" />${5}\n\
+snippet input.\n\
+	<input class=\"${1}\" type=\"${2:text/submit/hidden/button/image}\" name=\"${3}\" id=\"${4:$3}\" value=\"${5}\" />${6}\n\
+snippet input:text\n\
+	<input type=\"text\" name=\"${1}\" id=\"${2:$1}\" value=\"${3}\" />${4}\n\
+snippet input:submit\n\
+	<input type=\"submit\" name=\"${1}\" id=\"${2:$1}\" value=\"${3}\" />${4}\n\
+snippet input:hidden\n\
+	<input type=\"hidden\" name=\"${1}\" id=\"${2:$1}\" value=\"${3}\" />${4}\n\
+snippet input:button\n\
+	<input type=\"button\" name=\"${1}\" id=\"${2:$1}\" value=\"${3}\" />${4}\n\
+snippet input:image\n\
+	<input type=\"image\" name=\"${1}\" id=\"${2:$1}\" src=\"${3}\" alt=\"${4}\" />${5}\n\
+snippet input:checkbox\n\
+	<input type=\"checkbox\" name=\"${1}\" id=\"${2:$1}\" />${3}\n\
+snippet input:radio\n\
+	<input type=\"radio\" name=\"${1}\" id=\"${2:$1}\" />${3}\n\
+snippet input:color\n\
+	<input type=\"color\" name=\"${1}\" id=\"${2:$1}\" value=\"${3}\" />${4}\n\
+snippet input:date\n\
+	<input type=\"date\" name=\"${1}\" id=\"${2:$1}\" value=\"${3}\" />${4}\n\
+snippet input:datetime\n\
+	<input type=\"datetime\" name=\"${1}\" id=\"${2:$1}\" value=\"${3}\" />${4}\n\
+snippet input:datetime-local\n\
+	<input type=\"datetime-local\" name=\"${1}\" id=\"${2:$1}\" value=\"${3}\" />${4}\n\
+snippet input:email\n\
+	<input type=\"email\" name=\"${1}\" id=\"${2:$1}\" value=\"${3}\" />${4}\n\
+snippet input:file\n\
+	<input type=\"file\" name=\"${1}\" id=\"${2:$1}\" value=\"${3}\" />${4}\n\
+snippet input:month\n\
+	<input type=\"month\" name=\"${1}\" id=\"${2:$1}\" value=\"${3}\" />${4}\n\
+snippet input:number\n\
+	<input type=\"number\" name=\"${1}\" id=\"${2:$1}\" value=\"${3}\" />${4}\n\
+snippet input:password\n\
+	<input type=\"password\" name=\"${1}\" id=\"${2:$1}\" value=\"${3}\" />${4}\n\
+snippet input:range\n\
+	<input type=\"range\" name=\"${1}\" id=\"${2:$1}\" value=\"${3}\" />${4}\n\
+snippet input:reset\n\
+	<input type=\"reset\" name=\"${1}\" id=\"${2:$1}\" value=\"${3}\" />${4}\n\
+snippet input:search\n\
+	<input type=\"search\" name=\"${1}\" id=\"${2:$1}\" value=\"${3}\" />${4}\n\
+snippet input:time\n\
+	<input type=\"time\" name=\"${1}\" id=\"${2:$1}\" value=\"${3}\" />${4}\n\
+snippet input:url\n\
+	<input type=\"url\" name=\"${1}\" id=\"${2:$1}\" value=\"${3}\" />${4}\n\
+snippet input:week\n\
+	<input type=\"week\" name=\"${1}\" id=\"${2:$1}\" value=\"${3}\" />${4}\n\
+snippet ins\n\
+	<ins>${1}</ins>\n\
+snippet kbd\n\
+	<kbd>${1}</kbd>\n\
+snippet keygen\n\
+	<keygen>${1}</keygen>\n\
+snippet label\n\
+	<label for=\"${2:$1}\">${1}</label>\n\
+snippet label:i\n\
+	<label for=\"${2:$1}\">${1}</label>\n\
+	<input type=\"${3:text/submit/hidden/button}\" name=\"${4:$2}\" id=\"${5:$2}\" value=\"${6}\" />${7}\n\
+snippet label:s\n\
+	<label for=\"${2:$1}\">${1}</label>\n\
+	<select name=\"${3:$2}\" id=\"${4:$2}\">\n\
+		<option value=\"${5}\">${6:$5}</option>\n\
+	</select>\n\
+snippet legend\n\
+	<legend>${1}</legend>\n\
+snippet legend+\n\
+	<legend><span>${1}</span></legend>\n\
+snippet li\n\
+	<li>${1}</li>\n\
+snippet li.\n\
+	<li class=\"${1}\">${2}</li>\n\
+snippet li+\n\
+	<li>${1}</li>\n\
+	li+${2}\n\
+snippet lia\n\
+	<li><a href=\"${2:#}\">${1}</a></li>\n\
+snippet lia+\n\
+	<li><a href=\"${2:#}\">${1}</a></li>\n\
+	lia+${3}\n\
+snippet link\n\
+	<link rel=\"${1}\" href=\"${2}\" title=\"${3}\" type=\"${4}\" />${5}\n\
+snippet link:atom\n\
+	<link rel=\"alternate\" href=\"${1:atom.xml}\" title=\"Atom\" type=\"application/atom+xml\" />${2}\n\
+snippet link:css\n\
+	<link rel=\"stylesheet\" href=\"${2:style.css}\" type=\"text/css\" media=\"${3:all}\" />${4}\n\
+snippet link:favicon\n\
+	<link rel=\"shortcut icon\" href=\"${1:favicon.ico}\" type=\"image/x-icon\" />${2}\n\
+snippet link:rss\n\
+	<link rel=\"alternate\" href=\"${1:rss.xml}\" title=\"RSS\" type=\"application/atom+xml\" />${2}\n\
+snippet link:touch\n\
+	<link rel=\"apple-touch-icon\" href=\"${1:favicon.png}\" />${2}\n\
+snippet map\n\
+	<map name=\"${1}\">\n\
+		${2}\n\
+	</map>\n\
+snippet map.\n\
+	<map class=\"${1}\" name=\"${2}\">\n\
+		${3}\n\
+	</map>\n\
+snippet map#\n\
+	<map name=\"${1}\" id=\"${2:$1}>\n\
+		${3}\n\
+	</map>\n\
+snippet map+\n\
+	<map name=\"${1}\">\n\
+		<area shape=\"${2}\" coords=\"${3}\" href=\"${4}\" alt=\"${5}\" />${6}\n\
+	</map>${7}\n\
+snippet mark\n\
+	<mark>${1}</mark>\n\
+snippet menu\n\
+	<menu>\n\
+		${1}\n\
+	</menu>\n\
+snippet menu:c\n\
+	<menu type=\"context\">\n\
+		${1}\n\
+	</menu>\n\
+snippet menu:t\n\
+	<menu type=\"toolbar\">\n\
+		${1}\n\
+	</menu>\n\
+snippet meta\n\
+	<meta http-equiv=\"${1}\" content=\"${2}\" />${3}\n\
+snippet meta:compat\n\
+	<meta http-equiv=\"X-UA-Compatible\" content=\"IE=${1:7,8,edge}\" />${3}\n\
+snippet meta:refresh\n\
+	<meta http-equiv=\"refresh\" content=\"text/html;charset=UTF-8\" />${3}\n\
+snippet meta:utf\n\
+	<meta http-equiv=\"content-type\" content=\"text/html;charset=UTF-8\" />${3}\n\
+snippet meter\n\
+	<meter>${1}</meter>\n\
+snippet nav\n\
+	<nav>\n\
+		${1}\n\
+	</nav>\n\
+snippet nav.\n\
+	<nav class=\"${1}\">\n\
+		${2}\n\
+	</nav>\n\
+snippet nav#\n\
+	<nav id=\"${1}\">\n\
+		${2}\n\
+	</nav>\n\
+snippet noscript\n\
+	<noscript>\n\
+		${1}\n\
+	</noscript>\n\
+snippet object\n\
+	<object data=\"${1}\" type=\"${2}\">\n\
+		${3}\n\
+	</object>${4}\n\
+# Embed QT Movie\n\
+snippet movie\n\
+	<object width=\"$2\" height=\"$3\" classid=\"clsid:02BF25D5-8C17-4B23-BC80-D3488ABDDC6B\"\n\
+	 codebase=\"http://www.apple.com/qtactivex/qtplugin.cab\">\n\
+		<param name=\"src\" value=\"$1\" />\n\
+		<param name=\"controller\" value=\"$4\" />\n\
+		<param name=\"autoplay\" value=\"$5\" />\n\
+		<embed src=\"${1:movie.mov}\"\n\
+			width=\"${2:320}\" height=\"${3:240}\"\n\
+			controller=\"${4:true}\" autoplay=\"${5:true}\"\n\
+			scale=\"tofit\" cache=\"true\"\n\
+			pluginspage=\"http://www.apple.com/quicktime/download/\" />\n\
+	</object>${6}\n\
+snippet ol\n\
+	<ol>\n\
+		${1}\n\
+	</ol>\n\
+snippet ol.\n\
+	<ol class=\"${1}>\n\
+		${2}\n\
+	</ol>\n\
+snippet ol#\n\
+	<ol id=\"${1}>\n\
+		${2}\n\
+	</ol>\n\
+snippet ol+\n\
+	<ol>\n\
+		<li>${1}</li>\n\
+		li+${2}\n\
+	</ol>\n\
+snippet opt\n\
+	<option value=\"${1}\">${2:$1}</option>\n\
+snippet opt+\n\
+	<option value=\"${1}\">${2:$1}</option>\n\
+	opt+${3}\n\
+snippet optt\n\
+	<option>${1}</option>\n\
+snippet optgroup\n\
+	<optgroup>\n\
+		<option value=\"${1}\">${2:$1}</option>\n\
+		opt+${3}\n\
+	</optgroup>\n\
+snippet output\n\
+	<output>${1}</output>\n\
+snippet p\n\
+	<p>${1}</p>\n\
+snippet param\n\
+	<param name=\"${1}\" value=\"${2}\" />${3}\n\
+snippet pre\n\
+	<pre>\n\
+		${1}\n\
+	</pre>\n\
+snippet progress\n\
+	<progress>${1}</progress>\n\
+snippet q\n\
+	<q>${1}</q>\n\
+snippet rp\n\
+	<rp>${1}</rp>\n\
+snippet rt\n\
+	<rt>${1}</rt>\n\
+snippet ruby\n\
+	<ruby>\n\
+		<rp><rt>${1}</rt></rp>\n\
+	</ruby>\n\
+snippet s\n\
+	<s>${1}</s>\n\
+snippet samp\n\
+	<samp>\n\
+		${1}\n\
+	</samp>\n\
+snippet script\n\
+	<script type=\"text/javascript\" charset=\"utf-8\">\n\
+		${1}\n\
+	</script>\n\
+snippet scriptsrc\n\
+	<script src=\"${1}.js\" type=\"text/javascript\" charset=\"utf-8\"></script>\n\
+snippet newscript\n\
+	<script type=\"application/javascript\" charset=\"utf-8\">\n\
+		${1}\n\
+	</script>\n\
+snippet newscriptsrc\n\
+	<script src=\"${1}.js\" type=\"application/javascript\" charset=\"utf-8\"></script>\n\
+snippet section\n\
+	<section>\n\
+		${1}\n\
+	</section>\n\
+snippet section.\n\
+	<section class=\"${1}\">\n\
+		${2}\n\
+	</section>\n\
+snippet section#\n\
+	<section id=\"${1}\">\n\
+		${2}\n\
+	</section>\n\
+snippet select\n\
+	<select name=\"${1}\" id=\"${2:$1}\">\n\
+		${3}\n\
+	</select>\n\
+snippet select.\n\
+	<select name=\"${1}\" id=\"${2:$1}\" class=\"${3}>\n\
+		${4}\n\
+	</select>\n\
+snippet select+\n\
+	<select name=\"${1}\" id=\"${2:$1}\">\n\
+		<option value=\"${3}\">${4:$3}</option>\n\
+		opt+${5}\n\
+	</select>\n\
+snippet small\n\
+	<small>${1}</small>\n\
+snippet source\n\
+	<source src=\"${1}\" type=\"${2}\" media=\"${3}\" />\n\
+snippet span\n\
+	<span>${1}</span>\n\
+snippet strong\n\
+	<strong>${1}</strong>\n\
+snippet style\n\
+	<style type=\"text/css\" media=\"${1:all}\">\n\
+		${2}\n\
+	</style>\n\
+snippet sub\n\
+	<sub>${1}</sub>\n\
+snippet summary\n\
+	<summary>\n\
+		${1}\n\
+	</summary>\n\
+snippet sup\n\
+	<sup>${1}</sup>\n\
+snippet table\n\
+	<table border=\"${1:0}\">\n\
+		${2}\n\
+	</table>\n\
+snippet table.\n\
+	<table class=\"${1}\" border=\"${2:0}\">\n\
+		${3}\n\
+	</table>\n\
+snippet table#\n\
+	<table id=\"${1}\" border=\"${2:0}\">\n\
+		${3}\n\
+	</table>\n\
+snippet tbody\n\
+	<tbody>\n\
+		${1}\n\
+	</tbody>\n\
+snippet td\n\
+	<td>${1}</td>\n\
+snippet td.\n\
+	<td class=\"${1}\">${2}</td>\n\
+snippet td#\n\
+	<td id=\"${1}\">${2}</td>\n\
+snippet td+\n\
+	<td>${1}</td>\n\
+	td+${2}\n\
+snippet textarea\n\
+	<textarea name=\"${1}\" id=${2:$1} rows=\"${3:8}\" cols=\"${4:40}\">${5}</textarea>${6}\n\
+snippet tfoot\n\
+	<tfoot>\n\
+		${1}\n\
+	</tfoot>\n\
+snippet th\n\
+	<th>${1}</th>\n\
+snippet th.\n\
+	<th class=\"${1}\">${2}</th>\n\
+snippet th#\n\
+	<th id=\"${1}\">${2}</th>\n\
+snippet th+\n\
+	<th>${1}</th>\n\
+	th+${2}\n\
+snippet thead\n\
+	<thead>\n\
+		${1}\n\
+	</thead>\n\
+snippet time\n\
+	<time datetime=\"${1}\" pubdate=\"${2:$1}>${3:$1}</time>\n\
+snippet title\n\
+	<title>${1:`substitute(Filename('', 'Page Title'), '^.', '\\u&', '')`}</title>\n\
+snippet tr\n\
+	<tr>\n\
+		${1}\n\
+	</tr>\n\
+snippet tr+\n\
+	<tr>\n\
+		<td>${1}</td>\n\
+		td+${2}\n\
+	</tr>\n\
+snippet track\n\
+	<track src=\"${1}\" srclang=\"${2}\" label=\"${3}\" default=\"${4:default}>${5}</track>${6}\n\
+snippet ul\n\
+	<ul>\n\
+		${1}\n\
+	</ul>\n\
+snippet ul.\n\
+	<ul class=\"${1}\">\n\
+		${2}\n\
+	</ul>\n\
+snippet ul#\n\
+	<ul id=\"${1}\">\n\
+		${2}\n\
+	</ul>\n\
+snippet ul+\n\
+	<ul>\n\
+		<li>${1}</li>\n\
+		li+${2}\n\
+	</ul>\n\
+snippet var\n\
+	<var>${1}</var>\n\
+snippet video\n\
+	<video src=\"${1} height=\"${2}\" width=\"${3}\" preload=\"${5:none}\" autoplay=\"${6:autoplay}>${7}</video>${8}\n\
+snippet wbr\n\
+	<wbr />${1}\n\
+";
 exports.scope = "liquid";
 
 });
@@ -60477,7 +61752,7 @@ var Gutter = function(parentEl) {
         var lastLineText = this.$lines.last() ? this.$lines.last().text : "";
         
         if (this.$fixedWidth || session.$useWrapMode)
-            lastLineText = session.getLength() + firstLineNumber;
+            lastLineText = session.getLength() + firstLineNumber - 1;
 
         var gutterWidth = gutterRenderer 
             ? gutterRenderer.getWidth(session, lastLineText, config)
@@ -60688,7 +61963,7 @@ var Gutter = function(parentEl) {
     this.$renderer = "";
     this.setShowLineNumbers = function(show) {
         this.$renderer = !show && {
-            getWidth: function() {return "";},
+            getWidth: function() {return 0;},
             getText: function() {return "";}
         };
     };
@@ -61329,7 +62604,7 @@ var Text = function(parentEl) {
                 valueFragment.appendChild(span);
             } else if (cjk) {
                 screenColumn += 1;
-                var span = dom.createElement("span");
+                var span = this.dom.createElement("span");
                 span.style.width = (self.config.characterWidth * 2) + "px";
                 span.className = "ace_cjk";
                 span.textContent = cjk;
@@ -61434,6 +62709,9 @@ var Text = function(parentEl) {
                 }
             }
         }
+        
+        if (splits[splits.length - 1] > this.MAX_LINE_LENGTH)
+            this.$renderOverflowMessage(lineEl, screenColumn, null, "", true);
     };
 
     this.$renderSimpleLine = function(parent, tokens) {
@@ -61453,15 +62731,13 @@ var Text = function(parentEl) {
         }
     };
     
-    this.$renderOverflowMessage = function(parent, screenColumn, token, value) {
-        this.$renderToken(parent, screenColumn, token,
+    this.$renderOverflowMessage = function(parent, screenColumn, token, value, hide) {
+        token && this.$renderToken(parent, screenColumn, token,
             value.slice(0, this.MAX_LINE_LENGTH - screenColumn));
             
         var overflowEl = this.dom.createElement("span");
         overflowEl.className = "ace_inline_button ace_keyword ace_toggle_wrap";
-        overflowEl.style.position = "absolute";
-        overflowEl.style.right = "0";
-        overflowEl.textContent = "<click to see more...>";
+        overflowEl.textContent = hide ? "<hide>" : "<click to see more...>";
         
         parent.appendChild(overflowEl);        
     };
@@ -61819,13 +63095,14 @@ var ScrollBar = function(parent) {
 
     this.inner = dom.createElement("div");
     this.inner.className = "ace_scrollbar-inner";
+    this.inner.textContent = "\xa0";
     this.element.appendChild(this.inner);
 
     parent.appendChild(this.element);
 
     this.setVisible(false);
     this.skipEvent = false;
-    
+
     event.addListener(this.element, "scroll", this.onScroll.bind(this));
     event.addListener(this.element, "mousedown", event.preventDefault);
 };
@@ -61952,9 +63229,11 @@ var RenderLoop = function(onRender, win) {
     this.onRender = onRender;
     this.pending = false;
     this.changes = 0;
+    this.$recursionLimit = 2;
     this.window = win || window;
     var _self = this;
     this._flush = function(ts) {
+        _self.pending = false;
         var changes = _self.changes;
 
         if (changes) {
@@ -61963,8 +63242,12 @@ var RenderLoop = function(onRender, win) {
             _self.onRender(changes);
         }
         
-        if (_self.changes)
+        if (_self.changes) {
+            if (_self.$recursionLimit-- < 0) return;
             _self.schedule();
+        } else {
+            _self.$recursionLimit = 2;
+        }
     };
 };
 
@@ -61972,9 +63255,16 @@ var RenderLoop = function(onRender, win) {
 
     this.schedule = function(change) {
         this.changes = this.changes | change;
-        if (this.changes) {
+        if (this.changes && !this.pending) {
             event.nextFrame(this._flush);
+            this.pending = true;
         }
+    };
+
+    this.clear = function(change) {
+        var changes = this.changes;
+        this.changes = 0;
+        return changes;
     };
 
 }).call(RenderLoop.prototype);
@@ -62457,32 +63747,20 @@ animation-timing-function: step-end;\
 animation-name: blink-ace-animate;\
 animation-iteration-count: infinite;\
 }\
-@keyframes blink-ace-animate {\
-from, to { opacity: 1; }\
-60% { opacity: 0; }\
-}\
 .ace_animate-blinking.ace_smooth-blinking .ace_cursor {\
 animation-duration: 1000ms;\
 animation-timing-function: ease-in-out;\
 animation-name: blink-ace-animate-smooth;\
+}\
+@keyframes blink-ace-animate {\
+from, to { opacity: 1; }\
+60% { opacity: 0; }\
 }\
 @keyframes blink-ace-animate-smooth {\
 from, to { opacity: 1; }\
 45% { opacity: 1; }\
 60% { opacity: 0; }\
 85% { opacity: 0; }\
-}\
-.normal-mode .ace_animate-blinking .ace_cursor,\
-.emacs-mode .ace_animate-blinking .ace_cursor\
-{\
-animation-duration: 1000ms;\
-animation-timing-function: step-end;\
-animation-name: blink-ace-animate-alternate;\
-animation-iteration-count: infinite;\
-}\
-@keyframes blink-ace-animate-alternate {\
-from, to { opacity: 0.5; }\
-60% { opacity: 0; }\
 }\
 .ace_marker-layer .ace_step, .ace_marker-layer .ace_stack {\
 position: absolute;\
@@ -62649,11 +63927,6 @@ background-color: rgba(255, 255, 0,0.2);\
 position: absolute;\
 z-index: 8;\
 }\
-.ace_text-input-ios {\
-position: absolute !important;\
-top: -100000px !important;\
-left: -100000px !important;\
-}\
 ";
 
 var useragent = require("./lib/useragent");
@@ -62768,7 +64041,7 @@ var VirtualRenderer = function(container, theme) {
         h: 0
     };
     
-    this.$keepTextAreaAtCursor = true;
+    this.$keepTextAreaAtCursor = !useragent.isIOS;
 
     this.$loop = new RenderLoop(
         this.$renderChanges.bind(this),
@@ -62779,7 +64052,7 @@ var VirtualRenderer = function(container, theme) {
     this.updateCharacterSize();
     this.setPadding(4);
     config.resetOptions(this);
-    config._emit("renderer", this);
+    config._signal("renderer", this);
 };
 
 (function() {
@@ -63080,15 +64353,16 @@ var VirtualRenderer = function(container, theme) {
         return this.container;
     };
     this.$moveTextAreaToCursor = function() {
+        if (this.$isMousePressed) return;
         var style = this.textarea.style;
-        if (!this.$keepTextAreaAtCursor) {
+        var composition = this.$composition;
+        if (!this.$keepTextAreaAtCursor && !composition) {
             dom.translate(this.textarea, -100, 0);
             return;
         }
         var pixelPos = this.$cursorLayer.$pixelPos;
         if (!pixelPos)
             return;
-        var composition = this.$composition;
         if (composition && composition.markerRange)
             pixelPos = this.$cursorLayer.getPixelPosition(composition.markerRange.start, true);
         
@@ -63251,13 +64525,13 @@ var VirtualRenderer = function(container, theme) {
             changes & this.CHANGE_SCROLL ||
             changes & this.CHANGE_H_SCROLL
         ) {
-            changes |= this.$computeLayerConfig();
+            changes |= this.$computeLayerConfig() | this.$loop.clear();
             if (config.firstRow != this.layerConfig.firstRow && config.firstRowScreen == this.layerConfig.firstRowScreen) {
                 var st = this.scrollTop + (config.firstRow - this.layerConfig.firstRow) * this.lineHeight;
                 if (st > 0) {
                     this.scrollTop = st;
                     changes = changes | this.CHANGE_SCROLL;
-                    changes |= this.$computeLayerConfig();
+                    changes |= this.$computeLayerConfig() | this.$loop.clear();
                 }
             }
             config = this.layerConfig;
@@ -63395,7 +64669,6 @@ var VirtualRenderer = function(container, theme) {
         if (this.$maxLines && this.lineHeight > 1)
             this.$autosize();
 
-        var offset = this.scrollTop % this.lineHeight;
         var minHeight = size.scrollerHeight + this.lineHeight;
         
         var scrollPastEnd = !this.$maxLines && this.$scrollPastEnd
@@ -63418,6 +64691,7 @@ var VirtualRenderer = function(container, theme) {
             this.scrollBarV.setVisible(vScroll);
         }
 
+        var offset = this.scrollTop % this.lineHeight;
         var lineCount = Math.ceil(minHeight / this.lineHeight) - 1;
         var firstRow = Math.max(0, Math.round((this.scrollTop - offset) / this.lineHeight));
         var lastRow = firstRow + lineCount;
@@ -63442,7 +64716,7 @@ var VirtualRenderer = function(container, theme) {
         if (this.layerConfig.width != longestLine || hScrollChanged) 
             changes = this.CHANGE_H_SCROLL;
         if (hScrollChanged || vScrollChanged) {
-            changes = this.$updateCachedSize(true, this.gutterWidth, size.width, size.height);
+            changes |= this.$updateCachedSize(true, this.gutterWidth, size.width, size.height);
             this._signal("scrollbarVisibilityChanged");
             if (vScrollChanged)
                 longestLine = this.$getLongestLine();
@@ -63557,7 +64831,7 @@ var VirtualRenderer = function(container, theme) {
         } else if (scrollTop + this.$size.scrollerHeight - bottomMargin < top + this.lineHeight) {
             if (offset && scrollTop + this.$size.scrollerHeight - bottomMargin < top -  this.lineHeight)
                 top += offset * this.$size.scrollerHeight;
-            this.session.setScrollTop(top + this.lineHeight - this.$size.scrollerHeight);
+            this.session.setScrollTop(top + this.lineHeight + bottomMargin - this.$size.scrollerHeight);
         }
 
         var scrollLeft = this.scrollLeft;
@@ -63734,7 +65008,6 @@ var VirtualRenderer = function(container, theme) {
         var col = this.$blockCursor ? Math.floor(offset) : Math.round(offset);
 
         var row = Math.floor((y + this.scrollTop - canvasPos.top) / this.lineHeight);
-
         return this.session.screenToDocumentPosition(row, Math.max(col, 0), offsetX);
     };
     this.textToScreenCoordinates = function(row, column) {
@@ -63762,12 +65035,10 @@ var VirtualRenderer = function(container, theme) {
         this.$composition = composition;
         if (!composition.cssText) {
             composition.cssText = this.textarea.style.cssText;
-            composition.keepTextAreaAtCursor = this.$keepTextAreaAtCursor;
         }
         composition.useTextareaForIME = this.$useTextareaForIME;
         
         if (this.$useTextareaForIME) {
-            this.$keepTextAreaAtCursor = true;
             dom.addCssClass(this.textarea, "ace_composition");
             this.textarea.style.cssText = "";
             this.$moveTextAreaToCursor();
@@ -63790,7 +65061,6 @@ var VirtualRenderer = function(container, theme) {
             this.session.removeMarker(this.$composition.markerId);
 
         dom.removeCssClass(this.textarea, "ace_composition");
-        this.$keepTextAreaAtCursor = this.$composition.keepTextAreaAtCursor;
         this.textarea.style.cssText = this.$composition.cssText;
         this.$composition = null;
         this.$cursorLayer.element.style.display = "";
@@ -64370,64 +65640,75 @@ exports.onMouseDown = onMouseDown;
 define("ace/commands/multi_select_commands",["require","exports","module","ace/keyboard/hash_handler"], function(require, exports, module) {
 exports.defaultCommands = [{
     name: "addCursorAbove",
+    description: "Add cursor above",
     exec: function(editor) { editor.selectMoreLines(-1); },
     bindKey: {win: "Ctrl-Alt-Up", mac: "Ctrl-Alt-Up"},
     scrollIntoView: "cursor",
     readOnly: true
 }, {
     name: "addCursorBelow",
+    description: "Add cursor below",
     exec: function(editor) { editor.selectMoreLines(1); },
     bindKey: {win: "Ctrl-Alt-Down", mac: "Ctrl-Alt-Down"},
     scrollIntoView: "cursor",
     readOnly: true
 }, {
     name: "addCursorAboveSkipCurrent",
+    description: "Add cursor above (skip current)",
     exec: function(editor) { editor.selectMoreLines(-1, true); },
     bindKey: {win: "Ctrl-Alt-Shift-Up", mac: "Ctrl-Alt-Shift-Up"},
     scrollIntoView: "cursor",
     readOnly: true
 }, {
     name: "addCursorBelowSkipCurrent",
+    description: "Add cursor below (skip current)",
     exec: function(editor) { editor.selectMoreLines(1, true); },
     bindKey: {win: "Ctrl-Alt-Shift-Down", mac: "Ctrl-Alt-Shift-Down"},
     scrollIntoView: "cursor",
     readOnly: true
 }, {
     name: "selectMoreBefore",
+    description: "Select more before",
     exec: function(editor) { editor.selectMore(-1); },
     bindKey: {win: "Ctrl-Alt-Left", mac: "Ctrl-Alt-Left"},
     scrollIntoView: "cursor",
     readOnly: true
 }, {
     name: "selectMoreAfter",
+    description: "Select more after",
     exec: function(editor) { editor.selectMore(1); },
     bindKey: {win: "Ctrl-Alt-Right", mac: "Ctrl-Alt-Right"},
     scrollIntoView: "cursor",
     readOnly: true
 }, {
     name: "selectNextBefore",
+    description: "Select next before",
     exec: function(editor) { editor.selectMore(-1, true); },
     bindKey: {win: "Ctrl-Alt-Shift-Left", mac: "Ctrl-Alt-Shift-Left"},
     scrollIntoView: "cursor",
     readOnly: true
 }, {
     name: "selectNextAfter",
+    description: "Select next after",
     exec: function(editor) { editor.selectMore(1, true); },
     bindKey: {win: "Ctrl-Alt-Shift-Right", mac: "Ctrl-Alt-Shift-Right"},
     scrollIntoView: "cursor",
     readOnly: true
 }, {
     name: "splitIntoLines",
+    description: "Split into lines",
     exec: function(editor) { editor.multiSelect.splitIntoLines(); },
     bindKey: {win: "Ctrl-Alt-L", mac: "Ctrl-Alt-L"},
     readOnly: true
 }, {
     name: "alignCursors",
+    description: "Align cursors",
     exec: function(editor) { editor.alignCursors(); },
     bindKey: {win: "Ctrl-Alt-A", mac: "Ctrl-Alt-A"},
     scrollIntoView: "cursor"
 }, {
     name: "findAll",
+    description: "Find all",
     exec: function(editor) { editor.findAll(); },
     bindKey: {win: "Ctrl-Alt-K", mac: "Ctrl-Alt-G"},
     scrollIntoView: "cursor",
@@ -64435,6 +65716,7 @@ exports.defaultCommands = [{
 }];
 exports.multiSelectCommands = [{
     name: "singleSelection",
+    description: "Single selection",
     bindKey: "esc",
     exec: function(editor) { editor.exitMultiSelectMode(); },
     scrollIntoView: "cursor",
@@ -65282,16 +66564,17 @@ function LineWidgets(session) {
 
 (function() {
     this.getRowLength = function(row) {
-        var h;
-        if (this.lineWidgets)
-            h = this.lineWidgets[row] && this.lineWidgets[row].rowCount || 0;
-        else 
-            h = 0;
-        if (!this.$useWrapMode || !this.$wrapData[row]) {
-            return 1 + h;
-        } else {
-            return this.$wrapData[row].length + 1 + h;
-        }
+
+        var height =
+            this.lineWidgets &&
+            this.lineWidgets[row] &&
+            this.lineWidgets[row].rowCount || 0;
+
+        if (this.$useWrapMode && this.$wrapData[row])
+            height += this.$wrapData[row].length;
+
+        return Math.ceil(height + 1);
+
     };
 
     this.$getWidgetScreenLength = function() {
@@ -65445,7 +66728,7 @@ function LineWidgets(session) {
             w.pixelHeight = w.el.offsetHeight;
         }
         if (w.rowCount == null) {
-            w.rowCount = w.pixelHeight / renderer.layerConfig.lineHeight;
+            w.rowCount = Math.ceil(w.pixelHeight / renderer.layerConfig.lineHeight);
         }
         
         var fold = this.session.getFoldAt(w.row, 0);
@@ -65534,7 +66817,7 @@ function LineWidgets(session) {
                 w.screenWidth = Math.ceil(w.w / config.characterWidth);
             }
             
-            var rowCount = w.h / config.lineHeight;
+            var rowCount = Math.ceil(w.h / config.lineHeight);
             if (w.coverLine) {
                 rowCount -= this.session.getRowLineCount(w.row);
                 if (rowCount < 0)
@@ -65991,10 +67274,11 @@ exports.createEditSession = function(text, mode) {
     return doc;
 };
 exports.Range = Range;
+exports.Editor = Editor;
 exports.EditSession = EditSession;
 exports.UndoManager = UndoManager;
 exports.VirtualRenderer = Renderer;
-exports.version = "1.4.1";
+exports.version = exports.config.version;
 });            (function() {
                 window.require(["ace/ace"], function(a) {
                     if (a) {

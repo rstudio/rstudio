@@ -1,7 +1,7 @@
 /*
  * DataImportDialog.java
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -15,6 +15,7 @@
 
 package org.rstudio.studio.client.workbench.views.environment.dataimport;
 
+import com.google.gwt.aria.client.Roles;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.widget.ModalDialog;
 import org.rstudio.core.client.widget.OperationWithInput;
@@ -31,7 +32,7 @@ public class DataImportDialog extends ModalDialog<String>
                            String path,
                            OperationWithInput<String> operation)
    {
-      super(caption, operation);
+      super(caption, Roles.getDialogRole(), operation);
       
       dataImport_ = new DataImport(dataImportMode, addProgressIndicator(false), path);
       RStudioGinjector.INSTANCE.injectMembers(this);

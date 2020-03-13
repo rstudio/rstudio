@@ -1,7 +1,7 @@
 /*
  * MonitorClientOverlay.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-12 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -20,7 +20,7 @@ namespace rstudio {
 namespace monitor {
 
 void SyncClient::logMessage(const std::string& programIdentity,
-                            core::system::LogLevel level,
+                            core::log::LogLevel level,
                             const std::string& message)
 {
 }
@@ -35,7 +35,7 @@ void SyncClient::sendMultiMetrics(
 }
 
 void AsyncClient::logMessage(const std::string& programIdentity,
-                             core::system::LogLevel level,
+                             core::log::LogLevel level,
                              const std::string& message)
 {
 }

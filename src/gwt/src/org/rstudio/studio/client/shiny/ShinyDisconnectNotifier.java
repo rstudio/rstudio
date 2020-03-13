@@ -1,7 +1,7 @@
 /*
  * ShinyDisconnectNotifier.java
  *
- * Copyright (C) 2009-14 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,6 +14,9 @@
  */
 package org.rstudio.studio.client.shiny;
 
+import org.rstudio.core.client.Debug;
+import org.rstudio.core.client.StringUtil;
+
 public class ShinyDisconnectNotifier
 {
    public interface ShinyDisconnectSource
@@ -25,31 +28,76 @@ public class ShinyDisconnectNotifier
    public ShinyDisconnectNotifier(ShinyDisconnectSource source)
    {
       source_ = source;
+      suppressUrl_ = null;
       initializeEvents();
+   }
+   
+   /**
+    * Begins suppressing disconnect notifications from the current URL.
+    */
+   public void suppress()
+   {
+      if (!StringUtil.isNullOrEmpty(suppressUrl_))
+      {
+         // should never happen in practice; if it does the safest behavior is
+         // to respect the new suppress URL and discard the old one. warn that
+         // we're doing this.
+         Debug.logWarning("Replacing old Shiny disconnect suppress URL: " + suppressUrl_);
+      }
+      suppressUrl_ = source_.getShinyUrl();
+   }
+   
+   /**
+    * Ends suppression of disconnect notifications.
+    */
+   public void unsuppress()
+   {
+      suppressUrl_ = null;
    }
 
    private native void initializeEvents() /*-{  
-      var thiz = this;   
-      $wnd.addEventListener(
-            "message",
-            $entry(function(e) {
-               if (typeof e.data != 'string')
-                  return;
-               thiz.@org.rstudio.studio.client.shiny.ShinyDisconnectNotifier::onMessage(Ljava/lang/String;Ljava/lang/String;)(e.data, e.origin);
-            }),
-            true);
+      
+      var self = this;
+      var callback = $entry(function(event) {
+         
+         if (typeof event.data !== "string")
+            return;
+         
+         self.@org.rstudio.studio.client.shiny.ShinyDisconnectNotifier::onMessage(*)(
+            event.data,
+            event.origin,
+            event.target.name
+         );
+         
+      });
+      
+      $wnd.addEventListener("message", callback, true);
+      
    }-*/;
    
-   private void onMessage(String data, String origin)
-   {  
-      if ("disconnected".equals(data))
+   private void onMessage(String data, String origin, String name)
+   {
+      // check to see if this is a 'disconnected' message
+      if (!StringUtil.equals(data, "disconnected"))
+         return;
+      
+      // check to see if the message originated from the same origin
+      String url = source_.getShinyUrl();
+      if (!url.startsWith(origin))
+         return;
+      
+      // if we were suppressing disconnect notifications from this URL,
+      // consume this disconnection and resume
+      if (StringUtil.equals(url, suppressUrl_))
       {
-         if (source_.getShinyUrl().startsWith(origin)) 
-         {
-            source_.onShinyDisconnect();
-         }
+         unsuppress();
+         return;
       }
+      
+      // respond to Shiny disconnect
+      source_.onShinyDisconnect();
    }
 
-   private ShinyDisconnectSource source_;
+   private final ShinyDisconnectSource source_;
+   private String suppressUrl_;
 }

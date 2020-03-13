@@ -1,69 +1,69 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
-	xmlns:g="urn:import:com.google.gwt.user.client.ui"
-	xmlns:rs="urn:import:org.rstudio.core.client.widget">
-	<ui:style>
-	  @external .gwt-Label;
-	  
-	  .controlLabel
-	  {
-	     margin-bottom: 3px;
-	     font-weight: bold;
-	     display: block;
-	  }
-	  
-	  .interiorControlLabel
-	  {
-	     margin-top: 7px; 
-	  }
-	  
-	  .textBox
-	  {
-	    padding: 2px;
-	    width: 100%;
-	  }
+   xmlns:g="urn:import:com.google.gwt.user.client.ui"
+   xmlns:rs="urn:import:org.rstudio.core.client.widget">
+   <ui:with field="ElementIds" type="org.rstudio.core.client.ElementIds"/>
+   <ui:style>
+     @external .gwt-Label;
+     @external .gwt-TextBox;
+     
+     .controlLabel .gwt-Label, .directoryChooser .gwt-Label
+     {
+        margin-bottom: 3px;
+        font-weight: bold;
+        display: block;
+     }
+     
+     .interiorControlLabel .gwt-Label, .directoryChooserInner .gwt-Label
+     {
+        margin-top: 7px; 
+     }
+     
+     .controlLabel .gwt-TextBox
+     {
+       padding: 2px;
+       width: 100%;
+     }
 
-	  .createNote
-	  {
-	    margin-top: 10px;
+     .createNote
+     {
+       margin-top: 10px;
 
-	  }
+     }
 
-	  .templateListArea
-	  {
-	    height: 155px;
-	    margin-top: 5px;
-	    background-color: #FFFFFF;
-	  }
-	  
-	  .templateListArea table table
-	  {
-	    border: none;
-	  }
-	  
-	  .noTemplates
-	  {
-       color: #909090;
+     .templateListArea
+     {
+       height: 155px;
+       margin-top: 5px;
+       background-color: #FFFFFF;
+     }
+     
+     .templateListArea table table
+     {
+       border: none;
+     }
+     
+     .noTemplates
+     {
        border: 1px solid #909090;
-	  }
-	  
-	  .noTemplatesText
-	  {
-	     text-align: center;
-	     margin-top: 35px;
-	  }
-	  
-	  .help .gwt-Label
-	  {
-	     font-weight: bold;
-	  }
-	</ui:style>
-	<g:HTMLPanel>
-	<rs:CaptionWithHelp styleName="{style.help}"></rs:CaptionWithHelp>
-	<rs:SimplePanelWithProgress ui:field="progressPanel_" 
-	                            styleName="{style.templateListArea}">
-      <rs:WidgetListBox width="100%" height="100%"
-                        ui:field="listTemplates_"></rs:WidgetListBox>
+     }
+     
+     .noTemplatesText
+     {
+        text-align: center;
+        margin-top: 35px;
+     }
+     
+     .help .gwt-Label
+     {
+        font-weight: bold;
+     }
+   </ui:style>
+   <g:HTMLPanel>
+   <rs:CaptionWithHelp ui:field="captionWithHelp_" styleName="{style.help}" labelId="{ElementIds.getNewRmdTemplateLabel}"/>
+   <rs:SimplePanelWithProgress ui:field="progressPanel_" 
+                               styleName="{style.templateListArea}">
+      <rs:WidgetListBox width="100%" height="100%" ui:field="listTemplates_" elementId="{ElementIds.getNewRmdTemplate}"/>
    </rs:SimplePanelWithProgress>
    <g:HTMLPanel styleName="{style.templateListArea} {style.noTemplates}" 
                 visible="false" ui:field="noTemplatesFound_">
@@ -73,21 +73,18 @@
    </g:HTMLPanel>
 
    <g:HTMLPanel ui:field="templateOptionsPanel_" visible="false">
-	  <g:HTML styleName="{style.createNote}">
-	     This template contains multiple files. Create a new directory for
-	     these files:
-	  </g:HTML>
-	  <g:Label styleName="{style.controlLabel} {style.interiorControlLabel}" 
-	           text="Name:"></g:Label>
-	  <g:TextBox styleName="{style.textBox}" ui:field="txtName_" 
-	             text="Untitled"></g:TextBox>
+     <g:HTML styleName="{style.createNote}">
+        This template contains multiple files. Create a new directory for
+        these files:
+     </g:HTML>
+     <rs:LabeledTextBox textBoxId="{ElementIds.getRmdTemplateChooserName}" labelText="Name:" 
+                        styleName="{style.controlLabel} {style.interiorControlLabel}" 
+                        ui:field="txtName_" text="Untitled"></rs:LabeledTextBox>
 
-	  <g:Label styleName="{style.controlLabel} {style.interiorControlLabel}" 
-	           text="Location:"></g:Label>
-	  <rs:DirectoryChooserTextBox width="100%" ui:field="dirLocation_">
-	  </rs:DirectoryChooserTextBox>
-	
-	</g:HTMLPanel>
+     <rs:DirectoryChooserTextBox width="100%" addStyleNames="{style.directoryChooser} {style.directoryChooserInner}" ui:field="dirLocation_">
+     </rs:DirectoryChooserTextBox>
+   
+   </g:HTMLPanel>
 
-	</g:HTMLPanel>
+   </g:HTMLPanel>
 </ui:UiBinder> 

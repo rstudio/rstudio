@@ -1,7 +1,7 @@
 /*
  * CppFileType.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-12 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -21,6 +21,7 @@ import com.google.gwt.resources.client.ImageResource;
 import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.studio.client.common.reditor.EditorLanguage;
 import org.rstudio.studio.client.workbench.commands.Commands;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.spelling.TokenPredicate;
 
 public class CppFileType extends TextFileType
 {
@@ -77,7 +78,22 @@ public class CppFileType extends TextFileType
             
       return result;
    }
-    
+
+   @Override
+   public TokenPredicate getSpellCheckTokenPredicate()
+   {
+      return (token, row, column) ->
+      {
+         if (reNospellType_.match(token.getType(), 0) != null) {
+            return false;
+         }
+
+         return reCommentType_.match(token.getType(), 0) != null &&
+            reKeywordType_.match(token.getType(), 0) == null &&
+            reIdentifierType_.match(token.getType(), 0) == null;
+      };
+   }
+
    private final boolean isCpp_;
    private final boolean canSource_;
 }

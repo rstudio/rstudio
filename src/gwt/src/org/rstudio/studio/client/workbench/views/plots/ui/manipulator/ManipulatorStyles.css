@@ -17,11 +17,11 @@
 }
 
 .control {
-	padding-bottom: 15px;
+   padding-bottom: 15px;
 }
 
 .slider {
-  width: 100%;	
+   width: 100%;
 }
 
 
@@ -74,17 +74,16 @@
 }
 
 .picker .gwt-ListBox {
-   min-width: 100px;	
+   min-width: 100px;
 }
 
-.checkBox {	
-	margin-left: -5px;	
+.checkBox {
+   margin-left: -5px;
 }
 
 .button {
-	position: relative;
-	left: -12px;
-	
+   position: relative;
+   left: -12px;
 }
 
 .manipulateButton {

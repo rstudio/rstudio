@@ -1,7 +1,7 @@
 /*
  * Message.hpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-12 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -67,8 +67,8 @@ public:
    std::string contentType() const ;
    void setContentType(const std::string& contentType) ;
    
-   std::size_t contentLength() const;
-   void setContentLength(int contentLength);
+   uintmax_t contentLength() const;
+   void setContentLength(uintmax_t contentLength);
   
    bool containsHeader(const std::string& name) const ;
    std::string headerValue(const std::string& name) const ;
@@ -86,6 +86,7 @@ public:
    void setHeader(const Header& header);
    void setHeader(const std::string& name, const std::string& value) ;
    void setHeader(const std::string& name, int value);
+   void setHeader(const std::string& name, uintmax_t value);
 
    void removeHeader(const std::string& name) ;
 
@@ -135,7 +136,11 @@ private:
 
    void setExtraHeader(const Header& header)
    {
-      setHeader(header);
+      // multiple Set-Cookie directives are allowed on the message
+      if (header.name == "Set-Cookie")
+         addHeader(header);
+      else
+         setHeader(header);
    }
    
 private:

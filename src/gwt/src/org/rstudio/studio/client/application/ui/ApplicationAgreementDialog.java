@@ -1,7 +1,7 @@
 /*
  * ApplicationAgreementDialog.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -16,6 +16,7 @@ package org.rstudio.studio.client.application.ui;
 
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
+import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.Size;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.ShowContentDialog;
@@ -47,7 +48,7 @@ public class ApplicationAgreementDialog extends ShowContentDialog
             doNotAcceptOperation_.execute();
          }
       });
-      addOkButton(doNotAcceptButton);
+      addOkButton(doNotAcceptButton, ElementIds.DIALOG_NO_BUTTON);
       
       // accept button
       ThemedButton acceptButton = new ThemedButton("I Agree",
@@ -59,7 +60,7 @@ public class ApplicationAgreementDialog extends ShowContentDialog
             acceptOperation_.execute();  
          }
       });
-      addButton(acceptButton);
+      addButton(acceptButton, ElementIds.DIALOG_YES_BUTTON);
    }
    
    private Operation doNotAcceptOperation_;

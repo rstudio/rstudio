@@ -1,7 +1,7 @@
 /*
  * Utils.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -26,7 +26,7 @@ namespace libclang {
 std::string toStdString(CXString cxStr)
 {
    const char* str = clang().getCString(cxStr);
-   if (str != NULL)
+   if (str != nullptr)
    {
       std::string stdString(str);
       clang().disposeString(cxStr);

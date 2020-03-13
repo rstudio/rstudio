@@ -1,84 +1,84 @@
 .mainPanel {
-	display: -ms-flexbox;
-	display: -webkit-flex;
-	display: flex;
+   display: -ms-flexbox;
+   display: -webkit-flex;
+   display: flex;
 
-	-webkit-flex-direction: column;
-	-ms-flex-direction: column;
-	flex-direction: column;
+   -webkit-flex-direction: column;
+   -ms-flex-direction: column;
+   flex-direction: column;
 
-	-ms-flex-grow: 1;
-	-webkit-flex-grow: 1;
-	flex-grow: 1;
+   -ms-flex-grow: 1;
+   -webkit-flex-grow: 1;
+   flex-grow: 1;
 
-	min-width: 300px;
-}	
+   min-width: 300px;
+}
 .optionsLabel {
-	margin-top: 14px;
+   margin-top: 14px;
 
-	margin-left: 5px;
-	margin-right: 5px;
-	
-	margin-bottom: 2px;
+   margin-left: 5px;
+   margin-right: 5px;
+
+   margin-bottom: 2px;
 }
 .optionsBlock {
-	border: 1px solid #999;
-	background-color: #F7F8F9;
-	padding-top: 12px;
-	padding-left: 16px;
-	padding-bottom: 3px;
-	padding-right: 6px;
+   border: 1px solid #999;
+   background-color: #F7F8F9;
+   padding-top: 12px;
+   padding-left: 16px;
+   padding-bottom: 3px;
+   padding-right: 6px;
 
-	display: -ms-flexbox;
-	display: -webkit-flex;
-	display: flex;
+   display: -ms-flexbox;
+   display: -webkit-flex;
+   display: flex;
 
-	-webkit-flex-direction: column;
-	-ms-flex-direction: column;
-	flex-direction: column;
+   -webkit-flex-direction: column;
+   -ms-flex-direction: column;
+   flex-direction: column;
 
-	-ms-flex-grow: 1;
-	-webkit-flex-grow: 1;
-	flex-grow: 1;
+   -ms-flex-grow: 1;
+   -webkit-flex-grow: 1;
+   flex-grow: 1;
 
-	margin-top: 3px;
-	margin-right: 5px;
-	margin-left: 5px;
+   margin-top: 3px;
+   margin-right: 5px;
+   margin-left: 5px;
 }
 .optionsDirectionRow {
-	-webkit-flex-direction: row;
-	-ms-flex-direction: row;
-	flex-direction: row;
+   -webkit-flex-direction: row;
+   -ms-flex-direction: row;
+   flex-direction: row;
 }
 .optionsRow {
-	display: -ms-flexbox;
-	display: -webkit-flex;
-	display: flex;
+   display: -ms-flexbox;
+   display: -webkit-flex;
+   display: flex;
 
-	-webkit-flex-direction: row;
-	-ms-flex-direction: row;
-	flex-direction: row;
+   -webkit-flex-direction: row;
+   -ms-flex-direction: row;
+   flex-direction: row;
 
-	-ms-flex-grow: 1;
-	-webkit-flex-grow: 1;
-	flex-grow: 1;
+   -ms-flex-grow: 1;
+   -webkit-flex-grow: 1;
+   flex-grow: 1;
 
-	height: 24px;
-	margin-right: 10px;
+   height: 24px;
+   margin-right: 10px;
 }
 .optionLabel {
-	width: 54px;
+   width: 54px;
 }
 .nameLabel {
-	margin-top: 3px;
+   margin-top: 3px;
 }
 .nameTextBox {
-	height: 22px;
+   height: 22px;
 
-	-ms-flex-grow: 1;
-	-webkit-flex-grow: 1;
-	flex-grow: 1;
+   -ms-flex-grow: 1;
+   -webkit-flex-grow: 1;
+   flex-grow: 1;
 
-	padding-left: 5px;
-	padding-right: 5px;
+   padding-left: 5px;
+   padding-right: 5px;
 }

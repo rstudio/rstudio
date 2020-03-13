@@ -1,7 +1,7 @@
 /*
  * NotebookQueueUnit.cpp
  *
- * Copyright (C) 2009-16 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -15,9 +15,10 @@
 
 #include "NotebookQueueUnit.hpp"
 
+#include <gsl/gsl>
+
 #include <session/SessionModuleContext.hpp>
 
-#include <boost/foreach.hpp>
 #include <boost/algorithm/string.hpp>
 
 #include <core/json/JsonRpc.hpp>
@@ -53,11 +54,11 @@ Error fillExecRange(const json::Array& in, std::list<ExecRange>* pOut)
    for (const json::Value val : in)
    {
       // ignore non-value types
-      if (val.type() != json::ObjectType)
+      if (!val.isObject())
          continue;
 
       ExecRange range(0, 0);
-      Error error = ExecRange::fromJson(val.get_obj(), &range);
+      Error error = ExecRange::fromJson(val.getObject(), &range);
       if (error)
          return error;
 
@@ -68,7 +69,7 @@ Error fillExecRange(const json::Array& in, std::list<ExecRange>* pOut)
 
 void fillJsonRange(const std::list<ExecRange>& in, json::Array* pOut)
 {
-   BOOST_FOREACH(const ExecRange range, in)
+   for (const ExecRange range : in)
    {
       pOut->push_back(range.toJson());
    }
@@ -161,19 +162,19 @@ Error NotebookQueueUnit::parseOptions(json::Object* pOptions)
    // convert to JSON 
    json::Value jsonOptions;
    error = r::json::jsonValueFromList(sexpOptions, &jsonOptions);
-   if (jsonOptions.type() == json::ArrayType && 
-       jsonOptions.get_array().empty())
+   if (jsonOptions.isArray() &&
+       jsonOptions.getArray().isEmpty())
    {
       // treat empty array as empty object
       *pOptions = json::Object();
    }
-   else if (jsonOptions.type() != json::ObjectType)
+   else if (!jsonOptions.isObject())
    {
       return Error(json::errc::ParseError, ERROR_LOCATION);
    }
    else 
    {
-      *pOptions = jsonOptions.get_value<json::Object>();
+      *pOptions = jsonOptions.getObject();
    }
 
    return Success();
@@ -257,12 +258,12 @@ std::string NotebookQueueUnit::popExecRange(ExecRange* pRange,
 
    // use the first line of the range if it's multi-line
    size_t idx = code_.find('\n', start + 1);
-   if (idx != std::string::npos && static_cast<int>(idx) < (stop - 1))
+   if (idx != std::string::npos && gsl::narrow_cast<int>(idx) < (stop - 1))
    {
-      stop = idx;
+      stop = gsl::narrow_cast<int>(idx);
 
       // adjust the range to account for the code we're about to send
-      range.start = idx + 1;
+      range.start = gsl::narrow_cast<int>(idx) + 1;
    }
    else
    {
@@ -329,7 +330,7 @@ void NotebookQueueUnit::replaceCode(const std::string& code)
 
    // replace the pending queue with one that executes exactly the code given
    pending_.clear();
-   pending_.push_back(ExecRange(0, code_.length()));
+   pending_.push_back(ExecRange(0, gsl::narrow_cast<int>(code_.length())));
 }
 
 } // namespace notebook

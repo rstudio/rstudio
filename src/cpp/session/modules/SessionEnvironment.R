@@ -1,7 +1,7 @@
 #
 # SessionEnvironment.R
 #
-# Copyright (C) 2009-16 by RStudio, Inc.
+# Copyright (C) 2009-16 by RStudio, PBC
 #
 # Unless you have received this program directly from RStudio pursuant
 # to the terms of a commercial license agreement with RStudio, then
@@ -366,60 +366,40 @@
    return ("")
 })
 
+.rs.addFunction("editor", function(name, file = "", title = file, ...)
+{
+   # if 'name' is missing, we're likely being invoked by
+   # 'utils::file.edit()', so just edit the requested file
+   if (missing(name))
+      return(.Call("rs_editFile", file, PACKAGE = "(embedding)"))
+   
+   # otherwise, we're more likely being invoked by 'edit()', which
+   # requires the parsed file to be valid R code -- so handle that
+   
+   # if no file has been supplied, generate one for the user
+   if (is.null(file) || !nzchar(file)) {
+      file <- tempfile("rstudio-scratch-", fileext = ".R")
+      on.exit(unlink(file), add = TRUE)
+   }
+   
+   # write deparsed R object to file
+   deparsed <- if (is.function(name))
+      .rs.deparseFunction(name, useSource = TRUE, asString = FALSE)
+   else
+      deparse(name)
+   writeLines(deparsed, con = file)
+   
+   # invoke edit
+   .Call("rs_editFile", file, PACKAGE = "(embedding)")
+   
+   # attempt to parse-eval the generated content
+   eval(parse(file), envir = globalenv())
+   
+})
 
-.rs.addFunction("registerFunctionEditor", function() {
-
-   # save default editor
-   defaultEditor <- getOption("editor")
-
-   # ensure we have a scratch file
-   scratchFile <- tempfile()
-   cat("", file = scratchFile)
-
-   options(editor = function(name, file, title) {
-
-      # handle missing 'name' field
-      if (missing(name))
-         name <- NULL
-      
-      # use internal editor for files and functions, otherwise
-      # delegate to the default editor
-      if (is.null(name) || is.function(name)) {
-
-         # if no name then use file
-         if (is.null(name)) {
-            if (!is.null(file) && nzchar(file))
-               targetFile <- file
-            else
-               targetFile <- scratchFile
-         }
-         # otherwise it's a function, write it to a file for editing
-         else {
-            functionSrc <- .rs.deparseFunction(name, TRUE, FALSE)
-            targetFile <- scratchFile
-            writeLines(functionSrc, targetFile)
-         }
-
-         # invoke the RStudio editor on the file
-         if (.Call("rs_editFile", targetFile)) {
-
-            # try to parse it back in
-            newFunc <- try(eval.parent(parse(targetFile)),
-                           silent = TRUE)
-            if (inherits(newFunc, "try-error")) {
-               stop(newFunc, "You can attempt to correct the error using ",
-                    title, " = edit()")
-            }
-
-            return(newFunc)
-         }
-         else {
-            stop("Error occurred while editing function '", name, "'")
-         }
-      }
-      else
-         edit(name, file, title, editor=defaultEditor)
-   })
+.rs.addFunction("registerFunctionEditor", function()
+{
+   options(editor = .rs.editor)
 })
 
 
@@ -452,7 +432,7 @@
       # some objects (e.g. ALTREP) have compact representations that are forced to materialize if
       # an attempt is made to compute their metrics exactly; avoid computing the size for these
       size <- if (computeSize) object.size(obj) else 0
-      len <- if (computeSize) length(obj) else 0
+      len <- length(obj)
    }
    class <- .rs.getSingleClass(obj)
    contents <- list()
@@ -482,7 +462,7 @@
          else
          {
             val <- paste("Large ", class, " (", len_desc, 
-                         capture.output(print(size, units="auto")), ")", sep="")
+                         format(size, units="auto", standard="SI"), ")", sep="")
          }
          contents_deferred <- TRUE
       }
@@ -501,7 +481,17 @@
              is.data.frame(obj) ||
              isS4(obj))
          {
-            contents <- .rs.valueContents(obj)
+            if (computeSize)
+            {
+               # normal object
+               contents <- .rs.valueContents(obj)
+            }
+            else
+            {
+               # don't prefetch content for altreps
+               val <- "NO_VALUE"
+               contents_deferred <- TRUE
+            }
          }
       }
    }

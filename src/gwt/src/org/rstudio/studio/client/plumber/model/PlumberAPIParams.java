@@ -1,7 +1,7 @@
 /*
  * PlumberAPIParams.java
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -44,7 +44,7 @@ public class PlumberAPIParams extends JavaScriptObject
       return this.url;
    }-*/;
    
-   public final native int getViewerType() /*-{
+   public final native String getViewerType() /*-{
       return this.viewer;
    }-*/;
 
@@ -60,7 +60,7 @@ public class PlumberAPIParams extends JavaScriptObject
       this.state = state;
    }-*/;
    
-   public final native void setViewerType(int viewerType) /*-{
+   public final native void setViewerType(String viewerType) /*-{
       this.viewer = viewerType;
    }-*/;
 }

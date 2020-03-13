@@ -1110,6 +1110,7 @@ exports.handler.addCommands({
                 editor.$handlesEmacsOnCopy = false;
                 if (editor.inMultiSelectMode) editor.forEachSelection({exec: deselect});
                 else deselect();
+                editor.setEmacsMark(null);
                 editor.session.$emacsMarkRing = marks.concat(deselectedMarks.reverse());
             }, 0);
         },

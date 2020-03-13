@@ -1,7 +1,7 @@
 /*
  * SourceSatellite.java
  *
- * Copyright (C) 2009-15 by RStudio, Inc.
+ * Copyright (C) 2009-20 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -20,6 +20,7 @@ import org.rstudio.studio.client.application.ApplicationUncaughtExceptionHandler
 import org.rstudio.studio.client.common.satellite.Satellite;
 import org.rstudio.studio.client.common.satellite.SatelliteApplication;
 import org.rstudio.studio.client.workbench.commands.Commands;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.views.source.editors.text.themes.AceThemes;
 
 import com.google.inject.Inject;
@@ -41,10 +42,11 @@ public class SourceSatellite extends SatelliteApplication
    public void initialize(SourceSatelliteView view,
                           Satellite satellite,
                           Provider<AceThemes> pAceThemes,
+                          Provider<UserPrefs> pUserPrefs,
                           ApplicationUncaughtExceptionHandler exHandler,
                           Commands commands)
    {
-      initialize(name_, view, satellite, pAceThemes, exHandler, commands);
+      initialize(name_, view, satellite, pAceThemes, pUserPrefs, exHandler, commands);
    }
    
    private final String name_;

@@ -1,7 +1,7 @@
 /*
  * Response.hpp
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -19,6 +19,7 @@
 #include <iostream>
 #include <sstream>
 
+#include <boost/function.hpp>
 #include <boost/optional.hpp>
 #include <boost/type_traits/is_same.hpp>
 #include <boost/make_shared.hpp>
@@ -32,8 +33,8 @@
 #endif
 
 #include <core/BrowserUtils.hpp>
-#include <core/Error.hpp>
-#include <core/FilePath.hpp>
+#include <shared_core/Error.hpp>
+#include <shared_core/FilePath.hpp>
 #include <core/FileUtils.hpp>
 
 #include "Message.hpp"
@@ -113,7 +114,7 @@ public:
    virtual ~StreamResponse() {}
 
    virtual Error initialize() = 0;
-   virtual boost::shared_ptr<StreamBuffer> nextBuffer() = 0;
+   virtual std::shared_ptr<StreamBuffer> nextBuffer() = 0;
 };
 
 class Response : public Message
@@ -153,7 +154,9 @@ public:
    
    void setBrowserCompatible(const Request& request);
 
-   void addCookie(const Cookie& cookie) ;
+   void addCookie(const Cookie& cookie);
+   void clearCookies();
+   Headers getCookies() const;
    
    Error setBody(const std::string& content);
    
@@ -276,8 +279,8 @@ public:
                  bool padding = false)
    {
       // open the file
-      boost::shared_ptr<std::istream> pIfs;
-      Error error = filePath.open_r(&pIfs);
+      std::shared_ptr<std::istream> pIfs;
+      Error error = filePath.openForRead(pIfs);
       if (error)
          return error;
       
@@ -291,7 +294,7 @@ public:
          Error error = systemError(boost::system::errc::io_error,
                                    ERROR_LOCATION);
          error.addProperty("what", e.what());
-         error.addProperty("path", filePath.absolutePath());
+         error.addProperty("path", filePath.getAbsolutePath());
          return error;
       }
    }
@@ -317,7 +320,7 @@ public:
       }
       
       // set content type
-      setContentType(filePath.mimeContentType());
+      setContentType(filePath.getMimeContentType());
       
       // gzip if possible
       if (request.acceptsEncoding(kGzipEncoding))
@@ -325,14 +328,14 @@ public:
 
       Error error = setBody(filePath, filter, 128, usePadding(request, filePath));
       if (error)
-         setError(status::InternalServerError, error.code().message());
+         setError(status::InternalServerError, error.getMessage());
    }
 
    bool usePadding(const Request& request,
                    const FilePath& filePath) const
    {
       return browser_utils::isQt(request.headerValue("User-Agent")) &&
-             filePath.mimeContentType() == "text/html";
+             filePath.getMimeContentType() == "text/html";
    }
    
    void setCacheableFile(const FilePath& filePath, const Request& request)
@@ -355,7 +358,7 @@ public:
       
       // set Last-Modified
       using namespace boost::posix_time;
-      ptime lastModifiedDate = from_time_t(filePath.lastWriteTime());
+      ptime lastModifiedDate = from_time_t(filePath.getLastWriteTime());
       setHeader("Last-Modified", util::httpDate(lastModifiedDate));
       
       // compare file modified time to If-Modified-Since

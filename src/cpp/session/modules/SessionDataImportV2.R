@@ -1,7 +1,7 @@
 #
 # SessionDataImportV2.R
 #
-# Copyright (C) 2009-17 by RStudio, Inc.
+# Copyright (C) 2009-17 by RStudio, PBC
 #
 # Unless you have received this program directly from RStudio pursuant
 # to the terms of a commercial license agreement with RStudio, then
@@ -661,12 +661,13 @@
 })
 
 .rs.addFunction("prepareViewerData", function(data, maxFactors, maxCols, maxRows) {
+   
    columns <- list()
    if (ncol(data)) {
       columns <- .rs.describeCols(data, maxFactors)
       if (ncol(data) > maxCols) {
          columns <- head(columns, maxCols)
-         data <- data[, maxCols]
+         data <- data[1:maxCols]
       }
    }
    

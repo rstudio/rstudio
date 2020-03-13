@@ -1,7 +1,7 @@
 /*
  * SessionPlumberViewer.cpp
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -18,7 +18,7 @@
 #include <boost/format.hpp>
 #include <boost/algorithm/string/predicate.hpp>
 
-#include <core/Error.hpp>
+#include <shared_core/Error.hpp>
 #include <core/Exec.hpp>
 
 #include <r/RSexp.hpp>
@@ -29,8 +29,8 @@
 #include <r/session/RSessionUtils.hpp>
 
 #include <session/SessionModuleContext.hpp>
-#include <session/SessionUserSettings.hpp>
 #include <session/SessionUrlPorts.hpp>
+#include <session/prefs/UserPrefs.hpp>
 
 #include "plumber/SessionPlumber.hpp"
 
@@ -44,7 +44,7 @@ namespace plumber_viewer {
 namespace {
 
 void enqueueStartEvent(const std::string& url, const std::string& path,
-                       int viewerType, int options)
+                       const std::string& viewerType, int options)
 {
    FilePath plumberPath(path);
 
@@ -74,7 +74,7 @@ SEXP rs_plumberviewer(SEXP urlSEXP, SEXP pathSEXP, SEXP viewerSEXP)
          throw r::exec::RErrorException(
             "path must be a single element character vector.");
       }
-      int viewertype = r::sexp::asInteger(viewerSEXP);
+      std::string viewertype = r::sexp::safeAsString(viewerSEXP, kPlumberViewerTypeWindow);
 
       // in desktop mode make sure we have the right version of httpuv
       if (options().programMode() == kSessionProgramModeDesktop)
@@ -102,7 +102,7 @@ SEXP rs_plumberviewer(SEXP urlSEXP, SEXP pathSEXP, SEXP viewerSEXP)
    return R_NilValue;
 }
 
-void setPlumberViewerType(int viewerType)
+void setPlumberViewerType(const std::string& viewerType)
 {
    Error error =
       r::exec::RFunction(".rs.setPlumberViewerType",
@@ -111,14 +111,15 @@ void setPlumberViewerType(int viewerType)
       LOG_ERROR(error);
 }
 
-void onUserSettingsChanged(boost::shared_ptr<int> pPlumberViewerType)
+void onUserSettingsChanged(const std::string& pref, 
+      boost::shared_ptr<std::string> pPlumberViewerType)
 {
-   int plumberViewerType = userSettings().plumberViewerType();
-   if (plumberViewerType != *pPlumberViewerType)
-   {
-      setPlumberViewerType(plumberViewerType);
-      *pPlumberViewerType = plumberViewerType;
-   }
+   if (pref != kPlumberViewerType)
+      return;
+
+   std::string plumberViewerType = prefs::userPrefs().plumberViewerType();
+   setPlumberViewerType(plumberViewerType);
+   *pPlumberViewerType = plumberViewerType;
 }
 
 Error getPlumberRunCmd(const json::JsonRpcRequest& request,
@@ -133,15 +134,15 @@ Error getPlumberRunCmd(const json::JsonRpcRequest& request,
    
    // Existence of "entrypoint.R" requires a different form of Plumber run command
    bool hasEntrypointFile = false;
-   FilePath searchFolder = plumberPath.isDirectory() ? plumberPath : plumberPath.parent();
+   FilePath searchFolder = plumberPath.isDirectory() ? plumberPath : plumberPath.getParent();
    std::vector<FilePath> children;
-   error = searchFolder.children(&children);
+   error = searchFolder.getChildren(children);
    if (error)
       return error;
 
    for (const auto& child : children)
    {
-      if (!child.isDirectory() && string_utils::toLower(child.filename()) == "entrypoint.r")
+      if (!child.isDirectory() && string_utils::toLower(child.getFilename()) == "entrypoint.r")
       {
          hasEntrypointFile = true;
          break;
@@ -152,7 +153,7 @@ Error getPlumberRunCmd(const json::JsonRpcRequest& request,
    {
       // entrypoint.R mode operates on the folder
       if (!plumberPath.isDirectory())
-         plumberPath = plumberPath.parent();
+         plumberPath = plumberPath.getParent();
    }
 
    std::string plumberRunPath = module_context::pathRelativeTo(
@@ -185,10 +186,10 @@ Error getPlumberRunCmd(const json::JsonRpcRequest& request,
    return Success();
 }
 
-Error initPlumberViewerPref(boost::shared_ptr<int> pPlumberViewerType)
+Error initPlumberViewerPref(boost::shared_ptr<std::string> pPlumberViewerType)
 {
    SEXP plumberBrowser = r::options::getOption("plumber.swagger.url");
-   *pPlumberViewerType = userSettings().plumberViewerType();
+   *pPlumberViewerType = prefs::userPrefs().plumberViewerType();
    if (plumberBrowser == R_NilValue)
    {
       setPlumberViewerType(*pPlumberViewerType);
@@ -204,15 +205,13 @@ Error initialize()
    using boost::bind;
    using namespace module_context;
 
-   boost::shared_ptr<int> pPlumberViewerType = boost::make_shared<int>(PLUMBER_VIEWER_NONE);
+   boost::shared_ptr<std::string> pPlumberViewerType = boost::make_shared<std::string>(
+         kPlumberViewerTypeNone);
 
-   R_CallMethodDef methodDefViewer;
-   methodDefViewer.name = "rs_plumberviewer";
-   methodDefViewer.fun = (DL_FUNC) rs_plumberviewer;
-   methodDefViewer.numArgs = 3;
-   r::routines::addCallMethod(methodDefViewer);
+   RS_REGISTER_CALL_METHOD(rs_plumberviewer);
 
-   userSettings().onChanged.connect(bind(onUserSettingsChanged, pPlumberViewerType));
+   prefs::userPrefs().onChanged.connect(bind(
+            onUserSettingsChanged, _2, pPlumberViewerType));
 
    ExecBlock initBlock;
    initBlock.addFunctions()

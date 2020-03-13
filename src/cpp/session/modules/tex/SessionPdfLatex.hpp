@@ -1,7 +1,7 @@
 /*
  * SessionPdfLatex.hpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-12 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -16,9 +16,9 @@
 #ifndef SESSION_MODULES_TEX_PDFLATEX_HPP
 #define SESSION_MODULES_TEX_PDFLATEX_HPP
 
-#include <core/FilePath.hpp>
+#include <shared_core/FilePath.hpp>
 
-#include <core/json/Json.hpp>
+#include <shared_core/json/Json.hpp>
 
 #include <core/tex/TexMagicComment.hpp>
 

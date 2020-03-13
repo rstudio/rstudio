@@ -1,7 +1,7 @@
 /*
  * Metric.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -17,9 +17,7 @@
 
 #include <ostream>
 
-#include <boost/foreach.hpp>
-
-#include <core/Error.hpp>
+#include <shared_core/Error.hpp>
 #include <core/DateTime.hpp>
 
 #include <core/json/JsonRpc.hpp>
@@ -63,7 +61,7 @@ json::Value toMetricDataJson(const MetricData& data)
    json::Object dataJson;
    dataJson["name"] = data.name;
    dataJson["value"] = data.value;
-   return dataJson;
+   return std::move(dataJson);
 }
 
 
@@ -146,13 +144,13 @@ Error metricFromJson(const json::Object& multiMetricJson,
 
    // create vector of metric data
    std::vector<MetricData> data;
-   BOOST_FOREACH(const json::Value& value, dataJson)
+   for (const json::Value& value : dataJson)
    {
       if (!json::isType<json::Object>(value))
          return Error(json::errc::ParamTypeMismatch, ERROR_LOCATION);
 
       MetricData dataItem;
-      const json::Object& valueObj = value.get_obj();
+      const json::Object& valueObj = value.getObject();
       Error error = json::readObject(valueObj,
                                      "name", &dataItem.name,
                                      "value", &dataItem.value);

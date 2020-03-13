@@ -1,7 +1,7 @@
 /*
  * SourcePane.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -15,17 +15,13 @@
 package org.rstudio.studio.client.workbench.views.source;
 
 import com.google.gwt.core.client.Scheduler;
-import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.Style.Cursor;
 import com.google.gwt.dom.client.Style.Unit;
-import com.google.gwt.event.dom.client.ClickEvent;
-import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.logical.shared.BeforeSelectionHandler;
 import com.google.gwt.event.logical.shared.CloseEvent;
 import com.google.gwt.event.logical.shared.CloseHandler;
 import com.google.gwt.event.logical.shared.SelectionHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
-import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.*;
 import com.google.inject.Inject;
@@ -39,6 +35,7 @@ import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.core.client.widget.BeforeShowCallback;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.studio.client.common.AutoGlassAttacher;
+import org.rstudio.studio.client.common.filetypes.FileIcon;
 import org.rstudio.studio.client.workbench.model.UnsavedChangesTarget;
 import org.rstudio.studio.client.workbench.ui.unsaved.UnsavedChangesDialog;
 import org.rstudio.studio.client.workbench.views.source.Source.Display;
@@ -83,14 +80,9 @@ public class SourcePane extends Composite implements Display,
          }
       });
       chevron_ = new Image(new ImageResource2x(ThemeResources.INSTANCE.chevron2x()));
+      chevron_.setAltText("Switch to tab");
       chevron_.getElement().getStyle().setCursor(Cursor.POINTER);
-      chevron_.addClickHandler(new ClickHandler()
-      {
-         public void onClick(ClickEvent event)
-         {
-            tabOverflowPopup_.showRelativeTo(chevron_);
-         }
-      });
+      chevron_.addClickHandler(event -> tabOverflowPopup_.showRelativeTo(chevron_));
 
       panel_.add(chevron_);
       panel_.setWidgetTopHeight(chevron_,
@@ -107,17 +99,11 @@ public class SourcePane extends Composite implements Display,
    protected void onLoad()
    {
       super.onLoad();
-      Scheduler.get().scheduleDeferred(new ScheduledCommand()
-      {
-         public void execute()
-         {
-            onResize();
-         }
-      });
+      Scheduler.get().scheduleDeferred(() -> onResize());
    }
 
    public void addTab(Widget widget,
-                      ImageResource icon,
+                      FileIcon icon,
                       String docId,
                       String name,
                       String tooltip,
@@ -167,7 +153,7 @@ public class SourcePane extends Composite implements Display,
    }
 
    public void renameTab(Widget child,
-                         ImageResource icon,
+                         FileIcon icon,
                          String value,
                          String tooltip)
    {
@@ -291,7 +277,7 @@ public class SourcePane extends Composite implements Display,
 
    public void onBeforeShow()
    {
-      fireEvent(new BeforeShowEvent());   
+      fireEvent(new BeforeShowEvent());
    }
 
    public HandlerRegistration addBeforeShowHandler(BeforeShowHandler handler)

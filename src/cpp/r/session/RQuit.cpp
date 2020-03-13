@@ -1,7 +1,7 @@
 /*
  * RQuit.cpp
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -16,6 +16,7 @@
 #define R_INTERNAL_FUNCTIONS
 
 #include <boost/bind.hpp>
+#include <gsl/gsl>
 
 #include <r/RErrorCategory.hpp>
 #include <r/RExec.hpp>
@@ -82,7 +83,7 @@ bool win32Quit(const std::string& command, std::string* pErrMsg)
       return false;
    }
 
-   return win32Quit(saveAction, static_cast<int>(status), runLast, pErrMsg);
+   return win32Quit(saveAction, gsl::narrow_cast<int>(status), runLast, pErrMsg);
 }
 
 #endif
@@ -97,14 +98,15 @@ void quit(bool saveWorkspace, int status)
    bool didQuit = win32Quit(save, 0, true, &quitErr);
    if (!didQuit)
    {
-      REprintf((quitErr + "\n").c_str());
+      REprintf("%s\n", quitErr.c_str());
       LOG_ERROR_MESSAGE(quitErr);
    }
  #else
    Error error = r::exec::RFunction("base:::q", save, status, true).call();
    if (error)
    {
-      REprintf((r::endUserErrorMessage(error) + "\n").c_str());
+      std::string message = r::endUserErrorMessage(error);
+      REprintf("%s\n", message.c_str());
       LOG_ERROR(error);
    }
  #endif

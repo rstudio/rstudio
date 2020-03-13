@@ -1,7 +1,7 @@
 /*
  * SourceWindow.java
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -120,8 +120,8 @@ public class SourceWindow implements LastSourceDocClosedHandler,
       
       // in desktop mode, the frame checks to see if we want to be closed, but
       // in web mode the best we can do is prompt if the user attempts to close
-      // a source window with unsaved chaanges.
-      if (!Desktop.isDesktop())
+      // a source window with unsaved changes.
+      if (!Desktop.hasDesktopFrame())
       {
          Window.addWindowClosingHandler(new ClosingHandler() {
             @Override
@@ -346,7 +346,7 @@ public class SourceWindow implements LastSourceDocClosedHandler,
       ArrayList<UnsavedChangesTarget> fileBacked =
             sourceShim_.getUnsavedChanges(Source.TYPE_FILE_BACKED);
       
-     if (Desktop.isDesktop() && untitled.size() > 0)
+     if (Desktop.hasDesktopFrame() && untitled.size() > 0)
      {
         // single untitled, unsaved doc in desktop mode is the most common case
         // so handle that gracefully

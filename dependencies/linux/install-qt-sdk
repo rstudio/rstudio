@@ -3,7 +3,7 @@
 #
 # install-qt-sdk
 #
-# Copyright (C) 2009-18 by RStudio, Inc.
+# Copyright (C) 2009-20 by RStudio, PBC
 #
 # Unless you have received this program directly from RStudio pursuant
 # to the terms of a commercial license agreement with RStudio, then
@@ -14,142 +14,33 @@
 # AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
 #
 
+# Used to install legacy Qt version via direct-download and extraction of a 
+# prepared archive.
+
 if [ -z "$QT_VERSION" ]; then
-    QT_VERSION=5.12.1
-fi
-if [ -z "$QT_SDK_BINARY" ]; then
-    QT_SDK_BINARY=qt-unified-linux-x64-3.0.6-online.run
-fi
-if [ -z "$QT_PACKAGES" ]; then
-    QT_PACKAGES=qt.qt5.5121.gcc_64,qt.qt5.5121.qtwebengine,qt.qt5.5121.qtwebengine.gcc_64
+   echo Error: QT_VERSION must be specified
+   exit 1
 fi
 if [ -z "$QT_SDK_CUSTOM" ]; then
-    echo Using online Qt installer
-else
-    echo Using custom Qt package: $QT_SDK_CUSTOM
+   echo Error: QT_SDK_CUSTOM must be supplied
+   exit 1
 fi
 if [ -z "$QT_SDK_DIR" ]; then
-
-   # Qt install root if path not supplied
-   QT_SDK_DIR=~/Qt${QT_VERSION}
-   
-   # other locations checked for existing installation
-   QT_SDK_DIR2=~/Qt/Qt${QT_VERSION}
-   QT_SDK_DIR3=~/Qt/${QT_VERSION}
+   echo Error: QT_SDK_DIR must be specified
+   exit 1
 fi
 
-QT_SDK_URL=https://s3.amazonaws.com/rstudio-buildtools/$QT_SDK_BINARY
-QT_SCRIPT=/tmp/qt-noninteractive-install-linux.qs
-
-# generate script for automatic Qt installation; customizes the install location via $QT_SDK_DIR
-function write_qt_script() {
-cat << EOF > $QT_SCRIPT
-
-function Controller() {
-    installer.autoRejectMessageBoxes();
-    installer.installationFinished.connect(function() {
-        gui.clickButton(buttons.NextButton);
-    })
-    installer.setMessageBoxAutomaticAnswer("cancelInstallation", QMessageBox.Yes);
-}
-
-Controller.prototype.WelcomePageCallback = function() {
-    gui.clickButton(buttons.NextButton, 3000);
-}
-
-Controller.prototype.CredentialsPageCallback = function() {
-    var widget = gui.currentPageWidget();
-    widget.loginWidget.EmailLineEdit.setText("");
-    widget.loginWidget.PasswordLineEdit.setText("");
-    gui.clickButton(buttons.NextButton, 500);
-}
-
-Controller.prototype.IntroductionPageCallback = function() {
-    gui.clickButton(buttons.NextButton);
-}
-
-Controller.prototype.TargetDirectoryPageCallback = function()
-{
-    var widget = gui.currentPageWidget();
-    if (widget != null) {
-        widget.TargetDirectoryLineEdit.setText("$QT_SDK_DIR");
-    }
-    gui.clickButton(buttons.NextButton);
-}
-
-Controller.prototype.ComponentSelectionPageCallback = function() {
-    var widget = gui.currentPageWidget();
-
-    function trim(str) {
-        return str.replace(/^ +/,"").replace(/ *$/,"");
-    }
-
-    var packages = trim("$QT_PACKAGES").split(",");
-    if (packages.length > 0 && packages[0] !== "") {
-        widget.deselectAll();
-        for (var i in packages) {
-            var pkg = trim(packages[i]);
-            widget.selectComponent(pkg);
-        }
-    }
-    gui.clickButton(buttons.NextButton);
-}
-
-Controller.prototype.LicenseAgreementPageCallback = function() {
-    gui.currentPageWidget().AcceptLicenseRadioButton.setChecked(true);
-    gui.clickButton(buttons.NextButton);
-}
-
-Controller.prototype.StartMenuDirectoryPageCallback = function() {
-    gui.clickButton(buttons.NextButton);
-}
-
-Controller.prototype.ReadyForInstallationPageCallback = function()
-{
-    gui.clickButton(buttons.NextButton);
-}
-
-Controller.prototype.FinishedPageCallback = function() {
-    var checkBoxForm = gui.currentPageWidget().LaunchQtCreatorCheckBoxForm
-    if (checkBoxForm && checkBoxForm.launchQtCreatorCheckBox) {
-        checkBoxForm.launchQtCreatorCheckBox.checked = false;
-    }
-    gui.clickButton(buttons.FinishButton);
-}
-EOF
-}
-
-if [ ! -e "$QT_SDK_DIR" ] && [ ! -e "$QT_SDK_DIR2" ] && [ ! -e "$QT_SDK_DIR3" ]
+if [ ! -e "$QT_SDK_DIR" ]
 then
-   if [ -z "$QT_SDK_CUSTOM" ]; then
-      # download and install via Qt online installer
-      wget $QT_SDK_URL -O /tmp/$QT_SDK_BINARY
-      chmod u+x /tmp/$QT_SDK_BINARY
-      write_qt_script
-
-      # online installer sometimes fails, keep trying...
-      retryCounter=0
-      while [ ! -e "$QT_SDK_DIR" ] && [ ! -e "$QT_SDK_DIR2" ] && [ ! -e "$QT_SDK_DIR3" ] && [ $retryCounter -le 5 ] 
-      do
-         echo "Installing Qt, this will take a while."
-         echo " - Ignore warnings about QtAccount credentials and/or XDG_RUNTIME_DIR."
-         echo " - Do not click on any Qt setup dialogs, it is controlled by a script."
-         /tmp/$QT_SDK_BINARY --script $QT_SCRIPT
-         ((retryCounter++))
-      done
-      rm -f /tmp/$QT_SDK_BINARY $QT_SCRIPT
-   else
-      QT_SDK_BINARY=$QT_SDK_CUSTOM
-      QT_SDK_URL=https://s3.amazonaws.com/rstudio-buildtools/$QT_SDK_BINARY
-      
-      # download and install
-      wget $QT_SDK_URL -O /tmp/$QT_SDK_BINARY
-      cd `dirname $QT_SDK_DIR`
-      tar xzf /tmp/$QT_SDK_BINARY
-      rm /tmp/$QT_SDK_BINARY
-   fi
-      
-   if [ ! -e "$QT_SDK_DIR" ] && [ ! -e "$QT_SDK_DIR2" ] && [ ! -e "$QT_SDK_DIR3" ]; then
+   QT_SDK_URL=https://s3.amazonaws.com/rstudio-buildtools/$QT_SDK_CUSTOM
+   
+   # download and install
+   wget $QT_SDK_URL -O /tmp/$QT_SDK_CUSTOM
+   cd `dirname $QT_SDK_DIR`
+   tar xzf /tmp/$QT_SDK_CUSTOM
+   rm /tmp/$QT_SDK_CUSTOM
+   
+   if [ ! -e "$QT_SDK_DIR" ]; then
       echo "Error: Unable to install Qt, run script again or install manually." 
       exit 1
    fi

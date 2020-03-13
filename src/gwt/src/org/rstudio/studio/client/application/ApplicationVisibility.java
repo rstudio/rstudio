@@ -1,7 +1,7 @@
 /*
  * ApplicationVisibility.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -42,7 +42,7 @@ public class ApplicationVisibility
       satelliteManager_ = satelliteManager;
       
       // don't register for visibility changed events in desktop mode
-      if (Desktop.isDesktop())
+      if (Desktop.hasDesktopFrame())
          return;
      
       // initialize after we have session info
@@ -74,7 +74,7 @@ public class ApplicationVisibility
                      if (isHidden())
                         handleApplicationVisibilityChanged();
                   }
-               }.schedule(5000);;
+               }.schedule(5000);
             }
             catch(Exception e)
             {

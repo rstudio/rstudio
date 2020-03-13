@@ -1,7 +1,7 @@
 /*
  * RExec.hpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-12 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -24,7 +24,7 @@
 #include <boost/scoped_ptr.hpp>
 #include <boost/function.hpp>
 
-#include <core/Error.hpp>
+#include <shared_core/Error.hpp>
 #include <core/system/System.hpp>
 
 #include <r/RSexp.hpp> 
@@ -236,6 +236,20 @@ public:
       
       // convert result to c++ accessible type
       return sexp::extract(resultSEXP, pValue) ;
+   }
+
+   template <typename T>
+   core::Error callUtf8(T* pValue)
+   {
+      // call the function
+      sexp::Protect rProtect;
+      SEXP resultSEXP ;
+      core::Error error = call(R_GlobalEnv, &resultSEXP, &rProtect);
+      if (error)
+         return error ;
+
+      // convert result to c++ accessible type
+      return sexp::extract(resultSEXP, pValue, true);
    }
    
 private:

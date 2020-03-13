@@ -1,7 +1,7 @@
 /*
  * SessionFilesListingMonitor.hpp
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -23,7 +23,7 @@
 
 #include <core/collection/Tree.hpp>
 
-#include <core/json/Json.hpp>
+#include <shared_core/json/Json.hpp>
 #include <core/system/FileMonitor.hpp>
 
 namespace rstudio {

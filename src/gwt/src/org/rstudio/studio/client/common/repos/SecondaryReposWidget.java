@@ -1,7 +1,7 @@
 /*
  * SecondaryReposWidget.java
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -16,6 +16,7 @@ package org.rstudio.studio.client.common.repos;
 
 import java.util.ArrayList;
 
+import com.google.gwt.user.client.ui.Widget;
 import org.rstudio.core.client.widget.MessageDialog;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.OperationWithInput;
@@ -42,7 +43,7 @@ public class SecondaryReposWidget extends Composite
    {
       RStudioGinjector.INSTANCE.injectMembers(this);
       
-      repos_ = new ArrayList<CRANMirror>();
+      repos_ = new ArrayList<>();
       
       VerticalPanel panel = new VerticalPanel();
       panel.addStyleName(RES.styles().panel());
@@ -109,12 +110,20 @@ public class SecondaryReposWidget extends Composite
       cranRepoUrl_ = cranUrl;
       cranIsCustom_ = cranIsCustom;
    }
+
+   /**
+    * @return the widget that should be labeled for accessibility purposes
+    */
+   public Widget getLabeledWidget()
+   {
+      return listBox_;
+   }
    
    private ClickHandler addButtonClicked_ = new ClickHandler() {
       @Override
       public void onClick(ClickEvent event)
       {
-         ArrayList<String> excluded = new ArrayList<String>();
+         ArrayList<String> excluded = new ArrayList<>();
          for (int i = 0; i < repos_.size(); i++)
             excluded.add(repos_.get(i).getName());
          

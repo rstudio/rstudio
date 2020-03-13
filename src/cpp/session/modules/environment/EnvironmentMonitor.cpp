@@ -1,7 +1,7 @@
 /*
  * EnvironmentMonitor.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -18,7 +18,7 @@
 #include <r/RSexp.hpp>
 #include <r/RInterface.hpp>
 #include <session/SessionModuleContext.hpp>
-#include <session/SessionUserSettings.hpp>
+#include <session/prefs/UserPrefs.hpp>
 
 #include "EnvironmentUtils.hpp"
 
@@ -114,15 +114,19 @@ SEXP EnvironmentMonitor::getMonitoredEnvironment()
 
 bool EnvironmentMonitor::hasEnvironment()
 {
-   return getMonitoredEnvironment() != NULL;
+   SEXP envir = getMonitoredEnvironment();
+   return envir != nullptr && r::sexp::isPrimitiveEnvironment(envir);
 }
 
 void EnvironmentMonitor::listEnv(std::vector<r::sexp::Variable>* pEnv)
 {
+   if (!hasEnvironment())
+      return;
+
    r::sexp::Protect rProtect;
    r::sexp::listEnvironment(getMonitoredEnvironment(),
                             false,
-                            userSettings().showLastDotValue(),
+                            prefs::userPrefs().showLastDotValue(),
                             &rProtect,
                             pEnv);
 }

@@ -1,7 +1,7 @@
 /*
  * ConnectionsPresenter.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * This program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
@@ -49,7 +49,8 @@ import org.rstudio.studio.client.workbench.model.ClientState;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.model.helper.JSObjectStateValue;
-import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserState;
 import org.rstudio.studio.client.workbench.views.BasePresenter;
 import org.rstudio.studio.client.workbench.views.connections.events.ActiveConnectionsChangedEvent;
 import org.rstudio.studio.client.workbench.views.connections.events.ConnectionListChangedEvent;
@@ -112,7 +113,8 @@ public class ConnectionsPresenter extends BasePresenter
                                ConnectionsServerOperations server,
                                GlobalDisplay globalDisplay,
                                EventBus eventBus,
-                               UIPrefs uiPrefs,
+                               UserPrefs userPrefs,
+                               UserState userState,
                                Binder binder,
                                final Commands commands,
                                WorkbenchListManager listManager,
@@ -124,7 +126,8 @@ public class ConnectionsPresenter extends BasePresenter
       display_ = display;
       commands_ = commands;
       server_ = server;
-      uiPrefs_ = uiPrefs;
+      state_ = userState;
+      userPrefs_ = userPrefs;
       globalDisplay_ = globalDisplay;
       eventBus_ = eventBus;
       applicationInterrupt_ = applicationInterrupt;
@@ -153,7 +156,7 @@ public class ConnectionsPresenter extends BasePresenter
          @Override
          public void onClick(ClickEvent event)
          {
-            showAllConnections(true);
+            showAllConnections(!userPrefs_.reducedMotion().getValue());
          }
       });
       
@@ -272,7 +275,7 @@ public class ConnectionsPresenter extends BasePresenter
    
    public void onNewConnection()
    {
-      // if r session bussy, fail
+      // if r session busy, fail
       if (commands_.interruptR().isEnabled()) {
          showError(
             "The R session is currently busy. Wait for completion or " +
@@ -435,7 +438,7 @@ public class ConnectionsPresenter extends BasePresenter
                  {
                      exploredConnection_ = removingConnection;
                      disconnectConnection(false);
-                     showAllConnections(true);
+                     showAllConnections(!userPrefs_.reducedMotion().getValue());
                  }
                  @Override
                  protected void onFailure()
@@ -542,7 +545,7 @@ public class ConnectionsPresenter extends BasePresenter
    private void exploreConnection(Connection connection)
    {
       exploredConnection_ = connection;
-      display_.showConnectionExplorer(connection, uiPrefs_.connectionsConnectVia().getValue());
+      display_.showConnectionExplorer(connection, state_.connectVia().getValue());
       manageUI();
    }
    
@@ -600,7 +603,8 @@ public class ConnectionsPresenter extends BasePresenter
    private final Display display_ ;
    private final EventBus eventBus_;
    private final Commands commands_;
-   private UIPrefs uiPrefs_;
+   private UserState state_;
+   private UserPrefs userPrefs_;
    private final ConnectionsServerOperations server_ ;
    @SuppressWarnings("unused") private final ApplicationInterrupt applicationInterrupt_;
    

@@ -1,7 +1,7 @@
 /*
  * SessionSourceCpp.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -20,8 +20,8 @@
 #include <boost/algorithm/string/join.hpp>
 
 #include <core/BoostSignals.hpp>
-#include <core/Error.hpp>
-#include <core/FilePath.hpp>
+#include <shared_core/Error.hpp>
+#include <shared_core/FilePath.hpp>
 #include <core/StringUtils.hpp>
 
 #include <r/RSexp.hpp>
@@ -43,7 +43,7 @@ namespace {
 
 struct SourceCppState
 {
-   bool empty() const { return errors.empty() && outputs.empty(); }
+   bool empty() const { return errors.isEmpty() && outputs.isEmpty(); }
 
    void clear()
    {
@@ -64,7 +64,7 @@ struct SourceCppState
       stateJson["target_file"] = targetFile;
       stateJson["outputs"] = outputs;
       stateJson["errors"] = errors;
-      return stateJson;
+      return std::move(stateJson);
    }
 
    std::string targetFile;
@@ -91,7 +91,7 @@ void enqueSourceCppCompleted(const FilePath& sourceFile,
 
    // parse errors
    std::string allOutput = output + "\n" + errorOutput;
-   CompileErrorParser errorParser = gccErrorParser(sourceFile.parent());
+   CompileErrorParser errorParser = gccErrorParser(sourceFile.getParent());
    std::vector<SourceMarker> errors = errorParser(allOutput);
    sourceCppState.errors = sourceMarkersAsJson(errors);
 
@@ -274,21 +274,8 @@ SEXP rs_sourceCppOnBuildComplete(SEXP sSucceeded, SEXP sOutput)
 
 Error initialize()
 {
-
-   // onBuild hook
-   R_CallMethodDef sourceCppOnBuildMethodDef ;
-   sourceCppOnBuildMethodDef.name = "rs_sourceCppOnBuild" ;
-   sourceCppOnBuildMethodDef.fun = (DL_FUNC)rs_sourceCppOnBuild ;
-   sourceCppOnBuildMethodDef.numArgs = 3;
-   r::routines::addCallMethod(sourceCppOnBuildMethodDef);
-
-   // onBuildCompleted hook
-   R_CallMethodDef sourceCppOnBuildCompleteMethodDef ;
-   sourceCppOnBuildCompleteMethodDef.name = "rs_sourceCppOnBuildComplete";
-   sourceCppOnBuildCompleteMethodDef.fun = (DL_FUNC)rs_sourceCppOnBuildComplete;
-   sourceCppOnBuildCompleteMethodDef.numArgs = 2;
-   r::routines::addCallMethod(sourceCppOnBuildCompleteMethodDef);
-
+   RS_REGISTER_CALL_METHOD(rs_sourceCppOnBuild);
+   RS_REGISTER_CALL_METHOD(rs_sourceCppOnBuildComplete);
    return Success();
 }
 

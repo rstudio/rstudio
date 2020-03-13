@@ -1,7 +1,7 @@
 /*
  * RShadowPngGraphicsHandler.cpp
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,6 +14,7 @@
  */
 
 #include <iostream>
+#include <gsl/gsl>
 
 #include <boost/bind.hpp>
 #include <boost/format.hpp>
@@ -47,7 +48,7 @@ namespace {
 class PreserveCurrentDeviceScope
 {
 public:
-   PreserveCurrentDeviceScope() : previousDevice_(NULL)
+   PreserveCurrentDeviceScope() : previousDevice_(nullptr)
    {
       if (!NoDevices())
          previousDevice_ = GEcurrentDevice();
@@ -57,7 +58,7 @@ public:
       try
       {
          // always restore previous device
-         if (previousDevice_ != NULL)
+         if (previousDevice_ != nullptr)
             selectDevice(ndevNumber(previousDevice_->dev));
       }
       catch(...)
@@ -70,30 +71,43 @@ private:
 
 struct ShadowDeviceData
 {
-   ShadowDeviceData() : pShadowPngDevice(NULL) {}
+   ShadowDeviceData() : pShadowPngDevice(nullptr) {}
    pDevDesc pShadowPngDevice;
 };
 
 void shadowDevOff(DeviceContext* pDC)
 {
-   ShadowDeviceData* pDevData = (ShadowDeviceData*)pDC->pDeviceSpecific;
-   if (pDevData->pShadowPngDevice != NULL)
+   // check for null pointers
+   if (pDC == nullptr)
    {
-      // kill the deviceF
-      pGEDevDesc geDev = desc2GEDesc(pDevData->pShadowPngDevice);
-
-      // only kill it is if is still alive
-      if (ndevNumber(pDevData->pShadowPngDevice) > 0)
-      {
-         // close the device -- don't log R errors because they can happen
-         // in the ordinary course of things for invalid graphics staes
-         Error error = r::exec::executeSafely(boost::bind(GEkillDevice, geDev));
-         if (error && !r::isCodeExecutionError(error))
-            LOG_ERROR(error);
-      }
-      // set to null
-      pDevData->pShadowPngDevice = NULL;
+      LOG_WARNING_MESSAGE("unexpected null device context");
+      return;
    }
+   
+   if (pDC->pDeviceSpecific == nullptr)
+   {
+      LOG_WARNING_MESSAGE("unexpected null device data");
+      return;
+   }
+   
+   // check and see if the device has already been turned off
+   ShadowDeviceData* pDevData = (ShadowDeviceData*) pDC->pDeviceSpecific;
+   if (pDevData->pShadowPngDevice == nullptr)
+      return;
+   
+   // kill the device if it's still alive
+   pGEDevDesc geDev = desc2GEDesc(pDevData->pShadowPngDevice);
+   if (ndevNumber(pDevData->pShadowPngDevice) > 0)
+   {
+      // close the device -- don't log R errors because they can happen
+      // in the ordinary course of things for invalid graphics staes
+      Error error = r::exec::executeSafely(boost::bind(GEkillDevice, geDev));
+      if (error && !r::isCodeExecutionError(error))
+         LOG_ERROR(error);
+   }
+   
+   // set to null
+   pDevData->pShadowPngDevice = nullptr;
 }
 
 Error shadowDevDesc(DeviceContext* pDC, pDevDesc* pDev)
@@ -101,22 +115,22 @@ Error shadowDevDesc(DeviceContext* pDC, pDevDesc* pDev)
    ShadowDeviceData* pDevData = (ShadowDeviceData*)pDC->pDeviceSpecific;
 
    // generate on demand
-   if (pDevData->pShadowPngDevice == NULL ||
+   if (pDevData->pShadowPngDevice == nullptr ||
        ndevNumber(pDevData->pShadowPngDevice) == 0)
    {
-      pDevData->pShadowPngDevice = NULL;
+      pDevData->pShadowPngDevice = nullptr;
 
       PreserveCurrentDeviceScope preserveCurrentDeviceScope;
 
       // determine width, height, and res
-      int width = static_cast<int>(pDC->width * pDC->devicePixelRatio);
-      int height = static_cast<int>(pDC->height * pDC->devicePixelRatio);
-      int res = static_cast<int>(96.0 * pDC->devicePixelRatio);
+      int width = gsl::narrow_cast<int>(pDC->width * pDC->devicePixelRatio);
+      int height = gsl::narrow_cast<int>(pDC->height * pDC->devicePixelRatio);
+      int res = gsl::narrow_cast<int>(96.0 * pDC->devicePixelRatio);
 
       // create PNG device (completely bail on error)
       boost::format fmt("grDevices:::png(\"%1%\", %2%, %3%, res = %4% %5%)");
       std::string code = boost::str(fmt %
-                                    string_utils::utf8ToSystem(pDC->targetPath.absolutePath()) %
+                                    string_utils::utf8ToSystem(pDC->targetPath.getAbsolutePath()) %
                                     width %
                                     height %
                                     res %
@@ -142,12 +156,12 @@ pDevDesc shadowDevDesc(pDevDesc dev)
    {
       DeviceContext* pDC = (DeviceContext*)dev->deviceSpecific;
 
-      pDevDesc shadowDev = NULL;
+      pDevDesc shadowDev = nullptr;
       Error error = shadowDevDesc(pDC, &shadowDev);
       if (error)
       {
          LOG_ERROR(error);
-         throw r::exec::RErrorException(error.summary());
+         throw r::exec::RErrorException(error.getSummary());
       }
 
       return shadowDev;
@@ -159,14 +173,15 @@ pDevDesc shadowDevDesc(pDevDesc dev)
    }
 
    // keep compiler happy
-   return NULL;
+   return nullptr;
 }
 
 FilePath tempFile(const std::string& extension)
 {
    FilePath tempFileDir(string_utils::systemToUtf8(R_TempDir));
-   FilePath tempFilePath = tempFileDir.complete(core::system::generateUuid(false) +
-                                                "." + extension);
+   FilePath tempFilePath = tempFileDir.completePath(
+      core::system::generateUuid(false) +
+      "." + extension);
    return tempFilePath;
 }
 
@@ -180,7 +195,7 @@ void shadowDevSync(DeviceContext* pDC)
    // copy the rstudio device's display list onto the shadow device
    PreserveCurrentDeviceScope preserveCurrentDevice;
 
-   pDevDesc dev = NULL;
+   pDevDesc dev = nullptr;
    Error error = shadowDevDesc(pDC, &dev);
    if (error)
    {
@@ -245,7 +260,7 @@ void setSize(pDevDesc pDev)
 void setDeviceAttributes(pDevDesc pDev)
 {
    pDevDesc shadowDev = shadowDevDesc(pDev);
-   if (shadowDev == NULL)
+   if (shadowDev == nullptr)
       return;
    
    dev_desc::setDeviceAttributes(pDev, shadowDev);
@@ -329,7 +344,7 @@ void circle(double x,
             pDevDesc dev)
 {
    pDevDesc pngDevDesc = shadowDevDesc(dev);
-   if (pngDevDesc == NULL)
+   if (pngDevDesc == nullptr)
       return;
    
    dev_desc::circle(x, y, r, gc, pngDevDesc);
@@ -343,7 +358,7 @@ void line(double x1,
           pDevDesc dev)
 {
    pDevDesc pngDevDesc = shadowDevDesc(dev);
-   if (pngDevDesc == NULL)
+   if (pngDevDesc == nullptr)
       return;
  
    dev_desc::line(x1, y1, x2, y2, gc, pngDevDesc);
@@ -356,7 +371,7 @@ void polygon(int n,
              pDevDesc dev)
 {
    pDevDesc pngDevDesc = shadowDevDesc(dev);
-   if (pngDevDesc == NULL)
+   if (pngDevDesc == nullptr)
       return;
    
    dev_desc::polygon(n, x, y, gc, pngDevDesc);
@@ -369,7 +384,7 @@ void polyline(int n,
               pDevDesc dev)
 {
    pDevDesc pngDevDesc = shadowDevDesc(dev);
-   if (pngDevDesc == NULL)
+   if (pngDevDesc == nullptr)
       return;
    
    dev_desc::polyline(n, x, y, gc, pngDevDesc);
@@ -383,7 +398,7 @@ void rect(double x0,
           pDevDesc dev)
 {
    pDevDesc pngDevDesc = shadowDevDesc(dev);
-   if (pngDevDesc == NULL)
+   if (pngDevDesc == nullptr)
       return;
    
    dev_desc::rect(x0, y0, x1, y1, gc, pngDevDesc);
@@ -398,7 +413,7 @@ void path(double *x,
           pDevDesc dd)
 {
    pDevDesc pngDevDesc = shadowDevDesc(dd);
-   if (pngDevDesc == NULL)
+   if (pngDevDesc == nullptr)
       return;
    
    dev_desc::path(x, y, npoly, nper, winding, gc, pngDevDesc);
@@ -417,7 +432,7 @@ void raster(unsigned int *raster,
             pDevDesc dd)
 {
    pDevDesc pngDevDesc = shadowDevDesc(dd);
-   if (pngDevDesc == NULL)
+   if (pngDevDesc == nullptr)
       return;
    
    dev_desc::raster(raster,
@@ -436,7 +451,7 @@ void raster(unsigned int *raster,
 SEXP cap(pDevDesc dd)
 {
    pDevDesc pngDevDesc = shadowDevDesc(dd);
-   if (pngDevDesc == NULL)
+   if (pngDevDesc == nullptr)
       return R_NilValue;
    
    return dev_desc::cap(pngDevDesc);
@@ -450,7 +465,7 @@ void metricInfo(int c,
                 pDevDesc dev)
 {
    pDevDesc pngDevDesc = shadowDevDesc(dev);
-   if (pngDevDesc == NULL)
+   if (pngDevDesc == nullptr)
       return;
    
    dev_desc::metricInfo(c, gc, ascent, descent, width, pngDevDesc);
@@ -459,8 +474,8 @@ void metricInfo(int c,
 double strWidth(const char *str, const pGEcontext gc, pDevDesc dev)
 {
    pDevDesc pngDevDesc = shadowDevDesc(dev);
-   if (pngDevDesc == NULL)
-      return ::strlen(str);
+   if (pngDevDesc == nullptr)
+      return gsl::narrow_cast<double>(::strlen(str));
    
    return dev_desc::strWidth(str, gc, pngDevDesc);
 }
@@ -474,7 +489,7 @@ void text(double x,
           pDevDesc dev)
 {   
    pDevDesc pngDevDesc = shadowDevDesc(dev);
-   if (pngDevDesc == NULL)
+   if (pngDevDesc == nullptr)
       return;
    
    dev_desc::text(x, y, str, rot, hadj, gc, pngDevDesc);
@@ -483,7 +498,7 @@ void text(double x,
 void clip(double x0, double x1, double y0, double y1, pDevDesc dev)
 {
    pDevDesc pngDevDesc = shadowDevDesc(dev);
-   if (pngDevDesc == NULL)
+   if (pngDevDesc == nullptr)
       return;
    
    dev_desc::clip(x0, x1, y0, y1, pngDevDesc);
@@ -492,7 +507,7 @@ void clip(double x0, double x1, double y0, double y1, pDevDesc dev)
 void newPage(const pGEcontext gc, pDevDesc dev)
 {
    pDevDesc pngDevDesc = shadowDevDesc(dev);
-   if (pngDevDesc == NULL)
+   if (pngDevDesc == nullptr)
       return;
    
    dev_desc::newPage(gc, pngDevDesc);
@@ -501,7 +516,7 @@ void newPage(const pGEcontext gc, pDevDesc dev)
 void mode(int mode, pDevDesc dev)
 {
    pDevDesc pngDevDesc = shadowDevDesc(dev);
-   if (pngDevDesc == NULL)
+   if (pngDevDesc == nullptr)
       return;
    
    dev_desc::mode(mode, pngDevDesc);
@@ -513,9 +528,9 @@ void onBeforeExecute(DeviceContext* pDC)
    // then switch to the rstudio device. note this can occur if the
    // user creates another device such as windows() or postscript() and
    // then does a dev.off
-   pGEDevDesc pCurrentDevice = NoDevices() ? NULL : GEcurrentDevice();
+   pGEDevDesc pCurrentDevice = NoDevices() ? nullptr : GEcurrentDevice();
    ShadowDeviceData* pShadowDevData = (ShadowDeviceData*)pDC->pDeviceSpecific;
-   if (pCurrentDevice != NULL && pShadowDevData != NULL)
+   if (pCurrentDevice != nullptr && pShadowDevData != nullptr)
    {
       if (pCurrentDevice->dev == pShadowDevData->pShadowPngDevice)
       {

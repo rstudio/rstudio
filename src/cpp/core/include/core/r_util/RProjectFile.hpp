@@ -1,7 +1,7 @@
 /*
  * RProjectFile.hpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-12 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -88,7 +88,8 @@ struct RProjectConfig
         tutorialPath(),
         quitChildProcessesOnExit(DefaultValue),
         disableExecuteRprofile(false),
-        defaultOpenDocs()
+        defaultOpenDocs(),
+        defaultTutorial()
    {
    }
 
@@ -122,6 +123,7 @@ struct RProjectConfig
    int quitChildProcessesOnExit;
    bool disableExecuteRprofile;
    std::string defaultOpenDocs;
+   std::string defaultTutorial;
 };
 
 Error findProjectFile(FilePath filePath,

@@ -1,7 +1,7 @@
 /*
  * MacFileMonitor.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -17,12 +17,12 @@
 
 #include <CoreServices/CoreServices.h>
 
-#include <boost/foreach.hpp>
 #include <boost/algorithm/string/trim.hpp>
 #include <boost/algorithm/string/classification.hpp>
+#include <boost/bind.hpp>
 
 #include <core/Log.hpp>
-#include <core/Error.hpp>
+#include <shared_core/Error.hpp>
 #include <core/FileInfo.hpp>
 #include <core/Thread.hpp>
 
@@ -38,18 +38,70 @@ namespace file_monitor {
 
 namespace {
 
+class DirectoryHandle : boost::noncopyable
+{
+public:
+   DirectoryHandle(const std::string& path)
+      : fd_(-1)
+   {
+      const char* cpath = path.c_str();
+      auto f = [&]() { return ::open(cpath, O_DIRECTORY); };
+      Error error = posixCall<int>(f, ERROR_LOCATION, &fd_);
+      if (error)
+         LOG_ERROR(error);
+   }
+
+   ~DirectoryHandle()
+   {
+      if (fd_ != -1)
+      {
+         auto f = [&]() { return ::close(fd_); };
+         safePosixCall<int>(f, ERROR_LOCATION);
+      }
+   }
+
+   FilePath currentPath()
+   {
+      // read the path associated with the descriptor
+      char path[PATH_MAX];
+      auto f = [&]() { return ::fcntl(fd_, F_GETPATH, path); };
+      Error error = posixCall<int>(f, ERROR_LOCATION);
+      if (error)
+         return FilePath();
+
+      // validate the directory still exists
+      FilePath currPath(path);
+      if (!currPath.isDirectory())
+         return FilePath();
+
+      // okay, return the path
+      return currPath;
+   }
+
+private:
+   int fd_;
+};
+
 class FileEventContext : boost::noncopyable
 {
 public:
-   FileEventContext()
-      : streamRef(NULL), recursive(false)
+   FileEventContext(const FilePath& rootPath)
+      : rootPath(rootPath),
+        rootHandle(rootPath.getAbsolutePathNative()),
+        streamRef(nullptr),
+        recursive(false)
    {
       handle = Handle((void*)this);
    }
-   virtual ~FileEventContext() {}
+
+   virtual ~FileEventContext()
+   {
+   }
+
    Handle handle;
-   FSEventStreamRef streamRef;
    FilePath rootPath;
+   DirectoryHandle rootHandle;
+   FSEventStreamRef streamRef;
    bool recursive;
    boost::function<bool(const FileInfo&)> filter;
    tree<FileInfo> fileTree;
@@ -72,31 +124,43 @@ void fileEventCallback(ConstFSEventStreamRef streamRef,
    if (!pContext->callbacks.onFilesChanged)
       return;
 
-   char **paths = (char**)eventPaths;
-   for (std::size_t i=0; i<numEvents; i++)
+   // de-register the file monitor if the root path has changed or been
+   // removed
+   //
+   // NOTE: on macOS Catalina, we observed spurious 'RootChanged' events
+   // delivered causing the file monitor to erroneously detach. protect
+   // against this by also double-checking whether the original path
+   // monitored and the path reported by the file handle match up
+   //
+   // We check for filesystem equivalence (not path equivalence) since macOS 
+   // Catalina can issue a RootChanged event for conversion to/from a 
+   // canonicalized /System/Volumes/Data path.
+   //
+   // https://github.com/rstudio/rstudio/issues/4755
+   if (!pContext->rootPath.isEquivalentTo(pContext->rootHandle.currentPath()))
    {
-      // check for root changed (unregister)
-      if (eventFlags[i] & kFSEventStreamEventFlagRootChanged)
-      {
-         // propagate error to client
-         Error error = fileNotFoundError(pContext->rootPath.absolutePath(),
-                                         ERROR_LOCATION);
-         pContext->callbacks.onMonitoringError(error);
+      // propagate error to client
+      Error error = fileNotFoundError(pContext->rootPath.getAbsolutePath(),
+                                      ERROR_LOCATION);
+      pContext->callbacks.onMonitoringError(error);
 
-         // unregister this monitor (this is done via postback from the
-         // main file_monitor loop so that the monitor Handle can be tracked)
-         file_monitor::unregisterMonitor(pContext->handle);
+      // unregister this monitor (this is done via postback from the
+      // main file_monitor loop so that the monitor Handle can be tracked)
+      file_monitor::unregisterMonitor(pContext->handle);
 
-         return;
-      }
+      return;
+   }
 
+   char **paths = (char**) eventPaths;
+   for (std::size_t i = 0; i < numEvents; i++)
+   {
       // make a copy of the path and strip off trailing / if necessary
       std::string path(paths[i]);
       boost::algorithm::trim_right_if(path, boost::algorithm::is_any_of("/"));
 
       // if we aren't in recursive mode then ignore this if it isn't for
       // the root directory
-      if (!pContext->recursive && (path != pContext->rootPath.absolutePath()))
+      if (!pContext->recursive && (path != pContext->rootPath.getAbsolutePath()))
          continue;
 
       // get FileInfo for this directory
@@ -117,7 +181,7 @@ void fileEventCallback(ConstFSEventStreamRef streamRef,
                                              &(pContext->fileTree),
                                              pContext->callbacks.onFilesChanged);
          if (error &&
-            (error.code() != boost::system::errc::no_such_file_or_directory))
+            (error != systemError(boost::system::errc::no_such_file_or_directory, ErrorLocation())))
          {
             LOG_ERROR(error);
          }
@@ -171,9 +235,9 @@ Handle registerMonitor(const FilePath& filePath,
    // allocate file path
    CFStringRef filePathRef = ::CFStringCreateWithCString(
                                        kCFAllocatorDefault,
-                                       filePath.absolutePath().c_str(),
+                                       filePath.getAbsolutePath().c_str(),
                                        kCFStringEncodingUTF8);
-   if (filePathRef == NULL)
+   if (filePathRef == nullptr)
    {
       callbacks.onRegistrationError(systemError(
                                        boost::system::errc::not_enough_memory,
@@ -186,8 +250,8 @@ Handle registerMonitor(const FilePath& filePath,
    CFArrayRef pathsArrayRef = ::CFArrayCreate(kCFAllocatorDefault,
                                               (const void **)&filePathRef,
                                               1,
-                                              NULL);
-   if (pathsArrayRef == NULL)
+                                              nullptr);
+   if (pathsArrayRef == nullptr)
    {
       callbacks.onRegistrationError(systemError(
                                        boost::system::errc::not_enough_memory,
@@ -196,20 +260,18 @@ Handle registerMonitor(const FilePath& filePath,
    }
    CFRefScope pathsArrayRefScope(pathsArrayRef);
 
-
    // create and allocate FileEventContext (create auto-ptr in case we
    // return early, we'll call release later before returning)
-   FileEventContext* pContext = new FileEventContext();
-   pContext->rootPath = filePath;
+   FileEventContext* pContext = new FileEventContext(filePath);
    pContext->recursive = recursive;
    pContext->filter = filter;
-   std::auto_ptr<FileEventContext> autoPtrContext(pContext);
+   std::unique_ptr<FileEventContext> autoPtrContext(pContext);
    FSEventStreamContext context;
    context.version = 0;
    context.info = (void*) pContext;
-   context.retain = NULL;
-   context.release = NULL;
-   context.copyDescription = NULL;
+   context.retain = nullptr;
+   context.release = nullptr;
+   context.copyDescription = nullptr;
 
    // create the stream and save a reference to it
    pContext->streamRef = ::FSEventStreamCreate(
@@ -221,7 +283,7 @@ Handle registerMonitor(const FilePath& filePath,
                   1,
                   kFSEventStreamCreateFlagNoDefer |
                   kFSEventStreamCreateFlagWatchRoot);
-   if (pContext->streamRef == NULL)
+   if (pContext->streamRef == nullptr)
    {
       callbacks.onRegistrationError(systemError(
                                        boost::system::errc::no_stream_resources,

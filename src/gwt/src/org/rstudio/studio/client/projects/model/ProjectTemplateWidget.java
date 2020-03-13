@@ -1,7 +1,7 @@
 /*
  * ProjectTemplateWidget.java
  *
- * Copyright (C) 2009-16 by RStudio, Inc.
+ * Copyright (C) 2009-20 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -18,16 +18,18 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.rstudio.core.client.Debug;
+import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.js.JsObject;
 import org.rstudio.core.client.widget.FileChooserTextBox;
+import org.rstudio.core.client.widget.LayoutGrid;
 import org.rstudio.core.client.widget.SelectWidget;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.FlowPanel;
-import com.google.gwt.user.client.ui.Grid;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.TextBox;
@@ -60,7 +62,7 @@ public class ProjectTemplateWidget extends Composite
    
    public ProjectTemplateWidget(ProjectTemplateDescription description)
    {
-      widgets_ = new ArrayList<ProjectTemplateWidgetItem>();
+      widgets_ = new ArrayList<>();
       
       // initialize widgets
       JsArray<ProjectTemplateWidgetDescription> descriptions = description.getWidgetDescription();
@@ -179,8 +181,8 @@ public class ProjectTemplateWidget extends Composite
       if (!StringUtil.isNullOrEmpty(defaultValue))
          primaryWidget.setText(defaultValue);
       
-      Grid grid = new Grid(1, 2);
-      primaryWidget.getElement().setAttribute("spellcheck", "false");
+      LayoutGrid grid = new LayoutGrid(1, 2);
+      DomUtils.disableSpellcheck(primaryWidget);
       grid.setWidget(0, 0, new Label(ensureEndsWithColon(description.getLabel())));
       grid.setWidget(0, 1, primaryWidget);
       
@@ -197,7 +199,8 @@ public class ProjectTemplateWidget extends Composite
    
    private ProjectTemplateWidgetItem fileInput(final ProjectTemplateWidgetDescription description)
    {
-      final FileChooserTextBox widget = new FileChooserTextBox(description.getLabel(), null);
+      final FileChooserTextBox widget = new FileChooserTextBox(description.getLabel(), "",
+         ElementIds.TextBoxButtonId.PROJECT_TEMPLATE, false, null, null);
       
       String defaultValue = description.getDefault();
       if (!StringUtil.isNullOrEmpty(defaultValue))

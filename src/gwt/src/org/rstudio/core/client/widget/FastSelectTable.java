@@ -1,7 +1,7 @@
 /*
  * FastSelectTable.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-12 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -18,7 +18,6 @@ import com.google.gwt.core.client.JavaScriptException;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.*;
-import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style.Cursor;
 import com.google.gwt.event.dom.client.*;
 import com.google.gwt.event.shared.HandlerRegistration;
@@ -450,7 +449,7 @@ public class FastSelectTable<TItemInput, TItemOutput, TItemOutput2> extends Widg
       }
       catch (JavaScriptException ex)
       {
-    	  	 return;
+         return;
       }
 
       boolean isCurrentlySelected = isSelected(row);

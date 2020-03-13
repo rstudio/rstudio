@@ -1,7 +1,7 @@
 /*
  * RSessionContext.hpp
  *
- * Copyright (C) 2009-15 by RStudio, Inc.
+ * Copyright (C) 2009-15 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -164,6 +164,8 @@ public:
    bool isJupyter() const;
    bool isJupyterLab() const;
    bool isJupyterNotebook() const;
+
+   std::string workbench() const;
 
    const std::string project() const { return project_.asString(); }
 

@@ -1,7 +1,7 @@
 /*
  * MirrorsServerOperations.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-12 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -15,15 +15,11 @@
 package org.rstudio.studio.client.common.mirrors.model;
 
 import org.rstudio.studio.client.server.ServerRequestCallback;
-import org.rstudio.studio.client.server.Void;
 
 import com.google.gwt.core.client.JsArray;
 
 public interface MirrorsServerOperations
 {
-   void setCRANMirror(CRANMirror mirror,
-                      ServerRequestCallback<Void> requestCallback);
-   
    void getCRANMirrors(
          ServerRequestCallback<JsArray<CRANMirror>> requestCallback);
 
@@ -32,5 +28,5 @@ public interface MirrorsServerOperations
          String cranRepoUrl);
 
    void getCRANActives(
-   		 ServerRequestCallback<JsArray<CRANMirror>> requestCallback);
+         ServerRequestCallback<JsArray<CRANMirror>> requestCallback);
 }

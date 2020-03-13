@@ -1,7 +1,7 @@
 /*
  * SourceLocation.hpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -21,7 +21,7 @@
 
 #include "clang-c/Index.h"
 
-#include <core/FilePath.hpp>
+#include <shared_core/FilePath.hpp>
 
 namespace rstudio {
 namespace core {
@@ -41,7 +41,7 @@ struct FileLocation
    {
    }
 
-   bool empty() const { return filePath.empty(); }
+   bool empty() const { return filePath.isEmpty(); }
 
    bool operator==(const FileLocation& other) const
    {
@@ -85,14 +85,14 @@ public:
    void getExpansionLocation(std::string* pFile,
                              unsigned* pLine,
                              unsigned* pColumn,
-                             unsigned* pOffset = NULL) const;
+                             unsigned* pOffset = nullptr) const;
 
    void printExpansionLocation(std::ostream& ostr);
 
    bool getSpellingLocation(std::string* pFile,
                             unsigned* pLine,
                             unsigned* pColumn,
-                            unsigned* pOffset = NULL) const;
+                            unsigned* pOffset = nullptr) const;
 
    FileLocation getSpellingLocation() const;
 

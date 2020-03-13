@@ -1,7 +1,7 @@
 /*
  * RErrorCategory.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -27,20 +27,20 @@ public:
 
 const boost::system::error_category& rCategory()
 {
-   static RErrorCategory rErrorCategoryConst ;
-	return rErrorCategoryConst ;
+   static RErrorCategory rErrorCategoryConst;
+   return rErrorCategoryConst;
 }
 
 const char * RErrorCategory::name() const BOOST_NOEXCEPT
 {
-	return "r" ;
+   return "r";
 }
 
 std::string RErrorCategory::message( int ev ) const
 {
-	std::string message ;
-	switch (ev)
-	{         
+   std::string message;
+   switch (ev)
+   {
       case errc::RHomeNotFound:
          message = "Unable to find R home directory";
          break;
@@ -73,12 +73,12 @@ std::string RErrorCategory::message( int ev ) const
          message = "No data available from R";
          break;
          
-		default:
-			message = "Unknown error" ;
-			break;
-	}
+      default:
+         message = "Unknown error";
+         break;
+   }
 
-	return message ;
+   return message;
 }
 
 core::Error rCodeExecutionError(const std::string& errMsg, 
@@ -92,9 +92,9 @@ core::Error rCodeExecutionError(const std::string& errMsg,
    
 bool isCodeExecutionError(const core::Error& error, std::string* pErrMsg)
 {
-   if (error.code() == r::errc::CodeExecutionError)
+   if (error == r::errc::CodeExecutionError)
    {
-      if (pErrMsg != NULL)
+      if (pErrMsg != nullptr)
          *pErrMsg = error.getProperty("errormsg");
       return true;
    }
@@ -110,7 +110,7 @@ std::string endUserErrorMessage(const core::Error& error)
    if (isCodeExecutionError(error, &errMsg))
       return errMsg;
    else
-      return error.code().message();
+      return error.getMessage();
 }
 
    

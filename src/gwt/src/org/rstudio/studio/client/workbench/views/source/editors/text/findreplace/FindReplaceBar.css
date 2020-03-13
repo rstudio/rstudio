@@ -53,7 +53,7 @@
 
 @if rstudio.desktop true {
 .macintosh .checkboxLabel {
-   margin-top: 5px;	
+   margin-top: 5px;
 }
 .ubuntu_mono .checkboxLabel {
    margin-top: 5px;

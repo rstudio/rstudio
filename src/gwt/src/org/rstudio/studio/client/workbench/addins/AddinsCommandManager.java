@@ -13,7 +13,7 @@ import org.rstudio.core.client.command.KeyMap.CommandBinding;
 import org.rstudio.core.client.command.KeyMap.KeyMapType;
 import org.rstudio.core.client.command.KeySequence;
 import org.rstudio.core.client.command.ShortcutManager;
-import org.rstudio.core.client.files.FileBacked;
+import org.rstudio.core.client.files.ConfigFileBacked;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.workbench.MainWindowObject;
 import org.rstudio.studio.client.workbench.addins.Addins.RAddin;
@@ -38,7 +38,7 @@ public class AddinsCommandManager
    {
       events_ = events;
      
-      bindings_ = new FileBacked<EditorKeyBindings>(
+      bindings_ = new ConfigFileBacked<EditorKeyBindings>(
             server,
             KEYBINDINGS_PATH,
             false,
@@ -176,8 +176,8 @@ public class AddinsCommandManager
       return MainWindowObject.rAddins().get();
    }
    
-   private final FileBacked<EditorKeyBindings> bindings_;
-   private static final String KEYBINDINGS_PATH = "~/.R/rstudio/keybindings/addins.json";
+   private final ConfigFileBacked<EditorKeyBindings> bindings_;
+   private static final String KEYBINDINGS_PATH = "keybindings/addins.json";
    
    
    // Injected ----

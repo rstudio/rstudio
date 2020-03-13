@@ -1,7 +1,7 @@
 /*
  * EnvironmentUtils.cpp
  *
- * Copyright (C) 2009-19 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -55,7 +55,7 @@ json::Value descriptionOfVar(SEXP var)
    }
    else
    {
-      return value;
+      return json::Value(value);
    }
 }
 
@@ -78,7 +78,7 @@ bool hasAltrepCapability()
 bool isAltrepImpl(SEXP var)
 {
    // Reject nulls
-   if (var == NULL || var == R_NilValue)
+   if (var == nullptr || var == R_NilValue)
       return false;
 
    // SEXP is a pointer to a structure that begins with an sxpinfo struct, so cast appropriately.
@@ -154,11 +154,11 @@ json::Value languageVarToJson(SEXP env, std::string objectName)
    if (error)
    {
       LOG_ERROR(error);
-      return UNKNOWN_VALUE;
+      return json::Value(UNKNOWN_VALUE);
    }
    else
    {
-      return value;
+      return json::Value(value);
    }
 }
 
@@ -202,7 +202,7 @@ json::Value varToJson(SEXP env, const r::sexp::Variable& var)
          varJson["type"] = std::string("unknown");
          varJson["value"] =  (varSEXP == R_MissingArg) ?
                                  descriptionOfVar(varSEXP) :
-                                 UNKNOWN_VALUE;
+                                 json::Value(UNKNOWN_VALUE);
       }
       varJson["description"] = std::string("");
       varJson["contents"] = json::Array();
@@ -230,7 +230,7 @@ json::Value varToJson(SEXP env, const r::sexp::Variable& var)
             return val;
       }
    }
-   return varJson;
+   return std::move(varJson);
 }
 
 bool functionDiffersFromSource(
@@ -307,7 +307,7 @@ bool functionDiffersFromSource(
 // from the source reference to the JSON object.
 void sourceRefToJson(const SEXP srcref, json::Object* pObject)
 {
-   if (srcref == NULL ||
+   if (srcref == nullptr ||
        r::sexp::isNull(srcref) ||
        r::context::isByteCodeSrcRef(srcref))
    {

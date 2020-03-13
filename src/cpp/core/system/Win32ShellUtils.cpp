@@ -1,7 +1,7 @@
 /*
  * Win32ShellUtils.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-12 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -33,7 +33,7 @@ std::string escape(const std::string& arg)
 
 std::string escape(const core::FilePath& path)
 {
-   return escape(string_utils::utf8ToSystem(path.absolutePath()));
+   return escape(string_utils::utf8ToSystem(path.getAbsolutePath()));
 }
 
 std::string join(const std::string& command1, const std::string& command2)

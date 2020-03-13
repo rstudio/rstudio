@@ -1,7 +1,7 @@
 /*
  * ConsoleProcess.java
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -45,11 +45,6 @@ public class ConsoleProcess implements ConsoleOutputEvent.HasHandlers,
                                        ConsolePromptEvent.HasHandlers,
                                        ProcessExitEvent.HasHandlers
 {
-   public enum TerminalType {
-      DUMB, // simple canonical (line-by-line) terminal
-      XTERM; // xterm-compatible non-canonical terminal
-   }
-   
    @Singleton
    public static class ConsoleProcessFactory
    {

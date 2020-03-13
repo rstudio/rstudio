@@ -1,7 +1,7 @@
 /*
  * ChildProcessSubprocPollTests.cpp
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -48,7 +48,7 @@ public:
    NoSubProcPollingFixture(PidType pid)
       :
         poller_(pid, kResetRecentDelay, kCheckSubprocDelay, kCheckCwdDelay,
-                NULL, std::vector<std::string>(), NULL)
+                0, std::vector<std::string>(), 0)
    {}
 
    ChildProcessSubprocPoll poller_;
@@ -62,7 +62,7 @@ public:
         poller_(pid, kResetRecentDelay, kCheckSubprocDelay, kCheckCwdDelay,
                 boost::bind(&SubProcPollingFixture::checkSubproc, this, _1),
                 std::vector<std::string>(),
-                NULL),
+                0),
         checkReturns_(false),
         callerPid_(0),
         checkCalled_(false)
@@ -102,7 +102,7 @@ public:
    CwdPollingFixture(PidType pid)
       :
         poller_(pid, kResetRecentDelay, kCheckSubprocDelay, kCheckCwdDelay,
-                NULL, std::vector<std::string>(),
+                0, std::vector<std::string>(),
                 boost::bind(&CwdPollingFixture::checkCwd, this, _1)),
         callerPid_(0),
         checkCalled_(false)
@@ -223,7 +223,7 @@ test_context("ChildProcess polling support class")
       CwdPollingFixture test(pid);
 
       expect_true(test.poller_.hasRecentOutput());
-      expect_true(test.poller_.getCwd().empty());
+      expect_true(test.poller_.getCwd().isEmpty());
    }
 }
 

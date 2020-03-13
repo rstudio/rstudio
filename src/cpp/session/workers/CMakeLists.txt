@@ -1,7 +1,7 @@
 #
 # CMakeLists.txt
 #
-# Copyright (C) 2009-12 by RStudio, Inc.
+# Copyright (C) 2009-12 by RStudio, PBC
 #
 # Unless you have received this program directly from RStudio pursuant
 # to the terms of a commercial license agreement with RStudio, then
@@ -29,6 +29,7 @@ set(SESSION_WORKERS_SOURCE_FILES
 # include directories
 include_directories(
    ${CORE_SOURCE_DIR}/include
+   ${SHARED_CORE_SOURCE_DIR}/include
    ${SESSION_SOURCE_DIR}/include/session/worker_safe
 )
 
@@ -36,6 +37,7 @@ include_directories(
 add_library(rstudio-session-workers STATIC
    ${SESSION_WORKERS_SOURCE_FILES}
    ${SESSION_WORKERS_HEADER_FILES})
+define_source_file_names(rstudio-session-workers)
 
 # link dependencies
 target_link_libraries(rstudio-session-workers

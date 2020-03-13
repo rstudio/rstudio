@@ -1,7 +1,7 @@
 /*
  * LineWidgetManager.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-12 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -22,7 +22,14 @@ public class LineWidgetManager extends JavaScriptObject
    protected LineWidgetManager() {}
    
    public native final void addLineWidget(LineWidget widget) /*-{
+      
+      // avoid duplicating a pre-existing line widget
+      var widgets = this.session.lineWidgets || {};
+      if (widgets[widget.row] === widget)
+         return;
+         
       this.addLineWidget(widget);
+      
    }-*/;
    
    public native final void removeLineWidget(LineWidget widget) /*-{

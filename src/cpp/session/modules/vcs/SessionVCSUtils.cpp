@@ -1,7 +1,7 @@
 /*
  * SessionVCSUtils.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-12 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -16,7 +16,7 @@
 
 #include <boost/regex.hpp>
 
-#include <core/json/Json.hpp>
+#include <shared_core/json/Json.hpp>
 
 #include <r/RUtil.hpp>
 
@@ -62,7 +62,7 @@ FilePath fileFilterPath(const json::Value& fileFilterJson)
    if (json::isType<std::string>(fileFilterJson))
    {
       // get the underlying file path
-      std::string aliasedPath= fileFilterJson.get_str();
+      std::string aliasedPath= fileFilterJson.getString();
       return module_context::resolveAliasedPath(aliasedPath);
    }
    else

@@ -1,7 +1,7 @@
 /*
- * ServerSecureCookie.cpp
+ * SecureCookie.cpp
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -215,7 +215,7 @@ void set(const std::string& name,
                       value,
                       request,
                       validDuration,
-                      boost::none,
+                      boost::optional<boost::gregorian::days>(),
                       path,
                       pResponse,
                       secure);
@@ -246,12 +246,38 @@ void set(const std::string& name,
    pResponse->addCookie(cookie);
 }
 
+void set(const std::string& name,
+         const std::string& value,
+         const http::Request& request,
+         const boost::posix_time::time_duration& validDuration,
+         const boost::optional<boost::posix_time::time_duration>& expiresFromNow,
+         const std::string& path,
+         http::Response* pResponse,
+         bool secure)
+{
+   // create secure cookie
+   http::Cookie cookie = createSecureCookie(name,
+                                            value,
+                                            request,
+                                            validDuration,
+                                            path,
+                                            secure);
+
+   // expire from browser as requested
+   if (expiresFromNow.is_initialized())
+      cookie.setExpires(*expiresFromNow);
+
+   // add to response
+   pResponse->addCookie(cookie);
+}
+
 void remove(const http::Request& request,
             const std::string& name,
             const std::string& path,
-            core::http::Response* pResponse)
+            core::http::Response* pResponse,
+            bool secure)
 {
-   // create vanilla cookie (no need for secure cookie since we are removing)
+   // create cookie
    http::Cookie cookie(request, name, std::string(), path);
 
    // expire delete
@@ -259,6 +285,14 @@ void remove(const http::Request& request,
 
    // secure cookies are set http only, so clear them that way
    cookie.setHttpOnly();
+
+   if (secure)
+   {
+      // set secure flag when removing secure cookies; there's no need for a "secure" empty value
+      // but best practices generally dictate always setting the secure flag on cookies delivered
+      // over https
+      cookie.setSecure();
+   }
 
    // add to response
    pResponse->addCookie(cookie);
@@ -281,7 +315,7 @@ Error initialize()
 
 Error initialize(const FilePath& secureKeyFile)
 {
-   if (secureKeyFile.empty())
+   if (secureKeyFile.isEmpty())
       return initialize();
 
    Error error = key_file::readSecureKeyFile(secureKeyFile, &s_secureCookieKey);

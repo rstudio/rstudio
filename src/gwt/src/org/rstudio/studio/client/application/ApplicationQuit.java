@@ -1,7 +1,7 @@
 /*
  * ApplicationQuit.java
  *
- * Copyright (C) 2009-19 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -24,7 +24,6 @@ import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.events.BarrierReleasedEvent;
 import org.rstudio.core.client.events.BarrierReleasedHandler;
 import org.rstudio.core.client.files.FileSystemItem;
-import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.MessageDialog;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.OperationWithInput;
@@ -45,19 +44,21 @@ import org.rstudio.studio.client.application.model.SuspendOptions;
 import org.rstudio.studio.client.application.model.TutorialApiCallContext;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.GlobalProgressDelayer;
-import org.rstudio.studio.client.common.SuperDevMode;
 import org.rstudio.studio.client.common.TimedProgressIndicator;
-import org.rstudio.studio.client.common.filetypes.FileIconResources;
+import org.rstudio.studio.client.common.filetypes.FileIcon;
+import org.rstudio.studio.client.projects.Projects;
+import org.rstudio.studio.client.projects.events.OpenProjectNewWindowEvent;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.events.LastChanceSaveEvent;
+import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionOpener;
 import org.rstudio.studio.client.workbench.model.UnsavedChangesItem;
 import org.rstudio.studio.client.workbench.model.UnsavedChangesTarget;
-import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.ui.unsaved.UnsavedChangesDialog;
 import org.rstudio.studio.client.workbench.ui.unsaved.UnsavedChangesDialog.Result;
 import org.rstudio.studio.client.workbench.views.jobs.model.JobManager;
@@ -66,7 +67,6 @@ import org.rstudio.studio.client.workbench.views.source.SourceShim;
 import org.rstudio.studio.client.workbench.views.terminal.TerminalHelper;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
@@ -85,7 +85,7 @@ public class ApplicationQuit implements SaveActionChangedHandler,
                           EventBus eventBus,
                           WorkbenchContext workbenchContext,
                           SourceShim sourceShim,
-                          Provider<UIPrefs> pUiPrefs,
+                          Provider<UserPrefs> pUiPrefs,
                           Commands commands,
                           Binder binder,
                           TerminalHelper terminalHelper,
@@ -98,16 +98,13 @@ public class ApplicationQuit implements SaveActionChangedHandler,
       eventBus_ = eventBus;
       workbenchContext_ = workbenchContext;
       sourceShim_ = sourceShim;
-      pUiPrefs_ = pUiPrefs;
+      pUserPrefs_ = pUiPrefs;
       terminalHelper_ = terminalHelper;
       pJobManager_ = pJobManager;
       pSessionOpener_ = pSessionOpener;
       
       // bind to commands
       binder.bind(commands, this);
-      
-      // only enable suspendSession() in devmode
-      commands.suspendSession().setVisible(SuperDevMode.isActive());
       
       // subscribe to events
       eventBus.addHandler(SaveActionChangedEvent.TYPE, this);   
@@ -133,7 +130,7 @@ public class ApplicationQuit implements SaveActionChangedHandler,
                               final boolean forceSaveAll,
                               final QuitContext quitContext)
    {
-      int busyMode = pUiPrefs_.get().terminalBusyMode().getValue();
+      String busyMode = pUserPrefs_.get().busyDetection().getValue();
 
       boolean busy = workbenchContext_.isServerBusy() || terminalHelper_.warnBeforeClosing(busyMode);
       String msg = null;
@@ -168,7 +165,7 @@ public class ApplicationQuit implements SaveActionChangedHandler,
       else
       {
          // if we aren't restoring source documents then close them all now
-         if (!pUiPrefs_.get().restoreSourceDocuments().getValue())
+         if (!pUserPrefs_.get().restoreSourceDocuments().getValue())
          {
             sourceShim_.closeAllSourceDocs(caption,
                   () -> handleUnfinishedWork(caption, allowCancel, forceSaveAll, quitContext));
@@ -295,7 +292,7 @@ public class ApplicationQuit implements SaveActionChangedHandler,
       // must be from the main window in web mode)
       else if (saveAction != SaveAction.SAVEASK && 
                unsavedSourceDocs.size() == 1 &&
-               (Desktop.isDesktop() || 
+               (Desktop.hasDesktopFrame() ||
                 !(unsavedSourceDocs.get(0) instanceof UnsavedChangesItem)))
       {
          sourceShim.saveWithPrompt(
@@ -438,7 +435,7 @@ public class ApplicationQuit implements SaveActionChangedHandler,
             // the process exits). since this codepath is only for the quit
             // case (and not the restart or restart and reload cases)
             // we can set the pending quit bit here
-            if (Desktop.isDesktop())
+            if (Desktop.hasDesktopFrame())
             {
                Desktop.getFrame().setPendingQuit(
                         DesktopFrame.PENDING_QUIT_AND_EXIT);
@@ -450,7 +447,7 @@ public class ApplicationQuit implements SaveActionChangedHandler,
          }
          
          private final boolean handled_;
-      };
+      }
       
       // get unsaved source docs
       ArrayList<UnsavedChangesTarget> unsavedSourceDocs = 
@@ -504,7 +501,7 @@ public class ApplicationQuit implements SaveActionChangedHandler,
                         SuspendOptions.createSaveMinimal(saveChanges),
                         null));
                }, "Restart R", "Terminal jobs will be terminated. Are you sure?",
-                  pUiPrefs_.get().terminalBusyMode().getValue());
+                  pUserPrefs_.get().busyDetection().getValue());
             }
          });
    }
@@ -550,7 +547,7 @@ public class ApplicationQuit implements SaveActionChangedHandler,
    
    private void setPendinqQuit(int pendingQuit)
    {
-      if (Desktop.isDesktop())
+      if (Desktop.hasDesktopFrame())
          Desktop.getFrame().setPendingQuit(pendingQuit);
    }
    
@@ -567,6 +564,22 @@ public class ApplicationQuit implements SaveActionChangedHandler,
             (boolean saveChanges) -> performQuit(null, saveChanges));
    }
 
+   public void doRestart(Session session)
+   {
+      prepareForQuit(
+            "Restarting RStudio",
+            saveChanges -> {
+               String project = session.getSessionInfo().getActiveProjectFile();
+               if (project == null)
+                  project = Projects.NONE;
+
+               final String finalProject = project;
+               performQuit(null, saveChanges, () -> {
+                  eventBus_.fireEvent(new OpenProjectNewWindowEvent(finalProject, null));
+               });
+            });
+   }
+
    private UnsavedChangesTarget globalEnvTarget_ = new UnsavedChangesTarget()
    {
       @Override
@@ -576,9 +589,9 @@ public class ApplicationQuit implements SaveActionChangedHandler,
       }
 
       @Override
-      public ImageResource getIcon()
+      public FileIcon getIcon()
       {
-         return new ImageResource2x(FileIconResources.INSTANCE.iconRdata2x()); 
+         return FileIcon.RDATA_ICON;
       }
 
       @Override
@@ -648,7 +661,7 @@ public class ApplicationQuit implements SaveActionChangedHandler,
 
                // notify the desktop frame that we are about to quit
                String switchToProject = StringUtil.create(switchToProject_);
-               if (Desktop.isDesktop())
+               if (Desktop.hasDesktopFrame())
                {
                   Desktop.getFrame().setPendingQuit(switchToProject_ != null ?
                         DesktopFrame.PENDING_QUIT_RESTART_AND_RELOAD :
@@ -706,7 +719,7 @@ public class ApplicationQuit implements SaveActionChangedHandler,
                                  message,
                                  callContext_));
                         }
-                        if (Desktop.isDesktop())
+                        if (Desktop.hasDesktopFrame())
                         {
                            Desktop.getFrame().setPendingQuit(
                                          DesktopFrame.PENDING_QUIT_NONE);
@@ -744,7 +757,7 @@ public class ApplicationQuit implements SaveActionChangedHandler,
    // injected
    private final ApplicationServerOperations server_;
    private final GlobalDisplay globalDisplay_;
-   private final Provider<UIPrefs> pUiPrefs_;
+   private final Provider<UserPrefs> pUserPrefs_;
    private final EventBus eventBus_;
    private final WorkbenchContext workbenchContext_;
    private final SourceShim sourceShim_;

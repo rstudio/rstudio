@@ -1,7 +1,7 @@
 /*
  * ConnectionExplorer.java
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-20 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -54,7 +54,7 @@ public class ConnectionExplorer extends Composite implements RequiresResize
       disconnectedUI_.add(codePanel_);
       Label label = new Label("(Not connected)");
       Style labelStyle = label.getElement().getStyle();
-      labelStyle.setColor("#888");
+      labelStyle.setColor("#767676");
       labelStyle.setMarginTop(25, Unit.PX);
       labelStyle.setTextAlign(TextAlign.CENTER);
       disconnectedUI_.add(label);

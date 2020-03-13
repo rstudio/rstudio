@@ -1,7 +1,7 @@
 /*
  * RVersionInfo.cpp
  *
- * Copyright (C) 2009-19 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -16,7 +16,7 @@
 #include <r/RVersionInfo.hpp>
 #include <r/RExec.hpp>
 
-#include <core/Error.hpp>
+#include <shared_core/Error.hpp>
 
 using namespace rstudio::core;
 using namespace rstudio::core::r_util;

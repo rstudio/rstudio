@@ -1,7 +1,7 @@
 /*
  * ManipulatorControlSlider.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-12 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -63,7 +63,7 @@ public class ManipulatorControlSlider extends ManipulatorControl
       double step = slider.getStep();
       if (step == -1)
       {        
-         // short range or decimals means continous decimal
+         // short range or decimals means continuous decimal
          if (range < 2 || hasDecimals(max) || hasDecimals(min) )
             step = range / 250; // ~ one step per pixel
          else

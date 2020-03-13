@@ -1,8 +1,9 @@
 bin/
 extras/
 gen/
-lib/
 sdk/
 war/
 
+# ignore log files dumped by a crashing GWT devmode
+/*.log
 

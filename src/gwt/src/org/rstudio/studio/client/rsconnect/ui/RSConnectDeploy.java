@@ -1,7 +1,7 @@
 /*
  * RSConnectDeploy.java
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-20 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -16,12 +16,17 @@ package org.rstudio.studio.client.rsconnect.ui;
 
 import java.util.ArrayList;
 
+import com.google.gwt.aria.client.Id;
+import com.google.gwt.aria.client.Roles;
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.Debug;
+import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.JsArrayUtil;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.resources.ImageResource2x;
+import org.rstudio.core.client.widget.FormLabel;
+import org.rstudio.core.client.widget.HyperlinkLabel;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ProgressIndicator;
@@ -45,7 +50,8 @@ import org.rstudio.studio.client.rsconnect.model.RSConnectPublishSource;
 import org.rstudio.studio.client.rsconnect.model.RSConnectServerOperations;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
-import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserState;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArray;
@@ -67,7 +73,6 @@ import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.Anchor;
 import com.google.gwt.user.client.ui.Composite;
-import com.google.gwt.user.client.ui.Grid;
 import com.google.gwt.user.client.ui.HTMLPanel;
 import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.Image;
@@ -172,7 +177,13 @@ public class RSConnectDeploy extends Composite
       // create UI
       initWidget(uiBinder.createAndBindUi(this));
       style_ = RESOURCES.style();
-      
+      nameLabel_.setFor(appName_.getTextBox());
+      accountList_.setLabelledBy(accountListLabel_.getElement());
+      ElementIds.assignElementId(fileListLabel_, ElementIds.RSC_FILES_LIST_LABEL);
+      Roles.getListboxRole().set(fileListPanel_.getElement());
+      Roles.getListboxRole().setAriaLabelledbyProperty(fileListPanel_.getElement(),
+         Id.of(fileListLabel_.getElement()));
+
       if (asWizard)
       {
          deployIllustration_.setVisible(false);
@@ -180,35 +191,24 @@ public class RSConnectDeploy extends Composite
          hideCheckUncheckAllButton();
       }
 
-      final boolean rsConnectEnabled = RStudioGinjector.INSTANCE.getUIPrefs()
-            .enableRStudioConnect().getGlobalValue();
+      final boolean rsConnectEnabled = 
+            userState_.enableRsconnectPublishUi().getGlobalValue();
       
       // Invoke the "add account" wizard
       if (contentType == RSConnect.CONTENT_TYPE_APP || rsConnectEnabled)
       {
-         addAccountAnchor_.addClickHandler(new ClickHandler()
+         addAccountAnchor_.setClickHandler(() ->
          {
-            @Override
-            public void onClick(ClickEvent event)
-            {
-               connector_.showAccountWizard(false, 
-                     contentType == RSConnect.CONTENT_TYPE_APP ||
-                     contentType == RSConnect.CONTENT_TYPE_APP_SINGLE, 
-                     new OperationWithInput<Boolean>() 
-               {
-                  @Override
-                  public void execute(Boolean successful)
+            connector_.showAccountWizard(false,
+                  contentType == RSConnect.CONTENT_TYPE_APP ||
+                  contentType == RSConnect.CONTENT_TYPE_APP_SINGLE,
+                  successful ->
                   {
                      if (successful)
                      {
                         accountList_.refreshAccountList();
                      }
-                  }
-               });
-               
-               event.preventDefault();
-               event.stopPropagation();
-            }
+                  });
          });
       }
       else
@@ -218,18 +218,12 @@ public class RSConnectDeploy extends Composite
          addAccountAnchor_.setVisible(false);
       }
       
-      createNewAnchor_.addClickHandler(new ClickHandler()
+      createNewAnchor_.setClickHandler(() ->
       {
-         @Override
-         public void onClick(ClickEvent event)
-         {
-            event.preventDefault();
-            event.stopPropagation();
-            display_.showMessage(GlobalDisplay.MSG_INFO, 
-                  "Create New Content", 
-                  "To publish this content to a new location, click the Publish drop-down menu " +
-                  "and choose Other Destination.");
-         }
+         display_.showMessage(GlobalDisplay.MSG_INFO, 
+               "Create New Content", 
+               "To publish this content to a new location, click the Publish drop-down menu " +
+               "and choose Other Destination.");
       });
 
       checkUncheckAllButton_.getElement().getStyle().setMarginLeft(0, Unit.PX);
@@ -283,14 +277,16 @@ public class RSConnectDeploy extends Composite
    public void initialize(RSConnectServerOperations server, 
                           RSAccountConnector connector,    
                           GlobalDisplay display,
-                          UIPrefs prefs)
+                          UserPrefs prefs,
+                          UserState state)
    {
       server_ = server;
       connector_ = connector;
       display_ = display;
-      prefs_ = prefs;
+      userPrefs_ = prefs;
+      userState_ = state;
       accountList_ = new RSConnectAccountList(server_, display_, false, 
-            !asStatic_);
+            !asStatic_, "Publish from Account");
       appName_ = new AppNameTextbox(this);
       
       // when the account list finishes populating, select the account from the
@@ -310,7 +306,7 @@ public class RSConnectDeploy extends Composite
                // when doing a first-time publish, select the account the user
                // prefers (currently this just tracks the last account used)
                RSConnectAccount preferred = 
-                     prefs_.preferredPublishAccount().getGlobalValue();
+                     userState_.publishAccount().getGlobalValue().cast();
                if (preferred != null)
                {
                   accountList_.selectAccount(preferred);
@@ -450,7 +446,7 @@ public class RSConnectDeploy extends Composite
       // include all the ones the user added but didn't later uncheck, so
       // cross-reference the list we kept with the one returned by the dialog
       ArrayList<String> deployFiles = getFileList();
-      ArrayList<String> additionalFiles = new ArrayList<String>();
+      ArrayList<String> additionalFiles = new ArrayList<>();
       for (String filePath: filesAddedManually_)
       {
          if (deployFiles.contains(filePath))
@@ -470,10 +466,10 @@ public class RSConnectDeploy extends Composite
       // new content
       if (fromPrevious_ == null && 
           !getSelectedAccount().equals(
-                prefs_.preferredPublishAccount().getGlobalValue()))
+                userState_.publishAccount().getGlobalValue()))
       {
-         prefs_.preferredPublishAccount().setGlobalValue(getSelectedAccount());
-         prefs_.writeUIPrefs();
+         userState_.publishAccount().setGlobalValue(getSelectedAccount());
+         userState_.writeState();
       }
       
       return new RSConnectPublishResult(
@@ -572,7 +568,7 @@ public class RSConnectDeploy extends Composite
    private void setFileList(ArrayList<String> files,
          ArrayList<String> additionalFiles, ArrayList<String> ignoredFiles)
    {
-      fileChecks_ = new ArrayList<DirEntryCheckBox>();
+      fileChecks_ = new ArrayList<>();
       
       // clear existing file list
       fileListPanel_.clear(); 
@@ -860,7 +856,7 @@ public class RSConnectDeploy extends Composite
             });
             return;
          }
-         ArrayList<String> files = new ArrayList<String>();
+         ArrayList<String> files = new ArrayList<>();
          FileSystemItem selfContained = FileSystemItem.createFile(
                      source_.getDeployFile());
          files.add(selfContained.getName());
@@ -964,7 +960,7 @@ public class RSConnectDeploy extends Composite
    
    private ArrayList<String> getCheckedFileList(boolean checked)
    {
-      ArrayList<String> files = new ArrayList<String>();
+      ArrayList<String> files = new ArrayList<>();
       if (fileChecks_ == null)
          return files;
       for (int i = 0; i < fileChecks_.size(); i++)
@@ -1292,10 +1288,9 @@ public class RSConnectDeploy extends Composite
       appErrorMessage_.setTitle(error);
    }
 
-   @UiField Anchor addAccountAnchor_;
-   @UiField Anchor createNewAnchor_;
+   @UiField HyperlinkLabel addAccountAnchor_;
+   @UiField HyperlinkLabel createNewAnchor_;
    @UiField Anchor urlAnchor_;
-   @UiField Grid mainGrid_;
    @UiField HTMLPanel appDetailsPanel_;
    @UiField HTMLPanel appInfoPanel_;
    @UiField HTMLPanel appProgressPanel_;
@@ -1305,11 +1300,12 @@ public class RSConnectDeploy extends Composite
    @UiField HTMLPanel accountEntryPanel_;
    @UiField Image deployIllustration_;
    @UiField Image descriptionImage_;
+   @UiField InlineLabel fileListLabel_;
    @UiField InlineLabel deployLabel_;
    @UiField Label appErrorMessage_;
    @UiField Label appExistingName_;
    @UiField Label appProgressName_;
-   @UiField Label nameLabel_;
+   @UiField FormLabel nameLabel_;
    @UiField Label publishToLabel_;
    @UiField ThemedButton addFileButton_;
    @UiField ThemedButton checkUncheckAllButton_;
@@ -1319,19 +1315,20 @@ public class RSConnectDeploy extends Composite
    @UiField VerticalPanel descriptionPanel_;
    @UiField HorizontalPanel publishFromPanel_;
    @UiField RSConnectAccountEntry accountEntry_;
+   @UiField FormLabel accountListLabel_;
    
    // provided fields
    @UiField(provided=true) RSConnectAccountList accountList_;
    @UiField(provided=true) AppNameTextbox appName_;
    
    private ArrayList<DirEntryCheckBox> fileChecks_;
-   private ArrayList<String> filesAddedManually_ = 
-         new ArrayList<String>();
+   private ArrayList<String> filesAddedManually_ = new ArrayList<>();
    
    private RSConnectServerOperations server_;
    private GlobalDisplay display_;
    private RSAccountConnector connector_;
-   private UIPrefs prefs_;
+   private UserPrefs userPrefs_;
+   private UserState userState_;
    
    private RSConnectPublishSource source_;
    private boolean asMultipleRmd_;

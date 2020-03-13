@@ -1,7 +1,7 @@
 /*
  * StringUtil.java
  *
- * Copyright (C) 2009-19 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -1405,14 +1405,38 @@ public class StringUtil
     */
    public static char charAt(String str, int pos)
    {
-      try
+      if (pos < 0 || pos >= str.length())
+         return '\0';
+      
+      return str.charAt(pos);
+   }
+
+   /**
+    * Convert a string "foo" to "f o o"
+    * @param str
+    * @return
+    */
+   public static native String spacedString(String str) /*-{
+      return str.split('').join(' ');
+   }-*/;
+
+   public static String format(String fmt, Object... objects)
+   {
+      List<String> strings = new ArrayList<String>();
+      for (Object object : objects)
       {
-         return str.charAt(pos);         
+         strings.add(object.toString());
       }
-      catch (StringIndexOutOfBoundsException ex)
+      
+      String result = fmt;
+      for (int i = 0; i < strings.size(); i += 2)
       {
-         return '\0';         
+         String target = "{" + strings.get(i) + "}";
+         String replacement = strings.get(i + 1);
+         result = result.replace(target, replacement);
       }
+      
+      return result;
    }
    
    private static final NumberFormat FORMAT = NumberFormat.getFormat("0.#");

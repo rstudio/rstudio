@@ -1,7 +1,7 @@
 /*
  * Commands.java
  *
- * Copyright (C) 2009-19 by RStudio, Inc.
+ * Copyright (C) 2009-20 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -32,9 +32,16 @@ public abstract class
    public abstract AppCommand newSourceDoc();
    public abstract AppCommand newRNotebook();
    public abstract AppCommand newTextDoc();
+   public abstract AppCommand newCDoc();
    public abstract AppCommand newCppDoc();
+   public abstract AppCommand newHeaderDoc();
+   public abstract AppCommand newMarkdownDoc();
    public abstract AppCommand newPythonDoc();
+   public abstract AppCommand newShellDoc();
    public abstract AppCommand newStanDoc();
+   public abstract AppCommand newHtmlDoc();
+   public abstract AppCommand newJavaScriptDoc();
+   public abstract AppCommand newCssDoc();
    public abstract AppCommand newD3Doc();
    public abstract AppCommand newSweaveDoc();
    public abstract AppCommand newRMarkdownDoc();
@@ -132,6 +139,7 @@ public abstract class
    public abstract AppCommand findAll();
    public abstract AppCommand replaceAndFind();
    public abstract AppCommand findInFiles();
+   public abstract AppCommand activateFindInFiles();
    public abstract AppCommand fold();
    public abstract AppCommand unfold();
    public abstract AppCommand foldAll();
@@ -289,7 +297,6 @@ public abstract class
    public abstract AppCommand presentationViewInBrowser();
    public abstract AppCommand presentationSaveAsStandalone();
    public abstract AppCommand activatePresentation();
-   public abstract AppCommand tutorialFeedback();
    public abstract AppCommand clearPresentationCache();
    
    // View
@@ -345,11 +352,6 @@ public abstract class
    public abstract AppCommand importDatasetFromSAS();
    public abstract AppCommand importDatasetFromStata();
    public abstract AppCommand importDatasetFromXLS();
-   public abstract AppCommand importDatasetFromXML();
-   public abstract AppCommand importDatasetFromJSON();
-   public abstract AppCommand importDatasetFromJDBC();
-   public abstract AppCommand importDatasetFromODBC();
-   public abstract AppCommand importDatasetFromMongo();
 
    // Environment
    public abstract AppCommand activateEnvironment();
@@ -384,6 +386,11 @@ public abstract class
    public abstract AppCommand packratHelp();
    public abstract AppCommand packratClean();
    public abstract AppCommand packratCheckStatus();
+   
+   // renv
+   public abstract AppCommand renvHelp();
+   public abstract AppCommand renvSnapshot();
+   public abstract AppCommand renvRestore();
 
    // Version control
    public abstract AppCommand versionControlHelp();
@@ -413,6 +420,7 @@ public abstract class
    public abstract AppCommand activateTerminal();
    public abstract AppCommand renameTerminal();
    public abstract AppCommand closeTerminal();
+   public abstract AppCommand closeAllTerminals();
    public abstract AppCommand clearTerminalScrollbackBuffer();
    public abstract AppCommand previousTerminal();
    public abstract AppCommand nextTerminal();
@@ -420,11 +428,17 @@ public abstract class
    public abstract AppCommand interruptTerminal();
    public abstract AppCommand sendTerminalToEditor();
    public abstract AppCommand sendToTerminal();
-    
+   public abstract AppCommand showTerminalOptions();
+   public abstract AppCommand openNewTerminalAtEditorLocation();
+   public abstract AppCommand openNewTerminalAtFilePaneLocation();
+   public abstract AppCommand sendFilenameToTerminal();
+   public abstract AppCommand setTerminalToCurrentDirectory();
+
    // Help
    public abstract AppCommand helpBack();
    public abstract AppCommand helpForward();
    public abstract AppCommand helpHome();
+   public abstract AppCommand helpSearch();
    public abstract AppCommand printHelp();
    public abstract AppCommand clearHelpHistory();
    public abstract AppCommand helpPopout();
@@ -444,6 +458,21 @@ public abstract class
    public abstract AppCommand debugImportDump();
    public abstract AppCommand refreshSuperDevMode();
    public abstract AppCommand viewShortcuts();
+   public abstract AppCommand editUserPrefs();
+   public abstract AppCommand viewAllPrefs();
+   public abstract AppCommand clearUserPrefs();
+   
+   // Tutorial
+   public abstract AppCommand activateTutorial();
+   public abstract AppCommand layoutZoomTutorial();
+   public abstract AppCommand tutorialPopout();
+   public abstract AppCommand tutorialBack(); 
+   public abstract AppCommand tutorialForward();
+   public abstract AppCommand tutorialZoom();
+   public abstract AppCommand tutorialRefresh();
+   public abstract AppCommand tutorialStop();
+   public abstract AppCommand tutorialHome();
+   
    
    // Viewer
    public abstract AppCommand activateViewer();
@@ -475,8 +504,9 @@ public abstract class
    public abstract AppCommand rstudioSupport();
    public abstract AppCommand rstudioCommunityForum();
    public abstract AppCommand rstudioAgreement();
-
+   public abstract AppCommand showSessionServerOptionsDialog();
    public abstract AppCommand showWarningBar();
+   public abstract AppCommand signOut();
  
    // Build
    public abstract AppCommand buildAll();
@@ -507,6 +537,7 @@ public abstract class
    public abstract AppCommand cutDummy();
    public abstract AppCommand copyDummy();
    public abstract AppCommand pasteDummy();
+   public abstract AppCommand pasteWithIndentDummy();
 
    // Placeholder for most recently used files
    public abstract AppCommand mru0();
@@ -581,6 +612,7 @@ public abstract class
 
    // Other
    public abstract AppCommand checkSpelling();
+   public abstract AppCommand wordCount();
    public abstract AppCommand layoutZoomCurrentPane();
    public abstract AppCommand layoutEndZoom();
    public abstract AppCommand layoutConsoleOnLeft();
@@ -588,7 +620,36 @@ public abstract class
    public abstract AppCommand paneLayout();
    public abstract AppCommand maximizeConsole();
    public abstract AppCommand toggleEditorTokenInfo();
+   public abstract AppCommand layoutZoomLeftColumn();
+   public abstract AppCommand layoutZoomRightColumn();
+   public abstract AppCommand focusLeftSeparator();
+   public abstract AppCommand focusRightSeparator();
+   public abstract AppCommand focusCenterSeparator();
    
-   public static final String KEYBINDINGS_PATH =
-         "~/.R/keybindings/rstudio_commands.json";
+
+   // Main menu (server)
+   public abstract AppCommand showFileMenu();
+   public abstract AppCommand showEditMenu();
+   public abstract AppCommand showCodeMenu();
+   public abstract AppCommand showViewMenu();
+   public abstract AppCommand showPlotsMenu();
+   public abstract AppCommand showSessionMenu();
+   public abstract AppCommand showBuildMenu();
+   public abstract AppCommand showDebugMenu();
+   public abstract AppCommand showProfileMenu();
+   public abstract AppCommand showToolsMenu();
+   public abstract AppCommand showHelpMenu();
+
+   // Accessibility
+   public abstract AppCommand toggleScreenReaderSupport();
+   public abstract AppCommand toggleTabKeyMovesFocus();
+   public abstract AppCommand showAccessibilityOptions();
+   public abstract AppCommand focusMainToolbar();
+   public abstract AppCommand speakEditorLocation();
+   public abstract AppCommand focusConsoleOutputEnd();
+   public abstract AppCommand showAccessibilityHelp();
+
+   // Internal
+   public abstract AppCommand showDomElements();
+   public abstract AppCommand showShortcutCommand();
 }

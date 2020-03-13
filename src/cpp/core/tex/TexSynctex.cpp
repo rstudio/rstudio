@@ -1,7 +1,7 @@
 /*
  * TexSynctex.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -20,8 +20,8 @@
 #include <boost/algorithm/string/trim.hpp>
 #include <boost/algorithm/string/predicate.hpp>
 
-#include <core/Error.hpp>
-#include <core/FilePath.hpp>
+#include <shared_core/Error.hpp>
+#include <shared_core/FilePath.hpp>
 #include <core/StringUtils.hpp>
 
 #include <core/system/System.hpp>
@@ -69,7 +69,7 @@ std::ostream& operator << (std::ostream& stream, const PdfLocation& loc)
 
 struct Synctex::Impl
 {
-   Impl() : scanner(NULL) {}
+   Impl() : scanner(nullptr) {}
 
    FilePath pdfPath;
    synctex_scanner_t scanner;
@@ -85,10 +85,10 @@ Synctex::~Synctex()
 {
    try
    {
-      if (pImpl_->scanner != NULL)
+      if (pImpl_->scanner != nullptr)
       {
          ::synctex_scanner_free(pImpl_->scanner);
-         pImpl_->scanner = NULL;
+         pImpl_->scanner = nullptr;
       }
    }
    catch(...)
@@ -102,13 +102,13 @@ bool Synctex::parse(const FilePath& pdfPath)
 {
    using namespace rstudio::core::string_utils;
    pImpl_->pdfPath = pdfPath;
-   std::string path = utf8ToSystem(pdfPath.absolutePath());
-   std::string buildDir = utf8ToSystem(pdfPath.parent().absolutePath());
+   std::string path = utf8ToSystem(pdfPath.getAbsolutePath());
+   std::string buildDir = utf8ToSystem(pdfPath.getParent().getAbsolutePath());
 
    pImpl_->scanner = ::synctex_scanner_new_with_output_file(path.c_str(),
                                                             buildDir.c_str(),
                                                             1);
-   return pImpl_->scanner != NULL;
+   return pImpl_->scanner != nullptr;
 }
 
 PdfLocation Synctex::forwardSearch(const SourceLocation& location)
@@ -128,7 +128,7 @@ PdfLocation Synctex::forwardSearch(const SourceLocation& location)
    if (result > 0)
    {
       synctex_node_t node = synctex_next_result(pImpl_->scanner);
-      if (node != NULL)
+      if (node != nullptr)
          pdfLocation = pdfLocationFromNode(node);
    }
 
@@ -146,7 +146,7 @@ SourceLocation Synctex::inverseSearch(const PdfLocation& location)
    if (result > 0)
    {
       synctex_node_t node = synctex_next_result(pImpl_->scanner);
-      if (node != NULL)
+      if (node != nullptr)
       {
          // get the filename then normalize it
          std::string name = ::synctex_scanner_get_name(
@@ -156,7 +156,7 @@ SourceLocation Synctex::inverseSearch(const PdfLocation& location)
 
          // might be relative or might be absolute, complete it against the
          // pdf's parent directory to cover both cases
-         FilePath filePath = pImpl_->pdfPath.parent().complete(adjustedName);
+         FilePath filePath = pImpl_->pdfPath.getParent().completePath(adjustedName);
 
          // fully normalize
          Error error = core::system::realPath(filePath, &filePath);
@@ -178,7 +178,7 @@ PdfLocation Synctex::topOfPageContent(int page)
 {
    // get the sheet contents
    synctex_node_t sheetNode = ::synctex_sheet_content(pImpl_->scanner, page);
-   if (sheetNode == NULL)
+   if (sheetNode == nullptr)
       return PdfLocation();
 
    // iterate through the nodes looking for a box
@@ -198,11 +198,11 @@ PdfLocation Synctex::topOfPageContent(int page)
 std::string Synctex::synctexNameForInputFile(const FilePath& inputFile)
 {
    // get the base directory for the input file
-   FilePath parentPath = inputFile.parent();
+   FilePath parentPath = inputFile.getParent();
 
    // iterate through the known input files looking for a match
    synctex_node_t node = ::synctex_scanner_input(pImpl_->scanner);
-   while (node != NULL)
+   while (node != nullptr)
    {
       // get tex name then normalize it for comparisons
       std::string name = ::synctex_scanner_get_name(pImpl_->scanner,
@@ -211,7 +211,7 @@ std::string Synctex::synctexNameForInputFile(const FilePath& inputFile)
 
       // complete the name against the parent path -- if it is equal to
       // the input file that that's the one we are looking for
-      FilePath synctexPath = parentPath.complete(adjustedName);
+      FilePath synctexPath = parentPath.completePath(adjustedName);
       if (synctexPath.isEquivalentTo(inputFile))
          return name;
 

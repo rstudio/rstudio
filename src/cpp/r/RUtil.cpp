@@ -1,7 +1,7 @@
 /*
  * RUtil.cpp
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -16,13 +16,15 @@
 
 #include <r/RUtil.hpp>
 
+#include <gsl/gsl>
+
 #include <boost/algorithm/string/replace.hpp>
 #include <boost/regex.hpp>
 
 #include <core/Algorithm.hpp>
-#include <core/FilePath.hpp>
+#include <shared_core/FilePath.hpp>
 #include <core/StringUtils.hpp>
-#include <core/Error.hpp>
+#include <shared_core/Error.hpp>
 #include <core/RegexUtils.hpp>
 
 #include <r/RExec.hpp>
@@ -182,7 +184,7 @@ core::Error iconvstr(const std::string& value,
             ::Riconv_close(handle);
             Error error = systemError(R_ERRNO, ERROR_LOCATION);
             error.addProperty("str", value);
-            error.addProperty("len", value.length());
+            error.addProperty("len", gsl::narrow_cast<int>(value.length()));
             error.addProperty("from", from);
             error.addProperty("to", to);
             return error;

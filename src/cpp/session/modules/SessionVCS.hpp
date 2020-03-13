@@ -1,7 +1,7 @@
 /*
  * SessionVCS.hpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-12 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -18,11 +18,9 @@
 
 #include <boost/shared_ptr.hpp>
 
-#include <core/json/Json.hpp>
-#include <core/Error.hpp>
-#include <core/FilePath.hpp>
-
-#include <session/SessionUserSettings.hpp>
+#include <shared_core/json/Json.hpp>
+#include <shared_core/Error.hpp>
+#include <shared_core/FilePath.hpp>
 
 #include "vcs/SessionVCSCore.hpp"
 
@@ -41,7 +39,8 @@ enum VCS
 };
 
 boost::shared_ptr<FileDecorationContext> fileDecorationContext(
-                                            const core::FilePath& rootDir);
+      const core::FilePath& rootDir,
+      bool implicit);
 
 VCS activeVCS();
 std::string activeVCSName();

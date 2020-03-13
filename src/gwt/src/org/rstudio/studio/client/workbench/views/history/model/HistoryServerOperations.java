@@ -1,7 +1,7 @@
 /*
  * HistoryServerOperations.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-12 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -74,7 +74,7 @@ public interface HistoryServerOperations
    /*
     *  searchHistoryDatabase - search the history archive for the query 
     *  (return up to maxEntries). the search is conducted beginning with the
-    *  most recent history items and returned in index decsending order i.e. newest
+    *  most recent history items and returned in index descending order i.e. newest
     *  ones first)
     */
    void searchHistoryArchive(

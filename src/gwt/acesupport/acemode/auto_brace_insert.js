@@ -1,7 +1,7 @@
 /*
  * auto_brace_insert.js
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-12 by RStudio, PBC
  *
  * The Initial Developer of the Original Code is
  * Ajax.org B.V.
@@ -115,19 +115,37 @@ define("mode/auto_brace_insert", ["require", "exports", "module"], function(requ
       // in the mode subclass
       this.smartAllowAutoInsert = function(session, pos, text)
       {
-         if (text !== "'" && text !== '"')
+         // Always allow auto-insert for other insertion types
+         if (text !== "'" && text !== '"' && text !== '`')
             return true;
+
+         // Only allow auto-insert of a '`' character if the number of
+         // backticks on the line is not balanced. Note that this is an
+         // R-centric view of backquoted strings, and assumes things within
+         // can be escaped by \.
+         if (text === '`')
+         {
+            // get line up to cursor position
+            var start = {row: pos.row, column: 0};
+            var line = session.doc.getTextRange({start: start, end: pos});
+
+            // remove escaped characters from the line
+            line = line.replace(/\\./g, '');
+
+            // check count of '`' characters
+            var match = line.match(/`/g);
+            return (match.length % 2) != 0;
+         }
 
          // Only allow auto-insertion of a quote char if the actual character
          // that was typed, was the start of a new string token
-
          if (pos.column == 0)
             return true;
 
          var token = this.codeModel.getTokenForPos(pos, false, true);
          return token &&
                 token.type === 'string' &&
-                token.column === pos.column-1;
+                token.column === pos.column - 1;
       };
 
       this.wrapRemove = function(editor, __remove, dir)

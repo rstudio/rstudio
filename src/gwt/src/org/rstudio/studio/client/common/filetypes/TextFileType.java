@@ -1,7 +1,7 @@
 /*
  * TextFileType.java
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -27,7 +27,6 @@ import org.rstudio.studio.client.common.filetypes.model.NavigationMethods;
 import org.rstudio.studio.client.common.reditor.EditorLanguage;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.views.source.SourceWindowManager;
-import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Token;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.spelling.CharClassifier;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.spelling.TokenPredicate;
 
@@ -230,6 +229,11 @@ public class TextFileType extends EditableFileType
       return FileTypeRegistry.SQL.getTypeId().equals(getTypeId());
    }
    
+   public boolean isYaml()
+   {
+      return FileTypeRegistry.YAML.getTypeId().equals(getTypeId());
+   }
+   
    public boolean requiresKnit()
    {
       return FileTypeRegistry.RMARKDOWN.getTypeId().equals(getTypeId()) ||
@@ -320,6 +324,11 @@ public class TextFileType extends EditableFileType
          results.add(commands.previewSql());
       }
       
+      if (isYaml())
+      {
+         results.add(commands.commentUncomment());
+      }
+      
       if ((canExecuteCode() && !isScript()) || isC())
       {
          results.add(commands.reindent());
@@ -402,6 +411,8 @@ public class TextFileType extends EditableFileType
          results.add(commands.executeSubsequentChunks());
          results.add(commands.executeCurrentChunk());
          results.add(commands.executeNextChunk());
+         results.add(commands.runSelectionAsJob());
+         results.add(commands.runSelectionAsLauncherJob());
       }
       if (canCheckSpelling())
       {
@@ -411,7 +422,8 @@ public class TextFileType extends EditableFileType
       {
          results.add(commands.toggleDocumentOutline());
       }
-      
+
+      results.add(commands.wordCount());
       results.add(commands.goToNextSection());
       results.add(commands.goToPrevSection());
       results.add(commands.goToNextChunk());
@@ -427,14 +439,18 @@ public class TextFileType extends EditableFileType
       results.add(commands.popoutDoc());
       if (!SourceWindowManager.isMainSourceWindow())
          results.add(commands.returnDocToMain());
-      
+
       if (isR())
       {
          results.add(commands.sourceAsLauncherJob());
          results.add(commands.sourceAsJob());
+         results.add(commands.runSelectionAsJob());
+         results.add(commands.runSelectionAsLauncherJob());
       }
 
       results.add(commands.sendToTerminal());
+      results.add(commands.sendFilenameToTerminal());
+      results.add(commands.openNewTerminalAtEditorLocation());
 
       return results;
    }
@@ -446,19 +462,33 @@ public class TextFileType extends EditableFileType
 
    public TokenPredicate getTokenPredicate()
    {
-      return new TokenPredicate()
+      return (token, row, column) ->
       {
-         @Override
-         public boolean test(Token token, int row, int column)
-         {
-            if (reNospellType_.match(token.getType(), 0) != null) {
-               return false;
-            }
-
-            return reTextType_.match(token.getType(), 0) != null ||
-               reStringType_.match(token.getType(), 0) != null ||
-               reHeaderType_.match(token.getType(), 0) != null;
+         if (reNospellType_.match(token.getType(), 0) != null) {
+            return false;
          }
+
+         return reTextType_.match(token.getType(), 0) != null ||
+            reStringType_.match(token.getType(), 0) != null ||
+            reHeaderType_.match(token.getType(), 0) != null ||
+            reCommentType_.match(token.getType(), 0) != null;
+      };
+   }
+
+   // default to only returning comments and text, override in subclasses
+   // for more or less specificity
+   public TokenPredicate getSpellCheckTokenPredicate()
+   {
+      return (token, row, column) ->
+      {
+         if (reNospellType_.match(token.getType(), 0) != null) {
+            return false;
+         }
+
+         return (reCommentType_.match(token.getType(), 0) != null ||
+                 reTextType_.match(token.getType(), 0) != null) &&
+                 reKeywordType_.match(token.getType(), 0) == null &&
+                 reIdentifierType_.match(token.getType(), 0) == null;
       };
    }
 
@@ -509,8 +539,11 @@ public class TextFileType extends EditableFileType
    private final boolean canPreviewFromR_;
    private final String defaultExtension_;
 
-   private static Pattern reTextType_ = Pattern.create("\\btext\\b");
-   private static Pattern reStringType_ = Pattern.create("\\bstring\\b");
-   private static Pattern reHeaderType_ = Pattern.create("\\bheading\\b");
-   private static Pattern reNospellType_ = Pattern.create("\\bnospell\\b");
+   protected static Pattern reTextType_ = Pattern.create("\\btext\\b");
+   protected static Pattern reStringType_ = Pattern.create("\\bstring\\b");
+   protected static Pattern reHeaderType_ = Pattern.create("\\bheading\\b");
+   protected static Pattern reNospellType_ = Pattern.create("\\bnospell\\b");
+   protected static Pattern reCommentType_ = Pattern.create("\\bcomment\\b");
+   protected static Pattern reKeywordType_ = Pattern.create("\\bkeyword\\b");
+   protected static Pattern reIdentifierType_ = Pattern.create("\\bidentifier\\b");
 }

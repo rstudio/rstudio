@@ -1,7 +1,7 @@
 /*
  * ServerOptions.hpp
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -20,11 +20,12 @@
 #include <map>
 #include <iosfwd>
 
+#include <boost/regex.hpp>
 #include <boost/utility.hpp>
 
-#include <core/FilePath.hpp>
+#include <shared_core/FilePath.hpp>
 #include <core/ProgramOptions.hpp>
-#include <core/SafeConvert.hpp>
+#include <shared_core/SafeConvert.hpp>
 #include <core/system/Types.hpp>
 
 namespace rstudio {
@@ -82,6 +83,16 @@ public:
 
    bool serverSetUmask() const { return serverSetUmask_; }
 
+   core::FilePath serverDataDir() const
+   {
+      return core::FilePath(serverDataDir_);
+   }
+
+   const std::vector<std::string>& serverAddHeaders() const
+   {
+      return serverAddHeaders_;
+   }
+
    // www 
    std::string wwwAddress() const
    { 
@@ -138,6 +149,16 @@ public:
       return wwwVerifyUserAgent_;
    }
 
+   bool wwwEnableOriginCheck() const
+   {
+      return wwwEnableOriginCheck_;
+   }
+
+   std::vector<boost::regex> wwwAllowedOrigins()
+   {
+      return wwwAllowedOrigins_;
+   }
+
    // auth
    bool authNone()
    {
@@ -152,6 +173,11 @@ public:
    int authStaySignedInDays()
    {
       return authStaySignedInDays_;
+   }
+
+   int authTimeoutMinutes()
+   {
+      return authTimeoutMinutes_;
    }
 
    bool authEncryptPassword()
@@ -174,9 +200,29 @@ public:
       return authMinimumUserId_;
    }
 
+   int authSignInThrottleSeconds()
+   {
+      return authSignInThrottleSeconds_;
+   }
+
    std::string authPamHelperPath() const
    {
       return std::string(authPamHelperPath_.c_str());
+   }
+
+   core::FilePath authRevocationListDir() const
+   {
+      return core::FilePath(authRevocationListDir_);
+   }
+   
+   bool authPamRequirePasswordPrompt() const
+   {
+      return authPamRequirePasswordPrompt_;
+   }
+
+   bool authCookiesForceSecure() const
+   {
+      return authCookiesForceSecure_;
    }
 
    // rsession
@@ -274,6 +320,8 @@ private:
    bool serverAppArmorEnabled_;
    bool serverSetUmask_;
    bool serverOffline_;
+   std::string serverDataDir_;
+   std::vector<std::string> serverAddHeaders_;
    std::string wwwAddress_ ;
    std::string wwwPort_ ;
    std::string wwwLocalPath_ ;
@@ -283,14 +331,21 @@ private:
    int wwwThreadPoolSize_;
    bool wwwProxyLocalhost_;
    bool wwwVerifyUserAgent_;
+   bool wwwEnableOriginCheck_;
+   std::vector<boost::regex> wwwAllowedOrigins_;
    bool authNone_;
    bool authValidateUsers_;
    int authStaySignedInDays_;
+   int authTimeoutMinutes_;
    bool authEncryptPassword_;
    std::string authLoginPageHtml_;
    std::string authRequiredUserGroup_;
    unsigned int authMinimumUserId_;
    std::string authPamHelperPath_;
+   bool authPamRequirePasswordPrompt_;
+   int authSignInThrottleSeconds_;
+   std::string authRevocationListDir_;
+   bool authCookiesForceSecure_;
    std::string rsessionWhichR_;
    std::string rsessionPath_;
    std::string rldpathPath_;

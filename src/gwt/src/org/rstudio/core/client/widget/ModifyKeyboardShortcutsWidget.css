@@ -7,116 +7,123 @@
 /* Avoid GWT's inset styling for selected cells */
 .dataGridKeyboardSelectedRowCell, .dataGridKeyboardSelectedRowCell:active,
 .dataGridKeyboardSelectedRowCell:hover, .dataGridKeyboardSelectedRowCell:focus {
-	border-top: 1px solid #FFF !important;
-	border-left: 1px solid #FFF !important;
-	border-right: 1px solid #FFF !important;
+   border-top: 1px solid #FFF !important;
+   border-left: 1px solid #FFF !important;
+   border-right: 1px solid #FFF !important;
 }
 
 .rstudio-themes-flat .dataGridKeyboardSelectedRowCell, .dataGridKeyboardSelectedRowCell:active,
 .rstudio-themes-flat .dataGridKeyboardSelectedRowCell:hover, .dataGridKeyboardSelectedRowCell:focus {
-	border-top: 0px solid #FFF !important;
-	border-left: 0px solid #FFF !important;
-	border-right: 0px solid #FFF !important;
+   border-top: 0px solid #FFF !important;
+   border-left: 0px solid #FFF !important;
+   border-right: 0px solid #FFF !important;
 }
 
 .dataGridKeyboardSelectedRowCell:first-child {
-	border-left: 2px solid #0AF !important;
+   border-left: 2px solid #0AF !important;
 }
 
 .dataGridKeyboardSelectedRowCell:first-child div {
-	margin-left: -1px;
+   margin-left: -1px;
 }
 
 .dataGridWidget > div {
-	min-height: 18px !important;
+   min-height: 18px !important;
 }
 
 .rstudio-themes-flat .dataGridWidget thead > tr {
-	height: 18px;
+   height: 18px;
 }
 
 .dataGridWidget td > div {
-	float: left;
+   float: left;
 }
 
 .dataGridCell {
-	border-bottom: 1px solid #ddd !important;
+   border-bottom: 1px solid #ddd !important;
 }
 
 .dataGridHeader:active, .dataGridHeader:focus {
-	outline: 0;
+   outline: 0;
 }
 
 .dataGridWidget input {
-	height: 14px !important;
+   height: 14px !important;
 }
 
 /* Other styling */
 
 .modifiedRow {
-	background-color: MODIFIED_COLOUR !important;
+   background-color: MODIFIED_COLOUR !important;
 }
 
 .modifiedRow td {
-	border-color: MODIFIED_COLOUR !important;
+   border-color: MODIFIED_COLOUR !important;
 }
 
 .customBindingRow {
-	background-color: CUSTOM_COLOUR !important;
+   background-color: CUSTOM_COLOUR !important;
 }
 
 .customBindingRow td {
-	border-color: CUSTOM_COLOUR !important;
+   border-color: CUSTOM_COLOUR !important;
 }
 
 .maskedEditorCommandCell div {
-	text-decoration: line-through;
+   text-decoration: line-through;
 }
 
 .conflictRow {
-	background-color: #FED;
+   background-color: #FED;
 }
 
 .shortcutInput {
-	border: 1px solid #CCC;
-	border-radius: 5px;
+   border: 1px solid #CCC;
+   border-radius: 5px;
 }
 
 .icon {
-	float: right;
-	margin-right: 10px;
+   float: right;
+   margin-right: 10px;
 }
 
 .icon:hover {
-	border-radius: 20px;
-	box-shadow: 0 0 4px #8BF;
+   border-radius: 20px;
+   box-shadow: 0 0 4px #8BF;
+}
+
+fieldset.showChoice {
+   float: left;
+   border: none;
+   padding: 0;
+   margin: 0;
 }
 
 .rstudio-themes-flat .dataGridWidget {
-	background: #FFF;
+   background: #FFF;
 }
 
 .rstudio-themes-flat .dataGridOddRowCell,
 .rstudio-themes-flat .dataGridEvenRowCell {
-  border: none;
+   border: none;
 }
 
 .rstudio-themes-flat .dataGridCell:first-child {
-	border-left: 2px solid #FFF;
+   border-left: 2px solid #FFF;
 }
 
 .rstudio-themes-flat .dataGridCell:first-child div {
-	margin-left: -1px;
+   margin-left: -1px;
 }
 
 .rstudio-themes-flat .dataGridKeyboardSelectedRowCell:first-child, .dataGridKeyboardSelectedRowCell:first-child:active,
 .rstudio-themes-flat .dataGridKeyboardSelectedRowCell:first-child:hover, .dataGridKeyboardSelectedRowCell:first-child:focus {
-	border-left: 2px solid #0AF !important;
+   border-left: 2px solid #0AF !important;
 }
 
 .rstudio-themes-flat .dataGridKeyboardSelectedRowCell:first-child div {
 }
 
 .rstudio-themes-flat .dataGridWidget {
-  border: 1px solid #ddd;
+   border: 1px solid #ddd;
 }

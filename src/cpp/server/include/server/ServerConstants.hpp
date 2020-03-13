@@ -1,7 +1,7 @@
 /*
  * ServerConstants.hpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-12 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -17,8 +17,13 @@
 #define SERVER_CONSTANTS_HPP
 
 #define kRStudioSessionRequiredHeader "X-RStudio-Session-Required"
-#define kRStudioServerLocalStream     "/tmp/rstudio-rserver/rserver.socket"
-#define kServerTmpDir                 "/tmp/rstudio-rserver"
+#define kServerLocalSocket            "rserver.socket"
+#define kServerLocalSocketPathEnvVar  "RS_SERVER_LOCAL_SOCKET_PATH"
+#define kServerTmpDir                 "rstudio-rserver"
+#define kUserIdCookie                 "user-id"
+#define kUserListCookie               "user-list-id"
+#define kPersistAuthCookie            "persist-auth"
+#define kServerTmpDirEnvVar           "RS_SERVER_TMP_DIR"
 
 #endif // SERVER_CONSTANTS_HPP
 

@@ -1,8 +1,8 @@
 /*
  * SessionModuleContext.hpp
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
-
+ * Copyright (C) 2009-20 by RStudio, PBC
+ *
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -40,6 +40,7 @@
 
 namespace rstudio {
 namespace core {
+   class DistributedEvent;
    class Error;
    class Success;
    class FilePath;
@@ -52,9 +53,6 @@ namespace core {
    namespace shell_utils {
       class ShellCommand;
    }
-}
-namespace server_core {
-   class DistributedEvent;
 }
 }
 
@@ -87,6 +85,7 @@ std::string createAliasedPath(const core::FilePath& path);
 std::string createFileUrl(const core::FilePath& path);
 core::FilePath resolveAliasedPath(const std::string& aliasedPath);
 core::FilePath userScratchPath();
+core::FilePath userUploadedFilesScratchPath();
 core::FilePath scopedScratchPath();
 core::FilePath sharedScratchPath();
 core::FilePath sharedProjectScratchPath();
@@ -119,6 +118,7 @@ std::string rLibsUser();
 // find out the location of a binary
 core::FilePath findProgram(const std::string& name);
 
+bool addTinytexToPathIfNecessary();
 bool isPdfLatexInstalled();
 
 // is the file a text file
@@ -189,6 +189,10 @@ core::Error registerAsyncUriHandler(
 core::Error registerUriHandler(
                         const std::string& name,
                         const core::http::UriHandlerFunction& handlerFunction);
+
+// register an inbound upload handler (include a leading slash)
+core::Error registerUploadHandler(const std::string& name,
+                                  const core::http::UriAsyncUploadHandlerFunction& handlerFunction);
 
 // register a local uri handler (scoped by a special prefix which indicates
 // a local scope)
@@ -344,7 +348,7 @@ struct Events : boost::noncopyable
    RSTUDIO_BOOST_SIGNAL<void (const std::string&)>  onPackageLoaded;
    RSTUDIO_BOOST_SIGNAL<void ()>                    onPackageLibraryMutated;
    RSTUDIO_BOOST_SIGNAL<void ()>                    onPreferencesSaved;
-   RSTUDIO_BOOST_SIGNAL<void (const server_core::DistributedEvent&)>
+   RSTUDIO_BOOST_SIGNAL<void (const core::DistributedEvent&)>
                                              onDistributedEvent;
    RSTUDIO_BOOST_SIGNAL<void (core::FilePath)>      onPermissionsChanged;
 
@@ -429,7 +433,7 @@ bool isDirectoryMonitored(const core::FilePath& directory);
 bool isRScriptInPackageBuildTarget(const core::FilePath& filePath);
 
 // convenience method for filtering out file listing and changes
-bool fileListingFilter(const core::FileInfo& fileInfo);
+bool fileListingFilter(const core::FileInfo& fileInfo, bool hideObjectFiles);
 
 // enque file changed events
 void enqueFileChangedEvent(const core::system::FileChangeEvent& event);
@@ -482,19 +486,14 @@ bool addRtoolsToPathIfNecessary(std::string* pPath,
 bool addRtoolsToPathIfNecessary(core::system::Options* pEnvironment,
                                 std::string* pWarningMessage);
 
+bool isMacOS();
+bool hasMacOSDeveloperTools();
+bool hasMacOSCommandLineTools();
+void checkXcodeLicense();
+
 #ifdef __APPLE__
-bool isOSXMavericks();
-bool hasOSXMavericksDeveloperTools();
 core::Error copyImageToCocoaPasteboard(const core::FilePath& filePath);
 #else
-inline bool isOSXMavericks()
-{
-   return false;
-}
-inline bool hasOSXMavericksDeveloperTools()
-{
-   return false;
-}
 inline core::Error copyImageToCocoaPasteboard(const core::FilePath& filePath)
 {
    return core::systemError(boost::system::errc::not_supported, ERROR_LOCATION);
@@ -659,12 +658,17 @@ struct PackratContext
    bool modeOn;
 };
 
+// implemented in SessionPackrat.cpp
 bool isRequiredPackratInstalled();
-
 PackratContext packratContext();
 core::json::Object packratContextAsJson();
-
 core::json::Object packratOptionsAsJson();
+
+// implemented in SessionRenv.cpp
+bool isRequiredRenvInstalled();
+bool isRenvActive();
+core::json::Value renvContextAsJson();
+core::json::Value renvOptionsAsJson();
 
 // R command invocation -- has two representations, one to be submitted
 // (shellCmd_) and one to show the user (cmdString_)
@@ -698,7 +702,7 @@ public:
 
    RCommand& operator<<(const core::FilePath& arg)
    {
-      cmdString_ += " " + arg.absolutePath();
+      cmdString_ += " " + arg.getAbsolutePath();
       shellCmd_ << arg;
       return *this;
    }
@@ -847,7 +851,11 @@ std::string websiteOutputDir();
 core::FilePath extractOutputFileCreated(const core::FilePath& inputFile,
                                         const std::string& output);
 
+bool isPathViewAllowed(const core::FilePath& path);
+
 void onBackgroundProcessing(bool isIdle);
+
+void initializeConsoleCtrlHandler();
 
 } // namespace module_context
 } // namespace session

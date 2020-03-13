@@ -1,7 +1,7 @@
 /*
  * RStdCallbacks.hpp
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -26,6 +26,7 @@ int RReadScript (const char *pmt, CONSOLE_BUFFER_CHAR* buf, int buflen, int hist
 
 void RWriteStdout (const char *buf, int buflen, int otype);
 
+void RScriptCleanUp(SA_TYPE saveact, int status, int runLast);
 
 } // namespace session
 } // namespace r

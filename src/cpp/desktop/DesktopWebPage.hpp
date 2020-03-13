@@ -1,7 +1,7 @@
 /*
  * DesktopWebPage.hpp
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -43,12 +43,7 @@ struct PendingWindow
                  int screenX,
                  int screenY,
                  int width,
-                 int height)
-      : name(name), pMainWindow(pMainWindow), x(screenX), y(screenY),
-        width(width), height(height), isSatellite(true),
-        allowExternalNavigate(false), showToolbar(false)
-   {
-   }
+                 int height);
 
    PendingWindow(QString name, bool allowExternalNavigation,
                  bool showDesktopToolbar)
@@ -79,10 +74,17 @@ class WebPage : public QWebEnginePage
    Q_OBJECT
 
 public:
-   explicit WebPage(QUrl baseUrl = QUrl(), QWidget *parent = nullptr,
+   explicit WebPage(QUrl baseUrl = QUrl(),
+                    QWidget *parent = nullptr,
+                    bool allowExternalNavigate = false);
+
+   explicit WebPage(QWebEngineProfile *profile,
+                    QUrl baseUrl = QUrl(),
+                    QWidget *parent = nullptr,
                     bool allowExternalNavigate = false);
 
    void setBaseUrl(const QUrl& baseUrl);
+   void setTutorialUrl(const QString& tutorialUrl);
    void setViewerUrl(const QString& viewerUrl);
    void setShinyDialogUrl(const QString& shinyDialogUrl);
    void prepareExternalNavigate(const QString& externalUrl);
@@ -92,6 +94,8 @@ public:
    void closeWindow(QString name);
 
    void triggerAction(QWebEnginePage::WebAction action, bool checked = false) override;
+
+   inline WebProfile* profile() { return static_cast<WebProfile*>(QWebEnginePage::profile()); }
 
 public Q_SLOTS:
    bool shouldInterruptJavaScript();
@@ -104,15 +108,17 @@ protected:
                                  int lineNumber, const QString& sourceID) override;
    QString userAgentForUrl(const QUrl &url) const;
    bool acceptNavigationRequest(const QUrl &url, NavigationType, bool isMainFrame) override;
-   QString viewerUrl();
    
-   inline WebProfile* profile() { return static_cast<WebProfile*>(QWebEnginePage::profile()); }
+   QString tutorialUrl();
+   QString viewerUrl();
 
 private:
+   void init();
    void handleBase64Download(QUrl url);
 
 private:
    QUrl baseUrl_;
+   QString tutorialUrl_;
    QString viewerUrl_;
    QString shinyDialogUrl_;
    bool allowExternalNav_;

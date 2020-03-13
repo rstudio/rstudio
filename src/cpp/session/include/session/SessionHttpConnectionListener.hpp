@@ -1,7 +1,7 @@
 /*
  * SessionHttpConnectionListener.hpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-12 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -72,7 +72,7 @@
 
 namespace rstudio {
 namespace core {
-	class Error;
+   class Error;
 }
 }
 
@@ -90,15 +90,15 @@ HttpConnectionListener& httpConnectionListener();
 class HttpConnectionListener
 {  
 public:
-	virtual ~HttpConnectionListener() {}
+   virtual ~HttpConnectionListener() {}
 
-	// start and stop
-	virtual core::Error start() = 0;
+   // start and stop
+   virtual core::Error start() = 0;
    virtual void stop() = 0;
 
    // connection queues
-	virtual HttpConnectionQueue& mainConnectionQueue() = 0;
-	virtual HttpConnectionQueue& eventsConnectionQueue() = 0;
+   virtual HttpConnectionQueue& mainConnectionQueue() = 0;
+   virtual HttpConnectionQueue& eventsConnectionQueue() = 0;
 };
 
 } // namespace session

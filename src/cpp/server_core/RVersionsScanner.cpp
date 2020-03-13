@@ -1,7 +1,7 @@
 /*
  * RVersionsScanner.cpp
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -15,11 +15,10 @@
 
 #include <server_core/RVersionsScanner.hpp>
 
-#include <boost/foreach.hpp>
 #include <boost/algorithm/string.hpp>
 #include <boost/algorithm/string/predicate.hpp>
 
-#include <core/Error.hpp>
+#include <shared_core/Error.hpp>
 #include <core/FileSerializer.hpp>
 #include <core/json/JsonRpc.hpp>
 #include <core/r_util/REnvironment.hpp>
@@ -53,13 +52,15 @@ RVersionsScanner::RVersionsScanner(bool checkCommonRLocations,
                                    const std::string& rLdScriptPath,
                                    const std::string& rLdLibraryPath,
                                    const r_util::RVersion& profileDefaultR,
-                                   const std::vector<FilePath>& profileRHomeDirs) :
+                                   const std::vector<FilePath>& profileRHomeDirs,
+                                   const std::string& modulesBinaryPath) :
    checkCommonRLocations_(checkCommonRLocations),
    whichROverride_(whichROverride),
    rLdScriptPath_(rLdScriptPath),
    rLdLibraryPath_(rLdLibraryPath),
    profileDefaultR_(profileDefaultR),
-   profileRHomeDirs_(profileRHomeDirs)
+   profileRHomeDirs_(profileRHomeDirs),
+   modulesBinaryPath_(modulesBinaryPath)
 {
 }
 
@@ -104,7 +105,7 @@ bool RVersionsScanner::detectSystemRVersion(core::r_util::RVersion* pVersion,
    // if it's a directory then see if we can find the script
    if (rWhichRPath.isDirectory())
    {
-      FilePath rScriptPath = rWhichRPath.childPath("bin/R");
+      FilePath rScriptPath = rWhichRPath.completeChildPath("bin/R");
       if (rScriptPath.exists())
          rWhichRPath = rScriptPath;
    }
@@ -178,7 +179,8 @@ std::vector<r_util::RVersion> RVersionsScanner::getRVersions()
             rEntries,
             checkCommonRLocations_,
             rLdScriptPath_,
-            rLdLibraryPath_);
+            rLdLibraryPath_,
+            modulesBinaryPath_);
 
    // cache the versions that we just found
    cachedVersions_ = versions;
@@ -189,7 +191,8 @@ std::vector<r_util::RVersion> RVersionsScanner::getRVersions()
    if (!sysVersion.empty())
    {
       r_util::RVersion overrideVersion = r_util::selectVersion(sysVersion.number(),
-                                                               sysVersion.homeDir().absolutePath(),
+                                                               sysVersion.homeDir().getAbsolutePath(),
+                                                               "",
                                                                versions);
       systemVersion_ = overrideVersion;
    }
@@ -225,7 +228,7 @@ void RVersionsScanner::parseRVersionsFile(const std::string& contents,
       bool skipEntry = true;
       std::vector<std::string> rEntryLines;
       boost::algorithm::split(rEntryLines, rEntry, boost::is_any_of("\n"));
-      BOOST_FOREACH(const std::string& line, rEntryLines)
+      for (const std::string& line : rEntryLines)
       {
          std::string trimmedLine = string_utils::trimWhitespace(line);
 
@@ -249,7 +252,7 @@ void RVersionsScanner::parseRVersionsFile(const std::string& contents,
          else
          {
             // dcf parse failed, so treat each line as a regular file path (legacy mode)
-            BOOST_FOREACH(const std::string& line, rEntryLines)
+            for (const std::string& line : rEntryLines)
             {
                if (boost::algorithm::starts_with(line, "#"))
                   continue;
@@ -287,9 +290,11 @@ boost::shared_ptr<r_util::RVersion> RVersionsScanner::parseREntry(const std::str
    }
 
    std::string path = string_utils::trimWhitespace(fields["Path"]);
+   std::string module = string_utils::trimWhitespace(fields["Module"]);
+
    FilePath rPath = FilePath(path);
 
-   if (path.empty() || !rPath.exists())
+   if (module.empty() && (path.empty() || !rPath.exists()))
    {
       LOG_ERROR_MESSAGE("Invalid R path specified in /etc/rstudio/r-versions: " + path +
                         "This version of R will be skipped");
@@ -302,12 +307,16 @@ boost::shared_ptr<r_util::RVersion> RVersionsScanner::parseREntry(const std::str
    pVersion->setLabel(label);
 
    pVersion->setHomeDir(rPath);
-
-   std::string module = string_utils::trimWhitespace(fields["Module"]);
    pVersion->setModule(module);
 
    std::string script = string_utils::trimWhitespace(fields["Script"]);
    pVersion->setPrelaunchScript(script);
+
+   std::string repo = string_utils::trimWhitespace(fields["Repo"]);
+   pVersion->setRepo(repo);
+
+   std::string library = string_utils::trimWhitespace(fields["Library"]);
+   pVersion->setLibrary(library);
 
    return pVersion;
 }

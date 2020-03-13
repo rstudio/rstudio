@@ -1,7 +1,7 @@
 /*
- * RParser.hpp
+ * SessionRParser.hpp
  *
- * Copyright (C) 2009-2015 by RStudio, Inc.
+ * Copyright (C) 2009-2019 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -29,6 +29,7 @@
 #include <set>
 #include <iostream>
 #include <iomanip>
+#include <gsl/gsl>
 
 #include <core/Algorithm.hpp>
 #include <core/r_util/RTokenizer.hpp>
@@ -42,7 +43,6 @@
 #include <boost/bind.hpp>
 #include <boost/container/flat_set.hpp>
 #include <boost/shared_ptr.hpp>
-#include <boost/foreach.hpp>
 #include <boost/algorithm/string.hpp>
 
 #include <core/Macros.hpp>
@@ -243,10 +243,10 @@ struct LintItem
    LintItem(const RToken& item,
             LintType type,
             const std::string& message)
-      : startRow(item.row()),
-        startColumn(item.column()),
-        endRow(item.row()),
-        endColumn(item.column() + item.length()),
+      : startRow(gsl::narrow_cast<int>(item.row())),
+        startColumn(gsl::narrow_cast<int>(item.column())),
+        endRow(gsl::narrow_cast<int>(item.row())),
+        endColumn(gsl::narrow_cast<int>(item.column() + item.length())),
         type(type),
         message(message)
    {}
@@ -254,10 +254,10 @@ struct LintItem
    LintItem(const ParseItem& item,
             LintType type,
             const std::string& message)
-      : startRow(item.position.row),
-        startColumn(item.position.column),
-        endRow(item.position.row),
-        endColumn(item.position.column + item.symbol.length()),
+      : startRow(gsl::narrow_cast<int>(item.position.row)),
+        startColumn(gsl::narrow_cast<int>(item.position.column)),
+        endRow(gsl::narrow_cast<int>(item.position.row)),
+        endColumn(gsl::narrow_cast<int>(item.position.column + item.symbol.length())),
         type(type),
         message(message)
    {}
@@ -292,7 +292,12 @@ public:
             LintType type,
             const std::string& message)
    {
-      LintItem item(startRow, startColumn, endRow, endColumn, type, message);
+      LintItem item(gsl::narrow_cast<int>(startRow),
+                    gsl::narrow_cast<int>(startColumn),
+                    gsl::narrow_cast<int>(endRow),
+                    gsl::narrow_cast<int>(endColumn),
+                    type,
+                    message);
       add(item);
    }
    
@@ -342,7 +347,7 @@ public:
       ParseItem item(
                cursor.contentAsUtf8(),
                cursor.currentPosition(),
-               NULL);
+               nullptr);
       noSymbolNamed(item, candidate);
    }
    
@@ -361,10 +366,10 @@ public:
    void symbolDefinedAfterUsage(const ParseItem& item,
                                 const Position& position)
    {
-      LintItem lint(position.row,
-                    position.column,
-                    position.row,
-                    position.column + item.symbol.length(),
+      LintItem lint(gsl::narrow_cast<int>(position.row),
+                    gsl::narrow_cast<int>(position.column),
+                    gsl::narrow_cast<int>(position.row),
+                    gsl::narrow_cast<int>(position.column + item.symbol.length()),
                     LintTypeInfo,
                     "'" + item.symbol + "' is defined after it is used");
       
@@ -408,10 +413,10 @@ public:
 
    void tooManyErrors(const Position& position)
    {
-      LintItem lint(position.row,
-                    position.column,
-                    position.row,
-                    position.column,
+      LintItem lint(gsl::narrow_cast<int>(position.row),
+                    gsl::narrow_cast<int>(position.column),
+                    gsl::narrow_cast<int>(position.row),
+                    gsl::narrow_cast<int>(position.column),
                     LintTypeError,
                     "too many errors emitted; stopping now");
       lintItems_.push_back(lint);
@@ -475,6 +480,20 @@ public:
                "unexpected assignment in argument list; did you mean to use '='?");
    }
    
+   void addLintItem(const RToken& rToken,
+                    LintType type,
+                    const std::string& message)
+   {
+      add(LintItem(rToken, type, message));
+   }
+   
+   void addLintItem(const ParseItem& item,
+                    LintType type,
+                    const std::string& message)
+   {
+      add(LintItem(item, type, message));
+   }
+   
    const std::vector<LintItem>& get() const
    {
       return lintItems_;
@@ -504,20 +523,6 @@ public:
    void dump();
    
 private:
-   
-   void addLintItem(const RToken& rToken,
-                    LintType type,
-                    const std::string& message)
-   {
-      add(LintItem(rToken, type, message));
-   }
-   
-   void addLintItem(const ParseItem& item,
-                    LintType type,
-                    const std::string& message)
-   {
-      add(LintItem(item, type, message));
-   }
    
    void add(const LintItem& item)
    {
@@ -570,19 +575,19 @@ public:
    static boost::shared_ptr<ParseNode> createRootNode()
    {
       return boost::shared_ptr<ParseNode>(
-               new ParseNode(NULL, "<root>", Position(0, 0)));
+               new ParseNode(nullptr, "<root>", Position(0, 0)));
    }
    
    static boost::shared_ptr<ParseNode> createNode(
          const std::string& name)
    {
       return boost::shared_ptr<ParseNode>(
-               new ParseNode(NULL, name, Position(0, 0)));
+               new ParseNode(nullptr, name, Position(0, 0)));
    }
    
    bool isRootNode() const
    {
-      return pParent_ == NULL;
+      return pParent_ == nullptr;
    }
    
    const SymbolPositions& getDefinedSymbols() const
@@ -662,7 +667,7 @@ public:
    ParseNode* const getRoot() const
    {
       ParseNode* pNode = const_cast<ParseNode*>(this);
-      while (pNode->pParent_ != NULL)
+      while (pNode->pParent_ != nullptr)
          pNode = pNode->pParent_;
       
       return pNode;
@@ -745,7 +750,7 @@ public:
    
    bool findFunction(const std::string& name,
                      const Position& position,
-                     const ParseNode** ppFoundNode = NULL) const
+                     const ParseNode** ppFoundNode = nullptr) const
    {
       return findFunctionImpl(
                this,
@@ -765,7 +770,7 @@ private:
       if (!pNode) return false;
       
       // First, perform a position-wide search in the current node.
-      Positions* pPositions = NULL;
+      Positions* pPositions = nullptr;
       core::algorithm::get(pNode->getDefinedSymbols(), name, &pPositions);
       
       if (!pPositions)
@@ -806,7 +811,7 @@ public:
    
    bool findVariable(const std::string& name,
                      const Position& position,
-                     Position* pFoundPosition = NULL) const
+                     Position* pFoundPosition = nullptr) const
    {
       return findVariableImpl(this,
                               name,
@@ -864,7 +869,7 @@ public:
            ++it)
       {
          const std::string& symbol = it->first;
-         BOOST_FOREACH(const Position& position, it->second)
+         for (const Position& position : it->second)
          {
             DEBUG("-- Checking for symbol '" << symbol << "' " << position.toString());
             if (!symbolHasDefinitionInTree(symbol, position) &&
@@ -886,7 +891,7 @@ public:
    
    bool isSymbolUsedInChildNode(const std::string& symbolName)
    {
-      BOOST_FOREACH(const boost::shared_ptr<ParseNode>& pChild, children_)
+      for (const boost::shared_ptr<ParseNode>& pChild : children_)
       {
          if (pChild->getReferencedSymbols().count(symbolName))
             return true;
@@ -947,7 +952,7 @@ public:
          DEBUG("-- '" << it->first << "'");
          if (nameLower == boost::algorithm::to_lower_copy(it->first))
          {
-            BOOST_FOREACH(const Position& position, it->second)
+            for (const Position& position : it->second)
             {
                if (position < item.position)
                {

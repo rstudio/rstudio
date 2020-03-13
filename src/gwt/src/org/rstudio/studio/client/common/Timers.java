@@ -1,7 +1,7 @@
 /*
  * Timers.java
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -29,5 +29,10 @@ public class Timers
             command.execute();
          }
       }.schedule(delayMs);
+   }
+   
+   public static final void singleShot(final Command command)
+   {
+      singleShot(0, command);
    }
 }

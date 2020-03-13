@@ -1,7 +1,7 @@
 /*
  * r.js
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * The Initial Developer of the Original Code is
  * Ajax.org B.V.
@@ -101,7 +101,14 @@ define("mode/r", ["require", "exports", "module"], function(require, exports, mo
 
             // If newline in a doxygen comment, continue the comment
             var pos = editor.getSelectionRange().start;
-            var match = /^((\s*#+')\s*)/.exec(session.doc.getLine(pos.row));
+            var docLine = session.doc.getLine(pos.row);
+            var match = /^((\s*#+')\s*)/.exec(docLine);
+            if (match && editor.getSelectionRange().start.column >= match[2].length) {
+               return {text: "\n" + match[1]};
+            }
+
+            // If newline in a plumber comment, continue the comment
+            match = /^((\s*#+\*)\s*)/.exec(docLine);
             if (match && editor.getSelectionRange().start.column >= match[2].length) {
                return {text: "\n" + match[1]};
             }

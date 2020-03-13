@@ -10,6 +10,8 @@
   margin-right: 5px;
   margin-left: 2px;
   margin-top: 2px;
+  width: 16px;
+  height: 14px;
 }
 
 .contents
@@ -38,12 +40,12 @@
 <g:HTMLPanel styleName="{style.host}">
   <g:VerticalPanel styleName="{style.panel}" ui:field="panel_">
      <g:HorizontalPanel visible="false" ui:field="messageBar_">
-       <g:Image styleName="{style.icon}" resource="{res.infoSmall2x}"></g:Image>
+       <g:Image altText="Info" styleName="{style.icon}" resource="{res.infoSmall2x}"></g:Image>
        <g:VerticalPanel styleName="{style.contents}" ui:field="messages_">
        </g:VerticalPanel>
      </g:HorizontalPanel>
      <g:HorizontalPanel visible="false" ui:field="warningBar_">
-       <g:Image styleName="{style.icon}" resource="{res.warningSmall2x}"></g:Image>
+       <g:Image altText="Warning" styleName="{style.icon}" resource="{res.warningSmall2x}"></g:Image>
        <g:VerticalPanel styleName="{style.contents}" ui:field="warnings_">
        </g:VerticalPanel>
      </g:HorizontalPanel>

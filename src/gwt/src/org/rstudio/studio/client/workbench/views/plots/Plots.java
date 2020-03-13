@@ -1,7 +1,7 @@
 /*
  * Plots.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -22,7 +22,6 @@ import com.google.gwt.event.logical.shared.SelectionEvent;
 import com.google.gwt.event.logical.shared.SelectionHandler;
 import com.google.gwt.json.client.JSONObject;
 import com.google.gwt.user.client.ui.HasWidgets;
-import com.google.gwt.user.client.ui.Panel;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 
@@ -52,7 +51,7 @@ import org.rstudio.studio.client.workbench.exportplot.ExportPlotUtils;
 import org.rstudio.studio.client.workbench.exportplot.model.ExportPlotOptions;
 import org.rstudio.studio.client.workbench.exportplot.model.SavePlotAsImageContext;
 import org.rstudio.studio.client.workbench.model.Session;
-import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserState;
 import org.rstudio.studio.client.workbench.views.BasePresenter;
 import org.rstudio.studio.client.workbench.views.console.events.ConsolePromptEvent;
 import org.rstudio.studio.client.workbench.views.console.events.ConsolePromptHandler;
@@ -87,7 +86,7 @@ public class Plots extends BasePresenter implements PlotsChangedHandler,
       
       void refresh();
    
-      Panel getPlotsSurface();
+      PlotsSurface getPlotsSurface();
       
       Parent getPlotsParent();
       Size getPlotFrameSize();
@@ -98,7 +97,7 @@ public class Plots extends BasePresenter implements PlotsChangedHandler,
    public Plots(final Display view,
                 GlobalDisplay globalDisplay,
                 WorkbenchContext workbenchContext,
-                Provider<UIPrefs> uiPrefs,
+                Provider<UserState> userState,
                 Commands commands,
                 EventBus events,
                 final PlotsServerOperations server,
@@ -108,7 +107,7 @@ public class Plots extends BasePresenter implements PlotsChangedHandler,
       view_ = view;
       globalDisplay_ = globalDisplay;
       workbenchContext_ = workbenchContext;
-      uiPrefs_ = uiPrefs;
+      userState_ = userState;
       server_ = server;
       session_ = session;
       exportPlot_ = GWT.create(ExportPlot.class);
@@ -222,7 +221,7 @@ public class Plots extends BasePresenter implements PlotsChangedHandler,
       
       
       // reload zoom window if we have one
-      if (Desktop.isDesktop())
+      if (Desktop.hasDesktopFrame())
          Desktop.getFrame().reloadZoomWindow();
       else if ((zoomWindow_ != null) && !zoomWindow_.isClosed())
          zoomWindow_.reload();
@@ -321,7 +320,7 @@ public class Plots extends BasePresenter implements PlotsChangedHandler,
                      server_, 
                      context, 
                      ExportPlotOptions.adaptToSize(
-                           uiPrefs_.get().exportPlotOptions().getValue(),
+                           userState_.get().exportPlotOptions().getValue().cast(),
                            getPlotSize()),
                      saveExportOptionsOperation_);  
             }
@@ -358,7 +357,7 @@ public class Plots extends BasePresenter implements PlotsChangedHandler,
 
                Size size = getPlotSize();
                final SavePlotAsPdfOptions currentOptions = 
-                         uiPrefs_.get().savePlotAsPdfOptions().getValue();
+                         userState_.get().savePlotAsPdfOptions().getValue().cast();
                
                exportPlot_.savePlotAsPdf(
                  globalDisplay_,
@@ -377,12 +376,12 @@ public class Plots extends BasePresenter implements PlotsChangedHandler,
                                                 options,
                                                 currentOptions))
                        {
-                          UIPrefs prefs = uiPrefs_.get();
-                          prefs.savePlotAsPdfOptions().setGlobalValue(options);
-                          prefs.writeUIPrefs();    
+                          UserState state = userState_.get();
+                          state.savePlotAsPdfOptions().setGlobalValue(options);
+                          state.writeState();
                        }
-                    }    
-                 }) ;  
+                    }
+                 });
             }
 
             @Override
@@ -402,7 +401,7 @@ public class Plots extends BasePresenter implements PlotsChangedHandler,
       exportPlot_.copyPlotToClipboard(
                               server_, 
                               ExportPlotOptions.adaptToSize(
-                                    uiPrefs_.get().exportPlotOptions().getValue(),
+                                    userState_.get().exportPlotOptions().getValue().cast(),
                                     getPlotSize()),
                               saveExportOptionsOperation_);    
    }
@@ -417,13 +416,13 @@ public class Plots extends BasePresenter implements PlotsChangedHandler,
       {
          public void execute(ExportPlotOptions options)
          {
-            UIPrefs uiPrefs = uiPrefs_.get();
+            UserState userState = userState_.get();
             if (!ExportPlotOptions.areEqual(
                             options,
-                            uiPrefs.exportPlotOptions().getValue()))
+                            userState.exportPlotOptions().getValue().cast()))
             {
-               uiPrefs.exportPlotOptions().setGlobalValue(options);
-               uiPrefs.writeUIPrefs();
+               userState.exportPlotOptions().setGlobalValue(options);
+               userState.writeState();
             }
          }
       };
@@ -437,7 +436,7 @@ public class Plots extends BasePresenter implements PlotsChangedHandler,
       // determine whether we should scale (see comment in ImageFrame.onLoad
       // for why we wouldn't want to scale)
       int scale = 1;
-      if (Desktop.isDesktop() && BrowseCap.isMacintosh())
+      if (Desktop.hasDesktopFrame() && BrowseCap.isMacintosh())
          scale = 0;
       
       // compose url string
@@ -612,7 +611,7 @@ public class Plots extends BasePresenter implements PlotsChangedHandler,
    private final PlotsServerOperations server_;
    private final WorkbenchContext workbenchContext_;
    private final Session session_;
-   private final Provider<UIPrefs> uiPrefs_;
+   private final Provider<UserState> userState_;
    private final Locator locator_;
    private final ManipulatorManager manipulatorManager_;
    private WindowEx zoomWindow_;

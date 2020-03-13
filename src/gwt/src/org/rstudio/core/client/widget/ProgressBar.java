@@ -1,7 +1,7 @@
 /*
  * ProgressBar.java
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,6 +14,8 @@
  */
 package org.rstudio.core.client.widget;
 
+import com.google.gwt.aria.client.LiveValue;
+import com.google.gwt.aria.client.Roles;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
@@ -34,10 +36,27 @@ public class ProgressBar extends Composite
    {
       initWidget(uiBinder.createAndBindUi(this));
       progress_.addStyleName("rstudio-themes-border");
+
+      Roles.getProgressbarRole().set(progress_.getElement());
+      Roles.getProgressbarRole().setAriaValueminProperty(progress_.getElement(), 0);
+      Roles.getProgressbarRole().setAriaValuemaxProperty(progress_.getElement(), 100);
+      Roles.getProgressbarRole().setAriaValuenowProperty(progress_.getElement(), 0);
+      Roles.getProgressbarRole().setAriaLiveProperty(progress_.getElement(), LiveValue.POLITE);
+      Roles.getPresentationRole().set(bar_.getElement());
    }
-   
+
+   /**
+    * @param label text label for screen readers
+    */
+   public void setLabel(String label)
+   {
+      if (label != null)
+         Roles.getProgressbarRole().setAriaLabelProperty(progress_.getElement(), label);
+   }
+
    public void setProgress(double percent)
    {
+      Roles.getProgressbarRole().setAriaValuenowProperty(progress_.getElement(), percent);
       bar_.setWidth(percent + "%");
    }
    

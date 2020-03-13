@@ -1,7 +1,7 @@
 /*
  * BuildToolsCustomPanel.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-20 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -12,10 +12,9 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-
-
 package org.rstudio.studio.client.projects.ui.prefs.buildtools;
 
+import org.rstudio.core.client.ElementIds;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.projects.model.RProjectConfig;
 import org.rstudio.studio.client.projects.model.RProjectOptions;
@@ -25,7 +24,7 @@ public class BuildToolsCustomPanel extends BuildToolsPanel
 {
    public BuildToolsCustomPanel()
    {
-      pathSelector_ = new FileSelector("Custom build script:");
+      pathSelector_ = new FileSelector("Custom build script:", ElementIds.TextBoxButtonId.BUILD_SCRIPT);
       pathSelector_.setTextWidth("250px");
       add(pathSelector_);
    }

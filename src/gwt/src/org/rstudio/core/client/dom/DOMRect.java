@@ -1,7 +1,7 @@
 /*
  * DOMRect.java
  *
- * Copyright (C) 2009-15 by RStudio, Inc.
+ * Copyright (C) 2009-15 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -36,5 +36,13 @@ public class DOMRect extends JavaScriptObject
       
    public final native int getBottom() /*-{
       return this.bottom;
+   }-*/;
+   
+   public final native int getWidth() /*-{
+      return this.width;
+   }-*/;
+   
+   public final native int getHeight() /*-{
+      return this.height;
    }-*/;
 }

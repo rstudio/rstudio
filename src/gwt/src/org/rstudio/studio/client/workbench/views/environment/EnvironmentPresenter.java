@@ -1,7 +1,7 @@
 /*
  * EnvironmentPresenter.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -519,36 +519,6 @@ public class EnvironmentPresenter extends BasePresenter
    {
       view_.bringToFront();
       dataImportPresenter_.openImportDatasetFromXLS("");
-   }
-
-   void onImportDatasetFromXML()
-   {
-      view_.bringToFront();
-      dataImportPresenter_.openImportDatasetFromXML("");
-   }
-
-   void onImportDatasetFromJSON()
-   {
-      view_.bringToFront();
-      dataImportPresenter_.openImportDatasetFromJSON("");
-   }
-
-   void onImportDatasetFromJDBC()
-   {
-      view_.bringToFront();
-      dataImportPresenter_.openImportDatasetFromJDBC("");
-   }
-
-   void onImportDatasetFromODBC()
-   {
-      view_.bringToFront();
-      dataImportPresenter_.openImportDatasetFromODBC("");
-   }
-
-   void onImportDatasetFromMongo()
-   {
-      view_.bringToFront();
-      dataImportPresenter_.openImportDatasetFromMongo("");
    }
 
    public void onOpenDataFile(OpenDataFileEvent event)

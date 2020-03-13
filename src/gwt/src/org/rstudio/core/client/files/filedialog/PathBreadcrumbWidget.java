@@ -1,7 +1,7 @@
 /*
  * PathBreadcrumbWidget.java
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,16 +14,16 @@
  */
 package org.rstudio.core.client.files.filedialog;
 
+import com.google.gwt.aria.client.Roles;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Unit;
-import com.google.gwt.event.dom.client.ClickEvent;
-import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.ui.*;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 
+import org.rstudio.core.client.a11y.A11y;
 import org.rstudio.core.client.events.HasSelectionCommitHandlers;
 import org.rstudio.core.client.events.SelectionCommitEvent;
 import org.rstudio.core.client.events.SelectionCommitHandler;
@@ -31,13 +31,13 @@ import org.rstudio.core.client.files.FileSystemContext;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.res.ThemeResources;
-import org.rstudio.core.client.theme.res.ThemeStyles;
+import org.rstudio.core.client.widget.HyperlinkLabel;
+import org.rstudio.core.client.widget.ImageButton;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.Desktop;
-import org.rstudio.studio.client.common.filetypes.FileIconResources;
 import org.rstudio.studio.client.workbench.model.Session;
 
 public class PathBreadcrumbWidget
@@ -54,32 +54,14 @@ public class PathBreadcrumbWidget
       pathPanel_ = new HorizontalPanel();
       pathPanel_.setStylePrimaryName(RES.styles().path());
 
-      if (INCLUDE_UP_LINK)
-      {
-         linkUp_ = new Anchor();
-         linkUp_.setTitle("Go to parent directory");
-         linkUp_.setVisible(false);
-         linkUp_.setStylePrimaryName(RES.styles().goUp());
-         linkUp_.addStyleName(ThemeStyles.INSTANCE.handCursor());
-         Image image = new Image(new ImageResource2x(FileIconResources.INSTANCE.iconUpFolder2x()));
-         linkUp_.getElement().appendChild(image.getElement());
-      }
-      else
-         linkUp_ = null;
-
       panel_ = new HorizontalPanel();
       panel_.setSize("100%", "100%");
       panel_.add(pathPanel_);
-      if (linkUp_ != null)
-      {
-         panel_.add(linkUp_);
-         panel_.setCellHorizontalAlignment(linkUp_, HorizontalPanel.ALIGN_RIGHT);
-         panel_.setCellVerticalAlignment(linkUp_, HorizontalPanel.ALIGN_MIDDLE);
-      }
 
       outer_ = new SimplePanel();
       outer_.setWidget(panel_);
       outer_.setStylePrimaryName(RES.styles().breadcrumb());
+      Roles.getGroupRole().setAriaLabelProperty(outer_.getElement(), "Selected path breadcrumb");
 
       Image fade = new Image(RES.fade());
       fade.setStylePrimaryName(STYLES.fade());
@@ -91,34 +73,16 @@ public class PathBreadcrumbWidget
 
       outer_.getElement().appendChild(fadeWrapper_.getElement());
 
-      if (linkUp_ != null)
-      {
-         linkUp_.addClickHandler(new ClickHandler()
-         {
-            public void onClick(ClickEvent event)
-            {
-               FileSystemItem[] dirs = context_.parseDir(
-                                                   context_.pwdItem().getPath());
-               if (dirs.length > 1)
-                  context_.cd(dirs[dirs.length - 2].getPath());
-            }
-         });
-      }
-
       frame_ = new DockLayoutPanel(Unit.PX);
       eastFrame_ = new FlowPanel();
 
       Button browse = new Button("...");
       browse.setStyleName(STYLES.browse());
       browse.addStyleName(ThemeResources.INSTANCE.themeStyles().handCursor());
-      browse.addClickHandler(new ClickHandler()
-      {
-         public void onClick(ClickEvent event)
-         {
-            browse();
-         }
-      });
-      browse.setTitle("Go to directory");
+      browse.addClickHandler(event -> browse());
+      String buttonTitle = "Go to directory";
+      browse.setTitle(buttonTitle);
+      Roles.getButtonRole().setAriaLabelProperty(browse.getElement(), buttonTitle);
       eastFrame_.add(browse);
       frame_.addEast(eastFrame_, 22);
       
@@ -147,28 +111,18 @@ public class PathBreadcrumbWidget
       
       if (projDir != null)
       {
-         Image projIcon = new Image(new ImageResource2x(RES.projectImage2x()));
-         projIcon.addStyleName(ThemeResources.INSTANCE.themeStyles().handCursor());
+         ImageButton projIcon = new ImageButton("Go to project directory", new ImageResource2x(RES.projectImage2x()));
 
-         projIcon.addClickHandler(new ClickHandler()
-         {
-            public void onClick(ClickEvent event)
-            {
-               SelectionCommitEvent.fire(PathBreadcrumbWidget.this, projDir);
-            }
-         });
-         projIcon.addStyleName(RES.styles().project());
-         projIcon.setTitle(
-               "Go to project directory");
-         
+         projIcon.addClickHandler(event -> SelectionCommitEvent.fire(PathBreadcrumbWidget.this, projDir));
+         projIcon.getImage().addStyleName(RES.styles().project());
+
          eastFrame_.insert(projIcon, 0);
-         
+
          // TODO: infer from contents
          double width = 42;
-         
+
          frame_.setWidgetSize(eastFrame_, width);
          projectIconsAdded_ = true;
-         
       }
    }
 
@@ -177,9 +131,6 @@ public class PathBreadcrumbWidget
    {
       pathPanel_.clear();
       maybeAddProjectIcon();
-      
-      if (linkUp_ != null)
-         linkUp_.setVisible(pathElements.length > 1);
 
       Widget lastAnchor = null;
       for (FileSystemItem item : pathElements)
@@ -192,7 +143,10 @@ public class PathBreadcrumbWidget
       }
 
       if (lastAnchor != null)
+      {
          lastAnchor.addStyleName(RES.styles().last());
+         A11y.setARIACurrent(lastAnchor, "location");
+      }
 
       onWidthsChanged();
    }
@@ -226,20 +180,13 @@ public class PathBreadcrumbWidget
          text = "Cloud";
       else
          text = item.getName();
-      Widget link = null;
-       
+      Widget link;
+
       if (browseable || isHome)
       {
-         Anchor anchor = new Anchor(text, false);
+         HyperlinkLabel anchor = new HyperlinkLabel(
+               text, () -> SelectionCommitEvent.fire(PathBreadcrumbWidget.this, item));
          anchor.addStyleName(ThemeResources.INSTANCE.themeStyles().handCursor());
-         
-         anchor.addClickHandler(new ClickHandler()
-         {
-            public void onClick(ClickEvent event)
-            {
-               SelectionCommitEvent.fire(PathBreadcrumbWidget.this, item);
-            }
-         });
          link = anchor;
       }
       else
@@ -314,12 +261,10 @@ public class PathBreadcrumbWidget
 
    private final HorizontalPanel panel_;
    private final HorizontalPanel pathPanel_;
-   private final Anchor linkUp_;
    private final Element fade_;
    private final FileSystemContext context_;
    private FileDialogResources RES = FileDialogResources.INSTANCE;
    private FileDialogStyles STYLES = RES.styles();
-   private static final boolean INCLUDE_UP_LINK = false;
    private SimplePanel outer_;
    private FlowPanel eastFrame_;
    private boolean projectIconsAdded_ = false;

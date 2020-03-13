@@ -1,7 +1,7 @@
 /*
  * RSourceIndex.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -34,13 +34,6 @@ namespace r_util {
 
 using namespace token_utils;
 using namespace token_cursor;
-
-// static members
-std::set<std::string> RSourceIndex::s_allInferredPkgNames_;
-std::set<std::string> RSourceIndex::s_importedPackages_;
-RSourceIndex::ImportFromMap RSourceIndex::s_importFromDirectives_;
-std::map<std::string, PackageInformation> RSourceIndex::s_packageInformation_;
-FunctionInformation RSourceIndex::s_noSuchFunction_;
 
 namespace {
 
@@ -468,7 +461,7 @@ RSourceIndex::RSourceIndex(const std::string& context, const std::string& code)
    do
    {
       status.update(cursor);
-      BOOST_FOREACH(const Indexer& indexer, indexers)
+      for (const Indexer& indexer : indexers)
       {
          indexer(cursor, status, this);
       }

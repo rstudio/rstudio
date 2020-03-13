@@ -1,7 +1,7 @@
 /*
  * SessionAsyncRProcess.cpp
  *
- * Copyright (C) 2009-16 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -13,14 +13,14 @@
  *
  */
 
-#include <boost/foreach.hpp>
-
-#include <session/SessionUserSettings.hpp>
+#include <session/prefs/UserPrefs.hpp>
 #include <session/SessionConsoleProcess.hpp>
 #include <session/SessionModuleContext.hpp>
 
 #include <core/system/Environment.hpp>
 #include <core/system/Process.hpp>
+
+#include <r/RExec.hpp>
 
 #include <r/session/RSessionUtils.hpp>
 
@@ -43,6 +43,11 @@ void AsyncRProcess::start(const char* rCommand,
                           std::vector<core::FilePath> rSourceFiles,
                           const std::string& input)
 {
+   // file paths to be used for IPC (if any) requested by child process
+   ipcRequests_  = module_context::tempFile("rstudio-ipc-requests-", "rds");
+   ipcResponse_  = module_context::tempFile("rstudio-ipc-response-", "rds");
+   sharedSecret_ = core::system::generateUuid();
+   
    // R binary
    core::FilePath rProgramPath;
    core::Error error = module_context::rScriptPath(&rProgramPath);
@@ -63,7 +68,7 @@ void AsyncRProcess::start(const char* rCommand,
       const core::FilePath rPath =
             session::options().coreRSourcePath();
       
-      const core::FilePath rTools =  rPath.childPath("Tools.R");
+      const core::FilePath rTools = rPath.completeChildPath("Tools.R");
       
       // insert at begin as Tools.R needs to be sourced first
       rSourceFiles.insert(rSourceFiles.begin(), rTools);
@@ -82,7 +87,7 @@ void AsyncRProcess::start(const char* rCommand,
 
    // for windows we need to forward setInternet2
 #ifdef _WIN32
-   if (!r::session::utils::isR3_3() && userSettings().useInternet2())
+   if (!r::session::utils::isR3_3() && prefs::userPrefs().useInternet2())
       args.push_back("--internet2");
 #endif
 
@@ -116,7 +121,7 @@ void AsyncRProcess::start(const char* rCommand,
            it != rSourceFiles.end();
            ++it)
       {
-         command << "source('" << it->absolutePath() << "');";
+         command << "source('" << it->getAbsolutePath() << "');";
       }
       
       command << escapedCommand;
@@ -138,7 +143,7 @@ void AsyncRProcess::start(const char* rCommand,
       options.redirectStdErrToStdOut = true;
 
    // if a working directory was specified, use it
-   if (!workingDir.empty())
+   if (!workingDir.isEmpty())
    {
       options.workingDir = workingDir;
    }
@@ -152,11 +157,19 @@ void AsyncRProcess::start(const char* rCommand,
    {
       core::system::setenv(&childEnv, "R_LIBS", libPaths);
    }
+   
    // forward passed environment variables
-   BOOST_FOREACH(const core::system::Option& var, environment)
+   for (const core::system::Option& var : environment)
    {
       core::system::setenv(&childEnv, var.first, var.second);
    }
+   
+   // set environment variables used for IPC
+   core::system::setenv(&childEnv, "RSTUDIOAPI_IPC_REQUESTS_FILE", ipcRequests_.getAbsolutePath());
+   core::system::setenv(&childEnv, "RSTUDIOAPI_IPC_RESPONSE_FILE", ipcResponse_.getAbsolutePath());
+   core::system::setenv(&childEnv, "RSTUDIOAPI_IPC_SHARED_SECRET", sharedSecret_);
+   
+   // update environment used for child process
    options.environment = childEnv;
 
    core::system::ProcessCallbacks cb;
@@ -180,7 +193,7 @@ void AsyncRProcess::start(const char* rCommand,
    input_ = input;
 
    error = module_context::processSupervisor().runProgram(
-            rProgramPath.absolutePath(),
+      rProgramPath.getAbsolutePath(),
             args,
             options,
             cb);
@@ -222,7 +235,32 @@ void AsyncRProcess::onStderr(const std::string& output)
 
 bool AsyncRProcess::onContinue()
 {
-   return !terminationRequested_;
+   if (terminationRequested_)
+      return false;
+   
+   // check for request requiring a response
+   if (ipcRequests_.exists())
+   {
+      core::Error error = r::exec::RFunction(".rs.rstudioapi.processRequest")
+            .addParam(ipcRequests_.getAbsolutePathNative())
+            .addParam(ipcResponse_.getAbsolutePathNative())
+            .addParam(sharedSecret_)
+            .call();
+
+      if (error)
+      {
+         LOG_ERROR(error);
+
+         // remove the requests file so we don't attempt to re-log
+         core::Error error = ipcRequests_.removeIfExists();
+         if (error)
+            LOG_ERROR(error);
+
+         return false;
+      }
+   }
+   
+   return true;
 }
 
 bool AsyncRProcess::terminationRequested()
@@ -233,6 +271,8 @@ bool AsyncRProcess::terminationRequested()
 void AsyncRProcess::onProcessCompleted(int exitStatus)
 {
    markCompleted();
+   ipcRequests_.removeIfExists();
+   ipcResponse_.removeIfExists();
    onCompleted(exitStatus);
 }
 

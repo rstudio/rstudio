@@ -1,7 +1,7 @@
 /*
  * RStdCallbacks.cpp
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,6 +14,8 @@
  */
 
 #define R_INTERNAL_FUNCTIONS
+
+#include <gsl/gsl>
 
 #include <boost/function.hpp>
 #include <boost/regex.hpp>
@@ -81,17 +83,17 @@ class JumpToTopException
 FilePath rSaveGlobalEnvironmentFilePath()
 {
    FilePath rEnvironmentDir = utils::rEnvironmentDir();
-   return rEnvironmentDir.complete(".RData");
+   return rEnvironmentDir.completePath(".RData");
 }
 
 void rSuicideError(const Error& error)
 {
    // provide error message if the error was unexpected
-   std::string msg;
-   if (!error.expected())
-      msg = core::log::errorAsLogEntry(error);
+   std::string errorStr;
+   if (!error.isExpected())
+      errorStr = core::log::writeError(error);
 
-   rSuicide(msg);
+   rSuicide(errorStr);
 }
 
 SA_TYPE saveAsk()
@@ -117,7 +119,8 @@ SA_TYPE saveAsk()
       while(true)
       {
          // read input
-         RReadConsole(prompt.c_str(), &(inputBuffer[0]), inputBuffer.size(), 0);
+         RReadConsole(prompt.c_str(), &(inputBuffer[0]),
+                      gsl::narrow_cast<int>(inputBuffer.size()), 0);
          std::string input(1, inputBuffer[0]);
          boost::algorithm::to_lower(input);
 
@@ -155,7 +158,7 @@ void doHistoryFileOperation(SEXP args,
    // perform operation
    Error error = fileOp(historyFilePath);
    if (error)
-      throw r::exec::RErrorException(error.code().message());
+      throw r::exec::RErrorException(error.getMessage());
 }
    
 bool consoleInputHook(const std::string& prompt,
@@ -172,7 +175,7 @@ bool consoleInputHook(const std::string& prompt,
    {
       if (!s_callbacks.handleUnsavedChanges())
       {
-         REprintf("User cancelled quit operation\n");
+         REprintf("%s\n", "User cancelled quit operation");
          return false;
       }
 
@@ -183,7 +186,7 @@ bool consoleInputHook(const std::string& prompt,
       std::string quitErr;
       bool didQuit = win32Quit(input, &quitErr);
       if (!didQuit)
-         REprintf((quitErr + "\n").c_str());
+         REprintf("%s\n", quitErr.c_str());
 
       // always return false (since we take over the command fully)
       return false;
@@ -216,7 +219,7 @@ Error saveDefaultGlobalEnvironment()
    r::exec::IgnoreInterruptsScope ignoreInterrupts;
          
    // save global environment
-   std::string path = string_utils::utf8ToSystem(globalEnvPath.absolutePath());
+   std::string path = string_utils::utf8ToSystem(globalEnvPath.getAbsolutePath());
    Error error = r::exec::executeSafely(
                     boost::bind(R_SaveGlobalEnvToFile, path.c_str()));
    
@@ -288,7 +291,7 @@ int RReadConsole (const char *pmt,
                error = initError;
 
             // log the error if it was unexpected
-            if (!error.expected())
+            if (!error.isExpected())
                LOG_ERROR(error);
             
             // terminate the session (use suicide so that no special
@@ -372,10 +375,22 @@ int RReadConsole (const char *pmt,
       // set interrupts pending
       r::exec::setInterruptsPending(true);
 
-      // only issue an interrupt when not on Windows -- let the regular
-      // event loop handle interrupts there. note that this will longjmp
+      // call R interrupt handler. note that previously we used
+      // r::exec::checkUserInterrupt(), but this also has the side effect of
+      // calling R_ProcessEvents(). this means that modules with registered
+      // event handlers may get a chance to handle our interrupt, and so the
+      // interrupt will be handled in an incorrect context. this can lead to
+      // issues like the process exiting prematurely. see:
+      //
+      //     https://github.com/rstudio/rstudio/issues/5108
+      //
+      // for one such example.
+      //
+      // note that on Windows we let the regular R_ProcessEvents() machinery
+      // handle the interrupt as we noticed calling Rf_onintr() in that
+      // environment could cause a crash
 #ifndef _WIN32
-      r::exec::checkUserInterrupt();
+      Rf_onintr();
 #endif
 
       // buffer not ready
@@ -462,10 +477,10 @@ int RChooseFile (int newFile, char *buf, int len)
    try 
    {
       FilePath filePath = s_callbacks.chooseFile(newFile == TRUE);
-      if (!filePath.empty())
+      if (!filePath.isEmpty())
       {
          // get absolute path
-         std::string absolutePath = filePath.absolutePath();
+         std::string absolutePath = filePath.getAbsolutePath();
          
          // trunate file if it is too long
          std::string::size_type maxLen = len - 1; 
@@ -477,7 +492,7 @@ int RChooseFile (int newFile, char *buf, int len)
          buf[absolutePath.length()] = '\0';
          
          // return the length of the filepath buffer
-         return absolutePath.length();
+         return gsl::narrow_cast<int>(absolutePath.length());
       }
       else
       {
@@ -504,7 +519,7 @@ int RShowFiles (int nfile,
       {
          // determine file path and title
          std::string fixedPath = r::util::fixPath(file[i]);
-         FilePath filePath = utils::safeCurrentPath().complete(fixedPath);
+         FilePath filePath = utils::safeCurrentPath().completePath(fixedPath);
          if (filePath.exists())
          {
             std::string title(headers[i]);
@@ -569,7 +584,7 @@ void Raddhistory(SEXP call, SEXP op, SEXP args, SEXP env)
       std::vector<std::string> commands ;
       Error error = sexp::extract(CAR(args), &commands);
       if (error)
-         throw r::exec::RErrorException(error.code().message());
+         throw r::exec::RErrorException(error.getMessage());
       
       // append them
       ConsoleHistory& history = consoleHistory();
@@ -596,8 +611,8 @@ void rSuicide(const std::string& msg)
    // log abort message if we are in desktop mode
    if (!utils::isServerMode())
    {
-      FilePath abendLogPath = utils::logPath().complete(
-                                                 "rsession_abort_msg.log");
+      FilePath abendLogPath = utils::logPath().completePath(
+         "rsession_abort_msg.log");
       Error error = core::writeStringToFile(abendLogPath, msg);
       if (error)
          LOG_ERROR(error);

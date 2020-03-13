@@ -1,7 +1,7 @@
 /*
  * Environment.hpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-12 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -65,6 +65,10 @@ void unsetenv(Options* pEnvironment,
 
 void getModifiedEnv(const Options& extraVars, Options* pEnv);
 
+// add to the PATH
+void addToPath(const std::string& filePath,
+               bool prepend = false);
+
 // add to the PATH within a string
 void addToPath(std::string* pPath,
                const std::string& filePath,
@@ -74,7 +78,6 @@ void addToPath(std::string* pPath,
 void addToPath(Options* pEnvironment,
                const std::string& filePath,
                bool prepend = false);
-
 
 /****************************************************************
    Utility functions

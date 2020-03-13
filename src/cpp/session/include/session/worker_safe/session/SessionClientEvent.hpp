@@ -1,7 +1,7 @@
 /*
  * SessionClientEvent.hpp
  *
- * Copyright (C) 2009-19 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -18,7 +18,7 @@
 
 #include <string>
 
-#include <core/json/Json.hpp>
+#include <shared_core/json/Json.hpp>
 
 namespace rstudio {
 namespace core {
@@ -68,7 +68,7 @@ extern const int kConsoleProcessOutput;
 extern const int kConsoleProcessExit;
 extern const int kListChanged;
 extern const int kConsoleProcessCreated;
-extern const int kUiPrefsChanged;
+extern const int kUserPrefsChanged;
 extern const int kHandleUnsavedChanges;
 extern const int kConsoleProcessPrompt;
 extern const int kConsoleProcessCreated;
@@ -196,6 +196,12 @@ extern const int kComputeThemeColors;
 extern const int kRequestDocumentClose;
 extern const int kRequestDocumentCloseCompleted;
 extern const int kExecuteAppCommand;
+extern const int kUserStateChanged;
+extern const int kHighlightUi;
+extern const int kReplaceResult;
+extern const int kReplaceUpdated;
+extern const int kTutorialCommand;
+extern const int kTutorialLaunch;
 }
    
 class ClientEvent

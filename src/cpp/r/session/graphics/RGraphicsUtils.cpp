@@ -1,7 +1,7 @@
 /*
  * RGraphicsUtils.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -18,7 +18,7 @@
 #include <boost/format.hpp>
 
 #include <core/Log.hpp>
-#include <core/Error.hpp>
+#include <shared_core/Error.hpp>
 
 #include <r/RExec.hpp>
 #include <r/ROptions.hpp>
@@ -73,7 +73,7 @@ bool hasRequiredGraphicsDevices(std::string* pMessage)
    static QuartzStatus s_quartzStatus;
    if (!s_quartzStatus.isInstalled())
    {
-      if (pMessage != NULL)
+      if (pMessage != nullptr)
       {
          *pMessage = "\nWARNING: The version of R you are running against "
                      "does not support the quartz graphics device (which is "
@@ -113,7 +113,7 @@ bool validateRequirements(std::string* pMessage)
    // version too old
    if (engineVersion < 5)
    {
-      if (pMessage != NULL)
+      if (pMessage != nullptr)
       {
          boost::format fmt(
             "R graphics engine version %1% is not supported by RStudio. "
@@ -128,7 +128,7 @@ bool validateRequirements(std::string* pMessage)
    // version too new
    else if (engineVersion > s_compatibleEngineVersion)
    {
-      if (pMessage != NULL)
+      if (pMessage != nullptr)
       {
          boost::format fmt(
             "R graphics engine version %1% is not supported by this "
@@ -177,7 +177,7 @@ std::string extraBitmapParams()
 
 struct RestorePreviousGraphicsDeviceScope::Impl
 {
-   Impl() : pPreviousDevice(NULL) {}
+   Impl() : pPreviousDevice(nullptr) {}
    pGEDevDesc pPreviousDevice;
 };
 
@@ -186,7 +186,7 @@ RestorePreviousGraphicsDeviceScope::RestorePreviousGraphicsDeviceScope()
    : pImpl_(new Impl())
 {
    // save ptr to previously selected device (if there is one)
-   pImpl_->pPreviousDevice = Rf_NoDevices() ? NULL : GEcurrentDevice();
+   pImpl_->pPreviousDevice = Rf_NoDevices() ? nullptr : GEcurrentDevice();
 }
          
 RestorePreviousGraphicsDeviceScope::~RestorePreviousGraphicsDeviceScope()
@@ -194,7 +194,7 @@ RestorePreviousGraphicsDeviceScope::~RestorePreviousGraphicsDeviceScope()
    try
    {
       // reslect the previously selected device if we had one
-      if (pImpl_->pPreviousDevice != NULL)
+      if (pImpl_->pPreviousDevice != nullptr)
          Rf_selectDevice(Rf_ndevNumber(pImpl_->pPreviousDevice->dev));  
    }
    catch(...)
@@ -205,8 +205,8 @@ RestorePreviousGraphicsDeviceScope::~RestorePreviousGraphicsDeviceScope()
 void reportError(const core::Error& error)
 {
    std::string endUserMessage = r::endUserErrorMessage(error);
-   std::string errmsg = ("Graphics error: " + endUserMessage + "\n");
-   REprintf(errmsg.c_str());
+   std::string errmsg = "Graphics error: " + endUserMessage;
+   REprintf("%s\n", errmsg.c_str());
 }
 
 void logAndReportError(const Error& error, const ErrorLocation& location)

@@ -1,7 +1,7 @@
 /*
  * AceEditorPreview.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -19,7 +19,6 @@ import com.google.gwt.dom.client.*;
 import com.google.gwt.dom.client.Style.BorderStyle;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.resources.client.ClientBundle;
-import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.resources.client.TextResource;
 
 import org.rstudio.core.client.ExternalJavaScriptLoader;
@@ -33,6 +32,7 @@ public class AceEditorPreview extends DynamicIFrame
 {
    public AceEditorPreview(String code)
    {
+      super("Editor Theme Preview");
       code_ = code;
       Style style = getStyleElement().getStyle();
       style.setBorderColor("#CCC");
@@ -86,6 +86,8 @@ public class AceEditorPreview extends DynamicIFrame
                            setFontSize(fontSize_);
                         if (zoomLevel_ != null)
                            setZoomLevel(zoomLevel_);
+
+                        doc.getHead().getParentElement().setLang("en"); // accessibility requirement
 
                         body.getStyle().setMargin(0, Unit.PX);
                         body.getStyle().setBackgroundColor("white");

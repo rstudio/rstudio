@@ -1,7 +1,7 @@
 /*
  * SumatraSynctex.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-12 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -18,8 +18,8 @@
 #include <boost/lexical_cast.hpp>
 
 #include <core/Log.hpp>
-#include <core/Error.hpp>
-#include <core/SafeConvert.hpp>
+#include <shared_core/Error.hpp>
+#include <shared_core/SafeConvert.hpp>
 #include <core/system/Environment.hpp>
 
 #include "DesktopUtils.hpp"
@@ -53,7 +53,7 @@ QStringList inverseSearchArgs(WId mainWindowId)
    QString space = QString::fromUtf8(" ");
 
    // path to rsinverse binary
-   std::string rsinverse = desktop::options().rsinversePath().absolutePath();
+   std::string rsinverse = desktop::options().rsinversePath().getAbsolutePath();
    cmdFormat.append(quote + QString::fromStdString(rsinverse) + quote);
    cmdFormat.append(space);
 

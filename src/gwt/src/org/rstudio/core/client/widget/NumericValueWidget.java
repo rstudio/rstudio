@@ -1,7 +1,7 @@
 /*
  * NumericValueWidget.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-20 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -27,14 +27,34 @@ public class NumericValueWidget extends Composite
       implements HasValue<String>,
                  HasEnsureVisibleHandlers
 {
-   public NumericValueWidget(String label)
-   {
-      FlowPanel flowPanel = new FlowPanel();
-      flowPanel.add(new SpanLabel(label, true));
+   public static final Integer ZeroMinimum = null;
+   public static final Integer NoMaximum = null;
 
-      textBox_ = new TextBox();
-      textBox_.setWidth("30px");
+   /**
+    * Prompt for an integer in the range [min, max]
+    * 
+    * @param label
+    * @param minValue minimum, if null (ZeroMinimum), zero assumed
+    * @param maxValue maximum, if null (NoMaximum), no maximum assumed
+    */
+   public NumericValueWidget(String label, Integer minValue, Integer maxValue)
+   {
+      label_ = label;
+      FlowPanel flowPanel = new FlowPanel();
+
+      textBox_ = new NumericTextBox();
+      textBox_.setWidth("48px");
+      minValue_ = minValue;
+      maxValue_ = maxValue;
+      if (minValue == ZeroMinimum)
+         textBox_.setMin(0);
+      else
+         textBox_.setMin(minValue);
+      if (maxValue != NoMaximum)
+         textBox_.setMax(maxValue);
       textBox_.getElement().getStyle().setMarginLeft(0.6, Unit.EM);
+
+      flowPanel.add(new SpanLabel(label_, textBox_, true));
       flowPanel.add(textBox_);
 
       initWidget(flowPanel);
@@ -65,21 +85,11 @@ public class NumericValueWidget extends Composite
       return textBox_.addValueChangeHandler(handler);
    }
 
-   public boolean validate(String fieldName)
-   {
-      return validateRange(fieldName, null, null);
-   }
-
-   public boolean validatePositive(String fieldName)
-   {
-      return validateRange(fieldName, 1, null);
-   }
-
    /**
-    * Make sure field is a valid integer in the range [min, max). If min or max
+    * Make sure field is a valid integer in the range [min, max]. If min or max
     * are null, then 0 and infinity are assumed, respectively.
     */
-   public boolean validateRange(String fieldName, Integer min, Integer max)
+   public boolean validate()
    {
       String value = textBox_.getValue().trim();
       if (!value.matches("^\\d+$"))
@@ -88,24 +98,27 @@ public class NumericValueWidget extends Composite
          textBox_.getElement().focus();
          RStudioGinjector.INSTANCE.getGlobalDisplay().showErrorMessage(
                "Error",
-               fieldName + " must be a valid number.");
+               label_ + " must be a valid number.",
+               textBox_);
          return false;
       }
-      if (min != null || max != null)
+      if (minValue_ != null || maxValue_ != null)
       {
          int intVal = Integer.parseInt(value);
-         if (min != null && intVal < min)
+         if (minValue_ != null && intVal < minValue_)
          {
             RStudioGinjector.INSTANCE.getGlobalDisplay().showErrorMessage(
                   "Error",
-                  fieldName + " must be greater than or equal to " + min + ".");
+                  label_ + " must be greater than or equal to " + minValue_ + ".",
+                  textBox_);
             return false;
          }
-         if (max != null && intVal >= max)
+         if (maxValue_ != null && intVal > maxValue_)
          {
             RStudioGinjector.INSTANCE.getGlobalDisplay().showErrorMessage(
                   "Error",
-                  fieldName + " must be less than " + max + ".");
+                  label_ + " must be less than or equal to " + maxValue_ + ".",
+                  textBox_);
             return false;
          }
       }
@@ -117,5 +130,8 @@ public class NumericValueWidget extends Composite
       return addHandler(handler, EnsureVisibleEvent.TYPE);
    }
 
-   private TextBox textBox_;
+   private final NumericTextBox textBox_;
+   private final Integer minValue_;
+   private final Integer maxValue_;
+   private final String label_;
 }

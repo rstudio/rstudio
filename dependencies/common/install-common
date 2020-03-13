@@ -3,7 +3,7 @@
 #
 # install-common
 #
-# Copyright (C) 2009-12 by RStudio, Inc.
+# Copyright (C) 2009-19 by RStudio, PBC
 #
 # Unless you have received this program directly from RStudio pursuant
 # to the terms of a commercial license agreement with RStudio, then
@@ -17,15 +17,23 @@
 
 set -e
 
-./install-gwt
 ./install-dictionaries
 ./install-mathjax
 ./install-boost
 ./install-pandoc
 ./install-packages
-./install-crashpad
+./install-sentry-cli
+
+# when installing dependencies to setup a dev environment, need to run install-crashpad
+# via sudo; however, this causes problems if used when building a Dockerfile
+if [ "$1" != "--install-crashpad-sudo" ]
+then
+   ./install-crashpad
+else
+   sudo ./install-crashpad
+fi
 
 if [ -e install-overlay ]
 then
-  ./install-overlay
+   ./install-overlay
 fi

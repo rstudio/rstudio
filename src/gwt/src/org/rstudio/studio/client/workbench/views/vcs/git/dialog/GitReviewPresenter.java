@@ -1,7 +1,7 @@
 /*
  * GitReviewPresenter.java
  *
- * Copyright (C) 2009-19 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -60,7 +60,7 @@ import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.ClientState;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.helper.IntStateValue;
-import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.views.files.events.FileChangeEvent;
 import org.rstudio.studio.client.workbench.views.files.events.FileChangeHandler;
 import org.rstudio.studio.client.workbench.views.vcs.common.ChangelistTable;
@@ -221,7 +221,7 @@ public class GitReviewPresenter implements ReviewPresenter
                              final GitState gitState,
                              final Session session,
                              final GlobalDisplay globalDisplay,
-                             final UIPrefs uiPrefs,
+                             final UserPrefs uiPrefs,
                              VCSFileOpener vcsFileOpener)
    {
       gitPresenterCore_ = gitPresenterCore;
@@ -508,7 +508,7 @@ public class GitReviewPresenter implements ReviewPresenter
                {
                   boolean value = event.getValue();
                   uiPrefs_.gitDiffIgnoreWhitespace().setGlobalValue(value);
-                  uiPrefs_.writeUIPrefs();
+                  uiPrefs_.writeUserPrefs();
                   updateDiff(false);
                }
             });
@@ -939,7 +939,7 @@ public class GitReviewPresenter implements ReviewPresenter
    // from staged view
    private boolean softModeSwitch_;
    private final GitState gitState_;
-   private final UIPrefs uiPrefs_;
+   private final UserPrefs uiPrefs_;
    private final VCSFileOpener vcsFileOpener_;
    private boolean initialized_;
    private static final String MODULE_GIT = "vcs_git";

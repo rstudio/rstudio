@@ -1,7 +1,7 @@
 /*
  * HunspellDictionaryManager.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,11 +14,12 @@
  */
 
 #include <core/spelling/HunspellDictionaryManager.hpp>
+#include <core/system/Xdg.hpp>
 
 #include <boost/bind.hpp>
-#include <boost/foreach.hpp>
 
 #include <core/Algorithm.hpp>
+#include <core/Log.hpp>
 
 namespace rstudio {
 namespace core {
@@ -67,17 +68,17 @@ KnownDictionary s_knownDictionaries[] =
    { "sv_SE",     "Swedish"                  },
    { "uk_UA",     "Ukrainian"                },
    { "vi_VN",     "Vietnamese"               },
-   { NULL, NULL }
+   { nullptr, nullptr }
 };
 
 FilePath dicPathForAffPath(const FilePath& affPath)
 {
-   return affPath.parent().childPath(affPath.stem() + ".dic");
+   return affPath.getParent().completeChildPath(affPath.getStem() + ".dic");
 }
 
 bool isDictionaryAff(const FilePath& filePath)
 {
-   return (filePath.extensionLowerCase() == ".aff") &&
+   return (filePath.getExtensionLowerCase() == ".aff") &&
           dicPathForAffPath(filePath).exists();
 }
 
@@ -92,7 +93,7 @@ Error listAffFiles(const FilePath& baseDir, std::vector<FilePath>* pAffFiles)
       return Success();
 
    std::vector<FilePath> children;
-   Error error = baseDir.children(&children);
+   Error error = baseDir.getChildren(children);
    if (error)
       return error;
 
@@ -149,13 +150,13 @@ Error HunspellDictionaryManager::availableLanguages(
          return error;
    }
 
-   // always check the languages-extra directory as well (and auto-create
+   // always check the custom directory as well (and auto-create
    // it so users who look for it will see it)
-   FilePath userLangsDir = userLanguagesDir();
-   Error error = userLangsDir.ensureDirectory();
+   FilePath customLangsDir = customLanguagesDir();
+   Error error = customLangsDir.ensureDirectory();
    if (error)
       LOG_ERROR(error);
-   error = listAffFiles(userLangsDir, &affFiles);
+   error = listAffFiles(customLangsDir, &affFiles);
    if (error)
       LOG_ERROR(error);
 
@@ -177,13 +178,13 @@ HunspellDictionary HunspellDictionaryManager::dictionaryForLanguageId(
    std::string affFile = langId + ".aff";
 
    // first check to see whether it exists in the user languages directory
-   FilePath userLangsAff = userLanguagesDir().complete(affFile);
-   if (userLangsAff.exists())
-      return HunspellDictionary(userLangsAff);
+   FilePath customLangsAff = customLanguagesDir().completePath(affFile);
+   if (customLangsAff.exists())
+      return HunspellDictionary(customLangsAff);
    else if (allLanguagesInstalled())
-      return HunspellDictionary(allLanguagesDir().complete(affFile));
+      return HunspellDictionary(allLanguagesDir().completePath(affFile));
    else
-      return HunspellDictionary(coreLanguagesDir_.complete(affFile));
+      return HunspellDictionary(coreLanguagesDir_.completePath(affFile));
 }
 
 const HunspellCustomDictionaries&  HunspellDictionaryManager::custom() const
@@ -191,16 +192,33 @@ const HunspellCustomDictionaries&  HunspellDictionaryManager::custom() const
    return customDicts_;
 }
 
+/*
+ * \deprecated
+ * For getting all languages from pre-1.3 RStudio
+ * */
+FilePath HunspellDictionaryManager::legacyAllLanguagesDir() const
+{
+   return userDir_.completeChildPath("languages-system");
+}
+
+/*
+ * \deprecated
+ * For getting user languages from pre-1.3 RStudio
+ * */
+FilePath HunspellDictionaryManager::legacyCustomLanguagesDir() const
+{
+   return userDir_.completeChildPath("custom");
+}
+
 FilePath HunspellDictionaryManager::allLanguagesDir() const
 {
-   return userDir_.childPath("languages-system");
+   return core::system::xdg::userConfigDir().completeChildPath("dictionaries/languages-system");
 }
 
-FilePath HunspellDictionaryManager::userLanguagesDir() const
+FilePath HunspellDictionaryManager::customLanguagesDir() const
 {
-   return userDir_.childPath("languages-user");
+   return core::system::xdg::userConfigDir().completeChildPath("dictionaries/custom");
 }
-
 
 } // namespace spelling
 } // namespace core

@@ -1,7 +1,7 @@
 /*
  * JobsListTests.java
  *
- * Copyright (C) 2009-19 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -113,13 +113,22 @@ public class JobsListTests extends GWTTestCase
       {
       }
    }
-   
+
+   private static class FakeJobItemPrefs implements JobItem.Preferences
+   {
+      @Override
+      public boolean reducedMotion()
+      {
+         return false;
+      }
+   }
+
    private static class Factory implements JobItemFactory
    {
       @Override
       public JobItem create(Job job)
       {
-         return new JobItem(job, new FakeEventBus());
+         return new JobItem(job, new FakeEventBus(), new FakeJobItemPrefs());
       }
    }
    

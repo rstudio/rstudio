@@ -1,7 +1,7 @@
 /*
  * EventBus.java
  *
- * Copyright (C) 2009-19 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -77,7 +77,7 @@ public class EventBus extends HandlerManager implements FireEvents
             if (crossWindow.focusMode() == CrossWindowEvent.MODE_FOCUS)
                pSatellite_.get().focusMainWindow();
             else if (crossWindow.focusMode() == CrossWindowEvent.MODE_AUXILIARY &&
-                     Desktop.isDesktop())
+                     Desktop.hasDesktopFrame())
                Desktop.getFrame().bringMainFrameBehindActive();
 
             fireEventToMainWindow(jso, pSatellite_.get().getSatelliteName());

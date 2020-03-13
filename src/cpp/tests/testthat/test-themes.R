@@ -1,7 +1,7 @@
 #
 # test-themes.R
 #
-# Copyright (C) 2009-2019 by RStudio, Inc.
+# Copyright (C) 2009-2019 by RStudio, PBC
 #
 # Unless you have received this program directly from RStudio pursuant
 # to the terms of a commercial license agreement with RStudio, then
@@ -1667,6 +1667,13 @@ AFTER_FUN = function() {
             '\"')
       }
    }
+})
+
+test_that("addTheme gives an error when adding an empty theme", {
+   themePath <- file.path(inputFileLocation, "rsthemes", "empty.rstheme")
+   expect_error(
+      .rs.addTheme(themePath, FALSE, FALSE, FALSE),
+      paste0("The theme file is empty."))
 })
 
 test_that_wrapped("addTheme gives error when the theme already exists", {

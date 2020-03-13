@@ -1,7 +1,7 @@
 /*
  * SessionInstallRtools.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -16,9 +16,8 @@
 #include "SessionInstallRtools.hpp"
 
 #include <boost/format.hpp>
-#include <boost/foreach.hpp>
 
-#include <core/Error.hpp>
+#include <shared_core/Error.hpp>
 #include <core/StringUtils.hpp>
 
 #include <core/r_util/RToolsInfo.hpp>
@@ -27,7 +26,7 @@
 
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionConsoleProcess.hpp>
-#include <session/SessionUserSettings.hpp>
+#include <session/prefs/UserPrefs.hpp>
 
 using namespace rstudio::core ;
 
@@ -46,7 +45,7 @@ void onDownloadCompleted(const core::system::ProcessResult& result,
    {
       json::Object data;
       data["version"] = version;
-      data["installer_path"] = installerPath.absolutePath();
+      data["installer_path"] = installerPath.getAbsolutePath();
       ClientEvent event(client_events::kInstallRtools, data);
       module_context::enqueClientEvent(event);
    }
@@ -76,13 +75,13 @@ Error installRtools()
    availableRtools.push_back(r_util::RToolsInfo("2.13", installPath, gcc49));
    availableRtools.push_back(r_util::RToolsInfo("2.12", installPath, gcc49));
    availableRtools.push_back(r_util::RToolsInfo("2.11", installPath, gcc49));
-   BOOST_FOREACH(const r_util::RToolsInfo& rTools, availableRtools)
+   for (const r_util::RToolsInfo& rTools : availableRtools)
    {
       if (module_context::isRtoolsCompatible(rTools))
       {
          version = rTools.name();
 
-         std::string repos = userSettings().cranMirror().url;
+         std::string repos = prefs::userPrefs().getCRANMirror().url;
          if (repos.empty())
             repos = module_context::rstudioCRANReposURL();
          url = rTools.url(repos);
@@ -100,7 +99,7 @@ Error installRtools()
 
    // get a temp file path to download into
    FilePath tempPath;
-   error = FilePath::tempFilePath(&tempPath);
+   error = FilePath::tempFilePath(tempPath);
    if (error)
       return error;
    error = tempPath.ensureDirectory();
@@ -110,8 +109,8 @@ Error installRtools()
    // create the command
    std::string rtoolsBinary =
        "Rtools" + boost::algorithm::replace_all_copy(version, ".", "") + ".exe";
-   FilePath installerPath = tempPath.childPath(rtoolsBinary);
-   std::string dest = string_utils::utf8ToSystem(installerPath.absolutePath());
+   FilePath installerPath = tempPath.completeChildPath(rtoolsBinary);
+   std::string dest = string_utils::utf8ToSystem(installerPath.getAbsolutePath());
    boost::format fmt("utils::download.file('%1%', '%2%', mode = 'wb')");
    std::string cmd = boost::str(fmt % url % dest);
 
@@ -128,7 +127,7 @@ Error installRtools()
    // fire the event
    json::Object data;
    data["version"] = version;
-   data["installer_path"] = installerPath.absolutePath();
+   data["installer_path"] = installerPath.getAbsolutePath();
    ClientEvent event(client_events::kInstallRtools, data);
    module_context::enqueClientEvent(event);
 

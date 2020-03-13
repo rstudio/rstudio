@@ -1,7 +1,7 @@
 /*
  * Message.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-12 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -22,7 +22,7 @@
 #include <boost/function.hpp>
 #include <boost/asio/buffer.hpp>
 
-#include <core/SafeConvert.hpp>
+#include <shared_core/SafeConvert.hpp>
 
 namespace rstudio {
 namespace core {
@@ -52,7 +52,7 @@ std::string Message::contentType() const
    return headerValue("Content-Type") ;
 }
 
-std::size_t Message::contentLength() const
+uintmax_t Message::contentLength() const
 {
    std::string value = headerValue("Content-Length");
    if (value.empty())
@@ -61,7 +61,7 @@ std::size_t Message::contentLength() const
    return safe_convert::stringTo<std::size_t>(value, 0);
 }
 
-void Message::setContentLength(int contentLength)
+void Message::setContentLength(uintmax_t contentLength)
 {
    setHeader("Content-Length", contentLength);
 }
@@ -125,6 +125,11 @@ void Message::setHeader(const std::string& name, const std::string& value)
 }
    
 void Message::setHeader(const std::string& name, int value)
+{
+   setHeader(name, safe_convert::numberToString(value));
+}
+
+void Message::setHeader(const std::string& name, uintmax_t value)
 {
    setHeader(name, safe_convert::numberToString(value));
 }

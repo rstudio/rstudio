@@ -1,7 +1,7 @@
 /*
  * SessionVCSUtils.hpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -18,7 +18,7 @@
 
 #include <boost/noncopyable.hpp>
 
-#include <core/json/Json.hpp>
+#include <shared_core/json/Json.hpp>
 #include <core/system/Process.hpp>
 
 namespace rstudio {
@@ -53,7 +53,7 @@ std::string convertDiff(const std::string& diff,
                         const std::string& fromEncoding,
                         const std::string& toEncoding,
                         bool allowSubst,
-                        bool* pSuccess=NULL);
+                        bool* pSuccess=nullptr);
 
 struct RefreshOnExit : public boost::noncopyable
 {

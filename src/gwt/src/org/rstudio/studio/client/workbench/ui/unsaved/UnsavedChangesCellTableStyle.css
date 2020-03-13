@@ -6,7 +6,6 @@ http://code.google.com/p/google-web-toolkit/source/browse/trunk/user/src/com/goo
 
 @def selectionBorderWidth 2px;
 .cellTableWidget {
-  
 }
 
 .cellTableFirstColumn {
@@ -23,8 +22,8 @@ http://code.google.com/p/google-web-toolkit/source/browse/trunk/user/src/com/goo
 }
 
 .cellTableCell {
-  padding: 3px 1px;
-  overflow: hidden;
+   padding: 3px 1px;
+   overflow: hidden;
 }
 
 .cellTableCell input[type=checkbox] {
@@ -32,17 +31,13 @@ http://code.google.com/p/google-web-toolkit/source/browse/trunk/user/src/com/goo
    margin-bottom: 0;
 }
 
-
 .cellTableFirstColumnFooter {
-  
 }
 
 .cellTableFirstColumnHeader {
- 
 }
 
 .cellTableLastColumnFooter {
-  
 }
 
 .cellTableLastColumnHeader {
@@ -55,7 +50,6 @@ http://code.google.com/p/google-web-toolkit/source/browse/trunk/user/src/com/goo
 }
 
 .cellTableSortedHeaderAscending {
-
 }
 
 .cellTableSortedHeaderDescending {
@@ -63,22 +57,22 @@ http://code.google.com/p/google-web-toolkit/source/browse/trunk/user/src/com/goo
 }
 
 .cellTableEvenRow, .cellTableHoveredRow, .cellTableSelectedRow, .cellTableKeyboardSelectedRow {
-  background: #ffffff;
+   background: #ffffff;
 }
 
-.cellTableEvenRowCell, .cellTableHoveredRowCell, .cellTableSelectedRowCell, .cellTableKeyboardSelectedRowCell, .cellTableKeyboardSelectedCell   {
-  border: selectionBorderWidth solid #ffffff;
+.cellTableEvenRowCell, .cellTableHoveredRowCell, .cellTableSelectedRowCell, .cellTableKeyboardSelectedRowCell, .cellTableKeyboardSelectedCell {
+   border: selectionBorderWidth solid #ffffff;
 }
 
 .cellTableOddRow {
-  background-color: #eef4fb;
+   background-color: #eef4fb;
 }
 
 .cellTableOddRowCell {
-  border: selectionBorderWidth solid #eef4fb;;
+   border: selectionBorderWidth solid #eef4fb;;
 }
 
 .cellTableLoading {
-  margin: 30px;
+   margin: 30px;
 }
 

@@ -1,7 +1,7 @@
 /*
  * SessionBuild.cpp
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -49,8 +49,8 @@
 #include <r/session/RConsoleHistory.hpp>
 
 #include <session/projects/SessionProjects.hpp>
-#include <session/SessionUserSettings.hpp>
 #include <session/SessionModuleContext.hpp>
+#include <session/prefs/UserPrefs.hpp>
 
 #include "SessionBuildErrors.hpp"
 #include "SessionSourceCpp.hpp"
@@ -136,11 +136,11 @@ bool isPackageHeaderFile(const FilePath& filePath)
    if (projects::projectContext().hasProject() &&
        (projects::projectContext().config().buildType ==
                                               r_util::kBuildTypePackage) &&
-       (boost::algorithm::starts_with(filePath.extensionLowerCase(), ".h") ||
-        filePath.extensionLowerCase() == ".stan"))
+       (boost::algorithm::starts_with(filePath.getExtensionLowerCase(), ".h") ||
+        filePath.getExtensionLowerCase() == ".stan"))
    {
       FilePath pkgPath = projects::projectContext().buildTargetPath();
-      std::string pkgRelative = filePath.relativePath(pkgPath);
+      std::string pkgRelative = filePath.getRelativePath(pkgPath);
       if (boost::algorithm::starts_with(pkgRelative, "src"))
          return true;
       else if (boost::algorithm::starts_with(pkgRelative, "inst/include"))
@@ -180,14 +180,14 @@ void onSourceEditorFileSaved(FilePath sourceFilePath)
       if (sourceFilePath.isWithin(buildTargetPath))
       {
          std::string outputDir = module_context::websiteOutputDir();
-         FilePath outputDirPath = buildTargetPath.childPath(outputDir);
+         FilePath outputDirPath = buildTargetPath.completeChildPath(outputDir);
          if (outputDir.empty() || !sourceFilePath.isWithin(outputDirPath))
          {
             // are we live previewing?
             bool livePreview = options.livePreviewWebsite;
 
             // force live preview for JS and CSS
-            std::string mimeType = sourceFilePath.mimeContentType();
+            std::string mimeType = sourceFilePath.getMimeContentType();
             if (mimeType == "text/css" || mimeType == "text/javascript")
                livePreview = true;
 
@@ -319,7 +319,7 @@ private:
       if (type == kTestFile)
       {
          options.environment = environment;
-         options.workingDir = buildTargetPath.parent();
+         options.workingDir = buildTargetPath.getParent();
          FilePath testPath = FilePath(subType);
          executePackageBuild(type, testPath, options, cb);
       }
@@ -331,7 +331,7 @@ private:
       else if (config.buildType == r_util::kBuildTypePackage)
       {
          options.environment = environment;
-         options.workingDir = buildTargetPath.parent();
+         options.workingDir = buildTargetPath.getParent();
          executePackageBuild(type, buildTargetPath, options, cb);
       }
       else if (config.buildType == r_util::kBuildTypeMakefile)
@@ -359,7 +359,7 @@ private:
       else if (config.buildType == r_util::kBuildTypeCustom)
       {
          options.environment = environment;
-         options.workingDir = buildTargetPath.parent();
+         options.workingDir = buildTargetPath.getParent();
          executeCustomBuild(type, buildTargetPath, options, cb);
       }
       else
@@ -377,9 +377,8 @@ private:
       {
           // try to read package from /tests/testthat/filename.R,
           // but ignore errors if not within a package
-          FilePath maybePackage = FilePath::resolveAliasedPath(
-             packagePath.parent().parent().parent().absolutePath(),
-             core::system::userHomePath()
+          FilePath maybePackage = module_context::resolveAliasedPath(
+             packagePath.getParent().getParent().getParent().getAbsolutePath()
           );
 
           pkgInfo_.read(maybePackage);
@@ -387,7 +386,7 @@ private:
       else
       {
          // validate that this is a package
-         if (!packagePath.childPath("DESCRIPTION").exists())
+         if (!packagePath.completeChildPath("DESCRIPTION").exists())
          {
             std::string message =
                   "The build directory does not contain a DESCRIPTION file and so "
@@ -566,6 +565,20 @@ private:
                             "generate documentation");
       }
 
+      // make a copy of options so we can customize the environment
+      core::system::Options childEnv;
+      if (options.environment)
+         childEnv = *options.environment;
+      else
+         core::system::environment(&childEnv);
+
+      // allow child process to inherit our R_LIBS
+      std::string libPaths = module_context::libPathsString();
+      if (!libPaths.empty())
+         core::system::setenv(&childEnv, "R_LIBS", libPaths);
+      
+      options.environment = childEnv;
+      
       // build the roxygenize command
       shell_utils::ShellCommand cmd(rScriptPath);
       cmd << "--slave";
@@ -637,7 +650,7 @@ private:
       // if this action is going to INSTALL the package then on
       // windows we need to unload the library first
 #ifdef _WIN32
-      if (packagePath.childPath("src").exists() &&
+      if (packagePath.completeChildPath("src").exists() &&
          (type == kBuildAndReload || type == kRebuildAll ||
           type == kBuildBinaryPackage))
       {
@@ -650,8 +663,8 @@ private:
 
       // use both the R and gcc error parsers
       CompileErrorParsers parsers;
-      parsers.add(rErrorParser(packagePath.complete("R")));
-      parsers.add(gccErrorParser(packagePath.complete("src")));
+      parsers.add(rErrorParser(packagePath.completePath("R")));
+      parsers.add(gccErrorParser(packagePath.completePath("src")));
 
       // track build type
       type_ = type;
@@ -659,11 +672,11 @@ private:
       // add testthat and shinytest result parsers
       if (type == kTestFile) {
          openErrorList_ = false;
-         parsers.add(testthatErrorParser(packagePath.parent()));
+         parsers.add(testthatErrorParser(packagePath.getParent()));
       }
       else if (type == kTestPackage) {
          openErrorList_ = false;
-         parsers.add(testthatErrorParser(packagePath.complete("tests/testthat")));
+         parsers.add(testthatErrorParser(packagePath.completePath("tests/testthat")));
       }
 
       initErrorParser(packagePath, parsers);
@@ -746,7 +759,7 @@ private:
          rCmd << extraArgs;
 
          // add filename as a FilePath so it is escaped
-         rCmd << FilePath(packagePath.filename());
+         rCmd << FilePath(packagePath.getFilename());
 
          // show the user the command
          enqueCommandString(rCmd.commandString());
@@ -837,7 +850,7 @@ private:
       if (session::options().packageOutputInPackageFolder())
          rCmd << FilePath(".");
       else
-         rCmd << FilePath(packagePath.filename());
+         rCmd << FilePath(packagePath.getFilename());
 
       // show the user the command
       enqueCommandString(rCmd.commandString());
@@ -872,7 +885,7 @@ private:
       if (session::options().packageOutputInPackageFolder())
          rCmd << FilePath(".");
       else
-         rCmd << FilePath(packagePath.filename());
+         rCmd << FilePath(packagePath.getFilename());
 
       // show the user the command
       enqueCommandString(rCmd.commandString());
@@ -911,7 +924,7 @@ private:
       if (session::options().packageOutputInPackageFolder())
          rCmd << FilePath(".");
       else
-         rCmd << FilePath(packagePath.filename());
+         rCmd << FilePath(packagePath.getFilename());
 
       // compose the check command (will be executed by the onExit
       // handler of the build cmd)
@@ -941,14 +954,14 @@ private:
       successMessage_ = "R CMD check succeeded\n";
 
       // bind a success function if appropriate
-      if (userSettings().cleanupAfterRCmdCheck())
+      if (prefs::userPrefs().cleanupAfterRCmdCheck())
       {
          successFunction_ = boost::bind(&Build::cleanupAfterCheck,
                                         Build::shared_from_this(),
                                         pkgInfo_);
       }
 
-      if (userSettings().viewDirAfterRCmdCheck())
+      if (prefs::userPrefs().viewDirAfterRCmdCheck())
       {
          failureFunction_ = boost::bind(
                   &Build::viewDirAfterFailedCheck,
@@ -990,7 +1003,7 @@ private:
 
       // run it
       module_context::processSupervisor().runProgram(
-               string_utils::utf8ToSystem(rProgramPath.absolutePath()),
+               string_utils::utf8ToSystem(rProgramPath.getAbsolutePath()),
                args,
                pkgOptions,
                cb);
@@ -1024,7 +1037,7 @@ private:
           !options_.autoRoxygenizeForCheck)
          args.push_back("document = FALSE");
 
-      if (!userSettings().cleanupAfterRCmdCheck())
+      if (!prefs::userPrefs().cleanupAfterRCmdCheck())
          args.push_back("cleanup = FALSE");
 
       // optional extra check args
@@ -1066,14 +1079,14 @@ private:
       successMessage_ = "\nR CMD check succeeded\n";
 
       // bind a success function if appropriate
-      if (userSettings().cleanupAfterRCmdCheck())
+      if (prefs::userPrefs().cleanupAfterRCmdCheck())
       {
          successFunction_ = boost::bind(&Build::cleanupAfterCheck,
                                         Build::shared_from_this(),
                                         pkgInfo_);
       }
 
-      if (userSettings().viewDirAfterRCmdCheck())
+      if (prefs::userPrefs().viewDirAfterRCmdCheck())
       {
          failureFunction_ = boost::bind(&Build::viewDirAfterFailedCheck,
                                         Build::shared_from_this(),
@@ -1107,7 +1120,7 @@ private:
 
       // navigate to the tests directory and source all R
       // scripts within
-      FilePath testsPath = packagePath.complete("tests");
+      FilePath testsPath = packagePath.completePath("tests");
 
       // construct a shell command to execute
       shell_utils::ShellCommand cmd(rScriptPath);
@@ -1125,8 +1138,8 @@ private:
       );
 
       cmd << boost::str(fmt %
-                        testsPath.absolutePath() %
-                        rScriptPath.absolutePath());
+                           testsPath.getAbsolutePath() %
+                        rScriptPath.getAbsolutePath());
 
       pkgOptions.workingDir = testsPath;
       enqueCommandString("Sourcing R files in 'tests' directory");
@@ -1163,7 +1176,7 @@ private:
 
       std::string testPathEscaped = 
          string_utils::singleQuotedStrEscape(string_utils::utf8ToSystem(
-            testPath.absolutePath()));
+            testPath.getAbsolutePath()));
 
       cmd << boost::str(fmt %
                         pkgInfo_.name() %
@@ -1185,13 +1198,30 @@ private:
       // normalize paths between all tests and single test
       std::string shinyTestName;
       if (type == kTestShinyFile) {
-        shinyTestName = shinyPath.filename();
-        shinyPath = shinyPath.parent().parent();
+        shinyTestName = shinyPath.getFilename();
+        shinyPath = shinyPath.getParent();
+        if (shinyPath.getFilename() == "shinytests")
+        {
+           // In newer versions of shinytest, tests are stored in a "shinytests" folder under the
+           // "tests" folder.
+           shinyPath = shinyPath.getParent();
+        }
+        if (shinyPath.getFilename() == "tests")
+        {
+           // Move up from the tests folder to the app folder.
+           shinyPath = shinyPath.getParent();
+        }
+        else
+        {
+           // If this doesn't look like it's in a tests directory, bail out.
+           terminateWithError("Could not find Shiny app for test in " + 
+              shinyPath.getAbsolutePath());
+        }
       }
 
       // get temp path to store rds results
       FilePath tempPath;
-      Error error = FilePath::tempFilePath(&tempPath);
+      Error error = FilePath::tempFilePath(tempPath);
       if (error)
       {
          terminateWithError("Find temp dir", error);
@@ -1203,7 +1233,7 @@ private:
          terminateWithError("Creating temp dir", error);
          return;
       }
-      FilePath tempRdsFile = tempPath.complete(core::system::generateUuid() + ".rds");
+      FilePath tempRdsFile = tempPath.completePath(core::system::generateUuid() + ".rds");
 
       // initialize parser
       CompileErrorParsers parsers;
@@ -1232,8 +1262,8 @@ private:
         );
 
         cmd << boost::str(fmt %
-                          shinyPath.absolutePath() %
-                          tempRdsFile.absolutePath());
+                             shinyPath.getAbsolutePath() %
+                          tempRdsFile.getAbsolutePath());
       } else if (type == kTestShinyFile) {
         boost::format fmt(
            "result <- shinytest::testApp('%1%', '%2%');"
@@ -1241,9 +1271,9 @@ private:
         );
 
         cmd << boost::str(fmt %
-                          shinyPath.absolutePath() %
+                             shinyPath.getAbsolutePath() %
                           shinyTestName %
-                          tempRdsFile.absolutePath());
+                          tempRdsFile.getAbsolutePath());
       } else {
         terminateWithError("Shiny test type is unsupported.");
       }
@@ -1325,9 +1355,9 @@ private:
       // compute paths
       FilePath buildPath = projects::projectContext().buildTargetPath();
       if (!session::options().packageOutputInPackageFolder())
-         buildPath = buildPath.parent();
-      FilePath srcPkgPath = buildPath.childPath(pkgInfo.sourcePackageFilename());
-      FilePath chkDirPath = buildPath.childPath(pkgInfo.name() + ".Rcheck");
+         buildPath = buildPath.getParent();
+      FilePath srcPkgPath = buildPath.completeChildPath(pkgInfo.sourcePackageFilename());
+      FilePath chkDirPath = buildPath.completeChildPath(pkgInfo.name() + ".Rcheck");
 
       // cleanup
       Error error = srcPkgPath.removeIfExists();
@@ -1344,8 +1374,8 @@ private:
       {
          FilePath buildPath = projects::projectContext().buildTargetPath();
          if (!session::options().packageOutputInPackageFolder())
-            buildPath = buildPath.parent();
-         FilePath chkDirPath = buildPath.childPath(pkgInfo.name() + ".Rcheck");
+            buildPath = buildPath.getParent();
+         FilePath chkDirPath = buildPath.completeChildPath(pkgInfo.name() + ".Rcheck");
 
          json::Object dataJson;
          dataJson["directory"] = module_context::createAliasedPath(chkDirPath);
@@ -1362,7 +1392,7 @@ private:
                              const core::system::ProcessCallbacks& cb)
    {
       // validate that there is a Makefile file
-      FilePath makefilePath = targetPath.childPath("Makefile");
+      FilePath makefilePath = targetPath.completeChildPath("Makefile");
       if (!makefilePath.exists())
       {
          boost::format fmt ("ERROR: The build directory does "
@@ -1463,14 +1493,14 @@ private:
    {
       // determine source file
       std::string output = outputAsText();
-      FilePath sourceFile = websitePath.childPath("index.Rmd");
+      FilePath sourceFile = websitePath.completeChildPath("index.Rmd");
       if (!sourceFile.exists())
-         sourceFile = websitePath.childPath("index.md");
+         sourceFile = websitePath.completeChildPath("index.md");
 
       // look for Output created message
       FilePath outputFile = module_context::extractOutputFileCreated(sourceFile,
                                                                      output);
-      if (!outputFile.empty())
+      if (!outputFile.isEmpty())
       {
          json::Object previewRmdJson;
          using namespace module_context;
@@ -1493,7 +1523,7 @@ private:
    void terminateWithError(const std::string& context,
                            const Error& error)
    {
-      std::string msg = "Error " + context + ": " + error.summary();
+      std::string msg = "Error " + context + ": " + error.getSummary();
       terminateWithError(msg);
    }
 
@@ -1628,9 +1658,9 @@ private:
          // and do differ in some cases)
          if (!pkgInfo_.empty() && !libPaths_.empty())
          {
-            std::string pkgFolder = projects::projectContext().buildTargetPath().filename();
+            std::string pkgFolder = projects::projectContext().buildTargetPath().getFilename();
             FilePath libPath = libPaths_[0];
-            FilePath lockPath = libPath.childPath("00LOCK-" + pkgFolder);
+            FilePath lockPath = libPath.completeChildPath("00LOCK-" + pkgFolder);
             lockPath.removeIfExists();
          }
          
@@ -1774,10 +1804,10 @@ private:
    {
       FilePath writtenPath = projects::projectContext().buildTargetPath();
       if (!session::options().packageOutputInPackageFolder())
-         writtenPath = writtenPath.parent();
+         writtenPath = writtenPath.getParent();
       std::string written = module_context::createAliasedPath(writtenPath);
       if (written == "~")
-         written = writtenPath.absolutePath();
+         written = writtenPath.getAbsolutePath();
 
       return type + " package written to " + written;
    }
@@ -1899,7 +1929,7 @@ Error devtoolsLoadAllPath(const json::JsonRpcRequest& request,
 
 struct BuildContext
 {
-   bool empty() const { return errors.empty() && outputs.empty(); }
+   bool empty() const { return errors.isEmpty() && outputs.isEmpty(); }
    std::string errorsBaseDir;
    json::Array errors;
    json::Array outputs;
@@ -1912,14 +1942,8 @@ BuildContext s_suspendBuildContext;
 void writeBuildContext(const BuildContext& buildContext,
                        core::Settings* pSettings)
 {
-   std::ostringstream ostr;
-   json::write(buildContext.outputs, ostr);
-   pSettings->set("build-last-outputs", ostr.str());
-
-   std::ostringstream ostrErrors;
-   json::write(buildContext.errors, ostrErrors);
-   pSettings->set("build-last-errors", ostrErrors.str());
-
+   pSettings->set("build-last-outputs", buildContext.outputs.write());
+   pSettings->set("build-last-errors", buildContext.errors.write());
    pSettings->set("build-last-errors-base-dir", buildContext.errorsBaseDir);
 }
 
@@ -1951,10 +1975,10 @@ void onResume(const core::Settings& settings)
    if (!buildLastOutputs.empty())
    {
       json::Value outputsJson;
-      if (json::parse(buildLastOutputs, &outputsJson) &&
+      if (!outputsJson.parse(buildLastOutputs) &&
           json::isType<json::Array>(outputsJson))
       {
-         s_suspendBuildContext.outputs = outputsJson.get_value<json::Array>();
+         s_suspendBuildContext.outputs = outputsJson.getValue<json::Array>();
       }
    }
 
@@ -1963,10 +1987,10 @@ void onResume(const core::Settings& settings)
    if (!buildLastErrors.empty())
    {
       json::Value errorsJson;
-      if (json::parse(buildLastErrors, &errorsJson) &&
+      if (!errorsJson.parse(buildLastErrors) &&
           json::isType<json::Array>(errorsJson))
       {
-         s_suspendBuildContext.errors = errorsJson.get_value<json::Array>();
+         s_suspendBuildContext.errors = errorsJson.getValue<json::Array>();
       }
    }
 }
@@ -2020,17 +2044,15 @@ SEXP rs_installBuildTools()
 
 SEXP rs_installBuildTools()
 {
-   if (module_context::isOSXMavericks())
+   if (module_context::isMacOS())
    {
-      if (!module_context::hasOSXMavericksDeveloperTools())
+      if (!module_context::hasMacOSCommandLineTools())
       {
-         // on mavericks we just need to invoke clang and the user will be
-         // prompted to install the command line tools
          core::system::ProcessResult result;
-         Error error = core::system::runCommand("clang --version",
-                                                "",
-                                                core::system::ProcessOptions(),
-                                                &result);
+         Error error = core::system::runCommand(
+                  "/usr/bin/xcode-select --install",
+                  core::system::ProcessOptions(),
+                  &result);
          if (error)
             LOG_ERROR(error);
       }
@@ -2094,7 +2116,7 @@ json::Value buildStateAsJson()
       stateJson["errors_base_dir"] = s_pBuild->errorsBaseDir();
       stateJson["type"] = s_pBuild->type();
       stateJson["errors"] = s_pBuild->errorsAsJson();
-      return stateJson;
+      return std::move(stateJson);
    }
    else if (!s_suspendBuildContext.empty())
    {
@@ -2104,7 +2126,7 @@ json::Value buildStateAsJson()
       stateJson["errors_base_dir"] = s_suspendBuildContext.errorsBaseDir;
       stateJson["type"] = s_suspendBuildContext.type;
       stateJson["errors"] = s_suspendBuildContext.errors;
-      return stateJson;
+      return std::move(stateJson);
    }
    else
    {
@@ -2119,10 +2141,10 @@ void onDeferredInit(bool newSession)
       // if we are on mavericks then provide an .R/Makevars that points
       // to clang if necessary
       using namespace module_context;
-      FilePath makevarsPath = userHomePath().childPath(".R/Makevars");
-      if (isOSXMavericks() && !makevarsPath.exists() && !canBuildCpp())
+      FilePath makevarsPath = userHomePath().completeChildPath(".R/Makevars");
+      if (isMacOS() && !makevarsPath.exists() && !canBuildCpp())
       {
-         Error error = makevarsPath.parent().ensureDirectory();
+         Error error = makevarsPath.getParent().ensureDirectory();
          if (!error)
          {
             std::string makevars = "CC=clang\nCXX=clang++\n";
@@ -2140,35 +2162,12 @@ void onDeferredInit(bool newSession)
 
 Error initialize()
 {
-   R_CallMethodDef canBuildMethodDef ;
-   canBuildMethodDef.name = "rs_canBuildCpp" ;
-   canBuildMethodDef.fun = (DL_FUNC) rs_canBuildCpp ;
-   canBuildMethodDef.numArgs = 0;
-   r::routines::addCallMethod(canBuildMethodDef);
-
-   R_CallMethodDef addRToolsToPathMethodDef ;
-   addRToolsToPathMethodDef.name = "rs_addRToolsToPath" ;
-   addRToolsToPathMethodDef.fun = (DL_FUNC) rs_addRToolsToPath ;
-   addRToolsToPathMethodDef.numArgs = 0;
-   r::routines::addCallMethod(addRToolsToPathMethodDef);
-
-   R_CallMethodDef restorePreviousPathMethodDef ;
-   restorePreviousPathMethodDef.name = "rs_restorePreviousPath" ;
-   restorePreviousPathMethodDef.fun = (DL_FUNC) rs_restorePreviousPath ;
-   restorePreviousPathMethodDef.numArgs = 0;
-   r::routines::addCallMethod(restorePreviousPathMethodDef);
-
-   R_CallMethodDef installPackageMethodDef ;
-   installPackageMethodDef.name = "rs_installPackage" ;
-   installPackageMethodDef.fun = (DL_FUNC) rs_installPackage;
-   installPackageMethodDef.numArgs = 2;
-   r::routines::addCallMethod(installPackageMethodDef);
-
-   R_CallMethodDef installBuildToolsMethodDef;
-   installBuildToolsMethodDef.name = "rs_installBuildTools" ;
-   installBuildToolsMethodDef.fun = (DL_FUNC) rs_installBuildTools;
-   installBuildToolsMethodDef.numArgs = 0;
-   r::routines::addCallMethod(installBuildToolsMethodDef);
+   // register .Call methods
+   RS_REGISTER_CALL_METHOD(rs_canBuildCpp);
+   RS_REGISTER_CALL_METHOD(rs_addRToolsToPath);
+   RS_REGISTER_CALL_METHOD(rs_restorePreviousPath);
+   RS_REGISTER_CALL_METHOD(rs_installPackage);
+   RS_REGISTER_CALL_METHOD(rs_installBuildTools);
 
    // subscribe to deferredInit for build tools fixup
    module_context::events().onDeferredInit.connect(onDeferredInit);
@@ -2212,7 +2211,7 @@ namespace {
 
 bool usingSystemMake()
 {
-   return findProgram("make").absolutePath() == "/usr/bin/make";
+   return findProgram("make").getAbsolutePath() == "/usr/bin/make";
 }
 
 } // anonymous namespace
@@ -2227,11 +2226,15 @@ bool canBuildCpp()
 {
    if (s_canBuildCpp)
       return true;
-   
+
 #ifdef __APPLE__
-   if (isOSXMavericks() &&
+   // NOTE: on macOS, R normally requests user install and use its own
+   // LLVM toolchain; however, that toolchain still needs to re-use
+   // system headers provided by the default macOS toolchain, and so
+   // we still want to check for macOS command line tools here
+   if (isMacOS() &&
        usingSystemMake() &&
-       !hasOSXMavericksDeveloperTools())
+       !hasMacOSCommandLineTools())
    {
       return false;
    }
@@ -2258,10 +2261,10 @@ bool canBuildCpp()
    // try to run build tools
    RCommand rCmd(rBinDir);
    rCmd << "SHLIB";
-   rCmd << cppPath.filename();
+   rCmd << cppPath.getFilename();
 
    core::system::ProcessOptions options;
-   options.workingDir = cppPath.parent();
+   options.workingDir = cppPath.getParent();
    core::system::Options childEnv;
    core::system::environment(&childEnv);
    std::string warningMsg;
@@ -2277,7 +2280,10 @@ bool canBuildCpp()
    }
 
    if (result.exitStatus != EXIT_SUCCESS)
+   {
+      checkXcodeLicense();
       return false;
+   }
    
    s_canBuildCpp = true;
    return true;

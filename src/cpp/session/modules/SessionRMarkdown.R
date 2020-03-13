@@ -1,7 +1,7 @@
 #
 # SessionRMarkdown.R
 #
-# Copyright (C) 2009-12 by RStudio, Inc.
+# Copyright (C) 2009-12 by RStudio, PBC
 #
 # Unless you have received this program directly from RStudio pursuant
 # to the terms of a commercial license agreement with RStudio, then
@@ -462,4 +462,47 @@
       FALSE
 })
 
+.rs.addFunction("tinytexRoot", function()
+{
+   sysname <- Sys.info()[["sysname"]]
+   if (sysname == "Windows")
+      file.path(Sys.getenv("APPDATA"), "TinyTeX")
+   else if (sysname == "Darwin")
+      "~/Library/TinyTeX"
+   else
+      "~/.TinyTeX"
+})
 
+.rs.addFunction("tinytexBin", function()
+{
+   root <- tryCatch(
+      tinytex:::tinytex_root(),
+      error = function(e) .rs.tinytexRoot()
+   )
+   
+   if (!file.exists(root))
+      return(NULL)
+   
+   # NOTE: binary directory has a single arch-specific subdir;
+   # rather than trying to hard-code the architecture we just
+   # infer it directly
+   bin <- file.path(root, "bin")
+   subbin <- list.files(bin, full.names = TRUE)
+   normalizePath(subbin[[1]], mustWork = TRUE)
+})
+
+.rs.addFunction("bookdown.renderedOutputPath", function(outputPath)
+{
+   # if this is a PDF, use it directly
+   if (tools::file_ext(outputPath) == "pdf")
+      return(outputPath)
+   
+   # if we have an index, prefer using that
+   index <- file.path(dirname(outputPath), "index.html")
+   if (file.exists(index))
+      return(index)
+   
+   # otherwise, return the rendered path directly
+   # (typically necessary for self-contained books)
+   outputPath
+})

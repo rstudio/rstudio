@@ -1,7 +1,7 @@
 /*
  * RExec.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -16,7 +16,7 @@
 #define R_INTERNAL_FUNCTIONS
 #include <r/RExec.hpp>
 
-#include <core/FilePath.hpp>
+#include <shared_core/FilePath.hpp>
 #include <core/Log.hpp>
 #include <core/StringUtils.hpp>
 #include <core/system/Environment.hpp>
@@ -431,11 +431,11 @@ Error RFunction::call(SEXP evalNS, bool safely, SEXP* pResultSEXP,
 
 FilePath rBinaryPath()
 {
-   FilePath binPath = FilePath(R_HomeDir()).complete("bin");
+   FilePath binPath = FilePath(R_HomeDir()).completePath("bin");
 #ifdef _WIN32
-   return binPath.complete("Rterm.exe");
+   return binPath.completePath("Rterm.exe");
 #else
-   return binPath.complete("R");
+   return binPath.completePath("R");
 #endif
 }
    
@@ -450,7 +450,7 @@ Error system(const std::string& command, std::string* pOutput)
    if (error)
    {
       // if it is NoDataAvailable this means empty output
-      if (error.code() == r::errc::NoDataAvailableError)
+      if (error == r::errc::NoDataAvailableError)
       {
          pOutput->clear();
          return Success();
@@ -469,12 +469,12 @@ Error system(const std::string& command, std::string* pOutput)
 
 void error(const std::string& message)   
 {
-   Rf_error(message.c_str());
+   Rf_error("%s", message.c_str());
 }
 
 void errorCall(SEXP call, const std::string& message)
 {
-   Rf_errorcall(call, message.c_str());
+   Rf_errorcall(call, "%s", message.c_str());
 }
    
 std::string getErrorMessage()
@@ -560,10 +560,10 @@ IgnoreInterruptsScope::~IgnoreInterruptsScope()
 
 DisableDebugScope::DisableDebugScope(SEXP env): 
    rdebug_(0), 
-   env_(NULL)
+   env_(nullptr)
 {
    // nothing to do if no environment 
-   if (env == NULL) {
+   if (env == nullptr) {
       return;
    }
 
@@ -582,7 +582,7 @@ DisableDebugScope::~DisableDebugScope()
 {
    // if we disabled debugging and debugging didn't end during the command 
    // evaluation, restore debugging
-   if (env_ != NULL && !atTopLevelContext()) 
+   if (env_ != nullptr && !atTopLevelContext()) 
    {
       SET_RDEBUG(env_, rdebug_);
    }

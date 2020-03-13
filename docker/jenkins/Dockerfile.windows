@@ -1,9 +1,7 @@
 # escape=`
 
-# Use the latest Windows Server Core image with .NET Framework 4.7.1.
-# Otherwise there are problems installing Visual Studio 2017 buildtools into containers
-# See https://docs.microsoft.com/en-us/visualstudio/install/build-tools-container
-FROM microsoft/dotnet-framework:4.7.1
+# LTSC (Long Term Service Channel) release of Server Core 2019
+FROM mcr.microsoft.com/windows/servercore:ltsc2019
 
 # set RUN commands to use powershell
 SHELL ["powershell"]
@@ -16,11 +14,11 @@ RUN [System.Net.ServicePointManager]::SecurityProtocol = 3072 -bor 768 -bor 192 
     iex ((New-Object System.Net.WebClient).DownloadString('https://chocolatey.org/install.ps1'))
 
 # install some deps via chocolatey
-RUN choco install -y cmake --installargs 'ADD_CMAKE_TO_PATH=""System""' --fail-on-error-output; ` 
-  choco install -y jdk8 ; `
-  choco install -y ant --version 1.10.5; `
+RUN choco install -y cmake --installargs 'ADD_CMAKE_TO_PATH=""System""' --fail-on-error-output; `
+  choco install -y jdk8; `
+  choco install -y -i ant; `
   choco install -y windows-sdk-10.1 --version 10.1.17134.12; `
-  choco install -y 7zip --version 18.5.0.20180730; `
+  choco install -y 7zip; `
   choco install -y nsis
   
 RUN choco install -y visualstudio2017buildtools --version 15.8.2.0; `
@@ -45,9 +43,9 @@ RUN $env:path += ';C:\R\R-3.0.3\bin\i386\' ;`
 
 # install qt (note that we are using the current directory's context)
 RUN [System.Net.ServicePointManager]::SecurityProtocol = 3072 -bor 768 -bor 192 -bor 48; ` 
-  (New-Object System.Net.WebClient).DownloadFile('https://s3.amazonaws.com/rstudio-buildtools/QtSDK-5.12.1-msvc2017_64.7z', 'c:\QtSDK-5.12.1-msvc2017_64.7z'); `
-  7z x c:\QtSDK-5.12.1-msvc2017_64.7z -oc:\ ; `
-  Remove-Item c:\QtSDK-5.12.1-msvc2017_64.7z -Force
+  (New-Object System.Net.WebClient).DownloadFile('https://s3.amazonaws.com/rstudio-buildtools/Qt/QtSDK-5.12.6-msvc2017_64.7z', 'c:\QtSDK-5.12.6-msvc2017_64.7z'); `
+  7z x c:\QtSDK-5.12.6-msvc2017_64.7z -oc:\ ; `
+  Remove-Item c:\QtSDK-5.12.6-msvc2017_64.7z -Force
     
 # cpack (an alias from chocolatey) and cmake's cpack conflict.
 RUN Remove-Item -Force 'C:\ProgramData\chocolatey\bin\cpack.exe'

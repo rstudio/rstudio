@@ -1,7 +1,7 @@
 /*
  * ViewFilePanel.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -30,6 +30,7 @@ import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.FileDialogs;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.GlobalProgressDelayer;
+import org.rstudio.studio.client.common.filetypes.FileIcon;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.filetypes.TextFileType;
 import org.rstudio.studio.client.server.ServerError;
@@ -38,7 +39,7 @@ import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.RemoteFileSystemContext;
 import org.rstudio.studio.client.workbench.model.Session;
-import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.ui.FontSizeManager;
 import org.rstudio.studio.client.workbench.views.files.model.FilesServerOperations;
 import org.rstudio.studio.client.workbench.views.source.PanelWithToolbars;
@@ -77,7 +78,7 @@ public class ViewFilePanel extends Composite implements TextDisplay
    public ViewFilePanel(GlobalDisplay globalDisplay,
                         DocDisplay docDisplay,
                         FileTypeRegistry fileTypeRegistry,
-                        UIPrefs uiPrefs,
+                        UserPrefs uiPrefs,
                         EventBus events,
                         Commands commands,
                         FilesServerOperations server,
@@ -247,8 +248,10 @@ public class ViewFilePanel extends Composite implements TextDisplay
       // header widget has icon + label
       HorizontalPanel panel = new HorizontalPanel();
      
-      Image imgFile = new Image(fileTypeRegistry_.getIconForFile(file));
+      FileIcon icon = fileTypeRegistry_.getIconForFile(file);
+      Image imgFile = new Image(icon.getImageResource());
       imgFile.addStyleName(styles.fullscreenCaptionIcon());
+      imgFile.setAltText(icon.getDescription());
       panel.add(imgFile);
       
       Label lblCaption = new Label(caption);
@@ -282,7 +285,8 @@ public class ViewFilePanel extends Composite implements TextDisplay
       toolbar_ = new ViewFileToolbar();
       
       toolbar_.addLeftWidget(new ToolbarButton(
-         "Save As", 
+         "Save As",
+         ToolbarButton.NoTitle,
          commands_.saveSourceDoc().getImageResource(),
          new ClickHandler() {
             @Override
@@ -295,7 +299,8 @@ public class ViewFilePanel extends Composite implements TextDisplay
       toolbar_.addLeftSeparator();
       
       toolbar_.addLeftWidget(new ToolbarButton(
-         null,
+         ToolbarButton.NoText,
+         commands_.printSourceDoc().getTooltip(),
          commands_.printSourceDoc().getImageResource(),
          new ClickHandler() {
 
@@ -380,6 +385,11 @@ public class ViewFilePanel extends Composite implements TextDisplay
    
    private class ViewFileToolbar extends Toolbar
    {
+      public ViewFileToolbar()
+      {
+         super("View File Tab");
+      }
+      
       @Override
       public int getHeight()
       {

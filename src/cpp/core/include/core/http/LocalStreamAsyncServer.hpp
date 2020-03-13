@@ -1,7 +1,7 @@
 /*
  * LocalStreamAsyncServer.hpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-12 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -33,8 +33,11 @@ class LocalStreamAsyncServer
 public:
    LocalStreamAsyncServer(const std::string& serverName,
                           const std::string& baseUri,
-                          core::system::FileMode fileMode)
-      : AsyncServerImpl<boost::asio::local::stream_protocol>(serverName, baseUri),
+                          core::system::FileMode fileMode,
+                          bool disableOriginCheck = true,
+                          const std::vector<boost::regex>& allowedOrigins = std::vector<boost::regex>(),
+                          const Headers& additionalHeaders = Headers())
+      : AsyncServerImpl<boost::asio::local::stream_protocol>(serverName, baseUri, disableOriginCheck, allowedOrigins, additionalHeaders),
         fileMode_(fileMode)
    {
    }

@@ -1,7 +1,7 @@
 /*
  * ServerInit.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-20 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -15,7 +15,7 @@
 
 
 
-#include <core/Error.hpp>
+#include <shared_core/Error.hpp>
 
 #include <core/http/TcpIpAsyncServer.hpp>
 
@@ -26,9 +26,13 @@ using namespace rstudio::core;
 namespace rstudio {
 namespace server {
 
-http::AsyncServer* httpServerCreate()
+http::AsyncServer* httpServerCreate(const http::Headers& additionalHeaders)
 {
-   return new http::TcpIpAsyncServer("RStudio");
+   return new http::TcpIpAsyncServer("RStudio",
+                                     std::string(),
+                                     !options().wwwEnableOriginCheck(),
+                                     options().wwwAllowedOrigins(),
+                                     additionalHeaders);
 }
 
 Error httpServerInit(http::AsyncServer* pAsyncServer)

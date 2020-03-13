@@ -1,7 +1,7 @@
 /*
  * SessionAskSecret.cpp
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -19,7 +19,7 @@
 
 #include <core/Exec.hpp>
 #include <core/Log.hpp>
-#include <core/json/Json.hpp>
+#include <shared_core/json/Json.hpp>
 
 #include <r/RExec.hpp>
 #include <r/RSexp.hpp>
@@ -148,7 +148,7 @@ Error askForSecret(const std::string& name,
    // if secret changed
    if (pInput->changed)
    {
-      pInput->secret = value.get_value<std::string>();
+      pInput->secret = value.getValue<std::string>();
 
       // decrypt if necessary
 #ifdef RSTUDIO_SERVER
@@ -205,12 +205,8 @@ Error initialize()
    s_waitForAskPass = module_context::registerWaitForMethod(
                                                 "asksecret_completed");
 
-   // register rs_askForSecret with R
-   R_CallMethodDef methodDefAskPass ;
-   methodDefAskPass.name = "rs_askForSecret" ;
-   methodDefAskPass.fun = (DL_FUNC) rs_askForSecret ;
-   methodDefAskPass.numArgs = 5;
-   r::routines::addCallMethod(methodDefAskPass);
+   // register .Call methods
+   RS_REGISTER_CALL_METHOD(rs_askForSecret);
 
    // complete initialization
    ExecBlock initBlock ;

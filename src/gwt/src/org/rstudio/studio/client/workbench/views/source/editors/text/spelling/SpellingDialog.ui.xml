@@ -1,7 +1,7 @@
 <ui:UiBinder xmlns:ui='urn:ui:com.google.gwt.uibinder'
              xmlns:g='urn:import:com.google.gwt.user.client.ui'
              xmlns:widget="urn:import:org.rstudio.core.client.widget">
-
+   <ui:with field="ElementIds" type="org.rstudio.core.client.ElementIds"/>
    <ui:style>
       .outer input {
          height: 20px !important;
@@ -29,7 +29,7 @@
       }
 
       .start2 {
-         margin-left: 110px;
+         margin-left: 114px;
       }
 
       .col2_3 {
@@ -49,10 +49,10 @@
    <g:HTMLPanel styleName="{style.outer}">
 
       <div>
-         <div class="{style.label}">Not in dictionary:
-         </div><g:TextBox ui:field="txtDisplay_"
-                          styleName="{style.control}"
-                          readOnly="true"/>
+         <widget:InlineFormLabel forId="{ElementIds.getSpellingNotInDict}"
+                                 styleName="{style.label}" text="Not in dictionary:"/>
+         <widget:FormTextBox ui:field="txtDisplay_" styleName="{style.control}" readOnly="true"
+                             elementId="{ElementIds.getSpellingNotInDict}"/>
       </div>
       <div class="{style.smallTopMargin} {style.start2} {style.col2_3}">
          <widget:ThemedButton ui:field="btnSkip_"/><div style="display:inline-block;width:8px"/><widget:ThemedButton ui:field="btnIgnoreAll_"/>
@@ -61,8 +61,10 @@
          </div>
       </div>
       <div>
-         <div class="{style.bigTopMargin} {style.label}">Change to:
-         </div><g:TextBox ui:field="txtReplacement_" styleName="{style.control}" />
+         <widget:InlineFormLabel forId="{ElementIds.getSpellingChangeTo}"
+                                          styleName="{style.bigTopMargin} {style.label}" text="Change to:"/>
+         <widget:FormTextBox ui:field="txtReplacement_" styleName="{style.control}"
+                             elementId="{ElementIds.getSpellingChangeTo}"/>
       </div>
       <div class="{style.smallTopMargin} {style.start2} {style.col2_3}">
          <g:ListBox

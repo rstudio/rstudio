@@ -1,7 +1,7 @@
 /*
  * WorkbenchTabPanel.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-12 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -18,9 +18,9 @@ package org.rstudio.studio.client.workbench.ui;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
-import com.google.gwt.event.logical.shared.*;
+import com.google.gwt.event.logical.shared.HasSelectionHandlers;
+import com.google.gwt.event.logical.shared.SelectionHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
-import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.LayoutPanel;
@@ -46,14 +46,14 @@ class WorkbenchTabPanel
                  HasEnsureVisibleHandlers,
                  HasEnsureHeightHandlers
 {
-   public WorkbenchTabPanel(WindowFrame owner, LogicalWindow parentWindow)
+   public WorkbenchTabPanel(WindowFrame owner, LogicalWindow parentWindow, String tabListName)
    {
       final int UTILITY_AREA_SIZE = 52;
       panel_ = new LayoutPanel();
       
       parentWindow_ = parentWindow;
 
-      tabPanel_ = new ModuleTabLayoutPanel(owner);
+      tabPanel_ = new ModuleTabLayoutPanel(owner, tabListName);
       panel_.add(tabPanel_);
       panel_.setWidgetTopBottom(tabPanel_, 0, Unit.PX, 0, Unit.PX);
       panel_.setWidgetLeftRight(tabPanel_, 0, Unit.PX, 0, Unit.PX);
@@ -78,41 +78,35 @@ class WorkbenchTabPanel
    {
       super.onLoad();
 
-      releaseOnUnload_.add(tabPanel_.addBeforeSelectionHandler(new BeforeSelectionHandler<Integer>()
+      releaseOnUnload_.add(tabPanel_.addBeforeSelectionHandler(beforeSelectionEvent ->
       {
-         public void onBeforeSelection(BeforeSelectionEvent<Integer> event)
+         if (clearing_)
+            return;
+
+         if (getSelectedIndex() >= 0)
          {
-            if (clearing_)
-               return;
-
-            if (getSelectedIndex() >= 0)
+            int unselectedTab = getSelectedIndex();
+            if (unselectedTab < tabs_.size())
             {
-               int unselectedTab = getSelectedIndex();
-               if (unselectedTab < tabs_.size())
-               {
-                  WorkbenchTab lastTab = tabs_.get(unselectedTab);
-                  lastTab.onBeforeUnselected();
-               }
+               WorkbenchTab lastTab = tabs_.get(unselectedTab);
+               lastTab.onBeforeUnselected();
             }
+         }
 
-            int selectedTab = event.getItem().intValue();
-            if (selectedTab < tabs_.size())
-            {  
-               WorkbenchTab tab = tabs_.get(selectedTab);
-               tab.onBeforeSelected();
-            }
+         int selectedTab = beforeSelectionEvent.getItem().intValue();
+         if (selectedTab < tabs_.size())
+         {
+            WorkbenchTab tab = tabs_.get(selectedTab);
+            tab.onBeforeSelected();
          }
       }));
-      releaseOnUnload_.add(tabPanel_.addSelectionHandler(new SelectionHandler<Integer>()
+      releaseOnUnload_.add(tabPanel_.addSelectionHandler(selectionEvent ->
       {
-         public void onSelection(SelectionEvent<Integer> event)
-         {
-            if (clearing_)
-               return;
+         if (clearing_)
+            return;
 
-            WorkbenchTab pane = tabs_.get(event.getSelectedItem().intValue());
-            pane.onSelected();
-         }
+         WorkbenchTab pane = tabs_.get(selectionEvent.getSelectedItem().intValue());
+         pane.onSelected();
       }));
 
       int selectedIndex = tabPanel_.getSelectedIndex();
@@ -172,36 +166,20 @@ class WorkbenchTabPanel
          @Override
          public void onClick(ClickEvent event)
          {
-            tab.confirmClose(new Command() {
-               @Override
-               public void execute()
-               {
-                  tab.ensureHidden();
-               }
-            });
+            tab.confirmClose(() -> tab.ensureHidden());
          }
       }, 
       tab instanceof ProvidesBusy ? (ProvidesBusy) tab : null);
       
-      tab.addEnsureVisibleHandler(new EnsureVisibleHandler()
+      tab.addEnsureVisibleHandler(ensureVisibleEvent ->
       {
-         public void onEnsureVisible(EnsureVisibleEvent event)
-         {
-            // First ensure that we ourselves are visible
-            fireEvent(new EnsureVisibleEvent(event.getActivate()));
-            if (event.getActivate())
-               tabPanel_.selectTab(widget);
-         }
+         // First ensure that we ourselves are visible
+         fireEvent(new EnsureVisibleEvent(ensureVisibleEvent.getActivate()));
+         if (ensureVisibleEvent.getActivate())
+            tabPanel_.selectTab(widget);
       });
       
-      tab.addEnsureHeightHandler(new EnsureHeightHandler() {
-
-         @Override
-         public void onEnsureHeight(EnsureHeightEvent event)
-         {
-            fireEvent(event);
-         }
-      });
+      tab.addEnsureHeightHandler(ensureHeightEvent -> fireEvent(ensureHeightEvent));
    }
    
    public void selectNextTab()
@@ -284,8 +262,7 @@ class WorkbenchTabPanel
       return tabPanel_.getSelectedIndex();
    }
    
-   public HandlerRegistration addSelectionHandler(
-         SelectionHandler<Integer> integerSelectionHandler)
+   public HandlerRegistration addSelectionHandler(SelectionHandler<Integer> integerSelectionHandler)
    {
       return tabPanel_.addSelectionHandler(integerSelectionHandler);
    }
@@ -297,15 +274,13 @@ class WorkbenchTabPanel
          ((RequiresResize)w).onResize();
    }
 
-   public HandlerRegistration addEnsureVisibleHandler(
-         EnsureVisibleHandler handler)
+   public HandlerRegistration addEnsureVisibleHandler(EnsureVisibleHandler handler)
    {
       return addHandler(handler, EnsureVisibleEvent.TYPE);
    }
    
    @Override
-   public HandlerRegistration addEnsureHeightHandler(
-         EnsureHeightHandler handler)
+   public HandlerRegistration addEnsureHeightHandler(EnsureHeightHandler handler)
    {
       return addHandler(handler, EnsureHeightEvent.TYPE);
    }
@@ -324,7 +299,7 @@ class WorkbenchTabPanel
    }
 
    private ModuleTabLayoutPanel tabPanel_;
-   private ArrayList<WorkbenchTab> tabs_ = new ArrayList<WorkbenchTab>();
+   private ArrayList<WorkbenchTab> tabs_ = new ArrayList<>();
    private final LogicalWindow parentWindow_;
    private final HandlerRegistrations releaseOnUnload_ = new HandlerRegistrations();
    private boolean clearing_ = false;

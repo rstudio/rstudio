@@ -1,7 +1,7 @@
 /*
  * ShellUtils.hpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-12 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -21,7 +21,7 @@
 
 #include <boost/regex.hpp>
 
-#include <core/FilePath.hpp>
+#include <shared_core/FilePath.hpp>
 #include <core/RegexUtils.hpp>
 #include <core/StringUtils.hpp>
 
@@ -64,7 +64,7 @@ public:
    explicit ShellCommand(const core::FilePath& filePath)
       : escapeMode_(EscapeAll)
    {
-      output_ = escape(string_utils::utf8ToSystem(filePath.absolutePath()));
+      output_ = escape(string_utils::utf8ToSystem(filePath.getAbsolutePath()));
    }
 
    explicit ShellCommand(const std::string& program)

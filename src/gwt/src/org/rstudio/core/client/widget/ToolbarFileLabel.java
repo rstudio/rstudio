@@ -1,7 +1,7 @@
 /*
  * ToolbarFileLabel.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -20,6 +20,7 @@ import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.studio.client.RStudioGinjector;
 
 import com.google.gwt.user.client.ui.Image;
+import org.rstudio.studio.client.common.filetypes.FileIcon;
 
 public class ToolbarFileLabel
 {
@@ -60,8 +61,10 @@ public class ToolbarFileLabel
       }
       else
       {
-         fileImage_.setResource(RStudioGinjector.INSTANCE.getFileTypeRegistry()
-                                                   .getIconForFilename(fileName));
+         FileIcon fileIcon = 
+               RStudioGinjector.INSTANCE.getFileTypeRegistry().getIconForFilename(fileName);
+         fileImage_.setResource(fileIcon.getImageResource());
+         fileImage_.setAltText(fileIcon.getDescription());
          fileImage_.setVisible(true);
          
          String shortFileName = StringUtil.shortPathName(

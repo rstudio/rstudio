@@ -1,7 +1,7 @@
 /*
  * MonitorConstants.hpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-12 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -16,7 +16,8 @@
 #ifndef MONITOR_CONSTANTS_HPP
 #define MONITOR_CONSTANTS_HPP
 
-#define kMonitorSocketPath         "/tmp/rstudio-rserver/rserver-monitor.socket"
+#define kMonitorSocket             "rserver-monitor.socket"
+#define kMonitorSocketPathEnvVar   "RS_MONITOR_SOCKET_PATH"
 #define kMonitorSharedSecretEnvVar "RS_MONITOR_SHARED_SECRET"
 #define kMonitorIntervalSeconds    "monitor-interval-seconds"
 

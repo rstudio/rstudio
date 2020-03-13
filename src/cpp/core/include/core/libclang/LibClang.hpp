@@ -1,7 +1,7 @@
 /*
  * LibClang.hpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -22,7 +22,7 @@
 #include <boost/format.hpp>
 #include <boost/function.hpp>
 
-#include <core/Error.hpp>
+#include <shared_core/Error.hpp>
 
 #include "Diagnostic.hpp"
 #include "SourceIndex.hpp"
@@ -103,16 +103,16 @@ class LibClang : boost::noncopyable
 {
 public:
    // construction/destruction (copying prohibited)
-   LibClang() : pLib_(NULL) {}
+   LibClang() : pLib_(nullptr) {}
    virtual ~LibClang();
 
    // loading
    bool load(EmbeddedLibrary embedded = EmbeddedLibrary(),
              LibraryVersion requiredVersion = LibraryVersion(3,4,0),
-             std::string* pDiagnostics = NULL);
+             std::string* pDiagnostics = nullptr);
 
    core::Error unload();
-   bool isLoaded() const { return pLib_ != NULL; }
+   bool isLoaded() const { return pLib_ != nullptr; }
 
    // version
    LibraryVersion version() const;

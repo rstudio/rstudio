@@ -67,12 +67,12 @@ th.checkColumn
 
 .checkColumn input
 {
-	margin: 0px;
+   margin: 0px;
 }
 
 .decoratedValueCol
 {
-	padding-right: 35px;
+   padding-right: 35px;
 }
 
 .rstudio-themes-flat .rstudio-themes-default .objectGridHeader {

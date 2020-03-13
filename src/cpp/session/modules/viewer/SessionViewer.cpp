@@ -1,7 +1,7 @@
 /*
  * SessionViewer.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-12 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -18,7 +18,7 @@
 #include <boost/format.hpp>
 #include <boost/algorithm/string/predicate.hpp>
 
-#include <core/Error.hpp>
+#include <shared_core/Error.hpp>
 #include <core/Exec.hpp>
 
 #include <r/RSexp.hpp>
@@ -86,7 +86,7 @@ Error viewerStopped(const json::JsonRpcRequest& request,
 }
 
 Error viewerBack(const json::JsonRpcRequest& request,
-                     json::JsonRpcResponse* pResponse)
+                 json::JsonRpcResponse* pResponse)
 {
    if (viewerHistory().hasPrevious())
       viewerNavigate(viewerHistory().goBack().url(), 0, true, true);
@@ -182,7 +182,7 @@ Error currentViewerSourcePath(FilePath* pSourcePath)
    }
 
    FilePath tempPath = module_context::tempDir();
-   *pSourcePath = tempPath.complete(viewerEntry.sessionTempPath());
+   *pSourcePath = tempPath.completePath(viewerEntry.sessionTempPath());
    return Success();
 }
 
@@ -260,8 +260,8 @@ bool isHTMLWidgetPath(const FilePath& filePath)
    // parent of parent must be session temp dir
    // (this is required because of the way we copy/restore
    // widget directories during suspend/resume)
-   FilePath parentDir = filePath.parent();
-   if (parentDir.parent() != tempDir)
+   FilePath parentDir = filePath.getParent();
+   if (parentDir.getParent() != tempDir)
       return false;
 
    // it is a widget!
@@ -301,7 +301,7 @@ SEXP rs_viewer(SEXP urlSEXP, SEXP heightSEXP)
          if (filePath.isWithin(tempDir) && r::util::hasRequiredVersion("2.14"))
          {
             // calculate the relative path
-            std::string path = filePath.relativePath(tempDir);
+            std::string path = filePath.getRelativePath(tempDir);
 
             // add to history and treat as a widget if appropriate
             if (isHTMLWidgetPath(filePath))
@@ -354,7 +354,7 @@ SEXP rs_viewer(SEXP urlSEXP, SEXP heightSEXP)
 FilePath historySerializationPath()
 {
    FilePath historyPath = module_context::sessionScratchPath()
-                                    .childPath("viewer_history");
+      .completeChildPath("viewer_history");
    Error error = historyPath.ensureDirectory();
    if (error)
       LOG_ERROR(error);
@@ -384,11 +384,7 @@ void onClientInit()
 
 Error initialize()
 {
-   R_CallMethodDef methodDefViewer ;
-   methodDefViewer.name = "rs_viewer" ;
-   methodDefViewer.fun = (DL_FUNC) rs_viewer ;
-   methodDefViewer.numArgs = 2;
-   r::routines::addCallMethod(methodDefViewer);
+   RS_REGISTER_CALL_METHOD(rs_viewer);
 
    // install event handlers
    using namespace module_context;

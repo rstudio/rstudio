@@ -1,7 +1,7 @@
 /*
  * RSession.hpp
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -20,7 +20,7 @@
 
 #include <boost/function.hpp>
 
-#include <core/FilePath.hpp>
+#include <shared_core/FilePath.hpp>
 
 #include <core/r_util/RSessionContext.hpp>
 
@@ -32,7 +32,7 @@
 
 namespace rstudio {
 namespace core {
-	class Error ;
+   class Error ;
    class Settings;
 } 
 }
@@ -173,19 +173,25 @@ void reportAndLogWarning(const std::string& warning);
 
 // suspend/resume
 bool isSuspendable(const std::string& prompt);
-bool suspend(bool force, int status = EXIT_SUCCESS);
+bool suspend(bool force, int status, const std::string& envVarSaveBlacklist);
 
 struct RSuspendOptions
 {
    RSuspendOptions(int exitStatus)
-      : status(exitStatus), saveMinimal(false), saveWorkspace(false), 
-        excludePackages(false)
+      : status(exitStatus)
+   {
+   }
+
+   RSuspendOptions(int exitStatus, const std::string& blacklist) 
+      : status(exitStatus),
+        envVarSaveBlacklist(blacklist)
    {
    }
    int status;
-   bool saveMinimal;
-   bool saveWorkspace;
-   bool excludePackages;
+   bool saveMinimal { false };
+   bool saveWorkspace { false };
+   bool excludePackages { false };
+   std::string envVarSaveBlacklist;
 };
 void suspendForRestart(const RSuspendOptions& options);
    

@@ -1,7 +1,7 @@
 /*
  * PreferencesDialogPaneBase.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,6 +14,7 @@
  */
 package org.rstudio.core.client.prefs;
 
+import com.google.gwt.aria.client.Roles;
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.events.EnsureVisibleEvent;
 import org.rstudio.core.client.events.EnsureVisibleHandler;
@@ -33,9 +34,15 @@ import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 
 public abstract class PreferencesDialogPaneBase<T> extends VerticalPanel
-implements HasEnsureVisibleHandlers
+                                                   implements HasEnsureVisibleHandlers
 {
    public abstract ImageResource getIcon();
+
+   public PreferencesDialogPaneBase()
+   {
+      super();
+      Roles.getTabpanelRole().set(getElement());
+   }
 
    public boolean validate()
    {
@@ -46,12 +53,8 @@ implements HasEnsureVisibleHandlers
 
    protected abstract void initialize(T prefs);
 
-   /**
-    * @return True if reload of the browser UI is required
-    */
-   public abstract boolean onApply(T prefs);
-   
-   
+   public abstract RestartRequirement onApply(T prefs);
+
    public HandlerRegistration addEnsureVisibleHandler(EnsureVisibleHandler handler)
    {
       return addHandler(handler, EnsureVisibleEvent.TYPE);
@@ -140,11 +143,11 @@ implements HasEnsureVisibleHandlers
       return widget;
    }
    
-   protected HorizontalPanel checkBoxWithHelp(CheckBox checkBox, String topic)
+   protected HorizontalPanel checkBoxWithHelp(CheckBox checkBox, String topic, String title)
    {
       HorizontalPanel panel = new HorizontalPanel();
       panel.add(checkBox);
-      HelpButton helpButton = new HelpButton(topic, false);
+      HelpButton helpButton = new HelpButton(topic, false, title);
       Style helpStyle = helpButton.getElement().getStyle();
       helpStyle.setMarginTop(1, Unit.PX);
       helpStyle.setMarginLeft(6, Unit.PX);

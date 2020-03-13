@@ -1,7 +1,7 @@
 /*
  * JobQuitControls.java
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-20 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -16,13 +16,14 @@ package org.rstudio.studio.client.workbench.views.jobs.view;
 
 import java.util.List;
 
+import org.rstudio.core.client.widget.FormLabel;
+import org.rstudio.core.client.widget.FormListBox;
 import org.rstudio.studio.client.workbench.views.jobs.model.Job;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.Composite;
-import com.google.gwt.user.client.ui.ListBox;
 import com.google.gwt.user.client.ui.Widget;
 
 public class JobQuitControls extends Composite
@@ -43,7 +44,12 @@ public class JobQuitControls extends Composite
       {
          jobList_.addItem(job.name);
       }
+      if (jobList_.getItemCount() > 1)
+      {
+         jobListLabel_.setText("The following " + jobList_.getItemCount() + " jobs are still running.");
+      }
    }
 
-   @UiField ListBox jobList_;
+   @UiField FormLabel jobListLabel_;
+   @UiField FormListBox jobList_;
 }

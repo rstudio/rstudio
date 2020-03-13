@@ -1,7 +1,7 @@
 /*
  * NewDirectoryNavigationPage.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -16,14 +16,18 @@ package org.rstudio.studio.client.projects.ui.newproject;
 
 import java.util.ArrayList;
 
+import com.google.gwt.aria.client.Roles;
 import org.rstudio.core.client.CommandWithArg;
+import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.js.JsUtil;
 import org.rstudio.core.client.resources.ImageResource2x;
+import org.rstudio.core.client.widget.DecorativeImage;
 import org.rstudio.core.client.widget.HasWizardPageSelectionHandler;
 import org.rstudio.core.client.widget.WizardNavigationPage;
 import org.rstudio.core.client.widget.WizardPage;
 import org.rstudio.core.client.widget.WizardProjectTemplatePage;
 import org.rstudio.core.client.widget.WizardResources;
+import org.rstudio.core.client.widget.events.ButtonClickManager;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.projects.model.NewProjectInput;
 import org.rstudio.studio.client.projects.model.NewProjectResult;
@@ -41,7 +45,6 @@ import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.DockLayoutPanel;
-import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.ScrollPanel;
 import com.google.gwt.user.client.ui.VerticalPanel;
@@ -151,8 +154,12 @@ public class NewDirectoryNavigationPage
          DockLayoutPanel panel = new DockLayoutPanel(Unit.PX);
          panel.addStyleName(styles.wizardPageSelectorItem());
          panel.addStyleName(styles.wizardPageSelectorItemSize());
-         
-         Image rightArrow = new Image(new ImageResource2x(WizardResources.INSTANCE.wizardDisclosureArrow2x()));
+         Roles.getButtonRole().set(panel.getElement());
+         panel.getElement().setTabIndex(0);
+         panel.getElement().setId(ElementIds.idFromLabel(page.getTitle() + "_wizard_page")); 
+
+         DecorativeImage rightArrow = new DecorativeImage(
+               new ImageResource2x(WizardResources.INSTANCE.wizardDisclosureArrow2x()));
          rightArrow.addStyleName(styles.wizardPageSelectorItemRightArrow());
          panel.addEast(rightArrow, 28);
          
@@ -162,7 +169,7 @@ public class NewDirectoryNavigationPage
          }
          else
          {
-            Image icon = new Image(page.getImage());
+            DecorativeImage icon = new DecorativeImage(page.getImage());
             icon.addStyleName(styles.wizardPageSelectorItemLeftIcon());
             panel.addWest(icon, 28);
          }
@@ -172,10 +179,11 @@ public class NewDirectoryNavigationPage
          mainLabel.getElement().setAttribute("title", page.getSubTitle());
          panel.add(mainLabel);
 
-         panel.addDomHandler(handler, ClickEvent.getType());
-         
+         clickManager_ = new ButtonClickManager(panel, handler);
          initWidget(panel);
       }
+
+      private ButtonClickManager clickManager_;
    }
    
    public interface Styles extends CssResource

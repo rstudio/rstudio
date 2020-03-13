@@ -1,7 +1,7 @@
 /*
  * AsyncUriHandler.hpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-12 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -23,11 +23,11 @@
 #include <boost/bind.hpp>
 #include <boost/function.hpp>
 #include <boost/shared_ptr.hpp>
+#include <boost/variant.hpp>
 #include <boost/algorithm/string/predicate.hpp>
 
 #include <core/http/UriHandler.hpp>
 #include <core/http/AsyncConnection.hpp>
-
 
 namespace rstudio {
 namespace core {
@@ -37,13 +37,52 @@ namespace http {
 typedef boost::function<void(
             boost::shared_ptr<AsyncConnection>)> AsyncUriHandlerFunction;
 
+typedef boost::function<bool(
+            boost::shared_ptr<AsyncConnection>, const std::string&, bool)> AsyncUriUploadHandlerFunction;
+
+typedef boost::variant<AsyncUriHandlerFunction,
+            AsyncUriUploadHandlerFunction> AsyncUriHandlerFunctionVariant;
+
+class AsyncUriHandlerFunctionVariantVisitor : public boost::static_visitor<void>
+{
+public:
+   AsyncUriHandlerFunctionVariantVisitor(boost::shared_ptr<AsyncConnection> pConnection) :
+      pConnection_(pConnection)
+   {
+   }
+
+   AsyncUriHandlerFunctionVariantVisitor(boost::shared_ptr<AsyncConnection> pConnection,
+                                         const std::string& formData,
+                                         bool isComplete) :
+      pConnection_(pConnection),
+      formData_(formData),
+      isComplete_(isComplete)
+   {
+   }
+
+   void operator()(const AsyncUriHandlerFunction& func)
+   {
+      func(pConnection_);
+   }
+
+   void operator()(const AsyncUriUploadHandlerFunction& func)
+   {
+      func(pConnection_, formData_, isComplete_);
+   }
+
+private:
+   boost::shared_ptr<AsyncConnection> pConnection_;
+   std::string formData_;
+   bool isComplete_;
+};
+
 class AsyncUriHandler
 {
 public:
    AsyncUriHandler() : isProxyHandler_(false) {} // other members default initialized
 
    AsyncUriHandler(const std::string& prefix,
-                   AsyncUriHandlerFunction function,
+                   AsyncUriHandlerFunctionVariant function,
                    bool isProxyHandler = false)
        : prefix_(prefix), function_(function), isProxyHandler_(isProxyHandler)
    {
@@ -56,7 +95,7 @@ public:
       return boost::algorithm::starts_with(uri, prefix_);
    }
 
-   AsyncUriHandlerFunction function() const
+   boost::optional<AsyncUriHandlerFunctionVariant> function() const
    {
       return function_;
    }
@@ -65,7 +104,22 @@ public:
    // implement AsyncUriHandlerFunction concept
    void operator()(boost::shared_ptr<AsyncConnection> pConnection) const
    {
-      function_(pConnection);
+      if (!function_)
+         return;
+
+      AsyncUriHandlerFunctionVariantVisitor visitor(pConnection);
+      boost::apply_visitor(visitor, function_.get());
+   }
+
+   void operator()(boost::shared_ptr<AsyncConnection> pConnection,
+                   const std::string& formData,
+                   bool isComplete) const
+   {
+      if (!function_)
+         return;
+
+      AsyncUriHandlerFunctionVariantVisitor visitor(pConnection, formData, isComplete);
+      boost::apply_visitor(visitor, function_.get());
    }
 
    bool isProxyHandler() const
@@ -75,10 +129,17 @@ public:
 
 private:
    std::string prefix_;
-   AsyncUriHandlerFunction function_ ;
+   boost::optional<AsyncUriHandlerFunctionVariant> function_ ;
    bool isProxyHandler_;
 
 };
+
+inline void visitHandler(const AsyncUriHandlerFunctionVariant& variant,
+                         boost::shared_ptr<AsyncConnection> pConnection)
+{
+   AsyncUriHandlerFunctionVariantVisitor visitor(pConnection);
+   boost::apply_visitor(visitor, variant);
+}
 
 class AsyncUriHandlers
 {

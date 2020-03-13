@@ -1,7 +1,7 @@
 /*
  * SessionConsoleProcessInfo.cpp
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -28,6 +28,7 @@
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionPersistentState.hpp>
 #include <session/SessionOptions.hpp>
+#include <session/prefs/UserPrefs.hpp>
 
 using namespace rstudio::core;
 
@@ -58,7 +59,7 @@ ConsoleProcessInfo::ConsoleProcessInfo(
          const std::string& title,
          const std::string& handle,
          const int terminalSequence,
-         TerminalShell::TerminalShellType shellType,
+         TerminalShell::ShellType shellType,
          bool altBufferActive,
          const core::FilePath& cwd,
          int cols, int rows, bool zombie, bool trackEnv)
@@ -207,7 +208,7 @@ core::json::Object ConsoleProcessInfo::toJson(SerializationMode serialMode) cons
    result["allow_restart"] = allowRestart_;
    result["title"] = title_;
    result["child_procs"] = childProcs_;
-   result["shell_type"] = static_cast<int>(shellType_);
+   result["shell_type"] = TerminalShell::getShellId(shellType_); 
    result["channel_mode"] = static_cast<int>(channelMode_);
    result["channel_id"] = channelId_;
    result["alt_buffer"] = altBufferActive_;
@@ -293,12 +294,11 @@ boost::shared_ptr<ConsoleProcessInfo> ConsoleProcessInfo::fromJson(const core::j
    if (error)
       LOG_ERROR(error);
 
-   int shellTypeInt = 0;
-   error = json::getOptionalParam(obj, "shell_type", 0, &shellTypeInt);
+   std::string shellType;
+   error = json::getOptionalParam(obj, "shell_type", std::string("default"), &shellType);
    if (error)
       LOG_ERROR(error);
-   pProc->shellType_ =
-      static_cast<TerminalShell::TerminalShellType>(shellTypeInt);
+   pProc->shellType_ = TerminalShell::shellTypeFromString(shellType);
 
    int channelModeInt = 0;
    error = json::getOptionalParam(obj, "channel_mode", 0, &channelModeInt);
@@ -373,6 +373,18 @@ void ConsoleProcessInfo::saveConsoleEnvironment(const core::system::Options& env
 void ConsoleProcessInfo::loadConsoleEnvironment(const std::string& handle, core::system::Options* pEnv)
 {
    console_persist::loadConsoleEnvironment(handle, pEnv);
+}
+
+AutoCloseMode ConsoleProcessInfo::closeModeFromPref(std::string prefValue)
+{
+   if (prefValue == kTerminalCloseBehaviorAlways)
+      return AlwaysAutoClose;
+   else if (prefValue == kTerminalCloseBehaviorClean)
+      return CleanExitAutoClose;
+   else if (prefValue == kTerminalCloseBehaviorNever)
+      return NeverAutoClose;
+   else
+      return NeverAutoClose;
 }
 
 } // namespace console_process_info

@@ -1,7 +1,7 @@
 /*
  * JsArrayUtil.java
  *
- * Copyright (C) 2009-15 by RStudio, Inc.
+ * Copyright (C) 2009-15 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -134,6 +134,16 @@ public class JsArrayUtil
       for (int i = 0; i < array.length(); i++)
          copy.push(array.get(i));
       return copy;
+   }
+   
+   public static JsArrayString createStringArray(String ...strings)
+   {
+      JsArrayString result = JsArray.createArray().cast();
+      for (String str: strings)
+      {
+         result.push(str);
+      }
+      return result;
    }
    
    @SuppressWarnings("unchecked")

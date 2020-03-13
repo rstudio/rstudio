@@ -1,4 +1,4 @@
-@external rstudio-themes-flat;
+@external rstudio-themes-flat, rstudio-themes-dark;
 
 @external rstudio-themes-default, rstudio-themes-dark-grey, rstudio-themes-alternate;
 
@@ -46,7 +46,6 @@
 }
 
 .rstudio-themes-flat .center {
-   color: #FFF;
    border-radius: 3px;
    border: solid 1px #000;
    height: 28px;
@@ -56,6 +55,10 @@
 .rstudio-themes-flat .center > table {
    padding: 0px;
    height: 27px;
+}
+
+.rstudio-themes-flat .rstudio-themes-dark .center {
+   color: white;
 }
 
 .rstudio-themes-flat .rstudio-themes-default .center {

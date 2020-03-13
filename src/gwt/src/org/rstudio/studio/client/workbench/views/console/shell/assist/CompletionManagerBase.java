@@ -1,7 +1,7 @@
 /*
  * CompletionManagerBase.java
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-20 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -28,8 +28,7 @@ import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.codetools.CodeToolsServerOperations;
 import org.rstudio.studio.client.common.codetools.Completions;
 import org.rstudio.studio.client.common.codetools.RCompletionType;
-import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
-import org.rstudio.studio.client.workbench.prefs.model.UIPrefsAccessor;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.snippets.SnippetHelper;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.CompletionRequester.QualifiedName;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
@@ -88,11 +87,11 @@ public abstract class CompletionManagerBase
    
    @Inject
    private void initialize(EventBus events,
-                           UIPrefs uiPrefs,
+                           UserPrefs uiPrefs,
                            HelpStrategy helpStrategy)
    {
       events_ = events;
-      uiPrefs_ = uiPrefs;
+      userPrefs_ = uiPrefs;
       helpStrategy_ = helpStrategy;
    }
    
@@ -135,7 +134,7 @@ public abstract class CompletionManagerBase
                completions.getLanguage()));
       }
       
-      if (uiPrefs_.enableSnippets().getValue())
+      if (userPrefs_.enableSnippets().getValue())
       {
          String[] parts = line.split("\\s+");
          if (parts.length > 0)
@@ -285,8 +284,14 @@ public abstract class CompletionManagerBase
       if (completionCache_.satisfyRequest(line, context_))
          return true;
       
-      getCompletions(line, context_);
-      return true;
+      boolean canComplete = getCompletions(line, context_);
+      
+      // if tab was used to trigger the completion, but no completions
+      // are available in that context, then insert a literal tab
+      if (!canComplete && isTabTriggered)
+         docDisplay_.insertCode("\t");
+      
+      return canComplete;
    }
    
    public Invalidation.Token getInvalidationToken()
@@ -316,7 +321,7 @@ public abstract class CompletionManagerBase
    
    public abstract void goToHelp();
    public abstract void goToDefinition();
-   public abstract void getCompletions(String line, CompletionRequestContext context);
+   public abstract boolean getCompletions(String line, CompletionRequestContext context);
    
    // Subclasses should override this to provide extra (e.g. context) completions.
    protected void addExtraCompletions(String token, List<QualifiedName> completions)
@@ -337,7 +342,7 @@ public abstract class CompletionManagerBase
       // add '()' for function completions
       boolean insertParensAfterCompletion =
             RCompletionType.isFunctionType(type) &&
-            uiPrefs_.insertParensAfterFunctionCompletion().getValue();
+            userPrefs_.insertParensAfterFunctionCompletion().getValue();
       
       if (insertParensAfterCompletion)
          value += "()";
@@ -355,7 +360,7 @@ public abstract class CompletionManagerBase
       
       boolean insertParensAfterCompletion =
             RCompletionType.isFunctionType(type) &&
-            uiPrefs_.insertParensAfterFunctionCompletion().getValue();
+            userPrefs_.insertParensAfterFunctionCompletion().getValue();
       
       if (insertParensAfterCompletion)
          docDisplay_.moveCursorBackward();
@@ -523,7 +528,7 @@ public abstract class CompletionManagerBase
       }
       else
       {
-         if (canAutoPopup(charCode, uiPrefs_.alwaysCompleteCharacters().getValue() - 1))
+         if (canAutoPopup(charCode, userPrefs_.codeCompletionCharacters().getValue() - 1))
             suggestTimer_.schedule(true, false);
       }
       
@@ -575,12 +580,12 @@ public abstract class CompletionManagerBase
    
    protected boolean canAutoPopup(char ch, int lookbackLimit)
    {
-      String codeComplete = uiPrefs_.codeComplete().getValue();
+      String codeComplete = userPrefs_.codeCompletion().getValue();
       
-      if (isTriggerCharacter(ch) && !StringUtil.equals(codeComplete, UIPrefsAccessor.COMPLETION_MANUAL))
+      if (isTriggerCharacter(ch) && !StringUtil.equals(codeComplete, UserPrefs.CODE_COMPLETION_MANUAL))
          return true;
       
-      if (!StringUtil.equals(codeComplete, UIPrefsAccessor.COMPLETION_ALWAYS))
+      if (!StringUtil.equals(codeComplete, UserPrefs.CODE_COMPLETION_ALWAYS))
          return false;
 
       if (docDisplay_.isVimModeOn() && !docDisplay_.isVimInInsertMode())
@@ -606,7 +611,7 @@ public abstract class CompletionManagerBase
       for (int i = 0; i < lookbackLimit; i++)
       {
          int index = cursorColumn - i - 1;
-         if (isBoundaryCharacter(currentLine.charAt(index)))
+         if (isBoundaryCharacter(StringUtil.charAt(currentLine, index)))
             return false;
       }
       
@@ -698,7 +703,7 @@ public abstract class CompletionManagerBase
          }
          
          String line = docDisplay_.getCurrentLine();
-         char ch = line.charAt(cursorColumn - 1);
+         char ch = StringUtil.charAt(line, cursorColumn - 1);
          if (isBoundaryCharacter(ch))
          {
             invalidatePendingRequests();
@@ -712,17 +717,20 @@ public abstract class CompletionManagerBase
    
    private boolean onTab()
    {
+      // Don't auto complete if tab auto completion was disabled
+      if (!userPrefs_.tabCompletion().getValue() || userPrefs_.tabKeyMoveFocus().getValue())
+         return false;
+
       // if the line is blank, don't request completions unless
       // the user has explicitly opted in
       String line = docDisplay_.getCurrentLineUpToCursor();
-      if (!uiPrefs_.allowTabMultilineCompletion().getValue())
+      if (!userPrefs_.tabMultilineCompletion().getValue())
       {
          if (line.matches("^\\s*"))
             return false;
       }
       
-      beginSuggest(true, true, true);
-      return true;
+      return beginSuggest(true, true, true);
    }
    
    private void showPopupHelp(QualifiedName completion)
@@ -848,7 +856,7 @@ public abstract class CompletionManagerBase
          flushCache_ = flushCache;
          canAutoInsert_ = canAutoInsert;
          
-         timer_.schedule(uiPrefs_.alwaysCompleteDelayMs().getValue());
+         timer_.schedule(userPrefs_.codeCompletionDelay().getValue());
       }
       
       public void cancel()
@@ -913,5 +921,5 @@ public abstract class CompletionManagerBase
    private HelpStrategy helpStrategy_;
    
    protected EventBus events_;
-   protected UIPrefs uiPrefs_;
+   protected UserPrefs userPrefs_;
 }

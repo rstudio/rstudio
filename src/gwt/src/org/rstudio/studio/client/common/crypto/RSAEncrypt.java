@@ -1,7 +1,7 @@
 /*
  * RSAEncrypt.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-12 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -35,7 +35,7 @@ public class RSAEncrypt
          final String input,
          final ResponseCallback callback)
    {
-      if (Desktop.isDesktop())
+      if (Desktop.hasDesktopFrame())
       {
          // Don't encrypt for desktop, Windows can't decrypt it.
          callback.onSuccess(input);
@@ -78,7 +78,7 @@ public class RSAEncrypt
                                          final String input,
                                          final CommandWithArg<String> callback)
    {
-      if (Desktop.isDesktop())
+      if (Desktop.hasDesktopFrame())
       {
          // Don't encrypt for desktop, Windows can't decrypt it.
          callback.execute(input);

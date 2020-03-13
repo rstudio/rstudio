@@ -1,7 +1,7 @@
 /*
  * Mutable.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -15,6 +15,8 @@
 package org.rstudio.core.client;
 
 // A utility class primarily used for creating mutable integers etc.
+// Useful for mutable objects that need to be accessible by anonymous classes,
+// callbacks, and so on.
 public class Mutable<T>
 {
    public Mutable()
@@ -35,6 +37,11 @@ public class Mutable<T>
    public void set(T data)
    {
       data_ = data;
+   }
+   
+   public void clear()
+   {
+      data_ = null;
    }
    
    private T data_;

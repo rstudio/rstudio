@@ -1,7 +1,7 @@
 /*
- * JobQuitControls.java
+ * JobQuitDialog.java
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -16,6 +16,7 @@ package org.rstudio.studio.client.workbench.views.jobs.view;
 
 import java.util.List;
 
+import com.google.gwt.aria.client.Roles;
 import org.rstudio.core.client.widget.ModalDialog;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.OperationWithInput;
@@ -29,7 +30,7 @@ public class JobQuitDialog extends ModalDialog<Boolean>
                         OperationWithInput<Boolean> onConfirmed,
                         Operation cancelOperation)
    {
-      super("Terminate Running Jobs", onConfirmed, cancelOperation);
+      super("Terminate Running Jobs", Roles.getAlertdialogRole(), onConfirmed, cancelOperation);
       running_ = runningJobs;
       setOkButtonCaption("Terminate Jobs");
    }

@@ -1,7 +1,7 @@
 /*
  * PaneConfig.java
  *
- * Copyright (C) 2009-19 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,42 +14,38 @@
  */
 package org.rstudio.studio.client.workbench.ui;
 
-import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArrayString;
 
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.JsArrayUtil;
 import org.rstudio.core.client.js.JsUtil;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefsAccessor;
 
 import java.util.*;
 
-public class PaneConfig extends JavaScriptObject
+public class PaneConfig extends UserPrefsAccessor.Panes
 {
-   public final static String SOURCE = "Source";
-   public final static String CONSOLE = "Console";
-   
-   
    public native static PaneConfig create(JsArrayString panes,
                                           JsArrayString tabSet1,
                                           JsArrayString tabSet2,
                                           boolean consoleLeftOnTop,
                                           boolean consoleRightOnTop) /*-{
       return { 
-         panes: panes, 
+         quadrants: panes, 
          tabSet1: tabSet1, 
          tabSet2: tabSet2,
-         consoleLeftOnTop: consoleLeftOnTop,
-         consoleRightOnTop: consoleRightOnTop 
+         console_left_on_top: consoleLeftOnTop,
+         console_right_on_top: consoleRightOnTop 
       };
    }-*/;
 
    public static PaneConfig createDefault()
    {
       JsArrayString panes = createArray().cast();
-      panes.push(SOURCE);
-      panes.push(CONSOLE);
-      panes.push("TabSet1");
-      panes.push("TabSet2");
+      panes.push(UserPrefsAccessor.Panes.QUADRANTS_SOURCE);
+      panes.push(UserPrefsAccessor.Panes.QUADRANTS_CONSOLE);
+      panes.push(UserPrefsAccessor.Panes.QUADRANTS_TABSET1);
+      panes.push(UserPrefsAccessor.Panes.QUADRANTS_TABSET2);
 
       JsArrayString tabSet1 = createArray().cast();
       tabSet1.push("Environment");
@@ -57,6 +53,7 @@ public class PaneConfig extends JavaScriptObject
       tabSet1.push("Connections");
       tabSet1.push("Build");
       tabSet1.push("VCS");
+      tabSet1.push("Tutorial");
       tabSet1.push("Presentation");
 
       JsArrayString tabSet2 = createArray().cast();
@@ -71,7 +68,12 @@ public class PaneConfig extends JavaScriptObject
 
    public static String[] getAllPanes()
    {
-      return new String[] {SOURCE, CONSOLE, "TabSet1", "TabSet2"};
+      return new String[] {
+         UserPrefsAccessor.Panes.QUADRANTS_SOURCE,
+         UserPrefsAccessor.Panes.QUADRANTS_CONSOLE,
+         UserPrefsAccessor.Panes.QUADRANTS_TABSET1,
+         UserPrefsAccessor.Panes.QUADRANTS_TABSET2
+      };
    }
 
    public static String[] getAllTabs()
@@ -79,7 +81,7 @@ public class PaneConfig extends JavaScriptObject
       // A list of all the tabs. Order matters; the Presentation tab must be the
       // last element in this array that's part of the first tabset (ts1)
       return new String[] {"Environment", "History", "Files", "Plots", "Connections",
-                           "Packages", "Help", "Build", "VCS", "Viewer", "Presentation"};
+                           "Packages", "Help", "Build", "VCS", "Tutorial", "Viewer", "Presentation"};
    }
 
    public static String[] getAlwaysVisibleTabs()
@@ -90,13 +92,13 @@ public class PaneConfig extends JavaScriptObject
 
    public static String[] getHideableTabs()
    {
-      return new String[] {"Build", "VCS", "Presentation", "Connections", "Packages" };
+      return new String[] {"Build", "VCS", "Tutorial", "Presentation", "Connections", "Packages" };
    }
 
    // Any tabs that were added after our first public release.
    public static String[] getAddableTabs()
    {
-      return new String[] {"Build", "VCS", "Presentation", "Connections", "Viewer" };
+      return new String[] {"Build", "VCS", "Tutorial", "Presentation", "Connections", "Viewer" };
    }
 
    // Tabs that have been replaced by newer versions/replaceable supersets
@@ -144,21 +146,9 @@ public class PaneConfig extends JavaScriptObject
    {
    }
 
-   public native final JsArrayString getPanes() /*-{
-      return this.panes;
-   }-*/;
-
-   public native final JsArrayString getTabSet1() /*-{
-      return this.tabSet1;
-   }-*/;
-
-   public native final JsArrayString getTabSet2() /*-{
-      return this.tabSet2;
-   }-*/;
-   
    public final int getConsoleIndex()
    {
-      JsArrayString panes = getPanes();
+      JsArrayString panes = getQuadrants();
       for (int i = 0; i<panes.length(); i++)
          if (panes.get(i) == "Console")
             return i;
@@ -168,7 +158,7 @@ public class PaneConfig extends JavaScriptObject
    
    public final boolean getConsoleLeft()
    {
-      JsArrayString panes = getPanes();
+      JsArrayString panes = getQuadrants();
       return panes.get(0) == "Console" || panes.get(1) == "Console";
    }
    
@@ -177,28 +167,12 @@ public class PaneConfig extends JavaScriptObject
       return !getConsoleLeft();
    }
    
-   public native final boolean getConsoleLeftOnTop() /*-{
-      // return default if the existing object doesn't have this property
-      if (this.hasOwnProperty("consoleLeftOnTop"))
-         return this.consoleLeftOnTop;
-      else
-         return false;
-   }-*/;
-   
-   public native final boolean getConsoleRightOnTop() /*-{
-      // return default if the existing object doesn't have this property
-      if (this.hasOwnProperty("consoleRightOnTop"))
-         return this.consoleRightOnTop;
-      else
-         return true;
-   }-*/;
-
    public final boolean validateAndAutoCorrect()
    {
-      JsArrayString panes = getPanes();
+      JsArrayString panes = getQuadrants();
       if (panes == null)
          return false;
-      if (!sameElements(panes, new String[] {SOURCE, CONSOLE, "TabSet1", "TabSet2"}))
+      if (!sameElements(panes, getAllPanes()))
          return false;
 
       JsArrayString ts1 = getTabSet1();
@@ -211,7 +185,7 @@ public class PaneConfig extends JavaScriptObject
       replaceObsoleteTabs(ts2);
 
       // Presentation tab must always be at the end of the ts1 tabset (this 
-      // is so that activating it works even in the presense of optionally
+      // is so that activating it works even in the presence of optionally
       // visible tabs). This is normally an invariant but for a time during 
       // the v0.99-1000 preview we allowed the Connections tab to be the 
       // last one in the tabset.
@@ -277,7 +251,7 @@ public class PaneConfig extends JavaScriptObject
 
    public final PaneConfig copy()
    {
-      return create(copy(getPanes()),
+      return create(copy(getQuadrants()),
                     copy(getTabSet1()),
                     copy(getTabSet2()),
                     getConsoleLeftOnTop(),

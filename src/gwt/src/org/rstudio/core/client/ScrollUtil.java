@@ -1,7 +1,7 @@
 /*
  * ScrollUtil.java
  *
- * Copyright (C) 2009-14 by RStudio, Inc.
+ * Copyright (C) 2009-14 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -15,7 +15,6 @@
 package org.rstudio.core.client;
 
 import org.rstudio.core.client.widget.RStudioFrame;
-import org.rstudio.studio.client.workbench.views.viewer.ViewerPane;
 
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.RepeatingCommand;
@@ -55,7 +54,7 @@ public class ScrollUtil
             if (doc.getScrollTop() > 0)
                return true;
 
-            if (doc.getURL() == ViewerPane.ABOUT_BLANK)
+            if (doc.getURL() == URIConstants.ABOUT_BLANK)
                return true;
             
             // restore scroll position

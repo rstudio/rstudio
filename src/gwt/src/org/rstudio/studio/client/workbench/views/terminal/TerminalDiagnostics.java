@@ -1,7 +1,7 @@
 /*
  * TerminalDiagnostics.java
  *
- * Copyright (C) 2009-19 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -22,7 +22,7 @@ public class TerminalDiagnostics
    {
       if (diagnostic_ == null)
          diagnostic_ = new StringBuilder();
-     
+
       diagnostic_.append(StringUtil.getTimestamp());
       diagnostic_.append(": ");
       diagnostic_.append(msg);
@@ -36,7 +36,7 @@ public class TerminalDiagnostics
       else
          return diagnostic_.toString();
    }
-   
+
    public void resetLog()
    {
       diagnostic_ = null;

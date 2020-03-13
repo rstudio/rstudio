@@ -1,7 +1,7 @@
 /*
  * RemoteServerEventListener.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-12 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -115,7 +115,7 @@ class RemoteServerEventListener
       // receive an event twice (because the reset to -1 causes us to never
       // confirm receipt of the event with the server). in practice this
       // would a) be very unlikely; b) not be that big of a deal; and c) is
-      // judged preferrable than doing something more complex in this code
+      // judged preferable than doing something more complex in this code
       // which might avoid dupes but cause other bugs (such as missing events
       // from the server). note also that when we go multi-user we'll be 
       // revisiting this mechanism again so there will be an opportunity to 
@@ -219,7 +219,7 @@ class RemoteServerEventListener
       //  1) perpetual "Loading..." indicator displayed to user (user can
       //     also then "cancel" the event request!); and
       //
-      //  2) terimation of the request without warning by the browser when
+      //  2) termination of the request without warning by the browser when
       //     the user hits the Back button within a frame hosted on the page
       //     (note in this case we get no error so think the request is still
       //     running -- see Watchdog for workaround to this general class of 
@@ -258,7 +258,7 @@ class RemoteServerEventListener
             
             try
             {
-               // only processs events if we are still listening
+               // only process events if we are still listening
                if (isListening_ && (events != null))
                {
                   for (int i=0; i<events.length(); i++)
@@ -270,7 +270,7 @@ class RemoteServerEventListener
                      if (!isListening_)
                         return;
                      
-                     // disppatch event
+                     // dispatch event
                      ClientEvent event = events.get(i);
                      dispatchEvent(event);
                      lastEventId_ = event.getId();
@@ -410,7 +410,7 @@ class RemoteServerEventListener
    // NOTE: the design of the Watchdog likely results in more restarts of
    // the event service than is optimal. when an rpc call reports that 
    // events are pending and the Watchdog is invoked it is very likely
-   // that the events have already been delievered in response to the 
+   // that the events have already been delivered in response to the
    // previous poll. In this case the Watchdog "misses" those events which
    // were already delivered and subsequently assumes that the service
    // needs to be restarted

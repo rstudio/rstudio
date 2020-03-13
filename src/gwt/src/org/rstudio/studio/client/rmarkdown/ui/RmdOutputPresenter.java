@@ -1,7 +1,7 @@
 /*
  * RmdOutputPresenter.java
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -29,7 +29,8 @@ import org.rstudio.studio.client.shiny.ShinyDisconnectNotifier.ShinyDisconnectSo
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionUtils;
-import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserState;
 
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.event.logical.shared.CloseEvent;
@@ -54,6 +55,7 @@ public class RmdOutputPresenter implements
       int getScrollPosition();
       void refresh();
       String getTitle();
+      String getName();
       String getAnchor();
       void focusFind();
    }
@@ -66,12 +68,14 @@ public class RmdOutputPresenter implements
                              Commands commands,
                              EventBus eventBus,
                              Satellite satellite,
-                             UIPrefs prefs)
+                             UserPrefs prefs,
+                             UserState state)
    {
       view_ = view;
       globalDisplay_ = globalDisplay;
       session_ = session;
-      prefs_ = prefs;
+      userPrefs_ = prefs;
+      userState_ = state;
       
       slideNavigationPresenter_ = new SlideNavigationPresenter(view_);
       disconnectNotifier_ = new ShinyDisconnectNotifier(this);
@@ -117,7 +121,7 @@ public class RmdOutputPresenter implements
    {
       return DomUtils.makeAbsoluteUrl(params_.getOutputUrl());
    }
-
+   
    @Override
    public void onShinyDisconnect()
    {
@@ -157,7 +161,7 @@ public class RmdOutputPresenter implements
       boolean refresh = params_ != null && 
             params_.getResult() == params.getResult();
       params_ = params;
-      view_.showOutput(params, SessionUtils.showPublishUi(session_, prefs_), 
+      view_.showOutput(params, SessionUtils.showPublishUi(session_, userState_), 
                        refresh);
    }
    
@@ -189,7 +193,8 @@ public class RmdOutputPresenter implements
    private final Display view_;
    private final GlobalDisplay globalDisplay_;
    private final Session session_;
-   private final UIPrefs prefs_;
+   private final UserPrefs userPrefs_;
+   private final UserState userState_;
   
    private final SlideNavigationPresenter slideNavigationPresenter_;
    private final ShinyDisconnectNotifier disconnectNotifier_;

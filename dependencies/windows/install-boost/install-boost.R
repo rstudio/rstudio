@@ -109,7 +109,7 @@ exec("bcp", args)
 enter("rstudio")
 exec("cmd.exe", "/C call bootstrap.bat vc141")
 
-# construct common arguments for boost builds
+# construct common arguments for 32bit, 64bit boost builds
 b2_build_args <- function(bitness) {
    
    prefix <- file.path(install_dir, sprintf("boost%s", bitness), fsep = "\\")
@@ -128,6 +128,10 @@ b2_build_args <- function(bitness) {
       "install"
    )
 }
+
+# build 32bit Boost
+section("Building Boost 32bit...")
+exec("b2", b2_build_args("32"))
 
 # build 64bit Boost
 section("Building Boost 64bit...")

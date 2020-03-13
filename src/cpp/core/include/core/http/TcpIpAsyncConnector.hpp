@@ -1,7 +1,7 @@
 /*
  * TcpIpAsyncConnector.hpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-12 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -55,7 +55,8 @@ public:
 public:
    TcpIpAsyncConnector(boost::asio::io_service& ioService,
                        boost::asio::ip::tcp::socket* pSocket)
-     : pSocket_(pSocket),
+     : service_(ioService),
+       pSocket_(pSocket),
        resolver_(ioService),
        isConnected_(false),
        hasFailed_(false)
@@ -78,7 +79,7 @@ public:
       {
          // start a timer that will cancel any outstanding asynchronous operations
          // when it elapses if the connection operation has not succeeded
-         pConnectionTimer_.reset(new boost::asio::deadline_timer(resolver_.get_io_service(), timeout));
+         pConnectionTimer_.reset(new boost::asio::deadline_timer(service_, timeout));
          pConnectionTimer_->async_wait(boost::bind(&TcpIpAsyncConnector::onConnectionTimeout,
                                                    TcpIpAsyncConnector::shared_from_this(),
                                                    boost::asio::placeholders::error));
@@ -137,6 +138,17 @@ private:
          {
             if (!ec)
             {
+               // work-around - in some rare instances, we've seen that Boost will still
+               // return us an empty endpoint_iterator, even when successful, which is
+               // contrary to the documentation
+               if (endpoint_iterator == boost::asio::ip::tcp::resolver::iterator())
+               {
+                  handleErrorCode(boost::system::error_code(boost::system::errc::io_error,
+                                                            boost::system::system_category()),
+                                  ERROR_LOCATION);
+                  return;
+               }
+
                // try endpoints until we successfully connect with one
                boost::asio::ip::tcp::endpoint endpoint = *endpoint_iterator;
                pSocket_->async_connect(
@@ -233,6 +245,7 @@ private:
    }
 
 private:
+   boost::asio::io_service& service_;
    boost::asio::ip::tcp::socket* pSocket_;
    boost::asio::ip::tcp::resolver resolver_;
    ConnectedHandler connectedHandler_;

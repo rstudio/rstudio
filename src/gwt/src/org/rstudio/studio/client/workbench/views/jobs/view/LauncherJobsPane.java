@@ -1,7 +1,7 @@
 /*
  * LauncherJobsPane.java
  *
- * Copyright (C) 2009-19 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -18,7 +18,7 @@ import com.google.gwt.core.client.JsArray;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import org.rstudio.core.client.widget.Toolbar;
-import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
 import org.rstudio.studio.client.workbench.views.jobs.LauncherJobsPresenter;
 import org.rstudio.studio.client.workbench.views.jobs.model.Job;
@@ -30,7 +30,7 @@ public class LauncherJobsPane extends WorkbenchPane
                               implements LauncherJobsPresenter.Display
 {
    @Inject
-   public LauncherJobsPane(UIPrefs uiPrefs,
+   public LauncherJobsPane(UserPrefs uiPrefs,
                            LauncherJobsPaneWidgets widgets)
    {
       super("Launcher");
@@ -106,7 +106,7 @@ public class LauncherJobsPane extends WorkbenchPane
       if (uiPrefs_.showLauncherJobsTab().getValue() != show)
       {
          uiPrefs_.showLauncherJobsTab().setGlobalValue(show);
-         uiPrefs_.writeUIPrefs();
+         uiPrefs_.writeUserPrefs();
       }
    }
 
@@ -114,6 +114,6 @@ public class LauncherJobsPane extends WorkbenchPane
    private JobsDisplayImpl baseImpl_;
 
    // injected
-   private final UIPrefs uiPrefs_;
+   private final UserPrefs uiPrefs_;
    private final LauncherJobsPaneWidgets widgets_;
 }

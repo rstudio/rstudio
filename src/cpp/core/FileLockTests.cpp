@@ -1,7 +1,7 @@
 /*
  * FileLocktests.cpp
  *
- * Copyright (C) 2009-16 by RStudio, Inc.
+ * Copyright (C) 2009-16 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -19,8 +19,8 @@
 
 #include <sys/wait.h>
 
-#include <core/Error.hpp>
-#include <core/FilePath.hpp>
+#include <shared_core/Error.hpp>
+#include <shared_core/FilePath.hpp>
 
 #include <boost/thread.hpp>
 #include <boost/bind.hpp>
@@ -41,7 +41,7 @@ void acquireLock(std::size_t threadNumber)
 {
    LinkBasedFileLock lock;
    Error error = lock.acquire(s_lockFilePath);
-   if (error == Success())
+   if (!error)
    {
       s_mutex.lock();
       ++s_lockCount;
@@ -61,7 +61,7 @@ void forkAndCheckLock()
 
       // if locked, the child process should not be able to acquire the lock
       Error error = childLock.acquire(s_lockFilePath);
-      CHECK_FALSE(error == Success());
+      CHECK_FALSE(!error);
 
       // the lock should remain after this attempt to lock
       CHECK(childLock.isLocked(s_lockFilePath));
@@ -75,7 +75,7 @@ void forkAndCheckLock()
    ::waitpid(child, &status, 0);
 }
    
-TEST_CASE("File Locking")
+TEST_CASE("File Locking", "[!hide]")
 {
    SECTION("A link-based lock can only be acquired once")
    {
@@ -88,26 +88,26 @@ TEST_CASE("File Locking")
       if (error)
          LOG_ERROR(error);
       
-      CHECK((error == Success()));
+      CHECK(!error);
       
       error = lock2.acquire(s_lockFilePath);
       if (error)
          LOG_ERROR(error);
       
-      CHECK_FALSE((error == Success()));
+      CHECK_FALSE(!error);
       
       // release and re-acquire
       error = lock1.release();
       if (error)
          LOG_ERROR(error);
       
-      CHECK((error == Success()));
+      CHECK(!error);
       
       error = lock2.acquire(s_lockFilePath);
       if (error)
          LOG_ERROR(error);
       
-      CHECK((error == Success()));
+      CHECK(!error);
       
       // clean up the lockfile when we're done
       s_lockFilePath.removeIfExists();
@@ -170,7 +170,7 @@ TEST_CASE("File Locking")
       
       // create lock file
       error = s_lockFilePath.ensureFile();
-      CHECK(error == Success());
+      CHECK(!error);
       
       // ensure file is not locked
       AdvisoryFileLock lock;
@@ -179,7 +179,7 @@ TEST_CASE("File Locking")
       
       // attempt to acquire that lock
       error = lock.acquire(s_lockFilePath);
-      CHECK(error == Success());
+      CHECK(!error);
       
       // check lock in child process
       forkAndCheckLock();
@@ -191,7 +191,7 @@ TEST_CASE("File Locking")
       {
          AdvisoryFileLock transientLock;
          error = transientLock.acquire(s_lockFilePath);
-         CHECK(error == Success());
+         CHECK(!error);
          forkAndCheckLock();
       }
       
@@ -200,7 +200,7 @@ TEST_CASE("File Locking")
       
       // ensure lock acquired
       error = lock.acquire(s_lockFilePath);
-      CHECK(error == Success());
+      CHECK(!error);
       
       // TODO: checking if a file is locked from same process will release lock
       // lock.isLocked(s_lockFilePath);

@@ -1,7 +1,7 @@
 /*
  * DesktopHooks.java
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-20 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -30,6 +30,7 @@ import org.rstudio.core.client.js.JsObjectInjector;
 import org.rstudio.core.client.widget.MessageDialog;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.application.events.LauncherServerEvent;
 import org.rstudio.studio.client.application.events.SaveActionChangedEvent;
 import org.rstudio.studio.client.application.events.SaveActionChangedHandler;
 import org.rstudio.studio.client.application.events.SuicideEvent;
@@ -42,7 +43,7 @@ import org.rstudio.studio.client.server.Server;
 import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.Session;
-import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
 import org.rstudio.studio.client.workbench.views.source.SourceShim;
 
@@ -62,7 +63,7 @@ public class DesktopHooks
                        EventBus events,
                        Session session,
                        GlobalDisplay globalDisplay,
-                       Provider<UIPrefs> pUIPrefs,
+                       Provider<UserPrefs> pUIPrefs,
                        Server server,
                        FileTypeRegistry fileTypeRegistry,
                        WorkbenchContext workbenchContext,
@@ -108,7 +109,12 @@ public class DesktopHooks
    String getActiveProjectDir()
    {
       if (workbenchContext_.getActiveProjectDir() != null)
-         return workbenchContext_.getActiveProjectDir().getPath();
+      {
+         if (pUIPrefs_.get().fullProjectPathInWindowTitle().getValue())
+            return workbenchContext_.getActiveProjectDir().getPath();
+         else
+            return workbenchContext_.getActiveProjectDir().getName();
+      }
       else
          return "";
    }
@@ -195,6 +201,17 @@ public class DesktopHooks
    {
       commands_.quitSession().execute();
    }
+
+   void promptToQuitR()
+   {
+      globalDisplay_.showYesNoMessage(MessageDialog.QUESTION,
+            "Close Remote Session",
+            "Do you want to close the remote session?",
+            false,
+            (Operation) () -> commands_.quitSession().execute(),
+            (Operation) () -> Desktop.getFrame().onSessionQuit(),
+            true);
+   }
   
    void notifyRCrashed()
    {
@@ -236,11 +253,17 @@ public class DesktopHooks
          globalDisplay_.showLicenseWarningBar(false, licenseMessage);
    }
 
+   void onLauncherServerEvent(String eventType, String details)
+   {
+      LauncherServerEvent.EventType type = LauncherServerEvent.EventType.valueOf(eventType);
+      events_.fireEvent(new LauncherServerEvent(type, details));
+   }
+
    private final Commands commands_;
    private final EventBus events_;
    private final Session session_;
    private final GlobalDisplay globalDisplay_;
-   private final Provider<UIPrefs> pUIPrefs_;
+   private final Provider<UserPrefs> pUIPrefs_;
    private final Server server_;
    private final FileTypeRegistry fileTypeRegistry_;
    private final WorkbenchContext workbenchContext_;

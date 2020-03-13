@@ -1,7 +1,7 @@
 /*
  * RMarkdownPreferencesPane.java
  *
- * Copyright (C) 2009-16 by RStudio, Inc.
+ * Copyright (C) 2009-16 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -18,19 +18,17 @@ import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.ui.CheckBox;
 import com.google.inject.Inject;
 
+import org.rstudio.core.client.prefs.RestartRequirement;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.SelectWidget;
 import org.rstudio.studio.client.common.HelpLink;
-import org.rstudio.studio.client.rmarkdown.RmdOutput;
 import org.rstudio.studio.client.workbench.model.Session;
-import org.rstudio.studio.client.workbench.prefs.model.RPrefs;
-import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
-import org.rstudio.studio.client.workbench.prefs.model.UIPrefsAccessor;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 
 public class RMarkdownPreferencesPane extends PreferencesPane
 {
    @Inject
-   public RMarkdownPreferencesPane(UIPrefs prefs,
+   public RMarkdownPreferencesPane(UserPrefs prefs,
                                    PreferencesDialogResources res,
                                    Session session)
    {
@@ -40,7 +38,7 @@ public class RMarkdownPreferencesPane extends PreferencesPane
       add(headerLabel("R Markdown"));
       
       add(checkboxPref("Show inline toolbar for R code chunks", prefs_.showInlineToolbarForRCodeChunks()));
-      add(checkboxPref("Show document outline by default", prefs_.showDocumentOutlineRmd()));
+      add(checkboxPref("Show document outline by default", prefs_.showDocOutlineRmd()));
       add(checkboxPref("Enable chunk background highlight", prefs_.highlightCodeChunks()));
       
       docOutlineDisplay_ = new SelectWidget(
@@ -51,9 +49,9 @@ public class RMarkdownPreferencesPane extends PreferencesPane
                   "Sections and All Chunks"
             },
             new String[] {
-                  UIPrefsAccessor.DOC_OUTLINE_SHOW_SECTIONS_ONLY,
-                  UIPrefsAccessor.DOC_OUTLINE_SHOW_SECTIONS_AND_NAMED_CHUNKS,
-                  UIPrefsAccessor.DOC_OUTLINE_SHOW_ALL
+                 UserPrefs.DOC_OUTLINE_SHOW_SECTIONS_ONLY,
+                 UserPrefs.DOC_OUTLINE_SHOW_SECTIONS_AND_CHUNKS,
+                 UserPrefs.DOC_OUTLINE_SHOW_ALL
             },
             false,
             true,
@@ -68,9 +66,9 @@ public class RMarkdownPreferencesPane extends PreferencesPane
                   "(None)"
             },
             new String[] {
-                  new Integer(RmdOutput.RMD_VIEWER_TYPE_WINDOW).toString(),
-                  new Integer(RmdOutput.RMD_VIEWER_TYPE_PANE).toString(),
-                  new Integer(RmdOutput.RMD_VIEWER_TYPE_NONE).toString()
+                  UserPrefs.RMD_VIEWER_TYPE_WINDOW,
+                  UserPrefs.RMD_VIEWER_TYPE_PANE,
+                  UserPrefs.RMD_VIEWER_TYPE_NONE
             },
             false,
             true,
@@ -81,7 +79,7 @@ public class RMarkdownPreferencesPane extends PreferencesPane
       // show output inline for all Rmds
       final CheckBox rmdInlineOutput = checkboxPref(
             "Show output inline for all R Markdown documents",
-            prefs_.showRmdChunkOutputInline());
+            prefs_.rmdChunkOutputInline());
       add(rmdInlineOutput);
       
       // behavior for latex and image preview popups
@@ -93,9 +91,9 @@ public class RMarkdownPreferencesPane extends PreferencesPane
                   "Inline"
             },
             new String[] {
-                  UIPrefsAccessor.LATEX_PREVIEW_SHOW_NEVER,
-                  UIPrefsAccessor.LATEX_PREVIEW_SHOW_INLINE_ONLY,
-                  UIPrefsAccessor.LATEX_PREVIEW_SHOW_ALWAYS
+                  UserPrefs.LATEX_PREVIEW_ON_CURSOR_IDLE_NEVER,
+                  UserPrefs.LATEX_PREVIEW_ON_CURSOR_IDLE_INLINE_ONLY,
+                  UserPrefs.LATEX_PREVIEW_ON_CURSOR_IDLE_ALWAYS
             },
             false,
             true,
@@ -112,9 +110,9 @@ public class RMarkdownPreferencesPane extends PreferencesPane
                      "Project"
                },
                new String[] {
-                     UIPrefsAccessor.KNIT_DIR_DEFAULT,
-                     UIPrefsAccessor.KNIT_DIR_CURRENT,
-                     UIPrefsAccessor.KNIT_DIR_PROJECT
+                     UserPrefs.KNIT_WORKING_DIR_DEFAULT,
+                     UserPrefs.KNIT_WORKING_DIR_CURRENT,
+                     UserPrefs.KNIT_WORKING_DIR_PROJECT
                },
                false,
                true,
@@ -168,27 +166,27 @@ public class RMarkdownPreferencesPane extends PreferencesPane
    }
 
    @Override
-   protected void initialize(RPrefs prefs)
+   protected void initialize(UserPrefs prefs)
    {
-      docOutlineDisplay_.setValue(prefs_.shownSectionsInDocumentOutline().getValue().toString());
+      docOutlineDisplay_.setValue(prefs_.docOutlineShow().getValue());
       rmdViewerMode_.setValue(prefs_.rmdViewerType().getValue().toString());
-      latexPreviewWidget_.setValue(prefs_.showLatexPreviewOnCursorIdle().getValue().toString());
+      latexPreviewWidget_.setValue(prefs_.latexPreviewOnCursorIdle().getValue());
       if (knitWorkingDir_ != null)
          knitWorkingDir_.setValue(prefs_.knitWorkingDir().getValue());
    }
    
    @Override
-   public boolean onApply(RPrefs rPrefs)
+   public RestartRequirement onApply(UserPrefs rPrefs)
    {
-      boolean requiresRestart = super.onApply(rPrefs);
+      RestartRequirement restartRequirement = super.onApply(rPrefs);
       
-      prefs_.shownSectionsInDocumentOutline().setGlobalValue(
+      prefs_.docOutlineShow().setGlobalValue(
             docOutlineDisplay_.getValue());
       
-      prefs_.rmdViewerType().setGlobalValue(Integer.decode(
-            rmdViewerMode_.getValue()));
+      prefs_.rmdViewerType().setGlobalValue(
+            rmdViewerMode_.getValue());
       
-      prefs_.showLatexPreviewOnCursorIdle().setGlobalValue(
+      prefs_.latexPreviewOnCursorIdle().setGlobalValue(
             latexPreviewWidget_.getValue());
       
       if (knitWorkingDir_ != null)
@@ -197,10 +195,10 @@ public class RMarkdownPreferencesPane extends PreferencesPane
                knitWorkingDir_.getValue());
       }
       
-      return requiresRestart;
+      return restartRequirement;
    }
 
-   private final UIPrefs prefs_;
+   private final UserPrefs prefs_;
    
    private final PreferencesDialogResources res_;
    

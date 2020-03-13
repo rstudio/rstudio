@@ -1,7 +1,7 @@
 /*
  * RGraphicsPlotManager.cpp
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -16,15 +16,15 @@
 #include "RGraphicsPlotManager.hpp"
 
 #include <algorithm>
+#include <gsl/gsl>
 
 #include <boost/bind.hpp>
 #include <boost/function.hpp>
 #include <boost/format.hpp>
 #include <boost/lexical_cast.hpp>
-#include <boost/foreach.hpp>
 
 #include <core/Log.hpp>
-#include <core/Error.hpp>
+#include <shared_core/Error.hpp>
 #include <core/FileSerializer.hpp>
 #include <core/RegexUtils.hpp>
 
@@ -100,7 +100,7 @@ Error PlotManager::initialize(const FilePath& graphicsPath,
       return error;
 
    // save reference to plots state file
-   plotsStateFile_ = graphicsPath_.complete("INDEX");
+   plotsStateFile_ = graphicsPath_.completePath("INDEX");
    
    // save reference to graphics device functions
    graphicsDevice_ = graphicsDevice;
@@ -118,7 +118,7 @@ Error PlotManager::initialize(const FilePath& graphicsPath,
 
 int PlotManager::plotCount() const
 {
-   return plots_.size();
+   return gsl::narrow_cast<int>(plots_.size());
 }
    
 Error PlotManager::plotImageFilename(int index, 
@@ -308,9 +308,9 @@ Error PlotManager::savePlotAsBitmapFile(const FilePath& targetPath,
    int res = 96;
 
    // adjust for device pixel ratio
-   width = static_cast<int>(width * pixelRatio);
-   height = static_cast<int>(height * pixelRatio);
-   res = static_cast<int>(res * pixelRatio);
+   width = gsl::narrow_cast<int>(width * pixelRatio);
+   height = gsl::narrow_cast<int>(height * pixelRatio);
+   res = gsl::narrow_cast<int>(res * pixelRatio);
 
    // optional format specific extra params
    std::string extraParams;
@@ -327,11 +327,11 @@ Error PlotManager::savePlotAsBitmapFile(const FilePath& targetPath,
       "{ require(grDevices, quietly=TRUE); "
       "  %1%(filename=\"%2%\", width=%3%, height=%4%, res = %5% %6%); }");
    std::string deviceCreationCode = boost::str(fmt % bitmapFileType %
-                                                     string_utils::utf8ToSystem(targetPath.absolutePath()) %
-                                                     width %
-                                                     height %
-                                                     res %
-                                                     extraParams);
+                                               string_utils::utf8ToSystem(targetPath.getAbsolutePath()) %
+                                               width %
+                                               height %
+                                               res %
+                                               extraParams);
 
    // save the file
    return savePlotAsFile(deviceCreationCode);
@@ -350,9 +350,9 @@ Error PlotManager::savePlotAsPdf(const FilePath& filePath,
       code += " pdf(file=\"%1%\", width=%2%, height=%3%, "
              "      useDingbats=FALSE); }";
    boost::format fmt(code);
-   std::string deviceCreationCode = boost::str(fmt % string_utils::utf8ToSystem(filePath.absolutePath()) %
-                                                     widthInches % 
-                                                     heightInches);
+   std::string deviceCreationCode = boost::str(fmt % string_utils::utf8ToSystem(filePath.getAbsolutePath()) %
+                                               widthInches %
+                                               heightInches);
    
    // save the file
    return savePlotAsFile(deviceCreationCode);
@@ -370,9 +370,9 @@ Error PlotManager::savePlotAsSvg(const FilePath& targetPath,
    boost::format fmt("{ require(grDevices, quietly=TRUE); "
                      "  svg(filename=\"%1%\", width=%2%, height=%3%, "
                      "      antialias = \"subpixel\"); }");
-   std::string deviceCreationCode = boost::str(fmt % string_utils::utf8ToSystem(targetPath.absolutePath()) %
-                                                     widthInches %
-                                                     heightInches);
+   std::string deviceCreationCode = boost::str(fmt % string_utils::utf8ToSystem(targetPath.getAbsolutePath()) %
+                                               widthInches %
+                                               heightInches);
 
    return savePlotAsFile(deviceCreationCode);
 }
@@ -391,9 +391,9 @@ Error PlotManager::savePlotAsPostscript(const FilePath& targetPath,
                      "             onefile = FALSE, "
                      "             paper = \"special\", "
                      "             horizontal = FALSE); }");
-   std::string deviceCreationCode = boost::str(fmt % string_utils::utf8ToSystem(targetPath.absolutePath()) %
-                                                     widthInches %
-                                                     heightInches);
+   std::string deviceCreationCode = boost::str(fmt % string_utils::utf8ToSystem(targetPath.getAbsolutePath()) %
+                                               widthInches %
+                                               heightInches);
 
    return savePlotAsFile(deviceCreationCode);
 }
@@ -412,7 +412,7 @@ Error PlotManager::savePlotAsMetafile(const core::FilePath& filePath,
    boost::format fmt("{ require(grDevices, quietly=TRUE); "
                      "  win.metafile(filename=\"%1%\", width=%2%, height=%3%, "
                      "               restoreConsole=FALSE); }");
-   std::string deviceCreationCode = boost::str(fmt % string_utils::utf8ToSystem(filePath.absolutePath()) %
+   std::string deviceCreationCode = boost::str(fmt % string_utils::utf8ToSystem(filePath.getAbsolutePath()) %
                                                      widthInches %
                                                      heightInches);
 
@@ -470,7 +470,7 @@ void PlotManager::render(boost::function<void(DisplayState)> outputFunction)
       {
          // no such file error expected in the case of an invalid graphics
          // context (because generation of the PNG would have failed)
-         bool pngNotFound = error.cause() && isPathNotFoundError(error.cause());
+         bool pngNotFound = error.getCause() && isPathNotFoundError(error.getCause());
 
          // only log if this wasn't png not found
          if (!pngNotFound)
@@ -491,7 +491,7 @@ void PlotManager::render(boost::function<void(DisplayState)> outputFunction)
    else  // write "empty" image 
    {
       // create an empty file
-      FilePath emptyImageFilePath = graphicsPath_.complete(emptyImageFilename());
+      FilePath emptyImageFilePath = graphicsPath_.completePath(emptyImageFilename());
       error = writeStringToFile(emptyImageFilePath, std::string());
       if (error)
       {
@@ -530,7 +530,7 @@ void PlotManager::refresh()
    
 FilePath PlotManager::imagePath(const std::string& imageFilename) const
 {
-   return graphicsPath_.complete(imageFilename);
+   return graphicsPath_.completePath(imageFilename);
 }
 
 void PlotManager::clear()
@@ -660,9 +660,9 @@ Error PlotManager::restorePlotsState()
    // of the circular buffer (would happen when migrating from a
    // suspended session that allowed more plots)
    if ((activePlot_ == -1) ||
-       (activePlot_ > (static_cast<int>(plots_.size()) - 1)))
+       (activePlot_ > (gsl::narrow_cast<int>(plots_.size()) - 1)))
    {
-      activePlot_ = plots_.size() - 1;
+      activePlot_ = gsl::narrow_cast<int>(plots_.size()) - 1;
    }
    
    // restore snapshot for the active plot
@@ -685,12 +685,12 @@ Error copyDirectory(const FilePath& srcDir, const FilePath& targetDir)
       return error;
 
    std::vector<FilePath> srcFiles;
-   error = srcDir.children(&srcFiles);
+   error = srcDir.getChildren(srcFiles);
    if (error)
       return error;
-   BOOST_FOREACH(const FilePath& srcFile, srcFiles)
+   for (const FilePath& srcFile : srcFiles)
    {
-      FilePath targetFile = targetDir.complete(srcFile.filename());
+      FilePath targetFile = targetDir.completePath(srcFile.getFilename());
       Error error = srcFile.copy(targetFile);
       if (error)
          return error;
@@ -728,6 +728,16 @@ void PlotManager::onDeviceNewPage(SEXP previousPageSnapshot)
 {
    if (suppressDeviceEvents_)
       return;
+   
+   // make sure the graphics path exists (may have been blown away
+   // by call to dev.off or other call to removeAllPlots)
+   Error error = graphicsPath_.ensureDirectory();
+   if (error)
+   {
+      Error graphicsError(errc::PlotFileError, error, ERROR_LOCATION);
+      logAndReportError(graphicsError, ERROR_LOCATION);
+      return;
+   }
    
    // if we have a plot with unrendered changes then save the previous snapshot
    if (hasPlot() && hasChanges())
@@ -782,7 +792,7 @@ void PlotManager::onDeviceNewPage(SEXP previousPageSnapshot)
 
       // add the plot
       plots_.push_back(ptrPlot);
-      activePlot_ = plots_.size() - 1  ;
+      activePlot_ = gsl::narrow_cast<int>(plots_.size()) - 1;
    }
 
    // once we render the new plot we always reset pending manipulator state

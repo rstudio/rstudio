@@ -1,7 +1,7 @@
 /*
  * ServerEval.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-12 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -17,9 +17,9 @@
 
 #include <boost/algorithm/string/trim.hpp>
 
-#include <core/FilePath.hpp>
+#include <shared_core/FilePath.hpp>
 #include <core/FileSerializer.hpp>
-#include <core/SafeConvert.hpp>
+#include <shared_core/SafeConvert.hpp>
 #include <core/DateTime.hpp>
 
 #include <core/http/Request.hpp>
@@ -38,8 +38,8 @@ bool expirationFilter(const core::http::Request& request,
 {
    // read the expiration date
    std::string expires;
-   FilePath expiresPath = server::options().wwwSymbolMapsPath().childPath(
-                 "17493e044be34dc589712565d9902700.symbolMapOffset");
+   FilePath expiresPath = server::options().wwwSymbolMapsPath().completeChildPath(
+      "17493e044be34dc589712565d9902700.symbolMapOffset");
    Error error = readStringFromFile(expiresPath, &expires);
    boost::algorithm::trim(expires);
    if (error || expires.empty())

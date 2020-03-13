@@ -1,7 +1,7 @@
 /*
  * MinimizedModuleTabLayoutPanel.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-20 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,13 +14,13 @@
  */
 package org.rstudio.core.client.theme;
 
-import com.google.gwt.event.dom.client.ClickEvent;
-import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.aria.client.Roles;
 import com.google.gwt.event.logical.shared.HasSelectionHandlers;
 import com.google.gwt.event.logical.shared.SelectionEvent;
 import com.google.gwt.event.logical.shared.SelectionHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.ui.HorizontalPanel;
+import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 
@@ -31,9 +31,10 @@ public class MinimizedModuleTabLayoutPanel
       extends MinimizedWindowFrame
    implements HasSelectionHandlers<Integer>
 {
-   public MinimizedModuleTabLayoutPanel()
+   public MinimizedModuleTabLayoutPanel(String accessibleName)
    {
-      super(null, new HorizontalPanel());
+      super(null, accessibleName, new HorizontalPanel());
+      accessibleName_ = accessibleName;
       addStyleName(ThemeResources.INSTANCE.themeStyles().moduleTabPanel());
       addStyleName(ThemeResources.INSTANCE.themeStyles().minimized());
    }
@@ -42,6 +43,8 @@ public class MinimizedModuleTabLayoutPanel
    {
       HorizontalPanel horiz = (HorizontalPanel) getExtraWidget();
       horiz.clear();
+      Roles.getTablistRole().set(horiz.getElement());
+      Roles.getTablistRole().setAriaLabelProperty(horiz.getElement(), accessibleName_ + " minimized");
 
       ThemeStyles styles = ThemeResources.INSTANCE.themeStyles();
       for (int i = 0; i < tabNames.length; i++)
@@ -50,27 +53,25 @@ public class MinimizedModuleTabLayoutPanel
          if (tabName == null)
             continue;
          ModuleTabLayoutPanel.ModuleTab tab
-               = new ModuleTabLayoutPanel.ModuleTab(tabName, styles, false);
+               = new ModuleTabLayoutPanel.ModuleTab(tabName, styles, false, true /*minimized*/);
          tab.addStyleName("gwt-TabLayoutPanelTab");
+         tab.getElement().setId(ElementIds.getUniqueElementId(tab.getTabId()));
          final Integer thisIndex = i;
-         tab.addClickHandler(new ClickHandler()
+         tab.addClickHandler(event ->
          {
-            public void onClick(ClickEvent event)
-            {
-               event.preventDefault();
-               SelectionEvent.fire(
-                     MinimizedModuleTabLayoutPanel.this,
-                     thisIndex);
-            }
+            event.preventDefault();
+            SelectionEvent.fire(
+                  MinimizedModuleTabLayoutPanel.this,
+                  thisIndex);
          });
-
          horiz.add(tab);
       }
    }
 
-   public HandlerRegistration addSelectionHandler(
-         SelectionHandler<Integer> handler)
+   public HandlerRegistration addSelectionHandler(SelectionHandler<Integer> handler)
    {
       return addHandler(handler, SelectionEvent.getType());
    }
+   
+   private final String accessibleName_;
 }

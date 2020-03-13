@@ -1,7 +1,7 @@
 /*
  * StatusBarElementWidget.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -26,13 +26,13 @@ import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.FlowPanel;
-import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.MenuItem;
 
 import java.util.ArrayList;
 
 import org.rstudio.core.client.resources.ImageResource2x;
+import org.rstudio.core.client.widget.DecorativeImage;
 
 public class StatusBarElementWidget extends FlowPanel
       implements StatusBarElement, HasSelectionHandlers<String>
@@ -114,7 +114,7 @@ public class StatusBarElementWidget extends FlowPanel
          if (showArrows)
          {
             Resources res = GWT.create(Resources.class);
-            arrows_ = new Image(new ImageResource2x(res.upDownArrow2x()));
+            arrows_ = new DecorativeImage(new ImageResource2x(res.upDownArrow2x()));
             arrows_.addStyleName("rstudio-themes-inverts");
             add(arrows_);
          }
@@ -168,7 +168,7 @@ public class StatusBarElementWidget extends FlowPanel
 
    private final ArrayList<String> options_;
    private final Label label_;
-   private Image arrows_;
+   private DecorativeImage arrows_;
    private boolean clicksEnabled_ = true;
    private String popupAlignment_ = POPUP_ALIGNMENT_LEFT;
          

@@ -1,7 +1,7 @@
 /*
  * VirtualConsole.java
  *
- * Copyright (C) 2009-19 by RStudio, Inc.
+ * Copyright (C) 2009-20 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -23,15 +23,18 @@ import java.util.SortedMap;
 import java.util.TreeMap;
 import java.util.TreeSet;
 
+import com.google.inject.Provider;
 import com.google.inject.assistedinject.Assisted;
 import org.rstudio.core.client.regex.Match;
 import org.rstudio.core.client.regex.Pattern;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 
 import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.SpanElement;
 import com.google.inject.Inject;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefsSubset;
 
 /**
  * Simulates a console that behaves like the R console, specifically with
@@ -39,21 +42,41 @@ import com.google.inject.Inject;
  */
 public class VirtualConsole
 {
-   // don't do any processing of ANSI escape codes
-   public final static int ANSI_COLOR_OFF = 0;
-   
-   // convert ANSI color escape codes into css styles
-   public final static int ANSI_COLOR_ON = 1;
-   
-   // strip out ANSI escape sequences but don't apply styles
-   public final static int ANSI_COLOR_STRIP = 2;
-   
    public interface Preferences
    {
       int truncateLongLinesInConsoleHistory();
-      int consoleAnsiMode();
+      String consoleAnsiMode();
+      boolean screenReaderEnabled();
    }
-  
+
+   public static class PreferencesImpl extends UserPrefsSubset
+                                       implements Preferences
+   {
+      @Inject
+      public PreferencesImpl(Provider<UserPrefs> pUserPrefs)
+      {
+         super(pUserPrefs);
+      }
+
+      @Override
+      public int truncateLongLinesInConsoleHistory()
+      {
+         return getUserPrefs().consoleLineLengthLimit().getGlobalValue();
+      }
+
+      @Override
+      public String consoleAnsiMode()
+      {
+         return getUserPrefs().ansiConsoleMode().getValue();
+      }
+
+      @Override
+      public boolean screenReaderEnabled()
+      {
+         return getUserPrefs().getScreenReaderEnabled();
+      }
+   }
+
    @Inject
    public VirtualConsole(@Assisted Element parent, final Preferences prefs)
    {
@@ -290,12 +313,13 @@ public class VirtualConsole
                // reduce the original range and add ours
                overlap.trimLeft(delta);
 
-               insertions.add(range);
+               if (!range.text().isEmpty())
+                  insertions.add(range);
 
                // move the shortened range to its new start position
                moves.put(l, overlap.start);
 
-               if (parent_ != null)
+               if (parent_ != null && !range.text().isEmpty())
                   parent_.insertBefore(range.element, overlap.element);
               
             }
@@ -369,6 +393,9 @@ public class VirtualConsole
     */
    private void text(String text, String clazz, boolean forceNewRange)
    {
+      if (newText_ != null)
+         newText_.append(text);
+
       int start = cursor_;
       int end = cursor_ + text.length();
       
@@ -393,7 +420,7 @@ public class VirtualConsole
 
    public void submit(String data, String clazz)
    {
-      submit(data, clazz, false/*forceNewRange*/);
+      submit(data, clazz, false/*forceNewRange*/, false/*ariaLiveAnnounce*/);
    }
 
    /**
@@ -401,9 +428,10 @@ public class VirtualConsole
     * @param data text to output
     * @param clazz text style
     * @param forceNewRange force any output from this call to be in a new
+    * @param ariaLiveAnnounce include in aria-live output announcement
     * output range (span) even if style matches previous output
     */
-   public void submit(String data, String clazz, boolean forceNewRange)
+   public void submit(String data, String clazz, boolean forceNewRange, boolean ariaLiveAnnounce)
    {
       // Only capture new elements when dealing with error output, which
       // is only place that sets forceNewRange to true. This is just an 
@@ -411,7 +439,9 @@ public class VirtualConsole
       // output.
       captureNewElements_ = forceNewRange;
       newElements_.clear();
-      
+
+      newText_ = ariaLiveAnnounce && prefs_.screenReaderEnabled() ? new StringBuilder() : null;
+
       // If previous submit ended with an incomplete ANSI code, add new data
       // to the previous (unwritten) data so we can try again to recognize
       // ANSI code.
@@ -423,13 +453,14 @@ public class VirtualConsole
      
       String currentClazz = clazz;
 
-      int ansiColorMode = prefs_.consoleAnsiMode();
+      String ansiColorMode = prefs_.consoleAnsiMode();
 
       // If previously determined classes from ANSI codes are available,
       // combine them with input class so they are ready to use if
       // there is text to output before any other ANSI codes in the
       // data (or there are no more ANSI codes).
-      if (ansiColorMode == ANSI_COLOR_ON && ansiCodeStyles_.inlineClazzes != null)
+      if (ansiColorMode == UserPrefs.ANSI_CONSOLE_MODE_ON && 
+            ansiCodeStyles_.inlineClazzes != null)
       {
          if (clazz != null)
          {
@@ -441,7 +472,7 @@ public class VirtualConsole
          }
       }
 
-      Match match = (ansiColorMode == ANSI_COLOR_OFF) ?
+      Match match = (ansiColorMode == UserPrefs.ANSI_CONSOLE_MODE_OFF) ?
             CONTROL.match(data, 0) :
             AnsiCode.CONTROL_PATTERN.match(data, 0);
       if (match == null)
@@ -532,7 +563,7 @@ public class VirtualConsole
                   if (ansi_ == null)
                      ansi_ = new AnsiCode();
                   ansiCodeStyles_ = ansi_.processCode(sgrMatch.getValue());
-                  if (ansiColorMode == ANSI_COLOR_STRIP)
+                  if (ansiColorMode == UserPrefs.ANSI_CONSOLE_MODE_STRIP)
                   {
                      currentClazz = clazz;
                   }
@@ -573,7 +604,15 @@ public class VirtualConsole
    {
       return newElements_;
    }
- 
+
+   // Text added by last submit() call (all ANSI codes and control characters except newlines
+   // stripped), only captured if screen reader is enabled when submit() is invoked. Intended
+   // for use in reporting output to screen readers.
+   public String getNewText()
+   {
+      return newText_ == null ? "" : newText_.toString();
+   }
+
    private class ClassRange
    {
       public ClassRange(int pos, String className, String text)
@@ -667,6 +706,8 @@ public class VirtualConsole
    private boolean captureNewElements_ = false;
    private List<Element> newElements_ = new ArrayList<Element>();
    
+   private StringBuilder newText_;
+
    // Injected ----
    private Preferences prefs_;
 }

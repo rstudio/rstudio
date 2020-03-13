@@ -1,7 +1,7 @@
 #
 # SessionCodeTools.R
 #
-# Copyright (C) 2009-12 by RStudio, Inc.
+# Copyright (C) 2009-20 by RStudio, PBC
 #
 # Unless you have received this program directly from RStudio pursuant
 # to the terms of a commercial license agreement with RStudio, then
@@ -1735,8 +1735,19 @@
    object
 })
 
-.rs.addFunction("makePrimitiveWrapper", function(x) {
-   eval(parse(text = capture.output(x)), envir = parent.frame(1))
+.rs.addFunction("makePrimitiveWrapper", function(x)
+{
+   # from the R documentation, args returns:
+   #
+   #   For a closure, a closure with identical formal argument list but an empty
+   #   (NULL) body.
+   #
+   #   For a primitive, a closure with the documented usage and NULL body. Note
+   #   that some primitives do not make use of named arguments and match by
+   #   position rather than name.
+   #
+   # we just need an R closure with the right formals, so args fits nicely
+   args(x)
 })
 
 .rs.addFunction("extractNativeSymbols", function(DLL, collapse = TRUE)
@@ -1758,38 +1769,12 @@
    if (package %in% names(loadedDLLs))
       return(.rs.extractNativeSymbols(loadedDLLs[[package]]))
    
-   reExtension <- paste("\\", .Platform$dynlib.ext, "$", sep = "")
-   
-   # Try loading the DLL temporarily so we can extract the symbols.
-   # Note that the shared object name does not necessarily match that
-   # of the package; e.g. `data.table` munges the object name.
-   libPath <- system.file("libs", package = package)
-   dllNames <- sub(
-      reExtension,
-      "",
-      list.files(libPath, pattern = reExtension)
-   )
-   
-   as.character(unlist(lapply(dllNames, function(name) {
-      
-      # TODO: Are there side-effects of this call that we want to avoid? If so
-      # we might want to execute this in a separate R process.
-      DLL <- try(
-         library.dynam(name, package = package, lib.loc = .libPaths()),
-         silent = TRUE
-      )
-      
-      if (inherits(DLL, "try-error"))
-         return(character())
-      
-      dllPath <- DLL[["path"]]
-      on.exit({
-         library.dynam.unload(name, libpath = system.file(package = package))
-      }, add = TRUE)
-      
-      return(.rs.extractNativeSymbols(DLL))
-   })))
-   
+   # we used to try to load and unload the package library to
+   # extract symbol information, but this is not safe to do now
+   # loading the DLL also implies running its R_init_* hook, and
+   # this can imply loading the package (+ its dependencies) --
+   # something we normally want to avoid
+   character()
 })
 
 .rs.addJsonRpcHandler("extract_chunk_options", function(chunkText)
@@ -1913,24 +1898,30 @@
 .rs.addFunction("CRANDownloadOptionsString", function() {
    
    # collect options of interest
-   options <- options("repos", "download.file.method", "download.file.extra")
+   options <- options("repos", "download.file.method", "download.file.extra", "HTTPUserAgent")
    if (identical(options[["download.file.method"]], "curl"))
       options[["download.file.extra"]] <- .rs.downloadFileExtraWithCurlArgs()
    
    # drop NULL entries
    options <- Filter(Negate(is.null), options)
    
-   # deparse to generate an R string
-   deparsed <- sub("^list", "options", .rs.deparse(options))
+   # deparse values individually (avoid relying on the format
+   # of the deparsed output of the whole expression; see e.g.
+   # https://github.com/rstudio/rstudio/issues/4916)
+   vals <- lapply(options, .rs.deparse)
+   
+   # join keys and values
+   keyvals <- paste(names(options), vals, sep = " = ")
+   
+   # create final options command
+   opts <- sprintf("options(%s)", paste(keyvals, collapse = ", "))
    
    # NOTE: we need to quote arguments with single quotes as the command will be
    # submitted using double quotes, and embedded quotes in the command are not
    # properly escaped.
    #
    # TODO: handle embedded quotes properly
-   deparsed <- gsub("\"", "'", deparsed, fixed = TRUE)
-   
-   deparsed
+   gsub("\"", "'", opts, fixed = TRUE)
    
 })
 
@@ -2089,16 +2080,8 @@
    contents
 })
 
-.rs.addFunction("discoverPackageDependencies", function(id, extension)
+.rs.addFunction("parsePackageDependencies", function(contents, extension)
 {
-   # check to see if we have available packages -- if none, bail
-   available <- .rs.availablePackages()
-   if (is.null(available$value))
-      return(character())
-   
-   # read the associated source file
-   contents <- .rs.readSourceDocument(id)
-   
    # NOTE: the following regular expressions were extracted from knitr;
    # we pull these out here just to avoid potentially loading the knitr
    # package without the user's consent
@@ -2131,8 +2114,65 @@
       return(character())
 
    }
-   
+
    discoveries <- new.env(parent = emptyenv())
+
+   # for R Markdown docs, scan the YAML header (requires the YAML package, a dependency of
+   # rmarkdown)
+   if (identical(extension, ".Rmd") && requireNamespace("yaml", quietly = TRUE))
+   {
+      # split document into sections based on the YAML header delimter
+      sections <- unlist(strsplit(contents, "---", fixed = TRUE))
+      if (length(sections) > 2)
+      {
+         front <- NULL
+
+         tryCatch({
+            front <- yaml::read_yaml(text = sections[[2]])
+         }, error = function(e) {
+            # ignore errors when reading YAML; it's very possible that the document's YAML will not
+            # be correct at all times (e.g. during editing) 
+         })
+
+         # start with an empty output
+         output <- NULL
+
+         if (!is.null(names(front$output)))
+         {
+            # if the output key has children, it will appear as a list name
+            # output:
+            #   pkg_name::out_fmt:
+            #     foo: bar
+            output <- names(front$output)[[1]]
+         }
+         else if (is.character(front$output))
+         {
+            # if the output key doesn't have children, it will appear as a plain character
+            #
+            # output: pkg_name::out_fmt
+            output <- front$output
+         }
+
+         # check for references to an R package in output format
+         if (!is.null(output))
+         {
+            format <- unlist(strsplit(output, "::"))
+            if (length(format) > 1)
+            {
+               discoveries[[format[[1]]]] <- TRUE
+            }
+         }
+
+         # check for runtime: shiny or parameters (requires the Shiny R package)
+         if (identical(front$runtime, "shiny") || 
+             identical(front$runtime, "shiny_prerendered") ||
+             !is.null(front$params))
+         {
+            discoveries[["shiny"]] <- TRUE
+         }
+
+      }
+   }
    
    handleLibraryRequireCall <- function(node) {
       
@@ -2234,7 +2274,24 @@
       handleRequireNamespaceCall(node)
    })
    
-   packages <- ls(envir = discoveries)
+   # return discovered packages
+   ls(envir = discoveries)
+})
+
+.rs.addFunction("discoverPackageDependencies", function(id, extension)
+{
+   # check to see if we have available packages -- if none, bail
+   available <- .rs.availablePackages()
+   if (is.null(available$value))
+      return(character())
+   
+   # read the associated source file
+   contents <- .rs.readSourceDocument(id)
+   if (is.null(contents))
+      return(character())
+
+   # parse to find packages
+   packages <- .rs.parsePackageDependencies(contents, extension)
    
    # keep only packages that are available in an active repository
    packages <- packages[packages %in% rownames(available$value)]
@@ -2316,5 +2373,31 @@
    
    truncated <- substring(string, 1, n - nchar(marker))
    return(paste(truncated, marker))
+   
+})
+
+.rs.addFunction("formatListForDialog", function(list, sep = ", ", max = 50L)
+{
+   # count index entries until we get too long
+   nc <- 0L
+   ns <- nchar(sep)
+   for (index in seq_along(list)) {
+      nc <- nc + ns + nchar(list[[index]])
+      if (nc > max)
+         break
+   }
+   
+   # collect items
+   n <- length(list)
+   items <- list
+   
+   # subset the list if we overflowed (index didn't reach end)
+   # avoid printing 'and 1 other'; no need to subset in that case
+   if (index < n - 1L)
+      items <- c(list[1:index], paste("and", n - index, "others"))
+   
+   # paste and truncate once more for safety
+   text <- paste(items, collapse = sep)
+   .rs.truncate(text, n = max * 2L)
    
 })

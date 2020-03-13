@@ -1,7 +1,7 @@
 /*
  * SessionTexUtils.hpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-12 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -16,7 +16,7 @@
 #ifndef SESSION_MODULES_TEX_UTILS_HPP
 #define SESSION_MODULES_TEX_UTILS_HPP
 
-#include <core/FilePath.hpp>
+#include <shared_core/FilePath.hpp>
 
 #include <core/system/ShellUtils.hpp>
 #include <core/system/Types.hpp>
@@ -36,7 +36,7 @@ namespace utils {
 
 struct RTexmfPaths
 {
-   bool empty() const { return texInputsPath.empty(); }
+   bool empty() const { return texInputsPath.isEmpty(); }
 
    core::FilePath texInputsPath;
    core::FilePath bibInputsPath;

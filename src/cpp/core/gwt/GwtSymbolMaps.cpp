@@ -1,7 +1,7 @@
 /*
  * GwtSymbolMaps.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -21,14 +21,13 @@
 #include <algorithm>
 
 #include <boost/bind.hpp>
-#include <boost/foreach.hpp>
 #include <boost/regex.hpp>
 #include <boost/algorithm/string/split.hpp>
 #include <boost/algorithm/string/predicate.hpp>
 
 #include <core/Thread.hpp>
 #include <core/RegexUtils.hpp>
-#include <core/SafeConvert.hpp>
+#include <shared_core/SafeConvert.hpp>
 #include <core/FileSerializer.hpp>
 
 // NOTE: this is a port of the following GWT class:
@@ -105,7 +104,7 @@ public:
          }
 
           std::map<std::string,std::string>& map = cache_[strongName];
-          BOOST_FOREACH(const std::string& symbol, symbols)
+          for (const std::string& symbol : symbols)
           {
              std::map<std::string,std::string>::const_iterator it =
                                                          map.find(symbol);
@@ -159,7 +158,7 @@ struct SymbolMaps::Impl
       std::set<std::string> symbolsLeftToFind = requiredSymbols;
 
       // read it from disk if it exists
-      FilePath mapPath = symbolMapsPath.childPath(strongName + ".symbolMap");
+      FilePath mapPath = symbolMapsPath.completeChildPath(strongName + ".symbolMap");
       if (mapPath.exists())
       {
          Error error = readCollectionFromFile
@@ -173,7 +172,7 @@ struct SymbolMaps::Impl
       }
 
       // mark all remaining symbols as having been looked for
-      BOOST_FOREACH(const std::string& symbol, symbolsLeftToFind)
+      for (const std::string& symbol : symbolsLeftToFind)
       {
          toReturn[symbol] = SYMBOL_DATA_UNKNOWN;
       }
@@ -214,7 +213,7 @@ std::vector<StackElement> SymbolMaps::resymbolize(
 {
    // warm the symbol cache
    std::set<std::string> requiredSymbols;
-   BOOST_FOREACH(const StackElement& stackElement, stack)
+   for (const StackElement& stackElement : stack)
    {
       requiredSymbols.insert(stackElement.methodName);
    }
@@ -222,7 +221,7 @@ std::vector<StackElement> SymbolMaps::resymbolize(
 
    // perform the resymbolization
    std::vector<StackElement> resymbolizedStack;
-   BOOST_FOREACH(const StackElement& se, stack)
+   for (const StackElement& se : stack)
    {
       resymbolizedStack.push_back(resymbolize(se, strongName));
    }

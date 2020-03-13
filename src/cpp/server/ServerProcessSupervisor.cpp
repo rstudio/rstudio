@@ -1,7 +1,7 @@
 /*
  * ServerProcessSupervisor.cpp
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -15,7 +15,7 @@
 
 #include <server/ServerProcessSupervisor.hpp>
 
-#include <core/Error.hpp>
+#include <shared_core/Error.hpp>
 #include <core/DateTime.hpp>
 #include <core/Thread.hpp>
 #include <core/PeriodicCommand.hpp>

@@ -1,7 +1,7 @@
 /*
  * CreateBranchDialog.java
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -17,10 +17,14 @@ package org.rstudio.studio.client.workbench.views.vcs;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.google.gwt.aria.client.Roles;
 import org.rstudio.core.client.Functional;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.Functional.Predicate;
+import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.js.JsUtil;
+import org.rstudio.core.client.widget.FormLabel;
+import org.rstudio.core.client.widget.LayoutGrid;
 import org.rstudio.core.client.widget.ModalDialog;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.SelectWidget;
@@ -40,9 +44,7 @@ import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.event.dom.client.KeyDownHandler;
 import com.google.gwt.user.client.ui.CheckBox;
-import com.google.gwt.user.client.ui.Grid;
 import com.google.gwt.user.client.ui.HorizontalPanel;
-import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
@@ -92,7 +94,7 @@ public class CreateBranchDialog extends ModalDialog<CreateBranchDialog.Input>
                              final OperationWithInput<CreateBranchDialog.Input> onCreateBranch,
                              final OperationWithInput<AddRemoteDialog.Input> onAddRemote)
    {
-      super(caption, onCreateBranch);
+      super(caption, Roles.getDialogRole(), onCreateBranch);
       
       setOkButtonCaption("Create");
       enableOkButton(false);
@@ -100,7 +102,7 @@ public class CreateBranchDialog extends ModalDialog<CreateBranchDialog.Input>
       container_ = new VerticalPanel();
       
       tbBranch_ = textBox();
-      tbBranch_.getElement().setAttribute("placeholder", "Branch name");
+      Roles.getTextboxRole().setAriaRequiredProperty(tbBranch_.getElement(), true);
       tbBranch_.addKeyDownHandler(new KeyDownHandler()
       {
          @Override
@@ -169,9 +171,10 @@ public class CreateBranchDialog extends ModalDialog<CreateBranchDialog.Input>
       
       setRemotes(remotesInfo);
       
-      Grid ctrBranch = new Grid(1, 2);
+      LayoutGrid ctrBranch = new LayoutGrid(1, 2);
       ctrBranch.setWidth("100%");
-      ctrBranch.setWidget(0, 0, new Label("Branch:"));
+      FormLabel branchLabel = new FormLabel("Branch Name:", tbBranch_);
+      ctrBranch.setWidget(0, 0, branchLabel);
       ctrBranch.setWidget(0, 1, tbBranch_);
       
       HorizontalPanel ctrRemote = new HorizontalPanel();
@@ -252,17 +255,17 @@ public class CreateBranchDialog extends ModalDialog<CreateBranchDialog.Input>
    }
    
    @Override
-   public void showModal()
+   public void focusFirstControl()
    {
-      super.showModal();
       tbBranch_.setFocus(true);
+      tbBranch_.selectAll();
    }
    
    private TextBox textBox()
    {
       TextBox textBox = new TextBox();
       textBox.getElement().getStyle().setProperty("minWidth", "200px");
-      textBox.getElement().setAttribute("spellcheck", "false");
+      DomUtils.disableSpellcheck(textBox);
       return textBox;
    }
    

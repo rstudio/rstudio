@@ -1,7 +1,7 @@
 /*
  * FoldStyle.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,8 +14,23 @@
  */
 package org.rstudio.studio.client.workbench.views.source.editors.text;
 
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
+
 public class FoldStyle
 {
+   public static final String FOLD_MARK_MANUAL        = "manual";
    public static final String FOLD_MARK_BEGIN_ONLY    = "markbegin";
    public static final String FOLD_MARK_BEGIN_AND_END = "markbeginend";
+   
+   public static String fromPref(String pref)
+   {
+      switch (pref)
+      {
+      case UserPrefs.FOLD_STYLE_BEGIN_AND_END:
+         return FOLD_MARK_BEGIN_AND_END;
+      case UserPrefs.FOLD_STYLE_BEGIN_ONLY:
+         return FOLD_MARK_BEGIN_ONLY;
+      }
+      return FOLD_MARK_MANUAL;
+   }
 }

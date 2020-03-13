@@ -1,7 +1,7 @@
 /*
  * CopyPlotToClipboardDesktopDialog.java
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -21,6 +21,7 @@ import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.DesktopFrame;
+import org.rstudio.studio.client.common.Timers;
 import org.rstudio.studio.client.workbench.exportplot.ExportPlotPreviewer;
 import org.rstudio.studio.client.workbench.exportplot.ExportPlotSizeEditor;
 import org.rstudio.studio.client.workbench.exportplot.model.ExportPlotOptions;
@@ -48,6 +49,18 @@ public class CopyPlotToClipboardDesktopDialog
    protected void copyAsBitmap(final Operation onCompleted)
    {
       final ExportPlotSizeEditor sizeEditor = getSizeEditor();
+      sizeEditor.setGripperVisible(false);
+      
+      // NOTE: we use a timer here just to be absolutely sure the
+      // browser has re-rendered and hidden the gripper before attempting
+      // to get a screenshot. note that the usual tools, e.g. scheduleDeferred(),
+      // don't work as expected here
+      Timers.singleShot(200, () -> { doCopyAsBitmap(onCompleted); });
+   }
+   
+   private void doCopyAsBitmap(final Operation onCompleted)
+   {
+      final ExportPlotSizeEditor sizeEditor = getSizeEditor();
       
       final Command completed = new Command()
       {
@@ -58,8 +71,6 @@ public class CopyPlotToClipboardDesktopDialog
             onCompleted.execute();
          }
       };
-      
-      sizeEditor.setGripperVisible(false);
       
       sizeEditor.prepareForExport(() -> {
          if (BrowseCap.isMacintoshDesktop())
@@ -76,11 +87,14 @@ public class CopyPlotToClipboardDesktopDialog
             NodeList<Element> images = doc.getElementsByTagName("img");
             if (images.getLength() > 0)
             {
-               ElementEx img = images.getItem(0).cast();
+               Element img = images.getItem(0);
                DesktopFrame frame = Desktop.getFrame();
+               
+               // NOTE: we use a one-pixel fudge factor here to avoid copying
+               // bits of the border; see https://github.com/rstudio/rstudio/issues/4864
                frame.copyPageRegionToClipboard(
-                     img.getClientLeft(),
-                     img.getClientTop(),
+                     ElementEx.getClientLeft(img) + 1,
+                     ElementEx.getClientTop(img) + 1,
                      img.getClientWidth(),
                      img.getClientHeight(),
                      completed);

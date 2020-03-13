@@ -6,20 +6,21 @@
 
    <g:HTMLPanel>
       <div class="{res.themeStyles.search}">
-         <div class="{res.themeStyles.left}"></div>
+         <div class="{res.themeStyles.left}"/>
          <div class="{res.themeStyles.rstheme_center}">
-            <g:Image ui:field='icon_'
+            <f:DecorativeImage ui:field='icon_'
                      resource='{res.smallMagGlassIcon2x}'
                      styleName='{res.themeStyles.searchMagGlass}' />
             <div class="{res.themeStyles.searchBoxContainer}">
+               <label ui:field='hiddenLabel_' class="{res.themeStyles.visuallyHidden}"/>
                <f:SearchWidget.FocusSuggestBox ui:field='suggestBox_'
                           styleName='{res.themeStyles.searchBox}'/>
             </div>
-            <g:Image ui:field='close_'
-                     resource='{res.clearSearch2x}'
-                     styleName='{res.themeStyles.clearSearch}'/>
+            <f:ImageButton ui:field='clearFilter_'
+                           resource='{res.clearSearch2x}'
+                           addStyleNames='{res.themeStyles.clearSearch}'/>
          </div>
-         <div class="{res.themeStyles.right}"></div>
+         <div class="{res.themeStyles.right}"/>
       </div>
    </g:HTMLPanel>
 

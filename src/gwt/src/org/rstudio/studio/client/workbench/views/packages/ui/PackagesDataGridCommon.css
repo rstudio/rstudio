@@ -16,7 +16,7 @@
    
 .dataGridHeader
 {
-	font-family: proportionalFont;
+   font-family: proportionalFont;
    white-space: nowrap;
    overflow: hidden;
    text-overflow: ellipsis;
@@ -52,8 +52,8 @@
 .dataGridCell
 {
    padding: 1px 6px;
-	vertical-align: top;
-	color: #606060;
+   vertical-align: top;
+   color: #606060;
 }
 
 .rstudio-themes-flat .dataGridCell
@@ -73,7 +73,7 @@
 
 .dataGridOddRow
 {
-	background-color: white; 
+   background-color: white;
 }
 
 .rstudio-themes-flat .dataGridOddRow
@@ -83,7 +83,7 @@
 
 .dataGridEvenRow
 {
-	background-color: white; 
+   background-color: white;
 }
 
 .rstudio-themes-flat .dataGridEvenRow
@@ -93,14 +93,14 @@
 
 .dataGridEvenRowCell
 {
-	border: none;
-	border-bottom: 1px solid #e0e0e0;
+   border: none;
+   border-bottom: 1px solid #e0e0e0;
 }
 
 .dataGridOddRowCell
 {
-	border: none;
-	border-bottom: 1px solid #e0e0e0;
+   border: none;
+   border-bottom: 1px solid #e0e0e0;
 }
 
 body.ubuntu_mono .dataGridCell input[type=checkbox] {

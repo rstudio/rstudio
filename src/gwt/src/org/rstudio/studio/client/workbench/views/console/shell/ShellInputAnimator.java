@@ -1,7 +1,7 @@
 /*
  * ShellInputAnimator.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-12 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -67,7 +67,7 @@ public class ShellInputAnimator
    {      
       if (pendingAnimatedInput_.size() > 0)
       {
-         // get the input animaator
+         // get the input animator
          InputAnimator inputAnimator = pendingAnimatedInput_.get(0);
          
          // calculate the period (make sure the command takes no longer

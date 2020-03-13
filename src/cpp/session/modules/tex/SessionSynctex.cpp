@@ -1,7 +1,7 @@
 /*
  * SessionSynctex.cpp
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -15,8 +15,8 @@
 
 #include "SessionSynctex.hpp"
 
-#include <core/Error.hpp>
-#include <core/FilePath.hpp>
+#include <shared_core/Error.hpp>
+#include <shared_core/FilePath.hpp>
 #include <core/Exec.hpp>
 
 #include <core/json/JsonRpc.hpp>
@@ -52,7 +52,7 @@ json::Value toJson(const FilePath& pdfFile,
       pdfJson["width"] = pdfLoc.width();
       pdfJson["height"] = pdfLoc.height();
       pdfJson["from_click"] = fromClick;
-      return pdfJson;
+      return std::move(pdfJson);
    }
    else
    {
@@ -68,7 +68,7 @@ json::Value toJson(const core::tex::SourceLocation& srcLoc)
       srcJson["file"] = module_context::createAliasedPath(srcLoc.file());
       srcJson["line"] = srcLoc.line();
       srcJson["column"] = srcLoc.column();
-      return srcJson;
+      return std::move(srcJson);
    }
    else
    {
@@ -80,7 +80,8 @@ void applyForwardConcordance(const FilePath& mainFile,
                              core::tex::SourceLocation* pLoc)
 {
    // skip if this isn't an Rnw
-   if (pLoc->file().extensionLowerCase() != ".rnw")
+   if (pLoc->file().getExtensionLowerCase() != ".rnw" && 
+       pLoc->file().getExtensionLowerCase() != ".rtex")
       return;
 
    // try to read concordance
@@ -324,7 +325,7 @@ Error forwardSearch(const FilePath& rootFile,
    FilePath inputFile = module_context::resolveAliasedPath(file);
 
    // determine pdf
-   FilePath pdfFile = rootFile.parent().complete(rootFile.stem() + ".pdf");
+   FilePath pdfFile = rootFile.getParent().completePath(rootFile.getStem() + ".pdf");
 
    core::tex::Synctex synctex;
    if (synctex.parse(pdfFile))

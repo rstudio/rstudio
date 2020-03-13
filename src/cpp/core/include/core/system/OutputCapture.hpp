@@ -1,7 +1,7 @@
 /*
  * OutputCapture.hpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-12 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -29,7 +29,8 @@ namespace system {
 
 Error captureStandardStreams(
          const boost::function<void(const std::string&)>& stdoutHandler,
-         const boost::function<void(const std::string&)>& stderrHandler);
+         const boost::function<void(const std::string&)>& stderrHandler,
+         bool forwardOutputToOriginalDescriptors);
 
 } // namespace system
 } // namespace core

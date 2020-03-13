@@ -1,7 +1,7 @@
 /*
  * ObjectExplorerEditingTargetWidget.java
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -62,6 +62,8 @@ public class ObjectExplorerEditingTargetWidget extends Composite
       cbAttributes_ = new CheckBox();
       
       refreshButton_ = new ToolbarButton(
+            ToolbarButton.NoText,
+            "Refresh",
             RES.refresh2x(),
             new ClickHandler()
             {
@@ -72,7 +74,7 @@ public class ObjectExplorerEditingTargetWidget extends Composite
                }
             });
       
-      filterWidget_ = new SearchWidget(new SuggestOracle()
+      filterWidget_ = new SearchWidget("Search objects", new SuggestOracle()
       {
          @Override
          public void requestSuggestions(Request request, Callback callback)

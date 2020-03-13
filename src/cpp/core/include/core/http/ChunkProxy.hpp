@@ -1,7 +1,7 @@
 /*
  * ChunkProxy.hpp
  *
- * Copyright (C) 2018 by RStudio, Inc.
+ * Copyright (C) 2018 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -18,7 +18,7 @@
 
 #include <boost/enable_shared_from_this.hpp>
 
-#include <core/Error.hpp>
+#include <shared_core/Error.hpp>
 #include <core/http/AsyncConnection.hpp>
 #include <core/http/AsyncClient.hpp>
 #include <core/http/Response.hpp>
@@ -26,8 +26,6 @@
 namespace rstudio {
 namespace core {
 namespace http {
-
-#define defaultMaxBufferSize 1024*1024 // 1 MB
 
 class ChunkProxy : public boost::enable_shared_from_this<ChunkProxy>,
                    boost::noncopyable
@@ -39,6 +37,7 @@ public:
    void proxy(const boost::shared_ptr<IAsyncClient>& pServerConnection);
 
 private:
+   static constexpr uint64_t defaultMaxBufferSize = 1024*1024; // 1MB
 
    bool queueChunk(const Response& response,
                    const std::string& chunk);

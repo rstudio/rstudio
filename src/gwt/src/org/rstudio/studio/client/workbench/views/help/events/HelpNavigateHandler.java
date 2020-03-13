@@ -1,7 +1,7 @@
 /*
  * HelpNavigateHandler.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-12 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -18,5 +18,5 @@ import com.google.gwt.event.shared.EventHandler;
 
 public interface HelpNavigateHandler extends EventHandler
 {
-   public void onNavigate(HelpNavigateEvent event) ;
+   public void onNavigate(HelpNavigateEvent event);
 }

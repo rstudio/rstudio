@@ -1,7 +1,7 @@
 /*
  * StanFileType.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-12 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -40,7 +40,7 @@ public class StanFileType extends PreviewableFromRFileType
    @Override
    public boolean getWordWrap()
    {
-      return RStudioGinjector.INSTANCE.getUIPrefs().softWrapRFiles().getValue();
+      return RStudioGinjector.INSTANCE.getUserPrefs().softWrapRFiles().getValue();
    }
    
    @Override

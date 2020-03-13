@@ -1,7 +1,7 @@
 /*
  * PackageInfo.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-12 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -107,9 +107,9 @@ public class PackageInfo extends JavaScriptObject
       return getPackratBoolField("currently.used");
    }
 
-   public final boolean getInPackratLibary()
+   public final boolean isInProjectLibrary()
    {
-      return getPackratBoolField("in.packrat.library");
+      return getPackratBoolField("in.project.library");
    }
    
    public final String getSourceLibrary()

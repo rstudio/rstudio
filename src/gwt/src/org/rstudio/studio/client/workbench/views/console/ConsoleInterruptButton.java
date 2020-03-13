@@ -1,7 +1,7 @@
 /*
  * ConsoleInterruptButton.java
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -20,15 +20,14 @@ import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.inject.Inject;
 
+import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.layout.DelayFadeInHelper;
 import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.events.BusyEvent;
-import org.rstudio.studio.client.workbench.events.BusyHandler;
 import org.rstudio.studio.client.workbench.views.console.events.ConsoleBusyEvent;
 import org.rstudio.studio.client.workbench.views.console.events.ConsolePromptEvent;
-import org.rstudio.studio.client.workbench.views.console.events.ConsolePromptHandler;
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.NotebookQueueState;
 
 public class ConsoleInterruptButton extends Composite
@@ -45,9 +44,13 @@ public class ConsoleInterruptButton extends Composite
       panel.getElement().getStyle().setPosition(Position.RELATIVE);
 
       commands_ = commands;
-      ImageResource icon = commands_.interruptR().getImageResource();
-      ToolbarButton button = new ToolbarButton(icon,
-                                               commands.interruptR());
+      AppCommand interruptCommand = commands_.interruptR();
+      ImageResource icon = interruptCommand.getImageResource();
+      ToolbarButton button = new ToolbarButton(
+            ToolbarButton.NoText,
+            interruptCommand.getTooltip(),
+            icon,
+            interruptCommand);
       width_ = icon.getWidth() + 6;
       height_ = icon.getHeight();
       panel.setWidget(button);
@@ -55,26 +58,19 @@ public class ConsoleInterruptButton extends Composite
       initWidget(panel);
       setVisible(false);
 
-      events.addHandler(BusyEvent.TYPE, new BusyHandler()
+      events.addHandler(BusyEvent.TYPE, event ->
       {
-         public void onBusy(BusyEvent event)
-         {
-            if (event.isBusy())
-               events.fireEvent(new ConsoleBusyEvent(true));
-         }
+         if (event.isBusy())
+            events.fireEvent(new ConsoleBusyEvent(true));
       });
       
-      events.addHandler(ConsoleBusyEvent.TYPE, new ConsoleBusyEvent.Handler()
+      events.addHandler(ConsoleBusyEvent.TYPE, event ->
       {
-         @Override
-         public void onConsoleBusy(ConsoleBusyEvent event)
-         {
-            if (event.isBusy())
-               fadeInHelper_.beginShow();
-            else
-               fadeInHelper_.hide();
-            commands_.interruptR().setEnabled(event.isBusy());
-         }
+         if (event.isBusy())
+            fadeInHelper_.beginShow();
+         else
+            fadeInHelper_.hide();
+         commands_.interruptR().setEnabled(event.isBusy());
       });
 
       /*
@@ -85,17 +81,14 @@ public class ConsoleInterruptButton extends Composite
       controller logic should subscribe to the ConsolePromptEvent and clear it
       whenever a prompt occurs.
       */
-      events.addHandler(ConsolePromptEvent.TYPE, new ConsolePromptHandler()
+      events.addHandler(ConsolePromptEvent.TYPE, event ->
       {
-         public void onConsolePrompt(ConsolePromptEvent event)
-         {
-            // if any notebook is currently feeding the console, wait for it
-            // to complete
-            if (NotebookQueueState.anyQueuesExecuting())
-               return;
-            
-            events.fireEvent(new ConsoleBusyEvent(false));
-         }
+         // if any notebook is currently feeding the console, wait for it
+         // to complete
+         if (NotebookQueueState.anyQueuesExecuting())
+            return;
+
+         events.fireEvent(new ConsoleBusyEvent(false));
       });
    }
 

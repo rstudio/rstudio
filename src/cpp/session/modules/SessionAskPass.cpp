@@ -1,7 +1,7 @@
 /*
  * SessionAskPass.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-12 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -19,7 +19,7 @@
 
 #include <core/Exec.hpp>
 #include <core/Log.hpp>
-#include <core/json/Json.hpp>
+#include <shared_core/json/Json.hpp>
 
 #include <r/RSexp.hpp>
 #include <r/RRoutines.hpp>
@@ -127,7 +127,7 @@ Error askForPassword(const std::string& prompt,
 
    // read inputs
    pInput->remember = remember;
-   pInput->password = value.get_value<std::string>();
+   pInput->password = value.getValue<std::string>();
 
    // decrypt if necessary
 #ifdef RSTUDIO_SERVER
@@ -154,12 +154,8 @@ Error initialize()
    s_waitForAskPass = module_context::registerWaitForMethod(
                                                 "askpass_completed");
 
-   // register rs_askForPassword with R
-   R_CallMethodDef methodDefAskPass ;
-   methodDefAskPass.name = "rs_askForPassword" ;
-   methodDefAskPass.fun = (DL_FUNC) rs_askForPassword ;
-   methodDefAskPass.numArgs = 1;
-   r::routines::addCallMethod(methodDefAskPass);
+   // register .Call methods
+   RS_REGISTER_CALL_METHOD(rs_askForPassword);
 
    // complete initialization
    ExecBlock initBlock ;

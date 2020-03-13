@@ -1,7 +1,7 @@
 /*
  * RsInverseMain.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-12 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -18,9 +18,9 @@
 #include <string>
 
 #include <core/Log.hpp>
-#include <core/Error.hpp>
+#include <shared_core/Error.hpp>
 #include <core/StringUtils.hpp>
-#include <core/SafeConvert.hpp>
+#include <shared_core/SafeConvert.hpp>
 #include <core/ProgramStatus.hpp>
 #include <core/ProgramOptions.hpp>
 #include <core/system/System.hpp>
@@ -45,7 +45,8 @@ int main(int argc, char** argv)
    try
    {
       // initialize log
-      initializeSystemLog("rsinverse", core::system::kLogLevelWarning);
+      core::log::setProgramId("rsinverse");
+      core::system::initializeSystemLog("rsinverse", log::LogLevel::WARN);
 
       // ignore SIGPIPE
       Error error = core::system::ignoreSignal(core::system::SigPipe);

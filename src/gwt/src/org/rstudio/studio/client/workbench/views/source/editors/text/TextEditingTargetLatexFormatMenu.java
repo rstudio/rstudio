@@ -1,7 +1,7 @@
 /*
  * TextEditingTargetLatexFormatMenu.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-12 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -15,7 +15,7 @@
 package org.rstudio.studio.client.workbench.views.source.editors.text;
 
 import org.rstudio.core.client.widget.ToolbarPopupMenu;
-import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 
 import com.google.gwt.user.client.Command;
@@ -23,7 +23,7 @@ import com.google.gwt.user.client.ui.MenuItem;
 
 public class TextEditingTargetLatexFormatMenu extends ToolbarPopupMenu
 {
-   public TextEditingTargetLatexFormatMenu(DocDisplay editor, UIPrefs prefs)
+   public TextEditingTargetLatexFormatMenu(DocDisplay editor, UserPrefs prefs)
    {
       editor_ = editor;
       prefs_ = prefs;
@@ -159,5 +159,5 @@ public class TextEditingTargetLatexFormatMenu extends ToolbarPopupMenu
   
    
    private final DocDisplay editor_;
-   private final UIPrefs prefs_;
+   private final UserPrefs prefs_;
 }

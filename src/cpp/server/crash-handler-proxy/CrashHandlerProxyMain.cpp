@@ -1,7 +1,7 @@
 /*
  * CrashHandlerProxyMain.cpp
  *
- * Copyright (C) 2019 by RStudio, Inc.
+ * Copyright (C) 2019 by RStudio, PBC
  *
  */
 
@@ -24,9 +24,9 @@ void runCrashHandler(const char* argv[])
    if (!crashpadHandlerPath.empty())
       handlerPath = FilePath(crashpadHandlerPath);
    else
-      handlerPath = exePath.parent().childPath("crashpad_handler");
+      handlerPath = exePath.getParent().completeChildPath("crashpad_handler");
 
-   std::string handlerPathStr = handlerPath.absolutePath();
+   std::string handlerPathStr = handlerPath.getAbsolutePath();
    const char* handlerExe = handlerPathStr.c_str();
    argv[0] = handlerExe;
 
@@ -41,8 +41,8 @@ int main(int argc, const char* argv[])
 {
    // note: we log all errors and attempt to launch the crashpad handler
    // regardless, as this is a best effort proxy attempt
-
-   initializeStderrLog("crash-handler-proxy", kLogLevelWarning);
+   log::setProgramId("crash-handler-proxy");
+   initializeStderrLog("crash-handler-proxy", log::LogLevel::WARN);
 
    Error error = ignoreSignal(SigPipe);
    if (error)

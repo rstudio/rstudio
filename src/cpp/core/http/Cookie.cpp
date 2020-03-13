@@ -1,7 +1,7 @@
 /*
  * Cookie.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-12 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -16,7 +16,7 @@
 #include <core/http/Cookie.hpp>
 
 #include <core/http/URL.hpp>
-#include <core/Error.hpp>
+#include <shared_core/Error.hpp>
 #include <core/Log.hpp>
 
 using namespace boost::gregorian ;
@@ -55,14 +55,21 @@ Cookie::~Cookie()
 {
 }
 
+void Cookie::setExpires(const boost::posix_time::time_duration& expiresFromNow)
+{
+   expires_ = boost::posix_time::ptime(boost::posix_time::second_clock::universal_time() + expiresFromNow);
+}
+
 void Cookie::setExpires(const days& expiresDays) 
 {
-   expires_ = date(day_clock::universal_day() + expiresDays) ; 
+   expires_ = boost::posix_time::ptime(date(day_clock::universal_day() + expiresDays),
+                                       boost::posix_time::time_duration(23, 59, 59)) ;
 }
 
 void Cookie::setExpiresDelete() 
 {
-   expires_ = date(day_clock::universal_day() - days(2)) ;
+   expires_ = boost::posix_time::ptime(date(day_clock::universal_day() - days(2)),
+                                       boost::posix_time::time_duration(23, 59, 59)) ;
 }
 
 void Cookie::setHttpOnly()   
@@ -82,15 +89,17 @@ std::string Cookie::cookieHeaderValue() const
    headerValue << name() << "=" << value() ;
 
    // expiries if specified
-   if ( !expires().is_not_a_date() )
+   if ( !expires().is_not_a_date_time() )
    {
-      date::ymd_type ymd = expires_.year_month_day() ;
-      greg_weekday wd = expires_.day_of_week() ;
+      date::ymd_type ymd = expires_.date().year_month_day() ;
+      greg_weekday wd = expires_.date().day_of_week() ;
 
       headerValue << "; expires=" ;
       headerValue << wd.as_short_string() << ", " 
-                  << ymd.day << "-" << ymd.month.as_short_string() << "-" 
-                  << ymd.year << " 23:59:59 GMT" ;
+                  << ymd.day << " " << ymd.month.as_short_string() << " "
+                  << ymd.year << " " << expires_.time_of_day().hours() << ":"
+                  << expires_.time_of_day().minutes() << ":"
+                  << expires_.time_of_day().seconds() << " GMT" ;
    }
 
    // path if specified

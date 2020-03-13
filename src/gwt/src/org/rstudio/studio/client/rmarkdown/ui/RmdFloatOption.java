@@ -1,7 +1,7 @@
 /*
  * RmdNumberOption.java
  *
- * Copyright (C) 2009-14 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -28,7 +28,6 @@ public class RmdFloatOption extends RmdNullableOption
       super(option, initialValue);
       HTMLPanel panel = new HTMLPanel("");
       defaultValue_ = Float.parseFloat(option.getDefaultValue());
-      panel.add(getOptionLabelWidget());
       txtValue_ = new NumericTextBox();
       if (initialValue.equals("null"))
          txtValue_.setValue(option.getDefaultValue());
@@ -36,6 +35,7 @@ public class RmdFloatOption extends RmdNullableOption
          txtValue_.setValue(initialValue);
       txtValue_.setWidth("40px");
       txtValue_.getElement().getStyle().setMarginLeft(5, Unit.PX);
+      panel.add(getOptionLabelWidget(txtValue_.getElement()));
       panel.add(txtValue_);
 
       updateNull();

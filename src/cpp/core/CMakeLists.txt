@@ -1,7 +1,7 @@
 #
 # CMakeLists.txt
 #
-# Copyright (C) 2009-18 by RStudio, Inc.
+# Copyright (C) 2009-19 by RStudio, PBC
 #
 # Unless you have received this program directly from RStudio pursuant
 # to the terms of a commercial license agreement with RStudio, then
@@ -27,21 +27,18 @@ endif()
 
 # source files
 set (CORE_SOURCE_FILES
-   Assert.cpp
    Backtrace.cpp
    Base64.cpp
    BoostErrors.cpp
    BrowserUtils.cpp
+   collection/MruList.cpp
    ConfigProfile.cpp
    ConfigUtils.cpp
    CrashHandler.cpp
    DateTime.cpp
    ExponentialBackoff.cpp
-   Error.cpp
    Exec.cpp
    FileInfo.cpp
-   FileLogWriter.cpp
-   FilePath.cpp
    FileSerializer.cpp
    FileUtils.cpp
    GitGraph.cpp
@@ -49,20 +46,17 @@ set (CORE_SOURCE_FILES
    HtmlUtils.cpp
    Log.cpp
    LogOptions.cpp
-   LogWriter.cpp
    PerformanceTimer.cpp
    ProgramOptions.cpp
    RegexUtils.cpp
    RecursionGuard.cpp
-   SafeConvert.cpp
    Settings.cpp
-   StderrLogWriter.cpp
    StringUtils.cpp
    ColorUtils.cpp
    Thread.cpp
    Trace.cpp
-   YamlUtil.cpp
    WaitUtils.cpp
+   YamlUtil.cpp
    file_lock/FileLock.cpp
    file_lock/AdvisoryFileLock.cpp
    file_lock/LinkBasedFileLock.cpp
@@ -80,7 +74,6 @@ set (CORE_SOURCE_FILES
    libclang/TranslationUnit.cpp
    libclang/UnsavedFiles.cpp
    libclang/Utils.cpp
-   json/Json.cpp
    json/JsonRpc.cpp
    http/Cookie.cpp
    http/Header.cpp
@@ -89,6 +82,7 @@ set (CORE_SOURCE_FILES
    http/ChunkParser.cpp
    http/ChunkProxy.cpp
    http/CSRFToken.cpp
+   http/FormProxy.cpp
    http/Request.cpp
    http/RequestParser.cpp
    http/Response.cpp
@@ -122,6 +116,7 @@ set (CORE_SOURCE_FILES
    system/Process.cpp
    system/ShellUtils.cpp
    system/System.cpp
+   system/Xdg.cpp
    system/file_monitor/FileMonitor.cpp
    terminal/PrivateCommand.cpp
    tex/TexLogParser.cpp
@@ -236,7 +231,6 @@ if (UNIX)
       r_util/REnvironmentPosix.cpp
       r_util/RSessionLaunchProfile.cpp
       r_util/RVersionsPosix.cpp
-      SyslogLogWriter.cpp
       system/PosixChildProcessTracker.cpp
       system/PosixEnvironment.cpp
       system/PosixFileScanner.cpp
@@ -279,12 +273,12 @@ else()
       RpcRT4
       ShLwApi
       AdvAPI32
+      Crypt32
       ${OPENSSL_LIBRARIES}
    )
 
    # source files
    set(CORE_SOURCE_FILES ${CORE_SOURCE_FILES}
-      Win32StringUtils.cpp
       http/NamedPipeProtocol.cpp
       system/Win32FileScanner.cpp
       system/RegistryKey.cpp
@@ -323,20 +317,27 @@ if(RSTUDIO_ADDINS_PATH)
    endif()
 endif()
 
+set(SHARED_CORE_INCLUDE_DIRS
+   ${SHARED_CORE_SOURCE_DIR}/include)
+
 # include directories
 include_directories(
    ${CORE_INCLUDE_DIRS}
+   ${SHARED_CORE_INCLUDE_DIRS}
+   ${EXT_SOURCE_DIR}
    ${CMAKE_CURRENT_BINARY_DIR}
    ${TESTS_INCLUDE_DIR}
 )
 
 # define shared library
 add_library(rstudio-core STATIC ${CORE_SOURCE_FILES} ${CORE_HEADER_FILES})
+define_source_file_names(rstudio-core)
 
 # link dependencies
 target_link_libraries(
    rstudio-core
    rstudio-core-hunspell
+   rstudio-shared-core
    ${Boost_LIBRARIES}
    ${CRASHPAD_LIBRARIES}
    ${CORE_SYSTEM_LIBRARIES}
@@ -357,6 +358,7 @@ if (RSTUDIO_UNIT_TESTS_ENABLED)
       rstudio-core
       rstudio-core-synctex
       rstudio-core-hunspell
+      rstudio-shared-core
       ${Boost_LIBRARIES}
       ${CORE_SYSTEM_LIBRARIES}
    )

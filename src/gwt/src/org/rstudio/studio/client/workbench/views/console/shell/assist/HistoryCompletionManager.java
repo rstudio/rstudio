@@ -1,7 +1,7 @@
 /*
  * HistoryCompletionManager.java
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -21,9 +21,11 @@ import com.google.gwt.event.logical.shared.CloseHandler;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.user.client.ui.PopupPanel;
 import com.google.gwt.user.client.ui.PopupPanel.PositionCallback;
+
 import org.rstudio.core.client.Invalidation;
 import org.rstudio.core.client.Invalidation.Token;
 import org.rstudio.core.client.Rectangle;
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.events.SelectionCommitEvent;
 import org.rstudio.core.client.events.SelectionCommitHandler;
 import org.rstudio.core.client.jsonrpc.RpcObjectList;
@@ -34,6 +36,7 @@ import org.rstudio.studio.client.workbench.views.console.shell.KeyPressPreviewHa
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorDisplay;
 import org.rstudio.studio.client.workbench.views.history.model.HistoryEntry;
 import org.rstudio.studio.client.workbench.views.history.model.HistoryServerOperations;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 
 public class HistoryCompletionManager implements KeyDownPreviewHandler,
                                                  KeyPressPreviewHandler
@@ -44,7 +47,7 @@ public class HistoryCompletionManager implements KeyDownPreviewHandler,
       PopupNoResults,     // popup is showing but with no results
       PopupIncremental,   // popup is showing incremental infix search
       PopupPrefix         // popup is showing prefix search
-   };
+   }
 
    public HistoryCompletionManager(InputEditorDisplay input,
                                    HistoryServerOperations server)
@@ -52,6 +55,12 @@ public class HistoryCompletionManager implements KeyDownPreviewHandler,
       input_ = input;
       server_ = server;
       mode_ = PopupMode.PopupNone;
+      
+      // Last search executed
+      lastSearch_ = "";
+      
+      // Current offset when navigating through search results
+      offset_ = -1;
    }
 
    public boolean previewKeyDown(NativeEvent event)
@@ -87,7 +96,10 @@ public class HistoryCompletionManager implements KeyDownPreviewHandler,
          }
          else if (event.getKeyCode() == KeyCodes.KEY_ENTER)
          {
+            Position pos = input_.getCursorPosition();
             input_.setText(popup_.getSelectedValue().getHistory());
+            input_.setCursorPosition(pos);
+            offset_ = popup_.getSelectedValue().getIndex();
             dismiss();
             return true;
          }
@@ -137,19 +149,70 @@ public class HistoryCompletionManager implements KeyDownPreviewHandler,
          mode_ = PopupMode.PopupNone;
       }
    }
+   
+   /**
+    * Navigates through a prefix search, creating a new search if necessary.
+    * 
+    * @param offset The offset from the current position; 1 to navigate
+    * forwards, -1 for backwards.
+    */
+   public void navigatePrefix(final int offset)
+   {
+      if (StringUtil.equals(getSearchText(), lastSearch_) && lastResults_ != null)
+      {
+         // Navigation through existing search results
+         navigateSearchPrefix(offset);
+      }
+      else
+      {
+         // No last search results; start a new search
+         server_.searchHistoryArchiveByPrefix(
+               getSearchText(), 20, true,
+               new HistoryCallback(getSearchText(), PopupMode.PopupNone)
+               {
+                  @Override
+                  public void onResponseReceived(RpcObjectList<HistoryEntry> entries)
+                  {
+                     super.onResponseReceived(entries);
+                     navigateSearchPrefix(offset);
+                  }
+               });
+      }
+   }
+   
+   private void navigateSearchPrefix(int offset)
+   {
+      // Bounds check to be sure we don't run off the end of the search results
+      int target = offset_ + offset;
+      if (target >= lastResults_.length() || target < 0)
+         return;
+      
+      // Pull the next entry from the result set and load into the input
+      Position pos = input_.getCursorPosition();
+      input_.setText(lastResults_.get(target).getCommand());
+      input_.setCursorPosition(pos);
+      offset_ = target;
+   }
 
    public void beginSuggest()
    {
       server_.searchHistoryArchiveByPrefix(
-            input_.getText(), 20, true, 
-            new HistoryCallback(input_.getText(), PopupMode.PopupPrefix));
+            getSearchText(), 20, true,
+            new HistoryCallback(getSearchText(), PopupMode.PopupPrefix));
    }
    
    public void beginSearch()
    {
       server_.searchHistory(
-            input_.getText(), 20, 
-            new HistoryCallback(input_.getText(), PopupMode.PopupIncremental));
+            getSearchText(), 20,
+            new HistoryCallback(getSearchText(), PopupMode.PopupIncremental));
+   }
+   
+   private String getSearchText()
+   {
+      Position pos = input_.getCursorPosition();
+      String text = input_.getText();
+      return text.substring(0, pos.getColumn());
    }
 
    public boolean previewKeyPress(char charCode)
@@ -170,7 +233,13 @@ public class HistoryCompletionManager implements KeyDownPreviewHandler,
          historyRequestInvalidation_.invalidate();
          token_ = historyRequestInvalidation_.getInvalidationToken();
          text_ = text;
+         lastSearch_ = text;
          desiredMode_ = desiredMode;
+
+         // If we aren't re-initiating a previous search, clear the offset
+         // selection
+         if (lastSearch_ != text)
+            offset_ = -1;
       }
 
       @Override
@@ -179,8 +248,13 @@ public class HistoryCompletionManager implements KeyDownPreviewHandler,
          if (token_.isInvalid())
             return;
          
+         lastResults_ = resp; 
+
          if (mode_ != PopupMode.PopupNone)
             dismiss();
+         
+         if (desiredMode_ == PopupMode.PopupNone)
+            return;
 
          if (resp.length() == 0)
          {
@@ -193,7 +267,7 @@ public class HistoryCompletionManager implements KeyDownPreviewHandler,
          {
             HistoryMatch[] entries = new HistoryMatch[resp.length()];
             for (int i = 0; i < entries.length; i++)
-               entries[i] = new HistoryMatch(resp.get(entries.length - i - 1).getCommand(), text_);
+               entries[i] = new HistoryMatch(resp.get(entries.length - i - 1).getCommand(), text_, i);
             popup_ = new CompletionListPopupPanel<HistoryMatch>(entries);
             mode_ = desiredMode_;
          }
@@ -209,7 +283,17 @@ public class HistoryCompletionManager implements KeyDownPreviewHandler,
                if (top < 20)
                   top = bounds.getBottom();
 
-               popup_.selectLast();
+               if (offset_ >= 0 && offset_ < resp.length())
+               {
+                  // Reuse the existing search offset
+                  popup_.selectIndex(offset_);
+               }
+               else
+               {
+                  // No existing search offset, so select the last entry
+                  popup_.selectLast();
+                  offset_ = resp.length();
+               }
                popup_.setPopupPosition(bounds.getLeft() - 6, top);
             }
          });
@@ -219,9 +303,12 @@ public class HistoryCompletionManager implements KeyDownPreviewHandler,
          {
             public void onSelectionCommit(SelectionCommitEvent<HistoryMatch> e)
             {
+               Position pos = input_.getCursorPosition();
                input_.setText(e.getSelectedItem().getHistory());
+               input_.setCursorPosition(pos);
                dismiss();
                input_.setFocus(true);
+               offset_ = e.getSelectedItem().getIndex();
             }
          });
          
@@ -235,7 +322,7 @@ public class HistoryCompletionManager implements KeyDownPreviewHandler,
             
          });
       }
-
+      
       private final PopupMode desiredMode_;
       private final Token token_;
       private final String text_;
@@ -243,10 +330,11 @@ public class HistoryCompletionManager implements KeyDownPreviewHandler,
    
    private class HistoryMatch
    {
-      public HistoryMatch(String history, String match)
+      public HistoryMatch(String history, String match, int index)
       {
          history_ = history;
          match_ = match;
+         index_ = index;
       }
       
       public String toString()
@@ -279,12 +367,21 @@ public class HistoryCompletionManager implements KeyDownPreviewHandler,
          return history_;
       }
       
+      public int getIndex()
+      {
+         return index_;
+      }
+      
       private final String history_;
       private final String match_;
+      private final int index_;
    }
    
    private CompletionListPopupPanel<HistoryMatch> popup_;
    private PopupMode mode_;
+   private RpcObjectList<HistoryEntry> lastResults_;
+   private String lastSearch_;
+   private int offset_;
    private final InputEditorDisplay input_;
    private final HistoryServerOperations server_;
    private final Invalidation historyRequestInvalidation_ = new Invalidation();

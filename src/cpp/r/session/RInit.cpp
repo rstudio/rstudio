@@ -1,7 +1,7 @@
 /*
  * RInit.cpp
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -63,7 +63,7 @@ void reportDeferredDeserializationError(const Error& error)
 
    // report to user
    std::string errMsg = r::endUserErrorMessage(error);
-   REprintf((errMsg + "\n").c_str());
+   REprintf("%s\n", errMsg.c_str());
 }
 
 std::string createAliasedPath(const FilePath& filePath)
@@ -129,7 +129,7 @@ void deferredRestoreNewSession()
       // what they intended
       r::exec::IgnoreInterruptsScope ignoreInterrupts;
 
-      std::string path = string_utils::utf8ToSystem(globalEnvPath.absolutePath());
+      std::string path = string_utils::utf8ToSystem(globalEnvPath.getAbsolutePath());
       std::string aliasedPath = createAliasedPath(globalEnvPath);
       
       std::string errMessage;
@@ -149,12 +149,14 @@ void deferredRestoreNewSession()
             << "'" << aliasedPath << "'" << std::endl
             << "Reason: " << errMessage << std::endl;
          std::string message = ss.str();
-         ::REprintf(message.c_str());
+         
+         ::REprintf("%s\n", message.c_str());
          LOG_ERROR_MESSAGE(message);
       }
       else
       {
-         Rprintf(("[Workspace loaded from " + aliasedPath + "]\n\n").c_str());
+         const char* fmt = "[Workspace loaded from %s]\n\n";
+         Rprintf(fmt, aliasedPath.c_str());
       }
    }
 
@@ -225,13 +227,13 @@ Error initialize()
    r::session::consoleHistory().setCapacityFromRHistsize();
 
    // install R tools
-   FilePath toolsFilePath = utils::rSourcePath().complete("Tools.R");
+   FilePath toolsFilePath = utils::rSourcePath().completePath("Tools.R");
    Error error = r::sourceManager().sourceTools(toolsFilePath);
    if (error)
       return error ;
 
    // install RStudio API
-   FilePath apiFilePath = utils::rSourcePath().complete("Api.R");
+   FilePath apiFilePath = utils::rSourcePath().completePath("Api.R");
    error = r::sourceManager().sourceTools(apiFilePath);
    if (error)
       return error;
@@ -245,12 +247,12 @@ Error initialize()
       std::string path = kGraphicsPath;
       if (utils::isR3())
          path += "-r3";
-      graphicsPath = utils::sessionScratchPath().complete(path);
+      graphicsPath = utils::sessionScratchPath().completePath(path);
    }
    else
    {
-      graphicsPath = r::session::utils::tempDir().complete(
-                              "rs-graphics-" + core::system::generateUuid());
+      graphicsPath = r::session::utils::tempDir().completePath(
+         "rs-graphics-" + core::system::generateUuid());
    }
 
    error = graphics::device::initialize(graphicsPath,
@@ -274,7 +276,7 @@ Error initialize()
 
       // show any error messages
       if (!errorMessages.empty())
-         REprintf(errorMessages.c_str());
+         REprintf("%s\n", errorMessages.c_str());
 
       // note we were resumed
       wasResumed = true;
@@ -287,7 +289,7 @@ Error initialize()
       
       // show any error messages
       if (!errorMessages.empty())
-         REprintf(errorMessages.c_str());
+         REprintf("%s\n", errorMessages.c_str());
 
       // note we were resumed
       wasResumed = true;
@@ -341,7 +343,7 @@ Error initialize()
       return error;
 
    // set global R options
-   FilePath optionsFilePath = utils::rSourcePath().complete("Options.R");
+   FilePath optionsFilePath = utils::rSourcePath().completePath("Options.R");
    error = r::sourceManager().sourceLocal(optionsFilePath);
    if (error)
       return error;
@@ -350,8 +352,8 @@ Error initialize()
    if (utils::isServerMode())
    {
 #ifndef __APPLE__
-      FilePath serverOptionsFilePath =  utils::rSourcePath().complete(
-                                                         "ServerOptions.R");
+      FilePath serverOptionsFilePath = utils::rSourcePath().completePath(
+         "ServerOptions.R");
       return r::sourceManager().sourceLocal(serverOptionsFilePath);
 #else
       return Success();
@@ -380,7 +382,7 @@ FilePath rHistoryFilePath()
    if (histFile.empty())
       histFile = ".Rhistory";
 
-   return utils::rHistoryDir().complete(histFile);
+   return utils::rHistoryDir().completePath(histFile);
 }
 
 void reportHistoryAccessError(const std::string& context,
@@ -391,14 +393,14 @@ void reportHistoryAccessError(const std::string& context,
    LOG_ERROR(error);
 
    // default summary
-   std::string summary = error.summary();
+   std::string summary = error.getSummary();
 
    // if the file exists and we still got no such file or directory
    // then it is almost always permission denied. this seems to happen
    // somewhat frequently on linux systems where the user was root for
    // an operation and ended up writing a .Rhistory
    if (historyFilePath.exists() &&
-       (error.code() == boost::system::errc::no_such_file_or_directory))
+       (error == systemError(boost::system::errc::no_such_file_or_directory, ErrorLocation())))
    {
       summary = "permission denied (is the .Rhistory file owned by root?)";
    }
@@ -406,7 +408,7 @@ void reportHistoryAccessError(const std::string& context,
    // notify the user
    std::string path = createAliasedPath(historyFilePath);
    std::string errmsg = context + " " + path + ": " + summary;
-   REprintf(("Error attempting to " + errmsg + "\n").c_str());
+   REprintf("Error attempting to %s\n", errmsg.c_str());
 }
    
 namespace utils {

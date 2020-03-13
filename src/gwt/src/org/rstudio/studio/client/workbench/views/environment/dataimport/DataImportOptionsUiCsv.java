@@ -1,7 +1,7 @@
 /*
  * DataImportOptionsCsv.java
  *
- * Copyright (C) 2009-16 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -15,6 +15,7 @@
 
 package org.rstudio.studio.client.workbench.views.environment.dataimport;
 
+import com.google.gwt.aria.client.Roles;
 import org.rstudio.core.client.MessageDisplay;
 import org.rstudio.core.client.MessageDisplay.PromptWithOptionResult;
 import org.rstudio.core.client.widget.Operation;
@@ -287,7 +288,8 @@ public class DataImportOptionsUiCsv extends DataImportOptionsUi
       naListBox_.addChangeHandler(changeHandler);
       commentListBox_.addChangeHandler(changeHandler);
       skipTextBox_.addValueChangeHandler(valueChangeHandler);
-      
+
+      Roles.getButtonRole().setAriaLabelProperty(localeButton_.getElement(), "Configure Locale");
       localeButton_.addClickHandler(new ClickHandler() {
          public void onClick(ClickEvent event) {
             new DataImportOptionsUiCsvLocale(

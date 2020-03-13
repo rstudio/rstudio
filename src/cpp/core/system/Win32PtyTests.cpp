@@ -1,7 +1,7 @@
 /*
  * Win32PtyTests.cpp
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -17,6 +17,8 @@
 
 #include "Win32Pty.hpp"
 
+#include <gsl/gsl>
+
 #define RSTUDIO_NO_TESTTHAT_ALIASES
 #include <tests/TestThat.hpp>
 
@@ -26,7 +28,7 @@
 #include <boost/algorithm/string/predicate.hpp>
 
 #include <core/system/System.hpp>
-#include <core/FilePath.hpp>
+#include <shared_core/FilePath.hpp>
 #include <core/StringUtils.hpp>
 #include <core/system/Environment.hpp>
 
@@ -47,7 +49,12 @@ FilePath getWinPtyPath()
    if (!ptyPath.empty())
       return FilePath(ptyPath);
 
+#ifdef _WIN64
    std::string suffix("/64/bin/winpty.dll");
+#else
+   std::string suffix("/32/bin/winpty.dll");
+#endif
+
    std::string prefix("external-winpty-path=");
    std::ifstream in("./conf/rdesktop-dev.conf");
 
@@ -86,7 +93,7 @@ TEST_CASE("Win32PtyTests")
             options.rows);
 
    FilePath cmd = expandComSpec();
-   std::string cmdExe = cmd.absolutePathNative();
+   std::string cmdExe = cmd.getAbsolutePathNative();
 
    SECTION("Agent not running")
    {
@@ -234,7 +241,7 @@ TEST_CASE("Win32PtyTests")
       std::string line1 = "echo This was once a place where words and letters and 32 numbers lived!";
 
       // console will word-wrap unless we set a large size
-      err = pty.setSize(line1.length() * 4, kRows);
+      err = pty.setSize(gsl::narrow_cast<int>(line1.length()) * 4, kRows);
       CHECK(!err);
 
       for (size_t i = 0; i < line1.length(); i++)

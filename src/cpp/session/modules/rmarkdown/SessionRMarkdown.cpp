@@ -1,7 +1,7 @@
 /*
  * SessionRMarkdown.cpp
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -16,6 +16,9 @@
 #include "session-config.h"
 
 #include "SessionRMarkdown.hpp"
+
+#include <gsl/gsl>
+
 #include "SessionRmdNotebook.hpp"
 #include "../SessionHTMLPreview.hpp"
 #include "../build/SessionBuildErrors.hpp"
@@ -24,7 +27,6 @@
 #include <boost/algorithm/string.hpp>
 #include <boost/iostreams/filter/regex.hpp>
 #include <boost/format.hpp>
-#include <boost/foreach.hpp>
 #include <boost/scope_exit.hpp>
 
 #include <core/FileSerializer.hpp>
@@ -46,10 +48,10 @@
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionConsoleProcess.hpp>
 #include <session/SessionAsyncRProcess.hpp>
-#include <session/SessionUserSettings.hpp>
 #include <session/SessionUrlPorts.hpp>
 
 #include <session/projects/SessionProjects.hpp>
+#include <session/prefs/UserPrefs.hpp>
 
 #include "RMarkdownPresentation.hpp"
 
@@ -79,8 +81,10 @@ std::string utf8ToConsole(const std::string& string)
    std::vector<wchar_t> wide(string.length() + 1);
    int chars = ::MultiByteToWideChar(
             CP_UTF8, 0,
-            string.data(), string.size(),
-            &wide[0], static_cast<int>(wide.size()));
+            string.data(),
+            gsl::narrow_cast<int>(string.size()),
+            &wide[0],
+            gsl::narrow_cast<int>(wide.size()));
 
    if (chars == 0)
    {
@@ -136,7 +140,7 @@ enum
 std::string projectBuildDir()
 {
    return string_utils::utf8ToSystem(
-       projects::projectContext().buildTargetPath().absolutePath());
+      projects::projectContext().buildTargetPath().getAbsolutePath());
 }
 
 Error detectWebsiteOutputDir(const std::string& siteDir,
@@ -162,7 +166,7 @@ void initWebsiteOutputDir()
    else
    {
       if (outputDirFullPath != projectBuildDir())
-         s_websiteOutputDir = FilePath(outputDirFullPath).filename();
+         s_websiteOutputDir = FilePath(outputDirFullPath).getFilename();
       else
          s_websiteOutputDir = "";
    }
@@ -185,7 +189,7 @@ FilePath extractOutputFileCreated(const FilePath& inputFile,
    std::stringstream outputStream(output);
    while (std::getline(outputStream, renderLine))
    {
-      BOOST_FOREACH(const std::string& marker, completeMarkers)
+      for (const std::string& marker : completeMarkers)
       {
          if (boost::algorithm::starts_with(renderLine, marker))
          {
@@ -197,7 +201,7 @@ FilePath extractOutputFileCreated(const FilePath& inputFile,
 
             // if the path looks absolute, use it as-is; otherwise, presume
             // it to be in the same directory as the input file
-            return inputFile.parent().complete(fileName);
+            return inputFile.getParent().completePath(fileName);
          }
       }
    }
@@ -231,7 +235,7 @@ int s_currentRenderOutput = 0;
 
 FilePath outputCachePath()
 {
-   return module_context::sessionScratchPath().childPath("rmd-outputs");
+   return module_context::sessionScratchPath().completeChildPath("rmd-outputs");
 }
 
 std::string assignOutputUrl(const std::string& outputFile)
@@ -245,10 +249,10 @@ std::string assignOutputUrl(const std::string& outputFile)
    std::string path = "/";
    FilePath outputPath = module_context::resolveAliasedPath(outputFile);
    FilePath websiteDir = r_util::websiteRootDirectory(outputPath);
-   if (!websiteDir.empty())
+   if (!websiteDir.isEmpty())
    {
       std::string websiteOutputDir;
-      Error error = detectWebsiteOutputDir(websiteDir.absolutePath(), &websiteOutputDir);
+      Error error = detectWebsiteOutputDir(websiteDir.getAbsolutePath(), &websiteOutputDir);
       if (error)
       {
          websiteDir = FilePath();
@@ -261,23 +265,24 @@ std::string assignOutputUrl(const std::string& outputFile)
    }
 
    // figure out the project directory
-   FilePath projDir = outputPath.parent();
-   if (projDir.filename() == "_site")
-      projDir = projDir.parent();
+   FilePath projDir = outputPath.getParent();
+   if (projDir.getFilename() == "_site")
+      projDir = projDir.getParent();
 
    // detect whether we're creating a book output vs. a website page
-   if (!websiteDir.empty() && outputPath.isWithin(websiteDir) && !r_util::isWebsiteDirectory(projDir))
+   if (!websiteDir.isEmpty() && outputPath.isWithin(websiteDir) && !r_util::isWebsiteDirectory(projDir))
    {
-      // if we're creating a '.pdf', detect the created book appropriately
-      FilePath indexPath;
-      if (outputPath.extensionLowerCase() == ".pdf")
-         indexPath = websiteDir.childPath(outputPath.filename());
-      else
-         indexPath = websiteDir.childPath("index.html");
+      std::string renderedPath;
+      Error error = r::exec::RFunction(".rs.bookdown.renderedOutputPath")
+            .addParam(outputPath.getAbsolutePath())
+            .callUtf8(&renderedPath);
+      if (error)
+         LOG_ERROR(error);
       
-      s_renderOutputs[s_currentRenderOutput] = indexPath.absolutePath();
+      s_renderOutputs[s_currentRenderOutput] = renderedPath;
+      
       // compute relative path to target file and append it to the path
-      std::string relativePath = outputPath.relativePath(websiteDir);
+      std::string relativePath = outputPath.getRelativePath(websiteDir);
       path += relativePath;
    }
    else
@@ -381,7 +386,7 @@ public:
       if (sourceNavigation_)
       {
          rmarkdown::presentation::ammendResults(
-                  outputFormat_["format_name"].get_str(),
+                  outputFormat_["format_name"].getString(),
                   targetFile_,
                   sourceLine,
                   jsonObject);
@@ -393,7 +398,7 @@ public:
       std::string runtime;
       Error error = r::exec::RFunction(
          ".rs.getRmdRuntime",
-         string_utils::utf8ToSystem(targetFile.absolutePath())).call(
+         string_utils::utf8ToSystem(targetFile.getAbsolutePath())).call(
                                                                &runtime);
       if (error)
          LOG_ERROR(error);
@@ -421,7 +426,7 @@ private:
    {
       Error error;
       json::Object dataJson;
-      getOutputFormat(targetFile_.absolutePath(), encoding, &outputFormat_);
+      getOutputFormat(targetFile_.getAbsolutePath(), encoding, &outputFormat_);
       dataJson["output_format"] = outputFormat_;
       dataJson["target_file"] = module_context::createAliasedPath(targetFile_);
       ClientEvent event(client_events::kRmdRenderStarted, dataJson);
@@ -443,7 +448,7 @@ private:
          // see if the input file has a custom render function
          error = r::exec::RFunction(
             ".rs.getCustomRenderFunction",
-            string_utils::utf8ToSystem(targetFile_.absolutePath())).call(
+            string_utils::utf8ToSystem(targetFile_.getAbsolutePath())).call(
                                                                   &renderFunc);
          if (error)
             LOG_ERROR(error);
@@ -456,7 +461,7 @@ private:
 
       std::string extraParams;
       std::string targetFile =
-            utf8ToConsole(targetFile_.absolutePath());
+            utf8ToConsole(targetFile_.getAbsolutePath());
 
       std::string renderOptions("encoding = '" + encoding + "'");
 
@@ -488,7 +493,7 @@ private:
          Error error = tmpDir.ensureDirectory();
          if (!error)
          {
-            std::string dir = utf8ToConsole(tmpDir.absolutePath());
+            std::string dir = utf8ToConsole(tmpDir.getAbsolutePath());
             renderOptions += ", output_dir = '" + dir + "'";
          }
          else
@@ -501,7 +506,7 @@ private:
       {
          extraParams += "shiny_args = list(launch.browser = FALSE), "
                         "auto_reload = FALSE, ";
-         std::string parentDir = utf8ToConsole(targetFile_.parent().absolutePath());
+         std::string parentDir = utf8ToConsole(targetFile_.getParent().getAbsolutePath());
          extraParams += "dir = '" + parentDir + "', ";
 
          // provide render_args in render_args parameter
@@ -542,12 +547,12 @@ private:
       {
          // launch the R session in the document's directory by default, unless
          // a working directory was supplied
-         FilePath working = targetFile_.parent();
+         FilePath working = targetFile_.getParent();
          if (!workingDir.empty())
             working = module_context::resolveAliasedPath(workingDir);
 
          // tell the user the command we're using to render the doc if requested
-         if (userSettings().showRmdRenderCommand())
+         if (prefs::userPrefs().showRmdRenderCommand())
          {
             onRenderOutput(module_context::kCompileOutputNormal, "==> " + cmd + "\n");
          }
@@ -597,7 +602,7 @@ private:
       std::vector<std::string> outputLines;
       boost::algorithm::split(outputLines, output,
                               boost::algorithm::is_any_of("\n\r"));
-      BOOST_FOREACH(std::string& outputLine, outputLines)
+      for (std::string& outputLine : outputLines)
       {
          // if this is a Shiny render, check to see if Shiny started listening
          if (isShiny_)
@@ -620,7 +625,7 @@ private:
 
                getPresentationDetails(sourceLine_, &startedJson);
 
-               startedJson["url"] = url + targetFile_.filename();
+               startedJson["url"] = url + targetFile_.getFilename();
 
                startedJson["runtime"] = getRuntime(targetFile_);
 
@@ -646,7 +651,7 @@ private:
       // see if we can determine the output file
       FilePath outputFile = module_context::extractOutputFileCreated
                                                    (targetFile_, allOutput_);
-      if (!outputFile.empty())
+      if (!outputFile.isEmpty())
          outputFile_ = outputFile;
 
       // the process may be terminated normally by the IDE (e.g. to stop the
@@ -661,7 +666,7 @@ private:
       std::string message =
             "Error rendering R Markdown for " +
             module_context::createAliasedPath(targetFile_) + " " +
-            error.summary();
+            error.getSummary();
       terminateWithError(message);
    }
 
@@ -705,14 +710,14 @@ private:
       resultJson["runtime"] = getRuntime(targetFile_);
 
       json::Value websiteDir;
-      if (outputFile_.extensionLowerCase() == ".html")
+      if (outputFile_.getExtensionLowerCase() == ".html")
       {
          // check for previous publishing
          resultJson["rpubs_published"] =
                !module_context::previousRpubsUploadId(outputFile_).empty();
 
          FilePath webPath = session::projects::projectContext().fileUnderWebsitePath(targetFile_);
-         if (!webPath.empty())
+         if (!webPath.isEmpty())
             websiteDir = createAliasedPath(webPath);
       }
       else
@@ -727,7 +732,7 @@ private:
       resultJson["viewer_type"] = viewerType_;
 
       // allow for format specific additions to the result json
-      std::string formatName =  outputFormat_["format_name"].get_str();
+      std::string formatName =  outputFormat_["format_name"].getString();
 
       // populate slide information if available
       getPresentationDetails(sourceLine_, &resultJson);
@@ -775,7 +780,7 @@ private:
             // emit it to the client when the render is complete
             SourceMarker err(
                      SourceMarker::Error,
-                     targetFile_.parent().complete(matches[3].str()),
+                     targetFile_.getParent().completePath(matches[3].str()),
                      boost::lexical_cast<int>(matches[1].str()),
                      1,
                      core::html_utils::HTML(matches[4].str()),
@@ -886,14 +891,14 @@ void initEnvironment()
    // set RSTUDIO_PANDOC (leave existing value alone)
    std::string rstudioPandoc = core::system::getenv(kRStudioPandoc);
    if (rstudioPandoc.empty())
-      rstudioPandoc = session::options().pandocPath().absolutePath();
+      rstudioPandoc = session::options().pandocPath().getAbsolutePath();
    r::exec::RFunction sysSetenv("Sys.setenv");
    sysSetenv.addParam(kRStudioPandoc, rstudioPandoc);
 
    // set RMARKDOWN_MATHJAX_PATH (leave existing value alone)
    std::string rmarkdownMathjaxPath = core::system::getenv(kRmarkdownMathjaxPath);
    if (rmarkdownMathjaxPath.empty())
-     rmarkdownMathjaxPath = session::options().mathjaxPath().absolutePath();
+     rmarkdownMathjaxPath = session::options().mathjaxPath().getAbsolutePath();
    sysSetenv.addParam(kRmarkdownMathjaxPath, rmarkdownMathjaxPath);
 
    // call Sys.setenv
@@ -917,8 +922,8 @@ std::string onDetectRmdSourceType(
    if (!pDoc->path().empty())
    {
       FilePath filePath = module_context::resolveAliasedPath(pDoc->path());
-      if ((filePath.extensionLowerCase() == ".rmd" ||
-           filePath.extensionLowerCase() == ".md") &&
+      if ((filePath.getExtensionLowerCase() == ".rmd" ||
+           filePath.getExtensionLowerCase() == ".md") &&
           !boost::algorithm::icontains(pDoc->contents(),
                                        "<!-- rmarkdown v1 -->") &&
           rmarkdownPackageAvailable())
@@ -1007,7 +1012,7 @@ Error renderRmd(const json::JsonRpcRequest& request,
    {
       // if this is a notebook, it's pre-rendered
       FilePath inputFile = module_context::resolveAliasedPath(file); 
-      FilePath outputFile = inputFile.parent().complete(inputFile.stem() + 
+      FilePath outputFile = inputFile.getParent().completePath(inputFile.getStem() + 
                                                         kNotebookExt);
 
       // extract the output format
@@ -1026,7 +1031,7 @@ Error renderRmd(const json::JsonRpcRequest& request,
       resultJson["target_line"] = line;
       resultJson["output_file"] = module_context::createAliasedPath(outputFile);
       resultJson["knitr_errors"] = json::Array();
-      resultJson["output_url"] = assignOutputUrl(outputFile.absolutePath());
+      resultJson["output_url"] = assignOutputUrl(outputFile.getAbsolutePath());
       resultJson["output_format"] = outputFormat;
       resultJson["is_shiny_document"] = false;
       resultJson["website_dir"] = json::Value();
@@ -1063,7 +1068,8 @@ Error renderRmdSource(const json::JsonRpcRequest& request,
    if (error)
       return error;
 
-   doRenderRmd(rmdTempFile.absolutePath(), -1, "", "UTF-8", "",
+   doRenderRmd(
+      rmdTempFile.getAbsolutePath(), -1, "", "UTF-8", "",
                false, false, false, "", "", "", pResponse);
 
    return Success();
@@ -1162,18 +1168,19 @@ void handleRmdOutputRequest(const http::Request& request,
    {
       // serve the MathJax resource: find the requested path in the MathJax
       // directory
-      pResponse->setCacheableFile(mathJaxDirectory().complete(
-                                    path.substr(sizeof(kMathjaxSegment))),
+      pResponse->setCacheableFile(
+         mathJaxDirectory().completePath(
+            path.substr(sizeof(kMathjaxSegment))),
                                   request);
    }
    else
    {
       // serve a file resource from the output folder
-      FilePath filePath = outputFilePath.parent().childPath(path);
+      FilePath filePath = outputFilePath.getParent().completeChildPath(path);
 
       // if it's a directory then auto-append index.html
       if (filePath.isDirectory())
-         filePath = filePath.childPath("index.html");
+         filePath = filePath.completeChildPath("index.html");
 
       html_preview::addFileSpecificHeaders(filePath, pResponse);
       pResponse->setNoCacheHeaders();
@@ -1223,7 +1230,7 @@ Error getRmdTemplate(const json::JsonRpcRequest& request,
 
    // locate the template skeleton on disk (if it doesn't exist we'll just
    // return an empty string)
-   FilePath skeletonPath = FilePath(path).complete("skeleton/skeleton.Rmd");
+   FilePath skeletonPath = FilePath(path).completePath("skeleton/skeleton.Rmd");
    std::string templateContent;
    if (skeletonPath.exists())
    {
@@ -1283,12 +1290,12 @@ Error maybeCopyWebsiteAsset(const json::JsonRpcRequest& request,
    // get the path relative to the website dir
    FilePath websiteDir = projects::projectContext().buildTargetPath();
    FilePath filePath = module_context::resolveAliasedPath(file);
-   std::string relativePath = filePath.relativePath(websiteDir);
+   std::string relativePath = filePath.getRelativePath(websiteDir);
 
    // get the list of copyable site resources
    std::vector<std::string> copyableResources;
    r::exec::RFunction func("rmarkdown:::copyable_site_resources");
-   func.addParam("input", string_utils::utf8ToSystem(websiteDir.absolutePath()));
+   func.addParam("input", string_utils::utf8ToSystem(websiteDir.getAbsolutePath()));
    func.addParam("encoding", projects::projectContext().config().encoding);
    error = func.call(&copyableResources);
    if (error)
@@ -1301,8 +1308,8 @@ Error maybeCopyWebsiteAsset(const json::JsonRpcRequest& request,
    // get the name to target -- if it's in the root dir it's the filename
    // otherwise it's the directory name
    std::string search;
-   if (filePath.parent() == websiteDir)
-      search = filePath.filename();
+   if (filePath.getParent() == websiteDir)
+      search = filePath.getFilename();
    else
       search = relativePath.substr(0, relativePath.find_first_of('/'));
 
@@ -1315,7 +1322,7 @@ Error maybeCopyWebsiteAsset(const json::JsonRpcRequest& request,
 
    // copy the file (removing it first)
    FilePath outputDir = FilePath(websiteOutputDir);
-   FilePath outputFile = outputDir.childPath(relativePath);
+   FilePath outputFile = outputDir.completeChildPath(relativePath);
    if (outputFile.exists())
    {
       error = outputFile.remove();
@@ -1327,7 +1334,7 @@ Error maybeCopyWebsiteAsset(const json::JsonRpcRequest& request,
       }
    }
 
-   error = outputFile.parent().ensureDirectory();
+   error = outputFile.getParent().ensureDirectory();
    if (error)
    {
       LOG_ERROR(error);
@@ -1368,10 +1375,10 @@ SEXP rs_getWebsiteOutputDir()
    SEXP absolutePathSEXP = R_NilValue;
 
    FilePath outputDir(module_context::websiteOutputDir());
-   if (!outputDir.empty())
+   if (!outputDir.isEmpty())
    {
       r::sexp::Protect protect;
-      absolutePathSEXP = r::sexp::create(outputDir.absolutePath(), &protect);
+      absolutePathSEXP = r::sexp::create(outputDir.getAbsolutePath(), &protect);
    }
    return absolutePathSEXP;
 }
@@ -1470,7 +1477,7 @@ Error initialize()
          LOG_ERROR(error);
       else
       {
-         s_currentRenderOutput = static_cast<int>(s_renderOutputs.size());
+         s_currentRenderOutput = gsl::narrow_cast<int>(s_renderOutputs.size());
          s_renderOutputs.reserve(kMaxRenderOutputs);
       }
    }

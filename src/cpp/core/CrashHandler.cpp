@@ -1,7 +1,7 @@
 /*
  * CrashHandler.cpp
  *
- * Copyright (C) 2019 by RStudio, Inc.
+ * Copyright (C) 2019 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -17,10 +17,15 @@
 
 #include <sstream>
 
+#include <core/FileUtils.hpp>
 #include <core/Settings.hpp>
 #include <core/StringUtils.hpp>
 #include <core/system/System.hpp>
 #include <core/system/Environment.hpp>
+
+#ifndef _WIN32
+#include <core/system/FileMode.hpp>
+#endif
 
 #include "config.h"
 
@@ -49,6 +54,16 @@ Error setUserHandlerEnabled(bool)
    return Success();
 }
 
+bool hasUserBeenPromptedForPermission()
+{
+   return true;
+}
+
+Error setUserHasBeenPromptedForPermission()
+{
+   return Success();
+}
+
 } // namespace crash_handler
 } // namespace core
 } // namespace rstudio
@@ -59,7 +74,7 @@ Error setUserHandlerEnabled(bool)
 #include <crashpad/client/settings.h>
 
 #define kCrashHandlingEnabled         "crash-handling-enabled"
-#define kCrashHandlingEnabledDefault  true
+#define kCrashHandlingEnabledDefault  false
 #define kCrashDatabasePath            "crash-db-path"
 #define kCrashDatabasePathDefault     ""
 #define kUploadUrl                    "upload-url"
@@ -84,15 +99,16 @@ FilePath adminConfFile()
 #ifndef _WIN32
    return FilePath("/etc/rstudio/crash-handler.conf");
 #else
-   return core::system::systemSettingsPath("RStudio", false).complete("crash-handler.conf");
+   return core::system::systemSettingsPath("RStudio", false).completePath("crash-handler.conf");
 #endif
 }
 
 FilePath userConfFile()
 {
-   return core::system::userSettingsPath(core::system::userHomePath(),
-                                         "R",
-                                         false).complete("crash-handler.conf");
+   return core::system::userSettingsPath(
+      core::system::userHomePath(),
+      "R",
+      true).completePath("crash-handler.conf");
 }
 
 void readOptions()
@@ -115,7 +131,9 @@ void readOptions()
       // can properly see the state at all times
       if (!optionsFile.exists())
       {
-         Error error = optionsFile.ensureFile();
+         Error error = optionsFile.getParent().ensureDirectory();
+         if (!error)
+            error = optionsFile.ensureFile();
          if (error)
             LOG_ERROR(error);
       }
@@ -166,6 +184,14 @@ void logClientCreation(const base::FilePath& handlerPath,
     LOG_INFO_MESSAGE(message);
 }
 
+FilePath permissionFile()
+{
+   return core::system::userSettingsPath(
+      core::system::userHomePath(),
+      "R",
+      false).completePath("crash-handler-permission");
+}
+
 } // anonymous namespace
 
 Error initialize(ProgramMode programMode)
@@ -191,23 +217,37 @@ Error initialize(ProgramMode programMode)
       {
          // server mode - default database path to default tmp location
          FilePath tmpPath;
-         Error error = FilePath::tempFilePath(&tmpPath);
+         Error error = FilePath::tempFilePath(tmpPath);
          if (error)
             return error;
-         databasePathStr = tmpPath.parent().childPath("crashpad_database").absolutePath();
+
+         FilePath databasePath = tmpPath.getParent().completeChildPath("crashpad_database");
+
+         // ensure that the database path exists
+         error = databasePath.ensureDirectory();
+         if (error)
+            return error;
+
+         // ensure that it is writeable by all users
+         // this is best case and we swallow the error because it is legitimately possible we
+         // lack the permissions to perform this (such as if we are an unprivileged rsession user)
+         core::system::changeFileMode(databasePath, core::system::EveryoneReadWriteExecuteMode);
+
+         databasePathStr = databasePath.getAbsolutePath();
       }
       else
       {
          // desktop mode - default database path to user settings path
-         databasePathStr = core::system::userSettingsPath(core::system::userHomePath(),
-                                                          "R",
-                                                          true).childPath("crashpad_database").absolutePath();
+         databasePathStr = core::system::userSettingsPath(
+            core::system::userHomePath(),
+            "R",
+            true).completeChildPath("crashpad_database").getAbsolutePath();
       }
 #else
       // desktop mode - default database path to user settings path
       databasePathStr = core::system::userSettingsPath(core::system::userHomePath(),
                                                        "R",
-                                                       true).childPath("crashpad_database").absolutePath();
+                                                       true).completeChildPath("crashpad_database").getAbsolutePath();
 #endif
    }
    base::FilePath databasePath = googleFilePath(databasePathStr);
@@ -237,20 +277,35 @@ Error initialize(ProgramMode programMode)
          // is run with the correct permissions (otherwise ptrace will not work if setuid is used)
          #ifdef RSTUDIO_SERVER
             if (s_programMode == ProgramMode::Server)
-               handlerPath = googleFilePath(exePath.parent().childPath("crash-handler-proxy").absolutePath());
+               handlerPath = googleFilePath(exePath.getParent().completeChildPath("crash-handler-proxy").getAbsolutePath());
             else
-               handlerPath = googleFilePath(exePath.parent().childPath("crashpad_handler").absolutePath());
+               handlerPath = googleFilePath(exePath.getParent().completeChildPath("crashpad_handler").getAbsolutePath());
          #else
-            handlerPath = googleFilePath(exePath.parent().childPath("crashpad_handler").absolutePath());
+            handlerPath = googleFilePath(exePath.getParent().completeChildPath("crashpad_handler").getAbsolutePath());
          #endif
       #else
-         handlerPath = googleFilePath(exePath.parent().childPath("crashpad_handler.com").absolutePath());
+         handlerPath = googleFilePath(exePath.getParent().completeChildPath("crashpad_handler.exe").getAbsolutePath());
 #endif
    }
 
    // open the crashpad database
    std::unique_ptr<crashpad::CrashReportDatabase> pDatabase =
          crashpad::CrashReportDatabase::Initialize(databasePath);
+
+   // in server mode, attempt to give full access to the entire database for all users
+   // this is necessary so unprivileged processes can write crash dumps properly
+   // again, we swallow the errors here because unprivileged processes cannot change permissions
+#ifdef RSTUDIO_SERVER
+   if (s_programMode == ProgramMode::Server)
+   {
+      std::vector<FilePath> dbFolders;
+      FilePath(databasePathStr).getChildren(dbFolders);
+      for (const FilePath& subPath : dbFolders)
+         core::system::changeFileMode(subPath, core::system::EveryoneReadWriteExecuteMode);
+   }
+#endif
+
+   // ensure database is properly initialized
    if (pDatabase != nullptr && pDatabase->GetSettings() != nullptr)
       pDatabase->GetSettings()->SetUploadsEnabled(uploadDumps);
    else
@@ -261,6 +316,7 @@ Error initialize(ProgramMode programMode)
    // initialize and start crashpad client
    s_crashpadClient.reset(new crashpad::CrashpadClient());
    std::map<std::string, std::string> annotations;
+   annotations["sentry[release]"] = RSTUDIO_VERSION;
    std::vector<std::string> args {"--no-rate-limit"};
 
 #ifdef __linux__
@@ -295,7 +351,7 @@ Error initialize(ProgramMode programMode)
 ConfigSource configSource()
 {
    FilePath settingsPath = s_settings->filePath();
-   if (settingsPath.empty())
+   if (settingsPath.isEmpty())
       return ConfigSource::Default;
 
    if (settingsPath == adminConfFile())
@@ -342,6 +398,27 @@ Error setUserHandlerEnabled(bool handlerEnabled)
    }
 
    return Success();
+}
+
+bool hasUserBeenPromptedForPermission()
+{
+   if (!permissionFile().exists())
+   {
+      // if for some reason the parent directory is not writeable
+      // we will just treat the user as if they have been prompted
+      // to prevent indefinite repeated promptings
+      if (!file_utils::isDirectoryWriteable(permissionFile().getParent()))
+         return true;
+      else
+         return false;
+   }
+   else
+      return true;
+}
+
+Error setUserHasBeenPromptedForPermission()
+{
+   return permissionFile().ensureFile();
 }
 
 } // namespace crash_handler

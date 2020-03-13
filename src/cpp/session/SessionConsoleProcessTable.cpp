@@ -1,7 +1,7 @@
 /*
  * SessionConsoleProcessTable.cpp
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -15,10 +15,9 @@
 
 #include "SessionConsoleProcessTable.hpp"
 
-#include <boost/foreach.hpp>
 #include <boost/range/adaptor/map.hpp>
 
-#include <core/SafeConvert.hpp>
+#include <shared_core/SafeConvert.hpp>
 
 #include <session/SessionModuleContext.hpp>
 
@@ -51,7 +50,7 @@ std::string serializeConsoleProcs(SerializationMode serialMode)
    }
 
    std::ostringstream ostr;
-   json::write(array, ostr);
+   array.write(ostr);
    return ostr.str();
 }
 
@@ -60,18 +59,18 @@ void deserializeConsoleProcs(const std::string& jsonStr)
    if (jsonStr.empty())
       return;
    json::Value value;
-   if (!json::parse(jsonStr, &value))
+   if (value.parse(jsonStr))
    {
       LOG_WARNING_MESSAGE("invalid console process json: " + jsonStr);
       return;
    }
 
-   const json::Array& procs = value.get_array();
-   for (json::Array::iterator it = procs.begin();
+   const json::Array& procs = value.getArray();
+   for (json::Array::Iterator it = procs.begin();
         it != procs.end();
         it++)
    {
-      ConsoleProcessPtr proc = ConsoleProcess::fromJson((*it).get_obj());
+      ConsoleProcessPtr proc = ConsoleProcess::fromJson((*it).getObject());
 
       // Deserializing consoleprocs list only happens during session
       // initialization, therefore they do not represent an actual running
@@ -88,7 +87,7 @@ void deserializeConsoleProcs(const std::string& jsonStr)
 
 bool isKnownProcHandle(const std::string& handle)
 {
-   return findProcByHandle(handle) != NULL;
+   return findProcByHandle(handle) != nullptr;
 }
 
 void onSuspend(core::Settings* /*pSettings*/)
@@ -123,7 +122,7 @@ ConsoleProcessPtr findProcByHandle(const std::string& handle)
 
 ConsoleProcessPtr findProcByCaption(const std::string& caption)
 {
-   BOOST_FOREACH(ConsoleProcessPtr& proc, s_procs | boost::adaptors::map_values)
+   for (ConsoleProcessPtr& proc : s_procs | boost::adaptors::map_values)
    {
       if (proc->getCaption() == caption)
          return proc;
@@ -160,7 +159,7 @@ std::vector<std::string> getAllHandles()
 std::pair<int, std::string> nextTerminalName()
 {
    int maxNum = kNoTerminal;
-   BOOST_FOREACH(ConsoleProcessPtr& proc, s_procs | boost::adaptors::map_values)
+   for (ConsoleProcessPtr& proc : s_procs | boost::adaptors::map_values)
    {
       maxNum = std::max(maxNum, proc->getTerminalSequence());
    }
@@ -183,14 +182,14 @@ void saveConsoleProcessesAtShutdown(bool terminatedNormally)
 
    // When shutting down, only preserve ConsoleProcesses that are marked
    // with allow_restart. Others should not survive a shutdown/restart.
-   ProcTable::const_iterator nextIt = s_procs.begin();
+   ProcTable::const_iterator nextIt;
    for (ProcTable::const_iterator it = s_procs.begin();
         it != s_procs.end();
         it = nextIt)
    {
       nextIt = it;
       ++nextIt;
-      if (it->second->getAllowRestart() == false)
+      if (!it->second->getAllowRestart())
       {
          s_procs.erase(it->second->handle());
       }
@@ -281,7 +280,7 @@ Error createTerminalConsoleProc(boost::shared_ptr<ConsoleProcessInfo> cpi,
 
    cpi->setCaption(computedCaption);
 
-   TerminalShell::TerminalShellType actualShellType;
+   TerminalShell::ShellType actualShellType;
    core::system::ProcessOptions options = ConsoleProcess::createTerminalProcOptions(
             *cpi, &actualShellType);
 
@@ -348,7 +347,7 @@ Error createTerminalExecuteConsoleProc(
                title,
                std::string() /*handle*/,
                termSequence,
-               TerminalShell::NoShell,
+               TerminalShell::ShellType::NoShell,
                false /*altBuffer*/,
                cwd,
                core::system::kDefaultCols, core::system::kDefaultRows,

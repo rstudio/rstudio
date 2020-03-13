@@ -1,7 +1,7 @@
 /*
  * SessionConsoleProcessPersist.cpp
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -15,7 +15,7 @@
 
 #include <session/SessionConsoleProcessPersist.hpp>
 
-#include <boost/foreach.hpp>
+#include <gsl/gsl>
 
 #include <core/FileSerializer.hpp>
 
@@ -51,7 +51,10 @@ namespace console_persist {
 //                Added autoClose, zombie
 // 2017/06/16 - console05 -> console06
 //                Added trackEnv
-#define kConsoleDir "console06"
+// 2019/07/30 - console06 -> console07
+//                Changed shell type from int to string to align with user
+//                preferences
+#define kConsoleDir "console07"
 
 namespace {
 
@@ -68,13 +71,13 @@ void initialize()
        session::options().programMode() == kSessionProgramModeServer)
    {
       // In multi-session mode, persist per session
-      s_consoleProcPath = module_context::sessionScratchPath().complete(kConsoleDir);
+      s_consoleProcPath = module_context::sessionScratchPath().completePath(kConsoleDir);
    }
    else
    {
       // In single-session mode, persist in external project storage (not internally in the project
       // since contents include environment values and can be sensitive)
-      s_consoleProcPath = projects::projectContext().externalStoragePath().complete(kConsoleDir);
+      s_consoleProcPath = projects::projectContext().externalStoragePath().completePath(kConsoleDir);
    }
 
    Error error = s_consoleProcPath.ensureDirectory();
@@ -83,7 +86,7 @@ void initialize()
       LOG_ERROR(error);
       return;
    }
-   s_consoleProcIndexPath = s_consoleProcPath.complete(kConsoleIndex);
+   s_consoleProcIndexPath = s_consoleProcPath.completePath(kConsoleIndex);
    s_inited = true;
 }
 
@@ -108,7 +111,7 @@ Error getLogFilePath(const std::string& handle, FilePath* pFile)
       return error;
    }
 
-   *pFile = getConsoleProcPath().complete(handle);
+   *pFile = getConsoleProcPath().completePath(handle);
    return Success();
 }
 
@@ -123,7 +126,7 @@ Error getEnvFilePath(const std::string& handle, FilePath* pFile)
 
    std::string envHandle = handle;
    envHandle.append(s_envFileExt);
-   *pFile = getConsoleProcPath().complete(envHandle);
+   *pFile = getConsoleProcPath().completePath(envHandle);
    return Success();
 }
 
@@ -203,7 +206,7 @@ std::string getSavedBuffer(const std::string& handle, int maxLines)
 int getSavedBufferLineCount(const std::string& handle, int maxLines)
 {
    std::string buffer = getSavedBuffer(handle, maxLines);
-   return static_cast<int>(string_utils::countNewlines(buffer) + 1);
+   return gsl::narrow_cast<int>(string_utils::countNewlines(buffer) + 1);
 }
 
 void appendToOutputBuffer(const std::string& handle, const std::string& buffer)
@@ -283,21 +286,21 @@ void deleteOrphanedLogs(bool (*validHandle)(const std::string&))
 
    // Delete orphaned buffer files
    std::vector<FilePath> children;
-   Error error = getConsoleProcPath().children(&children);
+   Error error = getConsoleProcPath().getChildren(children);
    if (error)
    {
       LOG_ERROR(error);
       return;
    }
-   BOOST_FOREACH(const FilePath& child, children)
+   for (const FilePath& child : children)
    {
       // Don't erase the INDEXnnn or any subfolders
-      if (!child.filename().compare(kConsoleIndex) || child.isDirectory())
+      if (!child.getFilename().compare(kConsoleIndex) || child.isDirectory())
       {
          continue;
       }
 
-      if (!validHandle(child.stem()))
+      if (!validHandle(child.getStem()))
       {
          error = child.remove();
          if (error)
@@ -316,9 +319,9 @@ void saveConsoleEnvironment(const std::string& handle, const core::system::Optio
       return;
    }
 
-   json::Object envJson = json::toJsonObject(environment);
+   json::Object envJson = json::Object(environment);
    std::ostringstream ostr;
-   json::writeFormatted(envJson, ostr);
+   envJson.writeFormatted(ostr);
    error = rstudio::core::writeStringToFile(log, ostr.str());
    if (error)
    {
@@ -348,7 +351,7 @@ void loadConsoleEnvironment(const std::string& handle, core::system::Options* pE
    }
 
    json::Value envJson;
-   if (!json::parse(jsonStr, &envJson) ||
+   if (envJson.parse(jsonStr) ||
        !json::isType<json::Object>(envJson))
    {
       LOG_ERROR(systemError(boost::system::errc::protocol_error,
@@ -357,8 +360,8 @@ void loadConsoleEnvironment(const std::string& handle, core::system::Options* pE
       return;
    }
 
-   core::system::Options loadedEnvironment = json::optionsFromJson(envJson.get_obj());
-   BOOST_FOREACH(const core::system::Option& var, loadedEnvironment)
+   core::system::Options loadedEnvironment = envJson.getObject().toStringPairList();
+   for (const core::system::Option& var : loadedEnvironment)
    {
       core::system::setenv(pEnv, var.first, var.second);
    }

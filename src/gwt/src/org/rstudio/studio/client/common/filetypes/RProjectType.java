@@ -1,7 +1,7 @@
 /*
  * RProjectType.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -29,5 +29,11 @@ public class RProjectType extends FileType
    public void openFile(FileSystemItem file, EventBus eventBus)
    {
       eventBus.fireEvent(new OpenProjectFileEvent(file));
+   }
+
+   @Override
+   protected FileIcon getDefaultFileIcon()
+   {
+      return FileIcon.RPROJECT_ICON;
    }
 }

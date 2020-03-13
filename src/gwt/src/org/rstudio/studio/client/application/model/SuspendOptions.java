@@ -1,7 +1,7 @@
 /*
  * SuspendOptions.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-12 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -43,7 +43,7 @@ public class SuspendOptions extends JavaScriptObject
    }-*/;
    
    /*
-    * Indidates that only a minimal amount of session state should be 
+    * Indicates that only a minimal amount of session state should be
     * saved (e.g. working directory and up-arrow history). 
     * 
     * If this option is true then the save_workspace option will be 

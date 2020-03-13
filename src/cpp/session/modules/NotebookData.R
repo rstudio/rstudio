@@ -1,7 +1,7 @@
 #
 # NotebookData.R
 #
-# Copyright (C) 2009-18 by RStudio, Inc.
+# Copyright (C) 2009-18 by RStudio, PBC
 #
 # Unless you have received this program directly from RStudio pursuant
 # to the terms of a commercial license agreement with RStudio, then
@@ -292,16 +292,31 @@
         paste0("<", summary, ">")
       })
 
+  # R 3.6.0 on Windows has an issue where RGui escapes can 'leak'
+  # into encoded strings; detect and remove those post-hoc.
+  # (should be fixed in R 3.6.1)
+  #
+  # https://bugs.r-project.org/bugzilla/show_bug.cgi?id=17567
+  needsEncodeFix <-
+    .Platform$OS.type == "windows" &&
+    getRversion() == "3.6.0"
+  
   data <- as.data.frame(
     lapply(
       data,
       function (y) {
+        
         # escape NAs from character columns
         if (typeof(y) == "character") {
           y[y == "NA"] <- "__NA__"
         }
 
+        # encode string (ensure control characters are escaped)
         y <- encodeString(format(y))
+        if (needsEncodeFix) {
+          y <- gsub("^\002\377\376", "", y)
+          y <- gsub("\003\377\376$", "", y)
+        }
 
         # trim spaces
         gsub("^\\s+|\\s+$", "", y)
@@ -309,7 +324,7 @@
     ),
     stringsAsFactors = FALSE,
     optional = TRUE)
-
+  
   pagedTableOptions <- list(
     columns = list(
       min = options[["cols.min.print"]],

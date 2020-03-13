@@ -1,7 +1,7 @@
 /*
  * EditorCommandEvent.java
  *
- * Copyright (C) 2009-16 by RStudio, Inc.
+ * Copyright (C) 2009-16 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -50,7 +50,6 @@ public class EditorCommandEvent extends CrossWindowEvent<EditorCommandEvent.Hand
    @SuppressWarnings("unchecked")
    public final <T extends JavaScriptObject> T getData()
    {
-      // work around errors with older JDK (1.6)
       T casted = (T) data_;
       return casted;
    }

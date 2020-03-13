@@ -1,7 +1,7 @@
 /*
  * BreakpointManager.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -35,6 +35,7 @@ import org.rstudio.studio.client.common.debugging.model.Breakpoint;
 import org.rstudio.studio.client.common.debugging.model.BreakpointState;
 import org.rstudio.studio.client.common.debugging.model.FunctionState;
 import org.rstudio.studio.client.common.debugging.model.FunctionSteps;
+import org.rstudio.studio.client.common.satellite.Satellite;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
@@ -389,8 +390,11 @@ public class BreakpointManager
          String functionName = frame.getFunctionName();
          String fileName = frame.getFileName();
          if (functionName == ".doTrace" &&
-             event.isServerInitiated())
+             event.isServerInitiated() && 
+             !Satellite.isCurrentWindowSatellite())
          {
+            // Only perform the step from the main window (otherwise multiple
+            // step commands will be emitted from each satellite)
             events_.fireEvent(new SendToConsoleEvent(
                   DebugCommander.NEXT_COMMAND, true));
          }

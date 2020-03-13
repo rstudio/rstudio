@@ -3,7 +3,7 @@
 #
 # install-pandoc
 #
-# Copyright (C) 2009-18 by RStudio, Inc.
+# Copyright (C) 2009-19 by RStudio, PBC
 #
 # Unless you have received this program directly from RStudio pursuant
 # to the terms of a commercial license agreement with RStudio, then
@@ -20,7 +20,7 @@ set -e
 source rstudio-tools
 
 # variables that control download + installation process
-PANDOC_VERSION="2.3.1"
+PANDOC_VERSION="2.7.3"
 PANDOC_SUBDIR="pandoc/${PANDOC_VERSION}"
 PANDOC_URL_BASE="https://s3.amazonaws.com/rstudio-buildtools/pandoc/${PANDOC_VERSION}"
 

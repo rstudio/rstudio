@@ -1,7 +1,7 @@
 /*
  * ConsoleOutputWriter.java
  *
- * Copyright (C) 2009-19 by RStudio, Inc.
+ * Copyright (C) 2009-20 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -16,6 +16,7 @@ package org.rstudio.core.client;
 
 import java.util.List;
 
+import com.google.gwt.aria.client.Roles;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.widget.PreWidget;
 
@@ -30,10 +31,15 @@ import com.google.gwt.dom.client.SpanElement;
  */
 public class ConsoleOutputWriter
 {
-   public ConsoleOutputWriter(VirtualConsoleFactory vcFactory)
+   public ConsoleOutputWriter(VirtualConsoleFactory vcFactory, String a11yLabel)
    {
       vcFactory_ = vcFactory;
       output_ = new PreWidget();
+      if (!StringUtil.isNullOrEmpty(a11yLabel))
+      {
+         output_.getElement().setAttribute("aria-label", a11yLabel);
+         Roles.getDocumentRole().set(output_.getElement());
+      }
    }
    
    public PreWidget getWidget()
@@ -70,12 +76,14 @@ public class ConsoleOutputWriter
     * @param className Text style
     * @param isError Is this an error message?
     * @param ignoreLineCount Output without checking buffer length?
+    * @param ariaLiveAnnounce Include in arialive output announcement
     * @return was this output below the maximum buffer line count?
     */
    public boolean outputToConsole(String text,
                                   String className,
                                   boolean isError,
-                                  boolean ignoreLineCount)
+                                  boolean ignoreLineCount,
+                                  boolean ariaLiveAnnounce)
    {
       if (text.indexOf('\f') >= 0)
          clearConsoleOutput();
@@ -86,12 +94,13 @@ public class ConsoleOutputWriter
       if (virtualConsole_ == null)
       {
          SpanElement trailing = Document.get().createSpanElement();
+         trailing.setTabIndex(-1);
          outEl.appendChild(trailing);
          virtualConsole_ = vcFactory_.create(trailing);
       }
 
       int oldLineCount = DomUtils.countLines(virtualConsole_.getParent(), true);
-      virtualConsole_.submit(text, className, isError);
+      virtualConsole_.submit(text, className, isError, ariaLiveAnnounce);
       int newLineCount = DomUtils.countLines(virtualConsole_.getParent(), true);
       lines_ += newLineCount - oldLineCount;
 
@@ -143,7 +152,24 @@ public class ConsoleOutputWriter
    {
       return lines_;
    }
-   
+
+   public String getNewText()
+   {
+      if (virtualConsole_ == null)
+         return "";
+      else
+         return virtualConsole_.getNewText();
+   }
+
+   public void focusEnd()
+   {
+      Node lastChild = output_.getElement().getLastChild();
+      if (lastChild == null)
+         return;
+      Element last = lastChild.cast();
+      last.focus();
+   }
+
    private int maxLines_ = -1;
    private int lines_ = 0;
    private final PreWidget output_;

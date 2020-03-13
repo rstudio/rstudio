@@ -11,6 +11,24 @@ Bootstrap
     - `Set-ExecutionPolicy Bypass -Scope Process -Force; iex ((New-Object System.Net.WebClient).DownloadString('https://raw.githubusercontent.com/rstudio/rstudio/master/dependencies/windows/Install-RStudio-Prereqs.ps1'))`
 - Wait for the script to complete
 
+Install Qt SDK
+=============================================================================
+Install Qt 5.12.6 SDK for Windows from https://qt.io, selecting 
+following components:
+
+- MSVC 2017 64-bit
+- QtWebEngine
+
+To install via the Qt online installer (recommended by Qt), when you reach the "Select Components"
+screen, click the "Archive" checkbox then the Filter button. The list of available versions will
+expand to include 5.12.6, as seen here:
+
+![screenshot of Qt component selection](./qt-5-12-6.png)
+
+Alternatively, the offline installer may be used:
+
+http://download.qt.io/official_releases/qt/5.12/5.12.6/qt-opensource-windows-x86-5.12.6.exe
+
 Clone the Repo and Run Batch File
 =============================================================================
 - Open Command Prompt (non-administrator); do this **after** running the 
@@ -20,7 +38,6 @@ PowerShell bootstrapping script above to pick up environment changes
 - Clone the repro, e.g. `git clone https://github.com/rstudio/rstudio`
 - `cd rstudio\dependencies\windows`
 - `install-dependencies.cmd`
-- Do not click buttons on the Qt installation UI; it is script-driven
 - Wait for the script to complete
 
 Build Java/Gwt
@@ -32,7 +49,7 @@ Build C++
 =============================================================================
 - Open Qt Creator
 - Open Project and select rstudio\src\cpp\CMakelists.txt
-- Select the 64-bit kit (RStudio for Windows is 64-bit only)
+- Select the 64-bit kit (The Qt-part of RStudio for Windows is 64-bit only)
 - (Optional but recommended): Change the `CMake generator` for the kit to 
 `Ninja` for faster incremental builds
 - Click Configure, then build

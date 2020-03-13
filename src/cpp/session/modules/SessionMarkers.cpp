@@ -1,7 +1,7 @@
 /*
  * SessionMarkers.cpp
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -15,7 +15,6 @@
 
 #include "SessionMarkers.hpp"
 
-#include <boost/foreach.hpp>
 #include <boost/algorithm/string/predicate.hpp>
 
 #include <core/Exec.hpp>
@@ -41,7 +40,7 @@ json::Object sourceMarkerSetAsJson(const module_context::SourceMarkerSet& set)
    using namespace module_context;
    json::Object jsonSet;
    jsonSet["name"] = set.name;
-   if (set.basePath.empty())
+   if (set.basePath.isEmpty())
    {
       jsonSet["base_path"] = std::string();
    }
@@ -125,13 +124,13 @@ public:
 
       MarkerSets markerSets;
 
-      BOOST_FOREACH(const json::Value& setJson, setsJson)
+      for (const json::Value& setJson : setsJson)
       {
          if (json::isType<json::Object>(setJson))
          {
             std::string name, basePath;
             json::Array markersJson;
-            Error error = json::readObject(setJson.get_obj(),
+            Error error = json::readObject(setJson.getObject(),
                                            "name", &name,
                                            "base_path", &basePath,
                                            "markers", &markersJson);
@@ -141,7 +140,7 @@ public:
                continue;
             }
             std::vector<module_context::SourceMarker> markers;
-            BOOST_FOREACH(json::Value markerJson, markersJson)
+            for (json::Value markerJson : markersJson)
             {
                if (json::isType<json::Object>(markerJson))
                {
@@ -151,7 +150,7 @@ public:
                   std::string message;
                   bool showErrorList;
                   Error error = json::readObject(
-                     markerJson.get_obj(),
+                     markerJson.getObject(),
                      "type", &type,
                      "path", &path,
                      "line", &line,
@@ -217,9 +216,9 @@ public:
       {
          // names
          json::Array namesJson;
-         BOOST_FOREACH(const module_context::SourceMarkerSet& set, markerSets_)
+         for (const module_context::SourceMarkerSet& set : markerSets_)
          {
-            namesJson.push_back(set.name);
+            namesJson.push_back(json::Value(set.name));
          }
 
          // markers for active set
@@ -350,13 +349,13 @@ SEXP rs_sourceMarkers(SEXP nameSEXP,
       json::Value markersJson;
       Error error = r::json::jsonValueFromList(markersSEXP, &markersJson);
       if (error)
-         throw RErrorException(error.summary());
+         throw RErrorException(error.getSummary());
       if (!json::isType<json::Array>(markersJson))
          throw RErrorException(
             "markers parameter was not a data frame or unnamed list");
 
       std::vector<SourceMarker> markers;
-      for (const json::Value& markerJson : markersJson.get_array())
+      for (const json::Value& markerJson : markersJson.getArray())
       {
          if (json::isType<json::Object>(markerJson))
          {
@@ -366,7 +365,7 @@ SEXP rs_sourceMarkers(SEXP nameSEXP,
             std::string message;
             bool messageHTML;
             Error error = json::readObject(
-               markerJson.get_obj(),
+               markerJson.getObject(),
                "type", &type,
                "file", &path,
                "line", &line,
@@ -415,7 +414,7 @@ SEXP rs_sourceMarkers(SEXP nameSEXP,
 
 FilePath sourceMarkersFilePath()
 {
-   return module_context::scopedScratchPath().childPath("saved_source_markers");
+   return module_context::scopedScratchPath().completeChildPath("saved_source_markers");
 }
 
 void readSourceMarkers()
@@ -433,7 +432,7 @@ void readSourceMarkers()
    }
 
    json::Value stateJson;
-   if (!json::parse(contents, &stateJson))
+   if (stateJson.parse(contents))
    {
       LOG_WARNING_MESSAGE("invalid session markers json");
       return;
@@ -445,7 +444,7 @@ void readSourceMarkers()
       return;
    }
 
-   error = sourceMarkers().readFromJson(stateJson.get_obj());
+   error = sourceMarkers().readFromJson(stateJson.getObject());
    if (error)
       LOG_ERROR(error);
 }
@@ -455,7 +454,7 @@ void writeSourceMarkers(bool terminatedNormally)
    if (terminatedNormally)
    {
       std::ostringstream os;
-      json::write(sourceMarkers().asJson(), os);
+      sourceMarkers().asJson().write(os);
       Error error = writeStringToFile(sourceMarkersFilePath(), os.str());
       if (error)
          LOG_ERROR(error);

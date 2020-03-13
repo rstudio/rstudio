@@ -1,7 +1,7 @@
 /*
  * CppCompletionToolTip.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-12 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -114,8 +114,8 @@ public class CppCompletionToolTip extends PopupPanel
          if (docDisplay.getLine(lineNumberAbove).length() > 
              docDisplay.getLength(docDisplay.getCurrentLineNum()))
          {
-            Double fontPad = RStudioGinjector.INSTANCE.getUIPrefs()
-                  .fontSize().getValue();
+            Double fontPad = RStudioGinjector.INSTANCE.getUserPrefs()
+                  .fontSizePoints().getValue();
             if (fontPad >= 13)
                fontPad *= 1.3;
             topPad = topPad + fontPad.intValue();

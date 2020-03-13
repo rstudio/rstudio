@@ -1,7 +1,10 @@
 <ui:UiBinder xmlns:ui='urn:ui:com.google.gwt.uibinder'
-             xmlns:g='urn:import:com.google.gwt.user.client.ui'>
+             xmlns:g='urn:import:com.google.gwt.user.client.ui'
+             xmlns:rw="urn:import:org.rstudio.core.client.widget">
 
    <ui:with field="res" type="org.rstudio.studio.client.workbench.views.environment.dataimport.ImportFileSettingsDialog.Resources"/>
+   <ui:with field="ElementIds" type="org.rstudio.core.client.ElementIds"/>
+   <ui:with field="themeRes" type="org.rstudio.core.client.theme.res.ThemeResources"/>
 
    <g:HTMLPanel>
       <g:HorizontalPanel>
@@ -9,44 +12,55 @@
             <table>
                <tr>
                   <td colspan="2">
-                     <g:Label text="Name" />
-                     <g:TextBox ui:field="varname_" styleName="{res.styles.varname}" />
+                     <rw:LabeledTextBox textBoxId="{ElementIds.getImportFileName}" ui:field="varname_"
+                                        labelText="Name" textBoxStyleName="{res.styles.varname}" />
                   </td>
                </tr>
                <tr>
-                  <td>Encoding</td>
-                  <td><g:ListBox ui:field="encoding_" styleName="{res.styles.list}" /></td>
+                  <td><rw:FormLabel for="{ElementIds.getImportFileEncoding}">Encoding</rw:FormLabel></td>
+                  <td><rw:FormListBox elementId="{ElementIds.getImportFileEncoding}" ui:field="encoding_" 
+                                      styleName="{res.styles.list}" /></td>
                </tr>
                <tr>
-                  <td>Heading</td>
+                  <td><rw:FormLabel ariaHidden="true">Heading</rw:FormLabel></td>
                   <td>
-                     <g:RadioButton ui:field="headingYes_" name="importFileSettingsHeading" text="Yes"/>
-                     <g:RadioButton ui:field="headingNo_" name="importFileSettingsHeading" text="No"/>
+                     <rw:FieldSetPanel legend="Heading" legendHidden="true">
+                        <g:HTMLPanel>
+                           <g:RadioButton ui:field="headingYes_" name="importFileSettingsHeading" text="Yes"/>
+                           <g:RadioButton ui:field="headingNo_" name="importFileSettingsHeading" text="No"/>
+                        </g:HTMLPanel>
+                     </rw:FieldSetPanel>
                   </td>
                </tr>
                <tr>
-                  <td>Row names</td>
-                  <td><g:ListBox ui:field="rowNames_" styleName="{res.styles.list}" /></td>
+                  <td><rw:FormLabel for="{ElementIds.getImportFileRowNames}">Row names</rw:FormLabel></td>
+                  <td><rw:FormListBox elementId="{ElementIds.getImportFileRowNames}" ui:field="rowNames_" 
+                                      styleName="{res.styles.list}" /></td>
                </tr>
                <tr>
-                  <td>Separator</td>
-                  <td><g:ListBox ui:field="separator_" styleName="{res.styles.list}" /></td>
+                  <td><rw:FormLabel for="{ElementIds.getImportFileSeparator}">Separator</rw:FormLabel></td>
+                  <td><rw:FormListBox elementId="{ElementIds.getImportFileSeparator}" ui:field="separator_" 
+                                      styleName="{res.styles.list}" /></td>
                </tr>
                <tr>
-                  <td>Decimal</td>
-                  <td><g:ListBox ui:field="decimal_" styleName="{res.styles.list}" /></td>
+                  <td><rw:FormLabel for="{ElementIds.getImportFileDecimal}">Decimal</rw:FormLabel></td>
+                  <td><rw:FormListBox elementId="{ElementIds.getImportFileDecimal}" ui:field="decimal_" 
+                                      styleName="{res.styles.list}" /></td>
                </tr>
                <tr>
-                  <td>Quote</td>
-                  <td><g:ListBox ui:field="quote_" styleName="{res.styles.list}" /></td>
+                  <td><rw:FormLabel for="{ElementIds.getImportFileQuote}">Quote</rw:FormLabel></td>
+                  <td><rw:FormListBox elementId="{ElementIds.getImportFileQuote}" ui:field="quote_" 
+                                      styleName="{res.styles.list}" /></td>
                </tr>
                <tr>
-                  <td>Comment</td>
-                  <td><g:ListBox ui:field="comment_" styleName="{res.styles.list}" /></td>
+                  <td><rw:FormLabel for="{ElementIds.getImportFileComment}">Comment</rw:FormLabel></td>
+                  <td><rw:FormListBox elementId="{ElementIds.getImportFileComment}" ui:field="comment_" 
+                                      styleName="{res.styles.list}" /></td>
                </tr>
                <tr>
-                  <td>na.strings</td>
-                  <td><g:TextBox ui:field="naStrings_" styleName="{res.styles.nastrings}"></g:TextBox></td>
+                  <td><rw:FormLabel for="{ElementIds.getImportFileNaStrings}">na.strings</rw:FormLabel></td>
+                  <td><rw:FormTextBox elementId="{ElementIds.getImportFileNaStrings}" ui:field="naStrings_" 
+                                      styleName="{res.styles.nastrings}"></rw:FormTextBox></td>
                </tr>
                <tr>
                   <td colspan="2"><g:CheckBox ui:field="stringsAsFactors_" text="Strings as factors"></g:CheckBox></td>

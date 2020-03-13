@@ -20,6 +20,8 @@
     <comment>R Sweave File</comment>
     <glob pattern="*.Rnw"/>
     <glob pattern="*.rnw"/>
+    <glob pattern="*.Rtex"/>
+    <glob pattern="*.rtex"/>
   </mime-type>
 
   <mime-type type="text/x-r-markdown">
@@ -58,6 +60,11 @@
     <glob pattern="*.Rproj"/>
     <glob pattern="*.RProj"/>
     <glob pattern="*.rproj"/>
+  </mime-type>
+
+  <mime-type type="application/x-rdp-rsp">
+    <comment>RDP RSP Session</comment>
+    <glob pattern="*.rdprsp"/>
   </mime-type>
 
   <mime-type type="text/x-r-history">

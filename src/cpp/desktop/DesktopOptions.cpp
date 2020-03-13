@@ -1,7 +1,7 @@
 /*
  * DesktopOptions.cpp
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -22,6 +22,10 @@
 #include <core/Random.hpp>
 #include <core/system/System.hpp>
 #include <core/system/Environment.hpp>
+
+#ifndef _WIN32
+#include <core/system/FileMode.hpp>
+#endif
 
 #include "DesktopInfo.hpp"
 #include "DesktopUtils.hpp"
@@ -46,6 +50,32 @@ Options& options()
 {
    static Options singleton;
    return singleton;
+}
+
+Options::Options() :
+   settings_(FORMAT,
+             QSettings::UserScope,
+             QString::fromUtf8("RStudio"),
+             QString::fromUtf8("desktop")),
+   runDiagnostics_(false)
+{
+#ifndef _WIN32
+   // ensure that the options file is only readable by this user
+   FilePath optionsFile(settings_.fileName().toStdString());
+   if (!optionsFile.exists())
+   {
+      // file doesn't yet exist - QT can lazily write to the settings file
+      // create an empty file so we can set its permissions before it's created by QT
+      std::shared_ptr<std::ostream> pOfs;
+      Error error = optionsFile.openForWrite(pOfs, false);
+      if (error)
+         LOG_ERROR(error);
+   }
+
+   Error error = core::system::changeFileMode(optionsFile, core::system::UserReadWriteMode);
+   if (error)
+      LOG_ERROR(error);
+#endif
 }
 
 void Options::initFromCommandLine(const QStringList& arguments)
@@ -74,6 +104,7 @@ void Options::restoreMainWindowBounds(QMainWindow* win)
    // https://github.com/rstudio/rstudio/issues/3498
    // https://github.com/rstudio/rstudio/issues/3159
    //
+   
    QSize size = QSize(1200, 900).boundedTo(
             QApplication::desktop()->availableGeometry().size());
    if (size.width() > 800 && size.height() > 500)
@@ -81,9 +112,40 @@ void Options::restoreMainWindowBounds(QMainWindow* win)
       // Only use default size if it seems sane; otherwise let Qt set it
       win->resize(size);
    }
-   
+
    if (settings_.contains(kMainWindowGeometry))
+   {
+      // try to restore the geometry
       win->restoreGeometry(settings_.value(kMainWindowGeometry).toByteArray());
+
+      // double-check that we haven't accidentally restored a geometry that
+      // places the Window off-screen (can happen if the screen configuration
+      // changes between the time geometry was saved and loaded)
+      QRect desktopRect = QApplication::desktop()->availableGeometry();
+      QRect winRect = win->geometry();
+      
+      // shrink the window rectangle a bit just to capture cases like RStudio
+      // too close to edge of window and hardly showing at all
+      QRect checkRect(
+               winRect.topLeft() + QPoint(5, 5),
+               winRect.bottomRight() - QPoint(5, 5));
+      
+      // check for intersection
+      if (!desktopRect.intersects(checkRect))
+      {
+         // restore size and center the window
+         win->resize(size);
+         win->move(
+                  desktopRect.width() / 2 - size.width() / 2,
+                  desktopRect.height() / 2 - size.height() / 2);
+      }
+   }
+   
+   // ensure a minimum width, height for the window on restore
+   win->resize(
+            std::max(300, win->width()),
+            std::max(200, win->height()));
+      
 }
 
 void Options::saveMainWindowBounds(QMainWindow* win)
@@ -325,6 +387,14 @@ void Options::setUseFontConfigDatabase(bool use)
 #ifdef _WIN32
 QString Options::rBinDir() const
 {
+   // HACK: If RBinDir doesn't appear at all, that means the user has never
+   // specified a preference for R64 vs. 32-bit R. In this situation we should
+   // accept either. We'll distinguish between this case (where preferR64
+   // should be ignored) and the other case by using null for this case and
+   // empty string for the other.
+   if (!settings_.contains(QString::fromUtf8("RBinDir")))
+      return QString::null;
+
    QString value = settings_.value(QString::fromUtf8("RBinDir")).toString();
    return value.isNull() ? QString() : value;
 }
@@ -334,6 +404,20 @@ void Options::setRBinDir(QString path)
    settings_.setValue(QString::fromUtf8("RBinDir"), path);
 }
 
+bool Options::preferR64() const
+{
+   if (!core::system::isWin64())
+      return false;
+
+   if (!settings_.contains(QString::fromUtf8("PreferR64")))
+      return true;
+   return settings_.value(QString::fromUtf8("PreferR64")).toBool();
+}
+
+void Options::setPreferR64(bool preferR64)
+{
+   settings_.setValue(QString::fromUtf8("PreferR64"), preferR64);
+}
 #endif
 
 FilePath Options::scriptsPath() const
@@ -348,7 +432,7 @@ void Options::setScriptsPath(const FilePath& scriptsPath)
 
 FilePath Options::executablePath() const
 {
-   if (executablePath_.empty())
+   if (executablePath_.isEmpty())
    {
       Error error = core::system::executablePath(QApplication::arguments().at(0).toUtf8(),
                                                  &executablePath_);
@@ -360,7 +444,7 @@ FilePath Options::executablePath() const
 
 FilePath Options::supportingFilePath() const
 {
-   if (supportingFilePath_.empty())
+   if (supportingFilePath_.isEmpty())
    {
       // default to install path
       core::system::installPath("..",
@@ -369,8 +453,8 @@ FilePath Options::supportingFilePath() const
 
       // adapt for OSX resource bundles
 #ifdef __APPLE__
-         if (supportingFilePath_.complete("Info.plist").exists())
-            supportingFilePath_ = supportingFilePath_.complete("Resources");
+         if (supportingFilePath_.completePath("Info.plist").exists())
+            supportingFilePath_ = supportingFilePath_.completePath("Resources");
 #endif
    }
    return supportingFilePath_;
@@ -378,16 +462,16 @@ FilePath Options::supportingFilePath() const
 
 FilePath Options::resourcesPath() const
 {
-   if (resourcesPath_.empty())
+   if (resourcesPath_.isEmpty())
    {
 #ifdef RSTUDIO_PACKAGE_BUILD
       // release configuration: the 'resources' folder is
       // part of the supporting files folder
-      resourcesPath_ = supportingFilePath().complete("resources");
+      resourcesPath_ = supportingFilePath().completePath("resources");
 #else
       // developer configuration: the 'resources' folder is
       // a sibling of the RStudio executable
-      resourcesPath_ = scriptsPath().complete("resources");
+      resourcesPath_ = scriptsPath().completePath("resources");
 #endif
    }
 
@@ -397,12 +481,12 @@ FilePath Options::resourcesPath() const
 FilePath Options::wwwDocsPath() const
 {
    FilePath supportingFilePath = desktop::options().supportingFilePath();
-   FilePath wwwDocsPath = supportingFilePath.complete("www/docs");
+   FilePath wwwDocsPath = supportingFilePath.completePath("www/docs");
    if (!wwwDocsPath.exists())
-      wwwDocsPath = supportingFilePath.complete("../gwt/www/docs");
+      wwwDocsPath = supportingFilePath.completePath("../gwt/www/docs");
 #ifdef __APPLE__
    if (!wwwDocsPath.exists())
-      wwwDocsPath = supportingFilePath.complete("../../../../../gwt/www/docs");
+      wwwDocsPath = supportingFilePath.completePath("../../../../../gwt/www/docs");
 #endif
    return wwwDocsPath;
 }
@@ -414,10 +498,10 @@ FilePath Options::urlopenerPath() const
    FilePath parentDir = scriptsPath();
 
    // detect dev configuration
-   if (parentDir.filename() == "desktop")
-      parentDir = parentDir.complete("urlopener");
+   if (parentDir.getFilename() == "desktop")
+      parentDir = parentDir.completePath("urlopener");
 
-   return parentDir.complete("urlopener.exe");
+   return parentDir.completePath("urlopener.exe");
 }
 
 FilePath Options::rsinversePath() const
@@ -425,10 +509,10 @@ FilePath Options::rsinversePath() const
    FilePath parentDir = scriptsPath();
 
    // detect dev configuration
-   if (parentDir.filename() == "desktop")
-      parentDir = parentDir.complete("synctex/rsinverse");
+   if (parentDir.getFilename() == "desktop")
+      parentDir = parentDir.completePath("synctex/rsinverse");
 
-   return parentDir.complete("rsinverse.exe");
+   return parentDir.completePath("rsinverse.exe");
 }
 
 #endif
@@ -447,9 +531,9 @@ core::FilePath Options::scratchTempDir(core::FilePath defaultPath)
 {
    core::FilePath dir(scratchPath.toUtf8().constData());
 
-   if (!dir.empty() && dir.exists())
+   if (!dir.isEmpty() && dir.exists())
    {
-      dir = dir.childPath("tmp");
+      dir = dir.completeChildPath("tmp");
       core::Error error = dir.ensureDirectory();
       if (!error)
          return dir;
@@ -460,8 +544,33 @@ core::FilePath Options::scratchTempDir(core::FilePath defaultPath)
 void Options::cleanUpScratchTempDir()
 {
    core::FilePath temp = scratchTempDir(core::FilePath());
-   if (!temp.empty())
+   if (!temp.isEmpty())
       temp.removeIfExists();
+}
+
+QString Options::lastRemoteSessionUrl(const QString& serverUrl)
+{
+   settings_.beginGroup(QString::fromUtf8("remote-sessions-list"));
+   QString sessionUrl = settings_.value(serverUrl).toString();
+   settings_.endGroup();
+   return sessionUrl;
+}
+
+void Options::setLastRemoteSessionUrl(const QString& serverUrl, const QString& sessionUrl)
+{
+   settings_.beginGroup(QString::fromUtf8("remote-sessions-list"));
+   settings_.setValue(serverUrl, sessionUrl);
+   settings_.endGroup();
+}
+
+QStringList Options::cookies() const
+{
+   return settings_.value(QString::fromUtf8("cookies"), QStringList()).toStringList();
+}
+
+void Options::setCookies(const QStringList& cookies)
+{
+   settings_.setValue(QString::fromUtf8("cookies"), cookies);
 }
 
 } // namespace desktop

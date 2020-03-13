@@ -1,7 +1,7 @@
 /*
  * loader.js
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-12 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -80,6 +80,11 @@ oop.inherits(RStudioEditor, Editor);
          // in markdown documents, allow '_', '*' to surround selection
          do
          {
+            // assume this preference is only wanted when surrounding
+            // other objects in general for now
+            if (this.$surroundSelection !== "quotes_and_brackets")
+               break;
+
             var mode = this.session.$mode;
             if (/\/markdown$/.test(mode.$id))
             {

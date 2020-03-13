@@ -1,7 +1,7 @@
 /*
  * Backtrace.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -34,7 +34,7 @@ std::string demangle(const std::string& name)
    
 #ifndef _WIN32
    int status = -1;
-   char* demangled = ::abi::__cxa_demangle(name.c_str(), NULL, NULL, &status);
+   char* demangled = ::abi::__cxa_demangle(name.c_str(), nullptr, nullptr, &status);
    if (status == 0) {
       result = demangled;
       ::free(demangled);
@@ -103,7 +103,7 @@ void printBacktrace(std::ostream& os)
       os << readyForPrinting << std::endl;
    }
    
-   if (stackStrings != NULL)
+   if (stackStrings != nullptr)
       ::free(stackStrings);
    
 #endif

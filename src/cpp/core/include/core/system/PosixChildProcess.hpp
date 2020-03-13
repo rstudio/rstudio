@@ -1,7 +1,7 @@
 /*
  * PosixChildProcess.hpp
  *
- * Copyright (C) 2017-18 by RStudio, Inc.
+ * Copyright (C) 2017-18 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -21,7 +21,7 @@
 #include <core/system/ChildProcess.hpp>
 #include <core/system/Process.hpp>
 
-#include <core/Error.hpp>
+#include <shared_core/Error.hpp>
 
 namespace rstudio {
 namespace core {

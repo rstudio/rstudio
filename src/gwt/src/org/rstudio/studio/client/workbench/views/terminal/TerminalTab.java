@@ -1,7 +1,7 @@
 /*
  * TerminalTab.java
  *
- * Copyright (C) 2009-19 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -31,7 +31,7 @@ import org.rstudio.studio.client.workbench.ui.DelayLoadWorkbenchTab;
 import org.rstudio.studio.client.workbench.views.terminal.events.ActivateNamedTerminalEvent;
 import org.rstudio.studio.client.workbench.views.terminal.events.AddTerminalEvent;
 import org.rstudio.studio.client.workbench.views.terminal.events.ClearTerminalEvent;
-import org.rstudio.studio.client.workbench.views.terminal.events.CreateTerminalEvent;
+import org.rstudio.studio.client.workbench.views.terminal.events.CreateNewTerminalEvent;
 import org.rstudio.studio.client.workbench.views.terminal.events.RemoveTerminalEvent;
 import org.rstudio.studio.client.workbench.views.terminal.events.SendToTerminalEvent;
 
@@ -44,20 +44,26 @@ public class TerminalTab extends DelayLoadWorkbenchTab<TerminalTabPresenter>
 {
    public interface Binder extends CommandBinder<Commands, Shim> {}
 
-   public abstract static class Shim 
+   public abstract static class Shim
       extends DelayLoadTabShim<TerminalTabPresenter, TerminalTab>
-      implements CreateTerminalEvent.Handler,
-                 SendToTerminalEvent.Handler,
+      implements SendToTerminalEvent.Handler,
                  ClearTerminalEvent.Handler,
                  AddTerminalEvent.Handler,
                  RemoveTerminalEvent.Handler,
-                 ActivateNamedTerminalEvent.Handler
+                 ActivateNamedTerminalEvent.Handler,
+                 CreateNewTerminalEvent.Handler
    {
+      @Handler
+      public abstract void onNewTerminal();
+
       @Handler
       public abstract void onActivateTerminal();
 
       @Handler
       public abstract void onCloseTerminal();
+
+      @Handler
+      public abstract void onCloseAllTerminals();
 
       @Handler
       public abstract void onRenameTerminal();
@@ -73,20 +79,23 @@ public class TerminalTab extends DelayLoadWorkbenchTab<TerminalTabPresenter>
 
       @Handler
       public abstract void onShowTerminalInfo();
-      
+
       @Handler
       public abstract void onInterruptTerminal();
 
       @Handler
       public abstract void onSendTerminalToEditor();
-      
+
+      @Handler
+      public abstract void onSetTerminalToCurrentDirectory();
+
       /**
        * Attach a list of server-side terminals to the pane.
        * @param procList list of terminals on server
        */
       abstract void onRepopulateTerminals(ArrayList<ConsoleProcessInfo> procList);
 
-      abstract void confirmClose(Command onConfirmed);
+      abstract void confirmClose(boolean tabClosing, Command onConfirmed);
    }
 
    @Inject
@@ -102,14 +111,15 @@ public class TerminalTab extends DelayLoadWorkbenchTab<TerminalTabPresenter>
       pConsoleProcessFactory_ = pConsoleProcessFactory;
 
       binder.bind(commands, shim_);
-      events.addHandler(CreateTerminalEvent.TYPE, shim_);
       events.addHandler(SendToTerminalEvent.TYPE, shim_);
       events.addHandler(ClearTerminalEvent.TYPE, shim_);
       events.addHandler(AddTerminalEvent.TYPE, shim_);
       events.addHandler(RemoveTerminalEvent.TYPE, shim_);
       events.addHandler(ActivateNamedTerminalEvent.TYPE, shim_);
+      events.addHandler(CreateNewTerminalEvent.TYPE, shim_);
 
-      events.addHandler(SessionInitEvent.TYPE, sie -> {
+      events.addHandler(SessionInitEvent.TYPE, sie ->
+      {
          JsArray<ConsoleProcessInfo> procs =
                session.getSessionInfo().getConsoleProcesses();
          final ArrayList<ConsoleProcessInfo> procList = new ArrayList<>();
@@ -136,14 +146,15 @@ public class TerminalTab extends DelayLoadWorkbenchTab<TerminalTabPresenter>
    @Override
    public void confirmClose(Command onConfirmed)
    {
-      shim_.confirmClose(onConfirmed);
+      // closing the entire Terminal pane
+      shim_.confirmClose(true, onConfirmed);
    }
 
    /**
     * Add process to list of processes, sorted in ascending order by
     * terminal sequence number. If duplicate sequence numbers are
     * encountered, all but the first will have the process killed.
-    * 
+    *
     * @param procInfoList (in/out) sorted list of terminal processes
     * @param procInfo process to insert in the list
     */
@@ -153,7 +164,7 @@ public class TerminalTab extends DelayLoadWorkbenchTab<TerminalTabPresenter>
       int newSequence = procInfo.getTerminalSequence();
       if (newSequence < 1)
       {
-         Debug.logWarning("Invalid terminal sequence " + newSequence + 
+         Debug.logWarning("Invalid terminal sequence " + newSequence +
                ", killing unrecognized process");
          pConsoleProcessFactory_.get().interruptAndReap(procInfo.getHandle());
          return;
@@ -165,7 +176,7 @@ public class TerminalTab extends DelayLoadWorkbenchTab<TerminalTabPresenter>
 
          if (newSequence == currentSequence)
          {
-            Debug.logWarning("Duplicate terminal sequence " + newSequence + 
+            Debug.logWarning("Duplicate terminal sequence " + newSequence +
                   ", killing duplicate process");
             pConsoleProcessFactory_.get().interruptAndReap(procInfo.getHandle());
             return;
@@ -179,8 +190,8 @@ public class TerminalTab extends DelayLoadWorkbenchTab<TerminalTabPresenter>
       }
       procInfoList.add(procInfo);
    }
-   
-   private Shim shim_;
+
+   private final Shim shim_;
 
    private final Provider<ConsoleProcessFactory> pConsoleProcessFactory_;
 }

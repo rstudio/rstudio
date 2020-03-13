@@ -1,7 +1,7 @@
 /*
  * JsObject.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-12 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -126,6 +126,11 @@ public class JsObject extends JavaScriptObject
          return null;
       return _getDouble(key);
    }
+   
+   public final Double getDbl(String key)
+   {
+      return getDouble(key);
+   }
 
    public final native double _getDouble(String key) /*-{
       return this[key];
@@ -148,6 +153,11 @@ public class JsObject extends JavaScriptObject
       if (!hasKey(key) || getValueType(key) != "boolean")
          return null;
       return _getBoolean(key);
+   }
+   
+   public final Boolean getBool(String key)
+   {
+      return getBoolean(key);
    }
 
    public final native boolean _getBoolean(String key) /*-{

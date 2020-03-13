@@ -1,7 +1,7 @@
 /*
  * TextEditingTargetFindReplace.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -39,7 +39,7 @@ public class TextEditingTargetFindReplace
       this(container, true);
    }
    
-   public TextEditingTargetFindReplace(Container container, boolean showReplace)                                  
+   public TextEditingTargetFindReplace(Container container, boolean showReplace)
    {
       container_ = container;
       showReplace_ = showReplace;
@@ -59,6 +59,8 @@ public class TextEditingTargetFindReplace
       if (findReplaceBar_ == null)
       {
          findReplaceButton_ = new ToolbarButton(
+               ToolbarButton.NoText,
+               showReplace_ ? "Find/Replace" : "Find",
                FindReplaceBar.getFindIcon(),
                new ClickHandler() {
                   public void onClick(ClickEvent event)
@@ -69,8 +71,6 @@ public class TextEditingTargetFindReplace
                         hideFindReplace();
                   }
                });
-         String title = showReplace_ ? "Find/Replace" : "Find";
-         findReplaceButton_.setTitle(title);
       }
       return findReplaceButton_;
    }

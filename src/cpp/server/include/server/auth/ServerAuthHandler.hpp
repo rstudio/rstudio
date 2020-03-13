@@ -1,7 +1,7 @@
 /*
  * ServerAuthHandler.hpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-12 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -20,8 +20,11 @@
 
 #include <boost/function.hpp>
 
+#include <core/ExponentialBackoff.hpp>
 #include <core/http/UriHandler.hpp>
 #include <core/http/AsyncUriHandler.hpp>
+
+#include <shared_core/json/Json.hpp>
 
 #include <server/auth/ServerSecureUriHandler.hpp>
 
@@ -36,7 +39,9 @@ extern const char * const kSignOut;
 extern const char * const kRefreshCredentialsAndContinue;
 
 // functions which can be called on the handler directly
-std::string getUserIdentifier(const core::http::Request& request);
+std::string getUserIdentifier(const core::http::Request& request,
+                              bool requireUserListCookie,
+                              core::http::Response* pResponse);
 
 std::string userIdentifierToLocalUsername(const std::string& userIdentifier);
 
@@ -58,7 +63,8 @@ void refreshCredentialsThenContinue(
 // functions which must be provided by an auth handler
 struct Handler
 {
-   boost::function<std::string(const core::http::Request&)> getUserIdentifier;
+   boost::function<std::string(const core::http::Request&,
+                               core::http::Response*)> getUserIdentifier;
    boost::function<std::string(const std::string&)>
                                                 userIdentifierToLocalUsername;
    core::http::UriFilterFunction mainPageFilter;
@@ -72,6 +78,19 @@ struct Handler
                         const std::string&,
                         bool,
                         core::http::Response*)> setSignInCookies;
+
+   boost::function<void(const core::http::Request&,
+                        const std::string&,
+                        bool,
+                        core::http::Response*)> refreshAuthCookies;
+};
+
+struct RevokedCookie
+{
+   RevokedCookie(const std::string& cookie);
+
+   std::string cookie;
+   boost::posix_time::ptime expiration;
 };
 
 // register the auth handler
@@ -90,6 +109,39 @@ void setSignInCookies(const core::http::Request& request,
 // sign out
 void signOut(const core::http::Request& request,
              core::http::Response* pResponse);
+
+// checks whether the user is attempting to sign in again too rapidly
+// used to prevent inordinate generation of expired tokens
+bool isUserSignInThrottled(const std::string& user);
+
+void insertRevokedCookie(const RevokedCookie& cookie);
+
+// refreshes the auth cookie silently (without user intervention)
+// invoked when the user performs an active action against the system
+// which "resets" his idle time, generating a new auth cookie
+void refreshAuthCookies(const std::string& userIdentifier,
+                        const core::http::Request& request,
+                        core::http::Response* pResponse);
+
+void invalidateAuthCookie(const std::string& cookie,
+                          core::ExponentialBackoffPtr backoffPtr = core::ExponentialBackoffPtr());
+
+core::Error initialize();
+
+namespace overlay {
+
+core::Error initialize();
+core::Error isUserLicensed(const std::string& username,
+                           bool* pLicensed);
+bool isUserListCookieValid(const std::string& cookieValue);
+bool shouldShowUserLicenseWarning();
+std::string getUserListCookieValue();
+unsigned int getActiveUserCount();
+core::json::Array getLicensedUsers();
+core::Error lockUser(boost::asio::io_service& ioService, const std::string& username);
+core::Error unlockUser(boost::asio::io_service& ioService, const std::string& username);
+
+} // namespace overlay
 
 } // namespace handler
 } // namespace auth

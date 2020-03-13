@@ -1,7 +1,7 @@
 /*
  * SessionConsoleProcess.cpp
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-20 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -19,6 +19,8 @@
 #include <session/projects/SessionProjects.hpp>
 
 #include <session/SessionModuleContext.hpp>
+#include <session/prefs/UserPrefs.hpp>
+#include <session/SessionConsoleProcessSocket.hpp>
 
 #include "modules/SessionWorkbench.hpp"
 #include "SessionConsoleProcessTable.hpp"
@@ -41,7 +43,7 @@ const std::string kEnvCommand = "/usr/bin/env";
 // create process options for a terminal
 core::system::ProcessOptions ConsoleProcess::createTerminalProcOptions(
       const ConsoleProcessInfo& procInfo,
-      TerminalShell::TerminalShellType* pSelectedShellType)
+      TerminalShell::ShellType* pSelectedShellType)
 {
    // configure environment for shell
    core::system::Options shellEnv;
@@ -53,6 +55,11 @@ core::system::ProcessOptions ConsoleProcess::createTerminalProcOptions(
    if (shellEnv.empty())
       core::system::environment(&shellEnv);
 
+#ifdef __APPLE__
+   // suppress macOS Catalina warning suggesting switching to zsh
+   core::system::setenv(&shellEnv, "BASH_SILENCE_DEPRECATION_WARNING", "1");
+#endif
+
    *pSelectedShellType = procInfo.getShellType();
 
 #ifndef _WIN32
@@ -63,18 +70,23 @@ core::system::ProcessOptions ConsoleProcess::createTerminalProcOptions(
    // don't add commands starting with a space to shell history
    if (procInfo.getTrackEnv())
    {
+      // HISTCONTROL is Bash-specific. In Zsh we rely on the shell having the 
+      // HIST_IGNORE_SPACE option set, which we do via -g when we start Zsh. In the
+      // future we could make environment-capture smarter and not set this variable
+      // for shells that don't use it, but for now keeping it to avoid having to 
+      // rework PrivateCommand class.
       core::system::setenv(&shellEnv, "HISTCONTROL", "ignoreboth");
    }
 #else
    core::system::setHomeToUserProfile(&shellEnv);
 #endif
 
-   // ammend shell paths as appropriate
+   // amend shell paths as appropriate
    session::modules::workbench::ammendShellPaths(&shellEnv);
 
    // set options
    core::system::ProcessOptions options;
-   options.workingDir = procInfo.getCwd().empty() ? module_context::shellWorkingDirectory() :
+   options.workingDir = procInfo.getCwd().isEmpty() ? module_context::shellWorkingDirectory() :
                                                     procInfo.getCwd();
    options.environment = shellEnv;
    options.smartTerminal = true;
@@ -83,8 +95,12 @@ core::system::ProcessOptions ConsoleProcess::createTerminalProcOptions(
    options.cols = procInfo.getCols();
    options.rows = procInfo.getRows();
 
-   if (session::userSettings().terminalBusyMode() == core::system::busy_detection::Whitelist)
-      options.subprocWhitelist = session::userSettings().terminalBusyWhitelist();
+   if (prefs::userPrefs().busyDetection() == kBusyDetectionWhitelist)
+   {
+      std::vector<std::string> whitelist;
+      prefs::userPrefs().busyWhitelist().toVectorString(whitelist);
+      options.subprocWhitelist = whitelist;
+   }
 
    // set path to shell
    AvailableTerminalShells shells;
@@ -174,7 +190,7 @@ void ConsoleProcess::commonInit()
          args << args_;
 
          // fixup program_ and args_ so we run the consoleio.exe proxy
-         program_ = consoleIoPath.absolutePathNative();
+         program_ = consoleIoPath.getAbsolutePathNative();
          args_ = args;
       }
       // if this is a runCommand then prepend consoleio.exe to the command
@@ -226,7 +242,7 @@ void ConsoleProcess::commonInit()
       core::system::setenv(&(options_.environment.get()), "RSTUDIO_TERM", procInfo_->getHandle());
 
       core::system::setenv(&(options_.environment.get()), "RSTUDIO_PROJ_NAME",
-                           projects::projectContext().file().stem());
+                           projects::projectContext().file().getStem());
       core::system::setenv(&(options_.environment.get()), "RSTUDIO_SESSION_ID",
                            module_context::activeSession().id());
 #endif
@@ -642,18 +658,10 @@ void ConsoleProcess::onExit(int exitCode)
    procInfo_->setExitCode(exitCode);
    procInfo_->setHasChildProcs(false);
 
-   AutoCloseMode autoClose = procInfo_->getAutoClose();
    if (procInfo_->getAutoClose() == DefaultAutoClose)
    {
-      if (session::userSettings().terminalAutoclose())
-      {
-         autoClose = AlwaysAutoClose;
-      }
-      else
-      {
-         autoClose = NeverAutoClose;
-      }
-      procInfo_->setAutoClose(autoClose);
+      procInfo_->setAutoClose(
+            ConsoleProcessInfo::closeModeFromPref(prefs::userPrefs().terminalCloseBehavior()));
    }
 
    if (procInfo_->getAutoClose() == NeverAutoClose)
@@ -712,9 +720,8 @@ std::string ConsoleProcess::getChannelMode() const
       return "rpc";
    case Websocket:
       return "websocket";
-   default:
-      return "unknown";
    }
+   return "unknown";
 }
 
 void ConsoleProcess::setRpcMode()
@@ -832,15 +839,6 @@ ConsoleProcessPtr ConsoleProcess::createTerminalProcess(
       {
          cp = proc;
          cp->procInfo_->setRestarted(false);
-
-         if (proc->procInfo_->getAltBufferActive())
-         {
-            // Jiggle the size of the pseudo-terminal, this will force the app
-            // to refresh itself; this does rely on the host performing a second
-            // resize to the actual available size. Clumsy, but so far this is
-            // the best I've come up with.
-            cp->resize(core::system::kDefaultCols / 2, core::system::kDefaultRows / 2);
-         }
       }
       else
       {
@@ -860,10 +858,15 @@ ConsoleProcessPtr ConsoleProcess::createTerminalProcess(
 
          // Windows Command Prompt and PowerShell don't support reloading
          // buffers, so delete the buffer before we start the new process.
-         if (cp->getShellType() == TerminalShell::Cmd32 ||
-             cp->getShellType() == TerminalShell::Cmd64 ||
-             cp->getShellType() == TerminalShell::PS32 ||
-             cp->getShellType() == TerminalShell::PS64)
+         if (cp->getShellType() == TerminalShell::ShellType::Cmd32 ||
+             cp->getShellType() == TerminalShell::ShellType::Cmd64 ||
+             cp->getShellType() == TerminalShell::ShellType::PS32 ||
+             cp->getShellType() == TerminalShell::ShellType::PS64 ||
+#ifdef _WIN32
+             // Ditto for custom shell on Windows.
+             cp->getShellType() == TerminalShell::ShellType::CustomShell ||
+#endif
+             cp->getShellType() == TerminalShell::ShellType::PSCore)
          {
             cp->deleteLogFile();
          }
@@ -897,7 +900,7 @@ ConsoleProcessPtr ConsoleProcess::createTerminalProcess(
 ConsoleProcessPtr ConsoleProcess::createTerminalProcess(
       ConsoleProcessPtr proc)
 {
-   TerminalShell::TerminalShellType actualShellType;
+   TerminalShell::ShellType actualShellType;
    core::system::ProcessOptions options = ConsoleProcess::createTerminalProcOptions(
             *proc->procInfo_,
             &actualShellType);
@@ -989,7 +992,7 @@ std::string ConsoleProcess::getShellName() const
 bool ConsoleProcess::useWebsockets()
 {
    return session::options().allowTerminalWebsockets() &&
-                     session::userSettings().terminalWebsockets();
+                     prefs::userPrefs().terminalWebsockets();
 }
 
 core::json::Array processesAsJson(SerializationMode serialMode)

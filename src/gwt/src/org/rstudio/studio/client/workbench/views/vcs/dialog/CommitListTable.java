@@ -1,7 +1,7 @@
 /*
  * CommitListTable.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-12 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -227,7 +227,7 @@ public class CommitListTable extends MultiSelectCellTable<CommitInfo>
          @Override
          public String getValue(CommitInfo object)
          {
-            return object.getId();
+            return object.getId().substring(0, 8);
          }
       };
       addColumn(idCol, idColName);

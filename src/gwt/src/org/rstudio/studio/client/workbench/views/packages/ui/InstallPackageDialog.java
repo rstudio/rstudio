@@ -1,7 +1,7 @@
 /*
  * InstallPackageDialog.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-20 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,13 +14,16 @@
  */
 package org.rstudio.studio.client.workbench.views.packages.ui;
 
+import com.google.gwt.aria.client.Roles;
 import org.rstudio.core.client.Debug;
+import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.files.FileSystemContext;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.CanFocus;
 import org.rstudio.core.client.widget.CaptionWithHelp;
 import org.rstudio.core.client.widget.FocusHelper;
+import org.rstudio.core.client.widget.FormLabel;
 import org.rstudio.core.client.widget.ModalDialog;
 import org.rstudio.core.client.widget.MultipleItemSuggestTextBox;
 import org.rstudio.core.client.widget.OperationWithInput;
@@ -48,7 +51,6 @@ import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.HTML;
-import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.ListBox;
 import com.google.gwt.user.client.ui.MultiWordSuggestOracle;
 import com.google.gwt.user.client.ui.SimplePanel;
@@ -66,7 +68,7 @@ public class InstallPackageDialog extends ModalDialog<PackageInstallRequest>
                            GlobalDisplay globalDisplay,
                            OperationWithInput<PackageInstallRequest> operation)
 {
-      super("Install Packages", operation);
+      super("Install Packages", Roles.getDialogRole(), operation);
       
       installContext_ = installContext;
       defaultInstallOptions_ = defaultInstallOptions;
@@ -129,16 +131,8 @@ public class InstallPackageDialog extends ModalDialog<PackageInstallRequest>
       mainPanel.setStylePrimaryName(RESOURCES.styles().mainWidget());
       
       // source type
-      reposCaption_ = new CaptionWithHelp("Install from:",
-                                          "Configuring Repositories",
-                                          "configuring_repositories");  
-      reposCaption_.setIncludeVersionInfo(false);
-      reposCaption_.setWidth("100%");
-      mainPanel.add(reposCaption_);
-      
       packageSourceListBox_ = new ListBox();
-      packageSourceListBox_.setStylePrimaryName(
-                           RESOURCES.styles().packageSourceListBox());
+      packageSourceListBox_.setStylePrimaryName(RESOURCES.styles().packageSourceListBox());
       packageSourceListBox_.addStyleName(RESOURCES.styles().extraBottomPad());
       JsArrayString repos = installContext_.selectedRepositoryNames();
       if (repos.length() == 1)
@@ -161,6 +155,13 @@ public class InstallPackageDialog extends ModalDialog<PackageInstallRequest>
       packageSourceListBox_.addItem("Package Archive File (" + 
                                     installContext_.packageArchiveExtension() +
                                     ")");
+      reposCaption_ = new CaptionWithHelp("Install from:",
+                                          "Configuring Repositories",
+                                          "configuring_repositories",
+                                          packageSourceListBox_);
+      reposCaption_.setIncludeVersionInfo(false);
+      reposCaption_.setWidth("100%");
+      mainPanel.add(reposCaption_); 
       mainPanel.add(packageSourceListBox_);
       
       // source panel container
@@ -169,25 +170,28 @@ public class InstallPackageDialog extends ModalDialog<PackageInstallRequest>
       
       // repos source panel
       reposSourcePanel_ = new FlowPanel();
-      Label packagesLabel = new Label(
-                      "Packages (separate multiple with space or comma):");
-      packagesLabel.setStylePrimaryName(RESOURCES.styles().packagesLabel());
-      reposSourcePanel_.add(packagesLabel);
-     
       packagesTextBox_ = new MultipleItemSuggestTextBox();
       packagesSuggestBox_ = new SuggestBox(new PackageOracle(),
                                            packagesTextBox_);
       packagesSuggestBox_.setWidth("100%");
       packagesSuggestBox_.setLimit(20);
       packagesSuggestBox_.addStyleName(RESOURCES.styles().extraBottomPad());
+      FormLabel packagesLabel = new FormLabel(
+                      "Packages (separate multiple with space or comma):", packagesSuggestBox_);
+      packagesLabel.setStylePrimaryName(RESOURCES.styles().packagesLabel());
+      reposSourcePanel_.add(packagesLabel);
       reposSourcePanel_.add(packagesSuggestBox_);
       sourcePanel_.setWidget(reposSourcePanel_);
       mainPanel.add(sourcePanel_);
          
       // archive source panel
       packageArchiveFile_ = new TextBoxWithButton(
-                                              "Package archive:", 
+                                              "Package archive:",
+                                              "",
                                               "Browse...",
+                                              null,
+                                              ElementIds.TextBoxButtonId.PACKAGE_ARCHIVE,
+                                              true,
                                               browseForArchiveClickHandler_);
             
       // create check box here because manageUIState accesses it
@@ -209,9 +213,6 @@ public class InstallPackageDialog extends ModalDialog<PackageInstallRequest>
                packageArchiveFile_.click();
          } 
       });
-      
-     
-      mainPanel.add(new Label("Install to Library:"));
       
       // library list box
       libraryListBox_ = new ListBox();
@@ -236,6 +237,9 @@ public class InstallPackageDialog extends ModalDialog<PackageInstallRequest>
         
       }
       libraryListBox_.setSelectedIndex(selectedIndex); 
+
+      FormLabel libraryListLabel = new FormLabel("Install to Library:", libraryListBox_);
+      mainPanel.add(libraryListLabel);
       mainPanel.add(libraryListBox_);
       
       // install dependencies check box
@@ -251,7 +255,7 @@ public class InstallPackageDialog extends ModalDialog<PackageInstallRequest>
    }
    
    @Override
-   protected void onDialogShown()
+   protected void focusInitialControl()
    {
       if (installFromRepository())
          FocusHelper.setFocusDeferred(packagesSuggestBox_);

@@ -1,15 +1,13 @@
 <component name="libraryTable">
   <library name="gwt">
     <CLASSES>
-      <root url="file://$PROJECT_DIR$/lib/gwt/2.8.2" />
+      <root url="file://$PROJECT_DIR$/lib/gwt/gwt-rstudio-1.3" />
     </CLASSES>
-    <JAVADOC>
-      <root url="file://$PROJECT_DIR$/lib/gwt/2.8.2/doc/javadoc" />
-    </JAVADOC>
+    <JAVADOC />
     <SOURCES>
-      <root url="file://$PROJECT_DIR$/lib/gwt/2.8.2" />
+      <root url="file://$PROJECT_DIR$/lib/gwt/gwt-rstudio-1.3" />
     </SOURCES>
-    <jarDirectory url="file://$PROJECT_DIR$/lib/gwt/2.8.2" recursive="false" />
-    <jarDirectory url="file://$PROJECT_DIR$/lib/gwt/2.8.2" recursive="false" type="SOURCES" />
+    <jarDirectory url="file://$PROJECT_DIR$/lib/gwt/gwt-rstudio-1.3" recursive="false" />
+    <jarDirectory url="file://$PROJECT_DIR$/lib/gwt/gwt-rstudio-1.3" recursive="false" type="SOURCES" />
   </library>
 </component>

@@ -1,7 +1,7 @@
 /*
  * DesktopPosixDetectRHome.cpp
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -51,21 +51,21 @@ bool prepareEnvironment(Options& options)
       rWhichRPath = FilePath(whichROverride);
 
 #ifdef Q_OS_MAC
-   FilePath rLdScriptPath = options.scriptsPath().complete("session/r-ldpath");
+   FilePath rLdScriptPath = options.scriptsPath().completePath("session/r-ldpath");
    if (!rLdScriptPath.exists())
    {
       FilePath executablePath;
-      Error error = core::system::executablePath(NULL, &executablePath);
+      Error error = core::system::executablePath(nullptr, &executablePath);
       if (error)
          LOG_ERROR(error);
-      rLdScriptPath = executablePath.parent().complete("r-ldpath");
+      rLdScriptPath = executablePath.getParent().completePath("r-ldpath");
    }
 #else
    // determine rLdPaths script location
    FilePath supportingFilePath = options.supportingFilePath();
-   FilePath rLdScriptPath = supportingFilePath.complete("bin/r-ldpath");
+   FilePath rLdScriptPath = supportingFilePath.completePath("bin/r-ldpath");
    if (!rLdScriptPath.exists())
-      rLdScriptPath = supportingFilePath.complete("session/r-ldpath");
+      rLdScriptPath = supportingFilePath.completePath("session/r-ldpath");
 #endif
    // attempt to detect R environment
    std::string rScriptPath, rVersion, errMsg;

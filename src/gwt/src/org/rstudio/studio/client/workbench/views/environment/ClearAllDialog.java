@@ -1,7 +1,7 @@
 /*
  * ClearAllDialog.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.views.environment;
 
+import com.google.gwt.aria.client.Roles;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickEvent;
@@ -32,13 +33,14 @@ import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.core.client.widget.ThemedButton;
 import org.rstudio.core.client.widget.images.MessageDialogImages;
 import org.rstudio.studio.client.RStudioGinjector;
-import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserState;
 
 public class ClearAllDialog extends ModalDialogBase
 {  
    public ClearAllDialog(int numObjects, 
                          final ProgressOperationWithInput<Boolean> okOperation)
    {
+      super(Roles.getAlertdialogRole());
       RStudioGinjector.INSTANCE.injectMembers(this);
       numObjects_ = numObjects;
       
@@ -60,9 +62,9 @@ public class ClearAllDialog extends ModalDialogBase
    }
    
    @Inject 
-   void initialize(UIPrefs prefs)
+   void initialize(UserState state)
    {
-      prefs_ = prefs;
+      state_ = state;
    }
 
    @Override
@@ -78,6 +80,7 @@ public class ClearAllDialog extends ModalDialogBase
       // add image
       MessageDialogImages images = MessageDialogImages.INSTANCE;
       Image image = new Image(new ImageResource2x(images.dialog_warning2x()));
+      image.setAltText(MessageDialogImages.DIALOG_WARNING_TEXT);
       horizontalPanel.add(image);
 
       // add message widget
@@ -96,6 +99,9 @@ public class ClearAllDialog extends ModalDialogBase
       horizontalPanel.add(label);
       panel.add(horizontalPanel);
       
+       // read the message when dialog is shown
+      setARIADescribedBy(label.getElement());
+
       // add include hidden option
       HorizontalPanel optionPanel = new HorizontalPanel();
       Style optionStyle = optionPanel.getElement().getStyle();
@@ -103,7 +109,7 @@ public class ClearAllDialog extends ModalDialogBase
       optionStyle.setMarginBottom(10, Unit.PX);
       
       chkIncludeHidden_ = new CheckBox("Include hidden objects");
-      chkIncludeHidden_.setValue(prefs_.clearHidden().getValue());
+      chkIncludeHidden_.setValue(state_.clearHidden().getValue());
 
       if (numObjects_ == 0)
       {
@@ -111,8 +117,8 @@ public class ClearAllDialog extends ModalDialogBase
             @Override
             public void onValueChange(ValueChangeEvent<Boolean> event)
             {
-               prefs_.clearHidden().setGlobalValue(event.getValue());
-               prefs_.writeUIPrefs();
+               state_.clearHidden().setGlobalValue(event.getValue());
+               state_.writeState();
             }
          });
          optionPanel.add(chkIncludeHidden_);
@@ -124,6 +130,6 @@ public class ClearAllDialog extends ModalDialogBase
    
    private ProgressIndicator progress_ ;
    private CheckBox chkIncludeHidden_;
-   private UIPrefs prefs_;
+   private UserState state_;
    private int numObjects_;
 }

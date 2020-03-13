@@ -1,7 +1,7 @@
 #
 # CMakeLists.txt
 #
-# Copyright (C) 2009-18 by RStudio, Inc.
+# Copyright (C) 2009-19 by RStudio, PBC
 #
 # Unless you have received this program directly from RStudio pursuant
 # to the terms of a commercial license agreement with RStudio, then
@@ -84,19 +84,27 @@ include_directories(
    include
    ${CMAKE_CURRENT_BINARY_DIR}
    ${CORE_SOURCE_DIR}/include
+   ${EXT_SOURCE_DIR}
    ${LIBR_INCLUDE_DIRS}
+   ${SHARED_CORE_SOURCE_DIR}/include
 )
 
 # define library
 add_library(rstudio-r STATIC ${R_SOURCE_FILES} ${R_HEADER_FILES})
+define_source_file_names(rstudio-r)
 
 # link dependencies
-target_link_libraries(rstudio-r
-   ${LIBR_LIBRARIES}
-   rstudio-core
-)
+target_link_libraries(rstudio-r rstudio-core)
+
+if(RSTUDIO_PACKAGE_BUILD AND APPLE)
+   target_link_libraries(rstudio-r "-undefined dynamic_lookup")
+else()
+   target_link_libraries(rstudio-r "${LIBR_LIBRARIES}")
+endif()
 
 # install rules
-file(GLOB R_SRC_FILES "R/*.R")
-install(FILES ${R_SRC_FILES} DESTINATION ${RSTUDIO_INSTALL_SUPPORTING}/R)
+if (NOT RSTUDIO_SESSION_WIN32)
+   file(GLOB R_SRC_FILES "R/*.R")
+   install(FILES ${R_SRC_FILES} DESTINATION ${RSTUDIO_INSTALL_SUPPORTING}/R)
+endif()
 

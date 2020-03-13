@@ -1,7 +1,7 @@
 /*
  * TcpIpAsyncServer.hpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-12 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -29,8 +29,11 @@ class TcpIpAsyncServer : public AsyncServerImpl<boost::asio::ip::tcp>
 {
 public:
    TcpIpAsyncServer(const std::string& serverName,
-                    const std::string& baseUri = std::string())
-      : AsyncServerImpl<boost::asio::ip::tcp>(serverName, baseUri)
+                    const std::string& baseUri = std::string(),
+                    bool disableOriginCheck = true,
+                    const std::vector<boost::regex> allowedOrigins = std::vector<boost::regex>(),
+                    const Headers& additionalHeaders = Headers())
+      : AsyncServerImpl<boost::asio::ip::tcp>(serverName, baseUri, disableOriginCheck, allowedOrigins, additionalHeaders)
    {
    }
    

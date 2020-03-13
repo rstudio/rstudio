@@ -1,7 +1,7 @@
 #
 # SessionPackages.R
 #
-# Copyright (C) 2009-12 by RStudio, Inc.
+# Copyright (C) 2009-19 by RStudio, PBC
 #
 # Unless you have received this program directly from RStudio pursuant
 # to the terms of a commercial license agreement with RStudio, then
@@ -64,7 +64,7 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
    
    notifyPackageLoaded <- function(pkgname, ...)
    {
-      .Call("rs_packageLoaded", pkgname)
+      .Call("rs_packageLoaded", pkgname, PACKAGE = "(embedding)")
 
       # when a package is loaded, it can register S3 methods which replace overrides we've
       # attached manually; take this opportunity to reattach them.
@@ -73,7 +73,7 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
 
    notifyPackageUnloaded <- function(pkgname, ...)
    {
-      .Call("rs_packageUnloaded", pkgname)
+      .Call("rs_packageUnloaded", pkgname, PACKAGE = "(embedding)")
    }
    
    # NOTE: `list.dirs()` was introduced with R 2.13 but was buggy until 3.0
@@ -123,7 +123,10 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
                                                                 repos = getOption("repos"),
                                                                 ...) 
    {
-      if (!.Call("rs_canInstallPackages"))
+      if (missing(pkgs))
+         return(utils::install.packages())
+      
+      if (!.Call("rs_canInstallPackages", PACKAGE = "(embedding)"))
       {
         stop("Package installation is disabled in this version of RStudio",
              call. = FALSE)
@@ -158,7 +161,7 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
       # do housekeeping after we execute the original
       on.exit({
          .rs.updatePackageEvents()
-         .Call("rs_packageLibraryMutated")
+         .Call("rs_packageLibraryMutated", PACKAGE = "(embedding)")
          .rs.restorePreviousPath()
       })
       
@@ -175,7 +178,7 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
                                                                ...) 
    {
       # do housekeeping after we execute the original
-      on.exit(.Call("rs_packageLibraryMutated"))
+      on.exit(.Call("rs_packageLibraryMutated", PACKAGE = "(embedding)"))
                          
       # call original
       original(pkgs, lib, ...) 
@@ -184,12 +187,12 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
 
 .rs.addFunction( "addRToolsToPath", function()
 {
-    .Call("rs_addRToolsToPath")
+    .Call("rs_addRToolsToPath", PACKAGE = "(embedding)")
 })
 
 .rs.addFunction( "restorePreviousPath", function()
 {
-    .Call("rs_restorePreviousPath")
+    .Call("rs_restorePreviousPath", PACKAGE = "(embedding)")
 })
 
 .rs.addFunction( "uniqueLibraryPaths", function()
@@ -423,7 +426,7 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
 {
    # cran mirror configured
    repos = getOption("repos")
-   cranMirrorConfigured <- !is.null(repos) && repos != "@CRAN@"
+   cranMirrorConfigured <- !is.null(repos) && !any(repos == "@CRAN@")
    
    # selected repository names (assume an unnamed repo == CRAN)
    selectedRepositoryNames <- names(repos)
@@ -762,7 +765,7 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
 
 .rs.addFunction("enqueLoadedPackageUpdates", function(installCmd)
 {
-   .Call("rs_enqueLoadedPackageUpdates", installCmd)
+   .Call("rs_enqueLoadedPackageUpdates", installCmd, PACKAGE = "(embedding)")
 })
 
 .rs.addJsonRpcHandler("loaded_package_updates_required", function(pkgs)
@@ -777,12 +780,12 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
 
 .rs.addFunction("getCachedAvailablePackages", function(contribUrl)
 {
-   .Call("rs_getCachedAvailablePackages", contribUrl)
+   .Call("rs_getCachedAvailablePackages", contribUrl, PACKAGE = "(embedding)")
 })
 
 .rs.addFunction("downloadAvailablePackages", function(contribUrl)
 {
-   .Call("rs_downloadAvailablePackages", contribUrl)
+   .Call("rs_downloadAvailablePackages", contribUrl, PACKAGE = "(embedding)")
 })
 
 .rs.addJsonRpcHandler("package_skeleton", function(packageName,
@@ -1162,7 +1165,7 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
       paste(packageName, ".Rproj", sep = "")
    )
    
-   if (!.Call("rs_writeProjectFile", RprojPath))
+   if (!.Call("rs_writeProjectFile", RprojPath, PACKAGE = "(embedding)"))
       return(.rs.error("Failed to create package .Rproj file"))
    
    # Ensure new packages get AutoAppendNewLine + StripTrailingWhitespace
@@ -1175,8 +1178,8 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
       Rproj <- c(Rproj, "AutoAppendNewline: Yes")
    
    stripTrailingWhitespace <- grep("StripTrailingWhitespace:", Rproj, fixed = TRUE)
-   if (length(appendNewLineIndex))
-      Rproj[appendNewLineIndex] <- "StripTrailingWhitespace: Yes"
+   if (length(stripTrailingWhitespace))
+      Rproj[stripTrailingWhitespace] <- "StripTrailingWhitespace: Yes"
    else
       Rproj <- c(Rproj, "StripTrailingWhitespace: Yes")
    
@@ -1185,7 +1188,7 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
    # NOTE: this file is not always generated (e.g. people who have implicitly opted
    # into using devtools won't need the template file)
    if (file.exists(file.path(packageDirectory, "R", "hello.R")))
-      .Call("rs_addFirstRunDoc", RprojPath, "R/hello.R")
+      .Call("rs_addFirstRunDoc", RprojPath, "R/hello.R", PACKAGE = "(embedding)")
 
    ## NOTE: This must come last to ensure the other package
    ## infrastructure bits have been generated; otherwise
@@ -1196,7 +1199,7 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
    {
       Rcpp::compileAttributes(packageDirectory)
       if (file.exists(file.path(packageDirectory, "src/rcpp_hello.cpp")))
-         .Call("rs_addFirstRunDoc", RprojPath, "src/rcpp_hello.cpp")
+         .Call("rs_addFirstRunDoc", RprojPath, "src/rcpp_hello.cpp", PACKAGE = "(embedding)")
    }
    
    .rs.success()
@@ -1478,11 +1481,12 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
    # check and see if R has already queried available packages;
    # if so we can ask R for available packages as it will use
    # the cache
-   paths <- sprintf(
-      "%s/repos_%s.rds",
-      tempdir(),
-      URLencode(contrib.url(repos), TRUE)
+   paths <- vapply(repos, function(url) {
+      sprintf("%s/repos_%s.rds", 
+              tempdir(), 
+              URLencode(contrib.url(url), TRUE)
    )
+   }, FUN.VALUE = character(1))
    
    if (all(file.exists(paths))) {
       
@@ -1639,7 +1643,7 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
       repos = list()
    )
    
-   rCranReposUrl <- .Call("rs_getCranReposUrl")
+   rCranReposUrl <- .Call("rs_getCranReposUrl", PACKAGE = "(embedding)")
    isDefault <- identical(rCranReposUrl, NULL) || nchar(rCranReposUrl) == 0
 
    if (isDefault) {
@@ -1711,4 +1715,13 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
    }, error = function(e) {
       .rs.scalar(FALSE)
    })
+})
+
+.rs.addJsonRpcHandler("is_package_installed", function(package, version)
+{
+   installed <- if (is.null(version))
+      .rs.isPackageInstalled(package)
+   else
+      .rs.isPackageVersionInstalled(package, version)
+   .rs.scalar(installed)
 })

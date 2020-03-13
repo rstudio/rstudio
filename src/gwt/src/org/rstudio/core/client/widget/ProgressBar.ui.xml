@@ -1,38 +1,38 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
-	xmlns:g="urn:import:com.google.gwt.user.client.ui">
-	<ui:style>
-	.progressHost
-	{
-		width: 100%;	
-	}
-	
-	.progress
-	{
-		border: 1px solid;
-		border-radius: 3px;
-		position: relative;
-		width: 100%;
-	}
-	
-	.bar
-	{
-		position: absolute;
-		top: 0;
-		left: 0;
-		width: 0;
-		background-color: #68C13C;
-	}
-	
-	.rstudio-themes-dark .bar
-	{
-		background-color: #058005;
-	}
-	
-	</ui:style>
-	<g:HorizontalPanel styleName="{style.progressHost}" ui:field="progressHost_">
-		<g:HTMLPanel styleName="{style.progress}" ui:field="progress_" height="1.5em">
-			<g:HTMLPanel styleName="{style.bar}" ui:field="bar_" height="1.5em"></g:HTMLPanel>
-		</g:HTMLPanel>
-	</g:HorizontalPanel>
+   xmlns:g="urn:import:com.google.gwt.user.client.ui">
+   <ui:style>
+   .progressHost
+   {
+      width: 100%;   
+   }
+   
+   .progress
+   {
+      border: 1px solid;
+      border-radius: 3px;
+      position: relative;
+      width: 100%;
+   }
+   
+   .bar
+   {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 0;
+      background-color: #68C13C;
+   }
+   
+   .rstudio-themes-dark .bar
+   {
+      background-color: #058005;
+   }
+   
+   </ui:style>
+   <g:HorizontalPanel styleName="{style.progressHost}" ui:field="progressHost_">
+      <g:HTMLPanel styleName="{style.progress}" ui:field="progress_" height="1.5em">
+         <g:HTMLPanel styleName="{style.bar}" ui:field="bar_" height="1.5em"></g:HTMLPanel>
+      </g:HTMLPanel>
+   </g:HorizontalPanel>
 </ui:UiBinder> 

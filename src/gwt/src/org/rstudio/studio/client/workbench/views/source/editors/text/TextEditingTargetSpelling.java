@@ -1,7 +1,7 @@
 /*
  * TextEditingTargetSpelling.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-12 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -32,12 +32,15 @@ import org.rstudio.core.client.ResultCallback;
 import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.widget.NullProgressIndicator;
 import org.rstudio.core.client.widget.ToolbarPopupMenu;
+import org.rstudio.studio.client.common.filetypes.TextFileType;
 import org.rstudio.studio.client.common.spelling.TypoSpellChecker;
 import org.rstudio.studio.client.server.Void;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.views.output.lint.LintManager;
 import org.rstudio.studio.client.workbench.views.output.lint.model.LintItem;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.spelling.TokenPredicate;
 import org.rstudio.studio.client.workbench.views.source.editors.text.spelling.CheckSpelling;
 import org.rstudio.studio.client.workbench.views.source.editors.text.spelling.InitialProgressDialog;
 import org.rstudio.studio.client.workbench.views.source.editors.text.spelling.SpellingDialog;
@@ -55,53 +58,77 @@ public class TextEditingTargetSpelling implements TypoSpellChecker.Context
 
    public TextEditingTargetSpelling(DocDisplay docDisplay,
                                     DocUpdateSentinel docUpdateSentinel,
-                                    LintManager lintManager)
+                                    LintManager lintManager,
+                                    UserPrefs prefs)
    {
       docDisplay_ = docDisplay;
       docUpdateSentinel_ = docUpdateSentinel;
       lintManager_ = lintManager;
+      prefs_ = prefs;
       typoSpellChecker_ = new TypoSpellChecker(this);
       injectContextMenuHandler();
    }
 
    public JsArray<LintItem> getLint()
    {
-      Iterable<Range> wordSource = docDisplay_.getWords(
-         docDisplay_.getFileType().getTokenPredicate(),
-         docDisplay_.getFileType().getCharPredicate(),
-         Position.create(0, 0),
-         null);
+      JsArray<LintItem> lint = JsArray.createArray().cast();
 
-      final ArrayList<String> words = new ArrayList<>();
+      /*
+         There are certain dictionaries blacklisted from realtime spellchecking, it's
+         possible due to external preference funny business to get into a state where
+         this function was incorrectly called. Detect that state, clean it up, and return.
+       */
+      final String language = prefs_.spellingDictionaryLanguage().getValue();
+      if (!TypoSpellChecker.canRealtimeSpellcheckDict(language))
+      {
+         prefs_.realTimeSpellchecking().setGlobalValue(false);
+         return lint;
+      }
+
+      TextFileType fileType = docDisplay_.getFileType();
+
+      // only spell check comments in code files
+      TokenPredicate tokenPredicate = fileType.getSpellCheckTokenPredicate();
+
+      // only get tokens for the visible screen
+      Iterable<Range> wordSource = docDisplay_.getWords(
+         tokenPredicate,
+         docDisplay_.getFileType().getCharPredicate(),
+         Position.create(docDisplay_.getFirstVisibleRow(), 0),
+         Position.create(docDisplay_.getLastVisibleRow(), docDisplay_.getLength(docDisplay_.getLastVisibleRow())));
+
       final ArrayList<Range> wordRanges = new ArrayList<>();
+      ArrayList<String> prefetchWords = new ArrayList<>();
 
       for (Range r : wordSource)
       {
-         // Don't worry about pathologically long words
-         if (r.getEnd().getColumn() - r.getStart().getColumn() > 250)
+         if (!typoSpellChecker_.shouldCheckSpelling(docDisplay_, r))
             continue;
 
          wordRanges.add(r);
-         words.add(docDisplay_.getTextForRange(r));
-      }
 
-      JsArray<LintItem> lint = JsArray.createArray().cast();
-      if (wordRanges.size() > 0)
-      {
-         for (int i = 0; i < words.size(); i++) {
-            String word = words.get(i);
-            if (!typoSpellChecker_.checkSpelling(word)) {
-               Range range = wordRanges.get(i);
-               lint.push(LintItem.create(
-                  range.getStart().getRow(),
-                  range.getStart().getColumn(),
-                  range.getEnd().getRow(),
-                  range.getEnd().getColumn(),
-                  "Spellcheck warning",
-                  "warning"));
-            }
+         // only check a certain number of words at once to not overwhelm the system
+         if (wordRanges.size() > prefs_.maxSpellcheckWords().getValue())
+            break;
+
+         String word = docDisplay_.getTextForRange(r);
+         if (!typoSpellChecker_.checkSpelling(word)) {
+            if (prefetchWords.size() < prefs_.maxSpellcheckPrefetch().getValue())
+               prefetchWords.add(word);
+
+            lint.push(LintItem.create(
+               r.getStart().getRow(),
+               r.getStart().getColumn(),
+               r.getEnd().getRow(),
+               r.getEnd().getColumn(),
+               "Spellcheck",
+               "spelling"));
          }
       }
+
+      if (prefetchWords.size() > 0)
+         typoSpellChecker_.prefetchWords(prefetchWords);
+
       return lint;
    }
 
@@ -139,15 +166,22 @@ public class TextEditingTargetSpelling implements TypoSpellChecker.Context
    @Override
    public void invalidateAllWords()
    {
-      lintManager_.forceRelint();
+      invalidateMisspelledWords();
+      lintManager_.relintAfterDelay(LintManager.DEFAULT_LINT_DELAY);
    }
 
    @Override
    public void invalidateMisspelledWords()
    {
-      
+      docDisplay_.removeMarkers((a, m) -> a != null && a.text().toLowerCase().contains("spellcheck"));
    }  
-   
+
+   @Override
+   public void invalidateWord(String word)
+   {
+      docDisplay_.removeMarkersAtWord(word);
+   }
+
    @Override
    public ArrayList<String> readDictionary()
    {
@@ -188,32 +222,52 @@ public class TextEditingTargetSpelling implements TypoSpellChecker.Context
    {
       docDisplay_.addContextMenuHandler((event) ->
       {
+         // If real time checking is off or
          // If we have a selection, just return as the user likely wants to cut/copy/paste
-         if (docDisplay_.hasSelection())
+         if (!prefs_.realTimeSpellchecking().getValue() || docDisplay_.hasSelection())
             return;
 
          // Get the word under the cursor
          Position pos = docDisplay_.getCursorPosition();
+         TextFileType fileType = docDisplay_.getFileType();
+         TokenPredicate tokenPredicate = fileType.getSpellCheckTokenPredicate();
          Position endOfLine = Position.create(pos.getRow()+1, 0);
          Iterable<Range> wordSource = docDisplay_.getWords(
-            docDisplay_.getFileType().getTokenPredicate(),
+            tokenPredicate,
             docDisplay_.getFileType().getCharPredicate(),
             pos,
             endOfLine);
 
          Iterator<Range> wordsIterator = wordSource.iterator();
 
-         // If there's no word, just return
          if (!wordsIterator.hasNext())
             return;
 
+         String word;
          Range wordRange = wordsIterator.next();
-         String word = docDisplay_.getTextForRange(wordRange);
 
-         if (word.length() < 2 || typoSpellChecker_.checkSpelling(word))
+         while (!wordRange.contains(pos))
+         {
+            if (wordsIterator.hasNext())
+               wordRange = wordsIterator.next();
+            else
+               break;
+         }
+         word = docDisplay_.getTextForRange(wordRange);
+
+         if (word == null ||
+             !typoSpellChecker_.shouldCheckSpelling(docDisplay_, wordRange) ||
+             typoSpellChecker_.checkSpelling(word))
+         {
             return;
+         }
+
+         // final variables for lambdas
+         final String replaceWord = word;
+         final Range replaceRange = wordRange;
 
          final ToolbarPopupMenu menu = new ToolbarPopupMenu();
+
          String[] suggestions = typoSpellChecker_.suggestionList(word);
 
          // We now know we're going to show our menu, stop default context menu
@@ -231,8 +285,9 @@ public class TextEditingTargetSpelling implements TypoSpellChecker.Context
                AppCommand.formatMenuLabel(null, suggestion, ""),
                true,
                () -> {
-                  docDisplay_.replaceRange(wordRange, suggestion);
                   docDisplay_.removeMarkersAtCursorPosition();
+                  docDisplay_.replaceRange(replaceRange, suggestion);
+                  lintManager_.relintAfterDelay(LintManager.DEFAULT_LINT_DELAY);
                });
 
             menu.addItem(suggestionItem);
@@ -243,11 +298,22 @@ public class TextEditingTargetSpelling implements TypoSpellChecker.Context
          if (suggestions.length > 0)
             menu.addSeparator();
 
+         MenuItem ignoreItem = new MenuItem(
+            AppCommand.formatMenuLabel(null, "Ignore word", ""),
+            true,
+            () -> {
+               typoSpellChecker_.addIgnoredWord(replaceWord);
+               docDisplay_.removeMarkersAtCursorPosition();
+            });
+
+         menu.addItem(ignoreItem);
+         menu.addSeparator();
+
          MenuItem addToDictionaryItem = new MenuItem(
             AppCommand.formatMenuLabel(RES.addToDictIcon(), "Add to user dictionary", ""),
             true,
             () -> {
-               typoSpellChecker_.addToUserDictionary(word);
+               typoSpellChecker_.addToUserDictionary(replaceWord);
                docDisplay_.removeMarkersAtCursorPosition();
             });
 
@@ -261,6 +327,9 @@ public class TextEditingTargetSpelling implements TypoSpellChecker.Context
             menu.setPopupPosition(menuX, menuY);
          });
       });
+
+      // relint the viewport as the user scrolls around
+      docDisplay_.addScrollYHandler((event) -> lintManager_.relintAfterDelay(LintManager.DEFAULT_LINT_DELAY));
    }
 
    private static final Resources RES = GWT.create(Resources.class);
@@ -282,10 +351,11 @@ public class TextEditingTargetSpelling implements TypoSpellChecker.Context
 
    private final static String IGNORED_WORDS = "ignored_words";
    private final static int MAX_SUGGESTIONS = 5;
-   
+
    private final DocDisplay docDisplay_;
    private final DocUpdateSentinel docUpdateSentinel_;
    private final LintManager lintManager_;
+   private final UserPrefs prefs_;
    private final TypoSpellChecker typoSpellChecker_;
  
    private ArrayList<HandlerRegistration> releaseOnDismiss_ = 

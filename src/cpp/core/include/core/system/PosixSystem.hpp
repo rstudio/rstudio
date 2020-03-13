@@ -1,7 +1,7 @@
 /*
  * PosixSystem.hpp
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -37,10 +37,7 @@ namespace core {
 namespace rstudio {
 namespace core {
 namespace system {
-
-namespace user {
-   struct User;
-}
+    class User;
 
 // daemonize the process
 core::Error daemonize(const std::string& pidFile = std::string());
@@ -93,22 +90,6 @@ struct SysInfo
 core::Error systemInformation(SysInfo* pSysInfo);
 
 core::Error pidof(const std::string& process, std::vector<PidType>* pPids);
-
-struct ProcessInfo
-{
-   ProcessInfo() : pid(0), ppid(0), pgrp(0) {}
-   PidType pid;
-   PidType ppid;
-   PidType pgrp;
-   std::string username;
-   std::string exe;
-   std::string state;
-   std::vector<std::string> arguments;
-
-#ifndef __APPLE__
-   core::Error creationTime(boost::posix_time::ptime* pCreationTime) const;
-#endif
-};
 
 typedef boost::function<bool (const ProcessInfo&)> ProcessFilter;
 
@@ -192,7 +173,7 @@ core::Error waitForProcessExit(PidType processId);
 
 // filter to call after the setuid has occurred (i.e. after
 // the user's home directory has become visible)
-typedef boost::function<void(const user::User&, ProcessConfig*)>
+typedef boost::function<void(const User&, ProcessConfig*)>
                                                    ProcessConfigFilter;
 
 core::Error launchChildProcess(std::string path,
@@ -230,7 +211,7 @@ Error terminateChildProcesses(pid_t pid,
 
 bool isUserNotFoundError(const core::Error& error);
 
-core::Error userBelongsToGroup(const user::User& user,
+core::Error userBelongsToGroup(const User& user,
                                const std::string& groupName,
                                bool* pBelongs);
 
@@ -273,13 +254,19 @@ std::vector<SubprocInfo> getSubprocessesViaPgrep(PidType pid);
 std::vector<SubprocInfo> getSubprocessesViaProcFs(PidType pid);
 #endif // !__APPLE__
 
+#ifdef __APPLE__
+// Detect current working directory via Mac-only APIs.
+// Note that this will only work reliably for child processes.
+FilePath currentWorkingDirMac(PidType pid);
+#endif
+
+#ifndef __APPLE__
 // Determine current working directory of a given process by shelling out
 // to lsof; used on systems without procfs.
 FilePath currentWorkingDirViaLsof(PidType pid);
 
 // Determine current working directory of a given process via procfs; returns
 // empty FilePath if unable to determine.
-#ifndef __APPLE__
 FilePath currentWorkingDirViaProcFs(PidType pid);
 #endif // !__APPLE__
 

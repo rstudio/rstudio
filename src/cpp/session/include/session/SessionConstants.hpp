@@ -2,7 +2,7 @@
 /*
  * SessionConstants.hpp
  *
- * Copyright (C) 2009-19 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -20,6 +20,7 @@
 #define kEventsPending                    "ep"
 
 #define kRStudioUserIdentity              "RSTUDIO_USER_IDENTITY"
+#define kRStudioSystemUserIdentity        "X-RStudioSystemUserIdentity"
 #define kRStudioUserIdentityDisplay       "X-RStudioUserIdentity"
 #define kRStudioLimitRpcClientUid         "RSTUDIO_LIMIT_RPC_CLIENT_UID"
 #define kRSessionPortNumber               "RSTUDIO_SESSION_PORT"
@@ -65,7 +66,7 @@
 #define kTimeoutSessionOption             "session-timeout-minutes"
 #define kTimeoutSuspendSessionOption      "session-timeout-suspend"
 #define kDisconnectedTimeoutSessionOption "session-disconnected-timeout-minutes"
-
+#define kSessionEnvVarSaveBlacklist       "session-env-var-save-blacklist"
 #define kVerifySignaturesSessionOption    "verify-signatures"
 #define kStandaloneSessionOption          "standalone"
 #define kWwwAddressSessionOption          "www-address"
@@ -81,6 +82,8 @@
 
 #define kPackageOutputInPackageFolder     "package-output-to-package-folder"
 
+#define kUseSecureCookiesSessionOption    "session-use-secure-cookies"
+
 // NOTE: literal versions of these are depended upon by the desktop/rsinverse
 // project so they should be updated there as well if they are changed
 #define kLocalUriLocationPrefix           "/rsession-local/"
@@ -90,10 +93,6 @@
 #define kMonitoredPath      "monitored"
 #define kListsPath          "lists"
 #define kProjectMruList     "project_mru"
-
-#define kUserSettingsDir       "user-settings"
-#define kUserSettingsFile      kUserSettingsDir
-#define kContextIdentifier     "contextIdentifier"
 
 #define kServerHomeSetting     "showUserHomePage"
 #define kServerHomeAlways      "always"
@@ -118,6 +117,9 @@
 #define kRunRprofileNo       0
 #define kRunRprofileYes      1
 #define kRunRprofileDefault  2
+
+#define kSessionTmpDirEnvVar       "RS_SESSION_TMP_DIR"
+#define kSessionTmpDir             "rstudio-rsession"
 
 // json rpc methods we handle (the rest are delegated to the HttpServer)
 const char * const kClientInit = "client_init" ;

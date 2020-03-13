@@ -1,7 +1,7 @@
 /*
  * HTMLPreview.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-12 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -39,7 +39,7 @@ public class HTMLPreview
          public void onShowHTMLPreview(ShowHTMLPreviewEvent event)
          {
             WindowEx win = satelliteManager.getSatelliteWindowObject(HTMLPreviewApplication.NAME);
-            if (win != null && !Desktop.isDesktop() && BrowseCap.isChrome())
+            if (win != null && !Desktop.hasDesktopFrame() && BrowseCap.isChrome())
             {
                satelliteManager.forceReopenSatellite(HTMLPreviewApplication.NAME, 
                                                      event.getParams(),

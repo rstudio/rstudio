@@ -1,7 +1,7 @@
 /*
  * StanCompletionManager.java
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -79,9 +79,10 @@ public class StanCompletionManager extends CompletionManagerBase
    }
    
    @Override
-   public void getCompletions(String line, CompletionRequestContext context)
+   public boolean getCompletions(String line, CompletionRequestContext context)
    {
       server_.stanGetCompletions(line, context);
+      return true;
    }
    
    @Override
@@ -129,7 +130,7 @@ public class StanCompletionManager extends CompletionManagerBase
       
       boolean insertParensAfterCompletion =
             RCompletionType.isFunctionType(type) &&
-            uiPrefs_.insertParensAfterFunctionCompletion().getValue();
+            userPrefs_.insertParensAfterFunctionCompletion().getValue();
       
       if (insertParensAfterCompletion)
       {

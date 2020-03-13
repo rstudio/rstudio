@@ -1,7 +1,7 @@
 /*
  * SpellingPreferencesPane.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -17,21 +17,24 @@ package org.rstudio.studio.client.workbench.prefs.views;
 
 import com.google.gwt.json.client.JSONString;
 import com.google.gwt.resources.client.ImageResource;
+import com.google.gwt.user.client.ui.CheckBox;
+import com.google.gwt.user.client.ui.Label;
 import com.google.inject.Inject;
 
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.prefs.PreferencesDialogBaseResources;
+import org.rstudio.core.client.prefs.RestartRequirement;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.spelling.SpellingService;
+import org.rstudio.studio.client.common.spelling.TypoSpellChecker;
 import org.rstudio.studio.client.common.spelling.ui.SpellingCustomDictionariesWidget;
 import org.rstudio.studio.client.common.spelling.ui.SpellingLanguageSelectWidget;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
-import org.rstudio.studio.client.workbench.prefs.model.RPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.SpellingPrefsContext;
-import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 
 public class SpellingPreferencesPane extends PreferencesPane
 {
@@ -39,7 +42,7 @@ public class SpellingPreferencesPane extends PreferencesPane
    public SpellingPreferencesPane(GlobalDisplay globalDisplay,
                                   PreferencesDialogResources res,
                                   SpellingService spellingService,
-                                  UIPrefs prefs)
+                                  UserPrefs prefs)
    {
       globalDisplay_ = globalDisplay;
       res_ = res;
@@ -54,12 +57,28 @@ public class SpellingPreferencesPane extends PreferencesPane
       spaced(customDictsWidget_);
       nudgeRight(customDictsWidget_);
       add(customDictsWidget_);
-            
-      add(checkboxPref("Ignore words in UPPERCASE", prefs.ignoreWordsInUppercase()));
-      
-      add(checkboxPref("Ignore words with numbers", prefs.ignoreWordsInUppercase()));
 
-      add(checkboxPref("Use real time spellchecking", prefs.realTimeSpellChecking()));
+      add(checkboxPref("Ignore words in UPPERCASE", prefs.ignoreUppercaseWords()));
+      add(checkboxPref("Ignore words with numbers", prefs.ignoreWordsWithNumbers()));
+
+      boolean canRealtime = TypoSpellChecker.canRealtimeSpellcheckDict(prefs.spellingDictionaryLanguage().getValue());
+      realtimeSpellcheckingCheckbox_ = checkboxPref("Use real time spellchecking", prefs.realTimeSpellchecking());
+      realtimeSpellcheckingCheckbox_.getElement().getStyle().setOpacity(canRealtime ? 1.0 : 0.6);
+      add(realtimeSpellcheckingCheckbox_);
+
+      blacklistWarning_ = new Label("Real time spellchecking currently unavailable for this dictionary");
+      blacklistWarning_.getElement().getStyle().setColor("red");
+      blacklistWarning_.setVisible(!canRealtime);
+
+      add(blacklistWarning_);
+
+      languageWidget_.addChangeHandler((event) -> {
+         boolean canRealtimeCheck = TypoSpellChecker.canRealtimeSpellcheckDict(languageWidget_.getSelectedLanguage());
+         blacklistWarning_.setVisible(!canRealtimeCheck);
+         realtimeSpellcheckingCheckbox_.setValue(realtimeSpellcheckingCheckbox_.getValue() && canRealtimeCheck);
+         realtimeSpellcheckingCheckbox_.setEnabled(canRealtimeCheck);
+         realtimeSpellcheckingCheckbox_.getElement().getStyle().setOpacity(canRealtimeCheck ? 1.0 : 0.6);
+      });
    }
 
    
@@ -111,26 +130,28 @@ public class SpellingPreferencesPane extends PreferencesPane
    };
    
    @Override
-   protected void initialize(RPrefs rPrefs)
+   protected void initialize(UserPrefs rPrefs)
    {
-      SpellingPrefsContext context = rPrefs.getSpellingPrefsContext();
+      SpellingPrefsContext context = uiPrefs_.spellingPrefsContext().getValue();
       languageWidget_.setLanguages(context.getAllLanguagesInstalled(),
                                    context.getAvailableLanguages());
       
       languageWidget_.setSelectedLanguage(
                         uiPrefs_.spellingDictionaryLanguage().getValue());
-      
+
       customDictsWidget_.setDictionaries(context.getCustomDictionaries());
       customDictsWidget_.setProgressIndicator(getProgressIndicator());
    }
 
    @Override
-   public boolean onApply(RPrefs rPrefs)
+   public RestartRequirement onApply(UserPrefs rPrefs)
    {
       uiPrefs_.spellingDictionaryLanguage().setGlobalValue(
                                        languageWidget_.getSelectedLanguage());
       
-      return super.onApply(rPrefs);
+      RestartRequirement restart = super.onApply(rPrefs);
+      restart.setDesktopRestartRequired(restart.getDesktopRestartRequired() || customDictsWidget_.getCustomDictsModified());
+      return restart;
    }
 
    
@@ -157,8 +178,10 @@ public class SpellingPreferencesPane extends PreferencesPane
    private final PreferencesDialogResources res_;
    
    private final GlobalDisplay globalDisplay_;
-   private final UIPrefs uiPrefs_;
+   private final UserPrefs uiPrefs_;
    private final SpellingService spellingService_;
    private final SpellingLanguageSelectWidget languageWidget_;
    private final SpellingCustomDictionariesWidget customDictsWidget_;
+   private final Label blacklistWarning_;
+   private final CheckBox realtimeSpellcheckingCheckbox_;
 }

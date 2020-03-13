@@ -1,7 +1,7 @@
 /*
  * ModifyKeyboardShortcutsWidget.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,6 +14,7 @@
  */
 package org.rstudio.core.client.widget;
 
+import com.google.gwt.aria.client.Roles;
 import com.google.gwt.cell.client.EditTextCell;
 import com.google.gwt.cell.client.FieldUpdater;
 import com.google.gwt.cell.client.ValueUpdater;
@@ -225,6 +226,7 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
    
    public ModifyKeyboardShortcutsWidget(String filterText)
    {
+      super(Roles.getDialogRole());
       RStudioGinjector.INSTANCE.injectMembers(this);
       
       initialFilterText_ = filterText;
@@ -352,7 +354,7 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
          }
       });
       
-      filterWidget_ = new SearchWidget(new SuggestOracle() {
+      filterWidget_ = new SearchWidget("Filter keyboard shortcuts", new SuggestOracle() {
 
          @Override
          public void requestSuggestions(Request request, Callback callback)
@@ -934,6 +936,12 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
                      }
                   }
 
+                  // If Help link has focus, Enter shouldn't close the widget
+                  if (keyCode == KeyCodes.KEY_ENTER && helpLink_.hasFocus())
+                  {
+                     return;
+                  }
+
                   // Otherwise, handle Enter / Escape 'modally' as we might normally do.
                   preview.cancel();
                   preview.getNativeEvent().stopPropagation();
@@ -973,21 +981,27 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
       Label radioLabel = new Label("Show:");
       radioLabel.getElement().getStyle().setFloat(Style.Float.LEFT);
       radioLabel.getElement().getStyle().setMarginRight(8, Unit.PX);
+
       headerPanel.add(radioLabel);
-      headerPanel.add(radioAll_);
+      FieldSetPanel showFieldsetPanel = new FieldSetPanel(radioLabel);
+      showFieldsetPanel.setStyleName(RES.dataGridStyle().showChoice());
+      FlowPanel radioPanel = new FlowPanel();
+      showFieldsetPanel.add(radioPanel);
+      headerPanel.add(showFieldsetPanel);
+      radioPanel.add(radioAll_);
       radioAll_.setValue(true);
-      headerPanel.add(radioCustomized_);
+      radioPanel.add(radioCustomized_);
       
       filterWidget_.getElement().getStyle().setFloat(Style.Float.LEFT);
       filterWidget_.getElement().getStyle().setMarginLeft(10, Unit.PX);
       filterWidget_.getElement().getStyle().setMarginTop(-1, Unit.PX);
       headerPanel.add(filterWidget_);
       
-      HelpLink link = new HelpLink(
+      helpLink_ = new HelpLink(
             "Customizing Keyboard Shortcuts",
             "custom_keyboard_shortcuts");
-      link.getElement().getStyle().setFloat(Style.Float.RIGHT);
-      headerPanel.add(link);
+      helpLink_.getElement().getStyle().setFloat(Style.Float.RIGHT);
+      headerPanel.add(helpLink_);
       
       container.add(headerPanel);
       
@@ -1429,8 +1443,8 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
    
    private final RadioButton radioAll_;
    private final RadioButton radioCustomized_;
-   private static final String RADIO_BUTTON_GROUP =
-         "radioCustomizeKeyboardShortcuts";
+   private static final String RADIO_BUTTON_GROUP = "radioCustomizeKeyboardShortcuts";
+   private HelpLink helpLink_;
    
    private HandlerRegistration previewHandler_;
    private List<KeyboardShortcutEntry> originalBindings_;
@@ -1466,6 +1480,7 @@ public class ModifyKeyboardShortcutsWidget extends ModalDialogBase
       String conflictRow();
       String shortcutInput();
       String icon();
+      String showChoice();
    }
    
    private static final Resources RES = GWT.create(Resources.class);

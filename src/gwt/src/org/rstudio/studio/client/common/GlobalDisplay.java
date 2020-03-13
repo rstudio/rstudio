@@ -1,7 +1,7 @@
 /*
  * GlobalDisplay.java
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -92,6 +92,16 @@ public abstract class GlobalDisplay extends MessageDisplay
       {
          return showDesktopToolbar_;
       }
+      
+      public void setAppendClientId(boolean append)
+      {
+         appendClientId_ = append;
+      }
+      
+      public boolean appendClientId()
+      {
+         return appendClientId_;
+      }
 
       private Point position_ = null;
       private String name_ = "_blank";
@@ -99,6 +109,7 @@ public abstract class GlobalDisplay extends MessageDisplay
       private OperationWithInput<WindowEx> callback_;
       private boolean allowExternalNavigation_ = false;
       private boolean showDesktopToolbar_ = true;
+      private boolean appendClientId_ = false;
    }
    
    public abstract void openWindow(String url);
@@ -134,6 +145,8 @@ public abstract class GlobalDisplay extends MessageDisplay
                                    NewWindowOptions options);
 
    public abstract void openEmailComposeWindow(String to, String subject);
+   
+   public abstract void bringWindowToFront(String name);
    
    public abstract void showHtmlFile(String path);
    

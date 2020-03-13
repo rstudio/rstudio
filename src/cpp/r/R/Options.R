@@ -1,7 +1,7 @@
 #
 # Options.R
 #
-# Copyright (C) 2009-11 by RStudio, Inc.
+# Copyright (C) 2009-11 by RStudio, PBC
 #
 # Unless you have received this program directly from RStudio pursuant
 # to the terms of a commercial license agreement with RStudio, then
@@ -143,3 +143,5 @@ options(profvis.keep_output = TRUE)
 # indicate that we're not in a notebook by default
 options(rstudio.notebook.executing = FALSE)
 
+# provide a custom HTTP user agent
+.rs.initHttpUserAgent()

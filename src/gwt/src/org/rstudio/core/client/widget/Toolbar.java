@@ -1,7 +1,7 @@
 /*
  * Toolbar.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-20 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,17 +14,19 @@
  */
 package org.rstudio.core.client.widget;
 
+import com.google.gwt.aria.client.ExpandedValue;
+import com.google.gwt.aria.client.Roles;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
-import com.google.gwt.dom.client.Style;
+import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Style.Overflow;
 import com.google.gwt.dom.client.Style.Unit;
-import com.google.gwt.event.dom.client.ClickEvent;
-import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.user.client.ui.*;
 import com.google.gwt.user.client.ui.HasVerticalAlignment.VerticalAlignmentConstant;
 
 import org.rstudio.core.client.SeparatorManager;
+import org.rstudio.core.client.a11y.A11y;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.theme.res.ThemeStyles;
@@ -76,9 +78,112 @@ public class Toolbar extends Composite
       }
    }
 
-   public Toolbar(Widget[] leftWidgets, Widget[] rightWidgets)
+   /**
+    * This is only used in a couple places, and should someday be replaced with standard
+    * ToolbarMenuButton; for now didn't want to have to rework the code using it to
+    * conform to the different model so duplicated some logic from ToolbarMenuButton to support
+    * screen readers and keyboard-use.
+    */
+   private class ToolbarPopupButton extends FocusWidget
    {
-      this();
+      public ToolbarPopupButton(final MenuLabel menuLabel, MenuSource menuSource)
+      {
+         menuSource_ = menuSource;
+
+         setElement(Document.get().createPushButtonElement());
+         getElement().setClassName(styles_.toolbarButton());
+         getElement().addClassName(styles_.toolbarButtonMenu());
+         getElement().addClassName(styles_.popupButton());
+
+         HorizontalPanel container = new HorizontalPanel();
+         container.setVerticalAlignment(HasVerticalAlignment.ALIGN_MIDDLE);
+         getElement().appendChild(container.getElement());
+
+         label_ = menuLabel.asWidget();
+         label_.setStylePrimaryName("rstudio-StrongLabel");
+         label_.getElement().getStyle().setOverflow(Overflow.HIDDEN);
+         container.add(label_);
+
+         Image image = new DecorativeImage(new ImageResource2x(ThemeResources.INSTANCE.menuDownArrow2x()));
+         image.getElement().getStyle().setMarginLeft(5, Unit.PX);
+         image.getElement().getStyle().setMarginRight(8, Unit.PX);
+         image.getElement().getStyle().setMarginBottom(2, Unit.PX);
+         image.addStyleName("rstudio-themes-inverts");
+         image.addStyleName(styles_.toolbarButtonRightImage());
+         container.add(image);
+
+         addMenuHandlers();
+      }
+
+      private void addMenuHandlers()
+      {
+         Roles.getButtonRole().setAriaHaspopupProperty(getElement(), true);
+         setMenuShowing(false);
+
+         addMouseDownHandler(event ->
+         {
+            event.preventDefault();
+            event.stopPropagation();
+            menuClick();
+         });
+         menuSource_.getMenu().addCloseHandler(popupPanelCloseEvent ->
+         {
+            removeStyleName(styles_.toolbarButtonPushed());
+            Scheduler.get().scheduleDeferred(() ->
+            {
+               setMenuShowing(false);
+               setFocus(true);
+            });
+         });
+         addKeyPressHandler(event ->
+         {
+            char charCode = event.getCharCode();
+            if (charCode == KeyCodes.KEY_ENTER || charCode == KeyCodes.KEY_SPACE)
+            {
+               event.preventDefault();
+               event.stopPropagation();
+               menuClick();
+            }
+         });
+      }
+
+      private void menuClick()
+      {
+         addStyleName(styles_.toolbarButtonPushed());
+         if (menuShowing_)
+         {
+            removeStyleName(styles_.toolbarButtonPushed());
+            menuSource_.getMenu().hide();
+            setMenuShowing(false);
+            setFocus(true);
+         }
+         else
+         {
+            menuSource_.getMenu().showRelativeTo(label_);
+            menuSource_.getMenu().getElement().getStyle().setPaddingTop(3, Unit.PX);
+            setMenuShowing(true);
+            menuSource_.getMenu().focus();
+         }
+      }
+
+      private void setMenuShowing(boolean showing)
+      {
+         if (showing)
+            Roles.getMenuRole().setAriaExpandedState(getElement(), ExpandedValue.TRUE);
+         else
+            A11y.setARIANotExpanded(getElement());
+
+         menuShowing_ = showing;
+      }
+
+      private boolean menuShowing_;
+      private final MenuSource menuSource_;
+      private final Widget label_;
+   }
+
+   public Toolbar(Widget[] leftWidgets, Widget[] rightWidgets, String label)
+   {
+      this(label);
 
       if (leftWidgets != null)
       {
@@ -101,11 +206,14 @@ public class Toolbar extends Composite
       }
    }
 
-   public Toolbar()
+   public Toolbar(String label)
    {
       super();
 
       toolbarWrapper_ = new HTMLPanel("");
+
+      Roles.getToolbarRole().set(toolbarWrapper_.getElement());
+      Roles.getToolbarRole().setAriaLabelProperty(toolbarWrapper_.getElement(), label);
 
       horizontalPanel_ = new HorizontalPanel();
       horizontalPanel_.setVerticalAlignment(HasVerticalAlignment.ALIGN_MIDDLE);
@@ -297,7 +405,16 @@ public class Toolbar extends Composite
    {
       return toolbarWrapper_;
    }
-   
+
+   /**
+    * Change the accessibility label for the toolbar
+    * @param label
+    */
+   public void setLabel(String label)
+   {
+      Roles.getToolbarRole().setAriaLabelProperty(toolbarWrapper_.getElement(), label);
+   }
+
    private void removeAllWidgets(HorizontalPanel panel)
    {
       for (int i = panel.getWidgetCount()-1; i >= 0; i--)
@@ -317,49 +434,24 @@ public class Toolbar extends Composite
          }
       }, left);
    }
-   
 
    private Widget addPopupMenu(final MenuLabel menuLabel, 
          final MenuSource menuSource,
          boolean left)
    {
-      final Widget label = menuLabel.asWidget();
-      label.setStylePrimaryName("rstudio-StrongLabel") ;
-      label.getElement().getStyle().setCursor(Style.Cursor.DEFAULT);
-      label.getElement().getStyle().setOverflow(Overflow.HIDDEN);
-      if (left)
-         addLeftWidget(label);
-      else
-         addRightWidget(label);
-      Image image = new Image(new ImageResource2x(ThemeResources.INSTANCE.menuDownArrow2x()));
-      image.getElement().getStyle().setMarginLeft(5, Unit.PX);
-      image.getElement().getStyle().setMarginRight(8, Unit.PX);
-      image.getElement().getStyle().setMarginBottom(2, Unit.PX);
-      image.addStyleName("rstudio-themes-inverts");
-      if (left)
-         addLeftWidget(image);
-      else
-         addRightWidget(image);
-      
-      final ClickHandler clickHandler = new ClickHandler()
-      {
-         public void onClick(ClickEvent event)
-         {
-            ToolbarPopupMenu menu = menuSource.getMenu();
-            menu.showRelativeTo(label);
-            menu.getElement().getStyle().setPaddingTop(3, Style.Unit.PX);
-         }
-      };
-      menuLabel.addClickHandler(clickHandler);
-      image.addClickHandler(clickHandler);
-      
-      return image;
-   }
-   
+      ToolbarPopupButton button = new ToolbarPopupButton(menuLabel, menuSource);
 
-   private HorizontalPanel horizontalPanel_ ;
-   private HorizontalPanel leftToolbarPanel_ ;
-   private HorizontalPanel rightToolbarPanel_ ;
+      if (left)
+         addLeftWidget(button);
+      else
+         addRightWidget(button);
+
+      return button;
+   }
+
+   private HorizontalPanel horizontalPanel_;
+   private HorizontalPanel leftToolbarPanel_;
+   private HorizontalPanel rightToolbarPanel_;
    private HTMLPanel toolbarWrapper_;
    protected final ThemeStyles styles_ = ThemeResources.INSTANCE.themeStyles();
    private boolean separatorsInvalidated_ = false;

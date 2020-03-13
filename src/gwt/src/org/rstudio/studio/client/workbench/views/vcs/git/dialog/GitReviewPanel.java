@@ -1,7 +1,7 @@
 /*
  * GitReviewPanel.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-20 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -39,17 +39,23 @@ import com.google.gwt.user.client.ui.*;
 import com.google.gwt.user.client.ui.PopupPanel.PositionCallback;
 import com.google.inject.Inject;
 
+import com.google.inject.Provider;
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.WidgetHandlerRegistration;
+import org.rstudio.core.client.a11y.A11y;
 import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.command.KeyboardShortcut;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.*;
+import org.rstudio.studio.client.application.AriaLiveService;
+import org.rstudio.studio.client.application.events.AriaLiveStatusEvent.Severity;
+import org.rstudio.studio.client.application.events.AriaLiveStatusEvent.Timing;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.vcs.GitServerOperations.PatchMode;
 import org.rstudio.studio.client.common.vcs.StatusAndPath;
 import org.rstudio.studio.client.workbench.commands.Commands;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.views.vcs.CheckoutBranchToolbarButton;
 import org.rstudio.studio.client.workbench.views.vcs.common.ChangelistTable;
 import org.rstudio.studio.client.workbench.views.vcs.common.diff.ChunkOrLine;
@@ -209,9 +215,13 @@ public class GitReviewPanel extends ResizeComposite implements Display
                          LineTableView diffPane,
                          final Commands commands,
                          FileTypeRegistry fileTypeRegistry,
-                         CheckoutBranchToolbarButton branchToolbarButton)
+                         CheckoutBranchToolbarButton branchToolbarButton,
+                         AriaLiveService ariaLive,
+                         Provider<UserPrefs> pPrefs)
    {
       fileTypeRegistry_ = fileTypeRegistry;
+      ariaLive_ = ariaLive;
+      pPrefs_ = pPrefs;
       splitPanel_ = new SplitLayoutPanel(4);
       splitPanelCommit_ = new SplitLayoutPanel(4);
 
@@ -223,6 +233,9 @@ public class GitReviewPanel extends ResizeComposite implements Display
       lines_.getElement().setTabIndex(-1);
 
       overrideSizeWarning_ = new SizeWarningWidget("diff");
+
+      topToolbar_ = new Toolbar("Git Review");
+      diffToolbar_ = new Toolbar("Git Diff");
 
       changelist.setSelectFirstItemByDefault(true);
 
@@ -240,7 +253,9 @@ public class GitReviewPanel extends ResizeComposite implements Display
       topToolbar_.addLeftSeparator();
       
       topToolbar_.addLeftWidget(new ToolbarButton(
-            null, commands.vcsRefresh().getImageResource(),
+            ToolbarButton.NoText,
+            commands.vcsRefresh().getTooltip(),
+            commands.vcsRefresh().getImageResource(),
             new ClickHandler() {
                @Override
                public void onClick(ClickEvent event)
@@ -254,6 +269,7 @@ public class GitReviewPanel extends ResizeComposite implements Display
 
       stageFilesButton_ = topToolbar_.addLeftWidget(new ToolbarButton(
             "Stage",
+            ToolbarButton.NoTitle,
             new ImageResource2x(RES.stage2x()),
             (ClickHandler) null));
 
@@ -261,13 +277,13 @@ public class GitReviewPanel extends ResizeComposite implements Display
 
       revertFilesButton_ = topToolbar_.addLeftWidget(new ToolbarButton(
             "Revert",
+            ToolbarButton.NoTitle,
             commands.vcsRevert().getImageResource(),
             (ClickHandler) null));
 
       ignoreButton_ = topToolbar_.addLeftWidget(new ToolbarButton(
-            "Ignore", new ImageResource2x(RES.ignore2x()), (ClickHandler) null));
+            "Ignore", ToolbarButton.NoTitle, new ImageResource2x(RES.ignore2x())));
 
-      
       topToolbar_.addRightWidget(commands.vcsPull().createToolbarButton());
 
       topToolbar_.addRightSeparator();
@@ -281,14 +297,20 @@ public class GitReviewPanel extends ResizeComposite implements Display
       toolbarWrapper_.setCellWidth(diffToolbar_, "100%");
 
       stageAllButton_ = diffToolbar_.addLeftWidget(new ToolbarButton(
-            "Stage All", new ImageResource2x(RES.stage2x()), (ClickHandler) null));
+            "Stage All", ToolbarButton.NoTitle, new ImageResource2x(RES.stage2x())));
       diffToolbar_.addLeftSeparator();
       discardAllButton_ = diffToolbar_.addLeftWidget(new ToolbarButton(
-            "Discard All", new ImageResource2x(RES.discard2x()), (ClickHandler) null));
+            "Discard All", ToolbarButton.NoTitle, new ImageResource2x(RES.discard2x())));
 
       unstageAllButton_ = diffToolbar_.addLeftWidget(new ToolbarButton(
-            "Unstage All", new ImageResource2x(RES.discard2x()), (ClickHandler) null));
+            "Unstage All", ToolbarButton.NoTitle, new ImageResource2x(RES.discard2x())));
       unstageAllButton_.setVisible(false);
+
+      lblCommit_.setFor(commitMessage_);
+      lblContext_.setFor(contextLines_);
+      
+      // Hide frequently-updating character count from screen readers
+      A11y.setARIAHidden(lblCharCount_);
 
       unstagedCheckBox_.addValueChangeHandler(new ValueChangeHandler<Boolean>()
       {
@@ -311,11 +333,23 @@ public class GitReviewPanel extends ResizeComposite implements Display
          }
       });
       
-      commitMessage_.getElement().setAttribute("spellcheck", "false");
+      DomUtils.disableSpellcheck(commitMessage_);
 
       listBoxAdapter_ = new ListBoxAdapter(contextLines_);
 
       FontSizer.applyNormalFontSize(commitMessage_);
+      commitMessage_.addKeyUpHandler(e ->
+      {
+         // Update commit message whenever keys are pressed
+         updateCharCount();
+      });
+      commitMessage_.addChangeHandler(e ->
+      {
+         // Update commit message whenever the text content changes; catches
+         // e.g. changes on blur after a mouse paste
+         updateCharCount();
+      });
+
       new WidgetHandlerRegistration(this)
       {
          @Override
@@ -394,7 +428,7 @@ public class GitReviewPanel extends ResizeComposite implements Display
    private int getPageScroll(ScrollPanel panel)
    {
       // Return slightly less than the client height (so there's overlap between
-      // one screen and the next) but never less than the line scoll height.
+      // one screen and the next) but never less than the line scroll height.
       return Math.max(
             getLineScroll(panel),
             panel.getElement().getClientHeight() - getLineScroll(panel));
@@ -473,7 +507,21 @@ public class GitReviewPanel extends ResizeComposite implements Display
    @Override
    public HasText getCommitMessage()
    {
-      return commitMessage_;
+      return new HasText()
+      {
+         @Override
+         public void setText(String text)
+         {
+            commitMessage_.setText(text);
+            updateCharCount();
+         }
+         
+         @Override
+         public String getText()
+         {
+            return commitMessage_.getText();
+         }
+      };
    }
 
    @Override
@@ -645,6 +693,30 @@ public class GitReviewPanel extends ResizeComposite implements Display
       });
    }
 
+   /**
+    * Update the character count for the commit message, or clear it if there
+    * are no longer any characters in the commit message.
+    */
+   private void updateCharCount()
+   {
+      int length = commitMessage_.getText().length();
+      String liveRegionMessage;
+      if (length == 0)
+      {
+         lblCharCount_.setText("");
+         liveRegionMessage = "";
+      }
+      else
+      {
+         lblCharCount_.setText(length + " characters");
+         liveRegionMessage = length + " characters in message";
+      }
+
+      // Debounce an update to the accessible character count
+      ariaLive_.announce(AriaLiveService.GIT_MESSAGE_LENGTH, liveRegionMessage,
+            Timing.DEBOUNCE, Severity.STATUS);
+   }
+
    @UiField(provided = true)
    SplitLayoutPanel splitPanel_;
    @UiField(provided = true)
@@ -660,11 +732,17 @@ public class GitReviewPanel extends ResizeComposite implements Display
    @UiField(provided = true)
    LineTableView lines_;
    @UiField
+   FormLabel lblContext_;
+   @UiField
    ListBox contextLines_;
-   @UiField
+   @UiField(provided = true)
    Toolbar topToolbar_;
-   @UiField
+   @UiField(provided = true)
    Toolbar diffToolbar_;
+   @UiField
+   FormLabel lblCommit_;
+   @UiField
+   Label lblCharCount_;
    @UiField
    TextArea commitMessage_;
    @UiField
@@ -688,6 +766,8 @@ public class GitReviewPanel extends ResizeComposite implements Display
    private ToolbarButton unstageAllButton_;
    @SuppressWarnings("unused")
    private final FileTypeRegistry fileTypeRegistry_;
+   private final AriaLiveService ariaLive_;
+   private final Provider<UserPrefs> pPrefs_;
    private LeftRightToggleButton switchViewButton_;
 
    private SizeWarningWidget overrideSizeWarning_;

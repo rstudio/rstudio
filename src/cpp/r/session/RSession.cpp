@@ -1,7 +1,7 @@
 /*
  * RSession.cpp
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -22,7 +22,7 @@
 #include <boost/algorithm/string/replace.hpp>
 #include <boost/algorithm/string/trim.hpp>
 
-#include <core/Error.hpp>
+#include <shared_core/Error.hpp>
 #include <core/Log.hpp>
 #include <core/Settings.hpp>
 #include <core/Scope.hpp>
@@ -64,6 +64,8 @@
 #include <R_ext/Utils.h>
 #include <R_ext/Rdynload.h>
 #include <R_ext/RStartup.h>
+
+#include <gsl/gsl>
 
 #define CTXT_BROWSER 16
 
@@ -115,7 +117,7 @@ SEXP rs_showFile(SEXP titleSEXP, SEXP fileSEXP, SEXP delSEXP)
    try
    {
       std::string file = r::util::fixPath(r::sexp::asString(fileSEXP));
-      FilePath filePath = utils::safeCurrentPath().complete(file);
+      FilePath filePath = utils::safeCurrentPath().completePath(file);
       if (!filePath.exists())
       {
           throw r::exec::RErrorException(
@@ -170,8 +172,8 @@ SEXP rs_browseURL(SEXP urlSEXP)
       else if (URL.find("://") == std::string::npos)
       {
          std::string file = r::util::expandFileName(URL);
-         FilePath filePath = utils::safeCurrentPath().complete(
-                                                   r::util::fixPath(file));
+         FilePath filePath = utils::safeCurrentPath().completePath(
+            r::util::fixPath(file));
          rCallbacks().browseFile(filePath);
       }
       else
@@ -269,13 +271,14 @@ Error run(const ROptions& options, const RCallbacks& callbacks)
      
    // initialize suspended session path
    FilePath userScratch = s_options.userScratchPath;
-   FilePath oldSuspendedSessionPath = userScratch.complete("suspended-session");
+   FilePath oldSuspendedSessionPath = userScratch.completePath("suspended-session");
    FilePath sessionScratch = s_options.sessionScratchPath;
 
    // set suspend paths
-   setSuspendPaths(sessionScratch.complete("suspended-session-data"), // session data
-      s_options.userScratchPath.complete("client-state"),             // client state
-      s_options.scopedScratchPath.complete("pcs"));                   // project client state
+   setSuspendPaths(
+      sessionScratch.completePath("suspended-session-data"),              // session data
+      s_options.userScratchPath.completePath("client-state"),             // client state
+      s_options.scopedScratchPath.completePath("pcs"));                   // project client state
 
    // one time migration of global suspend to default project suspend
    if (!suspendedSessionPath().exists() && oldSuspendedSessionPath.exists())
@@ -304,56 +307,14 @@ Error run(const ROptions& options, const RCallbacks& callbacks)
    restartContext().initialize(s_options.scopedScratchPath,
                                s_options.sessionPort);
 
-   // register browseURL method
-   R_CallMethodDef browseURLMethod ;
-   browseURLMethod.name = "rs_browseURL";
-   browseURLMethod.fun = (DL_FUNC)rs_browseURL;
-   browseURLMethod.numArgs = 1;
-   r::routines::addCallMethod(browseURLMethod);
-
-   // register editFile method
-   R_CallMethodDef editFileMethod;
-   editFileMethod.name = "rs_editFile";
-   editFileMethod.fun = (DL_FUNC)rs_editFile;
-   editFileMethod.numArgs = 1;
-   r::routines::addCallMethod(editFileMethod);
-
-   // register showFile method
-   R_CallMethodDef showFileMethod;
-   showFileMethod.name = "rs_showFile";
-   showFileMethod.fun = (DL_FUNC)rs_showFile;
-   showFileMethod.numArgs = 3;
-   r::routines::addCallMethod(showFileMethod);
-
-   // register createUUID method
-   R_CallMethodDef createUUIDMethodDef ;
-   createUUIDMethodDef.name = "rs_createUUID" ;
-   createUUIDMethodDef.fun = (DL_FUNC) rs_createUUID ;
-   createUUIDMethodDef.numArgs = 0;
-   r::routines::addCallMethod(createUUIDMethodDef);
-
-   // register loadHistory method
-   R_CallMethodDef loadHistoryMethodDef ;
-   loadHistoryMethodDef.name = "rs_loadHistory" ;
-   loadHistoryMethodDef.fun = (DL_FUNC) rs_loadHistory ;
-   loadHistoryMethodDef.numArgs = 1;
-   r::routines::addCallMethod(loadHistoryMethodDef);
-
-   // register saveHistory method
-   R_CallMethodDef saveHistoryMethodDef ;
-   saveHistoryMethodDef.name = "rs_saveHistory" ;
-   saveHistoryMethodDef.fun = (DL_FUNC) rs_saveHistory ;
-   saveHistoryMethodDef.numArgs = 1;
-   r::routines::addCallMethod(saveHistoryMethodDef);
-
-   // complete url
-   R_CallMethodDef completeUrlDef ;
-   completeUrlDef.name = "rs_completeUrl" ;
-   completeUrlDef.fun = (DL_FUNC) rs_completeUrl ;
-   completeUrlDef.numArgs = 2;
-   r::routines::addCallMethod(completeUrlDef);
-
-   // register graphics methods
+   // register methods
+   RS_REGISTER_CALL_METHOD(rs_browseURL);
+   RS_REGISTER_CALL_METHOD(rs_editFile);
+   RS_REGISTER_CALL_METHOD(rs_showFile);
+   RS_REGISTER_CALL_METHOD(rs_createUUID);
+   RS_REGISTER_CALL_METHOD(rs_loadHistory);
+   RS_REGISTER_CALL_METHOD(rs_saveHistory);
+   RS_REGISTER_CALL_METHOD(rs_completeUrl);
    RS_REGISTER_CALL_METHOD(rs_GEcopyDisplayList, 1);
    RS_REGISTER_CALL_METHOD(rs_GEplayDisplayList, 0);
 
@@ -387,6 +348,7 @@ Error run(const ROptions& options, const RCallbacks& callbacks)
       // normal session: read/write from browser
       cb.readConsole = RReadConsole;
       cb.writeConsoleEx = RWriteConsoleEx;
+      cb.cleanUp = RCleanUp;
    }
    else
    {
@@ -394,6 +356,7 @@ Error run(const ROptions& options, const RCallbacks& callbacks)
       setRunScript(options.runScript);
       cb.readConsole = RReadScript;
       cb.writeConsoleEx = RWriteStdout;
+      cb.cleanUp = RScriptCleanUp;
    }
 
    cb.showMessage = RShowMessage;
@@ -405,7 +368,6 @@ Error run(const ROptions& options, const RCallbacks& callbacks)
    cb.savehistory = Rsavehistory;
    cb.addhistory = Raddhistory;
    cb.suicide = RSuicide;
-   cb.cleanUp = RCleanUp;
    r::session::runEmbeddedR(FilePath(rLocations.homePath),
                             options.userHomePath,
                             quiet,
@@ -441,7 +403,7 @@ void setClientMetrics(const RClientMetrics& metrics)
    {
       // report to user
       std::string errMsg = r::endUserErrorMessage(error);
-      REprintf((errMsg + "\n").c_str());
+      REprintf("%s\n", errMsg.c_str());
 
       // restore previous values (but don't fire plotsChanged b/c
       // the reset doesn't result in a change in graphics state)
@@ -452,7 +414,7 @@ void setClientMetrics(const RClientMetrics& metrics)
 void reportAndLogWarning(const std::string& warning)
 {
    std::string msg = "WARNING: " + warning + "\n";
-   RWriteConsoleEx(msg.c_str(), msg.length(), 1);
+   RWriteConsoleEx(msg.c_str(), gsl::narrow_cast<int>(msg.length()), 1);
    LOG_WARNING_MESSAGE("(Reported to User) " + warning);
 }
 
@@ -598,7 +560,8 @@ FilePath tempDir()
    Error error = r::exec::RFunction("tempdir").call(&tempDir);
    if (error)
       LOG_ERROR(error);
-   FilePath filePath(r::util::fixPath(tempDir));
+
+   FilePath filePath(string_utils::systemToUtf8(r::util::fixPath(tempDir)));
    return filePath;
 }
 

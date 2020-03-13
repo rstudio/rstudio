@@ -1,7 +1,7 @@
 /*
  * DesktopMainWindow.cpp
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -22,12 +22,17 @@
 #include <boost/format.hpp>
 
 #include <core/FileSerializer.hpp>
+#include <core/Macros.hpp>
+#include <core/text/TemplateFilter.hpp>
 
 #include "DesktopOptions.hpp"
 #include "DesktopSlotBinders.hpp"
 #include "DesktopSessionLauncher.hpp"
+#include "DesktopJobLauncherOverlay.hpp"
+#include "RemoteDesktopSessionLauncherOverlay.hpp"
 #include "DockTileView.hpp"
 #include "DesktopActivationOverlay.hpp"
+#include "DesktopSessionServersOverlay.hpp"
 #include "DesktopRCommandEvaluator.hpp"
 
 using namespace rstudio::core;
@@ -50,23 +55,40 @@ void CALLBACK onDialogStart(HWINEVENTHOOK hook, DWORD event, HWND hwnd,
 
 } // end anonymous namespace
 
-MainWindow::MainWindow(QUrl url) :
-      GwtWindow(false, false, QString(), url, nullptr),
+MainWindow::MainWindow(QUrl url,
+                       bool isRemoteDesktop) :
+      GwtWindow(false, false, QString(), url, nullptr, nullptr, isRemoteDesktop),
+      isRemoteDesktop_(isRemoteDesktop),
       menuCallback_(this),
-      gwtCallback_(this, this),
+      gwtCallback_(this, this, isRemoteDesktop),
       pSessionLauncher_(nullptr),
+      pRemoteSessionLauncher_(nullptr),
+      pLauncher_(new JobLauncher(this)),
       pCurrentSessionProcess_(nullptr)
 {
    RCommandEvaluator::setMainWindow(this);
    pToolbar_->setVisible(false);
 
 #ifdef _WIN32
-   eventHook_ = NULL;
+   eventHook_ = nullptr;
 #endif
 
    // bind GWT callbacks
    auto* channel = webPage()->webChannel();
    channel->registerObject(QStringLiteral("desktop"), &gwtCallback_);
+   if (isRemoteDesktop_)
+   {
+      // since the object registration is asynchronous, during the GWT setup code
+      // there is a race condition where the initialization can happen before the
+      // remoteDesktop object is registered, making the GWT application think that
+      // it should use regular desktop objects - to circumvent this, we use a custom
+      // user agent string that the GWT code can detect with 100% success rate to
+      // get around this race condition
+      QString userAgent = webPage()->profile()->httpUserAgent().append(
+               QStringLiteral("; RStudio Remote Desktop"));
+      webPage()->profile()->setHttpUserAgent(userAgent);
+      channel->registerObject(QStringLiteral("remoteDesktop"), &gwtCallback_);
+   }
    channel->registerObject(QStringLiteral("desktopMenuCallback"), &menuCallback_);
 
    // Dummy menu bar to deal with the fact that
@@ -101,9 +123,20 @@ MainWindow::MainWindow(QUrl url) :
            this, SIGNAL(firstWorkbenchInitialized()));
    connect(&gwtCallback_, SIGNAL(workbenchInitialized()),
            this, SLOT(onWorkbenchInitialized()));
+   connect(&gwtCallback_, SIGNAL(sessionQuit()),
+           this, SLOT(onSessionQuit()));
 
    connect(webView(), SIGNAL(onCloseWindowShortcut()),
            this, SLOT(onCloseWindowShortcut()));
+
+   connect(webView(), &WebView::urlChanged,
+           this, &MainWindow::onUrlChanged);
+
+   connect(webView(), &WebView::loadFinished,
+           this, &MainWindow::onLoadFinished);
+
+   connect(webPage(), &QWebEnginePage::loadFinished,
+           &menuCallback_, &MenuCallback::cleanUpActions);
 
    connect(&desktopInfo(), &DesktopInfo::fixedWidthFontListChanged, [this]() {
       QString js = QStringLiteral(
@@ -125,6 +158,22 @@ MainWindow::MainWindow(QUrl url) :
 #endif
 
    desktop::enableFullscreenMode(this, true);
+
+   Error error = pLauncher_->initialize();
+   if (error)
+   {
+      LOG_ERROR(error);
+      showError(nullptr,
+                QStringLiteral("Initialization error"),
+                QStringLiteral("Could not initialize Job Launcher"),
+                QString());
+      ::_exit(EXIT_FAILURE);
+   }
+}
+
+bool MainWindow::isRemoteDesktop() const
+{
+   return isRemoteDesktop_;
 }
 
 QString MainWindow::getSumatraPdfExePath()
@@ -134,6 +183,10 @@ QString MainWindow::getSumatraPdfExePath()
 
 void MainWindow::launchSession(bool reload)
 {
+   // we're about to start another session, so clear the workbench init flag
+   // (will get set again once the new session has initialized the workbench)
+   workbenchInitialized_ = false;
+
    Error error = pSessionLauncher_->launchNextSession(reload);
    if (error)
    {
@@ -155,6 +208,54 @@ void MainWindow::launchRStudio(const std::vector<std::string> &args,
     pAppLauncher_->launchRStudio(args, initialDir);
 }
 
+void MainWindow::saveRemoteCookies()
+{
+   QStringList cookieList;
+
+   std::map<std::string, QNetworkCookie> cookies = pRemoteSessionLauncher_->getCookies();
+   for (const std::pair<std::string, QNetworkCookie>& pair : cookies)
+   {
+      cookieList.push_back(QString::fromStdString(pair.second.toRawForm().toStdString()));
+   }
+
+   cookies = pLauncher_->getCookies();
+   for (const std::pair<std::string, QNetworkCookie>& pair : cookies)
+   {
+      cookieList.push_back(QString::fromStdString(pair.second.toRawForm().toStdString()));
+   }
+
+   options().setCookies(cookieList);
+}
+
+void MainWindow::launchRemoteRStudio()
+{
+   saveRemoteCookies();
+
+   std::vector<std::string> args;
+   args.push_back(kSessionServerOption);
+   args.push_back(pRemoteSessionLauncher_->sessionServer().url());
+
+   pAppLauncher_->launchRStudio(args);
+}
+
+void MainWindow::launchRemoteRStudioProject(const QString& projectUrl)
+{
+   saveRemoteCookies();
+
+   std::vector<std::string> args;
+   args.push_back(kSessionServerOption);
+   args.push_back(pRemoteSessionLauncher_->sessionServer().url());
+   args.push_back(kSessionServerUrlOption);
+   args.push_back(projectUrl.toStdString());
+
+   pAppLauncher_->launchRStudio(args);
+}
+
+bool MainWindow::workbenchInitialized()
+{
+    return workbenchInitialized_;
+}
+
 void MainWindow::onWorkbenchInitialized()
 {
    //QTimer::singleShot(300, this, SLOT(resetMargins()));
@@ -163,6 +264,7 @@ void MainWindow::onWorkbenchInitialized()
    // or reload for a new project context)
    quitConfirmed_ = false;
    geometrySaved_ = false;
+   workbenchInitialized_ = true;
 
    webPage()->runJavaScript(
             QStringLiteral("window.desktopHooks.getActiveProjectDir()"),
@@ -183,6 +285,10 @@ void MainWindow::onWorkbenchInitialized()
 
       avoidMoveCursorIfNecessary();
    });
+
+#ifdef Q_OS_MAC
+   webView()->setFocus();
+#endif
 }
 
 void MainWindow::resetMargins()
@@ -207,6 +313,16 @@ void MainWindow::loadUrl(const QUrl& url)
 {
    webView()->setBaseUrl(url);
    webView()->load(url);
+}
+
+void MainWindow::loadHtml(const QString& html)
+{
+   webView()->setHtml(html);
+}
+
+QWebEngineProfile* MainWindow::getPageProfile()
+{
+   return webView()->page()->profile();
 }
 
 void MainWindow::quit()
@@ -247,6 +363,19 @@ void closeAllSatellites(QWidget* mainWindow)
 
 } // end anonymous namespace
 
+void MainWindow::onSessionQuit()
+{
+   if (isRemoteDesktop_)
+   {
+      int pendingQuit = collectPendingQuitRequest();
+      if (pendingQuit == PendingQuitAndExit || quitConfirmed_)
+      {
+         closeAllSatellites(this);
+         quit();
+      }
+   }
+}
+
 void MainWindow::closeEvent(QCloseEvent* pEvent)
 {
 #ifdef _WIN32
@@ -262,36 +391,60 @@ void MainWindow::closeEvent(QCloseEvent* pEvent)
       geometrySaved_ = true;
    }
 
+   CloseServerSessions close = sessionServerSettings().closeServerSessionsOnExit();
+
    if (quitConfirmed_ ||
-       pCurrentSessionProcess_ == nullptr ||
-       pCurrentSessionProcess_->state() != QProcess::Running)
+       (!isRemoteDesktop_ && pCurrentSessionProcess_ == nullptr) ||
+       (!isRemoteDesktop_ && pCurrentSessionProcess_->state() != QProcess::Running))
    {
       closeAllSatellites(this);
       pEvent->accept();
       return;
    }
 
+   auto quit = [this]()
+   {
+      closeAllSatellites(this);
+      this->quit();
+   };
+
    pEvent->ignore();
    webPage()->runJavaScript(
             QStringLiteral("!!window.desktopHooks"),
-            [&](QVariant hasQuitR) {
+            [=](QVariant hasQuitR) {
 
       if (!hasQuitR.toBool())
       {
          LOG_ERROR_MESSAGE("Main window closed unexpectedly");
 
          // exit to avoid user having to kill/force-close the application
-         closeAllSatellites(this);
-         QApplication::quit();
+         quit();
       }
       else
       {
-         webPage()->runJavaScript(
-                  QStringLiteral("window.desktopHooks.quitR()"),
-                  [&](QVariant ignored)
+         if (!isRemoteDesktop_ ||
+             close == CloseServerSessions::Always)
          {
-            // don't close all the satellites here since the user hasn't confirmed quit yet
-         });
+            webPage()->runJavaScript(
+                     QStringLiteral("window.desktopHooks.quitR()"),
+                     [=](QVariant ignored)
+            {
+               quitConfirmed_ = true;
+            });
+         }
+         else if (close == CloseServerSessions::Never)
+         {
+            quit();
+         }
+         else
+         {
+            webPage()->runJavaScript(
+                     QStringLiteral("window.desktopHooks.promptToQuitR()"),
+                     [=](QVariant ignored)
+            {
+               quitConfirmed_ = true;
+            });
+         }
       }
    });
 }
@@ -351,6 +504,21 @@ void MainWindow::setSessionLauncher(SessionLauncher* pSessionLauncher)
    pSessionLauncher_ = pSessionLauncher;
 }
 
+RemoteDesktopSessionLauncher* MainWindow::getRemoteDesktopSessionLauncher()
+{
+   return pRemoteSessionLauncher_;
+}
+
+boost::shared_ptr<JobLauncher> MainWindow::getJobLauncher()
+{
+   return pLauncher_;
+}
+
+void MainWindow::setRemoteDesktopSessionLauncher(RemoteDesktopSessionLauncher* pSessionLauncher)
+{
+   pRemoteSessionLauncher_ = pSessionLauncher;
+}
+
 void MainWindow::setSessionProcess(QProcess* pSessionProcess)
 {
    pCurrentSessionProcess_ = pSessionProcess;
@@ -367,7 +535,7 @@ void MainWindow::setSessionProcess(QProcess* pSessionProcess)
    {
       eventHook_ = ::SetWinEventHook(
                EVENT_SYSTEM_DIALOGSTART, EVENT_SYSTEM_DIALOGSTART,
-               NULL,
+               nullptr,
                onDialogStart,
                pSessionProcess->processId(),
                0,
@@ -395,6 +563,34 @@ bool MainWindow::desktopHooksAvailable()
 
 void MainWindow::onActivated()
 {
+}
+
+void MainWindow::onUrlChanged(QUrl url)
+{
+   urlChanged(url);
+}
+
+void MainWindow::onLoadFinished(bool ok)
+{
+   if (ok || pRemoteSessionLauncher_)
+      return;
+
+   RS_CALL_ONCE();
+   
+   std::map<std::string,std::string> vars;
+   vars["url"] = webView()->url().url().toStdString();
+   std::ostringstream oss;
+   Error error = text::renderTemplate(options().resourcesPath().completePath("html/connect.html"),
+                                      vars, oss);
+   if (error)
+      LOG_ERROR(error);
+   else
+      loadHtml(QString::fromStdString(oss.str()));
+}
+
+WebView* MainWindow::getWebView()
+{
+   return webView();
 }
 
 } // namespace desktop

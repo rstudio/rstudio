@@ -1,7 +1,7 @@
 /*
  * SVNResolveDialog.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,14 +14,20 @@
  */
 package org.rstudio.studio.client.workbench.views.vcs.svn;
 
+import com.google.gwt.aria.client.Id;
+import com.google.gwt.aria.client.Roles;
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.DivElement;
 import com.google.gwt.dom.client.InputElement;
 import com.google.gwt.dom.client.LabelElement;
 import com.google.gwt.dom.client.SpanElement;
+import com.google.gwt.dom.client.TableCellElement;
+import com.google.gwt.dom.client.TableElement;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.HTMLPanel;
 import com.google.gwt.user.client.ui.Widget;
+import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.widget.ModalDialog;
 import org.rstudio.core.client.widget.OperationWithInput;
 
@@ -34,7 +40,7 @@ public class SVNResolveDialog extends ModalDialog<String>
                            String caption,
                            OperationWithInput<String> operation)
    {
-      super(caption, operation);
+      super(caption, Roles.getDialogRole(), operation);
       fileCount_ = fileCount;
    }
 
@@ -61,6 +67,10 @@ public class SVNResolveDialog extends ModalDialog<String>
    {
       HTMLPanel widget = GWT.<Binder>create(Binder.class).createAndBindUi(this);
 
+      ElementIds.assignElementId(groupLabel_, ElementIds.SVN_RESOLVE_GROUP);
+      Roles.getGroupRole().set(layoutTable_);
+      Roles.getGroupRole().setAriaLabelledbyProperty(layoutTable_, Id.of(groupLabel_));
+
       inputElements_ = new InputElement[] {
             radioWorking_,
             radioMineConflict_,
@@ -71,37 +81,59 @@ public class SVNResolveDialog extends ModalDialog<String>
 
       spanTargetNoun_.setInnerText(fileCount_ == 1 ? "path" : "paths");
 
-      labelWorking_.setPropertyString("for", radioWorking_.getId());
-      labelMineConflict_.setPropertyString("for", radioMineConflict_.getId());
-      labelTheirsConflict_.setPropertyString("for", radioTheirsConflict_.getId());
-      labelMineAll_.setPropertyString("for", radioMineAll_.getId());
-      labelTheirsAll_.setPropertyString("for", radioTheirsAll_.getId());
+      ElementIds.assignElementId(radioWorking_, ElementIds.SVN_RESOLVE_MINE);
+      ElementIds.assignElementId(descriptionWorking_, ElementIds.SVN_RESOLVE_MINE_DESC);
+      Roles.getRadioRole().setAriaDescribedbyProperty(radioWorking_, Id.of(descriptionWorking_));
+
+      ElementIds.assignElementId(radioMineConflict_, ElementIds.SVN_RESOLVE_MINE_CONFLICT);
+      ElementIds.assignElementId(descriptionMineConflict_, ElementIds.SVN_RESOLVE_MINE_CONFLICT_DESC);
+      Roles.getRadioRole().setAriaDescribedbyProperty(radioMineConflict_, Id.of(descriptionMineConflict_));
+
+      ElementIds.assignElementId(radioTheirsConflict_, ElementIds.SVN_RESOLVE_THEIRS_CONFLICT);
+      ElementIds.assignElementId(descriptionTheirsConflict_, ElementIds.SVN_RESOLVE_THEIRS_CONFLICT_DESC);
+      Roles.getRadioRole().setAriaDescribedbyProperty(radioTheirsConflict_, Id.of(descriptionTheirsConflict_));
+
+      ElementIds.assignElementId(radioMineAll_, ElementIds.SVN_RESOLVE_MINE_ALL);
+      ElementIds.assignElementId(descriptionMineAll_, ElementIds.SVN_RESOLVE_MINE_ALL_DESC);
+      Roles.getRadioRole().setAriaDescribedbyProperty(radioMineAll_, Id.of(descriptionMineAll_));
+
+      ElementIds.assignElementId(radioTheirsAll_, ElementIds.SVN_RESOLVE_THEIRS_ALL);
+      ElementIds.assignElementId(descriptionTheirsAll_, ElementIds.SVN_RESOLVE_THEIRS_ALL_DESC);
+      Roles.getRadioRole().setAriaDescribedbyProperty(radioTheirsAll_, Id.of(descriptionTheirsAll_));
+
+      labelWorking_.setAttribute("for", radioWorking_.getId());
+      labelMineConflict_.setAttribute("for", radioMineConflict_.getId());
+      labelTheirsConflict_.setAttribute("for", radioTheirsConflict_.getId());
+      labelMineAll_.setAttribute("for", radioMineAll_.getId());
+      labelTheirsAll_.setAttribute("for", radioTheirsAll_.getId());
 
       return widget;
    }
 
-   @UiField
-   InputElement radioWorking_;
-   @UiField
-   InputElement radioMineConflict_;
-   @UiField
-   InputElement radioTheirsConflict_;
-   @UiField
-   InputElement radioMineAll_;
-   @UiField
-   InputElement radioTheirsAll_;
-   @UiField
-   SpanElement spanTargetNoun_;
-   @UiField
-   LabelElement labelWorking_;
-   @UiField
-   LabelElement labelMineConflict_;
-   @UiField
-   LabelElement labelTheirsConflict_;
-   @UiField
-   LabelElement labelMineAll_;
-   @UiField
-   LabelElement labelTheirsAll_;
+   @UiField DivElement groupLabel_;
+   @UiField SpanElement spanTargetNoun_;
+   @UiField TableElement layoutTable_;
+
+   @UiField InputElement radioWorking_;
+   @UiField LabelElement labelWorking_;
+   @UiField TableCellElement descriptionWorking_;
+
+   @UiField InputElement radioMineConflict_;
+   @UiField LabelElement labelMineConflict_;
+   @UiField TableCellElement descriptionMineConflict_;
+
+   @UiField InputElement radioTheirsConflict_;
+   @UiField LabelElement labelTheirsConflict_;
+   @UiField TableCellElement descriptionTheirsConflict_;
+
+   @UiField InputElement radioMineAll_;
+   @UiField LabelElement labelMineAll_;
+   @UiField TableCellElement descriptionMineAll_;
+
+   @UiField InputElement radioTheirsAll_;
+   @UiField LabelElement labelTheirsAll_;
+   @UiField TableCellElement descriptionTheirsAll_;
+
    private final int fileCount_;
    private InputElement[] inputElements_;
 }

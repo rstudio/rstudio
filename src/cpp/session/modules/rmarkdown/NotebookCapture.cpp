@@ -1,7 +1,7 @@
 /*
  * NotebookCapture.cpp
  *
- * Copyright (C) 2009-16 by RStudio, Inc.
+ * Copyright (C) 2009-16 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -62,8 +62,8 @@ bool NotebookCapture::onCondition(Condition condition,
    if (capturingConditions())
    {
       json::Array cond;
-      cond.push_back(static_cast<int>(condition));
-      cond.push_back(message);
+      cond.push_back(json::Value(static_cast<int>(condition)));
+      cond.push_back(json::Value(message));
       conditions_->push_back(cond);
       return true;
    }

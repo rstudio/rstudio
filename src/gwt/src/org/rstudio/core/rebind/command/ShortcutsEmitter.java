@@ -1,7 +1,7 @@
 /*
  * ShortcutsEmitter.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-20 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -245,6 +245,8 @@ public class ShortcutsEmitter
          return "com.google.gwt.event.dom.client.KeyCodes.KEY_PAGEUP";
       if (val.equalsIgnoreCase("pagedown"))
          return "com.google.gwt.event.dom.client.KeyCodes.KEY_PAGEDOWN";
+      if (val.equalsIgnoreCase("space"))
+         return "32";
       if (val.equalsIgnoreCase("F1"))
          return "112";
       if (val.equalsIgnoreCase("F2"))
@@ -269,6 +271,30 @@ public class ShortcutsEmitter
          return "122";
       if (val.equalsIgnoreCase("F12"))
          return "123";
+      if (val.equalsIgnoreCase("F13"))
+         return "124";
+      if (val.equalsIgnoreCase("F14"))
+         return "125";
+      if (val.equalsIgnoreCase("F15"))
+         return "126";
+      if (val.equalsIgnoreCase("F16"))
+         return "127";
+      if (val.equalsIgnoreCase("F17"))
+         return "128";
+      if (val.equalsIgnoreCase("F18"))
+         return "129";
+      if (val.equalsIgnoreCase("F19"))
+         return "130";
+      if (val.equalsIgnoreCase("F20"))
+         return "131";
+      if (val.equalsIgnoreCase("F21"))
+         return "132";
+      if (val.equalsIgnoreCase("F22"))
+         return "133";
+      if (val.equalsIgnoreCase("F23"))
+         return "134";
+      if (val.equalsIgnoreCase("F24"))
+         return "135";
       if (val.equals("`"))
          return "192";
       if (val.equals("."))
@@ -285,6 +311,8 @@ public class ShortcutsEmitter
          return "219";
       if (val.equals("]"))
          return "221";
+
+      logger_.log(Type.WARN, "Returning null from toKeyCode for key " + val);
       return null;
    }
 

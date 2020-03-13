@@ -1,7 +1,7 @@
 /*
  * NotebookChunkDefs.cpp
  *
- * Copyright (C) 2009-16 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -17,17 +17,14 @@
 #include "NotebookCache.hpp"
 #include "NotebookChunkDefs.hpp"
 
-#include <boost/foreach.hpp>
-
-#include <core/json/Json.hpp>
+#include <shared_core/json/Json.hpp>
 #include <core/json/JsonRpc.hpp>
 #include <core/Exec.hpp>
-#include <core/FilePath.hpp>
+#include <shared_core/FilePath.hpp>
 
 #include <r/RSexp.hpp>
 #include <r/RRoutines.hpp>
 
-#include <session/SessionUserSettings.hpp>
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionSourceDatabase.hpp>
 
@@ -61,7 +58,7 @@ SEXP rs_getRmdWorkingDir(SEXP rmdFileSEXP, SEXP docIdSEXP)
 
    // if we found a valid working directory, return it
    if (dir.exists())
-      return r::sexp::create(dir.absolutePath(), &protect);
+      return r::sexp::create(dir.getAbsolutePath(), &protect);
 
    // otherwise, return nothing
    return R_NilValue;
@@ -91,9 +88,9 @@ void cleanChunks(const FilePath& cacheDir,
                        std::back_inserter(staleIds));
 
    // remove each stale folder from the system
-   BOOST_FOREACH(const std::string& staleId, staleIds)
+   for (const std::string& staleId : staleIds)
    {
-      error = cacheDir.complete(staleId).removeIfExists();
+      error = cacheDir.completePath(staleId).removeIfExists();
    }
 }
 
@@ -101,7 +98,7 @@ FilePath chunkDefinitionsPath(const core::FilePath& docPath,
                               const std::string& nbCtxId)
 {
    std::string fileName = std::string() + kNotebookChunkDefFilename;
-   return chunkCacheFolder(docPath, "", nbCtxId).childPath(fileName);
+   return chunkCacheFolder(docPath, "", nbCtxId).completeChildPath(fileName);
 }
 
 FilePath chunkDefinitionsPath(const std::string& docPath,
@@ -109,7 +106,7 @@ FilePath chunkDefinitionsPath(const std::string& docPath,
                               const std::string& nbCtxId)
 {
    std::string fileName = std::string() + kNotebookChunkDefFilename;
-   return chunkCacheFolder(docPath, docId, nbCtxId).childPath(fileName);
+   return chunkCacheFolder(docPath, docId, nbCtxId).completeChildPath(fileName);
 }
 
 FilePath chunkDefinitionsPath(const std::string& docPath, 
@@ -135,11 +132,11 @@ Error getChunkJson(const FilePath& defs, json::Object *pJson)
 
    // pull out the contents
    json::Value defContents;
-   if (!json::parse(contents, &defContents) || 
-       defContents.type() != json::ObjectType)
+   if (defContents.parse(contents) ||
+       defContents.getType() != json::Type::OBJECT)
       return Error(json::errc::ParseError, ERROR_LOCATION);
 
-   *pJson = defContents.get_value<json::Object>();
+   *pJson = defContents.getValue<json::Object>();
 
    return Success();
 }
@@ -163,7 +160,7 @@ Error setChunkDefs(boost::shared_ptr<source_database::SourceDocument> pDoc,
          notebookCtxId());
 
    // make sure the parent folder exists
-   Error error = defFile.parent().ensureDirectory();
+   Error error = defFile.getParent().ensureDirectory();
    if (error)
       return error;
 
@@ -196,15 +193,12 @@ Error setChunkDefs(boost::shared_ptr<source_database::SourceDocument> pDoc,
 
    // update the contents of the file with the new chunk definitions and 
    // write time
-   time_t docTime = pDoc->dirty() ? std::time(NULL) : 
+   time_t docTime = pDoc->dirty() ? std::time(nullptr) : 
                                     pDoc->lastKnownWriteTime();
    defContents[kChunkDefs] = newDefs;
    defContents[kChunkDocWriteTime] = static_cast<boost::int64_t>(docTime);
 
-   std::ostringstream oss;
-   json::write(defContents, oss);
-
-   error = writeStringToFile(defFile, oss.str());
+   error = writeStringToFile(defFile, defContents.write());
    if (error)
    {
       LOG_ERROR(error);
@@ -219,11 +213,10 @@ void extractChunkIds(const json::Array& chunkOutputs,
 {
    for (const json::Value& chunkOutput : chunkOutputs)
    {
-      if (chunkOutput.type() != json::ObjectType)
+      if (chunkOutput.getType() != json::Type::OBJECT)
          continue;
       std::string chunkId;
-      if (json::readObject(chunkOutput.get_obj(), kChunkId, &chunkId) ==
-            Success()) 
+      if (!json::readObject(chunkOutput.getObject(), kChunkId, &chunkId))
       {
          pIds->push_back(chunkId);
       }

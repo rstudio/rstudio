@@ -1,7 +1,7 @@
 /*
  * DateTime.cpp
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -17,7 +17,6 @@
 
 #include "boost/date_time/c_local_time_adjustor.hpp"
 #include <boost/date_time/local_time/local_time.hpp>
-#include <boost/foreach.hpp>
 
 namespace rstudio {
 namespace core {

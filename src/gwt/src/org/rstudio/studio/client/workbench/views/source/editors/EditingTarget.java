@@ -1,7 +1,7 @@
 /*
  * EditingTarget.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-20 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -15,7 +15,6 @@
 package org.rstudio.studio.client.workbench.views.source.editors;
 
 import com.google.gwt.event.logical.shared.HasCloseHandlers;
-import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.HasValue;
 import com.google.gwt.user.client.ui.IsWidget;
@@ -26,6 +25,7 @@ import org.rstudio.core.client.events.HasEnsureHeightHandlers;
 import org.rstudio.core.client.events.HasEnsureVisibleHandlers;
 import org.rstudio.core.client.files.FileSystemContext;
 import org.rstudio.studio.client.common.ReadOnlyValue;
+import org.rstudio.studio.client.common.filetypes.FileIcon;
 import org.rstudio.studio.client.common.filetypes.FileType;
 import org.rstudio.studio.client.common.filetypes.TextFileType;
 import org.rstudio.studio.client.workbench.model.UnsavedChangesTarget;
@@ -51,7 +51,7 @@ public interface EditingTarget extends IsWidget,
    String getTitle();
    String getPath();
    String getContext();
-   ImageResource getIcon();
+   FileIcon getIcon();
    String getTabTooltip();
    
    FileType getFileType();
@@ -146,7 +146,13 @@ public interface EditingTarget extends IsWidget,
    long getLargeFileSize();
    
    String getDefaultNamePrefix();
-   
+
+   /**
+    * @return Summary of the pane's current state for screen readers (read out 
+    * loud by user request)
+    */
+   public String getCurrentStatus();
+
    public final static int DISMISS_TYPE_CLOSE = 0;
    public final static int DISMISS_TYPE_MOVE = 1;
 }

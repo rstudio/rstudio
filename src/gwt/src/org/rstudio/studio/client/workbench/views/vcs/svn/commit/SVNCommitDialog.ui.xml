@@ -43,7 +43,7 @@
       </g:center>
       <g:south size="125">
          <g:FlowPanel>
-            <g:Label text="Commit message:" styleName="{style.commitMessageLabel}"/>
+            <rs:FormLabel ui:field="lblMessage_" text="Commit message:" styleName="{style.commitMessageLabel}"/>
             <g:TextArea ui:field="message_" styleName="{style.commitMessage}"/>
          </g:FlowPanel>
       </g:south>

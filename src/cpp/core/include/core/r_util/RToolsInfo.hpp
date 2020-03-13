@@ -1,7 +1,7 @@
 /*
  * RToolsInfo.hpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-12 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -22,7 +22,7 @@
 
 #include <boost/algorithm/string/replace.hpp>
 
-#include <core/FilePath.hpp>
+#include <shared_core/FilePath.hpp>
 #include <core/system/Environment.hpp>
 
 namespace rstudio {
@@ -65,7 +65,7 @@ private:
 
 std::ostream& operator<<(std::ostream& os, const RToolsInfo& info);
 
-Error scanForRTools(bool usingMingwGcc49, std::vector<RToolsInfo>* pRTools);
+void scanForRTools(bool usingMingwGcc49, std::vector<RToolsInfo>* pRTools);
 
 template <typename T>
 void prependToSystemPath(const RToolsInfo& toolsInfo, T* pTarget)
@@ -75,7 +75,7 @@ void prependToSystemPath(const RToolsInfo& toolsInfo, T* pTarget)
                                           = toolsInfo.pathEntries().rbegin();
    for ( ; it != toolsInfo.pathEntries().rend(); ++it)
    {
-      std::string path = it->absolutePath();
+      std::string path = it->getAbsolutePath();
       boost::algorithm::replace_all(path, "/", "\\");
       core::system::addToPath(pTarget, path, true);
    }

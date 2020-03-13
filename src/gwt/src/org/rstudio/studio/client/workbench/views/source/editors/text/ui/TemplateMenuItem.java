@@ -1,7 +1,7 @@
 /*
  * TemplateMenuItem.java
  *
- * Copyright (C) 2009-14 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -20,8 +20,8 @@ import com.google.gwt.dom.client.Style.VerticalAlign;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.FlowPanel;
-import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.InlineLabel;
+import org.rstudio.core.client.widget.DecorativeImage;
 
 public class TemplateMenuItem extends Composite
 {
@@ -36,7 +36,7 @@ public class TemplateMenuItem extends Composite
    
    public void addIcon(ImageResource icon)
    {
-      Image iconImage = new Image(icon);
+      DecorativeImage iconImage = new DecorativeImage(icon);
       wrapper_.insert(iconImage, 0);
       Style imageStyle = iconImage.getElement().getStyle();
       imageStyle.setVerticalAlign(VerticalAlign.MIDDLE);

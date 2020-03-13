@@ -14,6 +14,7 @@ pipeline {
   }
   environment {
     PATH = '/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin'
+    PACKAGE_OS = 'macOS'
   }
 
   stages {
@@ -44,7 +45,20 @@ pipeline {
         }
       }
     }
-    stage('upload') {
+    stage('tests') {
+      steps {
+        script {
+          try {
+            // attempt to run cpp unit tests
+            // disable known broken tests for now (Jenkins cannot handle the parallel load these induce)
+            sh "cd package/osx/build/src/cpp && ./rstudio-tests --scope core"
+          } catch(err) {
+             currentBuild.result = "UNSTABLE"
+          }
+        }
+      }
+    }
+    stage('notarize and upload') {
       steps {
         script {
           // extract name of package to publish
@@ -52,6 +66,10 @@ pipeline {
             script: "basename `ls package/osx/build/RStudio-*.dmg`",
             returnStdout: true
           ).trim()
+
+          withCredentials([usernamePassword(credentialsId: 'ide-apple-notarizer', usernameVariable: 'APPLE_ID', passwordVariable: 'APPLE_ID_PASSWORD')]) {
+            sh "docker/jenkins/notarize-release.sh package/osx/build/${packageFile}"
+          }
 
           // this job is going to run on a macOS slave, which cannot use an instance-profile
           withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'jenkins-aws']]) {
@@ -61,6 +79,30 @@ pipeline {
           // upload daily build redirects
           withCredentials([file(credentialsId: 'www-rstudio-org-pem', variable: 'wwwRstudioOrgPem')]) {
             sh "docker/jenkins/publish-daily-binary.sh https://s3.amazonaws.com/rstudio-ide-build/desktop/macos/${packageFile} ${wwwRstudioOrgPem}"
+          }
+
+          // upload debug symbols to Sentry
+          withCredentials([string(credentialsId: 'ide-sentry-api-key', variable: 'SENTRY_API_KEY')]){
+            // construct release version
+            def RSTUDIO_RELEASE = "${params.RSTUDIO_VERSION_MAJOR}.${params.RSTUDIO_VERSION_MINOR}.${params.RSTUDIO_VERSION_PATCH}"
+            if (params.RSTUDIO_VERSION_SUFFIX != "0") {
+              RSTUDIO_RELEASE = "${RSTUDIO_RELEASE}-${params.RSTUDIO_VERSION_SUFFIX}" 
+            }
+ 
+            // create new release on Sentry
+            sh "sentry-cli --auth-token ${SENTRY_API_KEY} releases --org rstudio --project ide-backend new ${RSTUDIO_RELEASE}"
+
+            // upload Javascript source maps
+            sh "cd package/osx/build/gwt && sentry-cli --auth-token ${SENTRY_API_KEY} releases --org rstudio --project ide-backend files ${RSTUDIO_RELEASE} upload-sourcemaps --ext js --ext symbolMap --rewrite ."
+
+            // associate commits
+            sh "sentry-cli --auth-token ${SENTRY_API_KEY} releases --org rstudio --project ide-backend set-commits --auto ${RSTUDIO_RELEASE}"
+
+            // finalize release
+            sh "sentry-cli --auth-token ${SENTRY_API_KEY} releases --org rstudio --project ide-backend finalize ${RSTUDIO_RELEASE}"
+
+            // upload C++ debug information
+            sh "cd package/osx/build/src/cpp && sentry-cli --auth-token ${SENTRY_API_KEY} upload-dif --org rstudio --project ide-backend -t dsym ."
           }
         }
       }

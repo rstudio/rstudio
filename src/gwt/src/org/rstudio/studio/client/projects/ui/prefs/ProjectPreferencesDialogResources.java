@@ -1,7 +1,7 @@
 /*
  * ProjectPreferencesDialogResources.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-12 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -55,6 +55,9 @@ public interface ProjectPreferencesDialogResources extends ClientBundle
    @Source("iconPackrat_2x.png")
    ImageResource iconPackrat2x();
 
+   @Source("iconRenv_2x.png")
+   ImageResource iconRenv2x();
+   
    @Source("iconShare_2x.png")
    ImageResource iconShare2x();
    

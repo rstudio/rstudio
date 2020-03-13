@@ -1,7 +1,7 @@
 /*
  * DataEditingTargetWidget.java
  *
- * Copyright (C) 2009-15 by RStudio, Inc.
+ * Copyright (C) 2009-20 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -66,7 +66,8 @@ public class DataEditingTargetWidget extends Composite
       resources.styles().ensureInjected();
    }
 
-   public DataEditingTargetWidget(Commands commands, 
+   public DataEditingTargetWidget(String title,
+                                  Commands commands, 
                                   EventBus events,
                                   DataItem dataItem)
    {
@@ -75,6 +76,7 @@ public class DataEditingTargetWidget extends Composite
       commands_ = commands;
 
       frame_ = new RStudioThemedFrame(
+         title,
          dataItem.getContentUrl(),
          GridViewerStyles.getCustomStyle(),
          null,
@@ -113,9 +115,12 @@ public class DataEditingTargetWidget extends Composite
                      "[[" + col + "]]" + 
                      "[[" + row + "]])", true));
          };
+         
+         table_.addKeyDownHandler();
          table_.setDataViewerCallback(view);
          table_.setListViewerCallback(view);
          table_.setColumnFrameCallback();
+         
       });
 
       Widget mainWidget;
@@ -176,11 +181,18 @@ public class DataEditingTargetWidget extends Composite
       return frameEl.getContentWindow();
    }
 
+   @Override
    public void print()
    {
       getWindow().print();
    }
-   
+
+   @Override
+   public void setAccessibleName(String name)
+   {
+      // Accessible name is set on container of this widget
+   }
+
    public void setFilterUIVisible(boolean visible)
    {
       if (table_ != null)

@@ -1,7 +1,7 @@
 /*
  * SshKeyWidget.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -15,6 +15,7 @@
 package org.rstudio.studio.client.common.vcs;
 
 import org.rstudio.core.client.files.FileSystemItem;
+import org.rstudio.core.client.widget.FormLabel;
 import org.rstudio.core.client.widget.HyperlinkLabel;
 import org.rstudio.core.client.widget.NullProgressIndicator;
 import org.rstudio.core.client.widget.OperationWithInput;
@@ -24,15 +25,12 @@ import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.event.dom.client.ClickEvent;
-import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.HasHorizontalAlignment;
 import com.google.gwt.user.client.ui.HorizontalPanel;
-import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.TextBox;
 
 public class SshKeyWidget extends Composite
@@ -45,40 +43,33 @@ public class SshKeyWidget extends Composite
       
       FlowPanel panel = new FlowPanel();
            
-      // caption panel
-      HorizontalPanel captionPanel = new HorizontalPanel();
-      captionPanel.addStyleName(RES.styles().captionPanel());
-      captionPanel.setWidth(textWidth);
-      Label sshKeyPathLabel = new Label("SSH RSA key:");
-      captionPanel.add(sshKeyPathLabel);
-      captionPanel.setCellHorizontalAlignment(
-                                          sshKeyPathLabel,
-                                          HasHorizontalAlignment.ALIGN_LEFT);
-   
-      HorizontalPanel linkPanel = new HorizontalPanel();
-      publicKeyLink_ = new HyperlinkLabel("View public key");
-      publicKeyLink_.addStyleName(RES.styles().viewPublicKeyLink());
-      publicKeyLink_.addClickHandler(new ClickHandler() {
-         @Override
-         public void onClick(ClickEvent event)
-         {
-            viewPublicKey();
-         }    
-      });    
-      linkPanel.add(publicKeyLink_);
-      captionPanel.add(publicKeyLink_);
-      captionPanel.setCellHorizontalAlignment(
-                                        publicKeyLink_, 
-                                        HasHorizontalAlignment.ALIGN_RIGHT);
-      panel.add(captionPanel);
-      
-      
       // chooser
       txtSshKeyPath_ = new TextBox();
       txtSshKeyPath_.addStyleName(RES.styles().keyPath());
       txtSshKeyPath_.setReadOnly(true);
       txtSshKeyPath_.setWidth(textWidth);
-      panel.add(txtSshKeyPath_);  
+
+      // caption panel
+      HorizontalPanel captionPanel = new HorizontalPanel();
+      captionPanel.addStyleName(RES.styles().captionPanel());
+      captionPanel.setWidth(textWidth);
+      FormLabel sshKeyPathLabel = new FormLabel("SSH RSA key:", txtSshKeyPath_);
+      captionPanel.add(sshKeyPathLabel);
+      captionPanel.setCellHorizontalAlignment(
+            sshKeyPathLabel,
+            HasHorizontalAlignment.ALIGN_LEFT);
+
+      HorizontalPanel linkPanel = new HorizontalPanel();
+      publicKeyLink_ = new HyperlinkLabel("View public key", () -> viewPublicKey());
+      publicKeyLink_.addStyleName(RES.styles().viewPublicKeyLink());
+      linkPanel.add(publicKeyLink_);
+      captionPanel.add(publicKeyLink_);
+      captionPanel.setCellHorizontalAlignment(
+            publicKeyLink_, 
+            HasHorizontalAlignment.ALIGN_RIGHT);
+
+      panel.add(captionPanel);
+      panel.add(txtSshKeyPath_);
       
     
       // ssh key path action buttons
@@ -86,13 +77,7 @@ public class SshKeyWidget extends Composite
       sshButtonPanel.addStyleName(RES.styles().sshButtonPanel());
       createKeyButton_ = new SmallButton();
       createKeyButton_.setText("Create RSA Key...");
-      createKeyButton_.addClickHandler(new ClickHandler() {
-         @Override
-         public void onClick(ClickEvent event)
-         {
-            showCreateKeyDialog(); 
-         }
-      });
+      createKeyButton_.addClickHandler(event -> showCreateKeyDialog());
       sshButtonPanel.add(createKeyButton_);
       panel.add(sshButtonPanel);
            

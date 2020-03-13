@@ -1,7 +1,7 @@
 /*
  * ResponseParser.hpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-12 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -25,7 +25,7 @@
 #include <boost/asio/read.hpp>
 #include <boost/asio/read_until.hpp>
 
-#include <core/Error.hpp>
+#include <shared_core/Error.hpp>
 #include <core/http/Response.hpp>
 
 namespace rstudio {

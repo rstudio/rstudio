@@ -1,7 +1,7 @@
 /*
  * StreamWriter.hpp
  *
- * Copyright (C) 2018 by RStudio, Inc.
+ * Copyright (C) 2018 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -18,7 +18,7 @@
 
 #include <boost/enable_shared_from_this.hpp>
 
-#include <core/Error.hpp>
+#include <shared_core/Error.hpp>
 #include <core/http/Response.hpp>
 #include <core/http/AsyncClient.hpp>
 
@@ -70,7 +70,7 @@ private:
    void writeNextStreamChunk()
    {
       boost::shared_ptr<core::http::StreamResponse> response = response_->getStreamResponse();
-      boost::shared_ptr<core::http::StreamBuffer> buffer = response->nextBuffer();
+      std::shared_ptr<core::http::StreamBuffer> buffer = response->nextBuffer();
 
       if (buffer)
       {

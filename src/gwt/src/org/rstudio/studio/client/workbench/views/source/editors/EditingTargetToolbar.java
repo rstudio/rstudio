@@ -1,7 +1,7 @@
 /*
  * EditingTargetToolbar.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -25,6 +25,7 @@ public class EditingTargetToolbar extends Toolbar
 {
    public EditingTargetToolbar(Commands commands, boolean includePopout)
    {
+      super("Code Editor Tab");
       addLeftWidget(commands.sourceNavigateBack().createToolbarButton());
       Widget forwardButton = commands.sourceNavigateForward().createToolbarButton();
       forwardButton.getElement().getStyle().setMarginLeft(-6, Unit.PX);

@@ -1,7 +1,7 @@
 /*
  * WebApplicationHeader.java
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-20 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -15,34 +15,44 @@
 
 package org.rstudio.studio.client.application.ui.impl;
 
+import com.google.gwt.aria.client.Roles;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
-import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.ImageElement;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Cursor;
 import com.google.gwt.dom.client.Style.Position;
 import com.google.gwt.dom.client.Style.TextDecoration;
 import com.google.gwt.dom.client.Style.Unit;
-import com.google.gwt.event.dom.client.ClickEvent;
-import com.google.gwt.event.dom.client.ClickHandler;
-import com.google.gwt.event.logical.shared.CloseEvent;
-import com.google.gwt.event.logical.shared.CloseHandler;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.ImageResource;
+import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Event;
-import com.google.gwt.user.client.Event.NativePreviewEvent;
-import com.google.gwt.user.client.Event.NativePreviewHandler;
-import com.google.gwt.user.client.ui.*;
+import com.google.gwt.user.client.ui.Anchor;
+import com.google.gwt.user.client.ui.Composite;
+import com.google.gwt.user.client.ui.FlowPanel;
+import com.google.gwt.user.client.ui.HasVerticalAlignment;
+import com.google.gwt.user.client.ui.HorizontalPanel;
+import com.google.gwt.user.client.ui.Image;
+import com.google.gwt.user.client.ui.MenuBar;
+import com.google.gwt.user.client.ui.MenuItem;
+import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 
 import org.rstudio.core.client.BrowseCap;
-import org.rstudio.core.client.command.*;
+import org.rstudio.core.client.ElementIds;
+import org.rstudio.core.client.command.AppCommand;
+import org.rstudio.core.client.command.AppMenuBar;
+import org.rstudio.core.client.command.CommandHandler;
+import org.rstudio.core.client.command.KeyCombination;
+import org.rstudio.core.client.command.KeySequence;
+import org.rstudio.core.client.command.KeyboardShortcut;
 import org.rstudio.core.client.command.impl.WebMenuCallback;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.theme.res.ThemeStyles;
+import org.rstudio.core.client.widget.BannerWidget;
 import org.rstudio.core.client.widget.HyperlinkLabel;
 import org.rstudio.core.client.widget.MessageDialogLabel;
 import org.rstudio.core.client.widget.ToolbarButton;
@@ -63,11 +73,11 @@ import org.rstudio.studio.client.common.dialog.WebDialogBuilderFactory;
 import org.rstudio.studio.client.workbench.codesearch.CodeSearch;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.events.SessionInitEvent;
-import org.rstudio.studio.client.workbench.events.SessionInitHandler;
+import org.rstudio.studio.client.workbench.events.ShowMainMenuEvent;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
 
-public class WebApplicationHeader extends Composite 
+public class WebApplicationHeader extends Composite
                                   implements ApplicationHeader,
                                   WebApplicationHeaderOverlay.Context
 {  
@@ -104,16 +114,17 @@ public class WebApplicationHeader extends Composite
       
       // large logo
       logoLarge_ = new Image(new ImageResource2x(ThemeResources.INSTANCE.rstudio2x()));
-      ((ImageElement)logoLarge_.getElement().cast()).setAlt("RStudio");
+      ((ImageElement)logoLarge_.getElement().cast()).setAlt("");
       logoLarge_.getElement().getStyle().setBorderWidth(0, Unit.PX);
       
       // small logo
       logoSmall_ = new Image(new ImageResource2x(ThemeResources.INSTANCE.rstudio_small2x()));
-      ((ImageElement)logoSmall_.getElement().cast()).setAlt("RStudio");
+      ((ImageElement)logoSmall_.getElement().cast()).setAlt("");
       logoSmall_.getElement().getStyle().setBorderWidth(0, Unit.PX);
 
       // link target for logo
       logoAnchor_ = new Anchor();
+      ElementIds.assignElementId(logoAnchor_, ElementIds.RSTUDIO_LOGO);
       Style style = logoAnchor_.getElement().getStyle();
       style.setPosition(Position.ABSOLUTE);
       style.setLeft(18, Unit.PX);
@@ -123,7 +134,7 @@ public class WebApplicationHeader extends Composite
       logoAnchor_.setStylePrimaryName(themeResources.themeStyles().logoAnchor());
 
       // header container
-      headerBarPanel_ = new HorizontalPanel() ;
+      headerBarPanel_ = new HorizontalPanel();
       headerBarPanel_.setStylePrimaryName(themeResources.themeStyles().header());
       headerBarPanel_.setVerticalAlignment(HasVerticalAlignment.ALIGN_MIDDLE);
       headerBarPanel_.setWidth("100%");
@@ -139,17 +150,14 @@ public class WebApplicationHeader extends Composite
       mainMenu_.setAutoHideRedundantSeparators(false);
       fixup(mainMenu_);
       mainMenu_.addStyleName(themeResources.themeStyles().mainMenu());
-      AppMenuBar.addSubMenuVisibleChangedHandler(new SubMenuVisibleChangedHandler()
+      AppMenuBar.addSubMenuVisibleChangedHandler(event ->
       {
-         public void onSubMenuVisibleChanged(SubMenuVisibleChangedEvent event)
-         {
-            // When submenus of the main menu appear, glass over any iframes
-            // so that mouse clicks can make the menus disappear
-            if (event.isVisible())
-               eventBus_.fireEvent(new GlassVisibilityEvent(true));
-            else
-               eventBus_.fireEvent(new GlassVisibilityEvent(false));
-         }
+         // When submenus of the main menu appear, glass over any iframes
+         // so that mouse clicks can make the menus disappear
+         if (event.isVisible())
+            eventBus_.fireEvent(new GlassVisibilityEvent(true));
+         else
+            eventBus_.fireEvent(new GlassVisibilityEvent(false));
       });
       headerBarPanel_.add(mainMenu_);
 
@@ -162,60 +170,60 @@ public class WebApplicationHeader extends Composite
       headerBarPanel_.setCellHorizontalAlignment(headerBarCommandsPanel_,
                                                 HorizontalPanel.ALIGN_RIGHT);
 
-      eventBus.addHandler(SessionInitEvent.TYPE, new SessionInitHandler()
+      eventBus.addHandler(SessionInitEvent.TYPE, sie ->
       {
-         public void onSessionInit(SessionInitEvent sie)
+         SessionInfo sessionInfo = session.getSessionInfo();
+
+         hostedMode_ = !sessionInfo.getAllowFullUI();
+
+         if (hostedMode_)
          {
-            SessionInfo sessionInfo = session.getSessionInfo();
-            
-            hostedMode_ = !sessionInfo.getAllowFullUI();
-            
-            if (hostedMode_)
-            {
-               mainMenu_.addStyleName(themeResources.themeStyles().noLogo());
-               toolbar_.addStyleName(themeResources.themeStyles().noLogo());
-            }
-            
-            // complete toolbar initialization
-            toolbar_.completeInitialization(sessionInfo);
-             
-            // add project tools to main menu
-            projectMenuSeparator_ = createCommandSeparator();
-            headerBarPanel_.add(projectMenuSeparator_);
-            projectMenuButton_ = 
-               new ProjectPopupMenu(sessionInfo, commands).getToolbarButton();
-            projectMenuButton_.addStyleName(
-                       ThemeStyles.INSTANCE.webHeaderBarCommandsProjectMenu());
-            headerBarPanel_.add(projectMenuButton_);
-            showProjectMenu(!toolbar_.isVisible());
-                
-            // record logo target url (if any)
-            logoTargetUrl_ = sessionInfo.getUserHomePageUrl();
-            if (logoTargetUrl_ != null)
-            {
-               logoAnchor_.setHref(logoTargetUrl_);
-               logoAnchor_.setTitle("RStudio Server Home");
-            }
-            else
-            {
-               // no link, so ensure this doesn't get styled as clickable
-               logoAnchor_.getElement().getStyle().setCursor(Cursor.DEFAULT);
-            }
-            
-            // init commands panel in server mode
-            if (!Desktop.isDesktop())
-               initCommandsPanel(sessionInfo);
-                      
-            // notify overlay of global toolbar state
-            overlay_.setGlobalToolbarVisible(WebApplicationHeader.this, 
-                                             toolbar_.isVisible());
+            mainMenu_.addStyleName(themeResources.themeStyles().noLogo());
+            toolbar_.addStyleName(themeResources.themeStyles().noLogo());
          }
+
+         // complete toolbar initialization
+         toolbar_.completeInitialization(sessionInfo);
+
+         // add project tools to main menu
+         projectMenuSeparator_ = createCommandSeparator();
+         headerBarPanel_.add(projectMenuSeparator_);
+         projectMenuButton_ =
+            new ProjectPopupMenu(sessionInfo, commands,
+                                 ElementIds.PROJECT_MENUBUTTON_MENUBAR_SUFFIX).getToolbarButton();
+         projectMenuButton_.addStyleName(
+                    ThemeStyles.INSTANCE.webHeaderBarCommandsProjectMenu());
+         headerBarPanel_.add(projectMenuButton_);
+         showProjectMenu(!toolbar_.isVisible());
+
+         // record logo target url (if any)
+         logoTargetUrl_ = sessionInfo.getUserHomePageUrl();
+         if (logoTargetUrl_ != null)
+         {
+            logoAnchor_.setHref(logoTargetUrl_);
+            logoAnchor_.setTitle("RStudio Server Home");
+         }
+         else
+         {
+            // no link, so ensure this doesn't get styled as clickable
+            logoAnchor_.getElement().getStyle().setCursor(Cursor.DEFAULT);
+         }
+
+         // init commands panel in server mode
+         if (!Desktop.hasDesktopFrame())
+            initCommandsPanel(sessionInfo);
+
+         // notify overlay of global toolbar state
+         overlay_.setGlobalToolbarVisible(WebApplicationHeader.this,
+                                          toolbar_.isVisible());
+      });
+      
+      eventBus.addHandler(ShowMainMenuEvent.TYPE, event -> {
+         mainMenu_.keyboardActivateItem(event.getMenu().ordinal());
       });
       
       // create toolbar
-      toolbar_ = new GlobalToolbar(commands, 
-                                   eventBus,
-                                   pCodeSearch);
+      toolbar_ = new GlobalToolbar(commands, pCodeSearch);
       toolbar_.addStyleName(themeResources.themeStyles().webGlobalToolbar());
       toolbar_.getWrapper().addStyleName(themeResources.themeStyles().webGlobalToolbarWrapper());
       
@@ -227,6 +235,7 @@ public class WebApplicationHeader extends Composite
       initWidget(outerPanel_);
    }
     
+   @Override
    public void showToolbar(boolean showToolbar)
    {
       toolbarVisible_ = showToolbar;
@@ -238,9 +247,11 @@ public class WebApplicationHeader extends Composite
          {
             logoAnchor_.getElement().removeAllChildren();
             logoAnchor_.getElement().appendChild(logoLarge_.getElement());
-            outerPanel_.add(logoAnchor_);
+            outerPanel_.add(new BannerWidget(logoAnchor_));
          }
          HeaderPanel headerPanel = new HeaderPanel(headerBarPanel_, toolbar_);
+         Roles.getNavigationRole().set(headerPanel.getElement());
+         Roles.getNavigationRole().setAriaLabelProperty(headerPanel.getElement(), "Main menu and toolbar");
          outerPanel_.add(headerPanel);
          preferredHeight_ = 65;
          showProjectMenu(false);
@@ -251,9 +262,11 @@ public class WebApplicationHeader extends Composite
          {
             logoAnchor_.getElement().removeAllChildren();
             logoAnchor_.getElement().appendChild(logoSmall_.getElement());
-            outerPanel_.add(logoAnchor_);
+            outerPanel_.add(new BannerWidget(logoAnchor_));
          }
          MenubarPanel menubarPanel = new MenubarPanel(headerBarPanel_);
+         Roles.getNavigationRole().set(menubarPanel.getElement());
+         Roles.getNavigationRole().setAriaLabelProperty(menubarPanel.getElement(), "Main menu");
          outerPanel_.add(menubarPanel);
          preferredHeight_ = 45;
          showProjectMenu(true);
@@ -262,11 +275,19 @@ public class WebApplicationHeader extends Composite
       overlay_.setGlobalToolbarVisible(this, showToolbar);
    }
    
+   @Override
    public boolean isToolbarVisible()
    {
       return toolbarVisible_;
    }
    
+   @Override
+   public void focusToolbar()
+   {
+      toolbar_.setFocus();
+   }
+
+   @Override
    public void focusGoToFunction()
    {
       toolbar_.focusGoToFunction();
@@ -312,12 +333,13 @@ public class WebApplicationHeader extends Composite
    {
       int modifiers = BrowseCap.hasMetaKey() ? KeyboardShortcut.META : KeyboardShortcut.CTRL;
 
-      setCommandShortcut(commands.undoDummy(),  "z", 'Z', modifiers);
-      setCommandShortcut(commands.redoDummy(),  "Z", 'Z', modifiers | KeyboardShortcut.SHIFT);
+      setCommandShortcut(commands.undoDummy(),            "z", 'Z', modifiers);
+      setCommandShortcut(commands.redoDummy(),            "Z", 'Z', modifiers | KeyboardShortcut.SHIFT);
 
-      setCommandShortcut(commands.cutDummy(),   "x", 'X', modifiers);
-      setCommandShortcut(commands.copyDummy(),  "c", 'C', modifiers);
-      setCommandShortcut(commands.pasteDummy(), "v", 'V', modifiers);
+      setCommandShortcut(commands.cutDummy(),             "x", 'X', modifiers);
+      setCommandShortcut(commands.copyDummy(),            "c", 'C', modifiers);
+      setCommandShortcut(commands.pasteDummy(),           "v", 'V', modifiers);
+      setCommandShortcut(commands.pasteWithIndentDummy(), "v", 'V', modifiers | KeyboardShortcut.SHIFT);
       
       CommandHandler useKeyboardNotification = new CommandHandler()
       {
@@ -333,6 +355,7 @@ public class WebApplicationHeader extends Composite
                           makeRow(commands.cutDummy()) +
                           makeRow(commands.copyDummy()) +
                           makeRow(commands.pasteDummy()) +
+                          makeRow(commands.pasteWithIndentDummy()) +
                           "</table>"
                           );
             new WebDialogBuilderFactory().create(
@@ -357,8 +380,10 @@ public class WebApplicationHeader extends Composite
       commands.cutDummy().addHandler(useKeyboardNotification);
       commands.copyDummy().addHandler(useKeyboardNotification);
       commands.pasteDummy().addHandler(useKeyboardNotification);
+      commands.pasteWithIndentDummy().addHandler(useKeyboardNotification);
    }
 
+   @Override
    public int getPreferredHeight()
    {
       return preferredHeight_;
@@ -370,30 +395,21 @@ public class WebApplicationHeader extends Composite
     */
    private void fixup(final AppMenuBar mainMenu)
    {
-      mainMenu.addCloseHandler(new CloseHandler<PopupPanel>()
+      mainMenu.addCloseHandler(popupPanelCloseEvent ->
       {
-         public void onClose(CloseEvent<PopupPanel> popupPanelCloseEvent)
+         // Only dismiss the selection if the panel that just closed belongs
+         // to the currently selected item. Otherwise, the selected item
+         // has already changed and we don't want to mess with it. (This is
+         // NOT an edge case, it is very common.)
+         MenuItem menuItem = mainMenu.getSelectedItem();
+         if (menuItem != null)
          {
-            // Only dismiss the selection if the panel that just closed belongs
-            // to the currently selected item. Otherwise, the selected item
-            // has already changed and we don't want to mess with it. (This is
-            // NOT an edge case, it is very common.)
-            MenuItem menuItem = mainMenu.getSelectedItem();
-            if (menuItem != null)
+            MenuBar subMenu = menuItem.getSubMenu();
+            if (subMenu != null &&
+                popupPanelCloseEvent.getTarget() != null &&
+                subMenu.equals(popupPanelCloseEvent.getTarget().getWidget()))
             {
-               MenuBar subMenu = menuItem.getSubMenu();
-               if (subMenu != null &&
-                   popupPanelCloseEvent.getTarget() != null &&
-                   subMenu.equals(popupPanelCloseEvent.getTarget().getWidget()))
-               {
-                  Scheduler.get().scheduleDeferred(new ScheduledCommand()
-                  {
-                     public void execute()
-                     {
-                        mainMenu.selectItem(null);
-                     }
-                  });
-               }
+               Scheduler.get().scheduleDeferred(() -> mainMenu.selectItem(null));
             }
          }
       });
@@ -417,14 +433,11 @@ public class WebApplicationHeader extends Composite
          overlayUserCommandsPanel_ = new HorizontalPanel();
          headerBarCommandsPanel_.add(overlayUserCommandsPanel_);
         
-         ToolbarButton signOutButton = new ToolbarButton(new ImageResource2x(RESOURCES.signOut2x()),
-              new ClickHandler() {
-            public void onClick(ClickEvent event)
-            {
-               eventBus_.fireEvent(new LogoutRequestedEvent());
-            }
-         });
-         signOutButton.setTitle("Sign out");
+         ToolbarButton signOutButton = new ToolbarButton(
+               ToolbarButton.NoText,
+               "Sign out",
+               new ImageResource2x(RESOURCES.signOut2x()),
+               event -> eventBus_.fireEvent(new LogoutRequestedEvent()));
          headerBarCommandsPanel_.add(signOutButton);
          headerBarCommandsPanel_.add(
                   signOutSeparator_ = createCommandSeparator());
@@ -445,10 +458,9 @@ public class WebApplicationHeader extends Composite
       return sep;
    }
    
-   private Widget createCommandLink(String caption, ClickHandler clickHandler)
+   private Widget createCommandLink(String caption, Command clickHandler)
    {
-      HyperlinkLabel link = new HyperlinkLabel(caption, clickHandler);
-      return link;
+      return new HyperlinkLabel(caption, clickHandler);
    }
    
    @Override
@@ -545,24 +557,21 @@ public class WebApplicationHeader extends Composite
       ImageResource signOut2x();
    }
    
-   private static final Resources RESOURCES =  (Resources) GWT.create(Resources.class);
+   private static final Resources RESOURCES = GWT.create(Resources.class);
    
    // globally suppress F1 and F2 so no default browser behavior takes those
    // keystrokes (e.g. Help in Chrome)
    static
    {
-      Event.addNativePreviewHandler(new NativePreviewHandler() {
-         @Override
-         public void onPreviewNativeEvent(NativePreviewEvent event)
+      Event.addNativePreviewHandler(event ->
+      {
+         if (event.getTypeInt() == Event.ONKEYDOWN)
          {
-            if (event.getTypeInt() == Event.ONKEYDOWN)
+            int keyCode = event.getNativeEvent().getKeyCode();
+            int modifier = KeyboardShortcut.getModifierValue(event.getNativeEvent());
+            if (modifier == KeyboardShortcut.NONE && (keyCode == 112 || keyCode == 113))
             {
-               int keyCode = event.getNativeEvent().getKeyCode();
-               int modifier = KeyboardShortcut.getModifierValue(event.getNativeEvent());
-               if (modifier == KeyboardShortcut.NONE && (keyCode == 112 || keyCode == 113))
-               {
-                 event.getNativeEvent().preventDefault();
-               }
+              event.getNativeEvent().preventDefault();
             }
          }
       });

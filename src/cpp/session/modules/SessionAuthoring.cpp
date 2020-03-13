@@ -1,7 +1,7 @@
 /*
  * SessionAuthoring.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-12 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -20,10 +20,10 @@
 #include <boost/regex.hpp>
 
 #include <core/Log.hpp>
-#include <core/Error.hpp>
-#include <core/FilePath.hpp>
+#include <shared_core/Error.hpp>
+#include <shared_core/FilePath.hpp>
 #include <core/Exec.hpp>
-#include <core/SafeConvert.hpp>
+#include <shared_core/SafeConvert.hpp>
 #include <core/BrowserUtils.hpp>
 
 #include <core/json/JsonRpc.hpp>
@@ -53,7 +53,7 @@ namespace {
 
 FilePath pdfFilePath(const FilePath& texFilePath)
 {
-   return texFilePath.parent().complete(texFilePath.stem() + ".pdf");
+   return texFilePath.getParent().completePath(texFilePath.getStem() + ".pdf");
 }
 
 void viewPdfExternal(const FilePath& texPath)
@@ -208,11 +208,7 @@ json::Object compilePdfStateAsJson()
 Error initialize()
 {
    // register tanble function
-   R_CallMethodDef methodDef ;
-   methodDef.name = "rs_rnwTangle" ;
-   methodDef.fun = (DL_FUNC) rs_rnwTangle ;
-   methodDef.numArgs = 3;
-   r::routines::addCallMethod(methodDef);
+   RS_REGISTER_CALL_METHOD(rs_rnwTangle);
 
    // install rpc methods
    using boost::bind;

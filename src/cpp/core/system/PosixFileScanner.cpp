@@ -1,7 +1,7 @@
 /*
  * PosixFileScanner.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -18,11 +18,9 @@
 #include <dirent.h>
 #include <sys/stat.h>
 
-#include <boost/foreach.hpp>
-
-#include <core/Error.hpp>
+#include <shared_core/Error.hpp>
 #include <core/Log.hpp>
-#include <core/FilePath.hpp>
+#include <shared_core/FilePath.hpp>
 #include <core/BoostThread.hpp>
 
 #include "config.h"
@@ -82,12 +80,7 @@ Error scanDir(const std::string& dirPath, std::vector<std::string>* pNames)
    for(int i=0; i<entries; i++)
    {
       // get the name (then free it)
-      std::string name(namelist[i]->d_name,
-#ifdef __APPLE__
-                       namelist[i]->d_namlen);
-#else
-                       namelist[i]->d_reclen);
-#endif
+      std::string name(namelist[i]->d_name);
       ::free(namelist[i]);
 
       // add to the vector
@@ -129,10 +122,10 @@ Error scanFiles(const tree<FileInfo>::iterator_base& fromNode,
       return error;
 
    // iterate over the names
-   BOOST_FOREACH(const std::string& name, names)
+   for (const std::string& name : names)
    {
       // compute the path
-      std::string path = rootPath.childPath(name).absolutePath();
+      std::string path = rootPath.completeChildPath(name).getAbsolutePath();
 
       // get the attributes
       struct stat st;

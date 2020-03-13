@@ -1,7 +1,7 @@
 #
 # SessionTests.R
 #
-# Copyright (C) 2009-18 by RStudio, Inc.
+# Copyright (C) 2009-19 by RStudio, PBC
 #
 # Unless you have received this program directly from RStudio pursuant
 # to the terms of a commercial license agreement with RStudio, then
@@ -29,15 +29,28 @@
 
 })
 
-.rs.addJsonRpcHandler("has_shinytest_results", function(appPath, testName) {
+.rs.addJsonRpcHandler("has_shinytest_results", function(testFile) {
 
-   result <- dir.exists(
-      file.path(
-         appPath,
-         "tests",
-         paste(testName, "current", sep = "-")
-      )
-   )
+   # The test result is stored in a directory alongside the test file
+   dirExists <- dir.exists(file.path(
+      dirname(testFile), 
+      paste(tools::file_path_sans_ext(basename(testFile)), "current", sep = "-")))
 
-   .rs.scalar(result)
+   # Find the Shiny app directory
+   shinyDir <- dirname(testFile)
+   if (identical(basename(shinyDir), "shinytests")) {
+      # Newer versions of shinytest store tests in a "shinytests" folder
+      shinyDir <- dirname(shinyDir)
+   } 
+   if (identical(basename(shinyDir), "tests")) {
+      # Move up from the tests folder to the app folder
+      shinyDir <- dirname(shinyDir)
+   } else {
+      stop("Could not find Shiny app for test file ", testFile)
+   }
+
+   # Return the discovered application directory, and whether the test exists 
+   list(
+      appDir = .rs.scalar(shinyDir),
+      testDirExists = .rs.scalar(dirExists))
 })

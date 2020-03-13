@@ -1,7 +1,7 @@
 /*
  * ApplicationInterrupt.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-12 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -118,9 +118,9 @@ public class ApplicationInterrupt
    }
 
    public void interruptR(final InterruptHandler handler,
-                          List<Integer> errorHandlerTypes,
-                          int replacedWithHandlerType) {
-      final int originalDebugType = errorManager_.getErrorHandlerType();
+                          List<String> errorHandlerTypes,
+                          String replacedWithHandlerType) {
+      final String originalDebugType = errorManager_.getErrorHandlerType();
       
       if (!errorHandlerTypes.contains(originalDebugType)) {
          interruptR(handler);
@@ -245,7 +245,7 @@ public class ApplicationInterrupt
    
    private void setPendinqQuit(int pendingQuit)
    {
-      if (Desktop.isDesktop())
+      if (Desktop.hasDesktopFrame())
          Desktop.getFrame().setPendingQuit(pendingQuit);
    }
    

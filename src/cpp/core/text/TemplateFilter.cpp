@@ -1,7 +1,7 @@
 /*
  * TemplateFilter.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-12 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -15,7 +15,7 @@
 
 #include <core/text/TemplateFilter.hpp>
 
-#include <core/FilePath.hpp>
+#include <shared_core/FilePath.hpp>
 
 #include <core/http/Request.hpp>
 #include <core/http/Response.hpp>
@@ -51,8 +51,8 @@ Error renderTemplate(const core::FilePath& templateFile,
                      std::ostream& os)
 {
    // open input stream to template
-   boost::shared_ptr<std::istream> pIfs;
-   Error error = templateFile.open_r(&pIfs);
+   std::shared_ptr<std::istream> pIfs;
+   Error error = templateFile.openForRead(pIfs);
    if (error)
       return error;
 

@@ -1,7 +1,7 @@
 /*
  * SessionProjects.cpp
  *
- * Copyright (C) 2009-19 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -22,9 +22,9 @@
 #include <core/r_util/RSessionContext.hpp>
 
 #include <session/SessionModuleContext.hpp>
-#include <session/SessionUserSettings.hpp>
 #include <session/SessionProjectTemplate.hpp>
 #include <session/SessionScopes.hpp>
+#include <session/prefs/UserPrefs.hpp>
 
 #include <r/RExec.hpp>
 #include <r/RRoutines.hpp>
@@ -51,7 +51,7 @@ void onSuspend(Settings*)
    // the onResume handler) because we need it very early in the
    // processes lifetime and onResume happens too late
    projects::ProjectsSettings(options().userScratchPath()).
-         setNextSessionProject(s_projectContext.file().absolutePath());
+         setNextSessionProject(s_projectContext.file().getAbsolutePath());
 }
 
 void onResume(const Settings&) {}
@@ -78,7 +78,7 @@ Error validateProjectPath(const json::JsonRpcRequest& request,
 
       if (writeable)
       {
-         error = core::system::isFileWriteable(projectFilePath.parent(), &writeable);
+         error = core::system::isFileWriteable(projectFilePath.getParent(), &writeable);
          if (error)
             return error;
       }
@@ -155,7 +155,7 @@ bool findProjectFile(const std::string& path, std::string* pResult)
    if (!projectFilePath.isDirectory())
    {
       // handle being passed full path to an existing .Rproj file
-      if (projectFilePath.extensionLowerCase() == ".rproj")
+      if (projectFilePath.getExtensionLowerCase() == ".rproj")
       {
          *pResult = folder;
          return true;
@@ -213,17 +213,17 @@ Error initializeProjectFromTemplate(const FilePath& projectFilePath,
 
    json::Object descriptionJson;
    json::Object inputsJson;
-   error = json::readObject(projectTemplateOptions.get_obj(),
+   error = json::readObject(projectTemplateOptions.getObject(),
                             "description", &descriptionJson,
                             "inputs", &inputsJson);
    if (error)
       return error;
    
-   FilePath projectPath = projectFilePath.parent();
+   FilePath projectPath = projectFilePath.getParent();
    
    return r::exec::RFunction(".rs.initializeProjectFromTemplate")
-         .addParam(string_utils::utf8ToSystem(projectFilePath.absolutePath()))
-         .addParam(string_utils::utf8ToSystem(projectPath.absolutePath()))
+         .addParam(string_utils::utf8ToSystem(projectFilePath.getAbsolutePath()))
+         .addParam(string_utils::utf8ToSystem(projectPath.getAbsolutePath()))
          .addParam(descriptionJson)
          .addParam(inputsJson)
          .call();
@@ -248,10 +248,10 @@ Error createProject(const json::JsonRpcRequest& request,
    FilePath projectFilePath = module_context::resolveAliasedPath(projectFile);
 
    // Shiny application
-   if (!newShinyAppJson.is_null())
+   if (!newShinyAppJson.isNull())
    {
       // error if the shiny app dir already exists
-      FilePath appDir = projectFilePath.parent();
+      FilePath appDir = projectFilePath.getParent();
       if (appDir.exists())
          return core::fileExistsError(ERROR_LOCATION);
 
@@ -262,9 +262,9 @@ Error createProject(const json::JsonRpcRequest& request,
 
       // copy app.R into the project
       FilePath shinyDir = session::options().rResourcesPath()
-            .childPath("templates/shiny");
+                                            .completeChildPath("templates/shiny");
       
-      error = shinyDir.childPath("app.R").copy(appDir.childPath("app.R"));
+      error = shinyDir.completeChildPath("app.R").copy(appDir.completeChildPath("app.R"));
       if (error)
          LOG_ERROR(error);
 
@@ -272,7 +272,7 @@ Error createProject(const json::JsonRpcRequest& request,
       addFirstRunDoc(projectFilePath, "app.R");
 
       std::string existingProjectFilePath;
-      if (!findProjectFile(projectFilePath.parent().absolutePath(), &existingProjectFilePath))
+      if (!findProjectFile(projectFilePath.getParent().getAbsolutePath(), &existingProjectFilePath))
       {
          // create the project file
          return r_util::writeProjectFile(projectFilePath,
@@ -288,7 +288,7 @@ Error createProject(const json::JsonRpcRequest& request,
    }
    
    // if we have a custom project template, call that first
-   if (!projectTemplateOptions.is_null() &&
+   if (!projectTemplateOptions.isNull() &&
        json::isType<json::Object>(projectTemplateOptions))
    {
       Error error = initializeProjectFromTemplate(projectFilePath, projectTemplateOptions);
@@ -297,12 +297,12 @@ Error createProject(const json::JsonRpcRequest& request,
    }
    
    // default project scaffolding
-   error = projectFilePath.parent().ensureDirectory();
+   error = projectFilePath.getParent().ensureDirectory();
    if (error)
       return error;
 
    std::string existingProjectFilePath;
-   if (!findProjectFile(projectFilePath.parent().absolutePath(), &existingProjectFilePath))
+   if (!findProjectFile(projectFilePath.getParent().getAbsolutePath(), &existingProjectFilePath))
    {
       // create the project file
       error = r_util::writeProjectFile(projectFilePath,
@@ -341,11 +341,11 @@ Error createProjectFile(const json::JsonRpcRequest& request,
    // Check for an existing project file in the directory
    projFilePath = r_util::projectFromDirectory(projDirPath);
 
-   if (projFilePath.empty())
+   if (projFilePath.isEmpty())
    {
       // We didn't find a project file, so we need to make one. Use the name of the project
       // directory as the filename.
-      projFilePath = projDirPath.complete(projDirPath.filename() + ".Rproj");
+      projFilePath = projDirPath.completePath(projDirPath.getFilename() + ".Rproj");
       error = r_util::writeProjectFile(
                projFilePath,
                ProjectContext::buildDefaults(),
@@ -439,9 +439,9 @@ json::Object projectVcsContextJson()
    json::Object contextJson;
    contextJson["detected_vcs"] = vcsContext.detectedVcs;
    json::Array applicableJson;
-   BOOST_FOREACH(const std::string& vcs, vcsContext.applicableVcs)
+   for (const std::string& vcs : vcsContext.applicableVcs)
    {
-      applicableJson.push_back(vcs);
+      applicableJson.push_back(json::Value(vcs));
    }
    contextJson["applicable_vcs"] = applicableJson;
 
@@ -512,6 +512,9 @@ Error readProjectOptions(const json::JsonRpcRequest& request,
    optionsJson["build_context"] = projectBuildContextJson();
    optionsJson["packrat_options"] = module_context::packratOptionsAsJson();
    optionsJson["packrat_context"] = module_context::packratContextAsJson();
+   optionsJson["renv_options"] = module_context::renvOptionsAsJson();
+   optionsJson["renv_context"] = module_context::renvContextAsJson();
+
 
    pResponse->setResult(optionsJson);
    return Success();
@@ -599,6 +602,11 @@ Error writeProjectOptions(const json::JsonRpcRequest& request,
       if (!existingConfig.defaultOpenDocs.empty())
       {
          config.defaultOpenDocs = existingConfig.defaultOpenDocs;
+      }
+      
+      if (!existingConfig.defaultTutorial.empty())
+      {
+         config.defaultTutorial = existingConfig.defaultTutorial;
       }
    }
 
@@ -707,20 +715,20 @@ void onQuit()
 
 void onFilesChanged(const std::vector<core::system::FileChangeEvent>& events)
 {
-   BOOST_FOREACH(const core::system::FileChangeEvent& event, events)
+   for (const core::system::FileChangeEvent& event : events)
    {
       // if the project file changed then sync its changes
       if (event.fileInfo().absolutePath() ==
-          s_projectContext.file().absolutePath())
+         s_projectContext.file().getAbsolutePath())
       {
          // update project context
          syncProjectFileChanges();
 
          // fire event to client
          json::Object dataJson;
-         dataJson["type"] = "project";
-         dataJson["prefs"] = s_projectContext.uiPrefs();
-         ClientEvent event(client_events::kUiPrefsChanged, dataJson);
+         dataJson["name"] = kUserPrefsProjectLayer;
+         dataJson["values"] = s_projectContext.uiPrefs();
+         ClientEvent event(client_events::kUserPrefsChanged, dataJson);
          module_context::enqueClientEvent(event);
 
          break;
@@ -767,7 +775,7 @@ FilePath resolveProjectSwitch(const std::string& projectPath)
 void onClientInit(const json::Object& errorToSend)
 {
    // enque the error
-   if (!errorToSend.empty())
+   if (!errorToSend.isEmpty())
    {
       ClientEvent event(client_events::kOpenProjectError, errorToSend);
       module_context::enqueClientEvent(event);
@@ -793,14 +801,14 @@ void startup(const std::string& firstProjectPath)
    FilePath lastProjectPath = projSettings.lastProjectPath();
 
    // check for explicit project none scope
-   if (session::options().sessionScope().isProjectNone() || 
-       session::options().initialProjectPath().absolutePath() == kProjectNone)
+   if (session::options().sessionScope().isProjectNone() ||
+      session::options().initialProjectPath().getAbsolutePath() == kProjectNone)
    {
       projectFilePath = resolveProjectSwitch(kProjectNone);
    }
 
    // check for explicit request for a project (file association or url based)
-   else if (!session::options().initialProjectPath().empty())
+   else if (!session::options().initialProjectPath().isEmpty())
    {
       projectFilePath = session::options().initialProjectPath();
    }
@@ -824,14 +832,14 @@ void startup(const std::string& firstProjectPath)
    // check for other working dir override (implies a launch of a file
    // but not of a project). this code path is here to prevent
    // the next code path from executing
-   else if (!session::options().initialWorkingDirOverride().empty())
+   else if (!session::options().initialWorkingDirOverride().isEmpty())
    {
       projectFilePath = FilePath();
    }
 
    // check for restore last project
-   else if (userSettings().alwaysRestoreLastProject() &&
-            !lastProjectPath.empty())
+   else if (prefs::userPrefs().restoreLastProject() &&
+            !lastProjectPath.isEmpty())
    {
 
       // get last project path
@@ -851,15 +859,14 @@ void startup(const std::string& firstProjectPath)
 
    // if we have a project file path then try to initialize the
    // project context (show a warning to the user if we can't)
-   bool isNewProject = false;
-   if (!projectFilePath.empty())
+   if (!projectFilePath.isEmpty())
    {
       std::string userErrMsg;
-      Error error = s_projectContext.startup(projectFilePath, &userErrMsg, &isNewProject);
+      Error error = s_projectContext.startup(projectFilePath, &userErrMsg);
       if (error)
       {
          // log the error
-         error.addProperty("project-file", projectFilePath.absolutePath());
+         error.addProperty("project-file", projectFilePath.getAbsolutePath());
          error.addProperty("user-msg", userErrMsg);
          LOG_ERROR(error);
 
@@ -875,16 +882,16 @@ void startup(const std::string& firstProjectPath)
    // add default open docs if specified in the project
    // and the project has never been opened before
    std::string defaultOpenDocs = projectContext().config().defaultOpenDocs;
-   if (!defaultOpenDocs.empty() && isNewProject)
+   if (!defaultOpenDocs.empty() && projects::projectContext().isNewProject())
    {
       std::vector<std::string> docs;
       boost::algorithm::split(docs, defaultOpenDocs, boost::is_any_of(":"));
 
-      BOOST_FOREACH(std::string& doc, docs)
+      for (std::string& doc : docs)
       {
          boost::algorithm::trim(doc);
 
-         FilePath docPath = projectContext().directory().complete(doc);
+         FilePath docPath = projectContext().directory().completePath(doc);
          if (docPath.exists())
          {
             addFirstRunDoc(projectFilePath, doc);
@@ -919,7 +926,7 @@ SEXP rs_addFirstRunDoc(SEXP projectFileAbsolutePathSEXP, SEXP docRelativePathsSE
    if (!success)
       return R_NilValue;
    
-   BOOST_FOREACH(const std::string& path, docRelativePaths)
+   for (const std::string& path : docRelativePaths)
    {
       addFirstRunDoc(projectFilePath, path);
    }
@@ -1008,7 +1015,7 @@ json::Array websiteOutputFormatsJson()
    {
       r::exec::RFunction getFormats(".rs.getAllOutputFormats");
       getFormats.addParam(string_utils::utf8ToSystem(
-              projectContext().buildTargetPath().absolutePath()));
+         projectContext().buildTargetPath().getAbsolutePath()));
       getFormats.addParam(projectContext().defaultEncoding());
       std::vector<std::string> formats;
       Error error = getFormats.call(&formats);

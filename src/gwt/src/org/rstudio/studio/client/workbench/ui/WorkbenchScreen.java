@@ -1,7 +1,7 @@
 /*
  * WorkbenchScreen.java
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-20 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -15,6 +15,7 @@
 
 package org.rstudio.studio.client.workbench.ui;
 
+import com.google.gwt.aria.client.Roles;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
@@ -54,6 +55,8 @@ import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.events.*;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.WorkbenchMetrics;
+import org.rstudio.studio.client.workbench.prefs.views.AccessibilityPreferencesPane;
+import org.rstudio.studio.client.workbench.prefs.views.TerminalPreferencesPane;
 import org.rstudio.studio.client.workbench.ui.PaneManager.Tab;
 import org.rstudio.studio.client.workbench.views.console.ConsoleResources;
 import org.rstudio.studio.client.workbench.views.edit.Edit;
@@ -120,6 +123,8 @@ public class WorkbenchScreen extends Composite
       tabsPanel_ = paneManager_.getPanel();
       tabsPanel_.setSize("100%", "100%");
       tabsPanel_.addStyleDependentName("Workbench");
+      Roles.getMainRole().set(tabsPanel_.getElement());
+      Roles.getMainRole().setAriaLabelProperty(tabsPanel_.getElement(), "Workbench");
 
       // Prevent doOnPaneSizesChanged() from being called more than once
       // every N milliseconds. Note that the act of sending the client metrics
@@ -343,6 +348,8 @@ public class WorkbenchScreen extends Composite
    void onActivateViewer() { paneManager_.activateTab(Tab.Viewer); }
    @Handler
    void onActivateConnections() { paneManager_.activateTab(Tab.Connections); }
+   @Handler
+   void onActivateTutorial() { paneManager_.activateTab(Tab.Tutorial); }
    
    
    @Handler
@@ -369,6 +376,14 @@ public class WorkbenchScreen extends Composite
    void onLayoutZoomViewer() { paneManager_.zoomTab(Tab.Viewer); }
    @Handler
    void onLayoutZoomConnections() { paneManager_.zoomTab(Tab.Connections); }
+   @Handler
+   void onLayoutZoomTutorial() { paneManager_.zoomTab(Tab.Tutorial); }
+
+   @Handler
+   void onLayoutZoomLeftColumn() { paneManager_.zoomColumn(PaneManager.LEFT_COLUMN); }
+
+   @Handler
+   void onLayoutZoomRightColumn() { paneManager_.zoomColumn(PaneManager.RIGHT_COLUMN); }
 
    @Handler
    void onMacPreferences()
@@ -382,7 +397,18 @@ public class WorkbenchScreen extends Composite
       optionsLoader_.showOptions();
    }
    
-     
+   @Handler
+   void onShowAccessibilityOptions()
+   {
+      optionsLoader_.showOptions(AccessibilityPreferencesPane.class);
+   }
+
+   @Handler
+   void onShowTerminalOptions()
+   {
+      optionsLoader_.showOptions(TerminalPreferencesPane.class);
+   }
+
    @Handler
    void onVersionControlHelp()
    {
@@ -406,7 +432,4 @@ public class WorkbenchScreen extends Composite
 
    private final MainSplitPanel tabsPanel_ ;
    private PaneManager paneManager_;
-
-  
-
 }

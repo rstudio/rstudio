@@ -1,7 +1,7 @@
 /*
  * LintPresenter.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-12 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -20,10 +20,11 @@ import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.RetinaStyleInjector;
 import org.rstudio.studio.client.common.filetypes.TextFileType;
+import org.rstudio.studio.client.common.spelling.TypoSpellChecker;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
-import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.views.output.lint.model.LintItem;
 import org.rstudio.studio.client.workbench.views.output.lint.model.LintServerOperations;
 import org.rstudio.studio.client.workbench.views.presentation.events.SourceFileSaveCompletedEvent;
@@ -62,31 +63,36 @@ public class LintManager
          this.explicit = explicit;
          this.excludeCurrentStatement = excludeCurrentStatement;
       }
-      
+
       public final Invalidation.Token token;
       public final Position cursorPosition;
       public final boolean showMarkers;
       public final boolean explicit;
       public final boolean excludeCurrentStatement;
    }
-   
+
    private void reset()
    {
       showMarkers_ = false;
       explicit_ = false;
       excludeCurrentStatement_ = true;
    }
-   
+
    // NOTE: by 'lintable' we mean 'uses RStudio-internal' linter
    // rather than Ace worker
    private boolean isLintableDocument()
    {
       TextFileType type = docDisplay_.getFileType();
-      return (((type.isC() || type.isCpp()) && uiPrefs_.showDiagnosticsCpp().getValue()) ||
-              ((type.isR() || type.isRmd() || type.isRnw() || type.isRpres()) && uiPrefs_.showDiagnosticsR().getValue()));
+      if (type.isC() || type.isCpp())
+         return userPrefs_.showDiagnosticsCpp().getValue();
+      
+      if (type.isR() || type.isRmd() || type.isRnw() || type.isRpres())
+         return userPrefs_.showDiagnosticsR().getValue() || userPrefs_.realTimeSpellchecking().getValue();
+      
+      return false;
    }
-   
-   public LintManager(TextEditingTarget target, 
+
+   public LintManager(TextEditingTarget target,
                       CppCompletionContext cppCompletionContext)
    {
       RStudioGinjector.INSTANCE.injectMembers(this);
@@ -98,7 +104,7 @@ public class LintManager
       invalidation_ = new Invalidation();
       timer_ = new Timer()
       {
-         
+
          @Override
          public void run()
          {
@@ -107,7 +113,7 @@ public class LintManager
                getAceWorkerDiagnostics(docDisplay_);
                return;
             }
-            
+
             invalidation_.invalidate();
             LintContext context = new LintContext(
                   invalidation_.getInvalidationToken(),
@@ -119,32 +125,33 @@ public class LintManager
             lintActiveDocument(context);
          }
       };
-      
+
       // Background linting
       docDisplay_.addValueChangeHandler(new ValueChangeHandler<Void>()
       {
          @Override
          public void onValueChange(ValueChangeEvent<Void> event)
          {
-            if (!uiPrefs_.enableBackgroundDiagnostics().getValue())
+            if (!userPrefs_.backgroundDiagnostics().getValue())
                return;
-            
+
             if (!docDisplay_.isFocused())
                return;
-            
+
             if (docDisplay_.isPopupVisible())
                return;
-            
+
             Scheduler.get().scheduleDeferred(new ScheduledCommand()
             {
                @Override
                public void execute()
                {
-                  docDisplay_.removeMarkersOnCursorLine();
+                  // only remove spelling markers at cursor position
+                  docDisplay_.removeMarkersAtCursorPosition();
                   showMarkers_ = false;
                   excludeCurrentStatement_ = true;
                   explicit_ = false;
-                  timer_.schedule(uiPrefs_.backgroundDiagnosticsDelayMs().getValue());
+                  timer_.schedule(userPrefs_.backgroundDiagnosticsDelayMs().getValue());
                }
             });
          }
@@ -161,24 +168,24 @@ public class LintManager
             if (!docDisplay_.isFocused())
                return;
             
-            if (uiPrefs_.diagnosticsOnSave().getValue())
+            if (userPrefs_.diagnosticsOnSave().getValue())
                lint(false, true, false);
          }
       });
    }
 
-   public void forceRelint()
+   public void relintAfterDelay(int delayMills)
    {
-      timer_.schedule(uiPrefs_.backgroundDiagnosticsDelayMs().getValue());
+      timer_.schedule(delayMills == DEFAULT_LINT_DELAY ? userPrefs_.backgroundDiagnosticsDelayMs().getValue() : delayMills);
    }
 
    @Inject
    void initialize(LintServerOperations server,
-                   UIPrefs uiPrefs,
+                   UserPrefs uiPrefs,
                    EventBus eventBus)
    {
       server_ = server;
-      uiPrefs_ = uiPrefs;
+      userPrefs_ = uiPrefs;
       eventBus_ = eventBus;
    }
    
@@ -187,7 +194,7 @@ public class LintManager
       // don't lint if this is an unsaved document
       if (target_.getPath() == null)
          return;
-      
+
       if (context.showMarkers)
       {
          target_.saveThenExecute(null, new Command()
@@ -216,12 +223,12 @@ public class LintManager
    {
       if (context.token.isInvalid())
          return;
-      
-      if (target_.getTextFileType().isCpp() || target_.getTextFileType().isC())
+
+      if (userPrefs_.showDiagnosticsCpp().getValue() && (target_.getTextFileType().isCpp() || target_.getTextFileType().isC()))
          performCppLintServerRequest(context);
-      else if (target_.getTextFileType().isR())
+      else if (userPrefs_.showDiagnosticsR().getValue() && (target_.getTextFileType().isR() || target_.getTextFileType().isRmd()))
          performRLintServerRequest(context);
-      else if (target_.getTextFileType().isRmd())
+      else if (userPrefs_.realTimeSpellchecking().getValue())
          showLint(context, JsArray.createArray().cast());
    }
 
@@ -314,7 +321,7 @@ public class LintManager
    
    private void showLint(LintContext context, JsArray<LintItem> lint)
    {
-      if (docDisplay_.isPopupVisible() || !docDisplay_.isFocused())
+      if (docDisplay_.isPopupVisible())
          return;
 
       JsArray<LintItem> finalLint;
@@ -331,7 +338,7 @@ public class LintManager
       else
          finalLint = lint;
 
-      if (uiPrefs_.realTimeSpellChecking().getValue())
+      if (userPrefs_.realTimeSpellchecking().getValue() && TypoSpellChecker.isLoaded())
       {
          JsArray<LintItem> spellingLint = target_.getSpellingTarget().getLint();
          for (int i = 0; i < spellingLint.length(); i++)
@@ -381,7 +388,9 @@ public class LintManager
       });
       $wnd.setTimeout(callback, 100);
    }-*/;
-   
+
+   public final static int DEFAULT_LINT_DELAY = -1;
+
    private final Timer timer_;
    private final TextEditingTarget target_;
    private final DocDisplay docDisplay_;
@@ -392,7 +401,7 @@ public class LintManager
    private boolean excludeCurrentStatement_;
    
    private LintServerOperations server_;
-   private UIPrefs uiPrefs_;
+   private UserPrefs userPrefs_;
    private EventBus eventBus_;
    private final CppCompletionContext cppCompletionContext_;
    

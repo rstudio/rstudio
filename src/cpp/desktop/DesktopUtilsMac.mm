@@ -1,7 +1,7 @@
 /*
  * DesktopUtilsMac.mm
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -13,7 +13,7 @@
  *
  */
 
-#include "DesktopUtils.hpp"
+#include "DesktopUtilsMac.hpp"
 
 #include <boost/algorithm/string/predicate.hpp>
 
@@ -24,10 +24,11 @@
 #import <AppKit/NSFontManager.h>
 #import <AppKit/NSView.h>
 #import <AppKit/NSWindow.h>
+#import <AppKit/NSOpenPanel.h>
 
 #include "DockMenu.hpp"
 
-using namespace rstudio;
+using namespace rstudio::core;
 
 namespace rstudio {
 namespace desktop {
@@ -78,19 +79,9 @@ double devicePixelRatio(QMainWindow* pMainWindow)
    }
 }
 
-bool isOSXMavericks()
+bool isMacOS()
 {
-   NSDictionary *systemVersionDictionary =
-       [NSDictionary dictionaryWithContentsOfFile:
-           @"/System/Library/CoreServices/SystemVersion.plist"];
-
-   NSString *systemVersion =
-       [systemVersionDictionary objectForKey:@"ProductVersion"];
-
-   std::string version(
-         [systemVersion cStringUsingEncoding:NSASCIIStringEncoding]);
-
-   return boost::algorithm::starts_with(version, "10.9");
+   return true;
 }
 
 bool isCentOS()
@@ -261,6 +252,76 @@ void finalPlatformInitialize(MainWindow* pMainWindow)
    {
       s_pDockMenu = new DockMenu(pMainWindow);
    }
+   else
+   {
+      s_pDockMenu->setMainWindow(pMainWindow);
+   }
+}
+
+NSString* createAliasedPath(NSString* path)
+{
+   if (path == nil || [path length] == 0)
+      return @"";
+
+   std::string aliased = FilePath::createAliasedPath(
+      FilePath([path UTF8String]),
+      userHomePath());
+
+   return [NSString stringWithUTF8String: aliased.c_str()];
+}
+
+NSString* resolveAliasedPath(NSString* path)
+{
+   if (path == nil)
+      path = @"";
+
+   FilePath resolved = FilePath::resolveAliasedPath(
+      [path UTF8String],
+      userHomePath());
+
+   return [NSString stringWithUTF8String: resolved.getAbsolutePath().c_str()];
+}
+
+QString runFileDialog(NSSavePanel* panel)
+{
+   NSString* path = @"";
+   long int result = [panel runModal];
+   @try
+   {
+      if (result == NSOKButton)
+      {
+         path = [[panel URL] path];
+      }
+   }
+   @catch (NSException* e)
+   {
+      throw e;
+   }
+
+   return QString::fromNSString(createAliasedPath(path));
+}
+
+QString browseDirectory(const QString& qCaption,
+                        const QString& qLabel,
+                        const QString& qDir,
+                        QWidget* pOwner)
+{
+   NSString* caption = qCaption.toNSString();
+   NSString* label = qLabel.toNSString();
+   NSString* dir = qDir.toNSString();
+
+   dir = resolveAliasedPath(dir);
+
+   NSOpenPanel* panel = [NSOpenPanel openPanel];
+   [panel setTitle: caption];
+   [panel setPrompt: label];
+   [panel setDirectoryURL: [NSURL fileURLWithPath:
+                           [dir stringByStandardizingPath]]];
+   [panel setCanChooseFiles: false];
+   [panel setCanChooseDirectories: true];
+   [panel setCanCreateDirectories: true];
+
+   return runFileDialog(panel);
 }
 
 } // namespace desktop

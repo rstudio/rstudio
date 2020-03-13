@@ -1,7 +1,7 @@
 /*
  * AceDocumentChangeEventNative.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-12 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,22 +14,30 @@
  */
 package org.rstudio.studio.client.workbench.views.source.editors.text.ace;
 
-import com.google.gwt.core.client.JavaScriptObject;
+import jsinterop.annotations.JsType;
+
 import com.google.gwt.core.client.JsArrayString;
 
-public class AceDocumentChangeEventNative extends JavaScriptObject
-{
-   protected AceDocumentChangeEventNative() {};
-   
-   public final native String getAction() /*-{
-      return this.action;
-   }-*/;
+import jsinterop.annotations.JsOverlay;
+import jsinterop.annotations.JsPackage;
 
-   public final native Range getRange() /*-{
-      return this;
-   }-*/;
+@JsType(isNative = true, namespace = JsPackage.GLOBAL, name = "Object")
+public class AceDocumentChangeEventNative
+{
+   public String action;
+   public Position start;
+   public Position end;
+   public JsArrayString lines;
    
-   public final native JsArrayString getLines() /*-{
-      return this.lines;
-   }-*/;
+   @JsOverlay
+   public final Range getRange()
+   {
+      return Range.fromPoints(start, end);
+   }
+   
+   @JsOverlay
+   public final String getAction()
+   {
+      return action;
+   }
 }

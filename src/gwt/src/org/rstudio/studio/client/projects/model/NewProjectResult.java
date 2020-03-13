@@ -1,7 +1,7 @@
 /*
  * NewProjectResult.java
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -22,7 +22,7 @@ public class NewProjectResult
 {
    public NewProjectResult(String projectFile, 
                            boolean createGitRepo,
-                           boolean usePackrat,
+                           boolean useRenv,
                            String newDefaultProjectLocation,
                            VcsCloneOptions vcsCloneOptions,
                            NewPackageOptions newPackageOptions,
@@ -32,7 +32,7 @@ public class NewProjectResult
    {
       projectFile_ = projectFile;
       createGitRepo_ = createGitRepo;
-      usePackrat_ = usePackrat;
+      useRenv_ = useRenv;
       openInNewWindow_ = false;
       newDefaultProjectLocation_ = newDefaultProjectLocation;
       vcsCloneOptions_ = vcsCloneOptions;
@@ -57,9 +57,9 @@ public class NewProjectResult
       return createGitRepo_;
    }
    
-   public boolean getUsePackrat() 
+   public boolean getUseRenv() 
    {
-      return usePackrat_;
+      return useRenv_;
    }
    
    public boolean getOpenInNewWindow()
@@ -116,7 +116,7 @@ public class NewProjectResult
    }
 
    private final boolean createGitRepo_;
-   private final boolean usePackrat_;
+   private final boolean useRenv_;
    private boolean openInNewWindow_;
    private RVersionSpec rVersion_;
    private String projectFile_;

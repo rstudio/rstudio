@@ -1,7 +1,7 @@
 #
 # SessionRmdNotebook.R
 #
-# Copyright (C) 2009-17 by RStudio, Inc.
+# Copyright (C) 2009-17 by RStudio, PBC
 #
 # Unless you have received this program directly from RStudio pursuant
 # to the terms of a commercial license agreement with RStudio, then
@@ -556,6 +556,9 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
    # bail early for empty data
    if (length(csvData) == 0 || nrow(csvData) == 0)
       return(list())
+   
+   # remove ANSI escapes used for color from text
+   csvData$text <- gsub("\033\\[\\d*(?:;\\d*)*m", "", csvData$text)
    
    # split on type
    cutpoints <- .rs.cutpoints(csvData$type)

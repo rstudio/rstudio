@@ -1,7 +1,7 @@
 /*
  * SslAsyncServer.hpp
  *
- * Copyright (C) 2018 by RStudio, Inc.
+ * Copyright (C) 2018 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -19,7 +19,7 @@
 #include <boost/asio/io_service.hpp>
 #include <boost/asio/ssl.hpp>
 
-#include <core/FilePath.hpp>
+#include <shared_core/FilePath.hpp>
 #include <core/http/AsyncServerImpl.hpp>
 #include <core/http/TcpIpSocketUtils.hpp>
 
@@ -32,8 +32,11 @@ class SslAsyncServer : public AsyncServerImpl<boost::asio::ip::tcp>
 public:
 
    SslAsyncServer(const std::string& serverName,
-                  const std::string& baseUri = std::string())
-      : AsyncServerImpl(serverName, baseUri)
+                  const std::string& baseUri = std::string(),
+                  bool disableOriginCheck = true,
+                  const std::vector<boost::regex>& allowedOrigins = std::vector<boost::regex>(),
+                  const Headers& additionalHeaders = Headers())
+      : AsyncServerImpl(serverName, baseUri, disableOriginCheck, allowedOrigins, additionalHeaders)
    {
    }
    
@@ -63,11 +66,11 @@ public:
                            boost::asio::ssl::context::single_dh_use);
 
       boost::system::error_code ec;
-      context->use_certificate_chain_file(certFile.absolutePath(), ec);
+      context->use_certificate_chain_file(certFile.getAbsolutePath(), ec);
       if (ec)
          return Error(ec, ERROR_LOCATION);
 
-      context->use_private_key_file(keyFile.absolutePath(), boost::asio::ssl::context::pem, ec);
+      context->use_private_key_file(keyFile.getAbsolutePath(), boost::asio::ssl::context::pem, ec);
       if (ec)
          return Error(ec, ERROR_LOCATION);
 

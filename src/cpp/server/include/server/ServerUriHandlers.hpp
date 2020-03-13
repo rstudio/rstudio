@@ -1,7 +1,7 @@
 /*
  * ServerUriHandlers.hpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-12 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -28,6 +28,9 @@ namespace uri_handlers {
 // add async uri handler
 void add(const std::string& prefix,
          const core::http::AsyncUriHandlerFunction& handler);
+
+void addUploadHandler(const std::string& prefix,
+                      const core::http::AsyncUriUploadHandlerFunction& handler);
 
 // add proxy handler
 // proxy handlers have special behavior to allow them to route all traffic

@@ -1,7 +1,7 @@
 /*
  * FindInFilesServerOperations.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -25,11 +25,34 @@ public interface FindInFilesServerOperations
                   boolean regex,
                   boolean ignoreCase,
                   FileSystemItem directory,
-                  JsArrayString filePatterns,
+                  JsArrayString includeFilePatterns,
+                  JsArrayString excludeFilePatterns,
                   ServerRequestCallback<String> requestCallback);
 
    void stopFind(String findOperationHandle,
                  ServerRequestCallback<Void> requestCallback);
 
    void clearFindResults(ServerRequestCallback<Void> requestCallback);
+
+   void previewReplace(String searchString,
+                       boolean regex,
+                       boolean searchIgnoreCase,
+                       FileSystemItem dictionary,
+                       JsArrayString includeFilePatterns,
+                       JsArrayString excludeFilePatterns,
+                       String replaceString,
+                       ServerRequestCallback<String> requestCallback);
+
+   void completeReplace(String searchString,
+                        boolean regex,
+                        boolean searchIgnoreCase,
+                        FileSystemItem dictionary,
+                        JsArrayString includeFilePatterns,
+                        JsArrayString excludeFilePatterns,
+                        int searchResults,
+                        String replaceString,
+                        ServerRequestCallback<String> requestCallback);
+
+   void stopReplace(String findOperationHandle,
+                    ServerRequestCallback<Void> requestCallback);
 }

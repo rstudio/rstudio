@@ -1,7 +1,7 @@
 /*
  * RSexp.hpp
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -28,14 +28,14 @@
 #include <boost/utility.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
 
-#include <core/Error.hpp>
 #include <core/Log.hpp>
-#include <core/json/Json.hpp>
 #include <core/r_util/RFunctionInformation.hpp>
 
 #include <r/RErrorCategory.hpp>
 #include <r/RInternal.hpp>
 
+#include <shared_core/Error.hpp>
+#include <shared_core/json/Json.hpp>
 
 // IMPORTANT NOTE: all code in r::sexp must provide "no jump" guarantee.
 // See comment in RInternal.hpp for more info on this
@@ -134,7 +134,8 @@ core::Error extract(SEXP valueSEXP, std::string* pString, bool asUtf8 = false);
 core::Error extract(SEXP valueSEXP, std::vector<std::string>* pVector, bool asUtf8 = false);
 core::Error extract(SEXP valueSEXP, std::set<std::string>* pSet, bool asUtf8 = false);
 core::Error extract(SEXP valueSEXP, std::map< std::string, std::set<std::string> >* pMap, bool asUtf8 = false);
-      
+core::Error extract(SEXP valueSEXP, core::json::Value* pJson);
+
 // create SEXP from c++ type
 SEXP create(SEXP valueSEXP, Protect* pProtect);
 SEXP create(const core::json::Value& value, Protect* pProtect);
@@ -217,7 +218,7 @@ core::Error getNamedListElement(SEXP listSEXP,
   core:: Error error = getNamedListElement(listSEXP, name, pValue);
   if (error)
   {
-     if (error.code() == r::errc::ListElementNotFoundError)
+     if (error == r::errc::ListElementNotFoundError)
      {
         *pValue = defaultValue;
         return core::Success();

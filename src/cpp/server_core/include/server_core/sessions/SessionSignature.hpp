@@ -1,7 +1,7 @@
 /*
  * SessionSignature.hpp
  *
- * Copyright (C) 2018 by RStudio, Inc.
+ * Copyright (C) 2018 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -16,7 +16,7 @@
 #ifndef SERVER_CORE_SESSION_SIGNATURE_HPP
 #define SERVER_CORE_SESSION_SIGNATURE_HPP
 
-#include <core/Error.hpp>
+#include <shared_core/Error.hpp>
 #include <core/http/Request.hpp>
 
 #define kRStudioMessageSignature          "X-RS-Message-Signature"

@@ -1,7 +1,7 @@
 /*
  * SessionAuthoring.hpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -16,7 +16,7 @@
 #ifndef SESSION_MODULES_AUTHORING_HPP
 #define SESSION_MODULES_AUTHORING_HPP
 
-#include <core/json/Json.hpp>
+#include <shared_core/json/Json.hpp>
 
 namespace rstudio {
 namespace core {
@@ -35,9 +35,6 @@ core::json::Array supportedLatexProgramTypes();
 core::json::Object texCapabilitiesAsJson();
 core::json::Object compilePdfStateAsJson();
 bool hasRunningChildren();
-
-// accessors used by workbench
-std::string desktopSynctexViewer();
 
 core::Error initialize();
                        

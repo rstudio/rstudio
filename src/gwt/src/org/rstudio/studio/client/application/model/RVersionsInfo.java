@@ -1,7 +1,7 @@
 /*
  * RVersionsInfo.java
  *
- * Copyright (C) 2009-13 by RStudio, Inc.
+ * Copyright (C) 2009-13 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -41,6 +41,10 @@ public class RVersionsInfo extends JavaScriptObject
 
    public final native String getDefaultRVersionHome() /*-{
       return this.default_r_version_home;
+   }-*/;
+
+   public final native String getDefaultRVersionLabel() /*-{
+      return this.default_r_version_label;
    }-*/;
    
    public final native boolean getRestoreProjectRVersion() /*-{

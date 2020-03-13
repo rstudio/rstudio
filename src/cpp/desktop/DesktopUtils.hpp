@@ -1,7 +1,7 @@
 /*
  * DesktopUtils.hpp
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -37,12 +37,13 @@ class MainWindow;
 
 void reattachConsoleIfNecessary();
 
-core::FilePath userLogPath();
+rstudio::core::FilePath userLogPath();
+rstudio::core::FilePath userWebCachePath();
 
 double devicePixelRatio(QMainWindow* pMainWindow);
 
 bool isWindows();
-bool isOSXMavericks();
+bool isMacOS();
 bool isCentOS();
 bool isGnomeDesktop();
 
@@ -108,6 +109,15 @@ double getDpiZoomScaling();
 int getDpi();
 
 QFileDialog::Options standardFileDialogOptions();
+
+QString browseDirectory(const QString& caption,
+                        const QString& label,
+                        const QString& dir,
+                        QWidget* pOwner = nullptr);
+
+core::FilePath userHomePath();
+QString createAliasedPath(const QString& path);
+QString resolveAliasedPath(const QString& path);
 
 } // namespace desktop
 } // namespace rstudio

@@ -1,7 +1,7 @@
 /*
  * LauncherSessionStatus.java
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.application.ui;
 
+import com.google.gwt.aria.client.Roles;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
@@ -34,13 +35,20 @@ public class LauncherSessionStatus extends Composite
    public LauncherSessionStatus()
    {
       initWidget(uiBinder.createAndBindUi(this));
+      Roles.getStatusRole().set(status_.getElement());
    }
-   
+
+   public String getMessage()
+   {
+      return message_.getText();
+   }
+
    public void setStatus(String text)
    {
       status_.setVisible(true);
       status_.setText(text);
    }
 
+   @UiField Label message_;
    @UiField Label status_;
 }

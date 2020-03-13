@@ -1,7 +1,7 @@
 /*
  * AceEditorIdleCommands.java
  *
- * Copyright (C) 2009-16 by RStudio, Inc.
+ * Copyright (C) 2009-16 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -15,8 +15,7 @@
 package org.rstudio.studio.client.workbench.views.source.editors.text;
 
 import org.rstudio.studio.client.common.mathjax.MathJaxUtil;
-import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
-import org.rstudio.studio.client.workbench.prefs.model.UIPrefsAccessor;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetIdleMonitor.IdleCommand;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetIdleMonitor.IdleState;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
@@ -37,7 +36,7 @@ public class AceEditorIdleCommands
    }
    
    @Inject
-   private void initialize(UIPrefs uiPrefs)
+   private void initialize(UserPrefs uiPrefs)
    {
       prefs_ = uiPrefs;
    }
@@ -65,13 +64,13 @@ public class AceEditorIdleCommands
       if (range == null)
          return;
       
-      String pref = prefs_.showLatexPreviewOnCursorIdle().getValue();
+      String pref = prefs_.latexPreviewOnCursorIdle().getValue();
       
       // preview if preview is always enabled, or specifically enabled for this
       // document
       if (sentinel.getBoolProperty(
             TextEditingTargetNotebook.CONTENT_PREVIEW_ENABLED,
-            pref != UIPrefsAccessor.LATEX_PREVIEW_SHOW_NEVER))
+            pref != UserPrefs.LATEX_PREVIEW_ON_CURSOR_IDLE_NEVER))
       {
          target.renderLatex(range, true);
       }
@@ -106,7 +105,7 @@ public class AceEditorIdleCommands
       return Position.create(0, 0);
    }
 
-   private UIPrefs prefs_;
+   private UserPrefs prefs_;
    
    public final IdleCommand PREVIEW_LINK;
    public final IdleCommand PREVIEW_LATEX;

@@ -1,7 +1,7 @@
 /*
  * NotebookChunkOptions.cpp
  *
- * Copyright (C) 2009-16 by RStudio, Inc.
+ * Copyright (C) 2009-16 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -44,7 +44,7 @@ const core::json::Object& ChunkOptions::defaultOptions() const
 core::json::Object ChunkOptions::mergedOptions() const
 {
    json::Object merged(defaultOptions_);
-   for (json::Object::iterator it = chunkOptions_.begin();
+   for (json::Object::Iterator it = chunkOptions_.begin();
         it != chunkOptions_.end();
         it ++)
    {

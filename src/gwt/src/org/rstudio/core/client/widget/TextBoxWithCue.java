@@ -1,7 +1,7 @@
 /*
  * TextBoxWithCue.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-20 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -16,8 +16,10 @@ package org.rstudio.core.client.widget;
 
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.user.client.ui.TextBox;
+import org.rstudio.core.client.dom.DomUtils;
 
 public class TextBoxWithCue extends TextBox
+                            implements CanSetControlId
 {
    public TextBoxWithCue() 
    {
@@ -38,7 +40,7 @@ public class TextBoxWithCue extends TextBox
    private void init(String cueText, Element element)
    {
       setCueText(cueText);
-      element.setAttribute("spellcheck", "false");
+      DomUtils.disableSpellcheck(element);
    }
 
    public String getCueText()
@@ -49,7 +51,13 @@ public class TextBoxWithCue extends TextBox
    public void setCueText(String cueText)
    {
       cueText_ = cueText;
-      getElement().setAttribute("placeholder", cueText);
+      DomUtils.setPlaceholder(this, cueText);
+   }
+   
+   @Override
+   public void setElementId(String id)
+   {
+      getElement().setId(id);
    }
 
    private String cueText_;

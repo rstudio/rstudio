@@ -1,7 +1,7 @@
 #
 # CMakeLists.txt
 #
-# Copyright (C) 2019 by RStudio, Inc.
+# Copyright (C) 2019 by RStudio, PBC
 #
 
 project (CRASH_HANDLER_PROXY)
@@ -18,6 +18,7 @@ set(CRASH_HANDLER_PROXY_SOURCE_FILES
 include_directories(
    ${Boost_INCLUDE_DIRS}
    ${CORE_SOURCE_DIR}/include
+   ${SHARED_CORE_SOURCE_DIR}/include
 )
 
 

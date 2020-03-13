@@ -1,7 +1,7 @@
 /*
  * FileChangeEvent.hpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-12 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -35,7 +35,7 @@ namespace system {
 class FileChangeEvent
 {
 public:
-   // NOTE: skip 2 for compatabilty with old clients (used to be FileRenamed)
+   // NOTE: skip 2 for compatibility with old clients (used to be FileRenamed)
    enum Type 
    { 
       None = 0,

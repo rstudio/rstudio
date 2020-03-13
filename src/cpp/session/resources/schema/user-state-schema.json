@@ -1,0 +1,210 @@
+{
+    "$id": "https://rstudio.com/rstudio.state.json",
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "title": "RStudio User State",
+    "type": "object",
+    "properties": {
+        "context_id": {
+            "type": "string",
+            "default": "",
+            "description": "A unique identifier representing the user and machine."
+        },
+        "agreement_hash": {
+            "type": "string",
+            "default": "",
+            "description": "Hash of the agreement that the user has accepted."
+        },
+        "auto_created_profile": {
+            "type": "boolean",
+            "default": false,
+            "description": "Whether we have automatically created an .Rprofile for this user."
+        },
+        "theme": {
+            "type": "object",
+            "properties": {
+                "name": {
+                    "type": "string",
+                    "description": "The name of the theme."
+                },
+                "url": {
+                    "type": "string",
+                    "description": "The relative path/URL to the theme."
+                },
+                "isDark": {
+                    "type": "boolean",
+                    "description": "Whether the theme should be treated as a dark theme."
+                }
+            },
+            "default": {
+                "name": "Textmate (default)",
+                "url": "theme/default/textmate.rstheme",
+                "isDark": false
+            },
+            "description": "The color theme to apply."
+        },
+        "default_project_location": {
+            "type": "string",
+            "default": "",
+            "description": "The directory path under which to place new projects by default. Shadows a uipref."
+        },
+        "clear_hidden": {
+            "type": "boolean",
+            "default": true,
+            "description": "Whether to clear hidden objects along with visible objects when clearing the workspace. Set automatically to remember last action."
+        },
+        "export_plot_options": {
+            "type": "object",
+            "properties": {
+                "width": {
+                    "type": "integer"
+                },
+                "height": {
+                    "type": "integer"
+                },
+                "format": {
+                    "type": "string"
+                },
+                "keepRatio": {
+                    "type": "boolean"
+                },
+                "viewAfterSave": {
+                    "type": "boolean"
+                },
+                "copyAsMetafile": {
+                    "type": "boolean"
+                }
+            },
+            "default": {
+                "width": 550,
+                "height": 450,
+                "keepRatio": false,
+                "format": "PNG",
+                "viewAfterSave": false,
+                "copyAsMetafile": false
+            },
+            "description": "The most recently used plot export options."
+        },
+        "export_viewer_options": {
+            "type": "object",
+            "properties": {
+                "width": {
+                    "type": "integer"
+                },
+                "height": {
+                    "type": "integer"
+                },
+                "format": {
+                    "type": "string"
+                },
+                "keepRatio": {
+                    "type": "boolean"
+                },
+                "viewAfterSave": {
+                    "type": "boolean"
+                },
+                "copyAsMetafile": {
+                    "type": "boolean"
+                }
+            },
+            "default": {},
+            "description": "The most recently used viewer export options."
+        },
+        "save_plot_as_pdf_options": {
+            "type": "object",
+            "properties": {
+                "width": {
+                    "type": "integer"
+                },
+                "height": {
+                    "type": "integer"
+                },
+                "portrait": {
+                    "type": "boolean"
+                },
+                "cairo_pdf": {
+                    "type": "boolean"
+                },
+                "viewAfterSave": {
+                    "type": "boolean"
+                }
+            },
+            "default": {},
+            "description": "The most recently used options for saving a plot as a PDF."
+        },
+        "compile_r_notebook_prefs": {
+            "type": "object",
+            "properties": {
+                "author": {
+                    "type": "string"
+                },
+                "type": {
+                    "type": "string",
+                    "enum": ["default", "stitch", "spin"]
+                }
+            },
+            "default": {},
+            "description": "Most recently used settings for compiling a notebook from an R script."
+        },
+        "compile_r_markdown_notebook_prefs": {
+            "type": "object",
+            "properties": {
+                "format": {
+                    "type": "string",
+                    "enum": ["html_document", "pdf_document", "word_document"]
+                }
+            },
+            "default": {
+                "format": "html_document"
+            },
+            "description": "Most recently used settings for compiling a notebook using R Markdown."
+        },
+        "show_publish_ui": {
+            "type": "boolean",
+            "default": true,
+            "description": "Whether to show UI for publishing content."
+        },
+        "enable_rsconnect_publish_ui": {
+            "type": "boolean",
+            "default": true,
+            "description": "Whether to show UI for publishing content to RStudio Connect."
+        },
+        "publish_account": {
+            "type": "object",
+            "default": {
+                "name": "",
+                "server": ""
+            },
+            "properties": {
+                "name": {
+                    "type": "string"
+                },
+                "server": {
+                    "type": "string"
+                }
+            },
+            "description": "The default (last) account used for publishing"
+        },
+        "document_outline_width": {
+            "type": "integer",
+            "default": 110,
+            "description": "The preferred width, in pixels, of the document outline pane."
+        },
+        "connect_via": {
+            "type": "string",
+            "enum": ["connect-r-console", "connect-new-r-script", "connect-new-r-notebook", "connect-copy-to-clipboard"],
+            "default": "connect-r-console",
+            "description": "How to create new connections to data sources."
+        },
+        "error_handler_type": {
+            "type": "string",
+            "enum": ["message", "traceback", "break", "notebook", "custom"],
+            "default": "traceback",
+            "description": "The kind of handler to invoke when errors occur."
+        },
+        "using_mingw_gcc49": {
+            "type": "boolean",
+            "default": false,
+            "description": "Whether or not the MinGW compiler with GCC 4.9 is used."
+        }
+    }
+}

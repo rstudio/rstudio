@@ -1,7 +1,7 @@
 /*
  * CommandLineHistory.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-12 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -90,7 +90,7 @@ public class CommandLineHistory
    private int historyPos_ ;
    // If you start typing a command, then go up in history, then go down,
    // then what you had previously typed should still be there. This is
-   // that value--it is loaded/saved whenever history nagivation takes you
+   // that value--it is loaded/saved whenever history navigation takes you
    // into/out of that final history position (history_.size()).
    private String historyTail_;
    private final HasText input_;

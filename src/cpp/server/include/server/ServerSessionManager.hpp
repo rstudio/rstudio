@@ -1,7 +1,7 @@
 /*
  * ServerSessionManager.hpp
  *
- * Copyright (C) 2009-16 by RStudio, Inc.
+ * Copyright (C) 2009-16 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -82,6 +82,9 @@ public:
                            core::r_util::SessionLaunchProfile*)>
                                                   SessionLaunchProfileFilter;
    void addSessionLaunchProfileFilter(const SessionLaunchProfileFilter& filter);
+
+   // get current session launch profile filters
+   const std::vector<SessionLaunchProfileFilter>& getSessionLaunchProfileFilters() { return sessionLaunchProfileFilters_; }
 
    // notification that a SIGCHLD was received
    void notifySIGCHLD();

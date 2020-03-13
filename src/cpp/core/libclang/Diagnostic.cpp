@@ -1,7 +1,7 @@
 /*
  * Diagnostic.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -73,7 +73,7 @@ std::string Diagnostic::categoryText() const
 
 std::string Diagnostic::enableOption() const
 {
-   return toStdString(clang().getDiagnosticOption(diagnostic_, NULL));
+   return toStdString(clang().getDiagnosticOption(diagnostic_, nullptr));
 }
 
 std::string Diagnostic::disableOption() const
@@ -113,7 +113,7 @@ boost::shared_ptr<DiagnosticSet> Diagnostic::children() const
 {
    boost::shared_ptr<DiagnosticSet> pChildren;
    CXDiagnosticSet set = clang().getChildDiagnostics(diagnostic_);
-   if (set != NULL)
+   if (set != nullptr)
       pChildren.reset(new DiagnosticSet(set, false));
    return pChildren;
 }

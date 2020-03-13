@@ -1,7 +1,7 @@
 #
 # CMakeLists.txt
 #
-# Copyright (C) 2009-18 by RStudio, Inc.
+# Copyright (C) 2009-19 by RStudio, PBC
 #
 # Unless you have received this program directly from RStudio pursuant
 # to the terms of a commercial license agreement with RStudio, then
@@ -33,13 +33,6 @@ include_directories(
 # define executable
 add_executable(rpostback ${POSTBACK_SOURCE_FILES} ${POSTBACK_HEADER_FILES})
 
-# add origin rpath for suse/sles
-if(RSTUDIO_PACKAGE_BUILD_SLES)
-   set(CMAKE_BUILD_WITH_INSTALL_RPATH TRUE)
-   set_target_properties(rpostback PROPERTIES
-                         INSTALL_RPATH \$ORIGIN)
-endif()
-
 # set link dependencies
 target_link_libraries(rpostback
    rstudio-core
@@ -60,21 +53,38 @@ configure_file(rpostback-gitssh ${POSTBACK_SCRIPT_DIR}/rpostback-gitssh)
 configure_file(rpostback-askpass ${POSTBACK_SCRIPT_DIR}/rpostback-askpass)
 configure_file(askpass-passthrough ${POSTBACK_SCRIPT_DIR}/askpass-passthrough)
 
+# put rpostback in a place where it can be found for dev config
+if(NOT RSTUDIO_PACKAGE_BUILD)
+   set_target_properties(rpostback PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${POSTBACK_SCRIPT_DIR})
+endif()
+
 # installation rules
-install(TARGETS rpostback DESTINATION ${RSTUDIO_INSTALL_BIN})
-file(GLOB POSTBACK_SCRIPTS "rpostback-*")
-set(POSTBACK_SCRIPTS ${POSTBACK_SCRIPTS} "askpass-passthrough")
-install(PROGRAMS ${POSTBACK_SCRIPTS}
-        DESTINATION ${RSTUDIO_INSTALL_BIN}/postback)
+if(NOT RSTUDIO_SESSION_WIN32)
+   install(TARGETS rpostback DESTINATION ${RSTUDIO_INSTALL_BIN})
+   file(GLOB POSTBACK_SCRIPTS "rpostback-*")
+   set(POSTBACK_SCRIPTS ${POSTBACK_SCRIPTS} "askpass-passthrough")
+   install(PROGRAMS ${POSTBACK_SCRIPTS}
+           DESTINATION ${RSTUDIO_INSTALL_BIN}/postback)
+endif()
 
 # if doing a package build on MacOS, reroute the OpenSSL libraries to our bundled copies
 if(APPLE AND RSTUDIO_PACKAGE_BUILD)
+
    find_package(OpenSSL REQUIRED QUIET)
    foreach(lib ${OPENSSL_CRYPTO_LIBRARY} ${OPENSSL_SSL_LIBRARY})
-      get_filename_component(LIB_DIR ${lib} PATH)
-      execute_process(COMMAND readlink ${lib} OUTPUT_VARIABLE LIB_FILE OUTPUT_STRIP_TRAILING_WHITESPACE)
+      # get the real path to the library (with all symlinks resolved) and filename
+      get_filename_component(LIB_PATH "${lib}" REALPATH)
+      get_filename_component(LIB_FILE "${LIB_PATH}" NAME)
+      # this command does the following:
+      # 1. runs otool -L to find the path at which the OpenSSL library is
+      #    linked into the executable (this path is unfortunately not canonical
+      #    and includes layers of both resolved and unresolved symlinks)
+      # 2. extracts the path from the output using grep and awk
+      # 3. runs install_name_tool and tells it to replace the path with one that
+      #    points to a bundled copy of the same file
       add_custom_command (TARGET rpostback POST_BUILD
-         COMMAND install_name_tool -change ${LIB_DIR}/${LIB_FILE} @executable_path/../Frameworks/${LIB_FILE} ${CMAKE_CURRENT_BINARY_DIR}/rpostback)
+         COMMAND install_name_tool -change `otool -L ${CMAKE_CURRENT_BINARY_DIR}/rpostback | grep ${LIB_FILE} | awk '{ print $$1 }'` @executable_path/../Frameworks/${LIB_FILE} ${CMAKE_CURRENT_BINARY_DIR}/rpostback)
    endforeach()
+
 endif()
 

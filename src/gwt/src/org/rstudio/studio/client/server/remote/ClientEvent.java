@@ -1,7 +1,7 @@
 /*
  * ClientEvent.java
  *
- * Copyright (C) 2009-19 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -54,7 +54,8 @@ class ClientEvent extends JavaScriptObject
    public static final String ConsoleProcessOutput = "console_process_output";
    public static final String ConsoleProcessExit = "console_process_exit";
    public static final String ListChanged = "list_changed";
-   public static final String UiPrefsChanged = "ui_prefs_changed";
+   public static final String UserPrefsChanged = "user_prefs_changed";
+   public static final String UserStateChanged = "user_state_changed";
    public static final String HandleUnsavedChanges = "handle_unsaved_changes";
    public static final String PosixShellOutput = "posix_shell_output";
    public static final String PosixShellExit = "posix_shell_exit";
@@ -69,6 +70,8 @@ class ClientEvent extends JavaScriptObject
    public static final String CompilePdfCompletedEvent = "compile_pdf_completed_event";
    public static final String SynctexEditFile = "synctex_edit_file";
    public static final String FindResult = "find_result";
+   public static final String ReplaceResult = "replace_result";
+   public static final String ReplaceProgress = "replace_updated";
    public static final String FindOperationEnded = "find_operation_ended";
    public static final String RPubsUploadStatus = "rpubs_upload_status";
    public static final String BuildStarted = "build_started";
@@ -185,6 +188,9 @@ class ClientEvent extends JavaScriptObject
    public static final String ComputeThemeColors = "compute_theme_colors";
    public static final String RequestDocumentClose = "request_document_close";
    public static final String ExecuteAppCommand = "execute_app_command";
+   public static final String HighlightUi = "highlight_ui";
+   public static final String TutorialCommand = "tutorial_command";
+   public static final String TutorialLaunch = "tutorial_launch";
 
    protected ClientEvent()
    {

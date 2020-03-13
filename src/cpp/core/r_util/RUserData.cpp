@@ -1,7 +1,7 @@
 /*
  * RUserData.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-12 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -15,7 +15,7 @@
 
 #include <core/r_util/RUserData.hpp>
 
-#include <core/FilePath.hpp>
+#include <shared_core/FilePath.hpp>
 
 #include <core/system/System.hpp>
 
@@ -37,7 +37,7 @@ UserDirectories userDirectories(SessionType sessionType,
    if (!homePath.empty())
       dirs.homePath = homePath;
    else
-      dirs.homePath = core::system::userHomePath("R_USER|HOME").absolutePath();
+      dirs.homePath = core::system::userHomePath("R_USER|HOME").getAbsolutePath();
 
    // compute user scratch path
    std::string scratchPathName;
@@ -47,8 +47,8 @@ UserDirectories userDirectories(SessionType sessionType,
       scratchPathName = "RStudio";
 
    dirs.scratchPath = core::system::userSettingsPath(
-                                          FilePath(dirs.homePath),
-                                          scratchPathName).absolutePath();
+      FilePath(dirs.homePath),
+      scratchPathName).getAbsolutePath();
 
    return dirs;
 }

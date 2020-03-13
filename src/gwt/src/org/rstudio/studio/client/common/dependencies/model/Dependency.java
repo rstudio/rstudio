@@ -1,7 +1,7 @@
 /*
- * CompilePdfResult.java
+ * Dependency.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -20,50 +20,32 @@ import com.google.gwt.core.client.JavaScriptObject;
 
 public class Dependency extends JavaScriptObject
 {
-   public static final int CRAN_PACKAGE = 0;
-   public static final int EMBEDDED_PACKAGE = 1;
-   
    protected Dependency()
    {
    }
-   
+
    public static Dependency cranPackage(String name)
    {
       // use version '0.0.0' just to indicate that any currently installed
       // version of the requested package should suffice
-      return cranPackage(name, "0.0.0", false);
+      return cranPackage(name, "0.0.0");
    }
-   
-   public static Dependency cranPackage(String name, 
-                                        String version)
-   {
-      return cranPackage(name, version, false);
-   }
-            
-            
-   
-   public native static final Dependency cranPackage(String name, 
-                                                     String version,
-                                                     boolean source) /*-{
-      var dep = new Object();
-      dep.type = 0;
-      dep.name = name;
-      dep.version = version;
-      dep.source = source;
-      return dep;
+
+   public final native static Dependency cranPackage(String name, String version) /*-{
+      return {
+         "name": name,
+         "version": version,
+         "location": "cran",
+         "source": false
+      };
    }-*/;
    
-   public native static final Dependency embeddedPackage(String name) /*-{
-      var dep = new Object();
-      dep.type = 1;
-      dep.name = name;
-      dep.version = "";
-      dep.source = true;
-      return dep;
+   public final native String getLocation() /*-{
+      return this.location;
    }-*/;
    
-   public final native int getType() /*-{
-      return this.type;
+   public final native String setName(String name) /*-{
+      this.name = name;
    }-*/;
    
    public final native String getName() /*-{
@@ -88,9 +70,9 @@ public class Dependency extends JavaScriptObject
    
    public final boolean isEqualTo(Dependency other)
    {
-      return (getType()    == other.getType() &&
-              getName()    == other.getName() &&
-              getVersion() == other.getVersion() &&
-              getSource()  == other.getSource());
+      return (getLocation()  == other.getLocation() &&
+              getName()      == other.getName() &&
+              getVersion()   == other.getVersion() &&
+              getSource()    == other.getSource());
    }
 }

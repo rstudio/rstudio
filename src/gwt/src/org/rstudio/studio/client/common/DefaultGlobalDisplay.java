@@ -1,7 +1,7 @@
 /*
  * DefaultGlobalDisplay.java
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -394,6 +394,20 @@ public class DefaultGlobalDisplay extends GlobalDisplay
       // open window
       openWindow(url);
    }
+   
+   @Override
+   public void bringWindowToFront(String name)
+   {
+      if (Desktop.isDesktop())
+         Desktop.getFrame().activateMinimalWindow(name);
+      else
+         bringWindowToFrontImpl(name);
+   }
+   
+   private static final native void bringWindowToFrontImpl(String name)
+   /*-{
+      $wnd.open("", name);
+   }-*/;
    
    @Override
    public void openRStudioLink(String linkName, boolean includeVersionInfo)

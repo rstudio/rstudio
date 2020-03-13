@@ -1,7 +1,7 @@
 /*
  * SessionTexUtils.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -15,7 +15,6 @@
 
 #include "SessionTexUtils.hpp"
 
-#include <boost/foreach.hpp>
 #include <boost/algorithm/string.hpp>
 
 #include <core/system/Process.hpp>
@@ -54,7 +53,7 @@ core::system::Option inputsEnvVar(const std::string& name,
       boost::algorithm::replace_all(value, "\\", "/");
 #endif
 
-   std::string sysPath = string_utils::utf8ToSystem(extraPath.absolutePath());
+   std::string sysPath = string_utils::utf8ToSystem(extraPath.getAbsolutePath());
    core::system::addToPath(&value, sysPath);
    core::system::addToPath(&value, ""); // trailing : required by tex
 
@@ -66,7 +65,7 @@ shell_utils::ShellArgs buildArgs(const shell_utils::ShellArgs& args,
 {
    shell_utils::ShellArgs procArgs;
    procArgs << args;
-   procArgs << texFilePath.filename();
+   procArgs << texFilePath.getFilename();
    return procArgs;
 }
 
@@ -95,19 +94,20 @@ RTexmfPaths rTexmfPaths()
    }
 
    // R texmf path
-   FilePath rTexmfPath(rHomeSharePath.complete("texmf"));
+   FilePath rTexmfPath(rHomeSharePath.completePath("texmf"));
    if (!rTexmfPath.exists())
    {
-      LOG_ERROR(core::pathNotFoundError(rTexmfPath.absolutePath(),
+      LOG_ERROR(core::pathNotFoundError(
+         rTexmfPath.getAbsolutePath(),
                                         ERROR_LOCATION));
       return RTexmfPaths();
    }
 
    // populate and return struct
    RTexmfPaths texmfPaths;
-   texmfPaths.texInputsPath = rTexmfPath.childPath("tex/latex");
-   texmfPaths.bibInputsPath = rTexmfPath.childPath("bibtex/bib");
-   texmfPaths.bstInputsPath = rTexmfPath.childPath("bibtex/bst");
+   texmfPaths.texInputsPath = rTexmfPath.completeChildPath("tex/latex");
+   texmfPaths.bibInputsPath = rTexmfPath.completeChildPath("bibtex/bib");
+   texmfPaths.bstInputsPath = rTexmfPath.completeChildPath("bibtex/bst");
    return texmfPaths;
 }
 
@@ -142,7 +142,7 @@ Error runTexCompile(const FilePath& texProgramPath,
    // copy extra environment variables
    core::system::Options env;
    core::system::environment(&env);
-   BOOST_FOREACH(const core::system::Option& var, envVars)
+   for (const core::system::Option& var : envVars)
    {
       core::system::setenv(&env, var.first, var.second);
    }
@@ -152,11 +152,11 @@ Error runTexCompile(const FilePath& texProgramPath,
    procOptions.terminateChildren = true;
    procOptions.redirectStdErrToStdOut = true;
    procOptions.environment = env;
-   procOptions.workingDir = texFilePath.parent();
+   procOptions.workingDir = texFilePath.getParent();
 
    // run the program
    return core::system::runProgram(
-               string_utils::utf8ToSystem(texProgramPath.absolutePath()),
+               string_utils::utf8ToSystem(texProgramPath.getAbsolutePath()),
                buildArgs(args, texFilePath),
                "",
                procOptions,
@@ -174,7 +174,7 @@ core::Error runTexCompile(
                               texProgramPath,
                               buildArgs(args, texFilePath),
                               envVars,
-                              texFilePath.parent(),
+                              texFilePath.getParent(),
                               ignoreOutput,
                               onExited);
 

@@ -1,7 +1,7 @@
 #
 # SessionPackrat.R
 #
-# Copyright (C) 2009-14 by RStudio, Inc.
+# Copyright (C) 2009-14 by RStudio, PBC
 #
 # Unless you have received this program directly from RStudio pursuant
 # to the terms of a commercial license agreement with RStudio, then
@@ -75,7 +75,7 @@
 
    projectPath <- paste(normalizePath(dir), "packrat", "lib", "", sep = sep)
    libraryPaths <- normalizePath(as.character(libraryList[,"library"]))
-   libraryList["in.packrat.library"] <- 
+   libraryList["in.project.library"] <- 
       substr(libraryPaths, 1, nchar(projectPath)) == projectPath
 
    # resolve symlinks (use normalizePath rather than Sys.readlink since we want
@@ -104,8 +104,8 @@
    libraryList[,"library"] <- 
       .rs.createAliasedPath(dirname(resolvedLinks))
 
-   packratList <- subset(libraryList, in.packrat.library) 
-   nonPackratList <- subset(libraryList, !in.packrat.library) 
+   packratList <- subset(libraryList, in.project.library) 
+   nonPackratList <- subset(libraryList, !in.project.library) 
 
    # overlay packrat status on the packrat library status
    mergedList <- merge(packratList, 
@@ -116,7 +116,7 @@
                        all.y = TRUE)
 
    # mark all packages in the merged list 
-   mergedList[,"in.packrat.library"] <- rep(TRUE, nrow(mergedList))
+   mergedList[,"in.project.library"] <- rep(TRUE, nrow(mergedList))
 
    # exclude manipulate and rstudio packages 
    mergedList <- subset(mergedList, !(mergedList[,"name"] == "rstudio"))
@@ -159,4 +159,3 @@
 .rs.addJsonRpcHandler("get_pending_actions", function(action, dir) {
    .rs.pendingActions(action, dir)
 })
-

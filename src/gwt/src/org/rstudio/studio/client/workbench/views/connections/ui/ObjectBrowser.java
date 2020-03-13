@@ -1,7 +1,7 @@
 /*
  * ObjectBrowser.java
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -15,15 +15,11 @@
 
 package org.rstudio.studio.client.workbench.views.connections.ui;
 
-import java.util.HashSet;
-import java.util.Set;
-
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.widget.SimplePanelWithProgress;
 import org.rstudio.studio.client.common.Value;
 import org.rstudio.studio.client.workbench.views.connections.model.Connection;
-import org.rstudio.studio.client.workbench.views.connections.model.DatabaseObject;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
@@ -35,10 +31,7 @@ import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.resources.client.ImageResource.ImageOptions;
 import com.google.gwt.user.cellview.client.CellTree;
 import com.google.gwt.user.cellview.client.CellTree.CellTreeMessages;
-import com.google.gwt.user.cellview.client.TreeNode;
-import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Event;
-import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.RequiresResize;
 import com.google.gwt.user.client.ui.ScrollPanel;
@@ -69,80 +62,21 @@ public class ObjectBrowser extends Composite implements RequiresResize
    
    public void update(Connection connection, String hint)
    { 
-      final Set<DatabaseObject> expandedNodes = new HashSet<DatabaseObject>();
-      
-      // if this update is for the currently visible connection in the model,
-      // cache the set of expanded nodes for replay
-      if (objects_ != null && connection == connection_)
-      {
-         TreeNode rootNode = objects_.getRootTreeNode();
-         if (!objects_.getRootTreeNode().isDestroyed())
-         {
-            for (int i = 0; i < rootNode.getChildCount(); i++)
-            {
-               if (rootNode.isChildOpen(i))
-               {
-                  DatabaseObject node = (DatabaseObject)rootNode.getChildValue(i);
-                  expandedNodes.add(node);
-               }
-            }
-         }
-      }
-      
       // create tables model and widget
       objectsModel_ = new ObjectBrowserModel();
       
-      // capture scroll position
-      final int scrollPosition = scrollPanel_.getVerticalScrollPosition();
-
       // show progress while updating the connection
       hostPanel_.showProgress(50, "Loading objects");
             
       // update the table then restore expanded nodes
       objectsModel_.update(
-         connection,      // connection 
-         expandedNodes,
-         new Command() {   // table update completed, expand nodes
-            @Override
-            public void execute()
-            {
-               // clear progress and show the object tree again
-               hostPanel_.setWidget(scrollPanel_);
-               
-               // restore expanded nodes
-               TreeNode rootNode = objects_.getRootTreeNode();
-               if (!rootNode.isDestroyed())
-               {
-                  for (int i = 0; i < rootNode.getChildCount(); i++)
-                  {
-                     final DatabaseObject nodeVal = 
-                           (DatabaseObject)(rootNode.getChildValue(i));
-                     for (DatabaseObject expanded: expandedNodes)
-                     {
-                        if (expanded.isEqualTo(nodeVal))
-                           rootNode.setChildOpen(i, true, false);
-                     }
-                  }
-               }
-            }
-         },
-         new Command() {   // node expansion completed, restore scroll position
-            @Override
-            public void execute()
-            {
-               // delay 100ms to allow expand animation to complete
-               new Timer() {
-
-                  @Override
-                  public void run()
-                  {
-                     scrollPanel_.setVerticalScrollPosition(scrollPosition); 
-                  }
-                  
-               }.schedule(100);
-              
-            }
-         });
+         connection ,      // connection 
+         null,             // expanded nodes (none for refresh)
+         () -> 
+         {
+            // clear progress and show the object tree again
+            hostPanel_.setWidget(scrollPanel_);
+         }, null);
 
       // create new widget
       objects_ = new CellTree(objectsModel_, null, RES, MESSAGES, 512);

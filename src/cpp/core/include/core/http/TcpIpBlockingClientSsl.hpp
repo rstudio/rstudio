@@ -1,7 +1,7 @@
 /*
  * TcpIpBlockingClientSsl.hpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-12 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -27,13 +27,14 @@ namespace http {
 inline Error sendSslRequest(const std::string& address,
                             const std::string& port,
                             bool verify,
-                            const http::Request& request,
-                            http::Response* pResponse)
+                            const boost::posix_time::time_duration& connectionTimeout,
+                            const Request& request,
+                            Response* pResponse)
 {
    // create client
    boost::asio::io_service ioService;
    boost::shared_ptr<TcpIpAsyncClientSsl> pClient(
-         new TcpIpAsyncClientSsl(ioService, address, port, verify));
+         new TcpIpAsyncClientSsl(ioService, address, port, verify, std::string(), connectionTimeout));
 
    // execute blocking request
    return sendRequest<boost::asio::ssl::stream<boost::asio::ip::tcp::socket> >
@@ -41,6 +42,15 @@ inline Error sendSslRequest(const std::string& address,
                                                           pClient,
                                                           request,
                                                           pResponse);
+}
+
+inline Error sendSslRequest(const std::string& address,
+                            const std::string& port,
+                            bool verify,
+                            const http::Request& request,
+                            http::Response* pResponse)
+{
+   return sendSslRequest(address, port, verify, boost::posix_time::pos_infin, request, pResponse);
 }
    
 } // namespace http

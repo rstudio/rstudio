@@ -1,7 +1,7 @@
 /*
  * FindOutputCodec.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -58,7 +58,10 @@ public class FindOutputCodec
 
       TableCellElement td2 = Document.get().createTDElement();
       td2.setClassName(styles_.lineValue());
-      td2.setInnerHTML(entry.getLineHTML().asString());
+      if (!entry.getReplaceIndicator())
+         td2.setInnerHTML(entry.getLineHTML().asString());
+      else
+         td2.setInnerHTML(entry.getLineReplaceHTML().asString());
       tr.appendChild(td2);
 
       return tr;

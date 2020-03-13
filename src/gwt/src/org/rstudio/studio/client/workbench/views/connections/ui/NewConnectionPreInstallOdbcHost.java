@@ -1,7 +1,7 @@
 /*
  * NewConnectionPreInstallOdbcHost.java
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -16,6 +16,7 @@
 package org.rstudio.studio.client.workbench.views.connections.ui;
 
 
+import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.widget.DirectoryChooserTextBox;
 import org.rstudio.core.client.widget.Operation;
@@ -58,6 +59,7 @@ public class NewConnectionPreInstallOdbcHost extends Composite
    {
       RStudioGinjector.INSTANCE.injectMembers(this);
 
+      dirChooser_ = new DirectoryChooserTextBox("", "", ElementIds.TextBoxButtonId.ODBC_PATH, null);
       mainWidget_ = GWT.<Binder>create(Binder.class).createAndBindUi(this);
  
       initWidget(createWidget());
@@ -112,7 +114,7 @@ public class NewConnectionPreInstallOdbcHost extends Composite
    @UiField
    Label driverLabel_;
 
-   @UiField
+   @UiField(provided = true)
    DirectoryChooserTextBox dirChooser_;
 
    @UiField

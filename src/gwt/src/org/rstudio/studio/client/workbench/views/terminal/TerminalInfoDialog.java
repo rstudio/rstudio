@@ -1,7 +1,7 @@
 /*
  * TerminalInfoDialog.java
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -15,8 +15,10 @@
 
 package org.rstudio.studio.client.workbench.views.terminal;
 
+import com.google.gwt.aria.client.Roles;
 import org.rstudio.core.client.AnsiCode;
 import org.rstudio.core.client.BrowseCap;
+import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.ResultCallback;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.theme.res.ThemeResources;
@@ -25,26 +27,28 @@ import org.rstudio.core.client.widget.ThemedButton;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.common.console.ConsoleProcessInfo;
-import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 
 import com.google.gwt.user.client.ui.TextArea;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
+import org.rstudio.studio.client.workbench.views.terminal.xterm.XTermOptions;
 
 public class TerminalInfoDialog extends ModalDialogBase
 {
 
    public TerminalInfoDialog(String globalInfo, final TerminalSession session)
    {
+      super(Roles.getDialogRole());
       RStudioGinjector.INSTANCE.injectMembers(this);
 
       setText("Terminal Diagnostics");
 
-      boolean localEchoEnabled = uiPrefs_.terminalLocalEcho().getValue() && 
+      boolean localEchoEnabled = userPrefs_.terminalLocalEcho().getValue() &&
             !BrowseCap.isWindowsDesktop();
-      
+
       final StringBuilder diagnostics = new StringBuilder();
-      
+
       diagnostics.append("Global Terminal Information\n---------------------------\n");
       diagnostics.append(globalInfo);
       if (session != null)
@@ -71,13 +75,21 @@ public class TerminalInfoDialog extends ModalDialogBase
          diagnostics.append("Local-echo:  '").append(localEchoEnabled).append("'\n");
          diagnostics.append("Working Dir: '").append(cwd).append("'\n");
          diagnostics.append("Interactive: '").append(cpi.getInteractionModeName()).append("'\n");
-         diagnostics.append("WebSockets:  '").append(uiPrefs_.terminalUseWebsockets().getValue()).append("'\n");
-         diagnostics.append("Typing lag:  '").append(session.getSocket().getTypingLagMsg()).append("'\n");
+         diagnostics.append("WebSockets:  '").append(userPrefs_.terminalWebsockets().getValue()).append("'\n");
+
+         diagnostics.append("\nCurrent Terminal Emulator Settings\n------------------------------------\n");
+         for (String optionName : XTermOptions.stringOptions)
+            diagnostics.append(optionName).append(": ").append(session.getStringOption(optionName)).append("\n");
+         for (String optionName : XTermOptions.boolOptions)
+            diagnostics.append(optionName).append(": ").append(session.getBoolOption(optionName)).append("\n");
+         for (String optionName : XTermOptions.numberOptions)
+            diagnostics.append(optionName).append(": ").append(session.getNumberOption(optionName)).append("\n");
 
          diagnostics.append("\nSystem Information\n------------------\n");
          diagnostics.append("Desktop:    '").append(Desktop.isDesktop()).append("'\n");
+         diagnostics.append("Remote:     '").append(Desktop.isRemoteDesktop()).append("'\n");
          diagnostics.append("Platform:   '").append(BrowseCap.getPlatformName()).append("'\n");
-         if (!Desktop.isDesktop())
+         if (!Desktop.hasDesktopFrame())
             diagnostics.append("Browser:    '").append(BrowseCap.getBrowserName()).append("'\n");
 
          diagnostics.append("\nConnection Information\n----------------------\n");
@@ -96,7 +108,7 @@ public class TerminalInfoDialog extends ModalDialogBase
       textArea_.setText(diagnostics.toString());
 
       addOkButton(new ThemedButton("Close", event -> closeDialog()));
-      
+
       if (session != null)
       {
          appendBufferButton_ = new ThemedButton("Append Buffer", event -> {
@@ -111,10 +123,6 @@ public class TerminalInfoDialog extends ModalDialogBase
                   textArea_.setText(diagnostics.toString());
                   textArea_.setCursorPos(diagnostics.toString().length());
                   textArea_.getElement().setScrollTop(textArea_.getElement().getScrollHeight());
-
-                  diagnostics.append("\n\nTerminal Buffer (Client)\n---------------\n");
-                  diagnostics.append(AnsiCode.prettyPrint(session.getLocalBuffer()));
-                  textArea_.setText(diagnostics.toString());
                }
 
                @Override
@@ -125,26 +133,25 @@ public class TerminalInfoDialog extends ModalDialogBase
                }
             });
          });
-         addLeftButton(appendBufferButton_);
-      }      
+         addLeftButton(appendBufferButton_, ElementIds.PREVIEW_BUTTON);
+      }
    }
 
    @Inject
-   private void initialize(UIPrefs uiPrefs)
+   private void initialize(UserPrefs uiPrefs)
    {
-      uiPrefs_ = uiPrefs;
-   } 
+      userPrefs_ = uiPrefs;
+   }
 
-   
    @Override
    protected Widget createMainWidget()
    {
       return textArea_;
    }
-   
+
    private TextArea textArea_;
    private ThemedButton appendBufferButton_;
 
    // Injected ---- 
-   private UIPrefs uiPrefs_;
+   private UserPrefs userPrefs_;
 }

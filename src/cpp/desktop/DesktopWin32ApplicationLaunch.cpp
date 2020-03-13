@@ -1,7 +1,7 @@
 /*
  * DesktopWin32ApplicationLaunch.cpp
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -225,7 +225,7 @@ void ApplicationLaunch::launchRStudio(const std::vector<std::string>& args,
    }
 
    core::Error error = core::system::runProgram(
-      desktop::options().executablePath().absolutePath(),
+      desktop::options().executablePath().getAbsolutePath(),
       args,
       "",
       options,

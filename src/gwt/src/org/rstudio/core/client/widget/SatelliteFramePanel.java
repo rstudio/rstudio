@@ -1,7 +1,7 @@
 /*
  * SatelliteFramePanel.java
  *
- * Copyright (C) 2009-14 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -20,8 +20,6 @@ import com.google.gwt.event.dom.client.LoadHandler;
 import com.google.gwt.user.client.ui.LayoutPanel;
 import com.google.gwt.user.client.ui.ResizeComposite;
 
-import org.rstudio.core.client.widget.RStudioFrame;
-import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.studio.client.common.AutoGlassPanel;
 import org.rstudio.studio.client.workbench.commands.Commands;
 
@@ -33,7 +31,7 @@ public abstract class SatelliteFramePanel <T extends RStudioFrame>
       commands_ = commands;
       rootPanel_ = new LayoutPanel();
       
-      toolbar_ = new Toolbar();
+      toolbar_ = new Toolbar("Secondary Window");
       initToolbar(toolbar_, commands_);
       rootPanel_.add(toolbar_);
       rootPanel_.setWidgetLeftRight(toolbar_, 0, Unit.PX, 0, Unit.PX);
@@ -48,6 +46,11 @@ public abstract class SatelliteFramePanel <T extends RStudioFrame>
    }
    
    protected void showUrl(String url, boolean removeToolbar)
+   {
+      showUrl(url, false, null);
+   }
+
+   protected void showUrl(String url, boolean removeToolbar, LoadHandler onLoad)
    {
       if (appFrame_ != null)
       {
@@ -72,6 +75,12 @@ public abstract class SatelliteFramePanel <T extends RStudioFrame>
       rootPanel_.add(glassPanel_);
       rootPanel_.setWidgetLeftRight(glassPanel_,  0, Unit.PX, 0, Unit.PX);
       rootPanel_.setWidgetTopBottom(glassPanel_, widgetTop, Unit.PX, 0, Unit.PX);
+
+      if (onLoad != null)
+      {
+         // run supplied load handler if present
+         appFrame_.addLoadHandler(onLoad);
+      }
    }
    
    protected T getFrame()

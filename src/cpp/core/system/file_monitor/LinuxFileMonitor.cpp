@@ -1,7 +1,7 @@
 /*
  * LinuxFileMonitor.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -24,7 +24,6 @@
 #include <set>
 
 #include <boost/utility.hpp>
-#include <boost/foreach.hpp>
 #include <boost/algorithm/string/predicate.hpp>
 
 #include <boost/multi_index_container.hpp>
@@ -32,7 +31,7 @@
 #include <boost/multi_index/member.hpp>
 
 #include <core/Log.hpp>
-#include <core/Error.hpp>
+#include <shared_core/Error.hpp>
 #include <core/FileInfo.hpp>
 
 #include <core/system/FileScanner.hpp>
@@ -214,7 +213,7 @@ Error addWatch(const FileInfo& fileInfo,
    // add IN_DONT_FOLLOW unless we are explicitly allowing root symlinks
    // and this is a watch for the root path
    if (!allowRootSymlink ||
-       (fileInfo.absolutePath() != rootPath.absolutePath()))
+       (fileInfo.absolutePath() != rootPath.getAbsolutePath()))
    {
       mask |= IN_DONT_FOLLOW;
    }
@@ -324,8 +323,8 @@ Error processEvent(FileEventContext* pContext,
          return Success();
 
       // get file info
-      FilePath filePath = FilePath(parentIt->absolutePath()).complete(
-                                                                 pEvent->name);
+      FilePath filePath = FilePath(parentIt->absolutePath()).completePath(
+         pEvent->name);
 
 
       // if the file exists then collect as many extended attributes
@@ -337,7 +336,7 @@ Error processEvent(FileEventContext* pContext,
       }
       else
       {
-         fileInfo = FileInfo(filePath.absolutePath(), pEvent->mask & IN_ISDIR);
+         fileInfo = FileInfo(filePath.getAbsolutePath(), pEvent->mask & IN_ISDIR);
       }
 
       // if this doesn't meet the filter then ignore
@@ -359,7 +358,7 @@ Error processEvent(FileEventContext* pContext,
                                      &removeEvents);
 
             // for each directory remove event remove any watches we have for it
-            BOOST_FOREACH(const FileChangeEvent& event, removeEvents)
+            for (const FileChangeEvent& event : removeEvents)
             {
                if (event.fileInfo().isDirectory())
                {
@@ -394,7 +393,7 @@ Error processEvent(FileEventContext* pContext,
             // in the normal course of business if a file is deleted between
             // the time the change is detected and we try to inspect it)
             if (error &&
-               (error.code() != boost::system::errc::no_such_file_or_directory))
+               (error != systemError(boost::system::errc::no_such_file_or_directory, ErrorLocation())))
             {
                LOG_ERROR(error);
             }
@@ -536,7 +535,7 @@ void run(const boost::function<void()>& checkForInput)
    while(true)
    {
       std::list<void*> contexts = impl::activeEventContexts();
-      BOOST_FOREACH(void* ctx, contexts)
+      for (void* ctx : contexts)
       {
          // cast to context
          FileEventContext* pContext = (FileEventContext*)ctx;
@@ -550,7 +549,8 @@ void run(const boost::function<void()>& checkForInput)
          // check for context root directory deleted
          if (!pContext->rootPath.exists())
          {
-            Error error = fileNotFoundError(pContext->rootPath.absolutePath(),
+            Error error = fileNotFoundError(
+               pContext->rootPath.getAbsolutePath(),
                                             ERROR_LOCATION);
             terminateWithMonitoringError(pContext, error);
             continue;

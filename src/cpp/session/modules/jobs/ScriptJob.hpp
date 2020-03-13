@@ -1,7 +1,7 @@
 /*
  * ScriptJob.hpp
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -17,6 +17,9 @@
 #define SESSION_SCRIPT_JOB_HPP
 
 #include <session/jobs/Job.hpp>
+#include <session/SessionAsyncRProcess.hpp>
+
+#include "AsyncRJobManager.hpp"
 
 namespace rstudio {
 namespace core {
@@ -50,13 +53,15 @@ public:
          bool importEnv,
          const std::string& exportEnv);
 
-   std::string name();
-   std::string code();
-   core::FilePath path();
-   std::string encoding();
-   core::FilePath workingDir();
-   bool importEnv();
-   std::string exportEnv();
+   std::string name() const;
+   std::string code() const;
+   core::FilePath path() const;
+   std::string encoding() const;
+   core::FilePath workingDir() const;
+   bool importEnv() const;
+   std::string exportEnv() const;
+   void setProcOptions(async_r::AsyncRProcessOptions options);
+   boost::optional<async_r::AsyncRProcessOptions> procOptions();
 private:
    std::string name_;
    std::string code_;
@@ -65,9 +70,34 @@ private:
    core::FilePath workingDir_;
    bool importEnv_;
    std::string exportEnv_;
+   boost::optional<async_r::AsyncRProcessOptions> procOptions_;
+};
+
+
+class ScriptJob : public AsyncRJob
+{
+public:
+   static boost::shared_ptr<ScriptJob> create(
+         const ScriptLaunchSpec& spec);
+   void start();
+
+private:
+   ScriptJob(const ScriptLaunchSpec& spec);
+   void onStdout(const std::string& output);
+   void onCompleted(int exitStatus);
+   void onProgress(const std::string& cat, const std::string& argument);
+
+   ScriptLaunchSpec spec_;
+   core::FilePath import_;
+   core::FilePath export_;
+   core::FilePath tempCode_;
 };
 
 core::Error startScriptJob(const ScriptLaunchSpec& spec, 
+      std::string *pId);
+
+core::Error startScriptJob(const ScriptLaunchSpec& spec, 
+      boost::function<void()> onComplete,
       std::string *pId);
 
 core::Error stopScriptJob(const std::string& id);

@@ -1,8 +1,9 @@
+<!DOCTYPE html>
 <!--
 #
 # offline.htm
 #
-# Copyright (C) 2009-19 by RStudio, Inc.
+# Copyright (C) 2009-19 by RStudio, PBC
 #
 # This program is licensed to you under the terms of version 3 of the
 # GNU Affero General Public License. This program is distributed WITHOUT
@@ -15,11 +16,11 @@
 <html lang="en">
 
 <head>
-
+<meta charset="utf-8">
 <title>RStudio Offline</title>
 <link rel="shortcut icon" href="images/favicon.ico" />
 
-<style type="text/css">
+<style>
 
 body {
   background-color: #fff;
@@ -44,6 +45,7 @@ body, td {
   padding: 8px;
   -moz-border-radius: 10px;
   -webkit-border-radius: 10px;
+  margin: 0 auto;
 }
 #image {
   margin-right: -18px;
@@ -68,7 +70,7 @@ body, td {
 
 </style>
 
-<script type="text/javascript">
+<script>
    function getBaseUri()
    {
       var index = window.location.href.lastIndexOf("#!request_uri#");
@@ -90,11 +92,11 @@ body, td {
 
 <body>
 
-<h3 id="banner"><a href="http://www.rstudio.com"><img src="images/rstudio.png" id="bannerImage" width="78" height="24" title="RStudio"/></a></h3>
+<h3 id="banner"><a href="http://www.rstudio.com"><img src="images/rstudio.png" id="bannerImage" width="78" height="24" title="RStudio" alt="RStudio"/></a></h3>
 
-<table id="border" align="center">
+<table id="border">
   <tr>
-    <td><img id="image" src="images/offline.png"/></td>
+    <td><img alt id="image" src="images/offline.png"/></td>
     <td>
       <h2 id="caption">RStudio Temporarily Offline</h2>
       <div id="detail">RStudio is temporarily offline due to system maintenance. We apologize for the inconvenience, please try again in a few minutes.</div>
@@ -102,13 +104,13 @@ body, td {
   </tr>
 </table>
 
-</body>
+<script>
 
-<script type="text/javascript">
-   
-   document.getElementById("bannerImage").src = getBaseUri() + "/images/rstudio.png";
-   document.getElementById("image").src = getBaseUri() + "/images/offline.png";
+  document.getElementById("bannerImage").src = getBaseUri() + "/images/rstudio.png";
+  document.getElementById("image").src = getBaseUri() + "/images/offline.png";
 
 </script>
+
+</body>
 
 </html>

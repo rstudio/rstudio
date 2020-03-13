@@ -1,7 +1,7 @@
 /*
  * ImportFileSettingsDialog.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.views.environment.dataimport;
 
+import com.google.gwt.aria.client.Roles;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayString;
@@ -32,6 +33,7 @@ import org.rstudio.core.client.Invalidation;
 import org.rstudio.core.client.Invalidation.Token;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.js.JsObject;
+import org.rstudio.core.client.widget.LabeledTextBox;
 import org.rstudio.core.client.widget.ModalDialog;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ProgressIndicator;
@@ -76,7 +78,7 @@ public class ImportFileSettingsDialog extends ModalDialog<ImportFileSettingsDial
          OperationWithInput<ImportFileSettingsDialogResult> operation,
          GlobalDisplay globalDisplay)
    {
-      super(caption, operation);
+      super(caption, Roles.getDialogRole(), operation);
       server_ = server;
       sourceServer_ = sourceServer;
       dataFile_ = dataFile;
@@ -404,7 +406,7 @@ public class ImportFileSettingsDialog extends ModalDialog<ImportFileSettingsDial
    @UiField
    RadioButton headingNo_;
    @UiField
-   TextBox varname_;
+   LabeledTextBox varname_;
    @UiField
    TextBox naStrings_;
    @UiField

@@ -1,7 +1,7 @@
 /*
  * DataOutputPane.java
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -38,14 +38,14 @@ public class DataOutputPane extends WorkbenchPane
    @Override
    protected Widget createMainWidget()
    { 
-      gridViewer_ = new GridViewerFrame(true);
+      gridViewer_ = new GridViewerFrame("Data Output Pane", true);
       return gridViewer_;
    }
 
    @Override
    protected Toolbar createMainToolbar()
    {
-      Toolbar toolbar = new Toolbar();
+      Toolbar toolbar = new Toolbar("Data Output Tab");
 
       dataOutputFile_ = new Label();
       dataOutputFile_.setStyleName(ThemeStyles.INSTANCE.subtitle());

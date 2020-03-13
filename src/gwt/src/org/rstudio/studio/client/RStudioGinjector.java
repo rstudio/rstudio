@@ -1,7 +1,7 @@
 /*
  * RStudioGinjector.java
  *
- * Copyright (C) 2009-19 by RStudio, Inc.
+ * Copyright (C) 2009-20 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -33,8 +33,10 @@ import org.rstudio.core.client.widget.CaptionWithHelp;
 import org.rstudio.core.client.widget.LocalRepositoriesWidget;
 import org.rstudio.core.client.widget.ModifyKeyboardShortcutsWidget;
 import org.rstudio.core.client.widget.RStudioThemedFrame;
+import org.rstudio.core.client.widget.ToolbarPopupMenu;
 import org.rstudio.studio.client.application.Application;
 import org.rstudio.studio.client.application.ApplicationInterrupt;
+import org.rstudio.studio.client.application.AriaLiveService;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.ui.AboutDialog;
 import org.rstudio.studio.client.application.ui.ProjectPopupMenu;
@@ -44,7 +46,6 @@ import org.rstudio.studio.client.application.ui.impl.WebApplicationHeader;
 import org.rstudio.studio.client.application.ui.impl.WebApplicationHeaderOverlay;
 import org.rstudio.studio.client.common.FileDialogs;
 import org.rstudio.studio.client.common.GlobalDisplay;
-import org.rstudio.studio.client.common.compilepdf.dialog.CompilePdfProgressDialog;
 import org.rstudio.studio.client.common.dependencies.DependencyManager;
 import org.rstudio.studio.client.common.fileexport.FileExport;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
@@ -69,6 +70,7 @@ import org.rstudio.studio.client.plumber.PlumberAPISatellite;
 import org.rstudio.studio.client.plumber.ui.PlumberViewerTypePopupMenu;
 import org.rstudio.studio.client.projects.model.ProjectTemplateRegistryProvider;
 import org.rstudio.studio.client.projects.ui.newproject.CodeFilesList;
+import org.rstudio.studio.client.projects.ui.newproject.NewDirectoryPage;
 import org.rstudio.studio.client.projects.ui.newproject.NewPackagePage;
 import org.rstudio.studio.client.projects.ui.prefs.ProjectPreferencesPane;
 import org.rstudio.studio.client.projects.ui.prefs.buildtools.BuildToolsPackagePanel;
@@ -91,7 +93,8 @@ import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.RemoteFileSystemContext;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionOpener;
-import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserState;
 import org.rstudio.studio.client.workbench.snippets.SnippetHelper;
 import org.rstudio.studio.client.workbench.snippets.ui.EditSnippetsDialog;
 import org.rstudio.studio.client.workbench.ui.ConsoleTabPanel;
@@ -172,6 +175,7 @@ import org.rstudio.studio.client.workbench.views.environment.dataimport.DataImpo
 public interface RStudioGinjector extends Ginjector
 {
    void injectMembers(NewFileMenu newFileMenu);
+   void injectMembers(NewDirectoryPage newDirectoryPage);
    void injectMembers(DocsMenu docsMenu);
    void injectMembers(DesktopApplicationHeader desktopApplicationHeader);
    void injectMembers(WebApplicationHeader webApplicationHeader);
@@ -184,7 +188,6 @@ public interface RStudioGinjector extends Ginjector
    void injectMembers(SVNCommandHandler svnCommandHandler);
    void injectMembers(CaptionWithHelp captionWithHelp);
    void injectMembers(RnwWeaveSelectWidget selectWidget);
-   void injectMembers(CompilePdfProgressDialog compilePdfProgressDialog);
    void injectMembers(TextEditingTargetCompilePdfHelper compilePdfHelper);
    void injectMembers(TypoSpellChecker typoSpellChecker);
    void injectMembers(SpellingCustomDictionariesWidget widget);
@@ -194,6 +197,7 @@ public interface RStudioGinjector extends Ginjector
    void injectMembers(ProjectPreferencesPane projectPrefsPane);
    void injectMembers(BuildToolsPackagePanel buildToolsPackagePanel);
    void injectMembers(CodeFilesList codeFilesList);
+   void injectMembers(ToolbarPopupMenu toolbarPopupMenu);
    void injectMembers(ProjectPopupMenu projectPopupMenu);
    void injectMembers(ClearAllDialog clearAllDialog);
    void injectMembers(TextEditingTargetPresentationHelper presHelper);
@@ -223,6 +227,7 @@ public interface RStudioGinjector extends Ginjector
    void injectMembers(DocumentOutlineWidget widget);
    void injectMembers(SetupChunkOptionsPopupPanel panel);
    void injectMembers(SourceSatellite satellite);
+   void injectMembers(ShinyApplicationSatellite satellite);
    void injectMembers(ModifyKeyboardShortcutsWidget widget);
    void injectMembers(ShortcutManager manager);
    void injectMembers(UserCommandManager manager);
@@ -283,11 +288,10 @@ public interface RStudioGinjector extends Ginjector
    
    public static final RStudioGinjector INSTANCE = GWT.create(RStudioGinjector.class);
 
-   Application getApplication() ;
+   Application getApplication();
    ApplicationInterrupt getApplicationInterrupt();
    VCSApplication getVCSApplication();
    HTMLPreviewApplication getHTMLPreviewApplication();
-   ShinyApplicationSatellite getShinyApplicationSatellite();
    ShinyApplication getShinyApplication();
    ShinyViewerTypePopupMenu getShinyViewerTypePopupMenu();
    RmdOutputSatellite getRmdOutputSatellite();
@@ -301,7 +305,8 @@ public interface RStudioGinjector extends Ginjector
    RnwWeaveRegistry getRnwWeaveRegistry();
    LatexProgramRegistry getLatexProgramRegistry();
    Commands getCommands();
-   UIPrefs getUIPrefs();
+   UserPrefs getUserPrefs();
+   UserState getUserState();
    Session getSession();
    HelpStrategy getHelpStrategy();
    ShortcutViewer getShortcutViewer();
@@ -324,6 +329,7 @@ public interface RStudioGinjector extends Ginjector
    SessionOpener getSessionOpener();
    VirtualConsoleFactory getVirtualConsoleFactory();
    JobItemFactory getJobItemFactory();
+   AriaLiveService getAriaLiveService();
 
    // Pro-only below here
 }

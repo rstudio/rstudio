@@ -1,7 +1,7 @@
 /*
  * TranslationUnit.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -15,7 +15,9 @@
 
 #include <core/libclang/TranslationUnit.hpp>
 
-#include <core/FilePath.hpp>
+#include <gsl/gsl>
+
+#include <shared_core/FilePath.hpp>
 
 #include <core/libclang/Utils.hpp>
 #include <core/libclang/LibClang.hpp>
@@ -29,7 +31,7 @@ namespace  {
 
 std::string formatBytes(double value)
 {
-   int mb = static_cast<int>(value / 1024 / 1024);
+   int mb = gsl::narrow_cast<int>(value / 1024 / 1024);
    if (mb > 1024)
    {
       double gb = (double)mb / 1024.0;
@@ -44,7 +46,7 @@ std::string formatBytes(double value)
    else
    {
       boost::format fmt("%1% kb");
-      return boost::str(fmt % static_cast<int>(value / 1024));
+      return boost::str(fmt % gsl::narrow_cast<int>(value / 1024));
    }
 }
 
@@ -57,7 +59,7 @@ std::string TranslationUnit::getSpelling() const
 
 bool TranslationUnit::includesFile(const std::string& filename) const
 {
-   return clang().getFile(tu_, filename.c_str()) != NULL;
+   return clang().getFile(tu_, filename.c_str()) != nullptr;
 }
 
 CXFile TranslationUnit::getFile(const std::string& filename) const
@@ -75,7 +77,7 @@ CXResult TranslationUnit::findReferencesInFile(
                               const std::string& filename) const
 {
    CXFile file = getFile(filename);
-   if (file == NULL)
+   if (file == nullptr)
       return CXResult_Invalid;
 
    return clang().findReferencesInFile(cursor.getCXCursor(), file, visitor);
@@ -104,7 +106,7 @@ Cursor TranslationUnit::getCursor(const std::string& filename,
 {
    // get the file
    CXFile file = clang().getFile(tu_, filename.c_str());
-   if (file == NULL)
+   if (file == nullptr)
       return Cursor();
 
    // get the source location
@@ -133,7 +135,7 @@ boost::shared_ptr<CodeCompleteResults> TranslationUnit::codeCompleteAt(
                                  pUnsavedFiles_->numUnsavedFiles(),
                                  clang().defaultCodeCompleteOptions());
 
-   if (pResults != NULL)
+   if (pResults != nullptr)
    {
       clang().sortCodeCompletionResults(pResults->Results,
                                         pResults->NumResults);
@@ -169,7 +171,7 @@ void TranslationUnit::printResourceUsage(std::ostream& ostr, bool detailed) cons
       }
    }
    ostr << "TOTAL MEMORY: " << formatBytes(totalBytes)
-        << " (" << FilePath(getSpelling()).filename() << ")" << std::endl;
+        << " (" << FilePath(getSpelling()).getFilename() << ")" << std::endl;
 
    clang().disposeCXTUResourceUsage(usage);
 }

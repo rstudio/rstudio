@@ -1,7 +1,7 @@
 /*
  * ExponentialBackoff.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-12 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -53,7 +53,7 @@ bool ExponentialBackoff::next()
 {
    ExponentialBackoffPtr instance = shared_from_this();
 
-   LOCK_MUTEX(mutex_)
+   RECURSIVE_LOCK_MUTEX(mutex_)
    {
       // we should not continue trying if we've hit the max retries
       if (maxNumRetries_ != 0 &&
@@ -113,7 +113,7 @@ bool ExponentialBackoff::next()
          timer.reset();
 
          // wait has finished - update state and perform the action
-         LOCK_MUTEX(instance->mutex_)
+         RECURSIVE_LOCK_MUTEX(instance->mutex_)
          {
             ++instance->totalNumTries_;
          }

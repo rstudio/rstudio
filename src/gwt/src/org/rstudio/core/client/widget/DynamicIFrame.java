@@ -1,7 +1,7 @@
 /*
  * DynamicIFrame.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -24,16 +24,25 @@ import org.rstudio.core.client.dom.WindowEx;
 
 public abstract class DynamicIFrame extends Frame
 {
-   public DynamicIFrame(String url)
+   /**
+    * @param title iframe a11y title
+    * @param url
+    */
+   public DynamicIFrame(String title, String url)
    {
       super(url);
       url_ = url;
+      setTitle(title);
       pollForLoad();
    }
-   
-   public DynamicIFrame()
+
+   /**
+    * @param title iframe a11y title
+    */
+   public DynamicIFrame(String title)
    {
       url_ = null;
+      setTitle(title);
       pollForLoad();
    }
    

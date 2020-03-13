@@ -1,7 +1,7 @@
 /*
  * Win32FileMonitor.cpp
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -23,7 +23,7 @@
 #include <boost/algorithm/string/trim.hpp>
 #include <boost/algorithm/string/classification.hpp>
 
-#include <core/FilePath.hpp>
+#include <shared_core/FilePath.hpp>
 
 #include <core/system/FileScanner.hpp>
 #include <core/system/System.hpp>
@@ -46,9 +46,9 @@ class FileEventContext : boost::noncopyable
 public:
    FileEventContext()
       : recursive(false),
-        hDirectory(NULL),
+        hDirectory(nullptr),
         readDirChangesPending(false),
-        hRestartTimer(NULL),
+        hRestartTimer(nullptr),
         restartCount(0)
    {
       receiveBuffer.resize(kBuffSize);
@@ -87,7 +87,7 @@ public:
 
 void safeCloseHandle(HANDLE hObject, const ErrorLocation& location)
 {
-   if (hObject != NULL)
+   if (hObject != nullptr)
    {
       if (!::CloseHandle(hObject))
       {
@@ -98,7 +98,7 @@ void safeCloseHandle(HANDLE hObject, const ErrorLocation& location)
 
 void cleanupContext(FileEventContext* pContext)
 {
-   if (pContext->hDirectory != NULL)
+   if (pContext->hDirectory != nullptr)
    {
       if (!::CancelIo(pContext->hDirectory))
       {
@@ -107,10 +107,10 @@ void cleanupContext(FileEventContext* pContext)
 
       safeCloseHandle(pContext->hDirectory, ERROR_LOCATION);
 
-      pContext->hDirectory = NULL;
+      pContext->hDirectory = nullptr;
    }
 
-   if (pContext->hRestartTimer != NULL)
+   if (pContext->hRestartTimer != nullptr)
    {
       // make sure timer APC is never called after a cleanupContext
       if (!::CancelWaitableTimer(pContext->hRestartTimer))
@@ -120,7 +120,7 @@ void cleanupContext(FileEventContext* pContext)
 
       safeCloseHandle(pContext->hRestartTimer, ERROR_LOCATION);
 
-      pContext->hRestartTimer = NULL;
+      pContext->hRestartTimer = nullptr;
    }
 
    // delete pContext only if there are no read dir changes operations
@@ -139,12 +139,12 @@ void ensureLongFilePath(FilePath* pFilePath)
 {
    // get the filename, if it is 12 characters or less and it contains
    // a "~" then it may be a short file name. in that case do the conversion
-   std::string filename = pFilePath->filename();
+   std::string filename = pFilePath->getFilename();
    if (filename.length() <= 12 && filename.find('~') != std::string::npos)
    {
       const std::size_t kBuffSize = (MAX_PATH*2) + 1;
       char buffer[kBuffSize];
-      if (::GetLongPathName(pFilePath->absolutePath().c_str(),
+      if (::GetLongPathName(pFilePath->getAbsolutePath().c_str(),
                             buffer,
                             kBuffSize) > 0)
       {
@@ -169,13 +169,13 @@ void processFileChange(DWORD action,
    // does for any reason we want to prevent it from interfering
    // with the logic below (which assumes a child path)
    if (filePath.isDirectory() &&
-      (filePath.absolutePath() == pTree->begin()->absolutePath()))
+      (filePath.getAbsolutePath() == pTree->begin()->absolutePath()))
    {
       return;
    }
 
    // get an iterator to this file's parent
-   FileInfo parentFileInfo = FileInfo(filePath.parent());
+   FileInfo parentFileInfo = FileInfo(filePath.getParent());
    tree<FileInfo>::iterator parentIt = impl::findFile(pTree->begin(),
                                                       pTree->end(),
                                                       parentFileInfo);
@@ -255,7 +255,7 @@ void processFileChanges(FileEventContext* pContext,
       std::wstring name(fileNotify.FileName,
                         fileNotify.FileNameLength/sizeof(wchar_t));
       removeTrailingSlash(&name);
-      FilePath filePath(pContext->rootPath.absolutePathW() + L"\\" + name);
+      FilePath filePath(pContext->rootPath.getAbsolutePathW() + L"\\" + name);
 
       // ensure this is a long file name (docs say it could be short or long!)
       // (note that the call to GetLongFileNameW will fail if the file has
@@ -303,12 +303,12 @@ bool isRecoverableByRestart(const Error& error)
    return
       // undocumented return value that indicates we should do a restart
       // (see: http://blogs.msdn.com/b/oldnewthing/archive/2011/08/12/10195186.aspx)
-      error.code().value() == ERROR_NOTIFY_ENUM_DIR ||
+      error.getCode() == ERROR_NOTIFY_ENUM_DIR ||
 
       // error which some users have observed occuring if a network
       // volume is being monitored and there are too many simultaneous
       // reads and writes
-      error.code().value() == ERROR_TOO_MANY_CMDS;
+      error.getCode() == ERROR_TOO_MANY_CMDS;
 }
 
 Error readDirectoryChanges(FileEventContext* pContext);
@@ -353,7 +353,7 @@ VOID CALLBACK restartMonitoringApcProc(LPVOID lpArg, DWORD, DWORD)
 
    // close the timer handle
    safeCloseHandle(pContext->hRestartTimer, ERROR_LOCATION);
-   pContext->hRestartTimer = NULL;
+   pContext->hRestartTimer = nullptr;
 
    // attempt the restart
    restartMonitoring(pContext);
@@ -363,8 +363,8 @@ VOID CALLBACK restartMonitoringApcProc(LPVOID lpArg, DWORD, DWORD)
 void enqueRestartMonitoring(FileEventContext* pContext)
 {
    // create the restart timer (1 second from now)
-   pContext->hRestartTimer = ::CreateWaitableTimer(NULL, true, NULL);
-   if (pContext->hRestartTimer == NULL)
+   pContext->hRestartTimer = ::CreateWaitableTimer(nullptr, true, nullptr);
+   if (pContext->hRestartTimer == nullptr)
    {
       Error error = LAST_SYSTEM_ERROR();
       terminateWithMonitoringError(pContext, error);
@@ -435,7 +435,7 @@ VOID CALLBACK FileChangeCompletionRoutine(DWORD dwErrorCode,									// completi
    // make sure the root path still exists (if it doesn't then bail)
    if (!pContext->rootPath.exists())
    {
-      Error error = fileNotFoundError(pContext->rootPath.absolutePath(),
+      Error error = fileNotFoundError(pContext->rootPath.getAbsolutePath(),
                                       ERROR_LOCATION);
       terminateWithMonitoringError(pContext, error);
       return;
@@ -495,28 +495,6 @@ Error readDirectoryChanges(FileEventContext* pContext)
    }
 }
 
-bool monitorFilter(const FileInfo& fileInfo,
-                   const boost::function<bool(const FileInfo&)>& filter)
-{
-   // screen out '.git' folder
-   if (fileInfo.isDirectory() &&
-       boost::algorithm::ends_with(fileInfo.absolutePath(), "/.git"))
-   {
-      return false;
-   }
-
-   // screen out 'packrat' folder
-   if (fileInfo.isDirectory() &&
-       boost::algorithm::ends_with(fileInfo.absolutePath(), "/packrat") &&
-       FilePath(fileInfo.absolutePath() + "/packrat.lock").exists())
-   {
-      return false;
-   }
-
-   // delegate to registered filter
-   return filter(fileInfo);
-}
-
 } // anonymous namespace
 
 namespace detail {
@@ -534,20 +512,20 @@ Handle registerMonitor(const core::FilePath& filePath,
 
    // save the wide absolute path (notifications only come in wide strings)
    // strip any trailing slash for predictable append semantics
-   std::wstring wpath = filePath.absolutePathW();
+   std::wstring wpath = filePath.getAbsolutePathW();
    removeTrailingSlash(&wpath);
    pContext->rootPath = FilePath(wpath);
    pContext->recursive = recursive;
 
    // open the directory
    pContext->hDirectory = ::CreateFileW(
-                     filePath.absolutePathW().c_str(),
+                     filePath.getAbsolutePathW().c_str(),
                      FILE_LIST_DIRECTORY,
                      FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
-                     NULL,
+                     nullptr,
                      OPEN_EXISTING,
                      FILE_FLAG_BACKUP_SEMANTICS | FILE_FLAG_OVERLAPPED,
-                     NULL);
+                     nullptr);
    if (pContext->hDirectory == INVALID_HANDLE_VALUE)
    {
       callbacks.onRegistrationError(LAST_SYSTEM_ERROR());
@@ -583,7 +561,7 @@ Handle registerMonitor(const core::FilePath& filePath,
    core::system::FileScannerOptions options;
    options.recursive = recursive;
    options.yield = true;
-   options.filter = boost::bind(monitorFilter, _1, filter);
+   options.filter = filter;
    error = scanFiles(FileInfo(filePath), options, &pContext->fileTree);
    if (error)
    {

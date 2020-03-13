@@ -1,7 +1,7 @@
 /*
  * MathUtil.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -47,4 +47,8 @@ public class MathUtil
        return (value <= max) && (value >= min);
    }
 
+   public static boolean isEqual(double d1, double d2, double threshold)
+   {
+      return Math.abs(d1 - d2) < threshold;
+   }
 }

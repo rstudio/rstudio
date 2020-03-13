@@ -1,7 +1,7 @@
 /*
  * SessionReticulate.cpp
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -19,10 +19,11 @@
 
 #include <boost/bind.hpp>
 
-#include <core/Error.hpp>
+#include <shared_core/Error.hpp>
 #include <core/Exec.hpp>
 
 #include <r/RExec.hpp>
+#include <r/RRoutines.hpp>
 
 #include <session/SessionModuleContext.hpp>
 
@@ -33,6 +34,28 @@ namespace session {
 namespace modules {
 namespace reticulate {
 
+namespace {
+
+SEXP rs_reticulateInitialized()
+{
+   // Python will register its own console control handler,
+   // which also blocks signals from reaching any previously
+   // defined handlers (including RStudio's own). re-initialize
+   // RStudio's console control handler here to ensure that
+   // interrupts are still handled by R as expected
+   module_context::initializeConsoleCtrlHandler();
+
+   return R_NilValue;
+}
+
+void onDeferredInit(bool)
+{
+   Error error = r::exec::RFunction(".rs.reticulate.initialize").call();
+   if (error)
+      LOG_ERROR(error);
+}
+
+} // end anonymous namespace
 bool isReplActive()
 {
    bool active = false;
@@ -46,6 +69,10 @@ Error initialize()
 {
    using namespace module_context;
    
+   events().onDeferredInit.connect(onDeferredInit);
+
+   RS_REGISTER_CALL_METHOD(rs_reticulateInitialized);
+
    ExecBlock initBlock;
    initBlock.addFunctions()
       (bind(sourceModuleRFile, "SessionReticulate.R"));

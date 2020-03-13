@@ -1,7 +1,7 @@
 /*
  * ProjectEditingPreferencesPane.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-20 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,7 +14,9 @@
  */
 package org.rstudio.studio.client.projects.ui.prefs;
 
+import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.prefs.PreferencesDialogBaseResources;
+import org.rstudio.core.client.prefs.RestartRequirement;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.NumericValueWidget;
 import org.rstudio.core.client.widget.OperationWithInput;
@@ -22,6 +24,8 @@ import org.rstudio.core.client.widget.TextBoxWithButton;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.projects.model.RProjectConfig;
 import org.rstudio.studio.client.projects.model.RProjectOptions;
+import org.rstudio.studio.client.workbench.prefs.model.ProjectPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.prefs.views.LineEndingsSelectWidget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.IconvListResult;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ui.ChooseEncodingDialog;
@@ -47,8 +51,9 @@ public class ProjectEditingPreferencesPane extends ProjectPreferencesPane
       chkSpacesForTab_.addStyleName(RESOURCES.styles().useSpacesForTab());
       add(chkSpacesForTab_);
       
-      numSpacesForTab_ = new NumericValueWidget("Tab width");
+      numSpacesForTab_ = new NumericValueWidget("Tab width", 1, UserPrefs.MAX_TAB_WIDTH);
       numSpacesForTab_.addStyleName(RESOURCES.styles().numberOfTabs());
+      numSpacesForTab_.setWidth("36px");
       add(numSpacesForTab_);
       
       chkAutoAppendNewline_ = new CheckBox("Ensure that source files end with newline");
@@ -66,7 +71,11 @@ public class ProjectEditingPreferencesPane extends ProjectPreferencesPane
       
       encoding_ = new TextBoxWithButton(
             "Text encoding:",
+            "",
             "Change...",
+            null,
+            ElementIds.TextBoxButtonId.PROJECT_TEXT_ENCODING,
+            true,
             new ClickHandler()
             {
                public void onClick(ClickEvent event)
@@ -133,11 +142,11 @@ public class ProjectEditingPreferencesPane extends ProjectPreferencesPane
    @Override
    public boolean validate()
    {
-      return numSpacesForTab_.validate("Tab width"); 
+      return numSpacesForTab_.validate();
    }
 
    @Override
-   public boolean onApply(RProjectOptions options)
+   public RestartRequirement onApply(RProjectOptions options)
    {
       RProjectConfig config = options.getConfig();
       config.setEnableCodeIndexing(enableCodeIndexing_.getValue());
@@ -145,9 +154,9 @@ public class ProjectEditingPreferencesPane extends ProjectPreferencesPane
       config.setNumSpacesForTab(getTabWidth());
       config.setAutoAppendNewline(chkAutoAppendNewline_.getValue());
       config.setStripTrailingWhitespace(chkStripTrailingWhitespace_.getValue());
-      config.setLineEndings(lineEndings_.getIntValue());
+      config.setLineEndings(ProjectPrefs.lineEndingsFromPref(lineEndings_.getValue()));
       config.setEncoding(encodingValue_);
-      return false;
+      return new RestartRequirement();
    }
    
    private void setEncoding(String encoding)
@@ -179,5 +188,4 @@ public class ProjectEditingPreferencesPane extends ProjectPreferencesPane
    private TextBoxWithButton encoding_;
    private String encodingValue_;
    private RProjectConfig initialConfig_;
-
 }

@@ -1,7 +1,7 @@
 /*
  * SavePlotAsPdfDialog.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -17,9 +17,15 @@ package org.rstudio.studio.client.workbench.views.plots.ui.export;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.google.gwt.aria.client.Roles;
+import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import org.rstudio.core.client.BrowseCap;
+import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.files.FileSystemContext;
 import org.rstudio.core.client.files.FileSystemItem;
+import org.rstudio.core.client.widget.FieldSetWrapperPanel;
+import org.rstudio.core.client.widget.FormLabel;
+import org.rstudio.core.client.widget.LayoutGrid;
 import org.rstudio.core.client.widget.ModalDialogBase;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.OperationWithInput;
@@ -45,7 +51,6 @@ import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.i18n.client.NumberFormat;
 import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.Composite;
-import com.google.gwt.user.client.ui.Grid;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.HasVerticalAlignment;
 import com.google.gwt.user.client.ui.HorizontalPanel;
@@ -68,6 +73,7 @@ public class SavePlotAsPdfDialog extends ModalDialogBase
                               double plotHeight,
                               final OperationWithInput<SavePlotAsPdfOptions> onClose)
    {
+      super(Roles.getDialogRole());
       setText("Save Plot as PDF");
       
       globalDisplay_ = globalDisplay;
@@ -122,14 +128,14 @@ public class SavePlotAsPdfDialog extends ModalDialogBase
                 
             // invoke handler
             SavePlotAsHandler handler = createSavePlotAsHandler();
-            handler.attemptSave(previewPath, true, true, null);    
+            handler.attemptSave(previewPath, true, true, null);
          }
       });
-      addLeftButton(previewButton);
+      addLeftButton(previewButton, ElementIds.PREVIEW_BUTTON);
    }
    
    @Override 
-   protected void onDialogShown()
+   protected void focusInitialControl()
    {
       fileNameTextBox_.setFocus(true);
       fileNameTextBox_.selectAll();
@@ -140,27 +146,31 @@ public class SavePlotAsPdfDialog extends ModalDialogBase
    {
       ExportPlotResources.Styles styles = ExportPlotResources.INSTANCE.styles();
       
-      Grid grid = new Grid(7, 2);
+      LayoutGrid grid = new LayoutGrid(7, 2);
       grid.setStylePrimaryName(styles.savePdfMainWidget());
       
       // paper size
-      grid.setWidget(0, 0, new Label("PDF Size:"));
+      Label sizeLabel = new Label("PDF Size:");
+      grid.setWidget(0, 0, sizeLabel);
       
       // paper size label
-      paperSizeEditor_ = new PaperSizeEditor();
+      paperSizeEditor_ = new PaperSizeEditor(sizeLabel);
       grid.setWidget(0, 1, paperSizeEditor_);
       
       // orientation
-      grid.setWidget(1, 0, new Label("Orientation:"));
+      Label orientationLabel = new Label("Orientation:");
+      grid.setWidget(1, 0, orientationLabel);
       HorizontalPanel orientationPanel = new HorizontalPanel();
       orientationPanel.setSpacing(kComponentSpacing);
       VerticalPanel orientationGroupPanel = new VerticalPanel();
-      final String kOrientationGroup = new String("Orientation");
+      FieldSetWrapperPanel<VerticalPanel> orientationButtons =
+            new FieldSetWrapperPanel<>(orientationGroupPanel, orientationLabel);
+      final String kOrientationGroup = "Orientation";
       portraitRadioButton_ = new RadioButton(kOrientationGroup, "Portrait");
       orientationGroupPanel.add(portraitRadioButton_);
       landscapeRadioButton_ = new RadioButton(kOrientationGroup, "Landscape");
       orientationGroupPanel.add(landscapeRadioButton_);
-      orientationPanel.add(orientationGroupPanel);
+      orientationPanel.add(orientationButtons);
       grid.setWidget(1, 1, orientationPanel);
       
       boolean haveCairoPdf = sessionInfo_.isCairoPdfAvailable();
@@ -191,7 +201,7 @@ public class SavePlotAsPdfDialog extends ModalDialogBase
             fileDialogs_.chooseFolder(
                "Choose Directory",
                fileSystemContext_,
-               FileSystemItem.createDir(directoryLabel_.getTitle().trim()),
+               FileSystemItem.createDir(directoryTextBox_.getText().trim()),
                new ProgressOperationWithInput<FileSystemItem>() {
 
                  public void execute(FileSystemItem input,
@@ -213,24 +223,25 @@ public class SavePlotAsPdfDialog extends ModalDialogBase
       });
       
       
-      directoryLabel_ = new Label();
+      directoryTextBox_ = new TextBox();
+      directoryTextBox_.setReadOnly(true);
+      Roles.getTextboxRole().setAriaLabelProperty(directoryTextBox_.getElement(), "Selected Directory");
       setDirectory(defaultDirectory_);
-      directoryLabel_.setStylePrimaryName(styles.savePdfDirectoryLabel());
-      grid.setWidget(4, 1, directoryLabel_);
+      directoryTextBox_.setStylePrimaryName(styles.savePdfDirectoryTextBox());
+      grid.setWidget(4, 1, directoryTextBox_);
       
-      Label fileNameLabel = new Label("File name:");
-      fileNameLabel.setStylePrimaryName(styles.savePdfFileNameLabel());
-      grid.setWidget(5, 0, fileNameLabel);
       fileNameTextBox_ = new TextBox();
       fileNameTextBox_.setText(defaultPlotName_);
       fileNameTextBox_.setStylePrimaryName(styles.savePdfFileNameTextBox());
+      FormLabel fileNameLabel = new FormLabel("File name:", fileNameTextBox_);
+      fileNameLabel.setStylePrimaryName(styles.savePdfFileNameLabel());
+      grid.setWidget(5, 0, fileNameLabel);
       grid.setWidget(5, 1, fileNameTextBox_);
       
       
       // view after size
       viewAfterSaveCheckBox_ = new CheckBox("View plot after saving");
-      viewAfterSaveCheckBox_.setStylePrimaryName(
-                                       styles.savePdfViewAfterCheckbox());
+      viewAfterSaveCheckBox_.addStyleName(styles.savePdfViewAfterCheckbox());
       viewAfterSaveCheckBox_.setValue(options_.getViewAfterSave());
       grid.setWidget(6, 1, viewAfterSaveCheckBox_);
       
@@ -280,10 +291,7 @@ public class SavePlotAsPdfDialog extends ModalDialogBase
         
       // set label
       String dirLabel = ExportPlotUtils.shortDirectoryName(directory, 250);
-      directoryLabel_.setText(dirLabel);
-      
-      // set tooltip
-      directoryLabel_.setTitle(directory.getPath());
+      directoryTextBox_.setText(dirLabel);
    }
    
    
@@ -357,7 +365,7 @@ public class SavePlotAsPdfDialog extends ModalDialogBase
    
    private class PaperSizeEditor extends Composite
    {
-      public PaperSizeEditor()
+      public PaperSizeEditor(Label visibleLabel)
       {
          ExportPlotResources.Styles styles = 
                                        ExportPlotResources.INSTANCE.styles();
@@ -371,15 +379,17 @@ public class SavePlotAsPdfDialog extends ModalDialogBase
          paperSizes_.add(new PaperSize("5 x 7 in.", 5, 7));
          paperSizes_.add(new PaperSize("6 x 8 in.", 6, 8));
            
-         HorizontalPanel panel = new HorizontalPanel();
-         panel.setVerticalAlignment(HasVerticalAlignment.ALIGN_MIDDLE);   
-         panel.setSpacing(kComponentSpacing);
+         FieldSetWrapperPanel<HorizontalPanel> panel = new FieldSetWrapperPanel<>(
+               new HorizontalPanel(), visibleLabel);
+         panel.getPanel().setVerticalAlignment(HasVerticalAlignment.ALIGN_MIDDLE);   
+         panel.getPanel().setSpacing(kComponentSpacing);
           
          // paper size list box
          int selectedPaperSize = -1;
          paperSizeListBox_ = new ListBox();
          paperSizeListBox_.setStylePrimaryName(styles.savePdfSizeListBox());
-         for (int i=0; i<paperSizes_.size(); i++)
+         Roles.getListboxRole().setAriaLabelProperty(paperSizeListBox_.getElement(), "Size Preset");
+         for (int i = 0; i < paperSizes_.size(); i++)
          {
             PaperSize paperSize = paperSizes_.get(i);
             paperSizeListBox_.addItem(paperSize.getName());
@@ -407,20 +417,23 @@ public class SavePlotAsPdfDialog extends ModalDialogBase
                updateSizeDescription();  
             } 
          });
-         panel.add(paperSizeListBox_);   
+         panel.add(paperSizeListBox_);
          
          HorizontalPanel editPanel = new HorizontalPanel();
          widthTextBox_ = new TextBox();
          widthTextBox_.setStylePrimaryName(styles.savePdfPaperSizeTextBox());
+         Roles.getTextboxRole().setAriaLabelProperty(widthTextBox_.getElement(), "Width");
          widthTextBox_.addChangeHandler(sizeTextBoxChangeHandler_);
          editPanel.add(widthTextBox_);
          
-         Label label = new Label("x");
+         Label label = new Label();
+         label.getElement().setInnerSafeHtml(SafeHtmlUtils.fromSafeConstant("&times;"));
          label.setStylePrimaryName(styles.savePdfPaperSizeX());
          editPanel.add(label);
          
          heightTextBox_ = new TextBox();
          heightTextBox_.setStylePrimaryName(styles.savePdfPaperSizeTextBox());
+         Roles.getTextboxRole().setAriaLabelProperty(heightTextBox_.getElement(), "Height");
          heightTextBox_.addChangeHandler(sizeTextBoxChangeHandler_);
          editPanel.add(heightTextBox_);
          panel.add(editPanel);
@@ -537,7 +550,7 @@ public class SavePlotAsPdfDialog extends ModalDialogBase
    
    private TextBox fileNameTextBox_;
    private FileSystemItem directory_;
-   private Label directoryLabel_;
+   private TextBox directoryTextBox_;
    private PaperSizeEditor paperSizeEditor_ ;
   
    private RadioButton portraitRadioButton_ ;

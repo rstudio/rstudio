@@ -1,7 +1,7 @@
 /*
  * CompilePdfPreferencesPane.java
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -21,21 +21,19 @@ import com.google.gwt.user.client.ui.Label;
 import com.google.inject.Inject;
 
 import org.rstudio.core.client.prefs.PreferencesDialogBaseResources;
+import org.rstudio.core.client.prefs.RestartRequirement;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.HelpButton;
 import org.rstudio.core.client.widget.SelectWidget;
 import org.rstudio.studio.client.common.latex.LatexProgramSelectWidget;
 import org.rstudio.studio.client.common.rnw.RnwWeaveSelectWidget;
 import org.rstudio.studio.client.common.synctex.SynctexUtils;
-import org.rstudio.studio.client.workbench.prefs.model.RPrefs;
-import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
-import org.rstudio.studio.client.workbench.prefs.model.CompilePdfPrefs;
-import org.rstudio.studio.client.workbench.prefs.model.UIPrefsAccessor;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 
 public class CompilePdfPreferencesPane extends PreferencesPane
 {
    @Inject
-   public CompilePdfPreferencesPane(UIPrefs prefs,
+   public CompilePdfPreferencesPane(UserPrefs prefs,
                                     PreferencesDialogResources res)
    {
       prefs_ = prefs;
@@ -65,8 +63,12 @@ public class CompilePdfPreferencesPane extends PreferencesPane
       add(perProjectLabel);
        
       add(headerLabel("LaTeX Editing and Compilation"));
-      chkCleanTexi2DviOutput_ = new CheckBox(
-                                     "Clean auxiliary output after compile");
+      
+      chkUseTinytex_ = new CheckBox("Use tinytex when compiling .tex files");
+      spaced(chkUseTinytex_);
+      add(chkUseTinytex_);
+      
+      chkCleanTexi2DviOutput_ = new CheckBox("Clean auxiliary output after compile");
       spaced(chkCleanTexi2DviOutput_);
       add(chkCleanTexi2DviOutput_);
       
@@ -103,7 +105,7 @@ public class CompilePdfPreferencesPane extends PreferencesPane
             true, 
             false);   
          
-         HelpButton.addHelpButton(this, "pdf_preview");
+         HelpButton.addHelpButton(this, "pdf_preview", "Help on previewing PDF files");
       }
    }
   
@@ -128,57 +130,61 @@ public class CompilePdfPreferencesPane extends PreferencesPane
    }
 
    @Override
-   protected void initialize(RPrefs prefs)
+   protected void initialize(UserPrefs prefs)
    {
-      CompilePdfPrefs compilePdfPrefs = prefs.getCompilePdfPrefs();
-      chkCleanTexi2DviOutput_.setValue(compilePdfPrefs.getCleanOutput());
-      chkEnableShellEscape_.setValue(compilePdfPrefs.getEnableShellEscape());
+      chkUseTinytex_.setValue(prefs.useTinytex().getValue());
+      chkCleanTexi2DviOutput_.setValue(prefs.cleanTexi2dviOutput().getValue());
+      chkEnableShellEscape_.setValue(prefs.latexShellEscape().getValue());
       
-      pdfPreview_.addChoice("(No Preview)", UIPrefsAccessor.PDF_PREVIEW_NONE);
+      pdfPreview_.addChoice("(No Preview)", UserPrefs.PDF_PREVIEWER_NONE);
       
       String desktopSynctexViewer = SynctexUtils.getDesktopSynctexViewer();
       if (desktopSynctexViewer.length() > 0)
       {
          pdfPreview_.addChoice(desktopSynctexViewer  + " (Recommended)", 
-                               UIPrefsAccessor.PDF_PREVIEW_DESKTOP_SYNCTEX);
+                               UserPrefs.PDF_PREVIEWER_DESKTOP_SYNCTEX);
       }
       
       pdfPreview_.addChoice("RStudio Viewer", 
-                            UIPrefsAccessor.PDF_PREVIEW_RSTUDIO);
+                            UserPrefs.PDF_PREVIEWER_RSTUDIO);
       
       pdfPreview_.addChoice("System Viewer",
-                            UIPrefsAccessor.PDF_PREVIEW_SYSTEM);
+                            UserPrefs.PDF_PREVIEWER_SYSTEM);
       
-      pdfPreview_.setValue(prefs_.pdfPreview().getValue());
+      pdfPreview_.setValue(prefs_.pdfPreviewer().getValue());
    }
    
    @Override
-   public boolean onApply(RPrefs rPrefs)
+   public RestartRequirement onApply(UserPrefs rPrefs)
    {
-      boolean requiresRestart = super.onApply(rPrefs);
+      RestartRequirement restartRequirement = super.onApply(rPrefs);
       
       prefs_.defaultSweaveEngine().setGlobalValue(
                                     defaultSweaveEngine_.getValue());
       prefs_.defaultLatexProgram().setGlobalValue(
                                     defaultLatexProgram_.getValue());
       
-      prefs_.pdfPreview().setGlobalValue(pdfPreview_.getValue());
-         
-      CompilePdfPrefs prefs = CompilePdfPrefs.create(
-                                       chkCleanTexi2DviOutput_.getValue(),
-                                       chkEnableShellEscape_.getValue());
-      rPrefs.setCompilePdfPrefs(prefs);
+      prefs_.pdfPreviewer().setGlobalValue(pdfPreview_.getValue());
       
-      return requiresRestart;
+      prefs_.useTinytex().setGlobalValue(chkUseTinytex_.getValue());
+      
+      prefs_.cleanTexi2dviOutput().setGlobalValue(
+            chkCleanTexi2DviOutput_.getValue());
+      
+      prefs_.latexShellEscape().setGlobalValue(
+            chkEnableShellEscape_.getValue());
+         
+      return restartRequirement;
    }
 
-   private final UIPrefs prefs_;
+   private final UserPrefs prefs_;
    
    @SuppressWarnings("unused")
    private final PreferencesDialogResources res_;
    
    private RnwWeaveSelectWidget defaultSweaveEngine_;
    private LatexProgramSelectWidget defaultLatexProgram_;
+   private CheckBox chkUseTinytex_;
    private CheckBox chkCleanTexi2DviOutput_;
    private CheckBox chkEnableShellEscape_;
    private PdfPreviewSelectWidget pdfPreview_;

@@ -1,7 +1,7 @@
 /*
  * NotebookPaths.cpp
  *
- * Copyright (C) 2009-16 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -23,7 +23,6 @@
 #include <core/FileLock.hpp>
 
 #include <session/SessionModuleContext.hpp>
-#include <session/SessionUserSettings.hpp>
 
 using namespace rstudio::core;
 
@@ -53,7 +52,7 @@ public:
    PathLockGuard()
    {
       error_ = nbPathLock().acquire(
-            notebookCacheRoot().childPath("lock_file"));
+         notebookCacheRoot().completeChildPath("lock_file"));
    }
 
    ~PathLockGuard()
@@ -77,7 +76,7 @@ private:
 
 FilePath cachePath()
 {
-   return notebookCacheRoot().childPath("paths");
+   return notebookCacheRoot().completeChildPath("paths");
 }
 
 void cleanNotebookPathMap()
@@ -114,7 +113,7 @@ void cleanNotebookPathMap()
    error = writeStringMapToFile(cache, s_idCache);
    if (error)
       LOG_ERROR(error);
-   s_cacheWriteTime = std::time(NULL);
+   s_cacheWriteTime = std::time(nullptr);
 }
 
 Error synchronizeCache()
@@ -124,9 +123,9 @@ Error synchronizeCache()
    if (!cache.exists())
    {
       // create folder to host cache if necessary
-      if (!cache.parent().exists())
+      if (!cache.getParent().exists())
       {
-         error = cache.parent().ensureDirectory();
+         error = cache.getParent().ensureDirectory();
          if (error)
             return error;
       }
@@ -134,7 +133,7 @@ Error synchronizeCache()
    else
    {
       // the cache exists; see if we need to reload
-      if (cache.lastWriteTime() > s_cacheWriteTime) 
+      if (cache.getLastWriteTime() > s_cacheWriteTime)
       {
          // attempt to lock the file for reading
          PathLockGuard guard;
@@ -144,7 +143,7 @@ Error synchronizeCache()
          error = core::readStringMapFromFile(cache, &s_idCache);
          if (error)
             return error;
-         s_cacheWriteTime = std::time(NULL);
+         s_cacheWriteTime = std::time(nullptr);
 
          // schedule a path map cleanup (no urgency)
          module_context::scheduleDelayedWork(boost::posix_time::seconds(10),
@@ -165,7 +164,7 @@ Error notebookPathToId(const core::FilePath& path, std::string *pId)
    
    // check to see if the path is already in our lookup table
    std::map<std::string, std::string>::iterator it = 
-      s_idCache.find(path.absolutePath());
+      s_idCache.find(path.getAbsolutePath());
    if (it != s_idCache.end())
    {
       *pId = it->second;
@@ -196,11 +195,11 @@ Error notebookPathToId(const core::FilePath& path, std::string *pId)
       return error;
 
    // insert the new ID and update caches
-   s_idCache[path.absolutePath()] = id;
+   s_idCache[path.getAbsolutePath()] = id;
    error = writeStringMapToFile(cachePath(), s_idCache);
    if (error)
       return error;
-   s_cacheWriteTime = std::time(NULL);
+   s_cacheWriteTime = std::time(nullptr);
    *pId = id;
 
    return Success();

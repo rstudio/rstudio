@@ -1,7 +1,7 @@
 /*
  * FilePathTests.cpp
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -16,8 +16,8 @@
 #define RSTUDIO_NO_TESTTHAT_ALIASES
 #include <tests/TestThat.hpp>
 
-#include <core/Error.hpp>
-#include <core/FilePath.hpp>
+#include <shared_core/Error.hpp>
+#include <shared_core/FilePath.hpp>
 
 namespace rstudio {
 namespace core {
@@ -36,7 +36,57 @@ TEST_CASE("file paths")
       CHECK(bPath.isWithin(pPath));
       CHECK(!aPath.isWithin(bPath));
 
-      CHECK(aPath.relativePath(pPath) == "a");
+      CHECK(aPath.getRelativePath(pPath) == "a");
+   }
+
+   SECTION("path containment pathology")
+   {
+      // isWithin should not be fooled by directory traversal; the first path is not inside the
+      // second even though it appears to be lexically
+      FilePath aPath("/path/to/a/../b");
+      FilePath bPath("/path/to/a");
+      CHECK(!aPath.isWithin(bPath));
+
+      // isWithin should not be fooled by substrings
+      FilePath cPath("/path/to/foo");
+      FilePath dPath("/path/to/foobar");
+      CHECK(!dPath.isWithin(cPath));
+   }
+
+   SECTION("child path completion")
+   {
+      // simple path completion should do what's expected
+      FilePath aPath("/path/to/a");
+      FilePath bPath("/path/to/a/b");
+      CHECK(aPath.completeChildPath("b") == bPath);
+
+      // trying to complete to a path outside should fail and return the original path
+      FilePath cPath("/path/to/foo");
+      CHECK(cPath.completeChildPath("../bar") == cPath);
+      CHECK(cPath.completeChildPath("/path/to/quux") == cPath);
+
+      // trailing slashes are okay
+      FilePath dPath("/path/to/");
+      FilePath ePath("/path/to/e");
+      CHECK(dPath.completeChildPath("e") == ePath);
+   }
+
+   SECTION("general path completion")
+   {
+      // simple path completion should do what's expected
+      FilePath aPath("/path/to/a");
+      FilePath bPath("/path/to/a/b");
+      CHECK(aPath.completePath("b") == bPath);
+
+      // absolute paths are allowed
+      FilePath cPath("/path/to/c");
+      FilePath dPath("/path/to/d");
+      CHECK(cPath.completePath("/path/to/d") == dPath);
+
+      // directory traversal is allowed
+      FilePath ePath("/path/to/e");
+      FilePath fPath("/path/to/f");
+      CHECK(ePath.completePath("../f").getLexicallyNormalPath() == fPath.getAbsolutePath());
    }
 }
 

@@ -1,7 +1,7 @@
 /*
  * PrivateCommand.hpp
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -67,7 +67,7 @@ public:
          int privateCommandDelayMs = 3000, // min delay between private commands
          int waitAfterCommandDelayMs = 2000, // min delay after user command
          int privateCommandTimeoutMs = 1200, // timeout for private command
-         int postCommandTimeoutMs = 120, // how long to suppress output after private command done
+         int postCommandTimeoutMs = 300, // how long to suppress output after private command done
          bool oncePerUserCommand = true); // only run private command after user has hit <enter>
 
    // Give private command opportunity to capture terminal; returns true if it does (or already did).

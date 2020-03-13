@@ -1,7 +1,7 @@
 /*
  * DialogBuilderBase.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -25,6 +25,7 @@ public abstract class DialogBuilderBase implements DialogBuilder
    protected static class ButtonSpec
    {
       public String label;
+      public String elementId;
       public Operation operation;
       public ProgressOperation progressOperation;
    }
@@ -35,31 +36,37 @@ public abstract class DialogBuilderBase implements DialogBuilder
       this.caption = caption;
    }
 
-   public DialogBuilder addButton(String label)
+   @Override
+   public DialogBuilder addButton(String label, String elementId)
    {
-      return addButton(label, (Operation)null);
+      return addButton(label, elementId, (Operation)null);
    }
 
-   public DialogBuilder addButton(String label, Operation operation)
+   @Override
+   public DialogBuilder addButton(String label, String elementId, Operation operation)
    {
       ButtonSpec button = new ButtonSpec();
       button.label = label;
+      button.elementId = elementId;
       button.operation = operation;
       buttons_.add(button);
 
       return this;
    }
 
-   public DialogBuilder addButton(String label, ProgressOperation operation)
+   @Override
+   public DialogBuilder addButton(String label, String elementId, ProgressOperation operation)
    {
       ButtonSpec button = new ButtonSpec();
       button.label = label;
+      button.elementId = elementId;
       button.progressOperation = operation;
       buttons_.add(button);
 
       return this;
    }
 
+   @Override
    public DialogBuilder setDefaultButton(int index)
    {
       defaultButton_ = index;
@@ -70,6 +77,6 @@ public abstract class DialogBuilderBase implements DialogBuilder
 
    protected final int type;
    protected final String caption;
-   protected ArrayList<ButtonSpec> buttons_ = new ArrayList<ButtonSpec>();
+   protected ArrayList<ButtonSpec> buttons_ = new ArrayList<>();
    protected int defaultButton_ = 0;
 }

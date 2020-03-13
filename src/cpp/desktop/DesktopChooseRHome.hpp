@@ -1,7 +1,7 @@
 /*
  * DesktopChooseRHome.hpp
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -36,7 +36,8 @@ public:
 
    // "" means auto-detect
    rstudio::desktop::RVersion version();
-   void setVersion(const rstudio::desktop::RVersion& version);
+   bool preferR64();
+   void setVersion(const rstudio::desktop::RVersion& version, bool preferR64);
    
    QString renderingEngine();
    void setRenderingEngine(const QString& renderingEngine);

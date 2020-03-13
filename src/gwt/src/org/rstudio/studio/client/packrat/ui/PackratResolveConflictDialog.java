@@ -1,6 +1,6 @@
 /* PackratResolveConflictDialog.java
  *
- * Copyright (C) 2014 by RStudio, Inc.
+ * Copyright (C) 2014-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -16,6 +16,7 @@ package org.rstudio.studio.client.packrat.ui;
 
 import java.util.ArrayList;
 
+import com.google.gwt.aria.client.Roles;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.widget.MessageDialog;
 import org.rstudio.core.client.widget.ModalDialog;
@@ -47,7 +48,7 @@ public class PackratResolveConflictDialog
                ArrayList<PackratConflictActions> conflictActions,
                OperationWithInput<PackratConflictResolution> onResolved)
    {
-      super("Resolve Conflict", onResolved);
+      super("Resolve Conflict", Roles.getDialogRole(), onResolved);
       
       setOkButtonCaption("Resolve");
          

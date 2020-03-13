@@ -1,7 +1,7 @@
 /*
  * SourceWindowManager.java
  *
- * Copyright (C) 2009-16 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -51,7 +51,8 @@ import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.UnsavedChangesItem;
 import org.rstudio.studio.client.workbench.model.UnsavedChangesTarget;
 import org.rstudio.studio.client.workbench.model.helper.JSObjectStateValue;
-import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefsAccessor;
 import org.rstudio.studio.client.workbench.ui.PaneConfig;
 import org.rstudio.studio.client.workbench.views.source.events.*;
 import org.rstudio.studio.client.workbench.views.source.model.SourceDocument;
@@ -103,7 +104,7 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
          GlobalDisplay display, 
          SourceShim sourceShim,
          Session session,
-         UIPrefs uiPrefs)
+         UserPrefs uiPrefs)
    {
       events_ = events;
       server_ = server;
@@ -112,7 +113,7 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
       pWorkbenchContext_ = pWorkbenchContext;
       display_ = display;
       sourceShim_ = sourceShim;
-      uiPrefs_ = uiPrefs;
+      userPrefs_ = uiPrefs;
       
       events_.addHandler(DocWindowChangedEvent.TYPE, this);
       
@@ -332,6 +333,11 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
       return sourceWindows_.containsKey(windowId);
    }
    
+   public boolean areSourceWindowsOpen()
+   {
+      return !sourceWindows_.isEmpty();
+   }
+   
    public String getWindowIdOfDocPath(String path)
    {
       SourceDocument doc = getDocFromPath(path);
@@ -378,7 +384,6 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
    public void saveUnsavedDocuments(final Set<String> ids,
                                     final Command onCompleted)
    {
-      
       doForAllSourceWindows(new SourceWindowCommand()
       {
          @Override
@@ -446,7 +451,7 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
          public void execute()
          {
             // return focus to the main window when finished
-            if (Desktop.isDesktop() || !isMainSourceWindow())
+            if (Desktop.hasDesktopFrame() || !isMainSourceWindow())
                pSatellite_.get().focusMainWindow();
             
             // complete operation
@@ -552,10 +557,10 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
       if (SourceWindowManager.isMainSourceWindow())
       {
          // see if the Source and Console are paired
-         PaneConfig paneConfig = uiPrefs_.paneConfig().getValue();
+         PaneConfig paneConfig = userPrefs_.panes().getValue().cast();
          if (paneConfig == null)
             paneConfig = PaneConfig.createDefault();
-         if (hasSourceAndConsolePaired(paneConfig.getPanes()))
+         if (hasSourceAndConsolePaired(paneConfig.getQuadrants()))
          {
             events_.fireEvent(new MaximizeSourceWindowEvent());
          }  
@@ -567,10 +572,10 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
       if (SourceWindowManager.isMainSourceWindow())
       {
          // see if the Source and Console are paired
-         PaneConfig paneConfig = uiPrefs_.paneConfig().getValue();
+         PaneConfig paneConfig = userPrefs_.panes().getValue().cast();
          if (paneConfig == null)
             paneConfig = PaneConfig.createDefault();
-         if (hasSourceAndConsolePaired(paneConfig.getPanes()))
+         if (hasSourceAndConsolePaired(paneConfig.getQuadrants()))
          {
             events_.fireEvent(new EnsureVisibleSourceWindowEvent());
          }  
@@ -1032,7 +1037,7 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
                changedWindows.add(windowId);
             }
             newGeometries.setObject(windowId, newGeometry);
-         };
+         }
       });
       
       if (changedWindows.size() > 0)
@@ -1176,7 +1181,7 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
    
    private static boolean canActivateSourceWindows()
    {
-      return Desktop.isDesktop() || BrowseCap.INSTANCE.isInternetExplorer();
+      return Desktop.hasDesktopFrame() || BrowseCap.INSTANCE.isInternetExplorer();
    }
    
    private void focusSourceWindow(String windowId)
@@ -1184,7 +1189,7 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
       if (StringUtil.isNullOrEmpty(windowId))
       {
          // activate main window
-         if (Desktop.isDesktop())
+         if (Desktop.hasDesktopFrame())
             Desktop.getFrame().bringMainFrameToFront();
          else
             WindowEx.get().focus();
@@ -1337,11 +1342,11 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
    
    private boolean hasSourceAndConsolePaired(String pane1, String pane2)
    {
-      return (pane1 == PaneConfig.SOURCE &&
-              pane2 == PaneConfig.CONSOLE)
+      return (pane1 == UserPrefsAccessor.Panes.QUADRANTS_SOURCE &&
+              pane2 == UserPrefsAccessor.Panes.QUADRANTS_CONSOLE)
                  ||
-             (pane1 == PaneConfig.CONSOLE &&
-              pane2 == PaneConfig.SOURCE);
+             (pane1 == UserPrefsAccessor.Panes.QUADRANTS_CONSOLE &&
+              pane2 == UserPrefsAccessor.Panes.QUADRANTS_SOURCE);
    }
 
    // Private types -----------------------------------------------------------
@@ -1361,7 +1366,7 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
    private final SourceServerOperations server_;
    private final GlobalDisplay display_;
    private final SourceShim sourceShim_;
-   private final UIPrefs uiPrefs_;
+   private final UserPrefs userPrefs_;
 
    private HashMap<String, Integer> sourceWindows_ = 
          new HashMap<String,Integer>();

@@ -1,7 +1,7 @@
 /*
  * RmdDiscoveredTemplateItem.java
  *
- * Copyright (C) 2009-14 by RStudio, Inc.
+ * Copyright (C) 2009-14 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -30,7 +30,7 @@ public class RmdDiscoveredTemplateItem extends Composite
       panel_ = new HTMLPanel("");
       Label pkg = new Label("{" + template.getPackage() + "}");
       pkg.getElement().getStyle().setFloat(Style.Float.RIGHT);
-      pkg.getElement().getStyle().setColor("#909090");
+      pkg.getElement().getStyle().setColor("#656565");
       panel_.add(pkg);
       Label name = new Label(template.getName());
       name.setTitle(template.getDescription());

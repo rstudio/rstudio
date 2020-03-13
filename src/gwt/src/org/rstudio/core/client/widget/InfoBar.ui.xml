@@ -1,11 +1,12 @@
 <ui:UiBinder xmlns:ui='urn:ui:com.google.gwt.uibinder'
-             xmlns:g='urn:import:com.google.gwt.user.client.ui'>
+             xmlns:g='urn:import:com.google.gwt.user.client.ui'
+             xmlns:f='urn:import:org.rstudio.core.client.widget'>
 
     <ui:with field="themeRes" type="org.rstudio.core.client.theme.res.ThemeResources"/>
 
 
    <ui:style>
-      @external rstudio-themes-flat, rstudio-themes-dark-grey;
+      @external rstudio-themes-flat, rstudio-themes-dark-grey, gwt-Image;
       @eval THEME_DARKGREY_BACKGROUND org.rstudio.core.client.theme.ThemeColors.darkGreyBackground;
       @eval THEME_DARKGREY_BORDER org.rstudio.core.client.theme.ThemeColors.darkGreyBorder;
 
@@ -34,6 +35,12 @@
       .dismiss {
          margin-top: 4px;
          margin-right: 4px;
+         right: 0;
+         width: 9px;
+         height: 9px;
+      }
+      .dismiss .gwt-Image {
+         float: left;
          width: 9px;
          height: 9px;
       }
@@ -49,19 +56,20 @@
    <g:FlowPanel>
    <g:DockLayoutPanel ui:field="container_" styleName="{style.outer}">
       <g:west size="26">
-         <g:Image ui:field="icon_" styleName="{style.icon}"/>
+         <f:DecorativeImage ui:field="icon_" styleName="{style.icon}"/>
       </g:west>
       <g:center>
          <g:HorizontalPanel>
-         	<g:Label ui:field="label_" styleName="{style.label}" wordWrap="false"/>
-         	<g:HorizontalPanel ui:field="labelRight_" styleName="{style.label}"/>
+            <g:Label ui:field="label_" styleName="{style.label}" wordWrap="false"/>
+            <g:Label ui:field="live_" styleName="{themeRes.themeStyles.visuallyHidden}"/>
+            <g:HorizontalPanel ui:field="labelRight_" styleName="{style.label}"/>
          </g:HorizontalPanel>
       </g:center>
       <g:east size="13">
-          <g:Image ui:field="dismiss_"
+          <f:ImageButton ui:field="dismiss_"
                    resource="{themeRes.closeTab2x}"
-                   styleName="{style.dismiss}"
-                   title="Dismiss"/>
+                   addStyleNames="{style.dismiss}"
+                   title="Dismiss infobar"/>
       </g:east>
    </g:DockLayoutPanel>
    </g:FlowPanel>

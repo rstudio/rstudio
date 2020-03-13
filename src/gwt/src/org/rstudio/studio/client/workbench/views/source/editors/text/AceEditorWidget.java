@@ -1,7 +1,7 @@
 /*
  * AceEditorWidget.java
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-20 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -31,6 +31,8 @@ import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.event.shared.HandlerManager;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.event.shared.HasHandlers;
+
+import java.util.function.BiPredicate;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.HTML;
@@ -42,6 +44,7 @@ import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.events.HasContextMenuHandlers;
+import org.rstudio.core.client.widget.CanSetControlId;
 import org.rstudio.core.client.widget.FontSizer;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
@@ -49,8 +52,8 @@ import org.rstudio.studio.client.common.Value;
 import org.rstudio.studio.client.common.debugging.model.Breakpoint;
 import org.rstudio.studio.client.events.*;
 import org.rstudio.studio.client.server.Void;
-import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.commands.RStudioCommandExecutedFromShortcutEvent;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.views.output.lint.LintResources;
 import org.rstudio.studio.client.workbench.views.output.lint.model.AceAnnotation;
 import org.rstudio.studio.client.workbench.views.output.lint.model.LintItem;
@@ -65,9 +68,11 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ace.LineWid
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Marker;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Tooltip;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.events.AfterAceRenderEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.*;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.FoldChangeEvent.Handler;
+import org.rstudio.studio.client.workbench.views.source.events.ScrollYEvent;
 
 public class AceEditorWidget extends Composite
       implements RequiresResize,
@@ -75,7 +80,8 @@ public class AceEditorWidget extends Composite
                  HasContextMenuHandlers,
                  HasFoldChangeHandlers,
                  HasAllKeyHandlers,
-                 EditEvent.Handler
+                 EditEvent.Handler,
+                 CanSetControlId
 {
    public AceEditorWidget()
    {
@@ -105,6 +111,7 @@ public class AceEditorWidget extends Composite
       editor_.setHighlightActiveLine(false);
       editor_.setHighlightGutterLine(false);
       editor_.setFixedWidthGutter(true);
+      editor_.setIndentedSoftWrap(false);
       editor_.delegateEventsTo(AceEditorWidget.this);
       editor_.onChange(new CommandWithArg<AceDocumentChangeEventNative>()
       {
@@ -159,6 +166,17 @@ public class AceEditorWidget extends Composite
             fireEvent(new FoldChangeEvent());
          }
       });
+      editor_.onChangeScrollTop(() -> {
+         Position pos = Position.create(editor_.getFirstVisibleRow(), 0);
+         fireEvent(new ScrollYEvent(pos));
+      });
+
+      // don't show gutter tooltips for spelling warnings
+      editor_.onShowGutterTooltip((Tooltip tooltip) -> {
+         if (tooltip.getTextContent().toLowerCase().contains("spellcheck"))
+            tooltip.hide();
+      });
+
       editor_.onGutterMouseDown(new CommandWithArg<AceMouseEventNative>()
       {
         @Override
@@ -283,8 +301,7 @@ public class AceEditorWidget extends Composite
                   fireEvent(new AceSelectionChangedEvent());
                }
             }));
-      
-      
+
       addAttachHandler(new AttachEvent.Handler()
       {
          @Override
@@ -343,6 +360,8 @@ public class AceEditorWidget extends Composite
          unmapForEditImpl("<C-x>", "c-x");
       else if (type == EditEvent.TYPE_PASTE)
          unmapForEditImpl("<C-v>", "c-v");
+      else if (type == EditEvent.TYPE_PASTE_WITH_INDENT)
+         unmapForEditImpl("<C-S-v>", "c-s-v");
    }
    
    private final void remapForEdit(int type)
@@ -353,6 +372,8 @@ public class AceEditorWidget extends Composite
          remapForEditImpl("<C-x>", "c-x");
       else if (type == EditEvent.TYPE_PASTE)
          remapForEditImpl("<C-v>", "c-v");
+      else if (type == EditEvent.TYPE_PASTE_WITH_INDENT)
+         remapForEditImpl("<C-S-v>", "c-s-v");
    }
    
    private static final native void unmapForEditImpl(String vimKeys, String emacsKeys)
@@ -400,9 +421,10 @@ public class AceEditorWidget extends Composite
    }-*/;
    
    @Inject
-   private void initialize(EventBus events)
+   private void initialize(EventBus events, UserPrefs uiPrefs)
    {
       events_ = events;
+      uiPrefs_ = uiPrefs;
    }
    
    public HandlerRegistration addCursorChangedHandler(
@@ -428,7 +450,7 @@ public class AceEditorWidget extends Composite
    {
       return addHandler(handler, BreakpointMoveEvent.TYPE);
    }
-   
+
    public void toggleBreakpointAtCursor()
    {
       Position pos = editor_.getSession().getSelection().getCursor();
@@ -443,6 +465,33 @@ public class AceEditorWidget extends Composite
    protected void onLoad()
    {
       super.onLoad();
+
+      if (tabKeyMode_ == TabKeyMode.TrackUserPref)
+      {
+         // accessibility feature to allow tabbing out of text editor instead of indenting/outdenting
+         if (uiPrefs_.tabKeyMoveFocus().getValue())
+         {
+            editor_.setTabMovesFocus(true);
+            tabMovesFocus_ = true;
+         }
+      }
+
+      // This command binding has to be an anonymous inner class (not a lambda)
+      // due to an issue with using lambda bindings with Ace, which sometimes 
+      // results in a blocking exception on startup in devmode.
+      aceEventHandlers_.add(uiPrefs_.tabKeyMoveFocus().bind(
+            new CommandWithArg<Boolean>()
+      {
+         @Override
+         public void execute(Boolean movesFocus)
+         {
+            if (tabKeyMode_ == TabKeyMode.TrackUserPref && tabMovesFocus_ != movesFocus)
+            {
+               editor_.setTabMovesFocus(movesFocus);
+               tabMovesFocus_ = movesFocus;
+            }
+         }
+      }));
 
       editor_.getRenderer().updateFontSize();
       onResize();
@@ -505,6 +554,11 @@ public class AceEditorWidget extends Composite
       return addHandler(handler, BlurEvent.getType());
    }
 
+   public HandlerRegistration addScrollYHandler(ScrollYEvent.Handler handler)
+   {
+      return addHandler(handler, ScrollYEvent.TYPE);
+   }
+
    public HandlerRegistration addContextMenuHandler(ContextMenuHandler handler)
    {
       return addDomHandler(handler, ContextMenuEvent.getType());
@@ -563,6 +617,12 @@ public class AceEditorWidget extends Composite
    public HandlerRegistration addCapturingKeyUpHandler(KeyUpHandler handler)
    {
       return capturingHandlers_.addHandler(KeyUpEvent.getType(), handler);
+   }
+
+   public HandlerRegistration addScrollHandler(ScrollHandler handler)
+   {
+      capturingHandlers_.addHandler(ScrollEvent.getType(), handler);
+      return addHandler(handler, ScrollEvent.getType());
    }
 
    private static native void addEventListener(Element element,
@@ -878,14 +938,14 @@ public class AceEditorWidget extends Composite
    
    private int getBreakpointIdxById(int breakpointId)
    {
-	   for (int idx = 0; idx < breakpoints_.size(); idx++)
-	   {
-	      if (breakpoints_.get(idx).getBreakpointId() == breakpointId)
-	      {
-	         return idx;
-	      }
-	   }
-	   return -1;
+      for (int idx = 0; idx < breakpoints_.size(); idx++)
+      {
+         if (breakpoints_.get(idx).getBreakpointId() == breakpointId)
+         {
+            return idx;
+         }
+      }
+      return -1;
    }
    
    private int getBreakpointIdxByLine(int lineNumber)
@@ -917,7 +977,18 @@ public class AceEditorWidget extends Composite
    {
       return getEditor().getSession().createAnchoredRange(start, end);
    }
-   
+
+   @Override
+   public void setElementId(String id)
+   {
+      editor_.setElementId(id);
+   }
+
+   public Element getTextInputElement()
+   {
+      return editor_.getTextInputElement();
+   }
+
    // This class binds an ace annotation (used for the gutter) with an
    // inline marker (the underlining for associated lint). We also store
    // the associated marker. Ie, with some beautiful ASCII art:
@@ -1016,10 +1087,11 @@ public class AceEditorWidget extends Composite
             clazz = lintStyles_.info();
          else if (item.getType() == "style")
             clazz = lintStyles_.style();
+         else if (item.getType() == "spelling")
+            clazz = lintStyles_.warning();
          
          int id = editor_.getSession().addMarker(range, clazz, "text", true);
-         
-         annotations_.add(new AnchoredAceAnnotation(
+            annotations_.add(new AnchoredAceAnnotation(
                annotations.get(i),
                range,
                id));
@@ -1061,78 +1133,82 @@ public class AceEditorWidget extends Composite
    
    public void removeMarkersOnCursorLine()
    {
-      // Defer this so other event handling can update anchors etc.
-      Scheduler.get().scheduleDeferred(new ScheduledCommand()
-      {
-         
-         @Override
-         public void execute()
-         {
-            int cursorRow = editor_.getCursorPosition().getRow();
-            JsArray<AceAnnotation> newAnnotations = JsArray.createArray().cast();
-            
-            for (int i = 0; i < annotations_.size(); i++)
-            {
-               AnchoredAceAnnotation annotation = annotations_.get(i);
-               int markerId = annotation.getMarkerId();
-               Marker marker = editor_.getSession().getMarker(markerId);
-               
-               // The marker may have already been removed in response to
-               // a previous action.
-               if (marker == null)
-                  continue;
-               
-               Range range = marker.getRange();
-               int rowStart = range.getStart().getRow();
-               int rowEnd = range.getEnd().getRow();
-               
-               if (cursorRow >= rowStart && cursorRow <= rowEnd)
-                  editor_.getSession().removeMarker(markerId);
-               else
-                  newAnnotations.push(annotation.asAceAnnotation());
-            }
-            
-            editor_.getSession().setAnnotations(newAnnotations);
-            editor_.getRenderer().renderMarkers();
-            
-         }
+      int cursorRow = editor_.getCursorPosition().getRow();
+      removeMarkers((annotation, marker) -> {
+         Range range = marker.getRange();
+         int rowStart = range.getStart().getRow();
+         int rowEnd = range.getEnd().getRow();
+         return cursorRow < rowStart || cursorRow > rowEnd;
       });
    }
-   
+
+   public void removeMarkersAtWord(String word)
+   {
+      removeMarkers((annotation, marker) -> {
+         String textRange = editor_.getSession().getTextRange(marker.getRange());
+         return textRange.equals(word);
+      });
+   }
+
+   public void removeMarkers(BiPredicate<AceAnnotation, Marker> predicate)
+   {
+      // Defer this so other event handling can update anchors etc.
+      Scheduler.get().scheduleDeferred(() ->
+      {
+         JsArray<AceAnnotation> newAnnotations = JsArray.createArray().cast();
+
+         for (int i = 0; i < annotations_.size(); i++)
+         {
+            AnchoredAceAnnotation annotation = annotations_.get(i);
+            int markerId = annotation.getMarkerId();
+            Marker marker = editor_.getSession().getMarker(markerId);
+
+            // The marker may have already been removed in response to
+            // a previous action.
+            if (marker == null)
+               continue;
+
+            if (!predicate.test(annotation.asAceAnnotation(), marker))
+            {
+               newAnnotations.push(annotation.asAceAnnotation());
+            }
+            else
+               editor_.getSession().removeMarker(markerId);
+         }
+
+         editor_.getSession().setAnnotations(newAnnotations);
+         editor_.getRenderer().renderMarkers();
+      });
+   }
+
    public void removeMarkersAtCursorPosition()
    {
       // Defer this so other event handling can update anchors etc.
-      Scheduler.get().scheduleDeferred(new ScheduledCommand()
+      Scheduler.get().scheduleDeferred(() ->
       {
-         
-         @Override
-         public void execute()
+         Position cursor = editor_.getCursorPosition();
+         JsArray<AceAnnotation> newAnnotations = JsArray.createArray().cast();
+
+         for (int i = 0; i < annotations_.size(); i++)
          {
-            Position cursor = editor_.getCursorPosition();
-            JsArray<AceAnnotation> newAnnotations = JsArray.createArray().cast();
-            
-            for (int i = 0; i < annotations_.size(); i++)
-            {
-               AnchoredAceAnnotation annotation = annotations_.get(i);
-               int markerId = annotation.getMarkerId();
-               Marker marker = editor_.getSession().getMarker(markerId);
-               
-               // The marker may have already been removed in response to
-               // a previous action.
-               if (marker == null)
-                  continue;
-               
-               Range range = marker.getRange();
-               if (!range.contains(cursor))
-                  newAnnotations.push(annotation.asAceAnnotation());
-               else
-                  editor_.getSession().removeMarker(markerId);
-            }
-            
-            editor_.getSession().setAnnotations(newAnnotations);
-            editor_.getRenderer().renderMarkers();
-            
+            AnchoredAceAnnotation annotation = annotations_.get(i);
+            int markerId = annotation.getMarkerId();
+            Marker marker = editor_.getSession().getMarker(markerId);
+
+            // The marker may have already been removed in response to
+            // a previous action.
+            if (marker == null)
+               continue;
+
+            Range range = marker.getRange();
+            if (!range.contains(cursor))
+               newAnnotations.push(annotation.asAceAnnotation());
+            else
+               editor_.getSession().removeMarker(markerId);
          }
+
+         editor_.getSession().setAnnotations(newAnnotations);
+         editor_.getRenderer().renderMarkers();
       });
    }
    
@@ -1151,21 +1227,52 @@ public class AceEditorWidget extends Composite
       return isRendered_;
    }
 
+   public enum TabKeyMode
+   {
+      TrackUserPref,
+      AlwaysMoveFocus
+   }
+
+   /**
+    * By default, editor tracks the tabKeyMovesFocus user preference to control whether Tab
+    * and Shift+Tab indent/outdent, or move keyboard focus. Alternatively can force the
+    * move keyboard-focus mode independently of the user preference.
+    *
+    * @param mode TrackUserPref (default) or AlwaysMoveFocus
+    */
+   public void setTabKeyMode(TabKeyMode mode)
+   {
+      if (mode == tabKeyMode_)
+         return;
+
+      tabKeyMode_ = mode;
+      if (tabKeyMode_ == TabKeyMode.TrackUserPref)
+      {
+         tabMovesFocus_ = uiPrefs_.tabKeyMoveFocus().getValue();
+         editor_.setTabMovesFocus(tabMovesFocus_);
+      }
+      else
+      {
+         tabMovesFocus_ = true;
+         editor_.setTabMovesFocus(true);
+      }
+   }
+
    private final AceEditorNative editor_;
    private final HandlerManager capturingHandlers_;
    private final List<HandlerRegistration> aceEventHandlers_;
    private boolean initToEmptyString_ = true;
    private boolean inOnChangeHandler_ = false;
    private boolean isRendered_ = false;
-   private ArrayList<Breakpoint> breakpoints_ = new ArrayList<Breakpoint>();
-   private ArrayList<AnchoredAceAnnotation> annotations_ =
-         new ArrayList<AnchoredAceAnnotation>();
-   private ArrayList<ChunkRowExecState> lineExecState_ = 
-         new ArrayList<ChunkRowExecState>();
+   private ArrayList<Breakpoint> breakpoints_ = new ArrayList<>();
+   private ArrayList<AnchoredAceAnnotation> annotations_ = new ArrayList<>();
+   private ArrayList<ChunkRowExecState> lineExecState_ = new ArrayList<>();
    private LintResources.Styles lintStyles_ = LintResources.INSTANCE.styles();
-   
-   private EventBus events_;
-   private Commands commands_ = RStudioGinjector.INSTANCE.getCommands();
-   
    private static boolean hasEditHandlers_ = false;
+   private boolean tabMovesFocus_ = false;
+   private TabKeyMode tabKeyMode_ = TabKeyMode.TrackUserPref;
+
+   // injected
+   private EventBus events_;
+   private UserPrefs uiPrefs_;
 }

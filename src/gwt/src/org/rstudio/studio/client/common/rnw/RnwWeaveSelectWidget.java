@@ -1,7 +1,7 @@
 /*
  * RnwWeaveSelectWidget.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -39,7 +39,7 @@ public class RnwWeaveSelectWidget extends SelectWidget
    { 
       super("Weave Rnw files using:", rnwWeaveRegistry_.getTypeNames());
   
-      HelpButton.addHelpButton(this, "rnw_weave_method");
+      HelpButton.addHelpButton(this, "rnw_weave_method", "Help on weaving Rnw files");
       
       RStudioGinjector.INSTANCE.injectMembers(this);
       

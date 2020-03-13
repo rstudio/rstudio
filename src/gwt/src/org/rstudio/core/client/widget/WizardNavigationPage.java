@@ -1,7 +1,7 @@
 /*
  * WizardNavigationPage.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-12 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -40,8 +40,7 @@ public class WizardNavigationPage<I,T> extends WizardPage<I,T>
            image,
            largeImage,
            pages,
-           WizardPageSelector::new
-      );
+           pages1 -> new WizardPageSelector<I, T>(pages1));
    }
 
    public WizardNavigationPage(String title,

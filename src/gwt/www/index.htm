@@ -4,7 +4,7 @@
 #
 # index.htm
 #
-# Copyright (C) 2009-19 by RStudio, Inc.
+# Copyright (C) 2009-19 by RStudio, PBC
 #
 # This program is licensed to you under the terms of version 3 of the
 # GNU Affero General Public License. This program is distributed WITHOUT
@@ -20,12 +20,15 @@
 
     <meta http-equiv="content-type" content="text/html; charset=UTF-8"/>
     <meta name="gwt:property" content="compiler.stackMode=#compiler_stack_mode#"/>
-    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+    #!viewport_tag#
     <meta name="csrf-token" content="#csrf_token#" />
     <link rel="shortcut icon" href="images/favicon.ico" />
     <title>RStudio</title>
     #!head_tags#
     <link type="text/css" rel="stylesheet" href="css/icons.css" />
+    <link type="text/css" rel="stylesheet" href="css/focus-visible.css" />
+    <script type="text/javascript" language="javascript" src="js/inert-polyfill.min.js"></script>
+    <script type="text/javascript" language="javascript" src="js/focus-visible.min.js"></script>
     <script type="text/javascript" language="javascript" src="#!gwt_prefix#rstudio/rstudio.nocache.js"></script>
   </head>
 

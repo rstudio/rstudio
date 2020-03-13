@@ -1,35 +1,37 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
-	xmlns:g="urn:import:com.google.gwt.user.client.ui"
-	xmlns:rw="urn:import:org.rstudio.core.client.widget">
-	<ui:style>
-		.spaced, .header {
-			margin-bottom: 5px;
-		}
-		
-		.outer {
-			margin: 5px;
-		}
-		
-		.header {
-			font-weight: bold;
-		}
-		
-		.check {
-			display: block;
-		}
-	</ui:style>
-	<g:VerticalPanel styleName="{style.outer}" width="350px">
-		<g:Label styleName="{style.header}" text="Script Paths"></g:Label>
-		<rw:FileChooserTextBox styleName="{style.spaced}" ui:field="file_"></rw:FileChooserTextBox>
-		<rw:DirectoryChooserTextBox styleName="{style.spaced}" ui:field="dir_"></rw:DirectoryChooserTextBox>
-		<g:Label styleName="{style.header}" text="Environment"></g:Label>
-		<g:CheckBox styleName="gwt-CheckBox {style.check} {style.spaced}" 
-		            text="Run job with copy of global environment" 
-		            ui:field="importEnv_"></g:CheckBox>
-		<g:HorizontalPanel>
-			<g:InlineLabel text="Copy job results: "></g:InlineLabel>
-			<g:ListBox styleName="{style.check} {style.spaced}" ui:field="exportEnv_"></g:ListBox>
-		</g:HorizontalPanel>
-	</g:VerticalPanel>
-</ui:UiBinder> 
+   xmlns:g="urn:import:com.google.gwt.user.client.ui"
+   xmlns:rw="urn:import:org.rstudio.core.client.widget">
+   <ui:with field="ElementIds" type="org.rstudio.core.client.ElementIds"/>
+   <ui:style>
+      .spaced, .header {
+         margin-bottom: 5px;
+      }
+      
+      .outer {
+         margin: 5px;
+      }
+      
+      .header {
+         font-weight: bold;
+      }
+      
+      .check {
+         display: block;
+      }
+   </ui:style>
+   <g:VerticalPanel styleName="{style.outer}" width="350px">
+      <g:Label styleName="{style.header}" text="Script Paths"></g:Label>
+      <rw:FileChooserTextBox styleName="{style.spaced}" ui:field="file_"></rw:FileChooserTextBox>
+      <rw:DirectoryChooserTextBox styleName="{style.spaced}" ui:field="dir_"></rw:DirectoryChooserTextBox>
+      <g:Label styleName="{style.header}" text="Environment"></g:Label>
+      <g:CheckBox styleName="gwt-CheckBox {style.check} {style.spaced}" 
+                  text="Run job with copy of global environment" 
+                  ui:field="importEnv_"></g:CheckBox>
+      <g:HorizontalPanel>
+         <rw:InlineFormLabel forId="{ElementIds.getJobLauncherEnvironment}" text="Copy job results: "/>
+         <rw:FormListBox elementId="{ElementIds.getJobLauncherEnvironment}"
+                         styleName="{style.check} {style.spaced}" ui:field="exportEnv_"/>
+      </g:HorizontalPanel>
+   </g:VerticalPanel>
+</ui:UiBinder>

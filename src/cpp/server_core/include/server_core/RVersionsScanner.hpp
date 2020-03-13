@@ -1,7 +1,7 @@
 /*
  * RVersionsScanner.hpp
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -16,8 +16,8 @@
 #ifndef SERVER_CORE_R_VERSIONS_SCANNER_HPP
 #define SERVER_CORE_R_VERSIONS_SCANNER_HPP
 
-#include <core/Error.hpp>
-#include <core/FilePath.hpp>
+#include <shared_core/Error.hpp>
+#include <shared_core/FilePath.hpp>
 #include <core/json/JsonRpc.hpp>
 #include <core/r_util/RVersionsPosix.hpp>
 
@@ -39,7 +39,8 @@ public:
                     const std::string& rLdScriptPath,
                     const std::string& ldLibraryPath,
                     const r_util::RVersion& profileDefaultR,
-                    const std::vector<core::FilePath>& profileRHomeDirs);
+                    const std::vector<core::FilePath>& profileRHomeDirs,
+                    const std::string& modulesBinaryPath);
 
    // scans for r versions and returns any that were found
    // subsequent calls return cached versions found in initial scan
@@ -59,6 +60,7 @@ private:
    std::string rLdLibraryPath_;
    core::r_util::RVersion profileDefaultR_;
    std::vector<FilePath> profileRHomeDirs_;
+   core::FilePath modulesBinaryPath_;
 
    // cached versions
    core::r_util::RVersion systemVersion_;

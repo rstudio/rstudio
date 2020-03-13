@@ -1,7 +1,7 @@
 /*
  * LocalStreamAsyncClient.hpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-12 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -23,8 +23,8 @@
 
 #include <boost/asio/local/stream_protocol.hpp>
 
-#include <core/Error.hpp>
-#include <core/FilePath.hpp>
+#include <shared_core/Error.hpp>
+#include <shared_core/FilePath.hpp>
 
 #include <core/system/PosixUser.hpp>
 
@@ -69,7 +69,7 @@ private:
       if (validateUid_.is_initialized() && localStreamPath_.exists())
       {
          struct stat st;
-         if (::stat(localStreamPath_.absolutePath().c_str(), &st) == 0)
+         if (::stat(localStreamPath_.getAbsolutePath().c_str(), &st) == 0)
          {
             if (st.st_uid != validateUid_.get())
             {
@@ -95,7 +95,7 @@ private:
 
       // establish endpoint
       using boost::asio::local::stream_protocol;
-      stream_protocol::endpoint endpoint(localStreamPath_.absolutePath());
+      stream_protocol::endpoint endpoint(localStreamPath_.getAbsolutePath());
 
       // connect
       socket().async_connect(

@@ -1,7 +1,7 @@
 /*
  * ServerValidateUser.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -15,11 +15,10 @@
 
 #include <server/auth/ServerValidateUser.hpp>
 
-#include <boost/foreach.hpp>
 #include <boost/tokenizer.hpp>
 #include <boost/format.hpp>
 
-#include <core/Error.hpp>
+#include <shared_core/Error.hpp>
 #include <core/Log.hpp>
 #include <core/StringUtils.hpp>
 
@@ -44,8 +43,8 @@ bool validateUser(const std::string& username,
       return true;
    
    // get the user
-   core::system::user::User user;
-   Error error = userFromUsername(username, &user);
+   core::system::User user;
+   Error error = core::system::User::getUserFromIdentifier(username, user);
    if (error)
    {
       // log the error only if it is unexpected
@@ -57,7 +56,7 @@ bool validateUser(const std::string& username,
    }
 
    // validate minimum user id
-   if (user.userId < minimumUserId)
+   if (user.getUserId() < minimumUserId)
    {
       if (failureWarning)
       {
@@ -81,7 +80,7 @@ bool validateUser(const std::string& username,
       using namespace boost ;
       char_separator<char> comma(",");
       tokenizer<char_separator<char> > groups(requiredGroup, comma);
-      BOOST_FOREACH(const std::string& group, groups)
+      for (const std::string& group : groups)
       {
          // check group membership
          Error error = core::system::userBelongsToGroup(user,

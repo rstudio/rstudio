@@ -1,7 +1,7 @@
 /*
  * SessionHttpConnectionUtils.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-12 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -18,9 +18,9 @@
 
 #include <boost/algorithm/string/predicate.hpp>
 
-#include <core/FilePath.hpp>
+#include <shared_core/FilePath.hpp>
 #include <core/Log.hpp>
-#include <core/Error.hpp>
+#include <shared_core/Error.hpp>
 #include <core/FileSerializer.hpp>
 
 
@@ -159,8 +159,11 @@ bool checkForAbort(boost::shared_ptr<HttpConnection> ptrConnection,
       // kill child processes before going down
       terminateAllChildProcesses();
 
-      // abort
-      ::abort();
+      // abort the process
+      // we no longer do this with ::abort because it generated unwanted exceptions
+      // ::_Exit should perform the same functionality (not running destructors and exiting process)
+      // without generating an exception
+      std::_Exit(EXIT_SUCCESS);
       return true;
    }
    else

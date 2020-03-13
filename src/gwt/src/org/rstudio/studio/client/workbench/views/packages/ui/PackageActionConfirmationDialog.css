@@ -2,7 +2,7 @@
 
 .mainWidget {
    height: 300px;
-   border: 1px solid #BBB;  
+   border: 1px solid #BBB;
    background-color: white;
 }
 
@@ -11,5 +11,5 @@
 }
 
 .explanatoryText {
-	margin-bottom: 15px;
+   margin-bottom: 15px;
 }

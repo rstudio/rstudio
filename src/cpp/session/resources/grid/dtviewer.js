@@ -3,7 +3,7 @@
 /*
  * dtviewer.js
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-20 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -252,7 +252,7 @@ var renderCellContents = function(data, type, row, meta, clazz) {
      escaped = '<i>' + escaped + '</i> ' +
                 '<a class="viewerLink" href="javascript:window.' + 
                 (clazz === "dataCell" ? 'dataViewerCallback' : 'listViewerCallback') +
-                '(' + row[0] + ', ' + meta.col +')">' +
+                '(' + row[0] + ', ' + (meta.col + columnOffset) +')">' +
                 '<img src="' +
                 (clazz === "dataCell" ? 'data-viewer.png' : 'object-viewer.png') +
                 '" class="viewerImage" /></a>';
@@ -279,7 +279,7 @@ var renderCellClass = function (data, type, row, meta, clazz) {
     title = data;
 
   // produce tag
-  return createTag('span', contents, {
+  return createTag('div', contents, {
     'class': classes,
     'title': title
   });
@@ -772,6 +772,16 @@ var invokeFilterPopup = function (ele, buildPopup, onDismiss, dismissOnClick) {
 };
 
 var createFilterUI = function(idx, col) {
+
+  // the index coming into this function is for absolute data purposes
+  // since this is a visual-centric function we operate based on the visible index
+  var visualIndex = idx - columnOffset;
+
+  // don't filter rownames column
+  if (visualIndex < 1) {
+    return;
+  }
+
   var host = document.createElement("div");
   var val = null, ui = null;
   host.className = "colFilter unfiltered";
@@ -787,7 +797,7 @@ var createFilterUI = function(idx, col) {
   };
 
   var onDismiss = function() {
-    if (table.columns(idx).search()[0].length === 0) {
+    if (table.columns(visualIndex).search()[0].length === 0) {
       setUnfiltered();
     }
   };
@@ -799,7 +809,7 @@ var createFilterUI = function(idx, col) {
   clear.addEventListener("click", function(evt) {
     if (dismissActivePopup)
       dismissActivePopup(true);
-    table.columns(idx).search("").draw();
+    table.columns(visualIndex).search("").draw();
     setUnfiltered();
     evt.preventDefault();
     evt.stopPropagation();
@@ -810,13 +820,13 @@ var createFilterUI = function(idx, col) {
   val.textContent = "All";
   val.addEventListener("click", function(evt) {
     if (col.col_search_type === "numeric") {
-      ui = createNumericFilterUI(idx, col, onDismiss);
+      ui = createNumericFilterUI(visualIndex, col, onDismiss);
     } else if (col.col_search_type === "factor") {
-      ui = createFactorFilterUI(idx, col, onDismiss);
+      ui = createFactorFilterUI(visualIndex, col, onDismiss);
     } else if (col.col_search_type === "character") {
-      ui = createTextFilterUI(idx, col, onDismiss);
+      ui = createTextFilterUI(visualIndex, col, onDismiss);
     } else if (col.col_search_type === "boolean") {
-      ui = createBooleanFilterUI(idx, col, onDismiss);
+      ui = createBooleanFilterUI(visualIndex, col, onDismiss);
     }
     if (ui) {
       ui.className += " filterValue";
@@ -903,7 +913,11 @@ var createHeader = function(idx, col) {
   var title = document.createElement("div");
   title.textContent = col.col_name;
   interior.appendChild(title);
-  th.title = "column " + idx + ": " + col.col_type;
+  if (col.col_type === "rownames") {
+    th.title = "row names";
+  } else {
+    th.title = "column " + (idx - columnOffset) + ": " + col.col_type;
+  }
   if (col.col_type === "numeric") {
     th.title += " with range " + col.col_breaks[0] + " - " + 
                 col.col_breaks[col.col_breaks.length - 1];
@@ -939,6 +953,7 @@ var parseLocationUrl = function() {
   var parsedLocation = {};
 
   parsedLocation.env = parsedLocation.obj = parsedLocation.cacheKey = parsedLocation.id = "";
+  parsedLocation.maxCols = defaultMaxColumns;
 
   var query = window.location.search.substring(1);
   var queryVars = query.split("&");
@@ -954,6 +969,8 @@ var parseLocationUrl = function() {
       parsedLocation.dataSource = queryVar[1];
     } else if (queryVar[0] == "id") {
       parsedLocation.id = queryVar[1];
+    } else if (queryVar[0] == "max_cols") {
+      parsedLocation.maxCols = parseInt(queryVar[1], 10);
     }
   }
 
@@ -1020,6 +1037,7 @@ var initDataTable = function(resCols, data) {
   // look up the query parameters
   var parsedLocation = parseLocationUrl();
   var env = parsedLocation.env, obj = parsedLocation.obj, cacheKey = parsedLocation.cacheKey;
+  maxColumns = defaultMaxColumns = parsedLocation.maxCols;
 
   // keep track of column types for later render
   var typeIndices = {
@@ -1437,7 +1455,7 @@ var setHeaderUIVisible = function(visible, initialize, hide) {
       dismissActivePopup(true);
   }
   for (var i = 0; i < thead.children.length; i++) {
-    var colIdx = i + (rowNumbers ? 0 : 1);
+    var colIdx = i + (rowNumbers ? 0 : 1) + columnOffset;
     var col = cols[colIdx];
     var th = thead.children[i];
     if (visible) {

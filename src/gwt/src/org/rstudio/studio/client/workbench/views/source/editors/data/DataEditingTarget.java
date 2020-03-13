@@ -1,7 +1,7 @@
 /*
  * DataEditingTarget.java
  *
- * Copyright (C) 2009-15 by RStudio, Inc.
+ * Copyright (C) 2009-20 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,17 +14,17 @@
  */
 package org.rstudio.studio.client.workbench.views.source.editors.data;
 
-import com.google.gwt.resources.client.ImageResource;
+import com.google.gwt.aria.client.Roles;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 
 import org.rstudio.core.client.Debug;
-import org.rstudio.core.client.resources.ImageResource2x;
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.widget.SimplePanelWithProgress;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
-import org.rstudio.studio.client.common.filetypes.FileIconResources;
+import org.rstudio.studio.client.common.filetypes.FileIcon;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
@@ -64,12 +64,19 @@ public class DataEditingTarget extends UrlContentEditingTarget
    {
       progressPanel_ = new SimplePanelWithProgress();
       progressPanel_.setSize("100%", "100%");
+      Roles.getTabpanelRole().set(progressPanel_.getElement());
+      setAccessibleName(null);
       reloadDisplay();
       return new Display()
       {
          public void print()
          {
             ((Display)progressPanel_.getWidget()).print();
+         }
+
+         public void setAccessibleName(String accessibleName)
+         {
+            DataEditingTarget.this.setAccessibleName(accessibleName);
          }
 
          public Widget asWidget()
@@ -100,6 +107,14 @@ public class DataEditingTarget extends UrlContentEditingTarget
             doQueuedRefresh(false);
          }
       }
+   }
+
+   private void setAccessibleName(String accessibleName)
+   {
+      if (StringUtil.isNullOrEmpty(accessibleName))
+         accessibleName = "Untitled Data Browser";
+      Roles.getTabpanelRole().setAriaLabelProperty(progressPanel_.getElement(), accessibleName + 
+            " Data Browser");
    }
 
    @Override
@@ -153,6 +168,7 @@ public class DataEditingTarget extends UrlContentEditingTarget
    private void reloadDisplay()
    {
       view_ = new DataEditingTargetWidget(
+            "Data Browser",
             commands_,
             events_,
             getDataItem());
@@ -167,9 +183,9 @@ public class DataEditingTarget extends UrlContentEditingTarget
    }
 
    @Override
-   public ImageResource getIcon()
+   public FileIcon getIcon()
    {
-      return new ImageResource2x(FileIconResources.INSTANCE.iconCsv2x());
+      return FileIcon.CSV_ICON;
    }
 
    private DataItem getDataItem()
@@ -193,6 +209,12 @@ public class DataEditingTarget extends UrlContentEditingTarget
    public void popoutDoc()
    {
       events_.fireEvent(new PopoutDocEvent(getId(), null));
+   }
+
+   @Override
+   public String getCurrentStatus()
+   {
+      return "Data Browser displayed";
    }
 
    protected String getCacheKey()

@@ -1,7 +1,7 @@
 /*
  * ProcessArgs.hpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -29,10 +29,10 @@ namespace system {
 class ProcessArgs : boost::noncopyable
 {
 public:
-   ProcessArgs() : argCount_(0), args_(NULL) {}
+   ProcessArgs() : argCount_(0), args_(nullptr) {}
 
    ProcessArgs(const std::vector<std::string>& args)
-      : argCount_(0), args_(NULL)
+      : argCount_(0), args_(nullptr)
    {
       setArgs(args);
    }
@@ -50,7 +50,7 @@ public:
 
    bool empty() const { return argCount_ == 0; }
    std::size_t argCount() const { return argCount_; }
-   char** args() const { return !empty() ? args_ : NULL; }
+   char** args() const { return !empty() ? args_ : nullptr; }
    
 private:
    void setArgs(const std::vector<std::string>& args)
@@ -72,7 +72,7 @@ private:
       }
 
       // null terminate the list of args
-      args_[argCount_] = NULL;
+      args_[argCount_] = nullptr;
    }
 
    void freeArgs()

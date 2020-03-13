@@ -1,42 +1,43 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
-	xmlns:g="urn:import:com.google.gwt.user.client.ui">
-	<ui:style type="org.rstudio.studio.client.rsconnect.ui.RSConnectCloudAccount.ConnectStyle">
+   xmlns:g="urn:import:com.google.gwt.user.client.ui"
+   xmlns:rw="urn:import:org.rstudio.core.client.widget">
+   <ui:style type="org.rstudio.studio.client.rsconnect.ui.RSConnectCloudAccount.ConnectStyle">
     @eval fixedFont org.rstudio.core.client.theme.ThemeFonts.getFixedWidthFont();
-	
-	.accountInfo
-	{
-	  font-family: fixedFont;
-	  padding: 5px;
-	  width: 325px;
-	}
-	
-	.connectHeader
-	{
-	  font-weight: bold;
-	}
-	
-	.spaced
-	{
-	   margin-bottom: 5px;
-	}
-	</ui:style>
-	<g:HTMLPanel>
-	  <g:HTML>
+   
+   .accountInfo
+   {
+     font-family: fixedFont;
+     padding: 5px;
+     width: 325px;
+   }
+   
+   .connectHeader
+   {
+     font-weight: bold;
+   }
+   
+   .spaced
+   {
+      margin-bottom: 5px;
+   }
+   </ui:style>
+   <g:HTMLPanel>
+     <g:HTML>
        <p>Go to <a href="http://www.shinyapps.io/" target="_blank">your 
            account on ShinyApps</a> and log in.</p>
        <p>Click your name, then choose <b>Tokens</b> from your account menu.</p>
        <p>Click <b>Show</b> on the token you want to use, then <b>Show
           Secret</b> and <b>Copy to Clipboard.</b> Paste the result here:</p>
-	  </g:HTML>
-	  <g:TextArea styleName="{style.accountInfo} {style.spaced}"
-	              ui:field="accountInfo" visibleLines="5">
-	  </g:TextArea>
-	  <g:HTML>
-	  	<small>
-	  	Need a ShinyApps.io account? 
+     </g:HTML>
+     <rw:FormTextArea styleName="{style.accountInfo} {style.spaced}"
+                 ui:field="accountInfo" visibleLines="5" ariaLabel="ShinyApps Token and Secret">
+     </rw:FormTextArea>
+     <g:HTML>
+        <small>
+        Need a ShinyApps.io account? 
            <a href="http://www.shinyapps.io" target="_blank">Get started here.</a>
-	  	</small>
-	  </g:HTML>
-	</g:HTMLPanel>
+        </small>
+     </g:HTML>
+   </g:HTMLPanel>
 </ui:UiBinder> 

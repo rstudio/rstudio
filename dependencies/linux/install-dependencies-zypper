@@ -3,7 +3,7 @@
 #
 # install-dependencies-zypper
 #
-# Copyright (C) 2009-18 by RStudio, Inc.
+# Copyright (C) 2009-20 by RStudio, PBC
 #
 # Unless you have received this program directly from RStudio pursuant
 # to the terms of a commercial license agreement with RStudio, then
@@ -42,6 +42,10 @@ sudo zypper --non-interactive in pango-devel
 sudo zypper --non-interactive in java-1_7_0-openjdk-devel
 sudo zypper --non-interactive in ant
 
+# install headers needed by Qt (GL, xslt)
+sudo zypper --non-interactive in mesa-devel
+sudo zypper --non-interactive in libxslt-devel
+
 # overlay
 if [ -e install-overlay-zypper ]
 then
@@ -50,18 +54,6 @@ fi
 
 # common
 cd ../common
-./install-common
+./install-common --install-crashpad-sudo
 cd ../linux
-
-# desktop dependencies (qt)
-if [ "$1" != "--exclude-qt-sdk" ]
-then
-   ./install-qt-sdk
-
-   # install headers needed by Qt (GL, xslt)
-   sudo zypper --non-interactive in mesa-devel
-   sudo zypper --non-interactive in libxslt-devel
-fi
-
-
 

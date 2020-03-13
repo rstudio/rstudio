@@ -1,7 +1,7 @@
 /*
  * DesktopWebView.cpp
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -80,6 +80,24 @@ WebView::WebView(QUrl baseUrl, QWidget *parent, bool allowExternalNavigate) :
     QWebEngineView(parent),
     baseUrl_(baseUrl)
 {
+
+   pWebPage_ = new WebPage(baseUrl, this, allowExternalNavigate);
+   init();
+}
+
+WebView::WebView(QWebEngineProfile *profile,
+                 QUrl baseUrl,
+                 QWidget *parent,
+                 bool allowExternalNavigate) :
+   QWebEngineView(parent),
+   baseUrl_(baseUrl)
+{
+   pWebPage_ = new WebPage(profile, baseUrl, this, allowExternalNavigate);
+   init();
+}
+
+void WebView::init()
+{
 #ifdef Q_OS_LINUX
    if (!core::system::getenv("KDE_FULL_SESSION").empty())
    {
@@ -88,7 +106,7 @@ WebView::WebView(QUrl baseUrl, QWidget *parent, bool allowExternalNavigate) :
          setStyle(QStyleFactory::create(fusion));
    }
 #endif
-   pWebPage_ = new WebPage(baseUrl, this, allowExternalNavigate);
+
    setPage(pWebPage_);
 }
 
@@ -141,23 +159,19 @@ QString WebView::promptForFilename(const QNetworkRequest& request,
 
 void WebView::keyPressEvent(QKeyEvent* pEvent)
 {
+   
 #ifdef Q_OS_MAC
-   if (pEvent->key() == Qt::Key_W &&
-       pEvent->modifiers() == Qt::CTRL)
+   // on macOS, intercept Cmd+W and emit the window close signal
+   if (pEvent->key() == Qt::Key_W && pEvent->modifiers() == Qt::CTRL)
    {
-      // on macOS, intercept Cmd+W and emit the window close signal
       onCloseWindowShortcut();
+      return;
    }
-   else
-   {
-      // pass other key events through to WebEngine
-      QWebEngineView::keyPressEvent(pEvent);
-   }
-#else
-
+#endif
+ 
+   // use default behavior otherwise
    QWebEngineView::keyPressEvent(pEvent);
    
-#endif
 }
 
 void WebView::openFile(QString fileName)
@@ -191,6 +205,7 @@ bool WebView::event(QEvent* event)
 
 void WebView::closeEvent(QCloseEvent*)
 {
+   onClose();
 }
 
 namespace {

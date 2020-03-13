@@ -1,7 +1,7 @@
 /*
  * FilterWidget.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,21 +14,15 @@
  */
 package org.rstudio.core.client.widget;
 
-import com.google.gwt.event.logical.shared.ValueChangeEvent;
-import com.google.gwt.event.logical.shared.ValueChangeHandler;
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.SuggestOracle;
 
 public abstract class FilterWidget extends Composite
 {
    public abstract void filter(String query);
-   
+
    public FilterWidget()
-   {
-      this("Filter...");
-   }
-   
-   public FilterWidget(String placeholder)
    {
       SuggestOracle oracle = new SuggestOracle()
       {
@@ -37,24 +31,21 @@ public abstract class FilterWidget extends Composite
          {
          }
       };
-      
-      searchWidget_ = new SearchWidget(oracle);
-      searchWidget_.setPlaceholderText(placeholder);
-      searchWidget_.addValueChangeHandler(new ValueChangeHandler<String>()
-      {
-         @Override
-         public void onValueChange(ValueChangeEvent<String> event)
-         {
-            filter(event.getValue());
-         }
-      });
+
+      searchWidget_ = new SearchWidget("", oracle);
+      searchWidget_.addValueChangeHandler(event -> filter(event.getValue()));
       initWidget(searchWidget_);
    }
-   
+
    public void focus()
    {
       searchWidget_.focus();
    }
-   
+
+   public Element getInputElement()
+   {
+      return searchWidget_.getInputElement();
+   }
+
    private final SearchWidget searchWidget_;
 }

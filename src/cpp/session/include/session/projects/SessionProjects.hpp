@@ -1,7 +1,7 @@
 /*
  * SessionProjects.hpp
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -21,17 +21,16 @@
 
 #include <boost/utility.hpp>
 #include <boost/shared_ptr.hpp>
-#include <boost/foreach.hpp>
 
 #include <core/BoostSignals.hpp>
 #include <core/FileInfo.hpp>
-#include <core/FilePath.hpp>
+#include <shared_core/FilePath.hpp>
 #include <core/Settings.hpp>
 
 #include <core/system/FileMonitor.hpp>
 #include <core/system/FileChangeEvent.hpp>
 
-#include <core/json/Json.hpp>
+#include <shared_core/json/Json.hpp>
 
 #include <core/collection/Tree.hpp>
 
@@ -51,6 +50,13 @@ struct FileMonitorCallbacks
    boost::function<void(
          const std::vector<core::system::FileChangeEvent>&)> onFilesChanged;
    boost::function<void()> onMonitoringDisabled;
+};
+
+// file monitor ignore context
+struct FileMonitorFilterContext
+{
+   std::vector<std::string> ignoredComponents;
+   bool ignoreObjectFiles;
 };
 
 // vcs options
@@ -85,20 +91,21 @@ class ProjectContext : boost::noncopyable
 {
 public:
    ProjectContext()
-      : hasFileMonitor_(false)
+      : isNewProject_(false),
+        hasFileMonitor_(false)
    {
    }
+   
    virtual ~ProjectContext() {}
 
    core::Error startup(const core::FilePath& projectFile,
-                       std::string* pUserErrMsg,
-                       bool* pIsNewProject);
+                       std::string* pUserErrMsg);
 
    core::Error initialize();
 
    // these functions can be called even when there is no project
-   bool hasProject() const { return !file_.empty(); }
-
+   bool hasProject() const { return !file_.isEmpty(); }
+   
    // Path to the .RProj file representing the project
    const core::FilePath& file() const { return file_; }
 
@@ -129,7 +136,11 @@ public:
       updateDefaultEncoding();
       updateBuildTargetPath();
       updatePackageInfo();
+      onConfigChanged();
    }
+
+   // signal emitted when config changes
+   RSTUDIO_BOOST_SIGNAL<void()> onConfigChanged;
 
    core::Error readVcsOptions(RProjectVcsOptions* pOptions) const;
    core::Error writeVcsOptions(const RProjectVcsOptions& options) const;
@@ -159,7 +170,7 @@ public:
    core::json::Array openDocs() const;
 
    // current build options (note that these are not synchronized
-   // accross processes!)
+   // across processes!)
    const RProjectBuildOptions& buildOptions() const
    {
       return buildOptions_;
@@ -170,7 +181,11 @@ public:
       return packageInfo_;
    }
    
+   // is this an R package project?
    bool isPackageProject();
+   
+   // is this a new project? (ie: has not been opened or initialized before)
+   bool isNewProject() const { return isNewProject_; }
 
    // does this project context have a file monitor? (might not have one
    // if the user has disabled code indexing or if file monitoring failed
@@ -209,6 +224,8 @@ private:
    void fileMonitorFilesChanged(
                    const std::vector<core::system::FileChangeEvent>& events);
    void fileMonitorTermination(const core::Error& error);
+   bool fileMonitorFilter(const core::FileInfo& fileInfo,
+                          const FileMonitorFilterContext& context) const;
 
    core::FilePath vcsOptionsFilePath() const;
    core::Error buildOptionsFile(core::Settings* pOptionsFile) const;
@@ -230,6 +247,7 @@ private:
    core::FilePath buildTargetPath_;
    RProjectBuildOptions buildOptions_;
    core::r_util::RPackageInfo packageInfo_;
+   bool isNewProject_;
 
    bool hasFileMonitor_;
    std::vector<std::string> monitorSubscribers_;

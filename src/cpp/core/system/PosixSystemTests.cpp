@@ -1,7 +1,7 @@
 /*
  * PosixSystemTests.cpp
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,8 +14,6 @@
  */
 
 #ifndef _WIN32
-
-#include <boost/foreach.hpp>
 
 #include <core/system/PosixSystem.hpp>
 #include <signal.h>
@@ -47,7 +45,7 @@ test_context("PosixSystemTests")
          expect_true(children.empty());
 
          ::kill(pid, SIGKILL);
-         ::waitpid(pid, NULL, 0);
+         ::waitpid(pid, nullptr, 0);
       }
    }
 
@@ -60,7 +58,7 @@ test_context("PosixSystemTests")
 
       if (pid == 0)
       {
-         execlp(exe.c_str(), exe.c_str(), "100", NULL);
+         execlp(exe.c_str(), exe.c_str(), "100", nullptr);
          expect_true(false); // shouldn't get here!
       }
       else
@@ -71,7 +69,7 @@ test_context("PosixSystemTests")
          if (children.size() >= 1)
          {
             bool found = false;
-            BOOST_FOREACH(SubprocInfo info, children)
+            for (SubprocInfo info : children)
             {
                if (info.exe.compare(exe) == 0)
                {
@@ -83,7 +81,7 @@ test_context("PosixSystemTests")
          }
 
          ::kill(pid, SIGKILL);
-         ::waitpid(pid, NULL, 0);
+         ::waitpid(pid, nullptr, 0);
       }
    }
 
@@ -106,7 +104,7 @@ test_context("PosixSystemTests")
          expect_true(children.empty());
 
          ::kill(pid, SIGKILL);
-         ::waitpid(pid, NULL, 0);
+         ::waitpid(pid, nullptr, 0);
       }
    }
 
@@ -128,7 +126,7 @@ test_context("PosixSystemTests")
          expect_true(children.at(0).pid == pid);
 
          ::kill(pid, SIGKILL);
-         ::waitpid(pid, NULL, 0);
+         ::waitpid(pid, nullptr, 0);
       }
    }
 
@@ -140,7 +138,7 @@ test_context("PosixSystemTests")
 
       if (pid == 0)
       {
-         execlp(exe.c_str(), exe.c_str(), "100", NULL);
+         execlp(exe.c_str(), exe.c_str(), "100", nullptr);
          expect_true(false); // shouldn't get here!
       }
       else
@@ -154,11 +152,34 @@ test_context("PosixSystemTests")
             expect_true(children[0].exe.compare(exe) == 0);
 
          ::kill(pid, SIGKILL);
-         ::waitpid(pid, NULL, 0);
+         ::waitpid(pid, nullptr, 0);
       }
    }
 
+   test_that("Current working directory determined correctly with Mac method")
+   {
+      FilePath emptyPath;
+      FilePath startingDir = FilePath::safeCurrentPath(emptyPath);
+      pid_t pid = fork();
+      expect_false(pid == -1);
 
+      if (pid == 0)
+      {
+         ::sleep(1);
+         _exit(0);
+      }
+      else
+      {
+         // we now have a subprocess
+         FilePath cwd = currentWorkingDirMac(pid);
+         expect_false(cwd.isEmpty());
+         expect_true(cwd.exists());
+         expect_true(startingDir == cwd);
+
+         ::kill(pid, SIGKILL);
+         ::waitpid(pid, nullptr, 0);
+      }
+   }
 
 #else
 
@@ -179,7 +200,7 @@ test_context("PosixSystemTests")
          expect_true(children.empty());
 
          ::kill(pid, SIGKILL);
-         ::waitpid(pid, NULL, 0);
+         ::waitpid(pid, nullptr, 0);
       }
    }
 
@@ -191,7 +212,7 @@ test_context("PosixSystemTests")
 
       if (pid == 0)
       {
-         execlp(exe.c_str(), exe.c_str(), "10000", NULL);
+         execlp(exe.c_str(), exe.c_str(), "10000", nullptr);
          expect_true(false); // shouldn't get here!
       }
       else
@@ -203,7 +224,7 @@ test_context("PosixSystemTests")
          if (children.size() >= 1)
          {
             bool found = false;
-            BOOST_FOREACH(SubprocInfo info, children)
+            for (SubprocInfo info : children)
             {
                if (info.exe.compare(exe) == 0)
                {
@@ -215,7 +236,7 @@ test_context("PosixSystemTests")
          }
 
          ::kill(pid, SIGKILL);
-         ::waitpid(pid, NULL, 0);
+         ::waitpid(pid, nullptr, 0);
       }
    }
 #endif // !__APPLE__
@@ -237,7 +258,7 @@ test_context("PosixSystemTests")
          expect_true(children.empty());
 
          ::kill(pid, SIGKILL);
-         ::waitpid(pid, NULL, 0);
+         ::waitpid(pid, nullptr, 0);
       }
    }
 
@@ -257,14 +278,16 @@ test_context("PosixSystemTests")
       {
          // we now have a subprocess
          FilePath cwd = currentWorkingDir(pid);
-         expect_false(cwd.empty());
+         expect_false(cwd.isEmpty());
          expect_true(cwd.exists());
          expect_true(startingDir == cwd);
 
          ::kill(pid, SIGKILL);
-         ::waitpid(pid, NULL, 0);
+         ::waitpid(pid, nullptr, 0);
       }
    }
+
+#ifndef __APPLE__
 
    test_that("Current working directory determined correctly with lsof method")
    {
@@ -282,16 +305,15 @@ test_context("PosixSystemTests")
       {
          // we now have a subprocess
          FilePath cwd = currentWorkingDirViaLsof(pid);
-         expect_false(cwd.empty());
+         expect_false(cwd.isEmpty());
          expect_true(cwd.exists());
          expect_true(startingDir == cwd);
 
          ::kill(pid, SIGKILL);
-         ::waitpid(pid, NULL, 0);
+         ::waitpid(pid, nullptr, 0);
       }
    }
 
-#ifndef __APPLE__
    test_that("Current working directory determined correctly with procfs method")
    {
       FilePath emptyPath;
@@ -308,12 +330,12 @@ test_context("PosixSystemTests")
       {
          // we now have a subprocess
          FilePath cwd = currentWorkingDirViaProcFs(pid);
-         expect_false(cwd.empty());
+         expect_false(cwd.isEmpty());
          expect_true(cwd.exists());
          expect_true(startingDir == cwd);
 
          ::kill(pid, SIGKILL);
-         ::waitpid(pid, NULL, 0);
+         ::waitpid(pid, nullptr, 0);
       }
    }
 #endif // !__APPLE__

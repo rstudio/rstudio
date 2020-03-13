@@ -1,7 +1,7 @@
 /*
  * Macros.hpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-12 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -18,6 +18,14 @@
 
 #include <iostream>
 #include <iomanip>
+
+#define RS_CALL_ONCE()                                                         \
+   do                                                                          \
+   {                                                                           \
+      static bool s_once = false;                                              \
+      if (s_once) return;                                                      \
+      s_once = true;                                                           \
+   } while (0)
 
 /* Work around Xcode indentation rules */
 #define RS_BEGIN_NAMESPACE(__X__) namespace __X__ {

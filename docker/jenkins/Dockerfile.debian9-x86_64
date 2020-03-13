@@ -15,6 +15,7 @@ RUN apt-get update -y && apt-get install -y \
     libboost-all-dev \
     bzip2 \
     clang-4.0 \
+    curl \
     debsigs \
     dpkg-sig \
     expect \
@@ -28,8 +29,10 @@ RUN apt-get update -y && apt-get install -y \
     libcurl4-openssl-dev \
     libpam0g-dev \
     libffi-dev \
+    procps \
     uuid-dev \
     make \
+    p7zip-full \
     libssl1.0-dev \
     libpango-1.0-0 \
     r-base \
@@ -43,7 +46,10 @@ RUN apt-get update -y && apt-get install -y \
     libcap-dev \
     libacl1-dev \
     lsof \
-    python
+    python \
+    libuser1-dev \
+    libglib2.0-dev \
+    valgrind
 
 ## run install-boost twice - boost exits 1 even though it has installed good enough for our uses.
 ## https://github.com/rstudio/rstudio/blob/master/vagrant/provision-primary-user.sh#L12-L15
@@ -67,15 +73,13 @@ ENV RSTUDIO_GITHUB_LOGIN=$GITHUB_LOGIN
 
 # install common dependencies
 RUN mkdir -p /opt/rstudio-tools/dependencies/common
-COPY dependencies/common/* /opt/rstudio-tools/dependencies/common/
+COPY dependencies/common/ /opt/rstudio-tools/dependencies/common/
 RUN cd /opt/rstudio-tools/dependencies/common && /bin/bash ./install-common
 
 # install Qt SDK
-COPY dependencies/linux/install-qt-sdk /tmp/
-RUN mkdir -p /opt/RStudio-QtSDK && \
-    export QT_SDK_DIR=/opt/RStudio-QtSDK/Qt5.12.1 && \
-    export QT_QPA_PLATFORM=minimal && \
-    /tmp/install-qt-sdk
+COPY dependencies/common/install-qt.sh /tmp/
+COPY dependencies/linux/install-qt-linux /tmp/
+RUN cd /tmp && /bin/bash ./install-qt-linux
 
 # create jenkins user, make sudo. try to keep this toward the bottom for less cache busting
 ARG JENKINS_GID=999

@@ -1,7 +1,7 @@
 /*
  * ShinyServerOperations.java
  *
- * Copyright (C) 2009-14 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -17,7 +17,6 @@ package org.rstudio.studio.client.common.shiny.model;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.shiny.model.ShinyRunCmd;
-import org.rstudio.studio.client.shiny.model.ShinyViewerType;
 
 public interface ShinyServerOperations
 {
@@ -25,10 +24,10 @@ public interface ShinyServerOperations
                ServerRequestCallback<ShinyCapabilities> requestCallback);
 
    void getShinyViewerType(
-               ServerRequestCallback<ShinyViewerType> requestCallback);
+               ServerRequestCallback<String> requestCallback);
    
    void setShinyViewerType(
-               int viewerType, 
+               String viewerType, 
                ServerRequestCallback<Void> requestCallback);
    
    void getShinyRunCmd(
@@ -36,6 +35,12 @@ public interface ShinyServerOperations
                String extendedType,
                ServerRequestCallback<ShinyRunCmd> requestCallback);
 
+   void runShinyBackgroundApp(
+               String shinyFile,
+               String extendedType,
+               ServerRequestCallback<String> requestCallback);
+   
    void stopShinyApp(
+               String id,
                ServerRequestCallback<Void> requestCallback);
 }

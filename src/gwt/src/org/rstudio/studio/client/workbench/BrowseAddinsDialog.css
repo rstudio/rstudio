@@ -17,3 +17,8 @@
 .rstudio-themes-flat .dataGridWidget .dataGridSelectedRow {
    background: #eeeff1
 }
+
+.filterLabel {
+   float: left;
+   padding-right: 4px;
+}

@@ -1,7 +1,7 @@
 /*
  * cpp_code_model.js
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-12 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -1625,12 +1625,12 @@ var CppCodeModel = function(session, tokenizer,
 
    this.$onDocChange = function(evt)
    {
-      this.$tokenUtils.$invalidateRow(evt.start.row);
       if (evt.action === "insert")
          this.$tokenUtils.$insertNewRows(evt.start.row, evt.end.row - evt.start.row);
       else
          this.$tokenUtils.$removeRows(evt.start.row, evt.end.row - evt.start.row);
 
+      this.$tokenUtils.$invalidateRow(evt.start.row);
       this.$scopes.invalidateFrom(evt.start);
    };
 

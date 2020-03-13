@@ -1,7 +1,7 @@
 #
 # ModuleTools.R
 #
-# Copyright (C) 2009-18 by RStudio, Inc.
+# Copyright (C) 2009-19 by RStudio, PBC
 #
 # Unless you have received this program directly from RStudio pursuant
 # to the terms of a commercial license agreement with RStudio, then
@@ -40,12 +40,12 @@
    .Call("rs_logWarningMessage", message, PACKAGE = "(embedding)")
 })
 
-.rs.addFunction("getSignature", function(obj)
+.rs.addFunction("getSignature", function(object)
 {
-   sig = capture.output(print(args(obj)))
-   sig = sig[1:length(sig)-1]
-   sig = gsub('^\\s+', '', sig)
-   paste(sig, collapse='')
+   signature <- base::format.default(base::args(object))
+   length(signature) <- length(signature) - 1
+   trimmed <- gsub("^\\s+", "", signature)
+   paste(trimmed, collapse = "")
 })
 
 # Wrap a return value in this to give a hint to the
@@ -293,24 +293,60 @@
    .Call("rs_markdownToHTML", content, PACKAGE = "(embedding)")
 })
 
-.rs.addFunction("readUiPref", function(prefName) {
+.rs.addFunction("readPrefInternal", function(method, prefName) {
   if (missing(prefName) || is.null(prefName))
     stop("No preference name supplied")
-  .Call("rs_readUiPref", prefName, PACKAGE = "(embedding)")
+  .Call(method, prefName, PACKAGE = "(embedding)")
 })
 
-.rs.addFunction("writeUiPref", function(prefName, value) {
+.rs.addFunction("writePrefInternal", function(method, prefName, value) {
   if (missing(prefName) || is.null(prefName))
     stop("No preference name supplied")
   if (missing(value))
     stop("No value supplied")
-  invisible(.Call("rs_writeUiPref", prefName, .rs.scalar(value), PACKAGE = "(embedding)"))
+  invisible(.Call(method, prefName, .rs.scalar(value), PACKAGE = "(embedding)"))
 })
 
-.rs.addFunction("removeUiPref", function(prefName) {
+.rs.addFunction("readApiPref", function(prefName) {
+  .rs.readPrefInternal("rs_readApiPref", prefName)
+})
+
+.rs.addFunction("writeApiPref", function(prefName, value) {
+  .rs.writePrefInternal("rs_writeApiPref", prefName, value)
+})
+
+.rs.addFunction("readUiPref", function(prefName) {
+  .rs.readPrefInternal("rs_readUserPref", prefName)
+})
+.rs.addFunction("readUserPref", .rs.readUiPref)
+
+.rs.addFunction("writeUiPref", function(prefName, value) {
+  .rs.writePrefInternal("rs_writeUserPref", prefName, value)
+})
+.rs.addFunction("writeUserPref", .rs.writeUiPref)
+
+.rs.addFunction("readUserState", function(stateName) {
+  if (missing(stateName) || is.null(stateName))
+    stop("No state name supplied")
+  .Call("rs_readUserState", stateName, PACKAGE = "(embedding)")
+})
+
+.rs.addFunction("allPrefs", function() {
+  .Call("rs_allPrefs", PACKAGE = "(embedding)")
+})
+
+.rs.addFunction("writeUserState", function(stateName, value) {
+  if (missing(stateName) || is.null(stateName))
+    stop("No state name supplied")
+  if (missing(value))
+    stop("No value supplied")
+  invisible(.Call("rs_writeUserState", stateName, .rs.scalar(value), PACKAGE = "(embedding)"))
+})
+
+.rs.addFunction("removePref", function(prefName) {
   if (missing(prefName) || is.null(prefName))
     stop("No preference name supplied")
-  invisible(.Call("rs_removeUiPref", prefName, PACKAGE = "(embedding)"))
+  invisible(.Call("rs_removePref", prefName, PACKAGE = "(embedding)"))
 })
 
 .rs.addFunction("setUsingMingwGcc49", function(usingMingwGcc49) {

@@ -1,7 +1,7 @@
 /*
  * Synctex.java
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -39,7 +39,7 @@ import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.Session;
-import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.inject.Inject;
@@ -57,7 +57,7 @@ public class Synctex implements CompilePdfStartedEvent.Handler,
                   SynctexServerOperations server,
                   FileTypeRegistry fileTypeRegistry,
                   Session session,
-                  UIPrefs prefs,
+                  UserPrefs prefs,
                   Satellite satellite)
    {
       globalDisplay_ = globalDisplay;
@@ -69,7 +69,7 @@ public class Synctex implements CompilePdfStartedEvent.Handler,
       prefs_ = prefs;
       satellite_ = satellite;
       
-      // main window and satellite export callbacks to eachother
+      // main window and satellite export callbacks to each other
       if (!Satellite.isCurrentWindowSatellite())
       {
          registerMainWindowCallbacks();
@@ -77,7 +77,7 @@ public class Synctex implements CompilePdfStartedEvent.Handler,
          eventBus_.addHandler(SynctexEditFileEvent.TYPE, this);
       }
       
-      // fixup synctex tooltips for macos
+      // fixup synctex tooltips for macOS
       if (BrowseCap.isMacintosh())
          fixupSynctexCommandDescription(commands_.synctexSearch());
       
@@ -98,13 +98,13 @@ public class Synctex implements CompilePdfStartedEvent.Handler,
    @Override
    public void onCompilePdfCompleted(CompilePdfCompletedEvent event)
    {
-      String pdfPreview = prefs_.pdfPreview().getValue();
+      String pdfPreview = prefs_.pdfPreviewer().getValue();
       
       boolean synctexSupported =
                   // internal previewer
-                  pdfPreview == UIPrefs.PDF_PREVIEW_RSTUDIO ||
+                  pdfPreview == UserPrefs.PDF_PREVIEWER_RSTUDIO ||
                   // platform-specific desktop previewer
-                  (pdfPreview == UIPrefs.PDF_PREVIEW_DESKTOP_SYNCTEX &&
+                  (pdfPreview == UserPrefs.PDF_PREVIEWER_DESKTOP_SYNCTEX &&
                    Desktop.isDesktop());
       
       boolean synctexAvailable = synctexSupported && 
@@ -154,13 +154,13 @@ public class Synctex implements CompilePdfStartedEvent.Handler,
    // confident that it was always correct. we were also globally managing
    // the state of the synctex command based on any external viewer closing.
    // now that we optionally support desktop viewers for synctex this 
-   // assumption may not hold -- specfically there might be multiple active
+   // assumption may not hold -- specifically there might be multiple active
    // PDF viewers for different document or we might not know that the 
    // external viewer has closed . we have explicitly chosen to 
    // avoid the complexity of tracking distinct viewer states. if we want
    // to do this we probably should do the following:
    //
-   //    - always keep the the syncex command available in all editors
+   //    - always keep the the synctex command available in all editors
    //      so long as there is at least one preview window alive; OR
    //
    //    - for cases where we do know whether the window is still alive
@@ -172,7 +172,7 @@ public class Synctex implements CompilePdfStartedEvent.Handler,
    {
       if (handleDesktopSynctex())
       {
-         // apply concordane
+         // apply concordance
          final ProgressIndicator indicator = getSyncProgress();  
          server_.applyForwardConcordance(
                                  pdfFile, 
@@ -339,7 +339,7 @@ public class Synctex implements CompilePdfStartedEvent.Handler,
    {
       return Desktop.isDesktop() && 
              !Satellite.isCurrentWindowSatellite() &&
-             prefs_.pdfPreview().getValue() == UIPrefs.PDF_PREVIEW_DESKTOP_SYNCTEX;
+             prefs_.pdfPreviewer().getValue() == UserPrefs.PDF_PREVIEWER_DESKTOP_SYNCTEX;
    }
 
    private ProgressIndicator getSyncProgress()
@@ -415,7 +415,7 @@ public class Synctex implements CompilePdfStartedEvent.Handler,
    private final SynctexServerOperations server_;
    private final FileTypeRegistry fileTypeRegistry_;
    private final Session session_;
-   private final UIPrefs prefs_;
+   private final UserPrefs prefs_;
    private final Satellite satellite_;
    private String pdfPath_ = null;
    private String targetFile_ = "";

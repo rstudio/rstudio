@@ -1,7 +1,7 @@
 /*
  * FindTextBox.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -16,6 +16,7 @@ package org.rstudio.core.client.widget;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.DivElement;
+import com.google.gwt.dom.client.LabelElement;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Position;
 import com.google.gwt.dom.client.Style.Unit;
@@ -30,6 +31,7 @@ import com.google.gwt.user.client.ui.HasValue;
 import com.google.gwt.user.client.ui.Image;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
+import org.rstudio.core.client.dom.DomUtils;
 
 public class FindTextBox extends Composite implements HasValue<String>,
                                                       CanFocus
@@ -44,6 +46,9 @@ public class FindTextBox extends Composite implements HasValue<String>,
       initWidget(uiBinder.createAndBindUi(this));
       
       setIconVisible(false);
+
+      hiddenLabel_.setInnerText(cueText);
+      hiddenLabel_.setHtmlFor(DomUtils.ensureHasId(textBox_.getElement()));
 
       Style style = getElement().getStyle();
       style.setPosition(Position.RELATIVE);
@@ -107,6 +112,8 @@ public class FindTextBox extends Composite implements HasValue<String>,
       textBox_.selectAll();
    }
 
+   @UiField
+   LabelElement hiddenLabel_;
    @UiField(provided=true)
    TextBox textBox_;
    @UiField

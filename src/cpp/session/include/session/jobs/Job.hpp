@@ -1,7 +1,7 @@
 /*
  * Job.hpp
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -17,7 +17,7 @@
 #define SESSION_JOBS_JOB_HPP
 
 #include <string>
-#include <core/json/Json.hpp>
+#include <shared_core/json/Json.hpp>
 #include <r/RSexp.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
 

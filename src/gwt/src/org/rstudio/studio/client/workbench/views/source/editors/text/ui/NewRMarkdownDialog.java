@@ -1,7 +1,7 @@
 /*
  * NewRMarkdownDialog.java
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-20 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -17,11 +17,15 @@ package org.rstudio.studio.client.workbench.views.source.editors.text.ui;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.google.gwt.aria.client.Roles;
+
+import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.ModalDialog;
 import org.rstudio.core.client.widget.OperationWithInput;
+import org.rstudio.core.client.widget.ThemedButton;
 import org.rstudio.core.client.widget.WidgetListBox;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.HelpLink;
@@ -186,23 +190,23 @@ public class NewRMarkdownDialog extends ModalDialog<NewRMarkdownDialog.Result>
          String author,
          OperationWithInput<Result> operation)
    {
-      super("New R Markdown", operation);
+      super("New R Markdown", Roles.getDialogRole(), operation);
       server_ = server;
       context_ = context;
       templateChooser_ = new RmdTemplateChooser(server_);
 
       mainWidget_ = GWT.<Binder>create(Binder.class).createAndBindUi(this);
-      formatOptions_ = new ArrayList<RadioButton>();
+      formatOptions_ = new ArrayList<>();
       style.ensureInjected();
       txtAuthor_.setText(author);
       txtTitle_.setText("Untitled");
+      Roles.getListboxRole().setAriaLabelProperty(listTemplates_.getElement(), "Templates");
       listTemplates_.addChangeHandler(new ChangeHandler()
       {
          @Override
          public void onChange(ChangeEvent event)
          {
             updateOptions(getSelectedTemplate());
-            txtTitle_.setFocus(true);
          }
       });
 
@@ -257,6 +261,16 @@ public class NewRMarkdownDialog extends ModalDialog<NewRMarkdownDialog.Result>
       templateChooser_.setTargetDirectory(dir.getPath());
 
       updateOptions(getSelectedTemplate());
+      
+      // Add option to create empty document
+      ThemedButton emptyDoc = new ThemedButton("Create Empty Document", evt ->
+      {
+         closeDialog();
+         if (operation != null)
+            operation.execute(null);
+         onSuccess();
+      }); 
+      addLeftButton(emptyDoc, ElementIds.EMPTY_DOC_BUTTON);
    }
    
    @UiFactory
@@ -267,11 +281,10 @@ public class NewRMarkdownDialog extends ModalDialog<NewRMarkdownDialog.Result>
    }
    
    @Override
-   protected void onDialogShown()
+   protected void focusInitialControl()
    {
       // when dialog is finished booting, focus the title so it's ready to
       // accept input
-      super.onDialogShown();
       txtTitle_.setSelectionRange(0, txtTitle_.getText().length());
       txtTitle_.setFocus(true);
    }
@@ -374,8 +387,7 @@ public class NewRMarkdownDialog extends ModalDialog<NewRMarkdownDialog.Result>
       else 
       {
          
-         currentTemplate_ = RmdTemplate.getTemplate(templates_,
-                                                    selectedTemplate);
+         currentTemplate_ = RmdTemplate.getTemplate(templates_, selectedTemplate);
          if (currentTemplate_ == null)
             return;
          
@@ -454,7 +466,6 @@ public class NewRMarkdownDialog extends ModalDialog<NewRMarkdownDialog.Result>
    @UiField HTMLPanel existingTemplatePanel_;
    @UiField(provided=true) RmdTemplateChooser templateChooser_;
    @UiField HTMLPanel shinyInfoPanel_;
-   @UiField Label outputFormatLabel_;
 
    private final Widget mainWidget_;
    private List<RadioButton> formatOptions_;

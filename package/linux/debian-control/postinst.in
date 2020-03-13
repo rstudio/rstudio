@@ -4,8 +4,7 @@
 set +e 
 
 # add rserver user account
-useradd -r rstudio-server
-groupadd -r rstudio-server
+useradd -r -U rstudio-server
 
 # create softlink to admin script in /usr/sbin
 ln -f -s ${CMAKE_INSTALL_PREFIX}/bin/rstudio-server /usr/sbin/rstudio-server
@@ -78,7 +77,7 @@ if test "$INIT_SYSTEM" = "systemd"
 then
    systemctl stop rstudio-server.service 2>/dev/null
    systemctl disable rstudio-server.service 2>/dev/null
-   cp ${CMAKE_INSTALL_PREFIX}/extras/systemd/rstudio-server.service /etc/systemd/system/rstudio-server.service
+   cp ${CMAKE_INSTALL_PREFIX}/extras/systemd/rstudio-server.service /lib/systemd/system/rstudio-server.service
    systemctl daemon-reload
    systemctl enable rstudio-server.service
    systemctl start rstudio-server.service

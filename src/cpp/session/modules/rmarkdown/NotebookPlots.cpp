@@ -1,7 +1,7 @@
 /*
  * NotebookPlots.cpp
  *
- * Copyright (C) 2009-16 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -19,7 +19,6 @@
 #include "../SessionPlots.hpp"
 
 #include <boost/format.hpp>
-#include <boost/foreach.hpp>
 
 #include <core/BoostSignals.hpp>
 #include <core/Exec.hpp>
@@ -50,7 +49,7 @@ namespace {
 bool isPlotPath(const FilePath& path)
 {
    return path.hasExtensionLowerCase(".png") &&
-          string_utils::isPrefixOf(path.stem(), kPlotPrefix);
+          string_utils::isPrefixOf(path.getStem(), kPlotPrefix);
 }
 
 SEXP rs_recordExternalPlot(SEXP plotFilesSEXP)
@@ -58,7 +57,7 @@ SEXP rs_recordExternalPlot(SEXP plotFilesSEXP)
    std::vector<std::string> plotFiles;
    if (r::sexp::fillVectorString(plotFilesSEXP, &plotFiles))
    {
-      BOOST_FOREACH(const std::string& plotFile, plotFiles)
+      for (const std::string& plotFile : plotFiles)
       {
          if (plotFile.empty())
             continue;
@@ -92,7 +91,7 @@ void PlotCapture::processPlots(bool ignoreEmpty)
 
    // collect plots from the folder
    std::vector<FilePath> folderContents;
-   Error error = plotFolder_.children(&folderContents);
+   Error error = plotFolder_.getChildren(folderContents);
    if (error)
       LOG_ERROR(error);
 
@@ -102,13 +101,13 @@ void PlotCapture::processPlots(bool ignoreEmpty)
             folderContents.end(),
             std::less<FilePath>());
    
-   BOOST_FOREACH(const FilePath& path, folderContents)
+   for (const FilePath& path : folderContents)
    {
       if (isPlotPath(path))
       {
          // we might find an empty plot file if it hasn't been flushed to disk
          // yet--ignore these
-         if (ignoreEmpty && path.size() == 0)
+         if (ignoreEmpty && path.getSize() == 0)
             continue;
 
          // record height/width along with plot
@@ -151,13 +150,13 @@ void PlotCapture::saveSnapshot()
 
    // if there's a plot on the device, write its display list before it's
    // cleared for the next page
-   FilePath outputFile = plotFolder_.complete(
-         core::system::generateUuid(false) + kDisplayListExt);
+   FilePath outputFile = plotFolder_.completePath(
+      core::system::generateUuid(false) + kDisplayListExt);
 
    Error error = r::exec::RFunction(
          ".rs.saveNotebookGraphics",
          lastPlot_.get(),
-         string_utils::utf8ToSystem(outputFile.absolutePath())).call();
+         string_utils::utf8ToSystem(outputFile.getAbsolutePath())).call();
    
    if (error)
       LOG_ERROR(error);
@@ -238,7 +237,7 @@ void PlotCapture::removeGraphicsDevice()
    // device (if we haven't emitted it yet)
    if (hasPlots_ && 
        sizeBehavior_ == PlotSizeAutomatic &&
-       snapshotFile_.empty())
+       snapshotFile_.isEmpty())
       saveSnapshot();
 
    // turn off the graphics device, if it was ever turned on -- this has the
@@ -291,11 +290,11 @@ core::Error PlotCapture::connectPlots(const std::string& docId,
    // clean up any stale plots from the folder
    plotFolder_ = plotFolder;
    std::vector<FilePath> folderContents;
-   Error error = plotFolder.children(&folderContents);
+   Error error = plotFolder.getChildren(folderContents);
    if (error)
       return error;
 
-   BOOST_FOREACH(const core::FilePath& file, folderContents)
+   for (const core::FilePath& file : folderContents)
    {
       // remove if it looks like a plot 
       if (isPlotPath(file)) 
@@ -366,7 +365,7 @@ core::Error PlotCapture::setGraphicsOption()
    // the folder in which to place the rendered plots (this is a sibling of the
    // main chunk output folder)
    setOption.addParam(
-            string_utils::utf8ToSystem(plotFolder_.absolutePath()) +
+      string_utils::utf8ToSystem(plotFolder_.getAbsolutePath()) +
             "/" kPlotPrefix "%03d.png");
 
    // device dimensions

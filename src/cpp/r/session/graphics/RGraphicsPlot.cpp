@@ -1,7 +1,7 @@
 /*
  * RGraphicsPlot.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-12 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -19,7 +19,7 @@
 
 #include <boost/format.hpp>
 
-#include <core/Error.hpp>
+#include <shared_core/Error.hpp>
 #include <core/Log.hpp>
 
 #include <core/system/System.hpp>
@@ -133,8 +133,9 @@ Error Plot::renderFromDisplay()
    std::string storageUuid = core::system::generateUuid();
    
    // generate snapshot and image files
-   Error error = graphicsDevice_.saveSnapshot(snapshotFilePath(storageUuid),
-                                              imageFilePath(storageUuid));
+   FilePath snapshotPath = snapshotFilePath(storageUuid);
+   FilePath imagePath = imageFilePath(storageUuid);
+   Error error = graphicsDevice_.saveSnapshot(snapshotPath, imagePath);
    if (error)
       return Error(errc::PlotRenderingError, error, ERROR_LOCATION);
    
@@ -170,7 +171,7 @@ Error Plot::renderFromDisplaySnapshot(SEXP snapshot)
    FilePath snapshotFile = snapshotFilePath(storageUuid);
    Error error = r::exec::RFunction(".rs.saveGraphicsSnapshot",
                                     snapshot,
-                                    string_utils::utf8ToSystem(snapshotFile.absolutePath())).call();
+                                    string_utils::utf8ToSystem(snapshotFile.getAbsolutePath())).call();
    if (error)
       return error ;
 
@@ -201,7 +202,7 @@ Error Plot::renderFromDisplaySnapshot(SEXP snapshot)
 
 std::string Plot::imageFilename() const
 {
-   return imageFilePath(storageUuid()).filename();
+   return imageFilePath(storageUuid()).getFilename();
 }
 
 Error Plot::renderToDisplay()
@@ -257,13 +258,13 @@ FilePath Plot::snapshotFilePath() const
 
 FilePath Plot::snapshotFilePath(const std::string& storageUuid) const
 {
-   return baseDirPath_.complete(storageUuid + ".snapshot");
+   return baseDirPath_.completePath(storageUuid + ".snapshot");
 }
    
 FilePath Plot::imageFilePath(const std::string& storageUuid) const
 {
    std::string extension = graphicsDevice_.imageFileExtension();
-   return baseDirPath_.complete(storageUuid + "." + extension);
+   return baseDirPath_.completePath(storageUuid + "." + extension);
 }
 
 bool Plot::hasManipulatorFile() const
@@ -273,7 +274,7 @@ bool Plot::hasManipulatorFile() const
 
 FilePath Plot::manipulatorFilePath(const std::string& storageUuid) const
 {
-   return baseDirPath_.complete(storageUuid + ".manip");
+   return baseDirPath_.completePath(storageUuid + ".manip");
 }
 
 void Plot::loadManipulatorIfNecessary() const

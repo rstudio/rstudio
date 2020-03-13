@@ -1,7 +1,7 @@
 /*
  * RActiveSessions.hpp
  *
- * Copyright (C) 2009-16 by RStudio, Inc.
+ * Copyright (C) 2009-16 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -19,12 +19,12 @@
 
 #include <boost/noncopyable.hpp>
 
-#include <core/Error.hpp>
-#include <core/FilePath.hpp>
+#include <shared_core/Error.hpp>
+#include <shared_core/FilePath.hpp>
 #include <core/Log.hpp>
 #include <core/Settings.hpp>
 #include <core/DateTime.hpp>
-#include <core/SafeConvert.hpp>
+#include <shared_core/SafeConvert.hpp>
 
 #include <core/r_util/RSessionContext.hpp>
 #include <core/r_util/RProjectFile.hpp>
@@ -50,7 +50,7 @@ private:
       if (error)
          LOG_ERROR(error);
 
-      propertiesPath_ = scratchPath_.childPath("properites");
+      propertiesPath_ = scratchPath_.completeChildPath("properites");
       error = propertiesPath_.ensureDirectory();
       if (error)
          LOG_ERROR(error);
@@ -58,7 +58,7 @@ private:
 
 public:
 
-   bool empty() const { return scratchPath_.empty(); }
+   bool empty() const { return scratchPath_.isEmpty(); }
 
    std::string id() const { return id_; }
 
@@ -275,11 +275,11 @@ public:
 
    uintmax_t suspendSize()
    {
-      FilePath suspendPath = scratchPath_.complete("suspended-session-data");
+      FilePath suspendPath = scratchPath_.completePath("suspended-session-data");
       if (!suspendPath.exists())
          return 0;
 
-      return suspendPath.sizeRecursive();
+      return suspendPath.getSizeRecursive();
    }
 
    core::Error destroy()
@@ -318,7 +318,7 @@ public:
         // if we got this far the scope is valid, do one final check for
         // trying to open a shared project if sharing is disabled
         if (!projectSharingEnabled &&
-            r_util::isSharedPath(projectPath.absolutePath(), userHomePath))
+            r_util::isSharedPath(projectPath.getAbsolutePath(), userHomePath))
            return false;
       }
 
@@ -352,7 +352,7 @@ class ActiveSessions : boost::noncopyable
 public:
    explicit ActiveSessions(const FilePath& rootStoragePath)
    {
-      storagePath_ = rootStoragePath.childPath("sessions/active");
+      storagePath_ = rootStoragePath.completeChildPath("sessions/active");
       Error error = storagePath_.ensureDirectory();
       if (error)
          LOG_ERROR(error);

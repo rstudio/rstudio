@@ -1,7 +1,7 @@
 /*
  * SessionDiagnosticsTests.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -20,13 +20,12 @@
 #include <iostream>
 
 #include <core/collection/Tree.hpp>
-#include <core/FilePath.hpp>
+#include <shared_core/FilePath.hpp>
 #include <core/system/FileScanner.hpp>
 #include <core/FileUtils.hpp>
 
 #include <boost/algorithm/string.hpp>
 #include <boost/bind.hpp>
-#include <boost/foreach.hpp>
 
 #include <session/SessionOptions.hpp>
 #include "SessionRParser.hpp"
@@ -276,6 +275,12 @@ test_context("Diagnostics")
       EXPECT_NO_LINT("function() { i <- 1; function() { data[i] } }");
       
       EXPECT_LINT("list(a <- 1, b <- 2)");
+      
+      EXPECT_ERRORS("{\nx\n<- 1\n}");
+      
+      EXPECT_ERRORS("%a\nb%");
+      
+      EXPECT_ERRORS("local({ if (TRUE) })");
    }
    
    lintRStudioRFiles();

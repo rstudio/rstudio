@@ -1,7 +1,7 @@
 /*
  * RSourceManager.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-12 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -20,8 +20,8 @@
 #include <boost/bind.hpp>
 #include <boost/algorithm/string/replace.hpp>
 
-#include <core/Error.hpp>
-#include <core/FilePath.hpp>
+#include <shared_core/Error.hpp>
+#include <shared_core/FilePath.hpp>
 #include <core/Log.hpp>
 
 #include <r/RExec.hpp>
@@ -100,7 +100,7 @@ Error SourceManager::source(const FilePath& filePath, bool local)
    std::string localSuffix = local ? ")" : "";
       
    // do \ escaping (for windows)
-   std::string path = filePath.absolutePath();
+   std::string path = filePath.getAbsolutePath();
    boost::algorithm::replace_all(path, "\\", "\\\\");
 
    // Build the code. If this build is targeted for debugging, keep the source
@@ -127,8 +127,8 @@ Error SourceManager::source(const FilePath& filePath, bool local)
 
 void SourceManager::recordSourcedFile(const FilePath& filePath, bool local)
 {
-   SourcedFileInfo fileInfo(filePath.lastWriteTime(), local); 
-   sourcedFiles_[filePath.absolutePath()] = fileInfo ;
+   SourcedFileInfo fileInfo(filePath.getLastWriteTime(), local);
+   sourcedFiles_[filePath.getAbsolutePath()] = fileInfo ;
 }
    
 void SourceManager::reloadSourceIfNecessary(
@@ -139,7 +139,7 @@ void SourceManager::reloadSourceIfNecessary(
    SourcedFileInfo fileInfo = value.second;
    
    // compare last write times and source again if necessary
-   double diffTime = std::difftime(sourcedFilePath.lastWriteTime(), 
+   double diffTime = std::difftime(sourcedFilePath.getLastWriteTime(),
                                    fileInfo.lastWriteTime);
    if (diffTime > 0)
    {

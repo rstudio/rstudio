@@ -1,7 +1,7 @@
 /*
  * SecondaryReposDialog.java
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -16,9 +16,11 @@ package org.rstudio.studio.client.common.repos;
 
 import java.util.ArrayList;
 
+import com.google.gwt.aria.client.Roles;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.widget.FocusHelper;
+import org.rstudio.core.client.widget.FormLabel;
 import org.rstudio.core.client.widget.ModalDialog;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ProgressIndicator;
@@ -42,7 +44,6 @@ import com.google.gwt.event.dom.client.DoubleClickHandler;
 import com.google.gwt.resources.client.ClientBundle;
 import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.user.client.ui.HorizontalPanel;
-import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.ListBox;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.VerticalPanel;
@@ -57,7 +58,8 @@ public class SecondaryReposDialog extends ModalDialog<CRANMirror>
                                String cranRepoUrl,
                                boolean cranIsCustom)
    {
-      super("Retrieving list of secondary repositories...", operation);
+      super("Retrieving list of secondary repositories...", 
+            Roles.getDialogRole(), operation);
 
       excluded_ = excluded;
       cranRepoUrl_ = cranRepoUrl;
@@ -185,22 +187,22 @@ public class SecondaryReposDialog extends ModalDialog<CRANMirror>
 
       VerticalPanel namePanel = new VerticalPanel();
       namePanel.setStylePrimaryName(RESOURCES.styles().namePanel());
-      Label nameLabel = new Label("Name:");
-      namePanel.add(nameLabel);
       nameTextBox_ = new TextBox();
       nameTextBox_.setStylePrimaryName(RESOURCES.styles().nameTextBox());
+      FormLabel nameLabel = new FormLabel("Name:", nameTextBox_);
+      namePanel.add(nameLabel);
       namePanel.add(nameTextBox_);
       customPanel.add(namePanel);
 
       VerticalPanel urlPanel = new VerticalPanel();
-      Label urlLabel = new Label("Url:");
-      urlPanel.add(urlLabel);
       urlTextBox_ = new TextBox();
       urlTextBox_.setStylePrimaryName(RESOURCES.styles().urlTextBox());
+      FormLabel urlLabel = new FormLabel("Url:", urlTextBox_);
+      urlPanel.add(urlLabel);
       urlPanel.add(urlTextBox_);
       customPanel.add(urlPanel);
 
-      reposLabel_ = new Label("Available repositories:");
+      reposLabel_ = new FormLabel("Available repositories:");
       reposLabel_.getElement().getStyle().setMarginTop(8, Unit.PX);
       root.add(reposLabel_);
 
@@ -230,13 +232,14 @@ public class SecondaryReposDialog extends ModalDialog<CRANMirror>
 
             JsArray<CRANMirror> repos = result.getRepos();
             // keep internal list of mirrors
-            repos_ = new ArrayList<CRANMirror>(repos.length());
+            repos_ = new ArrayList<>(repos.length());
 
             // create list box and select default item
             listBox_ = new ListBox();
             listBox_.setMultipleSelect(false);
             listBox_.setVisibleItemCount(10);
             listBox_.setWidth("100%");
+            reposLabel_.setFor(listBox_);
             if (repos.length() > 0)
             {
                for(int i=0; i<repos.length(); i++)
@@ -246,8 +249,8 @@ public class SecondaryReposDialog extends ModalDialog<CRANMirror>
                   String repoUrl = repo.getURL();
                   if (repoUrl.length() > 0 &&
                       cranRepoUrl_.length() > 0) {
-                      char mainEnd = cranRepoUrl_.charAt(cranRepoUrl_.length() - 1);
-                      char repoEnd = repo.getURL().charAt(repoUrl.length() - 1);
+                      char mainEnd = StringUtil.charAt(cranRepoUrl_, cranRepoUrl_.length() - 1);
+                      char repoEnd = StringUtil.charAt(repo.getURL(), repoUrl.length() - 1);
                       if (mainEnd == '/' && repoEnd != '/')
                          repoUrl = repoUrl + "/";
                       else if (mainEnd != '/' && repoEnd == '/')
@@ -319,7 +322,7 @@ public class SecondaryReposDialog extends ModalDialog<CRANMirror>
       Styles styles();
    }
    
-   static Resources RESOURCES = (Resources) GWT.create(Resources.class);
+   static Resources RESOURCES = GWT.create(Resources.class);
    
    public static void ensureStylesInjected()
    {
@@ -336,7 +339,7 @@ public class SecondaryReposDialog extends ModalDialog<CRANMirror>
    private String cranRepoUrl_;
    private boolean cranIsCustom_;
 
-   private Label reposLabel_;
+   private FormLabel reposLabel_;
    private SimplePanelWithProgress panel_;
 
    private MirrorsServerOperations mirrorOperations_;

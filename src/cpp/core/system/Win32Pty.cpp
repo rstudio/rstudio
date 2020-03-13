@@ -1,7 +1,7 @@
 /*
  * Win32Pty.cpp
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -15,9 +15,7 @@
 
 #include "Win32Pty.hpp"
 
-#include <boost/foreach.hpp>
-
-#include <core/Error.hpp>
+#include <shared_core/Error.hpp>
 #include <core/StringUtils.hpp>
 #include <core/system/System.hpp>
 #include <core/system/LibraryLoader.hpp>
@@ -108,7 +106,7 @@ Error tryLoad(const core::FilePath& libraryPath)
       return Success();
 
    Error error = core::system::loadLibrary(
-            libraryPath.absolutePath(),
+            libraryPath.getAbsolutePath(),
             reinterpret_cast<void**>(&hMod));
    if (error)
    {
@@ -267,7 +265,7 @@ public:
       if (options.environment)
       {
          const Options& env = options.environment.get();
-         BOOST_FOREACH(const Option& envVar, env)
+         for (const Option& envVar : env)
          {
             std::wstring key = string_utils::utf8ToWide(envVar.first);
             std::wstring value = string_utils::utf8ToWide(envVar.second);
@@ -280,7 +278,7 @@ public:
          lpEnv = &envBlock[0];
       }
 
-      std::wstring workingDir(options.workingDir.absolutePathW());
+      std::wstring workingDir(options.workingDir.getAbsolutePathW());
 
       if (spawn_config_new)
       {
@@ -507,7 +505,7 @@ Error WinPty::runProcess(HANDLE* pProcess)
    // process command line arguments (copy of approach done by non-pseudoterm
    // code path in ChildProcess::run for Win32)
    std::string cmdLine;
-   BOOST_FOREACH(std::string& arg, args_)
+   for (std::string& arg : args_)
    {
       cmdLine.push_back(' ');
 

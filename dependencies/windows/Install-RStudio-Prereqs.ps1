@@ -66,14 +66,15 @@ refreshenv
 choco install -y cmake --installargs 'ADD_CMAKE_TO_PATH=""System""' --fail-on-error-output
 refreshenv
 choco install -y jdk8
-choco install -y ant --version 1.10.5
-choco install -y 7zip --version 18.5.0.20180730
-choco install -y git --version 2.18.0
-choco install -y ninja --version 1.7.2
+choco install -y -i ant
+choco install -y 7zip
+choco install -y git
+choco install -y ninja
 choco install -y windows-sdk-10.1 --version 10.1.17134.12
 choco install -y visualstudio2017buildtools --version 15.8.2.0
 choco install -y visualstudio2017-workload-vctools --version 1.3.0
 choco install -y nsis
+choco install -y activeperl
 
 # cpack (an alias from chocolatey) and cmake's cpack conflict.
 Remove-Item -Force 'C:\ProgramData\chocolatey\bin\cpack.exe'
@@ -82,9 +83,10 @@ Remove-Item -Force 'C:\ProgramData\chocolatey\bin\cpack.exe'
 
 Write-Host "-----------------------------------------------------------"
 Write-Host "Core dependencies successfully installed. Next steps:"
-Write-Host "(1) Start a non-adminstrator Command Prompt"
-Write-Host "(2) git clone https://github.com/rstudio/rstudio"
-Write-Host "(3) change working dir to rstudio\src\dependencies\windows"
-Write-Host "(4) install-dependencies.cmd"
-Write-Host "(5) open Qt Creator, load rstudio\src\cpp\CMakelists.txt"
+Write-Host "(1) Install Qt 5.12.6 from https://qt.io for MSVC 2017 64-bit with QtWebEngine"
+Write-Host "(2) Start a non-adminstrator Command Prompt"
+Write-Host "(3) git clone https://github.com/rstudio/rstudio"
+Write-Host "(4) change working dir to rstudio\src\dependencies\windows"
+Write-Host "(5) install-dependencies.cmd"
+Write-Host "(6) open Qt Creator, load rstudio\src\cpp\CMakelists.txt"
 Write-Host "-----------------------------------------------------------"

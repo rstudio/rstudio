@@ -1,7 +1,7 @@
 /*
  * FilesPane.java
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -31,6 +31,7 @@ import org.rstudio.core.client.cellview.ColumnSortInfo;
 import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.resources.ImageResource2x;
+import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.core.client.widget.Toolbar;
@@ -66,7 +67,7 @@ public class FilesPane extends WorkbenchPane implements Files.Display
                     Provider<FileCommandToolbar> pFileCommandToolbar)
    {
       super("Files");
-      globalDisplay_ = globalDisplay ;
+      globalDisplay_ = globalDisplay;
       commands_ = commands;
       fileDialogs_ = fileDialogs;
       fileTypeRegistry_ = fileTypeRegistry;
@@ -206,13 +207,17 @@ public class FilesPane extends WorkbenchPane implements Files.Display
                      String targetURL,
                      FileSystemItem targetDirectory, 
                      RemoteFileSystemContext fileSystemContext,
-                     OperationWithInput<PendingFileUpload> completedOperation)
+                     Operation beginOperation,
+                     OperationWithInput<PendingFileUpload> completedOperation,
+                     Operation failedOperation)
    {
       FileUploadDialog dlg = new FileUploadDialog(targetURL, 
                                                   targetDirectory,
                                                   fileDialogs_,
                                                   fileSystemContext,
-                                                  completedOperation);
+                                                  beginOperation,
+                                                  completedOperation,
+                                                  failedOperation);
       dlg.showModal();
    } 
    
@@ -332,9 +337,9 @@ public class FilesPane extends WorkbenchPane implements Files.Display
    }
 
    private boolean needsInit = false;
-   private FilesList filesList_ ;
+   private FilesList filesList_;
    private FilePathToolbar filePathToolbar_;
-   private final GlobalDisplay globalDisplay_ ;
+   private final GlobalDisplay globalDisplay_;
    private final FileDialogs fileDialogs_;
    private Files.Display.Observer observer_;
    private final Session session_;

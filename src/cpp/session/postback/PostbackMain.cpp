@@ -1,7 +1,7 @@
 /*
  * PostbackMain.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-12 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -20,12 +20,12 @@
 
 #include <iostream>
 
-#include <core/Error.hpp>
+#include <shared_core/Error.hpp>
 #include <core/CrashHandler.hpp>
-#include <core/FilePath.hpp>
+#include <shared_core/FilePath.hpp>
 #include <core/Log.hpp>
 #include <core/ProgramStatus.hpp>
-#include <core/SafeConvert.hpp>
+#include <shared_core/SafeConvert.hpp>
 
 #include <core/system/System.hpp>
 
@@ -53,7 +53,8 @@ int main(int argc, char * const argv[])
    try
    {
       // initialize log
-      initializeSystemLog("rpostback", core::system::kLogLevelWarning);
+      core::log::setProgramId("rpostback");
+      core::system::initializeSystemLog("rpostback", core::log::LogLevel::WARN);
 
       // ignore SIGPIPE
       Error error = core::system::ignoreSignal(core::system::SigPipe);

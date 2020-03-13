@@ -1,7 +1,7 @@
 /*
  * RStudioAPI.cpp
  *
- * Copyright (C) 2009-19 by RStudio, Inc.
+ * Copyright (C) 2009-20 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -16,7 +16,7 @@
 #include <core/Macros.hpp>
 #include <core/Algorithm.hpp>
 #include <core/Debug.hpp>
-#include <core/Error.hpp>
+#include <shared_core/Error.hpp>
 #include <core/Exec.hpp>
 
 #include <r/RSexp.hpp>
@@ -110,7 +110,7 @@ SEXP rs_showDialog(SEXP titleSEXP,
          return R_NilValue;
       }
 
-      if (dialogIcon == 4 && !request.params[1].is_null()) {
+      if (dialogIcon == 4 && !request.params[1].isNull()) {
          bool result;
          Error error = json::readParam(request.params, 1, &result);
          if (error)
@@ -122,7 +122,7 @@ SEXP rs_showDialog(SEXP titleSEXP,
          r::sexp::Protect rProtect;
          return r::sexp::create(result, &rProtect);
       }
-      else if (!request.params[0].is_null())
+      else if (!request.params[0].isNull())
       {
          std::string promptValue;
          Error error = json::readParam(request.params, 0, &promptValue);
@@ -200,6 +200,40 @@ SEXP rs_openFileDialog(SEXP typeSEXP,
    return r::sexp::create(selection, &protect);
 }
 
+SEXP rs_highlightUi(SEXP queriesSEXP)
+{
+   json::Value data;
+   Error error = r::json::jsonValueFromList(queriesSEXP, &data);
+   if (error)
+      LOG_ERROR(error);
+   
+   ClientEvent event(client_events::kHighlightUi, data);
+   module_context::enqueClientEvent(event);
+   
+   return queriesSEXP;
+}
+
+SEXP rs_userIdentity()
+{
+   r::sexp::Protect protect;
+   // Check RSTUDIO_USER_IDENTITY_DISPLAY first; it is used in Pro to override the system user
+   // identity (username) with a display name in some auth forms
+   std::string display = core::system::getenv("RSTUDIO_USER_IDENTITY_DISPLAY");
+   if (display.empty())
+   {
+      // no env var; look up value in options provided at session start
+      display = session::options().userIdentity();
+   }
+
+   return r::sexp::create(display, &protect);
+}
+
+SEXP rs_systemUsername()
+{
+   r::sexp::Protect protect;
+   return r::sexp::create(core::system::username(), &protect);
+}
+
 Error initialize()
 {
    using boost::bind;
@@ -212,8 +246,16 @@ Error initialize()
    RS_REGISTER_CALL_METHOD(rs_showDialog);
    RS_REGISTER_CALL_METHOD(rs_openFileDialog);
    RS_REGISTER_CALL_METHOD(rs_executeAppCommand);
+   RS_REGISTER_CALL_METHOD(rs_highlightUi);
+   RS_REGISTER_CALL_METHOD(rs_userIdentity);
+   RS_REGISTER_CALL_METHOD(rs_systemUsername);
+   
+   using boost::bind;
+   ExecBlock initBlock;
+   initBlock.addFunctions()
+         (bind(sourceModuleRFile, "RStudioAPI.R"));
 
-   return Success();
+   return initBlock.execute();
 }
 
 } // namespace connections

@@ -1,7 +1,7 @@
 /*
  * FileSerializer.cpp
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -19,12 +19,13 @@
 #include <iostream>
 #include <sstream>
 #include <algorithm>
+#include <gsl/gsl>
 
 #include <boost/algorithm/string/trim.hpp>
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/iostreams/copy.hpp>
 
-#include <core/FilePath.hpp>
+#include <shared_core/FilePath.hpp>
 #include <core/StringUtils.hpp>
 
 namespace rstudio {
@@ -124,8 +125,8 @@ Error writeStringToFile(const FilePath& filePath,
    using namespace boost::system::errc ;
    
    // open file
-   boost::shared_ptr<std::ostream> pOfs;
-   Error error = filePath.open_w(&pOfs, truncate);
+   std::shared_ptr<std::ostream> pOfs;
+   Error error = filePath.openForWrite(pOfs, truncate);
    if (error)
       return error;
    
@@ -148,7 +149,7 @@ Error writeStringToFile(const FilePath& filePath,
       Error error = systemError(boost::system::errc::io_error, 
                                 ERROR_LOCATION);
       error.addProperty("what", e.what());
-      error.addProperty("path", filePath.absolutePath());
+      error.addProperty("path", filePath.getAbsolutePath());
       return error;
    }
 }
@@ -164,8 +165,8 @@ Error readStringFromFile(const FilePath& filePath,
    using namespace boost::system::errc ;
    
    // open file
-   boost::shared_ptr<std::istream> pIfs;
-   Error error = filePath.open_r(&pIfs);
+   std::shared_ptr<std::istream> pIfs;
+   Error error = filePath.openForRead(pIfs);
    if (error)
       return error;
 
@@ -193,7 +194,7 @@ Error readStringFromFile(const FilePath& filePath,
                // compute the portion of the line to be read; if this is the
                // start or end of the region to be read, use the character
                // offsets supplied
-               int lineLength = static_cast<int>(line.length());
+               int lineLength = gsl::narrow_cast<int>(line.length());
                content += line.substr(
                         currentLine == startLine ?
                            std::min(
@@ -233,7 +234,7 @@ Error readStringFromFile(const FilePath& filePath,
       Error error = systemError(boost::system::errc::io_error, 
                                 ERROR_LOCATION);
       error.addProperty("what", e.what());
-      error.addProperty("path", filePath.absolutePath());
+      error.addProperty("path", filePath.getAbsolutePath());
       return error;
    }
 }

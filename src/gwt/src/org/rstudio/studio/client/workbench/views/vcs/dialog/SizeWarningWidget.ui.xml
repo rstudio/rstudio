@@ -20,10 +20,10 @@
             type="org.rstudio.core.client.widget.images.MessageDialogImages"/>
 
    <g:HTMLPanel styleName="{style.warning}">
-      <table class="{style.label}" cellspacing="8" cellpadding="0" align="center">
+      <table class="{style.label}" cellspacing="8" cellpadding="0" align="center" role="presentation">
          <tr>
             <td valign="top">
-               <g:Image resource='{messageDialogImages.dialog_warning2x}'/>
+               <g:Image resource='{messageDialogImages.dialog_warning2x}' altText="Warning"/>
             </td>
             <td valign="top" class="{style.labelCell}">
                <strong>This <span ui:field="subject_"/> is extremely large

@@ -1,7 +1,7 @@
 /*
  * Tree.hpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-12 by RStudio, PBC
  * Copyright (C) 2001-2011 Kasper Peeters <kasper@phi-sci.com>
  *
  * Unless you have received this program directly from RStudio pursuant
@@ -440,9 +440,9 @@ class tree {
 		template<class StrictWeakOrdering>
 		class compare_nodes {
 			public:
-				compare_nodes(StrictWeakOrdering comp) : comp_(comp) {};
+				compare_nodes(StrictWeakOrdering comp) : comp_(comp) {}
 				
-				bool operator()(const tree_node *a, const tree_node *b) 
+				bool operator()(const tree_node *a, const tree_node *b) const
 					{
 					return comp_(a->data, b->data);
 					}

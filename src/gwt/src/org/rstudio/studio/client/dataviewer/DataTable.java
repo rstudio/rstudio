@@ -1,7 +1,7 @@
 /*
  * DataTable.java
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-20 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -19,12 +19,16 @@ import java.util.ArrayList;
 
 import com.google.gwt.user.client.ui.Widget;
 import org.rstudio.core.client.CommandWith2Args;
+import org.rstudio.core.client.command.ShortcutManager;
 import org.rstudio.core.client.dom.IFrameElementEx;
 import org.rstudio.core.client.dom.WindowEx;
+import org.rstudio.core.client.events.NativeKeyDownEvent;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.core.client.widget.*;
 
+import com.google.gwt.dom.client.Element;
+import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
@@ -47,6 +51,8 @@ public class DataTable
    {
       filterButton_ = new LatchingToolbarButton(
               "Filter",
+              ToolbarButton.NoTitle,
+              false, /* textIndicatesState */
               new ImageResource2x(DataViewerResources.INSTANCE.filterIcon2x()),
               new ClickHandler() {
                  public void onClick(ClickEvent event)
@@ -70,7 +76,7 @@ public class DataTable
       colsSeparator_.setVisible(false);
       addColumnControls(toolbar);
 
-      searchWidget_ = new SearchWidget(new SuggestOracle() {
+      searchWidget_ = new SearchWidget("Search data table", new SuggestOracle() {
          @Override
          public void requestSuggestions(Request request, Callback callback)
          {
@@ -195,6 +201,24 @@ public class DataTable
    {
       IFrameElementEx frameEl = (IFrameElementEx) host_.getDataTableFrame().getElement().cast();
       return frameEl.getContentWindow();
+   }
+   
+   public void addKeyDownHandler()
+   {
+      addKeyDownHandlerImpl(getWindow().getDocument().getBody());
+   }
+   
+   private final native void addKeyDownHandlerImpl(Element body)
+   /*-{
+      var self = this;
+      body.addEventListener("keydown", $entry(function(event) {
+         self.@org.rstudio.studio.client.dataviewer.DataTable::onKeyDown(*)(event);
+      }));
+   }-*/;
+   
+   private void onKeyDown(NativeEvent event)
+   {
+      ShortcutManager.INSTANCE.onKeyDown(new NativeKeyDownEvent(event));
    }
 
    public boolean setFilterUIVisible(boolean visible)

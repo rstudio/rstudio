@@ -1,7 +1,7 @@
 /*
  * CommandBinder.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-12 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -17,7 +17,7 @@ package org.rstudio.core.client.command;
 import com.google.gwt.event.shared.HandlerRegistration;
 
 /**
- * Provides a mechanism for declaritively hooking up command handler methods
+ * Provides a mechanism for declaratively hooking up command handler methods
  * to the relevant commands.
  *
  * 1) Create a method for each command to be handled. It should have a return

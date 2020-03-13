@@ -1,7 +1,7 @@
 /*
  * RProjectFile.cpp
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -19,14 +19,13 @@
 #include <iomanip>
 #include <ostream>
 
-#include <boost/foreach.hpp>
 #include <boost/format.hpp>
 #include <boost/regex.hpp>
 
-#include <core/Error.hpp>
-#include <core/FilePath.hpp>
+#include <shared_core/Error.hpp>
+#include <shared_core/FilePath.hpp>
 #include <core/FileSerializer.hpp>
-#include <core/SafeConvert.hpp>
+#include <shared_core/SafeConvert.hpp>
 #include <core/RegexUtils.hpp>
 #include <core/StringUtils.hpp>
 #include <core/YamlUtil.hpp>
@@ -215,16 +214,16 @@ std::string detectBuildType(const FilePath& projectFilePath,
                             const RProjectBuildDefaults& buildDefaults,
                             RProjectConfig* pConfig)
 {
-   FilePath projectDir = projectFilePath.parent();
+   FilePath projectDir = projectFilePath.getParent();
    if (r_util::isPackageDirectory(projectDir))
    {
       setBuildPackageDefaults("", buildDefaults ,pConfig);
    }
-   else if (projectDir.childPath("pkg/DESCRIPTION").exists())
+   else if (projectDir.completeChildPath("pkg/DESCRIPTION").exists())
    {
       setBuildPackageDefaults("pkg", buildDefaults, pConfig);
    }
-   else if (projectDir.childPath("Makefile").exists())
+   else if (projectDir.completeChildPath("Makefile").exists())
    {
       pConfig->buildType = kBuildTypeMakefile;
       pConfig->makefilePath = "";
@@ -318,26 +317,26 @@ Error findProjectFile(FilePath filePath,
                       FilePath* pProjPath)
 {
    // check to see if we already have a .Rproj file
-   if (filePath.extensionLowerCase() == ".rproj")
+   if (filePath.getExtensionLowerCase() == ".rproj")
    {
       *pProjPath = filePath;
       return Success();
    }
 
    if (!filePath.isDirectory())
-      filePath = filePath.parent();
+      filePath = filePath.getParent();
    
    // list all paths up to root for our anchor -- we want to stop looking
    // if we hit the anchor path, or any parent directory of that path
    std::vector<FilePath> anchorPaths;
-   for (; anchorPath.exists(); anchorPath = anchorPath.parent())
+   for (; anchorPath.exists(); anchorPath = anchorPath.getParent())
       anchorPaths.push_back(anchorPath);
    
    // no .Rproj file found; scan parent directories
-   for (; filePath.exists(); filePath = filePath.parent())
+   for (; filePath.exists(); filePath = filePath.getParent())
    {
       // bail if we've hit our anchor
-      BOOST_FOREACH(const FilePath& anchorPath, anchorPaths)
+      for (const FilePath& anchorPath : anchorPaths)
       {
          if (filePath == anchorPath)
             return fileNotFoundError(ERROR_LOCATION);
@@ -345,12 +344,12 @@ Error findProjectFile(FilePath filePath,
       
       // skip directory if there's no .Rproj.user directory (avoid potentially
       // expensive query of all files in directory)
-      if (!filePath.complete(".Rproj.user").exists())
+      if (!filePath.completePath(".Rproj.user").exists())
          continue;
          
       // scan this directory for .Rproj files
       FilePath projPath = projectFromDirectory(filePath);
-      if (!projPath.empty())
+      if (!projPath.isEmpty())
       {
          *pProjPath = projPath;
          return Success();
@@ -801,6 +800,18 @@ Error readProjectFile(const FilePath& projectFilePath,
    {
       pConfig->defaultOpenDocs = "";
    }
+   
+   // extract default tutorial
+   it = dcfFields.find("DefaultTutorial");
+   if (it != dcfFields.end())
+   {
+      pConfig->defaultTutorial = it->second;
+   }
+   else
+   {
+      pConfig->defaultTutorial = "";
+   }
+   
 
    return Success();
 }
@@ -1004,6 +1015,14 @@ Error writeProjectFile(const FilePath& projectFilePath,
       boost::format docsFmt("\nDefaultOpenDocs: %1%\n");
       contents.append(boost::str(docsFmt % config.defaultOpenDocs));
    }
+   
+   // add default tutorial if present
+   if (!config.defaultTutorial.empty())
+   {
+      boost::format docsFmt("\nDefaultTutorial: %1%\n");
+      contents.append(boost::str(docsFmt % config.defaultTutorial));
+   }
+   
 
    // write it
    return writeStringToFile(projectFilePath,
@@ -1015,21 +1034,21 @@ FilePath projectFromDirectory(const FilePath& path)
 {
    // canonicalize the path; this handles the case (among others) where the incoming
    // path ends with a "/"; without removing that, the matching logic below fails
-   FilePath directoryPath(path.canonicalPath());
+   FilePath directoryPath(path.getCanonicalPath());
 
    // first use simple heuristic of a case sentitive match between
    // directory name and project file name
-   std::string dirName = directoryPath.filename();
+   std::string dirName = directoryPath.getFilename();
    if (!FilePath::isRootPath(dirName))
    {
-      FilePath projectFile = directoryPath.childPath(dirName + ".Rproj");
+      FilePath projectFile = directoryPath.completeChildPath(dirName + ".Rproj");
       if (projectFile.exists())
          return projectFile;
    }
 
    // didn't satisfy it with simple check so do scan of directory
    std::vector<FilePath> children;
-   Error error = directoryPath.children(&children);
+   Error error = directoryPath.getChildren(children);
    if (error)
    {
       LOG_ERROR(error);
@@ -1044,9 +1063,9 @@ FilePath projectFromDirectory(const FilePath& path)
         it != children.end();
         ++it)
    {
-      if (!it->isDirectory() && (it->extensionLowerCase() == ".rproj"))
+      if (!it->isDirectory() && (it->getExtensionLowerCase() == ".rproj"))
       {
-         if (string_utils::toLower(it->filename()) == projFileLower)
+         if (string_utils::toLower(it->getFilename()) == projFileLower)
             return *it;
          else
             rprojFiles.push_back(*it);
@@ -1066,7 +1085,7 @@ FilePath projectFromDirectory(const FilePath& path)
            it != rprojFiles.end();
            ++it)
       {
-         if (it->lastWriteTime() > projectFile.lastWriteTime())
+         if (it->getLastWriteTime() > projectFile.getLastWriteTime())
             projectFile = *it;
       }
 
@@ -1095,13 +1114,13 @@ bool updateSetPackageInstallArgsDefault(RProjectConfig* pConfig)
 bool isWebsiteDirectory(const FilePath& projectDir)
 {
    // look for an index.Rmd or index.md
-   FilePath indexFile = projectDir.childPath("index.Rmd");
+   FilePath indexFile = projectDir.completeChildPath("index.Rmd");
    if (!indexFile.exists())
-      indexFile = projectDir.childPath("index.md");
+      indexFile = projectDir.completeChildPath("index.md");
    if (indexFile.exists())
    {
       // look for _site.yml
-      FilePath siteFile = projectDir.childPath("_site.yml");
+      FilePath siteFile = projectDir.completeChildPath("_site.yml");
       if (siteFile.exists())
       {
          return true;
@@ -1123,13 +1142,13 @@ bool isWebsiteDirectory(const FilePath& projectDir)
 // find the website root (if any) for the given filepath
 FilePath websiteRootDirectory(const FilePath& filePath)
 {
-   FilePath dir = filePath.parent();
-   while (!dir.empty())
+   FilePath dir = filePath.getParent();
+   while (!dir.isEmpty())
    {
       if (r_util::isWebsiteDirectory(dir))
          return dir;
 
-      dir = dir.parent();
+      dir = dir.getParent();
    }
 
    return FilePath();

@@ -1,7 +1,7 @@
 /*
  * SessionRequest.hpp
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -16,13 +16,14 @@
 #ifndef SESSION_REQUEST_HPP
 #define SESSION_REQUEST_HPP
 
-#include <core/Error.hpp>
+#include <shared_core/Error.hpp>
 #include <core/system/Environment.hpp>
 
 #include <session/http/SessionRequest.hpp>
 
 #include <core/http/TcpIpBlockingClient.hpp>
 #include <core/http/ConnectionRetryProfile.hpp>
+#include <core/http/CSRFToken.hpp>
 
 #ifndef _WIN32
 #include <core/http/LocalStreamBlockingClient.hpp>
@@ -56,6 +57,12 @@ inline core::Error sendSessionRequest(const std::string& uri,
    request.setHeader("Connection", "close");
    request.setHeader("X-Session-Postback", "1");
    request.setHeader(kRStudioUserIdentityDisplay, core::system::username());
+
+   // generate random CSRF token for request
+   std::string token = core::system::generateUuid();
+   request.setHeader(kCSRFTokenHeader, token);
+   request.addCookie(kCSRFTokenCookie, token);
+
    request.setBody(body);
 
    // first, attempt to send a plain old http request

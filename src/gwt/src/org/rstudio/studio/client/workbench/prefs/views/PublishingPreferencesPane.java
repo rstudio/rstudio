@@ -1,7 +1,7 @@
 /*
  * PublishingPreferencesPane.java
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-20 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -32,6 +32,7 @@ import com.google.inject.Inject;
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.prefs.PreferencesDialogBaseResources;
+import org.rstudio.core.client.prefs.RestartRequirement;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.FileChooserTextBox;
 import org.rstudio.core.client.widget.Operation;
@@ -48,8 +49,8 @@ import org.rstudio.studio.client.rsconnect.ui.RSConnectAccountList;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
-import org.rstudio.studio.client.workbench.prefs.model.RPrefs;
-import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserState;
 
 public class PublishingPreferencesPane extends PreferencesPane
 {
@@ -57,24 +58,23 @@ public class PublishingPreferencesPane extends PreferencesPane
    public PublishingPreferencesPane(GlobalDisplay globalDisplay,
                                     RSConnectServerOperations server,
                                     RSAccountConnector connector,
-                                    UIPrefs prefs,
+                                    UserPrefs prefs,
+                                    UserState state,
                                     DependencyManager deps)
    {
       reloadRequired_ = false;
       display_ = globalDisplay;
-      uiPrefs_ = prefs;
+      userPrefs_ = prefs;
+      userState_ = state;
       server_ = server;
       connector_ = connector;
       deps_ = deps;
       
       VerticalPanel accountPanel = new VerticalPanel();
-      Label accountLabel = headerLabel("Publishing Accounts");
       HorizontalPanel hpanel = new HorizontalPanel();
       
-      accountPanel.add(accountLabel);
-      
-      accountList_ = new RSConnectAccountList(server, globalDisplay, true, 
-            true);
+      String accountListLabel = "Publishing Accounts";
+      accountList_ = new RSConnectAccountList(server, globalDisplay, true, true, accountListLabel);
       accountList_.setHeight("150px");
       accountList_.setWidth("300px");
       accountList_.getElement().getStyle().setMarginBottom(15, Unit.PX);
@@ -147,6 +147,8 @@ public class PublishingPreferencesPane extends PreferencesPane
       
       setButtonEnabledState();
 
+      Label accountLabel = headerLabel(accountListLabel);
+      accountPanel.add(accountLabel);
       accountPanel.add(hpanel);
       add(accountPanel);
       
@@ -188,14 +190,15 @@ public class PublishingPreferencesPane extends PreferencesPane
       add(missingPkgPanel);
       
       final CheckBox chkEnableRSConnect = checkboxPref("Enable publishing to RStudio Connect",
-            uiPrefs_.enableRStudioConnect());
+            userState_.enableRsconnectPublishUi());
       final HorizontalPanel rsconnectPanel = checkBoxWithHelp(chkEnableRSConnect, 
-                                                        "rstudio_connect");
+                                                        "rstudio_connect",
+                                                        "Information about RStudio Connect");
       lessSpaced(rsconnectPanel);
       
       add(headerLabel("Settings"));
       CheckBox chkEnablePublishing = checkboxPref("Enable publishing documents, apps, and APIs", 
-            uiPrefs_.showPublishUi());
+            userState_.showPublishUi());
       chkEnablePublishing.addValueChangeHandler(new ValueChangeHandler<Boolean>(){
          @Override
          public void onValueChange(ValueChangeEvent<Boolean> event)
@@ -211,22 +214,23 @@ public class PublishingPreferencesPane extends PreferencesPane
          add(rsconnectPanel);
       
       add(checkboxPref("Show diagnostic information when publishing",
-            uiPrefs_.showPublishDiagnostics()));
+            userPrefs_.showPublishDiagnostics()));
       
       add(spacedBefore(headerLabel("SSL Certificates")));
 
       add(checkboxPref("Check SSL certificates when publishing",
-            uiPrefs_.publishCheckCertificates()));
+            userPrefs_.publishCheckCertificates()));
       
       CheckBox useCaBundle = checkboxPref("Use custom CA bundle",
-            uiPrefs_.usePublishCABundle());
+            userPrefs_.usePublishCaBundle());
       useCaBundle.addValueChangeHandler(
             val -> caBundlePath_.setVisible(val.getValue()));
       add(useCaBundle);
 
-      caBundlePath_ = new FileChooserTextBox("", "(none)", null, null);
-      caBundlePath_.setText(uiPrefs_.publishCABundle().getValue());
-      caBundlePath_.setVisible(uiPrefs_.usePublishCABundle().getValue());
+      caBundlePath_ = new FileChooserTextBox(
+         "", "(none)", ElementIds.TextBoxButtonId.CA_BUNDLE, false, null, null);
+      caBundlePath_.setText(userPrefs_.publishCaBundle().getValue());
+      caBundlePath_.setVisible(userPrefs_.usePublishCaBundle().getValue());
       add(caBundlePath_);
 
       add(spacedBefore(new HelpLink("Troubleshooting Deployments", 
@@ -252,18 +256,21 @@ public class PublishingPreferencesPane extends PreferencesPane
    }
 
    @Override
-   protected void initialize(RPrefs rPrefs)
+   protected void initialize(UserPrefs rPrefs)
    {
    }
 
    @Override
-   public boolean onApply(RPrefs rPrefs)
+   public RestartRequirement onApply(UserPrefs rPrefs)
    {
-      boolean reload = super.onApply(rPrefs);
-      
-      uiPrefs_.publishCABundle().setGlobalValue(caBundlePath_.getText());
+      RestartRequirement restartRequirement = super.onApply(rPrefs);
 
-      return reload || reloadRequired_;
+      if (reloadRequired_)
+         restartRequirement.setUiReloadRequired(true);
+
+      userPrefs_.publishCaBundle().setGlobalValue(caBundlePath_.getText());
+
+      return restartRequirement;
    }
 
    
@@ -403,7 +410,8 @@ public class PublishingPreferencesPane extends PreferencesPane
    }
    
    private final GlobalDisplay display_;
-   private final UIPrefs uiPrefs_;
+   private final UserPrefs userPrefs_;
+   private final UserState userState_;
    private final RSConnectServerOperations server_;
    private final RSAccountConnector connector_;
    private final DependencyManager deps_;

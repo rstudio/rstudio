@@ -3,17 +3,9 @@
   <component name="FacetManager">
     <facet type="gwt" name="GWT">
       <configuration>
-        <setting name="compilerMaxHeapSize" value="128" />
-        <setting name="gwtScriptOutputStyle" value="PRETTY" />
-        <setting name="gwtSdkUrl" value="file://$MODULE_DIR$/lib/gwt/2.8.1" />
-        <packaging>
-          <module name="com.google.gwt.widgetideas.SliderBar" enabled="false" />
-          <module name="com.sksamuel.gwt.GwtWebsockets" enabled="false" />
-          <module name="org.rstudio.codemirror.CodeMirror" path="/com.rstudio.codemirror.CodeMirror" />
-          <module name="org.rstudio.core.Core" path="/com.rstudio.core.Core" enabled="false" />
-          <module name="org.rstudio.studio.PlainTextEditor" path="/com.rstudio.studio.PlainTextEditor" />
-          <module name="org.rstudio.studio.RStudioDesktop" path="/rstudio" />
-        </packaging>
+        <setting name="compilerMaxHeapSize" value="1024" />
+        <setting name="gwtScriptOutputStyle" value="DETAILED" />
+        <setting name="gwtSdkUrl" value="file://$MODULE_DIR$/lib/gwt/gwt-rstudio-1.3" />
       </configuration>
     </facet>
   </component>
@@ -33,17 +25,13 @@
       <excludeFolder url="file://$MODULE_DIR$/lib" />
       <excludeFolder url="file://$MODULE_DIR$/sdk" />
       <excludeFolder url="file://$MODULE_DIR$/tools" />
+      <excludeFolder url="file://$MODULE_DIR$/www/WEB-INF/deploy" />
       <excludeFolder url="file://$MODULE_DIR$/www/rstudio" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" name="gwt" level="project" />
     <orderEntry type="library" name="gin" level="project" />
-    <orderEntry type="library" name="2.37.0" level="project" />
     <orderEntry type="library" scope="TEST" name="junit-4.9b3" level="project" />
-    <orderEntry type="library" name="compiler" level="project" />
-    <orderEntry type="library" name="libs" level="project" />
-    <orderEntry type="library" name="2.8.1" level="project" />
-    <orderEntry type="library" name="javadoc" level="project" />
   </component>
 </module>

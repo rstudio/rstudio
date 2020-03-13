@@ -14,7 +14,7 @@
       .description {
          padding-bottom: 12px !important;
          width: 240px;
-         color: #888;
+         color: #666;
       }
       .prompt {
          display: block;
@@ -24,10 +24,10 @@
    </ui:style>
 
    <g:HTMLPanel styleName="{style.resolvePanel}">
-      <div class="{style.prompt}">
+      <div ui:field="groupLabel_" class="{style.prompt}">
          Resolve the selected <span ui:field="spanTargetNoun_"></span> using:
       </div>
-      <table>
+      <table ui:field="layoutTable_">
          <tr>
             <td><input type="radio"
                        name="svnResolve"
@@ -38,7 +38,7 @@
          </tr>
          <tr>
             <td />
-            <td class="{style.description}">
+            <td ui:field="descriptionWorking_" class="{style.description}">
                Mark the working copy as resolved
             </td>
          </tr>
@@ -54,7 +54,7 @@
          </tr>
          <tr>
             <td />
-            <td class="{style.description}">
+            <td ui:field="descriptionMineConflict_" class="{style.description}">
                Accept my version for all conflicts
             </td>
          </tr>
@@ -70,7 +70,7 @@
          </tr>
          <tr>
             <td />
-            <td class="{style.description}">
+            <td ui:field="descriptionTheirsConflict_" class="{style.description}">
                Accept their version for all conflicts
             </td>
          </tr>
@@ -86,7 +86,7 @@
          </tr>
          <tr>
             <td />
-            <td class="{style.description}">
+            <td ui:field="descriptionMineAll_" class="{style.description}">
                Accept my version of the entire file, even non-conflicts
             </td>
          </tr>
@@ -102,7 +102,7 @@
          </tr>
          <tr>
             <td />
-            <td class="{style.description}">
+            <td ui:field="descriptionTheirsAll_" class="{style.description}">
                Accept their version of the entire file, even non-conflicts
             </td>
          </tr>

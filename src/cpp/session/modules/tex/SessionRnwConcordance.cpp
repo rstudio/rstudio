@@ -1,7 +1,7 @@
 /*
  * SessionRnwConcordance.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -16,18 +16,18 @@
 #include "SessionRnwConcordance.hpp"
 
 #include <iostream>
+#include <gsl/gsl>
 
-#include <boost/foreach.hpp>
 #include <boost/regex.hpp>
 
 #include <boost/algorithm/string/trim.hpp>
 #include <boost/algorithm/string/split.hpp>
 #include <boost/algorithm/string/regex.hpp>
 
-#include <core/Error.hpp>
-#include <core/FilePath.hpp>
+#include <shared_core/Error.hpp>
+#include <shared_core/FilePath.hpp>
 #include <core/FileSerializer.hpp>
-#include <core/SafeConvert.hpp>
+#include <shared_core/SafeConvert.hpp>
 #include <core/Algorithm.hpp>
 
 #include <core/tex/TexSynctex.hpp>
@@ -46,8 +46,8 @@ namespace {
 
 FilePath concordanceFilePath(const FilePath& rnwFilePath)
 {
-   FilePath parentDir = rnwFilePath.parent();
-   return parentDir.complete(rnwFilePath.stem() + "-concordance.tex");
+   FilePath parentDir = rnwFilePath.getParent();
+   return parentDir.completePath(rnwFilePath.getStem() + "-concordance.tex");
 }
 
 Error badFormatError(const FilePath& concordanceFile,
@@ -97,7 +97,7 @@ Error Concordance::parse(const FilePath& sourceFile,
    // paste them back together (removing trailing %)
    using namespace boost::algorithm;
    std::string concordance;
-   BOOST_FOREACH(const std::string& line, lines)
+   for (const std::string& line : lines)
    {
       concordance.append(trim_right_copy_if(line, is_any_of("%")));
    }
@@ -119,8 +119,8 @@ Error Concordance::parse(const FilePath& sourceFile,
        return badFormatError(sourceFile, "sections", ERROR_LOCATION);
 
    // get input and output file names
-   outputFile_ = baseDir.complete(core::tex::normalizeSynctexName(sections[1]));
-   inputFile_ = baseDir.complete(core::tex::normalizeSynctexName(sections[2]));
+   outputFile_ = baseDir.completePath(core::tex::normalizeSynctexName(sections[1]));
+   inputFile_ = baseDir.completePath(core::tex::normalizeSynctexName(sections[2]));
 
    // get offset and values
    std::string valuesSection;
@@ -187,24 +187,24 @@ void Concordance::append(const Concordance& concordance)
    // if we don't yet have an input and output file then initialize
    // from this concordance -- otherwise verify that the inbound
    // concordances match
-   if (inputFile_.empty())
+   if (inputFile_.isEmpty())
       inputFile_ = concordance.inputFile();
-   if (outputFile_.empty())
+   if (outputFile_.isEmpty())
       outputFile_ = concordance.outputFile();
 
    if (inputFile_ != concordance.inputFile())
    {
       LOG_WARNING_MESSAGE("Non matching concordance: " +
-                          inputFile_.absolutePath() + ", " +
-                          concordance.inputFile().absolutePath());
+                             inputFile_.getAbsolutePath() + ", " +
+                          concordance.inputFile().getAbsolutePath());
       return;
    }
 
    else if (outputFile_ != concordance.outputFile())
    {
       LOG_WARNING_MESSAGE("Non matching concordance: " +
-                          outputFile_.absolutePath() + ", " +
-                          concordance.outputFile().absolutePath());
+                             outputFile_.getAbsolutePath() + ", " +
+                          concordance.outputFile().getAbsolutePath());
       return;
    }
 
@@ -245,7 +245,7 @@ bool hasInputFile(const Concordance& concord, const FilePath& inputFile)
 
 FileAndLine Concordances::rnwLine(const FileAndLine& texLine) const
 {
-   if (texLine.filePath().empty())
+   if (texLine.filePath().isEmpty())
       return FileAndLine();
 
    // inspect concordance where output file is equivliant to tex file
@@ -261,7 +261,7 @@ FileAndLine Concordances::rnwLine(const FileAndLine& texLine) const
    for (std::vector<Concordance>::const_reverse_iterator it =
       texFileConcords.rbegin(); it != texFileConcords.rend(); ++it)
    {
-      if (texLine.line() > static_cast<int>(it->offset()))
+      if (texLine.line() > gsl::narrow_cast<int>(it->offset()))
       {
           return FileAndLine(it->inputFile(),
                              it->rnwLine(texLine.line()));
@@ -274,7 +274,7 @@ FileAndLine Concordances::rnwLine(const FileAndLine& texLine) const
 
 FileAndLine Concordances::texLine(const FileAndLine& rnwLine) const
 {
-   if (rnwLine.filePath().empty())
+   if (rnwLine.filePath().isEmpty())
       return FileAndLine();
 
    // inspect concordance where input file is equivilant to rnw file
@@ -307,7 +307,7 @@ std::string fixup_formatter(const Concordances& concordances,
 {
    std::string result = what[0];
 
-   for (unsigned int i = what.size()-1; i > 0; i--)
+   for (int i = gsl::narrow_cast<int>(what.size()) - 1; i > 0; i--)
    {
       if (what[i].matched)
       {
@@ -388,7 +388,7 @@ Error readIfExists(const core::FilePath& srcFile, Concordances* pConcordances)
    boost::regex re("\\" + std::string(kConcordance));
    std::vector<std::string> concordances;
    boost::algorithm::split_regex(concordances, contents, re);
-   BOOST_FOREACH(const std::string& concordance, concordances)
+   for (const std::string& concordance : concordances)
    {
       std::string entry = boost::algorithm::trim_copy(concordance);
       if (!entry.empty())
@@ -396,7 +396,7 @@ Error readIfExists(const core::FilePath& srcFile, Concordances* pConcordances)
          Concordance concord;
          Error error = concord.parse(concordanceFile,
                                      kConcordance + entry,
-                                     srcFile.parent());
+                                     srcFile.getParent());
          if (error)
             LOG_ERROR(error);
          else

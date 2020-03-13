@@ -1,7 +1,7 @@
 /*
  * Win32SystemTests.cpp
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -16,9 +16,8 @@
 #ifdef _WIN32
 
 #include <core/system/System.hpp>
-#include <core/FilePath.hpp>
+#include <shared_core/FilePath.hpp>
 #include <boost/algorithm/string/predicate.hpp>
-#include <boost/foreach.hpp>
 
 #define RSTUDIO_NO_TESTTHAT_ALIASES
 #include <tests/TestThat.hpp>
@@ -68,7 +67,7 @@ TEST_CASE("Win32SystemTests")
    SECTION("ComSpec")
    {
       FilePath command = expandComSpec();
-      CHECK_FALSE(command.empty());
+      CHECK_FALSE(command.isEmpty());
       CHECK(command.exists());
    }
 
@@ -101,14 +100,14 @@ TEST_CASE("Win32SystemTests")
 
       // Start the child process.
       CHECK(CreateProcess(
-               NULL,          // No module name (use command line)
+               nullptr,       // No module name (use command line)
                &(cmdBuf[0]),  // Command
-               NULL,          // Process handle not inheritable
-               NULL,          // Thread handle not inheritable
+               nullptr,       // Process handle not inheritable
+               nullptr,       // Thread handle not inheritable
                FALSE,         // Set handle inheritance to FALSE
                0,             // No creation flags
-               NULL,          // Use parent's environment block
-               NULL,          // Use parent's starting directory
+               nullptr,       // Use parent's environment block
+               nullptr,       // Use parent's starting directory
                &si,           // Pointer to STARTUPINFO structure
                &pi));         // Pointer to PROCESS_INFORMATION structure
 
@@ -137,14 +136,14 @@ TEST_CASE("Win32SystemTests")
 
       // Start the child process.
       CHECK(CreateProcess(
-               NULL,          // No module name (use command line)
+               nullptr,       // No module name (use command line)
                &(cmdBuf[0]),  // Command
-               NULL,          // Process handle not inheritable
-               NULL,          // Thread handle not inheritable
+               nullptr,       // Process handle not inheritable
+               nullptr,       // Thread handle not inheritable
                FALSE,         // Set handle inheritance to FALSE
                0,             // No creation flags
-               NULL,          // Use parent's environment block
-               NULL,          // Use parent's starting directory
+               nullptr,       // Use parent's environment block
+               nullptr,       // Use parent's starting directory
                &si,           // Pointer to STARTUPINFO structure
                &pi));         // Pointer to PROCESS_INFORMATION structure
 
@@ -156,7 +155,7 @@ TEST_CASE("Win32SystemTests")
       if (children.size() >= 1)
       {
          bool found = false;
-         BOOST_FOREACH(SubprocInfo info, children)
+         for (SubprocInfo info : children)
          {
             if (info.exe.compare(exe) == 0)
             {
@@ -192,14 +191,14 @@ TEST_CASE("Win32SystemTests")
 
       // Start the child process.
       CHECK(CreateProcess(
-               NULL,          // No module name (use command line)
+               nullptr,       // No module name (use command line)
                &(cmdBuf[0]),  // Command
-               NULL,          // Process handle not inheritable
-               NULL,          // Thread handle not inheritable
+               nullptr,       // Process handle not inheritable
+               nullptr,       // Thread handle not inheritable
                FALSE,         // Set handle inheritance to FALSE
                0,             // No creation flags
-               NULL,          // Use parent's environment block
-               NULL,          // Use parent's starting directory
+               nullptr,       // Use parent's environment block
+               nullptr,       // Use parent's starting directory
                &si,           // Pointer to STARTUPINFO structure
                &pi));         // Pointer to PROCESS_INFORMATION structure
 
@@ -209,7 +208,7 @@ TEST_CASE("Win32SystemTests")
 
       // API is not implemented on Windows and should always return an empty
       // FilePath. See currentWorkingDir in Win32System.cpp for more info.
-      CHECK(cwd.empty());
+      CHECK(cwd.isEmpty());
 
       TerminateProcess(pi.hProcess, 1);
       WaitForSingleObject(pi.hProcess, INFINITE);
@@ -232,14 +231,14 @@ TEST_CASE("Win32SystemTests")
 
       // Start the child process.
       CHECK(CreateProcess(
-               NULL,          // No module name (use command line)
+               nullptr,       // No module name (use command line)
                &(cmdBuf[0]),  // Command
-               NULL,          // Process handle not inheritable
-               NULL,          // Thread handle not inheritable
+               nullptr,       // Process handle not inheritable
+               nullptr,       // Thread handle not inheritable
                FALSE,         // Set handle inheritance to FALSE
                0,             // No creation flags
-               NULL,          // Use parent's environment block
-               NULL,          // Use parent's starting directory
+               nullptr,       // Use parent's environment block
+               nullptr,       // Use parent's starting directory
                &si,           // Pointer to STARTUPINFO structure
                &pi));         // Pointer to PROCESS_INFORMATION structure
 

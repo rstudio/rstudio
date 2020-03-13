@@ -1,7 +1,7 @@
 /*
  * SessionSnippets.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -15,13 +15,13 @@
 
 #include "SessionSnippets.hpp"
 
-#include <core/Error.hpp>
+#include <shared_core/Error.hpp>
 #include <core/Exec.hpp>
 #include <core/FileSerializer.hpp>
-#include <core/json/Json.hpp>
+#include <shared_core/json/Json.hpp>
+#include <core/system/Xdg.hpp>
 
 #include <boost/bind.hpp>
-#include <boost/foreach.hpp>
 
 #include <session/SessionModuleContext.hpp>
 
@@ -39,16 +39,21 @@ FilePath s_snippetsMonitoredDir;
 void notifySnippetsChanged()
 {
    Error error = core::writeStringToFile(
-          s_snippetsMonitoredDir.childPath("changed"),
+      s_snippetsMonitoredDir.completeChildPath("changed"),
           core::system::generateUuid());
    if (error)
       LOG_ERROR(error);
 }
 
+FilePath getLegacySnippetsDir()
+{
+   // Hard-coded snippets folder used in RStudio 1.2 and below.
+   return module_context::resolveAliasedPath("~/.R/snippets");
+}
+
 FilePath getSnippetsDir(bool autoCreate = false)
 {
-   FilePath homeDir = module_context::userHomePath();
-   FilePath snippetsDir = homeDir.childPath(".R/snippets");
+   FilePath snippetsDir = core::system::xdg::userConfigDir().completePath("snippets");
    if (autoCreate)
    {
       Error error = snippetsDir.ensureDirectory();
@@ -67,11 +72,11 @@ Error saveSnippets(const json::JsonRpcRequest& request,
       return error;
 
    FilePath snippetsDir = getSnippetsDir(true);
-   BOOST_FOREACH(const json::Value& valueJson, snippetsJson)
+   for (const json::Value& valueJson : snippetsJson)
    {
       if (json::isType<json::Object>(valueJson))
       {
-         const json::Object& snippetJson = valueJson.get_obj();
+         const json::Object& snippetJson = valueJson.getObject();
          std::string mode, contents;
          Error error = json::readObject(snippetJson, "mode", &mode,
                                                      "contents", &contents);
@@ -81,7 +86,8 @@ Error saveSnippets(const json::JsonRpcRequest& request,
             continue;
          }
 
-         error = writeStringToFile(snippetsDir.childPath(mode + ".snippets"),
+         error = writeStringToFile(
+            snippetsDir.completeChildPath(mode + ".snippets"),
                                    contents);
          if (error)
             LOG_ERROR(error);
@@ -99,42 +105,70 @@ bool isSnippetFilePath(const FilePath& filePath,
    if (filePath.isDirectory())
       return false;
    
-   if (filePath.extensionLowerCase() != ".snippets")
+   if (filePath.getExtensionLowerCase() != ".snippets")
       return false;
    
-   *pMode = boost::algorithm::to_lower_copy(filePath.stem());
+   *pMode = boost::algorithm::to_lower_copy(filePath.getStem());
    return true;
 }
 
 Error getSnippetsAsJson(json::Array* pJsonData)
 {
-   FilePath snippetsDir = getSnippetsDir();
-   if (!snippetsDir.exists() || !snippetsDir.isDirectory())
-      return Success();
-   
-   // Get the contents of each file here, and pass that info back up
-   // to the client
-   std::vector<FilePath> snippetPaths;
-   Error error = snippetsDir.children(&snippetPaths);
-   if (error)
-      return error;
-   
-   BOOST_FOREACH(const FilePath& filePath, snippetPaths)
+   std::vector<FilePath> dirs;
+
+   // Add system-level snippets files
+   dirs.push_back(core::system::xdg::systemConfigDir().completePath("snippets"));
+
+   // Add snippets files from older RStudio
+   dirs.push_back(getLegacySnippetsDir());
+
+   // Add user snippets files
+   dirs.push_back(getSnippetsDir());
+
+   for (const auto& snippetsDir: dirs)
    {
-      // bail if this doesn't appear to be a snippets file
-      std::string mode;
-      if (!isSnippetFilePath(filePath, &mode))
+      if (!snippetsDir.exists() || !snippetsDir.isDirectory())
+      {
+         // Skip if no snippets at this location
          continue;
+      }
       
-      std::string contents;
-      error = readStringFromFile(filePath, &contents);
+      // Get the contents of each file here, and pass that info back up
+      // to the client
+      std::vector<FilePath> snippetPaths;
+      Error error = snippetsDir.getChildren(snippetPaths);
       if (error)
          return error;
       
-      json::Object snippetJson;
-      snippetJson["mode"] = mode;
-      snippetJson["contents"] = contents;
-      pJsonData->push_back(snippetJson);
+      for (const FilePath& filePath : snippetPaths)
+      {
+         // bail if this doesn't appear to be a snippets file
+         std::string mode;
+         if (!isSnippetFilePath(filePath, &mode))
+            continue;
+         
+         std::string contents;
+         error = readStringFromFile(filePath, &contents);
+         if (error)
+            return error;
+
+         // Remove (override) any existing snippets for this mode.
+         for (auto it = pJsonData->begin(); it != pJsonData->end(); it++)
+         {
+            json::Object obj = (*it).getObject();
+            if (obj["mode"].getString() == mode)
+            {
+               pJsonData->erase(it);
+               break;
+            }
+         }
+         
+         // Add the snippets for this mode to the collection
+         json::Object snippetJson;
+         snippetJson["mode"] = mode;
+         snippetJson["contents"] = contents;
+         pJsonData->push_back(snippetJson);
+      }
    }
    return Success();
 }
@@ -152,7 +186,7 @@ void checkAndNotifyClientIfSnippetsAvailable()
    }
    
    // if we got some, send them to the client
-   if (!jsonData.empty())
+   if (!jsonData.isEmpty())
    {
       ClientEvent event(client_events::kSnippetsChanged, jsonData);
       module_context::enqueClientEvent(event);
@@ -161,7 +195,7 @@ void checkAndNotifyClientIfSnippetsAvailable()
 
 void onDocUpdated(boost::shared_ptr<source_database::SourceDocument> pDoc)
 {
-   if (s_snippetsMonitoredDir.empty())
+   if (s_snippetsMonitoredDir.isEmpty())
       return;
 
    if (pDoc->path().empty() || pDoc->dirty())

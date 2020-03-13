@@ -1,7 +1,7 @@
 /*
  * Request.hpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-12 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -95,6 +95,7 @@ public:
 
    std::string cookieValue(const std::string& name) const;
    std::string cookieValueFromHeader(const std::string& headerName) const;
+   void addCookie(const std::string& name, const std::string& value);
    
    const Fields& formFields() const;
    std::string formFieldValue(const std::string& name) const;

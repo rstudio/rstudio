@@ -1,7 +1,7 @@
 /*
  * DialogHtmlSanitizer.java
  *
- * Copyright (C) 2009-16 by RStudio, Inc.
+ * Copyright (C) 2009-20 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -56,7 +56,7 @@ public final class DialogHtmlSanitizer implements HtmlSanitizer {
          String tag = null;
          boolean isValidTag = false;
          if (tagEnd > 0) {
-            if (segment.charAt(0) == '/') {
+            if (StringUtil.charAt(segment, 0) == '/') {
                tagStart = 1;
             }
             tag = segment.substring(tagStart, tagEnd).toLowerCase();

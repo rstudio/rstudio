@@ -1,7 +1,7 @@
 /*
  * TextEditingTargetNotebook.java
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -53,7 +53,7 @@ import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.Session;
-import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.views.console.model.ConsoleServerOperations;
 import org.rstudio.studio.client.workbench.views.console.shell.ConsoleLanguageTracker;
 import org.rstudio.studio.client.workbench.views.source.Source;
@@ -271,7 +271,7 @@ public class TextEditingTargetNotebook
          ConsoleServerOperations console,
          SourceServerOperations source,
          Session session,
-         UIPrefs prefs,
+         UserPrefs prefs,
          Commands commands,
          ConsoleLanguageTracker languageTracker,
          Provider<SourceWindowManager> pSourceWindowManager,
@@ -314,7 +314,7 @@ public class TextEditingTargetNotebook
       // subscribe to global rmd output inline preference and sync
       // again when it changes
       releaseOnDismiss_.add(
-         prefs_.showRmdChunkOutputInline().addValueChangeHandler(
+         prefs_.rmdChunkOutputInline().addValueChangeHandler(
             new ValueChangeHandler<Boolean>() {
                @Override
                public void onValueChange(ValueChangeEvent<Boolean> event)
@@ -1345,8 +1345,8 @@ public class TextEditingTargetNotebook
          // otherwise, use the global preference to set the value
          docDisplay_.setShowChunkOutputInline(
             docDisplay_.getModeId() == "mode/rmarkdown" &&
-            RStudioGinjector.INSTANCE.getUIPrefs()
-                                     .showRmdChunkOutputInline().getValue());
+            RStudioGinjector.INSTANCE.getUserPrefs()
+                                     .rmdChunkOutputInline().getValue());
       }
 
       // watch for scope tree changes if showing output inline
@@ -1858,7 +1858,7 @@ public class TextEditingTargetNotebook
    ArrayList<HandlerRegistration> releaseOnDismiss_;
    private Session session_;
    private Provider<SourceWindowManager> pSourceWindowManager_;
-   private UIPrefs prefs_;
+   private UserPrefs prefs_;
    private Commands commands_;
    private ConsoleLanguageTracker languageTracker_;
    private NotebookHtmlRenderer htmlRenderer_;

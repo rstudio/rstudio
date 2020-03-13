@@ -1,7 +1,7 @@
 /*
  * SourceCppOutputPresenter.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-12 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -25,7 +25,7 @@ import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.sourcemarkers.SourceMarker;
 import org.rstudio.studio.client.workbench.WorkbenchView;
-import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.views.BasePresenter;
 import org.rstudio.studio.client.workbench.views.output.sourcecpp.events.SourceCppCompletedEvent;
 import org.rstudio.studio.client.workbench.views.output.sourcecpp.events.SourceCppStartedEvent;
@@ -48,7 +48,7 @@ public class SourceCppOutputPresenter extends BasePresenter
    @Inject
    public SourceCppOutputPresenter(Display view,
                                    FileTypeRegistry fileTypeRegistry,
-                                   UIPrefs uiPrefs)
+                                   UserPrefs uiPrefs)
    {
       super(view);
       view_ = view;
@@ -120,5 +120,5 @@ public class SourceCppOutputPresenter extends BasePresenter
    
    private final Display view_;
    private final FileTypeRegistry fileTypeRegistry_;
-   private final UIPrefs uiPrefs_;
+   private final UserPrefs uiPrefs_;
 }

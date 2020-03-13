@@ -1,7 +1,7 @@
 /*
  * AnsiEscapeCode.java
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-20 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -598,7 +598,7 @@ public class AnsiCode
     
    private void resetForeground()
    {
-      for (int i = 0; i < 255; i++)
+      for (int i = 0; i < 256; i++)
       {
          clazzes_.remove(Color.clazzForColorIndex(i, false /*background*/));
       }
@@ -607,7 +607,7 @@ public class AnsiCode
 
    private void resetBackground()
    {
-      for (int i = 0; i < 255; i++)
+      for (int i = 0; i < 256; i++)
       {
          clazzes_.remove(Color.clazzForColorIndex(i, true /*background*/));
       }

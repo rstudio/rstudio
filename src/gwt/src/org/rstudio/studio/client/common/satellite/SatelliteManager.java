@@ -1,7 +1,7 @@
 /*
  * SatelliteManager.java
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -42,7 +42,7 @@ import org.rstudio.studio.client.common.satellite.events.WindowClosedEvent;
 import org.rstudio.studio.client.common.satellite.events.WindowOpenedEvent;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
-import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.views.source.SourceWindowManager;
 
 import com.google.gwt.core.client.JavaScriptObject;
@@ -62,7 +62,7 @@ public class SatelliteManager implements CloseHandler<Window>
          EventBus events,
          Provider<SourceWindowManager> pSourceWindowManager,
          Provider<ApplicationUncaughtExceptionHandler> pUncaughtExceptionHandler,
-         Provider<UIPrefs> pUIPrefs)
+         Provider<UserPrefs> pUIPrefs)
    {
       session_ = session;
       events_ = events;
@@ -147,7 +147,7 @@ public class SatelliteManager implements CloseHandler<Window>
             {
                // for web mode bring the window to the front, notify
                // it that it has been reactivated, then exit. 
-               if (!Desktop.isDesktop())
+               if (!Desktop.hasDesktopFrame())
                {
                   // don't do this for chrome (since it doesn't allow
                   // window.focus). for chrome we'll just fall through
@@ -268,7 +268,7 @@ public class SatelliteManager implements CloseHandler<Window>
    
    public void activateSatelliteWindow(String name)
    {
-      if (Desktop.isDesktop())
+      if (Desktop.hasDesktopFrame())
       {
          Desktop.getFrame().activateSatelliteWindow(
                SatelliteUtils.getSatelliteWindowName(StringUtil.notNull(name)));
@@ -714,7 +714,7 @@ public class SatelliteManager implements CloseHandler<Window>
       private final WindowEx window_;
    }
  
-   private final Provider<UIPrefs> pUIPrefs_;
+   private final Provider<UserPrefs> pUIPrefs_;
 }
 
 

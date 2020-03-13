@@ -1,7 +1,7 @@
 /*
  * ProgramOptions.cpp
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -17,9 +17,9 @@
 
 #include <iostream>
 
-#include <core/Error.hpp>
+#include <shared_core/Error.hpp>
 #include <core/Log.hpp>
-#include <core/FilePath.hpp>
+#include <shared_core/FilePath.hpp>
 #include <core/system/System.hpp>
 
 using namespace boost::program_options ;
@@ -75,7 +75,7 @@ void parseCommandLine(variables_map& vm,
                       const OptionsDescription& optionsDescription,
                       const options_description& commandLineOptions,
                       int argc,
-                      char * const argv[],
+                      const char * const argv[],
                       std::vector<std::string>* pUnrecognized)
 {
    // parse the command line
@@ -104,8 +104,8 @@ bool parseConfigFile(variables_map& vm,
    // open the config file
    if (!configFile.empty())
    {
-      boost::shared_ptr<std::istream> pIfs;
-      Error error = FilePath(configFile).open_r(&pIfs);
+      std::shared_ptr<std::istream> pIfs;
+      Error error = FilePath(configFile).openForRead(pIfs);
       if (error)
       {
          reportError("Unable to open config file: " + configFile,
@@ -136,7 +136,7 @@ bool parseConfigFile(variables_map& vm,
 
 ProgramStatus read(const OptionsDescription& optionsDescription,
                    int argc,
-                   char * const argv[],
+                   const char * const argv[],
                    std::vector<std::string>* pUnrecognized,
                    bool* pHelp,
                    bool allowUnregisteredConfigOptions,

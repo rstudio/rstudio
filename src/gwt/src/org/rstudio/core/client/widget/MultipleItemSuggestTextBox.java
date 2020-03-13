@@ -1,7 +1,7 @@
 /*
  * MultipleItemSuggestTextBox.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,7 +14,6 @@
  */
 package org.rstudio.core.client.widget;
 
-
 import java.util.ArrayList;
 import java.util.List;
 
@@ -22,6 +21,7 @@ import org.rstudio.core.client.StringUtil;
 
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.user.client.ui.TextBoxBase;
+import org.rstudio.core.client.dom.DomUtils;
 
 // TextBox designed for use with SuggestBox that supports the entry
 // of multiple items
@@ -31,7 +31,7 @@ public class MultipleItemSuggestTextBox extends TextBoxBase
    {
       super(Document.get().createTextInputElement());
       setStyleName("gwt-TextBox");
-      getElement().setAttribute("spellcheck", "false");
+      DomUtils.disableSpellcheck(this);
    }
    
    public List<String> getItems()

@@ -1,7 +1,7 @@
 /*
  * RmdOutputFramePane.java
  *
- * Copyright (C) 2009-14 by RStudio, Inc.
+ * Copyright (C) 2009-14 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -20,11 +20,11 @@ import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.RStudioFrame;
 import org.rstudio.studio.client.application.events.EventBus;
-import org.rstudio.studio.client.rmarkdown.RmdOutput;
 import org.rstudio.studio.client.rmarkdown.model.RMarkdownServerOperations;
 import org.rstudio.studio.client.rmarkdown.model.RmdPreviewParams;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.shiny.ShinyFrameHelper;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.views.viewer.events.ViewerClearedEvent;
 import org.rstudio.studio.client.workbench.views.viewer.events.ViewerNavigatedEvent;
 import org.rstudio.studio.client.workbench.views.viewer.events.ViewerPreviewRmdEvent;
@@ -115,9 +115,9 @@ public class RmdOutputFramePane extends RmdOutputFrameBase
    }
 
    @Override
-   public int getViewerType()
+   public String getViewerType()
    {
-      return RmdOutput.RMD_VIEWER_TYPE_PANE;
+      return UserPrefs.RMD_VIEWER_TYPE_PANE;
    }
    
    @Override

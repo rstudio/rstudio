@@ -1,7 +1,7 @@
 /*
  * KeyMap.java
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-20 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -30,7 +30,7 @@ import org.rstudio.core.client.container.SafeMap;
 public class KeyMap
 {
    public static enum KeyMapType {
-      ADDIN, EDITOR, APPLICATION;
+      ADDIN, EDITOR, APPLICATION
    }
    
    public interface CommandBinding
@@ -132,7 +132,7 @@ public class KeyMap
       return keys;
    }
    
-   public CommandBinding getActiveBinding(KeySequence keys)
+   public CommandBinding getActiveBinding(KeySequence keys, boolean includeDisabled)
    {
       List<CommandBinding> commands = getBindings(keys);
       
@@ -140,7 +140,7 @@ public class KeyMap
          return null;
       
       for (CommandBinding command : commands)
-         if (command.isEnabled())
+         if (command.isEnabled() || includeDisabled)
             return command;
       
       return null;

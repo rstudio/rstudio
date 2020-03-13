@@ -1,7 +1,7 @@
 /*
  * RmdTemplateOptionsWidget.java
  *
- * Copyright (C) 2009-14 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -19,6 +19,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.google.gwt.aria.client.Id;
+import com.google.gwt.aria.client.Roles;
+import com.google.gwt.dom.client.Style;
+import com.google.gwt.user.client.DOM;
 import org.rstudio.core.client.JsArrayUtil;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.theme.res.ThemeResources;
@@ -67,6 +71,7 @@ public class RmdTemplateOptionsWidget extends Composite
 
    public RmdTemplateOptionsWidget(boolean allowFormatChange)
    {
+      optionsTabs_ = new TabLayoutPanel(30, Style.Unit.PX, "R Markdown Options");
       initWidget(uiBinder.createAndBindUi(this));
       style.ensureInjected();
       allowFormatChange_ = allowFormatChange;
@@ -225,6 +230,13 @@ public class RmdTemplateOptionsWidget extends Composite
             panel = new FlowPanel();
             scrollPanel.add(panel);
             optionsTabs_.add(scrollPanel, new Label(category));
+
+            // associate tabpanel widget with controlling tab
+            Roles.getTabpanelRole().set(scrollPanel.getElement());
+            String tabId = DOM.createUniqueId();
+            optionsTabs_.setTabId(scrollPanel, tabId);
+            Roles.getTabpanelRole().setAriaLabelledbyProperty(scrollPanel.getElement(), Id.of(tabId));
+
             tabs_.put(category, panel);
          }
 
@@ -401,6 +413,6 @@ public class RmdTemplateOptionsWidget extends Composite
    @UiField ListBox listFormats_;
    @UiField Label labelFormatNotes_;
    @UiField Label labelFormatName_;
-   @UiField TabLayoutPanel optionsTabs_;
+   @UiField(provided=true) TabLayoutPanel optionsTabs_;
    @UiField OptionsStyle style;
 }

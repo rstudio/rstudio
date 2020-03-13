@@ -7,6 +7,7 @@ RUN yum install -y \
     ant \
     boost-devel \
     bzip2-devel \
+    curl \
     expect \
     fakeroot \
     fuse-libs \
@@ -18,6 +19,8 @@ RUN yum install -y \
     java-1.8.0-openjdk \
     java-1.8.0-openjdk-devel \
     libcurl-devel \
+    libacl-devel \
+    libcap-devel \ 
     libffi \
     libuuid-devel \
     libXcursor-devel \
@@ -27,6 +30,8 @@ RUN yum install -y \
     make \
     mariadb-libs \
     openssl-devel \
+    p7zip \
+    p7zip-plugins \
     pam-devel \
     pango-devel \
     patchelf \
@@ -37,7 +42,8 @@ RUN yum install -y \
     sudo \
     wget \
     xml-commons-apis \
-    zlib-devel
+    zlib-devel \
+    libuser-devel
 
 # add scl repo and install additional dependencies
 RUN yum install -y \
@@ -76,15 +82,13 @@ ENV RSTUDIO_GITHUB_LOGIN=$GITHUB_LOGIN
 
 # install common dependencies
 RUN mkdir -p /opt/rstudio-tools/dependencies/common
-COPY dependencies/common/* /opt/rstudio-tools/dependencies/common/
+COPY dependencies/common/ /opt/rstudio-tools/dependencies/common/
 RUN cd /opt/rstudio-tools/dependencies/common && scl enable llvm-toolset-7 "/bin/bash ./install-common"
 
 # install Qt SDK
-COPY dependencies/linux/install-qt-sdk /tmp/
-RUN mkdir -p /opt/RStudio-QtSDK && \
-    export QT_SDK_DIR=/opt/RStudio-QtSDK/Qt5.12.1 && \
-    export QT_QPA_PLATFORM=minimal && \
-    /tmp/install-qt-sdk
+COPY dependencies/common/install-qt.sh /tmp/
+COPY dependencies/linux/install-qt-linux /tmp/
+RUN cd /tmp && /bin/bash ./install-qt-linux
 
 # remove any previous users with conflicting IDs
 ARG JENKINS_GID=999

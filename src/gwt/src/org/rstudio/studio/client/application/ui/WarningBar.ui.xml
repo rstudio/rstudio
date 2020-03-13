@@ -1,31 +1,33 @@
 <ui:UiBinder xmlns:ui='urn:ui:com.google.gwt.uibinder'
-             xmlns:g='urn:import:com.google.gwt.user.client.ui'>
+             xmlns:g='urn:import:com.google.gwt.user.client.ui'
+             xmlns:rw='urn:import:org.rstudio.core.client.widget'>
 
    <ui:with field="res" type="org.rstudio.studio.client.application.ui.WarningBar.Resources"/>
    <ui:with field="themeRes" type="org.rstudio.core.client.theme.res.ThemeResources"/>
 
    <g:HTMLPanel>
-   <table class="{res.styles.warningBar}"
+   <table class="{res.styles.warningBar}" role="presentation"
           cellpadding="0" cellspacing="0" border="0" width="100%">
       <tr>
-         <td class="{res.styles.left}"></td>
+         <td class="{res.styles.left}"/>
          <td class="{res.styles.center}" valign="top">
-            <g:Image resource="{res.warningIconSmall2x}"
+            <rw:DecorativeImage resource="{res.warningIconSmall2x}"
                      width="21"
                      height="17"
                      styleName="{res.styles.warningIcon}"/>
             <span ui:field="label_" class="{res.styles.label}"/>
+            <div ui:field="live_" class="{themeRes.themeStyles.visuallyHidden}"/>
             <g:Button ui:field="moreButton_"/>
          </td>
          <td class="{res.styles.center}" align="right">
-            <g:Image ui:field="dismiss_"
+            <rw:ImageButton ui:field="dismiss_"
                      resource="{themeRes.closeTab2x}"
                      width="9"
                      height="9"
-                     styleName="{res.styles.dismiss}"
-                     title="Dismiss"/>
+                     addStyleNames="{res.styles.dismiss}"
+                     description="Dismiss Warning Bar"/>
          </td>
-         <td class="{res.styles.right}"></td>
+         <td class="{res.styles.right}"/>
       </tr>
    </table>
    </g:HTMLPanel>

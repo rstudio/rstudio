@@ -1,7 +1,7 @@
 /*
  * ConnectionCodePanel.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-20 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -17,10 +17,13 @@
 package org.rstudio.studio.client.workbench.views.connections.ui;
 
 import org.rstudio.core.client.BrowseCap;
+import org.rstudio.core.client.theme.res.ThemeStyles;
+import org.rstudio.core.client.widget.FormLabel;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.reditor.EditorLanguage;
 import org.rstudio.studio.client.workbench.views.connections.model.ConnectionOptions;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditorWidget;
+import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditorWidget.TabKeyMode;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.EditSession;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.CursorChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.CursorChangedHandler;
@@ -33,7 +36,6 @@ import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.HasHorizontalAlignment;
 import com.google.gwt.user.client.ui.HasVerticalAlignment;
 import com.google.gwt.user.client.ui.HorizontalPanel;
-import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.ListBox;
 import com.google.gwt.user.client.ui.RequiresResize;
 import com.google.gwt.user.client.ui.VerticalPanel;
@@ -50,19 +52,20 @@ public class ConnectionCodePanel extends Composite implements RequiresResize
    {
       RStudioGinjector.INSTANCE.injectMembers(this);
       container_ = new VerticalPanel();
-      container_.setVerticalAlignment(HasVerticalAlignment.ALIGN_TOP);      
+      container_.setVerticalAlignment(HasVerticalAlignment.ALIGN_TOP);
       HorizontalPanel codeHeaderPanel = new HorizontalPanel();
       codeHeaderPanel.addStyleName(RES.styles().codePanelHeader());
       codeHeaderPanel.setWidth("100%");
-      Label codeLabel = new Label("Connection:");
-      codeHeaderPanel.add(codeLabel);
+      codeLabel_ = new FormLabel("Connection:");
+      codeHeaderPanel.add(codeLabel_);
       codeHeaderPanel.setCellHorizontalAlignment(
-               codeLabel, HasHorizontalAlignment.ALIGN_LEFT);
+               codeLabel_, HasHorizontalAlignment.ALIGN_LEFT);
       HorizontalPanel connectPanel = new HorizontalPanel();
-      Label connectLabel = new Label("Connect from:");
+      FormLabel connectLabel = new FormLabel("Connect from:");
       connectLabel.addStyleName(RES.styles().leftLabel());
       connectPanel.add(connectLabel);
       connectVia_ = new ListBox();
+      connectLabel.setFor(connectVia_);
       updateConnectViaUI_ = new Command() {
          @Override
          public void execute()
@@ -104,6 +107,14 @@ public class ConnectionCodePanel extends Composite implements RequiresResize
             connectPanel, HasHorizontalAlignment.ALIGN_RIGHT);
       if (connectViaUI)
          container_.add(codeHeaderPanel);
+      else
+      {
+         // accessibility requires a label for the editor, so put the one we're not using 
+         // into our container
+         codeHeaderPanel.remove(codeLabel_);
+         container_.add(codeLabel_);
+         codeLabel_.setStyleName(ThemeStyles.INSTANCE.visuallyHidden());
+      }
      
       initWidget(container_);
    }
@@ -149,6 +160,8 @@ public class ConnectionCodePanel extends Composite implements RequiresResize
       
       // create new code viewer
       codeViewer_ = new AceEditorWidget(false);
+      codeViewer_.setTabKeyMode(TabKeyMode.AlwaysMoveFocus);
+      codeLabel_.setFor(codeViewer_.getTextInputElement());
       codeViewer_.addStyleName(RES.styles().codeViewer());
       codeViewer_.getEditor().getSession().setEditorMode(
             EditorLanguage.LANG_R.getParserName(), false);
@@ -202,6 +215,7 @@ public class ConnectionCodePanel extends Composite implements RequiresResize
    
    private VerticalPanel container_;
    private ListBox connectVia_;
+   private FormLabel codeLabel_;
    private AceEditorWidget codeViewer_;
    private boolean settingCode_ = false;
    private final Command updateConnectViaUI_;

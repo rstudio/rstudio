@@ -1,7 +1,7 @@
 /*
  * SessionClientEventService.cpp
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -19,7 +19,7 @@
 
 #include <core/BoostThread.hpp>
 #include <core/Log.hpp>
-#include <core/Error.hpp>
+#include <shared_core/Error.hpp>
 #include <core/BoostErrors.hpp>
 #include <core/Thread.hpp>
 #include <core/system/System.hpp>
@@ -45,8 +45,8 @@ const int kLastChanceWaitSeconds = 4;
 
 bool hasEventIdLessThanOrEqualTo(const json::Value& event, int targetId)
 {
-   const json::Object& eventJSON = event.get_obj();
-   int eventId = (*eventJSON.find("id")).value().get_int();
+   const json::Object& eventJSON = event.getObject();
+   int eventId = (*eventJSON.find("id")).getValue().getInt();
    return eventId <= targetId;
 }
          
@@ -156,7 +156,7 @@ bool ClientEventService::havePendingClientEvents()
 {
    LOCK_MUTEX(mutex_)
    {
-      return !clientEvents_.empty();
+      return !clientEvents_.isEmpty();
    }
    END_LOCK_MUTEX
 

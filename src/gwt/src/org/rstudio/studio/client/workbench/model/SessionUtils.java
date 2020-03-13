@@ -1,7 +1,7 @@
 /*
  * SessionUtils.java
  *
- * Copyright (C) 2009-15 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,22 +14,22 @@
  */
 package org.rstudio.studio.client.workbench.model;
 
-import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserState;
 
 public class SessionUtils
 {
-   public static boolean showPublishUi(Session session, UIPrefs prefs)
+   public static boolean showPublishUi(Session session, UserState state)
    {
       return session.getSessionInfo().getAllowPublish() &&
-            prefs.showPublishUi().getValue();
+            state.showPublishUi().getValue();
    }
    
    // Whether to show UI that publishes content to an external service. Note
    // that the server takes care of ensuring that this is false if showPublishUi
    // is false, so it's unnecessary to check both values.
-   public static boolean showExternalPublishUi(Session session, UIPrefs prefs)
+   public static boolean showExternalPublishUi(Session session, UserState state)
    {
       return session.getSessionInfo().getAllowExternalPublish() &&
-            prefs.showPublishUi().getValue();
+            state.showPublishUi().getValue();
    }
 }

@@ -1,7 +1,7 @@
 /*
  * RTokenizer.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-12 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -34,7 +34,7 @@
 #include <iostream>
 #include <sstream>
 
-#include <core/Error.hpp>
+#include <shared_core/Error.hpp>
 #include <core/Log.hpp>
 #include <core/StringUtils.hpp>
 
@@ -52,7 +52,7 @@ private:
    TokenPatterns()
       : NUMBER(L"[0-9]*(\\.[0-9]*)?([eE][+-]?[0-9]*)?[Li]?"),
         HEX_NUMBER(L"0x[0-9a-fA-F]*L?"),
-        USER_OPERATOR(L"%[^%]*%"),
+        USER_OPERATOR(L"%[^\\n%]*%"),
         QUOTED_IDENTIFIER(L"`[^`]*`"),
         UNTIL_END_QUOTE(L"[\\\\\'\"]"),
         WHITESPACE(L"[\\s\x00A0\x3000]+"),

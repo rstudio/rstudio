@@ -1,7 +1,7 @@
 /*
  * DefinitionIndex.cpp
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -16,8 +16,9 @@
 #include "DefinitionIndex.hpp"
 
 #include <deque>
+#include <gsl/gsl>
 
-#include <core/FilePath.hpp>
+#include <shared_core/FilePath.hpp>
 #include <core/DateTime.hpp>
 #include <core/PerformanceTimer.hpp>
 #include <core/FileSerializer.hpp>
@@ -219,8 +220,8 @@ void fileChangeHandler(const core::system::FileChangeEvent& event)
                                index,
                                file.c_str(),
                                argsArray.args(),
-                               argsArray.argCount(),
-                               NULL, 0, // no unsaved files
+                               gsl::narrow_cast<int>(argsArray.argCount()),
+                               nullptr, 0, // no unsaved files
                                CXTranslationUnit_None |
                                CXTranslationUnit_Incomplete);
 
@@ -291,7 +292,7 @@ std::ostream& operator<<(std::ostream& os, const CppDefinition& definition)
    os << definition.name << " ";
 
    // file location
-   os << "(" << definition.location.filePath.filename() << ":"
+   os << "(" << definition.location.filePath.getFilename() << ":"
       << definition.location.line << ":" << definition.location.column << ") ";
 
    // USR
@@ -338,7 +339,7 @@ FileLocation findDefinitionLocation(const FileLocation& location)
    {
       // first inspect translation units we have an in-memory index for
       TranslationUnits units = rSourceIndex().getIndexedTranslationUnits();
-      BOOST_FOREACH(const TranslationUnits::value_type& unit, units)
+      for (const TranslationUnits::value_type& unit : units)
       {
          // search for the definition
          CppDefinition def;
@@ -358,10 +359,9 @@ FileLocation findDefinitionLocation(const FileLocation& location)
 
       // if we didn't find it there then look for it in our index
       // of all saved files
-      BOOST_FOREACH(const DefinitionsByFile::value_type& defs,
-                    s_definitionsByFile)
+      for (const DefinitionsByFile::value_type& defs : s_definitionsByFile)
       {
-         BOOST_FOREACH(const CppDefinition& def, defs.second.definitions)
+         for (const CppDefinition& def : defs.second.definitions)
          {
             if (def.USR == USR)
                return def.location;
@@ -381,7 +381,7 @@ FileLocation findDefinitionLocation(const FileLocation& location)
    // return the location
    SourceLocation loc = cursor.getSourceLocation();
    unsigned line, column;
-   std::string filename = location.filePath.absolutePath();
+   std::string filename = location.filePath.getAbsolutePath();
    loc.getSpellingLocation(&filename, &line, &column);
    return FileLocation(FilePath(filename), line, column);
 }
@@ -417,7 +417,7 @@ json::Object cppDefinitionToJson(const CppDefinition& definition)
    definitionJson["kind"] = numberTo<int>(definition.kind, 0);
    definitionJson["parent_name"] = definition.parentName;
    definitionJson["name"] = definition.name;
-   definitionJson["file"] = definition.location.filePath.absolutePath();
+   definitionJson["file"] = definition.location.filePath.getAbsolutePath();
    definitionJson["line"] = numberTo<int>(definition.location.line, 1);
    definitionJson["column"] = numberTo<int>(definition.location.column, 1);
    return definitionJson;
@@ -457,7 +457,7 @@ CppDefinition cppDefinitionFromJson(const json::Object& object)
 
 FilePath definitionIndexFilePath()
 {
-   return module_context::scopedScratchPath().childPath("cpp-definition-cache");
+   return module_context::scopedScratchPath().completeChildPath("cpp-definition-cache");
 }
 
 void loadDefinitionIndex()
@@ -477,14 +477,14 @@ void loadDefinitionIndex()
    }
 
    json::Value indexValueJson;
-   if (!json::parse(contents, &indexValueJson) ||
+   if (indexValueJson.parse(contents) ||
        !json::isType<json::Array>(indexValueJson))
    {
       LOG_ERROR_MESSAGE("Error parsing definition index: " + contents);
       return;
    }
 
-   const json::Array& indexJson = indexValueJson.get_array();
+   const json::Array& indexJson = indexValueJson.getArray();
    for (const json::Value& definitionsJson : indexJson)
    {
       if (!json::isType<json::Object>(definitionsJson))
@@ -496,7 +496,7 @@ void loadDefinitionIndex()
       json::Array defsArrayJson;
       double fileLastWrite;
       CppDefinitions definitions;
-      Error error = json::readObject(definitionsJson.get_obj(),
+      Error error = json::readObject(definitionsJson.getObject(),
                                      "file", &definitions.file,
                                      "file_last_write", &fileLastWrite,
                                      "definitions", &defsArrayJson);
@@ -511,7 +511,7 @@ void loadDefinitionIndex()
       if (!FilePath::exists(definitions.file))
          continue;
 
-      BOOST_FOREACH(const json::Value& defJson, defsArrayJson)
+      for (const json::Value& defJson : defsArrayJson)
       {
          if (!json::isType<json::Object>(defJson))
          {
@@ -519,7 +519,7 @@ void loadDefinitionIndex()
             continue;
          }
 
-         CppDefinition definition = cppDefinitionFromJson(defJson.get_obj());
+         CppDefinition definition = cppDefinitionFromJson(defJson.getObject());
          if (!definition.empty())
             definitions.definitions.push_back(definition);
       }
@@ -534,7 +534,7 @@ void saveDefinitionIndex()
    using namespace safe_convert;
 
    json::Array indexJson;
-   BOOST_FOREACH(const DefinitionsByFile::value_type& defs, s_definitionsByFile)
+   for (const DefinitionsByFile::value_type& defs : s_definitionsByFile)
    {
       const CppDefinitions& definitions = defs.second;
       json::Object definitionsJson;
@@ -551,9 +551,8 @@ void saveDefinitionIndex()
       indexJson.push_back(definitionsJson);
    }
 
-   std::ostringstream ostr;
-   json::writeFormatted(indexJson, ostr);
-   Error error = writeStringToFile(definitionIndexFilePath(), ostr.str());
+   ;
+   Error error = writeStringToFile(definitionIndexFilePath(), indexJson.writeFormatted());
    if (error)
       LOG_ERROR(error);
 }
@@ -580,7 +579,7 @@ void searchDefinitions(const std::string& term,
    // first search translation units we have an in-memory index for
    // (this will reflect unsaved changes in editor buffers)
    TranslationUnits units = rSourceIndex().getIndexedTranslationUnits();
-   BOOST_FOREACH(const TranslationUnits::value_type& unit, units)
+   for (const TranslationUnits::value_type& unit : units)
    {
       // search for matching definitions
       DefinitionVisitor visitor =
@@ -598,13 +597,13 @@ void searchDefinitions(const std::string& term,
    // for within the in-memory index)
    // if we didn't find it there then look for it in our index
    // of all saved files
-   BOOST_FOREACH(const DefinitionsByFile::value_type& defs, s_definitionsByFile)
+   for (const DefinitionsByFile::value_type& defs : s_definitionsByFile)
    {
       // skip files we've already searched
       if (units.find(defs.first) != units.end())
          continue;
 
-      BOOST_FOREACH(const CppDefinition& def, defs.second.definitions)
+      for (const CppDefinition& def : defs.second.definitions)
       {
          if (matches(term, pattern, def))
             pDefinitions->push_back(def);
@@ -622,8 +621,8 @@ Error initializeDefinitionIndex()
 
       // check for src and inst/include dirs
       FilePath pkgPath = projects::projectContext().buildTargetPath();
-      FilePath srcPath = pkgPath.childPath("src");
-      FilePath includePath = pkgPath.childPath("inst/include");
+      FilePath srcPath = pkgPath.completeChildPath("src");
+      FilePath includePath = pkgPath.completeChildPath("inst/include");
       if (srcPath.exists() || includePath.exists())
       {
          // create an incremental file change handler (on the heap so that it

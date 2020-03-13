@@ -1,7 +1,7 @@
 /*
  * ProjectPackratPreferencesPane.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -20,6 +20,7 @@ import java.util.List;
 
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.js.JsUtil;
+import org.rstudio.core.client.prefs.RestartRequirement;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.FixedTextArea;
 import org.rstudio.core.client.widget.LabelWithHelp;
@@ -132,10 +133,6 @@ public class ProjectPackratPreferencesPane extends ProjectPreferencesPane
         add(chkUseCache_);
         
         panelExternalPackages_ = new VerticalPanel();
-        panelExternalPackages_.add(new LabelWithHelp(
-              "External packages (comma separated):",
-              "packrat_external_packages",
-              false));
         taExternalPackages_ = new FixedTextArea(3);
         taExternalPackages_.addStyleName(styles.externalPackages());
         taExternalPackages_.setText(
@@ -147,6 +144,10 @@ public class ProjectPackratPreferencesPane extends ProjectPreferencesPane
                     ),
                     ", "));
         taExternalPackages_.getElement().getStyle().setMarginBottom(8, Unit.PX);
+        panelExternalPackages_.add(new LabelWithHelp(
+            "External packages (comma separated):",
+            "packrat_external_packages",
+            false, "Help on external packages", taExternalPackages_));
         panelExternalPackages_.add(taExternalPackages_);
         add(panelExternalPackages_);
         
@@ -183,7 +184,7 @@ public class ProjectPackratPreferencesPane extends ProjectPreferencesPane
    }
 
    @Override
-   public boolean onApply(RProjectOptions options)
+   public RestartRequirement onApply(RProjectOptions options)
    {
       RProjectPackratOptions packratOptions = options.getPackratOptions();
       packratOptions.setUsePackrat(chkUsePackrat_.getValue());
@@ -197,7 +198,7 @@ public class ProjectPackratPreferencesPane extends ProjectPreferencesPane
       packratOptions.setLocalRepos(
             JsUtil.toJsArrayString(widgetLocalRepos_.getItems()));
             
-      return false;
+      return new RestartRequirement();
    }
    
    

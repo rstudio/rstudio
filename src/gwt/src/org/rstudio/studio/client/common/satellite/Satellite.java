@@ -1,7 +1,7 @@
 /*
  * Satellite.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-12 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -26,7 +26,7 @@ import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.events.SessionInitEvent;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
-import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.event.dom.client.FocusEvent;
@@ -51,7 +51,7 @@ public class Satellite implements HasCloseHandlers<Satellite>
    public Satellite(Session session,
                     EventBus eventBus,
                     Commands commands,
-                    Provider<UIPrefs> pUIPrefs)
+                    Provider<UserPrefs> pUIPrefs)
    {
       session_ = session;
       pUIPrefs_ = pUIPrefs;
@@ -72,7 +72,7 @@ public class Satellite implements HasCloseHandlers<Satellite>
       // NOTE: Desktop doesn't seem to get onWindowClosing events in Qt 4.8
       // so we instead rely on an explicit callback from the desktop frame
       // to notifyRStudioSatelliteClosing
-      if (!Desktop.isDesktop())
+      if (!Desktop.hasDesktopFrame())
       {
          Window.addWindowClosingHandler(new ClosingHandler() {
             @Override
@@ -220,7 +220,7 @@ public class Satellite implements HasCloseHandlers<Satellite>
    
    public void focusMainWindow() 
    {
-      if (Desktop.isDesktop())
+      if (Desktop.hasDesktopFrame())
          focusMainWindowDesktop();
       else
          focusMainWindowWeb();
@@ -292,7 +292,7 @@ public class Satellite implements HasCloseHandlers<Satellite>
    }
    
    private final Session session_;
-   private final Provider<UIPrefs> pUIPrefs_;
+   private final Provider<UserPrefs> pUIPrefs_;
    private final ClientEventDispatcher eventDispatcher_;
    private final HandlerManager handlerManager_ = new HandlerManager(this);
    private final Commands commands_;

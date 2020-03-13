@@ -1,7 +1,7 @@
 /*
  * RSexp.cpp
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -17,14 +17,16 @@
 #define RSTUDIO_DEBUG_LABEL "rsexp"
 // #define RSTUDIO_ENABLE_DEBUG_MACROS
 
-#include <r/RSexp.hpp>
+#include <gsl/gsl>
+
 #include <r/RInternal.hpp>
+#include <r/RJson.hpp>
+#include <r/RSexp.hpp>
 
 #include <core/Algorithm.hpp>
 
 #include <boost/bind.hpp>
 #include <boost/function.hpp>
-#include <boost/foreach.hpp>
 #include <boost/numeric/conversion/cast.hpp>
 #include <boost/optional.hpp>
 
@@ -315,8 +317,8 @@ Error asPrimitiveEnvironment(SEXP envirSEXP,
       return error;
    
    // ensure that we actually succeeded in producing a primitive environment
-   if (pTargetSEXP == NULL  ||
-       *pTargetSEXP == NULL ||
+   if (pTargetSEXP == nullptr  ||
+       *pTargetSEXP == nullptr ||
        !isPrimitiveEnvironment(*pTargetSEXP))
    {
       return Error(errc::UnexpectedDataTypeError, ERROR_LOCATION);
@@ -358,7 +360,7 @@ void listEnvironment(SEXP env,
    }
 
    // populate pVariables
-   BOOST_FOREACH(const std::string& var, vars)
+   for (const std::string& var : vars)
    {
       SEXP varSEXP = R_NilValue;
       // Merely calling Rf_findVar on an active binding will fire the binding.
@@ -733,7 +735,7 @@ bool isNullExternalPointer(SEXP object)
 {
    return
          isExternalPointer(object) &&
-         R_ExternalPtrAddr(object) == NULL;
+         R_ExternalPtrAddr(object) == nullptr;
 }
 
 SEXP makeWeakRef(SEXP key, SEXP val, R_CFinalizer_t fun, Rboolean onexit)
@@ -784,6 +786,11 @@ core::Error getNamedListSEXP(SEXP listSEXP,
       error.addProperty("element", name);
       return error;
    }
+}
+
+Error extract(SEXP valueSEXP, core::json::Value* pJson)
+{
+   return r::json::jsonValueFromObject(valueSEXP, pJson);
 }
 
 Error extract(SEXP valueSEXP, int* pInt)
@@ -902,37 +909,84 @@ SEXP create(SEXP valueSEXP, Protect* pProtect)
    pProtect->add(valueSEXP);
    return valueSEXP;
 }
+
+namespace {
+
+template <typename T>
+SEXP createInteger(const core::json::Value& value, const std::string& type, Protect* pProtect)
+{
+   try
+   {
+      int casted = boost::numeric_cast<int>(value.getValue<T>());
+      return create(casted, pProtect);
+   }
+   catch(const boost::bad_numeric_cast& e)
+   {
+      LOG_DEBUG_MESSAGE("Failed to cast from " + type + " to int: " + e.what());
+      try
+      {
+         double casted = boost::numeric_cast<double>(value.getValue<T>());
+         return create(casted, pProtect);
+      }
+      CATCH_UNEXPECTED_EXCEPTION
+   }
+   CATCH_UNEXPECTED_EXCEPTION
+
    
-SEXP create(const json::Value& value, Protect* pProtect)
+   // only reached if an exception occurs
+   return R_NilValue;
+}
+
+} // end anonymous namespace
+
+SEXP create(const core::json::Value& value, Protect* pProtect)
 {
    // call embedded create function based on type
-   if (value.type() == json::StringType)
+   if (value.getType() == core::json::Type::STRING)
    {
-      return create(value.get_str(), pProtect);
+      return create(value.getString(), pProtect);
    }
-   else if (value.type() == json::IntegerType)
+   else if (value.getType() == core::json::Type::INTEGER)
    {
-      return create(value.get_int(), pProtect);
+      if (value.isUInt64())
+      {
+         return createInteger<uint64_t>(value, "uint64_t", pProtect);
+      }
+      else if (value.isInt64())
+      {
+         return createInteger<int64_t>(value, "int64_t", pProtect);
+      }
+      else if (value.isUInt())
+      {
+         return createInteger<uint32_t>(value, "uint32_t", pProtect);
+      }
+      else if (value.isInt())
+      {
+         return createInteger<int32_t>(value, "int32_t", pProtect);
+      }
+      else
+      {
+         std::stringstream ss;
+         ss << "unhandled JSON data type " << value.getType();
+         LOG_WARNING_MESSAGE(ss.str());
+         return R_NilValue;
+      }
    }
-   else if (value.type() == json::RealType)
+   else if (value.getType() == core::json::Type::REAL)
    {
-      return create(value.get_real(), pProtect);
+      return create(value.getDouble(), pProtect);
    }
-   else if (value.type() == json::BooleanType)
+   else if (value.getType() == core::json::Type::BOOL)
    {
-      return create(value.get_bool(), pProtect);
+      return create(value.getBool(), pProtect);
    }
-   else if (value.type() == json::ArrayType)
+   else if (value.getType() == core::json::Type::ARRAY)
    {
-      return create(value.get_array(), pProtect);
+      return create(value.getArray(), pProtect);
    }
-   else if (value.type() == json::ObjectType)
+   else if (value.getType() == core::json::Type::OBJECT)
    {
-      return create(value.get_obj(), pProtect);
-   }
-   else if (value.is_null())
-   {
-      return R_NilValue;
+      return create(value.getObject(), pProtect);
    }
    else
    {
@@ -977,14 +1031,14 @@ SEXP create(bool value, Protect* pProtect)
    return valueSEXP;
 }
 
-SEXP create(const json::Array& value, Protect* pProtect)
+SEXP create(const core::json::Array& value, Protect* pProtect)
 {
    // create the list
    SEXP listSEXP;
-   pProtect->add(listSEXP = Rf_allocVector(VECSXP, value.size()));
+   pProtect->add(listSEXP = Rf_allocVector(VECSXP, value.getSize()));
    
    // add each array element to it
-   for (size_t i=0; i<value.size(); i++)
+   for (size_t i=0; i<value.getSize(); i++)
    {
       SEXP valueSEXP = create(value[i], pProtect);
       SET_VECTOR_ELT(listSEXP, i,  valueSEXP);
@@ -992,25 +1046,25 @@ SEXP create(const json::Array& value, Protect* pProtect)
    return listSEXP;
 }
    
-SEXP create(const json::Object& value, Protect* pProtect)
+SEXP create(const core::json::Object& value, Protect* pProtect)
 {
    // create the list
    SEXP listSEXP ;
-   pProtect->add(listSEXP = Rf_allocVector(VECSXP, value.size()));
+   pProtect->add(listSEXP = Rf_allocVector(VECSXP, value.getSize()));
    
    // build list of names
    SEXP namesSEXP ;
-   pProtect->add(namesSEXP = Rf_allocVector(STRSXP, value.size()));
+   pProtect->add(namesSEXP = Rf_allocVector(STRSXP, value.getSize()));
    
    // add each object field to it
    int index = 0;
-   for (const json::Member& member : value)
+   for (const core::json::Object::Member& member : value)
    {
       // set name
-      SET_STRING_ELT(namesSEXP, index, Rf_mkChar(member.name().c_str()));
+      SET_STRING_ELT(namesSEXP, index, Rf_mkChar(member.getName().c_str()));
       
       // set value
-      SEXP valueSEXP = create(member.value(), pProtect);
+      SEXP valueSEXP = create(member.getValue(), pProtect);
       SET_VECTOR_ELT(listSEXP, index,  valueSEXP);
       
       // increment element index
@@ -1192,7 +1246,7 @@ SEXP create(const std::set<std::string> &value, Protect *pProtect)
 
 SEXP create(const ListBuilder& builder, Protect *pProtect)
 {
-   int n = builder.names().size();
+   int n = gsl::narrow_cast<int>(builder.names().size());
 
    SEXP resultSEXP;
    pProtect->add(resultSEXP = Rf_allocVector(VECSXP, n));
@@ -1596,7 +1650,7 @@ void examineSymbolUsage(
    }
    
    // fill output
-   BOOST_FOREACH(FormalInformation& info, pInfo->formals())
+   for (FormalInformation& info : pInfo->formals())
    {
       const std::string& name = info.name();
       info.setIsUsed(usage.symbolsUsed.contains(name.c_str()));
@@ -1622,13 +1676,13 @@ public:
          return get(primitiveSEXP);
       
       r::sexp::Protect protect;
-      SEXP wrapperSEXP;
+      SEXP wrapperSEXP = R_NilValue;
       r::exec::RFunction makePrimitiveWrapper(".rs.makePrimitiveWrapper");
       makePrimitiveWrapper.addParam(primitiveSEXP);
       Error error = makePrimitiveWrapper.call(&wrapperSEXP, &protect);
       if (error)
          LOG_ERROR(error);
-      
+
       put(primitiveSEXP, wrapperSEXP);
       return wrapperSEXP;
    }
@@ -1646,7 +1700,8 @@ private:
    
    void put(SEXP primitiveSEXP, SEXP wrapperSEXP)
    {
-      R_PreserveObject(wrapperSEXP);
+      if (wrapperSEXP != R_NilValue)
+         R_PreserveObject(wrapperSEXP);
       database_[primitiveSEXP] = wrapperSEXP;
    }
    
@@ -1683,7 +1738,11 @@ core::Error extractFunctionInfo(
    bool isPrimitive = Rf_isPrimitive(functionSEXP);
    pInfo->setIsPrimitive(isPrimitive);
    if (isPrimitive)
+   {
       functionSEXP = primitiveWrapper(functionSEXP);
+      if (functionSEXP == R_NilValue)
+         return Error(errc::UnexpectedDataTypeError, ERROR_LOCATION);
+   }
    
    // TODO: Some primitives (e.g. language constructs like `if`, `return`)
    // still do not have formals; these functions only take arguments

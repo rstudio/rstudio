@@ -1,7 +1,7 @@
 /*
  * SessionShinyViewer.cpp
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -18,9 +18,10 @@
 #include <boost/format.hpp>
 #include <boost/algorithm/string/predicate.hpp>
 
-#include <core/Error.hpp>
+#include <shared_core/Error.hpp>
 #include <core/Exec.hpp>
 
+#include <r/RJson.hpp>
 #include <r/RSexp.hpp>
 #include <r/RRoutines.hpp>
 #include <r/RUtil.hpp>
@@ -30,10 +31,14 @@
 
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionUrlPorts.hpp>
-#include <session/SessionUserSettings.hpp>
+#include <session/prefs/UserPrefs.hpp>
 
 #include "shiny/SessionShiny.hpp"
+#include "shiny/ShinyAsyncJob.hpp"
+#include "jobs/AsyncRJobManager.hpp"
 #include "session-config.h"
+
+#define kForegroudAppId "foreground"
 
 using namespace rstudio::core;
 
@@ -42,17 +47,27 @@ namespace session {
 namespace modules { 
 namespace shiny_viewer {
 
+enum AppDestination
+{
+   ForegroundApp,
+   BackgroundApp
+};
+
 namespace {
+
 
 // track a pending Shiny path launch
 FilePath s_pendingShinyPath;
 
-void enqueueStartEvent(const std::string& url, const std::string& path,
-                     int viewerType, int options)
+void enqueueStartEvent(const std::string& url,
+                       const std::string& path,
+                       const std::string& viewerType,
+                       const json::Value& meta,
+                       int options)
 {
    FilePath shinyPath(path);
    if (module_context::safeCurrentPath() == shinyPath &&
-       !s_pendingShinyPath.empty())
+       !s_pendingShinyPath.isEmpty())
    {
       // when Shiny starts an app from a anonymous expr (e.g. shinyApp(foo)),
       // it reports the working directory as the app's "path". We sometimes
@@ -67,12 +82,17 @@ void enqueueStartEvent(const std::string& url, const std::string& path,
    dataJson["path"] = module_context::createAliasedPath(shinyPath);
    dataJson["state"] = "started";
    dataJson["viewer"] = viewerType;
+   dataJson["meta"] = meta;
    dataJson["options"] = options;
+   dataJson["id"] = kForegroudAppId;
    ClientEvent event(client_events::kShinyViewer, dataJson);
    module_context::enqueClientEvent(event);
 }
 
-SEXP rs_shinyviewer(SEXP urlSEXP, SEXP pathSEXP, SEXP viewerSEXP)
+SEXP rs_shinyviewer(SEXP urlSEXP,
+                    SEXP pathSEXP,
+                    SEXP viewerSEXP,
+                    SEXP metaSEXP)
 {   
    try
    {
@@ -81,13 +101,14 @@ SEXP rs_shinyviewer(SEXP urlSEXP, SEXP pathSEXP, SEXP viewerSEXP)
          throw r::exec::RErrorException(
             "url must be a single element character vector.");
       }
+      std::string url = r::sexp::safeAsString(urlSEXP);
 
       if (!r::sexp::isString(pathSEXP) || (r::sexp::length(pathSEXP) != 1))
       {
          throw r::exec::RErrorException(
             "path must be a single element character vector.");
       }
-      int viewertype = r::sexp::asInteger(viewerSEXP);
+      std::string viewertype = r::sexp::safeAsString(viewerSEXP, kShinyViewerTypeWindow);
 
       // in desktop mode make sure we have the right version of httpuv
       if (options().programMode() == kSessionProgramModeDesktop)
@@ -107,18 +128,28 @@ SEXP rs_shinyviewer(SEXP urlSEXP, SEXP pathSEXP, SEXP viewerSEXP)
       if (path.find("/shinytest/recorder") != std::string::npos ||
           path.find("/shinytest/diffviewerapp") != std::string::npos)
       {
-          viewertype = SHINY_VIEWER_WINDOW;
+          viewertype = kShinyViewerTypeWindow;
           options = SHINY_VIEWER_OPTIONS_NOTOOLS;
       }
       if (path.find("/shinytest/recorder") != std::string::npos)
       {
           options |= SHINY_VIEWER_OPTIONS_WIDE;
       }
+      
+      json::Value meta;
+      Error error = r::json::jsonValueFromObject(metaSEXP, &meta);
+      if (error)
+      {
+         throw r::exec::RErrorException(
+                  "meta must be NULL or a named R list");
+      }
 
-      enqueueStartEvent(r::sexp::safeAsString(urlSEXP),
-                        path,
-                        viewertype,
-                        options);
+      enqueueStartEvent(
+               url,
+               path,
+               viewertype,
+               meta,
+               options);
    }
    catch(const r::exec::RErrorException& e)
    {
@@ -128,7 +159,7 @@ SEXP rs_shinyviewer(SEXP urlSEXP, SEXP pathSEXP, SEXP viewerSEXP)
    return R_NilValue;
 }
 
-void setShinyViewerType(int viewerType)
+void setShinyViewerType(const std::string& viewerType)
 {
    Error error =
       r::exec::RFunction(".rs.setShinyViewerType",
@@ -137,21 +168,22 @@ void setShinyViewerType(int viewerType)
       LOG_ERROR(error);
 }
 
-void onUserSettingsChanged(boost::shared_ptr<int> pShinyViewerType)
+void onUserSettingsChanged(const std::string& pref,
+      boost::shared_ptr<std::string> pShinyViewerType)
 {
-   int shinyViewerType = userSettings().shinyViewerType();
-   if (shinyViewerType != *pShinyViewerType)
-   {
-      setShinyViewerType(shinyViewerType);
-      *pShinyViewerType = shinyViewerType;
-   }
+   if (pref != kShinyViewerType)
+      return;
+
+   std::string shinyViewerType = prefs::userPrefs().shinyViewerType();
+   setShinyViewerType(shinyViewerType);
+   *pShinyViewerType = shinyViewerType;
 }
 
-Error setShinyViewer(boost::shared_ptr<int> pShinyViewerType,
+Error setShinyViewer(boost::shared_ptr<std::string> pShinyViewerType,
                      const json::JsonRpcRequest& request,
                      json::JsonRpcResponse*)
 {
-   int viewerType = 0;
+   std::string viewerType;
    Error error = json::readParams(request.params, &viewerType);
    if (error)
       return error;
@@ -165,14 +197,14 @@ Error setShinyViewer(boost::shared_ptr<int> pShinyViewerType,
    return Success();
 }
 
-Error getShinyRunCmd(const json::JsonRpcRequest& request,
-                     json::JsonRpcResponse* pResponse)
+/**
+ * Generates an R string to run the given Shiny application
+ */
+std::string shinyRunCmd(const std::string& targetPath,
+      const FilePath& workingDir,
+      const std::string& extendedType, 
+      AppDestination dest)
 {
-   std::string targetPath, extendedType;
-   Error error = json::readParams(request.params, &targetPath, &extendedType);
-   if (error)
-      return error;
-
    modules::shiny::ShinyFileType shinyType = 
       modules::shiny::shinyTypeFromExtendedType(extendedType);
 
@@ -180,27 +212,32 @@ Error getShinyRunCmd(const json::JsonRpcRequest& request,
    // Shiny directory, use the parent
    FilePath shinyPath = module_context::resolveAliasedPath(targetPath); 
    if (shinyType == modules::shiny::ShinyDirectory)
-      shinyPath = shinyPath.parent();
+      shinyPath = shinyPath.getParent();
 
-   std::string shinyRunPath = module_context::pathRelativeTo(
-            module_context::safeCurrentPath(),
-            shinyPath);
+   // check to see if Shiny is attached to the search path, if we're running the app in the
+   // foreground; in the background we start with a clean session so Shiny is never attached
+   bool isShinyAttached = false;
+   if (dest == AppDestination::ForegroundApp)
+   {
+      isShinyAttached = r::util::isPackageAttached("shiny");
+   }
 
-   // check to see if Shiny is attached to the search path
-   bool isShinyAttached = r::util::isPackageAttached("shiny");
-   
+   // for brevity, specify the app path as relative to the working directory
+   std::string runPath = module_context::pathRelativeTo(workingDir, shinyPath);
+
    std::string runCmd; 
+
    if (shinyType == modules::shiny::ShinyDirectory)
    {
       if (!isShinyAttached)
          runCmd = "shiny::";
       runCmd.append("runApp(");
-      if (shinyRunPath != ".")
+      if (runPath != ".")
       {
          // runApp defaults to the current working directory, so don't specify
          // it unless we need to.
          runCmd.append("'");
-         runCmd.append(shinyRunPath);
+         runCmd.append(runPath);
          runCmd.append("'");
       }
       runCmd.append(")");
@@ -214,31 +251,80 @@ Error getShinyRunCmd(const json::JsonRpcRequest& request,
       if (module_context::isPackageVersionInstalled("shiny", "0.13.0") &&
           shinyType == modules::shiny::ShinySingleFile)
       {
-         runCmd.append("runApp('" + shinyRunPath + "')");
+         runCmd.append("runApp('" + runPath + "')");
       }
       else
       {
          if (shinyType == modules::shiny::ShinySingleFile)
             runCmd.append("print(");
          runCmd.append("source('");
-         runCmd.append(shinyRunPath);
+         runCmd.append(runPath);
          runCmd.append("')");
          if (shinyType == modules::shiny::ShinySingleFile)
             runCmd.append("$value)");
       }
    }
 
+   return runCmd;
+}
+
+Error runShinyBackgroundApp(boost::shared_ptr<std::string> pShinyViewerType,
+                            const json::JsonRpcRequest& request,
+                            json::JsonRpcResponse* pResponse)
+{
+   std::string targetPath, extendedType;
+   Error error = json::readParams(request.params, &targetPath, &extendedType);
+   if (error)
+      return error;
+
+   // always run the Shiny application from its own parent folder for consistency
+   FilePath appPath = module_context::resolveAliasedPath(targetPath).getParent();
+
+   // create the command that will be used to run the Shiny application in the background R session
+   std::string cmd = shinyRunCmd(targetPath, appPath, extendedType, 
+         AppDestination::BackgroundApp);
+
+   // create the asynchronous R job that will be used to run the Shiny application
+   boost::shared_ptr<shiny::ShinyAsyncJob> pJob = boost::make_shared<shiny::ShinyAsyncJob>(
+         "Shiny: " + appPath.getFilename(),
+         module_context::resolveAliasedPath(targetPath),
+         *pShinyViewerType,
+         cmd);
+
+   // register it and create an ID
+   std::string id;
+   error = jobs::registerAsyncRJob(pJob, &id);
+   if (error)
+      return error;
+
+   // start the job (actually creates the underlying R session)
+   pJob->start();
+
+   // return the ID we created
+   pResponse->setResult(id);
+   return Success();
+}
+
+Error getShinyRunCmd(const json::JsonRpcRequest& request,
+                     json::JsonRpcResponse* pResponse)
+{
+   std::string targetPath, extendedType;
+   Error error = json::readParams(request.params, &targetPath, &extendedType);
+   if (error)
+      return error;
+
    json::Object dataJson;
-   dataJson["run_cmd"] = runCmd;
+   dataJson["run_cmd"] = shinyRunCmd(targetPath, module_context::safeCurrentPath(),
+         extendedType, AppDestination::ForegroundApp);
    pResponse->setResult(dataJson);
 
    return Success();
 }
 
-Error initShinyViewerPref(boost::shared_ptr<int> pShinyViewerType)
+Error initShinyViewerPref(boost::shared_ptr<std::string> pShinyViewerType)
 {
    SEXP shinyBrowser = r::options::getOption("shiny.launch.browser");
-   *pShinyViewerType = userSettings().shinyViewerType();
+   *pShinyViewerType = prefs::userPrefs().shinyViewerType();
    if (shinyBrowser == R_NilValue)
    {
       setShinyViewerType(*pShinyViewerType);
@@ -279,20 +365,19 @@ Error initialize()
    using boost::bind;
    using namespace module_context;
 
-   boost::shared_ptr<int> pShinyViewerType =
-         boost::make_shared<int>(SHINY_VIEWER_NONE);
+   boost::shared_ptr<std::string> pShinyViewerType =
+         boost::make_shared<std::string>(kShinyViewerTypeNone);
 
    json::JsonRpcFunction setShinyViewerTypeRpc =
          boost::bind(setShinyViewer, pShinyViewerType, _1, _2);
 
-   R_CallMethodDef methodDefViewer;
-   methodDefViewer.name = "rs_shinyviewer";
-   methodDefViewer.fun = (DL_FUNC) rs_shinyviewer;
-   methodDefViewer.numArgs = 3;
-   r::routines::addCallMethod(methodDefViewer);
+   json::JsonRpcFunction runShinyBackground =
+         boost::bind(runShinyBackgroundApp, pShinyViewerType, _1, _2);
+
+   RS_REGISTER_CALL_METHOD(rs_shinyviewer);
 
    events().onConsoleInput.connect(onConsoleInput);
-   userSettings().onChanged.connect(bind(onUserSettingsChanged,
+   prefs::userPrefs().onChanged.connect(bind(onUserSettingsChanged, _2,
                                          pShinyViewerType));
 
    ExecBlock initBlock;
@@ -300,6 +385,7 @@ Error initialize()
       (bind(sourceModuleRFile, "SessionShinyViewer.R"))
       (bind(registerRpcMethod, "get_shiny_run_cmd", getShinyRunCmd))
       (bind(registerRpcMethod, "set_shiny_viewer_type", setShinyViewerTypeRpc))
+      (bind(registerRpcMethod, "run_shiny_background_app", runShinyBackground))
       (bind(initShinyViewerPref, pShinyViewerType));
 
    return initBlock.execute();

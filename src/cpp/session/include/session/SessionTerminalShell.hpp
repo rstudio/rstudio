@@ -1,7 +1,7 @@
 /*
  * SessionTerminalShell.hpp
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-20 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -19,7 +19,7 @@
 #include <vector>
 
 #include <core/json/JsonRpc.hpp>
-#include <core/FilePath.hpp>
+#include <shared_core/FilePath.hpp>
 
 namespace rstudio {
 namespace session {
@@ -31,9 +31,9 @@ struct TerminalShell
    // Identifiers for discovered shell options; for Windows there are several
    // possibilities, depending on what's installed, and the bit-ness of the
    // OS. For all others, only bash is supported.
-   enum TerminalShellType
+   enum class ShellType
    {
-      DefaultShell = 0, // Selected by user
+      Default      = 0, // Selected by user
 
       GitBash      = 1, // Win32: Bash from Windows Git
       WSLBash      = 2, // Win32: Windows Services for Linux (64-bit Windows-10 only)
@@ -45,17 +45,16 @@ struct TerminalShell
       PosixBash    = 7, // Posix: Bash
       CustomShell  = 8, // User-specified shell command
       NoShell      = 9, // Non-interactive job with no shell
+      PSCore      = 10, // PowerShell Core (v6)
+      PosixZsh    = 11, // Posix: Zsh
 
-      Max          = NoShell
+      Max          = PosixZsh
    };
 
-   TerminalShell()
-      :
-        type(DefaultShell)
-   {}
+   TerminalShell() = default;
 
    TerminalShell(
-         TerminalShellType type,
+         ShellType type,
          std::string name,
          core::FilePath path,
          std::vector<std::string> args)
@@ -66,28 +65,21 @@ struct TerminalShell
         args(args)
    {}
 
-   TerminalShellType type;
+   ShellType type = ShellType::Default;
    std::string name;
    core::FilePath path;
    std::vector<std::string> args;
 
    core::json::Object toJson() const;
 
-   static TerminalShellType safeShellTypeFromInt(int shellTypeInt)
-   {
-      TerminalShellType shellType = static_cast<TerminalShellType>(shellTypeInt);
-      if (shellType < DefaultShell || shellType > TerminalShell::Max)
-      {
-         shellType = DefaultShell;
-      }
-      return shellType;
-   }
-
    // get a user-friendly name for the given shell type
-   static std::string getShellName(TerminalShellType type);
+   static std::string getShellName(ShellType type);
+
+   // get an internal ID for the given shell type
+   static std::string getShellId(ShellType type);
    
    // map an rstudioapi terminalCreate shell type string to enum type
-   static TerminalShellType shellTypeFromString(const std::string& str);
+   static ShellType shellTypeFromString(const std::string& str);
 };
 
 class AvailableTerminalShells
@@ -99,7 +91,7 @@ public:
    void toJson(core::json::Array* pArray) const;
 
    // Get details on one type; returns false if type not available
-   bool getInfo(TerminalShell::TerminalShellType type, TerminalShell* pShellInfo) const;
+   bool getInfo(TerminalShell::ShellType type, TerminalShell* pShellInfo) const;
 
    // Number of available shells (including pseudo-shell "default")
    inline size_t count() const { return shells_.size(); }

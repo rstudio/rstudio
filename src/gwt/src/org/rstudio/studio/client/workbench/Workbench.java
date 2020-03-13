@@ -1,7 +1,7 @@
 /*
  * Workbench.java
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-20 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -15,6 +15,7 @@
 package org.rstudio.studio.client.workbench;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
@@ -23,6 +24,7 @@ import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.Size;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.TimeBufferedCommand;
+import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.files.FileSystemItem;
@@ -34,6 +36,7 @@ import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.studio.client.application.ApplicationVisibility;
 import org.rstudio.studio.client.application.Desktop;
+import org.rstudio.studio.client.application.events.DeferredInitCompletedEvent;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.ConsoleDispatcher;
 import org.rstudio.studio.client.common.FileDialogs;
@@ -67,14 +70,18 @@ import org.rstudio.studio.client.server.remote.ExecuteUserCommandEvent;
 import org.rstudio.studio.client.shiny.ShinyApplication;
 import org.rstudio.studio.client.shiny.ui.ShinyGadgetDialog;
 import org.rstudio.studio.client.workbench.commands.Commands;
+import org.rstudio.studio.client.workbench.commands.ReportShortcutBindingEvent;
 import org.rstudio.studio.client.workbench.events.*;
+import org.rstudio.studio.client.workbench.events.ShowMainMenuEvent.Menu;
 import org.rstudio.studio.client.workbench.model.*;
-import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.views.choosefile.ChooseFile;
 import org.rstudio.studio.client.workbench.views.files.events.DirectoryNavigateEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.profiler.ProfilerPresenter;
 import org.rstudio.studio.client.workbench.views.terminal.events.ActivateNamedTerminalEvent;
-import org.rstudio.studio.client.workbench.views.terminal.events.CreateTerminalEvent;
+import org.rstudio.studio.client.workbench.views.tutorial.TutorialPresenter.Tutorial;
+import org.rstudio.studio.client.workbench.views.tutorial.events.TutorialCommandEvent;
+import org.rstudio.studio.client.workbench.views.tutorial.events.TutorialLaunchEvent;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.VcsRefreshEvent;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.VcsRefreshHandler;
 import org.rstudio.studio.client.workbench.views.vcs.git.model.GitState;
@@ -82,7 +89,7 @@ import org.rstudio.studio.client.workbench.views.vcs.git.model.GitState;
 public class Workbench implements BusyHandler,
                                   ShowErrorMessageHandler,
                                   UserPromptHandler,
-                                  ShowWarningBarHandler,
+                                  ShowWarningBarEvent.Handler,
                                   BrowseUrlHandler,
                                   QuotaStatusHandler,
                                   WorkbenchLoadedHandler,
@@ -92,7 +99,10 @@ public class Workbench implements BusyHandler,
                                   ExecuteUserCommandEvent.Handler,
                                   AdminNotificationHandler,
                                   OpenFileDialogEvent.Handler,
-                                  ShowPageViewerHandler
+                                  ShowPageViewerHandler,
+                                  TutorialLaunchEvent.Handler,
+                                  DeferredInitCompletedEvent.Handler,
+                                  ReportShortcutBindingEvent.Handler
 {
    interface Binder extends CommandBinder<Commands, Workbench> {}
    
@@ -103,7 +113,7 @@ public class Workbench implements BusyHandler,
                     Commands commands,
                     EventBus eventBus,
                     Session session,
-                    Provider<UIPrefs> pPrefs,
+                    Provider<UserPrefs> pPrefs,
                     Server server,
                     RemoteFileSystemContext fsContext,
                     FileDialogs fileDialogs,
@@ -112,6 +122,7 @@ public class Workbench implements BusyHandler,
                     WorkbenchNewSession newSession,
                     ProjectOpener projectOpener,
                     Provider<GitState> pGitState,
+                    UserInterfaceHighlighter highlighter,       // force gin to create
                     ChooseFile chooseFile,                      // force gin to create
                     AskPassManager askPass,                     // force gin to create
                     PDFViewer pdfViewer,                        // force gin to create
@@ -160,6 +171,9 @@ public class Workbench implements BusyHandler,
       eventBus.addHandler(AdminNotificationEvent.TYPE, this);
       eventBus.addHandler(OpenFileDialogEvent.TYPE, this);
       eventBus.addHandler(ShowPageViewerEvent.TYPE, this);
+      eventBus.addHandler(TutorialLaunchEvent.TYPE, this);
+      eventBus.addHandler(DeferredInitCompletedEvent.TYPE, this);
+      eventBus.addHandler(ReportShortcutBindingEvent.TYPE, this);
 
       // We don't want to send setWorkbenchMetrics more than once per 1/2-second
       metricsChangedCommand_ = new TimeBufferedCommand(500)
@@ -206,7 +220,27 @@ public class Workbench implements BusyHandler,
             }
          });
       }
+   }
+   
+   public void onTutorialLaunch(final TutorialLaunchEvent event)
+   {
+      commands_.activateTutorial().execute();
       
+      Tutorial tutorial = event.getTutorial();
+      Scheduler.get().scheduleDeferred(() -> {
+         
+         TutorialCommandEvent commandEvent = new TutorialCommandEvent(
+               TutorialCommandEvent.TYPE_LAUNCH_DEFAULT_TUTORIAL,
+               tutorial.toJsObject());
+         
+         eventBus_.fireEvent(commandEvent);
+         
+      });
+   }
+
+   public void onDeferredInitCompleted(DeferredInitCompletedEvent ev)
+   {
+      checkForCrashHandlerPermission();
    }
    
    public void onBusy(BusyEvent event)
@@ -224,8 +258,7 @@ public class Workbench implements BusyHandler,
    @Override
    public void onShowWarningBar(ShowWarningBarEvent event)
    {
-      WarningBarMessage message = event.getMessage();
-      globalDisplay_.showWarningBar(message.isSevere(), message.getMessage());
+      globalDisplay_.showWarningBar(event.isSevere(), event.getMessage());
    } 
    
    public void onBrowseUrl(BrowseUrlEvent event)
@@ -419,12 +452,6 @@ public class Workbench implements BusyHandler,
    }
    
    @Handler
-   public void onNewTerminal()
-   {
-      eventBus_.fireEvent(new CreateTerminalEvent());
-   }
-      
-   @Handler
    public void onBrowseAddins()
    {
       BrowseAddinsDialog dialog = new BrowseAddinsDialog(new OperationWithInput<Command>()
@@ -448,10 +475,76 @@ public class Workbench implements BusyHandler,
    @Handler
    public void onToggleFullScreen()
    {
-      if (Desktop.isDesktop())
+      if (Desktop.hasDesktopFrame())
          Desktop.getFrame().toggleFullscreenMode();
    }
-   
+
+   @Handler
+   public void onShowFileMenu()
+   {
+      eventBus_.fireEvent(new ShowMainMenuEvent(Menu.File));
+   }
+
+   @Handler
+   public void onShowEditMenu()
+   {
+      eventBus_.fireEvent(new ShowMainMenuEvent(Menu.Edit));
+   }
+
+   @Handler
+   public void onShowCodeMenu()
+   {
+      eventBus_.fireEvent(new ShowMainMenuEvent(Menu.Code));
+   }
+
+   @Handler
+   public void onShowViewMenu()
+   {
+      eventBus_.fireEvent(new ShowMainMenuEvent(Menu.View));
+   }
+
+   @Handler
+   public void onShowPlotsMenu()
+   {
+      eventBus_.fireEvent(new ShowMainMenuEvent(Menu.Plots));
+   }
+
+   @Handler
+   public void onShowSessionMenu()
+   {
+      eventBus_.fireEvent(new ShowMainMenuEvent(Menu.Session));
+   }
+
+   @Handler
+   public void onShowBuildMenu()
+   {
+      eventBus_.fireEvent(new ShowMainMenuEvent(Menu.Build));
+   }
+
+   @Handler
+   public void onShowDebugMenu()
+   {
+      eventBus_.fireEvent(new ShowMainMenuEvent(Menu.Debug));
+   }
+
+   @Handler
+   public void onShowProfileMenu()
+   {
+      eventBus_.fireEvent(new ShowMainMenuEvent(Menu.Profile));
+   }
+
+   @Handler
+   public void onShowToolsMenu()
+   {
+      eventBus_.fireEvent(new ShowMainMenuEvent(Menu.Tools));
+   }
+
+   @Handler
+   public void onShowHelpMenu()
+   {
+      eventBus_.fireEvent(new ShowMainMenuEvent(Menu.Help));
+   }
+
    private void checkForInitMessages()
    {
       if (!Desktop.isDesktop())
@@ -489,6 +582,36 @@ public class Workbench implements BusyHandler,
       if (!StringUtil.isNullOrEmpty(licenseMessage))
       {
          globalDisplay_.showLicenseWarningBar(false, licenseMessage);
+      }
+   }
+
+   private void checkForCrashHandlerPermission()
+   {
+      boolean shouldPrompt = session_.getSessionInfo().getPromptForCrashHandlerPermission();
+      if (shouldPrompt)
+      {
+         String message =
+               "May we upload crash reports to RStudio automatically?\n\nCrash reports don't include " +
+               "any personal information, except for IP addresses which are used to determine how many users " +
+               "are affected by each crash.\n\nCrash reporting can be disabled at any time under the Global Options.";
+
+         globalDisplay_.showYesNoMessage(GlobalDisplay.MSG_QUESTION,
+               "Enable Automated Crash Reporting",
+               message,
+               false,
+               new Operation() {
+                  @Override
+                  public void execute() {
+                     server_.setUserCrashHandlerPrompted(true, new SimpleRequestCallback<Void>());
+                  }
+               },
+               new Operation() {
+                  @Override
+                  public void execute() {
+                     server_.setUserCrashHandlerPrompted(false, new SimpleRequestCallback<Void>());
+                  }
+               },
+               true);
       }
    }
     
@@ -647,12 +770,22 @@ public class Workbench implements BusyHandler,
    {
       server_.executeUserCommand(event.getCommandName(), new VoidServerRequestCallback());
    }
-   
+
+   @Override
+   public void onReportShortcutBinding(ReportShortcutBindingEvent event)
+   {
+      AppCommand command = commands_.getCommandById(event.getCommand());
+      if (command == null)
+         globalDisplay_.showWarningBar(false, event.getCommand());
+      else
+         globalDisplay_.showWarningBar(false, event.getCommand() + " : " + command.summarize());
+   }
+
    private final Server server_;
    private final WorkbenchServerOperations serverOperations_;
    private final EventBus eventBus_;
    private final Session session_;
-   private final Provider<UIPrefs> pPrefs_;
+   private final Provider<UserPrefs> pPrefs_;
    private final WorkbenchMainView view_;
    private final GlobalDisplay globalDisplay_;
    private final Commands commands_;

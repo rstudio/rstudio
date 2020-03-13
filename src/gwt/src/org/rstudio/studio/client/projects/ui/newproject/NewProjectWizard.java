@@ -1,7 +1,7 @@
 /*
  * NewProjectWizard.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -16,6 +16,7 @@ package org.rstudio.studio.client.projects.ui.newproject;
 
 import java.util.ArrayList;
 
+import com.google.gwt.aria.client.Roles;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.core.client.widget.Wizard;
 import org.rstudio.core.client.widget.WizardNavigationPage;
@@ -27,7 +28,7 @@ import org.rstudio.core.client.widget.WizardPage;
 import org.rstudio.studio.client.projects.model.NewProjectResult;
 import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
-import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.user.client.ui.CheckBox;
@@ -37,14 +38,15 @@ public class NewProjectWizard extends Wizard<NewProjectInput,NewProjectResult>
 {
    public NewProjectWizard(
          SessionInfo sessionInfo,
-         UIPrefs uiPrefs,
+         UserPrefs uiPrefs,
          WorkbenchContext workbenchContext,
          NewProjectInput input,
          boolean allowOpenInNewWindow,
          ProgressOperationWithInput<NewProjectResult> operation)
    {
-      super("New Project", 
+      super("New Project Wizard", 
             "Create Project",
+            Roles.getDialogRole(), 
             input, 
             createFirstPage(sessionInfo),
             operation);
@@ -115,7 +117,7 @@ public class NewProjectWizard extends Wizard<NewProjectInput,NewProjectResult>
    private static WizardPage<NewProjectInput, NewProjectResult> createFirstPage(
          SessionInfo sessionInfo)
    {
-      return new WizardNavigationPage<NewProjectInput, NewProjectResult>(
+      return new WizardNavigationPage<>(
             "New Project", "Create project from:", "Create Project", 
             null, null, createSubPages(sessionInfo));
    }
@@ -123,13 +125,12 @@ public class NewProjectWizard extends Wizard<NewProjectInput,NewProjectResult>
    private static ArrayList<WizardPage<NewProjectInput, NewProjectResult>> createSubPages(
          SessionInfo sessionInfo)
    {
-      ArrayList<WizardPage<NewProjectInput, NewProjectResult>> subPages = 
-            new ArrayList<WizardPage<NewProjectInput, NewProjectResult>>();
+      ArrayList<WizardPage<NewProjectInput, NewProjectResult>> subPages = new ArrayList<>();
       subPages.add(new NewDirectoryNavigationPage(sessionInfo));
       subPages.add(new ExistingDirectoryPage());
 
       if (sessionInfo.getAllowVcs())
-         subPages.add(new VersionControlNavigationPage(sessionInfo));
+         subPages.add(new VersionControlNavigationPage());
 
       return subPages;
    }

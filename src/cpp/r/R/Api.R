@@ -84,19 +84,12 @@
 
 .rs.addApiFunction("versionInfo", function() {
   info <- list()
-  info$citation <- .Call(getNativeSymbolInfo("rs_rstudioCitation",
-                                             PACKAGE=""))
-
-  info$mode <- .Call(getNativeSymbolInfo("rs_rstudioProgramMode",
-                                         PACKAGE=""))
-
-  info$edition <- .Call(getNativeSymbolInfo("rs_rstudioEdition",
-                                            PACKAGE=""))
-
-  info$version <- package_version(
-    .Call(getNativeSymbolInfo("rs_rstudioVersion", PACKAGE=""))
-  )
-
+  info$citation <- .Call("rs_rstudioCitation", PACKAGE = "(embedding)")
+  info$mode <- .Call("rs_rstudioProgramMode", PACKAGE = "(embedding)")
+  info$edition <- .Call("rs_rstudioEdition", PACKAGE = "(embedding)")
+  info$version <- .Call("rs_rstudioVersion", PACKAGE = "(embedding)")
+  info$version <- package_version(info$version)
+  info$release_name <- .Call("rs_rstudioReleaseName", PACKAGE = "(embedding)")
   info
 })
 
@@ -486,11 +479,20 @@
 })
 
 .rs.addApiFunction("writePreference", function(name, value) {
-  .rs.writeUiPref(paste("rstudioapi", name, sep = "_"), value)
+  .rs.writeApiPref(name, value)
 })
 
 .rs.addApiFunction("readPreference", function(name, default = NULL) {
-  value <- .rs.readUiPref(paste("rstudioapi", name, sep = "_"))
+  value <- .rs.readApiPref(name)
+  if (is.null(value)) default else value
+})
+
+.rs.addApiFunction("writeRStudioPreference", function(name, value) {
+  .rs.writeUiPref(name, value)
+})
+
+.rs.addApiFunction("readRStudioPreference", function(name, default = NULL) {
+  value <- .rs.readUiPref(name)
   if (is.null(value)) default else value
 })
 
@@ -592,10 +594,10 @@
    validShellType = TRUE
    if (!is.null(shellType)) {
       validShellType <- tolower(shellType) %in% c("default", "win-cmd", 
-            "win-ps", "win-git-bash", "win-wsl-bash", "custom")
+            "win-ps", "win-git-bash", "win-wsl-bash", "ps-core", "custom")
    }      
    if (!validShellType)
-      stop("'shellType' must be NULL, or one of 'default', 'win-cmd', 'win-ps', 'win-git-bash', 'win-wsl-bash', or 'custom'.") 
+      stop("'shellType' must be NULL, or one of 'default', 'win-cmd', 'win-ps', 'win-git-bash', 'win-wsl-bash', 'ps-core', 'bash', 'zsh', or 'custom'.") 
 
    .Call("rs_terminalCreate", caption, show, shellType)
 })
@@ -730,9 +732,9 @@ options(terminal.manager = list(terminalActivate = .rs.api.terminalActivate,
 .rs.addApiFunction("getThemeInfo", function() {
    
    # read theme preferences
-   global <- .rs.readUiPref("flat_theme")
+   global <- .rs.readUiPref("global_theme")
 
-   theme <- .rs.readUiPref("rstheme")
+   theme <- .rs.readUserState("theme")
    if (is.null(theme))
       theme <- list("name" = "Textmate (default)", "isDark" = FALSE)
 
@@ -807,3 +809,43 @@ options(terminal.manager = list(terminalActivate = .rs.api.terminalActivate,
   .Call("rs_executeAppCommand", commandId, quiet, PACKAGE = "(embedding)")
 })
 
+# return a list of all the R packages RStudio depends on in in some way
+.rs.addApiFunction("getPackageDependencies", function() {
+  .Call("rs_packageDependencies", PACKAGE = "(embedding)")
+})
+
+# highlight UI elements within the IDE
+.rs.addApiFunction("highlightUi", function(data = list()) {
+   .Call("rs_highlightUi", data, PACKAGE = "(embedding)")
+})
+
+# return display username (user identity)
+.rs.addApiFunction("userIdentity", function() {
+   .Call("rs_userIdentity", PACKAGE = "(embedding)")
+})
+
+# return system username 
+.rs.addApiFunction("systemUsername", function() {
+   .Call("rs_systemUsername", PACKAGE = "(embedding)")
+})
+
+# Tutorial ----
+
+# invoked by rstudioapi to instruct RStudio to open a particular
+# URL in the Tutorial pane. should be considered an internal contract
+# between the RStudio + rstudioapi packages rather than an official
+# user-facing API
+.rs.addApiFunction("tutorialLaunchBrowser", function(url) {
+   .rs.tutorial.launchBrowser(url)
+})
+
+# given a tutorial 'name' from package 'package', run that tutorial
+# and show the application in the Tutorial pane
+.rs.addApiFunction("tutorialRun", function(name, package, shiny_args = NULL) {
+   .rs.tutorial.runTutorial(name, package, shiny_args)
+})
+
+# stop a running tutorial
+.rs.addApiFunction("tutorialStop", function(name, package) {
+   .rs.tutorial.stopTutorial(name, package)
+})

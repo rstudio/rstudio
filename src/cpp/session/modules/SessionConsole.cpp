@@ -1,7 +1,7 @@
 /*
  * SessionConsole.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -19,17 +19,23 @@
 
 #include <boost/algorithm/string/predicate.hpp>
 
-#include <core/Error.hpp>
+#include <shared_core/Error.hpp>
 #include <core/Exec.hpp>
-#include <core/FilePath.hpp>
+#include <shared_core/FilePath.hpp>
 
 #include <core/system/OutputCapture.hpp>
+
+#include <core/text/AnsiCodeParser.hpp>
 
 #include <r/RExec.hpp>
 #include <r/RRoutines.hpp>
 #include <r/session/RConsoleActions.hpp>
 
 #include <session/SessionModuleContext.hpp>
+
+#include <session/prefs/UserPrefs.hpp>
+
+#define kMinConsoleLines 10
 
 using namespace rstudio::core;
 
@@ -84,14 +90,9 @@ void writeStandardError(const std::string& output)
 
 Error initializeOutputCapture()
 {
-   // only capture stderr if it isn't connected to a  terminal
-   boost::function<void(const std::string&)> stderrHandler;
-   if (!core::system::stderrIsTerminal())
-      stderrHandler = writeStandardError;
-
-   // initialize
    return core::system::captureStandardStreams(writeStandardOutput,
-                                               stderrHandler);
+                                               writeStandardError,
+                                               options().logStderr());
 }
 
 FilePath s_lastWorkingDirectory;
@@ -99,7 +100,7 @@ FilePath s_lastWorkingDirectory;
 void detectWorkingDirectoryChanged()
 {
    FilePath currentWorkingDirectory = module_context::safeCurrentPath();
-   if ( s_lastWorkingDirectory.empty() ||
+   if ( s_lastWorkingDirectory.isEmpty() ||
         (currentWorkingDirectory != s_lastWorkingDirectory) )
    {
       // fire event
@@ -148,8 +149,45 @@ SEXP rs_getPendingInput()
                           &rProtect);
 }
 
+text::AnsiCodeMode modeFromPref(const std::string& pref)
+{
+   if (pref == kAnsiConsoleModeOn)
+      return core::text::AnsiColorOn;
+   else if (pref == kAnsiConsoleModeOff)
+      return core::text::AnsiColorOff;
+   return core::text::AnsiColorStrip;
+}
+
 } // anonymous namespace
    
+
+void syncConsoleColorEnv() 
+{
+   // Use rsession alias to avoid collision with 'session'
+   // object brought in by Catch
+   namespace rsession = rstudio::session;
+   using namespace rsession;
+
+   // Mirror ansi_color_mode user preference with RSTUDIO_CONSOLE_COLOR
+   // environment variable so it can be inherited by spawned R processes, such
+   // as package builds, which cannot query RStudio IDE settings.
+   if (modeFromPref(prefs::userPrefs().ansiConsoleMode()) == core::text::AnsiColorOn)
+   {
+      core::system::setenv("RSTUDIO_CONSOLE_COLOR", "256");
+
+      if (rsession::options().defaultConsoleTerm().length() > 0)
+         core::system::setenv("TERM", rsession::options().defaultConsoleTerm());
+      if (rsession::options().defaultCliColorForce())
+         core::system::setenv("CLICOLOR_FORCE", "1");
+   }
+   else
+   {
+      core::system::unsetenv("RSTUDIO_CONSOLE_COLOR");
+      core::system::unsetenv("TERM");
+      core::system::unsetenv("CLICOLOR_FORCE");
+   }
+}
+
 Error initialize()
 {    
    if (!(session::options().verifyInstallation() ||
@@ -162,13 +200,22 @@ Error initialize()
          return error;
    }
 
-   // register routines
-   R_CallMethodDef methodDef ;
-   methodDef.name = "rs_getPendingInput" ;
-   methodDef.fun = (DL_FUNC) rs_getPendingInput ;
-   methodDef.numArgs = 0;
-   r::routines::addCallMethod(methodDef);
+   // set console action capacity from user pref, presuming the value is reasonable
+   int maxLines = prefs::userPrefs().consoleMaxLines();
+   if (maxLines < kMinConsoleLines)
+   {
+      LOG_WARNING_MESSAGE("Console must have at least " + 
+            safe_convert::numberToString(kMinConsoleLines) + 
+            " lines; ignoring invalid max line setting '" +
+            safe_convert::numberToString(maxLines) + "'");
+   }
+   else
+   {
+      r::session::consoleActions().setCapacity(maxLines);
+   }
 
+   // register routines
+   RS_REGISTER_CALL_METHOD(rs_getPendingInput);
    
    // subscribe to events
    using boost::bind;
@@ -181,7 +228,7 @@ Error initialize()
 
    // more initialization 
    using boost::bind;
-   ExecBlock initBlock ;
+   ExecBlock initBlock;
    initBlock.addFunctions()
       (bind(sourceModuleRFile, "SessionConsole.R"))
       (bind(registerRpcMethod, "reset_console_actions", resetConsoleActions));

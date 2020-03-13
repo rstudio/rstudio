@@ -17,6 +17,9 @@
 # the signing key into a private, temporary keyring, uses it to sign the
 # release, and then destroys the keyring.
 
+# abort on error
+set -e
+
 if [[ "$#" -lt 2 ]]; then
     echo "Usage: sign-release.sh [installer-file] [key-file] [passphrase-file]"
     exit 1
@@ -46,9 +49,9 @@ trap cleanup EXIT
 # if the gpg1 binary is present on this machine, then presume that it exists as
 # an alternative to a future, incompatible version, and use it for the "gpg"
 # command by manipulating $PATH.
-GPG1=$(which gpg1)
-if [ "$?" == "0" ]; then 
+if [ -x "$(command -v gpg1)" ]; then 
     # emit notice
+    GPG1=$(which gpg1)
     GPG2=$(which gpg)
     echo "Note: Using $GPG1 to provide GnuPG (was $GPG2)"
     # softlink gpg into our temporary work folder
@@ -109,17 +112,47 @@ elif [ "$EXT" == "rpm" ]; then
     fi
     touch "$RPM_MACROS"
     echo "%_signature gpg"  >> $RPM_MACROS
+
+    # define key name and directory where we installed temporaries
     echo "%_gpg_name $KEY_ID" >> $RPM_MACROS
     echo "%_gpg_path $TMP_KEYRING_DIR" >> $RPM_MACROS
-    cat $RPM_MACROS
 
-    # perform the actual signature
-    /usr/bin/expect << EOD
+    if [ -f /etc/redhat-release ]; then
+       REDHAT_VERSION=$(cat /etc/redhat-release | grep -oP "CentOS Linux release \K[\w.]+") || true
+       VERSION_ARRAY=(${REDHAT_VERSION//./ })
+       if ((${VERSION_ARRAY[0]} >= 8)); then
+          FORCE_NO_EXPECT=true
+          echo "Not using expect approach because we are on a newer version of Redhat"
+       fi
+    fi
+
+    if [ -f /etc/fedora-release ] || [ "$FORCE_NO_EXPECT" = true ]; then
+        # on fedora and centos 8 and greater, the expect-based approach doesn't work, so attempt to
+        # supply the passphrase by redefining the GPG signature command in the
+        # RPM macros definition to take a passphrase-file.
+        echo "%__gpg_sign_cmd %{__gpg} \\" >> $RPM_MACROS
+        echo "    gpg --no-verbose --no-armor --batch --pinentry-mode loopback \\" >> $RPM_MACROS
+        echo "    --passphrase-file $PASSFILE \\" >> $RPM_MACROS
+        echo "    %{?_gpg_sign_cmd_extra_args:%{_gpg_sign_cmd_extra_args}} \\" >> $RPM_MACROS
+        echo "    %{?_gpg_digest_algo:--digest-algo %{_gpg_digest_algo}} \\" >> $RPM_MACROS
+        echo "    --no-secmem-warning \\" >> $RPM_MACROS
+        echo "    -u "%{_gpg_name}" -sbo %{__signature_filename} %{__plaintext_filename}" >> $RPM_MACROS
+
+        rpmsign --addsign $INSTALLER
+    else
+        # on CentOS (and other RedHat platforms), use expect to supply the
+        # passphrase "manually"
+        /usr/bin/expect << EOD
 spawn bash -c "rpmsign --addsign $INSTALLER"
 expect "Enter pass phrase:"
 send "$PASSPHRASE\r"
 expect eof
 EOD
+    fi
+
+    # dump the contents of the RPM macro files to stdout so that they're
+    # visible in the build logs (this helps diagnose signing issues)
+    cat $RPM_MACROS
 
     # restore old rpmacros file if we touched it
     rm -f $RPM_MACROS
@@ -130,5 +163,3 @@ else
     # not a deb or rpm; we don't know how to sign this
     echo "Unknown installer extension $EXT."
 fi
-
-

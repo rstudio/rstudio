@@ -6,6 +6,7 @@
 @external rstudio-themes-default, rstudio-themes-dark-grey, rstudio-themes-alternate;
 @external editor_dark, ace_editor_theme;
 @external windows
+@external .rstudio-HyperlinkLabel
 
 @eval THEME_DEFAULT_BORDER org.rstudio.core.client.theme.ThemeColors.defaultBorder;
 @eval THEME_DARKGREY_BORDER org.rstudio.core.client.theme.ThemeColors.darkGreyBorder;
@@ -132,7 +133,7 @@ body.windows .gwt-CheckBox-FilesSelectAll {
 .breadcrumb-filepane, .breadcrumb-filepane table, .breadcrumb-filepane td {
    height: 20px;
 }
-.breadcrumb table.path a,
+.breadcrumb table.path .rstudio-HyperlinkLabel,
 .breadcrumb table.path span
 {
    float: left;
@@ -144,23 +145,23 @@ body.windows .gwt-CheckBox-FilesSelectAll {
    background-size: 6px 9px;
 }
 
-.rstudio-themes-flat .breadcrumb table.path a,
+.rstudio-themes-flat .breadcrumb table.path .rstudio-HyperlinkLabel,
 .rstudio-themes-flat .breadcrumb table.path span {
    padding-top: 4px;
 }
 
-body.windows .breadcrumb table.path a,
+body.windows .breadcrumb table.path .rstudio-HyperlinkLabel,
 body.windows .breadcrumb table.path span {
    padding-top: 2px;
 }
 
 
-.breadcrumb table.path a
+.breadcrumb table.path .rstudio-HyperlinkLabel
 {
    color: #0945bf;
 }
 
-.rstudio-themes-flat .rstudio-themes-dark .breadcrumb table.path a
+.rstudio-themes-flat .rstudio-themes-dark .breadcrumb table.path .rstudio-HyperlinkLabel
 {
    color: rgb(191,211,232);
 }

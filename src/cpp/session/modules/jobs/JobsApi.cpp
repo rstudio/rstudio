@@ -1,7 +1,7 @@
 /*
  * JobsApi.cpp
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -191,6 +191,20 @@ void removeAllLocalJobs()
       {
          it->second->cleanup();
          notifyClient(JobRemoved, it->second);
+         it = s_jobs.erase(it);
+      }
+      else
+         ++it;
+   }
+}
+
+void removeAllLauncherJobs()
+{
+   for (auto it = s_jobs.cbegin(); it != s_jobs.cend() ; )
+   {
+      if (it->second->type() == JobType::JobTypeLauncher)
+      {
+         it->second->cleanup();
          it = s_jobs.erase(it);
       }
       else

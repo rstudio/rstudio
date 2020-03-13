@@ -1,7 +1,7 @@
 /*
  * DomUtils.java
  *
- * Copyright (C) 2009-19 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -28,9 +28,11 @@ import com.google.gwt.event.dom.client.KeyPressEvent;
 import com.google.gwt.event.dom.client.KeyPressHandler;
 import com.google.gwt.event.dom.client.KeyUpEvent;
 import com.google.gwt.event.dom.client.KeyUpHandler;
+import com.google.gwt.resources.client.TextResource;
 import com.google.gwt.user.client.*;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.RootPanel;
+import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.UIObject;
 import com.google.gwt.user.client.ui.Widget;
 
@@ -41,6 +43,7 @@ import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.Point;
 import org.rstudio.core.client.Rectangle;
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.KeyboardShortcut;
 import org.rstudio.core.client.dom.impl.DomUtilsImpl;
 import org.rstudio.core.client.dom.impl.NodeRelativePosition;
@@ -889,7 +892,7 @@ public class DomUtils
    {
       Element[] elements = getElementsByClassName(parent, classes);
       if (elements.length == 0)
-   	   return null;
+         return null;
       return elements[0];
    }
    
@@ -970,7 +973,7 @@ public class DomUtils
    
    public static Element findParentElement(Element el,
                                            boolean includeSelf,
-   	                                     ElementPredicate predicate)
+                                           ElementPredicate predicate)
    {
       Element parent = includeSelf ? el : el.getParentElement();
       while (parent != null)
@@ -1015,7 +1018,7 @@ public class DomUtils
    
    public static final boolean preventBackspaceCausingBrowserBack(NativeEvent event)
    {
-      if (Desktop.isDesktop())
+      if (Desktop.hasDesktopFrame())
          return false;
       
       if (event.getKeyCode() != KeyCodes.KEY_BACKSPACE)
@@ -1112,7 +1115,74 @@ public class DomUtils
    {
       disableAutoBehavior(w.getElement());
    }
-   
+
+   public static void disableSpellcheck(Element ele)
+   {
+      ele.setAttribute("spellcheck", "false");
+   }
+
+   public static void disableSpellcheck(Widget w)
+   {
+      disableSpellcheck(w.getElement());
+   }
+
+   /**
+    * Set placeholder attribute on an element (assumed to be a textbox).
+    * This is considered a somewhat dubious technique from an accessibility 
+    * standpoint, especially if the placeholder is serving as the de facto label 
+    * for the textbox. Avoid introducing new uses of placeholder text.
+    * @param ele
+    * @param placeholder
+    */
+   public static void setPlaceholder(Element ele, String placeholder)
+   {
+      ele.setAttribute("placeholder", placeholder);
+   }
+
+   /**
+    * Set placeholder attribute on a TextBox widget.
+    * This is considered a somewhat dubious technique from an accessibility 
+    * standpoint, especially if the placeholder is serving as the de facto label 
+    * for the textbox. Avoid introducing new uses of placeholder text.
+    * @param w
+    * @param placeholder
+    */
+   public static void setPlaceholder(TextBox w, String placeholder)
+   {
+      setPlaceholder(w.getElement(), placeholder);
+   }
+
+   /**
+    * Set disabled attribute on an element's child
+    * @param element The parent element
+    * @param ordinal The index representing the child to disable
+    * @param disable Whether we are adding or removing the disable attribute
+    */
+   public static void setOptionDisabled(Element element, int ordinal, boolean disable)
+   {
+      if (disable)
+         ((Element) element.getChild(ordinal))
+            .setAttribute("disabled", "disabled");
+      else
+         ((Element) element.getChild(ordinal)).removeAttribute("disabled");
+   }
+
+   /**
+    * If an element doesn't already have an id, assign one
+    * @param ele element to operate on
+    * @return id of the element
+    */
+   public static String ensureHasId(Element ele)
+   {
+      String controlId = ele.getId();
+      if (StringUtil.isNullOrEmpty(controlId))
+      {
+         controlId = DOM.createUniqueId();
+         ele.setId(controlId);
+      }
+      return controlId;
+   }
+
    /**
     * Given any URL, resolves it to an absolute URL (using the current window as
     * the base URL), and returns the result.
@@ -1172,6 +1242,16 @@ public class DomUtils
    /*-{
       return element.querySelectorAll(query);
    }-*/;
+   
+   public static final void loadScript(TextResource resource)
+   {
+      ScriptElement scriptEl = Document.get().createScriptElement();
+      scriptEl.setAttribute("type", "text/javascript");
+      scriptEl.setText(resource.getText());
+      
+      HeadElement headEl = Document.get().getHead();
+      headEl.appendChild(scriptEl);
+   }
    
    public static final int ESTIMATED_SCROLLBAR_WIDTH = 19;
    private static int SCROLLBAR_WIDTH = -1;

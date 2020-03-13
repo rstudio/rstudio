@@ -1,7 +1,7 @@
 /*
  * EnvironmentPane.java
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -19,17 +19,18 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.rstudio.core.client.DebugFilePosition;
+import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.resources.ImageResource2x;
-import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.theme.res.ThemeStyles;
-import org.rstudio.core.client.widget.CheckableMenuItem;
+import org.rstudio.core.client.widget.MonitoringMenuItem;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.SearchWidget;
 import org.rstudio.core.client.widget.SecondaryToolbar;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.core.client.widget.ToolbarButton;
+import org.rstudio.core.client.widget.ToolbarMenuButton;
 import org.rstudio.core.client.widget.ToolbarPopupMenu;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.ui.RStudioThemes;
@@ -42,7 +43,7 @@ import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.Session;
-import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
 import org.rstudio.studio.client.workbench.views.environment.model.CallFrame;
@@ -77,7 +78,7 @@ public class EnvironmentPane extends WorkbenchPane
                           GlobalDisplay globalDisplay,
                           EnvironmentServerOperations serverOperations,
                           Session session,
-                          UIPrefs prefs)
+                          UserPrefs prefs)
    {
       super("Environment");
       
@@ -97,16 +98,6 @@ public class EnvironmentPane extends WorkbenchPane
       environmentIsLocal_ = environmentState.environmentIsLocal();
       
       environmentMonitoring_ = new Value<Boolean>(environmentState.environmentMonitoring());
-      ValueChangeHandler<Boolean> onMonitorChange = new ValueChangeHandler<Boolean>()
-      {
-         @Override
-         public void onValueChange(ValueChangeEvent<Boolean> event)
-         {
-            // when the monitoring state changes, update the UI accordingly
-            setRefreshButtonState(event.getValue());
-         }
-      };
-      environmentMonitoring_.addValueChangeHandler(onMonitorChange);
 
       EnvironmentPaneResources.INSTANCE.environmentPaneStyle().ensureInjected();
       
@@ -118,7 +109,7 @@ public class EnvironmentPane extends WorkbenchPane
    @Override
    protected Toolbar createMainToolbar()
    {
-      Toolbar toolbar = new Toolbar();
+      Toolbar toolbar = new Toolbar("Environment Tab");
       toolbar.addLeftWidget(commands_.loadWorkspace().createToolbarButton());
       toolbar.addLeftWidget(commands_.saveWorkspace().createToolbarButton());
       toolbar.addLeftSeparator();
@@ -129,10 +120,12 @@ public class EnvironmentPane extends WorkbenchPane
       ToolbarPopupMenu menu = new ToolbarPopupMenu();
       menu.addItem(createViewMenuItem(EnvironmentObjects.OBJECT_LIST_VIEW));
       menu.addItem(createViewMenuItem(EnvironmentObjects.OBJECT_GRID_VIEW));
-      viewButton_ = new ToolbarButton(
+      viewButton_ = new ToolbarMenuButton(
             nameOfViewType(EnvironmentObjects.OBJECT_LIST_VIEW),
+            ToolbarButton.NoTitle,
             imageOfViewType(EnvironmentObjects.OBJECT_LIST_VIEW),
             menu);
+      ElementIds.assignElementId(viewButton_, ElementIds.MB_OBJECT_LIST_VIEW);
       toolbar.addRightWidget(viewButton_);
       
       toolbar.addRightSeparator();
@@ -140,18 +133,18 @@ public class EnvironmentPane extends WorkbenchPane
       refreshButton_ = commands_.refreshEnvironment().createToolbarButton();
       refreshButton_.addStyleName(ThemeStyles.INSTANCE.refreshToolbarButton());
       toolbar.addRightWidget(refreshButton_);
-      setRefreshButtonState(environmentMonitoring_.getValue());
       
       ToolbarPopupMenu refreshMenu = new ToolbarPopupMenu();
-      refreshMenu.addItem(new MonitoringMenuItem(true));
-      refreshMenu.addItem(new MonitoringMenuItem(false));
+      refreshMenu.addItem(new EnvironmentMonitoringMenuItem(true));
+      refreshMenu.addItem(new EnvironmentMonitoringMenuItem(false));
       refreshMenu.addSeparator();
 
       refreshMenu.addItem(new MenuItem(
             AppCommand.formatMenuLabel(null, "Refresh Now", null),
             true, // as HTML
             () -> commands_.refreshEnvironment().execute()));
-      toolbar.addRightWidget(new ToolbarButton(refreshMenu, false));
+      toolbar.addRightWidget(
+            new ToolbarMenuButton(ToolbarButton.NoText, "Refresh options", refreshMenu, false));
 
       return toolbar;
    }
@@ -159,19 +152,21 @@ public class EnvironmentPane extends WorkbenchPane
    @Override
    protected SecondaryToolbar createSecondaryToolbar()
    {
-      SecondaryToolbar toolbar = new SecondaryToolbar();
+      SecondaryToolbar toolbar = new SecondaryToolbar("Environment Tab Second");
       
       environmentMenu_ = new EnvironmentPopupMenu();
-      environmentButton_ = new ToolbarButton(
+      environmentButton_ = new ToolbarMenuButton(
             friendlyEnvironmentName(),
+            ToolbarButton.NoTitle,
             imageOfEnvironment(environmentName_, environmentIsLocal_),
             environmentMenu_);
+      ElementIds.assignElementId(environmentButton_, ElementIds.MB_ENVIRONMENT_LIST);
       toolbar.addLeftWidget(environmentButton_);
 
       ThemeStyles styles = ThemeStyles.INSTANCE;
       toolbar.getWrapper().addStyleName(styles.tallerToolbarWrapper());
       
-      SearchWidget searchWidget = new SearchWidget(new SuggestOracle() {
+      SearchWidget searchWidget = new SearchWidget("Search environment", new SuggestOracle() {
          @Override
          public void requestSuggestions(Request request, Callback callback)
          {
@@ -181,6 +176,8 @@ public class EnvironmentPane extends WorkbenchPane
                   new Response(new ArrayList<Suggestion>()));
          }
       });
+      
+      ElementIds.assignElementId(searchWidget, ElementIds.SW_ENVIRONMENT);
       searchWidget.addValueChangeHandler(new ValueChangeHandler<String>() {
          @Override
          public void onValueChange(ValueChangeEvent<String> event)
@@ -205,7 +202,7 @@ public class EnvironmentPane extends WorkbenchPane
       return objects_;
    }
 
-   // EnviromentPresenter.Display implementation ------------------------------
+   // EnvironmentPresenter.Display implementation ------------------------------
 
    @Override
    public void addObject(RObject object)
@@ -397,7 +394,7 @@ public class EnvironmentPane extends WorkbenchPane
       isClientStateDirty_ = true;
    }
 
-   // EnviromentObjects.Observer implementation -------------------------------
+   // EnvironmentObjects.Observer implementation -------------------------------
 
    public void setPersistedScrollPosition(int scrollPosition)
    {
@@ -425,13 +422,13 @@ public class EnvironmentPane extends WorkbenchPane
    @Override
    public boolean getShowInternalFunctions()
    {
-      return prefs_.showInternalFunctionsInTraceback().getValue();
+      return prefs_.showInternalFunctions().getValue();
    }
 
    @Override
    public void setShowInternalFunctions(boolean show)
    {
-      prefs_.showInternalFunctionsInTraceback().setProjectValue(show);
+      prefs_.showInternalFunctions().setProjectValue(show);
    }
 
    public void fillObjectContents(final RObject object, 
@@ -480,19 +477,14 @@ public class EnvironmentPane extends WorkbenchPane
       menu.addItem(commands_.importDatasetFromSAV().createMenuItem(false));
       menu.addItem(commands_.importDatasetFromSAS().createMenuItem(false));
       menu.addItem(commands_.importDatasetFromStata().createMenuItem(false));
-      menu.addSeparator();
-      menu.addItem(commands_.importDatasetFromXML().createMenuItem(false));
-      menu.addItem(commands_.importDatasetFromJSON().createMenuItem(false));
-      menu.addSeparator();
-      menu.addItem(commands_.importDatasetFromJDBC().createMenuItem(false));
-      menu.addItem(commands_.importDatasetFromODBC().createMenuItem(false));
-      menu.addSeparator();
-      menu.addItem(commands_.importDatasetFromMongo().createMenuItem(false));
-      
-      dataImportButton_ = new ToolbarButton(
+
+      dataImportButton_ = new ToolbarMenuButton(
               "Import Dataset",
+              ToolbarButton.NoTitle,
               new ImageResource2x(StandardIcons.INSTANCE.import_dataset2x()),
               menu);
+      
+      ElementIds.assignElementId(dataImportButton_, ElementIds.MB_IMPORT_DATASET);
       return dataImportButton_;
 
    }
@@ -643,68 +635,38 @@ public class EnvironmentPane extends WorkbenchPane
       }
    }
    
-   private class MonitoringMenuItem extends CheckableMenuItem
+   private class EnvironmentMonitoringMenuItem extends MonitoringMenuItem
    {
-      public MonitoringMenuItem(boolean monitoring)
+      public EnvironmentMonitoringMenuItem(boolean monitoredValue)
       {
-         monitoring_ = monitoring;
-         environmentMonitoring_.addValueChangeHandler(new ValueChangeHandler<Boolean>()
-         {
-            @Override
-            public void onValueChange(ValueChangeEvent<Boolean> arg0)
-            {
-               onStateChanged();
-            }
-         });
-         onStateChanged();
-      }
-
-      @Override
-      public String getLabel()
-      {
-         return monitoring_ ?
-                  "Refresh Automatically" :
-                  "Manual Refresh Only";
-      }
-
-      @Override
-      public boolean isChecked()
-      {
-         return monitoring_ == environmentMonitoring_.getValue();
+         super(
+               refreshButton_,
+               environmentMonitoring_,
+               environmentMonitoring_.getValue(),
+               monitoredValue);
       }
 
       @Override
       public void onInvoked()
       {
-         server_.setEnvironmentMonitoring(monitoring_, new ServerRequestCallback<Void>()
+         server_.setEnvironmentMonitoring(monitoredValue_, new ServerRequestCallback<Void>()
          {
             @Override
             public void onResponseReceived(Void v)
             {
-               environmentMonitoring_.setValue(monitoring_, true);
+               environmentMonitoring_.setValue(monitoredValue_, true);
             }
-
+         
             @Override
             public void onError(ServerError error)
             {
-               globalDisplay_.showErrorMessage("Could not change monitoring state", 
+               globalDisplay_.showErrorMessage(
+                     "Could not change monitoring state",
                      error.getMessage());
             }
          });
+ 
       }
-
-      private final boolean monitoring_;
-   }
-   
-   private void setRefreshButtonState(boolean monitoring)
-   {
-      if (refreshButton_ == null)
-         return;
-
-      refreshButton_.setLeftImage(monitoring ?
-            commands_.refreshEnvironment().getImageResource() :
-            new ImageResource2x(
-               ThemeResources.INSTANCE.refreshWorkspaceUnmonitored2x()));
    }
    
    public static final String GLOBAL_ENVIRONMENT_NAME = "Global Environment";
@@ -713,13 +675,13 @@ public class EnvironmentPane extends WorkbenchPane
    private final EventBus eventBus_;
    private final GlobalDisplay globalDisplay_;
    private final EnvironmentServerOperations server_;
-   private final UIPrefs prefs_;
+   private final UserPrefs prefs_;
    private final Value<Boolean> environmentMonitoring_;
 
-   private ToolbarButton dataImportButton_;
+   private ToolbarMenuButton dataImportButton_;
    private ToolbarPopupMenu environmentMenu_;
-   private ToolbarButton environmentButton_;
-   private ToolbarButton viewButton_;
+   private ToolbarMenuButton environmentButton_;
+   private ToolbarMenuButton viewButton_;
    private ToolbarButton refreshButton_; 
    private EnvironmentObjects objects_;
 

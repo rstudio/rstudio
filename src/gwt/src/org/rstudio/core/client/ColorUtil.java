@@ -1,7 +1,7 @@
 /*
  * ColorUtil.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-12 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -120,7 +120,7 @@ public class ColorUtil
          
          if (pattern == null)
          {
-            Debug.logToConsole("Non-conformat RGB color string: '" + cssString + "'");
+            Debug.logToConsole("Non-conformant RGB color string: '" + cssString + "'");
             return new RGBColor();
          }
          

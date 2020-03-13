@@ -1,7 +1,7 @@
 /*
  * RemoteServerAuth.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-12 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -107,7 +107,7 @@ class RemoteServerAuth
          public void onResponseReceived(Integer response)
          {
             // this method does nothing in the case of both successfully
-            // updating credentails and method not found. however, if
+            // updating credentials and method not found. however, if
             // the credentials update fails then it needs to blow
             // away the client
             

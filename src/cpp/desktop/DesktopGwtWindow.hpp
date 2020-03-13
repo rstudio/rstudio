@@ -1,7 +1,7 @@
 /*
  * DesktopGwtWindow.hpp
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -31,7 +31,8 @@ public:
                       QString name,
                       QUrl baseUrl = QUrl(),
                       QWidget *parent = nullptr,
-                      WebPage* opener = nullptr);
+                      WebPage* opener = nullptr,
+                      bool isRemoteDesktop = false);
 
    const std::vector<double>& zoomLevels() const { return zoomLevels_; }
 

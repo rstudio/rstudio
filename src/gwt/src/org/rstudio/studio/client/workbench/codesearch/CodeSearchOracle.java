@@ -1,7 +1,7 @@
 /*
  * CodeSearchOracle.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-20 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -82,7 +82,7 @@ public class CodeSearchOracle extends SuggestOracle
          // Less penalty if character follows special delim
          if (matchPos >= 1)
          {
-            char prevChar = suggestionLower.charAt(matchPos - 1);
+            char prevChar = StringUtil.charAt(suggestionLower, matchPos - 1);
             if (prevChar == '_' || prevChar == '-' ||
                   (!isFile && prevChar == '.'))
             {
@@ -91,7 +91,7 @@ public class CodeSearchOracle extends SuggestOracle
          }
          
          // Less penalty for case-sensitive matches
-         if (suggestion.charAt(matchPos) == query.charAt(j))
+         if (StringUtil.charAt(suggestion, matchPos) == query.charAt(j))
             penalty--;
          
          // More penalty for 'uninteresting' files
@@ -363,7 +363,7 @@ public class CodeSearchOracle extends SuggestOracle
       private Callback callback_;
       private Invalidation.Token invalidationToken_;
       private boolean executing_;
-   };
+   }
    
    private void sortSuggestions(ArrayList<CodeSearchSuggestion> suggestions,
                                 String query)

@@ -1,7 +1,7 @@
 /*
  * NotebookExec.cpp
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -24,16 +24,13 @@
 #include "NotebookWorkingDir.hpp"
 #include "NotebookConditions.hpp"
 
-#include <boost/foreach.hpp>
-
-#include <core/Error.hpp>
+#include <shared_core/Error.hpp>
 #include <core/text/CsvParser.hpp>
 #include <core/FileSerializer.hpp>
 
 #include <r/ROptions.hpp>
 
 #include <session/SessionModuleContext.hpp>
-#include <session/SessionUserSettings.hpp>
 
 #include <iostream>
 
@@ -69,13 +66,13 @@ core::Error copyLibDirForOutput(const core::FilePath& file,
 {
    Error error = Success();
 
-   FilePath fileLib = file.parent().complete(kChunkLibDir);
+   FilePath fileLib = file.getParent().completePath(kChunkLibDir);
    if (fileLib.exists())
    {
       std::string docPath;
       source_database::getPath(docId, &docPath);
       error = mergeLib(fileLib, chunkCacheFolder(docPath, docId, nbCtxId)
-                                   .complete(kChunkLibDir));
+         .completePath(kChunkLibDir));
       if (error)
          LOG_ERROR(error);
 
@@ -197,7 +194,7 @@ void ChunkExecContext::connect()
 
    error = pHtmlCapture->connectHtmlCapture(
             outputPath_,
-            outputPath_.parent().complete(kChunkLibDir),
+            outputPath_.getParent().completePath(kChunkLibDir),
             options_.chunkOptions());
    if (error)
       LOG_ERROR(error);
@@ -282,7 +279,7 @@ bool ChunkExecContext::onCondition(Condition condition,
    }
 
    // give each capturing module a chance to handle the condition
-   BOOST_FOREACH(boost::shared_ptr<NotebookCapture> pCapture, captures_)
+   for (boost::shared_ptr<NotebookCapture> pCapture : captures_)
    {
       if (pCapture->onCondition(condition, message))
          return true;
@@ -321,7 +318,7 @@ void ChunkExecContext::onFileOutput(const FilePath& file,
 
    // preserve original extension; some output types, such as plots, don't
    // have a canonical extension
-   target = target.parent().complete(target.stem() + file.extension());
+   target = target.getParent().completePath(target.getStem() + file.getExtension());
 
    Error error = file.move(target);
    if (error)
@@ -335,19 +332,17 @@ void ChunkExecContext::onFileOutput(const FilePath& file,
    copyLibDirForOutput(file, docId_, nbCtxId_);
 
    // if output sidecar file was provided, write it out
-   if (!sidecar.empty())
+   if (!sidecar.isEmpty())
    {
-      sidecar.move(target.parent().complete(
-               target.stem() + sidecar.extension()));
+      sidecar.move(target.getParent().completePath(
+               target.getStem() + sidecar.getExtension()));
    }
 
    // serialize metadata if provided
-   if (!metadata.is_null())
+   if (!metadata.isNull())
    {
-      std::ostringstream oss;
-      json::write(metadata, oss);
-      error = writeStringToFile(target.parent().complete(
-               target.stem() + ".metadata"), oss.str());
+      error = writeStringToFile(target.getParent().completePath(
+               target.getStem() + ".metadata"), metadata.write());
    }
 
    enqueueChunkOutput(docId_, chunkId_, nbCtxId_, ordinal, outputType, target,
@@ -366,14 +361,14 @@ void ChunkExecContext::onError(const core::json::Object& err)
    unsigned ordinal;
    FilePath target = getNextOutputFile(docId_, chunkId_, nbCtxId_, 
          ChunkOutputError, &ordinal);
-   boost::shared_ptr<std::ostream> pOfs;
-   Error error = target.open_w(&pOfs, true);
+   std::shared_ptr<std::ostream> pOfs;
+   Error error = target.openForWrite(pOfs, true);
    if (error)
    {
       LOG_ERROR(error);
       return;
    }
-   json::write(err, *pOfs);
+   err.write(*pOfs);
    
    pOfs->flush();
    pOfs.reset();
@@ -441,7 +436,7 @@ void ChunkExecContext::disconnect()
    Error error;
 
    // clean up capturing modules (includes plots, errors, and HTML widgets)
-   BOOST_FOREACH(boost::shared_ptr<NotebookCapture> pCapture, captures_)
+   for (boost::shared_ptr<NotebookCapture> pCapture : captures_)
    {
       pCapture->disconnect();
    }
@@ -466,7 +461,7 @@ void ChunkExecContext::disconnect()
    }
 
    // unhook all our event handlers
-   BOOST_FOREACH(const RSTUDIO_BOOST_CONNECTION& connection, connections_)
+   for (const RSTUDIO_BOOST_CONNECTION& connection : connections_)
    {
       connection.disconnect();
    }
@@ -524,7 +519,7 @@ ExecScope ChunkExecContext::execScope()
 void ChunkExecContext::onExprComplete()
 {
    // notify capturing submodules
-   BOOST_FOREACH(boost::shared_ptr<NotebookCapture> pCapture, captures_)
+   for (boost::shared_ptr<NotebookCapture> pCapture : captures_)
    {
       pCapture->onExprComplete();
    }

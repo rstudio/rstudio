@@ -1,7 +1,7 @@
 #
 # SessionReticulate.R
 #
-# Copyright (C) 2009-18 by RStudio, Inc.
+# Copyright (C) 2009-18 by RStudio, PBC
 #
 # Unless you have received this program directly from RStudio pursuant
 # to the terms of a commercial license agreement with RStudio, then
@@ -12,6 +12,10 @@
 # AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
 #
 #
+
+options(reticulate.initialized = function() {
+   .Call("rs_reticulateInitialized", PACKAGE = "(embedding)")
+})
 
 .rs.setVar("python.moduleCache", new.env(parent = emptyenv()))
 
@@ -77,6 +81,21 @@
    
    .Call("rs_showPythonHelp", text, PACKAGE = "(embedding)")
    return(TRUE)
+})
+
+.rs.addFunction("reticulate.initialize", function()
+{
+   # try to default to the tkAgg backend (note that we'll
+   # force a vanilla 'agg' backend when required otherwise)
+   engine <- tolower(Sys.getenv("MPLENGINE"))
+   if (engine %in% c("", "qt5agg"))
+      Sys.setenv(MPLENGINE = "tkAgg")
+})
+
+.rs.addFunction("reticulate.matplotlib.pyplot.loadHook", function(plt)
+{
+   .rs.setVar("reticulate.matplotlib.show", plt$show)
+   plt$show <- .rs.reticulate.matplotlib.showHook
 })
 
 .rs.addFunction("reticulate.matplotlib.showHook", function(...)

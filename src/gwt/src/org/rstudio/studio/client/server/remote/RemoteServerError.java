@@ -1,7 +1,7 @@
 /*
  * RemoteServerError.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-12 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -66,7 +66,7 @@ class RemoteServerError implements ServerError
    
    public String getRedirectUrl()
    {
-	  return redirectUrl_;
+      return redirectUrl_;
    }
    
    public ServerErrorCause getCause()
@@ -121,7 +121,7 @@ class RemoteServerError implements ServerError
          
       case RpcError.MAX_SESSIONS_REACHED:
       case RpcError.MAX_USERS_REACHED:
-    	  return ServerError.LICENSE_USAGE_LIMIT;
+         return ServerError.LICENSE_USAGE_LIMIT;
                
       default:
          return ServerError.SUCCESS;

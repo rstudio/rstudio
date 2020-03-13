@@ -1,7 +1,7 @@
 /*
  * SessionClientEvent.cpp
  *
- * Copyright (C) 2009-19 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -17,10 +17,10 @@
 
 #include <boost/lexical_cast.hpp>
 
-#include <core/Error.hpp>
+#include <shared_core/Error.hpp>
 #include <core/Log.hpp>
-#include <core/FilePath.hpp>
-#include <core/SafeConvert.hpp>
+#include <shared_core/FilePath.hpp>
+#include <shared_core/SafeConvert.hpp>
 #include <core/FileSerializer.hpp>
 #include <core/system/System.hpp>
 
@@ -68,7 +68,7 @@ const int kConsoleProcessOutput = 43;
 const int kConsoleProcessExit = 44;
 const int kListChanged = 45;
 const int kConsoleProcessCreated = 46;
-const int kUiPrefsChanged = 47;
+const int kUserPrefsChanged = 47;
 const int kHandleUnsavedChanges = 48;
 const int kConsoleProcessPrompt = 49;
 const int kHTMLPreviewStartedEvent = 51;
@@ -195,6 +195,12 @@ const int kComputeThemeColors = 177;
 const int kRequestDocumentClose = 178;
 const int kRequestDocumentCloseCompleted = 179;
 const int kExecuteAppCommand = 180;
+const int kUserStateChanged = 181;
+const int kHighlightUi = 182;
+const int kReplaceResult = 183;
+const int kReplaceUpdated = 184;
+const int kTutorialCommand = 185;
+const int kTutorialLaunch = 186;
 }
 
 void ClientEvent::init(int type, const json::Value& data)
@@ -288,8 +294,8 @@ std::string ClientEvent::typeName() const
          return "console_process_exit";
       case client_events::kListChanged:
          return "list_changed";
-      case client_events::kUiPrefsChanged:
-         return "ui_prefs_changed";
+      case client_events::kUserPrefsChanged:
+         return "user_prefs_changed";
       case client_events::kHandleUnsavedChanges:
          return "handle_unsaved_changes";
       case client_events::kConsoleProcessPrompt:
@@ -540,6 +546,18 @@ std::string ClientEvent::typeName() const
          return "request_document_close_completed";
       case client_events::kExecuteAppCommand:
          return "execute_app_command";
+      case client_events::kUserStateChanged:
+         return "user_state_changed";
+      case client_events::kHighlightUi:
+         return "highlight_ui";
+      case client_events::kReplaceResult:
+         return "replace_result";
+      case client_events::kReplaceUpdated:
+         return "replace_updated";
+      case client_events::kTutorialCommand:
+         return "tutorial_command";
+      case client_events::kTutorialLaunch:
+         return "tutorial_launch";
       default:
          LOG_WARNING_MESSAGE("unexpected event type: " + 
                              safe_convert::numberToString(type_));

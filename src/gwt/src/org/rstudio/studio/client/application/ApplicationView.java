@@ -1,7 +1,7 @@
 /*
  * ApplicationView.java
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-20 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -16,9 +16,11 @@
 package org.rstudio.studio.client.application;
 
 import com.google.gwt.user.client.ui.Widget;
+import org.rstudio.core.client.widget.AriaLiveStatusReporter;
 import org.rstudio.core.client.widget.Operation;
+import org.rstudio.studio.client.application.events.AriaLiveStatusEvent.Severity;
 
-public interface ApplicationView
+public interface ApplicationView extends AriaLiveStatusReporter
 {       
    // show application agreement
    void showApplicationAgreement(String title,
@@ -30,8 +32,9 @@ public interface ApplicationView
    void showWorkbenchView(Widget widget);
    
    // toolbar
-   void showToolbar(boolean showToolbar);
+   void showToolbar(boolean showToolbar, boolean announce);
    boolean isToolbarShowing();
+   void focusToolbar();
    
    // application exit states
    void showApplicationQuit();
@@ -44,6 +47,10 @@ public interface ApplicationView
    // error messages
    void showSessionAbendWarning();
    
+   // status or alert message for screen reader users,
+   @Override
+   void reportStatus(String message, int delayMs, Severity severity);
+
    // progress
    void showSerializationProgress(String message, 
                                   boolean modal, 
@@ -51,7 +58,7 @@ public interface ApplicationView
                                   int timeoutMs);
    void hideSerializationProgress();
    
-   Widget getWidget() ;
+   Widget getWidget();
 
    void showLicenseWarning(boolean severe, String message);
    void showWarning(boolean severe, String message);

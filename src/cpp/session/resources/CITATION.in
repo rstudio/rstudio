@@ -1,0 +1,19 @@
+bibentry("Manual",
+         title = "RStudio: Integrated Development Environment for R",
+         author = person("RStudio Team"),
+         organization = "RStudio, PBC",
+         address      = "Boston, MA",
+         year         = "${CPACK_COPYRIGHT_YEAR}",
+         url          = "http://www.rstudio.com/",
+         
+         textVersion = 
+         paste("RStudio Team (${CPACK_COPYRIGHT_YEAR}). ", 
+               "RStudio: Integrated Development Environment for R. ",
+               "RStudio, PBC, Boston, MA ",
+               "URL http://www.rstudio.com/.",
+               sep=""),
+         
+         mheader = "To cite RStudio in publications use:",
+	 
+	     mfooter = ""
+	)

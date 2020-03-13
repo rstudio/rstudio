@@ -1,7 +1,7 @@
 /*
  * StringUtils.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-12 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -145,6 +145,13 @@ test_context("Comment extraction")
                "There is a comment\n"
                "% but not at the start of the document.\n");
       expect_false(extractCommentHeader(text, kLatexStyleLineCommentRegex, &extracted));
+   }
+
+   test_that("JavaScript literals are escaped")
+   {
+      expect_true(jsLiteralEscape("\"hello\"") == "\\\"hello\\\"");
+      expect_true(jsLiteralEscape("'goodbye'") == "\\'goodbye\\'");
+      expect_true(jsLiteralEscape("</script>") == "\\074/script>");
    }
 }
 

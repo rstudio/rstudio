@@ -1,7 +1,7 @@
 /*
  * DesktopSessionLauncher.cpp
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -19,15 +19,18 @@
 
 #include <boost/bind.hpp>
 
+#include <core/Macros.hpp>
 #include <core/http/Request.hpp>
 #include <core/http/Response.hpp>
 #include <core/http/TcpIpBlockingClient.hpp>
+#include <core/text/TemplateFilter.hpp>
 
 #include <core/WaitUtils.hpp>
 #include <core/FileSerializer.hpp>
 #include <core/system/Environment.hpp>
 #include <core/system/ParentProcessMonitor.hpp>
 #include <core/r_util/RUserData.hpp>
+#include <shared_core/SafeConvert.hpp>
 
 #include <QPushButton>
 
@@ -54,6 +57,24 @@ void launchProcess(const std::string& absPath,
    QProcess* process = new QProcess();
    process->setProgram(QString::fromStdString(absPath));
    process->setArguments(argList);
+   
+#ifdef Q_OS_DARWIN
+   // on macOS with the hardened runtime, we can no longer rely on dyld
+   // to lazy-load symbols from libR.dylib; to resolve this, we use
+   // DYLD_INSERT_LIBRARIES to inject the library we wish to use on
+   // launch 
+   FilePath rHome = FilePath(core::system::getenv("R_HOME"));
+   FilePath rLib = rHome.completeChildPath("lib/libR.dylib");
+   if (rLib.exists())
+   {
+      QProcessEnvironment environment = QProcessEnvironment::systemEnvironment();
+      environment.insert(
+               QStringLiteral("DYLD_INSERT_LIBRARIES"),
+               QString::fromStdString(rLib.getAbsolutePathNative()));
+      process->setProcessEnvironment(environment);
+   }
+#endif
+   
    if (options().runDiagnostics())
       process->setProcessChannelMode(QProcess::ForwardedChannels);
 
@@ -70,7 +91,7 @@ void launchProcess(const std::string& absPath,
 
 FilePath abendLogPath()
 {
-   return desktop::userLogPath().complete("rsession_abort_msg.log");
+   return desktop::userLogPath().completePath("rsession_abort_msg.log");
 }
 
 void logEnvVar(const std::string& name)
@@ -194,6 +215,104 @@ void SessionLauncher::closeAllSatellites()
    }
 }
 
+Error getRecentSessionLogs(std::string* pLogFile, std::string *pLogContents)
+{
+   // Collect R session logs
+   std::vector<FilePath> logs;
+   Error error = userLogPath().getChildren(logs);
+   if (error)
+   {
+      return error;
+   }
+
+   // Sort by recency in case there are several session logs --
+   // inverse sort so most recent logs are first
+   std::sort(logs.begin(), logs.end(), [](FilePath a, FilePath b)
+   {
+      return a.getLastWriteTime() < b.getLastWriteTime();
+   });
+
+   // Loop over all the log files and stop when we find a session log
+   // (desktop logs are also in this folder)
+   for (const auto& log: logs)
+   {
+      if (log.getFilename().find("rsession") != std::string::npos)
+      {
+         // Record the path where we found the log file
+         *pLogFile = log.getAbsolutePath();
+
+         // Read all the lines from a file into a string vector
+         std::vector<std::string> lines;
+         error = readStringVectorFromFile(log, &lines);
+         if (error)
+             return error;
+
+         // Combine the three most recent lines
+         std::string logContents;
+         for (size_t i = static_cast<size_t>(std::max(static_cast<int>(lines.size()) - 3, 0));
+              i < lines.size();
+              ++i)
+         {
+            logContents += lines[i] + "\n";
+         }
+         *pLogContents = logContents;
+         return Success();
+      }
+   }
+
+   // No logs found
+   *pLogFile = "Log File";
+   *pLogContents = "[No logs available]";
+   return Success();
+}
+
+void SessionLauncher::showLaunchErrorPage()
+{
+   RS_CALL_ONCE();
+   
+   // String mapping of template codes to diagnostic information
+   std::map<std::string,std::string> vars;
+
+   // Collect message from the abnormal end log path
+   if (abendLogPath().exists())
+   {
+      vars["launch_failed"] = launchFailedErrorMessage().toStdString();
+   }
+   else
+   {
+      vars["launch_failed"] = "[No error available]";
+   }
+
+   // Collect the rsession process exit code
+   vars["exit_code"] = safe_convert::numberToString(pRSessionProcess_->exitCode());
+
+   // Read standard output and standard error streams
+   std::string procStdout = pRSessionProcess_->readAllStandardOutput().toStdString();
+   if (procStdout.empty())
+       procStdout = "[No output emitted]";
+   vars["process_output"] = procStdout;
+
+   std::string procStderr = pRSessionProcess_->readAllStandardError().toStdString();
+   if (procStderr.empty())
+       procStderr = "[No errors emitted]";
+   vars["process_error"] = procStderr;
+
+   // Read recent entries from the rsession log file
+   std::string logFile, logContent;
+   Error error = getRecentSessionLogs(&logFile, &logContent);
+   if (error)
+       LOG_ERROR(error);
+   vars["log_file"] = logFile;
+   vars["log_content"] = logContent;
+
+   // Read text template, substitute variables, and load HTML into the main window
+   std::ostringstream oss;
+   error = text::renderTemplate(options().resourcesPath().completePath("html/error.html"), vars, oss);
+   if (error)
+       LOG_ERROR(error);
+   else
+      pMainWindow_->loadHtml(QString::fromStdString(oss.str()));
+}
 
 void SessionLauncher::onRSessionExited(int, QProcess::ExitStatus)
 {
@@ -210,15 +329,22 @@ void SessionLauncher::onRSessionExited(int, QProcess::ExitStatus)
    if (pendingQuit == PendingQuitNone)
    {
       closeAllSatellites();
-      pMainWindow_->webView()->webPage()->runJavaScript(
-               QString::fromUtf8("window.desktopHooks.notifyRCrashed()"));
-
-      if (abendLogPath().exists())
+      try
       {
-         showMessageBox(QMessageBox::Critical,
-                        pMainWindow_,
-                        desktop::activation().editionName(),
-                        launchFailedErrorMessage(), QString());
+         pMainWindow_->webView()->webPage()->runJavaScript(
+                  QString::fromUtf8("window.desktopHooks.notifyRCrashed()"));
+      }
+      catch (...)
+      {
+         // The above can throw if the window has no desktop hooks; this is normal
+         // if we haven't loaded the initial session.
+      }
+
+      if (!pMainWindow_->workbenchInitialized())
+      {
+         // If the R session exited without initializing the workbench, treat it as
+         // a boot failure.
+         showLaunchErrorPage();
       }
    }
 
@@ -369,9 +495,9 @@ Error SessionLauncher::launchSession(const QStringList& argList,
    if (error)
       LOG_ERROR(error);
 
-   return  parent_process_monitor::wrapFork(
+   return parent_process_monitor::wrapFork(
          boost::bind(launchProcess,
-                     sessionPath_.absolutePath(),
+                     sessionPath_.getAbsolutePath(),
                      argList,
                      ppRSessionProcess));
 }
@@ -387,7 +513,11 @@ void SessionLauncher::onLaunchError(QString message)
       errorMsg.setWindowFlag(Qt::WindowContextHelpButtonHint, false);
       errorMsg.exec();
    }
-  qApp->exit(EXIT_FAILURE);
+
+   if (pMainWindow_)
+      pMainWindow_->quit();
+   else
+      qApp->exit(EXIT_FAILURE);
 }
 
 QString SessionLauncher::collectAbendLogMessage() const
@@ -457,10 +587,10 @@ void SessionLauncher::buildLaunchContext(QString* pHost,
    *pUrl = QUrl(QString::fromUtf8("http://") + *pHost +
                 QString::fromUtf8(":") + *pPort + QString::fromUtf8("/"));
 
-   if (!confPath_.empty())
+   if (!confPath_.isEmpty())
    {
       *pArgList << QString::fromUtf8("--config-file") <<
-                   QString::fromUtf8(confPath_.absolutePath().c_str());
+                   QString::fromUtf8(confPath_.getAbsolutePath().c_str());
    }
    else
    {

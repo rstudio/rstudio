@@ -1,7 +1,7 @@
 /*
  * RStudioThemes.java
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -17,7 +17,8 @@ package org.rstudio.studio.client.application.ui;
 
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.StringUtil;
-import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserState;
 
 import com.google.gwt.dom.client.BodyElement;
 import com.google.gwt.dom.client.Document;
@@ -30,72 +31,101 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.themes.AceT
 
 public class RStudioThemes
 {
-   public static void initializeThemes(UIPrefs uiPrefs,
+   public static void initializeThemes(UserPrefs userPrefs,
+                                       UserState userState,
                                        Document document,
                                        Element element)
    {
-      String themeName = getThemeFromUiPrefs(uiPrefs);
+      String themeName = getThemeFromUserPrefs(userPrefs, userState);
       initializeThemes(themeName, document, element);
    }
 
+   public static void initializeThemes(Document document,
+                                       Element element)
+   {
+      if (activeTheme_ != null)
+      {
+         initializeThemes(activeTheme_, document, element);
+      }
+   }
+   
    public static void initializeThemes(String themeName,
                                        Document document,
                                        Element element)
    {
-      document.getBody().removeClassName("rstudio-themes-flat");
       element.removeClassName("rstudio-themes-dark");
       element.removeClassName("rstudio-themes-default");
       element.removeClassName("rstudio-themes-dark-grey");
       element.removeClassName("rstudio-themes-alternate");
       element.removeClassName("rstudio-themes-scrollbars");
 
+      document.getBody().removeClassName("rstudio-themes-flat");
+      
       document.getBody().removeClassName("rstudio-themes-dark-menus");
       document.getBody().removeClassName("rstudio-themes-dark-menus-disabled");
       
-      if (themeName == "default" || themeName == "dark-grey" || themeName == "alternate") {         
+      document.getBody().removeClassName("rstudio-themes-light-menus");
+      document.getBody().removeClassName("rstudio-themes-light-menus-disabled");
+      
+      if (themeName == "default" || themeName == "dark-grey" || themeName == "alternate")
+      {
          document.getBody().addClassName("rstudio-themes-flat");
          
-         if (themeName.contains("dark")) {
+         if (themeName.contains("dark"))
+         {
             document.getBody().addClassName("rstudio-themes-dark-menus");
             element.addClassName("rstudio-themes-dark");
          }
+         else
+         {
+            document.getBody().addClassName("rstudio-themes-light-menus");
+         }
 
-         if (usesScrollbars()) {
+         if (usesScrollbars())
+         {
             element.addClassName("rstudio-themes-scrollbars");
          }
             
          element.addClassName("rstudio-themes-" + themeName);
          element.setId("rstudio_container");
       }
+      
+      activeTheme_ = themeName;
    }
 
-   public static boolean isFlat(UIPrefs prefs) {
-      return prefs.getFlatTheme().getValue() != "classic"; 
+   public static boolean isFlat(UserPrefs prefs)
+   {
+      return prefs.globalTheme().getValue() != UserPrefs.GLOBAL_THEME_CLASSIC;
    }
    
-   public static boolean isFlat() {
+   public static boolean isFlat()
+   {
       return Document.get().getBody().hasClassName("rstudio-themes-flat");
    }
    
-   public static boolean isEditorDark() {
+   public static boolean isEditorDark()
+   {
       return Document.get().getBody().hasClassName("editor_dark");
    }
 
-   public static String suggestThemeFromAceTheme(AceTheme aceTheme, String rstudioTheme) {
+   public static String suggestThemeFromAceTheme(AceTheme aceTheme, String rstudioTheme)
+   {
       if (StringUtil.equals(rstudioTheme, "classic") || (aceTheme == null))
          return rstudioTheme;
       
       return aceTheme.isDark() ? "dark-grey" : rstudioTheme;
    }
 
-   public static String getThemeFromUiPrefs(UIPrefs prefs) {
+   public static String getThemeFromUserPrefs(UserPrefs prefs, UserState state)
+   {
       return suggestThemeFromAceTheme(
-        prefs.theme().getGlobalValue(),
-        prefs.getFlatTheme().getGlobalValue()
+        state.theme().getGlobalValue().cast(),
+        prefs.globalTheme().getGlobalValue()
       );
    }
    
-   public static boolean usesScrollbars() {
+   public static boolean usesScrollbars()
+   {
       if (usesScrollbars_ != null) return usesScrollbars_;
       
       if (!BrowseCap.isMacintosh()) {
@@ -146,4 +176,5 @@ public class RStudioThemes
    }
    
    private static Boolean usesScrollbars_ = null;
+   private static String activeTheme_ = null;
 }

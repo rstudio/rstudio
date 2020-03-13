@@ -1,7 +1,7 @@
 /*
  * HelpSearchOracle.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -28,14 +28,14 @@ public class HelpSearchOracle extends SuggestOracle
    @Inject
    public HelpSearchOracle(HelpServerOperations server)
    {
-      server_ = server ;
+      server_ = server;
    }
 
    @Override
    public void requestSuggestions(final Request request, 
                                   final Callback callback)
    {
-      String query = request.getQuery() ;
+      String query = request.getQuery();
       server_.suggestTopics(query,
                              new ServerRequestCallback<JsArrayString>() {
          @Override
@@ -49,34 +49,34 @@ public class HelpSearchOracle extends SuggestOracle
             int maxCount = Math.min(suggestions.length(), request.getLimit());
 
             ArrayList<SearchSuggestion> results =
-               new ArrayList<SearchSuggestion>() ;
+               new ArrayList<SearchSuggestion>();
             for (int i = 0; i< maxCount; i++)
-               results.add(new SearchSuggestion(suggestions.get(i))) ;
+               results.add(new SearchSuggestion(suggestions.get(i)));
             
-            callback.onSuggestionsReady(request, new Response(results)) ;
+            callback.onSuggestionsReady(request, new Response(results));
          }
-      }); ;
+      });
    }
    
    private class SearchSuggestion implements Suggestion
    {
       public SearchSuggestion(String value)
       {
-         value_ = value ;
+         value_ = value;
       }
 
       public String getDisplayString()
       {
-         return value_ ;
+         return value_;
       }
 
       public String getReplacementString()
       {
-         return value_ ;
+         return value_;
       }
       
-      private final String value_ ;
+      private final String value_;
    }
 
-   private final HelpServerOperations server_ ;
+   private final HelpServerOperations server_;
 }

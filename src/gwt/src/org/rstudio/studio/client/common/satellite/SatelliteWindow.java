@@ -1,7 +1,7 @@
 /*
  * SatelliteWindow.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-20 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -15,9 +15,15 @@
 package org.rstudio.studio.client.common.satellite;
 
 
+import org.rstudio.core.client.ElementIds;
+import org.rstudio.core.client.a11y.A11y;
 import org.rstudio.core.client.command.AppCommand;
+import org.rstudio.core.client.widget.AriaLiveStatusWidget;
 import org.rstudio.core.client.widget.FontSizer;
+import org.rstudio.core.client.widget.ModalDialogTracker;
 import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.application.events.AriaLiveStatusEvent;
+import org.rstudio.studio.client.application.events.AriaLiveStatusEvent.Timing;
 import org.rstudio.studio.client.application.events.ChangeFontSizeEvent;
 import org.rstudio.studio.client.application.events.ChangeFontSizeHandler;
 import org.rstudio.studio.client.application.events.EventBus;
@@ -25,7 +31,7 @@ import org.rstudio.studio.client.application.events.ThemeChangedEvent;
 import org.rstudio.studio.client.application.ui.RStudioThemes;
 import org.rstudio.studio.client.common.satellite.events.SatelliteWindowEventHandlers;
 import org.rstudio.studio.client.workbench.events.SessionInitEvent;
-import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.ui.FontSizeManager;
 
 import com.google.gwt.core.client.JavaScriptObject;
@@ -51,6 +57,7 @@ public abstract class SatelliteWindow extends Composite
       pFontSizeManager_ = pFontSizeManager;
 
       pEventBus_.get().addHandler(ThemeChangedEvent.TYPE, this);
+      pEventBus_.get().addHandler(AriaLiveStatusEvent.TYPE, this);
       
       // occupy full client area of the window
       if (!allowScrolling())
@@ -59,18 +66,24 @@ public abstract class SatelliteWindow extends Composite
 
       // create application panel
       mainPanel_ = new LayoutPanel();
-      
+      ElementIds.assignElementId(mainPanel_.getElement(), ElementIds.SATELLITE_PANEL);
+
       // Register an event handler for themes so it will be triggered after a
       // UIPrefsChangedEvent updates the theme. Do this after SessionInit (if we
       // do it beforehand we'll trigger the event before the SessionInfo object
       // arrives with the theme settings)
       pEventBus.get().addHandler(SessionInitEvent.TYPE, (evt) ->
       {
-         UIPrefs uiPrefs = RStudioGinjector.INSTANCE.getUIPrefs();
-         uiPrefs.theme().bind(theme -> pEventBus_.get().fireEvent(new ThemeChangedEvent()));
-         uiPrefs.getFlatTheme().bind(theme -> pEventBus_.get().fireEvent(new ThemeChangedEvent()));
+         UserPrefs userPrefs = RStudioGinjector.INSTANCE.getUserPrefs();
+         userPrefs.editorTheme().bind(theme -> pEventBus_.get().fireEvent(new ThemeChangedEvent()));
+         userPrefs.globalTheme().bind(theme -> pEventBus_.get().fireEvent(new ThemeChangedEvent()));
       });
-       
+
+      // aria-live status announcements
+      ariaLiveStatusWidget_ = new AriaLiveStatusWidget();
+      mainPanel_.add(ariaLiveStatusWidget_);
+      A11y.setVisuallyHidden(mainPanel_.getWidgetContainerElement(ariaLiveStatusWidget_));
+
       // init widget
       initWidget(mainPanel_);
    }
@@ -88,7 +101,8 @@ public abstract class SatelliteWindow extends Composite
       if (supportsThemes())
       {
          RStudioThemes.initializeThemes(
-            RStudioGinjector.INSTANCE.getUIPrefs(),
+            RStudioGinjector.INSTANCE.getUserPrefs(),
+            RStudioGinjector.INSTANCE.getUserState(),
             Document.get(),
             mainPanel_.getElement());
             
@@ -129,7 +143,16 @@ public abstract class SatelliteWindow extends Composite
    {
       mainPanel_.onResize(); 
    }
-   
+
+   @Override
+   public void onAriaLiveStatus(AriaLiveStatusEvent event)
+   {
+      int delayMs = (event.getTiming() == Timing.IMMEDIATE) ?
+            0 : RStudioGinjector.INSTANCE.getUserPrefs().typingStatusDelayMs().getValue();
+      if (!ModalDialogTracker.dispatchAriaLiveStatus(event.getMessage(), delayMs, event.getSeverity()))
+         ariaLiveStatusWidget_.reportStatus(event.getMessage(), delayMs, event.getSeverity());
+   }
+
    abstract protected void onInitialize(LayoutPanel mainPanel, 
                                         JavaScriptObject params);
    
@@ -141,4 +164,5 @@ public abstract class SatelliteWindow extends Composite
    private final Provider<EventBus> pEventBus_;
    private final Provider<FontSizeManager> pFontSizeManager_;
    private LayoutPanel mainPanel_;
+   private final AriaLiveStatusWidget ariaLiveStatusWidget_;
 }

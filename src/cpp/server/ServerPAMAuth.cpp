@@ -1,7 +1,7 @@
 /*
  * ServerPAMAuth.cpp
  *
- * Copyright (C) 2009-19 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,7 +14,7 @@
  */
 #include "ServerPAMAuth.hpp"
 
-#include <core/Error.hpp>
+#include <shared_core/Error.hpp>
 #include <core/PeriodicCommand.hpp>
 #include <core/Thread.hpp>
 #include <core/system/Process.hpp>
@@ -23,6 +23,7 @@
 #include <core/system/PosixSystem.hpp>
 #include <core/system/PosixUser.hpp>
 
+#include <core/http/Cookie.hpp>
 #include <core/http/Request.hpp>
 #include <core/http/Response.hpp>
 #include <core/http/URL.hpp>
@@ -38,6 +39,7 @@
 #include <server/auth/ServerSecureUriHandler.hpp>
 #include <server/auth/ServerAuthHandler.hpp>
 
+#include <server/ServerConstants.hpp>
 #include <server/ServerOptions.hpp>
 #include <server/ServerUriHandlers.hpp>
 #include <server/ServerSessionProxy.hpp>
@@ -74,8 +76,6 @@ void assumeRootPriv()
     }
 }
 
-const char * const kUserId = "user-id";
-
 // It's important that URIs be in the root directory, so the cookie
 // gets set/unset at the correct scope!
 const char * const kDoSignIn = "/auth-do-sign-in";
@@ -91,13 +91,18 @@ const char * const kFormAction = "formAction";
 
 const char * const kStaySignedInDisplay = "staySignedInDisplay";
 
+const char * const kAuthTimeoutMinutes = "authTimeoutMinutes";
+const char * const kAuthTimeoutMinutesDisplay = "authTimeoutMinutesDisplay";
+
 const char * const kLoginPageHtml = "loginPageHtml";
 
 enum ErrorType 
 {
    kErrorNone,
    kErrorInvalidLogin,
-   kErrorServer 
+   kErrorServer,
+   kErrorUserLicenseLimitReached,
+   kErrorUserLicenseSystemUnavailable
 };
 
 std::string errorMessage(ErrorType error)
@@ -110,6 +115,10 @@ std::string errorMessage(ErrorType error)
          return "Incorrect or invalid username/password";
       case kErrorServer:
          return "Temporary server error, please try again";
+      case kErrorUserLicenseLimitReached:
+         return "The user limit for this license has been reached, or you are not allowed access.";
+      case kErrorUserLicenseSystemUnavailable:
+         return "The user licensing system is temporarily unavailable. Please try again later.";
    }
    return "";
 }
@@ -151,7 +160,7 @@ std::string getUserIdentifier(const core::http::Request& request)
    if (server::options().authNone())
       return core::system::username();
    else
-      return core::http::secure_cookie::readSecureCookie(request, kUserId);
+      return core::http::secure_cookie::readSecureCookie(request, kUserIdCookie);
 }
 
 std::string userIdentifierToLocalUsername(const std::string& userIdentifier)
@@ -170,16 +179,16 @@ std::string userIdentifierToLocalUsername(const std::string& userIdentifier)
       // view of the username (as that's what the session uses to form the
       // stream path), which is why we do a username => username transform
       // here. See case 5413 for details.
-      core::system::user::User user;
-      Error error = core::system::user::userFromUsername(userIdentifier, &user);
-      if (error) 
+      core::system::User user;
+      Error error = core::system::User::getUserFromIdentifier(userIdentifier, user);
+      if (error)
       {
          // log the error and return the PAM user identifier as a fallback
          LOG_ERROR(error);
       }
       else
       {
-         username = user.username;
+         username = user.getUsername();
       }
 
       // cache the username -- we do this even if the lookup fails since
@@ -229,9 +238,10 @@ void signIn(const http::Request& request,
             http::Response* pResponse)
 {
    core::http::secure_cookie::remove(request,
-                                     kUserId,
-                                     "/",
-                                     pResponse);
+      kUserIdCookie,
+      "/",
+      pResponse,
+      boost::algorithm::starts_with(request.absoluteUri(), "https"));
 
    std::map<std::string,std::string> variables;
    variables["action"] = applicationURL(request, kDoSignIn);
@@ -243,6 +253,9 @@ void signIn(const http::Request& request,
             safe_convert::stringTo<unsigned>(error, kErrorNone)));
    variables[kErrorDisplay] = error.empty() ? "none" : "block";
    variables[kStaySignedInDisplay] = canStaySignedIn() ? "block" : "none";
+   int timeoutMinutes = server::options().authTimeoutMinutes();
+   variables[kAuthTimeoutMinutesDisplay] = timeoutMinutes > 0 ? "block" : "none";
+   variables[kAuthTimeoutMinutes] = safe_convert::numberToString(timeoutMinutes);
    if (server::options().authEncryptPassword())
       variables[kFormAction] = "action=\"javascript:void\" "
                                "onsubmit=\"submitRealForm();return false\"";
@@ -259,7 +272,7 @@ void signIn(const http::Request& request,
    // get the path to the JS file
    Options& options = server::options();
    FilePath wwwPath(options.wwwLocalPath());
-   FilePath signInPath = wwwPath.complete("templates/encrypted-sign-in.htm");
+   FilePath signInPath = wwwPath.completePath("templates/encrypted-sign-in.htm");
 
    text::TemplateFilter filter(variables);
 
@@ -284,29 +297,104 @@ void publicKey(const http::Request&,
 void setSignInCookies(const core::http::Request& request,
                       const std::string& username,
                       bool persist,
-                      core::http::Response* pResponse)
+                      core::http::Response* pResponse,
+                      bool reuseCsrf = false)
 {
+   std::string csrfToken = reuseCsrf ? request.cookieValue(kCSRFTokenCookie) : std::string();
+
    int staySignedInDays = server::options().authStaySignedInDays();
-   boost::optional<boost::gregorian::days> expiry;
-   if (persist && canStaySignedIn())
-      expiry = boost::gregorian::days(staySignedInDays);
+   int authTimeoutMinutes = server::options().authTimeoutMinutes();
+
+   bool secureCookie = options().authCookiesForceSecure() ||
+                       options().getOverlayOption("ssl-enabled") == "1" ||
+                       boost::algorithm::starts_with(request.absoluteUri(), "https");
+
+   if (authTimeoutMinutes == 0)
+   {
+      // legacy auth expiration - users do not idle
+      // and stay signed in for multiple days
+      // not very secure, but maintained for those users that want this
+      boost::optional<boost::gregorian::days> expiry;
+      if (persist && canStaySignedIn())
+         expiry = boost::gregorian::days(staySignedInDays);
+      else
+         expiry = boost::none;
+
+      core::http::secure_cookie::set(kUserIdCookie,
+                                     username,
+                                     request,
+                                     boost::posix_time::time_duration(24*staySignedInDays,
+                                                                      0,
+                                                                      0,
+                                                                      0),
+                                     expiry,
+                                     "/",
+                                     pResponse,
+                                     secureCookie);
+
+      // set a cookie that is tied to the specific user list we have written
+      // if the user list ever has conflicting changes (e.g. a user is locked),
+      // the user will be forced to sign back in
+      core::http::secure_cookie::set(kUserListCookie,
+                                     auth::handler::overlay::getUserListCookieValue(),
+                                     request,
+                                     boost::posix_time::time_duration(24*staySignedInDays,
+                                                                      0,
+                                                                      0,
+                                                                      0),
+                                     expiry,
+                                     "/",
+                                     pResponse,
+                                     secureCookie);
+
+      // add cross site request forgery detection cookie
+      core::http::setCSRFTokenCookie(request, expiry, csrfToken, secureCookie, pResponse);
+   }
    else
-      expiry = boost::none;
+   {
+      // new auth expiration - users are forced to sign in
+      // after being idle for authTimeoutMinutes amount
+      boost::optional<boost::posix_time::time_duration> expiry;
+      if (persist)
+         expiry = boost::posix_time::minutes(authTimeoutMinutes);
+      else
+         expiry = boost::none;
 
-   core::http::secure_cookie::set(kUserId,
-                                  username,
-                                  request,
-                                  boost::posix_time::time_duration(24*staySignedInDays,
-                                                                   0,
-                                                                   0,
-                                                                   0),
-                                  expiry,
-                                  "/",
-                                  pResponse,
-                                  options().getOverlayOption("ssl-enabled") == "1");
+      // set the secure user id cookie
+      core::http::secure_cookie::set(kUserIdCookie,
+                                     username,
+                                     request,
+                                     boost::posix_time::minutes(authTimeoutMinutes),
+                                     expiry,
+                                     "/",
+                                     pResponse,
+                                     secureCookie);
 
-   // add cross site request forgery detection cookie
-   core::http::setCSRFTokenCookie(request, expiry, "", pResponse);
+      // set a cookie that is tied to the specific user list we have written
+      // if the user list ever has conflicting changes (e.g. a user is locked),
+      // the user will be forced to sign back in
+      core::http::secure_cookie::set(kUserListCookie,
+                                     auth::handler::overlay::getUserListCookieValue(),
+                                     request,
+                                     boost::posix_time::minutes(authTimeoutMinutes),
+                                     expiry,
+                                     "/",
+                                     pResponse,
+                                     secureCookie);
+
+      // set a cookie indicating whether or not we should persist the auth cookie
+      // when it is automatically refreshed
+      core::http::Cookie persistCookie(request,
+                                       kPersistAuthCookie,
+                                       persist ? "1" : "0",
+                                       "/",
+                                       true,
+                                       secureCookie);
+      persistCookie.setExpires(boost::posix_time::minutes(authTimeoutMinutes));
+      pResponse->addCookie(persistCookie);
+
+      core::http::setCSRFTokenCookie(request, expiry, csrfToken, secureCookie, pResponse);
+   }
 }
 
 void doSignIn(const http::Request& request,
@@ -315,8 +403,6 @@ void doSignIn(const http::Request& request,
    std::string appUri = request.formFieldValue(kAppUri);
    if (appUri.empty())
       appUri = "/";
-
-
 
    bool persist = false;
    std::string username, password;
@@ -366,8 +452,45 @@ void doSignIn(const http::Request& request,
 
    onUserUnauthenticated(username);
 
+   // ensure user is not throttled from logging in
+   if (auth::handler::isUserSignInThrottled(username))
+   {
+      pResponse->setMovedTemporarily(
+            request,
+            applicationSignInURL(request,
+                                 appUri,
+                                 kErrorServer));
+      return;
+   }
+
    if ( pamLogin(username, password) && server::auth::validateUser(username))
    {
+      // ensure user is licensed to use the product
+      bool isLicensed = false;
+      Error error = auth::handler::overlay::isUserLicensed(username, &isLicensed);
+      if (error)
+      {
+         LOG_ERROR(error);
+         pResponse->setMovedTemporarily(
+               request,
+               applicationSignInURL(request,
+                                    appUri,
+                                    kErrorUserLicenseSystemUnavailable));
+         return;
+      }
+      else
+      {
+         if (!isLicensed)
+         {
+            pResponse->setMovedTemporarily(
+                  request,
+                  applicationSignInURL(request,
+                                       appUri,
+                                       kErrorUserLicenseLimitReached));
+            return;
+         }
+      }
+
       if (appUri.size() > 0 && appUri[0] != '/')
          appUri = "/" + appUri;
 
@@ -422,10 +545,24 @@ void signOut(const http::Request& request,
       onUserUnauthenticated(username, true);
    }
 
+   // instruct browser to clear the user's auth cookies
    core::http::secure_cookie::remove(request,
-                                     kUserId,
-                                     "/",
-                                     pResponse);
+      kUserIdCookie,
+      "/",
+      pResponse,
+      boost::algorithm::starts_with(request.absoluteUri(), "https"));
+
+   if (options().authTimeoutMinutes() > 0)
+   {
+      core::http::secure_cookie::remove(request,
+                                        kPersistAuthCookie,
+                                        "/",
+                                        pResponse,
+                                        boost::algorithm::starts_with(request.absoluteUri(), "https"));
+   }
+
+   // invalidate the auth cookie so that it can no longer be used
+   auth::handler::invalidateAuthCookie(request.cookieValue(kUserIdCookie));
 
    pResponse->setMovedTemporarily(request, auth::handler::kSignIn);
 }
@@ -440,13 +577,15 @@ bool pamLogin(const std::string& username, const std::string& password)
    if (!pamHelperPath.exists())
    {
       LOG_ERROR_MESSAGE("PAM helper binary does not exist at " +
-                        pamHelperPath.absolutePath());
+                           pamHelperPath.getAbsolutePath());
       return false;
    }
 
    // form args
    std::vector<std::string> args;
    args.push_back(username);
+   args.push_back("rstudio");
+   args.push_back(server::options().authPamRequirePasswordPrompt() ? "1" : "0");
 
    // don't try to login with an empty password (this hangs PAM as it waits for input)
    if (password.empty())
@@ -461,11 +600,12 @@ bool pamLogin(const std::string& username, const std::string& password)
 
    // run pam helper
    core::system::ProcessResult result;
-   Error error = core::system::runProgram(pamHelperPath.absolutePath(),
-                                          args,
-                                          password,
-                                          options,
-                                          &result);
+   Error error = core::system::runProgram(
+      pamHelperPath.getAbsolutePath(),
+      args,
+      password,
+      options,
+      &result);
    if (error)
    {
       LOG_ERROR(error);
@@ -480,7 +620,7 @@ Error initialize()
 {
    // register ourselves as the auth handler
    server::auth::handler::Handler pamHandler;
-   pamHandler.getUserIdentifier = getUserIdentifier;
+   pamHandler.getUserIdentifier = boost::bind(getUserIdentifier, _1);
    pamHandler.userIdentifierToLocalUsername = userIdentifierToLocalUsername;
    pamHandler.mainPageFilter = mainPageFilter;
    pamHandler.signInThenContinue = signInThenContinue;
@@ -488,7 +628,8 @@ Error initialize()
    pamHandler.signIn = signIn;
    pamHandler.signOut = signOut;
    if (canSetSignInCookies())
-      pamHandler.setSignInCookies = setSignInCookies;
+      pamHandler.setSignInCookies = boost::bind(setSignInCookies, _1, _2, _3, _4, false);
+   pamHandler.refreshAuthCookies = boost::bind(setSignInCookies, _1, _2, _3, _4, true);
    auth::handler::registerHandler(pamHandler);
 
    // add pam-specific auth handlers

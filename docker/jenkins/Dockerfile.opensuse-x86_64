@@ -1,4 +1,4 @@
-FROM opensuse:42.3
+FROM opensuse/leap:42.3
 
 # needed to build RPMs
 RUN zypper --non-interactive addrepo http://download.opensuse.org/repositories/systemsmanagement:wbem:deps/openSUSE_Leap_42.3/systemsmanagement:wbem:deps.repo
@@ -8,6 +8,7 @@ RUN zypper --non-interactive --gpg-auto-import-keys refresh && \
     zypper --non-interactive install -y \
     ant \
     boost-devel \
+    curl \
     expect \
     fakeroot \
     gcc \
@@ -32,9 +33,11 @@ RUN zypper --non-interactive --gpg-auto-import-keys refresh && \
     sudo \
     tar \
     unzip \
+    valgrind \
     wget \
     xml-commons-apis \
-    zlib-devel
+    zlib-devel \
+    libuser-devel
 
 ## run install-boost twice - boost exits 1 even though it has installed good enough for our uses.
 ## https://github.com/rstudio/rstudio/blob/master/vagrant/provision-primary-user.sh#L12-L15
@@ -52,7 +55,7 @@ ENV RSTUDIO_GITHUB_LOGIN=$GITHUB_LOGIN
 # install common dependencies
 ENV RSTUDIO_DISABLE_CRASHPAD=1
 RUN mkdir -p /opt/rstudio-tools/dependencies/common
-COPY dependencies/common/* /opt/rstudio-tools/dependencies/common/
+COPY dependencies/common/ /opt/rstudio-tools/dependencies/common/
 RUN cd /opt/rstudio-tools/dependencies/common && /bin/bash ./install-common
 
 # install Qt SDK

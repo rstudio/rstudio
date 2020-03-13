@@ -1,7 +1,7 @@
 /*
  * AboutDialogContents.java
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,6 +14,13 @@
  */
 package org.rstudio.studio.client.application.ui;
 
+import com.google.gwt.aria.client.Id;
+import com.google.gwt.aria.client.Roles;
+import com.google.gwt.dom.client.Element;
+import com.google.gwt.user.client.ui.Anchor;
+import org.rstudio.core.client.Debug;
+import org.rstudio.core.client.widget.HyperlinkLabel;
+import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.model.ProductEditionInfo;
 import org.rstudio.studio.client.application.model.ProductInfo;
@@ -28,6 +35,9 @@ import com.google.gwt.user.client.ui.InlineLabel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.TextArea;
 import com.google.gwt.user.client.ui.Widget;
+import org.rstudio.studio.client.application.model.ProductNotice;
+import org.rstudio.studio.client.server.ServerError;
+import org.rstudio.studio.client.server.ServerRequestCallback;
 
 public class AboutDialogContents extends Composite
 {
@@ -53,48 +63,73 @@ public class AboutDialogContents extends Composite
    {
       initWidget(uiBinder.createAndBindUi(this));
       versionLabel.setText(info.version);
+      
+      // a11y
+      productInfo.getElement().setId("productinfo");
+      gplLinkLabel.getElement().setId("gplLinkLabel");
+      Roles.getLinkRole().setAriaDescribedbyProperty(gplLink.getElement(), Id.of(gplLinkLabel.getElement()));
+
       userAgentLabel.setText(
             Window.Navigator.getUserAgent());
       buildLabel.setText(
-           "Build " + info.build + " (" + info.commit.substring(0, 8) + ")");
-      noticeBox.setValue(info.notice);
+           "\"" + info.release_name + "\" (" + info.commit.substring(0, 8) + ", " +
+           info.date + ") for " + info.os);
       productName.setText(editionInfo.editionName());
-      
+      copyrightYearLabel.setText("2009-" + info.copyright_year);
+
+      showNoticelink_.setClickHandler(() ->
+      {
+         RStudioGinjector.INSTANCE.getServer().getProductNotice(new ServerRequestCallback<ProductNotice>()
+         {
+            @Override
+            public void onResponseReceived(ProductNotice notice)
+            {
+               AboutOpenSourceDialog about = new AboutOpenSourceDialog(notice);
+               about.showModal();
+            }
+            @Override
+            public void onError(ServerError error)
+            {
+               Debug.logError(error);
+            }
+         });
+      });
+
       if (editionInfo.proLicense())
       {
          // no need to show GPL notice in pro edition
          gplNotice.setVisible(false);
 
-         if (Desktop.isDesktop())
+         if (Desktop.hasDesktopFrame())
          {
-             // load license status in desktop mode
-             noticeBox.setVisibleLines(9);
-             licenseBox.setVisibleLines(3);
-             licenseLabel.setVisible(true);
-             licenseBox.setVisible(true);
-             licenseBox.setText("Loading...");
+            // load license status in desktop mode
+            licenseBox.setVisibleLines(3);
+            licenseLabel.setVisible(true);
+            licenseBox.setVisible(true);
+            licenseBox.setText("Loading...");
+            Desktop.getFrame().getLicenseStatusMessage(licenseStatus ->
+            {
+               licenseBox.setText(licenseStatus);
+            });
          }
       }
    }
-   
-   public void refresh()
+
+   public Element getDescriptionElement()
    {
-      if (licenseBox.isVisible())
-      {
-         licenseBox.setText("Loading...");
-         Desktop.getFrame().getLicenseStatusMessage(licenseStatus ->
-         {
-            licenseBox.setText(licenseStatus);
-         });
-      }
+      return productInfo.getElement();
    }
 
    @UiField InlineLabel versionLabel;
    @UiField InlineLabel userAgentLabel;
    @UiField InlineLabel buildLabel;
-   @UiField TextArea noticeBox;
+   @UiField InlineLabel copyrightYearLabel;
+   @UiField HyperlinkLabel showNoticelink_;
    @UiField HTMLPanel gplNotice;
-   @UiField Label licenseLabel;
+   @UiField HTMLPanel licenseLabel;
    @UiField TextArea licenseBox;
    @UiField Label productName;
+   @UiField HTMLPanel productInfo;
+   @UiField Anchor gplLink;
+   @UiField Label gplLinkLabel;
 }

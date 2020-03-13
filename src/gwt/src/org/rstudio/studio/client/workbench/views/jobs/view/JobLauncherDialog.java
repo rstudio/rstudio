@@ -1,7 +1,7 @@
 /*
  * JobLauncherDialog.java
  *
- * Copyright (C) 2009-19 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.views.jobs.view;
 
+import com.google.gwt.aria.client.Roles;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.ModalDialog;
@@ -45,7 +46,7 @@ public class JobLauncherDialog extends ModalDialog<JobLaunchSpec>
                             String code,
                             OperationWithInput<JobLaunchSpec> operation)
    {
-      super(caption, operation);
+      super(caption, Roles.getDialogRole(), operation);
 
       controls_ = new JobLauncherControls();
 

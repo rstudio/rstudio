@@ -1,7 +1,7 @@
 /*
  * ProjectGeneralPreferencesPane.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -15,7 +15,10 @@
 package org.rstudio.studio.client.projects.ui.prefs;
 
 import org.rstudio.core.client.prefs.PreferencesDialogBaseResources;
+import org.rstudio.core.client.prefs.RestartRequirement;
 import org.rstudio.core.client.resources.ImageResource2x;
+import org.rstudio.core.client.widget.FormLabel;
+import org.rstudio.core.client.widget.LayoutGrid;
 import org.rstudio.studio.client.packrat.model.PackratContext;
 import org.rstudio.studio.client.projects.model.RProjectConfig;
 import org.rstudio.studio.client.projects.model.RProjectOptions;
@@ -25,7 +28,6 @@ import org.rstudio.studio.client.workbench.model.SessionInfo;
 
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.ui.CheckBox;
-import com.google.gwt.user.client.ui.Grid;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.ListBox;
 import com.google.inject.Inject;
@@ -34,10 +36,10 @@ public class ProjectGeneralPreferencesPane extends ProjectPreferencesPane
 {
    @Inject
    public ProjectGeneralPreferencesPane(Session session)
-   {        
+   {
       sessionInfo_ = session.getSessionInfo();
 
-      Grid grid = new Grid(6, 2);
+      LayoutGrid grid = new LayoutGrid(6, 2);
       grid.addStyleName(RESOURCES.styles().workspaceGrid());
       grid.setCellSpacing(8);
 
@@ -46,16 +48,19 @@ public class ProjectGeneralPreferencesPane extends ProjectPreferencesPane
       grid.setWidget(0, 0, infoLabel);
 
       // restore workspace
-      grid.setWidget(1, 0, new Label("Restore .RData into workspace at startup"));
-      grid.setWidget(1, 1, restoreWorkspace_ = new YesNoAskDefault(false));
+      restoreWorkspace_ = new YesNoAskDefault(false);
+      grid.setWidget(1, 0, new FormLabel("Restore .RData into workspace at startup", restoreWorkspace_));
+      grid.setWidget(1, 1, restoreWorkspace_);
 
-      // save workspace      
-      grid.setWidget(2, 0, new Label("Save workspace to .RData on exit"));
-      grid.setWidget(2, 1, saveWorkspace_ = new YesNoAskDefault(true));
+      // save workspace
+      saveWorkspace_ = new YesNoAskDefault(true);
+      grid.setWidget(2, 0, new FormLabel("Save workspace to .RData on exit", saveWorkspace_));
+      grid.setWidget(2, 1, saveWorkspace_);
 
       // always save history
-      grid.setWidget(3, 0, new Label("Always save history (even if not saving .RData)"));
-      grid.setWidget(3, 1, alwaysSaveHistory_ = new YesNoAskDefault(false));
+      alwaysSaveHistory_ = new YesNoAskDefault(false);
+      grid.setWidget(3, 0, new FormLabel("Always save history (even if not saving .RData)", alwaysSaveHistory_));
+      grid.setWidget(3, 1, alwaysSaveHistory_);
 
       // disable execute .Rprofile
       grid.setWidget(4, 0, disableExecuteRprofile_ = new CheckBox("Disable .Rprofile execution on session start/resume"));
@@ -120,7 +125,7 @@ public class ProjectGeneralPreferencesPane extends ProjectPreferencesPane
    }
 
    @Override
-   public boolean onApply(RProjectOptions options)
+   public RestartRequirement onApply(RProjectOptions options)
    {
       RProjectConfig config = options.getConfig();
       config.setRestoreWorkspace(restoreWorkspace_.getSelectedIndex());
@@ -140,7 +145,7 @@ public class ProjectGeneralPreferencesPane extends ProjectPreferencesPane
       }
       
       config.setQuitChildProcessesOnExit(quitChildProcessesOnExit);
-      return false;
+      return new RestartRequirement();
    }
    
    private class YesNoAskDefault extends ListBox

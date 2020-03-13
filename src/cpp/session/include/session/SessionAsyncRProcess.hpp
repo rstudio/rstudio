@@ -1,7 +1,7 @@
 /*
  * SessionAsyncRProcesss.hpp
  *
- * Copyright (C) 2009-16 by RStudio, Inc.
+ * Copyright (C) 2009-16 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -92,6 +92,9 @@ private:
    bool isRunning_;
    bool terminationRequested_;
    std::string input_;
+   core::FilePath ipcRequests_;
+   core::FilePath ipcResponse_;
+   std::string sharedSecret_;
 };
 
 } // namespace async_r

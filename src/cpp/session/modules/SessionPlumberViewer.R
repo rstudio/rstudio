@@ -1,7 +1,7 @@
 #
 # SessionPlumberViewer.R
 #
-# Copyright (C) 2009-18 by RStudio, Inc.
+# Copyright (C) 2009-19 by RStudio, PBC
 #
 # Unless you have received this program directly from RStudio pursuant
 # to the terms of a commercial license agreement with RStudio, then
@@ -14,40 +14,40 @@
 #
 
 .rs.addFunction("invokePlumberPaneViewer", function(url) {
-   invisible(.Call("rs_plumberviewer", url, getwd(), 2))
-}, attrs = list(plumberViewerType = 2))
+   invisible(.Call("rs_plumberviewer", url, getwd(), "pane", PACKAGE = "(embedding)"))
+}, attrs = list(plumberViewerType = "pane"))
 
 .rs.addFunction("invokePlumberWindowViewer", function(url) {
-   invisible(.Call("rs_plumberviewer", url, getwd(), 3))
-}, attrs = list(plumberViewerType = 3))
+   invisible(.Call("rs_plumberviewer", url, getwd(), "window", PACKAGE = "(embedding)"))
+}, attrs = list(plumberViewerType = "window"))
 
 .rs.addFunction("invokePlumberWindowExternal", function(url) {
-   invisible(.Call("rs_plumberviewer", url, getwd(), 4))
-}, attrs = list(plumberViewerType = 4))
+   invisible(.Call("rs_plumberviewer", url, getwd(), "browser", PACKAGE = "(embedding)"))
+}, attrs = list(plumberViewerType = "browser"))
 
 .rs.addFunction("setPlumberViewerType", function(type) {
-   if (type == 1)
+   if (identical(type, "none"))
       options(plumber.swagger.url = NULL)
-   else if (type == 2)
+   else if (identical(type, "pane"))
       options(plumber.swagger.url = .rs.invokePlumberPaneViewer)
-   else if (type == 3)
+   else if (identical(type, "window"))
       options(plumber.swagger.url = .rs.invokePlumberWindowViewer)
-   else if (type == 4)
+   else if (identical(type, "browser"))
       options(plumber.swagger.url = .rs.invokePlumberWindowExternal)
 })
 
 .rs.addFunction("getPlumberViewerType", function() {
    viewer <- getOption("plumber.swagger.url")
    if (identical(viewer, FALSE))
-      return(1)
+      return("none")
    else if (identical(viewer, TRUE))
-      return(4)
-   else if (is.function(viewer) && is.numeric(attr(viewer, "plumberViewerType")))
+      return("browser")
+   else if (is.function(viewer) && is.character(attr(viewer, "plumberViewerType")))
       return(attr(viewer, "plumberViewerType"))
-   return(0)
+   return("user")
 })
 
 .rs.addJsonRpcHandler("get_plumber_viewer_type", function() {
-   list(viewerType = .rs.scalar(.rs.getPlumberViewerType()))
+   .rs.scalar(.rs.getPlumberViewerType())
 })
 

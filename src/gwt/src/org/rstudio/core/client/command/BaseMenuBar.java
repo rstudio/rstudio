@@ -1,7 +1,7 @@
 /*
  * BaseMenuBar.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-20 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -22,6 +22,7 @@ import com.google.gwt.user.client.ui.MenuBar;
 import com.google.gwt.user.client.ui.MenuItem;
 import com.google.gwt.user.client.ui.MenuItemSeparator;
 import com.google.gwt.user.client.ui.UIObject;
+import org.rstudio.core.client.HandlerRegistrations;
 import org.rstudio.core.client.SeparatorManager;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.widget.events.GlassVisibilityEvent;
@@ -34,6 +35,7 @@ import java.util.Comparator;
 import java.util.List;
 
 public class BaseMenuBar extends MenuBar
+                         implements CommandHandler
 {
    private class PositionComparator implements Comparator<UIObject>
    {
@@ -63,6 +65,7 @@ public class BaseMenuBar extends MenuBar
       // subclasses are instantiated using generated code--don't feel
       // like messing with all that now
       eventBus_ = RStudioGinjector.INSTANCE.getEventBus();
+      commandHandler_ = new HandlerRegistrations();
    }
    
    private MenuItem getTargetedMenuItem(Event event)
@@ -149,6 +152,7 @@ public class BaseMenuBar extends MenuBar
       if (vertical_ && glass++ == 0)
          eventBus_.fireEvent(new GlassVisibilityEvent(true));
       super.onLoad();
+      commandHandler_.add(eventBus_.addHandler(CommandEvent.TYPE, this));
       for (MenuItem child : getItems())
       {
          if (child instanceof AppMenuItem)
@@ -179,6 +183,7 @@ public class BaseMenuBar extends MenuBar
    protected void onUnload()
    {
       super.onUnload();
+      commandHandler_.removeHandler();
       if (vertical_ && --glass == 0)
          eventBus_.fireEvent(new GlassVisibilityEvent(false));
    }
@@ -262,6 +267,53 @@ public class BaseMenuBar extends MenuBar
       return items;
    }
 
+   public MenuItem getItem(int index)
+   {
+      int count = getItemCount();
+      if (count == 0)
+         return null;
+
+      if (index < 0)
+         index = 0;
+
+      if (index >= count - 1)
+         index = count - 1;
+
+      List<MenuItem> items = getItems();
+      return items.get(index);
+   }
+
+   public void selectItem(int index)
+   {
+      MenuItem item = getItem(index);
+      if (item == null)
+         return;
+
+      selectItem(item);
+   }
+
+   public void keyboardActivateItem(int index)
+   {
+      MenuItem item = getItem(index);
+      if (item == null)
+         return;
+      
+      // set focus
+      getElement().focus();
+
+      // activate item
+      doItemAction(item, true, true);
+   }
+
+   @Override
+   public void onCommand(AppCommand command)
+   {
+      if (command.getExecutedFromShortcut())
+      {
+         closeAllChildren(false);
+      }
+   }
+
    /**
     * Reference count for glass visibility. NOTE: Perhaps this should be
     * hoisted into a more general class so that everyone who raises
@@ -270,8 +322,8 @@ public class BaseMenuBar extends MenuBar
    private static int glass = 0;
 
    private boolean autoHideRedundantSeparators_ = true;
-   private final ArrayList<MenuItemSeparator> separators_ =
-         new ArrayList<MenuItemSeparator>();
+   private final ArrayList<MenuItemSeparator> separators_ = new ArrayList<>();
    private final EventBus eventBus_;
    private final boolean vertical_;
+   private final HandlerRegistrations commandHandler_;
 }

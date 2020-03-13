@@ -1,7 +1,7 @@
 /*
  * SessionConsoleProcess.hpp
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -22,12 +22,13 @@
 #include <boost/regex.hpp>
 #include <boost/circular_buffer.hpp>
 #include <boost/enable_shared_from_this.hpp>
+#include <boost/thread/mutex.hpp>
 
 #include <core/BoostSignals.hpp>
 #include <core/system/Process.hpp>
 #include <core/terminal/PrivateCommand.hpp>
 
-#include <session/SessionConsoleProcessSocket.hpp>
+#include <session/SessionConsoleProcessConnectionCallbacks.hpp>
 
 namespace rstudio {
 namespace core {
@@ -135,9 +136,9 @@ public:
    // was actually configured (e.g. what did 'default' get mapped to?).
    static core::system::ProcessOptions createTerminalProcOptions(
          const ConsoleProcessInfo& procInfo,
-         TerminalShell::TerminalShellType *pSelectedShellType);
+         TerminalShell::ShellType *pSelectedShellType);
 
-   virtual ~ConsoleProcess() {}
+   virtual ~ConsoleProcess() = default;
 
    // set a custom prompt handler -- return true to indicate the prompt
    // was handled and false to let it pass. return empty input to
@@ -159,7 +160,6 @@ public:
    void interrupt();
    void interruptChild();
    void resize(int cols, int rows);
-   void onSuspend();
    bool isStarted() const { return started_; }
    void setCaption(std::string& caption) { procInfo_->setCaption(caption); }
    std::string getCaption() const { return procInfo_->getCaption(); }
@@ -182,9 +182,7 @@ public:
    boost::optional<int> getExitCode() const { return procInfo_->getExitCode(); }
 
    std::string getShellName() const;
-   TerminalShell::TerminalShellType getShellType() const {
-      return procInfo_->getShellType();
-   }
+   TerminalShell::ShellType getShellType() const { return procInfo_->getShellType(); }
 
    // Used to downgrade to RPC mode after failed attempt to connect websocket
    void setRpcMode();

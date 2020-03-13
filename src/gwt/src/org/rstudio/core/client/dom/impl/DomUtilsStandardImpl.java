@@ -1,7 +1,7 @@
 /*
  * DomUtilsStandardImpl.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-12 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -27,17 +27,17 @@ public class DomUtilsStandardImpl implements DomUtilsImpl
 {
    public void focus(Element element, boolean alwaysDriveSelection)
    {
-      ElementEx el = (ElementEx)element ;
+      ElementEx el = (ElementEx)element;
 
-      el.focus() ;
+      el.focus();
       if (alwaysDriveSelection
             || (el.getContentEditable() &&
                 (el.getInnerText() == null || el.getInnerText() == "")))
       {
          Document doc = el.getOwnerDocument();
-         Range range = Range.create(doc) ;
-         range.selectNodeContents(el) ;
-         Selection sel = Selection.get(NativeWindow.get(doc)) ;
+         Range range = Range.create(doc);
+         range.selectNodeContents(el);
+         Selection sel = Selection.get(NativeWindow.get(doc));
          sel.setRange(range);
       }
 
@@ -46,52 +46,52 @@ public class DomUtilsStandardImpl implements DomUtilsImpl
 
    public void collapseSelection(boolean toStart)
    {
-      Selection sel = Selection.get() ;
+      Selection sel = Selection.get();
       if (sel == null || sel.getRangeCount() <= 0)
-         return ;
-      Range range = sel.getRangeAt(0) ;
-      range.collapse(toStart) ;
-      sel.removeAllRanges() ;
-      sel.addRange(range) ;
+         return;
+      Range range = sel.getRangeAt(0);
+      range.collapse(toStart);
+      sel.removeAllRanges();
+      sel.addRange(range);
    }
 
    public boolean isSelectionCollapsed()
    {
-      Selection sel = Selection.get() ;
+      Selection sel = Selection.get();
       return sel != null
              && sel.getRangeCount() == 1
-             && sel.getRangeAt(0).isCollapsed() ;
+             && sel.getRangeAt(0).isCollapsed();
    }
 
    public boolean isSelectionInElement(Element element)
    {
       Range rng = getSelectionRange(
-            NativeWindow.get(element.getOwnerDocument()), false) ;
+            NativeWindow.get(element.getOwnerDocument()), false);
       if (rng == null)
-         return false ;
-      return DomUtils.contains(element, rng.getCommonAncestorContainer()) ;
+         return false;
+      return DomUtils.contains(element, rng.getCommonAncestorContainer());
    }
 
    public boolean selectionExists()
    {
-      Selection sel = Selection.get() ;
+      Selection sel = Selection.get();
       if (sel == null || sel.getRangeCount() == 0)
-         return false ;
+         return false;
       if (sel.getRangeCount() > 1)
-         return true ;
-      return !sel.getRangeAt(0).isCollapsed() ;
+         return true;
+      return !sel.getRangeAt(0).isCollapsed();
    }
 
    public Range getSelectionRange(NativeWindow window, boolean clone)
    {
-      Selection sel = Selection.get(window) ;
+      Selection sel = Selection.get(window);
       if (sel.getRangeCount() != 1)
-         return null ;
+         return null;
 
-      Range result = sel.getRangeAt(0) ;
+      Range result = sel.getRangeAt(0);
       if (clone)
-         result = result.cloneRange() ;
-      return result ;
+         result = result.cloneRange();
+      return result;
    }
 
    public Rectangle getCursorBounds(Document doc)
@@ -102,21 +102,21 @@ public class DomUtilsStandardImpl implements DomUtilsImpl
       if (selRng == null)
          return null;
       sel.removeAllRanges();
-      SpanElement span = doc.createSpanElement() ;
+      SpanElement span = doc.createSpanElement();
 
       Range rng = selRng.cloneRange();
       rng.collapse(true);
-      rng.insertNode(span) ;
+      rng.insertNode(span);
 
-      int x = span.getAbsoluteLeft() ;
-      int y = span.getAbsoluteTop() ;
+      int x = span.getAbsoluteLeft();
+      int y = span.getAbsoluteTop();
       int w = 0;
-      int h = span.getOffsetHeight() ;
-      Rectangle result = new Rectangle(x, y, w, h) ;
+      int h = span.getOffsetHeight();
+      Rectangle result = new Rectangle(x, y, w, h);
 
-      ElementEx parent = (ElementEx)span.getParentElement() ;
-      parent.removeChild(span) ;
-      parent.normalize() ;
+      ElementEx parent = (ElementEx)span.getParentElement();
+      parent.removeChild(span);
+      parent.normalize();
       sel.setRange(selRng);
       return result;
    }
@@ -126,12 +126,12 @@ public class DomUtilsStandardImpl implements DomUtilsImpl
       if (!isSelectionInElement(document.getBody()))
          throw new IllegalStateException("Selection is not active");
 
-      Range rng = getSelectionRange(NativeWindow.get(document), true) ;
+      Range rng = getSelectionRange(NativeWindow.get(document), true);
       String orig = rng.toStringJs();
-      rng.deleteContents() ;
+      rng.deleteContents();
 
-      Text textNode = document.createTextNode(text) ;
-      rng.insertNode(textNode) ;
+      Text textNode = document.createTextNode(text);
+      rng.insertNode(textNode);
       rng.selectNode(textNode);
 
       Selection.get(NativeWindow.get(document)).setRange(rng);
@@ -152,21 +152,21 @@ public class DomUtilsStandardImpl implements DomUtilsImpl
    {
       Range rng = getSelectionRange(
             NativeWindow.get(container.getOwnerDocument()),
-            false) ;
+            false);
 
       if (rng == null)
          return null;
 
       int start = NodeRelativePosition.toOffset(container,
                            new NodeRelativePosition(rng.getStartContainer(),
-                                                    rng.getStartOffset())) ;
+                                                    rng.getStartOffset()));
       int end = NodeRelativePosition.toOffset(container,
                          new NodeRelativePosition(rng.getEndContainer(),
-                                                  rng.getEndOffset())) ;
+                                                  rng.getEndOffset()));
       if (start >= 0 && end >= 0)
          return new int[] {start, end};
       else
-         return null ;
+         return null;
    }
 
    public void setSelectionOffsets(Element container, int start, int end)
@@ -175,10 +175,10 @@ public class DomUtilsStandardImpl implements DomUtilsImpl
       NodeRelativePosition endp = NodeRelativePosition.toPosition(container, end);
 
       Document doc = container.getOwnerDocument();
-      Range rng = Range.create(doc) ;
-      rng.setStart(startp.node, startp.offset) ;
-      rng.setEnd(endp.node, endp.offset) ;
-      Selection.get(NativeWindow.get(doc)).setRange(rng) ;
+      Range rng = Range.create(doc);
+      rng.setStart(startp.node, startp.offset);
+      rng.setEnd(endp.node, endp.offset);
+      Selection.get(NativeWindow.get(doc)).setRange(rng);
 
    }
 

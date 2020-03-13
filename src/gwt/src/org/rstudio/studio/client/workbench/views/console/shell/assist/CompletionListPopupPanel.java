@@ -1,7 +1,7 @@
 /*
  * CompletionListPopupPanel.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -41,37 +41,42 @@ public class CompletionListPopupPanel<TItem> extends ThemedPopupPanel
       if (list_ == null || !list_.isAttached())
          return null ;
 
-      return list_.getSelectedItem() ;
+      return list_.getSelectedItem();
    }
 
    public boolean selectNext()
    {
-      return list_.selectNext() ;
+      return list_.selectNext();
    }
 
    public boolean selectPrev()
    {
-      return list_.selectPrev() ;
+      return list_.selectPrev();
    }
 
    public boolean selectPrevPage()
    {
-      return list_.selectPrevPage() ;
+      return list_.selectPrevPage();
    }
 
    public boolean selectNextPage()
    {
-      return list_.selectNextPage() ;
+      return list_.selectNextPage();
    }
 
    public boolean selectFirst()
    {
-      return list_.selectFirst() ;
+      return list_.selectFirst();
    }
 
    public boolean selectLast()
    {
-      return list_.selectLast() ;
+      return list_.selectLast();
+   }
+   
+   public void selectIndex(int idx)
+   {
+      list_.setSelectedIndex(idx);
    }
 
    public void setMaxWidth(int pixels)

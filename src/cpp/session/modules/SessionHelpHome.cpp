@@ -1,7 +1,7 @@
 /*
  * SessionHelpHome.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-12 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -35,7 +35,7 @@ void handleHelpHomeRequest(const core::http::Request& request,
                                 core::http::Response* pResponse)
 {
    // get the resource path
-   FilePath helpResPath = options().rResourcesPath().complete("help_resources");
+   FilePath helpResPath = options().rResourcesPath().completePath("help_resources");
 
    // resolve the file reference
    std::string path = http::util::pathAfterPrefix(request,
@@ -49,7 +49,8 @@ void handleHelpHomeRequest(const core::http::Request& request,
       variables["js_callbacks"] = jsCallbacks;
       text::TemplateFilter templateFilter(variables);
       pResponse->setNoCacheHeaders();
-      pResponse->setFile(helpResPath.childPath("index.htm"),
+      pResponse->setFile(
+         helpResPath.completeChildPath("index.htm"),
                          request,
                          templateFilter);
 
@@ -57,7 +58,7 @@ void handleHelpHomeRequest(const core::http::Request& request,
    // otherwise it's just a file reference
    else
    {
-      FilePath filePath = helpResPath.complete(path);
+      FilePath filePath = helpResPath.completePath(path);
       pResponse->setCacheableFile(filePath, request);
    }
 }

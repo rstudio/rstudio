@@ -1,7 +1,7 @@
 /*
  * PlumberAPISatellite.java
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-20 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -19,6 +19,7 @@ import org.rstudio.studio.client.common.satellite.Satellite;
 import org.rstudio.studio.client.common.satellite.SatelliteApplication;
 import org.rstudio.studio.client.plumber.ui.PlumberAPIView;
 import org.rstudio.studio.client.workbench.commands.Commands;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.views.source.editors.text.themes.AceThemes;
 
 import com.google.inject.Inject;
@@ -34,9 +35,10 @@ public class PlumberAPISatellite extends SatelliteApplication
    public PlumberAPISatellite(PlumberAPIView view,
                               Satellite satellite,
                               Provider<AceThemes> pAceThemes,
+                              Provider<UserPrefs> pUserPrefs,
                               ApplicationUncaughtExceptionHandler exHandler,
                               Commands commands)
    {
-      super(NAME, view, satellite, pAceThemes, exHandler, commands);
+      super(NAME, view, satellite, pAceThemes, pUserPrefs, exHandler, commands);
    }
 }

@@ -61,6 +61,11 @@
    width: 100%;
    padding: 6px 2px 4px 2px;
 }
+
+.section:focus {
+   outline:none;
+}
+
 .section * {
    cursor: default;
 }
@@ -70,17 +75,21 @@
    background: #D6E9F8;
 }
 
+.activeSection:focus {
+   outline:none;
+}
+
 .indent {
    margin-left: 20px;
 }
 
 .textBoxWithChooser {
-   width: 350px;	
+   width: 350px;
 }
 
 .infoLabel {
    font-style: italic;
-   font-size: 0.9em; 
+   font-size: 0.9em;
 }
 
 .spacedBefore {

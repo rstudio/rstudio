@@ -1,7 +1,7 @@
 /*
  * DesktopChooseRHome.cpp
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -99,6 +99,8 @@ ChooseRHome::ChooseRHome(QList<RVersion> list, QWidget *parent) :
             this, SLOT(validateSelection()));
     validateSelection();
 
+    connect(ui->radioDefault, SIGNAL(toggled(bool)),
+            this, SLOT(onModeChanged()));
     ui->radioDefault64->setChecked(true);
     connect(ui->radioDefault64, SIGNAL(toggled(bool)),
             this, SLOT(onModeChanged()));
@@ -222,12 +224,12 @@ void ChooseRHome::done(int r)
    {
       if (!ui->radioCustom->isChecked())
       {
-         Architecture arch = ArchX64;
+         Architecture arch = preferR64() ? ArchX64 : ArchX86;
          if (rstudio::desktop::autoDetect(arch).isEmpty())
          {
             if (rstudio::desktop::allRVersions().length() > 0)
             {
-               QString name = QString::fromUtf8("R64");
+               QString name = QString::fromUtf8(preferR64() ? "R64" : "R");
 
                showWarning(
                      this,
@@ -300,11 +302,14 @@ RVersion ChooseRHome::version()
              : toVersion(selectedItems.at(0));
 }
 
-void ChooseRHome::setVersion(const RVersion& value)
+void ChooseRHome::setVersion(const RVersion& value, bool preferR64)
 {
    if (value.isEmpty())
    {
-      ui->radioDefault64->setChecked(true);
+      if (preferR64)
+         ui->radioDefault64->setChecked(true);
+      else
+         ui->radioDefault->setChecked(true);
    }
    else
    {
@@ -333,4 +338,9 @@ void ChooseRHome::setRenderingEngine(const QString& renderingEngine)
       ui->comboRenderingEngines->setCurrentText(QString::fromStdString(s_engineValueTolabel[engine]));
    else
       ui->comboRenderingEngines->setCurrentText(QStringLiteral("Auto-detect (recommended)"));
+}
+
+bool ChooseRHome::preferR64()
+{
+   return ui->radioDefault64->isChecked();
 }

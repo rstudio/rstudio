@@ -1,7 +1,7 @@
 /*
  * ClientEventDispatcher.java
  *
- * Copyright (C) 2009-19 by RStudio, Inc.
+ * Copyright (C) 2009-20 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -22,6 +22,7 @@ import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.RepeatingCommand;
 
 import org.rstudio.core.client.events.ExecuteAppCommandEvent;
+import org.rstudio.core.client.events.HighlightEvent;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.files.filedialog.events.OpenFileDialogEvent;
 import org.rstudio.core.client.js.JsObject;
@@ -44,7 +45,6 @@ import org.rstudio.studio.client.common.debugging.events.ErrorHandlerChangedEven
 import org.rstudio.studio.client.common.debugging.events.PackageLoadedEvent;
 import org.rstudio.studio.client.common.debugging.events.PackageUnloadedEvent;
 import org.rstudio.studio.client.common.debugging.events.UnhandledErrorEvent;
-import org.rstudio.studio.client.common.debugging.model.ErrorHandlerType;
 import org.rstudio.studio.client.common.debugging.model.UnhandledError;
 import org.rstudio.studio.client.common.dependencies.events.InstallShinyEvent;
 import org.rstudio.studio.client.common.rpubs.events.RPubsUploadStatusEvent;
@@ -109,7 +109,9 @@ import org.rstudio.studio.client.workbench.addins.events.AddinRegistryUpdatedEve
 import org.rstudio.studio.client.workbench.codesearch.model.SearchPathFunctionDefinition;
 import org.rstudio.studio.client.workbench.events.*;
 import org.rstudio.studio.client.workbench.model.*;
-import org.rstudio.studio.client.workbench.prefs.events.UiPrefsChangedEvent;
+import org.rstudio.studio.client.workbench.prefs.events.UserPrefsChangedEvent;
+import org.rstudio.studio.client.workbench.prefs.events.UserStateChangedEvent;
+import org.rstudio.studio.client.workbench.prefs.model.PrefLayer;
 import org.rstudio.studio.client.workbench.snippets.model.SnippetsChangedEvent;
 import org.rstudio.studio.client.workbench.views.buildtools.events.BuildCompletedEvent;
 import org.rstudio.studio.client.workbench.views.buildtools.events.BuildErrorsEvent;
@@ -149,6 +151,8 @@ import org.rstudio.studio.client.workbench.views.output.data.events.DataOutputCo
 import org.rstudio.studio.client.workbench.views.output.data.model.DataOutputResult;
 import org.rstudio.studio.client.workbench.views.output.find.events.FindOperationEndedEvent;
 import org.rstudio.studio.client.workbench.views.output.find.events.FindResultEvent;
+import org.rstudio.studio.client.workbench.views.output.find.events.ReplaceResultEvent;
+import org.rstudio.studio.client.workbench.views.output.find.events.ReplaceProgressEvent;
 import org.rstudio.studio.client.workbench.views.output.lint.events.LintEvent;
 import org.rstudio.studio.client.workbench.views.output.markers.events.MarkersChangedEvent;
 import org.rstudio.studio.client.workbench.views.output.sourcecpp.events.SourceCppCompletedEvent;
@@ -190,6 +194,8 @@ import org.rstudio.studio.client.workbench.views.terminal.events.RemoveTerminalE
 import org.rstudio.studio.client.workbench.views.terminal.events.SendToTerminalEvent;
 import org.rstudio.studio.client.workbench.views.terminal.events.TerminalCwdEvent;
 import org.rstudio.studio.client.workbench.views.terminal.events.TerminalSubprocEvent;
+import org.rstudio.studio.client.workbench.views.tutorial.events.TutorialCommandEvent;
+import org.rstudio.studio.client.workbench.views.tutorial.events.TutorialLaunchEvent;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.AskPassEvent;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.VcsRefreshEvent;
 import org.rstudio.studio.client.workbench.views.vcs.common.events.VcsRefreshEvent.Reason;
@@ -363,8 +369,7 @@ public class ClientEventDispatcher
          }
          else if (type == ClientEvent.ShowWarningBar)
          {
-            WarningBarMessage message = event.getData();
-            eventBus_.dispatchEvent(new ShowWarningBarEvent(message));
+            eventBus_.dispatchEvent(new ShowWarningBarEvent(event.getData()));
          }
          else if (type == ClientEvent.OpenProjectError)
          {
@@ -456,6 +461,18 @@ public class ClientEventDispatcher
             String data = event.getData();
             eventBus_.dispatchEvent(new FindOperationEndedEvent(data));
          }
+         else if (type == ClientEvent.ReplaceResult)
+         {
+            ReplaceResultEvent.Data data = event.getData();
+            eventBus_.dispatchEvent(new ReplaceResultEvent(
+                   data.getHandle(), data.getResults().toArrayList()));
+         }
+         else if (type == ClientEvent.ReplaceProgress)
+         {
+            ReplaceProgressEvent.Data data = event.getData();
+            eventBus_.dispatchEvent(
+               new ReplaceProgressEvent(data.getTotalReplaceCount(), data.getReplacedCount()));
+         }
          else if (type == ClientEvent.RPubsUploadStatus)
          {
             RPubsUploadStatusEvent.Status status = event.getData();
@@ -527,10 +544,15 @@ public class ClientEventDispatcher
          {
             eventBus_.dispatchEvent(new ListChangedEvent(event.<JsObject>getData()));
          }
-         else if (type == ClientEvent.UiPrefsChanged)
+         else if (type == ClientEvent.UserPrefsChanged)
          {
-            UiPrefsChangedEvent.Data data = event.getData();
-            eventBus_.dispatchEvent(new UiPrefsChangedEvent(data));
+            PrefLayer data = event.getData();
+            eventBus_.dispatchEvent(new UserPrefsChangedEvent(data));
+         }
+         else if (type == ClientEvent.UserStateChanged)
+         {
+            PrefLayer data = event.getData();
+            eventBus_.dispatchEvent(new UserStateChangedEvent(data));
          }
          else if (type == ClientEvent.ContextDepthChanged) {
             EnvironmentContextData data = event.getData();
@@ -595,8 +617,8 @@ public class ClientEventDispatcher
          }
          else if (type == ClientEvent.ErrorHandlerChanged)
          {
-            ErrorHandlerType handlerType = event.getData();
-            eventBus_.dispatchEvent(new ErrorHandlerChangedEvent(handlerType));
+            ErrorHandlerChangedEvent.Data data = event.getData();
+            eventBus_.dispatchEvent(new ErrorHandlerChangedEvent(data));
          }
          else if (type == ClientEvent.ViewerNavigate)
          {
@@ -1024,6 +1046,21 @@ public class ClientEventDispatcher
             ExecuteAppCommandEvent.Data data = event.getData();
             eventBus_.dispatchEvent(new ExecuteAppCommandEvent(data));
          }
+         else if (type == ClientEvent.HighlightUi)
+         {
+            HighlightEvent.Data data = event.getData();
+            eventBus_.dispatchEvent(new HighlightEvent(data));
+         }
+         else if (type == ClientEvent.TutorialCommand)
+         {
+            TutorialCommandEvent.Data data = event.getData();
+            eventBus_.dispatchEvent(new TutorialCommandEvent(data));
+         }
+         else if (type == ClientEvent.TutorialLaunch)
+         {
+            TutorialLaunchEvent.Data data = event.getData();
+            eventBus_.dispatchEvent(new TutorialLaunchEvent(data));
+         }
          else
          {
             GWT.log("WARNING: Server event not dispatched: " + type, null);
@@ -1031,7 +1068,7 @@ public class ClientEventDispatcher
       }
       catch(Throwable e)
       {
-         GWT.log("WARNING: Exception occured dispatching event: " + type, e);
+         GWT.log("WARNING: Exception occurred dispatching event: " + type, e);
       }
    }
    

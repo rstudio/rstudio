@@ -1,7 +1,7 @@
 /*
  * DesktopGwtWindow.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-12 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -39,8 +39,9 @@ GwtWindow::GwtWindow(bool showToolbar,
                      QString name,
                      QUrl baseUrl,
                      QWidget* pParent,
-                     WebPage* opener) :
-   BrowserWindow(showToolbar, adjustTitle, name, baseUrl, pParent, opener)
+                     WebPage* opener,
+                     bool isRemoteDesktop) :
+   BrowserWindow(showToolbar, adjustTitle, name, baseUrl, pParent, opener, isRemoteDesktop)
 {
    // initialize zoom levels (synchronize with AppearancePreferencesPane.java)
    double levels[] = {

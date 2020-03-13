@@ -1,7 +1,7 @@
 /*
  * SessionAgreement.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -20,8 +20,8 @@
 #include <boost/function.hpp>
 
 #include <core/Log.hpp>
-#include <core/Error.hpp>
-#include <core/FilePath.hpp>
+#include <shared_core/Error.hpp>
+#include <shared_core/FilePath.hpp>
 #include <core/Hash.hpp>
 #include <core/Exec.hpp>
 #include <core/FileSerializer.hpp>
@@ -30,8 +30,8 @@
 #include <core/http/Response.hpp>
 
 #include <session/SessionOptions.hpp>
-#include <session/SessionUserSettings.hpp>
 #include <session/SessionModuleContext.hpp>
+#include <session/prefs/UserState.hpp>
 
 using namespace rstudio::core ;
 
@@ -64,14 +64,14 @@ struct Agreement
 Error agreementFileContents(std::string* pContents, std::string* pContentType)
 {
    FilePath agreementFilePath = session::options().agreementFilePath();
-   *pContentType = agreementFilePath.mimeContentType();
+   *pContentType = agreementFilePath.getMimeContentType();
    return readStringFromFile(agreementFilePath, pContents);
 }
 
 Agreement checkForPendingAgreement()
 {
    // get hash of any previously agreed to agreement
-   std::string agreedToHash = userSettings().agreementHash();
+   std::string agreedToHash = prefs::userState().agreementHash();
    
    // read agreement file contents
    std::string contents, contentType ;
@@ -83,7 +83,7 @@ Agreement checkForPendingAgreement()
    }
    
    // hash: filename + crc32 checksum of contents
-   std::string hash = session::options().agreementFilePath().filename() +
+   std::string hash = session::options().agreementFilePath().getFilename() +
                       hash::crc32Hash(contents);
    
    // see if we have not yet agreed to this agreement
@@ -115,7 +115,7 @@ Error handleAcceptAgreement(const json::JsonRpcRequest& request,
       return paramError;
    
    // set it
-   userSettings().setAgreementHash(hash);
+   prefs::userState().setAgreementHash(hash);
    
    // return success
    return Success();
@@ -144,7 +144,7 @@ void handleAgreementRequest(const http::Request& request,
 
 bool hasAgreement()
 {
-   return !session::options().agreementFilePath().empty();
+   return !session::options().agreementFilePath().isEmpty();
 }
 
 json::Value pendingAgreement()
@@ -160,7 +160,7 @@ json::Value pendingAgreement()
          jsonAgreement["contents"] = agreement.contents;
          jsonAgreement["hash"] = agreement.hash;
          jsonAgreement["updated"] = agreement.updated;
-         return jsonAgreement;
+         return std::move(jsonAgreement);
       }
       else
       {

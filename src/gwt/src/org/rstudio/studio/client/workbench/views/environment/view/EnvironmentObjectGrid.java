@@ -1,7 +1,7 @@
 /*
  * EnvironmentObjectGrid.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -18,11 +18,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.cellview.AriaLabeledCheckboxCell;
+import org.rstudio.core.client.cellview.LabeledBoolean;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.studio.client.workbench.views.environment.view.RObjectEntry.Categories;
 
 import com.google.gwt.cell.client.Cell;
-import com.google.gwt.cell.client.CheckboxCell;
 import com.google.gwt.cell.client.ClickableTextCell;
 import com.google.gwt.cell.client.ValueUpdater;
 import com.google.gwt.core.shared.GWT;
@@ -65,16 +66,14 @@ public class EnvironmentObjectGrid extends EnvironmentObjectDisplay
       super(host, observer, environmentName);
       style_ = ((Resources)GWT.create(Resources.class)).style();
       style_.ensureInjected();
-      selection_ = new MultiSelectionModel<RObjectEntry>(
-              RObjectEntry.KEY_PROVIDER);
+      selection_ = new MultiSelectionModel<>(RObjectEntry.KEY_PROVIDER);
       
       createColumns();
       setTableBuilder(new EnvironmentObjectGridBuilder(this));
       setHeaderBuilder(new GridHeaderBuilder(this, false));
       setSkipRowHoverCheck(true);
       setKeyboardSelectionPolicy(KeyboardSelectionPolicy.DISABLED);
-      setSelectionModel(selection_, 
-         DefaultSelectionEventManager.<RObjectEntry>createCheckboxManager(0));
+      setSelectionModel(selection_, DefaultSelectionEventManager.createCheckboxManager(0));
       addStyleName(style_.objectGrid());
       addStyleName("ace_editor_theme");
    }
@@ -90,8 +89,8 @@ public class EnvironmentObjectGrid extends EnvironmentObjectDisplay
    public List<String> getSelectedObjects()
    {
       boolean hasFilter = !host_.getFilterText().isEmpty();
-      ArrayList<String> selectedObjectNames = new ArrayList<String>();
-      ArrayList<String> filteredObjectNames = new ArrayList<String>();
+      ArrayList<String> selectedObjectNames = new ArrayList<>();
+      ArrayList<String> filteredObjectNames = new ArrayList<>();
       List<RObjectEntry> objects = getVisibleItems();
       for (RObjectEntry object: objects)
       {
@@ -136,32 +135,32 @@ public class EnvironmentObjectGrid extends EnvironmentObjectDisplay
 
    private void createColumns()
    {
-      checkColumn_ = new Column<RObjectEntry, Boolean>(
-            new CheckboxCell(false, false))
+      checkColumn_ = new Column<RObjectEntry, LabeledBoolean>(
+            new AriaLabeledCheckboxCell(false, false))
             {
                @Override
-               public Boolean getValue(RObjectEntry value)
+               public LabeledBoolean getValue(RObjectEntry value)
                {
-                  return selection_.isSelected(value); 
+                  return new LabeledBoolean(value.rObject.getName(), selection_.isSelected(value));
                }
             };
       addColumn(checkColumn_);
-      checkHeader_ = new Header<Boolean>(new CheckboxCell())
+      checkHeader_ = new Header<LabeledBoolean>(new AriaLabeledCheckboxCell(false, false))
       {
          @Override
-         public Boolean getValue()
+         public LabeledBoolean getValue()
          {
-            return selectAll_;
+            return new LabeledBoolean("Select all", selectAll_);
          }
       };
-      checkHeader_.setUpdater(new ValueUpdater<Boolean>()
+      checkHeader_.setUpdater(new ValueUpdater<LabeledBoolean>()
       {
          @Override
-         public void update(Boolean value)
+         public void update(LabeledBoolean value)
          {
-            if (selectAll_ != value)
+            if (selectAll_ != value.getBool())
             {
-               setSelectAll(value);
+               setSelectAll(value.getBool());
             }
          }
       });
@@ -392,10 +391,9 @@ public class EnvironmentObjectGrid extends EnvironmentObjectDisplay
       }
    }
    
-   private Column<RObjectEntry, Boolean> checkColumn_;
-   private Header<Boolean> checkHeader_;
-   private ArrayList<ObjectGridColumn> columns_ = 
-         new ArrayList<ObjectGridColumn>();
+   private Column<RObjectEntry, LabeledBoolean> checkColumn_;
+   private Header<LabeledBoolean> checkHeader_;
+   private ArrayList<ObjectGridColumn> columns_ = new ArrayList<>();
    private Style style_;
    private SelectionModel<RObjectEntry> selection_;
    private boolean selectAll_ = false;

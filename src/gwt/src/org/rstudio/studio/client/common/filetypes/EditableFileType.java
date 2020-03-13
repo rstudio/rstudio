@@ -1,7 +1,7 @@
 /*
  * EditableFileType.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -33,6 +33,12 @@ public abstract class EditableFileType extends FileType
    public ImageResource getDefaultIcon()
    {
       return defaultIcon_;
+   }
+
+   @Override
+   public FileIcon getDefaultFileIcon()
+   {
+      return new FileIcon(defaultIcon_, label_);
    }
 
    private final String label_;

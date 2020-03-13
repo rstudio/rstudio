@@ -8,7 +8,7 @@
 # 
 # The syntax is as follows:
 #
-#     docker-compile.sh IMAGE-NAME FLAVOR-NAME [VERSION] [VARIANT]
+#     docker-compile.sh IMAGE-NAME FLAVOR-NAME [VERSION]
 #
 # where the image name is the platform and architecture, the flavor name is
 # the kind of package you wish to build (desktop or server), and the version
@@ -34,7 +34,6 @@
 IMAGE=$1
 FLAVOR=$2
 VERSION=$3
-VARIANT=$4
 
 # abort on error
 set -e
@@ -84,6 +83,9 @@ docker build --tag "$REPO:$IMAGE" --file "docker/jenkins/Dockerfile.$IMAGE" $BUI
 if [ "${IMAGE:0:6}" = "centos" ]; then
     PACKAGE=RPM
     INSTALLER=yum
+elif [ "${IMAGE:0:6}" = "fedora" ]; then
+    PACKAGE=RPM
+    INSTALLER=yum
 elif [ "${IMAGE:0:8}" = "opensuse" ]; then
     PACKAGE=RPM
     INSTALLER=zypper
@@ -117,7 +119,7 @@ if hash nproc 2>/dev/null; then
     ENV="$ENV MAKEFLAGS=-j$(nproc --all)"
 elif hash sysctl 2>/dev/null; then
     # macos
-    ENV="$ENV MAKEFLAKGS=-j$(sysctl -n hw.ncpu)"
+    ENV="$ENV MAKEFLAGS=-j$(sysctl -n hw.ncpu)"
 fi
 
 # forward build type if set
@@ -136,7 +138,7 @@ echo "Cleaning up container $CONTAINER_ID if it exists..."
 docker rm "$CONTAINER_ID" || true
 
 # run compile step
-docker run --name "$CONTAINER_ID" -v "$(pwd):/src" "$REPO:$IMAGE" bash -c "mkdir /package && cd /package && $ENV /src/package/linux/make-package ${FLAVOR^} $PACKAGE clean $VARIANT && echo build-${FLAVOR^}-$PACKAGE/*.${PACKAGE,,} && ls build-${FLAVOR^}-$PACKAGE$FLAVOR_SUFFIX/*.${PACKAGE,,}"
+docker run --name "$CONTAINER_ID" -v "$(pwd):/src" "$REPO:$IMAGE" bash -c "mkdir /package && cd /package && $ENV /src/package/linux/make-package ${FLAVOR^} $PACKAGE clean && echo build-${FLAVOR^}-$PACKAGE/*.${PACKAGE,,} && ls build-${FLAVOR^}-$PACKAGE$FLAVOR_SUFFIX/*.${PACKAGE,,}"
 
 # extract logs to get filename (should be on the last line)
 PKG_FILENAME=$(docker logs --tail 1 "$CONTAINER_ID")
@@ -153,5 +155,3 @@ fi
 # stop the container
 docker stop "$CONTAINER_ID"
 echo "Container image saved in $CONTAINER_ID."
-
-

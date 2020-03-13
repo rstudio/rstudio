@@ -1,7 +1,7 @@
 /*
  * Link.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-12 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -29,9 +29,9 @@ public class Link
    {
       if (!preserveHost)
          url = removeHost(url);
-      url_ = url ;
-      title_ = title ;
-      id_ = normalizeUrl(url_) ;
+      url_ = url;
+      title_ = title;
+      id_ = normalizeUrl(url_);
    }
 
    /**
@@ -62,45 +62,45 @@ public class Link
 
    public String getUrl()
    {
-      return url_ ;
+      return url_;
    }
    
    public String getTitle()
    {
-      return title_ ;
+      return title_;
    }
    
    private static String normalizeUrl(String url)
    {
-      return url.indexOf('#') >= 0 ? url.substring(0, url.indexOf('#')) : url ;
+      return url.indexOf('#') >= 0 ? url.substring(0, url.indexOf('#')) : url;
    }
    
    @Override
    public int hashCode()
    {
-      return (id_ == null) ? 0 : id_.hashCode() ;
+      return (id_ == null) ? 0 : id_.hashCode();
    }
    
    @Override
    public boolean equals(Object obj)
    {
       if (this == obj)
-         return true ;
+         return true;
       if (obj == null)
-         return false ;
+         return false;
       if (getClass() != obj.getClass())
-         return false ;
-      Link other = (Link) obj ;
+         return false;
+      Link other = (Link) obj;
       if (id_ == null)
       {
          if (other.id_ != null)
-            return false ;
+            return false;
       } else if (!id_.equals(other.id_))
-         return false ;
-      return true ;
+         return false;
+      return true;
    }
 
-   private final String url_ ;
-   private final String title_ ;
-   private final String id_ ;
+   private final String url_;
+   private final String title_;
+   private final String id_;
 }

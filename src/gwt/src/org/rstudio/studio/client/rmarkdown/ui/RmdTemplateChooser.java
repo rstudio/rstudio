@@ -1,7 +1,7 @@
 /*
  * RmdTemplateChooser.java
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-20 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -16,9 +16,14 @@ package org.rstudio.studio.client.rmarkdown.ui;
 
 import java.util.ArrayList;
 
+import com.google.gwt.aria.client.Id;
+import com.google.gwt.aria.client.Roles;
+import org.rstudio.core.client.ElementIds;
+import org.rstudio.core.client.JsArrayUtil;
 import org.rstudio.core.client.resources.CoreResources;
 import org.rstudio.core.client.widget.CaptionWithHelp;
 import org.rstudio.core.client.widget.DirectoryChooserTextBox;
+import org.rstudio.core.client.widget.LabeledTextBox;
 import org.rstudio.core.client.widget.SimplePanelWithProgress;
 import org.rstudio.core.client.widget.WidgetListBox;
 import org.rstudio.studio.client.RStudioGinjector;
@@ -39,7 +44,6 @@ import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.HTMLPanel;
 import com.google.gwt.user.client.ui.Image;
-import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 
 public class RmdTemplateChooser extends Composite
@@ -54,6 +58,8 @@ public class RmdTemplateChooser extends Composite
 
    public RmdTemplateChooser(RMarkdownServerOperations server)
    {
+      dirLocation_ = new DirectoryChooserTextBox("Location:", 
+            ElementIds.TextBoxButtonId.RMD_TEMPLATE_DIR);
       initWidget(uiBinder.createAndBindUi(this));
       server_ = server;
       listTemplates_.setItemPadding(2, Unit.PX);
@@ -69,6 +75,8 @@ public class RmdTemplateChooser extends Composite
                   item.getTemplate().getCreateDir() == "true");
          }
       });
+      Roles.getListboxRole().setAriaLabelledbyProperty(listTemplates_.getElement(),
+         Id.of(captionWithHelp_.getLabelElement()));
    }
    
    public void populateTemplates()
@@ -83,18 +91,28 @@ public class RmdTemplateChooser extends Composite
          @Override
          public void onResponseReceived(JsArray<RmdDocumentTemplate> templates)
          {
-            for (int i = 0; i < templates.length(); i++)
+            // Sort the list by package, then template name
+            JsArrayUtil.fillList(templates, templates_);
+            templates_.sort((RmdDocumentTemplate a, RmdDocumentTemplate b) ->
             {
-               final RmdDocumentTemplate template = templates.get(i);
+               int result = a.getPackage().compareTo(b.getPackage());
+               if (result == 0)
+               {
+                  return a.getName().compareTo(b.getName());
+               }
+               return result;
+            });
 
-               String preferredTemplate = RStudioGinjector.INSTANCE.getUIPrefs()
+            // Add each to the UI
+            for (RmdDocumentTemplate template: templates_)
+            {
+               String preferredTemplate = RStudioGinjector.INSTANCE.getUserPrefs()
                      .rmdPreferredTemplatePath().getValue();
 
                // create a template list item from the template; add it at the
                // end if it isn't the user's preferred template
                listTemplates_.addItem(new RmdDiscoveredTemplateItem(template), 
                      template.getPath() != preferredTemplate);
-               templates_.add(template);
             }
 
             state_ = STATE_POPULATED;
@@ -137,14 +155,14 @@ public class RmdTemplateChooser extends Composite
    @UiFactory
    public DirectoryChooserTextBox makeDirectoryChooserTextbox()
    {
-      return new DirectoryChooserTextBox("", null);
+      return new DirectoryChooserTextBox("", ElementIds.TextBoxButtonId.RMD_DIR, null);
    }
    
    @UiFactory
    public CaptionWithHelp makeHelpCaption()
    {
       return new CaptionWithHelp("Template:", "Using R Markdown Templates",
-                                 "using_rmarkdown_templates");
+                                 "using_rmarkdown_templates", null);
    }
    
    @UiFactory
@@ -208,14 +226,14 @@ public class RmdTemplateChooser extends Composite
    }
    
    private int state_;
-   private ArrayList<RmdDocumentTemplate> templates_ = 
-         new ArrayList<RmdDocumentTemplate>();
+   private ArrayList<RmdDocumentTemplate> templates_ = new ArrayList<>();
    
    private final RMarkdownServerOperations server_;
    
+   @UiField CaptionWithHelp captionWithHelp_;
    @UiField WidgetListBox<RmdDiscoveredTemplateItem> listTemplates_;
-   @UiField TextBox txtName_;
-   @UiField DirectoryChooserTextBox dirLocation_;
+   @UiField LabeledTextBox txtName_;
+   @UiField(provided = true) DirectoryChooserTextBox dirLocation_;
    @UiField HTMLPanel noTemplatesFound_;
    @UiField HTMLPanel templateOptionsPanel_;
    @UiField SimplePanelWithProgress progressPanel_;

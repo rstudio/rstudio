@@ -1,7 +1,7 @@
 /*
  * RScriptCallbacks.cpp
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -13,8 +13,8 @@
  *
  */
 
-#include <core/Error.hpp>
-#include <core/SafeConvert.hpp>
+#include <shared_core/Error.hpp>
+#include <shared_core/SafeConvert.hpp>
 
 #include <r/RExec.hpp>
 
@@ -99,6 +99,11 @@ void RWriteStdout (const char *buf, int buflen, int otype)
    std::cout << buf;
 }
 
+void RScriptCleanUp(SA_TYPE saveact, int status, int runLast)
+{
+   // override save action for script runs
+   stdInternalCallbacks()->cleanUp(SA_NOSAVE, status, runLast);
+}
    
 } // namespace session
 } // namespace r

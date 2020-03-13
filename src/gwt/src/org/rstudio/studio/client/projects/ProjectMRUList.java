@@ -1,7 +1,7 @@
 /*
  * ProjectMRUList.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-12 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -73,7 +73,7 @@ public class ProjectMRUList extends MRUList
             });
       
       // set right image for project MRU commands
-      if (Desktop.isDesktop() || session.getSessionInfo().getMultiSession())
+      if (Desktop.hasDesktopFrame() || session.getSessionInfo().getMultiSession())
       {
          ImageResource image = commands.openHtmlExternal().getImageResource();
          commands.projectMru0().setRightImage(image, NEW_SESSION_DESC);
@@ -115,9 +115,9 @@ public class ProjectMRUList extends MRUList
    
    @Override
    protected ArrayList<String> generateLabels(
-		   ArrayList<String> mruEntries, boolean includeExt)
+         ArrayList<String> mruEntries, boolean includeExt)
    {
-	   return DuplicateHelper.getPathLabels(mruEntries, true);
+      return DuplicateHelper.getPathLabels(mruEntries, true);
    }
    
    private static boolean openInNewWindow_ = false;

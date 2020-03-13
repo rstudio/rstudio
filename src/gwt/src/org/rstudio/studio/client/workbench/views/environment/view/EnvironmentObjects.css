@@ -125,12 +125,11 @@
 {
    font-family: proportionalFont;
    font-size: 90%;
-   color: #909090;
 }
 
 .unclickableIcon
 {
-	cursor: default;
+   cursor: default;
 }
 
 .unevaluatedPromise
@@ -145,6 +144,7 @@
 }
 
 .widthSettingRow td.expandCol,
+.widthSettingRow td.resizeCol,
 .widthSettingRow td.nameCol,
 .widthSettingRow td.valueCol
 {

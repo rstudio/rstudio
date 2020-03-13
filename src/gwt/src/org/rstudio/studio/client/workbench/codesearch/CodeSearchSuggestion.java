@@ -1,7 +1,7 @@
 /*
  * CodeSearchSuggestion.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -41,7 +41,7 @@ class CodeSearchSuggestion implements Suggestion
             
       // compute display string
       ImageResource image = 
-         fileTypeRegistry_.getIconForFilename(fileItem.getFilename());
+         fileTypeRegistry_.getIconForFilename(fileItem.getFilename()).getImageResource();
    
       displayString_ = createDisplayString(image,
                                            RES.styles().fileImage(),
@@ -126,7 +126,7 @@ class CodeSearchSuggestion implements Suggestion
    public void setFileDisplayString(String file, String displayString)
    {
       // compute display string
-      ImageResource image =  fileTypeRegistry_.getIconForFilename(file);
+      ImageResource image =  fileTypeRegistry_.getIconForFilename(file).getImageResource();
       displayString_ = createDisplayString(image,
                                            RES.styles().fileImage(),
                                            displayString,

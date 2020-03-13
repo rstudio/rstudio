@@ -1,7 +1,7 @@
 /*
  * SessionVCS.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -15,8 +15,6 @@
 
 #include "SessionVCS.hpp"
 
-#include <boost/foreach.hpp>
-
 #include <core/Exec.hpp>
 #include <core/StringUtils.hpp>
 #include <core/system/Environment.hpp>
@@ -26,6 +24,7 @@
 #include <session/SessionModuleContext.hpp>
 #include <session/projects/SessionProjects.hpp>
 #include <session/SessionConsoleProcess.hpp>
+#include <session/prefs/UserPrefs.hpp>
 
 #include "vcs/SessionVCSUtils.hpp"
 
@@ -135,22 +134,28 @@ class NullFileDecorationContext : public FileDecorationContext
 } // anonymous namespace
 
 boost::shared_ptr<FileDecorationContext> fileDecorationContext(
-                                            const core::FilePath& rootDir)
+      const core::FilePath& rootDir,
+      bool implicit)
 {
-   if (git::isWithinGitRoot(rootDir))
+   if (implicit && !prefs::userPrefs().vcsAutorefresh())
    {
       return boost::shared_ptr<FileDecorationContext>(
-                           new git::GitFileDecorationContext(rootDir));
+               new NullFileDecorationContext());
+   }
+   else if (git::isWithinGitRoot(rootDir))
+   {
+      return boost::shared_ptr<FileDecorationContext>(
+               new git::GitFileDecorationContext(rootDir));
    }
    else if (svn::isSvnEnabled())
    {
       return boost::shared_ptr<FileDecorationContext>(
-                           new svn::SvnFileDecorationContext(rootDir));
+               new svn::SvnFileDecorationContext(rootDir));
    }
    else
    {
       return boost::shared_ptr<FileDecorationContext>(
-                           new NullFileDecorationContext());
+               new NullFileDecorationContext());
    }
 }
 
@@ -192,7 +197,7 @@ FilePath getTrueHomeDir()
 
 FilePath defaultSshKeyDir()
 {
-   return getTrueHomeDir().childPath(".ssh");
+   return getTrueHomeDir().completeChildPath(".ssh");
 }
 
 void enqueueRefreshEvent()
@@ -221,7 +226,7 @@ core::Error initialize()
    const projects::ProjectContext& projContext = projects::projectContext();
    FilePath workingDir = projContext.directory();
 
-   if (!session::options().allowVcs() || !userSettings().vcsEnabled() || workingDir.empty())
+   if (!session::options().allowVcs() || !prefs::userPrefs().vcsEnabled() || workingDir.isEmpty())
       return Success();
 
 

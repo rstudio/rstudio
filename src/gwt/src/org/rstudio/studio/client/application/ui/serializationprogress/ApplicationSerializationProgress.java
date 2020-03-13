@@ -1,7 +1,7 @@
 /*
  * ApplicationSerializationProgress.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-20 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -31,7 +31,8 @@ public class ApplicationSerializationProgress extends PopupPanel
 {
    public ApplicationSerializationProgress(String message, 
                                            boolean modal, 
-                                           int delayMs)
+                                           int delayMs,
+                                           boolean announce)
    {
       super(false, modal);
       addStyleName(RESOURCES.styles().panel());
@@ -43,7 +44,7 @@ public class ApplicationSerializationProgress extends PopupPanel
       }
 
       ApplicationSerializationProgressLabel label =
-            new ApplicationSerializationProgressLabel();
+            new ApplicationSerializationProgressLabel(announce);
       label.setText(message);
 
       // set widget

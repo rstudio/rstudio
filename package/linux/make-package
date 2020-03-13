@@ -67,7 +67,6 @@ rm -rf $BUILD_DIR/_CPack_Packages
 cmake -DRSTUDIO_TARGET=$1 \
       -DCMAKE_BUILD_TYPE=$CMAKE_BUILD_TYPE \
       -DRSTUDIO_PACKAGE_BUILD=1 \
-      -DRSTUDIO_PACKAGE_VARIANT=$4 \
       -DCMAKE_INSTALL_PREFIX="${CMAKE_INSTALL_PREFIX}" \
       -DGWT_BIN_DIR="$BUILD_DIR/gwt/bin" \
       -DGWT_WWW_DIR="$BUILD_DIR/gwt/www" \
@@ -79,16 +78,9 @@ make ${MAKEFLAGS}
 if [ "$2" != "DEB" ]
 then
   fakeroot cpack -G "$2"
-  PACKAGE=$(ls *.rpm)
 else
   cpack -G $2
   $PKG_DIR/fix-debian-permissions `ls *.deb`
-  PACKAGE=$(ls *.deb)
 fi
-
-# strip off cmake build type from file name
-PACKAGE_TYPE=$(echo $CMAKE_BUILD_TYPE | tr '[:upper:]' '[:lower:]')
-MODIFIED_PACKAGE=$(echo $PACKAGE | sed "s/-${PACKAGE_TYPE}//")
-mv $PACKAGE $MODIFIED_PACKAGE
 
 cd $PREV_WD

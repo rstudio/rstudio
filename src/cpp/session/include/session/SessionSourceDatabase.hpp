@@ -1,7 +1,7 @@
 /*
  * SessionSourceDatabase.hpp
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -23,8 +23,8 @@
 #include <boost/shared_ptr.hpp>
 
 #include <core/BoostSignals.hpp>
-#include <core/FilePath.hpp>
-#include <core/json/Json.hpp>
+#include <shared_core/FilePath.hpp>
+#include <shared_core/json/Json.hpp>
 
 #include <r/RSexp.hpp>
 
@@ -155,7 +155,7 @@ public:
    SEXP toRObject(r::sexp::Protect* pProtect, bool includeContents = true) const;
 
 private:
-   void editProperty(const core::json::Member& property);
+   void editProperty(const core::json::Object::Member& property);
 
 private:
    std::string id_;

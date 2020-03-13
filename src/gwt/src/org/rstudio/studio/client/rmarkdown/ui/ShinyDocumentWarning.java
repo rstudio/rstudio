@@ -1,7 +1,7 @@
 /*
  * ShinyDocumentWarning.java
  *
- * Copyright (C) 2009-14 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -15,8 +15,11 @@
 package org.rstudio.studio.client.rmarkdown.ui;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.uibinder.client.UiBinder;
+import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.Composite;
+import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.Widget;
 
 public class ShinyDocumentWarning extends Composite
@@ -33,4 +36,11 @@ public class ShinyDocumentWarning extends Composite
    {
       initWidget(uiBinder.createAndBindUi(this));
    }
+
+   public Element getMessageElement()
+   {
+      return dialogMessage_.getElement();
+   }
+
+   @UiField HTML dialogMessage_;
 }

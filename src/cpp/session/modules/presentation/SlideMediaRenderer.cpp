@@ -1,7 +1,7 @@
 /*
  * SlideMediaRenderer.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -19,11 +19,10 @@
 #include <iostream>
 #include <sstream>
 
-#include <boost/foreach.hpp>
 #include <boost/format.hpp>
 #include <boost/algorithm/string/predicate.hpp>
 
-#include <core/json/Json.hpp>
+#include <shared_core/json/Json.hpp>
 
 #include <session/SessionModuleContext.hpp>
 
@@ -77,17 +76,17 @@ std::vector<MediaSource> discoverMediaSources(
    }
 
    std::vector<MediaSource> sources;
-   FilePath mediaFile = baseDir.complete(filename);
+   FilePath mediaFile = baseDir.completePath(filename);
    if (mediaFile.exists())
    {
       // get the filename without extension
-      std::string stem = mediaFile.stem();
-      BOOST_FOREACH(std::string fmt, formats)
+      std::string stem = mediaFile.getStem();
+      for (std::string fmt : formats)
       {
-         FilePath targetPath = mediaFile.parent().complete(stem + "." + fmt);
+         FilePath targetPath = mediaFile.getParent().completePath(stem + "." + fmt);
          if (targetPath.exists())
          {
-            std::string file = targetPath.relativePath(baseDir);
+            std::string file = targetPath.getRelativePath(baseDir);
             if (boost::algorithm::starts_with(fmt, "og"))
                fmt = "ogg";
             sources.push_back(MediaSource(file, type + "/" + fmt));
@@ -97,7 +96,7 @@ std::vector<MediaSource> discoverMediaSources(
    else
    {
       module_context::consoleWriteError("Media file " +
-                                        mediaFile.absolutePath() +
+                                           mediaFile.getAbsolutePath() +
                                         " does not exist");
    }
 
@@ -107,14 +106,12 @@ std::vector<MediaSource> discoverMediaSources(
 std::string atCommandsAsJsonArray(const std::vector<AtCommand>& atCommands)
 {
    json::Array cmdsArray;
-   BOOST_FOREACH(const AtCommand atCmd, atCommands)
+   for (const AtCommand atCmd : atCommands)
    {
       cmdsArray.push_back(atCmd.asJson());
    }
 
-   std::ostringstream ostr;
-   json::write(cmdsArray, ostr);
-   return ostr.str();
+   return cmdsArray.write();
 }
 
 } // anonymous namespace
@@ -137,7 +134,7 @@ void renderMedia(const std::string& type,
                                                                 baseDir,
                                                                 fileName);
    std::string sources;
-   BOOST_FOREACH(const MediaSource& source, mediaSources)
+   for (const MediaSource& source : mediaSources)
    {
       sources += (source.asTag() + "\n");
    }

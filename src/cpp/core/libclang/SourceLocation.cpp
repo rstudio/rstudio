@@ -1,7 +1,7 @@
 /*
  * SourceLocation.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -63,7 +63,7 @@ void SourceLocation::printExpansionLocation(std::ostream& ostr)
 {
    std::string file;
    unsigned line, offset;
-   getExpansionLocation(&file, &line, &offset, NULL);
+   getExpansionLocation(&file, &line, &offset, nullptr);
    ostr << file << " [line: " << line << ", col: " << offset << "]";
 }
 
@@ -102,7 +102,7 @@ void SourceLocation::printSpellingLocation(std::ostream& ostr)
 {
    std::string file;
    unsigned line, offset;
-   if (getSpellingLocation(&file, &line, &offset, NULL))
+   if (getSpellingLocation(&file, &line, &offset, nullptr))
       ostr << file << " [line: " << line << ", col: " << offset << "]";
 }
 

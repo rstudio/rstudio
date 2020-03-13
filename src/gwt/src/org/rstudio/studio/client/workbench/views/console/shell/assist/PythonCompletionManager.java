@@ -1,7 +1,7 @@
 /*
  * PythonCompletionManager.java
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -96,9 +96,10 @@ public class PythonCompletionManager extends CompletionManagerBase
    }
 
    @Override
-   public void getCompletions(String line, CompletionRequestContext context)
+   public boolean getCompletions(String line, CompletionRequestContext context)
    {
       server_.pythonGetCompletions(buildCompletionLine(), completionContext(), context);
+      return true;
    }
    
    @Override

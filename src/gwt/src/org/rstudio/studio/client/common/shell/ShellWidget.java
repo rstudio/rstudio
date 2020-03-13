@@ -1,7 +1,7 @@
 /*
  * ShellWidget.java
  *
- * Copyright (C) 2009-19 by RStudio, Inc.
+ * Copyright (C) 2009-20 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -29,12 +29,13 @@ import org.rstudio.core.client.widget.BottomScrollPanel;
 import org.rstudio.core.client.widget.FontSizer;
 import org.rstudio.core.client.widget.PreWidget;
 import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.application.AriaLiveService;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.debugging.model.UnhandledError;
 import org.rstudio.studio.client.common.debugging.ui.ConsoleError;
 import org.rstudio.studio.client.workbench.model.ConsoleAction;
-import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.views.console.ConsoleResources;
 import org.rstudio.studio.client.workbench.views.console.events.RunCommandWithDebugEvent;
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorDisplay;
@@ -43,18 +44,16 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor.N
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.CursorChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.CursorChangedHandler;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.PasteEvent;
+import org.rstudio.studio.client.workbench.views.source.editors.text.themes.AceTheme;
 
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.RepeatingCommand;
-import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.SpanElement;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
-import com.google.gwt.event.dom.client.FocusEvent;
-import com.google.gwt.event.dom.client.FocusHandler;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.event.dom.client.KeyDownHandler;
@@ -73,30 +72,34 @@ public class ShellWidget extends Composite implements ShellDisplay,
                                                       RequiresResize,
                                                       ConsoleError.Observer
 {
-   public ShellWidget(AceEditor editor, UIPrefs prefs, EventBus events)
+   public ShellWidget(AceEditor editor,
+                      UserPrefs prefs,
+                      EventBus events,
+                      AriaLiveService ariaLive,
+                      String outputLabel)
    {
       styles_ = ConsoleResources.INSTANCE.consoleStyles();
       events_ = events;
       prefs_ = prefs;
+      ariaLive_ = ariaLive;
       
       SelectInputClickHandler secondaryInputHandler = new SelectInputClickHandler();
 
-      output_ = new ConsoleOutputWriter(RStudioGinjector.INSTANCE.getVirtualConsoleFactory());
+      output_ = new ConsoleOutputWriter(RStudioGinjector.INSTANCE.getVirtualConsoleFactory(), outputLabel);
       output_.getWidget().setStylePrimaryName(styles_.output());
       output_.getWidget().addClickHandler(secondaryInputHandler);
-      ElementIds.assignElementId(output_.getElement(), 
-                                 ElementIds.CONSOLE_OUTPUT);
+      ElementIds.assignElementId(output_.getElement(), ElementIds.CONSOLE_OUTPUT);
       output_.getWidget().addPasteHandler(secondaryInputHandler);
 
       pendingInput_ = new PreWidget();
       pendingInput_.setStyleName(styles_.output());
       pendingInput_.addClickHandler(secondaryInputHandler);
 
-      prompt_ = new HTML() ;
-      prompt_.setStylePrimaryName(styles_.prompt()) ;
+      prompt_ = new HTML();
+      prompt_.setStylePrimaryName(styles_.prompt());
       prompt_.addStyleName(KEYWORD_CLASS_NAME);
 
-      input_ = editor ;
+      input_ = editor;
       input_.setShowLineNumbers(false);
       input_.setShowPrintMargin(false);
       if (!Desktop.isDesktop())
@@ -107,20 +110,14 @@ public class ShellWidget extends Composite implements ShellDisplay,
       final Widget inputWidget = input_.asWidget();
       ElementIds.assignElementId(inputWidget.getElement(),
                                  ElementIds.CONSOLE_INPUT);
-      input_.addClickHandler(secondaryInputHandler) ;
+      input_.addClickHandler(secondaryInputHandler);
       inputWidget.addStyleName(styles_.input());
       input_.addCursorChangedHandler(new CursorChangedHandler()
       {
+         @Override
          public void onCursorChanged(CursorChangedEvent event)
          {
-            Scheduler.get().scheduleDeferred(new ScheduledCommand()
-            {
-               @Override
-               public void execute()
-               {
-                  input_.scrollToCursor(scrollPanel_, 8, 60);
-               }
-            });
+            Scheduler.get().scheduleDeferred(() -> input_.scrollToCursor(scrollPanel_, 8, 60));
          }
       });
       input_.addCapturingKeyDownHandler(new KeyDownHandler()
@@ -132,15 +129,16 @@ public class ShellWidget extends Composite implements ShellDisplay,
             if (input_.isPopupVisible())
                return;
             
-            // If the user hits Page-Up from inside the console input, we need
-            // to simulate pageup because focus is not contained in the scroll
-            // panel (it's in the hidden textarea that Ace uses under the
-            // covers).
+            // If the user hits PageUp or PageDown from inside the console
+            // input, we need to simulate its action because focus is not contained
+            // in the scroll panel (it's in the hidden textarea that Ace uses
+            // under the covers).
 
             int keyCode = event.getNativeKeyCode();
             switch (keyCode)
             {
                case KeyCodes.KEY_PAGEUP:
+               {
                   event.stopPropagation();
                   event.preventDefault();
 
@@ -148,22 +146,37 @@ public class ShellWidget extends Composite implements ShellDisplay,
                   if (scrollPanel_.getVerticalScrollPosition() == 0)
                      return;
 
+                  int newScrollTop =
+                        scrollPanel_.getVerticalScrollPosition() -
+                        scrollPanel_.getOffsetHeight() +
+                        40;
+                  
                   scrollPanel_.focus();
-                  int newScrollTop = scrollPanel_.getVerticalScrollPosition() -
-                                     scrollPanel_.getOffsetHeight() + 40;
                   scrollPanel_.setVerticalScrollPosition(Math.max(0, newScrollTop));
                   break;
+               }
+                  
+               case KeyCodes.KEY_PAGEDOWN:
+               {
+                  event.stopPropagation();
+                  event.preventDefault();
+                  
+                  if (scrollPanel_.isScrolledToBottom())
+                     return;
+                  
+                  int newScrollTop =
+                        scrollPanel_.getVerticalScrollPosition() +
+                        scrollPanel_.getOffsetHeight() -
+                        40;
+                  
+                  scrollPanel_.focus();
+                  scrollPanel_.setVerticalScrollPosition(newScrollTop);
+                  break;
+               }
             }
          }
       });
-      input_.addFocusHandler(new FocusHandler()
-      {
-         @Override
-         public void onFocus(FocusEvent event)
-         {
-            scrollToBottom();
-         }
-      });
+      input_.addFocusHandler(event -> scrollToBottom());
 
       inputLine_ = new DockPanel();
       inputLine_.setHorizontalAlignment(DockPanel.ALIGN_LEFT);
@@ -202,7 +215,7 @@ public class ShellWidget extends Composite implements ShellDisplay,
          }
       };
 
-      initWidget(scrollPanel_) ;
+      initWidget(scrollPanel_);
 
       addCopyHook(getElement());
    }
@@ -233,13 +246,9 @@ public class ShellWidget extends Composite implements ShellDisplay,
       if (!initialized_)
       {
          initialized_ = true;
-         Scheduler.get().scheduleDeferred(new ScheduledCommand()
-         {
-            public void execute()
-            {
-               doOnLoad();
-               scrollPanel_.scrollToBottom();
-            }
+         Scheduler.get().scheduleDeferred(() -> {
+            doOnLoad();
+            scrollPanel_.scrollToBottom();
          });
       }
 
@@ -255,6 +264,7 @@ public class ShellWidget extends Composite implements ShellDisplay,
       input_.forceCursorChange();
    }
 
+   @Override
    public void setSuppressPendingInput(boolean suppressPendingInput)
    {
       suppressPendingInput_ = suppressPendingInput;
@@ -263,7 +273,8 @@ public class ShellWidget extends Composite implements ShellDisplay,
    public void consoleWriteError(final String error)
    {
       clearPendingInput();
-      output(error, getErrorClass(), true /*isError*/, false /*ignoreLineCount*/);
+      output(error, getErrorClass(), true /*isError*/, false /*ignoreLineCount*/,
+            isAnnouncementEnabled(AriaLiveService.CONSOLE_LOG));
 
       // Pick up the elements emitted to the console by this call. If we get 
       // extended information for this error, we'll need to swap out the simple 
@@ -323,12 +334,15 @@ public class ShellWidget extends Composite implements ShellDisplay,
       events_.fireEvent(new RunCommandWithDebugEvent(command));
    }
 
+   @Override
    public void consoleWriteOutput(final String output)
    {
       clearPendingInput();
-      output(output, styles_.output(), false /*isError*/, false /*ignoreLineCount*/);
+      output(output, styles_.output(), false /*isError*/, false /*ignoreLineCount*/,
+            isAnnouncementEnabled(AriaLiveService.CONSOLE_LOG));
    }
 
+   @Override
    public void consoleWriteInput(final String input, String console)
    {
       // if coming from another console id (i.e. notebook chunk), clear the
@@ -339,7 +353,7 @@ public class ShellWidget extends Composite implements ShellDisplay,
 
       clearPendingInput();
       output(input, styles_.command() + KEYWORD_CLASS_NAME, false /*isError*/, 
-            false /*ignoreLineCount*/);
+            false /*ignoreLineCount*/, isAnnouncementEnabled(AriaLiveService.CONSOLE_COMMAND));
    }
    
    private void clearPendingInput()
@@ -348,10 +362,11 @@ public class ShellWidget extends Composite implements ShellDisplay,
       pendingInput_.setVisible(false);
    }
 
+   @Override
    public void consoleWritePrompt(final String prompt)
    {
       output(prompt, styles_.prompt() + KEYWORD_CLASS_NAME, false /*isError*/,
-            false /*ignoreLineCount*/);
+            false /*ignoreLineCount*/, isAnnouncementEnabled(AriaLiveService.CONSOLE_COMMAND));
       clearErrors_ = true;
    }
 
@@ -362,13 +377,14 @@ public class ShellWidget extends Composite implements ShellDisplay,
       return console.toString();
    }
 
+   @Override
    public void consolePrompt(String prompt, boolean showInput)
    {
       if (prompt != null)
          prompt = consolify(prompt);
 
       prompt_.getElement().setInnerText(prompt);
-      //input_.clear() ;
+      //input_.clear();
       ensureInputVisible();
 
       // Deal gracefully with multi-line prompts
@@ -381,6 +397,7 @@ public class ShellWidget extends Composite implements ShellDisplay,
       output_.ensureStartingOnNewLine();
    }
 
+   @Override
    public void ensureInputVisible()
    {
       scrollPanel_.scrollToBottom();
@@ -389,7 +406,8 @@ public class ShellWidget extends Composite implements ShellDisplay,
    private String getErrorClass()
    {
       return styles_.error() + " " + 
-             RStudioGinjector.INSTANCE.getUIPrefs().getThemeErrorClass();
+             AceTheme.getThemeErrorClass(
+                RStudioGinjector.INSTANCE.getUserState().theme().getValue().cast());
    }
 
    /**
@@ -398,21 +416,27 @@ public class ShellWidget extends Composite implements ShellDisplay,
     * @param className Text style
     * @param isError Is this an error message?
     * @param ignoreLineCount Output without checking buffer length?
+    * @param ariaLiveAnnounce Include in arialive output announcement
     * @return was this output below the maximum buffer line count?
     */
    private boolean output(String text,
                           String className,
                           boolean isError,
-                          boolean ignoreLineCount)
+                          boolean ignoreLineCount,
+                          boolean ariaLiveAnnounce)
    {
       boolean canContinue = output_.outputToConsole(text, className, 
-                                                    isError, ignoreLineCount);
+                                                    isError, ignoreLineCount,
+                                                    ariaLiveAnnounce);
 
       // if we're currently scrolled to the bottom, nudge the timer so that we
       // will keep up with output
       if (scrollPanel_.isScrolledToBottom())
          resizeCommand_.nudge();
       
+      if (liveRegion_ != null)
+         liveRegion_.announce(output_.getNewText());
+
       return canContinue;
    }
 
@@ -460,6 +484,7 @@ public class ShellWidget extends Composite implements ShellDisplay,
          private int i = startIndex;
          private int chunksize = 1000;
 
+         @Override
          public boolean execute()
          {
             boolean canContinue = false;
@@ -482,25 +507,29 @@ public class ShellWidget extends Composite implements ShellDisplay,
                      canContinue = output(action.getData() + "\n",
                                           styles_.command() + " " + KEYWORD_CLASS_NAME,
                                           false /*isError*/, 
-                                          true /*ignoreLineCount*/);
+                                          true /*ignoreLineCount*/,
+                                          false /*announce*/);
                      break;
                   case ConsoleAction.OUTPUT:
                      canContinue = output(action.getData(),
                                           styles_.output(),
                                           false /*isError*/,
-                                          true /*ignoreLineCount*/);
+                                          true /*ignoreLineCount*/,
+                                          false /*announce*/);
                      break;
                   case ConsoleAction.ERROR:
                      canContinue = output(action.getData(),
                                           getErrorClass(),
                                           true /*isError*/,
-                                          true /*ignoreLineCount*/);
+                                          true /*ignoreLineCount*/,
+                                          false /*announce*/);
                      break;
                   case ConsoleAction.PROMPT:
                      canContinue = output(action.getData(),
                                           styles_.prompt() + " " + KEYWORD_CLASS_NAME,
                                           false /*isError*/,
-                                          true /*ignoreLineCount*/);
+                                          true /*ignoreLineCount*/,
+                                          false /*announce*/);
                      break;
                }
                if (!canContinue)
@@ -523,9 +552,10 @@ public class ShellWidget extends Composite implements ShellDisplay,
       });
    }
 
+   @Override
    public void focus()
    {
-      input_.setFocus(true) ;
+      input_.setFocus(true);
    }
    
    /**
@@ -536,6 +566,7 @@ public class ShellWidget extends Composite implements ShellDisplay,
                                                     KeyDownHandler,
                                                     PasteEvent.Handler
    {
+      @Override
       public void onClick(ClickEvent event)
       {
          // If clicking on the input panel already, stop propagation.
@@ -563,6 +594,7 @@ public class ShellWidget extends Composite implements ShellDisplay,
          }
       }
 
+      @Override
       public void onKeyDown(KeyDownEvent event)
       {
          if (event.getSource() == input_)
@@ -589,11 +621,15 @@ public class ShellWidget extends Composite implements ShellDisplay,
                if (event.isControlKeyDown() || event.isMetaKeyDown())
                   return;
                break;
+            case KeyCodes.KEY_TAB:
+               if (prefs_ == null || prefs_.tabKeyMoveFocus().getValue())
+                  return;
          }
          input_.setFocus(true);
          delegateEvent(input_.asWidget(), event);
       }
       
+      @Override
       public void onPaste(PasteEvent event)
       {
          // When pasting, focus the input so it'll receive the pasted text
@@ -606,7 +642,7 @@ public class ShellWidget extends Composite implements ShellDisplay,
       }
 
       private AceEditor input_;
-      private Timer inputFocus_ = new Timer()
+      private final Timer inputFocus_ = new Timer()
       {
          @Override
          public void run()
@@ -614,8 +650,20 @@ public class ShellWidget extends Composite implements ShellDisplay,
             // Don't drive focus to the input unless there is no selection.
             // Otherwise it would interfere with the ability to select stuff
             // from the output buffer for copying to the clipboard.
-            if (!DomUtils.selectionExists() && isInputOnscreen())
-               input_.setFocus(true);
+            if (DomUtils.selectionExists() || !isInputOnscreen())
+               return;
+            
+            // When focusing Ace, if the user hasn't yet typed anything into
+            // the input line, then Ace will erroneously adjust the scroll
+            // position upwards upon focus. Rather than patching Ace, we instead
+            // just re-scroll to the bottom if we were already scrolled to the
+            // bottom after giving focus to the Ace editor instance.
+            //
+            // https://github.com/rstudio/rstudio/issues/6231
+            boolean wasScrolledToBottom = scrollPanel_.isScrolledToBottom();
+            input_.setFocus(true);
+            if (wasScrolledToBottom)
+               scrollPanel_.scrollToBottom();
          }
       };
    }
@@ -649,17 +697,27 @@ public class ShellWidget extends Composite implements ShellDisplay,
       }
    }
 
+   @Override
    public void clearOutput()
    {
       output_.clearConsoleOutput();
+      clearLiveRegion();
       cleared_ = true;
    }
    
+   @Override
    public InputEditorDisplay getInputEditorDisplay()
    {
-      return input_ ;
+      return input_;
    }
 
+   @Override
+   public ConsoleOutputWriter getConsoleOutputWriter()
+   {
+      return output_;
+   }
+
+   @Override
    public String processCommandEntry()
    {
       // parse out the command text
@@ -689,17 +747,19 @@ public class ShellWidget extends Composite implements ShellDisplay,
 
       ensureInputVisible();
 
-      return commandText ;
+      return commandText;
    }
 
+   @Override
    public HandlerRegistration addCapturingKeyDownHandler(KeyDownHandler handler)
    {
-      return input_.addCapturingKeyDownHandler(handler) ;
+      return input_.addCapturingKeyDownHandler(handler);
    }
 
+   @Override
    public HandlerRegistration addKeyPressHandler(KeyPressHandler handler)
    {
-      return input_.addKeyPressHandler(handler) ;
+      return input_.addKeyPressHandler(handler);
    }
    
    @Override
@@ -714,42 +774,55 @@ public class ShellWidget extends Composite implements ShellDisplay,
       return input_.addKeyUpHandler(handler);
    }
 
+   @Override
    public int getCharacterWidth()
    {
       return DomUtils.getCharacterWidth(getElement(), styles_.console());
    }
    
+   @Override
    public boolean isPromptEmpty()
    {
       return StringUtil.isNullOrEmpty(prompt_.getText());
    }
    
+   @Override
    public String getPromptText()
    {
       return StringUtil.notNull(prompt_.getText());
    }
    
+   @Override
    public void setReadOnly(boolean readOnly)
    {
       input_.setReadOnly(readOnly);
    }
 
+   @Override
    public int getMaxOutputLines()
    {
       return output_.getMaxOutputLines();
    }
    
+   @Override
    public void setMaxOutputLines(int maxLines)
    {
       output_.setMaxOutputLines(maxLines);
    }
-   
+
+   @Override
+   public void setTextInputAriaLabel(String label)
+   {
+      input_.setTextInputAriaLabel(label);
+   }
+
    @Override
    public Widget getShellWidget()
    {
       return this;
    }
 
+   @Override
    public void onResize()
    {
       if (getWidget() instanceof RequiresResize)
@@ -761,23 +834,49 @@ public class ShellWidget extends Composite implements ShellDisplay,
    {
       scrollPanel_.onContentSizeChanged();
    }
-   
+
+   public Widget getOutputWidget()
+   {
+      return output_.getWidget();
+   }
+
+   @Override
+   public void enableLiveReporting()
+   {
+      liveRegion_ = new AriaLiveShellWidget(prefs_);
+      verticalPanel_.add(liveRegion_);
+   }
+
+   @Override
+   public void clearLiveRegion()
+   {
+      if (liveRegion_ != null)
+         liveRegion_.clearLiveRegion();
+   }
+
+   private boolean isAnnouncementEnabled(String announcement)
+   {
+      return ariaLive_ != null && !ariaLive_.isDisabled(announcement);
+   }
+
    private boolean cleared_ = false;
    private final ConsoleOutputWriter output_;
-   private PreWidget pendingInput_ ;
-   private final HTML prompt_ ;
-   protected final AceEditor input_ ;
-   private final DockPanel inputLine_ ;
-   private final VerticalPanel verticalPanel_ ;
-   protected final ClickableScrollPanel scrollPanel_ ;
-   private ConsoleResources.ConsoleStyles styles_;
+   private final PreWidget pendingInput_;
+   private final HTML prompt_;
+   private AriaLiveShellWidget liveRegion_ = null;
+   protected final AceEditor input_;
+   private final DockPanel inputLine_;
+   protected final ClickableScrollPanel scrollPanel_;
+   private final ConsoleResources.ConsoleStyles styles_;
    private final TimeBufferedCommand resizeCommand_;
    private boolean suppressPendingInput_;
    private final EventBus events_;
-   private final UIPrefs prefs_;
-   
+   private final UserPrefs prefs_;
+   private final AriaLiveService ariaLive_;
+   private VerticalPanel verticalPanel_;
+
    // A list of errors that have occurred between console prompts. 
-   private Map<String, List<Element>> errorNodes_ = new TreeMap<String, List<Element>>();
+   private final Map<String, List<Element>> errorNodes_ = new TreeMap<>();
    private boolean clearErrors_ = false;
 
    private static final String KEYWORD_CLASS_NAME = ConsoleResources.KEYWORD_CLASS_NAME;

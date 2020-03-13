@@ -1,7 +1,7 @@
 /*
  * AsyncConnection.hpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-12 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -16,6 +16,7 @@
 #ifndef CORE_HTTP_ASYNC_CONNECTION_HPP
 #define CORE_HTTP_ASYNC_CONNECTION_HPP
 
+#include <boost/any.hpp>
 #include <boost/shared_ptr.hpp>
 #include <boost/asio/io_service.hpp>
 
@@ -53,6 +54,7 @@ public:
 
    // request
    virtual const http::Request& request() const = 0;
+   virtual const std::string& originalUri() const = 0;
 
    // populate or set response then call writeResponse when done
    virtual http::Response& response() = 0;
@@ -60,7 +62,8 @@ public:
 
    // simple wrappers for writing an existing response or error
    virtual void writeResponse(const http::Response& response,
-                              bool close = true) = 0;
+                              bool close = true,
+                              const http::Headers& extraHeaders = http::Headers()) = 0;
 
    // writes only the headers and not any body data
    // useful for chunked encoding (streaming)
@@ -71,6 +74,13 @@ public:
    virtual void writeError(const Error& error) = 0;
 
    virtual void close() = 0;
+
+   // resume parsing the connection data if previously paused
+   virtual void continueParsing() = 0;
+
+   // set and get arbitrary connection-related data
+   virtual void setData(const boost::any& data) = 0;
+   virtual boost::any getData() = 0;
 };
 
 } // namespace http

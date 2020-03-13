@@ -1,7 +1,7 @@
 /*
  * RClientState.hpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-12 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -20,12 +20,12 @@
 
 #include <boost/utility.hpp>
 
-#include <core/FilePath.hpp>
-#include <core/json/Json.hpp>
+#include <shared_core/FilePath.hpp>
+#include <shared_core/json/Json.hpp>
 
 namespace rstudio {
 namespace core {
-	class Error;
+   class Error;
 } 
 }
 
@@ -34,7 +34,7 @@ namespace r {
 namespace session {
 
 // singleton
-class ClientState ;
+class ClientState;
 ClientState& clientState();
 
 enum ClientStateCommitType
@@ -87,11 +87,11 @@ private:
    void restoreProjectState(const core::FilePath& stateFile);
 
 private:
-   core::json::Object temporaryState_ ;
-   core::json::Object persistentState_ ;
+   core::json::Object temporaryState_;
+   core::json::Object persistentState_;
    core::json::Object projectPersistentState_;
 };
-      
+
 } // namespace session
 } // namespace r
 } // namespace rstudio

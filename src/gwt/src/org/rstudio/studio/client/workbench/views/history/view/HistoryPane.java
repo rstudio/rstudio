@@ -1,7 +1,7 @@
 /*
  * HistoryPane.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -31,6 +31,8 @@ import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.ui.*;
 import com.google.inject.Inject;
+
+import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.events.HasSelectionCommitHandlers;
 import org.rstudio.core.client.events.SelectionCommitEvent;
@@ -564,7 +566,7 @@ public class HistoryPane extends WorkbenchPane
    @Override
    protected Toolbar createMainToolbar()
    {
-      searchWidget_ = new SearchWidget(new SuggestOracle()
+      searchWidget_ = new SearchWidget("Filter command history", new SuggestOracle()
       {
          @Override
          public void requestSuggestions(Request request,
@@ -613,8 +615,10 @@ public class HistoryPane extends WorkbenchPane
             contextResults_.getFocusTarget().removeClassName(styles_.fakeFocus());
          }
       });
+      
+      ElementIds.assignElementId(searchWidget_, ElementIds.SW_HISTORY);
 
-      Toolbar toolbar = new Toolbar();
+      Toolbar toolbar = new Toolbar("History Tab");
       toolbar.addLeftWidget(commands_.loadHistory().createToolbarButton());
       toolbar.addLeftWidget(commands_.saveHistory().createToolbarButton());
       toolbar.addLeftSeparator();

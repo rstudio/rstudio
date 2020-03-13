@@ -1,7 +1,7 @@
 /*
  * CppCompletionUtils.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -73,8 +73,7 @@ public class CppCompletionUtils
       // is there already a C++ identifier character at this position? 
       // if so then bail
       if ((position.getColumn() < line.length()) &&
-          CppCompletionUtils.isCppIdentifierChar(
-                                        line.charAt(position.getColumn()))) 
+          CppCompletionUtils.isCppIdentifierChar(StringUtil.charAt(line, position.getColumn())))
       {
          return null;
       }
@@ -83,20 +82,18 @@ public class CppCompletionUtils
       // determine the column right before this one
       int inputCol = position.getColumn() - 1;
                
-      // walk backwards across C++ identifer symbols 
+      // walk backwards across C++ identifier symbols
       int col = inputCol;
       if (isInclude)
       {
-         while (col >= 0 &&
-               !StringUtil.isOneOf(line.charAt(col), '/', '<', '"'))
+         while (col >= 0 && !StringUtil.isOneOf(StringUtil.charAt(line, col), '/', '<', '"'))
          {
             col--;
          }
       }
       else
       {
-         while ((col >= 0) && 
-               CppCompletionUtils.isCppIdentifierChar(line.charAt(col)))
+         while ((col >= 0) && CppCompletionUtils.isCppIdentifierChar(StringUtil.charAt(line, col)))
          {
             col--;
          }
@@ -106,8 +103,8 @@ public class CppCompletionUtils
       Position startPos = Position.create(position.getRow(), col + 1);
       
       // check for a completion triggering sequence
-      char ch = line.charAt(col);   
-      char prefixCh = line.charAt(col - 1);
+      char ch = StringUtil.charAt(line, col);
+      char prefixCh = StringUtil.charAt(line, col - 1);
       
       // member
       if (ch == '.' || (prefixCh == '-' && ch == '>'))

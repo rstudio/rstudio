@@ -1,5 +1,20 @@
+/*
+ * CheckableMenuItem.java
+ *
+ * Copyright (C) 2009-19 by RStudio, PBC
+ *
+ * Unless you have received this program directly from RStudio pursuant
+ * to the terms of a commercial license agreement with RStudio, then
+ * this program is licensed to you under the terms of version 3 of the
+ * GNU Affero General Public License. This program is distributed WITHOUT
+ * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
+ * MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE. Please refer to the
+ * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
+ *
+ */
 package org.rstudio.core.client.widget;
 
+import com.google.gwt.aria.client.Roles;
 import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.res.ThemeResources;
@@ -15,17 +30,26 @@ public abstract class CheckableMenuItem extends MenuItem
 {
    public CheckableMenuItem()
    {
-      this("", false);
+      this("", false, false);
    }
 
    public CheckableMenuItem(String label)
    {
-      this (label, false);
+      this (label, false, false);
    }
 
    public CheckableMenuItem(String label, boolean html)
    {
-      super(label, html, (Scheduler.ScheduledCommand)null);
+      this(label, html, false);
+   }
+
+   public CheckableMenuItem(String label, boolean html, boolean checked)
+   {
+      super(label, 
+            html,
+            Roles.getMenuitemcheckboxRole(),
+            checked, 
+            (Scheduler.ScheduledCommand)null);
       if (!html)
          setHTML(getHTMLContent());
       setScheduledCommand(new ScheduledCommand()
@@ -36,11 +60,13 @@ public abstract class CheckableMenuItem extends MenuItem
             onInvoked();
          }
       });
+      setChecked(checked);
    }
 
    public void onStateChanged()
    {
       setHTML(getHTMLContent());
+      setChecked(isChecked());
    }
 
    public abstract String getLabel();

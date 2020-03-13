@@ -4,9 +4,9 @@ import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.common.satellite.SatelliteManager;
-import org.rstudio.studio.client.rmarkdown.RmdOutput;
 import org.rstudio.studio.client.rmarkdown.RmdOutputSatellite;
 import org.rstudio.studio.client.rmarkdown.model.RmdPreviewParams;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.inject.Inject;
@@ -38,7 +38,7 @@ public class RmdOutputFrameSatellite extends RmdOutputFrameBase
    {
       super.showRmdPreview(params);
       WindowEx win = getWindowObject();
-      if (activate && win != null && !Desktop.isDesktop() && BrowseCap.isChrome())
+      if (activate && win != null && !Desktop.hasDesktopFrame() && BrowseCap.isChrome())
       {
          satelliteManager_.forceReopenSatellite(RmdOutputSatellite.NAME, 
                                                 params,
@@ -54,9 +54,9 @@ public class RmdOutputFrameSatellite extends RmdOutputFrameBase
    }
 
    @Override
-   public int getViewerType()
+   public String getViewerType()
    {
-      return RmdOutput.RMD_VIEWER_TYPE_WINDOW;
+      return UserPrefs.RMD_VIEWER_TYPE_WINDOW;
    }
    
    @Override

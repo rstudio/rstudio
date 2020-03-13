@@ -1,7 +1,7 @@
 /*
  * PlotsPanePreviewer.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -54,7 +54,7 @@ public class PlotsPanePreviewer implements ExportPlotPreviewer
    {
       if (imageFrame_ == null)
       {
-         imageFrame_ = new ImageFrame();
+         imageFrame_ = new ImageFrame("Plot Preview");
          imageFrame_.setUrl("about:blank");
          imageFrame_.setSize("100%", "100%");
          imageFrame_.setMarginHeight(0);

@@ -1,7 +1,7 @@
 /*
  * Packages.java
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -43,11 +43,12 @@ import org.rstudio.studio.client.common.mirrors.DefaultCRANMirror;
 import org.rstudio.studio.client.packrat.PackratUtil;
 import org.rstudio.studio.client.packrat.model.PackratConflictActions;
 import org.rstudio.studio.client.packrat.model.PackratConflictResolution;
-import org.rstudio.studio.client.packrat.model.PackratContext;
 import org.rstudio.studio.client.packrat.model.PackratPackageAction;
 import org.rstudio.studio.client.packrat.model.PackratServerOperations;
 import org.rstudio.studio.client.packrat.ui.PackratActionDialog;
 import org.rstudio.studio.client.packrat.ui.PackratResolveConflictDialog;
+import org.rstudio.studio.client.renv.model.RenvServerOperations;
+import org.rstudio.studio.client.renv.ui.RenvActionDialog;
 import org.rstudio.studio.client.server.ServerDataSource;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
@@ -59,6 +60,8 @@ import org.rstudio.studio.client.workbench.model.ClientState;
 import org.rstudio.studio.client.workbench.model.RemoteFileSystemContext;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.helper.JSObjectStateValue;
+import org.rstudio.studio.client.workbench.projects.ProjectContext;
+import org.rstudio.studio.client.workbench.projects.RenvAction;
 import org.rstudio.studio.client.workbench.views.BasePresenter;
 import org.rstudio.studio.client.workbench.views.console.events.ConsolePromptEvent;
 import org.rstudio.studio.client.workbench.views.console.events.ConsolePromptHandler;
@@ -102,7 +105,7 @@ public class Packages
 
    public interface Display extends WorkbenchView
    {
-      void setPackageState(PackratContext packratContext, 
+      void setPackageState(ProjectContext projectContext, 
                            List<PackageInfo> packagesDS);
       
       void installPackage(PackageInstallContext installContext,
@@ -122,6 +125,7 @@ public class Packages
                    final EventBus events,
                    PackagesServerOperations server,
                    PackratServerOperations packratServer,
+                   RenvServerOperations renvServer,
                    GlobalDisplay globalDisplay,
                    Session session,
                    Binder binder,
@@ -136,6 +140,7 @@ public class Packages
       view_ = view;
       server_ = server;
       packratServer_ = packratServer;
+      renvServer_ = renvServer;
       globalDisplay_ = globalDisplay ;
       view_.setObserver(this) ;
       events_ = events ;
@@ -503,6 +508,8 @@ public class Packages
       updatePackageState(true, true);
    }
    
+   // Packrat ----
+   
    @Handler
    public void onPackratHelp()
    {
@@ -625,6 +632,72 @@ public class Packages
          }
       });
    }
+   
+   // renv ----
+   
+   private void renvAction(final String action)
+   {
+      String errorMessage = "Error during " + action;
+      ProgressIndicator indicator =
+            globalDisplay_.getProgressIndicator(errorMessage);
+      
+      indicator.onProgress("Performing " + action.toLowerCase() + "...");
+      
+      renvServer_.renvActions(action, new ServerRequestCallback<JsArray<RenvAction>>()
+      {
+         @Override
+         public void onResponseReceived(JsArray<RenvAction> response)
+         {
+            indicator.onCompleted();
+            
+            if (response.length() == 0)
+            {
+               globalDisplay_.showMessage(
+                     GlobalDisplay.MSG_INFO,
+                     "Up to Date",
+                     "The project is already up to date.");
+               return;
+            }
+
+            final OperationWithInput<Void> operation = (Void input) -> {
+
+               String code = "renv::" + action.toLowerCase() + "(confirm = FALSE)";
+               events_.fireEvent(new SendToConsoleEvent(code, true));
+            };
+
+            RenvActionDialog dialog = new RenvActionDialog(action, response, operation);
+            dialog.showModal();
+
+         }
+
+         @Override
+         public void onError(ServerError error)
+         {
+            Debug.logError(error);
+            indicator.onError(error.getUserMessage());
+         }
+      });
+   }
+   
+   @Handler
+   public void onRenvHelp()
+   {
+      globalDisplay_.openRStudioLink("renv", false);
+   }
+   
+   @Handler
+   public void onRenvSnapshot()
+   {
+      renvAction("Snapshot");
+   }
+   
+   @Handler
+   public void onRenvRestore()
+   {
+      renvAction("Restore");
+   }
+   
+   // Miscellaneous ----
    
    public void removePackage(final PackageInfo packageInfo)
    {
@@ -814,7 +887,7 @@ public class Packages
          packages = allPackages_;
       }
       
-      view_.setPackageState(packratContext_, packages);
+      view_.setPackageState(projectContext_, packages);
    }
    
    private void checkPackageStatusOnNextConsolePrompt(
@@ -1012,7 +1085,7 @@ public class Packages
       {
          setPackageState(response);
       }
-   };
+   }
    
    public static class Action
    {
@@ -1183,7 +1256,7 @@ public class Packages
          }
       }
       
-      packratContext_ = newState.getPackratContext();
+      projectContext_ = newState.getProjectContext();
       view_.setProgress(false);
       setViewPackageList();
    }
@@ -1202,8 +1275,9 @@ public class Packages
    private final Display view_;
    private final PackagesServerOperations server_;
    private final PackratServerOperations packratServer_;
+   private final RenvServerOperations renvServer_;
    private ArrayList<PackageInfo> allPackages_ = new ArrayList<PackageInfo>();
-   private PackratContext packratContext_;
+   private ProjectContext projectContext_;
    private String packageFilter_ = new String();
    private HandlerRegistration consolePromptHandlerReg_ = null;
    private final EventBus events_ ;

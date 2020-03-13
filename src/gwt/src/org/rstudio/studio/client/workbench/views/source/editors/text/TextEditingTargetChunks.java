@@ -1,7 +1,7 @@
 /*
  * TextEditingTargetChunks.java
  *
- * Copyright (C) 2009-16 by RStudio, Inc.
+ * Copyright (C) 2009-16 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -19,13 +19,14 @@ import java.util.Map;
 
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.studio.client.RStudioGinjector;
-import org.rstudio.studio.client.common.r.knitr.RMarkdownChunkHeaderParser;
-import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserState;
+import org.rstudio.studio.client.workbench.prefs.model.UserStateAccessor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.LineWidget;
+import org.rstudio.studio.client.workbench.views.source.editors.text.assist.RChunkHeaderParser;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.EditorModeChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.ScopeTreeReadyEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkContextUi;
-import org.rstudio.studio.client.workbench.views.source.editors.text.themes.AceTheme;
 
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
@@ -104,18 +105,19 @@ public class TextEditingTargetChunks
    // Private methods ---------------------------------------------------------
    
    @Inject
-   private void initialize(UIPrefs prefs)
+   private void initialize(UserPrefs prefs, UserState state)
    {
       prefs_ = prefs;
-      dark_ = prefs.theme().getValue().isDark();
+      state_ = state;
+      dark_ = state.theme().getValue().getIsDark();
       
-      prefs_.theme().addValueChangeHandler(new ValueChangeHandler<AceTheme>()
+      state_.theme().addValueChangeHandler(new ValueChangeHandler<UserStateAccessor.Theme>()
       {
          @Override
-         public void onValueChange(ValueChangeEvent<AceTheme> theme)
+         public void onValueChange(ValueChangeEvent<UserStateAccessor.Theme> theme)
          {
             // recompute dark state
-            boolean isDark = theme.getValue().isDark();
+            boolean isDark = theme.getValue().getIsDark();
             
             // redraw all the toolbars if necessary
             if (isDark != dark_)
@@ -237,8 +239,7 @@ public class TextEditingTargetChunks
       String header = target_.getDocDisplay().getLine(row);
       
       // parse contents
-      Map<String, String> options = 
-            RMarkdownChunkHeaderParser.parse(header);
+      Map<String, String> options = RChunkHeaderParser.parse(header);
       
       // check runnable engine
       String engine = StringUtil.stringValue(options.get("engine"));
@@ -267,7 +268,8 @@ public class TextEditingTargetChunks
    private boolean dark_;
    private boolean initialized_;
    
-   private UIPrefs prefs_;
+   private UserPrefs prefs_;
+   private UserState state_;
 
    private int lastRow_;
    

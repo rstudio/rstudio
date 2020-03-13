@@ -1,7 +1,7 @@
 /*
  * DelayLoadWorkbenchTab.java
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.ui;
 
+import com.google.gwt.aria.client.Roles;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.event.shared.HandlerManager;
 import com.google.gwt.event.shared.HandlerRegistration;
@@ -24,14 +25,12 @@ import com.google.gwt.user.client.ui.Panel;
 import com.google.gwt.user.client.ui.Widget;
 
 import org.rstudio.core.client.ElementIds;
-import org.rstudio.core.client.SerializedCommandQueue;
 import org.rstudio.core.client.events.EnsureHiddenEvent;
 import org.rstudio.core.client.events.EnsureHiddenHandler;
 import org.rstudio.core.client.events.EnsureHeightEvent;
 import org.rstudio.core.client.events.EnsureHeightHandler;
 import org.rstudio.core.client.events.EnsureVisibleEvent;
 import org.rstudio.core.client.events.EnsureVisibleHandler;
-import org.rstudio.studio.client.RStudioGinjector;
 
 public abstract class DelayLoadWorkbenchTab<T extends IsWidget>
       implements WorkbenchTab
@@ -42,6 +41,13 @@ public abstract class DelayLoadWorkbenchTab<T extends IsWidget>
    {
       title_ = title;
       panel_ = new DockLayoutPanel(Style.Unit.PX);
+      Roles.getTabpanelRole().set(panel_.getElement());
+      Roles.getTabpanelRole().setAriaLabelProperty(panel_.getElement(), title_);
+
+      // Assign a unique ID to the pane based on its title
+      ElementIds.assignElementId(panel_.getElement(),
+            ElementIds.WORKBENCH_PANEL + "_" + ElementIds.idSafeString(title_));
+
       shimmed_ = shimmed;
       shimmed_.setParentTab(this);
    }
@@ -128,79 +134,8 @@ public abstract class DelayLoadWorkbenchTab<T extends IsWidget>
       return handlers_.addHandler(EnsureHeightEvent.TYPE, handler);
    }
 
-   protected void setInternalCallbacks(InternalCallbacks callbacks)
-   {
-      callbacks_ = callbacks;
-   }
-
-   protected interface InternalCallbacks
-   {
-
-      void onBeforeSelected();
-
-      void onSelected();
-
-   }
-
-   protected void initialize(final WorkbenchPane pane, Panel panel)
-   {
-      assert !initialized_;
-
-      initialized_ = true;
-
-      // Assign a unique ID to the pane based on its title
-      ElementIds.assignElementId(pane.getElement(), 
-            ElementIds.WORKBENCH_PANEL + "_" + ElementIds.idSafeString(title_));
-
-      pane.ensureWidget();
-      panel.add(pane);
-      pane.addEnsureVisibleHandler(new EnsureVisibleHandler()
-      {
-         public void onEnsureVisible(EnsureVisibleEvent event)
-         {
-            ensureVisible(event.getActivate());
-         }
-      });
-      pane.addEnsureHiddenHandler(new EnsureHiddenHandler()
-      {
-         @Override
-         public void onEnsureHidden(EnsureHiddenEvent event)
-         {
-            ensureHidden();
-         }
-      });
-
-      setInternalCallbacks(new InternalCallbacks()
-      {
-         public void onBeforeSelected()
-         {
-            pane.onBeforeSelected();
-         }
-
-         public void onSelected()
-         {
-            pane.onSelected();
-         }
-      });
-
-      pane.onBeforeSelected();
-      pane.onSelected();
-   }
-
-   protected void handleCodeLoadFailure(Throwable reason)
-   {
-      RStudioGinjector.INSTANCE.getGlobalDisplay().showErrorMessage(
-            "Code Failed to Load",
-            reason == null ? "(Unknown error)" : reason.getMessage());
-   }
-
    private final HandlerManager handlers_ = new HandlerManager(null);
-   @SuppressWarnings("unused")
-   private SerializedCommandQueue initQueue = new SerializedCommandQueue();
-   private boolean initialized_;
    protected final DockLayoutPanel panel_;
    private final String title_;
-   @SuppressWarnings("unused")
-   private InternalCallbacks callbacks_;
    private DelayLoadTabShim<T, ?> shimmed_;
 }

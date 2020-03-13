@@ -1,7 +1,7 @@
 /*
  * BuildTab.java
  *
- * Copyright (C) 2009-15 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,8 +14,6 @@
  */
 package org.rstudio.studio.client.workbench.views.buildtools;
 
-import com.google.gwt.event.logical.shared.ValueChangeEvent;
-import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.inject.Inject;
 
 import org.rstudio.core.client.command.CommandBinder;
@@ -23,19 +21,17 @@ import org.rstudio.core.client.command.Handler;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.events.SessionInitEvent;
-import org.rstudio.studio.client.workbench.events.SessionInitHandler;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
-import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.ui.DelayLoadTabShim;
 import org.rstudio.studio.client.workbench.ui.DelayLoadWorkbenchTab;
 import org.rstudio.studio.client.workbench.views.buildtools.model.BuildState;
 
-
 public class BuildTab extends DelayLoadWorkbenchTab<BuildPresenter>
 {
    public interface Binder extends CommandBinder<Commands, Shim> {}
-   
+
    public abstract static class Shim extends DelayLoadTabShim<BuildPresenter, BuildTab> 
    {
       @Handler
@@ -62,7 +58,7 @@ public class BuildTab extends DelayLoadWorkbenchTab<BuildPresenter>
       public abstract void onTestTestthatFile();
       @Handler
       public abstract void onTestShinytestFile();
-      
+
       abstract void initialize(BuildState buildState);
    }
 
@@ -72,37 +68,29 @@ public class BuildTab extends DelayLoadWorkbenchTab<BuildPresenter>
                    Binder binder, 
                    final Commands commands,
                    EventBus eventBus,
-                   UIPrefs uiPrefs)
+                   UserPrefs uiPrefs)
    {
       super("Build", shim);
       session_ = session;
       binder.bind(commands, shim);
-      
+
       // stop build always starts out disabled
       commands.stopBuild().setEnabled(false);
-      
+
       // manage roxygen command
       commands.roxygenizePackage().setVisible(uiPrefs.useRoxygen().getValue());
       uiPrefs.useRoxygen().addValueChangeHandler(
-                                       new ValueChangeHandler<Boolean>() {
-         @Override
-         public void onValueChange(ValueChangeEvent<Boolean> event)
-         {
-            commands.roxygenizePackage().setVisible(event.getValue());
-         }       
-      });
+         event -> commands.roxygenizePackage().setVisible(event.getValue()));
         
-      eventBus.addHandler(SessionInitEvent.TYPE, new SessionInitHandler() {
-         public void onSessionInit(SessionInitEvent sie)
-         {
-            SessionInfo sessionInfo = session.getSessionInfo();
-            BuildCommands.setBuildCommandState(commands, sessionInfo);
+      eventBus.addHandler(SessionInitEvent.TYPE, sie ->
+      {
+         SessionInfo sessionInfo = session.getSessionInfo();
+         BuildCommands.setBuildCommandState(commands, sessionInfo);
 
-            // initialize from build state if necessary
-            BuildState buildState = sessionInfo.getBuildState();
-            if (buildState != null)
-               shim.initialize(buildState);           
-         }
+         // initialize from build state if necessary
+         BuildState buildState = sessionInfo.getBuildState();
+         if (buildState != null)
+            shim.initialize(buildState);
       });
    }
    
@@ -112,5 +100,5 @@ public class BuildTab extends DelayLoadWorkbenchTab<BuildPresenter>
       return session_.getSessionInfo().getBuildToolsType() == SessionInfo.BUILD_TOOLS_NONE;
    }
 
-   private Session session_;
+   private final Session session_;
 }

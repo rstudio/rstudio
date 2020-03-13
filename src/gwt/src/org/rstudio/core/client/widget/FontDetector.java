@@ -1,7 +1,7 @@
 /*
  * FontDetector.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -68,7 +68,7 @@ public class FontDetector
                ctx.clearRect(0, 0, width, height);
                ctx.fillText("TheQuickBrownFox", 2, 50);
                return canvas.toDataUrl();
-            }};
+            }}
          
          // get hashes and compare them
          HashGenerator hashGenerator = new HashGenerator();

@@ -1,7 +1,7 @@
 /*
  * AsyncClient.hpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -16,7 +16,6 @@
 #ifndef CORE_HTTP_ASYNC_CLIENT_HPP
 #define CORE_HTTP_ASYNC_CLIENT_HPP
 
-#include <boost/foreach.hpp>
 #include <boost/shared_ptr.hpp>
 #include <boost/function.hpp>
 #include <boost/enable_shared_from_this.hpp>
@@ -31,7 +30,6 @@
 
 #include <boost/algorithm/string/predicate.hpp>
 
-#include <core/Error.hpp>
 #include <core/Log.hpp>
 #include <core/system/System.hpp>
 #include <core/Thread.hpp>
@@ -43,6 +41,8 @@
 #include <core/http/Socket.hpp>
 #include <core/http/SocketUtils.hpp>
 #include <core/http/ConnectionRetryProfile.hpp>
+
+#include <shared_core/Error.hpp>
 
 // special version of unexpected exception handler which makes
 // sure to call the user's ErrorHandler
@@ -67,6 +67,7 @@ typedef boost::function<bool(const http::Response&, const std::string&)> ChunkHa
 
 typedef boost::function<void(const http::Response&)> ResponseHandler;
 typedef boost::function<void(const core::Error&)> ErrorHandler;
+typedef boost::function<void(void)> ConnectHandler;
 
 class IAsyncClient : public Socket
 {
@@ -78,6 +79,7 @@ public:
                         const ErrorHandler& errorHandler,
                         const ChunkHandler& chunkHandler = ChunkHandler()) = 0;
    virtual void setChunkHandler(const ChunkHandler& chunkHandler) = 0;
+   virtual void setConnectHandler(const ConnectHandler& connectHandler) = 0;
    virtual void resumeChunkProcessing() = 0;
    virtual void disableHandlers() = 0;
    virtual void close() = 0;
@@ -96,7 +98,8 @@ public:
         ioService_(ioService),
         connectionRetryContext_(ioService),
         logToStderr_(logToStderr),
-        closed_(false)
+        closed_(false),
+        requestWritten_(false)
    {
    }
 
@@ -143,6 +146,7 @@ public:
       responseHandler_ = ResponseHandler();
       errorHandler_ = ErrorHandler();
       chunkHandler_ = ChunkHandler();
+      connectHandler_ = ConnectHandler();
    }
 
    // satisfy lower-level http::Socket interface (used when the client
@@ -404,12 +408,44 @@ private:
       CATCH_UNEXPECTED_ASYNC_CLIENT_EXCEPTION
    }
 
+   virtual void setConnectHandler(const ConnectHandler& connectHandler)
+   {
+      // if we are already connected, don't bother saving the connect handler
+      // and just invoke it directly
+      bool invokeConnectHandler = false;
+      LOCK_MUTEX(socketMutex_)
+      {
+         if (!requestWritten_)
+            connectHandler_ = connectHandler;
+         else
+            invokeConnectHandler = true;
+      }
+      END_LOCK_MUTEX
+
+      if (invokeConnectHandler)
+         connectHandler();
+   }
+
    void handleWrite(const boost::system::error_code& ec)
    {
       try
       {
          if (!ec)
          {
+            // invoke connect handler if we have one
+            ConnectHandler handler;
+            LOCK_MUTEX(socketMutex_)
+            {
+               requestWritten_ = true;
+               if (connectHandler_)
+                  handler = connectHandler_;
+            }
+            END_LOCK_MUTEX
+
+            // actual invocation should be outside of lock to prevent recursive lock acquisitions
+            if (handler)
+               handler();
+
             // initiate async read of the first line of the response
             boost::asio::async_read_until(
               socket(),
@@ -725,6 +761,9 @@ private:
 
    boost::mutex socketMutex_;
    bool closed_;
+
+   bool requestWritten_;
+   ConnectHandler connectHandler_;
 };
    
 

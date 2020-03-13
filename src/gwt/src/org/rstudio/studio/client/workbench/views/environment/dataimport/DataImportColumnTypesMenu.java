@@ -1,7 +1,7 @@
 /*
  * DataImportColumnTypesMenu.java
  *
- * Copyright (C) 2009-16 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -120,7 +120,7 @@ public class DataImportColumnTypesMenu extends PopupPanel
       for (final MenuItem elem : menuItems_)
       {
          elem.getWidget().setStyleName(style.entry());
-      };
+      }
       
       include_.setStyleName(style.entrySelected());
       
@@ -134,12 +134,12 @@ public class DataImportColumnTypesMenu extends PopupPanel
       for (final MenuItem elem : menuItems_)
       {
          elem.getWidget().setVisible(false);
-      };
+      }
       
       for (final String columnName : columnNames)
       {
          menuItemsMap_.get(columnName).getWidget().setVisible(true);
-      };
+      }
    }
    
    public void setSelected(String entry)

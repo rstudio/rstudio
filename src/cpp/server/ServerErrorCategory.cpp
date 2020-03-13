@@ -1,7 +1,7 @@
 /*
  * ServerErrorCategory.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-12 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -27,20 +27,20 @@ public:
 
 const boost::system::error_category& serverCategory()
 {
-   static ServerErrorCategory serverErrorCategoryConst ;
-   return serverErrorCategoryConst ;
+   static ServerErrorCategory serverErrorCategoryConst;
+   return serverErrorCategoryConst;
 }
 
 const char * ServerErrorCategory::name() const BOOST_NOEXCEPT
 {
-   return "server" ;
+   return "server";
 }
 
 std::string ServerErrorCategory::message( int ev ) const
 {
-	std::string message ;
-	switch (ev)
-	{         
+   std::string message;
+   switch (ev)
+   {
       case errc::AuthenticationError:
          message = "Authentication error";
          break;
@@ -54,17 +54,17 @@ std::string ServerErrorCategory::message( int ev ) const
          break;
          
       default:
-         message = "Unknown error" ;
+         message = "Unknown error";
          break;
-	}
+   }
 
-	return message ;
+   return message;
 }
 
 
 bool isAuthenticationError(const core::Error& error)
 {
-   if (error.code() == server::errc::AuthenticationError)
+   if (error == server::errc::AuthenticationError)
       return true;
    else
       return false;
@@ -72,7 +72,7 @@ bool isAuthenticationError(const core::Error& error)
 
 bool isSessionUnavailableError(const core::Error& error)
 {
-   if (error.code() == server::errc::SessionUnavailableError)
+   if (error == server::errc::SessionUnavailableError)
       return true;
    else
       return false;
@@ -80,7 +80,7 @@ bool isSessionUnavailableError(const core::Error& error)
 
 bool isInvalidSessionScopeError(const core::Error& error)
 {
-   if (error.code() == server::errc::InvalidSessionScopeError)
+   if (error == server::errc::InvalidSessionScopeError)
       return true;
    else
       return false;

@@ -1,7 +1,7 @@
 /*
  * ServerSessionManager.cpp
  *
- * Copyright (C) 2009-19 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -17,10 +17,9 @@
 
 #include <server/ServerSessionManager.hpp>
 
-#include <boost/foreach.hpp>
 #include <boost/format.hpp>
 
-#include <core/SafeConvert.hpp>
+#include <shared_core/SafeConvert.hpp>
 #include <core/system/PosixUser.hpp>
 #include <core/system/Environment.hpp>
 #include <core/json/JsonRpc.hpp>
@@ -29,7 +28,7 @@
 #include <session/SessionConstants.hpp>
 
 #include <server/ServerOptions.hpp>
-
+#include <server/ServerPaths.hpp>
 #include <server/ServerErrorCategory.hpp>
 
 #include <server/auth/ServerValidateUser.hpp>
@@ -104,6 +103,12 @@ core::system::ProcessConfig sessionProcessConfig(
                                     context.scope.id()));
    }
 
+   // ensure cookies are marked secure if applicable
+   bool useSecureCookies = options.authCookiesForceSecure() ||
+                           options.getOverlayOption("ssl-enabled") == "1";
+   args.push_back(std::make_pair("--" kUseSecureCookiesSessionOption,
+                                 useSecureCookies ? "1" : "0"));
+
    // create launch token if we haven't already
    if (s_launcherToken.empty())
       s_launcherToken = core::system::generateShortenedUuid();
@@ -153,7 +158,7 @@ core::system::ProcessConfig sessionProcessConfig(
                         rVersion.number());
    core::system::setenv(&environment,
                         kRStudioDefaultRVersionHome,
-                        rVersion.homeDir().absolutePath());
+                        rVersion.homeDir().getAbsolutePath());
 
    // forward the auth options
    core::system::setenv(&environment,
@@ -179,6 +184,11 @@ core::system::ProcessConfig sessionProcessConfig(
 
    if (!core::system::getenv(kCrashpadHandlerEnvVar).empty())
       environment.push_back({kCrashpadHandlerEnvVar, core::system::getenv(kCrashpadHandlerEnvVar)});
+
+
+   // forward path for session temp dir (used for local stream path)
+   environment.push_back(
+         std::make_pair(kSessionTmpDirEnvVar, sessionTmpDir().getAbsolutePath()));
 
    // build the config object and return it
    core::system::ProcessConfig config;
@@ -254,7 +264,7 @@ Error SessionManager::launchSession(boost::asio::io_service& ioService,
    profile.config = sessionProcessConfig(context, args);
 
    // pass the profile to any filters we have
-   BOOST_FOREACH(SessionLaunchProfileFilter f, sessionLaunchProfileFilters_)
+   for (SessionLaunchProfileFilter f : sessionLaunchProfileFilters_)
    {
       f(&profile);
    }
@@ -356,6 +366,12 @@ r_util::SessionLaunchProfile createSessionLaunchProfile(const r_util::SessionCon
    profile.context = context;
    profile.executablePath = server::options().rsessionPath();
    profile.config = sessionProcessConfig(context, extraArgs);
+
+   // pass the profile to any filters we have
+   for (const SessionManager::SessionLaunchProfileFilter f : sessionManager().getSessionLaunchProfileFilters())
+   {
+      f(&profile);
+   }
 
    return profile;
 }

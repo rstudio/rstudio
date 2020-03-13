@@ -1,7 +1,7 @@
 /*
  * Thread.hpp
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -23,7 +23,7 @@
 
 #include <core/BoostErrors.hpp>
 #include <core/BoostThread.hpp>
-#include <core/Error.hpp>
+#include <shared_core/Error.hpp>
 #include <core/Log.hpp>
 
 #define LOCK_MUTEX(m)                                                          \
@@ -40,8 +40,8 @@
    }                                                                           \
    catch (const boost::thread_resource_error& e)                               \
    {                                                                           \
-      Error threadError(boost::thread_error::ec_from_exception(e),             \
-                        ERROR_LOCATION);                                       \
+      core::Error threadError(boost::thread_error::ec_from_exception(e),       \
+                              ERROR_LOCATION);                                 \
       LOG_ERROR(threadError);                                                  \
    }                                                                           \
    CATCH_UNEXPECTED_EXCEPTION
@@ -300,7 +300,7 @@ private:
 };
 
 void safeLaunchThread(boost::function<void()> threadMain,
-                      boost::thread* pThread = NULL);
+                      boost::thread* pThread = nullptr);
       
 } // namespace thread
 } // namespace core

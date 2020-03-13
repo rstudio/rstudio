@@ -1,7 +1,7 @@
 /*
  * DataViewer.cpp
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -18,19 +18,19 @@
 #include <string>
 #include <vector>
 #include <sstream>
+#include <gsl/gsl>
 
 #include <boost/bind.hpp>
-#include <boost/foreach.hpp>
 #include <boost/format.hpp>
 #include <boost/algorithm/string/predicate.hpp>
 
 #include <core/Log.hpp>
-#include <core/Error.hpp>
+#include <shared_core/Error.hpp>
 #include <core/Exec.hpp>
 #include <core/FileSerializer.hpp>
 #include <core/RecursionGuard.hpp>
 #include <core/StringUtils.hpp>
-#include <core/SafeConvert.hpp>
+#include <shared_core/SafeConvert.hpp>
 
 #define R_INTERNAL_FUNCTIONS
 #include <r/RInternal.hpp>
@@ -44,6 +44,8 @@
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionContentUrls.hpp>
 #include <session/SessionSourceDatabase.hpp>
+
+#include <session/prefs/UserPrefs.hpp>
 
 #ifndef _WIN32
 #include <core/system/FileMode.hpp>
@@ -236,14 +238,14 @@ struct CachedFrame
       objName(obj),
       observedSEXP(sexp)
    {
-      if (sexp == NULL)
+      if (sexp == nullptr)
          return;
 
       // cache list of column names
       r::sexp::Protect protect;
       SEXP namesSEXP;
       r::exec::RFunction("names", sexp).call(&namesSEXP, &protect);
-      if (namesSEXP != NULL && TYPEOF(namesSEXP) != NILSXP 
+      if (namesSEXP != nullptr && TYPEOF(namesSEXP) != NILSXP 
           && !Rf_isNull(namesSEXP))
       {
          r::sexp::extract(namesSEXP, &colNames);
@@ -300,18 +302,18 @@ std::map<std::string, CachedFrame> s_cachedFrames;
 
 std::string viewerCacheDir() 
 {
-   return module_context::sessionScratchPath().childPath(kViewerCacheDir)
-      .absolutePath();
+   return module_context::sessionScratchPath().completeChildPath(kViewerCacheDir)
+      .getAbsolutePath();
 }
 
 SEXP findInNamedEnvir(const std::string& envir, const std::string& name)
 {
-   SEXP env = NULL;
+   SEXP env = nullptr;
    r::sexp::Protect protect;
 
    // shortcut for unbound environment
    if (envir == kNoBoundEnv)
-      return NULL;
+      return nullptr;
 
    // use the global environment or resolve environment name
    if (envir.empty() || envir == "R_GlobalEnv")
@@ -320,12 +322,12 @@ SEXP findInNamedEnvir(const std::string& envir, const std::string& name)
       r::exec::RFunction(".rs.safeAsEnvironment", envir).call(&env, &protect);
 
    // if we failed to find an environment by name, return a null SEXP
-   if (env == NULL || TYPEOF(env) == NILSXP || Rf_isNull(env))
-      return NULL;
+   if (env == nullptr || TYPEOF(env) == NILSXP || Rf_isNull(env))
+      return nullptr;
 
    // find the SEXP directly in the environment; return null if unbound
    SEXP obj = r::sexp::findVar(name, env); 
-   return obj == R_UnboundValue ? NULL : obj;
+   return obj == R_UnboundValue ? nullptr : obj;
 }
 
 // data items are used both as the payload for the client event that opens an
@@ -353,10 +355,11 @@ json::Value makeDataItem(SEXP dataSEXP,
    dataItem["contentUrl"] = kGridResource "/gridviewer.html?env=" +
       http::util::urlEncode(envName, true) + "&obj=" + 
       http::util::urlEncode(objName, true) + "&cache_key=" +
-      http::util::urlEncode(cacheKey, true);
+      http::util::urlEncode(cacheKey, true) + "&max_cols=" + 
+      safe_convert::numberToString(prefs::userPrefs().dataViewerMaxColumns());
    dataItem["preview"] = preview;
 
-   return dataItem;
+   return std::move(dataItem);
 }
 
 SEXP rs_viewData(SEXP dataSEXP, SEXP exprSEXP, SEXP captionSEXP, SEXP nameSEXP, 
@@ -396,9 +399,9 @@ SEXP rs_viewData(SEXP dataSEXP, SEXP exprSEXP, SEXP captionSEXP, SEXP nameSEXP,
       if (error) 
       {
          // caught below
-         throw r::exec::RErrorException(error.summary());
+         throw r::exec::RErrorException(error.getSummary());
       }
-      if (dataFrameSEXP != NULL && dataFrameSEXP != R_NilValue)
+      if (dataFrameSEXP != nullptr && dataFrameSEXP != R_NilValue)
       {
          dataSEXP = dataFrameSEXP;
       }
@@ -438,7 +441,7 @@ void handleGridResReq(const http::Request& request,
 
    // setCacheableFile is responsible for emitting a 404 when the file doesn't
    // exist.
-   core::FilePath gridResource = options().rResourcesPath().childPath(path);
+   core::FilePath gridResource = options().rResourcesPath().completeChildPath(path);
    pResponse->setCacheableFile(gridResource, request);
 }
 
@@ -453,7 +456,7 @@ json::Value getCols(SEXP dataSEXP)
    {
       json::Object err;
       if (error) 
-         err["error"] = error.summary();
+         err["error"] = error.getSummary();
       else
          err["error"] = "Failed to retrieve column definitions for data.";
       result = err;
@@ -505,12 +508,22 @@ json::Value getData(SEXP dataSEXP, const http::Fields& fields)
    // extract filters
    std::vector<std::string> filters;
    bool hasFilter = false;
+
+   // fill the initial filters outside of the visible frame
+   // unfortunately the code that consumes these filters assumes
+   // it's purely index based and needs to be padded out
+   for (int i = 0; i < columnOffset; i++)
+   {
+      std::string emptyStr = "";
+      filters.push_back(emptyStr);
+   }
    for (int i = 1; i <= ncol; i++)
    {
       std::string filterVal = http::util::urlDecode(
             http::util::fieldValue<std::string>(fields,
                   "columns[" + boost::lexical_cast<std::string>(i) + "]"
                   "[search][value]", ""));
+
       if (!filterVal.empty())
       {
          hasFilter = true;
@@ -529,10 +542,10 @@ json::Value getData(SEXP dataSEXP, const http::Fields& fields)
       if (cachedFrame != s_cachedFrames.end())
       {
          // do we have a previously ordered/filtered view?
-         SEXP workingDataSEXP = NULL;
+         SEXP workingDataSEXP = nullptr;
          r::exec::RFunction(".rs.findWorkingData", cacheKey)
             .call(&workingDataSEXP, &protect);
-         if (workingDataSEXP != NULL && TYPEOF(workingDataSEXP) != NILSXP &&
+         if (workingDataSEXP != nullptr && TYPEOF(workingDataSEXP) != NILSXP &&
              !Rf_isNull(workingDataSEXP))
          {
             if (cachedFrame->second.workingSearch == search &&
@@ -569,11 +582,11 @@ json::Value getData(SEXP dataSEXP, const http::Fields& fields)
       transform.addParam("dir", orderdir);     // order direction ("asc"/"desc")
       transform.call(&dataSEXP, &protect);
       if (error)
-         throw r::exec::RErrorException(error.summary());
+         throw r::exec::RErrorException(error.getSummary());
 
       // check to see if we've accidentally transformed ourselves into nothing
       // (this shouldn't generally happen without a specific error)
-      if (dataSEXP == NULL || TYPEOF(dataSEXP) == NILSXP || 
+      if (dataSEXP == nullptr || TYPEOF(dataSEXP) == NILSXP || 
           Rf_isNull(dataSEXP)) 
       {
          throw r::exec::RErrorException("Failure to sort or filter data");
@@ -611,7 +624,7 @@ json::Value getData(SEXP dataSEXP, const http::Fields& fields)
    for (int i = initialIndex; i < initialIndex + numFormattedColumns; i++)
    {
       SEXP columnSEXP = VECTOR_ELT(dataSEXP, i);
-      if (columnSEXP == NULL || TYPEOF(columnSEXP) == NILSXP ||
+      if (columnSEXP == nullptr || TYPEOF(columnSEXP) == NILSXP ||
           Rf_isNull(columnSEXP))
       {
          throw r::exec::RErrorException("No data in column " +
@@ -620,11 +633,11 @@ json::Value getData(SEXP dataSEXP, const http::Fields& fields)
       SEXP formattedColumnSEXP;
       r::exec::RFunction formatFx(".rs.formatDataColumn");
       formatFx.addParam(columnSEXP);
-      formatFx.addParam(static_cast<int>(start));
-      formatFx.addParam(static_cast<int>(length));
+      formatFx.addParam(gsl::narrow_cast<int>(start));
+      formatFx.addParam(gsl::narrow_cast<int>(length));
       error = formatFx.call(&formattedColumnSEXP, &protect);
       if (error)
-         throw r::exec::RErrorException(error.summary());
+         throw r::exec::RErrorException(error.getSummary());
       SET_VECTOR_ELT(formattedDataSEXP, i - initialIndex, formattedColumnSEXP);
    }
 
@@ -638,53 +651,53 @@ json::Value getData(SEXP dataSEXP, const http::Fields& fields)
    for (int row = 0; row < length; row++)
    {
       json::Array rowData;
-      if (rownamesSEXP != NULL &&
+      if (rownamesSEXP != nullptr &&
           TYPEOF(rownamesSEXP) != NILSXP &&
           !Rf_isNull(rownamesSEXP) )
       {
          SEXP nameSEXP = STRING_ELT(rownamesSEXP, row);
-         if (nameSEXP != NULL &&
+         if (nameSEXP != nullptr &&
              nameSEXP != NA_STRING &&
              r::sexp::length(nameSEXP) > 0)
          {
-            rowData.push_back(Rf_translateCharUTF8(nameSEXP));
+            rowData.push_back(json::Value(Rf_translateCharUTF8(nameSEXP)));
          }
          else
          {
-            rowData.push_back(row + start);
+            rowData.push_back(json::Value(row + start));
          }
       }
       else
       {
-         rowData.push_back(row + start);
+         rowData.push_back(json::Value(row + start));
       }
 
       for (int col = 0; col<Rf_length(formattedDataSEXP); col++)
       {
          SEXP columnSEXP = VECTOR_ELT(formattedDataSEXP, col);
-         if (columnSEXP != NULL &&
-             TYPEOF(columnSEXP) != NILSXP &&
+         if (columnSEXP != nullptr &&
+             TYPEOF(columnSEXP) == STRSXP &&
              !Rf_isNull(columnSEXP))
          {
             SEXP stringSEXP = STRING_ELT(columnSEXP, row);
-            if (stringSEXP != NULL &&
+            if (stringSEXP != nullptr &&
                 stringSEXP != NA_STRING &&
                 r::sexp::length(stringSEXP) > 0)
             {
-               rowData.push_back(Rf_translateCharUTF8(stringSEXP));
+               rowData.push_back(json::Value(Rf_translateCharUTF8(stringSEXP)));
             }
             else if (stringSEXP == NA_STRING)
             {
-               rowData.push_back(SPECIAL_CELL_NA);
+               rowData.push_back(json::Value(SPECIAL_CELL_NA));
             }
             else
             {
-               rowData.push_back("");
+               rowData.push_back(json::Value(""));
             }
          }
          else
          {
-            rowData.push_back("");
+            rowData.push_back(json::Value(""));
          }
       }
       data.push_back(rowData);
@@ -695,7 +708,7 @@ json::Value getData(SEXP dataSEXP, const http::Fields& fields)
    result["recordsTotal"] = nrow;
    result["recordsFiltered"] = filteredNRow;
    result["data"] = data;
-   return result;
+   return std::move(result);
 }
 
 Error getGridData(const http::Request& request,
@@ -745,7 +758,7 @@ Error getGridData(const http::Request& request,
       }
 
       // couldn't find the original object
-      if (dataSEXP == NULL || dataSEXP == R_UnboundValue || 
+      if (dataSEXP == nullptr || dataSEXP == R_UnboundValue || 
           Rf_isNull(dataSEXP) || TYPEOF(dataSEXP) == NILSXP)
       {
          json::Object err;
@@ -782,9 +795,6 @@ Error getGridData(const http::Request& request,
    }
    CATCH_UNEXPECTED_EXCEPTION
 
-   std::ostringstream ostr;
-   json::write(result, ostr);
-
    // There are some unprintable ASCII control characters that are written
    // verbatim by json::write, but that won't parse in most Javascript JSON
    // parsing implementations, even if contained in a string literal. Scan the
@@ -793,7 +803,7 @@ Error getGridData(const http::Request& request,
    // unprintable and (b) some characters are invalid *even if escaped* e.g.
    // \v, there's little to be gained here in trying to marshal them to the
    // viewer.
-   std::string output = ostr.str();
+   std::string output = result.write();
    for (size_t i = 0; i < output.size(); i++)
    {
       char c = output[i];
@@ -881,7 +891,7 @@ void onDetectChanges(module_context::ChangeSource source)
          r::exec::RFunction(".rs.removeWorkingData", i->first).call();
 
          // replace cached copy (if we have something to replace it with)
-         if (sexp != NULL)
+         if (sexp != nullptr)
             r::exec::RFunction(".rs.assignCachedData", 
                   i->first, sexp, i->second.objName).call();
 
@@ -960,7 +970,7 @@ void onDeferredInit(bool newSession)
    }
 
    std::vector<std::string> sourceKeys;
-   BOOST_FOREACH(boost::shared_ptr<source_database::SourceDocument> pDoc, docs)
+   for (boost::shared_ptr<source_database::SourceDocument> pDoc : docs)
    {
       std::string key = pDoc->getProperty("cacheKey");
       if (!key.empty())
@@ -972,7 +982,7 @@ void onDeferredInit(bool newSession)
    std::vector<FilePath> cacheFiles;
    if (cache.exists())
    {
-      Error error = cache.children(&cacheFiles);
+      Error error = cache.getChildren(cacheFiles);
       if (error)
       {
          LOG_ERROR(error);
@@ -981,9 +991,9 @@ void onDeferredInit(bool newSession)
    }
 
    std::vector<std::string> cacheKeys;
-   BOOST_FOREACH(const FilePath& cacheFile, cacheFiles)
+   for (const FilePath& cacheFile : cacheFiles)
    {
-      cacheKeys.push_back(cacheFile.stem());
+      cacheKeys.push_back(cacheFile.getStem());
    }
 
    // sort each set of keys (so we can diff the sets below)
@@ -996,9 +1006,9 @@ void onDeferredInit(bool newSession)
                        std::back_inserter(orphanKeys));
 
    // remove each key no longer bound to a source file
-   BOOST_FOREACH(const std::string& orphanKey, orphanKeys)
+   for (const std::string& orphanKey : orphanKeys)
    {
-      error = cache.complete(orphanKey + ".Rdata").removeIfExists();
+      error = cache.completePath(orphanKey + ".Rdata").removeIfExists();
       if (error)
          LOG_ERROR(error);
    }
@@ -1011,11 +1021,7 @@ Error initialize()
    using namespace module_context;
 
    // register viewData method
-   R_CallMethodDef methodDef ;
-   methodDef.name = "rs_viewData" ;
-   methodDef.fun = (DL_FUNC) rs_viewData ;
-   methodDef.numArgs = 7;
-   r::routines::addCallMethod(methodDef);
+   RS_REGISTER_CALL_METHOD(rs_viewData);
 
    source_database::events().onDocPendingRemove.connect(onDocPendingRemove);
 

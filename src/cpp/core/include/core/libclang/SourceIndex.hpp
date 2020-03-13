@@ -1,7 +1,7 @@
 /*
  * SourceIndex.hpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -23,7 +23,7 @@
 #include <boost/function.hpp>
 #include <boost/noncopyable.hpp>
 
-#include <core/FilePath.hpp>
+#include <shared_core/FilePath.hpp>
 
 #include "clang-c/Index.h"
 
@@ -39,6 +39,7 @@ struct CompilationDatabase
    boost::function<std::vector<std::string>()> translationUnits;
    boost::function<std::vector<std::string>(const std::string&, bool)>
                                     compileArgsForTranslationUnit;
+   boost::function<void()> rebuildPackageCompilationDatabase;
 };
 
 class SourceIndex : boost::noncopyable
@@ -88,7 +89,7 @@ private:
 
    struct StoredTranslationUnit
    {
-      StoredTranslationUnit() : lastWriteTime(0), tu(NULL) {}
+      StoredTranslationUnit() : lastWriteTime(0), tu(nullptr) {}
       StoredTranslationUnit(const std::vector<std::string>& compileArgs,
                             std::time_t lastWriteTime,
                             CXTranslationUnit tu)

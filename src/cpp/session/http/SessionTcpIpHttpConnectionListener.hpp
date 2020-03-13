@@ -1,7 +1,7 @@
 /*
  * SessionTcpIpHttpConnectionListener.hpp
  *
- * Copyright (C) 2009-11 by RStudio, Inc.
+ * Copyright (C) 2009-11 by RStudio, PBC
  *
  * This program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
@@ -13,7 +13,7 @@
 
 #include <boost/algorithm/string/predicate.hpp>
 
-#include <core/Error.hpp>
+#include <shared_core/Error.hpp>
 
 #include <core/http/TcpIpSocketUtils.hpp>
 

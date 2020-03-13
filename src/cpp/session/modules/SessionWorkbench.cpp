@@ -1,7 +1,7 @@
 /*
  * SessionWorkbench.cpp
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -21,7 +21,7 @@
 #include <boost/format.hpp>
 
 #include <core/CrashHandler.hpp>
-#include <core/Error.hpp>
+#include <shared_core/Error.hpp>
 #include <core/Debug.hpp>
 #include <core/Exec.hpp>
 #include <core/StringUtils.hpp>
@@ -42,9 +42,11 @@
 
 #include <session/projects/SessionProjects.hpp>
 
-#include <session/SessionModuleContext.hpp>
-#include <session/SessionUserSettings.hpp>
+#include <session/prefs/UserPrefs.hpp>
+#include <session/prefs/UserState.hpp>
+
 #include <session/SessionConsoleProcess.hpp>
+#include <session/SessionModuleContext.hpp>
 #include <session/RVersionSettings.hpp>
 #include <session/SessionTerminalShell.hpp>
 
@@ -119,9 +121,9 @@ SEXP rs_getEditorContext(SEXP typeSEXP)
    
    // add in the selection ranges
    ListBuilder selectionBuilder(&protect);
-   for (std::size_t i = 0; i < selection.size(); ++i)
+   for (std::size_t i = 0; i < selection.getSize(); ++i)
    {
-      const json::Object& object = selection[i].get_obj();
+      const json::Object& object = selection[i].getObject();
       
       json::Array rangeJson;
       std::string text;
@@ -135,7 +137,7 @@ SEXP rs_getEditorContext(SEXP typeSEXP)
       }
       
       std::vector<int> range;
-      if (!json::fillVectorInt(rangeJson, &range))
+      if (!rangeJson.toVectorInt(range))
       {
          LOG_WARNING_MESSAGE("failed to parse document range");
          continue;
@@ -185,7 +187,7 @@ Error setClientState(const json::JsonRpcRequest& request,
 // IN: WorkbenchMetrics object
 // OUT: Void
 Error setWorkbenchMetrics(const json::JsonRpcRequest& request, 
-                          json::JsonRpcResponse* pResponse)
+                          json::JsonRpcResponse* /*pResponse*/)
 {
    // extract fields
    r::session::RClientMetrics metrics ;
@@ -204,517 +206,8 @@ Error setWorkbenchMetrics(const json::JsonRpcRequest& request,
    return Success();
 }
 
-CRANMirror toCRANMirror(const json::Object& cranMirrorJson)
-{
-   CRANMirror cranMirror;
-   json::readObject(cranMirrorJson,
-                    "name", &cranMirror.name,
-                    "host", &cranMirror.host,
-                    "url", &cranMirror.url,
-                    "secondary", &cranMirror.secondary,
-                    "country", &cranMirror.country,
-                    "changed", &cranMirror.changed);
-   return cranMirror;
-}
-
-/* Call to this is commented out below
-BioconductorMirror toBioconductorMirror(const json::Object& mirrorJson)
-{
-   BioconductorMirror mirror;
-   json::readObject(mirrorJson,
-                    "name", &mirror.name,
-                    "url", &mirror.url);
-   return mirror;
-}
-*/
-
-// try to detect a terminal on linux desktop
-FilePath detectedTerminalPath()
-{
-#if defined(_WIN32) || defined(__APPLE__)
-   return FilePath();
-#else
-   if (session::options().programMode() == kSessionProgramModeDesktop)
-   {
-      std::vector<FilePath> terminalPaths;
-      terminalPaths.push_back(FilePath("/usr/bin/gnome-terminal"));
-      terminalPaths.push_back(FilePath("/usr/bin/konsole"));
-      terminalPaths.push_back(FilePath("/usr/bin/xfce4-terminal"));
-      terminalPaths.push_back(FilePath("/usr/bin/xterm"));
-
-      BOOST_FOREACH(const FilePath& terminalPath, terminalPaths)
-      {
-         if (terminalPath.exists())
-            return terminalPath;
-      }
-
-      return FilePath();
-   }
-   else
-   {
-      return FilePath();
-   }
-#endif
-}
-
-Error setPrefs(const json::JsonRpcRequest& request, json::JsonRpcResponse*)
-{
-   // read params
-   json::Object generalPrefs, historyPrefs, editingPrefs, packagesPrefs,
-                projectsPrefs, sourceControlPrefs, compilePdfPrefs,
-                terminalPrefs;
-   Error error = json::readObjectParam(request.params, 0,
-                              "general_prefs", &generalPrefs,
-                              "history_prefs", &historyPrefs,
-                              "editing_prefs", &editingPrefs,
-                              "packages_prefs", &packagesPrefs,
-                              "projects_prefs", &projectsPrefs,
-                              "source_control_prefs", &sourceControlPrefs,
-                              "compile_pdf_prefs", &compilePdfPrefs,
-                              "terminal_prefs", &terminalPrefs);
-   if (error)
-      return error;
-   json::Object uiPrefs;
-   error = json::readParam(request.params, 1, &uiPrefs);
-   if (error)
-      return error;
-
-
-   // read and set general prefs
-   int saveAction;
-   bool loadRData, rProfileOnResume, restoreProjectRVersion, showLastDotValue;
-   bool reuseSessionsForProjectLinks, enableCrashReporting;
-   std::string initialWorkingDir, showUserHomePage;
-   json::Object defaultRVersionJson;
-   error = json::readObject(generalPrefs,
-                            "show_user_home_page", &showUserHomePage,
-                            "reuse_sessions_for_project_links", &reuseSessionsForProjectLinks,
-                            "save_action", &saveAction,
-                            "load_rdata", &loadRData,
-                            "rprofile_on_resume", &rProfileOnResume,
-                            "initial_working_dir", &initialWorkingDir,
-                            "default_r_version", &defaultRVersionJson,
-                            "restore_project_r_version", &restoreProjectRVersion,
-                            "show_last_dot_value", &showLastDotValue,
-                            "enable_crash_reporting", &enableCrashReporting);
-   if (error)
-      return error;
-
-   // detect if lastDotValue changed
-   bool lastDotValueChanged = userSettings().showLastDotValue() != showLastDotValue;
-
-   // detect if initialWorkingDir changed
-   // we consider it changed if it has ever been written
-   // or if it has not been written and the value is different than the session default
-   bool initialWorkingDirChanged = false;
-   if (!userSettings().initialWorkingDirectory("").empty())
-      initialWorkingDirChanged = true;
-   else if (initialWorkingDir != session::options().defaultWorkingDir())
-      initialWorkingDirChanged = true;
-
-   // update settings
-   userSettings().beginUpdate();
-   userSettings().setShowUserHomePage(showUserHomePage);
-   userSettings().setReuseSessionsForProjectLinks(reuseSessionsForProjectLinks);
-   userSettings().setSaveAction(saveAction);
-   userSettings().setLoadRData(loadRData);
-   userSettings().setRprofileOnResume(rProfileOnResume);
-   userSettings().setShowLastDotValue(showLastDotValue);
-   if (initialWorkingDirChanged)
-      userSettings().setInitialWorkingDirectory(FilePath(initialWorkingDir));
-   userSettings().endUpdate();
-
-   // refresh environment if lastDotValueChanged
-   if (lastDotValueChanged)
-   {
-      ClientEvent refreshEvent(client_events::kEnvironmentRefresh);
-      module_context::enqueClientEvent(refreshEvent);
-   }
-
-   // enable or disable crash reporting - we only do this in
-   // desktop mode (as it should not be overrideable in server mode)
-   // and only if we are currently configured to use the user setting
-   // (meaning no admin settings exist)
-   if (crash_handler::configSource() == crash_handler::ConfigSource::User &&
-       session::options().programMode() == kSessionProgramModeDesktop)
-   {
-      error = crash_handler::setUserHandlerEnabled(enableCrashReporting);
-      if (error)
-         LOG_ERROR(error);
-   }
-
-   // sync underlying R save action
-   module_context::syncRSaveAction();
-
-   // versions prefs
-   std::string defaultRVersion, defaultRVersionHome;
-   error = json::readObject(defaultRVersionJson,
-                            "version", &defaultRVersion,
-                            "r_home", &defaultRVersionHome);
-   if (error)
-      return error;
-
-   RVersionSettings versionSettings(module_context::userScratchPath(),
-                                    FilePath(options().getOverlayOption(
-                                                kSessionSharedStoragePath)));
-   versionSettings.setDefaultRVersion(defaultRVersion, defaultRVersionHome);
-   versionSettings.setRestoreProjectRVersion(restoreProjectRVersion);
-
-   // read and set history prefs
-   bool alwaysSave, removeDuplicates;
-   error = json::readObject(historyPrefs,
-                            "always_save", &alwaysSave,
-                            "remove_duplicates", &removeDuplicates);
-   if (error)
-      return error;
-   userSettings().beginUpdate();
-   userSettings().setAlwaysSaveHistory(alwaysSave);
-   userSettings().setRemoveHistoryDuplicates(removeDuplicates);
-   userSettings().endUpdate();
-
-   // read and set editing prefs
-   int lineEndings;
-   error = json::readObject(editingPrefs,
-                            "line_endings", &lineEndings);
-   if (error)
-      return error;
-   userSettings().beginUpdate();
-   userSettings().setLineEndings((core::string_utils::LineEnding)lineEndings);
-   userSettings().endUpdate();
-
-   // read and set packages prefs
-   bool useInternet2, cleanupAfterCheckSuccess, viewDirAfterCheckFailure;
-   bool hideObjectFiles, useDevtools, useSecureDownload, useNewlineInMakefiles;
-   json::Object cranMirrorJson;
-   error = json::readObject(packagesPrefs,
-                            "cran_mirror", &cranMirrorJson,
-                            "use_internet2", &useInternet2,
-/* see note on bioconductor below
-                            "bioconductor_mirror", &bioconductorMirrorJson);
-*/
-                            "cleanup_after_check_success", &cleanupAfterCheckSuccess,
-                            "viewdir_after_check_failure", &viewDirAfterCheckFailure,
-                            "hide_object_files", &hideObjectFiles,
-                            "use_devtools", &useDevtools,
-                            "use_secure_download", &useSecureDownload,
-                            "use_newline_in_makefiles", &useNewlineInMakefiles);
-
-   if (error)
-       return error;
-   userSettings().beginUpdate();
-   userSettings().setUseDevtools(useDevtools);
-   userSettings().setSecurePackageDownload(useSecureDownload);
-   userSettings().setCRANMirror(toCRANMirror(cranMirrorJson));
-   userSettings().setUseInternet2(useInternet2);
-   userSettings().setCleanupAfterRCmdCheck(cleanupAfterCheckSuccess);
-   userSettings().setHideObjectFiles(hideObjectFiles);
-   userSettings().setViewDirAfterRCmdCheck(viewDirAfterCheckFailure);
-   userSettings().setUseNewlineInMakefiles(useNewlineInMakefiles);
-
-   // NOTE: currently there is no UI for bioconductor mirror so we
-   // don't want to set it (would have side effect of overwriting
-   // user-specified BioC_Mirror option)
-   /*
-   userSettings().setBioconductorMirror(toBioconductorMirror(
-                                                bioconductorMirrorJson));
-   */
-   userSettings().endUpdate();
-
-   // verify cran mirror security (will either update to https or
-   // will print a warning)
-   module_context::reconcileSecureDownloadConfiguration();
-
-   // read and set projects prefs
-   bool restoreLastProject;
-   error = json::readObject(projectsPrefs,
-                            "restore_last_project", &restoreLastProject);
-   if (error)
-      return error;
-   userSettings().beginUpdate();
-   userSettings().setAlwaysRestoreLastProject(restoreLastProject);
-   userSettings().endUpdate();
-
-   // read and set source control prefs
-   bool vcsEnabled;
-   std::string gitExe, svnExe, terminalPath;
-   error = json::readObject(sourceControlPrefs,
-                            "vcs_enabled", &vcsEnabled,
-                            "git_exe_path", &gitExe,
-                            "svn_exe_path", &svnExe,
-                            "terminal_path", &terminalPath);
-   if (error)
-      return error;
-   userSettings().beginUpdate();
-   userSettings().setVcsEnabled(vcsEnabled);
-
-   FilePath gitExePath = module_context::resolveAliasedPath(gitExe);
-   if (gitExePath == git::detectedGitExePath() ||
-       gitExePath == module_context::userHomePath())
-      userSettings().setGitExePath(FilePath());
-   else
-      userSettings().setGitExePath(gitExePath);
-
-   FilePath svnExePath = module_context::resolveAliasedPath(svnExe);
-   if (svnExePath == svn::detectedSvnExePath() ||
-       svnExePath == module_context::userHomePath())
-      userSettings().setSvnExePath(FilePath());
-   else
-      userSettings().setSvnExePath(svnExePath);
-
-   FilePath terminalFilePath = module_context::resolveAliasedPath(terminalPath);
-   if (terminalFilePath == detectedTerminalPath() ||
-       terminalFilePath == module_context::userHomePath())
-      userSettings().setVcsTerminalPath(FilePath());
-   else
-      userSettings().setVcsTerminalPath(terminalFilePath);
-
-   userSettings().endUpdate();
-
-
-   // read and update compile pdf prefs
-   bool cleanOutput, enableShellEscape;
-   error = json::readObject(compilePdfPrefs,
-                            "clean_output", &cleanOutput,
-                            "enable_shell_escape", &enableShellEscape);
-   if (error)
-      return error;
-   userSettings().beginUpdate();
-   userSettings().setCleanTexi2DviOutput(cleanOutput);
-   userSettings().setEnableLaTeXShellEscape(enableShellEscape);
-   userSettings().endUpdate();
-
-   // read and update terminal prefs
-   int defaultTerminalShell;
-   std::string customShellPath;
-   std::string customShellOptions;
-   error = json::readObject(terminalPrefs,
-                            "default_shell", &defaultTerminalShell,
-                            "shell_exe_path", &customShellPath,
-                            "shell_exe_options", &customShellOptions);
-   if (error)
-      return error;
-   userSettings().beginUpdate();
-   userSettings().setDefaultTerminalShellValue(
-      static_cast<console_process::TerminalShell::TerminalShellType>(defaultTerminalShell));
-   userSettings().setCustomShellCommand(customShellPath);
-   userSettings().setCustomShellOptions(customShellOptions);
-   userSettings().endUpdate();
-
-   // set ui prefs
-   userSettings().setUiPrefs(uiPrefs);
-
-   // fire preferences saved event
-   module_context::events().onPreferencesSaved();
-
-   return Success();
-}
-
-
-Error setUiPrefs(const json::JsonRpcRequest& request,
-                 json::JsonRpcResponse* pResponse)
-{
-   json::Object uiPrefs;
-   Error error = json::readParams(request.params, &uiPrefs);
-   if (error)
-      return error;
-
-   userSettings().setUiPrefs(uiPrefs);
-
-   return Success();
-}
-
-
-json::Object toCRANMirrorJson(const CRANMirror& cranMirror)
-{
-   json::Object cranMirrorJson;
-   cranMirrorJson["name"] = cranMirror.name;
-   cranMirrorJson["host"] = cranMirror.host;
-   cranMirrorJson["url"] = cranMirror.url;
-   cranMirrorJson["secondary"] = cranMirror.secondary;
-   cranMirrorJson["country"] = cranMirror.country;
-   cranMirrorJson["changed"] = cranMirror.changed;
-   return cranMirrorJson;
-}
-
-json::Object toBioconductorMirrorJson(
-                           const BioconductorMirror& bioconductorMirror)
-{
-   json::Object bioconductorMirrorJson;
-   bioconductorMirrorJson["name"] = bioconductorMirror.name;
-   bioconductorMirrorJson["url"] = bioconductorMirror.url;
-   return bioconductorMirrorJson;
-}
-
-
-Error getRPrefs(const json::JsonRpcRequest& request,
-                json::JsonRpcResponse* pResponse)
-{
-   // proj settings
-   RVersionSettings versionSettings(module_context::userScratchPath(),
-                                    FilePath(options().getOverlayOption(
-                                                kSessionSharedStoragePath)));
-   json::Object defaultRVersionJson;
-   defaultRVersionJson["version"] = versionSettings.defaultRVersion();
-   defaultRVersionJson["r_home"] = versionSettings.defaultRVersionHome();
-
-   // get general prefs
-   json::Object generalPrefs;
-   generalPrefs["show_user_home_page"] = userSettings().showUserHomePage();
-   generalPrefs["reuse_sessions_for_project_links"] = userSettings().reuseSessionsForProjectLinks();
-   generalPrefs["save_action"] = userSettings().saveAction();
-   generalPrefs["load_rdata"] = userSettings().loadRData();
-   generalPrefs["rprofile_on_resume"] = userSettings().rProfileOnResume();
-   generalPrefs["initial_working_dir"] = module_context::createAliasedPath(
-         userSettings().initialWorkingDirectory());
-   generalPrefs["default_r_version"] = defaultRVersionJson;
-   generalPrefs["restore_project_r_version"] = versionSettings.restoreProjectRVersion();
-   generalPrefs["show_last_dot_value"] = userSettings().showLastDotValue();
-   generalPrefs["enable_crash_reporting"] = crash_handler::isHandlerEnabled();
-
-   // get history prefs
-   json::Object historyPrefs;
-   historyPrefs["always_save"] = userSettings().alwaysSaveHistory();
-   historyPrefs["remove_duplicates"] = userSettings().removeHistoryDuplicates();
-
-   // get editing prefs
-   json::Object editingPrefs;
-   editingPrefs["line_endings"] = (int)userSettings().lineEndings();
-
-   // get packages prefs
-   json::Object packagesPrefs;
-   packagesPrefs["use_devtools"] = userSettings().useDevtools();
-   packagesPrefs["cran_mirror"] = toCRANMirrorJson(
-                                      userSettings().cranMirror());
-   packagesPrefs["use_internet2"] = userSettings().useInternet2();
-   packagesPrefs["bioconductor_mirror"] = toBioconductorMirrorJson(
-                                      userSettings().bioconductorMirror());
-   packagesPrefs["cleanup_after_check_success"] = userSettings().cleanupAfterRCmdCheck();
-   packagesPrefs["viewdir_after_check_failure"] = userSettings().viewDirAfterRCmdCheck();
-   packagesPrefs["hide_object_files"] = userSettings().hideObjectFiles();
-   packagesPrefs["use_secure_download"] = userSettings().securePackageDownload();
-   packagesPrefs["use_newline_in_makefiles"] = userSettings().useNewlineInMakefiles();
-
-   // get projects prefs
-   json::Object projectsPrefs;
-   projectsPrefs["restore_last_project"] = userSettings().alwaysRestoreLastProject();
-
-   // get source control prefs
-   json::Object sourceControlPrefs;
-   sourceControlPrefs["vcs_enabled"] = userSettings().vcsEnabled();
-   FilePath gitExePath = userSettings().gitExePath();
-   if (gitExePath.empty())
-      gitExePath = git::detectedGitExePath();
-   sourceControlPrefs["git_exe_path"] = gitExePath.absolutePath();
-
-   FilePath svnExePath = userSettings().svnExePath();
-   if (svnExePath.empty())
-      svnExePath = svn::detectedSvnExePath();
-   sourceControlPrefs["svn_exe_path"] = svnExePath.absolutePath();
-
-   FilePath terminalPath = userSettings().vcsTerminalPath();
-   if (terminalPath.empty())
-      terminalPath = detectedTerminalPath();
-   sourceControlPrefs["terminal_path"] = terminalPath.absolutePath();
-
-   FilePath sshKeyDir = modules::source_control::defaultSshKeyDir();
-   FilePath rsaSshKeyPath = sshKeyDir.childPath("id_rsa");
-   sourceControlPrefs["rsa_key_path"] =
-                  module_context::createAliasedPath(rsaSshKeyPath);
-   sourceControlPrefs["have_rsa_key"] = rsaSshKeyPath.exists();
-
-   // get compile pdf prefs
-   json::Object compilePdfPrefs;
-   compilePdfPrefs["clean_output"] = userSettings().cleanTexi2DviOutput();
-   compilePdfPrefs["enable_shell_escape"] = userSettings().enableLaTeXShellEscape();
-
-   // get terminal prefs
-   json::Object terminalPrefs;
-   terminalPrefs["default_shell"] = userSettings().defaultTerminalShellValue();
-   terminalPrefs["shell_exe_path"] = userSettings().customShellCommand().absolutePath();
-   terminalPrefs["shell_exe_options"] = userSettings().customShellOptions();
-
-   // initialize and set result object
-   json::Object result;
-   result["general_prefs"] = generalPrefs;
-   result["history_prefs"] = historyPrefs;
-   result["editing_prefs"] = editingPrefs;
-   result["packages_prefs"] = packagesPrefs;
-   result["projects_prefs"] = projectsPrefs;
-   result["source_control_prefs"] = sourceControlPrefs;
-   result["compile_pdf_prefs"] = compilePdfPrefs;
-   result["spelling_prefs_context"] =
-                  session::modules::spelling::spellingPrefsContextAsJson();
-   result["terminal_prefs"] = terminalPrefs;
-
-   pResponse->setResult(result);
-
-   return Success();
-}
-
-Error getTerminalOptions(const json::JsonRpcRequest& request,
-                         json::JsonRpcResponse* pResponse)
-{
-   json::Object optionsJson;
-
-   FilePath terminalPath;
-
-   // Shell type is needed on Windows to make additional shell-type
-   // specific tweaks, see DesktopGwtCallback.cpp::openTerminal
-   console_process::TerminalShell::TerminalShellType shellType =
-         console_process::TerminalShell::DefaultShell;
-
-#if defined(_WIN32)
-
-   // Use default terminal setting for shell
-   console_process::AvailableTerminalShells shells;
-   console_process::TerminalShell shell;
-
-   if (shells.getInfo(userSettings().defaultTerminalShellValue(), &shell))
-   {
-      shellType = shell.type;
-      terminalPath = shell.path;
-   }
-
-   // last-ditch, use system shell
-   if (!terminalPath.exists())
-   {
-      console_process::TerminalShell sysShell;
-      if (console_process::AvailableTerminalShells::getSystemShell(&sysShell))
-      {
-         shellType = shell.type;
-         terminalPath = sysShell.path;
-      }
-   }
-
-#elif defined(__APPLE__)
-
-   // do nothing (we always launch Terminal.app)
-
-#else
-
-   // auto-detection (+ overridable by a setting)
-   terminalPath = userSettings().vcsTerminalPath();
-   if (terminalPath.empty())
-      terminalPath = detectedTerminalPath();
-
-#endif
-
-   // append shell paths as appropriate
-   std::string extraPathEntries;
-   ammendShellPaths(&extraPathEntries);
-
-   optionsJson["terminal_path"] = terminalPath.absolutePath();
-   optionsJson["working_directory"] =
-                  module_context::shellWorkingDirectory().absolutePath();
-   optionsJson["extra_path_entries"] = extraPathEntries;
-   optionsJson["shell_type"] = shellType;
-   pResponse->setResult(optionsJson);
-
-   return Success();
-}
-
 Error adaptToLanguage(const json::JsonRpcRequest& request,
-                      json::JsonRpcResponse* pResponse)
+                      json::JsonRpcResponse* /*pResponse*/)
 {
    // get the requested language
    std::string language;
@@ -725,7 +218,7 @@ Error adaptToLanguage(const json::JsonRpcRequest& request,
    // check to see what language is active in main console
    using namespace r::exec;
    
-   // check to see what langauge is currently active (but default to r)
+   // check to see what language is currently active (but default to r)
    std::string activeLanguage = "R";
    if (reticulate::isReplActive())
       activeLanguage = "Python";
@@ -773,7 +266,7 @@ Error adaptToLanguage(const json::JsonRpcRequest& request,
 }
 
 Error executeCode(const json::JsonRpcRequest& request,
-                  json::JsonRpcResponse* pResponse)
+                  json::JsonRpcResponse* /*pResponse*/)
 {
    // get the code
    std::string code;
@@ -817,11 +310,11 @@ Error createSshKey(const json::JsonRpcRequest& request,
 
    // resolve key path
    FilePath sshKeyPath = module_context::resolveAliasedPath(path);
-   error = sshKeyPath.parent().ensureDirectory();
+   error = sshKeyPath.getParent().ensureDirectory();
    if (error)
       return error;
-   FilePath sshPublicKeyPath = sshKeyPath.parent().complete(
-                                             sshKeyPath.stem() + ".pub");
+   FilePath sshPublicKeyPath = sshKeyPath.getParent().completePath(
+                                             sshKeyPath.getStem() + ".pub");
    if (sshKeyPath.exists() || sshPublicKeyPath.exists())
    {
       if (!overwrite)
@@ -876,7 +369,7 @@ Error createSshKey(const json::JsonRpcRequest& request,
 
    // add msys_ssh to path
    core::system::addToPath(&childEnv,
-                           session::options().msysSshPath().absolutePath());
+                           session::options().msysSshPath().getAbsolutePath());
 
    options.environment = childEnv;
 #endif
@@ -929,7 +422,7 @@ void editFilePostback(const std::string& file,
    bool succeeded = s_waitForEditCompleted(&request, editEvent);
 
    // cancelled or otherwise didn't succeed
-   if (!succeeded || request.params[0].is_null())
+   if (!succeeded || request.params[0].isNull())
    {
       cont(EXIT_FAILURE, "");
       return;
@@ -958,28 +451,6 @@ void editFilePostback(const std::string& file,
    cont(EXIT_SUCCESS, "");
 }
 
-Error setCRANMirror(const json::JsonRpcRequest& request,
-                    json::JsonRpcResponse* pResponse)
-{
-   json::Object cranMirrorJson;
-   Error error = json::readParam(request.params, 0, &cranMirrorJson);
-   if (error)
-      return error;
-   CRANMirror cranMirror = toCRANMirror(cranMirrorJson);
-   cranMirror.changed = true;
-
-   userSettings().beginUpdate();
-   userSettings().setCRANMirror(cranMirror);
-   userSettings().endUpdate();
-
-   // verify cran mirror security (will either update to https or
-   // will print a warning)
-   module_context::reconcileSecureDownloadConfiguration();
-
-   return Success();
-}
-
-
 // options("pdfviewer")
 void viewPdfPostback(const std::string& pdfPath,
                     const module_context::PostbackHandlerContinuation& cont)
@@ -993,7 +464,10 @@ void handleFileShow(const http::Request& request, http::Response* pResponse)
 {
    // get the file path
    FilePath filePath = module_context::resolveAliasedPath(request.queryParamValue("path"));
-   if (!filePath.exists())
+
+   // treat disallowed paths identically to missing ones so this endpoint cannot be used to probe
+   // for existence
+   if (!filePath.exists() || !module_context::isPathViewAllowed(filePath))
    {
       pResponse->setNotFoundError(request);
       return;
@@ -1004,17 +478,41 @@ void handleFileShow(const http::Request& request, http::Response* pResponse)
    pResponse->setCacheableFile(filePath, request);
 }
 
-void onUserSettingsChanged()
+void onUserSettingsChanged(const std::string& layer, const std::string& pref)
 {
-   // sync underlying R save action
-   module_context::syncRSaveAction();
+   if (pref == kSaveWorkspace)
+   {
+      // sync underlying R save action
+      module_context::syncRSaveAction();
+   }
 
-   // fire event notifying the client that uiPrefs changed
-   json::Object dataJson;
-   dataJson["type"] = "global";
-   dataJson["prefs"] = userSettings().uiPrefs();
-   ClientEvent event(client_events::kUiPrefsChanged, dataJson);
-   module_context::enqueClientEvent(event);
+   if (pref == kCranMirror)
+   {
+      // verify cran mirror security (will either update to https or
+      // will print a warning)
+      module_context::reconcileSecureDownloadConfiguration();
+   }
+
+   if (pref == kUseSecureDownload)
+   {
+      // reconcile secure download config
+      module_context::reconcileSecureDownloadConfiguration();
+   }
+}
+
+Error setUserCrashHandlerPrompted(const json::JsonRpcRequest& request,
+                                  json::JsonRpcResponse* /*pResponse*/)
+{
+   bool crashHandlingEnabled;
+   Error error = json::readParam(request.params, 0, &crashHandlingEnabled);
+   if (error)
+      return error;
+
+   error = crash_handler::setUserHasBeenPromptedForPermission();
+   if (error)
+      return error;
+
+   return crash_handler::setUserHandlerEnabled(crashHandlingEnabled);
 }
 
 } // anonymous namespace
@@ -1028,7 +526,7 @@ std::string editFileCommand()
 Error initialize()
 {
    // register for change notifications on user settings
-   userSettings().onChanged.connect(onUserSettingsChanged);
+   prefs::userPrefs().onChanged.connect(onUserSettingsChanged);
 
    // register postback handler for viewPDF (server-only)
    if (session::options().programMode() == kSessionProgramModeServer)
@@ -1072,14 +570,10 @@ Error initialize()
       (bind(registerUriHandler, "/file_show", handleFileShow))
       (bind(registerRpcMethod, "set_client_state", setClientState))
       (bind(registerRpcMethod, "set_workbench_metrics", setWorkbenchMetrics))
-      (bind(registerRpcMethod, "set_prefs", setPrefs))
-      (bind(registerRpcMethod, "set_ui_prefs", setUiPrefs))
-      (bind(registerRpcMethod, "get_r_prefs", getRPrefs))
-      (bind(registerRpcMethod, "set_cran_mirror", setCRANMirror))
-      (bind(registerRpcMethod, "get_terminal_options", getTerminalOptions))
       (bind(registerRpcMethod, "create_ssh_key", createSshKey))
       (bind(registerRpcMethod, "adapt_to_language", adaptToLanguage))
-      (bind(registerRpcMethod, "execute_code", executeCode));
+      (bind(registerRpcMethod, "execute_code", executeCode))
+      (bind(registerRpcMethod, "set_user_crash_handler_prompted", setUserCrashHandlerPrompted));
    return initBlock.execute();
 }
 

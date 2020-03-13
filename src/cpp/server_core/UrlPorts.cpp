@@ -1,7 +1,7 @@
 /*
  * UrlPorts.cpp
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -19,7 +19,7 @@
 #include <boost/format.hpp>
 
 #include <server_core/UrlPorts.hpp>
-#include <core/SafeConvert.hpp>
+#include <shared_core/SafeConvert.hpp>
 #include <core/RegexUtils.hpp>
 #include <iomanip>
 
@@ -122,7 +122,7 @@ int detransformPort(const std::string& token, const std::string& port)
 std::string generateNewPortToken()
 {
    // configure random number generation for the token
-   static boost::mt19937 gen(std::time(NULL));
+   static boost::mt19937 gen(std::time(nullptr));
    boost::uniform_int<> dist(1, 65535);  // Avoid zeroes since we'll be multiplying and XORing
    boost::variate_generator<boost::mt19937&, boost::uniform_int<> > var(gen, dist);
    std::vector<uint32_t> token;

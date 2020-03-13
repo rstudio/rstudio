@@ -14,7 +14,7 @@
 }
 
 .invalidAppName {
-	background-color: #f2dede;
+   background-color: #f2dede;
 }
 
 .appNameTextBox {
@@ -22,5 +22,11 @@
 }
 
 .textBox, .textBox .gwt-TextBox {
-	padding-left: 4px;
+   padding-left: 4px;
+}
+
+.shinyTypeGroup {
+   border: none;
+   margin: 0;
+   padding: 0;
 }

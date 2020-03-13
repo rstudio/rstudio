@@ -1,7 +1,7 @@
 /*
  * XTermDimensions.java
  *
- * Copyright (C) 2009-16 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -24,7 +24,7 @@ import com.google.gwt.core.client.JavaScriptObject;
 public class XTermDimensions extends JavaScriptObject
 {
    protected XTermDimensions() {}
-   
+
    public final native int getCols() /*-{
       if (this.cols !== this.cols) { return -1; } // isNaN
       return this.cols;

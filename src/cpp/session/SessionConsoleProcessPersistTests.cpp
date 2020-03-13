@@ -1,7 +1,7 @@
 /*
  * SessionConsoleProcessPersistTests.cpp
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -19,8 +19,6 @@
 #include <tests/TestThat.hpp>
 
 #include <sstream>
-
-#include <boost/foreach.hpp>
 
 #include <core/system/Environment.hpp>
 
@@ -212,10 +210,10 @@ TEST_CASE("ConsoleProcess Persistence")
       console_persist::loadConsoleEnvironment(handle1, &loadEnv);
       CHECK((loadEnv.size() == env.size()));
 
-      BOOST_FOREACH(const core::system::Option& varOrig, env)
+      for (const core::system::Option& varOrig : env)
       {
          bool match = false;
-         BOOST_FOREACH(const core::system::Option& varLoaded, loadEnv)
+         for (const core::system::Option& varLoaded : loadEnv)
          {
             if (varLoaded.first == varOrig.first)
             {

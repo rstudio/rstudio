@@ -1,7 +1,7 @@
 /*
  * SessionDirs.cpp
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -18,8 +18,8 @@
 #include <r/session/RSession.hpp>
 
 #include <session/SessionModuleContext.hpp>
-#include <session/SessionUserSettings.hpp>
 #include <session/projects/SessionProjects.hpp>
+#include <session/prefs/UserPrefs.hpp>
 
 using namespace rstudio::core;
 
@@ -30,7 +30,8 @@ namespace dirs {
 FilePath getDefaultWorkingDirectory()
 {
    // calculate using user settings
-   FilePath defaultWorkingDir = userSettings().initialWorkingDirectory();
+   FilePath defaultWorkingDir = module_context::resolveAliasedPath(
+         prefs::userPrefs().initialWorkingDirectory());
    FilePath sessionDefaultWorkingDir = FilePath(session::options().defaultWorkingDir());
 
    // return it if it exists, otherwise use the
@@ -97,11 +98,11 @@ FilePath getProjectUserDataDir(const ErrorLocation& location)
    // for a .Ruserdata directory as an alternative
    FilePath dataDir = projectDir;
 
-   FilePath ruserdataDir = projectDir.childPath(".Ruserdata");
+   FilePath ruserdataDir = projectDir.completeChildPath(".Ruserdata");
    if (ruserdataDir.exists())
    {
       // create user-specific subdirectory if necessary
-      FilePath userDir = ruserdataDir.childPath(core::system::username());
+      FilePath userDir = ruserdataDir.completeChildPath(core::system::username());
       Error error = userDir.ensureDirectory();
       if (!error)
       {

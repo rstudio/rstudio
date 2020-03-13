@@ -1,7 +1,7 @@
 /*
  * ZoomUtils.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-12 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -41,7 +41,7 @@ public class ZoomUtils
       {
          final int PADDING = 20;
    
-         // calculate ideal heigh and width. try to be as large as possible
+         // calculate ideal height and width. try to be as large as possible
          // within the bounds of the current client size
          Size bounds = new Size(Window.getClientWidth() - PADDING,
                                 Window.getClientHeight() - PADDING);

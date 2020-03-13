@@ -1,7 +1,7 @@
 /*
  * SessionErrors.hpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -16,7 +16,7 @@
 #ifndef SESSIONERRORS_HPP
 #define SESSIONERRORS_HPP
 
-#include <core/json/Json.hpp>
+#include <shared_core/json/Json.hpp>
 
 namespace rstudio {
 namespace core {
@@ -28,15 +28,6 @@ namespace rstudio {
 namespace session {
 namespace modules {
 namespace errors {
-
-// Error handler types understood by the client. The client has its own copy
-// of this enum, and its values are persisted in user settings, so the meaning
-// of these values must be preserved.
-const int ERRORS_MESSAGE = 0;
-const int ERRORS_TRACEBACK = 1;
-const int ERRORS_BREAK = 2;
-const int ERRORS_CUSTOM = 3;
-const int ERRORS_NOTEBOOK = 4;
 
 core::Error initialize();
 core::json::Value errorStateAsJson();

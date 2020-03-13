@@ -1,7 +1,7 @@
 /*
  * ChooseEncodingDialog.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,11 +14,10 @@
  */
 package org.rstudio.studio.client.workbench.views.source.editors.text.ui;
 
+import com.google.gwt.aria.client.Roles;
 import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.dom.client.Style.Display;
 import com.google.gwt.dom.client.Style.Unit;
-import com.google.gwt.event.logical.shared.ValueChangeEvent;
-import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.ListBox;
 import com.google.gwt.user.client.ui.VerticalPanel;
@@ -38,7 +37,7 @@ public class ChooseEncodingDialog extends ModalDialog<String>
                                boolean includeSaveAsDefault,
                                OperationWithInput<String> operation)
    {
-      super("Choose Encoding", operation);
+      super("Choose Encoding", Roles.getDialogRole(), operation);
       commonEncodings_ = commonEncodings;
       allEncodings_ = allEncodings;
       currentEncoding_ = currentEncoding;
@@ -87,22 +86,19 @@ public class ChooseEncodingDialog extends ModalDialog<String>
    protected Widget createMainWidget()
    {
       listBox_ = new ListBox();
-      listBox_.setMultipleSelect(true);
       listBox_.setVisibleItemCount(15);
       listBox_.setWidth("350px");
+      Roles.getListboxRole().setAriaLabelProperty(listBox_.getElement(), "Encodings");
 
       setEncodings(commonEncodings_, currentEncoding_);
 
       CheckBox showAll = new CheckBox("Show all encodings");
-      showAll.addValueChangeHandler(new ValueChangeHandler<Boolean>()
+      showAll.addValueChangeHandler(valueChangeEvent ->
       {
-         public void onValueChange(ValueChangeEvent<Boolean> e)
-         {
-            if (e.getValue())
-               setEncodings(allEncodings_, currentEncoding_);
-            else
-               setEncodings(commonEncodings_, currentEncoding_);
-         }
+         if (valueChangeEvent.getValue())
+            setEncodings(allEncodings_, currentEncoding_);
+         else
+            setEncodings(commonEncodings_, currentEncoding_);
       });
       setCheckBoxMargins(showAll, 8, 12);
 

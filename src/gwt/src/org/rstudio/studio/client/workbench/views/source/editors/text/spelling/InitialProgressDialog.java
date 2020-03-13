@@ -1,7 +1,7 @@
 /*
  * InitialProgressDialog.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -16,6 +16,7 @@ package org.rstudio.studio.client.workbench.views.source.editors.text.spelling;
 
 import com.google.gwt.event.dom.client.HasClickHandlers;
 import com.google.gwt.user.client.Timer;
+import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.widget.MessageDialog;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.ThemedButton;
@@ -29,7 +30,7 @@ public class InitialProgressDialog implements ProgressDisplay
       dialog_ = new MessageDialog(MessageDialog.INFO,
                                   "Check Spelling",
                                   "Spell check in progress...");
-      cancel_ = dialog_.addButton("Cancel", (Operation) null, true, true);
+      cancel_ = dialog_.addButton("Cancel", ElementIds.DIALOG_CANCEL_BUTTON, (Operation) null, true, true);
 
       delayShowTimer_ = new Timer()
       {

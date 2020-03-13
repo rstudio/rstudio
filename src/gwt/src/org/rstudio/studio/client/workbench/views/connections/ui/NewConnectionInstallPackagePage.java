@@ -1,7 +1,7 @@
 /*
  * NewConnectionInstallPackagePage.java
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -127,7 +127,7 @@ public class NewConnectionInstallPackagePage
    @Override
    protected Widget createWidget()
    {
-      Widget widget = new VerticalPanel(); 
+      Widget widget = new VerticalPanel();
       return widget;
    }
 

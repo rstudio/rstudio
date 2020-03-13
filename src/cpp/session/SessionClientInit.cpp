@@ -1,7 +1,7 @@
 /*
  * SessionClientInit.hpp
  *
- * Copyright (C) 2009-19 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -24,6 +24,7 @@
 #include "modules/rmarkdown/SessionRMarkdown.hpp"
 #include "modules/connections/SessionConnections.hpp"
 #include "modules/SessionBreakpoints.hpp"
+#include "modules/SessionDependencyList.hpp"
 #include "modules/SessionRAddins.hpp"
 #include "modules/SessionErrors.hpp"
 #include "modules/SessionFind.hpp"
@@ -49,11 +50,12 @@
 #include <r/ROptions.hpp>
 
 #include <core/CrashHandler.hpp>
-#include <core/json/Json.hpp>
+#include <shared_core/json/Json.hpp>
 #include <core/json/JsonRpc.hpp>
 #include <core/http/Request.hpp>
 #include <core/http/Response.hpp>
 #include <core/http/Cookie.hpp>
+#include <core/http/CSRFToken.hpp>
 #include <core/system/Environment.hpp>
 
 #include <session/SessionConsoleProcess.hpp>
@@ -63,8 +65,9 @@
 #include <session/SessionOptions.hpp>
 #include <session/SessionPackageProvidedExtension.hpp>
 #include <session/SessionPersistentState.hpp>
-#include <session/SessionUserSettings.hpp>
 #include <session/projects/SessionProjectSharing.hpp>
+#include <session/prefs/UserPrefs.hpp>
+#include <session/prefs/UserState.hpp>
 
 #include <session/projects/SessionProjects.hpp>
 
@@ -136,6 +139,14 @@ void handleClientInit(const boost::function<void()>& initFunction,
    // alias options
    Options& options = session::options();
    
+   // check for valid CSRF headers in server mode 
+   if (options.programMode() == kSessionProgramModeServer && 
+       !core::http::validateCSRFHeaders(ptrConnection->request()))
+   {
+      ptrConnection->sendJsonRpcError(Error(json::errc::Unauthorized, ERROR_LOCATION));
+      return;
+   }
+
    // calculate initialization parameters
    std::string clientId = persistentState().newActiveClientId();
    bool resumed = suspend::sessionResumed() || init::isSessionInitialized();
@@ -173,12 +184,13 @@ void handleClientInit(const boost::function<void()>& initFunction,
    sessionInfo["init_options"] = initOptions;
    
    sessionInfo["userIdentity"] = options.userIdentity();
+   sessionInfo["systemUsername"] = core::system::username();
 
    // only send log_dir and scratch_dir if we are in desktop mode
    if (options.programMode() == kSessionProgramModeDesktop)
    {
-      sessionInfo["log_dir"] = options.userLogPath().absolutePath();
-      sessionInfo["scratch_dir"] = options.userScratchPath().absolutePath();
+      sessionInfo["log_dir"] = options.userLogPath().getAbsolutePath();
+      sessionInfo["scratch_dir"] = options.userScratchPath().getAbsolutePath();
    }
 
    // temp dir
@@ -186,13 +198,13 @@ void handleClientInit(const boost::function<void()>& initFunction,
    Error error = tempDir.ensureDirectory();
    if (error)
       LOG_ERROR(error);
-   sessionInfo["temp_dir"] = tempDir.absolutePath();
+   sessionInfo["temp_dir"] = tempDir.getAbsolutePath();
 
    // R_LIBS_USER
    sessionInfo["r_libs_user"] = module_context::rLibsUser();
    
    // user home path
-   sessionInfo["user_home_path"] = session::options().userHomePath().absolutePath();
+   sessionInfo["user_home_path"] = session::options().userHomePath().getAbsolutePath();
    
    // installed client version
    sessionInfo["client_version"] = http_methods::clientVersion();
@@ -263,7 +275,8 @@ void handleClientInit(const boost::function<void()>& initFunction,
                                         "experience unexpected issues as a result.\n\n");
    }
 
-   sessionInfo["ui_prefs"] = userSettings().uiPrefs();
+   sessionInfo["user_prefs"] = prefs::allPrefLayers();
+   sessionInfo["user_state"] = prefs::allStateLayers();
 
    sessionInfo["have_advanced_step_commands"] =
                         modules::breakpoints::haveAdvancedStepCommands();
@@ -305,7 +318,7 @@ void handleClientInit(const boost::function<void()>& initFunction,
       sessionInfo["project_user_data_directory"] = json::Value();
    }
 
-   sessionInfo["system_encoding"] = std::string(::locale2charset(NULL));
+   sessionInfo["system_encoding"] = std::string(::locale2charset(nullptr));
 
    std::vector<std::string> vcsAvailable;
    if (modules::source_control::isGitInstalled())
@@ -327,7 +340,7 @@ void handleClientInit(const boost::function<void()>& initFunction,
    // send sumatra pdf exe path if we are on windows
 #ifdef _WIN32
    sessionInfo["sumatra_pdf_exe_path"] =
-               options.sumatraPath().complete("SumatraPDF.exe").absolutePath();
+               options.sumatraPath().completePath("SumatraPDF.exe").getAbsolutePath();
 #endif
 
    // are build tools enabled
@@ -340,15 +353,15 @@ void handleClientInit(const boost::function<void()>& initFunction,
                               module_context::isBookdownWebsite();
 
       FilePath buildTargetDir = projects::projectContext().buildTargetPath();
-      if (!buildTargetDir.empty())
+      if (!buildTargetDir.isEmpty())
       {
          sessionInfo["build_target_dir"] = module_context::createAliasedPath(
                                                                 buildTargetDir);
          sessionInfo["has_pkg_src"] = (type == r_util::kBuildTypePackage) &&
-                                      buildTargetDir.childPath("src").exists();
+            buildTargetDir.completeChildPath("src").exists();
          sessionInfo["has_pkg_vig"] =
                (type == r_util::kBuildTypePackage) &&
-               buildTargetDir.childPath("vignettes").exists();
+                  buildTargetDir.completeChildPath("vignettes").exists();
       }
       else
       {
@@ -436,6 +449,9 @@ void handleClientInit(const boost::function<void()>& initFunction,
    sessionInfo["packrat_available"] =
                      module_context::isRequiredPackratInstalled();
 
+   sessionInfo["renv_available"] =
+         module_context::isRequiredRenvInstalled();
+
    // check rmarkdown package presence and capabilities
    sessionInfo["rmarkdown_available"] =
          modules::rmarkdown::rmarkdownPackageAvailable();
@@ -485,11 +501,20 @@ void handleClientInit(const boost::function<void()>& initFunction,
 
    sessionInfo["launcher_jobs_enabled"] = modules::overlay::launcherJobsFeatureDisplayed();
 
+   json::Object packageDependencies;
+   error = modules::dependency_list::getDependencyList(&packageDependencies);
+   if (error)
+      LOG_ERROR(error);
+   sessionInfo["package_dependencies"] = packageDependencies;
+
    // crash handler settings
    bool canModifyCrashSettings =
          options.programMode() == kSessionProgramModeDesktop &&
          crash_handler::configSource() == crash_handler::ConfigSource::User;
    sessionInfo["crash_handler_settings_modifiable"] = canModifyCrashSettings;
+
+   bool promptForCrashHandlerPermission = canModifyCrashSettings && !crash_handler::hasUserBeenPromptedForPermission();
+   sessionInfo["prompt_for_crash_handler_permission"] = promptForCrashHandlerPermission;
 
    sessionInfo["project_id"] = session::options().sessionScope().project();
 

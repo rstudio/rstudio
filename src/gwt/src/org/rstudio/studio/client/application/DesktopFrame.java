@@ -1,7 +1,7 @@
 /*
  * DesktopFrame.java
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -16,9 +16,11 @@ package org.rstudio.studio.client.application;
 
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.Point;
+import org.rstudio.core.client.SessionServer;
 import org.rstudio.core.client.js.BaseExpression;
 import org.rstudio.core.client.js.JavaScriptPassthrough;
 
+import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayInteger;
 import com.google.gwt.user.client.Command;
 
@@ -150,7 +152,7 @@ public interface DesktopFrame extends JavaScriptPassthrough
    void openTerminal(String terminalPath,
                      String workingDirectory,
                      String extraPathEntries,
-                     int shellType);
+                     String shellType);
 
    void setFixedWidthFont(String font);
    void setZoomLevel(double zoomLevel);
@@ -195,6 +197,8 @@ public interface DesktopFrame extends JavaScriptPassthrough
    void setViewerUrl(String url);
    void reloadViewerZoomWindow(String url);
    
+   void setTutorialUrl(String url);
+   
    void setShinyDialogUrl(String url);
    
    void setBusy(boolean busy);
@@ -202,4 +206,27 @@ public interface DesktopFrame extends JavaScriptPassthrough
    void setWindowTitle(String title);
    
    void installRtools(String version, String installerPath);
+
+   void showSessionServerOptionsDialog();
+
+   void onSessionQuit();
+
+   void getSessionServer(CommandWithArg<SessionServer> callback);
+   void getSessionServers(CommandWithArg<JsArray<SessionServer>> callback);
+   void reconnectToSessionServer(SessionServer server);
+
+   void setLauncherServer(SessionServer server, CommandWithArg<Boolean> callback);
+   void connectToLauncherServer();
+
+   void getLauncherServer(CommandWithArg<SessionServer> callback);
+   void startLauncherJobStatusStream(String jobId);
+   void stopLauncherJobStatusStream(String jobId);
+   void startLauncherJobOutputStream(String jobId);
+   void stopLauncherJobOutputStream(String jobId);
+   void controlLauncherJob(String jobId, String operation);
+   void getJobContainerUser();
+   void validateJobsConfig();
+   void getProxyPortNumber(CommandWithArg<Integer> callback);
+
+   void signOut();
 }

@@ -1,7 +1,7 @@
 /*
  * NotebookPlotReplay.cpp
  *
- * Copyright (C) 2009-16 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -21,7 +21,6 @@
 
 #include <boost/algorithm/string.hpp>
 #include <boost/bind.hpp>
-#include <boost/foreach.hpp>
 
 #include <core/StringUtils.hpp>
 #include <core/Exec.hpp>
@@ -61,9 +60,9 @@ public:
       // create the text to send to the process (it'll be read on stdin
       // inside R)
       std::string input;
-      BOOST_FOREACH(const FilePath snapshot, snapshotFiles)
+      for (const FilePath snapshot : snapshotFiles)
       {
-         input.append(string_utils::utf8ToSystem(snapshot.absolutePath()));
+         input.append(string_utils::utf8ToSystem(snapshot.getAbsolutePath()));
          input.append("\n");
       }
       input.append("\n");
@@ -74,9 +73,9 @@ public:
       FilePath modulesPath = session::options().modulesRSourcePath();
       FilePath sourcesPath = session::options().coreRSourcePath();
 
-      sources.push_back(sourcesPath.complete("Tools.R"));
-      sources.push_back(modulesPath.complete("ModuleTools.R"));
-      sources.push_back(modulesPath.complete("NotebookPlots.R"));
+      sources.push_back(sourcesPath.completePath("Tools.R"));
+      sources.push_back(modulesPath.completePath("ModuleTools.R"));
+      sources.push_back(modulesPath.completePath("NotebookPlots.R"));
 
       // form extra bitmap params 
       std::string extraParams = r::session::graphics::extraBitmapParams();
@@ -117,7 +116,7 @@ private:
       std::vector<std::string> paths;
       boost::algorithm::split(paths, output,
                               boost::algorithm::is_any_of("\n\r"));
-      BOOST_FOREACH(std::string& path, paths)
+      for (std::string& path : paths)
       {
          // ensure path exists
          FilePath png(string_utils::trimWhitespace(path));
@@ -125,23 +124,23 @@ private:
             continue;
 
          FilePath chunkBase = png;
-         if (!persistOutput_) chunkBase = png.parent();
+         if (!persistOutput_) chunkBase = png.getParent();
 
          // create the event and send to the client. consider: this makes some
          // assumptions about the way output URLs are formed and some
          // assumptions about cache structure that might be better localized.
          json::Object result;
-         result["chunk_id"] = chunkBase.parent().filename();
+         result["chunk_id"] = chunkBase.getParent().getFilename();
          result["doc_id"] = docId_;
          result["replay_id"] = replayId_;
 
          result["plot_url"] = kChunkOutputPath "/" + 
-            chunkBase.parent().parent().filename() + "/" + // context ID = folder name
+            chunkBase.getParent().getParent().getFilename() + "/" + // context ID = folder name
             docId_ + "/" + 
-            chunkBase.parent().filename() + 
+            chunkBase.getParent().getFilename() + 
             "/" + 
-            (persistOutput_ ? "" : png.parent().filename() + "/") +
-            png.filename();
+            (persistOutput_ ? "" : png.getParent().getFilename() + "/") +
+            png.getFilename();
 
          ClientEvent event(client_events::kChunkPlotRefreshed, result);
          module_context::enqueClientEvent(event);
@@ -225,7 +224,7 @@ Error replayPlotOutput(const json::JsonRpcRequest& request,
 
    // look for snapshot files
    std::vector<FilePath> snapshotFiles;
-   BOOST_FOREACH(const std::string chunkId, chunkIds)
+   for (const std::string chunkId : chunkIds)
    {
       // find the storage location for this chunk output
       FilePath path = chunkOutputPath(docPath, docId, chunkId, notebookCtxId(),
@@ -235,13 +234,13 @@ Error replayPlotOutput(const json::JsonRpcRequest& request,
 
       // look for snapshot files
       std::vector<FilePath> contents;
-      error = path.children(&contents);
+      error = path.getChildren(contents);
       if (error)
       {
          LOG_ERROR(error);
          continue;
       }
-      BOOST_FOREACH(const FilePath content, contents)
+      for (const FilePath content : contents)
       {
          if (content.hasExtensionLowerCase(kDisplayListExt))
             snapshotFiles.push_back(content);
@@ -296,14 +295,14 @@ Error replayChunkPlotOutput(const json::JsonRpcRequest& request,
 
    // look for snapshot files
    std::vector<FilePath> contents;
-   error = path.children(&contents);
+   error = path.getChildren(contents);
    if (error)
    {
       LOG_ERROR(error);
       return Success();
    }
 
-   BOOST_FOREACH(const FilePath content, contents)
+   for (const FilePath content : contents)
    {
       if (content.hasExtensionLowerCase(kDisplayListExt))
          snapshotFiles.push_back(content);
@@ -331,7 +330,7 @@ Error cleanReplayChunkPlotOutput(const json::JsonRpcRequest& request,
    FilePath chunkFilePath = chunkOutputPath(docPath, docId, chunkId, notebookCtxId(),
       ContextSaved);
 
-   FilePath tempFilePath = chunkFilePath.complete("temp");
+   FilePath tempFilePath = chunkFilePath.completePath("temp");
 
    error = tempFilePath.remove();
    if (error)

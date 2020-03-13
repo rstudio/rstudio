@@ -1,7 +1,7 @@
 /*
  * SessionSignature.cpp
  *
- * Copyright (C) 2018 by RStudio, Inc.
+ * Copyright (C) 2018 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -13,7 +13,7 @@
  *
  */
 
-#include <core/Error.hpp>
+#include <shared_core/Error.hpp>
 #include <core/http/Util.hpp>
 #include <core/system/Crypto.hpp>
 
@@ -27,6 +27,7 @@ using namespace core;
 using namespace core::system;
 
 // redefinition here so we do not have to include session constants
+#define kRStudioSystemUserIdentity      "X-RStudioSystemUserIdentity"
 #define kRStudioUserIdentityDisplay     "X-RStudioUserIdentity"
 
 Error signRequest(const std::string& rsaPrivateKey,
@@ -37,7 +38,11 @@ Error signRequest(const std::string& rsaPrivateKey,
    if (includeUsername)
    {
       // get request username - this MUST be set
-      username = request.headerValue(kRStudioUserIdentityDisplay);
+      // we prefer the system username if present, falling back to the display username
+      username = request.headerValue(kRStudioSystemUserIdentity);
+      if (username.empty())
+         username = request.headerValue(kRStudioUserIdentityDisplay);
+
       if (username.empty())
          return systemError(boost::system::errc::permission_denied, "No user specified", ERROR_LOCATION);
    }
@@ -134,9 +139,13 @@ Error verifyRequestSignature(const std::string& rsaPublicKey,
                          ERROR_LOCATION);
    }
 
-   // get username from request
-   std::string username = request.headerValue(kRStudioUserIdentityDisplay);
-   if (includeUsername && username.empty())
+   // get username from request -
+   // we allow either of the display username or the system username to match for signing requests
+   // which is handy when proxied auth is in use as the two identifiers are used in different circumstances
+   std::string username;
+   std::string systemUsername = request.headerValue(kRStudioSystemUserIdentity);
+   std::string displayUsername = request.headerValue(kRStudioUserIdentityDisplay);
+   if (includeUsername && systemUsername.empty() && displayUsername.empty())
    {
       return systemError(boost::system::errc::permission_denied,
                         "No username specified on request",
@@ -144,22 +153,62 @@ Error verifyRequestSignature(const std::string& rsaPublicKey,
    }
 
    // ensure the user matches who we expect it to
-   if (!expectedUser.empty() && username != expectedUser)
+   if (!expectedUser.empty())
    {
-      return systemError(boost::system::errc::permission_denied,
-                        "Request from invalid user " + username +
-                            ", expected " + expectedUser,
-                         ERROR_LOCATION);
+      if (systemUsername == expectedUser)
+      {
+         username = systemUsername;
+      }
+      else if (displayUsername == expectedUser)
+      {
+         username = displayUsername;
+      }
+      else
+      {
+         std::string username;
+         if (!systemUsername.empty())
+         {
+            username += systemUsername;
+            if (displayUsername != systemUsername && !displayUsername.empty())
+               username += "/" + displayUsername;
+         }
+         else if (!displayUsername.empty())
+            username = displayUsername;
+
+         return systemError(boost::system::errc::permission_denied,
+                           "Request from invalid user " + username +
+                               ", expected " + expectedUser,
+                            ERROR_LOCATION);
+      }
    }
 
    // calculate expected signature
-   std::string payload = includeUsername ?  username + "\n" : std::string();
-   payload += (date + "\n" + request.body());
+   if (!expectedUser.empty() || !includeUsername)
+   {
+      // we have a specific user we are expecting or usernames are not present on the signature
+      // thus, we only need to validate 0 or 1 usernames
+      std::string payload = includeUsername ? username + "\n" : std::string();
+      payload += (date + "\n" + request.body());
 
-   // ensure specified signature is valid
-   error = core::system::crypto::rsaVerify(payload, decodedSignature, rsaPublicKey);
-   if (error)
-      return error;
+      error = core::system::crypto::rsaVerify(payload, decodedSignature, rsaPublicKey);
+      if (error)
+         return error;
+   }
+   else
+   {
+      // we don't have a specific user to validate the signature against - it could be
+      // either the system username or the display username, so try both
+      std::string payload1 = systemUsername + "\n" + date + "\n" + request.body();
+      std::string payload2 = displayUsername + "\n" + date + "\n" + request.body();
+
+      error = core::system::crypto::rsaVerify(payload1, decodedSignature, rsaPublicKey);
+      if (error)
+      {
+         error = core::system::crypto::rsaVerify(payload2, decodedSignature, rsaPublicKey);
+         if (error)
+            return error;
+      }
+   }
 
    return Success();
 }

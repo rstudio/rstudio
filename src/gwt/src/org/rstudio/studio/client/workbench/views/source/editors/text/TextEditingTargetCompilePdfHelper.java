@@ -1,7 +1,7 @@
 /*
  * TextEditingTargetCompilePdfHelper.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-12 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -33,7 +33,7 @@ import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.model.TexCapabilities;
-import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorPosition;
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorSelection;
 import org.rstudio.studio.client.workbench.views.source.model.RnwChunkOptions;
@@ -53,7 +53,7 @@ public class TextEditingTargetCompilePdfHelper
    }
    
    @Inject
-   public void initialize(UIPrefs prefs,
+   public void initialize(UserPrefs prefs,
                           Session session,
                           TexServerOperations server,
                           RnwWeaveRegistry rnwWeaveRegistry,
@@ -70,7 +70,7 @@ public class TextEditingTargetCompilePdfHelper
    // the chunk options are ready the callback command is execute (note
    // that if there are no chunk options available then execute will 
    // never be called). this method caches the results from the server
-   // so that chunk options are only retreived once per session -- we 
+   // so that chunk options are only retrieved once per session -- we
    // do this not only to save the round-trip but also because knitr takes
    // over 500ms to load and it may need to be loaded to serve the
    // request for chunk options
@@ -139,7 +139,7 @@ public class TextEditingTargetCompilePdfHelper
                               TextFileType fileType)
    {
       // for all tex files we need to parse magic comments and validate
-      // any explict latex proram directive
+      // any explicit latex program directive
       ArrayList<TexMagicComment> magicComments = null;
       if (fileType.canCompilePDF())
       {
@@ -215,12 +215,12 @@ public class TextEditingTargetCompilePdfHelper
                {
                   String warning;
                   if (Desktop.isDesktop())
-                     warning = "No TeX installation detected. Please install " +
-                               "TeX before compiling.";
+                     warning = "No LaTeX installation detected. Please install " +
+                               "LaTeX before compiling.";
                   else
-                     warning = "This server does not have TeX installed. You " +
+                     warning = "This server does not have LaTeX installed. You " +
                                "may not be able to compile.";
-                  display.showWarningBar(warning);
+                  display.showTexInstallationMissingWarning(warning);
                }
                else if (checkForRnwWeave && 
                         !response.isRnwWeaveAvailable(fRnwWeave))
@@ -340,7 +340,7 @@ public class TextEditingTargetCompilePdfHelper
    }
 
    // get the currently active rnw weave name -- arranges to always return
-   // a valid string by returing the pref if the directive is invalid
+   // a valid string by returning the pref if the directive is invalid
    public String getActiveRnwWeaveName()
    {
       if (docDisplay_.getFileType().canKnitToHTML() || 
@@ -444,7 +444,7 @@ public class TextEditingTargetCompilePdfHelper
    
    private final DocDisplay docDisplay_;
    
-   private UIPrefs prefs_;
+   private UserPrefs prefs_;
    private Session session_;
    private TexServerOperations server_;
    private RnwWeaveRegistry rnwWeaveRegistry_;

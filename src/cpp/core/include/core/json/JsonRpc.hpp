@@ -1,7 +1,7 @@
 /*
  * JsonRpc.hpp
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -16,10 +16,12 @@
 #ifndef CORE_JSON_RPC_HPP
 #define CORE_JSON_RPC_HPP
 
+#include <boost/system/error_code.hpp>
+
 #include <core/type_traits/TypeTraits.hpp>
 #include <core/json/JsonRpc.hpp>
 
-#include <core/json/Json.hpp>
+#include <shared_core/json/Json.hpp>
 
 namespace rstudio {
 namespace core {
@@ -88,8 +90,8 @@ struct is_error_code_enum<rstudio::core::json::errc::errc_t>
 #include <boost/optional.hpp>
 #include <boost/unordered_map.hpp>
 
-#include <core/Error.hpp>
-#include <core/json/Json.hpp>
+#include <shared_core/Error.hpp>
+#include <shared_core/json/Json.hpp>
 
 namespace rstudio {
 namespace core {
@@ -193,7 +195,7 @@ inline core::Error readParam(const Array& params,
                              unsigned int index, 
                              Value* pValue)
 {
-   if (index >= params.size())
+   if (index >= params.getSize())
       return core::Error(json::errc::ParamMissing, ERROR_LOCATION);
    
    *pValue = params[index] ;
@@ -203,13 +205,13 @@ inline core::Error readParam(const Array& params,
 template <typename T>
 core::Error readParam(const Array& params, unsigned int index, T* pValue)
 {
-   if (index >= params.size())
+   if (index >= params.getSize())
       return core::Error(json::errc::ParamMissing, ERROR_LOCATION);
 
    if (!isType<T>(params[index]))
       return core::Error(json::errc::ParamTypeMismatch, ERROR_LOCATION) ;
 
-   *pValue = params[index].get_value<T>();
+   *pValue = params[index].getValue<T>();
 
    return Success() ;
 }
@@ -267,7 +269,7 @@ inline Error paramMissing(const std::string& name,
 }
 
 inline Error typeMismatch(const Value& value,
-                          int expectedType,
+                          Type expectedType,
                           const ErrorLocation& location)
 {
    Error error(json::errc::ParamTypeMismatch, location);
@@ -275,7 +277,7 @@ inline Error typeMismatch(const Value& value,
    std::string description = std::string("expected ") +
          "'" + typeAsString(expectedType) + "'" +
          "; got " +
-         "'" + typeAsString(value.type()) + "'";
+         "'" + typeAsString(value.getType()) + "'";
    error.addProperty("description", description);
    return error;
 }
@@ -287,17 +289,17 @@ core::Error readObject(const Object& object,
                        const std::string& name, 
                        T* pValue)
 {
-   Object::iterator it = object.find(name);
+   Object::Iterator it = object.find(name);
    if (it == object.end())
       return errors::paramMissing(name, ERROR_LOCATION);
 
-   if (!isType<T>((*it).value()))
+   if (!isType<T>((*it).getValue()))
       return errors::typeMismatch(
-               (*it).value(),
+               (*it).getValue(),
                asJsonType(*pValue),
                ERROR_LOCATION);
 
-   *pValue = (*it).value().get_value<T>();
+   *pValue = (*it).getValue().getValue<T>();
 
    return Success() ;
 }
@@ -322,7 +324,7 @@ core::Error readObject(
    if (error)
       return error;
    
-   for (std::size_t i = 0, n = array.size(); i < n; ++i)
+   for (std::size_t i = 0, n = array.getSize(); i < n; ++i)
    {
       const Value& el = array[i];
       if (!isType<T>(el))
@@ -331,7 +333,7 @@ core::Error readObject(
                   asJsonType(T()),
                   ERROR_LOCATION);
       
-      pVector->push_back(el.get_value<T>());
+      pVector->push_back(el.getValue<T>());
    }
    
    return Success();
@@ -343,20 +345,20 @@ core::Error readObject(const Object& object,
                        const T& defaultValue,
                        T* pValue)
 {
-   Object::iterator it = object.find(name) ;
+   Object::Iterator it = object.find(name) ;
    if (it == object.end())
    {
       *pValue = defaultValue;
       return Success();
    }
 
-   if (!isType<T>((*it).value()))
+   if (!isType<T>((*it).getValue()))
       return errors::typeMismatch(
-               (*it).value(),
+               (*it).getValue(),
                asJsonType(*pValue),
                ERROR_LOCATION);
 
-   *pValue = (*it).value().get_value<T>() ;
+   *pValue = (*it).getValue().getValue<T>() ;
 
    return Success() ;
 }
@@ -414,17 +416,17 @@ template <typename T>
 core::Error getOptionalParam(const Object& json, const std::string& param,
                              const T& defaultValue, T* outParam)
 {
-   Object::iterator it = json.find(param);
-   if (it != json.end() && (*it).value().type() != NullType)
+   Object::Iterator it = json.find(param);
+   if (it != json.end() && !(*it).getValue().isNull())
    {
-      if (!isType<T>((*it).value()))
+      if (!isType<T>((*it).getValue()))
       {
          core::Error error = core::Error(json::errc::ParamTypeMismatch, ERROR_LOCATION);
          error.addProperty("description", "Invalid type for optional param " + param);
          return error;
       }
 
-      *outParam = (*it).value().get_value<T>();
+      *outParam = (*it).getValue().getValue<T>();
       return Success();
    }
 
@@ -437,17 +439,17 @@ core::Error getOptionalParam(const Object& json,
                              const std::string& param,
                              boost::optional<T>* pOutParam)
 {
-   Object::iterator it = json.find(param);
-   if (it != json.end() && (*it).value().type() != NullType)
+   Object::Iterator it = json.find(param);
+   if (it != json.end() && !(*it).getValue().isNull())
    {
-      if (!isType<T>((*it).value()))
+      if (!isType<T>((*it).getValue()))
       {
          core::Error error = core::Error(json::errc::ParamTypeMismatch, ERROR_LOCATION);
          error.addProperty("description", "Invalid type for optional param " + param);
          return error;
       }
 
-      *pOutParam = (*it).value().get_value<T>();
+      *pOutParam = (*it).getValue().getValue<T>();
       return Success();
    }
 
@@ -486,6 +488,14 @@ public:
    }
    
    void setError(const core::Error& error,
+                 bool includeErrorProperties = false);
+   
+   void setError(const core::Error& error,
+                 const char* message,
+                 bool includeErrorProperties = false);
+   
+   void setError(const core::Error& error,
+                 const std::string& message,
                  bool includeErrorProperties = false);
 
    void setError(const core::Error& error,

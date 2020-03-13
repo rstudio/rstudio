@@ -3,7 +3,7 @@
 #
 # install-dependencies-yum
 #
-# Copyright (C) 2009-18 by RStudio, Inc.
+# Copyright (C) 2009-20 by RStudio, PBC
 #
 # Unless you have received this program directly from RStudio pursuant
 # to the terms of a commercial license agreement with RStudio, then
@@ -47,6 +47,13 @@ sudo yum install -y java-1.8.0-openjdk-devel
 sudo yum install -y ant
 sudo yum install -y xml-commons-apis
 
+# required for Qt
+sudo yum install -y libxslt-devel
+sudo yum install -y mesa-libGL-devel
+sudo yum install -y libXScrnSaver-devel
+sudo yum install -y fakeroot
+sudo yum install -y postgresql-devel
+
 # overlay
 if [ -e install-overlay-yum ]
 then
@@ -55,20 +62,6 @@ fi
 
 # common
 cd ../common
-./install-common
+./install-common --install-crashpad-sudo
 cd ../linux
-
-# desktop dependencies (qt)
-if [ "$1" != "--exclude-qt-sdk" ]
-then
-   # required for Qt
-   sudo yum install -y libxslt-devel
-   sudo yum install -y mesa-libGL-devel
-   sudo yum install -y libXScrnSaver-devel
-   sudo yum install -y fakeroot
-   sudo yum install -y postgresql-devel
-
-   ./install-qt-sdk
-fi
-
 

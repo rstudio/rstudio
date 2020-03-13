@@ -1,7 +1,7 @@
 /*
  * RGraphicsHandler.hpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -16,8 +16,8 @@
 #ifndef R_GRAPHICS_HANDLER_HPP
 #define R_GRAPHICS_HANDLER_HPP
 
-#include <core/Error.hpp>
-#include <core/FilePath.hpp>
+#include <shared_core/Error.hpp>
+#include <shared_core/FilePath.hpp>
 
 #include "RGraphicsDevDesc.hpp"
 
@@ -41,7 +41,7 @@ void installCairoHandler();
 struct DeviceContext
 {
    DeviceContext(pDevDesc ownerDev) :
-         pDeviceSpecific(NULL),
+         pDeviceSpecific(nullptr),
          width(0),
          height(0),
          devicePixelRatio(1.0),

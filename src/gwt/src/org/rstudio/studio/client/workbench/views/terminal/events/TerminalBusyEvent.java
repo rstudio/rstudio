@@ -1,7 +1,7 @@
 /*
  * TerminalBusyEvent.java
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -18,7 +18,7 @@ import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 
 /**
- * Sent when overall state of terminal busy-ness changes. That is, if any
+ * Sent when overall state of terminal busyness changes. That is, if any
  * terminal is busy, this event signals busy.
  */
 public class TerminalBusyEvent extends GwtEvent<TerminalBusyEvent.Handler>

@@ -1,7 +1,7 @@
 /*
  * Diagnostics.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-12 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -96,7 +96,8 @@ json::Object diagnosticToJson(const TranslationUnit& tu,
       }
       else
       {
-         Cursor cursor = tu.getCursor(location.filePath.absolutePath(),
+         Cursor cursor = tu.getCursor(
+            location.filePath.getAbsolutePath(),
                                       location.line,
                                       location.column);
 
@@ -143,7 +144,7 @@ json::Array getCppDiagnosticsJson(const FilePath& filePath)
 
    // get diagnostics from translation unit
    TranslationUnit tu = rSourceIndex().getTranslationUnit(
-                                             filePath.absolutePath(),
+      filePath.getAbsolutePath(),
                                              true);
    if (!tu.empty())
    {

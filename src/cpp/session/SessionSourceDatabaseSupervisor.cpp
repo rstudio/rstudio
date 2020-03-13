@@ -2,7 +2,7 @@
  *
  * SessionSourceDatabaseSupervisor.cpp
  *
- * Copyright (C) 2009-16 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -23,12 +23,11 @@
 
 #include <vector>
 
-#include <boost/foreach.hpp>
 #include <boost/scope_exit.hpp>
 #include <boost/algorithm/string/predicate.hpp>
 
-#include <core/Error.hpp>
-#include <core/FilePath.hpp>
+#include <shared_core/Error.hpp>
+#include <shared_core/FilePath.hpp>
 #include <core/FileSerializer.hpp>
 #include <core/FileLock.hpp>
 #include <core/FileUtils.hpp>
@@ -55,22 +54,22 @@ const char * const kSessionDirPrefix = "s-";
 
 FilePath sdbSourceDatabaseRoot()
 {
-   return module_context::scopedScratchPath().complete("sdb");
+   return module_context::scopedScratchPath().completePath("sdb");
 }
 
 FilePath sourceDatabaseRoot()
 {
-   return module_context::scopedScratchPath().complete(kSessionSourceDatabasePrefix);
+   return module_context::scopedScratchPath().completePath(kSessionSourceDatabasePrefix);
 }
 
 FilePath mostRecentTitledDir()
 {
-   return module_context::scopedScratchPath().complete(kSessionSourceDatabasePrefix "/mt");
+   return module_context::scopedScratchPath().completePath(kSessionSourceDatabasePrefix "/mt");
 }
 
 FilePath mostRecentUntitledDir()
 {
-   return module_context::scopedScratchPath().complete(kSessionSourceDatabasePrefix "/mu");
+   return module_context::scopedScratchPath().completePath(kSessionSourceDatabasePrefix "/mu");
 }
 
 FilePath persistentTitledDir(bool multiSession = true)
@@ -78,11 +77,11 @@ FilePath persistentTitledDir(bool multiSession = true)
    if (multiSession && options().multiSession() && options().programMode() == kSessionProgramModeServer)
    {
       std::string id = module_context::activeSession().id();
-      return sourceDatabaseRoot().complete("per/t/" + id);
+      return sourceDatabaseRoot().completePath("per/t/" + id);
    }
    else
    {
-      return sourceDatabaseRoot().complete("per/t");
+      return sourceDatabaseRoot().completePath("per/t");
    }
 }
 
@@ -90,7 +89,7 @@ FilePath oldPersistentTitledDir()
 {
    FilePath oldPath = module_context::oldScopedScratchPath();
    if (oldPath.exists())
-      return oldPath.complete("source_database_v2/persistent/titled");
+      return oldPath.completePath("source_database_v2/persistent/titled");
    else
       return FilePath();
 }
@@ -100,11 +99,11 @@ FilePath persistentUntitledDir(bool multiSession = true)
    if (multiSession && options().multiSession() && options().programMode() == kSessionProgramModeServer)
    {
       std::string id = module_context::activeSession().id();
-      return sourceDatabaseRoot().complete("per/u/" + id);
+      return sourceDatabaseRoot().completePath("per/u/" + id);
    }
    else
    {
-      return sourceDatabaseRoot().complete("per/u");
+      return sourceDatabaseRoot().completePath("per/u");
    }
 }
 
@@ -112,36 +111,30 @@ FilePath oldPersistentUntitledDir()
 {
    FilePath oldPath = module_context::oldScopedScratchPath();
    if (oldPath.exists())
-      return oldPath.complete("source_database_v2/persistent/untitled");
+      return oldPath.completePath("source_database_v2/persistent/untitled");
    else
       return FilePath();
 }
 
 FilePath sessionLockFilePath(const FilePath& sessionDir)
 {
-   return sessionDir.complete("lock_file");
+   return sessionDir.completePath("lock_file");
 }
 
 FilePath sessionSuspendFilePath(const FilePath& sessionDir)
 {
-   return sessionDir.complete("suspend_file");
+   return sessionDir.completePath("suspend_file");
 }
 
 FilePath sessionRestartFilePath(const FilePath& sessionDir)
 {
-   return sessionDir.complete("restart_file");
+   return sessionDir.completePath("restart_file");
 }
 
 // session dir lock (lock is acquired within 'attachToSourceDatabase()')
 boost::shared_ptr<FileLock> createSessionDirLock()
 {
-   // always use advisory locks on Desktop, but allow server lock scheme
-   // to be configurable
-   bool isServer = session::options().programMode() == kSessionProgramModeServer;
-   if (isServer)
-      return FileLock::createDefault();
-   else
-      return FileLock::create(FileLock::LOCKTYPE_ADVISORY);
+   return FileLock::createDefault();
 }
 
 FileLock& sessionDirLock()
@@ -154,10 +147,10 @@ Error removeSessionDir(const FilePath& sessionDir)
 {
    // first remove children
    std::vector<FilePath> children;
-   Error error = sessionDir.children(&children);
+   Error error = sessionDir.getChildren(children);
    if (error)
       LOG_ERROR(error);
-   BOOST_FOREACH(const FilePath& filePath, children)
+   for (const FilePath& filePath : children)
    {
       error = filePath.remove();
       if (error)
@@ -171,14 +164,14 @@ Error removeSessionDir(const FilePath& sessionDir)
 bool isNotSessionDir(const FilePath& filePath)
 {
    return !filePath.isDirectory() || !boost::algorithm::starts_with(
-                                                filePath.filename(),
+                                                filePath.getFilename(),
                                                 kSessionDirPrefix);
 }
 
 Error enumerateSessionDirs(std::vector<FilePath>* pSessionDirs)
 {
    // get the directories
-   Error error = sourceDatabaseRoot().children(pSessionDirs);
+   Error error = sourceDatabaseRoot().getChildren(*pSessionDirs);
    if (error)
       return error;
 
@@ -197,12 +190,12 @@ void attemptToMoveSourceDbFiles(const FilePath& fromPath,
 {
    // enumerate the from path
    std::vector<FilePath> children;
-   Error error = fromPath.children(&children);
+   Error error = fromPath.getChildren(children);
    if (error)
       LOG_ERROR(error);
 
    // move the files
-   BOOST_FOREACH(const FilePath& filePath, children)
+   for (const FilePath& filePath : children)
    {
       // skip directories (directories can exist because multi-session
       // mode writes top level directories into the /sdb/t and /sdb/u
@@ -218,12 +211,12 @@ void attemptToMoveSourceDbFiles(const FilePath& fromPath,
       // chance of file with the same name already existing is
       // close to zero (collision probability of uniqueFilePath)
       // so it's no big deal to punt here.
-      FilePath targetPath = toPath.complete(filePath.filename());
+      FilePath targetPath = toPath.completePath(filePath.getFilename());
       if (targetPath.exists())
       {
          LOG_WARNING_MESSAGE("Skipping source db move from: " +
-                             filePath.absolutePath() + " to " +
-                             targetPath.absolutePath());
+                                filePath.getAbsolutePath() + " to " +
+                             targetPath.getAbsolutePath());
 
          Error error = filePath.remove();
          if (error)
@@ -327,7 +320,7 @@ bool reclaimOrphanedSession()
       return false;
    }
 
-   BOOST_FOREACH(const FilePath& sessionDir, sessionDirs)
+   for (const FilePath& sessionDir : sessionDirs)
    {
       // if the suspend file exists, this session is only sleeping, not dead
       if (sessionSuspendFilePath(sessionDir).exists())
@@ -336,7 +329,7 @@ bool reclaimOrphanedSession()
       FilePath restartFile = sessionRestartFilePath(sessionDir);
       if (restartFile.exists())
       {
-         if (std::time(NULL) - restartFile.lastWriteTime() > 
+         if (std::time(nullptr) - restartFile.getLastWriteTime() >
               (1000 * 60 * 5))
          {
             // the file exists, but it's more than five minutes old, so 
@@ -494,12 +487,12 @@ Error saveMostRecentDocuments()
          return error;
 
       // write the docs into the mru directories
-      BOOST_FOREACH(boost::shared_ptr<SourceDocument> pDoc, sourceDocs)
+      for (boost::shared_ptr<SourceDocument> pDoc : sourceDocs)
       {
          FilePath targetDir = pDoc->isUntitled() ? mostRecentDirUntitled :
                                                    mostRecentDir;
 
-         Error error = pDoc->writeToFile(targetDir.childPath(pDoc->id()));
+         Error error = pDoc->writeToFile(targetDir.completeChildPath(pDoc->id()));
          if (error)
             LOG_ERROR(error);
       }
@@ -534,14 +527,14 @@ Error detachFromSourceDatabase()
       return error;
 
    // now write the source database entries to the appropriate places
-   BOOST_FOREACH(boost::shared_ptr<SourceDocument> pDoc, sourceDocs)
+   for (boost::shared_ptr<SourceDocument> pDoc : sourceDocs)
    {
       if (pDoc->isUntitled())
       {
          // compute the target path (manage uniqueness since this
          // directory is appended to from multiple processes who
          // could have created docs with the same id)
-         FilePath targetPath = untitledDir.complete(pDoc->id());
+         FilePath targetPath = untitledDir.completePath(pDoc->id());
          if (targetPath.exists())
             targetPath = file_utils::uniqueFilePath(untitledDir);
 
@@ -551,14 +544,14 @@ Error detachFromSourceDatabase()
       }
       else
       {
-         error = pDoc->writeToFile(titledDir.complete(pDoc->id()));
+         error = pDoc->writeToFile(titledDir.completePath(pDoc->id()));
          if (error)
             LOG_ERROR(error);
       }
    }
 
    // record session dir (parent of lock file)
-   FilePath sessionDir = sessionDirLock().lockFilePath().parent();
+   FilePath sessionDir = sessionDirLock().lockFilePath().getParent();
 
    // give up our lock
    error = sessionDirLock().release();
@@ -571,8 +564,9 @@ Error detachFromSourceDatabase()
 
 FilePath sessionDirPath()
 {
-   return sourceDatabaseRoot().complete(kSessionDirPrefix +
-         module_context::activeSession().id());
+   return sourceDatabaseRoot().completePath(
+      kSessionDirPrefix +
+      module_context::activeSession().id());
 }
 
 void suspendSourceDatabase(int status)

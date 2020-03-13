@@ -1,7 +1,7 @@
 /*
  * RRestartContext.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -15,11 +15,10 @@
 
 #include "RRestartContext.hpp"
 
-#include <boost/foreach.hpp>
 #include <boost/algorithm/string.hpp>
 
 #include <core/Log.hpp>
-#include <core/Error.hpp>
+#include <shared_core/Error.hpp>
 #include <core/FileUtils.hpp>
 #include <core/system/System.hpp>
 
@@ -37,7 +36,7 @@ const char * const kContext = "ctx-";
 
 FilePath restartContextsPath(const FilePath& scopePath)
 {
-   FilePath contextsPath = scopePath.complete("ctx");
+   FilePath contextsPath = scopePath.completePath("ctx");
    Error error = contextsPath.ensureDirectory();
    if (error)
       LOG_ERROR(error);
@@ -61,14 +60,14 @@ void RestartContext::initialize(const FilePath& scopePath,
                                 const std::string& contextId)
 {
    FilePath contextsPath = restartContextsPath(scopePath);
-   FilePath statePath = contextsPath.complete(kContext + contextId);
+   FilePath statePath = contextsPath.completePath(kContext + contextId);
    if (statePath.exists())
       sessionStatePath_ = statePath;
 }
 
 bool RestartContext::hasSessionState() const
 {
-   return !sessionStatePath().empty();
+   return !sessionStatePath().isEmpty();
 }
 
 bool RestartContext::rProfileOnRestore() const
@@ -96,7 +95,7 @@ FilePath RestartContext::createSessionStatePath(const FilePath& scopePath,
                                                 const std::string& contextId)
 {
    FilePath contextsPath = restartContextsPath(scopePath);
-   FilePath statePath = contextsPath.complete(kContext + contextId);
+   FilePath statePath = contextsPath.completePath(kContext + contextId);
 
    Error error = statePath.ensureDirectory();
    if (error)

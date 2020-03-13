@@ -1,7 +1,7 @@
 /*
  * ROptions.cpp
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-17 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -19,8 +19,8 @@
 #include <boost/format.hpp>
 
 #include <core/Log.hpp>
-#include <core/FilePath.hpp>
-#include <core/SafeConvert.hpp>
+#include <shared_core/FilePath.hpp>
+#include <shared_core/SafeConvert.hpp>
 #include <core/system/Environment.hpp>
 
 #include <r/RExec.hpp>
@@ -40,12 +40,12 @@ int s_buildWidth = -1;
 
 Error saveOptions(const FilePath& filePath)
 {
-   return exec::RFunction(".rs.saveOptions", filePath.absolutePath()).call();
+   return exec::RFunction(".rs.saveOptions", filePath.getAbsolutePath()).call();
 }
    
 Error restoreOptions(const FilePath& filePath)
 {
-   return exec::RFunction(".rs.restoreOptions", filePath.absolutePath()).call();
+   return exec::RFunction(".rs.restoreOptions", filePath.getAbsolutePath()).call();
 }
    
 const int kDefaultWidth = 80;   
@@ -87,6 +87,18 @@ SEXP setErrorOption(SEXP value)
    SEXP option = SYMVALUE(Rf_install(".Options"));
    while (option != R_NilValue)
    {
+      // are we removing the option?
+      if (value == R_NilValue)
+      {
+         // remove the error option from the list
+         if (TAG(CDR(option)) == errorTag)
+         {
+            SEXP previous = CAR(CDR(option));
+            SETCDR(option, CDDR(option));
+            return previous;
+         }
+      }
+
       // is this the error option?
       if (TAG(option) == errorTag)
       {
@@ -94,6 +106,15 @@ SEXP setErrorOption(SEXP value)
          SEXP previous = CAR(option);
          SETCAR(option, value);
          return previous;
+      }
+
+      if (CDR(option) == R_NilValue && value != R_NilValue)
+      {
+         // no error option exists at all; add it so we can set the value
+         SETCDR(option, Rf_allocList(1));
+         SETCAR(CDR(option), value);
+         SET_TAG(CDR(option), errorTag);
+         break;
       }
 
       // next option

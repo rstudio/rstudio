@@ -1,7 +1,7 @@
 /*
  * Projects.java
  *
- * Copyright (C) 2009-19 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -18,6 +18,7 @@ package org.rstudio.studio.client.projects;
 import java.util.ArrayList;
 
 import org.rstudio.core.client.Debug;
+import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.SerializedCommand;
 import org.rstudio.core.client.SerializedCommandQueue;
 import org.rstudio.core.client.StringUtil;
@@ -44,7 +45,6 @@ import org.rstudio.studio.client.common.dependencies.model.Dependency;
 import org.rstudio.studio.client.common.vcs.GitServerOperations;
 import org.rstudio.studio.client.common.vcs.VCSConstants;
 import org.rstudio.studio.client.common.vcs.VcsCloneOptions;
-import org.rstudio.studio.client.packrat.model.PackratServerOperations;
 import org.rstudio.studio.client.projects.events.OpenProjectErrorEvent;
 import org.rstudio.studio.client.projects.events.OpenProjectErrorHandler;
 import org.rstudio.studio.client.projects.events.OpenProjectFileEvent;
@@ -66,6 +66,7 @@ import org.rstudio.studio.client.projects.model.ProjectsServerOperations;
 import org.rstudio.studio.client.projects.model.RProjectOptions;
 import org.rstudio.studio.client.projects.ui.newproject.NewProjectWizard;
 import org.rstudio.studio.client.projects.ui.prefs.ProjectPreferencesDialog;
+import org.rstudio.studio.client.renv.model.RenvServerOperations;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
@@ -79,13 +80,14 @@ import org.rstudio.studio.client.workbench.model.RemoteFileSystemContext;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.model.SessionOpener;
-import org.rstudio.studio.client.workbench.prefs.model.UIPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.views.vcs.common.ConsoleProgressDialog;
 
 import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.inject.Singleton;
+import java.util.function.Consumer;
 
 @Singleton
 public class Projects implements OpenProjectFileHandler,
@@ -108,7 +110,7 @@ public class Projects implements OpenProjectFileHandler,
                    RemoteFileSystemContext fsContext,
                    ApplicationQuit applicationQuit,
                    ProjectsServerOperations projServer,
-                   PackratServerOperations packratServer,
+                   RenvServerOperations renvServer,
                    GitServerOperations gitServer,
                    EventBus eventBus,
                    Binder binder,
@@ -117,20 +119,20 @@ public class Projects implements OpenProjectFileHandler,
                    SessionOpener sessionOpener,
                    Provider<ProjectPreferencesDialog> pPrefDialog,
                    Provider<WorkbenchContext> pWorkbenchContext,
-                   Provider<UIPrefs> pUIPrefs)
+                   Provider<UserPrefs> pUIPrefs)
    {
       globalDisplay_ = globalDisplay;
       eventBus_ = eventBus;
       pMRUList_ = pMRUList;
       applicationQuit_ = applicationQuit;
       projServer_ = projServer;
-      packratServer_ = packratServer;
+      renvServer_ = renvServer;
       gitServer_ = gitServer;
       fsContext_ = fsContext;
       session_ = session;
       pWorkbenchContext_ = pWorkbenchContext;
       pPrefDialog_ = pPrefDialog;
-      pUIPrefs_ = pUIPrefs;
+      pUserPrefs_ = pUIPrefs;
       opener_ = opener;
       sessionOpener_ = sessionOpener;
 
@@ -203,7 +205,7 @@ public class Projects implements OpenProjectFileHandler,
             }
             
             // disable the open project in new window if necessary
-            if (!Desktop.isDesktop() || !sessionInfo.getMultiSession())
+            if (!Desktop.hasDesktopFrame() || !sessionInfo.getMultiSession())
                commands.openProjectInNewWindow().remove();
             
             // maintain mru
@@ -245,11 +247,11 @@ public class Projects implements OpenProjectFileHandler,
                    {
                       NewProjectWizard wiz = new NewProjectWizard(
                          session_.getSessionInfo(),
-                         pUIPrefs_.get(),
+                         pUserPrefs_.get(),
                          pWorkbenchContext_.get(),
                          new NewProjectInput(
                             FileSystemItem.createDir(
-                               pUIPrefs_.get().defaultProjectLocation().getValue()), 
+                               pUserPrefs_.get().defaultProjectLocation().getValue()), 
                             context
                          ),
                          allowOpenInNewWindow,
@@ -393,32 +395,32 @@ public class Projects implements OpenProjectFileHandler,
          @Override
          public void onExecute(final Command continuation)
          {
-            UIPrefs uiPrefs = pUIPrefs_.get();
+            UserPrefs userPrefs = pUserPrefs_.get();
             
             // update default project location pref if necessary
             if ((newProject.getNewDefaultProjectLocation() != null) ||
                 (newProject.getCreateGitRepo() != 
-                 uiPrefs.newProjGitInit().getValue()))
+                 userPrefs.newProjGitInit().getValue()))
             {
                indicator.onProgress("Saving defaults...");
 
                if (newProject.getNewDefaultProjectLocation() != null)
                {
-                  uiPrefs.defaultProjectLocation().setGlobalValue(
+                  userPrefs.defaultProjectLocation().setGlobalValue(
                      newProject.getNewDefaultProjectLocation());
                }
                
                if (newProject.getCreateGitRepo() != 
-                   uiPrefs.newProjGitInit().getValue())
+                   userPrefs.newProjGitInit().getValue())
                {
-                  uiPrefs.newProjGitInit().setGlobalValue(
+                  userPrefs.newProjGitInit().setGlobalValue(
                                           newProject.getCreateGitRepo());
                }
                
                // call the server -- in all cases continue on with
                // creating the project (swallow errors updating the pref)
-               projServer_.setUiPrefs(
-                     session_.getSessionInfo().getUiPrefs(),
+               projServer_.setUserPrefs(
+                     session_.getSessionInfo().getUserPrefs(),
                      new VoidServerRequestCallback(indicator) {
                         @Override
                         public void onResponseReceived(Void response)
@@ -533,7 +535,7 @@ public class Projects implements OpenProjectFileHandler,
                         newProject.getNewPackageOptions(),
                         newProject.getNewShinyAppOptions(),
                         newProject.getProjectTemplateOptions(),
-                        new SimpleRequestCallback<String>()
+                        new ServerRequestCallback<String>()
                         {
                            @Override
                            public void onResponseReceived(String foundProjectFile)
@@ -547,6 +549,14 @@ public class Projects implements OpenProjectFileHandler,
                               }
                               continuation.execute();
                            }
+
+                           @Override
+                           public void onError(ServerError error)
+                           {
+                              Debug.logError(error);
+                              indicator.onError(error.getUserMessage());
+                              notifyTutorialCreateNewResult(newProject, false, error.getUserMessage());
+                           }
                         });
                };
                
@@ -556,10 +566,13 @@ public class Projects implements OpenProjectFileHandler,
                   // not be currently installed; in those cases, verify that the package is
                   // installed and if not attempt installation from CRAN first
                   String pkg = newProject.getProjectTemplateOptions().getDescription().getPackage();
+                  ArrayList<Dependency> deps = new ArrayList<Dependency>();
+                  deps.add(Dependency.cranPackage(pkg));
                   RStudioGinjector.INSTANCE.getDependencyManager().withDependencies(
                         "Creating project",
                         "Creating a project with " + pkg,
-                        new Dependency[] { Dependency.cranPackage(pkg) },
+                        pkg + " Project",
+                        deps,
                         false,
                         (Boolean success) -> {
                            if (!success)
@@ -655,31 +668,24 @@ public class Projects implements OpenProjectFileHandler,
          }, false);
       }
       
-      // Generate a new packrat project
-      if (newProject.getUsePackrat()) {
-         createProjectCmds.addCommand(new SerializedCommand() 
-         {
+      if (newProject.getUseRenv())
+      {
+         createProjectCmds.addCommand((final Command continuation) -> {
+            indicator.onProgress("Initializing renv...");
             
-            @Override
-            public void onExecute(final Command continuation) {
-               
-               indicator.onProgress("Initializing packrat project...");
-               
-               String projDir = FileSystemItem.createFile(
+            String projDir = FileSystemItem.createFile(
                   newProject.getProjectFile()
-               ).getParentPathString();
+            ).getParentPathString();
+            
+            renvServer_.renvInit(projDir, new VoidServerRequestCallback(indicator) {
                
-               packratServer_.packratBootstrap(
-                  projDir, 
-                  false,
-                  new VoidServerRequestCallback(indicator) {
-                     @Override
-                     public void onSuccess()
-                     {
-                        continuation.execute();
-                     }
-                  });
-            }
+               @Override
+               public void onSuccess()
+               {
+                  continuation.execute();
+               }
+            });
+            
          }, false);
       }
       
@@ -799,7 +805,7 @@ public class Projects implements OpenProjectFileHandler,
    {
       // call the desktop to open the project (since it is
       // a conventional foreground gui application it has
-      // less chance of running afowl of desktop app creation
+      // less chance of running afoul of desktop app creation
       // & activation restrictions)
       FileSystemItem project = FileSystemItem.createFile(event.getProject());
       if (Desktop.isDesktop())
@@ -878,13 +884,13 @@ public class Projects implements OpenProjectFileHandler,
    @Handler
    public void onPackratBootstrap()
    {
-      showProjectOptions(ProjectPreferencesDialog.PACKRAT);
+      showProjectOptions(ProjectPreferencesDialog.RENV);
    }
    
    @Handler
    public void onPackratOptions()
    {
-      showProjectOptions(ProjectPreferencesDialog.PACKRAT);
+      showProjectOptions(ProjectPreferencesDialog.RENV);
    }
    
    public void showProjectOptions(final int initialPane)
@@ -956,6 +962,8 @@ public class Projects implements OpenProjectFileHandler,
       
       ArrayList<String> buttons = new ArrayList<>();
       buttons.add("OK");
+      ArrayList<String> elementIds = new ArrayList<>();
+      elementIds.add(ElementIds.DIALOG_OK_BUTTON);
       ArrayList<Operation> ops = new ArrayList<>();
       ops.add(new Operation()
       {
@@ -972,7 +980,7 @@ public class Projects implements OpenProjectFileHandler,
       RStudioGinjector.INSTANCE.getGlobalDisplay().showGenericDialog(
             GlobalDisplay.MSG_ERROR, 
             "Error Opening Project", 
-            msg, buttons, ops, 0);
+            msg, buttons, elementIds, ops, 0);
       
       // remove from mru list
       pMRUList_.get().remove(event.getProject());
@@ -1062,16 +1070,28 @@ public class Projects implements OpenProjectFileHandler,
                                              RVersionSpec rVersion,
                                              final Command onSuccess)
    {
+      Consumer<String> onSessionCreated;
+      if (Desktop.isRemoteDesktop())
+      {
+         onSessionCreated = (String url) -> {
+            if (onSuccess != null)
+               onSuccess.execute();
+            Desktop.getFrame().openProjectInNewWindow(url);
+         };
+      }
+      else
+      {
+         onSessionCreated = (String url) -> {
+            if (onSuccess != null)
+               onSuccess.execute();
+            globalDisplay_.openWindow(url);
+         };
+      }
       sessionOpener_.navigateToNewSession(
             true, /*isProject*/
             project.getParentPathString(),
             rVersion,
-            url -> {
-               if (onSuccess != null)
-                  onSuccess.execute();
-
-               globalDisplay_.openWindow(url);
-            });
+            onSessionCreated);
    }
    
    private void showOpenProjectDialog(final int projectType)
@@ -1171,7 +1191,7 @@ public class Projects implements OpenProjectFileHandler,
    private final Provider<ProjectMRUList> pMRUList_;
    private final ApplicationQuit applicationQuit_;
    private final ProjectsServerOperations projServer_;
-   private final PackratServerOperations packratServer_;
+   private final RenvServerOperations renvServer_;
    private final GitServerOperations gitServer_;
    private final RemoteFileSystemContext fsContext_;
    private final GlobalDisplay globalDisplay_;
@@ -1179,7 +1199,7 @@ public class Projects implements OpenProjectFileHandler,
    private final Session session_;
    private final Provider<WorkbenchContext> pWorkbenchContext_;
    private final Provider<ProjectPreferencesDialog> pPrefDialog_;
-   private final Provider<UIPrefs> pUIPrefs_;
+   private final Provider<UserPrefs> pUserPrefs_;
    private final ProjectOpener opener_;
    private final SessionOpener sessionOpener_;
    

@@ -1,7 +1,7 @@
 /*
  * Process.cpp
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -19,10 +19,9 @@
 
 #include <boost/algorithm/cxx11/any_of.hpp>
 #include <boost/bind.hpp>
-#include <boost/foreach.hpp>
 
 #include <core/Scope.hpp>
-#include <core/Error.hpp>
+#include <shared_core/Error.hpp>
 #include <core/Log.hpp>
 #include <core/BoostThread.hpp>
 
@@ -346,8 +345,7 @@ bool ProcessSupervisor::poll()
 void ProcessSupervisor::terminateAll()
 {
    // call terminate on all of our children
-   BOOST_FOREACH(boost::shared_ptr<AsyncChildProcess> pChild,
-                 pImpl_->children)
+   for (boost::shared_ptr<AsyncChildProcess> pChild : pImpl_->children)
    {
       Error error = pChild->terminate();
       if (error)

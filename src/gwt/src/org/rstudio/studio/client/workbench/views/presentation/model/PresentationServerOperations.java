@@ -1,7 +1,7 @@
 /*
  * PresentationServerOperations.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -51,9 +51,6 @@ public interface PresentationServerOperations extends RPubsServerOperations
                              ServerRequestCallback<Void> requestCallback);
    
    void closePresentationPane(ServerRequestCallback<Void> requestCallaback); 
-   
-   void tutorialFeedback(String feedback, 
-                         ServerRequestCallback<Void> requestCallback);
    
    void tutorialQuizResponse(int slideIndex, int answer, boolean correct,
                              ServerRequestCallback<Void> requestCallback);

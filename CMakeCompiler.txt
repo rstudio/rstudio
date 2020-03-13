@@ -1,7 +1,7 @@
 #
 # CMakeCompiler.txt
 #
-# Copyright (C) 2009-18 by RStudio, Inc.
+# Copyright (C) 2009-18 by RStudio, PBC
 #
 # Unless you have received this program directly from RStudio pursuant
 # to the terms of a commercial license agreement with RStudio, then
@@ -52,6 +52,11 @@ if(MSVC)
   # disable C4068 warning: unknown pragma
   # these warnings are being triggered in the MSVC-supplied headers and we aren't touching those
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /wd4068")
+
+  # embed debug information into the generated objects
+  # (otherwise we can run into annoying PDB errors during compilation)
+  string(REGEX REPLACE "/Zi" "/Z7" CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG}")
+  string(REGEX REPLACE "/Zi" "/Z7" CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG}")
 
   # ensure that we're using linker flags compatible with
   # the version of Boost that will be linked in

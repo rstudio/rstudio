@@ -1,7 +1,7 @@
 /*
  * RCntxtUtils.hpp
  *
- * Copyright (C) 2009-16 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -16,7 +16,7 @@
 #ifndef R_CONTEXT_UTILS_HPP
 #define R_CONTEXT_UTILS_HPP
 
-#include <core/Error.hpp>
+#include <shared_core/Error.hpp>
 #include "RCntxt.hpp"
 
 namespace rstudio {
@@ -28,7 +28,8 @@ namespace context {
 // represents the version of the memory layout of the RCNTXT structure
 enum RCntxtVersion
 {
-   RVersion34, // R 3.4 and above
+   RVersion40, // R 4.0 and above
+   RVersion34, // R 3.4 until R 4.0 (exclusive)
    RVersion33, // R 3.3 (all versions)
    RVersion32, // R 3.2.5 and below
    RVersionUnknown 
@@ -45,8 +46,8 @@ bool inDebugHiddenContext();
 RCntxt firstFunctionContext();
 
 RCntxt getFunctionContext(const int depth, 
-                          int* pFoundDepth = NULL,
-                          SEXP* pEnvironment = NULL);
+                          int* pFoundDepth = nullptr,
+                          SEXP* pEnvironment = nullptr);
 
 bool isByteCodeContext(const RCntxt& cntxt);
 bool isByteCodeSrcRef(SEXP srcref);

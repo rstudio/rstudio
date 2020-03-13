@@ -1,7 +1,7 @@
 /*
  * RPackageInfo.cpp
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -17,9 +17,10 @@
 
 #include <boost/format.hpp>
 
-#include <core/Error.hpp>
-
+#include <core/Log.hpp>
 #include <core/text/DcfParser.hpp>
+
+#include <shared_core/Error.hpp>
 
 namespace rstudio {
 namespace core {
@@ -27,15 +28,13 @@ namespace r_util {
 
 namespace {
 
-const char * const kPackageType = "Package";
-
 Error fieldNotFoundError(const FilePath& descFilePath,
                          const std::string& fieldName,
                          const ErrorLocation& location)
 {
    return systemError(
             boost::system::errc::protocol_error,
-            fieldName + " field not found in " + descFilePath.absolutePath(),
+            fieldName + " field not found in " + descFilePath.getAbsolutePath(),
             location);
 }
 
@@ -73,7 +72,7 @@ void readField(const Container& container,
 Error RPackageInfo::read(const FilePath& packageDir)
 {
    // parse DCF file
-   FilePath descFilePath = packageDir.childPath("DESCRIPTION");
+   FilePath descFilePath = packageDir.completeChildPath("DESCRIPTION");
    if (!descFilePath.exists())
       return core::fileNotFoundError(descFilePath, ERROR_LOCATION);
    std::string errMsg;
@@ -112,7 +111,7 @@ std::string RPackageInfo::packageFilename(const std::string& extension) const
 
 bool isPackageDirectory(const FilePath& dir)
 {
-   if (dir.childPath("DESCRIPTION").exists())
+   if (dir.completeChildPath("DESCRIPTION").exists())
    {
       RPackageInfo pkgInfo;
       Error error = pkgInfo.read(dir);
@@ -129,7 +128,7 @@ bool isPackageDirectory(const FilePath& dir)
 
 std::string packageNameFromDirectory(const FilePath& dir)
 {
-   if (dir.childPath("DESCRIPTION").exists())
+   if (dir.completeChildPath("DESCRIPTION").exists())
    {
       RPackageInfo pkgInfo;
       Error error = pkgInfo.read(dir);

@@ -1,7 +1,7 @@
 /*
  * DesktopSatelliteWindow.cpp
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -18,13 +18,15 @@
 #include <QShortcut>
 #include <QWebChannel>
 
+#include "DesktopMainWindow.hpp"
+
 namespace rstudio {
 namespace desktop {
 
 
 SatelliteWindow::SatelliteWindow(MainWindow* pMainWindow, QString name, WebPage* opener) :
-    GwtWindow(false, true, name, QUrl(), nullptr, opener),
-    gwtCallback_(pMainWindow, this),
+    GwtWindow(false, true, name, QUrl(), nullptr, opener, pMainWindow->isRemoteDesktop()),
+    gwtCallback_(pMainWindow, this, pMainWindow->isRemoteDesktop()),
     close_(CloseStageOpen)
 {
    setAttribute(Qt::WA_QuitOnClose, true);
@@ -35,6 +37,8 @@ SatelliteWindow::SatelliteWindow(MainWindow* pMainWindow, QString name, WebPage*
    // bind GWT callbacks
    auto* channel = webPage()->webChannel();
    channel->registerObject(QStringLiteral("desktop"), &gwtCallback_);
+   if (pMainWindow->isRemoteDesktop())
+      channel->registerObject(QStringLiteral("remoteDesktop"), &gwtCallback_);
    
    // satellites don't have a menu, so connect zoom keyboard shortcuts
    // directly

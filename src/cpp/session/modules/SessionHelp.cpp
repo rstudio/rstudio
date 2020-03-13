@@ -1,7 +1,7 @@
 /*
  * SessionHelp.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -16,6 +16,7 @@
 #include "SessionHelp.hpp"
 
 #include <algorithm>
+#include <gsl/gsl>
 
 #include <boost/regex.hpp>
 #include <boost/function.hpp>
@@ -25,7 +26,8 @@
 #include <boost/algorithm/string.hpp>
 #include <boost/iostreams/filter/aggregate.hpp>
 
-#include <core/Error.hpp>
+#include <core/Algorithm.hpp>
+#include <shared_core/Error.hpp>
 #include <core/Exec.hpp>
 #include <core/Log.hpp>
 
@@ -49,6 +51,8 @@
 
 #include <session/SessionModuleContext.hpp>
 #include <session/SessionPersistentState.hpp>
+
+#include <session/prefs/UserPrefs.hpp>
 
 #include "presentation/SlideRequestHandler.hpp"
 
@@ -91,16 +95,28 @@ std::string localURL(const std::string& address, const std::string& port)
    return "http://" + address + ":" + port + "/";
 }
 
-std::string replaceRPort(const std::string& url, const std::string& rPort)
+std::string replaceRPort(const std::string& url,
+                         const std::string& rPort,
+                         const std::string& scope)
 {
-   std::string newUrl = url;
-   boost::algorithm::replace_last(newUrl, rPort, session::options().wwwPort());
-   return newUrl;
+
+   // avoid replacing port in query params in R help, as R uses this
+   // for state management in its help server from R 3.6.0 and onwards
+   if (scope.empty())
+   {
+      std::vector<std::string> splat = core::algorithm::split(url, "?");
+      boost::algorithm::replace_last(splat[0], rPort, session::options().wwwPort());
+      return core::algorithm::join(splat, "?");
+   }
+   else
+   {
+      return boost::algorithm::replace_last_copy(url, rPort, session::options().wwwPort());
+   }
 }
 
 bool isLocalURL(const std::string& url,
                 const std::string& scope,
-                std::string* pLocalURLPath = NULL)
+                std::string* pLocalURLPath = nullptr)
 {
    // first look for local ip prefix
    std::string rPort = module_context::rLocalHelpPort();
@@ -110,7 +126,7 @@ bool isLocalURL(const std::string& url,
    {
       std::string relativeUrl = url.substr(urlPrefix.length());
       if (pLocalURLPath)
-         *pLocalURLPath = replaceRPort(relativeUrl, rPort);
+         *pLocalURLPath = replaceRPort(relativeUrl, rPort, scope);
       return true;
    }
 
@@ -121,7 +137,7 @@ bool isLocalURL(const std::string& url,
    {
       std::string relativeUrl = url.substr(urlPrefix.length());
       if (pLocalURLPath)
-         *pLocalURLPath = replaceRPort(relativeUrl, rPort);
+         *pLocalURLPath = replaceRPort(relativeUrl, rPort, scope);
       return true;
    }
 
@@ -244,7 +260,7 @@ bool handleLocalHttpUrl(const std::string& url)
 // displaying the manual. Redirect these to the appropriate help event
 bool handleRShowDocFile(const core::FilePath& filePath)
 {
-   std::string absPath = filePath.absolutePath();
+   std::string absPath = filePath.getAbsolutePath();
    boost::regex manualRegx(".*/lib/R/(doc/manual/[A-Za-z0-9_\\-]*\\.html)");
    boost::smatch match;
    if (regex_utils::match(absPath, match, manualRegx))
@@ -269,7 +285,21 @@ const char * const kJsCallbacks =
       "</script>\n";
 
 
-   
+class HelpFontSizeFilter : public boost::iostreams::aggregate_filter<char>
+{
+public:
+   typedef std::vector<char> Characters ;
+
+   void do_filter(const Characters& src, Characters& dest)
+   {
+      std::string cssValue(src.begin(), src.end());
+      cssValue.append("body, td {\n   font-size:");
+      cssValue.append(safe_convert::numberToString(prefs::userPrefs().helpFontSizePoints()));
+      cssValue.append("pt;\n}");
+      std::copy(cssValue.begin(), cssValue.end(), std::back_inserter(dest));
+   }
+};
+
 class HelpContentsFilter : public boost::iostreams::aggregate_filter<char>
 {
 public:
@@ -346,7 +376,7 @@ void setDynamicContentResponse(const std::string& content,
       if (error)
       {
          pResponse->setError(http::status::InternalServerError,
-                             error.code().message());
+                             error.getMessage());
       }
    }
    // otherwise just leave it alone
@@ -549,7 +579,7 @@ SEXP parseRequestBody(const http::Request& request, r::sexp::Protect* pProtect)
    else
    {
       // body bytes
-      int contentLength = request.body().length();
+      int contentLength = gsl::narrow_cast<int>(request.body().length());
       SEXP bodySEXP;
       pProtect->add(bodySEXP = Rf_allocVector(RAWSXP, contentLength));
       if (contentLength > 0)
@@ -658,9 +688,9 @@ SEXP callHandler(const std::string& path,
 
 r_util::RPackageInfo packageInfoForRd(const FilePath& rdFilePath)
 {
-   FilePath packageDir = rdFilePath.parent().parent();
+   FilePath packageDir = rdFilePath.getParent().getParent();
 
-   FilePath descFilePath = packageDir.childPath("DESCRIPTION");
+   FilePath descFilePath = packageDir.completeChildPath("DESCRIPTION");
    if (!descFilePath.exists())
       return r_util::RPackageInfo();
 
@@ -749,10 +779,12 @@ void handleHttpdRequest(const std::string& location,
    // server custom css file if necessary
    if (boost::algorithm::ends_with(path, "/R.css"))
    {
-      core::FilePath cssFile = options().rResourcesPath().childPath("R.css");
+      core::FilePath cssFile = options().rResourcesPath().completeChildPath("R.css");
       if (cssFile.exists())
       {
-         pResponse->setFile(cssFile, request, filter);
+         // ignoring the filter parameter here because the only other possible filter 
+         // is HelpContentsFilter which is for html
+         pResponse->setFile(cssFile, request, HelpFontSizeFilter());
          return;
       }
    }
@@ -774,8 +806,8 @@ void handleHttpdRequest(const std::string& location,
    // markdown help is also a special case
    if (path == "/doc/markdown_help.html")
    {
-      core::FilePath helpFile = options().rResourcesPath().childPath(
-                                                      "markdown_help.html");
+      core::FilePath helpFile = options().rResourcesPath().completeChildPath(
+         "markdown_help.html");
       if (helpFile.exists())
       {
          pResponse->setFile(helpFile, request, filter);
@@ -786,7 +818,7 @@ void handleHttpdRequest(const std::string& location,
    // roxygen help
    if (path == "/doc/roxygen_help.html")
    {
-      core::FilePath helpFile = options().rResourcesPath().childPath("roxygen_help.html");
+      core::FilePath helpFile = options().rResourcesPath().completeChildPath("roxygen_help.html");
       if (helpFile.exists())
       {
          pResponse->setFile(helpFile, request, filter);
@@ -815,7 +847,7 @@ void handleHttpdRequest(const std::string& location,
    if (error)
    {
       pResponse->setError(http::status::InternalServerError,
-                          error.code().message());
+                          error.getMessage());
    }
    
    // error returned explicitly by httpd
@@ -841,7 +873,7 @@ void handleHttpdRequest(const std::string& location,
 
 // this mirrors handler_for_path in Rhttpd.c. They cache the custom handlers
 // env (not sure why). do the same for consistency
-SEXP s_customHandlersEnv = NULL;
+SEXP s_customHandlersEnv = nullptr;
 SEXP lookupCustomHandler(const std::string& uri)
 {
    // pick name of handler out of uri
@@ -910,7 +942,7 @@ void handleSessionRequest(const http::Request& request, http::Response* pRespons
    }
 
    // form a path to the temporary file
-   FilePath tempFilePath = r::session::utils::tempDir().childPath(uri);
+   FilePath tempFilePath = r::session::utils::tempDir().completeChildPath(uri);
 
    // return the file
    pResponse->setCacheWithRevalidationHeaders();

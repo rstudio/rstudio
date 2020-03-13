@@ -1,7 +1,7 @@
 /*
  * Util.cpp
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-18 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -31,8 +31,8 @@
 #include <core/http/Request.hpp>
 #include <core/http/Response.hpp>
 #include <core/Log.hpp>
-#include <core/Error.hpp>
-#include <core/FilePath.hpp>
+#include <shared_core/Error.hpp>
+#include <shared_core/FilePath.hpp>
 #include <core/RegexUtils.hpp>
 #include <core/system/System.hpp>
 
@@ -416,13 +416,14 @@ core::FilePath requestedFile(const std::string& wwwLocalPath,
 
    // calculate "real" requested path
    FilePath realRequestedPath;
-   FilePath requestedPath = wwwRealPath.complete(relativePath);
-   error = core::system::realPath(requestedPath.absolutePath(),
+   FilePath requestedPath = wwwRealPath.completePath(relativePath);
+   error = core::system::realPath(
+      requestedPath.getAbsolutePath(),
                                   &realRequestedPath);
    if (error)
    {
       // log if this isn't file not found
-      if (error.code() != boost::system::errc::no_such_file_or_directory)
+      if (error != systemError(boost::system::errc::no_such_file_or_directory, ErrorLocation()))
       {
          error.addProperty("requested-path", relativePath);
          LOG_ERROR(error);
@@ -432,7 +433,7 @@ core::FilePath requestedFile(const std::string& wwwLocalPath,
 
    // validate that the requested path falls within the www path
    if ( (realRequestedPath != wwwRealPath) &&
-        realRequestedPath.relativePath(wwwRealPath).empty() )
+      realRequestedPath.getRelativePath(wwwRealPath).empty() )
    {
       LOG_WARNING_MESSAGE("Non www-local-path URI requested: " +
                           relativePath);
@@ -445,7 +446,7 @@ core::FilePath requestedFile(const std::string& wwwLocalPath,
 #else
 
    // just complete the path straight away on Win32
-   return FilePath(wwwLocalPath).complete(relativePath);
+   return FilePath(wwwLocalPath).completePath(relativePath);
 
 #endif
 }
@@ -483,7 +484,7 @@ void fileRequestHandler(const std::string& wwwLocalPath,
    // get path to the requested file requested file
    std::string relativePath = uri.substr(baseUri.length());
    FilePath filePath = http::util::requestedFile(wwwLocalPath, relativePath);
-   if (filePath.empty())
+   if (filePath.isEmpty())
    {
       pResponse->setNotFoundError(request);
       return;

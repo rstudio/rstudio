@@ -1,3 +1,17 @@
+#
+# CMakeLists.txt
+#
+# Copyright (C) 2009-20 by RStudio, PBC
+#
+# Unless you have received this program directly from RStudio pursuant
+# to the terms of a commercial license agreement with RStudio, then
+# this program is licensed to you under the terms of version 3 of the
+# GNU Affero General Public License. This program is distributed WITHOUT
+# ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
+# MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE. Please refer to the
+# AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
+#
+#
 
 # configure cpack install location 
 set(CPACK_SET_DESTDIR "ON")
@@ -51,11 +65,6 @@ if(RSTUDIO_SERVER)
   # rpm dependencies
   set(RSTUDIO_RPM_DEPENDS "psmisc, ")
 
-  # on RHEL 5 we also depend on libffi
-  if(IS_RHEL_5 AND NOT RSTUDIO_PACKAGE_VARIANT STREQUAL "SLES")
-     set(RSTUDIO_RPM_DEPENDS "${RSTUDIO_RPM_DEPENDS}libffi, ")
-  endif()
-
 elseif(RSTUDIO_DESKTOP)
  
    # debian control files
@@ -66,8 +75,17 @@ elseif(RSTUDIO_DESKTOP)
   set(RPM_POSTINST postinst-desktop.sh.in)
   set(RPM_POSTRM postrm-desktop.sh.in)
 
+  # rpm dependencies
+  string(FIND "${RSTUDIO_PACKAGE_OS}" "SUSE" SUSE_POS)
+  if(SUSE_POS GREATER 0)
+     # SuSE based systems name this dependency with a -0 suffix
+     set(RSTUDIO_RPM_DEPENDS "libxkbcommon-x11-0, ")
+  else()
+     set(RSTUDIO_RPM_DEPENDS "libxkbcommon-x11, ")
+  endif()
+
   # deb dependencies
-  set(RSTUDIO_DEBIAN_DEPENDS "libedit2, libssl1.0.0 | libssl1.0.2 | libssl1.1, libclang-dev, ")
+  set(RSTUDIO_DEBIAN_DEPENDS "libedit2, libssl1.0.0 | libssl1.0.2 | libssl1.1, libclang-dev, libxkbcommon-x11-0, ")
   
 endif()
 
@@ -75,18 +93,9 @@ endif()
 set(RSTUDIO_PACKAGE_SUFFIX "-")
 
 if(RSTUDIO_SERVER)
-   # SLES builds are produced from a CentOS5 machine, so check for specific SLES
-   # target first
-   if(RSTUDIO_PACKAGE_VARIANT STREQUAL "SLES")
-      set(RSTUDIO_PACKAGE_SUFFIX "${RSTUDIO_PACKAGE_SUFFIX}suse-")
-   elseif(IS_RHEL_5)
-      set(RSTUDIO_PACKAGE_SUFFIX "${RSTUDIO_PACKAGE_SUFFIX}rhel5-")
-   elseif(IS_RHEL) 
+   if(IS_RHEL) 
       set(RSTUDIO_PACKAGE_SUFFIX "${RSTUDIO_PACKAGE_SUFFIX}rhel-")
    endif()
-elseif(NOT RSTUDIO_PACKAGE_VARIANT STREQUAL "")
-   # for desktop builds, use the package variant name directly when non-empty
-   set(RSTUDIO_PACKAGE_SUFFIX "${RSTUDIO_PACKAGE_SUFFIX}${RSTUDIO_PACKAGE_VARIANT}-")
 endif()
 
 # include overlay if it exists
@@ -180,7 +189,7 @@ set(PACKAGE_LONG_DESCRIPTION "RStudio is a set of integrated tools designed to h
 set(CPACK_DEBIAN_PACKAGE_DESCRIPTION "${CPACK_PACKAGE_DESCRIPTION}\n ${PACKAGE_LONG_DESCRIPTION}")
 set(CPACK_DEBIAN_PACKAGE_ARCHITECTURE "${PACKAGE_ARCHITECTURE}")
 set(CPACK_DEBIAN_PACKAGE_DEPENDS "${RSTUDIO_DEBIAN_DEPENDS} libc6 (>= 2.7)")
-set(CPACK_DEBIAN_PACKAGE_RECOMMENDS "r-base (>= 2.11.1)")
+set(CPACK_DEBIAN_PACKAGE_RECOMMENDS "r-base (>= ${RSTUDIO_R_MAJOR_VERSION_REQUIRED}.${RSTUDIO_R_MINOR_VERSION_REQUIRED}.${RSTUDIO_R_PATCH_VERSION_REQUIRED})")
 
 # rpm-specific
 set(CPACK_RPM_PACKAGE_SUMMARY "${CPACK_PACKAGE_NAME}")

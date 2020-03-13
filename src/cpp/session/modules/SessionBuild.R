@@ -1,7 +1,7 @@
 #
 # SessionBuild.R
 #
-# Copyright (C) 2009-12 by RStudio, Inc.
+# Copyright (C) 2009-12 by RStudio, PBC
 #
 # Unless you have received this program directly from RStudio pursuant
 # to the terms of a commercial license agreement with RStudio, then
@@ -83,4 +83,13 @@ options(buildtools.with = .rs.withBuildTools)
    sapply(failures, function(e) e$name)
 })
 
+.rs.addFunction("findShinyTestsDir", function(appDir) {
+   if (exists("findTestsDir", where = asNamespace("shinytest"))) {
+      # Newer versions of shinytest can report their own test directories.
+      shinytest:::findTestsDir(appDir = appDir, mustExist = FALSE, quiet = TRUE)
+   } else {
+      # Older versions require us to know.
+      file.path(appDir, "tests")
+   }
+})
 

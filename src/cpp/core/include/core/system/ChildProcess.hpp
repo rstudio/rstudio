@@ -1,7 +1,7 @@
 /*
  * ChildProcess.hpp
  *
- * Copyright (C) 2009-17 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -18,7 +18,7 @@
 
 #include <core/system/Process.hpp>
 
-#include <core/Error.hpp>
+#include <shared_core/Error.hpp>
 #include <core/Log.hpp>
 
 namespace rstudio {
@@ -110,7 +110,7 @@ public:
       : ChildProcess()
    {
       init(exe, args, options);
-      if (!options.stdOutFile.empty() || !options.stdErrFile.empty())
+      if (!options.stdOutFile.isEmpty() || !options.stdErrFile.isEmpty())
       {
          LOG_ERROR_MESSAGE(
                   "stdOutFile/stdErrFile options cannot be used with runProgram");
@@ -151,7 +151,7 @@ public:
       }
 
       // bail if we aren't waiting for results
-      if (pResult == NULL)
+      if (pResult == nullptr)
          return Success();
 
       // read standard out if we didn't have a previous problem
@@ -246,7 +246,7 @@ private:
    void reportIOError(const char* what, const ErrorLocation& location)
    {
       Error error = systemError(boost::system::errc::io_error, location);
-      if (what != NULL)
+      if (what != nullptr)
          error.addProperty("what", what);
       reportError(error);
    }

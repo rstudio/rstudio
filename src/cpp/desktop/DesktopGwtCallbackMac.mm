@@ -1,7 +1,7 @@
 /*
  * DesktopGwtCallbackMac.mm
  *
- * Copyright (C) 2009-18 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -15,7 +15,7 @@
 
 #include "DesktopGwtCallback.hpp"
 #include "DesktopGwtWindow.hpp"
-#include "DesktopUtils.hpp"
+#include "DesktopUtilsMac.hpp"
 
 #import <AppKit/NSApplication.h>
 #import <AppKit/NSAlert.h>
@@ -25,7 +25,7 @@
 #import <AppKit/NSImage.h>
 #import <Cocoa/Cocoa.h>
 
-#include <core/FilePath.hpp>
+#include <shared_core/FilePath.hpp>
 #include <core/Macros.hpp>
 
 using namespace rstudio;
@@ -89,54 +89,6 @@ enum MessageType
    MSG_QUESTION = 4
 };
 
-FilePath userHomePath()
-{
-   return core::system::userHomePath("R_USER|HOME");
-}
-
-NSString* createAliasedPath(NSString* path)
-{
-   if (path == nil || [path length] == 0)
-      return @"";
-   
-   std::string aliased = FilePath::createAliasedPath(
-      FilePath([path UTF8String]),
-      userHomePath());
-   
-   return [NSString stringWithUTF8String: aliased.c_str()];
-}
-
-NSString* resolveAliasedPath(NSString* path)
-{
-   if (path == nil)
-      path = @"";
-   
-   FilePath resolved = FilePath::resolveAliasedPath(
-      [path UTF8String],
-      userHomePath());
-   
-   return [NSString stringWithUTF8String: resolved.absolutePath().c_str()];
-}
-
-QString runFileDialog(NSSavePanel* panel)
-{
-   NSString* path = @"";
-   long int result = [panel runModal];
-   @try
-   {
-      if (result == NSOKButton)
-      {
-         path = [[panel URL] path];
-      }
-   }
-   @catch (NSException* e)
-   {
-      throw e;
-   }
-   
-   return QString::fromNSString(createAliasedPath(path));
-}
-
 bool showOfficeDoc(NSString* path, NSString* appName, NSString* formatString)
 {
    bool opened = false;
@@ -167,7 +119,7 @@ bool showOfficeDoc(NSString* path, NSString* appName, NSString* formatString)
                     &kCFTypeArrayCallBacks);
       
       // ask the OS to open the doc for us in an appropriate viewer
-      OSStatus status = LSOpenURLsWithRole(docArr, kLSRolesViewer, NULL, NULL, NULL, 0);
+      OSStatus status = LSOpenURLsWithRole(docArr, kLSRolesViewer, nullptr, nullptr, nullptr, 0);
       if (status != noErr)
       {
          return false;
@@ -215,25 +167,6 @@ RS_END_NAMESPACE()
 
 void GwtCallback::initialize()
 {
-   [NSEvent addLocalMonitorForEventsMatchingMask: NSKeyDownMask
-                                         handler: ^(NSEvent* event)
-    {
-       // detect attempts to run Command + Shift + /, and let our own
-       // reflow comment code run instead
-       if (event.keyCode == 44 &&
-           (event.modifierFlags & NSEventModifierFlagShift) != 0 &&
-           (event.modifierFlags & NSEventModifierFlagCommand) != 0 &&
-           (event.modifierFlags & NSEventModifierFlagControl) == 0 &&
-           (event.modifierFlags & NSEventModifierFlagOption) == 0 &&
-           (event.modifierFlags & NSEventModifierFlagFunction) == 0)
-       {
-          invokeReflowComment();
-          return (NSEvent*) nil;
-       }
-       
-       return event;
-    }];
-
 }
 
 int GwtCallback::showMessageBox(int type,
@@ -284,12 +217,20 @@ int GwtCallback::showMessageBox(int type,
    }
 
    // Make Enter invoke the default button, and ESC the cancel button.
-   // If there's only one button, make sure Enter is the button used to
+   // If there's only one button, allow both Enter and ESC to
    // dismiss the dialog. If there's multiple dialogs, accommodate the
    // case where the default button may be the cancel button.
    if ([dialogButtons count] == 1)
    {
       [[[alert buttons] objectAtIndex: defaultButton] setKeyEquivalent: @"\r"];
+
+      // a single button can't have multiple key equivalents, so create a second
+      // hidden button to respond to ESC
+      NSButton* otherButton = [[NSButton alloc] initWithFrame:NSMakeRect(0, 0, 0, 0)];
+      otherButton.target = alert.buttons.lastObject;
+      otherButton.action = @selector(performClick:);
+      otherButton.keyEquivalent = @"\e"; // Escape
+      [alert setAccessoryView:otherButton];
    }
    else
    {
@@ -391,9 +332,9 @@ QString GwtCallback::getSaveFileName(const QString& qCaption,
    {
       std::string filename;
       if (hasDefaultExtension)
-         filename = filePath.stem();
+         filename = filePath.getStem();
       else
-         filename = filePath.filename();
+         filename = filePath.getFilename();
       [panel setNameFieldStringValue:
                   [NSString stringWithUTF8String: filename.c_str()]];
 
@@ -418,24 +359,9 @@ QString GwtCallback::getSaveFileName(const QString& qCaption,
 QString GwtCallback::getExistingDirectory(const QString& qCaption,
                                           const QString& qLabel,
                                           const QString& qDir,
-                                          bool focusOwner)
+                                          bool /*focusOwner*/)
 {
-   NSString* caption = qCaption.toNSString();
-   NSString* label = qLabel.toNSString();
-   NSString* dir = qDir.toNSString();
-   
-   dir = resolveAliasedPath(dir);
-   
-   NSOpenPanel* panel = [NSOpenPanel openPanel];
-   [panel setTitle: caption];
-   [panel setPrompt: label];
-   [panel setDirectoryURL: [NSURL fileURLWithPath:
-                           [dir stringByStandardizingPath]]];
-   [panel setCanChooseFiles: false];
-   [panel setCanChooseDirectories: true];
-   [panel setCanCreateDirectories: true];
-   
-   return runFileDialog(panel);
+   return browseDirectory(qCaption, qLabel, qDir);
 }
 
 void GwtCallback::showWordDoc(QString qPath)
@@ -466,34 +392,13 @@ void GwtCallback::changeTitleBarColor(int red, int green, int blue) {
 
    // attempts to mess with the window appearance (especially with
    // whether layer-backed views are used) cause rendering issues
-   // with older versions of macOS, so only enable this on Mojave
-   // https://github.com/rstudio/rstudio/issues/4409 
-   if (@available(macOS 10.14, *)) {
+   // with older versions of macOS, and also cause issues if the
+   // requested appearance is incompatible with the current macOS
+   // theme selected by the user, so make this a no-op for now.
+   //
+   // https://github.com/rstudio/rstudio/issues/4409
+   // https://github.com/rstudio/rstudio/issues/4497
 
-      const int kAverageColor = pow(127.0, 2.0) * 3;
-      const int kBrightColor = pow(217.0, 2.0) * 3;
-
-      WId winId = pOwner_->asWidget()->effectiveWinId();
-      if (winId == 0) return;
-      NSView* view = (NSView*)winId;
-      NSWindow* window = [view window];
-      // we need to set `wantsLayer` to make sure the title color is set correctly
-      // https://github.com/rstudio/rstudio/pull/3365#issuecomment-415845021
-      view.wantsLayer = YES;
-      if (pow(red, 2.) + pow(green, 2.) + pow(blue, 2.) < kAverageColor) {
-         window.appearance = [NSAppearance appearanceNamed: NSAppearanceNameVibrantDark];
-      } else {
-         window.appearance = [NSAppearance appearanceNamed: NSAppearanceNameVibrantLight];
-      }
-      if (pow(red, 2.) + pow(green, 2.) + pow(blue, 2.) > kBrightColor) {
-         // do not change title bar color if the background is very light
-         window.titlebarAppearsTransparent = NO;
-         window.backgroundColor = [NSColor colorWithCalibratedWhite: 1.0 alpha: 1.];
-      } else {
-         window.titlebarAppearsTransparent = YES;
-         window.backgroundColor = [NSColor colorWithRed:red/255. green:green/255. blue:blue/255. alpha:1.];
-      }
-   }
 }
 
 

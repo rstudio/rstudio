@@ -1,7 +1,7 @@
 /*
  * ModalDialog.java
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,6 +14,7 @@
  */
 package org.rstudio.core.client.widget;
 
+import com.google.gwt.aria.client.DialogRole;
 import org.rstudio.core.client.Debug;
 import org.rstudio.studio.client.common.HelpLink;
 
@@ -24,17 +25,19 @@ import com.google.gwt.user.client.Command;
 
 public abstract class ModalDialog<T> extends ModalDialogBase
 {
-   public ModalDialog(String caption, 
+   public ModalDialog(String caption,
+                      DialogRole role,
                       OperationWithInput<T> operation)
    {
-      this(caption, operation, null);
+      this(caption, role, operation, null);
    }
    
-   public ModalDialog(String caption, 
+   public ModalDialog(String caption,
+                      DialogRole role,
                       final OperationWithInput<T> operation,
                       Operation cancelOperation)
    {
-      super();
+      super(role);
       progressIndicator_ = null;
     
       ThemedButton okButton = new ThemedButton("OK", new ClickHandler() {
@@ -63,16 +66,18 @@ public abstract class ModalDialog<T> extends ModalDialogBase
 
 
    public ModalDialog(String caption,
+                      DialogRole role,
                       final ProgressOperationWithInput<T> operation)
    {
-      this(caption, operation, null);
+      this(caption, role, operation, null);
    }
 
-   public ModalDialog(String caption, 
+   public ModalDialog(String caption,
+                      DialogRole role,
                       final ProgressOperationWithInput<T> operation,
                       Operation cancelOperation)
    {
-      super();
+      super(role);
 
       progressIndicator_ = addProgressIndicator();
       

@@ -1,7 +1,7 @@
 /*
  * Win32RecycleBin.cpp
  *
- * Copyright (C) 2009-12 by RStudio, Inc.
+ * Copyright (C) 2009-19 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -13,8 +13,8 @@
  *
  */
 
-#include <core/Error.hpp>
-#include <core/FilePath.hpp>
+#include <shared_core/Error.hpp>
+#include <shared_core/FilePath.hpp>
 
 #include <windows.h>
 #include <shellapi.h>
@@ -27,14 +27,14 @@ namespace recycle_bin {
 Error sendTo(const FilePath& filePath)
 {
    // get the path and double-null terminate
-   std::wstring wPath = filePath.absolutePathW();
+   std::wstring wPath = filePath.getAbsolutePathW();
    std::vector<wchar_t> buffPath;
    std::copy(wPath.begin(), wPath.end(), std::back_inserter(buffPath));
    buffPath.push_back(L'\0');
    buffPath.push_back(L'\0');
 
    SHFILEOPSTRUCTW fileOp;
-   fileOp.hwnd = NULL;
+   fileOp.hwnd = nullptr;
    fileOp.wFunc = FO_DELETE;
    fileOp.pFrom = &(buffPath[0]);
    fileOp.pTo = L"";
@@ -43,7 +43,7 @@ Error sendTo(const FilePath& filePath)
                    FOF_NOERRORUI |
                    FOF_SILENT;
    fileOp.fAnyOperationsAborted = FALSE;
-   fileOp.hNameMappings = NULL;
+   fileOp.hNameMappings = nullptr;
    fileOp.lpszProgressTitle = L"";
 
    int result = ::SHFileOperationW(&fileOp);
