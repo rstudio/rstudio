@@ -45,6 +45,7 @@ import { editingRootNode } from '../../api/node';
 
 import { imageDialog } from './image-dialog';
 import { unitToPixels, isNaturalAspectRatio, pixelsToUnit, roundUnit, sizePropWithUnit, validUnits } from './image-util';
+import { extractSizeStyles } from '../../api/css';
 
 export function initResizeContainer(container: HTMLElement) {
 
@@ -514,7 +515,7 @@ function updateImageSize(
   unit = unit === 'px' ? '' : unit;
 
   // edit width & height in keyvalue
-  let keyvalue = image.node.attrs.keyvalue as Array<[string, string]>;
+  let keyvalue = extractSizeStyles(image.node.attrs.keyvalue as Array<[string, string]>)!;
   keyvalue = keyvalue.filter(value => !['width', 'height'].includes(value[0]));
   keyvalue.push(['width', width + unit]);
   if (!isNaturalAspectRatio(width, height, img, false)) {

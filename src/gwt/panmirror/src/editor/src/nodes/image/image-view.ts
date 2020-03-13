@@ -20,7 +20,7 @@ import { NodeSelection } from 'prosemirror-state';
 import { findParentNodeClosestToPos } from 'prosemirror-utils';
 
 import { EditorUI, ImageType } from '../../api/ui';
-import { removeStyleAttrib } from '../../api/css';
+import { removeStyleAttrib, extractSizeStyles } from '../../api/css';
 
 import { imageDialog } from './image-dialog';
 import { attachResizeUI, initResizeContainer, ResizeUI, isResizeUICompatible } from './image-resize';
@@ -265,7 +265,9 @@ export class ImageNodeView implements NodeView {
       // determine containerWidth
       const containerWidth = this.containerWidth();
       
-      (node.attrs.keyvalue as Array<[string, string]>).forEach(attr => {
+      const keyvalue = extractSizeStyles(node.attrs.keyvalue);
+
+      (keyvalue as Array<[string, string]>).forEach(attr => {
         // alias key and value
         const key = attr[0];
         let value = attr[1];
@@ -279,10 +281,6 @@ export class ImageNodeView implements NodeView {
             value = removeStyleAttrib(value, 'vertical-align', liftStyle);
             value = removeStyleAttrib(value, 'margin(?:[\\w\\-])*', liftStyle);
           }
-
-          // remove width and height (they require explicit props)
-          value = removeStyleAttrib(value, 'width');
-          value = removeStyleAttrib(value, 'height');
 
           // set image style (modulo the properties lifted/removed above)
           this.img.setAttribute('style', value);

@@ -19,6 +19,7 @@ import { EditorView } from 'prosemirror-view';
 
 import { insertAndSelectNode } from '../../api/node';
 import { ImageProps, ImageType, EditorUI } from '../../api/ui';
+import { extractSizeStyles } from '../../api/css';
 
 export async function imageDialog(
   node: Node | null,
@@ -61,8 +62,14 @@ export async function imageDialog(
       }
     }
 
+    // move width and height out of style if necessary
+    const imageProps = {
+      ...result,
+      keyvalue: extractSizeStyles(result.keyvalue)
+    };
+
     // create the image
-    const newImage = nodeType.createAndFill(result, content);
+    const newImage = nodeType.createAndFill(imageProps, content);
 
     // insert and select
     if (newImage) {
