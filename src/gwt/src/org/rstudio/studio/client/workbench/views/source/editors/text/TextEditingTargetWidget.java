@@ -785,7 +785,7 @@ public class TextEditingTargetWidget
       rmdOptionsButton_.setEnabled(isRMarkdown2);
       
       
-      commands_.enableProsemirrorDevTools().setVisible(isVisualMode());
+      commands_.enableProsemirrorDevTools().setVisible(isVisualModeEnabled());
      
       toggleRmdVisualModeButton_.setVisible(isVisualModeEnabled());
      
