@@ -31,6 +31,7 @@ import {
   setTextSelection,
   findParentNodeOfType,
   findParentNodeOfTypeClosestToPos,
+  findParentNode,
 } from 'prosemirror-utils';
 import 'prosemirror-view/style/prosemirror.css';
 
@@ -57,11 +58,9 @@ import {
   appendMarkTransactionsPlugin,
   kLayoutFixupTransaction,
   kAddToHistoryTransaction,
-  kRestoreLocationTransaction,
 } from './api/transaction';
 import { EditorOutline } from './api/outline';
 import { EditingLocation, getEditingLocation, restoreEditingLocation } from './api/location';
-import { mergedTextNodes } from './api/text';
 import { navigateTo } from './api/navigation';
 
 import { getTitle, setTitle } from './nodes/yaml_metadata/yaml_metadata-title';
@@ -178,7 +177,7 @@ export class Editor {
     parent: HTMLElement,
     context: EditorContext,
     options: EditorOptions,
-    editorCode: EditorCode,
+    markdown: string,
   ): Promise<Editor> {
     // provide default options
     options = {
@@ -195,8 +194,8 @@ export class Editor {
     let format = context.format;
 
     // if markdown was specified then try to read the format from it
-    if (editorCode.markdown && options.formatComment) {
-      format = resolvePandocFormatComment(pandocFormatCommentFromCode(editorCode.markdown), format);
+    if (markdown && options.formatComment) {
+      format = resolvePandocFormatComment(pandocFormatCommentFromCode(markdown), format);
     }
 
     // resolve the format
@@ -206,8 +205,8 @@ export class Editor {
     const editor = new Editor(parent, context, options, pandocFmt);
 
     // set initial markdown if specified
-    if (editorCode.markdown) {
-      await editor.setMarkdown(editorCode, false);
+    if (markdown) {
+      await editor.setMarkdown(markdown, false);
     }
 
     // return editor
@@ -301,12 +300,12 @@ export class Editor {
     }
   }
 
-  public async setMarkdown(editorCode: EditorCode, emitUpdate = true): Promise<boolean> {
+  public async setMarkdown(markdown: string, emitUpdate = true): Promise<boolean> {
     // update format from source code magic comments
-    await this.updatePandocFormat(pandocFormatCommentFromCode(editorCode.markdown));
+    await this.updatePandocFormat(pandocFormatCommentFromCode(markdown));
 
     // get the doc
-    const doc = await this.pandocConverter.toProsemirror(editorCode.markdown, this.pandocFormat.fullName);
+    const doc = await this.pandocConverter.toProsemirror(markdown, this.pandocFormat.fullName);
 
     // re-initialize editor state
     this.state = EditorState.create({
@@ -315,11 +314,6 @@ export class Editor {
       plugins: this.state.plugins,
     });
     this.view.updateState(this.state);
-
-    // restore cursor position if requested
-    if (editorCode.cursorSentinel) {
-      this.setSelectionFromCursorSentinel(editorCode.cursorSentinel);
-    }
 
     // apply layout fixups
     this.applyLayoutFixups();
@@ -709,55 +703,36 @@ export class Editor {
   }
 
   private docWithCursorSentinel() {
-    // transaction for inserting the sentinel
+
+    // transaction for inserting the sentinel (won't actually commit since it will
+    // have the sentinel in it but rather will use the computed tr.doc)
     const tr = this.state.tr;
 
-    // if we are inside a table then get out of it (as the sentinel will mess up
-    // table column formatting)
-    let sentinelPos = tr.selection.from;
-    const tableContainer = findParentNodeOfType(this.schema.nodes.table_container)(tr.selection);
-    if (tableContainer) {
-      sentinelPos = tableContainer.pos;
-      // don't use it if it's in yet another table
-      const anotherTableContainer = findParentNodeOfTypeClosestToPos(
-        tr.doc.resolve(sentinelPos),
-        this.schema.nodes.table_container,
-      );
-      if (anotherTableContainer) {
-        sentinelPos = -1;
-      }
-    }
-
-    // insert it
+    // cursorSentinel to return
     let cursorSentinel: string | undefined;
-    if (sentinelPos !== -1) {
-      cursorSentinel = 'CursorSentinel-CAFB04C4-080D-4074-898C-F670CAACB8AF';
-      setTextSelection(sentinelPos, -1)(tr);
-      tr.insertText(cursorSentinel);
-    } else {
-      cursorSentinel = undefined;
+
+    // find the beginning of the nearest text block
+    const textBlock = findParentNode(node => node.isTextblock)(tr.selection);
+    if (textBlock) {
+      // only proceed if we are not inside a table (as the sentinel will mess up
+      // table column formatting)
+      const textBlockPos = tr.doc.resolve(textBlock.pos);
+      if (!this.schema.nodes.table || 
+          !findParentNodeOfTypeClosestToPos(textBlockPos, this.schema.nodes.table)) {
+        // space at the end of the sentinel so that it doesn't interere with
+        // markdown that is sensitive to contiguous characters (e.g. math)
+        cursorSentinel = 'CursorSentinel-CAFB04C4-080D-4074-898C-F670CAACB8AF ';
+        setTextSelection(textBlock.pos)(tr);
+        tr.insertText(cursorSentinel);
+      }
     }
 
-    return {
+    // return the doc and sentinel (if any)
+    return { 
       doc: tr.doc,
-      cursorSentinel,
+      cursorSentinel
     };
-  }
 
-  private setSelectionFromCursorSentinel(cursorSentinel: string) {
-    const tr = this.state.tr;
-    tr.setMeta(kRestoreLocationTransaction, true);
-    tr.setMeta(kAddToHistoryTransaction, false);
-    const textNodes = mergedTextNodes(tr.doc);
-    textNodes.forEach(textNode => {
-      const sentinelLoc = textNode.text.indexOf(cursorSentinel);
-      if (sentinelLoc !== -1) {
-        const start = textNode.pos + sentinelLoc;
-        tr.deleteRange(start, start + cursorSentinel.length);
-        setTextSelection(start)(tr);
-      }
-    });
-    this.view.dispatch(tr);
   }
 }
 

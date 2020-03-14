@@ -150,7 +150,7 @@ public class TextEditingTargetVisualMode
    {      
       
       loadingFromSource_ = true;
-      panmirror_.setMarkdown(getEditorCode(true), true, (done) -> {  
+      panmirror_.setMarkdown(getEditorCode(), true, (done) -> {  
              
          // activate editor
          if (ready != null)
@@ -162,18 +162,8 @@ public class TextEditingTargetVisualMode
          // restore selection if we have one
          Scheduler.get().scheduleDeferred(() -> {
             
-            // if we are focusing then scroll to the current cursor location, 
-            // otherwise use the saved location
-            PanmirrorEditingLocation location = null;
-            if (focus) 
-            {
-               location = panmirror_.getEditingLocation();
-               location.scrollTop = -1; // determine scrollTop from selection
-            } else 
-            {
-               location = savedEditingLocation();
-            }
-            
+            // restore saved location
+            PanmirrorEditingLocation location = savedEditingLocation();
             if (location != null)
                panmirror_.restoreEditingLocation(location);
             
@@ -355,9 +345,7 @@ public class TextEditingTargetVisualMode
          PanmirrorWidget.Options widgetOptions = new PanmirrorWidget.Options();
          
          
-         PanmirrorWidget.create(context, options, widgetOptions, 
-                               getEditorCode(true), 
-                                (panmirror) -> {
+         PanmirrorWidget.create(context, options, widgetOptions, getEditorCode(), (panmirror) -> {
             
             // save reference to panmirror
             panmirror_ = panmirror;
@@ -443,12 +431,11 @@ public class TextEditingTargetVisualMode
       }
    } 
    
-   private PanmirrorCode getEditorCode(boolean cursorSentinel)
+   private String getEditorCode()
    {
       TextEditorContainer editorContainer = display_.editorContainer();
       TextEditorContainer.Editor editor = editorContainer.getEditor();
-      TextEditorContainer.EditorCode editorCode = editor.getCode(cursorSentinel);
-      return editorCode.toPanmirrorCode();
+      return editor.getCode();
    }
    
    // is our widget active in the editor container

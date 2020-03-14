@@ -1688,29 +1688,9 @@ public class TextEditingTargetWidget
       }
       
       @Override
-      public TextEditorContainer.EditorCode getCode(boolean cursorSentinel)
+      public String getCode()
       {
-         TextEditorContainer.EditorCode editorCode = new TextEditorContainer.EditorCode();
-         if (cursorSentinel)
-         {
-            editorCode.cursorSentinel = "CursorSentinel-C4B636D6-5AA6-4CC8-A641-14EF34BAF2F3";  
-            Position cursorPosition = editor_.getCursorPosition();
-            editorCode.code = filterCode(editor_.getCode(), (line, number) -> {
-               if (number == cursorPosition.getRow()) {
-                  line = line.substring(0, cursorPosition.getColumn()) + 
-                          editorCode.cursorSentinel +
-                         line.substring(cursorPosition.getColumn());
-               }
-               return line;
-            });
-            
-         }
-         else
-         {
-            editorCode.code = editor_.getCode();
-         }
-         return editorCode;
-         
+         return editor_.getCode(); 
       }   
    };
    
