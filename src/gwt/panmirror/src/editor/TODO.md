@@ -2,27 +2,20 @@
 
 Discuss tokens / escaping / etc. with Joe
 
-Image alone in a paragraph does not become a figure (so our hoisting of float: left, etc. doesn't work)
-
-Sentinel cursor could end up outside of text node (e.g. in an attribute or between dollar signs) and in that case would result in a loss of content. perhaps we need something more approximate (e.g. paragraph or line level)
-
-If we start in VisualMode PM devtools not visible
-
 Images that link to things need to be supported. Currently a "figure" with a surrounding link tag doesn't even round trip!
+
+Image dialog with width/height/style
 
 Images should support width/align for gfm (write raw\_html) (we'd need to do the image tag parsing for this to work). May be as simple as just letting it through (as pandoc seems to automatically write html tags if raw\_html is supported but link\_attributes aren't) Alternatively, we could send inline html through the schema dom parser to see if it has an internal representation
 
 Clipboard / DragDrop support for images
 
 Surface attributes
+handling for div with only an id (shading treatment a bit much?)
 
 Better direct manipulation for tables
 
-Unit testing for core panmirror code
-
 Make character escaping configurable
-
-Link input rule doesn't work for enter after link (<https://discuss.prosemirror.net/t/trigger-inputrule-on-enter/1118/2>)
 
 Cursor location for insert yaml in the middle of paragraph
 
@@ -30,17 +23,22 @@ Tables with a large number of columns are written as HTML when variable column w
 
 improve scrolling with: <https://github.com/cferdinandi/smooth-scroll>
 
+showPandocWarnings treatment for RStudio IDE (including localization)
+
+MathJax preview
+
+
+## Future
+
+Unit testing for core panmirror code
+
 multimarkdown support is incomplete: -mmd\_title\_block -mmd\_link\_attributes (not written, likely limitation of pandoc) -mmd\_header\_identifiers (work fine, but we currently allow edit of classes + keyvalue for markdown\_mmd)
 
 no support for +pandoc\_title\_block
 
 We currently can't round-trip reference links (as pandoc doesn't seem to write them, this is not disimillar from the situation w/ inline footnotes so may be fine)
 
-showPandocWarnings treatment for RStudio IDE (including localization)
-
 No editing support for fancy list auto-numbering (\#. as list item that is auto-numbered)
-
-handling for div with only an id (shading treatment a bit much?)
 
 Direct parsing of citations (get rid of special post-processing + supported nested) (note: for nested we need excludes: '')
 
