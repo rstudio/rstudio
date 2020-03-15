@@ -197,7 +197,12 @@ class PandocWriter implements PandocOutput {
         if (this.options.writeSpaces && ch === ' ') {
           flushTextRun();
           this.writeToken(PandocTokenType.Space);
-        } else if (this.format.extensions.tex_math_single_backslash && ['(', ')', '[', ']'].includes(ch)) {
+        } else if (
+          // disable [] escaping for gfm (allows for MediaWiki extensions in GitHub wikis)
+          (this.format.baseName === 'gfm' && ['[', ']'].includes(ch)) ||
+          // disable []() escaping in tex_math_single_backslash 
+          (this.format.extensions.tex_math_single_backslash && ['(', ')', '[', ']'].includes(ch))
+        ) {
           flushTextRun();
           this.writeRawMarkdown(ch);
         } else {
