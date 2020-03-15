@@ -34,14 +34,12 @@ import {
   checkedListInputRule,
   CheckedListItemCommand,
   CheckedListItemToggleCommand,
-  checkedListItemMarkdownOutputFilter,
 } from './list-checked';
 
 import {
   writePandocBulletList,
   writePandocOrderedList,
   readPandocList,
-  exampleListPandocMarkdownOutputFilter,
 } from './list-pandoc';
 
 import './list-styles.css';
@@ -223,14 +221,7 @@ const extension = (pandocExtensions: PandocExtensions): Extension => {
               handler: (schema: Schema) => readPandocList(schema.nodes.ordered_list, capabilities),
             },
           ],
-          writer: writePandocOrderedList(capabilities),
-          markdownOutputFilter: (markdown: string) => {
-            markdown = exampleListPandocMarkdownOutputFilter(markdown);
-            if (capabilities.tasks) {
-              markdown = checkedListItemMarkdownOutputFilter(markdown);
-            }
-            return markdown;
-          },
+          writer: writePandocOrderedList(capabilities)
         },
       },
     ],

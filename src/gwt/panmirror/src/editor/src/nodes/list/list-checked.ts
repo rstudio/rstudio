@@ -203,20 +203,12 @@ function setItemChecked(tr: Transaction, itemNode: NodeWithPos, check: null | bo
     checked: check === null ? null : typeof check === 'string' ? check === 'x' : check,
   });
 }
-
-const kCheckedListItemSentinel = '9A1CF289-30C8-493C-A639-A79B013A25F7';
-const kCheckedListItemSentinelRegex = new RegExp(kCheckedListItemSentinel, 'g');
-const kUncheckedListItemSentinel = '991A75E7-0987-45A4-8AFE-36BB6C067778';
-const kUncheckedListItemSentinelRegex = new RegExp(kUncheckedListItemSentinel, 'g');
-
 // prepend a check mark to the provided fragment
 export function fragmentWithCheck(schema: Schema, fragment: Fragment, checked: boolean) {
-  const checkedText = schema.text((checked ? kCheckedListItemSentinel : kUncheckedListItemSentinel) + ' ');
-  return Fragment.from(checkedText).append(fragment);
-}
-
-export function checkedListItemMarkdownOutputFilter(markdown: string) {
-  return markdown.replace(kCheckedListItemSentinelRegex, '[x]').replace(kUncheckedListItemSentinelRegex, '[ ]');
+  // create a raw markdown node with [x] or [ ]
+  const mark = schema.marks.raw_inline.create({ format: 'markdown' });
+  const check = schema.text((checked ? '[x]' : '[ ]') + ' ', [mark]);
+  return Fragment.from(check).append(fragment);
 }
 
 const kCheckedChar = '☒';
