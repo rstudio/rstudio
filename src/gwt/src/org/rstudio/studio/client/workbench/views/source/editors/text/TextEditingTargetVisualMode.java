@@ -16,6 +16,7 @@
 package org.rstudio.studio.client.workbench.views.source.editors.text;
 
 import org.rstudio.core.client.DebouncedCommand;
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.files.FileSystemItem;
@@ -489,6 +490,7 @@ public class TextEditingTargetVisualMode
       }
       catch(Exception ex)
       {
+         Debug.logException(ex);
          return null;
       }
       
