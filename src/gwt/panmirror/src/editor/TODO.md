@@ -10,16 +10,17 @@ Images should support width/align for gfm (write raw\_html) (we'd need to do the
 
 Clipboard / DragDrop support for images
 
-GFM double-bracket links
-
 Surface attributes
 handling for div with only an id (shading treatment a bit much?)
+
+Consider whether we should make it an option to not put spaces before bullets
+
+Check other uses of markdownOutputFilter (generally doesn't work with tables)
+  example lists, heading links
 
 Better direct manipulation for tables
 
 Make character escaping configurable
-
-Cursor location for insert yaml in the middle of paragraph
 
 Tables with a large number of columns are written as HTML when variable column widths are presented (presumably b/c it can't represent the percentage granularity w/ markdown) Perhaps don't set widths on all of the columns (only ones explicitly sized?)
 
