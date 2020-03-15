@@ -65,7 +65,7 @@ export async function imageDialog(
     // move width and height out of style if necessary
     const imageProps = {
       ...result,
-      keyvalue: extractSizeStyles(result.keyvalue)
+      keyvalue: extractSizeStyles(result.keyvalue),
     };
 
     // create the image

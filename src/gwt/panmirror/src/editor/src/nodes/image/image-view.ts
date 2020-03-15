@@ -181,7 +181,6 @@ export class ImageNodeView implements NodeView {
 
   // ignore mutations outside of the content time so sizing actions don't cause PM re-render
   public ignoreMutation(mutation: MutationRecord | { type: 'selection'; target: Element }) {
-   
     if (!this.contentDOM) {
       return true;
     }
@@ -195,7 +194,6 @@ export class ImageNodeView implements NodeView {
 
   // prevent bubbling of events into editor
   public stopEvent(event: Event) {
-
     // allow drag events if they target the image
     if (event instanceof DragEvent && event.target instanceof HTMLImageElement) {
       return false;
@@ -219,17 +217,9 @@ export class ImageNodeView implements NodeView {
     if (this.imageAttributes && isResizeUICompatible(this.img!)) {
       const imageNode = () => ({ pos: this.getPos(), node: this.node });
       const imgContainerWidth = () => this.containerWidth();
-      this.resizeUI = attachResizeUI(
-        imageNode, 
-        this.dom, 
-        this.img!, 
-        imgContainerWidth,
-        this.view, 
-        this.editorUI
-      );
+      this.resizeUI = attachResizeUI(imageNode, this.dom, this.img!, imgContainerWidth, this.view, this.editorUI);
     }
   }
-
 
   // map node to img tag
   private updateImg(node: ProsemirrorNode) {
@@ -261,10 +251,9 @@ export class ImageNodeView implements NodeView {
 
     // apply keyvalue attribute to image
     if (node.attrs.keyvalue) {
-
       // determine containerWidth
       const containerWidth = this.containerWidth();
-      
+
       const keyvalue = extractSizeStyles(node.attrs.keyvalue);
 
       (keyvalue as Array<[string, string]>).forEach(attr => {
@@ -285,9 +274,7 @@ export class ImageNodeView implements NodeView {
           // we don't set the style, because that will override styles set in width/height.
           // if there are specific styles we want to reflect we should whitelist them in
           // via calls to removeStyleAttrib
-
         } else if (key === 'width') {
-
           // see if this is a unit we can edit
           const widthProp = sizePropWithUnit(value);
           if (widthProp) {
@@ -297,14 +284,12 @@ export class ImageNodeView implements NodeView {
               this.img.style.width = unitToPixels(widthProp.size, widthProp.unit, containerWidth) + 'px';
             }
           }
-          
+
           // if not, just pass it straight through (editing UI will be disabled)
           if (!this.img.hasAttribute('data-width')) {
             this.img.style.width = value;
           }
-
         } else if (key === 'height') {
-
           // see if this is a unit we can edit
           const heightProp = sizePropWithUnit(value);
           if (heightProp) {
@@ -314,14 +299,14 @@ export class ImageNodeView implements NodeView {
               this.img.style.height = unitToPixels(heightProp.size, heightProp.unit, containerWidth) + 'px';
             }
           }
-          
+
           // if not, just pass it straight through (editing UI will be disabled)
           if (!this.img.hasAttribute('data-height')) {
             this.img.style.height = value;
           }
 
-        // use of legacy 'align' attribute is common for some pandoc users
-        // so we convert it to the requisite CSS
+          // use of legacy 'align' attribute is common for some pandoc users
+          // so we convert it to the requisite CSS
         } else if (this.isFigure() && key === 'align') {
           switch (value) {
             case 'left':
@@ -360,7 +345,7 @@ export class ImageNodeView implements NodeView {
           containerWidth = (resizeEl.node as HTMLElement).offsetWidth;
         }
       }
-    } 
+    }
     return containerWidth;
   }
 }

@@ -77,14 +77,8 @@ export class LinkPopupPlugin extends Plugin<DecorationSet> {
             // the previous line)
             const kPopupChromeWidth = 70;
             const maxWidth = kMaxLinkWidth + kPopupChromeWidth;
-            const textRangePopup = createTextRangePopup(
-              editorView, 
-              range, 
-              ['pm-popup-link'], 
-              maxWidth, 
-              cleanup
-            );
-        
+            const textRangePopup = createTextRangePopup(editorView, range, ['pm-popup-link'], maxWidth, cleanup);
+
             // create panel that will host the ui and add it to the popup
             const panel = createHorizontalPanel();
             textRangePopup.popup.append(panel);
@@ -124,7 +118,10 @@ export class LinkPopupPlugin extends Plugin<DecorationSet> {
             }
 
             // remove link
-            const removeLink = createImageButton(['pm-image-button-remove-link'], ui.context.translateText('Remove Link'));
+            const removeLink = createImageButton(
+              ['pm-image-button-remove-link'],
+              ui.context.translateText('Remove Link'),
+            );
             removeLink.onclick = () => {
               // in rstudio (w/ webkit) removing the link during the click results
               // in a page-navigation! defer to next event cycle to avoid this
@@ -136,11 +133,14 @@ export class LinkPopupPlugin extends Plugin<DecorationSet> {
             addToPanel(removeLink);
 
             // edit link
-            const editLink = createImageButton(['pm-image-button-edit-properties'], ui.context.translateText('Edit Link'));
+            const editLink = createImageButton(
+              ['pm-image-button-edit-properties'],
+              ui.context.translateText('Edit Link'),
+            );
             editLink.onclick = () => {
               linkCmd(editorView.state, editorView.dispatch, editorView);
             };
-            addToPanel(editLink);           
+            addToPanel(editLink);
 
             // return decorations
             return DecorationSet.create(tr.doc, [Decoration.widget(textRangePopup.pos, textRangePopup.popup)]);

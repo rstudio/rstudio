@@ -13,30 +13,36 @@
  *
  */
 
-
 import { EditorView } from 'prosemirror-view';
 import { NodeWithPos } from 'prosemirror-utils';
 import { NodeSelection } from 'prosemirror-state';
 
-import { 
-  createPopup, 
-  createHorizontalPanel, 
-  addHorizontalPanelCell, 
-  createInputLabel, 
-  createImageButton, 
-  createCheckboxInput, 
+import {
+  createPopup,
+  createHorizontalPanel,
+  addHorizontalPanelCell,
+  createInputLabel,
+  createImageButton,
+  createCheckboxInput,
   createSelectInput,
-  createTextInput
+  createTextInput,
 } from '../../api/widgets';
 import { EditorUI } from '../../api/ui';
 import { editingRootNode } from '../../api/node';
 
 import { imageDialog } from './image-dialog';
-import { unitToPixels, isNaturalAspectRatio, pixelsToUnit, roundUnit, sizePropWithUnit, validUnits, hasPercentWidth } from './image-util';
+import {
+  unitToPixels,
+  isNaturalAspectRatio,
+  pixelsToUnit,
+  roundUnit,
+  sizePropWithUnit,
+  validUnits,
+  hasPercentWidth,
+} from './image-util';
 import { extractSizeStyles } from '../../api/css';
 
 export function initResizeContainer(container: HTMLElement) {
-
   // add standard parent class
   container.classList.add('pm-image-resize-container', 'pm-selected-node-outline-color');
 
@@ -54,14 +60,13 @@ export function initResizeContainer(container: HTMLElement) {
 }
 
 export function isResizeUICompatible(img: HTMLImageElement) {
-
   // incompatible if it has a width, but not a data-width
   const incompatibleWidth = img.style.width && !img.hasAttribute('data-width');
 
   // incompatible if it has a height, but not a data-height
   const incompatibleHeight = img.style.height && img.style.height !== 'auto' && !img.hasAttribute('data-height');
 
-  return (!incompatibleWidth && !incompatibleHeight);
+  return !incompatibleWidth && !incompatibleHeight;
 }
 
 export interface ResizeUI {
@@ -75,70 +80,54 @@ export function attachResizeUI(
   img: HTMLImageElement,
   imgContainerWidth: () => number,
   view: EditorView,
-  ui: EditorUI 
-) : ResizeUI {
-
+  ui: EditorUI,
+): ResizeUI {
   // indicate that resize ui is active
   container.classList.add('pm-image-resize-active');
 
   // sync current state of shelf to node
   const syncFromShelf = () => {
-    updateImageSize(
-      view, 
-      imageNode(), 
-      img,
-      shelf.props.width(), 
-      shelf.props.height(),
-      shelf.props.units()
-    );
+    updateImageSize(view, imageNode(), img, shelf.props.width(), shelf.props.height(), shelf.props.units());
   };
 
   // shelf init
   const onInitShelf = () => {
-    
     // sync props
     shelf.sync();
 
     // default for lockRatio based on naturalWidth/naturalHeight
-    shelf.props.setLockRatio(
-      isNaturalAspectRatio(shelf.props.width(), shelf.props.height(), img, true)
-    );
+    shelf.props.setLockRatio(isNaturalAspectRatio(shelf.props.width(), shelf.props.height(), img, true));
   };
 
   // handle width changed from shelf
   const onWidthChanged = () => {
     const width = shelf.props.width();
-    const height = shelf.props.lockRatio() ?
-      (img.offsetHeight / img.offsetWidth) * width : 
-      shelf.props.height();
+    const height = shelf.props.lockRatio() ? (img.offsetHeight / img.offsetWidth) * width : shelf.props.height();
     shelf.props.setHeight(height);
-    
+
     syncFromShelf();
   };
 
   // handle height changed from shelf
   const onHeightChanged = () => {
     const height = shelf.props.height();
-    const width = shelf.props.lockRatio() ? 
-      (img.offsetWidth / img.offsetHeight) * height :
-      shelf.props.width();
+    const width = shelf.props.lockRatio() ? (img.offsetWidth / img.offsetHeight) * height : shelf.props.width();
     shelf.props.setWidth(width);
 
     syncFromShelf();
   };
 
   const onUnitsChanged = () => {
-
     const prevUnits = shelfSizeFromImage(img).unit;
-    
+
     const containerWidth = imgContainerWidth();
 
     const width = shelf.props.width();
-    const widthPixels = unitToPixels(width, prevUnits, containerWidth); 
+    const widthPixels = unitToPixels(width, prevUnits, containerWidth);
     shelf.props.setWidth(pixelsToUnit(widthPixels, shelf.props.units(), containerWidth));
-  
+
     const height = shelf.props.height();
-    const heightPixels = unitToPixels(height, prevUnits, containerWidth); 
+    const heightPixels = unitToPixels(height, prevUnits, containerWidth);
     shelf.props.setHeight(pixelsToUnit(heightPixels, shelf.props.units(), containerWidth));
 
     syncFromShelf();
@@ -157,7 +146,6 @@ export function attachResizeUI(
     }
   }, 25);
 
-
   // handle editImage request from shelf
   const onEditImage = () => {
     const nodeWithPos = imageNode();
@@ -166,29 +154,28 @@ export function attachResizeUI(
 
   // create resize shelf
   const shelf = resizeShelf(
-    view, 
+    view,
     img,
     onInitShelf,
     onWidthChanged,
     onHeightChanged,
     onUnitsChanged,
-    onEditImage, 
-    ui.context.translateText
+    onEditImage,
+    ui.context.translateText,
   );
   container.append(shelf.el);
- 
+
   // create resize handle and add it to the container
   const handle = resizeHandle(
-    img, 
+    img,
     imgContainerWidth,
     shelf.props.lockRatio,
     shelf.props.units,
     shelf.sync,
-    syncFromShelf
+    syncFromShelf,
   );
   container.append(handle);
 
-  
   // return functions that can be used to update and detach the ui
   return {
     update: () => {
@@ -199,24 +186,23 @@ export function attachResizeUI(
       clearInterval(containerWidthTimer);
       handle.remove();
       shelf.el.remove();
-    }
+    },
   };
 }
 
 function resizeShelf(
-  view: EditorView, 
+  view: EditorView,
   img: HTMLImageElement,
   onInit: () => void,
-  onWidthChanged: () => void, 
+  onWidthChanged: () => void,
   onHeightChanged: () => void,
   onUnitsChanged: () => void,
-  onEditImage: () => void, 
-  translateText: (text: string) => string
-)  {
-
+  onEditImage: () => void,
+  translateText: (text: string) => string,
+) {
   // create resize shelf
   const shelf = createPopup(view, ['pm-text-color']);
- 
+
   // update shelf position to make sure it's visible
   const updatePosition = () => {
     const kShelfRequiredSize = 335;
@@ -224,19 +210,18 @@ function resizeShelf(
     const editingEl = view.domAtPos(editingNode!.pos + 1).node as HTMLElement;
     const editingBox = editingEl.getBoundingClientRect();
     const imageBox = img.getBoundingClientRect();
-    const positionLeft = (imageBox.left + kShelfRequiredSize) < editingBox.right;
+    const positionLeft = imageBox.left + kShelfRequiredSize < editingBox.right;
     if (positionLeft) {
       shelf.style.left = '0';
       if (img.offsetWidth < kShelfRequiredSize) {
-        shelf.style.right = (img.offsetWidth - kShelfRequiredSize) + 'px';
+        shelf.style.right = img.offsetWidth - kShelfRequiredSize + 'px';
       } else {
         shelf.style.right = '';
       }
-    }
-    else {
+    } else {
       shelf.style.right = '0';
       if (img.offsetWidth < kShelfRequiredSize) {
-        shelf.style.left = (img.offsetWidth - kShelfRequiredSize) + 'px';
+        shelf.style.left = img.offsetWidth - kShelfRequiredSize + 'px';
       } else {
         shelf.style.left = '';
       }
@@ -244,7 +229,7 @@ function resizeShelf(
   };
 
   // always position below
-  shelf.style.bottom = "-48px";
+  shelf.style.bottom = '-48px';
 
   // main panel that holds the controls
   const panel = createHorizontalPanel();
@@ -257,7 +242,7 @@ function resizeShelf(
       addHorizontalPanelCell(panel, paddingSpan);
     }
   };
-  
+
   const inputClasses = ['pm-text-color', 'pm-background-color'];
 
   // width
@@ -280,8 +265,8 @@ function resizeShelf(
   // units
   const unitsSelect = createSelectInput(validUnits(), inputClasses);
   unitsSelect.onchange = () => {
-    // drive focus to width and back to prevent wierd selection change 
-    // detection condition that causes PM to re-render the node the 
+    // drive focus to width and back to prevent wierd selection change
+    // detection condition that causes PM to re-render the node the
     // next time we resize it
     wInput.focus();
     unitsSelect.focus();
@@ -304,10 +289,7 @@ function resizeShelf(
   addToPanel(lockLabel, 20);
 
   // edit button
-  const editImage = createImageButton(
-    ['pm-image-button-edit-properties'], 
-    translateText('Edit Image')
-  );
+  const editImage = createImageButton(['pm-image-button-edit-properties'], translateText('Edit Image'));
   editImage.onclick = onEditImage;
   addHorizontalPanelCell(panel, editImage);
 
@@ -318,10 +300,8 @@ function resizeShelf(
     img.onload = onInit;
   }
 
-
   // function used to manage ui
   const manageUnitsUI = () => {
-
     const percentSizing = unitsSelect.value === '%';
 
     if (percentSizing) {
@@ -334,7 +314,6 @@ function resizeShelf(
     hInput.style.display = percentSizing ? 'none' : '';
     hAutoLabel.style.display = percentSizing ? '' : 'none';
   };
-
 
   // helper function to get a dimension (returns null if input not currently valid)
   const getDim = (input: HTMLInputElement) => {
@@ -350,7 +329,7 @@ function resizeShelf(
   };
 
   const setWidth = (width: number) => {
-    wInput.value = roundUnit(width, unitsSelect.value);  
+    wInput.value = roundUnit(width, unitsSelect.value);
   };
   const setHeight = (height: number) => {
     hInput.value = roundUnit(height, unitsSelect.value);
@@ -363,7 +342,6 @@ function resizeShelf(
     // we don't sync to the node b/c we want to benefit from automatic
     // unit handling in the conversion to the DOM
     sync: () => {
-
       const size = shelfSizeFromImage(img);
       unitsSelect.value = size.unit;
       setWidth(size.width);
@@ -371,10 +349,9 @@ function resizeShelf(
 
       // manage units ui
       manageUnitsUI();
-      
+
       // ensure we are positioned correctly (not offscreen, wide enough, etc.)
       updatePosition();
-
     },
 
     position: () => {
@@ -387,32 +364,31 @@ function resizeShelf(
       height: () => getDim(hInput) || shelfSizeFromImage(img).height,
       setHeight,
       units: () => unitsSelect.value,
-      setUnits: (units: string) => unitsSelect.value = units,
+      setUnits: (units: string) => (unitsSelect.value = units),
       lockRatio: () => lockCheckbox.checked,
       setLockRatio: (lock: boolean) => {
-        if (!lockCheckbox.disabled) { 
+        if (!lockCheckbox.disabled) {
           lockCheckbox.checked = lock;
         }
-      }
-    }
+      },
+    },
   };
 }
 
 function shelfSizeFromImage(img: HTMLImageElement) {
-
   // get attributes
   const width = img.getAttribute('data-width');
   const height = img.getAttribute('data-height');
- 
+
   // if there is no width and no height, then use pixels
   if (!width && !height) {
     return {
       width: img.offsetWidth,
       height: img.offsetHeight,
-      unit: 'px'
+      unit: 'px',
     };
 
-  // read units 
+    // read units
   } else {
     let widthWithUnit = sizePropWithUnit(width);
     let heightWithUnit = sizePropWithUnit(height);
@@ -420,47 +396,41 @@ function shelfSizeFromImage(img: HTMLImageElement) {
     if (!widthWithUnit) {
       widthWithUnit = {
         size: heightWithUnit!.size * (img.offsetWidth / img.offsetHeight),
-        unit: heightWithUnit!.unit
+        unit: heightWithUnit!.unit,
       };
     }
 
     if (!heightWithUnit) {
       heightWithUnit = {
         size: widthWithUnit.size * (img.offsetHeight / img.offsetWidth),
-        unit: widthWithUnit.unit
+        unit: widthWithUnit.unit,
       };
     }
 
     return {
       width: widthWithUnit.size,
       height: heightWithUnit.size,
-      unit: widthWithUnit.unit
+      unit: widthWithUnit.unit,
     };
-  } 
+  }
 }
 
-
 function resizeHandle(
-  img: HTMLImageElement, 
+  img: HTMLImageElement,
   imgContainerWidth: () => number,
   lockRatio: () => boolean,
   units: () => string,
   onSizing: () => void,
-  onSizingComplete: () => void
+  onSizingComplete: () => void,
 ) {
-
   const handle = document.createElement('span');
-  handle.classList.add(
-    'pm-image-resize-handle', 
-    'pm-background-color', 
-    'pm-selected-node-border-color'
-  );
+  handle.classList.add('pm-image-resize-handle', 'pm-background-color', 'pm-selected-node-border-color');
   handle.style.position = 'absolute';
   handle.style.bottom = '-6px';
   handle.style.right = '-6px';
   handle.style.cursor = 'nwse-resize';
 
-  const havePointerEvents = !!document.body.setPointerCapture;  
+  const havePointerEvents = !!document.body.setPointerCapture;
 
   const onPointerDown = (ev: MouseEvent) => {
     ev.preventDefault();
@@ -474,7 +444,6 @@ function resizeHandle(
     const containerWidth = imgContainerWidth();
 
     const onPointerMove = (e: MouseEvent) => {
-
       // detect pointer movement
       const movedX = e.pageX - startX;
       const movedY = e.pageY - startY;
@@ -483,17 +452,17 @@ function resizeHandle(
       let height;
       if (lockRatio()) {
         if (movedX >= movedY) {
-          width = startWidth + movedX; 
-          height = startHeight + (movedX * (startHeight/startWidth));
+          width = startWidth + movedX;
+          height = startHeight + movedX * (startHeight / startWidth);
         } else {
           height = startHeight + movedY;
-          width = startWidth + (movedY * (startWidth/startHeight));
+          width = startWidth + movedY * (startWidth / startHeight);
         }
       } else {
         width = startWidth + movedX;
         height = startHeight + movedY;
-      }    
-      
+      }
+
       // set image width and height based on units currnetly in use
       img.style.width = width + 'px';
       img.setAttribute('data-width', pixelsToUnit(width, units(), containerWidth) + units());
@@ -515,7 +484,7 @@ function resizeHandle(
         document.removeEventListener('mousemove', onPointerMove);
         document.removeEventListener('mouseup', onPointerUp);
       }
-      
+
       // update image size
       onSizingComplete();
     };
@@ -528,7 +497,6 @@ function resizeHandle(
       document.addEventListener('mousemove', onPointerMove);
       document.addEventListener('mouseup', onPointerUp);
     }
-    
   };
 
   if (havePointerEvents) {
@@ -538,19 +506,16 @@ function resizeHandle(
   }
 
   return handle;
-
 }
 
-
 function updateImageSize(
-  view: EditorView, 
-  image: NodeWithPos, 
+  view: EditorView,
+  image: NodeWithPos,
   img: HTMLImageElement,
-  width: number, 
+  width: number,
   height: number,
-  unit: string
+  unit: string,
 ) {
-
   // don't write pixels explicitly
   unit = unit === 'px' ? '' : unit;
 
@@ -561,7 +526,6 @@ function updateImageSize(
   if (!hasPercentWidth(width + unit) && !isNaturalAspectRatio(width, height, img, false)) {
     keyvalue.push(['height', height + unit]);
   }
-  
 
   // create transaction
   const tr = view.state.tr;

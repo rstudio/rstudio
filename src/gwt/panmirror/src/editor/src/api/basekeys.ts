@@ -30,13 +30,13 @@ import { keymap } from 'prosemirror-keymap';
 import { CommandFn } from './command';
 
 export enum BaseKey {
-  Enter = "Enter",
-  ModEnter = "Mod-Enter",
-  ShiftEnter = "Shift-Enter",
-  Backspace = "Backspace",
-  Delete = "Delete|Mod-Delete", // Use pipes to register multiple commands
-  Tab = "Tab",
-  ShiftTab = "Shift-Tab",
+  Enter = 'Enter',
+  ModEnter = 'Mod-Enter',
+  ShiftEnter = 'Shift-Enter',
+  Backspace = 'Backspace',
+  Delete = 'Delete|Mod-Delete', // Use pipes to register multiple commands
+  Tab = 'Tab',
+  ShiftTab = 'Shift-Tab',
 }
 
 export interface BaseKeyBinding {
@@ -70,7 +70,7 @@ export function baseKeysPlugin(keys: BaseKeyBinding[]) {
   ];
 
   // build arrays for each BaseKey type
-  const commandMap : { [key: string ]: CommandFn[] } = {};
+  const commandMap: { [key: string]: CommandFn[] } = {};
   for (const baseKey of Object.values(BaseKey)) {
     commandMap[baseKey] = [];
   }
@@ -78,7 +78,7 @@ export function baseKeysPlugin(keys: BaseKeyBinding[]) {
     commandMap[key.key].unshift(key.command);
   });
 
-  const bindings: {[key: string]: CommandFn} = {};
+  const bindings: { [key: string]: CommandFn } = {};
   for (const baseKey of Object.values(BaseKey)) {
     const commands = commandMap[baseKey];
     // baseKey may contain multiple keys, separated by |
@@ -90,4 +90,3 @@ export function baseKeysPlugin(keys: BaseKeyBinding[]) {
   // return keymap
   return keymap(bindings);
 }
-

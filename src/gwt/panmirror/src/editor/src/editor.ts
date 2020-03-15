@@ -703,7 +703,6 @@ export class Editor {
   }
 
   private docWithCursorSentinel() {
-
     // transaction for inserting the sentinel (won't actually commit since it will
     // have the sentinel in it but rather will use the computed tr.doc)
     const tr = this.state.tr;
@@ -717,8 +716,7 @@ export class Editor {
       // only proceed if we are not inside a table (as the sentinel will mess up
       // table column formatting)
       const textBlockPos = tr.doc.resolve(textBlock.pos);
-      if (!this.schema.nodes.table || 
-          !findParentNodeOfTypeClosestToPos(textBlockPos, this.schema.nodes.table)) {
+      if (!this.schema.nodes.table || !findParentNodeOfTypeClosestToPos(textBlockPos, this.schema.nodes.table)) {
         // space at the end of the sentinel so that it doesn't interere with
         // markdown that is sensitive to contiguous characters (e.g. math)
         cursorSentinel = 'CursorSentinel-CAFB04C4-080D-4074-898C-F670CAACB8AF ';
@@ -728,11 +726,10 @@ export class Editor {
     }
 
     // return the doc and sentinel (if any)
-    return { 
+    return {
       doc: tr.doc,
-      cursorSentinel
+      cursorSentinel,
     };
-
   }
 }
 

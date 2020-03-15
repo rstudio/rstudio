@@ -13,18 +13,16 @@
  *
  */
 
-
- export function removeStyleAttrib(style: string, attrib: string, handler?: (attrib: string, value: string) => void) {
+export function removeStyleAttrib(style: string, attrib: string, handler?: (attrib: string, value: string) => void) {
   return style.replace(new RegExp('(' + attrib + ')\\:\\s*(\\w+)', 'g'), (_match, p1, p2) => {
     if (handler) {
       handler(p1, p2);
     }
     return '';
   });
- }
+}
 
- export function extractSizeStyles(keyvalues: Array<[string,string]> | undefined) {
-
+export function extractSizeStyles(keyvalues: Array<[string, string]> | undefined) {
   if (!keyvalues) {
     return keyvalues;
   }
@@ -34,7 +32,7 @@
   const getValue = (key: string) => {
     const pair = newKeyvalues.find(keyvalue => keyvalue[0] === key);
     return pair ? pair[1] : null;
-  }; 
+  };
 
   const setValue = (key: string, value: string | null) => {
     newKeyvalues = newKeyvalues.filter(keyvalue => keyvalue[0] !== key);
@@ -68,5 +66,4 @@
   setValue('style', style);
 
   return newKeyvalues;
-
- }
+}

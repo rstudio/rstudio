@@ -40,7 +40,7 @@ export function createPopup(
 ) {
   // create popup
   const popup = window.document.createElement('span');
-  popup.contentEditable = "false";
+  popup.contentEditable = 'false';
   popup.classList.add('pm-popup', 'pm-pane-border-color', 'pm-background-color', 'pm-text-color');
   popup.style.position = 'absolute';
   popup.style.zIndex = '10';
@@ -64,14 +64,13 @@ export function createPopup(
   return popup;
 }
 
-
 // popup that appears immediately below a range of text (e.g. actions popup below links)
 export function createTextRangePopup(
-  view: EditorView, 
-  range: { from: number, to: number },  
+  view: EditorView,
+  range: { from: number; to: number },
   classes: string[],
   maxWidth: number,
-  onDestroyed?: () => void
+  onDestroyed?: () => void,
 ) {
   // get the (window) DOM coordinates for the start of the range. we use range.from + 1 so
   // that ranges that are at the beginning of a line don't have their position set
@@ -85,7 +84,7 @@ export function createTextRangePopup(
   const editingBox = editingEl.getBoundingClientRect();
 
   // we are going to stick the decoration at the beginning of the containing
-  // top level body block, then position it by calculating the relative location of 
+  // top level body block, then position it by calculating the relative location of
   // the range within text block. we do this so that the decoration isn't located
   // *within* the range (which confounds double-click selection and spell checking)
   const containingBlockPos = rangePos.start(2);
@@ -95,7 +94,7 @@ export function createTextRangePopup(
 
   // base popup style
   const popupStyle = {
-    'margin-top': (linkCoords.bottom - containingBlockBox.top + 3) + "px"
+    'margin-top': linkCoords.bottom - containingBlockBox.top + 3 + 'px',
   };
 
   // we need to compute whether the popup will be visible (horizontally), do
@@ -105,32 +104,42 @@ export function createTextRangePopup(
   if (positionRight) {
     const rightCoords = view.coordsAtPos(range.to);
     const rightPos = editingBox.right - rightCoords.right;
-    popup = createPopup(view, classes, onDestroyed, { 
-      ...popupStyle,
-      right: rightPos + 'px' 
-    });
-  } else {
-    const marginLeft = "calc(" + 
-      (linkCoords.left - containingBlockBox.left) + "px " + 
-      " - " + containingBlockStyle.borderLeftWidth + 
-      " - " + containingBlockStyle.paddingLeft + 
-      " - " + containingBlockStyle.marginLeft +
-      " - 1ch" + 
-    ")";
     popup = createPopup(view, classes, onDestroyed, {
       ...popupStyle,
-      'margin-left': marginLeft
+      right: rightPos + 'px',
+    });
+  } else {
+    const marginLeft =
+      'calc(' +
+      (linkCoords.left - containingBlockBox.left) +
+      'px ' +
+      ' - ' +
+      containingBlockStyle.borderLeftWidth +
+      ' - ' +
+      containingBlockStyle.paddingLeft +
+      ' - ' +
+      containingBlockStyle.marginLeft +
+      ' - 1ch' +
+      ')';
+    popup = createPopup(view, classes, onDestroyed, {
+      ...popupStyle,
+      'margin-left': marginLeft,
     });
   }
 
   return {
     pos: rangePos.start(2),
-    popup
+    popup,
   };
 }
 
-
-export function createLinkButton(text: string, title?: string, maxWidth?: number, classes?: string[], style?: { [key: string]: string }) {
+export function createLinkButton(
+  text: string,
+  title?: string,
+  maxWidth?: number,
+  classes?: string[],
+  style?: { [key: string]: string },
+) {
   const link = window.document.createElement('a');
   link.classList.add('pm-link', 'pm-link-text-color');
   link.href = '#';
@@ -168,9 +177,8 @@ export function createSelectInput(options: string[], classes?: string[], style?:
 }
 
 export function createDatalistInput(options: string[], classes?: string[], style?: { [key: string]: string }) {
-  
   const container = window.document.createElement('span');
-  
+
   const datalistId = uuidv4();
   const datalist = window.document.createElement('datalist');
   datalist.id = datalistId;
@@ -183,10 +191,10 @@ export function createDatalistInput(options: string[], classes?: string[], style
   input.classList.add('pm-input-datalist');
   applyStyles(input, classes, style);
   container.append(input);
-  
-  return  {
+
+  return {
     container,
-    input
+    input,
   };
 }
 
@@ -202,46 +210,41 @@ function appendOptions(container: HTMLElement, options: string[]) {
 export function createCheckboxInput(classes?: string[], style?: { [key: string]: string }) {
   const input = window.document.createElement('input');
   input.classList.add('pm-input-checkbox');
-  input.type = "checkbox";
+  input.type = 'checkbox';
   applyStyles(input, classes, style);
   return input;
 }
 
-export function createTextInput(
-  widthChars: number,
-  classes?: string[], 
-  style?: { [key: string]: string }
-) {
+export function createTextInput(widthChars: number, classes?: string[], style?: { [key: string]: string }) {
   const input = document.createElement('input');
-  input.type = "text";
+  input.type = 'text';
   input.classList.add('pm-input-text');
   applyStyles(input, classes, style);
-  input.style.width = (widthChars) + "ch";
+  input.style.width = widthChars + 'ch';
   return input;
 }
 
 export function createNumericInput(
-  digits: number, 
-  min?: number, 
-  max?: number, 
-  classes?: string[], 
-  style?: { [key: string]: string }
+  digits: number,
+  min?: number,
+  max?: number,
+  classes?: string[],
+  style?: { [key: string]: string },
 ) {
-    const input = document.createElement('input');
-    input.type = "number";
-    input.classList.add('pm-input-numeric');
-    applyStyles(input, classes, style);
-    input.style.width = (digits + 1) + "ch";
-    if (min) {
-      input.min = min.toString();
-    }
-    if (max) {
-      input.max = max.toString();
-    }
+  const input = document.createElement('input');
+  input.type = 'number';
+  input.classList.add('pm-input-numeric');
+  applyStyles(input, classes, style);
+  input.style.width = digits + 1 + 'ch';
+  if (min) {
+    input.min = min.toString();
+  }
+  if (max) {
+    input.max = max.toString();
+  }
 
-    return input;
+  return input;
 }
-
 
 export function showTooltip(
   el: Element,
@@ -254,7 +257,6 @@ export function showTooltip(
   tlite.show(el, { grav });
   setTimeout(() => tlite.hide(el), timeout);
 }
-
 
 function applyStyles(el: HTMLElement, classes?: string[], style?: { [key: string]: string }) {
   if (classes) {

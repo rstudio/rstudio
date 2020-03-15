@@ -152,14 +152,12 @@ export function insertAndSelectNode(
 export function editingRootNode(selection: Selection) {
   const schema = selection.$head.node().type.schema;
   return findParentNodeOfType(schema.nodes.body)(selection) || findParentNodeOfType(schema.nodes.note)(selection);
-
-
 }
 
 export function editingRootNodeClosestToPos($pos: ResolvedPos) {
   const schema = $pos.node().type.schema;
-  return findParentNodeOfTypeClosestToPos($pos, schema.nodes.body) || 
-         findParentNodeOfTypeClosestToPos($pos, schema.nodes.note);
+  return (
+    findParentNodeOfTypeClosestToPos($pos, schema.nodes.body) ||
+    findParentNodeOfTypeClosestToPos($pos, schema.nodes.note)
+  );
 }
-
-

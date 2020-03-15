@@ -16,7 +16,7 @@
 const kDpi = 96;
 
 // https://github.com/jgm/pandoc/blob/master/src/Text/Pandoc/ImageSize.hs
-const kValidUnits = ["px", "in", "cm", "mm", "%"];// 
+const kValidUnits = ['px', 'in', 'cm', 'mm', '%']; //
 
 export function validUnits() {
   return kValidUnits;
@@ -26,10 +26,9 @@ export function isValidUnit(unit: string) {
   return kValidUnits.includes(unit);
 }
 
-
 export function isNaturalAspectRatio(width: number, height: number, img: HTMLImageElement, defaultValue: boolean) {
   if (img.naturalWidth && img.naturalHeight) {
-    const diff = Math.abs((width/height) - (img.naturalWidth/img.naturalHeight));
+    const diff = Math.abs(width / height - img.naturalWidth / img.naturalHeight);
     return diff <= 0.02;
   } else {
     // no naturalWidth or naturalHeight, return default
@@ -39,20 +38,20 @@ export function isNaturalAspectRatio(width: number, height: number, img: HTMLIma
 
 export function unitToPixels(value: number, unit: string, containerWidth: number) {
   let pixels;
-  switch(unit) {
-    case "in":
+  switch (unit) {
+    case 'in':
       pixels = value * kDpi;
       break;
-    case "mm":
+    case 'mm':
       pixels = value * (kDpi / 25.4);
       break;
-    case "cm":
+    case 'cm':
       pixels = value * (kDpi / 2.54);
       break;
-    case "%":
+    case '%':
       pixels = (value / 100) * ensureContainerWidth(containerWidth);
       break;
-    case "px":
+    case 'px':
     default:
       pixels = value;
       break;
@@ -61,26 +60,26 @@ export function unitToPixels(value: number, unit: string, containerWidth: number
 }
 
 export function pixelsToUnit(pixels: number, unit: string, containerWidth: number) {
-  switch(unit) {
-    case "in":
+  switch (unit) {
+    case 'in':
       return pixels / kDpi;
-    case "mm":
+    case 'mm':
       return (pixels / kDpi) * 25.4;
-    case "cm":
+    case 'cm':
       return (pixels / kDpi) * 2.54;
-    case "%":
+    case '%':
       return (pixels / ensureContainerWidth(containerWidth)) * 100;
-    case "px":
+    case 'px':
     default:
       return pixels;
   }
 }
 
-export function roundUnit(value: number, unit: string)  {
-  switch(unit) {
-    case "in":
+export function roundUnit(value: number, unit: string) {
+  switch (unit) {
+    case 'in':
       return value.toFixed(2);
-    case "cm":
+    case 'cm':
       return value.toFixed(1);
     default:
       return Math.round(value).toString();
@@ -93,7 +92,7 @@ export function sizePropWithUnit(prop: string | null) {
     if (match) {
       return {
         size: parseFloat(match[1]),
-        unit: match[2]
+        unit: match[2],
       };
     } else {
       return null;
@@ -101,7 +100,6 @@ export function sizePropWithUnit(prop: string | null) {
   } else {
     return null;
   }
- 
 }
 
 export function hasPercentWidth(size: string | null) {
@@ -109,7 +107,7 @@ export function hasPercentWidth(size: string | null) {
 }
 
 // sometime when we are called before the DOM renders the containerWidth
-// is 0, in this case provide a default of 1000 
+// is 0, in this case provide a default of 1000
 function ensureContainerWidth(containerWidth: number) {
   return containerWidth || 1000;
 }
