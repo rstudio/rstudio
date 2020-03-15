@@ -50,7 +50,7 @@ constexpr const char* kPostgresqlDatabaseConnectionTimeoutSeconds = "connnection
 constexpr const int   kDefaultPostgresqlDatabaseConnectionTimeoutSeconds = 10;
 
 // environment variables
-constexpr const char* kServerTmpDirEnvVar = "RS_SERVER_TMP_DIR";
+constexpr const char* kServerDataDirEnvVar = "RS_SERVER_DATA_DIR";
 constexpr const char* kDatabaseMigrationsPathEnvVar = "RS_DB_MIGRATIONS_PATH";
 
 //misc constants
@@ -93,7 +93,7 @@ Error readOptions(ConnectionOptions* pOptions)
 
    std::string databaseProvider = settings.get(kDatabaseProvider, kDatabaseProviderSqlite);
 
-   if (boost::iequals(databaseProvider, "sqlite"))
+   if (boost::iequals(databaseProvider, kDatabaseProviderSqlite))
    {
       SqliteConnectionOptions options;
 
@@ -103,7 +103,7 @@ Error readOptions(ConnectionOptions* pOptions)
       std::string databaseDirectory = settings.get(kSqliteDatabaseDirectory, std::string());
       if (databaseDirectory.empty())
       {
-         databaseDirectory = core::system::getenv(kServerTmpDirEnvVar);
+         databaseDirectory = core::system::getenv(kServerDataDirEnvVar);
          if (databaseDirectory.empty())
             databaseDirectory = kDefaultSqliteDatabaseDirectory;
       }
@@ -111,7 +111,7 @@ Error readOptions(ConnectionOptions* pOptions)
       options.file = FilePath(databaseDirectory).completeChildPath("rstudio.sqlite").getAbsolutePath();
       *pOptions = options;
    }
-   else if (boost::iequals(databaseProvider, "postgresql"))
+   else if (boost::iequals(databaseProvider, kDatabaseProviderPostgresql))
    {
       PostgresqlConnectionOptions options;
       options.database = "rstudio";

@@ -10,8 +10,6 @@ ln -f -s ${CMAKE_INSTALL_PREFIX}/bin/rstudio /usr/bin/rstudio
 ln -f -s ${CMAKE_INSTALL_PREFIX}/bin/libsoci_core.so.4.0.0 ${CMAKE_INSTALL_PREFIX}/bin/libsoci_core.so.4.0
 ln -f -s ${CMAKE_INSTALL_PREFIX}/bin/libsoci_sqlite3.so.4.0.0 ${CMAKE_INSTALL_PREFIX}/bin/libsoci_sqlite3.so.4.0
 ln -f -s ${CMAKE_INSTALL_PREFIX}/bin/libsoci_postgresql.so.4.0.0 ${CMAKE_INSTALL_PREFIX}/bin/libsoci_postgresql.so.4.0
-ln -f -s ${CMAKE_INSTALL_PREFIX}/bin/libpq.so* ${CMAKE_INSTALL_PREFIX}/bin/$(ldd "${CMAKE_INSTALL_PREFIX}/bin/rstudio" | grep libpq | awk '{print $1}')
-ln -f -s ${CMAKE_INSTALL_PREFIX}/bin/libsqlite3.so* ${CMAKE_INSTALL_PREFIX}/bin/$(ldd "${CMAKE_INSTALL_PREFIX}/bin/rstudio" | grep libsqlite | awk '{print $1}')
 
 # create openssl softlinks based off Fedora version 
 if test -f /etc/fedora-release

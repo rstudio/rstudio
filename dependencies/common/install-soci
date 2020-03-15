@@ -25,7 +25,7 @@ BOOST_VERSION="1_69_0"
 RSTUDIO_TOOLS_DIR=/opt/rstudio-tools
 SOCI_DIR=$RSTUDIO_TOOLS_DIR/soci
 SOCI_BIN_DIR=$SOCI_DIR/build
-SOCI_BRANCH=release/4.0
+SOCI_URL=https://s3.amazonaws.com/rstudio-buildtools/soci.tar.gz
 BOOST_DIR="$RSTUDIO_TOOLS_DIR/boost/boost_$BOOST_VERSION"
 
 # install SOCI if it isn't already installed
@@ -36,26 +36,27 @@ then
    # download SOCI from source
    if ! [ -d "$SOCI_DIR" ]
    then
-      git clone git://github.com/SOCI/soci.git
+      sudo curl $SOCI_URL -o soci.tar.gz
+      sudo tar zxvf soci.tar.gz
+      sudo rm soci.tar.gz
    fi
    cd $SOCI_DIR
 
-   # checkout desired soci branch (version pinned)
-   git checkout "$SOCI_BRANCH"  
-
    # make build directory
-   mkdir -p $SOCI_BIN_DIR
+   sudo mkdir -p $SOCI_BIN_DIR
    cd $SOCI_BIN_DIR
 
    # create symlink to our boost datetime library so it is properly discovered by the SOCI build
-   ln -sf "$BOOST_DIR/lib/libboost_date_time.a" "$BOOST_DIR/lib/rstudio_boost_date_time.a"
+   sudo ln -sf "$BOOST_DIR/lib/libboost_date_time.a" "$BOOST_DIR/lib/rstudio_boost_date_time.a"
  
    # build SOCI
-   cmake -G "Unix Makefiles" -DSOCI_TESTS=OFF -DSOCI_CXX11=ON -DSOCI_EMPTY=OFF -DCMAKE_INCLUDE_PATH="$BOOST_DIR/include" -DBoost_USE_STATIC_LIBS=ON -DCMAKE_LIBRARY_PATH="$BOOST_DIR/lib" -DWITH_BOOST=ON -DWITH_POSTGRESQL=ON -DWITH_SQLITE3=ON -DBoost_DEBUG=1 ..   
-   make
+   cmakeCommand=$(which cmake)
+   makeCommand=$(which make)
+   sudo $cmakeCommand -G "Unix Makefiles" -DSOCI_TESTS=OFF -DSOCI_CXX11=ON -DSOCI_EMPTY=OFF -DCMAKE_INCLUDE_PATH="$BOOST_DIR/include" -DBoost_USE_STATIC_LIBS=ON -DCMAKE_LIBRARY_PATH="$BOOST_DIR/lib" -DWITH_BOOST=ON -DWITH_POSTGRESQL=ON -DWITH_SQLITE3=ON -DBoost_DEBUG=1 ..   
+   sudo $makeCommand
    
-   # fix up permissions (if run as root, bin dir will be unreadable by others)
-   chmod -R 777 "$SOCI_BIN_DIR" 
+   # fix up permissions so bin dir will be readable by others
+   sudo chmod -R 777 "$SOCI_BIN_DIR" 
 else
    echo "SOCI already installed in $SOCI_BIN_DIR"
 fi

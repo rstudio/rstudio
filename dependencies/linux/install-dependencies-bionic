@@ -51,7 +51,7 @@ sudo apt-get -y install \
   libpam-dev \
   libpango1.0-dev \
   libpq-dev \
-  libsqlite-dev \
+  libsqlite3-dev \
   libssl-dev \
   libuser1-dev \
   libxslt1-dev \
