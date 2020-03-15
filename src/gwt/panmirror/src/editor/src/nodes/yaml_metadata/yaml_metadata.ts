@@ -110,9 +110,8 @@ class YamlMetadataCommand extends ProsemirrorCommand {
           const kYamlTrailing = '\n---';
           const yamlText = schema.text(kYamlLeading + kYamlTrailing);
           const yamlNode = schema.nodes.yaml_metadata.create({}, yamlText);
-          const prevSel = tr.selection.from;
           tr.replaceSelectionWith(yamlNode);
-          setTextSelection(prevSel + kYamlLeading.length, -1)(tr);
+          setTextSelection(tr.selection.from - kYamlTrailing.length - 2)(tr);
           dispatch(tr);
         }
 

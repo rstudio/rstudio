@@ -129,9 +129,8 @@ class RmdChunkCommand extends ProsemirrorCommand {
           const kRmdText = 'r\n';
           const rmdText = schema.text(kRmdText);
           const rmdNode = schema.nodes.rmd_chunk.create({}, rmdText);
-          const prevSel = tr.selection.from;
           tr.replaceSelectionWith(rmdNode);
-          setTextSelection(prevSel + kRmdText.length, -1)(tr);
+          setTextSelection(tr.selection.from - 2)(tr);
           dispatch(tr);
         }
 
