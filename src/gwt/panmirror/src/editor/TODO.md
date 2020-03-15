@@ -10,6 +10,8 @@ Images should support width/align for gfm (write raw\_html) (we'd need to do the
 
 Clipboard / DragDrop support for images
 
+GFM double-bracket links
+
 Surface attributes
 handling for div with only an id (shading treatment a bit much?)
 
