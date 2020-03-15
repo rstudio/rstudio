@@ -73,6 +73,7 @@ public class TextEditorContainer extends LayoutPanel implements CanFocus
          if (widget.isVisible()) 
          {
             widget.focus();
+            return;
          }
       });
    }
