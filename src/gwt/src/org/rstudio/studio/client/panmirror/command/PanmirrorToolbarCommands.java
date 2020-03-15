@@ -96,7 +96,7 @@ public class PanmirrorToolbarCommands
       add(PanmirrorCommands.InlineLatex, "Inline LaTeX");
       add(PanmirrorCommands.RawInline, "Raw Inline...");
       add(PanmirrorCommands.RawBlock, "Raw Block...");
-      add(PanmirrorCommands.YamlMetadata, "YAML Block...");
+      add(PanmirrorCommands.YamlMetadata, "YAML Block");
       add(PanmirrorCommands.RmdChunk, "Code Chunk", icons.RMD_CHUNK);
       add(PanmirrorCommands.DefinitionList, "Definition List");
       add(PanmirrorCommands.DefinitionTerm, "Term");
