@@ -719,7 +719,7 @@ export class Editor {
       if (!this.schema.nodes.table || !findParentNodeOfTypeClosestToPos(textBlockPos, this.schema.nodes.table)) {
         // space at the end of the sentinel so that it doesn't interere with
         // markdown that is sensitive to contiguous characters (e.g. math)
-        cursorSentinel = 'CursorSentinel-CAFB04C4-080D-4074-898C-F670CAACB8AF ';
+        cursorSentinel = 'CursorSentinel-CAFB04C4-080D-4074-898C-F670CAACB8AF';
         setTextSelection(textBlock.pos)(tr);
         tr.insertText(cursorSentinel);
       }
