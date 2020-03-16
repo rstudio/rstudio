@@ -31,6 +31,7 @@ import org.rstudio.studio.client.panmirror.PanmirrorUIContext;
 import org.rstudio.studio.client.panmirror.PanmirrorWidget;
 import org.rstudio.studio.client.panmirror.PanmirrorWriterOptions;
 import org.rstudio.studio.client.panmirror.command.PanmirrorCommands;
+import org.rstudio.studio.client.panmirror.pandoc.PanmirrorPandocFormat;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.commands.Commands;
@@ -170,6 +171,18 @@ public class TextEditingTargetVisualMode
             
             if (focus)
               panmirror_.focus();
+            
+            // show any format or extension warnings
+            PanmirrorPandocFormat format = panmirror_.getPandocFormat();
+            if (format.warnings.invalidFormat.length() > 0)
+            {
+               display_.showWarningBar("Invalid Pandoc format: " + format.warnings.invalidFormat);
+            }
+            else if (format.warnings.invalidOptions.length > 0)
+            {
+               display_.showWarningBar("Pandoc format " + format.baseName + " does not support options: " + 
+                                       String.join(", ", format.warnings.invalidOptions));
+            }
          });                
       });
    }
