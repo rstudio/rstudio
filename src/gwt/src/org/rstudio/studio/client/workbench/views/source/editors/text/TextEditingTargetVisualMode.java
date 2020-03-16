@@ -115,22 +115,22 @@ public class TextEditingTargetVisualMode
       }
    }
    
-   public void syncToEditor(boolean force)
+   public void syncToEditor(boolean activatingEditor)
    {
-      syncToEditor(force, null);
+      syncToEditor(activatingEditor, null);
    }
    
-   public void syncToEditor(boolean force, Command ready)
+   public void syncToEditor(boolean activatingEditor, Command ready)
    {
       // if panmirror is active then generate markdown & sync it to the editor
-      if (isPanmirrorActive() && (force || isDirty_))
+      if (isPanmirrorActive() && (activatingEditor || isDirty_))
       {
          withPanmirror(() -> {
             PanmirrorWriterOptions options = new PanmirrorWriterOptions();
             options.atxHeaders = true;
             if (prefs_.visualMarkdownEditingWrapAuto().getValue())
                options.wrapColumn = prefs_.visualMarkdownEditingWrapColumn().getValue();
-            panmirror_.getMarkdown(options, true, markdown -> { 
+            panmirror_.getMarkdown(options, activatingEditor, markdown -> { 
                TextEditorContainer.EditorCode editorCode = new TextEditorContainer.EditorCode(markdown);
                getSourceEditor().setCode(editorCode, true); 
                isDirty_ = false;
