@@ -5,6 +5,8 @@ Discuss tokens / escaping / etc. with Joe
 Images that link to things need to be supported. Currently a "figure" with a surrounding link tag doesn't even round trip! That's 
 because figures can't have links, we should reflect this.
 
+Fixup mechanism needs to become more generic (layout vs. load)
+
 Image dialog with width/height/style
 
 Images should support width/align for gfm (write raw\_html) (we'd need to do the image tag parsing for this to work). May be as simple as just letting it through (as pandoc seems to automatically write html tags if raw\_html is supported but link\_attributes aren't) Alternatively, we could send inline html through the schema dom parser to see if it has an internal representation
