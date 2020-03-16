@@ -27,9 +27,7 @@ import {
 import { EditorState, Plugin, PluginKey, Transaction } from 'prosemirror-state';
 import { EditorView } from 'prosemirror-view';
 import {
-  findChildren,
   setTextSelection,
-  findParentNodeOfType,
   findParentNodeOfTypeClosestToPos,
   findParentNode,
 } from 'prosemirror-utils';
