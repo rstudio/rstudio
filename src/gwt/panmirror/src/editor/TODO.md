@@ -2,10 +2,10 @@
 
 Discuss tokens / escaping / etc. with Joe
 
+Slight flashing for image resize shelf if in 'auto' mode (may need to show/hide at creation time)
+
 Images that link to things need to be supported. Currently a "figure" with a surrounding link tag doesn't even round trip! That's 
 because figures can't have links, we should reflect this.
-
-Fixup mechanism needs to become more generic (layout vs. load)
 
 Image dialog with width/height/style
 
