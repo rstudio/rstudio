@@ -405,6 +405,7 @@ if(UNIX)
       set(SOCI_LIB_SUFFIX ".4.0.0${LIB_SUFFIX}")
    endif()
    file(GLOB_RECURSE SOCI_LIBRARIES "${SOCI_LIBRARY_DIR}/*${LIB_SUFFIX}")
+   file(GLOB_RECURSE SOCI_SYMLINK_LIBRARIES "${SOCI_LIBRARY_DIR}/*${SOCI_LIB_SYMLINK}")
 else()
    set(SOCI_LIBRARY_DIR "${RSTUDIO_TOOLS_SOCI}/build/${SOCI_ARCH}/lib")
    if(CMAKE_BUILD_TYPE STREQUAL "Debug")
@@ -433,37 +434,12 @@ endif()
 
 message(STATUS "SOCI libraries found under ${SOCI_LIBRARY_DIR}.")
 
-# ensure the soci libraries are installed with the installation package
-# on Linux, we do not bundle the database client libs (libpq/libsqlite3) as these are simply installed via the system package managers
-if(UNIX)
+# ensure the soci libraries are installed with the installation package on Linux
+# on OSX, the needed depdencies are copied into the Frameworks directory
+if(UNIX AND NOT APPLE)
    install(PROGRAMS "${SOCI_LIBRARY_DIR}/libsoci_core${SOCI_LIB_SUFFIX}" DESTINATION ${RSTUDIO_INSTALL_BIN})
    install(PROGRAMS "${SOCI_LIBRARY_DIR}/libsoci_sqlite3${SOCI_LIB_SUFFIX}" DESTINATION ${RSTUDIO_INSTALL_BIN})
    install(PROGRAMS "${SOCI_LIBRARY_DIR}/libsoci_postgresql${SOCI_LIB_SUFFIX}" DESTINATION ${RSTUDIO_INSTALL_BIN})
-
-   if(APPLE)
-      GET_PREREQUISITES("${SOCI_LIBRARY_DIR}/libsoci_sqlite3${SOCI_LIB_SUFFIX}" SQLITE_LIBS "0" "0" "." "")
-      foreach(LIBRARY IN LISTS SQLITE_LIBS)
-         string(FIND "${LIBRARY}" "libsqlite3" INDEX)
-         if(INDEX GREATER "-1")
-            set(SQLITE_LIB "${LIBRARY}")
-         endif()
-      endforeach(LIBRARY)
-
-      GET_PREREQUISITES("${SOCI_LIBRARY_DIR}/libsoci_postgresql${SOCI_LIB_SUFFIX}" POSTGRES_LIBS "0" "0" "." "")
-      foreach(LIBRARY IN LISTS POSTGRES_LIBS)
-         string(FIND "${LIBRARY}" "libpq" INDEX)
-         if(INDEX GREATER "-1")
-            set(POSTGRES_LIB "${LIBRARY}")
-         endif()
-      endforeach(LIBRARY)
-
-      get_filename_component(SQLITE_LIB "${SQLITE_LIB}" REALPATH)
-      get_filename_component(POSTGRES_LIB "${POSTGRES_LIB}" REALPATH)
-      message(STATUS "SQLite lib: ${SQLITE_LIB}")
-      message(STATUS "PostgreSQL lib: ${POSTGRES_LIB}")
-      install(PROGRAMS "${SQLITE_LIB}" DESTINATION ${RSTUDIO_INSTALL_BIN})
-      install(PROGRAMS "${POSTGRES_LIB}" DESTINATION ${RSTUDIO_INSTALL_BIN})
-   endif()
 endif()
 
 if(WIN32)
