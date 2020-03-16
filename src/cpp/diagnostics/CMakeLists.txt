@@ -83,7 +83,6 @@ if(APPLE AND RSTUDIO_PACKAGE_BUILD)
 
    # do something similar to the above to fix paths to SOCI libraries
    foreach(lib ${SOCI_SYMLINK_LIBRARIES})
-      # get the real path to the library (with all symlinks resolved) and filename
       get_filename_component(LIB_PATH "${lib}" ABSOLUTE)
       get_filename_component(LIB_FILE "${LIB_PATH}" NAME)
       add_custom_command (TARGET diagnostics POST_BUILD
