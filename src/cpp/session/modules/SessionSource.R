@@ -184,10 +184,9 @@
    
    if (length(args) > 0)
    {
+      # Needs to access the list via index in case of empty strings https://github.com/rstudio/rstudio/issues/5285
       for (i in seq_along(args))
-         # Filter empty string https://github.com/rstudio/rstudio/issues/5285
-         if (!identical(args[[i]], expression()))
-            freeVars <- c(freeVars, codetools:::walkCode(args[[i]], w))
+         freeVars <- c(freeVars, codetools:::walkCode(args[[i]], w))
    }
    return(unique(freeVars))
 })
