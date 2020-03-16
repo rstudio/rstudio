@@ -257,7 +257,7 @@ export class Editor {
     applyTheme(defaultTheme());
 
     // apply fixups when the window size changes
-    this.applyFixups = this.applyFixups.bind(this);
+    this.applyFixupsOnResize = this.applyFixupsOnResize.bind(this);
     window.addEventListener('resize', this.applyFixupsOnResize);
 
     // create pandoc translator
