@@ -26,6 +26,7 @@ import { PandocNode, CodeViewOptions } from './api/node';
 import { Extension, ExtensionFn } from './api/extension';
 import { BaseKeyBinding } from './api/basekeys';
 import { AppendTransactionHandler, AppendMarkTransactionHandler } from './api/transaction';
+import { FixupFn } from './api/fixup';
 import {
   PandocTokenReader,
   PandocMarkWriter,
@@ -374,10 +375,10 @@ export class ExtensionManager {
     });
   }
 
-  public layoutFixups(schema: Schema, view: EditorView) {
-    return this.collect<(tr: Transaction) => Transaction>((extension: Extension) => {
-      if (extension.layoutFixups) {
-        return extension.layoutFixups(schema, view);
+  public fixups(schema: Schema, view: EditorView) {
+    return this.collect<FixupFn>((extension: Extension) => {
+      if (extension.fixups) {
+        return extension.fixups(schema, view);
       } else {
         return undefined;
       }

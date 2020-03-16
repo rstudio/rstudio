@@ -132,7 +132,7 @@ const extension = (pandocExtensions: PandocExtensions): Extension | null => {
       ];
     },
 
-    layoutFixups: (_schema: Schema, view: EditorView) => {
+    fixups: (_schema: Schema, view: EditorView) => {
       return [fixupTableWidths(view)];
     },
 
