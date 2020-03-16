@@ -95,8 +95,9 @@ export class ImageNodeView implements NodeView {
 
       // initialize the image, add it to the container, then add
       // the container to the DOM
-      this.updateImg(node);
+      
       container.append(this.img);
+      this.updateImg(node);
       container.contentEditable = 'false';
       this.dom.append(container);
 
@@ -113,9 +114,9 @@ export class ImageNodeView implements NodeView {
     } else {
       this.dom = document.createElement('span');
 
-      this.updateImg(node);
       this.dom.append(this.img);
-
+      this.updateImg(node);
+  
       this.contentDOM = null;
       this.figcaption = null;
     }
@@ -334,6 +335,13 @@ export class ImageNodeView implements NodeView {
   }
 
   private containerWidth() {
+
+    // don't attempt to get the width if the img is not yet connected
+    // to the DOM (view.domAtPos below will fail in this case)
+    if (!this.img.isConnected) {
+      return 0;
+    }
+
     let containerWidth = (this.view.dom as HTMLElement).offsetWidth;
     if (containerWidth > 0) {
       const pos = this.getPos();
