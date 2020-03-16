@@ -41,6 +41,7 @@
      <pathelement location="${build.dir}"/>
       <fileset dir="${gwt.sdk}" includes="*.jar"/>
       <fileset dir="${lib.dir}/gin/2.1.2" includes="*.jar"/>
+      <fileset dir="${lib.dir}/elemental2/" includes="*.jar"/>
    </path>
 
    <path id="test.class.path">
@@ -80,6 +81,26 @@
       <echo>Concatenated acesupport files to 'acesupport.js'</echo>
    </target>
 
+   <!-- panmirror typescript library -->
+   <property name="node.dir" value="../../dependencies/common/node/10.19.0"/>
+   <condition property="node.bin" value="../../../${node.dir}/bin/node">
+     <not>
+        <os family="windows" />
+     </not>
+   </condition>
+   <condition property="node.bin" value="${node.dir}/node.exe">
+     <os family="windows" />
+   </condition>
+   <property name="panmirror.dir" value="./panmirror/src/editor"/>
+   <property name="panmirror.build.dir" value="./www/js/panmirror"/>      
+   <target name="panmirror" description="Compile panmirror library">
+      <mkdir dir="${panmirror.build.dir}"/>
+      <exec executable="${node.bin}" dir="${panmirror.dir}" spawn="${panmirror.spawn}">
+         <arg value="fuse"/>
+         <arg value="${panmirror.target}"/>
+      </exec>
+   </target>
+
    <target name="javac" description="Compile java source">
       <mkdir dir="${build.dir}"/>
       <!-- Compile com.google stuff separately from org.rstudio stuff since
@@ -109,6 +130,10 @@
    </target>
 
    <target name="gwtc" depends="ext,javac" description="GWT compile to JavaScript">
+      <antcall target="panmirror">
+         <param name="panmirror.target" value="ide-dist"/>
+         <param name="panmirror.spawn" value="false"/>
+      </antcall>
       <java failonerror="true" fork="true" classname="com.google.gwt.dev.Compiler">
          <classpath>
             <pathelement location="${src.dir}"/>
@@ -163,6 +188,10 @@
    </target>
 
    <target name="codeserver" depends="acesupport,javac" description="Run GWT devmode code server">
+      <antcall target="panmirror">
+         <param name="panmirror.target" value="ide-dev-watch"/>
+         <param name="panmirror.spawn" value="true"/>
+      </antcall>
       <java failonerror="true" fork="true" classname="com.google.gwt.dev.DevMode">
          <classpath>
             <pathelement location="${src.dir}"/>
@@ -191,6 +220,7 @@
       <delete dir="gwt-unitCache" failonerror="false" />
       <delete dir="${www.dir}/rstudio" failonerror="false" />
       <delete file="${ace.bin}/acesupport.js" failonerror="false" />
+      <delete dir="${panmirror.build.dir}" failonerror="false"/>
       <delete dir="gen" failonerror="false" />
       <delete dir="${extras.dir}" failonerror="false" />
    </target>

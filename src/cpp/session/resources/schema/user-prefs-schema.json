@@ -1010,6 +1010,21 @@
             "default": false,
             "description": "Whether to show the full path to project in desktop window title."
         },
+        "enable_visual_markdown_editing_mode": {
+            "type": "boolean",
+            "default": false,
+            "description": "Whether to enable experimental visual markdown editing"
+        },
+        "visual_markdown_editing_wrap_auto": {
+            "type": "boolean",
+            "default": false,
+            "description": "Whether to automatically wrap text when writing markdown"
+        },
+        "visual_markdown_editing_wrap_column": {
+            "type": "integer",
+            "default": 80,
+            "description": "The column to wrap text at when writing markdown"
+        },
         "disabled_aria_live_announcements": {
             "type": "array",
             "items": {

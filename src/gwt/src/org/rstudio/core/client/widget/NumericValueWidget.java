@@ -25,11 +25,17 @@ import org.rstudio.studio.client.RStudioGinjector;
 
 public class NumericValueWidget extends Composite
       implements HasValue<String>,
-                 HasEnsureVisibleHandlers
+                 HasEnsureVisibleHandlers,
+                 CanSetControlId
 {
    public static final Integer ZeroMinimum = null;
    public static final Integer NoMaximum = null;
 
+   public NumericValueWidget()
+   {
+      this("", ZeroMinimum, NoMaximum);
+   }
+   
    /**
     * Prompt for an integer in the range [min, max]
     * 
@@ -44,20 +50,23 @@ public class NumericValueWidget extends Composite
 
       textBox_ = new NumericTextBox();
       textBox_.setWidth("48px");
-      minValue_ = minValue;
-      maxValue_ = maxValue;
-      if (minValue == ZeroMinimum)
-         textBox_.setMin(0);
-      else
-         textBox_.setMin(minValue);
-      if (maxValue != NoMaximum)
-         textBox_.setMax(maxValue);
+      setLimits(minValue, maxValue);
       textBox_.getElement().getStyle().setMarginLeft(0.6, Unit.EM);
-
-      flowPanel.add(new SpanLabel(label_, textBox_, true));
+      flowPanel.add(textBoxLabel_ = new SpanLabel(label_, textBox_, true));
       flowPanel.add(textBox_);
 
       initWidget(flowPanel);
+   }
+   
+   public String getLabel()
+   {
+      return textBoxLabel_.getText();
+   }
+   
+   public void setLabel(String text)
+   {
+      label_ = text;
+      textBoxLabel_.setText(text);
    }
 
    public String getValue()
@@ -75,9 +84,26 @@ public class NumericValueWidget extends Composite
       textBox_.setValue(value, fireEvents);
    }
    
+   public void setLimits(Integer minValue, Integer maxValue)
+   {
+      minValue_ = minValue;
+      maxValue_ = maxValue;
+      if (minValue == ZeroMinimum)
+         textBox_.setMin(0);
+      else
+         textBox_.setMin(minValue);
+      if (maxValue != NoMaximum)
+         textBox_.setMax(maxValue);
+   }
+   
    public void setWidth(String width)
    {
       textBox_.setWidth(width);
+   }
+   
+   public void setEnabled(boolean enabled)
+   {
+      textBox_.setEnabled(enabled);
    }
 
    public HandlerRegistration addValueChangeHandler(ValueChangeHandler<String> handler)
@@ -129,9 +155,17 @@ public class NumericValueWidget extends Composite
    {
       return addHandler(handler, EnsureVisibleEvent.TYPE);
    }
+   
 
+   @Override
+   public void setElementId(String id)
+   {
+      textBox_.getElement().setId(id);      
+   }
+
+   private final SpanLabel textBoxLabel_;
    private final NumericTextBox textBox_;
-   private final Integer minValue_;
-   private final Integer maxValue_;
-   private final String label_;
+   private Integer minValue_;
+   private Integer maxValue_;
+   private String label_;
 }

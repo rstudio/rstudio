@@ -33,6 +33,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ChunkOutput
 import org.rstudio.studio.client.workbench.views.source.editors.text.ChunkOutputWidget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.PinnedLineWidget;
+import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTarget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay.AnchoredSelection;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.LineWidget;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
@@ -533,6 +534,10 @@ public class MathJax
          endRender();
          return;
       }
+      
+      // don't show the popup in visual mode
+      if (sentinel_.getBoolProperty(TextEditingTarget.RMD_VISUAL_MODE, false))
+         return;
       
       // no need to re-position popup if already showing;
       // just typeset

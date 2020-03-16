@@ -385,6 +385,7 @@ public class UserPrefs extends UserPrefsComputed
    public static final int LAYER_PROJECT  = 4;
 
    public static final int MAX_TAB_WIDTH = 64;
+   public static final int MAX_WRAP_COLUMN = 256;
    public static final int MAX_SCREEN_READER_CONSOLE_OUTPUT = 999;
 
    private final Session session_;
