@@ -28,8 +28,6 @@ Tables with a large number of columns are written as HTML when variable column w
 
 improve scrolling with: <https://github.com/cferdinandi/smooth-scroll>
 
-showPandocWarnings treatment for RStudio IDE (including localization)
-
 MathJax preview
 
 
