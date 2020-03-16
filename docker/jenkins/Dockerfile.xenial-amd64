@@ -82,7 +82,7 @@ ENV PATH=/usr/lib/llvm-4.0/bin:$PATH
 
 # install crashpad and its dependencies
 COPY dependencies/common/install-crashpad /tmp/
-RUN bash /tmp/install-crashpad
+RUN bash /tmp/install-crashpad xenial
 
 # set github login from build argument if defined
 ARG GITHUB_LOGIN

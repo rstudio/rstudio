@@ -63,7 +63,7 @@ RUN cp /usr/bin/python2 /usr/bin/python
 
 # install crashpad and its dependencies
 COPY dependencies/common/install-crashpad /tmp/
-RUN bash /tmp/install-crashpad
+RUN bash /tmp/install-crashpad centos8
 
 # set github login from build argument if defined
 ARG GITHUB_LOGIN

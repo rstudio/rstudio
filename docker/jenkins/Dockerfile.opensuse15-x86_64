@@ -55,7 +55,7 @@ RUN bash /tmp/install-dependencies
 
 # install crashpad and its dependencies
 COPY dependencies/common/install-crashpad /tmp/
-RUN bash /tmp/install-crashpad
+RUN bash /tmp/install-crashpad opensuse15
 
 # set github login from build argument if defined
 ARG GITHUB_LOGIN

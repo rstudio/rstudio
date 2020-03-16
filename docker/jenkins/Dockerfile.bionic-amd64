@@ -83,6 +83,10 @@ ENV RSTUDIO_GITHUB_LOGIN=$GITHUB_LOGIN
 COPY package/linux/install-dependencies /tmp/
 RUN /bin/bash /tmp/install-dependencies
 
+# install crashpad and its dependencies
+COPY dependencies/common/install-crashpad /tmp/
+RUN bash /tmp/install-crashpad bionic
+
 # install common dependencies
 RUN mkdir -p /opt/rstudio-tools/dependencies/common
 COPY dependencies/common/ /opt/rstudio-tools/dependencies/common/
