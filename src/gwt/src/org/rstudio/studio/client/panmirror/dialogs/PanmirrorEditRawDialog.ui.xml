@@ -1,0 +1,37 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+   xmlns:g="urn:import:com.google.gwt.user.client.ui"
+   xmlns:rw="urn:import:org.rstudio.core.client.widget"
+   xmlns:dialogs="urn:import:org.rstudio.studio.client.panmirror.dialogs">
+   <ui:with field="res" type="org.rstudio.studio.client.panmirror.dialogs.PanmirrorDialogsResources" />
+   <ui:style>
+     
+      @eval fixedWidthFont org.rstudio.core.client.theme.ThemeFonts.getFixedWidthFont();
+	    
+      .rawDialog {
+         width: 400px;
+      }
+	    
+      .formatSelect select {
+         width: 100%;
+      }
+     
+      .rawContent {
+         font-family: fixedWidthFont;
+      }
+     
+   </ui:style>
+   
+   <g:HTMLPanel styleName="{res.styles.dialog} {style.rawDialog}">
+   
+      <dialogs:PanmirrorRawFormatSelect styleName="{style.formatSelect} {res.styles.spaced}" ui:field="rawFormatSelect_">
+      </dialogs:PanmirrorRawFormatSelect>
+   		
+      <g:Label text="Raw content:"/>
+      <rw:FormTextArea styleName="{res.styles.textArea} {style.rawContent} {res.styles.spaced}"
+                 	     ui:field="rawContent_" visibleLines="5" ariaLabel="Raw content">
+      </rw:FormTextArea>
+      	
+   </g:HTMLPanel>
+
+</ui:UiBinder> 

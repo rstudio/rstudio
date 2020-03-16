@@ -60,7 +60,17 @@ public class FindReplaceBar extends Composite implements Display, RequiresResize
       String closeButton();
    }
    
-   public FindReplaceBar(boolean showReplace, final boolean defaultForward)
+   public FindReplaceBar(boolean showReplace, boolean defaultForward)
+   {
+      this(true, showReplace, true, true, defaultForward);
+   }
+   
+   
+   public FindReplaceBar(boolean showFindAll,
+                         boolean showReplace, 
+                         boolean showInSelection,
+                         boolean showWholeWord,
+                         final boolean defaultForward)
    {
       defaultForward_ = defaultForward;
       
@@ -186,11 +196,28 @@ public class FindReplaceBar extends Composite implements Display, RequiresResize
          }
       });
       
+      if (!showFindAll)
+      {
+         btnSelectAll_.setVisible(false);
+      }
+      
       if (!showReplace)
       {
          txtReplace_.setVisible(false);
          btnReplace_.setVisible(false);
          btnReplaceAll_.setVisible(false);
+      }
+      
+      if (!showInSelection)
+      {
+         inSelectionLabel.setVisible(false);
+         chkInSelection_.setVisible(false);
+      }
+      
+      if (!showWholeWord)
+      {
+         wholeWordLabel.setVisible(false);
+         chkWholeWord_.setVisible(false);
       }
 
       initWidget(shelf);
@@ -206,6 +233,12 @@ public class FindReplaceBar extends Composite implements Display, RequiresResize
    public void addFindKeyUpHandler(KeyUpHandler keyUpHandler)
    {
       txtFind_.addKeyUpHandler(keyUpHandler);
+   }
+   
+   public void addTextBoxFocusHandler(FocusHandler handler)
+   {
+      txtFind_.addFocusHandler(handler);
+      txtReplace_.addFocusHandler(handler);
    }
 
    public HasValue<String> getReplaceValue()

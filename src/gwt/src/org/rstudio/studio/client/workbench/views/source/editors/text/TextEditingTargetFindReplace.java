@@ -54,7 +54,7 @@ public class TextEditingTargetFindReplace
       });
    }
    
-   public Widget createFindReplaceButton()
+   public ToolbarButton createFindReplaceButton()
    {
       if (findReplaceBar_ == null)
       {

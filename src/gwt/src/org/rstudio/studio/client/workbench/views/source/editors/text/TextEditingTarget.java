@@ -203,24 +203,24 @@ public class TextEditingTarget implements
    
    public final static String DOC_OUTLINE_SIZE    = "docOutlineSize";
    public final static String DOC_OUTLINE_VISIBLE = "docOutlineVisible";
-
+   
+   public static final String RMD_VISUAL_MODE = "rmdVisualMode";
+  
    private static final MyCommandBinder commandBinder =
          GWT.create(MyCommandBinder.class);
 
    public interface Display extends TextDisplay, 
                                     WarningBarDisplay,
+                                    HasFindReplace,
                                     HasEnsureVisibleHandlers,
                                     HasEnsureHeightHandlers,
                                     HasResizeHandlers
    {
       HasValue<Boolean> getSourceOnSave();
       void ensureVisible();
-      void showFindReplace(boolean defaultForward);
-      void findNext();
-      void findPrevious();
+      
       void findSelectAll();
       void findFromSelection();
-      void replaceAndFind();
       
       StatusBar getStatusBar();
 
@@ -254,10 +254,15 @@ public class TextEditingTarget implements
       void initWidgetSize();
       
       void toggleDocumentOutline();
+      void toggleRmdVisualMode();
       
       void setNotebookUIVisible(boolean visible);
 
       void setAccessibleName(String name);
+      
+      TextEditorContainer editorContainer();
+ 
+      void manageCommandUI();
    }
 
    private class SaveProgressIndicator implements ProgressIndicator
@@ -1095,7 +1100,9 @@ public class TextEditingTarget implements
    public void navigateToPosition(SourcePosition position, 
                                   boolean recordCurrent)
    {
-      docDisplay_.navigateToPosition(position, recordCurrent);
+      visualMode_.deactivate(() -> {
+         docDisplay_.navigateToPosition(position, recordCurrent);
+      });
    }
    
    @Override
@@ -1103,7 +1110,9 @@ public class TextEditingTarget implements
                                   boolean recordCurrent,
                                   boolean highlightLine)
    {
-      docDisplay_.navigateToPosition(position, recordCurrent, highlightLine);
+      visualMode_.deactivate(() -> {
+         docDisplay_.navigateToPosition(position, recordCurrent, highlightLine);
+      });  
    }
 
    @Override
@@ -1736,6 +1745,14 @@ public class TextEditingTarget implements
          @Override
          public void execute()
          {
+            // initialize visual mode
+            visualMode_ = new TextEditingTargetVisualMode(
+               TextEditingTarget.this,
+               view_, 
+               dirtyState_, 
+               docUpdateSentinel_
+            );
+            
             if (!prefs_.restoreSourceDocumentCursorPosition().getValue())
                return;
             
@@ -2201,6 +2218,9 @@ public class TextEditingTarget implements
    {
       if (fileType_.isRmd())
          notebook_.manageCommands();
+      
+      if (fileType_.isMarkdown() && (visualMode_ != null))
+         visualMode_.manageCommands();
    }
    
    @Override
@@ -2270,7 +2290,7 @@ public class TextEditingTarget implements
 
    public void focus()
    {
-      docDisplay_.focus();
+      view_.editorContainer().focus();
    }
    
    public String getSelectedText()
@@ -2361,6 +2381,12 @@ public class TextEditingTarget implements
          notebook_.onActivate();
       
       view_.onActivate();
+      
+      if (visualMode_ != null && visualMode_.isActivated())
+      {
+         visualMode_.onSwitchToDoc();
+      }
+         
    }
 
    public void onDeactivate()
@@ -2507,16 +2533,16 @@ public class TextEditingTarget implements
             {
                public void execute(String encoding)
                {
-                  fixupCodeBeforeSaving();
-                  
-                  docUpdateSentinel_.save(path,
-                                          null,
-                                          encoding,
-                                          new SaveProgressIndicator(
-                                                FileSystemItem.createFile(path),
-                                                null,
-                                                command
-                                          ));
+                  fixupCodeBeforeSaving(() -> {
+                     docUpdateSentinel_.save(path,
+                           null,
+                           encoding,
+                           new SaveProgressIndicator(
+                                 FileSystemItem.createFile(path),
+                                 null,
+                                 command
+                           ));
+                  });
                }
             });
    }
@@ -2669,19 +2695,21 @@ public class TextEditingTarget implements
                               syncPublishPath(saveItem.getPath());
                            }
                            
-                           fixupCodeBeforeSaving();
-                                 
-                           docUpdateSentinel_.save(
-                                 saveItem.getPath(),
-                                 fileType.getTypeId(),
-                                 encoding,
-                                 new SaveProgressIndicator(saveItem,
-                                                           fileType,
-                                                           executeOnSuccess));
+                           fixupCodeBeforeSaving(() -> {
+                              docUpdateSentinel_.save(
+                                    saveItem.getPath(),
+                                    fileType.getTypeId(),
+                                    encoding,
+                                    new SaveProgressIndicator(saveItem,
+                                                              fileType,
+                                                              executeOnSuccess));
 
-                           events_.fireEvent(
-                                 new SourceFileSavedEvent(getId(),
-                                       saveItem.getPath()));
+                              events_.fireEvent(
+                                    new SourceFileSavedEvent(getId(),
+                                          saveItem.getPath()));
+                           });
+                                 
+                         
                         }
  
                      };
@@ -2726,69 +2754,74 @@ public class TextEditingTarget implements
    }
    
    
-   private void fixupCodeBeforeSaving()
+   private void fixupCodeBeforeSaving(Command ready)
    { 
-      int lineCount = docDisplay_.getRowCount();
-      if (lineCount < 1)
-         return;
-      
-      if (docDisplay_.hasActiveCollabSession())
-      {
-         // mutating the code (especially as below where the entire document 
-         // contents are changed) during a save operation inside a collaborative
-         // editing session would require some nuanced orchestration so for now
-         // these preferences don't apply to shared editing sessions
-         return;
-      }
-      
-      boolean stripTrailingWhitespace = (projConfig_ == null)
-            ? prefs_.stripTrailingWhitespace().getValue()
-            : projConfig_.stripTrailingWhitespace();
-            
-      // override preference for certain files
-      boolean dontStripWhitespace =
-            fileType_.isMarkdown() ||
-            fileType_.isPython() ||
-            name_.getValue().equals("DESCRIPTION");
-      
-      if (dontStripWhitespace)
-         stripTrailingWhitespace = false;
-      
-      if (stripTrailingWhitespace)
-      {
-         String code = docDisplay_.getCode();
-         Pattern pattern = Pattern.create("[ \t]+$");
-         String strippedCode = pattern.replaceAll(code, "");
-         if (!strippedCode.equals(code))
+      // sync edits from visual mode if it's active
+      visualMode_.syncToEditor(false, () -> {
+         
+         int lineCount = docDisplay_.getRowCount();
+         if (lineCount < 1)
+            return;
+         
+         if (docDisplay_.hasActiveCollabSession())
          {
-            // Calling 'setCode' can remove folds in the document; cache the folds
-            // and reapply them after document mutation.
-            JsArray<AceFold> folds = docDisplay_.getFolds();
-            docDisplay_.setCode(strippedCode, true);
-            for (AceFold fold : JsUtil.asIterable(folds))
-               docDisplay_.addFold(fold.getRange());
+            // mutating the code (especially as below where the entire document 
+            // contents are changed) during a save operation inside a collaborative
+            // editing session would require some nuanced orchestration so for now
+            // these preferences don't apply to shared editing sessions
+            return;
          }
-      }
-      
-      boolean autoAppendNewline = (projConfig_ == null)
-            ? prefs_.autoAppendNewline().getValue()
-            : projConfig_.ensureTrailingNewline();
-            
-      // auto-append newlines for commonly-used R startup files
-      String path = StringUtil.notNull(docUpdateSentinel_.getPath());
-      boolean isStartupFile =
-            path.endsWith("/.Rprofile") ||
-            path.endsWith("/.Rprofile.site") ||
-            path.endsWith("/.Renviron") ||
-            path.endsWith("/.Renviron.site");
-      
-      if (autoAppendNewline || isStartupFile || fileType_.isPython())
-      {
-         String lastLine = docDisplay_.getLine(lineCount - 1);
-         if (lastLine.length() != 0)
-            docDisplay_.insertCode(docDisplay_.getEnd().getEnd(), "\n");
-      }
-      
+         
+         boolean stripTrailingWhitespace = (projConfig_ == null)
+               ? prefs_.stripTrailingWhitespace().getValue()
+               : projConfig_.stripTrailingWhitespace();
+               
+         // override preference for certain files
+         boolean dontStripWhitespace =
+               fileType_.isMarkdown() ||
+               fileType_.isPython() ||
+               name_.getValue().equals("DESCRIPTION");
+         
+         if (dontStripWhitespace)
+            stripTrailingWhitespace = false;
+         
+         if (stripTrailingWhitespace)
+         {
+            String code = docDisplay_.getCode();
+            Pattern pattern = Pattern.create("[ \t]+$");
+            String strippedCode = pattern.replaceAll(code, "");
+            if (!strippedCode.equals(code))
+            {
+               // Calling 'setCode' can remove folds in the document; cache the folds
+               // and reapply them after document mutation.
+               JsArray<AceFold> folds = docDisplay_.getFolds();
+               docDisplay_.setCode(strippedCode, true);
+               for (AceFold fold : JsUtil.asIterable(folds))
+                  docDisplay_.addFold(fold.getRange());
+            }
+         }
+         
+         boolean autoAppendNewline = (projConfig_ == null)
+               ? prefs_.autoAppendNewline().getValue()
+               : projConfig_.ensureTrailingNewline();
+               
+         // auto-append newlines for commonly-used R startup files
+         String path = StringUtil.notNull(docUpdateSentinel_.getPath());
+         boolean isStartupFile =
+               path.endsWith("/.Rprofile") ||
+               path.endsWith("/.Rprofile.site") ||
+               path.endsWith("/.Renviron") ||
+               path.endsWith("/.Renviron.site");
+         
+         if (autoAppendNewline || isStartupFile || fileType_.isPython())
+         {
+            String lastLine = docDisplay_.getLine(lineCount - 1);
+            if (lastLine.length() != 0)
+               docDisplay_.insertCode(docDisplay_.getEnd().getEnd(), "\n");
+         }
+         
+         ready.execute();
+      });
    }
    
    private FileSystemItem getSaveFileDefaultDir()
@@ -2957,6 +2990,18 @@ public class TextEditingTarget implements
    }
    
    @Handler
+   void onToggleRmdVisualMode()
+   {
+      view_.toggleRmdVisualMode();
+   }
+   
+   @Handler
+   void onEnableProsemirrorDevTools()
+   {
+      visualMode_.activateDevTools();
+   }
+   
+   @Handler
    void onReformatCode()
    {
       // Only allow if entire selection in R mode for now
@@ -3114,8 +3159,10 @@ public class TextEditingTarget implements
 
    @Handler
    void onCheckSpelling()
-   {
-      spelling_.checkSpelling();
+   {  
+      visualMode_.deactivate(() -> {
+         spelling_.checkSpelling();
+      }); 
    }
 
    @Handler
@@ -6149,23 +6196,31 @@ public class TextEditingTarget implements
    {
       docDisplay_.quickAddNext();
    }
+   
+   private HasFindReplace getFindReplace()
+   {
+      if (visualMode_.isActivated())
+         return visualMode_.getFindReplace();
+      else
+         return view_;
+   }
 
    @Handler
    void onFindReplace()
    {
-      view_.showFindReplace(true);
+      getFindReplace().showFindReplace(true);
    }
    
    @Handler
    void onFindNext()
    {
-      view_.findNext();
+      getFindReplace().findNext();
    }
    
    @Handler
    void onFindPrevious()
    {
-      view_.findPrevious();
+      getFindReplace().findPrevious();
    }
    
    @Handler
@@ -6184,7 +6239,7 @@ public class TextEditingTarget implements
    @Handler
    void onReplaceAndFind()
    {
-      view_.replaceAndFind();
+      getFindReplace().replaceAndFind();
    }
    
    @Override
@@ -6591,7 +6646,7 @@ public class TextEditingTarget implements
 
                      if (!dirtyState_.getValue())
                      {
-                        docUpdateSentinel_.revert();
+                        revertEdits();
                      }
                      else
                      {
@@ -6609,7 +6664,7 @@ public class TextEditingTarget implements
                                  public void execute()
                                  {
                                     isWaitingForUserResponseToExternalEdit_ = false;
-                                    docUpdateSentinel_.revert();
+                                    revertEdits();
                                  }
                               },
                               new Operation()
@@ -6635,6 +6690,15 @@ public class TextEditingTarget implements
                   Debug.logError(error);
                }
             });
+   }
+   
+   private void revertEdits()
+   {
+      docUpdateSentinel_.revert(() -> {
+         if (visualMode_.isActivated())
+            visualMode_.syncFromEditor(null, true);
+      }, false);
+      
    }
    
    private SourcePosition toSourcePosition(Scope func)
@@ -7489,6 +7553,7 @@ public class TextEditingTarget implements
    private final TextEditingTargetPresentationHelper presentationHelper_;
    private final TextEditingTargetReformatHelper reformatHelper_;
    private final TextEditingTargetRHelper rHelper_;
+   private TextEditingTargetVisualMode visualMode_;
    private TextEditingTargetIdleMonitor bgIdleMonitor_;
    private TextEditingTargetThemeHelper themeHelper_;
    private RoxygenHelper roxygenHelper_;
@@ -7615,5 +7680,5 @@ public class TextEditingTarget implements
    }
    
    private static final String PROPERTY_CURSOR_POSITION = "cursorPosition";
-   private static final String PROPERTY_SCROLL_LINE = "scrollLine";
+   private static final String PROPERTY_SCROLL_LINE = "scrollLine";  
 }

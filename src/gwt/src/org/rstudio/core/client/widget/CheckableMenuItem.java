@@ -70,6 +70,7 @@ public abstract class CheckableMenuItem extends MenuItem
    }
 
    public abstract String getLabel();
+   public String getShortcut() { return ""; }
    public abstract boolean isChecked();
    public abstract void onInvoked();
    
@@ -79,7 +80,7 @@ public abstract class CheckableMenuItem extends MenuItem
             isChecked() ? 
                   new ImageResource2x(ThemeResources.INSTANCE.menuCheck2x()) :
                   null,
-            getLabel(), "", ThemeStyles.INSTANCE.menuCheckable());
+            getLabel(), getShortcut(), ThemeStyles.INSTANCE.menuCheckable());
       
    }
 }

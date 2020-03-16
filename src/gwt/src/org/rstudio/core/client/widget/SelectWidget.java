@@ -31,6 +31,11 @@ public class SelectWidget extends Composite
 {
    public static String ExternalLabel = null;
 
+   public SelectWidget()
+   {
+      this(ExternalLabel);
+   }
+   
    public SelectWidget(String label)
    {
       this(label, null, false);

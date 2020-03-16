@@ -1,0 +1,46 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+   xmlns:g="urn:import:com.google.gwt.user.client.ui"
+   xmlns:rw="urn:import:org.rstudio.core.client.widget"
+   xmlns:dialogs="urn:import:org.rstudio.studio.client.panmirror.dialogs">
+   <ui:with field="res" type="org.rstudio.studio.client.panmirror.dialogs.PanmirrorDialogsResources" />
+   <ui:style>
+      
+      .column {
+         width: 175px;
+      }
+      
+      .caption {
+         width: 335px;
+      }
+	  
+      .header input[type="checkbox"] {
+         margin-right: 5px; 
+      }  
+   </ui:style>
+   
+   <g:VerticalPanel styleName="{res.styles.dialog}">
+   
+      <rw:LayoutGrid styleName="{res.styles.spaced}">
+         <rw:row>
+            <rw:customCell styleName="{style.column}">
+               <rw:NumericValueWidget label="Rows" value="3" ui:field="rows_"></rw:NumericValueWidget>
+            </rw:customCell>
+            <rw:customCell styleName="{style.column}">
+               <rw:NumericValueWidget label="Columns" value="3" ui:field="columns_"></rw:NumericValueWidget>
+            </rw:customCell>
+         </rw:row>
+      </rw:LayoutGrid>
+    
+      <g:Label text="Caption" ui:field="captionLabel_"></g:Label>
+      <rw:TextBoxWithCue cueText="(Optional)" styleName="{style.caption} {res.styles.spaced}" ui:field="caption_"></rw:TextBoxWithCue>
+          
+      <g:cell><g:Label></g:Label></g:cell>  
+          
+      <g:CheckBox styleName="{res.styles.checkBox} {res.styles.spaced}" text="Include table header" ui:field="header_"></g:CheckBox>
+        
+
+      	
+   </g:VerticalPanel>
+
+</ui:UiBinder> 
