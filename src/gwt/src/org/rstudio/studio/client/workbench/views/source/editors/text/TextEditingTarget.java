@@ -2381,6 +2381,12 @@ public class TextEditingTarget implements
          notebook_.onActivate();
       
       view_.onActivate();
+      
+      if (visualMode_ != null && visualMode_.isActivated())
+      {
+         visualMode_.onSwitchToDoc();
+      }
+         
    }
 
    public void onDeactivate()
@@ -2992,7 +2998,7 @@ public class TextEditingTarget implements
    @Handler
    void onEnableProsemirrorDevTools()
    {
-      visualMode_.enableDevTools();
+      visualMode_.activateDevTools();
    }
    
    @Handler

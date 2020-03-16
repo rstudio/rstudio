@@ -262,11 +262,16 @@ public class TextEditingTargetVisualMode
       }  
    }
    
-   public void enableDevTools()
+   public void activateDevTools()
    {
       withPanmirror(() -> {
-         panmirror_.enableDevTools();
+         panmirror_.activateDevTools();
       });
+   }
+   
+   public void onSwitchToDoc()
+   {
+      syncDevTools();
    }
   
   
@@ -299,7 +304,10 @@ public class TextEditingTargetVisualMode
             // begin save-on-idle behavior
             syncOnIdle_.resume();
             saveLocationOnIdle_.resume();
-         
+            
+            // activate devtools if they are loaded
+            syncDevTools();
+               
             // execute completed hook
             Scheduler.get().scheduleDeferred(completed);    
          };
@@ -335,6 +343,15 @@ public class TextEditingTargetVisualMode
             // execute completed hook
             Scheduler.get().scheduleDeferred(completed);
          });  
+      }
+   }
+   
+   private void syncDevTools()
+   {
+      // activate devtools if they are loaded
+      if (panmirror_.devToolsLoaded()) 
+      {
+         panmirror_.activateDevTools();
       }
    }
    

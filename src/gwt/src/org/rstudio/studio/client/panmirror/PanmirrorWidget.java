@@ -426,11 +426,16 @@ public class PanmirrorWidget extends DockLayoutPanel implements
       editor_.blur();
    }
    
-   public void enableDevTools() 
+   public void activateDevTools() 
    { 
       ProseMirrorDevTools.load(() -> {
          editor_.enableDevTools(ProseMirrorDevTools.applyDevTools);
       });
+   }
+   
+   public boolean devToolsLoaded()
+   {
+      return ProseMirrorDevTools.isLoaded();
    }
    
    @Override
@@ -512,8 +517,15 @@ public class PanmirrorWidget extends DockLayoutPanel implements
 class ProseMirrorDevTools
 {
    @JsOverlay
-   public static void load(ExternalJavaScriptLoader.Callback onLoaded) {    
+   public static void load(ExternalJavaScriptLoader.Callback onLoaded) 
+   {    
       devtoolsLoader_.addCallback(onLoaded);
+   }
+   
+   @JsOverlay
+   public static boolean isLoaded() 
+   {
+      return devtoolsLoader_.isLoaded();
    }
    
    public static JsObject applyDevTools;
