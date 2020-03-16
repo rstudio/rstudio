@@ -651,7 +651,6 @@ if(APPLE)
          # get the real path to the library (with all symlinks resolved) and filename
          get_filename_component(LIB_PATH "${lib}" ABSOLUTE)
          get_filename_component(LIB_FILE "${LIB_PATH}" NAME)
-         message("THE LIB IS ${lib} ${LIB_FILE}")
          add_custom_command (TARGET rsession POST_BUILD
             COMMAND install_name_tool -change `otool -L ${CMAKE_CURRENT_BINARY_DIR}/rsession | grep ${LIB_FILE} | awk '{ print $$1 }'` @executable_path/../Frameworks/${LIB_FILE} ${CMAKE_CURRENT_BINARY_DIR}/rsession)
       endforeach()
