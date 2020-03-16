@@ -13,8 +13,9 @@
  *
  */
 
-import { Selection } from 'prosemirror-state';
+import { Selection, NodeSelection } from 'prosemirror-state';
 import { NodeWithPos } from 'prosemirror-utils';
+import { Schema } from 'prosemirror-model';
 
 export function selectionIsWithin(selection: Selection, nodeWithPos: NodeWithPos) {
   const begin = nodeWithPos.pos + 1;
@@ -26,4 +27,9 @@ export function selectionIsBodyTopLevel(selection: Selection) {
   const { $head } = selection;
   const parentNode = $head.node($head.depth - 1);
   return parentNode && parentNode.type === parentNode.type.schema.nodes.body;
+}
+
+export function selectionIsImageNode(schema: Schema, selection: Selection) {
+  return selection instanceof NodeSelection &&
+         [schema.nodes.image, schema.nodes.figure].includes(selection.node.type);
 }
