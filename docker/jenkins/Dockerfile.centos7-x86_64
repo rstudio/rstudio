@@ -81,9 +81,16 @@ RUN scl enable llvm-toolset-7 "/bin/bash /tmp/install-crashpad"
 ARG GITHUB_LOGIN
 ENV RSTUDIO_GITHUB_LOGIN=$GITHUB_LOGIN
 
-# install common dependencies
+# copy common dependency installation scripts
 RUN mkdir -p /opt/rstudio-tools/dependencies/common
 COPY dependencies/common/ /opt/rstudio-tools/dependencies/common/
+
+# copy panmirror project setup
+RUN mkdir -p /opt/rstudio-tools/src/gwt/panmirror/src/editor
+COPY src/gwt/panmirror/src/editor/yarn.lock /opt/rstudio-tools/src/gwt/panmirror/src/editor/
+COPY src/gwt/panmirror/src/editor/package.json /opt/rstudio-tools/src/gwt/panmirror/src/editor/
+
+# install common dependencies
 RUN cd /opt/rstudio-tools/dependencies/common && scl enable llvm-toolset-7 "/bin/bash ./install-common"
 
 # install Qt SDK
