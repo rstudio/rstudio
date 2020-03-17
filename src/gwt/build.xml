@@ -3,7 +3,7 @@
 #
 # build.xml
 #
-# Copyright (C) 2009-19 by RStudio, PBC
+# Copyright (C) 2009-20 by RStudio, PBC
 #
 # This program is licensed to you under the terms of version 3 of the
 # GNU Affero General Public License. This program is distributed WITHOUT
@@ -103,6 +103,7 @@
       <exec executable="${node.bin}" dir="${panmirror.dir}" spawn="${panmirror.spawn}">
          <arg value="fuse"/>
          <arg value="${panmirror.target}"/>
+         <env key="NODE_PATH" path="${env.NODE_PATH}:/opt/rstudio-tools/panmirror/node_modules"/>
       </exec>
    </target>
 
