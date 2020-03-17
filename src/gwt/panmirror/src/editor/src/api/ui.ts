@@ -158,6 +158,7 @@ export interface RawFormatResult {
 export interface AttrEditInput {
   id?: string;
   classes?: string;
+  style?: string;
   keyvalue?: string;
 }
 
@@ -167,18 +168,34 @@ export interface AttrKeyvaluePartitioned {
 }
 
 export function attrPropsToInput(attr: AttrProps): AttrEditInput {
+
+  let style : string | undefined;
+  let keyvalue: string | undefined;
+  if (attr.keyvalue) {
+    const partitionedKeyvalue = partitionKeyvalue(["style"], attr.keyvalue);
+    if (partitionedKeyvalue.partitioned.length > 0) {
+      style = partitionedKeyvalue.partitioned[0][1];
+    }
+    keyvalue = attrTextFromKeyvalue(partitionedKeyvalue.base);
+  }
+
   return {
     id: asHtmlId(attr.id) || undefined,
     classes: attr.classes ? attr.classes.map(asHtmlClass).join(' ') : undefined,
-    keyvalue: attr.keyvalue ? attrTextFromKeyvalue(attr.keyvalue) : undefined,
+    style,
+    keyvalue
   };
 }
 
 export function attrInputToProps(attr: AttrEditInput): AttrProps {
   const classes = attr.classes ? attr.classes.split(/\s+/) : [];
   let keyvalue: Array<[string, string]> | undefined;
-  if (attr.keyvalue) {
-    keyvalue = attrKeyvalueFromText(attr.keyvalue);
+  if (attr.keyvalue || attr.style) {
+    let text = attr.keyvalue || '';
+    if (attr.style) {
+      text += `\nstyle=${attr.style}\n`;
+    }
+    keyvalue = attrKeyvalueFromText(text);
   }
   return {
     id: asPandocId(attr.id || ''),
@@ -187,12 +204,12 @@ export function attrInputToProps(attr: AttrEditInput): AttrProps {
   };
 }
 
-export function attrTextFromKeyvalue(keyvalue: Array<[string,string]>) {
+function attrTextFromKeyvalue(keyvalue: Array<[string,string]>) {
   return keyvalue.map(kv => `${kv[0]}=${kv[1]}`).join('\n');
 }
 
 
-export function attrKeyvalueFromText(text: string) : Array<[string,string]> {
+function attrKeyvalueFromText(text: string) : Array<[string,string]> {
   const lines = text.trim().split('\n');
   return lines.map(line => {
     const parts = line.trim().split('=');
@@ -200,7 +217,7 @@ export function attrKeyvalueFromText(text: string) : Array<[string,string]> {
   });
 }
 
-export function attrPartitionKeyvalue(partition: string[], keyvalue: Array<[string, string]>) : AttrKeyvaluePartitioned {
+function partitionKeyvalue(partition: string[], keyvalue: Array<[string, string]>) : AttrKeyvaluePartitioned {
   
   const base = new Array<[string,string]>();
   const partitioned = new Array<[string,string]>();

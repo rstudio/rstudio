@@ -140,9 +140,6 @@ export class UITools {
   public attrInputToProps(input: AttrEditInput) {
     return attrInputToProps(input);
   }
-  public attrPartitionKeyvalue(partition: string[], keyvalue: Array<[string, string]>) {
-    return attrPartitionKeyvalue(partition, keyvalue);
-  }
 }
 
 const keybindingsPlugin = new PluginKey('keybindings');

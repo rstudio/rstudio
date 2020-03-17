@@ -23,6 +23,7 @@ public class PanmirrorAttrEditInput
 {
    public String id;
    public String classes;
+   public String style;
    public String keyvalue;
 }
 

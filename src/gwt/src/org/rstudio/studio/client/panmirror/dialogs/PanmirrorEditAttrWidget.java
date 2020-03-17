@@ -22,7 +22,6 @@ import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.widget.FormTextArea;
 import org.rstudio.studio.client.panmirror.PanmirrorUITools;
 import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorAttrEditInput;
-import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorAttrKeyvaluePartitioned;
 import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorAttrProps;
 
 import com.google.gwt.core.client.GWT;
@@ -48,20 +47,11 @@ public class PanmirrorEditAttrWidget extends SimplePanel
    
    
    public void setAttr(PanmirrorAttrProps attr)
-   {
-      // partition style out of keyvalue
-      PanmirrorAttrProps editProps = new PanmirrorAttrProps();
-      editProps.id = attr.id;
-      editProps.classes = attr.classes;
-      String[] styleKey = {"style"};
-      PanmirrorAttrKeyvaluePartitioned keyvalue = uiTools_.attrPartitionKeyvalue(styleKey, attr.keyvalue);
-      editProps.keyvalue = keyvalue.base;
-      
-      PanmirrorAttrEditInput input = uiTools_.attrPropsToInput(editProps);
+   {  
+      PanmirrorAttrEditInput input = uiTools_.attrPropsToInput(attr);
       id_.setText(input.id);
       classes_.setText(input.classes);
-      if (keyvalue.partitioned.length > 0)
-         style_.setText(keyvalue.partitioned[0][1]);
+      style_.setText(input.style);
       attributes_.setText(input.keyvalue);
    }
    
@@ -70,12 +60,8 @@ public class PanmirrorEditAttrWidget extends SimplePanel
       PanmirrorAttrEditInput input = new PanmirrorAttrEditInput();
       input.id = id_.getValue().trim();
       input.classes = classes_.getValue().trim();
-      String keyvalue = attributes_.getValue().trim();
-      String style = style_.getText().trim();
-      if (style.length() > 0) {
-         keyvalue = keyvalue + "\nstyle=" + style + "\n"; 
-      }
-      input.keyvalue = keyvalue;
+      input.style = style_.getValue().trim();
+      input.keyvalue = attributes_.getValue().trim();
       return uiTools_.attrInputToProps(input);
    }
  
