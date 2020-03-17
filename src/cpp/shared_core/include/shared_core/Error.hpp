@@ -577,6 +577,16 @@ Error systemError(const std::error_code& in_code, const ErrorLocation& in_locati
 /**
  * @brief Function which creates a system error.
  *
+ * @param in_error           The system error which occurred.
+ * @param in_location        The location of the error.
+ *
+ * @return A system error.
+ */
+Error systemError(const std::system_error& in_error, const ErrorLocation& in_location);
+
+/**
+ * @brief Function which creates a system error.
+ *
  * @param in_code            The error code. (e.g. 1)
  * @param in_cause           The error which caused this error.
  * @param in_location        The location of the error.
@@ -595,6 +605,17 @@ Error systemError(int in_code, const Error& in_cause, const ErrorLocation& in_lo
  * @return A system error.
  */
 Error systemError(const std::error_code& in_code, const Error& in_cause, const ErrorLocation& in_location);
+
+/**
+ * @brief Function which creates a system error.
+ *
+ * @param in_error           The system error which occurred.
+ * @param in_cause           The error which caused this error.
+ * @param in_location        The location of the error.
+ *
+ * @return A system error.
+ */
+Error systemError(const std::system_error& in_error, const Error& in_cause, const ErrorLocation& in_location);
 
 /**
  * @brief Function which creates a system error.
@@ -619,6 +640,21 @@ Error systemError(int in_code, const std::string& in_description, const ErrorLoc
  * @return A system error.
  */
 Error systemError(const std::error_code& in_code, const std::string& in_description, const ErrorLocation& in_location);
+
+/**
+ * @brief Function which creates a system error.
+ *
+ * @param in_error           The system error which occurred.
+ * @param in_description     A detailed description of the error. (e.g. "Failed to open socket while attempting to
+ *                           connect to Kubernetes.")
+ * @param in_location        The location of the error.
+ *
+ * @return A system error.
+ */
+Error systemError(
+   const std::system_error& in_error,
+   const std::string& in_description,
+   const ErrorLocation& in_location);
 
 /**
  * @brief Function which creates a system error.
@@ -650,6 +686,23 @@ Error systemError(
  */
 Error systemError(
    const std::error_code& in_code,
+   const std::string& in_description,
+   const Error& in_cause,
+   const ErrorLocation& in_location);
+
+/**
+ * @brief Function which creates a system error.
+ *
+ * @param in_error           The system error which occurred.
+ * @param in_description     A detailed description of the error. (e.g. "Failed to open socket while attempting to
+ *                           connect to Kubernetes.")
+ * @param in_cause           The error which caused this error.
+ * @param in_location        The location of the error.
+ *
+ * @return A system error.
+ */
+Error systemError(
+   const std::system_error& in_error,
    const std::string& in_description,
    const Error& in_cause,
    const ErrorLocation& in_location);
