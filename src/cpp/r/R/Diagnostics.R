@@ -233,7 +233,7 @@ sensitive information before submitting your diagnostics report.
     
   if (file.exists(binaryPath)) {
     binaryPath <- normalizePath(binaryPath)
-    diagnostics <- system(binaryPath, intern = TRUE)
+    diagnostics <- system2(binaryPath, stdout = TRUE, stderr = TRUE)
     writeLines(diagnostics)
   }
   
