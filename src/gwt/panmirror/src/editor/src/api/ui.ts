@@ -161,11 +161,16 @@ export interface AttrEditInput {
   keyvalue?: string;
 }
 
+export interface AttrKeyvaluePartitioned {
+  base: Array<[string, string]>;
+  partitioned: Array<[string, string]>;
+}
+
 export function attrPropsToInput(attr: AttrProps): AttrEditInput {
   return {
     id: asHtmlId(attr.id) || undefined,
     classes: attr.classes ? attr.classes.map(asHtmlClass).join(' ') : undefined,
-    keyvalue: attr.keyvalue ? attr.keyvalue.map(keyvalue => `${keyvalue[0]}=${keyvalue[1]}`).join('\n') : undefined,
+    keyvalue: attr.keyvalue ? attrTextFromKeyvalue(attr.keyvalue) : undefined,
   };
 }
 
@@ -173,16 +178,44 @@ export function attrInputToProps(attr: AttrEditInput): AttrProps {
   const classes = attr.classes ? attr.classes.split(/\s+/) : [];
   let keyvalue: Array<[string, string]> | undefined;
   if (attr.keyvalue) {
-    const lines = attr.keyvalue.trim().split('\n');
-    keyvalue = lines.map(line => {
-      const parts = line.trim().split('=');
-      return [parts[0], (parts[1] || '').replace(/^"/, '').replace(/"$/, '')];
-    });
+    keyvalue = attrKeyvalueFromText(attr.keyvalue);
   }
   return {
     id: asPandocId(attr.id || ''),
     classes: classes.map(asPandocClass),
     keyvalue,
+  };
+}
+
+export function attrTextFromKeyvalue(keyvalue: Array<[string,string]>) {
+  return keyvalue.map(kv => `${kv[0]}=${kv[1]}`).join('\n');
+}
+
+
+export function attrKeyvalueFromText(text: string) : Array<[string,string]> {
+  const lines = text.trim().split('\n');
+  return lines.map(line => {
+    const parts = line.trim().split('=');
+    return [parts[0], (parts[1] || '').replace(/^"/, '').replace(/"$/, '')];
+  });
+}
+
+export function attrPartitionKeyvalue(partition: string[], keyvalue: Array<[string, string]>) : AttrKeyvaluePartitioned {
+  
+  const base = new Array<[string,string]>();
+  const partitioned = new Array<[string,string]>();
+
+  keyvalue.forEach(kv => {
+    if (partition.includes(kv[0])) {
+      partitioned.push(kv);
+    } else {
+      base.push(kv);
+    }
+  });
+  
+  return {
+    base,
+    partitioned
   };
 }
 

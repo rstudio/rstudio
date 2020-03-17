@@ -81,13 +81,13 @@ public class PanmirrorEditLinkDialog extends ModalDialog<PanmirrorLinkEditResult
       text_ = PanmirrorDialogsUtil.addTextBox(
          linkTab, 
          ElementIds.VISUAL_MD_LINK_TEXT, 
-         textLabel_ = new Label("Text"), 
+         textLabel_ = new Label("Text:"), 
          link.text
       );
       title_ = PanmirrorDialogsUtil.addTextBox(
          linkTab, 
          ElementIds.VISUAL_MD_LINK_TITLE, 
-         titleLabel_ = new Label("Title/Tooltip"), 
+         titleLabel_ = new Label("Title/Tooltip:"), 
          link.title
       );
         

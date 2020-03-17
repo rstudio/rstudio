@@ -24,15 +24,15 @@
       <rw:LayoutGrid styleName="{res.styles.spaced}">
          <rw:row>
             <rw:customCell styleName="{style.column}">
-               <rw:NumericValueWidget label="Rows" value="3" ui:field="rows_"></rw:NumericValueWidget>
+               <rw:NumericValueWidget label="Rows:" value="3" ui:field="rows_"></rw:NumericValueWidget>
             </rw:customCell>
             <rw:customCell styleName="{style.column}">
-               <rw:NumericValueWidget label="Columns" value="3" ui:field="columns_"></rw:NumericValueWidget>
+               <rw:NumericValueWidget label="Columns:" value="3" ui:field="columns_"></rw:NumericValueWidget>
             </rw:customCell>
          </rw:row>
       </rw:LayoutGrid>
     
-      <g:Label text="Caption" ui:field="captionLabel_"></g:Label>
+      <g:Label text="Caption:" ui:field="captionLabel_"></g:Label>
       <rw:TextBoxWithCue cueText="(Optional)" styleName="{style.caption} {res.styles.spaced}" ui:field="caption_"></rw:TextBoxWithCue>
           
       <g:cell><g:Label></g:Label></g:cell>  

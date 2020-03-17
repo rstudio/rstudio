@@ -465,6 +465,7 @@ public class ElementIds
    public final static String VISUAL_MD_ATTR_REMOVE_BUTTON = "visual_md_attr_remove_button";
    public final static String VISUAL_MD_ATTR_ID = "visual_md_attr_id";
    public final static String VISUAL_MD_ATTR_CLASSES = "visual_md_attr_classes";
+   public final static String VISUAL_MD_ATTR_STYLE = "visual_md_attr_style";
    public final static String VISUAL_MD_ATTR_KEYVALUE = "visual_md_attr_keyvalue";
    public final static String VISUAL_MD_CITATION_ID = "visual_md_citation_id";
    public final static String VISUAL_MD_CITATION_LOCATOR = "visual_md_citation_locator";

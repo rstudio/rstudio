@@ -50,8 +50,8 @@ public class PanmirrorEditImageDialog extends ModalDialog<PanmirrorImageProps>
       imageTab.add(url_ = new PanmirrorImageChooser(FileSystemItem.createDir(resourceDir)));
       if (!StringUtil.isNullOrEmpty(props.src))
          url_.setText(props.src);
-      title_ = PanmirrorDialogsUtil.addTextBox(imageTab, ElementIds.VISUAL_MD_IMAGE_TITLE, "Title/Tooltip", props.title);
-      alt_ = PanmirrorDialogsUtil.addTextBox(imageTab, ElementIds.VISUAL_MD_IMAGE_ALT, "Caption/Alt", props.alt); 
+      title_ = PanmirrorDialogsUtil.addTextBox(imageTab, ElementIds.VISUAL_MD_IMAGE_TITLE, "Title/Tooltip:", props.title);
+      alt_ = PanmirrorDialogsUtil.addTextBox(imageTab, ElementIds.VISUAL_MD_IMAGE_ALT, "Caption/Alt:", props.alt); 
          
       editAttr_ =  new PanmirrorEditAttrWidget();
       editAttr_.setAttr(props);

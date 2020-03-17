@@ -17,6 +17,7 @@
 package org.rstudio.studio.client.panmirror;
 
 import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorAttrEditInput;
+import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorAttrKeyvaluePartitioned;
 import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorAttrProps;
 
 import jsinterop.annotations.JsType;
@@ -26,5 +27,6 @@ public class PanmirrorUITools
 {
    public native PanmirrorAttrEditInput attrPropsToInput(PanmirrorAttrProps attr);
    public native PanmirrorAttrProps attrInputToProps(PanmirrorAttrEditInput input);
+   public native PanmirrorAttrKeyvaluePartitioned attrPartitionKeyvalue(String[] keys, String[][] keyvalue);
 }
 

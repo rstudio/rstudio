@@ -10,10 +10,10 @@
    
    <g:VerticalPanel styleName="{res.styles.dialog}">
    
-      <g:Label text="Citation ID (e.g. @Knuth)"></g:Label>
+      <g:Label text="Citation ID (e.g. @Knuth):"></g:Label>
       <g:TextBox styleName="{res.styles.fullWidth} {res.styles.spaced}" ui:field="citationId_"></g:TextBox>
     
-      <g:Label text="Locator (e.g. pp. 33-35))"></g:Label>
+      <g:Label text="Locator (e.g. pp. 33-35):"></g:Label>
       <rw:TextBoxWithCue cueText="(Optional)" styleName="{res.styles.fullWidth} {res.styles.spaced}" ui:field="locator_"></rw:TextBoxWithCue>
       	
    </g:VerticalPanel>

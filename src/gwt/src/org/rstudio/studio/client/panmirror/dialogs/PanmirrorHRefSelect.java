@@ -89,7 +89,7 @@ public class PanmirrorHRefSelect extends Composite implements CanFocus
       });
       
       VerticalPanel container = new VerticalPanel();
-      container.add(new Label("Link To"));
+      container.add(new Label("Link To:"));
       container.add(controls_);
       
       initWidget(container);
