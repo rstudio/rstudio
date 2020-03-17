@@ -459,35 +459,64 @@ std::ostream& operator<<(std::ostream& io_ostream, const Error& in_error)
 }
 
 // Common error creation functions =====================================================================================
-Error systemError(int in_value, const ErrorLocation& in_location)
+Error systemError(int in_code, const ErrorLocation& in_location)
 {
    using namespace boost::system ;
-   return Error(error_code(in_value, system_category()), in_location);
+   return Error(error_code(in_code, system_category()), in_location);
 }
 
-Error systemError(int in_value,
+Error systemError(const std::error_code& in_code, const ErrorLocation& in_location)
+{
+   return Error(in_code.category().name(), in_code.value(), in_code.message(), in_location);
+}
+
+Error systemError(int in_code,
                   const Error& in_cause,
                   const ErrorLocation& in_location)
 {
    using namespace boost::system ;
-   return Error(error_code(in_value, system_category()), in_cause, in_location);
+   return Error(error_code(in_code, system_category()), in_cause, in_location);
 }
 
-Error systemError(int in_value,
+Error systemError(const std::error_code& in_code, const Error& in_cause, const ErrorLocation& in_location)
+{
+   return Error(in_code.category().name(), in_code.value(), in_code.message(), in_cause, in_location);
+}
+
+Error systemError(int in_code,
                   const std::string& in_description,
                   const ErrorLocation& in_location)
 {
-   Error error = systemError(in_value, in_location);
+   Error error = systemError(in_code, in_location);
    error.addProperty("description", in_description);
    return error;
 }
 
-Error systemError(int in_value,
+Error systemError(const std::error_code& in_code,
+                  const std::string& in_description,
+                  const ErrorLocation& in_location)
+{
+   Error error = systemError(in_code, in_location);
+   error.addProperty("description", in_description);
+   return error;
+}
+
+Error systemError(int in_code,
                   const std::string& in_description,
                   const Error& in_cause,
                   const ErrorLocation& in_location)
 {
-   Error error = systemError(in_value, in_cause, in_location);
+   Error error = systemError(in_code, in_cause, in_location);
+   error.addProperty("description", in_description);
+   return error;
+}
+
+Error systemError(const std::error_code&  in_code,
+                  const std::string& in_description,
+                  const Error& in_cause,
+                  const ErrorLocation& in_location)
+{
+   Error error = systemError(in_code, in_cause, in_location);
    error.addProperty("description", in_description);
    return error;
 }
