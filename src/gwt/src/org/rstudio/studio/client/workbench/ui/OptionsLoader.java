@@ -146,6 +146,7 @@ public class OptionsLoader
    }
    
    private final GlobalDisplay globalDisplay_;
+   @SuppressWarnings("unused")
    private final WorkbenchServerOperations server_;
    private final Commands commands_;
    private final UserPrefs uiPrefs_;

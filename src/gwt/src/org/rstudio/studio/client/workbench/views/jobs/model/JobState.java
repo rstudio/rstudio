@@ -68,7 +68,7 @@ public class JobState extends JsObject
 
    public final boolean hasJobs()
    {
-      for (String id : iterableKeys())
+      for (@SuppressWarnings("unused") String id : iterableKeys())
       {
          return true;
       }
