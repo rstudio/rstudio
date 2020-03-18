@@ -34,6 +34,7 @@ import { EditorUI } from '../../api/ui';
 import { imageDialog } from './image-dialog';
 import { imageDrop } from './image-events';
 import { ImageNodeView } from './image-view';
+import { selectionIsImageNode } from '../../api/selection';
 
 const TARGET_URL = 0;
 const TARGET_TITLE = 1;
@@ -202,11 +203,8 @@ function imageCommand(editorUI: EditorUI, imageAttributes: boolean) {
       // see if we are editing an existing node
       let node: ProsemirrorNode | null = null;
       let nodeType = schema.nodes.image;
-      if (
-        state.selection instanceof NodeSelection &&
-        [schema.nodes.image, schema.nodes.figure].includes(state.selection.node.type)
-      ) {
-        node = state.selection.node;
+      if (selectionIsImageNode(schema, state.selection)) {
+        node = (state.selection as NodeSelection).node;
         nodeType = node.type;
       }
 

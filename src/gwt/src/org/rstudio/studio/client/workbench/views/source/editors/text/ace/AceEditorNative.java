@@ -167,6 +167,7 @@ public class AceEditorNative extends JavaScriptObject
            }));
    }-*/;
 
+   @SuppressWarnings("hiding")
    public native final <Tooltip> void onShowGutterTooltip(CommandWithArg<Tooltip> command) /*-{
        this.on("showGutterTooltip",
            $entry(function (arg) {

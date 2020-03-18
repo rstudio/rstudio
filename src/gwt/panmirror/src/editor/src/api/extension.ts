@@ -26,6 +26,7 @@ import { BaseKeyBinding } from './basekeys';
 import { AppendTransactionHandler, AppendMarkTransactionHandler } from './transaction';
 import { EditorOptions } from './options';
 import { PandocExtensions } from './pandoc';
+import { FixupFn } from './fixup';
 
 export interface Extension {
   marks?: PandocMark[];
@@ -36,7 +37,7 @@ export interface Extension {
   plugins?: (schema: Schema, ui: EditorUI, mac: boolean) => readonly Plugin[];
   appendTransaction?: (schema: Schema) => readonly AppendTransactionHandler[];
   appendMarkTransaction?: (schema: Schema) => readonly AppendMarkTransactionHandler[];
-  layoutFixups?: (schema: Schema, view: EditorView) => Readonly<Array<(tr: Transaction) => Transaction>>;
+  fixups?: (schema: Schema, view: EditorView) => Readonly<FixupFn[]>;
 }
 
 // return an extension conditional on the active EditorOptions

@@ -520,6 +520,7 @@ public class GeneralPreferencesPane extends PreferencesPane
       return "General";
    }
    
+   @SuppressWarnings("unused")
    private RVersionSpec getDefaultRVersion()
    {
       if (rServerRVersion_ != null)
@@ -528,6 +529,7 @@ public class GeneralPreferencesPane extends PreferencesPane
          return RVersionSpec.createEmpty();
    }
    
+   @SuppressWarnings("unused")
    private boolean getRestoreProjectRVersion()
    {
       if (rememberRVersionForProjects_ != null)

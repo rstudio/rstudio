@@ -1364,7 +1364,6 @@ public class ObjectExplorerDataGrid
    private final ObjectExplorerHandle handle_;
    private Data root_;
    
-   @SuppressWarnings("unused")
    private final SourceDocument document_;
    
    private final IdentityColumn<Data> nameColumn_;

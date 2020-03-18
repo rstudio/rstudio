@@ -27,9 +27,7 @@ import {
 import { EditorState, Plugin, PluginKey, Transaction } from 'prosemirror-state';
 import { EditorView } from 'prosemirror-view';
 import {
-  findChildren,
   setTextSelection,
-  findParentNodeOfType,
   findParentNodeOfTypeClosestToPos,
   findParentNode,
 } from 'prosemirror-utils';
@@ -56,12 +54,13 @@ import { baseKeysPlugin } from './api/basekeys';
 import {
   appendTransactionsPlugin,
   appendMarkTransactionsPlugin,
-  kLayoutFixupTransaction,
+  kFixupTransaction,
   kAddToHistoryTransaction,
 } from './api/transaction';
 import { EditorOutline } from './api/outline';
 import { EditingLocation, getEditingLocation, restoreEditingLocation } from './api/location';
 import { navigateTo } from './api/navigation';
+import { FixupContext } from './api/fixup';
 
 import { getTitle, setTitle } from './nodes/yaml_metadata/yaml_metadata-title';
 
@@ -258,8 +257,8 @@ export class Editor {
     applyTheme(defaultTheme());
 
     // apply fixups when the window size changes
-    this.applyLayoutFixups = this.applyLayoutFixups.bind(this);
-    window.addEventListener('resize', this.applyLayoutFixups);
+    this.applyFixupsOnResize = this.applyFixupsOnResize.bind(this);
+    window.addEventListener('resize', this.applyFixupsOnResize);
 
     // create pandoc translator
     this.pandocConverter = new PandocConverter(this.schema, this.extensions, context.pandoc);
@@ -278,7 +277,7 @@ export class Editor {
   }
 
   public destroy() {
-    document.removeEventListener('resize', this.applyLayoutFixups);
+    document.removeEventListener('resize', this.applyFixupsOnResize);
     this.view.destroy();
   }
 
@@ -315,8 +314,8 @@ export class Editor {
     });
     this.view.updateState(this.state);
 
-    // apply layout fixups
-    this.applyLayoutFixups();
+    // apply fixups
+    this.applyFixups(FixupContext.Load);
 
     // notify listeners if requested
     if (emitUpdate) {
@@ -341,7 +340,7 @@ export class Editor {
     }
 
     // apply layout fixups
-    this.applyLayoutFixups();
+    this.applyFixups(FixupContext.Save);
 
     // convert doc
     const docWithCursor = cursorSentinel
@@ -410,7 +409,7 @@ export class Editor {
   }
 
   public resize() {
-    this.applyLayoutFixups();
+    this.applyFixupsOnResize();
   }
 
   public enableDevTools(initFn: (view: EditorView, stateClass: any) => void) {
@@ -488,8 +487,8 @@ export class Editor {
 
     // notify listeners of updates
     if (tr.docChanged) {
-      // fire updated (unless this was a layout fixup)
-      if (!tr.getMeta(kLayoutFixupTransaction)) {
+      // fire updated (unless this was a fixup)
+      if (!tr.getMeta(kFixupTransaction)) {
         this.emitEvent(EditorEvents.Update);
       }
 
@@ -675,19 +674,23 @@ export class Editor {
     };
   }
 
-  private applyLayoutFixups() {
+  private applyFixupsOnResize() {
+    this.applyFixups(FixupContext.Resize);
+  }
+
+  private applyFixups(context: FixupContext) {
     let tr = this.state.tr;
-    tr = this.extensionLayoutFixups(tr);
+    tr = this.extensionFixups(tr, context);
     if (tr.docChanged) {
       tr.setMeta(kAddToHistoryTransaction, false);
-      tr.setMeta(kLayoutFixupTransaction, true);
+      tr.setMeta(kFixupTransaction, true);
       this.view.dispatch(tr);
     }
   }
 
-  private extensionLayoutFixups(tr: Transaction) {
-    this.extensions.layoutFixups(this.schema, this.view).forEach(fixup => {
-      tr = fixup(tr);
+  private extensionFixups(tr: Transaction, context: FixupContext) {
+    this.extensions.fixups(this.schema, this.view).forEach(fixup => {
+      tr = fixup(tr, context);
     });
     return tr;
   }
@@ -719,7 +722,7 @@ export class Editor {
       if (!this.schema.nodes.table || !findParentNodeOfTypeClosestToPos(textBlockPos, this.schema.nodes.table)) {
         // space at the end of the sentinel so that it doesn't interere with
         // markdown that is sensitive to contiguous characters (e.g. math)
-        cursorSentinel = 'CursorSentinel-CAFB04C4-080D-4074-898C-F670CAACB8AF ';
+        cursorSentinel = 'CursorSentinel-CAFB04C4-080D-4074-898C-F670CAACB8AF';
         setTextSelection(textBlock.pos)(tr);
         tr.insertText(cursorSentinel);
       }

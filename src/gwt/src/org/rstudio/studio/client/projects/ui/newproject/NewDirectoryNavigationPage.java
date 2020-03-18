@@ -183,6 +183,7 @@ public class NewDirectoryNavigationPage
          initWidget(panel);
       }
 
+      @SuppressWarnings("unused")
       private ButtonClickManager clickManager_;
    }
    

@@ -136,7 +136,9 @@ public class ProjectRenvPreferencesPane extends ProjectPreferencesPane
    private CheckBox chkUseRenv_;
    
    // Injected ----
+   @SuppressWarnings("unused")
    private final Session session_;
+   @SuppressWarnings("unused")
    private final RenvServerOperations server_;
    private final DependencyManager dependencyManager_;
    

@@ -3,7 +3,7 @@
 #
 # build.xml
 #
-# Copyright (C) 2009-19 by RStudio, PBC
+# Copyright (C) 2009-20 by RStudio, PBC
 #
 # This program is licensed to you under the terms of version 3 of the
 # GNU Affero General Public License. This program is distributed WITHOUT
@@ -82,7 +82,8 @@
    </target>
 
    <!-- panmirror typescript library -->
-   <property name="node.dir" value="../../dependencies/common/node/10.19.0"/>
+   <property name="node.version" value="10.19.0"/>
+   <property name="node.dir" value="../../dependencies/common/node/${node.version}"/>
    <condition property="node.bin" value="../../../${node.dir}/bin/node">
      <not>
         <os family="windows" />
@@ -91,6 +92,10 @@
    <condition property="node.bin" value="${node.dir}/node.exe">
      <os family="windows" />
    </condition>
+
+   <!-- use node from /opt/rstudio-tools if installed (typical for Docker) -->
+   <available property="node.bin" value="/opt/rstudio-tools/dependencies/common/node/${node.version}/bin/node" file="/opt/rstudio-tools/dependencies/common/node/${node.version}/bin/node"/>
+
    <property name="panmirror.dir" value="./panmirror/src/editor"/>
    <property name="panmirror.build.dir" value="./www/js/panmirror"/>      
    <target name="panmirror" description="Compile panmirror library">
@@ -98,6 +103,7 @@
       <exec executable="${node.bin}" dir="${panmirror.dir}" spawn="${panmirror.spawn}">
          <arg value="fuse"/>
          <arg value="${panmirror.target}"/>
+         <env key="NODE_PATH" path="${env.NODE_PATH}:/opt/rstudio-tools/panmirror/node_modules"/>
       </exec>
    </target>
 

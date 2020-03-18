@@ -1327,6 +1327,7 @@ public class RSConnectDeploy extends Composite
    private RSConnectServerOperations server_;
    private GlobalDisplay display_;
    private RSAccountConnector connector_;
+   @SuppressWarnings("unused")
    private UserPrefs userPrefs_;
    private UserState userState_;
    

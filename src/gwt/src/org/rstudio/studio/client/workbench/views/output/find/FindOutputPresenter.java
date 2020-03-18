@@ -45,7 +45,6 @@ import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
-import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.vcs.VCSConstants;
 import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.WorkbenchView;

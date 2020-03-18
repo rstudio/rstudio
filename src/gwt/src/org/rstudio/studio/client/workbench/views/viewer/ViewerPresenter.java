@@ -623,6 +623,7 @@ public class ViewerPresenter extends BasePresenter
    private final DependencyManager dependencyManager_;
    private final FileDialogs fileDialogs_;
    private final RemoteFileSystemContext fileSystemContext_;
+   @SuppressWarnings("unused")
    private final Provider<UserPrefs> pUserPrefs_;
    private final Provider<UserState> pUserState_;
    private final SourceShim sourceShim_; 
@@ -632,6 +633,7 @@ public class ViewerPresenter extends BasePresenter
    
    private ShinyApplicationParams runningShinyAppParams_;
    private PlumberAPIParams runningPlumberAPIParams_;
+   @SuppressWarnings("unused")
    private RmdPreviewParams rmdPreviewParams_;
    
    private WindowEx zoomWindow_ = null;

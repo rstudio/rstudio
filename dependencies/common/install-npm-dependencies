@@ -3,7 +3,7 @@
 #
 # install-npm-dependencies
 #
-# Copyright (C) 2009-19 by RStudio, Inc.
+# Copyright (C) 2009-20 by RStudio, Inc.
 #
 # Unless you have received this program directly from RStudio pursuant
 # to the terms of a commercial license agreement with RStudio, then
@@ -89,7 +89,13 @@ else
 fi
 
 # panmirror dependencies
-pushd ../../src/gwt/panmirror/src/editor
+if [ -d "/opt/rstudio-tools/panmirror" ]; then
+  # install dependencies from /opt/rstudio-tools if present
+  pushd /opt/rstudio-tools/panmirror
+else
+  # otherwise, use source tree
+  pushd ../../src/gwt/panmirror/src/editor
+fi
 PATH=${INSTALL_PATH} yarn config set ignore-engines true
 PATH=${INSTALL_PATH} yarn install
 popd

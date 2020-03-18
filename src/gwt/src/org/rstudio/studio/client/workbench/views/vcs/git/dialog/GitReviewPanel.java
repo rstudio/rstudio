@@ -767,6 +767,7 @@ public class GitReviewPanel extends ResizeComposite implements Display
    @SuppressWarnings("unused")
    private final FileTypeRegistry fileTypeRegistry_;
    private final AriaLiveService ariaLive_;
+   @SuppressWarnings("unused")
    private final Provider<UserPrefs> pPrefs_;
    private LeftRightToggleButton switchViewButton_;
 

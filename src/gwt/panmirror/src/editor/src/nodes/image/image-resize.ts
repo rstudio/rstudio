@@ -314,6 +314,7 @@ function resizeShelf(
     hInput.style.display = percentSizing ? 'none' : '';
     hAutoLabel.style.display = percentSizing ? '' : 'none';
   };
+  manageUnitsUI();
 
   // helper function to get a dimension (returns null if input not currently valid)
   const getDim = (input: HTMLInputElement) => {

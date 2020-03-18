@@ -323,6 +323,7 @@ public class TutorialPresenter
    private final EventBus events_;
    private final Commands commands_;
    private final TutorialServerOperations server_;
+   @SuppressWarnings("unused")
    private final ShinyDisconnectNotifier disconnectNotifier_;
    
    public static final String VIEWER_TYPE_TUTORIAL = "tutorial";
