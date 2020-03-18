@@ -1,11 +1,16 @@
 ## TODO
 
+
 Discuss tokens / escaping / etc. with Joe
 
 Images that link to things need to be supported. Currently a "figure" with a surrounding link tag doesn't even round trip! That's 
 because figures can't have links, we should reflect this.
 
-Image dialog with width/height/units/lock
+Image dialog with width/height/units/lock:
+   - Consider reading natualWidth/naturalHeight when no width/height
+   - Dialog front-end for width/height/units
+   - Propagate valid units to front end
+   - Set an initial value for lockRatio
 
 Incorporate new theme colors
 
