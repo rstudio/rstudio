@@ -27,6 +27,7 @@ import org.rstudio.core.client.command.EditorCommandManager;
 import org.rstudio.core.client.command.ShortcutManager;
 import org.rstudio.core.client.command.ShortcutViewer;
 import org.rstudio.core.client.command.UserCommandManager;
+import org.rstudio.core.client.files.filedialog.OpenProjectDialog;
 import org.rstudio.core.client.files.filedialog.PathBreadcrumbWidget;
 import org.rstudio.core.client.theme.WindowFrame;
 import org.rstudio.core.client.widget.CaptionWithHelp;
@@ -285,6 +286,7 @@ public interface RStudioGinjector extends Ginjector
    void injectMembers(CheckForUpdatesDialog dialog);
    void injectMembers(JobsPresenterEventHandlersImpl jobPresenterBaseImpl);
    void injectMembers(JobsDisplayImpl jobDisplayBaseImpl);
+   void injectMembers(OpenProjectDialog dialog);
    
    public static final RStudioGinjector INSTANCE = GWT.create(RStudioGinjector.class);
 
