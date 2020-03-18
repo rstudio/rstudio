@@ -3,7 +3,7 @@
 #
 # build.xml
 #
-# Copyright (C) 2009-19 by RStudio, PBC
+# Copyright (C) 2009-20 by RStudio, PBC
 #
 # This program is licensed to you under the terms of version 3 of the
 # GNU Affero General Public License. This program is distributed WITHOUT
@@ -92,11 +92,9 @@
    <condition property="node.bin" value="${node.dir}/node.exe">
      <os family="windows" />
    </condition>
-   <condition property="node.bin" value="/opt/rstudio-tools/dependencies/common/node/${node.version}/bin/node">
-      <resourceexists>
-        <file file="/opt/rstudio-tools/dependencies/common/node/${node.version}/bin/node"/>
-      </resourceexists>
-   </condition>
+
+   <!-- use node from /opt/rstudio-tools if installed (typical for Docker) -->
+   <available property="node.bin" value="/opt/rstudio-tools/dependencies/common/node/${node.version}/bin/node" file="/opt/rstudio-tools/dependencies/common/node/${node.version}/bin/node"/>
 
    <property name="panmirror.dir" value="./panmirror/src/editor"/>
    <property name="panmirror.build.dir" value="./www/js/panmirror"/>      
@@ -105,6 +103,7 @@
       <exec executable="${node.bin}" dir="${panmirror.dir}" spawn="${panmirror.spawn}">
          <arg value="fuse"/>
          <arg value="${panmirror.target}"/>
+         <env key="NODE_PATH" path="${env.NODE_PATH}:/opt/rstudio-tools/panmirror/node_modules"/>
       </exec>
    </target>
 
