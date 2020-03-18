@@ -161,6 +161,24 @@ FilePath User::getUserHomePath(const std::string& in_envOverride)
    return FilePath(getEnvVariable("HOME"));
 }
 
+bool User::operator==(const User& in_other) const
+{
+   // If one or the other is all users but not both, these aren't the same user.
+   if (isAllUsers() != in_other.isAllUsers())
+      return false;
+
+   // Otherwise they're both all users or they're both not, so just return true if this user is all users.
+   if (isAllUsers())
+      return true;
+
+   return getUserId() == in_other.getUserId();
+}
+
+bool User::operator!=(const User &in_other) const
+{
+   return !(*this == in_other);
+}
+
 bool User::exists() const
 {
    return !isEmpty() && !isAllUsers();

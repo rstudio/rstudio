@@ -132,6 +132,24 @@ public:
    static Error getUserFromIdentifier(UidType in_userId, User& out_user);
 
    /**
+    * @brief Equality operator.
+    *
+    * @param in_other      The user to compare with this user.
+    *
+    * @return True if this user and in_other have the same user ID; false otherwise.
+    */
+   bool operator==(const User& in_other) const;
+
+   /**
+    * @brief Inequality operator.
+    *
+    * @param in_other      The user to compare with this user.
+    *
+    * @return False if this user and in_other have the same user ID; true otherwise.
+    */
+   bool operator!=(const User& in_other) const;
+
+   /**
     * @brief Checks whether the user represented by this object exists.
     *
     * If this is an empty user, or is a user object which represents all users, this method will return false as it does
