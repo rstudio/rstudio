@@ -334,6 +334,7 @@ public class TextEditingTargetSpelling implements TypoSpellChecker.Context
 
    private static final Resources RES = GWT.create(Resources.class);
 
+   @SuppressWarnings("unused")
    private final class InputKeyDownHandler implements KeyDownHandler
    {
       public void onKeyDown(KeyDownEvent event)

@@ -228,6 +228,7 @@ public class NewConnectionNavigationPage
          initWidget(panel);
       }
 
+      @SuppressWarnings("unused")
       private ButtonClickManager clickManager_;
    }
 

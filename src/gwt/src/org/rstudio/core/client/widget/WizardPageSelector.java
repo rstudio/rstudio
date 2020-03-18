@@ -138,6 +138,7 @@ public class WizardPageSelector<I,T> extends Composite
          initWidget(layoutPanel);
       }
 
+      @SuppressWarnings("unused")
       private ButtonClickManager clickManager_;
    }
 

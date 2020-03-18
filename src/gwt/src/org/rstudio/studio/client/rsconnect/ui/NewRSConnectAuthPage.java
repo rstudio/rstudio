@@ -226,6 +226,7 @@ public class NewRSConnectAuthPage
       }, 1000);
    }
 
+   @SuppressWarnings("unused")
    private void onAuthCompleted()
    {
       server_.getUserFromToken(result_.getServerInfo().getUrl(), 

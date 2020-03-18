@@ -22,7 +22,6 @@ import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import org.rstudio.core.client.Pair;
 import org.rstudio.core.client.StringUtil;
-import org.rstudio.core.client.JsArrayUtil;
 
 import java.util.ArrayList;
 
@@ -282,7 +281,6 @@ public class FindResult extends JavaScriptObject
          String line = getLineValue();
          // Use a counter to ensure tags are balanced.
          int openInsTags = 0;
-         int openMarkTags = 0;
    
          for (int i = 0; i < line.length(); i++)
          {

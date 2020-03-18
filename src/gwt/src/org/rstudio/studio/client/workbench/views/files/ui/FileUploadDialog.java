@@ -181,6 +181,8 @@ public class FileUploadDialog extends HtmlFormModalDialog<PendingFileUpload>
    private FileSystemItem targetDirectory_;
    private Hidden targetDirectoryHidden_;
    private DirectoryChooserTextBox directoryNameWidget_;
+   @SuppressWarnings("unused")
    private final FileDialogs fileDialogs_;
+   @SuppressWarnings("unused")
    private RemoteFileSystemContext fileSystemContext_;
 }

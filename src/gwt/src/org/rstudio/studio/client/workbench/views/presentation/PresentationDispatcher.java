@@ -239,6 +239,7 @@ public class PresentationDispatcher
    private final GlobalDisplay globalDisplay_;
    private final Commands commands_;
    private final Session session_;
+   @SuppressWarnings("unused")
    private final WorkbenchContext workbenchContext_;
    
 }

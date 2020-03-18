@@ -44,7 +44,6 @@ import org.rstudio.core.client.widget.ModalDialog;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.GlobalDisplay;
-import org.rstudio.studio.client.common.vcs.StatusAndPathInfo;
 import org.rstudio.studio.client.common.vcs.VCSConstants;
 import org.rstudio.studio.client.workbench.model.Session;
 
