@@ -1,16 +1,22 @@
 ## TODO
 
+Image dialog:
+
+- For unsupported units, need to hide the sizing UI and have it still
+  show up in attributes
+  
+- When a new image is selected, hide the sizing UI and set the props to null
+  (alternatively, read the image dims from the url)
+  
+- Image at 620x330px shows up as 621x331 in the dialog
+
+- Test routing to/from style attributes
+
 
 Discuss tokens / escaping / etc. with Joe
 
 Images that link to things need to be supported. Currently a "figure" with a surrounding link tag doesn't even round trip! That's 
 because figures can't have links, we should reflect this.
-
-Image dialog with width/height/units/lock:
-   - Consider reading natualWidth/naturalHeight when no width/height
-   - Dialog front-end for width/height/units
-   - Propagate valid units to front end
-   - Set an initial value for lockRatio
 
 Incorporate new theme colors
 
