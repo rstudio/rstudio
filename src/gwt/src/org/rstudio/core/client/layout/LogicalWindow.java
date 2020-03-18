@@ -63,6 +63,19 @@ public class LogicalWindow implements HasWindowStateChangeHandlers,
       normal_.focus();
    }
 
+   public boolean visible()
+   {
+      switch (state_)
+      {
+         case HIDE:
+            return false;
+         case MINIMIZE:
+            return false;
+         default:
+            return true;
+      }
+   }
+
    public Widget getActiveWidget()
    {
       switch (state_)

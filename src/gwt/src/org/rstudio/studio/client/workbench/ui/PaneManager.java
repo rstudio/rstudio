@@ -894,37 +894,22 @@ public class PaneManager
          // Try to find a visible tabSet, if both are hidden - add to tabSet1
          LogicalWindow tabSet1 = panesByName_.get("TabSet1");
          LogicalWindow tabSet2 = panesByName_.get("TabSet2");
-         MinimizedModuleTabLayoutPanel minimized;
-         ArrayList<Tab> tabs;
-         if ((tabSet1.getState() != WindowState.HIDE &&
-              tabSet1.getState() != WindowState.MINIMIZE) ||
-              (tabSet2.getState() == WindowState.HIDE ||
-               tabSet2.getState() == WindowState.MINIMIZE))
+         if (tabSet1.visible() || !tabSet2.visible())
          {
             parent = tabSet1;
             panel = tabSet1TabPanel_;
-            minimized = tabSet1MinPanel_;
-            tabs = tabs1_;
+            moveHiddenTabToTabSet1(tab, parent, panel, tabSet1MinPanel_, tabs1_);
          }
          else
          {
             parent = tabSet2;
             panel = tabSet2TabPanel_;
-            minimized = tabSet2MinPanel_;
-            tabs = tabs2_;
+            moveHiddenTabToTabSet2(tab, parent, panel, tabSet2MinPanel_, tabs2_);
          }
-         // Remove tab from hidden tabSet
-         hiddenTabs_.remove(tab);
-         populateTabPanel(hiddenTabs_, hiddenTabSetTabPanel_, hiddenTabSetMinPanel_);
-
-         // Add tab to new set
-         tabs.add(tab);
-         populateTabPanel(tabs, panel, minimized);
       }
 
       // Ensure that the pane is visible (otherwise tab selection will fail)
-      if (parent.getState() == WindowState.MINIMIZE ||
-          parent.getState() == WindowState.HIDE)
+      if (!parent.visible())
       {
          parent.onWindowStateChange(new WindowStateChangeEvent(WindowState.NORMAL));
       }
@@ -958,6 +943,58 @@ public class PaneManager
          return;
       
       toggleWindowZoom(parentWindow, tab);
+   }
+
+   private JsArrayString tabListToJsArrayString(ArrayList<Tab> tabs)
+   {
+      JsArrayString tabSet = JsArrayString.createArray().cast();
+      for (Tab tab : tabs)
+         tabSet.push(tab.name());
+      return tabSet;
+   }
+
+   private void moveTabToVisiblePanel(Tab tab, LogicalWindow window, WorkbenchTabPanel panel,
+                               MinimizedModuleTabLayoutPanel minimized, ArrayList<Tab> tabs)
+   {
+      // Remove tab from hidden tabSet
+      hiddenTabs_.remove(tab);
+      populateTabPanel(hiddenTabs_, hiddenTabSetTabPanel_, hiddenTabSetMinPanel_);
+
+      // Add tab to the front of the new set
+      tabs.add(0, tab);
+      populateTabPanel(tabs, panel, minimized);
+   }
+
+   private void moveHiddenTabToTabSet1(Tab tab, LogicalWindow window, WorkbenchTabPanel panel,
+                                       MinimizedModuleTabLayoutPanel minimized, ArrayList<Tab> tabs)
+   {
+      moveTabToVisiblePanel(tab, window, panel, minimized, tabs);
+
+      PaneConfig paneConfig = getCurrentConfig();
+      userPrefs_.panes().setGlobalValue(PaneConfig.create(
+         JsArrayUtil.copy(paneConfig.getQuadrants()),
+         tabListToJsArrayString(tabs),
+         paneConfig.getTabSet2(),
+         tabListToJsArrayString(hiddenTabs_),
+         paneConfig.getConsoleLeftOnTop(),
+         paneConfig.getConsoleRightOnTop()).cast());
+      userPrefs_.writeUserPrefs();
+   }
+
+   private void moveHiddenTabToTabSet2(Tab tab, LogicalWindow window, WorkbenchTabPanel panel,
+                                       MinimizedModuleTabLayoutPanel minimized, ArrayList<Tab> tabs)
+   {
+      moveTabToVisiblePanel(tab, window, panel, minimized, tabs);
+
+      PaneConfig paneConfig = getCurrentConfig();
+      userPrefs_.panes().setGlobalValue(PaneConfig.create(
+         JsArrayUtil.copy(paneConfig.getQuadrants()),
+         paneConfig.getTabSet1(),
+         tabListToJsArrayString(tabs),
+         tabListToJsArrayString(hiddenTabs_),
+         paneConfig.getConsoleLeftOnTop(),
+         paneConfig.getConsoleRightOnTop()).cast());
+      userPrefs_.writeUserPrefs();
    }
 
    /**
@@ -1150,7 +1187,8 @@ public class PaneManager
          session_.persistClientState();
       });
 
-      new SelectedTabStateValue(persisterName, tabPanel);
+      if (persisterName != "HiddenTabSet")
+         new SelectedTabStateValue(persisterName, tabPanel);
 
       return new Triad<>(
          logicalWindow,
