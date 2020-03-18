@@ -337,9 +337,9 @@ public class PanmirrorEditImageDialog extends ModalDialog<PanmirrorImageProps>
       return input;
    }
    
-   private static ListBox addUnitsSelect(Panel panel)
+   private ListBox addUnitsSelect(Panel panel)
    {
-      String[] options = {"px", "in", "cm", "mm", "%"};
+      String[] options = uiTools_.validUnits();
       ListBox units = new ListBox();
       units.addStyleName(RES.styles().horizontalInput());
       for (int i = 0; i < options.length; i++)

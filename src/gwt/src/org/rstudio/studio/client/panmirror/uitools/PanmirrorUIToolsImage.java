@@ -22,7 +22,7 @@ import jsinterop.annotations.JsType;
 @JsType
 public class PanmirrorUIToolsImage
 {
-   public native String validUnits();
+   public native String[] validUnits();
    public native String percentUnit();
    public native double unitToPixels(double value, String unit, double containerWidth);
    public native double pixelsToUnit(double pixels, String unit, double containerWidth);
