@@ -184,6 +184,14 @@ User& User::operator=(User &&in_other) noexcept
 
 bool User::operator==(const User& in_other) const
 {
+   // If one or the other is empty but not both, these objects aren't equal.
+   if (isEmpty() != in_other.isEmpty())
+      return false;
+
+   // Otherwise they're both empty or they're both not, so just return true if this user is empty.
+   if (isEmpty())
+      return true;
+
    // If one or the other is all users but not both, these aren't the same user.
    if (isAllUsers() != in_other.isAllUsers())
       return false;
