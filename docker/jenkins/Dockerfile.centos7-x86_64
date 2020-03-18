@@ -75,7 +75,7 @@ RUN bash /tmp/install-dependencies
 
 # install crashpad and its dependencies
 COPY dependencies/common/install-crashpad /tmp/
-RUN scl enable llvm-toolset-7 "/bin/bash /tmp/install-crashpad"
+RUN scl enable llvm-toolset-7 "/bin/bash /tmp/install-crashpad centos7"
 
 # set github login from build argument if defined
 ARG GITHUB_LOGIN
