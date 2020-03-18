@@ -20,7 +20,7 @@ import { EditorView } from 'prosemirror-view';
 import { insertAndSelectNode } from '../../api/node';
 import { ImageProps, ImageType, EditorUI } from '../../api/ui';
 import { extractSizeStyles } from '../../api/css';
-import { ImageDimensions } from '../../api/image';
+import { ImageDimensions, isNaturalAspectRatio, kPercentUnit } from '../../api/image';
 
 import { imagePropsWithSizes } from './image-util';
 
@@ -37,7 +37,7 @@ export async function imageDialog(
   // if we are being called with an existing node then read it's attributes
   let content = Fragment.empty;
   let image: ImageProps = { src: null };
-  if (node && node.type === nodeType) {
+  if (node && dims && node.type === nodeType) {
     image = {
       ...(node.attrs as ImageProps),
       alt: node.textContent || node.attrs.alt,
@@ -50,7 +50,7 @@ export async function imageDialog(
     };
 
     // move width, height, and units out of keyvalue if necessary
-    image = imagePropsWithSizes(image);
+    image = imagePropsWithSizes(image, dims);
     
     content = node.content;
   } else {
@@ -79,13 +79,14 @@ export async function imageDialog(
     // if we have width and height move them into keyvalue
     let keyvalue = result.keyvalue;
     if (result.units) {
+      const units = result.units && result.units === "px" ? "" : result.units;
       if (result.width) {
         keyvalue = keyvalue || [];
-        keyvalue.push(["width", result.width + result.units]);
+        keyvalue.push(["width", result.width + units]);
       }
-      if (result.height) {
+      if (result.height && (units !== kPercentUnit) && !isNaturalHeight(result.width, result.height, dims)) {
         keyvalue = keyvalue || [];
-        keyvalue.push(["height", result.height + result.units]);
+        keyvalue.push(["height", result.height + units]);
       }
     }
     
@@ -107,4 +108,14 @@ export async function imageDialog(
   if (view) {
     view.focus();
   }
+}
+
+
+function isNaturalHeight(width: number | undefined, height: number | undefined, dims: ImageDimensions | null) {
+  if (width && height && dims) {
+    return isNaturalAspectRatio(width, height, dims, false);
+  } else {
+    return false;
+  }
+
 }

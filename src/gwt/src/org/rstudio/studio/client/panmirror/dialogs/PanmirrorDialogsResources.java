@@ -39,6 +39,7 @@ public interface PanmirrorDialogsResources extends ClientBundle
       String horizontalLabel();
       String horizontalInput();
       String lockRatioCheckbox();
+      String heightAuto();
    }
 
    @Source("PanmirrorDialogsStyles.css")

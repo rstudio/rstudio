@@ -64,6 +64,8 @@ public abstract class ModalDialogBase extends DialogBox
 {
    private static final String firstFocusClass = "__rstudio_modal_first_focus";
    private static final String lastFocusClass = "__rstudio_modal_last_focus";
+   
+   protected static final String allowEnterKeyClass = "__rstudio_modal_allow_enter_key";
 
    protected ModalDialogBase(DialogRole role)
    {
@@ -561,6 +563,7 @@ public abstract class ModalDialogBase extends DialogBox
             // allow Enter on textareas or anchors (including custom links)
             Element e = DomUtils.getActiveElement();
             if (e.hasTagName("TEXTAREA") || e.hasTagName("A") || 
+                  e.hasClassName(allowEnterKeyClass) ||
                   (e.hasAttribute("role") && e.getAttribute("role") == "link"))
                return;
 

@@ -25,6 +25,8 @@ import org.rstudio.core.client.widget.FormLabel;
 import org.rstudio.core.client.widget.ModalDialog;
 import org.rstudio.core.client.widget.NumericTextBox;
 import org.rstudio.core.client.widget.OperationWithInput;
+import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorAttrProps;
 import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorImageDimensions;
 import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorImageProps;
@@ -32,6 +34,9 @@ import org.rstudio.studio.client.panmirror.uitools.PanmirrorUITools;
 import org.rstudio.studio.client.panmirror.uitools.PanmirrorUIToolsImage;
 
 import com.google.gwt.aria.client.Roles;
+import com.google.gwt.dom.client.Document;
+import com.google.gwt.event.dom.client.DomEvent;
+import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.HasVerticalAlignment;
 import com.google.gwt.user.client.ui.HorizontalPanel;
@@ -58,6 +63,10 @@ public class PanmirrorEditImageDialog extends ModalDialog<PanmirrorImageProps>
       
       dims_ = dims;
       
+      widthProp_ = props.width;
+      heightProp_ = props.height;
+      unitsProp_ = props.units;
+      
       VerticalTabPanel imageTab = new VerticalTabPanel(ElementIds.VISUAL_MD_IMAGE_TAB_IMAGE);
       imageTab.addStyleName(RES.styles().dialog());
       
@@ -72,14 +81,74 @@ public class PanmirrorEditImageDialog extends ModalDialog<PanmirrorImageProps>
       HorizontalPanel sizePanel = new HorizontalPanel();
       sizePanel.addStyleName(RES.styles().spaced());
       sizePanel.setVerticalAlignment(HasVerticalAlignment.ALIGN_MIDDLE);
-      width_ = addSizeInput(uiWidth(props), sizePanel, ElementIds.VISUAL_MD_IMAGE_WIDTH, "Width:");
-      height_ = addSizeInput(uiHeight(props), sizePanel, ElementIds.VISUAL_MD_IMAGE_HEIGHT, "Height:");
+      
+      width_ = addSizeInput(sizePanel, ElementIds.VISUAL_MD_IMAGE_WIDTH, "Width:");
+      height_ = addSizeInput(sizePanel, ElementIds.VISUAL_MD_IMAGE_HEIGHT, "Height:");
+      heightAuto_ = createHorizontalLabel("(Auto)");
+      heightAuto_.addStyleName(RES.styles().heightAuto());
+      sizePanel.add(heightAuto_);
       units_ = addUnitsSelect(sizePanel);
+      initSizeInputs();
+      
       lockRatio_ = new CheckBox("Lock ratio");
       lockRatio_.addStyleName(RES.styles().lockRatioCheckbox());
       lockRatio_.getElement().setId(ElementIds.VISUAL_MD_IMAGE_LOCK_RATIO);
+      lockRatio_.setValue(props.lockRatio);
       sizePanel.add(lockRatio_);
-      if (editAttributes)
+      
+      width_.addChangeHandler(event -> {
+         String width = width_.getText();
+         widthProp_ = StringUtil.isNullOrEmpty(width) ? null : Double.parseDouble(width);
+         if (widthProp_ != null && lockRatio_.getValue()) {
+            double height = widthProp_ * (dims_.naturalHeight/dims_.naturalWidth);
+            height_.setValue(uiTools_.roundUnit(height, units_.getSelectedValue()));
+            heightProp_ = Double.parseDouble(height_.getValue());
+         }
+         unitsProp_ = units_.getSelectedValue();
+      });
+      
+      height_.addChangeHandler(event -> {
+         String height = height_.getText();
+         heightProp_ = StringUtil.isNullOrEmpty(height) ? null : Double.parseDouble(height);
+         if (heightProp_ != null && lockRatio_.getValue()) {
+            double width = heightProp_ * (dims_.naturalWidth/dims_.naturalHeight);
+            width_.setValue(uiTools_.roundUnit(width, units_.getSelectedValue()));
+            widthProp_ = Double.parseDouble(width_.getValue());
+         }
+         unitsProp_ = units_.getSelectedValue();
+      });
+      
+      units_.addChangeHandler(event -> {
+         
+         String width = width_.getText();  
+         if (!StringUtil.isNullOrEmpty(width)) 
+         {
+            double widthPixels = uiTools_.unitToPixels(Double.parseDouble(width), prevUnits_, dims_.containerWidth);
+            double widthUnit = uiTools_.pixelsToUnit(widthPixels, units_.getSelectedValue(), dims_.containerWidth);
+            width_.setText(uiTools_.roundUnit(widthUnit, units_.getSelectedValue()));
+            widthProp_ = Double.parseDouble(width_.getValue());
+         }
+         
+         String height = height_.getText();
+         if (!StringUtil.isNullOrEmpty(height)) 
+         {
+            double heightPixels = uiTools_.unitToPixels(Double.parseDouble(height), prevUnits_, dims_.containerWidth);
+            double heightUnit = uiTools_.pixelsToUnit(heightPixels, units_.getSelectedValue(), dims_.containerWidth);
+            height_.setText(uiTools_.roundUnit(heightUnit, units_.getSelectedValue()));
+            heightProp_ = Double.parseDouble(height_.getValue());
+         }
+         
+         prevUnits_ = units_.getSelectedValue();
+         
+         unitsProp_ = units_.getSelectedValue();
+         
+         manageUnitsUI();
+      });
+
+      manageUnitsUI();
+      
+      // only add sizing controls if we support editAttributes and dims have been provided
+      if (editAttributes && dims_ != null)
       {
          imageTab.add(sizePanel);
       }
@@ -130,6 +199,10 @@ public class PanmirrorEditImageDialog extends ModalDialog<PanmirrorImageProps>
       result.src = url_.getTextBox().getValue().trim();
       result.title = title_.getValue().trim();
       result.alt = alt_.getValue().trim();
+      result.width = widthProp_;
+      result.height = heightProp_;
+      result.units = unitsProp_;
+      result.lockRatio = lockRatio_.getValue();
       PanmirrorAttrProps attr = editAttr_.getAttr();
       result.id = attr.id;
       result.classes = attr.classes;
@@ -140,47 +213,122 @@ public class PanmirrorEditImageDialog extends ModalDialog<PanmirrorImageProps>
    @Override
    protected boolean validate(PanmirrorImageProps result)
    {
-      return true;
-   }
-   
-   private Double uiWidth(PanmirrorImageProps props)
-   {
-      if (props.width != null)
+      // width is required if height is specified
+      if (height_.getText().trim().length() > 0)
       {
-         return props.width;
+         GlobalDisplay globalDisplay = RStudioGinjector.INSTANCE.getGlobalDisplay();
+         String width = width_.getText().trim();
+         if (width.length() == 0)
+         {
+            globalDisplay.showErrorMessage(
+               "Error", "You must provide a value for image width."
+            );
+            width_.setFocus(true);
+            return false;
+         }
+         else
+         {
+            return true;
+         }
       }
       else
       {
-         return dims_.naturalWidth;
+         return true;
+      }
+     
+      
+   }
+   
+   private void initSizeInputs()
+   {
+      // only init for existing images (i.e. dims passed)
+      if (dims_ == null)
+         return;
+      
+      String width = null, height = null, units = "px"; 
+      
+      // if we have both width and height then use them
+      if (widthProp_ != null && heightProp_ != null)
+      {
+         width = widthProp_.toString();
+         height = heightProp_.toString();
+         units = unitsProp_;
+      }
+      
+      // if there is no width or height, use pixels
+      else if (widthProp_ == null && heightProp_ == null)
+      {
+         width = dims_.naturalWidth.toString();
+         height = dims_.naturalHeight.toString();
+         units = "px";
+      }
+      
+      else if (dims_.naturalHeight != null && dims_.naturalWidth != null)
+      {
+         // if there is width only then show computed height
+         units = unitsProp_;
+         if (widthProp_ != null)
+         {
+            width = widthProp_.toString();
+            height = uiTools_.roundUnit(widthProp_ * (dims_.naturalHeight/dims_.naturalWidth), units);
+         }
+         else if (heightProp_ != null)
+         {
+            height = heightProp_.toString();
+            width = uiTools_.roundUnit(heightProp_ * (dims_.naturalWidth/dims_.naturalHeight), units);
+         }
+      }
+      
+      // set values into inputs
+      width_.setValue(width);
+      height_.setValue(height);
+      for (int i = 0; i<units_.getItemCount(); i++)
+      {
+         if (units_.getItemText(i) == units)
+         {
+            units_.setSelectedIndex(i);
+            prevUnits_ = units;
+            break;
+         }
       }
    }
    
-   private Double uiHeight(PanmirrorImageProps props)
+   private void manageUnitsUI()
    {
-      Double width = uiWidth(props);
-      if (props.height != null)
+      boolean percentUnits = units_.getSelectedValue() == uiTools_.percentUnit();
+      
+      if (percentUnits)
       {
-         return props.height;
-      }
-      else if (width != null && dims_.naturalHeight != null)
-      {
-         return width * (dims_.naturalHeight / dims_.naturalWidth);
+         lockRatio_.setValue(true);
+         lockRatio_.setEnabled(false);
       }
       else
       {
-         return null;
+         lockRatio_.setEnabled(true);
       }
+      
+      height_.setVisible(!percentUnits);
+      heightAuto_.setVisible(percentUnits);
    }
+
    
-   
-   private static NumericTextBox addSizeInput(Double value, Panel panel, String id, String labelText)
+
+   private static NumericTextBox addSizeInput(Panel panel, String id, String labelText)
    {
       FormLabel label = createHorizontalLabel(labelText);
       NumericTextBox input = new NumericTextBox();
+      input.getElement().addClassName(allowEnterKeyClass);
+      input.addKeyUpHandler(event -> {
+         int keycode = event.getNativeKeyCode();
+         if (keycode == KeyCodes.KEY_ENTER) 
+         {
+            event.preventDefault();
+            event.stopPropagation();
+            DomEvent.fireNativeEvent(Document.get().createChangeEvent(), input);
+         }
+      });
       input.setMin(1);
       input.setMax(10000);
-      if (value != null)
-         input.setText(value.toString());
       input.addStyleName(RES.styles().horizontalInput());
       input.getElement().setId(id);
       label.setFor(input);
@@ -216,9 +364,16 @@ public class PanmirrorEditImageDialog extends ModalDialog<PanmirrorImageProps>
    
    private final PanmirrorUIToolsImage uiTools_;
 
+   private Double widthProp_ = null;
+   private Double heightProp_ = null;
+   private String unitsProp_ = null;
+   
+   private String prevUnits_;
+   
    private final PanmirrorImageChooser url_;
    private final NumericTextBox width_;
    private final NumericTextBox height_;
+   private final FormLabel heightAuto_;
    private final ListBox units_;
    private final CheckBox lockRatio_;
    private final TextBox title_;

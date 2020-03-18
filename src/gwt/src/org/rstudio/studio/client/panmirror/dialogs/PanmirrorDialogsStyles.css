@@ -29,6 +29,11 @@
    margin-top: 5px;
 }
 
+.dialog .heightAuto {
+	color: #606060;
+	margin-right: 7px;
+}
+
 .lockRatioCheckbox {
 	 margin-left: 3px;
 }

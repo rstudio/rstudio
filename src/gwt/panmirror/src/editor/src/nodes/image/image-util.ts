@@ -1,5 +1,5 @@
 import { ImageProps, attrPartitionKeyvalue } from "../../api/ui";
-import { imageSizePropWithUnit, isValidImageSizeUnit, ensureContainerWidth, kPercentUnit } from "../../api/image";
+import { imageSizePropWithUnit, isValidImageSizeUnit, ensureContainerWidth, kPercentUnit, isNaturalAspectRatio, ImageDimensions } from "../../api/image";
 import { EditorView } from "prosemirror-view";
 import { findParentNodeClosestToPos } from "prosemirror-utils";
 
@@ -18,7 +18,7 @@ import { findParentNodeClosestToPos } from "prosemirror-utils";
  *
  */
 
-export function imagePropsWithSizes(image: ImageProps) {
+export function imagePropsWithSizes(image: ImageProps, dims: ImageDimensions) {
 
   // pull width, height, and units out of keyvalue if necessary
   // (enables front-ends to provide dedicated UI for width/height)
@@ -28,6 +28,7 @@ export function imagePropsWithSizes(image: ImageProps) {
     let width : number | undefined;
     let height : number | undefined;
     let units : string | undefined;
+    let lockRatio = true;
     const partitionedKeyvalue = attrPartitionKeyvalue(["width", "height"], image.keyvalue);
     for (const kv of partitionedKeyvalue.partitioned) {
       const [key, value] = kv;
@@ -50,12 +51,15 @@ export function imagePropsWithSizes(image: ImageProps) {
         partitionedKeyvalue.base.push(kv);
       }
     }
+    if (width && height) {
+      lockRatio = isNaturalAspectRatio(width, height, dims, lockRatio);
+    }
     return {
       ...image,
       width,
       height,
       units,
-      lockRatio: true,
+      lockRatio,
       keyvalue: partitionedKeyvalue.base
     };
   } else {
