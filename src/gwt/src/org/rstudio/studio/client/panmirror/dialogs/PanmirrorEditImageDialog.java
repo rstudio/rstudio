@@ -53,6 +53,8 @@ public class PanmirrorEditImageDialog extends ModalDialog<PanmirrorImageProps>
          operation.execute(null);
       }); 
       
+      dims_ = dims;
+      
       VerticalTabPanel imageTab = new VerticalTabPanel(ElementIds.VISUAL_MD_IMAGE_TAB_IMAGE);
       imageTab.addStyleName(RES.styles().dialog());
       
@@ -67,10 +69,8 @@ public class PanmirrorEditImageDialog extends ModalDialog<PanmirrorImageProps>
       HorizontalPanel sizePanel = new HorizontalPanel();
       sizePanel.addStyleName(RES.styles().spaced());
       sizePanel.setVerticalAlignment(HasVerticalAlignment.ALIGN_MIDDLE);
-      width_ = addSizeInput(props.width, sizePanel, ElementIds.VISUAL_MD_IMAGE_WIDTH, "Width:");
-      if (props.width != null)
-         width_.setText(props.width.toString());
-      height_ = addSizeInput(props.height, sizePanel, ElementIds.VISUAL_MD_IMAGE_HEIGHT, "Height:");
+      width_ = addSizeInput(uiWidth(props), sizePanel, ElementIds.VISUAL_MD_IMAGE_WIDTH, "Width:");
+      height_ = addSizeInput(uiHeight(props), sizePanel, ElementIds.VISUAL_MD_IMAGE_HEIGHT, "Height:");
       units_ = addUnitsSelect(sizePanel);
       lockRatio_ = new CheckBox("Lock ratio");
       lockRatio_.addStyleName(RES.styles().lockRatioCheckbox());
@@ -140,6 +140,36 @@ public class PanmirrorEditImageDialog extends ModalDialog<PanmirrorImageProps>
       return true;
    }
    
+   private Double uiWidth(PanmirrorImageProps props)
+   {
+      if (props.width != null)
+      {
+         return props.width;
+      }
+      else
+      {
+         return dims_.naturalWidth;
+      }
+   }
+   
+   private Double uiHeight(PanmirrorImageProps props)
+   {
+      Double width = uiWidth(props);
+      if (props.height != null)
+      {
+         return props.height;
+      }
+      else if (width != null && dims_.naturalHeight != null)
+      {
+         return width * (dims_.naturalHeight / dims_.naturalWidth);
+      }
+      else
+      {
+         return null;
+      }
+   }
+   
+   
    private static NumericTextBox addSizeInput(Double value, Panel panel, String id, String labelText)
    {
       FormLabel label = createHorizontalLabel(labelText);
@@ -176,6 +206,8 @@ public class PanmirrorEditImageDialog extends ModalDialog<PanmirrorImageProps>
    }
    
    private static PanmirrorDialogsResources RES = PanmirrorDialogsResources.INSTANCE;
+   
+   private final PanmirrorImageDimensions dims_;
    
    private final Widget mainWidget_;
 
