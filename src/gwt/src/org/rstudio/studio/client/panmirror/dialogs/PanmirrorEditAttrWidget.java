@@ -20,9 +20,10 @@ package org.rstudio.studio.client.panmirror.dialogs;
 
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.widget.FormTextArea;
-import org.rstudio.studio.client.panmirror.PanmirrorUITools;
 import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorAttrEditInput;
 import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorAttrProps;
+import org.rstudio.studio.client.panmirror.uitools.PanmirrorUITools;
+import org.rstudio.studio.client.panmirror.uitools.PanmirrorUIToolsAttr;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;
@@ -36,7 +37,7 @@ public class PanmirrorEditAttrWidget extends SimplePanel
 { 
    public PanmirrorEditAttrWidget()
    {
-      uiTools_ = new PanmirrorUITools();
+      uiTools_ = new PanmirrorUITools().attr;
       mainWidget_ = GWT.<Binder>create(Binder.class).createAndBindUi(this);
       setWidget(mainWidget_);
       id_.getElement().setId(ElementIds.VISUAL_MD_ATTR_ID);
@@ -48,7 +49,7 @@ public class PanmirrorEditAttrWidget extends SimplePanel
    
    public void setAttr(PanmirrorAttrProps attr)
    {  
-      PanmirrorAttrEditInput input = uiTools_.attrPropsToInput(attr);
+      PanmirrorAttrEditInput input = uiTools_.propsToInput(attr);
       id_.setText(input.id);
       classes_.setText(input.classes);
       style_.setText(input.style);
@@ -62,10 +63,10 @@ public class PanmirrorEditAttrWidget extends SimplePanel
       input.classes = classes_.getValue().trim();
       input.style = style_.getValue().trim();
       input.keyvalue = attributes_.getValue().trim();
-      return uiTools_.attrInputToProps(input);
+      return uiTools_.inputToProps(input);
    }
  
-   private final PanmirrorUITools uiTools_;
+   private final PanmirrorUIToolsAttr uiTools_;
    
    interface Binder extends UiBinder<Widget, PanmirrorEditAttrWidget> {}
    

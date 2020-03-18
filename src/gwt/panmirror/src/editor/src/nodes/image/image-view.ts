@@ -21,11 +21,11 @@ import { findParentNodeClosestToPos } from 'prosemirror-utils';
 
 import { EditorUI, ImageType } from '../../api/ui';
 import { removeStyleAttrib, extractSizeStyles } from '../../api/css';
-import { isValidImageSizeUnit, imageSizePropWithUnit } from '../../api/image';
+import { isValidImageSizeUnit, imageSizePropWithUnit, unitToPixels } from '../../api/image';
 
 import { imageDialog } from './image-dialog';
 import { attachResizeUI, initResizeContainer, ResizeUI, isResizeUICompatible } from './image-resize';
-import { unitToPixels, hasPercentWidth, imageDimensionsFromImg, imageContainerWidth } from './image-util';
+import { hasPercentWidth, imageDimensionsFromImg, imageContainerWidth } from './image-util';
 
 import './image-styles.css';
 

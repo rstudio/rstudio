@@ -14,8 +14,12 @@
  *
  */
 
+const kDpi = 96;
+
+export const kPercentUnit = '%';
+
  // https://github.com/jgm/pandoc/blob/master/src/Text/Pandoc/ImageSize.hs
-const kValidUnits = ['px', 'in', 'cm', 'mm', '%']; //
+export const kValidUnits = ['px', 'in', 'cm', 'mm', kPercentUnit]; //
 
 export interface ImageDimensions {
   naturalWidth: number | null;
@@ -23,9 +27,6 @@ export interface ImageDimensions {
   containerWidth: number;
 }
 
-export function validImageSizeUnits() {
-  return kValidUnits;
-}
 
 export function isValidImageSizeUnit(unit: string) {
   return kValidUnits.includes(unit);
@@ -46,3 +47,71 @@ export function imageSizePropWithUnit(prop: string | null) {
     return null;
   }
 }
+
+export function isNaturalAspectRatio(width: number, height: number, dims: ImageDimensions, defaultValue: boolean) {
+  if (dims.naturalWidth && dims.naturalHeight) {
+    const diff = Math.abs(width / height - dims.naturalWidth / dims.naturalHeight);
+    return diff <= 0.02;
+  } else {
+    // no naturalWidth or naturalHeight, return default
+    return defaultValue;
+  }
+}
+
+export function unitToPixels(value: number, unit: string, containerWidth: number) {
+  let pixels;
+  switch (unit) {
+    case 'in':
+      pixels = value * kDpi;
+      break;
+    case 'mm':
+      pixels = value * (kDpi / 25.4);
+      break;
+    case 'cm':
+      pixels = value * (kDpi / 2.54);
+      break;
+    case kPercentUnit:
+      pixels = (value / 100) * ensureContainerWidth(containerWidth);
+      break;
+    case 'px':
+    default:
+      pixels = value;
+      break;
+  }
+  return Math.round(pixels);
+}
+
+export function pixelsToUnit(pixels: number, unit: string, containerWidth: number) {
+  switch (unit) {
+    case 'in':
+      return pixels / kDpi;
+    case 'mm':
+      return (pixels / kDpi) * 25.4;
+    case 'cm':
+      return (pixels / kDpi) * 2.54;
+    case kPercentUnit:
+      return (pixels / ensureContainerWidth(containerWidth)) * 100;
+    case 'px':
+    default:
+      return pixels;
+  }
+}
+
+export function roundUnit(value: number, unit: string) {
+  switch (unit) {
+    case 'in':
+      return value.toFixed(2);
+    case 'cm':
+      return value.toFixed(1);
+    default:
+      return Math.round(value).toString();
+  }
+}
+
+
+// sometime when we are called before the DOM renders the containerWidth
+// is 0, in this case provide a default of 1000
+export function ensureContainerWidth(containerWidth: number) {
+  return containerWidth || 1000;
+}
+

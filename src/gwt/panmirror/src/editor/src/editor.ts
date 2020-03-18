@@ -61,6 +61,7 @@ import { EditorOutline } from './api/outline';
 import { EditingLocation, getEditingLocation, restoreEditingLocation } from './api/location';
 import { navigateTo } from './api/navigation';
 import { FixupContext } from './api/fixup';
+import { unitToPixels, pixelsToUnit, roundUnit, kValidUnits, kPercentUnit } from './api/image';
 
 import { getTitle, setTitle } from './nodes/yaml_metadata/yaml_metadata-title';
 
@@ -84,6 +85,7 @@ import { applyTheme, defaultTheme, EditorTheme } from './theme';
 
 import './styles/frame.css';
 import './styles/styles.css';
+
 
 const kMac = typeof navigator !== 'undefined' ? /Mac/.test(navigator.platform) : false;
 
@@ -133,12 +135,37 @@ export interface EditorFindReplace {
 
 export { EditorCommandId as EditorCommands } from './api/command';
 
+export interface UIToolsAttr {
+  propsToInput(attr: AttrProps) : AttrEditInput;
+  inputToProps(input: AttrEditInput) : AttrProps;
+}
+
+export interface UIToolsImage {
+  validUnits() : string[];
+  percentUnit() : string;
+  unitToPixels(value: number, unit: string, containerWidth: number): number;
+  pixelsToUnit(pixels: number, unit: string, containerWidth: number): number;
+  roundUnit(value: number, unit: string): string;
+}
+
 export class UITools {
-  public attrPropsToInput(attr: AttrProps) {
-    return attrPropsToInput(attr);
-  }
-  public attrInputToProps(input: AttrEditInput) {
-    return attrInputToProps(input);
+
+  public readonly attr: UIToolsAttr;
+  public readonly image: UIToolsImage;
+
+  constructor() {
+    this.attr = {
+      propsToInput: attrPropsToInput,
+      inputToProps: attrInputToProps
+    };
+
+    this.image = {
+      validUnits: () => kValidUnits,
+      percentUnit: () => kPercentUnit,
+      unitToPixels,
+      pixelsToUnit,
+      roundUnit
+    };
   }
 }
 

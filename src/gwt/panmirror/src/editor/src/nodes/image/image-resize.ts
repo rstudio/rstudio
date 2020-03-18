@@ -30,14 +30,10 @@ import {
 import { EditorUI } from '../../api/ui';
 import { editingRootNode } from '../../api/node';
 import { extractSizeStyles } from '../../api/css';
-import { validImageSizeUnits, imageSizePropWithUnit } from '../../api/image';
+import { imageSizePropWithUnit, isNaturalAspectRatio, unitToPixels, pixelsToUnit, roundUnit, kPercentUnit, kValidUnits } from '../../api/image';
 
 import { imageDialog } from './image-dialog';
 import {
-  unitToPixels,
-  isNaturalAspectRatio,
-  pixelsToUnit,
-  roundUnit,
   hasPercentWidth,
   imageDimensionsFromImg,
 } from './image-util';
@@ -87,7 +83,15 @@ export function attachResizeUI(
 
   // sync current state of shelf to node
   const syncFromShelf = () => {
-    updateImageSize(view, imageNode(), img, shelf.props.width(), shelf.props.height(), shelf.props.units());
+    updateImageSize(
+      view, 
+      imageNode(), 
+      img, 
+      imgContainerWidth, 
+      shelf.props.width(), 
+      shelf.props.height(), 
+      shelf.props.units()
+    );
   };
 
   // shelf init
@@ -96,7 +100,8 @@ export function attachResizeUI(
     shelf.sync();
 
     // default for lockRatio based on naturalWidth/naturalHeight
-    shelf.props.setLockRatio(isNaturalAspectRatio(shelf.props.width(), shelf.props.height(), img, true));
+    const dims = imageDimensionsFromImg(img, imgContainerWidth());
+    shelf.props.setLockRatio(isNaturalAspectRatio(shelf.props.width(), shelf.props.height(), dims, true));
   };
 
   // handle width changed from shelf
@@ -139,7 +144,7 @@ export function attachResizeUI(
     const containerWidth = imgContainerWidth();
     if (containerWidth !== lastContainerWidth) {
       lastContainerWidth = containerWidth;
-      if (shelf.props.units() === '%') {
+      if (shelf.props.units() === kPercentUnit) {
         img.style.width = unitToPixels(shelf.props.width(), shelf.props.units(), containerWidth) + 'px';
         shelf.position();
       }
@@ -272,7 +277,7 @@ function resizeShelf(
   addToPanel(hAutoLabel, 10);
 
   // units
-  const unitsSelect = createSelectInput(validImageSizeUnits(), inputClasses);
+  const unitsSelect = createSelectInput(kValidUnits, inputClasses);
   unitsSelect.onchange = () => {
     // drive focus to width and back to prevent wierd selection change
     // detection condition that causes PM to re-render the node the
@@ -311,7 +316,7 @@ function resizeShelf(
 
   // function used to manage ui
   const manageUnitsUI = () => {
-    const percentSizing = unitsSelect.value === '%';
+    const percentSizing = unitsSelect.value === kPercentUnit;
 
     if (percentSizing) {
       lockCheckbox.checked = true;
@@ -522,6 +527,7 @@ function updateImageSize(
   view: EditorView,
   image: NodeWithPos,
   img: HTMLImageElement,
+  imgContainerWidth: () => number,
   width: number,
   height: number,
   unit: string,
@@ -533,7 +539,8 @@ function updateImageSize(
   let keyvalue = extractSizeStyles(image.node.attrs.keyvalue as Array<[string, string]>)!;
   keyvalue = keyvalue.filter(value => !['width', 'height'].includes(value[0]));
   keyvalue.push(['width', width + unit]);
-  if (!hasPercentWidth(width + unit) && !isNaturalAspectRatio(width, height, img, false)) {
+  const dims = imageDimensionsFromImg(img, imgContainerWidth());
+  if (!hasPercentWidth(width + unit) && !isNaturalAspectRatio(width, height, dims, false)) {
     keyvalue.push(['height', height + unit]);
   }
 

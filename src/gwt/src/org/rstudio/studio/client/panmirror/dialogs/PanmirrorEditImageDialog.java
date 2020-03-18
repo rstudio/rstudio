@@ -16,7 +16,6 @@
 
 package org.rstudio.studio.client.panmirror.dialogs;
 
-import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.files.FileSystemItem;
@@ -29,6 +28,8 @@ import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorAttrProps;
 import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorImageDimensions;
 import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorImageProps;
+import org.rstudio.studio.client.panmirror.uitools.PanmirrorUITools;
+import org.rstudio.studio.client.panmirror.uitools.PanmirrorUIToolsImage;
 
 import com.google.gwt.aria.client.Roles;
 import com.google.gwt.user.client.ui.CheckBox;
@@ -52,6 +53,8 @@ public class PanmirrorEditImageDialog extends ModalDialog<PanmirrorImageProps>
          // cancel returns null
          operation.execute(null);
       }); 
+      
+      uiTools_ = new PanmirrorUITools().image;
       
       dims_ = dims;
       
@@ -117,7 +120,7 @@ public class PanmirrorEditImageDialog extends ModalDialog<PanmirrorImageProps>
    public void focusFirstControl()
    {
       url_.getTextBox().setFocus(true);
-      url_.getTextBox().selectAll();
+      url_.getTextBox().setSelectionRange(0, 0);
    }
    
    @Override
@@ -210,6 +213,8 @@ public class PanmirrorEditImageDialog extends ModalDialog<PanmirrorImageProps>
    private final PanmirrorImageDimensions dims_;
    
    private final Widget mainWidget_;
+   
+   private final PanmirrorUIToolsImage uiTools_;
 
    private final PanmirrorImageChooser url_;
    private final NumericTextBox width_;

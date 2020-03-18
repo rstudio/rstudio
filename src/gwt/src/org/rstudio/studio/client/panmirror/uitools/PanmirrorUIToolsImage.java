@@ -1,5 +1,5 @@
 /*
- * PanmirrorUITools.java
+ * PanmirrorUIToolsImage.java
  *
  * Copyright (C) 2009-20 by RStudio, PBC
  *
@@ -14,17 +14,18 @@
  */
 
 
-package org.rstudio.studio.client.panmirror;
+package org.rstudio.studio.client.panmirror.uitools;
 
-import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorAttrEditInput;
-import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorAttrProps;
 
 import jsinterop.annotations.JsType;
 
-@JsType(isNative = true, name="UITools", namespace = "Panmirror")
-public class PanmirrorUITools
+@JsType
+public class PanmirrorUIToolsImage
 {
-   public native PanmirrorAttrEditInput attrPropsToInput(PanmirrorAttrProps attr);
-   public native PanmirrorAttrProps attrInputToProps(PanmirrorAttrEditInput input);
+   public native String validUnits();
+   public native String percentUnit();
+   public native double unitToPixels(double value, String unit, double containerWidth);
+   public native double pixelsToUnit(double pixels, String unit, double containerWidth);
+   public native String roundUnit(double value, String unit);
 }
 

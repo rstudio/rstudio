@@ -1,5 +1,5 @@
 import { ImageProps, attrPartitionKeyvalue } from "../../api/ui";
-import { imageSizePropWithUnit, isValidImageSizeUnit } from "../../api/image";
+import { imageSizePropWithUnit, isValidImageSizeUnit, ensureContainerWidth, kPercentUnit } from "../../api/image";
 import { EditorView } from "prosemirror-view";
 import { findParentNodeClosestToPos } from "prosemirror-utils";
 
@@ -17,69 +17,6 @@ import { findParentNodeClosestToPos } from "prosemirror-utils";
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-
-const kDpi = 96;
-
-export function isNaturalAspectRatio(width: number, height: number, img: HTMLImageElement, defaultValue: boolean) {
-  if (img.naturalWidth && img.naturalHeight) {
-    const diff = Math.abs(width / height - img.naturalWidth / img.naturalHeight);
-    return diff <= 0.02;
-  } else {
-    // no naturalWidth or naturalHeight, return default
-    return defaultValue;
-  }
-}
-
-export function unitToPixels(value: number, unit: string, containerWidth: number) {
-  let pixels;
-  switch (unit) {
-    case 'in':
-      pixels = value * kDpi;
-      break;
-    case 'mm':
-      pixels = value * (kDpi / 25.4);
-      break;
-    case 'cm':
-      pixels = value * (kDpi / 2.54);
-      break;
-    case '%':
-      pixels = (value / 100) * ensureContainerWidth(containerWidth);
-      break;
-    case 'px':
-    default:
-      pixels = value;
-      break;
-  }
-  return Math.round(pixels);
-}
-
-export function pixelsToUnit(pixels: number, unit: string, containerWidth: number) {
-  switch (unit) {
-    case 'in':
-      return pixels / kDpi;
-    case 'mm':
-      return (pixels / kDpi) * 25.4;
-    case 'cm':
-      return (pixels / kDpi) * 2.54;
-    case '%':
-      return (pixels / ensureContainerWidth(containerWidth)) * 100;
-    case 'px':
-    default:
-      return pixels;
-  }
-}
-
-export function roundUnit(value: number, unit: string) {
-  switch (unit) {
-    case 'in':
-      return value.toFixed(2);
-    case 'cm':
-      return value.toFixed(1);
-    default:
-      return Math.round(value).toString();
-  }
-}
-
 
 export function imagePropsWithSizes(image: ImageProps) {
 
@@ -135,7 +72,7 @@ export function imageDimensionsFromImg(img: HTMLImageElement, containerWidth: nu
 }
 
 export function hasPercentWidth(size: string | null) {
-  return !!size && size.endsWith('%');
+  return !!size && size.endsWith(kPercentUnit);
 }
 
 export function imageContainerWidth(pos: number, view: EditorView) {
@@ -153,11 +90,4 @@ export function imageContainerWidth(pos: number, view: EditorView) {
   }
 
   return containerWidth;
-}
-
-
-// sometime when we are called before the DOM renders the containerWidth
-// is 0, in this case provide a default of 1000
-function ensureContainerWidth(containerWidth: number) {
-  return containerWidth || 1000;
 }
