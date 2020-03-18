@@ -148,7 +148,7 @@ public class PanmirrorEditImageDialog extends ModalDialog<PanmirrorImageProps>
       manageUnitsUI();
       
       // only add sizing controls if we support editAttributes and dims have been provided
-      if (editAttributes && dims_ != null)
+      if (editAttributes && dims_ != null && !hasSizeKeyvalue(props.keyvalue))
       {
          imageTab.add(sizePanel);
       }
@@ -354,6 +354,17 @@ public class PanmirrorEditImageDialog extends ModalDialog<PanmirrorImageProps>
       FormLabel label = new FormLabel(text);
       label.addStyleName(RES.styles().horizontalLabel());
       return label;
+   }
+   
+   private static boolean hasSizeKeyvalue(String[][] keyvalue)
+   {
+      for (int i=0; i<keyvalue.length; i++)
+      {
+         String key = keyvalue[i][0];
+         if (key.equalsIgnoreCase("width") || key.equalsIgnoreCase("height"))
+            return true;
+      }
+      return false;
    }
    
    private static PanmirrorDialogsResources RES = PanmirrorDialogsResources.INSTANCE;
