@@ -66,9 +66,9 @@ RUN mkdir -p /opt/rstudio-tools/dependencies/common
 COPY dependencies/common/ /opt/rstudio-tools/dependencies/common/
 
 # copy panmirror project setup (so install-common can install needed deps)
-RUN mkdir -p /opt/rstudio-tools/src/gwt/panmirror/src/editor
-COPY src/gwt/panmirror/src/editor/yarn.lock /opt/rstudio-tools/src/gwt/panmirror/src/editor/
-COPY src/gwt/panmirror/src/editor/package.json /opt/rstudio-tools/src/gwt/panmirror/src/editor/
+RUN mkdir -p /opt/rstudio-tools/panmirror
+COPY src/gwt/panmirror/src/editor/yarn.lock /opt/rstudio-tools/panmirror/
+COPY src/gwt/panmirror/src/editor/package.json /opt/rstudio-tools/panmirror/
 
 # install common dependencies
 ENV RSTUDIO_DISABLE_CRASHPAD=1

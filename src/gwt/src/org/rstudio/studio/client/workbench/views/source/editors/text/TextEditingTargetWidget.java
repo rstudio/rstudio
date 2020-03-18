@@ -60,7 +60,6 @@ import org.rstudio.studio.client.common.filetypes.TextFileType;
 import org.rstudio.studio.client.common.icons.StandardIcons;
 import org.rstudio.studio.client.plumber.model.PlumberAPIParams;
 import org.rstudio.studio.client.plumber.ui.PlumberViewerTypePopupMenu;
-import org.rstudio.studio.client.rmarkdown.RmdOutput;
 import org.rstudio.studio.client.rmarkdown.events.RenderRmdEvent;
 import org.rstudio.studio.client.rmarkdown.events.RmdOutputFormatChangedEvent;
 import org.rstudio.studio.client.rsconnect.RSConnect;
@@ -85,7 +84,6 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.status.Stat
 import org.rstudio.studio.client.workbench.views.source.editors.text.status.StatusBarWidget;
 import org.rstudio.studio.client.workbench.views.source.model.DocUpdateSentinel;
 import org.rstudio.studio.client.workbench.views.source.model.SourceDocument;
-import org.rstudio.studio.client.workbench.views.source.model.SourcePosition;
 
 public class TextEditingTargetWidget
       extends ResizeComposite
@@ -1712,6 +1710,7 @@ public class TextEditingTargetWidget
    private final TextEditingTarget target_;
    private final DocUpdateSentinel docUpdateSentinel_;
    private final Commands commands_;
+   @SuppressWarnings("unused")
    private final EventBus events_;
    private final UserPrefs userPrefs_;
    private final UserState userState_;

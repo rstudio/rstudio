@@ -356,7 +356,9 @@ public class ApplicationWindow extends Composite
    private final AriaLiveStatusWidget ariaLiveStatusWidget_;
    private int workbenchBottom_ = COMPONENT_SPACING;
    private final GlobalDisplay globalDisplay_;
+   @SuppressWarnings("unused")
    private final EventBus events_;
+   @SuppressWarnings("unused")
    private final Provider<UserPrefs> pPrefs_;
    private final AriaLiveService ariaLive_;
    private final Provider<WarningBar> pWarningBar_;
