@@ -1,3 +1,8 @@
+import { ImageProps, attrPartitionKeyvalue } from "../../api/ui";
+import { imageSizePropWithUnit, isValidImageSizeUnit } from "../../api/image";
+import { EditorView } from "prosemirror-view";
+import { findParentNodeClosestToPos } from "prosemirror-utils";
+
 /*
  * image-util.ts
  *
@@ -14,17 +19,6 @@
  */
 
 const kDpi = 96;
-
-// https://github.com/jgm/pandoc/blob/master/src/Text/Pandoc/ImageSize.hs
-const kValidUnits = ['px', 'in', 'cm', 'mm', '%']; //
-
-export function validUnits() {
-  return kValidUnits;
-}
-
-export function isValidUnit(unit: string) {
-  return kValidUnits.includes(unit);
-}
 
 export function isNaturalAspectRatio(width: number, height: number, img: HTMLImageElement, defaultValue: boolean) {
   if (img.naturalWidth && img.naturalHeight) {
@@ -86,25 +80,81 @@ export function roundUnit(value: number, unit: string) {
   }
 }
 
-export function sizePropWithUnit(prop: string | null) {
-  if (prop) {
-    const match = prop.match(/(^\d*\.?\d*)(.*)$/);
-    if (match) {
-      return {
-        size: parseFloat(match[1]),
-        unit: match[2],
-      };
-    } else {
-      return null;
+
+export function imagePropsWithSizes(image: ImageProps) {
+
+  // pull width, height, and units out of keyvalue if necessary
+  // (enables front-ends to provide dedicated UI for width/height)
+  // note that if the value doesn't use a unit supported by the 
+  // UI it's kept within the original keyvalue prop
+  if (image.keyvalue) {
+    let width : number | undefined;
+    let height : number | undefined;
+    let units : string | undefined;
+    const partitionedKeyvalue = attrPartitionKeyvalue(["width", "height"], image.keyvalue);
+    for (const kv of partitionedKeyvalue.partitioned) {
+      const [key, value] = kv;
+      let partitioned = false;
+      const sizeWithUnit = imageSizePropWithUnit(value);
+      if (sizeWithUnit) {
+        sizeWithUnit.unit = sizeWithUnit.unit || 'px';
+        if (isValidImageSizeUnit(sizeWithUnit.unit)) {
+          if (key === "width") {
+            width = sizeWithUnit.size;
+            units = sizeWithUnit.unit;
+          } else if (key === "height") {
+            height = sizeWithUnit.size;
+            units = units || sizeWithUnit.unit;
+          }
+          partitioned = true;
+        }
+      }
+      if (!partitioned) {
+        partitionedKeyvalue.base.push(kv);
+      }
     }
+    return {
+      ...image,
+      width,
+      height,
+      units,
+      lockRatio: true,
+      keyvalue: partitionedKeyvalue.base
+    };
   } else {
-    return null;
+    return image;
   }
+}
+
+export function imageDimensionsFromImg(img: HTMLImageElement, containerWidth: number) {
+  return {
+    naturalWidth: img.naturalWidth || null,
+    naturalHeight: img.naturalHeight || null,
+    containerWidth: ensureContainerWidth(containerWidth)
+  };
 }
 
 export function hasPercentWidth(size: string | null) {
   return !!size && size.endsWith('%');
 }
+
+export function imageContainerWidth(pos: number, view: EditorView) {
+  
+  let containerWidth = (view.dom as HTMLElement).offsetWidth;
+  if (containerWidth > 0) {
+    if (pos) {
+      const imagePos = view.state.doc.resolve(pos);
+      const resizeContainer = findParentNodeClosestToPos(imagePos, nd => nd.isBlock);
+      if (resizeContainer) {
+        const resizeEl = view.domAtPos(resizeContainer.pos);
+        containerWidth = (resizeEl.node as HTMLElement).offsetWidth;
+      }
+    }
+  }
+
+  return containerWidth;
+}
+
 
 // sometime when we are called before the DOM renders the containerWidth
 // is 0, in this case provide a default of 1000

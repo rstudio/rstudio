@@ -14,10 +14,23 @@
    margin-bottom: 4px;
 }
 
+.dialog .horizontalLabel {
+   margin-bottom: 0;
+   margin-right: 4px;
+}
+
+.dialog .horizontalInput {
+   margin-right: 7px;
+}
+
 .dialog .infoLabel {
    color: #606060;
    font-size: 0.7rem;
    margin-top: 5px;
+}
+
+.lockRatioCheckbox {
+	 margin-left: 3px;
 }
 
 .dialog .fullWidth {

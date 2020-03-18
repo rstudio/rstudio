@@ -29,6 +29,8 @@ import {
 } from '../../api/widgets';
 import { EditorUI } from '../../api/ui';
 import { editingRootNode } from '../../api/node';
+import { extractSizeStyles } from '../../api/css';
+import { validImageSizeUnits, imageSizePropWithUnit } from '../../api/image';
 
 import { imageDialog } from './image-dialog';
 import {
@@ -36,11 +38,9 @@ import {
   isNaturalAspectRatio,
   pixelsToUnit,
   roundUnit,
-  sizePropWithUnit,
-  validUnits,
   hasPercentWidth,
+  imageDimensionsFromImg,
 } from './image-util';
-import { extractSizeStyles } from '../../api/css';
 
 export function initResizeContainer(container: HTMLElement) {
   // add standard parent class
@@ -149,7 +149,16 @@ export function attachResizeUI(
   // handle editImage request from shelf
   const onEditImage = () => {
     const nodeWithPos = imageNode();
-    imageDialog(nodeWithPos.node, nodeWithPos.node.type, view.state, view.dispatch, view, ui, true);
+    imageDialog(
+      nodeWithPos.node, 
+      imageDimensionsFromImg(img, imgContainerWidth()), 
+      nodeWithPos.node.type, 
+      view.state, 
+      view.dispatch, 
+      view, 
+      ui, 
+      true)
+    ;
   };
 
   // create resize shelf
@@ -263,7 +272,7 @@ function resizeShelf(
   addToPanel(hAutoLabel, 10);
 
   // units
-  const unitsSelect = createSelectInput(validUnits(), inputClasses);
+  const unitsSelect = createSelectInput(validImageSizeUnits(), inputClasses);
   unitsSelect.onchange = () => {
     // drive focus to width and back to prevent wierd selection change
     // detection condition that causes PM to re-render the node the
@@ -391,8 +400,8 @@ function shelfSizeFromImage(img: HTMLImageElement) {
 
     // read units
   } else {
-    let widthWithUnit = sizePropWithUnit(width);
-    let heightWithUnit = sizePropWithUnit(height);
+    let widthWithUnit = imageSizePropWithUnit(width);
+    let heightWithUnit = imageSizePropWithUnit(height);
 
     if (!widthWithUnit) {
       widthWithUnit = {

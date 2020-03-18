@@ -20,6 +20,7 @@ import { EditorView } from 'prosemirror-view';
 import { ProsemirrorCommand, EditorCommandId } from '../../api/command';
 import { Extension } from '../../api/extension';
 import { canInsertNode } from '../../api/node';
+import { selectionIsImageNode } from '../../api/selection';
 import { pandocAttrSpec, pandocAttrParseDom, pandocAttrToDomAttr, pandocAttrReadAST } from '../../api/pandoc_attr';
 import {
   PandocOutput,
@@ -30,11 +31,13 @@ import {
   PandocExtensions,
 } from '../../api/pandoc';
 import { EditorUI } from '../../api/ui';
+import { ImageDimensions } from '../../api/image';
 
 import { imageDialog } from './image-dialog';
 import { imageDrop } from './image-events';
 import { ImageNodeView } from './image-view';
-import { selectionIsImageNode } from '../../api/selection';
+import { imageDimensionsFromImg, imageContainerWidth } from './image-util';
+
 
 const TARGET_URL = 0;
 const TARGET_TITLE = 1;
@@ -199,13 +202,26 @@ function imageCommand(editorUI: EditorUI, imageAttributes: boolean) {
       return false;
     }
 
-    if (dispatch) {
+    if (dispatch && view) {
       // see if we are editing an existing node
       let node: ProsemirrorNode | null = null;
       let nodeType = schema.nodes.image;
+      let img: HTMLImageElement | null = null;
+      let imgDimensions: ImageDimensions | null = null;
       if (selectionIsImageNode(schema, state.selection)) {
         node = (state.selection as NodeSelection).node;
         nodeType = node.type;
+        if (nodeType === schema.nodes.figure) {
+          const figure = view.nodeDOM(state.selection.from) as HTMLElement;
+          img = figure.firstChild!.firstChild as HTMLImageElement;
+        } else {
+          const span = view.nodeDOM(state.selection.from) as HTMLElement;
+          img = span.firstChild! as HTMLImageElement;
+        }
+        if (img) {
+          const containerWidth = imageContainerWidth(state.selection.from, view);
+          imgDimensions = imageDimensionsFromImg(img, containerWidth);
+        }
       }
 
       // see if we are in an empty paragraph (in that case insert a figure)
@@ -215,7 +231,16 @@ function imageCommand(editorUI: EditorUI, imageAttributes: boolean) {
       }
 
       // show dialog
-      imageDialog(node, nodeType, state, dispatch, view, editorUI, imageAttributes);
+      imageDialog(
+        node, 
+        imgDimensions,
+        nodeType, 
+        state, 
+        dispatch, 
+        view, 
+        editorUI, 
+        imageAttributes
+      );
     }
 
     return true;

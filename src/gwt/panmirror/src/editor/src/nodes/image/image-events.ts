@@ -13,23 +13,9 @@
  *
  */
 
-import { Node, NodeType } from 'prosemirror-model';
+import { NodeType } from 'prosemirror-model';
 import { EditorView } from 'prosemirror-view';
 
-import { EditorUI } from '../../api/ui';
-
-import { imageDialog } from './image-dialog';
-
-export function imageDoubleClickOn(nodeType: NodeType, editorUI: EditorUI, imageAttributes: boolean) {
-  return (view: EditorView, _pos: number, node: Node) => {
-    if (node.type === nodeType) {
-      imageDialog(node, nodeType, view.state, view.dispatch, view, editorUI, imageAttributes);
-      return true;
-    } else {
-      return false;
-    }
-  };
-}
 
 export function imageDrop(nodeType: NodeType) {
   return (view: EditorView, event: Event) => {

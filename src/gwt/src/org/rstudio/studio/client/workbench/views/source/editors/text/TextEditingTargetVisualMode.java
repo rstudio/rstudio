@@ -22,7 +22,6 @@ import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.HasFindReplace;
 import org.rstudio.studio.client.RStudioGinjector;
-import org.rstudio.studio.client.panmirror.PanmirrorCode;
 import org.rstudio.studio.client.panmirror.PanmirrorContext;
 import org.rstudio.studio.client.panmirror.PanmirrorEditingLocation;
 import org.rstudio.studio.client.panmirror.PanmirrorKeybindings;

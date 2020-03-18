@@ -13,16 +13,20 @@
  *
  */
 
-import { Node, NodeType, Fragment } from 'prosemirror-model';
+import { Node as ProsemirrorNode, NodeType, Fragment } from 'prosemirror-model';
 import { EditorState, Transaction } from 'prosemirror-state';
 import { EditorView } from 'prosemirror-view';
 
 import { insertAndSelectNode } from '../../api/node';
 import { ImageProps, ImageType, EditorUI } from '../../api/ui';
 import { extractSizeStyles } from '../../api/css';
+import { ImageDimensions } from '../../api/image';
+
+import { imagePropsWithSizes } from './image-util';
 
 export async function imageDialog(
-  node: Node | null,
+  node: ProsemirrorNode | null,
+  dims: ImageDimensions | null,
   nodeType: NodeType,
   state: EditorState,
   dispatch: (tr: Transaction<any>) => void,
@@ -38,6 +42,16 @@ export async function imageDialog(
       ...(node.attrs as ImageProps),
       alt: node.textContent || node.attrs.alt,
     };
+
+    // move width and height out of style and into keyvalue if necessary
+    image = {
+      ...image,
+      keyvalue: extractSizeStyles(image.keyvalue),
+    };
+
+    // move width, height, and units out of keyvalue if necessary
+    image = imagePropsWithSizes(image);
+    
     content = node.content;
   } else {
     image = nodeType.create(image).attrs as ImageProps;
@@ -47,7 +61,7 @@ export async function imageDialog(
   const type = nodeType === state.schema.nodes.image ? ImageType.Image : ImageType.Figure;
 
   // edit the image
-  const result = await editorUI.dialogs.editImage(image, editorUI.context.getResourceDir(), imageAttributes);
+  const result = await editorUI.dialogs.editImage(image, dims, editorUI.context.getResourceDir(), imageAttributes);
   if (result) {
     // figures treat 'alt' as their content (the caption), but since captions support
     // inline formatting (and the dialog doesn't) we only want to update the
@@ -62,10 +76,23 @@ export async function imageDialog(
       }
     }
 
+    // if we have width and height move them into keyvalue
+    let keyvalue = result.keyvalue;
+    if (result.units) {
+      if (result.width) {
+        keyvalue = keyvalue || [];
+        keyvalue.push(["width", result.width + result.units]);
+      }
+      if (result.height) {
+        keyvalue = keyvalue || [];
+        keyvalue.push(["height", result.height + result.units]);
+      }
+    }
+    
     // move width and height out of style if necessary
     const imageProps = {
       ...result,
-      keyvalue: extractSizeStyles(result.keyvalue),
+      keyvalue: extractSizeStyles(keyvalue),
     };
 
     // create the image

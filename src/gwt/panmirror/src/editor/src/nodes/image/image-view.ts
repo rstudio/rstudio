@@ -21,10 +21,11 @@ import { findParentNodeClosestToPos } from 'prosemirror-utils';
 
 import { EditorUI, ImageType } from '../../api/ui';
 import { removeStyleAttrib, extractSizeStyles } from '../../api/css';
+import { isValidImageSizeUnit, imageSizePropWithUnit } from '../../api/image';
 
 import { imageDialog } from './image-dialog';
 import { attachResizeUI, initResizeContainer, ResizeUI, isResizeUICompatible } from './image-resize';
-import { sizePropWithUnit, isValidUnit, unitToPixels, hasPercentWidth } from './image-util';
+import { unitToPixels, hasPercentWidth, imageDimensionsFromImg, imageContainerWidth } from './image-util';
 
 import './image-styles.css';
 
@@ -73,7 +74,16 @@ export class ImageNodeView implements NodeView {
 
     const editOnDblClick = () => {
       selectOnClick();
-      imageDialog(this.node, this.node.type, this.view.state, this.view.dispatch, this.view, editorUI, imageAttributes);
+      imageDialog(
+        this.node, 
+        imageDimensionsFromImg(this.img, this.containerWidth()), 
+        this.node.type, 
+        this.view.state, 
+        this.view.dispatch, 
+        this.view, 
+        editorUI, 
+        imageAttributes)
+      ;
     };
 
     const noPropagateClick = (ev: MouseEvent) => {
@@ -180,7 +190,7 @@ export class ImageNodeView implements NodeView {
     return true;
   }
 
-  // ignore mutations outside of the content time so sizing actions don't cause PM re-render
+  // ignore mutations outside of the content dom so sizing actions don't cause PM re-render
   public ignoreMutation(mutation: MutationRecord | { type: 'selection'; target: Element }) {
     if (!this.contentDOM) {
       return true;
@@ -277,10 +287,10 @@ export class ImageNodeView implements NodeView {
           // via calls to removeStyleAttrib
         } else if (key === 'width') {
           // see if this is a unit we can edit
-          const widthProp = sizePropWithUnit(value);
+          const widthProp = imageSizePropWithUnit(value);
           if (widthProp) {
             widthProp.unit = widthProp.unit || 'px';
-            if (isValidUnit(widthProp.unit)) {
+            if (isValidImageSizeUnit(widthProp.unit)) {
               this.img.setAttribute('data-width', widthProp.size + widthProp.unit);
               this.img.style.width = unitToPixels(widthProp.size, widthProp.unit, containerWidth) + 'px';
             }
@@ -292,10 +302,10 @@ export class ImageNodeView implements NodeView {
           }
         } else if (key === 'height') {
           // see if this is a unit we can edit
-          const heightProp = sizePropWithUnit(value);
+          const heightProp = imageSizePropWithUnit(value);
           if (heightProp) {
             heightProp.unit = heightProp.unit || 'px';
-            if (isValidUnit(heightProp.unit)) {
+            if (isValidImageSizeUnit(heightProp.unit)) {
               this.img.setAttribute('data-height', heightProp.size + heightProp.unit);
               this.img.style.height = unitToPixels(heightProp.size, heightProp.unit, containerWidth) + 'px';
             }
@@ -337,23 +347,11 @@ export class ImageNodeView implements NodeView {
   private containerWidth() {
 
     // don't attempt to get the width if the img is not yet connected
-    // to the DOM (view.domAtPos below will fail in this case)
+    // to the DOM (view.domAtPos will fail in this case)
     if (!this.img.isConnected) {
       return 0;
     }
 
-    let containerWidth = (this.view.dom as HTMLElement).offsetWidth;
-    if (containerWidth > 0) {
-      const pos = this.getPos();
-      if (pos) {
-        const imagePos = this.view.state.doc.resolve(pos);
-        const resizeContainer = findParentNodeClosestToPos(imagePos, nd => nd.isBlock);
-        if (resizeContainer) {
-          const resizeEl = this.view.domAtPos(resizeContainer.pos);
-          containerWidth = (resizeEl.node as HTMLElement).offsetWidth;
-        }
-      }
-    }
-    return containerWidth;
+    return imageContainerWidth(this.getPos(), this.view);
   }
 }

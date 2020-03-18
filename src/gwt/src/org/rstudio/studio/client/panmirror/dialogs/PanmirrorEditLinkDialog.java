@@ -20,6 +20,7 @@ import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.theme.DialogTabLayoutPanel;
 import org.rstudio.core.client.theme.VerticalTabPanel;
+import org.rstudio.core.client.widget.FormLabel;
 import org.rstudio.core.client.widget.ModalDialog;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ThemedButton;
@@ -32,7 +33,6 @@ import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorLinkType;
 
 import com.google.gwt.aria.client.Roles;
 import com.google.gwt.user.client.Command;
-import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 
@@ -81,13 +81,13 @@ public class PanmirrorEditLinkDialog extends ModalDialog<PanmirrorLinkEditResult
       text_ = PanmirrorDialogsUtil.addTextBox(
          linkTab, 
          ElementIds.VISUAL_MD_LINK_TEXT, 
-         textLabel_ = new Label("Text:"), 
+         textLabel_ = new FormLabel("Text:"), 
          link.text
       );
       title_ = PanmirrorDialogsUtil.addTextBox(
          linkTab, 
          ElementIds.VISUAL_MD_LINK_TITLE, 
-         titleLabel_ = new Label("Title/Tooltip:"), 
+         titleLabel_ = new FormLabel("Title/Tooltip:"), 
          link.title
       );
         
@@ -181,9 +181,9 @@ public class PanmirrorEditLinkDialog extends ModalDialog<PanmirrorLinkEditResult
    
    private final PanmirrorHRefSelect href_;
    
-   private final Label textLabel_;
+   private final FormLabel textLabel_;
    private final TextBox text_;
-   private final Label titleLabel_;
+   private final FormLabel titleLabel_;
    private final TextBox title_;
 
    private final PanmirrorEditAttrWidget editAttr_;

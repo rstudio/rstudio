@@ -20,6 +20,7 @@ import org.rstudio.core.client.widget.Operation;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorAttrProps;
+import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorImageDimensions;
 import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorAttrEditResult;
 import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorImageProps;
 import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorInsertCitationResult;
@@ -102,11 +103,11 @@ public class PanmirrorDialogs {
       );
    }
    
-   public Promise<PanmirrorImageProps> editImage(PanmirrorImageProps image, String resourceDir, boolean editAttributes)
+   public Promise<PanmirrorImageProps> editImage(PanmirrorImageProps image, PanmirrorImageDimensions dims, String resourceDir, boolean editAttributes)
    {
       return new Promise<PanmirrorImageProps>(
          (ResolveCallbackFn<PanmirrorImageProps> resolve, RejectCallbackFn reject) -> {  
-            PanmirrorEditImageDialog dialog = new PanmirrorEditImageDialog(image, resourceDir, editAttributes,
+            PanmirrorEditImageDialog dialog = new PanmirrorEditImageDialog(image, dims, resourceDir, editAttributes,
                (result) -> { resolve.onInvoke(result); }
             );
             dialog.showModal(false);

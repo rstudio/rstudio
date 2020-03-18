@@ -36,6 +36,9 @@ public interface PanmirrorDialogsResources extends ClientBundle
       String hrefSelect();
       String popup();
       String linkLabel();
+      String horizontalLabel();
+      String horizontalInput();
+      String lockRatioCheckbox();
    }
 
    @Source("PanmirrorDialogsStyles.css")

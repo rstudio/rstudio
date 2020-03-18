@@ -1,7 +1,7 @@
 /*
- * extension.ts
+ * PanmirrorImageDimensions.java
  *
- * Copyright (C) 2019-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -13,14 +13,16 @@
  *
  */
 
-import { Transaction } from "prosemirror-state";
 
-export enum FixupContext {
-  Load,
-  Save,
-  Resize
+package org.rstudio.studio.client.panmirror.dialogs.model;
+
+import jsinterop.annotations.JsType;
+
+@JsType
+public class PanmirrorImageDimensions
+{
+   public Double naturalWidth;
+   public Double naturalHeight;
+   public Double containerWidth;
 }
-
-export type FixupFn = (tr: Transaction, context: FixupContext) => Transaction;
-
 

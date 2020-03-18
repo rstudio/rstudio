@@ -16,6 +16,7 @@
 import { ListCapabilities } from './list';
 import { LinkTargets, LinkCapabilities, LinkType } from './link';
 import { TableCapabilities } from './table';
+import { ImageDimensions } from './image';
 
 export interface EditorUI {
   dialogs: EditorDialogs;
@@ -72,6 +73,7 @@ export type LinkEditorFn = (
 
 export type ImageEditorFn = (
   image: ImageProps,
+  dims: ImageDimensions | null,
   resourceDir: string,
   editAttributes: boolean,
 ) => Promise<ImageEditResult | null>;
@@ -120,6 +122,10 @@ export interface ImageProps extends AttrProps {
   src: string | null;
   title?: string;
   alt?: string;
+  width?: number;
+  height?: number;
+  units?: string;
+  lockRatio?: boolean;
 }
 
 export type ImageEditResult = ImageProps;
@@ -172,7 +178,7 @@ export function attrPropsToInput(attr: AttrProps): AttrEditInput {
   let style : string | undefined;
   let keyvalue: string | undefined;
   if (attr.keyvalue) {
-    const partitionedKeyvalue = partitionKeyvalue(["style"], attr.keyvalue);
+    const partitionedKeyvalue = attrPartitionKeyvalue(["style"], attr.keyvalue);
     if (partitionedKeyvalue.partitioned.length > 0) {
       style = partitionedKeyvalue.partitioned[0][1];
     }
@@ -204,20 +210,7 @@ export function attrInputToProps(attr: AttrEditInput): AttrProps {
   };
 }
 
-function attrTextFromKeyvalue(keyvalue: Array<[string,string]>) {
-  return keyvalue.map(kv => `${kv[0]}=${kv[1]}`).join('\n');
-}
-
-
-function attrKeyvalueFromText(text: string) : Array<[string,string]> {
-  const lines = text.trim().split('\n');
-  return lines.map(line => {
-    const parts = line.trim().split('=');
-    return [parts[0], (parts[1] || '').replace(/^"/, '').replace(/"$/, '')];
-  });
-}
-
-function partitionKeyvalue(partition: string[], keyvalue: Array<[string, string]>) : AttrKeyvaluePartitioned {
+export function attrPartitionKeyvalue(partition: string[], keyvalue: Array<[string, string]>) : AttrKeyvaluePartitioned {
   
   const base = new Array<[string,string]>();
   const partitioned = new Array<[string,string]>();
@@ -234,6 +227,19 @@ function partitionKeyvalue(partition: string[], keyvalue: Array<[string, string]
     base,
     partitioned
   };
+}
+
+function attrTextFromKeyvalue(keyvalue: Array<[string,string]>) {
+  return keyvalue.map(kv => `${kv[0]}=${kv[1]}`).join('\n');
+}
+
+
+function attrKeyvalueFromText(text: string) : Array<[string,string]> {
+  const lines = text.trim().split('\n');
+  return lines.map(line => {
+    const parts = line.trim().split('=');
+    return [parts[0], (parts[1] || '').replace(/^"/, '').replace(/"$/, '')];
+  });
 }
 
 function asHtmlId(id: string | undefined) {
