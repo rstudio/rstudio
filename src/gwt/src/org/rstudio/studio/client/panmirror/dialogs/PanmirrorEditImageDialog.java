@@ -70,15 +70,20 @@ public class PanmirrorEditImageDialog extends ModalDialog<PanmirrorImageProps>
       VerticalTabPanel imageTab = new VerticalTabPanel(ElementIds.VISUAL_MD_IMAGE_TAB_IMAGE);
       imageTab.addStyleName(RES.styles().dialog());
       
+      HorizontalPanel sizePanel = new HorizontalPanel();
       
       imageTab.add(url_ = new PanmirrorImageChooser(FileSystemItem.createDir(resourceDir)));
       url_.addStyleName(RES.styles().spaced());
       if (!StringUtil.isNullOrEmpty(props.src))
          url_.setText(props.src);
-      
+      url_.addValueChangeHandler(value -> {
+         widthProp_ = null;
+         heightProp_ = null;
+         unitsProp_ = null;
+         imageTab.remove(sizePanel);
+      });
       
       // size 
-      HorizontalPanel sizePanel = new HorizontalPanel();
       sizePanel.addStyleName(RES.styles().spaced());
       sizePanel.setVerticalAlignment(HasVerticalAlignment.ALIGN_MIDDLE);
       
