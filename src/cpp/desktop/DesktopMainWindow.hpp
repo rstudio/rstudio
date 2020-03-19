@@ -64,6 +64,7 @@ public Q_SLOTS:
    void loadHtml(const QString& html);
    void setMenuBar(QMenuBar *pMenuBar);
    void invokeCommand(QString commandId);
+   void runJavaScript(QString script);
    void openFileInRStudio(QString path);
    void onPdfViewerClosed(QString pdfPath);
    void onPdfViewerSyncSource(QString srcFile, int line, int column);

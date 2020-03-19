@@ -76,13 +76,13 @@ public:
                    bool disableOriginCheck = true,
                    const std::vector<boost::regex>& allowedOrigins = std::vector<boost::regex>(),
                    const Headers& additionalResponseHeaders = Headers())
-      : abortOnResourceError_(false),
+      : acceptorService_(),
+        abortOnResourceError_(false),
         serverName_(serverName),
         baseUri_(baseUri),
         originCheckDisabled_(disableOriginCheck),
         allowedOrigins_(allowedOrigins),
         additionalResponseHeaders_(additionalResponseHeaders),
-        acceptorService_(),
         scheduledCommandInterval_(boost::posix_time::seconds(3)),
         scheduledCommandTimer_(acceptorService_.ioService()),
         running_(false)
@@ -248,7 +248,26 @@ public:
       acceptorService_.ioService().stop();
 
       // update state
-      running_ = false;
+      RECURSIVE_LOCK_MUTEX(mutex_)
+      {
+         running_ = false;
+
+         // gracefully stop all open connections to ensure they are freed
+         // before our io service (socket acceptor) is freed - if this is
+         // not gauranteed, boost will crash when attempting to free socket objects
+         //
+         // note that we create a copy of the connections list here because as connections
+         // are closed, they will remove themselves from the list
+        auto connections = connections_;
+        for (const auto& connection : connections)
+        {
+           connection->close();
+        }
+
+        // the list should be empty now, but clear it to make sure
+        connections_.clear();
+      }
+      END_LOCK_MUTEX
    }
    
    virtual void waitUntilStopped()
@@ -287,6 +306,24 @@ private:
       CATCH_UNEXPECTED_EXCEPTION
    }
 
+   void addConnection(const boost::shared_ptr<AsyncConnectionImpl<typename ProtocolType::socket>>& connection)
+   {
+      RECURSIVE_LOCK_MUTEX(mutex_)
+      {
+         connections_.insert(connection);
+      }
+      END_LOCK_MUTEX
+   }
+
+   void onConnectionClosed(const boost::shared_ptr<AsyncConnectionImpl<typename ProtocolType::socket>>& connection)
+   {
+      RECURSIVE_LOCK_MUTEX(mutex_)
+      {
+         connections_.erase(connection);
+      }
+      END_LOCK_MUTEX
+   }
+
    void acceptNextConnection()
    {
       ptrNextConnection_.reset(
@@ -306,6 +343,10 @@ private:
          boost::bind(&AsyncServerImpl<ProtocolType>::handleConnection,
                      this, _1, _2),
 
+         // close handler
+         boost::bind(&AsyncServerImpl<ProtocolType>::onConnectionClosed,
+                     this, _1),
+
          // request filter
          boost::bind(&AsyncServerImpl<ProtocolType>::connectionRequestFilter,
                      this, _1, _2, _3),
@@ -314,6 +355,8 @@ private:
          boost::bind(&AsyncServerImpl<ProtocolType>::connectionResponseFilter,
                      this, _1, _2)
       ));
+
+      addConnection(ptrNextConnection_);
 
       // wait for next connection
       acceptorService_.asyncAccept(
@@ -684,6 +727,8 @@ private:
    }
 
 private:
+   boost::recursive_mutex mutex_;
+   SocketAcceptorService<ProtocolType> acceptorService_;
    bool abortOnResourceError_;
    std::string serverName_;
    std::string baseUri_;
@@ -692,10 +737,10 @@ private:
    Headers additionalResponseHeaders_;
    boost::shared_ptr<boost::asio::ssl::context> sslContext_;
    boost::shared_ptr<AsyncConnectionImpl<typename ProtocolType::socket> > ptrNextConnection_;
+   std::set<boost::shared_ptr<AsyncConnectionImpl<typename ProtocolType::socket> >> connections_;
    AsyncUriHandlers uriHandlers_ ;
    AsyncUriHandlerFunction defaultHandler_;
    std::vector<boost::shared_ptr<boost::thread> > threads_;
-   SocketAcceptorService<ProtocolType> acceptorService_;
    boost::posix_time::time_duration scheduledCommandInterval_;
    boost::asio::deadline_timer scheduledCommandTimer_;
    std::vector<boost::shared_ptr<ScheduledCommand> > scheduledCommands_;
