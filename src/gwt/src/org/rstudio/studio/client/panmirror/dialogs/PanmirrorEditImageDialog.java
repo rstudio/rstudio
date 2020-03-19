@@ -18,6 +18,7 @@ package org.rstudio.studio.client.panmirror.dialogs;
 
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.theme.DialogTabLayoutPanel;
 import org.rstudio.core.client.theme.VerticalTabPanel;
@@ -36,7 +37,6 @@ import org.rstudio.studio.client.panmirror.uitools.PanmirrorUIToolsImage;
 import com.google.gwt.aria.client.Roles;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.event.dom.client.DomEvent;
-import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.user.client.ui.CheckBox;
 import com.google.gwt.user.client.ui.HasVerticalAlignment;
 import com.google.gwt.user.client.ui.HorizontalPanel;
@@ -200,6 +200,16 @@ public class PanmirrorEditImageDialog extends ModalDialog<PanmirrorImageProps>
    @Override
    protected PanmirrorImageProps collectInput()
    {
+      // process change event for focused size controls
+      if (width_.getElement() == DomUtils.getActiveElement()) 
+      {
+         DomEvent.fireNativeEvent(Document.get().createChangeEvent(), width_);
+      }
+      else if (height_.getElement() == DomUtils.getActiveElement())
+      {
+         DomEvent.fireNativeEvent(Document.get().createChangeEvent(), height_);
+      }
+      
       PanmirrorImageProps result = new PanmirrorImageProps();
       result.src = url_.getTextBox().getValue().trim();
       result.title = title_.getValue().trim();
@@ -322,16 +332,6 @@ public class PanmirrorEditImageDialog extends ModalDialog<PanmirrorImageProps>
    {
       FormLabel label = createHorizontalLabel(labelText);
       NumericTextBox input = new NumericTextBox();
-      input.getElement().addClassName(allowEnterKeyClass);
-      input.addKeyUpHandler(event -> {
-         int keycode = event.getNativeKeyCode();
-         if (keycode == KeyCodes.KEY_ENTER) 
-         {
-            event.preventDefault();
-            event.stopPropagation();
-            DomEvent.fireNativeEvent(Document.get().createChangeEvent(), input);
-         }
-      });
       input.setMin(1);
       input.setMax(10000);
       input.addStyleName(RES.styles().horizontalInput());
