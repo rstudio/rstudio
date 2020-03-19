@@ -304,7 +304,7 @@ public:
             connectionData_.clear();
 
             // notify that we have closed the connection
-            onClosed_(shared_from_this());
+            onClosed_(AsyncConnectionImpl<SocketType>::shared_from_this());
          }
       }
       END_LOCK_MUTEX;
