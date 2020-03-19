@@ -58,6 +58,7 @@ public class ImageResourceUrl implements ImageResource
       return 0;
    }
 
+   @Deprecated
    @Override
    public String getURL()
    {
