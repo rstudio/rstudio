@@ -219,7 +219,7 @@ function resizeShelf(
 
   // update shelf position to make sure it's visible
   const updatePosition = () => {
-    const kShelfRequiredSize = 335;
+    const kShelfRequiredSize = 333;
     const editingNode = editingRootNode(view.state.selection);
     const editingEl = view.domAtPos(editingNode!.pos + 1).node as HTMLElement;
     const editingBox = editingEl.getBoundingClientRect();
