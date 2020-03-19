@@ -1,9 +1,5 @@
 ## TODO
 
-Image dialog:
-  
-- General cleanup/commenting
-
 
 Discuss tokens / escaping / etc. with Joe
 
