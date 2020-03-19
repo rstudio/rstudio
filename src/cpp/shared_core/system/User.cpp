@@ -161,6 +161,54 @@ FilePath User::getUserHomePath(const std::string& in_envOverride)
    return FilePath(getEnvVariable("HOME"));
 }
 
+User& User::operator=(const User& in_other)
+{
+   if (this == &in_other)
+      return *this;
+
+   if ((m_impl == nullptr) && (in_other.m_impl == nullptr))
+      return *this;
+
+   if (in_other.m_impl == nullptr)
+   {
+      m_impl.reset();
+      return *this;
+   }
+
+   if (m_impl == nullptr)
+      m_impl.reset(new Impl());
+
+   *m_impl = *in_other.m_impl;
+
+   return *this;
+}
+
+bool User::operator==(const User& in_other) const
+{
+   // If one or the other is empty but not both, these objects aren't equal.
+   if (isEmpty() != in_other.isEmpty())
+      return false;
+
+   // Otherwise they're both empty or they're both not, so just return true if this user is empty.
+   if (isEmpty())
+      return true;
+
+   // If one or the other is all users but not both, these aren't the same user.
+   if (isAllUsers() != in_other.isAllUsers())
+      return false;
+
+   // Otherwise they're both all users or they're both not, so just return true if this user is all users.
+   if (isAllUsers())
+      return true;
+
+   return getUserId() == in_other.getUserId();
+}
+
+bool User::operator!=(const User &in_other) const
+{
+   return !(*this == in_other);
+}
+
 bool User::exists() const
 {
    return !isEmpty() && !isAllUsers();
@@ -199,16 +247,6 @@ const std::string& User::getUsername() const
 const std::string& User::getShell() const
 {
    return m_impl->Shell;
-}
-
-User& User::operator=(const User& in_other)
-{
-   m_impl->Name = in_other.m_impl->Name;
-   m_impl->UserId = in_other.m_impl->UserId;
-   m_impl->GroupId = in_other.m_impl->GroupId;
-   m_impl->HomeDirectory = in_other.m_impl->HomeDirectory;
-   m_impl->Shell = in_other.m_impl->Shell;
-   return *this;
 }
 
 } // namespace system
