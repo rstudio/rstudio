@@ -17,7 +17,8 @@ Images should support width/align for gfm (write raw\_html) (we'd need to do the
 Clipboard / DragDrop support for images
 Paste image handler for RStudio IDE
 
-When computing containerWidth, factor in padding of container when it's the body (see React workbench front-end)
+When computing containerWidth, factor in padding of container when it's the body (see React workbench front-end and even
+IDE front end that maxes out at 97%)
 
 Pandoc allows for list items to start with a block, but our schema follows ProseMirror in requiring a paragraph
 (https://github.com/ProseMirror/prosemirror-schema-list/tree/master/src). Resolve this.
