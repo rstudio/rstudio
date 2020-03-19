@@ -2,15 +2,9 @@
 
 Image dialog:
 
-- For unsupported units, need to hide the sizing UI and have it still
-  show up in attributes
+- Lock ratio on accept if OK
   
-- When a new image is selected, hide the sizing UI and set the props to null
-  (alternatively, read the image dims from the url)
-  
-- Image at 620x330px shows up as 621x331 in the dialog
-
-- Test routing to/from style attributes
+- General cleanup/commenting
 
 
 Discuss tokens / escaping / etc. with Joe
