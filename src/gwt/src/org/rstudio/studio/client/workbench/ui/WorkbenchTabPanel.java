@@ -173,10 +173,15 @@ class WorkbenchTabPanel
       
       tab.addEnsureVisibleHandler(ensureVisibleEvent ->
       {
-         // First ensure that we ourselves are visible
-         fireEvent(new EnsureVisibleEvent(ensureVisibleEvent.getActivate()));
-         if (ensureVisibleEvent.getActivate())
-            tabPanel_.selectTab(widget);
+         if (!neverVisible_)
+         {
+            // First ensure that we ourselves are visible
+            int myInt = tabPanel_.getWidgetCount();
+            LogicalWindow window = getParentWindow();
+            fireEvent(new EnsureVisibleEvent(ensureVisibleEvent.getActivate()));
+            if (ensureVisibleEvent.getActivate())
+               tabPanel_.selectTab(widget);
+         }
       });
       
       tab.addEnsureHeightHandler(ensureHeightEvent -> fireEvent(ensureHeightEvent));
@@ -298,11 +303,17 @@ class WorkbenchTabPanel
       return parentWindow_;
    }
 
+   public void neverVisible(boolean value)
+   {
+      neverVisible_ = value;
+   }
+
    private ModuleTabLayoutPanel tabPanel_;
    private ArrayList<WorkbenchTab> tabs_ = new ArrayList<>();
    private final LogicalWindow parentWindow_;
    private final HandlerRegistrations releaseOnUnload_ = new HandlerRegistrations();
    private boolean clearing_ = false;
+   private boolean neverVisible_ = false;
    private LayoutPanel panel_;
    private HTML utilPanel_;
 }
