@@ -165,7 +165,7 @@ if not exist %YARN_DIR%\yarn (
 
 set PATH=%CD%\%NODE_SUBDIR%;%CD%\%YARN_DIR%;%PATH%
 pushd ..\..\src\gwt\panmirror\src\editor
-yarn install
+call yarn install
 popd
 
 
