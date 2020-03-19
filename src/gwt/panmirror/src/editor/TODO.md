@@ -1,8 +1,6 @@
 ## TODO
 
 Image dialog:
-
-- Lock ratio on accept if OK
   
 - General cleanup/commenting
 
