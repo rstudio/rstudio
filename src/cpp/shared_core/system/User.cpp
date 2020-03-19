@@ -110,11 +110,6 @@ User::User(const User& in_other) :
 {
 }
 
-User::User(User&& in_other) noexcept :
-   m_impl(std::move(in_other.m_impl))
-{
-}
-
 Error User::getCurrentUser(User& out_currentUser)
 {
    return getUserFromIdentifier(::geteuid(), out_currentUser);
@@ -186,12 +181,6 @@ User& User::operator=(const User& in_other)
    *m_impl = *in_other.m_impl;
 
    return *this;
-}
-
-User& User::operator=(User &&in_other) noexcept
-{
-   m_impl.reset();
-   m_impl.swap(in_other.m_impl);
 }
 
 bool User::operator==(const User& in_other) const

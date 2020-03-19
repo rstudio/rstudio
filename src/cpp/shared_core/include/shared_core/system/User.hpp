@@ -106,7 +106,7 @@ public:
     *
     * @param in_other   The user to move into this User.
     */
-   User(User&& in_other) noexcept;
+   User(User&& in_other) noexcept = default;
 
    /**
     * @brief Gets the current user.
@@ -154,7 +154,7 @@ public:
     *
     * @return This user.
     */
-   User& operator=(User&& in_other) noexcept;
+   User& operator=(User&& in_other) noexcept = default;
 
    /**
     * @brief Equality operator.
