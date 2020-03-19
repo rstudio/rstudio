@@ -26,11 +26,7 @@ import {
 } from 'prosemirror-model';
 import { EditorState, Plugin, PluginKey, Transaction } from 'prosemirror-state';
 import { EditorView } from 'prosemirror-view';
-import {
-  setTextSelection,
-  findParentNodeOfTypeClosestToPos,
-  findParentNode,
-} from 'prosemirror-utils';
+import { setTextSelection, findParentNodeOfTypeClosestToPos, findParentNode } from 'prosemirror-utils';
 import 'prosemirror-view/style/prosemirror.css';
 
 import { EditorOptions } from './api/options';
@@ -61,7 +57,8 @@ import { EditorOutline } from './api/outline';
 import { EditingLocation, getEditingLocation, restoreEditingLocation } from './api/location';
 import { navigateTo } from './api/navigation';
 import { FixupContext } from './api/fixup';
-import { unitToPixels, pixelsToUnit, roundUnit, kValidUnits, kPercentUnit } from './api/image';
+import { unitToPixels, pixelsToUnit, roundUnit, kValidUnits } from './api/image';
+import { kPercentUnit } from './api/css';
 
 import { getTitle, setTitle } from './nodes/yaml_metadata/yaml_metadata-title';
 
@@ -85,7 +82,6 @@ import { applyTheme, defaultTheme, EditorTheme } from './theme';
 
 import './styles/frame.css';
 import './styles/styles.css';
-
 
 const kMac = typeof navigator !== 'undefined' ? /Mac/.test(navigator.platform) : false;
 
@@ -136,27 +132,26 @@ export interface EditorFindReplace {
 export { EditorCommandId as EditorCommands } from './api/command';
 
 export interface UIToolsAttr {
-  propsToInput(attr: AttrProps) : AttrEditInput;
-  inputToProps(input: AttrEditInput) : AttrProps;
+  propsToInput(attr: AttrProps): AttrEditInput;
+  inputToProps(input: AttrEditInput): AttrProps;
 }
 
 export interface UIToolsImage {
-  validUnits() : string[];
-  percentUnit() : string;
+  validUnits(): string[];
+  percentUnit(): string;
   unitToPixels(value: number, unit: string, containerWidth: number): number;
   pixelsToUnit(pixels: number, unit: string, containerWidth: number): number;
   roundUnit(value: number, unit: string): string;
 }
 
 export class UITools {
-
   public readonly attr: UIToolsAttr;
   public readonly image: UIToolsImage;
 
   constructor() {
     this.attr = {
       propsToInput: attrPropsToInput,
-      inputToProps: attrInputToProps
+      inputToProps: attrInputToProps,
     };
 
     this.image = {
@@ -164,7 +159,7 @@ export class UITools {
       percentUnit: () => kPercentUnit,
       unitToPixels,
       pixelsToUnit,
-      roundUnit
+      roundUnit,
     };
   }
 }

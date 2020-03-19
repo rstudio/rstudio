@@ -200,7 +200,7 @@ class PandocWriter implements PandocOutput {
         } else if (
           // disable [] escaping for gfm (allows for MediaWiki extensions in GitHub wikis)
           (this.format.baseName === 'gfm' && ['[', ']'].includes(ch)) ||
-          // disable []() escaping in tex_math_single_backslash 
+          // disable []() escaping in tex_math_single_backslash
           (this.format.extensions.tex_math_single_backslash && ['(', ')', '[', ']'].includes(ch))
         ) {
           flushTextRun();

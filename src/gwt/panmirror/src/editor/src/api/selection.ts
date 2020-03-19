@@ -30,6 +30,5 @@ export function selectionIsBodyTopLevel(selection: Selection) {
 }
 
 export function selectionIsImageNode(schema: Schema, selection: Selection) {
-  return selection instanceof NodeSelection &&
-         [schema.nodes.image, schema.nodes.figure].includes(selection.node.type);
+  return selection instanceof NodeSelection && [schema.nodes.image, schema.nodes.figure].includes(selection.node.type);
 }

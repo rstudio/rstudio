@@ -38,7 +38,6 @@ import { imageDrop } from './image-events';
 import { ImageNodeView } from './image-view';
 import { imageDimensionsFromImg, imageContainerWidth } from './image-util';
 
-
 const TARGET_URL = 0;
 const TARGET_TITLE = 1;
 
@@ -231,16 +230,7 @@ function imageCommand(editorUI: EditorUI, imageAttributes: boolean) {
       }
 
       // show dialog
-      imageDialog(
-        node, 
-        imgDimensions,
-        nodeType, 
-        state, 
-        dispatch, 
-        view, 
-        editorUI, 
-        imageAttributes
-      );
+      imageDialog(node, imgDimensions, nodeType, state, dispatch, view, editorUI, imageAttributes);
     }
 
     return true;

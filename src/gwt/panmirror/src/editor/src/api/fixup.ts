@@ -13,14 +13,12 @@
  *
  */
 
-import { Transaction } from "prosemirror-state";
+import { Transaction } from 'prosemirror-state';
 
 export enum FixupContext {
   Load,
   Save,
-  Resize
+  Resize,
 }
 
 export type FixupFn = (tr: Transaction, context: FixupContext) => Transaction;
-
-

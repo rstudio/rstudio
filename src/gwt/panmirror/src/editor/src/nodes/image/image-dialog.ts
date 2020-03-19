@@ -19,8 +19,9 @@ import { EditorView } from 'prosemirror-view';
 
 import { insertAndSelectNode } from '../../api/node';
 import { ImageProps, ImageType, EditorUI } from '../../api/ui';
-import { extractSizeStyles } from '../../api/css';
-import { ImageDimensions, isNaturalAspectRatio, kPercentUnit } from '../../api/image';
+import { extractSizeStyles, kPercentUnit, kPixelUnit } from '../../api/css';
+import { ImageDimensions, isNaturalAspectRatio } from '../../api/image';
+import { kWidthAttrib, kHeightAttrib } from '../../api/pandoc_attr';
 
 import { imagePropsWithSizes } from './image-util';
 
@@ -38,6 +39,7 @@ export async function imageDialog(
   let content = Fragment.empty;
   let image: ImageProps = { src: null };
   if (node && dims && node.type === nodeType) {
+    // base attributess
     image = {
       ...(node.attrs as ImageProps),
       alt: node.textContent || node.attrs.alt,
@@ -49,11 +51,14 @@ export async function imageDialog(
       keyvalue: extractSizeStyles(image.keyvalue),
     };
 
-    // move width, height, and units out of keyvalue if necessary
+    // move width, height, and units out of keyvalue into explicit
+    // top level image properties if necessary
     image = imagePropsWithSizes(image, dims);
-    
+
+    // content (will be caption for figures)
     content = node.content;
   } else {
+    // create a new image
     image = nodeType.create(image).attrs as ImageProps;
   }
 
@@ -66,35 +71,33 @@ export async function imageDialog(
     // figures treat 'alt' as their content (the caption), but since captions support
     // inline formatting (and the dialog doesn't) we only want to update the
     // content if the alt/caption actually changed (as it will blow away formatting)
-    if (type === ImageType.Figure) {
-      if (image.alt !== result.alt) {
-        if (result.alt) {
-          content = Fragment.from(state.schema.text(result.alt));
-        } else {
-          content = Fragment.empty;
-        }
+    if (type === ImageType.Figure && image.alt !== result.alt) {
+      if (result.alt) {
+        content = Fragment.from(state.schema.text(result.alt));
+      } else {
+        content = Fragment.empty;
       }
     }
 
     // if we have width and height move them into keyvalue
     let keyvalue = result.keyvalue;
     if (result.units) {
-      const units = result.units && result.units === "px" ? "" : result.units;
+      // no units for px
+      const units = result.units && result.units === kPixelUnit ? '' : result.units;
+      // width
       if (result.width) {
         keyvalue = keyvalue || [];
-        keyvalue.push(["width", result.width + units]);
+        keyvalue.push([kWidthAttrib, result.width + units]);
       }
-      if (result.height && (units !== kPercentUnit) && !isNaturalHeight(result.width, result.height, dims)) {
+      // only record height if it's not % units and it's not at it's natural height
+      if (result.height && units !== kPercentUnit && !isNaturalHeight(result.width, result.height, dims)) {
         keyvalue = keyvalue || [];
-        keyvalue.push(["height", result.height + units]);
+        keyvalue.push([kHeightAttrib, result.height + units]);
       }
     }
-    
-    // move width and height out of style if necessary
-    const imageProps = {
-      ...result,
-      keyvalue: extractSizeStyles(keyvalue),
-    };
+
+    // merge updated keyvalue
+    const imageProps = { ...result, keyvalue };
 
     // create the image
     const newImage = nodeType.createAndFill(imageProps, content);
@@ -110,12 +113,11 @@ export async function imageDialog(
   }
 }
 
-
+// wrapper for isNaturalHeight that handles potentially undefined params
 function isNaturalHeight(width: number | undefined, height: number | undefined, dims: ImageDimensions | null) {
   if (width && height && dims) {
     return isNaturalAspectRatio(width, height, dims, false);
   } else {
     return false;
   }
-
 }

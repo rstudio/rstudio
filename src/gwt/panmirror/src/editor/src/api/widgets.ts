@@ -20,6 +20,7 @@ import { editingRootNodeClosestToPos } from './node';
 
 import './widgets.css';
 import { uuidv4 } from './util';
+import { kPixelUnit } from './css';
 
 export function createHorizontalPanel() {
   const div = window.document.createElement('div');
@@ -94,7 +95,7 @@ export function createTextRangePopup(
 
   // base popup style
   const popupStyle = {
-    'margin-top': linkCoords.bottom - containingBlockBox.top + 3 + 'px',
+    'margin-top': linkCoords.bottom - containingBlockBox.top + 3 + kPixelUnit,
   };
 
   // we need to compute whether the popup will be visible (horizontally), do
@@ -106,7 +107,7 @@ export function createTextRangePopup(
     const rightPos = editingBox.right - rightCoords.right;
     popup = createPopup(view, classes, onDestroyed, {
       ...popupStyle,
-      right: rightPos + 'px',
+      right: rightPos + kPixelUnit,
     });
   } else {
     const marginLeft =
@@ -146,7 +147,7 @@ export function createLinkButton(
   link.innerText = text;
   link.title = title || text;
   if (maxWidth) {
-    link.style.maxWidth = maxWidth + 'px';
+    link.style.maxWidth = maxWidth + kPixelUnit;
   }
   applyStyles(link, classes, style);
   return link;

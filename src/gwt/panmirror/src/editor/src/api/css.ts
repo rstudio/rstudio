@@ -1,3 +1,5 @@
+import { kWidthAttrib, kHeightAttrib, kStyleAttrib } from './pandoc_attr';
+
 /*
  * css.ts
  *
@@ -12,6 +14,9 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
+
+export const kPercentUnit = '%';
+export const kPixelUnit = 'px';
 
 export function removeStyleAttrib(style: string, attrib: string, handler?: (attrib: string, value: string) => void) {
   return style.replace(new RegExp('(' + attrib + ')\\:\\s*(\\w+)', 'g'), (_match, p1, p2) => {
@@ -41,17 +46,17 @@ export function extractSizeStyles(keyvalues: Array<[string, string]> | undefined
     }
   };
 
-  let width = getValue('width');
-  let height = getValue('height');
-  let style = getValue('style');
+  let width = getValue(kWidthAttrib);
+  let height = getValue(kHeightAttrib);
+  let style = getValue(kStyleAttrib);
 
   if (style) {
-    style = removeStyleAttrib(style, 'width', (_attrib, value) => {
+    style = removeStyleAttrib(style, kWidthAttrib, (_attrib, value) => {
       if (!width) {
         width = value;
       }
     });
-    style = removeStyleAttrib(style, 'height', (_attrib, value) => {
+    style = removeStyleAttrib(style, kHeightAttrib, (_attrib, value) => {
       if (!height) {
         height = value;
       }
@@ -61,9 +66,9 @@ export function extractSizeStyles(keyvalues: Array<[string, string]> | undefined
     style = style.replace(/^\s*;+\s*/, '').trimLeft();
   }
 
-  setValue('width', width);
-  setValue('height', height);
-  setValue('style', style);
+  setValue(kWidthAttrib, width);
+  setValue(kHeightAttrib, height);
+  setValue(kStyleAttrib, style);
 
   return newKeyvalues;
 }

@@ -17,36 +17,35 @@ import { Node as ProsemirrorNode } from 'prosemirror-model';
 import { NodeView, EditorView } from 'prosemirror-view';
 import { NodeSelection } from 'prosemirror-state';
 
-import { findParentNodeClosestToPos } from 'prosemirror-utils';
-
 import { EditorUI, ImageType } from '../../api/ui';
-import { removeStyleAttrib, extractSizeStyles } from '../../api/css';
-import { isValidImageSizeUnit, imageSizePropWithUnit, unitToPixels } from '../../api/image';
 
 import { imageDialog } from './image-dialog';
-import { attachResizeUI, initResizeContainer, ResizeUI, isResizeUICompatible } from './image-resize';
-import { hasPercentWidth, imageDimensionsFromImg, imageContainerWidth } from './image-util';
+import {
+  attachResizeUI,
+  initResizeContainer,
+  ResizeUI,
+  isResizeUICompatible,
+  updateImageViewSize,
+} from './image-resize';
+import { imageDimensionsFromImg, imageContainerWidth } from './image-util';
 
 import './image-styles.css';
 
 export class ImageNodeView implements NodeView {
   private readonly type: ImageType;
 
+  private node: ProsemirrorNode;
+  private readonly view: EditorView;
+  private readonly getPos: () => number;
+  private readonly editorUI: EditorUI;
+  private readonly imageAttributes: boolean;
+
   public readonly dom: HTMLElement;
   private readonly img: HTMLImageElement;
-
-  private readonly getPos: () => number;
-
   public readonly contentDOM: HTMLElement | null;
   private readonly figcaption: HTMLElement | null;
 
-  private node: ProsemirrorNode;
-  private readonly view: EditorView;
-
-  private readonly imageAttributes: boolean;
   private resizeUI: ResizeUI | null;
-
-  private readonly editorUI: EditorUI;
 
   constructor(
     node: ProsemirrorNode,
@@ -59,6 +58,7 @@ export class ImageNodeView implements NodeView {
     const schema = node.type.schema;
     this.type = node.type === schema.nodes.image ? ImageType.Image : ImageType.Figure;
 
+    // save references
     this.node = node;
     this.view = view;
     this.getPos = getPos;
@@ -66,26 +66,30 @@ export class ImageNodeView implements NodeView {
     this.editorUI = editorUI;
     this.resizeUI = null;
 
+    // set node selection on click
     const selectOnClick = () => {
       const tr = view.state.tr;
       tr.setSelection(NodeSelection.create(view.state.doc, getPos()));
       view.dispatch(tr);
     };
 
+    // show image dialog on double-click
     const editOnDblClick = () => {
       selectOnClick();
       imageDialog(
-        this.node, 
-        imageDimensionsFromImg(this.img, this.containerWidth()), 
-        this.node.type, 
-        this.view.state, 
-        this.view.dispatch, 
-        this.view, 
-        editorUI, 
-        imageAttributes)
-      ;
+        this.node,
+        imageDimensionsFromImg(this.img, this.containerWidth()),
+        this.node.type,
+        this.view.state,
+        this.view.dispatch,
+        this.view,
+        editorUI,
+        imageAttributes,
+      );
     };
 
+    // stop propagation from child elmeents that need to handle click
+    // (e.g. figcaption element)
     const noPropagateClick = (ev: MouseEvent) => {
       ev.stopPropagation();
     };
@@ -100,16 +104,14 @@ export class ImageNodeView implements NodeView {
       // create figure wrapper
       this.dom = document.createElement('figure');
 
-      // create container and add resize handles to it
+      // create container
       const container = document.createElement('div');
-
-      // initialize the image, add it to the container, then add
-      // the container to the DOM
-      
-      container.append(this.img);
-      this.updateImg(node);
       container.contentEditable = 'false';
       this.dom.append(container);
+
+      // initialize the image
+      container.append(this.img);
+      this.updateImg(node);
 
       // create the caption and make it our contentDOM
       this.figcaption = document.createElement('figcaption');
@@ -126,12 +128,12 @@ export class ImageNodeView implements NodeView {
 
       this.dom.append(this.img);
       this.updateImg(node);
-  
+
       this.contentDOM = null;
       this.figcaption = null;
     }
 
-    // prevent drag/drop if the event doesn't target the
+    // prevent drag/drop if the event doesn't target the image
     this.dom.ondragstart = (event: DragEvent) => {
       if (event.target !== this.img) {
         event.preventDefault();
@@ -172,11 +174,17 @@ export class ImageNodeView implements NodeView {
 
   // update image with latest node/attributes
   public update(node: ProsemirrorNode) {
+    // boilerplate type check
     if (node.type !== this.node.type) {
       return false;
     }
+
+    // set new node and update the image
     this.node = node;
     this.updateImg(node);
+
+    // if we already have resize UI then either update it
+    // or detach it (if e.g. the units are no longer compatible)
     if (this.resizeUI) {
       if (isResizeUICompatible(this.img!)) {
         this.resizeUI.update();
@@ -184,6 +192,7 @@ export class ImageNodeView implements NodeView {
         this.resizeUI.detach();
         this.resizeUI = null;
       }
+      // attach if the node is selected
     } else if (this.isNodeSelected()) {
       this.attachResizeUI();
     }
@@ -192,20 +201,24 @@ export class ImageNodeView implements NodeView {
 
   // ignore mutations outside of the content dom so sizing actions don't cause PM re-render
   public ignoreMutation(mutation: MutationRecord | { type: 'selection'; target: Element }) {
+    // always ignore if we have no contentDOM
     if (!this.contentDOM) {
       return true;
     }
 
+    // always ignore mutations of the image
     if (mutation.target === this.img) {
       return true;
     }
 
+    // ignore any changes inside the contentDOM
     return !this.contentDOM.contains(mutation.target);
   }
 
   // prevent bubbling of events into editor
   public stopEvent(event: Event) {
-    // allow drag events if they target the image
+    // allow drag events if they target the image (otherwise mouse events
+    // on the shelf can end up bubbling up)
     if (event instanceof DragEvent && event.target instanceof HTMLImageElement) {
       return false;
     }
@@ -216,19 +229,6 @@ export class ImageNodeView implements NodeView {
       return stop;
     } else {
       return false;
-    }
-  }
-
-  private isNodeSelected() {
-    return this.dom.classList.contains('ProseMirror-selectednode');
-  }
-
-  // attach resize UI if appropriate
-  private attachResizeUI() {
-    if (this.imageAttributes && isResizeUICompatible(this.img!)) {
-      const imageNode = () => ({ pos: this.getPos(), node: this.node });
-      const imgContainerWidth = () => this.containerWidth();
-      this.resizeUI = attachResizeUI(imageNode, this.dom, this.img!, imgContainerWidth, this.view, this.editorUI);
     }
   }
 
@@ -243,101 +243,22 @@ export class ImageNodeView implements NodeView {
     // ensure alt attribute so that we get default browser broken image treatment
     this.img.alt = node.textContent || node.attrs.src;
 
-    // reset attributes
-    this.img.removeAttribute('style');
-    this.img.removeAttribute('data-width');
-    this.img.removeAttribute('data-height');
+    // update size
+    const containerWidth = this.img.isConnected ? this.containerWidth() : 0;
+    updateImageViewSize(node, this.img, this.isFigure() ? this.dom : null, containerWidth);
+  }
 
-    // reset figure styles (only reset styles that we explicitly set below, b/c some
-    // styles may have been set by e.g. the attachResizeUI function)
-    if (this.isFigure()) {
-      this.dom.style.cssFloat = '';
-      this.dom.style.verticalAlign = '';
-      this.dom.style.margin = '';
-      this.dom.style.marginTop = '';
-      this.dom.style.marginBottom = '';
-      this.dom.style.marginRight = '';
-      this.dom.style.marginLeft = '';
+  // attach resize UI if appropriate
+  private attachResizeUI() {
+    if (this.imageAttributes && isResizeUICompatible(this.img!)) {
+      const imageNode = () => ({ pos: this.getPos(), node: this.node });
+      const imgContainerWidth = () => this.containerWidth();
+      this.resizeUI = attachResizeUI(imageNode, this.dom, this.img!, imgContainerWidth, this.view, this.editorUI);
     }
+  }
 
-    // apply keyvalue attribute to image
-    if (node.attrs.keyvalue) {
-      // determine containerWidth
-      const containerWidth = this.containerWidth();
-
-      const keyvalue = extractSizeStyles(node.attrs.keyvalue);
-
-      (keyvalue as Array<[string, string]>).forEach(attr => {
-        // alias key and value
-        const key = attr[0];
-        let value = attr[1];
-
-        // forward styles to image (but set align oriented styles on figure parent)
-        if (key === 'style') {
-          // pull out certain styles that shoudl really belong to the block container
-          if (this.isFigure()) {
-            const liftStyle = (attrib: string, val: string) => this.dom.style.setProperty(attrib, val);
-            value = removeStyleAttrib(value, 'float', liftStyle);
-            value = removeStyleAttrib(value, 'vertical-align', liftStyle);
-            value = removeStyleAttrib(value, 'margin(?:[\\w\\-])*', liftStyle);
-          }
-
-          // we don't set the style, because that will override styles set in width/height.
-          // if there are specific styles we want to reflect we should whitelist them in
-          // via calls to removeStyleAttrib
-        } else if (key === 'width') {
-          // see if this is a unit we can edit
-          const widthProp = imageSizePropWithUnit(value);
-          if (widthProp) {
-            widthProp.unit = widthProp.unit || 'px';
-            if (isValidImageSizeUnit(widthProp.unit)) {
-              this.img.setAttribute('data-width', widthProp.size + widthProp.unit);
-              this.img.style.width = unitToPixels(widthProp.size, widthProp.unit, containerWidth) + 'px';
-            }
-          }
-
-          // if not, just pass it straight through (editing UI will be disabled)
-          if (!this.img.hasAttribute('data-width')) {
-            this.img.style.width = value;
-          }
-        } else if (key === 'height') {
-          // see if this is a unit we can edit
-          const heightProp = imageSizePropWithUnit(value);
-          if (heightProp) {
-            heightProp.unit = heightProp.unit || 'px';
-            if (isValidImageSizeUnit(heightProp.unit)) {
-              this.img.setAttribute('data-height', heightProp.size + heightProp.unit);
-              this.img.style.height = unitToPixels(heightProp.size, heightProp.unit, containerWidth) + 'px';
-            }
-          }
-
-          // if not, just pass it straight through (editing UI will be disabled)
-          if (!this.img.hasAttribute('data-height')) {
-            this.img.style.height = value;
-          }
-
-          // use of legacy 'align' attribute is common for some pandoc users
-          // so we convert it to the requisite CSS
-        } else if (this.isFigure() && key === 'align') {
-          switch (value) {
-            case 'left':
-            case 'right':
-              this.dom.style.cssFloat = value;
-              break;
-            case 'top':
-            case 'bottom':
-            case 'middle':
-              this.dom.style.verticalAlign = value;
-              break;
-          }
-        }
-      });
-
-      // if width is a percentage, then displayed height needs to be 'auto'
-      if (hasPercentWidth(this.img.getAttribute('data-width'))) {
-        this.img.style.height = 'auto';
-      }
-    }
+  private isNodeSelected() {
+    return this.dom.classList.contains('ProseMirror-selectednode');
   }
 
   private isFigure() {
@@ -345,13 +266,6 @@ export class ImageNodeView implements NodeView {
   }
 
   private containerWidth() {
-
-    // don't attempt to get the width if the img is not yet connected
-    // to the DOM (view.domAtPos will fail in this case)
-    if (!this.img.isConnected) {
-      return 0;
-    }
-
     return imageContainerWidth(this.getPos(), this.view);
   }
 }

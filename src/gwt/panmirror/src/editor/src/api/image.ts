@@ -1,4 +1,3 @@
-
 /*
  * image.ts
  *
@@ -14,19 +13,18 @@
  *
  */
 
+import { kPixelUnit, kPercentUnit } from './css';
+
 const kDpi = 96;
 
-export const kPercentUnit = '%';
-
- // https://github.com/jgm/pandoc/blob/master/src/Text/Pandoc/ImageSize.hs
-export const kValidUnits = ['px', 'in', 'cm', 'mm', kPercentUnit]; //
+// https://github.com/jgm/pandoc/blob/master/src/Text/Pandoc/ImageSize.hs
+export const kValidUnits = [kPixelUnit, 'in', 'cm', 'mm', kPercentUnit];
 
 export interface ImageDimensions {
   naturalWidth: number | null;
   naturalHeight: number | null;
   containerWidth: number;
 }
-
 
 export function isValidImageSizeUnit(unit: string) {
   return kValidUnits.includes(unit);
@@ -73,7 +71,7 @@ export function unitToPixels(value: number, unit: string, containerWidth: number
     case kPercentUnit:
       pixels = (value / 100) * ensureContainerWidth(containerWidth);
       break;
-    case 'px':
+    case kPixelUnit:
     default:
       pixels = value;
       break;
@@ -91,7 +89,7 @@ export function pixelsToUnit(pixels: number, unit: string, containerWidth: numbe
       return (pixels / kDpi) * 2.54;
     case kPercentUnit:
       return (pixels / ensureContainerWidth(containerWidth)) * 100;
-    case 'px':
+    case kPixelUnit:
     default:
       return pixels;
   }
@@ -108,10 +106,8 @@ export function roundUnit(value: number, unit: string) {
   }
 }
 
-
 // sometime when we are called before the DOM renders the containerWidth
 // is 0, in this case provide a default of 1000
 export function ensureContainerWidth(containerWidth: number) {
   return containerWidth || 1000;
 }
-

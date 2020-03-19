@@ -16,6 +16,7 @@
 import { EditorView } from 'prosemirror-view';
 import { NodeWithPos } from 'prosemirror-utils';
 import { NodeSelection } from 'prosemirror-state';
+import { Node as ProsemirrorNode } from 'prosemirror-model';
 
 import {
   createPopup,
@@ -29,14 +30,23 @@ import {
 } from '../../api/widgets';
 import { EditorUI } from '../../api/ui';
 import { editingRootNode } from '../../api/node';
-import { extractSizeStyles } from '../../api/css';
-import { imageSizePropWithUnit, isNaturalAspectRatio, unitToPixels, pixelsToUnit, roundUnit, kPercentUnit, kValidUnits } from '../../api/image';
+import { extractSizeStyles, kPercentUnit, kPixelUnit, removeStyleAttrib } from '../../api/css';
+import {
+  imageSizePropWithUnit,
+  isNaturalAspectRatio,
+  unitToPixels,
+  pixelsToUnit,
+  roundUnit,
+  kValidUnits,
+  isValidImageSizeUnit,
+} from '../../api/image';
+import { kWidthAttrib, kHeightAttrib, kStyleAttrib, kAlignAttrib } from '../../api/pandoc_attr';
 
 import { imageDialog } from './image-dialog';
-import {
-  hasPercentWidth,
-  imageDimensionsFromImg,
-} from './image-util';
+import { hasPercentWidth, imageDimensionsFromImg } from './image-util';
+
+const kDataWidth = 'data-width';
+const kDataHeight = 'data-height';
 
 export function initResizeContainer(container: HTMLElement) {
   // add standard parent class
@@ -57,10 +67,10 @@ export function initResizeContainer(container: HTMLElement) {
 
 export function isResizeUICompatible(img: HTMLImageElement) {
   // incompatible if it has a width, but not a data-width
-  const incompatibleWidth = img.style.width && !img.hasAttribute('data-width');
+  const incompatibleWidth = img.style.width && !img.hasAttribute(kDataWidth);
 
   // incompatible if it has a height, but not a data-height
-  const incompatibleHeight = img.style.height && img.style.height !== 'auto' && !img.hasAttribute('data-height');
+  const incompatibleHeight = img.style.height && img.style.height !== 'auto' && !img.hasAttribute(kDataHeight);
 
   return !incompatibleWidth && !incompatibleHeight;
 }
@@ -82,15 +92,15 @@ export function attachResizeUI(
   container.classList.add('pm-image-resize-active');
 
   // sync current state of shelf to node
-  const syncFromShelf = () => {
-    updateImageSize(
-      view, 
-      imageNode(), 
-      img, 
-      imgContainerWidth, 
-      shelf.props.width(), 
-      shelf.props.height(), 
-      shelf.props.units()
+  const updateImageNodeFromShelf = () => {
+    updateImageNodeSize(
+      view,
+      imageNode(),
+      img,
+      imgContainerWidth,
+      shelf.props.width(),
+      shelf.props.height(),
+      shelf.props.units(),
     );
   };
 
@@ -109,8 +119,7 @@ export function attachResizeUI(
     const width = shelf.props.width();
     const height = shelf.props.lockRatio() ? (img.offsetHeight / img.offsetWidth) * width : shelf.props.height();
     shelf.props.setHeight(height);
-
-    syncFromShelf();
+    updateImageNodeFromShelf();
   };
 
   // handle height changed from shelf
@@ -118,13 +127,12 @@ export function attachResizeUI(
     const height = shelf.props.height();
     const width = shelf.props.lockRatio() ? (img.offsetWidth / img.offsetHeight) * height : shelf.props.width();
     shelf.props.setWidth(width);
-
-    syncFromShelf();
+    updateImageNodeFromShelf();
   };
 
+  // do necessary unit conversion when the units change
   const onUnitsChanged = () => {
     const prevUnits = shelfSizeFromImage(img).unit;
-
     const containerWidth = imgContainerWidth();
 
     const width = shelf.props.width();
@@ -135,17 +143,17 @@ export function attachResizeUI(
     const heightPixels = unitToPixels(height, prevUnits, containerWidth);
     shelf.props.setHeight(pixelsToUnit(heightPixels, shelf.props.units(), containerWidth));
 
-    syncFromShelf();
+    updateImageNodeFromShelf();
   };
 
-  // update image width for changes in container
+  // monitor container width and update image if it's using percent sizing
   let lastContainerWidth = imgContainerWidth();
   const containerWidthTimer = setInterval(() => {
     const containerWidth = imgContainerWidth();
     if (containerWidth !== lastContainerWidth) {
       lastContainerWidth = containerWidth;
       if (shelf.props.units() === kPercentUnit) {
-        img.style.width = unitToPixels(shelf.props.width(), shelf.props.units(), containerWidth) + 'px';
+        img.style.width = unitToPixels(shelf.props.width(), shelf.props.units(), containerWidth) + kPixelUnit;
         shelf.position();
       }
     }
@@ -155,15 +163,15 @@ export function attachResizeUI(
   const onEditImage = () => {
     const nodeWithPos = imageNode();
     imageDialog(
-      nodeWithPos.node, 
-      imageDimensionsFromImg(img, imgContainerWidth()), 
-      nodeWithPos.node.type, 
-      view.state, 
-      view.dispatch, 
-      view, 
-      ui, 
-      true)
-    ;
+      nodeWithPos.node,
+      imageDimensionsFromImg(img, imgContainerWidth()),
+      nodeWithPos.node.type,
+      view.state,
+      view.dispatch,
+      view,
+      ui,
+      true,
+    );
   };
 
   // create resize shelf
@@ -186,7 +194,7 @@ export function attachResizeUI(
     shelf.props.lockRatio,
     shelf.props.units,
     shelf.sync,
-    syncFromShelf,
+    updateImageNodeFromShelf,
   );
   container.append(handle);
 
@@ -217,7 +225,7 @@ function resizeShelf(
   // create resize shelf
   const shelf = createPopup(view, ['pm-text-color']);
 
-  // update shelf position to make sure it's visible
+  // update shelf absolute position to make sure it's visible
   const updatePosition = () => {
     const kShelfRequiredSize = 333;
     const editingNode = editingRootNode(view.state.selection);
@@ -228,14 +236,14 @@ function resizeShelf(
     if (positionLeft) {
       shelf.style.left = '0';
       if (img.offsetWidth < kShelfRequiredSize) {
-        shelf.style.right = img.offsetWidth - kShelfRequiredSize + 'px';
+        shelf.style.right = img.offsetWidth - kShelfRequiredSize + kPixelUnit;
       } else {
         shelf.style.right = '';
       }
     } else {
       shelf.style.right = '0';
       if (img.offsetWidth < kShelfRequiredSize) {
-        shelf.style.left = img.offsetWidth - kShelfRequiredSize + 'px';
+        shelf.style.left = img.offsetWidth - kShelfRequiredSize + kPixelUnit;
       } else {
         shelf.style.left = '';
       }
@@ -252,14 +260,13 @@ function resizeShelf(
     addHorizontalPanelCell(panel, widget);
     if (paddingRight) {
       const paddingSpan = window.document.createElement('span');
-      paddingSpan.style.width = paddingRight + 'px';
+      paddingSpan.style.width = paddingRight + kPixelUnit;
       addHorizontalPanelCell(panel, paddingSpan);
     }
   };
 
-  const inputClasses = ['pm-text-color', 'pm-background-color'];
-
   // width
+  const inputClasses = ['pm-text-color', 'pm-background-color'];
   const wLabel = createInputLabel('w:');
   addToPanel(wLabel, 4);
   const wInput = createTextInput(4, inputClasses);
@@ -307,14 +314,14 @@ function resizeShelf(
   editImage.onclick = onEditImage;
   addHorizontalPanelCell(panel, editImage);
 
-  // run onInit
+  // run onInit (wait for image to load if necessary)
   if (img.complete) {
     setTimeout(onInit, 0);
   } else {
     img.onload = onInit;
   }
 
-  // function used to manage ui
+  // function used to manage units ui (percent vs. non-percent)
   const manageUnitsUI = () => {
     const percentSizing = unitsSelect.value === kPercentUnit;
 
@@ -351,6 +358,7 @@ function resizeShelf(
   };
 
   return {
+    // shelf element
     el: shelf,
 
     // sync the shelf props to the current size/units of the image
@@ -388,46 +396,6 @@ function resizeShelf(
       },
     },
   };
-}
-
-function shelfSizeFromImage(img: HTMLImageElement) {
-  // get attributes
-  const width = img.getAttribute('data-width');
-  const height = img.getAttribute('data-height');
-
-  // if there is no width and no height, then use pixels
-  if (!width && !height) {
-    return {
-      width: img.offsetWidth,
-      height: img.offsetHeight,
-      unit: 'px',
-    };
-
-    // read units
-  } else {
-    let widthWithUnit = imageSizePropWithUnit(width);
-    let heightWithUnit = imageSizePropWithUnit(height);
-
-    if (!widthWithUnit) {
-      widthWithUnit = {
-        size: heightWithUnit!.size * (img.offsetWidth / img.offsetHeight),
-        unit: heightWithUnit!.unit,
-      };
-    }
-
-    if (!heightWithUnit) {
-      heightWithUnit = {
-        size: widthWithUnit.size * (img.offsetHeight / img.offsetWidth),
-        unit: widthWithUnit.unit,
-      };
-    }
-
-    return {
-      width: widthWithUnit.size,
-      height: heightWithUnit.size,
-      unit: widthWithUnit.unit,
-    };
-  }
 }
 
 function resizeHandle(
@@ -479,10 +447,10 @@ function resizeHandle(
       }
 
       // set image width and height based on units currnetly in use
-      img.style.width = width + 'px';
-      img.setAttribute('data-width', pixelsToUnit(width, units(), containerWidth) + units());
-      img.style.height = height + 'px';
-      img.setAttribute('data-height', pixelsToUnit(height, units(), containerWidth) + units());
+      img.style.width = width + kPixelUnit;
+      img.setAttribute(kDataWidth, pixelsToUnit(width, units(), containerWidth) + units());
+      img.style.height = height + kPixelUnit;
+      img.setAttribute(kDataHeight, pixelsToUnit(height, units(), containerWidth) + units());
 
       onSizing();
     };
@@ -523,7 +491,50 @@ function resizeHandle(
   return handle;
 }
 
-function updateImageSize(
+// derive the shelf size attributes from the image. takes advantage of any data-width
+// or data-height attributes, then falls back to actual offsetWidth/offsetHeight
+// as necessary
+function shelfSizeFromImage(img: HTMLImageElement) {
+  // get attributes
+  const width = img.getAttribute(kDataWidth);
+  const height = img.getAttribute(kDataHeight);
+
+  // if there is no width and no height, then use pixels
+  if (!width && !height) {
+    return {
+      width: img.offsetWidth,
+      height: img.offsetHeight,
+      unit: kPixelUnit,
+    };
+
+    // read units
+  } else {
+    let widthWithUnit = imageSizePropWithUnit(width);
+    let heightWithUnit = imageSizePropWithUnit(height);
+
+    if (!widthWithUnit) {
+      widthWithUnit = {
+        size: heightWithUnit!.size * (img.offsetWidth / img.offsetHeight),
+        unit: heightWithUnit!.unit,
+      };
+    }
+
+    if (!heightWithUnit) {
+      heightWithUnit = {
+        size: widthWithUnit.size * (img.offsetHeight / img.offsetWidth),
+        unit: widthWithUnit.unit,
+      };
+    }
+
+    return {
+      width: widthWithUnit.size,
+      height: heightWithUnit.size,
+      unit: widthWithUnit.unit,
+    };
+  }
+}
+
+function updateImageNodeSize(
   view: EditorView,
   image: NodeWithPos,
   img: HTMLImageElement,
@@ -533,15 +544,15 @@ function updateImageSize(
   unit: string,
 ) {
   // don't write pixels explicitly
-  unit = unit === 'px' ? '' : unit;
+  unit = unit === kPixelUnit ? '' : unit;
 
   // edit width & height in keyvalue
   let keyvalue = extractSizeStyles(image.node.attrs.keyvalue as Array<[string, string]>)!;
-  keyvalue = keyvalue.filter(value => !['width', 'height'].includes(value[0]));
-  keyvalue.push(['width', width + unit]);
+  keyvalue = keyvalue.filter(value => ![kWidthAttrib, kHeightAttrib].includes(value[0]));
+  keyvalue.push([kWidthAttrib, width + unit]);
   const dims = imageDimensionsFromImg(img, imgContainerWidth());
   if (!hasPercentWidth(width + unit) && !isNaturalAspectRatio(width, height, dims, false)) {
-    keyvalue.push(['height', height + unit]);
+    keyvalue.push([kHeightAttrib, height + unit]);
   }
 
   // create transaction
@@ -558,4 +569,107 @@ function updateImageSize(
 
   // dispatch transaction
   view.dispatch(tr);
+}
+
+// update the DOM representation of the image. extracts size-oriented attributes from the node and
+// applies them to the img element (alignment oriented attributes are applied to the figure elmenet)
+export function updateImageViewSize(
+  node: ProsemirrorNode,
+  img: HTMLImageElement,
+  figure: HTMLElement | null,
+  containerWidth: number,
+) {
+  // reset attributes (they'll be set to new values below)
+  img.removeAttribute(kStyleAttrib);
+  img.removeAttribute(kDataWidth);
+  img.removeAttribute(kDataHeight);
+
+  // reset figure styles (only reset styles that we explicitly set below, b/c some
+  // styles may have been set by e.g. the attachResizeUI function)
+  if (figure) {
+    figure.style.cssFloat = '';
+    figure.style.verticalAlign = '';
+    figure.style.margin = '';
+    figure.style.marginTop = '';
+    figure.style.marginBottom = '';
+    figure.style.marginRight = '';
+    figure.style.marginLeft = '';
+  }
+
+  // apply keyvalue attribute to image
+  if (node.attrs.keyvalue) {
+    // factor width & height out of style
+    const keyvalue = extractSizeStyles(node.attrs.keyvalue);
+
+    // inspect all keys and process width, height, and style
+    (keyvalue as Array<[string, string]>).forEach(attr => {
+      // alias key and value
+      const key = attr[0];
+      let value = attr[1];
+
+      // set align oriented styles on figure parent
+      if (key === kStyleAttrib) {
+        if (figure) {
+          const liftStyle = (attrib: string, val: string) => figure.style.setProperty(attrib, val);
+          value = removeStyleAttrib(value, 'float', liftStyle);
+          value = removeStyleAttrib(value, 'vertical-align', liftStyle);
+          value = removeStyleAttrib(value, 'margin(?:[\\w\\-])*', liftStyle);
+        }
+
+        // we don't set the style attrib for either figures or inline images, because that
+        // will override styles set in width/height. if there are specific styles we want to
+        // reflect we should whitelist them in // via calls to removeStyleAttrib
+      } else if (key === kWidthAttrib) {
+        // see if this is a unit we can edit
+        const widthProp = imageSizePropWithUnit(value);
+        if (widthProp) {
+          widthProp.unit = widthProp.unit || kPixelUnit;
+          if (isValidImageSizeUnit(widthProp.unit)) {
+            img.setAttribute(kDataWidth, widthProp.size + widthProp.unit);
+            img.style.width = unitToPixels(widthProp.size, widthProp.unit, containerWidth) + kPixelUnit;
+          }
+        }
+
+        // if not, just pass it straight through (editing UI will be disabled)
+        if (!img.hasAttribute(kDataWidth)) {
+          img.style.width = value;
+        }
+      } else if (key === kHeightAttrib) {
+        // see if this is a unit we can edit
+        const heightProp = imageSizePropWithUnit(value);
+        if (heightProp) {
+          heightProp.unit = heightProp.unit || kPixelUnit;
+          if (isValidImageSizeUnit(heightProp.unit)) {
+            img.setAttribute(kDataHeight, heightProp.size + heightProp.unit);
+            img.style.height = unitToPixels(heightProp.size, heightProp.unit, containerWidth) + kPixelUnit;
+          }
+        }
+
+        // if not, just pass it straight through (editing UI will be disabled)
+        if (!img.hasAttribute(kDataHeight)) {
+          img.style.height = value;
+        }
+
+        // use of legacy 'align' attribute is common for some pandoc users
+        // so we convert it to the requisite CSS and apply it to the figure container
+      } else if (figure && key === kAlignAttrib) {
+        switch (value) {
+          case 'left':
+          case 'right':
+            figure.style.cssFloat = value;
+            break;
+          case 'top':
+          case 'bottom':
+          case 'middle':
+            figure.style.verticalAlign = value;
+            break;
+        }
+      }
+    });
+
+    // if width is a percentage, then displayed height needs to be 'auto'
+    if (hasPercentWidth(img.getAttribute(kDataWidth))) {
+      img.style.height = 'auto';
+    }
+  }
 }

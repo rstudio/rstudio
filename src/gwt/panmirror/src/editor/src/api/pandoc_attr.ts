@@ -22,6 +22,11 @@ const PANDOC_ATTR_ID = 0;
 const PANDOC_ATTR_CLASSES = 1;
 const PANDOC_ATTR_KEYVAULE = 2;
 
+export const kWidthAttrib = 'width';
+export const kHeightAttrib = 'height';
+export const kStyleAttrib = 'style';
+export const kAlignAttrib = 'align';
+
 export interface PandocAttr {
   id: string;
   classes: string[];

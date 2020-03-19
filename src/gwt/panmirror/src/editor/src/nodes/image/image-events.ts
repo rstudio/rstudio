@@ -16,7 +16,6 @@
 import { NodeType } from 'prosemirror-model';
 import { EditorView } from 'prosemirror-view';
 
-
 export function imageDrop(nodeType: NodeType) {
   return (view: EditorView, event: Event) => {
     // alias to drag event so typescript knows about event.dataTransfer

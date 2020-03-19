@@ -36,11 +36,7 @@ import {
   CheckedListItemToggleCommand,
 } from './list-checked';
 
-import {
-  writePandocBulletList,
-  writePandocOrderedList,
-  readPandocList,
-} from './list-pandoc';
+import { writePandocBulletList, writePandocOrderedList, readPandocList } from './list-pandoc';
 
 import './list-styles.css';
 
@@ -221,7 +217,7 @@ const extension = (pandocExtensions: PandocExtensions): Extension => {
               handler: (schema: Schema) => readPandocList(schema.nodes.ordered_list, capabilities),
             },
           ],
-          writer: writePandocOrderedList(capabilities)
+          writer: writePandocOrderedList(capabilities),
         },
       },
     ],

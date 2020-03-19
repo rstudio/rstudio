@@ -17,6 +17,7 @@ import { ListCapabilities } from './list';
 import { LinkTargets, LinkCapabilities, LinkType } from './link';
 import { TableCapabilities } from './table';
 import { ImageDimensions } from './image';
+import { kStyleAttrib } from './pandoc_attr';
 
 export interface EditorUI {
   dialogs: EditorDialogs;
@@ -174,11 +175,10 @@ export interface AttrKeyvaluePartitioned {
 }
 
 export function attrPropsToInput(attr: AttrProps): AttrEditInput {
-
-  let style : string | undefined;
+  let style: string | undefined;
   let keyvalue: string | undefined;
   if (attr.keyvalue) {
-    const partitionedKeyvalue = attrPartitionKeyvalue(["style"], attr.keyvalue);
+    const partitionedKeyvalue = attrPartitionKeyvalue([kStyleAttrib], attr.keyvalue);
     if (partitionedKeyvalue.partitioned.length > 0) {
       style = partitionedKeyvalue.partitioned[0][1];
     }
@@ -189,7 +189,7 @@ export function attrPropsToInput(attr: AttrProps): AttrEditInput {
     id: asHtmlId(attr.id) || undefined,
     classes: attr.classes ? attr.classes.map(asHtmlClass).join(' ') : undefined,
     style,
-    keyvalue
+    keyvalue,
   };
 }
 
@@ -210,10 +210,9 @@ export function attrInputToProps(attr: AttrEditInput): AttrProps {
   };
 }
 
-export function attrPartitionKeyvalue(partition: string[], keyvalue: Array<[string, string]>) : AttrKeyvaluePartitioned {
-  
-  const base = new Array<[string,string]>();
-  const partitioned = new Array<[string,string]>();
+export function attrPartitionKeyvalue(partition: string[], keyvalue: Array<[string, string]>): AttrKeyvaluePartitioned {
+  const base = new Array<[string, string]>();
+  const partitioned = new Array<[string, string]>();
 
   keyvalue.forEach(kv => {
     if (partition.includes(kv[0])) {
@@ -222,19 +221,18 @@ export function attrPartitionKeyvalue(partition: string[], keyvalue: Array<[stri
       base.push(kv);
     }
   });
-  
+
   return {
     base,
-    partitioned
+    partitioned,
   };
 }
 
-function attrTextFromKeyvalue(keyvalue: Array<[string,string]>) {
+function attrTextFromKeyvalue(keyvalue: Array<[string, string]>) {
   return keyvalue.map(kv => `${kv[0]}=${kv[1]}`).join('\n');
 }
 
-
-function attrKeyvalueFromText(text: string) : Array<[string,string]> {
+function attrKeyvalueFromText(text: string): Array<[string, string]> {
   const lines = text.trim().split('\n');
   return lines.map(line => {
     const parts = line.trim().split('=');
