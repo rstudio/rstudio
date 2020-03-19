@@ -21,7 +21,7 @@
       <g:Label text="Style (e.g. &quot;margin-right: 10px;&quot;):"></g:Label>
       <g:TextBox styleName="{res.styles.fullWidth} {res.styles.spaced}" ui:field="style_"></g:TextBox>
     
-      <g:Label text="More (key=value, one per line):"/>
+      <g:Label text="Other (key=value, one per line):"/>
       <rw:FormTextArea styleName="{res.styles.textArea} {res.styles.spaced}"
                        ui:field="attributes_" visibleLines="4" ariaLabel="Attributes">
       </rw:FormTextArea>
