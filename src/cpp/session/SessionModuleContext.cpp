@@ -70,6 +70,7 @@
 #include <session/http/SessionRequest.hpp>
 
 #include "SessionClientEventQueue.hpp"
+#include "SessionMainProcess.hpp"
 
 #include <session/projects/SessionProjects.hpp>
 
@@ -399,6 +400,9 @@ SEXP rs_sourceDiagnostics()
 
 SEXP rs_packageLoaded(SEXP pkgnameSEXP)
 {
+   if (main_process::wasForked())
+      return R_NilValue;
+   
    std::string pkgname = r::sexp::safeAsString(pkgnameSEXP);
 
    // fire server event
@@ -415,11 +419,15 @@ SEXP rs_packageLoaded(SEXP pkgnameSEXP)
 
 SEXP rs_packageUnloaded(SEXP pkgnameSEXP)
 {
+   if (main_process::wasForked())
+      return R_NilValue;
+   
    std::string pkgname = r::sexp::safeAsString(pkgnameSEXP);
    ClientEvent packageUnloadedEvent(
             client_events::kPackageUnloaded,
             json::Value(pkgname));
    enqueClientEvent(packageUnloadedEvent);
+   
    return R_NilValue;
 }
 
