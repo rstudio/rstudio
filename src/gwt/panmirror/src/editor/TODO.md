@@ -1,20 +1,23 @@
 ## TODO
 
+Incorporate new theme colors
+
+Initial render of <img> tags with % shows at full width. It's because that defautl 1000 is still in effect!
+
+Align attributes for non-figure image in standalone paragraph
+
+Can still reproduce tables ending up with pipes in them. Insert 3x3, size some columns (leaving empty), and they show up
+
+When computing containerWidth, factor in padding of container when it's the body (see React workbench front-end and even
+IDE front end that maxes out at 97%)
 
 Discuss tokens / escaping / etc. with Joe
 
 Images that link to things need to be supported. Currently a "figure" with a surrounding link tag doesn't even round trip! That's 
 because figures can't have links, we should reflect this.
 
-Incorporate new theme colors
-
-Images should support width/align for gfm (write raw\_html) (we'd need to do the image tag parsing for this to work). May be as simple as just letting it through (as pandoc seems to automatically write html tags if raw\_html is supported but link\_attributes aren't) Alternatively, we could send inline html through the schema dom parser to see if it has an internal representation
-
 Clipboard / DragDrop support for images
 Paste image handler for RStudio IDE
-
-When computing containerWidth, factor in padding of container when it's the body (see React workbench front-end and even
-IDE front end that maxes out at 97%)
 
 Pandoc allows for list items to start with a block, but our schema follows ProseMirror in requiring a paragraph
 (https://github.com/ProseMirror/prosemirror-schema-list/tree/master/src). Resolve this.
