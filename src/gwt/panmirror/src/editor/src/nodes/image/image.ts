@@ -13,7 +13,7 @@
  *
  */
 
-import { Node as ProsemirrorNode, Schema, DOMOutputSpec, DOMParser } from 'prosemirror-model';
+import { Node as ProsemirrorNode, Schema, DOMOutputSpec } from 'prosemirror-model';
 import { EditorState, NodeSelection, Transaction, Plugin, PluginKey } from 'prosemirror-state';
 import { EditorView } from 'prosemirror-view';
 

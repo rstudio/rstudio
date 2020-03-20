@@ -15,7 +15,7 @@
 
 import { InputRule } from 'prosemirror-inputrules';
 import { Schema } from 'prosemirror-model';
-import { Plugin, Transaction } from 'prosemirror-state';
+import { Plugin } from 'prosemirror-state';
 import { EditorView } from 'prosemirror-view';
 
 import { EditorOptions } from './api/options';

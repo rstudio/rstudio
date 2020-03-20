@@ -21,6 +21,8 @@ import { Extension } from '../../api/extension';
 import { EditorUI } from '../../api/ui';
 import { BaseKey } from '../../api/basekeys';
 import { exitNode } from '../../api/command';
+
+import { isSingleLineHTML } from '../../api/html';
 import { PandocToken, PandocTokenType, ProsemirrorWriter, PandocExtensions, kRawBlockContent, kRawBlockFormat, imageAttributesAvailable } from '../../api/pandoc';
 
 import {
@@ -32,10 +34,10 @@ import {
   imageAttrsFromHTML,
 } from './image';
 import { ImageNodeView } from './image-view';
+import { inlineHTMLIsImage } from './image-util';
 
 import './figure-styles.css';
-import { inlineHTMLIsImage } from './image-util';
-import { isSingleLineHTML } from '../../api/html';
+
 
 const plugin = new PluginKey('figure');
 
@@ -171,14 +173,6 @@ function isSingleChildParagraph(tok: PandocToken) {
   return tok.t === PandocTokenType.Para && 
          tok.c &&
          tok.c.length === 1;
-}
-
-function isHTMLImage(tok: PandocToken) {
-  if (tok.t === PandocTokenType.RawInline) {
-    return tok.c[0] === 'html' && inlineHTMLIsImage(tok.c[1]);
-  } else {
-    return false;
-  }
 }
 
 export default extension;
