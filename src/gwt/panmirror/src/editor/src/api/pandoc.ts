@@ -183,6 +183,10 @@ export interface PandocTokenReader {
   postprocessor?: PandocPostprocessorFn;
 }
 
+// constants used to read the contents of raw blocks
+export const kRawBlockFormat = 0;
+export const kRawBlockContent = 1;
+
 // special reader that gets a first shot at blocks (i.e. to convert a para w/ a single image into a figure)
 export type PandocBlockReaderFn = (schema: Schema, tok: PandocToken, writer: ProsemirrorWriter) => boolean;
 

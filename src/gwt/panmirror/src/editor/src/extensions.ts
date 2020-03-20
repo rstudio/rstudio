@@ -49,6 +49,7 @@ import nodeBlockquote from './nodes/blockquote';
 import nodeCodeBlock from './nodes/code_block';
 import nodeLists from './nodes/list/list';
 import nodeImage from './nodes/image/image';
+import nodeFigure from './nodes/image/figure';
 import nodeHr from './nodes/hr';
 import nodeHardBreak from './nodes/hard_break';
 import nodeNull from './nodes/null';
@@ -86,7 +87,6 @@ import nodeFootnote from './nodes/footnote/footnote';
 import nodeRawBlock from './nodes/raw_block';
 import nodeYamlMetadata from './nodes/yaml_metadata/yaml_metadata';
 import nodeRmdCodeChunk from './nodes/rmd_chunk/rmd_chunk';
-import nodeFigure from './nodes/image/figure';
 import nodeDiv from './nodes/div';
 import nodeLineBlock from './nodes/line_block';
 import nodeTable from './nodes/table/table';
@@ -111,6 +111,7 @@ export function initExtensions(
     nodeCodeBlock,
     nodeLists,
     nodeImage,
+    nodeFigure,
     nodeHr,
     nodeHardBreak,
     nodeNull,
@@ -149,13 +150,12 @@ export function initExtensions(
     // nodes
     nodeDiv,
     nodeFootnote,
-    nodeFigure,
-    nodeRawBlock,
     nodeYamlMetadata,
     nodeRmdCodeChunk,
     nodeTable,
     nodeDefinitionList,
     nodeLineBlock,
+    nodeRawBlock,
   ]);
 
   // optional codemirror embedded editor

@@ -37,7 +37,7 @@ import { nodeToHTML } from '../../api/html';
 import { imageDialog } from './image-dialog';
 import { imageDrop } from './image-events';
 import { ImageNodeView } from './image-view';
-import { imageDimensionsFromImg, imageContainerWidth } from './image-util';
+import { imageDimensionsFromImg, imageContainerWidth, inlineHTMLIsImage } from './image-util';
 
 const TARGET_URL = 0;
 const TARGET_TITLE = 1;
@@ -138,7 +138,9 @@ export function pandocImageHandler(figure: boolean, imageAttributes: boolean) {
 export function imagePandocOutputWriter(figure: boolean, pandocExtensions: PandocExtensions) {
 
   return (output: PandocOutput, node: ProsemirrorNode) => {
-    const writer = () => {
+    
+    // default writer for markdown images
+    let writer = () => {
       output.writeToken(PandocTokenType.Image, () => {
         if (pandocExtensions.link_attributes) {
           output.writeAttr(node.attrs.id, node.attrs.classes, node.attrs.keyvalue);
@@ -161,26 +163,34 @@ export function imagePandocOutputWriter(figure: boolean, pandocExtensions: Pando
                       !pandocExtensions.link_attributes &&   // markdown attribs not supported
                       pandocExtensions.raw_html;             // raw html is supported
 
-    // write as appropriate
+    // if we do, then substitute a raw html writer
     if (writeHTML) {
-      const html = nodeToHTML(node.type.schema, node);
-      output.writeRawMarkdown(html);
-    } else if (figure) { 
-      // wrap figure in paragraph
+      writer = () => {
+        // generate HTML (convert figures to images so we write <img> rather than <figure> tag)
+        if (figure) {
+          const schema = node.type.schema;
+          node = schema.nodes.image.create(node.attrs);
+        }
+        const html = nodeToHTML(node.type.schema, node);
+        output.writeRawMarkdown(html);
+      };
+    }
+
+    // write (wrap in paragraph for figures)
+    if (figure) { 
       output.writeToken(PandocTokenType.Para, writer);
     } else {
       writer();
     }
+
   };
 }
 
 // parse inline html with <img> as image node
 function imageInlineHTMLReader(schema: Schema, html: string, writer: ProsemirrorWriter) {
-  if (html.trimLeft().toLowerCase().startsWith("<img")) {
-    const parser = new window.DOMParser();
-    const doc = parser.parseFromString(html, "text/html");
-    if (doc.body && doc.body.firstChild instanceof HTMLImageElement) {
-      const attrs = imageAttrsFromDOM(doc.body.firstChild, true);
+  if (inlineHTMLIsImage(html)) {
+    const attrs = imageAttrsFromHTML(html);
+    if (attrs) {
       writer.addNode(schema.nodes.image, attrs, []);
       return true;
     } else {
@@ -235,6 +245,16 @@ export function imageAttrsFromDOM(el: Element, imageAttributes: boolean) {
   };
 }
 
+export function imageAttrsFromHTML(html: string) {
+  const parser = new window.DOMParser();
+  const doc = parser.parseFromString(html, "text/html");
+  if (doc.body && doc.body.firstChild instanceof HTMLImageElement) {
+    return imageAttrsFromDOM(doc.body.firstChild, true);
+  } else {
+    return null;
+  }
+}
+
 function imageCommand(editorUI: EditorUI, imageAttributes: boolean) {
   return (state: EditorState, dispatch?: (tr: Transaction<any>) => void, view?: EditorView) => {
     const schema = state.schema;
@@ -267,9 +287,7 @@ function imageCommand(editorUI: EditorUI, imageAttributes: boolean) {
 
       // see if we are in an empty paragraph (in that case insert a figure)
       const { $head } = state.selection;
-      if (schema.nodes.figure && 
-          $head.parent.type === schema.nodes.paragraph && 
-          $head.parent.childCount === 0) {
+      if ($head.parent.type === schema.nodes.paragraph && $head.parent.childCount === 0) {
         nodeType = schema.nodes.figure;
       }
 

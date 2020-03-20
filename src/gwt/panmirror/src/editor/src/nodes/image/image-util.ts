@@ -102,3 +102,8 @@ export function imageContainerWidth(pos: number, view: EditorView) {
 
   return containerWidth;
 }
+
+export function inlineHTMLIsImage(html: string) {
+  return html.trimLeft().toLowerCase().startsWith("<img");
+}
+

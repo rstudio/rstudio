@@ -15,6 +15,11 @@
 
 import { Node as ProsemirrorNode, Schema, DOMSerializer, Fragment } from 'prosemirror-model';
 
+
+export function isSingleLineHTML(html: string) {
+  return html.trimRight().split('\n').length === 1;
+}
+
 export function nodeToHTML(schema: Schema, node: ProsemirrorNode) {
   return generateHTML(() => DOMSerializer.fromSchema(schema).serializeNode(node));
 }

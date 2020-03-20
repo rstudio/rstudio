@@ -21,14 +21,13 @@ import { findParentNodeOfType, setTextSelection } from 'prosemirror-utils';
 
 import { Extension } from '../api/extension';
 
-import { PandocOutput, PandocToken, PandocTokenType, PandocExtensions, ProsemirrorWriter } from '../api/pandoc';
+import { PandocOutput, PandocToken, PandocTokenType, PandocExtensions, ProsemirrorWriter, kRawBlockContent, kRawBlockFormat } from '../api/pandoc';
 import { ProsemirrorCommand, EditorCommandId } from '../api/command';
 
 import { canInsertNode } from '../api/node';
 import { EditorUI, RawFormatResult } from '../api/ui';
+import { isSingleLineHTML } from '../api/html';
 
-const RAW_BLOCK_FORMAT = 0;
-const RAW_BLOCK_CONTENT = 1;
 
 const extension = (pandocExtensions: PandocExtensions): Extension | null => {
   // requires either raw_attribute or raw_html
@@ -84,9 +83,19 @@ const extension = (pandocExtensions: PandocExtensions): Extension | null => {
           readers: [
             {
               token: PandocTokenType.RawBlock,
-              handler: (schema: Schema) => readPandocRawBlock(schema),
-            },
+              block: 'raw_block'
+            }
           ],
+          // we define a custom blockReader here so that we can convert html blocks with
+          // a single line of code into paragraph with an html inline
+          blockReader: (schema: Schema, tok: PandocToken, writer: ProsemirrorWriter) => {
+            if (tok.t === PandocTokenType.RawBlock) {
+              readPandocRawBlock(schema, tok, writer);
+              return true;
+            } else {
+              return false;
+            }
+          },
           writer: (output: PandocOutput, node: ProsemirrorNode) => {
             output.writeToken(PandocTokenType.RawBlock, () => {
               output.write(node.attrs.format);
@@ -107,23 +116,20 @@ const extension = (pandocExtensions: PandocExtensions): Extension | null => {
   };
 };
 
-function readPandocRawBlock(schema: Schema) {
-  return (writer: ProsemirrorWriter, tok: PandocToken) => {
-    const format = tok.c[RAW_BLOCK_FORMAT];
-    const text = tok.c[RAW_BLOCK_CONTENT] as string;
-
-    // single lines of html should be read as inline_html (allows for 
-    // highlighting and more seamless editing experience)
-    if (format === 'html' && text.trimRight().split('\n').length === 1) {
-      writer.openNode(schema.nodes.paragraph, {});
-      writer.writeInlineHTML(text.trimRight());
-      writer.closeNode();
-    } else {
-      writer.openNode(schema.nodes.raw_block, { format });
-      writer.writeText(text);
-      writer.closeNode();
-    }
-  };
+function readPandocRawBlock(schema: Schema, tok: PandocToken, writer: ProsemirrorWriter) {
+  // single lines of html should be read as inline_html (allows for 
+  // highlighting and more seamless editing experience)
+  const format = tok.c[kRawBlockFormat];
+  const text = tok.c[kRawBlockContent] as string;
+  if (format === 'html' && isSingleLineHTML(text)) {
+    writer.openNode(schema.nodes.paragraph, {});
+    writer.writeInlineHTML(text.trimRight());
+    writer.closeNode();
+  } else {
+    writer.openNode(schema.nodes.raw_block, { format });
+    writer.writeText(text);
+    writer.closeNode();
+  }
 }
 
 class RawBlockCommand extends ProsemirrorCommand {

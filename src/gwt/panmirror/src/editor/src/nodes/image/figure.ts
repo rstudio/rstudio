@@ -21,7 +21,7 @@ import { Extension } from '../../api/extension';
 import { EditorUI } from '../../api/ui';
 import { BaseKey } from '../../api/basekeys';
 import { exitNode } from '../../api/command';
-import { PandocToken, PandocTokenType, ProsemirrorWriter, PandocExtensions } from '../../api/pandoc';
+import { PandocToken, PandocTokenType, ProsemirrorWriter, PandocExtensions, kRawBlockContent, kRawBlockFormat } from '../../api/pandoc';
 
 import {
   imageAttrsFromDOM,
@@ -29,19 +29,17 @@ import {
   imageDOMOutputSpec,
   imagePandocOutputWriter,
   pandocImageHandler,
+  imageAttrsFromHTML,
 } from './image';
 import { ImageNodeView } from './image-view';
 
 import './figure-styles.css';
+import { inlineHTMLIsImage } from './image-util';
+import { isSingleLineHTML } from '../../api/html';
 
 const plugin = new PluginKey('figure');
 
 const extension = (pandocExtensions: PandocExtensions): Extension | null => {
-
-  // no extension if implicit_figures aren't enabled
-  if (!pandocExtensions.implicit_figures) {
-    return null;
-  }
 
   const imageAttr = pandocExtensions.link_attributes || pandocExtensions.raw_html;
 
@@ -81,13 +79,31 @@ const extension = (pandocExtensions: PandocExtensions): Extension | null => {
         pandoc: {
           writer: imagePandocOutputWriter(true, pandocExtensions),
 
-          // intercept paragraphs with a single image and process them as figures
+          // intercept  paragraphs with a single image and process them as figures
           blockReader: (schema: Schema, tok: PandocToken, writer: ProsemirrorWriter) => {
-            // unroll figures from paragraphs
+
+            // helper to process html image
+            const handleHTMLImage = (html: string) => {
+              const attrs = imageAttrsFromHTML(html);
+              if (attrs) {
+                writer.addNode(schema.nodes.figure, attrs, []);
+                return true;
+              } else {
+                return false;
+              }
+            };
+
+            // unroll figure from paragraph with single image
             if (isParaWrappingFigure(tok)) {
               const handler = pandocImageHandler(true, imageAttr)(schema);
               handler(writer, tok.c[0]);
               return true;
+            // unroll figure from paragraph with single <img> tag
+            } else if (isParaWrappingHTMLImage(tok)) {
+              return handleHTMLImage(tok.c[0][1]);
+            // unroll figure from html RawBlock with single <img> tag
+            } else if (isHTMLImageBlock(tok)) {
+              return handleHTMLImage(tok.c[kRawBlockContent]);
             } else {
               return false;
             }
@@ -141,12 +157,37 @@ export function deleteCaption() {
 }
 
 function isParaWrappingFigure(tok: PandocToken) {
-  return (
-    tok.t === PandocTokenType.Para && // is a paragraph
-    tok.c &&
-    tok.c.length === 1 && // which has 1 child
-    tok.c[0].t === PandocTokenType.Image
-  ); // of type image
+  return isSingleChildParagraph(tok) && tok.c[0].t === PandocTokenType.Image;
 }
+
+function isParaWrappingHTMLImage(tok: PandocToken) {
+  return isSingleChildParagraph(tok) && isHTMLImage(tok.c[0]);
+}
+
+
+function isHTMLImageBlock(tok: PandocToken) {
+  if (tok.t === PandocTokenType.RawBlock) {
+    const format = tok.c[kRawBlockFormat];
+    const text = tok.c[kRawBlockContent] as string;
+    return format === 'html' && isSingleLineHTML(text) && inlineHTMLIsImage(text);
+  } else {
+    return false;
+  }
+}
+
+function isSingleChildParagraph(tok: PandocToken) {
+  return tok.t === PandocTokenType.Para && 
+         tok.c &&
+         tok.c.length === 1;
+}
+
+function isHTMLImage(tok: PandocToken) {
+  if (tok.t === PandocTokenType.RawInline) {
+    return tok.c[0] === 'html' && inlineHTMLIsImage(tok.c[1]);
+  } else {
+    return false;
+  }
+}
+
 
 export default extension;
