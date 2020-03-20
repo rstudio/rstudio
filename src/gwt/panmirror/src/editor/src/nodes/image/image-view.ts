@@ -18,6 +18,7 @@ import { NodeView, EditorView } from 'prosemirror-view';
 import { NodeSelection } from 'prosemirror-state';
 
 import { EditorUI, ImageType } from '../../api/ui';
+import { PandocExtensions, imageAttributesAvailable } from '../../api/pandoc';
 
 import { imageDialog } from './image-dialog';
 import {
@@ -52,7 +53,7 @@ export class ImageNodeView implements NodeView {
     view: EditorView,
     getPos: () => number,
     editorUI: EditorUI,
-    imageAttributes: boolean,
+    pandocExtensions: PandocExtensions,
   ) {
     // determine type
     const schema = node.type.schema;
@@ -62,7 +63,7 @@ export class ImageNodeView implements NodeView {
     this.node = node;
     this.view = view;
     this.getPos = getPos;
-    this.imageAttributes = imageAttributes;
+    this.imageAttributes = imageAttributesAvailable(pandocExtensions);
     this.editorUI = editorUI;
     this.resizeUI = null;
 
@@ -84,7 +85,7 @@ export class ImageNodeView implements NodeView {
         this.view.dispatch,
         this.view,
         editorUI,
-        imageAttributes,
+        this.imageAttributes,
       );
     };
 
@@ -122,6 +123,11 @@ export class ImageNodeView implements NodeView {
       this.contentDOM = this.figcaption;
       this.dom.append(this.figcaption);
 
+      // if there is no support for implicit_figures then hide the caption
+      if (!pandocExtensions.implicit_figures) {
+        this.figcaption.style.display = 'none';
+      }
+
       // standard inline image
     } else {
       this.dom = document.createElement('span');
@@ -142,7 +148,7 @@ export class ImageNodeView implements NodeView {
     };
 
     // init resize if we support imageAttributes
-    if (imageAttributes) {
+    if (this.imageAttributes) {
       initResizeContainer(this.dom);
     }
 

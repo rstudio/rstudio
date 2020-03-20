@@ -29,6 +29,7 @@ import {
   PandocToken,
   tokensCollectText,
   PandocExtensions,
+  imageAttributesAvailable,
 } from '../../api/pandoc';
 import { EditorUI } from '../../api/ui';
 import { ImageDimensions } from '../../api/image';
@@ -50,7 +51,7 @@ const plugin = new PluginKey('image');
 
 const extension = (pandocExtensions: PandocExtensions): Extension => {
 
-  const imageAttr = pandocExtensions.link_attributes || pandocExtensions.raw_html;
+  const imageAttr = imageAttributesAvailable(pandocExtensions);
 
   return {
     nodes: [
@@ -97,7 +98,7 @@ const extension = (pandocExtensions: PandocExtensions): Extension => {
           props: {
             nodeViews: {
               image(node: ProsemirrorNode, view: EditorView, getPos: boolean | (() => number)) {
-                return new ImageNodeView(node, view, getPos as () => number, ui, imageAttr);
+                return new ImageNodeView(node, view, getPos as () => number, ui, pandocExtensions);
               },
             },
             handleDOMEvents: {

@@ -99,6 +99,10 @@ export interface PandocExtensions {
   [key: string]: boolean;
 }
 
+export function imageAttributesAvailable(pandocExtensions: PandocExtensions) {
+  return pandocExtensions.link_attributes || pandocExtensions.raw_html;
+}
+
 export interface PandocAst {
   blocks: PandocToken[];
   'pandoc-api-version': PandocApiVersion;
