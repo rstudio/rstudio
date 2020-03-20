@@ -38,7 +38,7 @@ public class PromiseWithProgress<V>
    {
       // setup progress
       GlobalDisplay globalDisplay = RStudioGinjector.INSTANCE.getGlobalDisplay();
-      ProgressIndicator indicator = new GlobalProgressDelayer(globalDisplay, 300, progress).getIndicator();
+      ProgressIndicator indicator = new GlobalProgressDelayer(globalDisplay, 500, progress).getIndicator();
       
       // execute the promise
       promise.then(new ThenOnFulfilledCallbackFn<V,V>() {
