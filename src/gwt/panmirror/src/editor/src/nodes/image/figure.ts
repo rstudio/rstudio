@@ -98,9 +98,6 @@ const extension = (pandocExtensions: PandocExtensions): Extension | null => {
               const handler = pandocImageHandler(true, imageAttr)(schema);
               handler(writer, tok.c[0]);
               return true;
-            // unroll figure from paragraph with single <img> tag
-            } else if (isParaWrappingHTMLImage(tok)) {
-              return handleHTMLImage(tok.c[0][1]);
             // unroll figure from html RawBlock with single <img> tag
             } else if (isHTMLImageBlock(tok)) {
               return handleHTMLImage(tok.c[kRawBlockContent]);
@@ -160,11 +157,6 @@ function isParaWrappingFigure(tok: PandocToken) {
   return isSingleChildParagraph(tok) && tok.c[0].t === PandocTokenType.Image;
 }
 
-function isParaWrappingHTMLImage(tok: PandocToken) {
-  return isSingleChildParagraph(tok) && isHTMLImage(tok.c[0]);
-}
-
-
 function isHTMLImageBlock(tok: PandocToken) {
   if (tok.t === PandocTokenType.RawBlock) {
     const format = tok.c[kRawBlockFormat];
@@ -188,6 +180,5 @@ function isHTMLImage(tok: PandocToken) {
     return false;
   }
 }
-
 
 export default extension;
