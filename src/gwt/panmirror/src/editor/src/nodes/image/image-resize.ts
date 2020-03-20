@@ -407,6 +407,7 @@ function resizeHandle(
   onSizingComplete: () => void,
 ) {
   const handle = document.createElement('span');
+  handle.contentEditable = "false";
   handle.classList.add('pm-image-resize-handle', 'pm-background-color', 'pm-selected-node-border-color');
   handle.style.position = 'absolute';
   handle.style.bottom = '-6px';
