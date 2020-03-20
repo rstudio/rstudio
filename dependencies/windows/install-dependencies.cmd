@@ -160,12 +160,12 @@ if not exist %NODE_SUBDIR% (
 set YARN_DIR=%NODE_SUBDIR%\node_modules\yarn\bin
 if not exist %YARN_DIR%\yarn (
   echo "Installing yarn"
-  %NODE_SUBDIR%\npm install --global yarn
+  call %NODE_SUBDIR%\npm install --global yarn
 )
 
 set PATH=%CD%\%NODE_SUBDIR%;%CD%\%YARN_DIR%;%PATH%
-pushd ..\..\src\gwt\panmirror
-yarn install
+pushd ..\..\src\gwt\panmirror\src\editor
+call yarn install
 popd
 
 
