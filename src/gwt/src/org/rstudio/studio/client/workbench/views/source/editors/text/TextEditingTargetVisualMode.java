@@ -558,10 +558,7 @@ public class TextEditingTargetVisualMode
    {
       PanmirrorUIContext uiContext = new PanmirrorUIContext();
       uiContext.mapResourcePath = path -> {
-         if (docUpdateSentinel_.getPath() != null)
-            return ImagePreviewer.imgSrcPathFromHref(docUpdateSentinel_, path);
-         else
-            return path;
+         return ImagePreviewer.imgSrcPathFromHref(uiContext.getResourceDir.getResourceDir(), path);
       };
       uiContext.getResourceDir = () -> {
          if (docUpdateSentinel_.getPath() != null)

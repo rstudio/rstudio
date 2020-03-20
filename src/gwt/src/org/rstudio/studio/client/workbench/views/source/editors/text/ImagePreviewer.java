@@ -499,9 +499,15 @@ public class ImagePreviewer
           href.endsWith(".gif")  ||
           href.endsWith(".svg");
    }
+   
+   public static String imgSrcPathFromHref(DocUpdateSentinel sentinel, String href)
+   {
+      String docPath = sentinel.getPath();
+      String docDir = FilePathUtils.dirFromFile(docPath);
+      return imgSrcPathFromHref(docDir, href);
+   }
 
-   public static String imgSrcPathFromHref(DocUpdateSentinel sentinel, 
-                                            String href)
+   public static String imgSrcPathFromHref(String docDir, String href)
    {
       // return paths that have a custom / external protocol as-is
       Pattern reProtocol = Pattern.create("^\\w+://");
@@ -512,8 +518,7 @@ public class ImagePreviewer
       String absPath = href;
       if (FilePathUtils.pathIsRelative(href))
       {
-         String docPath = sentinel.getPath();
-         absPath = FilePathUtils.dirFromFile(docPath) + "/" + absPath;
+         absPath = docDir + "/" + absPath;
       }
       
       return "file_show?path=" + StringUtil.encodeURIComponent(absPath) + 
