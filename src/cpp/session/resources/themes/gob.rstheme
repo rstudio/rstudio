@@ -1,5 +1,5 @@
-/* rs-theme-name: gob */
-/* rs-theme-is-dark: FALSE */
+/* rs-theme-name: Gob */
+/* rs-theme-is-dark: TRUE */
 .ace_gutter {
   background: #0B1818;
   color: #03EE03
