@@ -361,6 +361,7 @@ QString inferDefaultRenderingEngine()
       {
          if (deviceString.find(item) != std::string::npos)
          {
+            QCoreApplication::setAttribute(Qt::AA_DisableShaderDiskCache, true);
             return QStringLiteral("software");
          }
       }
@@ -388,13 +389,6 @@ void initializeRenderingEngine(std::vector<char*>* pArguments)
    {
       engine = inferDefaultRenderingEngine();
    }
-
-#ifdef _WIN32
-   // disable the shader disk cache by default, as corrupt shaders can
-   // cause the IDE to hang and there is no simple way to detect or
-   // recover from that state
-   QCoreApplication::setAttribute(Qt::AA_DisableShaderDiskCache, true);
-#endif
 
    if (engine == QStringLiteral("desktop"))
    {
