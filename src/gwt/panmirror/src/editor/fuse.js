@@ -29,7 +29,7 @@ context(
     getConfig(outputDir, webIndex = false, vendorSrcMap = false) {
       return FuseBox.init({
         homeDir: "src",
-        modulesFolder: "./node_modules",
+        modulesFolder: ["./node_modules", "/opt/rstudio-tools/panmirror/node_modules"],
         target: "browser@es6",
         globals: { default: kLibraryName },
         output: path.join(outputDir, "$name.js"),
