@@ -20,7 +20,6 @@ import {
   Node as ProsemirrorNode,
   NodeSpec,
   Schema,
-  DOMSerializer,
   DOMParser,
   ParseOptions,
 } from 'prosemirror-model';
@@ -37,6 +36,7 @@ import { EditorUI, attrPropsToInput, attrInputToProps, AttrProps, AttrEditInput 
 import { Extension } from './api/extension';
 import { ExtensionManager, initExtensions } from './extensions';
 import { PandocEngine } from './api/pandoc';
+import { fragmentToHTML } from './api/html';
 import {
   PandocFormat,
   resolvePandocFormat,
@@ -377,10 +377,7 @@ export class Editor {
   }
 
   public getHTML(): string {
-    const div = document.createElement('div');
-    const fragment = DOMSerializer.fromSchema(this.state.schema).serializeFragment(this.state.doc.content);
-    div.appendChild(fragment);
-    return div.innerHTML;
+    return fragmentToHTML(this.state.schema, this.state.doc.content);
   }
 
   public getTitle() {

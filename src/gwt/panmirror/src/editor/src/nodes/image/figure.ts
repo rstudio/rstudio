@@ -36,8 +36,14 @@ import './figure-styles.css';
 
 const plugin = new PluginKey('figure');
 
-const extension = (pandocExtensions: PandocExtensions): Extension => {
-  const imageAttr = pandocExtensions.link_attributes;
+const extension = (pandocExtensions: PandocExtensions): Extension | null => {
+
+  // no extension if implicit_figures aren't enabled
+  if (!pandocExtensions.implicit_figures) {
+    return null;
+  }
+
+  const imageAttr = pandocExtensions.link_attributes || pandocExtensions.raw_html;
 
   return {
     nodes: [
@@ -73,7 +79,7 @@ const extension = (pandocExtensions: PandocExtensions): Extension => {
           },
         },
         pandoc: {
-          writer: imagePandocOutputWriter(true, imageAttr),
+          writer: imagePandocOutputWriter(true, pandocExtensions),
 
           // intercept paragraphs with a single image and process them as figures
           blockReader: (schema: Schema, tok: PandocToken, writer: ProsemirrorWriter) => {

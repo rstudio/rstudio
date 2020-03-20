@@ -186,6 +186,9 @@ export interface PandocTokenReader {
 // special reader that gets a first shot at blocks (i.e. to convert a para w/ a single image into a figure)
 export type PandocBlockReaderFn = (schema: Schema, tok: PandocToken, writer: ProsemirrorWriter) => boolean;
 
+// reader that gets a first shot at inline html (e.g. image node parsing an <img> tag)
+export type PandocInlineHTMLReaderFn = (schema: Schema, html: string, writer: ProsemirrorWriter) => boolean;
+
 // reader for code blocks that require special handling
 export interface PandocCodeBlockFilter {
   preprocessor: (markdown: string) => string;
@@ -211,6 +214,9 @@ export interface ProsemirrorWriter {
 
   // add text to the current node using the current mark set
   writeText(text: string): void;
+
+  // write inlne html to the current node
+  writeInlineHTML(html: string): void;
 
   // write tokens into the current node
   writeTokens(tokens: PandocToken[]): void;

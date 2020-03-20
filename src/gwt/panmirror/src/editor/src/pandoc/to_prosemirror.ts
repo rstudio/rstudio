@@ -22,6 +22,7 @@ import {
   ProsemirrorWriter,
   PandocBlockReaderFn,
   PandocCodeBlockFilter,
+  PandocInlineHTMLReaderFn,
 } from '../api/pandoc';
 import { pandocAttrReadAST, PandocAttr } from '../api/pandoc_attr';
 
@@ -30,9 +31,10 @@ export function pandocToProsemirror(
   schema: Schema,
   readers: readonly PandocTokenReader[],
   blockReaders: readonly PandocBlockReaderFn[],
+  inlineHTMLReaders: readonly PandocInlineHTMLReaderFn[],
   codeBlockFilters: readonly PandocCodeBlockFilter[],
 ) {
-  const parser = new Parser(schema, readers, blockReaders, codeBlockFilters);
+  const parser = new Parser(schema, readers, blockReaders, inlineHTMLReaders, codeBlockFilters);
   return parser.parse(ast);
 }
 
@@ -41,15 +43,18 @@ const CODE_BLOCK_TEXT = 1;
 
 class Parser {
   private readonly schema: Schema;
+  private readonly inlineHTMLReaders: readonly PandocInlineHTMLReaderFn[];
   private readonly handlers: { [token: string]: ParserTokenHandlerCandidate[] };
 
   constructor(
     schema: Schema,
     readers: readonly PandocTokenReader[],
     blockReaders: readonly PandocBlockReaderFn[],
+    inlineHTMLReaders: readonly PandocInlineHTMLReaderFn[],
     codeBlockFilters: readonly PandocCodeBlockFilter[],
   ) {
     this.schema = schema;
+    this.inlineHTMLReaders = inlineHTMLReaders;
     this.handlers = this.createHandlers(readers, blockReaders, codeBlockFilters);
   }
 
@@ -67,6 +72,9 @@ class Parser {
       openMark: state.openMark.bind(state),
       closeMark: state.closeMark.bind(state),
       writeText: state.writeText.bind(state),
+      writeInlineHTML(html: string) {
+        parser.writeInlineHTML(this, html);
+      },
       writeTokens(tokens: PandocToken[]) {
         parser.writeTokens(this, tokens);
       },
@@ -95,6 +103,26 @@ class Parser {
     }
 
     throw new Error(`No handler for pandoc token ${tok.t}`);
+  }
+
+  private writeInlineHTML(writer: ProsemirrorWriter, html: string) {
+
+    // see if any of our readers want to take it
+    for (const reader of this.inlineHTMLReaders) {
+      if (reader(this.schema, html, writer)) {
+        return;
+      }
+    }
+
+    // otherwise just write it
+    const commentRe = /^<!--([\s\S]*?)-->\s*$/;
+    const mark = this.schema.marks.raw_inline.create({
+      format: 'html',
+      comment: commentRe.test(html),
+    });
+    writer.openMark(mark);
+    writer.writeText(html);
+    writer.closeMark(mark);
   }
 
   // create parser token handler functions based on the passed readers

@@ -38,6 +38,7 @@ import {
   PandocAstOutputFilter,
   PandocMarkdownOutputFilter,
   PandocExtensions,
+  PandocInlineHTMLReaderFn,
 } from './api/pandoc';
 
 // required extensions (base non-customiziable pandoc nodes/marks + core behaviors)
@@ -238,6 +239,16 @@ export class ExtensionManager {
       }
     });
     return blockReaders;
+  }
+
+  public pandocInlineHTMLReaders(): readonly PandocInlineHTMLReaderFn[] {
+    const htmlReaders: PandocInlineHTMLReaderFn[] = [];
+    this.pandocNodes().forEach((node: PandocNode) => {
+      if (node.pandoc.inlineHTMLReader) {
+        htmlReaders.push(node.pandoc.inlineHTMLReader);
+      }
+    });
+    return htmlReaders;
   }
 
   public pandocCodeBlockFilters(): readonly PandocCodeBlockFilter[] {

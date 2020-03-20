@@ -28,6 +28,7 @@ import {
   PandocAstOutputFilter,
   PandocMarkdownOutputFilter,
   PandocPostprocessorFn,
+  PandocInlineHTMLReaderFn,
 } from '../api/pandoc';
 
 import { pandocFormatWith, PandocFormat } from '../api/pandoc_format';
@@ -48,6 +49,7 @@ export class PandocConverter {
   private readonly postprocessors: readonly PandocPostprocessorFn[];
   private readonly readers: readonly PandocTokenReader[];
   private readonly blockReaders: readonly PandocBlockReaderFn[];
+  private readonly inlineHTMLReaders: readonly PandocInlineHTMLReaderFn[];
   private readonly codeBlockFilters: readonly PandocCodeBlockFilter[];
   private readonly nodeWriters: readonly PandocNodeWriter[];
   private readonly markWriters: readonly PandocMarkWriter[];
@@ -64,6 +66,7 @@ export class PandocConverter {
     this.postprocessors = extensions.pandocPostprocessors();
     this.readers = extensions.pandocReaders();
     this.blockReaders = extensions.pandocBlockReaders();
+    this.inlineHTMLReaders = extensions.pandocInlineHTMLReaders();
     this.codeBlockFilters = extensions.pandocCodeBlockFilters();
     this.nodeWriters = extensions.pandocNodeWriters();
     this.markWriters = extensions.pandocMarkWriters();
@@ -85,7 +88,7 @@ export class PandocConverter {
 
     const ast = await this.pandoc.markdownToAst(markdown, format, []);
     this.apiVersion = ast['pandoc-api-version'];
-    let doc = pandocToProsemirror(ast, this.schema, this.readers, this.blockReaders, this.codeBlockFilters);
+    let doc = pandocToProsemirror(ast, this.schema, this.readers, this.blockReaders, this.inlineHTMLReaders, this.codeBlockFilters);
 
     // run post-processors
     this.postprocessors.forEach(postprocessor => {

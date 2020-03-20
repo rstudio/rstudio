@@ -112,19 +112,11 @@ function readPandocRawBlock(schema: Schema) {
     const format = tok.c[RAW_BLOCK_FORMAT];
     const text = tok.c[RAW_BLOCK_CONTENT] as string;
 
-    // html comments should be read as inline html. this allows them to be
-    // edited more naturally in the editor and to be written without
-    // raw_block attribute formatting
-    const commentRe = /^<!--([\s\S]*?)-->\s*$/;
+    // single lines of html should be read as inline_html (allows for 
+    // highlighting and more seamless editing experience)
     if (format === 'html' && text.trimRight().split('\n').length === 1) {
       writer.openNode(schema.nodes.paragraph, {});
-      const mark = schema.marks.raw_inline.create({
-        format,
-        comment: commentRe.test(text),
-      });
-      writer.openMark(mark);
-      writer.writeText(text.trimRight());
-      writer.closeMark(mark);
+      writer.writeInlineHTML(text.trimRight());
       writer.closeNode();
     } else {
       writer.openNode(schema.nodes.raw_block, { format });

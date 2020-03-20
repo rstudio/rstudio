@@ -13,7 +13,7 @@
  *
  */
 
-import { Node as ProsemirrorNode, Schema, DOMOutputSpec } from 'prosemirror-model';
+import { Node as ProsemirrorNode, Schema, DOMOutputSpec, DOMParser } from 'prosemirror-model';
 import { EditorState, NodeSelection, Transaction, Plugin, PluginKey } from 'prosemirror-state';
 import { EditorView } from 'prosemirror-view';
 
@@ -21,7 +21,7 @@ import { ProsemirrorCommand, EditorCommandId } from '../../api/command';
 import { Extension } from '../../api/extension';
 import { canInsertNode } from '../../api/node';
 import { selectionIsImageNode } from '../../api/selection';
-import { pandocAttrSpec, pandocAttrParseDom, pandocAttrToDomAttr, pandocAttrReadAST } from '../../api/pandoc_attr';
+import { pandocAttrSpec, pandocAttrParseDom, pandocAttrToDomAttr, pandocAttrReadAST, pandocAttrAvailable } from '../../api/pandoc_attr';
 import {
   PandocOutput,
   PandocTokenType,
@@ -32,6 +32,7 @@ import {
 } from '../../api/pandoc';
 import { EditorUI } from '../../api/ui';
 import { ImageDimensions } from '../../api/image';
+import { nodeToHTML } from '../../api/html';
 
 import { imageDialog } from './image-dialog';
 import { imageDrop } from './image-events';
@@ -48,7 +49,8 @@ const IMAGE_TARGET = 2;
 const plugin = new PluginKey('image');
 
 const extension = (pandocExtensions: PandocExtensions): Extension => {
-  const imageAttr = pandocExtensions.link_attributes;
+
+  const imageAttr = pandocExtensions.link_attributes || pandocExtensions.raw_html;
 
   return {
     nodes: [
@@ -78,7 +80,8 @@ const extension = (pandocExtensions: PandocExtensions): Extension => {
               handler: pandocImageHandler(false, imageAttr),
             },
           ],
-          writer: imagePandocOutputWriter(false, imageAttr),
+          inlineHTMLReader: imageInlineHTMLReader,
+          writer: imagePandocOutputWriter(false, pandocExtensions),
         },
       },
     ],
@@ -132,11 +135,12 @@ export function pandocImageHandler(figure: boolean, imageAttributes: boolean) {
   };
 }
 
-export function imagePandocOutputWriter(figure: boolean, imageAttributes: boolean) {
+export function imagePandocOutputWriter(figure: boolean, pandocExtensions: PandocExtensions) {
+
   return (output: PandocOutput, node: ProsemirrorNode) => {
     const writer = () => {
       output.writeToken(PandocTokenType.Image, () => {
-        if (imageAttributes) {
+        if (pandocExtensions.link_attributes) {
           output.writeAttr(node.attrs.id, node.attrs.classes, node.attrs.keyvalue);
         } else {
           output.writeAttr();
@@ -152,7 +156,17 @@ export function imagePandocOutputWriter(figure: boolean, imageAttributes: boolea
       });
     };
 
-    if (figure) {
+     // see if we need to write raw html
+    const writeHTML = pandocAttrAvailable(node.attrs) &&     // attribs need to be written
+                      !pandocExtensions.link_attributes &&   // markdown attribs not supported
+                      pandocExtensions.raw_html;             // raw html is supported
+
+    // write as appropriate
+    if (writeHTML) {
+      const html = nodeToHTML(node.type.schema, node);
+      output.writeRawMarkdown(html);
+    } else if (figure) { 
+      // wrap figure in paragraph
       output.writeToken(PandocTokenType.Para, writer);
     } else {
       writer();
@@ -160,13 +174,41 @@ export function imagePandocOutputWriter(figure: boolean, imageAttributes: boolea
   };
 }
 
+// parse inline html with <img> as image node
+function imageInlineHTMLReader(schema: Schema, html: string, writer: ProsemirrorWriter) {
+  if (html.trimLeft().toLowerCase().startsWith("<img")) {
+    const parser = new window.DOMParser();
+    const doc = parser.parseFromString(html, "text/html");
+    if (doc.body && doc.body.firstChild instanceof HTMLImageElement) {
+      const attrs = imageAttrsFromDOM(doc.body.firstChild, true);
+      writer.addNode(schema.nodes.image, attrs, []);
+      return true;
+    } else {
+      return false;
+    }
+  } else {
+    return false;
+  }
+}
+
 export function imageDOMOutputSpec(node: ProsemirrorNode, imageAttributes: boolean): DOMOutputSpec {
+  
+  const attr: { [key: string]: string } = {
+    src: node.attrs.src
+  };
+  const title = node.attrs.title;
+  if (title) {
+    attr.title = title;
+  }
+  const alt = node.attrs.alt || node.textContent;
+  if (alt) {
+    attr.alt = alt;
+  }
+  
   return [
     'img',
     {
-      src: node.attrs.src,
-      title: node.attrs.title,
-      alt: node.attrs.alt || node.textContent,
+      ...attr,
       ...(imageAttributes ? pandocAttrToDomAttr(node.attrs) : {}),
     },
   ];
@@ -225,7 +267,9 @@ function imageCommand(editorUI: EditorUI, imageAttributes: boolean) {
 
       // see if we are in an empty paragraph (in that case insert a figure)
       const { $head } = state.selection;
-      if ($head.parent.type === schema.nodes.paragraph && $head.parent.childCount === 0) {
+      if (schema.nodes.figure && 
+          $head.parent.type === schema.nodes.paragraph && 
+          $head.parent.childCount === 0) {
         nodeType = schema.nodes.figure;
       }
 

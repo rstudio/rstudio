@@ -20,7 +20,7 @@ import { DecorationSet, Decoration } from 'prosemirror-view';
 
 import { Extension } from '../../api/extension';
 import { ProsemirrorCommand } from '../../api/command';
-import { PandocOutput, PandocToken, PandocTokenType, PandocExtensions } from '../../api/pandoc';
+import { PandocOutput, PandocToken, PandocTokenType, PandocExtensions, ProsemirrorWriter } from '../../api/pandoc';
 import { mergedTextNodes } from '../../api/text';
 import { getMarkRange } from '../../api/mark';
 import { EditorUI } from '../../api/ui';
@@ -84,17 +84,22 @@ const extension = (pandocExtensions: PandocExtensions): Extension | null => {
           readers: [
             {
               token: PandocTokenType.RawInline,
-              mark: 'raw_inline',
-              getAttrs: (tok: PandocToken) => {
-                const text = tok.c[RAW_INLINE_CONTENT];
-                const comment = kHTMLComment.test(text);
-                return {
-                  format: tok.c[RAW_INLINE_FORMAT],
-                  comment,
+              handler: (schema: Schema) => {
+                return (writer: ProsemirrorWriter, tok: PandocToken) => {
+                  const text = tok.c[RAW_INLINE_CONTENT];
+                  const format = tok.c[RAW_INLINE_FORMAT];
+                  if (format === 'html') {
+                    writer.writeInlineHTML(text);
+                  } else {
+                    const mark = schema.marks.raw_inline.create({
+                      format,
+                      comment: false,
+                    });
+                    writer.openMark(mark);
+                    writer.writeText(text);
+                    writer.closeMark(mark);
+                  }
                 };
-              },
-              getText: (tok: PandocToken) => {
-                return tok.c[RAW_INLINE_CONTENT];
               },
             },
           ],
