@@ -260,6 +260,7 @@ export type PandocMarkWriterFn = (output: PandocOutput, mark: Mark, parent: Frag
 export type PandocOutputOption = 'writeSpaces';
 
 export interface PandocOutput {
+  extensions: PandocExtensions;
   write(value: any): void;
   writeToken(type: PandocTokenType, content?: (() => void) | any): void;
   writeMark(type: PandocTokenType, parent: Fragment, expelEnclosingWhitespace?: boolean): void;

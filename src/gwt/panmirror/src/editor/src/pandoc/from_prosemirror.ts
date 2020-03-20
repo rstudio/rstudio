@@ -25,6 +25,7 @@ import {
   PandocApiVersion,
   PandocTokenType,
   PandocOutputOption,
+  PandocExtensions,
 } from '../api/pandoc';
 
 import { PandocFormat } from '../api/pandoc_format';
@@ -44,6 +45,7 @@ export function pandocFromProsemirror(
 }
 
 class PandocWriter implements PandocOutput {
+
   private readonly ast: PandocAst;
   private readonly format: PandocFormat;
   private readonly nodeWriters: { [key: string]: PandocNodeWriterFn };
@@ -53,6 +55,8 @@ class PandocWriter implements PandocOutput {
   private readonly activeMarks: MarkType[];
   private options: { [key: string]: boolean };
 
+  public readonly extensions: PandocExtensions;
+
   constructor(
     apiVersion: PandocApiVersion,
     format: PandocFormat,
@@ -60,8 +64,9 @@ class PandocWriter implements PandocOutput {
     markWriters: readonly PandocMarkWriter[],
     notes: ProsemirrorNode,
   ) {
-    // save format
+    // save format and extensions
     this.format = format;
+    this.extensions = format.extensions;
     // create maps of node and mark writers
     this.nodeWriters = {};
     nodeWriters.forEach((writer: PandocNodeWriter) => {

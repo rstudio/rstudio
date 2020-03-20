@@ -82,7 +82,7 @@ const extension = (pandocExtensions: PandocExtensions): Extension => {
             },
           ],
           inlineHTMLReader: imageInlineHTMLReader,
-          writer: imagePandocOutputWriter(false, pandocExtensions),
+          writer: imagePandocOutputWriter(false),
         },
       },
     ],
@@ -136,14 +136,14 @@ export function pandocImageHandler(figure: boolean, imageAttributes: boolean) {
   };
 }
 
-export function imagePandocOutputWriter(figure: boolean, pandocExtensions: PandocExtensions) {
+export function imagePandocOutputWriter(figure: boolean) {
 
   return (output: PandocOutput, node: ProsemirrorNode) => {
     
     // default writer for markdown images
     let writer = () => {
       output.writeToken(PandocTokenType.Image, () => {
-        if (pandocExtensions.link_attributes) {
+        if (output.extensions.link_attributes) {
           output.writeAttr(node.attrs.id, node.attrs.classes, node.attrs.keyvalue);
         } else {
           output.writeAttr();
@@ -161,8 +161,8 @@ export function imagePandocOutputWriter(figure: boolean, pandocExtensions: Pando
 
      // see if we need to write raw html
     const writeHTML = pandocAttrAvailable(node.attrs) &&     // attribs need to be written
-                      !pandocExtensions.link_attributes &&   // markdown attribs not supported
-                      pandocExtensions.raw_html;             // raw html is supported
+                      !output.extensions.link_attributes &&   // markdown attribs not supported
+                      output.extensions.raw_html;             // raw html is supported
 
     // if we do, then substitute a raw html writer
     if (writeHTML) {

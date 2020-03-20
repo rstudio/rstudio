@@ -77,7 +77,7 @@ const extension = (pandocExtensions: PandocExtensions): Extension | null => {
           },
         },
         pandoc: {
-          writer: imagePandocOutputWriter(true, pandocExtensions),
+          writer: imagePandocOutputWriter(true),
 
           // intercept  paragraphs with a single image and process them as figures
           blockReader: (schema: Schema, tok: PandocToken, writer: ProsemirrorWriter) => {
