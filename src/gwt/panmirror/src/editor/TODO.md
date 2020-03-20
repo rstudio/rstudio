@@ -1,12 +1,16 @@
 ## TODO
 
+switching to gfm dynamically (by pasting in mode comment) ends up losing all the image attributes
+(that's because the pandocExtensions in the closure aren't updated)
+
 Incorporate new theme colors
 
-Initial render of <img> tags with % shows at full width. It's because that defautl 1000 is still in effect!
+test builds and update doc
 
-Align attributes for non-figure image in standalone paragraph
-
+Untitled doc can't preview images (project path not coming over?)
 Can still reproduce tables ending up with pipes in them. Insert 3x3, size some columns (leaving empty), and they show up
+
+Border ridge on image shelf in dark mode.
 
 When computing containerWidth, factor in padding of container when it's the body (see React workbench front-end and even
 IDE front end that maxes out at 97%)
