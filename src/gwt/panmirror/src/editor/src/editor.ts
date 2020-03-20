@@ -13,6 +13,9 @@
  *
  */
 
+// polyfills
+import './polyfill/index';
+
 import { inputRules } from 'prosemirror-inputrules';
 import { keydownHandler } from 'prosemirror-keymap';
 import {

@@ -111,7 +111,7 @@ export class ImageNodeView implements NodeView {
 
       // initialize the image
       container.append(this.img);
-      this.updateImg(node);
+      this.updateImg();
 
       // create the caption and make it our contentDOM
       this.figcaption = document.createElement('figcaption');
@@ -127,7 +127,7 @@ export class ImageNodeView implements NodeView {
       this.dom = document.createElement('span');
 
       this.dom.append(this.img);
-      this.updateImg(node);
+      this.updateImg();
 
       this.contentDOM = null;
       this.figcaption = null;
@@ -145,6 +145,17 @@ export class ImageNodeView implements NodeView {
     if (imageAttributes) {
       initResizeContainer(this.dom);
     }
+
+    // if the img is not yet connected to the DOM then poll until it is
+    // and update the image size
+    const updateSizeWhenConnected = () => {
+      if (this.img.isConnected) {
+        this.updateImageSize();
+      } else {
+        setTimeout(updateSizeWhenConnected, 50);
+      }
+    };
+    updateSizeWhenConnected();
   }
 
   public selectNode() {
@@ -181,7 +192,7 @@ export class ImageNodeView implements NodeView {
 
     // set new node and update the image
     this.node = node;
-    this.updateImg(node);
+    this.updateImg();
 
     // if we already have resize UI then either update it
     // or detach it (if e.g. the units are no longer compatible)
@@ -233,19 +244,24 @@ export class ImageNodeView implements NodeView {
   }
 
   // map node to img tag
-  private updateImg(node: ProsemirrorNode) {
+  private updateImg() {
+
     // map to path reachable within current editing frame
-    this.img.src = this.editorUI.context.mapResourcePath(node.attrs.src);
+    this.img.src = this.editorUI.context.mapResourcePath(this.node.attrs.src);
 
     // title/tooltip
-    this.img.title = node.attrs.title;
+    this.img.title = this.node.attrs.title;
 
     // ensure alt attribute so that we get default browser broken image treatment
-    this.img.alt = node.textContent || node.attrs.src;
+    this.img.alt = this.node.textContent || this.node.attrs.src;
 
     // update size
-    const containerWidth = this.img.isConnected ? this.containerWidth() : 0;
-    updateImageViewSize(node, this.img, this.isFigure() ? this.dom : null, containerWidth);
+    this.updateImageSize();
+  }
+
+  private updateImageSize() {
+     const containerWidth = this.img.isConnected ? this.containerWidth() : 0;
+     updateImageViewSize(this.node, this.img, this.isFigure() ? this.dom : null, containerWidth);
   }
 
   // attach resize UI if appropriate
