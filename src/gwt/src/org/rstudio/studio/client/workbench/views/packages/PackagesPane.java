@@ -40,6 +40,7 @@ import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.SuperDevMode;
 import org.rstudio.studio.client.packrat.model.PackratContext;
 import org.rstudio.studio.client.workbench.commands.Commands;
+import org.rstudio.studio.client.workbench.events.ActivatePaneEvent;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.projects.ProjectContext;
 import org.rstudio.studio.client.workbench.projects.RenvContext;
@@ -92,6 +93,7 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
       commands_ = commands;
       session_ = session;
       display_ = display;
+      events_ = events;
       
       dataGridRes_ = (PackagesDataGridResources) 
             GWT.create(PackagesDataGridResources.class);
@@ -269,6 +271,13 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
       return toolbar;
    }
    
+   @Override
+   public void bringToFront()
+   {
+      events_.fireEvent(new ActivatePaneEvent("Packages"));
+      super.bringToFront();
+   }
+
    private class VersionCell extends AbstractCell<PackageInfo>
    {
       public VersionCell (boolean packratVersion)
@@ -699,5 +708,6 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
    private final Commands commands_;
    private final Session session_;
    private final GlobalDisplay display_;
+   private final EventBus events_;
    private final PackagesDataGridResources dataGridRes_;
 }

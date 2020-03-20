@@ -43,6 +43,7 @@ import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.shiny.model.ShinyApplicationParams;
 import org.rstudio.studio.client.workbench.commands.Commands;
+import org.rstudio.studio.client.workbench.events.ActivatePaneEvent;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
 import org.rstudio.studio.client.workbench.views.viewer.events.ViewerNavigatedEvent;
 import org.rstudio.studio.client.workbench.views.viewer.model.ViewerServerOperations;
@@ -158,7 +159,14 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
       navigate(URIConstants.ABOUT_BLANK, false);
       return new AutoGlassPanel(frame_);
    }
-   
+
+   @Override
+   public void bringToFront()
+   {
+      events_.fireEvent(new ActivatePaneEvent("Viewer"));
+      super.bringToFront();
+   }
+
    @Override
    public void navigate(String url)
    {

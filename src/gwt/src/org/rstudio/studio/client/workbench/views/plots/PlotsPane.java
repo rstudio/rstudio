@@ -30,6 +30,7 @@ import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.Size;
 import org.rstudio.core.client.widget.ImageFrame;
 import org.rstudio.core.client.widget.Toolbar;
+import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.dependencies.DependencyManager;
 import org.rstudio.studio.client.common.zoom.ZoomUtils;
@@ -37,6 +38,7 @@ import org.rstudio.studio.client.rsconnect.RSConnect;
 import org.rstudio.studio.client.rsconnect.model.PublishHtmlSource;
 import org.rstudio.studio.client.rsconnect.ui.RSConnectPublishButton;
 import org.rstudio.studio.client.workbench.commands.Commands;
+import org.rstudio.studio.client.workbench.events.ActivatePaneEvent;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
 import org.rstudio.studio.client.workbench.views.plots.model.PlotsServerOperations;
 import org.rstudio.studio.client.workbench.views.plots.ui.PlotsToolbar;
@@ -47,11 +49,12 @@ public class PlotsPane extends WorkbenchPane implements Plots.Display,
       HasResizeHandlers
 {
    @Inject
-   public PlotsPane(Commands commands, PlotsServerOperations server,
+   public PlotsPane(Commands commands, EventBus events, PlotsServerOperations server,
          DependencyManager dependencies)
    {
       super("Plots");
       commands_ = commands;
+      events_ = events;
       server_ = server;
       dependencies_ = dependencies;
       ensureWidget();
@@ -136,6 +139,13 @@ public class PlotsPane extends WorkbenchPane implements Plots.Display,
    }
 
    @Override
+   public void bringToFront()
+   {
+      events_.fireEvent(new ActivatePaneEvent("Plots"));
+      super.bringToFront();
+   }
+
+   @Override
    public void setProgress(boolean enabled)
    {
       // also set frame to about:blank during progress
@@ -208,6 +218,7 @@ public class PlotsPane extends WorkbenchPane implements Plots.Display,
    }
 
    private final Commands commands_;
+   private final EventBus events_;
    private final PlotsServerOperations server_;
    private final DependencyManager dependencies_;
    

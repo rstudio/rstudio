@@ -42,6 +42,7 @@ import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.commands.Commands;
+import org.rstudio.studio.client.workbench.events.ActivatePaneEvent;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
@@ -200,6 +201,15 @@ public class EnvironmentPane extends WorkbenchPane
    {
       objects_ = new EnvironmentObjects(this);
       return objects_;
+   }
+
+   // ToolbarPane overrides ----------------------------------------------------
+
+   @Override
+   public void bringToFront()
+   {
+      eventBus_.fireEvent(new ActivatePaneEvent("Environment"));
+      super.bringToFront();
    }
 
    // EnvironmentPresenter.Display implementation ------------------------------

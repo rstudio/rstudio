@@ -34,6 +34,7 @@ import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.core.client.widget.ToolbarMenuButton;
 import org.rstudio.core.client.widget.ToolbarPopupMenu;
+import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.compile.CompileOutput;
 import org.rstudio.studio.client.common.compile.CompileOutputBufferWithHighlight;
@@ -41,6 +42,7 @@ import org.rstudio.studio.client.common.compile.CompilePanel;
 import org.rstudio.studio.client.common.icons.StandardIcons;
 import org.rstudio.studio.client.common.sourcemarkers.SourceMarker;
 import org.rstudio.studio.client.workbench.commands.Commands;
+import org.rstudio.studio.client.workbench.events.ActivatePaneEvent;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
@@ -52,11 +54,13 @@ public class BuildPane extends WorkbenchPane
 {
    @Inject
    public BuildPane(Commands commands,
+                    EventBus events,
                     Session session,
                     BuildServerOperations server)
    {
       super("Build");
       commands_ = commands;
+      events_ = events;
       session_ = session;
       server_ = server;
       compilePanel_ = new CompilePanel(new CompileOutputBufferWithHighlight());
@@ -230,6 +234,13 @@ public class BuildPane extends WorkbenchPane
    }
    
    @Override
+   public void bringToFront()
+   {
+      events_.fireEvent(new ActivatePaneEvent("Build"));
+      super.bringToFront();
+   }
+
+   @Override
    public void buildStarted()
    {
       compilePanel_.compileStarted(null);  
@@ -309,6 +320,7 @@ public class BuildPane extends WorkbenchPane
    }
  
    private final Commands commands_;
+   private final EventBus events_;
    private final Session session_;
    private final BuildServerOperations server_;
    private String errorsBuildType_;

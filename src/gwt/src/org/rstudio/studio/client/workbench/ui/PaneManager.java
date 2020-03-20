@@ -961,8 +961,11 @@ public class PaneManager
       hiddenTabs_.remove(tab);
       populateTabPanel(hiddenTabs_, hiddenTabSetTabPanel_, hiddenTabSetMinPanel_);
 
-      // Add tab to the front of the new set
-      tabs.add(0, tab);
+      // Add tab to the back of the new set
+      if (tabs.get(tabs.size() - 1).name() == "Presentation")
+         tabs.add(tabs.size() - 1, tab);
+      else
+         tabs.add(tab);
       populateTabPanel(tabs, panel, minimized);
    }
 

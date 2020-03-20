@@ -66,6 +66,7 @@ import org.rstudio.core.client.widget.ToolbarMenuButton;
 import org.rstudio.core.client.widget.ToolbarPopupMenu;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.workbench.commands.Commands;
+import org.rstudio.studio.client.workbench.events.ActivatePaneEvent;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
 import org.rstudio.studio.client.workbench.views.connections.ConnectionsPresenter;
@@ -194,6 +195,13 @@ public class ConnectionsPane extends WorkbenchPane
       setSecondaryToolbarVisible(false);
    }
    
+   @Override
+   public void bringToFront()
+   {
+      eventBus_.fireEvent(new ActivatePaneEvent("Connections"));
+      super.bringToFront();
+   }
+
    @Override
    public void setConnections(List<Connection> connections)
    {

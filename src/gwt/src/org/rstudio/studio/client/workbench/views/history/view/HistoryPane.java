@@ -38,8 +38,10 @@ import org.rstudio.core.client.events.HasSelectionCommitHandlers;
 import org.rstudio.core.client.events.SelectionCommitEvent;
 import org.rstudio.core.client.events.SelectionCommitHandler;
 import org.rstudio.core.client.widget.*;
+import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
+import org.rstudio.studio.client.workbench.events.ActivatePaneEvent;
 import org.rstudio.studio.client.workbench.views.history.HasHistory;
 import org.rstudio.studio.client.workbench.views.history.History.SearchBoxDisplay;
 import org.rstudio.studio.client.workbench.views.history.events.FetchCommandsEvent;
@@ -85,10 +87,11 @@ public class HistoryPane extends WorkbenchPane
    }
 
    @Inject
-   public HistoryPane(Commands commands)
+   public HistoryPane(Commands commands, EventBus events)
    {
       super("History");
       commands_ = commands;
+      events_ = events;
       ensureWidget();
    }
 
@@ -203,6 +206,13 @@ public class HistoryPane extends WorkbenchPane
       setVisible(contextResults_, contextResults_.getFocusTarget(), false);
 
       return mainPanel_;
+   }
+
+   @Override
+   public void bringToFront()
+   {
+      events_.fireEvent(new ActivatePaneEvent("History"));
+      super.bringToFront();
    }
 
    public Mode getMode()
@@ -648,6 +658,7 @@ public class HistoryPane extends WorkbenchPane
    private HistoryTableWithToolbar contextResults_;
    private HistoryTableWithToolbar searchResults_;
    private final Commands commands_;
+   private final EventBus events_;
    private Anchor loadMore_;
    private SearchWidget searchWidget_;
    private Styles styles_ = ((Resources) GWT.create(Resources.class)).styles();

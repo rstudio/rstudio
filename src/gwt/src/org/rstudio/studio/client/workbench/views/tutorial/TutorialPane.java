@@ -31,6 +31,7 @@ import org.rstudio.studio.client.common.GlobalDisplay.NewWindowOptions;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.commands.Commands;
+import org.rstudio.studio.client.workbench.events.ActivatePaneEvent;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
 import org.rstudio.studio.client.workbench.views.console.events.ConsolePromptEvent;
@@ -119,7 +120,14 @@ public class TutorialPane
       
       return toolbar_;
    }
-   
+
+   @Override
+   public void bringToFront()
+   {
+      events_.fireEvent(new ActivatePaneEvent("Tutorial"));
+      super.bringToFront();
+   }
+
    @Override
    public void back()
    {
