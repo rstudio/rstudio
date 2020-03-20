@@ -97,7 +97,7 @@ node_selector_map <- list(
 )
 
 comment_bg_map <- list(
-   "solarized_light" = NULL,
+   "solarized_light" = "#FFDDA2",
    "solarized_dark" = NULL,
    "twilight" = NULL,
    "idle_fingers" = NULL,
