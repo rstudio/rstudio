@@ -41,8 +41,6 @@ public class PanmirrorImageChooser extends TextBoxWithButton {
                "Choose Image",
                RStudioGinjector.INSTANCE.getRemoteFileSystemContext(),
                documentDir,
-               "PNG (*.png); SVG (*.svg); JPEG (*.jpeg); JPG (*.jpg); GIF (*.gif)",
-               false,
                new ProgressOperationWithInput<FileSystemItem>()
                {
                   public void execute(FileSystemItem input,
