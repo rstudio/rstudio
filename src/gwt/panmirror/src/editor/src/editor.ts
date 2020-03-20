@@ -13,10 +13,6 @@
  *
  */
 
-// apply polyfills
-import polyfill from './polyfill/index';
-polyfill();
-
 import { inputRules } from 'prosemirror-inputrules';
 import { keydownHandler } from 'prosemirror-keymap';
 import {
@@ -31,6 +27,8 @@ import { EditorState, Plugin, PluginKey, Transaction } from 'prosemirror-state';
 import { EditorView } from 'prosemirror-view';
 import { setTextSelection, findParentNodeOfTypeClosestToPos, findParentNode } from 'prosemirror-utils';
 import 'prosemirror-view/style/prosemirror.css';
+
+import polyfill from './polyfill/index';
 
 import { EditorOptions } from './api/options';
 import { ProsemirrorCommand, CommandFn, EditorCommand } from './api/command';
@@ -86,6 +84,9 @@ import { applyTheme, defaultTheme, EditorTheme } from './theme';
 
 import './styles/frame.css';
 import './styles/styles.css';
+
+// apply polyfills
+polyfill();
 
 const kMac = typeof navigator !== 'undefined' ? /Mac/.test(navigator.platform) : false;
 
