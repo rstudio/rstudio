@@ -2279,14 +2279,12 @@ well as menu structures (for main menu and popup menus).
         buttonLabel="Diff"
         menuLabel="Diff"
         desc="Diff selected file(s)"
-        rebindable="false"
         context="vcs"/>
         
    <cmd id="vcsCommit"
         buttonLabel="Commit"
         menuLabel="_Commit..."
         desc="Commit pending changes"
-        rebindable="false"
         context="vcs"
         windowMode="review_changes"/>
 
@@ -2307,7 +2305,6 @@ well as menu structures (for main menu and popup menus).
         
    <cmd id="vcsRefresh"
         desc="Refresh listing"
-        rebindable="false"
         context="vcs"/>
         
    <cmd id="vcsRefreshNoError"
@@ -2330,21 +2327,18 @@ well as menu structures (for main menu and popup menus).
    <cmd id="vcsPull"
         menuLabel="_Pull Branches"
         buttonLabel="Pull"
-        rebindable="false"
         context="vcs"
         windowMode="review_changes"/>
         
    <cmd id="vcsPullRebase"
         menuLabel="_Pull with Rebase"
         buttonLabel="Pull with Rebase"
-        rebindable="false"
         context="vcs"
         windowMode="review_changes"/>
         
    <cmd id="vcsPush"
         menuLabel="P_ush Branch"
         buttonLabel="Push"
-        rebindable="false"
         context="vcs"
         windowMode="review_changes"/>
         
