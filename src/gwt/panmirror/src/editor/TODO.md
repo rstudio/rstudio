@@ -4,6 +4,8 @@ Incorporate new theme colors (pending)
 
 test builds and update doc (pending)
 
+Inserting an inline image inside a header results in the shelf using the font attributes (size, etc.) of the header element
+
 Don't show shelf for broken image
 
 Image file browser doesn't show pngs on Ubuntu (must not like the spec)
