@@ -6,6 +6,8 @@ test builds and update doc (pending)
 
 Don't show shelf for broken image
 
+Image file browser doesn't show pngs on Ubuntu (must not like the spec)
+
 Border ridge on image shelf in dark mode.
 
 When computing containerWidth, factor in padding of container when it's the body (see React workbench front-end and even
