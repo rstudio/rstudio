@@ -13,5 +13,14 @@
  *
  */
 
- import './isconnected';
+import polyfillIsConnected from './isconnected';
+
+function polyfill() {
+  polyfillIsConnected();
+}
+
+export default polyfill;
+
  
+
+

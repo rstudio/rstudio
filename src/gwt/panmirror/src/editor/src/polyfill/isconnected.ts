@@ -8,17 +8,23 @@
  * NO WARRANTY EXPRESSED OR IMPLIED. USE AT YOUR OWN RISK.
  */
 
-if (!('isConnected' in Node.prototype)) {
-  Object.defineProperty(Node.prototype, 'isConnected', {
-    get() {
-      return (
-        !this.ownerDocument ||
-        !(
-          // tslint:disable-next-line: no-bitwise
-          this.ownerDocument.compareDocumentPosition(this) &
-          this.DOCUMENT_POSITION_DISCONNECTED
-        )
-      );
-    },
-  });
+
+function polyfill() {
+  if (!('isConnected' in Node.prototype)) {
+    Object.defineProperty(Node.prototype, 'isConnected', {
+      get() {
+        return (
+          !this.ownerDocument ||
+          !(
+            // tslint:disable-next-line: no-bitwise
+            this.ownerDocument.compareDocumentPosition(this) &
+            this.DOCUMENT_POSITION_DISCONNECTED
+          )
+        );
+      },
+    });
+  }
 }
+
+export default polyfill;
+
