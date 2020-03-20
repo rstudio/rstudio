@@ -1667,6 +1667,30 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
+    * Whether to enable experimental visual markdown editing
+    */
+   public PrefValue<Boolean> enableVisualMarkdownEditingMode()
+   {
+      return bool("enable_visual_markdown_editing_mode", false);
+   }
+
+   /**
+    * Whether to automatically wrap text when writing markdown
+    */
+   public PrefValue<Boolean> visualMarkdownEditingWrapAuto()
+   {
+      return bool("visual_markdown_editing_wrap_auto", false);
+   }
+
+   /**
+    * The column to wrap text at when writing markdown
+    */
+   public PrefValue<Integer> visualMarkdownEditingWrapColumn()
+   {
+      return integer("visual_markdown_editing_wrap_column", 80);
+   }
+
+   /**
     * List of aria-live announcements to disable.
     */
    public PrefValue<JsArrayString> disabledAriaLiveAnnouncements()
@@ -2056,6 +2080,12 @@ public class UserPrefsAccessor extends Prefs
          terminalInitialDirectory().setValue(layer, source.getString("terminal_initial_directory"));
       if (source.hasKey("full_project_path_in_window_title"))
          fullProjectPathInWindowTitle().setValue(layer, source.getBool("full_project_path_in_window_title"));
+      if (source.hasKey("enable_visual_markdown_editing_mode"))
+         enableVisualMarkdownEditingMode().setValue(layer, source.getBool("enable_visual_markdown_editing_mode"));
+      if (source.hasKey("visual_markdown_editing_wrap_auto"))
+         visualMarkdownEditingWrapAuto().setValue(layer, source.getBool("visual_markdown_editing_wrap_auto"));
+      if (source.hasKey("visual_markdown_editing_wrap_column"))
+         visualMarkdownEditingWrapColumn().setValue(layer, source.getInteger("visual_markdown_editing_wrap_column"));
       if (source.hasKey("disabled_aria_live_announcements"))
          disabledAriaLiveAnnouncements().setValue(layer, source.getObject("disabled_aria_live_announcements"));
       if (source.hasKey("screenreader_console_announce_limit"))

@@ -67,6 +67,18 @@ public class StringUtil
       }
    }
 
+   public static double parseDouble(String value, double defaultValue)
+   {
+      try
+      {
+         return Double.parseDouble(value);
+      }
+      catch (NumberFormatException nfe)
+      {
+         return defaultValue;
+      }
+   }
+   
    public static String formatDate(Date date)
    {
       if (date == null)

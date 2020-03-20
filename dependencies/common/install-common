@@ -23,6 +23,7 @@ set -e
 ./install-pandoc
 ./install-packages
 ./install-sentry-cli
+./install-npm-dependencies
 ./install-soci
 
 # when installing dependencies to setup a dev environment, need to run install-crashpad

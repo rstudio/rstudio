@@ -239,6 +239,7 @@ public class ObjectBrowser extends Composite implements RequiresResize
    private CellTree objects_;
    private VerticalPanel objectsWrapper_;
    private ObjectBrowserModel objectsModel_;
+   @SuppressWarnings("unused")
    private Connection connection_;
    private HandlerRegistration registration_;
 }

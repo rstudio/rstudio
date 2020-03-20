@@ -178,6 +178,11 @@ void handleDictionaryRequest(const http::Request& request, http::Response* pResp
    {
       pResponse->setCacheableFile(options().hunspellDictionariesPath().completePath(splat[1]), request);
    }
+   else if (boost::algorithm::ends_with(splat[1], "aff"))
+   {
+      // the aff file is optional, especially for custom dictionaries
+      pResponse->setCacheableBody("", request);
+   }
    else
    {
       pResponse->setNotFoundError(request);

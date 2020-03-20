@@ -83,9 +83,20 @@ ENV RSTUDIO_GITHUB_LOGIN=$GITHUB_LOGIN
 COPY package/linux/install-dependencies /tmp/
 RUN /bin/bash /tmp/install-dependencies
 
-# install common dependencies
+# install crashpad and its dependencies
+COPY dependencies/common/install-crashpad /tmp/
+RUN bash /tmp/install-crashpad bionic
+
+# copy common dependency installation scripts
 RUN mkdir -p /opt/rstudio-tools/dependencies/common
 COPY dependencies/common/ /opt/rstudio-tools/dependencies/common/
+
+# copy panmirror project setup (so install-common can install needed deps)
+RUN mkdir -p /opt/rstudio-tools/panmirror
+COPY src/gwt/panmirror/src/editor/yarn.lock /opt/rstudio-tools/panmirror/
+COPY src/gwt/panmirror/src/editor/package.json /opt/rstudio-tools/panmirror/
+
+# install common dependencies
 RUN cd /opt/rstudio-tools/dependencies/common && /bin/bash ./install-common
 
 # install Qt SDK

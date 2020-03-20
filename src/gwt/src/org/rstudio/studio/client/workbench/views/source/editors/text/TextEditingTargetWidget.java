@@ -22,7 +22,6 @@ import com.google.gwt.aria.client.Roles;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.Style.Unit;
-import com.google.gwt.event.dom.client.MouseDownEvent;
 import com.google.gwt.event.logical.shared.ResizeEvent;
 import com.google.gwt.event.logical.shared.ResizeHandler;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
@@ -36,7 +35,6 @@ import com.google.gwt.user.client.ui.*;
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.ElementIds;
-import org.rstudio.core.client.MathUtil;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.command.KeyCombination;
@@ -62,7 +60,6 @@ import org.rstudio.studio.client.common.filetypes.TextFileType;
 import org.rstudio.studio.client.common.icons.StandardIcons;
 import org.rstudio.studio.client.plumber.model.PlumberAPIParams;
 import org.rstudio.studio.client.plumber.ui.PlumberViewerTypePopupMenu;
-import org.rstudio.studio.client.rmarkdown.RmdOutput;
 import org.rstudio.studio.client.rmarkdown.events.RenderRmdEvent;
 import org.rstudio.studio.client.rmarkdown.events.RmdOutputFormatChangedEvent;
 import org.rstudio.studio.client.rsconnect.RSConnect;
@@ -80,6 +77,7 @@ import org.rstudio.studio.client.workbench.views.source.DocumentOutlineWidget;
 import org.rstudio.studio.client.workbench.views.source.PanelWithToolbars;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTargetToolbar;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTarget.Display;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.findreplace.FindReplaceBar;
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.TextEditingTargetNotebook;
 import org.rstudio.studio.client.workbench.views.source.editors.text.status.StatusBar;
@@ -155,69 +153,47 @@ public class TextEditingTargetWidget
       editorPanel_.addEast(docOutlineWidget_, 0);
       editorPanel_.add(editor.asWidget());
       
+     
       MouseDragHandler.addHandler(
-            docOutlineWidget_.getLeftSeparator(),
-            new MouseDragHandler()
+         docOutlineWidget_.getLeftSeparator(),
+         new DockPanelSidebarDragHandler(editorPanel_, docOutlineWidget_) {
+            
+            @Override
+            public void onResized(boolean visible)
             {
-               double initialWidth_ = 0;
-               
-               @Override
-               public boolean beginDrag(MouseDownEvent event)
-               {
-                  initialWidth_ = editorPanel_.getWidgetSize(docOutlineWidget_);
-                  return true;
-               }
-               
-               @Override
-               public void onDrag(MouseDragEvent event)
-               {
-                  double initialWidth = initialWidth_;
-                  double xDiff = event.getTotalDelta().getMouseX();
-                  double newSize = initialWidth - xDiff;
-                  
-                  // We allow an extra pixel here just to 'hide' the border
-                  // if the outline is maximized, since the 'separator'
-                  // lives as part of the outline instead of 'between' the
-                  // two widgets
-                  double maxSize = editorPanel_.getOffsetWidth() + 1;
-                  
-                  double clamped = MathUtil.clamp(newSize, 0, maxSize);
-                  
-                  // If the size is below '5px', interpret this as a request
-                  // to close the outline widget.
-                  if (clamped < 5)
-                     clamped = 0;
-                  
-                  editorPanel_.setWidgetSize(docOutlineWidget_, clamped);
-                  setDocOutlineLatchState(clamped != 0);
-                  editor_.onResize();
-               }
-               
-               @Override
-               public void endDrag()
-               {
-                  double size = editorPanel_.getWidgetSize(docOutlineWidget_);
-                  
-                  // We only update the preferred size if the user hasn't closed
-                  // the widget.
-                  if (size > 0)
-                     target_.setPreferredOutlineWidgetSize(size);
-                  
-                  target_.setPreferredOutlineWidgetVisibility(size > 0);
-               }
-            });
-      
+               setDocOutlineLatchState(visible);
+               editor_.onResize();
+            }
+            
+            @Override
+            public void onPreferredWidth(double width)
+            {
+               target_.setPreferredOutlineWidgetSize(width);
+            }
+            
+            @Override
+            public void onPreferredVisibility(boolean visible)
+            {
+               target_.setPreferredOutlineWidgetVisibility(visible);
+            }
+         }
+      );
+         
+      // setup editign container (only activate editor if we are not in visual mode)
+      editorContainer_ = new TextEditorContainer(sourceEditor_);
+      if (!isVisualMode())
+        editorContainer_.activateEditor();
+            
       panel_ = new PanelWithToolbars(
             toolbar_ = createToolbar(fileType),
-            editorPanel_,
+            editorContainer_,
             statusBar_);
       
       Roles.getTabpanelRole().set(panel_.getElement());
       setAccessibleName(null);
       adaptToFileType(fileType);
       
-      editor.addFocusHandler(event ->
-            setDocOutlineLatchState(docOutlineWidget_.getOffsetWidth() > 0));
+      editor.addFocusHandler(event -> initWidgetSize());
 
       editor_.setTextInputAriaLabel("Text editor");
 
@@ -247,11 +223,26 @@ public class TextEditingTargetWidget
          editorPanel_.setWidgetSize(docOutlineWidget_, size);
          setDocOutlineLatchState(true);
       }
+      else
+      {
+         editorPanel_.setWidgetSize(docOutlineWidget_, 0);
+         setDocOutlineLatchState(false);
+      }
    }
    
    public void toggleDocumentOutline()
    {
-      toggleDocOutlineButton_.click();
+      if (isVisualMode())
+         toggleVisualModeOutlineButton_.click();
+      else
+         toggleDocOutlineButton_.click();
+   }
+   
+
+   @Override
+   public void toggleRmdVisualMode()
+   {
+      toggleRmdVisualModeButton_.click();
    }
    
    private StatusBarWidget statusBar_;
@@ -302,7 +293,7 @@ public class TextEditingTargetWidget
       toolbar.addLeftSeparator();
       toolbar.addLeftWidget(commands_.checkSpelling().createToolbarButton());
       
-      toolbar.addLeftWidget(findReplace_.createFindReplaceButton());
+      toolbar.addLeftWidget(findReplaceButton_ = findReplace_.createFindReplaceButton());
       toolbar.addLeftWidget(createCodeTransformMenuButton());
       
       notebookSeparatorWidget_ = toolbar.addLeftSeparator();
@@ -363,7 +354,7 @@ public class TextEditingTargetWidget
 
       toolbar.addLeftSeparator();
       toolbar.addLeftWidget(commands_.synctexSearch().createToolbarButton());
-
+      
       // create menu of chunk skeletons based on common engine types
       ToolbarPopupMenu insertChunksMenu = new ToolbarPopupMenu();
       insertChunksMenu.addItem(commands_.insertChunkR().createMenuItem(false));
@@ -568,10 +559,14 @@ public class TextEditingTargetWidget
             setDocOutlineLatchState(docOutlineWidget_.getOffsetWidth() > 0);
          }
       }.schedule(100);
-      
+       
       toolbar.addRightSeparator();
       toolbar.addRightWidget(toggleDocOutlineButton_);
+      addVisualModeOutlineButton(toolbar);
       
+      toolbar.addRightSeparator();
+      toolbar.addRightWidget(createVisualModeToggleButton());
+       
       showWhitespaceCharactersCheckbox_ = new CheckBox("Show whitespace");
       showWhitespaceCharactersCheckbox_.setVisible(false);
       showWhitespaceCharactersCheckbox_.setValue(userPrefs_.showInvisibles().getValue());
@@ -589,6 +584,61 @@ public class TextEditingTargetWidget
       toolbar.addRightWidget(showWhitespaceCharactersCheckbox_);
       
       return toolbar;
+   }
+   
+   private ToolbarButton createVisualModeToggleButton()
+   {
+      toggleRmdVisualModeButton_ = new LatchingToolbarButton(
+         ToolbarButton.NoText,
+         commands_.toggleRmdVisualMode().getTooltip(), 
+         false, /* textIndicatesState */
+         new ImageResource2x(StandardIcons.INSTANCE.visual_mode2x()), event -> {
+            boolean visible = !isVisualMode();
+            docUpdateSentinel_.setBoolProperty(TextEditingTarget.RMD_VISUAL_MODE, visible);
+            toggleRmdVisualModeButton_.setLatched(visible);
+         });
+      docUpdateSentinel_.addPropertyValueChangeHandler(TextEditingTarget.RMD_VISUAL_MODE, (value) -> {
+         toggleRmdVisualModeButton_.setLatched(isVisualMode());
+         if (isVisualMode())
+            findReplace_.hideFindReplace();
+      });
+      toggleRmdVisualModeButton_.setLatched(isVisualMode());
+      toggleRmdVisualModeButton_.addStyleName("rstudio-themes-inverts");
+      return toggleRmdVisualModeButton_;
+   }
+   
+   private void addVisualModeOutlineButton(Toolbar toolbar)
+   {
+      // we add a separate outilne button for the visual mode outline b/c the
+      // logic for the standard one is tied up in DOM visibility, and we didn't
+      // want to refactor that code in a conservative release (v1.4). it's
+      // expected that the whole 'visual mode' concept will go away in v1.5
+      toggleVisualModeOutlineButton_ = new LatchingToolbarButton(ToolbarButton.NoText,
+            ToolbarButton.NoTitle, true, /* textIndicatesState */
+            new ImageResource2x(StandardIcons.INSTANCE.outline2x()), event -> {
+               target_.setPreferredOutlineWidgetVisibility(
+                     !target_.getPreferredOutlineWidgetVisibility());
+            });
+
+      // stay in sync w/ doc property
+      syncVisualModeOutlineLatchState();
+      docUpdateSentinel_.addPropertyValueChangeHandler(TextEditingTarget.DOC_OUTLINE_VISIBLE,
+            (event) -> {
+               syncVisualModeOutlineLatchState();
+            });
+
+      // add to toolbar
+      toggleVisualModeOutlineButton_.addStyleName("rstudio-themes-inverts");
+      toolbar.addRightWidget(toggleVisualModeOutlineButton_);
+   }
+   
+   private void syncVisualModeOutlineLatchState()
+   {
+      boolean visible = target_.getPreferredOutlineWidgetVisibility();
+      toggleVisualModeOutlineButton_.setLatched(visible);
+      String title = commands_.toggleDocumentOutline().getTooltip();
+      title = visible ? title.replace("Show ", "Hide ") : title.replace("Hide ", "Show ");
+      toggleVisualModeOutlineButton_.setTitle(title);
    }
    
    private void setDocOutlineLatchState(boolean latched)
@@ -657,6 +707,7 @@ public class TextEditingTargetWidget
       editor_.setFileType(fileType);
       boolean canCompilePdf = fileType.canCompilePDF();
       boolean canKnitToHTML = fileType.canKnitToHTML();
+      boolean visualRmdMode = isVisualMode();
       boolean canCompileNotebook = fileType.canCompileNotebook();
       boolean canSource = fileType.canSource();
       boolean canSourceWithEcho = fileType.canSourceWithEcho();
@@ -666,15 +717,15 @@ public class TextEditingTargetWidget
          canSourceOnSave = (extendedType_.equals(SourceDocument.XT_JS_PREVIEWABLE));
       if (canSourceOnSave && fileType.isSql()) 
          canSourceOnSave = (extendedType_.equals(SourceDocument.XT_SQL_PREVIEWABLE));
-      boolean canExecuteCode = fileType.canExecuteCode();
-      boolean canExecuteChunks = fileType.canExecuteChunks();
+      boolean canExecuteCode = fileType.canExecuteCode() && !visualRmdMode;
+      boolean canExecuteChunks = fileType.canExecuteChunks() && !visualRmdMode;
       boolean isPlainMarkdown = fileType.isPlainMarkdown();
       boolean isCpp = fileType.isCpp();
       boolean isScript = fileType.isScript();
       boolean isRMarkdown2 = extendedType_ == "rmarkdown";
       boolean canPreviewFromR = fileType.canPreviewFromR();
       boolean terminalAllowed = session_.getSessionInfo().getAllowShell();
-      
+     
       if (isScript && !terminalAllowed)
       {
          commands_.executeCode().setEnabled(false);
@@ -687,13 +738,13 @@ public class TextEditingTargetWidget
       runLastButton_.setVisible(runButton_.isVisible() && !canExecuteChunks && !isScript);
       
       // show insertion options for various knitr engines in rmarkdown v2
-      insertChunkMenu_.setVisible(isRMarkdown2);
+      insertChunkMenu_.setVisible(isRMarkdown2 && !visualRmdMode);
       
       // otherwise just show the regular insert chunk button
       insertChunkButton_.setVisible(canExecuteChunks && !isRMarkdown2);
 
-      goToPrevButton_.setVisible(fileType.canGoNextPrevSection());
-      goToNextButton_.setVisible(fileType.canGoNextPrevSection());
+      goToPrevButton_.setVisible(fileType.canGoNextPrevSection() && !visualRmdMode);
+      goToNextButton_.setVisible(fileType.canGoNextPrevSection() && !visualRmdMode);
       
       sourceOnSave_.setVisible(canSourceOnSave);
       srcOnSaveLabel_.setVisible(canSourceOnSave);
@@ -722,11 +773,19 @@ public class TextEditingTargetWidget
       notebookSeparatorWidget_.setVisible(canCompileNotebook);
       notebookToolbarButton_.setVisible(canCompileNotebook);
       
+      findReplaceButton_.setVisible(!visualRmdMode);
+      
+      
       knitDocumentButton_.setVisible(canKnitToHTML);
       
       setRmdFormatButtonVisible(isRMarkdown2);
       rmdOptionsButton_.setVisible(isRMarkdown2);
       rmdOptionsButton_.setEnabled(isRMarkdown2);
+      
+      
+      commands_.enableProsemirrorDevTools().setVisible(isVisualModeEnabled());
+     
+      toggleRmdVisualModeButton_.setVisible(isVisualModeEnabled());
      
       if (isShinyFile() || isTestFile() || isPlumberFile())
       {
@@ -779,12 +838,14 @@ public class TextEditingTargetWidget
       setPublishPath(extendedType_, publishPath_);
       
       // make toggle outline visible if we have a scope tree
-      toggleDocOutlineButton_.setVisible(fileType.canShowScopeTree());
+      toggleDocOutlineButton_.setVisible(fileType.canShowScopeTree() && !visualRmdMode);
       if (!fileType.canShowScopeTree())
       {
          editorPanel_.setWidgetSize(docOutlineWidget_, 0);
          setDocOutlineLatchState(false);
       }
+      
+      toggleVisualModeOutlineButton_.setVisible(visualRmdMode);
       
       toolbar_.invalidateSeparators();
    }
@@ -794,7 +855,18 @@ public class TextEditingTargetWidget
       return extendedType_ != null &&
              extendedType_.startsWith(SourceDocument.XT_SHINY_PREFIX);
    }
+   
+   private boolean isVisualModeEnabled()
+   {
+      return editor_.getFileType().isMarkdown() && 
+             (isVisualMode() || userPrefs_.enableVisualMarkdownEditingMode().getValue());
+   }
 
+   private boolean isVisualMode()
+   {
+      return docUpdateSentinel_.getBoolProperty(TextEditingTarget.RMD_VISUAL_MODE, false);
+   }
+   
    private boolean isPlumberFile()
    {
       return SourceDocument.isPlumberFile(extendedType_);
@@ -957,10 +1029,20 @@ public class TextEditingTargetWidget
          panel_.remove(warningBar_);
       }
    }
+   
+   public boolean isFindReplaceShowing()
+   {
+      return findReplace_.isShowing();
+   }
 
    public void showFindReplace(boolean defaultForward)
    {
       findReplace_.showFindReplace(defaultForward);
+   }
+   
+   public void hideFindReplace()
+   {
+      findReplace_.hideFindReplace();
    }
    
    @Override
@@ -1147,9 +1229,8 @@ public class TextEditingTargetWidget
       
       addClearKnitrCacheMenu(rmdFormatButton_);
           
-      showRmdViewerMenuItems(true, canEditFormatOptions, fileType.isRmd(), 
-            RmdOutput.TYPE_STATIC);
-     
+      showRmdViewerMenuItems(true, canEditFormatOptions, fileType.isRmd(), false); 
+           
       if (publishButton_ != null)
          publishButton_.setIsStatic(true);
    }
@@ -1172,9 +1253,8 @@ public class TextEditingTargetWidget
    {
       setRmdFormatButtonVisible(false);
       
-      showRmdViewerMenuItems(!isPresentation, showOutputOptions, true, 
-            RmdOutput.TYPE_SHINY);
-   
+      showRmdViewerMenuItems(!isPresentation, showOutputOptions, true, true); 
+           
       String docType = isPresentation ? "Presentation" : "Document";
 
       if (!isPresentation && !isShinyPrerendered) {
@@ -1213,7 +1293,20 @@ public class TextEditingTargetWidget
       knitDocumentButton_.setLeftImage(
             commands_.newRNotebook().getImageResource());
       setRmdFormatButtonVisible(true);
-      showRmdViewerMenuItems(true, true, true, RmdOutput.TYPE_NOTEBOOK);
+      showRmdViewerMenuItems(true, true, true, false);
+   }
+   
+   @Override 
+   public TextEditorContainer editorContainer()
+   {
+      return editorContainer_;
+   }
+   
+   @Override
+   public void manageCommandUI()
+   {
+      adaptToFileType(editor_.getFileType());
+      showRmdViewerMenuItems(true, true, true,  isShinyFile());
    }
    
    private void setRmdFormatButtonVisible(boolean visible)
@@ -1411,7 +1504,7 @@ public class TextEditingTargetWidget
    }
    
    private void showRmdViewerMenuItems(boolean show, boolean showOutputOptions, 
-         boolean isRmd, int type)
+         boolean isRmd, boolean isShinyFile)
    {
       if (rmdViewerPaneMenuItem_ == null)
          rmdViewerPaneMenuItem_ = new UserPrefMenuItem<>(
@@ -1432,6 +1525,27 @@ public class TextEditingTargetWidget
       
       ToolbarPopupMenu menu = rmdOptionsButton_.getMenu();
       menu.clearItems();
+      
+      boolean visualMode = isVisualMode();
+      if (isVisualModeEnabled())
+      {
+         DocPropMenuItem visualModeMenu = new DocPropMenuItem(
+            "Use Visual Editor", true, docUpdateSentinel_, 
+            visualMode,
+            TextEditingTarget.RMD_VISUAL_MODE, 
+            DocUpdateSentinel.PROPERTY_TRUE
+         ) {
+            @Override
+            public String getShortcut() {
+               return commands_.toggleRmdVisualMode().getShortcutPrettyHtml();
+            }
+            
+         };
+         menu.addItem(visualModeMenu);
+         menu.addSeparator();
+      }
+      
+      
       if (show)
       {
          menu.addItem(rmdViewerWindowMenuItem_);
@@ -1442,48 +1556,51 @@ public class TextEditingTargetWidget
       
       menu.addSeparator();
 
-      String pref = userPrefs_.latexPreviewOnCursorIdle().getValue();
-      menu.addItem(new DocPropMenuItem(
-            "Preview Images and Equations", docUpdateSentinel_, 
-            docUpdateSentinel_.getBoolProperty(
-               TextEditingTargetNotebook.CONTENT_PREVIEW_ENABLED, 
-               pref != UserPrefs.LATEX_PREVIEW_ON_CURSOR_IDLE_NEVER),
-            TextEditingTargetNotebook.CONTENT_PREVIEW_ENABLED, 
-            DocUpdateSentinel.PROPERTY_TRUE));
-      menu.addItem(new DocPropMenuItem(
-            "Show Previews Inline", docUpdateSentinel_, 
-            docUpdateSentinel_.getBoolProperty(
-               TextEditingTargetNotebook.CONTENT_PREVIEW_INLINE, 
-                 pref == UserPrefs.LATEX_PREVIEW_ON_CURSOR_IDLE_ALWAYS),
-            TextEditingTargetNotebook.CONTENT_PREVIEW_INLINE, 
-            DocUpdateSentinel.PROPERTY_TRUE));
-      menu.addSeparator();
-      
-      if (type != RmdOutput.TYPE_SHINY)
+      if (!visualMode)
       {
-        boolean inline = userPrefs_.rmdChunkOutputInline().getValue();
-        menu.addItem(new DocPropMenuItem(
-              "Chunk Output Inline", docUpdateSentinel_,
-              inline,
-              TextEditingTargetNotebook.CHUNK_OUTPUT_TYPE,
-              TextEditingTargetNotebook.CHUNK_OUTPUT_INLINE));
-        menu.addItem(new DocPropMenuItem(
-              "Chunk Output in Console", docUpdateSentinel_,
-              !inline,
-              TextEditingTargetNotebook.CHUNK_OUTPUT_TYPE,
-              TextEditingTargetNotebook.CHUNK_OUTPUT_CONSOLE));
+         String pref = userPrefs_.latexPreviewOnCursorIdle().getValue();
+         menu.addItem(new DocPropMenuItem(
+               "Preview Images and Equations", docUpdateSentinel_, 
+               docUpdateSentinel_.getBoolProperty(
+                  TextEditingTargetNotebook.CONTENT_PREVIEW_ENABLED, 
+                  pref != UserPrefs.LATEX_PREVIEW_ON_CURSOR_IDLE_NEVER),
+               TextEditingTargetNotebook.CONTENT_PREVIEW_ENABLED, 
+               DocUpdateSentinel.PROPERTY_TRUE));
+         menu.addItem(new DocPropMenuItem(
+               "Show Previews Inline", docUpdateSentinel_, 
+               docUpdateSentinel_.getBoolProperty(
+                  TextEditingTargetNotebook.CONTENT_PREVIEW_INLINE, 
+                    pref == UserPrefs.LATEX_PREVIEW_ON_CURSOR_IDLE_ALWAYS),
+               TextEditingTargetNotebook.CONTENT_PREVIEW_INLINE, 
+               DocUpdateSentinel.PROPERTY_TRUE));
+         menu.addSeparator();
+         
+         if (!isShinyFile)
+         {
+           boolean inline = userPrefs_.rmdChunkOutputInline().getValue();
+           menu.addItem(new DocPropMenuItem(
+                 "Chunk Output Inline", docUpdateSentinel_,
+                 inline,
+                 TextEditingTargetNotebook.CHUNK_OUTPUT_TYPE,
+                 TextEditingTargetNotebook.CHUNK_OUTPUT_INLINE));
+           menu.addItem(new DocPropMenuItem(
+                 "Chunk Output in Console", docUpdateSentinel_,
+                 !inline,
+                 TextEditingTargetNotebook.CHUNK_OUTPUT_TYPE,
+                 TextEditingTargetNotebook.CHUNK_OUTPUT_CONSOLE));
+            
+            menu.addSeparator();
+   
+            menu.addItem(commands_.notebookExpandAllOutput().createMenuItem(false));
+            menu.addItem(commands_.notebookCollapseAllOutput().createMenuItem(false));
+            menu.addSeparator();
+            menu.addItem(commands_.notebookClearOutput().createMenuItem(false));
+            menu.addItem(commands_.notebookClearAllOutput().createMenuItem(false));
+            menu.addSeparator();
+         }
          
          menu.addSeparator();
-
-         menu.addItem(commands_.notebookExpandAllOutput().createMenuItem(false));
-         menu.addItem(commands_.notebookCollapseAllOutput().createMenuItem(false));
-         menu.addSeparator();
-         menu.addItem(commands_.notebookClearOutput().createMenuItem(false));
-         menu.addItem(commands_.notebookClearAllOutput().createMenuItem(false));
-         menu.addSeparator();
       }
-      
-      menu.addSeparator();
            
       if (showOutputOptions)
          menu.addItem(commands_.editRmdFormatOptions().createMenuItem(false));
@@ -1499,10 +1616,101 @@ public class TextEditingTargetWidget
       ElementIds.assignElementId(sourceOnSave_, ElementIds.CB_SOURCE_ON_SAVE);
       ElementIds.assignElementId(toggleDocOutlineButton_, ElementIds.TOGGLE_DOC_OUTLINE_BUTTON);
    }
+   
+   private final TextEditorContainer.Editor sourceEditor_ = new TextEditorContainer.Editor()
+   {
+      @Override
+      public void setVisible(boolean visible)
+      {
+         editorPanel_.setVisible(visible);
+         panel_.showStatusBar(visible);
+      }
+      
+      @Override
+      public boolean isVisible()
+      {
+         return editorPanel_.isVisible();
+      }
+      
+      @Override
+      public void focus()
+      {
+         editor_.focus();
+         new Timer() {
+            @Override
+            public void run()
+            {
+               editor_.moveCursorNearTop();
+            }
+         }.schedule(100);
+      }
+      
+      @Override
+      public Widget asWidget()
+      {
+        return editorPanel_;
+      }
+     
+      @Override
+      public void setCode(TextEditorContainer.EditorCode editorCode, boolean preserveCursorLocation)
+      {
+         // if the cursor location is a sentinel within the code string, then pull it out and note it's position
+         final Position cursorPosition = Position.create(0, 0);
+         
+      
+         if (editorCode.cursorSentinel != null) {
+            
+            final Position kNoPosition = Position.create(0,0);
+            
+            editorCode.code = filterCode(editorCode.code, (line, number) -> {
+               if (cursorPosition.isEqualTo(kNoPosition)) {
+                  int sentinelLoc = line.indexOf(editorCode.cursorSentinel);
+                  if (sentinelLoc != -1) {
+                     line = line.substring(0, sentinelLoc) + 
+                            line.substring(sentinelLoc + editorCode.cursorSentinel.length());
+                     cursorPosition.setRow(number); 
+                     cursorPosition.setColumn(sentinelLoc);
+                  }
+               }
+               return line;
+            });        
+         }
+         
+         // set the code
+         editor_.setCode(editorCode.code, preserveCursorLocation);
+         
+         // set cursor position if we need to
+         if (editorCode.cursorSentinel != null) {
+            editor_.setCursorPosition(cursorPosition);
+         }
+      }
+      
+      @Override
+      public String getCode()
+      {
+         return editor_.getCode(); 
+      }   
+   };
+   
+   private String filterCode(String code, LineFilter filter) 
+   {
+      ArrayList<String> codeLines = new ArrayList<String>();
+      int lineNumber = 0;
+      for (String line : StringUtil.getLineIterator(code)) {
+         codeLines.add(filter.filterLine(line, lineNumber++));
+      }
+      return String.join("\n", codeLines);         
+   }
+   
+   private interface LineFilter
+   {
+      String filterLine(String line, int number);
+   }
 
    private final TextEditingTarget target_;
    private final DocUpdateSentinel docUpdateSentinel_;
    private final Commands commands_;
+   @SuppressWarnings("unused")
    private final EventBus events_;
    private final UserPrefs userPrefs_;
    private final UserState userState_;
@@ -1515,12 +1723,14 @@ public class TextEditingTargetWidget
    private String extendedType_;
    private String publishPath_;
    private CheckBox sourceOnSave_;
+   private TextEditorContainer editorContainer_;
    private DockLayoutPanel editorPanel_;
    private DocumentOutlineWidget docOutlineWidget_;
    private PanelWithToolbars panel_;
    private Toolbar toolbar_;
    private InfoBar warningBar_;
    private final TextEditingTargetFindReplace findReplace_;
+   private ToolbarButton findReplaceButton_;
    private ToolbarMenuButton codeTransform_;
    private ToolbarButton compilePdfButton_;
    private ToolbarButton previewHTMLButton_;
@@ -1543,7 +1753,9 @@ public class TextEditingTargetWidget
    private ToolbarMenuButton shinyLaunchButton_;
    private ToolbarMenuButton plumberLaunchButton_;
    private ToolbarMenuButton rmdOptionsButton_;
+   private LatchingToolbarButton toggleRmdVisualModeButton_;
    private LatchingToolbarButton toggleDocOutlineButton_;
+   private LatchingToolbarButton toggleVisualModeOutlineButton_;
    private CheckBox showWhitespaceCharactersCheckbox_;
    private ToolbarPopupMenuButton rmdFormatButton_;
    private ToolbarPopupMenuButton runDocumentMenuButton_;
@@ -1564,4 +1776,5 @@ public class TextEditingTargetWidget
    private String sourceCommandText_ = "Source";
    private String knitCommandText_ = "Knit";
    private String previewCommandText_ = "Preview";
+
 }

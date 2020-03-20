@@ -23,8 +23,8 @@ include_directories(
 
 
 # define executable
-add_executable(crash-handler-proxy
-               ${CRASH_HANDLER_PROXY_SOURCE_FILES} ${CRASH_HANDLER_PROXY_HEADER_FILES})
+add_stripped_executable(crash-handler-proxy
+                        ${CRASH_HANDLER_PROXY_SOURCE_FILES} ${CRASH_HANDLER_PROXY_HEADER_FILES})
 
 # set link dependencies
 target_link_libraries(crash-handler-proxy

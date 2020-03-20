@@ -169,13 +169,6 @@ void WebView::keyPressEvent(QKeyEvent* pEvent)
    }
 #endif
  
-   // allow Ctrl+Shift+V to act as a 'paste with indent' action
-   if (pEvent->key() == Qt::Key_V && pEvent->modifiers() == Qt::CTRL + Qt::SHIFT)
-   {
-      triggerPageAction(QWebEnginePage::PasteAndMatchStyle);
-      return;
-   }
-   
    // use default behavior otherwise
    QWebEngineView::keyPressEvent(pEvent);
    

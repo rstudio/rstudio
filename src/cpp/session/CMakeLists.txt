@@ -190,6 +190,7 @@ set (SESSION_SOURCE_FILES
    modules/jobs/Job.cpp
    modules/jobs/JobsApi.cpp
    modules/mathjax/SessionMathJax.cpp
+   modules/panmirror/SessionPanmirror.cpp
    modules/overlay/SessionOverlay.cpp
    modules/plumber/SessionPlumber.cpp
    modules/presentation/SessionPresentation.cpp
@@ -626,7 +627,7 @@ endif()
 
 if(APPLE)
 
-   # if doing a package build on MacOS, reroute the OpenSSL libraries to our
+   # if doing a package build on MacOS, reroute dependent libraries to our
    # bundled copies
    if (RSTUDIO_PACKAGE_BUILD)
       find_package(OpenSSL REQUIRED QUIET)
@@ -644,6 +645,15 @@ if(APPLE)
          add_custom_command (TARGET rsession POST_BUILD
             COMMAND install_name_tool -change `otool -L ${CMAKE_CURRENT_BINARY_DIR}/rsession | grep ${LIB_FILE} | awk '{ print $$1 }'` @executable_path/../Frameworks/${LIB_FILE} ${CMAKE_CURRENT_BINARY_DIR}/rsession)
       endforeach()
+
+      # do something similar to the above to fix paths to SOCI libraries
+      foreach(lib ${SOCI_SYMLINK_LIBRARIES})
+         get_filename_component(LIB_PATH "${lib}" ABSOLUTE)
+         get_filename_component(LIB_FILE "${LIB_PATH}" NAME)
+         add_custom_command (TARGET rsession POST_BUILD
+            COMMAND install_name_tool -change `otool -L ${CMAKE_CURRENT_BINARY_DIR}/rsession | grep ${LIB_FILE} | awk '{ print $$1 }'` @executable_path/../Frameworks/${LIB_FILE} ${CMAKE_CURRENT_BINARY_DIR}/rsession)
+      endforeach()
+
    endif()
 
 endif()

@@ -84,6 +84,7 @@ import org.rstudio.studio.client.htmlpreview.ui.HTMLPreviewApplicationView;
 import org.rstudio.studio.client.htmlpreview.ui.HTMLPreviewApplicationWindow;
 import org.rstudio.studio.client.htmlpreview.ui.HTMLPreviewPanel;
 import org.rstudio.studio.client.packrat.model.PackratServerOperations;
+import org.rstudio.studio.client.panmirror.pandoc.PanmirrorPandocServerOperations;
 import org.rstudio.studio.client.pdfviewer.PDFViewer;
 import org.rstudio.studio.client.plumber.PlumberAPI;
 import org.rstudio.studio.client.plumber.PlumberAPIPresenter;
@@ -456,6 +457,7 @@ public class RStudioGinModule extends AbstractGinModule
       bind(ConnectionsServerOperations.class).to(RemoteServer.class);
       bind(ProfilerServerOperations.class).to(RemoteServer.class);
       bind(RMarkdownServerOperations.class).to(RemoteServer.class);
+      bind(PanmirrorPandocServerOperations.class).to(RemoteServer.class);
       bind(DependencyServerOperations.class).to(RemoteServer.class);
       bind(PackratServerOperations.class).to(RemoteServer.class);
       bind(RenvServerOperations.class).to(RemoteServer.class);

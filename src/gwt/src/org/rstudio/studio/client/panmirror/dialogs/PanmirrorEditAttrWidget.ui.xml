@@ -1,0 +1,30 @@
+<ui:UiBinder xmlns:ui='urn:ui:com.google.gwt.uibinder'
+             xmlns:g='urn:import:com.google.gwt.user.client.ui'
+             xmlns:rw="urn:import:org.rstudio.core.client.widget">
+
+   <ui:with field="res" type="org.rstudio.studio.client.panmirror.dialogs.PanmirrorDialogsResources" />
+   <ui:style>
+   
+   .editAttr {
+      width: 100%;
+   }
+
+   </ui:style>
+
+   <g:VerticalPanel styleName="{style.editAttr}">
+      <g:Label text="ID (e.g. &quot;#overview&quot;):"></g:Label>
+      <g:TextBox styleName="{res.styles.fullWidth} {res.styles.spaced}" ui:field="id_"></g:TextBox>
+    
+      <g:Label text="Classes (e.g. &quot;.illustration&quot;):"></g:Label>
+      <g:TextBox styleName="{res.styles.fullWidth} {res.styles.spaced}" ui:field="classes_"></g:TextBox>
+    
+      <g:Label text="Style (e.g. &quot;margin-right: 10px;&quot;):"></g:Label>
+      <g:TextBox styleName="{res.styles.fullWidth} {res.styles.spaced}" ui:field="style_"></g:TextBox>
+    
+      <g:Label text="Other (key=value, one per line):"/>
+      <rw:FormTextArea styleName="{res.styles.textArea} {res.styles.spaced}"
+                       ui:field="attributes_" visibleLines="4" ariaLabel="Attributes">
+      </rw:FormTextArea>
+   </g:VerticalPanel>
+
+</ui:UiBinder>

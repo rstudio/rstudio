@@ -68,6 +68,11 @@ public class ExternalJavaScriptLoader
       document_ = document;
       url_ = url;
    }
+   
+   public boolean isLoaded() 
+   {
+      return state_ == State.Loaded;
+   }
 
    public void addCallback(Callback callback)
    {
@@ -91,6 +96,7 @@ public class ExternalJavaScriptLoader
    private void startLoading()
    {
       assert state_ == State.Start;
+      state_ = State.Loading;
       ScriptElement script = document_.createScriptElement();
       script.setType("text/javascript");
       script.setSrc(url_);

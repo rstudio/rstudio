@@ -62,7 +62,7 @@ if(NOT RSTUDIO_SESSION_WIN32)
    install(TARGETS diagnostics DESTINATION ${RSTUDIO_INSTALL_BIN})
 endif()
 
-# if doing a package build on MacOS, reroute the OpenSSL libraries to our bundled copies
+# if doing a package build on MacOS, reroute depdendent libraries to our bundled copies
 if(APPLE AND RSTUDIO_PACKAGE_BUILD)
 
    find_package(OpenSSL REQUIRED QUIET)
@@ -77,6 +77,14 @@ if(APPLE AND RSTUDIO_PACKAGE_BUILD)
       # 2. extracts the path from the output using grep and awk
       # 3. runs install_name_tool and tells it to replace the path with one that
       #    points to a bundled copy of the same file
+      add_custom_command (TARGET diagnostics POST_BUILD
+         COMMAND install_name_tool -change `otool -L ${CMAKE_CURRENT_BINARY_DIR}/diagnostics | grep ${LIB_FILE} | awk '{ print $$1 }'` @executable_path/../Frameworks/${LIB_FILE} ${CMAKE_CURRENT_BINARY_DIR}/diagnostics)
+   endforeach()
+
+   # do something similar to the above to fix paths to SOCI libraries
+   foreach(lib ${SOCI_SYMLINK_LIBRARIES})
+      get_filename_component(LIB_PATH "${lib}" ABSOLUTE)
+      get_filename_component(LIB_FILE "${LIB_PATH}" NAME)
       add_custom_command (TARGET diagnostics POST_BUILD
          COMMAND install_name_tool -change `otool -L ${CMAKE_CURRENT_BINARY_DIR}/diagnostics | grep ${LIB_FILE} | awk '{ print $$1 }'` @executable_path/../Frameworks/${LIB_FILE} ${CMAKE_CURRENT_BINARY_DIR}/diagnostics)
    endforeach()

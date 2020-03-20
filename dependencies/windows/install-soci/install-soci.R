@@ -15,10 +15,17 @@ options(log.dir = normalizePath("logs"))
 # put RStudio tools on PATH
 PATH$prepend("../tools")
 
+# try to find MSVC 2017
+msvc <- head(Filter(file.exists, c("C:/Program Files (x86)/Microsoft Visual Studio/2017/Community/VC/Auxiliary/Build",
+                                   "C:/Program Files (x86)/Microsoft Visual Studio/2017/BuildTools/VC/Auxiliary/Build")), n = 1)
+if (length(msvc) == 0)
+   fatal("No MSVC 2017 installation detected (please install Visual Studio 2017 using 'Install-RStudio-Prereqs.ps1')")
+PATH$prepend(msvc)
+
 # initialize variables
 output_dir <- normalizePath(file.path(owd, ".."), winslash = "\\")
 boost_dir <- normalizePath(file.path(output_dir, "boost-1.69.0-win-msvc141-release-static\\boost64"), winslash = "\\")
-soci_branch <- "release/4.0"
+soci_url <- "https://rstudio-buildtools.s3.amazonaws.com/soci.tar.gz"
 soci_dir <- file.path(owd, "soci")
 soci_build_dir <- file.path(soci_dir, "build")
 sqlite_dir <- file.path(owd, "sqlite")
@@ -56,15 +63,15 @@ if (!file.exists(normalizePath(file.path(soci_build_dir, "x64\\lib\\Release\\lib
    
    # clone repository if we dont already have it
    if (!file.exists("soci")) {
-      section("Cloning SOCI repository")
-      exec("git", "clone https://github.com/SOCI/soci.git")
+      section("Downloading SOCI sources")
+      download(soci_url, destfile = "soci.tar.gz")
+	  section("Unzipping SOCI sources")
+	  exec("7z.exe", "e", "soci.tar.gz")
+	  exec("7z.exe", "x", "soci.tar")
    }
-
-   # checkout SOCI branch
-   setwd(soci_dir)
-   exec("git", paste("checkout", soci_branch))
    
    # create build directories
+   setwd(soci_dir)
    dir.create("build")
    setwd("build")
    dir.create("x86")

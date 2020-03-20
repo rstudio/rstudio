@@ -23,6 +23,7 @@
 #define kUserIdCookie                 "user-id"
 #define kUserListCookie               "user-list-id"
 #define kPersistAuthCookie            "persist-auth"
+#define kServerDataDirEnvVar          "RS_SERVER_DATA_DIR"
 #define kServerTmpDirEnvVar           "RS_SERVER_TMP_DIR"
 
 #endif // SERVER_CONSTANTS_HPP

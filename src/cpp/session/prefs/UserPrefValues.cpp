@@ -2338,6 +2338,45 @@ core::Error UserPrefValues::setFullProjectPathInWindowTitle(bool val)
 }
 
 /**
+ * Whether to enable experimental visual markdown editing
+ */
+bool UserPrefValues::enableVisualMarkdownEditingMode()
+{
+   return readPref<bool>("enable_visual_markdown_editing_mode");
+}
+
+core::Error UserPrefValues::setEnableVisualMarkdownEditingMode(bool val)
+{
+   return writePref("enable_visual_markdown_editing_mode", val);
+}
+
+/**
+ * Whether to automatically wrap text when writing markdown
+ */
+bool UserPrefValues::visualMarkdownEditingWrapAuto()
+{
+   return readPref<bool>("visual_markdown_editing_wrap_auto");
+}
+
+core::Error UserPrefValues::setVisualMarkdownEditingWrapAuto(bool val)
+{
+   return writePref("visual_markdown_editing_wrap_auto", val);
+}
+
+/**
+ * The column to wrap text at when writing markdown
+ */
+int UserPrefValues::visualMarkdownEditingWrapColumn()
+{
+   return readPref<int>("visual_markdown_editing_wrap_column");
+}
+
+core::Error UserPrefValues::setVisualMarkdownEditingWrapColumn(int val)
+{
+   return writePref("visual_markdown_editing_wrap_column", val);
+}
+
+/**
  * List of aria-live announcements to disable.
  */
 core::json::Array UserPrefValues::disabledAriaLiveAnnouncements()
@@ -2570,6 +2609,9 @@ std::vector<std::string> UserPrefValues::allKeys()
       kAutoSaveOnBlur,
       kTerminalInitialDirectory,
       kFullProjectPathInWindowTitle,
+      kEnableVisualMarkdownEditingMode,
+      kVisualMarkdownEditingWrapAuto,
+      kVisualMarkdownEditingWrapColumn,
       kDisabledAriaLiveAnnouncements,
       kScreenreaderConsoleAnnounceLimit,
       kFileMonitorIgnoredComponents,

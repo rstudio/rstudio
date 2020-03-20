@@ -352,6 +352,11 @@ try {
    webPage()->runJavaScript(command);
 }
 
+void MainWindow::runJavaScript(QString script)
+{
+   webPage()->runJavaScript(script);
+}
+
 namespace {
 
 void closeAllSatellites(QWidget* mainWindow)

@@ -305,7 +305,7 @@ public class TerminalPreferencesPane extends PreferencesPane
          busyMode_.addChoice("Always except for whitelist", UserPrefs.BUSY_DETECTION_WHITELIST);
          busyMode_.setEnabled(true);
          
-         String selection = prefs_.busyDetection().getValue();
+         prefs_.busyDetection().getValue();
          for (int i = 0; i < busyMode_.getListBox().getItemCount(); i++)
          {
             if (busyMode_.getListBox().getValue(i) == prefs_.busyDetection().getValue())

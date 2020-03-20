@@ -264,7 +264,7 @@ macro(add_stripped_executable _target)
 
    # set RPATH=$ORIGIN to ensure that any bundled libraries are found in our binary dir
    set(CMAKE_BUILD_WITH_INSTALL_RPATH TRUE)
-   set_target_properties(${_target} PROPERTIES INSTALL_RPATH \$ORIGIN)
+   set_target_properties(${_target} PROPERTIES INSTALL_RPATH "\$ORIGIN;${CMAKE_INSTALL_RPATH}")
 
    # only strip debug info in release builds
    if(CMAKE_BUILD_TYPE STREQUAL RelWithDebInfo)

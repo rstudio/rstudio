@@ -15,9 +15,17 @@
 
 .rs.addFunction("isSourceCall", function(call)
 {
-   fun <- deparse(call[[1]])
-   return (fun == "source" ||
-           fun == "debugSource")
+   symbols <- list(
+      quote(source),
+      quote(debugSource)
+   )
+   
+   fun <- call[[1L]]
+   for (symbol in symbols)
+      if (identical(fun, symbol))
+         return(TRUE)
+   
+   FALSE
 })
 
 .rs.addFunction("recordTraceback", function(userOnly, minDepth, errorReporter)

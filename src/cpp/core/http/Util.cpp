@@ -36,9 +36,7 @@
 #include <core/RegexUtils.hpp>
 #include <core/system/System.hpp>
 
-#ifndef _WIN32
 #include <core/http/BoostAsioSsl.hpp>
-#endif
 
 namespace rstudio {
 namespace core {
@@ -549,7 +547,7 @@ bool isSslShutdownError(const boost::system::error_code& ec)
 #else
 bool isSslShutdownError(const boost::system::error_code& ec)
 {
-   return false;
+   return ec == boost::asio::ssl::error::stream_truncated;
 }
 #endif
 

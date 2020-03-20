@@ -164,10 +164,6 @@ else()
    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /bigobj")
    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /bigobj")
 
-   # necessary windows libraries
-   find_library(WIN_LDAP_LIBRARY NAMES Wldap32)
-   find_library(WIN_SSPI_LIBRARY NAMES Secur32)
-
    # require Windows-7 SP1
    add_definitions(
       -DNOMINMAX
@@ -398,6 +394,7 @@ endif()
 # find SOCI libraries
 if(UNIX)
    set(SOCI_LIBRARY_DIR "${RSTUDIO_TOOLS_SOCI}/build/lib")
+   set(CMAKE_INSTALL_RPATH "${SOCI_LIBRARY_DIR}")
    if (NOT APPLE)
       set(LIB_SUFFIX ".so")
       set(SOCI_LIB_SYMLINK "${LIB_SUFFIX}.4.0")
@@ -408,20 +405,21 @@ if(UNIX)
       set(SOCI_LIB_SUFFIX ".4.0.0${LIB_SUFFIX}")
    endif()
    file(GLOB_RECURSE SOCI_LIBRARIES "${SOCI_LIBRARY_DIR}/*${LIB_SUFFIX}")
+   file(GLOB_RECURSE SOCI_SYMLINK_LIBRARIES "${SOCI_LIBRARY_DIR}/*${SOCI_LIB_SYMLINK}")
 else()
    set(SOCI_LIBRARY_DIR "${RSTUDIO_TOOLS_SOCI}/build/${SOCI_ARCH}/lib")
    if(CMAKE_BUILD_TYPE STREQUAL "Debug")
        file(GLOB_RECURSE SOCI_LIBRARIES "${SOCI_LIBRARY_DIR}/Debug/*.lib")
-       list(APPEND SOCI_LIBRARIES "${WIN_LDAP_LIBRARY}")
-       list(APPEND SOCI_LIBRARIES "${WIN_SSPI_LIBRARY}")
+       list(APPEND SOCI_LIBRARIES "Wldap32")
+       list(APPEND SOCI_LIBRARIES "Secur32")
        list(APPEND SOCI_LIBRARIES "${RSTUDIO_WINDOWS_DEPENDENCIES_DIR}/install-soci/sqlite/sqlite3-debug-${SOCI_ARCH}.lib")
        list(APPEND SOCI_LIBRARIES "${RSTUDIO_WINDOWS_DEPENDENCIES_DIR}/install-soci/postgresql/lib/libpq-debug-${SOCI_ARCH}.lib")
        list(APPEND SOCI_LIBRARIES "${RSTUDIO_WINDOWS_DEPENDENCIES_DIR}/install-soci/postgresql/lib/libpgcommon-debug-${SOCI_ARCH}.lib")
        list(APPEND SOCI_LIBRARIES "${RSTUDIO_WINDOWS_DEPENDENCIES_DIR}/install-soci/postgresql/lib/libpgport-debug-${SOCI_ARCH}.lib")
    else()
        file(GLOB_RECURSE SOCI_LIBRARIES "${SOCI_LIBRARY_DIR}/Release/*.lib")
-       list(APPEND SOCI_LIBRARIES "${WIN_LDAP_LIBRARY}")
-       list(APPEND SOCI_LIBRARIES "${WIN_SSPI_LIBRARY}")
+       list(APPEND SOCI_LIBRARIES "Wldap32")
+       list(APPEND SOCI_LIBRARIES "Secur32")
        list(APPEND SOCI_LIBRARIES "${RSTUDIO_WINDOWS_DEPENDENCIES_DIR}/install-soci/sqlite/sqlite3-release-${SOCI_ARCH}.lib")
        list(APPEND SOCI_LIBRARIES "${RSTUDIO_WINDOWS_DEPENDENCIES_DIR}/install-soci/postgresql/lib/libpq-release-${SOCI_ARCH}.lib")
        list(APPEND SOCI_LIBRARIES "${RSTUDIO_WINDOWS_DEPENDENCIES_DIR}/install-soci/postgresql/lib/libpgcommon-release-${SOCI_ARCH}.lib")
@@ -436,34 +434,12 @@ endif()
 
 message(STATUS "SOCI libraries found under ${SOCI_LIBRARY_DIR}.")
 
-# ensure the soci/sqlite/postgres libraries are installed with the installation package
-if(UNIX)
+# ensure the soci libraries are installed with the installation package on Linux
+# on OSX, the needed depdencies are copied into the Frameworks directory
+if(UNIX AND NOT APPLE)
    install(PROGRAMS "${SOCI_LIBRARY_DIR}/libsoci_core${SOCI_LIB_SUFFIX}" DESTINATION ${RSTUDIO_INSTALL_BIN})
    install(PROGRAMS "${SOCI_LIBRARY_DIR}/libsoci_sqlite3${SOCI_LIB_SUFFIX}" DESTINATION ${RSTUDIO_INSTALL_BIN})
    install(PROGRAMS "${SOCI_LIBRARY_DIR}/libsoci_postgresql${SOCI_LIB_SUFFIX}" DESTINATION ${RSTUDIO_INSTALL_BIN})
-
-   GET_PREREQUISITES("${SOCI_LIBRARY_DIR}/libsoci_sqlite3${SOCI_LIB_SUFFIX}" SQLITE_LIBS "0" "0" "." "")
-   foreach(LIBRARY IN LISTS SQLITE_LIBS)
-      string(FIND "${LIBRARY}" "libsqlite3" INDEX)
-      if(INDEX GREATER "-1")
-         set(SQLITE_LIB "${LIBRARY}")
-      endif()
-   endforeach(LIBRARY)
-
-   GET_PREREQUISITES("${SOCI_LIBRARY_DIR}/libsoci_postgresql${SOCI_LIB_SUFFIX}" POSTGRES_LIBS "0" "0" "." "")
-   foreach(LIBRARY IN LISTS POSTGRES_LIBS)
-      string(FIND "${LIBRARY}" "libpq" INDEX)
-      if(INDEX GREATER "-1")
-         set(POSTGRES_LIB "${LIBRARY}")
-      endif()
-   endforeach(LIBRARY)
-
-   get_filename_component(SQLITE_LIB "${SQLITE_LIB}" REALPATH)
-   get_filename_component(POSTGRES_LIB "${POSTGRES_LIB}" REALPATH)
-   message(STATUS "SQLite lib: ${SQLITE_LIB}")
-   message(STATUS "PostgreSQL lib: ${POSTGRES_LIB}")
-   install(PROGRAMS "${SQLITE_LIB}" DESTINATION ${RSTUDIO_INSTALL_BIN})
-   install(PROGRAMS "${POSTGRES_LIB}" DESTINATION ${RSTUDIO_INSTALL_BIN})
 endif()
 
 if(WIN32)

@@ -27,6 +27,13 @@ set LIBCLANG_VERSION=5.0.2
 set LIBCLANG_NAME=libclang-windows-%LIBCLANG_VERSION%
 set LIBCLANG_FILE=%LIBCLANG_NAME%.zip
 
+set NODE_VERSION=10.19.0
+set NODE_ROOT=node
+set NODE_SUBDIR=%NODE_ROOT%\%NODE_VERSION%
+set NODE_BASE_URL=https://nodejs.org/dist/v%NODE_VERSION%/
+set NODE_ARCHIVE_DIR=node-v%NODE_VERSION%-win-x64
+set NODE_ARCHIVE_FILE=%NODE_ARCHIVE_DIR%.zip
+
 if not exist gnudiff (
   wget %WGET_ARGS% "%BASEURL%%GNUDIFF_FILE%"
   mkdir gnudiff
@@ -140,6 +147,27 @@ if not exist libclang\%LIBCLANG_VERSION% (
   unzip %UNZIP_ARGS% "%LIBCLANG_FILE%"
   del %LIBCLANG_FILE%
 )
+
+if not exist %NODE_SUBDIR% (
+  wget %WGET_ARGS% %NODE_BASE_URL%%NODE_ARCHIVE_FILE%
+  echo Unzipping node %NODE_VERSION%
+  mkdir %NODE_ROOT%
+  unzip %UNZIP_ARGS% %NODE_ARCHIVE_FILE%
+  move %NODE_ARCHIVE_DIR% %NODE_SUBDIR%
+  del %NODE_ARCHIVE_FILE%
+)
+
+set YARN_DIR=%NODE_SUBDIR%\node_modules\yarn\bin
+if not exist %YARN_DIR%\yarn (
+  echo "Installing yarn"
+  call %NODE_SUBDIR%\npm install --global yarn
+)
+
+set PATH=%CD%\%NODE_SUBDIR%;%CD%\%YARN_DIR%;%PATH%
+pushd ..\..\src\gwt\panmirror\src\editor
+call yarn install
+popd
+
 
 call install-packages.cmd
 

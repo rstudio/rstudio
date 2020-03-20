@@ -149,9 +149,9 @@ public:
       return wwwVerifyUserAgent_;
    }
 
-   bool wwwDisableOriginCheck() const
+   bool wwwEnableOriginCheck() const
    {
-      return wwwDisableOriginCheck_;
+      return wwwEnableOriginCheck_;
    }
 
    std::vector<boost::regex> wwwAllowedOrigins()
@@ -331,7 +331,7 @@ private:
    int wwwThreadPoolSize_;
    bool wwwProxyLocalhost_;
    bool wwwVerifyUserAgent_;
-   bool wwwDisableOriginCheck_;
+   bool wwwEnableOriginCheck_;
    std::vector<boost::regex> wwwAllowedOrigins_;
    bool authNone_;
    bool authValidateUsers_;

@@ -1,0 +1,101 @@
+@external gwt-Label, gwt-TextBox, rstudio-themes-dark, rstudio-ImageButton;
+
+@eval THEME_DARKGREY_MENU_BORDER org.rstudio.core.client.theme.ThemeColors.darkGreyMenuBorder;
+
+
+.dialog {
+   width: 380px;
+   margin-bottom: 12px;
+   position: relative;
+}
+	   
+.dialog label,
+.dialog .gwt-Label {
+   margin-bottom: 4px;
+}
+
+.dialog .horizontalLabel {
+   margin-bottom: 0;
+   margin-right: 4px;
+}
+
+.dialog .horizontalInput {
+   margin-right: 7px;
+}
+
+.dialog .infoLabel {
+   color: #606060;
+   font-size: 0.7rem;
+   margin-top: 5px;
+}
+
+.dialog .heightAuto {
+	color: #606060;
+	margin-right: 7px;
+}
+
+.lockRatioCheckbox {
+	 margin-left: 3px;
+}
+
+.dialog .fullWidth {
+   width: 98%;
+}
+
+.dialog .fullWidth select {
+	width: 100%;
+}
+
+.spaced {
+   margin-bottom: 10px;
+}
+
+.dialog .checkBox  input[type="checkbox"] {
+   margin-right: 5px; 
+}  
+
+.dialog .textArea {
+   -moz-box-sizing: border-box;
+   -webkit-box-sizing: border-box;
+   box-sizing: border-box;
+   border: 1px solid #c3c5c7;
+   border-radius: 4px;
+   resize: none;
+   width: 100%;
+}
+
+.imageDialogTabs, .linkDialogTabs {
+   width: 380px;
+   height: 290px;
+}
+
+.hrefSelect {
+   width: 98%;
+}
+
+.popup {
+   box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.2);
+   border-radius: 4px;
+   border: solid 1px #a3a8b2;
+   padding: 10px;
+   padding-bottom: 4px;
+}
+
+.rstudio-themes-dark .popup {
+   border: solid 1px THEME_DARKGREY_MENU_BORDER;
+}
+
+.popup .rstudio-ImageButton img {
+   width: 20px;
+   height: 20px;
+   padding: 0 5px;
+}
+
+.linkLabel {
+   margin-right: 12px;
+   white-space: nowrap;
+   overflow: hidden;
+   text-overflow: ellipsis;
+}
+
+

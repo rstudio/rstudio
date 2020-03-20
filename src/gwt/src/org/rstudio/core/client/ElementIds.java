@@ -158,6 +158,9 @@ public class ElementIds
 
    public final static String GENERAL_BASIC_PREFS = "general_basic_prefs";
    public final static String GENERAL_ADVANCED_PREFS = "general_advanced_prefs";
+   
+   public final static String RMARKDOWN_BASIC_PREFS = "rmarkdown_basic_prefs";
+   public final static String RMARKDOWN_ADVANCED_PREFS = "markdown_advanced_prefs";
 
    public final static String PACKAGE_MANAGEMENT_PREFS = "package_management_prefs";
    public final static String PACKAGE_DEVELOPMENT_PREFS = "package_development_prefs";
@@ -251,7 +254,8 @@ public class ElementIds
       TEXT_ENCODING("text_encoding"),
       UPLOAD_TARGET("upload_target"),
       VCS_IGNORE("vcs_ignore"),
-      VCS_TERMINAL("vcs_terminal");
+      VCS_TERMINAL("vcs_terminal"),
+      CHOOSE_IMAGE("choose_image");
 
       TextBoxButtonId(String value)
       {
@@ -449,7 +453,45 @@ public class ElementIds
    public final static String FRAME_MAX_BTN = "frame_max_btn";
    public final static String MIN_FRAME_MIN_BTN = "min_frame_min_btn";
    public final static String MIN_FRAME_MAX_BTN = "min_frame_max_btn";
-
+   
+   // Visual Markdown Editing dialogs
+   public final static String VISUAL_MD_RAW_FORMAT_SELECT = "visual_md_raw_format_select";
+   public final static String VISUAL_MD_RAW_FORMAT_CONTENT = "visual_md_raw_format_content";
+   public final static String VISUAL_MD_RAW_FORMAT_REMOVE_BUTTON = "visual_md_raw_format_remove_button";
+   public final static String VISUAL_MD_INSERT_TABLE_ROWS = "visual_md_insert_table_rows";
+   public final static String VISUAL_MD_INSERT_TABLE_COLUMNS = "visual_md_insert_table_columns";
+   public final static String VISUAL_MD_INSERT_TABLE_CAPTION = "visual_md_insert_table_caption";
+   public final static String VISUAL_MD_INSERT_TABLE_HEADER = "visual_md_insert_table_heaeder";
+   public final static String VISUAL_MD_ATTR_REMOVE_BUTTON = "visual_md_attr_remove_button";
+   public final static String VISUAL_MD_ATTR_ID = "visual_md_attr_id";
+   public final static String VISUAL_MD_ATTR_CLASSES = "visual_md_attr_classes";
+   public final static String VISUAL_MD_ATTR_STYLE = "visual_md_attr_style";
+   public final static String VISUAL_MD_ATTR_KEYVALUE = "visual_md_attr_keyvalue";
+   public final static String VISUAL_MD_CITATION_ID = "visual_md_citation_id";
+   public final static String VISUAL_MD_CITATION_LOCATOR = "visual_md_citation_locator";
+   public final static String VISUAL_MD_ORDERED_LIST_ORDER = "visual_md_ordered_list_order";
+   public final static String VISUAL_MD_ORDERED_LIST_NUMBER_STYLE = "visual_md_ordered_list_number_style";
+   public final static String VISUAL_MD_ORDERED_LIST_NUMBER_DELIM = "visual_md_ordered_list_number_delim";
+   public final static String VISUAL_MD_ORDERED_LIST_TIGHT = "visual_md_ordered_list_tight";
+   public final static String VISUAL_MD_IMAGE_TAB_IMAGE = "visual_md_image_tab_image";
+   public final static String VISUAL_MD_IMAGE_SRC = "visual_md_image_src";
+   public final static String VISUAL_MD_IMAGE_WIDTH = "visual_md_image_width";
+   public final static String VISUAL_MD_IMAGE_HEIGHT = "visual_md_image_height";
+   public final static String VISUAL_MD_IMAGE_UNITS = "visual_md_image_units";
+   public final static String VISUAL_MD_IMAGE_LOCK_RATIO = "visual_md_image_lock_ratio";
+   public final static String VISUAL_MD_IMAGE_TITLE = "visual_md_image_title";
+   public final static String VISUAL_MD_IMAGE_ALT = "visual_md_image_alt";
+   public final static String VISUAL_MD_IMAGE_TAB_ATTRIBUTES = "visual_md_image_tab_attributes";
+   public final static String VISUAL_MD_LINK_REMOVE_LINK_BUTTON = "visual_md_link_remove_link_button";
+   public final static String VISUAL_MD_LINK_TAB_LINK = "visual_md_link_tab_link";
+   public final static String VISUAL_MD_LINK_TYPE = "visual_md_link_type";
+   public final static String VISUAL_MD_LINK_HREF = "visual_md_link_href";
+   public final static String VISUAL_MD_LINK_SELECT_HEADING = "visual_md_link_select_heading";
+   public final static String VISUAL_MD_LINK_SELECT_ID = "visual_md_link_select_id";
+   public final static String VISUAL_MD_LINK_TEXT = "visual_md_link_text";
+   public final static String VISUAL_MD_LINK_TITLE = "visual_md_link_title";
+   public final static String VISUAL_MD_LINK_TAB_ATTRIBUTES = "visual_md_link_tab_attributes";
+   
    // ProgressDialog
    public final static String PROGRESS_TITLE_LABEL = "progress_title_label";
 

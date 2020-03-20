@@ -103,6 +103,9 @@ public:
          boost::shared_ptr<AsyncConnectionImpl<SocketType> >,
          http::Request*)> Handler;
 
+    typedef boost::function<void(
+         boost::shared_ptr<AsyncConnectionImpl<SocketType>>)> ClosedHandler;
+
    typedef boost::function<bool(
          boost::shared_ptr<AsyncConnectionImpl<SocketType> >,
          http::Request*)> HeadersParsedHandler;
@@ -112,11 +115,13 @@ public:
                        boost::shared_ptr<boost::asio::ssl::context> sslContext,
                        const HeadersParsedHandler& onHeadersParsed,
                        const Handler& onRequestParsed,
+                       const ClosedHandler& onClosed,
                        const RequestFilter& requestFilter = RequestFilter(),
                        const ResponseFilter& responseFilter = ResponseFilter())
       : ioService_(ioService),
         onHeadersParsed_(onHeadersParsed),
         onRequestParsed_(onRequestParsed),
+        onClosed_(onClosed),
         requestFilter_(requestFilter),
         responseFilter_(responseFilter),
         closed_(false),
@@ -138,6 +143,11 @@ public:
          socket_.reset(new SocketType(ioService));
          socketOperations_.reset(new SocketOperations<SocketType>(socket_));
       }
+   }
+
+   virtual ~AsyncConnectionImpl()
+   {
+      close();
    }
 
    SocketType& socket()
@@ -292,6 +302,9 @@ public:
 
             // cleanup any associated data with the connection
             connectionData_.clear();
+
+            // notify that we have closed the connection
+            onClosed_(AsyncConnectionImpl<SocketType>::shared_from_this());
          }
       }
       END_LOCK_MUTEX;
@@ -568,6 +581,7 @@ private:
 
    HeadersParsedHandler onHeadersParsed_;
    Handler onRequestParsed_;
+   ClosedHandler onClosed_;
    FormHandler formHandler_;
    RequestFilter requestFilter_;
    ResponseFilter responseFilter_;

@@ -1,7 +1,7 @@
 /*
  * ServerOptions.cpp
  *
- * Copyright (C) 2009-12 by RStudio, PBC
+ * Copyright (C) 2009-20 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -263,9 +263,9 @@ ProgramStatus Options::read(int argc,
       ("www-frame-origin",
          value<std::string>(&wwwFrameOrigin_)->default_value("none"),
          "allowed origin for hosting frame")
-      ("www-disable-origin-check",
-         value<bool>(&wwwDisableOriginCheck_)->default_value(true),
-         "disable check that ensures request origin is from the host domain")
+      ("www-enable-origin-check",
+         value<bool>(&wwwEnableOriginCheck_)->default_value(false),
+         "enable check that ensures request origin is from the host domain")
       ("www-allow-origin",
          value<std::vector<std::string>>(&wwwAllowedOrigins)->default_value(std::vector<std::string>{})->multitoken(),
          "allows requests from this origin, even if it does not match the host domain");
