@@ -223,7 +223,7 @@ function resizeShelf(
   translateText: (text: string) => string,
 ) {
   // create resize shelf
-  const shelf = createPopup(view, ['pm-text-color']);
+  const shelf = createPopup(view, []);
 
   // update shelf absolute position to make sure it's visible
   const updatePosition = () => {

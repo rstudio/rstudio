@@ -42,7 +42,13 @@ export function createPopup(
   // create popup
   const popup = window.document.createElement('span');
   popup.contentEditable = 'false';
-  popup.classList.add('pm-popup', 'pm-pane-border-color', 'pm-background-color', 'pm-text-color');
+  popup.classList.add(
+    'pm-popup', 
+    'pm-text-color', 
+    'pm-proportional-font', 
+    'pm-pane-border-color', 
+    'pm-background-color'
+  );
   popup.style.position = 'absolute';
   popup.style.zIndex = '10';
   applyStyles(popup, classes, style);
