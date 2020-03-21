@@ -31,14 +31,19 @@ public class PromiseWithProgress<V>
 { 
    public PromiseWithProgress(Promise<V> promise, V errorVal, CommandWithArg<V> completed)
    {
-      this(promise, "Working...", errorVal, completed);
+      this(promise, errorVal, 500, completed);
    }
    
-   public PromiseWithProgress(Promise<V> promise, String progress, V errorVal, CommandWithArg<V> completed)
+   public PromiseWithProgress(Promise<V> promise, V errorVal, int delayMs, CommandWithArg<V> completed)
+   {
+      this(promise, "Working...", errorVal, delayMs, completed);
+   }
+   
+   public PromiseWithProgress(Promise<V> promise, String progress, V errorVal, int delayMs, CommandWithArg<V> completed)
    {
       // setup progress
       GlobalDisplay globalDisplay = RStudioGinjector.INSTANCE.getGlobalDisplay();
-      ProgressIndicator indicator = new GlobalProgressDelayer(globalDisplay, 500, progress).getIndicator();
+      ProgressIndicator indicator = new GlobalProgressDelayer(globalDisplay, delayMs, progress).getIndicator();
       
       // execute the promise
       promise.then(new ThenOnFulfilledCallbackFn<V,V>() {
