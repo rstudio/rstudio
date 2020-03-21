@@ -151,17 +151,6 @@ export class ImageNodeView implements NodeView {
     if (this.imageAttributes) {
       initResizeContainer(this.dom);
     }
-
-    // if the img is not yet connected to the DOM then poll until it is
-    // and update the image size
-    const updateSizeWhenConnected = () => {
-      if (this.img.isConnected) {
-        this.updateImageSize();
-      } else {
-        setTimeout(updateSizeWhenConnected, 50);
-      }
-    };
-    updateSizeWhenConnected();
   }
 
   public selectNode() {
