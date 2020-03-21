@@ -2,25 +2,24 @@
 
 Incorporate new theme colors (pending)
 
-test builds and update doc (pending)
-
-Inserting an inline image inside a header results in the shelf using the font attributes (size, etc.) of the header element
-
 Don't show shelf for broken image
 
-Image file browser doesn't show pngs on Ubuntu (must not like the spec)
+Need to update image size both on isConnected and when tab is activated
+(it's effectively a resize)
 
 Border ridge on image shelf in dark mode.
 
 When computing containerWidth, factor in padding of container when it's the body (see React workbench front-end and even
 IDE front end that maxes out at 97%)
 
-Can still reproduce tables ending up with pipes in them. Insert 3x3, size some columns (leaving empty), and they show up
+Can still reproduce tables ending up with pipes in them. Insert 3x3, size some columns (leaving empty), and they show up.
+Saw this in gfm mode.
 
 Discuss tokens / escaping / etc. with Joe
 
 Images that link to things need to be supported. Currently a "figure" with a surrounding link tag doesn't even round trip! That's 
-because figures can't have links, we should reflect this.
+because figures can't have links, we should reflect this. I believe that the editor currently handles this fine, but our 
+pandoc serialization currently does not.
 
 Clipboard / DragDrop support for images
 Paste image handler for RStudio IDE
