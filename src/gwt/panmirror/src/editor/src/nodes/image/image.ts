@@ -34,6 +34,7 @@ import {
 import { EditorUI } from '../../api/ui';
 import { ImageDimensions } from '../../api/image';
 import { nodeToHTML } from '../../api/html';
+import { EditorOptions } from '../../api/options';
 
 import { imageDialog } from './image-dialog';
 import { imageDrop } from './image-events';
@@ -49,7 +50,7 @@ const IMAGE_TARGET = 2;
 
 const plugin = new PluginKey('image');
 
-const extension = (pandocExtensions: PandocExtensions): Extension => {
+const extension = (pandocExtensions: PandocExtensions, options: EditorOptions, ui: EditorUI): Extension => {
 
   const imageAttr = imageAttributesAvailable(pandocExtensions);
 
@@ -82,16 +83,16 @@ const extension = (pandocExtensions: PandocExtensions): Extension => {
             },
           ],
           inlineHTMLReader: imageInlineHTMLReader,
-          writer: imagePandocOutputWriter(false),
+          writer: imagePandocOutputWriter(false, ui),
         },
       },
     ],
 
-    commands: (_schema: Schema, ui: EditorUI) => {
+    commands: (_schema: Schema) => {
       return [new ProsemirrorCommand(EditorCommandId.Image, ['Shift-Mod-i'], imageCommand(ui, imageAttr))];
     },
 
-    plugins: (schema: Schema, ui: EditorUI) => {
+    plugins: (schema: Schema) => {
       return [
         new Plugin({
           key: plugin,
@@ -136,7 +137,7 @@ export function pandocImageHandler(figure: boolean, imageAttributes: boolean) {
   };
 }
 
-export function imagePandocOutputWriter(figure: boolean) {
+export function imagePandocOutputWriter(figure: boolean, ui: EditorUI) {
 
   return (output: PandocOutput, node: ProsemirrorNode) => {
     
@@ -167,12 +168,20 @@ export function imagePandocOutputWriter(figure: boolean) {
     // if we do, then substitute a raw html writer
     if (writeHTML) {
       writer = () => {
-        // generate HTML (convert figures to images so we write <img> rather than <figure> tag)
-        if (figure) {
-          const schema = node.type.schema;
-          node = schema.nodes.image.create(node.attrs);
+        // create a new node to use for conversion (always an image so we don't serialize <figure>)
+        const schema = node.type.schema;
+        node = schema.nodes.image.create(node.attrs);
+        
+        // generate html (map image src and back b/c the browser will attempt to fetch the
+        // image as part of constructing the DOM)
+        const src = node.attrs.src;
+        node.attrs.src = ui.context.mapResourcePath(src);
+        let html = nodeToHTML(node.type.schema, node);
+        if (node.attrs.src !== src) {
+          html = html.replace("&amp;", "&").replace(node.attrs.src, src);
         }
-        const html = nodeToHTML(node.type.schema, node);
+        
+        // write the html
         output.writeRawMarkdown(html);
       };
     }

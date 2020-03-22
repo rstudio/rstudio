@@ -539,7 +539,7 @@ export class Editor {
   }
 
   private initExtensions() {
-    return initExtensions(this.options, this.context.extensions, this.pandocFormat.extensions);
+    return initExtensions(this.options, this.context.ui, this.context.extensions, this.pandocFormat.extensions);
   }
 
   private initSchema(): Schema {

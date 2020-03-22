@@ -96,11 +96,12 @@ import { codeMirrorPlugins } from './optional/codemirror/codemirror';
 
 export function initExtensions(
   options: EditorOptions,
+  ui: EditorUI,
   extensions: readonly Extension[] | undefined,
   pandocExtensions: PandocExtensions,
 ): ExtensionManager {
   // create extension manager
-  const manager = new ExtensionManager(options, pandocExtensions);
+  const manager = new ExtensionManager(pandocExtensions, options, ui);
 
   // required extensions
   manager.register([
@@ -173,20 +174,22 @@ export function initExtensions(
 }
 
 export class ExtensionManager {
-  private options: EditorOptions;
   private pandocExtensions: PandocExtensions;
+  private options: EditorOptions;
+  private ui: EditorUI;
   private extensions: Extension[];
 
-  public constructor(options: EditorOptions, pandocExtensions: PandocExtensions) {
-    this.options = options;
+  public constructor(pandocExtensions: PandocExtensions, options: EditorOptions, ui: EditorUI) {
     this.pandocExtensions = pandocExtensions;
+    this.options = options;
+    this.ui = ui;
     this.extensions = [];
   }
 
   public register(extensions: ReadonlyArray<Extension | ExtensionFn>): void {
     extensions.forEach(extension => {
       if (typeof extension === 'function') {
-        const ext = extension(this.pandocExtensions, this.options);
+        const ext = extension(this.pandocExtensions, this.options, this.ui);
         if (ext) {
           this.extensions.push(ext);
         }

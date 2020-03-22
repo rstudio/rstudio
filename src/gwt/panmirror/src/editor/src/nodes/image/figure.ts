@@ -21,6 +21,7 @@ import { Extension } from '../../api/extension';
 import { EditorUI } from '../../api/ui';
 import { BaseKey } from '../../api/basekeys';
 import { exitNode } from '../../api/command';
+import { EditorOptions } from '../../api/options';
 
 import { isSingleLineHTML } from '../../api/html';
 import { PandocToken, PandocTokenType, ProsemirrorWriter, PandocExtensions, kRawBlockContent, kRawBlockFormat, imageAttributesAvailable } from '../../api/pandoc';
@@ -41,7 +42,7 @@ import './figure-styles.css';
 
 const plugin = new PluginKey('figure');
 
-const extension = (pandocExtensions: PandocExtensions): Extension | null => {
+const extension = (pandocExtensions: PandocExtensions, options: EditorOptions, ui: EditorUI): Extension | null => {
 
   const imageAttr = imageAttributesAvailable(pandocExtensions);
 
@@ -79,7 +80,7 @@ const extension = (pandocExtensions: PandocExtensions): Extension | null => {
           },
         },
         pandoc: {
-          writer: imagePandocOutputWriter(true),
+          writer: imagePandocOutputWriter(true, ui),
 
           // intercept  paragraphs with a single image and process them as figures
           blockReader: (schema: Schema, tok: PandocToken, writer: ProsemirrorWriter) => {
@@ -118,7 +119,7 @@ const extension = (pandocExtensions: PandocExtensions): Extension | null => {
       ];
     },
 
-    plugins: (_schema: Schema, ui: EditorUI) => {
+    plugins: (_schema: Schema) => {
       return [
         new Plugin({
           key: plugin,
