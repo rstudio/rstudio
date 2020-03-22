@@ -19,6 +19,7 @@ import { NodeSelection } from 'prosemirror-state';
 
 import { EditorUI, ImageType } from '../../api/ui';
 import { PandocExtensions, imageAttributesAvailable } from '../../api/pandoc';
+import { isElementVisible } from '../../api/dom';
 
 import { imageDialog } from './image-dialog';
 import {
@@ -47,6 +48,7 @@ export class ImageNodeView implements NodeView {
   private readonly figcaption: HTMLElement | null;
 
   private resizeUI: ResizeUI | null;
+  private sizeOnVisibleTimer?: number;
 
   constructor(
     node: ProsemirrorNode,
@@ -151,6 +153,13 @@ export class ImageNodeView implements NodeView {
     if (this.imageAttributes) {
       initResizeContainer(this.dom);
     }
+
+    // update image size when the image first becomes visible
+    this.updateSizeOnVisible();
+  }
+
+  public destroy() {
+    this.clearSizeOnVisibleTimer();
   }
 
   public selectNode() {
@@ -207,6 +216,7 @@ export class ImageNodeView implements NodeView {
 
   // ignore mutations outside of the content dom so sizing actions don't cause PM re-render
   public ignoreMutation(mutation: MutationRecord | { type: 'selection'; target: Element }) {
+
     // always ignore if we have no contentDOM
     if (!this.contentDOM) {
       return true;
@@ -257,6 +267,25 @@ export class ImageNodeView implements NodeView {
   private updateImageSize() {
      const containerWidth = this.img.isConnected ? this.containerWidth() : 0;
      updateImageViewSize(this.node, this.img, this.isFigure() ? this.dom : null, containerWidth);
+  }
+
+  private updateSizeOnVisible()
+  {
+    const updateSizeOnVisible = () => {
+      if (isElementVisible(this.img)) {
+        this.updateImageSize();
+        this.clearSizeOnVisibleTimer();
+      }
+    }; 
+    this.sizeOnVisibleTimer = window.setInterval(updateSizeOnVisible, 200);
+  }
+
+  private clearSizeOnVisibleTimer()
+  {
+    if (this.sizeOnVisibleTimer) {
+      clearInterval(this.sizeOnVisibleTimer);
+      this.sizeOnVisibleTimer = undefined;
+    }
   }
 
   // attach resize UI if appropriate
