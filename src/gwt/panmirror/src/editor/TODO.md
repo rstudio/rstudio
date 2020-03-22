@@ -4,8 +4,21 @@ Incorporate new theme colors (pending)
 
 Don't show shelf for broken image
 
-Need to update image size both on isConnected and when tab is activated
-(it's effectively a resize)
+
+It would be nice to get notified when size changes and when 
+tab activation happens (we know at the editor level, but can
+we get access to all the node views?)
+
+Container resize detection for % based images not working
+(that's because it's only active when selected for resize)
+
+404 occurs when serializing html tag image fragments (b/c img path doesn't exist)
+
+GH issue template w/ panmirrror tag + assign to me. 
+
+setMarkdown is being called twice for docs (created timer cleanup issue in NodeView, other issues? why doe this happen?)
+
+Perhaps we could defer the call to setMarkdown until we are first activated?
 
 Border ridge on image shelf in dark mode.
 
