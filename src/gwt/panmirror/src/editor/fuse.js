@@ -23,13 +23,14 @@ const kLibraryName = "Panmirror"
 const kLibraryNameLower = kLibraryName.toLowerCase()
 const kIdeJsDir = "../../../www/js"
 const kIdeOutputDir = path.join(kIdeJsDir, kLibraryNameLower);
+const kGlobalNodeModulesPath = "/opt/rstudio-tools/panmirror/node_modules";
 
 context(
   class {
     getConfig(outputDir, webIndex = false, vendorSrcMap = false) {
       return FuseBox.init({
         homeDir: "src",
-        modulesFolder: ["./node_modules", "/opt/rstudio-tools/panmirror/node_modules"],
+        modulesFolder: ["./node_modules", fs.existsSync(kGlobalNodeModulesPath) ? kGlobalNodeModulesPath : ""],
         target: "browser@es6",
         globals: { default: kLibraryName },
         output: path.join(outputDir, "$name.js"),
