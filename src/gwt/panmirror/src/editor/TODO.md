@@ -2,8 +2,6 @@
 
 Incorporate new theme colors (pending)
 
-Don't show shelf for broken image
-
 It would be nice to get notified when size changes and when 
 tab activation happens (we know at the editor level, but can
 we get access to all the node views?)
@@ -12,8 +10,6 @@ Container resize detection for % based images not working
 (that's because it's only active when selected for resize)
  
 consider doing manual html generation for images (to avoid http requests)
-
-setMarkdown is being called twice for docs (created timer cleanup issue in NodeView, other issues? why doe this happen?)
 
 Perhaps we could defer the call to setMarkdown until we are first activated?
 
