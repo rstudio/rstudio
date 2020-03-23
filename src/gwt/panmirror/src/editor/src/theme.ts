@@ -221,6 +221,9 @@ export function applyTheme(theme: EditorTheme) {
       font-family: ${theme.fixedWidthFont};
       font-size: ${theme.fixedWidthFontSizePt}pt !important;
     }
+    .CodeMirror {
+      background: ${theme.backgroundColor};
+    }
     .CodeMirror-selected { background: none  ; }
     .CodeMirror-focused .CodeMirror-selected { background: ${theme.selectionColor}  ; }
     .CodeMirror-line::selection, .CodeMirror-line > span::selection, .CodeMirror-line > span > span::selection { background: ${theme.selectionColor}  ; }
