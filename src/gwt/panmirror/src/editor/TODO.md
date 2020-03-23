@@ -2,8 +2,6 @@
 
 Incorporate new theme colors (pending)
 
-Clicking on image size text box dismisses shelf
-
 It would be nice to get notified when size changes and when 
 tab activation happens (we know at the editor level, but can
 we get access to all the node views?)
@@ -12,8 +10,6 @@ Container resize detection for % based images not working
 (that's because it's only active when selected for resize)
  
 consider doing manual html generation for images (to avoid http requests)
-
-Perhaps we could defer the call to setMarkdown until we are first activated?
 
 When computing containerWidth, factor in padding of container when it's the body (see React workbench front-end and even
 IDE front end that maxes out at 97%)
