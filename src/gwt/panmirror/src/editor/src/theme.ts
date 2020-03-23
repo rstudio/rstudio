@@ -230,7 +230,10 @@ export function applyTheme(theme: EditorTheme) {
     .CodeMirror-line::-moz-selection, .CodeMirror-line > span::-moz-selection, .CodeMirror-line > span > span::-moz-selection { background: ${theme.selectionColor}  ; }
     .CodeMirror-cursor { border-left-color: ${theme.cursorColor}; }
     .CodeMirror pre.CodeMirror-line, .CodeMirror pre.CodeMirror-line-like  { color: ${theme.textColor}; }
-    .CodeMirror-gutters { background-color: ${theme.gutterBackgroundColor} !important; }
+    .CodeMirror-gutters { 
+      border-right-color: ${theme.blockBorderColor} !important;
+      background-color: ${theme.gutterBackgroundColor} !important; 
+    }
     .CodeMirror-linenumber { color: ${theme.gutterTextColor} !important; }
     .cm-s-default .cm-keyword {color: ${theme.code.keywordColor};}
     .cm-s-default .cm-atom {color: ${theme.code.atomColor};}
