@@ -18,6 +18,10 @@
   font-weight: normal;
 }
 
+.editor_dark .pm-input-text {
+  border-width: 1px;
+}
+
 .pm-image-button {
   background-color: transparent;
   background-repeat: no-repeat; 
