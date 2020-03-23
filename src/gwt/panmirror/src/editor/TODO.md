@@ -2,20 +2,34 @@
 
 Incorporate new theme colors (pending)
 
-It would be nice to get notified when size changes and when 
-tab activation happens (we know at the editor level, but can
-we get access to all the node views?)
-
-Container resize detection for % based images not working
-(that's because it's only active when selected for resize)
+straight open of visual mode Rmd doesn't show it due to new optimization
  
 consider doing manual html generation for images (to avoid http requests)
+https://stackoverflow.com/questions/7753448/how-do-i-escape-quotes-in-html-attribute-values/9756789#9756789
+```js
+function quoteattr(s, preserveCR) {
+    preserveCR = preserveCR ? '&#13;' : '\n';
+    return ('' + s) /* Forces the conversion to string. */
+        .replace(/&/g, '&amp;') /* This MUST be the 1st replacement. */
+        .replace(/'/g, '&apos;') /* The 4 other predefined entities, required. */
+        .replace(/"/g, '&quot;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        /*
+        You may add other replacements here for HTML only 
+        (but it's not necessary).
+        Or for XML, only if the named entities are defined in its DTD.
+        */ 
+        .replace(/\r\n/g, preserveCR) /* Must be before the next replacement. */
+        .replace(/[\r\n]/g, preserveCR);
+        ;
+}
+```
 
-When computing containerWidth, factor in padding of container when it's the body (see React workbench front-end and even
-IDE front end that maxes out at 97%)
+Resize shelf (and presumably link popup) can be occulded when inside a table (some sort of overflow: visible required?)
 
 Can still reproduce tables ending up with pipes in them. Insert 3x3, size some columns (leaving empty), and they show up.
-Saw this in gfm mode.
+Saw this in gfm mode. Maybe have a mimimum number of spaces for empty cells?
 
 Discuss tokens / escaping / etc. with Joe
 
