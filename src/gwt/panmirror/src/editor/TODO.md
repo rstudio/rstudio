@@ -2,6 +2,8 @@
 
 Incorporate new theme colors (pending)
 
+Clicking on image size text box dismisses shelf
+
 It would be nice to get notified when size changes and when 
 tab activation happens (we know at the editor level, but can
 we get access to all the node views?)
@@ -12,8 +14,6 @@ Container resize detection for % based images not working
 consider doing manual html generation for images (to avoid http requests)
 
 Perhaps we could defer the call to setMarkdown until we are first activated?
-
-Border ridge on image shelf in dark mode.
 
 When computing containerWidth, factor in padding of container when it's the body (see React workbench front-end and even
 IDE front end that maxes out at 97%)
@@ -27,7 +27,8 @@ Images that link to things need to be supported. Currently a "figure" with a sur
 because figures can't have links, we should reflect this. I believe that the editor currently handles this fine, but our 
 pandoc serialization currently does not.
 
-Clipboard / DragDrop support for images
+Clipboard / DragDrop support for images (note we should only accept
+local images within our resource dir)
 Paste image handler for RStudio IDE
 
 Pandoc allows for list items to start with a block, but our schema follows ProseMirror in requiring a paragraph
