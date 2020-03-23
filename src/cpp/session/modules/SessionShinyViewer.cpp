@@ -329,6 +329,17 @@ Error initShinyViewerPref(boost::shared_ptr<std::string> pShinyViewerType)
    {
       setShinyViewerType(*pShinyViewerType);
    }
+   else
+   {
+      // the functions used to invoke the Shiny viewer changed in v1.2 -> v1.3;
+      // however, the older versions of these functions may be persisted as part
+      // of the R options (for shiny.launch.browser). for that reason, we detect
+      // if this option is set and ensure an up-to-date copy of the function is
+      // used as appropriate
+      Error error = r::exec::RFunction(".rs.refreshShinyLaunchBrowserOption").call();
+      if (error)
+         LOG_ERROR(error);
+   }
 
    return Success();
 }

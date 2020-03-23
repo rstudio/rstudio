@@ -53,6 +53,35 @@
    return("user")
 })
 
+.rs.addFunction("refreshShinyLaunchBrowserOption", function()
+{
+   # read viewer option
+   viewer <- getOption("shiny.launch.browser")
+   if (!is.function(viewer))
+      return(FALSE)
+   
+   type <- attr(viewer, "shinyViewerType", exact = TRUE)
+   if (is.null(type))
+      return(FALSE)
+   
+   # NOTE: in RStudio v1.2, Shiny viewer types were stored as numeric values;
+   # now, they're stored as explicit names. we handle both cases here; the
+   # indices of the following 'types' vector matches the types used for v1.2
+   if (is.numeric(type) && length(type) == 1L)
+   {
+      types <- c("none", "pane", "window", "browser")
+      type <- types[[type]]
+   }
+   
+   # validate that we now have a character type
+   if (!is.character(type) || length(type) != 1L)
+      return(FALSE)
+   
+   # set the viewer type
+   .rs.setShinyViewerType(type)
+   TRUE
+})
+
 .rs.addJsonRpcHandler("get_shiny_viewer_type", function() {
    .rs.scalar(.rs.getShinyViewerType())
 })
