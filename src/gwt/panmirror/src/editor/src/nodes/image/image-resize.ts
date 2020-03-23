@@ -138,7 +138,7 @@ export function attachResizeUI(
     const width = shelf.props.width();
     const widthPixels = unitToPixels(width, prevUnits, containerWidth);
     let widthInUnits = pixelsToUnit(widthPixels, shelf.props.units(), containerWidth);
-    if (hasPercentWidth(shelf.props.units())) {
+    if (hasPercentWidth(shelf.props.units()) && widthInUnits > 100) {
       widthInUnits = 100;
     }
     shelf.props.setWidth(widthInUnits);
