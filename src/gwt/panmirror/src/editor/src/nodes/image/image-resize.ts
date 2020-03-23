@@ -137,7 +137,11 @@ export function attachResizeUI(
 
     const width = shelf.props.width();
     const widthPixels = unitToPixels(width, prevUnits, containerWidth);
-    shelf.props.setWidth(pixelsToUnit(widthPixels, shelf.props.units(), containerWidth));
+    let widthInUnits = pixelsToUnit(widthPixels, shelf.props.units(), containerWidth);
+    if (hasPercentWidth(shelf.props.units())) {
+      widthInUnits = 100;
+    }
+    shelf.props.setWidth(widthInUnits);
 
     const height = shelf.props.height();
     const heightPixels = unitToPixels(height, prevUnits, containerWidth);
@@ -447,7 +451,13 @@ function resizeHandle(
         height = startHeight + movedY;
       }
 
-      // set image width and height based on units currnetly in use
+      // determine the new width in units. If it's percent and > 100 then clip
+      const widthInUnits = pixelsToUnit(width, units(), containerWidth);
+      if (hasPercentWidth(units()) && widthInUnits > 100) {
+        width = containerWidth;
+        height = width * (startHeight/startWidth);
+      }
+
       img.style.width = width + kPixelUnit;
       img.setAttribute(kDataWidth, pixelsToUnit(width, units(), containerWidth) + units());
       img.style.height = height + kPixelUnit;

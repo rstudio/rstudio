@@ -22,3 +22,20 @@ export function bodyElement(view: EditorView): HTMLElement {
 export function isElementVisible(el: HTMLElement) {
   return !!(el.offsetWidth || el.offsetHeight || el.getClientRects().length);
 }
+
+export function elementInnerDimensions(el: HTMLElement) {
+  
+  const cs = getComputedStyle(el);
+  
+  const asNumber = (x: string | null) => x ? parseFloat(x) : 0; 
+  const paddingX = asNumber(cs.paddingLeft) + asNumber(cs.paddingRight);
+  const paddingY = asNumber(cs.paddingTop) + asNumber(cs.paddingBottom);
+  const borderX = asNumber(cs.borderLeftWidth) + asNumber(cs.borderRightWidth);
+  const borderY = asNumber(cs.borderTopWidth) + asNumber(cs.borderBottomWidth);
+
+  return {
+    width: el.offsetWidth - paddingX - borderX,
+    height: el.offsetHeight - paddingY - borderY
+  };
+
+}

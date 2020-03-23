@@ -23,7 +23,7 @@ import { extractSizeStyles, kPercentUnit, kPixelUnit } from '../../api/css';
 import { ImageDimensions, isNaturalAspectRatio } from '../../api/image';
 import { kWidthAttrib, kHeightAttrib } from '../../api/pandoc_attr';
 
-import { imagePropsWithSizes } from './image-util';
+import { imagePropsWithSizes, hasPercentWidth } from './image-util';
 
 export async function imageDialog(
   node: ProsemirrorNode | null,
@@ -86,8 +86,12 @@ export async function imageDialog(
       const units = result.units && result.units === kPixelUnit ? '' : result.units;
       // width
       if (result.width) {
+        let width = result.width;
+        if (hasPercentWidth(units)) {
+          width = Math.min(width, 100);
+        }
         keyvalue = keyvalue || [];
-        keyvalue.push([kWidthAttrib, result.width + units]);
+        keyvalue.push([kWidthAttrib, width + units]);
       }
       // only record height if it's not % units and it's not at it's natural height
       if (result.height && units !== kPercentUnit && !isNaturalHeight(result.width, result.height, dims)) {

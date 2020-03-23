@@ -26,6 +26,7 @@ import {
 } from '../../api/image';
 import { kWidthAttrib, kHeightAttrib } from '../../api/pandoc_attr';
 import { kPercentUnit, kPixelUnit } from '../../api/css';
+import { elementInnerDimensions } from '../../api/dom';
 
 export function imagePropsWithSizes(image: ImageProps, dims: ImageDimensions) {
   // pull width, height, and units out of keyvalue if necessary
@@ -94,8 +95,8 @@ export function imageContainerWidth(pos: number, view: EditorView) {
       const imagePos = view.state.doc.resolve(pos);
       const resizeContainer = findParentNodeClosestToPos(imagePos, nd => nd.isBlock);
       if (resizeContainer) {
-        const resizeEl = view.domAtPos(resizeContainer.pos);
-        containerWidth = (resizeEl.node as HTMLElement).offsetWidth;
+        const resizeEl = view.domAtPos(resizeContainer.pos + 1);
+        containerWidth = elementInnerDimensions(resizeEl.node as HTMLElement).width;
       }
     }
   }
