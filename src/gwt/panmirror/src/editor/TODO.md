@@ -24,14 +24,17 @@ function quoteattr(s, preserveCR) {
 }
 ```
 
-Resize shelf (and presumably link popup) can be occulded when inside a table (some sort of overflow: visible required?)
+Resize shelf (and presumably link popup) can be occulded when inside a table. Change this UI 
+to use absolute positioning within the editing root node (editingRootNodeClosestToPos).
+
 
 Can still reproduce tables ending up with pipes in them. Insert 3x3, size some columns (leaving empty), and they show up.
 Saw this in gfm mode. Maybe have a mimimum number of spaces for empty cells?
 
 Some mechanism for deferring pandoc work with multiple editor tabs
 
-Discuss tokens / escaping / etc. with Joe
+Discuss tokens / escaping / etc. with Joe. HTML must be inserted manually. Backslashes need to
+be escaped (already wrote the code to do this.). Math bears more discussion.....
 
 Images that link to things need to be supported. Currently a "figure" with a surrounding link tag doesn't even round trip! That's 
 because figures can't have links, we should reflect this. I believe that the editor currently handles this fine, but our 
