@@ -47,6 +47,7 @@ export class ImageNodeView implements NodeView {
   public readonly contentDOM: HTMLElement | null;
   private readonly figcaption: HTMLElement | null;
 
+  private imgBroken: boolean;
   private resizeUI: ResizeUI | null;
   private sizeOnVisibleTimer?: number;
 
@@ -68,6 +69,7 @@ export class ImageNodeView implements NodeView {
     this.imageAttributes = imageAttributesAvailable(pandocExtensions);
     this.editorUI = editorUI;
     this.resizeUI = null;
+    this.imgBroken = false;
 
     // set node selection on click
     const selectOnClick = () => {
@@ -99,6 +101,12 @@ export class ImageNodeView implements NodeView {
 
     // create the image (used by both image and figure node types)
     this.img = document.createElement('img');
+    this.img.onload = () => {
+      this.imgBroken = false;
+    };
+    this.img.onerror = () => {
+      this.imgBroken = true;
+    };
     this.img.onclick = selectOnClick;
     this.img.ondblclick = editOnDblClick;
 
@@ -290,7 +298,7 @@ export class ImageNodeView implements NodeView {
 
   // attach resize UI if appropriate
   private attachResizeUI() {
-    if (this.imageAttributes && isResizeUICompatible(this.img!)) {
+    if (this.imageAttributes && !this.imgBroken && isResizeUICompatible(this.img!)) {
       const imageNode = () => ({ pos: this.getPos(), node: this.node });
       const imgContainerWidth = () => this.containerWidth();
       this.resizeUI = attachResizeUI(imageNode, this.dom, this.img!, imgContainerWidth, this.view, this.editorUI);

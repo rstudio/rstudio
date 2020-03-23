@@ -288,20 +288,18 @@ public class PanmirrorEditImageDialog extends ModalDialog<PanmirrorImageProps>
          height = heightProp_.toString();
          units = unitsProp_;
       }
-      
-      // if there is no width or height, use pixels
-      else if (widthProp_ == null && heightProp_ == null)
-      {
-         width = dims_.naturalWidth.toString();
-         height = dims_.naturalHeight.toString();
-         units = "px";
-      }
-      
       else if (dims_.naturalHeight != null && dims_.naturalWidth != null)
       {
-         // if there is width only then show computed height
          units = unitsProp_;
-         if (widthProp_ != null)
+         
+         // if there is width only then show computed height
+         if (widthProp_ == null && heightProp_ == null)
+         {
+            width = dims_.naturalWidth.toString();
+            height = dims_.naturalHeight.toString();
+            units = "px";
+         }
+         else if (widthProp_ != null)
          {
             width = widthProp_.toString();
             height = uiTools_.roundUnit(widthProp_ * (dims_.naturalHeight/dims_.naturalWidth), units);
