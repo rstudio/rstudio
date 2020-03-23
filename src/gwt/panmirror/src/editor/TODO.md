@@ -1,8 +1,6 @@
 ## TODO
 
 Incorporate new theme colors (pending)
-
-straight open of visual mode Rmd doesn't show it due to new optimization
  
 consider doing manual html generation for images (to avoid http requests)
 https://stackoverflow.com/questions/7753448/how-do-i-escape-quotes-in-html-attribute-values/9756789#9756789
@@ -30,6 +28,8 @@ Resize shelf (and presumably link popup) can be occulded when inside a table (so
 
 Can still reproduce tables ending up with pipes in them. Insert 3x3, size some columns (leaving empty), and they show up.
 Saw this in gfm mode. Maybe have a mimimum number of spaces for empty cells?
+
+Some mechanism for deferring pandoc work with multiple editor tabs
 
 Discuss tokens / escaping / etc. with Joe
 
