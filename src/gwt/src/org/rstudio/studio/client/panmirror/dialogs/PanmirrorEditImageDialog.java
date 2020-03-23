@@ -173,7 +173,7 @@ public class PanmirrorEditImageDialog extends ModalDialog<PanmirrorImageProps>
       // (i.e. not an insert operation) and there aren't width or height attributes 
       // within props.keyvalue (which is an indicator that they use units unsupported
       // by our sizing UI (e.g. ch, em, etc.)
-      if (editAttributes && dims_ != null && !hasSizeKeyvalue(props.keyvalue))
+      if (editAttributes && dims_ != null && hasNaturalSizes(dims) && !hasSizeKeyvalue(props.keyvalue))
       {
          imageTab.add(sizePanel);
       }
@@ -402,6 +402,11 @@ public class PanmirrorEditImageDialog extends ModalDialog<PanmirrorImageProps>
             return true;
       }
       return false;
+   }
+   
+   private static boolean hasNaturalSizes(PanmirrorImageDimensions dims)
+   {
+      return dims.naturalWidth != null && dims.naturalHeight != null;
    }
    
    // resources
