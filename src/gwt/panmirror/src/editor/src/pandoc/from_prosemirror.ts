@@ -199,7 +199,10 @@ class PandocWriter implements PandocOutput {
       };
       for (let i = 0; i < text.length; i++) {
         const ch = text.charAt(i);
-        if (this.options.writeSpaces && ch === ' ') {
+        if (ch === '\\') {
+          flushTextRun();
+          this.writeRawMarkdown('\\');
+        } else if (this.options.writeSpaces && ch === ' ') {
           flushTextRun();
           this.writeToken(PandocTokenType.Space);
         } else if (
