@@ -63,10 +63,21 @@ public class TextEditingTargetVisualMode
       dirtyState_ = dirtyState;
       docUpdateSentinel_ = docUpdateSentinel;
       
-      // manage ui based on current pref + changes over time
-      manageUI(isActivated(), false);
+      // if we aren't activated then reflect that (if we are activated then this will
+      // be deferred until onSwitchToTab is called)
+      if (!isActivated())
+         manageUI(false, false);
+    
+      // track changes over time
       onDocPropChanged(TextEditingTarget.RMD_VISUAL_MODE, (value) -> {
-         manageUI(isActivated(), true);
+         if (haveSwitchedToDoc_)
+         { 
+            manageUI(isActivated(), true);
+         }
+         else
+         {
+            // defer until we actually switch to the doc
+         }
       });
       
       // sync to outline visible prop
@@ -270,7 +281,22 @@ public class TextEditingTargetVisualMode
    
    public void onSwitchToDoc()
    {
-      syncDevTools();
+      // devtools sync command
+      ScheduledCommand devtoolsCmd = () -> {
+         if (isActivated())
+            syncDevTools();
+      };
+       
+      // manage UI the first time we switch to the doc
+      if (!haveSwitchedToDoc_) 
+      {
+         haveSwitchedToDoc_ = true;
+         manageUI(isActivated(), true, devtoolsCmd);
+      }
+      else 
+      {
+         devtoolsCmd.execute();
+      } 
    }
   
   
@@ -586,6 +612,7 @@ public class TextEditingTargetVisualMode
    private DebouncedCommand syncOnIdle_; 
    private boolean isDirty_ = false;
    private boolean loadingFromSource_ = false;
+   private boolean haveSwitchedToDoc_ = false;
    
    private DebouncedCommand saveLocationOnIdle_;
    
