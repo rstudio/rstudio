@@ -283,10 +283,6 @@ export class Editor {
     // apply default theme
     applyTheme(defaultTheme());
 
-    // apply fixups when the window size changes
-    this.applyFixupsOnResize = this.applyFixupsOnResize.bind(this);
-    window.addEventListener('resize', this.applyFixupsOnResize);
-
     // create pandoc translator
     this.pandocConverter = new PandocConverter(this.schema, this.extensions, context.pandoc);
 
@@ -304,7 +300,6 @@ export class Editor {
   }
 
   public destroy() {
-    document.removeEventListener('resize', this.applyFixupsOnResize);
     this.view.destroy();
   }
 
