@@ -27,9 +27,12 @@ theme_details_map <- list(
    "cobalt" = list(name = "Cobalt", isDark = TRUE),
    "crimson_editor" = list(name = "Crimson Editor", isDark = FALSE),
    "dawn" = list(name = "Dawn", isDark = FALSE),
+   "dracula" = list(name = "Dracula", isDark = TRUE),
    "dreamweaver" = list(name = "Dreamweaver", isDark = FALSE),
    "eclipse" = list(name = "Eclipse", isDark = FALSE),
+   "gob" = list(name = "Gob", isDark = TRUE),
    "idle_fingers" = list(name = "Idle Fingers", isDark = TRUE),
+   "iplastic" = list(name = "iPlastic", isDark = FALSE),
    "katzenmilch" = list(name = "Katzenmilch", isDark = FALSE),
    "kr_theme" = list(name = "Kr Theme", isDark = TRUE),
    "merbivore" = list(name = "Merbivore", isDark = TRUE),
@@ -39,6 +42,7 @@ theme_details_map <- list(
    "pastel_on_dark" = list(name = "Pastel On Dark", isDark = TRUE),
    "solarized_dark" = list(name = "Solarized Dark", isDark = TRUE),
    "solarized_light" = list(name = "Solarized Light", isDark = FALSE),
+   "sqlserver" = list(name = "SQL Server", isDark = FALSE),
    "textmate" = list(name = "Textmate (default)", isDark = FALSE),
    "tomorrow" = list(name = "Tomorrow", isDark = FALSE),
    "tomorrow_night" = list(name = "Tomorrow Night", isDark = TRUE),
@@ -52,8 +56,8 @@ theme_details_map <- list(
 
 ## A set of operator colors to use, for each theme. Should match the name
 ## of the theme file in ace.
-## We need to explicity set themes that should be overridden with the default 
-## vaue to NULL
+## We need to explicitly set themes that should be overridden with the default 
+## value to NULL
 operator_theme_map <- list(
    "solarized_light" = "#93A1A1",
    "solarized_dark" = "#B58900",
@@ -62,6 +66,48 @@ operator_theme_map <- list(
    "clouds_midnight" = "#A53553",
    "cobalt" = "#BED6FF",
    "kr_theme" = "#A56464",
+   "clouds" = NULL,
+   "dawn" = NULL,
+   "eclipse" = NULL,
+   "katzenmilch" = NULL,
+   "merbivore" = NULL,
+   "merbivore_soft" = NULL,
+   "monokai" = NULL,
+   "pastel_on_dark" = NULL,
+   "vibrant_ink" = NULL,
+   "xcode" = NULL,
+   NULL
+)
+
+node_selector_map <- list(
+   "solarized_light" = NULL,
+   "solarized_dark" = NULL,
+   "twilight" = NULL,
+   "idle_fingers" = NULL,
+   "clouds_midnight" = NULL,
+   "cobalt" = NULL,
+   "kr_theme" = NULL,
+   "clouds" = NULL,
+   "dawn" = NULL,
+   "eclipse" = NULL,
+   "katzenmilch" = NULL,
+   "merbivore" = NULL,
+   "merbivore_soft" = NULL,
+   "monokai" = NULL,
+   "pastel_on_dark" = NULL,
+   "vibrant_ink" = NULL,
+   "xcode" = NULL,
+   NULL
+)
+
+comment_bg_map <- list(
+   "solarized_light" = "#FFDDA2",
+   "solarized_dark" = NULL,
+   "twilight" = NULL,
+   "idle_fingers" = NULL,
+   "clouds_midnight" = NULL,
+   "cobalt" = NULL,
+   "kr_theme" = NULL,
    "clouds" = NULL,
    "dawn" = NULL,
    "eclipse" = NULL,
@@ -166,13 +212,17 @@ applyFixups.twilight <- function(content, parsed) {
 applyFixups.vibrant_ink <- applyFixups.tomorrow_night_eighties
 
 ## Get the set of all theme .css files
+aceRoot <- "./rstudio-ace"
 args <- commandArgs(trailingOnly=TRUE)
-if (length(args) != 1)
-{
-   stop("Usage: Rscript compile-themes.R <path-to-git-repositories>")
-}
+if (length(args) >= 1)
+   aceRoot <- args[1]
+
 outDir <- "../../cpp/session/resources/themes"
-themeDir <- file.path(args[1], "ace/lib/ace/theme")
+themeDir <- file.path(aceRoot, "/lib/ace/theme")
+
+if (!file.exists(themeDir))
+   stop("Ace directory not found. Usage: Rscript compile-themes.R <path-to-ace-reposiotry>")
+
 themeFiles <- list.files(
    path = themeDir,
    full.names = TRUE,
@@ -195,7 +245,9 @@ for (themeFile in themeFiles) {
       fileName,
       chunkBgPropOverrideMap = chunk_bg_proportion_map,
       operatorOverrideMap = operator_theme_map,
-      keywordOverrideMap = keyword_theme_map)
+      keywordOverrideMap = keyword_theme_map,
+      nodeSelectorOverrideMap = node_selector_map,
+      commentBgOverrideMap = comment_bg_map)
 
    if (length(content) > 0)
    {
