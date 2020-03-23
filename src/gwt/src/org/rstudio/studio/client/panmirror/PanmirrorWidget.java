@@ -237,14 +237,14 @@ public class PanmirrorWidget extends DockLayoutPanel implements
       });
       
       
-      editorEventUnsubscribe_.add(editor_.subscribe(PanmirrorEvents.Update, () -> {
+      editorEventUnsubscribe_.add(editor_.subscribe(PanmirrorEvent.Update, () -> {
          
          // fire to clients
          DomEvent.fireNativeEvent(Document.get().createChangeEvent(), handlers_);
       
       }));
       
-      editorEventUnsubscribe_.add(editor_.subscribe(PanmirrorEvents.SelectionChange, () -> {
+      editorEventUnsubscribe_.add(editor_.subscribe(PanmirrorEvent.SelectionChange, () -> {
          
          // sync toolbar commands
          if (toolbar_ != null)
@@ -257,7 +257,7 @@ public class PanmirrorWidget extends DockLayoutPanel implements
          SelectionChangeEvent.fire(this);
       }));
       
-      editorEventUnsubscribe_.add(editor_.subscribe(PanmirrorEvents.OutlineChange, () -> {
+      editorEventUnsubscribe_.add(editor_.subscribe(PanmirrorEvent.OutlineChange, () -> {
 
          // sync outline items
          PanmirrorOutlineItem[] outline = editor_.getOutline();

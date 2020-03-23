@@ -1,5 +1,5 @@
 /*
- * PanmirrorEvents.java
+ * PanmirrorEvent.java
  *
  * Copyright (C) 2009-20 by RStudio, PBC
  *
@@ -15,11 +15,12 @@
 
 package org.rstudio.studio.client.panmirror;
 
-public class PanmirrorEvents
+public class PanmirrorEvent
 {
-   public static String Update = "update";
-   public static String OutlineChange = "outlineChange";
-   public static String SelectionChange = "selectionChange";
+   public static String Update = "panmirrorUpdate";
+   public static String OutlineChange = "panmirrorOutlineChange";
+   public static String SelectionChange = "panmirrorSelectionChange";
+   public static String Resize = "panmirrorResize";
 }
 
 

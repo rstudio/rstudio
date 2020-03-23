@@ -40,6 +40,7 @@ import {
   PandocExtensions,
   PandocInlineHTMLReaderFn,
 } from './api/pandoc';
+import { EditorEvents } from './api/events';
 
 // required extensions (base non-customiziable pandoc nodes/marks + core behaviors)
 import nodeText from './nodes/text';
@@ -97,11 +98,12 @@ import { codeMirrorPlugins } from './optional/codemirror/codemirror';
 export function initExtensions(
   options: EditorOptions,
   ui: EditorUI,
+  events: EditorEvents,
   extensions: readonly Extension[] | undefined,
   pandocExtensions: PandocExtensions,
 ): ExtensionManager {
   // create extension manager
-  const manager = new ExtensionManager(pandocExtensions, options, ui);
+  const manager = new ExtensionManager(pandocExtensions, options, ui, events);
 
   // required extensions
   manager.register([
@@ -177,19 +179,21 @@ export class ExtensionManager {
   private pandocExtensions: PandocExtensions;
   private options: EditorOptions;
   private ui: EditorUI;
+  private events: EditorEvents;
   private extensions: Extension[];
 
-  public constructor(pandocExtensions: PandocExtensions, options: EditorOptions, ui: EditorUI) {
+  public constructor(pandocExtensions: PandocExtensions, options: EditorOptions, ui: EditorUI, events: EditorEvents) {
     this.pandocExtensions = pandocExtensions;
     this.options = options;
     this.ui = ui;
+    this.events = events;
     this.extensions = [];
   }
 
   public register(extensions: ReadonlyArray<Extension | ExtensionFn>): void {
     extensions.forEach(extension => {
       if (typeof extension === 'function') {
-        const ext = extension(this.pandocExtensions, this.options, this.ui);
+        const ext = extension(this.pandocExtensions, this.options, this.ui, this.events);
         if (ext) {
           this.extensions.push(ext);
         }

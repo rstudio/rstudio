@@ -39,6 +39,7 @@ import { Extension } from './api/extension';
 import { ExtensionManager, initExtensions } from './extensions';
 import { PandocEngine } from './api/pandoc';
 import { fragmentToHTML } from './api/html';
+import { EditorEvent } from './api/events';
 import {
   PandocFormat,
   resolvePandocFormat,
@@ -109,12 +110,6 @@ export interface EditorHooks {
 
 export interface EditorKeybindings {
   [id: string]: string[];
-}
-
-export enum EditorEvents {
-  Update = 'update',
-  OutlineChange = 'outlineChange',
-  SelectionChange = 'selectionChange',
 }
 
 export interface EditorSelection {
@@ -303,7 +298,7 @@ export class Editor {
     this.view.destroy();
   }
 
-  public subscribe(event: string, handler: VoidFunction): VoidFunction {
+  public subscribe(event: EditorEvent, handler: VoidFunction): VoidFunction {
     if (!this.events.has(event)) {
       const valid = Array.from(this.events.keys()).join(', ');
       throw new Error(`Unknown event ${event}. Valid events are ${valid}`);
@@ -341,9 +336,9 @@ export class Editor {
 
     // notify listeners if requested
     if (emitUpdate) {
-      this.emitEvent(EditorEvents.Update);
-      this.emitEvent(EditorEvents.OutlineChange);
-      this.emitEvent(EditorEvents.SelectionChange);
+      this.emitEvent(EditorEvent.Update);
+      this.emitEvent(EditorEvent.OutlineChange);
+      this.emitEvent(EditorEvent.SelectionChange);
     }
 
     return true;
@@ -429,6 +424,7 @@ export class Editor {
 
   public resize() {
     this.applyFixupsOnResize();
+    this.emitEvent(EditorEvent.Resize);
   }
 
   public enableDevTools(initFn: (view: EditorView, stateClass: any) => void) {
@@ -502,18 +498,18 @@ export class Editor {
     this.view.updateState(this.state);
 
     // notify listeners of selection change
-    this.emitEvent(EditorEvents.SelectionChange);
+    this.emitEvent(EditorEvent.SelectionChange);
 
     // notify listeners of updates
     if (tr.docChanged) {
       // fire updated (unless this was a fixup)
       if (!tr.getMeta(kFixupTransaction)) {
-        this.emitEvent(EditorEvents.Update);
+        this.emitEvent(EditorEvent.Update);
       }
 
       // fire outline changed if necessary
       if (getOutline(this.state) !== previousOutline) {
-        this.emitEvent(EditorEvents.OutlineChange);
+        this.emitEvent(EditorEvent.OutlineChange);
       }
     }
   }
@@ -527,14 +523,21 @@ export class Editor {
 
   private initEvents(): ReadonlyMap<string, Event> {
     const events = new Map<string, Event>();
-    events.set(EditorEvents.Update, new Event(EditorEvents.Update));
-    events.set(EditorEvents.OutlineChange, new Event(EditorEvents.OutlineChange));
-    events.set(EditorEvents.SelectionChange, new Event(EditorEvents.SelectionChange));
+    events.set(EditorEvent.Update, new Event(EditorEvent.Update));
+    events.set(EditorEvent.OutlineChange, new Event(EditorEvent.OutlineChange));
+    events.set(EditorEvent.SelectionChange, new Event(EditorEvent.SelectionChange));
+    events.set(EditorEvent.Resize, new Event(EditorEvent.Resize));
     return events;
   }
 
   private initExtensions() {
-    return initExtensions(this.options, this.context.ui, this.context.extensions, this.pandocFormat.extensions);
+    return initExtensions(
+      this.options, 
+      this.context.ui, 
+      { subscribe: this.subscribe.bind(this) }, 
+      this.context.extensions, 
+      this.pandocFormat.extensions
+    );
   }
 
   private initSchema(): Schema {

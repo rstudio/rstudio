@@ -22,6 +22,7 @@ import { EditorUI } from '../../api/ui';
 import { BaseKey } from '../../api/basekeys';
 import { exitNode } from '../../api/command';
 import { EditorOptions } from '../../api/options';
+import { EditorEvents } from '../../api/events';
 
 import { isSingleLineHTML } from '../../api/html';
 import { PandocToken, PandocTokenType, ProsemirrorWriter, PandocExtensions, kRawBlockContent, kRawBlockFormat, imageAttributesAvailable } from '../../api/pandoc';
@@ -42,7 +43,7 @@ import './figure-styles.css';
 
 const plugin = new PluginKey('figure');
 
-const extension = (pandocExtensions: PandocExtensions, options: EditorOptions, ui: EditorUI): Extension | null => {
+const extension = (pandocExtensions: PandocExtensions, options: EditorOptions, ui: EditorUI, events: EditorEvents) : Extension | null => {
 
   const imageAttr = imageAttributesAvailable(pandocExtensions);
 
@@ -126,7 +127,7 @@ const extension = (pandocExtensions: PandocExtensions, options: EditorOptions, u
           props: {
             nodeViews: {
               figure(node: ProsemirrorNode, view: EditorView, getPos: boolean | (() => number)) {
-                return new ImageNodeView(node, view, getPos as () => number, ui, pandocExtensions);
+                return new ImageNodeView(node, view, getPos as () => number, ui, events, pandocExtensions);
               },
             },
           },

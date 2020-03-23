@@ -35,6 +35,7 @@ import { EditorUI } from '../../api/ui';
 import { ImageDimensions } from '../../api/image';
 import { nodeToHTML } from '../../api/html';
 import { EditorOptions } from '../../api/options';
+import { EditorEvents } from '../../api/events';
 
 import { imageDialog } from './image-dialog';
 import { imageDrop } from './image-events';
@@ -50,7 +51,7 @@ const IMAGE_TARGET = 2;
 
 const plugin = new PluginKey('image');
 
-const extension = (pandocExtensions: PandocExtensions, options: EditorOptions, ui: EditorUI): Extension => {
+const extension = (pandocExtensions: PandocExtensions, _options: EditorOptions, ui: EditorUI, events: EditorEvents): Extension => {
 
   const imageAttr = imageAttributesAvailable(pandocExtensions);
 
@@ -99,7 +100,7 @@ const extension = (pandocExtensions: PandocExtensions, options: EditorOptions, u
           props: {
             nodeViews: {
               image(node: ProsemirrorNode, view: EditorView, getPos: boolean | (() => number)) {
-                return new ImageNodeView(node, view, getPos as () => number, ui, pandocExtensions);
+                return new ImageNodeView(node, view, getPos as () => number, ui, events, pandocExtensions);
               },
             },
             handleDOMEvents: {

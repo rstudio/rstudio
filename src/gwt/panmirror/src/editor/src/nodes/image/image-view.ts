@@ -20,6 +20,7 @@ import { NodeSelection } from 'prosemirror-state';
 import { EditorUI, ImageType } from '../../api/ui';
 import { PandocExtensions, imageAttributesAvailable } from '../../api/pandoc';
 import { isElementVisible } from '../../api/dom';
+import { EditorEvents, EditorEvent } from '../../api/events';
 
 import { imageDialog } from './image-dialog';
 import {
@@ -33,29 +34,37 @@ import { imageDimensionsFromImg, imageContainerWidth } from './image-util';
 
 import './image-styles.css';
 
-export class ImageNodeView implements NodeView {
-  private readonly type: ImageType;
 
+export class ImageNodeView implements NodeView {
+  
+  // ProseMirror context
+  private readonly type: ImageType;
   private node: ProsemirrorNode;
   private readonly view: EditorView;
   private readonly getPos: () => number;
   private readonly editorUI: EditorUI;
   private readonly imageAttributes: boolean;
 
+  // DOM elements
   public readonly dom: HTMLElement;
   private readonly img: HTMLImageElement;
   public readonly contentDOM: HTMLElement | null;
   private readonly figcaption: HTMLElement | null;
 
+  // transient state
   private imgBroken: boolean;
+ 
+  // things to clean up
   private resizeUI: ResizeUI | null;
   private sizeOnVisibleTimer?: number;
+  private unregisterOnResize: VoidFunction;
 
   constructor(
     node: ProsemirrorNode,
     view: EditorView,
     getPos: () => number,
     editorUI: EditorUI,
+    editorEvents: EditorEvents,
     pandocExtensions: PandocExtensions,
   ) {
     // determine type
@@ -166,9 +175,15 @@ export class ImageNodeView implements NodeView {
 
     // update image size when the image first becomes visible
     this.updateSizeOnVisible();
+
+    // update image size whenever the container is resized
+    this.unregisterOnResize = editorEvents.subscribe(EditorEvent.Resize, () => {
+      this.updateImageSize();
+    });
   }
 
   public destroy() {
+    this.unregisterOnResize();
     this.clearSizeOnVisibleTimer();
   }
 

@@ -150,19 +150,6 @@ export function attachResizeUI(
     updateImageNodeFromShelf();
   };
 
-  // monitor container width and update image if it's using percent sizing
-  let lastContainerWidth = imgContainerWidth();
-  const containerWidthTimer = setInterval(() => {
-    const containerWidth = imgContainerWidth();
-    if (containerWidth !== lastContainerWidth) {
-      lastContainerWidth = containerWidth;
-      if (shelf.props.units() === kPercentUnit) {
-        img.style.width = unitToPixels(shelf.props.width(), shelf.props.units(), containerWidth) + kPixelUnit;
-        shelf.position();
-      }
-    }
-  }, 25);
-
   // handle editImage request from shelf
   const onEditImage = () => {
     const nodeWithPos = imageNode();
@@ -209,7 +196,6 @@ export function attachResizeUI(
     },
     detach: () => {
       container.classList.remove('pm-image-resize-active');
-      clearInterval(containerWidthTimer);
       handle.remove();
       shelf.el.remove();
     },
