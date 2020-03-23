@@ -135,7 +135,9 @@ export class ImageNodeView implements NodeView {
 
       // if there is no support for implicit_figures then hide the caption
       if (!pandocExtensions.implicit_figures) {
-        this.figcaption.style.display = 'none';
+        this.figcaption.style.height = '0';
+        this.figcaption.style.minHeight = '0';
+        this.figcaption.style.margin = '0';
       }
 
       // standard inline image
