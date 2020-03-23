@@ -2382,8 +2382,10 @@ public class TextEditingTarget implements
       
       view_.onActivate();
       
-      if (visualMode_ != null)
+      if (visualMode_ != null && visualMode_.isActivated())
+      {
          visualMode_.onSwitchToDoc();
+      }
          
    }
 
@@ -2413,11 +2415,6 @@ public class TextEditingTarget implements
    public void onInitiallyLoaded()
    {
       checkForExternalEdit();
-      
-      Scheduler.get().scheduleDeferred(() -> {
-         if (visualMode_ != null)
-            visualMode_.onSwitchToDoc();
-      });
    }
 
    public boolean onBeforeDismiss()
