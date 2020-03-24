@@ -1,7 +1,7 @@
 /*
  * RGraphicsUtils.cpp
  *
- * Copyright (C) 2009-19 by RStudio, PBC
+ * Copyright (C) 2009-20 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -17,9 +17,10 @@
 
 #include <boost/format.hpp>
 
+#include <shared_core/Error.hpp>
+
 #include <core/Algorithm.hpp>
 #include <core/Log.hpp>
-#include <shared_core/Error.hpp>
 
 #include <r/RExec.hpp>
 #include <r/ROptions.hpp>
@@ -29,6 +30,8 @@
 #define R_USE_PROTOTYPES 1
 #include <R_ext/GraphicsEngine.h>
 #include <R_ext/GraphicsDevice.h>
+
+#include <r/session/RGraphicsConstants.h>
 
 #include <r/RErrorCategory.hpp>
 
@@ -153,26 +156,33 @@ std::string extraBitmapParams()
 {
    std::vector<std::string> params;
    
-   std::string type = r::options::getOption<std::string>("RStudioGD.type", "default", false);
+   std::string backend = r::options::getOption<std::string>(
+            kGraphicsOptionBackend,
+            "default",
+            false);
    
 #ifndef __APPLE__
    // silently ignore 'quartz' on non-macOS platforms
    // (assume this would arise if one copied UI prefs across different machines)
-   if (type == "quartz")
-      type = "default";
+   if (backend == "quartz")
+      backend = "default";
 #endif
    
 #ifndef _WIN32
    // silently ignore 'windows' on non-Windows platforms
    // (assume this would arise if one copied UI prefs across different machines)
-   if (type == "windows")
-      type = "default";
+   if (backend == "windows")
+      backend = "default";
 #endif
    
-   if (type != "default")
-      params.push_back("type = \"" + type + "\"");
+   if (backend != "default")
+      params.push_back("type = \"" + backend + "\"");
    
-   std::string antialias = r::options::getOption<std::string>("RStudioGD.antialias", "default", false);
+   std::string antialias = r::options::getOption<std::string>(
+            kGraphicsOptionAntialias,
+            "default",
+            false);
+
    if (antialias != "default")
       params.push_back("antialias = \"" + antialias + "\"");
    

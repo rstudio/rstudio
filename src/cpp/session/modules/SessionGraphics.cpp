@@ -21,6 +21,8 @@
 #include <r/RJson.hpp>
 #include <r/ROptions.hpp>
 
+#include <r/session/RGraphicsConstants.h>
+
 #include <session/prefs/UserPrefs.hpp>
 #include <session/SessionModuleContext.hpp>
 
@@ -36,11 +38,11 @@ namespace {
 void onPreferencesSaved()
 {
    r::options::setOption(
-            "RStudioGD.backend",
+            kGraphicsOptionBackend,
             prefs::userPrefs().graphicsBackend());
    
    r::options::setOption(
-            "RStudioGD.antialias",
+            kGraphicsOptionAntialias,
             prefs::userPrefs().graphicsAntialiasing());
 }
 
