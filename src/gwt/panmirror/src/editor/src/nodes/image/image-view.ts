@@ -185,6 +185,7 @@ export class ImageNodeView implements NodeView {
   public destroy() {
     this.unregisterOnResize();
     this.clearSizeOnVisibleTimer();
+    this.detachResizeUI();
   }
 
   public selectNode() {
@@ -206,10 +207,7 @@ export class ImageNodeView implements NodeView {
     }
 
     // remove resize UI
-    if (this.resizeUI) {
-      this.resizeUI.detach();
-      this.resizeUI = null;
-    }
+    this.detachResizeUI();
   }
 
   // update image with latest node/attributes
@@ -290,6 +288,13 @@ export class ImageNodeView implements NodeView {
       const imageNode = () => ({ pos: this.getPos(), node: this.node });
       const imgContainerWidth = () => this.containerWidth();
       this.resizeUI = attachResizeUI(imageNode, this.dom, this.img!, imgContainerWidth, this.view, this.editorUI);
+    }
+  }
+
+  private detachResizeUI() {
+    if (this.resizeUI) {
+      this.resizeUI.detach();
+      this.resizeUI = null;
     }
   }
 
