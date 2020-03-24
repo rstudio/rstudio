@@ -1002,17 +1002,27 @@ private:
             matchOffs.push_back(matchOff);
             replaceMatchOns.push_back(replaceMatchOn);
             replaceMatchOffs.push_back(replaceMatchOff);
-            for (std::string newError : errorMessage)
-               errors.push_back(json::Value(newError));
+            json::Array combinedErrors = json::toJsonArray(errorMessage);
+            errors.push_back(combinedErrors);
             recordsToProcess--;
          }
       }
+      // when doing a replace, we haven't completed the replace for the last file here
       if (findResults().replace() && !currentFile_.empty() && !findResults().preview())
       {
          std::set<std::string> errorMessage;
          completeFileReplace(&errorMessage);
-         for (std::string newError : errorMessage)
-            errors.push_back(json::Value(newError));
+
+         // it is unlikely there will be any errors if we've made it this far,
+         // but if so we must add them to the last array in errors
+         // if there is an error, there will only be one
+         if (!errorMessage.empty())
+         {
+            json::Array lastErrors = errors.getBack().getArray();
+            errors.erase(errors.end());
+            lastErrors.push_back(json::Value(*errorMessage.begin()));
+            errors.push_back(lastErrors);
+         }
       }
 
       if (nextLineStart)
