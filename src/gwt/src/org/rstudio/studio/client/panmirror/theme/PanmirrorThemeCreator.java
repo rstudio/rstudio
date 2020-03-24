@@ -37,15 +37,16 @@ public class PanmirrorThemeCreator
       selectionBkgdClasses.push("ace_marker-layer");
       selectionBkgdClasses.push("ace_selection");
       theme.selectionColor = DomUtils.extractCssValue(selectionBkgdClasses, "backgroundColor");
-      
-      // node selection is always the same -- we need something a bit stronger/darker than the
-      // standard text selection color. tried using linkTextColor which is okay for dark themes
-      // but too strong for light themes. currently, the library does in fact use linkTextColor
-      // for dark themes then this hard coded value for all light themes.
-      theme.nodeSelectionColor = "rgb(102,155,243)";
-      
       theme.backgroundColor = DomUtils.extractCssValue("ace_editor", "backgroundColor");
       theme.metadataBackgroundColor = theme.backgroundColor;
+      
+      // this code doesn't currently seem to successfully extract color values (we end up w/ rgba(0,0,0,0))
+      theme.nodeSelectionColor = DomUtils.extractCssValue("ace_node-selector", "backgroundColor");
+      theme.commentBackgroundColor = DomUtils.extractCssValue("ace_comment-highlight", "backgroundColor");
+      
+      // ....so hard code default values for the time being
+      theme.nodeSelectionColor = "rgb(102,155,243)";
+      theme.commentBackgroundColor = "rgb(254, 155, 243)";
       
       JsArrayString regionBkgdClasses = JsArrayString.createArray().cast();
       regionBkgdClasses.push("ace_marker-layer");

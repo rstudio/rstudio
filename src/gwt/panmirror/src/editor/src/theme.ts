@@ -22,6 +22,7 @@ export interface EditorTheme {
   chunkBackgroundColor: string;
   spanBackgroundColor: string;
   divBackgroundColor: string;
+  commentBackgroundColor: string;
   gutterBackgroundColor: string;
   gutterTextColor: string;
   textColor: string;
@@ -70,6 +71,7 @@ export function defaultTheme(): EditorTheme {
     chunkBackgroundColor: 'rgb(251,251,251)',
     spanBackgroundColor: '#fff8dc',
     divBackgroundColor: 'rgb(236, 249, 250)',
+    commentBackgroundColor: 'rgb(254, 155, 243)',
     gutterBackgroundColor: '#f0f0f0',
     gutterTextColor: '#333',
     textColor: 'black',
@@ -138,6 +140,9 @@ export function applyTheme(theme: EditorTheme) {
     }
     .pm-div-background-color {
       background-color: ${theme.divBackgroundColor} !important;
+    }
+    .pm-comment-background-color {
+      background-color: ${theme.commentBackgroundColor} !important;
     }
     .pm-text-color {
       color: ${theme.textColor} !important;
