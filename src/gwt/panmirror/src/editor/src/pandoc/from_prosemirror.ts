@@ -199,13 +199,12 @@ class PandocWriter implements PandocOutput {
       };
       for (let i = 0; i < text.length; i++) {
         const ch = text.charAt(i);
-        if (ch === '\\') {
-          flushTextRun();
-          this.writeRawMarkdown('\\');
-        } else if (this.options.writeSpaces && ch === ' ') {
+        if (this.options.writeSpaces && ch === ' ') {
           flushTextRun();
           this.writeToken(PandocTokenType.Space);
         } else if (
+          // disable \ escaping (we use it for inline latex)
+          (ch === '\\') ||
           // disable [] escaping for gfm (allows for MediaWiki extensions in GitHub wikis)
           (this.format.baseName === 'gfm' && ['[', ']'].includes(ch)) ||
           // disable []() escaping in tex_math_single_backslash
