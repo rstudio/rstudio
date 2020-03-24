@@ -33,7 +33,7 @@ import {
 } from '../../api/pandoc';
 import { EditorUI } from '../../api/ui';
 import { ImageDimensions } from '../../api/image';
-import { nodeToHTML } from '../../api/html';
+import { asHTMLTag } from '../../api/html';
 import { EditorOptions } from '../../api/options';
 import { EditorEvents } from '../../api/events';
 
@@ -169,20 +169,8 @@ export function imagePandocOutputWriter(figure: boolean, ui: EditorUI) {
     // if we do, then substitute a raw html writer
     if (writeHTML) {
       writer = () => {
-        // create a new node to use for conversion (always an image so we don't serialize <figure>)
-        const schema = node.type.schema;
-        node = schema.nodes.image.create(node.attrs);
-        
-        // generate html (map image src and back b/c the browser will attempt to fetch the
-        // image as part of constructing the DOM)
-        const src = node.attrs.src;
-        node.attrs.src = ui.context.mapResourcePath(src);
-        let html = nodeToHTML(node.type.schema, node);
-        if (node.attrs.src !== src) {
-          html = html.replace("&amp;", "&").replace(node.attrs.src, src);
-        }
-        
-        // write the html
+        const imgAttr = imageDOMAttributes(node, true);
+        const html = asHTMLTag('img', imgAttr, true);
         output.writeRawMarkdown(html);
       };
     }
@@ -213,7 +201,13 @@ function imageInlineHTMLReader(schema: Schema, html: string, writer: Prosemirror
 }
 
 export function imageDOMOutputSpec(node: ProsemirrorNode, imageAttributes: boolean): DOMOutputSpec {
-  
+  return [
+    'img',
+    imageDOMAttributes(node, imageAttributes)
+  ];
+}
+
+export function imageDOMAttributes(node: ProsemirrorNode, imageAttributes: boolean) : { [key: string]: string } {
   const attr: { [key: string]: string } = {
     src: node.attrs.src
   };
@@ -226,13 +220,11 @@ export function imageDOMOutputSpec(node: ProsemirrorNode, imageAttributes: boole
     attr.alt = alt;
   }
   
-  return [
-    'img',
-    {
-      ...attr,
-      ...(imageAttributes ? pandocAttrToDomAttr(node.attrs) : {}),
-    },
-  ];
+  return {
+    ...attr,
+    ...(imageAttributes ? pandocAttrToDomAttr(node.attrs) : {}),
+  };
+  
 }
 
 export function imageNodeAttrsSpec(imageAttributes: boolean) {
