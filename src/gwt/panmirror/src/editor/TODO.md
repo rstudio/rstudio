@@ -24,14 +24,15 @@ function quoteattr(s, preserveCR) {
 }
 ```
 
-Resize shelf (and presumably link popup) can be occulded when inside a table. Change this UI 
-to use absolute positioning within the editing root node (editingRootNodeClosestToPos).
-
 
 Can still reproduce tables ending up with pipes in them. Insert 3x3, size some columns (leaving empty), and they show up.
 Saw this in gfm mode. Maybe have a mimimum number of spaces for empty cells?
 
+Multiple 'working' messages at startup, consolidate (or get rid of working or make it 5000ms)
+
 Some mechanism for deferring pandoc work with multiple editor tabs
+
+Consider moving widgets to React now that they are outside the PM dom.
 
 Discuss tokens / escaping / etc. with Joe. HTML must be inserted manually. Backslashes need to
 be escaped (already wrote the code to do this.). Math bears more discussion.....
@@ -40,8 +41,12 @@ Images that link to things need to be supported. Currently a "figure" with a sur
 because figures can't have links, we should reflect this. I believe that the editor currently handles this fine, but our 
 pandoc serialization currently does not.
 
-Clipboard / DragDrop support for images (note we should only accept
-local images within our resource dir)
+Clipboard / DragDrop support for images (note we should only accept local images within our resource dir)
+Drag/Drop doesn't currently create a figure. I wonder if we should always transform to figure as soon as we 
+are standalone in a paragraph. Check whether image serialization works in gfm for images dragged into 'figure' position
+(we may have removed some code that did this)
+
+
 Paste image handler for RStudio IDE
 
 Pandoc allows for list items to start with a block, but our schema follows ProseMirror in requiring a paragraph
