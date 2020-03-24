@@ -31,7 +31,7 @@ public class PromiseWithProgress<V>
 { 
    public PromiseWithProgress(Promise<V> promise, V errorVal, CommandWithArg<V> completed)
    {
-      this(promise, errorVal, 500, completed);
+      this(promise, errorVal, 2000, completed);
    }
    
    public PromiseWithProgress(Promise<V> promise, V errorVal, int delayMs, CommandWithArg<V> completed)
