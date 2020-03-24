@@ -168,6 +168,7 @@ export function attachResizeUI(
   // create resize shelf
   const shelf = resizeShelf(
     view,
+    container,
     img,
     onInitShelf,
     onWidthChanged,
@@ -176,7 +177,6 @@ export function attachResizeUI(
     onEditImage,
     ui.context.translateText,
   );
-  container.append(shelf.el);
 
   // create resize handle and add it to the container
   const handle = resizeHandle(
@@ -197,13 +197,14 @@ export function attachResizeUI(
     detach: () => {
       container.classList.remove('pm-image-resize-active');
       handle.remove();
-      shelf.el.remove();
+      shelf.remove();
     },
   };
 }
 
 function resizeShelf(
   view: EditorView,
+  container: HTMLElement,
   img: HTMLImageElement,
   onInit: () => void,
   onWidthChanged: () => void,
@@ -215,33 +216,30 @@ function resizeShelf(
   // create resize shelf
   const shelf = createPopup(view, []);
 
+  // add the shelf to the editor container (so we don't mutate the editor dom)
+  const editorContainer = view.dom.parentNode as HTMLElement;
+  editorContainer.appendChild(shelf);
+
   // update shelf absolute position to make sure it's visible
   const updatePosition = () => {
     const kShelfRequiredSize = 333;
-    const editingNode = editingRootNode(view.state.selection);
-    const editingEl = view.domAtPos(editingNode!.pos + 1).node as HTMLElement;
-    const editingBox = editingEl.getBoundingClientRect();
-    const imageBox = img.getBoundingClientRect();
-    const positionLeft = imageBox.left + kShelfRequiredSize < editingBox.right;
+    const editorBox = editorContainer.getBoundingClientRect();
+    const imageBox = container.getBoundingClientRect();
+    shelf.style.top = (imageBox.top - editorBox.top) + imageBox.height + 6 + 'px';
+    const positionLeft = imageBox.left + kShelfRequiredSize < editorBox.right;
     if (positionLeft) {
-      shelf.style.left = '0';
-      if (img.offsetWidth < kShelfRequiredSize) {
-        shelf.style.right = img.offsetWidth - kShelfRequiredSize + kPixelUnit;
-      } else {
-        shelf.style.right = '';
-      }
+      shelf.style.right = '';
+      shelf.style.left = (imageBox.left - editorBox.left) + 'px';
     } else {
-      shelf.style.right = '0';
-      if (img.offsetWidth < kShelfRequiredSize) {
-        shelf.style.left = img.offsetWidth - kShelfRequiredSize + kPixelUnit;
-      } else {
-        shelf.style.left = '';
-      }
+      shelf.style.left = '';
+      shelf.style.right = (editorBox.right - imageBox.right) + 'px';
     }
   };
 
-  // always position below
-  shelf.style.bottom = '-48px';
+  // detect when the editing root note scrolls and update the position
+  const editingNode = editingRootNode(view.state.selection)!;
+  const editingEl = view.domAtPos(editingNode.pos! + 1).node as HTMLElement;
+  editingEl.addEventListener('scroll', updatePosition);
 
   // main panel that holds the controls
   const panel = createHorizontalPanel();
@@ -369,6 +367,11 @@ function resizeShelf(
 
     position: () => {
       updatePosition();
+    },
+
+    remove: () => {
+      editingEl.removeEventListener('scroll', updatePosition);
+      shelf.remove();
     },
 
     props: {

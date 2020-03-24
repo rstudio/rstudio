@@ -241,36 +241,7 @@ export class ImageNodeView implements NodeView {
 
   // ignore mutations outside of the content dom so sizing actions don't cause PM re-render
   public ignoreMutation(mutation: MutationRecord | { type: 'selection'; target: Element }) {
-
-    // always ignore if we have no contentDOM
-    if (!this.contentDOM) {
-      return true;
-    }
-
-    // always ignore mutations of the image
-    if (mutation.target === this.img) {
-      return true;
-    }
-
-    // ignore any changes inside the contentDOM
-    return !this.contentDOM.contains(mutation.target);
-  }
-
-  // prevent bubbling of events into editor
-  public stopEvent(event: Event) {
-    // allow drag events if they target the image (otherwise mouse events
-    // on the shelf can end up bubbling up)
-    if (event instanceof DragEvent && event.target instanceof HTMLImageElement) {
-      return false;
-    }
-
-    // filter other events that target our element or it's children
-    if (event.target instanceof HTMLElement) {
-      const stop = this.dom === event.target || this.dom.contains(event.target as HTMLElement);
-      return stop;
-    } else {
-      return false;
-    }
+    return !this.contentDOM || !this.contentDOM.contains(mutation.target);
   }
 
   // map node to img tag
