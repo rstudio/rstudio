@@ -1,6 +1,4 @@
 ## TODO
-
-Incorporate new theme colors (pending)
  
 consider doing manual html generation for images (to avoid http requests)
 https://stackoverflow.com/questions/7753448/how-do-i-escape-quotes-in-html-attribute-values/9756789#9756789
@@ -25,9 +23,6 @@ function quoteattr(s, preserveCR) {
 ```
 
 
-Can still reproduce tables ending up with pipes in them. Insert 3x3, size some columns (leaving empty), and they show up.
-Saw this in gfm mode. Maybe have a mimimum number of spaces for empty cells?
-
 Multiple 'working' messages at startup, consolidate (or get rid of working or make it 5000ms)
 
 Some mechanism for deferring pandoc work with multiple editor tabs
@@ -45,7 +40,6 @@ Clipboard / DragDrop support for images (note we should only accept local images
 Drag/Drop doesn't currently create a figure. I wonder if we should always transform to figure as soon as we 
 are standalone in a paragraph. Check whether image serialization works in gfm for images dragged into 'figure' position
 (we may have removed some code that did this)
-
 
 Paste image handler for RStudio IDE
 
