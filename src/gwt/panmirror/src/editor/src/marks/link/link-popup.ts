@@ -61,7 +61,7 @@ export class LinkPopupPlugin extends Plugin<DecorationSet> {
           const range = getMarkRange(selection.$from, schema.marks.link);
           if (range) {
             // get link attrs
-            const attrs = getMarkAttrs(editorView.state.doc, range, schema.marks.link) as LinkProps;
+            const attrs = getMarkAttrs(newState.doc, range, schema.marks.link) as LinkProps;
 
             // we may create a ClipboardJS instance. if we do then clean it up
             // when the popup id destroyed
@@ -87,7 +87,7 @@ export class LinkPopupPlugin extends Plugin<DecorationSet> {
             };
 
             // link
-            const text = attrs.heading ? attrs.heading! : attrs.href;
+            const text = attrs.heading ? attrs.heading : attrs.href;
             const link = createLinkButton(text, attrs.title, kMaxLinkWidth);
             link.onclick = () => {
               editorView.focus();
