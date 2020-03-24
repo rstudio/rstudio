@@ -151,7 +151,7 @@ export function writePandocTableHeaderNodes(output: PandocOutput, node: Prosemir
       // write a paragraph containing a space (this is an attempt to fix an issue where
       // empty headers don't get correct round-tripping)
       output.writeToken(PandocTokenType.Para, () => {
-        output.writeToken(PandocTokenType.Space);
+        output.writeRawMarkdown(' ');
       });
     }
   });
