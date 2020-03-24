@@ -16,7 +16,6 @@
 package org.rstudio.core.client.promise;
 
 import org.rstudio.core.client.CommandWithArg;
-import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.GlobalProgressDelayer;
@@ -29,11 +28,6 @@ import elemental2.promise.IThenable.ThenOnRejectedCallbackFn;
 
 public class PromiseWithProgress<V>
 { 
-   public PromiseWithProgress(Promise<V> promise, V errorVal, CommandWithArg<V> completed)
-   {
-      this(promise, errorVal, 2000, completed);
-   }
-   
    public PromiseWithProgress(Promise<V> promise, V errorVal, int delayMs, CommandWithArg<V> completed)
    {
       this(promise, "Working...", errorVal, delayMs, completed);
@@ -43,14 +37,14 @@ public class PromiseWithProgress<V>
    {
       // setup progress
       GlobalDisplay globalDisplay = RStudioGinjector.INSTANCE.getGlobalDisplay();
-      ProgressIndicator indicator = new GlobalProgressDelayer(globalDisplay, delayMs, progress).getIndicator();
+      GlobalProgressDelayer progressDelayer = new GlobalProgressDelayer(globalDisplay, delayMs, progress);
       
       // execute the promise
       promise.then(new ThenOnFulfilledCallbackFn<V,V>() {
          @Override
          public IThenable<V> onInvoke(V v)
          {
-            indicator.onCompleted();
+            progressDelayer.dismiss();
             completed.execute(v);
             return null;
            
@@ -60,7 +54,8 @@ public class PromiseWithProgress<V>
          @Override
          public IThenable<V> onInvoke(Object error)
          {
-            indicator.onError(error.toString());
+            progressDelayer.dismiss();
+            globalDisplay.showErrorMessage("Error", error.toString());
             completed.execute(errorVal);
             return null;
          }
