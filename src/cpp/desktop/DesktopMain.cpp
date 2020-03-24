@@ -659,6 +659,14 @@ int main(int argc, char* argv[])
 #endif
 
 #endif
+
+#ifdef Q_OS_WIN32
+# if QT_VERSION > QT_VERSION_CHECK(5, 12, 0)
+      // allow AltGr key to be recognized separately on Windows
+      arguments.push_back("-platform");
+      arguments.push_back("windows:altgr");
+# endif
+#endif
       
       // allow users to supply extra command-line arguments
       augmentCommandLineArguments(&arguments);
