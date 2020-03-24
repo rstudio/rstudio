@@ -17,6 +17,7 @@
 
 #include <boost/format.hpp>
 
+#include <core/Algorithm.hpp>
 #include <core/Log.hpp>
 #include <shared_core/Error.hpp>
 
@@ -150,29 +151,28 @@ bool validateRequirements(std::string* pMessage)
 
 std::string extraBitmapParams()
 {
-#if defined(_WIN32)
-
-   // no extra params for windows
-
-#elif defined(__APPLE__)
-
-   return ", type = \"quartz\", antialias=\"default\"";
-
-#else
-
-   // if bitmapType is Xlib then force cairo if we can
-   if (r::options::getOption<std::string>("bitmapType") == "Xlib")
-   {
-      if (r::util::hasRequiredVersion("2.14") &&
-          r::util::hasCapability("cairo"))
-      {
-         return ", type = \"cairo\"";
-      }
-   }
-
+   std::vector<std::string> params;
+   
+   std::string type = r::options::getOption<std::string>("RStudioGD.type", "default", false);
+   
+#ifndef __APPLE__
+   // silently ignore 'quartz' on non-macOS platforms
+   // (assume this would arise if one copied UI prefs across different machines)
+   if (type == "quartz")
+      type = "default";
 #endif
-
-   return "";
+   
+   if (type != "default")
+      params.push_back("type = \"" + type + "\"");
+   
+   std::string antialias = r::options::getOption<std::string>("RStudioGD.antialias", "default", false);
+   if (antialias != "default")
+      params.push_back("antialias = \"" + antialias + "\"");
+   
+   if (params.empty())
+      return "";
+   
+   return ", " + core::algorithm::join(params, ", ");
 }
 
 struct RestorePreviousGraphicsDeviceScope::Impl

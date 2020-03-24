@@ -134,6 +134,7 @@
 #include "modules/SessionErrors.hpp"
 #include "modules/SessionFiles.hpp"
 #include "modules/SessionFind.hpp"
+#include "modules/SessionGraphics.hpp"
 #include "modules/SessionDependencies.hpp"
 #include "modules/SessionDependencyList.hpp"
 #include "modules/SessionDirty.hpp"
@@ -578,6 +579,7 @@ Error rInit(const rstudio::r::session::RInitInfo& rInitInfo)
       (modules::terminal::initialize)
       (modules::config_file::initialize)
       (modules::tutorial::initialize)
+      (modules::graphics::initialize)
 
       // workers
       (workers::web_request::initialize)

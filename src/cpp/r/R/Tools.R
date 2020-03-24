@@ -1093,3 +1093,9 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
       options(HTTPUserAgent = newAgent)
    }
 })
+
+.rs.addFunction("hasCapability", function(what)
+{
+   cap <- capabilities(what)
+   length(cap) && cap
+})
