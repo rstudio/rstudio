@@ -162,6 +162,13 @@ std::string extraBitmapParams()
       type = "default";
 #endif
    
+#ifndef _WIN32
+   // silently ignore 'windows' on non-Windows platforms
+   // (assume this would arise if one copied UI prefs across different machines)
+   if (type == "windows")
+      type = "default";
+#endif
+   
    if (type != "default")
       params.push_back("type = \"" + type + "\"");
    
