@@ -1,30 +1,5 @@
 ## TODO
  
-consider doing manual html generation for images (to avoid http requests)
-https://stackoverflow.com/questions/7753448/how-do-i-escape-quotes-in-html-attribute-values/9756789#9756789
-```js
-function quoteattr(s, preserveCR) {
-    preserveCR = preserveCR ? '&#13;' : '\n';
-    return ('' + s) /* Forces the conversion to string. */
-        .replace(/&/g, '&amp;') /* This MUST be the 1st replacement. */
-        .replace(/'/g, '&apos;') /* The 4 other predefined entities, required. */
-        .replace(/"/g, '&quot;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        /*
-        You may add other replacements here for HTML only 
-        (but it's not necessary).
-        Or for XML, only if the named entities are defined in its DTD.
-        */ 
-        .replace(/\r\n/g, preserveCR) /* Must be before the next replacement. */
-        .replace(/[\r\n]/g, preserveCR);
-        ;
-}
-```
-
-
-Multiple 'working' messages at startup, consolidate (or get rid of working or make it 5000ms)
-
 Some mechanism for deferring pandoc work with multiple editor tabs
 
 Consider moving widgets to React now that they are outside the PM dom.
