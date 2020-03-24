@@ -149,40 +149,42 @@ public class TextEditingTargetVisualMode
    
    public void syncFromEditor(Command ready, boolean focus)
    {      
-      
       loadingFromSource_ = true;
-      panmirror_.setMarkdown(getEditorCode(), true, (done) -> {  
-             
-         // activate editor
-         if (ready != null)
-            ready.execute();
+      withPanmirror(() -> {
          
-         isDirty_ = false;
-         loadingFromSource_ = false;
-       
-         // restore selection if we have one
-         Scheduler.get().scheduleDeferred(() -> {
+         panmirror_.setMarkdown(getEditorCode(), true, (done) -> {  
             
-            // restore saved location
-            PanmirrorEditingLocation location = savedEditingLocation();
-            if (location != null)
-               panmirror_.restoreEditingLocation(location);
+            // activate editor
+            if (ready != null)
+               ready.execute();
             
-            if (focus)
-              panmirror_.focus();
-            
-            // show any format or extension warnings
-            PanmirrorPandocFormat format = panmirror_.getPandocFormat();
-            if (format.warnings.invalidFormat.length() > 0)
-            {
-               display_.showWarningBar("Invalid Pandoc format: " + format.warnings.invalidFormat);
-            }
-            else if (format.warnings.invalidOptions.length > 0)
-            {
-               display_.showWarningBar("Pandoc format " + format.baseName + " does not support options: " + 
-                                       String.join(", ", format.warnings.invalidOptions));
-            }
-         });                
+            isDirty_ = false;
+            loadingFromSource_ = false;
+          
+            // restore selection if we have one
+            Scheduler.get().scheduleDeferred(() -> {
+               
+               // restore saved location
+               PanmirrorEditingLocation location = savedEditingLocation();
+               if (location != null)
+                  panmirror_.restoreEditingLocation(location);
+               
+               if (focus)
+                 panmirror_.focus();
+               
+               // show any format or extension warnings
+               PanmirrorPandocFormat format = panmirror_.getPandocFormat();
+               if (format.warnings.invalidFormat.length() > 0)
+               {
+                  display_.showWarningBar("Invalid Pandoc format: " + format.warnings.invalidFormat);
+               }
+               else if (format.warnings.invalidOptions.length > 0)
+               {
+                  display_.showWarningBar("Pandoc format " + format.baseName + " does not support options: " + 
+                                          String.join(", ", format.warnings.invalidOptions));
+               }
+            });                
+         });
       });
    }
  
