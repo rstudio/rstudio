@@ -248,7 +248,7 @@ public class ProfilerEditingTarget implements EditingTarget,
    {
    }
 
-   public void onActivate()
+   public void onActivate(boolean forUser)
    {
       activeProfilerEditingTarger_ = this;
       
@@ -377,11 +377,6 @@ public class ProfilerEditingTarget implements EditingTarget,
 
    @Override
    public void onInitiallyLoaded()
-   {
-   }
-   
-   @Override
-   public void onActivatedForUser()
    {
    }
 

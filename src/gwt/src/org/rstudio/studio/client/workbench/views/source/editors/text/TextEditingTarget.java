@@ -2332,7 +2332,7 @@ public class TextEditingTarget implements
       handlers_.fireEvent(event);
    }
 
-   public void onActivate()
+   public void onActivate(boolean forUser)
    {
       // IMPORTANT NOTE: most of this logic is duplicated in 
       // CodeBrowserEditingTarget (no straightforward way to create a
@@ -2382,11 +2382,13 @@ public class TextEditingTarget implements
       
       view_.onActivate();
       
-      if (visualMode_ != null && visualMode_.isActivated())
+      if (forUser) 
       {
-         visualMode_.onSwitchToDoc();
+         // defer interactions with visual mode b/c it's creation is also deferred
+         Scheduler.get().scheduleDeferred(() -> {
+            visualMode_.onUserEditingDoc();
+         });
       }
-         
    }
 
    public void onDeactivate()
@@ -2415,11 +2417,6 @@ public class TextEditingTarget implements
    public void onInitiallyLoaded()
    {
       checkForExternalEdit();
-   }
-   
-   @Override
-   public void onActivatedForUser()
-   {
    }
 
    public boolean onBeforeDismiss()

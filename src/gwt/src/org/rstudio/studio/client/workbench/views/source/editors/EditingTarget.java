@@ -70,13 +70,11 @@ public interface EditingTarget extends IsWidget,
    void verifyNewSqlPrerequisites();
 
    void focus();
-   void onActivate();
+   void onActivate(boolean forUser);
    void onDeactivate();
 
    void onInitiallyLoaded();
    
-   void onActivatedForUser();
-
    void recordCurrentNavigationPosition();
    void navigateToPosition(SourcePosition position, 
                            boolean recordCurrent);

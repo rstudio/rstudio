@@ -654,7 +654,7 @@ public class Source implements InsertSourceHandler,
 
             if (view_.getTabCount() > 0 && view_.getActiveTabIndex() >= 0)
             {
-               editors_.get(view_.getActiveTabIndex()).onInitiallyLoaded();        
+               editors_.get(view_.getActiveTabIndex()).onInitiallyLoaded();
             }
 
             // clear the history manager
@@ -1950,7 +1950,7 @@ public class Source implements InsertSourceHandler,
             @Override
             public void onSuccess(EditingTarget target)
             {
-               setActiveEditor(target);
+               activeEditor_ = target;
                doActivateSource(afterActivation);
             }
             
@@ -3740,8 +3740,8 @@ public class Source implements InsertSourceHandler,
 
       if (event.getSelectedItem() >= 0)
       {
-         setActiveEditor(editors_.get(event.getSelectedItem()));
-         activeEditor_.onActivate();
+         activeEditor_ = editors_.get(event.getSelectedItem());
+         activeEditor_.onActivate(tabActivationsAreForUser_);
          
          // let any listeners know this tab was activated
          events_.fireEvent(new DocTabActivatedEvent(
@@ -3783,13 +3783,6 @@ public class Source implements InsertSourceHandler,
       
       if (initialized_)
          manageCommands();
-   }
-   
-   private void setActiveEditor(EditingTarget target)
-   {
-      activeEditor_ = target;
-      if (tabActivationsAreForUser_)
-         activeEditor_.onActivatedForUser();
    }
 
    private void manageCommands()
