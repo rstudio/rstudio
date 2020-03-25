@@ -35,7 +35,7 @@ namespace graphics {
 
 namespace {
 
-void onPreferencesSaved()
+void syncWithPrefs()
 {
    r::options::setOption(
             kGraphicsOptionBackend,
@@ -44,6 +44,11 @@ void onPreferencesSaved()
    r::options::setOption(
             kGraphicsOptionAntialias,
             prefs::userPrefs().graphicsAntialiasing());
+}
+
+void onPreferencesSaved()
+{
+   syncWithPrefs();
 }
 
 } // end anonymous namespace
@@ -75,6 +80,8 @@ core::Error initialize()
    using namespace module_context;
    
    events().onPreferencesSaved.connect(onPreferencesSaved);
+   
+   syncWithPrefs();
    
    using boost::bind;
    ExecBlock initBlock;
