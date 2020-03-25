@@ -63,6 +63,7 @@ public class TextEditorContainer extends LayoutPanel implements CanFocus
    public TextEditorContainer(Editor editor)
    {
       editor_ = editor;
+      addStyleName("ace_editor_theme");
       addWidget(editor);
    }
    
