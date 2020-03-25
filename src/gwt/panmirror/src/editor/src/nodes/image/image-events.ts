@@ -42,9 +42,6 @@ export function imageDrop() {
       return false;
     }
 
-    // indicate that we can handle this drop
-    event.preventDefault();
-
     // see whether this is a figure or image drop (image if it's immediate parent supports inline content)
     const schema = view.state.schema;
     let nodeType = schema.nodes.image;
@@ -53,14 +50,33 @@ export function imageDrop() {
       nodeType = schema.nodes.figure;
     }
 
-    // insert the images   
+    // insert the images (track whether we handled at least one)
+    let insertedImage = false;
     uriList.split('\r?\n').forEach(src => {
-      const node = nodeType.create({ src });
-      const tr = view.state.tr.insert(coordinates.pos, node);
-      tr.scrollIntoView();
-      view.dispatch(tr);
+
+      // get extension and check it it's an image
+      // https://developer.mozilla.org/en-US/docs/Web/Media/Formats/Image_types#Common_image_file_types
+      const kImageExtensions = [
+        'apng', 'bmp', 'gif', 'ico', 'cur',  'jpg', 'jpeg', 'jfif',
+        'pjpeg', 'pjp', 'png', 'svg', 'tiff', 'webp' 
+      ];
+      const extension = src.split(/\./).pop()!.toLowerCase();
+      if (kImageExtensions.includes(extension)) {
+        insertedImage = true;
+        const node = nodeType.create({ src });
+        const tr = view.state.tr.insert(coordinates.pos, node);
+        tr.scrollIntoView();
+        view.dispatch(tr);
+      }
+
     });
 
-    return true;
+    // if we inserted an image then indicate that we handled the drop
+    if (insertedImage) {
+      event.preventDefault();
+      return true;
+    } else {
+      return false;
+    }
   };
 }
