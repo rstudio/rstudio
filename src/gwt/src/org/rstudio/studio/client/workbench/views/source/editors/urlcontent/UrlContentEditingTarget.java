@@ -235,7 +235,7 @@ public class UrlContentEditingTarget implements EditingTarget
    {
    }
 
-   public void onActivate()
+   public void onActivate(boolean forUser)
    {
       if (commandReg_ != null)
       {

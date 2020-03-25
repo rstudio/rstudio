@@ -248,7 +248,7 @@ public class ProfilerEditingTarget implements EditingTarget,
    {
    }
 
-   public void onActivate()
+   public void onActivate(boolean forUser)
    {
       activeProfilerEditingTarger_ = this;
       
