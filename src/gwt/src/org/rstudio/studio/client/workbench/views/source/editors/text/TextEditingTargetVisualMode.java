@@ -349,11 +349,12 @@ public class TextEditingTargetVisualMode
    
    private void syncDevTools()
    {
-      // activate devtools if they are loaded
-      if (panmirror_.devToolsLoaded()) 
-      {
-         panmirror_.activateDevTools();
-      }
+      withPanmirror(() -> {
+         if (panmirror_.devToolsLoaded()) 
+         {
+            panmirror_.activateDevTools();
+         }
+      });
    }
    
    
