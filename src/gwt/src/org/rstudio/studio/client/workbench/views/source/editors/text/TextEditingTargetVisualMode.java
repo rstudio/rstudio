@@ -63,8 +63,12 @@ public class TextEditingTargetVisualMode
       dirtyState_ = dirtyState;
       docUpdateSentinel_ = docUpdateSentinel;
       
-      // manage ui based on current pref + changes over time
-      manageUI(isActivated(), false);
+      // if visual mode isn't enabled then reflect that (if it is enabled we'll
+      // defer initialization work until after the tab is actually activated)
+      if (!isActivated())
+         manageUI(false, false);
+      
+      // track changes over time
       onDocPropChanged(TextEditingTarget.RMD_VISUAL_MODE, (value) -> {
          manageUI(isActivated(), true);
       });
@@ -273,7 +277,25 @@ public class TextEditingTargetVisualMode
    public void onUserEditingDoc()
    {
       if (isActivated())
-         syncDevTools();
+      {
+         // dev tools sync
+         ScheduledCommand devtoolsCmd = () -> {
+            syncDevTools();
+         };
+         
+         // if this is the first time we've switched to the doc
+         // while in visual mode then complete initialization
+         if (!haveEditedInVisualMode_)
+         {
+            haveEditedInVisualMode_ = true;
+            manageUI(true, true, devtoolsCmd);
+         }
+         else
+         {
+            devtoolsCmd.execute();
+         }
+      }
+        
    }
   
   
@@ -590,6 +612,7 @@ public class TextEditingTargetVisualMode
    private DebouncedCommand syncOnIdle_; 
    private boolean isDirty_ = false;
    private boolean loadingFromSource_ = false;
+   private boolean haveEditedInVisualMode_ = false; 
    
    private DebouncedCommand saveLocationOnIdle_;
    
