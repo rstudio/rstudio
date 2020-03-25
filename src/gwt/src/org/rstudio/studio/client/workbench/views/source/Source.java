@@ -3741,9 +3741,7 @@ public class Source implements InsertSourceHandler,
       if (event.getSelectedItem() >= 0)
       {
          activeEditor_ = editors_.get(event.getSelectedItem());
-         activeEditor_.onActivate();
-         if (tabActivationsAreForUser_)
-            activeEditor_.onActivatedForUser();
+         activeEditor_.onActivate(tabActivationsAreForUser_);
          
          // let any listeners know this tab was activated
          events_.fireEvent(new DocTabActivatedEvent(

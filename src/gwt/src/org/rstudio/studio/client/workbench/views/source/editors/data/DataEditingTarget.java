@@ -118,9 +118,9 @@ public class DataEditingTarget extends UrlContentEditingTarget
    }
 
    @Override
-   public void onActivate()
+   public void onActivate(boolean forUser)
    {
-      super.onActivate();
+      super.onActivate(forUser);
       if (view_ != null)
       {
          if (queuedRefresh_ != QueuedRefreshType.NoRefresh)

@@ -235,7 +235,7 @@ public class UrlContentEditingTarget implements EditingTarget
    {
    }
 
-   public void onActivate()
+   public void onActivate(boolean forUser)
    {
       if (commandReg_ != null)
       {
@@ -258,11 +258,6 @@ public class UrlContentEditingTarget implements EditingTarget
 
    @Override
    public void onInitiallyLoaded()
-   {
-   }
-   
-   @Override
-   public void onActivatedForUser()
    {
    }
    
