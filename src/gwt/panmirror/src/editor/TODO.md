@@ -1,9 +1,9 @@
+## Info
+
+pandoc schema: <https://github.com/jgm/pandoc-types/blob/master/Text/Pandoc/Definition.hs#L94>
+
 ## TODO
  
-Some mechanism for deferring pandoc work with multiple editor tabs
-Still don't get devtools on fresh load (not getting onInitiallySelected or whatever)
-- checkForChanges is the codepath we neeed
-
 Consider moving widgets to React now that they are outside the PM dom.
 
 Discuss tokens / escaping / etc. with Joe. HTML must be inserted manually. Backslashes need to
@@ -13,21 +13,18 @@ Images that link to things need to be supported. Currently a "figure" with a sur
 because figures can't have links, we should reflect this. I believe that the editor currently handles this fine, but our 
 pandoc serialization currently does not.
 
-Clipboard / DragDrop support for images (note we should only accept local images within our resource dir)
+Clipboard support for pasting image urls
 
+Inline images dropped into figure slot remain images
 I wonder if we should always transform to figure as soon as we are standalone in a paragraph (i.e. appendTransaction handler).
 that way we don't need this logic everywhere that we create an image.
 
-Paste image handler for RStudio IDE
+Remove link button doesn't work after dragging link
 
-urilist will actually take non-image uris (or maybe urilist is only used for images?)
-protect against "local" urilist (local images)
-
-Inline images dropped into figure slot remain images
+Distinguish between internal drag source attributes and external (and strip styles/classes from external). Try 
+dragging this header to test: https://blog.rstudio.com/2019/03/14/rstudio-1-2-jobs/
 
 Shelf doesn't always move perfectly after a drop
-
-
 
 Pandoc allows for list items to start with a block, but our schema follows ProseMirror in requiring a paragraph
 (https://github.com/ProseMirror/prosemirror-schema-list/tree/master/src). Resolve this.
@@ -50,6 +47,8 @@ improve scrolling with: <https://github.com/cferdinandi/smooth-scroll>
 
 MathJax preview
 
+Direct parsing of citations (get rid of special post-processing + supported nested) (note: for nested we need excludes: '').
+Only do this if our current method breaks footnotes in citations (if that's even a thing)
 
 ## Future
 
@@ -63,15 +62,11 @@ We currently can't round-trip reference links (as pandoc doesn't seem to write t
 
 No editing support for fancy list auto-numbering (\#. as list item that is auto-numbered)
 
-Direct parsing of citations (get rid of special post-processing + supported nested) (note: for nested we need excludes: '')
-
 MathQuill/MathJax: <https://pboysen.github.io/> <https://discuss.prosemirror.net/t/odd-behavior-with-nodeview-and-atom-node/1521>
 
 critic markup: <http://criticmarkup.com/>
 
 pandoc scholar: <https://pandoc-scholar.github.io/> pandoc jats: <https://github.com/mfenner/pandoc-jats>
-
-pandoc schema: <https://github.com/jgm/pandoc-types/blob/master/Text/Pandoc/Definition.hs#L94>
 
 Notes on preformance implications of scanning the entire document + some discussion of the tricky nature of doing step by step inspection: <https://discuss.prosemirror.net/t/changed-part-of-document/992> <https://discuss.prosemirror.net/t/reacting-to-node-adding-removing-changing/676> <https://discuss.prosemirror.net/t/undo-and-cursor-position/677/5>
 
