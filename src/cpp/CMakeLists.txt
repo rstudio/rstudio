@@ -16,7 +16,7 @@
 # set minimum version
 cmake_minimum_required(VERSION 3.4.3)
 
-project (RSTUDIO_CPP)
+project("RStudio 1.4")
 
 include(GetPrerequisites)
 
