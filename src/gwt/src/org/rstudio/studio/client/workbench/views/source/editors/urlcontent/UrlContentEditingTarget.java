@@ -262,6 +262,11 @@ public class UrlContentEditingTarget implements EditingTarget
    }
    
    @Override
+   public void onActivatedForUser()
+   {
+   }
+   
+   @Override
    public void recordCurrentNavigationPosition()
    {
       events_.fireEvent(new SourceNavigationEvent(

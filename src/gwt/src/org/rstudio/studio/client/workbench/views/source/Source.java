@@ -642,6 +642,11 @@ public class Source implements InsertSourceHandler,
          @Override
          protected void onInit(Integer value)
          {
+            // set flag indicating that tab selections are actual "user-level"
+            // document activations (in contrast to onActivated which is fired
+            // for every new tab added during startup)
+            tabActivationsAreForUser_ = true;
+            
             if (value == null)
                return;
             if (value >= 0 && view_.getTabCount() > value)
@@ -649,7 +654,7 @@ public class Source implements InsertSourceHandler,
 
             if (view_.getTabCount() > 0 && view_.getActiveTabIndex() >= 0)
             {
-               editors_.get(view_.getActiveTabIndex()).onInitiallyLoaded();
+               editors_.get(view_.getActiveTabIndex()).onInitiallyLoaded();        
             }
 
             // clear the history manager
@@ -1945,7 +1950,7 @@ public class Source implements InsertSourceHandler,
             @Override
             public void onSuccess(EditingTarget target)
             {
-               activeEditor_ = target;
+               setActiveEditor(target);
                doActivateSource(afterActivation);
             }
             
@@ -3735,7 +3740,7 @@ public class Source implements InsertSourceHandler,
 
       if (event.getSelectedItem() >= 0)
       {
-         activeEditor_ = editors_.get(event.getSelectedItem());
+         setActiveEditor(editors_.get(event.getSelectedItem()));
          activeEditor_.onActivate();
          
          // let any listeners know this tab was activated
@@ -3778,6 +3783,13 @@ public class Source implements InsertSourceHandler,
       
       if (initialized_)
          manageCommands();
+   }
+   
+   private void setActiveEditor(EditingTarget target)
+   {
+      activeEditor_ = target;
+      if (tabActivationsAreForUser_)
+         activeEditor_.onActivatedForUser();
    }
 
    private void manageCommands()
@@ -5014,6 +5026,7 @@ public class Source implements InsertSourceHandler,
    private static final String KEY_ACTIVETAB = "activeTab";
    private boolean initialized_;
    private Timer debugSelectionTimer_ = null;
+   private boolean tabActivationsAreForUser_ = false;
    
    private final SourceWindowManager windowManager_;
 

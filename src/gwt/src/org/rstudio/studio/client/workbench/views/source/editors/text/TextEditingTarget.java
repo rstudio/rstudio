@@ -2416,6 +2416,11 @@ public class TextEditingTarget implements
    {
       checkForExternalEdit();
    }
+   
+   @Override
+   public void onActivatedForUser()
+   {
+   }
 
    public boolean onBeforeDismiss()
    {
