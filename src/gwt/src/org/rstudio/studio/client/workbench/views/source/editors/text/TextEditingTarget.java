@@ -2380,7 +2380,7 @@ public class TextEditingTarget implements
       if (notebook_ != null)
          notebook_.onActivate();
       
-      view_.onActivate();  
+      view_.onActivate();
       
       if (forUser) 
       {
