@@ -156,24 +156,28 @@ std::string extraBitmapParams()
 {
    std::vector<std::string> params;
    
+   std::vector<std::string> supportedBackends;
+   Error error = r::exec::RFunction(".rs.graphics.supportedBackends").call(&supportedBackends);
+   if (error)
+   {
+      LOG_ERROR(error);
+      return "";
+   }
+   
    std::string backend = r::options::getOption<std::string>(
             kGraphicsOptionBackend,
             "default",
             false);
    
-#ifndef __APPLE__
-   // silently ignore 'quartz' on non-macOS platforms
-   // (assume this would arise if one copied UI prefs across different machines)
-   if (backend == "quartz")
-      backend = "default";
-#endif
-   
-#ifndef _WIN32
-   // silently ignore 'windows' on non-Windows platforms
-   // (assume this would arise if one copied UI prefs across different machines)
-   if (backend == "windows")
-      backend = "default";
-#endif
+   // if the requested backend is not supported, silently use the default
+   // (this could happen if a package's configuration was migrated from
+   // one machine to another on a different OS)
+   if (backend != "default")
+   {
+      auto it = std::find(supportedBackends.begin(), supportedBackends.end(), backend);
+      if (it == supportedBackends.end())
+         backend = "default";
+   }
    
    if (backend != "default")
       params.push_back("type = \"" + backend + "\"");
