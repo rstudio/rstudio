@@ -185,7 +185,7 @@ std::string extraBitmapParams()
 
 #ifdef _WIN32
    // fix up antialias for windows backend
-   if (backend == "windows" && antialias == "subpixel")
+   if ((backend == "windows" || backend == "default") && antialias == "subpixel")
       antialias = "cleartype";
 #endif
 
