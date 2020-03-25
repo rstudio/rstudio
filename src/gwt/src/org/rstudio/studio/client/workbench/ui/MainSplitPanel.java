@@ -33,6 +33,8 @@ import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.helper.JSObjectStateValue;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 
+import java.util.ArrayList;
+
 public class MainSplitPanel extends NotifyingSplitLayoutPanel
       implements SplitterResizedHandler
 {
@@ -189,6 +191,86 @@ public class MainSplitPanel extends NotifyingSplitLayoutPanel
       setWidgetMinSize(right_, 0);
    }
 
+   public void initialize(ArrayList<Widget> leftSource, Widget left, Widget right)
+   {
+      leftSource_ = leftSource;
+      left_ = left;
+      right_ = right;
+
+      new JSObjectStateValue(GROUP_WORKBENCH,
+                             KEY_RIGHTPANESIZE,
+                             ClientState.PERSISTENT,
+                             session_.getSessionInfo().getClientState(),
+                             false) {
+
+         @Override
+         protected void onInit(JsObject value)
+         {
+            State state = value == null ? null : (State)value.cast();
+            if (state != null && state.hasSplitterPos())
+            {
+               if (state.hasPanelWidth() && state.hasWindowWidth()
+                   && state.getWindowWidth() != Window.getClientWidth())
+               {
+                  int delta = state.getWindowWidth() - state.getPanelWidth();
+                  int offsetWidth = Window.getClientWidth() - delta;
+                  double pct = (double)state.getSplitterPos()
+                               / state.getPanelWidth();
+                  addEast(right_, pct * offsetWidth);
+               }
+               else
+               {
+                  addEast(right_, state.getSplitterPos());
+               }
+            }
+            else
+            {
+               addEast(right_, Window.getClientWidth() * 0.45);
+            }
+            if (!leftSource_.isEmpty())
+            {
+               for (Widget w : leftSource_)
+                  addWest(w, Window.getClientWidth() * 0.30);
+            }
+
+            Scheduler.get().scheduleDeferred(new ScheduledCommand()
+            {
+               public void execute()
+               {
+                  enforceBoundaries();
+               }
+            });
+         }
+
+         @Override
+         protected JsObject getValue()
+         {
+            State state = JavaScriptObject.createObject().cast();
+            state.setPanelWidth(getOffsetWidth());
+            state.setWindowWidth(Window.getClientWidth());
+            state.setSplitterPos(right_.getOffsetWidth());
+            return state.cast();
+         }
+
+         @Override
+         protected boolean hasChanged()
+         {
+            JsObject newValue = getValue();
+            if (!State.equals(lastKnownValue_, (State) newValue.cast()))
+            {
+               lastKnownValue_ = newValue.cast();
+               return true;
+            }
+            return false;
+         }
+
+         private State lastKnownValue_;
+      };
+
+      add(left);
+      setWidgetMinSize(right_, 0);
+   }
+
    @Override
    protected void onLoad()
    {
@@ -273,6 +355,7 @@ public class MainSplitPanel extends NotifyingSplitLayoutPanel
 
    private final Session session_;
    @SuppressWarnings("unused")
+   private ArrayList<Widget> leftSource_;
    private Widget left_;
    private Widget right_;
    private static final String GROUP_WORKBENCH = "workbenchp";
