@@ -379,6 +379,11 @@ public class ProfilerEditingTarget implements EditingTarget,
    public void onInitiallyLoaded()
    {
    }
+   
+   @Override
+   public void onActivatedForUser()
+   {
+   }
 
    @Override
    public void recordCurrentNavigationPosition()

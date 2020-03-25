@@ -74,6 +74,8 @@ public interface EditingTarget extends IsWidget,
    void onDeactivate();
 
    void onInitiallyLoaded();
+   
+   void onActivatedForUser();
 
    void recordCurrentNavigationPosition();
    void navigateToPosition(SourcePosition position, 

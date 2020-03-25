@@ -550,6 +550,11 @@ public class CodeBrowserEditingTarget implements EditingTarget
    }
    
    @Override
+   public void onActivatedForUser()
+   {
+   }
+   
+   @Override
    public void recordCurrentNavigationPosition()
    {
       docDisplay_.recordCurrentNavigationPosition();
