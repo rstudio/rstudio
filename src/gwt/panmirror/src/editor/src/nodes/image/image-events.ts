@@ -37,29 +37,17 @@ export function imageDrop() {
     }
 
     // see if this is a drag of image uris
-    let uriList = dragEvent.dataTransfer.getData('text/uri-list');
-    const html = dragEvent.dataTransfer.getData('text/html');
-    if (!uriList || !html) {
+    const uriList = dragEvent.dataTransfer.getData('text/uri-list');
+    if (!uriList) {
       return false;
-    }
-
-    // see if we can pull an image out of the html
-    const regex = /<img.*?src=["'](.*?)["']/;
-    const match = regex.exec(html);
-    if (!match) {
-      return false;
-    } else {
-      uriList = match[1];
     }
 
     // indicate that we can handle this drop
     event.preventDefault();
 
-    // see whether this is a figure or image drop (image if it's immediate parent is a text node)
+    // see whether this is a figure or image drop (image if it's immediate parent supports inline content)
     const schema = view.state.schema;
     let nodeType = schema.nodes.image;
-   
-    
     const dropNode = findParentNodeClosestToPos(view.state.doc.resolve(coordinates.pos), () => true);
     if (!dropNode || !dropNode.node.inlineContent) {
       nodeType = schema.nodes.figure;
@@ -68,8 +56,9 @@ export function imageDrop() {
     // insert the images   
     uriList.split('\r?\n').forEach(src => {
       const node = nodeType.create({ src });
-      const transaction = view.state.tr.insert(coordinates.pos, node);
-      view.dispatch(transaction);
+      const tr = view.state.tr.insert(coordinates.pos, node);
+      tr.scrollIntoView();
+      view.dispatch(tr);
     });
 
     return true;
