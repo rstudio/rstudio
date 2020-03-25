@@ -1,6 +1,8 @@
 ## TODO
  
 Some mechanism for deferring pandoc work with multiple editor tabs
+Still don't get devtools on fresh load (not getting onInitiallySelected or whatever)
+- checkForChanges is the codepath we neeed
 
 Consider moving widgets to React now that they are outside the PM dom.
 
@@ -12,11 +14,20 @@ because figures can't have links, we should reflect this. I believe that the edi
 pandoc serialization currently does not.
 
 Clipboard / DragDrop support for images (note we should only accept local images within our resource dir)
-Drag/Drop doesn't currently create a figure. I wonder if we should always transform to figure as soon as we 
-are standalone in a paragraph. Check whether image serialization works in gfm for images dragged into 'figure' position
-(we may have removed some code that did this)
+
+I wonder if we should always transform to figure as soon as we are standalone in a paragraph (i.e. appendTransaction handler).
+that way we don't need this logic everywhere that we create an image.
 
 Paste image handler for RStudio IDE
+
+urilist will actually take non-image uris (or maybe urilist is only used for images?)
+protect against "local" urilist (local images)
+
+Inline images dropped into figure slot remain images
+
+Shelf doesn't always move perfectly after a drop
+
+
 
 Pandoc allows for list items to start with a block, but our schema follows ProseMirror in requiring a paragraph
 (https://github.com/ProseMirror/prosemirror-schema-list/tree/master/src). Resolve this.
