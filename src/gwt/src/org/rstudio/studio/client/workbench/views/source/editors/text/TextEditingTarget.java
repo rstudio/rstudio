@@ -2380,13 +2380,7 @@ public class TextEditingTarget implements
       if (notebook_ != null)
          notebook_.onActivate();
       
-      view_.onActivate();
-      
-      if (visualMode_ != null && visualMode_.isActivated())
-      {
-         visualMode_.onSwitchToDoc();
-      }
-         
+      view_.onActivate();   
    }
 
    public void onDeactivate()
@@ -2420,6 +2414,11 @@ public class TextEditingTarget implements
    @Override
    public void onActivatedForUser()
    {
+      // defer interactions with visual mode b/c it's creation is also deferred
+      Scheduler.get().scheduleDeferred(() -> {
+         if (visualMode_.isActivated())
+            visualMode_.onActivatedForUser();
+      });
    }
 
    public boolean onBeforeDismiss()

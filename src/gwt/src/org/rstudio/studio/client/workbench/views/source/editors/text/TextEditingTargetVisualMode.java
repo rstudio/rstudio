@@ -270,7 +270,7 @@ public class TextEditingTargetVisualMode
       });
    }
    
-   public void onSwitchToDoc()
+   public void onActivatedForUser()
    {
       syncDevTools();
    }
