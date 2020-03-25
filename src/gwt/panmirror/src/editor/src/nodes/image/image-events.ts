@@ -15,8 +15,9 @@
 
 import { NodeType } from 'prosemirror-model';
 import { EditorView } from 'prosemirror-view';
+import { findParentNodeClosestToPos } from 'prosemirror-utils';
 
-export function imageDrop(nodeType: NodeType) {
+export function imageDrop() {
   return (view: EditorView, event: Event) => {
     // alias to drag event so typescript knows about event.dataTransfer
     const dragEvent = event as DragEvent;
@@ -36,7 +37,7 @@ export function imageDrop(nodeType: NodeType) {
     }
 
     // see if this is a drag of image uris
-    const uriList = dragEvent.dataTransfer.getData('text/uri-list');
+    let uriList = dragEvent.dataTransfer.getData('text/uri-list');
     const html = dragEvent.dataTransfer.getData('text/html');
     if (!uriList || !html) {
       return false;
@@ -47,12 +48,24 @@ export function imageDrop(nodeType: NodeType) {
     const match = regex.exec(html);
     if (!match) {
       return false;
+    } else {
+      uriList = match[1];
     }
 
     // indicate that we can handle this drop
     event.preventDefault();
 
-    // insert the images
+    // see whether this is a figure or image drop (image if it's immediate parent is a text node)
+    const schema = view.state.schema;
+    let nodeType = schema.nodes.image;
+   
+    
+    const dropNode = findParentNodeClosestToPos(view.state.doc.resolve(coordinates.pos), () => true);
+    if (!dropNode || !dropNode.node.inlineContent) {
+      nodeType = schema.nodes.figure;
+    }
+
+    // insert the images   
     uriList.split('\r?\n').forEach(src => {
       const node = nodeType.create({ src });
       const transaction = view.state.tr.insert(coordinates.pos, node);

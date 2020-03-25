@@ -32,3 +32,9 @@ export function selectionIsBodyTopLevel(selection: Selection) {
 export function selectionIsImageNode(schema: Schema, selection: Selection) {
   return selection instanceof NodeSelection && [schema.nodes.image, schema.nodes.figure].includes(selection.node.type);
 }
+
+export function selectionIsEmptyParagraph(schema: Schema, selection: Selection) {
+  const { $head } = selection;
+  return $head.parent.type === schema.nodes.paragraph && $head.parent.childCount === 0;
+}
+

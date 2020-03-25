@@ -20,7 +20,7 @@ import { EditorView } from 'prosemirror-view';
 import { ProsemirrorCommand, EditorCommandId } from '../../api/command';
 import { Extension } from '../../api/extension';
 import { canInsertNode } from '../../api/node';
-import { selectionIsImageNode } from '../../api/selection';
+import { selectionIsImageNode, selectionIsEmptyParagraph } from '../../api/selection';
 import { pandocAttrSpec, pandocAttrParseDom, pandocAttrToDomAttr, pandocAttrReadAST, pandocAttrAvailable } from '../../api/pandoc_attr';
 import {
   PandocOutput,
@@ -104,7 +104,7 @@ const extension = (pandocExtensions: PandocExtensions, _options: EditorOptions, 
               },
             },
             handleDOMEvents: {
-              drop: imageDrop(schema.nodes.image),
+              drop: imageDrop(),
             },
           },
         }),
@@ -289,8 +289,7 @@ function imageCommand(editorUI: EditorUI, imageAttributes: boolean) {
       }
 
       // see if we are in an empty paragraph (in that case insert a figure)
-      const { $head } = state.selection;
-      if ($head.parent.type === schema.nodes.paragraph && $head.parent.childCount === 0) {
+      if (selectionIsEmptyParagraph(schema, state.selection)) {
         nodeType = schema.nodes.figure;
       }
 
