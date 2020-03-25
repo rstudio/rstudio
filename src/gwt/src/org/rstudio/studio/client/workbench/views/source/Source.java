@@ -654,7 +654,7 @@ public class Source implements InsertSourceHandler,
 
             if (view_.getTabCount() > 0 && view_.getActiveTabIndex() >= 0)
             {
-               editors_.get(view_.getActiveTabIndex()).onInitiallyLoaded();        
+               editors_.get(view_.getActiveTabIndex()).onInitiallyLoaded();
             }
 
             // clear the history manager
