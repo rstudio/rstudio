@@ -37,10 +37,13 @@ public class PanmirrorThemeCreator
       selectionBkgdClasses.push("ace_marker-layer");
       selectionBkgdClasses.push("ace_selection");
       theme.selectionColor = DomUtils.extractCssValue(selectionBkgdClasses, "backgroundColor");
+      // having trouble with selection colors in dark mode...the ace_selection color appears
+      // to be getting blended to yield the actual color use. for now we hard-code #AAA
+      // so the selection is at least visible
+      if (aceTheme.isDark()) 
+         theme.selectionColor = "#AAA";
       theme.backgroundColor = DomUtils.extractCssValue("ace_editor", "backgroundColor");
       theme.metadataBackgroundColor = theme.backgroundColor;
-      
-      // this code doesn't currently seem to successfully extract color values (we end up w/ rgba(0,0,0,0))
       theme.nodeSelectionColor = DomUtils.extractCssValue("ace_node-selector", "backgroundColor");
       theme.commentBackgroundColor = DomUtils.extractCssValue("ace_comment-highlight", "backgroundColor");
          
