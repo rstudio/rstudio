@@ -116,6 +116,10 @@ public class TextEditingTargetVisualMode
          docUpdateSentinel_.setBoolProperty(TextEditingTarget.RMD_VISUAL_MODE, false);
          manageUI(false, true, completed);
       }
+      else
+      {
+         completed.execute();
+      }
    }
    
    public void syncToEditor(boolean activatingEditor)

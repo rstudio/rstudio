@@ -118,6 +118,7 @@ set (SESSION_SOURCE_FILES
    modules/SessionFilesQuotas.cpp
    modules/SessionFind.cpp
    modules/SessionGit.cpp
+   modules/SessionGraphics.cpp
    modules/SessionHelp.cpp
    modules/SessionHelpHome.cpp
    modules/SessionHistory.cpp

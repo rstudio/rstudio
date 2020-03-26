@@ -1,7 +1,7 @@
 /*
  * RGraphicsUtils.cpp
  *
- * Copyright (C) 2009-19 by RStudio, PBC
+ * Copyright (C) 2009-20 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -17,8 +17,10 @@
 
 #include <boost/format.hpp>
 
-#include <core/Log.hpp>
 #include <shared_core/Error.hpp>
+
+#include <core/Algorithm.hpp>
+#include <core/Log.hpp>
 
 #include <r/RExec.hpp>
 #include <r/ROptions.hpp>
@@ -28,6 +30,8 @@
 #define R_USE_PROTOTYPES 1
 #include <R_ext/GraphicsEngine.h>
 #include <R_ext/GraphicsDevice.h>
+
+#include <r/session/RGraphicsConstants.h>
 
 #include <r/RErrorCategory.hpp>
 
@@ -150,29 +154,52 @@ bool validateRequirements(std::string* pMessage)
 
 std::string extraBitmapParams()
 {
-#if defined(_WIN32)
-
-   // no extra params for windows
-
-#elif defined(__APPLE__)
-
-   return ", type = \"quartz\", antialias=\"default\"";
-
-#else
-
-   // if bitmapType is Xlib then force cairo if we can
-   if (r::options::getOption<std::string>("bitmapType") == "Xlib")
+   std::vector<std::string> params;
+   
+   std::vector<std::string> supportedBackends;
+   Error error = r::exec::RFunction(".rs.graphics.supportedBackends").call(&supportedBackends);
+   if (error)
    {
-      if (r::util::hasRequiredVersion("2.14") &&
-          r::util::hasCapability("cairo"))
-      {
-         return ", type = \"cairo\"";
-      }
+      LOG_ERROR(error);
+      return "";
    }
+   
+   std::string backend = r::options::getOption<std::string>(
+            kGraphicsOptionBackend,
+            "default",
+            false);
+   
+   // if the requested backend is not supported, silently use the default
+   // (this could happen if a package's configuration was migrated from
+   // one machine to another on a different OS)
+   if (backend != "default")
+   {
+      auto it = std::find(supportedBackends.begin(), supportedBackends.end(), backend);
+      if (it == supportedBackends.end())
+         backend = "default";
+   }
+   
+   if (backend != "default")
+      params.push_back("type = \"" + backend + "\"");
+   
+   std::string antialias = r::options::getOption<std::string>(
+            kGraphicsOptionAntialias,
+            "default",
+            false);
 
+#ifdef _WIN32
+   // fix up antialias for windows backend
+   if ((backend == "windows" || backend == "default") && antialias == "subpixel")
+      antialias = "cleartype";
 #endif
 
-   return "";
+   if (antialias != "default")
+      params.push_back("antialias = \"" + antialias + "\"");
+   
+   if (params.empty())
+      return "";
+   
+   return ", " + core::algorithm::join(params, ", ");
 }
 
 struct RestorePreviousGraphicsDeviceScope::Impl

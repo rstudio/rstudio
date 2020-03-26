@@ -1722,6 +1722,33 @@ public class UserPrefsAccessor extends Prefs
       return bool("install_pkg_deps_individually", true);
    }
 
+   /**
+    * R graphics backend.
+    */
+   public PrefValue<String> graphicsBackend()
+   {
+      return string("graphics_backend", "default");
+   }
+
+   public final static String GRAPHICS_BACKEND_DEFAULT = "default";
+   public final static String GRAPHICS_BACKEND_CAIRO = "cairo";
+   public final static String GRAPHICS_BACKEND_CAIRO_PNG = "cairo-png";
+   public final static String GRAPHICS_BACKEND_QUARTZ = "quartz";
+   public final static String GRAPHICS_BACKEND_WINDOWS = "windows";
+
+   /**
+    * Type of anti-aliasing to be used for generated R plots.
+    */
+   public PrefValue<String> graphicsAntialiasing()
+   {
+      return string("graphics_antialiasing", "default");
+   }
+
+   public final static String GRAPHICS_ANTIALIASING_DEFAULT = "default";
+   public final static String GRAPHICS_ANTIALIASING_NONE = "none";
+   public final static String GRAPHICS_ANTIALIASING_GRAY = "gray";
+   public final static String GRAPHICS_ANTIALIASING_SUBPIXEL = "subpixel";
+
    public void syncPrefs(String layer, JsObject source)
    {
       if (source.hasKey("run_rprofile_on_resume"))
@@ -2094,6 +2121,10 @@ public class UserPrefsAccessor extends Prefs
          fileMonitorIgnoredComponents().setValue(layer, source.getObject("file_monitor_ignored_components"));
       if (source.hasKey("install_pkg_deps_individually"))
          installPkgDepsIndividually().setValue(layer, source.getBool("install_pkg_deps_individually"));
+      if (source.hasKey("graphics_backend"))
+         graphicsBackend().setValue(layer, source.getString("graphics_backend"));
+      if (source.hasKey("graphics_antialiasing"))
+         graphicsAntialiasing().setValue(layer, source.getString("graphics_antialiasing"));
    }
    
 

@@ -1050,6 +1050,18 @@
             "type": "boolean",
             "default": true,
             "description": "Whether to install R package dependencies one at a time."
+        },
+        "graphics_backend": {
+            "type": "string",
+            "enum": ["default", "cairo", "cairo-png", "quartz", "windows"],
+            "default": "default",
+            "description": "R graphics backend."
+        },
+        "graphics_antialiasing": {
+            "type": "string",
+            "enum": ["default", "none", "gray", "subpixel"],
+            "default": "default",
+            "description": "Type of anti-aliasing to be used for generated R plots."
         }
     }
 }

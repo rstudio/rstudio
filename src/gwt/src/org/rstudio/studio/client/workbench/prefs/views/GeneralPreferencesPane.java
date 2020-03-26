@@ -16,6 +16,10 @@ package org.rstudio.studio.client.workbench.prefs.views;
 
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
+
+import java.util.HashMap;
+import java.util.Map;
+
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.StringUtil;
@@ -40,6 +44,7 @@ import org.rstudio.studio.client.workbench.model.RemoteFileSystemContext;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 
+import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.resources.client.ImageResource;
@@ -195,6 +200,31 @@ public class GeneralPreferencesPane extends PreferencesPane
          enableCrashReporting_.setEnabled(session.getSessionInfo().getCrashHandlerSettingsModifiable());
          basic.add(enableCrashReporting_);
       }
+      
+      VerticalTabPanel graphics = new VerticalTabPanel(ElementIds.GENERAL_GRAPHICS_PREFS);
+      
+      graphics.add(headerLabel("Graphics Device"));
+      graphics.add(graphicsBackend_ = graphicsBackendWidget());
+      
+      graphicsAntialias_ = new SelectWidget(
+            "Antialiasing:",
+            new String[] {
+                  "(Default)",
+                  "None",
+                  "Gray",
+                  "Subpixel"
+            },
+            new String[] {
+                  UserPrefs.GRAPHICS_ANTIALIASING_DEFAULT,
+                  UserPrefs.GRAPHICS_ANTIALIASING_NONE,
+                  UserPrefs.GRAPHICS_ANTIALIASING_GRAY,
+                  UserPrefs.GRAPHICS_ANTIALIASING_SUBPIXEL
+            },
+            false,
+            true,
+            false);
+      
+      graphics.add(graphicsAntialias_);
 
       VerticalTabPanel advanced = new VerticalTabPanel(ElementIds.GENERAL_ADVANCED_PREFS);
 
@@ -353,6 +383,7 @@ public class GeneralPreferencesPane extends PreferencesPane
       DialogTabLayoutPanel tabPanel = new DialogTabLayoutPanel("General");
       tabPanel.setSize("435px", "498px");
       tabPanel.add(basic, "Basic", basic.getBasePanelId());
+      tabPanel.add(graphics, "Graphics", graphics.getBasePanelId());
       tabPanel.add(advanced, "Advanced", advanced.getBasePanelId());
       tabPanel.selectTab(0);
       add(tabPanel);
@@ -424,6 +455,10 @@ public class GeneralPreferencesPane extends PreferencesPane
       // projects prefs
       restoreLastProject_.setEnabled(true);
       restoreLastProject_.setValue(prefs.restoreLastProject().getValue());
+      
+      // graphics prefs
+      graphicsBackend_.setValue(prefs.graphicsBackend().getValue());
+      graphicsAntialias_.setValue(prefs.graphicsAntialiasing().getValue());
    }
    
 
@@ -500,6 +535,8 @@ public class GeneralPreferencesPane extends PreferencesPane
       prefs.alwaysSaveHistory().setGlobalValue(alwaysSaveHistory_.getValue());
       prefs.removeHistoryDuplicates().setGlobalValue(removeHistoryDuplicates_.getValue());
       prefs.restoreLastProject().setGlobalValue(restoreLastProject_.getValue());
+      prefs.graphicsBackend().setGlobalValue(graphicsBackend_.getValue());
+      prefs.graphicsAntialiasing().setGlobalValue(graphicsAntialias_.getValue());
       
       // Pro specific
       if (showServerHomePage_ != null && showServerHomePage_.isEnabled())
@@ -537,6 +574,30 @@ public class GeneralPreferencesPane extends PreferencesPane
       else
          return false;
    }
+   
+   private SelectWidget graphicsBackendWidget()
+   {
+      Map<String, String> valuesToLabelsMap = new HashMap<String, String>();
+      valuesToLabelsMap.put(UserPrefs.GRAPHICS_BACKEND_DEFAULT, " (Default)");
+      valuesToLabelsMap.put(UserPrefs.GRAPHICS_BACKEND_QUARTZ,    "Quartz");
+      valuesToLabelsMap.put(UserPrefs.GRAPHICS_BACKEND_WINDOWS,   "Windows");
+      valuesToLabelsMap.put(UserPrefs.GRAPHICS_BACKEND_CAIRO,     "Cairo");
+      valuesToLabelsMap.put(UserPrefs.GRAPHICS_BACKEND_CAIRO_PNG, "Cairo PNG");
+      
+      JsArrayString supportedBackends =
+            session_.getSessionInfo().getGraphicsBackends();
+      
+      String[] values = new String[supportedBackends.length() + 1];
+      values[0] = "default";
+      for (int i = 0; i < supportedBackends.length(); i++)
+         values[i + 1] = supportedBackends.get(i);
+      
+      String[] labels = new String[supportedBackends.length() + 1];
+      for (int i = 0; i < labels.length; i++)
+         labels[i] = valuesToLabelsMap.get(values[i]);
+      
+      return new SelectWidget("Backend:", labels, values, false, true, false);
+   }
 
    private static final String ENGINE_AUTO        = "auto";
    private static final String ENGINE_DESKTOP     = "desktop";
@@ -559,6 +620,10 @@ public class GeneralPreferencesPane extends PreferencesPane
    private CheckBox useGpuDriverBugWorkarounds_ = null;
    private SelectWidget renderingEngineWidget_ = null;
    private String renderingEngine_ = null;
+   
+   private SelectWidget graphicsBackend_;
+   private SelectWidget graphicsAntialias_;
+   
    private SelectWidget showServerHomePage_;
    private SelectWidget saveWorkspace_;
    private TextBoxWithButton rVersion_;
