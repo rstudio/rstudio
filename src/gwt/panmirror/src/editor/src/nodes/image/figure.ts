@@ -39,6 +39,7 @@ import { ImageNodeView } from './image-view';
 import { inlineHTMLIsImage } from './image-util';
 
 import './figure-styles.css';
+import { findChildrenByType } from 'prosemirror-utils';
 
 
 const plugin = new PluginKey('figure');
@@ -113,6 +114,16 @@ const extension = (pandocExtensions: PandocExtensions, options: EditorOptions, u
       },
     ],
 
+    appendTransaction: (schema: Schema) => {
+      return [
+        {
+          name: 'figure-convert',
+          nodeFilter: node => node.type === schema.nodes.image,
+          append: convertImagesToFigure
+        }
+      ];
+    },
+    
     baseKeys: (schema: Schema) => {
       return [
         { key: BaseKey.Enter, command: exitNode(schema.nodes.figure, -1, false) },
@@ -155,6 +166,18 @@ export function deleteCaption() {
 
     return true;
   };
+}
+
+function convertImagesToFigure(tr: Transaction) {
+  const schema = tr.doc.type.schema;
+  const images = findChildrenByType(tr.doc, schema.nodes.image);
+  images.forEach(image => {
+    const imagePos = tr.doc.resolve(image.pos);
+    if (imagePos.parent.type === schema.nodes.paragraph && 
+        imagePos.parent.childCount === 1) {
+      tr.setNodeMarkup(image.pos, schema.nodes.figure, image.node.attrs);
+    }
+  });
 }
 
 function isParaWrappingFigure(tok: PandocToken) {

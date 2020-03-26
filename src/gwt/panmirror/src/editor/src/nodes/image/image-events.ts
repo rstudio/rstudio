@@ -41,16 +41,8 @@ export function imageDrop() {
       return false;
     }
 
-    // see whether this is a figure or image drop (image if it's immediate parent supports inline content)
-    const schema = view.state.schema;
-    let nodeType = schema.nodes.image;
-    const dropNode = findParentNodeClosestToPos(view.state.doc.resolve(coordinates.pos), () => true);
-    if (!dropNode || !dropNode.node.inlineContent) {
-      nodeType = schema.nodes.figure;
-    }
-
     // insert the images (track whether we handled at least one)
-    let insertedImage = false;
+    const tr = view.state.tr;
     uriList.split('\r?\n').forEach(src => {
 
       // get extension and check it it's an image
@@ -61,17 +53,14 @@ export function imageDrop() {
       ];
       const extension = src.split(/\./).pop()!.toLowerCase();
       if (kImageExtensions.includes(extension)) {
-        insertedImage = true;
-        const node = nodeType.create({ src });
-        const tr = view.state.tr.insert(coordinates.pos, node);
-        tr.scrollIntoView();
-        view.dispatch(tr);
+        const node = view.state.schema.nodes.image.create({ src });
+        tr.insert(coordinates.pos, node);
       }
-
     });
 
     // if we inserted an image then indicate that we handled the drop
-    if (insertedImage) {
+    if (tr.docChanged) {
+      view.dispatch(tr);
       event.preventDefault();
       return true;
     } else {
