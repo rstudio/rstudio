@@ -2425,6 +2425,11 @@ public class TextEditingTarget implements
       {
          public void execute()
          {
+            // notify visual mode
+            if (visualMode_ != null)
+               visualMode_.onClosing();
+            
+            // fire close event
             CloseEvent.fire(TextEditingTarget.this, null);
          }
       };

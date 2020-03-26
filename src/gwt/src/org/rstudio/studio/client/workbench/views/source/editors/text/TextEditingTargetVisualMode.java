@@ -297,6 +297,14 @@ public class TextEditingTargetVisualMode
       }
         
    }
+   
+   public void onClosing()
+   {
+      if (syncOnIdle_ != null)
+         syncOnIdle_.suspend();
+      if (saveLocationOnIdle_ != null)
+         saveLocationOnIdle_.suspend();
+   }
   
   
    private void manageUI(boolean activate, boolean focus)
