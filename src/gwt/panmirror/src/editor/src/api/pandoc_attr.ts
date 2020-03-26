@@ -22,6 +22,8 @@ const PANDOC_ATTR_ID = 0;
 const PANDOC_ATTR_CLASSES = 1;
 const PANDOC_ATTR_KEYVAULE = 2;
 
+const kDataPmPandocAttr = 'data-pm-pandoc-attr';
+
 export const kWidthAttrib = 'width';
 export const kHeightAttrib = 'height';
 export const kStyleAttrib = 'style';
@@ -87,19 +89,31 @@ export function pandocAttrToDomAttr(attrs: any) {
     domAttr[keyvalue[0]] = keyvalue[1];
   });
 
+  // marker
+  domAttr[kDataPmPandocAttr] = "1";
+
   // return domAttr
   return domAttr;
 }
 
 export function pandocAttrParseDom(el: Element, attrs: { [key: string]: string | null }) {
-  const existingNames = Object.keys(attrs);
+  
+  // exclude any keys passed to us
+  const excludedNames = Object.keys(attrs);
+
+  // if this isn't from a prosemirror pandoc node then exclude id, style, and classes
+  if (!el.hasAttribute(kDataPmPandocAttr)) {
+    excludedNames.push('id', 'class', 'style');
+  }
+
+  // read attributes
   const attr: any = {};
   attr.classes = [];
   attr.keyvalue = [];
   el.getAttributeNames().forEach(name => {
     const value: string = el.getAttribute(name) as string;
     // exclude attributes already parsed and prosemirror internal attributes
-    if (existingNames.indexOf(name) === -1 && !name.startsWith('data-pm')) {
+    if (excludedNames.indexOf(name) === -1 && !name.startsWith('data-pm')) {
       if (name === 'id') {
         attr.id = value;
       } else if (name === 'class') {
