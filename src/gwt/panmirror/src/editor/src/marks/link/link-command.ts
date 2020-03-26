@@ -93,7 +93,7 @@ export function linkCommand(markType: MarkType, onEditLink: LinkEditorFn, capabi
 
 export function removeLinkCommand(markType: MarkType) {
   return (state: EditorState, dispatch?: (tr: Transaction<any>) => void, view?: EditorView) => {
-    const range = getMarkRange(state.selection.$head, markType);
+    const range = getMarkRange(state.selection.$from, markType);
     if (!range) {
       return false;
     }
