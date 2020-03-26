@@ -187,10 +187,10 @@ export function applyTheme(theme: EditorTheme) {
     }
     .editor_dark .pm-selected-node-outline-color,
     .editor_dark .ProseMirror-selectednode {
-      outline-color: ${theme.linkTextColor} !important;
+      outline-color: ${theme.nodeSelectionColor} !important;
     }
     .editor_dark .pm-selected-node-border-color {
-      border-color: ${theme.linkTextColor} !important;
+      border-color: ${theme.nodeSelectionColor} !important;
     }
     .pm-background-color *::selection {
       background-color: ${theme.selectionColor} !important;

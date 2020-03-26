@@ -43,11 +43,7 @@ public class PanmirrorThemeCreator
       // this code doesn't currently seem to successfully extract color values (we end up w/ rgba(0,0,0,0))
       theme.nodeSelectionColor = DomUtils.extractCssValue("ace_node-selector", "backgroundColor");
       theme.commentBackgroundColor = DomUtils.extractCssValue("ace_comment-highlight", "backgroundColor");
-      
-      // ....so hard code default values for the time being
-      theme.nodeSelectionColor = "rgb(102,155,243)";
-      theme.commentBackgroundColor = "rgb(254, 155, 243)";
-      
+         
       JsArrayString regionBkgdClasses = JsArrayString.createArray().cast();
       regionBkgdClasses.push("ace_marker-layer");
       regionBkgdClasses.push("ace_foreign_line");
