@@ -28,6 +28,7 @@
 #include "modules/SessionRAddins.hpp"
 #include "modules/SessionErrors.hpp"
 #include "modules/SessionFind.hpp"
+#include "modules/SessionGraphics.hpp"
 #include "modules/SessionHTMLPreview.hpp"
 #include "modules/SessionLists.hpp"
 #include "modules/clang/SessionClang.hpp"
@@ -379,6 +380,8 @@ void handleClientInit(const boost::function<void()>& initFunction,
       sessionInfo["has_pkg_src"] = false;
       sessionInfo["has_pkg_vig"] = false;
    }
+   
+   sessionInfo["graphics_backends"] = modules::graphics::supportedBackends();
 
    sessionInfo["presentation_state"] = modules::presentation::presentationStateAsJson();
    sessionInfo["presentation_commands"] = options.allowPresentationCommands();

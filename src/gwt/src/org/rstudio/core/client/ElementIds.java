@@ -157,6 +157,7 @@ public class ElementIds
    public final static String EDIT_DIAGNOSTICS_PREFS = "editing_diagnostics_prefs";
 
    public final static String GENERAL_BASIC_PREFS = "general_basic_prefs";
+   public final static String GENERAL_GRAPHICS_PREFS = "general_graphics_prefs";
    public final static String GENERAL_ADVANCED_PREFS = "general_advanced_prefs";
    
    public final static String RMARKDOWN_BASIC_PREFS = "rmarkdown_basic_prefs";

@@ -2428,6 +2428,32 @@ core::Error UserPrefValues::setInstallPkgDepsIndividually(bool val)
    return writePref("install_pkg_deps_individually", val);
 }
 
+/**
+ * R graphics backend.
+ */
+std::string UserPrefValues::graphicsBackend()
+{
+   return readPref<std::string>("graphics_backend");
+}
+
+core::Error UserPrefValues::setGraphicsBackend(std::string val)
+{
+   return writePref("graphics_backend", val);
+}
+
+/**
+ * Type of anti-aliasing to be used for generated R plots.
+ */
+std::string UserPrefValues::graphicsAntialiasing()
+{
+   return readPref<std::string>("graphics_antialiasing");
+}
+
+core::Error UserPrefValues::setGraphicsAntialiasing(std::string val)
+{
+   return writePref("graphics_antialiasing", val);
+}
+
 std::vector<std::string> UserPrefValues::allKeys()
 {
    return std::vector<std::string>({
@@ -2616,6 +2642,8 @@ std::vector<std::string> UserPrefValues::allKeys()
       kScreenreaderConsoleAnnounceLimit,
       kFileMonitorIgnoredComponents,
       kInstallPkgDepsIndividually,
+      kGraphicsBackend,
+      kGraphicsAntialiasing,
    });
 }
    

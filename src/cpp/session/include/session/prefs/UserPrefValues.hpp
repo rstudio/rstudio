@@ -322,6 +322,17 @@ namespace prefs {
 #define kScreenreaderConsoleAnnounceLimit "screenreader_console_announce_limit"
 #define kFileMonitorIgnoredComponents "file_monitor_ignored_components"
 #define kInstallPkgDepsIndividually "install_pkg_deps_individually"
+#define kGraphicsBackend "graphics_backend"
+#define kGraphicsBackendDefault "default"
+#define kGraphicsBackendCairo "cairo"
+#define kGraphicsBackendCairoPng "cairo-png"
+#define kGraphicsBackendQuartz "quartz"
+#define kGraphicsBackendWindows "windows"
+#define kGraphicsAntialiasing "graphics_antialiasing"
+#define kGraphicsAntialiasingDefault "default"
+#define kGraphicsAntialiasingNone "none"
+#define kGraphicsAntialiasingGray "gray"
+#define kGraphicsAntialiasingSubpixel "subpixel"
 
 class UserPrefValues: public Preferences
 {
@@ -1436,6 +1447,18 @@ public:
     */
    bool installPkgDepsIndividually();
    core::Error setInstallPkgDepsIndividually(bool val);
+
+   /**
+    * R graphics backend.
+    */
+   std::string graphicsBackend();
+   core::Error setGraphicsBackend(std::string val);
+
+   /**
+    * Type of anti-aliasing to be used for generated R plots.
+    */
+   std::string graphicsAntialiasing();
+   core::Error setGraphicsAntialiasing(std::string val);
 
 };
 
