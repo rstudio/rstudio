@@ -104,7 +104,7 @@ public class PanmirrorWidget extends DockLayoutPanel implements
          new PromiseWithProgress<PanmirrorEditor>(
             PanmirrorEditor.create(editorWidget.editorParent_.getElement(), context, options, code),
             null,
-            kPromiseProgressDelayMs,
+            kCreationProgressDelayMs,
             editor -> {
                editorWidget.attachEditor(editor);
                completed.execute(editorWidget);
@@ -311,7 +311,7 @@ public class PanmirrorWidget extends DockLayoutPanel implements
       new PromiseWithProgress<Boolean>(
          editor_.setMarkdown(code, emitUpdate),
          false,
-         kPromiseProgressDelayMs,
+         kSerializationProgressDelayMs,
          completed
       );
    }
@@ -320,7 +320,7 @@ public class PanmirrorWidget extends DockLayoutPanel implements
       new PromiseWithProgress<PanmirrorCode>(
          editor_.getMarkdown(options, cursorSentinel),
          null,
-         kPromiseProgressDelayMs,
+         kSerializationProgressDelayMs,
          completed   
       );
    }
@@ -514,7 +514,8 @@ public class PanmirrorWidget extends DockLayoutPanel implements
    private final HandlerRegistrations registrations_ = new HandlerRegistrations();
    private final ArrayList<JsVoidFunction> editorEventUnsubscribe_ = new ArrayList<JsVoidFunction>();
    
-   private static final int kPromiseProgressDelayMs = 5000;
+   private static final int kCreationProgressDelayMs = 2000;
+   private static final int kSerializationProgressDelayMs = 5000;
 }
 
 
