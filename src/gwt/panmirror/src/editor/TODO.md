@@ -2,6 +2,19 @@
 
 pandoc schema: <https://github.com/jgm/pandoc-types/blob/master/Text/Pandoc/Definition.hs#L94>
 
+## Feedback
+
+### Sigrid
+
+- ctrl-k for insert link does not work for me
+- should parens autocomplete still be effective in visual mode (I don’t really know, I had a case where I inserted a link and then, wanted to surround it by parentheses)
+- should visual mode & text mode display text in the same font size? (visual is bigger)
+not that relevant, but how would one insert an emdash in visual mode? (sorry if that’s a dumb question, but i don’t really know anything about Pandoc [[[in case that’s relevant for the question]]])
+- noticed that in the “format” and “insert” menus, when i hover over something (e.g., “Text”) the submenu is not displayed automatically (i need to click on “Text”)
+- is there a way to insert non-ASCII characters? (again, same lack of Pandoc etc. knowledge applies)
+- i think ctrl and > pressed simultaneously should insert a blockquote, right? for me, it opens a search window above the console window (but i also have to press shift because of the keyboard layout i have)
+
+
 ## TODO
  
 Consider moving widgets to React now that they are outside the PM dom.
