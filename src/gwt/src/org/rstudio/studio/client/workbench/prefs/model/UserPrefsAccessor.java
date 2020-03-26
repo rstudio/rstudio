@@ -1735,6 +1735,7 @@ public class UserPrefsAccessor extends Prefs
    public final static String GRAPHICS_BACKEND_CAIRO_PNG = "cairo-png";
    public final static String GRAPHICS_BACKEND_QUARTZ = "quartz";
    public final static String GRAPHICS_BACKEND_WINDOWS = "windows";
+   public final static String GRAPHICS_BACKEND_RAGG = "ragg";
 
    /**
     * Type of anti-aliasing to be used for generated R plots.

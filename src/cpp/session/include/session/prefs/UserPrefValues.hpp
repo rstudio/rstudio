@@ -328,6 +328,7 @@ namespace prefs {
 #define kGraphicsBackendCairoPng "cairo-png"
 #define kGraphicsBackendQuartz "quartz"
 #define kGraphicsBackendWindows "windows"
+#define kGraphicsBackendRagg "ragg"
 #define kGraphicsAntialiasing "graphics_antialiasing"
 #define kGraphicsAntialiasingDefault "default"
 #define kGraphicsAntialiasingNone "none"

@@ -760,6 +760,17 @@ public class DependencyManager implements InstallShinyEvent.Handler,
             });
    }
    
+   public void withRagg(String userAction, final CommandWithArg<Boolean> command)
+   {
+      withDependencies(
+            "AGG",
+            "Using the AGG renderer",
+            getFeatureDescription("ragg"),
+            getFeatureDependencies("ragg"),
+            true,
+            command);
+   }
+   
    private ArrayList<Dependency> connectionPackageDependencies(
               String packageName,
               String packageVersion)

@@ -489,7 +489,7 @@ std::string getErrorMessage()
 
 void warning(const std::string& warning)
 {
-   Rf_warning(warning.c_str());
+   Rf_warning("%s", warning.c_str());
 }
 
 void message(const std::string& message)

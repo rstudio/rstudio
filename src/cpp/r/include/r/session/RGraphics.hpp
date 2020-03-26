@@ -21,6 +21,8 @@
 
 #include <core/BoostSignals.hpp>
 
+#include "RGraphicsConstants.h"
+
 namespace rstudio {
 namespace r {
 namespace session {
@@ -73,6 +75,9 @@ namespace rstudio {
 namespace r {
 namespace session {
 namespace graphics {
+
+std::string getDefaultBackend();
+std::string getDefaultAntialiasing();
 
 namespace device {
 
