@@ -16,6 +16,7 @@
 package org.rstudio.studio.client.panmirror.theme;
 
 import org.rstudio.core.client.BrowseCap;
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.theme.ThemeFonts;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
@@ -33,15 +34,22 @@ public class PanmirrorThemeCreator
       
       theme.cursorColor = DomUtils.extractCssValue("ace_cursor", "color");
       
-      JsArrayString selectionBkgdClasses = JsArrayString.createArray().cast();
-      selectionBkgdClasses.push("ace_marker-layer");
-      selectionBkgdClasses.push("ace_selection");
-      theme.selectionColor = DomUtils.extractCssValue(selectionBkgdClasses, "backgroundColor");
       // having trouble with selection colors in dark mode...the ace_selection color appears
-      // to be getting blended to yield the actual color use. for now we hard-code #AAA
-      // so the selection is at least visible
-      if (aceTheme.isDark()) 
-         theme.selectionColor = "#AAA";
+      // to be getting blended to yield the actual color used. for now we will just 
+      // use the terminal selection color
+      JsArrayString selectionBkgdClasses = JsArrayString.createArray().cast();
+      if (aceTheme.isDark())
+      {
+         selectionBkgdClasses.push("terminal");
+         selectionBkgdClasses.push("xterm-selection");
+         selectionBkgdClasses.push("fake-class");
+      }
+      else
+      {
+         selectionBkgdClasses.push("ace_marker-layer");
+         selectionBkgdClasses.push("ace_selection");
+      }
+      theme.selectionColor = DomUtils.extractCssValue(selectionBkgdClasses, "backgroundColor");
       theme.backgroundColor = DomUtils.extractCssValue("ace_editor", "backgroundColor");
       theme.metadataBackgroundColor = theme.backgroundColor;
       theme.nodeSelectionColor = DomUtils.extractCssValue("ace_node-selector", "backgroundColor");
