@@ -74,7 +74,7 @@ export function pandocAttrReadAST(tok: PandocToken, index: number) {
   };
 }
 
-export function pandocAttrToDomAttr(attrs: any) {
+export function pandocAttrToDomAttr(attrs: any, marker = true) {
   // id and class
   const domAttr: any = {};
   if (attrs.id) {
@@ -90,7 +90,9 @@ export function pandocAttrToDomAttr(attrs: any) {
   });
 
   // marker
-  domAttr[kDataPmPandocAttr] = "1";
+  if (marker) {
+    domAttr[kDataPmPandocAttr] = "1";
+  }
 
   // return domAttr
   return domAttr;

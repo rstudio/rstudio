@@ -169,7 +169,7 @@ export function imagePandocOutputWriter(figure: boolean, ui: EditorUI) {
     // if we do, then substitute a raw html writer
     if (writeHTML) {
       writer = () => {
-        const imgAttr = imageDOMAttributes(node, true);
+        const imgAttr = imageDOMAttributes(node, true, false);
         const html = asHTMLTag('img', imgAttr, true);
         output.writeRawMarkdown(html);
       };
@@ -207,7 +207,7 @@ export function imageDOMOutputSpec(node: ProsemirrorNode, imageAttributes: boole
   ];
 }
 
-export function imageDOMAttributes(node: ProsemirrorNode, imageAttributes: boolean) : { [key: string]: string } {
+export function imageDOMAttributes(node: ProsemirrorNode, imageAttributes: boolean, marker = true) : { [key: string]: string } {
   const attr: { [key: string]: string } = {
     src: node.attrs.src
   };
@@ -222,7 +222,7 @@ export function imageDOMAttributes(node: ProsemirrorNode, imageAttributes: boole
   
   return {
     ...attr,
-    ...(imageAttributes ? pandocAttrToDomAttr(node.attrs) : {}),
+    ...(imageAttributes ? pandocAttrToDomAttr(node.attrs, marker) : {}),
   };
   
 }
