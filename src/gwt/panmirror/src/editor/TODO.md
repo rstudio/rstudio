@@ -13,18 +13,9 @@ Images that link to things need to be supported. Currently a "figure" with a sur
 because figures can't have links, we should reflect this. I believe that the editor currently handles this fine, but our 
 pandoc serialization currently does not.
 
-Clipboard support for pasting image urls
-
-Inline images dropped into figure slot remain images
-I wonder if we should always transform to figure as soon as we are standalone in a paragraph (i.e. appendTransaction handler).
-that way we don't need this logic everywhere that we create an image.
-
 Remove link button doesn't work after dragging link
 
-Distinguish between internal drag source attributes and external (and strip styles/classes from external). Try 
-dragging this header to test: https://blog.rstudio.com/2019/03/14/rstudio-1-2-jobs/
-
-Shelf doesn't always move perfectly after a drop
+Shelf doesn't always move perfectly after a drop (perhaps poll getPos as well?)
 
 Pandoc allows for list items to start with a block, but our schema follows ProseMirror in requiring a paragraph
 (https://github.com/ProseMirror/prosemirror-schema-list/tree/master/src). Resolve this.
