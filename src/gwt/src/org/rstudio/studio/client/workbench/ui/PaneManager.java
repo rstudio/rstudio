@@ -66,6 +66,7 @@ import org.rstudio.studio.client.workbench.prefs.views.PaneLayoutPreferencesPane
 import org.rstudio.studio.client.workbench.views.console.ConsolePane;
 import org.rstudio.studio.client.workbench.views.output.find.FindOutputTab;
 import org.rstudio.studio.client.workbench.views.output.markers.MarkersOutputTab;
+import org.rstudio.studio.client.workbench.views.source.SourcePane;
 import org.rstudio.studio.client.workbench.views.source.SourceShim;
 import org.rstudio.studio.client.workbench.views.source.SourceWindowManager;
 import org.rstudio.studio.client.workbench.views.source.model.SourceDocument;
@@ -802,7 +803,6 @@ public class PaneManager
       panesByName_ = new HashMap<>();
       panesByName_.put("Console", createConsole());
       panesByName_.put("Source", createSource());
-      panesByName_.put("LeftSource", createLeftSource());
 
       Triad<LogicalWindow, WorkbenchTabPanel, MinimizedModuleTabLayoutPanel> ts1 = createTabSet(
             "TabSet1",

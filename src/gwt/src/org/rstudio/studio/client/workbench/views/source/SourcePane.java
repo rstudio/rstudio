@@ -54,45 +54,48 @@ public class SourcePane extends Composite implements Display,
    {
       final int UTILITY_AREA_SIZE = 74;
 
-      panel_ = new LayoutPanel();
+      SourcePanel sp = new SourcePanel();
+      sp.panel_ = new LayoutPanel();
 
-      new AutoGlassAttacher(panel_);
+      new AutoGlassAttacher(sp.panel_);
 
-      tabPanel_ = new DocTabLayoutPanel(true, 65, UTILITY_AREA_SIZE);
-      panel_.add(tabPanel_);
-      panel_.setWidgetTopBottom(tabPanel_, 0, Unit.PX, 0, Unit.PX);
-      panel_.setWidgetLeftRight(tabPanel_, 0, Unit.PX, 0, Unit.PX);
+      sp.tabPanel_ =  new DocTabLayoutPane(true, 65, UTILITY_AREA_SIZE));
+      sp.panel_.add(sp.tabPanel_);
+      sp.panel_.setWidgetTopBottom(sp.tabPanel_, 0, Unit.PX, 0, Unit.PX);
+      sp.panel_.setWidgetLeftRight(sp.tabPanel_, 0, Unit.PX, 0, Unit.PX);
 
-      utilPanel_ = new HTML();
-      utilPanel_.setStylePrimaryName(ThemeStyles.INSTANCE.multiPodUtilityArea());
-      panel_.add(utilPanel_);
-      panel_.setWidgetRightWidth(utilPanel_,
-                                 0, Unit.PX,
-                                 UTILITY_AREA_SIZE, Unit.PX);
-      panel_.setWidgetTopHeight(utilPanel_, 0, Unit.PX, 22, Unit.PX);
+      sp.utilPanel_ = new HTML();
+      sp.utilPanel_.setStylePrimaryName(ThemeStyles.INSTANCE.multiPodUtilityArea());
+      sp.panel_.add(sp.utilPanel_);
+      sp.panel_.setWidgetRightWidth(sp.utilPanel_,
+                                    0, Unit.PX,
+                                    UTILITY_AREA_SIZE, Unit.PX);
+      sp.panel_.setWidgetTopHeight(sp.utilPanel_, 0, Unit.PX, 22, Unit.PX);
 
-      tabOverflowPopup_ = new TabOverflowPopupPanel();
-      tabOverflowPopup_.addCloseHandler(new CloseHandler<PopupPanel>()
+      sp.tabOverflowPopup_ = new TabOverflowPopupPanel();
+      sp.tabOverflowPopup_.addCloseHandler(new CloseHandler<PopupPanel>()
       {
          public void onClose(CloseEvent<PopupPanel> popupPanelCloseEvent)
          {
             manageChevronVisibility();
          }
       });
-      chevron_ = new Image(new ImageResource2x(ThemeResources.INSTANCE.chevron2x()));
-      chevron_.setAltText("Switch to tab");
-      chevron_.getElement().getStyle().setCursor(Cursor.POINTER);
-      chevron_.addClickHandler(event -> tabOverflowPopup_.showRelativeTo(chevron_));
+      sp.chevron_ = new Image(new ImageResource2x(ThemeResources.INSTANCE.chevron2x()));
+      sp.chevron_.setAltText("Switch to tab");
+      sp.chevron_.getElement().getStyle().setCursor(Cursor.POINTER);
+      sp.chevron_.addClickHandler(event -> sp.tabOverflowPopup_.showRelativeTo(sp.chevron_));
 
-      panel_.add(chevron_);
-      panel_.setWidgetTopHeight(chevron_,
-                               8, Unit.PX,
-                               chevron_.getHeight(), Unit.PX);
-      panel_.setWidgetRightWidth(chevron_,
-                                52, Unit.PX,
-                                chevron_.getWidth(), Unit.PX);
+      sp.panel_.add(sp.chevron_);
+      sp.panel_.setWidgetTopHeight(sp.chevron_,
+                                    8, Unit.PX,
+                                    sp.chevron_.getHeight(), Unit.PX);
+      sp.panel_.setWidgetRightWidth(sp.chevron_,
+                                    52, Unit.PX,
+                                    sp.chevron_.getWidth(), Unit.PX);
       
-      initWidget(panel_);
+      initWidget(sp.panel_);
+      panelList_.add(sp);
+      activePanel_ = sp;
    }
 
    @Override
@@ -110,9 +113,14 @@ public class SourcePane extends Composite implements Display,
                       Integer position,
                       boolean switchToTab)
    {
-      tabPanel_.add(widget, icon, docId, name, tooltip, position);
+      activePanel_.tabPanel.add(widget, icon, docId, name, tooltip, position);
       if (switchToTab)
          tabPanel_.selectTab(widget);
+   }
+
+   public boolean hasTab(Widget widget)
+   {
+      return tabPanel_.getWidgetIndex(widget) >= 0 ? true : false;
    }
 
    public void closeTab(Widget child, boolean interactive)
@@ -300,9 +308,15 @@ public class SourcePane extends Composite implements Display,
       tabPanel_.cancelTabDrag();
    }
 
-   private DocTabLayoutPanel tabPanel_;
-   private HTML utilPanel_;
-   private Image chevron_;
-   private LayoutPanel panel_;
-   private PopupPanel tabOverflowPopup_;
+   class SourcePanel
+   {
+      DocTabLayoutPanel tabPanel_;
+      HTML utilPanel_;
+      Image chevron_;
+      LayoutPanel panel_;
+      PopupPanel tabOverflowPopup_;
+   };
+
+   private SourcePanel activePanel_;
+   private ArrayList<SourcePanel> panelList_ = new ArrayList<SourcePanel>();
 }
