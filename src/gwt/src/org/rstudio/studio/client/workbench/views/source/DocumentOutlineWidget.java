@@ -119,7 +119,6 @@ public class DocumentOutlineWidget extends Composite
                target_.navigateToPosition(
                      SourcePosition.create(node_.getPreamble().getRow(), node_.getPreamble().getColumn()),
                      true);
-               target_.getDocDisplay().alignCursor(node_.getPreamble(), 0.1);
                
                // Defer focus so it occurs after click has been fully handled
                Scheduler.get().scheduleDeferred(new ScheduledCommand()
