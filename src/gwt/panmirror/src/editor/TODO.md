@@ -13,24 +13,11 @@ Images that link to things need to be supported. Currently a "figure" with a sur
 because figures can't have links, we should reflect this. I believe that the editor currently handles this fine, but our 
 pandoc serialization currently does not.
 
-Remove link button doesn't work after dragging link
+Surface attributes handling for div with only an id (shading treatment a bit much?)
 
-Shelf doesn't always move perfectly after a drop (perhaps poll getPos as well?)
-
-Pandoc allows for list items to start with a block, but our schema follows ProseMirror in requiring a paragraph
-(https://github.com/ProseMirror/prosemirror-schema-list/tree/master/src). Resolve this.
-
-Surface attributes
-handling for div with only an id (shading treatment a bit much?)
-
-Consider whether we should make it an option to not put spaces before bullets
-
-Check other uses of markdownOutputFilter (generally doesn't work with tables)
-  example lists, heading links
+Check other uses of markdownOutputFilter (generally doesn't work with tables). example lists, heading links
 
 Better direct manipulation for tables
-
-Make character escaping configurable
 
 Tables with a large number of columns are written as HTML when variable column widths are presented (presumably b/c it can't represent the percentage granularity w/ markdown) Perhaps don't set widths on all of the columns (only ones explicitly sized?)
 
@@ -49,6 +36,10 @@ multimarkdown support is incomplete: -mmd\_title\_block -mmd\_link\_attributes (
 
 no support for +pandoc\_title\_block
 
+allow more control over markdown output, particularly list indenting (perhaps get a PR into pandoc to make it flexible)
+
+as with above, make character escaping configurable
+
 We currently can't round-trip reference links (as pandoc doesn't seem to write them, this is not disimillar from the situation w/ inline footnotes so may be fine)
 
 No editing support for fancy list auto-numbering (\#. as list item that is auto-numbered)
@@ -60,6 +51,12 @@ critic markup: <http://criticmarkup.com/>
 pandoc scholar: <https://pandoc-scholar.github.io/> pandoc jats: <https://github.com/mfenner/pandoc-jats>
 
 Notes on preformance implications of scanning the entire document + some discussion of the tricky nature of doing step by step inspection: <https://discuss.prosemirror.net/t/changed-part-of-document/992> <https://discuss.prosemirror.net/t/reacting-to-node-adding-removing-changing/676> <https://discuss.prosemirror.net/t/undo-and-cursor-position/677/5>
+
+## Known issues:
+
+- When dragging and dropping an image to a place in the document above the original position the shelf sometimes
+  stays in it's original position (until you scroll)
+
 
 ## Project/Build
 
