@@ -184,18 +184,27 @@
    <target name="desktop" description="Run desktop development mode">
       <antcall target="codeserver">
          <param name="gwt.main.module" value="org.rstudio.studio.RStudioDesktopSuperDevMode"/>
+      	 <param name="panmirror.target" value="ide-dev"/>
       </antcall>
    </target>
 
    <target name="devmode" description="Run server development mode">
       <antcall target="codeserver">
          <param name="gwt.main.module" value="org.rstudio.studio.RStudioSuperDevMode"/>
+      	 <param name="panmirror.target" value="ide-dev"/>
       </antcall>
    </target>
+	
+	<target name="devmode-panmirror" description="Run server development mode">
+      <antcall target="codeserver">
+         <param name="gwt.main.module" value="org.rstudio.studio.RStudioSuperDevMode"/>
+         <param name="panmirror.target" value="ide-dev-watch"/>
+      </antcall>
+	</target>
 
    <target name="codeserver" depends="acesupport,javac" description="Run GWT devmode code server">
       <antcall target="panmirror">
-         <param name="panmirror.target" value="ide-dev-watch"/>
+         <param name="panmirror.target" value="${panmirror.target}"/>
          <param name="panmirror.spawn" value="true"/>
       </antcall>
       <java failonerror="true" fork="true" classname="com.google.gwt.dev.DevMode">
