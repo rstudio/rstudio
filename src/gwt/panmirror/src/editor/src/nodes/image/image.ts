@@ -294,7 +294,7 @@ function imageCommand(editorUI: EditorUI, imageAttributes: boolean) {
       }
 
       // show dialog
-      imageDialog(node, imgDimensions, nodeType, state, dispatch, view, editorUI, imageAttributes);
+      imageDialog(node, imgDimensions, nodeType, view, editorUI, imageAttributes);
     }
 
     return true;

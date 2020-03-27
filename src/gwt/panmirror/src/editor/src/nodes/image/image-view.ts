@@ -94,8 +94,6 @@ export class ImageNodeView implements NodeView {
         this.node,
         imageDimensionsFromImg(this.img, this.containerWidth()),
         this.node.type,
-        this.view.state,
-        this.view.dispatch,
         this.view,
         editorUI,
         this.imageAttributes,

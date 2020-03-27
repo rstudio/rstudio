@@ -13,7 +13,7 @@
  *
  */
 
-import { Node as ProsemirrorNode, NodeType, Fragment } from 'prosemirror-model';
+import { Node as ProsemirrorNode, NodeType, Fragment, Mark } from 'prosemirror-model';
 import { EditorState, Transaction } from 'prosemirror-state';
 import { EditorView } from 'prosemirror-view';
 
@@ -29,15 +29,14 @@ export async function imageDialog(
   node: ProsemirrorNode | null,
   dims: ImageDimensions | null,
   nodeType: NodeType,
-  state: EditorState,
-  dispatch: (tr: Transaction<any>) => void,
-  view: EditorView | undefined,
+  view: EditorView,
   editorUI: EditorUI,
   imageAttributes: boolean,
 ) {
   // if we are being called with an existing node then read it's attributes
   let content = Fragment.empty;
   let image: ImageProps = { src: null };
+  let marks: Mark[] = [];
   if (node && dims && node.type === nodeType) {
     // base attributess
     image = {
@@ -57,13 +56,17 @@ export async function imageDialog(
 
     // content (will be caption for figures)
     content = node.content;
+
+    // marks
+    marks = node.marks;
+
   } else {
     // create a new image
     image = nodeType.create(image).attrs as ImageProps;
   }
 
   // determine the type
-  const type = nodeType === state.schema.nodes.image ? ImageType.Image : ImageType.Figure;
+  const type = nodeType === view.state.schema.nodes.image ? ImageType.Image : ImageType.Figure;
 
   // edit the image
   const result = await editorUI.dialogs.editImage(image, dims, editorUI.context.getResourceDir(), imageAttributes);
@@ -73,7 +76,7 @@ export async function imageDialog(
     // content if the alt/caption actually changed (as it will blow away formatting)
     if (type === ImageType.Figure && image.alt !== result.alt) {
       if (result.alt) {
-        content = Fragment.from(state.schema.text(result.alt));
+        content = Fragment.from(view.state.schema.text(result.alt));
       } else {
         content = Fragment.empty;
       }
@@ -104,11 +107,11 @@ export async function imageDialog(
     const imageProps = { ...result, keyvalue };
 
     // create the image
-    const newImage = nodeType.createAndFill(imageProps, content);
+    const newImage = nodeType.createAndFill(imageProps, content, marks);
 
     // insert and select
     if (newImage) {
-      insertAndSelectNode(newImage, state, dispatch);
+      insertAndSelectNode(view, newImage);
     }
   }
 

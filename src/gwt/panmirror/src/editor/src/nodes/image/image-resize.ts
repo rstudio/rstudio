@@ -157,8 +157,6 @@ export function attachResizeUI(
       nodeWithPos.node,
       imageDimensionsFromImg(img, imgContainerWidth()),
       nodeWithPos.node.type,
-      view.state,
-      view.dispatch,
       view,
       ui,
       true,

@@ -26,6 +26,8 @@ import {
   findParentNodeOfTypeClosestToPos,
 } from 'prosemirror-utils';
 
+import { EditorView } from 'prosemirror-view';
+
 import {
   PandocTokenReader,
   PandocNodeWriterFn,
@@ -133,22 +135,23 @@ export function canInsertNode(state: EditorState, nodeType: NodeType) {
 }
 
 export function insertAndSelectNode(
+  view: EditorView,
   node: ProsemirrorNode,
-  state: EditorState,
-  dispatch: (tr: Transaction<any>) => void,
 ) {
+
   // create new transaction
-  const tr = state.tr;
+  const tr = view.state.tr;
 
   // insert the node over the existing selection
+  tr.ensureMarks(node.marks);
   tr.replaceSelectionWith(node);
 
   // set selection to inserted node
-  const selectionPos = tr.doc.resolve(tr.mapping.map(state.selection.from, -1));
+  const selectionPos = tr.doc.resolve(tr.mapping.map(view.state.selection.from, -1));
   tr.setSelection(new NodeSelection(selectionPos));
 
   // dispatch transaction
-  dispatch(tr);
+  view.dispatch(tr);
 }
 
 export function editingRootNode(selection: Selection) {
