@@ -15,6 +15,7 @@
 
 package org.rstudio.core.client.widget;
 
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.studio.client.workbench.views.environment.dataimport.DataImportDataActiveColumn;
 
@@ -31,7 +32,7 @@ public class GridViewerFrame extends RStudioThemedFrame
    {
       super(
          title,
-         "grid_resource/gridviewer.html?data_source=data",
+         "grid_resource/gridviewer_datagrid.html?data_source=data",
          false,
          null, 
          GridViewerStyles.getCustomStyle(),
@@ -47,6 +48,8 @@ public class GridViewerFrame extends RStudioThemedFrame
    
    public void setData(JavaScriptObject data)
    {
+      Debug.log("Setting data: " + data.toString());
+
       WindowEx gridViewerFrameWindow = getIFrame().getContentWindow();
       setDataNative(gridViewerFrameWindow, data);
    }
