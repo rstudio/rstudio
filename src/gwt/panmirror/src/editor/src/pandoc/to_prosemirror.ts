@@ -308,10 +308,17 @@ class ParserState {
   }
 
   public closeNode(): ProsemirrorNode {
-    if (this.marks.length) {
-      this.marks = Mark.none;
-    }
+    
+    // get node info
     const info: ParserStackElement = this.stack.pop() as ParserStackElement;
+    
+    // clear marks if the node type isn't inline
+    if (!info.type.isInline) {
+      if (this.marks.length) {
+        this.marks = Mark.none;
+      }
+    }
+
     return this.addNode(info.type, info.attrs, info.content) as ProsemirrorNode;
   }
 
