@@ -23,5 +23,6 @@ public class PanmirrorLinkCapabilities
 {
    public boolean headings;
    public boolean attributes;
+   public boolean text;
 }
 

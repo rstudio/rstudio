@@ -25,6 +25,7 @@ export enum LinkType {
 export interface LinkCapabilities {
   headings: boolean;
   attributes: boolean;
+  text: boolean;
 }
 
 export interface LinkTargets {

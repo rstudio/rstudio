@@ -15,7 +15,7 @@
 
 import { MarkType } from 'prosemirror-model';
 import { LinkEditorFn, LinkProps } from '../../api/ui';
-import { EditorState, Transaction } from 'prosemirror-state';
+import { EditorState, Transaction, TextSelection } from 'prosemirror-state';
 import { EditorView } from 'prosemirror-view';
 
 import { markIsActive, getMarkAttrs, getSelectionMarkRange, getMarkRange } from '../../api/mark';
@@ -39,7 +39,16 @@ export function linkCommand(markType: MarkType, onEditLink: LinkEditorFn, capabi
 
         // get link attributes if we have them
         let link: { [key: string]: any } = {};
-        link.text = state.doc.textBetween(range.from, range.to);
+
+        // only get text if this is a text selection
+        if (state.selection instanceof TextSelection) {
+          link.text = state.doc.textBetween(range.from, range.to);
+          capabilities.text = true;
+        } else {
+          capabilities.text = false;
+        }
+        
+        // get other attributes
         if (markIsActive(state, markType)) {
           link = {
             ...link,
@@ -66,7 +75,7 @@ export function linkCommand(markType: MarkType, onEditLink: LinkEditorFn, capabi
             const mark = markType.create(result.link);
 
             // if the content changed then replace the range, otherwise
-            if (link.text !== result.link.text) {
+            if (capabilities.text && (link.text !== result.link.text)) {
               const node = markType.schema.text(result.link.text, [mark]);
               // if we are editing an existing link then replace it, otherwise replace the selection
               if (link.href) {
