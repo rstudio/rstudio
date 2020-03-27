@@ -173,7 +173,8 @@ function convertImagesToFigure(tr: Transaction) {
   const images = findChildrenByType(tr.doc, schema.nodes.image);
   images.forEach(image => {
     const imagePos = tr.doc.resolve(image.pos);
-    if (imagePos.parent.type === schema.nodes.paragraph && 
+    if (!schema.marks.link.isInSet(image.node.marks) &&
+        imagePos.parent.type === schema.nodes.paragraph && 
         imagePos.parent.childCount === 1) {
       tr.setNodeMarkup(image.pos, schema.nodes.figure, image.node.attrs);
     }

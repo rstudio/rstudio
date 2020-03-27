@@ -10,6 +10,10 @@ Images that link to things need to be supported. Currently a "figure" with a sur
 because figures can't have links, we should reflect this. I believe that the editor currently handles this fine, but our 
 pandoc serialization currently does not.
 
+This causes some PM exceptions as we click around:
+[![](https://rstudio.com/wp-content/uploads/2018/10/RStudio-Logo-Flat.png){width="40px"}.](https://www.rstudio.com)
+
+
 Check other uses of markdownOutputFilter (generally doesn't work with tables). example lists, heading links
 
 Discuss tokens / escaping / etc. with Joe. HTML must be inserted manually. Backslashes need to
