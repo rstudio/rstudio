@@ -6,12 +6,20 @@ pandoc schema: <https://github.com/jgm/pandoc-types/blob/master/Text/Pandoc/Defi
 
 ## TODO
  
-Images that link to things need to be supported. Currently a "figure" with a surrounding link tag doesn't even round trip! That's 
-because figures can't have links, we should reflect this. I believe that the editor currently handles this fine, but our 
-pandoc serialization currently does not.
+- Test out html images surrounded by links in gfm
 
-This causes some PM exceptions as we click around:
+- LinkTo dialog for node selections should not have the text field
+
+- When a figure is converted into an image b/c a linkTo property was added the image is selected at full width
+  (as opposed to just having the image be selected).
+
+- When an image is converted into a figure b/c the linkTo property is removed the image doens't remain selected.
+  (maybe want to do a delete then insert for this and the above)
+
+- Put cursor in between image and period with this and you get a link popup, but when you edit it you get no href!
 [![](https://rstudio.com/wp-content/uploads/2018/10/RStudio-Logo-Flat.png){width="40px"}.](https://www.rstudio.com)
+
+Can't undo a delete of a node + text (as with above)
 
 
 Check other uses of markdownOutputFilter (generally doesn't work with tables). example lists, heading links
@@ -28,6 +36,8 @@ Better direct manipulation for tables
 Insert special character UX
 
 Tables with a large number of columns are written as HTML when variable column widths are presented (presumably b/c it can't represent the percentage granularity w/ markdown) Perhaps don't set widths on all of the columns (only ones explicitly sized?)
+
+Visual mode implications for addin API
 
 improve scrolling with: <https://github.com/cferdinandi/smooth-scroll>
 
