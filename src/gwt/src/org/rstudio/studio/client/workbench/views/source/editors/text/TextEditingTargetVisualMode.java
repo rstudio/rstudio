@@ -242,6 +242,7 @@ public class TextEditingTargetVisualMode
         commands_.foldAll(),
         commands_.unfold(),
         commands_.unfoldAll(),
+        commands_.yankAfterCursor(),
         commands_.notebookExpandAllOutput(),
         commands_.notebookCollapseAllOutput(),
         commands_.notebookClearAllOutput(),
