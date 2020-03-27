@@ -31,6 +31,7 @@ import {
   createTextRangePopup,
 } from '../../api/widgets';
 import { navigateToId, navigateToHeading } from '../../api/navigation';
+import { selectionIsImageNode } from '../../api/selection';
 
 const kMaxLinkWidth = 300;
 
@@ -58,8 +59,21 @@ export class LinkPopupPlugin extends Plugin<DecorationSet> {
           // if the selection is contained within a link then show the popup
           const schema = newState.doc.type.schema;
           const selection = newState.selection;
+
+          // don't show the link popup if the selection is an image node (as it has it's own popup)
+          if (selectionIsImageNode(schema, selection)) {
+            return DecorationSet.empty;
+          }
+
           const range = getMarkRange(selection.$from, schema.marks.link);
           if (range) {
+
+            // don't show the link popup if it's positioned at the far left of the link
+            // (awkward when cursor is just left of an image)
+            if (selection.empty && range.from === selection.from) {
+              return DecorationSet.empty;
+            }
+
             // get link attrs
             const attrs = getMarkAttrs(newState.doc, range, schema.marks.link) as LinkProps;
 
