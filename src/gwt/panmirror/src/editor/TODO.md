@@ -6,26 +6,22 @@ pandoc schema: <https://github.com/jgm/pandoc-types/blob/master/Text/Pandoc/Defi
 
 ## TODO
  
-Consider moving widgets to React now that they are outside the PM dom.
-
-Discuss tokens / escaping / etc. with Joe. HTML must be inserted manually. Backslashes need to
-be escaped (already wrote the code to do this.). Math bears more discussion.....
-
-Show sub-menu when hovering over it (this works w/ main menus but not with toolbar menus).
-
-Insert special character UX
-
-Highlight citation brackets using brace highlighting
-
 Images that link to things need to be supported. Currently a "figure" with a surrounding link tag doesn't even round trip! That's 
 because figures can't have links, we should reflect this. I believe that the editor currently handles this fine, but our 
 pandoc serialization currently does not.
 
-Surface attributes handling for div with only an id (shading treatment a bit much?)
-
 Check other uses of markdownOutputFilter (generally doesn't work with tables). example lists, heading links
 
+Discuss tokens / escaping / etc. with Joe. HTML must be inserted manually. Backslashes need to
+be escaped (already wrote the code to do this.). Math bears more discussion.....
+
+Consider moving widgets to React now that they are outside the PM dom.
+
+Surface attributes handling for div with only an id (shading treatment a bit much?)
+
 Better direct manipulation for tables
+
+Insert special character UX
 
 Tables with a large number of columns are written as HTML when variable column widths are presented (presumably b/c it can't represent the percentage granularity w/ markdown) Perhaps don't set widths on all of the columns (only ones explicitly sized?)
 
