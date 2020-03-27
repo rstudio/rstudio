@@ -482,6 +482,7 @@ public class ElementIds
    public final static String VISUAL_MD_IMAGE_LOCK_RATIO = "visual_md_image_lock_ratio";
    public final static String VISUAL_MD_IMAGE_TITLE = "visual_md_image_title";
    public final static String VISUAL_MD_IMAGE_ALT = "visual_md_image_alt";
+   public final static String VISUAL_MD_IMAGE_LINK_TO = "visual_md_image_link_to";
    public final static String VISUAL_MD_IMAGE_TAB_ATTRIBUTES = "visual_md_image_tab_attributes";
    public final static String VISUAL_MD_LINK_REMOVE_LINK_BUTTON = "visual_md_link_remove_link_button";
    public final static String VISUAL_MD_LINK_TAB_LINK = "visual_md_link_tab_link";
