@@ -21,7 +21,7 @@ import com.google.gwt.dom.client.Element;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.Window;
-import com.google.gwt.user.client.ui.SimplePanel;
+//import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.SplitterResizedEvent;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
@@ -278,8 +278,9 @@ public class PaneManager
       panes_ = createPanes(config);
       left_ = createSplitWindow(panes_.get(0), panes_.get(1), LEFT_COLUMN, 0.4, splitterSize);
       right_ = createSplitWindow(panes_.get(2), panes_.get(3), RIGHT_COLUMN, 0.6, splitterSize);
-      leftSource_ = new SimplePanel();
+      //leftSource_ = new SimplePanel();
 
+      /*
       {
          SourcePane sp = new SourcePane();
          sp.setSize("100%", "100%");
@@ -293,9 +294,10 @@ public class PaneManager
 
       ArrayList<Widget> mylist = new ArrayList<Widget>();
       mylist.add(leftSource_);
+      */
 
       panel_ = pSplitPanel.get();
-      panel_.initialize(mylist, left_, right_);
+      panel_.initialize(/*mylist,*/ left_, right_);
       
       // count the number of source docs assigned to this window
       JsArray<SourceDocument> docs = 
@@ -790,7 +792,7 @@ public class PaneManager
       ArrayList<LogicalWindow> results = new ArrayList<>();
 
       JsArrayString panes = config.getQuadrants();
-      panes.push("LeftSource");
+      //panes.push("LeftSource");
       for (int i = 0; i < panes.length(); i++)
       {
          results.add(panesByName_.get(panes.get(i)));
@@ -1347,7 +1349,7 @@ public class PaneManager
    private final HashMap<Tab, Integer> tabToIndex_ = new HashMap<>();
    private final HashMap<WorkbenchTab, Tab> wbTabToTab_ = new HashMap<>();
    private HashMap<String, LogicalWindow> panesByName_;
-   private final SimplePanel leftSource_;
+   //private final SimplePanel leftSource_;
    private final DualWindowLayoutPanel left_;
    private final DualWindowLayoutPanel right_;
    private ArrayList<LogicalWindow> panes_;
