@@ -29,7 +29,7 @@ export function citeHighlightPlugin(schema: Schema) {
     const decorations = markHighlightDecorations(markRange, text, re, kIdClass);
 
     // delimiter decorations
-    const kDelimClass = 'cite-delimiter';
+    const kDelimClass = 'pm-light-text-color';
     return decorations.concat([
       Decoration.inline(markRange.from, markRange.from + 1, { class: kDelimClass }),
       Decoration.inline(markRange.to - 1, markRange.to, { class: kDelimClass }),
