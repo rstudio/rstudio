@@ -6,9 +6,6 @@ pandoc schema: <https://github.com/jgm/pandoc-types/blob/master/Text/Pandoc/Defi
 
 ## TODO
  
-- Test out html images surrounded by links in gfm
-
-- LinkTo dialog for node selections should not have the text field
 
 - When a figure is converted into an image b/c a linkTo property was added the image is selected at full width
   (as opposed to just having the image be selected).
