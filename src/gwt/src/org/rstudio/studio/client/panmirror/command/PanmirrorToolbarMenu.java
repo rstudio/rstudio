@@ -42,6 +42,7 @@ public class PanmirrorToolbarMenu extends ToolbarPopupMenu implements PanmirrorC
       commands_ = commands;
       addStyleName(RES.styles().toolbarPopupMenu());
       getElement().getStyle().setZIndex(1000);
+      setAutoOpen(true);
    }
    
    @Override
