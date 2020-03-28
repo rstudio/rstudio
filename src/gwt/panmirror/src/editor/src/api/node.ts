@@ -147,7 +147,7 @@ export function insertAndSelectNode(
   tr.replaceSelectionWith(node);
 
   // set selection to inserted node
-  const selectionPos = tr.doc.resolve(tr.mapping.map(view.state.selection.from, -1));
+  const selectionPos = tr.doc.resolve(tr.selection.from - node.nodeSize);
   tr.setSelection(new NodeSelection(selectionPos));
 
   // dispatch transaction
