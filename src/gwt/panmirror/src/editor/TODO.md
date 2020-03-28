@@ -13,16 +13,26 @@ pandoc schema: <https://github.com/jgm/pandoc-types/blob/master/Text/Pandoc/Defi
 - When an image is converted into a figure b/c the linkTo property is removed the image doens't remain selected.
   (maybe want to do a delete then insert for this and the above)
 
+- Drag and drop of an inline image with a link to the figure slot results in cursor right of image and
+  link popup visible
+
 - Put cursor in between image and period with this and you get a link popup, but when you edit it you get no href!
 [![](https://rstudio.com/wp-content/uploads/2018/10/RStudio-Logo-Flat.png){width="40px"}.](https://www.rstudio.com)
 
-Can't undo a delete of a node + text (as with above)
-
+- Can't undo a delete of a node + text (as with above)
 
 Check other uses of markdownOutputFilter (generally doesn't work with tables). example lists, heading links
 
 Discuss tokens / escaping / etc. with Joe. HTML must be inserted manually. Backslashes need to
 be escaped (already wrote the code to do this.). Math bears more discussion.....
+
+Tables with a large number of columns are written as HTML when variable column widths are presented (presumably b/c it can't represent the percentage granularity w/ markdown) Perhaps don't set widths on all of the columns (only ones explicitly sized?)
+
+Visual mode implications for addin API
+
+Direct parsing of citations (get rid of special post-processing + supported nested) (note: for nested we need excludes: '').
+Only do this if our current method breaks footnotes in citations (if that's even a thing)
+
 
 Consider moving widgets to React now that they are outside the PM dom.
 
@@ -32,16 +42,9 @@ Better direct manipulation for tables
 
 Insert special character UX
 
-Tables with a large number of columns are written as HTML when variable column widths are presented (presumably b/c it can't represent the percentage granularity w/ markdown) Perhaps don't set widths on all of the columns (only ones explicitly sized?)
-
-Visual mode implications for addin API
-
 improve scrolling with: <https://github.com/cferdinandi/smooth-scroll>
 
 MathJax preview
-
-Direct parsing of citations (get rid of special post-processing + supported nested) (note: for nested we need excludes: '').
-Only do this if our current method breaks footnotes in citations (if that's even a thing)
 
 ## Future
 
