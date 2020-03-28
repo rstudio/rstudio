@@ -7,15 +7,6 @@ pandoc schema: <https://github.com/jgm/pandoc-types/blob/master/Text/Pandoc/Defi
 ## TODO
  
 
-- When a figure is converted into an image b/c a linkTo property was added the image is selected at full width
-  (as opposed to just having the image be selected).
-
-- When an image is converted into a figure b/c the linkTo property is removed the image doens't remain selected.
-  (maybe want to do a delete then insert for this and the above)
-
-- Drag and drop of an inline image with a link to the figure slot results in cursor right of image and
-  link popup visible
-
 - Put cursor in between image and period with this and you get a link popup, but when you edit it you get no href!
 [![](https://rstudio.com/wp-content/uploads/2018/10/RStudio-Logo-Flat.png){width="40px"}.](https://www.rstudio.com)
 
