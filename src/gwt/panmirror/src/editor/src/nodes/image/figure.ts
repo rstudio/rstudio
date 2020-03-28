@@ -39,8 +39,6 @@ import { ImageNodeView } from './image-view';
 import { inlineHTMLIsImage } from './image-util';
 
 import './figure-styles.css';
-import { findChildrenByType } from 'prosemirror-utils';
-
 
 const plugin = new PluginKey('figure');
 
@@ -114,6 +112,7 @@ const extension = (pandocExtensions: PandocExtensions, options: EditorOptions, u
       },
     ],
 
+    /*
     appendTransaction: (schema: Schema) => {
       return [
         {
@@ -123,6 +122,7 @@ const extension = (pandocExtensions: PandocExtensions, options: EditorOptions, u
         }
       ];
     },
+    */
     
     baseKeys: (schema: Schema) => {
       return [
@@ -166,19 +166,6 @@ export function deleteCaption() {
 
     return true;
   };
-}
-
-function convertImagesToFigure(tr: Transaction) {
-  const schema = tr.doc.type.schema;
-  const images = findChildrenByType(tr.doc, schema.nodes.image);
-  images.forEach(image => {
-    const imagePos = tr.doc.resolve(image.pos);
-    if (!schema.marks.link.isInSet(image.node.marks) &&
-        imagePos.parent.type === schema.nodes.paragraph && 
-        imagePos.parent.childCount === 1) {
-      tr.setNodeMarkup(image.pos, schema.nodes.figure, image.node.attrs);
-    }
-  });
 }
 
 function isParaWrappingFigure(tok: PandocToken) {
