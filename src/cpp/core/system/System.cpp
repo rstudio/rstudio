@@ -232,6 +232,20 @@ void initializeLogWriters()
 }
 } // anonymous namespace
 
+log::LoggerType loggerType(const std::string& in_sectionName)
+{
+   RECURSIVE_LOCK_MUTEX(s_loggingMutex)
+      {
+         if (!s_logOptions)
+
+            return s_logOptions->loggerType(in_sectionName);
+      }
+   END_LOCK_MUTEX
+
+   // default return - only occurs if we fail to lock mutex
+   return log::LoggerType::kSysLog;
+}
+
 log::LogLevel lowestLogLevel()
 {
    RECURSIVE_LOCK_MUTEX(s_loggingMutex)
