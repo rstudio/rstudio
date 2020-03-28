@@ -52,7 +52,7 @@ export function linkCommand(markType: MarkType, onEditLink: LinkEditorFn, capabi
         if (markIsActive(state, markType)) {
           link = {
             ...link,
-            ...getMarkAttrs(state.doc, state.selection, markType),
+            ...getMarkAttrs(state.doc, range, markType),
           };
         }
 
