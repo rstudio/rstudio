@@ -14,7 +14,7 @@
  */
 
 import { Node as ProsemirrorNode, NodeSpec, NodeType, ResolvedPos } from 'prosemirror-model';
-import { EditorState, Selection, NodeSelection, Transaction } from 'prosemirror-state';
+import { EditorState, Selection, NodeSelection } from 'prosemirror-state';
 import {
   findParentNode,
   findSelectedNodeOfType,

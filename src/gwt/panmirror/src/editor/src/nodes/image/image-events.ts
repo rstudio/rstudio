@@ -14,7 +14,6 @@
  */
 
 import { EditorView } from 'prosemirror-view';
-import { findParentNodeClosestToPos } from 'prosemirror-utils';
 
 export function imageDrop() {
   return (view: EditorView, event: Event) => {

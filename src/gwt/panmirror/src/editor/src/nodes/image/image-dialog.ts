@@ -14,7 +14,6 @@
  */
 
 import { Node as ProsemirrorNode, NodeType, Fragment, Mark } from 'prosemirror-model';
-import { EditorState, Transaction } from 'prosemirror-state';
 import { EditorView } from 'prosemirror-view';
 
 import { insertAndSelectNode } from '../../api/node';
