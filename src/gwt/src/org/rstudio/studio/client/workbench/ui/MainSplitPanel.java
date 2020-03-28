@@ -206,6 +206,9 @@ public class MainSplitPanel extends NotifyingSplitLayoutPanel
          @Override
          protected void onInit(JsObject value)
          {
+            double multiplier = 0.90;
+            int widgets = 2 + leftSource_.size();
+            multiplier = multiplier / (double)widgets;
             State state = value == null ? null : (State)value.cast();
             if (state != null && state.hasSplitterPos())
             {
@@ -216,21 +219,27 @@ public class MainSplitPanel extends NotifyingSplitLayoutPanel
                   int offsetWidth = Window.getClientWidth() - delta;
                   double pct = (double)state.getSplitterPos()
                                / state.getPanelWidth();
-                  addEast(right_, pct * offsetWidth);
+                  //addEast(right_, pct * offsetWidth);
                }
                else
                {
-                  addEast(right_, state.getSplitterPos());
+                  //addEast(right_, state.getSplitterPos() * multiplier);
                }
             }
             else
             {
-               addEast(right_, Window.getClientWidth() * 0.45);
+               //addEast(right_, Window.getClientWidth() * multiplier);
             }
+            double startValue = Window.getClientWidth() * multiplier;
+            addEast(right_, startValue);
             if (!leftSource_.isEmpty())
             {
+               startValue += multiplier;
                for (Widget w : leftSource_)
-                  addWest(w, Window.getClientWidth() * 0.30);
+               {
+                  addWest(w, startValue);
+                  startValue += multiplier;
+               }
             }
 
             Scheduler.get().scheduleDeferred(new ScheduledCommand()

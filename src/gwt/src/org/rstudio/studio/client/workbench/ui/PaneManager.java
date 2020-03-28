@@ -66,6 +66,7 @@ import org.rstudio.studio.client.workbench.prefs.views.PaneLayoutPreferencesPane
 import org.rstudio.studio.client.workbench.views.console.ConsolePane;
 import org.rstudio.studio.client.workbench.views.output.find.FindOutputTab;
 import org.rstudio.studio.client.workbench.views.output.markers.MarkersOutputTab;
+import org.rstudio.studio.client.workbench.views.source.Source;
 import org.rstudio.studio.client.workbench.views.source.SourcePane;
 import org.rstudio.studio.client.workbench.views.source.SourceShim;
 import org.rstudio.studio.client.workbench.views.source.SourceWindowManager;
@@ -211,7 +212,9 @@ public class PaneManager
                       Commands commands,
                       UserPrefs userPrefs,
                       @Named("Console") final Widget consolePane,
-                      SourceShim source,
+                      Provider<Source> pSource,
+                      Provider<SourceShim> pSourceShim,
+                      Provider<SourcePane> pSourceShimPane,
                       @Named("History") final WorkbenchTab historyTab,
                       @Named("Files") final WorkbenchTab filesTab,
                       @Named("Plots") final WorkbenchTab plotsTab,
@@ -242,7 +245,9 @@ public class PaneManager
       commands_ = commands;
       userPrefs_ = userPrefs;
       consolePane_ = (ConsolePane)consolePane;
-      source_ = source;
+      pSource_ = pSource;
+      pSourceShim_ = pSourceShim;
+      pSourceShimPane_ = pSourceShimPane;
       historyTab_ = historyTab;
       filesTab_ = filesTab;
       plotsTab_ = plotsTab;
@@ -278,8 +283,14 @@ public class PaneManager
       panes_ = createPanes(config);
       left_ = createSplitWindow(panes_.get(0), panes_.get(1), LEFT_COLUMN, 0.4, splitterSize);
       right_ = createSplitWindow(panes_.get(2), panes_.get(3), RIGHT_COLUMN, 0.6, splitterSize);
-      //leftSource_ = new SimplePanel();
+      //LeftSource_ = pSourceShimPane_.get();
 
+      //leftSource_ = pSourceShimPane.get();
+      SourceShim shim = pSourceShim_.get();
+      shim.setSize("100%", "100%");
+      Source source = pSource_.get();
+      shim.setSource(source);
+      leftSource_ = shim.asWidget();
       /*
       {
          SourcePane sp = new SourcePane();
@@ -292,12 +303,20 @@ public class PaneManager
          //leftSource_.add(source_);
       }
 
+      */
       ArrayList<Widget> mylist = new ArrayList<Widget>();
       mylist.add(leftSource_);
-      */
+      {
+         SourceShim shim2 = pSourceShim_.get();
+         shim2.setSize("100%", "100%");
+         Source source2 = pSource_.get();
+         shim2.setSource(source2);
+         Widget myWidget = shim2.asWidget();
+         mylist.add(shim2);
+      }
 
       panel_ = pSplitPanel.get();
-      panel_.initialize(/*mylist,*/ left_, right_);
+      panel_.initialize(mylist, left_, right_);
       
       // count the number of source docs assigned to this window
       JsArray<SourceDocument> docs = 
@@ -1080,10 +1099,13 @@ public class PaneManager
 
    private LogicalWindow createSource()
    {
+      SourceShim mainSource = pSourceShim_.get();
+      Source source = pSource_.get();
+      mainSource.setSource(source);
       String frameName = "Source";
       WindowFrame sourceFrame = new WindowFrame(frameName);
-      sourceFrame.setFillWidget(source_.asWidget());
-      source_.forceLoad();
+      sourceFrame.setFillWidget(mainSource.asWidget());
+      mainSource.forceLoad();
       return sourceLogicalWindow_ = new LogicalWindow(
             sourceFrame,
             new MinimizedWindowFrame(frameName, frameName));
@@ -1321,7 +1343,9 @@ public class PaneManager
    private final WorkbenchTab compilePdfTab_;
    private final WorkbenchTab sourceCppTab_;
    private final ConsolePane consolePane_;
-   private final SourceShim source_;
+   private final Provider<Source> pSource_;
+   private final Provider<SourceShim> pSourceShim_;
+   private final Provider<SourcePane> pSourceShimPane_;
    private final WorkbenchTab historyTab_;
    private final WorkbenchTab filesTab_;
    private final WorkbenchTab plotsTab_;
@@ -1349,7 +1373,7 @@ public class PaneManager
    private final HashMap<Tab, Integer> tabToIndex_ = new HashMap<>();
    private final HashMap<WorkbenchTab, Tab> wbTabToTab_ = new HashMap<>();
    private HashMap<String, LogicalWindow> panesByName_;
-   //private final SimplePanel leftSource_;
+   private final Widget leftSource_;
    private final DualWindowLayoutPanel left_;
    private final DualWindowLayoutPanel right_;
    private ArrayList<LogicalWindow> panes_;

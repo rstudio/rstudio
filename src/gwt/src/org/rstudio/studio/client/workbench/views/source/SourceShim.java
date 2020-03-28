@@ -398,7 +398,7 @@ public class SourceShim extends Composite
       return source_.getActiveEditor().getId();
    }
    
-   void setSource(Source source)
+   public void setSource(Source source)
    {
       source_ = source;
    }

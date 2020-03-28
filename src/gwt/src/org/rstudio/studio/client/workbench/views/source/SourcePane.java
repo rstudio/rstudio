@@ -53,28 +53,22 @@ public class SourcePane extends Composite implements Display,
    public SourcePane()
    {
       final int UTILITY_AREA_SIZE = 74;
-      final int HALF_UTILITY_AREA_SIZE = UTILITY_AREA_SIZE / 2;
 
       panel_ = new LayoutPanel();
 
       new AutoGlassAttacher(panel_);
 
-      tabPanel_ =  new DocTabLayoutPanel(true, 65, HALF_UTILITY_AREA_SIZE);
+      tabPanel_ =  new DocTabLayoutPanel(true, 65, UTILITY_AREA_SIZE);
       panel_.add(tabPanel_);
-      panel_.setWidgetRightWidth(tabPanel_, 0, Unit.PCT, 50, Unit.PCT);
-      /*
       panel_.setWidgetTopBottom(tabPanel_, 0, Unit.PX, 0, Unit.PX);
       panel_.setWidgetLeftRight(tabPanel_, 0, Unit.PX, 0, Unit.PX);
-      panel_.setWidgetRightWidth(
-            tabPanel_, HALF_UTILITY_AREA_SIZE, Unit.PX, HALF_UTILITY_AREA_SIZE*2, Unit.PX);
-            */
 
       utilPanel_ = new HTML();
       utilPanel_.setStylePrimaryName(ThemeStyles.INSTANCE.multiPodUtilityArea());
       panel_.add(utilPanel_);
       panel_.setWidgetRightWidth(utilPanel_,
-                                    0, Unit.PCT,
-                                    50, Unit.PCT);
+                                    0, Unit.PX,
+                                    UTILITY_AREA_SIZE, Unit.PX);
       panel_.setWidgetTopHeight(utilPanel_, 0, Unit.PX, 22, Unit.PX);
 
       tabOverflowPopup_ = new TabOverflowPopupPanel();
@@ -98,42 +92,6 @@ public class SourcePane extends Composite implements Display,
                                  52, Unit.PX,
                                  chevron_.getWidth(), Unit.PX);
       
-      {
-         tabPanel2_ =  new DocTabLayoutPanel(true, 65, HALF_UTILITY_AREA_SIZE);
-         panel_.add(tabPanel2_);
-         panel_.setWidgetLeftWidth(tabPanel2_, 0, Unit.PCT, 50, Unit.PCT);
-   
-         utilPanel2_ = new HTML();
-         utilPanel2_.setStylePrimaryName(ThemeStyles.INSTANCE.multiPodUtilityArea());
-         panel_.add(utilPanel2_);
-         panel_.setWidgetLeftWidth(utilPanel2_,
-                                   0, Unit.PCT,
-                                   50, Unit.PCT);
-         panel_.setWidgetTopHeight(utilPanel2_, 0, Unit.PX, 22, Unit.PX);
-   
-         tabOverflowPopup2_ = new TabOverflowPopupPanel();
-         tabOverflowPopup2_.addCloseHandler(new CloseHandler<PopupPanel>()
-         {
-            public void onClose(CloseEvent<PopupPanel> popupPanelCloseEvent)
-            {
-               manageChevronVisibility();
-            }
-         });
-         chevron2_ = new Image(new ImageResource2x(ThemeResources.INSTANCE.chevron2x()));
-         chevron2_.setAltText("Switch to tab");
-         chevron2_.getElement().getStyle().setCursor(Cursor.POINTER);
-         chevron2_.addClickHandler(event -> tabOverflowPopup2_.showRelativeTo(chevron2_));
-   
-         panel_.add(chevron2_);
-         panel_.setWidgetTopHeight(chevron2_,
-                                   8, Unit.PX,
-                                   chevron2_.getHeight(), Unit.PX);
-         panel_.setWidgetRightWidth(chevron2_,
-                                    52, Unit.PX,
-                                    chevron_.getWidth(), Unit.PX);
-
-      }
-
       initWidget(panel_);
    }
 
@@ -352,8 +310,4 @@ public class SourcePane extends Composite implements Display,
    private Image chevron_;
    private LayoutPanel panel_;
    private PopupPanel tabOverflowPopup_;
-   private DocTabLayoutPanel tabPanel2_;
-   private HTML utilPanel2_;
-   private Image chevron2_;
-   private PopupPanel tabOverflowPopup2_;
 }
