@@ -44,6 +44,7 @@ const extension = (pandocExtensions: PandocExtensions, options: EditorOptions): 
   const capabilities = {
     headings: pandocExtensions.implicit_header_references,
     attributes: pandocExtensions.link_attributes,
+    text: true
   };
   const linkAttr = pandocExtensions.link_attributes;
   const autoLink = pandocExtensions.autolink_bare_uris;
