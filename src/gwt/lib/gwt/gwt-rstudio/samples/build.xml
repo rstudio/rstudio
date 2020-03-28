@@ -1,0 +1,28 @@
+<project name="samples" default="build" basedir=".">
+
+  <target name="-do">
+    <ant target="${target}" dir="DynaTable"/>
+    <ant target="${target}" dir="Hello"/>
+    <ant target="${target}" dir="JSON"/>
+    <ant target="${target}" dir="Mail"/>
+    <ant target="${target}" dir="Showcase"/>
+  </target>
+
+  <target name="build" description="Build all samples">
+    <antcall target="-do">
+      <param name="target" value="build" />
+    </antcall>
+  </target>
+
+  <target name="eclipse.generate" description="Generate eclipse projects for all samples">
+    <antcall target="-do">
+      <param name="target" value="eclipse.generate" />
+    </antcall>
+  </target>
+
+  <target name="clean" description="Clean all samples">
+    <antcall target="-do">
+      <param name="target" value="clean" />
+    </antcall>
+  </target>
+</project>

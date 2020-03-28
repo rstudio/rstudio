@@ -1,0 +1,54 @@
+<html>
+<head>
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+<title>Restrictions on subclasses of JavaScriptObject</title>
+</head>
+<body>
+<p>Subclasses of JavaScriptObject represent a view of a JavaScript
+object from Java. Such classes must conform to a number of restrictions
+so that the compiler can implement them. This page lists those
+restrictions.</p>
+<p>In the following, "JSO class" means any subclass of <code>JavaScriptObject</code>.
+Rationales are written <em>like this</em>.</p>
+<ol>
+  <li>All instance methods on JSO classes must be one of:
+  explicitly final, a member of a final class, or private. <em>Methods
+  of JSO classes cannot be overridden, because calls to such methods
+  could require dynamic dispatch.</em></li>
+  <li>An interface type may be implemented by at most one JSO
+  subtype. <em>This ensures that polymorphic dispatch via a
+  "SingleJsoImpl" interface can be statically resolved to exactly one
+  implementing JSO subtype.</em>
+  <ol>
+    <li>A <code>JavaScriptObject</code> that implements a
+    "SingleJsoImpl" interface may be further extended. The subclasses
+    may implement additional "SingleJsoImpl" interfaces. <em>The
+    methods on a JSO must be effectively final, so each "SingleJsoImpl"
+    method still has a 1:1 mapping to a method defined within a JSO
+    subtype.</em></li>
+    <li>It is valid for any number of any non-<code>JavaScriptObject</code>
+    types to implement a "SingleJsoImpl" interface. <em>There is a
+    slight runtime dispatch penalty when a "SingleJsoImpl" interface is
+    implemented by both JSO and non-JSO types.</em></li>
+  </ol>
+  </li>
+  <li>No instance methods on JSO classes may override another
+  method. <em>This catches accidents where JSO itself did not
+  finalize some method from its superclass.</em></li>
+  <li>JSO classes cannot have instance fields. <em>The fields
+  would have no place to live in web mode. Programmers should instead
+  make an explicit wrapper class and put the fields there.</em></li>
+  <li>Nested JSO classes must be static. <em>The implicit <code>this</code>
+  fields of a non-static inner class has the same problems as an
+  explicit field.</em></li>
+  <li>"new" operations cannot be used with JSO classes. <em>This
+  avoids ever being able to try to instantiate JSO objects using the new
+  keyword. New JSO instances can only come from JSNI, as in previous
+  versions of GWT.</em></li>
+  <li>JSNI methods may not refer to instance methods defined within
+  a <code>JavaScriptObject</code>.</li>
+  <li>Every JSO class must have precisely one constructor, and it
+  must be protected, empty, and no-argument.</li>
+</ol>
+</body>
+</html>
