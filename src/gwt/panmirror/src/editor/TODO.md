@@ -6,18 +6,17 @@ pandoc schema: <https://github.com/jgm/pandoc-types/blob/master/Text/Pandoc/Defi
 
 ## TODO
  
+Source editor image preview pops up from time to time
 
-- Put cursor in between image and period with this and you get a link popup, but when you edit it you get no href!
-[![](https://rstudio.com/wp-content/uploads/2018/10/RStudio-Logo-Flat.png){width="40px"}.](https://www.rstudio.com)
+Heading sections only linked when they start out in the document together (no linkage after insert)
 
-- Can't undo a delete of a node + text (as with above)
+No Undo while link popup is visible (perhaps image as well?)
 
-Check other uses of markdownOutputFilter (generally doesn't work with tables). example lists, heading links
+Writeup known limitations (reference links, example lists, list auto-numbering, etc. -- see below)
+
 
 Discuss tokens / escaping / etc. with Joe. HTML must be inserted manually. Backslashes need to
 be escaped (already wrote the code to do this.). Math bears more discussion.....
-
-Tables with a large number of columns are written as HTML when variable column widths are presented (presumably b/c it can't represent the percentage granularity w/ markdown) Perhaps don't set widths on all of the columns (only ones explicitly sized?)
 
 Visual mode implications for addin API
 
@@ -45,11 +44,15 @@ multimarkdown support is incomplete: -mmd\_title\_block -mmd\_link\_attributes (
 
 no support for +pandoc\_title\_block
 
+Example lists don't round trip through the AST:
+  - (@good) referenced elsewhere via (@good) just becomes a generic example (@) with a literal numeric reference.
+  - The writer doesn't preserve the (@) or the (@good) when writing
+
+We currently can't round-trip reference links (as pandoc doesn't seem to write them, this is not disimillar from the situation w/ inline footnotes so may be fine)
+
 allow more control over markdown output, particularly list indenting (perhaps get a PR into pandoc to make it flexible)
 
 as with above, make character escaping configurable
-
-We currently can't round-trip reference links (as pandoc doesn't seem to write them, this is not disimillar from the situation w/ inline footnotes so may be fine)
 
 No editing support for fancy list auto-numbering (\#. as list item that is auto-numbered)
 
@@ -65,6 +68,9 @@ Notes on preformance implications of scanning the entire document + some discuss
 
 - When dragging and dropping an image to a place in the document above the original position the shelf sometimes
   stays in it's original position (until you scroll)
+
+- Tables with a large number of columns are written as HTML when variable column widths are presented (presumably b/c it can't represent the percentage    
+  granularity w/ markdown) Perhaps don't set widths on all of the columns (only ones explicitly sized?)
 
 
 ## Project/Build
