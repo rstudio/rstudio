@@ -36,7 +36,6 @@ import {
   PandocBlockReaderFn,
   PandocCodeBlockFilter,
   PandocAstOutputFilter,
-  PandocMarkdownOutputFilter,
   PandocExtensions,
   PandocInlineHTMLReaderFn,
 } from './api/pandoc';
@@ -313,21 +312,6 @@ export class ExtensionManager {
     this.pandocNodes().forEach((node: PandocNode) => {
       if (node.pandoc.astOutputFilter) {
         filters.push(node.pandoc.astOutputFilter);
-      }
-    });
-    return filters;
-  }
-
-  public pandocMarkdownOutputFilters(): readonly PandocMarkdownOutputFilter[] {
-    const filters: PandocMarkdownOutputFilter[] = [];
-    this.pandocMarks().forEach((mark: PandocMark) => {
-      if (mark.pandoc.markdownOutputFilter) {
-        filters.push(mark.pandoc.markdownOutputFilter);
-      }
-    });
-    this.pandocNodes().forEach((node: PandocNode) => {
-      if (node.pandoc.markdownOutputFilter) {
-        filters.push(node.pandoc.markdownOutputFilter);
       }
     });
     return filters;

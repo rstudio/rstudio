@@ -35,7 +35,6 @@ import {
   PandocBlockReaderFn,
   PandocCodeBlockFilter,
   PandocAstOutputFilter,
-  PandocMarkdownOutputFilter,
   PandocInlineHTMLReaderFn,
 } from './pandoc';
 
@@ -51,7 +50,6 @@ export interface PandocNode {
     readonly inlineHTMLReader?: PandocInlineHTMLReaderFn;
     readonly codeBlockFilter?: PandocCodeBlockFilter;
     readonly astOutputFilter?: PandocAstOutputFilter;
-    readonly markdownOutputFilter?: PandocMarkdownOutputFilter;
   };
 }
 

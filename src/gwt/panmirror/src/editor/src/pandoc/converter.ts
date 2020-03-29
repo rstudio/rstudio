@@ -26,7 +26,6 @@ import {
   PandocBlockReaderFn,
   PandocCodeBlockFilter,
   PandocAstOutputFilter,
-  PandocMarkdownOutputFilter,
   PandocPostprocessorFn,
   PandocInlineHTMLReaderFn,
 } from '../api/pandoc';
@@ -54,7 +53,6 @@ export class PandocConverter {
   private readonly nodeWriters: readonly PandocNodeWriter[];
   private readonly markWriters: readonly PandocMarkWriter[];
   private readonly astOutputFilters: readonly PandocAstOutputFilter[];
-  private readonly markdownOutputFilters: readonly PandocMarkdownOutputFilter[];
   private readonly pandoc: PandocEngine;
 
   private apiVersion: PandocApiVersion | null;
@@ -71,7 +69,6 @@ export class PandocConverter {
     this.nodeWriters = extensions.pandocNodeWriters();
     this.markWriters = extensions.pandocMarkWriters();
     this.astOutputFilters = extensions.pandocAstOutputFilters();
-    this.markdownOutputFilters = extensions.pandocMarkdownOutputFilters();
 
     this.pandoc = pandoc;
     this.apiVersion = null;
@@ -136,10 +133,7 @@ export class PandocConverter {
     format = pandocFormatWith(format, disable, '');
 
     // render to markdown
-    let markdown = await this.pandoc.astToMarkdown(ast, format, pandocOptions);
-
-    // apply markdown filters
-    markdown = this.applyMarkdownOutputFilters(markdown);
+    const markdown = await this.pandoc.astToMarkdown(ast, format, pandocOptions);
 
     // return markdown
     return markdown;
@@ -160,13 +154,6 @@ export class PandocConverter {
     }
 
     return filteredAst;
-  }
-
-  private applyMarkdownOutputFilters(markdown: string) {
-    this.markdownOutputFilters.forEach(filter => {
-      markdown = filter(markdown);
-    });
-    return markdown;
   }
 
   private wrapColumnOptions(options: PandocWriterOptions) {
