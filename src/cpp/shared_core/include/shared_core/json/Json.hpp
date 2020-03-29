@@ -2105,12 +2105,14 @@ template <typename T>
 Error readObject(const Object& in_object, const std::string& in_name, boost::optional<std::vector<T> >& out_values)
 {
    out_values = boost::none;
+
    std::vector<T> values;
    Error error = readObject(in_object, in_name, values);
    if (error && !isMissingMemberError(error))
       return error;
+   else if (!error)
+      out_values = values;
 
-   out_values = values;
    return Success();
 }
 
@@ -2134,6 +2136,8 @@ Error readObject(const Object& in_object, const std::string& in_name, boost::opt
    Error error = readObject(in_object, in_name, values);
    if (error && !isMissingMemberError(error))
       return error;
+   else if (!error)
+      out_values = values;
 
    out_values = values;
    return Success();
