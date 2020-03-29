@@ -2139,7 +2139,6 @@ Error readObject(const Object& in_object, const std::string& in_name, boost::opt
    else if (!error)
       out_values = values;
 
-   out_values = values;
    return Success();
 }
 
