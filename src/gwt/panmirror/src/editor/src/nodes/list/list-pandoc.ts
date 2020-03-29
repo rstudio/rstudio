@@ -28,6 +28,13 @@ const LIST_ATTRIB_ORDER = 0;
 const LIST_ATTRIB_NUMBER_STYLE = 1;
 const LIST_ATTRIB_NUMBER_DELIM = 2;
 
+// Note that we are planning on eliminating the markdownOutputFilter after this commit
+// as there will be no more uses of it and it plays poorly w/ e.g. pandoc table output
+// which needs to reliably know the number of characters wide each column will be).
+// (previous uses of markdownOutputFilter were converted to use output.writeRawMarkdown).
+// So, if we are attempting to re-enable example lists b/c there is now round tripping
+// of example lists through the pandoc AST we need an alternative way to fixup 
+// example list output (likely a more robust pandoc AST).
 const kListItemExampleSentinel = '20543127-1873-4833-AC49-5B352CFA2AF5';
 const kListItemExampleRegex = new RegExp(`\\(\\d+\\) ${kListItemExampleSentinel}`, 'g');
 
@@ -39,13 +46,29 @@ export function readPandocList(nodeType: NodeType, capabilities: ListCapabilitie
   let getChildren = (tok: PandocToken) => tok.c;
   let getAttrs = (tok: PandocToken): { [key: string]: any } => ({});
 
+  // function to read the number style (convert example to default if we 
+  // don't support example lists)
+  const readNumberStyle = (attribs: any) => {
+    if (capabilities.fancy) {
+      const style = attribs[LIST_ATTRIB_NUMBER_STYLE].t;
+      if (style === ListNumberStyle.Example && !capabilities.example) {
+        return ListNumberStyle.DefaultStyle;
+      } else {
+        return style;
+      }
+    } else {
+      return ListNumberStyle.DefaultStyle;
+    }
+  };
+
+
   // specialize for ordered_list
   if (nodeType === schema.nodes.ordered_list) {
     getAttrs = (tok: PandocToken) => {
       const attribs = tok.c[LIST_ATTRIBS];
       return {
         order: capabilities.order ? attribs[LIST_ATTRIB_ORDER] : 1,
-        number_style: capabilities.fancy ? attribs[LIST_ATTRIB_NUMBER_STYLE].t : ListNumberStyle.DefaultStyle,
+        number_style: readNumberStyle(attribs),
         number_delim: capabilities.fancy ? attribs[LIST_ATTRIB_NUMBER_DELIM].t : ListNumberDelim.DefaultDelim,
       };
     };

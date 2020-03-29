@@ -183,13 +183,23 @@ public class SelectWidget extends Composite
       for (int i = 0; i < options.length; i++)
          addChoice(options[i], values[i]);
       
-      if (listBox_.getItemCount() > 0)
-         listBox_.setSelectedIndex(0);
+      selectFirstItem();
+   }
+   
+   public void addChoice(String option)
+   {
+      addChoice(option, option);
    }
    
    public void addChoice(String option, String value)
    {
       listBox_.addItem(option, value);
+   }
+   
+   public void selectFirstItem()
+   {
+      if (listBox_.getItemCount() > 0)
+         listBox_.setSelectedIndex(0);
    }
 
    public void setEnabled(boolean enabled)

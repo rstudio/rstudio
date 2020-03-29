@@ -67,7 +67,14 @@ const extension = (pandocExtensions: PandocExtensions): Extension => {
   const capabilities: ListCapabilities = {
     tasks: pandocExtensions.task_lists,
     fancy: pandocExtensions.fancy_lists,
-    example: pandocExtensions.fancy_lists && pandocExtensions.example_lists,
+    /*
+     Always disable example lists b/c they don't round trip through the AST:
+      - (@good) referenced elsewhere via (@good) just becomes a generic example (@) with 
+        a literal numeric reference.
+      - The writer doesn't preserve the (@) or the (@good) when writing
+    */
+    // example: pandocExtensions.fancy_lists && pandocExtensions.example_lists,
+    example: false,
     order: pandocExtensions.startnum,
   };
 
