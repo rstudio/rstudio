@@ -561,6 +561,10 @@ public class ImagePreviewer
          return;
       }
       
+      // don't show preview if we are in visual mode
+      if (sentinel.getBoolProperty(TextEditingTarget.RMD_VISUAL_MODE, false))
+         return;
+      
       // construct image el, place in popup, and show
       ImagePreviewPopup panel = new ImagePreviewPopup(display, tokenRange, 
             href, imgSrcPathFromHref(sentinel, href));
