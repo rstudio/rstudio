@@ -6,23 +6,20 @@ pandoc schema: <https://github.com/jgm/pandoc-types/blob/master/Text/Pandoc/Defi
 
 ## TODO
  
-Source editor image preview pops up from time to time
-
 Heading sections only linked when they start out in the document together (no linkage after insert)
 
 No Undo while link popup is visible (perhaps image as well?)
 
 Writeup known limitations (reference links, example lists, list auto-numbering, etc. -- see below)
 
+Visual mode implications for addin API
+
+Direct parsing of citations (get rid of special post-processing + supported nested) 
+(note: for nested we need excludes: ''). Could also choose not to support nested 
+citations as I'm not sure pandoc even handles this.
 
 Discuss tokens / escaping / etc. with Joe. HTML must be inserted manually. Backslashes need to
 be escaped (already wrote the code to do this.). Math bears more discussion.....
-
-Visual mode implications for addin API
-
-Direct parsing of citations (get rid of special post-processing + supported nested) (note: for nested we need excludes: '').
-Only do this if our current method breaks footnotes in citations (if that's even a thing)
-
 
 Consider moving widgets to React now that they are outside the PM dom.
 
@@ -30,7 +27,8 @@ Surface attributes handling for div with only an id (shading treatment a bit muc
 
 Better direct manipulation for tables
 
-Insert special character UX
+Consider special Knit behavior from Visual Mode: execute w/ keep_md and only re-executes
+R code when the code chunks have actually changed.
 
 improve scrolling with: <https://github.com/cferdinandi/smooth-scroll>
 
@@ -39,6 +37,8 @@ MathJax preview
 ## Future
 
 Unit testing for core panmirror code
+
+Insert special character UX
 
 multimarkdown support is incomplete: -mmd\_title\_block -mmd\_link\_attributes (not written, likely limitation of pandoc) -mmd\_header\_identifiers (work fine, but we currently allow edit of classes + keyvalue for markdown\_mmd)
 
