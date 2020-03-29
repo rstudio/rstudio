@@ -37,9 +37,6 @@ const LINK_ATTR = 0;
 const LINK_CHILDREN = 1;
 const LINK_TARGET = 2;
 
-const kHeadingLinkSentinel = '#2E93950F-D8CF-4551-88E0-F496194FDEE8';
-const kHeadingLinkSentinelRegex = new RegExp(`\\(${kHeadingLinkSentinel}\\)`, 'g');
-
 const extension = (pandocExtensions: PandocExtensions, options: EditorOptions): Extension => {
   const capabilities = {
     headings: pandocExtensions.implicit_header_references,
@@ -125,29 +122,30 @@ const extension = (pandocExtensions: PandocExtensions, options: EditorOptions): 
           writer: {
             priority: 15,
             write: (output: PandocOutput, mark: Mark, parent: Fragment) => {
-              output.writeToken(PandocTokenType.Link, () => {
-                // write attributes if the current format supports that
-                if (linkAttr) {
-                  output.writeAttr(mark.attrs.id, mark.attrs.classes, mark.attrs.keyvalue);
-                } else {
-                  output.writeAttr();
-                }
+              if (mark.attrs.heading) {
+                output.writeRawMarkdown('[');
+                output.writeRawMarkdown(mark.attrs.heading, true);
+                output.writeRawMarkdown(']');
+              } else {
+                output.writeToken(PandocTokenType.Link, () => {
+                  // write attributes if the current format supports that
+                  if (linkAttr) {
+                    output.writeAttr(mark.attrs.id, mark.attrs.classes, mark.attrs.keyvalue);
+                  } else {
+                    output.writeAttr();
+                  }
 
-                // write content
-                output.writeArray(() => {
-                  output.writeInlines(parent);
+                  // write content
+                  output.writeArray(() => {
+                    output.writeInlines(parent);
+                  });
+
+                  // write href
+                  output.write([mark.attrs.href || '', mark.attrs.title || '']);
                 });
-
-                // write href (but if this is a heading link write a special sentinel that
-                // we will remove in the postprocessor)
-                const href = mark.attrs.heading ? kHeadingLinkSentinel : mark.attrs.href;
-                output.write([href || '', mark.attrs.title || '']);
-              });
+              }
+              
             },
-          },
-
-          markdownOutputFilter: (markdown: string) => {
-            return markdown.replace(kHeadingLinkSentinelRegex, '');
           },
         },
       },

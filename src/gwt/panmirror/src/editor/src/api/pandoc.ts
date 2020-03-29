@@ -271,7 +271,7 @@ export interface PandocOutput {
   writeNodes(parent: ProsemirrorNode): void;
   writeNote(note: ProsemirrorNode): void;
   writeInlines(fragment: Fragment): void;
-  writeRawMarkdown(markdown: Fragment | string): void;
+  writeRawMarkdown(markdown: Fragment | string, escapeSymbols?: boolean): void;
   withOption(option: PandocOutputOption, value: boolean, f: () => void): void;
 }
 

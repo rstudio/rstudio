@@ -57,6 +57,9 @@ class PandocWriter implements PandocOutput {
 
   public readonly extensions: PandocExtensions;
 
+  private readonly escapeCharacters: string[] = [];
+  private readonly preventEscapeCharacters: string[] = [];
+
   constructor(
     apiVersion: PandocApiVersion,
     format: PandocFormat,
@@ -67,6 +70,8 @@ class PandocWriter implements PandocOutput {
     // save format and extensions
     this.format = format;
     this.extensions = format.extensions;
+    // compute escape characters based on format
+    this.initEscapeCharacters();
     // create maps of node and mark writers
     this.nodeWriters = {};
     nodeWriters.forEach((writer: PandocNodeWriter) => {
@@ -202,14 +207,7 @@ class PandocWriter implements PandocOutput {
         if (this.options.writeSpaces && ch === ' ') {
           flushTextRun();
           this.writeToken(PandocTokenType.Space);
-        } else if (
-          // disable \ escaping (we use it for inline latex)
-          (ch === '\\') ||
-          // disable [] escaping for gfm (allows for MediaWiki extensions in GitHub wikis)
-          (this.format.baseName === 'gfm' && ['[', ']'].includes(ch)) ||
-          // disable []() escaping in tex_math_single_backslash
-          (this.format.extensions.tex_math_single_backslash && ['(', ')', '[', ']'].includes(ch))
-        ) {
+        } else if (this.preventEscapeCharacters.includes(ch)) {
           flushTextRun();
           this.writeRawMarkdown(ch);
         } else {
@@ -221,6 +219,7 @@ class PandocWriter implements PandocOutput {
       }
     }
   }
+
 
   public writeNote(note: ProsemirrorNode) {
     const noteBody = this.notes[note.attrs.ref];
@@ -315,7 +314,7 @@ class PandocWriter implements PandocOutput {
     }
   }
 
-  public writeRawMarkdown(markdown: Fragment | string) {
+  public writeRawMarkdown(markdown: Fragment | string, escapeSymbols?: boolean) {
     // collect markdown text if necessary
     let md = '';
     if (markdown instanceof Fragment) {
@@ -323,6 +322,20 @@ class PandocWriter implements PandocOutput {
       markdown = md;
     } else {
       md = markdown;
+    }
+
+    // escape symbols if requested
+    if (escapeSymbols) {
+      const escaped: string[] = [];
+      for (let i = 0; i < md.length; i++) {
+        const ch = markdown.charAt(i);
+        if (this.escapeCharacters.includes(ch)) {
+          escaped.push('\\' + ch);
+        } else {
+          escaped.push(ch);
+        }
+      }
+      md = escaped.join('');
     }
 
     this.writeToken(PandocTokenType.RawInline, () => {
@@ -343,4 +356,28 @@ class PandocWriter implements PandocOutput {
     content();
     this.containers.pop();
   }
+
+  private initEscapeCharacters() {
+  
+    // prevent escape characters based on format
+    if (this.format.extensions.raw_tex) {
+      this.preventEscapeCharacters.push('\\');
+    }
+    if (this.format.baseName === 'gfm' || this.format.extensions.tex_math_single_backslash) {
+      this.preventEscapeCharacters.push('[', ']');
+    }
+    if (this.format.extensions.tex_math_single_backslash) {
+      this.preventEscapeCharacters.push('(', ')');
+    }
+    
+    // filter standard escape characters w/ preventEscapeCharacters
+    const allEscapeCharacters = [
+      '\\', '`', '*', '_', '{', '}', '[', ']', 
+      '(', ')', '>', '#', '+', '-', '.', '!'
+    ];
+    this.escapeCharacters.push(
+      ...allEscapeCharacters.filter(ch => !this.preventEscapeCharacters.includes(ch))
+    ); 
+  }
 }
+
