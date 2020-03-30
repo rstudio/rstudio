@@ -315,6 +315,12 @@ void MainWindow::loadUrl(const QUrl& url)
    webView()->load(url);
 }
 
+void MainWindow::loadRequest(const QWebEngineHttpRequest& request)
+{
+   webView()->setBaseUrl(request.url());
+   webView()->load(request);
+}
+
 void MainWindow::loadHtml(const QString& html)
 {
    webView()->setHtml(html);

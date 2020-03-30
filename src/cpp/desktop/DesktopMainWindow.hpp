@@ -61,6 +61,7 @@ public:
 public Q_SLOTS:
    void quit();
    void loadUrl(const QUrl& url);
+   void loadRequest(const QWebEngineHttpRequest& request);
    void loadHtml(const QString& html);
    void setMenuBar(QMenuBar *pMenuBar);
    void invokeCommand(QString commandId);
