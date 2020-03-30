@@ -248,7 +248,10 @@ export class ImageNodeView implements NodeView {
     this.img.src = this.editorUI.context.mapResourcePath(this.node.attrs.src);
 
     // title/tooltip
-    this.img.title = this.node.attrs.title;
+    this.img.title = '';
+    if (this.node.attrs.title) {
+      this.img.title = this.node.attrs.title;
+    } 
 
     // ensure alt attribute so that we get default browser broken image treatment
     this.img.alt = this.node.textContent || this.node.attrs.src;
