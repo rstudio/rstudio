@@ -17,6 +17,8 @@ import { Node as ProsemirrorNode, Schema } from 'prosemirror-model';
 import { Plugin, PluginKey, EditorState, Transaction, NodeSelection } from 'prosemirror-state';
 import { EditorView } from 'prosemirror-view';
 
+import { findChildrenByType } from 'prosemirror-utils';
+
 import { Extension } from '../../api/extension';
 import { EditorUI } from '../../api/ui';
 import { BaseKey } from '../../api/basekeys';
@@ -25,6 +27,7 @@ import { EditorOptions } from '../../api/options';
 import { EditorEvents } from '../../api/events';
 
 import { isSingleLineHTML } from '../../api/html';
+import { getMarkAttrs } from '../../api/mark';
 import { PandocToken, PandocTokenType, ProsemirrorWriter, PandocExtensions, kRawBlockContent, kRawBlockFormat, imageAttributesAvailable } from '../../api/pandoc';
 
 import {
@@ -39,6 +42,8 @@ import { ImageNodeView } from './image-view';
 import { inlineHTMLIsImage } from './image-util';
 
 import './figure-styles.css';
+import { FixupContext } from '../../api/fixup';
+
 
 const plugin = new PluginKey('figure');
 
@@ -51,7 +56,7 @@ const extension = (pandocExtensions: PandocExtensions, options: EditorOptions, u
       {
         name: 'figure',
         spec: {
-          attrs: imageNodeAttrsSpec(imageAttr),
+          attrs: imageNodeAttrsSpec(true, imageAttr),
           content: 'inline*',
           group: 'block',
           draggable: true,
@@ -112,7 +117,18 @@ const extension = (pandocExtensions: PandocExtensions, options: EditorOptions, u
       },
     ],
 
-    /*
+    fixups: (_schema: Schema) => {
+      return [
+        (tr: Transaction, context: FixupContext) => {
+          if (context === FixupContext.Load) {
+            return convertImagesToFigure(tr);
+          } else {
+            return tr;
+          }
+        }
+      ];
+    },
+
     appendTransaction: (schema: Schema) => {
       return [
         {
@@ -122,7 +138,6 @@ const extension = (pandocExtensions: PandocExtensions, options: EditorOptions, u
         }
       ];
     },
-    */
     
     baseKeys: (schema: Schema) => {
       return [
@@ -166,6 +181,31 @@ export function deleteCaption() {
 
     return true;
   };
+}
+
+function convertImagesToFigure(tr: Transaction) {
+  const schema = tr.doc.type.schema;
+  const images = findChildrenByType(tr.doc, schema.nodes.image);
+  images.forEach(image => {
+    const imagePos = tr.doc.resolve(image.pos);
+    if (imagePos.parent.type === schema.nodes.paragraph && 
+        imagePos.parent.childCount === 1) {
+
+      // figure attributes
+      const attrs = image.node.attrs;
+
+      // extract linkTo from link mark (if any)
+      if (schema.marks.link.isInSet(image.node.marks)) {
+        const linkAttrs = getMarkAttrs(tr.doc, { from: image.pos, to: image.pos + image.node.nodeSize}, schema.marks.link);
+        if (linkAttrs && linkAttrs.href) {
+          attrs.linkTo = linkAttrs.href;
+        }
+      }
+
+      tr.setNodeMarkup(image.pos, schema.nodes.figure, attrs);
+    }
+  });
+  return tr;
 }
 
 function isParaWrappingFigure(tok: PandocToken) {
