@@ -283,21 +283,16 @@ public class TextEditingTargetVisualMode
    {
       if (isActivated())
       {
-         // dev tools sync
-         ScheduledCommand devtoolsCmd = () -> {
-            syncDevTools();
-         };
-         
          // if this is the first time we've switched to the doc
          // while in visual mode then complete initialization
          if (!haveEditedInVisualMode_)
          {
             haveEditedInVisualMode_ = true;
-            manageUI(true, true, devtoolsCmd);
+            manageUI(true, true);
          }
          else
          {
-            devtoolsCmd.execute();
+            syncDevTools();
          }
       }
         
@@ -385,12 +380,8 @@ public class TextEditingTargetVisualMode
    
    private void syncDevTools()
    {
-      withPanmirror(() -> {
-         if (panmirror_.devToolsLoaded()) 
-         {
-            panmirror_.activateDevTools();
-         }
-      });
+      if (panmirror_ != null && panmirror_.devToolsLoaded()) 
+         panmirror_.activateDevTools();
    }
    
    
