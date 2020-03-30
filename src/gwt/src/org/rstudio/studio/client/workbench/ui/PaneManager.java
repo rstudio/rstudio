@@ -15,6 +15,7 @@
 package org.rstudio.studio.client.workbench.ui;
 
 import com.google.gwt.animation.client.Animation;
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.dom.client.Element;
@@ -84,7 +85,7 @@ import java.util.List;
 public class PaneManager
 {
    public interface Binder extends CommandBinder<Commands, PaneManager> {}
-   
+
    public enum Tab {
       History, Files, Plots, Packages, Help, VCS, Tutorial, Build, Connections,
       Presentation, Environment, Viewer, Source, Console
@@ -212,7 +213,7 @@ public class PaneManager
                       Commands commands,
                       UserPrefs userPrefs,
                       @Named("Console") final Widget consolePane,
-                      Provider<Source> pSource,
+                      Source source,
                       Provider<SourceShim> pSourceShim,
                       Provider<SourcePane> pSourceShimPane,
                       @Named("History") final WorkbenchTab historyTab,
@@ -245,7 +246,7 @@ public class PaneManager
       commands_ = commands;
       userPrefs_ = userPrefs;
       consolePane_ = (ConsolePane)consolePane;
-      pSource_ = pSource;
+      source_ = source;
       pSourceShim_ = pSourceShim;
       pSourceShimPane_ = pSourceShimPane;
       historyTab_ = historyTab;
@@ -285,34 +286,16 @@ public class PaneManager
       right_ = createSplitWindow(panes_.get(2), panes_.get(3), RIGHT_COLUMN, 0.6, splitterSize);
       //LeftSource_ = pSourceShimPane_.get();
 
-      //leftSource_ = pSourceShimPane.get();
-      SourceShim shim = pSourceShim_.get();
-      shim.setSize("100%", "100%");
-      Source source = pSource_.get();
-      shim.setSource(source);
-      leftSource_ = shim.asWidget();
-      /*
-      {
-         SourcePane sp = new SourcePane();
-         sp.setSize("100%", "100%");
-         leftSource_.add(sp.asWidget());
-         
-         //SourceShim shim = new SourceShim(source_);
-         //shim.forceLoad();
-         //shim.onNewSourceDoc();
-         //leftSource_.add(source_);
-      }
 
-      */
+      Source.Display sp = GWT.create(SourcePane.class);
+      source.addView(sp);
       ArrayList<Widget> mylist = new ArrayList<Widget>();
-      mylist.add(leftSource_);
+      int counter = 0;
+      for (Source.Display display : source_.getViews())
       {
-         SourceShim shim2 = pSourceShim_.get();
-         shim2.setSize("100%", "100%");
-         Source source2 = pSource_.get();
-         shim2.setSource(source2);
-         Widget myWidget = shim2.asWidget();
-         mylist.add(shim2);
+         if (counter <= 0)
+            mylist.add(display.asWidget());
+         counter++;
       }
 
       panel_ = pSplitPanel.get();
@@ -1100,7 +1083,7 @@ public class PaneManager
    private LogicalWindow createSource()
    {
       SourceShim mainSource = pSourceShim_.get();
-      Source source = pSource_.get();
+      Source source = source_;
       mainSource.setSource(source);
       String frameName = "Source";
       WindowFrame sourceFrame = new WindowFrame(frameName);
@@ -1343,7 +1326,7 @@ public class PaneManager
    private final WorkbenchTab compilePdfTab_;
    private final WorkbenchTab sourceCppTab_;
    private final ConsolePane consolePane_;
-   private final Provider<Source> pSource_;
+   private final Source source_;
    private final Provider<SourceShim> pSourceShim_;
    private final Provider<SourcePane> pSourceShimPane_;
    private final WorkbenchTab historyTab_;
@@ -1373,7 +1356,7 @@ public class PaneManager
    private final HashMap<Tab, Integer> tabToIndex_ = new HashMap<>();
    private final HashMap<WorkbenchTab, Tab> wbTabToTab_ = new HashMap<>();
    private HashMap<String, LogicalWindow> panesByName_;
-   private final Widget leftSource_;
+   //private final Widget leftSource_;
    private final DualWindowLayoutPanel left_;
    private final DualWindowLayoutPanel right_;
    private ArrayList<LogicalWindow> panes_;

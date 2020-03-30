@@ -2663,6 +2663,11 @@ public class Source implements InsertSourceHandler,
       }
    }
    
+   public void addView(Display view)
+   {
+      views_.add(view);
+   }
+
    public Display getActiveView()
    {
       return views_.getActiveDisplay();
