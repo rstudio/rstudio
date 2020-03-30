@@ -66,6 +66,7 @@ then
        -DWITH_MYSQL=OFF \
        -DWITH_ORACLE=OFF \
        -DWITH_FIREBIRD=OFF \
+       -DWITH_ODBC=OFF \
        -DBoost_DEBUG=1 ..   
    sudo $makeCommand
    
