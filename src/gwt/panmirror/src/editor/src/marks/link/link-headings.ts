@@ -29,8 +29,8 @@ export function linkHeadingsPostprocessor(doc: ProsemirrorNode) {
   const headings = findChildrenByType(doc, schema.nodes.heading);
 
   // find link marks
-  findChildrenByMark(doc, schema.marks.link).forEach(mark => {
-    const markRange = getMarkRange(doc.resolve(mark.pos), schema.marks.link);
+  findChildrenByMark(doc, schema.marks.link).forEach(link => {
+    const markRange = getMarkRange(doc.resolve(link.pos), schema.marks.link);
     if (markRange) {
       const attrs = getMarkAttrs(doc, markRange, schema.marks.link);
       const linkText = doc.textBetween(markRange.from, markRange.to);

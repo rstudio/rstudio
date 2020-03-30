@@ -17,6 +17,7 @@ import { MarkType } from 'prosemirror-model';
 import { LinkEditorFn, LinkProps } from '../../api/ui';
 import { EditorState, Transaction, TextSelection } from 'prosemirror-state';
 import { EditorView } from 'prosemirror-view';
+import { findChildren } from 'prosemirror-utils';
 
 import { markIsActive, getMarkAttrs, getSelectionMarkRange, getMarkRange } from '../../api/mark';
 
@@ -85,6 +86,19 @@ export function linkCommand(markType: MarkType, onEditLink: LinkEditorFn, capabi
               }
             } else {
               tr.addMark(range.from, range.to, mark);
+            }
+
+            // if it's a heading link then update heading to indicate it has an associated link 
+            if (result.link.type === LinkType.Heading) {
+              const heading = findChildren(tr.doc, node => 
+                node.type === state.schema.nodes.heading && node.textContent === result.link.heading
+              );
+              if (heading.length > 0) {
+                tr.setNodeMarkup(heading[0].pos, state.schema.nodes.heading, {
+                  ...heading[0].node.attrs,
+                  link: result.link.heading
+                });
+              }
             }
           }
           dispatch(tr);
