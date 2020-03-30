@@ -5,29 +5,40 @@ pandoc schema: <https://github.com/jgm/pandoc-types/blob/master/Text/Pandoc/Defi
 ## Feedback
 
 ## TODO
- 
+
+appendTransaction for image -> figure needs to do correct mapping (ask Joe)
+
+Do we still need the figure pandoc reader to convert images?
+
+Drag inline image into figure slot still has some insertion problems when we auto-convert to a figure
+
+Consider using setNodeMarkup for image dialog (now that it doesn't change types)
+
+Currently hard to get a cursor to the right of a floated image. Special handler?
+Floated with link inserts an extra paragraph on top
 
 Writeup known limitations (reference links, example lists, list auto-numbering, etc. -- see below)
 
 Visual mode implications for addin API
 
+Updated dark mode node selection color from Paul
+
 Direct parsing of citations (get rid of special post-processing + supported nested) 
 (note: for nested we need excludes: ''). Could also choose not to support nested 
-citations as I'm not sure pandoc even handles this.
+citations as I'm not sure pandoc even handles this. What happens to footnotes
+in citations?
 
-Discuss tokens / escaping / etc. with Joe. HTML must be inserted manually. Backslashes need to
-be escaped (already wrote the code to do this.). Math bears more discussion.....
-
-Consider moving widgets to React now that they are outside the PM dom.
+Discuss tokens / escaping / etc. with Joe. HTML must be inserted manually. Backslashes need to be escaped (already wrote the code to do this.). Math bears more discussion....
 
 Surface attributes handling for div with only an id (shading treatment a bit much?)
 
+Clear Formatting command
+
 Better direct manipulation for tables
 
-Consider special Knit behavior from Visual Mode: execute w/ keep_md and only re-executes
-R code when the code chunks have actually changed.
-
 improve scrolling with: <https://github.com/cferdinandi/smooth-scroll>
+
+Consider moving widgets to React now that they are outside the PM dom.
 
 MathJax preview
 
@@ -52,6 +63,8 @@ allow more control over markdown output, particularly list indenting (perhaps ge
 as with above, make character escaping configurable
 
 No editing support for fancy list auto-numbering (\#. as list item that is auto-numbered)
+
+Consider special Knit behavior from Visual Mode: execute w/ keep_md and only re-executes R code when the code chunks have actually changed.
 
 MathQuill/MathJax: <https://pboysen.github.io/> <https://discuss.prosemirror.net/t/odd-behavior-with-nodeview-and-atom-node/1521>
 
