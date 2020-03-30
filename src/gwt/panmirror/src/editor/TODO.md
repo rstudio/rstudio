@@ -6,9 +6,6 @@ pandoc schema: <https://github.com/jgm/pandoc-types/blob/master/Text/Pandoc/Defi
 
 ## TODO
  
-Heading sections only linked when they start out in the document together (no linkage after insert)
-
-No Undo while link popup is visible (perhaps image as well?)
 
 Writeup known limitations (reference links, example lists, list auto-numbering, etc. -- see below)
 
