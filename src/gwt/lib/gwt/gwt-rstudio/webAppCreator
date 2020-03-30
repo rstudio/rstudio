@@ -1,0 +1,3 @@
+#!/bin/sh
+HOMEDIR=`dirname $0`;
+java -cp $HOMEDIR/gwt-user.jar:$HOMEDIR/gwt-dev.jar com.google.gwt.user.tools.WebAppCreator "$@";
