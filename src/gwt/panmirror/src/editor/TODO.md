@@ -7,6 +7,9 @@ pandoc schema: <https://github.com/jgm/pandoc-types/blob/master/Text/Pandoc/Defi
 ## TODO
 
 appendTransaction for image -> figure needs to do correct mapping (ask Joe)
+https://github.com/rstudio/rstudio-internal/blob/68ca63249a7d2426d40a981ec80e51e59301c5cb/src/gwt/panmirror/src/editor/src/marks/user_comment/user_comment-fixup.ts#L39
+https://github.com/rstudio/rstudio-internal/blob/68ca63249a7d2426d40a981ec80e51e59301c5cb/src/gwt/panmirror/src/editor/src/marks/user_comment/user_comment-fixup.ts#L105-L107
+https://github.com/rstudio/rstudio-internal/blob/68ca63249a7d2426d40a981ec80e51e59301c5cb/src/gwt/panmirror/src/editor/src/marks/user_comment/user_comment-fixup.ts#L52-L53
 
 Do we still need the figure pandoc reader to convert images?
 
