@@ -277,13 +277,6 @@ export interface PandocOutput {
   withOption(option: PandocOutputOption, value: boolean, f: () => void): void;
 }
 
-export type PandocAstOutputFilter = (ast: PandocAst, util: PandocAstOutputFilterUtil) => Promise<PandocAst>;
-
-export interface PandocAstOutputFilterUtil {
-  markdownToAst(markdown: string): Promise<PandocAst>;
-  astToMarkdown(ast: PandocAst, formatOptions: string): Promise<string>;
-}
-
 // collect the text from a collection of pandoc ast
 // elements (ignores marks, useful for ast elements
 // that support marks but whose prosemirror equivalent

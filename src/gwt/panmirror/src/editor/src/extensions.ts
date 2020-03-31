@@ -35,7 +35,6 @@ import {
   PandocPostprocessorFn,
   PandocBlockReaderFn,
   PandocCodeBlockFilter,
-  PandocAstOutputFilter,
   PandocExtensions,
   PandocInlineHTMLReaderFn,
 } from './api/pandoc';
@@ -302,21 +301,6 @@ export class ExtensionManager {
       }
     });
     return writers;
-  }
-
-  public pandocAstOutputFilters(): readonly PandocAstOutputFilter[] {
-    const filters: PandocAstOutputFilter[] = [];
-    this.pandocMarks().forEach((mark: PandocMark) => {
-      if (mark.pandoc.astOutputFilter) {
-        filters.push(mark.pandoc.astOutputFilter);
-      }
-    });
-    this.pandocNodes().forEach((node: PandocNode) => {
-      if (node.pandoc.astOutputFilter) {
-        filters.push(node.pandoc.astOutputFilter);
-      }
-    });
-    return filters;
   }
 
   public commands(schema: Schema, ui: EditorUI, mac: boolean): readonly ProsemirrorCommand[] {

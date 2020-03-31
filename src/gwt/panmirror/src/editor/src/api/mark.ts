@@ -17,7 +17,7 @@ import { Mark, MarkSpec, MarkType, ResolvedPos, Node as ProsemirrorNode } from '
 import { EditorState, Selection } from 'prosemirror-state';
 import { InputRule } from 'prosemirror-inputrules';
 
-import { PandocTokenReader, PandocMarkWriterFn, PandocAstOutputFilter } from './pandoc';
+import { PandocTokenReader, PandocMarkWriterFn } from './pandoc';
 import { mergedTextNodes } from './text';
 import { findChildrenByMark } from 'prosemirror-utils';
 import { MarkTransaction } from './transaction';
@@ -32,7 +32,6 @@ export interface PandocMark {
       priority: number;
       write: PandocMarkWriterFn;
     };
-    readonly astOutputFilter?: PandocAstOutputFilter;
   };
 }
 

@@ -25,7 +25,6 @@ import {
   PandocPreprocessorFn,
   PandocBlockReaderFn,
   PandocCodeBlockFilter,
-  PandocAstOutputFilter,
   PandocPostprocessorFn,
   PandocInlineHTMLReaderFn,
 } from '../api/pandoc';
@@ -52,7 +51,6 @@ export class PandocConverter {
   private readonly codeBlockFilters: readonly PandocCodeBlockFilter[];
   private readonly nodeWriters: readonly PandocNodeWriter[];
   private readonly markWriters: readonly PandocMarkWriter[];
-  private readonly astOutputFilters: readonly PandocAstOutputFilter[];
   private readonly pandoc: PandocEngine;
 
   private apiVersion: PandocApiVersion | null;
@@ -68,7 +66,6 @@ export class PandocConverter {
     this.codeBlockFilters = extensions.pandocCodeBlockFilters();
     this.nodeWriters = extensions.pandocNodeWriters();
     this.markWriters = extensions.pandocMarkWriters();
-    this.astOutputFilters = extensions.pandocAstOutputFilters();
 
     this.pandoc = pandoc;
     this.apiVersion = null;
@@ -111,9 +108,6 @@ export class PandocConverter {
     // adjust format
     let format = this.adjustedFormat(pandocFormat.fullName);
 
-    // run ast filters
-    const ast = await this.applyAstOutputFilters(output.ast, format, options);
-
     // prepare options
     let pandocOptions: string[] = [];
     if (options.atxHeaders) {
@@ -133,27 +127,10 @@ export class PandocConverter {
     format = pandocFormatWith(format, disable, '');
 
     // render to markdown
-    const markdown = await this.pandoc.astToMarkdown(ast, format, pandocOptions);
+    const markdown = await this.pandoc.astToMarkdown(output.ast, format, pandocOptions);
 
     // return markdown
     return markdown;
-  }
-
-  private async applyAstOutputFilters(ast: PandocAst, format: string, options: PandocWriterOptions) {
-    let filteredAst = ast;
-
-    for (const filter of this.astOutputFilters) {
-      filteredAst = await filter(filteredAst, {
-        astToMarkdown: (pandocAst: PandocAst, formatOptions: string) => {
-          return this.pandoc.astToMarkdown(pandocAst, format + formatOptions, []);
-        },
-        markdownToAst: (markdown: string) => {
-          return this.pandoc.markdownToAst(markdown, format, this.wrapColumnOptions(options));
-        },
-      });
-    }
-
-    return filteredAst;
   }
 
   private wrapColumnOptions(options: PandocWriterOptions) {
