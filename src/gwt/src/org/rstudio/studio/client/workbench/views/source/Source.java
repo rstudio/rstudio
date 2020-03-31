@@ -936,6 +936,11 @@ public class Source implements InsertSourceHandler,
       return views_.getActiveDisplay().asWidget();
    }
 
+   public Widget asWidget(Display display)
+   {
+      return display.asWidget();
+   }
+
    private void restoreDocuments(final Session session)
    {
       final JsArray<SourceDocument> docs =
@@ -2681,6 +2686,11 @@ public class Source implements InsertSourceHandler,
    public Display getActiveView()
    {
       return views_.getActiveDisplay();
+   }
+
+   public Display getViewByIndex(int index)
+   {
+      return views_.get(index);
    }
 
    public ArrayList<Display> getViews()

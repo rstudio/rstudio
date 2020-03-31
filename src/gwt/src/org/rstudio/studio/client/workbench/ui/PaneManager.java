@@ -213,9 +213,8 @@ public class PaneManager
                       Commands commands,
                       UserPrefs userPrefs,
                       @Named("Console") final Widget consolePane,
+                      SourceShim sourceShim,
                       Source source,
-                      Provider<SourceShim> pSourceShim,
-                      Provider<SourcePane> pSourceShimPane,
                       @Named("History") final WorkbenchTab historyTab,
                       @Named("Files") final WorkbenchTab filesTab,
                       @Named("Plots") final WorkbenchTab plotsTab,
@@ -247,8 +246,7 @@ public class PaneManager
       userPrefs_ = userPrefs;
       consolePane_ = (ConsolePane)consolePane;
       source_ = source;
-      pSourceShim_ = pSourceShim;
-      pSourceShimPane_ = pSourceShimPane;
+      sourceShim_ = sourceShim;
       historyTab_ = historyTab;
       filesTab_ = filesTab;
       plotsTab_ = plotsTab;
@@ -284,7 +282,6 @@ public class PaneManager
       panes_ = createPanes(config);
       left_ = createSplitWindow(panes_.get(0), panes_.get(1), LEFT_COLUMN, 0.4, splitterSize);
       right_ = createSplitWindow(panes_.get(2), panes_.get(3), RIGHT_COLUMN, 0.6, splitterSize);
-      //LeftSource_ = pSourceShimPane_.get();
 
 
       for (int i = 0; i < 3; i++)
@@ -292,14 +289,12 @@ public class PaneManager
          source_.addDisplay();
       }
 
-      //Source.Display sp = GWT.create(SourcePane.class);
-      //source.addView(sp);
       ArrayList<Widget> mylist = new ArrayList<Widget>();
       int counter = 0;
       for (Source.Display display : source_.getViews())
       {
          //if (counter <= 0)
-            mylist.add(display.asWidget());
+         mylist.add(display.asWidget());
          counter++;
       }
 
@@ -799,7 +794,10 @@ public class PaneManager
       ArrayList<LogicalWindow> results = new ArrayList<>();
 
       JsArrayString panes = config.getQuadrants();
-      //panes.push("LeftSource");
+      for (int i = 0; i < source_.getViews().size()-1; i++)
+      {
+         panes.push("Source " + Integer.toString(i));
+      }
       for (int i = 0; i < panes.length(); i++)
       {
          results.add(panesByName_.get(panes.get(i)));
@@ -812,6 +810,11 @@ public class PaneManager
       panesByName_ = new HashMap<>();
       panesByName_.put("Console", createConsole());
       panesByName_.put("Source", createSource());
+      for (int i = 0; i < source_.getViews().size(); i++)
+      {
+         String frameName = "Source " + Integer.toString(i);
+         panesByName_.put(frameName, createSource(frameName, source_.getViewByIndex(i)));
+      }
 
       Triad<LogicalWindow, WorkbenchTabPanel, MinimizedModuleTabLayoutPanel> ts1 = createTabSet(
             "TabSet1",
@@ -1087,13 +1090,21 @@ public class PaneManager
 
    private LogicalWindow createSource()
    {
-      SourceShim mainSource = pSourceShim_.get();
-      Source source = source_;
-      mainSource.setSource(source);
       String frameName = "Source";
       WindowFrame sourceFrame = new WindowFrame(frameName);
-      sourceFrame.setFillWidget(mainSource.asWidget());
-      mainSource.forceLoad();
+      sourceFrame.setFillWidget(sourceShim_.asWidget());
+      sourceShim_.forceLoad();
+      return sourceLogicalWindow_ = new LogicalWindow(
+            sourceFrame,
+            new MinimizedWindowFrame(frameName, frameName));
+   }
+
+   private LogicalWindow createSource(String frameName, Source.Display display)
+   {
+      WindowFrame sourceFrame = new WindowFrame(frameName);
+      sourceFrame.setFillWidget(source_.asWidget(display));
+      //sourceFrame.setFillWidget(sourceShim_.asWidget(display));
+      //sourceShim_.forceLoad();
       return sourceLogicalWindow_ = new LogicalWindow(
             sourceFrame,
             new MinimizedWindowFrame(frameName, frameName));
@@ -1332,8 +1343,7 @@ public class PaneManager
    private final WorkbenchTab sourceCppTab_;
    private final ConsolePane consolePane_;
    private final Source source_;
-   private final Provider<SourceShim> pSourceShim_;
-   private final Provider<SourcePane> pSourceShimPane_;
+   private final SourceShim sourceShim_;
    private final WorkbenchTab historyTab_;
    private final WorkbenchTab filesTab_;
    private final WorkbenchTab plotsTab_;
