@@ -180,13 +180,15 @@ public class PanmirrorToolbar extends SecondaryToolbar implements RequiresResize
       listMenu.addSeparator();
       listMenu.addCommand(PanmirrorCommands.OrderedListEdit);
       formatMenu.addSeparator();
+      formatMenu.addCommand(PanmirrorCommands.AttrEdit);
+      formatMenu.addSeparator();
       formatMenu.addCommand(PanmirrorCommands.Blockquote);
       formatMenu.addCommand(PanmirrorCommands.LineBlock);
       formatMenu.addSeparator();
       formatMenu.addCommand(PanmirrorCommands.Div);
       formatMenu.addCommand(PanmirrorCommands.RawBlock);
       formatMenu.addSeparator();
-      formatMenu.addCommand(PanmirrorCommands.AttrEdit);
+      formatMenu.addCommand(PanmirrorCommands.ClearFormatting);
       return formatMenu;
    }
    
