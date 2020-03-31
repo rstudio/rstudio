@@ -13,16 +13,15 @@
  *
  */
 
-import { Mark, Schema } from 'prosemirror-model';
+import { Mark, Schema, Fragment } from 'prosemirror-model';
 
 import { Extension, extensionIfEnabled } from '../../api/extension';
 import { EditorUI } from '../../api/ui';
-import { PandocTokenType, PandocToken } from '../../api/pandoc';
+import { PandocTokenType, PandocToken, PandocOutput } from '../../api/pandoc';
 
 import { citeAppendMarkTransaction } from './cite-transaction';
 import { citeHighlightPlugin } from './cite-highlight';
 import { InsertCitationCommand } from './cite-commands';
-import { citePandocAstOutputFilter, citePandocWriter } from './cite-pandoc';
 
 const CITE_CITATIONS = 0;
 
@@ -73,10 +72,13 @@ const extension: Extension = {
 
         writer: {
           priority: 14,
-          write: citePandocWriter,
-        },
-
-        astOutputFilter: citePandocAstOutputFilter,
+          write: (output: PandocOutput, _mark: Mark, parent: Fragment) => {
+            // write w/o escaping [, ], or @
+            output.withOption('citationEscaping', true, () => {
+              output.writeInlines(parent);
+            });
+          }
+        }
       },
     },
   ],

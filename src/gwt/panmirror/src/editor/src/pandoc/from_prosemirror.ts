@@ -97,6 +97,7 @@ class PandocWriter implements PandocOutput {
     this.activeMarks = [];
     this.options = {
       writeSpaces: true,
+      citationEscaping: false
     };
   }
 
@@ -195,6 +196,13 @@ class PandocWriter implements PandocOutput {
   }
 
   public writeText(text: string | null) {
+
+    // determine which characters we shouldn't escape
+    const preventEscapeCharacters = this.preventEscapeCharacters;
+    if (this.options.citationEscaping) {
+      preventEscapeCharacters.push('[', ']', '@');
+    }
+
     if (text) {
       let textRun = '';
       const flushTextRun = () => {
@@ -208,7 +216,7 @@ class PandocWriter implements PandocOutput {
         if (this.options.writeSpaces && ch === ' ') {
           flushTextRun();
           this.writeToken(PandocTokenType.Space);
-        } else if (this.preventEscapeCharacters.includes(ch)) {
+        } else if (preventEscapeCharacters.includes(ch)) {
           flushTextRun();
           this.writeRawMarkdown(ch);
         } else {

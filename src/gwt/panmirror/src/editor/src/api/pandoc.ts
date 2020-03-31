@@ -258,7 +258,7 @@ export interface PandocMarkWriter {
 
 export type PandocMarkWriterFn = (output: PandocOutput, mark: Mark, parent: Fragment) => void;
 
-export type PandocOutputOption = 'writeSpaces';
+export type PandocOutputOption = 'writeSpaces' | 'citationEscaping';
 
 export interface PandocOutput {
   extensions: PandocExtensions;
