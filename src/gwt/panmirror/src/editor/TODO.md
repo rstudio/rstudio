@@ -6,10 +6,6 @@ pandoc schema: <https://github.com/jgm/pandoc-types/blob/master/Text/Pandoc/Defi
 
 ## TODO
 
-Clear Formatting command
-
-Command to clear/reset table columns widths
-
 Direct parsing of citations (get rid of special post-processing + supported nested) 
 (note: for nested we need excludes: ''). Could also choose not to support nested 
 citations as I'm not sure pandoc even handles this. What happens to footnotes
@@ -72,6 +68,7 @@ Notes on preformance implications of scanning the entire document + some discuss
 - Tables with a large number of columns are written as HTML when variable column widths are presented (presumably b/c it can't represent the percentage    
   granularity w/ markdown) Perhaps don't set widths on all of the columns (only ones explicitly sized?)
 
+- Clear Formatting doesn't play well with table selections (only one of the cells is considered part of the "selected nodes")
 
 ## Project/Build
 
