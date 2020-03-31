@@ -67,16 +67,8 @@ private:
 } // end anonymous namespace
 
 WebProfile::WebProfile(const QUrl& baseUrl, QObject* parent)
-   : QWebEngineProfile(QString::fromUtf8("rstudio-desktop"), parent)
+   : QWebEngineProfile(parent)
 {
-   // force an in-memory cache of web resources
-   // otherwise, multiple windows / pages attempting to access
-   // or mutate the disk cache at the same time can cause
-   // data corruption to occur
-   //
-   // https://github.com/rstudio/rstudio/issues/6201
-   setHttpCacheType(QWebEngineProfile::MemoryHttpCache);
-   
    sharedSecret_ = core::system::getenv("RS_SHARED_SECRET");
    setBaseUrl(baseUrl);
 }

@@ -116,7 +116,7 @@ private:
    void onUrlChanged(QUrl url);
    void onLoadFinished(bool ok);
 
-   void saveRemoteCookies();
+   void saveRemoteAuthCookies(bool forcePersist);
 
 private:
    bool isRemoteDesktop_;
