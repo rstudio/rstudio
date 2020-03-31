@@ -1253,6 +1253,11 @@ public class DomUtils
       headEl.appendChild(scriptEl);
    }
    
+   public static final native DOMRect getBoundingClientRect(Element el)
+   /*-{
+      return el.getBoundingClientRect();
+   }-*/;
+   
    public static final int ESTIMATED_SCROLLBAR_WIDTH = 19;
    private static int SCROLLBAR_WIDTH = -1;
 }
