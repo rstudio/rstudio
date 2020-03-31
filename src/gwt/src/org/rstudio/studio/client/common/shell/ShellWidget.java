@@ -112,15 +112,14 @@ public class ShellWidget extends Composite implements ShellDisplay,
                                  ElementIds.CONSOLE_INPUT);
       input_.addClickHandler(secondaryInputHandler);
       inputWidget.addStyleName(styles_.input());
-      
-      input_.addCursorChangedHandler((CursorChangedEvent event) ->
+      input_.addCursorChangedHandler(new CursorChangedHandler()
       {
-         Scheduler.get().scheduleDeferred(() ->
+         @Override
+         public void onCursorChanged(CursorChangedEvent event)
          {
-            input_.scrollCursorIntoViewIfNecessary();
-         });
+            Scheduler.get().scheduleDeferred(() -> input_.scrollToCursor(scrollPanel_, 8, 60));
+         }
       });
-      
       input_.addCapturingKeyDownHandler(new KeyDownHandler()
       {
          @Override
