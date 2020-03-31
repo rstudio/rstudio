@@ -51,7 +51,7 @@ export function clearFormatting(state: EditorState, dispatch?: (tr: Transaction)
 
     // clear formatting marks
     kFormattingMarks.forEach(markName => {
-      const mark = state.schema.marks[markName]
+      const mark = state.schema.marks[markName];
       if (mark) {
         tr.removeMark(from, to, mark);
       }
