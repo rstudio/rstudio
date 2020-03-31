@@ -199,33 +199,38 @@ function convertImagesToFigure(tr: Transaction) {
     // position reflecting steps already taken in this handler
     const mappedPos = newActions.mapping.mapResult(image.pos);
 
-    // resolve image pos
-    const imagePos = tr.doc.resolve(mappedPos.pos);
-
-    // if it's an image in a standalone paragraph, convert it to a figure
-    if (imagePos.parent.type === schema.nodes.paragraph && 
-        imagePos.parent.childCount === 1) {
-
-      // figure attributes
-      const attrs = image.node.attrs;
-
-      // extract linkTo from link mark (if any)
-      if (schema.marks.link.isInSet(image.node.marks)) {
-        const linkAttrs = getMarkAttrs(tr.doc, { from: image.pos, to: image.pos + image.node.nodeSize}, schema.marks.link);
-        if (linkAttrs && linkAttrs.href) {
-          attrs.linkTo = linkAttrs.href;
-        }
-      }
-
-      // figure content
-      const content = attrs.alt ? Fragment.from(schema.text(attrs.alt)) : Fragment.empty;
+    // process image so long as it wasn't deleted by a previous step
+    if (!mappedPos.deleted) {
       
-      // create figure
-      const figure = schema.nodes.figure.createAndFill(attrs, content);
+      // resolve image pos 
+      const imagePos = tr.doc.resolve(mappedPos.pos);
 
-      // replace image with figure
-      tr.replaceRangeWith(mappedPos.pos, mappedPos.pos + image.node.nodeSize, figure);
+      // if it's an image in a standalone paragraph, convert it to a figure
+      if (imagePos.parent.type === schema.nodes.paragraph && 
+          imagePos.parent.childCount === 1) {
+
+        // figure attributes
+        const attrs = image.node.attrs;
+
+        // extract linkTo from link mark (if any)
+        if (schema.marks.link.isInSet(image.node.marks)) {
+          const linkAttrs = getMarkAttrs(tr.doc, { from: image.pos, to: image.pos + image.node.nodeSize}, schema.marks.link);
+          if (linkAttrs && linkAttrs.href) {
+            attrs.linkTo = linkAttrs.href;
+          }
+        }
+
+        // figure content
+        const content = attrs.alt ? Fragment.from(schema.text(attrs.alt)) : Fragment.empty;
+        
+        // create figure
+        const figure = schema.nodes.figure.createAndFill(attrs, content);
+
+        // replace image with figure
+        tr.replaceRangeWith(mappedPos.pos, mappedPos.pos + image.node.nodeSize, figure);
+      }
     }
+    
   });
 
   // copy the contents of newActions to the actual transaction
