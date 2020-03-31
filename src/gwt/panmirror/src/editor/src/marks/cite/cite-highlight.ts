@@ -26,13 +26,6 @@ export function citeHighlightPlugin(schema: Schema) {
     // id decorations
     const kIdClass = 'pm-link-text-color';
     const re = /-?@[\w:.#$%&-+?<>~/]+/g;
-    const decorations = markHighlightDecorations(markRange, text, re, kIdClass);
-
-    // delimiter decorations
-    const kDelimClass = 'pm-light-text-color';
-    return decorations.concat([
-      Decoration.inline(markRange.from, markRange.from + 1, { class: kDelimClass }),
-      Decoration.inline(markRange.to - 1, markRange.to, { class: kDelimClass }),
-    ]);
+    return markHighlightDecorations(markRange, text, re, kIdClass);
   });
 }
