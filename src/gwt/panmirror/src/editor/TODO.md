@@ -5,31 +5,32 @@ pandoc schema: <https://github.com/jgm/pandoc-types/blob/master/Text/Pandoc/Defi
 ## Feedback
 
 ## TODO
- 
 
-Writeup known limitations (reference links, example lists, list auto-numbering, etc. -- see below)
+Clear Formatting command
 
-Visual mode implications for addin API
+Command to clear/reset table columns widths
 
 Direct parsing of citations (get rid of special post-processing + supported nested) 
 (note: for nested we need excludes: ''). Could also choose not to support nested 
-citations as I'm not sure pandoc even handles this.
+citations as I'm not sure pandoc even handles this. What happens to footnotes
+in citations?
 
-Discuss tokens / escaping / etc. with Joe. HTML must be inserted manually. Backslashes need to
-be escaped (already wrote the code to do this.). Math bears more discussion.....
-
-Consider moving widgets to React now that they are outside the PM dom.
+Discuss tokens / escaping / etc. with Joe. HTML must be inserted manually. Backslashes need to be escaped (already wrote the code to do this.). Math bears more discussion....
 
 Surface attributes handling for div with only an id (shading treatment a bit much?)
 
-Better direct manipulation for tables
 
-Consider special Knit behavior from Visual Mode: execute w/ keep_md and only re-executes
-R code when the code chunks have actually changed.
+Better direct manipulation for tables
 
 improve scrolling with: <https://github.com/cferdinandi/smooth-scroll>
 
+Consider moving widgets to React now that they are outside the PM dom.
+
 MathJax preview
+
+Visual mode implications for addin API (pending Kevin)
+
+Updated dark mode node selection color from Paul (pending Maria)
 
 ## Future
 
@@ -52,6 +53,8 @@ allow more control over markdown output, particularly list indenting (perhaps ge
 as with above, make character escaping configurable
 
 No editing support for fancy list auto-numbering (\#. as list item that is auto-numbered)
+
+Consider special Knit behavior from Visual Mode: execute w/ keep_md and only re-executes R code when the code chunks have actually changed.
 
 MathQuill/MathJax: <https://pboysen.github.io/> <https://discuss.prosemirror.net/t/odd-behavior-with-nodeview-and-atom-node/1521>
 

@@ -22,6 +22,7 @@ public class PanmirrorCommands
    public static String Undo = "201CA961-829E-4708-8FBC-8896FDE85A10";
    public static String Redo = "B6272475-04E0-48C0-86E3-DAFA763BDF7B";
    public static String SelectAll = "E42BF0DA-8A02-4FCE-A202-7EA8A4833FC5";
+   public static String ClearFormatting = "C22D8CC4-0A9F-41D5-B540-7DAAAB80F344";
 
    // formatting
    public static String Strong = "83B04020-1195-4A65-8A8E-7C173C87F439";

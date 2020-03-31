@@ -32,6 +32,9 @@ export async function imageDialog(
   editorUI: EditorUI,
   imageAttributes: boolean,
 ) {
+  // alias schema
+  const schema = view.state.schema;
+
   // if we are being called with an existing node then read it's attributes
   let content = Fragment.empty;
   let image: ImageProps = { src: null };
@@ -54,18 +57,17 @@ export async function imageDialog(
     // top level image properties if necessary
     image = imagePropsWithSizes(image, dims);
 
-    // linkTo (from mark)
-    const schema = nodeType.schema;
-    linkMark = node.marks.find(mark => mark.type === schema.marks.link);
-    if (linkMark) {
-      image.linkTo = linkMark.attrs.href;
+    // record marks / linkTo
+    if (nodeType === schema.nodes.image) {
+      marks = node.marks;
+      linkMark = node.marks.find(mark => mark.type === schema.marks.link);
+      if (linkMark) {
+        image.linkTo = linkMark.attrs.href;
+      }
     }
     
     // content (will be caption for figures)
     content = node.content;
-
-    // marks (for preservation)
-    marks = node.marks;
 
   } else {
     // create a new image
@@ -73,19 +75,11 @@ export async function imageDialog(
   }
 
   // determine the type
-  let type = nodeType === view.state.schema.nodes.image ? ImageType.Image : ImageType.Figure;
+  const type = nodeType === view.state.schema.nodes.image ? ImageType.Image : ImageType.Figure;
 
   // edit the image
   const result = await editorUI.dialogs.editImage(image, dims, editorUI.context.getResourceDir(), imageAttributes);
   if (result) {
-
-    // if the type is a figure but a linkTo was returned, convert it 
-    // to an image (as figures in pandoc can't be surrounded by links)
-    if (type === ImageType.Figure && result.linkTo) {
-      type = ImageType.Image;
-      nodeType = view.state.schema.nodes.image;
-      content = Fragment.empty;
-    }
 
     // figures treat 'alt' as their content (the caption), but since captions support
     // inline formatting (and the dialog doesn't) we only want to update the
@@ -123,19 +117,20 @@ export async function imageDialog(
     const imageProps = { ...result, keyvalue };
 
     // update or create link mark as necessary
-    const schema = view.state.schema;
-    if (linkMark) {
-      marks = linkMark.removeFromSet(marks);
-      if (imageProps.linkTo) {
-        linkMark = linkMark.type.create({ ...linkMark.attrs, href: imageProps.linkTo});
+    if (nodeType === schema.nodes.image) {
+      if (linkMark) {
+        marks = linkMark.removeFromSet(marks);
+        if (imageProps.linkTo) {
+          linkMark = linkMark.type.create({ ...linkMark.attrs, href: imageProps.linkTo});
+        }
+      } else if (imageProps.linkTo) {
+        linkMark = schema.marks.link.create({ href: imageProps.linkTo });
       }
-    } else if (imageProps.linkTo) {
-      linkMark = schema.marks.link.create({ href: imageProps.linkTo });
+      if (imageProps.linkTo && linkMark) {
+        marks = linkMark.addToSet(marks);
+      }
     }
-    if (imageProps.linkTo && linkMark) {
-      marks = linkMark.addToSet(marks);
-    }
-
+   
     // create the image
     const newImage = nodeType.createAndFill(imageProps, content, marks);
 

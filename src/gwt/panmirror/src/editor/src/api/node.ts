@@ -147,10 +147,7 @@ export function insertAndSelectNode(
   tr.replaceSelectionWith(node);
 
   // set selection to inserted node
-  const replacingImageNode = selectionIsImageNode(view.state.schema, view.state.selection);
-  const selectionPos = replacingImageNode ?
-     tr.doc.resolve(tr.selection.from - node.nodeSize) :
-     tr.doc.resolve(tr.mapping.map(view.state.selection.from, -1));
+  const selectionPos = tr.doc.resolve(tr.mapping.map(view.state.selection.from, -1));
   tr.setSelection(new NodeSelection(selectionPos));
 
   // dispatch transaction

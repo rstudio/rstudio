@@ -55,6 +55,7 @@ public class PanmirrorToolbarCommands
       add(PanmirrorCommands.LineBlock, "Line Block", Roles.getMenuitemcheckboxRole());
       add(PanmirrorCommands.Div, "Section/Div...");
       add(PanmirrorCommands.AttrEdit, "Edit Attributes...");
+      add(PanmirrorCommands.ClearFormatting, "Clear Formatting");
       
       // lists
       add(PanmirrorCommands.BulletList, "Bullet List", Roles.getMenuitemcheckboxRole(), icons.BULLET_LIST);

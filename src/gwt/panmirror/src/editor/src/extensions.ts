@@ -61,6 +61,7 @@ import behaviorHistory from './behaviors/history';
 import behaviorSelectAll from './behaviors/select_all';
 import behaviorCursor from './behaviors/cursor';
 import behaviorFind from './behaviors/find';
+import behaviorClearFormatting from './behaviors/clear_formatting';
 
 // behaviors
 import behaviorSmarty from './behaviors/smarty';
@@ -125,6 +126,7 @@ export function initExtensions(
     behaviorSelectAll,
     behaviorCursor,
     behaviorFind,
+    behaviorClearFormatting
   ]);
 
   // optional extensions

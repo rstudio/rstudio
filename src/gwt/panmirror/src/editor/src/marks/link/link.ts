@@ -18,7 +18,7 @@ import { PluginKey, Plugin } from 'prosemirror-state';
 
 import { ProsemirrorCommand, EditorCommandId } from '../../api/command';
 import { PandocToken, PandocOutput, PandocTokenType, PandocExtensions } from '../../api/pandoc';
-import { pandocAttrSpec, pandocAttrParseDom, pandocAttrToDomAttr, pandocAttrReadAST } from '../../api/pandoc_attr';
+import { pandocAttrSpec, pandocAttrParseDom, pandocAttrToDomAttr, pandocAttrReadAST, PandocAttr } from '../../api/pandoc_attr';
 import { EditorUI } from '../../api/ui';
 import { Extension } from '../../api/extension';
 import { EditorOptions } from '../../api/options';
@@ -127,22 +127,11 @@ const extension = (pandocExtensions: PandocExtensions, options: EditorOptions): 
                 output.writeRawMarkdown(mark.attrs.heading, true);
                 output.writeRawMarkdown(']');
               } else {
-                output.writeToken(PandocTokenType.Link, () => {
-                  // write attributes if the current format supports that
-                  if (linkAttr) {
-                    output.writeAttr(mark.attrs.id, mark.attrs.classes, mark.attrs.keyvalue);
-                  } else {
-                    output.writeAttr();
-                  }
-
-                  // write content
-                  output.writeArray(() => {
+                output.writeLink(mark.attrs.href, mark.attrs.title, linkAttr ? (mark.attrs as PandocAttr) : null, 
+                  () => {
                     output.writeInlines(parent);
-                  });
-
-                  // write href
-                  output.write([mark.attrs.href || '', mark.attrs.title || '']);
-                });
+                  }
+                );
               }
               
             },

@@ -21,7 +21,7 @@ import { ProsemirrorCommand, EditorCommandId } from '../../api/command';
 import { Extension } from '../../api/extension';
 import { canInsertNode } from '../../api/node';
 import { selectionIsImageNode, selectionIsEmptyParagraph } from '../../api/selection';
-import { pandocAttrSpec, pandocAttrParseDom, pandocAttrToDomAttr, pandocAttrReadAST, pandocAttrAvailable } from '../../api/pandoc_attr';
+import { pandocAttrSpec, pandocAttrParseDom, pandocAttrToDomAttr, pandocAttrReadAST, pandocAttrAvailable, PandocAttr } from '../../api/pandoc_attr';
 import {
   PandocOutput,
   PandocTokenType,
@@ -61,7 +61,7 @@ const extension = (pandocExtensions: PandocExtensions, _options: EditorOptions, 
         name: 'image',
         spec: {
           inline: true,
-          attrs: imageNodeAttrsSpec(imageAttr),
+          attrs: imageNodeAttrsSpec(false, imageAttr),
           group: 'inline',
           draggable: true,
           parseDOM: [
@@ -175,9 +175,15 @@ export function imagePandocOutputWriter(figure: boolean, ui: EditorUI) {
       };
     }
 
-    // write (wrap in paragraph for figures)
+    // write (wrap in paragraph and possibly link for  figures)
     if (figure) { 
-      output.writeToken(PandocTokenType.Para, writer);
+      let writeFigure = writer;
+      if (node.attrs.linkTo) {
+        writeFigure = () => {
+          output.writeLink(node.attrs.linkTo, '', null, writer);
+        };
+      }
+      output.writeToken(PandocTokenType.Para, writeFigure);
     } else {
       writer();
     }
@@ -227,11 +233,12 @@ export function imageDOMAttributes(node: ProsemirrorNode, imageAttributes: boole
   
 }
 
-export function imageNodeAttrsSpec(imageAttributes: boolean) {
+export function imageNodeAttrsSpec(linkTo: boolean, imageAttributes: boolean) {
   return {
     src: {},
     title: { default: null },
     alt: { default: null },
+    ...(linkTo ? { linkTo: { default: null } } : {}),
     ...(imageAttributes ? pandocAttrSpec : {}),
   };
 }

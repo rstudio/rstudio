@@ -14,6 +14,7 @@
  */
 
 import { Fragment, Mark, Node as ProsemirrorNode, Schema, NodeType } from 'prosemirror-model';
+import { PandocAttr } from './pandoc_attr';
 
 export interface PandocEngine {
   markdownToAst(markdown: string, format: string, options: string[]): Promise<PandocAst>;
@@ -267,6 +268,7 @@ export interface PandocOutput {
   writeArray(content: () => void): void;
   writeAttr(id?: string, classes?: string[], keyvalue?: string[]): void;
   writeText(text: string | null): void;
+  writeLink(href: string, title: string, attr: PandocAttr | null, f: () => void) : void;
   writeNode(node: ProsemirrorNode): void;
   writeNodes(parent: ProsemirrorNode): void;
   writeNote(note: ProsemirrorNode): void;

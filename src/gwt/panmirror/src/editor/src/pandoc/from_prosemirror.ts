@@ -29,6 +29,7 @@ import {
 } from '../api/pandoc';
 
 import { PandocFormat } from '../api/pandoc_format';
+import { PandocAttr } from '../api/pandoc_attr';
 
 export function pandocFromProsemirror(
   doc: ProsemirrorNode,
@@ -220,6 +221,23 @@ class PandocWriter implements PandocOutput {
     }
   }
 
+  public writeLink(href: string, title: string, attr: PandocAttr | null, content: VoidFunction ) {
+    this.writeToken(PandocTokenType.Link, () => {
+      // write attr if provided
+      if (attr) {
+        this.writeAttr(attr.id, attr.classes, attr.keyvalue);
+      } else {
+        this.writeAttr();
+      }
+      // write content
+      this.writeArray(() => {
+        content();
+      });
+  
+      // write href
+      this.write([href || '', title || '']);
+    });
+  }
 
   public writeNote(note: ProsemirrorNode) {
     const noteBody = this.notes[note.attrs.ref];
