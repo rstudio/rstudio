@@ -6,15 +6,12 @@ pandoc schema: <https://github.com/jgm/pandoc-types/blob/master/Text/Pandoc/Defi
 
 ## TODO
 
-Direct parsing of citations (get rid of special post-processing + supported nested) 
-(note: for nested we need excludes: ''). Could also choose not to support nested 
-citations as I'm not sure pandoc even handles this. What happens to footnotes
-in citations?
+Discuss tokens / escaping / etc. with Joe. HTML must be inserted manually. Backslashes need to be escaped (already wrote the code to do this.).
+Math and citations bear more discussion....
 
-Discuss tokens / escaping / etc. with Joe. HTML must be inserted manually. Backslashes need to be escaped (already wrote the code to do this.). Math bears more discussion....
+Input rules for marks (e.g. bold / italic) don't seem to work within ciations
 
 Surface attributes handling for div with only an id (shading treatment a bit much?)
-
 
 Better direct manipulation for tables
 
