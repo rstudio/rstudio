@@ -19,6 +19,7 @@ RUN apt-get update && \
     apt-get install -y \
     ant \
     build-essential \
+    curl \
     debsigs \
     dpkg-sig \
     expect \
@@ -39,6 +40,7 @@ RUN apt-get update && \
     libxslt1-dev \
     lsof \
     openjdk-8-jdk \
+    p7zip-full \
     pkg-config \
     python \
     r-base \
@@ -79,11 +81,9 @@ COPY package/linux/install-dependencies /tmp/
 RUN /bin/bash /tmp/install-dependencies
 
 # install Qt SDK
-COPY dependencies/linux/install-qt-sdk /tmp/
-RUN mkdir -p /opt/RStudio-QtSDK && \
-    export QT_SDK_DIR=/opt/RStudio-QtSDK/Qt5.12.1 && \
-    export QT_QPA_PLATFORM=minimal && \
-    /tmp/install-qt-sdk
+COPY dependencies/common/install-qt.sh /tmp/
+COPY dependencies/linux/install-qt-linux /tmp/
+RUN cd /tmp && /bin/bash ./install-qt-linux
 
 # create jenkins user, make sudo. try to keep this toward the bottom for less cache busting
 ARG JENKINS_GID=999
