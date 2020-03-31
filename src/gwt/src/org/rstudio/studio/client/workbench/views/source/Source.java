@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.views.source;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayString;
@@ -353,13 +354,15 @@ public class Source implements InsertSourceHandler,
       
       vimCommands_ = new SourceVimCommands();
       
-      Display activeView = views_.getActiveDisplay();
-      activeView.addTabClosingHandler(this);
-      activeView.addTabCloseHandler(this);
-      activeView.addTabClosedHandler(this);
-      activeView.addTabReorderHandler(this);
-      activeView.addSelectionHandler(this);
-      activeView.addBeforeShowHandler(this);
+      for (Display v: views_)
+      {
+         v.addTabClosingHandler(this);
+         v.addTabCloseHandler(this);
+         v.addTabClosedHandler(this);
+         v.addTabReorderHandler(this);
+         v.addSelectionHandler(this);
+         v.addBeforeShowHandler(this);
+      }
 
       dynamicCommands_ = new HashSet<AppCommand>();
       dynamicCommands_.add(commands.saveSourceDoc());
@@ -701,12 +704,12 @@ public class Source implements InsertSourceHandler,
             
             if (value == null)
                return;
-            if (value >= 0 && activeView.getTabCount() > value)
-               activeView.selectTab(value);
+            if (value >= 0 && views_.getActiveDisplay().getTabCount() > value)
+               views_.getActiveDisplay().selectTab(value);
 
-            if (activeView.getTabCount() > 0 && activeView.getActiveTabIndex() >= 0)
+            if (views_.getActiveDisplay().getTabCount() > 0 && views_.getActiveDisplay().getActiveTabIndex() >= 0)
             {
-               editors_.get(activeView.getActiveTabIndex()).onInitiallyLoaded();
+               editors_.get(views_.getActiveDisplay().getActiveTabIndex()).onInitiallyLoaded();
             }
 
             // clear the history manager
@@ -2663,6 +2666,13 @@ public class Source implements InsertSourceHandler,
       }
    }
    
+   public void addDisplay()
+   {
+      Source.Display display = GWT.create(SourcePane.class);
+      display.ensureVisible();
+      views_.add(display);
+   }
+
    public void addView(Display view)
    {
       views_.add(view);

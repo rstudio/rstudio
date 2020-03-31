@@ -287,13 +287,18 @@ public class PaneManager
       //LeftSource_ = pSourceShimPane_.get();
 
 
-      Source.Display sp = GWT.create(SourcePane.class);
-      source.addView(sp);
+      for (int i = 0; i < 3; i++)
+      {
+         source_.addDisplay();
+      }
+
+      //Source.Display sp = GWT.create(SourcePane.class);
+      //source.addView(sp);
       ArrayList<Widget> mylist = new ArrayList<Widget>();
       int counter = 0;
       for (Source.Display display : source_.getViews())
       {
-         if (counter <= 0)
+         //if (counter <= 0)
             mylist.add(display.asWidget());
          counter++;
       }
