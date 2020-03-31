@@ -15,7 +15,7 @@
 
 import { Schema } from 'prosemirror-model';
 import { EditorView } from 'prosemirror-view';
-import { Transaction } from 'prosemirror-state';
+import { Transaction, EditorState } from 'prosemirror-state';
 
 import { tableEditing, columnResizing, goToNextCell, deleteColumn, deleteRow } from 'prosemirror-tables';
 
@@ -71,6 +71,7 @@ const extension = (pandocExtensions: PandocExtensions): Extension | null => {
   const capabilities: TableCapabilities = {
     captions: pandocExtensions.table_captions,
     headerOptional: pandocExtensions.grid_tables,
+    multiline: pandocExtensions.multiline_tables || pandocExtensions.grid_tables
   };
 
   return {
@@ -124,12 +125,23 @@ const extension = (pandocExtensions: PandocExtensions): Extension | null => {
     },
 
     baseKeys: (schema: Schema) => {
-      return [
+
+      // core keys
+      const keys = [
         { key: BaseKey.Backspace, command: deleteTableCaption() },
         { key: BaseKey.Enter, command: exitNode(schema.nodes.table_caption, -2, false) },
         { key: BaseKey.Tab, command: goToNextCell(1) },
         { key: BaseKey.ShiftTab, command: goToNextCell(-1) },
       ];
+
+      // turn enter key variations into tab if we don't support multi-line
+      if (!capabilities.multiline) {
+        keys.push({ key: BaseKey.Enter, command: goToNextCell(1) });
+        keys.push({ key: BaseKey.ShiftEnter, command: goToNextCell(-11) });
+        keys.push({ key: BaseKey.ModEnter, command: goToNextCell(1) });
+      }
+      
+      return keys;
     },
 
     fixups: (_schema: Schema, view: EditorView) => {
