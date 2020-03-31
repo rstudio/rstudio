@@ -143,6 +143,10 @@ public class Renderer extends JavaScriptObject
       this.$renderChanges(this.CHANGE_FULL);
    }-*/;
    
+   public native final void renderCursor() /*-{
+      this.$renderChanges(this.CHANGE_CURSOR);
+   }-*/;
+   
    public native final void renderMarkers() /*-{
       this.$renderChanges(this.CHANGE_MARKER);
    }-*/;
