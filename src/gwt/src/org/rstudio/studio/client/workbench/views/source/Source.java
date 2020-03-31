@@ -4908,10 +4908,14 @@ public class Source implements InsertSourceHandler,
          EditingTarget target = activeEditor_;
          if (target != null && target instanceof TextEditingTarget)
          {
-            getEditorContext(
-                  target.getId(),
-                  target.getPath(),
-                  ((TextEditingTarget) target).getDocDisplay());
+            TextEditingTarget editingTarget = (TextEditingTarget)target;
+            editingTarget.ensureTextEditorActive(() -> {
+               getEditorContext(
+                  editingTarget.getId(),
+                  editingTarget.getPath(),
+                  editingTarget.getDocDisplay()
+               );
+            });
             return;
          }
       }
