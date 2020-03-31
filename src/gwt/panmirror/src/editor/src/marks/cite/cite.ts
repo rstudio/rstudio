@@ -46,7 +46,6 @@ const extension: Extension = {
   marks: [
     {
       name: 'cite',
-      noInputRules: true,
       spec: {
         attrs: {},
         inclusive: false,
