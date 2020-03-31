@@ -6,25 +6,9 @@ pandoc schema: <https://github.com/jgm/pandoc-types/blob/master/Text/Pandoc/Defi
 
 ## TODO
 
-appendTransaction for image -> figure needs to do correct mapping (ask Joe)
-https://github.com/rstudio/rstudio-internal/blob/68ca63249a7d2426d40a981ec80e51e59301c5cb/src/gwt/panmirror/src/editor/src/marks/user_comment/user_comment-fixup.ts#L39
-https://github.com/rstudio/rstudio-internal/blob/68ca63249a7d2426d40a981ec80e51e59301c5cb/src/gwt/panmirror/src/editor/src/marks/user_comment/user_comment-fixup.ts#L105-L107
-https://github.com/rstudio/rstudio-internal/blob/68ca63249a7d2426d40a981ec80e51e59301c5cb/src/gwt/panmirror/src/editor/src/marks/user_comment/user_comment-fixup.ts#L52-L53
+Clear Formatting command
 
-Do we still need the figure pandoc reader to convert images?
-
-Drag inline image into figure slot still has some insertion problems when we auto-convert to a figure
-
-Consider using setNodeMarkup for image dialog (now that it doesn't change types)
-
-Currently hard to get a cursor to the right of a floated image. Special handler?
-Floated with link inserts an extra paragraph on top
-
-Writeup known limitations (reference links, example lists, list auto-numbering, etc. -- see below)
-
-Visual mode implications for addin API
-
-Updated dark mode node selection color from Paul
+Command to clear/reset table columns widths
 
 Direct parsing of citations (get rid of special post-processing + supported nested) 
 (note: for nested we need excludes: ''). Could also choose not to support nested 
@@ -35,7 +19,6 @@ Discuss tokens / escaping / etc. with Joe. HTML must be inserted manually. Backs
 
 Surface attributes handling for div with only an id (shading treatment a bit much?)
 
-Clear Formatting command
 
 Better direct manipulation for tables
 
@@ -44,6 +27,10 @@ improve scrolling with: <https://github.com/cferdinandi/smooth-scroll>
 Consider moving widgets to React now that they are outside the PM dom.
 
 MathJax preview
+
+Visual mode implications for addin API (pending Kevin)
+
+Updated dark mode node selection color from Paul (pending Maria)
 
 ## Future
 
