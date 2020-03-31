@@ -6,10 +6,30 @@ pandoc schema: <https://github.com/jgm/pandoc-types/blob/master/Text/Pandoc/Defi
 
 ## TODO
 
-Discuss tokens / escaping / etc. with Joe. HTML must be inserted manually. Backslashes need to be escaped (already wrote the code to do this.).
-Math and citations bear more discussion....
+When reading text from pandoc, need to read \ as \\ whenever raw_tex is enabled (as that's how users can escape out of raw tex mode).
+Update docs on this when done.
 
-Input rules for marks (e.g. bold / italic) don't seem to work within ciations
+Require an explicit gesture to insert math. We will also implement an input rule for display math. 
+
+Require an explicit gesture for inserting HTML.
+
+Take the Fragment the represents the Cite (Citation+) and parse out the Pandoc tokens. Delimiters are `[]@;` and we need to only respect unescaped versions of those. See about handling citations within citations?
+
+Look into correct handling of non-bracket citations (currently brackets added on intake)
+
+Add 'Raw' top level menu for:
+
+
+- TeX Command(s)
+------------------------
+- Inline TeX Math
+- Display TeX Math
+------------------------
+- HTML Tag(s)...
+- HTML Block...
+------------------------
+- Raw Inline...
+- Raw Block...
 
 Surface attributes handling for div with only an id (shading treatment a bit much?)
 
@@ -19,7 +39,7 @@ improve scrolling with: <https://github.com/cferdinandi/smooth-scroll>
 
 Consider moving widgets to React now that they are outside the PM dom.
 
-MathJax preview
+MathJax preview. When containing the selection, the math will show both the code and the preview. When not containing the selection will show the preview. (so probably require a node view for this). Consider a “done” gesture for display math.
 
 Visual mode implications for addin API (pending Kevin)
 
