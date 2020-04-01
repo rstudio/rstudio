@@ -20,6 +20,7 @@
 
 #include <QDir>
 #include <QMainWindow>
+#include <QNetworkCookie>
 #include <QSettings>
 #include <QStringList>
 
@@ -121,8 +122,8 @@ public:
    QString lastRemoteSessionUrl(const QString& serverUrl);
    void setLastRemoteSessionUrl(const QString& serverUrl, const QString& sessionUrl);
 
-   QStringList cookies() const;
-   void setCookies(const QStringList& cookies);
+   QList<QNetworkCookie> authCookies() const;
+   void setAuthCookies(const QList<QNetworkCookie>& cookies);
 
 private:
    Options();

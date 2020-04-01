@@ -1096,6 +1096,11 @@ public class TextEditingTarget implements
       docDisplay_.recordCurrentNavigationPosition();
    }
    
+   public void ensureTextEditorActive(Command command)
+   {
+      visualMode_.deactivate(command);
+   }
+   
    @Override
    public void navigateToPosition(SourcePosition position, 
                                   boolean recordCurrent)
