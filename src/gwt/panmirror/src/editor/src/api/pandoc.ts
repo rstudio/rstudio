@@ -337,3 +337,8 @@ export function mapTokens(tokens: PandocToken[], f: (tok: PandocToken) => Pandoc
 
   return tokens.map(mapToken);
 }
+
+
+export function tokenTextEscaped(t: PandocToken) {
+  return t.c.replace(/\\/g, `\\\\`);
+}

@@ -16,7 +16,7 @@
 import { Node as ProsemirrorNode } from 'prosemirror-model';
 
 import { Extension } from '../api/extension';
-import { PandocOutput, PandocToken, PandocTokenType } from '../api/pandoc';
+import { PandocOutput, PandocToken, PandocTokenType, tokenTextEscaped } from '../api/pandoc';
 
 const extension: Extension = {
   nodes: [
@@ -30,7 +30,7 @@ const extension: Extension = {
       },
       pandoc: {
         readers: [
-          { token: PandocTokenType.Str, text: true, getText: (tok: PandocToken) => tok.c },
+          { token: PandocTokenType.Str, text: true, getText: tokenTextEscaped },
           { token: PandocTokenType.Space, text: true, getText: () => ' ' },
           { token: PandocTokenType.SoftBreak, text: true, getText: () => ' ' },
         ],
@@ -44,3 +44,4 @@ const extension: Extension = {
 };
 
 export default extension;
+
