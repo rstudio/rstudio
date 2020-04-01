@@ -145,6 +145,13 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
             checkBox.setValue(tabs.contains(checkBox.getText()), false);
       }
 
+      public boolean presentationVisible()
+      {
+         CheckBox lastCheckBox = checkBoxes_.get(checkBoxes_.size() - 1);
+         return StringUtil.equals(lastCheckBox.getText(), "Presentation") &&
+                                  lastCheckBox.isVisible();
+      }
+
       public HandlerRegistration addValueChangeHandler(
             ValueChangeHandler<ArrayList<Boolean>> handler)
       {
@@ -164,7 +171,7 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
 
       add(new Label("Choose the layout of the panes in RStudio by selecting from the controls in each quadrant.", true));
 
-      String[] allPanes = PaneConfig.getAllPanes();
+      String[] visiblePanes = PaneConfig.getVisiblePanes();
 
       leftTop_ = new ListBox();
       Roles.getListboxRole().setAriaLabelProperty(leftTop_.getElement(), "Top left quadrant");
@@ -174,10 +181,10 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
       Roles.getListboxRole().setAriaLabelProperty(rightTop_.getElement(), "Top right quadrant");
       rightBottom_ = new ListBox();
       Roles.getListboxRole().setAriaLabelProperty(rightBottom_.getElement(), "Bottom right quadrant");
-      allPanes_ = new ListBox[]{leftTop_, leftBottom_, rightTop_, rightBottom_};
-      for (ListBox lb : allPanes_)
+      visiblePanes_ = new ListBox[]{leftTop_, leftBottom_, rightTop_, rightBottom_};
+      for (ListBox lb : visiblePanes_)
       {
-         for (String value : allPanes)
+         for (String value : visiblePanes)
             lb.addItem(value);
       }
 
@@ -188,7 +195,7 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
       JsArrayString origPanes = userPrefs.panes().getGlobalValue().getQuadrants();
       for (int i = 0; i < 4; i++)
       {
-         boolean success = selectByValue(allPanes_[i], origPanes.get(i));
+         boolean success = selectByValue(visiblePanes_[i], origPanes.get(i));
          if (!success)
          {
             Debug.log("Bad config! Falling back to a reasonable default");
@@ -200,9 +207,9 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
          }
       }
 
-      new ExclusiveSelectionMaintainer(allPanes_);
+      new ExclusiveSelectionMaintainer(visiblePanes_);
 
-      for (ListBox lb : allPanes_)
+      for (ListBox lb : visiblePanes_)
          lb.addChangeHandler(new ChangeHandler()
          {
             public void onChange(ChangeEvent event)
@@ -225,7 +232,7 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
                                                  res.styles().paneLayoutTable());
       add(grid);
 
-      allPanePanels_ = new VerticalPanel[] {leftTopPanel_, leftBottomPanel_,
+      visiblePanePanels_ = new VerticalPanel[] {leftTopPanel_, leftBottomPanel_,
                                             rightTopPanel_, rightBottomPanel_};
 
       tabSet1ModuleList_ = new ModuleList();
@@ -376,24 +383,31 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
 
    private void updateTabSetPositions()
    {
-      for (int i = 0; i < allPanes_.length; i++)
+      for (int i = 0; i < visiblePanes_.length; i++)
       {
-         String value = allPanes_[i].getValue(allPanes_[i].getSelectedIndex());
+         String value = visiblePanes_[i].getValue(visiblePanes_[i].getSelectedIndex());
          if (value == "TabSet1")
-            allPanePanels_[i].add(tabSet1ModuleList_);
+            visiblePanePanels_[i].add(tabSet1ModuleList_);
          else if (value == "TabSet2")
-            allPanePanels_[i].add(tabSet2ModuleList_);
-         else if (value == "HiddenTabSet")
-            allPanePanels_[i].add(hiddenTabSetModuleList_);
+            visiblePanePanels_[i].add(tabSet2ModuleList_);
       }
    }
 
    private void updateTabSetLabels()
    {
-      for (ListBox pane : allPanes_)
+      // If no tabs are values in a tabset pane, give the pane a generic name,
+      // otherwise the name is created from the selected values 
+      String itemText1 = tabSet1ModuleList_.getValue().isEmpty() ?
+         "TabSet" : StringUtil.join(tabSet1ModuleList_.getValue(), ", "); 
+      String itemText2 = tabSet2ModuleList_.getValue().isEmpty() ?
+         "TabSet" : StringUtil.join(tabSet2ModuleList_.getValue(), ", "); 
+      if (StringUtil.equals(itemText1, "Presentation") && !tabSet1ModuleList_.presentationVisible())
+         itemText1 = "TabSet";
+
+      for (ListBox pane : visiblePanes_)
       {
-         pane.setItemText(2, StringUtil.join(tabSet1ModuleList_.getValue(), ", "));
-         pane.setItemText(3, StringUtil.join(tabSet2ModuleList_.getValue(), ", "));
+         pane.setItemText(2, itemText1);
+         pane.setItemText(3, itemText2);
       }
    }
 
@@ -411,12 +425,12 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
    private final ListBox leftBottom_;
    private final ListBox rightTop_;
    private final ListBox rightBottom_;
-   private final ListBox[] allPanes_;
+   private final ListBox[] visiblePanes_;
    private final VerticalPanel leftTopPanel_;
    private final VerticalPanel leftBottomPanel_;
    private final VerticalPanel rightTopPanel_;
    private final VerticalPanel rightBottomPanel_;
-   private final VerticalPanel[] allPanePanels_;
+   private final VerticalPanel[] visiblePanePanels_;
    private final ModuleList tabSet1ModuleList_;
    private final ModuleList tabSet2ModuleList_;
    private final ModuleList hiddenTabSetModuleList_;

@@ -81,6 +81,16 @@ public class PaneConfig extends UserPrefsAccessor.Panes
       };
    }
 
+   public static String[] getVisiblePanes()
+   {
+      return new String[] {
+         UserPrefsAccessor.Panes.QUADRANTS_SOURCE,
+         UserPrefsAccessor.Panes.QUADRANTS_CONSOLE,
+         UserPrefsAccessor.Panes.QUADRANTS_TABSET1,
+         UserPrefsAccessor.Panes.QUADRANTS_TABSET2
+      };
+   }
+
    public static String[] getAllTabs()
    {
       // A list of all the tabs. Order matters; the Presentation tab must be the
