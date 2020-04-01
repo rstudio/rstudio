@@ -24,7 +24,7 @@ namespace shell_utils {
 std::string escape(const std::string& arg)
 {
    boost::regex pattern("'");
-   return "'" + boost::regex_replace(arg, pattern, R"('\\'')") + "'";
+   return "'" + boost::regex_replace(arg, pattern, R"('"'"')") + "'";
 }
 
 std::string escape(const core::FilePath &path)

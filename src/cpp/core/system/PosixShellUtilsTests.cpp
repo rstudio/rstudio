@@ -50,7 +50,7 @@ test_context("Shell Escaping")
    {
       std::string text = "Text with 'inner quotes'.";
       std::string escaped = escape(text);
-      std::string expected = R"('Text with '\''inner quotes'\''.')";
+      std::string expected = R"('Text with '"'"'inner quotes'"'"'.')";
       expect_true(escaped == expected);
    }
 }
