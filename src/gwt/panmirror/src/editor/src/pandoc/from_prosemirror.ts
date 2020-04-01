@@ -382,7 +382,7 @@ class PandocWriter implements PandocOutput {
   }
 
   private initEscapeCharacters() {
-    // raw_text disallows \ escaping so that users can write \\ to distinguish backslashes
+    // raw_tex disallows \ escaping so that users can write \\ to distinguish backslashes
     // that shouldn't be taken as the start of a raw_tex block
     if (this.format.extensions.raw_tex) {
       this.preventEscapeCharacters.push('\\');
