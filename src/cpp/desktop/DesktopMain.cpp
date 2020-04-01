@@ -376,6 +376,32 @@ QString inferDefaultRenderingEngine()
 
 QString inferDefaultRenderingEngine()
 {
+   // disable opengl when using nouveau drivers, as a large number
+   // of users have reported crashes when attempting to do so.
+   //
+   // NOTE: we'll currently assume this is fixed in the next Qt
+   // update, so guard only for older Qt for now
+   //
+   // https://github.com/rstudio/rstudio/issues/3781
+   // https://bugreports.qt.io/browse/QTBUG-73715
+#if QT_VERSION < QT_VERSION_CHECK(5, 13, 0)
+   core::system::ProcessResult result;
+   Error error = core::system::runCommand(
+            "lspci -mkv | grep -q 'Driver:[[:space:]]*nouveau'",
+            core::system::ProcessOptions(),
+            &result);
+
+   // don't log errors (assume that lspci failed or wasn't available
+   // and just bail on inference attempts)
+   if (error)
+      return QStringLiteral("auto");
+
+   // successful exit here implies that we found the nouveau driver
+   // is in use; in that case, we want to force software rendering
+   if (result.exitStatus == EXIT_SUCCESS)
+      return QStringLiteral("software");
+#endif
+
    return QStringLiteral("auto");
 }
 
