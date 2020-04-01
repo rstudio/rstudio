@@ -31,12 +31,7 @@ const extension = (pandocExtensions: PandocExtensions) => {
         },
         pandoc: {
           readers: [
-            { token: PandocTokenType.Str, text: true, 
-              // raw_tex needs to take \ from pandoc and turn it into \\ within ProseMirror
-              // this is so that users can write \\ to distinguish backslashes that shouldn't 
-              // be taken as the start of a raw_tex block
-              getText: pandocExtensions.raw_tex ? tokenTextEscaped : (t: PandocToken) => t.c 
-            },
+            { token: PandocTokenType.Str, text: true, getText: (t: PandocToken) => t.c },
             { token: PandocTokenType.Space, text: true, getText: () => ' ' },
             { token: PandocTokenType.SoftBreak, text: true, getText: () => ' ' },
           ],
