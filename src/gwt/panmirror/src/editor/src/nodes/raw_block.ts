@@ -21,13 +21,20 @@ import { findParentNodeOfType, setTextSelection } from 'prosemirror-utils';
 
 import { Extension } from '../api/extension';
 
-import { PandocOutput, PandocToken, PandocTokenType, PandocExtensions, ProsemirrorWriter, kRawBlockContent, kRawBlockFormat } from '../api/pandoc';
+import {
+  PandocOutput,
+  PandocToken,
+  PandocTokenType,
+  PandocExtensions,
+  ProsemirrorWriter,
+  kRawBlockContent,
+  kRawBlockFormat,
+} from '../api/pandoc';
 import { ProsemirrorCommand, EditorCommandId } from '../api/command';
 
 import { canInsertNode } from '../api/node';
 import { EditorUI, RawFormatResult } from '../api/ui';
 import { isSingleLineHTML } from '../api/html';
-
 
 const extension = (pandocExtensions: PandocExtensions): Extension | null => {
   // requires either raw_attribute or raw_html
@@ -83,8 +90,8 @@ const extension = (pandocExtensions: PandocExtensions): Extension | null => {
           readers: [
             {
               token: PandocTokenType.RawBlock,
-              block: 'raw_block'
-            }
+              block: 'raw_block',
+            },
           ],
           // we define a custom blockReader here so that we can convert html blocks with
           // a single line of code into paragraph with an html inline
@@ -117,7 +124,7 @@ const extension = (pandocExtensions: PandocExtensions): Extension | null => {
 };
 
 function readPandocRawBlock(schema: Schema, tok: PandocToken, writer: ProsemirrorWriter) {
-  // single lines of html should be read as inline_html (allows for 
+  // single lines of html should be read as inline_html (allows for
   // highlighting and more seamless editing experience)
   const format = tok.c[kRawBlockFormat];
   const text = tok.c[kRawBlockContent] as string;

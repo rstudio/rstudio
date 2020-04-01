@@ -223,14 +223,14 @@ function resizeShelf(
     const kShelfRequiredSize = 333;
     const editorBox = editorContainer.getBoundingClientRect();
     const imageBox = container.getBoundingClientRect();
-    shelf.style.top = (imageBox.top - editorBox.top) + imageBox.height + 6 + 'px';
+    shelf.style.top = imageBox.top - editorBox.top + imageBox.height + 6 + 'px';
     const positionLeft = imageBox.left + kShelfRequiredSize < editorBox.right;
     if (positionLeft) {
       shelf.style.right = '';
-      shelf.style.left = (imageBox.left - editorBox.left) + 'px';
+      shelf.style.left = imageBox.left - editorBox.left + 'px';
     } else {
       shelf.style.left = '';
-      shelf.style.right = (editorBox.right - imageBox.right) + 'px';
+      shelf.style.right = editorBox.right - imageBox.right + 'px';
     }
   };
 
@@ -398,7 +398,7 @@ function resizeHandle(
   onSizingComplete: () => void,
 ) {
   const handle = document.createElement('span');
-  handle.contentEditable = "false";
+  handle.contentEditable = 'false';
   handle.classList.add('pm-image-resize-handle', 'pm-background-color', 'pm-selected-node-border-color');
   handle.style.position = 'absolute';
   handle.style.bottom = '-6px';
@@ -442,7 +442,7 @@ function resizeHandle(
       const widthInUnits = pixelsToUnit(width, units(), containerWidth);
       if (hasPercentWidth(units()) && widthInUnits > 100) {
         width = containerWidth;
-        height = width * (startHeight/startWidth);
+        height = width * (startHeight / startWidth);
       }
 
       img.style.width = width + kPixelUnit;

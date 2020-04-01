@@ -125,7 +125,7 @@ export function initExtensions(
     behaviorSelectAll,
     behaviorCursor,
     behaviorFind,
-    behaviorClearFormatting
+    behaviorClearFormatting,
   ]);
 
   // optional extensions

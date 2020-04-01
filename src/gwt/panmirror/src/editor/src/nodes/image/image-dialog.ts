@@ -65,10 +65,9 @@ export async function imageDialog(
         image.linkTo = linkMark.attrs.href;
       }
     }
-    
+
     // content (will be caption for figures)
     content = node.content;
-
   } else {
     // create a new image
     image = nodeType.create(image).attrs as ImageProps;
@@ -80,7 +79,6 @@ export async function imageDialog(
   // edit the image
   const result = await editorUI.dialogs.editImage(image, dims, editorUI.context.getResourceDir(), imageAttributes);
   if (result) {
-
     // figures treat 'alt' as their content (the caption), but since captions support
     // inline formatting (and the dialog doesn't) we only want to update the
     // content if the alt/caption actually changed (as it will blow away formatting)
@@ -121,7 +119,7 @@ export async function imageDialog(
       if (linkMark) {
         marks = linkMark.removeFromSet(marks);
         if (imageProps.linkTo) {
-          linkMark = linkMark.type.create({ ...linkMark.attrs, href: imageProps.linkTo});
+          linkMark = linkMark.type.create({ ...linkMark.attrs, href: imageProps.linkTo });
         }
       } else if (imageProps.linkTo) {
         linkMark = schema.marks.link.create({ href: imageProps.linkTo });
@@ -130,7 +128,7 @@ export async function imageDialog(
         marks = linkMark.addToSet(marks);
       }
     }
-   
+
     // create the image
     const newImage = nodeType.createAndFill(imageProps, content, marks);
 

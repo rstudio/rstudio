@@ -91,7 +91,7 @@ export function pandocAttrToDomAttr(attrs: any, marker = true) {
 
   // marker
   if (marker) {
-    domAttr[kDataPmPandocAttr] = "1";
+    domAttr[kDataPmPandocAttr] = '1';
   }
 
   // return domAttr
@@ -99,7 +99,6 @@ export function pandocAttrToDomAttr(attrs: any, marker = true) {
 }
 
 export function pandocAttrParseDom(el: Element, attrs: { [key: string]: string | null }) {
-  
   // exclude any keys passed to us
   const excludedNames = Object.keys(attrs);
 

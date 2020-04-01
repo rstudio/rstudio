@@ -268,7 +268,7 @@ export interface PandocOutput {
   writeArray(content: () => void): void;
   writeAttr(id?: string, classes?: string[], keyvalue?: string[]): void;
   writeText(text: string | null): void;
-  writeLink(href: string, title: string, attr: PandocAttr | null, f: () => void) : void;
+  writeLink(href: string, title: string, attr: PandocAttr | null, f: () => void): void;
   writeNode(node: ProsemirrorNode): void;
   writeNodes(parent: ProsemirrorNode): void;
   writeNote(note: ProsemirrorNode): void;

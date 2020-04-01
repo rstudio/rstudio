@@ -20,7 +20,3 @@ function polyfill() {
 }
 
 export default polyfill;
-
- 
-
-

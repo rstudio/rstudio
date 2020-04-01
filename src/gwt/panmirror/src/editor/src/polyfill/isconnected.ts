@@ -1,4 +1,3 @@
-
 /*
  * Node.isConnected polyfill for IE and EdgeHTML
  * 2020-02-04
@@ -8,7 +7,6 @@
  * NO WARRANTY EXPRESSED OR IMPLIED. USE AT YOUR OWN RISK.
  */
 
-
 function polyfill() {
   if (!('isConnected' in Node.prototype)) {
     Object.defineProperty(Node.prototype, 'isConnected', {
@@ -17,8 +15,7 @@ function polyfill() {
           !this.ownerDocument ||
           !(
             // tslint:disable-next-line: no-bitwise
-            this.ownerDocument.compareDocumentPosition(this) &
-            this.DOCUMENT_POSITION_DISCONNECTED
+            (this.ownerDocument.compareDocumentPosition(this) & this.DOCUMENT_POSITION_DISCONNECTED)
           )
         );
       },
@@ -27,4 +24,3 @@ function polyfill() {
 }
 
 export default polyfill;
-

@@ -32,7 +32,6 @@ const enDash = new InputRule(/^(?:[^-]*)--$/, (state: EditorState, match: string
   }
 });
 
-
 const emDash = new InputRule(/^(?:.*)–-$/, (state: EditorState, match: string[], start: number, end: number) => {
   const tr = state.tr;
   tr.insertText('—', end - 2, end);

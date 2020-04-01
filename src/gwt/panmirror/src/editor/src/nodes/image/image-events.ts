@@ -43,14 +43,28 @@ export function imageDrop() {
     // insert the images (track whether we handled at least one)
     const tr = view.state.tr;
     uriList.split('\r?\n').forEach(src => {
-
       // get extension and check it it's an image
       // https://developer.mozilla.org/en-US/docs/Web/Media/Formats/Image_types#Common_image_file_types
       const kImageExtensions = [
-        'apng', 'bmp', 'gif', 'ico', 'cur',  'jpg', 'jpeg', 'jfif',
-        'pjpeg', 'pjp', 'png', 'svg', 'tiff', 'webp' 
+        'apng',
+        'bmp',
+        'gif',
+        'ico',
+        'cur',
+        'jpg',
+        'jpeg',
+        'jfif',
+        'pjpeg',
+        'pjp',
+        'png',
+        'svg',
+        'tiff',
+        'webp',
       ];
-      const extension = src.split(/\./).pop()!.toLowerCase();
+      const extension = src
+        .split(/\./)
+        .pop()!
+        .toLowerCase();
       if (kImageExtensions.includes(extension)) {
         const node = view.state.schema.nodes.image.create({ src });
         tr.insert(coordinates.pos, node);

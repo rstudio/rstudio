@@ -18,7 +18,13 @@ import { PluginKey, Plugin } from 'prosemirror-state';
 
 import { ProsemirrorCommand, EditorCommandId } from '../../api/command';
 import { PandocToken, PandocOutput, PandocTokenType, PandocExtensions } from '../../api/pandoc';
-import { pandocAttrSpec, pandocAttrParseDom, pandocAttrToDomAttr, pandocAttrReadAST, PandocAttr } from '../../api/pandoc_attr';
+import {
+  pandocAttrSpec,
+  pandocAttrParseDom,
+  pandocAttrToDomAttr,
+  pandocAttrReadAST,
+  PandocAttr,
+} from '../../api/pandoc_attr';
 import { EditorUI } from '../../api/ui';
 import { Extension } from '../../api/extension';
 import { EditorOptions } from '../../api/options';
@@ -41,7 +47,7 @@ const extension = (pandocExtensions: PandocExtensions, options: EditorOptions): 
   const capabilities = {
     headings: pandocExtensions.implicit_header_references,
     attributes: pandocExtensions.link_attributes,
-    text: true
+    text: true,
   };
   const linkAttr = pandocExtensions.link_attributes;
   const autoLink = pandocExtensions.autolink_bare_uris;
@@ -127,13 +133,15 @@ const extension = (pandocExtensions: PandocExtensions, options: EditorOptions): 
                 output.writeRawMarkdown(mark.attrs.heading, true);
                 output.writeRawMarkdown(']');
               } else {
-                output.writeLink(mark.attrs.href, mark.attrs.title, linkAttr ? (mark.attrs as PandocAttr) : null, 
+                output.writeLink(
+                  mark.attrs.href,
+                  mark.attrs.title,
+                  linkAttr ? (mark.attrs as PandocAttr) : null,
                   () => {
                     output.writeInlines(parent);
-                  }
+                  },
                 );
               }
-              
             },
           },
         },

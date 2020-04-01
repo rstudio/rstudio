@@ -21,16 +21,11 @@ import { ProsemirrorCommand, EditorCommandId } from '../api/command';
 import { liftTarget } from 'prosemirror-transform';
 
 // marks included in clear formatting
-const kFormattingMarks = [
-  'code', 'em', 'smallcaps', 'span', 
-  'strikeout', 'strong', 'superscript', 'subscript'
-];
+const kFormattingMarks = ['code', 'em', 'smallcaps', 'span', 'strikeout', 'strong', 'superscript', 'subscript'];
 
 // for nodes, all nodes with isTextblock === true will be converted to paragraph, and all
 // nodes in this list will be lifted
-const kLiftFormattingNodes = [
-  'blockquote', 'line_block', 'div'
-];
+const kLiftFormattingNodes = ['blockquote', 'line_block', 'div'];
 
 const extension: Extension = {
   commands: () => {
@@ -39,9 +34,7 @@ const extension: Extension = {
 };
 
 export function clearFormatting(state: EditorState, dispatch?: (tr: Transaction) => void) {
-  
   if (dispatch) {
-
     // create transaction
     const tr = state.tr;
 
@@ -60,19 +53,19 @@ export function clearFormatting(state: EditorState, dispatch?: (tr: Transaction)
 
     // lift / set nodes as required
     tr.doc.nodesBetween(from, to, (node: ProsemirrorNode, pos: number) => {
-      
       // ignore paragraph and text nodes (already have 'cleared' formatting)
-      if (node.type === schema.nodes.paragraph || 
-          node.type === schema.nodes.text) {
+      if (node.type === schema.nodes.paragraph || node.type === schema.nodes.text) {
         return;
       }
 
       // pass recursively through list container nodes
-      if (node.type === schema.nodes.bullet_list || 
-          node.type === schema.nodes.ordered_list ||
-          node.type === schema.nodes.definition_list ||
-          node.type === schema.nodes.definition_list_term ||
-          node.type === schema.nodes.definition_list_description) {
+      if (
+        node.type === schema.nodes.bullet_list ||
+        node.type === schema.nodes.ordered_list ||
+        node.type === schema.nodes.definition_list ||
+        node.type === schema.nodes.definition_list_term ||
+        node.type === schema.nodes.definition_list_description
+      ) {
         return;
       }
 

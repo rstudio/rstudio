@@ -21,7 +21,14 @@ import { ProsemirrorCommand, EditorCommandId } from '../../api/command';
 import { Extension } from '../../api/extension';
 import { canInsertNode } from '../../api/node';
 import { selectionIsImageNode, selectionIsEmptyParagraph } from '../../api/selection';
-import { pandocAttrSpec, pandocAttrParseDom, pandocAttrToDomAttr, pandocAttrReadAST, pandocAttrAvailable, PandocAttr } from '../../api/pandoc_attr';
+import {
+  pandocAttrSpec,
+  pandocAttrParseDom,
+  pandocAttrToDomAttr,
+  pandocAttrReadAST,
+  pandocAttrAvailable,
+  PandocAttr,
+} from '../../api/pandoc_attr';
 import {
   PandocOutput,
   PandocTokenType,
@@ -51,8 +58,12 @@ const IMAGE_TARGET = 2;
 
 const plugin = new PluginKey('image');
 
-const extension = (pandocExtensions: PandocExtensions, _options: EditorOptions, ui: EditorUI, events: EditorEvents): Extension => {
-
+const extension = (
+  pandocExtensions: PandocExtensions,
+  _options: EditorOptions,
+  ui: EditorUI,
+  events: EditorEvents,
+): Extension => {
   const imageAttr = imageAttributesAvailable(pandocExtensions);
 
   return {
@@ -139,9 +150,7 @@ export function pandocImageHandler(figure: boolean, imageAttributes: boolean) {
 }
 
 export function imagePandocOutputWriter(figure: boolean, ui: EditorUI) {
-
   return (output: PandocOutput, node: ProsemirrorNode) => {
-    
     // default writer for markdown images
     let writer = () => {
       output.writeToken(PandocTokenType.Image, () => {
@@ -161,10 +170,11 @@ export function imagePandocOutputWriter(figure: boolean, ui: EditorUI) {
       });
     };
 
-     // see if we need to write raw html
-    const writeHTML = pandocAttrAvailable(node.attrs) &&     // attribs need to be written
-                      !output.extensions.link_attributes &&   // markdown attribs not supported
-                      output.extensions.raw_html;             // raw html is supported
+    // see if we need to write raw html
+    const writeHTML =
+      pandocAttrAvailable(node.attrs) && // attribs need to be written
+      !output.extensions.link_attributes && // markdown attribs not supported
+      output.extensions.raw_html; // raw html is supported
 
     // if we do, then substitute a raw html writer
     if (writeHTML) {
@@ -176,7 +186,7 @@ export function imagePandocOutputWriter(figure: boolean, ui: EditorUI) {
     }
 
     // write (wrap in paragraph and possibly link for  figures)
-    if (figure) { 
+    if (figure) {
       let writeFigure = writer;
       if (node.attrs.linkTo) {
         writeFigure = () => {
@@ -187,7 +197,6 @@ export function imagePandocOutputWriter(figure: boolean, ui: EditorUI) {
     } else {
       writer();
     }
-
   };
 }
 
@@ -207,15 +216,16 @@ function imageInlineHTMLReader(schema: Schema, html: string, writer: Prosemirror
 }
 
 export function imageDOMOutputSpec(node: ProsemirrorNode, imageAttributes: boolean): DOMOutputSpec {
-  return [
-    'img',
-    imageDOMAttributes(node, imageAttributes)
-  ];
+  return ['img', imageDOMAttributes(node, imageAttributes)];
 }
 
-export function imageDOMAttributes(node: ProsemirrorNode, imageAttributes: boolean, marker = true) : { [key: string]: string } {
+export function imageDOMAttributes(
+  node: ProsemirrorNode,
+  imageAttributes: boolean,
+  marker = true,
+): { [key: string]: string } {
   const attr: { [key: string]: string } = {
-    src: node.attrs.src
+    src: node.attrs.src,
   };
   const title = node.attrs.title;
   if (title) {
@@ -225,12 +235,11 @@ export function imageDOMAttributes(node: ProsemirrorNode, imageAttributes: boole
   if (alt) {
     attr.alt = alt;
   }
-  
+
   return {
     ...attr,
     ...(imageAttributes ? pandocAttrToDomAttr(node.attrs, marker) : {}),
   };
-  
 }
 
 export function imageNodeAttrsSpec(linkTo: boolean, imageAttributes: boolean) {
@@ -257,7 +266,7 @@ export function imageAttrsFromDOM(el: Element, imageAttributes: boolean) {
 
 export function imageAttrsFromHTML(html: string) {
   const parser = new window.DOMParser();
-  const doc = parser.parseFromString(html, "text/html");
+  const doc = parser.parseFromString(html, 'text/html');
   if (doc.body && doc.body.firstChild instanceof HTMLImageElement) {
     return imageAttrsFromDOM(doc.body.firstChild, true);
   } else {

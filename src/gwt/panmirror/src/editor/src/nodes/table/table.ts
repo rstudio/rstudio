@@ -71,7 +71,7 @@ const extension = (pandocExtensions: PandocExtensions): Extension | null => {
   const capabilities: TableCapabilities = {
     captions: pandocExtensions.table_captions,
     headerOptional: pandocExtensions.grid_tables,
-    multiline: pandocExtensions.multiline_tables || pandocExtensions.grid_tables
+    multiline: pandocExtensions.multiline_tables || pandocExtensions.grid_tables,
   };
 
   return {
@@ -125,7 +125,6 @@ const extension = (pandocExtensions: PandocExtensions): Extension | null => {
     },
 
     baseKeys: (schema: Schema) => {
-
       // core keys
       const keys = [
         { key: BaseKey.Backspace, command: deleteTableCaption() },
@@ -140,7 +139,7 @@ const extension = (pandocExtensions: PandocExtensions): Extension | null => {
         keys.push({ key: BaseKey.ShiftEnter, command: goToNextCell(-11) });
         keys.push({ key: BaseKey.ModEnter, command: goToNextCell(1) });
       }
-      
+
       return keys;
     },
 

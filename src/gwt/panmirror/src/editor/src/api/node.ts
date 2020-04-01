@@ -132,11 +132,7 @@ export function canInsertNode(state: EditorState, nodeType: NodeType) {
   return false;
 }
 
-export function insertAndSelectNode(
-  view: EditorView,
-  node: ProsemirrorNode,
-) {
-
+export function insertAndSelectNode(view: EditorView, node: ProsemirrorNode) {
   // create new transaction
   const tr = view.state.tr;
 

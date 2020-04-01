@@ -46,7 +46,6 @@ export function pandocFromProsemirror(
 }
 
 class PandocWriter implements PandocOutput {
-
   private readonly ast: PandocAst;
   private readonly format: PandocFormat;
   private readonly nodeWriters: { [key: string]: PandocNodeWriterFn };
@@ -97,7 +96,7 @@ class PandocWriter implements PandocOutput {
     this.activeMarks = [];
     this.options = {
       writeSpaces: true,
-      citationEscaping: false
+      citationEscaping: false,
     };
   }
 
@@ -196,7 +195,6 @@ class PandocWriter implements PandocOutput {
   }
 
   public writeText(text: string | null) {
-
     // determine which characters we shouldn't escape
     const preventEscapeCharacters = this.preventEscapeCharacters;
     if (this.options.citationEscaping) {
@@ -229,7 +227,7 @@ class PandocWriter implements PandocOutput {
     }
   }
 
-  public writeLink(href: string, title: string, attr: PandocAttr | null, content: VoidFunction ) {
+  public writeLink(href: string, title: string, attr: PandocAttr | null, content: VoidFunction) {
     this.writeToken(PandocTokenType.Link, () => {
       // write attr if provided
       if (attr) {
@@ -241,7 +239,7 @@ class PandocWriter implements PandocOutput {
       this.writeArray(() => {
         content();
       });
-  
+
       // write href
       this.write([href || '', title || '']);
     });
@@ -384,7 +382,6 @@ class PandocWriter implements PandocOutput {
   }
 
   private initEscapeCharacters() {
-  
     // prevent escape characters based on format
     if (this.format.extensions.raw_tex) {
       this.preventEscapeCharacters.push('\\');
@@ -395,15 +392,9 @@ class PandocWriter implements PandocOutput {
     if (this.format.extensions.tex_math_single_backslash) {
       this.preventEscapeCharacters.push('(', ')');
     }
-    
+
     // filter standard escape characters w/ preventEscapeCharacters
-    const allEscapeCharacters = [
-      '\\', '`', '*', '_', '{', '}', '[', ']', 
-      '(', ')', '>', '#', '+', '-', '.', '!'
-    ];
-    this.escapeCharacters.push(
-      ...allEscapeCharacters.filter(ch => !this.preventEscapeCharacters.includes(ch))
-    ); 
+    const allEscapeCharacters = ['\\', '`', '*', '_', '{', '}', '[', ']', '(', ')', '>', '#', '+', '-', '.', '!'];
+    this.escapeCharacters.push(...allEscapeCharacters.filter(ch => !this.preventEscapeCharacters.includes(ch)));
   }
 }
-

@@ -15,14 +15,7 @@
 
 import { inputRules } from 'prosemirror-inputrules';
 import { keydownHandler } from 'prosemirror-keymap';
-import {
-  MarkSpec,
-  Node as ProsemirrorNode,
-  NodeSpec,
-  Schema,
-  DOMParser,
-  ParseOptions,
-} from 'prosemirror-model';
+import { MarkSpec, Node as ProsemirrorNode, NodeSpec, Schema, DOMParser, ParseOptions } from 'prosemirror-model';
 import { EditorState, Plugin, PluginKey, Transaction } from 'prosemirror-state';
 import { EditorView } from 'prosemirror-view';
 import { setTextSelection, findParentNodeOfTypeClosestToPos, findParentNode } from 'prosemirror-utils';
@@ -532,11 +525,11 @@ export class Editor {
 
   private initExtensions() {
     return initExtensions(
-      this.options, 
-      this.context.ui, 
-      { subscribe: this.subscribe.bind(this) }, 
-      this.context.extensions, 
-      this.pandocFormat.extensions
+      this.options,
+      this.context.ui,
+      { subscribe: this.subscribe.bind(this) },
+      this.context.extensions,
+      this.pandocFormat.extensions,
     );
   }
 

@@ -42,7 +42,12 @@ export interface Extension {
 }
 
 // return an extension conditional on the active EditorOptions
-export type ExtensionFn = (pandocExtensions: PandocExtensions, options: EditorOptions, ui: EditorUI, events: EditorEvents) => Extension | null;
+export type ExtensionFn = (
+  pandocExtensions: PandocExtensions,
+  options: EditorOptions,
+  ui: EditorUI,
+  events: EditorEvents,
+) => Extension | null;
 
 // create an ExtensionFn for a given extension and format option that must be enabled
 export function extensionIfEnabled(extension: Extension, name: string | string[]) {

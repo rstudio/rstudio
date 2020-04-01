@@ -82,7 +82,14 @@ export class PandocConverter {
 
     const ast = await this.pandoc.markdownToAst(markdown, format, []);
     this.apiVersion = ast['pandoc-api-version'];
-    let doc = pandocToProsemirror(ast, this.schema, this.readers, this.blockReaders, this.inlineHTMLReaders, this.codeBlockFilters);
+    let doc = pandocToProsemirror(
+      ast,
+      this.schema,
+      this.readers,
+      this.blockReaders,
+      this.inlineHTMLReaders,
+      this.codeBlockFilters,
+    );
 
     // run post-processors
     this.postprocessors.forEach(postprocessor => {

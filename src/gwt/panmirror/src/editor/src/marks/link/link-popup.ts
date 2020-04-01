@@ -67,7 +67,6 @@ export class LinkPopupPlugin extends Plugin<DecorationSet> {
 
           const range = getMarkRange(selection.$from, schema.marks.link);
           if (range) {
-
             // don't show the link popup if it's positioned at the far left of the link
             // (awkward when cursor is just left of an image)
             if (selection.empty && range.from === selection.from) {

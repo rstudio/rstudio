@@ -48,7 +48,7 @@ export function linkCommand(markType: MarkType, onEditLink: LinkEditorFn, capabi
         } else {
           capabilities.text = false;
         }
-        
+
         // get other attributes
         if (markIsActive(state, markType)) {
           link = {
@@ -76,7 +76,7 @@ export function linkCommand(markType: MarkType, onEditLink: LinkEditorFn, capabi
             const mark = markType.create(result.link);
 
             // if the content changed then replace the range, otherwise
-            if (capabilities.text && (link.text !== result.link.text)) {
+            if (capabilities.text && link.text !== result.link.text) {
               const node = markType.schema.text(result.link.text, [mark]);
               // if we are editing an existing link then replace it, otherwise replace the selection
               if (link.href) {
@@ -88,15 +88,16 @@ export function linkCommand(markType: MarkType, onEditLink: LinkEditorFn, capabi
               tr.addMark(range.from, range.to, mark);
             }
 
-            // if it's a heading link then update heading to indicate it has an associated link 
+            // if it's a heading link then update heading to indicate it has an associated link
             if (result.link.type === LinkType.Heading) {
-              const heading = findChildren(tr.doc, node => 
-                node.type === state.schema.nodes.heading && node.textContent === result.link.heading
+              const heading = findChildren(
+                tr.doc,
+                node => node.type === state.schema.nodes.heading && node.textContent === result.link.heading,
               );
               if (heading.length > 0) {
                 tr.setNodeMarkup(heading[0].pos, state.schema.nodes.heading, {
                   ...heading[0].node.attrs,
-                  link: result.link.heading
+                  link: result.link.heading,
                 });
               }
             }

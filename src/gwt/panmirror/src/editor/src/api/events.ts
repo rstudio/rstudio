@@ -1,4 +1,3 @@
-
 /*
  * events.ts
  *
@@ -18,10 +17,9 @@ export enum EditorEvent {
   Update = 'panmirrorUpdate',
   OutlineChange = 'panmirrorOutlineChange',
   SelectionChange = 'panmirrorSelectionChange',
-  Resize = 'panmirrorResize'
+  Resize = 'panmirrorResize',
 }
 
 export interface EditorEvents {
   subscribe: (event: EditorEvent, handler: VoidFunction) => VoidFunction;
 }
-

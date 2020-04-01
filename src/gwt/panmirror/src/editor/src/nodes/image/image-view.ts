@@ -34,9 +34,7 @@ import { imageDimensionsFromImg, imageContainerWidth } from './image-util';
 
 import './image-styles.css';
 
-
 export class ImageNodeView implements NodeView {
-  
   // ProseMirror context
   private readonly type: ImageType;
   private node: ProsemirrorNode;
@@ -53,7 +51,7 @@ export class ImageNodeView implements NodeView {
 
   // transient state
   private imgBroken: boolean;
- 
+
   // things to clean up
   private resizeUI: ResizeUI | null;
   private sizeOnVisibleTimer?: number;
@@ -142,7 +140,7 @@ export class ImageNodeView implements NodeView {
 
       // if there is no support for implicit_figures then hide the caption
       if (!pandocExtensions.implicit_figures) {
-        this.figcaption.contentEditable = "false";
+        this.figcaption.contentEditable = 'false';
         this.figcaption.style.height = '0';
         this.figcaption.style.minHeight = '0';
         this.figcaption.style.margin = '0';
@@ -243,7 +241,6 @@ export class ImageNodeView implements NodeView {
 
   // map node to img tag
   private updateImg() {
-
     // map to path reachable within current editing frame
     this.img.src = this.editorUI.context.mapResourcePath(this.node.attrs.src);
 
@@ -251,7 +248,7 @@ export class ImageNodeView implements NodeView {
     this.img.title = '';
     if (this.node.attrs.title) {
       this.img.title = this.node.attrs.title;
-    } 
+    }
 
     // ensure alt attribute so that we get default browser broken image treatment
     this.img.alt = this.node.textContent || this.node.attrs.src;
@@ -261,23 +258,21 @@ export class ImageNodeView implements NodeView {
   }
 
   private updateImageSize() {
-     const containerWidth = this.img.isConnected ? this.containerWidth() : 0;
-     updateImageViewSize(this.node, this.img, this.isFigure() ? this.dom : null, containerWidth);
+    const containerWidth = this.img.isConnected ? this.containerWidth() : 0;
+    updateImageViewSize(this.node, this.img, this.isFigure() ? this.dom : null, containerWidth);
   }
 
-  private updateSizeOnVisible()
-  {
+  private updateSizeOnVisible() {
     const updateSizeOnVisible = () => {
       if (isElementVisible(this.img)) {
         this.updateImageSize();
         this.clearSizeOnVisibleTimer();
       }
-    }; 
+    };
     this.sizeOnVisibleTimer = window.setInterval(updateSizeOnVisible, 200);
   }
 
-  private clearSizeOnVisibleTimer()
-  {
+  private clearSizeOnVisibleTimer() {
     if (this.sizeOnVisibleTimer) {
       clearInterval(this.sizeOnVisibleTimer);
       this.sizeOnVisibleTimer = undefined;

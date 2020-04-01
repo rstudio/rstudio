@@ -106,7 +106,6 @@ class Parser {
   }
 
   private writeInlineHTML(writer: ProsemirrorWriter, html: string) {
-
     // see if any of our readers want to take it
     for (const reader of this.inlineHTMLReaders) {
       if (reader(this.schema, html, writer)) {
@@ -308,10 +307,9 @@ class ParserState {
   }
 
   public closeNode(): ProsemirrorNode {
-    
     // get node info
     const info: ParserStackElement = this.stack.pop() as ParserStackElement;
-    
+
     // clear marks if the node type isn't inline
     if (!info.type.isInline) {
       if (this.marks.length) {

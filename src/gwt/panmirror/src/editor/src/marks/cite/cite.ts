@@ -76,8 +76,8 @@ const extension: Extension = {
             output.withOption('citationEscaping', true, () => {
               output.writeInlines(parent);
             });
-          }
-        }
+          },
+        },
       },
     },
   ],

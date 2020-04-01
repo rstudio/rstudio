@@ -33,7 +33,7 @@ const LIST_ATTRIB_NUMBER_DELIM = 2;
 // which needs to reliably know the number of characters wide each column will be).
 // (previous uses of markdownOutputFilter were converted to use output.writeRawMarkdown).
 // So, if we are attempting to re-enable example lists b/c there is now round tripping
-// of example lists through the pandoc AST we need an alternative way to fixup 
+// of example lists through the pandoc AST we need an alternative way to fixup
 // example list output (likely a more robust pandoc AST).
 const kListItemExampleSentinel = '20543127-1873-4833-AC49-5B352CFA2AF5';
 const kListItemExampleRegex = new RegExp(`\\(\\d+\\) ${kListItemExampleSentinel}`, 'g');
@@ -46,7 +46,7 @@ export function readPandocList(nodeType: NodeType, capabilities: ListCapabilitie
   let getChildren = (tok: PandocToken) => tok.c;
   let getAttrs = (tok: PandocToken): { [key: string]: any } => ({});
 
-  // function to read the number style (convert example to default if we 
+  // function to read the number style (convert example to default if we
   // don't support example lists)
   const readNumberStyle = (attribs: any) => {
     if (capabilities.fancy) {
@@ -60,7 +60,6 @@ export function readPandocList(nodeType: NodeType, capabilities: ListCapabilitie
       return ListNumberStyle.DefaultStyle;
     }
   };
-
 
   // specialize for ordered_list
   if (nodeType === schema.nodes.ordered_list) {

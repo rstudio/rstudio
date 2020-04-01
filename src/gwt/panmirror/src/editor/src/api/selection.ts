@@ -37,4 +37,3 @@ export function selectionIsEmptyParagraph(schema: Schema, selection: Selection) 
   const { $head } = selection;
   return $head.parent.type === schema.nodes.paragraph && $head.parent.childCount === 0;
 }
-
