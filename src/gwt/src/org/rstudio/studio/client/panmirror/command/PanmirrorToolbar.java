@@ -46,7 +46,6 @@ public class PanmirrorToolbar extends SecondaryToolbar implements RequiresResize
  
    public void init(PanmirrorCommand[] commands, HasFindReplace findReplace)
    { 
-      PanmirrorCommandIcons icons = PanmirrorCommandIcons.INSTANCE;
       
       commands_ = new PanmirrorToolbarCommands(commands);
       commandObjects_.clear();
@@ -58,6 +57,7 @@ public class PanmirrorToolbar extends SecondaryToolbar implements RequiresResize
       addLeftSeparator();
       
       formatWidgets_ = addWidgetGroup(
+         addLeftSeparator(),
          addLeftButton(PanmirrorCommands.Strong),
          addLeftButton(PanmirrorCommands.Em),
          addLeftButton(PanmirrorCommands.Code),
@@ -74,18 +74,17 @@ public class PanmirrorToolbar extends SecondaryToolbar implements RequiresResize
       insertWidgets_ = addWidgetGroup(
          addLeftButton(PanmirrorCommands.Link),
          addLeftButton(PanmirrorCommands.Image),
-         addLeftSeparator(),
-         addLeftButton(PanmirrorCommands.RmdChunk),
          addLeftSeparator()
       );
       
-      PanmirrorToolbarMenu tableMenu = createTableMenu();
-      addLeftWidget(new ToolbarMenuButton(ToolbarButton.NoText, ToolbarButton.NoTitle, icons.get(icons.TABLE), tableMenu));
-      
-      addLeftSeparator();
       
       PanmirrorToolbarMenu formatMenu = createFormatMenu();
       addLeftTextMenu(new ToolbarMenuButton("Format", "Format", null, formatMenu, false));
+      
+      addLeftSeparator();
+      
+      PanmirrorToolbarMenu tableMenu = createTableMenu();
+      addLeftTextMenu(new ToolbarMenuButton("Table", "Table", null, tableMenu, false));
       
       addLeftSeparator();
       
@@ -127,6 +126,14 @@ public class PanmirrorToolbar extends SecondaryToolbar implements RequiresResize
      );
    }
    
+   @Override 
+   public Widget addLeftSeparator()
+   {
+      Widget separator = super.addLeftSeparator();
+      separator.addStyleName(RES.styles().toolbarSeparator());
+      return separator;
+   }
+   
    @Override
    public void onResize()
    {
@@ -134,9 +141,9 @@ public class PanmirrorToolbar extends SecondaryToolbar implements RequiresResize
       if (width == 0)
          return;
            
-      showGroup(formatWidgets_, width > 350);
-      showGroup(blockWidgets_, width > 450);
-      showGroup(insertWidgets_, width > 550);
+      showGroup(formatWidgets_, width > 445);
+      showGroup(blockWidgets_, width > 525);
+      showGroup(insertWidgets_, width > 580);
    }
    
    
