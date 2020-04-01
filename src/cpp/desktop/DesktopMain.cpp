@@ -280,15 +280,6 @@ bool useRemoteDevtoolsDebugging()
 #endif
 }
 
-#ifdef Q_OS_MAC
-
-QString inferDefaultRenderingEngine()
-{
-   return QStringLiteral("auto");
-}
-
-#endif
-
 #ifdef Q_OS_WIN
 
 namespace {
@@ -332,7 +323,7 @@ bool isRemoteSession()
 
 } // end anonymous namespace
 
-QString inferDefaultRenderingEngine()
+QString inferDefaultRenderingEngineWindows()
 {
    if (isRemoteSession())
       return QStringLiteral("software");
@@ -370,11 +361,20 @@ QString inferDefaultRenderingEngine()
    return QStringLiteral("auto");
 }
 
-#endif
+#endif /* Q_OS_WIN */
+
+#ifdef Q_OS_MAC
+
+QString inferDefaultRenderingEngineMac()
+{
+   return QStringLiteral("auto");
+}
+
+#endif /* Q_OS_MAC */
 
 #ifdef Q_OS_LINUX
 
-QString inferDefaultRenderingEngine()
+QString inferDefaultRenderingEngineLinux()
 {
    // disable opengl when using nouveau drivers, as a large number
    // of users have reported crashes when attempting to do so.
@@ -405,7 +405,20 @@ QString inferDefaultRenderingEngine()
    return QStringLiteral("auto");
 }
 
+#endif /* Q_OS_LINUX */
+
+QString inferDefaultRenderingEngine()
+{
+#if defined(Q_OS_WIN)
+   return inferDefaultRenderingEngineWindows();
+#elif defined(Q_OS_MAC)
+   return inferDefaultRenderingEngineMac();
+#elif defined(Q_OS_LINUX)
+   return inferDefaultRenderingEngineLinux();
+#else
+   return QStringLiteral("auto");
 #endif
+}
 
 void initializeRenderingEngine(std::vector<char*>* pArguments)
 {
