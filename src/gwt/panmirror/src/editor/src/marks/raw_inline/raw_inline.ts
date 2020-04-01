@@ -52,6 +52,7 @@ const extension = (pandocExtensions: PandocExtensions): Extension | null => {
     marks: [
       {
         name: 'raw_inline',
+        noInputRules: true,
         spec: {
           inclusive: false,
           excludes: '_',
