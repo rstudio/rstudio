@@ -17,6 +17,8 @@
 #undef TRUE
 #undef FALSE
 
+#include <Rversion.h>
+
 #define R_INTERNAL_FUNCTIONS
 #include <r/RInternal.hpp>
 
@@ -136,7 +138,11 @@ void runEmbeddedR(const core::FilePath& rHome,
 
    // more configuration
    pRP->CharacterMode = RGui;
+#if R_VERSION < R_Version(4, 0, 0)
    pRP->R_Slave = FALSE;
+#else
+   pRP->R_NoEcho = FALSE;
+#endif
    pRP->R_Quiet = quiet ? TRUE : FALSE;
    pRP->R_Interactive = TRUE;
    pRP->SaveAction = defaultSaveAction;
