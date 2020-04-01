@@ -817,8 +817,12 @@ public class PaneManager
    private ArrayList<Tab> tabNamesToTabs(JsArrayString tabNames)
    {
       ArrayList<Tab> tabList = new ArrayList<>();
-      for (int j = 0; j < tabNames.length(); j++)
-         tabList.add(Enum.valueOf(Tab.class, tabNames.get(j)));
+      // this is neccesary to avoid issues when moving from 1.3 where hiddenTabSet did not exist
+      if (tabNames != null)
+      {
+         for (int j = 0; j < tabNames.length(); j++)
+            tabList.add(Enum.valueOf(Tab.class, tabNames.get(j)));
+      }
       return tabList;
    }
 
