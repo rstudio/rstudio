@@ -91,6 +91,10 @@ public class PanmirrorToolbar extends SecondaryToolbar implements RequiresResize
       
       PanmirrorToolbarMenu insertMenu = createInsertMenu();
       addLeftTextMenu(new ToolbarMenuButton("Insert", "Insert", null, insertMenu, false)); 
+      
+      addLeftSeparator();
+      PanmirrorToolbarMenu rawMenu = createRawMenu();
+      addLeftTextMenu(new ToolbarMenuButton("Raw", "Raw", null, rawMenu, false));
           
       addLeftSeparator();
       findReplaceButton_ = new ToolbarButton(
@@ -150,6 +154,19 @@ public class PanmirrorToolbar extends SecondaryToolbar implements RequiresResize
       blockMenu.addSeparator();
       blockMenu.addCommand(PanmirrorCommands.CodeBlock);
       return blockMenu;
+   }
+   
+   private PanmirrorToolbarMenu createRawMenu()
+   {
+      PanmirrorToolbarMenu rawMenu = new PanmirrorToolbarMenu(commands_);
+      rawMenu.addCommand(PanmirrorCommands.InlineLatex);
+      rawMenu.addSeparator();
+      rawMenu.addCommand(PanmirrorCommands.InlineMath);
+      rawMenu.addCommand(PanmirrorCommands.DisplayMath);
+      rawMenu.addSeparator();
+      rawMenu.addCommand(PanmirrorCommands.RawInline);
+      rawMenu.addCommand(PanmirrorCommands.RawBlock);
+      return rawMenu;
    }
    
    private PanmirrorToolbarMenu createFormatMenu()
@@ -218,13 +235,6 @@ public class PanmirrorToolbar extends SecondaryToolbar implements RequiresResize
          definitionMenu.addCommand(PanmirrorCommands.DefinitionDescription);
          insertMenu.addSeparator();
       }
-      
-      insertMenu.addCommand(PanmirrorCommands.InlineMath);
-      insertMenu.addCommand(PanmirrorCommands.DisplayMath);
-      insertMenu.addCommand(PanmirrorCommands.InlineLatex);
-      insertMenu.addSeparator();
-      insertMenu.addCommand(PanmirrorCommands.RawBlock);
-      insertMenu.addCommand(PanmirrorCommands.RawInline);
       insertMenu.addSeparator();
       insertMenu.addCommand(PanmirrorCommands.YamlMetadata);
       return insertMenu;

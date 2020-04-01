@@ -92,17 +92,20 @@ public class PanmirrorToolbarCommands
       add(PanmirrorCommands.Footnote, "Footnote");
       add(PanmirrorCommands.HorizontalRule, "Horizontal Rule");
       add(PanmirrorCommands.ParagraphInsert, "Paragraph");
-      add(PanmirrorCommands.InlineMath, "Inline Math");
-      add(PanmirrorCommands.DisplayMath, "Display Math");
-      add(PanmirrorCommands.InlineLatex, "Inline LaTeX");
-      add(PanmirrorCommands.RawInline, "Raw Inline...");
-      add(PanmirrorCommands.RawBlock, "Raw Block...");
       add(PanmirrorCommands.YamlMetadata, "YAML Block");
       add(PanmirrorCommands.RmdChunk, "Code Chunk", icons.RMD_CHUNK);
       add(PanmirrorCommands.DefinitionList, "Definition List");
       add(PanmirrorCommands.DefinitionTerm, "Term");
       add(PanmirrorCommands.DefinitionDescription, "Description");
       add(PanmirrorCommands.Citation, "Citation...");  
+      
+      // raw
+      add(PanmirrorCommands.InlineLatex, "TeX Command(s)");
+      add(PanmirrorCommands.InlineMath, "TeX Inline Math");
+      add(PanmirrorCommands.DisplayMath, "TeX Display Math");
+      add(PanmirrorCommands.RawInline, "Raw Inline...");
+      add(PanmirrorCommands.RawBlock, "Raw Block...");
+      
    }
    
    public PanmirrorCommandUI get(String id)
