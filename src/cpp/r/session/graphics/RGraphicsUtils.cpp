@@ -104,6 +104,22 @@ bool hasRequiredGraphicsDevices(std::string* pMessage)
 
 } // anonymous namespace
 
+std::string getDefaultBackend()
+{
+   return r::options::getOption<std::string>(
+            kGraphicsOptionBackend,
+            "default",
+            false);
+}
+
+std::string getDefaultAntialiasing()
+{
+   return r::options::getOption<std::string>(
+            kGraphicsOptionAntialias,
+            "default",
+            false);
+}
+
 void setCompatibleEngineVersion(int version)
 {
    s_compatibleEngineVersion = version;
@@ -164,10 +180,7 @@ std::string extraBitmapParams()
       return "";
    }
    
-   std::string backend = r::options::getOption<std::string>(
-            kGraphicsOptionBackend,
-            "default",
-            false);
+   std::string backend = getDefaultBackend();
    
    // if the requested backend is not supported, silently use the default
    // (this could happen if a package's configuration was migrated from
@@ -182,17 +195,14 @@ std::string extraBitmapParams()
    if (backend != "default")
       params.push_back("type = \"" + backend + "\"");
    
-   std::string antialias = r::options::getOption<std::string>(
-            kGraphicsOptionAntialias,
-            "default",
-            false);
-
 #ifdef _WIN32
    // fix up antialias for windows backend
    if ((backend == "windows" || backend == "default") && antialias == "subpixel")
       antialias = "cleartype";
 #endif
 
+   std::string antialias = getDefaultAntialiasing();
+   
    if (antialias != "default")
       params.push_back("antialias = \"" + antialias + "\"");
    

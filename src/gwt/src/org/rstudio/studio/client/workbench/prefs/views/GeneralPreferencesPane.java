@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.prefs.views;
 
+import com.google.gwt.event.dom.client.ChangeEvent;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 
@@ -33,6 +34,7 @@ import org.rstudio.core.client.widget.DirectoryChooserTextBox;
 import org.rstudio.core.client.widget.MessageDialog;
 import org.rstudio.core.client.widget.SelectWidget;
 import org.rstudio.core.client.widget.TextBoxWithButton;
+import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.model.RVersionSpec;
 import org.rstudio.studio.client.application.model.RVersionsInfo;
@@ -203,8 +205,9 @@ public class GeneralPreferencesPane extends PreferencesPane
       
       VerticalTabPanel graphics = new VerticalTabPanel(ElementIds.GENERAL_GRAPHICS_PREFS);
       
+      initializeGraphicsBackendWidget();
       graphics.add(headerLabel("Graphics Device"));
-      graphics.add(graphicsBackend_ = graphicsBackendWidget());
+      graphics.add(graphicsBackend_);
       
       graphicsAntialias_ = new SelectWidget(
             "Antialiasing:",
@@ -575,7 +578,7 @@ public class GeneralPreferencesPane extends PreferencesPane
          return false;
    }
    
-   private SelectWidget graphicsBackendWidget()
+   private void initializeGraphicsBackendWidget()
    {
       Map<String, String> valuesToLabelsMap = new HashMap<String, String>();
       valuesToLabelsMap.put(UserPrefs.GRAPHICS_BACKEND_DEFAULT, " (Default)");
@@ -583,6 +586,7 @@ public class GeneralPreferencesPane extends PreferencesPane
       valuesToLabelsMap.put(UserPrefs.GRAPHICS_BACKEND_WINDOWS,   "Windows");
       valuesToLabelsMap.put(UserPrefs.GRAPHICS_BACKEND_CAIRO,     "Cairo");
       valuesToLabelsMap.put(UserPrefs.GRAPHICS_BACKEND_CAIRO_PNG, "Cairo PNG");
+      valuesToLabelsMap.put(UserPrefs.GRAPHICS_BACKEND_RAGG,      "AGG");
       
       JsArrayString supportedBackends =
             session_.getSessionInfo().getGraphicsBackends();
@@ -596,7 +600,25 @@ public class GeneralPreferencesPane extends PreferencesPane
       for (int i = 0; i < labels.length; i++)
          labels[i] = valuesToLabelsMap.get(values[i]);
       
-      return new SelectWidget("Backend:", labels, values, false, true, false);
+      graphicsBackend_ =
+            new SelectWidget("Backend:", labels, values, false, true, false);
+      
+      graphicsBackend_.addChangeHandler((ChangeEvent event) ->
+      {
+         String backend = graphicsBackend_.getValue();
+         if (StringUtil.equals(backend, UserPrefs.GRAPHICS_BACKEND_RAGG))
+         {
+            RStudioGinjector.INSTANCE.getDependencyManager().withRagg(
+                  "Using the AGG renderer",
+                  (Boolean succeeded) ->
+                  {
+                     if (!succeeded)
+                     {
+                        graphicsBackend_.setValue(UserPrefs.GRAPHICS_BACKEND_DEFAULT);
+                     }
+                  });
+         }
+      });
    }
 
    private static final String ENGINE_AUTO        = "auto";
