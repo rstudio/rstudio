@@ -34,15 +34,23 @@ test_context("Shell Escaping")
    {
       std::string dollars = "$$$";
       std::string escaped  = escape(dollars);
-      std::string expected = "\"\\$\\$\\$\"";
+      std::string expected = "'$$$'";
       expect_true(escaped == expected);
    }
    
    test_that("Commands with backslashes are escaped")
    {
-      std::string backslashes = "\\\\\\";
+      std::string backslashes = R"(\\\)";
       std::string escaped = escape(backslashes);
-      std::string expected = "\"\\\\\\\\\\\\\"";
+      std::string expected = R"('\\\')";
+      expect_true(escaped == expected);
+   }
+   
+   test_that("Inner quotes are properly handled")
+   {
+      std::string text = "Text with 'inner quotes'.";
+      std::string escaped = escape(text);
+      std::string expected = R"('Text with '\''inner quotes'\''.')";
       expect_true(escaped == expected);
    }
 }
