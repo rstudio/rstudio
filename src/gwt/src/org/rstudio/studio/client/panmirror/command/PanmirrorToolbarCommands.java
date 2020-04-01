@@ -100,9 +100,10 @@ public class PanmirrorToolbarCommands
       add(PanmirrorCommands.Citation, "Citation...");  
       
       // raw
-      add(PanmirrorCommands.InlineLatex, "TeX Command(s)");
+      add(PanmirrorCommands.InlineLatex, "TeX Command");
       add(PanmirrorCommands.InlineMath, "TeX Inline Math");
       add(PanmirrorCommands.DisplayMath, "TeX Display Math");
+      add(PanmirrorCommands.HTMLInline, "HTML Tag");
       add(PanmirrorCommands.RawInline, "Raw Inline...");
       add(PanmirrorCommands.RawBlock, "Raw Block...");
       

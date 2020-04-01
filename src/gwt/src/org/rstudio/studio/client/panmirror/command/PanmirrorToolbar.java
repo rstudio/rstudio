@@ -171,6 +171,8 @@ public class PanmirrorToolbar extends SecondaryToolbar implements RequiresResize
       rawMenu.addCommand(PanmirrorCommands.InlineMath);
       rawMenu.addCommand(PanmirrorCommands.DisplayMath);
       rawMenu.addSeparator();
+      rawMenu.addCommand(PanmirrorCommands.HTMLInline);
+      rawMenu.addSeparator();
       rawMenu.addCommand(PanmirrorCommands.RawInline);
       rawMenu.addCommand(PanmirrorCommands.RawBlock);
       return rawMenu;

@@ -82,15 +82,19 @@ public class PanmirrorCommands
    public static String Footnote = "1D1A73C0-F0E1-4A0F-BEBC-08398DE14A4D";
    public static String ParagraphInsert = "4E68830A-3E68-450A-B3F3-2591F4EB6B9A";
    public static String HorizontalRule = "EAA7115B-181C-49EC-BDB1-F0FF10369278";
-   public static String InlineMath = "A35C562A-0BD6-4B14-93D5-6FF3BE1A0C8A";
-   public static String DisplayMath = "3E36BA99-2AE9-47C3-8C85-7CC5314A88DF";
-   public static String RawInline = "984167C8-8582-469C-97D8-42CB12773657";
-   public static String RawBlock = "F5757992-4D33-45E6-86DC-F7D7B174B1EC";
    public static String YamlMetadata = "431B5A45-1B25-4A55-9BAF-C0FE95D9B2B6";
    public static String RmdChunk = "EBFD21FF-4A6E-4D88-A2E0-B38470B00BB9";
-   public static String InlineLatex = "CFE8E9E5-93BA-4FFA-9A77-BA7EFC373864";
    public static String Citation = "EFFCFC81-F2E7-441E-B7FA-C693146B4185";
    public static String DefinitionList = "CFAB8F4D-3350-4398-9754-8DE0FB95167B";
    public static String DefinitionTerm = "204D1A8F-8EE6-424A-8E69-99768C85B39E";
    public static String DefinitionDescription = "F0738D83-8E11-4CB5-B958-390190A2D7DD";
+   
+   // raw
+   public static String InlineLatex = "CFE8E9E5-93BA-4FFA-9A77-BA7EFC373864";
+   public static String InlineMath = "A35C562A-0BD6-4B14-93D5-6FF3BE1A0C8A";
+   public static String DisplayMath = "3E36BA99-2AE9-47C3-8C85-7CC5314A88DF";
+   public static String HTMLInline = "C682C6B5-E58D-498C-A38F-FB07BEC3A82D";
+   public static String HTMLBlock = "6F9F64AF-711F-4F91-8642-B51C41717F31";
+   public static String RawInline = "984167C8-8582-469C-97D8-42CB12773657";
+   public static String RawBlock = "F5757992-4D33-45E6-86DC-F7D7B174B1EC";
 }

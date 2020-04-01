@@ -27,19 +27,19 @@ import { EditorUI } from '../../api/ui';
 import { MarkTransaction } from '../../api/transaction';
 import { markHighlightPlugin, markHighlightDecorations } from '../../api/mark-highlight';
 
-import { InsertInlineLatexCommand, RawInlineCommand } from './raw_inline-commands';
+import { InsertInlineLatexCommand, RawInlineCommand, InsertInlineHTMLCommand } from './raw_inline-commands';
 
 import './raw_inline-styles.css';
 
 const RAW_INLINE_FORMAT = 0;
 const RAW_INLINE_CONTENT = 1;
 
-const TEX_FORMAT = 'tex';
-const HTML_FORMAT = 'html';
-
 const kBeginTex = /(^|[^\\])\\[A-Za-z]/;
 const kBeginHTML = /(^|[^\\])</;
 const kHTMLComment = /^<!--([\s\S]*?)-->$/;
+
+export const TEX_FORMAT = 'tex';
+export const HTML_FORMAT = 'html';
 
 const extension = (pandocExtensions: PandocExtensions): Extension | null => {
   // short circuit to no extension if none of the raw format bits are set
@@ -136,6 +136,10 @@ const extension = (pandocExtensions: PandocExtensions): Extension | null => {
         commands.push(new RawInlineCommand(ui));
       }
 
+      if (pandocExtensions.raw_html) {
+        commands.push(new InsertInlineHTMLCommand());
+      }
+
       if (pandocExtensions.raw_tex) {
         commands.push(new InsertInlineLatexCommand());
       }
@@ -188,9 +192,6 @@ const extension = (pandocExtensions: PandocExtensions): Extension | null => {
                   if (pandocExtensions.raw_tex && mark.attrs.format === TEX_FORMAT) {
                     removeInvalidedMark(texLength);
                   }
-                  if (pandocExtensions.raw_html && mark.attrs.format === HTML_FORMAT) {
-                    removeInvalidedMark(htmlLength);
-                  }
                 }
               }
             });
@@ -238,9 +239,6 @@ const extension = (pandocExtensions: PandocExtensions): Extension | null => {
             // this is adding back the tex mark we escaped away
             if (pandocExtensions.raw_tex) {
               addRawInlineMarks(TEX_FORMAT, kBeginTex, texLength);
-            }
-            if (pandocExtensions.raw_html) {
-              addRawInlineMarks(HTML_FORMAT, kBeginHTML, htmlLength, kHTMLComment);
             }
           },
         },
@@ -320,53 +318,6 @@ function texLength(text: string) {
   } else {
     return 0;
   }
-}
-
-function htmlLength(text: string) {
-  let inSingleQuote = false;
-  let inDoubleQuote = false;
-  let i;
-  for (i = 0; i < text.length; i++) {
-    // next character
-    const ch = text[i];
-
-    // must start with <[/]{str}
-    if (i === 0 && ch !== '<') {
-      return 0;
-    }
-    if (i === 1 && !isLetter(ch) && ch !== '!' && ch !== '/') {
-      return 0;
-    }
-
-    // invalid if we see another < when not in quotes
-    if (i > 0 && ch === '<' && !inSingleQuote && !inDoubleQuote) {
-      return 0;
-    }
-
-    // > terminates if we aren't in quotes
-    if (ch === '>' && !inSingleQuote && !inDoubleQuote) {
-      return i + 1;
-    }
-
-    // handle single quote
-    if (ch === "'") {
-      if (inSingleQuote) {
-        inSingleQuote = false;
-      } else if (!inDoubleQuote) {
-        inSingleQuote = true;
-      }
-
-      // handle double quote
-    } else if (ch === '"') {
-      if (inDoubleQuote) {
-        inDoubleQuote = false;
-      } else if (!inSingleQuote) {
-        inDoubleQuote = true;
-      }
-    }
-  }
-
-  return 0;
 }
 
 export default extension;
