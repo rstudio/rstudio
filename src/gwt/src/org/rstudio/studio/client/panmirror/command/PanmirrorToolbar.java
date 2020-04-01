@@ -168,9 +168,6 @@ public class PanmirrorToolbar extends SecondaryToolbar implements RequiresResize
       PanmirrorToolbarMenu rawMenu = new PanmirrorToolbarMenu(commands_);
       rawMenu.addCommand(PanmirrorCommands.InlineLatex);
       rawMenu.addSeparator();
-      rawMenu.addCommand(PanmirrorCommands.InlineMath);
-      rawMenu.addCommand(PanmirrorCommands.DisplayMath);
-      rawMenu.addSeparator();
       rawMenu.addCommand(PanmirrorCommands.HTMLInline);
       rawMenu.addSeparator();
       rawMenu.addCommand(PanmirrorCommands.RawInline);
@@ -239,6 +236,9 @@ public class PanmirrorToolbar extends SecondaryToolbar implements RequiresResize
          definitionMenu.addCommand(PanmirrorCommands.DefinitionDescription);
          insertMenu.addSeparator();
       }
+      insertMenu.addCommand(PanmirrorCommands.InlineMath);
+      insertMenu.addCommand(PanmirrorCommands.DisplayMath);
+      insertMenu.addSeparator();
       insertMenu.addCommand(PanmirrorCommands.Footnote);
       insertMenu.addCommand(PanmirrorCommands.Citation);
       insertMenu.addSeparator();

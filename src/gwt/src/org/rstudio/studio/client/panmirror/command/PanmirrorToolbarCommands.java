@@ -94,6 +94,8 @@ public class PanmirrorToolbarCommands
       add(PanmirrorCommands.ParagraphInsert, "Paragraph");
       add(PanmirrorCommands.YamlMetadata, "YAML Block");
       add(PanmirrorCommands.RmdChunk, "Code Chunk", icons.RMD_CHUNK);
+      add(PanmirrorCommands.InlineMath, "Inline Math");
+      add(PanmirrorCommands.DisplayMath, "Display Math");
       add(PanmirrorCommands.DefinitionList, "Definition List");
       add(PanmirrorCommands.DefinitionTerm, "Term");
       add(PanmirrorCommands.DefinitionDescription, "Description");
@@ -101,8 +103,6 @@ public class PanmirrorToolbarCommands
       
       // raw
       add(PanmirrorCommands.InlineLatex, "TeX Command");
-      add(PanmirrorCommands.InlineMath, "TeX Inline Math");
-      add(PanmirrorCommands.DisplayMath, "TeX Display Math");
       add(PanmirrorCommands.HTMLInline, "HTML Tag");
       add(PanmirrorCommands.RawInline, "Raw Inline...");
       add(PanmirrorCommands.RawBlock, "Raw Block...");
