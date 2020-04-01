@@ -14,6 +14,9 @@ pandoc schema: <https://github.com/jgm/pandoc-types/blob/master/Text/Pandoc/Defi
 
 - Account for placing latex commands inside code marks (awkward right now)
 
+- Handle insert assignment operator (Alt + -). Note behaves differnetly
+  depending on language
+
 TeX handling
 
 - Eliminate current \ escaping special cases
