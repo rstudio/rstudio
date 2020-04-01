@@ -19,8 +19,6 @@ pandoc schema: <https://github.com/jgm/pandoc-types/blob/master/Text/Pandoc/Defi
 
 TeX handling
 
-- Eliminate current \ escaping special cases
-- Break out a special mark type for inline latex
 - Create a \[A-Za-z] input rule that gets you into a Tex command
 - Create an input rule that fires if you add a second backslash at the beginning of the command
   (the rule would remove the backslash as well as the Tex command formatting)
