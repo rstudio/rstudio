@@ -80,21 +80,19 @@ public class PanmirrorToolbar extends SecondaryToolbar implements RequiresResize
       
       PanmirrorToolbarMenu formatMenu = createFormatMenu();
       addLeftTextMenu(new ToolbarMenuButton("Format", "Format", null, formatMenu, false));
-      
-      addLeftSeparator();
-      
-      PanmirrorToolbarMenu tableMenu = createTableMenu();
-      addLeftTextMenu(new ToolbarMenuButton("Table", "Table", null, tableMenu, false));
-      
+            
       addLeftSeparator();
       
       PanmirrorToolbarMenu insertMenu = createInsertMenu();
       addLeftTextMenu(new ToolbarMenuButton("Insert", "Insert", null, insertMenu, false)); 
       
-      addLeftSeparator();
-      PanmirrorToolbarMenu rawMenu = createRawMenu();
-      addLeftTextMenu(new ToolbarMenuButton("Raw", "Raw", null, rawMenu, false));
-          
+      if (haveAnyOf(PanmirrorCommands.TableInsertTable)) 
+      {
+         addLeftSeparator();
+         PanmirrorToolbarMenu tableMenu = createTableMenu();
+         addLeftTextMenu(new ToolbarMenuButton("Table", "Table", null, tableMenu, false));
+      }
+             
       addLeftSeparator();
       findReplaceButton_ = new ToolbarButton(
          ToolbarButton.NoText,
@@ -163,17 +161,6 @@ public class PanmirrorToolbar extends SecondaryToolbar implements RequiresResize
       return blockMenu;
    }
    
-   private PanmirrorToolbarMenu createRawMenu()
-   {
-      PanmirrorToolbarMenu rawMenu = new PanmirrorToolbarMenu(commands_);
-      rawMenu.addCommand(PanmirrorCommands.InlineLatex);
-      rawMenu.addSeparator();
-      rawMenu.addCommand(PanmirrorCommands.HTMLInline);
-      rawMenu.addSeparator();
-      rawMenu.addCommand(PanmirrorCommands.RawInline);
-      rawMenu.addCommand(PanmirrorCommands.RawBlock);
-      return rawMenu;
-   }
    
    private PanmirrorToolbarMenu createFormatMenu()
    {
@@ -219,15 +206,12 @@ public class PanmirrorToolbar extends SecondaryToolbar implements RequiresResize
       insertMenu.addCommand(PanmirrorCommands.Image);
       insertMenu.addCommand(PanmirrorCommands.Link);
       insertMenu.addSeparator();
-      insertMenu.addCommand(PanmirrorCommands.RmdChunk);
-      insertMenu.addCommand(PanmirrorCommands.YamlMetadata);
-      insertMenu.addSeparator();
       insertMenu.addCommand(PanmirrorCommands.ParagraphInsert);
       insertMenu.addCommand(PanmirrorCommands.HorizontalRule);
       insertMenu.addSeparator();
       if (haveAnyOf(PanmirrorCommands.DefinitionList,
-            PanmirrorCommands.DefinitionTerm,
-            PanmirrorCommands.DefinitionDescription))
+                    PanmirrorCommands.DefinitionTerm,
+                    PanmirrorCommands.DefinitionDescription))
       {
          PanmirrorToolbarMenu definitionMenu = insertMenu.addSubmenu("Definition");
          definitionMenu.addCommand(PanmirrorCommands.DefinitionList);
@@ -236,6 +220,24 @@ public class PanmirrorToolbar extends SecondaryToolbar implements RequiresResize
          definitionMenu.addCommand(PanmirrorCommands.DefinitionDescription);
          insertMenu.addSeparator();
       }
+      insertMenu.addCommand(PanmirrorCommands.RmdChunk);
+      insertMenu.addCommand(PanmirrorCommands.YamlMetadata);
+      insertMenu.addSeparator();
+      if (haveAnyOf(PanmirrorCommands.RawBlock, 
+            PanmirrorCommands.TexInline, 
+            PanmirrorCommands.HTMLInline))
+      {
+         PanmirrorToolbarMenu rawMenu = insertMenu.addSubmenu("Raw");
+         rawMenu.addCommand(PanmirrorCommands.TexInline);
+         rawMenu.addCommand(PanmirrorCommands.TexBlock);
+         rawMenu.addSeparator();
+         rawMenu.addCommand(PanmirrorCommands.HTMLInline);
+         rawMenu.addCommand(PanmirrorCommands.HTMLBlock);
+         rawMenu.addSeparator();
+         rawMenu.addCommand(PanmirrorCommands.RawInline);
+         rawMenu.addCommand(PanmirrorCommands.RawBlock);
+         insertMenu.addSeparator();
+      }  
       insertMenu.addCommand(PanmirrorCommands.InlineMath);
       insertMenu.addCommand(PanmirrorCommands.DisplayMath);
       insertMenu.addSeparator();

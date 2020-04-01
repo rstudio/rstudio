@@ -33,8 +33,9 @@ import {
 import { ProsemirrorCommand, EditorCommandId } from '../api/command';
 
 import { canInsertNode } from '../api/node';
-import { EditorUI, RawFormatResult } from '../api/ui';
+import { EditorUI, RawFormatResult, RawFormatProps } from '../api/ui';
 import { isSingleLineHTML } from '../api/html';
+import { kHTMLFormat, kTexFormat } from '../api/raw';
 
 const extension = (pandocExtensions: PandocExtensions): Extension | null => {
   // requires either raw_attribute or raw_html
@@ -114,11 +115,16 @@ const extension = (pandocExtensions: PandocExtensions): Extension | null => {
     ],
 
     commands: (_schema: Schema, ui: EditorUI) => {
+
+      const commands: ProsemirrorCommand[] = [];
+
       if (pandocExtensions.raw_attribute) {
-        return [new RawBlockCommand(ui)];
-      } else {
-        return [];
-      }
+        commands.push(new FormatRawBlockCommand(EditorCommandId.HTMLBlock, kHTMLFormat));
+        commands.push(new FormatRawBlockCommand(EditorCommandId.TexBlock, kTexFormat));
+        commands.push(new RawBlockCommand(ui));
+      } 
+
+      return commands;
     },
   };
 };
@@ -139,6 +145,29 @@ function readPandocRawBlock(schema: Schema, tok: PandocToken, writer: Prosemirro
   }
 }
 
+class FormatRawBlockCommand extends ProsemirrorCommand {
+  constructor(id: EditorCommandId, format: string) {
+    super(
+      id,
+      [],
+      (state: EditorState, dispatch?: (tr: Transaction) => void) => {
+        if (!canInsertNode(state, state.schema.nodes.raw_block)) {
+          return false;
+        }
+
+        if (dispatch) {
+          const tr = state.tr;
+          insertRawNode(tr, { format, content: '' });
+          dispatch(tr);
+        }
+
+        return true;
+      }
+    );
+  }
+}
+
+
 class RawBlockCommand extends ProsemirrorCommand {
   constructor(ui: EditorUI) {
     super(
@@ -154,12 +183,7 @@ class RawBlockCommand extends ProsemirrorCommand {
         }
 
         async function asyncEditRawBlock() {
-          // function to create the node
-          function createRawNode(result: RawFormatResult) {
-            const rawText = result!.raw.content ? schema.text(result!.raw.content) : undefined;
-            return schema.nodes.raw_block.createAndFill({ format: result!.raw.format }, rawText)!;
-          }
-
+        
           if (dispatch) {
             // get existing attributes (if any)
             const raw = {
@@ -182,12 +206,11 @@ class RawBlockCommand extends ProsemirrorCommand {
                 if (result.action === 'remove') {
                   tr.setBlockType(range.from, range.to, schema.nodes.paragraph);
                 } else if (result.action === 'edit') {
-                  tr.replaceRangeWith(range.from, range.to, createRawNode(result));
+                  tr.replaceRangeWith(range.from, range.to, createRawNode(schema, result.raw));
                   setTextSelection(tr.selection.from - 1, -1)(tr);
                 }
               } else {
-                tr.replaceSelectionWith(createRawNode(result));
-                setTextSelection(tr.mapping.map(state.selection.from), -1)(tr);
+                insertRawNode(tr, result.raw);
               }
 
               dispatch(tr);
@@ -204,6 +227,21 @@ class RawBlockCommand extends ProsemirrorCommand {
       },
     );
   }
+}
+
+// function to create a raw node
+function createRawNode(schema: Schema, raw: RawFormatProps) {
+  const rawText = raw.content ? schema.text(raw.content) : undefined;
+  return schema.nodes.raw_block.createAndFill({ format: raw.format }, rawText)!;
+}
+
+// function to create and insert a raw node, then set selection inside of it
+function insertRawNode(tr: Transaction, raw: RawFormatProps) {
+  const schema = tr.doc.type.schema;
+  const prevSel = tr.selection;
+  const node = createRawNode(schema, raw);
+  tr.replaceSelectionWith(createRawNode(schema, raw));
+  setTextSelection(tr.mapping.map(prevSel.from), -1)(tr);
 }
 
 export default extension;

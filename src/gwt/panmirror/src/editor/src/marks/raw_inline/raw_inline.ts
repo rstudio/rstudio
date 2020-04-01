@@ -26,10 +26,12 @@ import { getMarkRange } from '../../api/mark';
 import { EditorUI } from '../../api/ui';
 import { MarkTransaction } from '../../api/transaction';
 import { markHighlightPlugin, markHighlightDecorations } from '../../api/mark-highlight';
+import { kTexFormat, kHTMLFormat } from '../../api/raw';
 
 import { InsertInlineLatexCommand, RawInlineCommand, InsertInlineHTMLCommand } from './raw_inline-commands';
 
 import './raw_inline-styles.css';
+
 
 const RAW_INLINE_FORMAT = 0;
 const RAW_INLINE_CONTENT = 1;
@@ -37,9 +39,6 @@ const RAW_INLINE_CONTENT = 1;
 const kBeginTex = /(^|[^\\])\\[A-Za-z]/;
 const kBeginHTML = /(^|[^\\])</;
 const kHTMLComment = /^<!--([\s\S]*?)-->$/;
-
-export const TEX_FORMAT = 'tex';
-export const HTML_FORMAT = 'html';
 
 const extension = (pandocExtensions: PandocExtensions): Extension | null => {
   // short circuit to no extension if none of the raw format bits are set
@@ -114,7 +113,7 @@ const extension = (pandocExtensions: PandocExtensions): Extension | null => {
               // write straight through (bypassing the pandoc ast) for raw html and tex as they will
               // otherwise acquire an explicit raw attribute which is bad for round-tripping, see
               // https://github.com/jgm/pandoc/commit/28cad165179378369fcf4d25656ea28357026baa
-              if ([TEX_FORMAT, HTML_FORMAT].includes(mark.attrs.format)) {
+              if ([kTexFormat, kHTMLFormat].includes(mark.attrs.format)) {
                 output.writeRawMarkdown(raw);
               } else {
                 output.writeToken(PandocTokenType.RawInline, () => {
@@ -189,7 +188,7 @@ const extension = (pandocExtensions: PandocExtensions): Extension | null => {
                       tr.removeMark(rawInlineRange.from + length, rawInlineRange.to, schema.marks.raw_inline);
                     }
                   };
-                  if (pandocExtensions.raw_tex && mark.attrs.format === TEX_FORMAT) {
+                  if (pandocExtensions.raw_tex && mark.attrs.format === kTexFormat) {
                     removeInvalidedMark(texLength);
                   }
                 }
@@ -238,7 +237,7 @@ const extension = (pandocExtensions: PandocExtensions): Extension | null => {
             };
             // this is adding back the tex mark we escaped away
             if (pandocExtensions.raw_tex) {
-              addRawInlineMarks(TEX_FORMAT, kBeginTex, texLength);
+              addRawInlineMarks(kTexFormat, kBeginTex, texLength);
             }
           },
         },
@@ -261,13 +260,13 @@ export function rawInlineHighlightPlugin(schema: Schema) {
   const delimiterRegex = /[{}]/g;
 
   return markHighlightPlugin(key, schema.marks.raw_inline, (text, attrs, markRange) => {
-    if (attrs.format === TEX_FORMAT) {
+    if (attrs.format === kTexFormat) {
       const kIdClass = 'pm-markup-text-color';
       const idRegEx = /\\[A-Za-z]+/g;
       let decorations = markHighlightDecorations(markRange, text, idRegEx, kIdClass);
       decorations = decorations.concat(markHighlightDecorations(markRange, text, delimiterRegex, kLightTextClass));
       return decorations;
-    } else if (attrs.format === HTML_FORMAT && attrs.comment) {
+    } else if (attrs.format === kHTMLFormat && attrs.comment) {
       return [Decoration.inline(markRange.from, markRange.to, { class: kLightTextClass })];
     } else {
       return [];

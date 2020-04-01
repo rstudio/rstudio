@@ -23,8 +23,7 @@ import { ProsemirrorCommand, EditorCommandId } from '../../api/command';
 import { canInsertNode } from '../../api/node';
 import { EditorUI, RawFormatProps } from '../../api/ui';
 import { getMarkAttrs, markIsActive, getMarkRange } from '../../api/mark';
-
-import { HTML_FORMAT } from './raw_inline';
+import { kHTMLFormat } from '../../api/raw';
 
 export class RawInlineCommand extends ProsemirrorCommand {
   constructor(ui: EditorUI) {
@@ -91,7 +90,7 @@ export class RawInlineCommand extends ProsemirrorCommand {
 
 export class InsertInlineLatexCommand extends ProsemirrorCommand {
   constructor() {
-    super(EditorCommandId.InlineLatex, [], (state: EditorState, dispatch?: (tr: Transaction) => void) => {
+    super(EditorCommandId.TexInline, [], (state: EditorState, dispatch?: (tr: Transaction) => void) => {
       if (!canInsertInlineRaw(state)) {
         return false;
       }
@@ -117,7 +116,7 @@ export class InsertInlineHTMLCommand extends ProsemirrorCommand {
       if (dispatch) {
         const tr = state.tr;
         const schema = state.schema;
-        const mark = schema.marks.raw_inline.create( { format: HTML_FORMAT });
+        const mark = schema.marks.raw_inline.create( { format: kHTMLFormat });
         const node = state.schema.text('<>', [mark]);
         tr.replaceSelectionWith(node, false);
         setTextSelection(tr.selection.to-1)(tr);

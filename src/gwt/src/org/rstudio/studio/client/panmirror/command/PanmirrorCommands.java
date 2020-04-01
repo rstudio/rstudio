@@ -90,7 +90,8 @@ public class PanmirrorCommands
    public static String DefinitionDescription = "F0738D83-8E11-4CB5-B958-390190A2D7DD";
    
    // raw
-   public static String InlineLatex = "CFE8E9E5-93BA-4FFA-9A77-BA7EFC373864";
+   public static String TexInline = "CFE8E9E5-93BA-4FFA-9A77-BA7EFC373864";
+   public static String TexBlock = "BD11A6A7-E528-40A2-8139-3F8F5F556ED2";
    public static String InlineMath = "A35C562A-0BD6-4B14-93D5-6FF3BE1A0C8A";
    public static String DisplayMath = "3E36BA99-2AE9-47C3-8C85-7CC5314A88DF";
    public static String HTMLInline = "C682C6B5-E58D-498C-A38F-FB07BEC3A82D";
