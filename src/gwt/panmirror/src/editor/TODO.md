@@ -6,30 +6,37 @@ pandoc schema: <https://github.com/jgm/pandoc-types/blob/master/Text/Pandoc/Defi
 
 ## TODO
 
-When reading text from pandoc, need to read \ as \\ whenever raw_tex is enabled (as that's how users can escape out of raw tex mode).
-Update docs on this when done.
+- Add a latching state for RStudio formatting toolbars
 
-Require an explicit gesture to insert math. We will also implement an input rule for display math. 
+- Single line of tex brought in as tex block (convert to inline)
 
-Require an explicit gesture for inserting HTML.
+- Clear Raw command for converting raw_inline to text node
+
+- Account for placing latex commands inside code marks (awkward right now)
+
+TeX handling
+
+- Eliminate current \ escaping special cases
+- Break out a special mark type for inline latex
+- Create a \[A-Za-z] input rule that gets you into a Tex command
+- Create an input rule that fires if you add a second backslash at the beginning of the command
+  (the rule would remove the backslash as well as the Tex command formatting)
+- Use inclusive: true (and then create an appendTransaction handler that clear the stored mark)
+
+HTML handling
+
+Math handing
+
+- Require an explicit gesture (no scanning) and implement math editor / previewer
+
 
 Take the Fragment the represents the Cite (Citation+) and parse out the Pandoc tokens. Delimiters are `[]@;` and we need to only respect unescaped versions of those. See about handling citations within citations?
 
 Look into correct handling of non-bracket citations (currently brackets added on intake)
 
-Add 'Raw' top level menu for:
+Update docs on Raw
 
-
-- TeX Command(s)
-------------------------
-- Inline TeX Math
-- Display TeX Math
-------------------------
-- HTML Tag(s)...
-- HTML Block...
-------------------------
-- Raw Inline...
-- Raw Block...
+Doc with only YAML block needs paragraph at end
 
 Surface attributes handling for div with only an id (shading treatment a bit much?)
 
