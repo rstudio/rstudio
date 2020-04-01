@@ -382,13 +382,17 @@ class PandocWriter implements PandocOutput {
   }
 
   private initEscapeCharacters() {
-    // prevent escape characters based on format
+    // raw_text disallows \ escaping so that users can write \\ to distinguish backslashes
+    // that shouldn't be taken as the start of a raw_tex block
     if (this.format.extensions.raw_tex) {
       this.preventEscapeCharacters.push('\\');
     }
+    // gfm disallows [] escaping so that MediaWiki style page links (e.g. [[MyPage]]) work as expected
+    // tex_math_single_backslash does not allow escaping of [] or () (as that conflicts with the math syntax)
     if (this.format.baseName === 'gfm' || this.format.extensions.tex_math_single_backslash) {
       this.preventEscapeCharacters.push('[', ']');
     }
+    // tex_math_single_backslash does not allow escaping of [] or () (as that conflicts with the math syntax)
     if (this.format.extensions.tex_math_single_backslash) {
       this.preventEscapeCharacters.push('(', ')');
     }
