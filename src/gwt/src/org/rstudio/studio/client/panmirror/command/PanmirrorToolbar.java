@@ -196,14 +196,12 @@ public class PanmirrorToolbar extends SecondaryToolbar implements RequiresResize
       listMenu.addCommand(PanmirrorCommands.ListItemLift);
       listMenu.addSeparator();
       listMenu.addCommand(PanmirrorCommands.OrderedListEdit);
-      formatMenu.addSeparator();
-      formatMenu.addCommand(PanmirrorCommands.AttrEdit);
-      formatMenu.addSeparator();
       formatMenu.addCommand(PanmirrorCommands.Blockquote);
-      formatMenu.addCommand(PanmirrorCommands.LineBlock);
       formatMenu.addSeparator();
       formatMenu.addCommand(PanmirrorCommands.Div);
-      formatMenu.addCommand(PanmirrorCommands.RawBlock);
+      formatMenu.addCommand(PanmirrorCommands.LineBlock);
+      formatMenu.addSeparator();
+      formatMenu.addCommand(PanmirrorCommands.AttrEdit);
       formatMenu.addSeparator();
       formatMenu.addCommand(PanmirrorCommands.ClearFormatting);
       return formatMenu;
@@ -216,17 +214,14 @@ public class PanmirrorToolbar extends SecondaryToolbar implements RequiresResize
       insertMenu.addCommand(PanmirrorCommands.Link);
       insertMenu.addSeparator();
       insertMenu.addCommand(PanmirrorCommands.RmdChunk);
+      insertMenu.addCommand(PanmirrorCommands.YamlMetadata);
       insertMenu.addSeparator();
       insertMenu.addCommand(PanmirrorCommands.ParagraphInsert);
       insertMenu.addCommand(PanmirrorCommands.HorizontalRule);
       insertMenu.addSeparator();
-      insertMenu.addCommand(PanmirrorCommands.Footnote);
-      insertMenu.addCommand(PanmirrorCommands.Citation);
-      insertMenu.addSeparator();
-      
       if (haveAnyOf(PanmirrorCommands.DefinitionList,
-                    PanmirrorCommands.DefinitionTerm,
-                    PanmirrorCommands.DefinitionDescription))
+            PanmirrorCommands.DefinitionTerm,
+            PanmirrorCommands.DefinitionDescription))
       {
          PanmirrorToolbarMenu definitionMenu = insertMenu.addSubmenu("Definition");
          definitionMenu.addCommand(PanmirrorCommands.DefinitionList);
@@ -235,8 +230,10 @@ public class PanmirrorToolbar extends SecondaryToolbar implements RequiresResize
          definitionMenu.addCommand(PanmirrorCommands.DefinitionDescription);
          insertMenu.addSeparator();
       }
+      insertMenu.addCommand(PanmirrorCommands.Footnote);
+      insertMenu.addCommand(PanmirrorCommands.Citation);
       insertMenu.addSeparator();
-      insertMenu.addCommand(PanmirrorCommands.YamlMetadata);
+      
       return insertMenu;
    }
    
