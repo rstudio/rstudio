@@ -41,7 +41,7 @@ Consider moving widgets to React now that they are outside the PM dom.
 
 MathJax preview. When containing the selection, the math will show both the code and the preview. When not containing the selection will show the preview. (so probably require a node view for this). Consider a “done” gesture for display math.
 
-Visual mode implications for addin API (pending Kevin)
+Reveal codes / typora behavior
 
 Updated dark mode node selection color from Paul (pending Maria)
 
