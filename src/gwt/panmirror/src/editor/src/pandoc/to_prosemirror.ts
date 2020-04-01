@@ -115,8 +115,7 @@ class Parser {
 
     // otherwise just write it
     const commentRe = /^<!--([\s\S]*?)-->\s*$/;
-    const mark = this.schema.marks.raw_inline.create({
-      format: 'html',
+    const mark = this.schema.marks.raw_html.create({
       comment: commentRe.test(html),
     });
     writer.openMark(mark);

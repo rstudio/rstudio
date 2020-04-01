@@ -78,6 +78,8 @@ import markSubscript from './marks/subscript';
 import markSmallcaps from './marks/smallcaps';
 import markQuoted from './marks/quoted';
 import markRawInline from './marks/raw_inline/raw_inline';
+import markRawTex from './marks/raw_inline/raw_tex';
+import markRawHTML from './marks/raw_inline/raw_html';
 import markMath from './marks/math/math';
 import markCite from './marks/cite/cite';
 import markSpan from './marks/span';
@@ -145,6 +147,8 @@ export function initExtensions(
     markSubscript,
     markSmallcaps,
     markQuoted,
+    markRawTex,
+    markRawHTML,
     markRawInline,
     markMath,
     markCite,

@@ -179,8 +179,8 @@ export function pandocFormatCommentFromState(state: EditorState): PandocFormatCo
     if (foundFirstRawInline) {
       return false;
     }
-    // if it's a text node with a raw-inline then scan it for the format comment
-    if (node.isText && state.schema.marks.raw_inline.isInSet(node.marks)) {
+    // if it's a text node with a raw-html then scan it for the format comment
+    if (node.isText && state.schema.marks.raw_html.isInSet(node.marks)) {
       foundFirstRawInline = true;
       comment = pandocFormatCommentFromCode(node.textContent);
       return false;
