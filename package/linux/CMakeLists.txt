@@ -62,7 +62,7 @@ if(RSTUDIO_SERVER)
      # SuSE based systems
      set(RSTUDIO_RPM_DEPENDS "libsqlite3-0, libpq5, ")
   else()
-     set(RSTUDIO_RPM_DEPENDS "sqlite, postgresql-libs, ")
+     set(RSTUDIO_RPM_DEPENDS "soci-postgresql, soci-sqlite3, ")
   endif()
   set(RSTUDIO_RPM_DEPENDS "${RSTUDIO_RPM_DEPENDS} psmisc, ")
 
@@ -70,7 +70,7 @@ if(RSTUDIO_SERVER)
   # automatic dependency resolution use e.g.
   #   sudo apt-get install gdebi-core
   #   sudo gdebi rstudio-server-0.97.151-amd64.deb
-  set(RSTUDIO_DEBIAN_DEPENDS "psmisc, libapparmor1, libedit2, sudo, lsb-release, libssl1.0.0 | libssl1.0.2 | libssl1.1, libclang-dev, libsqlite3-0, libpq5, ")
+  set(RSTUDIO_DEBIAN_DEPENDS "psmisc, libapparmor1, libedit2, sudo, lsb-release, libssl1.0.0 | libssl1.0.2 | libssl1.1, libclang-dev, libsoci-postgresql, libsoci-sqlite, ")
 
 elseif(RSTUDIO_DESKTOP)
  
@@ -88,11 +88,11 @@ elseif(RSTUDIO_DESKTOP)
      # SuSE based systems
      set(RSTUDIO_RPM_DEPENDS "libxkbcommon-x11-0, libsqlite3-0, libpq5, ")
   else()
-     set(RSTUDIO_RPM_DEPENDS "libxkbcommon-x11, sqlite, postgresql-libs, ")
+     set(RSTUDIO_RPM_DEPENDS "libxkbcommon-x11, soci-postgresql, soci-sqlite3, ")
   endif()
 
   # deb dependencies
-  set(RSTUDIO_DEBIAN_DEPENDS "libedit2, libssl1.0.0 | libssl1.0.2 | libssl1.1, libclang-dev, libxkbcommon-x11-0, libsqlite3-0, libpq5, ")
+  set(RSTUDIO_DEBIAN_DEPENDS "libedit2, libssl1.0.0 | libssl1.0.2 | libssl1.1, libclang-dev, libxkbcommon-x11-0, libsoci-postgresql, libsoci-sqlite, ")
   
 endif()
 

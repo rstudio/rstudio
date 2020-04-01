@@ -38,12 +38,12 @@ RUN yum install -y \
     pam-devel \
     pango-devel \
     patchelf \
-    postgresql-devel \
     python2 \
     R \
     rpmdevtools \
     rpm-sign \
-    sqlite-devel \
+    soci-postgresql-devel \
+    soci-sqlite3-devel \
     sudo \
     valgrind \
     wget \

@@ -7,9 +7,12 @@ set +e
 ln -f -s ${CMAKE_INSTALL_PREFIX}/bin/rstudio /usr/bin/rstudio
 
 # create SOCI library softlinks
-ln -f -s ${CMAKE_INSTALL_PREFIX}/bin/libsoci_core.so.4.0.0 ${CMAKE_INSTALL_PREFIX}/bin/libsoci_core.so.4.0
-ln -f -s ${CMAKE_INSTALL_PREFIX}/bin/libsoci_sqlite3.so.4.0.0 ${CMAKE_INSTALL_PREFIX}/bin/libsoci_sqlite3.so.4.0
-ln -f -s ${CMAKE_INSTALL_PREFIX}/bin/libsoci_postgresql.so.4.0.0 ${CMAKE_INSTALL_PREFIX}/bin/libsoci_postgresql.so.4.0
+# this is only done for suse platforms as there is no system package which provides the libraries
+if grep -q "SUSE" <<< "${RSTUDIO_PACKAGE_OS}"; then
+   ln -f -s ${CMAKE_INSTALL_PREFIX}/bin/libsoci_core.so.4.0.0 ${CMAKE_INSTALL_PREFIX}/bin/libsoci_core.so.4.0
+   ln -f -s ${CMAKE_INSTALL_PREFIX}/bin/libsoci_sqlite3.so.4.0.0 ${CMAKE_INSTALL_PREFIX}/bin/libsoci_sqlite3.so.4.0
+   ln -f -s ${CMAKE_INSTALL_PREFIX}/bin/libsoci_postgresql.so.4.0.0 ${CMAKE_INSTALL_PREFIX}/bin/libsoci_postgresql.so.4.0
+fi
 
 # create openssl softlinks based off Fedora version 
 if test -f /etc/fedora-release

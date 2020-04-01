@@ -1,4 +1,4 @@
-FROM centos:6
+ROM centos:6
 
 RUN set -x \
     && yum install epel-release -y
@@ -25,12 +25,12 @@ RUN yum install -y \
     openssl-devel \
     pam-devel \
     pango-devel \
-    postgresql-devel \
     R \
     rpmdevtools \
     rpmsign \
     rrdtool \
-    sqlite-devel \
+    soci-postgresql-devel \
+    soci-sqlite3-devel \
     sudo \
     wget \
     xml-commons-apis \

@@ -29,8 +29,7 @@ RUN apt-get update -y && apt-get install -y \
     libcurl4-openssl-dev \
     libpam0g-dev \
     libffi-dev \
-    libpq-dev \
-    libsqlite3-dev \
+    libsoci-dev \
     procps \
     uuid-dev \
     make \
