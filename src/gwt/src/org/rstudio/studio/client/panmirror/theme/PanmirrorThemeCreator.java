@@ -16,7 +16,6 @@
 package org.rstudio.studio.client.panmirror.theme;
 
 import org.rstudio.core.client.BrowseCap;
-import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.theme.ThemeFonts;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
