@@ -20,7 +20,7 @@ import { toggleMark } from 'prosemirror-commands';
 
 import { Extension } from '../../api/extension';
 import { ProsemirrorCommand, EditorCommandId } from '../../api/command';
-import { PandocOutput, PandocToken, PandocTokenType, PandocExtensions, ProsemirrorWriter } from '../../api/pandoc';
+import { PandocOutput, PandocToken, PandocTokenType, PandocExtensions } from '../../api/pandoc';
 import { getMarkRange, markIsActive, getMarkAttrs } from '../../api/mark';
 import { EditorUI, RawFormatProps } from '../../api/ui';
 import { canInsertNode } from '../../api/node';

@@ -268,7 +268,6 @@ function createRawNode(schema: Schema, raw: RawFormatProps) {
 function insertRawNode(tr: Transaction, raw: RawFormatProps) {
   const schema = tr.doc.type.schema;
   const prevSel = tr.selection;
-  const node = createRawNode(schema, raw);
   tr.replaceSelectionWith(createRawNode(schema, raw));
   setTextSelection(tr.mapping.map(prevSel.from), -1)(tr);
 }

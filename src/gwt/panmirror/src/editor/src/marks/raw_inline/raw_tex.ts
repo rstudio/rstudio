@@ -13,13 +13,13 @@
  *
  */
 
-import { Node as ProsemirrorNode, Mark, Fragment, Schema, MarkType } from "prosemirror-model";
+import { Node as ProsemirrorNode, Mark, Fragment, Schema } from "prosemirror-model";
 import { DecorationSet } from "prosemirror-view";
-import { Plugin, PluginKey, EditorState, Transaction, Selection, TextSelection } from "prosemirror-state";
+import { Plugin, PluginKey, EditorState, Transaction, TextSelection } from "prosemirror-state";
 import { toggleMark } from "prosemirror-commands";
-import { InputRule, textblockTypeInputRule } from "prosemirror-inputrules";
+import { InputRule } from "prosemirror-inputrules";
 
-import { findChildrenByMark, setTextSelection } from "prosemirror-utils";
+import { findChildrenByMark } from "prosemirror-utils";
 
 import { PandocExtensions, PandocToken, PandocTokenType, PandocOutput } from "../../api/pandoc";
 import { Extension } from "../../api/extension";
