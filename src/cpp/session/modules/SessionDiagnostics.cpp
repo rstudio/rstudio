@@ -595,7 +595,7 @@ void applyOptions(const FileLocalLintOptions& fileOptions,
    }
 }
 
-const char * const kLintComment = "(?:^|\\n)#+\\s+\\!diagnostics";
+#define kLintComment L"(?:^|\\n)#+\\s+\\!diagnostics"
 
 void setFileLocalParseOptions(const std::wstring& rCode,
                               ParseOptions* pOptions,
@@ -604,7 +604,7 @@ void setFileLocalParseOptions(const std::wstring& rCode,
    using namespace string_utils;
    
    // Extract all of the lint commands.
-   boost::regex reLintComments(kLintComment);
+   boost::wregex reLintComments(kLintComment);
    std::vector<std::string> lintCommands;
    boost::wsmatch match;
    
