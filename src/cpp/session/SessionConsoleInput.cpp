@@ -156,10 +156,96 @@ void reissueLastConsolePrompt()
 
 void clearConsoleInputBuffer()
 {
-   // Discard any buffered input
-   while (!s_consoleInputBuffer.empty())
-      s_consoleInputBuffer.pop();
+   s_consoleInputBuffer = {};
 }
+
+namespace {
+
+// this function takes the next chunk of pending console input
+// in the queue, then splits it into separate pieces of console
+// input with one piece of input for each line.
+//
+// we also fix up indentation if we can determine that the
+// code is going to be sent to the reticulate Python REPL
+void fixupPendingConsoleInput()
+{
+   // get next input
+   auto input = s_consoleInputBuffer.front();
+   
+   // nothing to do if this is a cancel
+   if (input.cancel)
+      return;
+   
+   // if this has no newlines, then nothing to do
+   auto index = input.text.find('\n');
+   if (index == std::string::npos)
+      return;
+   
+   // if we're about to send code to the Python REPL, then
+   // we need to fix whitespace in the code before sending
+   bool pyReplActive = false;
+   Error error = 
+         r::exec::RFunction(".rs.reticulate.replIsActive")
+         .call(&pyReplActive);
+   if (error)
+      LOG_ERROR(error);
+   
+   // pop off current input (we're going to split and re-push now)
+   s_consoleInputBuffer.pop();
+   
+   // keep track of last line's indent
+   std::string indent;
+   
+   // split input into list of commands
+   boost::char_separator<char> sep("\n", "", boost::keep_empty_tokens);
+   boost::tokenizer<boost::char_separator<char> > lines(input.text, sep);
+   for (auto it = lines.begin(); it != lines.end(); ++it)
+   {
+      // get line
+      std::string line(*it);
+      
+      // fix up indentation if necessary
+      if (pyReplActive)
+      {
+         if (line.empty())
+         {
+            line = indent;
+         }
+         else if (line == "quit" || line == "exit")
+         {
+            pyReplActive = false;
+         }
+         else
+         {
+            std::size_t index = line.find_first_not_of(" \t");
+            indent = (index == std::string::npos)
+                  ? std::string()
+                  : line.substr(0, index);
+         }
+      }
+      else
+      {
+         if (line == "reticulate::repl_python()")
+         {
+            pyReplActive = true;
+         }
+      }
+   
+      // add to buffer
+      s_consoleInputBuffer.push(rstudio::r::session::RConsoleInput(line, input.console));
+      
+   }
+}
+
+void popConsoleInput(rstudio::r::session::RConsoleInput* pConsoleInput)
+{
+   fixupPendingConsoleInput();
+   *pConsoleInput = s_consoleInputBuffer.front();
+   s_consoleInputBuffer.pop();
+}
+
+} // end anonymous namespace
+
 
 bool rConsoleRead(const std::string& prompt,
                   bool addToHistory,
@@ -175,11 +261,12 @@ bool rConsoleRead(const std::string& prompt,
    // r is not processing input
    setExecuting(false);
 
+   // if we have pending console input, send it directly
    if (!s_consoleInputBuffer.empty())
    {
-      *pConsoleInput = s_consoleInputBuffer.front();
-      s_consoleInputBuffer.pop();
+      popConsoleInput(pConsoleInput);
    }
+   
    // otherwise prompt and wait for console_input from the client
    else
    {
@@ -210,8 +297,8 @@ bool rConsoleRead(const std::string& prompt,
          LOG_ERROR(error);
          *pConsoleInput = rstudio::r::session::RConsoleInput("", "");
       }
-      *pConsoleInput = s_consoleInputBuffer.front();
-      s_consoleInputBuffer.pop();
+      
+      popConsoleInput(pConsoleInput);
    }
 
    // fire onBeforeExecute and onConsoleInput events if this isn't a cancel
@@ -241,27 +328,7 @@ bool rConsoleRead(const std::string& prompt,
 
 void addToConsoleInputBuffer(const rstudio::r::session::RConsoleInput& consoleInput)
 {
-   if (consoleInput.cancel || consoleInput.text.find('\n') == std::string::npos)
-   {
-      s_consoleInputBuffer.push(consoleInput);
-      return;
-   }
-
-   // split input into list of commands
-   boost::char_separator<char> lineSep("\n", "", boost::keep_empty_tokens);
-   boost::tokenizer<boost::char_separator<char> > lines(consoleInput.text, lineSep);
-   for (boost::tokenizer<boost::char_separator<char> >::iterator
-        lineIter = lines.begin();
-        lineIter != lines.end();
-        ++lineIter)
-   {
-      // get line
-      std::string line(*lineIter);
-
-      // add to buffer
-      s_consoleInputBuffer.push(rstudio::r::session::RConsoleInput(
-               line, consoleInput.console));
-   }
+   s_consoleInputBuffer.push(consoleInput);
 }
 
 } // namespace console_input 
