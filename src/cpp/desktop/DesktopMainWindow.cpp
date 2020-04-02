@@ -208,32 +208,38 @@ void MainWindow::launchRStudio(const std::vector<std::string> &args,
     pAppLauncher_->launchRStudio(args, initialDir);
 }
 
-void MainWindow::saveRemoteAuthCookies(bool forcePersist)
-{
-   auto makeCookieKey = [](const QNetworkCookie& cookie)
+void MainWindow::saveRemoteAuthCookies(const boost::function<QList<QNetworkCookie>()>& loadCookies,
+                                       const boost::function<void(QList<QNetworkCookie>)>& saveCookies,
+                                       bool saveSessionCookies)
+{   
+   std::map<std::string, QNetworkCookie> cookieMap;
+   auto addCookie = [&](const QNetworkCookie& cookie)
    {
-      return cookie.domain().toStdString() + "." +
-             cookie.name().toStdString();
+      // ensure we don't save expired cookies
+      // due to how cookie domains are fluid, it's possible
+      // we could continue to save expired cookies if we don't filter them out
+      if (!cookie.isSessionCookie() && cookie.expirationDate().toUTC() <= QDateTime::currentDateTimeUtc())
+         return;
+
+      // also do not save the cookie if it is a session cookie and we were not told to explicitly save them
+      if (!saveSessionCookies && cookie.isSessionCookie())
+         return;
+
+      for (const auto& sessionServer : sessionServerSettings().servers())
+      {
+         if (sessionServer.cookieBelongs(cookie))
+         {
+            cookieMap[sessionServer.label() + "." + cookie.name().toStdString()] = cookie;
+         }
+      }
    };
 
    // merge with existing cookies on disk
-   QList<QNetworkCookie> cookies = options().authCookies();
-   std::map<std::string, QNetworkCookie> cookieMap;
+   QList<QNetworkCookie> cookies = loadCookies();
    for (const QNetworkCookie& cookie : cookies)
    {
-      std::string key = makeCookieKey(cookie);
-      cookieMap[key] = cookie;
+      addCookie(cookie);
    }
-
-   auto addCookieToMap = [&](const QNetworkCookie& cookie)
-   {
-      // only persist session cookies if explicitly told to do so
-      if (forcePersist || !cookie.isSessionCookie())
-      {
-         std::string key = makeCookieKey(cookie);
-         cookieMap[key] = cookie;
-      }
-   };
 
    if (pRemoteSessionLauncher_)
    {
@@ -243,7 +249,7 @@ void MainWindow::saveRemoteAuthCookies(bool forcePersist)
       {
          for (const auto& pair : remoteCookies)
          {
-            addCookieToMap(pair.second);
+            addCookie(pair.second);
          }
       }
       else
@@ -269,7 +275,7 @@ void MainWindow::saveRemoteAuthCookies(bool forcePersist)
       std::map<std::string, QNetworkCookie> cookies = pLauncher_->getCookies();
       for (const auto& pair : cookies)
       {
-         addCookieToMap(pair.second);
+         addCookie(pair.second);
       }
    }
 
@@ -279,29 +285,35 @@ void MainWindow::saveRemoteAuthCookies(bool forcePersist)
       mergedCookies.push_back(pair.second);
    }
 
-   options().setAuthCookies(mergedCookies);
+   saveCookies(mergedCookies);
 }
 
 void MainWindow::launchRemoteRStudio()
 {
-   saveRemoteAuthCookies(true);
+   saveRemoteAuthCookies(boost::bind(&Options::tempAuthCookies, &options()),
+                         boost::bind(&Options::setTempAuthCookies, &options(), _1),
+                         true);
 
    std::vector<std::string> args;
    args.push_back(kSessionServerOption);
    args.push_back(pRemoteSessionLauncher_->sessionServer().url());
+   args.push_back(kTempCookiesOption);
 
    pAppLauncher_->launchRStudio(args);
 }
 
 void MainWindow::launchRemoteRStudioProject(const QString& projectUrl)
 {
-   saveRemoteAuthCookies(true);
+   saveRemoteAuthCookies(boost::bind(&Options::tempAuthCookies, &options()),
+                         boost::bind(&Options::setTempAuthCookies, &options(), _1),
+                         true);
 
    std::vector<std::string> args;
    args.push_back(kSessionServerOption);
    args.push_back(pRemoteSessionLauncher_->sessionServer().url());
    args.push_back(kSessionServerUrlOption);
    args.push_back(projectUrl.toStdString());
+   args.push_back(kTempCookiesOption);
 
    pAppLauncher_->launchRStudio(args);
 }
@@ -450,7 +462,9 @@ void MainWindow::closeEvent(QCloseEvent* pEvent)
 #endif
 
    desktopInfo().onClose();
-   saveRemoteAuthCookies(false);
+   saveRemoteAuthCookies(boost::bind(&Options::authCookies, &options()),
+                         boost::bind(&Options::setAuthCookies, &options(), _1),
+                         false);
 
    if (!geometrySaved_)
    {

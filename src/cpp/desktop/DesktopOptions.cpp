@@ -563,9 +563,8 @@ void Options::setLastRemoteSessionUrl(const QString& serverUrl, const QString& s
    settings_.endGroup();
 }
 
-QList<QNetworkCookie> Options::authCookies() const
+QList<QNetworkCookie> Options::cookiesFromList(const QStringList& cookieStrs) const
 {
-   QStringList cookieStrs = settings_.value(QString::fromUtf8("cookies"), QStringList()).toStringList();
    QList<QNetworkCookie> cookies;
 
    for (const QString& cookieStr : cookieStrs)
@@ -581,7 +580,19 @@ QList<QNetworkCookie> Options::authCookies() const
    return cookies;
 }
 
-void Options::setAuthCookies(const QList<QNetworkCookie>& cookies)
+QList<QNetworkCookie> Options::authCookies() const
+{
+   QStringList cookieStrs = settings_.value(QString::fromUtf8("cookies"), QStringList()).toStringList();
+   return cookiesFromList(cookieStrs);
+}
+
+QList<QNetworkCookie> Options::tempAuthCookies() const
+{
+   QStringList cookieStrs = settings_.value(QString::fromUtf8("temp-auth-cookies"), QStringList()).toStringList();
+   return cookiesFromList(cookieStrs);
+}
+
+QStringList Options::cookiesToList(const QList<QNetworkCookie>& cookies) const
 {
    QStringList cookieStrs;
    for (const QNetworkCookie& cookie : cookies)
@@ -589,7 +600,17 @@ void Options::setAuthCookies(const QList<QNetworkCookie>& cookies)
       cookieStrs.push_back(QString::fromStdString(cookie.toRawForm().toStdString()));
    }
 
-   settings_.setValue(QString::fromUtf8("cookies"), cookieStrs);
+   return cookieStrs;
+}
+
+void Options::setAuthCookies(const QList<QNetworkCookie>& cookies)
+{
+   settings_.setValue(QString::fromUtf8("cookies"), cookiesToList(cookies));
+}
+
+void Options::setTempAuthCookies(const QList<QNetworkCookie>& cookies)
+{
+   settings_.setValue(QString::fromUtf8("temp-auth-cookies"), cookiesToList(cookies));
 }
 
 } // namespace desktop
