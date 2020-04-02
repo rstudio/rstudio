@@ -13,11 +13,13 @@
  *
  */
 
-import { Node as ProsemirrorNode, Schema } from 'prosemirror-model';
+import { Node as ProsemirrorNode, Schema, NodeType } from 'prosemirror-model';
 
 import { EditorState, Transaction } from 'prosemirror-state';
 import { EditorView } from 'prosemirror-view';
-import { findParentNodeOfType, setTextSelection } from 'prosemirror-utils';
+import { setBlockType } from 'prosemirror-commands';
+
+import { findParentNodeOfType, setTextSelection, findParentNode } from 'prosemirror-utils';
 
 import { Extension } from '../api/extension';
 
@@ -95,8 +97,8 @@ const extension = (pandocExtensions: PandocExtensions): Extension | null => {
               block: 'raw_block',
             },
           ],
-          // we define a custom blockReader here so that we can convert html blocks with
-          // a single line of code into paragraph with an html inline
+          // we define a custom blockReader here so that we can convert html and tex blocks with
+          // a single line of code into paragraph with a raw inline
           blockReader: (schema: Schema, tok: PandocToken, writer: ProsemirrorWriter) => {
             if (tok.t === PandocTokenType.RawBlock) {
               readPandocRawBlock(schema, tok, writer);
@@ -115,13 +117,16 @@ const extension = (pandocExtensions: PandocExtensions): Extension | null => {
       },
     ],
 
-    commands: (_schema: Schema, ui: EditorUI) => {
+    commands: (schema: Schema, ui: EditorUI) => {
 
       const commands: ProsemirrorCommand[] = [];
 
+      if (pandocExtensions.raw_html) {
+        commands.push(new FormatRawBlockCommand(EditorCommandId.HTMLBlock, kHTMLFormat, schema.nodes.raw_block));
+      }
+
       if (pandocExtensions.raw_attribute) {
-        commands.push(new FormatRawBlockCommand(EditorCommandId.HTMLBlock, kHTMLFormat));
-        commands.push(new FormatRawBlockCommand(EditorCommandId.TexBlock, kTexFormat));
+        commands.push(new FormatRawBlockCommand(EditorCommandId.TexBlock, kTexFormat, schema.nodes.raw_block));
         commands.push(new RawBlockCommand(ui));
       } 
 
@@ -157,29 +162,44 @@ function readPandocRawBlock(schema: Schema, tok: PandocToken, writer: Prosemirro
   }
 }
 
+
+
+// base class for format specific raw block commands (e.g. html/tex)
 class FormatRawBlockCommand extends ProsemirrorCommand {
-  constructor(id: EditorCommandId, format: string) {
-    super(
-      id,
-      [],
-      (state: EditorState, dispatch?: (tr: Transaction) => void) => {
-        if (!canInsertNode(state, state.schema.nodes.raw_block)) {
-          return false;
-        }
 
-        if (dispatch) {
-          const tr = state.tr;
-          insertRawNode(tr, { format, content: '' });
-          dispatch(tr);
-        }
+  private format: string;
+  private nodeType: NodeType;
 
-        return true;
+  constructor(id: EditorCommandId, format: string, nodeType: NodeType) {
+    super(id, [],  (state: EditorState, dispatch?: (tr: Transaction<any>) => void, view?: EditorView) => { 
+      
+      if (!this.isActive(state) && !setBlockType(this.nodeType, { format })(state)) {
+        return false;
       }
-    );
+
+      if (dispatch) {
+        const schema = state.schema;
+        if (this.isActive(state)) {
+          setBlockType(schema.nodes.paragraph)(state, dispatch);
+        } else {
+          setBlockType(this.nodeType, { format })(state, dispatch);
+        }
+      }
+
+      return true;
+    
+    });
+    this.format = format;
+    this.nodeType = nodeType;
+  }
+
+  public isActive(state: EditorState) {
+    return !!findParentNode(node => node.type === this.nodeType && node.attrs.format === this.format)(state.selection);
   }
 }
 
 
+// generic raw block command (shows dialog to allow choosing from among raw formats)
 class RawBlockCommand extends ProsemirrorCommand {
   constructor(ui: EditorUI) {
     super(
@@ -188,7 +208,7 @@ class RawBlockCommand extends ProsemirrorCommand {
       (state: EditorState, dispatch?: (tr: Transaction) => void, view?: EditorView) => {
         const schema = state.schema;
 
-        // enable if we are either insie a raw block or we can insert a raw block
+        // enable if we are either inside a raw block or we can insert a raw block
         const rawBlock = findParentNodeOfType(schema.nodes.raw_block)(state.selection);
         if (!rawBlock && !canInsertNode(state, schema.nodes.raw_block)) {
           return false;
