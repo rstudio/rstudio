@@ -180,8 +180,8 @@ export class BlockCommand extends NodeCommand {
 }
 
 export class WrapCommand extends NodeCommand {
-  constructor(id: EditorCommandId, keymap: string[], wrapType: NodeType) {
-    super(id, keymap, wrapType, {}, toggleWrap(wrapType));
+  constructor(id: EditorCommandId, keymap: string[], wrapType: NodeType, attrs = {}) {
+    super(id, keymap, wrapType, attrs, toggleWrap(wrapType, attrs));
   }
 }
 
@@ -241,15 +241,15 @@ export function toggleBlockType(type: NodeType, toggletype: NodeType, attrs = {}
   };
 }
 
-export function toggleWrap(type: NodeType): CommandFn {
+export function toggleWrap(type: NodeType, attrs?: {[key: string]: any}) : CommandFn {
   return (state: EditorState, dispatch?: (tr: Transaction<any>) => void, view?: EditorView) => {
-    const isActive = nodeIsActive(state, type);
+    const isActive = nodeIsActive(state, type, attrs);
 
     if (isActive) {
       return lift(state, dispatch);
     }
 
-    return wrapIn(type)(state, dispatch);
+    return wrapIn(type, attrs)(state, dispatch);
   };
 }
 
