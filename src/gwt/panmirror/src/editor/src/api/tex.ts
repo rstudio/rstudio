@@ -13,21 +13,12 @@
  *
  */
 
-import { Selection } from 'prosemirror-state';
-
 
 // Get the length of valid tex content for the passed text. return values include:
 //  -1: Invalid tex content (starts with \ but doesn't close braces properly)
 //   0: Not tex content
-//   1: Special case (only available when pos & selection are passed) to indicate
-//      that it's a single \ awaiting further user input to make it valid
 //  >1: Length of valid tex string
-export function texLength(text: string, pos?: number, selection?: Selection) {
-
-  // special case for cursor at start
-  if (pos && selection && text === '\\' && (pos + 1) === selection.from) {
-    return 1;
-  }
+export function texLength(text: string) {
 
   let braceLevel = 0;
   let i;

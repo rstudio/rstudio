@@ -110,7 +110,7 @@ const extension = (pandocExtensions: PandocExtensions): Extension | null => {
                 const rawInlineRange = getMarkRange(tr.doc.resolve(from), schema.marks.raw_tex);
                 if (rawInlineRange) {
                   const text = tr.doc.textBetween(rawInlineRange.from, rawInlineRange.to);
-                  const length = texLength(text, rawInlineRange.from, tr.selection);
+                  const length = texLength(text);
                   if (length > -1 && length !== text.length) {
                     tr.removeMark(rawInlineRange.from + length, rawInlineRange.to, schema.marks.raw_tex);
                   }
@@ -161,7 +161,7 @@ function texInputRule(schema: Schema) {
       const { parent, parentOffset } = tr.selection.$head;
       const text = parent.textContent.slice(parentOffset - 1);
       if (text.length > 0) {
-        const length = texLength(text, tr.selection.from - 1, tr.selection);
+        const length = texLength(text);
         if (length > 1) {
           const startTex = tr.selection.from - 1;
           tr.addMark(startTex, startTex + length, mark);
