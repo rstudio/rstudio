@@ -15,6 +15,8 @@
 
 #include <signal.h>
 
+#include <core/Algorithm.hpp>
+
 #include "SessionConsoleInput.hpp"
 #include "SessionClientEventQueue.hpp"
 #include "SessionInit.hpp"
@@ -127,8 +129,7 @@ Error extractConsoleInput(const json::JsonRpcRequest& request)
       {
          // get console input to return to R
          std::string text = request.params[0].getString();
-         addToConsoleInputBuffer(rstudio::r::session::RConsoleInput(text, 
-                  console));
+         addToConsoleInputBuffer(rstudio::r::session::RConsoleInput(text, console));
 
          // return success
          return Success();
@@ -161,12 +162,12 @@ void clearConsoleInputBuffer()
 
 namespace {
 
-// this function takes the next chunk of pending console input
-// in the queue, then splits it into separate pieces of console
+// this function takes the next chunk of (potentially multi-line) pending
+// console input in the queue, then splits it into separate pieces of console
 // input with one piece of input for each line.
 //
 // we also fix up indentation if we can determine that the
-// code is going to be sent to the reticulate Python REPL
+// code is going to be sent to the reticulate Python REPL.
 void fixupPendingConsoleInput()
 {
    // get next input
@@ -184,8 +185,7 @@ void fixupPendingConsoleInput()
    // if we're about to send code to the Python REPL, then
    // we need to fix whitespace in the code before sending
    bool pyReplActive = false;
-   Error error = 
-         r::exec::RFunction(".rs.reticulate.replIsActive")
+   Error error =  r::exec::RFunction(".rs.reticulate.replIsActive")
          .call(&pyReplActive);
    if (error)
       LOG_ERROR(error);
@@ -193,39 +193,71 @@ void fixupPendingConsoleInput()
    // pop off current input (we're going to split and re-push now)
    s_consoleInputBuffer.pop();
    
+   // does this Python line start an indented block?
+   // NOTE: should consider using tokenizer here
+   boost::regex reBlockStart(":\\s*(?:#|$)");
+   
    // keep track of last line's indent
    std::string indent;
    
-   // split input into list of commands
-   boost::char_separator<char> sep("\n", "", boost::keep_empty_tokens);
-   boost::tokenizer<boost::char_separator<char> > lines(input.text, sep);
-   for (auto it = lines.begin(); it != lines.end(); ++it)
+   // pending empty strings whose indent we need to set
+   std::vector<std::string*> pendingStrings;
+   
+   // helper for getting indent of line
+   auto getIndent = [](const std::string& line)
    {
-      // get line
-      std::string line(*it);
+      auto index = line.find_first_not_of(" \t");
+      if (index == std::string::npos)
+         return std::string();
+      return line.substr(0, index);
+   };
+   
+   // split input into list of commands
+   std::vector<std::string> lines = core::algorithm::split(input.text, "\n");
+   for (std::size_t i = 0, n = lines.size(); i < n; i++)
+   {
+      // get current line
+      std::string line = lines[i];
       
       // fix up indentation if necessary
       if (pyReplActive)
       {
+         // if the line is empty, then replace it with the appropriate indent
          if (line.empty())
          {
             line = indent;
          }
+         
+         // if this line would exit the reticulate REPL, then update that state
          else if (line == "quit" || line == "exit")
          {
             pyReplActive = false;
          }
-         else
+         
+         // if it looks like we're starting a new Python block,
+         // then update our indent. perform a lookahead for the
+         // next non-blank line, and use that line's indent
+         else if (boost::regex_search(line, reBlockStart))
          {
-            std::size_t index = line.find_first_not_of(" \t");
-            indent = (index == std::string::npos)
-                  ? std::string()
-                  : line.substr(0, index);
+            for (std::size_t j = i + 1; j < n; j++)
+            {
+               const std::string& lookahead = lines[j];
+               if (lookahead.empty())
+                  continue;
+               
+               std::size_t index = lookahead.find_first_not_of(" \t");
+               indent = (index == std::string::npos)
+                     ? std::string()
+                     : lookahead.substr(0, index);
+               break;
+            }
          }
       }
       else
       {
-         if (line == "reticulate::repl_python()")
+         // check for a line that would enter the Python REPL
+         if (line == "reticulate::repl_python()" ||
+             line == "repl_python()")
          {
             pyReplActive = true;
          }
