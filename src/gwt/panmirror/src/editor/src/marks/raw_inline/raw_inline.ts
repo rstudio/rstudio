@@ -29,7 +29,6 @@ export const kRawInlineFormat = 0;
 export const kRawInlineContent = 1;
 
 const extension = (pandocExtensions: PandocExtensions): Extension | null => {
-  
   if (!pandocExtensions.raw_attribute) {
     return null;
   }
@@ -52,7 +51,7 @@ const extension = (pandocExtensions: PandocExtensions): Extension | null => {
               getAttrs(dom: Node | string) {
                 const el = dom as Element;
                 return {
-                  format: el.getAttribute('data-format')
+                  format: el.getAttribute('data-format'),
                 };
               },
             },
@@ -72,12 +71,12 @@ const extension = (pandocExtensions: PandocExtensions): Extension | null => {
               mark: 'raw_inline',
               getAttrs: (tok: PandocToken) => {
                 return {
-                  format: tok.c[kRawInlineFormat]
+                  format: tok.c[kRawInlineFormat],
                 };
               },
               getText: (tok: PandocToken) => {
                 return tok.c[kRawInlineContent];
-              }
+              },
             },
           ],
           writer: {
@@ -99,21 +98,16 @@ const extension = (pandocExtensions: PandocExtensions): Extension | null => {
 
     // insert command
     commands: (_schema: Schema, ui: EditorUI) => {
-      return [
-        new RawInlineCommand(ui)
-      ];
-    }
+      return [new RawInlineCommand(ui)];
+    },
   };
 };
 
 // base class for format-specific raw inline commands (e.g. tex/html)
 export class RawInlineFormatCommand extends ProsemirrorCommand {
-
   private markType: MarkType;
   constructor(id: EditorCommandId, markType: MarkType, insert: (tr: Transaction) => void) {
-   
     super(id, [], (state: EditorState, dispatch?: (tr: Transaction) => void) => {
-      
       // if we aren't active then make sure we can insert a text node here
       if (!this.isActive(state) && !canInsertNode(state, markType.schema.nodes.text)) {
         return false;
@@ -141,7 +135,7 @@ export class RawInlineFormatCommand extends ProsemirrorCommand {
 
         dispatch(tr);
       }
-      
+
       return true;
     });
     this.markType = markType;
@@ -151,7 +145,6 @@ export class RawInlineFormatCommand extends ProsemirrorCommand {
     return markIsActive(state, this.markType);
   }
 }
-
 
 // generic raw inline command (opens dialog that allows picking from among formats)
 class RawInlineCommand extends ProsemirrorCommand {

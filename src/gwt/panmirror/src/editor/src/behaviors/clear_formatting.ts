@@ -22,8 +22,17 @@ import { liftTarget } from 'prosemirror-transform';
 
 // marks included in clear formatting
 const kFormattingMarks = [
-  'code', 'em', 'smallcaps', 'span', 'strikeout', 'strong', 'superscript', 'subscript',
-  'raw_tex', 'raw_html', 'raw_inline'
+  'code',
+  'em',
+  'smallcaps',
+  'span',
+  'strikeout',
+  'strong',
+  'superscript',
+  'subscript',
+  'raw_tex',
+  'raw_html',
+  'raw_inline',
 ];
 
 // for nodes, all nodes with isTextblock === true will be converted to paragraph, and all

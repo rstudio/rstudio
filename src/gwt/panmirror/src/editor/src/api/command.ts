@@ -241,7 +241,7 @@ export function toggleBlockType(type: NodeType, toggletype: NodeType, attrs = {}
   };
 }
 
-export function toggleWrap(type: NodeType, attrs?: {[key: string]: any}) : CommandFn {
+export function toggleWrap(type: NodeType, attrs?: { [key: string]: any }): CommandFn {
   return (state: EditorState, dispatch?: (tr: Transaction<any>) => void, view?: EditorView) => {
     const isActive = nodeIsActive(state, type, attrs);
 

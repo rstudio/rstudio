@@ -45,4 +45,3 @@ const extension = (pandocExtensions: PandocExtensions) => {
 };
 
 export default extension;
-
