@@ -6,36 +6,20 @@ pandoc schema: <https://github.com/jgm/pandoc-types/blob/master/Text/Pandoc/Defi
 
 ## TODO
 
-- Add a latching state for RStudio formatting toolbars
-
-- Single line of tex brought in as tex block (convert to inline)
-
-- Clear Raw command for converting raw_inline to text node
-
-- Account for placing latex commands inside code marks (awkward right now)
-
 - Handle insert assignment operator (Alt + -). Note behaves differnetly
   depending on language
-
-TeX handling
-
-- Create a \[A-Za-z] input rule that gets you into a Tex command
-- Create an input rule that fires if you add a second backslash at the beginning of the command
-  (the rule would remove the backslash as well as the Tex command formatting)
-- Use inclusive: true (and then create an appendTransaction handler that clear the stored mark)
-
-HTML handling
 
 Math handing
 
 - Require an explicit gesture (no scanning) and implement math editor / previewer
-
 
 Take the Fragment the represents the Cite (Citation+) and parse out the Pandoc tokens. Delimiters are `[]@;` and we need to only respect unescaped versions of those. See about handling citations within citations?
 
 Look into correct handling of non-bracket citations (currently brackets added on intake)
 
 Update docs on Raw
+
+Update screenshots
 
 Doc with only YAML block needs paragraph at end
 
