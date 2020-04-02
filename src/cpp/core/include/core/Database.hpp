@@ -45,6 +45,16 @@ struct PostgresqlConnectionOptions
    int connectionTimeoutSeconds;
 };
 
+enum class Driver
+{
+   Sqlite,
+   Postgresql,
+   Unknown
+};
+
+static constexpr const char* SQLITE_DRIVER = "sqlite3";
+static constexpr const char* POSTGRESQL_DRIVER = "postgresql";
+
 typedef boost::variant<SqliteConnectionOptions, PostgresqlConnectionOptions> ConnectionOptions;
 using InputParameter = soci::details::use_type_ptr;
 using OutputParameter = soci::details::into_type_ptr;
@@ -123,6 +133,17 @@ public:
                          bool* pDataReturned = nullptr) = 0;
 
    virtual Error executeStr(const std::string& queryStr) = 0;
+
+   Driver driver() const
+   {
+      std::string driverStr = driverName();
+      if (driverStr == SQLITE_DRIVER)
+         return Driver::Sqlite;
+      else if (driverStr == POSTGRESQL_DRIVER)
+         return Driver::Postgresql;
+      else
+         return Driver::Unknown;
+   }
 
    virtual std::string driverName() const = 0;
 
@@ -227,9 +248,6 @@ private:
    boost::shared_ptr<IConnection> connection_;
    soci::transaction transaction_;
 };
-
-static constexpr const char* SQLITE_DRIVER = "sqlite3";
-static constexpr const char* POSTGRESQL_DRIVER = "postgresql";
 
 class SchemaUpdater
 {

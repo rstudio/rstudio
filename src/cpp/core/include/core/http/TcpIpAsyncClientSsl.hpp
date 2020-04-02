@@ -85,7 +85,7 @@ public:
                   std::string subjectNameStr(subjectName);
                   OPENSSL_free(subjectName);
 
-                  boost::system::error_code ec = rstudio_boost::system::error_code(
+                  boost::system::error_code ec = boost::system::error_code(
                               static_cast<int>(::ERR_get_error()),
                               boost::asio::error::get_ssl_category());
                   Error error(ec, ERROR_LOCATION);

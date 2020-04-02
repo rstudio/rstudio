@@ -23,7 +23,9 @@
          "quartz",
       
       if (.rs.hasCapability("cairo"))
-         c("cairo", "cairo-png")
+         c("cairo", "cairo-png"),
+      
+      "ragg"
    )
    
 })

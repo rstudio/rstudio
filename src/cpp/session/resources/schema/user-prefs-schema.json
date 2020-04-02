@@ -1053,7 +1053,7 @@
         },
         "graphics_backend": {
             "type": "string",
-            "enum": ["default", "cairo", "cairo-png", "quartz", "windows"],
+            "enum": ["default", "cairo", "cairo-png", "quartz", "windows", "ragg"],
             "default": "default",
             "description": "R graphics backend."
         },
