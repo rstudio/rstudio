@@ -27,6 +27,7 @@ set(SERVER_SOURCE_FILES
    ServerErrorCategory.cpp
    ServerEval.cpp
    ServerInit.cpp
+   ServerLoginPages.cpp
    ServerMain.cpp
    ServerMainOverlay.cpp
    ServerMeta.cpp
@@ -41,6 +42,7 @@ set(SERVER_SOURCE_FILES
    ServerSessionProxyOverlay.cpp
    ServerSessionManager.cpp
    auth/ServerAuthHandler.cpp
+   auth/ServerAuthCommon.cpp
    auth/ServerSecureUriHandler.cpp
    auth/ServerValidateUser.cpp
    ${CMAKE_CURRENT_BINARY_DIR}/ServerAddins.cpp

@@ -26,11 +26,6 @@ bool canSetSignInCookies()
    return true;
 }
 
-bool canStaySignedIn()
-{
-   return true;
-}
-
 void onUserAuthenticated(const std::string& username,
                          const std::string& password)
 {
