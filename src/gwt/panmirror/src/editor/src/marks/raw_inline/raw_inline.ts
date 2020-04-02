@@ -13,7 +13,7 @@
  *
  */
 
-import { Schema, Node as ProsemirrorNode, Mark, Fragment } from 'prosemirror-model';
+import { Schema, Node as ProsemirrorNode, Mark, Fragment, MarkType } from 'prosemirror-model';
 import { EditorState, Transaction } from 'prosemirror-state';
 import { EditorView } from 'prosemirror-view';
 import { toggleMark } from 'prosemirror-commands';
@@ -106,6 +106,54 @@ const extension = (pandocExtensions: PandocExtensions): Extension | null => {
   };
 };
 
+// base class for format-specific raw inline commands (e.g. tex/html)
+export class RawInlineFormatCommand extends ProsemirrorCommand {
+
+  private markType: MarkType;
+  constructor(id: EditorCommandId, markType: MarkType, insert: (tr: Transaction) => void) {
+   
+    super(id, [], (state: EditorState, dispatch?: (tr: Transaction) => void) => {
+      
+      // if we aren't active then make sure we can insert a text node here
+      if (!this.isActive(state) && !canInsertNode(state, markType.schema.nodes.text)) {
+        return false;
+      }
+
+      // ensure we can apply this mark here
+      if (!toggleMark(this.markType)(state)) {
+        return false;
+      }
+
+      if (dispatch) {
+        const tr = state.tr;
+
+        if (this.isActive(state)) {
+          const range = getMarkRange(state.selection.$head, this.markType);
+          if (range) {
+            tr.removeMark(range.from, range.to, this.markType);
+          }
+        } else if (!tr.selection.empty) {
+          const mark = markType.create();
+          tr.addMark(tr.selection.from, tr.selection.to, mark);
+        } else {
+          insert(tr);
+        }
+
+        dispatch(tr);
+      }
+      
+      return true;
+    });
+    this.markType = markType;
+  }
+
+  public isActive(state: EditorState) {
+    return markIsActive(state, this.markType);
+  }
+}
+
+
+// generic raw inline command (opens dialog that allows picking from among formats)
 class RawInlineCommand extends ProsemirrorCommand {
   constructor(ui: EditorUI) {
     super(

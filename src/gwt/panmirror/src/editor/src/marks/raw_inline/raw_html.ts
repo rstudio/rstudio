@@ -13,9 +13,8 @@
  *
  */
 
-import { Node as ProsemirrorNode, Mark, Schema, Fragment } from "prosemirror-model";
-import { toggleMark } from "prosemirror-commands";
-import { EditorState, Transaction } from "prosemirror-state";
+import { Mark, Schema, Fragment } from "prosemirror-model";
+import { Transaction } from "prosemirror-state";
 
 import { setTextSelection } from "prosemirror-utils";
 
@@ -23,10 +22,9 @@ import { PandocExtensions, PandocTokenType, PandocToken, ProsemirrorWriter, Pand
 import { Extension } from "../../api/extension";
 import { kHTMLFormat } from "../../api/raw";
 import { EditorUI } from "../../api/ui";
-import { ProsemirrorCommand, EditorCommandId } from "../../api/command";
-import { canInsertNode } from "../../api/node";
+import { EditorCommandId } from "../../api/command";
 
-import { kRawInlineFormat, kRawInlineContent } from "./raw_inline";
+import { kRawInlineFormat, kRawInlineContent, RawInlineFormatCommand } from "./raw_inline";
 
 const extension = (pandocExtensions: PandocExtensions): Extension | null => {
 
@@ -92,32 +90,22 @@ const extension = (pandocExtensions: PandocExtensions): Extension | null => {
     ],
 
     // insert command
-    commands: (_schema: Schema, ui: EditorUI) => {
+    commands: (schema: Schema, ui: EditorUI) => {
       return [
-        new InsertInlineHTMLCommand()
+        new InsertInlineHTMLCommand(schema)
       ];
     },
   };
 
 };
 
-class InsertInlineHTMLCommand extends ProsemirrorCommand {
-  constructor() {
-    super(EditorCommandId.HTMLInline, [], (state: EditorState, dispatch?: (tr: Transaction) => void) => {
-      const schema = state.schema;
-      if (!canInsertNode(state, schema.nodes.text) || !toggleMark(schema.marks.raw_html)(state)) {
-        return false;
-      }
-
-      if (dispatch) {
-        const tr = state.tr;
-        const mark = schema.marks.raw_html.create();
-        const node = state.schema.text('<>', [mark]);
-        tr.replaceSelectionWith(node, false);
-        setTextSelection(tr.selection.to-1)(tr);
-        dispatch(tr);
-      }
-      return true;
+class InsertInlineHTMLCommand extends RawInlineFormatCommand {
+  constructor(schema: Schema) {
+    super(EditorCommandId.HTMLInline, schema.marks.raw_html, (tr: Transaction) => {
+      const mark = schema.marks.raw_html.create();
+      const node = schema.text('<>', [mark]);
+      tr.replaceSelectionWith(node, false);
+      setTextSelection(tr.selection.to-1)(tr);
     });
   }
 }

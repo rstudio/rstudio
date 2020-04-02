@@ -27,15 +27,13 @@ import { kTexFormat } from "../../api/raw";
 import { EditorUI } from "../../api/ui";
 import { markHighlightPlugin, markHighlightDecorations } from "../../api/mark-highlight";
 import { MarkTransaction } from "../../api/transaction";
-import { getMarkRange, markIsActive } from "../../api/mark";
-import { mergedTextNodes } from "../../api/text";
-import { ProsemirrorCommand, EditorCommandId } from "../../api/command";
-import { canInsertNode } from "../../api/node";
-
-import { kRawInlineFormat, kRawInlineContent } from './raw_inline';
+import { getMarkRange } from "../../api/mark";
+import { EditorCommandId } from "../../api/command";
 import { texLength } from "../../api/tex";
 
-const kBeginTex = /(^|[^\\])\\[A-Za-z]/;
+import { kRawInlineFormat, kRawInlineContent, RawInlineFormatCommand } from './raw_inline';
+
+const kTexPlaceholder = 'tex';
 
 const extension = (pandocExtensions: PandocExtensions): Extension | null => {
 
@@ -171,12 +169,8 @@ function texInputRule(schema: Schema) {
 
       // if it wasn't extended then insert/select placeholder
       if (!extended) {
-        const placeholder = 'tex';
-        tr.insertText(placeholder);
-        tr.setSelection(new TextSelection(
-          tr.doc.resolve(tr.selection.from - placeholder.length), 
-          tr.doc.resolve(tr.selection.from)
-        ));
+        tr.insertText(kTexPlaceholder);
+        setTexSelectionAfterInsert(tr);
       }
 
       return tr;
@@ -186,51 +180,25 @@ function texInputRule(schema: Schema) {
   });
 }
 
-
-class InsertInlineLatexCommand extends ProsemirrorCommand {
-  
-  private markType: MarkType;
+class InsertInlineLatexCommand extends RawInlineFormatCommand {
   constructor(schema: Schema) {
-   
-    super(EditorCommandId.TexInline, [], (state: EditorState, dispatch?: (tr: Transaction) => void) => {
-      
-      // if we aren't active then make sure we can insert a text node here
-      if (!this.isActive(state) && !canInsertNode(state, schema.nodes.text)) {
-        return false;
-      }
-
-      // ensure we can apply this mark here
-      if (!toggleMark(this.markType)(state)) {
-        return false;
-      }
-
-      if (dispatch) {
-        const tr = state.tr;
-
-        if (this.isActive(state)) {
-          const range = getMarkRange(state.selection.$head, this.markType);
-          if (range) {
-            tr.removeMark(range.from, range.to, this.markType);
-          }
-        } else {
-          const mark = this.markType.create();
-          const node = state.schema.text('\\', [mark]);
-          tr.replaceSelectionWith(node, false);
-        }
-
-        dispatch(tr);
-      }
-      
-      return true;
+    super(EditorCommandId.TexInline, schema.marks.raw_tex, (tr: Transaction) => {
+      const mark = schema.marks.raw_tex.create();
+      const tex = '\\' + kTexPlaceholder;
+      const node = schema.text(tex, [mark]);
+      tr.replaceSelectionWith(node, false);
+      setTexSelectionAfterInsert(tr);
     });
-    this.markType = schema.marks.raw_tex;
-  }
-
-  public isActive(state: EditorState) {
-    return markIsActive(state, this.markType);
   }
 }
 
+
+function setTexSelectionAfterInsert(tr: Transaction) {
+  tr.setSelection(new TextSelection(
+    tr.doc.resolve(tr.selection.from - kTexPlaceholder.length), 
+    tr.doc.resolve(tr.selection.from)
+  ));
+}
 
 
 const key = new PluginKey<DecorationSet>('latex-highlight');
