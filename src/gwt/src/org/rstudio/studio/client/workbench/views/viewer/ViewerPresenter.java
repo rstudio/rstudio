@@ -63,7 +63,6 @@ import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UserState;
 import org.rstudio.studio.client.workbench.views.BasePresenter;
 import org.rstudio.studio.client.workbench.views.source.Source;
-import org.rstudio.studio.client.workbench.views.source.SourceShim;
 import org.rstudio.studio.client.workbench.views.viewer.events.ViewerClearedEvent;
 import org.rstudio.studio.client.workbench.views.viewer.events.ViewerNavigateEvent;
 import org.rstudio.studio.client.workbench.views.viewer.events.ViewerPreviewRmdEvent;
@@ -108,7 +107,7 @@ public class ViewerPresenter extends BasePresenter
                           Commands commands,
                           Binder binder,
                           ViewerServerOperations server,
-                          SourceShim sourceShim,
+                          Source source,
                           Provider<UserPrefs> pUserPrefs,
                           Provider<UserState> pUserState,
                           HtmlMessageListener htmlMessageListener)
@@ -123,7 +122,7 @@ public class ViewerPresenter extends BasePresenter
       server_ = server;
       events_ = eventBus;
       globalDisplay_ = globalDisplay;
-      sourceShim_ = sourceShim;
+      source_ = source;
       pUserPrefs_ = pUserPrefs;
       pUserState_ = pUserState;
       htmlMessageListener_ = htmlMessageListener;
@@ -444,8 +443,8 @@ public class ViewerPresenter extends BasePresenter
    @Handler
    public void onViewerSaveAllAndRefresh()
    {
-      sourceShim_.handleUnsavedChangesBeforeExit(
-         sourceShim_.getUnsavedChanges(Source.TYPE_FILE_BACKED),
+      source_.handleUnsavedChangesBeforeExit(
+         source_.getUnsavedChanges(Source.TYPE_FILE_BACKED),
          new Command() {
             @Override
             public void execute()
@@ -626,7 +625,7 @@ public class ViewerPresenter extends BasePresenter
    @SuppressWarnings("unused")
    private final Provider<UserPrefs> pUserPrefs_;
    private final Provider<UserState> pUserState_;
-   private final SourceShim sourceShim_; 
+   private final Source source_; 
    private final ShinyDisconnectNotifier shinyNotifier_;
    
    private FileSystemItem saveAsWebPageDefaultPath_ = null;

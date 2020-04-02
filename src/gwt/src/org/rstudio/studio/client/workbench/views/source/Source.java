@@ -328,7 +328,7 @@ public class Source implements InsertSourceHandler,
                  ConsoleEditorProvider consoleEditorProvider,
                  RnwWeaveRegistry rnwWeaveRegistry,
                  DependencyManager dependencyManager,
-                 SourceWindowManager windowManager)
+                 Provider<SourceWindowManager> pWindowManager)
    {
       commands_ = commands;
       views_.add(view);
@@ -350,7 +350,7 @@ public class Source implements InsertSourceHandler,
       consoleEditorProvider_ = consoleEditorProvider;
       rnwWeaveRegistry_ = rnwWeaveRegistry;
       dependencyManager_ = dependencyManager;
-      windowManager_ = windowManager;
+      pWindowManager_ = pWindowManager;
       
       vimCommands_ = new SourceVimCommands();
       
@@ -688,7 +688,7 @@ public class Source implements InsertSourceHandler,
       String activeTabKey = KEY_ACTIVETAB;
       if (!SourceWindowManager.isMainSourceWindow())
          activeTabKey += "SourceWindow" + 
-                         windowManager_.getSourceWindowOrdinal();
+                         pWindowManager_.get().getSourceWindowOrdinal();
 
       new IntStateValue(MODULE_SOURCE, activeTabKey, 
                         ClientState.PROJECT_PERSISTENT,
@@ -961,7 +961,7 @@ public class Source implements InsertSourceHandler,
          // is the main window, and the window it's assigned to isn't open.
          if (currentSourceWindowId == docWindowId ||
              (SourceWindowManager.isMainSourceWindow() && 
-              !windowManager_.isSourceWindowOpen(docWindowId)))
+              !pWindowManager_.get().isSourceWindowOpen(docWindowId)))
          {
             // attempt to add a tab for the current doc; try/catch this since
             // we don't want to allow one failure to prevent all docs from
@@ -1997,7 +1997,7 @@ public class Source implements InsertSourceHandler,
    public void onActivateSource(final Command afterActivation)
    {
       // give the window manager a chance to activate the last source pane
-      if (windowManager_.activateLastFocusedSource())
+      if (pWindowManager_.get().activateLastFocusedSource())
          return;
       
       if (activeEditor_ == null)
@@ -2188,7 +2188,7 @@ public class Source implements InsertSourceHandler,
          // source documents
          final CollabEditStartParams collabParams = 
                e.getCollabParams() == null ? 
-                     windowManager_.getDocCollabParams(e.getDocId()) :
+                     pWindowManager_.get().getDocCollabParams(e.getDocId()) :
                      e.getCollabParams();
          
          // if we're the adopting window, add the doc
@@ -2375,7 +2375,7 @@ public class Source implements InsertSourceHandler,
       });
 
       // Save all documents in satellite windows
-      windowManager_.saveUnsavedDocuments(null, null);
+      pWindowManager_.get().saveUnsavedDocuments(null, null);
    }
    
    
@@ -2485,7 +2485,7 @@ public class Source implements InsertSourceHandler,
       if (SourceWindowManager.isMainSourceWindow() && !excludeActive)
       {
          // if this is the main window, close docs in the satellites first 
-         windowManager_.closeAllSatelliteDocs(caption, new Command()
+         pWindowManager_.get().closeAllSatelliteDocs(caption, new Command()
          {
             @Override
             public void execute()
@@ -2575,7 +2575,7 @@ public class Source implements InsertSourceHandler,
       // the satellite windows as well
       if (SourceWindowManager.isMainSourceWindow())
       {
-         targets.addAll(windowManager_.getAllSatelliteUnsavedChanges(type));
+         targets.addAll(pWindowManager_.get().getAllSatelliteUnsavedChanges(type));
       }
 
       for (EditingTarget target : editors_)
@@ -2614,7 +2614,7 @@ public class Source implements InsertSourceHandler,
       
       // if this is the main source window, save all files in satellites first
       if (SourceWindowManager.isMainSourceWindow())
-         windowManager_.saveUnsavedDocuments(ids, saveAllLocal);
+         pWindowManager_.get().saveUnsavedDocuments(ids, saveAllLocal);
       else
          saveAllLocal.execute();
    }
@@ -2624,11 +2624,11 @@ public class Source implements InsertSourceHandler,
                               Command onCancelled)
    {
       if (SourceWindowManager.isMainSourceWindow() &&
-          !windowManager_.getWindowIdOfDocId(target.getId()).isEmpty())
+          !pWindowManager_.get().getWindowIdOfDocId(target.getId()).isEmpty())
       {
          // we are the main window, and we're being asked to save a document
          // that's in a different window; perform the save over there
-         windowManager_.saveWithPrompt(UnsavedChangesItem.create(target), 
+         pWindowManager_.get().saveWithPrompt(UnsavedChangesItem.create(target), 
                onCompleted);
          return;
       }
@@ -2637,6 +2637,21 @@ public class Source implements InsertSourceHandler,
          editingTarget.saveWithPrompt(onCompleted, onCancelled);
    }
    
+   public Command revertUnsavedChangesBeforeExitCommand(
+                                               final Command onCompleted)
+   {
+      return new Command()
+      {
+         @Override
+         public void execute()
+         {
+            handleUnsavedChangesBeforeExit(
+                                 new ArrayList<UnsavedChangesTarget>(),
+                                 onCompleted);
+         }
+
+      };
+   }
    public void handleUnsavedChangesBeforeExit(
                         final ArrayList<UnsavedChangesTarget> saveTargets,
                         final Command onCompleted)
@@ -2655,7 +2670,7 @@ public class Source implements InsertSourceHandler,
       // changes first
       if (SourceWindowManager.isMainSourceWindow())
       {
-         windowManager_.handleUnsavedChangesBeforeExit(
+         pWindowManager_.get().handleUnsavedChangesBeforeExit(
                saveTargets, new Command()
          {
             @Override
@@ -2911,6 +2926,24 @@ public class Source implements InsertSourceHandler,
          });
    }
    
+   public void forceLoad()
+   {
+      AceEditor.preload();
+   }
+
+   public String getCurrentDocId()
+   {
+      if (getActiveEditor() == null)
+         return null;
+      return getActiveEditor().getId();
+   }
+
+   public String getCurrentDocPath()
+   {
+      if (getActiveEditor() == null)
+         return null;
+      return getActiveEditor().getPath();
+   }
    
    private void doOpenSourceFile(final FileSystemItem file,
                                  final TextFileType fileType,
@@ -2921,7 +2954,7 @@ public class Source implements InsertSourceHandler,
    {
       // if the navigation should happen in another window, do that instead
       NavigationResult navResult = 
-            windowManager_.navigateToFile(file, position, navMethod);
+            pWindowManager_.get().navigateToFile(file, position, navMethod);
       
       // we navigated externally, just skip this
       if (navResult.getType() == NavigationResult.RESULT_NAVIGATED)
@@ -4108,7 +4141,7 @@ public class Source implements InsertSourceHandler,
    {
       // if source windows are open, managing state of the command becomes
       // complicated, so leave it enabled
-      if (windowManager_.areSourceWindowsOpen())
+      if (pWindowManager_.get().areSourceWindowsOpen())
       {
          commands_.saveAllSourceDocs().setEnabled(true);
          return;
@@ -4565,7 +4598,7 @@ public class Source implements InsertSourceHandler,
          Command withLocalCodeBrowser)
    {
       final String path = CodeBrowserEditingTarget.getCodeBrowserPath(func);
-      NavigationResult result = windowManager_.navigateToCodeBrowser(
+      NavigationResult result = pWindowManager_.get().navigateToCodeBrowser(
             path, event);
       if (result.getType() != NavigationResult.RESULT_NAVIGATED)
       {
@@ -5106,7 +5139,7 @@ public class Source implements InsertSourceHandler,
    private Timer debugSelectionTimer_ = null;
    private boolean tabActivationsAreForUser_ = false;
    
-   private final SourceWindowManager windowManager_;
+   private final Provider<SourceWindowManager> pWindowManager_;
 
    // If positive, a new tab is about to be created
    private int newTabPending_;

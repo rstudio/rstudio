@@ -83,7 +83,6 @@ import org.rstudio.studio.client.workbench.views.environment.model.EnvironmentSe
 import org.rstudio.studio.client.workbench.views.environment.model.RObject;
 import org.rstudio.studio.client.workbench.views.environment.view.EnvironmentClientState;
 import org.rstudio.studio.client.workbench.views.source.Source;
-import org.rstudio.studio.client.workbench.views.source.SourceShim;
 import org.rstudio.studio.client.workbench.views.source.events.CodeBrowserFinishedEvent;
 import org.rstudio.studio.client.workbench.views.source.events.CodeBrowserHighlightEvent;
 import org.rstudio.studio.client.workbench.views.source.events.CodeBrowserNavigationEvent;
@@ -140,7 +139,7 @@ public class EnvironmentPresenter extends BasePresenter
                                ConsoleDispatcher consoleDispatcher,
                                RemoteFileSystemContext fsContext,
                                Session session,
-                               SourceShim sourceShim,
+                               Source source,
                                DebugCommander debugCommander,
                                FileTypeRegistry fileTypeRegistry,
                                DataImportPresenter dataImportPresenter)
@@ -161,7 +160,7 @@ public class EnvironmentPresenter extends BasePresenter
       initialized_ = false;
       currentBrowseFile_ = "";
       currentBrowsePosition_ = null;
-      sourceShim_ = sourceShim;
+      source_ = source;
       debugCommander_ = debugCommander;
       session_ = session;
       fileTypeRegistry_ = fileTypeRegistry;
@@ -728,7 +727,7 @@ public class EnvironmentPresenter extends BasePresenter
    private boolean fileContainsUnsavedChanges(String path)
    {
       ArrayList<UnsavedChangesTarget> unsavedSourceDocs = 
-         sourceShim_.getUnsavedChanges(Source.TYPE_FILE_BACKED);
+         source_.getUnsavedChanges(Source.TYPE_FILE_BACKED);
       
       for (UnsavedChangesTarget target: unsavedSourceDocs)
       {
@@ -984,7 +983,7 @@ public class EnvironmentPresenter extends BasePresenter
    private final WorkbenchContext workbenchContext_;
    private final FileDialogs fileDialogs_;
    private final EventBus eventBus_;
-   private final SourceShim sourceShim_;
+   private final Source source_;
    private final DebugCommander debugCommander_;
    private final Session session_;
    private final FileTypeRegistry fileTypeRegistry_;

@@ -141,7 +141,7 @@ import org.rstudio.studio.client.workbench.views.output.compilepdf.events.Compil
 import org.rstudio.studio.client.workbench.views.output.lint.LintManager;
 import org.rstudio.studio.client.workbench.views.presentation.events.SourceFileSaveCompletedEvent;
 import org.rstudio.studio.client.workbench.views.presentation.model.PresentationState;
-import org.rstudio.studio.client.workbench.views.source.SourceBuildHelper;
+import org.rstudio.studio.client.workbench.views.source.Source;
 import org.rstudio.studio.client.workbench.views.source.SourceWindowManager;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTarget;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTargetCodeExecution;
@@ -440,7 +440,7 @@ public class TextEditingTarget implements
                             UserPrefs prefs, 
                             UserState state, 
                             BreakpointManager breakpointManager,
-                            SourceBuildHelper sourceBuildHelper,
+                            Source source,
                             DependencyManager dependencyManager)
    {
       commands_ = commands;
@@ -456,7 +456,7 @@ public class TextEditingTarget implements
       synctex_ = synctex;
       fontSizeManager_ = fontSizeManager;
       breakpointManager_ = breakpointManager;
-      sourceBuildHelper_ = sourceBuildHelper;
+      source_ = source;
       dependencyManager_ = dependencyManager;
 
       docDisplay_ = docDisplay;
@@ -5482,24 +5482,36 @@ public class TextEditingTarget implements
    
    private void runShinyApp()
    {
-      sourceBuildHelper_.withSaveFilesBeforeCommand(() ->
+      source_.withSaveFilesBeforeCommand(() ->
       {
          events_.fireEvent(new LaunchShinyApplicationEvent(getPath(),
                prefs_.shinyBackgroundJobs().getValue() ?
                   ShinyApplication.BACKGROUND_APP :
                   ShinyApplication.FOREGROUND_APP, getExtendedFileType()));
-      }, "Run Shiny Application");
+      },
+      new Command() {
+         public void execute()
+         {
+         }
+      },
+      "Run Shiny Application");
    }
    
    private void runPlumberAPI()
    {
-      sourceBuildHelper_.withSaveFilesBeforeCommand(new Command() {
+      source_.withSaveFilesBeforeCommand(new Command() {
          @Override
          public void execute()
          {
             events_.fireEvent(new LaunchPlumberAPIEvent(getPath()));
          }
-      }, "Run Plumber API");
+      },
+      new Command() {
+         public void execute()
+         {
+         }
+      },
+      "Run Plumber API");
    }
    
    private void sourcePython()
@@ -7535,7 +7547,7 @@ public class TextEditingTarget implements
    private final Session session_;
    private final Synctex synctex_;
    private final FontSizeManager fontSizeManager_;
-   private final SourceBuildHelper sourceBuildHelper_;
+   private final Source source_;
    private final DependencyManager dependencyManager_;
    private DocUpdateSentinel docUpdateSentinel_;
    private Value<String> name_ = new Value<String>(null);

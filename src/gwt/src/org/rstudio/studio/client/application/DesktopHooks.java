@@ -45,7 +45,6 @@ import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
-import org.rstudio.studio.client.workbench.views.source.SourceShim;
 
 /**
  * Any methods on this class are automatically made available to the
@@ -67,7 +66,6 @@ public class DesktopHooks
                        Server server,
                        FileTypeRegistry fileTypeRegistry,
                        WorkbenchContext workbenchContext,
-                       SourceShim sourceShim,
                        ProductEditionInfo editionInfo)
    {
       commands_ = commands;
@@ -78,7 +76,6 @@ public class DesktopHooks
       server_ = server;
       fileTypeRegistry_ = fileTypeRegistry;
       workbenchContext_ = workbenchContext;
-      sourceShim_ = sourceShim;
       editionInfo_ = editionInfo;
       
       events_.addHandler(SaveActionChangedEvent.TYPE, 
@@ -267,7 +264,6 @@ public class DesktopHooks
    private final Server server_;
    private final FileTypeRegistry fileTypeRegistry_;
    private final WorkbenchContext workbenchContext_;
-   private final SourceShim sourceShim_;
    private final SerializedCommandQueue commandQueue_ = 
                                          new SerializedCommandQueue();
    private final ProductEditionInfo editionInfo_;

@@ -69,7 +69,6 @@ import org.rstudio.studio.client.workbench.views.output.find.FindOutputTab;
 import org.rstudio.studio.client.workbench.views.output.markers.MarkersOutputTab;
 import org.rstudio.studio.client.workbench.views.source.Source;
 import org.rstudio.studio.client.workbench.views.source.SourcePane;
-import org.rstudio.studio.client.workbench.views.source.SourceShim;
 import org.rstudio.studio.client.workbench.views.source.SourceWindowManager;
 import org.rstudio.studio.client.workbench.views.source.model.SourceDocument;
 
@@ -213,7 +212,6 @@ public class PaneManager
                       Commands commands,
                       UserPrefs userPrefs,
                       @Named("Console") final Widget consolePane,
-                      SourceShim sourceShim,
                       Source source,
                       @Named("History") final WorkbenchTab historyTab,
                       @Named("Files") final WorkbenchTab filesTab,
@@ -246,7 +244,6 @@ public class PaneManager
       userPrefs_ = userPrefs;
       consolePane_ = (ConsolePane)consolePane;
       source_ = source;
-      sourceShim_ = sourceShim;
       historyTab_ = historyTab;
       filesTab_ = filesTab;
       plotsTab_ = plotsTab;
@@ -1092,8 +1089,8 @@ public class PaneManager
    {
       String frameName = "Source";
       WindowFrame sourceFrame = new WindowFrame(frameName);
-      sourceFrame.setFillWidget(sourceShim_.asWidget());
-      sourceShim_.forceLoad();
+      sourceFrame.setFillWidget(source_.asWidget());
+      source_.forceLoad();
       return sourceLogicalWindow_ = new LogicalWindow(
             sourceFrame,
             new MinimizedWindowFrame(frameName, frameName));
@@ -1103,8 +1100,8 @@ public class PaneManager
    {
       WindowFrame sourceFrame = new WindowFrame(frameName);
       sourceFrame.setFillWidget(source_.asWidget(display));
-      //sourceFrame.setFillWidget(sourceShim_.asWidget(display));
-      //sourceShim_.forceLoad();
+      sourceFrame.setFillWidget(source_.asWidget(display));
+      source_.forceLoad();
       return sourceLogicalWindow_ = new LogicalWindow(
             sourceFrame,
             new MinimizedWindowFrame(frameName, frameName));
@@ -1343,7 +1340,6 @@ public class PaneManager
    private final WorkbenchTab sourceCppTab_;
    private final ConsolePane consolePane_;
    private final Source source_;
-   private final SourceShim sourceShim_;
    private final WorkbenchTab historyTab_;
    private final WorkbenchTab filesTab_;
    private final WorkbenchTab plotsTab_;

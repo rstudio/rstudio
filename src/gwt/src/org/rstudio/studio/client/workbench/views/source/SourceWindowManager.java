@@ -102,7 +102,7 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
          EventBus events,
          FileTypeRegistry registry,
          GlobalDisplay display, 
-         SourceShim sourceShim,
+         Source source,
          Session session,
          UserPrefs uiPrefs)
    {
@@ -112,7 +112,7 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
       pSatellite_ = pSatellite;
       pWorkbenchContext_ = pWorkbenchContext;
       display_ = display;
-      sourceShim_ = sourceShim;
+      source_ = source;
       userPrefs_ = uiPrefs;
       
       events_.addHandler(DocWindowChangedEvent.TYPE, this);
@@ -525,7 +525,7 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
       // source window or the main window
       WindowEx lastFocusedWindow = getLastFocusedSourceWindow();
       if (lastFocusedWindow == null)
-         return sourceShim_.getCurrentDocPath();
+         return source_.getCurrentDocPath();
       else
          return getCurrentDocPath(lastFocusedWindow);
    }
@@ -534,7 +534,12 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
    {
       WindowEx lastFocusedWindow = getLastFocusedSourceWindow();
       if (lastFocusedWindow == null)
-         return sourceShim_.getCurrentDocId();
+      {
+         if (source_ == null)
+            return null;
+         else
+            return source_.getCurrentDocId();
+      }
       else
          return getCurrentDocId(lastFocusedWindow);
    }
@@ -1365,7 +1370,7 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
    private final Provider<WorkbenchContext> pWorkbenchContext_;
    private final SourceServerOperations server_;
    private final GlobalDisplay display_;
-   private final SourceShim sourceShim_;
+   private final Source source_;
    private final UserPrefs userPrefs_;
 
    private HashMap<String, Integer> sourceWindows_ = 

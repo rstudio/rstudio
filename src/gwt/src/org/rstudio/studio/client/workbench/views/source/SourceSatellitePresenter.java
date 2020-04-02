@@ -29,7 +29,7 @@ public class SourceSatellitePresenter implements IsWidget
    {}
 
    @Inject
-   public SourceSatellitePresenter(SourceShim source)
+   public SourceSatellitePresenter(Source source)
    {
       source_ = source;
    }
@@ -41,5 +41,5 @@ public class SourceSatellitePresenter implements IsWidget
       return source_.asWidget();
    }
    
-   private SourceShim source_;
+   private Source source_;
 }
