@@ -6,9 +6,6 @@ pandoc schema: <https://github.com/jgm/pandoc-types/blob/master/Text/Pandoc/Defi
 
 ## TODO
 
-- Handle insert assignment operator (Alt + -). Note behaves differnetly
-  depending on language
-
 Math handing
 
 - Require an explicit gesture (no scanning) and implement math editor / previewer
@@ -16,8 +13,6 @@ Math handing
 Take the Fragment the represents the Cite (Citation+) and parse out the Pandoc tokens. Delimiters are `[]@;` and we need to only respect unescaped versions of those. See about handling citations within citations?
 
 Look into correct handling of non-bracket citations (currently brackets added on intake)
-
-Update docs on Raw
 
 Update screenshots
 
