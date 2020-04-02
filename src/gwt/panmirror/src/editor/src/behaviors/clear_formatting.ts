@@ -21,11 +21,14 @@ import { ProsemirrorCommand, EditorCommandId } from '../api/command';
 import { liftTarget } from 'prosemirror-transform';
 
 // marks included in clear formatting
-const kFormattingMarks = ['code', 'em', 'smallcaps', 'span', 'strikeout', 'strong', 'superscript', 'subscript'];
+const kFormattingMarks = [
+  'code', 'em', 'smallcaps', 'span', 'strikeout', 'strong', 'superscript', 'subscript',
+  'raw_tex', 'raw_html', 'raw_inline'
+];
 
 // for nodes, all nodes with isTextblock === true will be converted to paragraph, and all
 // nodes in this list will be lifted
-const kLiftFormattingNodes = ['blockquote', 'line_block', 'div'];
+const kLiftFormattingNodes = ['blockquote', 'line_block', 'div', 'raw_block'];
 
 const extension: Extension = {
   commands: () => {
