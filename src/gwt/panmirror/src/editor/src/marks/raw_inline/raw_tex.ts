@@ -15,10 +15,11 @@
 
 import { Node as ProsemirrorNode, Mark, Fragment, Schema } from "prosemirror-model";
 import { DecorationSet } from "prosemirror-view";
-import { Plugin, PluginKey, EditorState, Transaction } from "prosemirror-state";
+import { Plugin, PluginKey, EditorState, Transaction, Selection, TextSelection } from "prosemirror-state";
 import { toggleMark } from "prosemirror-commands";
+import { InputRule, textblockTypeInputRule } from "prosemirror-inputrules";
 
-import { findChildrenByMark } from "prosemirror-utils";
+import { findChildrenByMark, setTextSelection } from "prosemirror-utils";
 
 import { PandocExtensions, PandocToken, PandocTokenType, PandocOutput } from "../../api/pandoc";
 import { Extension } from "../../api/extension";
@@ -26,7 +27,7 @@ import { kTexFormat } from "../../api/raw";
 import { EditorUI } from "../../api/ui";
 import { markHighlightPlugin, markHighlightDecorations } from "../../api/mark-highlight";
 import { MarkTransaction } from "../../api/transaction";
-import { getMarkRange } from "../../api/mark";
+import { getMarkRange, markIsActive } from "../../api/mark";
 import { mergedTextNodes } from "../../api/text";
 import { ProsemirrorCommand, EditorCommandId } from "../../api/command";
 import { canInsertNode } from "../../api/node";
@@ -47,7 +48,7 @@ const extension = (pandocExtensions: PandocExtensions): Extension | null => {
         name: 'raw_tex',
         noInputRules: true,
         spec: {
-          inclusive: false,
+          inclusive: true,
           excludes: '_',
           attrs: {},
           parseDOM: [
@@ -94,24 +95,12 @@ const extension = (pandocExtensions: PandocExtensions): Extension | null => {
     appendMarkTransaction: (schema: Schema) => {
       return [
         {
-          name: 'raw-tex-marks',
+          name: 'remove-raw-tex-marks',
           filter: node => node.isTextblock && node.type.allowsMarkType(schema.marks.raw_tex),
           append: (tr: MarkTransaction, node: ProsemirrorNode, pos: number) => {
-          
+    
+            // remove marks from raw_tex as needed
             const rawTexMark = (nd: ProsemirrorNode) => schema.marks.raw_tex.isInSet(nd.marks);
-            const hasRawTexContent = (pattern: RegExp) => {
-              return (nd: ProsemirrorNode, parentNode: ProsemirrorNode) => {
-                return (
-                  nd.isText &&
-                  !schema.marks.code.isInSet(nd.marks) &&
-                  (!schema.marks.math || !schema.marks.math.isInSet(nd.marks)) &&
-                  parentNode.type.allowsMarkType(schema.marks.raw_tex) &&
-                  pattern.test(parentNode.textContent)
-                );
-              };
-            };
-
-            // remove marks from inline nodes as needed
             const rawTexNodes = findChildrenByMark(node, schema.marks.raw_tex, true);
             rawTexNodes.forEach(rawTexNode => {
               const mark = rawTexMark(rawTexNode.node);
@@ -120,49 +109,10 @@ const extension = (pandocExtensions: PandocExtensions): Extension | null => {
                 const rawInlineRange = getMarkRange(tr.doc.resolve(from), schema.marks.raw_tex);
                 if (rawInlineRange) {
                   const text = tr.doc.textBetween(rawInlineRange.from, rawInlineRange.to);
-                  const preceding = tr.doc.textBetween(rawInlineRange.from - 1, rawInlineRange.from);
-                  const removeInvalidedMark = (markupLength: (text: string) => number) => {
-                    const length = markupLength(text);
-                    if (preceding === '\\') {
-                      tr.removeMark(rawInlineRange.from, rawInlineRange.to, schema.marks.raw_tex);
-                    } else if (length !== text.length) {
-                      tr.removeMark(rawInlineRange.from + length, rawInlineRange.to, schema.marks.raw_tex);
-                    }
-                  };
-                  removeInvalidedMark(texLength);
-                }
-              }
-            });
-
-            const searchForMarkup = (text: string) => {
-              const match = text.match(kBeginTex);
-              if (match && match.index !== undefined) {
-                return match.index + match[1].length;
-              } else {
-                return -1;
-              }
-            };
-
-            const hasMarkup = hasRawTexContent(kBeginTex);
-            const markupNodes = mergedTextNodes(node, hasMarkup);
-            markupNodes.forEach(markupNode => {
-              const text = markupNode.text;
-              let beginIdx = searchForMarkup(text);
-              while (beginIdx !== -1) {
-                const length = texLength(text.substring(beginIdx));
-                if (length > 0) {
-                  const from = pos + 1 + markupNode.pos + beginIdx;
-                  const to = from + length;
-                  const markRange = getMarkRange(tr.doc.resolve(markupNode.pos + beginIdx), schema.marks.raw_tex);
-                  if (!markRange || markRange.to !== to) {
-                    const mark = schema.mark('raw_tex');
-                    tr.addMark(from, to, mark);
+                  const length = texLength(text, rawInlineRange.from, tr.selection);
+                  if (length > -1 && length !== text.length) {
+                    tr.removeMark(rawInlineRange.from + length, rawInlineRange.to, schema.marks.raw_tex);
                   }
-                }
-                const nextSearchIdx = length ? beginIdx + length : beginIdx + 1;
-                beginIdx = searchForMarkup(text.slice(nextSearchIdx));
-                if (beginIdx !== -1) {
-                  beginIdx = nextSearchIdx + beginIdx;
                 }
               }
             });
@@ -171,16 +121,70 @@ const extension = (pandocExtensions: PandocExtensions): Extension | null => {
       ];
     },
 
-    // plugin to add and remove raw_tex latex marks as the user edits
+    inputRules: (schema: Schema) => {
+      return [
+        texInputRule(schema)
+      ];
+    },
+
+    // plugin to add highlighting decorations
     plugins: (schema: Schema) => {
       const plugins: Plugin[] = [];
-      plugins.push(rawInlineHighlightPlugin(schema));
+      plugins.push(latexHighlightingPlugin(schema));
       return plugins;
     },
 
   };
 
 };
+
+
+
+function texInputRule(schema: Schema) {
+  return new InputRule(/(^| )\\$/, (state: EditorState, match: string[], start: number, end: number) => {
+    
+    const rawTexMark = schema.marks.raw_tex;
+    
+    if (state.selection.empty && toggleMark(rawTexMark)(state)) {
+      
+      // create transaction
+      const tr = state.tr;
+      
+      // insert tex backslash
+      const mark = schema.marks.raw_tex.create();
+      tr.addStoredMark(mark);
+      tr.insertText('\\');
+      
+      // extend the mark to cover any valid tex that immediately follows the \
+      let extended = false;
+      const { parent, parentOffset } = tr.selection.$head;
+      const text = parent.textContent.slice(parentOffset - 1);
+      if (text.length > 0) {
+        const length = texLength(text, tr.selection.from - 1, tr.selection);
+        if (length > 1) {
+          const startTex = tr.selection.from - 1;
+          tr.addMark(startTex, startTex + length, mark);
+          extended = true;
+        }
+      } 
+
+      // if it wasn't extended then insert/select placeholder
+      if (!extended) {
+        const placeholder = 'tex';
+        tr.insertText(placeholder);
+        tr.setSelection(new TextSelection(
+          tr.doc.resolve(tr.selection.from - placeholder.length), 
+          tr.doc.resolve(tr.selection.from)
+        ));
+      }
+
+      return tr;
+    } else {
+      return null;
+    }
+  });
+}
+
 
 class InsertInlineLatexCommand extends ProsemirrorCommand {
   constructor() {
@@ -194,7 +198,7 @@ class InsertInlineLatexCommand extends ProsemirrorCommand {
         const tr = state.tr;
         const mark = schema.marks.raw_tex.create();
         const node = state.schema.text('\\', [mark]);
-        tr.replaceSelectionWith(node);
+        tr.replaceSelectionWith(node, false);
         dispatch(tr);
       }
       return true;
@@ -206,11 +210,11 @@ class InsertInlineLatexCommand extends ProsemirrorCommand {
 
 const key = new PluginKey<DecorationSet>('latex-highlight');
 
-export function rawInlineHighlightPlugin(schema: Schema) {
+export function latexHighlightingPlugin(schema: Schema) {
   const kLightTextClass = 'pm-light-text-color';
   const delimiterRegex = /[{}]/g;
 
-  return markHighlightPlugin(key, schema.marks.raw_tex, (text, attrs, markRange) => {
+  return markHighlightPlugin(key, schema.marks.raw_tex, (text, _attrs, markRange) => {
     const kIdClass = 'pm-markup-text-color';
     const idRegEx = /\\[A-Za-z]+/g;
     let decorations = markHighlightDecorations(markRange, text, idRegEx, kIdClass);
@@ -224,10 +228,11 @@ function isLetter(ch: string) {
   return LetterRegex.test(ch);
 }
 
-function texLength(text: string) {
-  // reject entirely if we start with \\
-  if (text.startsWith('\\\\')) {
-    return 0;
+function texLength(text: string, pos: number, selection: Selection) {
+
+  // special case for cursor at start
+  if (text === '\\' && (pos + 1) === selection.from) {
+    return 1;
   }
 
   let braceLevel = 0;
@@ -260,7 +265,7 @@ function texLength(text: string) {
   if (braceLevel === 0) {
     return i;
   } else {
-    return 0;
+    return -1; // invalid tex
   }
 }
 

@@ -13,8 +13,7 @@
  *
  */
 
-import { Schema } from 'prosemirror-model';
-import { InputRule } from 'prosemirror-inputrules';
+import { InputRule, inputRules } from 'prosemirror-inputrules';
 import { EditorState } from 'prosemirror-state';
 import { setTextSelection } from 'prosemirror-utils';
 
@@ -28,20 +27,23 @@ const braces = new Map([
 ]);
 
 const extension: Extension = {
-  inputRules: (_schema: Schema) => {
+
+  plugins: () => {
     return [
-      new InputRule(/(^|[^^\\])([{[])$/, (state: EditorState, match: string[], start: number, end: number) => {
-        const tr = state.tr;
-        tr.insertText(match[2] + braces.get(match[2]));
-        setTextSelection(start + match[1].length + 1)(tr);
-        return tr;
-      }),
+      inputRules({ rules: [
+        new InputRule(/(^|[^^\\])([{[])$/, (state: EditorState, match: string[], start: number, end: number) => {
+          const tr = state.tr;
+          tr.insertText(match[2] + braces.get(match[2]));
+          setTextSelection(start + match[1].length + 1)(tr);
+          return tr;
+        })
+      ]})
     ];
   },
 };
 
-export default (_pandocExtensions: PandocExtensions, options: EditorOptions) => {
-  if (options.braceMatching) {
+export default (pandocExtensions: PandocExtensions, options: EditorOptions) => {
+  if (options.braceMatching ||  pandocExtensions.raw_tex) {
     return extension;
   } else {
     return null;
