@@ -174,8 +174,6 @@ public class PanmirrorToolbar extends SecondaryToolbar implements RequiresResize
       textMenu.addCommand(PanmirrorCommands.Subscript);
       textMenu.addCommand(PanmirrorCommands.Smallcaps);
       textMenu.addSeparator();
-      textMenu.addCommand(PanmirrorCommands.RawInline);
-      textMenu.addSeparator();
       textMenu.addCommand(PanmirrorCommands.Span);
       PanmirrorToolbarMenu listMenu = formatMenu.addSubmenu("Bullets & Numbering");
       listMenu.addCommand(PanmirrorCommands.BulletList);
@@ -194,6 +192,21 @@ public class PanmirrorToolbar extends SecondaryToolbar implements RequiresResize
       formatMenu.addCommand(PanmirrorCommands.Div);
       formatMenu.addCommand(PanmirrorCommands.LineBlock);
       formatMenu.addSeparator();
+      if (haveAnyOf(PanmirrorCommands.RawBlock, 
+            PanmirrorCommands.TexInline, 
+            PanmirrorCommands.HTMLInline))
+      {
+         PanmirrorToolbarMenu rawMenu = formatMenu.addSubmenu("Raw");
+         rawMenu.addCommand(PanmirrorCommands.TexInline);
+         rawMenu.addCommand(PanmirrorCommands.TexBlock);
+         rawMenu.addSeparator();
+         rawMenu.addCommand(PanmirrorCommands.HTMLInline);
+         rawMenu.addCommand(PanmirrorCommands.HTMLBlock);
+         rawMenu.addSeparator();
+         rawMenu.addCommand(PanmirrorCommands.RawInline);
+         rawMenu.addCommand(PanmirrorCommands.RawBlock);
+         formatMenu.addSeparator();
+      }  
       formatMenu.addCommand(PanmirrorCommands.AttrEdit);
       formatMenu.addSeparator();
       formatMenu.addCommand(PanmirrorCommands.ClearFormatting);
@@ -223,21 +236,6 @@ public class PanmirrorToolbar extends SecondaryToolbar implements RequiresResize
       insertMenu.addCommand(PanmirrorCommands.RmdChunk);
       insertMenu.addCommand(PanmirrorCommands.YamlMetadata);
       insertMenu.addSeparator();
-      if (haveAnyOf(PanmirrorCommands.RawBlock, 
-            PanmirrorCommands.TexInline, 
-            PanmirrorCommands.HTMLInline))
-      {
-         PanmirrorToolbarMenu rawMenu = insertMenu.addSubmenu("Raw");
-         rawMenu.addCommand(PanmirrorCommands.TexInline);
-         rawMenu.addCommand(PanmirrorCommands.TexBlock);
-         rawMenu.addSeparator();
-         rawMenu.addCommand(PanmirrorCommands.HTMLInline);
-         rawMenu.addCommand(PanmirrorCommands.HTMLBlock);
-         rawMenu.addSeparator();
-         rawMenu.addCommand(PanmirrorCommands.RawInline);
-         rawMenu.addCommand(PanmirrorCommands.RawBlock);
-         insertMenu.addSeparator();
-      }  
       insertMenu.addCommand(PanmirrorCommands.InlineMath);
       insertMenu.addCommand(PanmirrorCommands.DisplayMath);
       insertMenu.addSeparator();
