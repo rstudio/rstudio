@@ -13,7 +13,7 @@
  *
  */
 
-import { Node as ProsemirrorNode, Mark, Fragment, Schema } from "prosemirror-model";
+import { Node as ProsemirrorNode, Mark, Fragment, Schema, MarkType } from "prosemirror-model";
 import { DecorationSet } from "prosemirror-view";
 import { Plugin, PluginKey, EditorState, Transaction, Selection, TextSelection } from "prosemirror-state";
 import { toggleMark } from "prosemirror-commands";
@@ -89,8 +89,8 @@ const extension = (pandocExtensions: PandocExtensions): Extension | null => {
     ],
 
     // insert command
-    commands: (_schema: Schema, ui: EditorUI) => {
-      return [new InsertInlineLatexCommand()];
+    commands: (schema: Schema, ui: EditorUI) => {
+      return [new InsertInlineLatexCommand(schema)];
     },
 
     appendMarkTransaction: (schema: Schema) => {
@@ -188,22 +188,46 @@ function texInputRule(schema: Schema) {
 
 
 class InsertInlineLatexCommand extends ProsemirrorCommand {
-  constructor() {
+  
+  private markType: MarkType;
+  constructor(schema: Schema) {
+   
     super(EditorCommandId.TexInline, [], (state: EditorState, dispatch?: (tr: Transaction) => void) => {
-      const schema = state.schema;
-      if (!canInsertNode(state, schema.nodes.text) || !toggleMark(schema.marks.raw_tex)(state)) {
+      
+      // if we aren't active then make sure we can insert a text node here
+      if (!this.isActive(state) && !canInsertNode(state, schema.nodes.text)) {
+        return false;
+      }
+
+      // ensure we can apply this mark here
+      if (!toggleMark(this.markType)(state)) {
         return false;
       }
 
       if (dispatch) {
         const tr = state.tr;
-        const mark = schema.marks.raw_tex.create();
-        const node = state.schema.text('\\', [mark]);
-        tr.replaceSelectionWith(node, false);
+
+        if (this.isActive(state)) {
+          const range = getMarkRange(state.selection.$head, this.markType);
+          if (range) {
+            tr.removeMark(range.from, range.to, this.markType);
+          }
+        } else {
+          const mark = this.markType.create();
+          const node = state.schema.text('\\', [mark]);
+          tr.replaceSelectionWith(node, false);
+        }
+
         dispatch(tr);
       }
+      
       return true;
     });
+    this.markType = schema.marks.raw_tex;
+  }
+
+  public isActive(state: EditorState) {
+    return markIsActive(state, this.markType);
   }
 }
 

@@ -102,7 +102,7 @@ public class PanmirrorToolbarCommands
       add(PanmirrorCommands.Citation, "Citation...");  
       
       // raw
-      add(PanmirrorCommands.TexInline, "TeX Command");
+      add(PanmirrorCommands.TexInline, "TeX Command", Roles.getMenuitemcheckboxRole());
       add(PanmirrorCommands.TexBlock, "TeX Block");
       add(PanmirrorCommands.HTMLInline, "HTML Tag");
       add(PanmirrorCommands.HTMLBlock, "HTML Block");
