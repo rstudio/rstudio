@@ -22,7 +22,7 @@ set -e
 command -v 7z >/dev/null 2>&1 || { echo >&2 "7z command required to install Qt but not found."; exit 1; }
 
 if [ -z "$QT_VERSION" ]; then
-    QT_VERSION=5.12.6
+    QT_VERSION=5.14.2
 fi
 if [ -z "$QT_SDK_DIR" ]; then
    QT_SDK_DIR=/opt/RStudio-QtSDK

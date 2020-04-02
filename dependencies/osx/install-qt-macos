@@ -21,7 +21,7 @@
 set -e
 
 if [ -z "$QT_VERSION" ]; then
-    QT_VERSION=5.12.6
+    QT_VERSION=5.14.2
 fi
 if [ -z "$QT_SDK_DIR" ]; then
 

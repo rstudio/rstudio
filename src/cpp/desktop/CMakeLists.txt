@@ -1,7 +1,7 @@
 #
 # CMakeLists.txt
 #
-# Copyright (C) 2009-19 by RStudio, PBC
+# Copyright (C) 2009-20 by RStudio, PBC
 #
 # Unless you have received this program directly from RStudio pursuant
 # to the terms of a commercial license agreement with RStudio, then
@@ -36,9 +36,9 @@ if(NOT WIN32)
       endif()
          
       if(APPLE)
-         set(QT_CANDIDATES 5.12.6)
+         set(QT_CANDIDATES 5.14.2)
       else()
-         set(QT_CANDIDATES 5.12.6 5.10.1)
+         set(QT_CANDIDATES 5.14.2 5.10.1)
       endif()
 
       # find the newest installed Qt version among the versions we build
@@ -72,7 +72,7 @@ if(NOT WIN32)
    endif()
 else()
    # Windows
-   set(QT_VERSION "5.12.6")
+   set(QT_VERSION "5.14.2")
    set(QT_VERSION_SUBDIR "${QT_VERSION}")   
    if(NOT QT_QMAKE_EXECUTABLE)
 

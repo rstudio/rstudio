@@ -83,7 +83,7 @@ Remove-Item -Force 'C:\ProgramData\chocolatey\bin\cpack.exe'
 
 Write-Host "-----------------------------------------------------------"
 Write-Host "Core dependencies successfully installed. Next steps:"
-Write-Host "(1) Install Qt 5.12.6 from https://qt.io for MSVC 2017 64-bit with QtWebEngine"
+Write-Host "(1) Install Qt 5.14.2 from https://qt.io for MSVC 2017 64-bit with QtWebEngine"
 Write-Host "(2) Start a non-adminstrator Command Prompt"
 Write-Host "(3) git clone https://github.com/rstudio/rstudio"
 Write-Host "(4) change working dir to rstudio\src\dependencies\windows"

@@ -9,15 +9,15 @@ systems. Specific version requirements for various components include:
 - R 3.0.1
 - CMake 3.4.3 or newer
 - Boost 1.69
-- Qt 5.12.6 [Required only for Desktop]
+- Qt 5.14.2 [Required only for Desktop]
 - patchelf 0.9 [Required only for Desktop]
 - some older Linux platforms (OpenSUSE 42.3, Ubuntu Trusty) can only
-  build Desktop with Qt 5.10.1 due to unsatisfied dependencies in 5.12.6
+  build Desktop with Qt 5.10.1 due to unsatisfied dependencies in 5.14.2
 
-Installation of Qt SDK 5.12.6
+Installation of Qt SDK
 =============================================================================
 
-To build RStudio Desktop, install Qt 5.12.6 from https://qt.io. Include the
+To build RStudio Desktop, install Qt from https://qt.io. Include the
 QtWebEngine component.
 
 Installing Dependencies for Debian/Ubuntu, Fedora, RedHat/CentOS, or OpenSUSE
@@ -31,7 +31,7 @@ installing it using the system standard package management tools (apt-get,
 yum, etc).
 
 2) Run the install-dependencies script appropriate to your platform's
-package management system (to optionally exclude installation of the Qt 5.12.6
+package management system (to optionally exclude installation of the Qt
 SDK be sure to specify the --exclude-qt-sdk flag as described above).
 
    ./install-dependencies-debian
@@ -71,9 +71,9 @@ OR
 
    RSTUDIO_DISABLE_CRASHPAD=1 ./install-common
 
-3) Optionally install the Qt 5.12.6 SDK, including QtWebEngine, from 
+3) Optionally install the Qt SDK, including QtWebEngine, from 
 https://qt.io. You should do this if you are building the Desktop version 
-and don't have Qt 5.12.6 and QtWebEngine installed on the system:
+and don't have Qt and QtWebEngine installed on the system:
 
 4) If your system doesn't meet the minimum version requirements for CMake 
 (3.4.3) you can download a Linux binary of the latest version of CMake here:
