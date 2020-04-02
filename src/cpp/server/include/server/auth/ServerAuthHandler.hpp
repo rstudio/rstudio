@@ -131,6 +131,7 @@ core::Error initialize();
 namespace overlay {
 
 core::Error initialize();
+bool canStaySignedIn();
 core::Error isUserLicensed(const std::string& username,
                            bool* pLicensed);
 bool isUserListCookieValid(const std::string& cookieValue);
