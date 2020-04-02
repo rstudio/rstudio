@@ -1,7 +1,7 @@
 /*
  * Event.cpp
  *
- * Copyright (C) 2009-12 by RStudio, PBC
+ * Copyright (C) 2009-20 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -51,6 +51,15 @@ std::string eventScopeAndIdAsString(const Event& event)
          break;
       case kAuthLoginFailedEvent:
          id = "login_failed";
+         break;
+      case kAuthLoginThrottledEvent:
+         id = "throttled";
+         break;
+      case kAuthLoginUnlicensedEvent:
+         id = "unlicensed";
+         break;
+      case kAuthLicenseFailedEvent:
+         id = "license_failed";
          break;
       case kSessionStartEvent:
          id = "start";
