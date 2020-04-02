@@ -38,6 +38,7 @@ public class PanmirrorCommandButton extends ToolbarButton implements PanmirrorCo
          }
       });
       commandUI_ = commandUI;
+      addStyleName(RES.styles().toolbarButton());
       sync(true);
    }
    
@@ -53,8 +54,19 @@ public class PanmirrorCommandButton extends ToolbarButton implements PanmirrorCo
       
       if (images)
          setLeftImage(commandUI_.getImage());
+      
+      String latchedStyle = RES.styles().toolbarButtonLatched();
+      if (commandUI_.isActive()) {
+         addStyleName(latchedStyle);
+      } else {
+         removeStyleName(latchedStyle);
+      }
 
    }
+   
+   private static final PanmirrorToolbarResources RES = PanmirrorToolbarResources.INSTANCE;
+  
+
    
    private final PanmirrorCommandUI commandUI_;
 }
