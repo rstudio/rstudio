@@ -33,9 +33,10 @@ import {
 import { ProsemirrorCommand, EditorCommandId } from '../api/command';
 
 import { canInsertNode } from '../api/node';
-import { EditorUI, RawFormatResult, RawFormatProps } from '../api/ui';
+import { EditorUI, RawFormatProps } from '../api/ui';
 import { isSingleLineHTML } from '../api/html';
 import { kHTMLFormat, kTexFormat } from '../api/raw';
+import { isSingleLineTex } from '../api/tex';
 
 const extension = (pandocExtensions: PandocExtensions): Extension | null => {
   // requires either raw_attribute or raw_html
@@ -130,14 +131,25 @@ const extension = (pandocExtensions: PandocExtensions): Extension | null => {
 };
 
 function readPandocRawBlock(schema: Schema, tok: PandocToken, writer: ProsemirrorWriter) {
-  // single lines of html should be read as inline_html (allows for
+  // single lines of html should be read as inline html (allows for
   // highlighting and more seamless editing experience)
   const format = tok.c[kRawBlockFormat];
   const text = tok.c[kRawBlockContent] as string;
-  if (format === 'html' && isSingleLineHTML(text)) {
+  if (format === kHTMLFormat && isSingleLineHTML(text)) {
     writer.openNode(schema.nodes.paragraph, {});
     writer.writeInlineHTML(text.trimRight());
     writer.closeNode();
+
+  // similarly, single lines of tex should be read as inline tex
+  } else if (format === kTexFormat && isSingleLineTex(text)) {
+  
+    writer.openNode(schema.nodes.paragraph, {});
+    const rawTexMark = schema.marks.raw_tex.create();
+    writer.openMark(rawTexMark);
+    writer.writeText(text.trimRight());
+    writer.closeMark(rawTexMark);
+    writer.closeNode();
+
   } else {
     writer.openNode(schema.nodes.raw_block, { format });
     writer.writeText(text);

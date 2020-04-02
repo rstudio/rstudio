@@ -33,6 +33,7 @@ import { ProsemirrorCommand, EditorCommandId } from "../../api/command";
 import { canInsertNode } from "../../api/node";
 
 import { kRawInlineFormat, kRawInlineContent } from './raw_inline';
+import { texLength } from "../../api/tex";
 
 const kBeginTex = /(^|[^\\])\\[A-Za-z]/;
 
@@ -221,52 +222,6 @@ export function latexHighlightingPlugin(schema: Schema) {
     decorations = decorations.concat(markHighlightDecorations(markRange, text, delimiterRegex, kLightTextClass));
     return decorations;
   });
-}
-
-const LetterRegex = /[A-Za-z]/;
-function isLetter(ch: string) {
-  return LetterRegex.test(ch);
-}
-
-function texLength(text: string, pos: number, selection: Selection) {
-
-  // special case for cursor at start
-  if (text === '\\' && (pos + 1) === selection.from) {
-    return 1;
-  }
-
-  let braceLevel = 0;
-  let i;
-  for (i = 0; i < text.length; i++) {
-    // next character
-    const ch = text[i];
-
-    // must start with \{ltr}
-    if (i === 0 && ch !== '\\') {
-      return 0;
-    }
-    if (i === 1 && !isLetter(ch)) {
-      return 0;
-    }
-
-    // non-letter / non-open-brace if we aren't in braces terminates
-    if (i > 0 && !isLetter(ch) && ch !== '{' && braceLevel <= 0) {
-      return i;
-    }
-
-    // manage brace levels
-    if (ch === '{') {
-      braceLevel++;
-    } else if (ch === '}') {
-      braceLevel--;
-    }
-  }
-
-  if (braceLevel === 0) {
-    return i;
-  } else {
-    return -1; // invalid tex
-  }
 }
 
 
