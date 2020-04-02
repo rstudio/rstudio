@@ -139,9 +139,9 @@ public class PanmirrorToolbar extends SecondaryToolbar implements RequiresResize
       if (width == 0)
          return;
            
-      showGroup(formatWidgets_, width > 445);
-      showGroup(blockWidgets_, width > 525);
-      showGroup(insertWidgets_, width > 580);
+      showGroup(formatWidgets_, width > 400);
+      showGroup(blockWidgets_, width > 480);
+      showGroup(insertWidgets_, width > 535);
    }
    
    
