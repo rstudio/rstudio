@@ -38,6 +38,7 @@
 #include "modules/SessionSVN.hpp"
 #include "modules/SessionSource.hpp"
 #include "modules/SessionVCS.hpp"
+#include "modules/SessionFonts.hpp"
 #include "modules/build/SessionBuild.hpp"
 #include "modules/jobs/SessionJobs.hpp"
 #include "modules/environment/SessionEnvironment.hpp"
@@ -443,6 +444,13 @@ void handleClientInit(const boost::function<void()>& initFunction,
 
    sessionInfo["environment_state"] = modules::environment::environmentStateAsJson();
    sessionInfo["error_state"] = modules::errors::errorStateAsJson();
+
+   // in server mode, enumerate all the user/system fonts installed
+   // on the server
+   sessionInfo["installed_fonts"] = 
+         options.programMode() == kSessionProgramModeServer ? 
+               modules::fonts::getInstalledFonts() :
+               json::Array();
 
    // send whether we should show the user identity
    sessionInfo["show_identity"] =

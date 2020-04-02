@@ -89,6 +89,7 @@ MimeType s_mimeTypes[] =
       { "swf",          "application/x-shockwave-flash" },
       { "ttf",          "application/x-font-ttf" },
       { "woff",         "application/font-woff" },
+      { "woff2",        "application/font-woff2" },
 
       // markdown types
       { "md",           "text/x-markdown" },

@@ -231,6 +231,7 @@ void httpServerAddHandlers()
    uri_handlers::add("/mathjax", secureAsyncHttpHandler(proxyContentRequest));
    uri_handlers::add("/connections", secureAsyncHttpHandler(proxyContentRequest));
    uri_handlers::add("/theme", secureAsyncHttpHandler(proxyContentRequest));
+   uri_handlers::add("/fonts", secureAsyncHttpHandler(proxyContentRequest));
    uri_handlers::add("/python", secureAsyncHttpHandler(proxyContentRequest));
    uri_handlers::add("/tutorial", secureAsyncHttpHandler(proxyContentRequest));
 
