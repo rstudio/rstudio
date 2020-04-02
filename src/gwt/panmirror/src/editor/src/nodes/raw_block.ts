@@ -121,11 +121,8 @@ const extension = (pandocExtensions: PandocExtensions): Extension | null => {
 
       const commands: ProsemirrorCommand[] = [];
 
-      if (pandocExtensions.raw_html) {
-        commands.push(new FormatRawBlockCommand(EditorCommandId.HTMLBlock, kHTMLFormat, schema.nodes.raw_block));
-      }
-
       if (pandocExtensions.raw_attribute) {
+        commands.push(new FormatRawBlockCommand(EditorCommandId.HTMLBlock, kHTMLFormat, schema.nodes.raw_block));
         commands.push(new FormatRawBlockCommand(EditorCommandId.TexBlock, kTexFormat, schema.nodes.raw_block));
         commands.push(new RawBlockCommand(ui));
       } 
