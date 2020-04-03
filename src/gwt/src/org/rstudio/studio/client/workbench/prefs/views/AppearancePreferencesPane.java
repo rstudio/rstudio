@@ -176,8 +176,9 @@ public class AppearancePreferencesPane extends PreferencesPane
             fontFace_.insertValue(0, label, value);
             fontFace_.setValue(value);
          }
-         initialFontFace_ = StringUtil.notNull(fontFace_.getValue());
       }
+
+      initialFontFace_ = StringUtil.notNull(fontFace_.getValue());
 
       leftPanel.add(fontFace_);
       fontFace_.addChangeHandler(new ChangeHandler()
@@ -187,9 +188,11 @@ public class AppearancePreferencesPane extends PreferencesPane
          {
             String font = fontFace_.getValue();
             if (font != null)
-               preview_.setFont(font);
+            {
+               preview_.setFont(font, !Desktop.hasDesktopFrame());
+            }
             else
-               preview_.setFont(ThemeFonts.getFixedWidthFont());
+               preview_.setFont(ThemeFonts.getFixedWidthFont(), false);
          }
       });
 
@@ -580,16 +583,25 @@ public class AppearancePreferencesPane extends PreferencesPane
          userPrefs_.editorTheme().setGlobalValue(theme_.getValue(), false);
       }
       
+     if (!StringUtil.equals(initialFontFace_, fontFace_.getValue()))
+     {
+        String fontFace = fontFace_.getValue();
+        initialFontFace_ = fontFace;
+        if (Desktop.hasDesktopFrame())
+        {
+           // In desktop mode the font is stored in a per-machine file since
+           // the font list varies between machines.
+           Desktop.getFrame().setFixedWidthFont(fontFace);
+        }
+        else
+        {
+           userPrefs_.serverEditorFont().setGlobalValue(fontFace);
+        }
+        restartRequirement.setUiReloadRequired(true);
+     }
+         
       if (Desktop.hasDesktopFrame())
       {
-         if (!StringUtil.equals(initialFontFace_, fontFace_.getValue()))
-         {
-            String fontFace = fontFace_.getValue();
-            initialFontFace_ = fontFace;
-            Desktop.getFrame().setFixedWidthFont(fontFace);
-            restartRequirement.setUiReloadRequired(true);
-         }
-         
          if (!StringUtil.equals(initialZoomLevel_, zoomLevel_.getValue()))
          {
             double zoomLevel = Double.parseDouble(zoomLevel_.getValue());
@@ -668,7 +680,8 @@ public class AppearancePreferencesPane extends PreferencesPane
    private void populateFontList(String[] fontList)
    {
       String value = fontFace_.getValue();
-      value = value.replaceAll("\\\"", "");
+      if (!StringUtil.isNullOrEmpty(value))
+         value = value.replaceAll("\\\"", "");
       fontFace_.setLabel("Editor font:");
       fontFace_.setChoices(fontList, fontList);
       fontFace_.setValue(value);

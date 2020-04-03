@@ -87,14 +87,14 @@ Error generateCssFromFile(const FilePath& file,
 {
    pCss->append("@font-face {\n"
                 "  font-family: \"" + fontName + "\";\n"
-                "  src: url(" kFontFiles);
+                "  src: url('../files/");
 
-   // Build URL to font file from parent folders
+   // Build URL to font file from parent folders. 
    for (const auto& parent: parents)
    {
       pCss->append(parent + "/");
    }
-   pCss->append(file.getFilename() + ");\n");
+   pCss->append(file.getFilename() + "');\n");
 
    // Convert each parent folder
    for (const auto& parent: parents)
@@ -174,7 +174,7 @@ Error generateCssFromDir(const FilePath& dir,
 void handleFontFileRequest(const http::Request& request,
                            http::Response* pResponse)
 {
-   std::string prefix = "/"  kFontFiles;
+   std::string prefix = "/" kFontFiles;
    std::string fileName = http::util::pathAfterPrefix(request, prefix);
    
    // Check user font folder first
@@ -221,7 +221,9 @@ void handleFontCssRequest(const http::Request& request,
       if (subDir.exists() && subDir.isDirectory())
       {
          // Folder full of font files
-         error = generateCssFromDir(subDir, fileName, std::vector<std::string>(), &css);
+         std::vector<std::string> parents;
+         parents.push_back(fileName);
+         error = generateCssFromDir(subDir, fileName, parents, &css);
       }
       else
       {

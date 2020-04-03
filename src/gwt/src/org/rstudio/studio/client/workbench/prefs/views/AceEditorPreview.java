@@ -98,7 +98,7 @@ public class AceEditorPreview extends DynamicIFrame
                               ".ace_editor {\n" +
                                     "border: none !important;\n" +
                               "}");
-                        setFont(ThemeFonts.getFixedWidthFont());
+                        setFont(ThemeFonts.getFixedWidthFont(), false);
                         body.appendChild(style);
 
                         DivElement div = doc.createDivElement();
@@ -148,23 +148,36 @@ public class AceEditorPreview extends DynamicIFrame
          FontSizer.setNormalFontSize(getDocument(), fontSize_ * zoomLevel_);
    }
 
-   public void setFont(String font)
+   public void setFont(String font, boolean webFont)
    {
       final String STYLE_EL_ID = "__rstudio_font_family";
+      final String LINK_EL_ID = "__rstudio_font_link";
       Document document = getDocument();
 
       Element oldStyle = document.getElementById(STYLE_EL_ID);
+      Element oldLink = document.getElementById(LINK_EL_ID);
+      
+      if (webFont)
+      {
+         LinkElement link = document.createLinkElement();
+         link.setRel("stylesheet");
+         link.setHref("fonts/css/" + font + ".css");
+         link.setId(LINK_EL_ID);
+         document.getHead().appendChild(link);
+      }
 
       StyleElement style = document.createStyleElement();
       style.setAttribute("type", "text/css");
       style.setInnerText(".ace_editor, .ace_text-layer {\n" +
-                         "font-family: " + font + " !important;\n" +
+                         "font-family: \"" + font + "\" !important;\n" +
                          "}");
 
       document.getBody().appendChild(style);
 
       if (oldStyle != null)
          oldStyle.removeFromParent();
+      if (oldLink != null)
+         oldLink.removeFromParent();
 
       style.setId(STYLE_EL_ID);
    }
