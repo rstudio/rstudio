@@ -1,7 +1,7 @@
 /*
  * DesktopWebProfile.cpp
  *
- * Copyright (C) 2009-18 by RStudio, PBC
+ * Copyright (C) 2009-20 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -76,7 +76,11 @@ WebProfile::WebProfile(const QUrl& baseUrl, QObject* parent)
 void WebProfile::setBaseUrl(const QUrl& baseUrl)
 {
    interceptor_.reset(new Interceptor(this, baseUrl, sharedSecret_));
+#if QT_VERSION >= QT_VERSION_CHECK(5, 13, 0)
+   setUrlRequestInterceptor(interceptor_.data());
+#else
    setRequestInterceptor(interceptor_.data());
+#endif
 }
 
 void WebProfile::onInterceptRequest(QWebEngineUrlRequestInfo& info)

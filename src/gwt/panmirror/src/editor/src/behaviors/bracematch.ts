@@ -27,23 +27,24 @@ const braces = new Map([
 ]);
 
 const extension: Extension = {
-
   plugins: () => {
     return [
-      inputRules({ rules: [
-        new InputRule(/(^|[^^\\])([{[])$/, (state: EditorState, match: string[], start: number, end: number) => {
-          const tr = state.tr;
-          tr.insertText(match[2] + braces.get(match[2]));
-          setTextSelection(start + match[1].length + 1)(tr);
-          return tr;
-        })
-      ]})
+      inputRules({
+        rules: [
+          new InputRule(/(^|[^^\\])([{[])$/, (state: EditorState, match: string[], start: number, end: number) => {
+            const tr = state.tr;
+            tr.insertText(match[2] + braces.get(match[2]));
+            setTextSelection(start + match[1].length + 1)(tr);
+            return tr;
+          }),
+        ],
+      }),
     ];
   },
 };
 
 export default (pandocExtensions: PandocExtensions, options: EditorOptions) => {
-  if (options.braceMatching ||  pandocExtensions.raw_tex) {
+  if (options.braceMatching || pandocExtensions.raw_tex) {
     return extension;
   } else {
     return null;

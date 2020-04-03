@@ -27,7 +27,6 @@ import {
   pandocAttrToDomAttr,
   pandocAttrReadAST,
   pandocAttrAvailable,
-  PandocAttr,
 } from '../../api/pandoc_attr';
 import {
   PandocOutput,

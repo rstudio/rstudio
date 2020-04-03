@@ -14,7 +14,7 @@
  */
 
 import { PluginKey } from 'prosemirror-state';
-import { DecorationSet, Decoration } from 'prosemirror-view';
+import { DecorationSet } from 'prosemirror-view';
 import { Schema } from 'prosemirror-model';
 
 import { markHighlightPlugin, markHighlightDecorations } from '../../api/mark-highlight';

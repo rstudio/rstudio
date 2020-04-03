@@ -13,13 +13,11 @@
  *
  */
 
-
 // Get the length of valid tex content for the passed text. return values include:
 //  -1: Invalid tex content (starts with \ but doesn't close braces properly)
 //   0: Not tex content
 //  >1: Length of valid tex string
 export function texLength(text: string) {
-
   let braceLevel = 0;
   let i;
   for (i = 0; i < text.length; i++) {
@@ -54,7 +52,6 @@ export function texLength(text: string) {
   }
 }
 
-
 export function isSingleLineTex(tex: string) {
   return tex.trimRight().split('\n').length === 1;
 }
@@ -63,5 +60,3 @@ const LetterRegex = /[A-Za-z]/;
 function isLetter(ch: string) {
   return LetterRegex.test(ch);
 }
-
-

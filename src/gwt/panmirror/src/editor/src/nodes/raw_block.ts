@@ -118,14 +118,13 @@ const extension = (pandocExtensions: PandocExtensions): Extension | null => {
     ],
 
     commands: (schema: Schema, ui: EditorUI) => {
-
       const commands: ProsemirrorCommand[] = [];
 
       if (pandocExtensions.raw_attribute) {
         commands.push(new FormatRawBlockCommand(EditorCommandId.HTMLBlock, kHTMLFormat, schema.nodes.raw_block));
         commands.push(new FormatRawBlockCommand(EditorCommandId.TexBlock, kTexFormat, schema.nodes.raw_block));
         commands.push(new RawBlockCommand(ui));
-      } 
+      }
 
       return commands;
     },
@@ -142,16 +141,14 @@ function readPandocRawBlock(schema: Schema, tok: PandocToken, writer: Prosemirro
     writer.writeInlineHTML(text.trimRight());
     writer.closeNode();
 
-  // similarly, single lines of tex should be read as inline tex
+    // similarly, single lines of tex should be read as inline tex
   } else if (format === kTexFormat && isSingleLineTex(text)) {
-  
     writer.openNode(schema.nodes.paragraph, {});
     const rawTexMark = schema.marks.raw_tex.create();
     writer.openMark(rawTexMark);
     writer.writeText(text.trimRight());
     writer.closeMark(rawTexMark);
     writer.closeNode();
-
   } else {
     writer.openNode(schema.nodes.raw_block, { format });
     writer.writeText(text);
@@ -159,17 +156,13 @@ function readPandocRawBlock(schema: Schema, tok: PandocToken, writer: Prosemirro
   }
 }
 
-
-
 // base class for format specific raw block commands (e.g. html/tex)
 class FormatRawBlockCommand extends ProsemirrorCommand {
-
   private format: string;
   private nodeType: NodeType;
 
   constructor(id: EditorCommandId, format: string, nodeType: NodeType) {
-    super(id, [],  (state: EditorState, dispatch?: (tr: Transaction<any>) => void, view?: EditorView) => { 
-      
+    super(id, [], (state: EditorState, dispatch?: (tr: Transaction<any>) => void, view?: EditorView) => {
       if (!this.isActive(state) && !setBlockType(this.nodeType, { format })(state)) {
         return false;
       }
@@ -184,7 +177,6 @@ class FormatRawBlockCommand extends ProsemirrorCommand {
       }
 
       return true;
-    
     });
     this.format = format;
     this.nodeType = nodeType;
@@ -194,7 +186,6 @@ class FormatRawBlockCommand extends ProsemirrorCommand {
     return !!findParentNode(node => node.type === this.nodeType && node.attrs.format === this.format)(state.selection);
   }
 }
-
 
 // generic raw block command (shows dialog to allow choosing from among raw formats)
 class RawBlockCommand extends ProsemirrorCommand {
@@ -212,7 +203,6 @@ class RawBlockCommand extends ProsemirrorCommand {
         }
 
         async function asyncEditRawBlock() {
-        
           if (dispatch) {
             // get existing attributes (if any)
             const raw = {
@@ -268,7 +258,6 @@ function createRawNode(schema: Schema, raw: RawFormatProps) {
 function insertRawNode(tr: Transaction, raw: RawFormatProps) {
   const schema = tr.doc.type.schema;
   const prevSel = tr.selection;
-  const node = createRawNode(schema, raw);
   tr.replaceSelectionWith(createRawNode(schema, raw));
   setTextSelection(tr.mapping.map(prevSel.from), -1)(tr);
 }
