@@ -14,12 +14,13 @@
  */
 
 import { Mark, Schema, Fragment } from 'prosemirror-model';
+import { InputRule } from 'prosemirror-inputrules';
+import { EditorState, TextSelection } from 'prosemirror-state';
 
 import { Extension, extensionIfEnabled } from '../../api/extension';
 import { EditorUI } from '../../api/ui';
 import { PandocTokenType, PandocToken, PandocOutput } from '../../api/pandoc';
 
-import { citeAppendMarkTransaction } from './cite-transaction';
 import { citeHighlightPlugin } from './cite-highlight';
 import { InsertCitationCommand } from './cite-commands';
 
@@ -72,6 +73,9 @@ const extension: Extension = {
         writer: {
           priority: 14,
           write: (output: PandocOutput, _mark: Mark, parent: Fragment) => {
+
+            // walk through the fragment
+
             // write w/o escaping [, ], or @
             output.withOption('citationEscaping', true, () => {
               output.writeInlines(parent);
@@ -86,14 +90,36 @@ const extension: Extension = {
     return [new InsertCitationCommand(ui)];
   },
 
-  appendMarkTransaction: (_schema: Schema) => {
-    return [citeAppendMarkTransaction()];
+  inputRules: (schema: Schema) => {
+    return [citeInputRule(schema)];
   },
 
   plugins: (schema: Schema) => {
     return [citeHighlightPlugin(schema)];
   },
 };
+
+function citeInputRule(schema: Schema) {
+  return new InputRule(/@$/, (state: EditorState, match: string[], start: number, end: number) => {
+    // check that the @ sign is enclosed between brackets
+    const prevChar = state.doc.textBetween(start - 1, start);
+    const nextChar = state.doc.textBetween(end, end + 1);
+    if (prevChar === '[' && nextChar === ']') {
+      const tr = state.tr;
+      const cite = '@cite';
+      tr.insertText(cite);
+      tr.setSelection(new TextSelection(
+        tr.doc.resolve(start + 1), tr.doc.resolve(start + cite.length)
+      ));
+      const mark = schema.marks.cite.create();
+      tr.addMark(start - 1, start + cite.length + 1, mark);
+      return tr;
+
+    } else {
+      return null;
+    }
+  });
+}
 
 function citationsTokens(citations: Citation[]) {
   const tokens: PandocToken[] = [];
