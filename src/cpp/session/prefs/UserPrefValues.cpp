@@ -1038,6 +1038,19 @@ core::Error UserPrefValues::setEditorTheme(std::string val)
 }
 
 /**
+ * The name of the editor font to use with RStudio Server.
+ */
+std::string UserPrefValues::serverEditorFont()
+{
+   return readPref<std::string>("server_editor_font");
+}
+
+core::Error UserPrefValues::setServerEditorFont(std::string val)
+{
+   return writePref("server_editor_font", val);
+}
+
+/**
  * The default character encoding to use when saving files.
  */
 std::string UserPrefValues::defaultEncoding()
@@ -2535,6 +2548,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kFontSizePoints,
       kHelpFontSizePoints,
       kEditorTheme,
+      kServerEditorFont,
       kDefaultEncoding,
       kToolbarVisible,
       kDefaultProjectLocation,

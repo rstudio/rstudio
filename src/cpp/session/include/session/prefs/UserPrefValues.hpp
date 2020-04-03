@@ -155,6 +155,7 @@ namespace prefs {
 #define kFontSizePoints "font_size_points"
 #define kHelpFontSizePoints "help_font_size_points"
 #define kEditorTheme "editor_theme"
+#define kServerEditorFont "server_editor_font"
 #define kDefaultEncoding "default_encoding"
 #define kToolbarVisible "toolbar_visible"
 #define kDefaultProjectLocation "default_project_location"
@@ -806,6 +807,12 @@ public:
     */
    std::string editorTheme();
    core::Error setEditorTheme(std::string val);
+
+   /**
+    * The name of the editor font to use with RStudio Server.
+    */
+   std::string serverEditorFont();
+   core::Error setServerEditorFont(std::string val);
 
    /**
     * The default character encoding to use when saving files.

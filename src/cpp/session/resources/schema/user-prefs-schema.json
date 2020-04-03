@@ -479,6 +479,11 @@
             "default": "Textmate (default)",
             "description": "The name of the color theme to apply to the text editor in RStudio."
         },
+        "server_editor_font": {
+            "type": "string",
+            "default": "",
+            "description": "The name of the fixed-width editor font to use with RStudio Server."
+        },
         "default_encoding": {
             "type": "string",
             "default": "",

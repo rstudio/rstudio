@@ -774,6 +774,14 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
+    * The name of the editor font to use with RStudio Server.
+    */
+   public PrefValue<String> serverEditorFont()
+   {
+      return string("server_editor_font", "");
+   }
+
+   /**
     * The default character encoding to use when saving files.
     */
    public PrefValue<String> defaultEncoding()
@@ -1908,6 +1916,8 @@ public class UserPrefsAccessor extends Prefs
          helpFontSizePoints().setValue(layer, source.getDbl("help_font_size_points"));
       if (source.hasKey("editor_theme"))
          editorTheme().setValue(layer, source.getString("editor_theme"));
+      if (source.hasKey("server_editor_font"))
+         serverEditorFont().setValue(layer, source.getString("server_editor_font"));
       if (source.hasKey("default_encoding"))
          defaultEncoding().setValue(layer, source.getString("default_encoding"));
       if (source.hasKey("toolbar_visible"))
