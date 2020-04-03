@@ -5,14 +5,14 @@ pandoc schema: <https://github.com/jgm/pandoc-types/blob/master/Text/Pandoc/Defi
 ## Feedback
 
 ## TODO
+- Citation is never broken by editing (unless removed entirely)
+- At write time we will determine whether it's still a citation or not
 
-Take the Fragment the represents the Cite (Citation+) and parse out the Pandoc tokens. Delimiters are `[]@;` and we need to only respect unescaped versions of those. See about handling citations within citations?
-
-Look into correct handling of non-bracket citations (currently brackets added on intake)
+Add math, cite, latex input rules to docs
 
 Update screenshots
 
-Doc with only YAML block needs paragraph at end
+Doc with only YAML block or Rmd Chunk needs paragraph at end
 
 Surface attributes handling for div with only an id (shading treatment a bit much?)
 
