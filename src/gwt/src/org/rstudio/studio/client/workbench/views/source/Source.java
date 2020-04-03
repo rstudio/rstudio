@@ -309,392 +309,401 @@ public class Source implements InsertSourceHandler,
       }
    }
 
-      @Inject
-      public Source(Commands commands,
-                    Display view,
-                    SourceServerOperations server,
-                    EditingTargetSource editingTargetSource,
-                    FileTypeRegistry fileTypeRegistry,
-                    GlobalDisplay globalDisplay,
-                    FileDialogs fileDialogs,
-                    RemoteFileSystemContext fileContext,
-                    EventBus events,
-                    AriaLiveService ariaLive,
-                    final Session session,
-                    Synctex synctex,
-                    WorkbenchContext workbenchContext,
-                    Provider<FileMRUList> pMruList,
-                    UserPrefs userPrefs,
-                    UserState userState,
-                    Satellite satellite,
-                    ConsoleEditorProvider consoleEditorProvider,
-                    RnwWeaveRegistry rnwWeaveRegistry,
-                    DependencyManager dependencyManager,
-                    Provider<SourceWindowManager> pWindowManager)
+   @Inject
+   public Source(Commands commands,
+                 Display view,
+                 SourceServerOperations server,
+                 EditingTargetSource editingTargetSource,
+                 FileTypeRegistry fileTypeRegistry,
+                 GlobalDisplay globalDisplay,
+                 FileDialogs fileDialogs,
+                 RemoteFileSystemContext fileContext,
+                 EventBus events,
+                 AriaLiveService ariaLive,
+                 final Session session,
+                 Synctex synctex,
+                 WorkbenchContext workbenchContext,
+                 Provider<FileMRUList> pMruList,
+                 UserPrefs userPrefs,
+                 UserState userState,
+                 Satellite satellite,
+                 ConsoleEditorProvider consoleEditorProvider,
+                 RnwWeaveRegistry rnwWeaveRegistry,
+                 DependencyManager dependencyManager,
+                 Provider<SourceWindowManager> pWindowManager)
+   {
+      commands_ = commands;
+      views_.add(view);
+      server_ = server;
+      editingTargetSource_ = editingTargetSource;
+      fileTypeRegistry_ = fileTypeRegistry;
+      globalDisplay_ = globalDisplay;
+      fileDialogs_ = fileDialogs;
+      fileContext_ = fileContext;
+      rmarkdown_ = new TextEditingTargetRMarkdownHelper();
+      events_ = events;
+      ariaLive_ = ariaLive;
+      session_ = session;
+      synctex_ = synctex;
+      workbenchContext_ = workbenchContext;
+      pMruList_ = pMruList;
+      userPrefs_ = userPrefs;
+      userState_ = userState;
+      consoleEditorProvider_ = consoleEditorProvider;
+      rnwWeaveRegistry_ = rnwWeaveRegistry;
+      dependencyManager_ = dependencyManager;
+      pWindowManager_ = pWindowManager;
+
+      displayManagerList_.add(new SourceDisplayManager(new SourcePane(), view));
+
+      events.fireEvent(new DocTabsChangedEvent(null,
+                                               new String[0],
+                                               new FileIcon[0],
+                                               new String[0],
+                                               new String[0]));
+      dynamicCommands_ = new HashSet<AppCommand>();
+   }
+
+   public void loadFullSource()
+   {
+      vimCommands_ = new SourceVimCommands();
+      
+      for (Display v: views_)
       {
-         commands_ = commands;
-         views_.add(view);
-         server_ = server;
-         editingTargetSource_ = editingTargetSource;
-         fileTypeRegistry_ = fileTypeRegistry;
-         globalDisplay_ = globalDisplay;
-         fileDialogs_ = fileDialogs;
-         fileContext_ = fileContext;
-         rmarkdown_ = new TextEditingTargetRMarkdownHelper();
-         events_ = events;
-         ariaLive_ = ariaLive;
-         session_ = session;
-         synctex_ = synctex;
-         workbenchContext_ = workbenchContext;
-         pMruList_ = pMruList;
-         userPrefs_ = userPrefs;
-         userState_ = userState;
-         consoleEditorProvider_ = consoleEditorProvider;
-         rnwWeaveRegistry_ = rnwWeaveRegistry;
-         dependencyManager_ = dependencyManager;
-         pWindowManager_ = pWindowManager;
-
-         displayManagerList_.add(new SourceDisplayManager(new SourcePane(), view));
-
-         events.fireEvent(new DocTabsChangedEvent(null,
-                                                  new String[0],
-                                                  new FileIcon[0],
-                                                  new String[0],
-                                                  new String[0]));
-         dynamicCommands_ = new HashSet<AppCommand>();
+         v.addTabClosingHandler(this);
+         v.addTabCloseHandler(this);
+         v.addTabClosedHandler(this);
+         v.addTabReorderHandler(this);
+         v.addSelectionHandler(this);
+         v.addBeforeShowHandler(this);
       }
 
-      public void loadFullSource()
+      dynamicCommands_.add(commands_.saveSourceDoc());
+      dynamicCommands_.add(commands_.reopenSourceDocWithEncoding());
+      dynamicCommands_.add(commands_.saveSourceDocAs());
+      dynamicCommands_.add(commands_.saveSourceDocWithEncoding());
+      dynamicCommands_.add(commands_.printSourceDoc());
+      dynamicCommands_.add(commands_.vcsFileLog());
+      dynamicCommands_.add(commands_.vcsFileDiff());
+      dynamicCommands_.add(commands_.vcsFileRevert());
+      dynamicCommands_.add(commands_.executeCode());
+      dynamicCommands_.add(commands_.executeCodeWithoutFocus());
+      dynamicCommands_.add(commands_.executeAllCode());
+      dynamicCommands_.add(commands_.executeToCurrentLine());
+      dynamicCommands_.add(commands_.executeFromCurrentLine());
+      dynamicCommands_.add(commands_.executeCurrentFunction());
+      dynamicCommands_.add(commands_.executeCurrentSection());
+      dynamicCommands_.add(commands_.executeLastCode());
+      dynamicCommands_.add(commands_.insertChunk());
+      dynamicCommands_.add(commands_.insertSection());
+      dynamicCommands_.add(commands_.executeSetupChunk());
+      dynamicCommands_.add(commands_.executePreviousChunks());
+      dynamicCommands_.add(commands_.executeSubsequentChunks());
+      dynamicCommands_.add(commands_.executeCurrentChunk());
+      dynamicCommands_.add(commands_.executeNextChunk());
+      dynamicCommands_.add(commands_.previewJS());
+      dynamicCommands_.add(commands_.previewSql());
+      dynamicCommands_.add(commands_.sourceActiveDocument());
+      dynamicCommands_.add(commands_.sourceActiveDocumentWithEcho());
+      dynamicCommands_.add(commands_.knitDocument());
+      dynamicCommands_.add(commands_.toggleRmdVisualMode());
+      dynamicCommands_.add(commands_.enableProsemirrorDevTools());
+      dynamicCommands_.add(commands_.previewHTML());
+      dynamicCommands_.add(commands_.compilePDF());
+      dynamicCommands_.add(commands_.compileNotebook());
+      dynamicCommands_.add(commands_.synctexSearch());
+      dynamicCommands_.add(commands_.popoutDoc());
+      dynamicCommands_.add(commands_.returnDocToMain());
+      dynamicCommands_.add(commands_.findReplace());
+      dynamicCommands_.add(commands_.findNext());
+      dynamicCommands_.add(commands_.findPrevious());
+      dynamicCommands_.add(commands_.findFromSelection());
+      dynamicCommands_.add(commands_.replaceAndFind());
+      dynamicCommands_.add(commands_.extractFunction());
+      dynamicCommands_.add(commands_.extractLocalVariable());
+      dynamicCommands_.add(commands_.commentUncomment());
+      dynamicCommands_.add(commands_.reindent());
+      dynamicCommands_.add(commands_.reflowComment());
+      dynamicCommands_.add(commands_.jumpTo());
+      dynamicCommands_.add(commands_.jumpToMatching());
+      dynamicCommands_.add(commands_.goToHelp());
+      dynamicCommands_.add(commands_.goToDefinition());
+      dynamicCommands_.add(commands_.setWorkingDirToActiveDoc());
+      dynamicCommands_.add(commands_.debugDumpContents());
+      dynamicCommands_.add(commands_.debugImportDump());
+      dynamicCommands_.add(commands_.goToLine());
+      dynamicCommands_.add(commands_.checkSpelling());
+      dynamicCommands_.add(commands_.wordCount());
+      dynamicCommands_.add(commands_.codeCompletion());
+      dynamicCommands_.add(commands_.findUsages());
+      dynamicCommands_.add(commands_.debugBreakpoint());
+      dynamicCommands_.add(commands_.vcsViewOnGitHub());
+      dynamicCommands_.add(commands_.vcsBlameOnGitHub());
+      dynamicCommands_.add(commands_.editRmdFormatOptions());
+      dynamicCommands_.add(commands_.reformatCode());
+      dynamicCommands_.add(commands_.showDiagnosticsActiveDocument());
+      dynamicCommands_.add(commands_.renameInScope());
+      dynamicCommands_.add(commands_.insertRoxygenSkeleton());
+      dynamicCommands_.add(commands_.expandSelection());
+      dynamicCommands_.add(commands_.shrinkSelection());
+      dynamicCommands_.add(commands_.toggleDocumentOutline());
+      dynamicCommands_.add(commands_.knitWithParameters());
+      dynamicCommands_.add(commands_.clearKnitrCache());
+      dynamicCommands_.add(commands_.goToNextSection());
+      dynamicCommands_.add(commands_.goToPrevSection());
+      dynamicCommands_.add(commands_.goToNextChunk());
+      dynamicCommands_.add(commands_.goToPrevChunk());
+      dynamicCommands_.add(commands_.profileCode());
+      dynamicCommands_.add(commands_.profileCodeWithoutFocus());
+      dynamicCommands_.add(commands_.saveProfileAs());
+      dynamicCommands_.add(commands_.restartRClearOutput());
+      dynamicCommands_.add(commands_.restartRRunAllChunks());
+      dynamicCommands_.add(commands_.notebookCollapseAllOutput());
+      dynamicCommands_.add(commands_.notebookExpandAllOutput());
+      dynamicCommands_.add(commands_.notebookClearOutput());
+      dynamicCommands_.add(commands_.notebookClearAllOutput());
+      dynamicCommands_.add(commands_.notebookToggleExpansion());
+      dynamicCommands_.add(commands_.sendToTerminal());
+      dynamicCommands_.add(commands_.openNewTerminalAtEditorLocation());
+      dynamicCommands_.add(commands_.sendFilenameToTerminal());
+      dynamicCommands_.add(commands_.renameSourceDoc());
+      dynamicCommands_.add(commands_.sourceAsLauncherJob());
+      dynamicCommands_.add(commands_.sourceAsJob());
+      dynamicCommands_.add(commands_.runSelectionAsJob());
+      dynamicCommands_.add(commands_.runSelectionAsLauncherJob());
+      for (AppCommand command : dynamicCommands_)
       {
-         vimCommands_ = new SourceVimCommands();
-         
-         for (Display v: views_)
+         command.setVisible(false);
+         command.setEnabled(false);
+      }
+
+      // fake shortcuts for commands_ which we handle at a lower level
+      commands_.goToHelp().setShortcut(new KeyboardShortcut("F1", KeyCodes.KEY_F1, KeyboardShortcut.NONE));
+      commands_.goToDefinition().setShortcut(new KeyboardShortcut("F2", KeyCodes.KEY_F2, KeyboardShortcut.NONE));
+
+      // If tab has been disabled for auto complete by the user, set the "shortcut" to ctrl-space instead.
+      if (userPrefs_.tabCompletion().getValue() && !userPrefs_.tabKeyMoveFocus().getValue())
+         commands_.codeCompletion().setShortcut(new KeyboardShortcut("Tab", KeyCodes.KEY_TAB, KeyboardShortcut.NONE));
+      else
+      {
+         KeySequence sequence = new KeySequence();
+         sequence.add(new KeyCombination("Ctrl+Space", KeyCodes.KEY_SPACE, KeyCodes.KEY_CTRL));
+         commands_.codeCompletion().setShortcut(new KeyboardShortcut(sequence));
+      }
+      
+      events_.addHandler(ShowContentEvent.TYPE, this);
+      events_.addHandler(ShowDataEvent.TYPE, this);
+      events_.addHandler(OpenObjectExplorerEvent.TYPE, this);
+
+      events_.addHandler(CodeBrowserNavigationEvent.TYPE, this);
+      
+      events_.addHandler(CodeBrowserFinishedEvent.TYPE, this);
+
+      events_.addHandler(CodeBrowserHighlightEvent.TYPE, this);
+
+      events_.addHandler(FileTypeChangedEvent.TYPE, new FileTypeChangedHandler()
+      {
+         public void onFileTypeChanged(FileTypeChangedEvent event)
          {
-            v.addTabClosingHandler(this);
-            v.addTabCloseHandler(this);
-            v.addTabClosedHandler(this);
-            v.addTabReorderHandler(this);
-            v.addSelectionHandler(this);
-            v.addBeforeShowHandler(this);
+            manageCommands();
          }
-
-         dynamicCommands_.add(commands_.saveSourceDoc());
-         dynamicCommands_.add(commands_.reopenSourceDocWithEncoding());
-         dynamicCommands_.add(commands_.saveSourceDocAs());
-         dynamicCommands_.add(commands_.saveSourceDocWithEncoding());
-         dynamicCommands_.add(commands_.printSourceDoc());
-         dynamicCommands_.add(commands_.vcsFileLog());
-         dynamicCommands_.add(commands_.vcsFileDiff());
-         dynamicCommands_.add(commands_.vcsFileRevert());
-         dynamicCommands_.add(commands_.executeCode());
-         dynamicCommands_.add(commands_.executeCodeWithoutFocus());
-         dynamicCommands_.add(commands_.executeAllCode());
-         dynamicCommands_.add(commands_.executeToCurrentLine());
-         dynamicCommands_.add(commands_.executeFromCurrentLine());
-         dynamicCommands_.add(commands_.executeCurrentFunction());
-         dynamicCommands_.add(commands_.executeCurrentSection());
-         dynamicCommands_.add(commands_.executeLastCode());
-         dynamicCommands_.add(commands_.insertChunk());
-         dynamicCommands_.add(commands_.insertSection());
-         dynamicCommands_.add(commands_.executeSetupChunk());
-         dynamicCommands_.add(commands_.executePreviousChunks());
-         dynamicCommands_.add(commands_.executeSubsequentChunks());
-         dynamicCommands_.add(commands_.executeCurrentChunk());
-         dynamicCommands_.add(commands_.executeNextChunk());
-         dynamicCommands_.add(commands_.previewJS());
-         dynamicCommands_.add(commands_.previewSql());
-         dynamicCommands_.add(commands_.sourceActiveDocument());
-         dynamicCommands_.add(commands_.sourceActiveDocumentWithEcho());
-         dynamicCommands_.add(commands_.knitDocument());
-         dynamicCommands_.add(commands_.toggleRmdVisualMode());
-         dynamicCommands_.add(commands_.enableProsemirrorDevTools());
-         dynamicCommands_.add(commands_.previewHTML());
-         dynamicCommands_.add(commands_.compilePDF());
-         dynamicCommands_.add(commands_.compileNotebook());
-         dynamicCommands_.add(commands_.synctexSearch());
-         dynamicCommands_.add(commands_.popoutDoc());
-         dynamicCommands_.add(commands_.returnDocToMain());
-         dynamicCommands_.add(commands_.findReplace());
-         dynamicCommands_.add(commands_.findNext());
-         dynamicCommands_.add(commands_.findPrevious());
-         dynamicCommands_.add(commands_.findFromSelection());
-         dynamicCommands_.add(commands_.replaceAndFind());
-         dynamicCommands_.add(commands_.extractFunction());
-         dynamicCommands_.add(commands_.extractLocalVariable());
-         dynamicCommands_.add(commands_.commentUncomment());
-         dynamicCommands_.add(commands_.reindent());
-         dynamicCommands_.add(commands_.reflowComment());
-         dynamicCommands_.add(commands_.jumpTo());
-         dynamicCommands_.add(commands_.jumpToMatching());
-         dynamicCommands_.add(commands_.goToHelp());
-         dynamicCommands_.add(commands_.goToDefinition());
-         dynamicCommands_.add(commands_.setWorkingDirToActiveDoc());
-         dynamicCommands_.add(commands_.debugDumpContents());
-         dynamicCommands_.add(commands_.debugImportDump());
-         dynamicCommands_.add(commands_.goToLine());
-         dynamicCommands_.add(commands_.checkSpelling());
-         dynamicCommands_.add(commands_.wordCount());
-         dynamicCommands_.add(commands_.codeCompletion());
-         dynamicCommands_.add(commands_.findUsages());
-         dynamicCommands_.add(commands_.debugBreakpoint());
-         dynamicCommands_.add(commands_.vcsViewOnGitHub());
-         dynamicCommands_.add(commands_.vcsBlameOnGitHub());
-         dynamicCommands_.add(commands_.editRmdFormatOptions());
-         dynamicCommands_.add(commands_.reformatCode());
-         dynamicCommands_.add(commands_.showDiagnosticsActiveDocument());
-         dynamicCommands_.add(commands_.renameInScope());
-         dynamicCommands_.add(commands_.insertRoxygenSkeleton());
-         dynamicCommands_.add(commands_.expandSelection());
-         dynamicCommands_.add(commands_.shrinkSelection());
-         dynamicCommands_.add(commands_.toggleDocumentOutline());
-         dynamicCommands_.add(commands_.knitWithParameters());
-         dynamicCommands_.add(commands_.clearKnitrCache());
-         dynamicCommands_.add(commands_.goToNextSection());
-         dynamicCommands_.add(commands_.goToPrevSection());
-         dynamicCommands_.add(commands_.goToNextChunk());
-         dynamicCommands_.add(commands_.goToPrevChunk());
-         dynamicCommands_.add(commands_.profileCode());
-         dynamicCommands_.add(commands_.profileCodeWithoutFocus());
-         dynamicCommands_.add(commands_.saveProfileAs());
-         dynamicCommands_.add(commands_.restartRClearOutput());
-         dynamicCommands_.add(commands_.restartRRunAllChunks());
-         dynamicCommands_.add(commands_.notebookCollapseAllOutput());
-         dynamicCommands_.add(commands_.notebookExpandAllOutput());
-         dynamicCommands_.add(commands_.notebookClearOutput());
-         dynamicCommands_.add(commands_.notebookClearAllOutput());
-         dynamicCommands_.add(commands_.notebookToggleExpansion());
-         dynamicCommands_.add(commands_.sendToTerminal());
-         dynamicCommands_.add(commands_.openNewTerminalAtEditorLocation());
-         dynamicCommands_.add(commands_.sendFilenameToTerminal());
-         dynamicCommands_.add(commands_.renameSourceDoc());
-         dynamicCommands_.add(commands_.sourceAsLauncherJob());
-         dynamicCommands_.add(commands_.sourceAsJob());
-         dynamicCommands_.add(commands_.runSelectionAsJob());
-         dynamicCommands_.add(commands_.runSelectionAsLauncherJob());
-         for (AppCommand command : dynamicCommands_)
+      });
+      
+      events_.addHandler(NewDocumentWithCodeEvent.TYPE,
+                         new NewDocumentWithCodeEvent.Handler() {
+         @Override
+         public void onNewDocumentWithCode(NewDocumentWithCodeEvent event)
          {
-            command.setVisible(false);
-            command.setEnabled(false);
+            onNewDocumentWithCode(event);
          }
+      });
 
-         // fake shortcuts for commands_ which we handle at a lower level
-         commands_.goToHelp().setShortcut(new KeyboardShortcut("F1", KeyCodes.KEY_F1, KeyboardShortcut.NONE));
-         commands_.goToDefinition().setShortcut(new KeyboardShortcut("F2", KeyCodes.KEY_F2, KeyboardShortcut.NONE));
-
-         // If tab has been disabled for auto complete by the user, set the "shortcut" to ctrl-space instead.
-         if (userPrefs_.tabCompletion().getValue() && !userPrefs_.tabKeyMoveFocus().getValue())
-            commands_.codeCompletion().setShortcut(new KeyboardShortcut("Tab", KeyCodes.KEY_TAB, KeyboardShortcut.NONE));
-         else
+      events_.addHandler(SourceOnSaveChangedEvent.TYPE, 
+                        new SourceOnSaveChangedHandler() {
+         @Override
+         public void onSourceOnSaveChanged(SourceOnSaveChangedEvent event)
          {
-            KeySequence sequence = new KeySequence();
-            sequence.add(new KeyCombination("Ctrl+Space", KeyCodes.KEY_SPACE, KeyCodes.KEY_CTRL));
-            commands_.codeCompletion().setShortcut(new KeyboardShortcut(sequence));
+            manageSaveCommands();
          }
-         
-         events_.addHandler(ShowContentEvent.TYPE, this);
-         events_.addHandler(ShowDataEvent.TYPE, this);
-         events_.addHandler(OpenObjectExplorerEvent.TYPE, this);
+      });
 
-         events_.addHandler(CodeBrowserNavigationEvent.TYPE, this);
-         
-         events_.addHandler(CodeBrowserFinishedEvent.TYPE, this);
-
-         events_.addHandler(CodeBrowserHighlightEvent.TYPE, this);
-
-         events_.addHandler(FileTypeChangedEvent.TYPE, new FileTypeChangedHandler()
+      events_.addHandler(SwitchToDocEvent.TYPE, new SwitchToDocHandler()
+      {
+         public void onSwitchToDoc(SwitchToDocEvent event)
          {
-            public void onFileTypeChanged(FileTypeChangedEvent event)
-            {
-               manageCommands();
-            }
-         });
-         
-         events_.addHandler(SourceOnSaveChangedEvent.TYPE, 
-                           new SourceOnSaveChangedHandler() {
-            @Override
-            public void onSourceOnSaveChanged(SourceOnSaveChangedEvent event)
-            {
-               manageSaveCommands();
-            }
-         });
+            ensureVisible(false);
+            setPhysicalTabIndex(event.getSelectedIndex());
+            
+            // Fire an activation event just to ensure the activated
+            // tab gets focus
+            commands_.activateSource().execute();
+         }
+      });
 
-         events_.addHandler(SwitchToDocEvent.TYPE, new SwitchToDocHandler()
+      events_.addHandler(SourceFileSavedEvent.TYPE, new SourceFileSavedHandler()
+      {
+         public void onSourceFileSaved(SourceFileSavedEvent event)
          {
-            public void onSwitchToDoc(SwitchToDocEvent event)
-            {
-               ensureVisible(false);
-               setPhysicalTabIndex(event.getSelectedIndex());
-               
-               // Fire an activation event just to ensure the activated
-               // tab gets focus
-               commands_.activateSource().execute();
-            }
-         });
-
-         events_.addHandler(SourceFileSavedEvent.TYPE, new SourceFileSavedHandler()
-         {
-            public void onSourceFileSaved(SourceFileSavedEvent event)
-            {
-               pMruList_.get().add(event.getPath());
-            }
-         });
+            pMruList_.get().add(event.getPath());
+         }
+      });
          
-         events_.addHandler(SourcePathChangedEvent.TYPE, 
-               new SourcePathChangedEvent.Handler()
+      events_.addHandler(SourcePathChangedEvent.TYPE, 
+            new SourcePathChangedEvent.Handler()
+      {
+         
+         @Override
+         public void onSourcePathChanged(final SourcePathChangedEvent event)
          {
             
-            @Override
-            public void onSourcePathChanged(final SourcePathChangedEvent event)
+            inEditorForPath(event.getFrom(), 
+                            new OperationWithInput<EditingTarget>()
             {
-               
-               inEditorForPath(event.getFrom(), 
-                               new OperationWithInput<EditingTarget>()
+               @Override
+               public void execute(EditingTarget input)
                {
-                  @Override
-                  public void execute(EditingTarget input)
+                  FileSystemItem toPath = 
+                        FileSystemItem.createFile(event.getTo());
+                  if (input instanceof TextEditingTarget)
                   {
-                     FileSystemItem toPath = 
-                           FileSystemItem.createFile(event.getTo());
-                     if (input instanceof TextEditingTarget)
-                     {
-                        // for text files, notify the editing surface so it can
-                        // react to the new file type
-                        ((TextEditingTarget)input).setPath(toPath);
-                     }
-                     else
-                     {
-                        // for other files, just rename the tab
-                        input.getName().setValue(toPath.getName(), true);
-                     }
-                     events_.fireEvent(new SourceFileSavedEvent(
-                           input.getId(), event.getTo()));
+                     // for text files, notify the editing surface so it can
+                     // react to the new file type
+                     ((TextEditingTarget)input).setPath(toPath);
                   }
-               });
-            }
-         });
-               
-         events_.addHandler(SourceNavigationEvent.TYPE, 
-                           new SourceNavigationHandler() {
-            @Override
-            public void onSourceNavigation(SourceNavigationEvent event)
-            {
-               if (!suspendSourceNavigationAdding_)
-               {
-                  sourceNavigationHistory_.add(event.getNavigation());
-               }
-            }
-         });
-         
-         events_.addHandler(SourceExtendedTypeDetectedEvent.TYPE, this);
-         
-         sourceNavigationHistory_.addChangeHandler(new ChangeHandler()
-         {
-
-            @Override
-            public void onChange(ChangeEvent event)
-            {
-               manageSourceNavigationCommands();
-            }
-         });
-         
-         events_.addHandler(SynctexStatusChangedEvent.TYPE, 
-                           new SynctexStatusChangedEvent.Handler()
-         {
-            @Override
-            public void onSynctexStatusChanged(SynctexStatusChangedEvent event)
-            {
-               manageSynctexCommands();
-            }
-         });
-         
-         events_.addHandler(CollabEditStartedEvent.TYPE, 
-               new CollabEditStartedEvent.Handler() 
-         {
-            @Override
-            public void onCollabEditStarted(final CollabEditStartedEvent collab) 
-            {
-               inEditorForPath(collab.getStartParams().getPath(),
-                  new OperationWithInput<EditingTarget>()
+                  else
                   {
-                     @Override
-                     public void execute(EditingTarget editor)
-                     {
-                        editor.beginCollabSession(collab.getStartParams());
-                     }
-                  });
-            }
-         });
-         
-         events_.addHandler(CollabEditEndedEvent.TYPE, 
-               new CollabEditEndedEvent.Handler()
-         {
-            @Override
-            public void onCollabEditEnded(final CollabEditEndedEvent collab) 
-            {
-               inEditorForPath(collab.getPath(), 
-                  new OperationWithInput<EditingTarget>()
-                  {
-                     @Override
-                     public void execute(EditingTarget editor)
-                     {
-                        editor.endCollabSession();
-                     }
-                  });
-            }
-         });
-         
-         events_.addHandler(NewWorkingCopyEvent.TYPE, 
-               new NewWorkingCopyEvent.Handler()
-         {
-            @Override
-            public void onNewWorkingCopy(NewWorkingCopyEvent event)
-            {
-               newDoc(event.getType(), event.getContents(), null);
-            }
-         });
-         
-         events_.addHandler(PopoutDocEvent.TYPE, this);
-         events_.addHandler(DocWindowChangedEvent.TYPE, this);
-         events_.addHandler(DocTabDragInitiatedEvent.TYPE, this);
-         events_.addHandler(PopoutDocInitiatedEvent.TYPE, this);
-         events_.addHandler(DebugModeChangedEvent.TYPE, this);
-         events_.addHandler(ReplaceRangesEvent.TYPE, this);
-         events_.addHandler(GetEditorContextEvent.TYPE, this);
-         events_.addHandler(SetSelectionRangesEvent.TYPE, this);
-         events_.addHandler(OpenProfileEvent.TYPE, this);
-         events_.addHandler(RequestDocumentSaveEvent.TYPE, this);
-         events_.addHandler(RequestDocumentCloseEvent.TYPE, this);
-
-         // Suppress 'CTRL + ALT + SHIFT + click' to work around #2483 in Ace
-         Event.addNativePreviewHandler(new NativePreviewHandler()
-         {
-            @Override
-            public void onPreviewNativeEvent(NativePreviewEvent event)
-            {
-               int type = event.getTypeInt();
-               if (type == Event.ONMOUSEDOWN || type == Event.ONMOUSEUP)
-               {
-                  int modifier = KeyboardShortcut.getModifierValue(event.getNativeEvent());
-                  if (modifier == (KeyboardShortcut.ALT | KeyboardShortcut.CTRL | KeyboardShortcut.SHIFT))
-                  {
-                     event.cancel();
-                     return;
+                     // for other files, just rename the tab
+                     input.getName().setValue(toPath.getName(), true);
                   }
+                  events_.fireEvent(new SourceFileSavedEvent(
+                        input.getId(), event.getTo()));
                }
-            }
-         });
-         
-         // on macOS, we need to aggressively re-sync commands when a new
-         // window is selected (since the main menu applies to both main
-         // window and satellites)
-         if (BrowseCap.isMacintoshDesktop())
-         {
-            WindowEx.addFocusHandler((FocusEvent event) -> {
-               manageCommands(true);
             });
          }
+      });
+            
+      events_.addHandler(SourceNavigationEvent.TYPE, 
+                        new SourceNavigationHandler() {
+         @Override
+         public void onSourceNavigation(SourceNavigationEvent event)
+         {
+            if (!suspendSourceNavigationAdding_)
+            {
+               sourceNavigationHistory_.add(event.getNavigation());
+            }
+         }
+      });
+      
+      events_.addHandler(SourceExtendedTypeDetectedEvent.TYPE, this);
          
-         restoreDocuments(session_);
+      sourceNavigationHistory_.addChangeHandler(new ChangeHandler()
+      {
+
+         @Override
+         public void onChange(ChangeEvent event)
+         {
+            manageSourceNavigationCommands();
+         }
+      });
+      
+      events_.addHandler(SynctexStatusChangedEvent.TYPE, 
+                        new SynctexStatusChangedEvent.Handler()
+      {
+         @Override
+         public void onSynctexStatusChanged(SynctexStatusChangedEvent event)
+         {
+            manageSynctexCommands();
+         }
+      });
+      
+      events_.addHandler(CollabEditStartedEvent.TYPE, 
+            new CollabEditStartedEvent.Handler() 
+      {
+         @Override
+         public void onCollabEditStarted(final CollabEditStartedEvent collab) 
+         {
+            inEditorForPath(collab.getStartParams().getPath(),
+               new OperationWithInput<EditingTarget>()
+               {
+                  @Override
+                  public void execute(EditingTarget editor)
+                  {
+                     editor.beginCollabSession(collab.getStartParams());
+                  }
+               });
+         }
+      });
+         
+      events_.addHandler(CollabEditEndedEvent.TYPE, 
+            new CollabEditEndedEvent.Handler()
+      {
+         @Override
+         public void onCollabEditEnded(final CollabEditEndedEvent collab) 
+         {
+            inEditorForPath(collab.getPath(), 
+               new OperationWithInput<EditingTarget>()
+               {
+                  @Override
+                  public void execute(EditingTarget editor)
+                  {
+                     editor.endCollabSession();
+                  }
+               });
+         }
+      });
+         
+      events_.addHandler(NewWorkingCopyEvent.TYPE, 
+            new NewWorkingCopyEvent.Handler()
+      {
+         @Override
+         public void onNewWorkingCopy(NewWorkingCopyEvent event)
+         {
+            newDoc(event.getType(), event.getContents(), null);
+         }
+      });
+      
+      events_.addHandler(PopoutDocEvent.TYPE, this);
+      events_.addHandler(DocWindowChangedEvent.TYPE, this);
+      events_.addHandler(DocTabDragInitiatedEvent.TYPE, this);
+      events_.addHandler(PopoutDocInitiatedEvent.TYPE, this);
+      events_.addHandler(DebugModeChangedEvent.TYPE, this);
+      events_.addHandler(ReplaceRangesEvent.TYPE, this);
+      events_.addHandler(GetEditorContextEvent.TYPE, this);
+      events_.addHandler(SetSelectionRangesEvent.TYPE, this);
+      events_.addHandler(OpenProfileEvent.TYPE, this);
+      events_.addHandler(RequestDocumentSaveEvent.TYPE, this);
+      events_.addHandler(RequestDocumentCloseEvent.TYPE, this);
+
+      // Suppress 'CTRL + ALT + SHIFT + click' to work around #2483 in Ace
+      Event.addNativePreviewHandler(new NativePreviewHandler()
+      {
+         @Override
+         public void onPreviewNativeEvent(NativePreviewEvent event)
+         {
+            int type = event.getTypeInt();
+            if (type == Event.ONMOUSEDOWN || type == Event.ONMOUSEUP)
+            {
+               int modifier = KeyboardShortcut.getModifierValue(event.getNativeEvent());
+               if (modifier == (KeyboardShortcut.ALT | KeyboardShortcut.CTRL | KeyboardShortcut.SHIFT))
+               {
+                  event.cancel();
+                  return;
+               }
+            }
+         }
+      });
+      
+      // on macOS, we need to aggressively re-sync commands when a new
+      // window is selected (since the main menu applies to both main
+      // window and satellites)
+      if (BrowseCap.isMacintoshDesktop())
+      {
+         WindowEx.addFocusHandler((FocusEvent event) -> {
+            manageCommands(true);
+         });
+      }
+         
+      restoreDocuments(session_);
       
       // get the key to use for active tab persistence; use ordinal-based key
       // for source windows rather than their ID to avoid unbounded accumulation
@@ -765,6 +774,7 @@ public class Source implements InsertSourceHandler,
       
       // add vim commands
       initVimCommands();
+      ensureVisible(false);
    }
    
    public void withSaveFilesBeforeCommand(final Command command,
