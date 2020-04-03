@@ -9,11 +9,6 @@ useradd -r -U rstudio-server
 # create softlink to admin script in /usr/sbin
 ln -f -s "${CMAKE_INSTALL_PREFIX}"/bin/rstudio-server /usr/sbin/rstudio-server
 
-# create SOCI library softlinks
-ln -f -s ${CMAKE_INSTALL_PREFIX}/bin/libsoci_core.so.4.0.0 ${CMAKE_INSTALL_PREFIX}/bin/libsoci_core.so.4.0
-ln -f -s ${CMAKE_INSTALL_PREFIX}/bin/libsoci_sqlite3.so.4.0.0 ${CMAKE_INSTALL_PREFIX}/bin/libsoci_sqlite3.so.4.0
-ln -f -s ${CMAKE_INSTALL_PREFIX}/bin/libsoci_postgresql.so.4.0.0 ${CMAKE_INSTALL_PREFIX}/bin/libsoci_postgresql.so.4.0
-
 # create config directory and default config files
 mkdir -p /etc/rstudio
 if ! test -f /etc/rstudio/rserver.conf
