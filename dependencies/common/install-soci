@@ -53,6 +53,7 @@ then
    cmakeCommand=$(which cmake)
    makeCommand=$(which make)
    sudo $cmakeCommand -G "Unix Makefiles" \
+       -DCMAKE_POSITION_INDEPENDENT_CODE:BOOL=true \
        -DSOCI_TESTS=OFF \
        -DSOCI_CXX11=ON \
        -DSOCI_EMPTY=OFF \
