@@ -196,18 +196,6 @@ void fixupPendingConsoleInput()
    // keep track of last line's indent
    std::string indent;
    
-   // pending empty strings whose indent we need to set
-   std::vector<std::string*> pendingStrings;
-   
-   // helper for getting indent of line
-   auto getIndent = [](const std::string& line)
-   {
-      auto index = line.find_first_not_of(" \t");
-      if (index == std::string::npos)
-         return std::string();
-      return line.substr(0, index);
-   };
-   
    // split input into list of commands
    std::vector<std::string> lines = core::algorithm::split(input.text, "\n");
    for (std::size_t i = 0, n = lines.size(); i < n; i++)
