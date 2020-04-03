@@ -111,7 +111,6 @@ public class AceEditorPreview extends DynamicIFrame
                         FontSizer.injectStylesIntoDocument(doc);
                         FontSizer.applyNormalFontSize(div);
                         
-                        
                         body.appendChild(doc.createScriptElement(RES.loader().getText()));
                      }
                   });
@@ -143,7 +142,7 @@ public class AceEditorPreview extends DynamicIFrame
          return;
 
       if (zoomLevel_ == null)
-         FontSizer.setNormalFontSize(getDocument(),  fontSize_);
+         FontSizer.setNormalFontSize(getDocument(), fontSize_);
       else
          FontSizer.setNormalFontSize(getDocument(), fontSize_ * zoomLevel_);
    }

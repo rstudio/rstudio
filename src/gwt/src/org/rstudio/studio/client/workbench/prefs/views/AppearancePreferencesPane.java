@@ -33,6 +33,7 @@ import org.rstudio.core.client.js.JsUtil;
 import org.rstudio.core.client.prefs.RestartRequirement;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.ThemeFonts;
+import org.rstudio.core.client.widget.FontDetector;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.SelectWidget;
 import org.rstudio.core.client.widget.ThemedButton;
@@ -51,7 +52,10 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.themes.AceT
 import org.rstudio.studio.client.workbench.views.source.editors.text.themes.AceThemes;
 import org.rstudio.studio.client.workbench.views.source.editors.text.themes.model.ThemeServerOperations;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Set;
+import java.util.TreeSet;
 
 public class AppearancePreferencesPane extends PreferencesPane
 {
@@ -658,16 +662,29 @@ public class AppearancePreferencesPane extends PreferencesPane
    
    private void getInstalledFontList()
    {
+      // Search for installed fixed-width fonts on this web browser.
+      final Set<String> browserFonts = new TreeSet<String>();
+      JsArrayString candidates = userPrefs_.browserFixedWidthFonts().getGlobalValue();
+      for (String candidate: JsUtil.asIterable(candidates))
+      {
+         if (FontDetector.isFontSupported(candidate))
+         {
+            browserFonts.add(candidate);
+         }
+      }
+      
       server_.getInstalledFonts(new ServerRequestCallback<JsArrayString>()
       {
          @Override
          public void onResponseReceived(JsArrayString fonts)
          {
-            populateFontList(JsUtil.toStringArray(fonts));
+            browserFonts.addAll(JsUtil.toList(fonts));
+            populateFontList(browserFonts.toArray(new String[browserFonts.size()]));
             String font = userPrefs_.serverEditorFont().getValue();
             if (!StringUtil.isNullOrEmpty(font))
             {
                fontFace_.setValue(font);
+               preview_.setFont(font, true);
             }
          }
 

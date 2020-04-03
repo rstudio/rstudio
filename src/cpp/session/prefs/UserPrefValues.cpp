@@ -1038,7 +1038,7 @@ core::Error UserPrefValues::setEditorTheme(std::string val)
 }
 
 /**
- * The name of the editor font to use with RStudio Server.
+ * The name of the fixed-width editor font to use with RStudio Server.
  */
 std::string UserPrefValues::serverEditorFont()
 {
@@ -2467,6 +2467,19 @@ core::Error UserPrefValues::setGraphicsAntialiasing(std::string val)
    return writePref("graphics_antialiasing", val);
 }
 
+/**
+ * List of fixed-width fonts to check for browser support.
+ */
+core::json::Array UserPrefValues::browserFixedWidthFonts()
+{
+   return readPref<core::json::Array>("browser_fixed_width_fonts");
+}
+
+core::Error UserPrefValues::setBrowserFixedWidthFonts(core::json::Array val)
+{
+   return writePref("browser_fixed_width_fonts", val);
+}
+
 std::vector<std::string> UserPrefValues::allKeys()
 {
    return std::vector<std::string>({
@@ -2658,6 +2671,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kInstallPkgDepsIndividually,
       kGraphicsBackend,
       kGraphicsAntialiasing,
+      kBrowserFixedWidthFonts,
    });
 }
    

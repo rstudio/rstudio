@@ -774,7 +774,7 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
-    * The name of the editor font to use with RStudio Server.
+    * The name of the fixed-width editor font to use with RStudio Server.
     */
    public PrefValue<String> serverEditorFont()
    {
@@ -1758,6 +1758,14 @@ public class UserPrefsAccessor extends Prefs
    public final static String GRAPHICS_ANTIALIASING_GRAY = "gray";
    public final static String GRAPHICS_ANTIALIASING_SUBPIXEL = "subpixel";
 
+   /**
+    * List of fixed-width fonts to check for browser support.
+    */
+   public PrefValue<JsArrayString> browserFixedWidthFonts()
+   {
+      return object("browser_fixed_width_fonts", JsArrayUtil.createStringArray("Cascadia Code", "Consolas", "DejaVu Sans Mono", "Droid Sans Mono", "FiraCode", "Hack", "IBM Plex Mono", "Inconsolata", "JetBrains Mono", "Lucida Console", "Menlo", "Monaco", "Monoid", "Operator Mono", "SF Mono", "Source Code Pro", "Victor Mono", "Ubuntu Mono"));
+   }
+
    public void syncPrefs(String layer, JsObject source)
    {
       if (source.hasKey("run_rprofile_on_resume"))
@@ -2136,6 +2144,8 @@ public class UserPrefsAccessor extends Prefs
          graphicsBackend().setValue(layer, source.getString("graphics_backend"));
       if (source.hasKey("graphics_antialiasing"))
          graphicsAntialiasing().setValue(layer, source.getString("graphics_antialiasing"));
+      if (source.hasKey("browser_fixed_width_fonts"))
+         browserFixedWidthFonts().setValue(layer, source.getObject("browser_fixed_width_fonts"));
    }
    
 

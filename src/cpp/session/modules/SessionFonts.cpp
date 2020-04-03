@@ -249,33 +249,29 @@ void handleFontCssRequest(const http::Request& request,
       }
    }
 
-   if (css.empty())
+   // It's okay if there was no matching font found at this point, since on RStudio Server the font
+   // can be provided by the browser instead of the server. We will still generate a font-specific
+   // stylesheet below.
+   //
+   // Append override rules for basic fixed-width elements. This stylesheet overrides a few key
+   // styles in themeStyles.css with the specified font.
+   std::map<std::string,std::string> vars;
+   vars["font"] = fileName;
+   std::ostringstream oss;
+   error = core::text::renderTemplate(
+      session::options().rResourcesPath().completeChildPath("themes/css/fonts.css"), vars, oss);
+   if (error)
    {
-      // No CSS was found for this font
-      pResponse->setNotFoundError(request);
+      LOG_ERROR(error);
    }
    else
    {
-      // Append override rules for basic fixed-width elements. This stylesheet overrides a few key
-      // styles in themeStyles.css with the specified font.
-      std::map<std::string,std::string> vars;
-      vars["font"] = fileName;
-      std::ostringstream oss;
-      error = core::text::renderTemplate(
-         session::options().rResourcesPath().completeChildPath("themes/css/fonts.css"), vars, oss);
-      if (error)
-      {
-         LOG_ERROR(error);
-      }
-      else
-      {
-         css.append(oss.str());
-      }
-
-      // Return the accumulated stylesheet
-      pResponse->setContentType("text/css");
-      pResponse->setBody(css);
+      css.append(oss.str());
    }
+
+   // Return the accumulated stylesheet
+   pResponse->setContentType("text/css");
+   pResponse->setBody(css);
 
    return;
 }

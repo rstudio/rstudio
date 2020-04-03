@@ -1067,6 +1067,33 @@
             "enum": ["default", "none", "gray", "subpixel"],
             "default": "default",
             "description": "Type of anti-aliasing to be used for generated R plots."
+        },
+        "browser_fixed_width_fonts": {
+            "type": "array",
+            "description": "List of fixed-width fonts to check for browser support.",
+            "items": {
+                "type": "string"
+            },
+            "default": [
+                "Cascadia Code", 
+                "Consolas", 
+                "DejaVu Sans Mono",
+                "Droid Sans Mono",
+                "FiraCode", 
+                "Hack", 
+                "IBM Plex Mono",
+                "Inconsolata", 
+                "JetBrains Mono", 
+                "Lucida Console",
+                "Menlo", 
+                "Monaco", 
+                "Monoid",
+                "Operator Mono",
+                "SF Mono",
+                "Source Code Pro",
+                "Victor Mono", 
+                "Ubuntu Mono"
+            ]
         }
     }
 }

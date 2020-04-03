@@ -335,6 +335,7 @@ namespace prefs {
 #define kGraphicsAntialiasingNone "none"
 #define kGraphicsAntialiasingGray "gray"
 #define kGraphicsAntialiasingSubpixel "subpixel"
+#define kBrowserFixedWidthFonts "browser_fixed_width_fonts"
 
 class UserPrefValues: public Preferences
 {
@@ -809,7 +810,7 @@ public:
    core::Error setEditorTheme(std::string val);
 
    /**
-    * The name of the editor font to use with RStudio Server.
+    * The name of the fixed-width editor font to use with RStudio Server.
     */
    std::string serverEditorFont();
    core::Error setServerEditorFont(std::string val);
@@ -1467,6 +1468,12 @@ public:
     */
    std::string graphicsAntialiasing();
    core::Error setGraphicsAntialiasing(std::string val);
+
+   /**
+    * List of fixed-width fonts to check for browser support.
+    */
+   core::json::Array browserFixedWidthFonts();
+   core::Error setBrowserFixedWidthFonts(core::json::Array val);
 
 };
 
