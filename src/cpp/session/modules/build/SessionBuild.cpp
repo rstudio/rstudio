@@ -1,7 +1,7 @@
 /*
  * SessionBuild.cpp
  *
- * Copyright (C) 2009-19 by RStudio, PBC
+ * Copyright (C) 2009-20 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -69,8 +69,8 @@ std::string preflightPackageBuildErrorMessage(
       const std::string& message,
       const FilePath& buildDirectory)
 {
-   std::string fmt = 1 + R"EOF(
-ERROR: Package build failed.
+   std::string fmt =
+R"EOF(ERROR: Package build failed.
 
 %1%
 
@@ -1432,7 +1432,7 @@ private:
                                                      cb);
    }
 
-   void executeCustomBuild(const std::string& type,
+   void executeCustomBuild(const std::string& /*type*/,
                            const FilePath& customScriptPath,
                            const core::system::ProcessOptions& options,
                            const core::system::ProcessCallbacks& cb)
@@ -1880,7 +1880,7 @@ Error startBuild(const json::JsonRpcRequest& request,
 
 
 
-Error terminateBuild(const json::JsonRpcRequest& request,
+Error terminateBuild(const json::JsonRpcRequest& /*request*/,
                      json::JsonRpcResponse* pResponse)
 {
    if (isBuildRunning())
@@ -1891,7 +1891,7 @@ Error terminateBuild(const json::JsonRpcRequest& request,
    return Success();
 }
 
-Error getCppCapabilities(const json::JsonRpcRequest& request,
+Error getCppCapabilities(const json::JsonRpcRequest& /*request*/,
                          json::JsonRpcResponse* pResponse)
 {
    json::Object capsJson;
@@ -1916,7 +1916,7 @@ Error installBuildTools(const json::JsonRpcRequest& request,
    return Success();
 }
 
-Error devtoolsLoadAllPath(const json::JsonRpcRequest& request,
+Error devtoolsLoadAllPath(const json::JsonRpcRequest& /*request*/,
                      json::JsonRpcResponse* pResponse)
 {
    pResponse->setResult(module_context::pathRelativeTo(
@@ -2092,7 +2092,7 @@ SEXP rs_installPackage(SEXP pkgPathSEXP, SEXP libPathSEXP)
    return R_NilValue;
 }
 
-Error getBookdownFormats(const json::JsonRpcRequest& request,
+Error getBookdownFormats(const json::JsonRpcRequest& /*request*/,
                          json::JsonRpcResponse* pResponse)
 {
    json::Object responseJson;

@@ -2630,8 +2630,8 @@ namespace {
 
 void warnXcodeLicense()
 {
-   const char* msg = 1 + R"EOF(
-Warning: macOS is reporting that you have not yet agreed to the Xcode license.
+   const char* msg =
+R"EOF(Warning: macOS is reporting that you have not yet agreed to the Xcode license.
 This can occur if Xcode has been updated or reinstalled (e.g. as part of a macOS update).
 Some features (e.g. Git / SVN) may be disabled.
 
