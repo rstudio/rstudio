@@ -17,9 +17,9 @@ import { Node as ProsemirrorNode, Mark, Fragment, Schema } from 'prosemirror-mod
 import { DecorationSet } from 'prosemirror-view';
 import { Plugin, PluginKey, EditorState, Transaction, TextSelection } from 'prosemirror-state';
 import { toggleMark } from 'prosemirror-commands';
-import { InputRule } from 'prosemirror-inputrules';
+import { InputRule, inputRules } from 'prosemirror-inputrules';
 
-import { findChildrenByMark } from 'prosemirror-utils';
+import { findChildrenByMark, setTextSelection } from 'prosemirror-utils';
 
 import { PandocExtensions, PandocToken, PandocTokenType, PandocOutput } from '../../api/pandoc';
 import { Extension } from '../../api/extension';
@@ -27,7 +27,7 @@ import { kTexFormat } from '../../api/raw';
 import { EditorUI } from '../../api/ui';
 import { markHighlightPlugin, markHighlightDecorations } from '../../api/mark-highlight';
 import { MarkTransaction } from '../../api/transaction';
-import { getMarkRange } from '../../api/mark';
+import { getMarkRange, markIsActive } from '../../api/mark';
 import { EditorCommandId } from '../../api/command';
 import { texLength } from '../../api/tex';
 
@@ -124,8 +124,36 @@ const extension = (pandocExtensions: PandocExtensions): Extension | null => {
 
     // plugin to add highlighting decorations
     plugins: (schema: Schema) => {
+
+      // plugins to return
       const plugins: Plugin[] = [];
+
+      // latex equation highlighting
       plugins.push(latexHighlightingPlugin(schema));
+
+      // latex brace matching
+      const braces = new Map([
+        ['{', '}'],
+        ['[', ']'],
+      ]);
+      plugins.push(
+        inputRules({
+          rules: [
+            new InputRule(/(^|[^^\\])([{[])$/, (state: EditorState, match: string[], start: number, end: number) => {
+              if (markIsActive(state, schema.marks.raw_tex)) {
+                const tr = state.tr;
+                tr.insertText(match[2] + braces.get(match[2]));
+                setTextSelection(start + match[1].length + 1)(tr);
+                return tr;
+              } else {
+                return null;
+              }
+            }),
+          ],
+        }),
+      );
+
+      // return
       return plugins;
     },
   };
