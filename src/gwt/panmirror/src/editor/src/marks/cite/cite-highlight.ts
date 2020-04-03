@@ -26,6 +26,10 @@ export function citeHighlightPlugin(schema: Schema) {
     // id decorations
     const kIdClass = 'pm-link-text-color';
     const re = /-?@[\w:.#$%&-+?<>~/]+/g;
-    return markHighlightDecorations(markRange, text, re, kIdClass);
+    const decorations = markHighlightDecorations(markRange, text, re, kIdClass);
+
+    // bracket decorations
+    const bracketRe = /(^\[|\]$)/g;
+    return decorations.concat(markHighlightDecorations(markRange, text, bracketRe, kIdClass));
   });
 }
