@@ -13,13 +13,14 @@
  *
  */
 
-import { Mark, Schema, Fragment } from 'prosemirror-model';
+import { Mark, Schema, Fragment, Node as ProsemirrorNode } from 'prosemirror-model';
 import { InputRule } from 'prosemirror-inputrules';
 import { EditorState, TextSelection } from 'prosemirror-state';
 
 import { Extension, extensionIfEnabled } from '../../api/extension';
 import { EditorUI } from '../../api/ui';
 import { PandocTokenType, PandocToken, PandocOutput } from '../../api/pandoc';
+import { fragmentText } from '../../api/fragment';
 
 import { citeHighlightPlugin } from './cite-highlight';
 import { InsertCitationCommand } from './cite-commands';
@@ -74,12 +75,27 @@ const extension: Extension = {
           priority: 14,
           write: (output: PandocOutput, _mark: Mark, parent: Fragment) => {
 
-            // walk through the fragment
+            // TODO: @id should be it's own mark type created via input rule
+            // TODO: semicolon escaping is still a thing....
 
-            // write w/o escaping [, ], or @
-            output.withOption('citationEscaping', true, () => {
+            // divide out delimiters from body
+            const openCite = parent.cut(0, 1);
+            const cite = parent.cut(1, parent.size - 1);
+            const closeCite = parent.cut(parent.size - 1, parent.size);
+
+            // proceed if the citation is still valid
+            const kCiteRe = /(.* -?@|-?@)[\w:.#$%&-+?<>~/]+.*/;
+            if (fragmentText(openCite) === '[' && 
+                fragmentText(closeCite) === ']'&&
+                kCiteRe.test(fragmentText(cite))) {
+              output.writeRawMarkdown('[');
+              output.withOption('citationEscaping', true, () => {
+                output.writeInlines(cite);
+              });
+              output.writeRawMarkdown(']');
+            } else {
               output.writeInlines(parent);
-            });
+            }
           },
         },
       },

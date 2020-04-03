@@ -198,7 +198,7 @@ class PandocWriter implements PandocOutput {
     // determine which characters we shouldn't escape
     const preventEscapeCharacters = this.preventEscapeCharacters;
     if (this.options.citationEscaping) {
-      preventEscapeCharacters.push('[', ']', '@');
+      preventEscapeCharacters.push('@');
     }
 
     if (text) {
