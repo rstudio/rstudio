@@ -41,6 +41,11 @@ public class ThemeFonts
       String getProportionalFont();
       String getFixedWidthFont();
    }
+   
+   public static String getFixedWidthClass()
+   {
+      return "rstudio-fixed-width-font";
+   }
 
    static class DesktopThemeFontLoader implements ThemeFontLoader
    {

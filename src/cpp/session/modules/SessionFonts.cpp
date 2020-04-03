@@ -18,6 +18,7 @@
 #include <core/http/Request.hpp>
 #include <core/http/Response.hpp>
 #include <core/Exec.hpp>
+#include <core/text/TemplateFilter.hpp>
 
 #include <core/system/Xdg.hpp>
 
@@ -255,6 +256,22 @@ void handleFontCssRequest(const http::Request& request,
    }
    else
    {
+      // Append override rules for basic fixed-width elements. This stylesheet overrides a few key
+      // styles in themeStyles.css with the specified font.
+      std::map<std::string,std::string> vars;
+      vars["font"] = fileName;
+      std::ostringstream oss;
+      error = core::text::renderTemplate(
+         session::options().rResourcesPath().completeChildPath("themes/css/fonts.css"), vars, oss);
+      if (error)
+      {
+         LOG_ERROR(error);
+      }
+      else
+      {
+         css.append(oss.str());
+      }
+
       // Return the accumulated stylesheet
       pResponse->setContentType("text/css");
       pResponse->setBody(css);

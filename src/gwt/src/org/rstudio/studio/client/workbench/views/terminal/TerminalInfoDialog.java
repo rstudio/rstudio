@@ -21,6 +21,7 @@ import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.ResultCallback;
 import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.theme.ThemeFonts;
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.widget.ModalDialogBase;
 import org.rstudio.core.client.widget.ThemedButton;
@@ -102,7 +103,7 @@ public class TerminalInfoDialog extends ModalDialogBase
             diagnostics.append(session.getSocket().getLocalEchoDiagnostics());
       }
       textArea_ = new TextArea();
-      textArea_.addStyleName(ThemeResources.INSTANCE.themeStyles().fixedWidthFont());
+      textArea_.addStyleName(ThemeFonts.getFixedWidthClass());
       textArea_.setSize("600px", "400px");
       textArea_.setReadOnly(true);
       textArea_.setText(diagnostics.toString());

@@ -50,8 +50,6 @@ public interface ThemeStyles extends CssResource
           
    String closeTabButton();
 
-   String fixedWidthFont();
-   
    String visuallyHidden();
    String tabLayout();
    String tabLayoutLeft();

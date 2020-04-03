@@ -1,0 +1,14 @@
+
+pre {
+   font-family: "#!font#", monospace;
+}
+
+.ace_editor, .ace_text-layer {
+   font-family: "#!font#", monospace !important;
+}
+
+.rstudio-fixed-width-font {
+   font-family: "#!font#", monospace !important;
+}
+
+
