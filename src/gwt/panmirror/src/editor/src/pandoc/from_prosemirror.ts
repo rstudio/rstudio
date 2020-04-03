@@ -97,7 +97,6 @@ class PandocWriter implements PandocOutput {
     this.activeMarks = [];
     this.options = {
       writeSpaces: true,
-      citationEscaping: false,
     };
   }
 
@@ -198,10 +197,7 @@ class PandocWriter implements PandocOutput {
   public writeText(text: string | null) {
     // determine which characters we shouldn't escape
     const preventEscapeCharacters = this.preventEscapeCharacters;
-    if (this.options.citationEscaping) {
-      preventEscapeCharacters.push('@');
-    }
-
+ 
     if (text) {
       let textRun = '';
       const flushTextRun = () => {

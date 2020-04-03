@@ -215,6 +215,31 @@ export function removeInvalidatedMarks(
   });
 }
 
+export function splitInvalidatedMarks(
+  tr: MarkTransaction,
+  node: ProsemirrorNode,
+  pos: number,
+  validLength: (text: string) => number,
+  markType: MarkType
+) {
+  const hasMarkType = (nd: ProsemirrorNode) => markType.isInSet(nd.marks);
+  const markedNodes = findChildrenByMark(node, markType, true);
+  markedNodes.forEach(markedNode => {
+    const mark = hasMarkType(markedNode.node);
+    if (mark) {
+      const from = pos + 1 + markedNode.pos;
+      const markRange = getMarkRange(tr.doc.resolve(from), markType);
+      if (markRange) {
+        const text = tr.doc.textBetween(markRange.from, markRange.to);
+        const length = validLength(text);
+        if (length > -1 && length !== text.length) {
+          tr.removeMark(markRange.from + length, markRange.to, markType);
+        }
+      }
+    }
+  });
+}
+
 export function detectAndApplyMarks(
   tr: MarkTransaction,
   node: ProsemirrorNode,

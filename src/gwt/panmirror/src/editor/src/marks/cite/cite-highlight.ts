@@ -23,13 +23,9 @@ const key = new PluginKey<DecorationSet>('cite-highlight');
 
 export function citeHighlightPlugin(schema: Schema) {
   return markHighlightPlugin(key, schema.marks.cite, (text, _attrs, markRange) => {
-    // id decorations
-    const kIdClass = 'pm-link-text-color';
-    const re = /-?@[\w:.#$%&-+?<>~/]+/g;
-    const decorations = markHighlightDecorations(markRange, text, re, kIdClass);
-
     // bracket decorations
+    const kBracketClass = 'pm-link-text-color';
     const bracketRe = /(^\[|\]$)/g;
-    return decorations.concat(markHighlightDecorations(markRange, text, bracketRe, kIdClass));
+    return markHighlightDecorations(markRange, text, bracketRe, kBracketClass);
   });
 }
