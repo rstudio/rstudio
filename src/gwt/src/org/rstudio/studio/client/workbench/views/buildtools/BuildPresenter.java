@@ -64,7 +64,7 @@ import org.rstudio.studio.client.workbench.views.console.events.WorkingDirChange
 import org.rstudio.studio.client.workbench.views.console.events.WorkingDirChangedHandler;
 import org.rstudio.studio.client.workbench.views.files.model.FilesServerOperations;
 import org.rstudio.studio.client.workbench.views.jobs.model.JobManager;
-import org.rstudio.studio.client.workbench.views.source.SourceBuildHelper;
+import org.rstudio.studio.client.workbench.views.source.Source;
 import org.rstudio.studio.client.workbench.views.terminal.TerminalHelper;
 
 public class BuildPresenter extends BasePresenter 
@@ -104,7 +104,7 @@ public class BuildPresenter extends BasePresenter
                          FileTypeRegistry fileTypeRegistry,
                          Session session,
                          DependencyManager dependencyManager,
-                         SourceBuildHelper sourceBuildHelper,
+                         Source source,
                          TerminalHelper terminalHelper,
                          Provider<JobManager> pJobManager,
                          FilesServerOperations fileServer)
@@ -118,7 +118,7 @@ public class BuildPresenter extends BasePresenter
       eventBus_ = eventBus;
       commands_ = commands;
       fileTypeRegistry_ = fileTypeRegistry;
-      sourceBuildHelper_ = sourceBuildHelper;
+      source_ = source;
       terminalHelper_ = terminalHelper;
       pJobManager_ = pJobManager;
       session_ = session;
@@ -309,7 +309,7 @@ public class BuildPresenter extends BasePresenter
    
    void onDevtoolsLoadAll()
    {
-      sourceBuildHelper_.withSaveFilesBeforeCommand(new Command() {
+      source_.withSaveFilesBeforeCommand(new Command() {
          @Override
          public void execute()
          {
@@ -322,7 +322,13 @@ public class BuildPresenter extends BasePresenter
                } 
             }); 
          }
-      }, "Build");
+      },
+      new Command() {
+         public void execute()
+         {
+         }
+      },
+      "Build");
    }
      
    void onBuildSourcePackage()
@@ -421,7 +427,7 @@ public class BuildPresenter extends BasePresenter
       // attempt to start a build (this will be a silent no-op if there
       // is already a build running)
       workbenchContext_.setBuildInProgress(true);
-      sourceBuildHelper_.withSaveFilesBeforeCommand(new Command() {
+      source_.withSaveFilesBeforeCommand(new Command() {
          @Override
          public void execute()
          {
@@ -442,7 +448,13 @@ public class BuildPresenter extends BasePresenter
 
             });
          }
-      }, "Build");
+      },
+      new Command() {
+         public void execute()
+         {
+         }
+      },
+      "Build");
    }
 
    void onStopBuild()
@@ -509,7 +521,7 @@ public class BuildPresenter extends BasePresenter
    private final DependencyManager dependencyManager_;
    private final Commands commands_;
    private final FileTypeRegistry fileTypeRegistry_;
-   private final SourceBuildHelper sourceBuildHelper_;
+   private final Source source_;
    private final WorkbenchContext workbenchContext_;
    private final TerminalHelper terminalHelper_;
    private final Provider<JobManager> pJobManager_;

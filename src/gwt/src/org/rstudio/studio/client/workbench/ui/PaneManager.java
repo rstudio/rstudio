@@ -281,12 +281,14 @@ public class PaneManager
       right_ = createSplitWindow(panes_.get(2), panes_.get(3), RIGHT_COLUMN, 0.6, splitterSize);
 
 
+      ArrayList<Widget> mylist = new ArrayList<Widget>();
+      source_.loadFullSource();
+      /*
       for (int i = 0; i < 3; i++)
       {
          source_.addDisplay();
       }
 
-      ArrayList<Widget> mylist = new ArrayList<Widget>();
       int counter = 0;
       for (Source.Display display : source_.getViews())
       {
@@ -294,6 +296,7 @@ public class PaneManager
          mylist.add(display.asWidget());
          counter++;
       }
+      */
 
       panel_ = pSplitPanel.get();
       panel_.initialize(mylist, left_, right_);
