@@ -1075,8 +1075,12 @@
                 "type": "string"
             },
             "default": [
+                "Andale Mono", 
+                "Bitstream Vera Sans Mono", 
                 "Cascadia Code", 
                 "Consolas", 
+                "Courier New", 
+                "Courier", 
                 "DejaVu Sans Mono",
                 "Droid Sans Mono",
                 "FiraCode", 
@@ -1085,12 +1089,15 @@
                 "Inconsolata", 
                 "JetBrains Mono", 
                 "Lucida Console",
+                "Lucida Sans Typewriter",
                 "Menlo", 
                 "Monaco", 
                 "Monoid",
                 "Operator Mono",
+                "Pragmata", 
                 "SF Mono",
                 "Source Code Pro",
+                "Vera Sans Mono", 
                 "Victor Mono", 
                 "Ubuntu Mono"
             ]
