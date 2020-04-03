@@ -245,9 +245,12 @@ void fixupPendingConsoleInput()
          //    "foo"         <--
          //
          // so update the indent in that case
-         std::string lineIndent = string_utils::extractIndent(line);
-         if (lineIndent.length() < blockIndent.length())
-            blockIndent = lineIndent;
+         else
+         {
+            std::string lineIndent = string_utils::extractIndent(line);
+            if (lineIndent.length() < blockIndent.length())
+               blockIndent = lineIndent;
+         }
       }
       else
       {
