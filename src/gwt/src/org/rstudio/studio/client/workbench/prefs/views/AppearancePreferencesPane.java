@@ -664,6 +664,11 @@ public class AppearancePreferencesPane extends PreferencesPane
          public void onResponseReceived(JsArrayString fonts)
          {
             populateFontList(JsUtil.toStringArray(fonts));
+            String font = userPrefs_.serverEditorFont().getValue();
+            if (!StringUtil.isNullOrEmpty(font))
+            {
+               fontFace_.setValue(font);
+            }
          }
 
          @Override

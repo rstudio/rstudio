@@ -28,6 +28,7 @@ import com.google.inject.Singleton;
 
 import org.rstudio.core.client.ColorUtil.RGBColor;
 import org.rstudio.core.client.Debug;
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.ProgressIndicator;
@@ -37,6 +38,7 @@ import org.rstudio.studio.client.common.DelayedProgressRequestCallback;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UserState;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.EditorThemeChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.themes.model.ThemeServerOperations;
@@ -50,11 +52,13 @@ public class AceThemes
    @Inject
    public AceThemes(ThemeServerOperations themeServerOperations,
                     final Provider<UserState> state,
+                    final Provider<UserPrefs> prefs,
                     EventBus events)
    {
       themeServerOperations_ = themeServerOperations;
       events_ = events;
       state_ = state;
+      prefs_ = prefs;
       themes_ = new HashMap<>();
 
       state.get().theme().bind(theme -> applyTheme((AceTheme)theme.cast()));
@@ -74,6 +78,33 @@ public class AceThemes
       currentStyleEl.setRel("stylesheet");
       currentStyleEl.setId(linkId_);
       currentStyleEl.setHref(themeUrl.toString());
+      
+      // In server mode, augment the theme with a font if we have one
+      LinkElement fontEl = null;
+      if (!Desktop.isDesktop())
+      {
+         String font = prefs_.get().serverEditorFont().getValue();
+         if (!StringUtil.isNullOrEmpty(font))
+         {
+            fontEl = document.createLinkElement();
+            fontEl.setType("text/css");
+            fontEl.setRel("stylesheet");
+            fontEl.setId(fontId_);
+            fontEl.setHref(
+                  GWT.getHostPageBaseURL() + 
+                  "fonts/css/" + 
+                  font + ".css");
+            Element oldFontEl = document.getElementById(fontId_);
+            if (null != oldFontEl)
+            {
+              document.getBody().replaceChild(fontEl, oldFontEl);
+            }
+            else
+            {
+               document.getBody().appendChild(fontEl);
+            }
+         }
+      }
    
       Element oldStyleEl = document.getElementById(linkId_);
       if (null != oldStyleEl)
@@ -249,6 +280,8 @@ public class AceThemes
    private ThemeServerOperations themeServerOperations_;
    private final EventBus events_;
    private final Provider<UserState> state_;
+   private final Provider<UserPrefs> prefs_;
    private final String linkId_ = "rstudio-acethemes-linkelement";
+   private final String fontId_ = "rstudio-fontelement";
    private HashMap<String, AceTheme> themes_;
 }
