@@ -31,8 +31,6 @@ namespace fonts {
 
 core::Error initialize();
 
-core::json::Array getInstalledFonts();
-
 } // namespace fonts
 } // namespace modules
 } // namespace session

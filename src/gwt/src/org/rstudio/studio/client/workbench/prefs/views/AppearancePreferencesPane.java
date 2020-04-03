@@ -1,7 +1,7 @@
 /*
  * AppearancePreferencesPane.java
  *
- * Copyright (C) 2009-18 by RStudio, PBC
+ * Copyright (C) 2009-20 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.prefs.views;
 
+import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.RepeatingCommand;
 import com.google.gwt.dom.client.SelectElement;
@@ -28,6 +29,7 @@ import com.google.inject.Inject;
 
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.js.JsUtil;
 import org.rstudio.core.client.prefs.RestartRequirement;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.ThemeFonts;
@@ -40,11 +42,14 @@ import org.rstudio.studio.client.application.DesktopInfo;
 import org.rstudio.studio.client.common.FileDialogs;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.dependencies.DependencyManager;
+import org.rstudio.studio.client.server.ServerError;
+import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UserState;
 import org.rstudio.studio.client.workbench.views.source.editors.text.themes.AceTheme;
 import org.rstudio.studio.client.workbench.views.source.editors.text.themes.AceThemes;
+import org.rstudio.studio.client.workbench.views.source.editors.text.themes.model.ThemeServerOperations;
 
 import java.util.HashMap;
 
@@ -59,13 +64,15 @@ public class AppearancePreferencesPane extends PreferencesPane
                                     WorkbenchContext workbenchContext,
                                     GlobalDisplay globalDisplay,
                                     DependencyManager dependencyManager,
-                                    FileDialogs fileDialogs)
+                                    FileDialogs fileDialogs,
+                                    ThemeServerOperations server)
    {
       res_ = res;
       userPrefs_ = userPrefs;
       userState_ = userState;
       globalDisplay_ = globalDisplay;
       dependencyManager_ = dependencyManager;
+      server_ = server;
       
       VerticalPanel leftPanel = new VerticalPanel();
       
@@ -133,23 +140,35 @@ public class AppearancePreferencesPane extends PreferencesPane
          leftPanel.add(zoomLevel_);
          
          zoomLevel_.getListBox().addChangeHandler(event -> updatePreviewZoomLevel());
+      }
       
+      String[] fonts = new String[] {};
+      
+      if (Desktop.isDesktop())
+      {
+         // In desktop mode, get the list of installed fonts from Qt
          String fontList = DesktopInfo.getFixedWidthFontList();
          
-         String[] fonts = fontList.isEmpty()
-               ? new String[] {}
-               : fontList.split("\\n");
-               
-         String fontFaceLabel = fontList.isEmpty()
-               ? "Editor font (loading...):"
-               : "Editor font:";
-
          if (fontList.isEmpty())
             registerFontListReadyCallback();
-         
-         fontFace_ = new SelectWidget(fontFaceLabel, fonts, fonts, false, false, false);
-         fontFace_.getListBox().setWidth("95%");
+         else
+            fonts = fontList.split("\\n");
+      }
+      else
+      {
+         // In server mode, get the installed set of fonts by querying the server
+         getInstalledFontList();
+      }
 
+      String fontFaceLabel = fonts.length == 0 
+            ? "Editor font (loading...):"
+            : "Editor font:";
+
+      fontFace_ = new SelectWidget(fontFaceLabel, fonts, fonts, false, false, false);
+      fontFace_.getListBox().setWidth("95%");
+      
+      if (Desktop.isDesktop())
+      {
          String value = DesktopInfo.getFixedWidthFont();
          String label = value.replaceAll("\\\"", "");
          if (!fontFace_.setValue(label))
@@ -158,20 +177,21 @@ public class AppearancePreferencesPane extends PreferencesPane
             fontFace_.setValue(value);
          }
          initialFontFace_ = StringUtil.notNull(fontFace_.getValue());
-         leftPanel.add(fontFace_);
-         fontFace_.addChangeHandler(new ChangeHandler()
-         {
-            @Override
-            public void onChange(ChangeEvent event)
-            {
-               String font = fontFace_.getValue();
-               if (font != null)
-                  preview_.setFont(font);
-               else
-                  preview_.setFont(ThemeFonts.getFixedWidthFont());
-            }
-         });
       }
+
+      leftPanel.add(fontFace_);
+      fontFace_.addChangeHandler(new ChangeHandler()
+      {
+         @Override
+         public void onChange(ChangeEvent event)
+         {
+            String font = fontFace_.getValue();
+            if (font != null)
+               preview_.setFont(font);
+            else
+               preview_.setFont(ThemeFonts.getFixedWidthFont());
+         }
+      });
 
       String[] labels = {"7", "8", "9", "10", "11", "12", "13", "14", "16", "18", "24", "36"};
       String[] values = new String[labels.length];
@@ -617,15 +637,41 @@ public class AppearancePreferencesPane extends PreferencesPane
                return true;
          
             String[] fontList = fonts.split("\\n");
-            String value = fontFace_.getValue();
-            value = value.replaceAll("\\\"", "");
-            fontFace_.setLabel("Editor font:");
-            fontFace_.setChoices(fontList, fontList);
-            fontFace_.setValue(value);
+            populateFontList(fontList);
             return false;
          }
          
       }, 100);
+   }
+   
+   private void getInstalledFontList()
+   {
+      server_.getInstalledFonts(new ServerRequestCallback<JsArrayString>()
+      {
+         @Override
+         public void onResponseReceived(JsArrayString fonts)
+         {
+            populateFontList(JsUtil.toStringArray(fonts));
+         }
+
+         @Override
+         public void onError(ServerError error)
+         {
+            // Change label so it doesn't load indefinitely
+            fontFace_.setLabel("Editor font:");
+
+            Debug.logError(error);
+         }
+      });
+   }
+   
+   private void populateFontList(String[] fontList)
+   {
+      String value = fontFace_.getValue();
+      value = value.replaceAll("\\\"", "");
+      fontFace_.setLabel("Editor font:");
+      fontFace_.setChoices(fontList, fontList);
+      fontFace_.setValue(value);
    }
 
    private final PreferencesDialogResources res_;
@@ -647,6 +693,7 @@ public class AppearancePreferencesPane extends PreferencesPane
    private HashMap<String, AceTheme> themeList_;
    private final GlobalDisplay globalDisplay_;
    private final DependencyManager dependencyManager_;
+   private final ThemeServerOperations server_;
    
    private static final String CODE_SAMPLE =
          "# plotting of R objects\n" +

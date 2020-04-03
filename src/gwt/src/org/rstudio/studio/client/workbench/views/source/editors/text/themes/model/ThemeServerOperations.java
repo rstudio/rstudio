@@ -1,7 +1,7 @@
 /*
  * ThemeServerOperations.java
  *
- * Copyright (C) 2018 by RStudio, PBC
+ * Copyright (C) 2018-2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -16,6 +16,7 @@
 package org.rstudio.studio.client.workbench.views.source.editors.text.themes.model;
 
 import com.google.gwt.core.client.JsArray;
+import com.google.gwt.core.client.JsArrayString;
 
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
@@ -33,4 +34,6 @@ public interface ThemeServerOperations
    void getThemeName(ServerRequestCallback<String> request, String themeLocation);
    
    void setComputedThemeColors(String foreground, String background, VoidServerRequestCallback callback);
+   
+   void getInstalledFonts(ServerRequestCallback<JsArrayString> callback);
 }

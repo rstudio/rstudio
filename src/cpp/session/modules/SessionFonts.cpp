@@ -107,9 +107,9 @@ Error generateCssFromFile(const FilePath& file,
          // Looks like a number, so generate a weight rule and recurse.
          pCss->append("  font-weight: " + parent + ";\n");
       }
-      else
+      else if (parent == "oblique" || parent == "italic")
       {
-         // Presume it's a style (usually "italic" or "oblique")
+         // It's a style
          pCss->append("  font-style: " + parent + ";\n");
       }
    }
@@ -261,9 +261,7 @@ void handleFontCssRequest(const http::Request& request,
    return;
 }
 
-} // anonymous namespace
-
-json::Array getInstalledFonts()
+Error getInstalledFonts(const json::JsonRpcRequest& request, json::JsonRpcResponse* pResponse)
 {
    Error error;
 
@@ -284,8 +282,7 @@ json::Array getInstalledFonts()
       if (error)
       {
          // These directories should be readable by everyone
-         LOG_ERROR(error);
-         continue;
+         return error;
       }
 
       for (const auto& file: files)
@@ -298,8 +295,12 @@ json::Array getInstalledFonts()
       }
    }
 
-   return fonts;
+   pResponse->setResult(fonts);
+
+   return Success();
 }
+
+} // anonymous namespace
 
 Error initialize()
 {
@@ -308,6 +309,7 @@ Error initialize()
 
    ExecBlock initBlock;
    initBlock.addFunctions()
+      (bind(registerRpcMethod, "get_installed_fonts", getInstalledFonts))
       (bind(registerUriHandler, "/" kFontFiles, handleFontFileRequest))
       (bind(registerUriHandler, "/" kFontCss,   handleFontCssRequest));
    return initBlock.execute();
