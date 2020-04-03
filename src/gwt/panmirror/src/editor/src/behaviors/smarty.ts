@@ -63,10 +63,13 @@ const extension: Extension = {
             text = text.replace(/'/g, '’');
 
             // emdash
-            text = text.replace(/(\w)--(\w)/, '$1—$2');
+            text = text.replace(/(\w)---(\w)/g, '$1—$2');
+
+            // endash
+            text = text.replace(/(\w)--(\w)/g, '$1–$2');
 
             // ellipses
-            text = text.replace(/\.\.\./, '…');
+            text = text.replace(/\.\.\./g, '…');
 
             return text;
           },
