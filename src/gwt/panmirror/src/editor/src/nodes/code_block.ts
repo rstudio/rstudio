@@ -113,7 +113,7 @@ const extension = (pandocExtensions: PandocExtensions): Extension => {
     },
 
     inputRules: (schema: Schema) => {
-      return [textblockTypeInputRule(/^```/, schema.nodes.code_block)];
+      return [textblockTypeInputRule(/^```$/, schema.nodes.code_block)];
     },
   };
 };

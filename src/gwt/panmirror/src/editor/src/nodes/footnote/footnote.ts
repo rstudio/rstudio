@@ -23,7 +23,6 @@ import {
   NodeWithPos,
   findChildren,
 } from 'prosemirror-utils';
-import { InputRule } from 'prosemirror-inputrules';
 
 import { Extension, extensionIfEnabled } from '../../api/extension';
 import { uuidv4 } from '../../api/util';
@@ -119,17 +118,6 @@ const extension: Extension = {
 
   commands: (_schema: Schema) => {
     return [new ProsemirrorCommand(EditorCommandId.Footnote, ['Mod-^'], footnoteCommandFn())];
-  },
-
-  inputRules: (_schema: Schema) => {
-    return [
-      new InputRule(/\^\[/, (state: EditorState, match: string[], start: number, end: number) => {
-        const tr = state.tr;
-        tr.delete(start, end);
-        insertFootnote(tr);
-        return tr;
-      }),
-    ];
   },
 };
 

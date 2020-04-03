@@ -68,7 +68,6 @@ import behaviorAttrEdit from './behaviors/attr_edit';
 import behaviorAttrDuplicateId from './behaviors/attr_duplicate_id';
 import behaviorTrailingP from './behaviors/trailing_p';
 import behaviorOutline from './behaviors/outline';
-import behaviorBraceMatch from './behaviors/bracematch';
 import behaviorTextFocus from './behaviors/text_focus';
 
 // marks
@@ -138,7 +137,6 @@ export function initExtensions(
     behaviorAttrDuplicateId,
     behaviorTrailingP,
     behaviorOutline,
-    behaviorBraceMatch,
     behaviorTextFocus,
 
     // marks

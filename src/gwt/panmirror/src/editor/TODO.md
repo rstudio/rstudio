@@ -4,15 +4,15 @@ pandoc schema: <https://github.com/jgm/pandoc-types/blob/master/Text/Pandoc/Defi
 
 ## Feedback
 
-## TODO
+Add math, cite, latex input rules to docs
 
-Take the Fragment the represents the Cite (Citation+) and parse out the Pandoc tokens. Delimiters are `[]@;` and we need to only respect unescaped versions of those. See about handling citations within citations?
-
-Look into correct handling of non-bracket citations (currently brackets added on intake)
+Perhaps only run quoted fixup during load and save?
 
 Update screenshots
 
-Doc with only YAML block needs paragraph at end
+texLength needs to handle brackets as well as braces
+
+Doc with only YAML block or Rmd Chunk needs paragraph at end
 
 Surface attributes handling for div with only an id (shading treatment a bit much?)
 
@@ -26,7 +26,6 @@ MathJax preview. When containing the selection, the math will show both the code
 
 Reveal codes / typora behavior
 
-Updated dark mode node selection color from Paul (pending Maria)
 
 ## Future
 
@@ -69,6 +68,9 @@ Notes on preformance implications of scanning the entire document + some discuss
   granularity w/ markdown) Perhaps don't set widths on all of the columns (only ones explicitly sized?)
 
 - Clear Formatting doesn't play well with table selections (only one of the cells is considered part of the "selected nodes")
+
+- Semicolons in citations cannot be escaped (they always indicate a delimiter). Solution to this would be
+  to mark them explicitly with an input rule (and color them so user sees that there is a state change).
 
 ## Project/Build
 
