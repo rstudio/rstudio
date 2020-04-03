@@ -4,13 +4,13 @@ pandoc schema: <https://github.com/jgm/pandoc-types/blob/master/Text/Pandoc/Defi
 
 ## Feedback
 
-## TODO
-- Citation is never broken by editing (unless removed entirely)
-- At write time we will determine whether it's still a citation or not
-
 Add math, cite, latex input rules to docs
 
+Perhaps only run quoted fixup during load and save?
+
 Update screenshots
+
+texLength needs to handle brackets as well as braces
 
 Doc with only YAML block or Rmd Chunk needs paragraph at end
 
@@ -68,6 +68,9 @@ Notes on preformance implications of scanning the entire document + some discuss
   granularity w/ markdown) Perhaps don't set widths on all of the columns (only ones explicitly sized?)
 
 - Clear Formatting doesn't play well with table selections (only one of the cells is considered part of the "selected nodes")
+
+- Semicolons in citations cannot be escaped (they always indicate a delimiter). Solution to this would be
+  to mark them explicitly with an input rule (and color them so user sees that there is a state change).
 
 ## Project/Build
 
