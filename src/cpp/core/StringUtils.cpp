@@ -774,6 +774,14 @@ bool extractCommentHeader(const std::string& contents,
    return true;
 }
 
+std::string extractIndent(const std::string& line)
+{
+   auto index = line.find_first_not_of(" \t");
+   if (index == std::string::npos)
+      return std::string();
+   return line.substr(0, index);
+}
+
 } // namespace string_utils
 } // namespace core 
 } // namespace rstudio

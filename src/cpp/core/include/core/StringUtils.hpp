@@ -290,6 +290,8 @@ bool extractCommentHeader(const std::string& contents,
                           const std::string& reCommentPrefix,
                           std::string* pHeader);
 
+std::string extractIndent(const std::string& line);
+
 } // namespace string_utils
 
 // wrappers for functions in <cctype>, as those functions normally

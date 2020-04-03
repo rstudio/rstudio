@@ -193,8 +193,9 @@ void fixupPendingConsoleInput()
    // NOTE: should consider using tokenizer here
    boost::regex reBlockStart(":\\s*(?:#|$)");
    
-   // keep track of last line's indent
-   std::string indent;
+   // keep track of the indentation used for the current block
+   // of Python code (default to no indent)
+   std::string blockIndent;
    
    // split input into list of commands
    std::vector<std::string> lines = core::algorithm::split(input.text, "\n");
@@ -209,12 +210,13 @@ void fixupPendingConsoleInput()
          // if the line is empty, then replace it with the appropriate indent
          if (line.empty())
          {
-            line = indent;
+            line = blockIndent;
          }
          
          // if this line would exit the reticulate REPL, then update that state
          else if (line == "quit" || line == "exit")
          {
+            blockIndent.clear();
             pyReplActive = false;
          }
          
@@ -229,13 +231,23 @@ void fixupPendingConsoleInput()
                if (lookahead.empty())
                   continue;
                
-               std::size_t index = lookahead.find_first_not_of(" \t");
-               indent = (index == std::string::npos)
-                     ? std::string()
-                     : lookahead.substr(0, index);
+               blockIndent = string_utils::extractIndent(lookahead);
                break;
             }
          }
+         
+         // if the indent for this line has _decreased_, then we've
+         // closed an inner block; e.g. for something like:
+         //
+         // def foo():
+         //    def bar():
+         //       "bar"
+         //    "foo"         <--
+         //
+         // so update the indent in that case
+         std::string lineIndent = string_utils::extractIndent(line);
+         if (lineIndent.length() < blockIndent.length())
+            blockIndent = lineIndent;
       }
       else
       {
