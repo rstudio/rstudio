@@ -26,7 +26,6 @@ MathJax preview. When containing the selection, the math will show both the code
 
 Reveal codes / typora behavior
 
-Updated dark mode node selection color from Paul (pending Maria)
 
 ## Future
 
