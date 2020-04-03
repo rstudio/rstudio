@@ -107,7 +107,10 @@ public class PaneManager
       @Override
       protected void onInit(Integer value)
       {
-         if (value != null)
+         if (tabPanel_.isEmpty())
+            tabPanel_.getParentWindow().onWindowStateChange(
+                  new WindowStateChangeEvent(WindowState.HIDE));
+         else if (value != null)
             tabPanel_.selectTab(value);
       }
 

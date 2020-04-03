@@ -188,6 +188,11 @@ public class SourcePane extends Composite implements Display,
       return tabPanel_.getWidgetCount();
    }
 
+   public void addToPanel(Widget w)
+   {
+      panel_.add(w);
+   }
+
    @Override
    public void moveTab(int index, int delta)
    {

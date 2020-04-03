@@ -178,35 +178,35 @@ import java.util.LinkedList;
 import java.util.Queue;
 import java.util.Set;
 
-public class Source extends Composite implements InsertSourceHandler,
-                                                 IsWidget,
-                                               OpenSourceFileHandler,
-                                               TabClosingHandler,
-                                               TabCloseHandler,
-                                               TabReorderHandler,
-                                               SelectionHandler<Integer>,
-                                               TabClosedHandler,
-                                               FileEditHandler,
-                                               ShowContentHandler,
-                                               ShowDataHandler,
-                                               CodeBrowserNavigationHandler,
-                                               CodeBrowserFinishedHandler,
-                                               CodeBrowserHighlightEvent.Handler,
-                                               SourceExtendedTypeDetectedEvent.Handler,
-                                               BeforeShowHandler,
-                                               SnippetsChangedEvent.Handler,
-                                               PopoutDocEvent.Handler,
-                                               DocWindowChangedEvent.Handler,
-                                               DocTabDragInitiatedEvent.Handler,
-                                               PopoutDocInitiatedEvent.Handler,
-                                               DebugModeChangedEvent.Handler,
-                                               OpenProfileEvent.Handler,
-                                               OpenObjectExplorerEvent.Handler,
-                                               ReplaceRangesEvent.Handler,
-                                               SetSelectionRangesEvent.Handler,
-                                               GetEditorContextEvent.Handler,
-                                               RequestDocumentSaveEvent.Handler,
-                                               RequestDocumentCloseEvent.Handler
+public class Source implements InsertSourceHandler,
+                               IsWidget,
+                               OpenSourceFileHandler,
+                               TabClosingHandler,
+                               TabCloseHandler,
+                               TabReorderHandler,
+                               SelectionHandler<Integer>,
+                               TabClosedHandler,
+                               FileEditHandler,
+                               ShowContentHandler,
+                               ShowDataHandler,
+                               CodeBrowserNavigationHandler,
+                               CodeBrowserFinishedHandler,
+                               CodeBrowserHighlightEvent.Handler,
+                               SourceExtendedTypeDetectedEvent.Handler,
+                               BeforeShowHandler,
+                               SnippetsChangedEvent.Handler,
+                               PopoutDocEvent.Handler,
+                               DocWindowChangedEvent.Handler,
+                               DocTabDragInitiatedEvent.Handler,
+                               PopoutDocInitiatedEvent.Handler,
+                               DebugModeChangedEvent.Handler,
+                               OpenProfileEvent.Handler,
+                               OpenObjectExplorerEvent.Handler,
+                               ReplaceRangesEvent.Handler,
+                               SetSelectionRangesEvent.Handler,
+                               GetEditorContextEvent.Handler,
+                               RequestDocumentSaveEvent.Handler,
+                               RequestDocumentCloseEvent.Handler
 {
    public interface Display extends IsWidget,
                                     HasTabClosingHandlers,
@@ -354,9 +354,7 @@ public class Source extends Composite implements InsertSourceHandler,
          dependencyManager_ = dependencyManager;
          pWindowManager_ = pWindowManager;
 
-         panel_ = new LayoutPanel();
-         panel_.setSize("100%", "100%");
-         initWidget(panel_);
+         displayManagerList_.add(new SourceDisplayManager(new SourcePane(), view));
 
          events.fireEvent(new DocTabsChangedEvent(null,
                                                   new String[0],
@@ -5161,11 +5159,11 @@ public class Source extends Composite implements InsertSourceHandler,
       public final CommandWithArg<FileSystemItem> action;
    }
    
-   private LayoutPanel panel_;
    final Queue<StatFileEntry> statQueue_ = new LinkedList<StatFileEntry>();
    final Queue<OpenFileEntry> openFileQueue_ = new LinkedList<OpenFileEntry>();
    ArrayList<EditingTarget> editors_ = new ArrayList<EditingTarget>();
    ArrayList<Integer> tabOrder_ = new ArrayList<Integer>();
+   ArrayList<SourceDisplayManager> displayManagerList_ = new ArrayList<SourceDisplayManager>();
    DisplayList views_ = new DisplayList();
    private EditingTarget activeEditor_;
    private final Commands commands_;
