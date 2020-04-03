@@ -1,7 +1,7 @@
 /*
  * DesktopOptions.cpp
  *
- * Copyright (C) 2009-19 by RStudio, PBC
+ * Copyright (C) 2009-20 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -389,7 +389,7 @@ QString Options::rBinDir() const
    // should be ignored) and the other case by using null for this case and
    // empty string for the other.
    if (!settings_.contains(QString::fromUtf8("RBinDir")))
-      return QString::null;
+      return QString();
 
    QString value = settings_.value(QString::fromUtf8("RBinDir")).toString();
    return value.isNull() ? QString() : value;
