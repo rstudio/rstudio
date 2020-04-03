@@ -30,6 +30,7 @@ import {
 
 import { PandocFormat } from '../api/pandoc_format';
 import { PandocAttr } from '../api/pandoc_attr';
+import { fragmentText } from '../api/fragment';
 
 export function pandocFromProsemirror(
   doc: ProsemirrorNode,
@@ -339,20 +340,15 @@ class PandocWriter implements PandocOutput {
   }
 
   public writeRawMarkdown(markdown: Fragment | string, escapeSymbols?: boolean) {
+    
     // collect markdown text if necessary
-    let md = '';
-    if (markdown instanceof Fragment) {
-      markdown.forEach((node: ProsemirrorNode) => (md = md + node.textContent));
-      markdown = md;
-    } else {
-      md = markdown;
-    }
-
+    let md = markdown instanceof Fragment ? fragmentText(markdown) : markdown;
+    
     // escape symbols if requested
     if (escapeSymbols) {
       const escaped: string[] = [];
       for (let i = 0; i < md.length; i++) {
-        const ch = markdown.charAt(i);
+        const ch = md.charAt(i);
         if (this.escapeCharacters.includes(ch)) {
           escaped.push('\\' + ch);
         } else {

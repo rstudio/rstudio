@@ -24,6 +24,7 @@ import { PandocOutput, PandocToken, PandocTokenType, PandocExtensions } from '..
 import { getMarkRange, markIsActive, getMarkAttrs } from '../../api/mark';
 import { EditorUI, RawFormatProps } from '../../api/ui';
 import { canInsertNode } from '../../api/node';
+import { fragmentText } from '../../api/fragment';
 
 export const kRawInlineFormat = 0;
 export const kRawInlineContent = 1;
@@ -83,8 +84,8 @@ const extension = (pandocExtensions: PandocExtensions): Extension | null => {
             priority: 20,
             write: (output: PandocOutput, mark: Mark, parent: Fragment) => {
               // get raw content
-              let raw = '';
-              parent.forEach((node: ProsemirrorNode) => (raw = raw + node.textContent));
+              const raw = fragmentText(parent);
+             
               // write it
               output.writeToken(PandocTokenType.RawInline, () => {
                 output.write(mark.attrs.format);
