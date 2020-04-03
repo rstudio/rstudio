@@ -1,7 +1,7 @@
 /*
  * DesktopGwtCallbackMac.mm
  *
- * Copyright (C) 2009-19 by RStudio, PBC
+ * Copyright (C) 2009-20 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -37,8 +37,8 @@ RS_BEGIN_NAMESPACE(desktop)
 
 RS_BEGIN_NAMESPACE()
 
-static const char* const s_openWordDocumentFormatString = 1 + R"EOF(
-tell application "Microsoft Word"
+static const char* const s_openWordDocumentFormatString =
+R"EOF(tell application "Microsoft Word"
    activate
    set reopened to false
    repeat with i from 1 to (count of documents)
@@ -60,8 +60,8 @@ tell application "Microsoft Word"
 end tell
 )EOF";
 
-static const char* const s_openPptPresFormatString = 1 + R"EOF(
-tell application "Microsoft PowerPoint"
+static const char* const s_openPptPresFormatString =
+R"EOF(tell application "Microsoft PowerPoint"
 	activate
 	set reopened to false
 	repeat with i from 1 to (count of presentations)

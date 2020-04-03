@@ -1,7 +1,7 @@
 /*
  * DesktopBrowserWindow.cpp
  *
- * Copyright (C) 2009-19 by RStudio, PBC
+ * Copyright (C) 2009-20 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -48,8 +48,8 @@ void initializeWebchannel(BrowserWindow* pWindow)
    webChannelJsFile.close();
 
    // append our WebChannel initialization code
-   const char* webChannelInit = 1 + R"EOF(
-new QWebChannel(qt.webChannelTransport, function(channel) {
+   const char* webChannelInit =
+R"EOF(new QWebChannel(qt.webChannelTransport, function(channel) {
 
    // export channel objects to the main window
    for (var key in channel.objects) {
