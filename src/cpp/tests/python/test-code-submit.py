@@ -30,14 +30,31 @@ def test():
    
 test()
 
+# Test submission of a class definition.
 class HelloWorld(object):
    
    def __init__(self):
       pass
       
    def world(self):
-      
       print("Hello, world!")
 
 hello = HelloWorld()
 hello.world()
+
+
+# Test nested functions.
+def outer():
+   
+   # Define an inner function.
+   def inner():
+
+      print("inner")
+
+   # Now back at 'outer' block scope.
+   inner()
+
+   print("outer")
+   
+# Invoke outer.
+outer()
