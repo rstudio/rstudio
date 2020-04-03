@@ -184,11 +184,7 @@ void fixupPendingConsoleInput()
    
    // if we're about to send code to the Python REPL, then
    // we need to fix whitespace in the code before sending
-   bool pyReplActive = false;
-   Error error =  r::exec::RFunction(".rs.reticulate.replIsActive")
-         .call(&pyReplActive);
-   if (error)
-      LOG_ERROR(error);
+   bool pyReplActive = modules::reticulate::isReplActive();
    
    // pop off current input (we're going to split and re-push now)
    s_consoleInputBuffer.pop();
