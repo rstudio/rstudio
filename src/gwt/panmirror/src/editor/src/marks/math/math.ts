@@ -94,6 +94,9 @@ const extension: Extension = {
             const delimiter = delimiterForType(mark.attrs.type);
             math = math.substr(delimiter.length, math.length - 2 * delimiter.length);
 
+            // escape dollar signs that occur within math
+            math = math.replace(/([^\\])\$/, '$1\\$');
+
             // if it's just whitespace then it's not actually math (we allow this state
             // in the editor because it's the natural starting place for new equations)
             if (math.trim().length === 0) {
@@ -117,8 +120,17 @@ const extension: Extension = {
     return [{ key: BaseKey.Enter, command: displayMathNewline() }];
   },
 
-  inputRules: (_schema: Schema) => {
+  inputRules: (schema: Schema) => {
     return [
+      // inline math
+      new InputRule(/^\$[^ ].*?[^ \\]\$$/, (state: EditorState, match: string[], start: number, end: number) => {
+        const tr = state.tr;
+        tr.insertText('$');
+        const mark = schema.marks.math.create({ type: MathType.Inline });
+        tr.addMark(start, end + 1, mark);
+        return tr;
+      }),
+      // display math
       new InputRule(/^\$\$$/, (state: EditorState, match: string[], start: number, end: number) => {
         const tr = state.tr;
         tr.delete(start, end);

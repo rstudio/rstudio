@@ -13,21 +13,20 @@
  *
  */
 
-import { Mark, Schema, Fragment } from "prosemirror-model";
-import { Transaction } from "prosemirror-state";
+import { Mark, Schema, Fragment } from 'prosemirror-model';
+import { Transaction } from 'prosemirror-state';
 
-import { setTextSelection } from "prosemirror-utils";
+import { setTextSelection } from 'prosemirror-utils';
 
-import { PandocExtensions, PandocTokenType, PandocToken, ProsemirrorWriter, PandocOutput } from "../../api/pandoc";
-import { Extension } from "../../api/extension";
-import { kHTMLFormat } from "../../api/raw";
-import { EditorUI } from "../../api/ui";
-import { EditorCommandId } from "../../api/command";
+import { PandocExtensions, PandocTokenType, PandocToken, ProsemirrorWriter, PandocOutput } from '../../api/pandoc';
+import { Extension } from '../../api/extension';
+import { kHTMLFormat } from '../../api/raw';
+import { EditorUI } from '../../api/ui';
+import { EditorCommandId } from '../../api/command';
 
-import { kRawInlineFormat, kRawInlineContent, RawInlineFormatCommand } from "./raw_inline";
+import { kRawInlineFormat, kRawInlineContent, RawInlineFormatCommand } from './raw_inline';
 
 const extension = (pandocExtensions: PandocExtensions): Extension | null => {
-
   if (!pandocExtensions.raw_html) {
     return null;
   }
@@ -56,8 +55,8 @@ const extension = (pandocExtensions: PandocExtensions): Extension | null => {
           ],
           toDOM(mark: Mark) {
             const attr: any = {
-              class: 'raw-html pm-fixedwidth-font ' + 
-                     (mark.attrs.comment ? 'pm-light-text-color' : 'pm-markup-text-color'),
+              class:
+                'raw-html pm-fixedwidth-font ' + (mark.attrs.comment ? 'pm-light-text-color' : 'pm-markup-text-color'),
               'data-comment': mark.attrs.comment ? '1' : '0',
             };
             return ['span', attr];
@@ -91,12 +90,9 @@ const extension = (pandocExtensions: PandocExtensions): Extension | null => {
 
     // insert command
     commands: (schema: Schema, ui: EditorUI) => {
-      return [
-        new InsertInlineHTMLCommand(schema)
-      ];
+      return [new InsertInlineHTMLCommand(schema)];
     },
   };
-
 };
 
 class InsertInlineHTMLCommand extends RawInlineFormatCommand {
@@ -105,7 +101,7 @@ class InsertInlineHTMLCommand extends RawInlineFormatCommand {
       const mark = schema.marks.raw_html.create();
       const node = schema.text('<>', [mark]);
       tr.replaceSelectionWith(node, false);
-      setTextSelection(tr.selection.to-1)(tr);
+      setTextSelection(tr.selection.to - 1)(tr);
     });
   }
 }
