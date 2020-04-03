@@ -21,6 +21,7 @@
 #include <boost/algorithm/string.hpp>
 #include <boost/bind.hpp>
 #include <boost/enable_shared_from_this.hpp>
+#include <boost/filesystem.hpp>
 
 #include <core/Exec.hpp>
 #include <core/StringUtils.hpp>
@@ -47,7 +48,8 @@ namespace errc {
 enum errc_t
 {
    Success = 0,
-   RegexError = 1
+   RegexError = 1,
+   PermissionsError = 2
 };
 
 const std::string& findCategory()
@@ -127,6 +129,7 @@ public:
       running_(false),
       replace_(false),
       preview_(false),
+      gitFlag_(false),
       pReplaceProgress_(nullptr)
    {
    }
@@ -286,28 +289,28 @@ public:
    {
       json::Object results;
       Error error = json::readObject(asJson,
-                                     "handle", &handle_,
-                                     "input", &input_,
-                                     "path", &path_,
-                                     "regex", &regex_,
-                                     "ignoreCase", &ignoreCase_,
-                                     "results", &results,
-                                     "running", &running_,
-                                     "replace", &replace_,
-                                     "preview", &preview_,
-                                     "gitFlag", &gitFlag_,
-                                     "replacePattern", &replacePattern_);
+                                     "handle", handle_,
+                                     "input", input_,
+                                     "path", path_,
+                                     "regex", regex_,
+                                     "ignoreCase", ignoreCase_,
+                                     "results", results,
+                                     "running", running_,
+                                     "replace", replace_,
+                                     "preview", preview_,
+                                     "gitFlag", gitFlag_,
+                                     "replacePattern", replacePattern_);
       if (error)
          return error;
 
       error = json::readObject(results,
-                               "file", &files_,
-                               "line", &lineNums_,
-                               "lineValue", &contents_,
-                               "matchOn", &matchOns_,
-                               "matchOff", &matchOffs_,
-                               "replaceMatchOn", &replaceMatchOns_,
-                               "replaceMatchOff", &replaceMatchOffs_);
+                               "file", files_,
+                               "line", lineNums_,
+                               "lineValue", contents_,
+                               "matchOn", matchOns_,
+                               "matchOff", matchOffs_,
+                               "replaceMatchOn", replaceMatchOns_,
+                               "replaceMatchOff", replaceMatchOffs_);
       if (error)
          return error;
 
@@ -486,6 +489,45 @@ private:
       }
    }
 
+// permissions getter/setter (only applicable to Unix platforms)
+#ifndef _WIN32
+   Error setPermissions(const std::string& filePath, boost::filesystem::perms permissions)
+   {
+      boost::filesystem::path path(filePath);
+      try
+      {
+         boost::filesystem::permissions(path, permissions);
+      }
+      catch (const boost::filesystem::filesystem_error& e)
+      {
+         return Error(e.code(), ERROR_LOCATION);
+      }
+
+      return Success();
+   }
+
+   Error getPermissions(const std::string& filePath, boost::filesystem::perms* pPerms)
+   {
+      *pPerms = boost::filesystem::no_perms;
+
+      boost::filesystem::path path(filePath);
+      try
+      {
+         boost::filesystem::file_status fileStatus = status(path);
+         *pPerms = fileStatus.permissions();
+      }
+      catch (const boost::filesystem::filesystem_error& e)
+      {
+         return (Error(
+                  errc::findCategory(),
+                  errc::PermissionsError,
+                  "A permissions error occured during replace operation.",
+                  ERROR_LOCATION));
+      }
+      return Success();
+   }
+#endif
+
    void adjustForPreview(std::string* contents, json::Array* pMatchOn, json::Array* pMatchOff)
    {
       size_t maxPreviewLength = 300;
@@ -524,8 +566,8 @@ private:
              outputStream_->good())
          {
              Error error;
-             // For Windows we ignore this additional safety check
-             // it will always fail because we have inputStream_ reading the file
+// For Windows we ignore this additional safety check
+// it will always fail because we have inputStream_ reading the file
 #ifndef _WIN32
             error = FilePath(currentFile_).testWritePermissions();
             if (error)
@@ -545,7 +587,15 @@ private:
             outputStream_->flush();
             inputStream_.reset();
             outputStream_.reset();
-            error = tempReplaceFile_.move(FilePath(currentFile_));
+
+// Unneccesary on Windows because this only sets write permissions which we
+// already know are correct if we are writing.
+// This needs to happen after outputStream is flushed
+#ifndef _WIN32
+            error = setPermissions(tempReplaceFile_.getAbsolutePath(), filePermissions_);
+#endif
+            if (!error)
+               error = tempReplaceFile_.move(FilePath(currentFile_));
             currentFile_.clear();
             if (error)
             {
@@ -614,6 +664,7 @@ private:
       Error error = file.testWritePermissions();
       if (error)
          return error;
+
       if (!findResults().preview())
       {
          tempReplaceFile_ =  module_context::tempFile("replace", "txt");
@@ -621,14 +672,23 @@ private:
          if (error)
             return error;
       }
+
       error = file.openForRead(inputStream_);
-      if (!error)
-      {
-         fileSuccess_ = true;
-         inputLineNum_ = 0;
-         currentFile_ = file.getAbsolutePath();
-      }
-      return error;
+      if (error)
+         return error;
+
+      // boost only acknowledges write permissions on Windows which we already know exist
+#ifndef _WIN32
+      error = getPermissions(file.getAbsolutePath(), &filePermissions_);
+      if (error)
+         return (error);
+#endif
+
+      fileSuccess_ = true;
+      inputLineNum_ = 0;
+      currentFile_ = file.getAbsolutePath();
+
+      return Success();
    }
 
    void subtractOffsetIntegerToJsonArray(
@@ -939,17 +999,27 @@ private:
             matchOffs.push_back(matchOff);
             replaceMatchOns.push_back(replaceMatchOn);
             replaceMatchOffs.push_back(replaceMatchOff);
-            for (std::string newError : errorMessage)
-               errors.push_back(newError);
+            json::Array combinedErrors = json::toJsonArray(errorMessage);
+            errors.push_back(combinedErrors);
             recordsToProcess--;
          }
       }
+      // when doing a replace, we haven't completed the replace for the last file here
       if (findResults().replace() && !currentFile_.empty() && !findResults().preview())
       {
          std::set<std::string> errorMessage;
          completeFileReplace(&errorMessage);
-         for (std::string newError : errorMessage)
-            errors.push_back(json::Value(newError));
+
+         // it is unlikely there will be any errors if we've made it this far,
+         // but if so we must add them to the last array in errors
+         // if there is an error, there will only be one
+         if (!errorMessage.empty())
+         {
+            json::Array lastErrors = errors.getBack().getArray();
+            errors.erase(errors.end());
+            lastErrors.push_back(json::Value(*errorMessage.begin()));
+            errors.push_back(lastErrors);
+         }
       }
 
       if (nextLineStart)
@@ -1023,6 +1093,7 @@ private:
    FilePath tempReplaceFile_;
    std::shared_ptr<std::istream> inputStream_;
    std::shared_ptr<std::ostream> outputStream_;
+   boost::filesystem::perms filePermissions_;
    int inputLineNum_;
    bool fileSuccess_;
 };

@@ -71,69 +71,13 @@ json::Object createObject()
    return object;
 }
 
-json::Object returnObject()
-{
-   std::string jsonStr = "{\"a\": 5}";
-   json::Value val;
-   REQUIRE(!val.parse(jsonStr));
-
-   return val.getValue<json::Object>();
-}
-
 json::Value createValue()
 {
    json::Object obj = createObject();
    return std::move(obj);
 }
 
-json::Value getValue()
-{
-   std::string jsonStr = "{\"a\": 5}";
-   json::Value val;
-   REQUIRE(!val.parse(jsonStr));
-
-   json::Object obj = val.getObject();
-
-   // must return a copy instead of actual reference
-   return obj["a"].clone();
-}
-
 json::Object s_object;
-
-json::Value getGlobalValue(std::string scope,
-                           std::string name)
-{
-   json::Object::Iterator i = s_object.find(scope);
-   if (i == s_object.end())
-   {
-      return json::Value();
-   }
-   else
-   {
-      if (!json::isType<core::json::Object>((*i).getValue()))
-         return json::Value();
-      json::Object scopeObject = (*i).getValue().getObject();
-      return scopeObject[name];
-   }
-}
-
-void insertGlobalValue(const std::string& scope,
-                       const std::string& entryName,
-                       const json::Value& entryValue)
-{
-   json::Object::Iterator pos = s_object.find(scope);
-   if (pos == s_object.end())
-   {
-      json::Object newScopeObject;
-      s_object.insert(scope, newScopeObject);
-   }
-
-   const json::Value& scopeValue = s_object[scope];
-   json::Object scopeObject = scopeValue.getObject();
-
-   // insert the value into the scope
-   scopeObject.insert(entryName, entryValue);
-}
 
 } // anonymous namespace
 
@@ -173,51 +117,6 @@ TEST_CASE("JsonRpc")
       REQUIRE(bVal == "DEFAULT");
 
       REQUIRE(json::typeAsString(obj["b"]) == "<Null>");
-   }
-
-   SECTION("readObject tests")
-   {
-      json::Object obj;
-      json::Object obj2;
-      obj["a"] = 1;
-      obj["b"] = false;
-      obj["c"] = "Hello there";
-      obj2["a"] = "Inner obj";
-      obj["d"] = obj2;
-
-      int a;
-      bool b;
-      std::string c;
-      json::Object d;
-      Error error = json::readObject(obj,
-                                     "a", &a,
-                                     "b", &b,
-                                     "c", &c,
-                                     "d", &d);
-
-      REQUIRE_FALSE(error);
-      REQUIRE(a == 1);
-      REQUIRE_FALSE(b);
-      REQUIRE(c == "Hello there");
-      REQUIRE(d["a"].getString() == "Inner obj");
-
-      error = json::readObject(obj,
-                               "a", &c,
-                               "b", &b,
-                               "c", &c);
-      REQUIRE(error);
-
-      error = json::readObject(obj,
-                               "a", &a,
-                               "b", &a,
-                               "c", &c);
-      REQUIRE(error);
-
-      error = json::readObject(obj,
-                               "a", &a,
-                               "b", &b,
-                               "c", &a);
-      REQUIRE(error);
    }
 
    SECTION("readParams tests")
@@ -358,15 +257,15 @@ TEST_CASE("JsonRpc")
       json::Object i;
 
       Error error = json::readObject(deserializedObject,
-                                     "a", &a,
-                                     "b", &b,
-                                     "c", &c,
-                                     "d", &d,
-                                     "e", &e,
-                                     "f", &f,
-                                     "g", &g,
-                                     "h", &h,
-                                     "i", &i);
+                                     "a", a,
+                                     "b", b,
+                                     "c", c,
+                                     "d", d,
+                                     "e", e,
+                                     "f", f,
+                                     "g", g,
+                                     "h", h,
+                                     "i", i);
       REQUIRE_FALSE(error);
       REQUIRE(a);
       REQUIRE_FALSE(b);
@@ -393,8 +292,8 @@ TEST_CASE("JsonRpc")
       std::string a1;
       int a2;
       error = json::readObject(h1,
-                               "a1", &a1,
-                               "a2", &a2);
+                               "a1", a1,
+                               "a2", a2);
       REQUIRE_FALSE(error);
       REQUIRE(a1 == "a1");
       REQUIRE(a2 == 1);
@@ -402,8 +301,8 @@ TEST_CASE("JsonRpc")
       std::string b1;
       int b2;
       error = json::readObject(h2,
-                               "b1", &b1,
-                               "b2", &b2);
+                               "b1", b1,
+                               "b2", b2);
       REQUIRE_FALSE(error);
       REQUIRE(b1 == "b1");
       REQUIRE(b2 == 2);
@@ -412,8 +311,8 @@ TEST_CASE("JsonRpc")
       json::Object innerObj;
 
       error = json::readObject(i,
-                               "nestedValue", &nestedValue,
-                               "inner", &innerObj);
+                               "nestedValue", nestedValue,
+                               "inner", innerObj);
       REQUIRE_FALSE(error);
       REQUIRE(nestedValue == Approx(9876.324));
 
@@ -422,9 +321,9 @@ TEST_CASE("JsonRpc")
       int innerC;
 
       error = json::readObject(innerObj,
-                               "a", &innerA,
-                               "b", &innerB,
-                               "c", &innerC);
+                               "a", innerA,
+                               "b", innerB,
+                               "c", innerC);
 
       REQUIRE_FALSE(error);
       REQUIRE(innerA == "Inner object a");

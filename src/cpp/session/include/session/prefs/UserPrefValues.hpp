@@ -316,9 +316,25 @@ namespace prefs {
 #define kTerminalInitialDirectoryCurrent "current"
 #define kTerminalInitialDirectoryHome "home"
 #define kFullProjectPathInWindowTitle "full_project_path_in_window_title"
+#define kEnableVisualMarkdownEditingMode "enable_visual_markdown_editing_mode"
+#define kVisualMarkdownEditingWrapAuto "visual_markdown_editing_wrap_auto"
+#define kVisualMarkdownEditingWrapColumn "visual_markdown_editing_wrap_column"
 #define kDisabledAriaLiveAnnouncements "disabled_aria_live_announcements"
 #define kScreenreaderConsoleAnnounceLimit "screenreader_console_announce_limit"
 #define kFileMonitorIgnoredComponents "file_monitor_ignored_components"
+#define kInstallPkgDepsIndividually "install_pkg_deps_individually"
+#define kGraphicsBackend "graphics_backend"
+#define kGraphicsBackendDefault "default"
+#define kGraphicsBackendCairo "cairo"
+#define kGraphicsBackendCairoPng "cairo-png"
+#define kGraphicsBackendQuartz "quartz"
+#define kGraphicsBackendWindows "windows"
+#define kGraphicsBackendRagg "ragg"
+#define kGraphicsAntialiasing "graphics_antialiasing"
+#define kGraphicsAntialiasingDefault "default"
+#define kGraphicsAntialiasingNone "none"
+#define kGraphicsAntialiasingGray "gray"
+#define kGraphicsAntialiasingSubpixel "subpixel"
 
 class UserPrefValues: public Preferences
 {
@@ -1393,6 +1409,24 @@ public:
    core::Error setFullProjectPathInWindowTitle(bool val);
 
    /**
+    * Whether to enable experimental visual markdown editing
+    */
+   bool enableVisualMarkdownEditingMode();
+   core::Error setEnableVisualMarkdownEditingMode(bool val);
+
+   /**
+    * Whether to automatically wrap text when writing markdown
+    */
+   bool visualMarkdownEditingWrapAuto();
+   core::Error setVisualMarkdownEditingWrapAuto(bool val);
+
+   /**
+    * The column to wrap text at when writing markdown
+    */
+   int visualMarkdownEditingWrapColumn();
+   core::Error setVisualMarkdownEditingWrapColumn(int val);
+
+   /**
     * List of aria-live announcements to disable.
     */
    core::json::Array disabledAriaLiveAnnouncements();
@@ -1409,6 +1443,24 @@ public:
     */
    core::json::Array fileMonitorIgnoredComponents();
    core::Error setFileMonitorIgnoredComponents(core::json::Array val);
+
+   /**
+    * Whether to install R package dependencies one at a time.
+    */
+   bool installPkgDepsIndividually();
+   core::Error setInstallPkgDepsIndividually(bool val);
+
+   /**
+    * R graphics backend.
+    */
+   std::string graphicsBackend();
+   core::Error setGraphicsBackend(std::string val);
+
+   /**
+    * Type of anti-aliasing to be used for generated R plots.
+    */
+   std::string graphicsAntialiasing();
+   core::Error setGraphicsAntialiasing(std::string val);
 
 };
 

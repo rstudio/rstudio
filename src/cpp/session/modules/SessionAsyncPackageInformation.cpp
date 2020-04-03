@@ -121,9 +121,9 @@ bool fillFunctionInfo(const json::Object& functionObjectJson,
       json::Array formalInfoJson;
       int performsNse = 0;
       Error error = json::readObject(valueJson.getObject(),
-                                     "formal_names", &formalNamesJson,
-                                     "formal_info",  &formalInfoJson,
-                                     "performs_nse", &performsNse);
+                                     "formal_names", formalNamesJson,
+                                     "formal_info",  formalInfoJson,
+                                     "performs_nse", performsNse);
       
       if (error)
          LOG_ERROR(error);
@@ -212,11 +212,11 @@ void AsyncPackageInformationProcess::onCompleted(int exitStatus)
          continue;
       
       Error error = json::readObject(value.getObject(),
-                                     "package", &pkgInfo.package,
-                                     "exports", &exportsJson,
-                                     "types", &typesJson,
-                                     "function_info", &functionInfoJson,
-                                     "datasets", &datasetsJson);
+                                     "package", pkgInfo.package,
+                                     "exports", exportsJson,
+                                     "types", typesJson,
+                                     "function_info", functionInfoJson,
+                                     "datasets", datasetsJson);
 
       if (error)
       {

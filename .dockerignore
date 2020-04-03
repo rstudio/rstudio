@@ -4,3 +4,5 @@
 !docker/jenkins
 !docker/docker-compile.sh
 !package/linux/install-dependencies
+!src/gwt/panmirror/src/editor/yarn.lock
+!src/gwt/panmirror/src/editor/package.json

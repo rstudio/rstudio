@@ -211,7 +211,8 @@ std::string embeddedWebFonts()
 
       // base64 encoder
       FilePath fontPath = session::options().rResourcesPath().completePath(fonts);
-      filteredStream.push(html_utils::CssUrlFilter(fontPath));
+      auto cssFilter = html_utils::CssUrlFilter(fontPath);
+      filteredStream.push(cssFilter);
 
       // target stream
       std::ostringstream os;
@@ -781,10 +782,13 @@ bool createStandalonePresentation(const FilePath& targetFile,
       return false;
    }
 
+   // collect filters
+   std::vector<boost::iostreams::regex_filter> filters;
+   
    // create image filter
    FilePath dirPath = presentation::state::directory();
-   std::vector<boost::iostreams::regex_filter> filters;
-   filters.push_back(html_utils::Base64ImageFilter(dirPath));
+   auto imageFilter = html_utils::Base64ImageFilter(dirPath);
+   filters.push_back(imageFilter);
 
    // render presentation
    return renderPresentation(vars, filters, *pOfs, pErrorResponse);

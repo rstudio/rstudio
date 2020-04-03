@@ -234,12 +234,6 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
    }
    
    @Override
-   public String getName()
-   {
-      return frame_.getWindow().getName();
-   }
-   
-   @Override
    public void popout()
    {
       if (rmdPreviewParams_ != null && 

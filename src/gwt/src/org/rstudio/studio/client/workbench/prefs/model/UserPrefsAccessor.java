@@ -1672,6 +1672,30 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
+    * Whether to enable experimental visual markdown editing
+    */
+   public PrefValue<Boolean> enableVisualMarkdownEditingMode()
+   {
+      return bool("enable_visual_markdown_editing_mode", false);
+   }
+
+   /**
+    * Whether to automatically wrap text when writing markdown
+    */
+   public PrefValue<Boolean> visualMarkdownEditingWrapAuto()
+   {
+      return bool("visual_markdown_editing_wrap_auto", false);
+   }
+
+   /**
+    * The column to wrap text at when writing markdown
+    */
+   public PrefValue<Integer> visualMarkdownEditingWrapColumn()
+   {
+      return integer("visual_markdown_editing_wrap_column", 80);
+   }
+
+   /**
     * List of aria-live announcements to disable.
     */
    public PrefValue<JsArrayString> disabledAriaLiveAnnouncements()
@@ -1694,6 +1718,42 @@ public class UserPrefsAccessor extends Prefs
    {
       return object("file_monitor_ignored_components", JsArrayUtil.createStringArray());
    }
+
+   /**
+    * Whether to install R package dependencies one at a time.
+    */
+   public PrefValue<Boolean> installPkgDepsIndividually()
+   {
+      return bool("install_pkg_deps_individually", true);
+   }
+
+   /**
+    * R graphics backend.
+    */
+   public PrefValue<String> graphicsBackend()
+   {
+      return string("graphics_backend", "default");
+   }
+
+   public final static String GRAPHICS_BACKEND_DEFAULT = "default";
+   public final static String GRAPHICS_BACKEND_CAIRO = "cairo";
+   public final static String GRAPHICS_BACKEND_CAIRO_PNG = "cairo-png";
+   public final static String GRAPHICS_BACKEND_QUARTZ = "quartz";
+   public final static String GRAPHICS_BACKEND_WINDOWS = "windows";
+   public final static String GRAPHICS_BACKEND_RAGG = "ragg";
+
+   /**
+    * Type of anti-aliasing to be used for generated R plots.
+    */
+   public PrefValue<String> graphicsAntialiasing()
+   {
+      return string("graphics_antialiasing", "default");
+   }
+
+   public final static String GRAPHICS_ANTIALIASING_DEFAULT = "default";
+   public final static String GRAPHICS_ANTIALIASING_NONE = "none";
+   public final static String GRAPHICS_ANTIALIASING_GRAY = "gray";
+   public final static String GRAPHICS_ANTIALIASING_SUBPIXEL = "subpixel";
 
    public void syncPrefs(String layer, JsObject source)
    {
@@ -2053,12 +2113,24 @@ public class UserPrefsAccessor extends Prefs
          terminalInitialDirectory().setValue(layer, source.getString("terminal_initial_directory"));
       if (source.hasKey("full_project_path_in_window_title"))
          fullProjectPathInWindowTitle().setValue(layer, source.getBool("full_project_path_in_window_title"));
+      if (source.hasKey("enable_visual_markdown_editing_mode"))
+         enableVisualMarkdownEditingMode().setValue(layer, source.getBool("enable_visual_markdown_editing_mode"));
+      if (source.hasKey("visual_markdown_editing_wrap_auto"))
+         visualMarkdownEditingWrapAuto().setValue(layer, source.getBool("visual_markdown_editing_wrap_auto"));
+      if (source.hasKey("visual_markdown_editing_wrap_column"))
+         visualMarkdownEditingWrapColumn().setValue(layer, source.getInteger("visual_markdown_editing_wrap_column"));
       if (source.hasKey("disabled_aria_live_announcements"))
          disabledAriaLiveAnnouncements().setValue(layer, source.getObject("disabled_aria_live_announcements"));
       if (source.hasKey("screenreader_console_announce_limit"))
          screenreaderConsoleAnnounceLimit().setValue(layer, source.getInteger("screenreader_console_announce_limit"));
       if (source.hasKey("file_monitor_ignored_components"))
          fileMonitorIgnoredComponents().setValue(layer, source.getObject("file_monitor_ignored_components"));
+      if (source.hasKey("install_pkg_deps_individually"))
+         installPkgDepsIndividually().setValue(layer, source.getBool("install_pkg_deps_individually"));
+      if (source.hasKey("graphics_backend"))
+         graphicsBackend().setValue(layer, source.getString("graphics_backend"));
+      if (source.hasKey("graphics_antialiasing"))
+         graphicsAntialiasing().setValue(layer, source.getString("graphics_antialiasing"));
    }
    
 

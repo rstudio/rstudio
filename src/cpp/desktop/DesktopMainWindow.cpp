@@ -208,28 +208,83 @@ void MainWindow::launchRStudio(const std::vector<std::string> &args,
     pAppLauncher_->launchRStudio(args, initialDir);
 }
 
-void MainWindow::saveRemoteCookies()
+void MainWindow::saveRemoteAuthCookies(bool forcePersist)
 {
-   QStringList cookieList;
-
-   std::map<std::string, QNetworkCookie> cookies = pRemoteSessionLauncher_->getCookies();
-   for (const std::pair<std::string, QNetworkCookie>& pair : cookies)
+   auto makeCookieKey = [](const QNetworkCookie& cookie)
    {
-      cookieList.push_back(QString::fromStdString(pair.second.toRawForm().toStdString()));
+      return cookie.domain().toStdString() + "." +
+             cookie.name().toStdString();
+   };
+
+   // merge with existing cookies on disk
+   QList<QNetworkCookie> cookies = options().authCookies();
+   std::map<std::string, QNetworkCookie> cookieMap;
+   for (const QNetworkCookie& cookie : cookies)
+   {
+      std::string key = makeCookieKey(cookie);
+      cookieMap[key] = cookie;
    }
 
-   cookies = pLauncher_->getCookies();
-   for (const std::pair<std::string, QNetworkCookie>& pair : cookies)
+   auto addCookieToMap = [&](const QNetworkCookie& cookie)
    {
-      cookieList.push_back(QString::fromStdString(pair.second.toRawForm().toStdString()));
+      // only persist session cookies if explicitly told to do so
+      if (forcePersist || !cookie.isSessionCookie())
+      {
+         std::string key = makeCookieKey(cookie);
+         cookieMap[key] = cookie;
+      }
+   };
+
+   if (pRemoteSessionLauncher_)
+   {
+      std::map<std::string, QNetworkCookie> remoteCookies = pRemoteSessionLauncher_->getCookies();
+
+      if (!remoteCookies.empty())
+      {
+         for (const auto& pair : remoteCookies)
+         {
+            addCookieToMap(pair.second);
+         }
+      }
+      else
+      {
+         // cookies were empty, meaning they needed to be cleared (for example, due to sign out)
+         // ensure that all cookies for the domain are cleared out
+         for (auto it = cookieMap.cbegin(); it != cookieMap.cend();)
+         {
+            if (pRemoteSessionLauncher_->sessionServer().cookieBelongs(it->second))
+            {
+               it = cookieMap.erase(it);
+            }
+            else
+            {
+               ++it;
+            }
+         }
+      }
    }
 
-   options().setCookies(cookieList);
+   if (pLauncher_)
+   {
+      std::map<std::string, QNetworkCookie> cookies = pLauncher_->getCookies();
+      for (const auto& pair : cookies)
+      {
+         addCookieToMap(pair.second);
+      }
+   }
+
+   QList<QNetworkCookie> mergedCookies;
+   for (const auto& pair: cookieMap)
+   {
+      mergedCookies.push_back(pair.second);
+   }
+
+   options().setAuthCookies(mergedCookies);
 }
 
 void MainWindow::launchRemoteRStudio()
 {
-   saveRemoteCookies();
+   saveRemoteAuthCookies(true);
 
    std::vector<std::string> args;
    args.push_back(kSessionServerOption);
@@ -240,7 +295,7 @@ void MainWindow::launchRemoteRStudio()
 
 void MainWindow::launchRemoteRStudioProject(const QString& projectUrl)
 {
-   saveRemoteCookies();
+   saveRemoteAuthCookies(true);
 
    std::vector<std::string> args;
    args.push_back(kSessionServerOption);
@@ -315,6 +370,12 @@ void MainWindow::loadUrl(const QUrl& url)
    webView()->load(url);
 }
 
+void MainWindow::loadRequest(const QWebEngineHttpRequest& request)
+{
+   webView()->setBaseUrl(request.url());
+   webView()->load(request);
+}
+
 void MainWindow::loadHtml(const QString& html)
 {
    webView()->setHtml(html);
@@ -352,6 +413,11 @@ try {
    webPage()->runJavaScript(command);
 }
 
+void MainWindow::runJavaScript(QString script)
+{
+   webPage()->runJavaScript(script);
+}
+
 namespace {
 
 void closeAllSatellites(QWidget* mainWindow)
@@ -384,6 +450,7 @@ void MainWindow::closeEvent(QCloseEvent* pEvent)
 #endif
 
    desktopInfo().onClose();
+   saveRemoteAuthCookies(false);
 
    if (!geometrySaved_)
    {
@@ -509,7 +576,7 @@ RemoteDesktopSessionLauncher* MainWindow::getRemoteDesktopSessionLauncher()
    return pRemoteSessionLauncher_;
 }
 
-JobLauncher* MainWindow::getJobLauncher()
+boost::shared_ptr<JobLauncher> MainWindow::getJobLauncher()
 {
    return pLauncher_;
 }

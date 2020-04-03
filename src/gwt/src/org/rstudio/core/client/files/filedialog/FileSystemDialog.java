@@ -189,7 +189,12 @@ public abstract class FileSystemDialog extends ModalDialogBase
 
    protected void accept()
    {
-      operation_.execute(getSelectedItem(), this);
+      accept(getSelectedItem());
+   }
+   
+   protected void accept(FileSystemItem item)
+   {
+      operation_.execute(item, this);
    }
 
    protected abstract FileSystemItem getSelectedItem();

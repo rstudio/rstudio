@@ -102,6 +102,13 @@ public:
    User(const User& in_other);
 
    /**
+    * @brief Move constructor.
+    *
+    * @param in_other   The user to move into this User.
+    */
+   User(User&& in_other) noexcept = default;
+
+   /**
     * @brief Gets the current user.
     *
     * @param out_currentUser    The user this process is currently executing on behalf of. This object will be the empty
@@ -130,6 +137,42 @@ public:
     * @return Success if the user could be retrieved; Error otherwise.
     */
    static Error getUserFromIdentifier(UidType in_userId, User& out_user);
+
+   /**
+    * @brief Overloaded assignment operator.
+    *
+    * @param in_other   The user to copy to this one.
+    *
+    * @return This user.
+    */
+   User& operator=(const User& in_other);
+
+   /**
+    * @brief Overloaded move operator.
+    *
+    * @param in_other   The user to move to this one.
+    *
+    * @return This user.
+    */
+   User& operator=(User&& in_other) noexcept = default;
+
+   /**
+    * @brief Equality operator.
+    *
+    * @param in_other      The user to compare with this user.
+    *
+    * @return True if this user and in_other have the same user ID; false otherwise.
+    */
+   bool operator==(const User& in_other) const;
+
+   /**
+    * @brief Inequality operator.
+    *
+    * @param in_other      The user to compare with this user.
+    *
+    * @return False if this user and in_other have the same user ID; true otherwise.
+    */
+   bool operator!=(const User& in_other) const;
 
    /**
     * @brief Checks whether the user represented by this object exists.
@@ -189,15 +232,6 @@ public:
     * @return The name of this user ("*" for all users).
     */
    const std::string& getUsername() const;
-
-   /**
-    * @brief Overloaded assignment operator.
-    *
-    * @param in_other   The user to copy to this one.
-    *
-    * @return This user.
-    */
-   User& operator=(const User& in_other);
 
 private:
    // The private implementation of User.

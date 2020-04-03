@@ -1,0 +1,168 @@
+/*
+ * styles.css
+ *
+ * Copyright (C) 2019-20 by RStudio, PBC
+ *
+ * Unless you have received this program directly from RStudio pursuant
+ * to the terms of a commercial license agreement with RStudio, then
+ * this program is licensed to you under the terms of version 3 of the
+ * GNU Affero General Public License. This program is distributed WITHOUT
+ * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
+ * MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE. Please refer to the
+ * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
+ *
+ */
+
+.pm-content {
+  padding: 0 8px;
+}
+
+.pm-content p {
+  margin-top: 0;
+  margin-bottom: 1em;
+  line-height: 1.5;
+}
+
+.pm-content > p:first-child {
+  margin-top: 10px;
+}
+
+/* Pseudo-element so that outline navigation leaves some space above headings */
+.pm-content h1::before,
+.pm-content h2::before,
+.pm-content h3::before,
+.pm-content h4::before,
+.pm-content h5::before,
+.pm-content h6::before {
+    content: "";
+    display: block;
+    height: 20px;
+    margin: -20px 0 0;
+}
+
+.pm-link {
+  text-decoration: underline;
+}
+
+.pm-code-block {
+  white-space: pre-wrap;
+  margin-block-end: 1em;
+}
+
+.pm-blockquote {
+  padding-left: 0.75em;
+  border-left: 3px solid;
+  margin-left: 0; 
+  margin-right: 0;
+}
+
+.pm-figcaption {
+  margin-top: 3px;
+}
+
+.pm-table-container {
+  margin-bottom: 1em;
+}
+
+.pm-table-container th {
+  font-weight: bold;
+  text-align: left;
+}
+
+.pm-table-cell {
+  border: 1px solid;
+  padding: 0 5px;
+  padding-top: 7px;
+  padding-bottom: 0;
+}
+
+.pm-table-cell > p:last-of-type {
+  margin-bottom: 0.5rem;
+} 
+
+.pm-code-editor {
+  border: 1px solid;
+  margin-block-end: 1em;
+  margin-top: 10px;
+}
+
+.pm-definition-term {
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  padding: 0.2rem;
+  display: block;
+}
+
+.pm-definition-description {
+  margin-left: 0.7rem;
+}
+
+.pm-line-block {
+  margin-block-end: 1em;
+}
+
+.pm-line-block > p {
+  margin-top: 0;
+  margin-bottom: 2px;
+}
+
+.pm-yaml-metadata-block {
+  border-radius: 4px;
+}
+
+.pm-footnote {
+  font-size: 75%;
+  top: -0.45em;
+}
+
+.pm-footnote-body {
+  font-size: 0.9rem;
+}
+
+.pm-footnote-body p {
+  margin-bottom: 0.5em;
+  margin-top: 0.5em;
+}
+
+.pm-node-caption {
+  text-align: left;
+  font-style: italic;
+  font-size: 0.85rem;
+  cursor: text;
+  min-height: 1.28581em;
+}
+
+.pm-margin-bordered {
+  border-left: 1px solid;
+  padding-left: 0.7em;
+}
+
+.pm-show-text-focus.pm-text-focused {
+  outline: 1px dotted;
+}
+ 
+.pm-popup {
+  border-radius: 8px;
+  border-style: solid;
+  border-width: 1px;
+  padding: 10px;
+}
+
+.pm-image-button {
+  width: 22px;
+  height: 20px;
+}
+
+.pm-image-button-edit-properties {
+  background-image: url("./images/edit_properties.png");
+}
+
+.pm-image-button-remove-link {
+  background-image: url("./images/break_link.png");
+}
+
+.pm-image-button-copy-link {
+  background-image: url("./images/copy_link.png");
+}
+
+

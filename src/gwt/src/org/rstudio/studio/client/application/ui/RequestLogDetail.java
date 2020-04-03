@@ -51,6 +51,7 @@ public class RequestLogDetail extends Composite
                    + tryPrettyJson(resp)
                    + "\n");
       html.getElement().getStyle().setProperty("whiteSpace", "pre-wrap");
+      html.getElement().getStyle().setProperty("userSelect", "text");
 
       panel.add(html);
 

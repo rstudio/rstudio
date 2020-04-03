@@ -116,6 +116,8 @@ public abstract class
    public abstract AppCommand openSparklyrCheatSheet();
    public abstract AppCommand openPurrrCheatSheet();
    public abstract AppCommand browseCheatSheets();
+   public abstract AppCommand toggleRmdVisualMode();
+   public abstract AppCommand enableProsemirrorDevTools();
    public abstract AppCommand knitDocument();
    public abstract AppCommand previewHTML();
    public abstract AppCommand publishHTML();
@@ -646,7 +648,9 @@ public abstract class
    public abstract AppCommand showAccessibilityOptions();
    public abstract AppCommand focusMainToolbar();
    public abstract AppCommand speakEditorLocation();
-   
+   public abstract AppCommand focusConsoleOutputEnd();
+   public abstract AppCommand showAccessibilityHelp();
+
    // Internal
    public abstract AppCommand showDomElements();
    public abstract AppCommand showShortcutCommand();

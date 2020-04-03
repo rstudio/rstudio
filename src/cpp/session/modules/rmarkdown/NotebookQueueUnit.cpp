@@ -81,8 +81,8 @@ Error ExecRange::fromJson(const json::Object& source,
                           ExecRange* pRange)
 {
    return json::readObject(source,
-         kQueueUnitRangeStart, &pRange->start,
-         kQueueUnitRangeStop,  &pRange->stop);
+         kQueueUnitRangeStart, pRange->start,
+         kQueueUnitRangeStop,  pRange->stop);
 }
 
 json::Object ExecRange::toJson() const
@@ -115,13 +115,13 @@ Error NotebookQueueUnit::fromJson(const json::Object& source,
    int execMode, execScope;
    std::string code;
    Error error = json::readObject(source, 
-         kQueueUnitCode,      &code,
-         kQueueUnitDocId,     &unit.docId_,
-         kQueueUnitChunkId,   &unit.chunkId_,
-         kQueueUnitCompleted, &completed,
-         kQueueUnitPending,   &pending,
-         kQueueUnitExecMode,  &execMode,
-         kQueueUnitExecScope, &execScope);
+         kQueueUnitCode,      code,
+         kQueueUnitDocId,     unit.docId_,
+         kQueueUnitChunkId,   unit.chunkId_,
+         kQueueUnitCompleted, completed,
+         kQueueUnitPending,   pending,
+         kQueueUnitExecMode,  execMode,
+         kQueueUnitExecScope, execScope);
    if (error)
       LOG_ERROR(error);
 

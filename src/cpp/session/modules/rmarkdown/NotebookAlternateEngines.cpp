@@ -505,7 +505,7 @@ Error runUserDefinedEngine(const std::string& docId,
    
    // determine whether we want to emit warnings, errors in this chunk
    bool emitWarnings = true;
-   core::json::readObject(options, "warning", &emitWarnings);
+   core::json::readObject(options, "warning", emitWarnings);
    
    unsigned int ordinal = 1;
    

@@ -36,6 +36,8 @@
 #include <core/gwt/GwtLogHandler.hpp>
 #include <core/gwt/GwtFileHandler.hpp>
 
+#include <server_core/ServerDatabase.hpp>
+
 #include <monitor/MonitorClient.hpp>
 
 #include <session/SessionConstants.hpp>
@@ -609,6 +611,7 @@ int main(int argc, char * const argv[])
       }
 
       // export important environment variables
+      core::system::setenv(kServerDataDirEnvVar, serverDataDir.getAbsolutePath());
       core::system::setenv(kSessionTmpDirEnvVar, sessionTmpDir().getAbsolutePath());
 
       // initialize File Lock
@@ -619,6 +622,11 @@ int main(int argc, char * const argv[])
 
       // initialize secure cookie module
       error = core::http::secure_cookie::initialize(options.secureCookieKeyFile());
+      if (error)
+         return core::system::exitFailure(error, ERROR_LOCATION);
+
+      // initialize database connectivity
+      error = server_core::database::initialize(true);
       if (error)
          return core::system::exitFailure(error, ERROR_LOCATION);
 

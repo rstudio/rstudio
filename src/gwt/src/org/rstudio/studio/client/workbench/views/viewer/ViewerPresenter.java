@@ -92,7 +92,6 @@ public class ViewerPresenter extends BasePresenter
       HandlerRegistration addLoadHandler(LoadHandler handler);
       String getUrl();
       String getTitle();
-      String getName();
       void popout();
       void refresh();
       Size getViewerFrameSize();
@@ -271,12 +270,6 @@ public class ViewerPresenter extends BasePresenter
       return display_.getUrl();
    }
    
-   @Override
-   public String getWindowName()
-   {
-      return display_.getName();
-   }
-
    @Override
    public void onShinyDisconnect()
    {
@@ -630,6 +623,7 @@ public class ViewerPresenter extends BasePresenter
    private final DependencyManager dependencyManager_;
    private final FileDialogs fileDialogs_;
    private final RemoteFileSystemContext fileSystemContext_;
+   @SuppressWarnings("unused")
    private final Provider<UserPrefs> pUserPrefs_;
    private final Provider<UserState> pUserState_;
    private final SourceShim sourceShim_; 
@@ -639,6 +633,7 @@ public class ViewerPresenter extends BasePresenter
    
    private ShinyApplicationParams runningShinyAppParams_;
    private PlumberAPIParams runningPlumberAPIParams_;
+   @SuppressWarnings("unused")
    private RmdPreviewParams rmdPreviewParams_;
    
    private WindowEx zoomWindow_ = null;

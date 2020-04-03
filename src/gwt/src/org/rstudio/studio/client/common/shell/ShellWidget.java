@@ -18,12 +18,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
-import com.google.gwt.aria.client.Roles;
 import org.rstudio.core.client.ConsoleOutputWriter;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.TimeBufferedCommand;
 import org.rstudio.core.client.VirtualConsole;
+import org.rstudio.core.client.dom.DOMRect;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.jsonrpc.RpcObjectList;
 import org.rstudio.core.client.widget.BottomScrollPanel;
@@ -43,8 +43,8 @@ import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEdito
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor.NewLineMode;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.CursorChangedEvent;
-import org.rstudio.studio.client.workbench.views.source.editors.text.events.CursorChangedHandler;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.PasteEvent;
+import org.rstudio.studio.client.workbench.views.source.editors.text.events.RenderFinishedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.themes.AceTheme;
 
 import com.google.gwt.core.client.Scheduler;
@@ -55,6 +55,7 @@ import com.google.gwt.dom.client.SpanElement;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.event.dom.client.FocusEvent;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.event.dom.client.KeyDownHandler;
@@ -86,7 +87,7 @@ public class ShellWidget extends Composite implements ShellDisplay,
       
       SelectInputClickHandler secondaryInputHandler = new SelectInputClickHandler();
 
-      output_ = new ConsoleOutputWriter(RStudioGinjector.INSTANCE.getVirtualConsoleFactory());
+      output_ = new ConsoleOutputWriter(RStudioGinjector.INSTANCE.getVirtualConsoleFactory(), outputLabel);
       output_.getWidget().setStylePrimaryName(styles_.output());
       output_.getWidget().addClickHandler(secondaryInputHandler);
       ElementIds.assignElementId(output_.getElement(), ElementIds.CONSOLE_OUTPUT);
@@ -103,24 +104,38 @@ public class ShellWidget extends Composite implements ShellDisplay,
       input_ = editor;
       input_.setShowLineNumbers(false);
       input_.setShowPrintMargin(false);
-      if (!Desktop.isDesktop())
-         input_.setNewLineMode(NewLineMode.Unix);
       input_.setUseWrapMode(true);
       input_.setPadding(0);
       input_.autoHeight();
-      final Widget inputWidget = input_.asWidget();
-      ElementIds.assignElementId(inputWidget.getElement(),
-                                 ElementIds.CONSOLE_INPUT);
+      
+      if (!Desktop.isDesktop())
+         input_.setNewLineMode(NewLineMode.Unix);
+      
       input_.addClickHandler(secondaryInputHandler);
-      inputWidget.addStyleName(styles_.input());
-      input_.addCursorChangedHandler(new CursorChangedHandler()
+      input_.addCursorChangedHandler((CursorChangedEvent event) -> scrollIntoView());
+      input_.addFocusHandler((FocusEvent event) -> scrollIntoView());
+      
+      // This one is kind of awkward. If a user pastes multi-line content
+      // into the Ace instance, it might force the scroll panel to render
+      // the associated scrollbar. However, doing so will also force Ace
+      // to re-wrap code, since the editor width has effectively been
+      // decreased in response to the new scroller being rendered. This
+      // unfortunately leads to an awkward case where pasting multi-line
+      // code can actually cause Ace to stop rendering the last few lines
+      // of pasted content.
+      //
+      // The solution here is to force Ace to check whether a resize
+      // is necessary after a render has finished.
+      
+      input_.addRenderFinishedHandler(new RenderFinishedEvent.Handler()
       {
          @Override
-         public void onCursorChanged(CursorChangedEvent event)
+         public void onRenderFinished(RenderFinishedEvent event)
          {
-            Scheduler.get().scheduleDeferred(() -> input_.scrollToCursor(scrollPanel_, 8, 60));
+            checkForResize();
          }
       });
+      
       input_.addCapturingKeyDownHandler(new KeyDownHandler()
       {
          @Override
@@ -177,7 +192,10 @@ public class ShellWidget extends Composite implements ShellDisplay,
             }
          }
       });
-      input_.addFocusHandler(event -> scrollToBottom());
+      
+      final Widget inputWidget = input_.asWidget();
+      ElementIds.assignElementId(inputWidget.getElement(), ElementIds.CONSOLE_INPUT);
+      inputWidget.addStyleName(styles_.input());
 
       inputLine_ = new DockPanel();
       inputLine_.setHorizontalAlignment(DockPanel.ALIGN_LEFT);
@@ -191,11 +209,6 @@ public class ShellWidget extends Composite implements ShellDisplay,
       verticalPanel_ = new VerticalPanel();
       verticalPanel_.setStylePrimaryName(styles_.console());
       FontSizer.applyNormalFontSize(verticalPanel_);
-      if (!StringUtil.isNullOrEmpty(outputLabel))
-      {
-         Roles.getRegionRole().set(output_.getElement());
-         Roles.getRegionRole().setAriaLabelProperty(output_.getElement(), outputLabel);
-      }
       verticalPanel_.add(output_.getWidget());
       verticalPanel_.add(pendingInput_);
       verticalPanel_.add(inputLine_);
@@ -245,10 +258,12 @@ public class ShellWidget extends Composite implements ShellDisplay,
    }
 
    private boolean initialized_ = false;
+   
    @Override
    protected void onLoad()
    {
       super.onLoad();
+      
       if (!initialized_)
       {
          initialized_ = true;
@@ -406,7 +421,7 @@ public class ShellWidget extends Composite implements ShellDisplay,
    @Override
    public void ensureInputVisible()
    {
-      scrollPanel_.scrollToBottom();
+      scrollIntoView();
    }
    
    private String getErrorClass()
@@ -718,12 +733,19 @@ public class ShellWidget extends Composite implements ShellDisplay,
    }
 
    @Override
+   public ConsoleOutputWriter getConsoleOutputWriter()
+   {
+      return output_;
+   }
+
+   @Override
    public String processCommandEntry()
    {
       // parse out the command text
       String promptText = prompt_.getElement().getInnerText();
       String commandText = input_.getCode();
       input_.setText("");
+      
       // Force render to avoid subtle command movement in the console, caused
       // by the prompt disappearing before the input line does
       input_.forceImmediateRender();
@@ -859,6 +881,63 @@ public class ShellWidget extends Composite implements ShellDisplay,
       return ariaLive_ != null && !ariaLive_.isDisabled(announcement);
    }
 
+   private void scrollIntoView()
+   {
+      int padding = 8;
+      
+      // Force Ace to render the cursor element, so that its new position
+      // is properly represented in the DOM after a cursor move.
+      input_.getWidget().getEditor().getRenderer().renderCursor();
+            
+      // Get the bounding rectangles for the scroll panel + cursor element.
+      // Note that we rely on getBoundingClientRect() here as the Ace cursor
+      // element is rendered using CSS transforms, and those transforms are
+      // not represented in offsetTop.
+      DOMRect parent = DomUtils.getBoundingClientRect(
+            scrollPanel_.getElement());
+      
+      DOMRect child  = DomUtils.getBoundingClientRect(
+            input_.getWidget().getEditor().getRenderer().getCursorElement());
+      
+      // Scroll the cursor into view as required.
+      if (child.getTop() - padding < parent.getTop())
+      {
+         int scrollPos =
+               scrollPanel_.getVerticalScrollPosition() +
+               child.getTop() -
+               parent.getTop();
+         
+         scrollPanel_.setVerticalScrollPosition(scrollPos - padding);
+      }
+      else if (child.getBottom() + padding > parent.getBottom())
+      {
+         int scrollPos =
+               scrollPanel_.getVerticalScrollPosition() +
+               child.getBottom() -
+               parent.getBottom();
+         
+         scrollPanel_.setVerticalScrollPosition(scrollPos + padding);
+      }
+   }
+   
+   private void checkForResize()
+   {
+      int width = input_.getWidget().getOffsetWidth();
+      if (width != editorWidth_)
+      {
+         editorWidth_ = width;
+         scrollIntoView_ = true;
+         input_.onResize();
+         input_.forceImmediateRender();
+      }
+      
+      if (scrollIntoView_)
+      {
+         scrollIntoView_ = false;
+         scrollIntoView();
+      }
+   }
+   
    private boolean cleared_ = false;
    private final ConsoleOutputWriter output_;
    private final PreWidget pendingInput_;
@@ -874,6 +953,9 @@ public class ShellWidget extends Composite implements ShellDisplay,
    private final UserPrefs prefs_;
    private final AriaLiveService ariaLive_;
    private VerticalPanel verticalPanel_;
+   
+   private int editorWidth_ = -1;
+   private boolean scrollIntoView_ = false;
 
    // A list of errors that have occurred between console prompts. 
    private final Map<String, List<Element>> errorNodes_ = new TreeMap<>();

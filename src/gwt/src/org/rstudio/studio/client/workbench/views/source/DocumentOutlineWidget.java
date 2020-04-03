@@ -60,7 +60,17 @@ import com.google.inject.Inject;
 public class DocumentOutlineWidget extends Composite
                   implements EditorThemeStyleChangedEvent.Handler
 {
-   public class VerticalSeparator extends Composite
+   public static class EmptyPlaceholder extends FlowPanel
+   {
+      public EmptyPlaceholder()
+      {
+         add(new Label("No outline available"));
+         addStyleName(RES.styles().emptyPlaceholder());
+      }
+   }
+   
+   
+   public static class VerticalSeparator extends Composite
    {
       public VerticalSeparator()
       {
@@ -70,6 +80,16 @@ public class DocumentOutlineWidget extends Composite
          Roles.getSeparatorRole().setAriaOrientationProperty(panel_.getElement(),
                OrientationValue.VERTICAL);
          initWidget(panel_);
+      }
+      
+      // should be called after the separator is added to a parent
+      public void pad()
+      {
+         // This is a somewhat hacky way of allowing the separator to 'fit'
+         // to a size of 4px, but overflow an extra 4px (to provide extra
+         // space for a mouse cursor to drag or resize)
+         Element parent = getElement().getParentElement();
+         parent.getStyle().setPaddingRight(4, Unit.PX);
       }
       
       private final FlowPanel panel_;
@@ -99,7 +119,6 @@ public class DocumentOutlineWidget extends Composite
                target_.navigateToPosition(
                      SourcePosition.create(node_.getPreamble().getRow(), node_.getPreamble().getColumn()),
                      true);
-               target_.getDocDisplay().alignCursor(node_.getPreamble(), 0.1);
                
                // Defer focus so it occurs after click has been fully handled
                Scheduler.get().scheduleDeferred(new ScheduledCommand()
@@ -215,9 +234,7 @@ public class DocumentOutlineWidget extends Composite
    {
       RStudioGinjector.INSTANCE.injectMembers(this);
       
-      emptyPlaceholder_ = new FlowPanel();
-      emptyPlaceholder_.add(new Label("No outline available"));
-      emptyPlaceholder_.addStyleName(RES.styles().emptyPlaceholder());
+      emptyPlaceholder_ = new EmptyPlaceholder();
       
       container_ = new DockLayoutPanel(Unit.PX);
       container_.addStyleName(RES.styles().container());
@@ -225,12 +242,7 @@ public class DocumentOutlineWidget extends Composite
       
       separator_ = new VerticalSeparator();
       container_.addWest(separator_, 4);
-      
-      // This is a somewhat hacky way of allowing the separator to 'fit'
-      // to a size of 4px, but overflow an extra 4px (to provide extra
-      // space for a mouse cursor to drag or resize)
-      Element parent = separator_.getElement().getParentElement();
-      parent.getStyle().setPaddingRight(4, Unit.PX);
+      separator_.pad();
       
       tree_ = new Tree();
       tree_.addStyleName(RES.styles().tree());
@@ -505,7 +517,7 @@ public class DocumentOutlineWidget extends Composite
    private final FlowPanel panel_;
    private final VerticalSeparator separator_;
    private final Tree tree_;
-   private final FlowPanel emptyPlaceholder_;
+   private final EmptyPlaceholder emptyPlaceholder_;
    
    private final TextEditingTarget target_;
    private final HandlerRegistrations handlers_;
@@ -544,7 +556,7 @@ public class DocumentOutlineWidget extends Composite
       Styles styles();
    }
    
-   private static Resources RES = GWT.create(Resources.class);
+   public static Resources RES = GWT.create(Resources.class);
    static {
       RES.styles().ensureInjected();
    }

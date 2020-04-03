@@ -63,8 +63,8 @@ public class ProjectTemplateIconImageResource implements ImageResource
       return 0;
    }
 
+   @Deprecated
    @Override
-   @SuppressWarnings("deprecation")
    public String getURL()
    {
       return uri_;

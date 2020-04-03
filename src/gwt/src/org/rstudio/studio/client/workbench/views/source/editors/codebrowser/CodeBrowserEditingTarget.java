@@ -506,7 +506,7 @@ public class CodeBrowserEditingTarget implements EditingTarget
 
    
    @Override
-   public void onActivate()
+   public void onActivate(boolean forUser)
    {
       // IMPORTANT NOTE: most of this logic is duplicated in 
       // TextEditingTarget (no straightforward way to create a

@@ -134,6 +134,7 @@
 #include "modules/SessionErrors.hpp"
 #include "modules/SessionFiles.hpp"
 #include "modules/SessionFind.hpp"
+#include "modules/SessionGraphics.hpp"
 #include "modules/SessionDependencies.hpp"
 #include "modules/SessionDependencyList.hpp"
 #include "modules/SessionDirty.hpp"
@@ -187,6 +188,7 @@
 #include "modules/SessionUserCommands.hpp"
 #include "modules/SessionRAddins.hpp"
 #include "modules/mathjax/SessionMathJax.hpp"
+#include "modules/panmirror/SessionPanmirror.hpp"
 #include "modules/SessionLibPathsIndexer.hpp"
 #include "modules/SessionObjectExplorer.hpp"
 #include "modules/SessionReticulate.hpp"
@@ -562,6 +564,7 @@ Error rInit(const rstudio::r::session::RInitInfo& rInitInfo)
       (modules::r_addins::initialize)
       (modules::projects::templates::initialize)
       (modules::mathjax::initialize)
+      (modules::panmirror::initialize)
       (modules::rstudioapi::initialize)
       (modules::libpaths::initialize)
       (modules::explorer::initialize)
@@ -576,13 +579,13 @@ Error rInit(const rstudio::r::session::RInitInfo& rInitInfo)
       (modules::terminal::initialize)
       (modules::config_file::initialize)
       (modules::tutorial::initialize)
+      (modules::graphics::initialize)
 
       // workers
       (workers::web_request::initialize)
 
       // R code
       (bind(sourceModuleRFile, "SessionCodeTools.R"))
-      (bind(sourceModuleRFile, "SessionCompletionHooks.R"))
       (bind(sourceModuleRFile, "SessionPatches.R"))
    
       // unsupported functions
@@ -719,7 +722,7 @@ void notifyIfRVersionChanged()
    {
       const char* fmt =
             "R version change [%1% -> %2%] detected when restoring session; "
-            "search path not restored\n";
+            "search path not restored";
       
       boost::format formatter(fmt);
       formatter
@@ -727,7 +730,7 @@ void notifyIfRVersionChanged()
             % std::string(info.activeRVersion);
       
       std::string msg = formatter.str();
-      ::REprintf(msg.c_str());
+      ::REprintf("%s\n", msg.c_str());
    }
 }
 

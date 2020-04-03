@@ -62436,6 +62436,10 @@ var Text = function(parentEl) {
                 this.$renderLine(
                     lineElement, row, row == foldStart ? foldLine : false
                 );
+
+                if (heightChanged)
+                    lineElement.style.top = this.$lines.computeLineTop(row, config, this.session) + "px";
+
                 var height = (config.lineHeight * this.session.getRowLength(row)) + "px";
                 if (lineElement.style.height != height) {
                     heightChanged = true;
@@ -64552,6 +64556,7 @@ var VirtualRenderer = function(container, theme) {
             this.scroller.className = this.scrollLeft <= 0 ? "ace_scroller" : "ace_scroller ace_scroll-left";
         }
         if (changes & this.CHANGE_FULL) {
+            this.$changedLines = null;
             this.$textLayer.update(config);
             if (this.$showGutter)
                 this.$gutterLayer.update(config);
@@ -64563,6 +64568,7 @@ var VirtualRenderer = function(container, theme) {
             return;
         }
         if (changes & this.CHANGE_SCROLL) {
+            this.$changedLines = null;
             if (changes & this.CHANGE_TEXT || changes & this.CHANGE_LINES)
                 this.$textLayer.update(config);
             else
@@ -64583,6 +64589,7 @@ var VirtualRenderer = function(container, theme) {
         }
 
         if (changes & this.CHANGE_TEXT) {
+            this.$changedLines = null;
             this.$textLayer.update(config);
             if (this.$showGutter)
                 this.$gutterLayer.update(config);
@@ -65007,7 +65014,7 @@ var VirtualRenderer = function(container, theme) {
         var offset = offsetX / this.characterWidth;
         var col = this.$blockCursor ? Math.floor(offset) : Math.round(offset);
 
-        var row = (y + this.scrollTop - canvasPos.top) / this.lineHeight;
+        var row = Math.floor((y + this.scrollTop - canvasPos.top) / this.lineHeight);
         return this.session.screenToDocumentPosition(row, Math.max(col, 0), offsetX);
     };
     this.textToScreenCoordinates = function(row, column) {
@@ -66573,7 +66580,7 @@ function LineWidgets(session) {
         if (this.$useWrapMode && this.$wrapData[row])
             height += this.$wrapData[row].length;
 
-        return height + 1;
+        return Math.ceil(height + 1);
 
     };
 
@@ -66728,7 +66735,7 @@ function LineWidgets(session) {
             w.pixelHeight = w.el.offsetHeight;
         }
         if (w.rowCount == null) {
-            w.rowCount = w.pixelHeight / renderer.layerConfig.lineHeight;
+            w.rowCount = Math.ceil(w.pixelHeight / renderer.layerConfig.lineHeight);
         }
         
         var fold = this.session.getFoldAt(w.row, 0);
@@ -66817,7 +66824,7 @@ function LineWidgets(session) {
                 w.screenWidth = Math.ceil(w.w / config.characterWidth);
             }
             
-            var rowCount = w.h / config.lineHeight;
+            var rowCount = Math.ceil(w.h / config.lineHeight);
             if (w.coverLine) {
                 rowCount -= this.session.getRowLineCount(w.row);
                 if (rowCount < 0)

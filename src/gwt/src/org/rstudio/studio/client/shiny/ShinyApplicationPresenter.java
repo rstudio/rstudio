@@ -47,7 +47,6 @@ public class ShinyApplicationPresenter implements
       String getDocumentTitle();
       String getUrl();
       String getAbsoluteUrl();
-      String getName();
       void showApp(ShinyApplicationParams params, LoadHandler handler);
       void reloadApp();
    }
@@ -96,12 +95,6 @@ public class ShinyApplicationPresenter implements
       {
          reload();
       }
-   }
-   
-   @Override
-   public String getWindowName()
-   {
-      return view_.getName();
    }
    
    @Override

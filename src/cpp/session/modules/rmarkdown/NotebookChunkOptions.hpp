@@ -37,11 +37,11 @@ public:
    {
       // check overlay first
       core::Error error = core::json::readObject(chunkOptions_, key, 
-            &defaultValue);
+            defaultValue);
 
       // no overlay option, check base
       if (error)
-         core::json::readObject(defaultOptions_, key, &defaultValue);
+         core::json::readObject(defaultOptions_, key, defaultValue);
 
       return defaultValue;
    }

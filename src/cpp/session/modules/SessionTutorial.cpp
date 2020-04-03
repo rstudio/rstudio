@@ -136,10 +136,10 @@ private:
          
          TutorialInfo info;
          error = json::readObject(tutorialJson.getObject(),
-                                  "name",        &info.name,
-                                  "file",        &info.file,
-                                  "title",       &info.title,
-                                  "description", &info.description);
+                                  "name",        info.name,
+                                  "file",        info.file,
+                                  "title",       info.title,
+                                  "description", info.description);
 
          if (error)
          {
@@ -173,7 +173,6 @@ void handleTutorialRunRequest(const http::Request& request,
    std::string package = request.queryParamValue("package");
    std::string name = request.queryParamValue("name");
    
-   // TODO: Check tutorial pre-requisites first!
    Error error = r::exec::RFunction(".rs.tutorial.runTutorial")
          .addParam(name)
          .addParam(package)
@@ -183,9 +182,11 @@ void handleTutorialRunRequest(const http::Request& request,
    {
       LOG_ERROR(error);
       pResponse->setStatusCode(http::status::NotFound);
+      return;
    }
    
-   pResponse->setStatusCode(http::status::Ok);
+   FilePath loadingPath = resourcesPath().completePath("loading.html");
+   pResponse->setFile(loadingPath, request);
 }
 
 void handleTutorialHomeRequest(const http::Request& request,
@@ -234,8 +235,12 @@ void handleTutorialHomeRequest(const http::Request& request,
          
          ss << "<div class=\"rstudio-tutorials-label-container\">";
          
+         std::string title = (tutorial.title.empty())
+               ? "[Untitled tutorial]"
+               : htmlEscape(tutorial.title);
+         
          ss << "<span role=\"heading\" aria-level=\"2\" class=\"rstudio-tutorials-label\">"
-            << htmlEscape(tutorial.title)
+            << title
             << "</span>";
          
          ss << "<span class=\"rstudio-tutorials-run-container\">"
@@ -254,7 +259,7 @@ void handleTutorialHomeRequest(const http::Request& request,
          ss << "</div>";
          
          ss << "<div class=\"rstudio-tutorials-sublabel\">"
-            << pkgName << ": " << tutorial.name
+            << pkgName << ": " << htmlEscape(tutorial.name)
             << "</div>";
          
          if (tutorial.description.empty())

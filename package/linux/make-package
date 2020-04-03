@@ -56,6 +56,7 @@ else
 fi
 
 : ${CMAKE_INSTALL_PREFIX="/usr/lib/${INSTALL_DIR}"}
+: ${CMAKE_GENERATOR="Unix Makefiles"}
 
 PKG_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 echo $PKG_DIR
@@ -64,23 +65,31 @@ mkdir -p $BUILD_DIR/gwt
 cd $BUILD_DIR
 rm -f CMakeCache.txt
 rm -rf $BUILD_DIR/_CPack_Packages
-cmake -DRSTUDIO_TARGET=$1 \
-      -DCMAKE_BUILD_TYPE=$CMAKE_BUILD_TYPE \
-      -DRSTUDIO_PACKAGE_BUILD=1 \
+cmake -G"${CMAKE_GENERATOR}"                           \
+      -DRSTUDIO_TARGET=$1                              \
+      -DCMAKE_BUILD_TYPE=$CMAKE_BUILD_TYPE             \
+      -DRSTUDIO_PACKAGE_BUILD=1                        \
       -DCMAKE_INSTALL_PREFIX="${CMAKE_INSTALL_PREFIX}" \
-      -DGWT_BIN_DIR="$BUILD_DIR/gwt/bin" \
-      -DGWT_WWW_DIR="$BUILD_DIR/gwt/www" \
-      -DGWT_EXTRAS_DIR="$BUILD_DIR/gwt/extras" \
+      -DGWT_BIN_DIR="$BUILD_DIR/gwt/bin"               \
+      -DGWT_WWW_DIR="$BUILD_DIR/gwt/www"               \
+      -DGWT_EXTRAS_DIR="$BUILD_DIR/gwt/extras"         \
       $PKG_DIR/../..
 
-make ${MAKEFLAGS}
+cmake --build . --target all
 
 if [ "$2" != "DEB" ]
 then
-  fakeroot cpack -G "$2"
+   fakeroot cpack -G "$2"
 else
-  cpack -G $2
-  $PKG_DIR/fix-debian-permissions `ls *.deb`
+   cpack -G $2
+
+   # Fix permissions for non-development builds
+   if [ -z "${RSTUDIO_DEVELOPMENT_BUILD}" ]
+   then
+      $PKG_DIR/fix-debian-permissions `ls *.deb`
+   fi
+
 fi
 
 cd $PREV_WD
+

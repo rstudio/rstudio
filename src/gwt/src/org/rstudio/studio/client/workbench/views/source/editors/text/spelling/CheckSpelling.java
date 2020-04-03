@@ -33,7 +33,6 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Anchor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
-import org.rstudio.studio.client.workbench.views.source.model.SourcePosition;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -168,7 +167,7 @@ public class CheckSpelling
          showProgress();
 
          Iterable<Range> wordSource = docDisplay_.getWords(
-               docDisplay_.getFileType().getTokenPredicate(),
+               docDisplay_.getFileType().getSpellCheckTokenPredicate(),
                docDisplay_.getFileType().getCharPredicate(),
                currentPos_,
                wrapped_ ? initialCursorPos_.getPosition() : null);
@@ -183,10 +182,6 @@ public class CheckSpelling
 
             wordRanges.add(r);
             words.add(docDisplay_.getTextForRange(r));
-
-            SourcePosition startPos = SourcePosition.create(r.getStart().getRow(), r.getStart().getColumn());
-            SourcePosition endPos = SourcePosition.create(r.getEnd().getRow(), r.getEnd().getColumn());
-            docDisplay_.highlightDebugLocation(startPos, endPos, true);
 
             // Check a maximum of N words at a time
             if (wordRanges.size() == 100)

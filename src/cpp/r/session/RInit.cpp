@@ -63,7 +63,7 @@ void reportDeferredDeserializationError(const Error& error)
 
    // report to user
    std::string errMsg = r::endUserErrorMessage(error);
-   REprintf((errMsg + "\n").c_str());
+   REprintf("%s\n", errMsg.c_str());
 }
 
 std::string createAliasedPath(const FilePath& filePath)
@@ -149,12 +149,14 @@ void deferredRestoreNewSession()
             << "'" << aliasedPath << "'" << std::endl
             << "Reason: " << errMessage << std::endl;
          std::string message = ss.str();
-         ::REprintf(message.c_str());
+         
+         ::REprintf("%s\n", message.c_str());
          LOG_ERROR_MESSAGE(message);
       }
       else
       {
-         Rprintf(("[Workspace loaded from " + aliasedPath + "]\n\n").c_str());
+         const char* fmt = "[Workspace loaded from %s]\n\n";
+         Rprintf(fmt, aliasedPath.c_str());
       }
    }
 
@@ -274,7 +276,7 @@ Error initialize()
 
       // show any error messages
       if (!errorMessages.empty())
-         REprintf(errorMessages.c_str());
+         REprintf("%s\n", errorMessages.c_str());
 
       // note we were resumed
       wasResumed = true;
@@ -287,7 +289,7 @@ Error initialize()
       
       // show any error messages
       if (!errorMessages.empty())
-         REprintf(errorMessages.c_str());
+         REprintf("%s\n", errorMessages.c_str());
 
       // note we were resumed
       wasResumed = true;
@@ -406,7 +408,7 @@ void reportHistoryAccessError(const std::string& context,
    // notify the user
    std::string path = createAliasedPath(historyFilePath);
    std::string errmsg = context + " " + path + ": " + summary;
-   REprintf(("Error attempting to " + errmsg + "\n").c_str());
+   REprintf("Error attempting to %s\n", errmsg.c_str());
 }
    
 namespace utils {

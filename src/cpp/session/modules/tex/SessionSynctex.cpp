@@ -181,10 +181,10 @@ Error rpcApplyForwardConcordance(const json::JsonRpcRequest& request,
    int line, column;
    bool fromClick;
    error = json::readObject(sourceLocation,
-                                  "file", &file,
-                                  "line", &line,
-                                  "column", &column,
-                                  "from_click", &fromClick);
+                                  "file", file,
+                                  "line", line,
+                                  "column", column,
+                                  "from_click", fromClick);
    if (error)
       return error;
 
@@ -314,10 +314,10 @@ Error forwardSearch(const FilePath& rootFile,
    int line, column;
    bool fromClick;
    Error error = json::readObject(sourceLocation,
-                                  "file", &file,
-                                  "line", &line,
-                                  "column", &column,
-                                  "from_click", &fromClick);
+                                  "file", file,
+                                  "line", line,
+                                  "column", column,
+                                  "from_click", fromClick);
    if (error)
       return error;
 

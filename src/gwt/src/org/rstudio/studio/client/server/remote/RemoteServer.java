@@ -4231,17 +4231,27 @@ public class RemoteServer implements Server
    }
    
    @Override
-   public void tutorialStop(String tutorialName,
-                            String tutorialPackage,
+   public void tutorialStop(String tutorialUrl,
                             ServerRequestCallback<Void> requestCallback)
    {
       JSONArray params = new JSONArrayBuilder()
-            .add(tutorialName)
-            .add(tutorialPackage)
+            .add(tutorialUrl)
             .get();
       
       sendRequest(RPC_SCOPE, TUTORIAL_STOP, params, requestCallback);
    }
+   
+   @Override
+   public void tutorialMetadata(String tutorialUrl,
+                                ServerRequestCallback<JsObject> requestCallback)
+   {
+      JSONArray params = new JSONArrayBuilder()
+            .add(tutorialUrl)
+            .get();
+      
+      sendRequest(RPC_SCOPE, TUTORIAL_METADATA, params, requestCallback);
+   }
+   
    
    @Override
    public void getSlideNavigationForFile(
@@ -6115,6 +6125,34 @@ public class RemoteServer implements Server
       params.set(2, new JSONString(code));
       sendRequest(RPC_SCOPE, REPLACE_COMMENT_HEADER, params, callback);
    }
+   
+   @Override
+   public void pandocMarkdownToAst(String markdown, String format, JsArrayString options,
+                                   ServerRequestCallback<JavaScriptObject> callback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(markdown));
+      params.set(1, new JSONString(format));
+      setArrayString(params, 2, options);
+      sendRequest(RPC_SCOPE, PANDOC_MARKDOWN_TO_AST, params, callback);
+   }
+
+   @Override
+   public void pandocAstToMarkdown(JavaScriptObject ast, String format, JsArrayString options,
+                                   ServerRequestCallback<String> callback)
+   {
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONObject(ast));
+      params.set(1, new JSONString(format));
+      setArrayString(params, 2, options);
+      sendRequest(RPC_SCOPE, PANDOC_AST_TO_MARKDOWN, params, callback);
+   }
+
+   @Override
+   public void pandocListExtensions(String format, ServerRequestCallback<String> callback)
+   {
+      sendRequest(RPC_SCOPE, PANDOC_LIST_EXTENSIONS, format, callback);
+   }
 
    protected String clientInitId_ = "";
    private String clientId_;
@@ -6408,6 +6446,7 @@ public class RemoteServer implements Server
    
    private static final String TUTORIAL_STARTED = "tutorial_started";
    private static final String TUTORIAL_STOP = "tutorial_stop";
+   private static final String TUTORIAL_METADATA = "tutorial_metadata";
    
    private static final String GET_SLIDE_NAVIGATION_FOR_FILE = "get_slide_navigation_for_file";
    private static final String GET_SLIDE_NAVIGATION_FOR_CODE = "get_slide_navigation_for_code";
@@ -6600,4 +6639,8 @@ public class RemoteServer implements Server
 
    private static final String REPLACE_COMMENT_HEADER = "replace_comment_header";
    private static final String SET_USER_CRASH_HANDLER_PROMPTED = "set_user_crash_handler_prompted";
+   
+   private static final String PANDOC_AST_TO_MARKDOWN = "pandoc_ast_to_markdown";
+   private static final String PANDOC_MARKDOWN_TO_AST = "pandoc_markdown_to_ast";
+   private static final String PANDOC_LIST_EXTENSIONS = "pandoc_list_extensions";  
 }

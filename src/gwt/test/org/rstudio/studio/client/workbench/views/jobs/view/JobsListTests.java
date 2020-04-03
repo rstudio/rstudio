@@ -143,6 +143,7 @@ public class JobsListTests extends GWTTestCase
     */
    public void testAllocate()
    {
+      @SuppressWarnings("unused")
       JobsList list = new JobsList(new Factory());
       Assert.assertTrue(true);
    }

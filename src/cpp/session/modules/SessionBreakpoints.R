@@ -532,7 +532,7 @@
 .rs.addFunction("unquote", function(strings)
 {
    tryCatch(
-      unquoteImpl(strings),
+      .rs.unquoteImpl(strings),
       error = function(e) strings
    )
 })

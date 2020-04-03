@@ -2338,6 +2338,45 @@ core::Error UserPrefValues::setFullProjectPathInWindowTitle(bool val)
 }
 
 /**
+ * Whether to enable experimental visual markdown editing
+ */
+bool UserPrefValues::enableVisualMarkdownEditingMode()
+{
+   return readPref<bool>("enable_visual_markdown_editing_mode");
+}
+
+core::Error UserPrefValues::setEnableVisualMarkdownEditingMode(bool val)
+{
+   return writePref("enable_visual_markdown_editing_mode", val);
+}
+
+/**
+ * Whether to automatically wrap text when writing markdown
+ */
+bool UserPrefValues::visualMarkdownEditingWrapAuto()
+{
+   return readPref<bool>("visual_markdown_editing_wrap_auto");
+}
+
+core::Error UserPrefValues::setVisualMarkdownEditingWrapAuto(bool val)
+{
+   return writePref("visual_markdown_editing_wrap_auto", val);
+}
+
+/**
+ * The column to wrap text at when writing markdown
+ */
+int UserPrefValues::visualMarkdownEditingWrapColumn()
+{
+   return readPref<int>("visual_markdown_editing_wrap_column");
+}
+
+core::Error UserPrefValues::setVisualMarkdownEditingWrapColumn(int val)
+{
+   return writePref("visual_markdown_editing_wrap_column", val);
+}
+
+/**
  * List of aria-live announcements to disable.
  */
 core::json::Array UserPrefValues::disabledAriaLiveAnnouncements()
@@ -2374,6 +2413,45 @@ core::json::Array UserPrefValues::fileMonitorIgnoredComponents()
 core::Error UserPrefValues::setFileMonitorIgnoredComponents(core::json::Array val)
 {
    return writePref("file_monitor_ignored_components", val);
+}
+
+/**
+ * Whether to install R package dependencies one at a time.
+ */
+bool UserPrefValues::installPkgDepsIndividually()
+{
+   return readPref<bool>("install_pkg_deps_individually");
+}
+
+core::Error UserPrefValues::setInstallPkgDepsIndividually(bool val)
+{
+   return writePref("install_pkg_deps_individually", val);
+}
+
+/**
+ * R graphics backend.
+ */
+std::string UserPrefValues::graphicsBackend()
+{
+   return readPref<std::string>("graphics_backend");
+}
+
+core::Error UserPrefValues::setGraphicsBackend(std::string val)
+{
+   return writePref("graphics_backend", val);
+}
+
+/**
+ * Type of anti-aliasing to be used for generated R plots.
+ */
+std::string UserPrefValues::graphicsAntialiasing()
+{
+   return readPref<std::string>("graphics_antialiasing");
+}
+
+core::Error UserPrefValues::setGraphicsAntialiasing(std::string val)
+{
+   return writePref("graphics_antialiasing", val);
 }
 
 std::vector<std::string> UserPrefValues::allKeys()
@@ -2557,9 +2635,15 @@ std::vector<std::string> UserPrefValues::allKeys()
       kAutoSaveOnBlur,
       kTerminalInitialDirectory,
       kFullProjectPathInWindowTitle,
+      kEnableVisualMarkdownEditingMode,
+      kVisualMarkdownEditingWrapAuto,
+      kVisualMarkdownEditingWrapColumn,
       kDisabledAriaLiveAnnouncements,
       kScreenreaderConsoleAnnounceLimit,
       kFileMonitorIgnoredComponents,
+      kInstallPkgDepsIndividually,
+      kGraphicsBackend,
+      kGraphicsAntialiasing,
    });
 }
    

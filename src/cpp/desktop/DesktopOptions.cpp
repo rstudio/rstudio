@@ -559,14 +559,33 @@ void Options::setLastRemoteSessionUrl(const QString& serverUrl, const QString& s
    settings_.endGroup();
 }
 
-QStringList Options::cookies() const
+QList<QNetworkCookie> Options::authCookies() const
 {
-   return settings_.value(QString::fromUtf8("cookies"), QStringList()).toStringList();
+   QStringList cookieStrs = settings_.value(QString::fromUtf8("cookies"), QStringList()).toStringList();
+   QList<QNetworkCookie> cookies;
+
+   for (const QString& cookieStr : cookieStrs)
+   {
+      QByteArray cookieArr = QByteArray::fromStdString(cookieStr.toStdString());
+      QList<QNetworkCookie> innerCookies = QNetworkCookie::parseCookies(cookieArr);
+      for (const QNetworkCookie& cookie : innerCookies)
+      {
+         cookies.push_back(cookie);
+      }
+   }
+
+   return cookies;
 }
 
-void Options::setCookies(const QStringList& cookies)
+void Options::setAuthCookies(const QList<QNetworkCookie>& cookies)
 {
-   settings_.setValue(QString::fromUtf8("cookies"), cookies);
+   QStringList cookieStrs;
+   for (const QNetworkCookie& cookie : cookies)
+   {
+      cookieStrs.push_back(QString::fromStdString(cookie.toRawForm().toStdString()));
+   }
+
+   settings_.setValue(QString::fromUtf8("cookies"), cookieStrs);
 }
 
 } // namespace desktop

@@ -8,9 +8,9 @@
 # filenames, so tweaking for new releases is expected.
 
 # Modify to set the Pandoc version to upload
-PANDOC_VERSION=2.7.3
+PANDOC_VERSION=2.9.2.1
 
-for PLATFORM in linux.tar.gz macOS.zip windows-x86_64.zip; do
+for PLATFORM in linux-amd64.tar.gz macOS.zip windows-x86_64.zip; do
 
     # Form filename from version and platform
     FILENAME=pandoc-$PANDOC_VERSION-$PLATFORM

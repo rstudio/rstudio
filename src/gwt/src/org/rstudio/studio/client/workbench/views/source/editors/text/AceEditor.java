@@ -47,7 +47,6 @@ import java.util.function.BiPredicate;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.RootPanel;
-import com.google.gwt.user.client.ui.ScrollPanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import org.rstudio.core.client.AceSupport;
@@ -3096,21 +3095,6 @@ public class AceEditor implements DocDisplay,
       widget_.forceCursorChange();
    }
 
-   public void scrollToCursor(ScrollPanel scrollPanel,
-                              int paddingVert,
-                              int paddingHoriz)
-   {
-      DomUtils.ensureVisibleVert(
-            scrollPanel.getElement(),
-            widget_.getEditor().getRenderer().getCursorElement(),
-            paddingVert);
-      DomUtils.ensureVisibleHoriz(
-            scrollPanel.getElement(),
-            widget_.getEditor().getRenderer().getCursorElement(),
-            paddingHoriz, paddingHoriz,
-            false);
-   }
-
    public void scrollToLine(int row, boolean center)
    {
       widget_.getEditor().scrollToLine(row, center);
@@ -4029,6 +4013,11 @@ public class AceEditor implements DocDisplay,
    public final void setScrollSpeed(double speed)
    {
       widget_.getEditor().setScrollSpeed(speed);
+   }
+   
+   public final void setIndentedSoftWrap(boolean softWrap)
+   {
+      widget_.getEditor().setIndentedSoftWrap(softWrap);
    }
 
    private void fireLineWidgetsChanged()

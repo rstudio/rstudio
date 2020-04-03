@@ -52,7 +52,7 @@ public:
    void launchRemoteRStudioProject(const QString& projectUrl);
 
    RemoteDesktopSessionLauncher* getRemoteDesktopSessionLauncher();
-   JobLauncher* getJobLauncher();
+   boost::shared_ptr<JobLauncher> getJobLauncher();
 
    QWebEngineProfile* getPageProfile();
    WebView* getWebView();
@@ -61,9 +61,11 @@ public:
 public Q_SLOTS:
    void quit();
    void loadUrl(const QUrl& url);
+   void loadRequest(const QWebEngineHttpRequest& request);
    void loadHtml(const QString& html);
    void setMenuBar(QMenuBar *pMenuBar);
    void invokeCommand(QString commandId);
+   void runJavaScript(QString script);
    void openFileInRStudio(QString path);
    void onPdfViewerClosed(QString pdfPath);
    void onPdfViewerSyncSource(QString srcFile, int line, int column);
@@ -114,7 +116,7 @@ private:
    void onUrlChanged(QUrl url);
    void onLoadFinished(bool ok);
 
-   void saveRemoteCookies();
+   void saveRemoteAuthCookies(bool forcePersist);
 
 private:
    bool isRemoteDesktop_;
@@ -125,7 +127,7 @@ private:
    GwtCallback gwtCallback_;
    SessionLauncher* pSessionLauncher_;
    RemoteDesktopSessionLauncher* pRemoteSessionLauncher_;
-   JobLauncher* pLauncher_;
+   boost::shared_ptr<JobLauncher> pLauncher_;
    ApplicationLaunch *pAppLauncher_;
    QProcess* pCurrentSessionProcess_;
 

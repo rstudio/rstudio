@@ -701,9 +701,9 @@ void handleConnection(boost::shared_ptr<HttpConnection> ptrConnection,
                   std::string version, rHome, label;
                   Error error = json::readObject(
                                             switchToVersionJson.getObject(),
-                                            "version", &version,
-                                            "r_home", &rHome,
-                                            "label", &label);
+                                            "version", version,
+                                            "r_home", rHome,
+                                            "label", label);
                   if (!error)
                   {
                      // set version for active session

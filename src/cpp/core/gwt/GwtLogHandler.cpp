@@ -50,9 +50,9 @@ Error parseClientException(const json::Object exJson, ClientException* pEx)
 {
    json::Array stackJson;
    Error error = json::readObject(exJson,
-                                  "message", &(pEx->message),
-                                  "strong_name", &(pEx->strongName),
-                                  "stack", &stackJson);
+                                  "message", pEx->message,
+                                  "strong_name", pEx->strongName,
+                                  "stack", stackJson);
    if (error)
        return error;
 
@@ -63,10 +63,10 @@ Error parseClientException(const json::Object exJson, ClientException* pEx)
 
       StackElement element;
       Error error = json::readObject(elementJson.getObject(),
-                                     "file_name", &element.fileName,
-                                     "class_name", &element.className,
-                                     "method_name", &element.methodName,
-                                     "line_number", &element.lineNumber);
+                                     "file_name", element.fileName,
+                                     "class_name", element.className,
+                                     "method_name", element.methodName,
+                                     "line_number", element.lineNumber);
       if (error)
          return error;
 

@@ -56,6 +56,7 @@ public class HelpTab extends DelayLoadWorkbenchTab<Help>
       @Handler public abstract void onOpenRoxygenQuickReference();
       @Handler public abstract void onBrowseCheatSheets();
       @Handler public abstract void onProfileHelp();
+      @Handler public abstract void onShowAccessibilityHelp();
       
       public abstract void bringToFront();
    }

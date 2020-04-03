@@ -20,7 +20,7 @@
 }
 .ace_selection.ace_start {
   box-shadow: 0 0 3px 0px #141414;
-  border-radius: 2px
+  border-radius: 2px;
 }
 .ace_marker-layer .ace_step {
   background: rgb(102, 82, 0)
@@ -113,20 +113,26 @@
 .ace_marker-layer .ace_foreign_line {
   position: absolute;
   z-index: -1;
-  background-color: #2A2A2A;
+  background-color: #2B2B2B;
+}
+.ace_node-selector {
+  background-color: #fb6f1c
+}
+.ace_comment-highlight {
+  background-color: #5C4916
 }
 .ace_marker-layer .ace_active_debug_line {
   position: absolute;
   z-index: -1;
-  background-color: #897926;
+  background-color: #8A7926;
 }
 .ace_marker-layer .ace_find_line {
   position: absolute;
   z-index: -1;
-  background-color: #414141;
+  background-color: #424242;
 }
 .ace_console_error {
-  background-color: #414141;
+  background-color: #424242;
 }
 .ace_keyword.ace_operator {
   color: #7587A6 !important;

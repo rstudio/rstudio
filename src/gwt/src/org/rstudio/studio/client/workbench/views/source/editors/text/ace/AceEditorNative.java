@@ -167,6 +167,7 @@ public class AceEditorNative extends JavaScriptObject
            }));
    }-*/;
 
+   @SuppressWarnings("hiding")
    public native final <Tooltip> void onShowGutterTooltip(CommandWithArg<Tooltip> command) /*-{
        this.on("showGutterTooltip",
            $entry(function (arg) {
@@ -346,19 +347,11 @@ public class AceEditorNative extends JavaScriptObject
    }-*/;
 
    public final native void autoHeight() /*-{
-      var editor = this;
-      function updateEditorHeight() {
-         editor.container.style.height = (Math.max(1, editor.getSession().getScreenLength()) * editor.renderer.lineHeight) + 'px';
-         editor.resize();
-         editor.renderer.scrollToY(0);
-         editor.renderer.scrollToX(0);
-      }
-      if (!editor.autoHeightAttached) {
-         editor.autoHeightAttached = true;
-         editor.getSession().getDocument().on("change", updateEditorHeight);
-         editor.renderer.$textLayer.on("changeCharacterSize", updateEditorHeight);
-      }
-      updateEditorHeight();
+      this.setOptions({
+         minLines: 1,
+         maxLines: Infinity,
+         scrollPastEnd: false
+      });
    }-*/;
 
    public final native void onCursorChange() /*-{
@@ -651,6 +644,10 @@ public class AceEditorNative extends JavaScriptObject
    public final native void setScrollSpeed(double speed) /*-{
       this.setOption("scrollSpeed", speed);
    }-*/;
+   
+   public final native void setIndentedSoftWrap(boolean softWrap) /*-{
+      this.setOption("indentedSoftWrap", softWrap);
+   }-*/;
 
    public final native void setTabMovesFocus(boolean movesFocus) /*-{
       if (movesFocus) {
@@ -661,6 +658,7 @@ public class AceEditorNative extends JavaScriptObject
          this.commands.bindKey("Shift+Tab", "outdent");
       }
    }-*/;
+   
 
    private static final native void initialize()
    /*-{

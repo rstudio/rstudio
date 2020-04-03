@@ -280,15 +280,6 @@ bool useRemoteDevtoolsDebugging()
 #endif
 }
 
-#ifdef Q_OS_MAC
-
-QString inferDefaultRenderingEngine()
-{
-   return QStringLiteral("auto");
-}
-
-#endif
-
 #ifdef Q_OS_WIN
 
 namespace {
@@ -332,7 +323,7 @@ bool isRemoteSession()
 
 } // end anonymous namespace
 
-QString inferDefaultRenderingEngine()
+QString inferDefaultRenderingEngineWindows()
 {
    if (isRemoteSession())
       return QStringLiteral("software");
@@ -370,16 +361,64 @@ QString inferDefaultRenderingEngine()
    return QStringLiteral("auto");
 }
 
-#endif
+#endif /* Q_OS_WIN */
 
-#ifdef Q_OS_LINUX
+#ifdef Q_OS_MAC
 
-QString inferDefaultRenderingEngine()
+QString inferDefaultRenderingEngineMac()
 {
    return QStringLiteral("auto");
 }
 
+#endif /* Q_OS_MAC */
+
+#ifdef Q_OS_LINUX
+
+QString inferDefaultRenderingEngineLinux()
+{
+   // disable opengl when using nouveau drivers, as a large number
+   // of users have reported crashes when attempting to do so.
+   //
+   // NOTE: we'll currently assume this is fixed in the next Qt
+   // update, so guard only for older Qt for now
+   //
+   // https://github.com/rstudio/rstudio/issues/3781
+   // https://bugreports.qt.io/browse/QTBUG-73715
+#if QT_VERSION < QT_VERSION_CHECK(5, 13, 0)
+   core::system::ProcessResult result;
+   Error error = core::system::runCommand(
+            "lspci -mkv | grep -q 'Driver:[[:space:]]*nouveau'",
+            core::system::ProcessOptions(),
+            &result);
+
+   // don't log errors (assume that lspci failed or wasn't available
+   // and just bail on inference attempts)
+   if (error)
+      return QStringLiteral("auto");
+
+   // successful exit here implies that we found the nouveau driver
+   // is in use; in that case, we want to force software rendering
+   if (result.exitStatus == EXIT_SUCCESS)
+      return QStringLiteral("software");
 #endif
+
+   return QStringLiteral("auto");
+}
+
+#endif /* Q_OS_LINUX */
+
+QString inferDefaultRenderingEngine()
+{
+#if defined(Q_OS_WIN)
+   return inferDefaultRenderingEngineWindows();
+#elif defined(Q_OS_MAC)
+   return inferDefaultRenderingEngineMac();
+#elif defined(Q_OS_LINUX)
+   return inferDefaultRenderingEngineLinux();
+#else
+   return QStringLiteral("auto");
+#endif
+}
 
 void initializeRenderingEngine(std::vector<char*>* pArguments)
 {
@@ -659,6 +698,14 @@ int main(int argc, char* argv[])
 #endif
 
 #endif
+
+#ifdef Q_OS_WIN32
+# if QT_VERSION > QT_VERSION_CHECK(5, 12, 0)
+      // allow AltGr key to be recognized separately on Windows
+      arguments.push_back("-platform");
+      arguments.push_back("windows:altgr");
+# endif
+#endif
       
       // allow users to supply extra command-line arguments
       augmentCommandLineArguments(&arguments);
@@ -738,8 +785,8 @@ int main(int argc, char* argv[])
                   else
                   {
                      error = json::readObject(val.getObject(),
-                                              "sessionUrl", &sessionUrl,
-                                              "serverUrl", &serverUrl);
+                                              "sessionUrl", sessionUrl,
+                                              "serverUrl", serverUrl);
                      if (error)
                      {
                         LOG_ERROR(error);

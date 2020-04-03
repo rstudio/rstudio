@@ -16,6 +16,9 @@
 #include <tests/TestThat.hpp>
 
 #include <iostream>
+#include <set>
+
+#include <boost/optional/optional_io.hpp>
 
 #include <shared_core/Error.hpp>
 #include <shared_core/json/Json.hpp>
@@ -954,6 +957,143 @@ TEST_CASE("Json")
       Error error = result.parse(R"({ "first": 1, "second": true })");
 
       REQUIRE(error);
+   }
+
+   SECTION("readObject tests")
+   {
+      json::Object obj;
+      json::Object obj2;
+      obj["a"] = 1;
+      obj["b"] = false;
+      obj["c"] = "Hello there";
+      obj2["a"] = "Inner obj";
+      obj["d"] = obj2;
+
+      int a;
+      bool b;
+      std::string c;
+      json::Object d;
+      Error error = json::readObject(obj,
+                                     "a", a,
+                                     "b", b,
+                                     "c", c,
+                                     "d", d);
+
+      REQUIRE_FALSE(error);
+      REQUIRE(a == 1);
+      REQUIRE_FALSE(b);
+      REQUIRE(c == "Hello there");
+      REQUIRE(d["a"].getString() == "Inner obj");
+
+      error = json::readObject(obj,
+                               "a", c,
+                               "b", b,
+                               "c", c);
+      REQUIRE(error);
+
+      error = json::readObject(obj,
+                               "a", a,
+                               "b", a,
+                               "c", c);
+      REQUIRE(error);
+
+      error = json::readObject(obj,
+                               "a", a,
+                               "b", b,
+                               "c", a);
+      REQUIRE(error);
+   }
+
+   SECTION("readObject tests (lists and optionals)")
+   {
+      json::Array intArr;
+      intArr.push_back(4);
+      intArr.push_back(3);
+      intArr.push_back(2);
+      intArr.push_back(1);
+      intArr.push_back(4);
+
+      json::Array strArr;
+      strArr.push_back("a string");
+      strArr.push_back("A CAPITAL STRING");
+      strArr.push_back("a duplicate string");
+      strArr.push_back("a duplicate string");
+      strArr.push_back("a duplicate string");
+      strArr.push_back("A CAPITAL STRING");
+
+      json::Object obj;
+      obj["intArr"] = intArr;
+      obj["strArr"] = strArr;
+
+      std::vector<int> intList, badStrList;
+      std::vector<std::string> strList, badIntList;
+      std::set<int> intSet, badStrSet;
+      std::set<std::string> strSet, badIntSet;
+
+      boost::optional<std::vector<int> > optIntList, badOptStrList;
+      boost::optional<std::vector<std::string> > optStrList, badOptIntList;
+      boost::optional<std::set<int> > optIntSet, badOptStrSet;
+      boost::optional<std::set<std::string> > optStrSet, badOptIntSet;
+
+      // No errors.
+      REQUIRE_FALSE(json::readObject(obj,
+         "intArr", intList,
+         "intArr", intSet,
+         "intArr", optIntList,
+         "intArr", optIntSet,
+         "strArr", strList,
+         "strArr", strSet,
+         "strArr", optStrList,
+         "strArr", optStrSet,
+         "notFound", badOptIntList,
+         "notFound", badOptStrSet));
+
+      // Check good values
+      REQUIRE(intList.size() == 5);
+      CHECK(intList[0] == 4);
+      CHECK(intList[1] == 3);
+      CHECK(intList[2] == 2);
+      CHECK(intList[3] == 1);
+      CHECK(intList[4] == 4);
+      REQUIRE(intSet.size() == 4);
+      CHECK(intSet.find(1) != intSet.end());
+      CHECK(intSet.find(2) != intSet.end());
+      CHECK(intSet.find(3) != intSet.end());
+      CHECK(intSet.find(4) != intSet.end());
+      REQUIRE(!(optIntList == boost::none));
+      CHECK(std::equal(intList.begin(), intList.end(), optIntList.get().begin()));
+      REQUIRE(!(optIntSet == boost::none));
+      CHECK(std::equal(intSet.begin(), intSet.end(), optIntSet.get().begin()));
+
+      REQUIRE(strList.size() == 6);
+      CHECK(strList[0] == "a string");
+      CHECK(strList[1] == "A CAPITAL STRING");
+      CHECK(strList[2] == "a duplicate string");
+      CHECK(strList[3] == "a duplicate string");
+      CHECK(strList[4] == "a duplicate string");
+      CHECK(strList[5] == "A CAPITAL STRING");
+      REQUIRE(strSet.size() == 3);
+      CHECK(strSet.find("a string") != strSet.end());
+      CHECK(strSet.find("A CAPITAL STRING") != strSet.end());
+      CHECK(strSet.find("a duplicate string") != strSet.end());
+      REQUIRE(!!optStrList);
+      CHECK(std::equal(strList.begin(), strList.end(), optStrList.get().begin()));
+      REQUIRE(!!optStrSet);
+      CHECK(std::equal(strSet.begin(), strSet.end(), optStrSet.get().begin()));
+
+      // Bad values, one at a time.
+      CHECK((json::readObject(obj, "notFound", badStrList) && badStrList.empty()));
+      CHECK((json::readObject(obj, "notFound", badStrSet) && badStrSet.empty()));
+      CHECK((json::readObject(obj, "strArr", badStrList) && badStrList.empty()));
+      CHECK((json::readObject(obj, "strArr", badOptStrList) && !!(badOptStrList == boost::none)));
+      CHECK((json::readObject(obj, "strArr", badStrSet) && badStrSet.empty()));
+      CHECK((json::readObject(obj, "strArr", badOptStrSet) && !!(badOptStrSet == boost::none)));
+      CHECK((json::readObject(obj, "notFound", badIntList) && badIntList.empty()));
+      CHECK((json::readObject(obj, "notFound", badIntSet) && badIntSet.empty()));
+      CHECK((json::readObject(obj, "intArr", badIntList) && badIntList.empty()));
+      CHECK((json::readObject(obj, "intArr", badOptIntList) && !!(badOptIntList == boost::none)));
+      CHECK((json::readObject(obj, "intArr", badIntSet) && badIntSet.empty()));
+      CHECK((json::readObject(obj, "intArr", badOptIntSet) && !!(badOptIntSet == boost::none)));
    }
 }
 

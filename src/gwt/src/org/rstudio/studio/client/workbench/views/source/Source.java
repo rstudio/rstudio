@@ -338,6 +338,8 @@ public class Source implements InsertSourceHandler,
       dynamicCommands_.add(commands.sourceActiveDocument());
       dynamicCommands_.add(commands.sourceActiveDocumentWithEcho());
       dynamicCommands_.add(commands.knitDocument());
+      dynamicCommands_.add(commands.toggleRmdVisualMode());
+      dynamicCommands_.add(commands.enableProsemirrorDevTools());
       dynamicCommands_.add(commands.previewHTML());
       dynamicCommands_.add(commands.compilePDF());
       dynamicCommands_.add(commands.compileNotebook());
@@ -640,6 +642,11 @@ public class Source implements InsertSourceHandler,
          @Override
          protected void onInit(Integer value)
          {
+            // set flag indicating that tab selections are actual "user-level"
+            // document activations (in contrast to onActivated which is fired
+            // for every new tab added during startup)
+            tabActivationsAreForUser_ = true;
+            
             if (value == null)
                return;
             if (value >= 0 && view_.getTabCount() > value)
@@ -3734,7 +3741,7 @@ public class Source implements InsertSourceHandler,
       if (event.getSelectedItem() >= 0)
       {
          activeEditor_ = editors_.get(event.getSelectedItem());
-         activeEditor_.onActivate();
+         activeEditor_.onActivate(tabActivationsAreForUser_);
          
          // let any listeners know this tab was activated
          events_.fireEvent(new DocTabActivatedEvent(
@@ -4901,10 +4908,14 @@ public class Source implements InsertSourceHandler,
          EditingTarget target = activeEditor_;
          if (target != null && target instanceof TextEditingTarget)
          {
-            getEditorContext(
-                  target.getId(),
-                  target.getPath(),
-                  ((TextEditingTarget) target).getDocDisplay());
+            TextEditingTarget editingTarget = (TextEditingTarget)target;
+            editingTarget.ensureTextEditorActive(() -> {
+               getEditorContext(
+                  editingTarget.getId(),
+                  editingTarget.getPath(),
+                  editingTarget.getDocDisplay()
+               );
+            });
             return;
          }
       }
@@ -5012,6 +5023,7 @@ public class Source implements InsertSourceHandler,
    private static final String KEY_ACTIVETAB = "activeTab";
    private boolean initialized_;
    private Timer debugSelectionTimer_ = null;
+   private boolean tabActivationsAreForUser_ = false;
    
    private final SourceWindowManager windowManager_;
 

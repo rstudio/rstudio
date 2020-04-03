@@ -16,6 +16,7 @@ package org.rstudio.core.client;
 
 import java.util.List;
 
+import com.google.gwt.aria.client.Roles;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.widget.PreWidget;
 
@@ -30,10 +31,15 @@ import com.google.gwt.dom.client.SpanElement;
  */
 public class ConsoleOutputWriter
 {
-   public ConsoleOutputWriter(VirtualConsoleFactory vcFactory)
+   public ConsoleOutputWriter(VirtualConsoleFactory vcFactory, String a11yLabel)
    {
       vcFactory_ = vcFactory;
       output_ = new PreWidget();
+      if (!StringUtil.isNullOrEmpty(a11yLabel))
+      {
+         output_.getElement().setAttribute("aria-label", a11yLabel);
+         Roles.getDocumentRole().set(output_.getElement());
+      }
    }
    
    public PreWidget getWidget()
@@ -88,6 +94,7 @@ public class ConsoleOutputWriter
       if (virtualConsole_ == null)
       {
          SpanElement trailing = Document.get().createSpanElement();
+         trailing.setTabIndex(-1);
          outEl.appendChild(trailing);
          virtualConsole_ = vcFactory_.create(trailing);
       }
@@ -152,6 +159,15 @@ public class ConsoleOutputWriter
          return "";
       else
          return virtualConsole_.getNewText();
+   }
+
+   public void focusEnd()
+   {
+      Node lastChild = output_.getElement().getLastChild();
+      if (lastChild == null)
+         return;
+      Element last = lastChild.cast();
+      last.focus();
    }
 
    private int maxLines_ = -1;

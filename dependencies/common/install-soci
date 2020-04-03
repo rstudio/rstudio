@@ -1,0 +1,80 @@
+#!/usr/bin/env bash
+
+#
+# install-soci
+#
+# Copyright (C) 2020 by RStudio, PBC
+#
+# Unless you have received this program directly from RStudio pursuant
+# to the terms of a commercial license agreement with RStudio, then
+# this program is licensed to you under the terms of version 3 of the
+# GNU Affero General Public License. This program is distributed WITHOUT
+# ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
+# MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE. Please refer to the
+# AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
+#
+#
+
+set -e
+
+# install dir 
+INSTALL_DIR=`pwd`
+
+# vars
+BOOST_VERSION="1_69_0"
+RSTUDIO_TOOLS_DIR=/opt/rstudio-tools
+SOCI_DIR=$RSTUDIO_TOOLS_DIR/soci
+SOCI_BIN_DIR=$SOCI_DIR/build
+SOCI_URL=https://s3.amazonaws.com/rstudio-buildtools/soci.tar.gz
+BOOST_DIR="$RSTUDIO_TOOLS_DIR/boost/boost_$BOOST_VERSION"
+
+# install SOCI if it isn't already installed
+if ! ls $SOCI_BIN_DIR/lib/libsoci_core* &> /dev/null
+then
+   cd $RSTUDIO_TOOLS_DIR
+
+   # download SOCI from source
+   if ! [ -d "$SOCI_DIR" ]
+   then
+      sudo curl $SOCI_URL -o soci.tar.gz
+      sudo tar zxvf soci.tar.gz
+      sudo rm soci.tar.gz
+   fi
+   cd $SOCI_DIR
+
+   # make build directory
+   sudo mkdir -p $SOCI_BIN_DIR
+   cd $SOCI_BIN_DIR
+
+   # create symlink to our boost datetime library so it is properly discovered by the SOCI build
+   sudo ln -sf "$BOOST_DIR/lib/libboost_date_time.a" "$BOOST_DIR/lib/rstudio_boost_date_time.a"
+ 
+   # build SOCI
+   cmakeCommand=$(which cmake)
+   makeCommand=$(which make)
+   sudo $cmakeCommand -G "Unix Makefiles" \
+       -DSOCI_TESTS=OFF \
+       -DSOCI_CXX11=ON \
+       -DSOCI_EMPTY=OFF \
+       -DCMAKE_INCLUDE_PATH="$BOOST_DIR/include" \
+       -DBoost_USE_STATIC_LIBS=ON \
+       -DCMAKE_LIBRARY_PATH="$BOOST_DIR/lib" \
+       -DWITH_BOOST=ON \
+       -DWITH_POSTGRESQL=ON \
+       -DWITH_SQLITE3=ON \
+       -DWITH_DB2=OFF \
+       -DWITH_MYSQL=OFF \
+       -DWITH_ORACLE=OFF \
+       -DWITH_FIREBIRD=OFF \
+       -DWITH_ODBC=OFF \
+       -DBoost_DEBUG=1 ..   
+   sudo $makeCommand
+   
+   # fix up permissions so bin dir will be readable by others
+   sudo chmod -R 777 "$SOCI_BIN_DIR" 
+else
+   echo "SOCI already installed in $SOCI_BIN_DIR"
+fi
+
+# back to install dir
+cd $INSTALL_DIR

@@ -19,6 +19,16 @@ following components:
 - MSVC 2017 64-bit
 - QtWebEngine
 
+To install via the Qt online installer (recommended by Qt), when you reach the "Select Components"
+screen, click the "Archive" checkbox then the Filter button. The list of available versions will
+expand to include 5.12.6, as seen here:
+
+![screenshot of Qt component selection](./qt-5-12-6.png)
+
+Alternatively, the offline installer may be used:
+
+http://download.qt.io/official_releases/qt/5.12/5.12.6/qt-opensource-windows-x86-5.12.6.exe
+
 Clone the Repo and Run Batch File
 =============================================================================
 - Open Command Prompt (non-administrator); do this **after** running the 

@@ -27,6 +27,7 @@ set(SERVER_SOURCE_FILES
    ServerErrorCategory.cpp
    ServerEval.cpp
    ServerInit.cpp
+   ServerLoginPages.cpp
    ServerMain.cpp
    ServerMainOverlay.cpp
    ServerMeta.cpp
@@ -41,6 +42,7 @@ set(SERVER_SOURCE_FILES
    ServerSessionProxyOverlay.cpp
    ServerSessionManager.cpp
    auth/ServerAuthHandler.cpp
+   auth/ServerAuthCommon.cpp
    auth/ServerSecureUriHandler.cpp
    auth/ServerValidateUser.cpp
    ${CMAKE_CURRENT_BINARY_DIR}/ServerAddins.cpp
@@ -174,6 +176,19 @@ configure_file("${CMAKE_CURRENT_SOURCE_DIR}/${RSERVER_THEME_README}"
                "${CMAKE_CURRENT_BINARY_DIR}/extras/${RSERVER_THEME_README}")
 install(FILES "${CMAKE_CURRENT_BINARY_DIR}/extras/${RSERVER_THEME_README}"
        DESTINATION "extras/themes")
+
+# install db migration scripts
+file(GLOB DB_MIGRATION_FILES_SQL "db/*.sql")
+file(GLOB DB_MIGRATION_FILES_SQLITE "db/*.sqlite")
+file(GLOB DB_MIGRATION_FILES_POSTGRESQL "db/*.postgresql")
+install(FILES ${DB_MIGRATION_FILES_SQL} ${DB_MIGRATION_FILES_SQLITE} ${DB_MIGRATION_FILES_POSTGRESQL}
+        DESTINATION "db")
+
+# install default database.conf file
+set(RSERVER_CONF_DIR "extras/conf")
+set(RSERVER_DATABASE_CONF_FILE "${RSERVER_CONF_DIR}/database.conf")
+install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/${RSERVER_DATABASE_CONF_FILE}
+        DESTINATION ${RSERVER_CONF_DIR})
 
 if (UNIX AND NOT APPLE)
 

@@ -431,13 +431,13 @@ CppDefinition cppDefinitionFromJson(const json::Object& object)
    std::string file;
    CppDefinition definition;
    Error error = json::readObject(object,
-                                  "usr", &definition.USR,
-                                  "kind", &kind,
-                                  "parent_name", &definition.parentName,
-                                  "name", &definition.name,
-                                  "file", &file,
-                                  "line", &line,
-                                  "column", &column);
+                                  "usr", definition.USR,
+                                  "kind", kind,
+                                  "parent_name", definition.parentName,
+                                  "name", definition.name,
+                                  "file", file,
+                                  "line", line,
+                                  "column", column);
    if (error)
    {
       LOG_ERROR(error);
@@ -497,9 +497,9 @@ void loadDefinitionIndex()
       double fileLastWrite;
       CppDefinitions definitions;
       Error error = json::readObject(definitionsJson.getObject(),
-                                     "file", &definitions.file,
-                                     "file_last_write", &fileLastWrite,
-                                     "definitions", &defsArrayJson);
+                                     "file", definitions.file,
+                                     "file_last_write", fileLastWrite,
+                                     "definitions", defsArrayJson);
       if (error)
       {
          LOG_ERROR(error);

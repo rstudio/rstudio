@@ -180,6 +180,11 @@
             "location": "cran",
             "source": true
         },
+        "ragg": {
+            "version": "0.1.5",
+            "location": "cran",
+            "source": false
+        },
         "rJava": {
             "version": "0.4-15",
             "location": "cran",
@@ -196,9 +201,9 @@
             "source": false
         },
         "renv": {
-            "version": "0.0.0",
-            "location": "embedded",
-            "source": true
+            "version": "0.9.3",
+            "location": "cran",
+            "source": false
         },
         "reticulate": {
             "version": "1.10",
@@ -519,6 +524,12 @@
                 "DBI"
             ]
         },
+        "ragg": {
+            "description": "R Interface to AGG",
+            "packages": [
+                "ragg"
+            ]
+        },
         "rsqlite": {
             "description": "RSQLite",
             "packages": [
@@ -529,7 +540,8 @@
         "tutorial": {
             "description": "RStudio Tutorials",
             "packages": [
-                "learnr"
+                "learnr",
+                "rstudioapi"
             ]
         }
     }

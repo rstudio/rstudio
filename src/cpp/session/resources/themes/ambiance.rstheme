@@ -2,11 +2,6 @@
 /* rs-theme-is-dark: TRUE */
 .ace_gutter {
   background-color: #3d3d3d;
-  background-image: -moz-linear-gradient(left, #3D3D3D, #333);
-  background-image: -ms-linear-gradient(left, #3D3D3D, #333);
-  background-image: -webkit-gradient(linear, 0 0, 0 100%, from(#3D3D3D), to(#333));
-  background-image: -webkit-linear-gradient(left, #3D3D3D, #333);
-  background-image: -o-linear-gradient(left, #3D3D3D, #333);
   background-image: linear-gradient(left, #3D3D3D, #333);
   background-repeat: repeat-x;
   border-right: 1px solid #4d4d4d;
@@ -186,20 +181,26 @@
 .ace_marker-layer .ace_foreign_line {
   position: absolute;
   z-index: -1;
-  background-color: #333332;
+  background-color: #343433;
+}
+.ace_node-selector {
+  background-color: #fb6f1c
+}
+.ace_comment-highlight {
+  background-color: #5C4916
 }
 .ace_marker-layer .ace_active_debug_line {
   position: absolute;
   z-index: -1;
-  background-color: #8F7F2C;
+  background-color: #907F2C;
 }
 .ace_marker-layer .ace_find_line {
   position: absolute;
   z-index: -1;
-  background-color: #474645;
+  background-color: #484746;
 }
 .ace_console_error {
-  background-color: #474645;
+  background-color: #484746;
 }
 .terminal {
   background-color: #202020;

@@ -157,20 +157,26 @@
 .ace_marker-layer .ace_foreign_line {
   position: absolute;
   z-index: -1;
-  background-color: #2A2A29;
+  background-color: #2B2B2A;
+}
+.ace_node-selector {
+  background-color: #fb6f1c
+}
+.ace_comment-highlight {
+  background-color: #5C4916
 }
 .ace_marker-layer .ace_active_debug_line {
   position: absolute;
   z-index: -1;
-  background-color: #8A7A27;
+  background-color: #8B7A27;
 }
 .ace_marker-layer .ace_find_line {
   position: absolute;
   z-index: -1;
-  background-color: #3F3E3D;
+  background-color: #403F3E;
 }
 .ace_console_error {
-  background-color: #3F3E3D;
+  background-color: #403F3E;
 }
 .terminal {
   background-color: #161616;

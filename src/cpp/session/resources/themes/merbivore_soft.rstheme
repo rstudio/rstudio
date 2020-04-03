@@ -20,7 +20,7 @@
 }
 .ace_selection.ace_start {
   box-shadow: 0 0 3px 0px #1C1C1C;
-  border-radius: 2px
+  border-radius: 2px;
 }
 .ace_marker-layer .ace_step {
   background: rgb(102, 82, 0)
@@ -100,26 +100,32 @@
 .ace_marker-layer .ace_foreign_line {
   position: absolute;
   z-index: -1;
-  background-color: #302F2F;
+  background-color: #313030;
+}
+.ace_node-selector {
+  background-color: #fb6f1c
+}
+.ace_comment-highlight {
+  background-color: #5C4916
 }
 .ace_marker-layer .ace_active_debug_line {
   position: absolute;
   z-index: -1;
-  background-color: #8D7D2A;
+  background-color: #8E7D2A;
 }
 .ace_marker-layer .ace_find_line {
   position: absolute;
   z-index: -1;
-  background-color: #444342;
+  background-color: #454443;
 }
 .ace_console_error {
-  background-color: #444342;
+  background-color: #454443;
 }
 .ace_keyword.ace_operator {
   color: #AAAAAA !important;
 }
 .terminal {
-  background-color: #1C1C1C;
+  background-color: #1c1c1c;
   color: #e6e1dc;
   font-feature-settings: "liga" 0;
   position: relative;
@@ -146,10 +152,10 @@
    background-color: #CCC;
 }
 .terminal .xterm-viewport {
-  background-color: #1C1C1C;
+  background-color: #1c1c1c;
   overflow-y: scroll;
 }
-.xtermInvertColor { color: #1C1C1C; }
+.xtermInvertColor { color: #1c1c1c; }
 .xtermInvertBgColor { background-color: #e6e1dc; }
 .xtermBold { font-weight: bold; }
 .xtermUnderline { text-decoration: underline; }

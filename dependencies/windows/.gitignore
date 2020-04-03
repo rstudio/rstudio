@@ -14,5 +14,15 @@ openssl*/
 crashpad*/
 *.zip
 breakpad-tools-windows/
+
 install-crashpad/logs/
+
+install-soci/logs
+install-soci/postgresql
+install-soci/soci.tar
+install-soci/soci.tar.gz
+install-soci/soci
+install-soci/sqlite
+
 sentry-cli.exe
+

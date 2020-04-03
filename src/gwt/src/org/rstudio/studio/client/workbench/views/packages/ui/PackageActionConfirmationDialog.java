@@ -1,7 +1,7 @@
 /*
  * PackageActionConfirmationDialog.java
  *
- * Copyright (C) 2009-19 by RStudio, PBC
+ * Copyright (C) 2009-20 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -63,6 +63,8 @@ public abstract class PackageActionConfirmationDialog<T extends JavaScriptObject
     
       addLeftButton(selectAllButton_ = new ThemedButton("Select All",
          event -> setGlobalPerformAction("Select All", true)), ElementIds.SELECT_ALL_BUTTON);
+      
+      selectAllButton_.getElement().getStyle().setMarginRight(10, Unit.PX);
      
       addLeftButton(selectNoneButton_ = new ThemedButton("Select None",
          event -> setGlobalPerformAction("Select None", false)), ElementIds.SELECT_NONE_BUTTON);
@@ -105,7 +107,7 @@ public abstract class PackageActionConfirmationDialog<T extends JavaScriptObject
       actionsTable_ = new CellTable<>(
             15,
             GWT.<PackagesCellTableResources> create(PackagesCellTableResources.class));
-      actionsTable_.setKeyboardSelectionPolicy(KeyboardSelectionPolicy.ENABLED);
+      actionsTable_.setKeyboardSelectionPolicy(KeyboardSelectionPolicy.DISABLED);
       actionsTable_.setSelectionModel(new NoSelectionModel<>());
       actionsTable_.setWidth("100%", true);
       

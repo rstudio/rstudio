@@ -159,12 +159,12 @@ Error fromJson(
 
    core::Error error = core::json::readObject(
             object,
-            "parameter", &description.parameter,
-            "type",      &description.type,
-            "label",     &description.label,
-            "default",   &description.defaultValue,
-            "position",  &description.position,
-            "fields",    &description.fields);
+            "parameter", description.parameter,
+            "type",      description.type,
+            "label",     description.label,
+            "default",   description.defaultValue,
+            "position",  description.position,
+            "fields",    description.fields);
 
    if (error)
       return error;
@@ -196,19 +196,19 @@ Error fromJson(
 
    error = json::readObject(
             object,
-            "package",    &description.package,
-            "binding",    &description.binding,
-            "title",      &description.title,
-            "subtitle",   &description.subtitle,
-            "caption",    &description.caption,
-            "icon",       &description.icon,
-            "open_files", &description.openFiles);
+            "package",    description.package,
+            "binding",    description.binding,
+            "title",      description.title,
+            "subtitle",   description.subtitle,
+            "caption",    description.caption,
+            "icon",       description.icon,
+            "open_files", description.openFiles);
    
    if (error)
       return error;
    
    json::Array array;
-   error = json::readObject(object, "widgets", &array);
+   error = json::readObject(object, "widgets", array);
    if (error)
       return error;
    

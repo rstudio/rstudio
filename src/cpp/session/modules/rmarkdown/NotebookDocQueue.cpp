@@ -60,12 +60,12 @@ NotebookDocQueue::NotebookDocQueue(const std::string& docId,
    if (error)
       return;
 
-   json::readObject(vals, kChunkDefaultOptions, &defaultOptions_);
+   json::readObject(vals, kChunkDefaultOptions, defaultOptions_);
    
    // read the default working dir; if it specifies a valid directory, use it
    // as the working directory for executing chunks in this document
    std::string docWorkingDir;
-   json::readObject(vals, kChunkWorkingDir, &docWorkingDir);
+   json::readObject(vals, kChunkWorkingDir, docWorkingDir);
    if (!docWorkingDir.empty())
    {
       // working directory set in setup chunk (i.e. knitr root.dir) takes
@@ -79,7 +79,7 @@ NotebookDocQueue::NotebookDocQueue(const std::string& docId,
    }
 
    // read external code chunk contents
-   json::readObject(vals, kChunkExternals, &externalChunks_);
+   json::readObject(vals, kChunkExternals, externalChunks_);
 }
 
 boost::shared_ptr<NotebookQueueUnit> NotebookDocQueue::firstUnit()
@@ -121,14 +121,14 @@ core::Error NotebookDocQueue::fromJson(const core::json::Object& source,
    int commitMode = 0, pixelWidth = 0, charWidth = 0, maxUnits = 0;
    std::string docId, jobDesc, workingDir;
    Error error = json::readObject(source, 
-         kDocQueueId,         &docId,
-         kDocQueueJobDesc,    &jobDesc,
-         kDocQueueWorkingDir, &workingDir,
-         kDocQueueCommitMode, &commitMode,
-         kDocQueuePixelWidth, &pixelWidth,
-         kDocQueueCharWidth,  &charWidth,
-         kDocQueueUnits,      &units, 
-         kDocQueueMaxUnits,   &maxUnits);
+         kDocQueueId,         docId,
+         kDocQueueJobDesc,    jobDesc,
+         kDocQueueWorkingDir, workingDir,
+         kDocQueueCommitMode, commitMode,
+         kDocQueuePixelWidth, pixelWidth,
+         kDocQueueCharWidth,  charWidth,
+         kDocQueueUnits,      units,
+         kDocQueueMaxUnits,   maxUnits);
    if (error)
       return error;
 

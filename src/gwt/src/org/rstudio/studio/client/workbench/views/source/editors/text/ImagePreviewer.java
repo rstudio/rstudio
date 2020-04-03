@@ -499,9 +499,15 @@ public class ImagePreviewer
           href.endsWith(".gif")  ||
           href.endsWith(".svg");
    }
+   
+   public static String imgSrcPathFromHref(DocUpdateSentinel sentinel, String href)
+   {
+      String docPath = sentinel.getPath();
+      String docDir = FilePathUtils.dirFromFile(docPath);
+      return imgSrcPathFromHref(docDir, href);
+   }
 
-   private static String imgSrcPathFromHref(DocUpdateSentinel sentinel, 
-                                            String href)
+   public static String imgSrcPathFromHref(String docDir, String href)
    {
       // return paths that have a custom / external protocol as-is
       Pattern reProtocol = Pattern.create("^\\w+://");
@@ -512,8 +518,7 @@ public class ImagePreviewer
       String absPath = href;
       if (FilePathUtils.pathIsRelative(href))
       {
-         String docPath = sentinel.getPath();
-         absPath = FilePathUtils.dirFromFile(docPath) + "/" + absPath;
+         absPath = docDir + "/" + absPath;
       }
       
       return "file_show?path=" + StringUtil.encodeURIComponent(absPath) + 
@@ -555,6 +560,10 @@ public class ImagePreviewer
                href, attributes, position, tokenRange);
          return;
       }
+      
+      // don't show preview if we are in visual mode
+      if (sentinel.getBoolProperty(TextEditingTarget.RMD_VISUAL_MODE, false))
+         return;
       
       // construct image el, place in popup, and show
       ImagePreviewPopup panel = new ImagePreviewPopup(display, tokenRange, 

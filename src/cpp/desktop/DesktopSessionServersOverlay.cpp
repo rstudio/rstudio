@@ -75,6 +75,11 @@ SessionServer SessionServer::fromJson(const QJsonObject& sessionServerJson)
    return SessionServer();
 }
 
+bool SessionServer::cookieBelongs(const QNetworkCookie& cookie) const
+{
+   return false;
+}
+
 Error SessionServer::test()
 {
    return Success();
@@ -103,8 +108,9 @@ void SessionServerSettings::save(const std::vector<SessionServer>& servers,
 {
 }
 
-void SessionServerSettings::addSaveHandler(const boost::function<void()>& onSave)
+boost::signals2::scoped_connection SessionServerSettings::addSaveHandler(const boost::function<void()>& onSave)
 {
+   return boost::signals2::scoped_connection();
 }
 
 } // namespace desktop

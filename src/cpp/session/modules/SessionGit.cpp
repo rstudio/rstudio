@@ -1743,7 +1743,7 @@ Error vcsListBranches(const json::JsonRpcRequest& request,
    json::Array jsonBranches;
    std::transform(branches.begin(), branches.end(),
                   std::back_inserter(jsonBranches),
-                  json::toJsonString);
+                  json::toJsonValue<std::string>);
 
    json::Object result;
    result["branches"] = jsonBranches;

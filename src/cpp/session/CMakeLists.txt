@@ -118,6 +118,7 @@ set (SESSION_SOURCE_FILES
    modules/SessionFilesQuotas.cpp
    modules/SessionFind.cpp
    modules/SessionGit.cpp
+   modules/SessionGraphics.cpp
    modules/SessionHelp.cpp
    modules/SessionHelpHome.cpp
    modules/SessionHistory.cpp
@@ -190,6 +191,7 @@ set (SESSION_SOURCE_FILES
    modules/jobs/Job.cpp
    modules/jobs/JobsApi.cpp
    modules/mathjax/SessionMathJax.cpp
+   modules/panmirror/SessionPanmirror.cpp
    modules/overlay/SessionOverlay.cpp
    modules/plumber/SessionPlumber.cpp
    modules/presentation/SessionPresentation.cpp
@@ -517,7 +519,7 @@ if (NOT RSTUDIO_SESSION_WIN32)
            DESTINATION ${RSTUDIO_INSTALL_SUPPORTING}/resources)
 
    # install pandoc
-   set(PANDOC_VERSION "2.7.3" CACHE INTERNAL "Pandoc version")
+   set(PANDOC_VERSION "2.9.2.1" CACHE INTERNAL "Pandoc version")
 
    set(PANDOC_BIN "${RSTUDIO_DEPENDENCIES_DIR}/common/pandoc/${PANDOC_VERSION}")
    file(GLOB PANDOC_FILES "${PANDOC_BIN}/pandoc*")
@@ -626,16 +628,33 @@ endif()
 
 if(APPLE)
 
-   # if doing a package build on MacOS, reroute the OpenSSL libraries to our
+   # if doing a package build on MacOS, reroute dependent libraries to our
    # bundled copies
    if (RSTUDIO_PACKAGE_BUILD)
       find_package(OpenSSL REQUIRED QUIET)
       foreach(lib ${OPENSSL_CRYPTO_LIBRARY} ${OPENSSL_SSL_LIBRARY})
-         get_filename_component(LIB_DIR ${lib} PATH)
-         execute_process(COMMAND readlink ${lib} OUTPUT_VARIABLE LIB_FILE OUTPUT_STRIP_TRAILING_WHITESPACE)
+         # get the real path to the library (with all symlinks resolved) and filename
+         get_filename_component(LIB_PATH "${lib}" REALPATH)
+         get_filename_component(LIB_FILE "${LIB_PATH}" NAME)
+         # this command does the following:
+         # 1. runs otool -L to find the path at which the OpenSSL library is
+         #    linked into the executable (this path is unfortunately not canonical
+         #    and includes layers of both resolved and unresolved symlinks)
+         # 2. extracts the path from the output using grep and awk
+         # 3. runs install_name_tool and tells it to replace the path with one that
+         #    points to a bundled copy of the same file
          add_custom_command (TARGET rsession POST_BUILD
-            COMMAND install_name_tool -change ${LIB_DIR}/${LIB_FILE} @executable_path/../Frameworks/${LIB_FILE} ${CMAKE_CURRENT_BINARY_DIR}/rsession)
+            COMMAND install_name_tool -change `otool -L ${CMAKE_CURRENT_BINARY_DIR}/rsession | grep ${LIB_FILE} | awk '{ print $$1 }'` @executable_path/../Frameworks/${LIB_FILE} ${CMAKE_CURRENT_BINARY_DIR}/rsession)
       endforeach()
+
+      # do something similar to the above to fix paths to SOCI libraries
+      foreach(lib ${SOCI_SYMLINK_LIBRARIES})
+         get_filename_component(LIB_PATH "${lib}" ABSOLUTE)
+         get_filename_component(LIB_FILE "${LIB_PATH}" NAME)
+         add_custom_command (TARGET rsession POST_BUILD
+            COMMAND install_name_tool -change `otool -L ${CMAKE_CURRENT_BINARY_DIR}/rsession | grep ${LIB_FILE} | awk '{ print $$1 }'` @executable_path/../Frameworks/${LIB_FILE} ${CMAKE_CURRENT_BINARY_DIR}/rsession)
+      endforeach()
+
    endif()
 
 endif()

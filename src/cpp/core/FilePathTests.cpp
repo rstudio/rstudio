@@ -1,7 +1,7 @@
 /*
  * FilePathTests.cpp
  *
- * Copyright (C) 2009-17 by RStudio, PBC
+ * Copyright (C) 2009-20 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -12,6 +12,9 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
+
+// All of these tests presume Unix-style paths
+#ifndef _WIN32
 
 #define RSTUDIO_NO_TESTTHAT_ALIASES
 #include <tests/TestThat.hpp>
@@ -93,3 +96,6 @@ TEST_CASE("file paths")
 } // end namespace tests
 } // end namespace core
 } // end namespace rstudio
+
+#endif  // _WIN32
+

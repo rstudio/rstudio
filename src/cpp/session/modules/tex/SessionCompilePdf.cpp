@@ -72,11 +72,11 @@ public:
    {
       clear();
       return json::readObject(asJson,
-                              "tab_visible", &tabVisible_,
-                              "running", &running_,
-                              "target_file", &targetFile_,
-                              "output", &output_,
-                              "errors", &errors_);
+                              "tab_visible", tabVisible_,
+                              "running", running_,
+                              "target_file", targetFile_,
+                              "output", output_,
+                              "errors", errors_);
    }
 
 
