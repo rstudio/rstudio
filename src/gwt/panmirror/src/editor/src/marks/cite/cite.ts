@@ -160,8 +160,7 @@ const extension: Extension = {
   inputRules: (schema: Schema) => {
     return [
       citeInputRule(schema),
-      citeIdInputRule(schema),
-      citeSuppressAuthorInputRule(schema)
+      citeIdInputRule(schema)
     ];
   },
 
@@ -244,24 +243,6 @@ function citeIdInputRule(schema: Schema) {
     } else {
       return null;
     }
-  });
-}
-
-function citeSuppressAuthorInputRule(schema: Schema) {
-  return new InputRule(/-$/, (state: EditorState, match: string[], start: number, end: number) => {
-    if (markIsActive(state, schema.marks.cite) && !state.doc.rangeHasMark(start, start, schema.marks.cite_id)) {
-      if (state.doc.rangeHasMark(start + 1, start + 2, schema.marks.cite_id)) {
-        const nextChar = state.doc.textBetween(start, start + 1);
-        if (nextChar !== '-') {
-          const tr = state.tr;
-          tr.addStoredMark(schema.marks.cite_id.create());
-          tr.insertText('-');
-          return tr;
-        }        
-      }
-    }
-
-    return null;
   });
 }
 
