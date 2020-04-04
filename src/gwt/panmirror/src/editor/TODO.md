@@ -4,11 +4,11 @@ pandoc schema: <https://github.com/jgm/pandoc-types/blob/master/Text/Pandoc/Defi
 
 ## Feedback
 
-Some issues with - handling at the beginning
+Localize '@cite'
 
-[@cite], then...
-[-@cite], then...
-Press delete key, all kinds of crazy stuff ensues
+General review/cleanup of cite.ts
+
+Cache forever on fusebox?
 
 
 Perhaps only run quoted fixup during load and save?
