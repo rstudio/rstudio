@@ -120,7 +120,7 @@ void initializeSharedSecret()
    core::system::setenv("RS_SHARED_SECRET", value);
 }
 
-void initializeWorkingDirectory(int argc,
+void initializeWorkingDirectory(int /*argc*/,
                                 char* argv[],
                                 const QString& filename)
 {
@@ -481,7 +481,7 @@ boost::optional<SessionServer> getLaunchServerFromUrl(const std::string& url)
    return boost::optional<SessionServer>();
 }
 
-ProgramStatus initializeOptions(const QStringList& arguments)
+ProgramStatus initializeOptions(const QStringList& /*arguments*/)
 {
    return ProgramStatus::run();
 }
@@ -917,7 +917,7 @@ int main(int argc, char* argv[])
             showError(nullptr,
                       QString::fromUtf8("Invalid session server"),
                       QString::fromStdString("Session server " + sessionServer + " does not exist"),
-                      QString::null);
+                      QString());
             return EXIT_FAILURE;
          }
       }
@@ -1100,10 +1100,10 @@ int main(int argc, char* argv[])
 }
 
 #ifdef _WIN32
-int WINAPI WinMain(HINSTANCE hInstance,
-                   HINSTANCE hPrevInstance,
-                   LPSTR lpCmdLine,
-                   int nShowCmd)
+int WINAPI WinMain(HINSTANCE /*hInstance*/,
+                   HINSTANCE /*hPrevInstance*/,
+                   LPSTR /*lpCmdLine*/,
+                   int /*nShowCmd*/)
 {
    return main(__argc, __argv);
 }
