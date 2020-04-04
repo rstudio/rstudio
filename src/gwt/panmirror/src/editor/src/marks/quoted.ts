@@ -18,7 +18,9 @@ import { Schema, Mark, Fragment, Node as ProsemirrorNode } from 'prosemirror-mod
 import { Extension } from '../api/extension';
 import { PandocOutput, PandocToken, PandocTokenType } from '../api/pandoc';
 import { removeInvalidatedMarks, detectAndApplyMarks } from '../api/mark';
-import { MarkTransaction } from '../api/transaction';
+import { FixupContext } from '../api/fixup';
+import { Transaction } from 'prosemirror-state';
+import { findChildren } from 'prosemirror-utils';
 
 const QUOTE_TYPE = 0;
 const QUOTED_CHILDREN = 1;
@@ -99,30 +101,38 @@ const extension: Extension = {
     },
   ],
 
-  appendMarkTransaction: (_schema: Schema) => {
+  fixups: (schema: Schema) => {
     return [
-      {
-        name: 'quoted-marks',
+      (tr: Transaction, context: FixupContext) => {
+        
+        // only apply on save
+        if (context !== FixupContext.Save) {
+          return tr;
+        }
 
-        filter: node => node.isTextblock && node.type.allowsMarkType(node.type.schema.marks.quoted),
-
-        append: (tr: MarkTransaction, node: ProsemirrorNode, pos: number) => {
-          const schema = node.type.schema;
+        const predicate = (node: ProsemirrorNode) =>  {
+          return node.isTextblock && node.type.allowsMarkType(node.type.schema.marks.quoted);
+        };
+        findChildren(tr.doc, predicate).forEach((nodeWithPos) => {
+          const { node, pos } = nodeWithPos;
 
           // find quoted marks where the text is no longer quoted (remove the mark)
           removeInvalidatedMarks(tr, node, pos, kQuoted, schema.marks.quoted);
 
-          // find quoted text that doesn't have a quoted mark (add the mark)
+           // find quoted text that doesn't have a quoted mark (add the mark)
           detectAndApplyMarks(tr, tr.doc.nodeAt(pos)!, pos, kDoubleQuoted, schema.marks.quoted, {
             type: QuoteType.DoubleQuote,
           });
           detectAndApplyMarks(tr, tr.doc.nodeAt(pos)!, pos, kSingleQuoted, schema.marks.quoted, {
             type: QuoteType.SingleQuote,
           });
-        },
+        });
+
+        return tr;
       },
     ];
-  },
+  }
+
 };
 
 function quotesForType(type: QuoteType) {
