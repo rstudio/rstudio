@@ -155,6 +155,7 @@ namespace prefs {
 #define kFontSizePoints "font_size_points"
 #define kHelpFontSizePoints "help_font_size_points"
 #define kEditorTheme "editor_theme"
+#define kServerEditorFontEnabled "server_editor_font_enabled"
 #define kServerEditorFont "server_editor_font"
 #define kDefaultEncoding "default_encoding"
 #define kToolbarVisible "toolbar_visible"
@@ -808,6 +809,12 @@ public:
     */
    std::string editorTheme();
    core::Error setEditorTheme(std::string val);
+
+   /**
+    * Whether to use a custom editor font in RStudio Server.
+    */
+   bool serverEditorFontEnabled();
+   core::Error setServerEditorFontEnabled(bool val);
 
    /**
     * The name of the fixed-width editor font to use with RStudio Server.

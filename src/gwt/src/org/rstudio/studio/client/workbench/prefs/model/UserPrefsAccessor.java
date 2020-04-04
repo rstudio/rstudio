@@ -774,6 +774,14 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
+    * Whether to use a custom editor font in RStudio Server.
+    */
+   public PrefValue<Boolean> serverEditorFontEnabled()
+   {
+      return bool("server_editor_font_enabled", false);
+   }
+
+   /**
     * The name of the fixed-width editor font to use with RStudio Server.
     */
    public PrefValue<String> serverEditorFont()
@@ -1924,6 +1932,8 @@ public class UserPrefsAccessor extends Prefs
          helpFontSizePoints().setValue(layer, source.getDbl("help_font_size_points"));
       if (source.hasKey("editor_theme"))
          editorTheme().setValue(layer, source.getString("editor_theme"));
+      if (source.hasKey("server_editor_font_enabled"))
+         serverEditorFontEnabled().setValue(layer, source.getBool("server_editor_font_enabled"));
       if (source.hasKey("server_editor_font"))
          serverEditorFont().setValue(layer, source.getString("server_editor_font"));
       if (source.hasKey("default_encoding"))

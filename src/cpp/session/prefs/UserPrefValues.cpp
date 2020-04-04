@@ -1038,6 +1038,19 @@ core::Error UserPrefValues::setEditorTheme(std::string val)
 }
 
 /**
+ * Whether to use a custom editor font in RStudio Server.
+ */
+bool UserPrefValues::serverEditorFontEnabled()
+{
+   return readPref<bool>("server_editor_font_enabled");
+}
+
+core::Error UserPrefValues::setServerEditorFontEnabled(bool val)
+{
+   return writePref("server_editor_font_enabled", val);
+}
+
+/**
  * The name of the fixed-width editor font to use with RStudio Server.
  */
 std::string UserPrefValues::serverEditorFont()
@@ -2561,6 +2574,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kFontSizePoints,
       kHelpFontSizePoints,
       kEditorTheme,
+      kServerEditorFontEnabled,
       kServerEditorFont,
       kDefaultEncoding,
       kToolbarVisible,

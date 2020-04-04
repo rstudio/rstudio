@@ -19,6 +19,7 @@ import com.google.gwt.core.client.GWT;
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 
 
 public class ThemeFonts
@@ -94,7 +95,12 @@ public class ThemeFonts
          String font = "";
          if (RStudioGinjector.INSTANCE.getSession().getSessionInfo() != null)
          {
-            font = RStudioGinjector.INSTANCE.getUserPrefs().serverEditorFont().getValue();
+            UserPrefs prefs = RStudioGinjector.INSTANCE.getUserPrefs();
+            if (prefs.serverEditorFontEnabled().getValue())
+            {
+               font = prefs.serverEditorFont().getValue();
+            }
+
             if (StringUtil.isNullOrEmpty(font))
             {
                // No user preference registered

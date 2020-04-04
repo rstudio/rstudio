@@ -81,7 +81,7 @@ public class AceThemes
       
       // In server mode, augment the theme with a font if we have one
       LinkElement fontEl = null;
-      if (!Desktop.isDesktop())
+      if (!Desktop.isDesktop() && prefs_.get().serverEditorFontEnabled().getValue())
       {
          String font = prefs_.get().serverEditorFont().getValue();
          if (!StringUtil.isNullOrEmpty(font))

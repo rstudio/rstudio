@@ -173,6 +173,7 @@ public class AppearancePreferencesPane extends PreferencesPane
       
       if (Desktop.isDesktop())
       {
+         // Get the fixed width font set in desktop mode
          String value = DesktopInfo.getFixedWidthFont();
          String label = value.replaceAll("\\\"", "");
          if (!fontFace_.setValue(label))
@@ -180,6 +181,12 @@ public class AppearancePreferencesPane extends PreferencesPane
             fontFace_.insertValue(0, label, value);
             fontFace_.setValue(value);
          }
+      }
+      else
+      {
+         // In server mode, there's always a Default option which uses a
+         // browser-specific font.
+         fontFace_.insertValue(0, DEFAULT_FONT_NAME, DEFAULT_FONT_VALUE);
       }
 
       initialFontFace_ = StringUtil.notNull(fontFace_.getValue());
@@ -191,12 +198,14 @@ public class AppearancePreferencesPane extends PreferencesPane
          public void onChange(ChangeEvent event)
          {
             String font = fontFace_.getValue();
-            if (font != null)
+            if (font == null || StringUtil.equals(font, DEFAULT_FONT_VALUE))
+            {
+               preview_.setFont(ThemeFonts.getFixedWidthFont(), false);
+            }
+            else
             {
                preview_.setFont(font, !Desktop.hasDesktopFrame());
             }
-            else
-               preview_.setFont(ThemeFonts.getFixedWidthFont(), false);
          }
       });
 
@@ -599,7 +608,17 @@ public class AppearancePreferencesPane extends PreferencesPane
         }
         else
         {
-           userPrefs_.serverEditorFont().setGlobalValue(fontFace);
+           if (StringUtil.equals(fontFace, DEFAULT_FONT_VALUE))
+           {
+              // User has chosen the default font face
+              userPrefs_.serverEditorFontEnabled().setGlobalValue(false);
+           }
+           else
+           {
+              // User has chosen a specific font
+              userPrefs_.serverEditorFontEnabled().setGlobalValue(true);
+              userPrefs_.serverEditorFont().setGlobalValue(fontFace);
+           }
         }
         restartRequirement.setUiReloadRequired(true);
      }
@@ -680,12 +699,28 @@ public class AppearancePreferencesPane extends PreferencesPane
          {
             browserFonts.addAll(JsUtil.toList(fonts));
             populateFontList(browserFonts.toArray(new String[browserFonts.size()]));
-            String font = userPrefs_.serverEditorFont().getValue();
-            if (!StringUtil.isNullOrEmpty(font))
+            fontFace_.insertValue(0, DEFAULT_FONT_NAME, DEFAULT_FONT_VALUE);
+
+            String font = null;
+            if (userPrefs_.serverEditorFontEnabled().getValue())
             {
+               // Use the user's supplied font
+               font = userPrefs_.serverEditorFont().getValue();
+            }
+            
+            if (StringUtil.isNullOrEmpty(font))
+            {
+               // No font selected
+               fontFace_.setValue(DEFAULT_FONT_VALUE);
+            }
+            else
+            {
+               // If there's a non-empty, enabled font, set it as the default
                fontFace_.setValue(font);
                preview_.setFont(font, true);
             }
+
+            initialFontFace_ = StringUtil.notNull(fontFace_.getValue());
          }
 
          @Override
@@ -729,6 +764,9 @@ public class AppearancePreferencesPane extends PreferencesPane
    private final GlobalDisplay globalDisplay_;
    private final DependencyManager dependencyManager_;
    private final ThemeServerOperations server_;
+   
+   private final static String DEFAULT_FONT_NAME = "(Default)";
+   private final static String DEFAULT_FONT_VALUE = "__default__";
    
    private static final String CODE_SAMPLE =
          "# plotting of R objects\n" +
