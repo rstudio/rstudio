@@ -8,17 +8,15 @@ pandoc schema: <https://github.com/jgm/pandoc-types/blob/master/Text/Pandoc/Defi
 
 ## TODO
 
-Cache forever on fusebox?
-
 Update screenshots
 
 improve scrolling with: <https://github.com/cferdinandi/smooth-scroll>
 
+Consider moving widgets to React now that they are outside the PM dom.
+
 Better direct manipulation for tables
 
 Surface attributes handling for div with only an id (shading treatment a bit much?)
-
-Consider moving widgets to React now that they are outside the PM dom.
 
 MathJax preview. When containing the selection, the math will show both the code and the preview. When not containing the selection will show the preview. (so probably require a node view for this). Consider a “done” gesture for display math.
 
