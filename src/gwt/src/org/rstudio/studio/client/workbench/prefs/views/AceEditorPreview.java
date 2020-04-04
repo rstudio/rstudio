@@ -26,6 +26,7 @@ import org.rstudio.core.client.ExternalJavaScriptLoader.Callback;
 import org.rstudio.core.client.theme.ThemeFonts;
 import org.rstudio.core.client.widget.DynamicIFrame;
 import org.rstudio.core.client.widget.FontSizer;
+import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceResources;
 
 public class AceEditorPreview extends DynamicIFrame
@@ -98,7 +99,10 @@ public class AceEditorPreview extends DynamicIFrame
                               ".ace_editor {\n" +
                                     "border: none !important;\n" +
                               "}");
-                        setFont(ThemeFonts.getFixedWidthFont(), false);
+                        if (Desktop.isDesktop())
+                           setFont(ThemeFonts.getFixedWidthFont(), false);
+                        else if (webFont_ != null)
+                           setFont(webFont_, true);
                         body.appendChild(style);
 
                         DivElement div = doc.createDivElement();
@@ -163,6 +167,7 @@ public class AceEditorPreview extends DynamicIFrame
          link.setHref("fonts/css/" + font + ".css");
          link.setId(LINK_EL_ID);
          document.getHead().appendChild(link);
+         webFont_ = font;
       }
 
       StyleElement style = document.createStyleElement();
@@ -194,6 +199,7 @@ public class AceEditorPreview extends DynamicIFrame
    private LinkElement currentStyleLink_;
    private boolean isFrameLoaded_;
    private String themeUrl_;
+   private String webFont_;
    private Double fontSize_;
    private Double zoomLevel_;
    private final String code_;
