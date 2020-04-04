@@ -10,18 +10,13 @@ pandoc schema: <https://github.com/jgm/pandoc-types/blob/master/Text/Pandoc/Defi
 
 Cache forever on fusebox?
 
-texLength needs to handle brackets as well as braces
-
-Doc with only YAML block or Rmd Chunk needs paragraph at end
 Update screenshots
 
-
-
-Surface attributes handling for div with only an id (shading treatment a bit much?)
+improve scrolling with: <https://github.com/cferdinandi/smooth-scroll>
 
 Better direct manipulation for tables
 
-improve scrolling with: <https://github.com/cferdinandi/smooth-scroll>
+Surface attributes handling for div with only an id (shading treatment a bit much?)
 
 Consider moving widgets to React now that they are outside the PM dom.
 
