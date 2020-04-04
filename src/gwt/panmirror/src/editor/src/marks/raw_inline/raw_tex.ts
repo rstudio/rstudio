@@ -108,7 +108,6 @@ const extension = (pandocExtensions: PandocExtensions): Extension | null => {
 
     // plugin to add highlighting decorations
     plugins: (schema: Schema) => {
-
       // plugins to return
       const plugins: Plugin[] = [];
 

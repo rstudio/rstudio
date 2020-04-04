@@ -1,4 +1,3 @@
-
 /*
  * fragment.ts
  *
@@ -21,6 +20,3 @@ export function fragmentText(fragment: Fragment) {
   fragment.forEach((node: ProsemirrorNode) => (text = text + node.textContent));
   return text;
 }
-
-
-

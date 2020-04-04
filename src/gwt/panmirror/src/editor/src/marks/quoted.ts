@@ -104,22 +104,21 @@ const extension: Extension = {
   fixups: (schema: Schema) => {
     return [
       (tr: Transaction, context: FixupContext) => {
-        
         // only apply on save
         if (context !== FixupContext.Save) {
           return tr;
         }
 
-        const predicate = (node: ProsemirrorNode) =>  {
+        const predicate = (node: ProsemirrorNode) => {
           return node.isTextblock && node.type.allowsMarkType(node.type.schema.marks.quoted);
         };
-        findChildren(tr.doc, predicate).forEach((nodeWithPos) => {
+        findChildren(tr.doc, predicate).forEach(nodeWithPos => {
           const { node, pos } = nodeWithPos;
 
           // find quoted marks where the text is no longer quoted (remove the mark)
           removeInvalidatedMarks(tr, node, pos, kQuoted, schema.marks.quoted);
 
-           // find quoted text that doesn't have a quoted mark (add the mark)
+          // find quoted text that doesn't have a quoted mark (add the mark)
           detectAndApplyMarks(tr, tr.doc.nodeAt(pos)!, pos, kDoubleQuoted, schema.marks.quoted, {
             type: QuoteType.DoubleQuote,
           });
@@ -131,8 +130,7 @@ const extension: Extension = {
         return tr;
       },
     ];
-  }
-
+  },
 };
 
 function quotesForType(type: QuoteType) {
