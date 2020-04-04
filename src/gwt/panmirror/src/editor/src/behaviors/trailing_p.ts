@@ -46,7 +46,7 @@ const extension: Extension = {
         }),
         state: {
           init: (_config, state: EditorState) => {
-            return false;
+            return insertTrailingP(state.selection);
           },
           apply: (tr: Transaction, value: any) => {
             if (!tr.docChanged) {
