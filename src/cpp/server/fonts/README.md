@@ -77,7 +77,10 @@ server. The folder `~/.config/rstudio/fonts` works exactly as
 `/etc/rstudio/fonts` does. In the case where a font exists in both folders, the
 user font overrides the system font.
 
-It is also possible to set a default font for all RStudio Server users using the `server_editor_font` option. See the *Session User Settings* chapter of the RStudio Server Pro Administration Guide for more information.
+It is also possible to set a default font for all RStudio Server users using
+the `server_editor_font_enabled` and `server_editor_font` options in
+`rstudio-prefs.json`.. See the *Session User Settings* chapter of the RStudio
+Server Pro Administration Guide for more information.
 
 Browser Fonts
 -------------
@@ -86,7 +89,8 @@ RStudio Server attempts to automatically detect available fixed-width fonts
 that are installed on a user's browser. For security reasons, it is not
 possible for RStudio Server to enumerate all the fonts on the user's machine,
 so a known list of popular programming fixed-width fonts are checked for
-compatibility. This list is stored in the option `browser_fixed_width_fonts`. 
+compatibility. This list is stored in the option `browser_fixed_width_fonts` in
+`rstudio-prefs.json`.
 
 
 

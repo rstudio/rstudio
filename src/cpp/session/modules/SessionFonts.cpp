@@ -28,7 +28,6 @@
 #include <session/SessionModuleContext.hpp>
 
 #include <array>
-#include <vector>
 
 using namespace rstudio::core;
 
@@ -150,6 +149,7 @@ Error generateCssFromDir(const FilePath& dir,
       std::string name = file.getFilename();
       if (file.isDirectory())
       {
+         // This is a directory, probably representing a font weight or style
          std::vector<std::string> newParents(parents);
          newParents.push_back(name);
          error = generateCssFromDir(file, fontName, newParents, pCss);
@@ -255,6 +255,7 @@ void handleFontCssRequest(const http::Request& request,
    //
    // Append override rules for basic fixed-width elements. This stylesheet overrides a few key
    // styles in themeStyles.css with the specified font.
+   //
    std::map<std::string,std::string> vars;
    vars["font"] = fileName;
    std::ostringstream oss;
@@ -283,6 +284,7 @@ Error getInstalledFonts(const json::JsonRpcRequest& request, json::JsonRpcRespon
    // The array of installed fonts we'll build
    json::Array fonts;
 
+   // Search user and system folders for installed fonts
    std::vector<FilePath> dirs;
    dirs.push_back(userFontFolder());
    dirs.push_back(systemFontFolder());
