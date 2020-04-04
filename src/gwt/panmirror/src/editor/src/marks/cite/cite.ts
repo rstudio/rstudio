@@ -15,7 +15,7 @@
 
 import { Mark, Schema, Fragment, Node as ProsemirrorNode } from 'prosemirror-model';
 import { InputRule } from 'prosemirror-inputrules';
-import { EditorState, TextSelection, Transaction } from 'prosemirror-state';
+import { EditorState, TextSelection } from 'prosemirror-state';
 
 import { Extension, extensionIfEnabled } from '../../api/extension';
 import { EditorUI } from '../../api/ui';
@@ -26,7 +26,6 @@ import { citeHighlightPlugin } from './cite-highlight';
 import { InsertCitationCommand } from './cite-commands';
 import { markIsActive, splitInvalidatedMarks } from '../../api/mark';
 import { MarkTransaction } from '../../api/transaction';
-import { findChildrenByMark } from 'prosemirror-utils';
 
 const CITE_CITATIONS = 0;
 
