@@ -172,7 +172,7 @@ const extension: Extension = {
 
 function citeInputRule(schema: Schema) {
   return new InputRule(new RegExp(`\\[${kBeginCitePattern}$`), (state: EditorState, match: string[], start: number, end: number) => {
-    if (!markIsActive(state, schema.marks.cite)) {
+    if (!markIsActive(state, schema.marks.cite) && !match[0].includes(']')) {
       const tr = state.tr;
       const nextChar = state.doc.textBetween(end, end + 1);
       const suffix = nextChar !== ']' ? ']' : '';
