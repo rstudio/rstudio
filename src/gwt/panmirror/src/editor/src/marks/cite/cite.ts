@@ -25,6 +25,7 @@ import { citeHighlightPlugin } from './cite-highlight';
 import { InsertCitationCommand } from './cite-commands';
 import { markIsActive, splitInvalidatedMarks } from '../../api/mark';
 import { MarkTransaction } from '../../api/transaction';
+import { EditorOptions } from '../../api/options';
 
 const CITE_CITATIONS = 0;
 
@@ -54,11 +55,13 @@ interface Citation {
   citationSuffix: PandocToken[];
 }
 
-const extension = (pandocExtensions: PandocExtensions) => {
+const extension = (pandocExtensions: PandocExtensions, _options: EditorOptions, ui: EditorUI) => {
 
   if (!pandocExtensions.citations) {
     return null;
   }
+
+  const citePlaceholder = ui.context.translateText('cite');
 
   return {
     marks: [
@@ -145,7 +148,7 @@ const extension = (pandocExtensions: PandocExtensions) => {
       },
     ],
 
-    commands: (_schema: Schema, ui: EditorUI) => {
+    commands: (_schema: Schema) => {
       return [new InsertCitationCommand(ui)];
     },
 
@@ -163,8 +166,8 @@ const extension = (pandocExtensions: PandocExtensions) => {
 
     inputRules: (schema: Schema) => {
       return [
-        citeInputRule(schema),
-        citeIdInputRule(schema)
+        citeInputRule(schema, citePlaceholder),
+        citeIdInputRule(schema, citePlaceholder)
       ];
     },
 
@@ -175,7 +178,7 @@ const extension = (pandocExtensions: PandocExtensions) => {
 };
 
 
-function citeInputRule(schema: Schema) {
+function citeInputRule(schema: Schema, citePlaceholder: string) {
   return new InputRule(new RegExp(`\\[${kBeginCitePattern}$`), (state: EditorState, match: string[], start: number, end: number) => {
     if (!markIsActive(state, schema.marks.cite) && !match[0].includes(']')) {
       const tr = state.tr;
@@ -185,15 +188,14 @@ function citeInputRule(schema: Schema) {
       const idPrefixMatch = match[0].endsWith('-@') ? '-@' : '@';
       tr.delete(end - (idPrefixMatch.length - 1), end);
 
-      const kCitePlaceholder = 'cite';
-      const citeIdText = idPrefixMatch + kCitePlaceholder + suffix;
+      const citeIdText = idPrefixMatch + citePlaceholder + suffix;
       const citeIdMark = schema.marks.cite_id.create();
       const citeId = schema.text(citeIdText, [citeIdMark]);
       tr.replaceSelectionWith(citeId, false);
 
       const begin = end + 1;
       tr.setSelection(new TextSelection(
-        tr.doc.resolve(begin), tr.doc.resolve(begin + kCitePlaceholder.length)
+        tr.doc.resolve(begin), tr.doc.resolve(begin + citePlaceholder.length)
       ));
 
       const mark = schema.marks.cite.create();
@@ -207,7 +209,7 @@ function citeInputRule(schema: Schema) {
 }
 
 
-function citeIdInputRule(schema: Schema) { 
+function citeIdInputRule(schema: Schema, citePlaceholder: string) { 
   return new InputRule(new RegExp(`${kCiteIdPrefixPattern}$`), (state: EditorState, match: string[], start: number, end: number) => {
     if (markIsActive(state, schema.marks.cite)) {
 
@@ -237,11 +239,10 @@ function citeIdInputRule(schema: Schema) {
       }
 
       if (!extended) {
-        const kCitePlaceholder = 'cite';
-        tr.insertText(kCitePlaceholder);
+        tr.insertText(citePlaceholder);
         const begin = start + match[0].length;
         tr.setSelection(new TextSelection(
-          tr.doc.resolve(begin), tr.doc.resolve(start + kCitePlaceholder.length + 1)
+          tr.doc.resolve(begin), tr.doc.resolve(start + citePlaceholder.length + 1)
         ));
       }
       return tr;
