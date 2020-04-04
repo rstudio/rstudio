@@ -17,9 +17,8 @@ import { Mark, Schema, Fragment, Node as ProsemirrorNode } from 'prosemirror-mod
 import { InputRule } from 'prosemirror-inputrules';
 import { EditorState, TextSelection } from 'prosemirror-state';
 
-import { Extension, extensionIfEnabled } from '../../api/extension';
 import { EditorUI } from '../../api/ui';
-import { PandocTokenType, PandocToken, PandocOutput, ProsemirrorWriter } from '../../api/pandoc';
+import { PandocTokenType, PandocToken, PandocOutput, ProsemirrorWriter, PandocExtensions } from '../../api/pandoc';
 import { fragmentText } from '../../api/fragment';
 
 import { citeHighlightPlugin } from './cite-highlight';
@@ -55,117 +54,124 @@ interface Citation {
   citationSuffix: PandocToken[];
 }
 
-const extension: Extension = {
-  marks: [
-    {
-      name: 'cite_id',
-      spec: {
-        attrs: {},
-        inclusive: true,
-        parseDOM: [
-          {
-            tag: "span[class*='cite-id']",
+const extension = (pandocExtensions: PandocExtensions) => {
+
+  if (!pandocExtensions.citations) {
+    return null;
+  }
+
+  return {
+    marks: [
+      {
+        name: 'cite_id',
+        spec: {
+          attrs: {},
+          inclusive: true,
+          parseDOM: [
+            {
+              tag: "span[class*='cite-id']",
+            },
+          ],
+          toDOM(mark: Mark) {
+            return ['span', { class: 'cite-id pm-link-text-color' }];
           },
-        ],
-        toDOM(mark: Mark) {
-          return ['span', { class: 'cite-id pm-link-text-color' }];
         },
-      },
-      pandoc: {
-        readers: [],
-        writer: {
-          priority: 13,
-          write: (output: PandocOutput, _mark: Mark, parent: Fragment) => {
-            const idText = fragmentText(parent);
-            if (kCiteIdRegEx.test(idText)) {
-              const prefixMatch = idText.match(/^-?@/);
-              if (prefixMatch) {
-                output.writeRawMarkdown(prefixMatch.input!);
-                output.writeInlines(parent.cut(prefixMatch.input!.length));
+        pandoc: {
+          readers: [],
+          writer: {
+            priority: 13,
+            write: (output: PandocOutput, _mark: Mark, parent: Fragment) => {
+              const idText = fragmentText(parent);
+              if (kCiteIdRegEx.test(idText)) {
+                const prefixMatch = idText.match(/^-?@/);
+                if (prefixMatch) {
+                  output.writeRawMarkdown(prefixMatch.input!);
+                  output.writeInlines(parent.cut(prefixMatch.input!.length));
+                } else {
+                  output.writeInlines(parent);
+                }
               } else {
                 output.writeInlines(parent);
               }
-            } else {
-              output.writeInlines(parent);
+              
             }
-            
           }
         }
-      }
-    },
-    {
-      name: 'cite',
-      spec: {
-        attrs: {},
-        inclusive: false,
-        parseDOM: [
-          {
-            tag: "span[class*='cite']",
-          },
-        ],
-        toDOM(mark: Mark) {
-          return ['span', { class: 'cite' }];
-        },
       },
-      pandoc: {
-        readers: [
-          {
-            token: PandocTokenType.Cite,
-            handler: readPandocCite,
-          },
-        ],
-
-        writer: {
-          priority: 14,
-          write: (output: PandocOutput, _mark: Mark, parent: Fragment) => {
-
-            // divide out delimiters from body
-            const openCite = parent.cut(0, 1);
-            const cite = parent.cut(1, parent.size - 1);
-            const closeCite = parent.cut(parent.size - 1, parent.size);
-
-            // proceed if the citation is still valid
-            if (fragmentText(openCite) === '[' && 
-                fragmentText(closeCite) === ']'&&
-                kCiteRegEx.test(fragmentText(cite))) {
-              output.writeRawMarkdown('[');
-              output.writeInlines(cite);
-              output.writeRawMarkdown(']');
-            } else {
-              output.writeInlines(parent);
-            }
-          },
-        },
-      },
-    },
-  ],
-
-  commands: (_schema: Schema, ui: EditorUI) => {
-    return [new InsertCitationCommand(ui)];
-  },
-
-  appendMarkTransaction: (schema: Schema) => {
-    return [
       {
-        name: 'remove-cite-id-marks',
-        filter: node => node.isTextblock && node.type.allowsMarkType(schema.marks.cite_id),
-        append: (tr: MarkTransaction, node: ProsemirrorNode, pos: number) => {
-          splitInvalidatedMarks(tr, node, pos, citeIdLength, schema.marks.cite_id);
+        name: 'cite',
+        spec: {
+          attrs: {},
+          inclusive: false,
+          parseDOM: [
+            {
+              tag: "span[class*='cite']",
+            },
+          ],
+          toDOM(mark: Mark) {
+            return ['span', { class: 'cite' }];
+          },
+        },
+        pandoc: {
+          readers: [
+            {
+              token: PandocTokenType.Cite,
+              handler: readPandocCite,
+            },
+          ],
+
+          writer: {
+            priority: 14,
+            write: (output: PandocOutput, _mark: Mark, parent: Fragment) => {
+
+              // divide out delimiters from body
+              const openCite = parent.cut(0, 1);
+              const cite = parent.cut(1, parent.size - 1);
+              const closeCite = parent.cut(parent.size - 1, parent.size);
+
+              // proceed if the citation is still valid
+              if (fragmentText(openCite) === '[' && 
+                  fragmentText(closeCite) === ']'&&
+                  kCiteRegEx.test(fragmentText(cite))) {
+                output.writeRawMarkdown('[');
+                output.writeInlines(cite);
+                output.writeRawMarkdown(']');
+              } else {
+                output.writeInlines(parent);
+              }
+            },
+          },
         },
       },
-    ];
-  },
+    ],
 
-  inputRules: (schema: Schema) => {
-    return [
-      citeInputRule(schema),
-      citeIdInputRule(schema)
-    ];
-  },
+    commands: (_schema: Schema, ui: EditorUI) => {
+      return [new InsertCitationCommand(ui)];
+    },
 
-  plugins: (schema: Schema) => {
-    return [citeHighlightPlugin(schema)];
-  },
+    appendMarkTransaction: (schema: Schema) => {
+      return [
+        {
+          name: 'remove-cite-id-marks',
+          filter: (node: ProsemirrorNode) => node.isTextblock && node.type.allowsMarkType(schema.marks.cite_id),
+          append: (tr: MarkTransaction, node: ProsemirrorNode, pos: number) => {
+            splitInvalidatedMarks(tr, node, pos, citeIdLength, schema.marks.cite_id);
+          },
+        },
+      ];
+    },
+
+    inputRules: (schema: Schema) => {
+      return [
+        citeInputRule(schema),
+        citeIdInputRule(schema)
+      ];
+    },
+
+    plugins: (schema: Schema) => {
+      return [citeHighlightPlugin(schema)];
+    },
+  };
 };
 
 
@@ -299,4 +305,4 @@ function citeIdLength(text: string) {
 }
 
 
-export default extensionIfEnabled(extension, 'citations');
+export default extension;
