@@ -4,20 +4,18 @@ pandoc schema: <https://github.com/jgm/pandoc-types/blob/master/Text/Pandoc/Defi
 
 ## Feedback
 
-Localize '@cite'
 
-General review/cleanup of cite.ts
+
+## TODO
 
 Cache forever on fusebox?
-
-
-Perhaps only run quoted fixup during load and save?
-
-Update screenshots
 
 texLength needs to handle brackets as well as braces
 
 Doc with only YAML block or Rmd Chunk needs paragraph at end
+Update screenshots
+
+
 
 Surface attributes handling for div with only an id (shading treatment a bit much?)
 
