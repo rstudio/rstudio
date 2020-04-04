@@ -204,7 +204,7 @@ const key = new PluginKey<DecorationSet>('latex-highlight');
 
 export function latexHighlightingPlugin(schema: Schema) {
   const kLightTextClass = 'pm-light-text-color';
-  const delimiterRegex = /[{}]/g;
+  const delimiterRegex = /[{}[\]]/g;
 
   return markHighlightPlugin(key, schema.marks.raw_tex, (text, _attrs, markRange) => {
     const kIdClass = 'pm-markup-text-color';
