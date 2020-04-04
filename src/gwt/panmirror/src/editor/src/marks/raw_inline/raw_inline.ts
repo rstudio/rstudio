@@ -85,7 +85,7 @@ const extension = (pandocExtensions: PandocExtensions): Extension | null => {
             write: (output: PandocOutput, mark: Mark, parent: Fragment) => {
               // get raw content
               const raw = fragmentText(parent);
-             
+
               // write it
               output.writeToken(PandocTokenType.RawInline, () => {
                 output.write(mark.attrs.format);

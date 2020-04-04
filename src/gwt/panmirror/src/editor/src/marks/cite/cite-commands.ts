@@ -40,7 +40,7 @@ export class InsertCitationCommand extends ProsemirrorCommand {
               const tr = state.tr;
               const locator = citation.locator ? ' ' + citation.locator : '';
 
-              const citeMark = schema.marks.cite.create(); 
+              const citeMark = schema.marks.cite.create();
               const cite = schema.text(`[${citation.id}${locator}]`, [citeMark]);
               tr.replaceSelectionWith(cite, false);
 

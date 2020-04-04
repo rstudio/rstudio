@@ -220,7 +220,7 @@ export function splitInvalidatedMarks(
   node: ProsemirrorNode,
   pos: number,
   validLength: (text: string) => number,
-  markType: MarkType
+  markType: MarkType,
 ) {
   const hasMarkType = (nd: ProsemirrorNode) => markType.isInSet(nd.marks);
   const markedNodes = findChildrenByMark(node, markType, true);

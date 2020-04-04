@@ -14,11 +14,13 @@
  */
 
 // Get the length of valid tex content for the passed text. return values include:
-//  -1: Invalid tex content (starts with \ but doesn't close braces properly)
+//  -1: Invalid tex content (starts with \ but doesn't close braces/brackets properly)
 //   0: Not tex content
 //  >1: Length of valid tex string
 export function texLength(text: string) {
   let braceLevel = 0;
+  let bracketLevel = 0;
+
   let i;
   for (i = 0; i < text.length; i++) {
     // next character
@@ -32,20 +34,26 @@ export function texLength(text: string) {
       return 0;
     }
 
-    // non-letter / non-open-brace if we aren't in braces terminates
-    if (i > 0 && !isLetter(ch) && ch !== '{' && braceLevel <= 0) {
+    // only letters and open brace/bracket allowed (unless we are in braces or brackets)
+    const inBraces = braceLevel >= 1;
+    const inBrackets = bracketLevel >= 1;
+    if (i > 0 && !isLetter(ch) && ch !== '{' && ch !== '[' && !inBraces && !inBrackets) {
       return i;
     }
 
-    // manage brace levels
+    // manage brace and bracket levels
     if (ch === '{') {
       braceLevel++;
     } else if (ch === '}') {
       braceLevel--;
+    } else if (ch === '[') {
+      bracketLevel++;
+    } else if (ch === ']') {
+      bracketLevel--;
     }
   }
 
-  if (braceLevel === 0) {
+  if (braceLevel === 0 && bracketLevel === 0) {
     return i;
   } else {
     return -1; // invalid tex
