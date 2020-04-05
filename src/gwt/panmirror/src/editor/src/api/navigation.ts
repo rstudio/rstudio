@@ -16,6 +16,9 @@
 import { EditorView } from 'prosemirror-view';
 import { setTextSelection, Predicate, findChildren } from 'prosemirror-utils';
 
+import zenscroll from 'zenscroll';
+import { editingRootNode } from './node';
+
 export function navigateTo(view: EditorView, predicate: Predicate) {
   const result = findChildren(view.state.doc, predicate);
   if (result.length) {
@@ -38,6 +41,10 @@ export function navigateToPosition(view: EditorView, pos: number) {
   // scroll to selection
   const node = view.nodeDOM(pos);
   if (node instanceof HTMLElement) {
-    node.scrollIntoView({ behavior: 'smooth' });
+    
+    const editingRoot = editingRootNode(view.state.selection)!;
+    const container = view.nodeDOM(editingRoot.pos) as HTMLElement;
+    const scroller = zenscroll.createScroller(container, 700, 20);
+    scroller.to(node);
   }
 }

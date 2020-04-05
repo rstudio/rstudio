@@ -17,6 +17,8 @@ import { Extension } from '../api/extension';
 import { Plugin, PluginKey, EditorState, Transaction, TextSelection } from 'prosemirror-state';
 import { DecorationSet, Decoration, EditorView } from 'prosemirror-view';
 
+import zenscroll from 'zenscroll';
+
 import { mergedTextNodes } from '../api/text';
 import { editingRootNode } from '../api/node';
 import { kAddToHistoryTransaction } from '../api/transaction';
@@ -306,7 +308,8 @@ class FindPlugin extends Plugin<DecorationSet> {
       if (container && node) {
         const rect = node.getBoundingClientRect();
         if (rect.top < 0 || rect.bottom > container.clientHeight) {
-          node.scrollIntoView({ behavior: 'auto' });
+          const scroller = zenscroll.createScroller(container);
+          scroller.center(node, 350, 50);
         }
       }
     }

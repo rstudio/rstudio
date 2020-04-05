@@ -232,6 +232,11 @@
   dependencies:
     "@types/estree" "*"
 
+"@types/zenscroll@^4.0.0":
+  version "4.0.0"
+  resolved "https://registry.yarnpkg.com/@types/zenscroll/-/zenscroll-4.0.0.tgz#9acc7df6c87cc9e064f5a6230df499835dee1972"
+  integrity sha512-n9np/qsr3HBH3VBVfviHhQPmGP1+D01+VI/40QFq/7LyJqDoIlcaaABu/qPAVats/oNuUJ/dhrjrOjVaqos+4A==
+
 abbrev@1:
   version "1.1.1"
   resolved "https://registry.yarnpkg.com/abbrev/-/abbrev-1.1.1.tgz#f8f2c887ad10bf67f634f005b6987fed3179aac8"
@@ -3267,3 +3272,8 @@ yaml@^1.7.2:
   integrity sha512-qXROVp90sb83XtAoqE8bP9RwAkTTZbugRUTm5YeFCBfNRPEp2YzTeqWiz7m5OORHzEvrA/qcGS8hp/E+MMROYw==
   dependencies:
     "@babel/runtime" "^7.6.3"
+
+zenscroll@^4.0.2:
+  version "4.0.2"
+  resolved "https://registry.yarnpkg.com/zenscroll/-/zenscroll-4.0.2.tgz#e8d5774d1c0738a47bcfa8729f3712e2deddeb25"
+  integrity sha1-6NV3TRwHOKR7z6hynzcS4t7d6yU=
