@@ -29,7 +29,7 @@ import { mathHighlightPlugin } from './math-highlight';
 
 import './math-styles.css';
 
-const kInlineMathPattern = '\\$[^ ].*?[^ ]\\$';
+const kInlineMathPattern = '\\$[^ ].*?[^\\ ]\\$';
 const kInlineMathRegex = new RegExp(kInlineMathPattern);
 
 export enum MathType {
@@ -96,9 +96,6 @@ const extension: Extension = {
             // strip delimiter
             const delimiter = delimiterForType(mark.attrs.type);
             math = math.substr(delimiter.length, math.length - 2 * delimiter.length);
-
-            // escape dollar signs that occur within math
-            math = math.replace(/([^\\])\$/, '$1\\$');
 
             // if it's just whitespace then it's not actually math (we allow this state
             // in the editor because it's the natural starting place for new equations)
