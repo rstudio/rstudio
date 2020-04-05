@@ -179,7 +179,7 @@ export function imagePandocOutputWriter(figure: boolean, ui: EditorUI) {
     if (writeHTML) {
       writer = () => {
         const imgAttr = imageDOMAttributes(node, true, false);
-        const html = asHTMLTag('img', imgAttr, true);
+        const html = asHTMLTag('img', imgAttr, true, true);
         output.writeRawMarkdown(html);
       };
     }
