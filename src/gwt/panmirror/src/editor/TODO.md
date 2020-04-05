@@ -8,7 +8,17 @@ pandoc schema: <https://github.com/jgm/pandoc-types/blob/master/Text/Pandoc/Defi
 
 ## TODO
 
-Update screenshots
+Input rules for inline math? (and docs)
+
+If [] is already a cite then [@] eats the first paren
+
+Width % when outline shown is off (85 showed up as 100)
+
+Height written for wide/short images (ratio checker isn't granular enough)
+
+Images: border style not applied in editor, lose border style on read back from html!
+
+Editor toolbar w/ nav and mode switcher is available on the footer!
 
 improve scrolling with: <https://github.com/cferdinandi/smooth-scroll>
 
