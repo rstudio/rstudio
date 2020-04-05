@@ -57,6 +57,8 @@ import com.google.gwt.event.dom.client.HasChangeHandlers;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HandlerManager;
 import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.layout.client.Layout.AnimationCallback;
+import com.google.gwt.layout.client.Layout.Layer;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.DockLayoutPanel;
 import com.google.gwt.user.client.ui.HTML;
@@ -345,11 +347,20 @@ public class PanmirrorWidget extends DockLayoutPanel implements
          if (animate)
          {
             int duration = (userPrefs_.reducedMotion().getValue() ? 0 : 500);
-            animate(duration);
+            animate(duration, new AnimationCallback() {
+               @Override
+               public void onAnimationComplete()
+               {
+                  editor_.resize();
+               }
+               @Override
+               public void onLayout(Layer layer, double progress) {}
+            });
          }
          else
          {
             forceLayout();
+            editor_.resize();
          }
       }
    }
