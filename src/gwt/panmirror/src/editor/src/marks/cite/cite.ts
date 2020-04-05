@@ -30,7 +30,7 @@ import { EditorOptions } from '../../api/options';
 const CITE_CITATIONS = 0;
 
 const kCiteIdPrefixPattern = '-?@';
-const kCiteIdCharsPattern = '\\w[\\w:.#$%&-+?<>~/]+';
+const kCiteIdCharsPattern = '[\\w:.#$%&-+?<>~/]+';
 const kCiteIdPattern = `^${kCiteIdPrefixPattern}${kCiteIdCharsPattern}$`;
 const kBeginCitePattern = `(.* ${kCiteIdPrefixPattern}|${kCiteIdPrefixPattern})`;
 
