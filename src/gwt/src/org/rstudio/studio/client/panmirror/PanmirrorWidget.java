@@ -354,7 +354,10 @@ public class PanmirrorWidget extends DockLayoutPanel implements
                   editor_.resize();
                }
                @Override
-               public void onLayout(Layer layer, double progress) {}
+               public void onLayout(Layer layer, double progress) 
+               {
+                  editor_.resize();
+               }
             });
          }
          else
