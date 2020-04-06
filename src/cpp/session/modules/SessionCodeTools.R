@@ -1895,7 +1895,8 @@
    .Call("rs_base64decode", data, binary)
 })
 
-.rs.addFunction("CRANDownloadOptionsString", function() {
+.rs.addFunction("CRANDownloadOptionsString", function()
+{
    
    # collect options of interest
    options <- options("repos", "download.file.method", "download.file.extra", "HTTPUserAgent")
@@ -1905,10 +1906,21 @@
    # drop NULL entries
    options <- Filter(Negate(is.null), options)
    
-   # deparse values individually (avoid relying on the format
+   # deparse values individually. avoid relying on the format
    # of the deparsed output of the whole expression; see e.g.
-   # https://github.com/rstudio/rstudio/issues/4916)
-   vals <- lapply(options, .rs.deparse)
+   # https://github.com/rstudio/rstudio/issues/4916 for example
+   # of where this can fail
+   vals <- lapply(options, function(option) {
+      
+      # replace single quotes with double quotes, so that
+      # deparse automatically escapes the inner quotes
+      # see: https://github.com/rstudio/rstudio/issues/6597
+      # (note these will be translated to single quotes later)
+      if (is.character(option))
+         option <- gsub("'", "\"", option)
+      
+      .rs.deparse(option)
+   })
    
    # join keys and values
    keyvals <- paste(names(options), vals, sep = " = ")
