@@ -1,7 +1,7 @@
 /*
  * SessionFind.cpp
  *
- * Copyright (C) 2009-19 by RStudio, PBC
+ * Copyright (C) 2009-20 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -538,7 +538,7 @@ private:
          {
             *contents = contents->erase(0, firstMatchOn - 30);
             contents->insert(0, "...");
-            int leadingCharactersErased = firstMatchOn - 33;
+            size_t leadingCharactersErased = firstMatchOn - 33;
             json::Array newMatchOnArray;
             json::Array newMatchOffArray;
             for (size_t i = 0; i < pMatchOn->getSize(); i++)
@@ -1674,7 +1674,7 @@ core::Error Replacer::replaceRegexIgnoreCase(size_t matchOn, size_t matchOff,
          "A regex error occurred during replace operation: " + std::string(e.what()),
          ERROR_LOCATION);
 
-      error.addProperty("position", e.position());
+      error.addProperty("position", gsl::narrow_cast<int>(e.position()));
       return error;
    }
 }
@@ -1699,7 +1699,7 @@ core::Error Replacer::replaceRegexWithCase(size_t matchOn, size_t matchOff,
          "A regex error occurred during replace operation: " + std::string(e.what()),
          ERROR_LOCATION);
 
-      error.addProperty("position", e.position());
+      error.addProperty("position", gsl::narrow_cast<int>(e.position()));
       return error;
    }
 }
