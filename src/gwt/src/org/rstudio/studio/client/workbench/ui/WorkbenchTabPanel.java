@@ -303,7 +303,7 @@ class WorkbenchTabPanel
       return parentWindow_;
    }
 
-   public void neverVisible(boolean value)
+   public void setNeverVisible(boolean value)
    {
       neverVisible_ = value;
    }

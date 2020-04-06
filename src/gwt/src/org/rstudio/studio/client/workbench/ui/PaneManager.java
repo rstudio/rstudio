@@ -810,7 +810,7 @@ public class PaneManager
             tabNamesToTabs(config.getHiddenTabSet()));
       panesByName_.put("HiddenTabSet", tsHide.first);
       hiddenTabSetTabPanel_ = tsHide.second;
-      hiddenTabSetTabPanel_.neverVisible(true);
+      hiddenTabSetTabPanel_.setNeverVisible(true);
       hiddenTabSetMinPanel_ = tsHide.third;
    }
    
