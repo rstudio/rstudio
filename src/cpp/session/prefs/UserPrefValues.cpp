@@ -1038,6 +1038,32 @@ core::Error UserPrefValues::setEditorTheme(std::string val)
 }
 
 /**
+ * Whether to use a custom editor font in RStudio Server.
+ */
+bool UserPrefValues::serverEditorFontEnabled()
+{
+   return readPref<bool>("server_editor_font_enabled");
+}
+
+core::Error UserPrefValues::setServerEditorFontEnabled(bool val)
+{
+   return writePref("server_editor_font_enabled", val);
+}
+
+/**
+ * The name of the fixed-width editor font to use with RStudio Server.
+ */
+std::string UserPrefValues::serverEditorFont()
+{
+   return readPref<std::string>("server_editor_font");
+}
+
+core::Error UserPrefValues::setServerEditorFont(std::string val)
+{
+   return writePref("server_editor_font", val);
+}
+
+/**
  * The default character encoding to use when saving files.
  */
 std::string UserPrefValues::defaultEncoding()
@@ -2454,6 +2480,19 @@ core::Error UserPrefValues::setGraphicsAntialiasing(std::string val)
    return writePref("graphics_antialiasing", val);
 }
 
+/**
+ * List of fixed-width fonts to check for browser support.
+ */
+core::json::Array UserPrefValues::browserFixedWidthFonts()
+{
+   return readPref<core::json::Array>("browser_fixed_width_fonts");
+}
+
+core::Error UserPrefValues::setBrowserFixedWidthFonts(core::json::Array val)
+{
+   return writePref("browser_fixed_width_fonts", val);
+}
+
 std::vector<std::string> UserPrefValues::allKeys()
 {
    return std::vector<std::string>({
@@ -2535,6 +2574,8 @@ std::vector<std::string> UserPrefValues::allKeys()
       kFontSizePoints,
       kHelpFontSizePoints,
       kEditorTheme,
+      kServerEditorFontEnabled,
+      kServerEditorFont,
       kDefaultEncoding,
       kToolbarVisible,
       kDefaultProjectLocation,
@@ -2644,6 +2685,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kInstallPkgDepsIndividually,
       kGraphicsBackend,
       kGraphicsAntialiasing,
+      kBrowserFixedWidthFonts,
    });
 }
    
