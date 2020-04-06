@@ -52,9 +52,8 @@ public class PlotsPane extends WorkbenchPane implements Plots.Display,
    public PlotsPane(Commands commands, EventBus events, PlotsServerOperations server,
          DependencyManager dependencies)
    {
-      super("Plots");
+      super("Plots", events);
       commands_ = commands;
-      events_ = events;
       server_ = server;
       dependencies_ = dependencies;
       ensureWidget();
@@ -139,13 +138,6 @@ public class PlotsPane extends WorkbenchPane implements Plots.Display,
    }
 
    @Override
-   public void bringToFront()
-   {
-      events_.fireEvent(new ActivatePaneEvent("Plots"));
-      super.bringToFront();
-   }
-
-   @Override
    public void setProgress(boolean enabled)
    {
       // also set frame to about:blank during progress
@@ -218,7 +210,6 @@ public class PlotsPane extends WorkbenchPane implements Plots.Display,
    }
 
    private final Commands commands_;
-   private final EventBus events_;
    private final PlotsServerOperations server_;
    private final DependencyManager dependencies_;
    

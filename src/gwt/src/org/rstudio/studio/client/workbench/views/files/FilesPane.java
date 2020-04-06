@@ -69,10 +69,9 @@ public class FilesPane extends WorkbenchPane implements Files.Display
                     Session session,
                     Provider<FileCommandToolbar> pFileCommandToolbar)
    {
-      super("Files");
+      super("Files", events);
       globalDisplay_ = globalDisplay;
       commands_ = commands;
-      events_ = events;
       fileDialogs_ = fileDialogs;
       fileTypeRegistry_ = fileTypeRegistry;
       pFileCommandToolbar_ = pFileCommandToolbar;
@@ -294,13 +293,6 @@ public class FilesPane extends WorkbenchPane implements Files.Display
        });
    }
    
-   @Override
-   public void bringToFront()
-   {
-      events_.fireEvent(new ActivatePaneEvent("Files"));
-      super.bringToFront();
-   }
-
    @Override 
    protected Widget createMainWidget()
    {
@@ -357,6 +349,5 @@ public class FilesPane extends WorkbenchPane implements Files.Display
 
    private final FileTypeRegistry fileTypeRegistry_;
    private final Commands commands_;
-   private final EventBus events_;
    private final Provider<FileCommandToolbar> pFileCommandToolbar_;
 }

@@ -15,7 +15,10 @@
 package org.rstudio.studio.client.workbench.ui;
 
 import com.google.gwt.user.client.Command;
+import org.rstudio.core.client.StringUtil;
+import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.workbench.WorkbenchView;
+import org.rstudio.studio.client.workbench.events.ActivatePaneEvent;
 
 public abstract class WorkbenchPane extends ToolbarPane
                                  implements WorkbenchView,
@@ -23,7 +26,14 @@ public abstract class WorkbenchPane extends ToolbarPane
 {
    protected WorkbenchPane(String title)
    {
-      title_ = title ;
+      title_ = title;
+      events_ = null;
+   }
+
+   protected WorkbenchPane(String title, EventBus events)
+   {
+      title_ = title;
+      events_ = events;
    }
 
    public void prefetch(Command continuation)
@@ -65,5 +75,14 @@ public abstract class WorkbenchPane extends ToolbarPane
       onConfirmed.execute();
    }
 
+   @Override
+   public void bringToFront()
+   {
+      if (events_ != null && !StringUtil.isNullOrEmpty(title_))
+         events_.fireEvent(new ActivatePaneEvent(title_));
+      super.bringToFront();
+   }
+
    private String title_;
+   protected final EventBus events_;
 }

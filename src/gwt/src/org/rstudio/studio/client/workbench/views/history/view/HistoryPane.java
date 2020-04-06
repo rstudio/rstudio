@@ -89,9 +89,8 @@ public class HistoryPane extends WorkbenchPane
    @Inject
    public HistoryPane(Commands commands, EventBus events)
    {
-      super("History");
+      super("History", events);
       commands_ = commands;
-      events_ = events;
       ensureWidget();
    }
 
@@ -206,13 +205,6 @@ public class HistoryPane extends WorkbenchPane
       setVisible(contextResults_, contextResults_.getFocusTarget(), false);
 
       return mainPanel_;
-   }
-
-   @Override
-   public void bringToFront()
-   {
-      events_.fireEvent(new ActivatePaneEvent("History"));
-      super.bringToFront();
    }
 
    public Mode getMode()
@@ -658,7 +650,6 @@ public class HistoryPane extends WorkbenchPane
    private HistoryTableWithToolbar contextResults_;
    private HistoryTableWithToolbar searchResults_;
    private final Commands commands_;
-   private final EventBus events_;
    private Anchor loadMore_;
    private SearchWidget searchWidget_;
    private Styles styles_ = ((Resources) GWT.create(Resources.class)).styles();

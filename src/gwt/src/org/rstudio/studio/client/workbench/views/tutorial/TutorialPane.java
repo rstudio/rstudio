@@ -75,10 +75,9 @@ public class TutorialPane
                           DependencyManager dependencies,
                           TutorialServerOperations server)
    {
-      super("Tutorial");
+      super("Tutorial", events);
       
       globalDisplay_ = globalDisplay;
-      events_        = events;
       commands_      = commands;
       session_       = session;
       dependencies_  = dependencies;
@@ -125,13 +124,6 @@ public class TutorialPane
       toolbar_.addRightWidget(commands_.tutorialRefresh().createToolbarButton());
       
       return toolbar_;
-   }
-
-   @Override
-   public void bringToFront()
-   {
-      events_.fireEvent(new ActivatePaneEvent("Tutorial"));
-      super.bringToFront();
    }
 
    @Override
@@ -554,7 +546,6 @@ public class TutorialPane
    
    // Injected ----
    private final GlobalDisplay globalDisplay_;
-   private final EventBus events_;
    private final Commands commands_;
    private final Session session_;
    private final DependencyManager dependencies_;

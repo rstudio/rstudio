@@ -58,9 +58,8 @@ public class BuildPane extends WorkbenchPane
                     Session session,
                     BuildServerOperations server)
    {
-      super("Build");
+      super("Build", events);
       commands_ = commands;
-      events_ = events;
       session_ = session;
       server_ = server;
       compilePanel_ = new CompilePanel(new CompileOutputBufferWithHighlight());
@@ -234,13 +233,6 @@ public class BuildPane extends WorkbenchPane
    }
    
    @Override
-   public void bringToFront()
-   {
-      events_.fireEvent(new ActivatePaneEvent("Build"));
-      super.bringToFront();
-   }
-
-   @Override
    public void buildStarted()
    {
       compilePanel_.compileStarted(null);  
@@ -320,7 +312,6 @@ public class BuildPane extends WorkbenchPane
    }
  
    private final Commands commands_;
-   private final EventBus events_;
    private final Session session_;
    private final BuildServerOperations server_;
    private String errorsBuildType_;

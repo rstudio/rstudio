@@ -57,10 +57,9 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
                      ViewerServerOperations server,
                      HtmlMessageListener htmlMessageListener)
    {
-      super("Viewer");
+      super("Viewer", events);
       commands_ = commands;
       globalDisplay_ = globalDisplay;
-      events_ = events;
       server_ = server;
       htmlMessageListener_ = htmlMessageListener;
       ensureWidget();
@@ -158,13 +157,6 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
       frame_.addStyleName("ace_editor_theme");
       navigate(URIConstants.ABOUT_BLANK, false);
       return new AutoGlassPanel(frame_);
-   }
-
-   @Override
-   public void bringToFront()
-   {
-      events_.fireEvent(new ActivatePaneEvent("Viewer"));
-      super.bringToFront();
    }
 
    @Override
@@ -349,7 +341,6 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
    private RmdPreviewParams rmdPreviewParams_;
    private final Commands commands_;
    private final GlobalDisplay globalDisplay_;
-   private final EventBus events_;
    private final ViewerServerOperations server_;
    
    private Toolbar toolbar_;

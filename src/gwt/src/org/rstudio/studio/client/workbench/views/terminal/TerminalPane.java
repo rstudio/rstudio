@@ -92,8 +92,7 @@ public class TerminalPane extends WorkbenchPane
                           WorkbenchContext workbenchContext,
                           WorkbenchServerOperations server)
    {
-      super("Terminal");
-      events_ = events;
+      super("Terminal", events);
       globalDisplay_ = globalDisplay;
       commands_ = commands;
       uiPrefs_ = uiPrefs;
@@ -1157,7 +1156,6 @@ public class TerminalPane extends WorkbenchPane
 
    // Injected ----
    private final GlobalDisplay globalDisplay_;
-   private final EventBus events_;
    private final Commands commands_;
    private final WorkbenchServerOperations server_;
    private final Provider<FontSizeManager> pFontSizeManager_;

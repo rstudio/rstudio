@@ -89,11 +89,10 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
                        GlobalDisplay display,
                        EventBus events)
    {
-      super("Packages");
+      super("Packages", events);
       commands_ = commands;
       session_ = session;
       display_ = display;
-      events_ = events;
       
       dataGridRes_ = (PackagesDataGridResources) 
             GWT.create(PackagesDataGridResources.class);
@@ -271,13 +270,6 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
       return toolbar;
    }
    
-   @Override
-   public void bringToFront()
-   {
-      events_.fireEvent(new ActivatePaneEvent("Packages"));
-      super.bringToFront();
-   }
-
    private class VersionCell extends AbstractCell<PackageInfo>
    {
       public VersionCell (boolean packratVersion)
@@ -708,6 +700,5 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
    private final Commands commands_;
    private final Session session_;
    private final GlobalDisplay display_;
-   private final EventBus events_;
    private final PackagesDataGridResources dataGridRes_;
 }
