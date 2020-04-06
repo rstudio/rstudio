@@ -1,7 +1,7 @@
 /*
  * AceThemes.java
  *
- * Copyright (C) 2009-18 by RStudio, PBC
+ * Copyright (C) 2009-20 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -66,6 +66,8 @@ public class AceThemes
    
    private void applyTheme(Document document, final AceTheme theme)
    {
+      final String linkId = "rstudio-acethemes-linkelement";
+
       // Build the URL.
       StringBuilder themeUrl = new StringBuilder();
       themeUrl.append(GWT.getHostPageBaseURL())
@@ -76,25 +78,25 @@ public class AceThemes
       LinkElement currentStyleEl = document.createLinkElement();
       currentStyleEl.setType("text/css");
       currentStyleEl.setRel("stylesheet");
-      currentStyleEl.setId(linkId_);
+      currentStyleEl.setId(linkId);
       currentStyleEl.setHref(themeUrl.toString());
       
       // In server mode, augment the theme with a font if we have one
-      LinkElement fontEl = null;
       if (!Desktop.isDesktop() && prefs_.get().serverEditorFontEnabled().getValue())
       {
          String font = prefs_.get().serverEditorFont().getValue();
          if (!StringUtil.isNullOrEmpty(font))
          {
-            fontEl = document.createLinkElement();
+            final String fontId = "rstudio-fontelement";
+            LinkElement fontEl = document.createLinkElement();
             fontEl.setType("text/css");
             fontEl.setRel("stylesheet");
-            fontEl.setId(fontId_);
+            fontEl.setId(fontId);
             fontEl.setHref(
                   GWT.getHostPageBaseURL() + 
                   "fonts/css/" + 
                   font + ".css");
-            Element oldFontEl = document.getElementById(fontId_);
+            Element oldFontEl = document.getElementById(fontId);
             if (null != oldFontEl)
             {
               document.getBody().replaceChild(fontEl, oldFontEl);
@@ -106,7 +108,7 @@ public class AceThemes
          }
       }
    
-      Element oldStyleEl = document.getElementById(linkId_);
+      Element oldStyleEl = document.getElementById(linkId);
       if (null != oldStyleEl)
       {
         document.getBody().replaceChild(currentStyleEl, oldStyleEl);
@@ -281,7 +283,5 @@ public class AceThemes
    private final EventBus events_;
    private final Provider<UserState> state_;
    private final Provider<UserPrefs> prefs_;
-   private final String linkId_ = "rstudio-acethemes-linkelement";
-   private final String fontId_ = "rstudio-fontelement";
    private HashMap<String, AceTheme> themes_;
 }

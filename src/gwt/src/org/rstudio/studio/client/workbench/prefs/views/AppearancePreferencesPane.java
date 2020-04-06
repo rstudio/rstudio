@@ -52,7 +52,6 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.themes.AceT
 import org.rstudio.studio.client.workbench.views.source.editors.text.themes.AceThemes;
 import org.rstudio.studio.client.workbench.views.source.editors.text.themes.model.ThemeServerOperations;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Set;
 import java.util.TreeSet;
@@ -682,7 +681,7 @@ public class AppearancePreferencesPane extends PreferencesPane
    private void getInstalledFontList()
    {
       // Search for installed fixed-width fonts on this web browser.
-      final Set<String> browserFonts = new TreeSet<String>();
+      final Set<String> browserFonts = new TreeSet<>();
       JsArrayString candidates = userPrefs_.browserFixedWidthFonts().getGlobalValue();
       for (String candidate: JsUtil.asIterable(candidates))
       {

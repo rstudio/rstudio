@@ -57,9 +57,9 @@ bool isFontFile(const FilePath& file)
 {
    // Test the file extension against known font formats
    std::string ext = file.getExtensionLowerCase();
-   for (size_t i = 0; i < s_fontExtensions.size(); i++)
+   for (const auto& fontExt: s_fontExtensions)
    {
-      if (ext == s_fontExtensions.at(i))
+      if (ext == fontExt)
          return true;
    }
 
@@ -225,14 +225,17 @@ void handleFontCssRequest(const http::Request& request,
          std::vector<std::string> parents;
          parents.push_back(fileName);
          error = generateCssFromDir(subDir, fileName, parents, &css);
+         if (error)
+         {
+            LOG_ERROR(error);
+         }
       }
       else
       {
          // An individual font file; determine extension
-         for (size_t i = 0; i < s_fontExtensions.size(); i++)
+         for (const auto& fontExt: s_fontExtensions)
          {
-            FilePath fontFile = dir.completeChildPath(
-                  fileName + s_fontExtensions[i]);
+            FilePath fontFile = dir.completeChildPath(fileName + fontExt);
             if (fontFile.exists())
             {
                // Generate CSS for the font file
@@ -273,8 +276,6 @@ void handleFontCssRequest(const http::Request& request,
    // Return the accumulated stylesheet
    pResponse->setContentType("text/css");
    pResponse->setBody(css);
-
-   return;
 }
 
 Error getInstalledFonts(const json::JsonRpcRequest& request, json::JsonRpcResponse* pResponse)
