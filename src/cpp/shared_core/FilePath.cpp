@@ -1043,11 +1043,14 @@ FilePath FilePath::getParent() const
 
 std::string FilePath::getRelativePath(const FilePath& in_parentPath) const
 {
-   path_t relativePath =
-      m_impl->Path.lexically_normal().lexically_relative(
-         in_parentPath.m_impl->Path.lexically_normal());
-
-   return BOOST_FS_PATH2STR(relativePath);
+   // NOTE: On Windows, we need to explicitly normalize separators.
+   // We use forward slashes since most of our file APIs prefer
+   // these separators, and Windows APIs transparently translate
+   // forward slashes to backslashes anyhow.
+   path_t self = m_impl->Path.generic_path().lexically_normal();
+   path_t parent = in_parentPath.m_impl->Path.generic_path().lexically_normal();
+   path_t relative = self.lexically_relative(parent);
+   return BOOST_FS_PATH2STR(relative);
 }
 
 uintmax_t FilePath::getSize() const
