@@ -16,11 +16,11 @@ import { EditorView } from 'prosemirror-view';
 
 import tlite from 'tlite';
 
-import { editingRootNodeClosestToPos } from './node';
+import { editingRootNodeClosestToPos } from '../node';
 
 import './widgets.css';
-import { uuidv4 } from './util';
-import { kPixelUnit } from './css';
+import { uuidv4 } from '../util';
+import { kPixelUnit } from '../css';
 
 export function createHorizontalPanel() {
   const div = window.document.createElement('div');

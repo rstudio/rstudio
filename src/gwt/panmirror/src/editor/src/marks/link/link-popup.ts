@@ -29,7 +29,7 @@ import {
   addHorizontalPanelCell,
   showTooltip,
   createTextRangePopup,
-} from '../../api/widgets';
+} from '../../api/widgets/widgets';
 import { navigateToId, navigateToHeading } from '../../api/navigation';
 import { selectionIsImageNode } from '../../api/selection';
 

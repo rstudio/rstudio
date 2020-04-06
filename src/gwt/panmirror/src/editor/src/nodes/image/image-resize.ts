@@ -27,7 +27,7 @@ import {
   createCheckboxInput,
   createSelectInput,
   createTextInput,
-} from '../../api/widgets';
+} from '../../api/widgets/widgets';
 import { EditorUI } from '../../api/ui';
 import { editingRootNode } from '../../api/node';
 import { extractSizeStyles, kPercentUnit, kPixelUnit, removeStyleAttrib } from '../../api/css';
