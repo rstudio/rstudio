@@ -398,6 +398,17 @@ std::string FilePath::createAliasedPath(const FilePath& in_filePath, const FileP
    if (in_filePath == in_userHomePath)
       return s_homePathLeafAlias;
 
+#ifdef _WIN32
+   // Also check for case where paths are identical
+   // after normalizing separators.
+   bool samePath =
+       in_filePath.m_impl->Path.generic_path() ==
+       in_userHomePath.m_impl->Path.generic_path();
+
+   if (samePath)
+      return s_homePathLeafAlias;
+#endif
+
    // if the path is contained within the home path then alias it
    if (in_filePath.isWithin(in_userHomePath))
    {
