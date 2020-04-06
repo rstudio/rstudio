@@ -197,7 +197,7 @@ class PandocWriter implements PandocOutput {
   public writeText(text: string | null) {
     // determine which characters we shouldn't escape
     const preventEscapeCharacters = this.preventEscapeCharacters;
- 
+
     if (text) {
       let textRun = '';
       const flushTextRun = () => {
@@ -336,10 +336,9 @@ class PandocWriter implements PandocOutput {
   }
 
   public writeRawMarkdown(markdown: Fragment | string, escapeSymbols?: boolean) {
-    
     // collect markdown text if necessary
     let md = markdown instanceof Fragment ? fragmentText(markdown) : markdown;
-    
+
     // escape symbols if requested
     if (escapeSymbols) {
       const escaped: string[] = [];

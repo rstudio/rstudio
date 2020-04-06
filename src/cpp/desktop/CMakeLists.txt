@@ -1,7 +1,7 @@
 #
 # CMakeLists.txt
 #
-# Copyright (C) 2009-19 by RStudio, PBC
+# Copyright (C) 2009-20 by RStudio, PBC
 #
 # Unless you have received this program directly from RStudio pursuant
 # to the terms of a commercial license agreement with RStudio, then
@@ -108,6 +108,7 @@ set(CMAKE_PREFIX_PATH "${QT_BIN_DIR}//..//lib//cmake")
 add_definitions(
    -DQT_NO_CAST_FROM_ASCII
    -DQT_NO_CAST_TO_ASCII
+   -DQT_DEPRECATED_WARNINGS
    -DQT_NO_SIGNALS_SLOTS_KEYWORDS)
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
