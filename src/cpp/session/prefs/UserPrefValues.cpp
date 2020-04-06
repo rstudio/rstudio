@@ -2130,6 +2130,19 @@ core::Error UserPrefValues::setRestoreLastProject(bool val)
 }
 
 /**
+ * The number of seconds after which a project is deemed to have successfully started.
+ */
+int UserPrefValues::projectSafeStartupSeconds()
+{
+   return readPref<int>("project_safe_startup_seconds");
+}
+
+core::Error UserPrefValues::setProjectSafeStartupSeconds(int val)
+{
+   return writePref("project_safe_startup_seconds", val);
+}
+
+/**
  * Use tinytex to compile .tex files.
  */
 bool UserPrefValues::useTinytex()
@@ -2658,6 +2671,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kViewDirAfterRCmdCheck,
       kHideObjectFiles,
       kRestoreLastProject,
+      kProjectSafeStartupSeconds,
       kUseTinytex,
       kCleanTexi2dviOutput,
       kLatexShellEscape,

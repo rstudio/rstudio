@@ -1513,6 +1513,14 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
+    * The number of seconds after which a project is deemed to have successfully started.
+    */
+   public PrefValue<Integer> projectSafeStartupSeconds()
+   {
+      return integer("project_safe_startup_seconds", 30);
+   }
+
+   /**
     * Use tinytex to compile .tex files.
     */
    public PrefValue<Boolean> useTinytex()
@@ -2100,6 +2108,8 @@ public class UserPrefsAccessor extends Prefs
          hideObjectFiles().setValue(layer, source.getBool("hide_object_files"));
       if (source.hasKey("restore_last_project"))
          restoreLastProject().setValue(layer, source.getBool("restore_last_project"));
+      if (source.hasKey("project_safe_startup_seconds"))
+         projectSafeStartupSeconds().setValue(layer, source.getInteger("project_safe_startup_seconds"));
       if (source.hasKey("use_tinytex"))
          useTinytex().setValue(layer, source.getBool("use_tinytex"));
       if (source.hasKey("clean_texi2dvi_output"))
