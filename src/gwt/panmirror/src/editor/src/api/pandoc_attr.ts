@@ -98,12 +98,12 @@ export function pandocAttrToDomAttr(attrs: any, marker = true) {
   return domAttr;
 }
 
-export function pandocAttrParseDom(el: Element, attrs: { [key: string]: string | null }) {
+export function pandocAttrParseDom(el: Element, attrs: { [key: string]: string | null }, forceAttrs = false) {
   // exclude any keys passed to us
   const excludedNames = Object.keys(attrs);
 
   // if this isn't from a prosemirror pandoc node then exclude id, style, and classes
-  if (!el.hasAttribute(kDataPmPandocAttr)) {
+  if (!forceAttrs && !el.hasAttribute(kDataPmPandocAttr)) {
     excludedNames.push('id', 'class', 'style');
   }
 

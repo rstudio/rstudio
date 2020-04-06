@@ -19,8 +19,9 @@ export function isSingleLineHTML(html: string) {
   return html.trimRight().split('\n').length === 1;
 }
 
-export function asHTMLTag(tag: string, attribs: { [key: string]: string }, selfClosing = false) {
+export function asHTMLTag(tag: string, attribs: { [key: string]: string }, selfClosing = false, noEmptyAttribs = false) {
   const attribsHTML = Object.keys(attribs)
+    .filter(name => !noEmptyAttribs || attribs[name])
     .map(name => `${name}="${escapeHTMLAttribute(attribs[name])}"`)
     .join(' ');
   return `<${tag} ${attribsHTML}${selfClosing ? '/' : ''}>`;
