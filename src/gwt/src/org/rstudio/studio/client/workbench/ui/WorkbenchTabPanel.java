@@ -223,8 +223,10 @@ class WorkbenchTabPanel
       
       // deal with migrating from n+1 to n tabs, and with -1 values
       int safeIndex = Math.min(Math.max(0, tabIndex), tabs_.size() - 1);
-      
-      tabPanel_.selectTab(safeIndex);
+      if (safeIndex >= 0)  
+         tabPanel_.selectTab(safeIndex);
+      else
+         Debug.logToConsole("Attempted to select tab in empty tab panel.");
    }
    
    public void selectTab(WorkbenchTab pane)
@@ -267,6 +269,11 @@ class WorkbenchTabPanel
       return tabPanel_.getSelectedIndex();
    }
    
+   public int getWidgetCount()
+   {
+      return tabPanel_.getWidgetCount();
+   }
+
    public HandlerRegistration addSelectionHandler(SelectionHandler<Integer> integerSelectionHandler)
    {
       return tabPanel_.addSelectionHandler(integerSelectionHandler);

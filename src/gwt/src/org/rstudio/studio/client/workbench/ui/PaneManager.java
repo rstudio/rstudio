@@ -104,7 +104,7 @@ public class PaneManager
       @Override
       protected void onInit(Integer value)
       {
-         if (value != null)
+         if (value != null && tabPanel_.getWidgetCount() > 0)
             tabPanel_.selectTab(value);
       }
 
