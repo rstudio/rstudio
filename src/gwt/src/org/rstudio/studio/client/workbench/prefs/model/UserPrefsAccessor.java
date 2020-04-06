@@ -774,6 +774,22 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
+    * Whether to use a custom editor font in RStudio Server.
+    */
+   public PrefValue<Boolean> serverEditorFontEnabled()
+   {
+      return bool("server_editor_font_enabled", false);
+   }
+
+   /**
+    * The name of the fixed-width editor font to use with RStudio Server.
+    */
+   public PrefValue<String> serverEditorFont()
+   {
+      return string("server_editor_font", "");
+   }
+
+   /**
     * The default character encoding to use when saving files.
     */
    public PrefValue<String> defaultEncoding()
@@ -1750,6 +1766,14 @@ public class UserPrefsAccessor extends Prefs
    public final static String GRAPHICS_ANTIALIASING_GRAY = "gray";
    public final static String GRAPHICS_ANTIALIASING_SUBPIXEL = "subpixel";
 
+   /**
+    * List of fixed-width fonts to check for browser support.
+    */
+   public PrefValue<JsArrayString> browserFixedWidthFonts()
+   {
+      return object("browser_fixed_width_fonts", JsArrayUtil.createStringArray("Andale Mono", "Bitstream Vera Sans Mono", "Cascadia Code", "Consolas", "Courier New", "Courier", "DejaVu Sans Mono", "Droid Sans Mono", "Fira Code", "Hack", "IBM Plex Mono", "Inconsolata", "JetBrains Mono", "Lucida Console", "Lucida Sans Typewriter", "Menlo", "Monaco", "Monoid", "Operator Mono", "Pragmata", "SF Mono", "Source Code Pro", "Vera Sans Mono", "Victor Mono", "Ubuntu Mono"));
+   }
+
    public void syncPrefs(String layer, JsObject source)
    {
       if (source.hasKey("run_rprofile_on_resume"))
@@ -1908,6 +1932,10 @@ public class UserPrefsAccessor extends Prefs
          helpFontSizePoints().setValue(layer, source.getDbl("help_font_size_points"));
       if (source.hasKey("editor_theme"))
          editorTheme().setValue(layer, source.getString("editor_theme"));
+      if (source.hasKey("server_editor_font_enabled"))
+         serverEditorFontEnabled().setValue(layer, source.getBool("server_editor_font_enabled"));
+      if (source.hasKey("server_editor_font"))
+         serverEditorFont().setValue(layer, source.getString("server_editor_font"));
       if (source.hasKey("default_encoding"))
          defaultEncoding().setValue(layer, source.getString("default_encoding"));
       if (source.hasKey("toolbar_visible"))
@@ -2126,6 +2154,8 @@ public class UserPrefsAccessor extends Prefs
          graphicsBackend().setValue(layer, source.getString("graphics_backend"));
       if (source.hasKey("graphics_antialiasing"))
          graphicsAntialiasing().setValue(layer, source.getString("graphics_antialiasing"));
+      if (source.hasKey("browser_fixed_width_fonts"))
+         browserFixedWidthFonts().setValue(layer, source.getObject("browser_fixed_width_fonts"));
    }
    
 

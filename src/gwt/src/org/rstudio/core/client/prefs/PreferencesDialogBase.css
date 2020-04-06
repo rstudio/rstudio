@@ -1,7 +1,3 @@
-@eval fixedWidthFont org.rstudio.core.client.theme.ThemeFonts.getFixedWidthFont();
-
-@external fixedWidthFont;
-
 @external gwt-CheckBox, gwt-RadioButton, gwt-Label;
 
 .preferencesDialog .gwt-CheckBox,

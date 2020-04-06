@@ -59,6 +59,8 @@
 
 @external rstudio-animating;
 
+@external rstudio-fixed-width-font;
+
 @external dataGridSortedHeaderAscending, dataGridSortedHeaderDescending;
 
 @eval THEME_DEFAULT_BACKGROUND org.rstudio.core.client.theme.ThemeColors.defaultBackground;
@@ -255,9 +257,6 @@ input[type=text][disabled] {
 button, input[type="reset"], input[type="button"], input[type="submit"] {
    color: black;
 }
-.fixedWidthFont {
-   font-family: fixedWidthFont !important;
-}
 
 /* hide something from sighted users but remain visible to screen readers */
 .visuallyHidden {
@@ -356,6 +355,10 @@ button {
 
 textarea {
    outline: none;
+}
+
+.rstudio-fixed-width-font {
+   font-family: fixedWidthFont !important;
 }
 
 pre {

@@ -178,6 +178,13 @@ configure_file("${CMAKE_CURRENT_SOURCE_DIR}/${RSERVER_THEME_README}"
 install(FILES "${CMAKE_CURRENT_BINARY_DIR}/extras/${RSERVER_THEME_README}"
        DESTINATION "extras/themes")
 
+# do the same for fonts
+set (RSERVER_FONT_README "fonts/README.md")
+configure_file("${CMAKE_CURRENT_SOURCE_DIR}/${RSERVER_FONT_README}"
+               "${CMAKE_CURRENT_BINARY_DIR}/extras/${RSERVER_FONT_README}")
+install(FILES "${CMAKE_CURRENT_BINARY_DIR}/extras/${RSERVER_FONT_README}"
+       DESTINATION "extras/fonts")
+
 # install db migration scripts
 file(GLOB DB_MIGRATION_FILES_SQL "db/*.sql")
 file(GLOB DB_MIGRATION_FILES_SQLITE "db/*.sqlite")
