@@ -30,7 +30,8 @@ namespace {
 // helper for creating a path with the system drive
 // prefixed for Windows. we try to use the current
 // drive if at all possible; if we cannot retrieve
-// that for some reason then we just fall back to C:
+// that for some reason then we just fall back to
+// the default system drive (normally C:)
 std::string getDrivePrefix()
 {
    char buffer[MAX_PATH];
