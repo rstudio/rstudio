@@ -1,8 +1,8 @@
 (function(){
 
 window.setData = function(data) {
-   const numRows = 1000;
-   const numCols = 200;
+   const numRows = 2000000;
+   const numCols = 10;
 
  //  var columnDefs = [{
  //        headerName: "Make",

@@ -98,6 +98,7 @@ public class DataImport extends Composite
                          ProgressIndicator progressIndicator,
                          final String path)
    {
+      Debug.log("DataImport 101");
       dataImportResources_ = GWT.create(DataImportResources.class);
       dataImportMode_ = dataImportMode;
       
@@ -508,6 +509,7 @@ public class DataImport extends Composite
    
    private void setGridViewerData(DataImportPreviewResponse response)
    {
+      Debug.log("setGridViewerData");
       gridViewer_.setOption("nullsAsNAs", "true");
       gridViewer_.setOption("ordering", "false");
       gridViewer_.setOption("rowNumbers", "false");
@@ -528,6 +530,7 @@ public class DataImport extends Composite
    
    private void previewDataImport()
    {
+      Debug.log("previewDataImport");
       Operation previewDataImportOperation = new Operation()
       {
          @Override

@@ -26,6 +26,7 @@ public class GridViewerFrame extends RStudioThemedFrame
    public GridViewerFrame(String title)
    {
       this(title, false);
+      Debug.log("grid viewer frame 29");
    }
 
    public GridViewerFrame(String title, boolean enableThemes)
@@ -39,11 +40,14 @@ public class GridViewerFrame extends RStudioThemedFrame
          null,
          false,
          enableThemes);
+
+      Debug.log("GridViewerFrame 44");
    }
    
    public void onAttach()
    {
       super.onAttach();
+      Debug.log("onattach 50");
    }
    
    public void setData(JavaScriptObject data)
@@ -56,6 +60,7 @@ public class GridViewerFrame extends RStudioThemedFrame
    
    public void setOption(String option, String value)
    {
+      Debug.log("set option");
       WindowEx gridViewerFrameWindow = getIFrame().getContentWindow();
       setOptionNative(gridViewerFrameWindow, option, value);
    }
@@ -65,6 +70,7 @@ public class GridViewerFrame extends RStudioThemedFrame
       Operation onColumnOpen,
       Operation onColumnDismiss)
    {
+      Debug.log("set c9olumn definitions ui bvisible");
       WindowEx gridViewerFrameWindow = getIFrame().getContentWindow();
       setColumnDefinitionsUIVisibleNative(
             gridViewerFrameWindow,

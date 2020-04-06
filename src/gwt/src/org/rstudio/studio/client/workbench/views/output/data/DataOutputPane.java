@@ -19,6 +19,7 @@ import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.events.EnsureVisibleEvent;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.core.client.widget.*;
@@ -37,7 +38,8 @@ public class DataOutputPane extends WorkbenchPane
 
    @Override
    protected Widget createMainWidget()
-   { 
+   {
+      Debug.log("createMainWidget");
       gridViewer_ = new GridViewerFrame("Data Output Pane", true);
       return gridViewer_;
    }
@@ -91,6 +93,7 @@ public class DataOutputPane extends WorkbenchPane
             }
             else
             {
+               Debug.log("is ready, setting data");
                gridViewer_.setOption("nullsAsNAs", "true");
                gridViewer_.setOption("ordering", "false");
                gridViewer_.setOption("rowNumbers", "false");
