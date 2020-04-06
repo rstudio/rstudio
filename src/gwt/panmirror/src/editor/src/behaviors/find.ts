@@ -250,8 +250,11 @@ class FindPlugin extends Plugin<DecorationSet> {
     // decorations to return
     const decorations: Decoration[] = [];
 
-    // perform search and populate results
-    const textNodes = mergedTextNodes(tr.doc);
+    // perform search and populate results (don't search code blocks because
+    // we currently can't highlight results inside codemirror blocks)
+    const textNodes = mergedTextNodes(tr.doc, (node, parent) => {
+      return !node.type.spec.code && !parent.type.spec.code;
+    });
 
     textNodes.forEach(textNode => {
       const search = this.findRegEx();
