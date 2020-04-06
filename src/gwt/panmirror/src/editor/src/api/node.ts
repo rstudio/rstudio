@@ -37,8 +37,6 @@ import {
   PandocInlineHTMLReaderFn,
 } from './pandoc';
 
-import { selectionIsImageNode } from './selection';
-
 export interface PandocNode {
   readonly name: string;
   readonly spec: NodeSpec;

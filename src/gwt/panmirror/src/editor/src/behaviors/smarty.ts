@@ -21,20 +21,22 @@ import { Extension, extensionIfEnabled } from '../api/extension';
 
 const plugin = new PluginKey('smartypaste');
 
-// match emDash but only for lines that aren't an html comment
-const enDash = new InputRule(/^(?:[^-]*)--$/, (state: EditorState, match: string[], start: number, end: number) => {
-  if (!state.doc.textBetween(start, end).startsWith('<!--')) {
+// match enDash but only for lines that aren't an html comment
+const enDash = new InputRule(/[^!-]--$/, (state: EditorState, match: string[], start: number, end: number) => {
+  const { parent, parentOffset } = state.selection.$head;
+  const precedingText = parent.textBetween(0, parentOffset);
+  if (precedingText.indexOf('<!--') === -1) {
     const tr = state.tr;
-    tr.insertText('–', end - 2, end);
+    tr.insertText('–', end - 1, end);
     return tr;
   } else {
     return null;
   }
 });
 
-const emDash = new InputRule(/^(?:.*)–-$/, (state: EditorState, match: string[], start: number, end: number) => {
+const emDash = new InputRule(/–-$/, (state: EditorState, match: string[], start: number, end: number) => {
   const tr = state.tr;
-  tr.insertText('—', end - 2, end);
+  tr.insertText('—', end - 1, end);
   return tr;
 });
 
@@ -63,10 +65,13 @@ const extension: Extension = {
             text = text.replace(/'/g, '’');
 
             // emdash
-            text = text.replace(/(\w)--(\w)/, '$1—$2');
+            text = text.replace(/(\w)---(\w)/g, '$1—$2');
+
+            // endash
+            text = text.replace(/(\w)--(\w)/g, '$1–$2');
 
             // ellipses
-            text = text.replace(/\.\.\./, '…');
+            text = text.replace(/\.\.\./g, '…');
 
             return text;
           },

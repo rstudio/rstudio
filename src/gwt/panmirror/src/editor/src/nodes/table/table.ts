@@ -15,7 +15,7 @@
 
 import { Schema } from 'prosemirror-model';
 import { EditorView } from 'prosemirror-view';
-import { Transaction, EditorState } from 'prosemirror-state';
+import { Transaction } from 'prosemirror-state';
 
 import { tableEditing, columnResizing, goToNextCell, deleteColumn, deleteRow } from 'prosemirror-tables';
 
@@ -89,7 +89,7 @@ const extension = (pandocExtensions: PandocExtensions): Extension | null => {
         new ProsemirrorCommand(
           EditorCommandId.TableInsertTable,
           ['Alt-Mod-t'],
-          insertTable(capabilities, ui.dialogs.insertTable),
+          insertTable(capabilities, ui),
         ),
         new ProsemirrorCommand(EditorCommandId.TableNextCell, ['Tab'], goToNextCell(1)),
         new ProsemirrorCommand(EditorCommandId.TablePreviousCell, ['Shift-Tab'], goToNextCell(-1)),

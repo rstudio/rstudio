@@ -14,7 +14,7 @@
  */
 
 import { PluginKey } from 'prosemirror-state';
-import { DecorationSet, Decoration } from 'prosemirror-view';
+import { DecorationSet } from 'prosemirror-view';
 import { Schema } from 'prosemirror-model';
 
 import { markHighlightPlugin, markHighlightDecorations } from '../../api/mark-highlight';
@@ -23,9 +23,9 @@ const key = new PluginKey<DecorationSet>('cite-highlight');
 
 export function citeHighlightPlugin(schema: Schema) {
   return markHighlightPlugin(key, schema.marks.cite, (text, _attrs, markRange) => {
-    // id decorations
-    const kIdClass = 'pm-link-text-color';
-    const re = /-?@[\w:.#$%&-+?<>~/]+/g;
-    return markHighlightDecorations(markRange, text, re, kIdClass);
+    // bracket decorations
+    const kBracketClass = 'pm-link-text-color';
+    const bracketRe = /(^\[|\]$)/g;
+    return markHighlightDecorations(markRange, text, bracketRe, kBracketClass);
   });
 }

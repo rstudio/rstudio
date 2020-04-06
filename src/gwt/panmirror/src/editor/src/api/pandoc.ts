@@ -258,7 +258,7 @@ export interface PandocMarkWriter {
 
 export type PandocMarkWriterFn = (output: PandocOutput, mark: Mark, parent: Fragment) => void;
 
-export type PandocOutputOption = 'writeSpaces' | 'citationEscaping';
+export type PandocOutputOption = 'writeSpaces';
 
 export interface PandocOutput {
   extensions: PandocExtensions;
@@ -337,7 +337,6 @@ export function mapTokens(tokens: PandocToken[], f: (tok: PandocToken) => Pandoc
 
   return tokens.map(mapToken);
 }
-
 
 export function tokenTextEscaped(t: PandocToken) {
   return t.c.replace(/\\/g, `\\\\`);

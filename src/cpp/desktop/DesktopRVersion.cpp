@@ -1,7 +1,7 @@
 /*
  * DesktopRVersion.cpp
  *
- * Copyright (C) 2009-19 by RStudio, PBC
+ * Copyright (C) 2009-20 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -16,7 +16,7 @@
 
 #include <windows.h>
 
-#include <QtAlgorithms>
+#include <algorithm>
 #include <QMessageBox>
 
 #include <core/system/System.hpp>
@@ -287,7 +287,7 @@ QList<RVersion> allRVersions(QList<RVersion> versions)
    }
 
    // Sort and de-duplicate
-   qSort(versions);
+   std::sort(versions.begin(), versions.end());
    for (int i = 1; i < versions.size(); i++)
    {
       if (versions.at(i) == versions.at(i-1))

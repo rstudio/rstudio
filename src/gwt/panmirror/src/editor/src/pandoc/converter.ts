@@ -21,7 +21,6 @@ import {
   PandocNodeWriter,
   PandocApiVersion,
   PandocMarkWriter,
-  PandocAst,
   PandocPreprocessorFn,
   PandocBlockReaderFn,
   PandocCodeBlockFilter,
