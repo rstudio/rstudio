@@ -13,14 +13,17 @@
  *
  */
 
-// All of these tests presume Unix-style paths
-#ifndef _WIN32
-
 #define RSTUDIO_NO_TESTTHAT_ALIASES
 #include <tests/TestThat.hpp>
 
 #include <shared_core/Error.hpp>
 #include <shared_core/FilePath.hpp>
+
+#ifdef _WIN32
+# define kRootPrefix "C:/"
+#else
+# define kRootPrefix "/"
+#endif
 
 namespace rstudio {
 namespace core {
@@ -30,10 +33,10 @@ TEST_CASE("file paths")
 {
    SECTION("relative path construction")
    {
-      FilePath rootPath("/");
-      FilePath pPath("/path/to");
-      FilePath aPath("/path/to/a");
-      FilePath bPath("/path/to/b");
+      FilePath rootPath(kRootPrefix);
+      FilePath pPath(kRootPrefix "path/to");
+      FilePath aPath(kRootPrefix "path/to/a");
+      FilePath bPath(kRootPrefix "path/to/b");
 
       CHECK(aPath.isWithin(pPath));
       CHECK(bPath.isWithin(pPath));
@@ -46,56 +49,66 @@ TEST_CASE("file paths")
    {
       // isWithin should not be fooled by directory traversal; the first path is not inside the
       // second even though it appears to be lexically
-      FilePath aPath("/path/to/a/../b");
-      FilePath bPath("/path/to/a");
+      FilePath aPath(kRootPrefix "path/to/a/../b");
+      FilePath bPath(kRootPrefix "path/to/a");
       CHECK(!aPath.isWithin(bPath));
 
       // isWithin should not be fooled by substrings
-      FilePath cPath("/path/to/foo");
-      FilePath dPath("/path/to/foobar");
+      FilePath cPath(kRootPrefix "path/to/foo");
+      FilePath dPath(kRootPrefix "path/to/foobar");
       CHECK(!dPath.isWithin(cPath));
    }
 
    SECTION("child path completion")
    {
       // simple path completion should do what's expected
-      FilePath aPath("/path/to/a");
-      FilePath bPath("/path/to/a/b");
+      FilePath aPath(kRootPrefix "path/to/a");
+      FilePath bPath(kRootPrefix "path/to/a/b");
       CHECK(aPath.completeChildPath("b") == bPath);
 
       // trying to complete to a path outside should fail and return the original path
-      FilePath cPath("/path/to/foo");
+      FilePath cPath(kRootPrefix "path/to/foo");
       CHECK(cPath.completeChildPath("../bar") == cPath);
       CHECK(cPath.completeChildPath("/path/to/quux") == cPath);
 
       // trailing slashes are okay
-      FilePath dPath("/path/to/");
-      FilePath ePath("/path/to/e");
+      FilePath dPath(kRootPrefix "path/to/");
+      FilePath ePath(kRootPrefix "path/to/e");
       CHECK(dPath.completeChildPath("e") == ePath);
    }
 
    SECTION("general path completion")
    {
       // simple path completion should do what's expected
-      FilePath aPath("/path/to/a");
-      FilePath bPath("/path/to/a/b");
+      FilePath aPath(kRootPrefix "path/to/a");
+      FilePath bPath(kRootPrefix "path/to/a/b");
       CHECK(aPath.completePath("b") == bPath);
 
       // absolute paths are allowed
-      FilePath cPath("/path/to/c");
-      FilePath dPath("/path/to/d");
+      FilePath cPath(kRootPrefix "path/to/c");
+      FilePath dPath(kRootPrefix "path/to/d");
       CHECK(cPath.completePath("/path/to/d") == dPath);
 
       // directory traversal is allowed
-      FilePath ePath("/path/to/e");
-      FilePath fPath("/path/to/f");
+      FilePath ePath(kRootPrefix "path/to/e");
+      FilePath fPath(kRootPrefix "path/to/f");
       CHECK(ePath.completePath("../f").getLexicallyNormalPath() == fPath.getAbsolutePath());
    }
+
+#ifdef _WIN32
+   SECTION("relative paths for UNC shares")
+   {
+      // NOTE: need to be robust against mixed separators as these can
+      // leak in depending on the API used to request the file path.
+      //
+      // https://github.com/rstudio/rstudio/issues/6587
+      FilePath pPath(R"(//LOCALHOST/c$/p)");
+      FilePath aPath(R"(\\LOCALHOST\c$\p\a)");
+      CHECK(aPath.getRelativePath(pPath) == "a");
+   }
+#endif
 }
 
 } // end namespace tests
 } // end namespace core
 } // end namespace rstudio
-
-#endif  // _WIN32
-
