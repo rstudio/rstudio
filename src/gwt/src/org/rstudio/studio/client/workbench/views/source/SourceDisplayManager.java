@@ -24,6 +24,8 @@ import com.google.gwt.event.logical.shared.SelectionHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.*;
+import com.google.inject.Inject;
+import com.google.inject.Singleton;
 
 import org.rstudio.core.client.events.*;
 import org.rstudio.core.client.layout.RequiresVisibilityChanged;
@@ -40,9 +42,11 @@ import org.rstudio.studio.client.workbench.ui.unsaved.UnsavedChangesDialog;
 import org.rstudio.studio.client.workbench.views.source.Source.Display;
 import java.util.ArrayList;
 
+@Singleton
 public class SourceDisplayManager extends Composite
    implements HasEnsureVisibleHandlers, HasEnsureHeightHandlers
 {
+   @Inject
    public SourceDisplayManager(SourcePane pane,
                                Display display)
    {

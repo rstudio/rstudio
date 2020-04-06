@@ -66,7 +66,6 @@ import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.prefs.events.UserPrefsChangedEvent;
 import org.rstudio.studio.client.workbench.prefs.events.UserPrefsChangedHandler;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
-import org.rstudio.studio.client.workbench.views.source.Source;
 import org.rstudio.studio.client.workbench.views.source.events.NotebookRenderFinishedEvent;
 
 import com.google.gwt.core.client.JavaScriptObject;
@@ -102,7 +101,6 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
                     Session session,
                     GlobalDisplay globalDisplay,
                     FileTypeRegistry fileTypeRegistry,
-                    Source source,
                     WorkbenchContext workbenchContext,
                     Provider<ViewFilePanel> pViewFilePanel,
                     Binder binder,
@@ -112,7 +110,6 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
    {
       globalDisplay_ = globalDisplay;
       fileTypeRegistry_ = fileTypeRegistry;
-      source_ = source;
       workbenchContext_ = workbenchContext;
       pViewFilePanel_ = pViewFilePanel;
       prefs_ = prefs;
@@ -859,7 +856,6 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
    private final Session session_;
    private final EventBus events_;
    private final Commands commands_;
-   private final Source source_;
    private final WorkbenchContext workbenchContext_;
    private boolean restarting_ = false;
 
