@@ -538,7 +538,7 @@ private:
          {
             *contents = contents->erase(0, firstMatchOn - 30);
             contents->insert(0, "...");
-            int leadingCharactersErased = firstMatchOn - 33;
+            int leadingCharactersErased = gsl::narrow_cast<int>(firstMatchOn - 33);
             json::Array newMatchOnArray;
             json::Array newMatchOffArray;
             for (size_t i = 0; i < pMatchOn->getSize(); i++)
