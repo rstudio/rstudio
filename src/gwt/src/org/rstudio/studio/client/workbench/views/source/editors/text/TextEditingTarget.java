@@ -6710,7 +6710,7 @@ public class TextEditingTarget implements
    {
       docUpdateSentinel_.revert(() -> {
          if (visualMode_.isActivated())
-            visualMode_.syncFromEditor(null, true);
+            visualMode_.syncFromEditor(null, false);
       }, false);
       
    }
