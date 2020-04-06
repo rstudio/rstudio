@@ -28,13 +28,18 @@ namespace {
 #ifdef _WIN32
 
 // helper for creating a path with the system drive
-// prefixed for Windows
+// prefixed for Windows. we try to use the current
+// drive if at all possible; if we cannot retrieve
+// that for some reason then we just fall back to C:
 std::string getDrivePrefix()
 {
    char buffer[MAX_PATH];
    DWORD n = GetCurrentDirectory(MAX_PATH, buffer);
    if (n < 2)
-      return "C:";
+      return ::getenv("SYSTEMDRIVE");
+
+   if (buffer[1] != ':')
+      return ::getenv("SYSTEMDRIVE");
 
    return std::string(buffer, 2);
 }
