@@ -352,6 +352,17 @@ std::string FilePath::createAliasedPath(const FilePath& in_filePath, const FileP
    if (in_filePath == in_userHomePath)
       return s_homePathLeafAlias;
 
+#ifdef _WIN32
+   // Also check for case where paths are identical
+   // after normalizing separators.
+   bool samePath =
+       in_filePath.m_impl->Path.generic_path() ==
+       in_userHomePath.m_impl->Path.generic_path();
+
+   if (samePath)
+      return s_homePathLeafAlias;
+#endif
+
    // if the path is contained within the home path then alias it
    if (in_filePath.isWithin(in_userHomePath))
    {
@@ -844,11 +855,14 @@ FilePath FilePath::getParent() const
 
 std::string FilePath::getRelativePath(const FilePath& in_parentPath) const
 {
-   path_t relativePath =
-      m_impl->Path.lexically_normal().lexically_relative(
-         in_parentPath.m_impl->Path.lexically_normal());
-
-   return BOOST_FS_PATH2STR(relativePath);
+   // NOTE: On Windows, we need to explicitly normalize separators.
+   // We use forward slashes since most of our file APIs prefer
+   // these separators, and Windows APIs transparently translate
+   // forward slashes to backslashes anyhow.
+   path_t self = m_impl->Path.generic_path().lexically_normal();
+   path_t parent = in_parentPath.m_impl->Path.generic_path().lexically_normal();
+   path_t relative = self.lexically_relative(parent);
+   return BOOST_FS_PATH2STR(relative);
 }
 
 uintmax_t FilePath::getSize() const
