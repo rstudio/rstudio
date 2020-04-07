@@ -115,29 +115,6 @@ export function createTextInput(widthChars: number, classes?: string[], style?: 
   return input;
 }
 
-export function createNumericInput(
-  digits: number,
-  min?: number,
-  max?: number,
-  classes?: string[],
-  style?: { [key: string]: string },
-) {
-  const input = document.createElement('input');
-  input.type = 'number';
-  input.classList.add('pm-input-numeric');
-  applyStyles(input, classes, style);
-  input.style.width = digits + 1 + 'ch';
-  if (min) {
-    input.min = min.toString();
-  }
-  if (max) {
-    input.max = max.toString();
-  }
-
-  return input;
-}
-
-
 function applyStyles(el: HTMLElement, classes?: string[], style?: { [key: string]: string }) {
   if (classes) {
     if (classes) {

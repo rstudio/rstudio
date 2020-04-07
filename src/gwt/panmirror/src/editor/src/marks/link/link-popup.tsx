@@ -120,10 +120,10 @@ export class LinkPopupPlugin extends Plugin<DecorationSet> {
 
 interface LinkPopupProps extends WidgetProps {
   link: LinkProps;
-  linkCmd: CommandFn;
-  removeLinkCmd: CommandFn;
   view: EditorView;
   ui: EditorUI;
+  linkCmd: CommandFn;
+  removeLinkCmd: CommandFn;
 }
 
 
