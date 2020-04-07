@@ -6,6 +6,10 @@ pandoc schema: <https://github.com/jgm/pandoc-types/blob/master/Text/Pandoc/Defi
 
 ## TODO
   
+why does ID show up as an option in the link dialog for gfm
+
+clicking link with wrong case match doesn't navigate
+
 Better direct manipulation for tables
 
 Surface attributes handling for div with only an id (shading treatment a bit much?)
