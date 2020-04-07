@@ -18,6 +18,8 @@
 
 #include <string>
 #include <map>
+#include <fstream>
+
 #include <gsl/gsl>
 
 #include <boost/bind.hpp>
@@ -68,6 +70,49 @@ namespace {
 
 module_context::WaitForMethodFunction s_waitForRequestDocumentSave;
 module_context::WaitForMethodFunction s_waitForRequestDocumentClose;
+
+std::string inferDocumentType(const FilePath& documentPath,
+                              const std::string& defaultType)
+{
+   // read first line in document
+   std::ifstream ifs(documentPath.getAbsolutePath());
+   if (!ifs.is_open())
+      return defaultType;
+ 
+   // try to read the first line
+   std::string line;
+   std::getline(ifs, line);
+   
+   // check for a shebang line
+   if (!boost::algorithm::starts_with(line, "#!"))
+      return defaultType;
+   
+   // use heuristics to guess the file type
+   boost::regex pattern("(?:\\s|/)([^\\s/]+)(?=\\s|$)");
+   boost::sregex_token_iterator it(line.begin(), line.end(), pattern, 1);
+   boost::sregex_token_iterator end;
+   for (; it != end; ++it)
+   {
+      std::cerr << *it << std::endl;
+      
+      // check for common shells
+      for (auto&& shell : {"sh", "bash", "fish", "zsh"})
+         if (*it == shell)
+            return kSourceDocumentTypeShell;
+      
+      // check for R
+      for (auto&& r : {"R", "Rscript"})
+         if (*it == r)
+            return kSourceDocumentTypeRSource;
+      
+      // check for Python
+      if (boost::algorithm::starts_with(*it, "python"))
+         return kSourceDocumentTypePython;
+   }
+   
+   return defaultType;
+
+}
 
 void writeDocToJson(boost::shared_ptr<SourceDocument> pDoc,
                     core::json::Object* pDocJson)
@@ -257,6 +302,12 @@ Error openDocument(const json::JsonRpcRequest& request,
       pResponse->setError(error, "File is binary rather than text so cannot "
                                  "be opened by the source editor.");
       return Success();
+   }
+   
+   // infer type from the document if appropriate
+   if (type == "text")
+   {
+      type = inferDocumentType(documentPath, type);
    }
 
    // set the doc contents to the specified file

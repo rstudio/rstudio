@@ -46,7 +46,7 @@ namespace {
 std::string onDetectSourceType(
       boost::shared_ptr<source_database::SourceDocument> pDoc)
 {
-   if ((pDoc->type() == source_database::SourceDocument::SourceDocumentTypeJS))
+   if ((pDoc->type() == kSourceDocumentTypeJS))
    {
       static const boost::regex rePreviewComment("^//\\s*!preview\\s+\\w+( |\\().*$");
       std::string contents = pDoc->contents();
@@ -56,7 +56,7 @@ std::string onDetectSourceType(
       }
    }
 
-   if ((pDoc->type() == source_database::SourceDocument::SourceDocumentTypeSQL))
+   if ((pDoc->type() == kSourceDocumentTypeSQL))
    {
       static const boost::regex rePreviewComment("^--\\s*!preview\\s+\\w+.*$");
       std::string contents = pDoc->contents();
