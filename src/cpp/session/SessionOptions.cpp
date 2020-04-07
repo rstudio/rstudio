@@ -26,6 +26,7 @@
 #include <core/system/Crypto.hpp>
 #include <core/system/System.hpp>
 #include <core/system/Environment.hpp>
+#include <core/system/Xdg.hpp>
 
 #include <shared_core/Error.hpp>
 #include <core/Log.hpp>
@@ -546,15 +547,27 @@ core::ProgramStatus Options::read(int argc, char * const argv[], std::ostream& o
       }
    }
 
-   // compute user paths
-   r_util::SessionType sessionType =
-      (programMode_ == kSessionProgramModeDesktop) ?
-                                    r_util::SessionTypeDesktop :
-                                    r_util::SessionTypeServer;
+   // resolve home directory from env vars
+   userHomePath_ = core::system::userHomePath("R_USER|HOME").getAbsolutePath();
 
-   r_util::UserDirectories userDirs = r_util::userDirectories(sessionType);
-   userHomePath_ = userDirs.homePath;
-   userScratchPath_ = userDirs.scratchPath;
+   // use XDG data directory (usually ~/.local/share/rstudio, or LOCALAPPDATA
+   // on Windows) as the scratch path
+   userScratchPath_ = core::system::xdg::userDataDir().getAbsolutePath();
+
+   // if the old scratch path exists but the new one doesn't, attempt to move
+   FilePath newScratchPath(userScratchPath_);
+   FilePath oldScratchPath(core::system::userSettingsPath(
+      FilePath(userHomePath_),
+      programMode_ == kSessionProgramModeDesktop ?
+         "RStudio-Desktop" : "RStudio"));
+   if (oldScratchPath.exists() && !newScratchPath.exists())
+   {
+      Error moveError = oldScratchPath.move(newScratchPath);
+      if (moveError)
+      {
+          LOG_ERROR(error);
+      }
+   }
 
    // set HOME if we are in standalone mode (this enables us to reflect
    // R_USER back into HOME on Linux)

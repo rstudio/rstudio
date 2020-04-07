@@ -1,7 +1,7 @@
 /*
  * RUserData.hpp
  *
- * Copyright (C) 2009-12 by RStudio, PBC
+ * Copyright (C) 2009-20 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -16,36 +16,8 @@
 #ifndef CORE_R_UTIL_R_USER_DATA_HPP
 #define CORE_R_UTIL_R_USER_DATA_HPP
 
-#include <string>
-
 #define kRStudioInitialWorkingDir      "RS_INITIAL_WD"
 #define kRStudioInitialEnvironment     "RS_INITIAL_ENV"
 #define kRStudioInitialProject         "RS_INITIAL_PROJECT"
 
-namespace rstudio {
-namespace core {
-namespace r_util {
-
-enum SessionType
-{
-   SessionTypeDesktop,
-   SessionTypeServer
-};
-
-struct UserDirectories
-{
-   std::string homePath;
-   std::string scratchPath;
-};
-
-UserDirectories userDirectories(SessionType sessionType,
-                                const std::string& homePath = std::string());
-
-
-} // namespace r_util
-} // namespace core 
-} // namespace rstudio
-
-
-#endif // CORE_R_UTIL_R_USER_DATA_HPP
-
+#endif
