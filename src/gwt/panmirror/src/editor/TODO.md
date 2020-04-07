@@ -6,8 +6,6 @@ pandoc schema: <https://github.com/jgm/pandoc-types/blob/master/Text/Pandoc/Defi
 
 ## TODO
   
-Introduce pm native class for .editor_dark
-
 Consider moving widgets to React now that they are outside the PM dom.
 
 Better direct manipulation for tables
