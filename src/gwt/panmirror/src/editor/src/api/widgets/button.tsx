@@ -1,6 +1,6 @@
 
 /*
- * Button.tsx
+ * button.tsx
  *
  * Copyright (C) 2019-20 by RStudio, PBC
  *
@@ -19,8 +19,6 @@
 import React from 'react';
 
 import { WidgetProps } from './react';
-
-import './button.css';
 
 export interface LinkButtonProps extends WidgetProps {
   text: string;

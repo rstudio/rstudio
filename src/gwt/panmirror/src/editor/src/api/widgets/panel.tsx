@@ -19,8 +19,6 @@ import React from 'react';
 
 import { WidgetProps } from './react';
 
-import './panel.css';
-
 export const Panel: React.FC<WidgetProps> = props => {
 
   const className = ['pm-horizontal-panel'].concat(props.classes || []).join(' ');

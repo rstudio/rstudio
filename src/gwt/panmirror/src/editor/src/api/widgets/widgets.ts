@@ -16,6 +16,7 @@ import { EditorView } from 'prosemirror-view';
 
 import './widgets.css';
 
+
 export function createHorizontalPanel() {
   const div = window.document.createElement('div');
   div.classList.add('pm-horizontal-panel');

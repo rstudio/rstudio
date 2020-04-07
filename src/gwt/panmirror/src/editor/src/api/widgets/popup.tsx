@@ -1,6 +1,6 @@
 
 /*
- * Popup.tsx
+ * popup.tsx
  *
  * Copyright (C) 2019-20 by RStudio, PBC
  *
@@ -22,8 +22,6 @@ import { kPixelUnit } from '../css';
 import { editingRootNodeClosestToPos } from '../node';
 
 import { WidgetProps } from './react';
-
-import './popup.css';
 
 export type PopupProps = WidgetProps;
 

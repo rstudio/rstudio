@@ -13,7 +13,28 @@
  *
  */
 
+.pm-popup {
+  font-weight: normal;
+}
+
+.pm-horizontal-panel {
+  display: table;
+}
+
+.pm-horizontal-panel-cell {
+  display: table-cell;
+  vertical-align: middle;
+}
+
+.pm-image-button {
+  background-color: transparent;
+  background-repeat: no-repeat; 
+  border: none;
+}
+
 
 .editor_dark .pm-input-text {
   border-width: 1px;
 }
+
+
