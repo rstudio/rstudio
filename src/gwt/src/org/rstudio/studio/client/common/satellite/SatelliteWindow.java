@@ -25,7 +25,6 @@ import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.AriaLiveStatusEvent;
 import org.rstudio.studio.client.application.events.AriaLiveStatusEvent.Timing;
 import org.rstudio.studio.client.application.events.ChangeFontSizeEvent;
-import org.rstudio.studio.client.application.events.ChangeFontSizeHandler;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.events.ThemeChangedEvent;
 import org.rstudio.studio.client.application.ui.RStudioThemes;
@@ -121,12 +120,9 @@ public abstract class SatelliteWindow extends Composite
    {
       // react to font size changes
       EventBus eventBus = pEventBus_.get();
-      eventBus.addHandler(ChangeFontSizeEvent.TYPE, new ChangeFontSizeHandler()
+      eventBus.addHandler(ChangeFontSizeEvent.TYPE, changeFontSizeEvent ->
       {
-         public void onChangeFontSize(ChangeFontSizeEvent event)
-         {
-            FontSizer.setNormalFontSize(Document.get(), event.getFontSize());
-         }
+            FontSizer.setNormalFontSize(Document.get(), changeFontSizeEvent.getFontSize());
       });
       FontSizeManager fontSizeManager = pFontSizeManager_.get();
       FontSizer.setNormalFontSize(Document.get(), fontSizeManager.getSize());

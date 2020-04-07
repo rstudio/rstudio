@@ -61,7 +61,6 @@ import org.rstudio.core.client.widget.*;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.ChangeFontSizeEvent;
-import org.rstudio.studio.client.application.events.ChangeFontSizeHandler;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.events.ResetEditorCommandsEvent;
 import org.rstudio.studio.client.application.events.SetEditorCommandBindingsEvent;
@@ -7056,15 +7055,10 @@ public class TextEditingTarget implements
                               final TextDisplay view,
                               FontSizeManager fontSizeManager)
    {
-      releaseOnDismiss.add(events.addHandler(
-            ChangeFontSizeEvent.TYPE,
-            new ChangeFontSizeHandler()
-            {
-               public void onChangeFontSize(ChangeFontSizeEvent event)
-               {
-                  view.setFontSize(event.getFontSize());
-               }
-            }));
+      releaseOnDismiss.add(events.addHandler(ChangeFontSizeEvent.TYPE, changeFontSizeEvent ->
+      {
+         view.setFontSize(changeFontSizeEvent.getFontSize());
+      }));
       view.setFontSize(fontSizeManager.getSize());
 
    }

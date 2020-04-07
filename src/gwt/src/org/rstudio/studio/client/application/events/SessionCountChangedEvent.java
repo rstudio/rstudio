@@ -1,7 +1,7 @@
 /*
  * SessionCountChangedEvent.java
  *
- * Copyright (C) 2009-12 by RStudio, PBC
+ * Copyright (C) 2009-20 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -26,30 +26,29 @@ public class SessionCountChangedEvent extends GwtEvent<SessionCountChangedEvent.
 
       public native final int getCount() /*-{ return this.count; }-*/;
     }
-   
+
    public interface Handler extends EventHandler
    {
       void onSessionCountChanged(SessionCountChangedEvent event);
    }
-   
-   public static final GwtEvent.Type<Handler> TYPE =
-      new GwtEvent.Type<Handler>();
-   
+
+   public static final Type<Handler> TYPE = new Type<>();
+
    public SessionCountChangedEvent(Data data)
    {
       count_ = data.getCount();
    }
-   
+
    public SessionCountChangedEvent(int count)
    {
       count_ = count;
    }
-   
+
    public int getCount()
    {
       return count_;
    }
-   
+
    @Override
    protected void dispatch(Handler handler)
    {
@@ -61,6 +60,6 @@ public class SessionCountChangedEvent extends GwtEvent<SessionCountChangedEvent.
    {
       return TYPE;
    }
-   
+
    private final int count_;
 }

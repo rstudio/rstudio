@@ -1,7 +1,7 @@
 /*
  * QuitInitiatedEvent.java
  *
- * Copyright (C) 2009-12 by RStudio, PBC
+ * Copyright (C) 2009-20 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,29 +14,31 @@
  */
 package org.rstudio.studio.client.application.events;
 
+import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 
-public class QuitInitiatedEvent extends GwtEvent<QuitInitiatedHandler>
+public class QuitInitiatedEvent extends GwtEvent<QuitInitiatedEvent.Handler>
 {
-   public static final GwtEvent.Type<QuitInitiatedHandler> TYPE =
-      new GwtEvent.Type<QuitInitiatedHandler>();
-   
+   public static final Type<Handler> TYPE = new Type<>();
+
    public QuitInitiatedEvent()
    {
    }
- 
+
    @Override
-   protected void dispatch(QuitInitiatedHandler handler)
+   protected void dispatch(Handler handler)
    {
       handler.onQuitInitiated(this);
    }
 
    @Override
-   public GwtEvent.Type<QuitInitiatedHandler> getAssociatedType()
+   public GwtEvent.Type<Handler> getAssociatedType()
    {
       return TYPE;
    }
 
-
-   
+   public interface Handler extends EventHandler
+   {
+      void onQuitInitiated(QuitInitiatedEvent event);
+   }
 }

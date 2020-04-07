@@ -1,7 +1,7 @@
 /*
  * LogoutRequestedEvent.java
  *
- * Copyright (C) 2009-12 by RStudio, PBC
+ * Copyright (C) 2009-20 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,22 +14,27 @@
  */
 package org.rstudio.studio.client.application.events;
 
+import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 
-public class LogoutRequestedEvent extends GwtEvent<LogoutRequestedHandler>
+public class LogoutRequestedEvent extends GwtEvent<LogoutRequestedEvent.Handler>
 {
-   public static final GwtEvent.Type<LogoutRequestedHandler> TYPE =
-      new GwtEvent.Type<LogoutRequestedHandler>();
+   public static final Type<Handler> TYPE = new Type<>();
    
    @Override
-   protected void dispatch(LogoutRequestedHandler handler)
+   protected void dispatch(Handler handler)
    {
       handler.onLogoutRequested(this);
    }
 
    @Override
-   public GwtEvent.Type<LogoutRequestedHandler> getAssociatedType()
+   public GwtEvent.Type<Handler> getAssociatedType()
    {
       return TYPE;
+   }
+
+   public interface Handler extends EventHandler
+   {
+      void onLogoutRequested(LogoutRequestedEvent event);
    }
 }

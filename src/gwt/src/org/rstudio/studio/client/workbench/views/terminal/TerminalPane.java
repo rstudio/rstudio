@@ -29,7 +29,6 @@ import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.events.RestartStatusEvent;
 import org.rstudio.studio.client.application.events.SessionSerializationEvent;
-import org.rstudio.studio.client.application.events.SessionSerializationHandler;
 import org.rstudio.studio.client.application.model.SessionSerializationAction;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.Timers;
@@ -80,7 +79,7 @@ public class TerminalPane extends WorkbenchPane
                                      ServerProcessExitEvent.Handler,
                                      SwitchToTerminalEvent.Handler,
                                      TerminalTitleEvent.Handler,
-                                     SessionSerializationHandler,
+   SessionSerializationEvent.Handler,
                                      TerminalSubprocEvent.Handler
 {
    @Inject
