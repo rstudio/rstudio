@@ -6,8 +6,6 @@ pandoc schema: <https://github.com/jgm/pandoc-types/blob/master/Text/Pandoc/Defi
 
 ## TODO
   
-Consider moving widgets to React now that they are outside the PM dom.
-
 Better direct manipulation for tables
 
 Surface attributes handling for div with only an id (shading treatment a bit much?)
@@ -15,9 +13,9 @@ Surface attributes handling for div with only an id (shading treatment a bit muc
 MathJax preview. When containing the selection, the math will show both the code and the preview. When not containing the selection will show the preview. (so probably require a node view for this). Consider a “done” gesture for display math. May need to bring back
 escaping of $ in math as this mode will clearly not be "source mode" style latex equation editing
 
-Slack style handling of marks?
-
 ## Future
+
+Slack style handling of marks?
 
 Reveal codes / typora behavior
 
