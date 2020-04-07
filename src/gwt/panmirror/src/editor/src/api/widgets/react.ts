@@ -33,7 +33,7 @@ export interface WidgetProps {
 // ReactDOM.unmountComponentAtNode
 export function reactRenderForEditorView(element: React.ReactElement, container: HTMLElement, view: EditorView) {
 
-  // render the react element into the decorator div
+  // render the react element into the container
   const ref = ReactDOM.render(element, container);
 
   // track view dom mutations to determine when ProseMirror has destroyed the element
