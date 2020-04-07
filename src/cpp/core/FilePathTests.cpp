@@ -13,9 +13,6 @@
  *
  */
 
-// All of these tests presume Unix-style paths
-#ifndef _WIN32
-
 #define RSTUDIO_NO_TESTTHAT_ALIASES
 #include <tests/TestThat.hpp>
 
@@ -26,14 +23,52 @@ namespace rstudio {
 namespace core {
 namespace tests {
 
+namespace {
+
+#ifdef _WIN32
+
+// helper for creating a path with the system drive
+// prefixed for Windows. we try to use the current
+// drive if at all possible; if we cannot retrieve
+// that for some reason then we just fall back to
+// the default system drive (normally C:)
+std::string getDrivePrefix()
+{
+   char buffer[MAX_PATH];
+   DWORD n = GetCurrentDirectory(MAX_PATH, buffer);
+   if (n < 2)
+      return ::getenv("SYSTEMDRIVE");
+
+   if (buffer[1] != ':')
+      return ::getenv("SYSTEMDRIVE");
+
+   return std::string(buffer, 2);
+}
+
+FilePath createPath(const std::string& path = "/")
+{
+   static const std::string prefix = getDrivePrefix();
+   return FilePath(prefix + path);
+}
+
+#else
+
+FilePath createPath(const std::string& path)
+{
+   return FilePath(path);
+}
+
+#endif /* _WIN32 */
+
+} // end anonymous namespace
 TEST_CASE("file paths")
 {
    SECTION("relative path construction")
    {
-      FilePath rootPath("/");
-      FilePath pPath("/path/to");
-      FilePath aPath("/path/to/a");
-      FilePath bPath("/path/to/b");
+      FilePath rootPath = createPath();
+      FilePath pPath = createPath("/path/to");
+      FilePath aPath = createPath("/path/to/a");
+      FilePath bPath = createPath("/path/to/b");
 
       CHECK(aPath.isWithin(pPath));
       CHECK(bPath.isWithin(pPath));
@@ -46,56 +81,69 @@ TEST_CASE("file paths")
    {
       // isWithin should not be fooled by directory traversal; the first path is not inside the
       // second even though it appears to be lexically
-      FilePath aPath("/path/to/a/../b");
-      FilePath bPath("/path/to/a");
+      FilePath aPath = createPath("/path/to/a/../b");
+      FilePath bPath = createPath("/path/to/a");
       CHECK(!aPath.isWithin(bPath));
 
       // isWithin should not be fooled by substrings
-      FilePath cPath("/path/to/foo");
-      FilePath dPath("/path/to/foobar");
+      FilePath cPath = createPath("/path/to/foo");
+      FilePath dPath = createPath("/path/to/foobar");
       CHECK(!dPath.isWithin(cPath));
    }
 
    SECTION("child path completion")
    {
       // simple path completion should do what's expected
-      FilePath aPath("/path/to/a");
-      FilePath bPath("/path/to/a/b");
+      FilePath aPath = createPath("/path/to/a");
+      FilePath bPath = createPath("/path/to/a/b");
       CHECK(aPath.completeChildPath("b") == bPath);
 
       // trying to complete to a path outside should fail and return the original path
-      FilePath cPath("/path/to/foo");
+      FilePath cPath = createPath("/path/to/foo");
       CHECK(cPath.completeChildPath("../bar") == cPath);
       CHECK(cPath.completeChildPath("/path/to/quux") == cPath);
 
       // trailing slashes are okay
-      FilePath dPath("/path/to/");
-      FilePath ePath("/path/to/e");
+      FilePath dPath = createPath("/path/to/");
+      FilePath ePath = createPath("/path/to/e");
       CHECK(dPath.completeChildPath("e") == ePath);
    }
 
    SECTION("general path completion")
    {
       // simple path completion should do what's expected
-      FilePath aPath("/path/to/a");
-      FilePath bPath("/path/to/a/b");
+      FilePath aPath = createPath("/path/to/a");
+      FilePath bPath = createPath("/path/to/a/b");
       CHECK(aPath.completePath("b") == bPath);
 
       // absolute paths are allowed
-      FilePath cPath("/path/to/c");
-      FilePath dPath("/path/to/d");
+      FilePath cPath = createPath("/path/to/c");
+      FilePath dPath = createPath("/path/to/d");
       CHECK(cPath.completePath("/path/to/d") == dPath);
 
       // directory traversal is allowed
-      FilePath ePath("/path/to/e");
-      FilePath fPath("/path/to/f");
+      FilePath ePath = createPath("/path/to/e");
+      FilePath fPath = createPath("/path/to/f");
       CHECK(ePath.completePath("../f").getLexicallyNormalPath() == fPath.getAbsolutePath());
    }
+
+#ifdef _WIN32
+
+   SECTION("relative paths for UNC shares")
+   {
+      // NOTE: need to be robust against mixed separators as these can
+      // leak in depending on the API used to request the file path.
+      //
+      // https://github.com/rstudio/rstudio/issues/6587
+      FilePath pPath(R"(//LOCALHOST/c$/p)");
+      FilePath aPath(R"(\\LOCALHOST\c$\p\a)");
+      CHECK(aPath.getRelativePath(pPath) == "a");
+   }
+
+#endif /* _WIN32 */
+
 }
 
 } // end namespace tests
 } // end namespace core
 } // end namespace rstudio
-
-#endif  // _WIN32
-
