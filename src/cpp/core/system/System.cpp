@@ -235,11 +235,11 @@ void initializeLogWriters()
 log::LoggerType loggerType(const std::string& in_sectionName)
 {
    RECURSIVE_LOCK_MUTEX(s_loggingMutex)
-      {
-         if (!s_logOptions)
+   {
+      if (s_logOptions)
 
-            return s_logOptions->loggerType(in_sectionName);
-      }
+         return s_logOptions->loggerType(in_sectionName);
+   }
    END_LOCK_MUTEX
 
    // default return - only occurs if we fail to lock mutex
