@@ -33,8 +33,9 @@
 }
 
 
-.editor_dark .pm-input-text {
+.pm-dark-mode .pm-input-text {
   border-width: 1px;
+  border-style: solid;
 }
 
 

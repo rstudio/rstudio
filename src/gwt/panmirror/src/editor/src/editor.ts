@@ -269,7 +269,7 @@ export class Editor {
     this.parent.classList.add('pm-proportional-font');
 
     // apply default theme
-    applyTheme(defaultTheme());
+    this.applyTheme(defaultTheme());
 
     // create pandoc translator
     this.pandocConverter = new PandocConverter(this.schema, this.extensions, context.pandoc);
@@ -445,6 +445,9 @@ export class Editor {
   }
 
   public applyTheme(theme: EditorTheme) {
+    // set global dark mode class
+    this.parent.classList.toggle('pm-dark-mode', !!theme.darkMode);
+    // apply the rest of the theme
     applyTheme(theme);
   }
 

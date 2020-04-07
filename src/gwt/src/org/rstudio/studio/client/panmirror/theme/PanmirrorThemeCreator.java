@@ -32,6 +32,9 @@ public class PanmirrorThemeCreator
       // create theme from current app theme
       PanmirrorTheme theme = new PanmirrorTheme(); 
       
+      // set dark mode
+      theme.darkMode = aceTheme.isDark();
+      
       theme.cursorColor = DomUtils.extractCssValue("ace_cursor", "color");
       
       // selection color
