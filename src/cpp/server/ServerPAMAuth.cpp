@@ -14,7 +14,6 @@
  */
 #include "ServerPAMAuth.hpp"
 
-#include <core/PeriodicCommand.hpp>
 #include <core/Thread.hpp>
 #include <core/system/Process.hpp>
 #include <core/FileSerializer.hpp>

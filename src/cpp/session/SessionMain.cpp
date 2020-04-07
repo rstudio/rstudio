@@ -1,7 +1,7 @@
 /*
  * SessionMain.cpp
  *
- * Copyright (C) 2009-19 by RStudio, PBC
+ * Copyright (C) 2009-20 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -195,6 +195,7 @@
 #include "modules/SessionCrashHandler.hpp"
 #include "modules/SessionRVersions.hpp"
 #include "modules/SessionTerminal.hpp"
+#include "modules/SessionFonts.hpp"
 
 #include <session/SessionProjectTemplate.hpp>
 
@@ -580,6 +581,7 @@ Error rInit(const rstudio::r::session::RInitInfo& rInitInfo)
       (modules::config_file::initialize)
       (modules::tutorial::initialize)
       (modules::graphics::initialize)
+      (modules::fonts::initialize)
 
       // workers
       (workers::web_request::initialize)

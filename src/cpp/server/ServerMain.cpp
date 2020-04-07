@@ -1,7 +1,7 @@
 /*
  * ServerMain.cpp
  *
- * Copyright (C) 2009-19 by RStudio, PBC
+ * Copyright (C) 2009-20 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -231,6 +231,7 @@ void httpServerAddHandlers()
    uri_handlers::add("/mathjax", secureAsyncHttpHandler(proxyContentRequest));
    uri_handlers::add("/connections", secureAsyncHttpHandler(proxyContentRequest));
    uri_handlers::add("/theme", secureAsyncHttpHandler(proxyContentRequest));
+   uri_handlers::add("/fonts", secureAsyncHttpHandler(proxyContentRequest));
    uri_handlers::add("/python", secureAsyncHttpHandler(proxyContentRequest));
    uri_handlers::add("/tutorial", secureAsyncHttpHandler(proxyContentRequest));
 

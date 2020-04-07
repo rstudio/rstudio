@@ -155,6 +155,8 @@ namespace prefs {
 #define kFontSizePoints "font_size_points"
 #define kHelpFontSizePoints "help_font_size_points"
 #define kEditorTheme "editor_theme"
+#define kServerEditorFontEnabled "server_editor_font_enabled"
+#define kServerEditorFont "server_editor_font"
 #define kDefaultEncoding "default_encoding"
 #define kToolbarVisible "toolbar_visible"
 #define kDefaultProjectLocation "default_project_location"
@@ -288,6 +290,7 @@ namespace prefs {
 #define kViewDirAfterRCmdCheck "view_dir_after_r_cmd_check"
 #define kHideObjectFiles "hide_object_files"
 #define kRestoreLastProject "restore_last_project"
+#define kProjectSafeStartupSeconds "project_safe_startup_seconds"
 #define kUseTinytex "use_tinytex"
 #define kCleanTexi2dviOutput "clean_texi2dvi_output"
 #define kLatexShellEscape "latex_shell_escape"
@@ -334,6 +337,7 @@ namespace prefs {
 #define kGraphicsAntialiasingNone "none"
 #define kGraphicsAntialiasingGray "gray"
 #define kGraphicsAntialiasingSubpixel "subpixel"
+#define kBrowserFixedWidthFonts "browser_fixed_width_fonts"
 
 class UserPrefValues: public Preferences
 {
@@ -806,6 +810,18 @@ public:
     */
    std::string editorTheme();
    core::Error setEditorTheme(std::string val);
+
+   /**
+    * Whether to use a custom editor font in RStudio Server.
+    */
+   bool serverEditorFontEnabled();
+   core::Error setServerEditorFontEnabled(bool val);
+
+   /**
+    * The name of the fixed-width editor font to use with RStudio Server.
+    */
+   std::string serverEditorFont();
+   core::Error setServerEditorFont(std::string val);
 
    /**
     * The default character encoding to use when saving files.
@@ -1300,6 +1316,12 @@ public:
    core::Error setRestoreLastProject(bool val);
 
    /**
+    * The number of seconds after which a project is deemed to have successfully started.
+    */
+   int projectSafeStartupSeconds();
+   core::Error setProjectSafeStartupSeconds(int val);
+
+   /**
     * Use tinytex to compile .tex files.
     */
    bool useTinytex();
@@ -1460,6 +1482,12 @@ public:
     */
    std::string graphicsAntialiasing();
    core::Error setGraphicsAntialiasing(std::string val);
+
+   /**
+    * List of fixed-width fonts to check for browser support.
+    */
+   core::json::Array browserFixedWidthFonts();
+   core::Error setBrowserFixedWidthFonts(core::json::Array val);
 
 };
 
