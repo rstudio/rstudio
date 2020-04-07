@@ -53,7 +53,7 @@ FilePath createPath(const std::string& path = "/")
 
 #else
 
-FilePath createPath(const std::string& path)
+FilePath createPath(const std::string& path = "/")
 {
    return FilePath(path);
 }
