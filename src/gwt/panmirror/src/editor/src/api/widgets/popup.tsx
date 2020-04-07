@@ -36,7 +36,7 @@ export const Popup: React.FC<PopupProps> = props => {
   };
 
   return (
-    <span className={className} style={style} contentEditable="false" suppressContentEditableWarning={true}>
+    <span className={className} style={style} contentEditable={false} suppressContentEditableWarning={true}>
       {props.children}
     </span>
   );
