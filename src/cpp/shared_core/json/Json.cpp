@@ -132,7 +132,7 @@ const char* JsonPointerParseErrorCategory::name() const BOOST_NOEXCEPT
    return "json-pointer-parse";
 }
 
-std::string JsonPointerParseErrorCategory::message(int ev) const
+std::string JsonPointerParseErrorCategory::message(int /*ev*/) const
 {
    // rapidjson provides no friendly mapping of pointer parse errors
    return "Pointer parse failure - see error code";
