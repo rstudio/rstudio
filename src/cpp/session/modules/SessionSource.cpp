@@ -93,7 +93,9 @@ std::string inferDocumentType(const FilePath& documentPath,
    boost::sregex_token_iterator end;
    for (; it != end; ++it)
    {
-      std::cerr << *it << std::endl;
+      // skip things that look like flags
+      if (boost::algorithm::starts_with(*it, "-"))
+         continue;
       
       // check for common shells
       for (auto&& shell : {"sh", "bash", "fish", "zsh"})
