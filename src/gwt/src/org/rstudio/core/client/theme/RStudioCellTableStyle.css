@@ -1,5 +1,3 @@
-@eval fixedWidthFont org.rstudio.core.client.theme.ThemeFonts.getFixedWidthFont();
-
 @def selectionBorderWidth 1px;
 
 @external editor_dark;

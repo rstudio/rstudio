@@ -9,11 +9,6 @@ useradd -r -U rstudio-server
 # create softlink to admin script in /usr/sbin
 ln -f -s ${CMAKE_INSTALL_PREFIX}/bin/rstudio-server /usr/sbin/rstudio-server
 
-# create SOCI library softlinks
-ln -f -s ${CMAKE_INSTALL_PREFIX}/bin/libsoci_core.so.4.0.0 ${CMAKE_INSTALL_PREFIX}/bin/libsoci_core.so.4.0
-ln -f -s ${CMAKE_INSTALL_PREFIX}/bin/libsoci_sqlite3.so.4.0.0 ${CMAKE_INSTALL_PREFIX}/bin/libsoci_sqlite3.so.4.0
-ln -f -s ${CMAKE_INSTALL_PREFIX}/bin/libsoci_postgresql.so.4.0.0 ${CMAKE_INSTALL_PREFIX}/bin/libsoci_postgresql.so.4.0
-
 # create config directory and default config files
 mkdir -p /etc/rstudio
 if ! test -f /etc/rstudio/rserver.conf
@@ -31,11 +26,17 @@ then
   chmod 600 /etc/rstudio/database.conf
 fi
 
-# create directory for global custom themes
+# create directories for global custom themes and fonts
 mkdir -p /etc/rstudio/themes
 if ! test -f /etc/rstudio/themes/README.md
 then
  cp ${CMAKE_INSTALL_PREFIX}/extras/themes/README.md /etc/rstudio/themes/README.md
+fi
+
+mkdir -p /etc/rstudio/fonts
+if ! test -f /etc/rstudio/fonts/README.md
+then
+ cp ${CMAKE_INSTALL_PREFIX}/extras/fonts/README.md /etc/rstudio/fonts/README.md
 fi
 
 # create var directories

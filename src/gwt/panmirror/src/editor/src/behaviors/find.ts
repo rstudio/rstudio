@@ -17,6 +17,8 @@ import { Extension } from '../api/extension';
 import { Plugin, PluginKey, EditorState, Transaction, TextSelection } from 'prosemirror-state';
 import { DecorationSet, Decoration, EditorView } from 'prosemirror-view';
 
+import zenscroll from 'zenscroll';
+
 import { mergedTextNodes } from '../api/text';
 import { editingRootNode } from '../api/node';
 import { kAddToHistoryTransaction } from '../api/transaction';
@@ -248,8 +250,11 @@ class FindPlugin extends Plugin<DecorationSet> {
     // decorations to return
     const decorations: Decoration[] = [];
 
-    // perform search and populate results
-    const textNodes = mergedTextNodes(tr.doc);
+    // perform search and populate results (don't search code blocks because
+    // we currently can't highlight results inside codemirror blocks)
+    const textNodes = mergedTextNodes(tr.doc, (node, parent) => {
+      return !node.type.spec.code && !parent.type.spec.code;
+    });
 
     textNodes.forEach(textNode => {
       const search = this.findRegEx();
@@ -306,7 +311,8 @@ class FindPlugin extends Plugin<DecorationSet> {
       if (container && node) {
         const rect = node.getBoundingClientRect();
         if (rect.top < 0 || rect.bottom > container.clientHeight) {
-          node.scrollIntoView({ behavior: 'auto' });
+          const scroller = zenscroll.createScroller(container);
+          scroller.center(node, 350, 50);
         }
       }
     }

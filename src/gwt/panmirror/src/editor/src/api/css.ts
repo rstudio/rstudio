@@ -17,9 +17,10 @@ import { kWidthAttrib, kHeightAttrib, kStyleAttrib } from './pandoc_attr';
 
 export const kPercentUnit = '%';
 export const kPixelUnit = 'px';
-
 export function removeStyleAttrib(style: string, attrib: string, handler?: (attrib: string, value: string) => void) {
-  return style.replace(new RegExp('(' + attrib + ')\\:\\s*(\\w+)', 'g'), (_match, p1, p2) => {
+  const pattern = '(' + attrib + ')\\:\\s*([^;]+);?';
+  const regex = new RegExp(pattern, 'g');
+  return style.replace(regex, (_match, p1, p2) => {
     if (handler) {
       handler(p1, p2);
     }

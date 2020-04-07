@@ -29,6 +29,9 @@ import { mathHighlightPlugin } from './math-highlight';
 
 import './math-styles.css';
 
+const kInlineMathPattern = '\\$[^ ].*?[^\\ ]\\$';
+const kInlineMathRegex = new RegExp(kInlineMathPattern);
+
 export enum MathType {
   Inline = 'InlineMath',
   Display = 'DisplayMath',
@@ -94,9 +97,6 @@ const extension: Extension = {
             const delimiter = delimiterForType(mark.attrs.type);
             math = math.substr(delimiter.length, math.length - 2 * delimiter.length);
 
-            // escape dollar signs that occur within math
-            math = math.replace(/([^\\])\$/, '$1\\$');
-
             // if it's just whitespace then it's not actually math (we allow this state
             // in the editor because it's the natural starting place for new equations)
             if (math.trim().length === 0) {
@@ -123,12 +123,34 @@ const extension: Extension = {
   inputRules: (schema: Schema) => {
     return [
       // inline math
-      new InputRule(/^\$[^ ].*?[^ \\]\$$/, (state: EditorState, match: string[], start: number, end: number) => {
-        const tr = state.tr;
-        tr.insertText('$');
-        const mark = schema.marks.math.create({ type: MathType.Inline });
-        tr.addMark(start, end + 1, mark);
-        return tr;
+      new InputRule(new RegExp(kInlineMathPattern + '$'), (state: EditorState, match: string[], start: number, end: number) => {
+        if (!markIsActive(state, schema.marks.math)) {
+          const tr = state.tr;
+          tr.insertText('$');
+          const mark = schema.marks.math.create({ type: MathType.Inline });
+          tr.addMark(start, end + 1, mark);
+          return tr;
+        } else {
+          return null;
+        }
+      }),
+      new InputRule(/\$$/, (state: EditorState, match: string[], start: number, end: number) => {
+        if (!markIsActive(state, schema.marks.math)) {
+          const { parent, parentOffset } = state.selection.$head;
+          const text = '$' + parent.textContent.slice(parentOffset);
+          if (text.length > 0) {
+            const length = mathLength(text);
+            if (length > 1) {
+              const tr = state.tr;
+              tr.insertText('$');
+              const startMath = tr.selection.from - 1;
+              const mark = schema.marks.math.create({ type: MathType.Inline });
+              tr.addMark(startMath, startMath + length, mark);
+              return tr;
+            }
+          }
+        }
+        return null;
       }),
       // display math
       new InputRule(/^\$\$$/, (state: EditorState, match: string[], start: number, end: number) => {
@@ -161,6 +183,15 @@ const extension: Extension = {
     ];
   },
 };
+
+function mathLength(text: string) {
+  const match = text.match(kInlineMathRegex);
+  if (match) {
+    return match[0].length;
+  } else {
+    return 0;
+  }
+}
 
 function handlePasteIntoMath() {
   return (view: EditorView, _event: Event, slice: Slice) => {

@@ -2022,16 +2022,18 @@ public class TextEditingTarget implements
          {
             public void execute()
             {
-               docUpdateSentinel_.changeFileType(
-                     type.getTypeId(),
-                     new SaveProgressIndicator(null, type, null));  
-               
-               Scheduler.get().scheduleDeferred(new ScheduledCommand() {
-                  @Override
-                  public void execute()
-                  {
-                     focus(); 
-                  } 
+               visualMode_.deactivate(() -> {
+                  docUpdateSentinel_.changeFileType(
+                        type.getTypeId(),
+                        new SaveProgressIndicator(null, type, null));  
+                  
+                  Scheduler.get().scheduleDeferred(new ScheduledCommand() {
+                     @Override
+                     public void execute()
+                     {
+                        focus(); 
+                     } 
+                  });
                });
             }
          });
@@ -2115,7 +2117,7 @@ public class TextEditingTarget implements
    private void updateStatusBarLanguage()
    {
       statusBar_.getLanguage().setValue(fileType_.getLabel());
-      boolean canShowScope = fileType_.canShowScopeTree();
+      boolean canShowScope = fileType_.canShowScopeTree() && !isVisualModeActivated();
       statusBar_.setScopeVisible(canShowScope);
    }
 
@@ -6708,7 +6710,7 @@ public class TextEditingTarget implements
    {
       docUpdateSentinel_.revert(() -> {
          if (visualMode_.isActivated())
-            visualMode_.syncFromEditor(null, true);
+            visualMode_.syncFromEditor(null, false);
       }, false);
       
    }
@@ -7526,6 +7528,11 @@ public class TextEditingTarget implements
       // Start new timer if enabled
       if (prefs_.autoSaveOnIdle().getValue() == UserPrefs.AUTO_SAVE_ON_IDLE_COMMIT)
          autoSaveTimer_.schedule(prefs_.autoSaveMs());
+   }
+   
+   private boolean isVisualModeActivated()
+   {
+      return docUpdateSentinel_.getBoolProperty(RMD_VISUAL_MODE, false);
    }
 
    private StatusBar statusBar_;

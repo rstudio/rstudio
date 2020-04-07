@@ -13,7 +13,7 @@
  *
  */
 
-import { Schema, Node as ProsemirrorNode, Mark, Fragment, MarkType } from 'prosemirror-model';
+import { Schema, Mark, Fragment, MarkType } from 'prosemirror-model';
 import { EditorState, Transaction } from 'prosemirror-state';
 import { EditorView } from 'prosemirror-view';
 import { toggleMark } from 'prosemirror-commands';

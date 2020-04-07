@@ -179,7 +179,7 @@ export function imagePandocOutputWriter(figure: boolean, ui: EditorUI) {
     if (writeHTML) {
       writer = () => {
         const imgAttr = imageDOMAttributes(node, true, false);
-        const html = asHTMLTag('img', imgAttr, true);
+        const html = asHTMLTag('img', imgAttr, true, true);
         output.writeRawMarkdown(html);
       };
     }
@@ -251,7 +251,7 @@ export function imageNodeAttrsSpec(linkTo: boolean, imageAttributes: boolean) {
   };
 }
 
-export function imageAttrsFromDOM(el: Element, imageAttributes: boolean) {
+export function imageAttrsFromDOM(el: Element, imageAttributes: boolean, forceAttrs = false) {
   const attrs: { [key: string]: string | null } = {
     src: el.getAttribute('src') || null,
     title: el.getAttribute('title') || null,
@@ -259,7 +259,7 @@ export function imageAttrsFromDOM(el: Element, imageAttributes: boolean) {
   };
   return {
     ...attrs,
-    ...(imageAttributes ? pandocAttrParseDom(el, attrs) : {}),
+    ...(imageAttributes ? pandocAttrParseDom(el, attrs, forceAttrs) : {}),
   };
 }
 
@@ -267,7 +267,7 @@ export function imageAttrsFromHTML(html: string) {
   const parser = new window.DOMParser();
   const doc = parser.parseFromString(html, 'text/html');
   if (doc.body && doc.body.firstChild instanceof HTMLImageElement) {
-    return imageAttrsFromDOM(doc.body.firstChild, true);
+    return imageAttrsFromDOM(doc.body.firstChild, true, true);
   } else {
     return null;
   }

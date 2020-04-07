@@ -13,7 +13,7 @@
  *
  */
 
-import { Mark, Schema, Fragment, Node as ProsemirrorNode } from 'prosemirror-model';
+import { Mark, Schema, Fragment, Node as ProsemirrorNode, DOMOutputSpecArray } from 'prosemirror-model';
 import { InputRule } from 'prosemirror-inputrules';
 import { EditorState, TextSelection } from 'prosemirror-state';
 
@@ -30,13 +30,14 @@ import { EditorOptions } from '../../api/options';
 const CITE_CITATIONS = 0;
 
 const kCiteIdPrefixPattern = '-?@';
-const kCiteIdCharsPattern = '[\\w:.#$%&-+?<>~/]+';
+const kCiteIdCharsPattern = '\\w[\\w:.#$%&-+?<>~/]*';
 const kCiteIdPattern = `^${kCiteIdPrefixPattern}${kCiteIdCharsPattern}$`;
 const kBeginCitePattern = `(.* ${kCiteIdPrefixPattern}|${kCiteIdPrefixPattern})`;
 
 const kCiteIdRegEx = new RegExp(kCiteIdPattern);
 const kCiteIdLengthRegEx = new RegExp(`^${kCiteIdPrefixPattern}${kCiteIdCharsPattern}`);
 const kCiteRegEx = new RegExp(`${kBeginCitePattern}${kCiteIdCharsPattern}.*`);
+const kFullCiteRegEx =  new RegExp(`\\[${kBeginCitePattern}${kCiteIdCharsPattern}.*\\]`);
 
 enum CitationMode {
   NormalCitation = 'NormalCitation',
@@ -74,8 +75,8 @@ const extension = (pandocExtensions: PandocExtensions, _options: EditorOptions, 
               tag: "span[class*='cite-id']",
             },
           ],
-          toDOM(_mark: Mark) {
-            return ['span', { class: 'cite-id pm-link-text-color' }];
+          toDOM(mark: Mark) : DOMOutputSpecArray {
+            return { '0': 'span', '1': { class: 'cite-id pm-link-text-color' } };
           },
         },
         pandoc: {
@@ -116,7 +117,7 @@ const extension = (pandocExtensions: PandocExtensions, _options: EditorOptions, 
             },
           ],
           toDOM(mark: Mark) {
-            return ['span', { class: 'cite' }];
+            return { '0': 'span', '1': { class: 'cite' } };
           },
         },
         pandoc: {
@@ -168,6 +169,14 @@ const extension = (pandocExtensions: PandocExtensions, _options: EditorOptions, 
           filter: (node: ProsemirrorNode) => node.isTextblock && node.type.allowsMarkType(schema.marks.cite_id),
           append: (tr: MarkTransaction, node: ProsemirrorNode, pos: number) => {
             splitInvalidatedMarks(tr, node, pos, citeIdLength, schema.marks.cite_id);
+          },
+        },
+          {
+          // 'break' cite marks if they are no longer valid. 
+          name: 'remove-cite-marks',
+          filter: (node: ProsemirrorNode) => node.isTextblock && node.type.allowsMarkType(schema.marks.cite),
+          append: (tr: MarkTransaction, node: ProsemirrorNode, pos: number) => {
+            splitInvalidatedMarks(tr, node, pos, citeLength, schema.marks.cite);
           },
         },
       ];
@@ -231,7 +240,7 @@ function citeIdInputRule(schema: Schema, citePlaceholder: string) {
       // only operate within a cite mark
       if (markIsActive(state, schema.marks.cite)) {
         // screen out if the previous character isn't the beginning of the cite or a space
-        const prevChar = state.doc.textBetween(start - 1, start);
+        const prevChar = state.doc.textBetween(start - 1, end);
         if (prevChar !== '[' && prevChar !== ' ') {
           return null;
         }
@@ -239,11 +248,9 @@ function citeIdInputRule(schema: Schema, citePlaceholder: string) {
         // create transaction
         const tr = state.tr;
 
-        // remove the input (we will recreate it below w/ appropraite marks, etc.)
-        tr.delete(start, end);
-
-        // inert the cite_id
+        // mark the the cite_id
         const citeIdMark = schema.marks.cite_id.create();
+        tr.addMark(start, end, citeIdMark);
         tr.addStoredMark(citeIdMark);
         tr.insertText(match[0]);
 
@@ -314,6 +321,12 @@ function readPandocCite(schema: Schema) {
     writer.writeText(']');
     writer.closeMark(citeMark);
   };
+}
+
+
+// validate that the cite is still valid (just return 0 or the whole length of the string)
+function citeLength(text: string) {
+  return kFullCiteRegEx.test(text) ? text.length : 0;
 }
 
 // up to how many characters of the passed text constitute a valid cite_id

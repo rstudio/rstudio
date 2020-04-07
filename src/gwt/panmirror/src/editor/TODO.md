@@ -4,24 +4,18 @@ pandoc schema: <https://github.com/jgm/pandoc-types/blob/master/Text/Pandoc/Defi
 
 ## Feedback
 
-
-
 ## TODO
-
-Cache forever on fusebox?
-
-Update screenshots
-
-improve scrolling with: <https://github.com/cferdinandi/smooth-scroll>
+  
+Consider moving widgets to React now that they are outside the PM dom.
 
 Better direct manipulation for tables
 
 Surface attributes handling for div with only an id (shading treatment a bit much?)
 
-Consider moving widgets to React now that they are outside the PM dom.
+MathJax preview. When containing the selection, the math will show both the code and the preview. When not containing the selection will show the preview. (so probably require a node view for this). Consider a “done” gesture for display math. May need to bring back
+escaping of $ in math as this mode will clearly not be "source mode" style latex equation editing
 
-MathJax preview. When containing the selection, the math will show both the code and the preview. When not containing the selection will show the preview. (so probably require a node view for this). Consider a “done” gesture for display math.
-
+Slack style handling of marks?
 
 ## Future
 
@@ -62,8 +56,10 @@ Notes on preformance implications of scanning the entire document + some discuss
 - When dragging and dropping an image to a place in the document above the original position the shelf sometimes
   stays in it's original position (until you scroll)
 
-- Tables with a large number of columns are written as HTML when variable column widths are presented (presumably b/c it can't represent the percentage    
-  granularity w/ markdown) Perhaps don't set widths on all of the columns (only ones explicitly sized?)
+- Tables with a large number of columns are written as HTML when variable column widths are presented 
+  (presumably b/c it can't represent the percentage  granularity w/ markdown) Perhaps don't set widths 
+  on all of the columns (only ones explicitly sized?). Or, detect when this occurs by examining the doc before
+  and markdown after transformation and automatically adjust the value?
 
 - Clear Formatting doesn't play well with table selections (only one of the cells is considered part of the "selected nodes")
 

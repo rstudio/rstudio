@@ -1,7 +1,7 @@
 /*
  * AceEditorPreview.java
  *
- * Copyright (C) 2009-19 by RStudio, PBC
+ * Copyright (C) 2009-20 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -26,6 +26,7 @@ import org.rstudio.core.client.ExternalJavaScriptLoader.Callback;
 import org.rstudio.core.client.theme.ThemeFonts;
 import org.rstudio.core.client.widget.DynamicIFrame;
 import org.rstudio.core.client.widget.FontSizer;
+import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceResources;
 
 public class AceEditorPreview extends DynamicIFrame
@@ -98,7 +99,10 @@ public class AceEditorPreview extends DynamicIFrame
                               ".ace_editor {\n" +
                                     "border: none !important;\n" +
                               "}");
-                        setFont(ThemeFonts.getFixedWidthFont());
+                        if (Desktop.isDesktop())
+                           setFont(ThemeFonts.getFixedWidthFont(), false);
+                        else if (webFont_ != null)
+                           setFont(webFont_, true);
                         body.appendChild(style);
 
                         DivElement div = doc.createDivElement();
@@ -110,7 +114,6 @@ public class AceEditorPreview extends DynamicIFrame
 
                         FontSizer.injectStylesIntoDocument(doc);
                         FontSizer.applyNormalFontSize(div);
-                        
                         
                         body.appendChild(doc.createScriptElement(RES.loader().getText()));
                      }
@@ -143,28 +146,42 @@ public class AceEditorPreview extends DynamicIFrame
          return;
 
       if (zoomLevel_ == null)
-         FontSizer.setNormalFontSize(getDocument(),  fontSize_);
+         FontSizer.setNormalFontSize(getDocument(), fontSize_);
       else
          FontSizer.setNormalFontSize(getDocument(), fontSize_ * zoomLevel_);
    }
 
-   public void setFont(String font)
+   public void setFont(String font, boolean webFont)
    {
       final String STYLE_EL_ID = "__rstudio_font_family";
+      final String LINK_EL_ID = "__rstudio_font_link";
       Document document = getDocument();
 
       Element oldStyle = document.getElementById(STYLE_EL_ID);
+      Element oldLink = document.getElementById(LINK_EL_ID);
+      
+      if (webFont)
+      {
+         LinkElement link = document.createLinkElement();
+         link.setRel("stylesheet");
+         link.setHref("fonts/css/" + font + ".css");
+         link.setId(LINK_EL_ID);
+         document.getHead().appendChild(link);
+         webFont_ = font;
+      }
 
       StyleElement style = document.createStyleElement();
       style.setAttribute("type", "text/css");
       style.setInnerText(".ace_editor, .ace_text-layer {\n" +
-                         "font-family: " + font + " !important;\n" +
+                         "font-family: \"" + font + "\" !important;\n" +
                          "}");
 
       document.getBody().appendChild(style);
 
       if (oldStyle != null)
          oldStyle.removeFromParent();
+      if (oldLink != null)
+         oldLink.removeFromParent();
 
       style.setId(STYLE_EL_ID);
    }
@@ -182,6 +199,7 @@ public class AceEditorPreview extends DynamicIFrame
    private LinkElement currentStyleLink_;
    private boolean isFrameLoaded_;
    private String themeUrl_;
+   private String webFont_;
    private Double fontSize_;
    private Double zoomLevel_;
    private final String code_;

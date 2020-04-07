@@ -36,7 +36,7 @@ const extension: Extension = {
             // check for selection chnage
             if (tr.selectionSet || !oldState.selection.eq(newState.selection)) {
               const term = findParentNode(node => {
-                return node.isTextblock;
+                return node.isTextblock && !node.type.spec.code;
               })(newState.selection);
               if (term) {
                 return DecorationSet.create(newState.doc, [
