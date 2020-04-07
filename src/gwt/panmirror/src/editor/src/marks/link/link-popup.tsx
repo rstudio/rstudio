@@ -30,11 +30,11 @@ import { navigateToId, navigateToHeading } from '../../api/navigation';
 import { selectionIsImageNode } from '../../api/selection';
 
 import { showTooltip } from '../../api/widgets/tooltip';
-import { textRangePopupDecoratorPosition, Popup } from '../../api/widgets/popup';
+
 import { reactRenderForEditorView, WidgetProps } from '../../api/widgets/react';
 import { Panel } from '../../api/widgets/panel';
 import { LinkButton, ImageButton } from '../../api/widgets/button';
-
+import { Popup, textRangePopupDecoratorPosition } from '../../api/widgets/popup';
 
 const key = new PluginKey<DecorationSet>('link-popup');
 
