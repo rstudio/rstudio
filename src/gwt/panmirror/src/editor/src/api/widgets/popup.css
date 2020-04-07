@@ -1,5 +1,6 @@
+
 /*
- * widgets.css
+ * popup.css
  *
  * Copyright (C) 2019-20 by RStudio, PBC
  *
@@ -13,7 +14,9 @@
  *
  */
 
-
-.editor_dark .pm-input-text {
-  border-width: 1px;
+.pm-popup {
+  font-weight: normal;
 }
+
+
+

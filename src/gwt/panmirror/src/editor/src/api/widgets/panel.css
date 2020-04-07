@@ -1,5 +1,5 @@
 /*
- * widgets.css
+ * panel.css
  *
  * Copyright (C) 2019-20 by RStudio, PBC
  *
@@ -13,7 +13,11 @@
  *
  */
 
+.pm-horizontal-panel {
+  display: table;
+}
 
-.editor_dark .pm-input-text {
-  border-width: 1px;
+.pm-horizontal-panel-cell {
+  display: table-cell;
+  vertical-align: middle;
 }

@@ -14,12 +14,16 @@
  *
  */
 
+import { EditorView } from 'prosemirror-view';
+
 import React from 'react';
 
-import { WidgetProps } from './react';
-import { EditorView } from 'prosemirror-view';
-import { editingRootNodeClosestToPos } from '../node';
 import { kPixelUnit } from '../css';
+import { editingRootNodeClosestToPos } from '../node';
+
+import { WidgetProps } from './react';
+
+import './popup.css';
 
 export type PopupProps = WidgetProps;
 

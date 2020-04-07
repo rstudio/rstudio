@@ -20,6 +20,8 @@ import React from 'react';
 
 import { WidgetProps } from './react';
 
+import './button.css';
+
 export interface LinkButtonProps extends WidgetProps {
   text: string;
   onClick: () => void;

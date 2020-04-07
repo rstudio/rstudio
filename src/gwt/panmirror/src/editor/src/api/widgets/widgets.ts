@@ -14,12 +14,7 @@
  */
 import { EditorView } from 'prosemirror-view';
 
-
-import { editingRootNodeClosestToPos } from '../node';
-
 import './widgets.css';
-import { uuidv4 } from '../util';
-import { kPixelUnit } from '../css';
 
 export function createHorizontalPanel() {
   const div = window.document.createElement('div');
@@ -70,94 +65,6 @@ export function createPopup(
   return popup;
 }
 
-// popup that appears immediately below a range of text (e.g. actions popup below links)
-export function createTextRangePopup(
-  view: EditorView,
-  range: { from: number; to: number },
-  classes: string[],
-  maxWidth: number,
-  onDestroyed?: () => void,
-) {
-  // get the (window) DOM coordinates for the start of the range. we use range.from + 1 so
-  // that ranges that are at the beginning of a line don't have their position set
-  // to the previous line
-  const linkCoords = view.coordsAtPos(range.from + 1);
-
-  // get the (window) DOM coordinates for the current editing root node (body or notes)
-  const rangePos = view.state.doc.resolve(range.from);
-  const editingNode = editingRootNodeClosestToPos(rangePos);
-  const editingEl = view.domAtPos(editingNode!.pos + 1).node as HTMLElement;
-  const editingBox = editingEl.getBoundingClientRect();
-
-  // we are going to stick the decoration at the beginning of the containing
-  // top level body block, then position it by calculating the relative location of
-  // the range within text block. we do this so that the decoration isn't located
-  // *within* the range (which confounds double-click selection and spell checking)
-  const containingBlockPos = rangePos.start(2);
-  const containingBlockEl = view.domAtPos(containingBlockPos).node as HTMLElement;
-  const containingBlockStyle = window.getComputedStyle(containingBlockEl);
-  const containingBlockBox = containingBlockEl.getBoundingClientRect();
-
-  // base popup style
-  const popupStyle = {
-    'margin-top': linkCoords.bottom - containingBlockBox.top + 3 + kPixelUnit,
-  };
-
-  // we need to compute whether the popup will be visible (horizontally), do
-  // this by testing whether we have room for the max link width + controls/padding
-  const positionRight = linkCoords.left + maxWidth > editingBox.right;
-  let popup: HTMLElement;
-  if (positionRight) {
-    const rightCoords = view.coordsAtPos(range.to);
-    const rightPos = editingBox.right - rightCoords.right;
-    popup = createPopup(view, classes, onDestroyed, {
-      ...popupStyle,
-      right: rightPos + kPixelUnit,
-    });
-  } else {
-    const marginLeft =
-      'calc(' +
-      (linkCoords.left - containingBlockBox.left) +
-      'px ' +
-      ' - ' +
-      containingBlockStyle.borderLeftWidth +
-      ' - ' +
-      containingBlockStyle.paddingLeft +
-      ' - ' +
-      containingBlockStyle.marginLeft +
-      ' - 1ch' +
-      ')';
-    popup = createPopup(view, classes, onDestroyed, {
-      ...popupStyle,
-      'margin-left': marginLeft,
-    });
-  }
-
-  return {
-    pos: rangePos.start(2),
-    popup,
-  };
-}
-
-export function createLinkButton(
-  text: string,
-  title?: string,
-  maxWidth?: number,
-  classes?: string[],
-  style?: { [key: string]: string },
-) {
-  const link = window.document.createElement('a');
-  link.classList.add('pm-link', 'pm-link-text-color');
-  link.href = '#';
-  link.innerText = text;
-  link.title = title || text;
-  if (maxWidth) {
-    link.style.maxWidth = maxWidth + kPixelUnit;
-  }
-  applyStyles(link, classes, style);
-  return link;
-}
-
 export function createImageButton(classes: string[], title: string, style?: { [key: string]: string }) {
   const button = window.document.createElement('button');
   button.classList.add('pm-image-button');
@@ -180,28 +87,6 @@ export function createSelectInput(options: string[], classes?: string[], style?:
   select.classList.add('pm-input-select');
   applyStyles(select, classes, style);
   return select;
-}
-
-export function createDatalistInput(options: string[], classes?: string[], style?: { [key: string]: string }) {
-  const container = window.document.createElement('span');
-
-  const datalistId = uuidv4();
-  const datalist = window.document.createElement('datalist');
-  datalist.id = datalistId;
-  appendOptions(datalist, options);
-  container.append(datalist);
-
-  const input = window.document.createElement('input');
-  input.type = 'text';
-  input.setAttribute('list', datalistId);
-  input.classList.add('pm-input-datalist');
-  applyStyles(input, classes, style);
-  container.append(input);
-
-  return {
-    container,
-    input,
-  };
 }
 
 function appendOptions(container: HTMLElement, options: string[]) {
