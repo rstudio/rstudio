@@ -41,7 +41,6 @@ export function navigateToPosition(view: EditorView, pos: number) {
   // scroll to selection
   const node = view.nodeDOM(pos);
   if (node instanceof HTMLElement) {
-    
     const editingRoot = editingRootNode(view.state.selection)!;
     const container = view.nodeDOM(editingRoot.pos) as HTMLElement;
     const scroller = zenscroll.createScroller(container, 700, 20);

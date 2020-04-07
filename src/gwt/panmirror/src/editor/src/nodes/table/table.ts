@@ -86,11 +86,7 @@ const extension = (pandocExtensions: PandocExtensions): Extension | null => {
 
     commands: (_schema: Schema, ui: EditorUI) => {
       const commands = [
-        new ProsemirrorCommand(
-          EditorCommandId.TableInsertTable,
-          ['Alt-Mod-t'],
-          insertTable(capabilities, ui),
-        ),
+        new ProsemirrorCommand(EditorCommandId.TableInsertTable, ['Alt-Mod-t'], insertTable(capabilities, ui)),
         new ProsemirrorCommand(EditorCommandId.TableNextCell, ['Tab'], goToNextCell(1)),
         new ProsemirrorCommand(EditorCommandId.TablePreviousCell, ['Shift-Tab'], goToNextCell(-1)),
         new ProsemirrorCommand(EditorCommandId.TableAddColumnAfter, [], addColumns(true)),

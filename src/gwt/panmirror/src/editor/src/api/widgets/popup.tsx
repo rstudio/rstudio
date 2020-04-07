@@ -1,4 +1,3 @@
-
 /*
  * popup.tsx
  *
@@ -26,20 +25,14 @@ import { WidgetProps } from './react';
 export type PopupProps = WidgetProps;
 
 export const Popup: React.FC<PopupProps> = props => {
+  const className = ['pm-popup', 'pm-text-color', 'pm-proportional-font', 'pm-pane-border-color', 'pm-background-color']
+    .concat(props.classes || [])
+    .join(' ');
 
-  const className = [
-    'pm-popup',
-    'pm-text-color',
-    'pm-proportional-font',
-    'pm-pane-border-color',
-    'pm-background-color'
-  ].concat(props.classes || [])
-   .join(' ');
-
-  const style : React.CSSProperties = {
+  const style: React.CSSProperties = {
     ...props.style,
     position: 'absolute',
-    zIndex: 10
+    zIndex: 10,
   };
 
   return (
@@ -47,13 +40,13 @@ export const Popup: React.FC<PopupProps> = props => {
       {props.children}
     </span>
   );
-
 };
 
-
-export function textRangePopupDecoratorPosition(view: EditorView, range: { from: number; to: number }, maxWidth: number) 
-  : { pos: number, style: React.CSSProperties } {
-
+export function textRangePopupDecoratorPosition(
+  view: EditorView,
+  range: { from: number; to: number },
+  maxWidth: number,
+): { pos: number; style: React.CSSProperties } {
   // get the (window) DOM coordinates for the start of the range. we use range.from + 1 so
   // that ranges that are at the beginning of a line don't have their position set
   // to the previous line
@@ -81,7 +74,7 @@ export function textRangePopupDecoratorPosition(view: EditorView, range: { from:
 
   // we need to compute whether the popup will be visible (horizontally), do
   // this by testing whether we have room for the max link width + controls/padding
-  let style : React.CSSProperties;
+  let style: React.CSSProperties;
   const positionRight = linkCoords.left + maxWidth > editingBox.right;
   if (positionRight) {
     const rightCoords = view.coordsAtPos(range.to);
@@ -105,12 +98,12 @@ export function textRangePopupDecoratorPosition(view: EditorView, range: { from:
       ')';
     style = {
       ...popupStyle,
-      marginLeft
+      marginLeft,
     };
   }
 
   return {
     pos: containingBlockPos,
-    style
+    style,
   };
 }
