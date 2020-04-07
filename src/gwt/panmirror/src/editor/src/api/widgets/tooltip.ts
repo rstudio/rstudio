@@ -1,6 +1,6 @@
 
 /*
- * Panel.tsx
+ * tooltip.ts
  *
  * Copyright (C) 2019-20 by RStudio, PBC
  *
@@ -15,21 +15,20 @@
  */
 
 
+import tlite from 'tlite';
 
-import React from 'react';
+import './tooltip.css';
 
-import { WidgetProps } from './react';
+export function showTooltip(
+  el: Element,
+  text: string,
+  grav: 's' | 'n' | 'e' | 'w' | 'sw' | 'se' | 'nw' | 'ne' = 'n',
+  timeout = 2000,
+) {
+  el.setAttribute('title', '');
+  el.setAttribute('data-tlite', text);
+  tlite.show(el, { grav });
+  setTimeout(() => tlite.hide(el), timeout);
+}
 
-export const Panel: React.FC<WidgetProps> = props => {
-
-  const className = ['pm-horizontal-panel'].concat(props.classes || []).join(' ');
-
-  const children = props.children;
-
-  return (
-    <div className={className}>
-      {React.Children.map(children, child => <div className='pm-horizontal-panel-cell'>{child}</div>)}
-    </div>
-  );
-};
 

@@ -20,32 +20,37 @@ import * as ReactDOM from 'react-dom';
 import { EditorView } from 'prosemirror-view';
 
 export interface WidgetProps {
-  className?: string;
+  classes?: string[];
+  style?: React.CSSProperties;
 }
 
-export function reactNodeDecorator(view: EditorView, element: React.ReactElement) {
 
-  // create decorator element that will be returned to prosemirror
-  const decorator = window.document.createElement("div");
+
+// Render a react element into a DOM container that will eventually be added to the EditorView.dom
+// this function is necessary for situations where an element is created and then handed to ProseMirror
+// (unattached to the DOM), and then subsequently destoyed/unmounted by ProseMirror. We use a
+// MutationObserver to watch EditorView.dom for the element's removal then in response call 
+// ReactDOM.unmountComponentAtNode
+export function reactRenderForEditorView(element: React.ReactElement, container: HTMLElement, view: EditorView) {
 
   // render the react element into the decorator div
-  ReactDOM.render(element, decorator);
+  const ref = ReactDOM.render(element, container);
 
   // track view dom mutations to determine when ProseMirror has destroyed the element
   // (our cue to unmount/cleanup the react component)
   const observer = new MutationObserver(mutationsList => {
     mutationsList.forEach(mutation => {
       mutation.removedNodes.forEach(node => {
-        if (node === decorator) {
+        if (node === container) {
           observer.disconnect();
-          ReactDOM.unmountComponentAtNode(decorator);
+          ReactDOM.unmountComponentAtNode(container);
         }
       });
     });
   });
   observer.observe(view.dom, { attributes: false, childList: true, subtree: true });
 
-  // return the decorator div
-  return decorator;
+  // return the ref
+  return ref;
 }
 

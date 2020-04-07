@@ -14,7 +14,6 @@
  */
 import { EditorView } from 'prosemirror-view';
 
-import tlite from 'tlite';
 
 import { editingRootNodeClosestToPos } from '../node';
 
@@ -253,17 +252,6 @@ export function createNumericInput(
   return input;
 }
 
-export function showTooltip(
-  el: Element,
-  text: string,
-  grav: 's' | 'n' | 'e' | 'w' | 'sw' | 'se' | 'nw' | 'ne' = 'n',
-  timeout = 2000,
-) {
-  el.setAttribute('title', '');
-  el.setAttribute('data-tlite', text);
-  tlite.show(el, { grav });
-  setTimeout(() => tlite.hide(el), timeout);
-}
 
 function applyStyles(el: HTMLElement, classes?: string[], style?: { [key: string]: string }) {
   if (classes) {
