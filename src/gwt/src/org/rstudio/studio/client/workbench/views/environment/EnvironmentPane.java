@@ -1,7 +1,7 @@
 /*
  * EnvironmentPane.java
  *
- * Copyright (C) 2009-19 by RStudio, PBC
+ * Copyright (C) 2009-20 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -74,16 +74,15 @@ public class EnvironmentPane extends WorkbenchPane
 {
    @Inject
    public EnvironmentPane(Commands commands,
-                          EventBus eventBus,
+                          EventBus events,
                           GlobalDisplay globalDisplay,
                           EnvironmentServerOperations serverOperations,
                           Session session,
                           UserPrefs prefs)
    {
-      super("Environment");
+      super("Environment", events);
       
       commands_ = commands;
-      eventBus_ = eventBus;
       server_ = serverOperations;
       globalDisplay_ = globalDisplay;
       prefs_ = prefs;
@@ -459,7 +458,7 @@ public class EnvironmentPane extends WorkbenchPane
       String editCode =
               function + "(" + StringUtil.toRSymbolName(objectName) + ")";
       SendToConsoleEvent event = new SendToConsoleEvent(editCode, true);
-      eventBus_.fireEvent(event);
+      events_.fireEvent(event);
    }
 
    private Widget createImportMenu()
@@ -672,7 +671,6 @@ public class EnvironmentPane extends WorkbenchPane
    public static final String GLOBAL_ENVIRONMENT_NAME = "Global Environment";
 
    private final Commands commands_;
-   private final EventBus eventBus_;
    private final GlobalDisplay globalDisplay_;
    private final EnvironmentServerOperations server_;
    private final UserPrefs prefs_;

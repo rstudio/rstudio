@@ -93,21 +93,13 @@ public class HelpPane extends WorkbenchPane
                    EventBus events,
                    UserPrefs prefs)
    {
-      super("Help");
+      super("Help", events);
       
       searchProvider_ = searchProvider;
       globalDisplay_ = globalDisplay;
       commands_ = commands;
-      events_ = events;
 
       prefs_ = prefs;
-      prefs_.helpFontSizePoints().bind(new CommandWithArg<Double>()
-      {
-         public void execute(Double value)
-         {
-            refresh();
-         }
-      });
     
       MenuItem clear = commands.clearHelpHistory().createMenuItem(false);
       history_ = new ToolbarLinkMenu(12, true, null, new MenuItem[] { clear });
@@ -161,6 +153,13 @@ public class HelpPane extends WorkbenchPane
          }
       };
       
+      prefs_.helpFontSizePoints().bind(new CommandWithArg<Double>()
+      {
+         public void execute(Double value)
+         {
+            refresh();
+         }
+      });
       
       ensureWidget();
    }
@@ -639,7 +638,7 @@ public class HelpPane extends WorkbenchPane
       String url = null;
       try 
       {
-         if (getIFrameEx() != null)
+         if (getIFrameEx() != null && getIFrameEx().getContentWindow() != null)
             url = getIFrameEx().getContentWindow().getLocationHref();
       }
       catch (Exception e)
@@ -874,7 +873,6 @@ public class HelpPane extends WorkbenchPane
    private final Provider<HelpSearch> searchProvider_;
    private GlobalDisplay globalDisplay_;
    private final Commands commands_;
-   private final EventBus events_;
    private boolean navigated_;
    private boolean initialized_;
    private String targetUrl_;

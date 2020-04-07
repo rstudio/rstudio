@@ -9,6 +9,10 @@
 
 * The font used in the editor and console can now be customized. (#2534)
 
+### Workbench
+
+* Any tab can be hidden from view through Global Options. (#6428)
+
 ### Bugfixes
 
 * Git integration now works properly for project names containing the '!' character. (#6160)

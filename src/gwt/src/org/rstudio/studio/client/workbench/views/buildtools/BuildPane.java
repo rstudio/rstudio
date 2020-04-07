@@ -1,7 +1,7 @@
 /*
  * BuildPane.java
  *
- * Copyright (C) 2009-19 by RStudio, PBC
+ * Copyright (C) 2009-20 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -34,6 +34,7 @@ import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.core.client.widget.ToolbarMenuButton;
 import org.rstudio.core.client.widget.ToolbarPopupMenu;
+import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.compile.CompileOutput;
 import org.rstudio.studio.client.common.compile.CompileOutputBufferWithHighlight;
@@ -52,10 +53,11 @@ public class BuildPane extends WorkbenchPane
 {
    @Inject
    public BuildPane(Commands commands,
+                    EventBus events,
                     Session session,
                     BuildServerOperations server)
    {
-      super("Build");
+      super("Build", events);
       commands_ = commands;
       session_ = session;
       server_ = server;
