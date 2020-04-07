@@ -12,10 +12,10 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
+
 import { EditorView } from 'prosemirror-view';
 
 import './widgets.css';
-
 
 export function createHorizontalPanel() {
   const div = window.document.createElement('div');
