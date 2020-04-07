@@ -1,5 +1,5 @@
 /*
- * widgets.css
+ * tooltip.css
  *
  * Copyright (C) 2019-20 by RStudio, PBC
  *
@@ -13,30 +13,6 @@
  *
  */
 
-
-.pm-popup {
-  font-weight: normal;
-}
-
-.editor_dark .pm-input-text {
-  border-width: 1px;
-}
-
-.pm-image-button {
-  background-color: transparent;
-  background-repeat: no-repeat; 
-  border: none;
-}
-
-
-.pm-horizontal-panel {
-  display: table;
-}
-
-.pm-horizontal-panel-cell {
-  display: table-cell;
-  vertical-align: middle;
-}
 
 .ProseMirror .tlite {
   background: #111;
