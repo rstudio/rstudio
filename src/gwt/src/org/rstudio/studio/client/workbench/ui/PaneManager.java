@@ -273,6 +273,7 @@ public class PaneManager
       tutorialTab_ = tutorialTab;
       
       binder.bind(commands, this);
+      source_.loadFullSource();
       
       PaneConfig config = validateConfig(userPrefs.panes().getValue().cast());
       initPanes(config);
@@ -285,7 +286,6 @@ public class PaneManager
 
 
       ArrayList<Widget> mylist = new ArrayList<Widget>();
-      source_.loadFullSource();
       /*
       for (int i = 0; i < 3; i++)
       {

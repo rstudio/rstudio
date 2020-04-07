@@ -87,6 +87,7 @@ import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.filetypes.ObjectExplorerFileType;
 import org.rstudio.studio.client.common.filetypes.TextFileType;
 import org.rstudio.studio.client.common.filetypes.events.OpenPresentationSourceFileEvent;
+import org.rstudio.studio.client.common.filetypes.events.OpenPresentationSourceFileHandler;
 import org.rstudio.studio.client.common.filetypes.events.OpenSourceFileEvent;
 import org.rstudio.studio.client.common.filetypes.events.OpenSourceFileHandler;
 import org.rstudio.studio.client.common.filetypes.model.NavigationMethods;
@@ -181,6 +182,7 @@ import java.util.Set;
 public class Source implements InsertSourceHandler,
                                IsWidget,
                                OpenSourceFileHandler,
+                               OpenPresentationSourceFileHandler,
                                TabClosingHandler,
                                TabCloseHandler,
                                TabReorderHandler,
@@ -206,7 +208,11 @@ public class Source implements InsertSourceHandler,
                                SetSelectionRangesEvent.Handler,
                                GetEditorContextEvent.Handler,
                                RequestDocumentSaveEvent.Handler,
-                               RequestDocumentCloseEvent.Handler
+                               RequestDocumentCloseEvent.Handler,
+                               EditPresentationSourceEvent.Handler,
+                               NewDocumentWithCodeEvent.Handler,
+                               MaximizeSourceWindowEvent.Handler,
+                               EnsureVisibleSourceWindowEvent.Handler
 {
    public interface Display extends IsWidget,
                                     HasTabClosingHandlers,
@@ -491,15 +497,20 @@ public class Source implements InsertSourceHandler,
          commands_.codeCompletion().setShortcut(new KeyboardShortcut(sequence));
       }
       
+      events_.addHandler(EditPresentationSourceEvent.TYPE, this);
+      events_.addHandler(InsertSourceEvent.TYPE, this);
       events_.addHandler(ShowContentEvent.TYPE, this);
       events_.addHandler(ShowDataEvent.TYPE, this);
       events_.addHandler(OpenObjectExplorerEvent.TYPE, this);
-
+      events_.addHandler(OpenPresentationSourceFileEvent.TYPE, this);
+      events_.addHandler(OpenSourceFileEvent.TYPE, this);
       events_.addHandler(CodeBrowserNavigationEvent.TYPE, this);
-      
       events_.addHandler(CodeBrowserFinishedEvent.TYPE, this);
-
       events_.addHandler(CodeBrowserHighlightEvent.TYPE, this);
+      events_.addHandler(SnippetsChangedEvent.TYPE, this);
+      events_.addHandler(NewDocumentWithCodeEvent.TYPE, this);
+      events_.addHandler(MaximizeSourceWindowEvent.TYPE, this);
+      events_.addHandler(EnsureVisibleSourceWindowEvent.TYPE, this);
 
       events_.addHandler(FileTypeChangedEvent.TYPE, new FileTypeChangedHandler()
       {
@@ -1307,6 +1318,23 @@ public class Source implements InsertSourceHandler,
       }
    }
    
+   @Handler
+   public void onEnsureVisibleSourceWindow(EnsureVisibleSourceWindowEvent e)
+   {
+      if (getActiveView().getTabCount() > 0)
+      {
+         events_.fireEvent(new EnsureVisibleEvent());
+         events_.fireEvent(new EnsureHeightEvent(EnsureHeightEvent.NORMAL));
+      }
+   }
+
+   @Handler
+   public void onMaximizeSourceWindow(MaximizeSourceWindowEvent e)
+   {
+      events_.fireEvent(new EnsureVisibleEvent());
+      events_.fireEvent(new EnsureHeightEvent(EnsureHeightEvent.MAXIMIZED));
+   }
+
    @Handler
    public void onNewSourceDoc()
    {

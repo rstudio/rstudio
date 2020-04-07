@@ -42,7 +42,6 @@ import org.rstudio.studio.client.workbench.ui.unsaved.UnsavedChangesDialog;
 import org.rstudio.studio.client.workbench.views.source.Source.Display;
 import java.util.ArrayList;
 
-@Singleton
 public class SourceDisplayManager extends Composite
    implements HasEnsureVisibleHandlers, HasEnsureHeightHandlers
 {
