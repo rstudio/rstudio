@@ -82,6 +82,7 @@ std::string inferDocumentType(const FilePath& documentPath,
    // try to read the first line
    std::string line;
    std::getline(ifs, line);
+   ifs.close();
    
    // check for a shebang line
    if (!boost::algorithm::starts_with(line, "#!"))
