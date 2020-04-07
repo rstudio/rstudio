@@ -164,7 +164,6 @@ target_link_libraries(rserver
    rstudio-server-core
    rstudio-monitor
    ${CRASHPAD_LIBRARIES}
-   ${SOCI_LIBRARIES}
    ${SERVER_SYSTEM_LIBRARIES}
 )
 

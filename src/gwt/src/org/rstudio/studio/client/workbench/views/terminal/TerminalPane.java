@@ -1,7 +1,7 @@
 /*
  * TerminalPane.java
  *
- * Copyright (C) 2009-19 by RStudio, PBC
+ * Copyright (C) 2009-20 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -92,8 +92,7 @@ public class TerminalPane extends WorkbenchPane
                           WorkbenchContext workbenchContext,
                           WorkbenchServerOperations server)
    {
-      super("Terminal");
-      events_ = events;
+      super("Terminal", events);
       globalDisplay_ = globalDisplay;
       commands_ = commands;
       uiPrefs_ = uiPrefs;
@@ -1157,7 +1156,6 @@ public class TerminalPane extends WorkbenchPane
 
    // Injected ----
    private final GlobalDisplay globalDisplay_;
-   private final EventBus events_;
    private final Commands commands_;
    private final WorkbenchServerOperations server_;
    private final Provider<FontSizeManager> pFontSizeManager_;

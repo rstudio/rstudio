@@ -1,7 +1,7 @@
 /*
  * HistoryPane.java
  *
- * Copyright (C) 2009-19 by RStudio, PBC
+ * Copyright (C) 2009-20 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -38,6 +38,7 @@ import org.rstudio.core.client.events.HasSelectionCommitHandlers;
 import org.rstudio.core.client.events.SelectionCommitEvent;
 import org.rstudio.core.client.events.SelectionCommitHandler;
 import org.rstudio.core.client.widget.*;
+import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
 import org.rstudio.studio.client.workbench.views.history.HasHistory;
@@ -85,9 +86,9 @@ public class HistoryPane extends WorkbenchPane
    }
 
    @Inject
-   public HistoryPane(Commands commands)
+   public HistoryPane(Commands commands, EventBus events)
    {
-      super("History");
+      super("History", events);
       commands_ = commands;
       ensureWidget();
    }
@@ -96,7 +97,8 @@ public class HistoryPane extends WorkbenchPane
    protected void onLoad()
    {
       super.onLoad();
-      scrollToBottom();
+      if (mode_ == Mode.Recent)
+         scrollToBottom();
    }
 
    @Override

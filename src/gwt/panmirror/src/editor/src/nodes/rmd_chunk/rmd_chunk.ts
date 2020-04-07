@@ -110,7 +110,7 @@ class RmdChunkCommand extends ProsemirrorCommand {
   constructor() {
     super(
       EditorCommandId.RmdChunk,
-      ['Shift-Mod-u'],
+      ['Mod-Alt-i'],
       (state: EditorState, dispatch?: (tr: Transaction) => void, view?: EditorView) => {
         const schema = state.schema;
 

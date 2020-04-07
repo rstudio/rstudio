@@ -116,7 +116,9 @@ private:
    void onUrlChanged(QUrl url);
    void onLoadFinished(bool ok);
 
-   void saveRemoteAuthCookies(bool forcePersist);
+   void saveRemoteAuthCookies(const boost::function<QList<QNetworkCookie>()>& loadCookies,
+                              const boost::function<void(QList<QNetworkCookie>)>& saveCookies,
+                              bool saveSessionCookies);
 
 private:
    bool isRemoteDesktop_;
