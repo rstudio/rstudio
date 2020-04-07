@@ -8,7 +8,7 @@ mathjax*/
 node-webkit/
 overlay/
 packrat/
-pandoc/
+pandoc*/
 node/
 plumber/
 profvis/

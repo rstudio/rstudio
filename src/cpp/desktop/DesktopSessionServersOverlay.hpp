@@ -18,6 +18,7 @@
 
 #include <QJsonObject>
 #include <QJsonValue>
+#include <QNetworkCookie>
 #include <QObject>
 
 #include <boost/optional.hpp>
@@ -95,6 +96,8 @@ public:
 
    QJsonObject toJson() const;
    static SessionServer fromJson(const QJsonObject& sessionServerJson);
+
+   bool cookieBelongs(const QNetworkCookie& cookie) const;
 
    void setName(const std::string& name) { name_ = name; }
    void setUrl(const std::string& url) { url_ = url; }

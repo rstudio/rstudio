@@ -1,7 +1,7 @@
 /*
  * PaneConfig.java
  *
- * Copyright (C) 2009-19 by RStudio, PBC
+ * Copyright (C) 2009-20 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -28,12 +28,14 @@ public class PaneConfig extends UserPrefsAccessor.Panes
    public native static PaneConfig create(JsArrayString panes,
                                           JsArrayString tabSet1,
                                           JsArrayString tabSet2,
+                                          JsArrayString hiddenTabSet,
                                           boolean consoleLeftOnTop,
                                           boolean consoleRightOnTop) /*-{
       return { 
          quadrants: panes, 
          tabSet1: tabSet1, 
          tabSet2: tabSet2,
+         hiddenTabSet: hiddenTabSet,
          console_left_on_top: consoleLeftOnTop,
          console_right_on_top: consoleRightOnTop 
       };
@@ -46,6 +48,7 @@ public class PaneConfig extends UserPrefsAccessor.Panes
       panes.push(UserPrefsAccessor.Panes.QUADRANTS_CONSOLE);
       panes.push(UserPrefsAccessor.Panes.QUADRANTS_TABSET1);
       panes.push(UserPrefsAccessor.Panes.QUADRANTS_TABSET2);
+      panes.push(UserPrefsAccessor.Panes.QUADRANTS_HIDDENTABSET);
 
       JsArrayString tabSet1 = createArray().cast();
       tabSet1.push("Environment");
@@ -63,10 +66,22 @@ public class PaneConfig extends UserPrefsAccessor.Panes
       tabSet2.push("Help");
       tabSet2.push("Viewer");
 
-      return create(panes, tabSet1, tabSet2, false, true);
+      JsArrayString hiddenTabSet = createArray().cast();
+      return create(panes, tabSet1, tabSet2, hiddenTabSet, false, true);
    }
 
    public static String[] getAllPanes()
+   {
+      return new String[] {
+         UserPrefsAccessor.Panes.QUADRANTS_SOURCE,
+         UserPrefsAccessor.Panes.QUADRANTS_CONSOLE,
+         UserPrefsAccessor.Panes.QUADRANTS_TABSET1,
+         UserPrefsAccessor.Panes.QUADRANTS_TABSET2,
+         UserPrefsAccessor.Panes.QUADRANTS_HIDDENTABSET
+      };
+   }
+
+   public static String[] getVisiblePanes()
    {
       return new String[] {
          UserPrefsAccessor.Panes.QUADRANTS_SOURCE,
@@ -82,23 +97,6 @@ public class PaneConfig extends UserPrefsAccessor.Panes
       // last element in this array that's part of the first tabset (ts1)
       return new String[] {"Environment", "History", "Files", "Plots", "Connections",
                            "Packages", "Help", "Build", "VCS", "Tutorial", "Viewer", "Presentation"};
-   }
-
-   public static String[] getAlwaysVisibleTabs()
-   {
-      return new String[] {"Environment", "History", "Files", "Plots",
-                           "Help", "Viewer"};
-   }
-
-   public static String[] getHideableTabs()
-   {
-      return new String[] {"Build", "VCS", "Tutorial", "Presentation", "Connections", "Packages" };
-   }
-
-   // Any tabs that were added after our first public release.
-   public static String[] getAddableTabs()
-   {
-      return new String[] {"Build", "VCS", "Tutorial", "Presentation", "Connections", "Viewer" };
    }
 
    // Tabs that have been replaced by newer versions/replaceable supersets
@@ -172,13 +170,9 @@ public class PaneConfig extends UserPrefsAccessor.Panes
       JsArrayString panes = getQuadrants();
       if (panes == null)
          return false;
-      if (!sameElements(panes, getAllPanes()))
-         return false;
 
       JsArrayString ts1 = getTabSet1();
       JsArrayString ts2 = getTabSet2();
-      if (ts1.length() == 0 || ts2.length() == 0)
-         return false;
 
       // Replace any obsoleted tabs in the config
       replaceObsoleteTabs(ts1);
@@ -194,41 +188,12 @@ public class PaneConfig extends UserPrefsAccessor.Panes
          Debug.logToConsole("Invaliding tabset config (Presentation index)");
          return false;
       }
-
-      // If any of these tabs are missing, then they can be added
-      Set<String> addableTabs = makeSet(getAddableTabs());
-
-      // If any of these tabs are missing, then the whole config is invalid
-      Set<String> baseTabs = makeSet(getAllTabs());
-      baseTabs.removeAll(addableTabs);
-
-      for (String tab : JsUtil.asIterable(concat(ts1, ts2)))
-      {
-         if (!baseTabs.remove(tab) && !addableTabs.remove(tab))
-            return false; // unknown tab
-      }
-
-      // If any baseTabs are still present, they weren't part of the tabsets
-      if (baseTabs.size() > 0)
+      
+      // Check for any unknown tabs
+      Set<String> allTabs = makeSet(getAllTabs());
+      if (!(isSubset(allTabs, JsUtil.asIterable(ts1)) &&
+            isSubset(allTabs, JsUtil.asIterable(ts2))))
          return false;
-
-      // Were any addable tabs missing? Add them the appropriate tabset
-      // (Iterate over original array instead of addableTabs set so that order
-      // is well-defined)
-      for (String tab : getAddableTabs())
-         if (addableTabs.contains(tab))
-            if (tab == "Viewer")
-               ts2.push(tab);
-            else
-               ts1.push(tab);
-
-      // These tabs can be hidden sometimes; they can't stand alone in a tabset
-      Set<String> hideableTabs = makeSet(getHideableTabs());
-      if (isSubset(hideableTabs, JsUtil.asIterable(ts1))
-          || isSubset(hideableTabs, JsUtil.asIterable(ts2)))
-      {
-         return false;
-      }
 
       return true;
    }
@@ -254,6 +219,7 @@ public class PaneConfig extends UserPrefsAccessor.Panes
       return create(copy(getQuadrants()),
                     copy(getTabSet1()),
                     copy(getTabSet2()),
+                    copy(getHiddenTabSet()),
                     getConsoleLeftOnTop(),
                     getConsoleRightOnTop());
    }
@@ -262,7 +228,8 @@ public class PaneConfig extends UserPrefsAccessor.Panes
       return other != null &&
              this.panes.toString() == other.panes.toString() &&
              this.tabSet1.toString() == other.tabSet1.toString() &&
-             this.tabSet2.toString() == other.tabSet2.toString();
+             this.tabSet2.toString() == other.tabSet2.toString() &&
+             this.hiddenTabSet.toString() == other.hiddenTabSet.toString();
    }-*/;
   
    private boolean sameElements(JsArrayString a, String[] b)
@@ -296,21 +263,9 @@ public class PaneConfig extends UserPrefsAccessor.Panes
 
    public static boolean isValidConfig(ArrayList<String> tabs)
    {
-      if (isSubset(makeSet(getHideableTabs()), tabs))
-      {
-         // The proposed tab config only contains hideable tabs (or possibly
-         // no tabs at all). Reject.
-         return false;
-      }
-      else if (isSubset(makeSet(tabs.toArray(new String[tabs.size()])),
-                        makeSet(getAlwaysVisibleTabs())))
-      {
-         // The proposed tab config contains all the always-visible tabs,
-         // which implies that the other tab config only contains hideable
-         // tabs (or possibly no tabs at all). Reject.
-         return false;
-      }
-      else
-         return true;
+      // This function was previously used to ensure tabsets didn't contain only "hideable" tabs or
+      // no tabs at all. As of 1.4 any tabs can be hidden so these checks have been removed. The
+      // function remains to maintain the structure if validation needs to be added in the future.
+     return true;
    }
 }

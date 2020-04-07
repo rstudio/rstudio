@@ -13,6 +13,8 @@
  *
  */
 
+#define R_INTERNAL_FUNCTIONS  // Rf_warningcall
+
 #include <iostream>
 #include <gsl/gsl>
 
@@ -23,6 +25,7 @@
 #include <core/StringUtils.hpp>
 
 #include <r/RExec.hpp>
+#include <r/ROptions.hpp>
 #include <r/session/RSessionUtils.hpp>
 #include <r/session/RGraphics.hpp>
 
@@ -126,19 +129,60 @@ Error shadowDevDesc(DeviceContext* pDC, pDevDesc* pDev)
       int width = gsl::narrow_cast<int>(pDC->width * pDC->devicePixelRatio);
       int height = gsl::narrow_cast<int>(pDC->height * pDC->devicePixelRatio);
       int res = gsl::narrow_cast<int>(96.0 * pDC->devicePixelRatio);
-
-      // create PNG device (completely bail on error)
-      boost::format fmt("grDevices:::png(\"%1%\", %2%, %3%, res = %4% %5%)");
-      std::string code = boost::str(fmt %
-                                    string_utils::utf8ToSystem(pDC->targetPath.getAbsolutePath()) %
-                                    width %
-                                    height %
-                                    res %
-                                    r::session::graphics::extraBitmapParams());
-      Error err = r::exec::executeString(code);
-      if (err)
-         return err;
-
+      
+      // determine the appropriate device
+      std::string backend = getDefaultBackend();
+      
+      // validate that the ragg package is available.
+      // this is mostly a sanity-check against users who might set
+      // the RStudioGD.backend option without explicitly installing the
+      // 'ragg' package, or if 'ragg' was uninstalled or otherwise removed
+      // from the library paths during a session.
+      if (backend == "ragg")
+      {
+         bool installed = false;
+         Error error = r::exec::RFunction(".rs.isPackageInstalled")
+               .addParam("ragg")
+               .call(&installed);
+         
+         if (error || !installed)
+         {
+            if (error)
+               LOG_ERROR(error);
+            
+            const char* msg = "package 'ragg' is not available; using default graphics backend instead";
+            Rf_warningcall(R_NilValue, "%s", msg);
+            r::options::setOption(kGraphicsOptionBackend, "default");
+            backend = "default";
+         }
+      }
+      
+      if (backend == "ragg")
+      {
+         Error error = r::exec::RFunction("ragg:::agg_png")
+               .addParam("filename", string_utils::utf8ToSystem(pDC->targetPath.getAbsolutePath()))
+               .addParam("width", width)
+               .addParam("height", height)
+               .addParam("res", res)
+               .call();
+         if (error)
+            return error;
+      }
+      else
+      {
+         // create PNG device (completely bail on error)
+         boost::format fmt("grDevices:::png(\"%1%\", %2%, %3%, res = %4% %5%)");
+         std::string code = boost::str(fmt %
+                                       string_utils::utf8ToSystem(pDC->targetPath.getAbsolutePath()) %
+                                       width %
+                                       height %
+                                       res %
+                                       r::session::graphics::extraBitmapParams());
+         Error err = r::exec::executeString(code);
+         if (err)
+            return err;
+      }
+      
       // save reference to shadow device
       pDevData->pShadowPngDevice = GEcurrentDevice()->dev;
    }

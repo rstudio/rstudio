@@ -17,6 +17,7 @@ package org.rstudio.studio.client.panmirror.theme;
 
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.dom.DomUtils;
+import org.rstudio.core.client.theme.ThemeColors;
 import org.rstudio.core.client.theme.ThemeFonts;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.views.source.DocumentOutlineWidget;
@@ -31,23 +32,29 @@ public class PanmirrorThemeCreator
       // create theme from current app theme
       PanmirrorTheme theme = new PanmirrorTheme(); 
       
+      // set dark mode
+      theme.darkMode = aceTheme.isDark();
+      
       theme.cursorColor = DomUtils.extractCssValue("ace_cursor", "color");
       
-      JsArrayString selectionBkgdClasses = JsArrayString.createArray().cast();
-      selectionBkgdClasses.push("ace_marker-layer");
-      selectionBkgdClasses.push("ace_selection");
-      theme.selectionColor = DomUtils.extractCssValue(selectionBkgdClasses, "backgroundColor");
+      // selection color
+      if (aceTheme.isDark())
+      {
+         theme.selectionColor = ThemeColors.darkGreyMenuSelected;
+      }
+      else
+      {
+         JsArrayString selectionBkgdClasses = JsArrayString.createArray().cast();
+         selectionBkgdClasses.push("ace_marker-layer");
+         selectionBkgdClasses.push("ace_selection");
+         theme.selectionColor = DomUtils.extractCssValue(selectionBkgdClasses, "backgroundColor");
+      }
+      
       theme.backgroundColor = DomUtils.extractCssValue("ace_editor", "backgroundColor");
       theme.metadataBackgroundColor = theme.backgroundColor;
-      
-      // this code doesn't currently seem to successfully extract color values (we end up w/ rgba(0,0,0,0))
       theme.nodeSelectionColor = DomUtils.extractCssValue("ace_node-selector", "backgroundColor");
       theme.commentBackgroundColor = DomUtils.extractCssValue("ace_comment-highlight", "backgroundColor");
-      
-      // ....so hard code default values for the time being
-      theme.nodeSelectionColor = "rgb(102,155,243)";
-      theme.commentBackgroundColor = "rgb(254, 155, 243)";
-      
+         
       JsArrayString regionBkgdClasses = JsArrayString.createArray().cast();
       regionBkgdClasses.push("ace_marker-layer");
       regionBkgdClasses.push("ace_foreign_line");

@@ -20,6 +20,7 @@
 
 #include <QDir>
 #include <QMainWindow>
+#include <QNetworkCookie>
 #include <QSettings>
 #include <QStringList>
 
@@ -28,6 +29,7 @@
 #define kRunDiagnosticsOption    "--run-diagnostics"
 #define kSessionServerOption     "--session-server"
 #define kSessionServerUrlOption  "--session-url"
+#define kTempCookiesOption       "--use-temp-cookies"
 
 #if defined(__APPLE__)
 #define FORMAT QSettings::NativeFormat
@@ -121,14 +123,18 @@ public:
    QString lastRemoteSessionUrl(const QString& serverUrl);
    void setLastRemoteSessionUrl(const QString& serverUrl, const QString& sessionUrl);
 
-   QStringList cookies() const;
-   void setCookies(const QStringList& cookies);
+   QList<QNetworkCookie> authCookies() const;
+   QList<QNetworkCookie> tempAuthCookies() const;
+   void setAuthCookies(const QList<QNetworkCookie>& cookies);
+   void setTempAuthCookies(const QList<QNetworkCookie>& cookies);
 
 private:
    Options();
    friend Options& options();
 
    void setFont(QString key, QString font);
+   QStringList cookiesToList(const QList<QNetworkCookie>& cookies) const;
+   QList<QNetworkCookie> cookiesFromList(const QStringList& cookieStrs) const;
 
    QSettings settings_;
    core::FilePath scriptsPath_;

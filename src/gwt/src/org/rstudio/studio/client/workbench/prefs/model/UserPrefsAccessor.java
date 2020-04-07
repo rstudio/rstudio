@@ -261,6 +261,7 @@ public class UserPrefsAccessor extends Prefs
       public final static String QUADRANTS_CONSOLE = "Console";
       public final static String QUADRANTS_TABSET1 = "TabSet1";
       public final static String QUADRANTS_TABSET2 = "TabSet2";
+      public final static String QUADRANTS_HIDDENTABSET = "HiddenTabSet";
 
       public final native JsArrayString getQuadrants() /*-{
          return this.quadrants;
@@ -272,6 +273,10 @@ public class UserPrefsAccessor extends Prefs
 
       public final native JsArrayString getTabSet2() /*-{
          return this.tabSet2;
+      }-*/;
+
+      public final native JsArrayString getHiddenTabSet() /*-{
+         return this.hiddenTabSet;
       }-*/;
 
       public final native boolean getConsoleLeftOnTop() /*-{
@@ -771,6 +776,22 @@ public class UserPrefsAccessor extends Prefs
    public PrefValue<String> editorTheme()
    {
       return string("editor_theme", "Textmate (default)");
+   }
+
+   /**
+    * Whether to use a custom editor font in RStudio Server.
+    */
+   public PrefValue<Boolean> serverEditorFontEnabled()
+   {
+      return bool("server_editor_font_enabled", false);
+   }
+
+   /**
+    * The name of the fixed-width editor font to use with RStudio Server.
+    */
+   public PrefValue<String> serverEditorFont()
+   {
+      return string("server_editor_font", "");
    }
 
    /**
@@ -1497,6 +1518,14 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
+    * The number of seconds after which a project is deemed to have successfully started.
+    */
+   public PrefValue<Integer> projectSafeStartupSeconds()
+   {
+      return integer("project_safe_startup_seconds", 30);
+   }
+
+   /**
     * Use tinytex to compile .tex files.
     */
    public PrefValue<Boolean> useTinytex()
@@ -1722,6 +1751,42 @@ public class UserPrefsAccessor extends Prefs
       return bool("install_pkg_deps_individually", true);
    }
 
+   /**
+    * R graphics backend.
+    */
+   public PrefValue<String> graphicsBackend()
+   {
+      return string("graphics_backend", "default");
+   }
+
+   public final static String GRAPHICS_BACKEND_DEFAULT = "default";
+   public final static String GRAPHICS_BACKEND_CAIRO = "cairo";
+   public final static String GRAPHICS_BACKEND_CAIRO_PNG = "cairo-png";
+   public final static String GRAPHICS_BACKEND_QUARTZ = "quartz";
+   public final static String GRAPHICS_BACKEND_WINDOWS = "windows";
+   public final static String GRAPHICS_BACKEND_RAGG = "ragg";
+
+   /**
+    * Type of anti-aliasing to be used for generated R plots.
+    */
+   public PrefValue<String> graphicsAntialiasing()
+   {
+      return string("graphics_antialiasing", "default");
+   }
+
+   public final static String GRAPHICS_ANTIALIASING_DEFAULT = "default";
+   public final static String GRAPHICS_ANTIALIASING_NONE = "none";
+   public final static String GRAPHICS_ANTIALIASING_GRAY = "gray";
+   public final static String GRAPHICS_ANTIALIASING_SUBPIXEL = "subpixel";
+
+   /**
+    * List of fixed-width fonts to check for browser support.
+    */
+   public PrefValue<JsArrayString> browserFixedWidthFonts()
+   {
+      return object("browser_fixed_width_fonts", JsArrayUtil.createStringArray("Andale Mono", "Bitstream Vera Sans Mono", "Cascadia Code", "Consolas", "Courier New", "Courier", "DejaVu Sans Mono", "Droid Sans Mono", "Fira Code", "Hack", "IBM Plex Mono", "Inconsolata", "JetBrains Mono", "Lucida Console", "Lucida Sans Typewriter", "Menlo", "Monaco", "Monoid", "Operator Mono", "Pragmata", "SF Mono", "Source Code Pro", "Vera Sans Mono", "Victor Mono", "Ubuntu Mono"));
+   }
+
    public void syncPrefs(String layer, JsObject source)
    {
       if (source.hasKey("run_rprofile_on_resume"))
@@ -1880,6 +1945,10 @@ public class UserPrefsAccessor extends Prefs
          helpFontSizePoints().setValue(layer, source.getDbl("help_font_size_points"));
       if (source.hasKey("editor_theme"))
          editorTheme().setValue(layer, source.getString("editor_theme"));
+      if (source.hasKey("server_editor_font_enabled"))
+         serverEditorFontEnabled().setValue(layer, source.getBool("server_editor_font_enabled"));
+      if (source.hasKey("server_editor_font"))
+         serverEditorFont().setValue(layer, source.getString("server_editor_font"));
       if (source.hasKey("default_encoding"))
          defaultEncoding().setValue(layer, source.getString("default_encoding"));
       if (source.hasKey("toolbar_visible"))
@@ -2044,6 +2113,8 @@ public class UserPrefsAccessor extends Prefs
          hideObjectFiles().setValue(layer, source.getBool("hide_object_files"));
       if (source.hasKey("restore_last_project"))
          restoreLastProject().setValue(layer, source.getBool("restore_last_project"));
+      if (source.hasKey("project_safe_startup_seconds"))
+         projectSafeStartupSeconds().setValue(layer, source.getInteger("project_safe_startup_seconds"));
       if (source.hasKey("use_tinytex"))
          useTinytex().setValue(layer, source.getBool("use_tinytex"));
       if (source.hasKey("clean_texi2dvi_output"))
@@ -2094,6 +2165,12 @@ public class UserPrefsAccessor extends Prefs
          fileMonitorIgnoredComponents().setValue(layer, source.getObject("file_monitor_ignored_components"));
       if (source.hasKey("install_pkg_deps_individually"))
          installPkgDepsIndividually().setValue(layer, source.getBool("install_pkg_deps_individually"));
+      if (source.hasKey("graphics_backend"))
+         graphicsBackend().setValue(layer, source.getString("graphics_backend"));
+      if (source.hasKey("graphics_antialiasing"))
+         graphicsAntialiasing().setValue(layer, source.getString("graphics_antialiasing"));
+      if (source.hasKey("browser_fixed_width_fonts"))
+         browserFixedWidthFonts().setValue(layer, source.getObject("browser_fixed_width_fonts"));
    }
    
 

@@ -15,12 +15,16 @@
 
 package org.rstudio.studio.client.workbench.views.source.editors.text;
 
+import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.DebouncedCommand;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.HasFindReplace;
+import org.rstudio.core.client.widget.IsHideableWidget;
+import org.rstudio.core.client.widget.ProgressPanel;
+import org.rstudio.core.client.widget.images.ProgressImages;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.panmirror.PanmirrorContext;
 import org.rstudio.studio.client.panmirror.PanmirrorEditingLocation;
@@ -45,6 +49,7 @@ import com.google.gwt.event.dom.client.ChangeEvent;
 import com.google.gwt.event.dom.client.ChangeHandler;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.user.client.Command;
+import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.view.client.SelectionChangeEvent;
 import com.google.inject.Inject;
 
@@ -62,9 +67,14 @@ public class TextEditingTargetVisualMode
       display_ = display;
       dirtyState_ = dirtyState;
       docUpdateSentinel_ = docUpdateSentinel;
+      progress_ = new ProgressPanel(ProgressImages.createSmall(), 200, false);
       
-      // manage ui based on current pref + changes over time
-      manageUI(isActivated(), false);
+      // if visual mode isn't enabled then reflect that (if it is enabled we'll
+      // defer initialization work until after the tab is actually activated)
+      if (!isActivated())
+         manageUI(false, false);
+      
+      // track changes over time
       onDocPropChanged(TextEditingTarget.RMD_VISUAL_MODE, (value) -> {
          manageUI(isActivated(), true);
       });
@@ -112,6 +122,10 @@ public class TextEditingTargetVisualMode
          docUpdateSentinel_.setBoolProperty(TextEditingTarget.RMD_VISUAL_MODE, false);
          manageUI(false, true, completed);
       }
+      else
+      {
+         completed.execute();
+      }
    }
    
    public void syncToEditor(boolean activatingEditor)
@@ -145,46 +159,55 @@ public class TextEditingTargetVisualMode
             ready.execute();
       }
    }
-
+   
    
    public void syncFromEditor(Command ready, boolean focus)
    {      
       loadingFromSource_ = true;
       withPanmirror(() -> {
          
-         panmirror_.setMarkdown(getEditorCode(), true, (done) -> {  
+         withProgress(400, completed -> {
             
-            // activate editor
-            if (ready != null)
-               ready.execute();
+            panmirror_.setMarkdown(getEditorCode(), true, (done) -> {  
+               
+               // indicate we are complete
+               completed.execute();
+               
+               // activate editor
+               if (ready != null)
+                  ready.execute();
+               
+               isDirty_ = false;
+               loadingFromSource_ = false;
+             
+               // restore selection if we have one
+               Scheduler.get().scheduleDeferred(() -> {
+                  
+                  // restore saved location
+                  PanmirrorEditingLocation location = savedEditingLocation();
+                  if (location != null)
+                     panmirror_.restoreEditingLocation(location);
+                  
+                  if (focus)
+                    panmirror_.focus();
+                  
+                  // show any format or extension warnings
+                  PanmirrorPandocFormat format = panmirror_.getPandocFormat();
+                  if (format.warnings.invalidFormat.length() > 0)
+                  {
+                     display_.showWarningBar("Invalid Pandoc format: " + format.warnings.invalidFormat);
+                  }
+                  else if (format.warnings.invalidOptions.length > 0)
+                  {
+                     display_.showWarningBar("Pandoc format " + format.baseName + " does not support options: " + 
+                                             String.join(", ", format.warnings.invalidOptions));
+                  }
+               });                
+            });
             
-            isDirty_ = false;
-            loadingFromSource_ = false;
-          
-            // restore selection if we have one
-            Scheduler.get().scheduleDeferred(() -> {
-               
-               // restore saved location
-               PanmirrorEditingLocation location = savedEditingLocation();
-               if (location != null)
-                  panmirror_.restoreEditingLocation(location);
-               
-               if (focus)
-                 panmirror_.focus();
-               
-               // show any format or extension warnings
-               PanmirrorPandocFormat format = panmirror_.getPandocFormat();
-               if (format.warnings.invalidFormat.length() > 0)
-               {
-                  display_.showWarningBar("Invalid Pandoc format: " + format.warnings.invalidFormat);
-               }
-               else if (format.warnings.invalidOptions.length > 0)
-               {
-                  display_.showWarningBar("Pandoc format " + format.baseName + " does not support options: " + 
-                                          String.join(", ", format.warnings.invalidOptions));
-               }
-            });                
          });
+         
+        
       });
    }
  
@@ -234,6 +257,7 @@ public class TextEditingTargetVisualMode
         commands_.foldAll(),
         commands_.unfold(),
         commands_.unfoldAll(),
+        commands_.yankAfterCursor(),
         commands_.notebookExpandAllOutput(),
         commands_.notebookCollapseAllOutput(),
         commands_.notebookClearAllOutput(),
@@ -273,7 +297,28 @@ public class TextEditingTargetVisualMode
    public void onUserEditingDoc()
    {
       if (isActivated())
-         syncDevTools();
+      {
+         // if this is the first time we've switched to the doc
+         // while in visual mode then complete initialization
+         if (!haveEditedInVisualMode_)
+         {
+            haveEditedInVisualMode_ = true;
+            manageUI(true, true);
+         }
+         else
+         {
+            syncDevTools();
+         }
+      }
+        
+   }
+   
+   public void onClosing()
+   {
+      if (syncOnIdle_ != null)
+         syncOnIdle_.suspend();
+      if (saveLocationOnIdle_ != null)
+         saveLocationOnIdle_.suspend();
    }
   
   
@@ -350,11 +395,8 @@ public class TextEditingTargetVisualMode
    
    private void syncDevTools()
    {
-      // activate devtools if they are loaded
-      if (panmirror_.devToolsLoaded()) 
-      {
+      if (panmirror_ != null && panmirror_.devToolsLoaded()) 
          panmirror_.activateDevTools();
-      }
    }
    
    
@@ -362,99 +404,106 @@ public class TextEditingTargetVisualMode
    {
       if (panmirror_ == null)
       {
-         // create panmirror
-         String format = "markdown+autolink_bare_uris+tex_math_single_backslash";
-         PanmirrorContext context = new PanmirrorContext(format, uiContext());
+         withProgress(400, completed -> {
          
-         PanmirrorOptions options = new PanmirrorOptions();
-         options.rmdCodeChunks = true;
-         
-         // add focus-visible class to prevent interaction with focus-visible.js
-         // (it ends up attempting to apply the "focus-visible" class b/c ProseMirror
-         // is contentEditable, and that triggers a dom mutation event for ProseMirror,
-         // which in turn causes us to lose table selections)
-         options.className = "focus-visible";
-           
-         PanmirrorWidget.Options widgetOptions = new PanmirrorWidget.Options();
-         
-         
-         PanmirrorWidget.create(context, options, widgetOptions, getEditorCode(), (panmirror) -> {
+            // create panmirror
+            String format = "markdown+autolink_bare_uris+tex_math_single_backslash";
+            PanmirrorContext context = new PanmirrorContext(format, uiContext());
             
-            // save reference to panmirror
-            panmirror_ = panmirror;
+            PanmirrorOptions options = new PanmirrorOptions();
+            options.rmdCodeChunks = true;
             
-            // remove some keybindings that conflict with the ide
-            disableKeys(
-               PanmirrorCommands.Paragraph, 
-               PanmirrorCommands.Heading1, PanmirrorCommands.Heading2, PanmirrorCommands.Heading3,
-               PanmirrorCommands.Heading4, PanmirrorCommands.Heading5, PanmirrorCommands.Heading6,
-               PanmirrorCommands.BulletList, PanmirrorCommands.OrderedList, PanmirrorCommands.TightList
-            );
-           
-            // periodically sync edits back to main editor
-            syncOnIdle_ = new DebouncedCommand(1000)
-            {
-               @Override
-               protected void execute()
+            // add focus-visible class to prevent interaction with focus-visible.js
+            // (it ends up attempting to apply the "focus-visible" class b/c ProseMirror
+            // is contentEditable, and that triggers a dom mutation event for ProseMirror,
+            // which in turn causes us to lose table selections)
+            options.className = "focus-visible";
+              
+            PanmirrorWidget.Options widgetOptions = new PanmirrorWidget.Options();
+            
+            
+            PanmirrorWidget.create(context, options, widgetOptions, getEditorCode(), (panmirror) -> {
+               
+               // save reference to panmirror
+               panmirror_ = panmirror;
+               
+               // remove some keybindings that conflict with the ide
+               disableKeys(
+                  PanmirrorCommands.Paragraph, 
+                  PanmirrorCommands.Heading1, PanmirrorCommands.Heading2, PanmirrorCommands.Heading3,
+                  PanmirrorCommands.Heading4, PanmirrorCommands.Heading5, PanmirrorCommands.Heading6,
+                  PanmirrorCommands.BulletList, PanmirrorCommands.OrderedList, PanmirrorCommands.TightList
+               );
+              
+               // periodically sync edits back to main editor
+               syncOnIdle_ = new DebouncedCommand(1000)
                {
-                  if (isDirty_)
-                     syncToEditor(false);
-               }
-            };
-            
-            // periodically save selection
-            saveLocationOnIdle_ = new DebouncedCommand(1000)
-            {
-               @Override
-               protected void execute()
-               {
-                  PanmirrorEditingLocation location = panmirror_.getEditingLocation();
-                  String locationProp = + location.pos + ":" + location.scrollTop; 
-                  docUpdateSentinel_.setProperty(RMD_VISUAL_MODE_LOCATION, locationProp);
-               }
-            };
-            
-            // set dirty flag + nudge idle sync on change
-            panmirror_.addChangeHandler(new ChangeHandler() 
-            {
-               @Override
-               public void onChange(ChangeEvent event)
-               {
-                  // set flag and nudge sync on idle
-                  isDirty_ = true;
-                  syncOnIdle_.nudge();
-                  
-                  // update editor dirty state if necessary
-                  if (!loadingFromSource_ && !dirtyState_.getValue())
+                  @Override
+                  protected void execute()
                   {
-                     dirtyState_.markDirty(false);
-                     source_.setSourceDocumentDirty(
-                           docUpdateSentinel_.getId(), true, 
-                           new VoidServerRequestCallback());
+                     if (isDirty_)
+                        syncToEditor(false);
                   }
-               }  
-            });
-            
-            // save selection
-            panmirror_.addSelectionChangeHandler(new SelectionChangeEvent.Handler()
-            {
-               @Override
-               public void onSelectionChange(SelectionChangeEvent event)
+               };
+               
+               // periodically save selection
+               saveLocationOnIdle_ = new DebouncedCommand(1000)
                {
-                  saveLocationOnIdle_.nudge();
-               }
+                  @Override
+                  protected void execute()
+                  {
+                     PanmirrorEditingLocation location = panmirror_.getEditingLocation();
+                     String locationProp = + location.pos + ":" + location.scrollTop; 
+                     docUpdateSentinel_.setProperty(RMD_VISUAL_MODE_LOCATION, locationProp);
+                  }
+               };
+               
+               // set dirty flag + nudge idle sync on change
+               panmirror_.addChangeHandler(new ChangeHandler() 
+               {
+                  @Override
+                  public void onChange(ChangeEvent event)
+                  {
+                     // set flag and nudge sync on idle
+                     isDirty_ = true;
+                     syncOnIdle_.nudge();
+                     
+                     // update editor dirty state if necessary
+                     if (!loadingFromSource_ && !dirtyState_.getValue())
+                     {
+                        dirtyState_.markDirty(false);
+                        source_.setSourceDocumentDirty(
+                              docUpdateSentinel_.getId(), true, 
+                              new VoidServerRequestCallback());
+                     }
+                  }  
+               });
+               
+               // save selection
+               panmirror_.addSelectionChangeHandler(new SelectionChangeEvent.Handler()
+               {
+                  @Override
+                  public void onSelectionChange(SelectionChangeEvent event)
+                  {
+                     saveLocationOnIdle_.nudge();
+                  }
+               });
+                
+               // track changes in outline sidebar and save as prefs
+               panmirror_.addPanmirrorOutlineVisibleHandler((event) -> {
+                  setOutlineVisible(event.getVisible());
+               });
+               panmirror_.addPanmirrorOutlineWidthHandler((event) -> {
+                  setOutlineWidth(event.getWidth());
+               });
+               
+               // indicate we are done with progress
+               completed.execute();
+              
+               // good to go!
+               ready.execute();
             });
-             
-            // track changes in outline sidebar and save as prefs
-            panmirror_.addPanmirrorOutlineVisibleHandler((event) -> {
-               setOutlineVisible(event.getVisible());
-            });
-            panmirror_.addPanmirrorOutlineWidthHandler((event) -> {
-               setOutlineWidth(event.getWidth());
-            });
-    
-            // good to go!
-            ready.execute();
+         
          });
       }
       else
@@ -463,6 +512,18 @@ public class TextEditingTargetVisualMode
          ready.execute();
       }
    } 
+   
+   private void withProgress(int delayMs, CommandWithArg<Command> command)
+   {
+      TextEditorContainer editorContainer = display_.editorContainer();
+      IsHideableWidget prevWidget = editorContainer.getActiveWidget();
+      progress_.beginProgressOperation(delayMs);
+      editorContainer.activateWidget(progress_);
+      command.execute(() -> {
+         progress_.endProgressOperation();
+         editorContainer.activateWidget(prevWidget);
+      });
+   }
    
    private String getEditorCode()
    {
@@ -589,10 +650,13 @@ public class TextEditingTargetVisualMode
    private DebouncedCommand syncOnIdle_; 
    private boolean isDirty_ = false;
    private boolean loadingFromSource_ = false;
+   private boolean haveEditedInVisualMode_ = false; 
    
    private DebouncedCommand saveLocationOnIdle_;
    
    private PanmirrorWidget panmirror_;
+   
+   private final ProgressPanel progress_;
    
    private static final String RMD_VISUAL_MODE_LOCATION = "rmdVisualModeLocation";   
 }

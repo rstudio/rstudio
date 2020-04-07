@@ -24,10 +24,9 @@ export function isElementVisible(el: HTMLElement) {
 }
 
 export function elementInnerDimensions(el: HTMLElement) {
-  
   const cs = getComputedStyle(el);
-  
-  const asNumber = (x: string | null) => x ? parseFloat(x) : 0; 
+
+  const asNumber = (x: string | null) => (x ? parseFloat(x) : 0);
   const paddingX = asNumber(cs.paddingLeft) + asNumber(cs.paddingRight);
   const paddingY = asNumber(cs.paddingTop) + asNumber(cs.paddingBottom);
   const borderX = asNumber(cs.borderLeftWidth) + asNumber(cs.borderRightWidth);
@@ -35,7 +34,6 @@ export function elementInnerDimensions(el: HTMLElement) {
 
   return {
     width: el.offsetWidth - paddingX - borderX,
-    height: el.offsetHeight - paddingY - borderY
+    height: el.offsetHeight - paddingY - borderY,
   };
-
 }

@@ -52,7 +52,22 @@ then
    # build SOCI
    cmakeCommand=$(which cmake)
    makeCommand=$(which make)
-   sudo $cmakeCommand -G "Unix Makefiles" -DSOCI_TESTS=OFF -DSOCI_CXX11=ON -DSOCI_EMPTY=OFF -DCMAKE_INCLUDE_PATH="$BOOST_DIR/include" -DBoost_USE_STATIC_LIBS=ON -DCMAKE_LIBRARY_PATH="$BOOST_DIR/lib" -DWITH_BOOST=ON -DWITH_POSTGRESQL=ON -DWITH_SQLITE3=ON -DBoost_DEBUG=1 ..   
+   sudo $cmakeCommand -G "Unix Makefiles" \
+       -DSOCI_TESTS=OFF \
+       -DSOCI_CXX11=ON \
+       -DSOCI_EMPTY=OFF \
+       -DCMAKE_INCLUDE_PATH="$BOOST_DIR/include" \
+       -DBoost_USE_STATIC_LIBS=ON \
+       -DCMAKE_LIBRARY_PATH="$BOOST_DIR/lib" \
+       -DWITH_BOOST=ON \
+       -DWITH_POSTGRESQL=ON \
+       -DWITH_SQLITE3=ON \
+       -DWITH_DB2=OFF \
+       -DWITH_MYSQL=OFF \
+       -DWITH_ORACLE=OFF \
+       -DWITH_FIREBIRD=OFF \
+       -DWITH_ODBC=OFF \
+       -DBoost_DEBUG=1 ..   
    sudo $makeCommand
    
    # fix up permissions so bin dir will be readable by others

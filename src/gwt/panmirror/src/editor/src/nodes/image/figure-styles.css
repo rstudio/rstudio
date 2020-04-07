@@ -19,10 +19,6 @@
   cursor: default;
 }
 
-.ProseMirror figure img {
-  max-width: 100%;
-}
-
 /* Note that ::selection and ::-moz-selection can't be combined into a single rule*/
 
 .ProseMirror .ProseMirror-selectednode *::selection {

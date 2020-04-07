@@ -13,6 +13,10 @@
  *
  */
 
+.ProseMirror img {
+  max-width: 100%;
+}
+
 .ProseMirror .pm-image-resize-container.pm-image-resize-active {
   outline: 2px solid;
 }

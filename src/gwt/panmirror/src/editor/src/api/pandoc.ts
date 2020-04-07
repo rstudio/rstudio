@@ -14,6 +14,7 @@
  */
 
 import { Fragment, Mark, Node as ProsemirrorNode, Schema, NodeType } from 'prosemirror-model';
+import { PandocAttr } from './pandoc_attr';
 
 export interface PandocEngine {
   markdownToAst(markdown: string, format: string, options: string[]): Promise<PandocAst>;
@@ -267,22 +268,14 @@ export interface PandocOutput {
   writeArray(content: () => void): void;
   writeAttr(id?: string, classes?: string[], keyvalue?: string[]): void;
   writeText(text: string | null): void;
+  writeLink(href: string, title: string, attr: PandocAttr | null, f: () => void): void;
   writeNode(node: ProsemirrorNode): void;
   writeNodes(parent: ProsemirrorNode): void;
   writeNote(note: ProsemirrorNode): void;
   writeInlines(fragment: Fragment): void;
-  writeRawMarkdown(markdown: Fragment | string): void;
+  writeRawMarkdown(markdown: Fragment | string, escapeSymbols?: boolean): void;
   withOption(option: PandocOutputOption, value: boolean, f: () => void): void;
 }
-
-export type PandocAstOutputFilter = (ast: PandocAst, util: PandocAstOutputFilterUtil) => Promise<PandocAst>;
-
-export interface PandocAstOutputFilterUtil {
-  markdownToAst(markdown: string): Promise<PandocAst>;
-  astToMarkdown(ast: PandocAst, formatOptions: string): Promise<string>;
-}
-
-export type PandocMarkdownOutputFilter = (markdown: string) => string;
 
 // collect the text from a collection of pandoc ast
 // elements (ignores marks, useful for ast elements
@@ -343,4 +336,8 @@ export function mapTokens(tokens: PandocToken[], f: (tok: PandocToken) => Pandoc
   }
 
   return tokens.map(mapToken);
+}
+
+export function tokenTextEscaped(t: PandocToken) {
+  return t.c.replace(/\\/g, `\\\\`);
 }

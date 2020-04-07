@@ -1,7 +1,7 @@
 /*
  * FilesPane.java
  *
- * Copyright (C) 2009-18 by RStudio, PBC
+ * Copyright (C) 2009-20 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -36,6 +36,7 @@ import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.core.client.widget.ToolbarPopupMenu;
+import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.FileDialogs;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
@@ -62,11 +63,12 @@ public class FilesPane extends WorkbenchPane implements Files.Display
    public FilesPane(GlobalDisplay globalDisplay,
                     FileDialogs fileDialogs,
                     Commands commands,
+                    EventBus events,
                     FileTypeRegistry fileTypeRegistry,
                     Session session,
                     Provider<FileCommandToolbar> pFileCommandToolbar)
    {
-      super("Files");
+      super("Files", events);
       globalDisplay_ = globalDisplay;
       commands_ = commands;
       fileDialogs_ = fileDialogs;

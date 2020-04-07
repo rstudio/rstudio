@@ -20,8 +20,14 @@ import { EditorView } from 'prosemirror-view';
 import { ProsemirrorCommand, EditorCommandId } from '../../api/command';
 import { Extension } from '../../api/extension';
 import { canInsertNode } from '../../api/node';
-import { selectionIsImageNode } from '../../api/selection';
-import { pandocAttrSpec, pandocAttrParseDom, pandocAttrToDomAttr, pandocAttrReadAST, pandocAttrAvailable } from '../../api/pandoc_attr';
+import { selectionIsImageNode, selectionIsEmptyParagraph } from '../../api/selection';
+import {
+  pandocAttrSpec,
+  pandocAttrParseDom,
+  pandocAttrToDomAttr,
+  pandocAttrReadAST,
+  pandocAttrAvailable,
+} from '../../api/pandoc_attr';
 import {
   PandocOutput,
   PandocTokenType,
@@ -51,8 +57,12 @@ const IMAGE_TARGET = 2;
 
 const plugin = new PluginKey('image');
 
-const extension = (pandocExtensions: PandocExtensions, _options: EditorOptions, ui: EditorUI, events: EditorEvents): Extension => {
-
+const extension = (
+  pandocExtensions: PandocExtensions,
+  _options: EditorOptions,
+  ui: EditorUI,
+  events: EditorEvents,
+): Extension => {
   const imageAttr = imageAttributesAvailable(pandocExtensions);
 
   return {
@@ -61,7 +71,7 @@ const extension = (pandocExtensions: PandocExtensions, _options: EditorOptions, 
         name: 'image',
         spec: {
           inline: true,
-          attrs: imageNodeAttrsSpec(imageAttr),
+          attrs: imageNodeAttrsSpec(false, imageAttr),
           group: 'inline',
           draggable: true,
           parseDOM: [
@@ -104,7 +114,7 @@ const extension = (pandocExtensions: PandocExtensions, _options: EditorOptions, 
               },
             },
             handleDOMEvents: {
-              drop: imageDrop(schema.nodes.image),
+              drop: imageDrop(),
             },
           },
         }),
@@ -139,9 +149,7 @@ export function pandocImageHandler(figure: boolean, imageAttributes: boolean) {
 }
 
 export function imagePandocOutputWriter(figure: boolean, ui: EditorUI) {
-
   return (output: PandocOutput, node: ProsemirrorNode) => {
-    
     // default writer for markdown images
     let writer = () => {
       output.writeToken(PandocTokenType.Image, () => {
@@ -161,27 +169,33 @@ export function imagePandocOutputWriter(figure: boolean, ui: EditorUI) {
       });
     };
 
-     // see if we need to write raw html
-    const writeHTML = pandocAttrAvailable(node.attrs) &&     // attribs need to be written
-                      !output.extensions.link_attributes &&   // markdown attribs not supported
-                      output.extensions.raw_html;             // raw html is supported
+    // see if we need to write raw html
+    const writeHTML =
+      pandocAttrAvailable(node.attrs) && // attribs need to be written
+      !output.extensions.link_attributes && // markdown attribs not supported
+      output.extensions.raw_html; // raw html is supported
 
     // if we do, then substitute a raw html writer
     if (writeHTML) {
       writer = () => {
-        const imgAttr = imageDOMAttributes(node, true);
-        const html = asHTMLTag('img', imgAttr, true);
+        const imgAttr = imageDOMAttributes(node, true, false);
+        const html = asHTMLTag('img', imgAttr, true, true);
         output.writeRawMarkdown(html);
       };
     }
 
-    // write (wrap in paragraph for figures)
-    if (figure) { 
-      output.writeToken(PandocTokenType.Para, writer);
+    // write (wrap in paragraph and possibly link for  figures)
+    if (figure) {
+      let writeFigure = writer;
+      if (node.attrs.linkTo) {
+        writeFigure = () => {
+          output.writeLink(node.attrs.linkTo, '', null, writer);
+        };
+      }
+      output.writeToken(PandocTokenType.Para, writeFigure);
     } else {
       writer();
     }
-
   };
 }
 
@@ -201,15 +215,16 @@ function imageInlineHTMLReader(schema: Schema, html: string, writer: Prosemirror
 }
 
 export function imageDOMOutputSpec(node: ProsemirrorNode, imageAttributes: boolean): DOMOutputSpec {
-  return [
-    'img',
-    imageDOMAttributes(node, imageAttributes)
-  ];
+  return ['img', imageDOMAttributes(node, imageAttributes)];
 }
 
-export function imageDOMAttributes(node: ProsemirrorNode, imageAttributes: boolean) : { [key: string]: string } {
+export function imageDOMAttributes(
+  node: ProsemirrorNode,
+  imageAttributes: boolean,
+  marker = true,
+): { [key: string]: string } {
   const attr: { [key: string]: string } = {
-    src: node.attrs.src
+    src: node.attrs.src,
   };
   const title = node.attrs.title;
   if (title) {
@@ -219,24 +234,24 @@ export function imageDOMAttributes(node: ProsemirrorNode, imageAttributes: boole
   if (alt) {
     attr.alt = alt;
   }
-  
+
   return {
     ...attr,
-    ...(imageAttributes ? pandocAttrToDomAttr(node.attrs) : {}),
+    ...(imageAttributes ? pandocAttrToDomAttr(node.attrs, marker) : {}),
   };
-  
 }
 
-export function imageNodeAttrsSpec(imageAttributes: boolean) {
+export function imageNodeAttrsSpec(linkTo: boolean, imageAttributes: boolean) {
   return {
     src: {},
     title: { default: null },
     alt: { default: null },
+    ...(linkTo ? { linkTo: { default: null } } : {}),
     ...(imageAttributes ? pandocAttrSpec : {}),
   };
 }
 
-export function imageAttrsFromDOM(el: Element, imageAttributes: boolean) {
+export function imageAttrsFromDOM(el: Element, imageAttributes: boolean, forceAttrs = false) {
   const attrs: { [key: string]: string | null } = {
     src: el.getAttribute('src') || null,
     title: el.getAttribute('title') || null,
@@ -244,15 +259,15 @@ export function imageAttrsFromDOM(el: Element, imageAttributes: boolean) {
   };
   return {
     ...attrs,
-    ...(imageAttributes ? pandocAttrParseDom(el, attrs) : {}),
+    ...(imageAttributes ? pandocAttrParseDom(el, attrs, forceAttrs) : {}),
   };
 }
 
 export function imageAttrsFromHTML(html: string) {
   const parser = new window.DOMParser();
-  const doc = parser.parseFromString(html, "text/html");
+  const doc = parser.parseFromString(html, 'text/html');
   if (doc.body && doc.body.firstChild instanceof HTMLImageElement) {
-    return imageAttrsFromDOM(doc.body.firstChild, true);
+    return imageAttrsFromDOM(doc.body.firstChild, true, true);
   } else {
     return null;
   }
@@ -289,13 +304,12 @@ function imageCommand(editorUI: EditorUI, imageAttributes: boolean) {
       }
 
       // see if we are in an empty paragraph (in that case insert a figure)
-      const { $head } = state.selection;
-      if ($head.parent.type === schema.nodes.paragraph && $head.parent.childCount === 0) {
+      if (selectionIsEmptyParagraph(schema, state.selection)) {
         nodeType = schema.nodes.figure;
       }
 
       // show dialog
-      imageDialog(node, imgDimensions, nodeType, state, dispatch, view, editorUI, imageAttributes);
+      imageDialog(node, imgDimensions, nodeType, view, editorUI, imageAttributes);
     }
 
     return true;

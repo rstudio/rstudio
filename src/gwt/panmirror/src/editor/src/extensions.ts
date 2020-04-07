@@ -35,8 +35,6 @@ import {
   PandocPostprocessorFn,
   PandocBlockReaderFn,
   PandocCodeBlockFilter,
-  PandocAstOutputFilter,
-  PandocMarkdownOutputFilter,
   PandocExtensions,
   PandocInlineHTMLReaderFn,
 } from './api/pandoc';
@@ -62,6 +60,7 @@ import behaviorHistory from './behaviors/history';
 import behaviorSelectAll from './behaviors/select_all';
 import behaviorCursor from './behaviors/cursor';
 import behaviorFind from './behaviors/find';
+import behaviorClearFormatting from './behaviors/clear_formatting';
 
 // behaviors
 import behaviorSmarty from './behaviors/smarty';
@@ -69,7 +68,6 @@ import behaviorAttrEdit from './behaviors/attr_edit';
 import behaviorAttrDuplicateId from './behaviors/attr_duplicate_id';
 import behaviorTrailingP from './behaviors/trailing_p';
 import behaviorOutline from './behaviors/outline';
-import behaviorBraceMatch from './behaviors/bracematch';
 import behaviorTextFocus from './behaviors/text_focus';
 
 // marks
@@ -79,6 +77,8 @@ import markSubscript from './marks/subscript';
 import markSmallcaps from './marks/smallcaps';
 import markQuoted from './marks/quoted';
 import markRawInline from './marks/raw_inline/raw_inline';
+import markRawTex from './marks/raw_inline/raw_tex';
+import markRawHTML from './marks/raw_inline/raw_html';
 import markMath from './marks/math/math';
 import markCite from './marks/cite/cite';
 import markSpan from './marks/span';
@@ -126,6 +126,7 @@ export function initExtensions(
     behaviorSelectAll,
     behaviorCursor,
     behaviorFind,
+    behaviorClearFormatting,
   ]);
 
   // optional extensions
@@ -136,7 +137,6 @@ export function initExtensions(
     behaviorAttrDuplicateId,
     behaviorTrailingP,
     behaviorOutline,
-    behaviorBraceMatch,
     behaviorTextFocus,
 
     // marks
@@ -145,6 +145,8 @@ export function initExtensions(
     markSubscript,
     markSmallcaps,
     markQuoted,
+    markRawTex,
+    markRawHTML,
     markRawInline,
     markMath,
     markCite,
@@ -301,36 +303,6 @@ export class ExtensionManager {
       }
     });
     return writers;
-  }
-
-  public pandocAstOutputFilters(): readonly PandocAstOutputFilter[] {
-    const filters: PandocAstOutputFilter[] = [];
-    this.pandocMarks().forEach((mark: PandocMark) => {
-      if (mark.pandoc.astOutputFilter) {
-        filters.push(mark.pandoc.astOutputFilter);
-      }
-    });
-    this.pandocNodes().forEach((node: PandocNode) => {
-      if (node.pandoc.astOutputFilter) {
-        filters.push(node.pandoc.astOutputFilter);
-      }
-    });
-    return filters;
-  }
-
-  public pandocMarkdownOutputFilters(): readonly PandocMarkdownOutputFilter[] {
-    const filters: PandocMarkdownOutputFilter[] = [];
-    this.pandocMarks().forEach((mark: PandocMark) => {
-      if (mark.pandoc.markdownOutputFilter) {
-        filters.push(mark.pandoc.markdownOutputFilter);
-      }
-    });
-    this.pandocNodes().forEach((node: PandocNode) => {
-      if (node.pandoc.markdownOutputFilter) {
-        filters.push(node.pandoc.markdownOutputFilter);
-      }
-    });
-    return filters;
   }
 
   public commands(schema: Schema, ui: EditorUI, mac: boolean): readonly ProsemirrorCommand[] {

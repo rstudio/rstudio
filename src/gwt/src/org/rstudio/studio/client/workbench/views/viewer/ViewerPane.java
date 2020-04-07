@@ -1,7 +1,7 @@
 /*
  * ViewerPane.java
  *
- * Copyright (C) 2009-19 by RStudio, PBC
+ * Copyright (C) 2009-20 by RStudio, PBC
  *
  * This program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
@@ -56,10 +56,9 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
                      ViewerServerOperations server,
                      HtmlMessageListener htmlMessageListener)
    {
-      super("Viewer");
+      super("Viewer", events);
       commands_ = commands;
       globalDisplay_ = globalDisplay;
-      events_ = events;
       server_ = server;
       htmlMessageListener_ = htmlMessageListener;
       ensureWidget();
@@ -158,7 +157,7 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
       navigate(URIConstants.ABOUT_BLANK, false);
       return new AutoGlassPanel(frame_);
    }
-   
+
    @Override
    public void navigate(String url)
    {
@@ -341,7 +340,6 @@ public class ViewerPane extends WorkbenchPane implements ViewerPresenter.Display
    private RmdPreviewParams rmdPreviewParams_;
    private final Commands commands_;
    private final GlobalDisplay globalDisplay_;
-   private final EventBus events_;
    private final ViewerServerOperations server_;
    
    private Toolbar toolbar_;

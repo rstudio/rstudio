@@ -28,7 +28,7 @@ namespace http {
 URL::URL(const std::string& absoluteURL)
 {
    std::string protocol, host, path;
-   boost::regex re("(http|https)://([^/#?]+)(.*)", boost::regex::icase);
+   boost::regex re("(http|https|file|ftp|ftps)://([^/#?]+)(.*)", boost::regex::icase);
    boost::cmatch matches ;
    if (regex_utils::match(absoluteURL.c_str(), matches, re))
    {

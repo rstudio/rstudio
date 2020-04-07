@@ -16,4 +16,5 @@
 export interface TableCapabilities {
   captions: boolean;
   headerOptional: boolean;
+  multiline: boolean;
 }

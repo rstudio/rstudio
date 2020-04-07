@@ -1,7 +1,7 @@
 /*
  * WorkbenchTabPanel.java
  *
- * Copyright (C) 2009-12 by RStudio, PBC
+ * Copyright (C) 2009-20 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -28,6 +28,7 @@ import com.google.gwt.user.client.ui.ProvidesResize;
 import com.google.gwt.user.client.ui.RequiresResize;
 import com.google.gwt.user.client.ui.Widget;
 
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.HandlerRegistrations;
 import org.rstudio.core.client.events.*;
 import org.rstudio.core.client.layout.LogicalWindow;
@@ -173,10 +174,15 @@ class WorkbenchTabPanel
       
       tab.addEnsureVisibleHandler(ensureVisibleEvent ->
       {
-         // First ensure that we ourselves are visible
-         fireEvent(new EnsureVisibleEvent(ensureVisibleEvent.getActivate()));
-         if (ensureVisibleEvent.getActivate())
-            tabPanel_.selectTab(widget);
+         if (!neverVisible_)
+         {
+            // First ensure that we ourselves are visible
+            int myInt = tabPanel_.getWidgetCount();
+            LogicalWindow window = getParentWindow();
+            fireEvent(new EnsureVisibleEvent(ensureVisibleEvent.getActivate()));
+            if (ensureVisibleEvent.getActivate())
+               tabPanel_.selectTab(widget);
+         }
       });
       
       tab.addEnsureHeightHandler(ensureHeightEvent -> fireEvent(ensureHeightEvent));
@@ -218,8 +224,10 @@ class WorkbenchTabPanel
       
       // deal with migrating from n+1 to n tabs, and with -1 values
       int safeIndex = Math.min(Math.max(0, tabIndex), tabs_.size() - 1);
-      
-      tabPanel_.selectTab(safeIndex);
+      if (safeIndex >= 0)  
+         tabPanel_.selectTab(safeIndex);
+      else
+         Debug.logToConsole("Attempted to select tab in empty tab panel.");
    }
    
    public void selectTab(WorkbenchTab pane)
@@ -262,6 +270,11 @@ class WorkbenchTabPanel
       return tabPanel_.getSelectedIndex();
    }
    
+   public int getWidgetCount()
+   {
+      return tabPanel_.getWidgetCount();
+   }
+
    public HandlerRegistration addSelectionHandler(SelectionHandler<Integer> integerSelectionHandler)
    {
       return tabPanel_.addSelectionHandler(integerSelectionHandler);
@@ -298,11 +311,17 @@ class WorkbenchTabPanel
       return parentWindow_;
    }
 
+   public void setNeverVisible(boolean value)
+   {
+      neverVisible_ = value;
+   }
+
    private ModuleTabLayoutPanel tabPanel_;
    private ArrayList<WorkbenchTab> tabs_ = new ArrayList<>();
    private final LogicalWindow parentWindow_;
    private final HandlerRegistrations releaseOnUnload_ = new HandlerRegistrations();
    private boolean clearing_ = false;
+   private boolean neverVisible_ = false;
    private LayoutPanel panel_;
    private HTML utilPanel_;
 }

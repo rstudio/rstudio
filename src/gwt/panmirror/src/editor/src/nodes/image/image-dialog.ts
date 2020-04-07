@@ -13,8 +13,7 @@
  *
  */
 
-import { Node as ProsemirrorNode, NodeType, Fragment } from 'prosemirror-model';
-import { EditorState, Transaction } from 'prosemirror-state';
+import { Node as ProsemirrorNode, NodeType, Fragment, Mark } from 'prosemirror-model';
 import { EditorView } from 'prosemirror-view';
 
 import { insertAndSelectNode } from '../../api/node';
@@ -29,15 +28,18 @@ export async function imageDialog(
   node: ProsemirrorNode | null,
   dims: ImageDimensions | null,
   nodeType: NodeType,
-  state: EditorState,
-  dispatch: (tr: Transaction<any>) => void,
-  view: EditorView | undefined,
+  view: EditorView,
   editorUI: EditorUI,
   imageAttributes: boolean,
 ) {
+  // alias schema
+  const schema = view.state.schema;
+
   // if we are being called with an existing node then read it's attributes
   let content = Fragment.empty;
   let image: ImageProps = { src: null };
+  let linkMark: Mark | undefined;
+  let marks: Mark[] = [];
   if (node && dims && node.type === nodeType) {
     // base attributess
     image = {
@@ -55,6 +57,15 @@ export async function imageDialog(
     // top level image properties if necessary
     image = imagePropsWithSizes(image, dims);
 
+    // record marks / linkTo
+    if (nodeType === schema.nodes.image) {
+      marks = node.marks;
+      linkMark = node.marks.find(mark => mark.type === schema.marks.link);
+      if (linkMark) {
+        image.linkTo = linkMark.attrs.href;
+      }
+    }
+
     // content (will be caption for figures)
     content = node.content;
   } else {
@@ -63,7 +74,7 @@ export async function imageDialog(
   }
 
   // determine the type
-  const type = nodeType === state.schema.nodes.image ? ImageType.Image : ImageType.Figure;
+  const type = nodeType === view.state.schema.nodes.image ? ImageType.Image : ImageType.Figure;
 
   // edit the image
   const result = await editorUI.dialogs.editImage(image, dims, editorUI.context.getResourceDir(), imageAttributes);
@@ -73,7 +84,7 @@ export async function imageDialog(
     // content if the alt/caption actually changed (as it will blow away formatting)
     if (type === ImageType.Figure && image.alt !== result.alt) {
       if (result.alt) {
-        content = Fragment.from(state.schema.text(result.alt));
+        content = Fragment.from(view.state.schema.text(result.alt));
       } else {
         content = Fragment.empty;
       }
@@ -103,12 +114,27 @@ export async function imageDialog(
     // merge updated keyvalue
     const imageProps = { ...result, keyvalue };
 
+    // update or create link mark as necessary
+    if (nodeType === schema.nodes.image) {
+      if (linkMark) {
+        marks = linkMark.removeFromSet(marks);
+        if (imageProps.linkTo) {
+          linkMark = linkMark.type.create({ ...linkMark.attrs, href: imageProps.linkTo });
+        }
+      } else if (imageProps.linkTo) {
+        linkMark = schema.marks.link.create({ href: imageProps.linkTo });
+      }
+      if (imageProps.linkTo && linkMark) {
+        marks = linkMark.addToSet(marks);
+      }
+    }
+
     // create the image
-    const newImage = nodeType.createAndFill(imageProps, content);
+    const newImage = nodeType.createAndFill(imageProps, content, marks);
 
     // insert and select
     if (newImage) {
-      insertAndSelectNode(newImage, state, dispatch);
+      insertAndSelectNode(view, newImage);
     }
   }
 

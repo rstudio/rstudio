@@ -17,7 +17,7 @@ import { Mark, MarkSpec, MarkType, ResolvedPos, Node as ProsemirrorNode } from '
 import { EditorState, Selection } from 'prosemirror-state';
 import { InputRule } from 'prosemirror-inputrules';
 
-import { PandocTokenReader, PandocMarkWriterFn, PandocAstOutputFilter, PandocMarkdownOutputFilter } from './pandoc';
+import { PandocTokenReader, PandocMarkWriterFn } from './pandoc';
 import { mergedTextNodes } from './text';
 import { findChildrenByMark } from 'prosemirror-utils';
 import { MarkTransaction } from './transaction';
@@ -32,8 +32,6 @@ export interface PandocMark {
       priority: number;
       write: PandocMarkWriterFn;
     };
-    readonly astOutputFilter?: PandocAstOutputFilter;
-    readonly markdownOutputFilter?: PandocMarkdownOutputFilter;
   };
 }
 
@@ -212,6 +210,31 @@ export function removeInvalidatedMarks(
       if (!re.test(text)) {
         tr.removeMark(markedRange.from, markedRange.to, markType);
         tr.removeStoredMark(markType);
+      }
+    }
+  });
+}
+
+export function splitInvalidatedMarks(
+  tr: MarkTransaction,
+  node: ProsemirrorNode,
+  pos: number,
+  validLength: (text: string) => number,
+  markType: MarkType,
+) {
+  const hasMarkType = (nd: ProsemirrorNode) => markType.isInSet(nd.marks);
+  const markedNodes = findChildrenByMark(node, markType, true);
+  markedNodes.forEach(markedNode => {
+    const mark = hasMarkType(markedNode.node);
+    if (mark) {
+      const from = pos + 1 + markedNode.pos;
+      const markRange = getMarkRange(tr.doc.resolve(from), markType);
+      if (markRange) {
+        const text = tr.doc.textBetween(markRange.from, markRange.to);
+        const length = validLength(text);
+        if (length > -1 && length !== text.length) {
+          tr.removeMark(markRange.from + length, markRange.to, markType);
+        }
       }
     }
   });

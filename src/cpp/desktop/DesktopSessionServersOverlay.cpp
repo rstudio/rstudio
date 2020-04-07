@@ -75,6 +75,11 @@ SessionServer SessionServer::fromJson(const QJsonObject& sessionServerJson)
    return SessionServer();
 }
 
+bool SessionServer::cookieBelongs(const QNetworkCookie& cookie) const
+{
+   return false;
+}
+
 Error SessionServer::test()
 {
    return Success();

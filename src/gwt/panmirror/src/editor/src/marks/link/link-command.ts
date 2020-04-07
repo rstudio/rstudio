@@ -15,8 +15,9 @@
 
 import { MarkType } from 'prosemirror-model';
 import { LinkEditorFn, LinkProps } from '../../api/ui';
-import { EditorState, Transaction } from 'prosemirror-state';
+import { EditorState, Transaction, TextSelection } from 'prosemirror-state';
 import { EditorView } from 'prosemirror-view';
+import { findChildren } from 'prosemirror-utils';
 
 import { markIsActive, getMarkAttrs, getSelectionMarkRange, getMarkRange } from '../../api/mark';
 
@@ -39,11 +40,20 @@ export function linkCommand(markType: MarkType, onEditLink: LinkEditorFn, capabi
 
         // get link attributes if we have them
         let link: { [key: string]: any } = {};
-        link.text = state.doc.textBetween(range.from, range.to);
+
+        // only get text if this is a text selection
+        if (state.selection instanceof TextSelection) {
+          link.text = state.doc.textBetween(range.from, range.to);
+          capabilities.text = true;
+        } else {
+          capabilities.text = false;
+        }
+
+        // get other attributes
         if (markIsActive(state, markType)) {
           link = {
             ...link,
-            ...getMarkAttrs(state.doc, state.selection, markType),
+            ...getMarkAttrs(state.doc, range, markType),
           };
         }
 
@@ -66,7 +76,7 @@ export function linkCommand(markType: MarkType, onEditLink: LinkEditorFn, capabi
             const mark = markType.create(result.link);
 
             // if the content changed then replace the range, otherwise
-            if (link.text !== result.link.text) {
+            if (capabilities.text && link.text !== result.link.text) {
               const node = markType.schema.text(result.link.text, [mark]);
               // if we are editing an existing link then replace it, otherwise replace the selection
               if (link.href) {
@@ -76,6 +86,20 @@ export function linkCommand(markType: MarkType, onEditLink: LinkEditorFn, capabi
               }
             } else {
               tr.addMark(range.from, range.to, mark);
+            }
+
+            // if it's a heading link then update heading to indicate it has an associated link
+            if (result.link.type === LinkType.Heading) {
+              const heading = findChildren(
+                tr.doc,
+                node => node.type === state.schema.nodes.heading && node.textContent === result.link.heading,
+              );
+              if (heading.length > 0) {
+                tr.setNodeMarkup(heading[0].pos, state.schema.nodes.heading, {
+                  ...heading[0].node.attrs,
+                  link: result.link.heading,
+                });
+              }
             }
           }
           dispatch(tr);
@@ -93,7 +117,7 @@ export function linkCommand(markType: MarkType, onEditLink: LinkEditorFn, capabi
 
 export function removeLinkCommand(markType: MarkType) {
   return (state: EditorState, dispatch?: (tr: Transaction<any>) => void, view?: EditorView) => {
-    const range = getMarkRange(state.selection.$head, markType);
+    const range = getMarkRange(state.selection.$from, markType);
     if (!range) {
       return false;
     }

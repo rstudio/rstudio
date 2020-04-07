@@ -21,12 +21,9 @@ import {
   PandocNodeWriter,
   PandocApiVersion,
   PandocMarkWriter,
-  PandocAst,
   PandocPreprocessorFn,
   PandocBlockReaderFn,
   PandocCodeBlockFilter,
-  PandocAstOutputFilter,
-  PandocMarkdownOutputFilter,
   PandocPostprocessorFn,
   PandocInlineHTMLReaderFn,
 } from '../api/pandoc';
@@ -53,8 +50,6 @@ export class PandocConverter {
   private readonly codeBlockFilters: readonly PandocCodeBlockFilter[];
   private readonly nodeWriters: readonly PandocNodeWriter[];
   private readonly markWriters: readonly PandocMarkWriter[];
-  private readonly astOutputFilters: readonly PandocAstOutputFilter[];
-  private readonly markdownOutputFilters: readonly PandocMarkdownOutputFilter[];
   private readonly pandoc: PandocEngine;
 
   private apiVersion: PandocApiVersion | null;
@@ -70,8 +65,6 @@ export class PandocConverter {
     this.codeBlockFilters = extensions.pandocCodeBlockFilters();
     this.nodeWriters = extensions.pandocNodeWriters();
     this.markWriters = extensions.pandocMarkWriters();
-    this.astOutputFilters = extensions.pandocAstOutputFilters();
-    this.markdownOutputFilters = extensions.pandocMarkdownOutputFilters();
 
     this.pandoc = pandoc;
     this.apiVersion = null;
@@ -88,7 +81,14 @@ export class PandocConverter {
 
     const ast = await this.pandoc.markdownToAst(markdown, format, []);
     this.apiVersion = ast['pandoc-api-version'];
-    let doc = pandocToProsemirror(ast, this.schema, this.readers, this.blockReaders, this.inlineHTMLReaders, this.codeBlockFilters);
+    let doc = pandocToProsemirror(
+      ast,
+      this.schema,
+      this.readers,
+      this.blockReaders,
+      this.inlineHTMLReaders,
+      this.codeBlockFilters,
+    );
 
     // run post-processors
     this.postprocessors.forEach(postprocessor => {
@@ -114,9 +114,6 @@ export class PandocConverter {
     // adjust format
     let format = this.adjustedFormat(pandocFormat.fullName);
 
-    // run ast filters
-    const ast = await this.applyAstOutputFilters(output.ast, format, options);
-
     // prepare options
     let pandocOptions: string[] = [];
     if (options.atxHeaders) {
@@ -136,36 +133,9 @@ export class PandocConverter {
     format = pandocFormatWith(format, disable, '');
 
     // render to markdown
-    let markdown = await this.pandoc.astToMarkdown(ast, format, pandocOptions);
-
-    // apply markdown filters
-    markdown = this.applyMarkdownOutputFilters(markdown);
+    const markdown = await this.pandoc.astToMarkdown(output.ast, format, pandocOptions);
 
     // return markdown
-    return markdown;
-  }
-
-  private async applyAstOutputFilters(ast: PandocAst, format: string, options: PandocWriterOptions) {
-    let filteredAst = ast;
-
-    for (const filter of this.astOutputFilters) {
-      filteredAst = await filter(filteredAst, {
-        astToMarkdown: (pandocAst: PandocAst, formatOptions: string) => {
-          return this.pandoc.astToMarkdown(pandocAst, format + formatOptions, []);
-        },
-        markdownToAst: (markdown: string) => {
-          return this.pandoc.markdownToAst(markdown, format, this.wrapColumnOptions(options));
-        },
-      });
-    }
-
-    return filteredAst;
-  }
-
-  private applyMarkdownOutputFilters(markdown: string) {
-    this.markdownOutputFilters.forEach(filter => {
-      markdown = filter(markdown);
-    });
     return markdown;
   }
 

@@ -15,32 +15,33 @@
 
 import { Node as ProsemirrorNode } from 'prosemirror-model';
 
-import { Extension } from '../api/extension';
-import { PandocOutput, PandocToken, PandocTokenType } from '../api/pandoc';
+import { PandocOutput, PandocToken, PandocTokenType, PandocExtensions } from '../api/pandoc';
 
-const extension: Extension = {
-  nodes: [
-    {
-      name: 'text',
-      spec: {
-        group: 'inline',
-        toDOM(node: ProsemirrorNode): any {
-          return node.text;
+const extension = (pandocExtensions: PandocExtensions) => {
+  return {
+    nodes: [
+      {
+        name: 'text',
+        spec: {
+          group: 'inline',
+          toDOM(node: ProsemirrorNode): any {
+            return node.text;
+          },
+        },
+        pandoc: {
+          readers: [
+            { token: PandocTokenType.Str, text: true, getText: (t: PandocToken) => t.c },
+            { token: PandocTokenType.Space, text: true, getText: () => ' ' },
+            { token: PandocTokenType.SoftBreak, text: true, getText: () => ' ' },
+          ],
+          writer: (output: PandocOutput, node: ProsemirrorNode) => {
+            const text = node.textContent;
+            output.writeText(text);
+          },
         },
       },
-      pandoc: {
-        readers: [
-          { token: PandocTokenType.Str, text: true, getText: (tok: PandocToken) => tok.c },
-          { token: PandocTokenType.Space, text: true, getText: () => ' ' },
-          { token: PandocTokenType.SoftBreak, text: true, getText: () => ' ' },
-        ],
-        writer: (output: PandocOutput, node: ProsemirrorNode) => {
-          const text = node.textContent;
-          output.writeText(text);
-        },
-      },
-    },
-  ],
+    ],
+  };
 };
 
 export default extension;

@@ -50,7 +50,7 @@ const extension: Extension = {
   ],
 
   commands: (schema: Schema) => {
-    return [new WrapCommand(EditorCommandId.Blockquote, ['Mod->'], schema.nodes.blockquote)];
+    return [new WrapCommand(EditorCommandId.Blockquote, [], schema.nodes.blockquote)];
   },
 
   inputRules: (schema: Schema) => {

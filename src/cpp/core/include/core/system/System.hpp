@@ -252,6 +252,8 @@ void log(log::LogLevel level,
 
 const char* logLevelToStr(log::LogLevel level);
 
+log::LoggerType loggerType(const std::string& logSection = "");
+
 log::LogLevel lowestLogLevel();
 
 // filesystem

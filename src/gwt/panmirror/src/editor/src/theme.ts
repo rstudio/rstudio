@@ -14,6 +14,7 @@
  */
 
 export interface EditorTheme {
+  darkMode: boolean;
   cursorColor: string;
   selectionColor: string;
   nodeSelectionColor: string;
@@ -63,6 +64,7 @@ export interface CodeTheme {
 
 export function defaultTheme(): EditorTheme {
   return {
+    darkMode: false,
     cursorColor: 'black',
     selectionColor: '#8cf',
     nodeSelectionColor: 'rgb(102,155,243)',
@@ -185,12 +187,12 @@ export function applyTheme(theme: EditorTheme) {
     .pm-selected-node-border-color {
       border-color: ${theme.nodeSelectionColor} !important;
     }
-    .editor_dark .pm-selected-node-outline-color,
-    .editor_dark .ProseMirror-selectednode {
-      outline-color: ${theme.linkTextColor} !important;
+    .pm-dark-mode .pm-selected-node-outline-color,
+    .pm-dark-mode .ProseMirror-selectednode {
+      outline-color: ${theme.nodeSelectionColor} !important;
     }
-    .editor_dark .pm-selected-node-border-color {
-      border-color: ${theme.linkTextColor} !important;
+    .pm-dark-mode .pm-selected-node-border-color {
+      border-color: ${theme.nodeSelectionColor} !important;
     }
     .pm-background-color *::selection {
       background-color: ${theme.selectionColor} !important;

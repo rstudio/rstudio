@@ -61,6 +61,7 @@ public:
 public Q_SLOTS:
    void quit();
    void loadUrl(const QUrl& url);
+   void loadRequest(const QWebEngineHttpRequest& request);
    void loadHtml(const QString& html);
    void setMenuBar(QMenuBar *pMenuBar);
    void invokeCommand(QString commandId);
@@ -115,7 +116,9 @@ private:
    void onUrlChanged(QUrl url);
    void onLoadFinished(bool ok);
 
-   void saveRemoteCookies();
+   void saveRemoteAuthCookies(const boost::function<QList<QNetworkCookie>()>& loadCookies,
+                              const boost::function<void(QList<QNetworkCookie>)>& saveCookies,
+                              bool saveSessionCookies);
 
 private:
    bool isRemoteDesktop_;

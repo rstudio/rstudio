@@ -27,6 +27,7 @@ set(SERVER_SOURCE_FILES
    ServerErrorCategory.cpp
    ServerEval.cpp
    ServerInit.cpp
+   ServerLoginPages.cpp
    ServerMain.cpp
    ServerMainOverlay.cpp
    ServerMeta.cpp
@@ -41,6 +42,7 @@ set(SERVER_SOURCE_FILES
    ServerSessionProxyOverlay.cpp
    ServerSessionManager.cpp
    auth/ServerAuthHandler.cpp
+   auth/ServerAuthCommon.cpp
    auth/ServerSecureUriHandler.cpp
    auth/ServerValidateUser.cpp
    ${CMAKE_CURRENT_BINARY_DIR}/ServerAddins.cpp
@@ -174,6 +176,13 @@ configure_file("${CMAKE_CURRENT_SOURCE_DIR}/${RSERVER_THEME_README}"
                "${CMAKE_CURRENT_BINARY_DIR}/extras/${RSERVER_THEME_README}")
 install(FILES "${CMAKE_CURRENT_BINARY_DIR}/extras/${RSERVER_THEME_README}"
        DESTINATION "extras/themes")
+
+# do the same for fonts
+set (RSERVER_FONT_README "fonts/README.md")
+configure_file("${CMAKE_CURRENT_SOURCE_DIR}/${RSERVER_FONT_README}"
+               "${CMAKE_CURRENT_BINARY_DIR}/extras/${RSERVER_FONT_README}")
+install(FILES "${CMAKE_CURRENT_BINARY_DIR}/extras/${RSERVER_FONT_README}"
+       DESTINATION "extras/fonts")
 
 # install db migration scripts
 file(GLOB DB_MIGRATION_FILES_SQL "db/*.sql")

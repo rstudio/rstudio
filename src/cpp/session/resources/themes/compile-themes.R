@@ -500,7 +500,7 @@
 .rs.addFunction("createNodeSelectorRule", function(themeName, isDark, overrides = list()) {
    nodeSelectorColor <- overrides[[themeName]]
    if (is.null(nodeSelectorColor))
-      nodeSelectorColor <- if (isDark) "#007B97" else "rgb(102, 155, 243)"
+      nodeSelectorColor <- if (isDark) "#fb6f1c" else "rgb(102, 155, 243)"
    
    sprintf(paste(sep = "\n",
                  ".ace_node-selector {",

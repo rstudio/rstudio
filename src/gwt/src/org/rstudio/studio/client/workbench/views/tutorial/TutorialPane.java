@@ -1,7 +1,7 @@
 /*
  * TutorialPane.java
  *
- * Copyright (C) 2009-19 by RStudio, PBC
+ * Copyright (C) 2009-20 by RStudio, PBC
  *
  * This program is licensed to you under the terms of version 3 of the
  * GNU Affero General Public License. This program is distributed WITHOUT
@@ -74,10 +74,9 @@ public class TutorialPane
                           DependencyManager dependencies,
                           TutorialServerOperations server)
    {
-      super("Tutorial");
+      super("Tutorial", events);
       
       globalDisplay_ = globalDisplay;
-      events_        = events;
       commands_      = commands;
       session_       = session;
       dependencies_  = dependencies;
@@ -125,7 +124,7 @@ public class TutorialPane
       
       return toolbar_;
    }
-   
+
    @Override
    public void back()
    {
@@ -546,7 +545,6 @@ public class TutorialPane
    
    // Injected ----
    private final GlobalDisplay globalDisplay_;
-   private final EventBus events_;
    private final Commands commands_;
    private final Session session_;
    private final DependencyManager dependencies_;

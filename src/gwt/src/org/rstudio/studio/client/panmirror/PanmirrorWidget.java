@@ -57,6 +57,8 @@ import com.google.gwt.event.dom.client.HasChangeHandlers;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HandlerManager;
 import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.layout.client.Layout.AnimationCallback;
+import com.google.gwt.layout.client.Layout.Layer;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.DockLayoutPanel;
 import com.google.gwt.user.client.ui.HTML;
@@ -104,7 +106,7 @@ public class PanmirrorWidget extends DockLayoutPanel implements
          new PromiseWithProgress<PanmirrorEditor>(
             PanmirrorEditor.create(editorWidget.editorParent_.getElement(), context, options, code),
             null,
-            kPromiseProgressDelayMs,
+            kCreationProgressDelayMs,
             editor -> {
                editorWidget.attachEditor(editor);
                completed.execute(editorWidget);
@@ -311,7 +313,7 @@ public class PanmirrorWidget extends DockLayoutPanel implements
       new PromiseWithProgress<Boolean>(
          editor_.setMarkdown(code, emitUpdate),
          false,
-         kPromiseProgressDelayMs,
+         kSerializationProgressDelayMs,
          completed
       );
    }
@@ -320,7 +322,7 @@ public class PanmirrorWidget extends DockLayoutPanel implements
       new PromiseWithProgress<PanmirrorCode>(
          editor_.getMarkdown(options, cursorSentinel),
          null,
-         kPromiseProgressDelayMs,
+         kSerializationProgressDelayMs,
          completed   
       );
    }
@@ -345,11 +347,23 @@ public class PanmirrorWidget extends DockLayoutPanel implements
          if (animate)
          {
             int duration = (userPrefs_.reducedMotion().getValue() ? 0 : 500);
-            animate(duration);
+            animate(duration, new AnimationCallback() {
+               @Override
+               public void onAnimationComplete()
+               {
+                  editor_.resize();
+               }
+               @Override
+               public void onLayout(Layer layer, double progress) 
+               {
+                  editor_.resize();
+               }
+            });
          }
          else
          {
             forceLayout();
+            editor_.resize();
          }
       }
    }
@@ -514,7 +528,8 @@ public class PanmirrorWidget extends DockLayoutPanel implements
    private final HandlerRegistrations registrations_ = new HandlerRegistrations();
    private final ArrayList<JsVoidFunction> editorEventUnsubscribe_ = new ArrayList<JsVoidFunction>();
    
-   private static final int kPromiseProgressDelayMs = 5000;
+   private static final int kCreationProgressDelayMs = 2000;
+   private static final int kSerializationProgressDelayMs = 5000;
 }
 
 

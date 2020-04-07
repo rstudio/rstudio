@@ -1,19 +1,18 @@
 #!/usr/bin/env bash
 set -e
 
-BRANCH=rstudio/v1.3
-GWTRELEASE=tags/2.8.2
+BRANCH=rstudio/v1.4
 #
-# RStudio fork of GWT started with BRANCH off of GWTRELEASE plus our changes.
+# RStudio fork of GWT started with BRANCH off of GWT 2.8.2 plus our changes.
 # That is, started life with:
 #
 #   git branch rstudio/v1.3 tags/2.8.2
 #   git checkout rstudio/v1.3
 #   git push --set-upstream origin rstudio/v1.3
 #
-# To take a new release of GWT, update GWTRELEASE and run this script to merge subsequent
-# GWT changes into our branch and rebuild with build-gwt (after resolving any merge conflicts).
-# Once successful, be sure to make PR of changes to rstudio/gwt as well as to rstudio itself.
+# To take a new release of GWT, merge new tag (e.g. tags/2.9.0) into our branch and rebuild with
+# build-gwt (after resolving any merge conflicts). Once successful, be sure to make PR of changes
+# to rstudio/gwt as well as to rstudio itself.
 #
 # To start work on a new release of RStudio, manually create a new branch, e.g. rstudio/v1.4,
 # from the desired starting commit (most likely the head of the prior rstudio/v1.x branch),
@@ -23,10 +22,6 @@ GWTRELEASE=tags/2.8.2
 #   git checkout rstudio/v1.4
 #   git push --set-upstream origin rstudio/1.4
 #
-# For new version of RStudio, recommend giving custom GWT build a new version name in 
-# "build-gwt" and in "build.xml" to make it easier to work on multiple RStudio releases in the
-# same cloned repo..
-# 
 
 # check out our copy of gwt and build tools
 if [ ! -d gwt ]; then

@@ -276,6 +276,11 @@ Error initialize()
    return Success();
 }
 
+bool canStaySignedIn()
+{
+   return true;
+}
+
 Error isUserLicensed(const std::string& username,
                      bool* pLicensed)
 {

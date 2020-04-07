@@ -55,6 +55,31 @@ bool validateUser(const std::string& username,
       return false;
    }
 
+   // we would expect that obtaining the same user by its own uid should
+   // return the same username but if it doesn't, there is another user with
+   // same uid and we bail to prevent unexpected behaviors down the road
+   core::system::User tmpUser;
+   error = core::system::User::getUserFromIdentifier(user.getUserId(), tmpUser);
+   if (error)
+   {
+       // log the error only if it is unexpected
+       if (!core::system::isUserNotFoundError(error))
+           LOG_ERROR(error);
+
+       // not found either due to non-existence or an unexpected error
+       return false;
+   }
+   if (user.getUsername() != tmpUser.getUsername())
+   {
+       boost::format fmt(
+               "User '%1%' could not be authenticated "
+               "because another user with the same UID %2% exists. "
+               "The conflicting user is '%3%'.");
+       std::string msg = boost::str(fmt % user.getUsername() % user.getUserId() % tmpUser.getUsername());
+       LOG_ERROR_MESSAGE(msg);
+       return false;
+   }
+
    // validate minimum user id
    if (user.getUserId() < minimumUserId)
    {

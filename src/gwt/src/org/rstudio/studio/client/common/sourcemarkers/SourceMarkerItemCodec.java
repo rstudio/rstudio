@@ -1,7 +1,7 @@
 /*
  * SourceMarkerItemCodec.java
  *
- * Copyright (C) 2009-12 by RStudio, PBC
+ * Copyright (C) 2009-20 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -19,6 +19,7 @@ import com.google.gwt.dom.client.*;
 import org.rstudio.core.client.CodeNavigationTarget;
 import org.rstudio.core.client.FilePosition;
 import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.theme.ThemeFonts;
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.widget.FontSizer;
 import org.rstudio.core.client.widget.HeaderBreaksItemCodec;
@@ -52,7 +53,7 @@ public class SourceMarkerItemCodec
    public TableRowElement getRowForItem(SourceMarker entry)
    {
       TableRowElement tr = Document.get().createTRElement();
-      tr.addClassName(ThemeResources.INSTANCE.themeStyles().fixedWidthFont());
+      tr.addClassName(ThemeFonts.getFixedWidthClass());
       FontSizer.applyNormalFontSize(tr);
       
       tr.setAttribute(DATA_PATH,

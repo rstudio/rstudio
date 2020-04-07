@@ -55,6 +55,7 @@ public class PanmirrorToolbarCommands
       add(PanmirrorCommands.LineBlock, "Line Block", Roles.getMenuitemcheckboxRole());
       add(PanmirrorCommands.Div, "Section/Div...");
       add(PanmirrorCommands.AttrEdit, "Edit Attributes...");
+      add(PanmirrorCommands.ClearFormatting, "Clear Formatting");
       
       // lists
       add(PanmirrorCommands.BulletList, "Bullet List", Roles.getMenuitemcheckboxRole(), icons.BULLET_LIST);
@@ -91,17 +92,23 @@ public class PanmirrorToolbarCommands
       add(PanmirrorCommands.Footnote, "Footnote");
       add(PanmirrorCommands.HorizontalRule, "Horizontal Rule");
       add(PanmirrorCommands.ParagraphInsert, "Paragraph");
-      add(PanmirrorCommands.InlineMath, "Inline Math");
-      add(PanmirrorCommands.DisplayMath, "Display Math");
-      add(PanmirrorCommands.InlineLatex, "Inline LaTeX");
-      add(PanmirrorCommands.RawInline, "Raw Inline...");
-      add(PanmirrorCommands.RawBlock, "Raw Block...");
       add(PanmirrorCommands.YamlMetadata, "YAML Block");
       add(PanmirrorCommands.RmdChunk, "Code Chunk", icons.RMD_CHUNK);
+      add(PanmirrorCommands.InlineMath, "Inline Math");
+      add(PanmirrorCommands.DisplayMath, "Display Math");
       add(PanmirrorCommands.DefinitionList, "Definition List");
       add(PanmirrorCommands.DefinitionTerm, "Term");
       add(PanmirrorCommands.DefinitionDescription, "Description");
       add(PanmirrorCommands.Citation, "Citation...");  
+      
+      // raw
+      add(PanmirrorCommands.TexInline, "TeX Command", Roles.getMenuitemcheckboxRole());
+      add(PanmirrorCommands.TexBlock, "TeX Block", Roles.getMenuitemcheckboxRole());
+      add(PanmirrorCommands.HTMLInline, "HTML Tag",  Roles.getMenuitemcheckboxRole());
+      add(PanmirrorCommands.HTMLBlock, "HTML Block", Roles.getMenuitemcheckboxRole());
+      add(PanmirrorCommands.RawInline, "Raw Inline...");
+      add(PanmirrorCommands.RawBlock, "Raw Block...");
+      
    }
    
    public PanmirrorCommandUI get(String id)

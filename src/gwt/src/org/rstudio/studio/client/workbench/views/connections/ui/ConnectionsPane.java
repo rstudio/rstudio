@@ -1,7 +1,7 @@
 /*
  * ConnectionsPane.java
  *
- * Copyright (C) 2009-19 by RStudio, PBC
+ * Copyright (C) 2009-20 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -87,13 +87,12 @@ public class ConnectionsPane extends WorkbenchPane
    public ConnectionsPane(Commands commands, EventBus eventBus, UserPrefs userPrefs)
    {
       // initialize
-      super("Connections");
+      super("Connections", eventBus);
       commands_ = commands;
-      eventBus_ = eventBus;
       userPrefs_ = userPrefs;
 
       // track activation events to update the toolbar
-      eventBus_.addHandler(ActiveConnectionsChangedEvent.TYPE, this);
+      events_.addHandler(ActiveConnectionsChangedEvent.TYPE, this);
       
       // create data grid
       keyProvider_ = new ProvidesKey<Connection>() {
@@ -461,7 +460,7 @@ public class ConnectionsPane extends WorkbenchPane
                @Override
                public void execute()
                {
-                  eventBus_.fireEvent(
+                  events_.fireEvent(
                         new PerformConnectionEvent(
                               connectVia, 
                               connectionExplorer_.getConnectCode()));    
@@ -604,7 +603,6 @@ public class ConnectionsPane extends WorkbenchPane
    private ToolbarLabel connectionType_;
    
    private final Commands commands_;
-   private final EventBus eventBus_;
    private final UserPrefs userPrefs_;
    
    // Resources, etc ----

@@ -113,7 +113,7 @@
   background-color: #1A3A63;
 }
 .ace_node-selector {
-  background-color: #007B97
+  background-color: #fb6f1c
 }
 .ace_comment-highlight {
   background-color: #5C4916

@@ -1,58 +1,45 @@
+## Info
+
+pandoc schema: <https://github.com/jgm/pandoc-types/blob/master/Text/Pandoc/Definition.hs#L94>
+
+## Feedback
+
 ## TODO
- 
-Some mechanism for deferring pandoc work with multiple editor tabs
-
-Consider moving widgets to React now that they are outside the PM dom.
-
-Discuss tokens / escaping / etc. with Joe. HTML must be inserted manually. Backslashes need to
-be escaped (already wrote the code to do this.). Math bears more discussion.....
-
-Images that link to things need to be supported. Currently a "figure" with a surrounding link tag doesn't even round trip! That's 
-because figures can't have links, we should reflect this. I believe that the editor currently handles this fine, but our 
-pandoc serialization currently does not.
-
-Clipboard / DragDrop support for images (note we should only accept local images within our resource dir)
-Drag/Drop doesn't currently create a figure. I wonder if we should always transform to figure as soon as we 
-are standalone in a paragraph. Check whether image serialization works in gfm for images dragged into 'figure' position
-(we may have removed some code that did this)
-
-Paste image handler for RStudio IDE
-
-Pandoc allows for list items to start with a block, but our schema follows ProseMirror in requiring a paragraph
-(https://github.com/ProseMirror/prosemirror-schema-list/tree/master/src). Resolve this.
-
-Surface attributes
-handling for div with only an id (shading treatment a bit much?)
-
-Consider whether we should make it an option to not put spaces before bullets
-
-Check other uses of markdownOutputFilter (generally doesn't work with tables)
-  example lists, heading links
-
+  
 Better direct manipulation for tables
 
-Make character escaping configurable
+Surface attributes handling for div with only an id (shading treatment a bit much?)
 
-Tables with a large number of columns are written as HTML when variable column widths are presented (presumably b/c it can't represent the percentage granularity w/ markdown) Perhaps don't set widths on all of the columns (only ones explicitly sized?)
-
-improve scrolling with: <https://github.com/cferdinandi/smooth-scroll>
-
-MathJax preview
-
+MathJax preview. When containing the selection, the math will show both the code and the preview. When not containing the selection will show the preview. (so probably require a node view for this). Consider a “done” gesture for display math. May need to bring back
+escaping of $ in math as this mode will clearly not be "source mode" style latex equation editing
 
 ## Future
 
+Slack style handling of marks?
+
+Reveal codes / typora behavior
+
 Unit testing for core panmirror code
+
+Insert special character UX
 
 multimarkdown support is incomplete: -mmd\_title\_block -mmd\_link\_attributes (not written, likely limitation of pandoc) -mmd\_header\_identifiers (work fine, but we currently allow edit of classes + keyvalue for markdown\_mmd)
 
 no support for +pandoc\_title\_block
 
+Example lists don't round trip through the AST:
+  - (@good) referenced elsewhere via (@good) just becomes a generic example (@) with a literal numeric reference.
+  - The writer doesn't preserve the (@) or the (@good) when writing
+
 We currently can't round-trip reference links (as pandoc doesn't seem to write them, this is not disimillar from the situation w/ inline footnotes so may be fine)
+
+allow more control over markdown output, particularly list indenting (perhaps get a PR into pandoc to make it flexible)
+
+as with above, make character escaping configurable
 
 No editing support for fancy list auto-numbering (\#. as list item that is auto-numbered)
 
-Direct parsing of citations (get rid of special post-processing + supported nested) (note: for nested we need excludes: '')
+Consider special Knit behavior from Visual Mode: execute w/ keep_md and only re-executes R code when the code chunks have actually changed.
 
 MathQuill/MathJax: <https://pboysen.github.io/> <https://discuss.prosemirror.net/t/odd-behavior-with-nodeview-and-atom-node/1521>
 
@@ -60,9 +47,22 @@ critic markup: <http://criticmarkup.com/>
 
 pandoc scholar: <https://pandoc-scholar.github.io/> pandoc jats: <https://github.com/mfenner/pandoc-jats>
 
-pandoc schema: <https://github.com/jgm/pandoc-types/blob/master/Text/Pandoc/Definition.hs#L94>
-
 Notes on preformance implications of scanning the entire document + some discussion of the tricky nature of doing step by step inspection: <https://discuss.prosemirror.net/t/changed-part-of-document/992> <https://discuss.prosemirror.net/t/reacting-to-node-adding-removing-changing/676> <https://discuss.prosemirror.net/t/undo-and-cursor-position/677/5>
+
+## Known issues:
+
+- When dragging and dropping an image to a place in the document above the original position the shelf sometimes
+  stays in it's original position (until you scroll)
+
+- Tables with a large number of columns are written as HTML when variable column widths are presented 
+  (presumably b/c it can't represent the percentage  granularity w/ markdown) Perhaps don't set widths 
+  on all of the columns (only ones explicitly sized?). Or, detect when this occurs by examining the doc before
+  and markdown after transformation and automatically adjust the value?
+
+- Clear Formatting doesn't play well with table selections (only one of the cells is considered part of the "selected nodes")
+
+- Semicolons in citations cannot be escaped (they always indicate a delimiter). Solution to this would be
+  to mark them explicitly with an input rule (and color them so user sees that there is a state change).
 
 ## Project/Build
 

@@ -35,6 +35,10 @@ BOOST_MODULES="algorithm asio array bind build chrono circular_buffer config con
    regex scope_exit signals signals2 smart_ptr spirit string_algo system
    test thread tokenizer type_traits typeof unordered utility variant"
 
+if [ "${PLATFORM}" = "Darwin" ]; then
+   TOOLSET="toolset=clang-darwin"
+fi
+
 # install if we aren't already installed
 if ! test -e $BOOST_DIR
 then
@@ -68,7 +72,7 @@ then
    sudo ./bootstrap.sh
 
    # build bcp helper
-   sudo ./b2 tools/bcp
+   sudo ./b2 "${TOOLSET}" tools/bcp
 
    # copy back to root
    sudo cp dist/bin/bcp bcp
@@ -93,7 +97,7 @@ then
      sudo ./bjam              \
         "${BOOST_BJAM_FLAGS}" \
         --prefix="$BOOST_DIR" \
-        toolset=clang         \
+        "${TOOLSET}"          \
         "${BJAM_CXXFLAGS}"    \
         "${BJAM_LDFLAGS}"     \
         variant=release       \

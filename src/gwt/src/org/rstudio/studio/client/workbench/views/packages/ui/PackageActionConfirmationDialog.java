@@ -63,6 +63,8 @@ public abstract class PackageActionConfirmationDialog<T extends JavaScriptObject
     
       addLeftButton(selectAllButton_ = new ThemedButton("Select All",
          event -> setGlobalPerformAction("Select All", true)), ElementIds.SELECT_ALL_BUTTON);
+      
+      selectAllButton_.getElement().getStyle().setMarginRight(10, Unit.PX);
      
       addLeftButton(selectNoneButton_ = new ThemedButton("Select None",
          event -> setGlobalPerformAction("Select None", false)), ElementIds.SELECT_NONE_BUTTON);

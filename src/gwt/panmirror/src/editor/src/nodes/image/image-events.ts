@@ -13,10 +13,9 @@
  *
  */
 
-import { NodeType } from 'prosemirror-model';
 import { EditorView } from 'prosemirror-view';
 
-export function imageDrop(nodeType: NodeType) {
+export function imageDrop() {
   return (view: EditorView, event: Event) => {
     // alias to drag event so typescript knows about event.dataTransfer
     const dragEvent = event as DragEvent;
@@ -37,28 +36,48 @@ export function imageDrop(nodeType: NodeType) {
 
     // see if this is a drag of image uris
     const uriList = dragEvent.dataTransfer.getData('text/uri-list');
-    const html = dragEvent.dataTransfer.getData('text/html');
-    if (!uriList || !html) {
+    if (!uriList) {
       return false;
     }
 
-    // see if we can pull an image out of the html
-    const regex = /<img.*?src=["'](.*?)["']/;
-    const match = regex.exec(html);
-    if (!match) {
-      return false;
-    }
-
-    // indicate that we can handle this drop
-    event.preventDefault();
-
-    // insert the images
+    // insert the images (track whether we handled at least one)
+    const tr = view.state.tr;
     uriList.split('\r?\n').forEach(src => {
-      const node = nodeType.create({ src });
-      const transaction = view.state.tr.insert(coordinates.pos, node);
-      view.dispatch(transaction);
+      // get extension and check it it's an image
+      // https://developer.mozilla.org/en-US/docs/Web/Media/Formats/Image_types#Common_image_file_types
+      const kImageExtensions = [
+        'apng',
+        'bmp',
+        'gif',
+        'ico',
+        'cur',
+        'jpg',
+        'jpeg',
+        'jfif',
+        'pjpeg',
+        'pjp',
+        'png',
+        'svg',
+        'tiff',
+        'webp',
+      ];
+      const extension = src
+        .split(/\./)
+        .pop()!
+        .toLowerCase();
+      if (kImageExtensions.includes(extension)) {
+        const node = view.state.schema.nodes.image.create({ src });
+        tr.insert(coordinates.pos, node);
+      }
     });
 
-    return true;
+    // if we inserted an image then indicate that we handled the drop
+    if (tr.docChanged) {
+      view.dispatch(tr);
+      event.preventDefault();
+      return true;
+    } else {
+      return false;
+    }
   };
 }

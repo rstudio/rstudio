@@ -29,6 +29,7 @@ export enum EditorCommandId {
   Undo = '201CA961-829E-4708-8FBC-8896FDE85A10',
   Redo = 'B6272475-04E0-48C0-86E3-DAFA763BDF7B',
   SelectAll = 'E42BF0DA-8A02-4FCE-A202-7EA8A4833FC5',
+  ClearFormatting = 'C22D8CC4-0A9F-41D5-B540-7DAAAB80F344',
 
   // formatting
   Strong = '83B04020-1195-4A65-8A8E-7C173C87F439',
@@ -88,17 +89,22 @@ export enum EditorCommandId {
   Footnote = '1D1A73C0-F0E1-4A0F-BEBC-08398DE14A4D',
   ParagraphInsert = '4E68830A-3E68-450A-B3F3-2591F4EB6B9A',
   HorizontalRule = 'EAA7115B-181C-49EC-BDB1-F0FF10369278',
-  InlineMath = 'A35C562A-0BD6-4B14-93D5-6FF3BE1A0C8A',
-  DisplayMath = '3E36BA99-2AE9-47C3-8C85-7CC5314A88DF',
-  RawInline = '984167C8-8582-469C-97D8-42CB12773657',
-  RawBlock = 'F5757992-4D33-45E6-86DC-F7D7B174B1EC',
   YamlMetadata = '431B5A45-1B25-4A55-9BAF-C0FE95D9B2B6',
   RmdChunk = 'EBFD21FF-4A6E-4D88-A2E0-B38470B00BB9',
-  InlineLatex = 'CFE8E9E5-93BA-4FFA-9A77-BA7EFC373864',
+  InlineMath = 'A35C562A-0BD6-4B14-93D5-6FF3BE1A0C8A',
+  DisplayMath = '3E36BA99-2AE9-47C3-8C85-7CC5314A88DF',
   Citation = 'EFFCFC81-F2E7-441E-B7FA-C693146B4185',
   DefinitionList = 'CFAB8F4D-3350-4398-9754-8DE0FB95167B',
   DefinitionTerm = '204D1A8F-8EE6-424A-8E69-99768C85B39E',
   DefinitionDescription = 'F0738D83-8E11-4CB5-B958-390190A2D7DD',
+
+  // raw
+  TexInline = 'CFE8E9E5-93BA-4FFA-9A77-BA7EFC373864',
+  TexBlock = 'BD11A6A7-E528-40A2-8139-3F8F5F556ED2',
+  HTMLInline = 'C682C6B5-E58D-498C-A38F-FB07BEC3A82D',
+  HTMLBlock = '6F9F64AF-711F-4F91-8642-B51C41717F31',
+  RawInline = '984167C8-8582-469C-97D8-42CB12773657',
+  RawBlock = 'F5757992-4D33-45E6-86DC-F7D7B174B1EC',
 }
 
 export interface EditorCommand {
@@ -174,8 +180,8 @@ export class BlockCommand extends NodeCommand {
 }
 
 export class WrapCommand extends NodeCommand {
-  constructor(id: EditorCommandId, keymap: string[], wrapType: NodeType) {
-    super(id, keymap, wrapType, {}, toggleWrap(wrapType));
+  constructor(id: EditorCommandId, keymap: string[], wrapType: NodeType, attrs = {}) {
+    super(id, keymap, wrapType, attrs, toggleWrap(wrapType, attrs));
   }
 }
 
@@ -235,15 +241,15 @@ export function toggleBlockType(type: NodeType, toggletype: NodeType, attrs = {}
   };
 }
 
-export function toggleWrap(type: NodeType): CommandFn {
+export function toggleWrap(type: NodeType, attrs?: { [key: string]: any }): CommandFn {
   return (state: EditorState, dispatch?: (tr: Transaction<any>) => void, view?: EditorView) => {
-    const isActive = nodeIsActive(state, type);
+    const isActive = nodeIsActive(state, type, attrs);
 
     if (isActive) {
       return lift(state, dispatch);
     }
 
-    return wrapIn(type)(state, dispatch);
+    return wrapIn(type, attrs)(state, dispatch);
   };
 }
 

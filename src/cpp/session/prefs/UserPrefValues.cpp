@@ -1038,6 +1038,32 @@ core::Error UserPrefValues::setEditorTheme(std::string val)
 }
 
 /**
+ * Whether to use a custom editor font in RStudio Server.
+ */
+bool UserPrefValues::serverEditorFontEnabled()
+{
+   return readPref<bool>("server_editor_font_enabled");
+}
+
+core::Error UserPrefValues::setServerEditorFontEnabled(bool val)
+{
+   return writePref("server_editor_font_enabled", val);
+}
+
+/**
+ * The name of the fixed-width editor font to use with RStudio Server.
+ */
+std::string UserPrefValues::serverEditorFont()
+{
+   return readPref<std::string>("server_editor_font");
+}
+
+core::Error UserPrefValues::setServerEditorFont(std::string val)
+{
+   return writePref("server_editor_font", val);
+}
+
+/**
  * The default character encoding to use when saving files.
  */
 std::string UserPrefValues::defaultEncoding()
@@ -2104,6 +2130,19 @@ core::Error UserPrefValues::setRestoreLastProject(bool val)
 }
 
 /**
+ * The number of seconds after which a project is deemed to have successfully started.
+ */
+int UserPrefValues::projectSafeStartupSeconds()
+{
+   return readPref<int>("project_safe_startup_seconds");
+}
+
+core::Error UserPrefValues::setProjectSafeStartupSeconds(int val)
+{
+   return writePref("project_safe_startup_seconds", val);
+}
+
+/**
  * Use tinytex to compile .tex files.
  */
 bool UserPrefValues::useTinytex()
@@ -2428,6 +2467,45 @@ core::Error UserPrefValues::setInstallPkgDepsIndividually(bool val)
    return writePref("install_pkg_deps_individually", val);
 }
 
+/**
+ * R graphics backend.
+ */
+std::string UserPrefValues::graphicsBackend()
+{
+   return readPref<std::string>("graphics_backend");
+}
+
+core::Error UserPrefValues::setGraphicsBackend(std::string val)
+{
+   return writePref("graphics_backend", val);
+}
+
+/**
+ * Type of anti-aliasing to be used for generated R plots.
+ */
+std::string UserPrefValues::graphicsAntialiasing()
+{
+   return readPref<std::string>("graphics_antialiasing");
+}
+
+core::Error UserPrefValues::setGraphicsAntialiasing(std::string val)
+{
+   return writePref("graphics_antialiasing", val);
+}
+
+/**
+ * List of fixed-width fonts to check for browser support.
+ */
+core::json::Array UserPrefValues::browserFixedWidthFonts()
+{
+   return readPref<core::json::Array>("browser_fixed_width_fonts");
+}
+
+core::Error UserPrefValues::setBrowserFixedWidthFonts(core::json::Array val)
+{
+   return writePref("browser_fixed_width_fonts", val);
+}
+
 std::vector<std::string> UserPrefValues::allKeys()
 {
    return std::vector<std::string>({
@@ -2509,6 +2587,8 @@ std::vector<std::string> UserPrefValues::allKeys()
       kFontSizePoints,
       kHelpFontSizePoints,
       kEditorTheme,
+      kServerEditorFontEnabled,
+      kServerEditorFont,
       kDefaultEncoding,
       kToolbarVisible,
       kDefaultProjectLocation,
@@ -2591,6 +2671,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kViewDirAfterRCmdCheck,
       kHideObjectFiles,
       kRestoreLastProject,
+      kProjectSafeStartupSeconds,
       kUseTinytex,
       kCleanTexi2dviOutput,
       kLatexShellEscape,
@@ -2616,6 +2697,9 @@ std::vector<std::string> UserPrefValues::allKeys()
       kScreenreaderConsoleAnnounceLimit,
       kFileMonitorIgnoredComponents,
       kInstallPkgDepsIndividually,
+      kGraphicsBackend,
+      kGraphicsAntialiasing,
+      kBrowserFixedWidthFonts,
    });
 }
    

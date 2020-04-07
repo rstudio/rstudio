@@ -27,7 +27,7 @@ import {
   createCheckboxInput,
   createSelectInput,
   createTextInput,
-} from '../../api/widgets';
+} from '../../api/widgets/widgets';
 import { EditorUI } from '../../api/ui';
 import { editingRootNode } from '../../api/node';
 import { extractSizeStyles, kPercentUnit, kPixelUnit, removeStyleAttrib } from '../../api/css';
@@ -157,8 +157,6 @@ export function attachResizeUI(
       nodeWithPos.node,
       imageDimensionsFromImg(img, imgContainerWidth()),
       nodeWithPos.node.type,
-      view.state,
-      view.dispatch,
       view,
       ui,
       true,
@@ -225,14 +223,14 @@ function resizeShelf(
     const kShelfRequiredSize = 333;
     const editorBox = editorContainer.getBoundingClientRect();
     const imageBox = container.getBoundingClientRect();
-    shelf.style.top = (imageBox.top - editorBox.top) + imageBox.height + 6 + 'px';
+    shelf.style.top = imageBox.top - editorBox.top + imageBox.height + 6 + 'px';
     const positionLeft = imageBox.left + kShelfRequiredSize < editorBox.right;
     if (positionLeft) {
       shelf.style.right = '';
-      shelf.style.left = (imageBox.left - editorBox.left) + 'px';
+      shelf.style.left = imageBox.left - editorBox.left + 'px';
     } else {
       shelf.style.left = '';
-      shelf.style.right = (editorBox.right - imageBox.right) + 'px';
+      shelf.style.right = editorBox.right - imageBox.right + 'px';
     }
   };
 
@@ -400,7 +398,7 @@ function resizeHandle(
   onSizingComplete: () => void,
 ) {
   const handle = document.createElement('span');
-  handle.contentEditable = "false";
+  handle.contentEditable = 'false';
   handle.classList.add('pm-image-resize-handle', 'pm-background-color', 'pm-selected-node-border-color');
   handle.style.position = 'absolute';
   handle.style.bottom = '-6px';
@@ -444,7 +442,7 @@ function resizeHandle(
       const widthInUnits = pixelsToUnit(width, units(), containerWidth);
       if (hasPercentWidth(units()) && widthInUnits > 100) {
         width = containerWidth;
-        height = width * (startHeight/startWidth);
+        height = width * (startHeight / startWidth);
       }
 
       img.style.width = width + kPixelUnit;
@@ -616,9 +614,13 @@ export function updateImageViewSize(
           value = removeStyleAttrib(value, 'margin(?:[\\w\\-])*', liftStyle);
         }
 
-        // we don't set the style attrib for either figures or inline images, because that
-        // will override styles set in width/height. if there are specific styles we want to
-        // reflect we should whitelist them in // via calls to removeStyleAttrib
+        // apply selected other styles to the image view (we don't just forward the entire
+        // style attribute b/c that would interfere with setting of style props in the 
+        // width and height cases below). here we should whitelist in all styles we think
+        // users might want to see in the editor
+        const liftImgStyle = (attrib: string, val: string) => img.style.setProperty(attrib, val);
+        removeStyleAttrib(value, 'border(?:[\\w\\-])*', liftImgStyle);
+
       } else if (key === kWidthAttrib) {
         // see if this is a unit we can edit
         const widthProp = imageSizePropWithUnit(value);

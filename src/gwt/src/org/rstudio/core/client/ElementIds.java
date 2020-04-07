@@ -157,6 +157,7 @@ public class ElementIds
    public final static String EDIT_DIAGNOSTICS_PREFS = "editing_diagnostics_prefs";
 
    public final static String GENERAL_BASIC_PREFS = "general_basic_prefs";
+   public final static String GENERAL_GRAPHICS_PREFS = "general_graphics_prefs";
    public final static String GENERAL_ADVANCED_PREFS = "general_advanced_prefs";
    
    public final static String RMARKDOWN_BASIC_PREFS = "rmarkdown_basic_prefs";
@@ -481,6 +482,7 @@ public class ElementIds
    public final static String VISUAL_MD_IMAGE_LOCK_RATIO = "visual_md_image_lock_ratio";
    public final static String VISUAL_MD_IMAGE_TITLE = "visual_md_image_title";
    public final static String VISUAL_MD_IMAGE_ALT = "visual_md_image_alt";
+   public final static String VISUAL_MD_IMAGE_LINK_TO = "visual_md_image_link_to";
    public final static String VISUAL_MD_IMAGE_TAB_ATTRIBUTES = "visual_md_image_tab_attributes";
    public final static String VISUAL_MD_LINK_REMOVE_LINK_BUTTON = "visual_md_link_remove_link_button";
    public final static String VISUAL_MD_LINK_TAB_LINK = "visual_md_link_tab_link";

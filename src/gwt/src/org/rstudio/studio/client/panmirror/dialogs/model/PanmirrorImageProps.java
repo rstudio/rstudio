@@ -24,6 +24,7 @@ public class PanmirrorImageProps extends PanmirrorAttrProps
    public String src;
    public String title;
    public String alt;
+   public String linkTo;
    public Double width;
    public Double height;
    public String units;

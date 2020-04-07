@@ -46,7 +46,6 @@ public class PanmirrorToolbar extends SecondaryToolbar implements RequiresResize
  
    public void init(PanmirrorCommand[] commands, HasFindReplace findReplace)
    { 
-      PanmirrorCommandIcons icons = PanmirrorCommandIcons.INSTANCE;
       
       commands_ = new PanmirrorToolbarCommands(commands);
       commandObjects_.clear();
@@ -58,6 +57,7 @@ public class PanmirrorToolbar extends SecondaryToolbar implements RequiresResize
       addLeftSeparator();
       
       formatWidgets_ = addWidgetGroup(
+         addLeftSeparator(),
          addLeftButton(PanmirrorCommands.Strong),
          addLeftButton(PanmirrorCommands.Em),
          addLeftButton(PanmirrorCommands.Code),
@@ -74,24 +74,25 @@ public class PanmirrorToolbar extends SecondaryToolbar implements RequiresResize
       insertWidgets_ = addWidgetGroup(
          addLeftButton(PanmirrorCommands.Link),
          addLeftButton(PanmirrorCommands.Image),
-         addLeftSeparator(),
-         addLeftButton(PanmirrorCommands.RmdChunk),
          addLeftSeparator()
       );
       
-      PanmirrorToolbarMenu tableMenu = createTableMenu();
-      addLeftWidget(new ToolbarMenuButton(ToolbarButton.NoText, ToolbarButton.NoTitle, icons.get(icons.TABLE), tableMenu));
-      
-      addLeftSeparator();
       
       PanmirrorToolbarMenu formatMenu = createFormatMenu();
       addLeftTextMenu(new ToolbarMenuButton("Format", "Format", null, formatMenu, false));
-      
+            
       addLeftSeparator();
       
       PanmirrorToolbarMenu insertMenu = createInsertMenu();
       addLeftTextMenu(new ToolbarMenuButton("Insert", "Insert", null, insertMenu, false)); 
-          
+      
+      if (haveAnyOf(PanmirrorCommands.TableInsertTable)) 
+      {
+         addLeftSeparator();
+         PanmirrorToolbarMenu tableMenu = createTableMenu();
+         addLeftTextMenu(new ToolbarMenuButton("Table", "Table", null, tableMenu, false));
+      }
+             
       addLeftSeparator();
       findReplaceButton_ = new ToolbarButton(
          ToolbarButton.NoText,
@@ -123,6 +124,14 @@ public class PanmirrorToolbar extends SecondaryToolbar implements RequiresResize
      );
    }
    
+   @Override 
+   public Widget addLeftSeparator()
+   {
+      Widget separator = super.addLeftSeparator();
+      separator.addStyleName(RES.styles().toolbarSeparator());
+      return separator;
+   }
+   
    @Override
    public void onResize()
    {
@@ -130,9 +139,9 @@ public class PanmirrorToolbar extends SecondaryToolbar implements RequiresResize
       if (width == 0)
          return;
            
-      showGroup(formatWidgets_, width > 350);
-      showGroup(blockWidgets_, width > 450);
-      showGroup(insertWidgets_, width > 550);
+      showGroup(formatWidgets_, width > 400);
+      showGroup(blockWidgets_, width > 480);
+      showGroup(insertWidgets_, width > 535);
    }
    
    
@@ -152,6 +161,7 @@ public class PanmirrorToolbar extends SecondaryToolbar implements RequiresResize
       return blockMenu;
    }
    
+   
    private PanmirrorToolbarMenu createFormatMenu()
    {
       PanmirrorToolbarMenu formatMenu = new PanmirrorToolbarMenu(commands_);
@@ -163,8 +173,6 @@ public class PanmirrorToolbar extends SecondaryToolbar implements RequiresResize
       textMenu.addCommand(PanmirrorCommands.Superscript);
       textMenu.addCommand(PanmirrorCommands.Subscript);
       textMenu.addCommand(PanmirrorCommands.Smallcaps);
-      textMenu.addSeparator();
-      textMenu.addCommand(PanmirrorCommands.RawInline);
       textMenu.addSeparator();
       textMenu.addCommand(PanmirrorCommands.Span);
       PanmirrorToolbarMenu listMenu = formatMenu.addSubmenu("Bullets & Numbering");
@@ -179,14 +187,29 @@ public class PanmirrorToolbar extends SecondaryToolbar implements RequiresResize
       listMenu.addCommand(PanmirrorCommands.ListItemLift);
       listMenu.addSeparator();
       listMenu.addCommand(PanmirrorCommands.OrderedListEdit);
-      formatMenu.addSeparator();
       formatMenu.addCommand(PanmirrorCommands.Blockquote);
-      formatMenu.addCommand(PanmirrorCommands.LineBlock);
       formatMenu.addSeparator();
       formatMenu.addCommand(PanmirrorCommands.Div);
-      formatMenu.addCommand(PanmirrorCommands.RawBlock);
+      formatMenu.addCommand(PanmirrorCommands.LineBlock);
       formatMenu.addSeparator();
+      if (haveAnyOf(PanmirrorCommands.RawBlock, 
+            PanmirrorCommands.TexInline, 
+            PanmirrorCommands.HTMLInline))
+      {
+         PanmirrorToolbarMenu rawMenu = formatMenu.addSubmenu("Raw");
+         rawMenu.addCommand(PanmirrorCommands.TexInline);
+         rawMenu.addCommand(PanmirrorCommands.TexBlock);
+         rawMenu.addSeparator();
+         rawMenu.addCommand(PanmirrorCommands.HTMLInline);
+         rawMenu.addCommand(PanmirrorCommands.HTMLBlock);
+         rawMenu.addSeparator();
+         rawMenu.addCommand(PanmirrorCommands.RawInline);
+         rawMenu.addCommand(PanmirrorCommands.RawBlock);
+         formatMenu.addSeparator();
+      }  
       formatMenu.addCommand(PanmirrorCommands.AttrEdit);
+      formatMenu.addSeparator();
+      formatMenu.addCommand(PanmirrorCommands.ClearFormatting);
       return formatMenu;
    }
    
@@ -196,15 +219,9 @@ public class PanmirrorToolbar extends SecondaryToolbar implements RequiresResize
       insertMenu.addCommand(PanmirrorCommands.Image);
       insertMenu.addCommand(PanmirrorCommands.Link);
       insertMenu.addSeparator();
-      insertMenu.addCommand(PanmirrorCommands.RmdChunk);
-      insertMenu.addSeparator();
       insertMenu.addCommand(PanmirrorCommands.ParagraphInsert);
       insertMenu.addCommand(PanmirrorCommands.HorizontalRule);
       insertMenu.addSeparator();
-      insertMenu.addCommand(PanmirrorCommands.Footnote);
-      insertMenu.addCommand(PanmirrorCommands.Citation);
-      insertMenu.addSeparator();
-      
       if (haveAnyOf(PanmirrorCommands.DefinitionList,
                     PanmirrorCommands.DefinitionTerm,
                     PanmirrorCommands.DefinitionDescription))
@@ -216,15 +233,16 @@ public class PanmirrorToolbar extends SecondaryToolbar implements RequiresResize
          definitionMenu.addCommand(PanmirrorCommands.DefinitionDescription);
          insertMenu.addSeparator();
       }
-      
+      insertMenu.addCommand(PanmirrorCommands.RmdChunk);
+      insertMenu.addCommand(PanmirrorCommands.YamlMetadata);
+      insertMenu.addSeparator();
       insertMenu.addCommand(PanmirrorCommands.InlineMath);
       insertMenu.addCommand(PanmirrorCommands.DisplayMath);
-      insertMenu.addCommand(PanmirrorCommands.InlineLatex);
       insertMenu.addSeparator();
-      insertMenu.addCommand(PanmirrorCommands.RawBlock);
-      insertMenu.addCommand(PanmirrorCommands.RawInline);
+      insertMenu.addCommand(PanmirrorCommands.Footnote);
+      insertMenu.addCommand(PanmirrorCommands.Citation);
       insertMenu.addSeparator();
-      insertMenu.addCommand(PanmirrorCommands.YamlMetadata);
+      
       return insertMenu;
    }
    

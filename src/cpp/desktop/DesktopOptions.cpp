@@ -1,7 +1,7 @@
 /*
  * DesktopOptions.cpp
  *
- * Copyright (C) 2009-19 by RStudio, PBC
+ * Copyright (C) 2009-20 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -389,7 +389,7 @@ QString Options::rBinDir() const
    // should be ignored) and the other case by using null for this case and
    // empty string for the other.
    if (!settings_.contains(QString::fromUtf8("RBinDir")))
-      return QString::null;
+      return QString();
 
    QString value = settings_.value(QString::fromUtf8("RBinDir")).toString();
    return value.isNull() ? QString() : value;
@@ -559,14 +559,54 @@ void Options::setLastRemoteSessionUrl(const QString& serverUrl, const QString& s
    settings_.endGroup();
 }
 
-QStringList Options::cookies() const
+QList<QNetworkCookie> Options::cookiesFromList(const QStringList& cookieStrs) const
 {
-   return settings_.value(QString::fromUtf8("cookies"), QStringList()).toStringList();
+   QList<QNetworkCookie> cookies;
+
+   for (const QString& cookieStr : cookieStrs)
+   {
+      QByteArray cookieArr = QByteArray::fromStdString(cookieStr.toStdString());
+      QList<QNetworkCookie> innerCookies = QNetworkCookie::parseCookies(cookieArr);
+      for (const QNetworkCookie& cookie : innerCookies)
+      {
+         cookies.push_back(cookie);
+      }
+   }
+
+   return cookies;
 }
 
-void Options::setCookies(const QStringList& cookies)
+QList<QNetworkCookie> Options::authCookies() const
 {
-   settings_.setValue(QString::fromUtf8("cookies"), cookies);
+   QStringList cookieStrs = settings_.value(QString::fromUtf8("cookies"), QStringList()).toStringList();
+   return cookiesFromList(cookieStrs);
+}
+
+QList<QNetworkCookie> Options::tempAuthCookies() const
+{
+   QStringList cookieStrs = settings_.value(QString::fromUtf8("temp-auth-cookies"), QStringList()).toStringList();
+   return cookiesFromList(cookieStrs);
+}
+
+QStringList Options::cookiesToList(const QList<QNetworkCookie>& cookies) const
+{
+   QStringList cookieStrs;
+   for (const QNetworkCookie& cookie : cookies)
+   {
+      cookieStrs.push_back(QString::fromStdString(cookie.toRawForm().toStdString()));
+   }
+
+   return cookieStrs;
+}
+
+void Options::setAuthCookies(const QList<QNetworkCookie>& cookies)
+{
+   settings_.setValue(QString::fromUtf8("cookies"), cookiesToList(cookies));
+}
+
+void Options::setTempAuthCookies(const QList<QNetworkCookie>& cookies)
+{
+   settings_.setValue(QString::fromUtf8("temp-auth-cookies"), cookiesToList(cookies));
 }
 
 } // namespace desktop

@@ -182,6 +182,9 @@ public class PanmirrorEditImageDialog extends ModalDialog<PanmirrorImageProps>
       title_ = PanmirrorDialogsUtil.addTextBox(imageTab, ElementIds.VISUAL_MD_IMAGE_TITLE, "Title/Tooltip:", props.title);
       alt_ = PanmirrorDialogsUtil.addTextBox(imageTab, ElementIds.VISUAL_MD_IMAGE_ALT, "Caption/Alt:", props.alt); 
          
+      // linkto
+      linkTo_ = PanmirrorDialogsUtil.addTextBox(imageTab,  ElementIds.VISUAL_MD_IMAGE_LINK_TO, "Link To:", props.linkTo);
+      
       // standard pandoc attributes
       editAttr_ =  new PanmirrorEditAttrWidget();
       editAttr_.setAttr(props);
@@ -231,6 +234,7 @@ public class PanmirrorEditImageDialog extends ModalDialog<PanmirrorImageProps>
       result.src = url_.getTextBox().getValue().trim();
       result.title = title_.getValue().trim();
       result.alt = alt_.getValue().trim();
+      result.linkTo = linkTo_.getValue().trim();
       result.width = widthProp_;
       result.height = heightProp_;
       result.units = unitsProp_;
@@ -434,6 +438,7 @@ public class PanmirrorEditImageDialog extends ModalDialog<PanmirrorImageProps>
    private final CheckBox lockRatio_;
    private final TextBox title_;
    private final TextBox alt_;
+   private final TextBox linkTo_;
    private final PanmirrorEditAttrWidget editAttr_;
    
    private static final String WIDTH = "width";

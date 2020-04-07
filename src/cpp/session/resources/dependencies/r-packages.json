@@ -180,6 +180,11 @@
             "location": "cran",
             "source": true
         },
+        "ragg": {
+            "version": "0.1.5",
+            "location": "cran",
+            "source": false
+        },
         "rJava": {
             "version": "0.4-15",
             "location": "cran",
@@ -517,6 +522,12 @@
             "description": "Database Interface",
             "packages": [
                 "DBI"
+            ]
+        },
+        "ragg": {
+            "description": "R Interface to AGG",
+            "packages": [
+                "ragg"
             ]
         },
         "rsqlite": {

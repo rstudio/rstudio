@@ -30,6 +30,9 @@ public interface PanmirrorToolbarResources extends ClientBundle
    {
       String toolbarTextMenuButton();
       String toolbarPopupMenu();
+      String toolbarSeparator();
+      String toolbarButton();
+      String toolbarButtonLatched();
    }
 
    @Source("PanmirrorToolbar.css")

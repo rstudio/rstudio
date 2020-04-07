@@ -13,37 +13,24 @@
  *
  */
 
-import { Schema, Node as ProsemirrorNode, Mark, Fragment } from 'prosemirror-model';
-import { Plugin, PluginKey } from 'prosemirror-state';
-import { findChildrenByMark } from 'prosemirror-utils';
-import { DecorationSet, Decoration } from 'prosemirror-view';
+import { Schema, Mark, Fragment, MarkType } from 'prosemirror-model';
+import { EditorState, Transaction } from 'prosemirror-state';
+import { EditorView } from 'prosemirror-view';
+import { toggleMark } from 'prosemirror-commands';
 
 import { Extension } from '../../api/extension';
-import { ProsemirrorCommand } from '../../api/command';
-import { PandocOutput, PandocToken, PandocTokenType, PandocExtensions, ProsemirrorWriter } from '../../api/pandoc';
-import { mergedTextNodes } from '../../api/text';
-import { getMarkRange } from '../../api/mark';
-import { EditorUI } from '../../api/ui';
-import { MarkTransaction } from '../../api/transaction';
-import { markHighlightPlugin, markHighlightDecorations } from '../../api/mark-highlight';
+import { ProsemirrorCommand, EditorCommandId } from '../../api/command';
+import { PandocOutput, PandocToken, PandocTokenType, PandocExtensions } from '../../api/pandoc';
+import { getMarkRange, markIsActive, getMarkAttrs } from '../../api/mark';
+import { EditorUI, RawFormatProps } from '../../api/ui';
+import { canInsertNode } from '../../api/node';
+import { fragmentText } from '../../api/fragment';
 
-import { InsertInlineLatexCommand, RawInlineCommand } from './raw_inline-commands';
-
-import './raw_inline-styles.css';
-
-const RAW_INLINE_FORMAT = 0;
-const RAW_INLINE_CONTENT = 1;
-
-const TEX_FORMAT = 'tex';
-const HTML_FORMAT = 'html';
-
-const kBeginTex = /(^|[^\\])\\[A-Za-z]/;
-const kBeginHTML = /(^|[^\\])</;
-const kHTMLComment = /^<!--([\s\S]*?)-->$/;
+export const kRawInlineFormat = 0;
+export const kRawInlineContent = 1;
 
 const extension = (pandocExtensions: PandocExtensions): Extension | null => {
-  // short circuit to no extension if none of the raw format bits are set
-  if (!pandocExtensions.raw_tex && !pandocExtensions.raw_html && !pandocExtensions.raw_attribute) {
+  if (!pandocExtensions.raw_attribute) {
     return null;
   }
 
@@ -52,12 +39,12 @@ const extension = (pandocExtensions: PandocExtensions): Extension | null => {
     marks: [
       {
         name: 'raw_inline',
+        noInputRules: true,
         spec: {
           inclusive: false,
           excludes: '_',
           attrs: {
             format: {},
-            comment: { default: false },
           },
           parseDOM: [
             {
@@ -66,7 +53,6 @@ const extension = (pandocExtensions: PandocExtensions): Extension | null => {
                 const el = dom as Element;
                 return {
                   format: el.getAttribute('data-format'),
-                  comment: el.getAttribute('data-comment') === '1',
                 };
               },
             },
@@ -75,7 +61,6 @@ const extension = (pandocExtensions: PandocExtensions): Extension | null => {
             const attr: any = {
               class: 'raw-inline pm-fixedwidth-font pm-markup-text-color',
               'data-format': mark.attrs.format,
-              'data-comment': mark.attrs.comment ? '1' : '0',
             };
             return ['span', attr];
           },
@@ -84,22 +69,14 @@ const extension = (pandocExtensions: PandocExtensions): Extension | null => {
           readers: [
             {
               token: PandocTokenType.RawInline,
-              handler: (schema: Schema) => {
-                return (writer: ProsemirrorWriter, tok: PandocToken) => {
-                  const text = tok.c[RAW_INLINE_CONTENT];
-                  const format = tok.c[RAW_INLINE_FORMAT];
-                  if (format === 'html') {
-                    writer.writeInlineHTML(text);
-                  } else {
-                    const mark = schema.marks.raw_inline.create({
-                      format,
-                      comment: false,
-                    });
-                    writer.openMark(mark);
-                    writer.writeText(text);
-                    writer.closeMark(mark);
-                  }
+              mark: 'raw_inline',
+              getAttrs: (tok: PandocToken) => {
+                return {
+                  format: tok.c[kRawInlineFormat],
                 };
+              },
+              getText: (tok: PandocToken) => {
+                return tok.c[kRawInlineContent];
               },
             },
           ],
@@ -107,20 +84,13 @@ const extension = (pandocExtensions: PandocExtensions): Extension | null => {
             priority: 20,
             write: (output: PandocOutput, mark: Mark, parent: Fragment) => {
               // get raw content
-              let raw = '';
-              parent.forEach((node: ProsemirrorNode) => (raw = raw + node.textContent));
+              const raw = fragmentText(parent);
 
-              // write straight through (bypassing the pandoc ast) for raw html and tex as they will
-              // otherwise acquire an explicit raw attribute which is bad for round-tripping, see
-              // https://github.com/jgm/pandoc/commit/28cad165179378369fcf4d25656ea28357026baa
-              if ([TEX_FORMAT, HTML_FORMAT].includes(mark.attrs.format)) {
-                output.writeRawMarkdown(raw);
-              } else {
-                output.writeToken(PandocTokenType.RawInline, () => {
-                  output.write(mark.attrs.format);
-                  output.write(raw);
-                });
-              }
+              // write it
+              output.writeToken(PandocTokenType.RawInline, () => {
+                output.write(mark.attrs.format);
+                output.write(raw);
+              });
             },
           },
         },
@@ -129,243 +99,116 @@ const extension = (pandocExtensions: PandocExtensions): Extension | null => {
 
     // insert command
     commands: (_schema: Schema, ui: EditorUI) => {
-      const commands: ProsemirrorCommand[] = [];
-
-      if (pandocExtensions.raw_attribute) {
-        commands.push(new RawInlineCommand(ui));
-      }
-
-      if (pandocExtensions.raw_tex) {
-        commands.push(new InsertInlineLatexCommand());
-      }
-
-      return commands;
-    },
-
-    appendMarkTransaction: (schema: Schema) => {
-      return [
-        {
-          name: 'raw-inline-marks',
-          filter: node => node.isTextblock && node.type.allowsMarkType(schema.marks.raw_inline),
-          append: (tr: MarkTransaction, node: ProsemirrorNode, pos: number) => {
-            // short circuit to do nothing if neither raw html or raw tex are enabled
-            if (!pandocExtensions.raw_tex && !pandocExtensions.raw_html) {
-              return;
-            }
-
-            const rawInlineMark = (nd: ProsemirrorNode) => schema.marks.raw_inline.isInSet(nd.marks);
-            const hasRawInlineContent = (pattern: RegExp) => {
-              return (nd: ProsemirrorNode, parentNode: ProsemirrorNode) => {
-                return (
-                  nd.isText &&
-                  !schema.marks.code.isInSet(nd.marks) &&
-                  (!schema.marks.math || !schema.marks.math.isInSet(nd.marks)) &&
-                  parentNode.type.allowsMarkType(schema.marks.raw_inline) &&
-                  pattern.test(parentNode.textContent)
-                );
-              };
-            };
-
-            // remove marks from inline nodes as needed
-            const rawInlineNodes = findChildrenByMark(node, schema.marks.raw_inline, true);
-            rawInlineNodes.forEach(rawInlineNode => {
-              const mark = rawInlineMark(rawInlineNode.node);
-              if (mark) {
-                const from = pos + 1 + rawInlineNode.pos;
-                const rawInlineRange = getMarkRange(tr.doc.resolve(from), schema.marks.raw_inline);
-                if (rawInlineRange) {
-                  const text = tr.doc.textBetween(rawInlineRange.from, rawInlineRange.to);
-                  const preceding = tr.doc.textBetween(rawInlineRange.from - 1, rawInlineRange.from);
-                  const removeInvalidedMark = (markupLength: (text: string) => number) => {
-                    const length = markupLength(text);
-                    if (preceding === '\\') {
-                      tr.removeMark(rawInlineRange.from, rawInlineRange.to, schema.marks.raw_inline);
-                    } else if (length !== text.length) {
-                      tr.removeMark(rawInlineRange.from + length, rawInlineRange.to, schema.marks.raw_inline);
-                    }
-                  };
-                  if (pandocExtensions.raw_tex && mark.attrs.format === TEX_FORMAT) {
-                    removeInvalidedMark(texLength);
-                  }
-                  if (pandocExtensions.raw_html && mark.attrs.format === HTML_FORMAT) {
-                    removeInvalidedMark(htmlLength);
-                  }
-                }
-              }
-            });
-
-            const addRawInlineMarks = (
-              format: string,
-              beginMarkup: RegExp,
-              markupLength: (text: string) => number,
-              commentRegex?: RegExp,
-            ) => {
-              const searchForMarkup = (text: string) => {
-                const match = text.match(beginMarkup);
-                if (match && match.index !== undefined) {
-                  return match.index + match[1].length;
-                } else {
-                  return -1;
-                }
-              };
-
-              const hasMarkup = hasRawInlineContent(beginMarkup);
-              const markupNodes = mergedTextNodes(node, hasMarkup);
-              markupNodes.forEach(markupNode => {
-                const text = markupNode.text;
-                let beginIdx = searchForMarkup(text);
-                while (beginIdx !== -1) {
-                  const length = markupLength(text.substring(beginIdx));
-                  if (length > 0) {
-                    const from = pos + 1 + markupNode.pos + beginIdx;
-                    const to = from + length;
-                    const markRange = getMarkRange(tr.doc.resolve(markupNode.pos + beginIdx), schema.marks.raw_inline);
-                    if (!markRange || markRange.to !== to) {
-                      const comment = commentRegex ? commentRegex.test(tr.doc.textBetween(from, to)) : false;
-                      const mark = schema.mark('raw_inline', { format, comment });
-                      tr.addMark(from, to, mark);
-                    }
-                  }
-                  const nextSearchIdx = length ? beginIdx + length : beginIdx + 1;
-                  beginIdx = searchForMarkup(text.slice(nextSearchIdx));
-                  if (beginIdx !== -1) {
-                    beginIdx = nextSearchIdx + beginIdx;
-                  }
-                }
-              });
-            };
-            // this is adding back the tex mark we escaped away
-            if (pandocExtensions.raw_tex) {
-              addRawInlineMarks(TEX_FORMAT, kBeginTex, texLength);
-            }
-            if (pandocExtensions.raw_html) {
-              addRawInlineMarks(HTML_FORMAT, kBeginHTML, htmlLength, kHTMLComment);
-            }
-          },
-        },
-      ];
-    },
-
-    // plugin to add and remove raw_inline latex marks as the user edits
-    plugins: (schema: Schema) => {
-      const plugins: Plugin[] = [];
-      plugins.push(rawInlineHighlightPlugin(schema));
-      return plugins;
+      return [new RawInlineCommand(ui)];
     },
   };
 };
 
-const key = new PluginKey<DecorationSet>('latex-highlight');
-
-export function rawInlineHighlightPlugin(schema: Schema) {
-  const kLightTextClass = 'pm-light-text-color';
-  const delimiterRegex = /[{}]/g;
-
-  return markHighlightPlugin(key, schema.marks.raw_inline, (text, attrs, markRange) => {
-    if (attrs.format === TEX_FORMAT) {
-      const kIdClass = 'pm-markup-text-color';
-      const idRegEx = /\\[A-Za-z]+/g;
-      let decorations = markHighlightDecorations(markRange, text, idRegEx, kIdClass);
-      decorations = decorations.concat(markHighlightDecorations(markRange, text, delimiterRegex, kLightTextClass));
-      return decorations;
-    } else if (attrs.format === HTML_FORMAT && attrs.comment) {
-      return [Decoration.inline(markRange.from, markRange.to, { class: kLightTextClass })];
-    } else {
-      return [];
-    }
-  });
-}
-
-const LetterRegex = /[A-Za-z]/;
-function isLetter(ch: string) {
-  return LetterRegex.test(ch);
-}
-
-function texLength(text: string) {
-  // reject entirely if we start with \\
-  if (text.startsWith('\\\\')) {
-    return 0;
-  }
-
-  let braceLevel = 0;
-  let i;
-  for (i = 0; i < text.length; i++) {
-    // next character
-    const ch = text[i];
-
-    // must start with \{ltr}
-    if (i === 0 && ch !== '\\') {
-      return 0;
-    }
-    if (i === 1 && !isLetter(ch)) {
-      return 0;
-    }
-
-    // non-letter / non-open-brace if we aren't in braces terminates
-    if (i > 0 && !isLetter(ch) && ch !== '{' && braceLevel <= 0) {
-      return i;
-    }
-
-    // manage brace levels
-    if (ch === '{') {
-      braceLevel++;
-    } else if (ch === '}') {
-      braceLevel--;
-    }
-  }
-
-  if (braceLevel === 0) {
-    return i;
-  } else {
-    return 0;
-  }
-}
-
-function htmlLength(text: string) {
-  let inSingleQuote = false;
-  let inDoubleQuote = false;
-  let i;
-  for (i = 0; i < text.length; i++) {
-    // next character
-    const ch = text[i];
-
-    // must start with <[/]{str}
-    if (i === 0 && ch !== '<') {
-      return 0;
-    }
-    if (i === 1 && !isLetter(ch) && ch !== '!' && ch !== '/') {
-      return 0;
-    }
-
-    // invalid if we see another < when not in quotes
-    if (i > 0 && ch === '<' && !inSingleQuote && !inDoubleQuote) {
-      return 0;
-    }
-
-    // > terminates if we aren't in quotes
-    if (ch === '>' && !inSingleQuote && !inDoubleQuote) {
-      return i + 1;
-    }
-
-    // handle single quote
-    if (ch === "'") {
-      if (inSingleQuote) {
-        inSingleQuote = false;
-      } else if (!inDoubleQuote) {
-        inSingleQuote = true;
+// base class for format-specific raw inline commands (e.g. tex/html)
+export class RawInlineFormatCommand extends ProsemirrorCommand {
+  private markType: MarkType;
+  constructor(id: EditorCommandId, markType: MarkType, insert: (tr: Transaction) => void) {
+    super(id, [], (state: EditorState, dispatch?: (tr: Transaction) => void) => {
+      // if we aren't active then make sure we can insert a text node here
+      if (!this.isActive(state) && !canInsertNode(state, markType.schema.nodes.text)) {
+        return false;
       }
 
-      // handle double quote
-    } else if (ch === '"') {
-      if (inDoubleQuote) {
-        inDoubleQuote = false;
-      } else if (!inSingleQuote) {
-        inDoubleQuote = true;
+      // ensure we can apply this mark here
+      if (!toggleMark(this.markType)(state)) {
+        return false;
       }
-    }
+
+      if (dispatch) {
+        const tr = state.tr;
+
+        if (this.isActive(state)) {
+          const range = getMarkRange(state.selection.$head, this.markType);
+          if (range) {
+            tr.removeMark(range.from, range.to, this.markType);
+          }
+        } else if (!tr.selection.empty) {
+          const mark = markType.create();
+          tr.addMark(tr.selection.from, tr.selection.to, mark);
+        } else {
+          insert(tr);
+        }
+
+        dispatch(tr);
+      }
+
+      return true;
+    });
+    this.markType = markType;
   }
 
-  return 0;
+  public isActive(state: EditorState) {
+    return markIsActive(state, this.markType);
+  }
+}
+
+// generic raw inline command (opens dialog that allows picking from among formats)
+class RawInlineCommand extends ProsemirrorCommand {
+  constructor(ui: EditorUI) {
+    super(
+      EditorCommandId.RawInline,
+      [],
+      (state: EditorState, dispatch?: (tr: Transaction) => void, view?: EditorView) => {
+        const schema = state.schema;
+
+        if (!canInsertNode(state, schema.nodes.text) || !toggleMark(schema.marks.raw_inline)(state)) {
+          return false;
+        }
+
+        async function asyncInlineRaw() {
+          if (dispatch) {
+            // check if mark is active
+            const isActive = markIsActive(state, schema.marks.raw_inline);
+
+            // get the range of the mark
+            let range = { from: state.selection.from, to: state.selection.to };
+            if (isActive) {
+              range = getMarkRange(state.selection.$from, schema.marks.raw_inline) as { from: number; to: number };
+            }
+
+            // get raw attributes if we have them
+            let raw: RawFormatProps = { content: '', format: '' };
+            raw.content = state.doc.textBetween(range.from, range.to);
+            if (isActive) {
+              raw = {
+                ...raw,
+                ...getMarkAttrs(state.doc, state.selection, schema.marks.raw_inline),
+              };
+            }
+
+            const result = await ui.dialogs.editRawInline(raw);
+            if (result) {
+              const tr = state.tr;
+              tr.removeMark(range.from, range.to, schema.marks.raw_inline);
+              if (result.action === 'edit') {
+                const mark = schema.marks.raw_inline.create({ format: result.raw.format });
+                const node = schema.text(result.raw.content, [mark]);
+                // if we are editing a selection then replace it, otherwise insert
+                if (raw.content) {
+                  tr.replaceRangeWith(range.from, range.to, node);
+                } else {
+                  tr.replaceSelectionWith(node, false);
+                }
+              }
+              dispatch(tr);
+            }
+
+            if (view) {
+              view.focus();
+            }
+          }
+        }
+        asyncInlineRaw();
+
+        return true;
+      },
+    );
+  }
 }
 
 export default extension;

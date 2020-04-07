@@ -18,6 +18,9 @@
     "@types/prosemirror-schema-list": "^1.0.1",
     "@types/prosemirror-state": "^1.2.3",
     "@types/prosemirror-tables": "^0.9.1",
+    "@types/react": "^16.9.32",
+    "@types/react-dom": "^16.9.6",
+    "@types/zenscroll": "^4.0.0",
     "clipboard": "^2.0.6",
     "codemirror": "^5.48.4",
     "orderedmap": "^1.0.0",
@@ -36,8 +39,11 @@
     "prosemirror-transform": "^1.2.3",
     "prosemirror-utils": "^0.9.6",
     "prosemirror-view": "^1.13.4",
+    "react": "^16.13.1",
+    "react-dom": "^16.13.1",
     "tlite": "^0.1.9",
-    "typescript": "3.6.3"
+    "typescript": "3.6.3",
+    "zenscroll": "^4.0.2"
   },
   "scripts": {
     "format": "prettier --write \"src/**/*.ts\" \"src/**/*.tsx\"",

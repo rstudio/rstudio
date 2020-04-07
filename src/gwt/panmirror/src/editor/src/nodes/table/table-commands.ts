@@ -13,7 +13,7 @@
  *
  */
 
-import { Node as ProsemirrorNode } from 'prosemirror-model';
+import { Node as ProsemirrorNode, Fragment } from 'prosemirror-model';
 import { EditorState, Transaction } from 'prosemirror-state';
 import { findParentNodeOfType, setTextSelection, findChildrenByType } from 'prosemirror-utils';
 import {
@@ -27,13 +27,13 @@ import {
   addColumn,
 } from 'prosemirror-tables';
 
-import { InsertTableFn } from '../../api/ui';
+import { EditorUI } from '../../api/ui';
 import { ProsemirrorCommand, EditorCommandId } from '../../api/command';
 import { EditorView } from 'prosemirror-view';
 import { canInsertNode } from '../../api/node';
 import { TableCapabilities } from '../../api/table';
 
-export function insertTable(capabilities: TableCapabilities, onInsertTable: InsertTableFn) {
+export function insertTable(capabilities: TableCapabilities, ui: EditorUI) {
   return (state: EditorState, dispatch?: (tr: Transaction) => void, view?: EditorView) => {
     const schema = state.schema;
 
@@ -51,15 +51,19 @@ export function insertTable(capabilities: TableCapabilities, onInsertTable: Inse
 
     async function asyncInsertTable() {
       if (dispatch) {
-        const result = await onInsertTable(capabilities);
+        const result = await ui.dialogs.insertTable(capabilities);
         if (result) {
           // create cells
+          const numRows = result.rows + (result.header ? 1 : 0);
           const rows: ProsemirrorNode[] = [];
-          for (let r = 0; r < result.rows; r++) {
+          for (let r = 0; r < numRows; r++) {
             const cells: ProsemirrorNode[] = [];
             const cellType = r === 0 && result.header ? schema.nodes.table_header : schema.nodes.table_cell;
             for (let c = 0; c < result.cols; c++) {
-              cells.push(cellType.createAndFill({}, schema.nodes.paragraph.create()!)!);
+              const content = cellType === schema.nodes.table_header 
+                ? schema.text(`${ui.context.translateText('Col')}${c+1}`)
+                : Fragment.empty; 
+              cells.push(cellType.createAndFill({}, schema.nodes.paragraph.createAndFill({}, content)!)!);
             }
             rows.push(schema.nodes.table_row.createAndFill({}, cells)!);
           }

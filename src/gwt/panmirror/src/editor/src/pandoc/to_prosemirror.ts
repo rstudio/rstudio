@@ -106,7 +106,6 @@ class Parser {
   }
 
   private writeInlineHTML(writer: ProsemirrorWriter, html: string) {
-
     // see if any of our readers want to take it
     for (const reader of this.inlineHTMLReaders) {
       if (reader(this.schema, html, writer)) {
@@ -116,8 +115,7 @@ class Parser {
 
     // otherwise just write it
     const commentRe = /^<!--([\s\S]*?)-->\s*$/;
-    const mark = this.schema.marks.raw_inline.create({
-      format: 'html',
+    const mark = this.schema.marks.raw_html.create({
       comment: commentRe.test(html),
     });
     writer.openMark(mark);
@@ -308,10 +306,16 @@ class ParserState {
   }
 
   public closeNode(): ProsemirrorNode {
-    if (this.marks.length) {
-      this.marks = Mark.none;
-    }
+    // get node info
     const info: ParserStackElement = this.stack.pop() as ParserStackElement;
+
+    // clear marks if the node type isn't inline
+    if (!info.type.isInline) {
+      if (this.marks.length) {
+        this.marks = Mark.none;
+      }
+    }
+
     return this.addNode(info.type, info.attrs, info.content) as ProsemirrorNode;
   }
 

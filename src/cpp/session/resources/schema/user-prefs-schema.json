@@ -144,7 +144,7 @@
                     "description": "Allocation of panes to quadrants.",
                     "items": {
                         "type": "string",
-                        "enum": ["Source", "Console", "TabSet1", "TabSet2"]
+                        "enum": ["Source", "Console", "TabSet1", "TabSet2", "HiddenTabSet"]
                     }
                 },
                 "tabSet1": {
@@ -157,6 +157,13 @@
                 "tabSet2": {
                     "type": "array",
                     "description": "The panes included in the second tabset.",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "hiddenTabSet": {
+                    "type": "array",
+                    "description": "The panes hidden from the user.",
                     "items": {
                         "type": "string"
                     }
@@ -175,9 +182,11 @@
                     "Source", 
                     "Console", 
                     "TabSet1",
-                    "TabSet2"],
+                    "TabSet2",
+                    "HiddenTabSet"],
                 "tabSet1": ["Environment", "History", "Connections", "Build", "VCS", "Presentation"],
                 "tabSet2": ["Files", "Plots", "Packages", "Help", "Viewer"],
+                "hiddenTabSet": [],
                 "console_left_on_top": false,
                 "console_right_on_top": true
             },
@@ -478,6 +487,16 @@
             "type": "string",
             "default": "Textmate (default)",
             "description": "The name of the color theme to apply to the text editor in RStudio."
+        },
+        "server_editor_font_enabled": {
+            "type": "boolean",
+            "default": false,
+            "description": "Whether to use a custom editor font in RStudio Server."
+        },
+        "server_editor_font": {
+            "type": "string",
+            "default": "",
+            "description": "The name of the fixed-width editor font to use with RStudio Server."
         },
         "default_encoding": {
             "type": "string",
@@ -905,6 +924,11 @@
             "default": true,
             "description": "Whether to restore the last project when starting RStudio."
         },
+        "project_safe_startup_seconds": {
+            "type": "integer",
+            "default": 30,
+            "description": "The number of seconds after which a project is deemed to have successfully started."
+        },
         "use_tinytex": {
             "type": "boolean",
             "default": false,
@@ -1050,7 +1074,52 @@
             "type": "boolean",
             "default": true,
             "description": "Whether to install R package dependencies one at a time."
+        },
+        "graphics_backend": {
+            "type": "string",
+            "enum": ["default", "cairo", "cairo-png", "quartz", "windows", "ragg"],
+            "default": "default",
+            "description": "R graphics backend."
+        },
+        "graphics_antialiasing": {
+            "type": "string",
+            "enum": ["default", "none", "gray", "subpixel"],
+            "default": "default",
+            "description": "Type of anti-aliasing to be used for generated R plots."
+        },
+        "browser_fixed_width_fonts": {
+            "type": "array",
+            "description": "List of fixed-width fonts to check for browser support.",
+            "items": {
+                "type": "string"
+            },
+            "default": [
+                "Andale Mono", 
+                "Bitstream Vera Sans Mono", 
+                "Cascadia Code", 
+                "Consolas", 
+                "Courier New", 
+                "Courier", 
+                "DejaVu Sans Mono",
+                "Droid Sans Mono",
+                "Fira Code", 
+                "Hack", 
+                "IBM Plex Mono",
+                "Inconsolata", 
+                "JetBrains Mono", 
+                "Lucida Console",
+                "Lucida Sans Typewriter",
+                "Menlo", 
+                "Monaco", 
+                "Monoid",
+                "Operator Mono",
+                "Pragmata", 
+                "SF Mono",
+                "Source Code Pro",
+                "Vera Sans Mono", 
+                "Victor Mono", 
+                "Ubuntu Mono"
+            ]
         }
     }
 }
-

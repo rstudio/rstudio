@@ -76,6 +76,7 @@ namespace prefs {
 #define kPanesQuadrants "quadrants"
 #define kPanesTabSet1 "tabSet1"
 #define kPanesTabSet2 "tabSet2"
+#define kPanesHiddenTabSet "hiddenTabSet"
 #define kPanesConsoleLeftOnTop "console_left_on_top"
 #define kPanesConsoleRightOnTop "console_right_on_top"
 #define kUseSpacesForTab "use_spaces_for_tab"
@@ -155,6 +156,8 @@ namespace prefs {
 #define kFontSizePoints "font_size_points"
 #define kHelpFontSizePoints "help_font_size_points"
 #define kEditorTheme "editor_theme"
+#define kServerEditorFontEnabled "server_editor_font_enabled"
+#define kServerEditorFont "server_editor_font"
 #define kDefaultEncoding "default_encoding"
 #define kToolbarVisible "toolbar_visible"
 #define kDefaultProjectLocation "default_project_location"
@@ -288,6 +291,7 @@ namespace prefs {
 #define kViewDirAfterRCmdCheck "view_dir_after_r_cmd_check"
 #define kHideObjectFiles "hide_object_files"
 #define kRestoreLastProject "restore_last_project"
+#define kProjectSafeStartupSeconds "project_safe_startup_seconds"
 #define kUseTinytex "use_tinytex"
 #define kCleanTexi2dviOutput "clean_texi2dvi_output"
 #define kLatexShellEscape "latex_shell_escape"
@@ -322,6 +326,19 @@ namespace prefs {
 #define kScreenreaderConsoleAnnounceLimit "screenreader_console_announce_limit"
 #define kFileMonitorIgnoredComponents "file_monitor_ignored_components"
 #define kInstallPkgDepsIndividually "install_pkg_deps_individually"
+#define kGraphicsBackend "graphics_backend"
+#define kGraphicsBackendDefault "default"
+#define kGraphicsBackendCairo "cairo"
+#define kGraphicsBackendCairoPng "cairo-png"
+#define kGraphicsBackendQuartz "quartz"
+#define kGraphicsBackendWindows "windows"
+#define kGraphicsBackendRagg "ragg"
+#define kGraphicsAntialiasing "graphics_antialiasing"
+#define kGraphicsAntialiasingDefault "default"
+#define kGraphicsAntialiasingNone "none"
+#define kGraphicsAntialiasingGray "gray"
+#define kGraphicsAntialiasingSubpixel "subpixel"
+#define kBrowserFixedWidthFonts "browser_fixed_width_fonts"
 
 class UserPrefValues: public Preferences
 {
@@ -794,6 +811,18 @@ public:
     */
    std::string editorTheme();
    core::Error setEditorTheme(std::string val);
+
+   /**
+    * Whether to use a custom editor font in RStudio Server.
+    */
+   bool serverEditorFontEnabled();
+   core::Error setServerEditorFontEnabled(bool val);
+
+   /**
+    * The name of the fixed-width editor font to use with RStudio Server.
+    */
+   std::string serverEditorFont();
+   core::Error setServerEditorFont(std::string val);
 
    /**
     * The default character encoding to use when saving files.
@@ -1288,6 +1317,12 @@ public:
    core::Error setRestoreLastProject(bool val);
 
    /**
+    * The number of seconds after which a project is deemed to have successfully started.
+    */
+   int projectSafeStartupSeconds();
+   core::Error setProjectSafeStartupSeconds(int val);
+
+   /**
     * Use tinytex to compile .tex files.
     */
    bool useTinytex();
@@ -1436,6 +1471,24 @@ public:
     */
    bool installPkgDepsIndividually();
    core::Error setInstallPkgDepsIndividually(bool val);
+
+   /**
+    * R graphics backend.
+    */
+   std::string graphicsBackend();
+   core::Error setGraphicsBackend(std::string val);
+
+   /**
+    * Type of anti-aliasing to be used for generated R plots.
+    */
+   std::string graphicsAntialiasing();
+   core::Error setGraphicsAntialiasing(std::string val);
+
+   /**
+    * List of fixed-width fonts to check for browser support.
+    */
+   core::json::Array browserFixedWidthFonts();
+   core::Error setBrowserFixedWidthFonts(core::json::Array val);
 
 };
 

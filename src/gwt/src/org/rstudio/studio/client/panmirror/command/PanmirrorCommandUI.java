@@ -16,6 +16,7 @@
 package org.rstudio.studio.client.panmirror.command;
 
 
+import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.command.KeySequence;
 import org.rstudio.core.client.dom.DomUtils;
 
@@ -107,7 +108,7 @@ public class PanmirrorCommandUI implements ScheduledCommand
          // normalize to RStudio shortcut string
          String key = command.keymap[0];
          key = key.replace('-', '+');
-         key = key.replace("Mod", "Cmd");
+         key = key.replace("Mod", BrowseCap.isMacintosh() ? "Cmd" : "Ctrl");
          
          // capitalize the last 
          KeySequence keySequence = KeySequence.fromShortcutString(key);

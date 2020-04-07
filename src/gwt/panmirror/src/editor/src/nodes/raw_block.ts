@@ -13,21 +13,32 @@
  *
  */
 
-import { Node as ProsemirrorNode, Schema } from 'prosemirror-model';
+import { Node as ProsemirrorNode, Schema, NodeType } from 'prosemirror-model';
 
 import { EditorState, Transaction } from 'prosemirror-state';
 import { EditorView } from 'prosemirror-view';
-import { findParentNodeOfType, setTextSelection } from 'prosemirror-utils';
+import { setBlockType } from 'prosemirror-commands';
+
+import { findParentNodeOfType, setTextSelection, findParentNode } from 'prosemirror-utils';
 
 import { Extension } from '../api/extension';
 
-import { PandocOutput, PandocToken, PandocTokenType, PandocExtensions, ProsemirrorWriter, kRawBlockContent, kRawBlockFormat } from '../api/pandoc';
+import {
+  PandocOutput,
+  PandocToken,
+  PandocTokenType,
+  PandocExtensions,
+  ProsemirrorWriter,
+  kRawBlockContent,
+  kRawBlockFormat,
+} from '../api/pandoc';
 import { ProsemirrorCommand, EditorCommandId } from '../api/command';
 
 import { canInsertNode } from '../api/node';
-import { EditorUI, RawFormatResult } from '../api/ui';
+import { EditorUI, RawFormatProps } from '../api/ui';
 import { isSingleLineHTML } from '../api/html';
-
+import { kHTMLFormat, kTexFormat } from '../api/raw';
+import { isSingleLineTex } from '../api/tex';
 
 const extension = (pandocExtensions: PandocExtensions): Extension | null => {
   // requires either raw_attribute or raw_html
@@ -83,11 +94,11 @@ const extension = (pandocExtensions: PandocExtensions): Extension | null => {
           readers: [
             {
               token: PandocTokenType.RawBlock,
-              block: 'raw_block'
-            }
+              block: 'raw_block',
+            },
           ],
-          // we define a custom blockReader here so that we can convert html blocks with
-          // a single line of code into paragraph with an html inline
+          // we define a custom blockReader here so that we can convert html and tex blocks with
+          // a single line of code into paragraph with a raw inline
           blockReader: (schema: Schema, tok: PandocToken, writer: ProsemirrorWriter) => {
             if (tok.t === PandocTokenType.RawBlock) {
               readPandocRawBlock(schema, tok, writer);
@@ -106,24 +117,37 @@ const extension = (pandocExtensions: PandocExtensions): Extension | null => {
       },
     ],
 
-    commands: (_schema: Schema, ui: EditorUI) => {
+    commands: (schema: Schema, ui: EditorUI) => {
+      const commands: ProsemirrorCommand[] = [];
+
       if (pandocExtensions.raw_attribute) {
-        return [new RawBlockCommand(ui)];
-      } else {
-        return [];
+        commands.push(new FormatRawBlockCommand(EditorCommandId.HTMLBlock, kHTMLFormat, schema.nodes.raw_block));
+        commands.push(new FormatRawBlockCommand(EditorCommandId.TexBlock, kTexFormat, schema.nodes.raw_block));
+        commands.push(new RawBlockCommand(ui));
       }
+
+      return commands;
     },
   };
 };
 
 function readPandocRawBlock(schema: Schema, tok: PandocToken, writer: ProsemirrorWriter) {
-  // single lines of html should be read as inline_html (allows for 
+  // single lines of html should be read as inline html (allows for
   // highlighting and more seamless editing experience)
   const format = tok.c[kRawBlockFormat];
   const text = tok.c[kRawBlockContent] as string;
-  if (format === 'html' && isSingleLineHTML(text)) {
+  if (format === kHTMLFormat && isSingleLineHTML(text)) {
     writer.openNode(schema.nodes.paragraph, {});
     writer.writeInlineHTML(text.trimRight());
+    writer.closeNode();
+
+    // similarly, single lines of tex should be read as inline tex
+  } else if (format === kTexFormat && isSingleLineTex(text)) {
+    writer.openNode(schema.nodes.paragraph, {});
+    const rawTexMark = schema.marks.raw_tex.create();
+    writer.openMark(rawTexMark);
+    writer.writeText(text.trimRight());
+    writer.closeMark(rawTexMark);
     writer.closeNode();
   } else {
     writer.openNode(schema.nodes.raw_block, { format });
@@ -132,6 +156,38 @@ function readPandocRawBlock(schema: Schema, tok: PandocToken, writer: Prosemirro
   }
 }
 
+// base class for format specific raw block commands (e.g. html/tex)
+class FormatRawBlockCommand extends ProsemirrorCommand {
+  private format: string;
+  private nodeType: NodeType;
+
+  constructor(id: EditorCommandId, format: string, nodeType: NodeType) {
+    super(id, [], (state: EditorState, dispatch?: (tr: Transaction<any>) => void, view?: EditorView) => {
+      if (!this.isActive(state) && !setBlockType(this.nodeType, { format })(state)) {
+        return false;
+      }
+
+      if (dispatch) {
+        const schema = state.schema;
+        if (this.isActive(state)) {
+          setBlockType(schema.nodes.paragraph)(state, dispatch);
+        } else {
+          setBlockType(this.nodeType, { format })(state, dispatch);
+        }
+      }
+
+      return true;
+    });
+    this.format = format;
+    this.nodeType = nodeType;
+  }
+
+  public isActive(state: EditorState) {
+    return !!findParentNode(node => node.type === this.nodeType && node.attrs.format === this.format)(state.selection);
+  }
+}
+
+// generic raw block command (shows dialog to allow choosing from among raw formats)
 class RawBlockCommand extends ProsemirrorCommand {
   constructor(ui: EditorUI) {
     super(
@@ -140,19 +196,13 @@ class RawBlockCommand extends ProsemirrorCommand {
       (state: EditorState, dispatch?: (tr: Transaction) => void, view?: EditorView) => {
         const schema = state.schema;
 
-        // enable if we are either insie a raw block or we can insert a raw block
+        // enable if we are either inside a raw block or we can insert a raw block
         const rawBlock = findParentNodeOfType(schema.nodes.raw_block)(state.selection);
         if (!rawBlock && !canInsertNode(state, schema.nodes.raw_block)) {
           return false;
         }
 
         async function asyncEditRawBlock() {
-          // function to create the node
-          function createRawNode(result: RawFormatResult) {
-            const rawText = result!.raw.content ? schema.text(result!.raw.content) : undefined;
-            return schema.nodes.raw_block.createAndFill({ format: result!.raw.format }, rawText)!;
-          }
-
           if (dispatch) {
             // get existing attributes (if any)
             const raw = {
@@ -175,12 +225,11 @@ class RawBlockCommand extends ProsemirrorCommand {
                 if (result.action === 'remove') {
                   tr.setBlockType(range.from, range.to, schema.nodes.paragraph);
                 } else if (result.action === 'edit') {
-                  tr.replaceRangeWith(range.from, range.to, createRawNode(result));
+                  tr.replaceRangeWith(range.from, range.to, createRawNode(schema, result.raw));
                   setTextSelection(tr.selection.from - 1, -1)(tr);
                 }
               } else {
-                tr.replaceSelectionWith(createRawNode(result));
-                setTextSelection(tr.mapping.map(state.selection.from), -1)(tr);
+                insertRawNode(tr, result.raw);
               }
 
               dispatch(tr);
@@ -197,6 +246,20 @@ class RawBlockCommand extends ProsemirrorCommand {
       },
     );
   }
+}
+
+// function to create a raw node
+function createRawNode(schema: Schema, raw: RawFormatProps) {
+  const rawText = raw.content ? schema.text(raw.content) : undefined;
+  return schema.nodes.raw_block.createAndFill({ format: raw.format }, rawText)!;
+}
+
+// function to create and insert a raw node, then set selection inside of it
+function insertRawNode(tr: Transaction, raw: RawFormatProps) {
+  const schema = tr.doc.type.schema;
+  const prevSel = tr.selection;
+  tr.replaceSelectionWith(createRawNode(schema, raw));
+  setTextSelection(tr.mapping.map(prevSel.from), -1)(tr);
 }
 
 export default extension;

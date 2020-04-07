@@ -29,14 +29,14 @@ export function linkHeadingsPostprocessor(doc: ProsemirrorNode) {
   const headings = findChildrenByType(doc, schema.nodes.heading);
 
   // find link marks
-  findChildrenByMark(doc, schema.marks.link).forEach(mark => {
-    const markRange = getMarkRange(doc.resolve(mark.pos), schema.marks.link);
+  findChildrenByMark(doc, schema.marks.link).forEach(link => {
+    const markRange = getMarkRange(doc.resolve(link.pos), schema.marks.link);
     if (markRange) {
       const attrs = getMarkAttrs(doc, markRange, schema.marks.link);
       const linkText = doc.textBetween(markRange.from, markRange.to);
       const matchedHeading = headings.find(heading => {
         return (
-          heading.node.textContent === linkText &&
+          heading.node.textContent.localeCompare(linkText, undefined, { sensitivity: 'accent' }) === 0 &&
           !attrs.title &&
           (attrs.href === '#' || attrs.href.substr(1) === heading.node.attrs.id)
         );
@@ -46,7 +46,7 @@ export function linkHeadingsPostprocessor(doc: ProsemirrorNode) {
         doc.nodesBetween(markRange.from, markRange.to, node => {
           const linkMark = node.marks.find(m => m.type === schema.marks.link);
           if (linkMark) {
-            linkMark.attrs.heading = linkText;
+            linkMark.attrs.heading = matchedHeading.node.textContent;
           }
         });
 

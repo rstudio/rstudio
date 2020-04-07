@@ -73,6 +73,8 @@ public class PanmirrorEditLinkDialog extends ModalDialog<PanmirrorLinkEditResult
          addLeftButton(removeLinkButton, ElementIds.VISUAL_MD_LINK_REMOVE_LINK_BUTTON); 
       }
       
+      capabilities_ = capabilities;
+      
       href_ = new PanmirrorHRefSelect(targets, capabilities);
       href_.addStyleName(RES.styles().hrefSelect());
       href_.addStyleName(RES.styles().spaced());
@@ -84,6 +86,7 @@ public class PanmirrorEditLinkDialog extends ModalDialog<PanmirrorLinkEditResult
          textLabel_ = new FormLabel("Text:"), 
          link.text
       );
+      
       title_ = PanmirrorDialogsUtil.addTextBox(
          linkTab, 
          ElementIds.VISUAL_MD_LINK_TITLE, 
@@ -168,11 +171,12 @@ public class PanmirrorEditLinkDialog extends ModalDialog<PanmirrorLinkEditResult
    
    private void manageVisibility()
    {
-      text_.setVisible(href_.getType() != PanmirrorLinkType.Heading);
-      textLabel_.setVisible(text_.isVisible());
-      title_.setVisible(text_.isVisible());
-      titleLabel_.setVisible(text_.isVisible());
-      editAttr_.setVisible(text_.isVisible());
+      boolean isHeadingLink = href_.getType() == PanmirrorLinkType.Heading;
+      text_.setVisible(capabilities_.text && !isHeadingLink);
+      textLabel_.setVisible(capabilities_.text && !isHeadingLink);
+      title_.setVisible(!isHeadingLink);
+      titleLabel_.setVisible(!isHeadingLink);
+      editAttr_.setVisible(!isHeadingLink);
    }
    
    private static PanmirrorDialogsResources RES = PanmirrorDialogsResources.INSTANCE;
@@ -185,6 +189,8 @@ public class PanmirrorEditLinkDialog extends ModalDialog<PanmirrorLinkEditResult
    private final TextBox text_;
    private final FormLabel titleLabel_;
    private final TextBox title_;
+   
+   private final PanmirrorLinkCapabilities capabilities_;
 
    private final PanmirrorEditAttrWidget editAttr_;
 }

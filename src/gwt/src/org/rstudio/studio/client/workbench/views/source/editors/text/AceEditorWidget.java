@@ -219,95 +219,97 @@ public class AceEditorWidget extends Composite
       
       aceEventHandlers_ = new ArrayList<HandlerRegistration>();
       
-      aceEventHandlers_.add(AceEditorNative.addEventListener(
-                  editor_,
-                  "undo",
-                  new CommandWithArg<Void>()
-                  {
-                     public void execute(Void arg)
-                     {
-                        fireEvent(new UndoRedoEvent(false));
-                     }
-                  }));
-      
-      aceEventHandlers_.add(AceEditorNative.addEventListener(
-                  editor_,
-                  "redo",
-                  new CommandWithArg<Void>()
-                  {
-                     public void execute(Void arg)
-                     {
-                        fireEvent(new UndoRedoEvent(true));
-                     }
-                  }));
-      
-      aceEventHandlers_.add(AceEditorNative.addEventListener(
-                  editor_,
-                  "paste",
-                  new CommandWithArg<String>()
-                  {
-                     public void execute(String text)
-                     {
-                        fireEvent(new PasteEvent(text));
-                     }
-                  }));
-      
-      aceEventHandlers_.add(AceEditorNative.addEventListener(
-                  editor_,
-                  "mousemove",
-                  new CommandWithArg<AceMouseEventNative>()
-                  {
-                     @Override
-                     public void execute(AceMouseEventNative event)
-                     {
-                        fireEvent(new AceMouseMoveEvent(event));
-                     }
-                  }));
-      
-      aceEventHandlers_.add(AceEditorNative.addEventListener(
-                  editor_,
-                  "mousedown",
-                  new CommandWithArg<AceMouseEventNative>()
-                  {
-                     @Override
-                     public void execute(AceMouseEventNative event)
-                     {
-                        fireEvent(new AceClickEvent(event));
-                     }
-                  }));
-      
-      aceEventHandlers_.add(AceEditorNative.addEventListener(
-            editor_.getRenderer(),
-            "afterRender",
-            new CommandWithArg<Void>()
-            {
-               @Override
-               public void execute(Void event)
-               {
-                  fireEvent(new RenderFinishedEvent());
-                  isRendered_ = true;
-                  events_.fireEvent(new AfterAceRenderEvent(AceEditorWidget.this.getEditor()));
-               }
-            }));
-      
-      aceEventHandlers_.add(AceEditorNative.addEventListener(
-            editor_,
-            "changeSelection",
-            new CommandWithArg<Void>()
-            {
-               @Override
-               public void execute(Void event)
-               {
-                  fireEvent(new AceSelectionChangedEvent());
-               }
-            }));
-
       addAttachHandler(new AttachEvent.Handler()
       {
          @Override
          public void onAttachOrDetach(AttachEvent event)
          {
-            if (!event.isAttached())
+            if (event.isAttached())
+            {
+               aceEventHandlers_.add(AceEditorNative.addEventListener(
+                     editor_,
+                     "undo",
+                     new CommandWithArg<Void>()
+                     {
+                        public void execute(Void arg)
+                        {
+                           fireEvent(new UndoRedoEvent(false));
+                        }
+                     }));
+
+               aceEventHandlers_.add(AceEditorNative.addEventListener(
+                     editor_,
+                     "redo",
+                     new CommandWithArg<Void>()
+                     {
+                        public void execute(Void arg)
+                        {
+                           fireEvent(new UndoRedoEvent(true));
+                        }
+                     }));
+
+               aceEventHandlers_.add(AceEditorNative.addEventListener(
+                     editor_,
+                     "paste",
+                     new CommandWithArg<String>()
+                     {
+                        public void execute(String text)
+                        {
+                           fireEvent(new PasteEvent(text));
+                        }
+                     }));
+
+               aceEventHandlers_.add(AceEditorNative.addEventListener(
+                     editor_,
+                     "mousemove",
+                     new CommandWithArg<AceMouseEventNative>()
+                     {
+                        @Override
+                        public void execute(AceMouseEventNative event)
+                        {
+                           fireEvent(new AceMouseMoveEvent(event));
+                        }
+                     }));
+
+               aceEventHandlers_.add(AceEditorNative.addEventListener(
+                     editor_,
+                     "mousedown",
+                     new CommandWithArg<AceMouseEventNative>()
+                     {
+                        @Override
+                        public void execute(AceMouseEventNative event)
+                        {
+                           fireEvent(new AceClickEvent(event));
+                        }
+                     }));
+
+               aceEventHandlers_.add(AceEditorNative.addEventListener(
+                     editor_.getRenderer(),
+                     "afterRender",
+                     new CommandWithArg<Void>()
+                     {
+                        @Override
+                        public void execute(Void event)
+                        {
+                           fireEvent(new RenderFinishedEvent());
+                           isRendered_ = true;
+                           events_.fireEvent(new AfterAceRenderEvent(AceEditorWidget.this.getEditor()));
+                        }
+                     }));
+
+               aceEventHandlers_.add(AceEditorNative.addEventListener(
+                     editor_,
+                     "changeSelection",
+                     new CommandWithArg<Void>()
+                     {
+                        @Override
+                        public void execute(Void event)
+                        {
+                           fireEvent(new AceSelectionChangedEvent());
+                        }
+                     }));
+            }
+            else
             {
                for (HandlerRegistration registration : aceEventHandlers_)
                   registration.removeHandler();

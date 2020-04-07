@@ -56,15 +56,16 @@ public class PanmirrorEditOrderedListDialog extends ModalDialog<PanmirrorOrdered
       numberDelimiter_.setVisible(capabilities.fancy);
       
       numberStyle_.getListBox().getElement().setId(ElementIds.VISUAL_MD_ORDERED_LIST_NUMBER_STYLE);
-      numberStyle_.setChoices(new String[] {
-         "DefaultStyle",
-         "Decimal",
-         "LowerRoman",
-         "UpperRoman",
-         "LowerAlpha",
-         "UpperAlpha",
-         "Example",    
-      });
+      numberStyle_.addChoice("DefaultStyle");
+      numberStyle_.addChoice("Decimal");
+      numberStyle_.addChoice("LowerRoman");
+      numberStyle_.addChoice("UpperRoman");
+      numberStyle_.addChoice("LowerAlpha");
+      numberStyle_.addChoice("UpperAlpha");
+      if (capabilities.example) {
+         numberStyle_.addChoice("Example");
+      }
+      
       numberDelimiter_.setChoices(new String[] {
          "DefaultDelim",
          "Period",

@@ -15,22 +15,22 @@
 
 import { Node as ProsemirrorNode, Schema, DOMSerializer, Fragment } from 'prosemirror-model';
 
-
 export function isSingleLineHTML(html: string) {
   return html.trimRight().split('\n').length === 1;
 }
 
-export function asHTMLTag(tag: string, attribs: { [key: string]: string }, selfClosing = false) {
+export function asHTMLTag(tag: string, attribs: { [key: string]: string }, selfClosing = false, noEmptyAttribs = false) {
   const attribsHTML = Object.keys(attribs)
+    .filter(name => !noEmptyAttribs || attribs[name])
     .map(name => `${name}="${escapeHTMLAttribute(attribs[name])}"`)
     .join(' ');
-  return `<${tag} ${attribsHTML}${selfClosing ? '/': ''}>`;
+  return `<${tag} ${attribsHTML}${selfClosing ? '/' : ''}>`;
 }
 
 export function escapeHTMLAttribute(value: string) {
   return value
-    .replace(/&/g, '&amp;')  // must be first replacement
-    .replace(/'/g, '&apos;') 
+    .replace(/&/g, '&amp;') // must be first replacement
+    .replace(/'/g, '&apos;')
     .replace(/"/g, '&quot;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;');

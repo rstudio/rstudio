@@ -164,7 +164,11 @@ function submitRealForm() {
 </head>
 <body>
 <div id="skipnav"><a href="#username">Skip navigation</a></div>
-<header role="banner" id="banner"><a href="http://www.rstudio.com"><img src="images/rstudio.png" width="78" height="27" alt="RStudio Logo (goes to external site)"/></a></header>
+<header role="banner" id="banner">
+  <div id="logo">
+    <a href="https://www.rstudio.com/"><img src="images/rstudio.png" width="78" height="27" alt="RStudio Logo (goes to external site)"/></a>
+  </div>
+</header>
 <main role="main">
 <div id="errorpanel">
 <p id="errortext">Error: #errorMessage#</p>
@@ -202,14 +206,14 @@ function submitRealForm() {
                 size='45'/><br />
       </p>
       <div style="display: #staySignedInDisplay#;">
+         <input type="checkbox" name="staySignedIn" id="staySignedIn" value="1"/>
+         <label for="staySignedIn">Stay signed in when browser closes</label>
          <p style="display: #authTimeoutMinutesDisplay#;">
             <span style="font-size:10px">You will automatically be signed out after #authTimeoutMinutes# minutes of inactivity.</span>
          </p>
-         <input type="checkbox" name="staySignedIn" id="staySignedIn" value="1"/>
-         <label for="staySignedIn">Stay signed in when browser closes</label>
       </div>
-       <input type="hidden" name="appUri" value="#appUri#"/>
-       <div id="buttonpanel"><button class="fancy" type="submit">Sign In</button></div>
+      <input type="hidden" name="appUri" value="#appUri#"/>
+      <div id="buttonpanel"><button class="fancy" type="submit">Sign In</button></div>
       </div>
     </td>
   </tr>
