@@ -103,7 +103,7 @@ std::string inferDocumentType(const FilePath& documentPath,
             return kSourceDocumentTypeShell;
       
       // check for R
-      for (auto&& r : {"R", "Rscript"})
+      for (auto&& r : {"r", "R", "Rscript"})
          if (*it == r)
             return kSourceDocumentTypeRSource;
       
