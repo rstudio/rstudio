@@ -38,7 +38,7 @@ export const LinkButton: React.FC<LinkButtonProps> = props => {
   };
 
   return (
-    <a href="#" onClick={onClick} title={props.title || props.text} className={className} style={style}>
+    <a href={props.text} onClick={onClick} title={props.title || props.text} className={className} style={style}>
       {props.text}
     </a>
   );
