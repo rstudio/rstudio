@@ -97,7 +97,8 @@ public class HistoryPane extends WorkbenchPane
    protected void onLoad()
    {
       super.onLoad();
-      scrollToBottom();
+      if (mode_ == Mode.Recent)
+         scrollToBottom();
    }
 
    @Override

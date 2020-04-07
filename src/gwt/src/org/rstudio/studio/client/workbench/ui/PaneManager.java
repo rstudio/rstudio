@@ -963,14 +963,12 @@ public class PaneManager
    {
       // Remove tab from hidden tabSet
       hiddenTabs_.remove(tab);
-      populateTabPanel(hiddenTabs_, hiddenTabSetTabPanel_, hiddenTabSetMinPanel_);
 
       // Add tab to the back of the new set
       if (tabs.get(tabs.size() - 1).name() == "Presentation")
          tabs.add(tabs.size() - 1, tab);
       else
          tabs.add(tab);
-      populateTabPanel(tabs, panel, minimized);
    }
 
    private void moveHiddenTabToTabSet1(Tab tab, LogicalWindow window, WorkbenchTabPanel panel,
