@@ -1,7 +1,7 @@
 /*
  * PaneLayoutPreferencesPane.java
  *
- * Copyright (C) 2009-19 by RStudio, PBC
+ * Copyright (C) 2009-20 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -147,6 +147,9 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
 
       public boolean presentationVisible()
       {
+         if (checkBoxes_.size() <= 0)
+            return false;
+
          CheckBox lastCheckBox = checkBoxes_.get(checkBoxes_.size() - 1);
          return StringUtil.equals(lastCheckBox.getText(), "Presentation") &&
                                   lastCheckBox.isVisible();

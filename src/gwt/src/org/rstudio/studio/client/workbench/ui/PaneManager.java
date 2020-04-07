@@ -817,7 +817,7 @@ public class PaneManager
    private ArrayList<Tab> tabNamesToTabs(JsArrayString tabNames)
    {
       ArrayList<Tab> tabList = new ArrayList<>();
-      // this is neccesary to avoid issues when moving from 1.3 where hiddenTabSet did not exist
+      // this is necessary to avoid issues when moving from 1.3 where hiddenTabSet did not exist
       if (tabNames != null)
       {
          for (int j = 0; j < tabNames.length(); j++)

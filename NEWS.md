@@ -6,6 +6,10 @@
 * The AGG renderer (as provided by the ragg package) is now a supported backend. (#6539)
 
 
+### Workbench
+
+* Any tab can be hidden from view through Global Options. (#6428)
+
 ### Bugfixes
 
 * Git integration now works properly for project names containing the '!' character. (#6160)

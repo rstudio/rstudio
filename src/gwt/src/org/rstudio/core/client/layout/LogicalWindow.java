@@ -68,7 +68,6 @@ public class LogicalWindow implements HasWindowStateChangeHandlers,
       switch (state_)
       {
          case HIDE:
-            return false;
          case MINIMIZE:
             return false;
          default:
