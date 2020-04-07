@@ -172,25 +172,64 @@ public class PaneConfig extends UserPrefsAccessor.Panes
       JsArrayString panes = getQuadrants();
       if (panes == null)
          return false;
+      if (!sameElements(panes, getAllPanes()))
+         return false;
 
       JsArrayString ts1 = getTabSet1();
       JsArrayString ts2 = getTabSet2();
+      if (ts1.length() == 0 || ts2.length() == 0)
+         return false;
 
       // Replace any obsoleted tabs in the config
       replaceObsoleteTabs(ts1);
       replaceObsoleteTabs(ts2);
 
-      // Presentation tab must always be at the end of the ts1 tabset (this 
+      // Presentation tab must always be at the end of the ts1 tabset (this
       // is so that activating it works even in the presence of optionally
-      // visible tabs). This is normally an invariant but for a time during 
-      // the v0.99-1000 preview we allowed the Connections tab to be the 
+      // visible tabs). This is normally an invariant but for a time during
+      // the v0.99-1000 preview we allowed the Connections tab to be the
       // last one in the tabset.
       if (ts1.get(ts1.length() - 1) != "Presentation")
       {
          Debug.logToConsole("Invaliding tabset config (Presentation index)");
          return false;
       }
-      
+
+      // If any of these tabs are missing, then they can be added
+      Set<String> addableTabs = makeSet(getAddableTabs());
+
+      // If any of these tabs are missing, then the whole config is invalid
+      Set<String> baseTabs = makeSet(getAllTabs());
+      baseTabs.removeAll(addableTabs);
+
+      for (String tab : JsUtil.asIterable(concat(ts1, ts2)))
+      {
+         if (!baseTabs.remove(tab) && !addableTabs.remove(tab))
+            return false; // unknown tab
+      }
+
+      // If any baseTabs are still present, they weren't part of the tabsets
+      if (baseTabs.size() > 0)
+         return false;
+
+      // Were any addable tabs missing? Add them the appropriate tabset
+      // (Iterate over original array instead of addableTabs set so that order
+      // is well-defined)
+      for (String tab : getAddableTabs())
+         if (addableTabs.contains(tab))
+            if (tab == "Viewer")
+               ts2.push(tab);
+            else
+               ts1.push(tab);
+
+      // These tabs can be hidden sometimes; they can't stand alone in a tabset
+      Set<String> hideableTabs = makeSet(getHideableTabs());
+      if (isSubset(hideableTabs, JsUtil.asIterable(ts1))
+          || isSubset(hideableTabs, JsUtil.asIterable(ts2)))
+      {
+         return false;
+      }
+
       return true;
    }
 

@@ -47,6 +47,7 @@ import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.*;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
+import com.google.inject.Singleton;
 
 import org.rstudio.core.client.*;
 import org.rstudio.core.client.command.AppCommand;
@@ -179,6 +180,7 @@ import java.util.LinkedList;
 import java.util.Queue;
 import java.util.Set;
 
+@Singleton
 public class Source implements InsertSourceHandler,
                                IsWidget,
                                OpenSourceFileHandler,
@@ -257,6 +259,8 @@ public class Source implements InsertSourceHandler,
                      String value,
                      String tooltip);
 
+      @Handler
+      void onNewSourceDoc();
       HandlerRegistration addBeforeShowHandler(BeforeShowHandler handler);
    }
 
@@ -498,6 +502,7 @@ public class Source implements InsertSourceHandler,
       }
       
       events_.addHandler(EditPresentationSourceEvent.TYPE, this);
+      events_.addHandler(FileEditEvent.TYPE, this);
       events_.addHandler(InsertSourceEvent.TYPE, this);
       events_.addHandler(ShowContentEvent.TYPE, this);
       events_.addHandler(ShowDataEvent.TYPE, this);
@@ -785,7 +790,7 @@ public class Source implements InsertSourceHandler,
       
       // add vim commands
       initVimCommands();
-      ensureVisible(false);
+      ensureVisible(true);
    }
    
    public void withSaveFilesBeforeCommand(final Command command,
@@ -2047,6 +2052,7 @@ public class Source implements InsertSourceHandler,
                @Override
                public void onResponseReceived(SourceDocument newDoc)
                {
+                  // !!! MJB
                   EditingTarget target = addTab(newDoc, OPEN_INTERACTIVE);
                   
                   if (contents != null)
@@ -4005,6 +4011,7 @@ public class Source implements InsertSourceHandler,
    {
       boolean hasDocs = editors_.size() > 0;
 
+      commands_.newSourceDoc().setEnabled(true);
       commands_.closeSourceDoc().setEnabled(hasDocs);
       commands_.closeAllSourceDocs().setEnabled(hasDocs);
       commands_.nextTab().setEnabled(hasDocs);

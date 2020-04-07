@@ -172,6 +172,10 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
       }
       
       CommandEvent event = new CommandEvent(this);
+      Object obj = event.getSource();
+      String name = event.toString();
+      String debug = event.toDebugString();
+
       RStudioGinjector.INSTANCE.getEventBus().fireEvent(event);
       handlers_.fireEvent(event);
    }

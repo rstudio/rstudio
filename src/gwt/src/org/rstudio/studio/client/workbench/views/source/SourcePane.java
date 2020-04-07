@@ -168,6 +168,12 @@ public class SourcePane extends Composite implements Display,
                                tooltip);
    }
 
+   @Override
+   public void onNewSourceDoc()
+   {
+      String breakpoint = "breakpoint";
+   }
+
    public int getActiveTabIndex()
    {
       return tabPanel_.getSelectedIndex();
