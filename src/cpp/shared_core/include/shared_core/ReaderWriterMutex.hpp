@@ -155,7 +155,7 @@ private:
 
 #define RW_LOCK_END(tryLog)                                                                  \
    }                                                                                         \
-   catch (const boost::thread_resource_error& e)                                             \
+   catch (const boost::thread_resource_error& /*e*/)                                         \
    {                                                                                         \
       if (tryLog)                                                                            \
          log::logErrorMessage("Failed to acquire lock: thread resource error",               \

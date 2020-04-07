@@ -117,6 +117,7 @@ set (SESSION_SOURCE_FILES
    modules/SessionFilesListingMonitor.cpp
    modules/SessionFilesQuotas.cpp
    modules/SessionFind.cpp
+   modules/SessionFonts.cpp
    modules/SessionGit.cpp
    modules/SessionGraphics.cpp
    modules/SessionHelp.cpp

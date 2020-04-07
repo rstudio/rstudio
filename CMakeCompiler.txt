@@ -65,6 +65,7 @@ if(MSVC)
      set(LINKER_FLAG "/MD")
   else()
      set(ITERATOR_DEBUG_LEVEL 2)
+     add_definitions(-D_DEBUG)
      set(LINKER_FLAG "/MDd")
   endif()
 

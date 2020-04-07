@@ -1,7 +1,7 @@
 /*
  * SessionFind.cpp
  *
- * Copyright (C) 2009-19 by RStudio, PBC
+ * Copyright (C) 2009-20 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -436,7 +436,7 @@ private:
       std::string encodedContents;
    };
 
-   bool onContinue(const core::system::ProcessOperations& ops) const
+   bool onContinue(const core::system::ProcessOperations& /*ops*/) const
    {
       return findResults().isRunning() && findResults().handle() == handle();
    }
@@ -538,7 +538,7 @@ private:
          {
             *contents = contents->erase(0, firstMatchOn - 30);
             contents->insert(0, "...");
-            int leadingCharactersErased = firstMatchOn - 33;
+            int leadingCharactersErased = gsl::narrow_cast<int>(firstMatchOn - 33);
             json::Array newMatchOnArray;
             json::Array newMatchOffArray;
             for (size_t i = 0; i < pMatchOn->getSize(); i++)
@@ -875,7 +875,7 @@ private:
               file.find("/.Rhistory") != std::string::npos);
    }
 
-   void onStdout(const core::system::ProcessOperations& ops, const std::string& data)
+   void onStdout(const core::system::ProcessOperations& /*ops*/, const std::string& data)
    {
       json::Array files;
       json::Array lineNums;
@@ -1068,14 +1068,14 @@ private:
       }
    }
 
-   void onStderr(const core::system::ProcessOperations& ops, const std::string& data)
+   void onStderr(const core::system::ProcessOperations& /*ops*/, const std::string& data)
    {
       LOG_ERROR_MESSAGE("grep: " + data);
       if (boost::algorithm::icontains(data, "not a git repository"))
          module_context::showErrorMessage("Not a Git Repository", data);
    }
 
-   void onExit(int exitCode)
+   void onExit(int /*exitCode*/)
    {
       findResults().onFindEnd(handle());
       module_context::enqueClientEvent(
@@ -1451,7 +1451,7 @@ core::Error beginFind(const json::JsonRpcRequest& request,
 }
 
 core::Error stopFind(const json::JsonRpcRequest& request,
-                     json::JsonRpcResponse* pResponse)
+                     json::JsonRpcResponse* /*pResponse*/)
 {
    std::string handle;
    Error error = json::readParams(request.params, &handle);
@@ -1463,8 +1463,8 @@ core::Error stopFind(const json::JsonRpcRequest& request,
    return Success();
 }
 
-core::Error clearFindResults(const json::JsonRpcRequest& request,
-                             json::JsonRpcResponse* pResponse)
+core::Error clearFindResults(const json::JsonRpcRequest& /*request*/,
+                             json::JsonRpcResponse* /*pResponse*/)
 {
    findResults().clear();
    return Success();
@@ -1538,7 +1538,7 @@ core::Error completeReplace(const json::JsonRpcRequest& request,
 }
 
 core::Error stopReplace(const json::JsonRpcRequest& request,
-                        json::JsonRpcResponse* pResponse)
+                        json::JsonRpcResponse* /*pResponse*/)
 {
    std::string handle;
    Error error = json::readParams(request.params, &handle);
@@ -1636,7 +1636,7 @@ core::Error Replacer::completeReplace(const boost::regex& searchRegex,
          "A regex error occurred during replace operation: " + std::string(e.what()),
          ERROR_LOCATION);
 
-      error.addProperty("position", e.position());
+      error.addProperty("position", gsl::narrow_cast<int>(e.position()));
       return error;
    }
 
@@ -1674,7 +1674,7 @@ core::Error Replacer::replaceRegexIgnoreCase(size_t matchOn, size_t matchOff,
          "A regex error occurred during replace operation: " + std::string(e.what()),
          ERROR_LOCATION);
 
-      error.addProperty("position", e.position());
+      error.addProperty("position", gsl::narrow_cast<int>(e.position()));
       return error;
    }
 }
@@ -1699,7 +1699,7 @@ core::Error Replacer::replaceRegexWithCase(size_t matchOn, size_t matchOff,
          "A regex error occurred during replace operation: " + std::string(e.what()),
          ERROR_LOCATION);
 
-      error.addProperty("position", e.position());
+      error.addProperty("position", gsl::narrow_cast<int>(e.position()));
       return error;
    }
 }
