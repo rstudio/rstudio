@@ -1755,7 +1755,9 @@ public class TextEditingTarget implements
                TextEditingTarget.this,
                view_, 
                dirtyState_, 
-               docUpdateSentinel_
+               docUpdateSentinel_,
+               events_,
+               releaseOnDismiss_
             );
             
             if (!prefs_.restoreSourceDocumentCursorPosition().getValue())

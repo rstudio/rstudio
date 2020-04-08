@@ -15,6 +15,8 @@
 
 package org.rstudio.studio.client.workbench.views.source.editors.text;
 
+import java.util.ArrayList;
+
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.DebouncedCommand;
 import org.rstudio.core.client.Debug;
@@ -26,6 +28,7 @@ import org.rstudio.core.client.widget.IsHideableWidget;
 import org.rstudio.core.client.widget.ProgressPanel;
 import org.rstudio.core.client.widget.images.ProgressImages;
 import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.panmirror.PanmirrorContext;
 import org.rstudio.studio.client.panmirror.PanmirrorEditingLocation;
 import org.rstudio.studio.client.panmirror.PanmirrorKeybindings;
@@ -48,8 +51,8 @@ import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.event.dom.client.ChangeEvent;
 import com.google.gwt.event.dom.client.ChangeHandler;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
+import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.Command;
-import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.view.client.SelectionChangeEvent;
 import com.google.inject.Inject;
 
@@ -59,7 +62,9 @@ public class TextEditingTargetVisualMode
    public TextEditingTargetVisualMode(TextEditingTarget target,
                                       TextEditingTarget.Display display,
                                       DirtyState dirtyState,
-                                      DocUpdateSentinel docUpdateSentinel)
+                                      DocUpdateSentinel docUpdateSentinel,
+                                      EventBus eventBus,
+                                      final ArrayList<HandlerRegistration> releaseOnDismiss)
    {
       RStudioGinjector.INSTANCE.injectMembers(this);
       
@@ -75,33 +80,36 @@ public class TextEditingTargetVisualMode
          manageUI(false, false);
       
       // track changes over time
-      onDocPropChanged(TextEditingTarget.RMD_VISUAL_MODE, (value) -> {
+      releaseOnDismiss.add(onDocPropChanged(TextEditingTarget.RMD_VISUAL_MODE, (value) -> {
          manageUI(isActivated(), true);
-      });
+      }));
       
       // sync to outline visible prop
-      onDocPropChanged(TextEditingTarget.DOC_OUTLINE_VISIBLE, (value) -> {
+      releaseOnDismiss.add(onDocPropChanged(TextEditingTarget.DOC_OUTLINE_VISIBLE, (value) -> {
          withPanmirror(() -> {
             panmirror_.showOutline(getOutlineVisible(), getOutlineWidth(), true);
          });
-      });
+      }));
       
       // sync to user pref changed
-      prefs_.enableVisualMarkdownEditingMode().addValueChangeHandler((value) -> {
+      releaseOnDismiss.add(prefs_.enableVisualMarkdownEditingMode().addValueChangeHandler((value) -> {
          display_.manageCommandUI();
-      });
+      }));
       
       // changes to line wrapping prefs make us dirty
-      prefs_.visualMarkdownEditingWrapAuto().addValueChangeHandler((value) -> {
+      releaseOnDismiss.add(prefs_.visualMarkdownEditingWrapAuto().addValueChangeHandler((value) -> {
          isDirty_ = true;
-      });
-      prefs_.visualMarkdownEditingWrapColumn().addValueChangeHandler((value) -> {
+      }));
+      releaseOnDismiss.add(prefs_.visualMarkdownEditingWrapColumn().addValueChangeHandler((value) -> {
          isDirty_ = true;
-      });
+      }));
    } 
    
    @Inject
-   public void initialize(Commands commands, UserPrefs prefs, SourceServerOperations source, WorkbenchContext context)
+   public void initialize(Commands commands, 
+                          UserPrefs prefs, 
+                          SourceServerOperations source, 
+                          WorkbenchContext context)
    {
       commands_ = commands;
       prefs_ = prefs;
@@ -613,9 +621,9 @@ public class TextEditingTargetVisualMode
       }
    }
    
-   private void onDocPropChanged(String prop, ValueChangeHandler<String> handler)
+   private HandlerRegistration onDocPropChanged(String prop, ValueChangeHandler<String> handler)
    {
-      docUpdateSentinel_.addPropertyValueChangeHandler(prop, handler);
+      return docUpdateSentinel_.addPropertyValueChangeHandler(prop, handler);
    }
    
    private PanmirrorUIContext uiContext()
