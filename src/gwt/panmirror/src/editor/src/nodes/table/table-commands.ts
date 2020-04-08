@@ -299,11 +299,11 @@ export class TableColumnAlignmentCommand extends ProsemirrorCommand {
       }
 
       if (dispatch) {
-        const { table, tableStart, left } = selectedRect(state);
+        const { table, tableStart, left, right } = selectedRect(state);
         const tr = state.tr;
         table.forEach((rowNode, rowOffset) => {
           rowNode.forEach((cellNode, cellOffset, i) => {
-            if (i === left) {
+            if (i >= left && i <= right) {
               const cellPos = tableStart + 1 + rowOffset + cellOffset;
               tr.setNodeMarkup(cellPos, cellNode.type, {
                 ...cellNode.attrs,
