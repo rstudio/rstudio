@@ -37,7 +37,7 @@ const kBeginCitePattern = `(.* ${kCiteIdPrefixPattern}|${kCiteIdPrefixPattern})`
 const kCiteIdRegEx = new RegExp(kCiteIdPattern);
 const kCiteIdLengthRegEx = new RegExp(`^${kCiteIdPrefixPattern}${kCiteIdCharsPattern}`);
 const kCiteRegEx = new RegExp(`${kBeginCitePattern}${kCiteIdCharsPattern}.*`);
-const kFullCiteRegEx =  new RegExp(`\\[${kBeginCitePattern}${kCiteIdCharsPattern}.*\\]`);
+const kFullCiteRegEx = new RegExp(`\\[${kBeginCitePattern}${kCiteIdCharsPattern}.*\\]`);
 
 enum CitationMode {
   NormalCitation = 'NormalCitation',
@@ -75,7 +75,7 @@ const extension = (pandocExtensions: PandocExtensions, _options: EditorOptions, 
               tag: "span[class*='cite-id']",
             },
           ],
-          toDOM(mark: Mark) : DOMOutputSpecArray {
+          toDOM(mark: Mark): DOMOutputSpecArray {
             return { '0': 'span', '1': { class: 'cite-id pm-link-text-color' } };
           },
         },
@@ -171,8 +171,8 @@ const extension = (pandocExtensions: PandocExtensions, _options: EditorOptions, 
             splitInvalidatedMarks(tr, node, pos, citeIdLength, schema.marks.cite_id);
           },
         },
-          {
-          // 'break' cite marks if they are no longer valid. 
+        {
+          // 'break' cite marks if they are no longer valid.
           name: 'remove-cite-marks',
           filter: (node: ProsemirrorNode) => node.isTextblock && node.type.allowsMarkType(schema.marks.cite),
           append: (tr: MarkTransaction, node: ProsemirrorNode, pos: number) => {
@@ -322,7 +322,6 @@ function readPandocCite(schema: Schema) {
     writer.closeMark(citeMark);
   };
 }
-
 
 // validate that the cite is still valid (just return 0 or the whole length of the string)
 function citeLength(text: string) {

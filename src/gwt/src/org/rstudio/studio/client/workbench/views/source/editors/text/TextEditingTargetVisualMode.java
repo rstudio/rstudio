@@ -15,6 +15,8 @@
 
 package org.rstudio.studio.client.workbench.views.source.editors.text;
 
+import java.util.ArrayList;
+
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.DebouncedCommand;
 import org.rstudio.core.client.Debug;
@@ -26,6 +28,7 @@ import org.rstudio.core.client.widget.IsHideableWidget;
 import org.rstudio.core.client.widget.ProgressPanel;
 import org.rstudio.core.client.widget.images.ProgressImages;
 import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.panmirror.PanmirrorContext;
 import org.rstudio.studio.client.panmirror.PanmirrorEditingLocation;
 import org.rstudio.studio.client.panmirror.PanmirrorKeybindings;
@@ -48,8 +51,8 @@ import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.event.dom.client.ChangeEvent;
 import com.google.gwt.event.dom.client.ChangeHandler;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
+import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.Command;
-import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.view.client.SelectionChangeEvent;
 import com.google.inject.Inject;
 
@@ -59,7 +62,9 @@ public class TextEditingTargetVisualMode
    public TextEditingTargetVisualMode(TextEditingTarget target,
                                       TextEditingTarget.Display display,
                                       DirtyState dirtyState,
-                                      DocUpdateSentinel docUpdateSentinel)
+                                      DocUpdateSentinel docUpdateSentinel,
+                                      EventBus eventBus,
+                                      final ArrayList<HandlerRegistration> releaseOnDismiss)
    {
       RStudioGinjector.INSTANCE.injectMembers(this);
       
@@ -67,7 +72,7 @@ public class TextEditingTargetVisualMode
       display_ = display;
       dirtyState_ = dirtyState;
       docUpdateSentinel_ = docUpdateSentinel;
-      progress_ = new ProgressPanel(ProgressImages.createSmall(), 200, false);
+      progress_ = new ProgressPanel(ProgressImages.createSmall(), 200);
       
       // if visual mode isn't enabled then reflect that (if it is enabled we'll
       // defer initialization work until after the tab is actually activated)
@@ -75,33 +80,36 @@ public class TextEditingTargetVisualMode
          manageUI(false, false);
       
       // track changes over time
-      onDocPropChanged(TextEditingTarget.RMD_VISUAL_MODE, (value) -> {
+      releaseOnDismiss.add(onDocPropChanged(TextEditingTarget.RMD_VISUAL_MODE, (value) -> {
          manageUI(isActivated(), true);
-      });
+      }));
       
       // sync to outline visible prop
-      onDocPropChanged(TextEditingTarget.DOC_OUTLINE_VISIBLE, (value) -> {
+      releaseOnDismiss.add(onDocPropChanged(TextEditingTarget.DOC_OUTLINE_VISIBLE, (value) -> {
          withPanmirror(() -> {
             panmirror_.showOutline(getOutlineVisible(), getOutlineWidth(), true);
          });
-      });
+      }));
       
       // sync to user pref changed
-      prefs_.enableVisualMarkdownEditingMode().addValueChangeHandler((value) -> {
+      releaseOnDismiss.add(prefs_.enableVisualMarkdownEditingMode().addValueChangeHandler((value) -> {
          display_.manageCommandUI();
-      });
+      }));
       
       // changes to line wrapping prefs make us dirty
-      prefs_.visualMarkdownEditingWrapAuto().addValueChangeHandler((value) -> {
+      releaseOnDismiss.add(prefs_.visualMarkdownEditingWrapAuto().addValueChangeHandler((value) -> {
          isDirty_ = true;
-      });
-      prefs_.visualMarkdownEditingWrapColumn().addValueChangeHandler((value) -> {
+      }));
+      releaseOnDismiss.add(prefs_.visualMarkdownEditingWrapColumn().addValueChangeHandler((value) -> {
          isDirty_ = true;
-      });
+      }));
    } 
    
    @Inject
-   public void initialize(Commands commands, UserPrefs prefs, SourceServerOperations source, WorkbenchContext context)
+   public void initialize(Commands commands, 
+                          UserPrefs prefs, 
+                          SourceServerOperations source, 
+                          WorkbenchContext context)
    {
       commands_ = commands;
       prefs_ = prefs;
@@ -166,48 +174,39 @@ public class TextEditingTargetVisualMode
       loadingFromSource_ = true;
       withPanmirror(() -> {
          
-         withProgress(400, completed -> {
+         panmirror_.setMarkdown(getEditorCode(), true, (done) -> {  
+               
+            // activate editor
+            if (ready != null)
+               ready.execute();
             
-            panmirror_.setMarkdown(getEditorCode(), true, (done) -> {  
+            isDirty_ = false;
+            loadingFromSource_ = false;
+          
+            // restore selection if we have one
+            Scheduler.get().scheduleDeferred(() -> {
                
-               // indicate we are complete
-               completed.execute();
+               // restore saved location
+               PanmirrorEditingLocation location = savedEditingLocation();
+               if (location != null)
+                  panmirror_.restoreEditingLocation(location);
                
-               // activate editor
-               if (ready != null)
-                  ready.execute();
+               if (focus)
+                 panmirror_.focus();
                
-               isDirty_ = false;
-               loadingFromSource_ = false;
-             
-               // restore selection if we have one
-               Scheduler.get().scheduleDeferred(() -> {
-                  
-                  // restore saved location
-                  PanmirrorEditingLocation location = savedEditingLocation();
-                  if (location != null)
-                     panmirror_.restoreEditingLocation(location);
-                  
-                  if (focus)
-                    panmirror_.focus();
-                  
-                  // show any format or extension warnings
-                  PanmirrorPandocFormat format = panmirror_.getPandocFormat();
-                  if (format.warnings.invalidFormat.length() > 0)
-                  {
-                     display_.showWarningBar("Invalid Pandoc format: " + format.warnings.invalidFormat);
-                  }
-                  else if (format.warnings.invalidOptions.length > 0)
-                  {
-                     display_.showWarningBar("Pandoc format " + format.baseName + " does not support options: " + 
-                                             String.join(", ", format.warnings.invalidOptions));
-                  }
-               });                
-            });
-            
+               // show any format or extension warnings
+               PanmirrorPandocFormat format = panmirror_.getPandocFormat();
+               if (format.warnings.invalidFormat.length() > 0)
+               {
+                  display_.showWarningBar("Invalid Pandoc format: " + format.warnings.invalidFormat);
+               }
+               else if (format.warnings.invalidOptions.length > 0)
+               {
+                  display_.showWarningBar("Pandoc format " + format.baseName + " does not support options: " + 
+                                          String.join(", ", format.warnings.invalidOptions));
+               }
+            });                
          });
-         
-        
       });
    }
  
@@ -341,7 +340,18 @@ public class TextEditingTargetVisualMode
       // visual mode enabled (panmirror editor)
       if (activate)
       {
+         // show progress (as this may well require either loading the 
+         // panmirror library for the first time or a reload of visual mode,
+         // which is normally instant but for very, very large documents
+         // can take a couple of seconds)
+         progress_.beginProgressOperation(400);
+         editorContainer.activateWidget(progress_);
+         
          Command activator = () -> {
+            
+            // clear progress
+            progress_.endProgressOperation();
+            
             // sync to editor outline prefs
             panmirror_.showOutline(getOutlineVisible(), getOutlineWidth());
             
@@ -404,106 +414,99 @@ public class TextEditingTargetVisualMode
    {
       if (panmirror_ == null)
       {
-         withProgress(400, completed -> {
+         // create panmirror
+         String format = "markdown+autolink_bare_uris+tex_math_single_backslash";
+         PanmirrorContext context = new PanmirrorContext(format, uiContext());
          
-            // create panmirror
-            String format = "markdown+autolink_bare_uris+tex_math_single_backslash";
-            PanmirrorContext context = new PanmirrorContext(format, uiContext());
+         PanmirrorOptions options = new PanmirrorOptions();
+         options.rmdCodeChunks = true;
+         
+         // add focus-visible class to prevent interaction with focus-visible.js
+         // (it ends up attempting to apply the "focus-visible" class b/c ProseMirror
+         // is contentEditable, and that triggers a dom mutation event for ProseMirror,
+         // which in turn causes us to lose table selections)
+         options.className = "focus-visible";
+           
+         PanmirrorWidget.Options widgetOptions = new PanmirrorWidget.Options();
+         
+         
+         PanmirrorWidget.create(context, options, widgetOptions, getEditorCode(), (panmirror) -> {
             
-            PanmirrorOptions options = new PanmirrorOptions();
-            options.rmdCodeChunks = true;
+            // save reference to panmirror
+            panmirror_ = panmirror;
             
-            // add focus-visible class to prevent interaction with focus-visible.js
-            // (it ends up attempting to apply the "focus-visible" class b/c ProseMirror
-            // is contentEditable, and that triggers a dom mutation event for ProseMirror,
-            // which in turn causes us to lose table selections)
-            options.className = "focus-visible";
-              
-            PanmirrorWidget.Options widgetOptions = new PanmirrorWidget.Options();
-            
-            
-            PanmirrorWidget.create(context, options, widgetOptions, getEditorCode(), (panmirror) -> {
-               
-               // save reference to panmirror
-               panmirror_ = panmirror;
-               
-               // remove some keybindings that conflict with the ide
-               disableKeys(
-                  PanmirrorCommands.Paragraph, 
-                  PanmirrorCommands.Heading1, PanmirrorCommands.Heading2, PanmirrorCommands.Heading3,
-                  PanmirrorCommands.Heading4, PanmirrorCommands.Heading5, PanmirrorCommands.Heading6,
-                  PanmirrorCommands.BulletList, PanmirrorCommands.OrderedList, PanmirrorCommands.TightList
-               );
-              
-               // periodically sync edits back to main editor
-               syncOnIdle_ = new DebouncedCommand(1000)
+            // remove some keybindings that conflict with the ide
+            disableKeys(
+               PanmirrorCommands.Paragraph, 
+               PanmirrorCommands.Heading1, PanmirrorCommands.Heading2, PanmirrorCommands.Heading3,
+               PanmirrorCommands.Heading4, PanmirrorCommands.Heading5, PanmirrorCommands.Heading6,
+               PanmirrorCommands.BulletList, PanmirrorCommands.OrderedList, PanmirrorCommands.TightList
+            );
+           
+            // periodically sync edits back to main editor
+            syncOnIdle_ = new DebouncedCommand(1000)
+            {
+               @Override
+               protected void execute()
                {
-                  @Override
-                  protected void execute()
+                  if (isDirty_)
+                     syncToEditor(false);
+               }
+            };
+            
+            // periodically save selection
+            saveLocationOnIdle_ = new DebouncedCommand(1000)
+            {
+               @Override
+               protected void execute()
+               {
+                  PanmirrorEditingLocation location = panmirror_.getEditingLocation();
+                  String locationProp = + location.pos + ":" + location.scrollTop; 
+                  docUpdateSentinel_.setProperty(RMD_VISUAL_MODE_LOCATION, locationProp);
+               }
+            };
+            
+            // set dirty flag + nudge idle sync on change
+            panmirror_.addChangeHandler(new ChangeHandler() 
+            {
+               @Override
+               public void onChange(ChangeEvent event)
+               {
+                  // set flag and nudge sync on idle
+                  isDirty_ = true;
+                  syncOnIdle_.nudge();
+                  
+                  // update editor dirty state if necessary
+                  if (!loadingFromSource_ && !dirtyState_.getValue())
                   {
-                     if (isDirty_)
-                        syncToEditor(false);
+                     dirtyState_.markDirty(false);
+                     source_.setSourceDocumentDirty(
+                           docUpdateSentinel_.getId(), true, 
+                           new VoidServerRequestCallback());
                   }
-               };
-               
-               // periodically save selection
-               saveLocationOnIdle_ = new DebouncedCommand(1000)
-               {
-                  @Override
-                  protected void execute()
-                  {
-                     PanmirrorEditingLocation location = panmirror_.getEditingLocation();
-                     String locationProp = + location.pos + ":" + location.scrollTop; 
-                     docUpdateSentinel_.setProperty(RMD_VISUAL_MODE_LOCATION, locationProp);
-                  }
-               };
-               
-               // set dirty flag + nudge idle sync on change
-               panmirror_.addChangeHandler(new ChangeHandler() 
-               {
-                  @Override
-                  public void onChange(ChangeEvent event)
-                  {
-                     // set flag and nudge sync on idle
-                     isDirty_ = true;
-                     syncOnIdle_.nudge();
-                     
-                     // update editor dirty state if necessary
-                     if (!loadingFromSource_ && !dirtyState_.getValue())
-                     {
-                        dirtyState_.markDirty(false);
-                        source_.setSourceDocumentDirty(
-                              docUpdateSentinel_.getId(), true, 
-                              new VoidServerRequestCallback());
-                     }
-                  }  
-               });
-               
-               // save selection
-               panmirror_.addSelectionChangeHandler(new SelectionChangeEvent.Handler()
-               {
-                  @Override
-                  public void onSelectionChange(SelectionChangeEvent event)
-                  {
-                     saveLocationOnIdle_.nudge();
-                  }
-               });
-                
-               // track changes in outline sidebar and save as prefs
-               panmirror_.addPanmirrorOutlineVisibleHandler((event) -> {
-                  setOutlineVisible(event.getVisible());
-               });
-               panmirror_.addPanmirrorOutlineWidthHandler((event) -> {
-                  setOutlineWidth(event.getWidth());
-               });
-               
-               // indicate we are done with progress
-               completed.execute();
-              
-               // good to go!
-               ready.execute();
+               }  
             });
-         
+            
+            // save selection
+            panmirror_.addSelectionChangeHandler(new SelectionChangeEvent.Handler()
+            {
+               @Override
+               public void onSelectionChange(SelectionChangeEvent event)
+               {
+                  saveLocationOnIdle_.nudge();
+               }
+            });
+             
+            // track changes in outline sidebar and save as prefs
+            panmirror_.addPanmirrorOutlineVisibleHandler((event) -> {
+               setOutlineVisible(event.getVisible());
+            });
+            panmirror_.addPanmirrorOutlineWidthHandler((event) -> {
+               setOutlineWidth(event.getWidth());
+            });
+           
+            // good to go!
+            ready.execute();
          });
       }
       else
@@ -613,9 +616,9 @@ public class TextEditingTargetVisualMode
       }
    }
    
-   private void onDocPropChanged(String prop, ValueChangeHandler<String> handler)
+   private HandlerRegistration onDocPropChanged(String prop, ValueChangeHandler<String> handler)
    {
-      docUpdateSentinel_.addPropertyValueChangeHandler(prop, handler);
+      return docUpdateSentinel_.addPropertyValueChangeHandler(prop, handler);
    }
    
    private PanmirrorUIContext uiContext()
@@ -625,6 +628,9 @@ public class TextEditingTargetVisualMode
          return ImagePreviewer.imgSrcPathFromHref(uiContext.getResourceDir.getResourceDir(), path);
       };
       uiContext.getResourceDir = () -> {
+         
+         // TODO: curent knitr directroy
+         
          if (docUpdateSentinel_.getPath() != null)
             return FileSystemItem.createDir(docUpdateSentinel_.getPath()).getParentPathString();
          else

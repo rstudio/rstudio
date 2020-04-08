@@ -112,6 +112,7 @@ export interface EditorCommand {
   readonly keymap: readonly string[];
   readonly isEnabled: () => boolean;
   readonly isActive: () => boolean;
+  readonly plural: () => number;
   readonly execute: () => void;
 }
 
@@ -134,6 +135,10 @@ export class ProsemirrorCommand {
 
   public isActive(state: EditorState): boolean {
     return false;
+  }
+
+  public plural(state: EditorState): number {
+    return 1;
   }
 }
 

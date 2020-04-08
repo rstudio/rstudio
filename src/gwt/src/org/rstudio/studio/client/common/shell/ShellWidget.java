@@ -112,8 +112,16 @@ public class ShellWidget extends Composite implements ShellDisplay,
          input_.setNewLineMode(NewLineMode.Unix);
       
       input_.addClickHandler(secondaryInputHandler);
-      input_.addCursorChangedHandler((CursorChangedEvent event) -> scrollIntoView());
       input_.addFocusHandler((FocusEvent event) -> scrollIntoView());
+      
+      // NOTE: we cannot scroll into view immediately after the cursor
+      // has changed, as Ace may not have rendered the updated cursor
+      // position yet. For that reason, we set the pending scroll flag
+      // and allow it to happen at the completion of next Ace render.
+      input_.addCursorChangedHandler((CursorChangedEvent event) ->
+      {
+         scrollIntoViewPending_ = true;
+      });
       
       // This one is kind of awkward. If a user pastes multi-line content
       // into the Ace instance, it might force the scroll panel to render
@@ -126,13 +134,17 @@ public class ShellWidget extends Composite implements ShellDisplay,
       //
       // The solution here is to force Ace to check whether a resize
       // is necessary after a render has finished.
-      
+      //
+      // We also check whether any other code has requested a scroll into
+      // view at this point as well, since the rendered cursor implies we
+      // can correctly compute the scroll position.
       input_.addRenderFinishedHandler(new RenderFinishedEvent.Handler()
       {
          @Override
          public void onRenderFinished(RenderFinishedEvent event)
          {
             checkForResize();
+            checkForPendingScroll();
          }
       });
       
@@ -900,40 +912,59 @@ public class ShellWidget extends Composite implements ShellDisplay,
             input_.getWidget().getEditor().getRenderer().getCursorElement());
       
       // Scroll the cursor into view as required.
+      int oldScrollPos = scrollPanel_.getVerticalScrollPosition();
+      int newScrollPos = oldScrollPos;
+      
       if (child.getTop() - padding < parent.getTop())
       {
-         int scrollPos =
-               scrollPanel_.getVerticalScrollPosition() +
+         newScrollPos =
+               scrollPanel_.getVerticalScrollPosition() -
+               parent.getTop() +
                child.getTop() -
-               parent.getTop();
-         
-         scrollPanel_.setVerticalScrollPosition(scrollPos - padding);
+               padding;
       }
       else if (child.getBottom() + padding > parent.getBottom())
       {
-         int scrollPos =
-               scrollPanel_.getVerticalScrollPosition() +
-               child.getBottom() -
-               parent.getBottom();
-         
-         scrollPanel_.setVerticalScrollPosition(scrollPos + padding);
+         newScrollPos =
+               scrollPanel_.getVerticalScrollPosition() -
+               parent.getBottom() +
+               child.getBottom() +
+               padding;
       }
+      else
+      {
+         // No scroll update required.
+         return;
+      }
+      
+      // Don't scroll if the difference is less than a pixel.
+      // This is necessary for cases where the IDE is zoomed,
+      // as we will end up comparing fractional pixels which
+      // may lead to small but non-zero differences in position.
+      int diff = Math.abs(newScrollPos - oldScrollPos);
+      if (diff < 1)
+         return;
+            
+      scrollPanel_.setVerticalScrollPosition(newScrollPos);
    }
    
    private void checkForResize()
    {
       int width = input_.getWidget().getOffsetWidth();
-      if (width != editorWidth_)
-      {
-         editorWidth_ = width;
-         scrollIntoView_ = true;
-         input_.onResize();
-         input_.forceImmediateRender();
-      }
+      if (width == editorWidth_)
+         return;
       
-      if (scrollIntoView_)
+      editorWidth_ = width;
+      scrollIntoViewPending_ = true;
+      input_.onResize();
+      input_.forceImmediateRender();
+   }
+   
+   private void checkForPendingScroll()
+   {
+      if (scrollIntoViewPending_)
       {
-         scrollIntoView_ = false;
+         scrollIntoViewPending_ = false;
          scrollIntoView();
       }
    }
@@ -955,7 +986,7 @@ public class ShellWidget extends Composite implements ShellDisplay,
    private VerticalPanel verticalPanel_;
    
    private int editorWidth_ = -1;
-   private boolean scrollIntoView_ = false;
+   private boolean scrollIntoViewPending_ = false;
 
    // A list of errors that have occurred between console prompts. 
    private final Map<String, List<Element>> errorNodes_ = new TreeMap<>();

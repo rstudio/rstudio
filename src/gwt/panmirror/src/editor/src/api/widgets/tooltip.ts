@@ -1,4 +1,3 @@
-
 /*
  * tooltip.ts
  *
@@ -13,7 +12,6 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-
 
 import tlite from 'tlite';
 
@@ -30,5 +28,3 @@ export function showTooltip(
   tlite.show(el, { grav });
   setTimeout(() => tlite.hide(el), timeout);
 }
-
-

@@ -45,7 +45,6 @@ import org.rstudio.core.client.theme.ModuleTabLayoutPanel;
 import org.rstudio.core.client.widget.FontSizer;
 import org.rstudio.core.client.widget.Toolbar;
 import org.rstudio.studio.client.application.events.ChangeFontSizeEvent;
-import org.rstudio.studio.client.application.events.ChangeFontSizeHandler;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.ui.appended.ApplicationEndedPopupPanel;
 import org.rstudio.studio.client.common.GlobalDisplay;
@@ -101,23 +100,16 @@ public class WorkbenchScreen extends Composite
 
       eventBus_.addHandler(ActivatePaneEvent.TYPE, this);
       eventBus_.addHandler(ShowEditorEvent.TYPE, edit);
-      eventBus_.addHandler(ChangeFontSizeEvent.TYPE, new ChangeFontSizeHandler()
+      eventBus_.addHandler(ChangeFontSizeEvent.TYPE, changeFontSizeEvent ->
       {
-         public void onChangeFontSize(ChangeFontSizeEvent event)
+         FontSizer.setNormalFontSize(Document.get(), changeFontSizeEvent.getFontSize());
+         Scheduler.get().scheduleDeferred(() ->
          {
-            FontSizer.setNormalFontSize(Document.get(), event.getFontSize());
-            Scheduler.get().scheduleDeferred(new ScheduledCommand()
-            {
-               public void execute()
-               {
-                  // Causes the console width to be remeasured
-                  doOnPaneSizesChanged();
-               }
-            });
-         }
+            // Causes the console width to be remeasured
+            doOnPaneSizesChanged();
+         });
       });
       FontSizer.setNormalFontSize(Document.get(), fontSizeManager.getSize());
-
 
       paneManager_ = pPaneManager.get();
       tabsPanel_ = paneManager_.getPanel();

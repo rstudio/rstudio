@@ -28,7 +28,6 @@ import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.events.SessionSerializationEvent;
-import org.rstudio.studio.client.application.events.SessionSerializationHandler;
 import org.rstudio.studio.client.application.events.ThemeChangedEvent;
 import org.rstudio.studio.client.application.model.SessionSerializationAction;
 import org.rstudio.studio.client.common.GlobalDisplay;
@@ -67,7 +66,7 @@ import com.google.inject.Inject;
 public class TerminalSession extends XTermWidget
                              implements TerminalSessionSocket.Session,
                                         XTermTitleEvent.Handler,
-                                        SessionSerializationHandler,
+   SessionSerializationEvent.Handler,
                                         ThemeChangedEvent.Handler
 {
    /**

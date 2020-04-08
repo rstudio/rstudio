@@ -1,7 +1,7 @@
 /*
  * FileUploadEvent.java
  *
- * Copyright (C) 2019 by RStudio, PBC
+ * Copyright (C) 2019-20 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,26 +14,26 @@
  */
 package org.rstudio.studio.client.application.events;
 
+import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 
-public class FileUploadEvent extends GwtEvent<FileUploadHandler>
+public class FileUploadEvent extends GwtEvent<FileUploadEvent.Handler>
 {
    public FileUploadEvent(boolean inProgress)
    {
       inProgress_ = inProgress;
    }
 
-   public static final GwtEvent.Type<FileUploadHandler> TYPE =
-         new GwtEvent.Type<>();
+   public static final Type<Handler> TYPE = new Type<>();
    
    @Override
-   protected void dispatch(FileUploadHandler handler)
+   protected void dispatch(Handler handler)
    {
       handler.onFileUpload(this);
    }
 
    @Override
-   public GwtEvent.Type<FileUploadHandler> getAssociatedType()
+   public GwtEvent.Type<Handler> getAssociatedType()
    {
       return TYPE;
    }
@@ -44,4 +44,9 @@ public class FileUploadEvent extends GwtEvent<FileUploadHandler>
    }
 
    private boolean inProgress_;
+
+   public interface Handler extends EventHandler
+   {
+      void onFileUpload(FileUploadEvent event);
+   }
 }

@@ -263,6 +263,7 @@ public class PanmirrorToolbar extends SecondaryToolbar implements RequiresResize
       tableMenu.addSeparator();
       tableMenu.addCommand(PanmirrorCommands.TableAddRowBefore);
       tableMenu.addCommand(PanmirrorCommands.TableAddRowAfter);
+      tableMenu.addSeparator();
       tableMenu.addCommand(PanmirrorCommands.TableAddColumnBefore);
       tableMenu.addCommand(PanmirrorCommands.TableAddColumnAfter);
       tableMenu.addSeparator();

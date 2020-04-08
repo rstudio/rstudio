@@ -1,7 +1,7 @@
 /*
  * RestartStatusEvent.java
  *
- * Copyright (C) 2009-16 by RStudio, PBC
+ * Copyright (C) 2009-20 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -55,8 +55,7 @@ public class RestartStatusEvent
    {
       handler.onRestartStatus(this);
    }
-   
-   
-   private int status_; 
-   public static final Type<Handler> TYPE = new Type<Handler>();
+
+   private int status_;
+   public static final Type<Handler> TYPE = new Type<>();
 }

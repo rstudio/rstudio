@@ -71,12 +71,12 @@ public class PanmirrorToolbarCommands
       add(PanmirrorCommands.TableInsertTable, "Insert Table...", icons.TABLE);
       add(PanmirrorCommands.TableToggleHeader, "Table Header", Roles.getMenuitemcheckboxRole());
       add(PanmirrorCommands.TableToggleCaption, "Table Caption", Roles.getMenuitemcheckboxRole());
-      add(PanmirrorCommands.TableAddColumnAfter, "Insert Column Right");
-      add(PanmirrorCommands.TableAddColumnBefore, "Insert Column Left");
-      add(PanmirrorCommands.TableDeleteColumn, "Delete Column");
-      add(PanmirrorCommands.TableAddRowAfter, "Insert Row Below");
-      add(PanmirrorCommands.TableAddRowBefore, "Insert Row Above");
-      add(PanmirrorCommands.TableDeleteRow, "Delete Row");
+      add(PanmirrorCommands.TableAddColumnAfter, "Insert Column Right", "Insert %d Columns Right", null);
+      add(PanmirrorCommands.TableAddColumnBefore, "Insert Column Left", "Insert %d Columns Left", null);
+      add(PanmirrorCommands.TableDeleteColumn, "Delete Column", "Delete %d Columns", null);
+      add(PanmirrorCommands.TableAddRowAfter, "Insert Row Below", "Insert %d Rows Below", null);
+      add(PanmirrorCommands.TableAddRowBefore, "Insert Row Above", "Insert %d Rows Above", null);
+      add(PanmirrorCommands.TableDeleteRow, "Delete Row", "Delete %d Rows", null);
       add(PanmirrorCommands.TableDeleteTable, "Delete Table");
       add(PanmirrorCommands.TableNextCell, "Next Cell");
       add(PanmirrorCommands.TablePreviousCell, "Previous Cell");
@@ -122,6 +122,11 @@ public class PanmirrorToolbarCommands
       add(id, menuText, Roles.getMenuitemRole());
    }
    
+   private void add(String id, String menuText, String pluralMenuText, String image)
+   {
+      add(id, menuText, pluralMenuText, Roles.getMenuitemRole(), image);
+   }
+   
    private void add(String id, String menuText, String image)
    {
       add(id, menuText, Roles.getMenuitemRole(), image);
@@ -135,6 +140,11 @@ public class PanmirrorToolbarCommands
    
    private void add(String id, String menuText, MenuitemRole role, String image)
    {
+      add(id, menuText, null, role, image);
+   }
+   
+   private void add(String id, String menuText, String pluralMenuText, MenuitemRole role, String image)
+   {
       // lookup the underlying command
       PanmirrorCommand command = null;
       for (PanmirrorCommand cmd : commands_) {
@@ -144,7 +154,7 @@ public class PanmirrorToolbarCommands
          }
       }
       // add it
-      commandsUI_.put(id, new PanmirrorCommandUI(command, menuText, role, image));
+      commandsUI_.put(id, new PanmirrorCommandUI(command, menuText, pluralMenuText, role, image));
    }
    
    

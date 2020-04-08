@@ -48,8 +48,8 @@ export function imageSizePropWithUnit(prop: string | null) {
 
 export function isNaturalAspectRatio(width: number, height: number, dims: ImageDimensions, defaultValue: boolean) {
   if (dims.naturalWidth && dims.naturalHeight) {
-    const diff = Math.abs((width / height) - (dims.naturalWidth / dims.naturalHeight));
-    return diff <= (0.01 * (width/height)); 
+    const diff = Math.abs(width / height - dims.naturalWidth / dims.naturalHeight);
+    return diff <= 0.01 * (width / height);
   } else {
     // no naturalWidth or naturalHeight, return default
     return defaultValue;

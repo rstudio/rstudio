@@ -55,7 +55,8 @@ public class PanmirrorHRefSelect extends Composite implements CanFocus
       
       if (capabilities.headings && targets.headings.length > 0)
          type_.addItem("Heading", Integer.toString(PanmirrorLinkType.Heading));
-      type_.addItem("ID",Integer.toString(PanmirrorLinkType.ID));
+      if (targets.ids.length > 0)
+         type_.addItem("ID",Integer.toString(PanmirrorLinkType.ID));
       controls_.add(type_);
       type_.getElement().getStyle().setMarginRight(6, Unit.PX);
       controls_.setCellHorizontalAlignment(type_, HasHorizontalAlignment.ALIGN_LEFT);

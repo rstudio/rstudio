@@ -28,15 +28,17 @@ import { BaseKey } from '../../api/basekeys';
 import { ProsemirrorCommand, EditorCommandId, exitNode } from '../../api/command';
 
 import {
-  deleteTable,
-  TableColumnAlignmentCommand,
   insertTable,
-  TableToggleHeaderCommand,
-  TableToggleCaptionCommand,
-  CssAlignment,
+  deleteTable,
   deleteTableCaption,
   addRows,
   addColumns,
+  TableColumnAlignmentCommand,
+  TableRowCommand,
+  TableColumnCommand,
+  TableToggleHeaderCommand,
+  TableToggleCaptionCommand,
+  CssAlignment,
 } from './table-commands';
 
 import {
@@ -86,19 +88,15 @@ const extension = (pandocExtensions: PandocExtensions): Extension | null => {
 
     commands: (_schema: Schema, ui: EditorUI) => {
       const commands = [
-        new ProsemirrorCommand(
-          EditorCommandId.TableInsertTable,
-          ['Alt-Mod-t'],
-          insertTable(capabilities, ui),
-        ),
+        new ProsemirrorCommand(EditorCommandId.TableInsertTable, ['Alt-Mod-t'], insertTable(capabilities, ui)),
         new ProsemirrorCommand(EditorCommandId.TableNextCell, ['Tab'], goToNextCell(1)),
         new ProsemirrorCommand(EditorCommandId.TablePreviousCell, ['Shift-Tab'], goToNextCell(-1)),
-        new ProsemirrorCommand(EditorCommandId.TableAddColumnAfter, [], addColumns(true)),
-        new ProsemirrorCommand(EditorCommandId.TableAddColumnBefore, [], addColumns(false)),
-        new ProsemirrorCommand(EditorCommandId.TableDeleteColumn, [], deleteColumn),
-        new ProsemirrorCommand(EditorCommandId.TableAddRowAfter, [], addRows(true)),
-        new ProsemirrorCommand(EditorCommandId.TableAddRowBefore, [], addRows(false)),
-        new ProsemirrorCommand(EditorCommandId.TableDeleteRow, [], deleteRow),
+        new TableColumnCommand(EditorCommandId.TableAddColumnAfter, [], addColumns(true)),
+        new TableColumnCommand(EditorCommandId.TableAddColumnBefore, [], addColumns(false)),
+        new TableColumnCommand(EditorCommandId.TableDeleteColumn, [], deleteColumn),
+        new TableRowCommand(EditorCommandId.TableAddRowAfter, [], addRows(true)),
+        new TableRowCommand(EditorCommandId.TableAddRowBefore, [], addRows(false)),
+        new TableRowCommand(EditorCommandId.TableDeleteRow, [], deleteRow),
         new ProsemirrorCommand(EditorCommandId.TableDeleteTable, [], deleteTable()),
         new TableColumnAlignmentCommand(EditorCommandId.TableAlignColumnLeft, CssAlignment.Left),
         new TableColumnAlignmentCommand(EditorCommandId.TableAlignColumnRight, CssAlignment.Right),
@@ -117,7 +115,7 @@ const extension = (pandocExtensions: PandocExtensions): Extension | null => {
     plugins: (_schema: Schema) => {
       return [
         columnResizing({
-          handleWidth: 8,
+          handleWidth: 5,
         }),
         tableEditing(),
         tablePaste(),

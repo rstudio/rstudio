@@ -79,9 +79,14 @@ public class ProgressSpinner extends Composite
    public void setVisible(boolean visible)
    {
       if (visible)
+      {
+         requestStopAnimating_ = false;
          startAnimating();
+      }
       else
+      {
          stopAnimating();
+      }
       
       super.setVisible(visible);
    }

@@ -123,17 +123,20 @@ const extension: Extension = {
   inputRules: (schema: Schema) => {
     return [
       // inline math
-      new InputRule(new RegExp(kInlineMathPattern + '$'), (state: EditorState, match: string[], start: number, end: number) => {
-        if (!markIsActive(state, schema.marks.math)) {
-          const tr = state.tr;
-          tr.insertText('$');
-          const mark = schema.marks.math.create({ type: MathType.Inline });
-          tr.addMark(start, end + 1, mark);
-          return tr;
-        } else {
-          return null;
-        }
-      }),
+      new InputRule(
+        new RegExp(kInlineMathPattern + '$'),
+        (state: EditorState, match: string[], start: number, end: number) => {
+          if (!markIsActive(state, schema.marks.math)) {
+            const tr = state.tr;
+            tr.insertText('$');
+            const mark = schema.marks.math.create({ type: MathType.Inline });
+            tr.addMark(start, end + 1, mark);
+            return tr;
+          } else {
+            return null;
+          }
+        },
+      ),
       new InputRule(/\$$/, (state: EditorState, match: string[], start: number, end: number) => {
         if (!markIsActive(state, schema.marks.math)) {
           const { parent, parentOffset } = state.selection.$head;

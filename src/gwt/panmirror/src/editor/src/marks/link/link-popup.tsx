@@ -1,4 +1,3 @@
-
 /*
  * LinkPopup.tsx
  *
@@ -85,14 +84,16 @@ export class LinkPopupPlugin extends Plugin<DecorationSet> {
             const decoratorPosition = textRangePopupDecoratorPosition(editorView, range, maxWidth);
 
             // create link popup component
-            const popup = <LinkPopup
-              link={attrs}
-              linkCmd={linkCmd}
-              removeLinkCmd={removeLinkCmd}
-              view={editorView}
-              ui={ui}
-              style={decoratorPosition.style}
-            />;
+            const popup = (
+              <LinkPopup
+                link={attrs}
+                linkCmd={linkCmd}
+                removeLinkCmd={removeLinkCmd}
+                view={editorView}
+                ui={ui}
+                style={decoratorPosition.style}
+              />
+            );
 
             // create decorator and render popup into it
             const decorator = window.document.createElement('div');
@@ -100,7 +101,6 @@ export class LinkPopupPlugin extends Plugin<DecorationSet> {
 
             // return decorations
             return DecorationSet.create(tr.doc, [Decoration.widget(decoratorPosition.pos, decorator)]);
-
           } else {
             return DecorationSet.empty;
           }
@@ -115,9 +115,6 @@ export class LinkPopupPlugin extends Plugin<DecorationSet> {
   }
 }
 
-
-
-
 interface LinkPopupProps extends WidgetProps {
   link: LinkProps;
   view: EditorView;
@@ -126,10 +123,8 @@ interface LinkPopupProps extends WidgetProps {
   removeLinkCmd: CommandFn;
 }
 
-
-const LinkPopup : React.FC<LinkPopupProps> = props => {
-
-  // link 
+const LinkPopup: React.FC<LinkPopupProps> = props => {
+  // link
   const linkText = props.link.heading ? props.link.heading : props.link.href;
   const onLinkClicked = () => {
     props.view.focus();
@@ -160,7 +155,7 @@ const LinkPopup : React.FC<LinkPopupProps> = props => {
     }
   };
 
-  // remove 
+  // remove
   const onRemoveClicked = () => {
     // in rstudio (w/ webkit) removing the link during the click results
     // in a page-navigation! defer to next event cycle to avoid this
@@ -174,25 +169,24 @@ const LinkPopup : React.FC<LinkPopupProps> = props => {
   const onEditClicked = () => {
     props.linkCmd(props.view.state, props.view.dispatch, props.view);
   };
-  
-  
+
   return (
-    <Popup classes={['pm-popup-link']} style={props.style}> 
-      <Panel>     
+    <Popup classes={['pm-popup-link']} style={props.style}>
+      <Panel>
         <LinkButton text={linkText} onClick={onLinkClicked}></LinkButton>
-        {showCopyButton ? 
-          <ImageButton 
+        {showCopyButton ? (
+          <ImageButton
             classes={['pm-image-button-copy-link']}
             title={props.ui.context.translateText('Copy Link to Clipboard')}
             ref={setCopyButton}
-          /> 
-          : null}
-        <ImageButton 
+          />
+        ) : null}
+        <ImageButton
           classes={['pm-image-button-remove-link']}
           title={props.ui.context.translateText('Remove Link')}
           onClick={onRemoveClicked}
         />
-       <ImageButton 
+        <ImageButton
           classes={['pm-image-button-edit-properties']}
           title={props.ui.context.translateText('Edit Link')}
           onClick={onEditClicked}

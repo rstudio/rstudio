@@ -1,7 +1,7 @@
 /*
  * SuspendAndRestartEvent.java
  *
- * Copyright (C) 2009-12 by RStudio, PBC
+ * Copyright (C) 2009-20 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,36 +14,36 @@
  */
 package org.rstudio.studio.client.application.events;
 
+import com.google.gwt.event.shared.EventHandler;
 import org.rstudio.studio.client.application.model.SuspendOptions;
 
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.event.shared.GwtEvent;
 
-public class SuspendAndRestartEvent extends GwtEvent<SuspendAndRestartHandler>
+public class SuspendAndRestartEvent extends GwtEvent<SuspendAndRestartEvent.Handler>
 {
-   public static final GwtEvent.Type<SuspendAndRestartHandler> TYPE =
-      new GwtEvent.Type<SuspendAndRestartHandler>();
-   
+   public static final Type<Handler> TYPE = new Type<>();
+
    public static class Data extends JavaScriptObject
    {
       protected Data()
       {
       }
-      
+
       public native final SuspendOptions getOptions() /*-{
          return this.options;
       }-*/;
-      
+
       public native final String getAfterRestartCommand() /*-{
          return this.after_restart;
       }-*/;
    }
-   
+
    public SuspendAndRestartEvent(Data data)
    {
       this(data.getOptions(), data.getAfterRestartCommand());
    }
-   
+
    public SuspendAndRestartEvent(SuspendOptions suspendOptions,
                                  String afterRestartCommand)
    {
@@ -52,34 +52,39 @@ public class SuspendAndRestartEvent extends GwtEvent<SuspendAndRestartHandler>
       suspendOptions_ = suspendOptions;
       afterRestartCommand_ = afterRestartCommand;
    }
-   
+
    public SuspendAndRestartEvent(String afterRestartCommand)
    {
       this(null, afterRestartCommand);
    }
- 
+
    public SuspendOptions getSuspendOptions()
    {
       return suspendOptions_;
    }
-   
+
    public String getAfterRestartCommand()
    {
       return afterRestartCommand_;
    }
-   
+
    @Override
-   protected void dispatch(SuspendAndRestartHandler handler)
+   protected void dispatch(Handler handler)
    {
       handler.onSuspendAndRestart(this);
    }
 
    @Override
-   public GwtEvent.Type<SuspendAndRestartHandler> getAssociatedType()
+   public GwtEvent.Type<Handler> getAssociatedType()
    {
       return TYPE;
    }
-   
+
    private final SuspendOptions suspendOptions_;
    private final String afterRestartCommand_;
+
+   public interface Handler extends EventHandler
+   {
+      void onSuspendAndRestart(SuspendAndRestartEvent event);
+   }
 }
