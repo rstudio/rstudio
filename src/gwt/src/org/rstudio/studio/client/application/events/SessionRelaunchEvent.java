@@ -1,7 +1,7 @@
 /*
  * SessionRelaunchEvent.java
  *
- * Copyright (C) 2018 by RStudio, PBC
+ * Copyright (C) 2018-20 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,12 +14,12 @@
  */
 package org.rstudio.studio.client.application.events;
 
+import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 
-public class SessionRelaunchEvent extends GwtEvent<SessionRelaunchHandler>
+public class SessionRelaunchEvent extends GwtEvent<SessionRelaunchEvent.Handler>
 {
-   public static final GwtEvent.Type<SessionRelaunchHandler> TYPE =
-      new GwtEvent.Type<SessionRelaunchHandler>();
+   public static final GwtEvent.Type<Handler> TYPE = new GwtEvent.Type<>();
 
    public enum Type
    {
@@ -38,16 +38,21 @@ public class SessionRelaunchEvent extends GwtEvent<SessionRelaunchHandler>
    }
 
    @Override
-   protected void dispatch(SessionRelaunchHandler handler)
+   protected void dispatch(Handler handler)
    {
       handler.onSessionRelaunch(this);
    }
 
    @Override
-   public GwtEvent.Type<SessionRelaunchHandler> getAssociatedType()
+   public GwtEvent.Type<Handler> getAssociatedType()
    {
       return TYPE;
    }
 
    private final Type type_;
+
+   public interface Handler extends EventHandler
+   {
+      void onSessionRelaunch(SessionRelaunchEvent event);
+   }
 }

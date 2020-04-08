@@ -1,7 +1,7 @@
 /*
  * ServerOfflineEvent.java
  *
- * Copyright (C) 2009-12 by RStudio, PBC
+ * Copyright (C) 2009-20 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,28 +14,32 @@
  */
 package org.rstudio.studio.client.application.events;
 
+import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 
 
-public class ServerOfflineEvent extends GwtEvent<ServerOfflineHandler>
+public class ServerOfflineEvent extends GwtEvent<ServerOfflineEvent.Handler>
 {
-   public static final GwtEvent.Type<ServerOfflineHandler> TYPE =
-      new GwtEvent.Type<ServerOfflineHandler>();
-   
+   public static final Type<Handler> TYPE = new Type<>();
+
    public ServerOfflineEvent()
    {
    }
-   
-   
+
    @Override
-   protected void dispatch(ServerOfflineHandler handler)
+   protected void dispatch(Handler handler)
    {
       handler.onServerOffline(this);
    }
 
    @Override
-   public GwtEvent.Type<ServerOfflineHandler> getAssociatedType()
+   public GwtEvent.Type<Handler> getAssociatedType()
    {
       return TYPE;
+   }
+
+   public interface Handler extends EventHandler
+   {
+      void onServerOffline(ServerOfflineEvent event);
    }
 }

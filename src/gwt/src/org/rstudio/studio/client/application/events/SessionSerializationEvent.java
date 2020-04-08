@@ -1,7 +1,7 @@
 /*
  * SessionSerializationEvent.java
  *
- * Copyright (C) 2009-12 by RStudio, PBC
+ * Copyright (C) 2009-20 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,36 +14,40 @@
  */
 package org.rstudio.studio.client.application.events;
 
+import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 import org.rstudio.studio.client.application.model.SessionSerializationAction;
 
-public class SessionSerializationEvent extends GwtEvent<SessionSerializationHandler>
-{   
-   public static final GwtEvent.Type<SessionSerializationHandler> TYPE =
-      new GwtEvent.Type<SessionSerializationHandler>();
-   
+public class SessionSerializationEvent extends GwtEvent<SessionSerializationEvent.Handler>
+{
+   public static final Type<Handler> TYPE = new Type<>();
+
    public SessionSerializationEvent(SessionSerializationAction action)
    {
       action_ = action;
    }
-   
+
    public SessionSerializationAction getAction()
    {
       return action_;
    }
-   
+
    @Override
-   protected void dispatch(SessionSerializationHandler handler)
+   protected void dispatch(Handler handler)
    {
       handler.onSessionSerialization(this);
    }
 
    @Override
-   public GwtEvent.Type<SessionSerializationHandler> getAssociatedType()
+   public GwtEvent.Type<Handler> getAssociatedType()
    {
       return TYPE;
    }
-   
-   
+
    private SessionSerializationAction action_;
+
+   public interface Handler extends EventHandler
+   {
+      void onSessionSerialization(SessionSerializationEvent event);
+   }
 }

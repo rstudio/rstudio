@@ -1,7 +1,7 @@
 /*
  * ClientDisconnectedEvent.java
  *
- * Copyright (C) 2009-12 by RStudio, PBC
+ * Copyright (C) 2009-20 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,22 +14,27 @@
  */
 package org.rstudio.studio.client.application.events;
 
+import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 
-public class ClientDisconnectedEvent extends GwtEvent<ClientDisconnectedHandler>
+public class ClientDisconnectedEvent extends GwtEvent<ClientDisconnectedEvent.Handler>
 {
-   public static final GwtEvent.Type<ClientDisconnectedHandler> TYPE =
-      new GwtEvent.Type<ClientDisconnectedHandler>();
+   public static final Type<Handler> TYPE = new Type<>();
    
    @Override
-   protected void dispatch(ClientDisconnectedHandler handler)
+   protected void dispatch(Handler handler)
    {
       handler.onClientDisconnected(this);
    }
 
    @Override
-   public GwtEvent.Type<ClientDisconnectedHandler> getAssociatedType()
+   public GwtEvent.Type<Handler> getAssociatedType()
    {
       return TYPE;
+   }
+
+   public interface Handler extends EventHandler
+   {
+      void onClientDisconnected(ClientDisconnectedEvent event);
    }
 }

@@ -1,7 +1,7 @@
 /*
  * CrossWindowEvent.java
  *
- * Copyright (C) 2009-15 by RStudio, PBC
+ * Copyright (C) 2009-20 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -24,13 +24,11 @@ import com.google.gwt.event.shared.GwtEvent;
 // versa. Note that CrossWindowEvents should be annotated with 
 // @JavaScriptSerializable so that they can be appropriately marshaled across
 // the window boundary.
-public abstract class CrossWindowEvent<T extends EventHandler> 
-                      extends GwtEvent<T>
+public abstract class CrossWindowEvent<T extends EventHandler> extends GwtEvent<T>
 {
    public CrossWindowEvent()
    {
-      setOriginWindowName(
-            RStudioGinjector.INSTANCE.getSatellite().getSatelliteName());
+      setOriginWindowName(RStudioGinjector.INSTANCE.getSatellite().getSatelliteName());
    }
 
    // Whether the event should be forwarded to the main window by default 
@@ -38,37 +36,37 @@ public abstract class CrossWindowEvent<T extends EventHandler>
    {
       return true;
    }
-   
+
    // The focus behavior for the event
    public int focusMode()
    {
       return MODE_BACKGROUND;
    }
-   
+
    public boolean isFromMainWindow()
    {
       return StringUtil.isNullOrEmpty(originWindowName_);
    }
-   
+
    public String originWindowName()
    {
       return originWindowName_;
    }
-   
+
    public void setOriginWindowName(String originWindow)
    {
       originWindowName_ = originWindow;
    }
-   
+
    private String originWindowName_;
-   
+
    // this event is processed in the background; don't raise the window
    public static final int MODE_BACKGROUND = 0;
-   
+
    // this event does auxiliary processing; make the window visible if possible
    // but don't give it focus (affects desktop only)
    public static final int MODE_AUXILIARY = 1;
-   
+
    // this event makes the window interactive; give it focus
    public static final int MODE_FOCUS = 2;
 }

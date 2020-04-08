@@ -1,7 +1,7 @@
 /*
  * UnauthorizedEvent.java
  *
- * Copyright (C) 2009-12 by RStudio, PBC
+ * Copyright (C) 2009-20 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,22 +14,27 @@
  */
 package org.rstudio.studio.client.application.events;
 
+import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 
-public class UnauthorizedEvent extends GwtEvent<UnauthorizedHandler>
+public class UnauthorizedEvent extends GwtEvent<UnauthorizedEvent.Handler>
 {
-   public static final GwtEvent.Type<UnauthorizedHandler> TYPE =
-      new GwtEvent.Type<UnauthorizedHandler>();
+   public static final Type<Handler> TYPE = new Type<>();
    
    @Override
-   protected void dispatch(UnauthorizedHandler handler)
+   protected void dispatch(Handler handler)
    {
       handler.onUnauthorized(this);
    }
 
    @Override
-   public GwtEvent.Type<UnauthorizedHandler> getAssociatedType()
+   public GwtEvent.Type<Handler> getAssociatedType()
    {
       return TYPE;
+   }
+
+   public interface Handler extends EventHandler
+   {
+      void onUnauthorized(UnauthorizedEvent event);
    }
 }
