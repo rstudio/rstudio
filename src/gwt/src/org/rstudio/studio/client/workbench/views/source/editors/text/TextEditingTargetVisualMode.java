@@ -29,6 +29,7 @@ import org.rstudio.core.client.widget.ProgressPanel;
 import org.rstudio.core.client.widget.images.ProgressImages;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.application.ui.RStudioThemes;
 import org.rstudio.studio.client.panmirror.PanmirrorContext;
 import org.rstudio.studio.client.panmirror.PanmirrorEditingLocation;
 import org.rstudio.studio.client.panmirror.PanmirrorKeybindings;
@@ -42,6 +43,7 @@ import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
+import org.rstudio.studio.client.workbench.views.source.editors.text.events.EditorThemeChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.model.DirtyState;
 import org.rstudio.studio.client.workbench.views.source.model.DocUpdateSentinel;
 import org.rstudio.studio.client.workbench.views.source.model.SourceServerOperations;
@@ -53,6 +55,7 @@ import com.google.gwt.event.dom.client.ChangeHandler;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.Command;
+import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.view.client.SelectionChangeEvent;
 import com.google.inject.Inject;
 
@@ -72,7 +75,13 @@ public class TextEditingTargetVisualMode
       display_ = display;
       dirtyState_ = dirtyState;
       docUpdateSentinel_ = docUpdateSentinel;
-      progress_ = new ProgressPanel(ProgressImages.createSmall(), 200, false);
+      
+      // init progress (then re-init when theme changes)
+      progressContainer_ = new ProgressContainer();
+      initProgressPanel();
+      releaseOnDismiss.add(eventBus.addHandler(EditorThemeChangedEvent.TYPE, (event) -> {
+        initProgressPanel();
+      }));
       
       // if visual mode isn't enabled then reflect that (if it is enabled we'll
       // defer initialization work until after the tab is actually activated)
@@ -521,17 +530,6 @@ public class TextEditingTargetVisualMode
       }
    } 
    
-   private void withProgress(int delayMs, CommandWithArg<Command> command)
-   {
-      TextEditorContainer editorContainer = display_.editorContainer();
-      IsHideableWidget prevWidget = editorContainer.getActiveWidget();
-      progress_.beginProgressOperation(delayMs);
-      editorContainer.activateWidget(progress_);
-      command.execute(() -> {
-         progress_.endProgressOperation();
-         editorContainer.activateWidget(prevWidget);
-      });
-   }
    
    private String getEditorCode()
    {
@@ -644,6 +642,44 @@ public class TextEditingTargetVisualMode
       return uiContext;
    }
    
+   private class ProgressContainer extends SimplePanel implements IsHideableWidget
+   {
+      @Override
+      public void focus()
+      {
+         // do-nothing (implement IsHideableWidget)
+      }  
+   }
+   
+   private void initProgressPanel()
+   {  
+      if (progress_ != null) 
+      {
+         progressContainer_.remove(progress_);
+         progress_ = null;
+      }
+      
+      boolean darkMode = RStudioThemes.isEditorDark();
+      progress_ = new ProgressPanel(
+         darkMode ? ProgressImages.createLargeGray() : ProgressImages.createSmall(), 
+         200, 
+         false
+      );
+      progressContainer_.setWidget(progress_);
+   }
+   
+   private void withProgress(int delayMs, CommandWithArg<Command> command)
+   {
+      TextEditorContainer editorContainer = display_.editorContainer();
+      IsHideableWidget prevWidget = editorContainer.getActiveWidget();
+      progress_.beginProgressOperation(delayMs);
+      editorContainer.activateWidget(progressContainer_);
+      command.execute(() -> {
+         progress_.endProgressOperation();
+         editorContainer.activateWidget(prevWidget);
+      });
+   }
+   
    
    private Commands commands_;
    private UserPrefs prefs_;
@@ -664,7 +700,8 @@ public class TextEditingTargetVisualMode
    
    private PanmirrorWidget panmirror_;
    
-   private final ProgressPanel progress_;
+   private ProgressPanel progress_;
+   private final ProgressContainer progressContainer_;
    
    private static final String RMD_VISUAL_MODE_LOCATION = "rmdVisualModeLocation";   
 }

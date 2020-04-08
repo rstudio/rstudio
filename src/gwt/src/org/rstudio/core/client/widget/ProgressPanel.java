@@ -26,7 +26,7 @@ import com.google.gwt.user.client.ui.Widget;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.core.client.widget.images.ProgressImages;
 
-public class ProgressPanel extends Composite implements IsHideableWidget
+public class ProgressPanel extends Composite
 {
    public ProgressPanel()
    {
@@ -112,12 +112,6 @@ public class ProgressPanel extends Composite implements IsHideableWidget
       progressImage_.setVisible(false);
       progressSpinner_.setVisible(false);
       progressLabel_.setVisible(false);
-   }
-   
-   @Override
-   public void focus()
-   {
-      // implement to satisfy IsHideableWidget, don't actually take focus when called
    }
 
    private int getSpinnerColor()
