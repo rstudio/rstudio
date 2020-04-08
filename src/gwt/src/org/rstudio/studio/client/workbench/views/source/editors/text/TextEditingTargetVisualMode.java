@@ -72,7 +72,7 @@ public class TextEditingTargetVisualMode
       display_ = display;
       dirtyState_ = dirtyState;
       docUpdateSentinel_ = docUpdateSentinel;
-      progress_ = new ProgressPanel(ProgressImages.createSmall(), 200, false);
+      progress_ = new ProgressPanel(ProgressImages.createSmall(), 200);
       
       // if visual mode isn't enabled then reflect that (if it is enabled we'll
       // defer initialization work until after the tab is actually activated)
