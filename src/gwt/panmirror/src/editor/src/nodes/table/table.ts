@@ -115,7 +115,7 @@ const extension = (pandocExtensions: PandocExtensions): Extension | null => {
     plugins: (_schema: Schema) => {
       return [
         columnResizing({
-          handleWidth: 8,
+          handleWidth: 5,
         }),
         tableEditing(),
         tablePaste(),
