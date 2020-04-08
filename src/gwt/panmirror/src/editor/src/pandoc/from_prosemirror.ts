@@ -208,7 +208,7 @@ class PandocWriter implements PandocOutput {
       };
       for (let i = 0; i < text.length; i++) {
         const ch = text.charAt(i);
-        if (this.options.writeSpaces && ch === ' ') {
+        if (this.options.writeSpaces && (ch === ' ' || ch.charCodeAt(0) === 160)) {
           flushTextRun();
           this.writeToken(PandocTokenType.Space);
         } else if (preventEscapeCharacters.includes(ch)) {
