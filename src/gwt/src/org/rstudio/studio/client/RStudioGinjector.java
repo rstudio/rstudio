@@ -132,8 +132,6 @@ import org.rstudio.studio.client.workbench.views.source.DocumentOutlineWidget;
 import org.rstudio.studio.client.workbench.views.source.NewPlumberAPI;
 import org.rstudio.studio.client.workbench.views.source.NewShinyWebApplication;
 import org.rstudio.studio.client.workbench.views.source.SourceSatellite;
-import org.rstudio.studio.client.workbench.views.source.Source;
-import org.rstudio.studio.client.workbench.views.source.SourcePane;
 import org.rstudio.studio.client.workbench.views.source.SourceWindow;
 import org.rstudio.studio.client.workbench.views.source.SourceWindowManager;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTargetCodeExecution;
@@ -303,7 +301,6 @@ public interface RStudioGinjector extends Ginjector
    void injectMembers(PanmirrorUIDisplay panmirrorUIDisplay);
    void injectMembers(TextEditingTargetVisualMode textEditingTargetVisualMode);
    void injectMembers(OpenProjectDialog dialog);
-   void injectMembers(SourcePane sourcePane);
    
    public static final RStudioGinjector INSTANCE = GWT.create(RStudioGinjector.class);
 

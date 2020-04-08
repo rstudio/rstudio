@@ -58,7 +58,7 @@ public class SourcePane extends Composite implements Display,
 
       new AutoGlassAttacher(panel_);
 
-      tabPanel_ =  new DocTabLayoutPanel(true, 65, UTILITY_AREA_SIZE);
+      tabPanel_ = new DocTabLayoutPanel(true, 65, UTILITY_AREA_SIZE);
       panel_.add(tabPanel_);
       panel_.setWidgetTopBottom(tabPanel_, 0, Unit.PX, 0, Unit.PX);
       panel_.setWidgetLeftRight(tabPanel_, 0, Unit.PX, 0, Unit.PX);
@@ -67,8 +67,8 @@ public class SourcePane extends Composite implements Display,
       utilPanel_.setStylePrimaryName(ThemeStyles.INSTANCE.multiPodUtilityArea());
       panel_.add(utilPanel_);
       panel_.setWidgetRightWidth(utilPanel_,
-                                    0, Unit.PX,
-                                    UTILITY_AREA_SIZE, Unit.PX);
+                                 0, Unit.PX,
+                                 UTILITY_AREA_SIZE, Unit.PX);
       panel_.setWidgetTopHeight(utilPanel_, 0, Unit.PX, 22, Unit.PX);
 
       tabOverflowPopup_ = new TabOverflowPopupPanel();
@@ -86,11 +86,11 @@ public class SourcePane extends Composite implements Display,
 
       panel_.add(chevron_);
       panel_.setWidgetTopHeight(chevron_,
-                                8, Unit.PX,
-                                chevron_.getHeight(), Unit.PX);
+                               8, Unit.PX,
+                               chevron_.getHeight(), Unit.PX);
       panel_.setWidgetRightWidth(chevron_,
-                                 52, Unit.PX,
-                                 chevron_.getWidth(), Unit.PX);
+                                52, Unit.PX,
+                                chevron_.getWidth(), Unit.PX);
       
       initWidget(panel_);
    }
@@ -113,11 +113,6 @@ public class SourcePane extends Composite implements Display,
       tabPanel_.add(widget, icon, docId, name, tooltip, position);
       if (switchToTab)
          tabPanel_.selectTab(widget);
-   }
-
-   public boolean hasTab(Widget widget)
-   {
-      return tabPanel_.getWidgetIndex(widget) >= 0 ? true : false;
    }
 
    public void closeTab(Widget child, boolean interactive)
@@ -168,12 +163,6 @@ public class SourcePane extends Composite implements Display,
                                tooltip);
    }
 
-   @Override
-   public void onNewSourceDoc()
-   {
-      String breakpoint = "breakpoint";
-   }
-
    public int getActiveTabIndex()
    {
       return tabPanel_.getSelectedIndex();
@@ -192,11 +181,6 @@ public class SourcePane extends Composite implements Display,
    public int getTabCount()
    {
       return tabPanel_.getWidgetCount();
-   }
-
-   public void addToPanel(Widget w)
-   {
-      panel_.add(w);
    }
 
    @Override

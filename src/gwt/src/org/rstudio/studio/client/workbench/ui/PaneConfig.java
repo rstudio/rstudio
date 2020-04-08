@@ -178,10 +178,10 @@ public class PaneConfig extends UserPrefsAccessor.Panes
       replaceObsoleteTabs(ts1);
       replaceObsoleteTabs(ts2);
 
-      // Presentation tab must always be at the end of the ts1 tabset (this
+      // Presentation tab must always be at the end of the ts1 tabset (this 
       // is so that activating it works even in the presence of optionally
-      // visible tabs). This is normally an invariant but for a time during
-      // the v0.99-1000 preview we allowed the Connections tab to be the
+      // visible tabs). This is normally an invariant but for a time during 
+      // the v0.99-1000 preview we allowed the Connections tab to be the 
       // last one in the tabset.
       if (ts1.get(ts1.length() - 1) != "Presentation")
       {

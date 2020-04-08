@@ -313,8 +313,7 @@ public class RStudioGinModule extends AbstractGinModule
       bind(RSAccountConnector.class).in(Singleton.class);
       bind(PlotPublishMRUList.class).asEagerSingleton();
       bind(SourceWindowManager.class).in(Singleton.class);
-      //bind(SourceWindow.class).in(Singleton.class);
-      bind(SourceWindow.class).asEagerSingleton();
+      bind(SourceWindow.class).in(Singleton.class);
       bind(EditorCommandManager.class).in(Singleton.class);
       bind(UserCommandManager.class).in(Singleton.class);
       bind(ApplicationCommandManager.class).in(Singleton.class);
@@ -329,7 +328,6 @@ public class RStudioGinModule extends AbstractGinModule
       bind(HtmlMessageListener.class).asEagerSingleton();
       bind(BrowserEventWorkarounds.class).asEagerSingleton();
       bind(FastestSmallestTextEncoderDecoder.class).asEagerSingleton();
-      bind(Source.class).in(Singleton.class);
 
       bind(ApplicationView.class).to(ApplicationWindow.class)
             .in(Singleton.class) ;

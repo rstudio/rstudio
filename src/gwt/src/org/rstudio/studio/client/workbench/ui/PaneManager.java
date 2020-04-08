@@ -15,14 +15,12 @@
 package org.rstudio.studio.client.workbench.ui;
 
 import com.google.gwt.animation.client.Animation;
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.Window;
-//import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.SplitterResizedEvent;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
@@ -282,24 +280,8 @@ public class PaneManager
       right_ = createSplitWindow(panes_.get(2), panes_.get(3), RIGHT_COLUMN, 0.6, splitterSize);
 
 
-      ArrayList<Widget> mylist = new ArrayList<Widget>();
-      /*
-      for (int i = 0; i < 3; i++)
-      {
-         source_.addDisplay();
-      }
-
-      int counter = 0;
-      for (Source.Display display : source_.getViews())
-      {
-         //if (counter <= 0)
-         mylist.add(display.asWidget());
-         counter++;
-      }
-      */
-
       panel_ = pSplitPanel.get();
-      panel_.initialize(mylist, left_, right_);
+      panel_.initialize(left_, right_);
       
       // count the number of source docs assigned to this window
       JsArray<SourceDocument> docs = 
@@ -799,11 +781,7 @@ public class PaneManager
       ArrayList<LogicalWindow> results = new ArrayList<>();
 
       JsArrayString panes = config.getQuadrants();
-      for (int i = 0; i < source_.getViews().size()-1; i++)
-      {
-         panes.push("Source " + Integer.toString(i));
-      }
-      for (int i = 0; i < panes.length(); i++)
+      for (int i = 0; i < 4; i++)
       {
          results.add(panesByName_.get(panes.get(i)));
       }
@@ -815,11 +793,6 @@ public class PaneManager
       panesByName_ = new HashMap<>();
       panesByName_.put("Console", createConsole());
       panesByName_.put("Source", createSource());
-      for (int i = 0; i < source_.getViews().size(); i++)
-      {
-         String frameName = "Source " + Integer.toString(i);
-         panesByName_.put(frameName, createSource(frameName, source_.getViewByIndex(i)));
-      }
 
       Triad<LogicalWindow, WorkbenchTabPanel, MinimizedModuleTabLayoutPanel> ts1 = createTabSet(
             "TabSet1",
@@ -1188,17 +1161,6 @@ public class PaneManager
             new MinimizedWindowFrame(frameName, frameName));
    }
 
-   private LogicalWindow createSource(String frameName, Source.Display display)
-   {
-      WindowFrame sourceFrame = new WindowFrame(frameName);
-      sourceFrame.setFillWidget(source_.asWidget(display));
-      sourceFrame.setFillWidget(source_.asWidget(display));
-      source_.forceLoad();
-      return sourceLogicalWindow_ = new LogicalWindow(
-            sourceFrame,
-            new MinimizedWindowFrame(frameName, frameName));
-   }
-
    private
          Triad<LogicalWindow, WorkbenchTabPanel, MinimizedModuleTabLayoutPanel>
          createTabSet(String persisterName, ArrayList<Tab> tabs)
@@ -1462,7 +1424,6 @@ public class PaneManager
    private final HashMap<Tab, Integer> tabToIndex_ = new HashMap<>();
    private final HashMap<WorkbenchTab, Tab> wbTabToTab_ = new HashMap<>();
    private HashMap<String, LogicalWindow> panesByName_;
-   //private final Widget leftSource_;
    private final DualWindowLayoutPanel left_;
    private final DualWindowLayoutPanel right_;
    private ArrayList<LogicalWindow> panes_;
