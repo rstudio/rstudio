@@ -28,7 +28,7 @@ import {
 } from 'prosemirror-tables';
 
 import { EditorUI } from '../../api/ui';
-import { ProsemirrorCommand, EditorCommandId } from '../../api/command';
+import { ProsemirrorCommand, EditorCommandId, CommandFn } from '../../api/command';
 import { EditorView } from 'prosemirror-view';
 import { canInsertNode } from '../../api/node';
 import { TableCapabilities } from '../../api/table';
@@ -254,6 +254,39 @@ export enum CssAlignment {
   Left = 'left',
   Right = 'right',
   Center = 'center',
+}
+
+
+export class TableRowCommand extends ProsemirrorCommand {
+  constructor(id: EditorCommandId, keymap: readonly string[], command: CommandFn) {
+    super(id, keymap, command);
+  }
+
+  public plural(state: EditorState) {
+    
+    if (!isInTable(state)) {
+      return 1;
+    }
+
+    const rect = selectedRect(state);
+    return rect.bottom - rect.top;
+  }
+}
+
+export class TableColumnCommand extends ProsemirrorCommand {
+  constructor(id: EditorCommandId, keymap: readonly string[], command: CommandFn) {
+    super(id, keymap, command);
+  }
+
+  public plural(state: EditorState) {
+    
+    if (!isInTable(state)) {
+      return 1;
+    }
+
+    const rect = selectedRect(state);
+    return rect.right - rect.left;
+  }
 }
 
 export class TableColumnAlignmentCommand extends ProsemirrorCommand {

@@ -24,5 +24,6 @@ public class PanmirrorCommand
    public String[] keymap;
    public native boolean isEnabled();
    public native boolean isActive();
+   public native int plural();
    public native void execute();
 }

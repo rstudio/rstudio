@@ -434,6 +434,7 @@ export class Editor {
         keymap: commandKeys[command.id],
         isActive: () => command.isActive(this.state),
         isEnabled: () => command.isEnabled(this.state),
+        plural: () => command.plural(this.state),
         execute: () => {
           command.execute(this.state, this.view.dispatch, this.view);
           if (command.keepFocus) {

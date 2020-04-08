@@ -26,12 +26,21 @@ import com.google.gwt.resources.client.ImageResource;
 
 public class PanmirrorCommandUI implements ScheduledCommand
 {
-   
-   
    public PanmirrorCommandUI(PanmirrorCommand command, String menuText, MenuitemRole role, String image)
+   {
+      this(command, menuText, null, role, image);
+   }
+   
+   
+   public PanmirrorCommandUI(PanmirrorCommand command, 
+                             String menuText, 
+                             String pluralMenuFormat,
+                             MenuitemRole role, 
+                             String image)
    {
       this.command_ = command;
       this.menuText_ = menuText;
+      this.pluralMenuFormat_ = pluralMenuFormat;
       this.menuRole_ = role;
       this.image_ = image;
       this.shortcut_ = getShortcut(command);
@@ -39,7 +48,11 @@ public class PanmirrorCommandUI implements ScheduledCommand
    
    public String getMenuText()
    {
-      return menuText_;
+      int plural = command_ != null ? command_.plural() : 1;
+      if (plural > 1 && pluralMenuFormat_ != null) 
+         return pluralMenuFormat_.replaceAll("%d", Integer.toString(plural));
+      else
+         return menuText_;
    }
    
    public String getDesc()
@@ -123,6 +136,7 @@ public class PanmirrorCommandUI implements ScheduledCommand
    
    private final PanmirrorCommand command_;
    private final String menuText_;
+   private final String pluralMenuFormat_;
    private final MenuitemRole menuRole_;
    private final String image_;
    private final String shortcut_;
