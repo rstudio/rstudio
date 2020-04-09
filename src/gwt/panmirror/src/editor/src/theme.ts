@@ -183,6 +183,9 @@ export function applyTheme(theme: EditorTheme) {
     .pm-div .pm-div {
       border-color: ${theme.focusOutlineColor} !important;
     }
+    .pm-raw-block-border {
+      border-color: ${theme.markupTextColor} !important;
+    }
     .pm-popup {
       box-shadow: 0 2px 10px ${theme.paneBorderColor} !important;
     }

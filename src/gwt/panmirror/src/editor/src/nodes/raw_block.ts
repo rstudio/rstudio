@@ -88,6 +88,7 @@ const extension = (pandocExtensions: PandocExtensions): Extension | null => {
           lang: (node: ProsemirrorNode) => {
             return node.attrs.format;
           },
+          borderColorClass: 'pm-raw-block-border'
         },
 
         pandoc: {

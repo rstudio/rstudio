@@ -124,7 +124,7 @@ class CodeBlockNodeView implements NodeView {
 
     // theming
     this.dom.classList.add('pm-code-editor');
-    this.dom.classList.add('pm-block-border-color');
+    this.dom.classList.add(options.borderColorClass || 'pm-block-border-color');
     if (this.options.classes) {
       this.options.classes.forEach(className => this.dom.classList.add(className));
     }

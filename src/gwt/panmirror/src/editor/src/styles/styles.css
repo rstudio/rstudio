@@ -137,6 +137,10 @@
   padding-left: 0.9em;
 }
 
+.pm-raw-block-border {
+  border-style: dotted;
+}
+
 .pm-show-text-focus.pm-text-focused {
   outline: 1px dotted;
 }
