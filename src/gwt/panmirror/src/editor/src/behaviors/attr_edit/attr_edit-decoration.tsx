@@ -121,10 +121,12 @@ export class AttrEditDecorationPlugin extends Plugin<DecorationSet> {
             // create a unique key to avoid recreating the decorator when the selection changes
             const specKey = `pos:${parentWithAttrs.pos}`;
 
-             // if the old popup already has a decoration for this key then just use it
+            /*
+            // if the old popup already has a decoration for this key then just use it
              if (old.find(undefined, undefined, spec => spec.key === specKey).length) {
               return old;
             }
+            */
 
             // raw blocks have their own edit function
             if (node.type === schema.nodes.raw_block) {
