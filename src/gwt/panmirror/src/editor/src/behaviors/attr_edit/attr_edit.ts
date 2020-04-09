@@ -24,52 +24,60 @@ import { EditorUI } from '../../api/ui';
 import { pandocAttrInSpec, extensionIfPandocAttrEnabled } from '../../api/pandoc_attr';
 import { getSelectionMarkRange } from '../../api/mark';
 
+import { AttrEditDecorationPlugin } from './attr_edit-decoration';
+
+
+function attrEditCommandFn(ui: EditorUI) {
+
+  return (state: EditorState, dispatch?: (tr: Transaction<any>) => void, view?: EditorView) => {
+    // see if there is an active mark with attrs or a parent node with attrs
+    const marks = state.storedMarks || state.selection.$head.marks();
+    const mark = marks.find((m: Mark) => pandocAttrInSpec(m.type.spec));
+
+    let node: ProsemirrorNode | null = null;
+    let pos: number = 0;
+    if (state.selection instanceof NodeSelection && pandocAttrInSpec(state.selection.node.type.spec)) {
+      node = state.selection.node;
+      pos = state.selection.$anchor.pos;
+    } else {
+      const nodeWithPos = findParentNode((n: ProsemirrorNode) => pandocAttrInSpec(n.type.spec))(state.selection);
+      if (nodeWithPos) {
+        node = nodeWithPos.node;
+        pos = nodeWithPos.pos;
+      }
+    }
+
+    // return false (disabled) for no targets
+    if (!mark && !node) {
+      return false;
+    }
+
+    // edit attributes
+    async function asyncEditAttrs() {
+      if (dispatch) {
+        if (mark) {
+          await editMarkAttrs(mark, state, dispatch, ui);
+        } else {
+          await editNodeAttrs(node as ProsemirrorNode, pos, state, dispatch, ui);
+        }
+        if (view) {
+          view.focus();
+        }
+      }
+    }
+    asyncEditAttrs();
+
+    // return true
+    return true;
+  };
+}
+
 class AttrEditCommand extends ProsemirrorCommand {
   constructor(ui: EditorUI) {
     super(
       EditorCommandId.AttrEdit,
       [],
-      (state: EditorState, dispatch?: (tr: Transaction<any>) => void, view?: EditorView) => {
-        // see if there is an active mark with attrs or a parent node with attrs
-        const marks = state.storedMarks || state.selection.$head.marks();
-        const mark = marks.find((m: Mark) => pandocAttrInSpec(m.type.spec));
-
-        let node: ProsemirrorNode | null = null;
-        let pos: number = 0;
-        if (state.selection instanceof NodeSelection && pandocAttrInSpec(state.selection.node.type.spec)) {
-          node = state.selection.node;
-          pos = state.selection.$anchor.pos;
-        } else {
-          const nodeWithPos = findParentNode((n: ProsemirrorNode) => pandocAttrInSpec(n.type.spec))(state.selection);
-          if (nodeWithPos) {
-            node = nodeWithPos.node;
-            pos = nodeWithPos.pos;
-          }
-        }
-
-        // return false (disabled) for no targets
-        if (!mark && !node) {
-          return false;
-        }
-
-        // edit attributes
-        async function asyncEditAttrs() {
-          if (dispatch) {
-            if (mark) {
-              await editMarkAttrs(mark, state, dispatch, ui);
-            } else {
-              await editNodeAttrs(node as ProsemirrorNode, pos, state, dispatch, ui);
-            }
-            if (view) {
-              view.focus();
-            }
-          }
-        }
-        asyncEditAttrs();
-
-        // return true
-        return true;
-      },
+      attrEditCommandFn(ui),
     );
   }
 }
@@ -122,6 +130,9 @@ const extension: Extension = {
   commands: (_schema: Schema, ui: EditorUI) => {
     return [new AttrEditCommand(ui)];
   },
+  plugins: (schema: Schema, ui: EditorUI) => {
+    return [new AttrEditDecorationPlugin(schema, attrEditCommandFn(ui))];
+  }
 };
 
 export default extensionIfPandocAttrEnabled(extension);

@@ -33,7 +33,8 @@ import { showTooltip } from '../../api/widgets/tooltip';
 import { reactRenderForEditorView, WidgetProps } from '../../api/widgets/react';
 import { Panel } from '../../api/widgets/panel';
 import { LinkButton, ImageButton } from '../../api/widgets/button';
-import { Popup, textRangePopupDecoratorPosition } from '../../api/widgets/popup';
+import { textRangePopupDecorationPosition } from '../../api/widgets/decoration';
+import { Popup } from '../../api/widgets/popup';
 
 const key = new PluginKey<DecorationSet>('link-popup');
 
@@ -81,7 +82,7 @@ export class LinkPopupPlugin extends Plugin<DecorationSet> {
             const kPopupChromeWidth = 70;
             const kMaxLinkWidth = 300;
             const maxWidth = kMaxLinkWidth + kPopupChromeWidth;
-            const decoratorPosition = textRangePopupDecoratorPosition(editorView, range, maxWidth);
+            const decorationPosition = textRangePopupDecorationPosition(editorView, range, maxWidth);
 
             // create link popup component
             const popup = (
@@ -91,16 +92,16 @@ export class LinkPopupPlugin extends Plugin<DecorationSet> {
                 removeLinkCmd={removeLinkCmd}
                 view={editorView}
                 ui={ui}
-                style={decoratorPosition.style}
+                style={decorationPosition.style}
               />
             );
 
             // create decorator and render popup into it
-            const decorator = window.document.createElement('div');
-            reactRenderForEditorView(popup, decorator, editorView);
+            const decoration = window.document.createElement('div');
+            reactRenderForEditorView(popup, decoration, editorView);
 
             // return decorations
-            return DecorationSet.create(tr.doc, [Decoration.widget(decoratorPosition.pos, decorator)]);
+            return DecorationSet.create(tr.doc, [Decoration.widget(decorationPosition.pos, decoration)]);
           } else {
             return DecorationSet.empty;
           }

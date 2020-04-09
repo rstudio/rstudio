@@ -149,6 +149,9 @@ export function applyTheme(theme: EditorTheme) {
     .pm-text-color {
       color: ${theme.textColor} !important;
     }
+    .pm-inverted-text-color {
+      color: ${theme.darkMode ? theme.selectionColor : theme.backgroundColor} !important;
+    }
     .pm-light-text-color {
       color: ${theme.lightTextColor} !important;
     }
