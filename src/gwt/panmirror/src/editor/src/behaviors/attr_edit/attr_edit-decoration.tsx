@@ -60,7 +60,7 @@ const AttrEditButton: React.FC<AttrEditButtonProps> = props => {
 
 interface AttrEditDecorationProps extends WidgetProps {
   attrs: AttrProps;
-  editAttrFn: CommandFn;
+  editFn: CommandFn;
   view: EditorView;
   ui: EditorUI;
 }
@@ -70,7 +70,7 @@ const AttrEditDecoration: React.FC<AttrEditDecorationProps> = props => {
   const buttonTitle = `${props.ui.context.translateText('Edit Attributes')} (${kEditAttrShortcut})`;
 
   const onEditAttrClick = () => {
-    props.editAttrFn(props.view.state, props.view.dispatch, props.view);
+    props.editFn(props.view.state, props.view.dispatch, props.view);
   };
   
   return (
@@ -128,9 +128,7 @@ export class AttrEditDecorationPlugin extends Plugin<DecorationSet> {
             }
           
             // raw blocks have their own edit function
-            if (node.type === schema.nodes.raw_block) {
-              editAttrFn = editRawBlockCommand(ui);
-            }
+            const editFn = node.type === schema.nodes.raw_block ? editRawBlockCommand(ui) : editAttrFn;
 
             // headings use an outline rather than a border, so offset for it (it's hard-coded to 6px in heading.css
             // so if this value changes the css must change as well)
@@ -155,7 +153,7 @@ export class AttrEditDecorationPlugin extends Plugin<DecorationSet> {
             const attrEdit = (
               <AttrEditDecoration
                 attrs={attrs}
-                editAttrFn={editAttrFn}
+                editFn={editFn}
                 view={editorView}
                 ui={ui}
                 style={decorationPosition.style}
