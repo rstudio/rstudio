@@ -177,6 +177,7 @@ class CodeBlockNodeView implements NodeView {
       return false;
     }
     this.node = node;
+    this.updateMode();
     const change = computeChange(this.cm.getValue(), node.textContent);
     if (change) {
       this.updating = true;
