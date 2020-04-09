@@ -6,21 +6,19 @@ pandoc schema: <https://github.com/jgm/pandoc-types/blob/master/Text/Pandoc/Defi
 
 ## TODO
 
-Try in React app
+A plain code block (no lang) is currently showing the raw dialog
 
-Keyboard shortcut for Edit Attributes
-Tooltip for Edit Attributes
-Show ID / Class in decorator
-Nested  (border)
+Make sure we aren't creating a decorator every time the selection changes
+(do some sort of optimization)
+
+Show ID / Class in decorator (format in raw blocks)
 
 Better way to indicate language of code blocks (input rule to 'lang' then watch for enter?)
+Insert Plain Code Block menu item (just does ```<lang>)
 
-Insert Plain Code Block menu item
+Try out with Mastering Shiny
 
 More complete docs
-
-This came back, find a repro:
-This text has some <a href="http://example.com">raw html</a>{=} included inline.
 
 MathJax preview. When containing the selection, the math will show both the code and the preview. When not containing the selection will show the preview. (so probably require a node view for this). Consider a “done” gesture for display math. May need to bring back
 escaping of $ in math as this mode will clearly not be "source mode" style latex equation editing
