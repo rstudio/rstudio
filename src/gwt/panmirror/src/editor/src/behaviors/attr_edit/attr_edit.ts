@@ -27,6 +27,8 @@ import { getSelectionMarkRange } from '../../api/mark';
 import { AttrEditDecorationPlugin } from './attr_edit-decoration';
 
 
+export const kEditAttrShortcut = 'F4';
+
 function attrEditCommandFn(ui: EditorUI) {
 
   return (state: EditorState, dispatch?: (tr: Transaction<any>) => void, view?: EditorView) => {
@@ -76,7 +78,7 @@ class AttrEditCommand extends ProsemirrorCommand {
   constructor(ui: EditorUI) {
     super(
       EditorCommandId.AttrEdit,
-      [],
+      [kEditAttrShortcut],
       attrEditCommandFn(ui),
     );
   }
@@ -131,7 +133,7 @@ const extension: Extension = {
     return [new AttrEditCommand(ui)];
   },
   plugins: (schema: Schema, ui: EditorUI) => {
-    return [new AttrEditDecorationPlugin(schema, attrEditCommandFn(ui))];
+    return [new AttrEditDecorationPlugin(schema, ui, attrEditCommandFn(ui))];
   }
 };
 

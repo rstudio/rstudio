@@ -23,14 +23,16 @@ import { findParentNodeOfType } from 'prosemirror-utils';
 import * as React from 'react';
 
 import { CommandFn } from '../../api/command';
-import { AttrProps } from '../../api/ui';
+import { AttrProps, EditorUI } from '../../api/ui';
 import { WidgetProps, reactRenderForEditorView } from '../../api/widgets/react';
 import { nodeDecorationPosition } from '../../api/widgets/decoration';
 
 import './attr_edit-decoration.css';
+import { kEditAttrShortcut } from './attr_edit';
 
 
 interface AttrEditButtonProps extends WidgetProps {
+  title: string;
   onClick: VoidFunction;
 }
 
@@ -48,7 +50,7 @@ const AttrEditButton: React.FC<AttrEditButtonProps> = props => {
   };
   
   return (
-    <div className="button-container" onMouseDown={onMouseDown} onClick={onClick}>
+    <div className="button-container" title={props.title} onMouseDown={onMouseDown} onClick={onClick}>
       <div className="pm-border-background-color button-background"></div>
       <div className="pm-inverted-text-color button-ellipse">...</div>
     </div>
@@ -59,17 +61,20 @@ interface AttrEditDecorationProps extends WidgetProps {
   attrs: AttrProps;
   editAttrFn: CommandFn;
   view: EditorView;
+  ui: EditorUI;
 }
 
 const AttrEditDecoration: React.FC<AttrEditDecorationProps> = props => {
   
+  const buttonTitle = `${props.ui.context.translateText('Edit Attributes')} (${kEditAttrShortcut})`;
+
   const onEditAttrClick = () => {
     props.editAttrFn(props.view.state, props.view.dispatch, props.view);
   };
   
   return (
     <div className="pm-attr-edit-decoration" style={props.style}>
-       <AttrEditButton onClick={onEditAttrClick}/>
+       <AttrEditButton title={buttonTitle} onClick={onEditAttrClick}/>
     </div>
   );
 };
@@ -79,7 +84,7 @@ const AttrEditDecoration: React.FC<AttrEditDecorationProps> = props => {
 const key = new PluginKey<DecorationSet>('attr_edit_decoration');
 
 export class AttrEditDecorationPlugin extends Plugin<DecorationSet> {
-  constructor(schema: Schema, editAttrFn: CommandFn) {
+  constructor(schema: Schema, ui: EditorUI, editAttrFn: CommandFn) {
     let editorView: EditorView;
     super({
       key,
@@ -130,6 +135,7 @@ export class AttrEditDecorationPlugin extends Plugin<DecorationSet> {
                 attrs={attrs}
                 editAttrFn={editAttrFn}
                 view={editorView}
+                ui={ui}
                 style={decorationPosition.style}
               />
             );
