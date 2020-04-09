@@ -25,6 +25,7 @@ import { pandocAttrInSpec, extensionIfPandocAttrEnabled } from '../../api/pandoc
 import { getSelectionMarkRange } from '../../api/mark';
 
 import { AttrEditDecorationPlugin } from './attr_edit-decoration';
+import { PandocExtensions } from '../../api/pandoc';
 
 
 export const kEditAttrShortcut = 'F4';
@@ -128,13 +129,16 @@ async function editNodeAttrs(
   }
 }
 
-const extension: Extension = {
-  commands: (_schema: Schema, ui: EditorUI) => {
-    return [new AttrEditCommand(ui)];
-  },
-  plugins: (schema: Schema, ui: EditorUI) => {
-    return [new AttrEditDecorationPlugin(schema, ui, attrEditCommandFn(ui))];
-  }
+const extension = (pandocExtensions: PandocExtensions) => {
+
+  return extensionIfPandocAttrEnabled({
+    commands: (_schema: Schema, ui: EditorUI) => {
+      return [new AttrEditCommand(ui)];
+    },
+    plugins: (schema: Schema, ui: EditorUI) => {
+      return [new AttrEditDecorationPlugin(schema, ui, attrEditCommandFn(ui), pandocExtensions.raw_attribute)];
+    }
+  })(pandocExtensions);
 };
 
-export default extensionIfPandocAttrEnabled(extension);
+export default extension;

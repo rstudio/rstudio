@@ -29,6 +29,7 @@ import { nodeDecorationPosition } from '../../api/widgets/decoration';
 
 import './attr_edit-decoration.css';
 import { kEditAttrShortcut } from './attr_edit';
+import { editRawBlockCommand } from '../../api/raw';
 
 
 interface AttrEditButtonProps extends WidgetProps {
@@ -84,7 +85,7 @@ const AttrEditDecoration: React.FC<AttrEditDecorationProps> = props => {
 const key = new PluginKey<DecorationSet>('attr_edit_decoration');
 
 export class AttrEditDecorationPlugin extends Plugin<DecorationSet> {
-  constructor(schema: Schema, ui: EditorUI, editAttrFn: CommandFn) {
+  constructor(schema: Schema, ui: EditorUI, editAttrFn: CommandFn, rawBlocks: boolean) {
     let editorView: EditorView;
     super({
       key,
@@ -98,17 +99,24 @@ export class AttrEditDecorationPlugin extends Plugin<DecorationSet> {
         },
         apply: (tr: Transaction, _old: DecorationSet, _oldState: EditorState, newState: EditorState) => {
           
+          // node types
+          const nodeTypes = [schema.nodes.heading, schema.nodes.code_block, schema.nodes.div];
+          if (rawBlocks) {
+            nodeTypes.push(schema.nodes.raw_block);
+          }
+
           // provide decoration if selection is contained within a heading, div, or code block
-          const parentWithAttrs = findParentNodeOfType([
-            schema.nodes.heading,
-            schema.nodes.code_block,
-            schema.nodes.div
-          ])(tr.selection);
+          const parentWithAttrs = findParentNodeOfType(nodeTypes)(tr.selection);
           if (parentWithAttrs) {
          
             // get attrs
             const node = parentWithAttrs.node;
             const attrs = node.attrs as AttrProps;
+
+            // raw blocks have their own edit function
+            if (node.type === schema.nodes.raw_block) {
+              editAttrFn = editRawBlockCommand(ui);
+            }
 
             // headings use an outline rather than a border, so offset for it (it's hard-coded to 6px in heading.css
             // so if this value changes the css must change as well)
