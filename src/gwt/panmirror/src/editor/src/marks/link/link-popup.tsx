@@ -51,7 +51,7 @@ export class LinkPopupPlugin extends Plugin<DecorationSet> {
         init: (_config: { [key: string]: any }) => {
           return DecorationSet.empty;
         },
-        apply: (tr: Transaction, _old: DecorationSet, _oldState: EditorState, newState: EditorState) => {
+        apply: (tr: Transaction, old: DecorationSet, _oldState: EditorState, newState: EditorState) => {
           // if this a restore location then return empty
           if (tr.getMeta(kRestoreLocationTransaction)) {
             return DecorationSet.empty;
@@ -84,6 +84,15 @@ export class LinkPopupPlugin extends Plugin<DecorationSet> {
             const maxWidth = kMaxLinkWidth + kPopupChromeWidth;
             const decorationPosition = textRangePopupDecorationPosition(editorView, range, maxWidth);
 
+            // compute unique key (will allow us to only recreate the popup when necessary)
+            const linkText = attrs.heading ? attrs.heading : attrs.href;
+            const specKey = `pos:${decorationPosition.pos}link:${linkText}`;
+
+            // if the old popup already has a decoration for this position then just use it
+            if (old.find(undefined, undefined, spec => spec.key === specKey).length) {
+              return old;
+            }
+
             // create link popup component
             const popup = (
               <LinkPopup
@@ -101,7 +110,7 @@ export class LinkPopupPlugin extends Plugin<DecorationSet> {
             reactRenderForEditorView(popup, decoration, editorView);
 
             // return decorations
-            return DecorationSet.create(tr.doc, [Decoration.widget(decorationPosition.pos, decoration)]);
+            return DecorationSet.create(tr.doc, [Decoration.widget(decorationPosition.pos, decoration, { key: specKey })]);
           } else {
             return DecorationSet.empty;
           }
