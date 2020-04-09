@@ -6,12 +6,11 @@ pandoc schema: <https://github.com/jgm/pandoc-types/blob/master/Text/Pandoc/Defi
 
 ## TODO
 
-A plain code block (no lang) is currently showing the raw dialog
-
-Make sure we aren't creating a decorator every time the selection changes
-(do some sort of optimization)
-
 Show ID / Class in decorator (format in raw blocks)
+
+Raw block dialog probably shouldn't show content
+
+Consider code block having a separate page for language (could be a longer pick list)
 
 Better way to indicate language of code blocks (input rule to 'lang' then watch for enter?)
 Insert Plain Code Block menu item (just does ```<lang>)
