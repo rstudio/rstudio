@@ -84,7 +84,8 @@ RUN cd /opt/rstudio-tools/dependencies/common && /bin/bash ./install-common
 # install Qt SDK
 COPY dependencies/common/install-qt.sh /tmp/
 COPY dependencies/linux/install-qt-linux /tmp/
-RUN cd /tmp && /bin/bash ./install-qt-linux
+RUN export QT_VERSION=5.12.8 && \
+    cd /tmp && /bin/bash ./install-qt-linux
 
 # get libuser header files (libuser-devel not currently available on centos8)
 RUN wget https://pagure.io/libuser/archive/libuser-0.62/libuser-libuser-0.62.tar.gz

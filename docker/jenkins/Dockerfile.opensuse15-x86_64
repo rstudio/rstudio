@@ -79,7 +79,8 @@ RUN cd /opt/rstudio-tools/dependencies/common && /bin/bash ./install-common
 # install Qt SDK
 COPY dependencies/common/install-qt.sh /tmp/
 COPY dependencies/linux/install-qt-linux /tmp/
-RUN cd /tmp && /bin/bash ./install-qt-linux
+RUN export QT_VERSION=5.12.8 && \
+    cd /tmp && /bin/bash ./install-qt-linux
 
 # install GnuPG 1.4 from source (needed for release signing)
 RUN cd /tmp && \
