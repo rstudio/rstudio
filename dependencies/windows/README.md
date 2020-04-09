@@ -23,6 +23,7 @@ If this version isn't showing up when installing via the Qt online installer
 (recommended by Qt) click the "Archive" checkbox on the "Select Components"
 screen, then the Filter button. The list of available versions will expand
 to include older versions.
+
 Alternatively, the offline installer may be used:
 
 http://download.qt.io/official_releases/qt/5.12/5.12.8/qt-opensource-windows-x86-5.12.8.exe
