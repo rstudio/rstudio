@@ -48,6 +48,10 @@
   margin-block-end: 1em;
 }
 
+.pm-div p:last-child {
+  margin-bottom: 0;
+}
+
 .pm-figcaption {
   margin-top: 3px;
 }
