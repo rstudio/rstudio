@@ -45,6 +45,7 @@ public class PanmirrorCommands
    public static String AttrEdit = "0F8A254D-9272-46BF-904D-3A9D68B91032";
    public static String Span = "852CF3E3-8A2B-420D-BD95-F79C54118E7E";
    public static String Div = "15EDB8F1-6015-4DA9-AE50-5987B24C1D96";
+   public static String InsertDiv = "ACA1521B-8875-4113-9D43-B47F0038B19F";
 
    // lists
    public static String BulletList = "D897FD2B-D6A4-44A7-A404-57B5251FBF64";

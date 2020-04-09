@@ -94,6 +94,7 @@ public class PanmirrorToolbarCommands
       add(PanmirrorCommands.ParagraphInsert, "Paragraph");
       add(PanmirrorCommands.YamlMetadata, "YAML Block");
       add(PanmirrorCommands.RmdChunk, "Code Chunk", icons.RMD_CHUNK);
+      add(PanmirrorCommands.InsertDiv, "Section/Div...");
       add(PanmirrorCommands.InlineMath, "Inline Math");
       add(PanmirrorCommands.DisplayMath, "Display Math");
       add(PanmirrorCommands.DefinitionList, "Definition List");
