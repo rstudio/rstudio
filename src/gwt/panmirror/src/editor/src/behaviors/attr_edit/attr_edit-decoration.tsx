@@ -97,7 +97,7 @@ export class AttrEditDecorationPlugin extends Plugin<DecorationSet> {
         init: (_config: { [key: string]: any }) => {
           return DecorationSet.empty;
         },
-        apply: (tr: Transaction, _old: DecorationSet, _oldState: EditorState, newState: EditorState) => {
+        apply: (tr: Transaction, old: DecorationSet, _oldState: EditorState, newState: EditorState) => {
           
           // node types
           const nodeTypes = [schema.nodes.heading, schema.nodes.code_block, schema.nodes.div];
@@ -108,10 +108,23 @@ export class AttrEditDecorationPlugin extends Plugin<DecorationSet> {
           // provide decoration if selection is contained within a heading, div, or code block
           const parentWithAttrs = findParentNodeOfType(nodeTypes)(tr.selection);
           if (parentWithAttrs) {
-         
+
             // get attrs
             const node = parentWithAttrs.node;
             const attrs = node.attrs as AttrProps;
+
+            //
+            // TODO: compute the text we will show to the user
+            // (note: use this is the key computation below)
+            // 
+
+            // create a unique key to avoid recreating the decorator when the selection changes
+            const specKey = `pos:${parentWithAttrs.pos}`;
+
+             // if the old popup already has a decoration for this key then just use it
+             if (old.find(undefined, undefined, spec => spec.key === specKey).length) {
+              return old;
+            }
 
             // raw blocks have their own edit function
             if (node.type === schema.nodes.raw_block) {
@@ -153,7 +166,7 @@ export class AttrEditDecorationPlugin extends Plugin<DecorationSet> {
             reactRenderForEditorView(attrEdit, decoration, editorView);
 
             // return decoration
-            return DecorationSet.create(tr.doc, [Decoration.widget(decorationPosition.pos, decoration)]);
+            return DecorationSet.create(tr.doc, [Decoration.widget(decorationPosition.pos, decoration, { key: specKey })]);
 
           } else {
             return DecorationSet.empty;
