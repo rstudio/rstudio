@@ -59,7 +59,7 @@ export function nodeDecorationPosition(
   const editingEl = editingDOM as HTMLElement;
   
   return {
-    pos: editingNode.pos + 1,
+    pos: editingNode.pos + editingNode.node.nodeSize - 1,
     style: {
       position: 'absolute',
       top: nodeEl.offsetTop + offsets.top + 'px',
