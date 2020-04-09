@@ -101,16 +101,21 @@ export class AttrEditDecorationPlugin extends Plugin<DecorationSet> {
           ])(tr.selection);
           if (parentWithAttrs) {
          
+            // get attrs
             const node = parentWithAttrs.node;
             const attrs = node.attrs as AttrProps;
+
+            // headings use an outline rather than a border, so offset for it (it's hard-coded to 6px in heading.css
+            // so if this value changes the css must change as well)
+            const outlineOffset = node.type === schema.nodes.heading ? 6 : 0;
 
             // node decorator position
             const decorationPosition = nodeDecorationPosition(
               editorView, 
               parentWithAttrs,
               { // offsets
-                top: -9,
-                right: 5
+                top: -9 - outlineOffset,
+                right: 5 - outlineOffset
               }
             );
 
