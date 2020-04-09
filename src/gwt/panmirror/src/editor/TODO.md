@@ -6,7 +6,21 @@ pandoc schema: <https://github.com/jgm/pandoc-types/blob/master/Text/Pandoc/Defi
 
 ## TODO
 
-Surface attributes handling for div with only an id (shading treatment a bit much?)
+Try in React app
+
+Keyboard shortcut for Edit Attributes
+Tooltip for Edit Attributes
+Show ID / Class in decorator
+Nested  (border)
+
+Better way to indicate language of code blocks (input rule to 'lang' then watch for enter?)
+
+Insert Plain Code Block menu item
+
+More complete docs
+
+This came back, find a repro:
+This text has some <a href="http://example.com">raw html</a>{=} included inline.
 
 MathJax preview. When containing the selection, the math will show both the code and the preview. When not containing the selection will show the preview. (so probably require a node view for this). Consider a “done” gesture for display math. May need to bring back
 escaping of $ in math as this mode will clearly not be "source mode" style latex equation editing
@@ -61,6 +75,9 @@ Notes on preformance implications of scanning the entire document + some discuss
 
 - Semicolons in citations cannot be escaped (they always indicate a delimiter). Solution to this would be
   to mark them explicitly with an input rule (and color them so user sees that there is a state change).
+
+- Edit attributes button is incorrectly positioned in note (this is due to the additional dom elements created by the node view)
+  Note however that headings and divs seem to be poorly supported in notes anyway.
 
 ## Project/Build
 
