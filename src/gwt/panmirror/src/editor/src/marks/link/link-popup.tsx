@@ -86,11 +86,11 @@ export class LinkPopupPlugin extends Plugin<DecorationSet> {
 
             // compute unique key (will allow us to only recreate the popup when necessary)
             const linkText = attrs.heading ? attrs.heading : attrs.href;
-            const specKey = `pos:${decorationPosition.pos}link:${linkText}`;
+            const specKey = `link_popup_decoration_pos:${decorationPosition.pos}link:${linkText}`;
 
             // if the old popup already has a decoration for this position then just use it
             if (old.find(undefined, undefined, spec => spec.key === specKey).length) {
-              return old;
+              return old.map(tr.mapping, tr.doc);
             }
 
             // create link popup component
