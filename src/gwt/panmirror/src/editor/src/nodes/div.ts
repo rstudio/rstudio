@@ -64,7 +64,7 @@ const extension: Extension = {
             'data-div': '1',
             ...pandocAttrToDomAttr({
               ...node.attrs,
-              classes: [...node.attrs.classes, 'pm-div-background-color'],
+              classes: [...node.attrs.classes, 'pm-div', 'pm-div-background-color'],
             }),
           };
           return ['div', attr, 0];
