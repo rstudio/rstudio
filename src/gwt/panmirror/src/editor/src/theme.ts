@@ -180,6 +180,9 @@ export function applyTheme(theme: EditorTheme) {
     .pm-pane-border-color {
       border-color: ${theme.paneBorderColor} !important;
     }
+    .pm-div .pm-div {
+      border-color: ${theme.focusOutlineColor} !important;
+    }
     .pm-popup {
       box-shadow: 0 2px 10px ${theme.paneBorderColor} !important;
     }

@@ -52,6 +52,10 @@
   margin-bottom: 0;
 }
 
+.pm-div .pm-div {
+  border: 1px solid;
+}
+
 .pm-figcaption {
   margin-top: 3px;
 }
