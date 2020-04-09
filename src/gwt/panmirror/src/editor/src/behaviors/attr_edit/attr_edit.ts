@@ -18,11 +18,11 @@ import { EditorView } from 'prosemirror-view';
 import { findParentNode } from 'prosemirror-utils';
 import { Node as ProsemirrorNode, Mark, Schema } from 'prosemirror-model';
 
-import { Extension } from '../api/extension';
-import { ProsemirrorCommand, EditorCommandId } from '../api/command';
-import { EditorUI } from '../api/ui';
-import { pandocAttrInSpec, extensionIfPandocAttrEnabled } from '../api/pandoc_attr';
-import { getSelectionMarkRange } from '../api/mark';
+import { Extension } from '../../api/extension';
+import { ProsemirrorCommand, EditorCommandId } from '../../api/command';
+import { EditorUI } from '../../api/ui';
+import { pandocAttrInSpec, extensionIfPandocAttrEnabled } from '../../api/pandoc_attr';
+import { getSelectionMarkRange } from '../../api/mark';
 
 class AttrEditCommand extends ProsemirrorCommand {
   constructor(ui: EditorUI) {
