@@ -88,7 +88,8 @@ RUN cd /opt/rstudio-tools/dependencies/common && /bin/bash ./install-common
 # install Qt SDK
 COPY dependencies/common/install-qt.sh /tmp/
 COPY dependencies/linux/install-qt-linux /tmp/
-RUN cd /tmp && /bin/bash ./install-qt-linux
+RUN export QT_VERSION=5.12.8 && \
+    cd /tmp && /bin/bash ./install-qt-linux
 
 # create jenkins user, make sudo. try to keep this toward the bottom for less cache busting
 ARG JENKINS_GID=999
