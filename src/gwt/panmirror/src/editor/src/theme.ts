@@ -29,6 +29,7 @@ export interface EditorTheme {
   textColor: string;
   lightTextColor: string;
   linkTextColor: string;
+  surfaceWidgetTextColor: string;
   markupTextColor: string;
   findTextBackgroundColor: string;
   findTextBorderColor: string;
@@ -77,6 +78,7 @@ export function defaultTheme(): EditorTheme {
     gutterBackgroundColor: '#f0f0f0',
     gutterTextColor: '#333',
     textColor: 'black',
+    surfaceWidgetTextColor: 'rgba(0,0,0.0.5)',
     lightTextColor: 'rgb(60, 76, 114)',
     linkTextColor: ' #106ba3',
     markupTextColor: 'rgb(185, 6, 144)',
@@ -149,8 +151,8 @@ export function applyTheme(theme: EditorTheme) {
     .pm-text-color {
       color: ${theme.textColor} !important;
     }
-    .pm-inverted-text-color {
-      color: ${theme.darkMode ? theme.selectionColor : theme.backgroundColor} !important;
+    .pm-surface-widget-text-color {
+      color: ${theme.surfaceWidgetTextColor} !important;
     }
     .pm-light-text-color {
       color: ${theme.lightTextColor} !important;
