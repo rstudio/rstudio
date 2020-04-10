@@ -70,6 +70,11 @@ const extension: Extension = {
           return ['div', attr, 0];
         },
       },
+
+      attr_edit: {
+        type: (schema: Schema) => schema.nodes.div,
+      },
+
       pandoc: {
         readers: [
           {

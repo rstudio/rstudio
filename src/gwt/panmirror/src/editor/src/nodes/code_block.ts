@@ -71,6 +71,10 @@ const extension = (pandocExtensions: PandocExtensions): Extension => {
           },
         },
 
+        attr_edit: {
+          type: (schema: Schema) => schema.nodes.code_block,
+        },
+
         pandoc: {
           readers: [
             {

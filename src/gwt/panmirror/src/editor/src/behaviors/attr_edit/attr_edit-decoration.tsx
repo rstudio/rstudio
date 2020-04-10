@@ -1,4 +1,3 @@
-
 /*
  * attr_edit-decoration.tsx
  *
@@ -14,7 +13,6 @@
  *
  */
 
-import { Schema } from 'prosemirror-model';
 import { Plugin, PluginKey, Transaction, EditorState } from 'prosemirror-state';
 import { DecorationSet, EditorView, Decoration } from 'prosemirror-view';
 
@@ -22,13 +20,16 @@ import { findParentNodeOfType } from 'prosemirror-utils';
 
 import * as React from 'react';
 
+import { EditorUI } from '../../api/ui';
+import { AttrEditOptions } from "../../api/attr_edit";
 import { CommandFn } from '../../api/command';
-import { AttrProps, EditorUI } from '../../api/ui';
+import { AttrProps } from '../../api/ui';
 import { WidgetProps, reactRenderForEditorView } from '../../api/widgets/react';
 import { nodeDecorationPosition } from '../../api/widgets/decoration';
 import { kUpdateDecoratorsTransaction } from '../../api/transaction';
+
 import { kEditAttrShortcut } from './attr_edit';
-import { editRawBlockCommand } from '../../api/raw';
+import { attrEditCommandFn } from './attr_edit-command';
 
 import './attr_edit-decoration.css';
 
@@ -69,11 +70,10 @@ const AttrEditDecoration: React.FC<AttrEditDecorationProps> = props => {
   );
 };
 
-
 const key = new PluginKey<DecorationSet>('attr_edit_decoration');
 
-export class AttrEditDecorationPlugin extends Plugin<DecorationSet> {
-  constructor(schema: Schema, ui: EditorUI, editAttrFn: CommandFn, rawBlocks: boolean) {
+class AttrEditDecorationPlugin extends Plugin<DecorationSet> {
+  constructor(ui: EditorUI, editors: AttrEditOptions[]) {
     let editorView: EditorView;
     super({
       key,
@@ -93,48 +93,47 @@ export class AttrEditDecorationPlugin extends Plugin<DecorationSet> {
             return old.map(tr.mapping, tr.doc);
           }
 
+
+
           // node types
-          const nodeTypes = [schema.nodes.heading, schema.nodes.code_block, schema.nodes.div];
-          if (rawBlocks) {
-            nodeTypes.push(schema.nodes.raw_block);
-          }
+          const schema = newState.schema;
+          const nodeTypes = editors.map(editor => editor.type(schema));
 
           // provide decoration if selection is contained within a heading, div, or code block
           const parentWithAttrs = findParentNodeOfType(nodeTypes)(tr.selection);
           if (parentWithAttrs) {
 
+            // get editor options + provide defaults
+            const editor = editors.find(ed=> ed.type(schema) === parentWithAttrs.node.type)!;
+            editor.tags = editor.tags || ((editorNode) => {
+              const attrTags = [];
+              if (editorNode.attrs.id) {
+                attrTags.push(`#${editorNode.attrs.id}`);
+              }
+              if (editorNode.attrs.classes && editorNode.attrs.classes.length) {
+                attrTags.push(`.${editorNode.attrs.classes[0]}`);
+              }
+              return attrTags;
+            });
+            editor.editFn = editor.editFn || attrEditCommandFn;
+            editor.offset = editor.offset || (() => 0);
+
             // get attrs
             const node = parentWithAttrs.node;
             const attrs = node.attrs;
-
+  
             // create tag (if any)
-            const tags = [];
-            if (node.type === schema.nodes.raw_block) {
-              tags.push(attrs.format);
-            } else {
-              if (attrs.id) {
-                tags.push(`#${attrs.id}`);
-              }
-              if (attrs.classes && attrs.classes.length) {
-                tags.push(`.${attrs.classes[0]}`);
-              }
-            }
+            const tags = editor.tags(node);
             const tagText = tags.join(' ');
           
-            // raw blocks have their own edit function
-            const editFn = node.type === schema.nodes.raw_block ? editRawBlockCommand(ui) : editAttrFn;
-
-            // headings use an outline rather than a border, so offset for it (it's hard-coded to 6px in heading.css
-            // so if this value changes the css must change as well)
-            const outlineOffset = node.type === schema.nodes.heading ? 8 : 0;
-
             // node decorator position
+            const offset = editor.offset();
             const decorationPosition = nodeDecorationPosition(
               editorView, 
               parentWithAttrs,
               { // offsets
-                top: -7 - outlineOffset,
-                right: 5 - outlineOffset
+                top: -7 - offset,
+                right: 5 - offset
               }
             );
 
@@ -156,7 +155,7 @@ export class AttrEditDecorationPlugin extends Plugin<DecorationSet> {
               <AttrEditDecoration
                 tag={tagText}
                 attrs={attrs}
-                editFn={editFn}
+                editFn={editor.editFn(ui)}
                 view={editorView}
                 ui={ui}
                 style={decorationPosition.style}
@@ -193,3 +192,13 @@ export class AttrEditDecorationPlugin extends Plugin<DecorationSet> {
     });
   }
 }
+
+
+export function attrEditDecorationPlugin(ui: EditorUI, editors: AttrEditOptions[]) {
+  return new AttrEditDecorationPlugin(ui, editors);
+}
+
+
+
+
+

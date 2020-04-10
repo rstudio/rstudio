@@ -37,10 +37,13 @@ import {
   PandocInlineHTMLReaderFn,
 } from './pandoc';
 
+import { AttrEditOptions } from './attr_edit';
+
 export interface PandocNode {
   readonly name: string;
   readonly spec: NodeSpec;
   readonly code_view?: CodeViewOptions;
+  readonly attr_edit?: AttrEditOptions;
   readonly pandoc: {
     readonly readers?: readonly PandocTokenReader[];
     readonly writer?: PandocNodeWriterFn;

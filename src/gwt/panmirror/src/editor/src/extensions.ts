@@ -40,6 +40,8 @@ import {
 } from './api/pandoc';
 import { EditorEvents } from './api/events';
 
+import { AttrEditOptions } from './api/attr_edit';
+
 // required extensions (base non-customiziable pandoc nodes/marks + core behaviors)
 import nodeText from './nodes/text';
 import nodeParagraph from './nodes/paragraph';
@@ -93,7 +95,10 @@ import nodeLineBlock from './nodes/line_block';
 import nodeTable from './nodes/table/table';
 import nodeDefinitionList from './nodes/definition_list/definition_list';
 
+// plugin factories
 import { codeMirrorPlugins } from './optional/codemirror/codemirror';
+import { attrEditDecorationPlugin } from './behaviors/attr_edit/attr_edit-decoration';
+
 
 export function initExtensions(
   options: EditorOptions,
@@ -163,15 +168,24 @@ export function initExtensions(
     nodeRawBlock,
   ]);
 
-  // optional codemirror embedded editor
-  if (options.codemirror) {
-    manager.register([{ plugins: () => codeMirrorPlugins(manager.codeViews()) }]);
-  }
-
   // register external extensions
   if (extensions) {
     manager.register(extensions);
   }
+
+   // additional plugins derived from extensions
+   const plugins: Plugin[] = [];
+
+   // codemirror code views
+   if (options.codemirror) {
+     plugins.push(...codeMirrorPlugins(manager.codeViews()));
+   }
+
+   // attribute editor plugin
+   plugins.push(attrEditDecorationPlugin(ui, manager.attrEditors()));
+
+   // register plugins
+   manager.registerPlugins(plugins);
 
   // return manager
   return manager;
@@ -203,6 +217,10 @@ export class ExtensionManager {
         this.extensions.push(extension);
       }
     });
+  }
+
+  public registerPlugins(plugins: Plugin[]) {
+    this.register([{ plugins: () => plugins }]);
   }
 
   public pandocMarks(): readonly PandocMark[] {
@@ -323,6 +341,16 @@ export class ExtensionManager {
       }
     });
     return views;
+  }
+
+  public attrEditors() {
+    const editors: AttrEditOptions[] = [];
+    this.pandocNodes().forEach((node: PandocNode) => {
+      if (node.attr_edit) {
+        editors.push(node.attr_edit);
+      }
+    });
+    return editors;
   }
 
   public baseKeys(schema: Schema) {

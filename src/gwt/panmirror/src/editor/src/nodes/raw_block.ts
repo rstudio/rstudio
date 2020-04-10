@@ -90,6 +90,12 @@ const extension = (pandocExtensions: PandocExtensions): Extension | null => {
           borderColorClass: 'pm-raw-block-border'
         },
 
+        attr_edit: {
+          type: (schema: Schema) => schema.nodes.raw_block,
+          tags: (node: ProsemirrorNode) => [node.attrs.format] ,
+          editFn: editRawBlockCommand,
+        },
+
         pandoc: {
           readers: [
             {
