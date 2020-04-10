@@ -38,9 +38,22 @@
 
 .pm-blockquote {
   padding-left: 0.75em;
-  border-left: 3px solid;
+  border-left: 0.25em solid;
   margin-left: 0; 
   margin-right: 0;
+}
+
+.pm-div {
+  padding: 1em;
+  margin-block-end: 1em;
+}
+
+.pm-div p:last-child {
+  margin-bottom: 0;
+}
+
+.pm-div .pm-div {
+  border: 1px solid;
 }
 
 .pm-figcaption {
@@ -120,8 +133,12 @@
 }
 
 .pm-margin-bordered {
-  border-left: 1px solid;
-  padding-left: 0.7em;
+  border-left: 0.1em solid;
+  padding-left: 0.9em;
+}
+
+.pm-raw-block-border {
+  border-style: dotted;
 }
 
 .pm-show-text-focus.pm-text-focused {

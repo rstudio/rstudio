@@ -64,7 +64,7 @@ const extension: Extension = {
             'data-div': '1',
             ...pandocAttrToDomAttr({
               ...node.attrs,
-              classes: [...node.attrs.classes, 'pm-div-background-color'],
+              classes: [...node.attrs.classes, 'pm-div', 'pm-div-background-color'],
             }),
           };
           return ['div', attr, 0];
@@ -94,18 +94,21 @@ const extension: Extension = {
   ],
 
   commands: (_schema: Schema, ui: EditorUI) => {
-    return [new DivCommand(ui)];
+    return [
+      new DivCommand(EditorCommandId.Div, ui, true),
+      new DivCommand(EditorCommandId.InsertDiv, ui, false)
+    ];
   },
 };
 
 class DivCommand extends ProsemirrorCommand {
-  constructor(ui: EditorUI) {
-    super(EditorCommandId.Div, [], (state: EditorState, dispatch?: (tr: Transaction) => void, view?: EditorView) => {
+  constructor(id: EditorCommandId, ui: EditorUI, allowEdit: boolean) {
+    super(id, [], (state: EditorState, dispatch?: (tr: Transaction) => void, view?: EditorView) => {
       // two different modes:
       //  - editing attributes of an existing div
       //  - wrapping (a la blockquote)
       const schema = state.schema;
-      const div = findParentNodeOfType(schema.nodes.div)(state.selection);
+      const div = allowEdit ? findParentNodeOfType(schema.nodes.div)(state.selection) : undefined;
       if (!div && !toggleWrap(schema.nodes.div)(state)) {
         return false;
       }

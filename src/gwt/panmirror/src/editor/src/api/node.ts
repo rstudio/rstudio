@@ -54,6 +54,7 @@ export interface PandocNode {
 export interface CodeViewOptions {
   lang: (node: ProsemirrorNode, content: string) => string | null;
   classes?: string[];
+  borderColorClass?: string; 
   firstLineMeta?: boolean;
   lineNumbers?: boolean;
   lineNumberFormatter?: (line: number) => string;

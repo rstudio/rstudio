@@ -382,7 +382,12 @@ export class Editor {
   }
 
   public restoreEditingLocation(location: EditingLocation) {
-    restoreEditingLocation(this.view, location);
+    // delay the restore so all of our code mirror instances
+    // can become visible (which allows decorators that reference
+    // offsetTop to draw at the proper location)
+    setTimeout(() => {
+      restoreEditingLocation(this.view, location);
+    }, 100);
   }
 
   public getOutline(): EditorOutline {

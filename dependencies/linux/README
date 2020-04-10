@@ -12,7 +12,7 @@ systems. Specific version requirements for various components include:
 - Qt 5.14.2 [Required only for Desktop]
 - patchelf 0.9 [Required only for Desktop]
 - some older Linux platforms (OpenSUSE 42.3, Ubuntu Trusty) can only
-  build Desktop with Qt 5.10.1 due to unsatisfied dependencies in 5.14.2
+  build Desktop with Qt 5.10.1 due to unsatisfied dependencies
 
 Installation of Qt SDK
 =============================================================================
@@ -71,7 +71,7 @@ OR
 
    RSTUDIO_DISABLE_CRASHPAD=1 ./install-common
 
-3) Optionally install the Qt SDK, including QtWebEngine, from 
+3) Optionally install the Qt SDK, including QtWebEngine, from
 https://qt.io. You should do this if you are building the Desktop version 
 and don't have Qt and QtWebEngine installed on the system:
 

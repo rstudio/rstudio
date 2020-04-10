@@ -19,7 +19,7 @@ import { EditorState, Transaction } from 'prosemirror-state';
 import { EditorView } from 'prosemirror-view';
 import { setBlockType } from 'prosemirror-commands';
 
-import { findParentNodeOfType, setTextSelection, findParentNode } from 'prosemirror-utils';
+import { findParentNode } from 'prosemirror-utils';
 
 import { Extension } from '../api/extension';
 
@@ -34,10 +34,9 @@ import {
 } from '../api/pandoc';
 import { ProsemirrorCommand, EditorCommandId } from '../api/command';
 
-import { canInsertNode } from '../api/node';
-import { EditorUI, RawFormatProps } from '../api/ui';
+import { EditorUI } from '../api/ui';
 import { isSingleLineHTML } from '../api/html';
-import { kHTMLFormat, kTexFormat } from '../api/raw';
+import { kHTMLFormat, kTexFormat, editRawBlockCommand } from '../api/raw';
 import { isSingleLineTex } from '../api/tex';
 
 const extension = (pandocExtensions: PandocExtensions): Extension | null => {
@@ -88,6 +87,7 @@ const extension = (pandocExtensions: PandocExtensions): Extension | null => {
           lang: (node: ProsemirrorNode) => {
             return node.attrs.format;
           },
+          borderColorClass: 'pm-raw-block-border'
         },
 
         pandoc: {
@@ -193,73 +193,9 @@ class RawBlockCommand extends ProsemirrorCommand {
     super(
       EditorCommandId.RawBlock,
       [],
-      (state: EditorState, dispatch?: (tr: Transaction) => void, view?: EditorView) => {
-        const schema = state.schema;
-
-        // enable if we are either inside a raw block or we can insert a raw block
-        const rawBlock = findParentNodeOfType(schema.nodes.raw_block)(state.selection);
-        if (!rawBlock && !canInsertNode(state, schema.nodes.raw_block)) {
-          return false;
-        }
-
-        async function asyncEditRawBlock() {
-          if (dispatch) {
-            // get existing attributes (if any)
-            const raw = {
-              format: '',
-              content: '',
-            };
-            if (rawBlock) {
-              raw.format = rawBlock.node.attrs.format;
-              raw.content = state.doc.textBetween(rawBlock.pos, rawBlock.pos + rawBlock.node.nodeSize);
-            }
-
-            // show dialog
-            const result = await ui.dialogs.editRawBlock(raw);
-            if (result) {
-              const tr = state.tr;
-
-              // remove means convert the block to text
-              if (rawBlock) {
-                const range = { from: rawBlock.pos, to: rawBlock.pos + rawBlock.node.nodeSize };
-                if (result.action === 'remove') {
-                  tr.setBlockType(range.from, range.to, schema.nodes.paragraph);
-                } else if (result.action === 'edit') {
-                  tr.replaceRangeWith(range.from, range.to, createRawNode(schema, result.raw));
-                  setTextSelection(tr.selection.from - 1, -1)(tr);
-                }
-              } else {
-                insertRawNode(tr, result.raw);
-              }
-
-              dispatch(tr);
-            }
-          }
-
-          if (view) {
-            view.focus();
-          }
-        }
-        asyncEditRawBlock();
-
-        return true;
-      },
+      editRawBlockCommand(ui)
     );
   }
-}
-
-// function to create a raw node
-function createRawNode(schema: Schema, raw: RawFormatProps) {
-  const rawText = raw.content ? schema.text(raw.content) : undefined;
-  return schema.nodes.raw_block.createAndFill({ format: raw.format }, rawText)!;
-}
-
-// function to create and insert a raw node, then set selection inside of it
-function insertRawNode(tr: Transaction, raw: RawFormatProps) {
-  const schema = tr.doc.type.schema;
-  const prevSel = tr.selection;
-  tr.replaceSelectionWith(createRawNode(schema, raw));
-  setTextSelection(tr.mapping.map(prevSel.from), -1)(tr);
 }
 
 export default extension;

@@ -64,7 +64,7 @@ import behaviorClearFormatting from './behaviors/clear_formatting';
 
 // behaviors
 import behaviorSmarty from './behaviors/smarty';
-import behaviorAttrEdit from './behaviors/attr_edit';
+import behaviorAttrEdit from './behaviors/attr_edit/attr_edit';
 import behaviorAttrDuplicateId from './behaviors/attr_duplicate_id';
 import behaviorTrailingP from './behaviors/trailing_p';
 import behaviorOutline from './behaviors/outline';
