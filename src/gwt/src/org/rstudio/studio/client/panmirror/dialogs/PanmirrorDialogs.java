@@ -20,6 +20,7 @@ import org.rstudio.core.client.widget.Operation;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorAttrProps;
+import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorCodeBlockProps;
 import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorImageDimensions;
 import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorAttrEditResult;
 import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorImageProps;
@@ -113,6 +114,18 @@ public class PanmirrorDialogs {
             dialog.showModal(false);
          }
       );      
+   }
+   
+   public Promise<PanmirrorCodeBlockProps> editCodeBlock(PanmirrorCodeBlockProps codeBlock, String[] languages)
+   {
+      return new Promise<PanmirrorCodeBlockProps>(
+         (ResolveCallbackFn<PanmirrorCodeBlockProps> resolve, RejectCallbackFn reject) -> {  
+            PanmirrorEditCodeBlockDialog dialog = new PanmirrorEditCodeBlockDialog(codeBlock, languages,
+               (result) -> { resolve.onInvoke(result); }
+            );
+            dialog.showModal(false);
+         }
+      );   
    }
    
    public Promise<PanmirrorOrderedListProps> editOrderedList(PanmirrorOrderedListProps props, 

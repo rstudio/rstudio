@@ -113,16 +113,39 @@ async function editNodeAttrs(
   dispatch: (tr: Transaction<any>) => void,
   ui: EditorUI,
 ): Promise<void> {
+
   const attrs = node.attrs;
-  const result = await ui.dialogs.editAttr({ ...attrs });
-  if (result) {
+
+  let resultAttrs: { [key: string]: any } | null = null;
+
+  // code blocks get their own dialog (that shows lang)
+  if (node.type === node.type.schema.nodes.code_block) {
+    const codeBlock = {
+      ...attrs,
+      lang: ''
+    };
+    const result = await ui.dialogs.editCodeBlock(codeBlock, []);
+    if (result) {
+      resultAttrs = result;
+    }
+  // standard dialog
+  } else {
+    const result = await ui.dialogs.editAttr({ ...attrs });
+    if (result) {
+      resultAttrs = result.attr;
+    }
+  }
+
+  // if we got a result then set it
+  if (resultAttrs) {
     dispatch(
       state.tr.setNodeMarkup(pos, node.type, {
         ...attrs,
-        ...result.attr,
+        ...resultAttrs,
       }),
     );
   }
+  
 }
 
 

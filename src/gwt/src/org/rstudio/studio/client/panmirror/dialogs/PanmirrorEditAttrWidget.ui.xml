@@ -37,7 +37,7 @@
       </g:HorizontalPanel>
       
       <rw:FormTextArea styleName="{res.styles.textArea} {res.styles.spaced}"
-                       ui:field="attributes_" visibleLines="4" ariaLabel="Attributes">
+                       ui:field="attributes_" visibleLines="3" ariaLabel="Attributes">
       </rw:FormTextArea>
    </g:VerticalPanel>
 
