@@ -64,7 +64,7 @@ struct User::Impl
 
       // Get the maximum size of a passwd for this system.
       long buffSize = ::sysconf(_SC_GETPW_R_SIZE_MAX);
-      if (buffSize == 1)
+      if (buffSize < 0)
          buffSize = 4096; // some systems return -1, be conservative!
 
       std::vector<char> buffer(buffSize);
