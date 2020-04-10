@@ -118,8 +118,8 @@ async function editNodeAttrs(
 
   let resultAttrs: { [key: string]: any } | null = null;
 
-  // code blocks get their own dialog (that shows lang)
-  if (node.type === node.type.schema.nodes.code_block) {
+  // front end can optionally provide a custom code block dialog (that shows lang)
+  if ((node.type === node.type.schema.nodes.code_block) && ui.dialogs.editCodeBlock) {
     const codeBlock = {
       ...attrs,
       lang: ''
