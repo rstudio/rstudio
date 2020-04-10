@@ -60,7 +60,7 @@ const AttrEditDecoration: React.FC<AttrEditDecorationProps> = props => {
       {props.tag ? 
         <div className="attr-edit-tag attr-edit-widget pm-border-background-color">
           <div>
-            .illustration
+            {props.tag}
           </div>
         </div> 
         : null
@@ -108,15 +108,24 @@ export class AttrEditDecorationPlugin extends Plugin<DecorationSet> {
 
             // get attrs
             const node = parentWithAttrs.node;
-            const attrs = node.attrs as AttrProps;
+            const attrs = node.attrs;
 
-            //
-            // TODO: compute the text we will show to the user
-            // (note: use this is the key computation below)
-            // 
+            // create tag (if any)
+            const tags = [];
+            if (node.type === schema.nodes.raw_block) {
+              tags.push(attrs.format);
+            } else {
+              if (attrs.id) {
+                tags.push(`#${attrs.id}`);
+              }
+              if (attrs.classes && attrs.classes.length) {
+                tags.push(`.${attrs.classes[0]}`);
+              }
+            }
+            const tagText = tags.join(' ');
 
             // create a unique key to avoid recreating the decorator when the selection changes
-            const specKey = `attr_edit_decoration_pos:${parentWithAttrs.pos}`;
+            const specKey = `attr_edit_decoration_pos:${parentWithAttrs.pos};tag:${tagText}`;
 
           
             // if the old popup already has a decoration for this key then just use it
@@ -149,6 +158,7 @@ export class AttrEditDecorationPlugin extends Plugin<DecorationSet> {
             // create attr edit react component
             const attrEdit = (
               <AttrEditDecoration
+                tag={tagText}
                 attrs={attrs}
                 editFn={editFn}
                 view={editorView}
