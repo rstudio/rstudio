@@ -11,8 +11,6 @@ systems. Specific version requirements for various components include:
 - Boost 1.69
 - Qt 5.14.2 [Required only for Desktop]
 - patchelf 0.9 [Required only for Desktop]
-- some older Linux platforms (OpenSUSE 42.3, Ubuntu Trusty) can only
-  build Desktop with Qt 5.10.1 due to unsatisfied dependencies
 
 Installation of Qt SDK
 =============================================================================
