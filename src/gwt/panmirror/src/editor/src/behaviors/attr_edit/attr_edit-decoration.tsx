@@ -26,7 +26,7 @@ import { CommandFn } from '../../api/command';
 import { AttrProps } from '../../api/ui';
 import { WidgetProps, reactRenderForEditorView } from '../../api/widgets/react';
 import { nodeDecorationPosition } from '../../api/widgets/decoration';
-import { kUpdateDecoratorsTransaction } from '../../api/transaction';
+import { kResizeTransaction } from '../../api/transaction';
 
 import { kEditAttrShortcut } from './attr_edit';
 import { attrEditCommandFn } from './attr_edit-command';
@@ -86,14 +86,11 @@ class AttrEditDecorationPlugin extends Plugin<DecorationSet> {
           return DecorationSet.empty;
         },
         apply: (tr: Transaction, old: DecorationSet, _oldState: EditorState, newState: EditorState) => {
-          
-          // only respond to transactions where the selection changes 
-          // (or special updateView sentinel transaction)
-          if (!tr.selectionSet && !tr.getMeta(kUpdateDecoratorsTransaction)) {
+        
+          // ignore resize transactions (view not yet updated)
+          if (tr.getMeta(kResizeTransaction)) {
             return old.map(tr.mapping, tr.doc);
           }
-
-
 
           // node types
           const schema = newState.schema;
