@@ -33,6 +33,7 @@ public class PanmirrorTheme
    public String gutterBackgroundColor;
    public String gutterTextColor;
    public String textColor;
+   public String surfaceWidgetTextColor;
    public String lightTextColor;
    public String linkTextColor;
    public String markupTextColor;
