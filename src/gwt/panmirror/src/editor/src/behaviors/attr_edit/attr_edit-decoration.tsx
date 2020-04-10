@@ -63,7 +63,6 @@ const AttrEditDecoration: React.FC<AttrEditDecorationProps> = props => {
         title={buttonTitle}
         onClick={onClick}
       >
-        <div>&nbsp;</div>
         <div className="attr-edit-button-ellipses">...</div>
       </div>
     </div>
