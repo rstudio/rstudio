@@ -28,6 +28,7 @@ import { EditorOptions } from './options';
 import { PandocExtensions } from './pandoc';
 import { FixupFn } from './fixup';
 import { EditorEvents } from './events';
+import { PandocCapabilities } from './pandoc_capabilities';
 
 export interface Extension {
   marks?: PandocMark[];
@@ -44,8 +45,9 @@ export interface Extension {
 // return an extension conditional on the active EditorOptions
 export type ExtensionFn = (
   pandocExtensions: PandocExtensions,
-  options: EditorOptions,
+  pandocCapabilities: PandocCapabilities,
   ui: EditorUI,
+  options: EditorOptions,
   events: EditorEvents,
 ) => Extension | null;
 

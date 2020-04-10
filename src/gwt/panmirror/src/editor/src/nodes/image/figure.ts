@@ -51,13 +51,15 @@ import { ImageNodeView } from './image-view';
 import { inlineHTMLIsImage } from './image-util';
 
 import './figure-styles.css';
+import { PandocCapabilities } from '../../api/pandoc_capabilities';
 
 const plugin = new PluginKey('figure');
 
 const extension = (
   pandocExtensions: PandocExtensions,
-  options: EditorOptions,
+  _pandocCapabilities: PandocCapabilities,
   ui: EditorUI,
+  _options: EditorOptions,
   events: EditorEvents,
 ): Extension | null => {
   const imageAttr = imageAttributesAvailable(pandocExtensions);

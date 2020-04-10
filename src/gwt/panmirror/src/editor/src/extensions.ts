@@ -39,8 +39,8 @@ import {
   PandocInlineHTMLReaderFn,
 } from './api/pandoc';
 import { EditorEvents } from './api/events';
-
 import { AttrEditOptions } from './api/attr_edit';
+import { PandocCapabilities } from './api/pandoc_capabilities';
 
 // required extensions (base non-customiziable pandoc nodes/marks + core behaviors)
 import nodeText from './nodes/text';
@@ -106,9 +106,10 @@ export function initExtensions(
   events: EditorEvents,
   extensions: readonly Extension[] | undefined,
   pandocExtensions: PandocExtensions,
+  pandocCapabilities: PandocCapabilities,
 ): ExtensionManager {
   // create extension manager
-  const manager = new ExtensionManager(pandocExtensions, options, ui, events);
+  const manager = new ExtensionManager(pandocExtensions, pandocCapabilities, options, ui, events);
 
   // required extensions
   manager.register([
@@ -193,13 +194,21 @@ export function initExtensions(
 
 export class ExtensionManager {
   private pandocExtensions: PandocExtensions;
+  private pandocCapabilities: PandocCapabilities;
   private options: EditorOptions;
   private ui: EditorUI;
   private events: EditorEvents;
   private extensions: Extension[];
 
-  public constructor(pandocExtensions: PandocExtensions, options: EditorOptions, ui: EditorUI, events: EditorEvents) {
+  public constructor(
+    pandocExtensions: PandocExtensions, 
+    pandocCapabilities: PandocCapabilities, 
+    options: EditorOptions, 
+    ui: EditorUI, 
+    events: EditorEvents
+  ) {
     this.pandocExtensions = pandocExtensions;
+    this.pandocCapabilities = pandocCapabilities;
     this.options = options;
     this.ui = ui;
     this.events = events;
@@ -209,7 +218,7 @@ export class ExtensionManager {
   public register(extensions: ReadonlyArray<Extension | ExtensionFn>): void {
     extensions.forEach(extension => {
       if (typeof extension === 'function') {
-        const ext = extension(this.pandocExtensions, this.options, this.ui, this.events);
+        const ext = extension(this.pandocExtensions, this.pandocCapabilities, this.ui, this.options, this.events);
         if (ext) {
           this.extensions.push(ext);
         }

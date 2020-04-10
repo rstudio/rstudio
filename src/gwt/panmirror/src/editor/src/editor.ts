@@ -565,6 +565,7 @@ export class Editor {
       { subscribe: this.subscribe.bind(this) },
       this.context.extensions,
       this.pandocFormat.extensions,
+      this.pandocCapabilities
     );
   }
 
