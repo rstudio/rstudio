@@ -1,4 +1,3 @@
-
 /*
  * attr_edit-decoration.tsx
  *
@@ -14,7 +13,6 @@
  *
  */
 
-import { Schema } from 'prosemirror-model';
 import { Plugin, PluginKey, Transaction, EditorState } from 'prosemirror-state';
 import { DecorationSet, EditorView, Decoration } from 'prosemirror-view';
 
@@ -22,13 +20,16 @@ import { findParentNodeOfType } from 'prosemirror-utils';
 
 import * as React from 'react';
 
+import { EditorUI } from '../../api/ui';
+import { AttrEditOptions } from "../../api/attr_edit";
 import { CommandFn } from '../../api/command';
-import { AttrProps, EditorUI } from '../../api/ui';
+import { AttrProps } from '../../api/ui';
 import { WidgetProps, reactRenderForEditorView } from '../../api/widgets/react';
 import { nodeDecorationPosition } from '../../api/widgets/decoration';
+import { kResizeTransaction } from '../../api/transaction';
 
 import { kEditAttrShortcut } from './attr_edit';
-import { editRawBlockCommand } from '../../api/raw';
+import { attrEditCommandFn } from './attr_edit-command';
 
 import './attr_edit-decoration.css';
 
@@ -44,14 +45,7 @@ const AttrEditDecoration: React.FC<AttrEditDecorationProps> = props => {
   
   const buttonTitle = `${props.ui.context.translateText('Edit Attributes')} (${kEditAttrShortcut})`;
   
-  const suppressMouseDown = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-  };
-
   const onClick = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
     props.editFn(props.view.state, props.view.dispatch, props.view);
   };
 
@@ -68,21 +62,18 @@ const AttrEditDecoration: React.FC<AttrEditDecorationProps> = props => {
       <div 
         className="attr-edit-button attr-edit-widget pm-border-background-color" 
         title={buttonTitle}
-        onMouseDown={suppressMouseDown} 
         onClick={onClick}
       >
-        <div>&nbsp;</div>
         <div className="attr-edit-button-ellipses">...</div>
       </div>
     </div>
   );
 };
 
-
 const key = new PluginKey<DecorationSet>('attr_edit_decoration');
 
-export class AttrEditDecorationPlugin extends Plugin<DecorationSet> {
-  constructor(schema: Schema, ui: EditorUI, editAttrFn: CommandFn, rawBlocks: boolean) {
+class AttrEditDecorationPlugin extends Plugin<DecorationSet> {
+  constructor(ui: EditorUI, editors: AttrEditOptions[]) {
     let editorView: EditorView;
     super({
       key,
@@ -95,58 +86,51 @@ export class AttrEditDecorationPlugin extends Plugin<DecorationSet> {
           return DecorationSet.empty;
         },
         apply: (tr: Transaction, old: DecorationSet, _oldState: EditorState, newState: EditorState) => {
-          
-          // node types
-          const nodeTypes = [schema.nodes.heading, schema.nodes.code_block, schema.nodes.div];
-          if (rawBlocks) {
-            nodeTypes.push(schema.nodes.raw_block);
+        
+          // ignore resize transactions (view not yet updated)
+          if (tr.getMeta(kResizeTransaction)) {
+            return old.map(tr.mapping, tr.doc);
           }
+
+          // node types
+          const schema = newState.schema;
+          const nodeTypes = editors.map(editor => editor.type(schema));
 
           // provide decoration if selection is contained within a heading, div, or code block
           const parentWithAttrs = findParentNodeOfType(nodeTypes)(tr.selection);
           if (parentWithAttrs) {
 
+            // get editor options + provide defaults
+            const editor = editors.find(ed=> ed.type(schema) === parentWithAttrs.node.type)!;
+            editor.tags = editor.tags || ((editorNode) => {
+              const attrTags = [];
+              if (editorNode.attrs.id) {
+                attrTags.push(`#${editorNode.attrs.id}`);
+              }
+              if (editorNode.attrs.classes && editorNode.attrs.classes.length) {
+                attrTags.push(`.${editorNode.attrs.classes[0]}`);
+              }
+              return attrTags;
+            });
+            editor.editFn = editor.editFn || attrEditCommandFn;
+            editor.offset = editor.offset || (() => 0);
+
             // get attrs
             const node = parentWithAttrs.node;
             const attrs = node.attrs;
-
+  
             // create tag (if any)
-            const tags = [];
-            if (node.type === schema.nodes.raw_block) {
-              tags.push(attrs.format);
-            } else {
-              if (attrs.id) {
-                tags.push(`#${attrs.id}`);
-              }
-              if (attrs.classes && attrs.classes.length) {
-                tags.push(`.${attrs.classes[0]}`);
-              }
-            }
+            const tags = editor.tags(node);
             const tagText = tags.join(' ');
-
-            // create a unique key to avoid recreating the decorator when the selection changes
-            const specKey = `attr_edit_decoration_pos:${parentWithAttrs.pos};tag:${tagText}`;
-
           
-            // if the old popup already has a decoration for this key then just use it
-            if (old.find(undefined, undefined, spec => spec.key === specKey).length) {
-              return old.map(tr.mapping, tr.doc);
-            }
-          
-            // raw blocks have their own edit function
-            const editFn = node.type === schema.nodes.raw_block ? editRawBlockCommand(ui) : editAttrFn;
-
-            // headings use an outline rather than a border, so offset for it (it's hard-coded to 6px in heading.css
-            // so if this value changes the css must change as well)
-            const outlineOffset = node.type === schema.nodes.heading ? 8 : 0;
-
             // node decorator position
+            const offset = editor.offset();
             const decorationPosition = nodeDecorationPosition(
               editorView, 
               parentWithAttrs,
               { // offsets
-                top: -7 - outlineOffset,
-                right: 5 - outlineOffset
+                top: -7 - offset,
+                right: 5 - offset
               }
             );
 
@@ -155,12 +139,20 @@ export class AttrEditDecorationPlugin extends Plugin<DecorationSet> {
               return DecorationSet.empty;
             }
 
+            // create a unique key to avoid recreating the decorator when the selection changes
+            const specKey = `attr_edit_decoration_pos:${parentWithAttrs.pos};tag:${tagText};top:${decorationPosition.style.top}`;
+          
+            // if the old popup already has a decoration for this key then just use it
+            if (old.find(undefined, undefined, spec => spec.key === specKey).length) {
+              return old.map(tr.mapping, tr.doc);
+            }
+
             // create attr edit react component
             const attrEdit = (
               <AttrEditDecoration
                 tag={tagText}
                 attrs={attrs}
-                editFn={editFn}
+                editFn={editor.editFn(ui)}
                 view={editorView}
                 ui={ui}
                 style={decorationPosition.style}
@@ -172,7 +164,14 @@ export class AttrEditDecorationPlugin extends Plugin<DecorationSet> {
             reactRenderForEditorView(attrEdit, decoration, editorView);
 
             // return decoration
-            return DecorationSet.create(tr.doc, [Decoration.widget(decorationPosition.pos, decoration, { key: specKey })]);
+            return DecorationSet.create(tr.doc, [Decoration.widget(decorationPosition.pos, decoration, 
+              { 
+                key: specKey,
+                ignoreSelection: true,
+                stopEvent: () => {
+                  return true;
+                }
+              })]);
 
           } else {
             return DecorationSet.empty;
@@ -190,3 +189,13 @@ export class AttrEditDecorationPlugin extends Plugin<DecorationSet> {
     });
   }
 }
+
+
+export function attrEditDecorationPlugin(ui: EditorUI, editors: AttrEditOptions[]) {
+  return new AttrEditDecorationPlugin(ui, editors);
+}
+
+
+
+
+

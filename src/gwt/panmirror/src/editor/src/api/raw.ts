@@ -26,7 +26,7 @@ import { EditorUI, RawFormatProps } from "./ui";
 export const kTexFormat = 'tex';
 export const kHTMLFormat = 'html';
 
-export function editRawBlockCommand(ui: EditorUI) {
+export function editRawBlockCommand(ui: EditorUI, outputFormats: string[]) {
   
   return (state: EditorState, dispatch?: (tr: Transaction) => void, view?: EditorView) => {
     const schema = state.schema;
@@ -42,15 +42,14 @@ export function editRawBlockCommand(ui: EditorUI) {
         // get existing attributes (if any)
         const raw = {
           format: '',
-          content: '',
+          content: ''
         };
         if (rawBlock) {
           raw.format = rawBlock.node.attrs.format;
-          raw.content = state.doc.textBetween(rawBlock.pos, rawBlock.pos + rawBlock.node.nodeSize);
         }
 
         // show dialog
-        const result = await ui.dialogs.editRawBlock(raw);
+        const result = await ui.dialogs.editRawBlock(raw, outputFormats);
         if (result) {
           const tr = state.tr;
 
@@ -60,11 +59,11 @@ export function editRawBlockCommand(ui: EditorUI) {
             if (result.action === 'remove') {
               tr.setBlockType(range.from, range.to, schema.nodes.paragraph);
             } else if (result.action === 'edit') {
-              tr.replaceRangeWith(range.from, range.to, createRawNode(schema, result.raw));
+              tr.setNodeMarkup(range.from, rawBlock.node.type, { format: result.raw.format });
               setTextSelection(tr.selection.from - 1, -1)(tr);
             }
           } else {
-            insertRawNode(tr, result.raw);
+            insertRawNode(tr, result.raw.format);
           }
 
           dispatch(tr);
@@ -83,15 +82,14 @@ export function editRawBlockCommand(ui: EditorUI) {
 
 
 // function to create a raw node
-function createRawNode(schema: Schema, raw: RawFormatProps) {
-  const rawText = raw.content ? schema.text(raw.content) : undefined;
-  return schema.nodes.raw_block.createAndFill({ format: raw.format }, rawText)!;
+function createRawNode(schema: Schema, format: string) {
+  return schema.nodes.raw_block.create({ format })!;
 }
 
 // function to create and insert a raw node, then set selection inside of it
-function insertRawNode(tr: Transaction, raw: RawFormatProps) {
+function insertRawNode(tr: Transaction, format: string) {
   const schema = tr.doc.type.schema;
   const prevSel = tr.selection;
-  tr.replaceSelectionWith(createRawNode(schema, raw));
+  tr.replaceSelectionWith(createRawNode(schema, format));
   setTextSelection(tr.mapping.map(prevSel.from), -1)(tr);
 }

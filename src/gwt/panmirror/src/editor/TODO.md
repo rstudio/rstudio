@@ -6,14 +6,21 @@ pandoc schema: <https://github.com/jgm/pandoc-types/blob/master/Text/Pandoc/Defi
 
 ## TODO
 
-Show ID / Class in decorator (format in raw blocks)
-
-Raw block dialog probably shouldn't show content
-
 Consider code block having a separate page for language (could be a longer pick list)
+
+Code block show just language w/o dot (perhaps it could even have a lang attibute if
+there is a hard convention in pandoc around the first class being the highlight target)
+
+Paul on new edit properties button
+
+Unable to toggle html tag w/ menu (select in example)
+
+Raw Inline... and Raw Block... should interoperate w/ HTML/Tex
 
 Better way to indicate language of code blocks (input rule to 'lang' then watch for enter?)
 Insert Plain Code Block menu item (just does ```<lang>)
+
+Propagate more styles to images? (definitely padding)
 
 Try out with Mastering Shiny
 

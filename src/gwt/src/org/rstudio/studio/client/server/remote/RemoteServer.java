@@ -6127,6 +6127,12 @@ public class RemoteServer implements Server
    }
    
    @Override
+   public void pandocGetCapabilities(ServerRequestCallback<JavaScriptObject> callback)
+   {
+      sendRequest(RPC_SCOPE, PANDOC_GET_CAPABILITIES, callback);
+   }
+   
+   @Override
    public void pandocMarkdownToAst(String markdown, String format, JsArrayString options,
                                    ServerRequestCallback<JavaScriptObject> callback)
    {
@@ -6646,6 +6652,7 @@ public class RemoteServer implements Server
    private static final String REPLACE_COMMENT_HEADER = "replace_comment_header";
    private static final String SET_USER_CRASH_HANDLER_PROMPTED = "set_user_crash_handler_prompted";
    
+   private static final String PANDOC_GET_CAPABILITIES = "pandoc_get_capabilities";
    private static final String PANDOC_AST_TO_MARKDOWN = "pandoc_ast_to_markdown";
    private static final String PANDOC_MARKDOWN_TO_AST = "pandoc_markdown_to_ast";
    private static final String PANDOC_LIST_EXTENSIONS = "pandoc_list_extensions";

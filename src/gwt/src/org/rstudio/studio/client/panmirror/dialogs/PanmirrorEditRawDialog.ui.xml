@@ -27,7 +27,7 @@
       <dialogs:PanmirrorRawFormatSelect styleName="{style.formatSelect} {res.styles.spaced}" ui:field="rawFormatSelect_">
       </dialogs:PanmirrorRawFormatSelect>
    		
-      <g:Label text="Raw content:"/>
+      <g:Label text="Raw content:" ui:field="rawContentLabel_"/>
       <rw:FormTextArea styleName="{res.styles.textArea} {style.rawContent} {res.styles.spaced}"
                  	     ui:field="rawContent_" visibleLines="5" ariaLabel="Raw content">
       </rw:FormTextArea>

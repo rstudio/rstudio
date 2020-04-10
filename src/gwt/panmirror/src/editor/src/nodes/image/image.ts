@@ -47,6 +47,7 @@ import { imageDialog } from './image-dialog';
 import { imageDrop } from './image-events';
 import { ImageNodeView } from './image-view';
 import { imageDimensionsFromImg, imageContainerWidth, inlineHTMLIsImage } from './image-util';
+import { PandocCapabilities } from '../../api/pandoc_capabilities';
 
 const TARGET_URL = 0;
 const TARGET_TITLE = 1;
@@ -59,8 +60,9 @@ const plugin = new PluginKey('image');
 
 const extension = (
   pandocExtensions: PandocExtensions,
-  _options: EditorOptions,
+  _pandocCapabilities: PandocCapabilities,
   ui: EditorUI,
+  _options: EditorOptions,
   events: EditorEvents,
 ): Extension => {
   const imageAttr = imageAttributesAvailable(pandocExtensions);

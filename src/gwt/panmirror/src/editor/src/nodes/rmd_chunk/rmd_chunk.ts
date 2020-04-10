@@ -27,6 +27,9 @@ import { canInsertNode } from '../../api/node';
 import { selectionIsBodyTopLevel } from '../../api/selection';
 import { uuidv4 } from '../../api/util';
 
+import { EditorUI } from '../../api/ui';
+import { PandocCapabilities } from '../../api/pandoc_capabilities';
+
 import './rmd_chunk-styles.css';
 
 const kRmdCodeChunkClass = 'D34DA053-95B6-4F12-B665-6CA8E4CD5101';
@@ -140,7 +143,7 @@ class RmdChunkCommand extends ProsemirrorCommand {
   }
 }
 
-export default (pandocExtensions: PandocExtensions, options: EditorOptions) => {
+export default (pandocExtensions: PandocExtensions, _caps: PandocCapabilities, _ui: EditorUI, options: EditorOptions) => {
   if (options.rmdCodeChunks && pandocExtensions.backtick_code_blocks && pandocExtensions.fenced_code_attributes) {
     return extension;
   } else {

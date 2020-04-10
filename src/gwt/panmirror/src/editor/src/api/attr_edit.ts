@@ -1,6 +1,7 @@
 
+
 /*
- * attr_edit.ts
+ * node_attr.tsx
  *
  * Copyright (C) 2019-20 by RStudio, PBC
  *
@@ -14,21 +15,18 @@
  *
  */
 
-import { Schema } from "prosemirror-model";
+import { Node as ProsemirrorNode, NodeType, Schema } from "prosemirror-model";
 
-import { EditorUI } from "../../api/ui";
-import { extensionIfPandocAttrEnabled } from "../../api/pandoc_attr";
+import { CommandFn } from "./command";
+import { EditorUI } from "./ui";
 
-import { AttrEditCommand } from "./attr_edit-command";
+export interface AttrEditOptions {
+   type: (schema: Schema) => NodeType;
+   tags?: (node: ProsemirrorNode) => string[];
+   editFn?: (ui: EditorUI) => CommandFn;
+   offset?: () => number;
+}
 
-export const kEditAttrShortcut = 'F4';
 
-const extension = {
-  commands: (_schema: Schema, ui: EditorUI) => {
-    return [new AttrEditCommand(ui)];
-  }
-};
-
-export default extensionIfPandocAttrEnabled(extension);
 
 

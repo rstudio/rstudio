@@ -14,9 +14,12 @@
  */
 
 import { Fragment, Mark, Node as ProsemirrorNode, Schema, NodeType } from 'prosemirror-model';
+
 import { PandocAttr } from './pandoc_attr';
+import { PandocCapabilitiesResult } from './pandoc_capabilities';
 
 export interface PandocEngine {
+  getCapabilities() : Promise<PandocCapabilitiesResult>;
   markdownToAst(markdown: string, format: string, options: string[]): Promise<PandocAst>;
   astToMarkdown(ast: PandocAst, format: string, options: string[]): Promise<string>;
   listExtensions(format: string): Promise<string>;
@@ -102,6 +105,10 @@ export interface PandocExtensions {
 
 export function imageAttributesAvailable(pandocExtensions: PandocExtensions) {
   return pandocExtensions.link_attributes || pandocExtensions.raw_html;
+}
+
+export function parsePandocListOutput(output: string) {
+  return output.split(/\r?\n/).filter(entry => entry.length);
 }
 
 export interface PandocAst {

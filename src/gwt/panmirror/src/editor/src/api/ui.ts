@@ -84,7 +84,7 @@ export type OrderedListEditorFn = (
   capabilities: ListCapabilities,
 ) => Promise<OrderedListEditResult | null>;
 
-export type RawFormatEditorFn = (raw: RawFormatProps) => Promise<RawFormatResult | null>;
+export type RawFormatEditorFn = (raw: RawFormatProps, outputFormats: string[]) => Promise<RawFormatResult | null>;
 
 export type InsertTableFn = (capabilities: TableCapabilities) => Promise<InsertTableResult | null>;
 

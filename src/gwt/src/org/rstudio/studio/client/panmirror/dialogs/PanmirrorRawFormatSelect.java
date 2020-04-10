@@ -24,82 +24,23 @@ public class PanmirrorRawFormatSelect extends SelectWidget
 {
    public PanmirrorRawFormatSelect()
    {
-      super("Format:", getOptions(), getValues(), false);
+      super("Format:", new String[] {}, new String[] {}, false);
    }
    
-   private static String[] getValues()
+   public void setFormats(String[] formats)
    {
-      return getFormatList("");
+      this.setChoices(
+         getFormatList("(Choose Format)", formats),
+         getFormatList("", formats)
+      );
    }
    
-   private static String[] getOptions()
-   {
-      return getFormatList("(Choose Format)");
-   }
-   
-   private static String[] getFormatList(String firstItem)
+   private static String[] getFormatList(String firstItem, String[] formats)
    {
       ArrayList<String> options = new ArrayList<String>();
       options.add(firstItem);
-      options.addAll(Arrays.asList(formats_));
+      options.addAll(Arrays.asList(formats));
       return options.toArray(new String[]{});
    }
-   
-   
-   private static String[] formats_ = {
-      "asciidoc",
-      "asciidoctor",
-      "beamer",
-      "commonmark",
-      "context",
-      "docbook",
-      "docbook4",
-      "docbook5",
-      "docx",
-      "dokuwiki",
-      "dzslides",
-      "epub",
-      "epub2",
-      "epub3",
-      "fb2",
-      "gfm",
-      "haddock",
-      "html",
-      "html4",
-      "html5",
-      "icml",
-      "ipynb",
-      "jats",
-      "jira",
-      "json",
-      "latex",
-      "man",
-      "markdown",
-      "markdown_github",
-      "markdown_mmd",
-      "markdown_phpextra",
-      "markdown_strict",
-      "mediawiki",
-      "ms",
-      "muse",
-      "native",
-      "odt",
-      "openxml",
-      "opendocument",
-      "opml",
-      "org",
-      "plain",
-      "pptx",
-      "revealjs",
-      "rst",
-      "rtf",
-      "s5",
-      "slideous",
-      "slidy",
-      "tei",
-      "texinfo",
-      "textile",
-      "xwiki",
-      "zimwiki",      
-   };
+
 }

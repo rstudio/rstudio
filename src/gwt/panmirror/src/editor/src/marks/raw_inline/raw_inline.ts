@@ -25,11 +25,12 @@ import { getMarkRange, markIsActive, getMarkAttrs } from '../../api/mark';
 import { EditorUI, RawFormatProps } from '../../api/ui';
 import { canInsertNode } from '../../api/node';
 import { fragmentText } from '../../api/fragment';
+import { PandocCapabilities } from '../../api/pandoc_capabilities';
 
 export const kRawInlineFormat = 0;
 export const kRawInlineContent = 1;
 
-const extension = (pandocExtensions: PandocExtensions): Extension | null => {
+const extension = (pandocExtensions: PandocExtensions, pandocCapabilities: PandocCapabilities): Extension | null => {
   if (!pandocExtensions.raw_attribute) {
     return null;
   }
@@ -99,7 +100,7 @@ const extension = (pandocExtensions: PandocExtensions): Extension | null => {
 
     // insert command
     commands: (_schema: Schema, ui: EditorUI) => {
-      return [new RawInlineCommand(ui)];
+      return [new RawInlineCommand(ui, pandocCapabilities.output_formats)];
     },
   };
 };
@@ -149,7 +150,7 @@ export class RawInlineFormatCommand extends ProsemirrorCommand {
 
 // generic raw inline command (opens dialog that allows picking from among formats)
 class RawInlineCommand extends ProsemirrorCommand {
-  constructor(ui: EditorUI) {
+  constructor(ui: EditorUI, outputFormats: string[]) {
     super(
       EditorCommandId.RawInline,
       [],
@@ -181,7 +182,7 @@ class RawInlineCommand extends ProsemirrorCommand {
               };
             }
 
-            const result = await ui.dialogs.editRawInline(raw);
+            const result = await ui.dialogs.editRawInline(raw, outputFormats);
             if (result) {
               const tr = state.tr;
               tr.removeMark(range.from, range.to, schema.marks.raw_inline);

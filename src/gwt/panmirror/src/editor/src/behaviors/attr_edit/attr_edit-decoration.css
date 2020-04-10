@@ -21,13 +21,12 @@
 }
 
 .pm-attr-edit-decoration .attr-edit-widget {
-  display: inline-block;
   height: 13px;
   padding: 2px;
-  position: relative;
 }
 
 .pm-attr-edit-decoration .attr-edit-tag {
+  float: left;
   border-radius: 20px;
   margin-right: 6px;
   padding-left: 7px;
@@ -35,6 +34,8 @@
 }
 
 .pm-attr-edit-decoration .attr-edit-button {
+  float: right;
+  position: relative;
   border-radius: 50%;
   width: 13px;
   user-select: none;

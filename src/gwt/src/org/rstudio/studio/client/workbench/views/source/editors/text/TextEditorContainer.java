@@ -58,7 +58,7 @@ public class TextEditorContainer extends LayoutPanel implements CanFocus
    public static interface Editor extends IsHideableWidget
    {
       String getCode();
-      void setCode(EditorCode editorCode, boolean preserveCursorLocation);
+      void setCode(EditorCode editorCode, boolean preserveCursorLocation, boolean activatingEditor);
    }
    
    public TextEditorContainer(Editor editor)

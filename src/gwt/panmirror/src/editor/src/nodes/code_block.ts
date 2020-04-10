@@ -23,8 +23,9 @@ import { BaseKey } from '../api/basekeys';
 import { codeNodeSpec } from '../api/code';
 import { PandocOutput, PandocTokenType, PandocExtensions } from '../api/pandoc';
 import { pandocAttrSpec, pandocAttrParseDom, pandocAttrToDomAttr } from '../api/pandoc_attr';
+import { PandocCapabilities } from '../api/pandoc_capabilities';
 
-const extension = (pandocExtensions: PandocExtensions): Extension => {
+const extension = (pandocExtensions: PandocExtensions, pandocCapabilities: PandocCapabilities): Extension => {
   return {
     nodes: [
       {
@@ -69,6 +70,22 @@ const extension = (pandocExtensions: PandocExtensions): Extension => {
               return null;
             }
           },
+        },
+
+        attr_edit: {
+          type: (schema: Schema) => schema.nodes.code_block,
+          tags: (node: ProsemirrorNode) => {
+            if (node.attrs.classes && node.attrs.classes.length) {
+              const lang = node.attrs.classes[0];
+              if (pandocCapabilities.highlight_languages.includes(lang)) {
+                return [lang];
+              } else {
+                return ['.' + lang];
+              }
+            } else {
+              return [];
+            }
+          }
         },
 
         pandoc: {
