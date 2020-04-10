@@ -44,14 +44,7 @@ const AttrEditDecoration: React.FC<AttrEditDecorationProps> = props => {
   
   const buttonTitle = `${props.ui.context.translateText('Edit Attributes')} (${kEditAttrShortcut})`;
   
-  const suppressMouseDown = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-  };
-
   const onClick = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
     props.editFn(props.view.state, props.view.dispatch, props.view);
   };
 
@@ -68,7 +61,6 @@ const AttrEditDecoration: React.FC<AttrEditDecorationProps> = props => {
       <div 
         className="attr-edit-button attr-edit-widget pm-border-background-color" 
         title={buttonTitle}
-        onMouseDown={suppressMouseDown} 
         onClick={onClick}
       >
         <div>&nbsp;</div>
@@ -172,7 +164,14 @@ export class AttrEditDecorationPlugin extends Plugin<DecorationSet> {
             reactRenderForEditorView(attrEdit, decoration, editorView);
 
             // return decoration
-            return DecorationSet.create(tr.doc, [Decoration.widget(decorationPosition.pos, decoration, { key: specKey })]);
+            return DecorationSet.create(tr.doc, [Decoration.widget(decorationPosition.pos, decoration, 
+              { 
+                key: specKey,
+                ignoreSelection: true,
+                stopEvent: () => {
+                  return true;
+                }
+              })]);
 
           } else {
             return DecorationSet.empty;
