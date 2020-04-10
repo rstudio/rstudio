@@ -4,7 +4,7 @@
 FROM mcr.microsoft.com/windows/servercore:ltsc2019
 
 # set RUN commands to use powershell
-SHELL ["powershell", "-Command", "$ErrorActionPreference = 'Stop'; $ProgressPreference = 'SilentlyContinue';"]
+SHELL ["powershell"]
 
 # Note: keep installed dependencies in-sync with Install-RStudio-Prereqs.ps1 for consistency
 # between dev machines and the build machine.
