@@ -94,8 +94,9 @@ export function textRangePopupDecorationPosition(
   const containingBlockBox = containingBlockEl.getBoundingClientRect();
 
   // base popup style
+  const topPadding = parseInt(containingBlockStyle.paddingTop!, 10) || 0;
   const popupStyle = {
-    marginTop: linkCoords.bottom - containingBlockBox.top + 3 + kPixelUnit,
+    marginTop: linkCoords.bottom - containingBlockBox.top - topPadding + 3 + kPixelUnit,
   };
 
   // we need to compute whether the popup will be visible (horizontally), do
