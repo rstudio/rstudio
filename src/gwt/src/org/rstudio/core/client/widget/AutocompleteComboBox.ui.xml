@@ -1,0 +1,41 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:rw='urn:import:org.rstudio.core.client.widget'>
+    <ui:style type="org.rstudio.core.client.widget.AutocompleteComboBox.Style">
+@external .suggestPopupContent;
+
+.suggestBox
+{
+   border: 1px 0px 1px 1px solid #909090;
+   width: 100%;
+}
+
+.suggestBox:focus
+{
+   outline: 0;
+}
+
+.suggestionList .suggestPopupContent
+{
+   max-height: 150px;
+   max-width: 185px;
+   overflow-y: auto;
+   overflow-x: hidden;
+}
+
+.suggestionList table
+{
+   width: 100%;
+}
+</ui:style>
+ <g:HorizontalPanel>
+    <g:cell>
+       <g:SuggestBox styleName="{style.suggestBox}"
+                     ui:field="suggestBox_"></g:SuggestBox>
+   </g:cell>
+   <g:cell width="23px">
+      <rw:DecorativeImage ui:field="dropButton_"></rw:DecorativeImage>
+   </g:cell>
+</g:HorizontalPanel>
+</ui:UiBinder> 
