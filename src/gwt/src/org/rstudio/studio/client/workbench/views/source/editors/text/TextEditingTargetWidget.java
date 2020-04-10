@@ -1636,13 +1636,17 @@ public class TextEditingTargetWidget
       public void focus()
       {
          editor_.focus();
-         new Timer() {
-            @Override
-            public void run()
-            {
-               editor_.moveCursorNearTop();
-            }
-         }.schedule(100);
+         if (activationPending_)
+         {
+            activationPending_ = false;
+            new Timer() {
+               @Override
+               public void run()
+               {
+                  editor_.moveCursorNearTop();
+               }
+            }.schedule(100);
+         }
       }
       
       @Override
@@ -1652,7 +1656,7 @@ public class TextEditingTargetWidget
       }
      
       @Override
-      public void setCode(TextEditorContainer.EditorCode editorCode, boolean preserveCursorLocation)
+      public void setCode(TextEditorContainer.EditorCode editorCode, boolean preserveCursorLocation, boolean activatingEditor)
       {
          // if the cursor location is a sentinel within the code string, then pull it out and note it's position
          final Position cursorPosition = Position.create(0, 0);
@@ -1683,13 +1687,19 @@ public class TextEditingTargetWidget
          if (editorCode.cursorSentinel != null) {
             editor_.setCursorPosition(cursorPosition);
          }
+         
+         // indicate that an activation is pending
+         if (activatingEditor)
+            activationPending_ = true;
       }
       
       @Override
       public String getCode()
       {
          return editor_.getCode(); 
-      }   
+      } 
+      
+      private boolean activationPending_ = false;
    };
    
    private String filterCode(String code, LineFilter filter) 
