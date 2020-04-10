@@ -160,20 +160,20 @@ public class PanmirrorDialogs {
    
    public Promise<PanmirrorRawFormatResult> editRawInline(PanmirrorRawFormatProps raw) 
    {
-      return editRaw(raw, 2);
+      return editRaw(raw, true);
    }
    
    public Promise<PanmirrorRawFormatResult> editRawBlock(PanmirrorRawFormatProps raw) 
    {
-      return editRaw(raw, 10);
+      return editRaw(raw, false);
    }
    
 
-   private Promise<PanmirrorRawFormatResult> editRaw(PanmirrorRawFormatProps raw, int minLines)
+   private Promise<PanmirrorRawFormatResult> editRaw(PanmirrorRawFormatProps raw, boolean inline)
    {
       return new Promise<PanmirrorRawFormatResult>(
          (ResolveCallbackFn<PanmirrorRawFormatResult> resolve, RejectCallbackFn reject) -> {  
-            PanmirrorEditRawDialog dialog = new PanmirrorEditRawDialog(raw, minLines, 
+            PanmirrorEditRawDialog dialog = new PanmirrorEditRawDialog(raw, inline, 
                (result) -> { resolve.onInvoke(result); }
             );
             dialog.showModal(false);
