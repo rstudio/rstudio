@@ -26,7 +26,7 @@ import { CommandFn } from '../../api/command';
 import { AttrProps, EditorUI } from '../../api/ui';
 import { WidgetProps, reactRenderForEditorView } from '../../api/widgets/react';
 import { nodeDecorationPosition } from '../../api/widgets/decoration';
-
+import { kUpdateDecoratorsTransaction } from '../../api/transaction';
 import { kEditAttrShortcut } from './attr_edit';
 import { editRawBlockCommand } from '../../api/raw';
 
@@ -87,6 +87,12 @@ export class AttrEditDecorationPlugin extends Plugin<DecorationSet> {
         },
         apply: (tr: Transaction, old: DecorationSet, _oldState: EditorState, newState: EditorState) => {
           
+          // only respond to transactions where the selection changes 
+          // (or special updateView sentinel transaction)
+          if (!tr.selectionSet && !tr.getMeta(kUpdateDecoratorsTransaction)) {
+            return old.map(tr.mapping, tr.doc);
+          }
+
           // node types
           const nodeTypes = [schema.nodes.heading, schema.nodes.code_block, schema.nodes.div];
           if (rawBlocks) {
@@ -114,15 +120,6 @@ export class AttrEditDecorationPlugin extends Plugin<DecorationSet> {
               }
             }
             const tagText = tags.join(' ');
-
-            // create a unique key to avoid recreating the decorator when the selection changes
-            const specKey = `attr_edit_decoration_pos:${parentWithAttrs.pos};tag:${tagText}`;
-
-          
-            // if the old popup already has a decoration for this key then just use it
-            if (old.find(undefined, undefined, spec => spec.key === specKey).length) {
-              return old.map(tr.mapping, tr.doc);
-            }
           
             // raw blocks have their own edit function
             const editFn = node.type === schema.nodes.raw_block ? editRawBlockCommand(ui) : editAttrFn;
@@ -144,6 +141,14 @@ export class AttrEditDecorationPlugin extends Plugin<DecorationSet> {
             // no decorator if we couldn't get a position
             if (!decorationPosition) {
               return DecorationSet.empty;
+            }
+
+            // create a unique key to avoid recreating the decorator when the selection changes
+            const specKey = `attr_edit_decoration_pos:${parentWithAttrs.pos};tag:${tagText};top:${decorationPosition.style.top}`;
+          
+            // if the old popup already has a decoration for this key then just use it
+            if (old.find(undefined, undefined, spec => spec.key === specKey).length) {
+              return old.map(tr.mapping, tr.doc);
             }
 
             // create attr edit react component

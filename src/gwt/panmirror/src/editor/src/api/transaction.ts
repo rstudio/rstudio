@@ -22,6 +22,8 @@ import { sliceContentLength } from './slice';
 
 export const kAddToHistoryTransaction = 'addToHistory';
 export const kFixupTransaction = 'docFixup';
+export const kResizeTransaction = 'resize';
+export const kUpdateDecoratorsTransaction = 'updateDecorators';
 export const kRestoreLocationTransaction = 'restoreLocation';
 
 export type TransactionsFilter = (transactions: Transaction[], oldState: EditorState, newState: EditorState) => boolean;

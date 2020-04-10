@@ -48,6 +48,8 @@ import {
   appendMarkTransactionsPlugin,
   kFixupTransaction,
   kAddToHistoryTransaction,
+  kResizeTransaction,
+  kUpdateDecoratorsTransaction,
 } from './api/transaction';
 import { EditorOutline } from './api/outline';
 import { EditingLocation, getEditingLocation, restoreEditingLocation } from './api/location';
@@ -499,6 +501,16 @@ export class Editor {
     this.state = this.state.apply(tr);
     this.view.updateState(this.state);
 
+    // if this was a resize transaction then emit another transaction
+    // after the view is updated (allows decorators that depend on DOM
+    // node positions to update after reflow)
+    if (tr.getMeta(kResizeTransaction)) {
+      const decsTr = this.state.tr;
+      decsTr.setMeta(kUpdateDecoratorsTransaction, true);
+      decsTr.setMeta(kAddToHistoryTransaction, false);
+      this.view.dispatch(decsTr);
+    }
+
     // notify listeners of selection change
     this.emitEvent(EditorEvent.SelectionChange);
 
@@ -705,11 +717,10 @@ export class Editor {
   private applyFixups(context: FixupContext) {
     let tr = this.state.tr;
     tr = this.extensionFixups(tr, context);
-    if (tr.docChanged) {
-      tr.setMeta(kAddToHistoryTransaction, false);
-      tr.setMeta(kFixupTransaction, true);
-      this.view.dispatch(tr);
-    }
+    tr.setMeta(kAddToHistoryTransaction, false);
+    tr.setMeta(kFixupTransaction, true);
+    tr.setMeta(kResizeTransaction, true);
+    this.view.dispatch(tr);
   }
 
   private extensionFixups(tr: Transaction, context: FixupContext) {
