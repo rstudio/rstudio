@@ -19,6 +19,10 @@ Reconsider Style field in attribs
 
 Reconsider overwraught parentheticals in attribs
 
+Unable to toggle html tag w/ menu (select in example)
+
+Raw Inline... and Raw Block... should interoperate w/ HTML/Tex
+
 Better way to indicate language of code blocks (input rule to 'lang' then watch for enter?)
 Insert Plain Code Block menu item (just does ```<lang>)
 
