@@ -43,6 +43,7 @@ public class PanmirrorEditRawDialog extends ModalDialog<PanmirrorRawFormatResult
 {
    public PanmirrorEditRawDialog(
                PanmirrorRawFormatProps raw,
+               String[] outputFormats,
                boolean inline,
                OperationWithInput<PanmirrorRawFormatResult> operation)
    {
@@ -56,6 +57,7 @@ public class PanmirrorEditRawDialog extends ModalDialog<PanmirrorRawFormatResult
       
       inline_ = inline;
    
+      rawFormatSelect_.setFormats(outputFormats);
       rawFormatSelect_.setValue(StringUtil.notNull(raw.format));
       rawFormatSelect_.getListBox().getElement().setId(ElementIds.VISUAL_MD_RAW_FORMAT_SELECT);
       

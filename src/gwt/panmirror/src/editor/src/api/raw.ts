@@ -26,7 +26,7 @@ import { EditorUI, RawFormatProps } from "./ui";
 export const kTexFormat = 'tex';
 export const kHTMLFormat = 'html';
 
-export function editRawBlockCommand(ui: EditorUI) {
+export function editRawBlockCommand(ui: EditorUI, outputFormats: string[]) {
   
   return (state: EditorState, dispatch?: (tr: Transaction) => void, view?: EditorView) => {
     const schema = state.schema;
@@ -49,7 +49,7 @@ export function editRawBlockCommand(ui: EditorUI) {
         }
 
         // show dialog
-        const result = await ui.dialogs.editRawBlock(raw);
+        const result = await ui.dialogs.editRawBlock(raw, outputFormats);
         if (result) {
           const tr = state.tr;
 

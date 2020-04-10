@@ -38,8 +38,9 @@ import { EditorUI } from '../api/ui';
 import { isSingleLineHTML } from '../api/html';
 import { kHTMLFormat, kTexFormat, editRawBlockCommand } from '../api/raw';
 import { isSingleLineTex } from '../api/tex';
+import { PandocCapabilities } from '../api/pandoc_capabilities';
 
-const extension = (pandocExtensions: PandocExtensions): Extension | null => {
+const extension = (pandocExtensions: PandocExtensions, pandocCapabilities: PandocCapabilities): Extension | null => {
   // requires either raw_attribute or raw_html
   if (!pandocExtensions.raw_attribute && !pandocExtensions.raw_html) {
     return null;
@@ -93,7 +94,7 @@ const extension = (pandocExtensions: PandocExtensions): Extension | null => {
         attr_edit: {
           type: (schema: Schema) => schema.nodes.raw_block,
           tags: (node: ProsemirrorNode) => [node.attrs.format] ,
-          editFn: editRawBlockCommand,
+          editFn: (ui: EditorUI) => editRawBlockCommand(ui, pandocCapabilities.output_formats),
         },
 
         pandoc: {
@@ -129,7 +130,7 @@ const extension = (pandocExtensions: PandocExtensions): Extension | null => {
       if (pandocExtensions.raw_attribute) {
         commands.push(new FormatRawBlockCommand(EditorCommandId.HTMLBlock, kHTMLFormat, schema.nodes.raw_block));
         commands.push(new FormatRawBlockCommand(EditorCommandId.TexBlock, kTexFormat, schema.nodes.raw_block));
-        commands.push(new RawBlockCommand(ui));
+        commands.push(new RawBlockCommand(ui, pandocCapabilities.output_formats));
       }
 
       return commands;
@@ -195,11 +196,11 @@ class FormatRawBlockCommand extends ProsemirrorCommand {
 
 // generic raw block command (shows dialog to allow choosing from among raw formats)
 class RawBlockCommand extends ProsemirrorCommand {
-  constructor(ui: EditorUI) {
+  constructor(ui: EditorUI, outputFormats: string[]) {
     super(
       EditorCommandId.RawBlock,
       [],
-      editRawBlockCommand(ui)
+      editRawBlockCommand(ui, outputFormats)
     );
   }
 }
