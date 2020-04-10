@@ -31,6 +31,7 @@ import { EditorUI, attrPropsToInput, attrInputToProps, AttrProps, AttrEditInput 
 import { Extension } from './api/extension';
 import { ExtensionManager, initExtensions } from './extensions';
 import { PandocEngine } from './api/pandoc';
+import { PandocCapabilities, getPandocCapabilities } from './api/pandoc_capabilities';
 import { fragmentToHTML } from './api/html';
 import { EditorEvent } from './api/events';
 import {
@@ -175,6 +176,9 @@ export class Editor {
   // provided within the document
   private pandocFormat: PandocFormat;
 
+  // pandoc capabilities
+  private pandocCapabilities: PandocCapabilities;
+
   // core prosemirror state/behaviors
   private readonly extensions: ExtensionManager;
   private readonly schema: Schema;
@@ -217,8 +221,11 @@ export class Editor {
     // resolve the format
     const pandocFmt = await resolvePandocFormat(context.pandoc, format);
 
+    // get pandoc capabilities
+    const pandocCapabilities = await getPandocCapabilities(context.pandoc);
+
     // create editor
-    const editor = new Editor(parent, context, options, pandocFmt);
+    const editor = new Editor(parent, context, options, pandocFmt, pandocCapabilities);
 
     // set initial markdown if specified
     if (markdown) {
@@ -229,13 +236,20 @@ export class Editor {
     return Promise.resolve(editor);
   }
 
-  private constructor(parent: HTMLElement, context: EditorContext, options: EditorOptions, pandocFormat: PandocFormat) {
+  private constructor(
+    parent: HTMLElement, 
+    context: EditorContext, 
+    options: EditorOptions, 
+    pandocFormat: PandocFormat,
+    pandocCapabilities: PandocCapabilities) 
+  {
     // initialize references
     this.parent = parent;
     this.context = context;
     this.options = options;
     this.keybindings = {};
     this.pandocFormat = pandocFormat;
+    this.pandocCapabilities = pandocCapabilities;
 
     // initialize custom events
     this.events = this.initEvents();
