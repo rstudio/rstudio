@@ -51,6 +51,7 @@ public class PanmirrorToolbarCommands
       add(PanmirrorCommands.Heading5, "Heading 5", Roles.getMenuitemradioRole());
       add(PanmirrorCommands.Heading6, "Heading 6", Roles.getMenuitemradioRole());
       add(PanmirrorCommands.CodeBlock, "Code Block", Roles.getMenuitemradioRole());
+      add(PanmirrorCommands.CodeBlockFormat, "Code Block...");
       add(PanmirrorCommands.Blockquote, "Blockquote", Roles.getMenuitemcheckboxRole(), icons.BLOCKQUOTE);
       add(PanmirrorCommands.LineBlock, "Line Block", Roles.getMenuitemcheckboxRole());
       add(PanmirrorCommands.Div, "Section/Div...");

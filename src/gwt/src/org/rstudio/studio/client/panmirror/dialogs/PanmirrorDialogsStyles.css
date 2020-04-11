@@ -5,7 +5,7 @@
 
 .dialog {
    width: 380px;
-   margin-bottom: 12px;
+   margin-bottom: 10px;
    position: relative;
 }
 	   
@@ -64,9 +64,16 @@
    width: 100%;
 }
 
-.imageDialogTabs, .linkDialogTabs {
+
+
+.linkDialogTabs {
    width: 380px;
-   height: 295px;
+   height: 280px;
+}
+
+.imageDialogTabs {
+	width: 380px;
+	height: 295px;
 }
 
 .hrefSelect {

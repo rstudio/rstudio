@@ -493,6 +493,10 @@ public class ElementIds
    public final static String VISUAL_MD_LINK_TEXT = "visual_md_link_text";
    public final static String VISUAL_MD_LINK_TITLE = "visual_md_link_title";
    public final static String VISUAL_MD_LINK_TAB_ATTRIBUTES = "visual_md_link_tab_attributes";
+   public final static String VISUAL_MD_CODE_BLOCK_TAB_LANGUAGE = "visual_md_code_block_tab_language";
+   public final static String VISUAL_MD_CODE_BLOCK_TAB_ATTRIBUTES = "visual_md_code_block_tab_attributes";
+   public final static String VISUAL_MD_CODE_BLOCK_LANG = "visual_md_code_block_tab_lang";
+
    
    // ProgressDialog
    public final static String PROGRESS_TITLE_LABEL = "progress_title_label";
