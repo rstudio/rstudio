@@ -17,15 +17,25 @@ import { Node as ProsemirrorNode, Schema } from 'prosemirror-model';
 import { textblockTypeInputRule } from 'prosemirror-inputrules';
 import { newlineInCode, exitCode } from 'prosemirror-commands';
 
-import { BlockCommand, EditorCommandId } from '../api/command';
+import { BlockCommand, EditorCommandId, ProsemirrorCommand } from '../api/command';
 import { Extension } from '../api/extension';
 import { BaseKey } from '../api/basekeys';
 import { codeNodeSpec } from '../api/code';
 import { PandocOutput, PandocTokenType, PandocExtensions } from '../api/pandoc';
 import { pandocAttrSpec, pandocAttrParseDom, pandocAttrToDomAttr } from '../api/pandoc_attr';
 import { PandocCapabilities } from '../api/pandoc_capabilities';
+import { attrEditCommandFn } from '../behaviors/attr_edit/attr_edit-command';
+import { EditorUI, CodeBlockProps } from '../api/ui';
+import { EditorState, Transaction } from 'prosemirror-state';
+import { EditorView } from 'prosemirror-view';
+import { findParentNodeOfType, setTextSelection } from 'prosemirror-utils';
+import { canInsertNode } from '../api/node';
 
-const extension = (pandocExtensions: PandocExtensions, pandocCapabilities: PandocCapabilities): Extension => {
+const extension = (
+  pandocExtensions: PandocExtensions, 
+  pandocCapabilities: PandocCapabilities, 
+  ui: EditorUI): Extension => 
+{
   return {
     nodes: [
       {
@@ -72,19 +82,26 @@ const extension = (pandocExtensions: PandocExtensions, pandocCapabilities: Pando
           },
         },
 
-        attr_edit: {
-          type: (schema: Schema) => pandocExtensions.fenced_code_attributes ? schema.nodes.code_block : null,
-          tags: (node: ProsemirrorNode) => {
-            if (node.attrs.classes && node.attrs.classes.length) {
-              const lang = node.attrs.classes[0];
-              if (pandocCapabilities.highlight_languages.includes(lang)) {
-                return [lang];
-              } else {
-                return ['.' + lang];
-              }
-            } else {
-              return [];
-            }
+        attr_edit: () => {
+          if (pandocExtensions.fenced_code_attributes) {
+            return {
+              type: (schema: Schema) => schema.nodes.code_block,
+              tags: (node: ProsemirrorNode) => {
+                if (node.attrs.classes && node.attrs.classes.length) {
+                  const lang = node.attrs.classes[0];
+                  if (pandocCapabilities.highlight_languages.includes(lang)) {
+                    return [lang];
+                  } else {
+                    return ['.' + lang];
+                  }
+                } else {
+                  return [];
+                }
+              },
+              editFn: () => codeBlockFormatCommandFn(ui, pandocCapabilities.highlight_languages)
+            };
+          } else {
+            return null;
           }
         },
 
@@ -110,7 +127,7 @@ const extension = (pandocExtensions: PandocExtensions, pandocCapabilities: Pando
     ],
 
     commands: (schema: Schema) => {
-      return [
+      const commands: ProsemirrorCommand[] = [
         new BlockCommand(
           EditorCommandId.CodeBlock,
           ['Shift-Ctrl-\\'],
@@ -119,6 +136,12 @@ const extension = (pandocExtensions: PandocExtensions, pandocCapabilities: Pando
           {},
         ),
       ];
+      if (pandocExtensions.fenced_code_attributes) {
+        commands.push(
+          new CodeBlockFormatCommand(ui, pandocCapabilities.highlight_languages)
+        );
+      }
+      return commands;
     },
 
     baseKeys: () => {
@@ -134,5 +157,79 @@ const extension = (pandocExtensions: PandocExtensions, pandocCapabilities: Pando
     },
   };
 };
+
+
+class CodeBlockFormatCommand extends ProsemirrorCommand {
+  constructor(ui: EditorUI, languages: string[]) {
+    super(
+      EditorCommandId.CodeBlockFormat,
+      [],
+      codeBlockFormatCommandFn(ui, languages)
+    );
+  }
+}
+
+function codeBlockFormatCommandFn(ui: EditorUI, languages: string[]) {
+  return (state: EditorState, dispatch?: (tr: Transaction) => void, view?: EditorView) => {
+
+    // enable if we are either inside a code block or we can insert a code block
+    const schema = state.schema;
+    const codeBlock = findParentNodeOfType(schema.nodes.code_block)(state.selection);
+    if (!codeBlock && !canInsertNode(state, schema.nodes.code_block)) {
+      return false;
+    }
+
+    async function asyncEditCodeBlock() {
+      if (dispatch) {
+        
+          // get props to edit
+          const codeBlockProps = codeBlock 
+            ? { ...codeBlock.node.attrs as CodeBlockProps, lang: '' }
+            : { id: '', classes: [], keyvalue: [], lang: '' }; 
+
+          // set lang if the first class is from available languages
+          if (codeBlockProps.classes && codeBlockProps.classes.length) {
+            const potentialLang = codeBlockProps.classes[0];
+            if (languages.includes(potentialLang)) {
+              codeBlockProps.lang = potentialLang;
+              codeBlockProps.classes = codeBlockProps.classes.slice(1);
+            }
+          }
+
+          // show dialog
+          const result = await ui.dialogs.editCodeBlock(codeBlockProps, languages);
+          if (result) {
+
+            // extract lang
+            const newProps = { ...result };
+            if (newProps.classes && newProps.lang) {
+              newProps.classes.unshift(result.lang);
+            }
+
+            // edit or insert as appropriate
+            const tr = state.tr;
+            if (codeBlock) {
+              tr.setNodeMarkup(codeBlock.pos, schema.nodes.code_block, newProps);
+            } else {
+              const prevSel = tr.selection;
+              tr.replaceSelectionWith(schema.nodes.code_block.create(newProps));
+              setTextSelection(tr.mapping.map(prevSel.from), -1)(tr);
+            }
+            dispatch(tr);
+          }
+      }
+
+      if (view) {
+        view.focus();
+      }
+    }
+
+    asyncEditCodeBlock();
+
+    return true;
+  };
+}
+
+
 
 export default extension;

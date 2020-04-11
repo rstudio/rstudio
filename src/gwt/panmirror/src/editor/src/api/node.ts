@@ -43,7 +43,7 @@ export interface PandocNode {
   readonly name: string;
   readonly spec: NodeSpec;
   readonly code_view?: CodeViewOptions;
-  readonly attr_edit?: AttrEditOptions;
+  readonly attr_edit?: () => AttrEditOptions | null;
   readonly pandoc: {
     readonly readers?: readonly PandocTokenReader[];
     readonly writer?: PandocNodeWriterFn;

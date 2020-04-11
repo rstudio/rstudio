@@ -115,37 +115,15 @@ async function editNodeAttrs(
 ): Promise<void> {
 
   const attrs = node.attrs;
-
-  let resultAttrs: { [key: string]: any } | null = null;
-
-  // front end can optionally provide a custom code block dialog (that shows lang)
-  if ((node.type === node.type.schema.nodes.code_block) && ui.dialogs.editCodeBlock) {
-    const codeBlock = {
-      ...attrs,
-      lang: ''
-    };
-    const result = await ui.dialogs.editCodeBlock(codeBlock, []);
-    if (result) {
-      resultAttrs = result;
-    }
-  // standard dialog
-  } else {
-    const result = await ui.dialogs.editAttr({ ...attrs });
-    if (result) {
-      resultAttrs = result.attr;
-    }
-  }
-
-  // if we got a result then set it
-  if (resultAttrs) {
+  const result = await ui.dialogs.editAttr({ ...attrs });
+  if (result) {
     dispatch(
       state.tr.setNodeMarkup(pos, node.type, {
         ...attrs,
-        ...resultAttrs,
+        ...result.attr,
       }),
     );
-  }
-  
+  }  
 }
 
 

@@ -356,7 +356,10 @@ export class ExtensionManager {
     const editors: AttrEditOptions[] = [];
     this.pandocNodes().forEach((node: PandocNode) => {
       if (node.attr_edit) {
-        editors.push(node.attr_edit);
+        const attrEdit = node.attr_edit();
+        if (attrEdit) {
+          editors.push(attrEdit);
+        }
       }
     });
     return editors;
