@@ -91,11 +91,11 @@ const extension = (pandocExtensions: PandocExtensions, pandocCapabilities: Pando
           borderColorClass: 'pm-raw-block-border'
         },
 
-        attr_edit: {
+        attr_edit: () => ({
           type: (schema: Schema) => schema.nodes.raw_block,
           tags: (node: ProsemirrorNode) => [node.attrs.format] ,
           editFn: (ui: EditorUI) => editRawBlockCommand(ui, pandocCapabilities.output_formats),
-        },
+        }),
 
         pandoc: {
           readers: [

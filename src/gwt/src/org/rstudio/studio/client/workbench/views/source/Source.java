@@ -3343,7 +3343,7 @@ public class Source implements InsertSourceHandler,
 
    private void confirmOpenLargeFile(FileSystemItem file,
                                      Operation openOperation,
-                                     Operation cancelOperation)
+                                     Operation noOperation)
    {
       StringBuilder msg = new StringBuilder();
       msg.append("The source file '" + file.getName() + "' is large (");
@@ -3353,7 +3353,9 @@ public class Source implements InsertSourceHandler,
       globalDisplay_.showYesNoMessage(GlobalDisplay.MSG_WARNING,
                                       "Confirm Open",
                                       msg.toString(),
+                                      false, // Don't include cancel
                                       openOperation,
+                                      noOperation,
                                       false);   // 'No' is default
    }
 

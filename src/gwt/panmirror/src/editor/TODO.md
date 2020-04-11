@@ -6,10 +6,8 @@ pandoc schema: <https://github.com/jgm/pandoc-types/blob/master/Text/Pandoc/Defi
 
 ## TODO
 
-Consider code block having a separate page for language (could be a longer pick list)
 
-Code block show just language w/o dot (perhaps it could even have a lang attibute if
-there is a hard convention in pandoc around the first class being the highlight target)
+Improve suggestion list display in code block dialog
 
 Paul on new edit properties button
 
@@ -19,6 +17,14 @@ Raw Inline... and Raw Block... should interoperate w/ HTML/Tex
 
 Better way to indicate language of code blocks (input rule to 'lang' then watch for enter?)
 Insert Plain Code Block menu item (just does ```<lang>)
+
+HTML Inlines not quite complete (end tags?). Perhaps an input rule that matches 
+known tag names? Perhaps it could match only at the start of a line for easy addition
+of style tags or comments?
+
+knitr::include_graphics preview
+
+Does fenced_code_blocks differ from fenced_code_attributes (e.g. could you have _just_ a language)
 
 Propagate more styles to images? (definitely padding)
 

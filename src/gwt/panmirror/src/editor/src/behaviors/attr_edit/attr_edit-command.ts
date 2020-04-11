@@ -113,6 +113,7 @@ async function editNodeAttrs(
   dispatch: (tr: Transaction<any>) => void,
   ui: EditorUI,
 ): Promise<void> {
+
   const attrs = node.attrs;
   const result = await ui.dialogs.editAttr({ ...attrs });
   if (result) {
@@ -122,7 +123,7 @@ async function editNodeAttrs(
         ...result.attr,
       }),
     );
-  }
+  }  
 }
 
 

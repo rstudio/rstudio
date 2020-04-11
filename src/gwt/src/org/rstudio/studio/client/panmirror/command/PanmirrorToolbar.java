@@ -189,6 +189,8 @@ public class PanmirrorToolbar extends SecondaryToolbar implements RequiresResize
       listMenu.addCommand(PanmirrorCommands.OrderedListEdit);
       formatMenu.addCommand(PanmirrorCommands.Blockquote);
       formatMenu.addSeparator();
+      formatMenu.addCommand(PanmirrorCommands.CodeBlockFormat);
+      formatMenu.addSeparator();
       formatMenu.addCommand(PanmirrorCommands.Div);
       formatMenu.addCommand(PanmirrorCommands.LineBlock);
       formatMenu.addSeparator();

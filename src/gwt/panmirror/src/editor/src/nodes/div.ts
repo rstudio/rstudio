@@ -71,9 +71,9 @@ const extension: Extension = {
         },
       },
 
-      attr_edit: {
+      attr_edit: () => ({
         type: (schema: Schema) => schema.nodes.div,
-      },
+      }),
 
       pandoc: {
         readers: [

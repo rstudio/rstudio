@@ -29,6 +29,7 @@ export interface EditorDialogs {
   alert: AlertFn;
   editLink: LinkEditorFn;
   editImage: ImageEditorFn;
+  editCodeBlock: CodeBlockEditorFn;
   editOrderedList: OrderedListEditorFn;
   editAttr: AttrEditorFn;
   editSpan: AttrEditorFn;
@@ -78,6 +79,11 @@ export type ImageEditorFn = (
   resourceDir: string,
   editAttributes: boolean,
 ) => Promise<ImageEditResult | null>;
+
+export type CodeBlockEditorFn = (
+  codeBlock: CodeBlockProps,
+  languages: string[]
+) => Promise<CodeBlockEditResult | null>;
 
 export type OrderedListEditorFn = (
   list: OrderedListProps,
@@ -131,6 +137,12 @@ export interface ImageProps extends AttrProps {
 }
 
 export type ImageEditResult = ImageProps;
+
+export interface CodeBlockProps extends AttrProps {
+  lang: string;
+}
+
+export type CodeBlockEditResult = CodeBlockProps;
 
 export interface OrderedListProps {
   tight: boolean;
