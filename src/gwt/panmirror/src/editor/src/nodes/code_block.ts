@@ -73,7 +73,7 @@ const extension = (pandocExtensions: PandocExtensions, pandocCapabilities: Pando
         },
 
         attr_edit: {
-          type: (schema: Schema) => schema.nodes.code_block,
+          type: (schema: Schema) => pandocExtensions.fenced_code_attributes ? schema.nodes.code_block : null,
           tags: (node: ProsemirrorNode) => {
             if (node.attrs.classes && node.attrs.classes.length) {
               const lang = node.attrs.classes[0];
