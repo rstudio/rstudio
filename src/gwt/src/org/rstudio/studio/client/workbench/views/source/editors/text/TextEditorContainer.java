@@ -22,7 +22,6 @@ import org.rstudio.core.client.widget.IsHideableWidget;
 import org.rstudio.studio.client.panmirror.PanmirrorCode;
 
 import com.google.gwt.dom.client.Style.Unit;
-import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.LayoutPanel;
 
 // container that holds a text editor, but which also supports juxtoposing
