@@ -23,7 +23,8 @@
   line-height: 1.5;
 }
 
-.pm-content > p:first-child {
+.pm-content > p:first-child,
+.pm-content > .pm-div:first-child {
   margin-top: 10px;
 }
 
