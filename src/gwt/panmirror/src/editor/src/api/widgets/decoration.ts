@@ -21,8 +21,9 @@ import { ContentNodeWithPos } from 'prosemirror-utils';
 
 import React from 'react';
 
-import { kPixelUnit } from '../css';
 import { editingRootNodeClosestToPos } from '../node';
+
+import { kPixelUnit } from '../css';
 
 export interface DecorationPosition {
   pos: number; 
@@ -54,33 +55,28 @@ export function nodeDecorationPosition(
     return null;
   }
 
-   // cast to HTML element
-   const nodeEl = nodeDOM as HTMLElement;
-   const editingEl = editingDOM as HTMLElement;
-  
-  // get the computed style for the editingDOM
-  const editingStyle = window.getComputedStyle(editingEl);
+  // cast to HTML element
+  const nodeEl = nodeDOM as HTMLElement;
+  const editingEl = editingDOM as HTMLElement;
 
-  // calculate our right padding
-  const editingPaddingRight = parseInt(editingStyle.paddingRight!, 10);
-  if (!editingPaddingRight) {
-    return null;
+  // find the top offset by looping up until we get to the editingEl
+  let topOffset = offsets.top;
+  let offsetTarget: Element | null = nodeEl;
+  while (offsetTarget && (offsetTarget !== editingEl)) {
+    topOffset += (offsetTarget as HTMLElement).offsetTop;
+    offsetTarget = (offsetTarget as HTMLElement).offsetParent;
   }
- 
-  // calculate node right edge
-  const nodeStyle = window.getComputedStyle(editingEl);
-  const nodePaddingRight =  parseInt(nodeStyle.paddingRight!, 10);
-  if (!nodePaddingRight) {
-    return null;
-  }
-  const nodeRightEdge = nodeEl.offsetLeft + nodeEl.offsetWidth - nodePaddingRight;
+
+  // get the rectangle of each
+  const nodeRect = nodeEl.getBoundingClientRect();
+  const editingRect = editingEl.getBoundingClientRect();
   
   return {
     pos: editingNode.pos + editingNode.node.nodeSize - 1,
     style: {
       position: 'absolute',
-      top: nodeEl.offsetTop + offsets.top + 'px',
-      right: editingEl.offsetWidth - editingPaddingRight - nodeRightEdge + offsets.right + 'px'
+      top: topOffset + 'px',
+      right: (editingRect.right - nodeRect.right) + offsets.right + 'px'
     }
   };
 
