@@ -54,16 +54,33 @@ export function nodeDecorationPosition(
     return null;
   }
 
-  // cast to HTML element
-  const nodeEl = nodeDOM as HTMLElement;
-  const editingEl = editingDOM as HTMLElement;
+   // cast to HTML element
+   const nodeEl = nodeDOM as HTMLElement;
+   const editingEl = editingDOM as HTMLElement;
+  
+  // get the computed style for the editingDOM
+  const editingStyle = window.getComputedStyle(editingEl);
+
+  // calculate our right padding
+  const editingPaddingRight = parseInt(editingStyle.paddingRight!, 10);
+  if (!editingPaddingRight) {
+    return null;
+  }
+ 
+  // calculate node right edge
+  const nodeStyle = window.getComputedStyle(editingEl);
+  const nodePaddingRight =  parseInt(nodeStyle.paddingRight!, 10);
+  if (!nodePaddingRight) {
+    return null;
+  }
+  const nodeRightEdge = nodeEl.offsetLeft + nodeEl.offsetWidth - nodePaddingRight;
   
   return {
     pos: editingNode.pos + editingNode.node.nodeSize - 1,
     style: {
       position: 'absolute',
       top: nodeEl.offsetTop + offsets.top + 'px',
-      right: (editingEl.offsetWidth - nodeEl.offsetLeft - nodeEl.offsetWidth + offsets.right) + 'px'
+      right: editingEl.offsetWidth - editingPaddingRight - nodeRightEdge + offsets.right + 'px'
     }
   };
 

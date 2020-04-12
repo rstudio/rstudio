@@ -3,8 +3,8 @@
 @external ProseMirror, pm-content, body;
 
 .ProseMirror .pm-content {
-   padding-left: 20px !important;
-   padding-right: 20px !important;
+   padding-left: literal("max(calc((100% - 800px)/2), 20px)") !important;
+   padding-right: literal("max(calc((100% - 800px)/2), 20px)") !important;
 }
 
 .ProseMirror .body {

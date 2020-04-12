@@ -140,7 +140,12 @@ class AttrEditDecorationPlugin extends Plugin<DecorationSet> {
             }
 
             // create a unique key to avoid recreating the decorator when the selection changes
-            const specKey = `attr_edit_decoration_pos:${parentWithAttrs.pos};tag:${tagText};top:${decorationPosition.style.top}`;
+            const specKey = `
+              attr_edit_decoration_pos:${parentWithAttrs.pos}
+              tag:${tagText}
+              top:${decorationPosition.style.top}
+              right:${decorationPosition.style.right}
+            `;
           
             // if the old popup already has a decoration for this key then just use it
             if (old.find(undefined, undefined, spec => spec.key === specKey).length) {
