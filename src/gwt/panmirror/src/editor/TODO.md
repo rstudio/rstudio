@@ -6,8 +6,7 @@ pandoc schema: <https://github.com/jgm/pandoc-types/blob/master/Text/Pandoc/Defi
 
 ## TODO
 
-
-Improve suggestion list display in code block dialog
+Consider multiple tags for #id .class
 
 Paul on new edit properties button
 
