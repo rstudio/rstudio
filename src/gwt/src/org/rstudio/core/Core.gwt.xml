@@ -67,5 +67,9 @@
       <when-type-is class="org.rstudio.core.client.theme.ThemeFonts.ThemeFontLoader"/>
       <when-property-is name="rstudio.desktop" value="true"/>
    </replace-with>
+   <replace-with class="org.rstudio.core.client.theme.ThemeFonts.EmptyThemeFontLoader">
+      <when-type-is class="org.rstudio.core.client.theme.ThemeFonts.ThemeFontLoader"/>
+      <when-property-is name="rstudio.unittests" value="true"/>
+   </replace-with>
 
 </module>
