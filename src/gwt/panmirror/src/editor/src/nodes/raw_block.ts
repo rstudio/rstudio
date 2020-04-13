@@ -36,7 +36,7 @@ import { ProsemirrorCommand, EditorCommandId } from '../api/command';
 
 import { EditorUI } from '../api/ui';
 import { isSingleLineHTML } from '../api/html';
-import { kHTMLFormat, kTexFormat, editRawBlockCommand } from '../api/raw';
+import { kHTMLFormat, kTexFormat, editRawBlockCommand, isRawHTMLFormat } from '../api/raw';
 import { isSingleLineTex } from '../api/tex';
 import { PandocCapabilities } from '../api/pandoc_capabilities';
 
@@ -143,7 +143,7 @@ function readPandocRawBlock(schema: Schema, tok: PandocToken, writer: Prosemirro
   // highlighting and more seamless editing experience)
   const format = tok.c[kRawBlockFormat];
   const text = tok.c[kRawBlockContent] as string;
-  if (format === kHTMLFormat && isSingleLineHTML(text)) {
+  if (isRawHTMLFormat(format) && isSingleLineHTML(text)) {
     writer.openNode(schema.nodes.paragraph, {});
     writer.writeInlineHTML(text.trimRight());
     writer.closeNode();

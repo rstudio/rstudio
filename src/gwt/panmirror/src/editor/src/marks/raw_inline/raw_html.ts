@@ -20,7 +20,7 @@ import { setTextSelection } from 'prosemirror-utils';
 
 import { PandocExtensions, PandocTokenType, PandocToken, ProsemirrorWriter, PandocOutput } from '../../api/pandoc';
 import { Extension } from '../../api/extension';
-import { kHTMLFormat } from '../../api/raw';
+import { isRawHTMLFormat } from '../../api/raw';
 import { EditorUI } from '../../api/ui';
 import { EditorCommandId } from '../../api/command';
 
@@ -68,7 +68,7 @@ const extension = (pandocExtensions: PandocExtensions): Extension | null => {
               token: PandocTokenType.RawInline,
               match: (tok: PandocToken) => {
                 const format = tok.c[kRawInlineFormat];
-                return format === kHTMLFormat;
+                return isRawHTMLFormat(format);
               },
               handler: (_schema: Schema) => {
                 return (writer: ProsemirrorWriter, tok: PandocToken) => {
