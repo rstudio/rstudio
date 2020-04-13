@@ -16,6 +16,10 @@
 import { Node as ProsemirrorNode, Schema } from 'prosemirror-model';
 import { textblockTypeInputRule } from 'prosemirror-inputrules';
 import { newlineInCode, exitCode } from 'prosemirror-commands';
+import { EditorState, Transaction } from 'prosemirror-state';
+import { EditorView } from 'prosemirror-view';
+
+import { findParentNodeOfType, setTextSelection } from 'prosemirror-utils';
 
 import { BlockCommand, EditorCommandId, ProsemirrorCommand } from '../api/command';
 import { Extension } from '../api/extension';
@@ -24,19 +28,16 @@ import { codeNodeSpec } from '../api/code';
 import { PandocOutput, PandocTokenType, PandocExtensions } from '../api/pandoc';
 import { pandocAttrSpec, pandocAttrParseDom, pandocAttrToDomAttr } from '../api/pandoc_attr';
 import { PandocCapabilities } from '../api/pandoc_capabilities';
-import { attrEditCommandFn } from '../behaviors/attr_edit/attr_edit-command';
 import { EditorUI, CodeBlockProps } from '../api/ui';
-import { EditorState, Transaction } from 'prosemirror-state';
-import { EditorView } from 'prosemirror-view';
-import { findParentNodeOfType, setTextSelection } from 'prosemirror-utils';
 import { canInsertNode } from '../api/node';
-import { modes } from 'codemirror';
 
 const extension = (
   pandocExtensions: PandocExtensions, 
   pandocCapabilities: PandocCapabilities, 
   ui: EditorUI): Extension => 
 {
+  const hasAttr = hasFencedCodeAttributes(pandocExtensions);
+
   return {
     nodes: [
       {
@@ -44,13 +45,13 @@ const extension = (
 
         spec: {
           ...codeNodeSpec(),
-          attrs: { ...(pandocExtensions.fenced_code_attributes ? pandocAttrSpec : {}) },
+          attrs: { ...(hasAttr ? pandocAttrSpec : {}) },
           parseDOM: [
             {
               tag: 'pre',
               preserveWhitespace: 'full',
               getAttrs: (node: Node | string) => {
-                if (pandocExtensions.fenced_code_attributes) {
+                if (hasAttr) {
                   const el = node as Element;
                   return pandocAttrParseDom(el, {});
                 } else {
@@ -61,7 +62,7 @@ const extension = (
           ],
           toDOM(node: ProsemirrorNode) {
             const fontClass = 'pm-fixedwidth-font';
-            const attrs = pandocExtensions.fenced_code_attributes
+            const attrs = hasAttr
               ? pandocAttrToDomAttr({
                   ...node.attrs,
                   classes: [...node.attrs.classes, fontClass],
@@ -94,7 +95,7 @@ const extension = (
           ],
           writer: (output: PandocOutput, node: ProsemirrorNode) => {
             output.writeToken(PandocTokenType.CodeBlock, () => {
-              if (pandocExtensions.fenced_code_attributes) {
+              if (hasAttr) {
                 output.writeAttr(node.attrs.id, node.attrs.classes, node.attrs.keyvalue);
               } else {
                 output.writeAttr();
@@ -116,9 +117,9 @@ const extension = (
           {},
         ),
       ];
-      if (pandocExtensions.fenced_code_attributes) {
+      if (hasAttr) {
         commands.push(
-          new CodeBlockFormatCommand(ui, pandocCapabilities.highlight_languages)
+          new CodeBlockFormatCommand(pandocExtensions, ui, pandocCapabilities.highlight_languages)
         );
       }
       return commands;
@@ -140,16 +141,16 @@ const extension = (
 
 
 class CodeBlockFormatCommand extends ProsemirrorCommand {
-  constructor(ui: EditorUI, languages: string[]) {
+  constructor(pandocExtensions: PandocExtensions, ui: EditorUI, languages: string[]) {
     super(
       EditorCommandId.CodeBlockFormat,
       [],
-      codeBlockFormatCommandFn(ui, languages)
+      codeBlockFormatCommandFn(pandocExtensions, ui, languages)
     );
   }
 }
 
-function codeBlockFormatCommandFn(ui: EditorUI, languages: string[]) {
+function codeBlockFormatCommandFn(pandocExtensions: PandocExtensions, ui: EditorUI, languages: string[]) {
   return (state: EditorState, dispatch?: (tr: Transaction) => void, view?: EditorView) => {
 
     // enable if we are either inside a code block or we can insert a code block
@@ -168,16 +169,22 @@ function codeBlockFormatCommandFn(ui: EditorUI, languages: string[]) {
             : { id: '', classes: [], keyvalue: [], lang: '' }; 
 
           // set lang if the first class is from available languages
+          // (alternatively if we don't support attributes then it's 
+          // automatically considered the language)
           if (codeBlockProps.classes && codeBlockProps.classes.length) {
             const potentialLang = codeBlockProps.classes[0];
-            if (languages.includes(potentialLang)) {
+            if (!pandocExtensions.fenced_code_attributes || languages.includes(potentialLang)) {
               codeBlockProps.lang = potentialLang;
               codeBlockProps.classes = codeBlockProps.classes.slice(1);
             }
           }
 
           // show dialog
-          const result = await ui.dialogs.editCodeBlock(codeBlockProps, languages);
+          const result = await ui.dialogs.editCodeBlock(
+            codeBlockProps, 
+            pandocExtensions.fenced_code_attributes, 
+            languages
+          );
           if (result) {
 
             // extract lang
@@ -216,7 +223,7 @@ function codeBlockAttrEdit(
   ui: EditorUI
 ) {
   return () => {
-    if (pandocExtensions.fenced_code_attributes) {
+    if (hasFencedCodeAttributes(pandocExtensions)) {
       return {
         type: (schema: Schema) => schema.nodes.code_block,
         tags: (node: ProsemirrorNode) => {
@@ -234,12 +241,21 @@ function codeBlockAttrEdit(
           } 
           return tags;
         },
-        editFn: () => codeBlockFormatCommandFn(ui, pandocCapabilities.highlight_languages)
+        editFn: () => codeBlockFormatCommandFn(
+          pandocExtensions, 
+          ui, 
+          pandocCapabilities.highlight_languages
+        )
       };
     } else {
       return null;
     }
   };
+}
+
+function hasFencedCodeAttributes(pandocExtensions: PandocExtensions) {
+  return pandocExtensions.fenced_code_blocks || 
+         pandocExtensions.fenced_code_attributes;
 }
 
 

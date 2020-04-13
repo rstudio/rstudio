@@ -116,11 +116,11 @@ public class PanmirrorDialogs {
       );      
    }
    
-   public Promise<PanmirrorCodeBlockProps> editCodeBlock(PanmirrorCodeBlockProps codeBlock, String[] languages)
+   public Promise<PanmirrorCodeBlockProps> editCodeBlock(PanmirrorCodeBlockProps codeBlock, boolean attributes, String[] languages)
    {
       return new Promise<PanmirrorCodeBlockProps>(
          (ResolveCallbackFn<PanmirrorCodeBlockProps> resolve, RejectCallbackFn reject) -> {  
-            PanmirrorEditCodeBlockDialog dialog = new PanmirrorEditCodeBlockDialog(codeBlock, languages,
+            PanmirrorEditCodeBlockDialog dialog = new PanmirrorEditCodeBlockDialog(codeBlock, attributes, languages,
                (result) -> { resolve.onInvoke(result); }
             );
             dialog.showModal(false);

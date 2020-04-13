@@ -39,6 +39,7 @@ public class PanmirrorEditCodeBlockDialog extends ModalDialog<PanmirrorCodeBlock
 { 
    public PanmirrorEditCodeBlockDialog(
                PanmirrorCodeBlockProps codeBlock,
+               boolean attributes,
                String[] languages,
                OperationWithInput<PanmirrorCodeBlockProps> operation)
    {
@@ -47,35 +48,37 @@ public class PanmirrorEditCodeBlockDialog extends ModalDialog<PanmirrorCodeBlock
          operation.execute(null);
       });
       
-      
+      // create lang (defer parent until we determine whether we support attributes)
       VerticalTabPanel langTab = new VerticalTabPanel(ElementIds.VISUAL_MD_CODE_BLOCK_TAB_LANGUAGE);
       langTab.addStyleName(RES.styles().dialog());
       langTab.add(new FormLabel("Language:"));
       lang_ = new PanmirrorLangSuggestBox(languages);
-            
       lang_.getElement().setId(ElementIds.VISUAL_MD_CODE_BLOCK_LANG);
       lang_.setText(codeBlock.lang);
       PanmirrorDialogsUtil.setFullWidthStyles(lang_);
       langTab.add(lang_);
       
-      
+      // create attr
       VerticalTabPanel attributesTab = new VerticalTabPanel(ElementIds.VISUAL_MD_CODE_BLOCK_TAB_ATTRIBUTES);
       attributesTab.addStyleName(RES.styles().dialog());
       editAttr_ =  new PanmirrorEditAttrWidget();   
       editAttr_.setAttr(codeBlock);
       attributesTab.add(editAttr_);
-     
-      DialogTabLayoutPanel tabPanel = new DialogTabLayoutPanel("Image");
-      tabPanel.addStyleName(RES.styles().linkDialogTabs());
-      tabPanel.add(langTab, "Language", langTab.getBasePanelId());
-      tabPanel.add(attributesTab, "Attributes", attributesTab.getBasePanelId());
-      tabPanel.selectTab(0);
+   
+      if (attributes)
+      {
+         DialogTabLayoutPanel tabPanel = new DialogTabLayoutPanel("Code Block");
+         tabPanel.addStyleName(RES.styles().linkDialogTabs());
+         tabPanel.add(langTab, "Language", langTab.getBasePanelId());
+         tabPanel.add(attributesTab, "Attributes", attributesTab.getBasePanelId());
+         tabPanel.selectTab(0);
       
-      
-      mainWidget_ = tabPanel;
-      
-      
-      
+         mainWidget_ = tabPanel;
+      }
+      else
+      {
+         mainWidget_ = langTab;
+      }
    }
    
    @Override
