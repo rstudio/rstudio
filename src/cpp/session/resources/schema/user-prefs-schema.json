@@ -771,6 +771,11 @@
             "default": false,
             "description": "Whether to show hidden files in the Files pane."
         },
+        "sort_file_names_naturally": {
+            "type": "boolean",
+            "default": true,
+            "description": "Whether to sort file names naturally, so that e.g., file10.R comes after file9.R"
+        },
         "jobs_tab_visibility": {
             "type": "string",
             "enum": ["closed", "shown", "default"],

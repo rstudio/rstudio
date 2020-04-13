@@ -1,7 +1,7 @@
 /*
  * FilesList.java
  *
- * Copyright (C) 2009-19 by RStudio, PBC
+ * Copyright (C) 2009-20 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -60,10 +60,18 @@ import com.google.gwt.view.client.ProvidesKey;
 
 public class FilesList extends Composite
 {
+   public enum SortOrder
+   {
+      Lexicographic,
+      Natural
+   };
+   
    public FilesList(final Files.Display.Observer observer,
-                    final FileTypeRegistry fileTypeRegistry)
+                    final FileTypeRegistry fileTypeRegistry,
+                    SortOrder order)
    {
       observer_ = observer;
+      order_ = order;
       
       // create data provider and sort handler
       dataProvider_ = new ListDataProvider<FileSystemItem>();
@@ -204,7 +212,17 @@ public class FilesList extends Composite
          @Override
          public int doCompare(FileSystemItem arg0, FileSystemItem arg1)
          {
-            return arg0.getName().compareToIgnoreCase(arg1.getName());
+            if (order_ == SortOrder.Natural)
+            {
+               // Natural ordering (the default) preserves ascending sequences
+               // in filenames
+               return StringUtil.naturalOrderCompare(arg0.getName(), arg1.getName());
+            }
+            else
+            {
+               // Lexicographic ordering is simpler (just goes char by char)
+               return arg0.getName().compareToIgnoreCase(arg1.getName());
+            }
          }
       });
       
@@ -669,6 +687,7 @@ public class FilesList extends Composite
    private final LinkColumn<FileSystemItem> nameColumn_;
    private final TextColumn<FileSystemItem> sizeColumn_;
    private final TextColumn<FileSystemItem> modifiedColumn_;
+   private final SortOrder order_;
    private boolean activeSortColumnAscending_ = true;
    private boolean applyingProgrammaticSort_ = false;
    
