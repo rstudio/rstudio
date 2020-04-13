@@ -58,6 +58,15 @@ public class PanmirrorToolbarCommands
       add(PanmirrorCommands.AttrEdit, "Edit Attributes...");
       add(PanmirrorCommands.ClearFormatting, "Clear Formatting");
       
+      // raw
+      add(PanmirrorCommands.TexInline, "TeX Inline", Roles.getMenuitemcheckboxRole());
+      add(PanmirrorCommands.TexBlock, "TeX Block", Roles.getMenuitemcheckboxRole());
+      add(PanmirrorCommands.HTMLInline, "HTML Inline",  Roles.getMenuitemcheckboxRole());
+      add(PanmirrorCommands.HTMLBlock, "HTML Block", Roles.getMenuitemcheckboxRole());
+      add(PanmirrorCommands.RawInline, "Raw Inline...");
+      add(PanmirrorCommands.RawBlock, "Raw Block...");
+
+      
       // lists
       add(PanmirrorCommands.BulletList, "Bullet List", Roles.getMenuitemcheckboxRole(), icons.BULLET_LIST);
       add(PanmirrorCommands.OrderedList, "Numbered List", Roles.getMenuitemcheckboxRole(), icons.NUMBERED_LIST);
@@ -101,16 +110,7 @@ public class PanmirrorToolbarCommands
       add(PanmirrorCommands.DefinitionList, "Definition List");
       add(PanmirrorCommands.DefinitionTerm, "Term");
       add(PanmirrorCommands.DefinitionDescription, "Description");
-      add(PanmirrorCommands.Citation, "Citation...");  
-      
-      // raw
-      add(PanmirrorCommands.TexInline, "TeX Command", Roles.getMenuitemcheckboxRole());
-      add(PanmirrorCommands.TexBlock, "TeX Block", Roles.getMenuitemcheckboxRole());
-      add(PanmirrorCommands.HTMLInline, "HTML Tag",  Roles.getMenuitemcheckboxRole());
-      add(PanmirrorCommands.HTMLBlock, "HTML Block", Roles.getMenuitemcheckboxRole());
-      add(PanmirrorCommands.RawInline, "Raw Inline...");
-      add(PanmirrorCommands.RawBlock, "Raw Block...");
-      
+      add(PanmirrorCommands.Citation, "Citation...");        
    }
    
    public PanmirrorCommandUI get(String id)
