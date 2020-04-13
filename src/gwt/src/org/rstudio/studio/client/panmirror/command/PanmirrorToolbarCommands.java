@@ -66,7 +66,6 @@ public class PanmirrorToolbarCommands
       add(PanmirrorCommands.RawInline, "Raw Inline...");
       add(PanmirrorCommands.RawBlock, "Raw Block...");
 
-      
       // lists
       add(PanmirrorCommands.BulletList, "Bullet List", Roles.getMenuitemcheckboxRole(), icons.BULLET_LIST);
       add(PanmirrorCommands.OrderedList, "Numbered List", Roles.getMenuitemcheckboxRole(), icons.NUMBERED_LIST);
