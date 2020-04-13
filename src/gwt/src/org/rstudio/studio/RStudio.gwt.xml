@@ -45,6 +45,9 @@
    </set-property>
    <collapse-property name="rstudio.desktop" values="*"/>
     
+   <define-property name="rstudio.unittests" values="true,false"/>
+   <set-property name="rstudio.unittests" value="false"/>
+
    <!-- RStudio module dependencies                                -->
    <inherits name='org.rstudio.core.Core' />
    

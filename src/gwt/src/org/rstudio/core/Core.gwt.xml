@@ -36,13 +36,6 @@
       <when-type-is class="org.rstudio.core.client.dom.impl.DomUtilsImpl" />
    </replace-with>
 
-   <replace-with class="org.rstudio.core.client.dom.impl.DomUtilsIE10Impl">
-      <when-type-is class="org.rstudio.core.client.dom.impl.DomUtilsImpl" />
-      <any>
-         <when-property-is name="user.agent" value="ie10" />
-      </any>
-   </replace-with>
-
    <replace-with class="org.rstudio.core.client.BrowseCapFirefox">
       <when-type-is class="org.rstudio.core.client.BrowseCap"/>
       <when-property-is name="user.agent" value="gecko1_8" />
@@ -53,12 +46,6 @@
          <when-property-is name="user.agent" value="safari" />
       </any>
    </replace-with>
-   <replace-with class="org.rstudio.core.client.BrowseCapIE10">
-      <when-type-is class="org.rstudio.core.client.BrowseCap"/>
-      <any>
-         <when-property-is name="user.agent" value="ie10" />
-      </any>
-   </replace-with>
 
    <replace-with class="org.rstudio.core.client.theme.ThemeFonts.WebThemeFontLoader">
       <when-type-is class="org.rstudio.core.client.theme.ThemeFonts.ThemeFontLoader"/>
@@ -66,6 +53,10 @@
    <replace-with class="org.rstudio.core.client.theme.ThemeFonts.DesktopThemeFontLoader">
       <when-type-is class="org.rstudio.core.client.theme.ThemeFonts.ThemeFontLoader"/>
       <when-property-is name="rstudio.desktop" value="true"/>
+   </replace-with>
+   <replace-with class="org.rstudio.core.client.theme.ThemeFonts.EmptyThemeFontLoader">
+      <when-type-is class="org.rstudio.core.client.theme.ThemeFonts.ThemeFontLoader"/>
+      <when-property-is name="rstudio.unittests" value="true"/>
    </replace-with>
 
 </module>
