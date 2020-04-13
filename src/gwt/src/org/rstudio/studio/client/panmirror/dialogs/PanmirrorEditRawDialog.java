@@ -35,6 +35,7 @@ import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.Label;
+import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 
@@ -47,7 +48,7 @@ public class PanmirrorEditRawDialog extends ModalDialog<PanmirrorRawFormatResult
                boolean inline,
                OperationWithInput<PanmirrorRawFormatResult> operation)
    {
-      super("Raw Format", Roles.getDialogRole(), operation, () -> {
+      super("Raw " + (inline ? "Inline" : "Block"), Roles.getDialogRole(), operation, () -> {
          // cancel returns null
          operation.execute(null);
       });
@@ -62,13 +63,10 @@ public class PanmirrorEditRawDialog extends ModalDialog<PanmirrorRawFormatResult
       rawFormatSelect_.getListBox().getElement().setId(ElementIds.VISUAL_MD_RAW_FORMAT_SELECT);
       
       rawContent_.setValue(raw.content);
+      PanmirrorDialogsUtil.setFullWidthStyles(rawContent_);
       rawContent_.getElement().setId(ElementIds.VISUAL_MD_RAW_FORMAT_CONTENT);
       
-      if (inline_)
-      {
-         rawContent_.setVisibleLines(2);
-      }
-      else
+      if (!inline_)
       {
          rawFormatSelect_.addStyleName(RES.styles().spaced());
          rawContentLabel_.setVisible(false);
@@ -108,6 +106,19 @@ public class PanmirrorEditRawDialog extends ModalDialog<PanmirrorRawFormatResult
    protected Widget createMainWidget()
    {
       return mainWidget_;
+   }
+   
+   @Override
+   protected void focusFirstControl()
+   {
+      if (rawFormatSelect_.getValue().length() > 0)
+      {
+         rawContent_.setFocus(true);
+      }
+      else
+      {
+         rawFormatSelect_.getListBox().setFocus(true);
+      }
    }
    
    @Override
@@ -155,7 +166,7 @@ public class PanmirrorEditRawDialog extends ModalDialog<PanmirrorRawFormatResult
    
    private Widget mainWidget_; 
    @UiField PanmirrorRawFormatSelect rawFormatSelect_;
-   @UiField FormTextArea rawContent_;
+   @UiField TextBox rawContent_;
    @UiField Label rawContentLabel_;
    
    

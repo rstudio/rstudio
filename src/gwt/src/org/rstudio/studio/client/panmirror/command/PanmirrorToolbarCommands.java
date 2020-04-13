@@ -61,7 +61,7 @@ public class PanmirrorToolbarCommands
       // raw
       add(PanmirrorCommands.TexInline, "TeX Inline", Roles.getMenuitemcheckboxRole());
       add(PanmirrorCommands.TexBlock, "TeX Block", Roles.getMenuitemcheckboxRole());
-      add(PanmirrorCommands.HTMLInline, "HTML Inline",  Roles.getMenuitemcheckboxRole());
+      add(PanmirrorCommands.HTMLInline, "HTML Inline...");
       add(PanmirrorCommands.HTMLBlock, "HTML Block", Roles.getMenuitemcheckboxRole());
       add(PanmirrorCommands.RawInline, "Raw Inline...");
       add(PanmirrorCommands.RawBlock, "Raw Block...");
