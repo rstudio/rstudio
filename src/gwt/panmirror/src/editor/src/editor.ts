@@ -540,12 +540,10 @@ export class Editor {
   }
 
   private redrawDecorators() {
-    setTimeout(() => {
-      const decsTr = this.state.tr;
-      decsTr.setMeta(kDecoratorRedrawTransaction, true);
-      decsTr.setMeta(kAddToHistoryTransaction, false);
-      this.view.dispatch(decsTr);
-    }, 50);
+    const decsTr = this.state.tr;
+    decsTr.setMeta(kDecoratorRedrawTransaction, true);
+    decsTr.setMeta(kAddToHistoryTransaction, false);
+    this.view.dispatch(decsTr);
   }
 
   private emitEvent(name: string) {
