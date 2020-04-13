@@ -13,7 +13,7 @@
  *
  */
 
-import { EditorState, Transaction, Selection } from 'prosemirror-state';
+import { Transaction, Selection } from 'prosemirror-state';
 import { Node as ProsemirrorNode, Schema } from 'prosemirror-model';
 
 import { Extension } from '../api/extension';
