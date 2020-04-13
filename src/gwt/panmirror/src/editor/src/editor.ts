@@ -206,6 +206,7 @@ export class Editor {
       codemirror: true,
       braceMatching: true,
       rmdCodeChunks: false,
+      rmdImagePreview: false,
       formatComment: true,
       ...options,
     };

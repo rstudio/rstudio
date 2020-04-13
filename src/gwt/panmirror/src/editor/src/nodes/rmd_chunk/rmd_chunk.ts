@@ -30,11 +30,18 @@ import { uuidv4 } from '../../api/util';
 import { EditorUI } from '../../api/ui';
 import { PandocCapabilities } from '../../api/pandoc_capabilities';
 
+import { RmdChunkImagePreviewPlugin } from './rmd_chunk-image';
+
 import './rmd_chunk-styles.css';
 
 const kRmdCodeChunkClass = 'D34DA053-95B6-4F12-B665-6CA8E4CD5101';
 
-const extension = (pandocExtensions: PandocExtensions, _caps: PandocCapabilities, _ui: EditorUI, options: EditorOptions) => {
+const extension = (
+  pandocExtensions: PandocExtensions, 
+  _caps: PandocCapabilities, 
+  ui: EditorUI, 
+  options: EditorOptions
+) : Extension | null => {
 
   if (!options.rmdCodeChunks || !pandocExtensions.backtick_code_blocks || !pandocExtensions.fenced_code_attributes) {
     return null;
@@ -112,6 +119,14 @@ const extension = (pandocExtensions: PandocExtensions, _caps: PandocCapabilities
 
     commands: (_schema: Schema) => {
       return [new RmdChunkCommand()];
+    },
+
+    plugins: (_schema: Schema) => {
+      if (options.rmdImagePreview) {
+        return [new RmdChunkImagePreviewPlugin(ui.context)];
+      } else {
+        return [];
+      }
     }
   };
 };

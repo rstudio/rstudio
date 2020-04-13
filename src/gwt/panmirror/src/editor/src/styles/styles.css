@@ -142,6 +142,11 @@
   border-style: dotted;
 }
 
+.pm-image-preview {
+  border: 1px dotted;
+  padding: 15px;
+}
+
 .pm-show-text-focus.pm-text-focused {
   outline: 1px dotted;
 }

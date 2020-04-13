@@ -420,6 +420,7 @@ public class TextEditingTargetVisualMode
          
          PanmirrorOptions options = new PanmirrorOptions();
          options.rmdCodeChunks = true;
+         options.rmdImagePreview = true;
          
          // add focus-visible class to prevent interaction with focus-visible.js
          // (it ends up attempting to apply the "focus-visible" class b/c ProseMirror
