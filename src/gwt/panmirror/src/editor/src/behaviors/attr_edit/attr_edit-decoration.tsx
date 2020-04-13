@@ -34,7 +34,7 @@ import { attrEditCommandFn } from './attr_edit-command';
 import './attr_edit-decoration.css';
 
 interface AttrEditDecorationProps extends WidgetProps {
-  tag?: string;
+  tags: string[];
   attrs: AttrProps;
   editFn: CommandFn;
   view: EditorView;
@@ -51,16 +51,18 @@ const AttrEditDecoration: React.FC<AttrEditDecorationProps> = props => {
 
   return (
     <div className="pm-attr-edit-decoration pm-surface-widget-text-color " style={props.style}>
-      {props.tag ? 
-        <div className="attr-edit-tag attr-edit-widget pm-border-background-color">
-          <div>
-            {props.tag}
-          </div>
-        </div> 
+      {props.tags.length ? 
+        props.tags.map(tag => {
+          return (
+            <div key={tag} className="attr-edit-tag attr-edit-widget pm-block-border-color pm-border-background-color">
+              <div>{tag}</div>
+            </div> 
+          );
+        })
         : null
       } 
       <div 
-        className="attr-edit-button attr-edit-widget pm-border-background-color" 
+        className="attr-edit-button attr-edit-widget pm-block-border-color pm-border-background-color" 
         title={buttonTitle}
         onClick={onClick}
       >
@@ -115,13 +117,10 @@ class AttrEditDecorationPlugin extends Plugin<DecorationSet> {
             editor.editFn = editor.editFn || attrEditCommandFn;
             editor.offset = editor.offset || (() => 0);
 
-            // get attrs
+            // get attrs/tags
             const node = parentWithAttrs.node;
             const attrs = node.attrs;
-  
-            // create tag (if any)
             const tags = editor.tags(node);
-            const tagText = tags.join(' ');
           
             // node decorator position
             const offset = editor.offset();
@@ -130,7 +129,7 @@ class AttrEditDecorationPlugin extends Plugin<DecorationSet> {
               parentWithAttrs,
               { // offsets
                 top: -7 - offset,
-                right: 5 - offset
+                right: 6 - offset
               }
             );
 
@@ -142,7 +141,7 @@ class AttrEditDecorationPlugin extends Plugin<DecorationSet> {
             // create a unique key to avoid recreating the decorator when the selection changes
             const specKey = `
               attr_edit_decoration_pos:${parentWithAttrs.pos}
-              tag:${tagText}
+              tags:${tags.join('/')}
               top:${decorationPosition.style.top}
               right:${decorationPosition.style.right}
             `;
@@ -155,7 +154,7 @@ class AttrEditDecorationPlugin extends Plugin<DecorationSet> {
             // create attr edit react component
             const attrEdit = (
               <AttrEditDecoration
-                tag={tagText}
+                tags={tags}
                 attrs={attrs}
                 editFn={editor.editFn(ui)}
                 view={editorView}

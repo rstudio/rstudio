@@ -30,6 +30,7 @@ import { EditorState, Transaction } from 'prosemirror-state';
 import { EditorView } from 'prosemirror-view';
 import { findParentNodeOfType, setTextSelection } from 'prosemirror-utils';
 import { canInsertNode } from '../api/node';
+import { modes } from 'codemirror';
 
 const extension = (
   pandocExtensions: PandocExtensions, 
@@ -82,28 +83,7 @@ const extension = (
           },
         },
 
-        attr_edit: () => {
-          if (pandocExtensions.fenced_code_attributes) {
-            return {
-              type: (schema: Schema) => schema.nodes.code_block,
-              tags: (node: ProsemirrorNode) => {
-                if (node.attrs.classes && node.attrs.classes.length) {
-                  const lang = node.attrs.classes[0];
-                  if (pandocCapabilities.highlight_languages.includes(lang)) {
-                    return [lang];
-                  } else {
-                    return ['.' + lang];
-                  }
-                } else {
-                  return [];
-                }
-              },
-              editFn: () => codeBlockFormatCommandFn(ui, pandocCapabilities.highlight_languages)
-            };
-          } else {
-            return null;
-          }
-        },
+        attr_edit: codeBlockAttrEdit(pandocExtensions, pandocCapabilities, ui),
 
         pandoc: {
           readers: [
@@ -230,6 +210,37 @@ function codeBlockFormatCommandFn(ui: EditorUI, languages: string[]) {
   };
 }
 
+function codeBlockAttrEdit(
+  pandocExtensions: PandocExtensions, 
+  pandocCapabilities: PandocCapabilities,
+  ui: EditorUI
+) {
+  return () => {
+    if (pandocExtensions.fenced_code_attributes) {
+      return {
+        type: (schema: Schema) => schema.nodes.code_block,
+        tags: (node: ProsemirrorNode) => {
+          const tags: string[] = [];
+          if (node.attrs.id) {
+            tags.push(`#${node.attrs.id}`);
+          }
+          if (node.attrs.classes && node.attrs.classes.length) {
+            const lang = node.attrs.classes[0];
+            if (pandocCapabilities.highlight_languages.includes(lang)) {
+              tags.push(lang);
+            } else {
+              tags.push(`.${lang}`);
+            }
+          } 
+          return tags;
+        },
+        editFn: () => codeBlockFormatCommandFn(ui, pandocCapabilities.highlight_languages)
+      };
+    } else {
+      return null;
+    }
+  };
+}
 
 
 export default extension;
