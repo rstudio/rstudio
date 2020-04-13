@@ -6,12 +6,6 @@ pandoc schema: <https://github.com/jgm/pandoc-types/blob/master/Text/Pandoc/Defi
 
 ## TODO
 
-General cleanup of image preview code
-
-Why does the image preview decorator get created twice (observed via console.log). Could it be that
-the entire document is getting rendered twice? (would explian some MANUAL.Rmd slowness)
-
-Delay rendering decorator widgets (via function interface) may obviate the need for us to do the extra decoration render
 
 Try out with Mastering Shiny
 
