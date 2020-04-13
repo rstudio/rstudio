@@ -253,33 +253,6 @@ bool isNonProjectFilename(const QString &filename)
    return filePath.exists() && filePath.getExtensionLowerCase() != ".rproj";
 }
 
-bool useRemoteDevtoolsDebugging()
-{
-#if QT_VERSION >= QT_VERSION_CHECK(5, 11, 0)
-   // don't need remote debugging for newer Qt
-   return false;
-#else
-   
-   // disable by default due to security concerns
-   // https://bugreports.qt.io/browse/QTBUG-50725
-   bool useDevtools = false;
-
-#ifndef NDEBUG
-   // but enable by default for development builds
-   useDevtools = true;
-#endif
-
-   // enable when environment variable is set
-   if (!core::system::getenv("RSTUDIO_USE_CHROMIUM_DEVTOOLS").empty())
-   {
-      useDevtools = true;
-   }
-
-   return useDevtools;
-   
-#endif
-}
-
 #ifdef Q_OS_WIN
 
 namespace {
@@ -534,21 +507,6 @@ int main(int argc, char* argv[])
 
       initializeLang();
       initializeRenderingEngine(&arguments);
-      
-      if (useRemoteDevtoolsDebugging())
-      {
-         // use QTcpSocket to find an open port. this is unfortunately a bit racey
-         // but AFAICS there isn't a better solution for port selection
-         QByteArray port;
-         QTcpSocket* pSocket = new QTcpSocket();
-         if (pSocket->bind())
-         {
-            quint16 port = pSocket->localPort();
-            desktopInfo().setChromiumDevtoolsPort(port);
-            core::system::setenv("QTWEBENGINE_REMOTE_DEBUGGING", safe_convert::numberToString(port));
-            pSocket->close();
-         }
-      }
 
       // initialize log
       core::system::initializeLog("rdesktop",
@@ -585,17 +543,6 @@ int main(int argc, char* argv[])
       // certain touch gestures)
       static char enableViewport[] = "--enable-viewport";
       arguments.push_back(enableViewport);
-      
-#if QT_VERSION < QT_VERSION_CHECK(5, 11, 0)
-      
-#ifndef NDEBUG
-      // disable web security for development builds (so we can
-      // get access to sourcemaps)
-      static char disableWebSecurity[] = "--disable-web-security";
-      arguments.push_back(disableWebSecurity);
-#endif
-      
-#endif
       
       // disable chromium renderer accessibility by default (it can cause
       // slowdown when used in conjunction with some applications; see e.g.
@@ -659,11 +606,7 @@ int main(int argc, char* argv[])
             }
             */
             
-            std::vector<std::string> gpuBlacklist = {
-#if QT_VERSION < QT_VERSION_CHECK(5, 12, 0)
-               "AMD FirePro"
-#endif
-            };
+            std::vector<std::string> gpuBlacklist = {};
             
             for (const std::string& entry : gpuBlacklist)
             {
@@ -682,20 +625,12 @@ int main(int argc, char* argv[])
 
       static char noSandbox[] = "--no-sandbox";
 
-#if (QT_VERSION == QT_VERSION_CHECK(5, 10, 1))
-      // workaround for Qt 5.10.1 bug "Could not find QtWebEngineProcess"
-      // https://bugreports.qt.io/browse/QTBUG-67023
-      // https://bugreports.qt.io/browse/QTBUG-66346
-      arguments.push_back(noSandbox);
-
-#else
-      // is this root? if so, we need --no-sandbox on Linux. 
+      // is this root? if so, we need --no-sandbox on Linux.
       // see https://crbug.com/638180.
       if (core::system::effectiveUserIsRoot())
       {
          arguments.push_back(noSandbox);
       }
-#endif
 
 #endif
 

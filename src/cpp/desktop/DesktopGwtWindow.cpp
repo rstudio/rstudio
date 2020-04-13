@@ -1,7 +1,7 @@
 /*
  * DesktopGwtWindow.cpp
  *
- * Copyright (C) 2009-12 by RStudio, PBC
+ * Copyright (C) 2009-20 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -19,20 +19,6 @@
 
 namespace rstudio {
 namespace desktop {
-
-#if QT_VERSION_MAJOR == 5 && QT_VERSION_MINOR == 10
-
-namespace {
-
-bool isDuplicateZoomRequest(QElapsedTimer* pTimer)
-{
-   qint64 elapsed = pTimer->restart();
-   return elapsed < 10;
-}
-
-} // end anonymous namespace
-
-#endif
 
 GwtWindow::GwtWindow(bool showToolbar,
                      bool adjustTitle,
@@ -58,11 +44,6 @@ GwtWindow::GwtWindow(bool showToolbar,
 
 void GwtWindow::zoomActualSize()
 {
-#if QT_VERSION_MAJOR == 5 && QT_VERSION_MINOR == 10
-   if (isDuplicateZoomRequest(&lastZoomTimer_))
-      return;
-#endif
-   
    options().setZoomLevel(1);
    webView()->setZoomFactor(1);
 }
@@ -75,11 +56,6 @@ void GwtWindow::setZoomLevel(double zoomLevel)
 
 void GwtWindow::zoomIn()
 {
-#if QT_VERSION_MAJOR == 5 && QT_VERSION_MINOR == 10
-   if (isDuplicateZoomRequest(&lastZoomTimer_))
-      return;
-#endif
-   
    // get next greatest value
    double zoomLevel = options().zoomLevel();
    auto it = std::upper_bound(zoomLevels_.begin(), zoomLevels_.end(), zoomLevel);
@@ -92,11 +68,6 @@ void GwtWindow::zoomIn()
 
 void GwtWindow::zoomOut()
 {
-#if QT_VERSION_MAJOR == 5 && QT_VERSION_MINOR == 10
-   if (isDuplicateZoomRequest(&lastZoomTimer_))
-      return;
-#endif
-   
    // get next smallest value
    double zoomLevel = options().zoomLevel();
    auto it = std::lower_bound(zoomLevels_.begin(), zoomLevels_.end(), zoomLevel);

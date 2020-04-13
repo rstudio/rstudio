@@ -1,7 +1,7 @@
 /*
  * DesktopUtils.cpp
  *
- * Copyright (C) 2009-18 by RStudio, PBC
+ * Copyright (C) 2009-20 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -345,11 +345,11 @@ void showFileError(const QString& action,
 bool isFixedWidthFont(const QFont& font)
 {
    QFontMetrics metrics(font);
-   int width = metrics.width(QChar::fromLatin1(' '));
+   int width = metrics.horizontalAdvance(QChar::fromLatin1(' '));
    char chars[] = {'m', 'i', 'A', '/', '-', '1', 'l', '!', 'x', 'X', 'y', 'Y'};
    for (char i : chars)
    {
-      if (metrics.width(QChar::fromLatin1(i)) != width)
+      if (metrics.horizontalAdvance(QChar::fromLatin1(i)) != width)
          return false;
    }
    return true;

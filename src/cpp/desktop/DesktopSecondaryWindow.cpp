@@ -1,7 +1,7 @@
 /*
  * DesktopSecondaryWindow.cpp
  *
- * Copyright (C) 2009-18 by RStudio, PBC
+ * Copyright (C) 2009-20 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -75,7 +75,7 @@ SecondaryWindow::SecondaryWindow(bool showToolbar, QString name, QUrl baseUrl,
 
    // Size it (use computed size if it seems sane; otherwise let Qt set it)
    QSize size = QSize(850, 1100).boundedTo(
-         QApplication::desktop()->availableGeometry().size());
+         QApplication::primaryScreen()->availableGeometry().size());
    if (size.width() > 500 && size.height() > 500)
    {
       size.setHeight(size.height()-75);
