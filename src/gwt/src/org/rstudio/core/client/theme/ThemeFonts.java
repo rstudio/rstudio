@@ -123,4 +123,24 @@ public class ThemeFonts
          return font;
       }
    }
+
+   /**
+    * Empty implementation of theme font loader used for test mock
+    */
+   static class EmptyThemeFontLoader implements ThemeFontLoader
+   {
+
+      @Override
+      public String getProportionalFont()
+      {
+         return "";
+      }
+
+      @Override
+      public String getFixedWidthFont()
+      {
+         return "";
+      }
+      
+   }
 }
