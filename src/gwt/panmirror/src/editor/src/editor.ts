@@ -519,10 +519,7 @@ export class Editor {
     // after the view is updated (allows decorators that depend on DOM node positions
     // to update after the transaction is applied to the view)
     if (tr.getMeta(kDecoratorDependencyTransaction)) {
-      const decsTr = this.state.tr;
-      decsTr.setMeta(kDecoratorRedrawTransaction, true);
-      decsTr.setMeta(kAddToHistoryTransaction, false);
-      this.view.dispatch(decsTr);
+      this.redrawDecorators();
     }
 
     // notify listeners of selection change
@@ -540,6 +537,15 @@ export class Editor {
         this.emitEvent(EditorEvent.OutlineChange);
       }
     }
+  }
+
+  private redrawDecorators() {
+    setTimeout(() => {
+      const decsTr = this.state.tr;
+      decsTr.setMeta(kDecoratorRedrawTransaction, true);
+      decsTr.setMeta(kAddToHistoryTransaction, false);
+      this.view.dispatch(decsTr);
+    }, 50);
   }
 
   private emitEvent(name: string) {
