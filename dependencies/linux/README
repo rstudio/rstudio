@@ -69,7 +69,7 @@ OR
 
    RSTUDIO_DISABLE_CRASHPAD=1 ./install-common
 
-3) Optionally install the Qt SDK, including QtWebEngine, from
+3) Optionally install the Qt SDK, including QtWebEngine, from 
 https://qt.io. You should do this if you are building the Desktop version 
 and don't have Qt and QtWebEngine installed on the system:
 
