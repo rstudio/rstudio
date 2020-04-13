@@ -13,10 +13,10 @@
  *
  */
 
-import { Node as ProsemirrorNode, Schema } from 'prosemirror-model';
-import { textblockTypeInputRule } from 'prosemirror-inputrules';
-import { newlineInCode, exitCode } from 'prosemirror-commands';
-import { EditorState, Transaction } from 'prosemirror-state';
+import { Node as ProsemirrorNode, Schema, ResolvedPos } from 'prosemirror-model';
+import { textblockTypeInputRule, InputRule } from 'prosemirror-inputrules';
+import { newlineInCode, exitCode, setBlockType } from 'prosemirror-commands';
+import { EditorState, Transaction, TextSelection } from 'prosemirror-state';
 import { EditorView } from 'prosemirror-view';
 
 import { findParentNodeOfType, setTextSelection } from 'prosemirror-utils';
@@ -26,10 +26,11 @@ import { Extension } from '../api/extension';
 import { BaseKey } from '../api/basekeys';
 import { codeNodeSpec } from '../api/code';
 import { PandocOutput, PandocTokenType, PandocExtensions } from '../api/pandoc';
-import { pandocAttrSpec, pandocAttrParseDom, pandocAttrToDomAttr } from '../api/pandoc_attr';
+import { pandocAttrSpec, pandocAttrParseDom, pandocAttrToDomAttr, pandocAttrFrom } from '../api/pandoc_attr';
 import { PandocCapabilities } from '../api/pandoc_capabilities';
-import { EditorUI, CodeBlockProps } from '../api/ui';
+import { EditorUI, CodeBlockProps, EditorUIContext } from '../api/ui';
 import { canInsertNode } from '../api/node';
+import { getMarkRange, markIsActive } from '../api/mark';
 
 const extension = (
   pandocExtensions: PandocExtensions, 
@@ -128,17 +129,86 @@ const extension = (
     baseKeys: () => {
       return [
         { key: BaseKey.Enter, command: newlineInCode },
+        { key: BaseKey.Enter, command: codeBlockInputRuleEnter(ui.context) },
         { key: BaseKey.ModEnter, command: exitCode },
         { key: BaseKey.ShiftEnter, command: exitCode },
       ];
     },
 
     inputRules: (schema: Schema) => {
-      return [textblockTypeInputRule(/^```$/, schema.nodes.code_block)];
+      return [
+        codeBlockInputRule(schema, ui.context)
+      ];
     },
   };
 };
 
+function codeBlockInputRule(schema: Schema, uiContext: EditorUIContext) {
+  return new InputRule(/^```$/, (state: EditorState, match: string[], start: number, end: number) => {
+
+    if (!canReplaceNodeWithCodeBlock(schema, state.selection.$from)) {
+      return null;
+    }
+
+    const tr = state.tr;
+    tr.deleteRange(start, end);
+    const langText = langPlaceholderText(uiContext);
+    const insertText = match[0] + langText;
+    const codeMark = schema.marks.code.create();
+    tr.addStoredMark(codeMark);
+    tr.insertText(insertText);
+    tr.removeStoredMark(codeMark);
+    tr.setSelection(TextSelection.create(tr.doc, start + match[0].length, start + insertText.length));
+    return tr;
+  });
+}
+
+function codeBlockInputRuleEnter(uiContext: EditorUIContext) {
+  return (state: EditorState, dispatch?: (tr: Transaction) => void) => {
+    
+    // see if the parent consist of a pending code block input rule
+    const { $head } = state.selection;
+
+    // full text of parent must meet the pattern
+    const match = $head.parent.textContent.match(/^```(\w*)$/);
+    if (!match) {
+      return false;
+    }
+
+    // must be enclosed in a code mark
+    const schema = state.schema;
+    if (!markIsActive(state, schema.marks.code)) {
+      return false;
+    }
+    
+    // must be able to perform the replacement
+    if (!canReplaceNodeWithCodeBlock(schema, $head)) {
+      return false;
+    }
+
+    // execute
+    if (dispatch) {
+      const tr = state.tr;
+      const lang = match[1];
+      const attrs = lang.length && lang !== langPlaceholderText(uiContext) 
+        ? pandocAttrFrom({ classes: [lang]} ) : {};
+      const start = $head.start();
+      tr.delete(start, start + $head.parent.textContent.length);
+      tr.setBlockType(start, start, schema.nodes.code_block, attrs);
+      dispatch(tr);
+    }
+
+    return true;
+  };
+}
+
+function langPlaceholderText(uiContext: EditorUIContext) {
+  return uiContext.translateText('lang');
+}
+
+function canReplaceNodeWithCodeBlock(schema: Schema, $pos: ResolvedPos) {
+  return $pos.node(-1).canReplaceWith($pos.index(-1), $pos.indexAfter(-1), schema.nodes.code_block);
+}
 
 class CodeBlockFormatCommand extends ProsemirrorCommand {
   constructor(pandocExtensions: PandocExtensions, ui: EditorUI, languages: string[]) {
