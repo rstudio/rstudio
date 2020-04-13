@@ -26,7 +26,7 @@ import { CommandFn } from '../../api/command';
 import { AttrProps } from '../../api/ui';
 import { WidgetProps, reactRenderForEditorView } from '../../api/widgets/react';
 import { nodeDecorationPosition } from '../../api/widgets/decoration';
-import { kResizeTransaction } from '../../api/transaction';
+import { kDecoratorDependencyTransaction } from '../../api/transaction';
 
 import { kEditAttrShortcut } from './attr_edit';
 import { attrEditCommandFn } from './attr_edit-command';
@@ -34,7 +34,7 @@ import { attrEditCommandFn } from './attr_edit-command';
 import './attr_edit-decoration.css';
 
 interface AttrEditDecorationProps extends WidgetProps {
-  tag?: string;
+  tags: string[];
   attrs: AttrProps;
   editFn: CommandFn;
   view: EditorView;
@@ -51,16 +51,18 @@ const AttrEditDecoration: React.FC<AttrEditDecorationProps> = props => {
 
   return (
     <div className="pm-attr-edit-decoration pm-surface-widget-text-color " style={props.style}>
-      {props.tag ? 
-        <div className="attr-edit-tag attr-edit-widget pm-border-background-color">
-          <div>
-            {props.tag}
-          </div>
-        </div> 
+      {props.tags.length ? 
+        props.tags.map(tag => {
+          return (
+            <div key={tag} className="attr-edit-tag attr-edit-widget pm-block-border-color pm-border-background-color">
+              <div>{tag}</div>
+            </div> 
+          );
+        })
         : null
       } 
       <div 
-        className="attr-edit-button attr-edit-widget pm-border-background-color" 
+        className="attr-edit-button attr-edit-widget pm-block-border-color pm-border-background-color" 
         title={buttonTitle}
         onClick={onClick}
       >
@@ -87,8 +89,8 @@ class AttrEditDecorationPlugin extends Plugin<DecorationSet> {
         },
         apply: (tr: Transaction, old: DecorationSet, _oldState: EditorState, newState: EditorState) => {
         
-          // ignore resize transactions (view not yet updated)
-          if (tr.getMeta(kResizeTransaction)) {
+          // ignore decorator dependency transactions (view not yet updated)
+          if (tr.getMeta(kDecoratorDependencyTransaction)) {
             return old.map(tr.mapping, tr.doc);
           }
 
@@ -115,22 +117,20 @@ class AttrEditDecorationPlugin extends Plugin<DecorationSet> {
             editor.editFn = editor.editFn || attrEditCommandFn;
             editor.offset = editor.offset || (() => 0);
 
-            // get attrs
+            // get attrs/tags
             const node = parentWithAttrs.node;
             const attrs = node.attrs;
-  
-            // create tag (if any)
             const tags = editor.tags(node);
-            const tagText = tags.join(' ');
           
             // node decorator position
             const offset = editor.offset();
             const decorationPosition = nodeDecorationPosition(
+              tr.doc,
               editorView, 
               parentWithAttrs,
               { // offsets
                 top: -7 - offset,
-                right: 5 - offset
+                right: 6 - offset
               }
             );
 
@@ -140,7 +140,12 @@ class AttrEditDecorationPlugin extends Plugin<DecorationSet> {
             }
 
             // create a unique key to avoid recreating the decorator when the selection changes
-            const specKey = `attr_edit_decoration_pos:${parentWithAttrs.pos};tag:${tagText};top:${decorationPosition.style.top}`;
+            const specKey = `
+              attr_edit_decoration_pos:${parentWithAttrs.pos}
+              tags:${tags.join('/')}
+              top:${decorationPosition.style.top}
+              right:${decorationPosition.style.right}
+            `;
           
             // if the old popup already has a decoration for this key then just use it
             if (old.find(undefined, undefined, spec => spec.key === specKey).length) {
@@ -150,7 +155,7 @@ class AttrEditDecorationPlugin extends Plugin<DecorationSet> {
             // create attr edit react component
             const attrEdit = (
               <AttrEditDecoration
-                tag={tagText}
+                tags={tags}
                 attrs={attrs}
                 editFn={editor.editFn(ui)}
                 view={editorView}

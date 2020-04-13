@@ -100,13 +100,13 @@ const extension = (pandocExtensions: PandocExtensions, pandocCapabilities: Pando
 
     // insert command
     commands: (_schema: Schema, ui: EditorUI) => {
-      return [new RawInlineCommand(ui, pandocCapabilities.output_formats)];
+      return [new RawInlineCommand(EditorCommandId.RawInline, '', ui, pandocCapabilities.output_formats)];
     },
   };
 };
 
-// base class for format-specific raw inline commands (e.g. tex/html)
-export class RawInlineFormatCommand extends ProsemirrorCommand {
+// base class for inline commands that auto-insert content
+export class RawInlineInsertCommand extends ProsemirrorCommand {
   private markType: MarkType;
   constructor(id: EditorCommandId, markType: MarkType, insert: (tr: Transaction) => void) {
     super(id, [], (state: EditorState, dispatch?: (tr: Transaction) => void) => {
@@ -149,10 +149,10 @@ export class RawInlineFormatCommand extends ProsemirrorCommand {
 }
 
 // generic raw inline command (opens dialog that allows picking from among formats)
-class RawInlineCommand extends ProsemirrorCommand {
-  constructor(ui: EditorUI, outputFormats: string[]) {
+export class RawInlineCommand extends ProsemirrorCommand {
+  constructor(id: EditorCommandId, defaultFormat: string, ui: EditorUI, outputFormats: string[]) {
     super(
-      EditorCommandId.RawInline,
+      id,
       [],
       (state: EditorState, dispatch?: (tr: Transaction) => void, view?: EditorView) => {
         const schema = state.schema;
@@ -173,7 +173,7 @@ class RawInlineCommand extends ProsemirrorCommand {
             }
 
             // get raw attributes if we have them
-            let raw: RawFormatProps = { content: '', format: '' };
+            let raw: RawFormatProps = { content: '', format: defaultFormat };
             raw.content = state.doc.textBetween(range.from, range.to);
             if (isActive) {
               raw = {

@@ -19,8 +19,6 @@ package org.rstudio.studio.client.panmirror.dialogs;
 
 import com.google.gwt.aria.client.Roles;
 
-import java.util.ArrayList;
-
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.theme.DialogTabLayoutPanel;
@@ -34,7 +32,6 @@ import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorAttrProps;
 import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorCodeBlockProps;
 
 import com.google.gwt.user.client.ui.SuggestBox;
-import com.google.gwt.user.client.ui.SuggestOracle;
 import com.google.gwt.user.client.ui.Widget;
 
 
@@ -42,6 +39,7 @@ public class PanmirrorEditCodeBlockDialog extends ModalDialog<PanmirrorCodeBlock
 { 
    public PanmirrorEditCodeBlockDialog(
                PanmirrorCodeBlockProps codeBlock,
+               boolean attributes,
                String[] languages,
                OperationWithInput<PanmirrorCodeBlockProps> operation)
    {
@@ -50,34 +48,37 @@ public class PanmirrorEditCodeBlockDialog extends ModalDialog<PanmirrorCodeBlock
          operation.execute(null);
       });
       
-      
+      // create lang (defer parent until we determine whether we support attributes)
       VerticalTabPanel langTab = new VerticalTabPanel(ElementIds.VISUAL_MD_CODE_BLOCK_TAB_LANGUAGE);
       langTab.addStyleName(RES.styles().dialog());
       langTab.add(new FormLabel("Language:"));
-      lang_ = new SuggestBox(languagesSuggestOracle(languages));
+      lang_ = new PanmirrorLangSuggestBox(languages);
       lang_.getElement().setId(ElementIds.VISUAL_MD_CODE_BLOCK_LANG);
       lang_.setText(codeBlock.lang);
       PanmirrorDialogsUtil.setFullWidthStyles(lang_);
       langTab.add(lang_);
       
-      
+      // create attr
       VerticalTabPanel attributesTab = new VerticalTabPanel(ElementIds.VISUAL_MD_CODE_BLOCK_TAB_ATTRIBUTES);
       attributesTab.addStyleName(RES.styles().dialog());
       editAttr_ =  new PanmirrorEditAttrWidget();   
       editAttr_.setAttr(codeBlock);
       attributesTab.add(editAttr_);
-     
-      DialogTabLayoutPanel tabPanel = new DialogTabLayoutPanel("Image");
-      tabPanel.addStyleName(RES.styles().linkDialogTabs());
-      tabPanel.add(langTab, "Language", langTab.getBasePanelId());
-      tabPanel.add(attributesTab, "Attributes", attributesTab.getBasePanelId());
-      tabPanel.selectTab(0);
+   
+      if (attributes)
+      {
+         DialogTabLayoutPanel tabPanel = new DialogTabLayoutPanel("Code Block");
+         tabPanel.addStyleName(RES.styles().linkDialogTabs());
+         tabPanel.add(langTab, "Language", langTab.getBasePanelId());
+         tabPanel.add(attributesTab, "Attributes", attributesTab.getBasePanelId());
+         tabPanel.selectTab(0);
       
-      
-      mainWidget_ = tabPanel;
-      
-      
-      
+         mainWidget_ = tabPanel;
+      }
+      else
+      {
+         mainWidget_ = langTab;
+      }
    }
    
    @Override
@@ -124,59 +125,8 @@ public class PanmirrorEditCodeBlockDialog extends ModalDialog<PanmirrorCodeBlock
       }
    }
    
-   private SuggestOracle languagesSuggestOracle(String[] languages) 
-   {
-      return new SuggestOracle() 
-      {
-
-         @Override
-         public void requestSuggestions(Request request, Callback callback)
-         {
-            String query = request.getQuery();
-            
-            ArrayList<Suggestion> suggestions = new ArrayList<Suggestion>();
-            for (int i=0; i<languages.length; i++)
-            {
-               String language = languages[i];
-               if (language.startsWith(query))
-                  suggestions.add(new LanguageSuggestion(language));
-               
-               if (suggestions.size() > request.getLimit())
-                  break;
-            }
-            
-            callback.onSuggestionsReady(request, new Response(suggestions));
-         }
-         
-         class LanguageSuggestion implements Suggestion
-         {
-            public LanguageSuggestion(String language)
-            {
-               language_ = language;
-            }
-
-            @Override
-            public String getDisplayString()
-            {
-               return language_;
-            }
-
-            @Override
-            public String getReplacementString()
-            {
-               return language_;
-            }
-            
-            private final String language_;
-            
-         }
-         
-      };
-   }
-   
 
    private static PanmirrorDialogsResources RES = PanmirrorDialogsResources.INSTANCE;
-
    
    private Widget mainWidget_; 
    

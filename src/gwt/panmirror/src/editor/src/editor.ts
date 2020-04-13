@@ -49,8 +49,8 @@ import {
   appendMarkTransactionsPlugin,
   kFixupTransaction,
   kAddToHistoryTransaction,
-  kResizeTransaction,
-  kUpdateDecoratorsTransaction,
+  kDecoratorDependencyTransaction,
+  kDecoratorRedrawTransaction,
 } from './api/transaction';
 import { EditorOutline } from './api/outline';
 import { EditingLocation, getEditingLocation, restoreEditingLocation } from './api/location';
@@ -206,6 +206,7 @@ export class Editor {
       codemirror: true,
       braceMatching: true,
       rmdCodeChunks: false,
+      rmdImagePreview: false,
       formatComment: true,
       ...options,
     };
@@ -515,14 +516,11 @@ export class Editor {
     this.state = this.state.apply(tr);
     this.view.updateState(this.state);
 
-    // if this was a resize transaction then emit another transaction
-    // after the view is updated (allows decorators that depend on DOM
-    // node positions to update after reflow)
-    if (tr.getMeta(kResizeTransaction)) {
-      const decsTr = this.state.tr;
-      decsTr.setMeta(kUpdateDecoratorsTransaction, true);
-      decsTr.setMeta(kAddToHistoryTransaction, false);
-      this.view.dispatch(decsTr);
+    // if this was a decorator dependency transaction then emit another transaction
+    // after the view is updated (allows decorators that depend on DOM node positions
+    // to update after the transaction is applied to the view)
+    if (tr.getMeta(kDecoratorDependencyTransaction)) {
+      this.redrawDecorators();
     }
 
     // notify listeners of selection change
@@ -540,6 +538,13 @@ export class Editor {
         this.emitEvent(EditorEvent.OutlineChange);
       }
     }
+  }
+
+  private redrawDecorators() {
+    const decsTr = this.state.tr;
+    decsTr.setMeta(kDecoratorRedrawTransaction, true);
+    decsTr.setMeta(kAddToHistoryTransaction, false);
+    this.view.dispatch(decsTr);
   }
 
   private emitEvent(name: string) {
@@ -734,7 +739,7 @@ export class Editor {
     tr = this.extensionFixups(tr, context);
     tr.setMeta(kAddToHistoryTransaction, false);
     tr.setMeta(kFixupTransaction, true);
-    tr.setMeta(kResizeTransaction, true);
+    tr.setMeta(kDecoratorDependencyTransaction, true);
     this.view.dispatch(tr);
   }
 

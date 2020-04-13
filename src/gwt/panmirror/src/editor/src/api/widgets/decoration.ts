@@ -14,15 +14,16 @@
  */
 
 
-import { ResolvedPos } from 'prosemirror-model';
+import { ResolvedPos, Node as ProsemirrorNode } from 'prosemirror-model';
 import { EditorView } from 'prosemirror-view';
 
 import { ContentNodeWithPos } from 'prosemirror-utils';
 
 import React from 'react';
 
-import { kPixelUnit } from '../css';
 import { editingRootNodeClosestToPos } from '../node';
+
+import { kPixelUnit } from '../css';
 
 export interface DecorationPosition {
   pos: number; 
@@ -30,6 +31,7 @@ export interface DecorationPosition {
 }
 
 export function nodeDecorationPosition(
+  doc: ProsemirrorNode,
   view: EditorView,
   nodeWithPos: ContentNodeWithPos,
   offsets?: { top: number, right: number }
@@ -45,7 +47,7 @@ export function nodeDecorationPosition(
   }
 
   // get the editing container element
-  const editingNode = editingRootNodeClosestToPos(view.state.doc.resolve(nodeWithPos.pos));
+  const editingNode = editingRootNodeClosestToPos(doc.resolve(nodeWithPos.pos));
   if (!editingNode) {
     return null;
   }
@@ -57,13 +59,25 @@ export function nodeDecorationPosition(
   // cast to HTML element
   const nodeEl = nodeDOM as HTMLElement;
   const editingEl = editingDOM as HTMLElement;
+
+  // find the top offset by looping up until we get to the editingEl
+  let topOffset = offsets.top;
+  let offsetTarget: Element | null = nodeEl;
+  while (offsetTarget && (offsetTarget !== editingEl)) {
+    topOffset += (offsetTarget as HTMLElement).offsetTop;
+    offsetTarget = (offsetTarget as HTMLElement).offsetParent;
+  }
+
+  // get the rectangle of each
+  const nodeRect = nodeEl.getBoundingClientRect();
+  const editingRect = editingEl.getBoundingClientRect();
   
   return {
     pos: editingNode.pos + editingNode.node.nodeSize - 1,
     style: {
       position: 'absolute',
-      top: nodeEl.offsetTop + offsets.top + 'px',
-      right: (editingEl.offsetWidth - nodeEl.offsetLeft - nodeEl.offsetWidth + offsets.right) + 'px'
+      top: topOffset + 'px',
+      right: (editingRect.right - nodeRect.right) + offsets.right + 'px'
     }
   };
 

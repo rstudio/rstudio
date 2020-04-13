@@ -17,12 +17,14 @@ package org.rstudio.studio.client.workbench.views.source.editors.text;
 
 import java.util.ArrayList;
 
+import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.DebouncedCommand;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.HasFindReplace;
+import org.rstudio.core.client.widget.IsHideableWidget;
 import org.rstudio.core.client.widget.ProgressPanel;
 import org.rstudio.core.client.widget.images.ProgressImages;
 import org.rstudio.studio.client.RStudioGinjector;
@@ -418,6 +420,7 @@ public class TextEditingTargetVisualMode
          
          PanmirrorOptions options = new PanmirrorOptions();
          options.rmdCodeChunks = true;
+         options.rmdImagePreview = true;
          
          // add focus-visible class to prevent interaction with focus-visible.js
          // (it ends up attempting to apply the "focus-visible" class b/c ProseMirror
@@ -513,6 +516,18 @@ public class TextEditingTargetVisualMode
          ready.execute();
       }
    } 
+   
+   private void withProgress(int delayMs, CommandWithArg<Command> command)
+   {
+      TextEditorContainer editorContainer = display_.editorContainer();
+      IsHideableWidget prevWidget = editorContainer.getActiveWidget();
+      progress_.beginProgressOperation(delayMs);
+      editorContainer.activateWidget(progress_);
+      command.execute(() -> {
+         progress_.endProgressOperation();
+         editorContainer.activateWidget(prevWidget);
+      });
+   }
    
    private String getEditorCode()
    {

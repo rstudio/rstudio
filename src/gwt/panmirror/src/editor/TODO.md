@@ -6,27 +6,12 @@ pandoc schema: <https://github.com/jgm/pandoc-types/blob/master/Text/Pandoc/Defi
 
 ## TODO
 
+General cleanup of image preview code
 
-Improve suggestion list display in code block dialog
+Why does the image preview decorator get created twice (observed via console.log). Could it be that
+the entire document is getting rendered twice? (would explian some MANUAL.Rmd slowness)
 
-Paul on new edit properties button
-
-Unable to toggle html tag w/ menu (select in example)
-
-Raw Inline... and Raw Block... should interoperate w/ HTML/Tex
-
-Better way to indicate language of code blocks (input rule to 'lang' then watch for enter?)
-Insert Plain Code Block menu item (just does ```<lang>)
-
-HTML Inlines not quite complete (end tags?). Perhaps an input rule that matches 
-known tag names? Perhaps it could match only at the start of a line for easy addition
-of style tags or comments?
-
-knitr::include_graphics preview
-
-Does fenced_code_blocks differ from fenced_code_attributes (e.g. could you have _just_ a language)
-
-Propagate more styles to images? (definitely padding)
+Delay rendering decorator widgets (via function interface) may obviate the need for us to do the extra decoration render
 
 Try out with Mastering Shiny
 

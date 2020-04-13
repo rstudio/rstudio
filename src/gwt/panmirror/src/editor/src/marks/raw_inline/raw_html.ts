@@ -20,13 +20,14 @@ import { setTextSelection } from 'prosemirror-utils';
 
 import { PandocExtensions, PandocTokenType, PandocToken, ProsemirrorWriter, PandocOutput } from '../../api/pandoc';
 import { Extension } from '../../api/extension';
-import { kHTMLFormat } from '../../api/raw';
+import { isRawHTMLFormat, kHTMLFormat } from '../../api/raw';
 import { EditorUI } from '../../api/ui';
 import { EditorCommandId } from '../../api/command';
 
-import { kRawInlineFormat, kRawInlineContent, RawInlineFormatCommand } from './raw_inline';
+import { kRawInlineFormat, kRawInlineContent, RawInlineCommand } from './raw_inline';
+import { PandocCapabilities } from '../../api/pandoc_capabilities';
 
-const extension = (pandocExtensions: PandocExtensions): Extension | null => {
+const extension = (pandocExtensions: PandocExtensions, pandocCapabilities: PandocCapabilities): Extension | null => {
   if (!pandocExtensions.raw_html) {
     return null;
   }
@@ -68,7 +69,7 @@ const extension = (pandocExtensions: PandocExtensions): Extension | null => {
               token: PandocTokenType.RawInline,
               match: (tok: PandocToken) => {
                 const format = tok.c[kRawInlineFormat];
-                return format === kHTMLFormat;
+                return isRawHTMLFormat(format);
               },
               handler: (_schema: Schema) => {
                 return (writer: ProsemirrorWriter, tok: PandocToken) => {
@@ -90,20 +91,14 @@ const extension = (pandocExtensions: PandocExtensions): Extension | null => {
 
     // insert command
     commands: (schema: Schema, ui: EditorUI) => {
-      return [new InsertInlineHTMLCommand(schema)];
+      return [new RawInlineCommand(
+        EditorCommandId.HTMLInline, 
+        kHTMLFormat, 
+        ui, 
+        pandocCapabilities.output_formats
+      )];
     },
   };
 };
-
-class InsertInlineHTMLCommand extends RawInlineFormatCommand {
-  constructor(schema: Schema) {
-    super(EditorCommandId.HTMLInline, schema.marks.raw_html, (tr: Transaction) => {
-      const mark = schema.marks.raw_html.create();
-      const node = schema.text('<>', [mark]);
-      tr.replaceSelectionWith(node, false);
-      setTextSelection(tr.selection.to - 1)(tr);
-    });
-  }
-}
 
 export default extension;

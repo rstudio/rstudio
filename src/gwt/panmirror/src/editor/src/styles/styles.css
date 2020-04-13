@@ -23,7 +23,8 @@
   line-height: 1.5;
 }
 
-.pm-content > p:first-child {
+.pm-content > p:first-child,
+.pm-content > .pm-div:first-child {
   margin-top: 10px;
 }
 
@@ -139,6 +140,11 @@
 
 .pm-raw-block-border {
   border-style: dotted;
+}
+
+.pm-image-preview {
+  border: 1px dotted;
+  padding: 15px;
 }
 
 .pm-show-text-focus.pm-text-focused {

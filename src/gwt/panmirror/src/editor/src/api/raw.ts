@@ -25,6 +25,12 @@ import { EditorUI, RawFormatProps } from "./ui";
 
 export const kTexFormat = 'tex';
 export const kHTMLFormat = 'html';
+export const kHTML4Format = 'html4';
+export const kHTML5Format = 'html5';
+
+export function isRawHTMLFormat(format: string) {
+  return [kHTMLFormat, kHTML4Format, kHTML5Format].includes(format);
+}
 
 export function editRawBlockCommand(ui: EditorUI, outputFormats: string[]) {
   
@@ -79,7 +85,6 @@ export function editRawBlockCommand(ui: EditorUI, outputFormats: string[]) {
     return true;
   };
 }
-
 
 // function to create a raw node
 function createRawNode(schema: Schema, format: string) {

@@ -296,7 +296,7 @@ function resizeShelf(
   addToPanel(lockLabel, 20);
 
   // edit button
-  const editImage = createImageButton(['pm-image-button-edit-properties'], translateText('Edit Image'));
+  const editImage = createImageButton(['pm-image-button-edit-properties'], translateText('Edit Attributes'));
   editImage.onclick = onEditImage;
   addHorizontalPanelCell(panel, editImage);
 
@@ -592,6 +592,11 @@ export function updateImageViewSize(
     figure.style.marginBottom = '';
     figure.style.marginRight = '';
     figure.style.marginLeft = '';
+    figure.style.padding = '';
+    figure.style.paddingTop = '';
+    figure.style.paddingBottom = '';
+    figure.style.paddingRight = '';
+    figure.style.paddingLeft = '';
   }
 
   // apply keyvalue attribute to image
@@ -612,6 +617,7 @@ export function updateImageViewSize(
           value = removeStyleAttrib(value, 'float', liftStyle);
           value = removeStyleAttrib(value, 'vertical-align', liftStyle);
           value = removeStyleAttrib(value, 'margin(?:[\\w\\-])*', liftStyle);
+          value = removeStyleAttrib(value, 'padding(?:[\\w\\-])*', liftStyle);
         }
 
         // apply selected other styles to the image view (we don't just forward the entire

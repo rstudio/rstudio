@@ -31,7 +31,7 @@ import { markIsActive, splitInvalidatedMarks } from '../../api/mark';
 import { EditorCommandId } from '../../api/command';
 import { texLength } from '../../api/tex';
 
-import { kRawInlineFormat, kRawInlineContent, RawInlineFormatCommand } from './raw_inline';
+import { kRawInlineFormat, kRawInlineContent, RawInlineInsertCommand } from './raw_inline';
 
 const kTexPlaceholder = 'tex';
 
@@ -181,7 +181,7 @@ function texInputRule(schema: Schema) {
   });
 }
 
-class InsertInlineLatexCommand extends RawInlineFormatCommand {
+class InsertInlineLatexCommand extends RawInlineInsertCommand {
   constructor(schema: Schema) {
     super(EditorCommandId.TexInline, schema.marks.raw_tex, (tr: Transaction) => {
       const mark = schema.marks.raw_tex.create();
