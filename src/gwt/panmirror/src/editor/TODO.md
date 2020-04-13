@@ -6,15 +6,8 @@ pandoc schema: <https://github.com/jgm/pandoc-types/blob/master/Text/Pandoc/Defi
 
 ## TODO
 
-Paul on new edit properties button
-
-HTML Inlines not quite complete (end tags?). Perhaps an input rule that matches 
-known tag names? Perhaps it could match only at the start of a line for easy addition
-of style tags or comments?
 
 knitr::include_graphics preview
-
-Propagate more styles to images? (definitely padding)
 
 Try out with Mastering Shiny
 
