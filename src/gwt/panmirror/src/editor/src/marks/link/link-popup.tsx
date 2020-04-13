@@ -203,7 +203,7 @@ const LinkPopup: React.FC<LinkPopupProps> = props => {
         />
         <ImageButton
           classes={['pm-image-button-edit-properties']}
-          title={props.ui.context.translateText('Edit Link')}
+          title={props.ui.context.translateText('Edit Attributes')}
           onClick={onEditClicked}
         />
       </Panel>

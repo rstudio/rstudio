@@ -296,7 +296,7 @@ function resizeShelf(
   addToPanel(lockLabel, 20);
 
   // edit button
-  const editImage = createImageButton(['pm-image-button-edit-properties'], translateText('Edit Image'));
+  const editImage = createImageButton(['pm-image-button-edit-properties'], translateText('Edit Attributes'));
   editImage.onclick = onEditImage;
   addHorizontalPanelCell(panel, editImage);
 
