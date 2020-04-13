@@ -30,7 +30,8 @@ import { pandocAttrSpec, pandocAttrParseDom, pandocAttrToDomAttr, pandocAttrFrom
 import { PandocCapabilities } from '../api/pandoc_capabilities';
 import { EditorUI, CodeBlockProps, EditorUIContext } from '../api/ui';
 import { canInsertNode } from '../api/node';
-import { getMarkRange, markIsActive } from '../api/mark';
+import { markIsActive } from '../api/mark';
+import { kDecoratorDependencyTransaction } from '../api/transaction';
 
 const extension = (
   pandocExtensions: PandocExtensions, 
@@ -188,7 +189,10 @@ function codeBlockInputRuleEnter(uiContext: EditorUIContext) {
 
     // execute
     if (dispatch) {
+
+      // insert the code block
       const tr = state.tr;
+      tr.setMeta(kDecoratorDependencyTransaction, true);
       const lang = match[1];
       const attrs = lang.length && lang !== langPlaceholderText(uiContext) 
         ? pandocAttrFrom({ classes: [lang]} ) : {};

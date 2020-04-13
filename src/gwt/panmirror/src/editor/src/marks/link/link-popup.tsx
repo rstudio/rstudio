@@ -23,7 +23,7 @@ import ClipboardJS from 'clipboard';
 import { getMarkRange, getMarkAttrs } from '../../api/mark';
 import { LinkProps, EditorUI } from '../../api/ui';
 import { CommandFn } from '../../api/command';
-import { kRestoreLocationTransaction, kResizeTransaction } from '../../api/transaction';
+import { kRestoreLocationTransaction, kDecoratorDependencyTransaction } from '../../api/transaction';
 
 import { navigateToId, navigateToHeading } from '../../api/navigation';
 import { selectionIsImageNode } from '../../api/selection';
@@ -57,8 +57,8 @@ export class LinkPopupPlugin extends Plugin<DecorationSet> {
             return DecorationSet.empty;
           }
 
-          // ignore resize transactions (view not yet populated)
-          if (tr.getMeta(kResizeTransaction)) {
+          // ignore decorator dependency transactions (view not yet populated)
+          if (tr.getMeta(kDecoratorDependencyTransaction)) {
             return old.map(tr.mapping, tr.doc);
           }
 

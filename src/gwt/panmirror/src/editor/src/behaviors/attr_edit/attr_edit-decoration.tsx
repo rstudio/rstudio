@@ -26,7 +26,7 @@ import { CommandFn } from '../../api/command';
 import { AttrProps } from '../../api/ui';
 import { WidgetProps, reactRenderForEditorView } from '../../api/widgets/react';
 import { nodeDecorationPosition } from '../../api/widgets/decoration';
-import { kResizeTransaction } from '../../api/transaction';
+import { kDecoratorDependencyTransaction } from '../../api/transaction';
 
 import { kEditAttrShortcut } from './attr_edit';
 import { attrEditCommandFn } from './attr_edit-command';
@@ -89,8 +89,8 @@ class AttrEditDecorationPlugin extends Plugin<DecorationSet> {
         },
         apply: (tr: Transaction, old: DecorationSet, _oldState: EditorState, newState: EditorState) => {
         
-          // ignore resize transactions (view not yet updated)
-          if (tr.getMeta(kResizeTransaction)) {
+          // ignore decorator dependency transactions (view not yet updated)
+          if (tr.getMeta(kDecoratorDependencyTransaction)) {
             return old.map(tr.mapping, tr.doc);
           }
 
