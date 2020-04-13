@@ -73,7 +73,7 @@ function imagePreviewDecorations(state: EditorState, uiContext: EditorUIContext)
   findChildrenByType(state.doc, state.schema.nodes.rmd_chunk).forEach(rmdChunk => {
 
     // look for a line with knitr::include_graphics
-    const match = rmdChunk.node.textContent.match(/^(knitr::)?include_graphics\((['"])([^\2]+)\2\)\s*$/m);
+    const match = rmdChunk.node.textContent.match(/^(knitr::)?include_graphics\((['"])([^\2]+)\2/m);
     if (match) {
       const imagePath = match[3];
       const decoration = Decoration.widget(
