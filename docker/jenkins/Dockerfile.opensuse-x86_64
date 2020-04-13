@@ -67,14 +67,6 @@ COPY src/gwt/panmirror/src/editor/package.json /opt/rstudio-tools/panmirror/
 ENV RSTUDIO_DISABLE_CRASHPAD=1
 RUN cd /opt/rstudio-tools/dependencies/common && /bin/bash ./install-common
 
-# install Qt SDK
-COPY dependencies/linux/install-qt-sdk /tmp/
-RUN mkdir -p /opt/RStudio-QtSDK && \
-    export QT_VERSION=5.10.1 && \
-    export QT_SDK_DIR=/opt/RStudio-QtSDK/Qt${QT_VERSION} && \
-    export QT_SDK_CUSTOM=QtSDK-${QT_VERSION}-x86_64.tar.gz && \
-    /tmp/install-qt-sdk
-
 # create jenkins user, make sudo. try to keep this toward the bottom for less cache busting
 ARG JENKINS_GID=999
 ARG JENKINS_UID=999
