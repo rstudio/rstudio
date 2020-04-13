@@ -93,6 +93,7 @@ function imagePreviewDecorations(state: EditorState, uiContext: EditorUIContext)
           img.onerror = () => {
             img.alt = ` ${uiContext.translateText('Image not found')}: ${imagePath}`;
           };
+          // select rmd_chunk for clicks on the preview image
           img.onclick = () => {
             const tr = view.state.tr;
             setTextSelection(getPos() - 1)(tr);
@@ -105,8 +106,6 @@ function imagePreviewDecorations(state: EditorState, uiContext: EditorUIContext)
       );
       decorations.push(decoration);
     }
-   
-
   });
 
   // return decorations
