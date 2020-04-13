@@ -125,6 +125,7 @@ class AttrEditDecorationPlugin extends Plugin<DecorationSet> {
             // node decorator position
             const offset = editor.offset();
             const decorationPosition = nodeDecorationPosition(
+              tr.doc,
               editorView, 
               parentWithAttrs,
               { // offsets

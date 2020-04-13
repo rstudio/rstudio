@@ -14,7 +14,7 @@
  */
 
 
-import { ResolvedPos } from 'prosemirror-model';
+import { ResolvedPos, Node as ProsemirrorNode } from 'prosemirror-model';
 import { EditorView } from 'prosemirror-view';
 
 import { ContentNodeWithPos } from 'prosemirror-utils';
@@ -31,6 +31,7 @@ export interface DecorationPosition {
 }
 
 export function nodeDecorationPosition(
+  doc: ProsemirrorNode,
   view: EditorView,
   nodeWithPos: ContentNodeWithPos,
   offsets?: { top: number, right: number }
@@ -46,7 +47,7 @@ export function nodeDecorationPosition(
   }
 
   // get the editing container element
-  const editingNode = editingRootNodeClosestToPos(view.state.doc.resolve(nodeWithPos.pos));
+  const editingNode = editingRootNodeClosestToPos(doc.resolve(nodeWithPos.pos));
   if (!editingNode) {
     return null;
   }
