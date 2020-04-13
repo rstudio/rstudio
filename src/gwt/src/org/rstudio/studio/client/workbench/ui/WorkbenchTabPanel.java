@@ -155,6 +155,7 @@ class WorkbenchTabPanel
       return true;
    }
 
+   @SuppressWarnings("unused")
    private void add(final WorkbenchTab tab)
    {
       if (tab.isSuppressed())
