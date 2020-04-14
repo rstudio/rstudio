@@ -517,6 +517,13 @@ public class TextEditingTargetVisualMode
       }
    } 
    
+   // bizzarly, removing this method triggers a gwt compiler issue that
+   // results in the Panmirror interop breaking! we need to investigate
+   // this, but in the meantime the method remains. note that this method
+   // *should not* be called as it doesn't handle re-entrancy correctly
+   // (the restoring of the getActiveWidget can result in forever progress
+   // when 2 calls to withProgress are in the promise chain)
+   @SuppressWarnings("unused")
    private void withProgress(int delayMs, CommandWithArg<Command> command)
    {
       TextEditorContainer editorContainer = display_.editorContainer();
