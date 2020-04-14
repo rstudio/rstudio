@@ -146,7 +146,7 @@ public class HyperlinkLabel extends Label
    }
 
    private final MouseHandlers mouseHandlers_ = new MouseHandlers();
-   private Command clickHandler_ ;
+   private Command clickHandler_;
    private final HandlerRegistrations releaseOnUnload_ = new HandlerRegistrations();
 
    private boolean alwaysUnderline_ = false;

@@ -25,100 +25,100 @@ class Range extends JavaScriptObject
    }
 
    public static native Range create(Document doc) /*-{
-      return doc.createRange() ;
+      return doc.createRange();
    }-*/; 
    
    public final native boolean isCollapsed() /*-{
-      return this.collapsed ;
+      return this.collapsed;
    }-*/;
 
    public final native Node getCommonAncestorContainer() /*-{
-      return this.commonAncestorContainer ;
+      return this.commonAncestorContainer;
    }-*/;
 
    public final native Node getEndContainer() /*-{
-      return this.endContainer ;
+      return this.endContainer;
    }-*/;
 
    public final native int getEndOffset() /*-{
-      return this.endOffset ;
+      return this.endOffset;
    }-*/;
 
    public final native Node getStartContainer() /*-{
-      return this.startContainer ;
+      return this.startContainer;
    }-*/;
 
    public final native int getStartOffset() /*-{
-      return this.startOffset ;
+      return this.startOffset;
    }-*/;
 
    public final native JavaScriptObject cloneContents() /*-{
-      return this.cloneContents() ;
+      return this.cloneContents();
    }-*/;
 
    public final native Range cloneRange() /*-{
-      return this.cloneRange() ;
+      return this.cloneRange();
    }-*/;
    
    public final native void collapse(boolean toStart) /*-{
-      return this.collapse(toStart) ;
+      return this.collapse(toStart);
    }-*/;
    
    public final native short compareBoundaryPoints(short how, 
                                                    Range sourceRange) /*-{
-      return this.compareBoundaryPoints(how, sourceRange) ;
+      return this.compareBoundaryPoints(how, sourceRange);
    }-*/;
 
    public final native void deleteContents() /*-{
-      return this.deleteContents() ;
+      return this.deleteContents();
    }-*/;
    
    public final native void detach() /*-{
-      return this.detach() ;
+      return this.detach();
    }-*/; 
 
    public final native JavaScriptObject extractContents() /*-{
-      return this.extractContents() ;
+      return this.extractContents();
    }-*/;
 
    public final native void insertNode(Node newNode) /*-{
-      return this.insertNode(newNode) ;
+      return this.insertNode(newNode);
    }-*/;
    
    public final native void selectNode(Node refNode) /*-{
-      return this.selectNode(refNode) ;
+      return this.selectNode(refNode);
    }-*/;
 
    public final native void selectNodeContents(Node refNode) /*-{
-      return this.selectNodeContents(refNode) ;
+      return this.selectNodeContents(refNode);
    }-*/;
 
    public final native void setEnd(Node refNode, int offset) /*-{
-      return this.setEnd(refNode, offset) ;
+      return this.setEnd(refNode, offset);
    }-*/;
 
    public final native void setEndAfter(Node refNode) /*-{
-      return this.setEndAfter(refNode) ;
+      return this.setEndAfter(refNode);
    }-*/;
 
    public final native void setEndBefore(Node refNode) /*-{
-      return this.setEndBefore(refNode) ;
+      return this.setEndBefore(refNode);
    }-*/;
 
    public final native void setStart(Node refNode, int offset) /*-{
-      return this.setStart(refNode, offset) ;
+      return this.setStart(refNode, offset);
    }-*/;
 
    public final native void setStartAfter(Node refNode) /*-{
-      return this.setStartAfter(refNode) ;
+      return this.setStartAfter(refNode);
    }-*/;
 
    public final native void setStartBefore(Node refNode) /*-{
-      return this.setStartBefore(refNode) ;
+      return this.setStartBefore(refNode);
    }-*/;
 
    public final native void surroundContents(Node newParent) /*-{
-      return this.surroundContents(newParent) ;
+      return this.surroundContents(newParent);
    }-*/;
 
    public final native String toStringJs() /*-{

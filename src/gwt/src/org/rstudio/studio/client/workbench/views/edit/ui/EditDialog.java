@@ -128,9 +128,9 @@ public class EditDialog extends ModalDialogBase
       editor_.focus();
    }
 
-   private final String sourceText_ ;
+   private final String sourceText_;
    private final boolean isRCode_;
    private final boolean lineWrapping_;
-   private final AceEditor editor_ ;
+   private final AceEditor editor_;
    private Size minimumSize_;
 }

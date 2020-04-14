@@ -62,15 +62,15 @@ import java.util.List;
 
 public class CompletionRequester
 {
-   private CodeToolsServerOperations server_ ;
+   private CodeToolsServerOperations server_;
    private UserPrefs uiPrefs_;
-   private final DocDisplay docDisplay_ ;
-   private final SnippetHelper snippets_ ;
+   private final DocDisplay docDisplay_;
+   private final SnippetHelper snippets_;
 
-   private String cachedLinePrefix_ ;
+   private String cachedLinePrefix_;
    private HashMap<String, CompletionResult> cachedCompletions_ =
          new HashMap<String, CompletionResult>();
-   private RnwCompletionContext rnwContext_ ;
+   private RnwCompletionContext rnwContext_;
    
    public CompletionRequester(RnwCompletionContext rnwContext,
                               DocDisplay docDisplay,
@@ -126,7 +126,7 @@ public class CompletionRequester
          // otherwise, produce a new completion list
          if (diff.length() > 0 && !diff.endsWith("::"))
          {
-            callback.onResponseReceived(narrow(cachedResult.token + diff, diff, cachedResult)) ;
+            callback.onResponseReceived(narrow(cachedResult.token + diff, diff, cachedResult));
             return true;
          }
       }
@@ -179,7 +179,7 @@ public class CompletionRequester
          {
             if (StringUtil.isSubsequence(qname.name, tokenFuzzy, true) &&
                 filterStartsWithDot(qname.name, token))
-               newCompletions.add(qname) ;
+               newCompletions.add(qname);
          }
       }
       
@@ -212,7 +212,7 @@ public class CompletionRequester
             newCompletions,
             cachedResult.guessedFunctionName,
             cachedResult.suggestOnAccept,
-            cachedResult.dontInsertParens) ;
+            cachedResult.dontInsertParens);
       
       cachedCompletions_.put(diff, result);
       return result;
@@ -440,7 +440,7 @@ public class CompletionRequester
 
             callback.onResponseReceived(result);
          }
-      }) ;
+      });
    }
    
    private ArrayList<QualifiedName>
@@ -738,7 +738,7 @@ public class CompletionRequester
 
    public void flushCache()
    {
-      cachedLinePrefix_ = null ;
+      cachedLinePrefix_ = null;
       cachedCompletions_.clear();
    }
    
@@ -750,18 +750,18 @@ public class CompletionRequester
                               boolean suggestOnAccept,
                               boolean dontInsertParens)
       {
-         this.token = token ;
-         this.completions = completions ;
-         this.guessedFunctionName = guessedFunctionName ;
-         this.suggestOnAccept = suggestOnAccept ;
-         this.dontInsertParens = dontInsertParens ;
+         this.token = token;
+         this.completions = completions;
+         this.guessedFunctionName = guessedFunctionName;
+         this.suggestOnAccept = suggestOnAccept;
+         this.dontInsertParens = dontInsertParens;
       }
       
-      public final String token ;
-      public final ArrayList<QualifiedName> completions ;
-      public final String guessedFunctionName ;
-      public final boolean suggestOnAccept ;
-      public final boolean dontInsertParens ;
+      public final String token;
+      public final ArrayList<QualifiedName> completions;
+      public final String guessedFunctionName;
+      public final boolean suggestOnAccept;
+      public final boolean dontInsertParens;
    }
    
    public static class QualifiedName implements Comparable<QualifiedName>
@@ -964,32 +964,32 @@ public class CompletionRequester
       public static QualifiedName parseFromText(String val)
       {
          String name, pkgName = "";
-         int idx = val.indexOf('{') ;
+         int idx = val.indexOf('{');
          if (idx < 0)
          {
-            name = val ;
+            name = val;
          }
          else
          {
-            name = val.substring(0, idx).trim() ;
-            pkgName = val.substring(idx + 1, val.length() - 1) ;
+            name = val.substring(0, idx).trim();
+            pkgName = val.substring(idx + 1, val.length() - 1);
          }
          
-         return new QualifiedName(name, pkgName) ;
+         return new QualifiedName(name, pkgName);
       }
 
       public int compareTo(QualifiedName o)
       {
          if (name.endsWith("=") ^ o.name.endsWith("="))
-            return name.endsWith("=") ? -1 : 1 ;
+            return name.endsWith("=") ? -1 : 1;
          
-         int result = String.CASE_INSENSITIVE_ORDER.compare(name, o.name) ;
+         int result = String.CASE_INSENSITIVE_ORDER.compare(name, o.name);
          if (result != 0)
-            return result ;
+            return result;
          
-         String pkg = source == null ? "" : source ;
-         String opkg = o.source == null ? "" : o.source ;
-         return pkg.compareTo(opkg) ;
+         String pkg = source == null ? "" : source;
+         String opkg = o.source == null ? "" : o.source;
+         return pkg.compareTo(opkg);
       }
       
       @Override
@@ -1012,13 +1012,13 @@ public class CompletionRequester
          return hash;
       }
 
-      public final String name ;
-      public final String source ;
-      public final boolean shouldQuote ;
-      public final int type ;
-      public final String meta ;
-      public final String helpHandler ;
-      public final String language ;
+      public final String name;
+      public final String source;
+      public final boolean shouldQuote;
+      public final int type;
+      public final String meta;
+      public final String helpHandler;
+      public final String language;
       
       private static final FileTypeRegistry FILE_TYPE_REGISTRY =
             RStudioGinjector.INSTANCE.getFileTypeRegistry();

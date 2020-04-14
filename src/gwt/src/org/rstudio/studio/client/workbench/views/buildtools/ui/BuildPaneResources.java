@@ -35,6 +35,6 @@ public interface BuildPaneResources extends ClientBundle
    ImageResource iconBuild2x();
    
    public static BuildPaneResources INSTANCE = 
-      (BuildPaneResources)GWT.create(BuildPaneResources.class) ;
+      (BuildPaneResources)GWT.create(BuildPaneResources.class);
   
 }

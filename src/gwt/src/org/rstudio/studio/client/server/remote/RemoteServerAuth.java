@@ -248,9 +248,9 @@ class RemoteServerAuth
    
    private String createRequestData()
    {
-      JSONObject request = new JSONObject() ;
+      JSONObject request = new JSONObject();
       request.put("method", new JSONString("update_credentials"));
-      request.put("params", new JSONArray());     
+      request.put("params", new JSONArray());
       return request.toString();
    }
    

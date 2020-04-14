@@ -33,7 +33,7 @@ public interface HelpInfoPopupPanelResources extends ClientBundle
    Styles styles();
   
    public static HelpInfoPopupPanelResources INSTANCE = 
-      (HelpInfoPopupPanelResources)GWT.create(HelpInfoPopupPanelResources.class) ;
+      (HelpInfoPopupPanelResources)GWT.create(HelpInfoPopupPanelResources.class);
    
   
 }

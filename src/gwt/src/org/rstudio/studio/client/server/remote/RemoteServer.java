@@ -1150,7 +1150,7 @@ public class RemoteServer implements Server
       sendRequest(RPC_SCOPE,
                   GET_HELP_AT_CURSOR,
                   params,
-                  requestCallback) ;
+                  requestCallback);
    }
    
    public void removeAllObjects(boolean includeHidden,
@@ -1403,17 +1403,17 @@ public class RemoteServer implements Server
    
    public void showHelpTopic(String what, String from, int type)
    {
-      JSONArray params = new JSONArray() ;
-      params.set(0, new JSONString(what)) ;
+      JSONArray params = new JSONArray();
+      params.set(0, new JSONString(what));
       params.set(1, from != null 
                        ? new JSONString(from)
-                       : JSONNull.getInstance()) ;
+                       : JSONNull.getInstance());
       params.set(2, new JSONNumber(type));
       
       sendRequest(RPC_SCOPE,
                   SHOW_HELP_TOPIC,
                   params,
-                  null) ;
+                  null);
    }
    
    public void showCustomHelpTopic(String helpHandler, 
@@ -1436,7 +1436,7 @@ public class RemoteServer implements Server
       sendRequest(RPC_SCOPE,
                   SEARCH,
                   query,
-                  requestCallback) ;
+                  requestCallback);
    }
    
    @Override
@@ -3357,7 +3357,7 @@ public class RemoteServer implements Server
             // if we have a retry handler then see if we can resolve the
             // error and then retry
             if ( resolveRpcErrorAndRetry(rpcRequest, error, retryHandler) )
-               return ;
+               return;
 
             // first crack goes to globally registered rpc error handlers
             if (!handleRpcErrorInternally(error))
@@ -3389,7 +3389,7 @@ public class RemoteServer implements Server
                // if we have a retry handler then see if we can resolve the
                // error and then retry
                if ( resolveRpcErrorAndRetry(request, error, retryHandler) )
-                  return ;
+                  return;
 
                // give first crack to internal handlers, then forward to caller
                if (!handleRpcErrorInternally(error))
@@ -3452,7 +3452,7 @@ public class RemoteServer implements Server
    {
       String eventsPending = response.getField("ep");
       if (eventsPending == null)
-         return true ; // default to true for json-rpc compactness
+         return true; // default to true for json-rpc compactness
       else
          return Boolean.parseBoolean(eventsPending);
    }
@@ -6176,7 +6176,7 @@ public class RemoteServer implements Server
    private boolean sessionRelaunchPending_;
 
    private final RemoteServerAuth serverAuth_;
-   private final RemoteServerEventListener serverEventListener_ ;
+   private final RemoteServerEventListener serverEventListener_;
 
    private final Provider<ConsoleProcessFactory> pConsoleProcessFactory_;
 
@@ -6282,11 +6282,11 @@ public class RemoteServer implements Server
    private static final String DISCOVER_PACKAGE_DEPENDENCIES = "discover_package_dependencies";
 
    private static final String GET_HELP = "get_help";
-   private static final String SHOW_HELP_TOPIC = "show_help_topic" ;
-   private static final String SEARCH = "search" ;
+   private static final String SHOW_HELP_TOPIC = "show_help_topic";
+   private static final String SEARCH = "search";
    private static final String GET_CUSTOM_HELP = "get_custom_help";
    private static final String GET_CUSTOM_PARAMETER_HELP = "get_custom_parameter_help";
-   private static final String SHOW_CUSTOM_HELP_TOPIC = "show_custom_help_topic" ;
+   private static final String SHOW_CUSTOM_HELP_TOPIC = "show_custom_help_topic";
 
    private static final String STAT = "stat";
    private static final String IS_TEXT_FILE = "is_text_file";

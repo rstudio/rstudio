@@ -115,8 +115,8 @@ public class ApplicationEndedPopupPanel extends PopupPanel
       });
    }
 
-   private static final int PREFETCH = 0 ;
-   private static final int QUIT = 1 ;
+   private static final int PREFETCH = 0;
+   private static final int QUIT = 1;
    private static final int SUICIDE = 2;
    private static final int DISCONNECTED = 3;
    private static final int OFFLINE = 4;

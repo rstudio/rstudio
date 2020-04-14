@@ -160,11 +160,11 @@ public class ShellInteractionManager implements ShellOutputWriter
    private void consolePrompt(String prompt, boolean addToHistory)
    {
       boolean showInput = showInputForPrompt(prompt);
-      display_.consolePrompt(prompt, showInput) ;
+      display_.consolePrompt(prompt, showInput);
 
       addToHistory_ = addToHistory && showInput;
       historyManager_.resetPosition();
-      lastPromptText_ = prompt ;
+      lastPromptText_ = prompt;
       
       // set focus on the first prompt
       if (!firstPromptShown_)
@@ -258,14 +258,14 @@ public class ShellInteractionManager implements ShellOutputWriter
     
    private final ShellDisplay display_;
    
-   private boolean addToHistory_ ;
+   private boolean addToHistory_;
    private boolean historyEnabled_ = true;
-   private String lastPromptText_ ;
+   private String lastPromptText_;
    private String defaultPromptSuffix_ = null;
    
    private boolean firstPromptShown_ = false;
 
-   private final InputEditorDisplay input_ ;
+   private final InputEditorDisplay input_;
    private final CommandLineHistory historyManager_;
    
    private final CommandWithArg<ShellInput> inputHandler_;

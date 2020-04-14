@@ -17,6 +17,6 @@ package org.rstudio.core.client.jsonrpc;
 
 public interface RpcRequestCallback 
 {
-   void onError(RpcRequest request, RpcError error) ;
+   void onError(RpcRequest request, RpcError error);
    void onResponseReceived(RpcRequest request, RpcResponse response);
 }

@@ -60,7 +60,7 @@ public class DomUtils
 {
    public interface NodePredicate
    {
-      boolean test(Node n) ;
+      boolean test(Node n);
    }
 
    public static native Element getActiveElement() /*-{
@@ -340,11 +340,11 @@ public class DomUtils
       while (descendant != null)
       {
          if (descendant == container)
-            return true ;
+            return true;
 
-         descendant = descendant.getParentNode() ;
+         descendant = descendant.getParentNode();
       }
-      return false ;
+      return false;
    }
 
    /**
@@ -364,7 +364,7 @@ public class DomUtils
 
    public static Rectangle getCursorBounds()
    {
-      return getCursorBounds(Document.get()) ;
+      return getCursorBounds(Document.get());
    }
 
    public static Rectangle getCursorBounds(Document doc)
@@ -396,11 +396,11 @@ public class DomUtils
 
    public static Text splitTextNodeAt(Element container, int offset)
    {
-      NodeRelativePosition pos = NodeRelativePosition.toPosition(container, offset) ;
+      NodeRelativePosition pos = NodeRelativePosition.toPosition(container, offset);
 
       if (pos != null)
       {
-         return ((Text)pos.node).splitText(pos.offset) ;
+         return ((Text)pos.node).splitText(pos.offset);
       }
       else
       {
@@ -411,14 +411,14 @@ public class DomUtils
    }
 
    public static native Element getTableCell(Element table, int row, int col) /*-{
-      return table.rows[row].cells[col] ;
+      return table.rows[row].cells[col];
    }-*/;
 
    public static void dump(Node node, String label)
    {
-      StringBuffer buffer = new StringBuffer() ;
-      dump(node, "", buffer, false) ;
-      Debug.log("Dumping " + label + ":\n\n" + buffer.toString()) ;
+      StringBuffer buffer = new StringBuffer();
+      dump(node, "", buffer, false);
+      Debug.log("Dumping " + label + ":\n\n" + buffer.toString());
    }
 
    private static void dump(Node node, 
@@ -427,21 +427,21 @@ public class DomUtils
                             boolean doSiblings)
    {
       if (node == null)
-         return ;
+         return;
       
       out.append(indent)
-         .append(node.getNodeName()) ;
+         .append(node.getNodeName());
       if (node.getNodeType() != 1)
       {
          out.append(": \"")
             .append(node.getNodeValue())
             .append("\"");
       }
-      out.append("\n") ;
+      out.append("\n");
       
-      dump(node.getFirstChild(), indent + "\u00A0\u00A0", out, true) ;
+      dump(node.getFirstChild(), indent + "\u00A0\u00A0", out, true);
       if (doSiblings)
-         dump(node.getNextSibling(), indent, out, true) ;
+         dump(node.getNextSibling(), indent, out, true);
    }
 
    public static native void ensureVisibleVert(
@@ -451,12 +451,12 @@ public class DomUtils
       if (!child)
          return;
 
-      var height = child.offsetHeight ;
+      var height = child.offsetHeight;
       var top = 0;
       while (child && child != container)
       {
-         top += child.offsetTop ;
-         child = child.offsetParent ;
+         top += child.offsetTop;
+         child = child.offsetParent;
       }
 
       if (!child)
@@ -468,11 +468,11 @@ public class DomUtils
 
       if (top < container.scrollTop)
       {
-         container.scrollTop = top ;
+         container.scrollTop = top;
       }
       else if (container.scrollTop + container.offsetHeight < top + height)
       {
-         container.scrollTop = top + height - container.offsetHeight ;
+         container.scrollTop = top + height - container.offsetHeight;
       }
    }-*/;
 
@@ -557,8 +557,8 @@ public class DomUtils
       var top = 0;
       while (child && child != container)
       {
-         top += child.offsetTop ;
-         child = child.offsetParent ;
+         top += child.offsetTop;
+         child = child.offsetParent;
       }
       if (!child)
          throw new Error("Child was not in container or " +
@@ -578,15 +578,15 @@ public class DomUtils
       switch (node.getNodeType())
       {
       case Node.DOCUMENT_NODE:
-         return ((ElementEx)node).getOuterHtml() ;
+         return ((ElementEx)node).getOuterHtml();
       case Node.ELEMENT_NODE:
-         return ((ElementEx)node).getOuterHtml() ;
+         return ((ElementEx)node).getOuterHtml();
       case Node.TEXT_NODE:
-         return node.getNodeValue() ;
+         return node.getNodeValue();
       default:
          assert false : 
-                  "Add case statement for node type " + node.getNodeType() ;
-         return node.getNodeValue() ;
+                  "Add case statement for node type " + node.getNodeType();
+         return node.getNodeValue();
       }
    }
 
@@ -597,9 +597,9 @@ public class DomUtils
            parent = parent.getParentNode())
       {
          if (parent.equals(ancestor))
-            return true ;
+            return true;
       }
-      return false ;
+      return false;
    }
    
    public static boolean isDescendantOfElementWithTag(Element el, String[] tags)
@@ -612,7 +612,7 @@ public class DomUtils
             if (tag.toLowerCase().equals(parent.getTagName().toLowerCase()))
                return true;
       }
-      return false ;
+      return false;
    }
    
    /**

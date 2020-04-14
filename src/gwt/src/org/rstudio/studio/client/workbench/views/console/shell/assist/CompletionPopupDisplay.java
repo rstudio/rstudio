@@ -40,43 +40,43 @@ public interface CompletionPopupDisplay
                              PositionCallback callback,
                              boolean truncated);
    
-   void showErrorMessage(String userMessage, PositionCallback callback) ;
-   void hide() ;
-   boolean isShowing() ;
+   void showErrorMessage(String userMessage, PositionCallback callback);
+   void hide();
+   boolean isShowing();
 
-   void setPopupPosition(int x, int y) ;
+   void setPopupPosition(int x, int y);
    void placeOffscreen();
    boolean isOffscreen();
    int getPopupLeft();
    int getPopupTop();
    
-   int getOffsetHeight() ;
+   int getOffsetHeight();
 
-   QualifiedName getSelectedValue() ;
-   QualifiedName getLastSelectedValue() ;
-   Rectangle getSelectionRect() ;
+   QualifiedName getSelectedValue();
+   QualifiedName getLastSelectedValue();
+   Rectangle getSelectionRect();
 
-   boolean selectPrev() ;
-   boolean selectNext() ;
-   boolean selectPrevPage() ;
-   boolean selectNextPage() ;
-   boolean selectFirst() ;
-   boolean selectLast() ;
+   boolean selectPrev();
+   boolean selectNext();
+   boolean selectPrevPage();
+   boolean selectNextPage();
+   boolean selectFirst();
+   boolean selectLast();
    
-   void setHelpVisible(boolean visible) ;
-   void displayHelp(HelpInfo.ParsedInfo help) ;
-   void displayParameterHelp(Map<String, String> map, String parameter) ;
-   void displayPackageHelp(HelpInfo.ParsedInfo helpInfo) ;
-   void displayDataHelp(HelpInfo.ParsedInfo helpInfo) ;
-   void displaySnippetHelp(String contents) ;
+   void setHelpVisible(boolean visible);
+   void displayHelp(HelpInfo.ParsedInfo help);
+   void displayParameterHelp(Map<String, String> map, String parameter);
+   void displayPackageHelp(HelpInfo.ParsedInfo helpInfo);
+   void displayDataHelp(HelpInfo.ParsedInfo helpInfo);
+   void displaySnippetHelp(String contents);
    /**
     * Clear out the current help info
     * @param downloadOperationPending If true, the current value is being
     *    cleared in preparation for a new value that is being downloaded.
     *    Implementations may choose to show a progress indicator in this case.
     */
-   void clearHelp(boolean downloadOperationPending) ;
-   boolean isHelpVisible() ;
+   void clearHelp(boolean downloadOperationPending);
+   boolean isHelpVisible();
    
    boolean hasCompletions();
    int numAvailableCompletions();

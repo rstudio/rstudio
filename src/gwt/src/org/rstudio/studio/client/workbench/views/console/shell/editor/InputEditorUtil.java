@@ -19,14 +19,14 @@ public class InputEditorUtil
    public static void yankAfterCursor(final InputEditorDisplay editor,
                                       final boolean saveValue)
    {
-      InputEditorSelection selection = editor.getSelection() ;
+      InputEditorSelection selection = editor.getSelection();
       if (selection != null)
       {
          selection = selection.extendToLineEnd();
 
          editor.setSelection(selection);
 
-         editor.setFocus(true) ;
+         editor.setFocus(true);
          String yanked = editor.replaceSelection("", true);
          if (saveValue)
             lastYanked = yanked;
@@ -36,14 +36,14 @@ public class InputEditorUtil
    public static void yankBeforeCursor(final InputEditorDisplay editor,
                                        final boolean saveValue)
    {
-      InputEditorSelection selection = editor.getSelection() ;
+      InputEditorSelection selection = editor.getSelection();
       if (selection != null)
       {
          selection = selection.extendToLineStart();
 
          editor.setSelection(selection);
 
-         editor.setFocus(true) ;
+         editor.setFocus(true);
          String yanked = editor.replaceSelection("", true);
          if (saveValue)
             lastYanked = yanked;

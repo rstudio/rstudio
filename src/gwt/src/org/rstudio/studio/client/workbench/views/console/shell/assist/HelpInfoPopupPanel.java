@@ -33,16 +33,16 @@ public class HelpInfoPopupPanel extends PopupPanel
 
       FlowPanel outer = new FlowPanel();
 
-      scrollPanel_.add(vpanel_) ;
-      vpanel_.setStylePrimaryName(consoleStyles_.functionInfo()) ;
-      vpanel_.setWidth("100%") ;
+      scrollPanel_.add(vpanel_);
+      vpanel_.setStylePrimaryName(consoleStyles_.functionInfo());
+      vpanel_.setWidth("100%");
       outer.add(scrollPanel_);
       
       f1prompt_ = new Label("Press F1 for additional help");
       f1prompt_.setStylePrimaryName(consoleStyles_.promptFullHelp());
       outer.add(f1prompt_);
 
-      setWidget(outer) ;
+      setWidget(outer);
       setVisible(false);
       setStylePrimaryName(RES.styles().helpPopup());
       
@@ -52,9 +52,9 @@ public class HelpInfoPopupPanel extends PopupPanel
       timer_ = new Timer() {
          public void run()
          {
-            scrollPanel_.setVisible(false) ;
-            f1prompt_.setVisible(false) ;
-            vpanel_.clear() ;
+            scrollPanel_.setVisible(false);
+            f1prompt_.setVisible(false);
+            vpanel_.clear();
             setVisible(false);
          }
       };
@@ -62,8 +62,8 @@ public class HelpInfoPopupPanel extends PopupPanel
 
    public void displayHelp(HelpInfo.ParsedInfo help)
    {
-      timer_.cancel() ;
-      vpanel_.clear() ;
+      timer_.cancel();
+      vpanel_.clear();
 
       Label lblSig;
       if (StringUtil.isNullOrEmpty(help.getFunctionSignature()))
@@ -73,13 +73,13 @@ public class HelpInfoPopupPanel extends PopupPanel
       }
       else
       {
-         lblSig = new Label(help.getFunctionSignature()) ;
-         lblSig.setStylePrimaryName(consoleStyles_.functionInfoSignature()) ;
+         lblSig = new Label(help.getFunctionSignature());
+         lblSig.setStylePrimaryName(consoleStyles_.functionInfoSignature());
       }
       vpanel_.add(lblSig);
       
-      HTML htmlDesc = new HTML(help.getDescription()) ;
-      htmlDesc.setStylePrimaryName(RES.styles().helpBodyText()) ;
+      HTML htmlDesc = new HTML(help.getDescription());
+      htmlDesc.setStylePrimaryName(RES.styles().helpBodyText());
       vpanel_.add(htmlDesc);
       
       doDisplay();
@@ -88,34 +88,34 @@ public class HelpInfoPopupPanel extends PopupPanel
    
    public void displayParameterHelp(Map<String, String> help, String paramName)
    {
-      String desc = help.get(paramName) ;
+      String desc = help.get(paramName);
       if (desc == null)
       {
-         clearHelp(false) ;
-         return ;
+         clearHelp(false);
+         return;
       }
 
-      timer_.cancel() ;
-      vpanel_.clear() ;
+      timer_.cancel();
+      vpanel_.clear();
 
       if (paramName != null)
       {
-         Label lblSig = new Label(paramName) ;
-         lblSig.setStylePrimaryName(consoleStyles_.paramInfoName()) ;
+         Label lblSig = new Label(paramName);
+         lblSig.setStylePrimaryName(consoleStyles_.paramInfoName());
          vpanel_.add(lblSig);
       }
       
-      HTML htmlDesc = new HTML(desc) ;
-      htmlDesc.setStylePrimaryName(RES.styles().helpBodyText()) ;
-      vpanel_.add(htmlDesc) ;
+      HTML htmlDesc = new HTML(desc);
+      htmlDesc.setStylePrimaryName(RES.styles().helpBodyText());
+      vpanel_.add(htmlDesc);
       
       doDisplay();
    }
    
    public void displayPackageHelp(HelpInfo.ParsedInfo help)
    {
-      timer_.cancel() ;
-      vpanel_.clear() ;
+      timer_.cancel();
+      vpanel_.clear();
 
       String title = help.getTitle();
       if (title != null)
@@ -125,9 +125,9 @@ public class HelpInfoPopupPanel extends PopupPanel
          vpanel_.add(label);
       }
       
-      HTML htmlDesc = new HTML(help.getDescription()) ;
-      htmlDesc.setStylePrimaryName(RES.styles().helpBodyText()) ;
-      vpanel_.add(htmlDesc) ;
+      HTML htmlDesc = new HTML(help.getDescription());
+      htmlDesc.setStylePrimaryName(RES.styles().helpBodyText());
+      vpanel_.add(htmlDesc);
 
       doDisplay();
    }
@@ -147,11 +147,11 @@ public class HelpInfoPopupPanel extends PopupPanel
    public void clearHelp(boolean downloadOperationPending)
    {
       f1prompt_.setVisible(false);
-      timer_.cancel() ;
+      timer_.cancel();
       if (downloadOperationPending)
-         timer_.schedule(170) ;
+         timer_.schedule(170);
       else
-         timer_.run() ;
+         timer_.run();
    }
    
    private void doDisplay()
@@ -169,8 +169,8 @@ public class HelpInfoPopupPanel extends PopupPanel
       scrollPanel_.setHeight(newHeight);
    }
    
-   private final ScrollPanel scrollPanel_ = new ScrollPanel() ;
-   private final VerticalPanel vpanel_ = new VerticalPanel() ;
+   private final ScrollPanel scrollPanel_ = new ScrollPanel();
+   private final VerticalPanel vpanel_ = new VerticalPanel();
    private final Timer timer_;
    private final ConsoleResources.ConsoleStyles consoleStyles_;
    private Label f1prompt_;

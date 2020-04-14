@@ -43,7 +43,7 @@ public final class InputEditorSelection
    public int compareTo(InputEditorSelection o)
    {
       if (o == null)
-         return 1 ;
+         return 1;
 
       int result = getStart().compareTo(o.getStart());
       if (result == 0)

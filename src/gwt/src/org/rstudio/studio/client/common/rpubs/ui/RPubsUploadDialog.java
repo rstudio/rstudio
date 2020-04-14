@@ -266,7 +266,7 @@ public class RPubsUploadDialog extends ModalDialogBase
 
    private final boolean isPublished_;
 
-   static Resources RESOURCES = GWT.create(Resources.class) ;
+   static Resources RESOURCES = GWT.create(Resources.class);
    public static void ensureStylesInjected()
    {
       RESOURCES.styles().ensureInjected();

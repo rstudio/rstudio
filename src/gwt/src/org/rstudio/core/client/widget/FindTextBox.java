@@ -64,12 +64,12 @@ public class FindTextBox extends Composite implements HasValue<String>,
    
    public String getValue()
    {
-      return textBox_.getText() ;
+      return textBox_.getText();
    }
 
    public void setValue(String text)
    {
-      textBox_.setText(text) ;
+      textBox_.setText(text);
    }
 
    public void setValue(String text, boolean fireEvents)

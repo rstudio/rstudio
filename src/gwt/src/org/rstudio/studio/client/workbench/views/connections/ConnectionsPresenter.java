@@ -600,12 +600,12 @@ public class ConnectionsPresenter extends BasePresenter
    
    private final GlobalDisplay globalDisplay_;
    
-   private final Display display_ ;
+   private final Display display_;
    private final EventBus eventBus_;
    private final Commands commands_;
    private UserState state_;
    private UserPrefs userPrefs_;
-   private final ConnectionsServerOperations server_ ;
+   private final ConnectionsServerOperations server_;
    @SuppressWarnings("unused") private final ApplicationInterrupt applicationInterrupt_;
    
    // client state

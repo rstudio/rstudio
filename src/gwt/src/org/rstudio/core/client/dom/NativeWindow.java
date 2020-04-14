@@ -22,7 +22,7 @@ public class NativeWindow extends JavaScriptObject
    protected NativeWindow() {}
    
    public static final native NativeWindow get() /*-{
-      return $wnd ;
+      return $wnd;
    }-*/;
 
    public static final native NativeWindow get(Document doc) /*-{
@@ -30,12 +30,12 @@ public class NativeWindow extends JavaScriptObject
    }-*/;
    
    public final native Document getDocument() /*-{
-      return this.document ;
+      return this.document;
    }-*/;
 
    public final native int getPageXOffset() /*-{
       if (this.pageXOffset)
-         return this.pageXOffset ;
+         return this.pageXOffset;
       if (this.scrollX)
          return this.scrollX;
       if (this.document.body && this.document.body.scrollLeft)
@@ -47,7 +47,7 @@ public class NativeWindow extends JavaScriptObject
 
    public final native int getPageYOffset() /*-{
       if (this.pageYOffset)
-         return this.pageYOffset ;
+         return this.pageYOffset;
       if (this.scrollY)
          return this.scrollY;
       if (this.document.body && this.document.body.scrollTop)
@@ -58,7 +58,7 @@ public class NativeWindow extends JavaScriptObject
    }-*/;
 
    public final native void focus() /*-{
-      this.focus() ;
+      this.focus();
    }-*/;
    
    public final native void print() /*-{

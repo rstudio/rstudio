@@ -21,7 +21,7 @@ public class ProgressImages
 {
    public static Image createSmall()
    {
-      return new Image(CoreResources.INSTANCE.progress()) ;
+      return new Image(CoreResources.INSTANCE.progress());
    }
    
    public static Image createSmallGray()

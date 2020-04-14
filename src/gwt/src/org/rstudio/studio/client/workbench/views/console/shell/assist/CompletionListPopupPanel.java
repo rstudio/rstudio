@@ -39,7 +39,7 @@ public class CompletionListPopupPanel<TItem> extends ThemedPopupPanel
    public TItem getSelectedValue()
    {
       if (list_ == null || !list_.isAttached())
-         return null ;
+         return null;
 
       return list_.getSelectedItem();
    }

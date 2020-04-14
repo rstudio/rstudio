@@ -116,7 +116,7 @@ public class Application implements ApplicationEventHandlers
                       Provider<ProductEditionInfo> pEdition)
    {
       // save references
-      view_ = view ;
+      view_ = view;
       globalDisplay_ = globalDisplay;
       events_ = events;
       session_ = session;
@@ -908,7 +908,7 @@ public class Application implements ApplicationEventHandlers
       
       // create workbench
       Workbench wb = workbench_.get();
-      eventBusProvider_.get().fireEvent(new SessionInitEvent()) ;
+      eventBusProvider_.get().fireEvent(new SessionInitEvent());
 
       // disable commands
       SessionInfo sessionInfo = session_.getSessionInfo();
@@ -1278,8 +1278,8 @@ public class Application implements ApplicationEventHandlers
          clientStateUpdaterInstance_.resumeSendingUpdates();
    }
    
-   private final ApplicationView view_ ;
-   private final GlobalDisplay globalDisplay_ ;
+   private final ApplicationView view_;
+   private final GlobalDisplay globalDisplay_;
    private final EventBus events_;
    private final Session session_;
    private final Commands commands_;

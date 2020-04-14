@@ -24,8 +24,8 @@ public class CppCapabilities extends JavaScriptObject
    
    public static final native CppCapabilities createDefault()  /*-{
       var caps = new Object();
-      caps.can_build = false ;
-      caps.can_source_cpp = false ;
+      caps.can_build = false;
+      caps.can_source_cpp = false;
       return caps;
    }-*/;
    

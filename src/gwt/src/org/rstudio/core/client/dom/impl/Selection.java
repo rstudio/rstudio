@@ -25,49 +25,49 @@ class Selection extends JavaScriptObject
    }
 
    public static native Selection get() /*-{
-      return $wnd.getSelection() ;
+      return $wnd.getSelection();
    }-*/;
    
    public static native Selection get(NativeWindow window) /*-{
-      return window.getSelection() ;
+      return window.getSelection();
    }-*/;
    
    public final native int getRangeCount() /*-{
-      return this.rangeCount ;
+      return this.rangeCount;
    }-*/;
    
    public final native Range getRangeAt(int index) /*-{
-      return this.getRangeAt(index) ;
+      return this.getRangeAt(index);
    }-*/;
    
    public final native void removeAllRanges() /*-{
-      return this.removeAllRanges() ;
+      return this.removeAllRanges();
    }-*/;
    
    public final native void addRange(Range range) /*-{
-      return this.addRange(range) ;
+      return this.addRange(range);
    }-*/;
    
    public final native Node getAnchorNode() /*-{
-      return this.anchorNode ;
+      return this.anchorNode;
    }-*/;
    
    public final native int getAnchorOffset() /*-{
-      return this.anchorOffset ;
+      return this.anchorOffset;
    }-*/;
    
    public final native Node getFocusNode() /*-{
-      return this.focusNode ;
+      return this.focusNode;
    }-*/;
    
    public final native int getFocusOffset() /*-{
-      return this.focusOffset ;
+      return this.focusOffset;
    }-*/;
 
    public final void setRange(Range selection)
    {
-      removeAllRanges() ;
+      removeAllRanges();
       if (selection != null)
-         addRange(selection) ;
+         addRange(selection);
    }
 }

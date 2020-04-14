@@ -20,10 +20,10 @@ import com.google.gwt.json.client.JSONValue;
 public interface ServerError
 {
    // method succeeded
-   public static final int SUCCESS = 0 ;
+   public static final int SUCCESS = 0;
    
    // couldn't connect (method did not execute)
-   public static final int CONNECTION = 1 ;
+   public static final int CONNECTION = 1;
    
    // unavailable (method did not execute)
    public static final int UNAVAILABLE = 2;
@@ -32,10 +32,10 @@ public interface ServerError
    public static final int UNAUTHORIZED = 3;
    
    // protocol (method did not execute)
-   public static final int PROTOCOL = 4 ;
+   public static final int PROTOCOL = 4;
    
    // error during processing (method failed in known state)
-   public static final int EXECUTION = 5 ;
+   public static final int EXECUTION = 5;
      
    // rpc transmission errors (method may have executed)
    public static final int TRANSMISSION = 6;
@@ -44,7 +44,7 @@ public interface ServerError
    public static final int LICENSE_USAGE_LIMIT = 7;
  
    // error type
-   int getCode() ;
+   int getCode();
    
    // error message 
    String getMessage();
@@ -53,7 +53,7 @@ public interface ServerError
    String getRedirectUrl();
    
    // underlying error
-   ServerErrorCause getCause() ;
+   ServerErrorCause getCause();
    
    // message to display to the end-user
    String getUserMessage();

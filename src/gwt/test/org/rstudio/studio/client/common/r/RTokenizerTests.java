@@ -30,21 +30,21 @@ public class RTokenizerTests extends GWTTestCase
 
    public void testVoid()
    {
-      RTokenizer rt = new RTokenizer("") ;
-      Assert.assertNull(rt.nextToken()) ;
+      RTokenizer rt = new RTokenizer("");
+      Assert.assertNull(rt.nextToken());
    }
    
    public void testSimple()
    {
-      Verifier v = new Verifier(RToken.ERROR, " ", " ") ;
-      v.verify(RToken.LPAREN, "(") ;
-      v.verify(RToken.RPAREN, ")") ;
-      v.verify(RToken.LBRACKET, "[") ;
-      v.verify(RToken.RBRACKET, "]") ;
-      v.verify(RToken.LBRACE, "{") ;
-      v.verify(RToken.RBRACE, "}") ;
-      v.verify(RToken.COMMA, ",") ;
-      v.verify(RToken.SEMI, ";") ;
+      Verifier v = new Verifier(RToken.ERROR, " ", " ");
+      v.verify(RToken.LPAREN, "(");
+      v.verify(RToken.RPAREN, ")");
+      v.verify(RToken.LBRACKET, "[");
+      v.verify(RToken.RBRACKET, "]");
+      v.verify(RToken.LBRACE, "{");
+      v.verify(RToken.RBRACE, "}");
+      v.verify(RToken.COMMA, ",");
+      v.verify(RToken.SEMI, ";");
    }
    
    public void testError()
@@ -53,108 +53,108 @@ public class RTokenizerTests extends GWTTestCase
 
    public void testComment()
    {
-      Verifier v = new Verifier(RToken.COMMENT, " ", "\n") ;
+      Verifier v = new Verifier(RToken.COMMENT, " ", "\n");
       v.verify("#");
       v.verify("# foo #");
 
-      Verifier v2 = new Verifier(RToken.COMMENT, " ", "\r\n") ;
+      Verifier v2 = new Verifier(RToken.COMMENT, " ", "\r\n");
       v2.verify("#");
       v2.verify("# foo #");
    }
    
    public void testNumbers()
    {
-      Verifier v = new Verifier(RToken.NUMBER, " ", " ") ;
+      Verifier v = new Verifier(RToken.NUMBER, " ", " ");
       v.verify(new String[] {
             "1", "10", "0.1", ".2", "1e-7", "1.2e+7", "2e", "3e+",
             "0x", "0x0", "0xDEADBEEF", "0xcafebad", "1L", "0x10L",
             "1000000L", "1e6L", "1.1L", "1e-3L", "2i", "4.1i", 
             "1e-2i"
-      }) ;
+      });
    }
    
    public void testOperators()
    {
-      Verifier v = new Verifier(RToken.OPER, " ", " ") ;
+      Verifier v = new Verifier(RToken.OPER, " ", " ");
       v.verify(
-            "+ - * / ^ > >= < <= == != ! & | ~ -> <- $ : =".split(" ")) ;
+            "+ - * / ^ > >= < <= == != ! & | ~ -> <- $ : =".split(" "));
    }
    
    public void testUOperators()
    {
-      Verifier v = new Verifier(RToken.UOPER, " ", " ") ;
+      Verifier v = new Verifier(RToken.UOPER, " ", " ");
       v.verify(new String[] {
          "%%", "%test test%"   
-      }) ;
+      });
    }
    
    public void testStrings()
    {
-      Verifier v = new Verifier(RToken.STRING, " ", " ") ;
-      v.verify("\"test\"") ;
-      v.verify("\" '$\t\r\n\\\"\"") ;
-      v.verify("\"\"") ;
-      v.verify("''") ;
-      v.verify("'\"'") ;
-      v.verify("'\\\"'") ;
-      v.verify("'\n'") ;
-      v.verify("'foo bar \\U654'") ;
+      Verifier v = new Verifier(RToken.STRING, " ", " ");
+      v.verify("\"test\"");
+      v.verify("\" '$\t\r\n\\\"\"");
+      v.verify("\"\"");
+      v.verify("''");
+      v.verify("'\"'");
+      v.verify("'\\\"'");
+      v.verify("'\n'");
+      v.verify("'foo bar \\U654'");
    }
    
    public void testIdentifiers()
    {
-      Verifier v = new Verifier(RToken.ID, " ", " ") ;
+      Verifier v = new Verifier(RToken.ID, " ", " ");
       v.verify(new String[] {
             ".", "...", "..1", "..2", "foo", "FOO", "f1",
             "a_b", "ab_", "\u00C1qc1", "`foo`", "`$@!$@#$`", "`a\n\"'b`"
-      }) ;
+      });
    }
    
    public void testWhitespace()
    {
-      Verifier v = new Verifier(RToken.WHITESPACE, "a", "z") ;
-      v.verify("\u00A0") ;
+      Verifier v = new Verifier(RToken.WHITESPACE, "a", "z");
+      v.verify("\u00A0");
       v.verify(new String[] {
          " ", "      ", "\u00A0", "\t\n"  
-      }) ;
+      });
    }
    
    protected void verify(String data,
                          int tokenType,
                          String content)
    {
-      RTokenizer rt = new RTokenizer(data) ;
-      RToken token = rt.nextToken() ;
-      Assert.assertNotNull(token) ;
-      Assert.assertEquals(tokenType, token.getTokenType()) ;
-      Assert.assertEquals(0, token.getOffset()) ;
-      Assert.assertEquals(content.length(), token.getLength()) ;
-      Assert.assertEquals(content, token.getContent()) ;
+      RTokenizer rt = new RTokenizer(data);
+      RToken token = rt.nextToken();
+      Assert.assertNotNull(token);
+      Assert.assertEquals(tokenType, token.getTokenType());
+      Assert.assertEquals(0, token.getOffset());
+      Assert.assertEquals(content.length(), token.getLength());
+      Assert.assertEquals(content, token.getContent());
    }
    
    class Verifier
    {
-      private final int defaultTokenType ;
-      private final String prefix ;
-      private final String suffix ;
+      private final int defaultTokenType;
+      private final String prefix;
+      private final String suffix;
 
       public Verifier(int defaultTokenType, String prefix, String suffix)
       {
-         super() ;
-         this.defaultTokenType = defaultTokenType ;
-         this.prefix = prefix ;
-         this.suffix = suffix ;
+         super();
+         this.defaultTokenType = defaultTokenType;
+         this.prefix = prefix;
+         this.suffix = suffix;
       }
       
       public void verify(String value)
       {
-         verify(defaultTokenType, value) ;
+         verify(defaultTokenType, value);
       }
       
       public void verify(int tokenType, String value)
       {
-         RTokenizer rt = new RTokenizer(prefix + value + suffix) ;
-         RToken t ;
+         RTokenizer rt = new RTokenizer(prefix + value + suffix);
+         RToken t;
          while (null != (t = rt.nextToken()))
          {
             if (t.getOffset() == prefix.length())
@@ -164,23 +164,23 @@ public class RTokenizerTests extends GWTTestCase
                   Assert.fail("Expected token type " + tokenType + ", but got type " + t.getTokenType() +
                                " for token '" + value + "'");
                }
-               Assert.assertEquals(value.length(), t.getLength()) ;
-               Assert.assertEquals(value, t.getContent()) ;
-               return ;
+               Assert.assertEquals(value.length(), t.getLength());
+               Assert.assertEquals(value, t.getContent());
+               return;
             }
          }
-         Assert.fail("Bad prefix?") ;
+         Assert.fail("Bad prefix?");
       }
       
       public void verify(String[] values)
       {
-         verify(defaultTokenType, values) ;
+         verify(defaultTokenType, values);
       }
       
       public void verify(int tokenType, String[] values)
       {
          for (String value : values)
-            verify(tokenType, value) ;
+            verify(tokenType, value);
       }
    }
 }

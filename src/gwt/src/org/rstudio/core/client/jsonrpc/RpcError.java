@@ -23,9 +23,9 @@ public class RpcError extends JavaScriptObject
 { 
    public static final native RpcError create(int code, String message) /*-{
       var error = new Object();
-      error.code = code ;
-      error.message = message ;
-      return error ;
+      error.code = code;
+      error.message = message;
+      return error;
    }-*/;
    
    protected RpcError()
@@ -33,28 +33,28 @@ public class RpcError extends JavaScriptObject
    }
    
    // no error
-   public final static int SUCCESS = 0 ;
+   public final static int SUCCESS = 0;
    
    // couldn't connect to service (method not executed)
-   public final static int CONNECTION_ERROR = 1 ;
+   public final static int CONNECTION_ERROR = 1;
    
    // service is currently unavailable
    public final static int UNAVAILABLE = 2;
    
    // not authorized to access service or method (method not executed)
-   public final static int UNAUTHORIZED = 3 ;
+   public final static int UNAUTHORIZED = 3;
    
    // provided client id is invalid (method not executed)
    public final static int INVALID_CLIENT_ID = 4;
    
    // protocol errors (method not executed)
-   public final static int PARSE_ERROR = 5 ;
-   public final static int INVALID_REQUEST = 6 ;
-   public final static int METHOD_NOT_FOUND = 7 ;
-   public final static int PARAM_MISSING = 8 ;
+   public final static int PARSE_ERROR = 5;
+   public final static int INVALID_REQUEST = 6;
+   public final static int METHOD_NOT_FOUND = 7;
+   public final static int PARAM_MISSING = 8;
    public final static int PARAM_TYPE_MISMATCH = 9;
    public final static int PARAM_INVALID = 10;
-   public final static int METHOD_UNEXEPECTED = 11 ;
+   public final static int METHOD_UNEXEPECTED = 11;
    public final static int INVALID_CLIENT_VERSION = 12;
    public final static int SERVER_OFFLINE = 13;
    public final static int INVALID_SESSION = 14;

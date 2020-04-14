@@ -257,13 +257,13 @@ public class ChooseMirrorDialog extends ModalDialog<CRANMirror>
       Styles styles();
    }
    
-   static Resources RESOURCES = (Resources)GWT.create(Resources.class) ;
+   static Resources RESOURCES = (Resources)GWT.create(Resources.class);
    public static void ensureStylesInjected()
    {
       RESOURCES.styles().ensureInjected();
    }
    
-   private final GlobalDisplay globalDisplay_ ;
+   private final GlobalDisplay globalDisplay_;
    private final Source mirrorSource_;
    private ArrayList<CRANMirror> mirrors_ = null;
    private ListBox listBox_ = null;

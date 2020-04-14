@@ -614,7 +614,7 @@ public class ViewerPresenter extends BasePresenter
             }
          };
    
-   private final Display display_ ;
+   private final Display display_;
    private final Commands commands_;
    private final GlobalDisplay globalDisplay_;
    private final WorkbenchContext workbenchContext_;

@@ -41,11 +41,11 @@ class CompletionList<TItem> extends Composite
    {
       public void onClick(ClickEvent event)
       {
-         Cell cell = grid_.getCellForEvent(event) ;
+         Cell cell = grid_.getCellForEvent(event);
          if (cell != null)
          {
-            int rowClicked = cell.getRowIndex() ;
-            SelectionCommitEvent.fire(CompletionList.this, items_[rowClicked]) ;
+            int rowClicked = cell.getRowIndex();
+            SelectionCommitEvent.fire(CompletionList.this, items_[rowClicked]);
          }
       }
 
@@ -71,10 +71,10 @@ class CompletionList<TItem> extends Composite
             return;
          }
 
-         int mousedOverRow = grid_.getRowForEvent(event) ;
+         int mousedOverRow = grid_.getRowForEvent(event);
          if (mousedOverRow >= 0)
          {
-            setSelectedIndex(mousedOverRow) ;
+            setSelectedIndex(mousedOverRow);
          }
       }
 
@@ -89,150 +89,150 @@ class CompletionList<TItem> extends Composite
    {
       allowVerticalShrink_ = allowVerticalShrink;
       styles_ = ConsoleResources.INSTANCE.consoleStyles();
-      GridEx grid = new GridEx(items.length, 1) ;
+      GridEx grid = new GridEx(items.length, 1);
       for (int i = 0; i < items.length; i++)
       {
          if (asHtml)
-            grid.setHTML(i, 0, items[i].toString()) ;
+            grid.setHTML(i, 0, items[i].toString());
          else
-            grid.setText(i, 0, items[i].toString()) ;
+            grid.setText(i, 0, items[i].toString());
       }
-      grid.addClickHandler(new GridMouseHandler()) ;
-      grid.addMouseMoveHandler(new GridMouseHandler()) ;
-      grid.setStylePrimaryName(styles_.completionGrid()) ;
+      grid.addClickHandler(new GridMouseHandler());
+      grid.addMouseMoveHandler(new GridMouseHandler());
+      grid.setStylePrimaryName(styles_.completionGrid());
       
       FontSizer.applyNormalFontSize(grid);
 
-      scrollPanel_ = new ScrollPanel() ;
+      scrollPanel_ = new ScrollPanel();
       scrollPanel_.getElement().getStyle().setProperty("overflowX", "hidden");
-      scrollPanel_.add(grid) ;
-      scrollPanel_.setHeight((visibleItems * 26) + "px") ;
+      scrollPanel_.add(grid);
+      scrollPanel_.setHeight((visibleItems * 26) + "px");
       
-      initWidget(scrollPanel_) ;
-      grid_ = grid ;
-      items_ = items ;
+      initWidget(scrollPanel_);
+      grid_ = grid;
+      items_ = items;
    }
    
    @Override
    protected void onLoad()
    {
-      super.onLoad() ;
+      super.onLoad();
       int width = grid_.getOffsetWidth() + 20;
       if (maxWidthInPixels_ != null
           && maxWidthInPixels_ > 0
           && maxWidthInPixels_ < width)
          width = maxWidthInPixels_;
-      scrollPanel_.setWidth(width + "px") ;
+      scrollPanel_.setWidth(width + "px");
       if (allowVerticalShrink_ &&
           grid_.getOffsetHeight() < scrollPanel_.getOffsetHeight())
       {
-         scrollPanel_.setHeight("") ;
+         scrollPanel_.setHeight("");
       }
-      grid_.setWidth("100%") ;
-      selectNext() ;
+      grid_.setWidth("100%");
+      selectNext();
    }
 
    public int getItemCount()
    {
       if (grid_ != null)
-         return grid_.getRowCount() ;
+         return grid_.getRowCount();
       else
          return 0;
    }
    
    public TItem getSelectedItem()
    {
-      int index = getSelectedIndex() ;
+      int index = getSelectedIndex();
       if (index < 0)
-         return null ;
-      return items_[index] ;
+         return null;
+      return items_[index];
    }
    
    public boolean selectNext()
    {
-      return moveSelection(1, true) ;
+      return moveSelection(1, true);
    }
    
    public boolean selectPrev()
    {
-      return moveSelection(-1, true) ;
+      return moveSelection(-1, true);
    }
    
    public boolean selectNextPage()
    {
-      return moveSelection(4, false) ;
+      return moveSelection(4, false);
    }
 
    public boolean selectPrevPage()
    {
-      return moveSelection(-4, false) ;
+      return moveSelection(-4, false);
    }
    
    public boolean selectFirst()
    {
-      return moveSelection(-getItemCount(), false) ;
+      return moveSelection(-getItemCount(), false);
    }
    
    public boolean selectLast()
    {
-      return moveSelection(getItemCount(), false) ;
+      return moveSelection(getItemCount(), false);
    }
 
    private boolean moveSelection(int offset, boolean allowWrap)
    {
       if (getItemCount() == 0)
-         return false ;
+         return false;
       
-      int index = getSelectedIndex() + offset ;
+      int index = getSelectedIndex() + offset;
       if (allowWrap)
-         index = (index + getItemCount()) % getItemCount() ;
+         index = (index + getItemCount()) % getItemCount();
       else
-         index = Math.min(getItemCount() - 1, Math.max(0, index)) ;
+         index = Math.min(getItemCount() - 1, Math.max(0, index));
 
-      setSelectedIndex(index) ;
+      setSelectedIndex(index);
       
-      return true ;
+      return true;
    }
 
    public HandlerRegistration addSelectionHandler(
          SelectionHandler<TItem> handler)
    {
-      return addHandler(handler, SelectionEvent.getType()) ;
+      return addHandler(handler, SelectionEvent.getType());
    }
    
    public HandlerRegistration addSelectionCommitHandler(
          SelectionCommitHandler<TItem> handler)
    {
-      return addHandler(handler, SelectionCommitEvent.getType()) ;
+      return addHandler(handler, SelectionCommitEvent.getType());
    }
    
    public HTML getDetailedInfoPane()
    {
-      return null ;
+      return null;
    }
    
    public int getSelectedIndex()
    {
-      return selectedIndex_ ;
+      return selectedIndex_;
    }
    
    public void setSelectedIndex(int index)
    {
       if (selectedIndex_ != index)
       {
-         CellFormatter cf = grid_.getCellFormatter() ;
+         CellFormatter cf = grid_.getCellFormatter();
          if (selectedIndex_ >= 0)
-            cf.removeStyleName(selectedIndex_, 0, styles_.selected()) ;
+            cf.removeStyleName(selectedIndex_, 0, styles_.selected());
          
-         selectedIndex_ = index ;
+         selectedIndex_ = index;
          
          if (index >= 0)
          {
-            cf.addStyleName(selectedIndex_, 0, styles_.selected()) ;
+            cf.addStyleName(selectedIndex_, 0, styles_.selected());
             com.google.gwt.dom.client.Element el =
-                  DomUtils.getTableCell(grid_.getElement(), index, 0) ;
-            DomUtils.ensureVisibleVert(scrollPanel_.getElement(), el, 2) ;
-            SelectionEvent.fire(this, getSelectedItem()) ;
+                  DomUtils.getTableCell(grid_.getElement(), index, 0);
+            DomUtils.ensureVisibleVert(scrollPanel_.getElement(), el, 2);
+            SelectionEvent.fire(this, getSelectedItem());
          }
       }
    }
@@ -243,16 +243,16 @@ class CompletionList<TItem> extends Composite
     */
    public Rectangle getSelectionRect()
    {
-      int index = getSelectedIndex() ;
+      int index = getSelectedIndex();
       if (index < 0)
          return null;
       
       com.google.gwt.dom.client.Element el =
-            DomUtils.getTableCell(grid_.getElement(), index, 0) ;
+            DomUtils.getTableCell(grid_.getElement(), index, 0);
       return new Rectangle(el.getAbsoluteLeft(), 
                       el.getAbsoluteTop(), 
                       el.getOffsetWidth(), 
-                      el.getOffsetHeight()) ;
+                      el.getOffsetHeight());
    }
    
    public void setMaxWidth(int maxWidthInPixels)
@@ -265,11 +265,11 @@ class CompletionList<TItem> extends Composite
       return items_;
    }
 
-   private int selectedIndex_ = -1 ;
+   private int selectedIndex_ = -1;
    
-   private final GridEx grid_ ;
-   private final TItem[] items_ ;
-   private final ScrollPanel scrollPanel_ ;
+   private final GridEx grid_;
+   private final TItem[] items_;
+   private final ScrollPanel scrollPanel_;
    private final ConsoleResources.ConsoleStyles styles_;
    private final boolean allowVerticalShrink_;
    private Integer maxWidthInPixels_;
