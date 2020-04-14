@@ -1,7 +1,7 @@
 /*
  * Rectangle.java
  *
- * Copyright (C) 2009-12 by RStudio, PBC
+ * Copyright (C) 2009-20 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -18,24 +18,23 @@ public class Rectangle
 {
    public Rectangle(int x, int y, int width, int height)
    {
-      super() ;
-      this.x = x ;
-      this.y = y ;
-      this.width = width ;
-      this.height = height ;
+      this.x = x;
+      this.y = y;
+      this.width = width;
+      this.height = height;
    }
 
    // Eclipse auto-generated
    @Override
    public int hashCode()
    {
-      final int prime = 31 ;
-      int result = 1 ;
-      result = prime * result + height ;
-      result = prime * result + width ;
-      result = prime * result + x ;
-      result = prime * result + y ;
-      return result ;
+      final int prime = 31;
+      int result = 1;
+      result = prime * result + height;
+      result = prime * result + width;
+      result = prime * result + x;
+      result = prime * result + y;
+      return result;
    }
 
    // Eclipse auto-generated
@@ -43,21 +42,19 @@ public class Rectangle
    public boolean equals(Object obj)
    {
       if (this == obj)
-         return true ;
+         return true;
       if (obj == null)
-         return false ;
+         return false;
       if (getClass() != obj.getClass())
-         return false ;
-      Rectangle other = (Rectangle) obj ;
+         return false;
+      Rectangle other = (Rectangle) obj;
       if (height != other.height)
-         return false ;
+         return false;
       if (width != other.width)
-         return false ;
+         return false;
       if (x != other.x)
-         return false ;
-      if (y != other.y)
-         return false ;
-      return true ;
+         return false;
+      return y == other.y;
    }
 
    @Override
@@ -69,32 +66,32 @@ public class Rectangle
 
    public int getLeft()
    {
-      return x ;
+      return x;
    }
    
    public int getTop()
    {
-      return y ;
+      return y;
    }
    
    public int getWidth()
    {
-      return width ;
+      return width;
    }
    
    public int getHeight()
    {
-      return height ;
+      return height;
    }
    
    public int getRight()
    {
-      return x + width ;
+      return x + width;
    }
    
    public int getBottom()
    {
-      return y + height ;
+      return y + height;
    }
    
    public Point getLocation()
@@ -104,7 +101,7 @@ public class Rectangle
    
    public Size getSize()
    {
-      return new Size(width, height) ;
+      return new Size(width, height);
    }
    
    public Point getCorner(boolean left, boolean top)

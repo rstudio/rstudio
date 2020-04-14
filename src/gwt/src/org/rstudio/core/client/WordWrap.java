@@ -1,7 +1,7 @@
 /*
  * WordWrap.java
  *
- * Copyright (C) 2009-12 by RStudio, PBC
+ * Copyright (C) 2009-20 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -72,10 +72,8 @@ public class WordWrap
    {
       assert line.indexOf('\n') < 0;
 
-      int origStringPos = 0;
-
       String trimmed = StringUtil.trimLeft(line);
-      origStringPos = line.length() - trimmed.length();
+      int origStringPos = line.length() - trimmed.length();
       line = trimmed;
       line = StringUtil.trimRight(line);
 
@@ -206,7 +204,7 @@ public class WordWrap
 
    protected String indent_ = "";
 
-   private StringBuilder output_ = new StringBuilder();
+   private final StringBuilder output_ = new StringBuilder();
    private int lineLength_;
    private int row_ = 0;
    private final int maxLineLength_;
