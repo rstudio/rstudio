@@ -2817,6 +2817,7 @@ public class Source implements InsertSourceHandler,
    
    public void onEditPresentationSource(final EditPresentationSourceEvent event)
    { 
+      openingForSourceNavigation_ = true;
       openFile(
             event.getSourceFile(), 
             FileTypeRegistry.RPRESENTATION,
@@ -2824,6 +2825,7 @@ public class Source implements InsertSourceHandler,
                @Override
                public void execute(final EditingTarget editor)
                {   
+                  openingForSourceNavigation_ = false;
                   TextEditingTargetPresentationHelper.navigateToSlide(
                                                          editor, 
                                                          event.getSlideIndex());
@@ -2966,10 +2968,15 @@ public class Source implements InsertSourceHandler,
          @Override
          public void execute(FileSystemItem file)
          {
+            // set flag indicating we are opening for a source navigation
+            openingForSourceNavigation_ = position != null || pattern != null;
+            
             openFile(file,
                      fileType,
-                     editingTargetAction);
-                     
+                     (target) -> {
+                        openingForSourceNavigation_ = false;
+                        editingTargetAction.execute(target);
+                     });      
          }
       };
 
@@ -3386,6 +3393,16 @@ public class Source implements InsertSourceHandler,
                @Override
                public void onResponseReceived(SourceDocument document)
                {
+                  // if we are opening for a source navigation then we 
+                  // need to force Rmds into source mode
+                  if (openingForSourceNavigation_) 
+                  {
+                     document.getProperties()._setBoolean(
+                        TextEditingTarget.RMD_VISUAL_MODE, 
+                        false
+                     );
+                  }
+                  
                   dismissProgress.execute();
                   pMruList_.get().add(document.getPath());
                   EditingTarget target = addTab(document, OPEN_INTERACTIVE);
@@ -5026,6 +5043,7 @@ public class Source implements InsertSourceHandler,
    private boolean initialized_;
    private Timer debugSelectionTimer_ = null;
    private boolean tabActivationsAreForUser_ = false;
+   private boolean openingForSourceNavigation_ = false;
    
    private final SourceWindowManager windowManager_;
 
