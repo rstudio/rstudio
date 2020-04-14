@@ -33,7 +33,7 @@ public class EnvironmentObjectAssignedEvent
    
    public EnvironmentObjectAssignedEvent(RObject objectInfo)
    {
-      objectInfo_ = objectInfo ;
+      objectInfo_ = objectInfo;
    }
    
    public RObject getObjectInfo()

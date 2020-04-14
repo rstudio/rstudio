@@ -22,15 +22,15 @@ public class RStringToken extends RToken
                        int length, 
                        boolean wellFormed)
    {
-      super(tokenType, content, offset, length) ;
+      super(tokenType, content, offset, length);
 
-      wellFormed_ = wellFormed ;
+      wellFormed_ = wellFormed;
    }
    
    public boolean isWellFormed()
    {
-      return wellFormed_ ;
+      return wellFormed_;
    }
 
-   private final boolean wellFormed_ ;
+   private final boolean wellFormed_;
 }

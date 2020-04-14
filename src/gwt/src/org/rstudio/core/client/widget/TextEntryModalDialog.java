@@ -145,7 +145,7 @@ public class TextEntryModalDialog extends ModalDialog<String>
          }
       }
 
-      return true ;
+      return true;
    }
 
    public boolean getExtraOption()

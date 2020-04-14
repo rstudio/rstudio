@@ -440,7 +440,7 @@ public class CodeSearchOracle extends SuggestOracle
    
    private final Invalidation searchInvalidation_ = new Invalidation();
    
-   private final CodeSearchServerOperations server_ ;
+   private final CodeSearchServerOperations server_;
    private final WorkbenchContext workbenchContext_;
    private final CodeSearchCommand codeSearch_ = new CodeSearchCommand();
    

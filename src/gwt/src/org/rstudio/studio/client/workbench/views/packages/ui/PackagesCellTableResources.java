@@ -22,7 +22,7 @@ import org.rstudio.core.client.theme.RStudioCellTableStyle;
 public interface PackagesCellTableResources extends CellTable.Resources 
 {
    static PackagesCellTableResources INSTANCE = 
-      (PackagesCellTableResources)GWT.create(PackagesCellTableResources.class) ;
+      (PackagesCellTableResources)GWT.create(PackagesCellTableResources.class);
 
    interface PackagesCellTableStyle extends CellTable.Style
    {

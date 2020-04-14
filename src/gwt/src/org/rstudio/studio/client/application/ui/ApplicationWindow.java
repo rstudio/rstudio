@@ -129,7 +129,7 @@ public class ApplicationWindow extends Composite
    
    public Widget getWidget()
    {
-      return this ;
+      return this;
    }
    
    @Override
@@ -344,8 +344,8 @@ public class ApplicationWindow extends Composite
    }
    
    // main application UI components
-   private LayoutPanel applicationPanel_ ;
-   private ApplicationHeader applicationHeader_ ;
+   private LayoutPanel applicationPanel_;
+   private ApplicationHeader applicationHeader_;
 
    // active serialization progress message
    private ApplicationSerializationProgress activeSerializationProgress_;

@@ -575,7 +575,7 @@ public class Plots extends BasePresenter implements PlotsChangedHandler,
       // rather than size of our current plot frame
       
       if (plotSize_ != null) // first try to use the last size reported
-         return plotSize_ ;
+         return plotSize_;
       else                   // then fallback to frame size
          return view_.getPlotFrameSize();
    }
@@ -618,7 +618,7 @@ public class Plots extends BasePresenter implements PlotsChangedHandler,
    private Size zoomWindowDefaultSize_;
    
    // export plot impl
-   private final ExportPlot exportPlot_ ;
+   private final ExportPlot exportPlot_;
    
    // size of most recently rendered plot
    Size plotSize_ = null;

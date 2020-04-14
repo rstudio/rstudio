@@ -16,5 +16,5 @@ package org.rstudio.studio.client.workbench.views.console.shell;
 
 public interface KeyPressPreviewHandler
 {
-   boolean previewKeyPress(char charCode) ;
+   boolean previewKeyPress(char charCode);
 }

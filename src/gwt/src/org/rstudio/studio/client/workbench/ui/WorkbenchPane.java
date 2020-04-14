@@ -43,7 +43,7 @@ public abstract class WorkbenchPane extends ToolbarPane
 
    public String getTitle()
    {
-      return title_ ;
+      return title_;
    }
 
    // hook for subclasses to be notified right before & after they are selected

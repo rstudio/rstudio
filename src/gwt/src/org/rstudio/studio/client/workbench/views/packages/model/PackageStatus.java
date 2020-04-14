@@ -30,10 +30,10 @@ public class PackageStatus extends JavaScriptObject
                                                    String lib,
                                                    boolean loaded) /*-{
       var status = new Object();
-      status.name = name ;
-      status.lib = lib ;
+      status.name = name;
+      status.lib = lib;
       status.loaded = loaded;
-      return status ;
+      return status;
    }-*/;
    
    public final native String getName() /*-{

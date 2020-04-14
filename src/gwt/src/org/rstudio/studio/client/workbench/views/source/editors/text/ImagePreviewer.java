@@ -580,7 +580,7 @@ public class ImagePreviewer
    private final DocUpdateSentinel sentinel_;
    private final UserPrefs prefs_;
 
-   private static final String LINE_WIDGET_TYPE = "image-preview" ;
+   private static final String LINE_WIDGET_TYPE = "image-preview";
    private static int IMAGE_ID = 0;
    
    interface Styles extends CssResource

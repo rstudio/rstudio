@@ -61,7 +61,7 @@ class RemoteServerError implements ServerError
    
    public String getMessage() 
    {
-      return message_ ;
+      return message_;
    }
    
    public String getRedirectUrl()
@@ -71,7 +71,7 @@ class RemoteServerError implements ServerError
    
    public ServerErrorCause getCause()
    {
-      return cause_ ;
+      return cause_;
    }
    
    public String getUserMessage()
@@ -79,7 +79,7 @@ class RemoteServerError implements ServerError
       if (cause_ != null)
          return cause_.getMessage();
       else
-         return message_ ;
+         return message_;
    }
 
    @Override
@@ -128,9 +128,9 @@ class RemoteServerError implements ServerError
       }
    }
    
-   private int code_ ;
-   private String message_ ;
+   private int code_;
+   private String message_;
    private String redirectUrl_;
-   private ServerErrorCause cause_ ;
+   private ServerErrorCause cause_;
    private JSONValue clientInfo_;
 }

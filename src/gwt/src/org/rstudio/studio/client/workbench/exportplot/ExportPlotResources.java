@@ -67,6 +67,6 @@ public interface ExportPlotResources extends ClientBundle
    ImageResource rightMouse2x();
    
    public static ExportPlotResources INSTANCE = 
-      (ExportPlotResources)GWT.create(ExportPlotResources.class) ;
+      (ExportPlotResources)GWT.create(ExportPlotResources.class);
   
 }

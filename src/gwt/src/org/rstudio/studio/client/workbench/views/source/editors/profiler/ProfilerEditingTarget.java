@@ -535,7 +535,7 @@ public class ProfilerEditingTarget implements EditingTarget,
          @Override
          public void generatePublishHtml(CommandWithArg<String> onComplete)
          {
-            onComplete.execute(htmlLocalPath_) ;
+            onComplete.execute(htmlLocalPath_);
          }
 
          @Override

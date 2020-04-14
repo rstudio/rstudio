@@ -57,15 +57,15 @@ public class WindowEx extends JavaScriptObject
    }-*/;
 
    public final native void print() /*-{
-      this.print() ;
+      this.print();
    }-*/;
 
    public final native void back() /*-{
-      this.history.back() ;
+      this.history.back();
    }-*/;
    
    public final native void forward() /*-{
-      this.history.forward() ;
+      this.history.forward();
    }-*/;
    
    public final native void removeSelection() /*-{
@@ -88,7 +88,7 @@ public class WindowEx extends JavaScriptObject
    }-*/;
    
    public final native String getLocationHref() /*-{
-      return this.location.href ;
+      return this.location.href;
    }-*/;
    
    public final native boolean isSecure() /*-{
@@ -100,11 +100,11 @@ public class WindowEx extends JavaScriptObject
    }-*/;
   
    public final native void setLocationHref(String url) /*-{
-      this.location.href = url ;
+      this.location.href = url;
    }-*/;
 
    public final native void replaceLocationHref(String url) /*-{
-      this.location.replace(url) ;
+      this.location.replace(url);
    }-*/;
    
    public final native void replaceHistoryState(String url) /*-{

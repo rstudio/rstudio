@@ -105,7 +105,7 @@ public class ExportPlotSizeEditor extends Composite
       }
       else
       {
-         optionsPanel = topPanel ;
+         optionsPanel = topPanel;
          optionsPanel.setStylePrimaryName(
                                  resources.styles().horizontalSizeOptions());
          widthAndHeightPanel = topPanel;
@@ -507,7 +507,7 @@ public class ExportPlotSizeEditor extends Composite
    private final Focusable initialFocusWidget_;
      
    private int lastWidth_;
-   private int lastHeight_ ;
+   private int lastHeight_;
   
    private boolean settingDimenensionInProgress_ = false;
    

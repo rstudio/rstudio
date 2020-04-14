@@ -290,7 +290,7 @@ public class CppCompletionManager implements CompletionManager
          return false;
       
       // check for no selection
-      InputEditorSelection selection = docDisplay_.getSelection() ;
+      InputEditorSelection selection = docDisplay_.getSelection();
       if (selection == null)
          return false;
       
@@ -449,7 +449,7 @@ public class CppCompletionManager implements CompletionManager
    private final CppCompletionContext completionContext_;
    private CppCompletionRequest request_;
    private SuggestionTimer suggestionTimer_;
-   private final InitCompletionFilter initFilter_ ;
+   private final InitCompletionFilter initFilter_;
    private final Invalidation completionRequestInvalidation_ = new Invalidation();
    private final SnippetHelper snippets_;
    

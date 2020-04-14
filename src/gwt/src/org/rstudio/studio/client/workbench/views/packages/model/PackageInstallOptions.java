@@ -29,9 +29,9 @@ public class PackageInstallOptions extends JavaScriptObject
                                           boolean installDependencies) /*-{
       var options = new Object();
       options.installFromRepository = installFromRepository;
-      options.libraryPath = libraryPath ;
-      options.installDependencies = installDependencies ;
-      return options ;
+      options.libraryPath = libraryPath;
+      options.installDependencies = installDependencies;
+      return options;
    }-*/;
 
 

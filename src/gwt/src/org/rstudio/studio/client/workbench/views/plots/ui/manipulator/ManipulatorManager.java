@@ -179,7 +179,7 @@ public class ManipulatorManager
                manipulatorPopup_.focusFirstControl();
             }
             
-         }) ;
+         });
          
          
       }

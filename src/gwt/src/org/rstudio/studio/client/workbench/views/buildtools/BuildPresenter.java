@@ -503,7 +503,7 @@ public class BuildPresenter extends BasePresenter
    private final UserPrefs userPrefs_;
    private final BuildServerOperations server_;
    private FilesServerOperations fileServer_;
-   private final Display view_ ; 
+   private final Display view_;
    private final EventBus eventBus_;
    private final Session session_;
    private final DependencyManager dependencyManager_;

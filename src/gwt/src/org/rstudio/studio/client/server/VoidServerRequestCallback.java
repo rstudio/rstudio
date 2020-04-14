@@ -26,7 +26,7 @@ public class VoidServerRequestCallback extends ServerRequestCallback<Void>
    
    public VoidServerRequestCallback(ProgressIndicator progress)
    {
-      progress_ = progress ;
+      progress_ = progress;
    }
    
    public void onResponseReceived(Void response)
@@ -67,5 +67,5 @@ public class VoidServerRequestCallback extends ServerRequestCallback<Void>
       
    }
    
-   private ProgressIndicator progress_ ;
+   private ProgressIndicator progress_;
 }

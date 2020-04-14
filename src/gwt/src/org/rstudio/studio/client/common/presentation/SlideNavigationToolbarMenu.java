@@ -166,5 +166,5 @@ public class SlideNavigationToolbarMenu
    private SlidesPopupMenu slidesMenu_ = new SlidesPopupMenu();
    private Widget menuWidget_;
    private Widget separatorWidget_ = null;
-   private final int heightOffset_ ;
+   private final int heightOffset_;
 }
