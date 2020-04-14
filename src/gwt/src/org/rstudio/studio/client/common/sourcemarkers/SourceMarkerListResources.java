@@ -61,6 +61,6 @@ public interface SourceMarkerListResources extends ClientBundle
    ImageResource logContextButton2x();
     
    public static SourceMarkerListResources INSTANCE = 
-      (SourceMarkerListResources)GWT.create(SourceMarkerListResources.class) ;
+      (SourceMarkerListResources)GWT.create(SourceMarkerListResources.class);
   
 }

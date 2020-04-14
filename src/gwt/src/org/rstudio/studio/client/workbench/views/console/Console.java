@@ -167,7 +167,7 @@ public class Console
 
    public Display getDisplay()
    {
-      return view_ ;
+      return view_;
    }
 
    private final DelayFadeInHelper interruptFadeInHelper_;

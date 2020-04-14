@@ -22,7 +22,6 @@ import org.rstudio.core.client.widget.IsHideableWidget;
 import org.rstudio.studio.client.panmirror.PanmirrorCode;
 
 import com.google.gwt.dom.client.Style.Unit;
-import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.LayoutPanel;
 
 // container that holds a text editor, but which also supports juxtoposing
@@ -105,16 +104,6 @@ public class TextEditorContainer extends LayoutPanel implements CanFocus
       {
          return false;
       }
-   }
-   
-   public IsHideableWidget getActiveWidget()
-   {
-      for (int i=0; i<widgets_.size(); i++) {
-         IsHideableWidget widget = widgets_.get(i);
-         if (widget.isVisible()) 
-            return widget;
-      }
-      return null;
    }
    
    public void activateEditor()

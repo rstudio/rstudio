@@ -27,7 +27,6 @@ import {
 } from '../../api/pandoc_attr';
 import { EditorUI } from '../../api/ui';
 import { Extension } from '../../api/extension';
-import { EditorOptions } from '../../api/options';
 
 import { linkCommand, removeLinkCommand } from './link-command';
 import { linkInputRules, linkPasteHandler } from './link-auto';

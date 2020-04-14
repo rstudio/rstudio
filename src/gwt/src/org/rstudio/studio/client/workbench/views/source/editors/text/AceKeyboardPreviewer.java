@@ -26,8 +26,8 @@ public class AceKeyboardPreviewer
 {
    public interface Handler 
    {
-      boolean previewKeyDown(JavaScriptObject data, NativeEvent event) ;
-      boolean previewKeyPress(JavaScriptObject data, char charCode) ;
+      boolean previewKeyDown(JavaScriptObject data, NativeEvent event);
+      boolean previewKeyPress(JavaScriptObject data, char charCode);
    }
    
    // NOTE: The 'previewKeyDown()' handler exposed here wraps a 'true' DOM

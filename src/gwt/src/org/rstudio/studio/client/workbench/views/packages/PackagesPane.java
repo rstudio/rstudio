@@ -101,7 +101,7 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
    @Override
    public void setObserver(PackagesDisplayObserver observer)
    {
-      observer_ = observer ;  
+      observer_ = observer;
    }
    
    @Override
@@ -144,7 +144,7 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
    @Override
    public void setPackageStatus(PackageStatus status)
    {
-      int row = packageRow(status.getName(), status.getLib()) ;
+      int row = packageRow(status.getName(), status.getLib());
       
       if (row != -1)
       {
@@ -182,11 +182,11 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
          if (packageInfo.getName() == packageName &&
              packageInfo.getLibrary() == packageLib)
          {
-            row = i ;
+            row = i;
             break;
          }
       }
-      return row ;
+      return row;
    }
    
    @Override
@@ -686,7 +686,7 @@ public class PackagesPane extends WorkbenchPane implements Packages.Display
    private DataGrid<PackageInfo> packagesTable_;
    private ListDataProvider<PackageInfo> packagesDataProvider_;
    private SearchWidget searchWidget_;
-   private PackagesDisplayObserver observer_ ;
+   private PackagesDisplayObserver observer_;
    
    private ToolbarMenuButton packratMenuButton_;
    private ToolbarMenuButton renvMenuButton_;

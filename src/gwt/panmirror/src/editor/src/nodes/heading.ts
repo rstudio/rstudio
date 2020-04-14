@@ -59,7 +59,7 @@ const extension = (pandocExtensions: PandocExtensions): Extension => {
           ],
           toDOM(node) {
             const attr = headingAttr ? pandocAttrToDomAttr(node.attrs) : {};
-            attr.class = (attr.class || '').concat(' pm-heading pm-show-text-focus');
+            attr.class = (attr.class || '').concat(' pm-heading');
             return [
               'h' + node.attrs.level,
               {
@@ -76,7 +76,9 @@ const extension = (pandocExtensions: PandocExtensions): Extension => {
           type: (schema: Schema) => schema.nodes.heading,
           // Note that this value is linked to the outline offset defined in heading-styles.css,
           // so if you change it here, you need to change it there as well
-          offset: () => 6
+          offset: () => 6,
+          // ensure tht we get the full text-focus treatment even at startup
+          classes: () => ['pm-text-focused','pm-focus-outline-color', 'pm-show-text-focus']
         }),
 
         pandoc: {

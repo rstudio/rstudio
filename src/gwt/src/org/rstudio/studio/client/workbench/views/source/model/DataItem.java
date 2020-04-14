@@ -42,7 +42,7 @@ public class DataItem extends JavaScriptObject
       dataItem.variables = variables;
       dataItem.contentUrl = contentUrl;
       dataItem.preview = preview;
-      return dataItem ;
+      return dataItem;
    }-*/;
 
    public final String getURI()

@@ -157,6 +157,6 @@ public class WindowFrameButton extends FocusWidget
    private boolean maximized_;
    private boolean exclusive_;
 
-   private Command clickHandler_ ;
+   private Command clickHandler_;
    private final HandlerRegistrations releaseOnUnload_ = new HandlerRegistrations();
 }

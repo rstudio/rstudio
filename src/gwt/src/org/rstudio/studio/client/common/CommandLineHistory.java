@@ -86,8 +86,8 @@ public class CommandLineHistory
       return Math.max(0, Math.min(pos, history_.size()));
    }
 
-   private final ArrayList<String> history_ = new ArrayList<String>() ;
-   private int historyPos_ ;
+   private final ArrayList<String> history_ = new ArrayList<String>();
+   private int historyPos_;
    // If you start typing a command, then go up in history, then go down,
    // then what you had previously typed should still be there. This is
    // that value--it is loaded/saved whenever history navigation takes you

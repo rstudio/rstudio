@@ -320,9 +320,9 @@ public class SavePlotAsPdfDialog extends ModalDialogBase
       public double getWidth() { return width_; }
       public double getHeight() { return height_; }
        
-      private final String name_ ;
-      private final double width_ ;
-      private final double height_ ;
+      private final String name_;
+      private final double width_;
+      private final double height_;
    }
    
    private SavePlotAsHandler createSavePlotAsHandler() 
@@ -551,9 +551,9 @@ public class SavePlotAsPdfDialog extends ModalDialogBase
    private TextBox fileNameTextBox_;
    private FileSystemItem directory_;
    private TextBox directoryTextBox_;
-   private PaperSizeEditor paperSizeEditor_ ;
+   private PaperSizeEditor paperSizeEditor_;
   
-   private RadioButton portraitRadioButton_ ;
+   private RadioButton portraitRadioButton_;
    private RadioButton landscapeRadioButton_;
    
    private CheckBox chkCairoPdf_;

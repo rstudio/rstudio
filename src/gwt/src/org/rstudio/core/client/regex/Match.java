@@ -21,12 +21,12 @@ public class Match extends JavaScriptObject
    protected Match() {}
    
    public final native String getValue() /*-{
-      return this.value ;
-   }-*/ ;
+      return this.value;
+   }-*/;
 
    public final native int getIndex() /*-{
-      return this.index ;
-   }-*/ ;
+      return this.index;
+   }-*/;
 
    public final native Match nextMatch() /*-{
       return @org.rstudio.core.client.regex.Match::doNextMatch(Lorg/rstudio/core/client/regex/Pattern;Ljava/lang/String;I)(this.pattern, this.input, this.next);

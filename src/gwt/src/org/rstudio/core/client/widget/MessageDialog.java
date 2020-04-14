@@ -154,7 +154,7 @@ public class MessageDialog extends ModalDialogBase
       focusOkButton();
    }
 
-   private int type_ ;
-   private Widget messageWidget_ ;
-   private ProgressIndicator progress_ ;
+   private int type_;
+   private Widget messageWidget_;
+   private ProgressIndicator progress_;
 }

@@ -45,6 +45,6 @@ public interface CppCompletionResources extends ClientBundle
    ImageResource downArrow2x();
    
    public static CppCompletionResources INSTANCE = 
-      (CppCompletionResources)GWT.create(CppCompletionResources.class) ;
+      (CppCompletionResources)GWT.create(CppCompletionResources.class);
   
 }

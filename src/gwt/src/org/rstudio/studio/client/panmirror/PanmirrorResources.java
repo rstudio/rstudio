@@ -29,7 +29,7 @@ public interface PanmirrorResources extends ClientBundle
    @Source("PanmirrorStyles.css")
    Styles styles();
    
-   public static PanmirrorResources INSTANCE = (PanmirrorResources)GWT.create(PanmirrorResources.class) ;
+   public static PanmirrorResources INSTANCE = (PanmirrorResources)GWT.create(PanmirrorResources.class);
    
 
    public static void ensureStylesInjected()

@@ -19,7 +19,7 @@ import com.google.gwt.user.client.ui.Widget;
 
 public interface SatelliteApplicationView
 {
-   Widget getWidget() ;
+   Widget getWidget();
    
    void show(JavaScriptObject params);
    void reactivate(JavaScriptObject params);

@@ -41,5 +41,5 @@ public interface CodeSearchResources extends ClientBundle
    ImageResource gotoFunction2x();
    
    public static CodeSearchResources INSTANCE = 
-      (CodeSearchResources)GWT.create(CodeSearchResources.class) ;
+      (CodeSearchResources)GWT.create(CodeSearchResources.class);
 }

@@ -193,6 +193,9 @@ export class Editor {
   // event sinks
   private readonly events: ReadonlyMap<string, Event>;
 
+  // create the editor -- note that the markdown argument does not substitute for calling
+  // setMarkdown, rather it's used to read the format comment to determine how to 
+  // initialize the various editor features
   public static async create(
     parent: HTMLElement,
     context: EditorContext,
@@ -202,7 +205,7 @@ export class Editor {
     // provide default options
     options = {
       autoFocus: false,
-      spellCheck: true,
+      spellCheck: false,
       codemirror: true,
       braceMatching: true,
       rmdCodeChunks: false,
@@ -227,11 +230,6 @@ export class Editor {
 
     // create editor
     const editor = new Editor(parent, context, options, pandocFmt, pandocCapabilities);
-
-    // set initial markdown if specified
-    if (markdown) {
-      await editor.setMarkdown(markdown, false);
-    }
 
     // return editor
     return Promise.resolve(editor);
@@ -472,6 +470,10 @@ export class Editor {
     this.parent.classList.toggle('pm-dark-mode', !!theme.darkMode);
     // apply the rest of the theme
     applyTheme(theme);
+  }
+
+  public useFixedPadding(fixed: boolean) {
+    this.parent.classList.toggle('pm-fixed-padding', fixed);
   }
 
   public setKeybindings(keyBindings: EditorKeybindings) {

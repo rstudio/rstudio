@@ -1103,8 +1103,8 @@ public class TextEditingTarget implements
    @Override
    public void navigateToPosition(SourcePosition position, 
                                   boolean recordCurrent)
-   {
-      visualMode_.deactivate(() -> {
+   { 
+      ensureTextEditorActive(() -> {
          docDisplay_.navigateToPosition(position, recordCurrent);
       });
    }
@@ -1114,7 +1114,7 @@ public class TextEditingTarget implements
                                   boolean recordCurrent,
                                   boolean highlightLine)
    {
-      visualMode_.deactivate(() -> {
+      ensureTextEditorActive(() -> {
          docDisplay_.navigateToPosition(position, recordCurrent, highlightLine);
       });  
    }
@@ -2023,7 +2023,7 @@ public class TextEditingTarget implements
          {
             public void execute()
             {
-               visualMode_.deactivate(() -> {
+               ensureTextEditorActive(() -> {
                   docUpdateSentinel_.changeFileType(
                         type.getTypeId(),
                         new SaveProgressIndicator(null, type, null));  
@@ -3175,7 +3175,7 @@ public class TextEditingTarget implements
    @Handler
    void onCheckSpelling()
    {  
-      visualMode_.deactivate(() -> {
+      ensureTextEditorActive(() -> {
          spelling_.checkSpelling();
       }); 
    }
@@ -5664,8 +5664,8 @@ public class TextEditingTarget implements
          public void execute()
          {
             String previewURL = "help/preview?file=";
-            previewURL += URL.encodeQueryString(docUpdateSentinel_.getPath());   
-            events_.fireEvent(new ShowHelpEvent(previewURL)) ; 
+            previewURL += URL.encodeQueryString(docUpdateSentinel_.getPath());
+            events_.fireEvent(new ShowHelpEvent(previewURL));
          }
       });
    }

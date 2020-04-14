@@ -43,11 +43,6 @@ public class BrowseCap
 
    public static final BrowseCap INSTANCE = GWT.create(BrowseCap.class);
 
-   public boolean suppressBraceHighlighting()
-   {
-      return false;
-   }
-
    public boolean aceVerticalScrollBarIssue()
    {
       return false;
@@ -72,12 +67,7 @@ public class BrowseCap
    {
       return isUserAgent("trident");
    }
-    
-   public boolean isInternetExplorer10()
-   {
-      return false;
-   }
-   
+
    public static boolean hasMetaKey()
    {
       return isMacintosh();

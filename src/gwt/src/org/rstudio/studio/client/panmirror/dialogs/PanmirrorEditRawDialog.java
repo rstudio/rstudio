@@ -21,7 +21,6 @@ import com.google.gwt.aria.client.Roles;
 
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.StringUtil;
-import org.rstudio.core.client.widget.FormTextArea;
 import org.rstudio.core.client.widget.ModalDialog;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ThemedButton;

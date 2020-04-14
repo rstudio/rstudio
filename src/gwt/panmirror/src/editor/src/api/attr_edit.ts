@@ -25,6 +25,7 @@ export interface AttrEditOptions {
    tags?: (node: ProsemirrorNode) => string[];
    editFn?: (ui: EditorUI) => CommandFn;
    offset?: () => number;
+   classes?: () => string[];
 }
 
 

@@ -116,6 +116,6 @@ public abstract class MiniDialogPopupPanel extends DecoratedPopupPanel
    }
    
    private VerticalPanel verticalPanel_;
-   private Label captionLabel_ ;
+   private Label captionLabel_;
    private FocusContext focusContext_ = new FocusContext();
 }

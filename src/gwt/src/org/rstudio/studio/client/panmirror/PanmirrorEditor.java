@@ -70,6 +70,8 @@ public class PanmirrorEditor
 
    public native void applyTheme(PanmirrorTheme theme);
    
+   public native void useFixedPadding(boolean fixed);
+   
    public native void setKeybindings(PanmirrorKeybindings keybindings);
    
    public native PanmirrorPandocFormat getPandocFormat();

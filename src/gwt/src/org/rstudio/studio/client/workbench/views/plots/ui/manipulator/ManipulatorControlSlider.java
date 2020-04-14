@@ -130,8 +130,8 @@ public class ManipulatorControlSlider extends ManipulatorControl
    private static boolean hasDecimals(double value)
    {
       double truncatedValue = (double)(Math.round(value));
-      return value != truncatedValue;       
+      return value != truncatedValue;
    }
    
-   private SliderBar sliderBar_ ;
+   private SliderBar sliderBar_;
 }

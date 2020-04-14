@@ -13,10 +13,10 @@
  *
  */
 
-import { Node as ProsemirrorNode, Schema } from 'prosemirror-model';
+import { Node as ProsemirrorNode, Schema, NodeType } from 'prosemirror-model';
 import { EditorState, Transaction } from 'prosemirror-state';
 import { EditorView } from 'prosemirror-view';
-import { setTextSelection } from 'prosemirror-utils';
+import { setTextSelection, findParentNodeOfType } from 'prosemirror-utils';
 
 import { Extension } from '../../api/extension';
 import { EditorOptions } from '../../api/options';
@@ -92,7 +92,7 @@ const extension = (
           codeBlockFilter: {
             preprocessor: (markdown: string) => {
               const md = markdown.replace(
-                /^(```+\s*\{)([a-zA-Z0-9_]+( *[ ,].*?)?)(\}\s*)([\W\w]*?)(?:```)(?:[ \t]*)$/gm,
+                /^([\t >]*```+\s*\{)([a-zA-Z0-9_]+( *[ ,].*?)?)(\}\s*)([\W\w]*?)(?:```)(?:[ \t]*)$/gm,
                 (_match: string, p1: string, p2: string, _p3: string, p4: string, p5: string, p6: string) => {
                   return p1 + '.' + kRmdCodeChunkClass + '}\n' + p2 + '\n' + p5 + '```\n';
                 },
@@ -143,8 +143,15 @@ class RmdChunkCommand extends ProsemirrorCommand {
           return false;
         }
 
-        // only allow inserting at the top level
-        if (!selectionIsBodyTopLevel(state.selection)) {
+        // must either be at the body top level, within a list item, or within a 
+        // blockquote (and never within a table)
+        const within = (nodeType: NodeType) => !!findParentNodeOfType(nodeType)(state.selection);
+        if (within(schema.nodes.table)) {
+          return false;
+        }        
+        if (!selectionIsBodyTopLevel(state.selection) && 
+            !within(schema.nodes.list_item) &&
+            !within(schema.nodes.blockquote)) {
           return false;
         }
 
@@ -155,7 +162,7 @@ class RmdChunkCommand extends ProsemirrorCommand {
           const rmdText = schema.text(kRmdText);
           const rmdNode = schema.nodes.rmd_chunk.create({}, rmdText);
           tr.replaceSelectionWith(rmdNode);
-          setTextSelection(tr.selection.from - 2)(tr);
+          setTextSelection(tr.mapping.map(state.selection.from) - 1)(tr);
           dispatch(tr);
         }
 
