@@ -226,7 +226,6 @@ public class Source implements InsertSourceHandler,
       void setSource(Source source);
       void generateName(boolean first);
       String getName();
-
       void addTab(Widget widget,
                   FileIcon icon,
                   String docId,
@@ -360,6 +359,7 @@ public class Source implements InsertSourceHandler,
       binder.bind(commands, this);
       view.setSource(this);
       views_.add(view);
+      views_.getActiveDisplay().generateName(true);
       server_ = server;
       editingTargetSource_ = editingTargetSource;
       fileTypeRegistry_ = fileTypeRegistry;
@@ -2802,6 +2802,12 @@ public class Source implements InsertSourceHandler,
       return views_;
    }
 
+   private Display getViewByDocId(String docId)
+   {
+      final EditingTarget target = getEditingTargetForId(docId);
+      return views_.getDisplayByEditor(target);
+
+   }
    public ArrayList<Widget> getViewsAsWidgets()
    {
       ArrayList<Widget> result = new ArrayList<Widget>();
@@ -2810,6 +2816,11 @@ public class Source implements InsertSourceHandler,
       return result;
    }
    
+   public void activateView(Display display)
+   {
+      //display.focus();
+   }
+
    private void revertActiveDocument()
    {
       if (activeEditor_ == null)

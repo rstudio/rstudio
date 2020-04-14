@@ -76,7 +76,8 @@ public class SourcePane extends LazyPanel implements Display,
                                                      BeforeShowCallback,
                                                      RequiresVisibilityChanged,
                                                      EnsureVisibleSourceWindowEvent.Handler,
-                                                     MaximizeSourceWindowEvent.Handler
+                                                     MaximizeSourceWindowEvent.Handler,
+                                                     DocWindowChangedEvent.Handler
 {
    public interface Binder extends CommandBinder<Commands, SourcePane> {}
 
@@ -89,6 +90,7 @@ public class SourcePane extends LazyPanel implements Display,
       events_ = RStudioGinjector.INSTANCE.getEventBus();
       events_.addHandler(MaximizeSourceWindowEvent.TYPE, this);
       events_.addHandler(EnsureVisibleSourceWindowEvent.TYPE, this);
+      events_.addHandler(DocWindowChangedEvent.TYPE, this);
 
       setVisible(true);
       ensureWidget();
@@ -157,7 +159,6 @@ public class SourcePane extends LazyPanel implements Display,
    {
       return name_;
    }
-
 
    @Override
    public void generateName(boolean first)
@@ -364,6 +365,11 @@ public class SourcePane extends LazyPanel implements Display,
          events_.fireEvent(new EnsureVisibleEvent());
          events_.fireEvent(new EnsureHeightEvent(EnsureHeightEvent.NORMAL));
       }
+   }
+
+   @Override
+   public void onDocWindowChanged(final DocWindowChangedEvent e)
+   {
    }
 
    public void onResize()

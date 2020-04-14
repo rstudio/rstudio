@@ -826,10 +826,8 @@ public class PaneManager
       assert source_.getViews().size() > 0;
       for (int i = 0; i < source_.getViews().size(); i++)
       {
-         String frameName = Source.COLUMN_PREFIX;
-         if (i > 0)
-            frameName += Integer.toString(i);
-         panesByName_.put(frameName, createSource(frameName, source_.getViewByIndex(i)));
+         Source.Display display = source_.getViewByIndex(i);
+         panesByName_.put(display.getName(), createSource(display.getName(), display));
       }
 
       Triad<LogicalWindow, WorkbenchTabPanel, MinimizedModuleTabLayoutPanel> ts1 = createTabSet(
