@@ -23,3 +23,7 @@ You should not generate both a `.sql` and specific database extension types for 
 ### Dev Schema Updates
 
 In order to run any new schemas, you simply need to restart `rstudio-server` to ensure that any unapplied schemas are applied. Note that there is currently no way to rollback successful schema updates, so you are responsible for backing up your existing data if that is important to you.
+
+### SQL Naming
+
+Within your schema files, make sure to use `snake_case` naming for all table and column names. There are several reasons for preferring this. For more information, see https://github.com/rstudio/rstudio/issues/65899.

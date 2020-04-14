@@ -476,7 +476,7 @@ Error SchemaUpdater::databaseSchemaVersion(std::string* pVersion)
    {
       // no schema version present - add the table to the database so it is available
       // for updating whenever migrations occur
-      error = connection_->executeStr(std::string("CREATE TABLE \"") + SCHEMA_TABLE + "\" (CurrentVersion text)");
+      error = connection_->executeStr(std::string("CREATE TABLE \"") + SCHEMA_TABLE + "\" (current_version text)");
       if (error)
          return error;
 
@@ -490,7 +490,7 @@ Error SchemaUpdater::databaseSchemaVersion(std::string* pVersion)
       return Success();
    }
 
-   Query query = connection_->query(std::string("SELECT CurrentVersion FROM \"") + SCHEMA_TABLE + "\"")
+   Query query = connection_->query(std::string("SELECT current_version FROM \"") + SCHEMA_TABLE + "\"")
          .withOutput(currentSchemaVersion);
 
    error = connection_->execute(query);
@@ -619,7 +619,7 @@ Error SchemaUpdater::updateToVersion(const std::string& maxVersion)
 
       // record the new version in the version table
       std::string version = migrationFile.getStem();
-      Query updateVersionQuery = connection_->query(std::string("UPDATE \"") + SCHEMA_TABLE + "\" SET CurrentVersion = (:ver)")
+      Query updateVersionQuery = connection_->query(std::string("UPDATE \"") + SCHEMA_TABLE + "\" SET current_version = (:ver)")
             .withInput(version);
       error = connection_->execute(updateVersionQuery);
       if (error)
