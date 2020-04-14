@@ -92,7 +92,7 @@ const extension = (
           codeBlockFilter: {
             preprocessor: (markdown: string) => {
               const md = markdown.replace(
-                /^(```+\s*\{)([a-zA-Z0-9_]+( *[ ,].*?)?)(\}\s*)([\W\w]*?)(?:```)(?:[ \t]*)$/gm,
+                /^([\t >]*```+\s*\{)([a-zA-Z0-9_]+( *[ ,].*?)?)(\}\s*)([\W\w]*?)(?:```)(?:[ \t]*)$/gm,
                 (_match: string, p1: string, p2: string, _p3: string, p4: string, p5: string, p6: string) => {
                   return p1 + '.' + kRmdCodeChunkClass + '}\n' + p2 + '\n' + p5 + '```\n';
                 },
