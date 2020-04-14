@@ -23,7 +23,7 @@ import ClipboardJS from 'clipboard';
 import { getMarkRange, getMarkAttrs } from '../../api/mark';
 import { LinkProps, EditorUI } from '../../api/ui';
 import { CommandFn } from '../../api/command';
-import { kRestoreLocationTransaction, kDecoratorDependencyTransaction } from '../../api/transaction';
+import { kRestoreLocationTransaction } from '../../api/transaction';
 
 import { navigateToId, navigateToHeading } from '../../api/navigation';
 import { selectionIsImageNode } from '../../api/selection';
@@ -55,11 +55,6 @@ export class LinkPopupPlugin extends Plugin<DecorationSet> {
           // if this a restore location then return empty
           if (tr.getMeta(kRestoreLocationTransaction)) {
             return DecorationSet.empty;
-          }
-
-          // ignore decorator dependency transactions (view not yet populated)
-          if (tr.getMeta(kDecoratorDependencyTransaction)) {
-            return old.map(tr.mapping, tr.doc);
           }
 
           // if the selection is contained within a link then show the popup

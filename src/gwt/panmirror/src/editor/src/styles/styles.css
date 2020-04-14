@@ -13,8 +13,12 @@
  *
  */
 
+.pm-editing-root-node {
+  padding: 0 10px;
+}
+
 .pm-content {
-  padding: 0 8px;
+  position: relative;
 }
 
 .pm-content p {

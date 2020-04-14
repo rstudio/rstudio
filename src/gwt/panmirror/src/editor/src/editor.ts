@@ -49,8 +49,6 @@ import {
   appendMarkTransactionsPlugin,
   kFixupTransaction,
   kAddToHistoryTransaction,
-  kDecoratorDependencyTransaction,
-  kDecoratorRedrawTransaction,
 } from './api/transaction';
 import { EditorOutline } from './api/outline';
 import { EditingLocation, getEditingLocation, restoreEditingLocation } from './api/location';
@@ -518,13 +516,6 @@ export class Editor {
     this.state = this.state.apply(tr);
     this.view.updateState(this.state);
 
-    // if this was a decorator dependency transaction then emit another transaction
-    // after the view is updated (allows decorators that depend on DOM node positions
-    // to update after the transaction is applied to the view)
-    if (tr.getMeta(kDecoratorDependencyTransaction)) {
-      this.redrawDecorators();
-    }
-
     // notify listeners of selection change
     this.emitEvent(EditorEvent.SelectionChange);
 
@@ -540,13 +531,6 @@ export class Editor {
         this.emitEvent(EditorEvent.OutlineChange);
       }
     }
-  }
-
-  private redrawDecorators() {
-    const decsTr = this.state.tr;
-    decsTr.setMeta(kDecoratorRedrawTransaction, true);
-    decsTr.setMeta(kAddToHistoryTransaction, false);
-    this.view.dispatch(decsTr);
   }
 
   private emitEvent(name: string) {
@@ -588,7 +572,9 @@ export class Editor {
         isolating: true,
         parseDOM: [{ tag: 'div[class*="body"]' }],
         toDOM() {
-          return ['div', { class: 'body pm-cursor-color pm-text-color pm-background-color pm-content' }, 0];
+          return ['div', { class: 'body pm-cursor-color pm-text-color pm-background-color pm-editing-root-node' }, 
+                   ['div', { class: 'pm-content'}, 0]
+                 ];
         },
       },
 
@@ -596,7 +582,9 @@ export class Editor {
         content: 'note*',
         parseDOM: [{ tag: 'div[class*="notes"]' }],
         toDOM() {
-          return ['div', { class: 'notes pm-cursor-color pm-text-color pm-background-color pm-content' }, 0];
+          return ['div', { class: 'notes pm-cursor-color pm-text-color pm-background-color pm-editing-root-node' }, 
+                   ['div', { class: 'pm-content'}, 0]
+                 ];
         },
       },
 
@@ -739,10 +727,11 @@ export class Editor {
   private applyFixups(context: FixupContext) {
     let tr = this.state.tr;
     tr = this.extensionFixups(tr, context);
-    tr.setMeta(kAddToHistoryTransaction, false);
-    tr.setMeta(kFixupTransaction, true);
-    tr.setMeta(kDecoratorDependencyTransaction, true);
-    this.view.dispatch(tr);
+    if (tr.docChanged) {
+      tr.setMeta(kAddToHistoryTransaction, false);
+      tr.setMeta(kFixupTransaction, true);
+      this.view.dispatch(tr);
+    }
   }
 
   private extensionFixups(tr: Transaction, context: FixupContext) {

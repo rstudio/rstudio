@@ -15,13 +15,15 @@
 
 .pm-attr-edit-decoration {
   position: absolute;
+  right: 5px;
   z-index: 100;
   background-color: transparent;
-  font-size: 0.8em;
+  font-size: 10px;
 }
 
 .pm-attr-edit-decoration .attr-edit-widget {
   padding: 2px;
+  height: 13px;
 }
 
 .pm-attr-edit-decoration .attr-edit-tag {
@@ -30,6 +32,7 @@
   margin-right: 6px;
   padding-left: 7px;
   padding-right: 7px;
+  font-weight: normal;
 }
 
 .pm-attr-edit-decoration .attr-edit-button {
@@ -38,11 +41,12 @@
   border-radius: 50%;
   user-select: none;
   cursor: pointer;
+  width: 13px;
 }
 
 .pm-attr-edit-decoration .attr-edit-button-ellipses {
   position: absolute;
-  top: -2px;
+  top: -1px;
   left: 4px;
   font-weight: bolder;
   letter-spacing: 1px;

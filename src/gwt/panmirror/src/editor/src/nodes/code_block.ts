@@ -31,7 +31,6 @@ import { PandocCapabilities } from '../api/pandoc_capabilities';
 import { EditorUI, CodeBlockProps, EditorUIContext } from '../api/ui';
 import { canInsertNode } from '../api/node';
 import { markIsActive } from '../api/mark';
-import { kDecoratorDependencyTransaction } from '../api/transaction';
 
 const extension = (
   pandocExtensions: PandocExtensions, 
@@ -192,7 +191,6 @@ function codeBlockInputRuleEnter(uiContext: EditorUIContext) {
 
       // insert the code block
       const tr = state.tr;
-      tr.setMeta(kDecoratorDependencyTransaction, true);
       const lang = match[1];
       const attrs = lang.length && lang !== langPlaceholderText(uiContext) 
         ? pandocAttrFrom({ classes: [lang]} ) : {};
