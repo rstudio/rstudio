@@ -24,7 +24,6 @@ import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.HasFindReplace;
-import org.rstudio.core.client.widget.IsHideableWidget;
 import org.rstudio.core.client.widget.ProgressPanel;
 import org.rstudio.core.client.widget.images.ProgressImages;
 import org.rstudio.studio.client.RStudioGinjector;
@@ -526,7 +525,9 @@ public class TextEditingTargetVisualMode
    @SuppressWarnings("unused")
    private void withProgress(int delayMs, CommandWithArg<Command> command)
    {
+     
       TextEditorContainer editorContainer = display_.editorContainer();
+      /*
       IsHideableWidget prevWidget = editorContainer.getActiveWidget();
       progress_.beginProgressOperation(delayMs);
       editorContainer.activateWidget(progress_);
@@ -534,6 +535,7 @@ public class TextEditingTargetVisualMode
          progress_.endProgressOperation();
          editorContainer.activateWidget(prevWidget);
       });
+      */
    }
    
    private String getEditorCode()

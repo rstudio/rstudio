@@ -106,16 +106,6 @@ public class TextEditorContainer extends LayoutPanel implements CanFocus
       }
    }
    
-   public IsHideableWidget getActiveWidget()
-   {
-      for (int i=0; i<widgets_.size(); i++) {
-         IsHideableWidget widget = widgets_.get(i);
-         if (widget.isVisible()) 
-            return widget;
-      }
-      return null;
-   }
-   
    public void activateEditor()
    {
       activateWidget(editor_);
