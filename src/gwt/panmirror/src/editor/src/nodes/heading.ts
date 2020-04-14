@@ -77,7 +77,8 @@ const extension = (pandocExtensions: PandocExtensions): Extension => {
           // Note that this value is linked to the outline offset defined in heading-styles.css,
           // so if you change it here, you need to change it there as well
           offset: () => 6,
-          classes: () => ['pm-show-text-focus']
+          // ensure tht we get the full text-focus treatment even at startup
+          classes: () => ['pm-text-focused','pm-focus-outline-color', 'pm-show-text-focus']
         }),
 
         pandoc: {
