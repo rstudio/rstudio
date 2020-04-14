@@ -117,6 +117,14 @@ class AttrEditDecorationPlugin extends Plugin<DecorationSet> {
             const attrs = node.attrs;
             const tags = editor.tags(node);
 
+            // create a unique key to avoid recreating the decorator when the selection changes
+            const specKey = `attr_edit_decoration_pos:${parentWithAttrs.pos}tags:${tags.join('/')}`;
+        
+            // if the old popup already has a decoration for this key then just use it
+            if (old.find(undefined, undefined, spec => spec.key === specKey).length) {
+              return old.map(tr.mapping, tr.doc);
+            }
+
             // does the offsetParent have any right padding we need to offset for?
             // we normally use right: 5px for positioning but that is relative to
             // the edge of the offsetParent. However, some offset parents (e.g. a 
@@ -140,17 +148,6 @@ class AttrEditDecorationPlugin extends Plugin<DecorationSet> {
               transform: `translate(${xOffset}px,-${yOffset}px)`
             };
 
-            // create a unique key to avoid recreating the decorator when the selection changes
-            const specKey = `
-              attr_edit_decoration_pos:${parentWithAttrs.pos}
-              tags:${tags.join('/')}
-            `;
-          
-            // if the old popup already has a decoration for this key then just use it
-            if (old.find(undefined, undefined, spec => spec.key === specKey).length) {
-              return old.map(tr.mapping, tr.doc);
-            }
-
             // create attr edit react component
             const attrEdit = (
               <AttrEditDecoration
@@ -171,12 +168,12 @@ class AttrEditDecorationPlugin extends Plugin<DecorationSet> {
             const decorations: Decoration[] = [];
 
             // add classes 
-            const editorClasses = editor.classes ? editor.classes() : [];
-            const classes = ['pm-attr-edit-node'].concat(editorClasses);
-            decorations.push(nodeDecoration(
-              parentWithAttrs, 
-              { class: classes.join(' ')}
-            ));
+            if (editor.classes) {
+              decorations.push(nodeDecoration(
+                parentWithAttrs, 
+                { class: editor.classes().join(' ')}
+              ));
+            }
             
             // attr_edit controls
             decorations.push(Decoration.widget(parentWithAttrs.pos, decoration, 
