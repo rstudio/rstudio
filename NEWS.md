@@ -13,6 +13,10 @@
 
 * Any tab can be hidden from view through Global Options. (#6428)
 
+### Files Pane
+
+* New command on More menu copies path in Files Pane to clipboard (#6344)
+
 ### Bugfixes
 
 * Fixed an issue where hovering mouse cursor over C++ completion popup would steal focus. (#5941)
