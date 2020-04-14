@@ -26,6 +26,7 @@ import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.cellview.ColumnSortInfo;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
+import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.js.JsObject;
 import org.rstudio.core.client.widget.*;
@@ -580,7 +581,12 @@ public class Files
       view_.bringToFront();
       navigateToDirectory(workbenchContext_.getCurrentWorkingDir());
    }
-   
+
+   void onCopyFilesPaneCurrentDirectory()
+   {
+      DomUtils.copyCodeToClipboard(currentPath_.getPath());
+   }
+
    @Handler
    void onSetAsWorkingDir()
    {

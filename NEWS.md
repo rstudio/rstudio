@@ -16,6 +16,7 @@
 ### Misc
 
 * The Files pane now sorts file names naturally, so that e.g. `step10.R` comes after `step9.R`. (#5766)
+* Added command to File pane's "More" menu to copy path to clipboard (#6344)
 
 ### Bugfixes
 

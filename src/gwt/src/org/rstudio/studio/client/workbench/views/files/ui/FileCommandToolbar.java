@@ -1,7 +1,7 @@
 /*
  * FileCommandToolbar.java
  *
- * Copyright (C) 2009-19 by RStudio, PBC
+ * Copyright (C) 2009-20 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -49,6 +49,7 @@ public class FileCommandToolbar extends Toolbar
       moreMenu.addItem(commands.copyFile().createMenuItem(false));
       moreMenu.addItem(commands.copyFileTo().createMenuItem(false));
       moreMenu.addItem(commands.moveFiles().createMenuItem(false));
+      moreMenu.addItem(commands.copyFilesPaneCurrentDirectory().createMenuItem(false));
       moreMenu.addSeparator();
       moreMenu.addItem(commands.exportFiles().createMenuItem(false));
       moreMenu.addSeparator();
@@ -58,8 +59,7 @@ public class FileCommandToolbar extends Toolbar
       moreMenu.addSeparator();
       moreMenu.addItem(commands.showFolder().createMenuItem(false));
       moreMenu.addSeparator();
-      moreMenu.addItem(new UserPrefMenuItem<Boolean>(
-            prefs.showHiddenFiles(), true, "Show Hidden Files", prefs));
+      moreMenu.addItem(new UserPrefMenuItem<>(prefs.showHiddenFiles(), true, "Show Hidden Files", prefs));
 
       ToolbarMenuButton moreButton = new ToolbarMenuButton(
             "More",

@@ -255,6 +255,7 @@ public abstract class
    public abstract AppCommand layoutZoomFiles();
    public abstract AppCommand goToWorkingDir();
    public abstract AppCommand setAsWorkingDir();
+   public abstract AppCommand copyFilesPaneCurrentDirectory();
    public abstract AppCommand setWorkingDirToFilesPane();
    public abstract AppCommand showFolder();
  
