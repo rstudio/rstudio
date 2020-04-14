@@ -116,10 +116,25 @@ class AttrEditDecorationPlugin extends Plugin<DecorationSet> {
             const node = parentWithAttrs.node;
             const attrs = node.attrs;
             const tags = editor.tags(node);
+
+            // does the offsetParent have any right padding we need to offset for?
+            // we normally use right: 5px for positioning but that is relative to
+            // the edge of the offsetParent. However, some offset parents (e.g. a 
+            // td or a nested div) have their own internal padding to account for
+            // so we look for it here
+            let rightPaddingOffset = 0;
+            const attrsNode = editorView.nodeDOM(parentWithAttrs.pos);
+            if (attrsNode) {
+              const attrsEl = attrsNode as HTMLElement;
+              if (attrsEl.offsetParent) {
+                const offsetParentStyle = window.getComputedStyle(attrsEl.offsetParent);
+                rightPaddingOffset = -parseInt(offsetParentStyle.paddingRight!, 10) || 0;
+              }
+            }
           
             // cacculate position offsets
             const offset = editor.offset();
-            const xOffset = offset;
+            const xOffset = rightPaddingOffset + offset;
             const yOffset = (13 / 2) + 1 + offset; // 13 is from height defined in attr_edit-decoration.css
             const cssProps: React.CSSProperties = {
               transform: `translate(${xOffset}px,-${yOffset}px)`
