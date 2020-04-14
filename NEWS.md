@@ -13,12 +13,10 @@
 
 * Any tab can be hidden from view through Global Options. (#6428)
 
-### Files Pane
-
-* New command on More menu copies path in Files Pane to clipboard (#6344)
 ### Misc
 
 * The Files pane now sorts file names naturally, so that e.g. `step10.R` comes after `step9.R`. (#5766)
+* New command on More menu copies path in Files Pane to clipboard (#6344)
 
 ### Bugfixes
 
