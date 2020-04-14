@@ -205,7 +205,7 @@ export class Editor {
     // provide default options
     options = {
       autoFocus: false,
-      spellCheck: true,
+      spellCheck: false,
       codemirror: true,
       braceMatching: true,
       rmdCodeChunks: false,
