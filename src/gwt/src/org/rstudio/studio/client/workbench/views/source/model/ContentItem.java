@@ -25,9 +25,9 @@ public class ContentItem extends JavaScriptObject
    public static final native ContentItem create(String title,
                                                  String contentUrl) /*-{
       var contentItem = new Object();
-      contentItem.title = title ;
-      contentItem.contentUrl = contentUrl ;
-      return contentItem ;
+      contentItem.title = title;
+      contentItem.contentUrl = contentUrl;
+      return contentItem;
    }-*/;
    
    

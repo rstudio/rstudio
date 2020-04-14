@@ -463,12 +463,12 @@ class RemoteServerEventListener
    private final int kSecondListenBounceMs = 250;
        
    private boolean isListening_;
-   private int lastEventId_ ;
-   private int listenCount_ ;
-   private int listenErrorCount_ ;
-   private boolean sessionWasQuit_ ;
+   private int lastEventId_;
+   private int listenCount_;
+   private int listenErrorCount_;
+   private boolean sessionWasQuit_;
    
-   private RpcRequest activeRequest_ ;
+   private RpcRequest activeRequest_;
    private ServerRequestCallback<JsArray<ClientEvent>> activeRequestCallback_;
 
    private final ClientEventDispatcher eventDispatcher_;

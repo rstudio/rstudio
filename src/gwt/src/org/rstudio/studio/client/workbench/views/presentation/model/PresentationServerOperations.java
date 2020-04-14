@@ -23,7 +23,7 @@ public interface PresentationServerOperations extends RPubsServerOperations
 {
    String getApplicationURL(String url);
    
-   void showHelpTopic(String what, String from, int type) ;
+   void showHelpTopic(String what, String from, int type);
    
    void setWorkingDirectory(String path,
                             ServerRequestCallback<Void> requestCallback);

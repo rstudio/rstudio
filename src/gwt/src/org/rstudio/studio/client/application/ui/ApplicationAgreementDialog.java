@@ -34,7 +34,7 @@ public class ApplicationAgreementDialog extends ShowContentDialog
             new Size(800, 1000));
       
       doNotAcceptOperation_ = doNotAcceptOperation;
-      acceptOperation_ = acceptOperation ;
+      acceptOperation_ = acceptOperation;
    }
    
    @Override

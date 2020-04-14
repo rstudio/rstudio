@@ -25,7 +25,7 @@ public class IFrameElementEx extends IFrameElement
    }
    
    public final native WindowEx getContentWindow() /*-{
-      return this.contentWindow ;
+      return this.contentWindow;
    }-*/;
    
    public final void setFocus()

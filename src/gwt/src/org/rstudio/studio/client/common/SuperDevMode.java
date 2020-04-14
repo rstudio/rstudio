@@ -26,7 +26,7 @@ public class SuperDevMode
       var s = $doc.createElement('script'); 
       s.src = 'http://localhost:9876/dev_mode_on.js'; 
       void($doc.getElementsByTagName('head')[0].appendChild(s));
-   }-*/ ;
+   }-*/;
    
    
    public static final native boolean isActive()

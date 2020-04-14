@@ -116,7 +116,7 @@ public class Packages
       
       void setPackageStatus(PackageStatus status);
   
-      void setObserver(PackagesDisplayObserver observer) ;
+      void setObserver(PackagesDisplayObserver observer);
       void setProgress(boolean showProgress);
    }
    
@@ -141,9 +141,9 @@ public class Packages
       server_ = server;
       packratServer_ = packratServer;
       renvServer_ = renvServer;
-      globalDisplay_ = globalDisplay ;
-      view_.setObserver(this) ;
-      events_ = events ;
+      globalDisplay_ = globalDisplay;
+      view_.setObserver(this);
+      events_ = events;
       defaultCRANMirror_ = defaultCRANMirror;
       workbenchContext_ = workbenchContext;
       fsContext_ = fsContext;
@@ -797,7 +797,7 @@ public class Packages
    
    public void showHelp(PackageInfo packageInfo)
    {
-      events_.fireEvent(new ShowHelpEvent(packageInfo.getHelpUrl())) ;
+      events_.fireEvent(new ShowHelpEvent(packageInfo.getHelpUrl()));
    }
    
    public void onPackageStateChanged(PackageStateChangedEvent event)
@@ -1280,8 +1280,8 @@ public class Packages
    private ProjectContext projectContext_;
    private String packageFilter_ = new String();
    private HandlerRegistration consolePromptHandlerReg_ = null;
-   private final EventBus events_ ;
-   private final GlobalDisplay globalDisplay_ ;
+   private final EventBus events_;
+   private final GlobalDisplay globalDisplay_;
    private final WorkbenchContext workbenchContext_;
    private final PackratUtil packratUtil_;
    private final RemoteFileSystemContext fsContext_;

@@ -24,9 +24,9 @@ public class Point extends JavaScriptObject
    
    public static final native Point create(double x, double y) /*-{
       var point = new Object();
-      point.x = x ;
-      point.y = y ;
-      return point ;
+      point.x = x;
+      point.y = y;
+      return point;
    }-*/;
    
    // size

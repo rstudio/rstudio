@@ -31,7 +31,7 @@ import org.rstudio.studio.client.application.Desktop;
 // for retries after network or authentication errors)
 public class RpcRequest 
 {
-   public static final boolean TRACE = false ;
+   public static final boolean TRACE = false;
    
    public RpcRequest(String url, 
                      String method, 
@@ -46,7 +46,7 @@ public class RpcRequest
    {
       url_ = url;
       method_ = method;
-      params_ = params ;
+      params_ = params;
       kwparams_ = kwparams;
       redactLog_ = redactLog;
       resultFieldName_ = resultFieldName;
@@ -65,12 +65,12 @@ public class RpcRequest
    public void send(RpcRequestCallback callback)
    {
       // final references for access from anonymous class
-      final RpcRequest enclosingRequest = this ;
-      final RpcRequestCallback requestCallback = callback ;
+      final RpcRequest enclosingRequest = this;
+      final RpcRequestCallback requestCallback = callback;
       
       // build json request object
-      JSONObject request = new JSONObject() ;
-      request.put("method", new JSONString(method_)) ;
+      JSONObject request = new JSONObject();
+      request.put("method", new JSONString(method_));
       if ( params_ != null )
          request.put("params", params_);  
       if ( kwparams_ != null)
@@ -89,7 +89,7 @@ public class RpcRequest
       
       // configure request builder
       RequestBuilder builder = new RequestBuilder(RequestBuilder.POST, url_);
-      builder.setHeader("Content-Type", "application/json") ;
+      builder.setHeader("Content-Type", "application/json");
       builder.setHeader("Accept", "application/json");
       String requestId = Integer.toString(Random.nextInt());
       builder.setHeader("X-RS-RID", requestId);
@@ -109,7 +109,7 @@ public class RpcRequest
       {
          String requestString = request.toString();
          if (TRACE)
-            Debug.log("Request: " + requestString) ;
+            Debug.log("Request: " + requestString);
 
          requestLogEntry_ = RequestLog.log(requestId,
                                            redactLog_ ? "[REDACTED]"
@@ -125,7 +125,7 @@ public class RpcRequest
                RpcError error = RpcError.create(
                                           RpcError.TRANSMISSION_ERROR,
                                           exception.getLocalizedMessage());
-               requestCallback.onError(enclosingRequest, error) ;
+               requestCallback.onError(enclosingRequest, error);
             }
             
             public void onResponseReceived(Request request, 
@@ -136,19 +136,19 @@ public class RpcRequest
                if ( status == 200 )
                {
                   // attempt to parse the response
-                  RpcResponse rpcResponse = null ;
+                  RpcResponse rpcResponse = null;
                   try
                   {
                      String responseText = response.getText();
                      if (TRACE)
-                        Debug.log("Response: " + responseText) ;
+                        Debug.log("Response: " + responseText);
                      requestLogEntry_.logResponse(ResponseType.Normal,
                                                  responseText);
                      rpcResponse = RpcResponse.parse(responseText);
                      
                      // response received and validated, process it!
                      requestCallback.onResponseReceived(enclosingRequest, 
-                                                        rpcResponse) ;
+                                                        rpcResponse);
                   }
                   catch(Exception e)
                   {
@@ -156,7 +156,7 @@ public class RpcRequest
                      RpcError error = RpcError.create(
                                                 RpcError.TRANSMISSION_ERROR,
                                                 e.getLocalizedMessage());
-                     requestCallback.onError(enclosingRequest, error) ;
+                     requestCallback.onError(enclosingRequest, error);
                   }
                }
                else
@@ -179,7 +179,7 @@ public class RpcRequest
                                               message);
                   RpcError error = RpcError.create(
                                              RpcError.TRANSMISSION_ERROR,
-                                             message) ;
+                                             message);
                   requestCallback.onError(enclosingRequest, error);
                }
             }
@@ -278,9 +278,9 @@ public class RpcRequest
       return refreshCredentials_;
    }
 
-   final private String url_ ;
-   final private String method_ ;
-   final private JSONArray params_ ;
+   final private String url_;
+   final private String method_;
+   final private JSONArray params_;
    final private JSONObject kwparams_;
    final private boolean redactLog_;
    final private String resultFieldName_;

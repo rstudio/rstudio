@@ -425,6 +425,6 @@ public class WorkbenchScreen extends Composite
    private final Shim edit_;
    private final org.rstudio.studio.client.workbench.ui.OptionsLoader.Shim optionsLoader_;
 
-   private final MainSplitPanel tabsPanel_ ;
+   private final MainSplitPanel tabsPanel_;
    private PaneManager paneManager_;
 }

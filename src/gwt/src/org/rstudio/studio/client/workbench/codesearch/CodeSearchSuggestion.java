@@ -138,7 +138,7 @@ class CodeSearchSuggestion implements Suggestion
    @Override
    public String getReplacementString()
    {
-      return "" ;
+      return "";
    }
    
    public CodeNavigationTarget getNavigationTarget()
@@ -159,7 +159,7 @@ class CodeSearchSuggestion implements Suggestion
    {    
       SafeHtmlBuilder sb = new SafeHtmlBuilder();
       SafeHtmlUtil.appendImage(sb, imageStyle, image);
-      SafeHtmlUtil.appendSpan(sb, RES.styles().itemName(), name);    
+      SafeHtmlUtil.appendSpan(sb, RES.styles().itemName(), name);
       
       // check for extra info
       if (!StringUtil.isNullOrEmpty(extraInfo))
@@ -181,7 +181,7 @@ class CodeSearchSuggestion implements Suggestion
    
    
    private final boolean isFileTarget_;
-   private final CodeNavigationTarget navigationTarget_ ;
+   private final CodeNavigationTarget navigationTarget_;
    private final String matchedString_;
    private String displayString_;
    private static final FileTypeRegistry fileTypeRegistry_ =

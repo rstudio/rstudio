@@ -181,11 +181,6 @@ public:
       return request_;
    }
 
-   virtual const std::string& originalUri() const
-   {
-      return originalUri_;
-   }
-
    virtual http::Response& response()
    {
       return response_;
@@ -202,7 +197,7 @@ public:
 
       // call the response filter if we have one
       if (responseFilter_)
-         responseFilter_(originalUri_, &response_);
+         responseFilter_(absoluteUri_, &response_);
 
       if (response_.isStreamResponse())
       {
@@ -392,7 +387,7 @@ private:
             else if (status == RequestParser::headers_parsed)
             {
                // record the original uri
-               originalUri_ = request_.absoluteUri();
+               absoluteUri_ = request_.absoluteUri();
 
                // call the request filter if we have one
                if (requestFilter_)
@@ -587,7 +582,7 @@ private:
    ResponseFilter responseFilter_;
    boost::array<char, 8192> buffer_ ;
    RequestParser requestParser_ ;
-   std::string originalUri_;
+   std::string absoluteUri_;
    http::Request request_;
    http::Response response_;
 

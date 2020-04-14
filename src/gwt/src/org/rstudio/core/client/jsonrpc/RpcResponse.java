@@ -56,8 +56,8 @@ public class RpcResponse extends JavaScriptObject
     
    public final native static RpcResponse create(RpcError error) /*-{
       var response = new Object();
-      response.error = error ;
-      return response ;
+      response.error = error;
+      return response;
    }-*/;
    
    public final RpcError getError()

@@ -5664,8 +5664,8 @@ public class TextEditingTarget implements
          public void execute()
          {
             String previewURL = "help/preview?file=";
-            previewURL += URL.encodeQueryString(docUpdateSentinel_.getPath());   
-            events_.fireEvent(new ShowHelpEvent(previewURL)) ; 
+            previewURL += URL.encodeQueryString(docUpdateSentinel_.getPath());
+            events_.fireEvent(new ShowHelpEvent(previewURL));
          }
       });
    }

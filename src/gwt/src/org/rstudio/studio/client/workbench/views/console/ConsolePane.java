@@ -313,7 +313,7 @@ public class ConsolePane extends WorkbenchPane
          showProgress(lastProgress_);
    }
 
-   private Provider<Shell> consoleProvider_ ;
+   private Provider<Shell> consoleProvider_;
    private Provider<JobProgressPresenter> progressProvider_;
    JobProgressPresenter progress_;
    LocalJobProgress lastProgress_;

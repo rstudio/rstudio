@@ -414,8 +414,8 @@ public class DefaultGlobalDisplay extends GlobalDisplay
    {
       // build url
       final SessionInfo sessionInfo = session_.getSessionInfo();
-      String url = "https://www.rstudio.org/links/" ;
-      url += URL.encodePathSegment(linkName) ;
+      String url = "https://www.rstudio.org/links/";
+      url += URL.encodePathSegment(linkName);
       if (includeVersionInfo)
       {
          url += "?version=" + URL.encodeQueryString(sessionInfo.getRstudioVersion());

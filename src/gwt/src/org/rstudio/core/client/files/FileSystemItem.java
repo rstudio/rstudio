@@ -55,11 +55,11 @@ public class FileSystemItem extends JavaScriptObject
          path = path + "/";
 
       var fileEntry = new Object();
-      fileEntry.path = path ;
-      fileEntry.dir = dir ;
+      fileEntry.path = path;
+      fileEntry.dir = dir;
       fileEntry.length = length;
       fileEntry.lastModified = lastModified;
-      return fileEntry ;
+      return fileEntry;
    }-*/;
 
    public final native String getPath() /*-{
@@ -145,7 +145,7 @@ public class FileSystemItem extends JavaScriptObject
    {
       String path = getPath();
       if (path.length() == 0)
-         return name ;
+         return name;
       else
          return path + "/" + name;
    }

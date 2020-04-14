@@ -33,16 +33,16 @@ public class PlainTextEditorImplFirefox extends PlainTextEditorImpl
    public Element setupTextContainer(Element element)
    {
         
-      Element zwspSpan = Document.get().createSpanElement() ;
-      zwspSpan.setInnerText("\u200B") ;
+      Element zwspSpan = Document.get().createSpanElement();
+      zwspSpan.setInnerText("\u200B");
       
       Element textContainer = Document.get().createDivElement();
       textContainer.getStyle().setDisplay(Display.INLINE);
       
-      element.appendChild(zwspSpan) ;
-      element.appendChild(textContainer) ;
+      element.appendChild(zwspSpan);
+      element.appendChild(textContainer);
       
-      textContainer.setPropertyBoolean("contentEditable", true) ;
+      textContainer.setPropertyBoolean("contentEditable", true);
 
       textContainer_ = textContainer;
       return textContainer_;

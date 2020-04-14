@@ -617,7 +617,7 @@ public class Presentation extends BasePresenter
       return -1;
    } 
    
-   private final Display view_ ; 
+   private final Display view_;
    private final PresentationServerOperations server_;
    private final GlobalDisplay globalDisplay_;
    private final EventBus eventBus_;

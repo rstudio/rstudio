@@ -24,46 +24,46 @@ public class RTokenizer
 {
    public RTokenizer(String data)
    {
-      this.data_ = data ;
-      this.pos_ = 0 ;
+      this.data_ = data;
+      this.pos_ = 0;
    }
    
    public static ArrayList<RToken> asTokens(String code)
    {
-      ArrayList<RToken> results = new ArrayList<RToken>() ;
-      RTokenizer rt = new RTokenizer(code) ;
-      RToken t ;
+      ArrayList<RToken> results = new ArrayList<RToken>();
+      RTokenizer rt = new RTokenizer(code);
+      RToken t;
       while (null != (t = rt.nextToken()))
-         results.add(t) ;
-      return results ;
+         results.add(t);
+      return results;
    }
 
    public RToken nextToken()
    {
       if (eol())
-         return null ;
+         return null;
       
-      char c = peek() ;
+      char c = peek();
       
       switch (c)
       {
       case '(': case ')':
       case '{': case '}':
       case ';': case ',':
-         return consumeToken(c, 1) ;
+         return consumeToken(c, 1);
       case '[':
          if (peek(1, false) == '[')
-            return consumeToken(RToken.LDBRACKET, 2) ;
+            return consumeToken(RToken.LDBRACKET, 2);
          else
-            return consumeToken(c, 1) ;
+            return consumeToken(c, 1);
       case ']':
          if (peek(1, false) == ']')
-            return consumeToken(RToken.RDBRACKET, 2) ;
+            return consumeToken(RToken.RDBRACKET, 2);
          else
-            return consumeToken(c, 1) ;
+            return consumeToken(c, 1);
       case '"':
       case '\'':
-         return matchStringLiteral() ;
+         return matchStringLiteral();
       case '`':
          return matchQuotedIdentifier();
       case '#':
@@ -72,19 +72,19 @@ public class RTokenizer
          return matchUserOperator();
       case ' ': case '\t': case '\r': case '\n':
       case '\u00A0': case '\u3000':
-         return matchWhitespace() ;
+         return matchWhitespace();
       }
       
-      char cNext = peek(1, false) ;
+      char cNext = peek(1, false);
       
       if ((c >= '0' && c <= '9')
             || (c == '.' && cNext >= '0' && cNext <= '9'))
       {
-         RToken numberToken = matchNumber() ;
+         RToken numberToken = matchNumber();
          if (numberToken.getLength() > 0)
-            return numberToken ;
+            return numberToken;
          
-         assert false : "matchNumber() returned a zero-length token" ;
+         assert false : "matchNumber() returned a zero-length token";
       }
       
       if (StringUtil.isLetter(c) || c == '.')
@@ -95,50 +95,50 @@ public class RTokenizer
          // Since we're not checking that the second character is
          // not a digit, we must match on identifiers AFTER we have
          // already tried to match on number.
-         return matchIdentifier() ;
+         return matchIdentifier();
       }
 
-      RToken oper = matchOperator() ;
+      RToken oper = matchOperator();
       if (oper != null)
-         return oper ;
+         return oper;
       
       // Error!!
-      return consumeToken(RToken.ERROR, 1) ;
+      return consumeToken(RToken.ERROR, 1);
    }
    
    private RToken matchWhitespace()
    {
-      String whitespace = peek("[\\s\\u00A0]+") ;
-      assert whitespace != null ;
-      return consumeToken(RToken.WHITESPACE, whitespace.length()) ;
+      String whitespace = peek("[\\s\\u00A0]+");
+      assert whitespace != null;
+      return consumeToken(RToken.WHITESPACE, whitespace.length());
    }
    
    private RToken matchStringLiteral()
    {
-      int start = pos_ ;
-      char quot = eat() ;
+      int start = pos_;
+      char quot = eat();
       
-      assert quot == '"' || quot == '\'' ;
+      assert quot == '"' || quot == '\'';
       
-      boolean wellFormed = false ;
+      boolean wellFormed = false;
       
       while (!eol())
       {
-         eatUntil("[\\\\\'\"]", true) ;
+         eatUntil("[\\\\\'\"]", true);
          if (eol())
-            break ;
+            break;
          
-         char c = eat() ;
+         char c = eat();
          if (c == quot)
          {
-            wellFormed = true ;
-            break ;
+            wellFormed = true;
+            break;
          }
 
          if (c == '\\')
          {
             if (!eol())
-               eat() ;
+               eat();
             // Actually the escape expression can be longer than
             // just the backslash plus one character--but we don't
             // need to distinguish escape expressions from other 
@@ -150,37 +150,37 @@ public class RTokenizer
       return new RStringToken(RToken.STRING, 
                         data_.substring(start, pos_), 
                         start, 
-                        pos_-start, wellFormed) ;
+                        pos_-start, wellFormed);
    }
    
    private RToken matchNumber()
    {
-      String num = peek("0x[0-9a-fA-F]*L?") ;
+      String num = peek("0x[0-9a-fA-F]*L?");
       if (num == null)
-         num = peek("[0-9]*(\\.[0-9]*)?([eE][+-]?[0-9]*)?[Li]?") ;
+         num = peek("[0-9]*(\\.[0-9]*)?([eE][+-]?[0-9]*)?[Li]?");
 
       // We should only be in this method if 0-9 was matched, so this should
       // be a safe assumption
-      assert num != null ;
+      assert num != null;
 
-      return consumeToken(RToken.NUMBER, num.length()) ;
+      return consumeToken(RToken.NUMBER, num.length());
    }
    
    private RToken matchIdentifier()
    {
-      int start = pos_ ;
-      eat() ;
-      String rest = peek("[\\w.]*") ;
-      pos_ += (rest != null ? rest : "").length() ;
+      int start = pos_;
+      eat();
+      String rest = peek("[\\w.]*");
+      pos_ += (rest != null ? rest : "").length();
       return new RToken(RToken.ID, 
                         data_.substring(start, pos_), 
                         start, 
-                        pos_ - start) ;
+                        pos_ - start);
    }
 
    private RToken matchQuotedIdentifier()
    {
-      String iden = peek("`[^`]*`") ;
+      String iden = peek("`[^`]*`");
       if (iden == null)
          return consumeToken(RToken.ERROR, 1);
       else
@@ -195,16 +195,16 @@ public class RTokenizer
    
    private RToken matchUserOperator()
    {
-      String oper = peek("%[^%]*%") ;
+      String oper = peek("%[^%]*%");
       if (oper == null)
-         return consumeToken(RToken.ERROR, 1) ;
+         return consumeToken(RToken.ERROR, 1);
       else
-         return consumeToken(RToken.UOPER, oper.length()) ;
+         return consumeToken(RToken.UOPER, oper.length());
    }
    
    private RToken matchOperator()
    {
-      char cNext = peek(1, false) ;
+      char cNext = peek(1, false);
       
       switch (peek())
       {
@@ -212,95 +212,95 @@ public class RTokenizer
       case '^': case '&': case '|':
       case '~': case '$': case ':':
          // single-character operators
-         return consumeToken(RToken.OPER, 1) ;
+         return consumeToken(RToken.OPER, 1);
       case '-': // also ->
-         return consumeToken(RToken.OPER, cNext == '>' ? 2 : 1) ;
+         return consumeToken(RToken.OPER, cNext == '>' ? 2 : 1);
       case '>': // also >=
-         return consumeToken(RToken.OPER, cNext == '=' ? 2 : 1) ;
+         return consumeToken(RToken.OPER, cNext == '=' ? 2 : 1);
       case '<': // also <- and <=
          return consumeToken(RToken.OPER, cNext == '=' ? 2 :
                                           cNext == '-' ? 2 :
-                                          1) ;
+                                          1);
       case '=': // also ==
-         return consumeToken(RToken.OPER, cNext == '=' ? 2 : 1) ;
+         return consumeToken(RToken.OPER, cNext == '=' ? 2 : 1);
       case '!': // also !=
-         return consumeToken(RToken.OPER, cNext == '=' ? 2 : 1) ;
+         return consumeToken(RToken.OPER, cNext == '=' ? 2 : 1);
       default:
-         return null ;
+         return null;
       }
    }
 
    private boolean eol()
    {
-      return pos_ >= data_.length() ;
+      return pos_ >= data_.length();
    }
    
    private char peek()
    {
-      return peek(0, true) ;
+      return peek(0, true);
    }
    
    private char peek(int lookahead, boolean throwOnEOL)
    {
       if (!throwOnEOL && (pos_ + lookahead) >= data_.length())
-         return 0 ;
-      return data_.charAt(pos_ + lookahead) ;
+         return 0;
+      return data_.charAt(pos_ + lookahead);
    }
    
    private char eat()
    {
-      char result = data_.charAt(pos_) ;
-      pos_++ ; // don't inline--we want the previous line to throw if EOL
-      return result ;
+      char result = data_.charAt(pos_);
+      pos_++; // don't inline--we want the previous line to throw if EOL
+      return result;
    }
    
    private String peek(String regex)
    {
-      Match match = Pattern.create(regex).match(data_, pos_) ;
+      Match match = Pattern.create(regex).match(data_, pos_);
       if (match == null)
-         return null ;
-      int idx = match.getIndex() ;
+         return null;
+      int idx = match.getIndex();
       if (idx != pos_)
-         return null ;
+         return null;
       
-      return match.getValue() ;
+      return match.getValue();
    }
    
    private String eatUntil(String regex, boolean eatAllOnFailure)
    {
-      int start = pos_ ;
-      Match match = Pattern.create(regex).match(data_, pos_) ;
+      int start = pos_;
+      Match match = Pattern.create(regex).match(data_, pos_);
       if (match == null)
       {
          if (eatAllOnFailure)
          {
-            pos_ = data_.length() ;
-            return data_.substring(start) ;
+            pos_ = data_.length();
+            return data_.substring(start);
          }
          else
          {
-            return null ;
+            return null;
          }
       }
       else
       {
-         pos_ = match.getIndex() ;
-         return data_.substring(start, pos_) ;
+         pos_ = match.getIndex();
+         return data_.substring(start, pos_);
       }
    }
    
    private RToken consumeToken(int tokenType, int length)
    {
       if (length == 0)
-         throw new IllegalArgumentException("Can't create zero-length token") ;
+         throw new IllegalArgumentException("Can't create zero-length token");
       if (pos_ + length > data_.length())
-         throw new IllegalArgumentException("Premature EOF") ;
+         throw new IllegalArgumentException("Premature EOF");
       
-      int start = pos_ ;
-      pos_ += length ;
-      return new RToken(tokenType, data_.substring(start, pos_), start, length) ;
+      int start = pos_;
+      pos_ += length;
+      return new RToken(tokenType, data_.substring(start, pos_), start, length);
    }
    
-   private final String data_ ;
-   private int pos_ ;
+   private final String data_;
+   private int pos_;
 }

@@ -330,7 +330,7 @@ public class RStudioGinModule extends AbstractGinModule
       bind(FastestSmallestTextEncoderDecoder.class).asEagerSingleton();
 
       bind(ApplicationView.class).to(ApplicationWindow.class)
-            .in(Singleton.class) ;
+            .in(Singleton.class);
       
       bind(VCSApplicationView.class).to(VCSApplicationWindow.class)
             .in(Singleton.class);
@@ -342,8 +342,8 @@ public class RStudioGinModule extends AbstractGinModule
       bind(RmdOutputView.class).to(RmdOutputWindow.class);
       bind(SourceSatelliteView.class).to(SourceSatelliteWindow.class);
       
-      bind(Server.class).to(RemoteServer.class) ;
-      bind(WorkbenchServerOperations.class).to(RemoteServer.class) ;
+      bind(Server.class).to(RemoteServer.class);
+      bind(WorkbenchServerOperations.class).to(RemoteServer.class);
 
       bind(EditingTargetSource.class).to(EditingTargetSource.Impl.class);
 
@@ -397,9 +397,9 @@ public class RStudioGinModule extends AbstractGinModule
       bindTab("Data Output", DataOutputTab.class);
       bindTab("Tutorial", TutorialTab.class);
 
-      bind(Shell.Display.class).to(ShellPane.class) ;
+      bind(Shell.Display.class).to(ShellPane.class);
            
-      bind(HelpSearch.Display.class).to(HelpSearchWidget.class) ;
+      bind(HelpSearch.Display.class).to(HelpSearchWidget.class);
       bind(CodeSearch.Display.class).to(CodeSearchWidget.class);
 
       bind(GitReviewPresenter.Display.class).to(GitReviewPanel.class);
@@ -415,19 +415,19 @@ public class RStudioGinModule extends AbstractGinModule
       
       bind(GlobalDisplay.class)
             .to(DefaultGlobalDisplay.class)
-            .in(Singleton.class) ;
+            .in(Singleton.class);
 
-      bind(ApplicationServerOperations.class).to(RemoteServer.class) ;
-      bind(ChooseFileServerOperations.class).to(RemoteServer.class) ;
-      bind(CodeToolsServerOperations.class).to(RemoteServer.class) ;
-      bind(ConsoleServerOperations.class).to(RemoteServer.class) ;
-      bind(SourceServerOperations.class).to(RemoteServer.class) ;
-      bind(FilesServerOperations.class).to(RemoteServer.class) ;
-      bind(HistoryServerOperations.class).to(RemoteServer.class) ;
-      bind(PlotsServerOperations.class).to(RemoteServer.class) ;
-      bind(PackagesServerOperations.class).to(RemoteServer.class) ;
-      bind(HelpServerOperations.class).to(RemoteServer.class) ;
-      bind(EditServerOperations.class).to(RemoteServer.class) ;
+      bind(ApplicationServerOperations.class).to(RemoteServer.class);
+      bind(ChooseFileServerOperations.class).to(RemoteServer.class);
+      bind(CodeToolsServerOperations.class).to(RemoteServer.class);
+      bind(ConsoleServerOperations.class).to(RemoteServer.class);
+      bind(SourceServerOperations.class).to(RemoteServer.class);
+      bind(FilesServerOperations.class).to(RemoteServer.class);
+      bind(HistoryServerOperations.class).to(RemoteServer.class);
+      bind(PlotsServerOperations.class).to(RemoteServer.class);
+      bind(PackagesServerOperations.class).to(RemoteServer.class);
+      bind(HelpServerOperations.class).to(RemoteServer.class);
+      bind(EditServerOperations.class).to(RemoteServer.class);
       bind(MirrorsServerOperations.class).to(RemoteServer.class);
       bind(VCSServerOperations.class).to(RemoteServer.class);
       bind(GitServerOperations.class).to(RemoteServer.class);
@@ -475,7 +475,7 @@ public class RStudioGinModule extends AbstractGinModule
       bind(ThemeServerOperations.class).to(RemoteServer.class);
       bind(TutorialServerOperations.class).to(RemoteServer.class);
 
-      bind(WorkbenchMainView.class).to(WorkbenchScreen.class) ;
+      bind(WorkbenchMainView.class).to(WorkbenchScreen.class);
 
       bind(DocDisplay.class).to(AceEditor.class);
       

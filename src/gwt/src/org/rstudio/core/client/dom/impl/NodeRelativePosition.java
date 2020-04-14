@@ -94,7 +94,7 @@ public class NodeRelativePosition
    public static NodeRelativePosition toPosition(Element container, int offset)
    {
       if (offset < 0)
-         throw new IllegalArgumentException("Offset must not be negative") ;
+         throw new IllegalArgumentException("Offset must not be negative");
 
       int[] counter = new int[] {offset};
       NodeRelativePosition result = toPositionHelper(container, counter);
@@ -141,15 +141,15 @@ public class NodeRelativePosition
       return null;
    }
 
-   public final Node node ;
+   public final Node node;
 
-   public final int offset ;
+   public final int offset;
 
    public NodeRelativePosition(Node node, int offset)
    {
-      super() ;
-      this.node = node ;
-      this.offset = offset ;
+      super();
+      this.node = node;
+      this.offset = offset;
    }
 
 }

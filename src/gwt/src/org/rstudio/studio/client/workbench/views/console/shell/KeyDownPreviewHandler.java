@@ -18,5 +18,5 @@ import com.google.gwt.dom.client.NativeEvent;
 
 public interface KeyDownPreviewHandler
 {
-   boolean previewKeyDown(NativeEvent event) ;
+   boolean previewKeyDown(NativeEvent event);
 }

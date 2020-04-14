@@ -13,6 +13,11 @@
 
 * Any tab can be hidden from view through Global Options. (#6428)
 
+### Misc
+
+* The Files pane now sorts file names naturally, so that e.g. `step10.R` comes after `step9.R`. (#5766)
+* Added command to File pane's "More" menu to copy path to clipboard (#6344)
+
 ### Bugfixes
 
 * Fixed an issue where hovering mouse cursor over C++ completion popup would steal focus. (#5941)

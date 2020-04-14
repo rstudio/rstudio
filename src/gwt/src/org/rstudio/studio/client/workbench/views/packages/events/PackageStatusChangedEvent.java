@@ -25,7 +25,7 @@ public class PackageStatusChangedEvent
    
    public PackageStatusChangedEvent(PackageStatus packageStatus)
    {
-      packageStatus_ = packageStatus ;
+      packageStatus_ = packageStatus;
    }
    
    public PackageStatus getPackageStatus()

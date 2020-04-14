@@ -31,7 +31,7 @@ public class SourceNavigation extends JavaScriptObject
       sourceNavPosition.document_id = document_id;
       sourceNavPosition.path = path;
       sourceNavPosition.position = position;
-      return sourceNavPosition ;
+      return sourceNavPosition;
    }-*/;
    
    public native final String getDocumentId() /*-{

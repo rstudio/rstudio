@@ -239,6 +239,7 @@ namespace prefs {
 #define kShowRmdRenderCommand "show_rmd_render_command"
 #define kEnableTextDrag "enable_text_drag"
 #define kShowHiddenFiles "show_hidden_files"
+#define kSortFileNamesNaturally "sort_file_names_naturally"
 #define kJobsTabVisibility "jobs_tab_visibility"
 #define kJobsTabVisibilityClosed "closed"
 #define kJobsTabVisibilityShown "shown"
@@ -1141,6 +1142,12 @@ public:
     */
    bool showHiddenFiles();
    core::Error setShowHiddenFiles(bool val);
+
+   /**
+    * Whether to sort file names naturally, so that e.g., file10.R comes after file9.R
+    */
+   bool sortFileNamesNaturally();
+   core::Error setSortFileNamesNaturally(bool val);
 
    /**
     * The visibility of the Jobs tab.

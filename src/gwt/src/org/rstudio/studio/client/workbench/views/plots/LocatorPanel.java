@@ -84,7 +84,7 @@ public class LocatorPanel extends LayoutPanel
    public void showLocator(Plots.Parent parent)
    {
       // set parent 
-      parent_ = parent ;
+      parent_ = parent;
       
       // add to parent
       parent_.add(this);
