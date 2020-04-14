@@ -6,17 +6,11 @@ pandoc schema: <https://github.com/jgm/pandoc-types/blob/master/Text/Pandoc/Defi
 
 ## TODO
 
+
 Support for bookdown @ref (seems to round-trip okay but provide mark / input rule?)
+ Would need a rule that runs on startup and an input rule
 
-Parse out.width in include_graphics preview (e.g. see action-workflow.Rmd)
-
-Auto padding (constraint to 700px) doesn't seem to work in desktop app
-
-Indented Rmd chunks are actually destroyed coming back in!
-
-basic_app.Rmd (ui <- FluidPage comes in wierd w/ .{r} class)
-
-Option for enabling/disabling browser spell check (docs)
+Round-trip tests in Mastering Shiny
 
 More complete docs
 
@@ -28,6 +22,7 @@ escaping of $ in math as this mode will clearly not be "source mode" style latex
 Button ellipses shouldn't require positioning override
 (see EditorPane.module.scss)
 
+
 Slack style handling of marks?
 
 Reveal codes / typora behavior
@@ -35,6 +30,9 @@ Reveal codes / typora behavior
 Unit testing for core panmirror code
 
 Insert special character UX
+
+Deleting withProgress in TextEditingTargetVisualMode breaks everything! (see inline comment)
+
 
 multimarkdown support is incomplete: -mmd\_title\_block -mmd\_link\_attributes (not written, likely limitation of pandoc) -mmd\_header\_identifiers (work fine, but we currently allow edit of classes + keyvalue for markdown\_mmd)
 
