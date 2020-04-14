@@ -6,7 +6,17 @@ pandoc schema: <https://github.com/jgm/pandoc-types/blob/master/Text/Pandoc/Defi
 
 ## TODO
 
-Try out with Mastering Shiny
+Support for bookdown @ref (seems to round-trip okay but provide mark / input rule?)
+
+Parse out.width in include_graphics preview (e.g. see action-workflow.Rmd)
+
+Auto padding (constraint to 700px) doesn't seem to work in desktop app
+
+Indented Rmd chunks are actually destroyed coming back in!
+
+basic_app.Rmd (ui <- FluidPage comes in wierd w/ .{r} class)
+
+Option for enabling/disabling browser spell check (docs)
 
 More complete docs
 
