@@ -14,9 +14,6 @@
  */
 
 import { Mark, Schema, Fragment } from 'prosemirror-model';
-import { Transaction } from 'prosemirror-state';
-
-import { setTextSelection } from 'prosemirror-utils';
 
 import { PandocExtensions, PandocTokenType, PandocToken, ProsemirrorWriter, PandocOutput } from '../../api/pandoc';
 import { Extension } from '../../api/extension';

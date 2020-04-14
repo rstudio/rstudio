@@ -14,8 +14,8 @@
  */
 
 import { Node as ProsemirrorNode, Schema, ResolvedPos } from 'prosemirror-model';
-import { textblockTypeInputRule, InputRule } from 'prosemirror-inputrules';
-import { newlineInCode, exitCode, setBlockType } from 'prosemirror-commands';
+import { InputRule } from 'prosemirror-inputrules';
+import { newlineInCode, exitCode } from 'prosemirror-commands';
 import { EditorState, Transaction, TextSelection } from 'prosemirror-state';
 import { EditorView } from 'prosemirror-view';
 

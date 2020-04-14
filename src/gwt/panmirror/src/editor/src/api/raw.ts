@@ -21,7 +21,7 @@ import { EditorView } from "prosemirror-view";
 import { findParentNodeOfType, setTextSelection } from "prosemirror-utils";
 
 import { canInsertNode } from "./node";
-import { EditorUI, RawFormatProps } from "./ui";
+import { EditorUI } from "./ui";
 
 export const kTexFormat = 'tex';
 export const kHTMLFormat = 'html';
