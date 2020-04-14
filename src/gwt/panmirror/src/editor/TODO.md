@@ -6,7 +6,6 @@ pandoc schema: <https://github.com/jgm/pandoc-types/blob/master/Text/Pandoc/Defi
 
 ## TODO
 
-
 Try out with Mastering Shiny
 
 More complete docs
@@ -15,6 +14,9 @@ MathJax preview. When containing the selection, the math will show both the code
 escaping of $ in math as this mode will clearly not be "source mode" style latex equation editing
 
 ## Future
+
+Button ellipses shouldn't require positioning override
+(see EditorPane.module.scss)
 
 Slack style handling of marks?
 
