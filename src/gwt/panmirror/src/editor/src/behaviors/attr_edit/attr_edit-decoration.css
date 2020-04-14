@@ -21,7 +21,6 @@
 }
 
 .pm-attr-edit-decoration .attr-edit-widget {
-  height: 13px;
   padding: 2px;
 }
 
@@ -37,15 +36,14 @@
   float: right;
   position: relative;
   border-radius: 50%;
-  width: 13px;
   user-select: none;
   cursor: pointer;
 }
 
 .pm-attr-edit-decoration .attr-edit-button-ellipses {
   position: absolute;
-  top: -1px;
-  left: 3.5px;
+  top: -2px;
+  left: 4px;
   font-weight: bolder;
   letter-spacing: 1px;
 }

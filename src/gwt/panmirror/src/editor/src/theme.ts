@@ -78,7 +78,7 @@ export function defaultTheme(): EditorTheme {
     gutterBackgroundColor: '#f0f0f0',
     gutterTextColor: '#333',
     textColor: 'black',
-    surfaceWidgetTextColor: 'rgba(0,0,0.0.5)',
+    surfaceWidgetTextColor: 'rgba(0,0,0,0.5)',
     lightTextColor: 'rgb(60, 76, 114)',
     linkTextColor: ' #106ba3',
     markupTextColor: 'rgb(185, 6, 144)',
