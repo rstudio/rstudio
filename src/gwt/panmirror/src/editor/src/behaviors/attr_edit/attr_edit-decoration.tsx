@@ -27,6 +27,7 @@ import { AttrProps } from '../../api/ui';
 import { WidgetProps, reactRenderForEditorView } from '../../api/widgets/react';
 import { nodeDecorationPosition } from '../../api/widgets/decoration';
 import { kDecoratorDependencyTransaction } from '../../api/transaction';
+import { nodeDecoration } from '../../api/decoration';
 
 import { kEditAttrShortcut } from './attr_edit';
 import { attrEditCommandFn } from './attr_edit-command';
@@ -169,15 +170,30 @@ class AttrEditDecorationPlugin extends Plugin<DecorationSet> {
             const decoration = window.document.createElement('div');
             reactRenderForEditorView(attrEdit, decoration, editorView);
 
-            // return decoration
-            return DecorationSet.create(tr.doc, [Decoration.widget(decorationPosition.pos, decoration, 
+            // decorations to return
+            const decorations: Decoration[] = [];
+
+            // add classes if requested
+            if (editor.classes) {
+              decorations.push(nodeDecoration(
+                parentWithAttrs, 
+                { class: editor.classes().join(' ')}
+              ));
+            }
+
+            // attr_edit controls
+            decorations.push(Decoration.widget(decorationPosition.pos, decoration, 
               { 
                 key: specKey,
                 ignoreSelection: true,
                 stopEvent: () => {
                   return true;
                 }
-              })]);
+              })
+            );
+
+            // return decorations
+            return DecorationSet.create(tr.doc, decorations);
 
           } else {
             return DecorationSet.empty;
