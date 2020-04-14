@@ -472,6 +472,10 @@ export class Editor {
     applyTheme(theme);
   }
 
+  public useFixedPadding(fixed: boolean) {
+    this.parent.classList.toggle('pm-fixed-padding', fixed);
+  }
+
   public setKeybindings(keyBindings: EditorKeybindings) {
     // validate that all of these keys can be rebound
 
