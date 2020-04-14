@@ -1435,6 +1435,21 @@ public class StringUtil
       return result;
    }
    
+   /**
+    * Perform a natural order comparison between two strings. Natural ordering
+    * preserves ascending numbers, such that e.g. item10 comes after item9.
+    * 
+    * @param str1 The source string
+    * @param str2 The target string
+    * @return
+    */
+   public static native int naturalOrderCompare(String str1, String str2) /*-{
+      // Coerce null/undefined to empty
+      var val1 = str1 ? str1 : "";
+      var val2 = str2 ? str2 : "";
+      return val1.localeCompare(val2, [], { "numeric": true });
+   }-*/;
+   
    private static final NumberFormat FORMAT = NumberFormat.getFormat("0.#");
    private static final NumberFormat PRETTY_NUMBER_FORMAT = NumberFormat.getFormat("#,##0.#####");
    private static final DateTimeFormat DATE_FORMAT

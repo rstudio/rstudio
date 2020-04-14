@@ -38,7 +38,7 @@ void readFromPipe(
       int pipeFd,
       const boost::function<void(const std::string&)>& outputFunction)
 {
-   const int kBufferSize = 512;
+   const int kBufferSize = 40960;
    char buffer[kBufferSize];
    int bytesRead = 0;
    while ( (bytesRead = ::read(pipeFd, buffer, kBufferSize)) > 0 )

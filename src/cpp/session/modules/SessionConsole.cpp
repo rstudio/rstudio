@@ -48,6 +48,16 @@ namespace {
 
 bool suppressOutput(const std::string& output)
 {
+   if (options().getBoolOverlayOption(kLauncherSessionOption))
+   {
+      // in launcher session mode, we log normal program errors to stderr so they
+      // can be recorded in the launcher job's logs, but we don't want them to show
+      // up in the RStudio console, so we filter them out here
+      // note: all log messages will contain a tag like [rsession-username]
+      if (boost::algorithm::contains(output, "[rsession"))
+         return true;
+   }
+
    // tokens to suppress
    const char * const kGlibWarningToken = "GLib-WARNING **:";
    const char * const kGlibCriticalToken = "GLib-CRITICAL **:";

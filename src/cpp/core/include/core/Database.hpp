@@ -269,7 +269,7 @@ public:
    Error databaseSchemaVersion(std::string* pVersion);
 
 private:
-   static constexpr const char* SCHEMA_TABLE = "SchemaVersion";
+   static constexpr const char* SCHEMA_TABLE = "schema_version";
    static constexpr const char* SQL_EXTENSION = ".sql";
    static constexpr const char* SQLITE_EXTENSION = ".sqlite";
    static constexpr const char* POSTGRESQL_EXTENSION = ".postgresql";
