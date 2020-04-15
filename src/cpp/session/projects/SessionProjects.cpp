@@ -984,6 +984,11 @@ Error initialize()
    if (error)
       return error;
 
+   // initialize project-level preferences
+   error = prefs::initializeProjectPrefs();
+   if (error)
+      LOG_ERROR(error);
+
    // subscribe to file_monitor for project file changes
    projects::FileMonitorCallbacks cb;
    cb.onFilesChanged = onFilesChanged;
