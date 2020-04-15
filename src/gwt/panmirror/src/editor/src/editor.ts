@@ -278,6 +278,16 @@ export class Editor {
       attributes,
     });
 
+    // add custom restoreFocus handler to the view -- this provides a custom
+    // handler for RStudio's FocusContext, necessary because the default 
+    // ProseMirror dom mutation handler picks up the focus and changes the 
+    // selection.
+    Object.defineProperty(this.view.dom, 'restoreFocus', {
+      value: () => {
+        this.focus();
+      }
+    });
+
     // add proportinal font class to parent
     this.parent.classList.add('pm-proportional-font');
 
