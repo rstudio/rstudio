@@ -57,11 +57,9 @@
    sweaveOptions$pdf.version <- "character"
    sweaveOptions$pdf.encoding <- "character"
    sweaveOptions$pdf.compress <-"logical"
-   if (getRversion() >= "2.13.0") {
-      sweaveOptions$png <- "logical"
-      sweaveOptions$jpeg <- "logical"
-      sweaveOptions$grdevice <- "character"
-   }
+   sweaveOptions$png <- "logical"
+   sweaveOptions$jpeg <- "logical"
+   sweaveOptions$grdevice <- "character"
    sweaveOptions$width <- "numeric"
    sweaveOptions$height <- "numeric"
    sweaveOptions$resolution <- "numeric"
