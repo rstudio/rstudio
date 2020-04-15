@@ -833,7 +833,7 @@ public class ProfilerEditingTarget implements EditingTarget,
    {
       events_.fireEventToMainWindow(new DocWindowChangedEvent(
             getId(), SourceWindowManager.getSourceWindowId(), "",
-            DocTabDragParams.create(getId(), currentPosition()),
+            DocTabDragParams.create(getId(), currentPosition(), null),
             null, 0));
    }
 

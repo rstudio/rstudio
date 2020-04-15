@@ -491,6 +491,7 @@ public class SourcePane extends LazyPanel implements Display,
       // we're inserting into an existing permuted tabset -- push aside
       // any tabs physically to the right of this tab
       editors_.add(position, target);
+      source_.addEditor(target);
       for (int i = 0; i < tabOrder_.size(); i++)
       {
          int pos = tabOrder_.get(i);

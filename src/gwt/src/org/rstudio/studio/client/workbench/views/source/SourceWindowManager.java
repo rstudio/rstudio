@@ -1245,6 +1245,8 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
                   {
                      assignSourceDocWindowId(sourceDocs.get(i).getId(), 
                            getSourceWindowId(), null);
+                     // !!! here we need to send the display with the event
+                     // need to look up display by editor by sourcedoc          
                      fireEventToSourceWindow(sourceWindowId, 
                            new DocWindowChangedEvent(
                                  sourceDocs.get(i).getId(), sourceWindowId, 

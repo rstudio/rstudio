@@ -2352,8 +2352,8 @@ public class Source implements InsertSourceHandler,
          {
             DocTabDragParams params = event.getDragParams();
             params.setSourcePosition(editor.currentPosition());
+            params.setDisplayName(views_.getDisplayByEditor(editor).getName());
             events_.fireEvent(new DocTabDragStartedEvent(params));
-            
          }
       });
    }
