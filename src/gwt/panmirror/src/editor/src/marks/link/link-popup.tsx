@@ -36,6 +36,10 @@ import { LinkButton, ImageButton } from '../../api/widgets/button';
 import { textRangePopupDecorationPosition } from '../../api/widgets/decoration';
 import { Popup } from '../../api/widgets/popup';
 
+import breakLinkImage from './images/break-link-2x.png';
+import copyLinkImage from './images/copy-link-2x.png';
+import editLinkImage from './images/settings-ellipsis-2x.png';
+
 const key = new PluginKey<DecorationSet>('link-popup');
 
 export class LinkPopupPlugin extends Plugin<DecorationSet> {
@@ -186,17 +190,20 @@ const LinkPopup: React.FC<LinkPopupProps> = props => {
         <LinkButton text={linkText} onClick={onLinkClicked}></LinkButton>
         {showCopyButton ? (
           <ImageButton
+            image={copyLinkImage}
             classes={['pm-image-button-copy-link']}
             title={props.ui.context.translateText('Copy Link to Clipboard')}
             ref={setCopyButton}
           />
         ) : null}
         <ImageButton
+          image={breakLinkImage}
           classes={['pm-image-button-remove-link']}
           title={props.ui.context.translateText('Remove Link')}
           onClick={onRemoveClicked}
         />
         <ImageButton
+          image={editLinkImage}
           classes={['pm-image-button-edit-properties']}
           title={props.ui.context.translateText('Edit Attributes')}
           onClick={onEditClicked}
