@@ -252,7 +252,13 @@ core::Error migratePrefs(const FilePath& src)
    // Migrate state 
    std::string contextId = settings.get("contextIdentifier");
    if (!contextId.empty())
+   {
+      // remove any computed context identifier to ensure that a value is written for the
+      // user-level context ID
+      userState().writePref(STATE_LAYER_COMPUTED, kContextId, "");
       destState[kContextId] = contextId;
+   }
+
    std::string agreementHash = settings.get("agreedToHash");
    if (!agreementHash.empty())
       destState[kAgreementHash] = agreementHash;

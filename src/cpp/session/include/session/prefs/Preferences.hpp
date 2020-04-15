@@ -72,14 +72,14 @@ public:
       return T();
    }
 
-   template <typename T> core::Error writePref(const std::string& name, T value)
+   template <typename T> core::Error writePref(int layerPos, const std::string& name, T value)
    {
       core::Error err;
-      auto layer = layers_[userLayer()];
+      auto layer = layers_[layerPos];
       if (!layer)
       {
          core::Error error(core::json::errc::ParamMissing, ERROR_LOCATION);
-         error.addProperty("description", "missing user layer for preference '" + 
+         error.addProperty("description", "missing user layer for preference '" +
                name + "'");
          return error;
       }
@@ -91,6 +91,11 @@ public:
       }
 
       return err;
+   }
+
+   template <typename T> core::Error writePref(const std::string& name, T value)
+   {
+       return writePref(userLayer(), name, value);
    }
 
    // Read/write accessors for the underlying JSON property values

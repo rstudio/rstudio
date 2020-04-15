@@ -1,7 +1,7 @@
 /*
  * UserPrefsComputedLayer.cpp
  *
- * Copyright (C) 2009-19 by RStudio, PBC
+ * Copyright (C) 2009-20 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -17,12 +17,15 @@
 
 #include <session/prefs/UserState.hpp>
 #include <session/prefs/UserStateValues.hpp>
+#include <session/SessionOptions.hpp>
 
 #include <boost/algorithm/string/predicate.hpp>
 
 #include <shared_core/json/Json.hpp>
 #include <core/system/Environment.hpp>
-#include <core/CrashHandler.hpp>
+#include <core/r_util/RUserData.hpp>
+#include <core/Settings.hpp>
+
 
 using namespace rstudio::core;
 
@@ -41,6 +44,37 @@ Error UserStateComputedLayer::readPrefs()
 
    layer[kUsingMingwGcc49] = boost::algorithm::contains(
          core::system::getenv("R_COMPILED_BY"), "4.9.3");
+
+   // Read any context ID saved by a previous version of RStudio (so we can restore document
+   // tabs, etc.)
+   r_util::SessionType sessionType =
+      (options().programMode() == kSessionProgramModeDesktop) ?
+                                    r_util::SessionTypeDesktop :
+                                    r_util::SessionTypeServer;
+   r_util::UserDirectories userDirs = r_util::userDirectories(sessionType);
+
+   FilePath oldUserSettings = FilePath(userDirs.scratchPath)
+      .completePath("monitored")
+      .completePath("user-settings")
+      .completePath("user-settings");
+
+   if (oldUserSettings.exists())
+   {
+      Settings settings;
+      Error err = settings.initialize(oldUserSettings);
+      if (err)
+      {
+         LOG_ERROR(err);
+      }
+      else
+      {
+         std::string contextId = settings.get("contextIdentifier");
+         if (!contextId.empty())
+         {
+            layer[kContextId] = contextId;
+         }
+      }
+   }
 
    cache_ = boost::make_shared<core::json::Object>(layer);
    return Success();
