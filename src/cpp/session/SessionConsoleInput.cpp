@@ -44,7 +44,8 @@ namespace console_input {
 namespace {
 
 // queue of pending console input
-std::queue<rstudio::r::session::RConsoleInput> s_consoleInputBuffer;
+using ConsoleInputQueue = std::queue<rstudio::r::session::RConsoleInput>;
+ConsoleInputQueue s_consoleInputBuffer;
 
 // manage global state indicating whether R is processing input
 volatile sig_atomic_t s_rProcessingInput = 0;
@@ -157,7 +158,7 @@ void reissueLastConsolePrompt()
 
 void clearConsoleInputBuffer()
 {
-   s_consoleInputBuffer = {};
+   s_consoleInputBuffer = ConsoleInputQueue();
 }
 
 namespace {

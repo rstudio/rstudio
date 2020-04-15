@@ -76,12 +76,8 @@ if (identical(as.character(Sys.info()["sysname"]), "Darwin") &&
       .Call("rs_packageUnloaded", pkgname, PACKAGE = "(embedding)")
    }
    
-   # NOTE: `list.dirs()` was introduced with R 2.13 but was buggy until 3.0
-   # (the 'full.names' argument was not properly respected)
-   pkgNames <- if (getRversion() >= "3.0.0")
+   pkgNames <-
       base::list.dirs(.libPaths(), full.names = FALSE, recursive = FALSE)
-   else
-      .packages(TRUE)
    
    sapply(pkgNames, function(packageName)
    {
