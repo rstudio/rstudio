@@ -8,6 +8,7 @@
 ### RStudio Server
 
 * The font used in the editor and console can now be customized. (#2534)
+* `XDG_CONFIG_DIRS` can be used to specify alternate directories for server configuration files. (Pro #1607)
 
 ### Workbench
 
@@ -17,6 +18,7 @@
 
 * The Files pane now sorts file names naturally, so that e.g. `step10.R` comes after `step9.R`. (#5766)
 * Added command to File pane's "More" menu to copy path to clipboard (#6344)
+* The user data folder `~/.rstudio` has been moved to `~/.local/share/rstudio`, and its location can now be customized with `XDG_DATA_HOME`. (#1846)
 
 ### Bugfixes
 
