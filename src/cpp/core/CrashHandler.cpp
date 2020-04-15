@@ -1,7 +1,7 @@
 /*
  * CrashHandler.cpp
  *
- * Copyright (C) 2019 by RStudio, PBC
+ * Copyright (C) 2019-20 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -22,6 +22,7 @@
 #include <core/StringUtils.hpp>
 #include <core/system/System.hpp>
 #include <core/system/Environment.hpp>
+#include <core/system/Xdg.hpp>
 
 #include "config.h"
 
@@ -79,6 +80,8 @@ Error setUserHasBeenPromptedForPermission()
 #define kUploadDumpsDefault           true
 #define kUploadProxy                  "upload-proxy"
 #define kUploadProxyDefault           ""
+#define kCrashConfFile                "crash-handler.conf"
+#define kCrashPermissionFile          "crash-handler-permission"
 
 namespace rstudio {
 namespace core {
@@ -92,19 +95,12 @@ ProgramMode s_programMode;
 
 FilePath adminConfFile()
 {
-#ifndef _WIN32
-   return FilePath("/etc/rstudio/crash-handler.conf");
-#else
-   return core::system::systemSettingsPath("RStudio", false).completePath("crash-handler.conf");
-#endif
+   return core::system::xdg::systemConfigFile(kCrashConfFile);
 }
 
 FilePath userConfFile()
 {
-   return core::system::userSettingsPath(
-      core::system::userHomePath(),
-      "R",
-      true).completePath("crash-handler.conf");
+   return core::system::xdg::userConfigDir().completeChildPath(kCrashConfFile);
 }
 
 void readOptions()
@@ -127,11 +123,32 @@ void readOptions()
       // can properly see the state at all times
       if (!optionsFile.exists())
       {
-         Error error = optionsFile.getParent().ensureDirectory();
-         if (!error)
-            error = optionsFile.ensureFile();
-         if (error)
-            LOG_ERROR(error);
+         FilePath oldOptionsFile = core::system::userSettingsPath(
+            core::system::userHomePath(),
+            "R",
+            true).completePath(kCrashConfFile);
+
+         Error error = Success();
+         if (oldOptionsFile.exists())
+         {
+            // Migrate conf from older version of RStudio if present.
+            error = oldOptionsFile.copy(optionsFile);
+            if (error)
+            {
+               LOG_ERROR(error);
+            }
+         }
+
+         // The new file might not exist because we failed to migrate the old file or
+         // because there *was* no old file. Either way, create the new file now.
+         if (!optionsFile.exists())
+         {
+            error = optionsFile.getParent().ensureDirectory();
+            if (!error)
+               error = optionsFile.ensureFile();
+            if (error)
+               LOG_ERROR(error);
+         }
       }
    }
 
@@ -182,10 +199,7 @@ void logClientCreation(const base::FilePath& handlerPath,
 
 FilePath permissionFile()
 {
-   return core::system::userSettingsPath(
-      core::system::userHomePath(),
-      "R",
-      false).completePath("crash-handler-permission");
+   return core::system::xdg::userDataDir().completeChildPath(kCrashPermissionFile);
 }
 
 } // anonymous namespace
@@ -400,6 +414,14 @@ bool hasUserBeenPromptedForPermission()
 {
    if (!permissionFile().exists())
    {
+      // check for the old (pre RStudio 1.4) permission file
+      FilePath oldPermissionFile = core::system::userSettingsPath(
+         core::system::userHomePath(),
+         "R",
+         false).completePath(kCrashPermissionFile);
+      if (oldPermissionFile.exists())
+          return true;
+
       // if for some reason the parent directory is not writeable
       // we will just treat the user as if they have been prompted
       // to prevent indefinite repeated promptings

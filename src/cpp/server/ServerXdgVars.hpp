@@ -1,7 +1,7 @@
 /*
- * RUserData.hpp
+ * ServerXdgVars.hpp
  *
- * Copyright (C) 2009-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -13,34 +13,23 @@
  *
  */
 
-#ifndef CORE_R_UTIL_R_USER_DATA_HPP
-#define CORE_R_UTIL_R_USER_DATA_HPP
-
-#include <string>
-
-#define kRStudioInitialWorkingDir      "RS_INITIAL_WD"
-#define kRStudioInitialEnvironment     "RS_INITIAL_ENV"
-#define kRStudioInitialProject         "RS_INITIAL_PROJECT"
+#ifndef SERVER_XDG_VARS_HPP
+#define SERVER_XDG_VARS_HPP
 
 namespace rstudio {
 namespace core {
+   class Error;
+}
+}
 
-class Error;
+namespace rstudio {
+namespace server {
+namespace xdg_vars {
 
-namespace r_util {
+core::Error initialize();
 
-enum SessionType
-{
-   SessionTypeDesktop,
-   SessionTypeServer
-};
-
-core::Error migrateUserStateIfNecessary(SessionType sessionType);
-
-} // namespace r_util
-} // namespace core 
+} // namespace xdg_vars
+} // namespace server
 } // namespace rstudio
 
-
-#endif // CORE_R_UTIL_R_USER_DATA_HPP
-
+#endif // SERVER_XDG_VARS_HPP

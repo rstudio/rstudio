@@ -821,8 +821,7 @@ Error processSourceTemplate(const std::string& name,
    if (!templatePath.exists())
    {
       // Next, check the system template path.
-      templatePath = core::system::xdg::systemConfigDir().completePath("templates")
-                                                         .completePath(templateName);
+      templatePath = core::system::xdg::systemConfigFile("templates").completePath(templateName);
       if (!templatePath.exists())
       {
          // No user or system template; check for a built-in template.

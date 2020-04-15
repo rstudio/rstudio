@@ -1,7 +1,7 @@
 /*
  * LogOptions.cpp
  *
- * Copyright (C) 2018 by RStudio, PBC
+ * Copyright (C) 2018-20 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -18,6 +18,7 @@
 #include <vector>
 
 #include <core/system/System.hpp>
+#include <core/system/Xdg.hpp>
 
 #include "config.h"
 
@@ -33,6 +34,7 @@ namespace log {
 #define kLogFileIncludePid "log-file-include-pid"
 #define kRotate            "rotate"
 #define kMaxSizeMb         "max-size-mb"
+#define kLogConfFile       "logging.conf"
 
 #define kFileLogger        "file"
 #define kStdErrLogger      "stderr"
@@ -209,18 +211,12 @@ void LogOptions::initProfile()
 Error LogOptions::read()
 {
 #ifdef RSTUDIO_SERVER
-   FilePath optionsFile("/etc/rstudio/logging.conf");
+   FilePath optionsFile = core::system::xdg::systemConfigFile(kLogConfFile);
 #else
    // desktop - read user file first, and only read admin file if the user file does not exist
-   FilePath optionsFile = core::system::userSettingsPath(core::system::userHomePath(),
-                                                         "RStudio-Desktop",
-                                                         false).completePath("logging.conf");
+   FilePath optionsFile = core::system:xdg::userConfigDir().completeChildPath(kLogConfFile);
    if (!optionsFile.exists())
-#ifdef _WIN32
-         optionsFile = core::system::systemSettingsPath("RStudio", false).completePath("logging.conf");
-#else
-         optionsFile = FilePath("/etc/rstudio/logging.conf");
-#endif
+         optionsFile = core::system::xdg::systemConfigFile(kLogConfFile);
 #endif
 
    // if the options file does not exist, that's fine - we'll just use default values

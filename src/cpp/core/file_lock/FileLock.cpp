@@ -24,6 +24,7 @@
 #include <core/FileSerializer.hpp>
 #include <core/http/SocketUtils.hpp>
 #include <core/system/Environment.hpp>
+#include <core/system/Xdg.hpp>
 
 #include <boost/algorithm/string.hpp>
 
@@ -47,7 +48,7 @@ const char * const kLockTypeLinkBased = "linkbased";
 # define kLockTypeDefaultEnum  (FileLock::LOCKTYPE_LINKBASED)
 #endif 
 
-const char * const kLocksConfPath    = "/etc/rstudio/file-locks";
+const char * const kLocksConfFile    = "file-locks";
 const double kDefaultRefreshRate     = 20.0;
 const double kDefaultTimeoutInterval = 30.0;
 
@@ -115,7 +116,7 @@ bool FileLock::verifyInitialized()
 void FileLock::initialize(FileLock::LockType fallbackLockType)
 {
    // read settings
-   FilePath locksConfPath(kLocksConfPath);
+   FilePath locksConfPath = core::system::xdg::systemConfigFile(kLocksConfFile);
 
    Settings settings;
    if (locksConfPath.exists())

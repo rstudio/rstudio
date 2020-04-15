@@ -1,7 +1,7 @@
 /*
  * SecureKeyFile.cpp
  *
- * Copyright (C) 2009-19 by RStudio, PBC
+ * Copyright (C) 2009-20 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -17,6 +17,7 @@
 #include <core/FileSerializer.hpp>
 
 #include <core/system/PosixSystem.hpp>
+#include <core/system/Xdg.hpp>
 
 #include <server_core/SecureKeyFile.hpp>
 
@@ -86,7 +87,8 @@ core::Error readSecureKeyFile(const std::string& filename,
    core::FilePath secureKeyPath;
    if (core::system::effectiveUserIsRoot())
    {
-      secureKeyPath = core::FilePath("/etc/rstudio").completePath(filename);
+      // check in our default configuration folder
+      secureKeyPath = core::system::xdg::systemConfigFile(filename);
       if (!secureKeyPath.exists())
          secureKeyPath = core::FilePath("/var/lib/rstudio-server")
             .completePath(filename);
