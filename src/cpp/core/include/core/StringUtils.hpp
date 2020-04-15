@@ -1,7 +1,7 @@
 /*
  * StringUtils.hpp
  *
- * Copyright (C) 2009-17 by RStudio, PBC
+ * Copyright (C) 2009-20 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -289,6 +289,8 @@ std::string makeRandomByteString(std::size_t n);
 bool extractCommentHeader(const std::string& contents,
                           const std::string& reCommentPrefix,
                           std::string* pHeader);
+
+std::string extractIndent(const std::string& line);
 
 } // namespace string_utils
 
