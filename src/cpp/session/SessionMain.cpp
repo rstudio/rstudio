@@ -472,6 +472,10 @@ Error rInit(const rstudio::r::session::RInitInfo& rInitInfo)
       // main module context
       (module_context::initialize)
 
+      // prefs (early init required -- many modules including projects below require
+      // preference access)
+      (modules::prefs::initialize)
+
       // projects (early project init required -- module inits below
       // can then depend on e.g. computed defaultEncoding)
       (projects::initialize)
@@ -498,7 +502,6 @@ Error rInit(const rstudio::r::session::RInitInfo& rInitInfo)
       (r_utils::initialize)
 
       // modules with c++ implementations
-      (modules::prefs::initialize)
       (modules::spelling::initialize)
       (modules::lists::initialize)
       (modules::path::initialize)
