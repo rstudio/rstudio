@@ -56,6 +56,7 @@ import { navigateTo } from './api/navigation';
 import { FixupContext } from './api/fixup';
 import { unitToPixels, pixelsToUnit, roundUnit, kValidUnits } from './api/image';
 import { kPercentUnit } from './api/css';
+import { defaultEditorUIImages } from './api/ui-images';
 
 import { getTitle, setTitle } from './nodes/yaml_metadata/yaml_metadata-title';
 
@@ -212,6 +213,18 @@ export class Editor {
       ...options,
     };
 
+    // provide context defaults
+    context = {
+      ...context,
+      ui: {
+        ...context.ui,
+        images: {
+          ...defaultEditorUIImages(),
+          ...context.ui.images
+        }
+      }
+    };
+    
     // default format to what is specified in the config
     let format = context.format;
 
