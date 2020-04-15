@@ -6,10 +6,18 @@ pandoc schema: <https://github.com/jgm/pandoc-types/blob/master/Text/Pandoc/Defi
 
 ## TODO
 
-Merge into panmirror-next 
+Link popups no longer truncated (see advanced_ui.Rmd)
+
+Is this round-tripping into a block for the HTML as a result of our handler?
+{{<figure src="/images/rsc-170-jupyter.png" caption="Publishing to Connect from Jupyter" alt= "Publishing to Connect from Jupyter">}}
+
+Consider markdown links
+
+Consider 2x icons for link
 
 Support for bookdown @ref (seems to round-trip okay but provide mark / input rule?)
  Would need a rule that runs on startup and an input rule
+ Insert -> Cross Reference
 
 Take a look at constructs encountered in blogdown (e.g. {{ foo }}) to see how well
 we work with them.
