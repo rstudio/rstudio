@@ -1,5 +1,5 @@
 /*
- * heading-styles.css
+ * images.ts
  *
  * Copyright (C) 2019-20 by RStudio, PBC
  *
@@ -13,12 +13,20 @@
  *
  */
 
- 
-.ProseMirror .pm-heading {
-  /*
-  Note that this value is relied upon by attr_edit-decoration.tsx (for locating the attr_edit
-  button on the outline) so if you change it here, change it there as well
-  */
-  outline-offset: 6px;
+import copyImage from '../styles/images/copy.png';
+import propertiesImage from '../styles/images/properties.png';
+import removelinkImage from '../styles/images/removelink.png';
+
+export interface EditorUIImages {
+  copy: string;
+  properties: string;
+  removelink: string;
 }
 
+export function defaultEditorUIImages():  EditorUIImages {
+  return {
+    copy: copyImage,
+    properties: propertiesImage,
+    removelink: removelinkImage
+  };
+}

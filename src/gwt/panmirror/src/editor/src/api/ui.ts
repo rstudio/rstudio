@@ -17,12 +17,15 @@ import { ListCapabilities } from './list';
 import { LinkTargets, LinkCapabilities, LinkType } from './link';
 import { TableCapabilities } from './table';
 import { ImageDimensions } from './image';
+import { EditorUIImages } from './ui-images';
+
 import { kStyleAttrib } from './pandoc_attr';
 
 export interface EditorUI {
   dialogs: EditorDialogs;
   display: EditorDisplay;
   context: EditorUIContext;
+  images: EditorUIImages;
 }
 
 export interface EditorDialogs {

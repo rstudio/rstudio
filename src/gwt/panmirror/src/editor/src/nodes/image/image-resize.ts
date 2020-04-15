@@ -41,9 +41,11 @@ import {
   isValidImageSizeUnit,
 } from '../../api/image';
 import { kWidthAttrib, kHeightAttrib, kStyleAttrib, kAlignAttrib } from '../../api/pandoc_attr';
+import { EditorUIImages } from '../../api/ui-images';
 
 import { imageDialog } from './image-dialog';
 import { hasPercentWidth, imageDimensionsFromImg } from './image-util';
+
 
 const kDataWidth = 'data-width';
 const kDataHeight = 'data-height';
@@ -173,6 +175,7 @@ export function attachResizeUI(
     onHeightChanged,
     onUnitsChanged,
     onEditImage,
+    ui.images,
     ui.context.translateText,
   );
 
@@ -209,6 +212,7 @@ function resizeShelf(
   onHeightChanged: () => void,
   onUnitsChanged: () => void,
   onEditImage: () => void,
+  uiImages: EditorUIImages,
   translateText: (text: string) => string,
 ) {
   // create resize shelf
@@ -296,7 +300,11 @@ function resizeShelf(
   addToPanel(lockLabel, 20);
 
   // edit button
-  const editImage = createImageButton(['pm-image-button-edit-properties'], translateText('Edit Attributes'));
+  const editImage = createImageButton(
+    uiImages.properties, 
+    ['pm-image-button-edit-properties'], 
+    translateText('Edit Attributes')
+  );
   editImage.onclick = onEditImage;
   addHorizontalPanelCell(panel, editImage);
 

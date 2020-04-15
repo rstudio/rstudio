@@ -163,21 +163,3 @@
   padding: 10px;
 }
 
-.pm-image-button {
-  width: 22px;
-  height: 20px;
-}
-
-.pm-image-button-edit-properties {
-  background-image: url("./images/edit_properties.png");
-}
-
-.pm-image-button-remove-link {
-  background-image: url("./images/break_link.png");
-}
-
-.pm-image-button-copy-link {
-  background-image: url("./images/copy_link.png");
-}
-
-

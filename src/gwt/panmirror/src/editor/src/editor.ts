@@ -56,6 +56,7 @@ import { navigateTo } from './api/navigation';
 import { FixupContext } from './api/fixup';
 import { unitToPixels, pixelsToUnit, roundUnit, kValidUnits } from './api/image';
 import { kPercentUnit } from './api/css';
+import { defaultEditorUIImages } from './api/ui-images';
 
 import { getTitle, setTitle } from './nodes/yaml_metadata/yaml_metadata-title';
 
@@ -212,6 +213,18 @@ export class Editor {
       ...options,
     };
 
+    // provide context defaults
+    context = {
+      ...context,
+      ui: {
+        ...context.ui,
+        images: {
+          ...defaultEditorUIImages(),
+          ...context.ui.images
+        }
+      }
+    };
+    
     // default format to what is specified in the config
     let format = context.format;
 
@@ -276,6 +289,16 @@ export class Editor {
       dispatchTransaction: this.dispatchTransaction.bind(this),
       domParser: new EditorDOMParser(this.schema),
       attributes,
+    });
+
+    // add custom restoreFocus handler to the view -- this provides a custom
+    // handler for RStudio's FocusContext, necessary because the default 
+    // ProseMirror dom mutation handler picks up the focus and changes the 
+    // selection.
+    Object.defineProperty(this.view.dom, 'restoreFocus', {
+      value: () => {
+        this.focus();
+      }
     });
 
     // add proportinal font class to parent
