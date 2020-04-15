@@ -13,13 +13,13 @@ Hugo shortcodes: https://gohugo.io/content-management/shortcodes/
 Is this round-tripping into a block for the HTML as a result of our handler?
 {{<figure src="/images/rsc-170-jupyter.png" caption="Publishing to Connect from Jupyter" alt= "Publishing to Connect from Jupyter">}}
 
-Support for bookdown @ref (seems to round-trip okay but provide mark / input rule?)
- Would need a rule that runs on startup and an input rule
- Insert -> Cross Reference
+Invesigate whether the quote applyMarks deal needs to use //g
 
 Round-trip tests in Mastering Shiny
 
 More complete docs
+
+Bookdown Theroms (equation w/ some narrative)
 
 MathJax preview. When containing the selection, the math will show both the code and the preview. When not containing the selection will show the preview. (so probably require a node view for this). Consider a “done” gesture for display math. May need to bring back
 escaping of $ in math as this mode will clearly not be "source mode" style latex equation editing
@@ -29,6 +29,7 @@ escaping of $ in math as this mode will clearly not be "source mode" style latex
 Button ellipses shouldn't require positioning override
 (see EditorPane.module.scss)
 
+Google Docs style list toggling
 
 Slack style handling of marks?
 
