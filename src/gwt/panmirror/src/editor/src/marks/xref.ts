@@ -53,7 +53,7 @@ const extension = (
             },
           ],
           toDOM(_mark: Mark) {
-            return ['span', { class: 'xref pm-linking-cmd' } ];
+            return ['span', { class: 'xref pm-link-text-color pm-fixedwidth-font' } ];
           },
         },
         pandoc: {

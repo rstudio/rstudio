@@ -160,11 +160,6 @@ export function applyTheme(theme: EditorTheme) {
     .pm-link-text-color {
       color: ${theme.linkTextColor} !important;
     }
-    .pm-linking-cmd {
-      color: ${theme.linkTextColor} !important;
-      font-family: ${theme.fixedWidthFont} !important;
-      font-size: ${theme.fixedWidthFontSizePt}pt !important;
-    }
     .pm-markup-text-color {
       color: ${theme.markupTextColor} !important;
     }
