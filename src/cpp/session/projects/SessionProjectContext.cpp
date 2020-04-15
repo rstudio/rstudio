@@ -411,9 +411,14 @@ Error ProjectContext::initialize()
       // update activeSession
       activeSession().setProject(createAliasedPath(directory()));
 
+      // update scratch paths
+      Error error = computeScratchPaths(file_, &scratchPath_, &sharedScratchPath_);
+      if (error)
+          LOG_ERROR(error);
+
       // read build options for the side effect of updating buildOptions_
       RProjectBuildOptions buildOptions;
-      Error error = readBuildOptions(&buildOptions);
+      error = readBuildOptions(&buildOptions);
       if (error)
          LOG_ERROR(error);
 
