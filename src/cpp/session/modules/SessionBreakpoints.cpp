@@ -603,12 +603,7 @@ Error removeAllBreakpoints(const json::JsonRpcRequest&,
 
 bool haveSrcrefAttribute()
 {
-   // check whether this is R 2.14 or greater
-   bool haveSrcref = false;
-   Error error = r::exec::evaluateString("getRversion() >= '2.14.0'", &haveSrcref);
-   if (error)
-      LOG_ERROR(error);
-   return haveSrcref;
+   return true;
 }
 
 bool haveAdvancedStepCommands()

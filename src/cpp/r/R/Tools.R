@@ -404,21 +404,11 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
    }
 })
 
-# indirection for normalizePath function
-.rs.addFunction("normalizePath", 
-   if(getRversion() < "2.13.0")
-      utils::normalizePath
-   else
-      normalizePath
-)
+# alias for normalizePath function
+.rs.addFunction("normalizePath", normalizePath)
 
-# indirection for path.package function
-.rs.addFunction("pathPackage",
-   if(getRversion() < "2.13.0")
-      .path.package
-   else
-      path.package
-)
+# alias for path.package function
+.rs.addFunction("pathPackage", path.package)
 
 # handle viewing a pdf differently on each platform:
 #  - windows: shell.exec
