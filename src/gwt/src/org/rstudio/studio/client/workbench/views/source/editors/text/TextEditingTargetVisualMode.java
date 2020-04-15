@@ -440,7 +440,7 @@ public class TextEditingTargetVisualMode
                PanmirrorCommands.Paragraph, 
                PanmirrorCommands.Heading1, PanmirrorCommands.Heading2, PanmirrorCommands.Heading3,
                PanmirrorCommands.Heading4, PanmirrorCommands.Heading5, PanmirrorCommands.Heading6,
-               PanmirrorCommands.BulletList, PanmirrorCommands.OrderedList, PanmirrorCommands.TightList
+               PanmirrorCommands.TightList
             );
            
             // periodically sync edits back to main editor
