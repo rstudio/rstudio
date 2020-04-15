@@ -87,6 +87,7 @@ public class PanmirrorCommands
    public static String YamlMetadata = "431B5A45-1B25-4A55-9BAF-C0FE95D9B2B6";
    public static String RmdChunk = "EBFD21FF-4A6E-4D88-A2E0-B38470B00BB9";
    public static String Citation = "EFFCFC81-F2E7-441E-B7FA-C693146B4185";
+   public static String CrossReference = "48CEED4F-1D18-4AF9-8686-9FEB5DF6BCC8";
    public static String DefinitionList = "CFAB8F4D-3350-4398-9754-8DE0FB95167B";
    public static String DefinitionTerm = "204D1A8F-8EE6-424A-8E69-99768C85B39E";
    public static String DefinitionDescription = "F0738D83-8E11-4CB5-B958-390190A2D7DD";

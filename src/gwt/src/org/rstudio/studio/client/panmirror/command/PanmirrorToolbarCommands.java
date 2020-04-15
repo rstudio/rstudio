@@ -109,7 +109,8 @@ public class PanmirrorToolbarCommands
       add(PanmirrorCommands.DefinitionList, "Definition List");
       add(PanmirrorCommands.DefinitionTerm, "Term");
       add(PanmirrorCommands.DefinitionDescription, "Description");
-      add(PanmirrorCommands.Citation, "Citation...");        
+      add(PanmirrorCommands.Citation, "Citation...");   
+      add(PanmirrorCommands.CrossReference, "Cross Reference");
    }
    
    public PanmirrorCommandUI get(String id)

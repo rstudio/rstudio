@@ -243,6 +243,8 @@ public class PanmirrorToolbar extends SecondaryToolbar implements RequiresResize
       insertMenu.addCommand(PanmirrorCommands.InlineMath);
       insertMenu.addCommand(PanmirrorCommands.DisplayMath);
       insertMenu.addSeparator();
+      insertMenu.addCommand(PanmirrorCommands.CrossReference);
+      insertMenu.addSeparator();
       insertMenu.addCommand(PanmirrorCommands.Footnote);
       insertMenu.addCommand(PanmirrorCommands.Citation);
       insertMenu.addSeparator();

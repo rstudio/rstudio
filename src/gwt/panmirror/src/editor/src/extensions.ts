@@ -84,6 +84,7 @@ import markRawHTML from './marks/raw_inline/raw_html';
 import markMath from './marks/math/math';
 import markCite from './marks/cite/cite';
 import markSpan from './marks/span';
+import markXRef from './marks/xref';
 
 // nodes
 import nodeFootnote from './nodes/footnote/footnote';
@@ -157,7 +158,8 @@ export function initExtensions(
     markMath,
     markCite,
     markSpan,
-
+    markXRef,
+    
     // nodes
     nodeDiv,
     nodeFootnote,
