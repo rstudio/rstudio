@@ -136,7 +136,7 @@ void runEmbeddedR(const core::FilePath& rHome,
 
    // more configuration
    pRP->CharacterMode = RGui;
-   pRP->R_Slave = FALSE;
+   pRP->R_NoEcho = FALSE;
    pRP->R_Quiet = quiet ? TRUE : FALSE;
    pRP->R_Interactive = TRUE;
    pRP->SaveAction = defaultSaveAction;
