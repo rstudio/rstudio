@@ -462,11 +462,11 @@
       FALSE
 })
 
-.rs.addFunction("isBlogdownProject", function(input_dir, encoding) {
-
+.rs.addFunction("isSiteProject", function(input_dir, encoding, site) {
+   
    index <- .rs.inputDirToIndexFile(input_dir)
    if (!is.null(index)) {
-      any(grepl("blogdown_site", readLines(index, encoding = encoding)))
+      any(grepl(site, readLines(index, encoding = encoding)))
    }
    else
       FALSE

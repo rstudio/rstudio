@@ -20,6 +20,7 @@ export interface EditorOptions {
   readonly braceMatching?: boolean;
   readonly rmdCodeChunks?: boolean;
   readonly rmdImagePreview?: boolean;
+  readonly rmdBookdownXRef?: boolean;
   readonly formatComment?: boolean;
   readonly className?: string;
 }

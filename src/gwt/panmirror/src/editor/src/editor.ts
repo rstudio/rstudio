@@ -209,6 +209,7 @@ export class Editor {
       braceMatching: true,
       rmdCodeChunks: false,
       rmdImagePreview: false,
+      rmdBookdownXRef: false,
       formatComment: true,
       ...options,
     };

@@ -847,6 +847,7 @@ bool usingMingwGcc49();
 bool isWebsiteProject();
 bool isBookdownWebsite();
 bool isBlogdownProject();
+bool isDistillProject();
 std::string websiteOutputDir();
 
 core::FilePath extractOutputFileCreated(const core::FilePath& inputFile,

@@ -1509,6 +1509,24 @@ Error initialize()
 
 namespace module_context {
 
+namespace {
+
+bool isSiteProject(const std::string& site)
+{
+   if (!modules::rmarkdown::rmarkdownPackageAvailable() || !projects::projectContext().hasProject())
+      return false;
+
+   bool isSite = false;
+   std::string encoding = projects::projectContext().defaultEncoding();
+   Error error = r::exec::RFunction(".rs.isSiteProject",
+                              projectDir(), encoding, site).call(&isSite);
+   if (error)
+      LOG_ERROR(error);
+   return isSite;
+}
+
+}
+
 bool isWebsiteProject()
 {
    if (!modules::rmarkdown::rmarkdownPackageAvailable())
@@ -1534,16 +1552,12 @@ bool isBookdownWebsite()
 
 bool isBlogdownProject()
 {
-   if (!modules::rmarkdown::rmarkdownPackageAvailable() || !projects::projectContext().hasProject())
-      return false;
+   return isSiteProject("blogdown_site");
+}
 
-   bool isBlogdown = false;
-   std::string encoding = projects::projectContext().defaultEncoding();
-   Error error = r::exec::RFunction(".rs.isBlogdownProject",
-                              projectDir(), encoding).call(&isBlogdown);
-   if (error)
-      LOG_ERROR(error);
-   return isBlogdown;
+bool isDistillProject()
+{
+   return isSiteProject("distill_website");
 }
 
 

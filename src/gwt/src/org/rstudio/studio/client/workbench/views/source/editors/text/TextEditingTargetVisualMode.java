@@ -16,6 +16,7 @@
 package org.rstudio.studio.client.workbench.views.source.editors.text;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.DebouncedCommand;
@@ -37,9 +38,12 @@ import org.rstudio.studio.client.panmirror.PanmirrorWidget;
 import org.rstudio.studio.client.panmirror.PanmirrorWriterOptions;
 import org.rstudio.studio.client.panmirror.command.PanmirrorCommands;
 import org.rstudio.studio.client.panmirror.pandoc.PanmirrorPandocFormat;
+import org.rstudio.studio.client.rmarkdown.model.YamlFrontMatter;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.commands.Commands;
+import org.rstudio.studio.client.workbench.model.Session;
+import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.views.source.model.DirtyState;
 import org.rstudio.studio.client.workbench.views.source.model.DocUpdateSentinel;
@@ -59,7 +63,8 @@ import com.google.inject.Inject;
 public class TextEditingTargetVisualMode 
 {
    public TextEditingTargetVisualMode(TextEditingTarget target,
-                                      TextEditingTarget.Display display,
+                                      TextEditingTarget.Display view,
+                                      DocDisplay docDisplay,
                                       DirtyState dirtyState,
                                       DocUpdateSentinel docUpdateSentinel,
                                       EventBus eventBus,
@@ -68,7 +73,8 @@ public class TextEditingTargetVisualMode
       RStudioGinjector.INSTANCE.injectMembers(this);
       
       target_ = target;
-      display_ = display;
+      view_ = view;
+      docDisplay_ = docDisplay;
       dirtyState_ = dirtyState;
       docUpdateSentinel_ = docUpdateSentinel;
       progress_ = new ProgressPanel(ProgressImages.createSmall(), 200);
@@ -92,7 +98,7 @@ public class TextEditingTargetVisualMode
       
       // sync to user pref changed
       releaseOnDismiss.add(prefs_.enableVisualMarkdownEditingMode().addValueChangeHandler((value) -> {
-         display_.manageCommandUI();
+         view_.manageCommandUI();
       }));
       
       // changes to line wrapping prefs make us dirty
@@ -108,12 +114,14 @@ public class TextEditingTargetVisualMode
    public void initialize(Commands commands, 
                           UserPrefs prefs, 
                           SourceServerOperations source, 
-                          WorkbenchContext context)
+                          WorkbenchContext context,
+                          Session session)
    {
       commands_ = commands;
       prefs_ = prefs;
       source_ = source;
       context_ = context;
+      sessionInfo_ = session.getSessionInfo();
    }
    
    public boolean isActivated()
@@ -197,11 +205,11 @@ public class TextEditingTargetVisualMode
                PanmirrorPandocFormat format = panmirror_.getPandocFormat();
                if (format.warnings.invalidFormat.length() > 0)
                {
-                  display_.showWarningBar("Invalid Pandoc format: " + format.warnings.invalidFormat);
+                  view_.showWarningBar("Invalid Pandoc format: " + format.warnings.invalidFormat);
                }
                else if (format.warnings.invalidOptions.length > 0)
                {
-                  display_.showWarningBar("Pandoc format " + format.baseName + " does not support options: " + 
+                  view_.showWarningBar("Pandoc format " + format.baseName + " does not support options: " + 
                                           String.join(", ", format.warnings.invalidOptions));
                }
             });                
@@ -331,10 +339,10 @@ public class TextEditingTargetVisualMode
       manageCommands();
       
       // manage toolbar buttons / menus in display
-      display_.manageCommandUI();
+      view_.manageCommandUI();
       
       // get references to the editing container and it's source editor
-      TextEditorContainer editorContainer = display_.editorContainer();
+      TextEditorContainer editorContainer = view_.editorContainer();
         
       // visual mode enabled (panmirror editor)
       if (activate)
@@ -420,6 +428,8 @@ public class TextEditingTargetVisualMode
          PanmirrorOptions options = new PanmirrorOptions();
          options.rmdCodeChunks = true;
          options.rmdImagePreview = true;
+         if (enableBookdownXRef()) 
+            options.rmdBookdownXRef = true;
          
          // add focus-visible class to prevent interaction with focus-visible.js
          // (it ends up attempting to apply the "focus-visible" class b/c ProseMirror
@@ -526,7 +536,7 @@ public class TextEditingTargetVisualMode
    private void withProgress(int delayMs, CommandWithArg<Command> command)
    {
      
-      TextEditorContainer editorContainer = display_.editorContainer();
+      TextEditorContainer editorContainer = view_.editorContainer();
       /*
       IsHideableWidget prevWidget = editorContainer.getActiveWidget();
       progress_.beginProgressOperation(delayMs);
@@ -540,20 +550,20 @@ public class TextEditingTargetVisualMode
    
    private String getEditorCode()
    {
-      TextEditorContainer editorContainer = display_.editorContainer();
+      TextEditorContainer editorContainer = view_.editorContainer();
       TextEditorContainer.Editor editor = editorContainer.getEditor();
       return editor.getCode();
-   }
+   }   
    
    // is our widget active in the editor container
    private boolean isPanmirrorActive()
    {
-      return display_.editorContainer().isWidgetActive(panmirror_);
+      return view_.editorContainer().isWidgetActive(panmirror_);
    }
    
    private TextEditorContainer.Editor getSourceEditor()
    {
-      return display_.editorContainer().getEditor();
+      return view_.editorContainer().getEditor();
    }
   
    private boolean getOutlineVisible()
@@ -652,14 +662,40 @@ public class TextEditingTargetVisualMode
       return uiContext;
    }
    
+   private boolean enableBookdownXRef()
+   {
+      return sessionInfo_.getBuildToolsBookdownWebsite() || 
+             sessionInfo_.getIsBlogdownProject() ||
+             sessionInfo_.getIsDistillProject() ||
+             getOutputFormats().contains("distill::distill_article");
+   }
+   
+   private List<String> getOutputFormats()
+   {
+      String yaml = YamlFrontMatter.getFrontMatter(docDisplay_);
+      if (yaml == null)
+      {
+         return new ArrayList<String>();
+      }
+      else
+      {
+         List<String> formats = TextEditingTargetRMarkdownHelper.getOutputFormats(yaml);
+         if (formats == null)
+            return new ArrayList<String>();
+         else
+            return formats;   
+      }
+   }
    
    private Commands commands_;
    private UserPrefs prefs_;
    private WorkbenchContext context_;
+   private SessionInfo sessionInfo_;
    private SourceServerOperations source_;
    
    private final TextEditingTarget target_;
-   private final TextEditingTarget.Display display_;
+   private final TextEditingTarget.Display view_;
+   private final DocDisplay docDisplay_;
    private final DirtyState dirtyState_;
    private final DocUpdateSentinel docUpdateSentinel_;
    

@@ -1752,7 +1752,8 @@ public class TextEditingTarget implements
             // initialize visual mode
             visualMode_ = new TextEditingTargetVisualMode(
                TextEditingTarget.this,
-               view_, 
+               view_,
+               docDisplay_,
                dirtyState_, 
                docUpdateSentinel_,
                events_,
@@ -4032,7 +4033,7 @@ public class TextEditingTarget implements
       String yaml = getRmdFrontMatter();
       if (yaml == null)
          return new ArrayList<String>();
-      List<String> formats = rmarkdownHelper_.getOutputFormats(yaml);
+      List<String> formats = TextEditingTargetRMarkdownHelper.getOutputFormats(yaml);
       if (formats == null)
          formats = new ArrayList<String>();
       return formats;  

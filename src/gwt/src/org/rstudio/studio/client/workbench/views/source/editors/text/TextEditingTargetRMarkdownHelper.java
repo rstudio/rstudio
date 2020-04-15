@@ -1049,7 +1049,7 @@ public class TextEditingTargetRMarkdownHelper
       return result;
    }
       
-   public List<String> getOutputFormats(String yaml)
+   public static List<String> getOutputFormats(String yaml)
    {
       try
       {  
@@ -1063,7 +1063,7 @@ public class TextEditingTargetRMarkdownHelper
       return null;
    }
    
-   private List<String> getOutputFormats(YamlTree tree)
+   private static List<String> getOutputFormats(YamlTree tree)
    {
       List<String> outputs = tree.getChildKeys(RmdFrontMatter.OUTPUT_KEY);
       if (outputs == null)

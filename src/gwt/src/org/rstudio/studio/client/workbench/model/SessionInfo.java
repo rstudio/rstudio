@@ -335,6 +335,10 @@ public class SessionInfo extends JavaScriptObject
       return this.is_blogdown_project;
    }-*/;
    
+   public final native boolean getIsDistillProject() /*-{
+      return this.is_distill_project;
+   }-*/;
+   
    public final native boolean getHasPackageSrcDir() /*-{
       return this.has_pkg_src;
    }-*/;
