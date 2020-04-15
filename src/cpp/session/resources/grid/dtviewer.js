@@ -1543,23 +1543,7 @@
     // restore any scroll handlers (this can get called on tab activate)
     restoreScrollHandlers();
 
-    if (structureChanged) {
-      // structure changed--this necessitates a full refresh
-      bootstrap();
-    } else {
-      // structure didn't change, so just reload data.
-      var s = table.settings();
-      var pos = $(".dataTables_scrollBody").scrollTop();
-      var row = s.scroller().pixelsToRow(pos);
-
-      // reload data, then snap to that row
-      table.ajax.reload(function () {
-        s.scrollToRow(row, false);
-        if (sizeChanged) {
-          debouncedDataTableSize();
-        }
-      }, false);
-    }
+    bootstrap();
   };
 
   // called from RStudio to apply a column-wide search.
