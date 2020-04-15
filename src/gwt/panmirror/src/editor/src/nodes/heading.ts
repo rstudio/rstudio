@@ -24,8 +24,6 @@ import { Extension } from '../api/extension';
 import { pandocAttrSpec, pandocAttrParseDom, pandocAttrToDomAttr, pandocAttrReadAST } from '../api/pandoc_attr';
 import { uuidv4 } from '../api/util';
 
-import './heading-styles.css';
-
 const HEADING_LEVEL = 0;
 const HEADING_ATTR = 1;
 const HEADING_CHILDREN = 2;
@@ -73,12 +71,7 @@ const extension = (pandocExtensions: PandocExtensions): Extension => {
         },
 
         attr_edit: () => ({
-          type: (schema: Schema) => schema.nodes.heading,
-          // Note that this value is linked to the outline offset defined in heading-styles.css,
-          // so if you change it here, you need to change it there as well
-          offset: () => 6,
-          // ensure tht we get the full text-focus treatment even at startup
-          classes: () => ['pm-text-focused','pm-focus-outline-color', 'pm-show-text-focus']
+          type: (schema: Schema) => schema.nodes.heading
         }),
 
         pandoc: {
