@@ -462,6 +462,16 @@
       FALSE
 })
 
+.rs.addFunction("isBlogdownProject", function(input_dir, encoding) {
+
+   index <- .rs.inputDirToIndexFile(input_dir)
+   if (!is.null(index)) {
+      any(grepl("blogdown_site", readLines(index, encoding = encoding)))
+   }
+   else
+      FALSE
+})
+
 .rs.addFunction("tinytexRoot", function()
 {
    sysname <- Sys.info()[["sysname"]]

@@ -381,6 +381,8 @@ void handleClientInit(const boost::function<void()>& initFunction,
       sessionInfo["has_pkg_src"] = false;
       sessionInfo["has_pkg_vig"] = false;
    }
+
+   sessionInfo["is_blogdown_project"] = module_context::isBlogdownProject();
    
    sessionInfo["graphics_backends"] = modules::graphics::supportedBackends();
 

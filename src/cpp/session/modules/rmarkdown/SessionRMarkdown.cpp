@@ -137,6 +137,12 @@ enum
    RExecutionBusy  = 1
 };
 
+std::string projectDir()
+{
+   return string_utils::utf8ToSystem(
+      projects::projectContext().directory().getAbsolutePath());
+}
+
 std::string projectBuildDir()
 {
    return string_utils::utf8ToSystem(
@@ -1525,6 +1531,21 @@ bool isBookdownWebsite()
       LOG_ERROR(error);
    return isBookdown;
 }
+
+bool isBlogdownProject()
+{
+   if (!modules::rmarkdown::rmarkdownPackageAvailable() || !projects::projectContext().hasProject())
+      return false;
+
+   bool isBlogdown = false;
+   std::string encoding = projects::projectContext().defaultEncoding();
+   Error error = r::exec::RFunction(".rs.isBlogdownProject",
+                              projectDir(), encoding).call(&isBlogdown);
+   if (error)
+      LOG_ERROR(error);
+   return isBlogdown;
+}
+
 
 std::string websiteOutputDir()
 {

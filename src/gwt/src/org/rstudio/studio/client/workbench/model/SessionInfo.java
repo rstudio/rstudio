@@ -331,6 +331,10 @@ public class SessionInfo extends JavaScriptObject
       return this.build_target_dir;
    }-*/;
    
+   public final native boolean getIsBlogdownProject() /*-{
+      return this.is_blogdown_project;
+   }-*/;
+   
    public final native boolean getHasPackageSrcDir() /*-{
       return this.has_pkg_src;
    }-*/;
