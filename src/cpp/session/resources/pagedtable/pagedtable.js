@@ -170,6 +170,8 @@ var PagedTable = function (pagedTable) {
   var options = function(source) {
     var options = typeof(source.options) !== "undefined" &&
       source.options !== null ? source.options : {};
+    var metadata = typeof(source.metadata) !== "undefined" &&
+      source.metadata !== null ? source.metadata : {};
 
     var columns = typeof(options.columns) !== "undefined" ? options.columns : {};
     var rows = typeof(options.rows) !== "undefined" ? options.rows : {};
@@ -189,7 +191,8 @@ var PagedTable = function (pagedTable) {
         min: positiveIntOrNull(columns.min),
         max: positiveIntOrNull(columns.max),
         total: positiveIntOrNull(columns.total)
-      }
+      },
+      metadata: metadata
     };
   }(source);
 
@@ -525,6 +528,36 @@ var PagedTable = function (pagedTable) {
 
     var fragment = document.createDocumentFragment();
 
+    // show metadata on top of header
+    if (options.metadata !== {}) {
+       // create a column that spans the entire header space 
+       var metarow = document.createElement("tr");
+       var metacell = document.createElement("td");
+       metacell.className = "pagedtable-metacell";
+       metacell.setAttribute("colspan", columns.subset.length);
+       metarow.appendChild(metacell);
+
+       // create a small table cell inside that column to host the metadata
+       var metatable = document.createElement("table");
+       metacell.appendChild(metatable);
+       for (var metafield in options.metadata) {
+          if (options.metadata.hasOwnProperty(metafield)) {
+             var metatablerow = document.createElement("tr");
+
+             var field = document.createElement("td");
+             field.innerText = metafield;
+             field.className = "pagedtable-info"
+             metatablerow.appendChild(field);
+
+             var val = document.createElement("td");
+             val.innerText = options.metadata[metafield];
+             metatablerow.appendChild(val);
+
+             metatable.appendChild(metatablerow);
+         }
+       }
+       fragment.appendChild(metarow);
+    }
     header = document.createElement("tr");
     fragment.appendChild(header);
 

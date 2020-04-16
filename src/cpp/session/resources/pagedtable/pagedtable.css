@@ -160,3 +160,15 @@ a.pagedtable-index-current {
   font-style: italic;
   opacity: 0.3;
 }
+
+.pagedtable-metacell {
+  border-bottom: 1px solid #dddddd;
+  background-color: #FBFBFB;
+}
+
+.pagedtable .pagedtable-metacell table {
+  width: auto;
+  height: auto;
+  background-color: #FBFBFB;
+
+}
