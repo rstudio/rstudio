@@ -30,6 +30,7 @@
   border: none;
   padding: 0;
   vertical-align: middle;
+  background-color: transparent;
 }
 
 .pm-image-button img {
