@@ -310,7 +310,7 @@ public class PanmirrorWidget extends DockLayoutPanel implements
    public void setMarkdown(String code, boolean emitUpdate, CommandWithArg<Boolean> completed) 
    {
       new PromiseWithProgress<Boolean>(
-         editor_.setMarkdown(code, emitUpdate),
+         editor_.setMarkdown(code, true, emitUpdate),
          false,
          kSerializationProgressDelayMs,
          completed
