@@ -63,7 +63,7 @@ public class BrowseCap
       return (Desktop.hasDesktopFrame()) || !isSafari();
    }
    
-   public boolean isInternetExplorer()
+   public static boolean isInternetExplorer()
    {
       return isUserAgent("trident");
    }
