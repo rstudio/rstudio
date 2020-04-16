@@ -8,16 +8,22 @@ pandoc schema: <https://github.com/jgm/pandoc-types/blob/master/Text/Pandoc/Defi
 
 Link popups no longer truncated (see advanced_ui.Rmd)
 
+Positioning of ellipses in props button
+
 Hugo shortcodes: https://gohugo.io/content-management/shortcodes/
+Perhaps do automatic processing (to remove < escape) in all contexts and do syntax treatment in blogdown contexts
 
-Is this round-tripping into a block for the HTML as a result of our handler?
-{{<figure src="/images/rsc-170-jupyter.png" caption="Publishing to Connect from Jupyter" alt= "Publishing to Connect from Jupyter">}}
+Nested shortcodes should be within a markdown block
+  - Shortcode begin/end is what the marks are applied to (for %)
+  - Apply mark to full range for <
 
-Invesigate whether the quote applyMarks deal needs to use //g
+Check for other Hugo / blogdown markdown extensions (allow declaration in format?)
+
+
 
 Round-trip tests in Mastering Shiny
 
-More complete docs
+More complete docs (cross refs, etc.)
 
 Bookdown Theroms (equation w/ some narrative)
 
