@@ -153,13 +153,13 @@ void handleDictionaryRequest(const http::Request& request, http::Response* pResp
    else if (core::system::xdg::systemConfigDir()
                .completePath(kCustomDictionaries).completePath(splat[1]).exists())
    {
-      pResponse->setCacheableFile(core::system::xdg::systemConfigDir().completePath(
+      pResponse->setCacheableFile(core::system::xdg::systemConfigFile(
                kCustomDictionaries).completePath(splat[1]), request);
    }
    else if (core::system::xdg::systemConfigDir()
                .completePath(kSystemLanguages).completePath(splat[1]).exists())
    {
-      pResponse->setCacheableFile(core::system::xdg::systemConfigDir().completePath(
+      pResponse->setCacheableFile(core::system::xdg::systemConfigFile(
                kSystemLanguages).completePath(splat[1]), request);
    }
    /*

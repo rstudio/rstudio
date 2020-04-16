@@ -117,7 +117,7 @@ Error getSnippetsAsJson(json::Array* pJsonData)
    std::vector<FilePath> dirs;
 
    // Add system-level snippets files
-   dirs.push_back(core::system::xdg::systemConfigDir().completePath("snippets"));
+   dirs.push_back(core::system::xdg::systemConfigFile("snippets"));
 
    // Add snippets files from older RStudio
    dirs.push_back(getLegacySnippetsDir());

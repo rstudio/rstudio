@@ -228,11 +228,7 @@ FilePath getGlobalCustomThemePath()
       return FilePath(kGlobalPathAlt);
    }
 
-#ifdef _WIN32
-   return core::system::systemSettingsPath("RStudio\\themes", false);
-#else
-   return FilePath("/etc/rstudio/themes/");
-#endif
+   return core::system::xdg::systemConfigFile("themes");
 }
 
 /**

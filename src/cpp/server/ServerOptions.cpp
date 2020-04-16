@@ -27,6 +27,7 @@
 
 #include <core/system/PosixUser.hpp>
 #include <core/system/PosixSystem.hpp>
+#include <core/system/Xdg.hpp>
 
 #include <monitor/MonitorConstants.hpp>
 
@@ -324,7 +325,8 @@ ProgramStatus Options::read(int argc,
         value<bool>(&authEncryptPassword_)->default_value(true),
         "encrypt password sent from login form")
       ("auth-login-page-html",
-        value<std::string>(&authLoginPageHtml)->default_value("/etc/rstudio/login.html"),
+        value<std::string>(&authLoginPageHtml)->default_value(
+           core::system::xdg::systemConfigFile("login.html").getAbsolutePath()),
         "path to file containing additional html for login page")
       ("auth-required-user-group",
         value<std::string>(&authRequiredUserGroup_)->default_value(""),
@@ -359,9 +361,11 @@ ProgramStatus Options::read(int argc,
        "monitoring interval");
 
    // define program options
-   FilePath defaultConfigPath("/etc/rstudio/rserver.conf");
+   FilePath defaultConfigPath = core::system::xdg::systemConfigFile("rserver.conf");
    std::string configFile = defaultConfigPath.exists() ?
                             defaultConfigPath.getAbsolutePath() : "";
+   if (!configFile.empty())
+      LOG_INFO_MESSAGE("Reading server configuration from " + configFile);
    program_options::OptionsDescription optionsDesc("rserver", configFile);
 
    // overlay hook

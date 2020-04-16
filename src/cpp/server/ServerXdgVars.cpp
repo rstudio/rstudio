@@ -1,7 +1,7 @@
 /*
- * UserPrefsSystemLayer.cpp
+ * ServerXdgVars.cpp
  *
- * Copyright (C) 2009-19 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -13,33 +13,35 @@
  *
  */
 
-#include "UserPrefsSystemLayer.hpp"
+#include "ServerXdgVars.hpp"
 
 #include <core/system/Xdg.hpp>
 
-#include <session/SessionOptions.hpp>
-#include <session/prefs/UserPrefs.hpp>
+#include <server/ServerOptionsOverlay.hpp>
+
+#include <server/ServerSessionManager.hpp>
 
 using namespace rstudio::core;
 
 namespace rstudio {
-namespace session {
-namespace prefs {
+namespace server {
+namespace xdg_vars {
 
-UserPrefsSystemLayer::UserPrefsSystemLayer():
-   PrefLayer(kUserPrefsSystemLayer)
+namespace {
+
+void sessionProfileFilter(core::r_util::SessionLaunchProfile* pProfile)
 {
+   core::system::xdg::forwardXdgEnvVars(&(pProfile->config.environment));
 }
 
-core::Error UserPrefsSystemLayer::readPrefs()
+} // anonymous namespace
+
+Error initialize()
 {
-   return loadPrefsFromFile(
-      core::system::xdg::systemConfigFile(kUserPrefsFile),
-      options().rResourcesPath().completePath("schema").completePath(kUserPrefsSchemaFile));
-      
+   sessionManager().addSessionLaunchProfileFilter(sessionProfileFilter);
+   return Success();
 }
 
-} // namespace prefs
-} // namespace session
+} // namespace xdg_vars
+} // namespace server
 } // namespace rstudio
-
