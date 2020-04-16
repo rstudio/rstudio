@@ -28,7 +28,7 @@ import {
   PandocExtensions,
 } from '../api/pandoc';
 
-import { PandocFormat } from '../api/pandoc_format';
+import { PandocFormat, kGfmFormat } from '../api/pandoc_format';
 import { PandocAttr } from '../api/pandoc_attr';
 import { fragmentText } from '../api/fragment';
 
@@ -378,7 +378,7 @@ class PandocWriter implements PandocOutput {
   private initEscapeCharacters() {
     // gfm disallows [] escaping so that MediaWiki style page links (e.g. [[MyPage]]) work as expected
     // tex_math_single_backslash does not allow escaping of [] or () (as that conflicts with the math syntax)
-    if (this.format.baseName === 'gfm' || this.format.extensions.tex_math_single_backslash) {
+    if (this.format.baseName === kGfmFormat || this.format.extensions.tex_math_single_backslash) {
       this.preventEscapeCharacters.push('[', ']');
     }
     // tex_math_single_backslash does not allow escaping of [] or () (as that conflicts with the math syntax)

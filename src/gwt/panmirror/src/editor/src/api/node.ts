@@ -162,3 +162,13 @@ export function editingRootNodeClosestToPos($pos: ResolvedPos) {
     findParentNodeOfTypeClosestToPos($pos, schema.nodes.note)
   );
 }
+
+export function editingRootScrollContainerElement(view: EditorView) {
+  const editingNode = editingRootNode(view.state.selection);
+  if (editingNode) {
+    const editingEl = view.domAtPos(editingNode.pos + 1).node;
+    return editingEl.parentElement;
+  } else {
+    return undefined;
+  }
+}

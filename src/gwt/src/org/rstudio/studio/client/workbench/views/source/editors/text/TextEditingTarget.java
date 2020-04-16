@@ -2238,6 +2238,11 @@ public class TextEditingTarget implements
       return fileType_.canCompilePDF();
    }
    
+   public boolean canExecuteChunks()
+   {
+      return fileType_.canExecuteChunks();
+   }
+   
    
    @Override
    public void verifyCppPrerequisites()

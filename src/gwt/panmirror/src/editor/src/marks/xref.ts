@@ -31,13 +31,17 @@ import { FixupContext } from "../api/fixup";
 import { ProsemirrorCommand, EditorCommandId } from "../api/command";
 import { canInsertNode } from "../api/node";
 
-const kRefRegEx = /@ref\([A-Za-z0-9:-]*\)/;
+const kRefRegEx = /@ref\([A-Za-z0-9:-]*\)/g;
 
 const extension = (
   _pandocExtensions: PandocExtensions, 
   _pandocCapabilities: PandocCapabilities, 
   _ui: EditorUI, 
   options: EditorOptions): Extension | null => {
+
+  if (!options.rmdBookdownXRef) {
+    return null;
+  }
 
   return {
 
@@ -103,7 +107,6 @@ const extension = (
         new InputRule(/\\?@ref\($/, (state: EditorState, match: string[], start: number, end: number) => {
           const tr = state.tr;
           tr.delete(start, end);
-
           insertRef(tr);
           return tr;
         }),
@@ -111,7 +114,7 @@ const extension = (
     },
 
     commands: (schema: Schema) => {
-      if (options.rmdBookdownXRef) {
+      if (options.rmdBookdownXRefCommand) {
         return [
           new ProsemirrorCommand(
             EditorCommandId.CrossReference, [],

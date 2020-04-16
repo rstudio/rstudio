@@ -422,15 +422,17 @@ public class TextEditingTargetVisualMode
       if (panmirror_ == null)
       {
          // create panmirror
-         String format = "markdown+autolink_bare_uris+tex_math_single_backslash";
+         String format = defaultMarkdownFormat();
          PanmirrorContext context = new PanmirrorContext(format, uiContext());
          
+         // editing options
          PanmirrorOptions options = new PanmirrorOptions();
-         options.rmdCodeChunks = true;
-         options.rmdImagePreview = true;
-         if (enableBookdownXRef()) 
-            options.rmdBookdownXRef = true;
-         
+         options.rmdCodeChunks = enableRmdChunks();
+         options.rmdImagePreview = options.rmdCodeChunks;
+         options.rmdBookdownXRef = enableBookdownXRef();
+         options.rmdBookdownXRefCommand = enableBookdownXRefCommand();
+         options.rmdBlogdownShortcodes = enableBlogdownShortcodes();
+            
          // add focus-visible class to prevent interaction with focus-visible.js
          // (it ends up attempting to apply the "focus-visible" class b/c ProseMirror
          // is contentEditable, and that triggers a dom mutation event for ProseMirror,
@@ -647,10 +649,7 @@ public class TextEditingTargetVisualMode
       uiContext.mapResourcePath = path -> {
          return ImagePreviewer.imgSrcPathFromHref(uiContext.getResourceDir.getResourceDir(), path);
       };
-      uiContext.getResourceDir = () -> {
-         
-         // TODO: curent knitr directroy
-         
+      uiContext.getResourceDir = () -> {  
          if (docUpdateSentinel_.getPath() != null)
             return FileSystemItem.createDir(docUpdateSentinel_.getPath()).getParentPathString();
          else
@@ -662,7 +661,38 @@ public class TextEditingTargetVisualMode
       return uiContext;
    }
    
+   
+   // default to standard R Markdown unless we've detected that this is 
+   // a blackfriday file (i.e. a .md or .Rmarkdown in a blogdown site)
+   private String defaultMarkdownFormat()
+   {
+      if (enableBlogdownBlackfriday())
+         return "blackfriday";
+      else 
+         return "markdown+autolink_bare_uris+tex_math_single_backslash";
+   }
+   
+   
+   // check whether rmd chunks can be executed
+   private boolean enableRmdChunks()
+   {
+      return target_.canExecuteChunks();
+   }
+   
+
+   // support for cross-reference marks is always enabled b/c they would not 
+   // serialize correctly in markdown modes that don't escape @ if not enabled,
+   // and the odds that someone wants to literally write @ref(foo) w/o the leading
+   // \ are vanishingly small)
    private boolean enableBookdownXRef()
+   {
+      return true;
+   }
+   
+
+   // enable bookdown cross reference command if appropriate (bookdown, blogdown, distill)
+   // we don't want the command to appear in documents where it will be a no-op
+   private boolean enableBookdownXRefCommand()
    {
       return sessionInfo_.getBuildToolsBookdownWebsite() || 
              sessionInfo_.getIsBlogdownProject() ||
@@ -670,6 +700,46 @@ public class TextEditingTargetVisualMode
              getOutputFormats().contains("distill::distill_article");
    }
    
+   // always enable blogdown shortcodes (w/o this we can end up destroying
+   // shortcodes during round-tripping, and we don't want to require that 
+   // blogdown files be opened within projects). this idiom is obscure 
+   // enough that it's vanishingly unlikely to affect non-blogdown docs
+   public boolean enableBlogdownShortcodes()
+   {
+      return true;
+   }
+   
+   // automatically enable blackfriday markdown engine if this is a blogdown
+   // file that isn't an Rmd (e.g. .md or .Rmarkdown). 
+   private boolean enableBlogdownBlackfriday()
+   {
+      // get current docPath
+      String docPath = docUpdateSentinel_.getPath();
+      
+      // if we have a doc
+      if (docPath != null)
+      {
+         // if we are in a blogdown project
+         if (sessionInfo_.getIsBlogdownProject())
+         {
+            // if the doc is in the project directory
+            FileSystemItem docFile = FileSystemItem.createFile(docPath);
+            FileSystemItem projectDir = context_.getActiveProjectDir();
+            if (docFile.getPathRelativeTo(projectDir) != null)
+            {
+               // if it has an extension indicating hugo will render markdown
+               String extension = FileSystemItem.getExtensionFromPath(docPath);
+               return extension.compareToIgnoreCase(".md") == 0 ||
+                      extension.compareToIgnoreCase("Rmarkdown") == 0;
+            }
+         }
+      }
+      
+      // default to false
+      return false;
+   }
+   
+  
    private List<String> getOutputFormats()
    {
       String yaml = YamlFrontMatter.getFrontMatter(docDisplay_);

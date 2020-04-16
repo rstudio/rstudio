@@ -49,6 +49,7 @@ import {
   appendMarkTransactionsPlugin,
   kFixupTransaction,
   kAddToHistoryTransaction,
+  kSetMarkdownTransaction,
 } from './api/transaction';
 import { EditorOutline } from './api/outline';
 import { EditingLocation, getEditingLocation, restoreEditingLocation } from './api/location';
@@ -210,6 +211,8 @@ export class Editor {
       rmdCodeChunks: false,
       rmdImagePreview: false,
       rmdBookdownXRef: false,
+      rmdBookdownXRefCommand: false,
+      rmdBlogdownShortcodes: false,
       formatComment: true,
       ...options,
     };
@@ -274,7 +277,7 @@ export class Editor {
     // create state
     this.state = EditorState.create({
       schema: this.schema,
-      doc: this.emptyDoc(),
+      doc: this.initialDoc(),
       plugins: this.createPlugins(),
     });
 
@@ -346,20 +349,35 @@ export class Editor {
     }
   }
 
-  public async setMarkdown(markdown: string, emitUpdate = true): Promise<boolean> {
+  public async setMarkdown(markdown: string, preserveHistory: boolean, emitUpdate = true): Promise<boolean> {
     // update format from source code magic comments
     await this.updatePandocFormat(pandocFormatCommentFromCode(markdown));
 
     // get the doc
     const doc = await this.pandocConverter.toProsemirror(markdown, this.pandocFormat.fullName);
 
-    // re-initialize editor state
-    this.state = EditorState.create({
-      schema: this.state.schema,
-      doc,
-      plugins: this.state.plugins,
-    });
-    this.view.updateState(this.state);
+    // if we are preserving history but the existing doc is empty then create a new state
+    // (resets the undo stack so that the intial setting of the document can't be undone)
+    if (!preserveHistory ||this.state.doc.attrs.initial) {
+      this.state = EditorState.create({
+        schema: this.state.schema,
+        doc,
+        plugins: this.state.plugins,
+      });
+      this.view.updateState(this.state);
+    } else {
+      // replace the top level nodes in the doc
+      const tr = this.state.tr;
+      tr.setMeta(kSetMarkdownTransaction, true);
+      let i = 0;
+      tr.doc.descendants((node, pos) => {
+        const mappedPos = tr.mapping.map(pos);
+        tr.replaceRangeWith(mappedPos, mappedPos + node.nodeSize, doc.child(i));
+        i++;
+        return false;
+      });
+      this.view.dispatch(tr);
+    }
 
     // apply fixups
     this.applyFixups(FixupContext.Load);
@@ -588,6 +606,9 @@ export class Editor {
     // build in doc node + nodes from extensions
     const nodes: { [name: string]: NodeSpec } = {
       doc: {
+        attrs: {
+          initial: { default: false }
+        },
         content: 'body notes',
       },
 
@@ -765,9 +786,12 @@ export class Editor {
     return tr;
   }
 
-  private emptyDoc(): ProsemirrorNode {
+  private initialDoc(): ProsemirrorNode {
     return this.schema.nodeFromJSON({
       type: 'doc',
+      attrs: {
+        initial: true
+      },
       content: [
         { type: 'body', content: [{ type: 'paragraph' }] },
         { type: 'notes', content: [] },

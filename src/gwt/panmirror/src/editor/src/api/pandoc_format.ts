@@ -17,6 +17,14 @@ import { EditorState } from 'prosemirror-state';
 
 import { PandocEngine, PandocExtensions } from './pandoc';
 
+export const kMarkdownFormat = 'markdown';
+export const kMarkdownPhpextraFormat = 'markdown_phpextra';
+export const kMarkdownGithubFormat = 'markdown_github';
+export const kMarkdownMmdFormat = 'markdown_mmd';
+export const kMarkdownStrictFormat = 'markdown_strict';
+export const kGfmFormat = 'gfm';
+export const kCommonmarkFormat = 'commonmark';
+
 export interface PandocFormat {
   baseName: string;
   fullName: string;
@@ -36,25 +44,30 @@ export interface PandocFormatComment {
 }
 
 export async function resolvePandocFormat(pandoc: PandocEngine, format: string) {
+
+  // additional markdown variants we support
+  const kMarkdownVariants : { [key: string] : string[] } = {
+    // https://github.com/russross/blackfriday/tree/v2#extensions
+    blackfriday: [
+      'intraword_underscores', 'pipe_tables', 'backtick_code_blocks', 
+      'definition_lists', 'footnotes', 'autolink_bare_uris', 'strikeout',  
+      'smart', 'yaml_metadata_block'
+    ]
+  };
+
   // setup warnings
   const warnings: PandocFormatWarnings = { invalidFormat: '', invalidOptions: [] };
 
   // split out base format from options
   const split = splitPandocFormatString(format);
-  const options = split.options;
+  let options = split.options;
   let baseName = split.format;
 
   // validate the base format (fall back to markdown if it's not known)
   if (
-    ![
-      'markdown',
-      'markdown_phpextra',
-      'markdown_github',
-      'markdown_mmd',
-      'markdown_strict',
-      'gfm',
-      'commonmark',
-    ].includes(baseName)
+    ![kMarkdownFormat, kMarkdownPhpextraFormat, kMarkdownGithubFormat, kMarkdownMmdFormat, kMarkdownStrictFormat,
+      kGfmFormat, kCommonmarkFormat].concat(Object.keys(kMarkdownVariants))
+    .includes(baseName)
   ) {
     warnings.invalidFormat = baseName;
     baseName = 'markdown';
@@ -66,7 +79,7 @@ export async function resolvePandocFormat(pandoc: PandocEngine, format: string) 
   // if the base format is commonmark or gfm then it's expressed as a set of
   // deltas on top of markdown
   let validOptions: string = '';
-  if (['gfm', 'commonmark'].includes(baseName)) {
+  if ([kGfmFormat, kCommonmarkFormat].includes(baseName)) {
     // query for available options then disable them all by default
     formatOptions = await pandoc.listExtensions('markdown');
     formatOptions = formatOptions.replace(/\+/g, '-');
@@ -75,8 +88,15 @@ export async function resolvePandocFormat(pandoc: PandocEngine, format: string) 
     const extraOptions = (validOptions = await pandoc.listExtensions(baseName));
     formatOptions = formatOptions + extraOptions;
   } else {
+
+    // if it's a variant then convert to strict
+    if (kMarkdownVariants[baseName]) {
+      options = kMarkdownVariants[baseName].map(option => `+${option}`).join('');
+      baseName = 'markdown_strict';
+    }
+
     // query for format options
-    formatOptions = validOptions = await pandoc.listExtensions(baseName);
+    formatOptions = validOptions = await pandoc.listExtensions(baseName);   
   }
 
   // active pandoc extensions
@@ -129,15 +149,6 @@ function parseExtensions(options: string) {
 export function pandocFormatWith(format: string, prepend: string, append: string) {
   const split = splitPandocFormatString(format);
   return `${split.format}${prepend}${split.options}${append}`;
-}
-
-export function pandocFormatFromCode(code: string) {
-  const variables = {
-    mode: 'markdown',
-    extensions: '',
-    ...pandocFormatCommentFromCode(code),
-  };
-  return pandocFormatWith(variables.mode, '', variables.extensions);
 }
 
 export function pandocFormatCommentFromCode(code: string): PandocFormatComment {
@@ -215,3 +226,4 @@ export function splitPandocFormatString(format: string) {
     options,
   };
 }
+

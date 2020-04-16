@@ -6,18 +6,20 @@ pandoc schema: <https://github.com/jgm/pandoc-types/blob/master/Text/Pandoc/Defi
 
 ## TODO
 
+Bookdown/Blogdown:
+- Implement universal \@ref handling (parse the \ coming in and remove it, then make sure we write it)
+  This is important for backends that don't escape it (e.g. blackfriday)
+- Implement shortcode handling (https://gohugo.io/content-management/shortcodes/)
+- Input rule for (PART\*) to remove the slash
+- Alison on blogdown engines, etc.
+
 Link popups no longer truncated (see advanced_ui.Rmd)
 
-Hugo shortcodes: https://gohugo.io/content-management/shortcodes/
-
-Is this round-tripping into a block for the HTML as a result of our handler?
-{{<figure src="/images/rsc-170-jupyter.png" caption="Publishing to Connect from Jupyter" alt= "Publishing to Connect from Jupyter">}}
-
-Invesigate whether the quote applyMarks deal needs to use //g
+Positioning of ellipses in props button
 
 Round-trip tests in Mastering Shiny
 
-More complete docs
+More complete docs (cross refs, etc.)
 
 Bookdown Theroms (equation w/ some narrative)
 

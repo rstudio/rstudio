@@ -53,7 +53,11 @@ const AttrEditDecoration: React.FC<AttrEditDecorationProps> = props => {
       {props.tags.length ? 
         props.tags.map(tag => {
           return (
-            <div key={tag} className="attr-edit-tag attr-edit-widget pm-block-border-color pm-border-background-color">
+            <div 
+              key={tag} 
+              className="attr-edit-tag attr-edit-widget pm-block-border-color pm-border-background-color"
+              onClick={onClick}
+            >
               <div>{tag}</div>
             </div> 
           );
