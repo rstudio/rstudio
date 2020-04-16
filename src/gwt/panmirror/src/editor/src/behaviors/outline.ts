@@ -18,7 +18,7 @@ import { Schema, Node as ProsemirrorNode } from 'prosemirror-model';
 import { NodeWithPos } from 'prosemirror-utils';
 
 import { Extension } from '../api/extension';
-import { transactionsHaveChange } from '../api/transaction';
+import { transactionsHaveChange, kSetMarkdownTransaction } from '../api/transaction';
 import { findTopLevelBodyNodes } from '../api/node';
 import { uuidv4 } from '../api/util';
 import { EditorOutlineItem, EditorOutlineItemType, EditorOutline } from '../api/outline';
@@ -152,7 +152,9 @@ function isOutlineNode(node: ProsemirrorNode) {
 
 function transactionsAffectOutline(transactions: Transaction[], oldState: EditorState, newState: EditorState) {
   return (
-    hasOutlineIdsTransaction(transactions) || transactionsHaveChange(transactions, oldState, newState, isOutlineNode)
+    transactions.some(tr => tr.getMeta(kSetMarkdownTransaction)) || 
+    hasOutlineIdsTransaction(transactions) || 
+    transactionsHaveChange(transactions, oldState, newState, isOutlineNode)
   );
 }
 

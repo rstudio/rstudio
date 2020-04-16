@@ -49,6 +49,7 @@ import {
   appendMarkTransactionsPlugin,
   kFixupTransaction,
   kAddToHistoryTransaction,
+  kSetMarkdownTransaction,
 } from './api/transaction';
 import { EditorOutline } from './api/outline';
 import { EditingLocation, getEditingLocation, restoreEditingLocation } from './api/location';
@@ -365,6 +366,7 @@ export class Editor {
     } else {
       // replace the top level nodes in the doc
       const tr = this.state.tr;
+      tr.setMeta(kSetMarkdownTransaction, true);
       let i = 0;
       tr.doc.descendants((node, pos) => {
         const mappedPos = tr.mapping.map(pos);

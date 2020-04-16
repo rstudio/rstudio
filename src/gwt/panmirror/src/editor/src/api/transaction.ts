@@ -20,6 +20,7 @@ import { ReplaceStep, Step } from 'prosemirror-transform';
 
 import { sliceContentLength } from './slice';
 
+export const kSetMarkdownTransaction = 'setMarkdown';
 export const kAddToHistoryTransaction = 'addToHistory';
 export const kFixupTransaction = 'docFixup';
 export const kRestoreLocationTransaction = 'restoreLocation';
