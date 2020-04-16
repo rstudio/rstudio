@@ -27,7 +27,6 @@ import {
 } from '../../api/pandoc_attr';
 import { EditorUI } from '../../api/ui';
 import { Extension } from '../../api/extension';
-import { EditorOptions } from '../../api/options';
 
 import { linkCommand, removeLinkCommand } from './link-command';
 import { linkInputRules, linkPasteHandler } from './link-auto';
@@ -43,7 +42,7 @@ const LINK_ATTR = 0;
 const LINK_CHILDREN = 1;
 const LINK_TARGET = 2;
 
-const extension = (pandocExtensions: PandocExtensions, options: EditorOptions): Extension => {
+const extension = (pandocExtensions: PandocExtensions): Extension  | null => {
   const capabilities = {
     headings: pandocExtensions.implicit_header_references,
     attributes: pandocExtensions.link_attributes,

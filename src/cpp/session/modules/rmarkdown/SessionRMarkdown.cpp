@@ -137,6 +137,12 @@ enum
    RExecutionBusy  = 1
 };
 
+std::string projectDir()
+{
+   return string_utils::utf8ToSystem(
+      projects::projectContext().directory().getAbsolutePath());
+}
+
 std::string projectBuildDir()
 {
    return string_utils::utf8ToSystem(
@@ -1503,6 +1509,24 @@ Error initialize()
 
 namespace module_context {
 
+namespace {
+
+bool isSiteProject(const std::string& site)
+{
+   if (!modules::rmarkdown::rmarkdownPackageAvailable() || !projects::projectContext().hasProject())
+      return false;
+
+   bool isSite = false;
+   std::string encoding = projects::projectContext().defaultEncoding();
+   Error error = r::exec::RFunction(".rs.isSiteProject",
+                              projectDir(), encoding, site).call(&isSite);
+   if (error)
+      LOG_ERROR(error);
+   return isSite;
+}
+
+}
+
 bool isWebsiteProject()
 {
    if (!modules::rmarkdown::rmarkdownPackageAvailable())
@@ -1525,6 +1549,17 @@ bool isBookdownWebsite()
       LOG_ERROR(error);
    return isBookdown;
 }
+
+bool isBlogdownProject()
+{
+   return isSiteProject("blogdown_site");
+}
+
+bool isDistillProject()
+{
+   return isSiteProject("distill_website");
+}
+
 
 std::string websiteOutputDir()
 {

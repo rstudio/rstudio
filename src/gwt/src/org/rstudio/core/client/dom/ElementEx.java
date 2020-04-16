@@ -23,11 +23,11 @@ public class ElementEx extends Element
    }
    
    public final native boolean getContentEditable() /*-{
-      return !!this.contentEditable ;
+      return !!this.contentEditable;
    }-*/;
 
    public final native void normalize() /*-{
-      this.normalize() ;
+      this.normalize();
    }-*/;
 
    public final native String getOuterHtml() /*-{

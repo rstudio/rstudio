@@ -29,7 +29,6 @@ import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
-import org.rstudio.core.client.command.KeyboardHelper;
 import org.rstudio.core.client.command.KeyboardShortcut;
 import org.rstudio.core.client.jsonrpc.RpcObjectList;
 import org.rstudio.studio.client.RStudioGinjector;
@@ -652,30 +651,6 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
                   case 'L':
                      Shell.this.onConsoleClear();
                      event.preventDefault();
-                     break;
-               }
-            }
-            else if (mod == KeyboardShortcut.ALT)
-            {
-               if (KeyboardHelper.isHyphenKeycode(keyCode))
-               {
-                  event.preventDefault();
-                  event.stopPropagation();
-                  input_.replaceSelection(" <- ", true);
-               }
-            }
-            else if (
-                  (BrowseCap.hasMetaKey() && 
-                   (mod == (KeyboardShortcut.META + KeyboardShortcut.SHIFT))) ||
-                  (!BrowseCap.hasMetaKey() && 
-                   (mod == (KeyboardShortcut.CTRL + KeyboardShortcut.SHIFT))))
-            {
-               switch (keyCode)
-               {
-                  case KeyCodes.KEY_M:
-                     event.preventDefault();
-                     event.stopPropagation();
-                     input_.replaceSelection(" %>% ", true);
                      break;
                }
             }

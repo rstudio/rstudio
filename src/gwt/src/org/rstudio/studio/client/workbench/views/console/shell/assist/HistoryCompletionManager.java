@@ -86,7 +86,7 @@ public class HistoryCompletionManager implements KeyDownPreviewHandler,
          case KeyCodes.KEY_SHIFT:
          case KeyCodes.KEY_CTRL:
          case KeyCodes.KEY_ALT:
-            return false ; // bare modifiers should do nothing
+            return false; // bare modifiers should do nothing
          }
          
          if (event.getKeyCode() == KeyCodes.KEY_ESCAPE)
@@ -114,21 +114,21 @@ public class HistoryCompletionManager implements KeyDownPreviewHandler,
             return true;
          }
          else if (event.getKeyCode() == KeyCodes.KEY_UP)
-            return popup_.selectPrev() ;
+            return popup_.selectPrev();
          else if (event.getKeyCode() == KeyCodes.KEY_DOWN)
-            return popup_.selectNext() ;
+            return popup_.selectNext();
          else if (event.getKeyCode() == KeyCodes.KEY_PAGEUP)
-            return popup_.selectPrevPage() ;
+            return popup_.selectPrevPage();
          else if (event.getKeyCode() == KeyCodes.KEY_PAGEDOWN)
-            return popup_.selectNextPage() ;
+            return popup_.selectNextPage();
          else if (event.getKeyCode() == KeyCodes.KEY_HOME)
-            return popup_.selectFirst() ;
+            return popup_.selectFirst();
          else if (event.getKeyCode() == KeyCodes.KEY_END)
-            return popup_.selectLast() ;
+            return popup_.selectLast();
          else if (event.getKeyCode() == KeyCodes.KEY_LEFT)
          {
             dismiss();
-            return true ;
+            return true;
          }
 
          if (mode_ != PopupMode.PopupIncremental)

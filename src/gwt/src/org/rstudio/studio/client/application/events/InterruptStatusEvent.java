@@ -1,7 +1,7 @@
 /*
  * InterruptInitiatedEvent.java
  *
- * Copyright (C) 2009-16 by RStudio, PBC
+ * Copyright (C) 2009-20 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -23,7 +23,7 @@ public class InterruptStatusEvent extends CrossWindowEvent<InterruptStatusEvent.
 {
    public final static int INTERRUPT_INITIATED = 0;
    public final static int INTERRUPT_COMPLETED = 1;
-   
+
    public interface Handler extends EventHandler
    {
       void onInterruptStatus(InterruptStatusEvent event);
@@ -38,7 +38,7 @@ public class InterruptStatusEvent extends CrossWindowEvent<InterruptStatusEvent.
    {
       status_ = status;
    }
-   
+
    public int getStatus()
    {
       return status_;
@@ -55,7 +55,7 @@ public class InterruptStatusEvent extends CrossWindowEvent<InterruptStatusEvent.
    {
       handler.onInterruptStatus(this);
    }
-   
+
    private final int status_; 
-   public static final Type<Handler> TYPE = new Type<Handler>();
+   public static final Type<Handler> TYPE = new Type<>();
 }

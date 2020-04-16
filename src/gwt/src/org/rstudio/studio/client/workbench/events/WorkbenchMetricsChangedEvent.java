@@ -25,12 +25,12 @@ public class WorkbenchMetricsChangedEvent extends
    
    public WorkbenchMetricsChangedEvent(WorkbenchMetrics clientMetrics)
    {
-      clientMetrics_ = clientMetrics ;
+      clientMetrics_ = clientMetrics;
    }
    
    public WorkbenchMetrics getWorkbenchMetrics()
    {
-      return clientMetrics_ ;
+      return clientMetrics_;
    }
    
    @Override
@@ -45,5 +45,5 @@ public class WorkbenchMetricsChangedEvent extends
       return TYPE;
    }
    
-   private final WorkbenchMetrics clientMetrics_ ;
+   private final WorkbenchMetrics clientMetrics_;
 }

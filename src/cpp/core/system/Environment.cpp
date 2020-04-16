@@ -1,7 +1,7 @@
 /*
  * Environment.cpp
  *
- * Copyright (C) 2009-18 by RStudio, PBC
+ * Copyright (C) 2009-20 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -16,6 +16,7 @@
 #include <core/system/Environment.hpp>
 
 #include <algorithm>
+#include <boost/regex.hpp>
 
 #include <core/Algorithm.hpp>
 
@@ -148,6 +149,22 @@ bool parseEnvVar(const std::string envVar, Option* pEnvVar)
    {
       return false;
    }
+}
+
+std::string expandEnvVars(const Options& environment, const std::string& str)
+{
+   std::string result(str);
+   for (const auto& pair: environment)
+   {
+      // replace bare forms (/home/$USER)
+      boost::regex reVar("\\$" + pair.first + "\\>");
+      result = boost::regex_replace(result, reVar, pair.second);
+
+      // replace curly brace forms (/home/${USER})
+      boost::regex reBraceVar("\\${" + pair.first + "}");
+      result = boost::regex_replace(result, reBraceVar, pair.second);
+   }
+   return result;
 }
 
 } // namespace system

@@ -32,7 +32,6 @@ import org.rstudio.core.client.widget.Operation;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.events.LauncherServerEvent;
 import org.rstudio.studio.client.application.events.SaveActionChangedEvent;
-import org.rstudio.studio.client.application.events.SaveActionChangedHandler;
 import org.rstudio.studio.client.application.events.SuicideEvent;
 import org.rstudio.studio.client.application.model.ProductEditionInfo;
 import org.rstudio.studio.client.application.model.SaveAction;
@@ -81,13 +80,9 @@ public class DesktopHooks
       source_ = source;
       editionInfo_ = editionInfo;
       
-      events_.addHandler(SaveActionChangedEvent.TYPE, 
-                         new SaveActionChangedHandler() 
+      events_.addHandler(SaveActionChangedEvent.TYPE, saveActionChangedEvent ->
       {
-         public void onSaveActionChanged(SaveActionChangedEvent event)
-         {
-            saveAction_ = event.getAction();  
-         }
+         saveAction_ = saveActionChangedEvent.getAction();
       });
       
       injector.injectObject(this);

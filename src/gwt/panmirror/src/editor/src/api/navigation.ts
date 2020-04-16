@@ -31,7 +31,10 @@ export function navigateToId(view: EditorView, id: string) {
 }
 
 export function navigateToHeading(view: EditorView, heading: string) {
-  navigateTo(view, node => node.type === view.state.schema.nodes.heading && node.textContent === heading);
+  navigateTo(view, node =>  {
+    return node.type === view.state.schema.nodes.heading && 
+           node.textContent.localeCompare(heading, undefined, { sensitivity: 'accent' }) === 0;
+  });
 }
 
 export function navigateToPosition(view: EditorView, pos: number) {
@@ -41,7 +44,6 @@ export function navigateToPosition(view: EditorView, pos: number) {
   // scroll to selection
   const node = view.nodeDOM(pos);
   if (node instanceof HTMLElement) {
-    
     const editingRoot = editingRootNode(view.state.selection)!;
     const container = view.nodeDOM(editingRoot.pos) as HTMLElement;
     const scroller = zenscroll.createScroller(container, 700, 20);

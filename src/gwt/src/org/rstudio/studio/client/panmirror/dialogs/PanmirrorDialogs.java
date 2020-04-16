@@ -20,6 +20,7 @@ import org.rstudio.core.client.widget.Operation;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorAttrProps;
+import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorCodeBlockProps;
 import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorImageDimensions;
 import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorAttrEditResult;
 import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorImageProps;
@@ -115,6 +116,18 @@ public class PanmirrorDialogs {
       );      
    }
    
+   public Promise<PanmirrorCodeBlockProps> editCodeBlock(PanmirrorCodeBlockProps codeBlock, boolean attributes, String[] languages)
+   {
+      return new Promise<PanmirrorCodeBlockProps>(
+         (ResolveCallbackFn<PanmirrorCodeBlockProps> resolve, RejectCallbackFn reject) -> {  
+            PanmirrorEditCodeBlockDialog dialog = new PanmirrorEditCodeBlockDialog(codeBlock, attributes, languages,
+               (result) -> { resolve.onInvoke(result); }
+            );
+            dialog.showModal(false);
+         }
+      );   
+   }
+   
    public Promise<PanmirrorOrderedListProps> editOrderedList(PanmirrorOrderedListProps props, 
                                                              PanmirrorListCapabilities capabilities)
    {
@@ -158,22 +171,22 @@ public class PanmirrorDialogs {
    }
    
    
-   public Promise<PanmirrorRawFormatResult> editRawInline(PanmirrorRawFormatProps raw) 
+   public Promise<PanmirrorRawFormatResult> editRawInline(PanmirrorRawFormatProps raw, String[] outputFormats) 
    {
-      return editRaw(raw, 2);
+      return editRaw(raw, outputFormats, true);
    }
    
-   public Promise<PanmirrorRawFormatResult> editRawBlock(PanmirrorRawFormatProps raw) 
+   public Promise<PanmirrorRawFormatResult> editRawBlock(PanmirrorRawFormatProps raw, String[] outputFormats) 
    {
-      return editRaw(raw, 10);
+      return editRaw(raw, outputFormats, false);
    }
    
 
-   private Promise<PanmirrorRawFormatResult> editRaw(PanmirrorRawFormatProps raw, int minLines)
+   private Promise<PanmirrorRawFormatResult> editRaw(PanmirrorRawFormatProps raw, String[] outputFormats, boolean inline)
    {
       return new Promise<PanmirrorRawFormatResult>(
          (ResolveCallbackFn<PanmirrorRawFormatResult> resolve, RejectCallbackFn reject) -> {  
-            PanmirrorEditRawDialog dialog = new PanmirrorEditRawDialog(raw, minLines, 
+            PanmirrorEditRawDialog dialog = new PanmirrorEditRawDialog(raw, outputFormats, inline, 
                (result) -> { resolve.onInvoke(result); }
             );
             dialog.showModal(false);

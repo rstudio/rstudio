@@ -76,7 +76,7 @@ core::FilePath userFontFolder()
 // The path to the system-wide font folder
 core::FilePath systemFontFolder()
 {
-   return core::system::xdg::systemConfigDir().completeChildPath(kFontFolder);
+   return core::system::xdg::systemConfigFile(kFontFolder);
 }
 
 // Generates a CSS snippet from a font file.

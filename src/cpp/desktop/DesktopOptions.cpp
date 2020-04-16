@@ -102,7 +102,7 @@ void Options::restoreMainWindowBounds(QMainWindow* win)
    //
    
    QSize size = QSize(1200, 900).boundedTo(
-            QApplication::desktop()->availableGeometry().size());
+            QApplication::primaryScreen()->availableGeometry().size());
    if (size.width() > 800 && size.height() > 500)
    {
       // Only use default size if it seems sane; otherwise let Qt set it
@@ -117,7 +117,7 @@ void Options::restoreMainWindowBounds(QMainWindow* win)
       // double-check that we haven't accidentally restored a geometry that
       // places the Window off-screen (can happen if the screen configuration
       // changes between the time geometry was saved and loaded)
-      QRect desktopRect = QApplication::desktop()->availableGeometry();
+      QRect desktopRect = QApplication::primaryScreen()->availableGeometry();
       QRect winRect = win->geometry();
       
       // shrink the window rectangle a bit just to capture cases like RStudio

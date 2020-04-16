@@ -1753,6 +1753,19 @@ core::Error UserPrefValues::setShowHiddenFiles(bool val)
 }
 
 /**
+ * Whether to sort file names naturally, so that e.g., file10.R comes after file9.R
+ */
+bool UserPrefValues::sortFileNamesNaturally()
+{
+   return readPref<bool>("sort_file_names_naturally");
+}
+
+core::Error UserPrefValues::setSortFileNamesNaturally(bool val)
+{
+   return writePref("sort_file_names_naturally", val);
+}
+
+/**
  * The visibility of the Jobs tab.
  */
 std::string UserPrefValues::jobsTabVisibility()
@@ -2642,6 +2655,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kShowRmdRenderCommand,
       kEnableTextDrag,
       kShowHiddenFiles,
+      kSortFileNamesNaturally,
       kJobsTabVisibility,
       kShowLauncherJobsTab,
       kLauncherJobsSort,

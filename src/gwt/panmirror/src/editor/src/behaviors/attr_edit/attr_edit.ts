@@ -1,7 +1,8 @@
+
 /*
- * SuspendAndRestartHandler.java
+ * attr_edit.ts
  *
- * Copyright (C) 2009-12 by RStudio, PBC
+ * Copyright (C) 2019-20 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -12,11 +13,22 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-package org.rstudio.studio.client.application.events;
 
-import com.google.gwt.event.shared.EventHandler;
+import { Schema } from "prosemirror-model";
 
-public interface SuspendAndRestartHandler extends EventHandler
-{
-   void onSuspendAndRestart(SuspendAndRestartEvent event);
-}
+import { EditorUI } from "../../api/ui";
+import { extensionIfPandocAttrEnabled } from "../../api/pandoc_attr";
+
+import { AttrEditCommand } from "./attr_edit-command";
+
+export const kEditAttrShortcut = 'F4';
+
+const extension = {
+  commands: (_schema: Schema, ui: EditorUI) => {
+    return [new AttrEditCommand(ui)];
+  }
+};
+
+export default extensionIfPandocAttrEnabled(extension);
+
+

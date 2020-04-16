@@ -26,6 +26,8 @@ public class PanmirrorOptions
    public boolean codemirror;
    public boolean braceMatching;
    public boolean rmdCodeChunks;
+   public boolean rmdImagePreview;
+   public boolean rmdBookdownXRef;
    public boolean formatComment;
    public String className;
 }

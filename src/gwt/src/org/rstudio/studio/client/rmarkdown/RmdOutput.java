@@ -30,7 +30,6 @@ import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.events.QuitInitiatedEvent;
-import org.rstudio.studio.client.application.events.QuitInitiatedHandler;
 import org.rstudio.studio.client.application.events.RestartStatusEvent;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
@@ -89,7 +88,7 @@ public class RmdOutput implements RmdRenderStartedEvent.Handler,
                                   WebsiteFileSavedEvent.Handler,
                                   NotebookRenderFinishedEvent.Handler,
                                   RmdRenderPendingEvent.Handler,
-                                  QuitInitiatedHandler,
+                                  QuitInitiatedEvent.Handler,
                                   UserPrefsChangedHandler
 {
    public interface Binder

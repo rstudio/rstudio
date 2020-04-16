@@ -216,6 +216,58 @@ Error pandocMarkdownToAst(const json::JsonRpcRequest& request,
    return Success();
 }
 
+
+bool pandocCaptureOutput(const std::string& arg, std::string* pOutput, json::JsonRpcResponse* pResponse)
+{
+   // build args
+   std::vector<std::string> args;
+   args.push_back(arg);
+
+   // run pandoc
+   core::system::ProcessResult result;
+   Error error = runPandoc(args, "", &result);
+   if (error)
+   {
+      setPandocErrorResponse(error, pResponse);
+      return false;
+   }
+   else if (result.exitStatus != EXIT_SUCCESS)
+   {
+      setPandocErrorResponse(result, pResponse);
+      return false;
+   }
+   else
+   {
+      *pOutput = result.stdOut;
+      return true;
+   }
+}
+
+
+Error pandocGetCapabilities(const json::JsonRpcRequest&,
+                            json::JsonRpcResponse* pResponse)
+{
+   std::string version;
+   if (!pandocCaptureOutput("--version", &version, pResponse))
+      return Success();
+
+   std::string outputFormats;
+   if (!pandocCaptureOutput("--list-output-formats", &outputFormats, pResponse))
+      return Success();
+
+   std::string highlightLanguages;
+   if (!pandocCaptureOutput("--list-highlight-languages", &highlightLanguages, pResponse))
+      return Success();
+
+   json::Object capabilities;
+   capabilities["version"] = version;
+   capabilities["output_formats"] = outputFormats;
+   capabilities["highlight_languages"] = highlightLanguages;
+   pResponse->setResult(capabilities);
+   return Success();
+}
+
+
 Error pandocListExtensions(const json::JsonRpcRequest& request,
                            json::JsonRpcResponse* pResponse)
 {
@@ -228,32 +280,17 @@ Error pandocListExtensions(const json::JsonRpcRequest& request,
       return Success();
    }
 
-   // build args
-   std::vector<std::string> args;
-   std::string extensions =  "--list-extensions";
+   // build arg
+   std::string arg =  "--list-extensions";
    if (!format.empty())
-      extensions += ('=' + format);
-   args.push_back(extensions);
+      arg += ('=' + format);
 
-   // run pandoc
-   core::system::ProcessResult result;
-   error = runPandoc(args, "", &result);
-   if (error)
-   {
-      setPandocErrorResponse(error, pResponse);
-      return Success();
-   }
 
-   // return output on success
-   if (result.exitStatus == EXIT_SUCCESS)
+   std::string extensions;
+   if (pandocCaptureOutput(arg, &extensions, pResponse))
    {
-      pResponse->setResult(result.stdOut);
+      pResponse->setResult(extensions);
    }
-   else
-   {
-      setPandocErrorResponse(result, pResponse);
-   }
-
    return Success();
 }
 
@@ -265,6 +302,7 @@ Error initialize()
 {
    ExecBlock initBlock;
    initBlock.addFunctions()
+      (boost::bind(module_context::registerRpcMethod, "pandoc_get_capabilities", pandocGetCapabilities))
       (boost::bind(module_context::registerRpcMethod, "pandoc_ast_to_markdown", pandocAstToMarkdown))
       (boost::bind(module_context::registerRpcMethod, "pandoc_markdown_to_ast", pandocMarkdownToAst))
       (boost::bind(module_context::registerRpcMethod, "pandoc_list_extensions", pandocListExtensions))

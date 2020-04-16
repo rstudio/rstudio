@@ -13,10 +13,10 @@
  *
  */
 
-import { Node as ProsemirrorNode, Schema } from 'prosemirror-model';
+import { Node as ProsemirrorNode, Schema, NodeType } from 'prosemirror-model';
 import { EditorState, Transaction } from 'prosemirror-state';
 import { EditorView } from 'prosemirror-view';
-import { setTextSelection } from 'prosemirror-utils';
+import { setTextSelection, findParentNodeOfType } from 'prosemirror-utils';
 
 import { Extension } from '../../api/extension';
 import { EditorOptions } from '../../api/options';
@@ -27,83 +27,108 @@ import { canInsertNode } from '../../api/node';
 import { selectionIsBodyTopLevel } from '../../api/selection';
 import { uuidv4 } from '../../api/util';
 
+import { EditorUI } from '../../api/ui';
+import { PandocCapabilities } from '../../api/pandoc_capabilities';
+
+import { RmdChunkImagePreviewPlugin } from './rmd_chunk-image';
+
 import './rmd_chunk-styles.css';
 
 const kRmdCodeChunkClass = 'D34DA053-95B6-4F12-B665-6CA8E4CD5101';
 
-const extension: Extension = {
-  nodes: [
-    {
-      name: 'rmd_chunk',
-      spec: {
-        ...codeNodeSpec(),
-        attrs: {
-          navigation_id: { default: null },
-        },
-        parseDOM: [
-          {
-            tag: "div[class*='rmd-chunk']",
-            preserveWhitespace: 'full',
+const extension = (
+  pandocExtensions: PandocExtensions, 
+  _caps: PandocCapabilities, 
+  ui: EditorUI, 
+  options: EditorOptions
+) : Extension | null => {
+
+  if (!options.rmdCodeChunks || !pandocExtensions.backtick_code_blocks || !pandocExtensions.fenced_code_attributes) {
+    return null;
+  }
+
+  return {
+    nodes: [
+      {
+        name: 'rmd_chunk',
+        spec: {
+          ...codeNodeSpec(),
+          attrs: {
+            navigation_id: { default: null },
           },
-        ],
-        toDOM(node: ProsemirrorNode) {
-          return ['div', { class: 'rmd-chunk pm-code-block' }, 0];
-        },
-      },
-
-      code_view: {
-        firstLineMeta: true,
-        lineNumbers: true,
-        lineNumberFormatter: (line: number) => {
-          if (line === 1) {
-            return '';
-          } else {
-            return line - 1 + '';
-          }
-        },
-        classes: ['pm-chunk-background-color'],
-        lang: (_node: ProsemirrorNode, content: string) => {
-          const match = content.match(/^[a-zA-Z0-9_]+/);
-          if (match) {
-            return match[0];
-          } else {
-            return null;
-          }
-        },
-      },
-
-      pandoc: {
-        codeBlockFilter: {
-          preprocessor: (markdown: string) => {
-            const md = markdown.replace(
-              /^(```+\s*\{)([a-zA-Z0-9_]+( *[ ,].*?)?)(\}\s*)([\W\w]*?)(?:```)(?:[ \t]*)$/gm,
-              (_match: string, p1: string, p2: string, _p3: string, p4: string, p5: string, p6: string) => {
-                return p1 + '.' + kRmdCodeChunkClass + '}\n' + p2 + '\n' + p5 + '```\n';
-              },
-            );
-            return md;
+          parseDOM: [
+            {
+              tag: "div[class*='rmd-chunk']",
+              preserveWhitespace: 'full',
+            },
+          ],
+          toDOM(node: ProsemirrorNode) {
+            return ['div', { class: 'rmd-chunk pm-code-block' }, 0];
           },
-          class: kRmdCodeChunkClass,
-          nodeType: schema => schema.nodes.rmd_chunk,
-          getAttrs: () => ({ navigation_id: uuidv4() }),
         },
 
-        writer: (output: PandocOutput, node: ProsemirrorNode) => {
-          output.writeToken(PandocTokenType.Para, () => {
-            // split text content into first and subsequent lines
-            const lines = node.textContent.split('\n');
-            if (lines.length > 0) {
-              output.writeRawMarkdown('```{' + lines[0] + '}\n' + lines.slice(1).join('\n') + '\n```\n');
+        code_view: {
+          firstLineMeta: true,
+          lineNumbers: true,
+          lineNumberFormatter: (line: number) => {
+            if (line === 1) {
+              return '';
+            } else {
+              return line - 1 + '';
             }
-          });
+          },
+          classes: ['pm-chunk-background-color'],
+          lang: (_node: ProsemirrorNode, content: string) => {
+            const match = content.match(/^[a-zA-Z0-9_]+/);
+            if (match) {
+              return match[0];
+            } else {
+              return null;
+            }
+          },
+        },
+
+        pandoc: {
+          codeBlockFilter: {
+            preprocessor: (markdown: string) => {
+              const md = markdown.replace(
+                /^([\t >]*```+\s*\{)([a-zA-Z0-9_]+( *[ ,].*?)?)(\}\s*)([\W\w]*?)(?:```)(?:[ \t]*)$/gm,
+                (_match: string, p1: string, p2: string, _p3: string, p4: string, p5: string, p6: string) => {
+                  return p1 + '.' + kRmdCodeChunkClass + '}\n' + p2 + '\n' + p5 + '```\n';
+                },
+              );
+              return md;
+            },
+            class: kRmdCodeChunkClass,
+            nodeType: (schema: Schema) => schema.nodes.rmd_chunk,
+            getAttrs: () => ({ navigation_id: uuidv4() }),
+          },
+
+          writer: (output: PandocOutput, node: ProsemirrorNode) => {
+            output.writeToken(PandocTokenType.Para, () => {
+              // split text content into first and subsequent lines
+              const lines = node.textContent.split('\n');
+              if (lines.length > 0) {
+                output.writeRawMarkdown('```{' + lines[0] + '}\n' + lines.slice(1).join('\n') + '\n```\n');
+              }
+            });
+          },
         },
       },
-    },
-  ],
+    ],
 
-  commands: (_schema: Schema) => {
-    return [new RmdChunkCommand()];
-  },
+    commands: (_schema: Schema) => {
+      return [new RmdChunkCommand()];
+    },
+
+    plugins: (_schema: Schema) => {
+      if (options.rmdImagePreview) {
+        return [new RmdChunkImagePreviewPlugin(ui.context)];
+      } else {
+        return [];
+      }
+    }
+  };
 };
 
 class RmdChunkCommand extends ProsemirrorCommand {
@@ -118,19 +143,26 @@ class RmdChunkCommand extends ProsemirrorCommand {
           return false;
         }
 
-        // only allow inserting at the top level
-        if (!selectionIsBodyTopLevel(state.selection)) {
+        // must either be at the body top level, within a list item, or within a 
+        // blockquote (and never within a table)
+        const within = (nodeType: NodeType) => !!findParentNodeOfType(nodeType)(state.selection);
+        if (within(schema.nodes.table)) {
+          return false;
+        }        
+        if (!selectionIsBodyTopLevel(state.selection) && 
+            !within(schema.nodes.list_item) &&
+            !within(schema.nodes.blockquote)) {
           return false;
         }
 
-        // create yaml metadata text
+        // create chunk text
         if (dispatch) {
           const tr = state.tr;
           const kRmdText = 'r\n';
           const rmdText = schema.text(kRmdText);
           const rmdNode = schema.nodes.rmd_chunk.create({}, rmdText);
           tr.replaceSelectionWith(rmdNode);
-          setTextSelection(tr.selection.from - 2)(tr);
+          setTextSelection(tr.mapping.map(state.selection.from) - 1)(tr);
           dispatch(tr);
         }
 
@@ -140,10 +172,4 @@ class RmdChunkCommand extends ProsemirrorCommand {
   }
 }
 
-export default (pandocExtensions: PandocExtensions, options: EditorOptions) => {
-  if (options.rmdCodeChunks && pandocExtensions.backtick_code_blocks && pandocExtensions.fenced_code_attributes) {
-    return extension;
-  } else {
-    return null;
-  }
-};
+export default extension;

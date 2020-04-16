@@ -1,7 +1,7 @@
 /*
  * ApplicationQuit.java
  *
- * Copyright (C) 2009-19 by RStudio, PBC
+ * Copyright (C) 2009-20 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -30,13 +30,10 @@ import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.events.HandleUnsavedChangesEvent;
-import org.rstudio.studio.client.application.events.HandleUnsavedChangesHandler;
 import org.rstudio.studio.client.application.events.QuitInitiatedEvent;
 import org.rstudio.studio.client.application.events.RestartStatusEvent;
 import org.rstudio.studio.client.application.events.SaveActionChangedEvent;
-import org.rstudio.studio.client.application.events.SaveActionChangedHandler;
 import org.rstudio.studio.client.application.events.SuspendAndRestartEvent;
-import org.rstudio.studio.client.application.events.SuspendAndRestartHandler;
 import org.rstudio.studio.client.application.model.ApplicationServerOperations;
 import org.rstudio.studio.client.application.model.RVersionSpec;
 import org.rstudio.studio.client.application.model.SaveAction;
@@ -72,9 +69,9 @@ import com.google.inject.Provider;
 import com.google.inject.Singleton;
 
 @Singleton
-public class ApplicationQuit implements SaveActionChangedHandler,
-                                        HandleUnsavedChangesHandler,
-                                        SuspendAndRestartHandler
+public class ApplicationQuit implements SaveActionChangedEvent.Handler,
+                                        HandleUnsavedChangesEvent.Handler,
+                                        SuspendAndRestartEvent.Handler
 {
    public interface Binder extends CommandBinder<Commands, ApplicationQuit> {}
    
@@ -106,7 +103,7 @@ public class ApplicationQuit implements SaveActionChangedHandler,
       binder.bind(commands, this);
       
       // subscribe to events
-      eventBus.addHandler(SaveActionChangedEvent.TYPE, this);   
+      eventBus.addHandler(SaveActionChangedEvent.TYPE, this);
       eventBus.addHandler(HandleUnsavedChangesEvent.TYPE, this);
       eventBus.addHandler(SuspendAndRestartEvent.TYPE, this);
    }

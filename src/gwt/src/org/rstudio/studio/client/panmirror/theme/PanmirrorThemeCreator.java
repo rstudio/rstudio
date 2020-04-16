@@ -64,6 +64,9 @@ public class PanmirrorThemeCreator
       theme.divBackgroundColor = regionBkgdColor;
       
       theme.textColor =  DomUtils.extractCssValue("ace_editor", "color");
+      
+      theme.surfaceWidgetTextColor = aceTheme.isDark() ? theme.textColor : "rgba(0,0,0,0.5)";
+      
       theme.lightTextColor = DomUtils.extractCssValue("ace_support ace_function", "color");
       theme.linkTextColor = DomUtils.extractCssValue("ace_keyword", "color");
       theme.markupTextColor = DomUtils.extractCssValue("ace_markup ace_list ace_string", "color");

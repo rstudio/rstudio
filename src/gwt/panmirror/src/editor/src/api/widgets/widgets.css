@@ -27,9 +27,14 @@
 }
 
 .pm-image-button {
-  background-color: transparent;
-  background-repeat: no-repeat; 
   border: none;
+  padding: 0;
+  vertical-align: middle;
+}
+
+.pm-image-button img {
+  width: 20px;
+  height: 18px;
 }
 
 

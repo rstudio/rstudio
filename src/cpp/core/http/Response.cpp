@@ -1,7 +1,7 @@
 /*
  * Response.cpp
  *
- * Copyright (C) 2009-19 by RStudio, PBC
+ * Copyright (C) 2009-20 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -374,9 +374,7 @@ void Response::setFrameOptionHeaders(const std::string& options)
 // mark this request's user agent compatibility
 void Response::setBrowserCompatible(const Request& request)
 {
-   if (boost::algorithm::contains(request.userAgent(), "chromeframe"))
-      setHeader("X-UA-Compatible", "chrome=1");
-   else if (boost::algorithm::contains(request.userAgent(), "Trident"))
+   if (boost::algorithm::contains(request.userAgent(), "Trident"))
       setHeader("X-UA-Compatible", "IE=edge");
 }
 

@@ -1,7 +1,7 @@
 /*
  * Stopwatch.java
  *
- * Copyright (C) 2009-17 by RStudio, PBC
+ * Copyright (C) 2009-20 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -40,5 +40,5 @@ public class Stopwatch
    }
 
    private long startTime_;
-   private boolean debugLog_;
+   private final boolean debugLog_;
 }

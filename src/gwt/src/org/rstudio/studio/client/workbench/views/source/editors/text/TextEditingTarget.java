@@ -61,7 +61,6 @@ import org.rstudio.core.client.widget.*;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.ChangeFontSizeEvent;
-import org.rstudio.studio.client.application.events.ChangeFontSizeHandler;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.events.ResetEditorCommandsEvent;
 import org.rstudio.studio.client.application.events.SetEditorCommandBindingsEvent;
@@ -1104,8 +1103,8 @@ public class TextEditingTarget implements
    @Override
    public void navigateToPosition(SourcePosition position, 
                                   boolean recordCurrent)
-   {
-      visualMode_.deactivate(() -> {
+   { 
+      ensureTextEditorActive(() -> {
          docDisplay_.navigateToPosition(position, recordCurrent);
       });
    }
@@ -1115,7 +1114,7 @@ public class TextEditingTarget implements
                                   boolean recordCurrent,
                                   boolean highlightLine)
    {
-      visualMode_.deactivate(() -> {
+      ensureTextEditorActive(() -> {
          docDisplay_.navigateToPosition(position, recordCurrent, highlightLine);
       });  
    }
@@ -1753,9 +1752,12 @@ public class TextEditingTarget implements
             // initialize visual mode
             visualMode_ = new TextEditingTargetVisualMode(
                TextEditingTarget.this,
-               view_, 
+               view_,
+               docDisplay_,
                dirtyState_, 
-               docUpdateSentinel_
+               docUpdateSentinel_,
+               events_,
+               releaseOnDismiss_
             );
             
             if (!prefs_.restoreSourceDocumentCursorPosition().getValue())
@@ -2022,7 +2024,7 @@ public class TextEditingTarget implements
          {
             public void execute()
             {
-               visualMode_.deactivate(() -> {
+               ensureTextEditorActive(() -> {
                   docUpdateSentinel_.changeFileType(
                         type.getTypeId(),
                         new SaveProgressIndicator(null, type, null));  
@@ -3174,7 +3176,7 @@ public class TextEditingTarget implements
    @Handler
    void onCheckSpelling()
    {  
-      visualMode_.deactivate(() -> {
+      ensureTextEditorActive(() -> {
          spelling_.checkSpelling();
       }); 
    }
@@ -4031,7 +4033,7 @@ public class TextEditingTarget implements
       String yaml = getRmdFrontMatter();
       if (yaml == null)
          return new ArrayList<String>();
-      List<String> formats = rmarkdownHelper_.getOutputFormats(yaml);
+      List<String> formats = TextEditingTargetRMarkdownHelper.getOutputFormats(yaml);
       if (formats == null)
          formats = new ArrayList<String>();
       return formats;  
@@ -5675,8 +5677,8 @@ public class TextEditingTarget implements
          public void execute()
          {
             String previewURL = "help/preview?file=";
-            previewURL += URL.encodeQueryString(docUpdateSentinel_.getPath());   
-            events_.fireEvent(new ShowHelpEvent(previewURL)) ; 
+            previewURL += URL.encodeQueryString(docUpdateSentinel_.getPath());
+            events_.fireEvent(new ShowHelpEvent(previewURL));
          }
       });
    }
@@ -7068,15 +7070,10 @@ public class TextEditingTarget implements
                               final TextDisplay view,
                               FontSizeManager fontSizeManager)
    {
-      releaseOnDismiss.add(events.addHandler(
-            ChangeFontSizeEvent.TYPE,
-            new ChangeFontSizeHandler()
-            {
-               public void onChangeFontSize(ChangeFontSizeEvent event)
-               {
-                  view.setFontSize(event.getFontSize());
-               }
-            }));
+      releaseOnDismiss.add(events.addHandler(ChangeFontSizeEvent.TYPE, changeFontSizeEvent ->
+      {
+         view.setFontSize(changeFontSizeEvent.getFontSize());
+      }));
       view.setFontSize(fontSizeManager.getSize());
 
    }

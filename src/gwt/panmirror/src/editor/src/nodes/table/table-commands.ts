@@ -60,9 +60,10 @@ export function insertTable(capabilities: TableCapabilities, ui: EditorUI) {
             const cells: ProsemirrorNode[] = [];
             const cellType = r === 0 && result.header ? schema.nodes.table_header : schema.nodes.table_cell;
             for (let c = 0; c < result.cols; c++) {
-              const content = cellType === schema.nodes.table_header 
-                ? schema.text(`${ui.context.translateText('Col')}${c+1}`)
-                : Fragment.empty; 
+              const content =
+                cellType === schema.nodes.table_header
+                  ? schema.text(`${ui.context.translateText('Col')}${c + 1}`)
+                  : Fragment.empty;
               cells.push(cellType.createAndFill({}, schema.nodes.paragraph.createAndFill({}, content)!)!);
             }
             rows.push(schema.nodes.table_row.createAndFill({}, cells)!);
@@ -255,6 +256,33 @@ export enum CssAlignment {
   Center = 'center',
 }
 
+
+export class TableRowCommand extends ProsemirrorCommand {
+
+  public plural(state: EditorState) {
+    
+    if (!isInTable(state)) {
+      return 1;
+    }
+
+    const rect = selectedRect(state);
+    return rect.bottom - rect.top;
+  }
+}
+
+export class TableColumnCommand extends ProsemirrorCommand {
+
+  public plural(state: EditorState) {
+    
+    if (!isInTable(state)) {
+      return 1;
+    }
+
+    const rect = selectedRect(state);
+    return rect.right - rect.left;
+  }
+}
+
 export class TableColumnAlignmentCommand extends ProsemirrorCommand {
   private readonly align: CssAlignment | null;
 
@@ -265,11 +293,11 @@ export class TableColumnAlignmentCommand extends ProsemirrorCommand {
       }
 
       if (dispatch) {
-        const { table, tableStart, left } = selectedRect(state);
+        const { table, tableStart, left, right } = selectedRect(state);
         const tr = state.tr;
         table.forEach((rowNode, rowOffset) => {
           rowNode.forEach((cellNode, cellOffset, i) => {
-            if (i === left) {
+            if (i >= left && i <= right) {
               const cellPos = tableStart + 1 + rowOffset + cellOffset;
               tr.setNodeMarkup(cellPos, cellNode.type, {
                 ...cellNode.attrs,

@@ -1,7 +1,7 @@
 /*
  * Xdg.cpp
  *
- * Copyright (C) 2009-19 by RStudio, PBC
+ * Copyright (C) 2009-20 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -36,7 +36,9 @@ FilePath resolveXdgDir(const std::string& envVar,
 #ifdef _WIN32
       const GUID windowsFolderId,
 #endif
-      const std::string& defaultDir)
+      const std::string& defaultDir,
+      const boost::optional<std::string>& user,
+      const boost::optional<FilePath>& homeDir)
 {
    FilePath xdgHome;
    std::string env = getenv(envVar);
@@ -71,9 +73,9 @@ FilePath resolveXdgDir(const std::string& envVar,
 #endif
       if (xdgHome.isEmpty())
       {
-         // Use the default subdir for POSIX. We also use it a fallback on Windows if we couldn't
-         // read the app settings path.
-         xdgHome = FilePath::resolveAliasedPath(defaultDir, userHomePath());
+         // Use the default subdir for POSIX. We also use this folder as a fallback on Windows
+         //if we couldn't read the app settings path.
+         xdgHome = FilePath(defaultDir);
       }
    }
    else
@@ -81,6 +83,18 @@ FilePath resolveXdgDir(const std::string& envVar,
       // We have a manually specified xdg directory from an environment variable.
       xdgHome = FilePath(env);
    }
+
+   // expand HOME and USER if given
+   core::system::Options environment;
+   core::system::setenv(&environment, "HOME",
+                        homeDir ? homeDir->getAbsolutePath() :
+                                  userHomePath().getAbsolutePath());
+   core::system::setenv(&environment, "USER",
+                        user ? *user : username());
+   std::string expanded = core::system::expandEnvVars(environment, xdgHome.getAbsolutePath());
+
+   // resolve aliases in the path
+   xdgHome = FilePath::resolveAliasedPath(expanded, homeDir ? *homeDir : userHomePath());
 
    return xdgHome.completePath(
 #ifdef _WIN32
@@ -93,32 +107,40 @@ FilePath resolveXdgDir(const std::string& envVar,
 
 } // anonymous namespace
 
-FilePath userConfigDir()
+FilePath userConfigDir(
+        const boost::optional<std::string>& user,
+        const boost::optional<FilePath>& homeDir)
 {
    return resolveXdgDir("XDG_CONFIG_HOME", 
 #ifdef _WIN32
          FOLDERID_RoamingAppData,
 #endif
-         "~/.config"
+         "~/.config",
+         user,
+         homeDir
    );
 }
 
-FilePath userDataDir()
+FilePath userDataDir(
+        const boost::optional<std::string>& user,
+        const boost::optional<FilePath>& homeDir)
 {
    return resolveXdgDir("XDG_DATA_HOME", 
 #ifdef _WIN32
          FOLDERID_LocalAppData,
 #endif
-         "~/.local/share"
+         "~/.local/share",
+         user,
+         homeDir
    );
 }
 
 FilePath systemConfigDir()
 {
 #ifndef _WIN32
-   // On POSIX operating systems, it's possible to specify multiple config directories. We don't
-   // support reading from multiple directories, so read the list and take the first one that
-   // contains an "rstudio" folder.
+   // On POSIX operating systems, it's possible to specify multiple config directories.
+    // We have to select one, so read the list and take the first one that contains an
+    // "rstudio" folder.
    std::string env = getenv("XDG_CONFIG_DIRS");
    if (env.find_first_of(":") != std::string::npos)
    {
@@ -137,8 +159,66 @@ FilePath systemConfigDir()
 #ifdef _WIN32
          FOLDERID_ProgramData,
 #endif
-         "/etc"
+         "/etc",
+         boost::none,  // no specific user
+         boost::none   // no home folder resolution
    );
+}
+
+FilePath systemConfigFile(const std::string& filename)
+{
+#ifdef _WIN32
+    // Passthrough on Windows
+    return systemConfigDir().completeChildPath(filename);
+#else
+   // On POSIX, check for a search path.
+   std::string env = getenv("XDG_CONFIG_DIRS");
+   if (env.find_first_of(":") != std::string::npos)
+   {
+      // This is a search path; check each element for the file.
+      std::vector<std::string> dirs = algorithm::split(env, ":");
+      for (const std::string& dir: dirs)
+      {
+         FilePath resolved = FilePath(dir).completePath("rstudio")
+                 .completeChildPath(filename);
+         if (resolved.exists())
+         {
+            return resolved;
+         }
+      }
+   }
+
+   // We didn't find the file on the search path, so return the location where
+   // we expected to find it.
+   return systemConfigDir().completeChildPath(filename);
+#endif
+}
+
+void forwardXdgEnvVars(Options *pEnvironment)
+{
+   // forward relevant XDG environment variables (i.e. all those we respect above)
+   for (auto&& xdgVar: {"XDG_CONFIG_HOME", "XDG_CONFIG_DIRS",
+                        "XDG_DATA_HOME",   "XDG_DATA_DIRS"})
+   {
+      // only forward value if non-empty; avoid overwriting a previously set
+      // value with an empty one
+      std::string val = core::system::getenv(xdgVar);
+      if (!val.empty())
+      {
+         // warn if we're changing values; we typically are forwarding values in
+         // order to ensure a consistent view of configuration and state across
+         // RStudio processes, which merits overwriting, but it's also hard to
+         // imagine that these vars would be set unintentionally in the existing
+         // environment.
+         std::string oldVal = core::system::getenv(*pEnvironment, xdgVar);
+         if (!oldVal.empty() && oldVal != val)
+         {
+             LOG_WARNING_MESSAGE("Overriding " + std::string(xdgVar) +
+                                 ": '" + oldVal + "' => '" + val + "'");
+         }
+         core::system::setenv(pEnvironment, xdgVar, val);
+      }
+   }
 }
 
 

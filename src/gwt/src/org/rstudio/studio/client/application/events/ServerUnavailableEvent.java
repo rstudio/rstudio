@@ -1,7 +1,7 @@
 /*
  * ServerUnavailableEvent.java
  *
- * Copyright (C) 2009-12 by RStudio, PBC
+ * Copyright (C) 2009-20 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,28 +14,32 @@
  */
 package org.rstudio.studio.client.application.events;
 
+import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 
 
-public class ServerUnavailableEvent extends GwtEvent<ServerUnavailableHandler>
+public class ServerUnavailableEvent extends GwtEvent<ServerUnavailableEvent.Handler>
 {
-   public static final GwtEvent.Type<ServerUnavailableHandler> TYPE =
-      new GwtEvent.Type<ServerUnavailableHandler>();
-   
+   public static final Type<Handler> TYPE = new Type<>();
+
    public ServerUnavailableEvent()
    {
    }
-   
-   
+
    @Override
-   protected void dispatch(ServerUnavailableHandler handler)
+   protected void dispatch(Handler handler)
    {
       handler.onServerUnavailable(this);
    }
 
    @Override
-   public GwtEvent.Type<ServerUnavailableHandler> getAssociatedType()
+   public GwtEvent.Type<Handler> getAssociatedType()
    {
       return TYPE;
+   }
+
+   public interface Handler extends EventHandler
+   {
+      void onServerUnavailable(ServerUnavailableEvent event);
    }
 }

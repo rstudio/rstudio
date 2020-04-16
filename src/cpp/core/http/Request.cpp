@@ -14,9 +14,11 @@
  */
 
 #include <core/http/Request.hpp>
+#include <core/http/URL.hpp>
 
 #include <gsl/gsl>
 
+#include <boost/regex.hpp>
 #include <boost/tokenizer.hpp>
 #include <boost/asio/buffer.hpp>
 #include <boost/algorithm/string/predicate.hpp>
@@ -41,16 +43,83 @@ Request::~Request()
 {
 }
 
+bool Request::isSecure() const
+{
+   // the request is secure if the browser is using HTTPS to
+   // reach the server which may depend on the presence of a proxy
+   return URL(proxiedUri()).protocol() == "https";
+}
+
 std::string Request::absoluteUri() const
 {
-   std::string scheme = "http";
-   std::string forwardedScheme = headerValue("X-Forwarded-Proto");
-   if (!forwardedScheme.empty())
-      scheme = forwardedScheme;
-
+   // ignore the proxy for the most part except by the scheme
+   std::string scheme = URL(proxiedUri()).protocol();
    return scheme + "://" + host() + uri();
 }
-   
+
+std::string Request::proxiedUri() const
+{
+   // if using the product-specific header use it
+   // it should contain the exact scheme/host/port/path
+   // of the original request as send by the browser
+   std::string overrideHeader = headerValue("X-RSP-Request");
+   if (!overrideHeader.empty())
+   {
+      return overrideHeader;
+   }
+
+   // might be using new Forwarded header
+   std::string forwarded = headerValue("Forwarded");
+   if (!forwarded.empty())
+   {
+      std::string forwardedHost;
+      boost::regex reHost("host=([\\w.:]+);?");
+      boost::smatch matches;
+      if (boost::regex_search(forwarded, matches, reHost))
+         forwardedHost = matches[1];
+
+      std::string protocol = "http";
+      boost::regex reProto("proto=([\\w.:]+);?");
+      if (boost::regex_search(forwarded, matches, reProto))
+         protocol = matches[1];
+
+      return URL::complete(protocol + "://" + forwardedHost, uri());
+   }
+
+   // get the protocol that was specified in the request
+   // it might have been specified by rserver-http w/ ssl-enabled=1
+   std::string protocol = headerValue("X-Forwarded-Proto");
+   if (protocol.empty())
+   {
+      protocol = "http";
+   }
+
+   // might be using the legacy X-Forwarded headers
+   std::string forwardedHost = headerValue("X-Forwarded-Host");
+   if (!forwardedHost.empty())
+   {
+      // get the port that may be specified in the request
+      std::string port = headerValue("X-Forwarded-Port");
+      if (!port.empty())
+      {
+         std::size_t pos = forwardedHost.find(':');
+         if (pos == std::string::npos)
+         {
+            forwardedHost += ":" + port;
+         }
+         else
+         {
+            forwardedHost = forwardedHost.substr(0, pos + 1) + port;
+         }
+      }
+
+      return URL::complete(protocol + "://" + forwardedHost, uri());
+   }
+
+   // use the protocol that may have been set by X-Forwarded-Proto
+   return URL::complete(protocol + "://" + host(), uri());
+}
+
 bool Request::acceptsContentType(const std::string& contentType) const
 {
    return headerValue("Accept").find(contentType) != std::string::npos;

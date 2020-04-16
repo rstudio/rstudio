@@ -43,8 +43,8 @@ public class Debug
 
    public static void log(String message)
    {
-      GWT.log(message, null) ;
-      logToConsole(message) ;
+      GWT.log(message, null);
+      logToConsole(message);
    }
    
    public static void logWarning(String warning)
@@ -62,9 +62,9 @@ public class Debug
    public static native void logToConsole(String message) /*-{
     if (typeof(console) != "undefined")
     {
-         console.log(message) ;
+         console.log(message);
     }
-   }-*/ ;
+   }-*/;
 
    public static <T> T printValue(String label, T value)
    {
@@ -116,7 +116,7 @@ public class Debug
    public static native void prettyPrint(JavaScriptObject obj) /*-{
       var str = JSON.stringify(obj, undefined, 2);
       console.log(str);
-   }-*/ ;
+   }-*/;
 
    public static void logAttachDetachException(AttachDetachException ade)
    {

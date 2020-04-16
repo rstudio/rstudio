@@ -8,22 +8,36 @@
    .editAttr {
       width: 100%;
    }
+   .infoLabel {
+	   margin-left: 6px;
+	   color: rgb(96,96,96);
+	}
 
    </ui:style>
 
    <g:VerticalPanel styleName="{style.editAttr}">
-      <g:Label text="ID (e.g. &quot;#overview&quot;):"></g:Label>
+      
+      <g:HorizontalPanel>
+         <g:Label text="ID"></g:Label><g:Label text="(e.g. #overview)" styleName="{style.infoLabel}"></g:Label>
+      </g:HorizontalPanel>
       <g:TextBox styleName="{res.styles.fullWidth} {res.styles.spaced}" ui:field="id_"></g:TextBox>
-    
-      <g:Label text="Classes (e.g. &quot;.illustration&quot;):"></g:Label>
+     
+      <g:HorizontalPanel>
+         <g:Label text="Classes"></g:Label><g:Label text="(e.g. .illustration)" styleName="{style.infoLabel}"></g:Label>
+      </g:HorizontalPanel>
       <g:TextBox styleName="{res.styles.fullWidth} {res.styles.spaced}" ui:field="classes_"></g:TextBox>
     
-      <g:Label text="Style (e.g. &quot;margin-right: 10px;&quot;):"></g:Label>
+      <g:HorizontalPanel>
+         <g:Label text="CSS styles"></g:Label><g:Label text="(e.g. color: gray;)" styleName="{style.infoLabel}"></g:Label>
+      </g:HorizontalPanel>
       <g:TextBox styleName="{res.styles.fullWidth} {res.styles.spaced}" ui:field="style_"></g:TextBox>
     
-      <g:Label text="Other (key=value, one per line):"/>
+      <g:HorizontalPanel>
+         <g:Label text="Other"/><g:Label text="(key=value, one per line)" styleName="{style.infoLabel}"/>
+      </g:HorizontalPanel>
+      
       <rw:FormTextArea styleName="{res.styles.textArea} {res.styles.spaced}"
-                       ui:field="attributes_" visibleLines="4" ariaLabel="Attributes">
+                       ui:field="attributes_" visibleLines="3" ariaLabel="Attributes">
       </rw:FormTextArea>
    </g:VerticalPanel>
 

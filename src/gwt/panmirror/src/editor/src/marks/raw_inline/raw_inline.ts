@@ -25,11 +25,12 @@ import { getMarkRange, markIsActive, getMarkAttrs } from '../../api/mark';
 import { EditorUI, RawFormatProps } from '../../api/ui';
 import { canInsertNode } from '../../api/node';
 import { fragmentText } from '../../api/fragment';
+import { PandocCapabilities } from '../../api/pandoc_capabilities';
 
 export const kRawInlineFormat = 0;
 export const kRawInlineContent = 1;
 
-const extension = (pandocExtensions: PandocExtensions): Extension | null => {
+const extension = (pandocExtensions: PandocExtensions, pandocCapabilities: PandocCapabilities): Extension | null => {
   if (!pandocExtensions.raw_attribute) {
     return null;
   }
@@ -99,13 +100,13 @@ const extension = (pandocExtensions: PandocExtensions): Extension | null => {
 
     // insert command
     commands: (_schema: Schema, ui: EditorUI) => {
-      return [new RawInlineCommand(ui)];
+      return [new RawInlineCommand(EditorCommandId.RawInline, '', ui, pandocCapabilities.output_formats)];
     },
   };
 };
 
-// base class for format-specific raw inline commands (e.g. tex/html)
-export class RawInlineFormatCommand extends ProsemirrorCommand {
+// base class for inline commands that auto-insert content
+export class RawInlineInsertCommand extends ProsemirrorCommand {
   private markType: MarkType;
   constructor(id: EditorCommandId, markType: MarkType, insert: (tr: Transaction) => void) {
     super(id, [], (state: EditorState, dispatch?: (tr: Transaction) => void) => {
@@ -148,10 +149,10 @@ export class RawInlineFormatCommand extends ProsemirrorCommand {
 }
 
 // generic raw inline command (opens dialog that allows picking from among formats)
-class RawInlineCommand extends ProsemirrorCommand {
-  constructor(ui: EditorUI) {
+export class RawInlineCommand extends ProsemirrorCommand {
+  constructor(id: EditorCommandId, defaultFormat: string, ui: EditorUI, outputFormats: string[]) {
     super(
-      EditorCommandId.RawInline,
+      id,
       [],
       (state: EditorState, dispatch?: (tr: Transaction) => void, view?: EditorView) => {
         const schema = state.schema;
@@ -172,7 +173,7 @@ class RawInlineCommand extends ProsemirrorCommand {
             }
 
             // get raw attributes if we have them
-            let raw: RawFormatProps = { content: '', format: '' };
+            let raw: RawFormatProps = { content: '', format: defaultFormat };
             raw.content = state.doc.textBetween(range.from, range.to);
             if (isActive) {
               raw = {
@@ -181,7 +182,7 @@ class RawInlineCommand extends ProsemirrorCommand {
               };
             }
 
-            const result = await ui.dialogs.editRawInline(raw);
+            const result = await ui.dialogs.editRawInline(raw, outputFormats);
             if (result) {
               const tr = state.tr;
               tr.removeMark(range.from, range.to, schema.marks.raw_inline);

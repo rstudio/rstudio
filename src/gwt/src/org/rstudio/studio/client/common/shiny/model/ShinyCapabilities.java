@@ -24,7 +24,7 @@ public class ShinyCapabilities extends JavaScriptObject
    
    public static final native ShinyCapabilities createDefault()  /*-{
       var caps = new Object();
-      caps.installed = false ;
+      caps.installed = false;
       return caps;
    }-*/;
    

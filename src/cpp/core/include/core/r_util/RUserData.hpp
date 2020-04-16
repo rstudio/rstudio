@@ -1,7 +1,7 @@
 /*
  * RUserData.hpp
  *
- * Copyright (C) 2009-12 by RStudio, PBC
+ * Copyright (C) 2009-20 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -24,6 +24,9 @@
 
 namespace rstudio {
 namespace core {
+
+class Error;
+
 namespace r_util {
 
 enum SessionType
@@ -32,15 +35,7 @@ enum SessionType
    SessionTypeServer
 };
 
-struct UserDirectories
-{
-   std::string homePath;
-   std::string scratchPath;
-};
-
-UserDirectories userDirectories(SessionType sessionType,
-                                const std::string& homePath = std::string());
-
+core::Error migrateUserStateIfNecessary(SessionType sessionType);
 
 } // namespace r_util
 } // namespace core 

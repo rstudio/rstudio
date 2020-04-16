@@ -1,7 +1,7 @@
 /*
- * SaveActionChangedHandler.java
+ * ServerXdgVars.hpp
  *
- * Copyright (C) 2009-12 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -12,11 +12,24 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-package org.rstudio.studio.client.application.events;
 
-import com.google.gwt.event.shared.EventHandler;
+#ifndef SERVER_XDG_VARS_HPP
+#define SERVER_XDG_VARS_HPP
 
-public interface SaveActionChangedHandler extends EventHandler
-{
-   void onSaveActionChanged(SaveActionChangedEvent event);
+namespace rstudio {
+namespace core {
+   class Error;
 }
+}
+
+namespace rstudio {
+namespace server {
+namespace xdg_vars {
+
+core::Error initialize();
+
+} // namespace xdg_vars
+} // namespace server
+} // namespace rstudio
+
+#endif // SERVER_XDG_VARS_HPP

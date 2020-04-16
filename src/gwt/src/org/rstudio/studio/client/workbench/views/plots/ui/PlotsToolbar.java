@@ -31,7 +31,7 @@ public class PlotsToolbar extends Toolbar implements HasCustomizableToolbar
    public PlotsToolbar(Commands commands, RSConnectPublishButton publishButton)
    {
       super("Plots Pane");
-      commands_ = commands ;
+      commands_ = commands;
       publishButton_ = publishButton;
       installStandardUI();
    }

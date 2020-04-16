@@ -44,7 +44,7 @@ public class Edit implements ShowEditorHandler
    public Edit(Display view,
                EditServerOperations server)
    {
-      view_ = view ;
+      view_ = view;
       server_ = server;
    }
 

@@ -31,6 +31,7 @@ import { EditorUI, attrPropsToInput, attrInputToProps, AttrProps, AttrEditInput 
 import { Extension } from './api/extension';
 import { ExtensionManager, initExtensions } from './extensions';
 import { PandocEngine } from './api/pandoc';
+import { PandocCapabilities, getPandocCapabilities } from './api/pandoc_capabilities';
 import { fragmentToHTML } from './api/html';
 import { EditorEvent } from './api/events';
 import {
@@ -55,6 +56,7 @@ import { navigateTo } from './api/navigation';
 import { FixupContext } from './api/fixup';
 import { unitToPixels, pixelsToUnit, roundUnit, kValidUnits } from './api/image';
 import { kPercentUnit } from './api/css';
+import { defaultEditorUIImages } from './api/ui-images';
 
 import { getTitle, setTitle } from './nodes/yaml_metadata/yaml_metadata-title';
 
@@ -173,6 +175,9 @@ export class Editor {
   // provided within the document
   private pandocFormat: PandocFormat;
 
+  // pandoc capabilities
+  private pandocCapabilities: PandocCapabilities;
+
   // core prosemirror state/behaviors
   private readonly extensions: ExtensionManager;
   private readonly schema: Schema;
@@ -187,6 +192,9 @@ export class Editor {
   // event sinks
   private readonly events: ReadonlyMap<string, Event>;
 
+  // create the editor -- note that the markdown argument does not substitute for calling
+  // setMarkdown, rather it's used to read the format comment to determine how to 
+  // initialize the various editor features
   public static async create(
     parent: HTMLElement,
     context: EditorContext,
@@ -196,14 +204,28 @@ export class Editor {
     // provide default options
     options = {
       autoFocus: false,
-      spellCheck: true,
+      spellCheck: false,
       codemirror: true,
       braceMatching: true,
       rmdCodeChunks: false,
+      rmdImagePreview: false,
+      rmdBookdownXRef: false,
       formatComment: true,
       ...options,
     };
 
+    // provide context defaults
+    context = {
+      ...context,
+      ui: {
+        ...context.ui,
+        images: {
+          ...defaultEditorUIImages(),
+          ...context.ui.images
+        }
+      }
+    };
+    
     // default format to what is specified in the config
     let format = context.format;
 
@@ -215,25 +237,30 @@ export class Editor {
     // resolve the format
     const pandocFmt = await resolvePandocFormat(context.pandoc, format);
 
-    // create editor
-    const editor = new Editor(parent, context, options, pandocFmt);
+    // get pandoc capabilities
+    const pandocCapabilities = await getPandocCapabilities(context.pandoc);
 
-    // set initial markdown if specified
-    if (markdown) {
-      await editor.setMarkdown(markdown, false);
-    }
+    // create editor
+    const editor = new Editor(parent, context, options, pandocFmt, pandocCapabilities);
 
     // return editor
     return Promise.resolve(editor);
   }
 
-  private constructor(parent: HTMLElement, context: EditorContext, options: EditorOptions, pandocFormat: PandocFormat) {
+  private constructor(
+    parent: HTMLElement, 
+    context: EditorContext, 
+    options: EditorOptions, 
+    pandocFormat: PandocFormat,
+    pandocCapabilities: PandocCapabilities) 
+  {
     // initialize references
     this.parent = parent;
     this.context = context;
     this.options = options;
     this.keybindings = {};
     this.pandocFormat = pandocFormat;
+    this.pandocCapabilities = pandocCapabilities;
 
     // initialize custom events
     this.events = this.initEvents();
@@ -263,6 +290,16 @@ export class Editor {
       dispatchTransaction: this.dispatchTransaction.bind(this),
       domParser: new EditorDOMParser(this.schema),
       attributes,
+    });
+
+    // add custom restoreFocus handler to the view -- this provides a custom
+    // handler for RStudio's FocusContext, necessary because the default 
+    // ProseMirror dom mutation handler picks up the focus and changes the 
+    // selection.
+    Object.defineProperty(this.view.dom, 'restoreFocus', {
+      value: () => {
+        this.focus();
+      }
     });
 
     // add proportinal font class to parent
@@ -382,7 +419,12 @@ export class Editor {
   }
 
   public restoreEditingLocation(location: EditingLocation) {
-    restoreEditingLocation(this.view, location);
+    // delay the restore so all of our code mirror instances
+    // can become visible (which allows decorators that reference
+    // offsetTop to draw at the proper location)
+    setTimeout(() => {
+      restoreEditingLocation(this.view, location);
+    }, 100);
   }
 
   public getOutline(): EditorOutline {
@@ -434,6 +476,7 @@ export class Editor {
         keymap: commandKeys[command.id],
         isActive: () => command.isActive(this.state),
         isEnabled: () => command.isEnabled(this.state),
+        plural: () => command.plural(this.state),
         execute: () => {
           command.execute(this.state, this.view.dispatch, this.view);
           if (command.keepFocus) {
@@ -449,6 +492,10 @@ export class Editor {
     this.parent.classList.toggle('pm-dark-mode', !!theme.darkMode);
     // apply the rest of the theme
     applyTheme(theme);
+  }
+
+  public useFixedPadding(fixed: boolean) {
+    this.parent.classList.toggle('pm-fixed-padding', fixed);
   }
 
   public setKeybindings(keyBindings: EditorKeybindings) {
@@ -533,6 +580,7 @@ export class Editor {
       { subscribe: this.subscribe.bind(this) },
       this.context.extensions,
       this.pandocFormat.extensions,
+      this.pandocCapabilities
     );
   }
 
@@ -548,7 +596,9 @@ export class Editor {
         isolating: true,
         parseDOM: [{ tag: 'div[class*="body"]' }],
         toDOM() {
-          return ['div', { class: 'body pm-cursor-color pm-text-color pm-background-color pm-content' }, 0];
+          return ['div', { class: 'body pm-cursor-color pm-text-color pm-background-color pm-editing-root-node' }, 
+                   ['div', { class: 'pm-content'}, 0]
+                 ];
         },
       },
 
@@ -556,7 +606,9 @@ export class Editor {
         content: 'note*',
         parseDOM: [{ tag: 'div[class*="notes"]' }],
         toDOM() {
-          return ['div', { class: 'notes pm-cursor-color pm-text-color pm-background-color pm-content' }, 0];
+          return ['div', { class: 'notes pm-cursor-color pm-text-color pm-background-color pm-editing-root-node' }, 
+                   ['div', { class: 'pm-content'}, 0]
+                 ];
         },
       },
 

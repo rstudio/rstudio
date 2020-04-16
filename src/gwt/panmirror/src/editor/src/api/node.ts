@@ -37,10 +37,13 @@ import {
   PandocInlineHTMLReaderFn,
 } from './pandoc';
 
+import { AttrEditOptions } from './attr_edit';
+
 export interface PandocNode {
   readonly name: string;
   readonly spec: NodeSpec;
   readonly code_view?: CodeViewOptions;
+  readonly attr_edit?: () => AttrEditOptions | null;
   readonly pandoc: {
     readonly readers?: readonly PandocTokenReader[];
     readonly writer?: PandocNodeWriterFn;
@@ -54,6 +57,7 @@ export interface PandocNode {
 export interface CodeViewOptions {
   lang: (node: ProsemirrorNode, content: string) => string | null;
   classes?: string[];
+  borderColorClass?: string; 
   firstLineMeta?: boolean;
   lineNumbers?: boolean;
   lineNumberFormatter?: (line: number) => string;

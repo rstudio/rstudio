@@ -16,7 +16,7 @@
          width: 100%;
       }
      
-      .rawContent {
+      input[type="text"].rawContent {
          font-family: fixedWidthFont;
       }
      
@@ -27,10 +27,10 @@
       <dialogs:PanmirrorRawFormatSelect styleName="{style.formatSelect} {res.styles.spaced}" ui:field="rawFormatSelect_">
       </dialogs:PanmirrorRawFormatSelect>
    		
-      <g:Label text="Raw content:"/>
-      <rw:FormTextArea styleName="{res.styles.textArea} {style.rawContent} {res.styles.spaced}"
-                 	     ui:field="rawContent_" visibleLines="5" ariaLabel="Raw content">
-      </rw:FormTextArea>
+      <g:Label text="Content:" ui:field="rawContentLabel_"/>
+      <g:TextBox  styleName="{style.rawContent} {res.styles.spaced}"
+                 	ui:field="rawContent_">
+      </g:TextBox>
       	
    </g:HTMLPanel>
 

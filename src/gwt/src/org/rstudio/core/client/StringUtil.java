@@ -1,7 +1,7 @@
 /*
  * StringUtil.java
  *
- * Copyright (C) 2009-19 by RStudio, PBC
+ * Copyright (C) 2009-20 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -23,7 +23,6 @@ import org.rstudio.core.client.dom.DomMetrics;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.regex.Match;
 import org.rstudio.core.client.regex.Pattern;
-import org.rstudio.core.client.regex.Pattern.ReplaceOperation;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -226,9 +225,9 @@ public class StringUtil
       // split into lines and find the maximum line width
       String[] lines = text.split("\n");
       int maxWidth = 0;
-      for (int i=0; i<lines.length; i++)
+      for (String line : lines)
       {
-         int width = lines[i].length();
+         int width = line.length();
          if (width > maxWidth)
             maxWidth = width;
       }
@@ -275,7 +274,7 @@ public class StringUtil
       if (identifier.length() > 20 || identifier.contains("|"))
          return false;
 
-      return ALL_KEYWORDS.indexOf("|" + identifier + "|") >= 0;
+      return ALL_KEYWORDS.contains("|" + identifier + "|");
    }
 
    public static String notNull(String s)
@@ -358,7 +357,7 @@ public class StringUtil
             return new Iterator<String>()
             {
                private int pos = 0;
-               private Pattern newline = Pattern.create("\\r?\\n");
+               private final Pattern newline = Pattern.create("\\r?\\n");
 
                @Override
                public boolean hasNext()
@@ -432,7 +431,7 @@ public class StringUtil
       if (lines.length == 0)
          return "";
 
-      /**
+      /*
        * allowPhantomWhitespace demands some explanation. Assuming these lines:
        *
        * {
@@ -449,7 +448,6 @@ public class StringUtil
        * whitespace would lead to a longer overall prefix but would not change
        * the visible appearance of the document.
        */
-
 
       String prefix = notNull(lines[0]);
 
@@ -522,18 +520,11 @@ public class StringUtil
    public static String pathToTitle(String path)
    {
       String val = FileSystemItem.createFile(path).getStem();
-      val = Pattern.create("\\b[a-z]").replaceAll(val, new ReplaceOperation()
-      {
-         @Override
-         public String replace(Match m)
-         {
-            return m.getValue().toUpperCase();
-         }
-      });
+      val = Pattern.create("\\b[a-z]").replaceAll(val, match -> match.getValue().toUpperCase());
       val = Pattern.create("[-_]").replaceAll(val, " ");
       return val;
    }
-   
+
    public static String joinStrings(List<String> strings, String separator)
    {
       String result = "";
@@ -612,7 +603,7 @@ public class StringUtil
       return input.substring(0, 1).toUpperCase() + input.substring(1); 
    }
    
-   public static final native String capitalizeAllWords(String input)
+   public static native String capitalizeAllWords(String input)
    /*-{
       return input.replace(
          /(?:^|\s)\S/g,
@@ -910,7 +901,7 @@ public class StringUtil
    
    public static List<Integer> subsequenceIndices(String sequence, String query)
    {
-      List<Integer> result = new ArrayList<Integer>();
+      List<Integer> result = new ArrayList<>();
       int querySize = query.length();
       
       int prevMatchIndex = -1;
@@ -994,7 +985,7 @@ public class StringUtil
    
    public static ArrayList<Integer> indicesOf(String string, char ch)
    {
-      ArrayList<Integer> indices = new ArrayList<Integer>();
+      ArrayList<Integer> indices = new ArrayList<>();
       
       int matchIndex = string.indexOf(ch);
       while (matchIndex != -1)
@@ -1027,9 +1018,9 @@ public class StringUtil
       return COMPLEMENTS.get(self) == other;
    }
    
-   private static final HashMap<String, String> makeComplementsMap()
+   private static HashMap<String, String> makeComplementsMap()
    {
-      HashMap<String, String> map = new HashMap<String, String>();
+      HashMap<String, String> map = new HashMap<>();
       
       map.put("[", "]");
       map.put("]", "[");
@@ -1075,17 +1066,17 @@ public class StringUtil
              result.substring(1);
    }
    
-   public static native final String escapeRegex(String regexString) /*-{
+   public static native String escapeRegex(String regexString) /*-{
       var utils = $wnd.require("mode/utils");
       return utils.escapeRegExp(regexString);
    }-*/;
    
-   public static final String getIndent(String line)
+   public static String getIndent(String line)
    {
       return RE_INDENT.match(line, 0).getGroup(0);
    }
    
-   public static final String truncate(String string, int targetLength, String suffix)
+   public static String truncate(String string, int targetLength, String suffix)
    {
       if (string.length() <= targetLength)
          return string;
@@ -1133,7 +1124,7 @@ public class StringUtil
              MathUtil.inRange(val, 1425, 1610);
    }
 
-   public static final String makeRandomId(int length) 
+   public static String makeRandomId(int length)
    {
       String alphanum = "0123456789abcdefghijklmnopqrstuvwxyz";
       String id = "";
@@ -1169,16 +1160,16 @@ public class StringUtil
       return string;
    }
    
-   public static final native String encodeURI(String string) /*-{
+   public static native String encodeURI(String string) /*-{
       return $wnd.encodeURI(string);
    }-*/;
    
-   public static final native String encodeURIComponent(String string) /*-{
+   public static native String encodeURIComponent(String string) /*-{
       return $wnd.encodeURIComponent(string);
    }-*/;
    
    
-   public static final native String normalizeNewLines(String string) /*-{
+   public static native String normalizeNewLines(String string) /*-{
       return string.replace(/\r\n|\n\r|\r/g, "\n");
    }-*/;
 
@@ -1186,11 +1177,11 @@ public class StringUtil
     * Convert string line endings to carriage returns to mimic keyboard entry
     * of text on Windows.
     */
-   public static final native String normalizeNewLinesToCR(String string) /*-{
+   public static native String normalizeNewLinesToCR(String string) /*-{
       return string.replace(/\r\n|\n\r|\n/g, "\r");
    }-*/;
     
-   public static final native JsArrayString split(String string, String delimiter) /*-{
+   public static native JsArrayString split(String string, String delimiter) /*-{
       return string.split(delimiter);
    }-*/;
    
@@ -1203,7 +1194,7 @@ public class StringUtil
     * @param str The string on which to compute the checksum
     * @return The checksum value, as a hexadecimal string
     */
-   public static final native String crc32(String str)/*-{
+   public static native String crc32(String str)/*-{
       // based on: https://stackoverflow.com/questions/18638900/javascript-crc32
       var genCrc32Table = function() 
       {
@@ -1239,10 +1230,10 @@ public class StringUtil
    // Automatically detect the indent size within a document (for documents
    // indented with spaces). If the document appears to be use tabs for
    // indentation, this function will return -1.
-   public static final int detectIndent(JsArrayString lines)
+   public static int detectIndent(JsArrayString lines)
    {
       // map indents -> counts
-      SafeMap<Integer, Integer> indentMap = new SafeMap<Integer, Integer>();
+      SafeMap<Integer, Integer> indentMap = new SafeMap<>();
       
       // use the first 1000 lines in the document
       int end = Math.min(lines.length() - 1, 1000);
@@ -1251,7 +1242,7 @@ public class StringUtil
       int indentedLineCount = 0;
       int tabIndentCount = 0;
       
-      for (int i = 0, n = end; i < n; i++)
+      for (int i = 0; i < end; i++)
       {
          String line = lines.get(i);
          String indent = StringUtil.getIndent(line);
@@ -1340,12 +1331,12 @@ public class StringUtil
       return str1.equalsIgnoreCase(str2);
    }
    
-   public static final String dequote(String string)
+   public static String dequote(String string)
    {
       return dequote(string, "\\\\");
    }
    
-   public static final String dequote(String string, String escape)
+   public static String dequote(String string, String escape)
    {
       for (String delimiter : new String[] { "\"", "'", "`" })
          if (string.startsWith(delimiter) && string.endsWith(delimiter))
@@ -1365,7 +1356,7 @@ public class StringUtil
     *
     * Does not support embedded newlines. Posix only.
     */
-   public static final String escapeBashPath(String path, boolean encodeLeadingTilde)
+   public static String escapeBashPath(String path, boolean encodeLeadingTilde)
    {
       if (StringUtil.isNullOrEmpty(path))
          return "";
@@ -1377,14 +1368,7 @@ public class StringUtil
          path = path.substring(1);
       }
 
-      return prefix + BASH_RESERVED_CHAR.replaceAll(path, new ReplaceOperation()
-      {
-         @Override
-         public String replace(Match m)
-         {
-            return "\\" + m.getValue();
-         }
-      });
+      return prefix + BASH_RESERVED_CHAR.replaceAll(path, match -> "\\" + match.getValue());
    }
    
    /**
@@ -1434,7 +1418,7 @@ public class StringUtil
 
    public static String format(String fmt, Object... objects)
    {
-      List<String> strings = new ArrayList<String>();
+      List<String> strings = new ArrayList<>();
       for (Object object : objects)
       {
          strings.add(object.toString());
@@ -1450,6 +1434,21 @@ public class StringUtil
       
       return result;
    }
+   
+   /**
+    * Perform a natural order comparison between two strings. Natural ordering
+    * preserves ascending numbers, such that e.g. item10 comes after item9.
+    * 
+    * @param str1 The source string
+    * @param str2 The target string
+    * @return
+    */
+   public static native int naturalOrderCompare(String str1, String str2) /*-{
+      // Coerce null/undefined to empty
+      var val1 = str1 ? str1 : "";
+      var val2 = str2 ? str2 : "";
+      return val1.localeCompare(val2, [], { "numeric": true });
+   }-*/;
    
    private static final NumberFormat FORMAT = NumberFormat.getFormat("0.#");
    private static final NumberFormat PRETTY_NUMBER_FORMAT = NumberFormat.getFormat("#,##0.#####");

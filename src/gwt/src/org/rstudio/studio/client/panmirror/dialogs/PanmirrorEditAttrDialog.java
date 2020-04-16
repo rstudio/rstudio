@@ -41,7 +41,10 @@ public class PanmirrorEditAttrDialog extends ModalDialog<PanmirrorAttrEditResult
                PanmirrorAttrProps attr,
                OperationWithInput<PanmirrorAttrEditResult> operation)
    {
-      super(caption, Roles.getDialogRole(), operation);
+      super(caption, Roles.getDialogRole(), operation, () -> {
+         // cancel returns null
+         operation.execute(null);
+      });
       mainWidget_ = GWT.<Binder>create(Binder.class).createAndBindUi(this);
        
       editAttr_.setAttr(attr);

@@ -1,7 +1,7 @@
 /*
  * BrowserUtils.cpp
  *
- * Copyright (C) 2009-12 by RStudio, PBC
+ * Copyright (C) 2009-20 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -50,14 +50,14 @@ bool hasRequiredBrowserVersion(const std::string& userAgent,
 
 bool isChrome(const std::string& userAgent)
 {
-   return contains(userAgent, "Chrome") || contains(userAgent, "chromeframe");
+   return contains(userAgent, "Chrome");
 }
 
 bool isChromeOlderThan(const std::string& userAgent, double version)
 {
    if (isChrome(userAgent))
    {
-      boost::regex chromeRegEx("(?:Chrome|chromeframe)/(\\d{1,4})");
+      boost::regex chromeRegEx("(?:Chrome)/(\\d{1,4})");
       return !hasRequiredBrowserVersion(userAgent, chromeRegEx, version);
    }
    else

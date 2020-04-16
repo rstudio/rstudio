@@ -191,7 +191,7 @@ public class Workbench implements BusyHandler,
 
    public WorkbenchMainView getMainView()
    {
-      return view_ ;
+      return view_;
    }
 
    public void onWorkbenchLoaded(WorkbenchLoadedEvent event)

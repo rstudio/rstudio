@@ -40,6 +40,7 @@ public interface PanmirrorDialogsResources extends ClientBundle
       String horizontalInput();
       String lockRatioCheckbox();
       String heightAuto();
+      String langSuggestionDisplay();
    }
 
    @Source("PanmirrorDialogsStyles.css")
@@ -51,7 +52,7 @@ public interface PanmirrorDialogsResources extends ClientBundle
    @Source("edit_link_2x.png")
    ImageResource edit_link();
    
-   public static PanmirrorDialogsResources INSTANCE = (PanmirrorDialogsResources)GWT.create(PanmirrorDialogsResources.class) ;
+   public static PanmirrorDialogsResources INSTANCE = (PanmirrorDialogsResources)GWT.create(PanmirrorDialogsResources.class);
    
 
    public static void ensureStylesInjected()

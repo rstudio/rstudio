@@ -1,7 +1,7 @@
 /*
  * InvalidSessionEvent.java
  *
- * Copyright (C) 2009-12 by RStudio, PBC
+ * Copyright (C) 2009-20 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -26,8 +26,7 @@ public class InvalidSessionEvent extends GwtEvent<InvalidSessionEvent.Handler>
       void onInvalidSession(InvalidSessionEvent event);
    }
    
-   public static final GwtEvent.Type<Handler> TYPE =
-      new GwtEvent.Type<Handler>();
+   public static final Type<Handler> TYPE = new Type<>();
    
    public InvalidSessionEvent(InvalidSessionInfo info)
    {

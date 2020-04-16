@@ -78,7 +78,7 @@ public class ShowContentDialog extends ModalDialogBase
      scrollPanel.setWidget(htmlContent);
       
      // if we don't have a preferred size then size based on content
-     Size size = preferredSize_ ;
+     Size size = preferredSize_;
      if (size.isEmpty())
         size = DomMetrics.measureHTML(content_, styleName_);
                                             

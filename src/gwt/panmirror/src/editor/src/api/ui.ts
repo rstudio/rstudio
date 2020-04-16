@@ -17,18 +17,22 @@ import { ListCapabilities } from './list';
 import { LinkTargets, LinkCapabilities, LinkType } from './link';
 import { TableCapabilities } from './table';
 import { ImageDimensions } from './image';
+import { EditorUIImages } from './ui-images';
+
 import { kStyleAttrib } from './pandoc_attr';
 
 export interface EditorUI {
   dialogs: EditorDialogs;
   display: EditorDisplay;
   context: EditorUIContext;
+  images: EditorUIImages;
 }
 
 export interface EditorDialogs {
   alert: AlertFn;
   editLink: LinkEditorFn;
   editImage: ImageEditorFn;
+  editCodeBlock: CodeBlockEditorFn;
   editOrderedList: OrderedListEditorFn;
   editAttr: AttrEditorFn;
   editSpan: AttrEditorFn;
@@ -79,12 +83,18 @@ export type ImageEditorFn = (
   editAttributes: boolean,
 ) => Promise<ImageEditResult | null>;
 
+export type CodeBlockEditorFn = (
+  codeBlock: CodeBlockProps,
+  attributes: boolean,
+  languages: string[]
+) => Promise<CodeBlockEditResult | null>;
+
 export type OrderedListEditorFn = (
   list: OrderedListProps,
   capabilities: ListCapabilities,
 ) => Promise<OrderedListEditResult | null>;
 
-export type RawFormatEditorFn = (raw: RawFormatProps) => Promise<RawFormatResult | null>;
+export type RawFormatEditorFn = (raw: RawFormatProps, outputFormats: string[]) => Promise<RawFormatResult | null>;
 
 export type InsertTableFn = (capabilities: TableCapabilities) => Promise<InsertTableResult | null>;
 
@@ -131,6 +141,12 @@ export interface ImageProps extends AttrProps {
 }
 
 export type ImageEditResult = ImageProps;
+
+export interface CodeBlockProps extends AttrProps {
+  lang: string;
+}
+
+export type CodeBlockEditResult = CodeBlockProps;
 
 export interface OrderedListProps {
   tight: boolean;

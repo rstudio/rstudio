@@ -51,3 +51,8 @@ export function mergedTextNodes(
   });
   return textNodes;
 }
+
+
+export function stripQuotes(text: string) {
+  return text.replace(/["']/g, '');
+}

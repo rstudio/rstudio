@@ -95,6 +95,7 @@ public class ScrollableToolbarPopupMenu extends ToolbarPopupMenu
       public ScrollableToolbarMenuBar(boolean vertical)
       {
          super(vertical);
+         setFocusOnHoverEnabled(false);
       }
 
       public HandlerRegistration addSelectionHandler(

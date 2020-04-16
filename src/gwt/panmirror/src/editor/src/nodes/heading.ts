@@ -56,17 +56,24 @@ const extension = (pandocExtensions: PandocExtensions): Extension => {
             { tag: 'h6', getAttrs: getHeadingAttrs(6, headingAttr) },
           ],
           toDOM(node) {
+            const attr = headingAttr ? pandocAttrToDomAttr(node.attrs) : {};
+            attr.class = (attr.class || '').concat(' pm-heading');
             return [
               'h' + node.attrs.level,
               {
                 'data-link': node.attrs.link,
-                ...(headingAttr ? pandocAttrToDomAttr(node.attrs) : {}),
+                ...attr,
               },
 
               0,
             ];
           },
         },
+
+        attr_edit: () => ({
+          type: (schema: Schema) => schema.nodes.heading
+        }),
+
         pandoc: {
           readers: [
             {

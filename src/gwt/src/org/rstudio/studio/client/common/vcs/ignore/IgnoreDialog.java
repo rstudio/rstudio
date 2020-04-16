@@ -189,7 +189,7 @@ public class IgnoreDialog extends ModalDialogBase
       Styles styles();
    }
    
-   static Resources RES = (Resources)GWT.create(Resources.class) ;
+   static Resources RES = (Resources)GWT.create(Resources.class);
    public static void ensureStylesInjected()
    {
       RES.styles().ensureInjected();
@@ -197,7 +197,7 @@ public class IgnoreDialog extends ModalDialogBase
 
    private final DirectoryChooserTextBox dirChooser_;
    private final CaptionWithHelp ignoresCaption_;
-   private final AceEditor editor_ ;
+   private final AceEditor editor_;
    private final ThemedButton saveButton_;
    private final ProgressIndicator progressIndicator_;
   

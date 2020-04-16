@@ -55,7 +55,9 @@ public:
    const std::string& uri() const { return uri_; }
    void setUri(const std::string& uri) { uri_ = uri; }
 
+   bool isSecure() const;
    std::string absoluteUri() const;
+   std::string proxiedUri() const;
    
    bool acceptsContentType(const std::string& contentType) const;
 

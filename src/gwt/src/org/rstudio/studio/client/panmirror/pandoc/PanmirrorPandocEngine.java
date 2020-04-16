@@ -43,6 +43,15 @@ public class PanmirrorPandocEngine {
    {
       server_ = server;
    }
+   
+   public Promise<JavaScriptObject> getCapabilities()
+   {
+      return new Promise<JavaScriptObject>((ResolveCallbackFn<JavaScriptObject> resolve, RejectCallbackFn reject) -> {
+         server_.pandocGetCapabilities(
+            new PromiseServerRequestCallback<JavaScriptObject>(resolve, reject)
+         );
+      });
+   }
 
    public Promise<JavaScriptObject> markdownToAst(String markdown, String format, JsArrayString options)
    {

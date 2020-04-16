@@ -210,7 +210,7 @@ public class PackratResolveConflictDialog
       Styles styles();
    }
    
-   static Resources RESOURCES = (Resources)GWT.create(Resources.class) ;
+   static Resources RESOURCES = (Resources)GWT.create(Resources.class);
    public static void ensureStylesInjected()
    {
       RESOURCES.styles().ensureInjected();

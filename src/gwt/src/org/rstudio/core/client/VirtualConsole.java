@@ -179,9 +179,8 @@ public class VirtualConsole
          else if (string.length() > maxLength)
             splat.set(i, string.substring(0, maxLength));
       }
-      
-      String joined = splat.join("\n");
-      return joined;
+
+      return splat.join("\n");
    }
    
    public int getLength()
@@ -240,7 +239,7 @@ public class VirtualConsole
          view = class_.subMap(left.getKey(), true, right.getKey(), true);
       else if (left == null && right != null)
          view = class_.tailMap(right.getKey(), true);
-      else if (left != null && right == null)
+      else if (left != null)
          view = class_.headMap(left.getKey(), true);
 
       // if no overlapping ranges exist, we can just create a new one
@@ -356,8 +355,7 @@ public class VirtualConsole
                ClassRange remainder = new ClassRange(
                      end,
                      overlap.clazz,
-                     text.substring((text.length() - (amountTrimmed - range.length)), 
-                                    text.length()));
+                     text.substring((text.length() - (amountTrimmed - range.length))));
                insertions.add(remainder);
                if (parent_ != null)
                   parent_.insertAfter(remainder.element, range.element);
@@ -459,8 +457,7 @@ public class VirtualConsole
       // combine them with input class so they are ready to use if
       // there is text to output before any other ANSI codes in the
       // data (or there are no more ANSI codes).
-      if (ansiColorMode == UserPrefs.ANSI_CONSOLE_MODE_ON && 
-            ansiCodeStyles_.inlineClazzes != null)
+      if (ansiColorMode == UserPrefs.ANSI_CONSOLE_MODE_ON && ansiCodeStyles_.inlineClazzes != null)
       {
          if (clazz != null)
          {
@@ -666,7 +663,7 @@ public class VirtualConsole
          String text = element.getInnerText();
          element.setInnerText(
                text.substring(0, pos) + content +
-               text.substring(pos + content.length(), text.length()));
+               text.substring(pos + content.length()));
       }
       
       public String text()
@@ -685,16 +682,16 @@ public class VirtualConsole
                "], text=[" + text() + "]";
       }
 
-      public String clazz;
+      public final String clazz;
       public int length;
       public int start;
-      public SpanElement element;
+      public final SpanElement element;
    }
 
    private static final Pattern CONTROL = Pattern.create("[\r\b\f\n]");
    
    private final StringBuilder output_ = new StringBuilder();
-   private final TreeMap<Integer, ClassRange> class_ = new TreeMap<Integer, ClassRange>();
+   private final TreeMap<Integer, ClassRange> class_ = new TreeMap<>();
    private final Element parent_;
    
    private int cursor_ = 0;
@@ -704,10 +701,10 @@ public class VirtualConsole
    
    // Elements added by last submit call (only if forceNewRange was true)
    private boolean captureNewElements_ = false;
-   private List<Element> newElements_ = new ArrayList<Element>();
+   private final List<Element> newElements_ = new ArrayList<>();
    
    private StringBuilder newText_;
 
    // Injected ----
-   private Preferences prefs_;
+   private final Preferences prefs_;
 }

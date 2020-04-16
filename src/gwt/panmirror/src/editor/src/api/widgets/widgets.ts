@@ -66,11 +66,14 @@ export function createPopup(
   return popup;
 }
 
-export function createImageButton(classes: string[], title: string, style?: { [key: string]: string }) {
+export function createImageButton(image: string, classes: string[], title: string, style?: { [key: string]: string }) {
   const button = window.document.createElement('button');
   button.classList.add('pm-image-button');
   button.title = title;
   applyStyles(button, classes, style);
+  const imageEl = window.document.createElement('img') as HTMLImageElement;
+  imageEl.src = image;
+  button.append(imageEl);
   return button;
 }
 

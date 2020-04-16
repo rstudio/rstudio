@@ -48,6 +48,7 @@ import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.RemoteFileSystemContext;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
 import org.rstudio.studio.client.workbench.views.console.shell.assist.PopupPositioner;
 import org.rstudio.studio.client.workbench.views.files.model.DirectoryListing;
@@ -66,7 +67,8 @@ public class FilesPane extends WorkbenchPane implements Files.Display
                     EventBus events,
                     FileTypeRegistry fileTypeRegistry,
                     Session session,
-                    Provider<FileCommandToolbar> pFileCommandToolbar)
+                    Provider<FileCommandToolbar> pFileCommandToolbar,
+                    Provider<UserPrefs> pPrefs)
    {
       super("Files", events);
       globalDisplay_ = globalDisplay;
@@ -74,6 +76,7 @@ public class FilesPane extends WorkbenchPane implements Files.Display
       fileDialogs_ = fileDialogs;
       fileTypeRegistry_ = fileTypeRegistry;
       pFileCommandToolbar_ = pFileCommandToolbar;
+      pPrefs_ = pPrefs;
       session_ = session;
       ensureWidget();
    }
@@ -299,7 +302,10 @@ public class FilesPane extends WorkbenchPane implements Files.Display
             session_.getSessionInfo().getCloudFolderEnabled());
 
       // create file list and file progress
-      filesList_ = new FilesList(new DisplayObserverProxy(), fileTypeRegistry_);
+      filesList_ = new FilesList(new DisplayObserverProxy(), fileTypeRegistry_,
+            pPrefs_.get().sortFileNamesNaturally().getValue() ? 
+               FilesList.SortOrder.Natural :
+               FilesList.SortOrder.Lexicographic);
 
       DockLayoutPanel dockPanel = new DockLayoutPanel(Unit.PX);
       dockPanel.addNorth(filePathToolbar_, filePathToolbar_.getHeight());
@@ -349,4 +355,5 @@ public class FilesPane extends WorkbenchPane implements Files.Display
    private final FileTypeRegistry fileTypeRegistry_;
    private final Commands commands_;
    private final Provider<FileCommandToolbar> pFileCommandToolbar_;
+   private final Provider<UserPrefs> pPrefs_;
 }

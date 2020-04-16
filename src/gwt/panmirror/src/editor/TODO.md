@@ -5,15 +5,31 @@ pandoc schema: <https://github.com/jgm/pandoc-types/blob/master/Text/Pandoc/Defi
 ## Feedback
 
 ## TODO
-  
-Better direct manipulation for tables
 
-Surface attributes handling for div with only an id (shading treatment a bit much?)
+Link popups no longer truncated (see advanced_ui.Rmd)
+
+Hugo shortcodes: https://gohugo.io/content-management/shortcodes/
+
+Is this round-tripping into a block for the HTML as a result of our handler?
+{{<figure src="/images/rsc-170-jupyter.png" caption="Publishing to Connect from Jupyter" alt= "Publishing to Connect from Jupyter">}}
+
+Invesigate whether the quote applyMarks deal needs to use //g
+
+Round-trip tests in Mastering Shiny
+
+More complete docs
+
+Bookdown Theroms (equation w/ some narrative)
 
 MathJax preview. When containing the selection, the math will show both the code and the preview. When not containing the selection will show the preview. (so probably require a node view for this). Consider a “done” gesture for display math. May need to bring back
 escaping of $ in math as this mode will clearly not be "source mode" style latex equation editing
 
 ## Future
+
+Button ellipses shouldn't require positioning override
+(see EditorPane.module.scss)
+
+Google Docs style list toggling
 
 Slack style handling of marks?
 
@@ -22,6 +38,9 @@ Reveal codes / typora behavior
 Unit testing for core panmirror code
 
 Insert special character UX
+
+Deleting withProgress in TextEditingTargetVisualMode breaks everything! (see inline comment)
+
 
 multimarkdown support is incomplete: -mmd\_title\_block -mmd\_link\_attributes (not written, likely limitation of pandoc) -mmd\_header\_identifiers (work fine, but we currently allow edit of classes + keyvalue for markdown\_mmd)
 
@@ -63,6 +82,9 @@ Notes on preformance implications of scanning the entire document + some discuss
 
 - Semicolons in citations cannot be escaped (they always indicate a delimiter). Solution to this would be
   to mark them explicitly with an input rule (and color them so user sees that there is a state change).
+
+- Edit attributes button is incorrectly positioned in note (this is due to the additional dom elements created by the node view)
+  Note however that headings and divs seem to be poorly supported in notes anyway.
 
 ## Project/Build
 

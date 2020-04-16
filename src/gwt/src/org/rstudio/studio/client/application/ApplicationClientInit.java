@@ -185,7 +185,7 @@ public class ApplicationClientInit implements RTimeoutOptions.RTimeoutObserver
 
    private final ApplicationServerOperations server_;
    @SuppressWarnings("unused")
-   private final GlobalDisplay globalDisplay_ ;
+   private final GlobalDisplay globalDisplay_;
    private Timer timeoutTimer_ = null;
    private boolean timedOut_ = false;
    private ServerRequestCallback<SessionInfo> rpcRequestCallback_;

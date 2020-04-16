@@ -41,9 +41,11 @@ import {
   isValidImageSizeUnit,
 } from '../../api/image';
 import { kWidthAttrib, kHeightAttrib, kStyleAttrib, kAlignAttrib } from '../../api/pandoc_attr';
+import { EditorUIImages } from '../../api/ui-images';
 
 import { imageDialog } from './image-dialog';
 import { hasPercentWidth, imageDimensionsFromImg } from './image-util';
+
 
 const kDataWidth = 'data-width';
 const kDataHeight = 'data-height';
@@ -173,6 +175,7 @@ export function attachResizeUI(
     onHeightChanged,
     onUnitsChanged,
     onEditImage,
+    ui.images,
     ui.context.translateText,
   );
 
@@ -209,6 +212,7 @@ function resizeShelf(
   onHeightChanged: () => void,
   onUnitsChanged: () => void,
   onEditImage: () => void,
+  uiImages: EditorUIImages,
   translateText: (text: string) => string,
 ) {
   // create resize shelf
@@ -296,7 +300,11 @@ function resizeShelf(
   addToPanel(lockLabel, 20);
 
   // edit button
-  const editImage = createImageButton(['pm-image-button-edit-properties'], translateText('Edit Image'));
+  const editImage = createImageButton(
+    uiImages.properties, 
+    ['pm-image-button-edit-properties'], 
+    translateText('Edit Attributes')
+  );
   editImage.onclick = onEditImage;
   addHorizontalPanelCell(panel, editImage);
 
@@ -592,6 +600,11 @@ export function updateImageViewSize(
     figure.style.marginBottom = '';
     figure.style.marginRight = '';
     figure.style.marginLeft = '';
+    figure.style.padding = '';
+    figure.style.paddingTop = '';
+    figure.style.paddingBottom = '';
+    figure.style.paddingRight = '';
+    figure.style.paddingLeft = '';
   }
 
   // apply keyvalue attribute to image
@@ -612,15 +625,15 @@ export function updateImageViewSize(
           value = removeStyleAttrib(value, 'float', liftStyle);
           value = removeStyleAttrib(value, 'vertical-align', liftStyle);
           value = removeStyleAttrib(value, 'margin(?:[\\w\\-])*', liftStyle);
+          value = removeStyleAttrib(value, 'padding(?:[\\w\\-])*', liftStyle);
         }
 
         // apply selected other styles to the image view (we don't just forward the entire
-        // style attribute b/c that would interfere with setting of style props in the 
+        // style attribute b/c that would interfere with setting of style props in the
         // width and height cases below). here we should whitelist in all styles we think
         // users might want to see in the editor
         const liftImgStyle = (attrib: string, val: string) => img.style.setProperty(attrib, val);
         removeStyleAttrib(value, 'border(?:[\\w\\-])*', liftImgStyle);
-
       } else if (key === kWidthAttrib) {
         // see if this is a unit we can edit
         const widthProp = imageSizePropWithUnit(value);

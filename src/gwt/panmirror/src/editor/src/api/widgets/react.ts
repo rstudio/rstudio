@@ -13,7 +13,6 @@
  *
  */
 
-
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
 
@@ -24,15 +23,12 @@ export interface WidgetProps {
   style?: React.CSSProperties;
 }
 
-
-
 // Render a react element into a DOM container that will eventually be added to the EditorView.dom
 // this function is necessary for situations where an element is created and then handed to ProseMirror
 // (unattached to the DOM), and then subsequently destoyed/unmounted by ProseMirror. We use a
-// MutationObserver to watch EditorView.dom for the element's removal then in response call 
+// MutationObserver to watch EditorView.dom for the element's removal then in response call
 // ReactDOM.unmountComponentAtNode
 export function reactRenderForEditorView(element: React.ReactElement, container: HTMLElement, view: EditorView) {
-
   // render the react element into the container
   const ref = ReactDOM.render(element, container);
 
@@ -53,4 +49,3 @@ export function reactRenderForEditorView(element: React.ReactElement, container:
   // return the ref
   return ref;
 }
-

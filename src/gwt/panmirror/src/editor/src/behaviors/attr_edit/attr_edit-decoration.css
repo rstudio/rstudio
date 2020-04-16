@@ -1,0 +1,53 @@
+/*
+ * attr_edit-decoration.css
+ *
+ * Copyright (C) 2019-20 by RStudio, PBC
+ *
+ * Unless you have received this program directly from RStudio pursuant
+ * to the terms of a commercial license agreement with RStudio, then
+ * this program is licensed to you under the terms of version 3 of the
+ * GNU Affero General Public License. This program is distributed WITHOUT
+ * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
+ * MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE. Please refer to the
+ * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
+ *
+ */
+
+.pm-attr-edit-decoration {
+  position: absolute;
+  right: 5px;
+  z-index: 100;
+  background-color: transparent;
+  font-size: 10px;
+}
+
+.pm-attr-edit-decoration .attr-edit-widget {
+  padding: 2px;
+  height: 13px;
+}
+
+.pm-attr-edit-decoration .attr-edit-tag {
+  float: left;
+  border-radius: 20px;
+  margin-right: 6px;
+  padding-left: 7px;
+  padding-right: 7px;
+  font-weight: normal;
+}
+
+.pm-attr-edit-decoration .attr-edit-button {
+  float: right;
+  position: relative;
+  border-radius: 50%;
+  user-select: none;
+  cursor: pointer;
+  width: 13px;
+}
+
+.pm-attr-edit-decoration .attr-edit-button-ellipses {
+  position: absolute;
+  top: -1px;
+  left: 4px;
+  font-weight: bolder;
+  letter-spacing: 1px;
+}

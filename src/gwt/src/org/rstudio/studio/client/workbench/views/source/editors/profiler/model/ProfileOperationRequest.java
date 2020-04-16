@@ -25,7 +25,7 @@ public class ProfileOperationRequest extends JavaScriptObject
    
    public final native static ProfileOperationRequest create(String fileName) /*-{
       var request = new Object();
-      request.fileName = fileName ;
+      request.fileName = fileName;
       
       return request;
    }-*/;

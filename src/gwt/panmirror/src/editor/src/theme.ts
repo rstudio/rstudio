@@ -29,6 +29,7 @@ export interface EditorTheme {
   textColor: string;
   lightTextColor: string;
   linkTextColor: string;
+  surfaceWidgetTextColor: string;
   markupTextColor: string;
   findTextBackgroundColor: string;
   findTextBorderColor: string;
@@ -69,14 +70,15 @@ export function defaultTheme(): EditorTheme {
     selectionColor: '#8cf',
     nodeSelectionColor: 'rgb(102,155,243)',
     backgroundColor: 'white',
-    metadataBackgroundColor: 'rgb(251,251,251)',
+    metadataBackgroundColor: 'rgb(255, 255, 255)',
     chunkBackgroundColor: 'rgb(251,251,251)',
     spanBackgroundColor: '#fff8dc',
-    divBackgroundColor: 'rgb(236, 249, 250)',
+    divBackgroundColor: 'rgb(243, 243, 243)',
     commentBackgroundColor: 'rgb(254, 155, 243)',
     gutterBackgroundColor: '#f0f0f0',
     gutterTextColor: '#333',
     textColor: 'black',
+    surfaceWidgetTextColor: 'rgba(0,0,0,0.5)',
     lightTextColor: 'rgb(60, 76, 114)',
     linkTextColor: ' #106ba3',
     markupTextColor: 'rgb(185, 6, 144)',
@@ -149,6 +151,9 @@ export function applyTheme(theme: EditorTheme) {
     .pm-text-color {
       color: ${theme.textColor} !important;
     }
+    .pm-surface-widget-text-color {
+      color: ${theme.surfaceWidgetTextColor} !important;
+    }
     .pm-light-text-color {
       color: ${theme.lightTextColor} !important;
     }
@@ -176,6 +181,12 @@ export function applyTheme(theme: EditorTheme) {
     }
     .pm-pane-border-color {
       border-color: ${theme.paneBorderColor} !important;
+    }
+    .pm-div .pm-div {
+      border-color: ${theme.focusOutlineColor} !important;
+    }
+    .pm-raw-block-border {
+      border-color: ${theme.markupTextColor} !important;
     }
     .pm-popup {
       box-shadow: 0 2px 10px ${theme.paneBorderColor} !important;

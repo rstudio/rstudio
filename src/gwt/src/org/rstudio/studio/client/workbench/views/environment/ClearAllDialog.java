@@ -128,7 +128,7 @@ public class ClearAllDialog extends ModalDialogBase
       return panel;
    }
    
-   private ProgressIndicator progress_ ;
+   private ProgressIndicator progress_;
    private CheckBox chkIncludeHidden_;
    private UserState state_;
    private int numObjects_;

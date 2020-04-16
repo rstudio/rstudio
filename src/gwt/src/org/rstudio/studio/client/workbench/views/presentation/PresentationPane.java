@@ -163,7 +163,7 @@ public class PresentationPane extends WorkbenchPane implements Presentation.Disp
    @Override 
    protected Widget createMainWidget()
    {  
-      frame_ = new PresentationFrame(false) ;
+      frame_ = new PresentationFrame(false);
       frame_.setUrl("about:blank");
       frame_.setSize("100%", "100%");
       return new AutoGlassPanel(frame_);
@@ -340,7 +340,7 @@ public class PresentationPane extends WorkbenchPane implements Presentation.Disp
    private ToolbarButton progressButton_;
    private RSConnectPublishButton publishButton_;
    private boolean busyPending_ = false;
-   private PresentationFrame frame_ ;
+   private PresentationFrame frame_;
    private final Commands commands_;
    private final Session session_;
    private final PresentationServerOperations server_;

@@ -128,7 +128,7 @@ public class ProgressPanel extends Composite implements IsHideableWidget
       return isDark ? ProgressSpinner.COLOR_WHITE : ProgressSpinner.COLOR_BLACK;
    }
 
-   private final Widget progressImage_ ;
+   private final Widget progressImage_;
    private final ProgressSpinner progressSpinner_;
    private final Label progressLabel_;
    private Timer timer_;

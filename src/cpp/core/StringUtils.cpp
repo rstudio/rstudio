@@ -1,7 +1,7 @@
 /*
  * StringUtils.cpp
  *
- * Copyright (C) 2009-19 by RStudio, PBC
+ * Copyright (C) 2009-20 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -772,6 +772,14 @@ bool extractCommentHeader(const std::string& contents,
    
    // report success to the user
    return true;
+}
+
+std::string extractIndent(const std::string& line)
+{
+   auto index = line.find_first_not_of(" \t");
+   if (index == std::string::npos)
+      return std::string();
+   return line.substr(0, index);
 }
 
 } // namespace string_utils

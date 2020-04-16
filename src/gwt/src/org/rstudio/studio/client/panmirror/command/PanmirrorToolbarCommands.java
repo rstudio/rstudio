@@ -51,12 +51,21 @@ public class PanmirrorToolbarCommands
       add(PanmirrorCommands.Heading5, "Heading 5", Roles.getMenuitemradioRole());
       add(PanmirrorCommands.Heading6, "Heading 6", Roles.getMenuitemradioRole());
       add(PanmirrorCommands.CodeBlock, "Code Block", Roles.getMenuitemradioRole());
+      add(PanmirrorCommands.CodeBlockFormat, "Code Block...");
       add(PanmirrorCommands.Blockquote, "Blockquote", Roles.getMenuitemcheckboxRole(), icons.BLOCKQUOTE);
       add(PanmirrorCommands.LineBlock, "Line Block", Roles.getMenuitemcheckboxRole());
       add(PanmirrorCommands.Div, "Section/Div...");
       add(PanmirrorCommands.AttrEdit, "Edit Attributes...");
       add(PanmirrorCommands.ClearFormatting, "Clear Formatting");
       
+      // raw
+      add(PanmirrorCommands.TexInline, "TeX Inline", Roles.getMenuitemcheckboxRole());
+      add(PanmirrorCommands.TexBlock, "TeX Block", Roles.getMenuitemcheckboxRole());
+      add(PanmirrorCommands.HTMLInline, "HTML Inline...");
+      add(PanmirrorCommands.HTMLBlock, "HTML Block", Roles.getMenuitemcheckboxRole());
+      add(PanmirrorCommands.RawInline, "Raw Inline...");
+      add(PanmirrorCommands.RawBlock, "Raw Block...");
+
       // lists
       add(PanmirrorCommands.BulletList, "Bullet List", Roles.getMenuitemcheckboxRole(), icons.BULLET_LIST);
       add(PanmirrorCommands.OrderedList, "Numbered List", Roles.getMenuitemcheckboxRole(), icons.NUMBERED_LIST);
@@ -71,12 +80,12 @@ public class PanmirrorToolbarCommands
       add(PanmirrorCommands.TableInsertTable, "Insert Table...", icons.TABLE);
       add(PanmirrorCommands.TableToggleHeader, "Table Header", Roles.getMenuitemcheckboxRole());
       add(PanmirrorCommands.TableToggleCaption, "Table Caption", Roles.getMenuitemcheckboxRole());
-      add(PanmirrorCommands.TableAddColumnAfter, "Insert Column Right");
-      add(PanmirrorCommands.TableAddColumnBefore, "Insert Column Left");
-      add(PanmirrorCommands.TableDeleteColumn, "Delete Column");
-      add(PanmirrorCommands.TableAddRowAfter, "Insert Row Below");
-      add(PanmirrorCommands.TableAddRowBefore, "Insert Row Above");
-      add(PanmirrorCommands.TableDeleteRow, "Delete Row");
+      add(PanmirrorCommands.TableAddColumnAfter, "Insert Column Right", "Insert %d Columns Right", null);
+      add(PanmirrorCommands.TableAddColumnBefore, "Insert Column Left", "Insert %d Columns Left", null);
+      add(PanmirrorCommands.TableDeleteColumn, "Delete Column", "Delete %d Columns", null);
+      add(PanmirrorCommands.TableAddRowAfter, "Insert Row Below", "Insert %d Rows Below", null);
+      add(PanmirrorCommands.TableAddRowBefore, "Insert Row Above", "Insert %d Rows Above", null);
+      add(PanmirrorCommands.TableDeleteRow, "Delete Row", "Delete %d Rows", null);
       add(PanmirrorCommands.TableDeleteTable, "Delete Table");
       add(PanmirrorCommands.TableNextCell, "Next Cell");
       add(PanmirrorCommands.TablePreviousCell, "Previous Cell");
@@ -94,21 +103,14 @@ public class PanmirrorToolbarCommands
       add(PanmirrorCommands.ParagraphInsert, "Paragraph");
       add(PanmirrorCommands.YamlMetadata, "YAML Block");
       add(PanmirrorCommands.RmdChunk, "Code Chunk", icons.RMD_CHUNK);
+      add(PanmirrorCommands.InsertDiv, "Section/Div...");
       add(PanmirrorCommands.InlineMath, "Inline Math");
       add(PanmirrorCommands.DisplayMath, "Display Math");
       add(PanmirrorCommands.DefinitionList, "Definition List");
       add(PanmirrorCommands.DefinitionTerm, "Term");
       add(PanmirrorCommands.DefinitionDescription, "Description");
-      add(PanmirrorCommands.Citation, "Citation...");  
-      
-      // raw
-      add(PanmirrorCommands.TexInline, "TeX Command", Roles.getMenuitemcheckboxRole());
-      add(PanmirrorCommands.TexBlock, "TeX Block", Roles.getMenuitemcheckboxRole());
-      add(PanmirrorCommands.HTMLInline, "HTML Tag",  Roles.getMenuitemcheckboxRole());
-      add(PanmirrorCommands.HTMLBlock, "HTML Block", Roles.getMenuitemcheckboxRole());
-      add(PanmirrorCommands.RawInline, "Raw Inline...");
-      add(PanmirrorCommands.RawBlock, "Raw Block...");
-      
+      add(PanmirrorCommands.Citation, "Citation...");   
+      add(PanmirrorCommands.CrossReference, "Cross Reference");
    }
    
    public PanmirrorCommandUI get(String id)
@@ -120,6 +122,11 @@ public class PanmirrorToolbarCommands
    private void add(String id, String menuText)
    {
       add(id, menuText, Roles.getMenuitemRole());
+   }
+   
+   private void add(String id, String menuText, String pluralMenuText, String image)
+   {
+      add(id, menuText, pluralMenuText, Roles.getMenuitemRole(), image);
    }
    
    private void add(String id, String menuText, String image)
@@ -135,6 +142,11 @@ public class PanmirrorToolbarCommands
    
    private void add(String id, String menuText, MenuitemRole role, String image)
    {
+      add(id, menuText, null, role, image);
+   }
+   
+   private void add(String id, String menuText, String pluralMenuText, MenuitemRole role, String image)
+   {
       // lookup the underlying command
       PanmirrorCommand command = null;
       for (PanmirrorCommand cmd : commands_) {
@@ -144,7 +156,7 @@ public class PanmirrorToolbarCommands
          }
       }
       // add it
-      commandsUI_.put(id, new PanmirrorCommandUI(command, menuText, role, image));
+      commandsUI_.put(id, new PanmirrorCommandUI(command, menuText, pluralMenuText, role, image));
    }
    
    

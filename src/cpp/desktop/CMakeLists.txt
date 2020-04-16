@@ -35,11 +35,7 @@ if(NOT WIN32)
          endif()
       endif()
          
-      if(APPLE)
-         set(QT_CANDIDATES 5.12.6)
-      else()
-         set(QT_CANDIDATES 5.12.6 5.10.1)
-      endif()
+      set(QT_CANDIDATES 5.12.8)
 
       # find the newest installed Qt version among the versions we build
       # against
@@ -72,7 +68,7 @@ if(NOT WIN32)
    endif()
 else()
    # Windows
-   set(QT_VERSION "5.12.6")
+   set(QT_VERSION "5.12.8")
    set(QT_VERSION_SUBDIR "${QT_VERSION}")   
    if(NOT QT_QMAKE_EXECUTABLE)
 

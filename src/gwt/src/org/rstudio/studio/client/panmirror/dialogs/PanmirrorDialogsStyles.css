@@ -1,11 +1,11 @@
-@external gwt-Label, gwt-TextBox, rstudio-themes-dark, rstudio-ImageButton;
+@external gwt-Label, gwt-TextBox, suggestPopupMiddleCenter, rstudio-themes-dark, rstudio-ImageButton;
 
 @eval THEME_DARKGREY_MENU_BORDER org.rstudio.core.client.theme.ThemeColors.darkGreyMenuBorder;
 
 
 .dialog {
    width: 380px;
-   margin-bottom: 12px;
+   margin-bottom: 10px;
    position: relative;
 }
 	   
@@ -64,9 +64,18 @@
    width: 100%;
 }
 
-.imageDialogTabs, .linkDialogTabs {
+.langSuggestionDisplay .suggestPopupMiddleCenter td {
+   width: 350px;
+}
+
+.linkDialogTabs {
    width: 380px;
-   height: 295px;
+   height: 280px;
+}
+
+.imageDialogTabs {
+	width: 380px;
+	height: 295px;
 }
 
 .hrefSelect {

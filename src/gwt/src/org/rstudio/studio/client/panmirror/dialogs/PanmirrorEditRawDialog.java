@@ -21,7 +21,6 @@ import com.google.gwt.aria.client.Roles;
 
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.StringUtil;
-import org.rstudio.core.client.widget.FormTextArea;
 import org.rstudio.core.client.widget.ModalDialog;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ThemedButton;
@@ -34,6 +33,8 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.Command;
+import com.google.gwt.user.client.ui.Label;
+import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 
@@ -42,25 +43,34 @@ public class PanmirrorEditRawDialog extends ModalDialog<PanmirrorRawFormatResult
 {
    public PanmirrorEditRawDialog(
                PanmirrorRawFormatProps raw,
-               int minRows,
+               String[] outputFormats,
+               boolean inline,
                OperationWithInput<PanmirrorRawFormatResult> operation)
    {
-      super("Raw Format", Roles.getDialogRole(), operation, () -> {
+      super("Raw " + (inline ? "Inline" : "Block"), Roles.getDialogRole(), operation, () -> {
          // cancel returns null
          operation.execute(null);
       });
       
       RStudioGinjector.INSTANCE.injectMembers(this);
       mainWidget_ = GWT.<Binder>create(Binder.class).createAndBindUi(this);
+      
+      inline_ = inline;
    
+      rawFormatSelect_.setFormats(outputFormats);
       rawFormatSelect_.setValue(StringUtil.notNull(raw.format));
       rawFormatSelect_.getListBox().getElement().setId(ElementIds.VISUAL_MD_RAW_FORMAT_SELECT);
       
       rawContent_.setValue(raw.content);
+      PanmirrorDialogsUtil.setFullWidthStyles(rawContent_);
       rawContent_.getElement().setId(ElementIds.VISUAL_MD_RAW_FORMAT_CONTENT);
-      final int kMaxRows = 10;
-      int rows = Math.min(kMaxRows, Math.max(minRows, raw.content.split("\\r?\\n").length));
-      rawContent_.setVisibleLines(rows);
+      
+      if (!inline_)
+      {
+         rawFormatSelect_.addStyleName(RES.styles().spaced());
+         rawContentLabel_.setVisible(false);
+         rawContent_.setVisible(false);
+      }
       
       // make remove button available if we are editing an existing format
       if (!rawFormatSelect_.getValue().equals("")) 
@@ -98,6 +108,19 @@ public class PanmirrorEditRawDialog extends ModalDialog<PanmirrorRawFormatResult
    }
    
    @Override
+   protected void focusFirstControl()
+   {
+      if (rawFormatSelect_.getValue().length() > 0)
+      {
+         rawContent_.setFocus(true);
+      }
+      else
+      {
+         rawFormatSelect_.getListBox().setFocus(true);
+      }
+   }
+   
+   @Override
    protected PanmirrorRawFormatResult collectInput()
    {
       PanmirrorRawFormatResult result = new PanmirrorRawFormatResult();
@@ -112,7 +135,7 @@ public class PanmirrorEditRawDialog extends ModalDialog<PanmirrorRawFormatResult
    @Override
    protected boolean validate(PanmirrorRawFormatResult result)
    {
-      if (rawContent().length() == 0)
+      if (inline_ && rawContent().length() == 0)
       {
          globalDisplay_.showErrorMessage(
                "No Content Specified", 
@@ -131,14 +154,19 @@ public class PanmirrorEditRawDialog extends ModalDialog<PanmirrorRawFormatResult
    {
       return rawContent_.getValue().trim();
    }
+   
+   private final boolean inline_;
 
    private GlobalDisplay globalDisplay_;
+   
+   private static PanmirrorDialogsResources RES = PanmirrorDialogsResources.INSTANCE;
    
    interface Binder extends UiBinder<Widget, PanmirrorEditRawDialog> {}
    
    private Widget mainWidget_; 
    @UiField PanmirrorRawFormatSelect rawFormatSelect_;
-   @UiField FormTextArea rawContent_;
+   @UiField TextBox rawContent_;
+   @UiField Label rawContentLabel_;
    
    
 }

@@ -1,7 +1,7 @@
 /*
  * DesktopGwtCallback.cpp
  *
- * Copyright (C) 2009-19 by RStudio, PBC
+ * Copyright (C) 2009-20 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -260,7 +260,11 @@ QString GwtCallback::getOpenFileName(const QString& caption,
 
    dialog.setFileMode(mode);
    dialog.setLabelText(QFileDialog::Accept, label);
+#if QT_VERSION < QT_VERSION_CHECK(5, 13, 0)
    dialog.setResolveSymlinks(false);
+#else
+   dialog.setOption(QFileDialog::DontResolveSymlinks, true);
+#endif
    dialog.setWindowModality(Qt::WindowModal);
 
    QString result;
@@ -762,11 +766,15 @@ void GwtCallback::exportPageRegionToFile(QString targetPath,
    targetPath = desktop::resolveAliasedPath(targetPath);
 
    // get the pixmap
+#if QT_VERSION < QT_VERSION_CHECK(5, 13, 0)
    QPixmap pixmap = QPixmap::grabWidget(pMainWindow_->webView(),
                                         left,
                                         top,
                                         width,
                                         height);
+#else
+   QPixmap pixmap = pMainWindow_->webView()->grab(QRect(left, top, width, height));
+#endif
 
    // save the file
    pixmap.save(targetPath, format.toUtf8().constData(), 100);

@@ -129,8 +129,8 @@ public class CppCompletionPopupMenu extends ScrollableToolbarPopupMenu
             Rectangle bounds = docDisplay_.getPositionBounds(position);
             
             int windowBottom = Window.getScrollTop() + 
-                               Window.getClientHeight() ;
-            int cursorBottom = bounds.getBottom() ;
+                               Window.getClientHeight();
+            int cursorBottom = bounds.getBottom();
             
             // figure out whether we should show below (do this 
             // only once so that we maintain the menu orientation
@@ -140,10 +140,10 @@ public class CppCompletionPopupMenu extends ScrollableToolbarPopupMenu
             
             final int PAD = 3;
             if (showBelow_)
-               setPopupPosition(bounds.getLeft(), cursorBottom + PAD) ;
+               setPopupPosition(bounds.getLeft(), cursorBottom + PAD);
             else
                setPopupPosition(bounds.getLeft(), 
-                                bounds.getTop() - offsetHeight) ;
+                                bounds.getTop() - offsetHeight);
          }
       });
    }

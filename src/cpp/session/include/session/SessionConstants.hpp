@@ -103,8 +103,6 @@
 
 #define kRStudioNoTransformRedirect "X-RStudio-NoTransformRedirect"
 
-#define kServerSettingsDir "/etc/rstudio"
-
 #define kSessionProxyDefaultPort   "8789"
 #define kRStudioSessionProxyPort   "X-RStudio-Session-Proxy-Port"
 

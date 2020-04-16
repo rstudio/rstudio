@@ -19,6 +19,8 @@ export interface EditorOptions {
   readonly codemirror?: boolean;
   readonly braceMatching?: boolean;
   readonly rmdCodeChunks?: boolean;
+  readonly rmdImagePreview?: boolean;
+  readonly rmdBookdownXRef?: boolean;
   readonly formatComment?: boolean;
   readonly className?: string;
 }

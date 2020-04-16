@@ -1,7 +1,7 @@
 /*
- * QuitInitiatedHandler.java
+ * images.ts
  *
- * Copyright (C) 2009-12 by RStudio, PBC
+ * Copyright (C) 2019-20 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -12,11 +12,21 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-package org.rstudio.studio.client.application.events;
 
-import com.google.gwt.event.shared.EventHandler;
+import copyImage from '../styles/images/copy.png';
+import propertiesImage from '../styles/images/properties.png';
+import removelinkImage from '../styles/images/removelink.png';
 
-public interface QuitInitiatedHandler extends EventHandler
-{
-   void onQuitInitiated(QuitInitiatedEvent event);
+export interface EditorUIImages {
+  copy: string;
+  properties: string;
+  removelink: string;
+}
+
+export function defaultEditorUIImages():  EditorUIImages {
+  return {
+    copy: copyImage,
+    properties: propertiesImage,
+    removelink: removelinkImage
+  };
 }

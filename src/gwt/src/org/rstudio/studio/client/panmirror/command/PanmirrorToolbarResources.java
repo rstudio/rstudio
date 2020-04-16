@@ -84,5 +84,5 @@ public interface PanmirrorToolbarResources extends ClientBundle
    ImageResource table();
    
    public static PanmirrorToolbarResources INSTANCE = 
-      (PanmirrorToolbarResources)GWT.create(PanmirrorToolbarResources.class) ;
+      (PanmirrorToolbarResources)GWT.create(PanmirrorToolbarResources.class);
 }

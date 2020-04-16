@@ -29,7 +29,7 @@ public class CodeBrowserContents extends JavaScriptObject
    public static final native CodeBrowserContents create(String context) /*-{
       var contents = new Object();
       contents.context = context;
-      return contents ;
+      return contents;
    }-*/;
    
    

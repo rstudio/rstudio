@@ -55,11 +55,11 @@ public class Completions extends JavaScriptObject
    }
 
    public final native String getToken() /*-{
-      return this.token[0] ;
+      return this.token[0];
    }-*/;
    
    public final native JsArrayString getCompletions() /*-{
-      return this.results ;
+      return this.results;
    }-*/;
    
    public final native JsArrayString getPackages() /*-{
@@ -76,8 +76,8 @@ public class Completions extends JavaScriptObject
     */
    public final native String getGuessedFunctionName() /*-{
       if (!this.fguess)
-         return null ;
-      return this.fguess[0] ;
+         return null;
+      return this.fguess[0];
    }-*/;
 
    public final native void setCacheable(boolean cacheable) /*-{

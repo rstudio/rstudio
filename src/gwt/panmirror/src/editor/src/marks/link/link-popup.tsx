@@ -1,4 +1,3 @@
-
 /*
  * LinkPopup.tsx
  *
@@ -34,7 +33,8 @@ import { showTooltip } from '../../api/widgets/tooltip';
 import { reactRenderForEditorView, WidgetProps } from '../../api/widgets/react';
 import { Panel } from '../../api/widgets/panel';
 import { LinkButton, ImageButton } from '../../api/widgets/button';
-import { Popup, textRangePopupDecoratorPosition } from '../../api/widgets/popup';
+import { textRangePopupDecorationPosition } from '../../api/widgets/decoration';
+import { Popup } from '../../api/widgets/popup';
 
 const key = new PluginKey<DecorationSet>('link-popup');
 
@@ -51,7 +51,7 @@ export class LinkPopupPlugin extends Plugin<DecorationSet> {
         init: (_config: { [key: string]: any }) => {
           return DecorationSet.empty;
         },
-        apply: (tr: Transaction, _old: DecorationSet, _oldState: EditorState, newState: EditorState) => {
+        apply: (tr: Transaction, old: DecorationSet, _oldState: EditorState, newState: EditorState) => {
           // if this a restore location then return empty
           if (tr.getMeta(kRestoreLocationTransaction)) {
             return DecorationSet.empty;
@@ -82,25 +82,35 @@ export class LinkPopupPlugin extends Plugin<DecorationSet> {
             const kPopupChromeWidth = 70;
             const kMaxLinkWidth = 300;
             const maxWidth = kMaxLinkWidth + kPopupChromeWidth;
-            const decoratorPosition = textRangePopupDecoratorPosition(editorView, range, maxWidth);
+            const decorationPosition = textRangePopupDecorationPosition(editorView, range, maxWidth);
+
+            // compute unique key (will allow us to only recreate the popup when necessary)
+            const linkText = attrs.heading ? attrs.heading : attrs.href;
+            const specKey = `link_popup_decoration_pos:${decorationPosition.pos}link:${linkText}`;
+
+            // if the old popup already has a decoration for this position then just use it
+            if (old.find(undefined, undefined, spec => spec.key === specKey).length) {
+              return old.map(tr.mapping, tr.doc);
+            }
 
             // create link popup component
-            const popup = <LinkPopup
-              link={attrs}
-              linkCmd={linkCmd}
-              removeLinkCmd={removeLinkCmd}
-              view={editorView}
-              ui={ui}
-              style={decoratorPosition.style}
-            />;
+            const popup = (
+              <LinkPopup
+                link={attrs}
+                linkCmd={linkCmd}
+                removeLinkCmd={removeLinkCmd}
+                view={editorView}
+                ui={ui}
+                style={decorationPosition.style}
+              />
+            );
 
             // create decorator and render popup into it
-            const decorator = window.document.createElement('div');
-            reactRenderForEditorView(popup, decorator, editorView);
+            const decoration = window.document.createElement('div');
+            reactRenderForEditorView(popup, decoration, editorView);
 
             // return decorations
-            return DecorationSet.create(tr.doc, [Decoration.widget(decoratorPosition.pos, decorator)]);
-
+            return DecorationSet.create(tr.doc, [Decoration.widget(decorationPosition.pos, decoration, { key: specKey })]);
           } else {
             return DecorationSet.empty;
           }
@@ -115,9 +125,6 @@ export class LinkPopupPlugin extends Plugin<DecorationSet> {
   }
 }
 
-
-
-
 interface LinkPopupProps extends WidgetProps {
   link: LinkProps;
   view: EditorView;
@@ -126,10 +133,8 @@ interface LinkPopupProps extends WidgetProps {
   removeLinkCmd: CommandFn;
 }
 
-
-const LinkPopup : React.FC<LinkPopupProps> = props => {
-
-  // link 
+const LinkPopup: React.FC<LinkPopupProps> = props => {
+  // link
   const linkText = props.link.heading ? props.link.heading : props.link.href;
   const onLinkClicked = () => {
     props.view.focus();
@@ -160,7 +165,7 @@ const LinkPopup : React.FC<LinkPopupProps> = props => {
     }
   };
 
-  // remove 
+  // remove
   const onRemoveClicked = () => {
     // in rstudio (w/ webkit) removing the link during the click results
     // in a page-navigation! defer to next event cycle to avoid this
@@ -174,27 +179,29 @@ const LinkPopup : React.FC<LinkPopupProps> = props => {
   const onEditClicked = () => {
     props.linkCmd(props.view.state, props.view.dispatch, props.view);
   };
-  
-  
+
   return (
-    <Popup classes={['pm-popup-link']} style={props.style}> 
-      <Panel>     
+    <Popup classes={['pm-popup-link']} style={props.style}>
+      <Panel>
         <LinkButton text={linkText} onClick={onLinkClicked}></LinkButton>
-        {showCopyButton ? 
-          <ImageButton 
+        {showCopyButton ? (
+          <ImageButton
+            image={props.ui.images.copy}
             classes={['pm-image-button-copy-link']}
             title={props.ui.context.translateText('Copy Link to Clipboard')}
             ref={setCopyButton}
-          /> 
-          : null}
-        <ImageButton 
+          />
+        ) : null}
+        <ImageButton
+          image={props.ui.images.removelink}
           classes={['pm-image-button-remove-link']}
           title={props.ui.context.translateText('Remove Link')}
           onClick={onRemoveClicked}
         />
-       <ImageButton 
+        <ImageButton
+          image={props.ui.images.properties}
           classes={['pm-image-button-edit-properties']}
-          title={props.ui.context.translateText('Edit Link')}
+          title={props.ui.context.translateText('Edit Attributes')}
           onClick={onEditClicked}
         />
       </Panel>

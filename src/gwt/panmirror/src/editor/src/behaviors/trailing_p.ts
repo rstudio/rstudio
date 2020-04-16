@@ -13,54 +13,56 @@
  *
  */
 
-import { Plugin, PluginKey, EditorState, Transaction, Selection } from 'prosemirror-state';
+import { Transaction, Selection } from 'prosemirror-state';
 import { Node as ProsemirrorNode, Schema } from 'prosemirror-model';
 
 import { Extension } from '../api/extension';
 import { editingRootNode } from '../api/node';
-
-const plugin = new PluginKey('trailingp');
+import { FixupContext } from '../api/fixup';
 
 const extension: Extension = {
-  plugins: (schema: Schema) => {
-    return [
-      new Plugin({
-        key: plugin,
-        view: () => ({
-          update: view => {
-            const { state } = view;
-            const insertNodeAtEnd = plugin.getState(state);
-            if (!insertNodeAtEnd) {
-              return;
-            }
 
-            // insert paragraph at the end of the editing root
-            const tr = state.tr;
-            const type = schema.nodes.paragraph;
-            const editingNode = editingRootNode(tr.selection);
-            if (editingNode) {
-              tr.insert(editingNode.pos + editingNode.node.nodeSize - 1, type.create());
-              view.dispatch(tr);
-            }
-          },
-        }),
-        state: {
-          init: (_config, state: EditorState) => {
-            return insertTrailingP(state.selection);
-          },
-          apply: (tr: Transaction, value: any) => {
-            if (!tr.docChanged) {
-              return value;
-            }
-            return insertTrailingP(tr.selection);
-          },
-        },
-      }),
+  fixups: (schema: Schema) => {
+    return [
+      (tr: Transaction, context: FixupContext) => {
+        if (context === FixupContext.Load) {
+          if (requiresTrailingP(tr.selection)) {
+            insertTrailingP(tr);
+          }
+        }
+        return tr;
+      }
     ];
   },
+
+  appendTransaction: (schema: Schema) => {
+    return [
+      {
+        name: 'trailing_p',
+        append: (tr: Transaction) => {
+          if (requiresTrailingP(tr.selection)) {
+            insertTrailingP(tr);
+          }
+          return tr;
+        }
+      }
+    ];
+  }
 };
 
-function insertTrailingP(selection: Selection) {
+function insertTrailingP(tr: Transaction) {
+  const schema = tr.doc.type.schema;
+  const editingNode = editingRootNode(tr.selection);
+  if (editingNode) {
+    tr.insert(
+      editingNode.pos + editingNode.node.nodeSize - 1, 
+      schema.nodes.paragraph.create()
+    );
+  }
+}
+
+
+function requiresTrailingP(selection: Selection) {
   const editingRoot = editingRootNode(selection);
   if (editingRoot) {
     return !isParagraphNode(editingRoot.node.lastChild);

@@ -28,23 +28,23 @@ public class CppCompletionUtils
    public static boolean isCppIdentifierKey(NativeEvent event)
    {
       if (event.getAltKey() || event.getCtrlKey() || event.getMetaKey())
-         return false ;
+         return false;
       
-      int keyCode = event.getKeyCode() ;
+      int keyCode = event.getKeyCode();
       if (keyCode >= 'a' && keyCode <= 'z')
-         return true ;
+         return true;
       if (keyCode >= 'A' && keyCode <= 'Z')
-         return true ;
+         return true;
       if (KeyboardHelper.isUnderscore(event))
-         return true ;
+         return true;
      
       if (event.getShiftKey())
-         return false ;
+         return false;
       
       if (keyCode >= '0' && keyCode <= '9')
-         return true ;
+         return true;
       
-      return false ;
+      return false;
    }
    
    public static boolean isCppIdentifierChar(char c)

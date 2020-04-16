@@ -18,8 +18,7 @@ package org.rstudio.studio.client.panmirror;
 
 import java.util.ArrayList;
 
-import org.rstudio.core.client.CommandWithArg;
-import org.rstudio.core.client.ExternalJavaScriptLoader;
+import org.rstudio.core.client.CommandWithArg;import org.rstudio.core.client.ExternalJavaScriptLoader;
 import org.rstudio.core.client.HandlerRegistrations;
 import org.rstudio.core.client.events.MouseDragHandler;
 import org.rstudio.core.client.jsinterop.JsVoidFunction;
@@ -351,19 +350,19 @@ public class PanmirrorWidget extends DockLayoutPanel implements
                @Override
                public void onAnimationComplete()
                {
-                  editor_.resize();
+                  resizeEditor();
                }
                @Override
                public void onLayout(Layer layer, double progress) 
                {
-                  editor_.resize();
+                  resizeEditor();
                }
             });
          }
          else
          {
             forceLayout();
-            editor_.resize();
+            resizeEditor();
          }
       }
    }
@@ -496,14 +495,31 @@ public class PanmirrorWidget extends DockLayoutPanel implements
          findReplace_.onResize();
       }
       if (editor_ != null) {
-         editor_.resize();
+         resizeEditor();
       }
+   }
+   
+   private void resizeEditor() 
+   {
+      useFixedPaddingIfRequired();
+      editor_.resize();
+   }
+
+   private void useFixedPaddingIfRequired()
+   {
+      if (editorParent_ != null && editor_ != null)
+      {
+         double editorSize = editorParent_.getElement().getClientWidth();
+         if (editorSize > 0)
+            editor_.useFixedPadding(editorSize < 740);
+         }
    }
    
    private void syncEditorTheme()
    {
       syncEditorTheme(userState_.theme().getGlobalValue().cast());
    }
+
    
    private void syncEditorTheme(AceTheme theme)
    {

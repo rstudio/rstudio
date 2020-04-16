@@ -1,4 +1,3 @@
-
 /*
  * button.tsx
  *
@@ -14,8 +13,6 @@
  *
  */
 
-
-
 import React from 'react';
 
 import { WidgetProps } from './react';
@@ -28,12 +25,11 @@ export interface LinkButtonProps extends WidgetProps {
 }
 
 export const LinkButton: React.FC<LinkButtonProps> = props => {
-
   const className = ['pm-link', 'pm-link-text-color'].concat(props.classes || []).join(' ');
 
-  const style : React.CSSProperties = {
+  const style: React.CSSProperties = {
     ...props.style,
-    maxWidth: props.maxWidth
+    maxWidth: props.maxWidth,
   };
 
   const onClick = (e: React.MouseEvent) => {
@@ -42,7 +38,7 @@ export const LinkButton: React.FC<LinkButtonProps> = props => {
   };
 
   return (
-    <a href="#" onClick={onClick} title={props.title || props.text} className={className} style={style}>
+    <a href={props.text} onClick={onClick} title={props.title || props.text} className={className} style={style}>
       {props.text}
     </a>
   );
@@ -50,25 +46,21 @@ export const LinkButton: React.FC<LinkButtonProps> = props => {
 
 export interface ImageButtonProps extends WidgetProps {
   title: string;
+  image: string;
   onClick?: () => void;
 }
 
-export const ImageButton = React.forwardRef<HTMLButtonElement, ImageButtonProps>(
-  (props: ImageButtonProps, ref) => {
-    const className = ['pm-image-button'].concat(props.classes || []).join(' ');
-    const onClick = (e: React.MouseEvent) => {
-      if (props.onClick) {
-        e.preventDefault();
-        props.onClick();
-      }
-    };
-    return (
-      <button onClick={onClick} title={props.title} className={className} style={props.style} ref={ref}></button>
-    );
-  }
-);
-
-
-
-
-
+export const ImageButton = React.forwardRef<HTMLButtonElement, ImageButtonProps>((props: ImageButtonProps, ref) => {
+  const className = ['pm-image-button'].concat(props.classes || []).join(' ');
+  const onClick = (e: React.MouseEvent) => {
+    if (props.onClick) {
+      e.preventDefault();
+      props.onClick();
+    }
+  };
+  return (
+    <button onClick={onClick} title={props.title} className={className} style={props.style} ref={ref}>
+      <img src={props.image} />
+    </button>
+  );
+});

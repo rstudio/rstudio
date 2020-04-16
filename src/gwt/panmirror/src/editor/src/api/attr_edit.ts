@@ -1,7 +1,9 @@
+
+
 /*
- * LogoutRequestedHandler.java
+ * node_attr.tsx
  *
- * Copyright (C) 2009-12 by RStudio, PBC
+ * Copyright (C) 2019-20 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -12,12 +14,18 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-package org.rstudio.studio.client.application.events;
 
-import com.google.gwt.event.shared.EventHandler;
+import { Node as ProsemirrorNode, NodeType, Schema } from "prosemirror-model";
 
+import { CommandFn } from "./command";
+import { EditorUI } from "./ui";
 
-public interface LogoutRequestedHandler extends EventHandler
-{
-   void onLogoutRequested(LogoutRequestedEvent event);
+export interface AttrEditOptions {
+   type: (schema: Schema) => NodeType;
+   tags?: (node: ProsemirrorNode) => string[];
+   editFn?: (ui: EditorUI) => CommandFn;
 }
+
+
+
+

@@ -181,7 +181,7 @@ public class SshKeyWidget extends Composite
       Styles styles();
    }
    
-   static Resources RES = (Resources)GWT.create(Resources.class) ;
+   static Resources RES = (Resources)GWT.create(Resources.class);
    public static void ensureStylesInjected()
    {
       RES.styles().ensureInjected();

@@ -39,12 +39,12 @@ public class SavePlotAsPdfOptions extends UserStateAccessor.SavePlotAsPdfOptions
                                                   boolean cairoPdf,
                                                   boolean viewAfterSave) /*-{
       var options = new Object();
-      options.width = width ;
-      options.height = height ;
+      options.width = width;
+      options.height = height;
       options.portrait = portrait;
       options.cairo_pdf = cairoPdf;
       options.viewAfterSave = viewAfterSave;
-      return options ;
+      return options;
    }-*/;
    
    public static final SavePlotAsPdfOptions adaptToSize(

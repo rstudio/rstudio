@@ -57,7 +57,9 @@ public class ConsolePane extends WorkbenchPane
                       Commands commands,
                       Session session)
    {
-      super("Console", events);
+      // We pass null in place of events here to prevent ActivePaneEvent from being called.
+      // ActivatePaneEvent isn't necessary and causes an exception for the Console Pane.
+      super("Console", null);
 
       consoleProvider_ = consoleProvider;
       progressProvider_ = progressProvider;
@@ -311,7 +313,7 @@ public class ConsolePane extends WorkbenchPane
          showProgress(lastProgress_);
    }
 
-   private Provider<Shell> consoleProvider_ ;
+   private Provider<Shell> consoleProvider_;
    private Provider<JobProgressPresenter> progressProvider_;
    JobProgressPresenter progress_;
    LocalJobProgress lastProgress_;
