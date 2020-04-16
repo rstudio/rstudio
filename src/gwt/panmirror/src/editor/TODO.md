@@ -6,24 +6,15 @@ pandoc schema: <https://github.com/jgm/pandoc-types/blob/master/Text/Pandoc/Defi
 
 ## TODO
 
+Bookdown/Blogdown:
+- Implement universal \@ref handling (parse the \ coming in and remove it, then make sure we write it)
+- Implement shortcode handling (https://gohugo.io/content-management/shortcodes/)
+- Input rule for (PART\*) to remove the slash
+- Alison on blogdown engines, etc.
+
 Link popups no longer truncated (see advanced_ui.Rmd)
 
 Positioning of ellipses in props button
-
-Hugo shortcodes: https://gohugo.io/content-management/shortcodes/
-Perhaps do automatic processing (to remove < escape) in all contexts and do syntax treatment in blogdown contexts
-
-Nested shortcodes should be within a markdown block
-  - Shortcode begin/end is what the marks are applied to (for %)
-  - Apply mark to full range for <
-
-Declare support for hugo shortcodes?
-
-Bookdown docs, note that \@ref not required, and (PART\*) the slash
-is not required (input rule?)
-
-Preserve Prosemirror undo stack when calling setMarkdown (editor
-seems to do this fine)
 
 Round-trip tests in Mastering Shiny
 
