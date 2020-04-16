@@ -24,6 +24,8 @@
 .pm-attr-edit-decoration .attr-edit-widget {
   padding: 2px;
   height: 13px;
+  user-select: none;
+  cursor: pointer;
 }
 
 .pm-attr-edit-decoration .attr-edit-tag {
@@ -39,8 +41,6 @@
   float: right;
   position: relative;
   border-radius: 50%;
-  user-select: none;
-  cursor: pointer;
   width: 13px;
 }
 
