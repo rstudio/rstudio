@@ -31,7 +31,7 @@ import { FixupContext } from "../api/fixup";
 import { ProsemirrorCommand, EditorCommandId } from "../api/command";
 import { canInsertNode } from "../api/node";
 
-const kRefRegEx = /@ref\([A-Za-z0-9:-]*\)/;
+const kRefRegEx = /@ref\([A-Za-z0-9:-]*\)/g;
 
 const extension = (
   _pandocExtensions: PandocExtensions, 
@@ -103,7 +103,6 @@ const extension = (
         new InputRule(/\\?@ref\($/, (state: EditorState, match: string[], start: number, end: number) => {
           const tr = state.tr;
           tr.delete(start, end);
-
           insertRef(tr);
           return tr;
         }),
