@@ -23,6 +23,7 @@
     "@types/zenscroll": "^4.0.0",
     "clipboard": "^2.0.6",
     "codemirror": "^5.48.4",
+    "jest": "^25.3.0",
     "orderedmap": "^1.0.0",
     "prosemirror-changeset": "^2.1.2",
     "prosemirror-commands": "^1.1.2",
@@ -42,15 +43,18 @@
     "react": "^16.13.1",
     "react-dom": "^16.13.1",
     "tlite": "^0.1.9",
+    "ts-jest": "^25.3.1",
     "typescript": "3.6.3",
     "zenscroll": "^4.0.2"
   },
   "scripts": {
     "format": "prettier --write \"src/**/*.ts\" \"src/**/*.tsx\"",
     "lint": "tslint -c tslint.json 'src/**/*.{ts,tsx}'",
-    "watch": "tsc --watch --noEmit --project './tsconfig.json'"
+    "watch": "tsc --watch --noEmit --project './tsconfig.json'",
+    "test": "jest"
   },
   "devDependencies": {
+    "@types/jest": "^25.2.1",
     "fuse-box": "^3.7.1",
     "prettier": "^1.18.2",
     "terser": "^4.6.2",
