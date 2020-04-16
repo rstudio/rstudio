@@ -17,9 +17,13 @@ Nested shortcodes should be within a markdown block
   - Shortcode begin/end is what the marks are applied to (for %)
   - Apply mark to full range for <
 
-Check for other Hugo / blogdown markdown extensions (allow declaration in format?)
+Declare support for hugo shortcodes?
 
+Bookdown docs, note that \@ref not required, and (PART\*) the slash
+is not required (input rule?)
 
+Preserve Prosemirror undo stack when calling setMarkdown (editor
+seems to do this fine)
 
 Round-trip tests in Mastering Shiny
 
