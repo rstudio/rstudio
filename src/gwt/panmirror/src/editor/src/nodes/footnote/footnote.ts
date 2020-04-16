@@ -117,7 +117,7 @@ const extension: Extension = {
   },
 
   commands: (_schema: Schema) => {
-    return [new ProsemirrorCommand(EditorCommandId.Footnote, ['Mod-^'], footnoteCommandFn())];
+    return [new ProsemirrorCommand(EditorCommandId.Footnote, ['Mod-Shift-F7'], footnoteCommandFn())];
   },
 };
 
