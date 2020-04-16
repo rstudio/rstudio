@@ -214,7 +214,7 @@ Error LogOptions::read()
    FilePath optionsFile = core::system::xdg::systemConfigFile(kLogConfFile);
 #else
    // desktop - read user file first, and only read admin file if the user file does not exist
-   FilePath optionsFile = core::system:xdg::userConfigDir().completeChildPath(kLogConfFile);
+   FilePath optionsFile = core::system::xdg::userConfigDir().completeChildPath(kLogConfFile);
    if (!optionsFile.exists())
          optionsFile = core::system::xdg::systemConfigFile(kLogConfFile);
 #endif
