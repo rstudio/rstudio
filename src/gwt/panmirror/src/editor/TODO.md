@@ -8,6 +8,7 @@ pandoc schema: <https://github.com/jgm/pandoc-types/blob/master/Text/Pandoc/Defi
 
 Bookdown/Blogdown:
 - Implement universal \@ref handling (parse the \ coming in and remove it, then make sure we write it)
+  This is important for backends that don't escape it (e.g. blackfriday)
 - Implement shortcode handling (https://gohugo.io/content-management/shortcodes/)
 - Input rule for (PART\*) to remove the slash
 - Alison on blogdown engines, etc.
