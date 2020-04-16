@@ -29,7 +29,7 @@ import {
   createTextInput,
 } from '../../api/widgets/widgets';
 import { EditorUI } from '../../api/ui';
-import { editingRootNode } from '../../api/node';
+import { editingRootScrollContainerElement } from '../../api/node';
 import { extractSizeStyles, kPercentUnit, kPixelUnit, removeStyleAttrib } from '../../api/css';
 import {
   imageSizePropWithUnit,
@@ -239,9 +239,10 @@ function resizeShelf(
   };
 
   // detect when the editing root note scrolls and update the position
-  const editingNode = editingRootNode(view.state.selection)!;
-  const editingEl = view.domAtPos(editingNode.pos! + 1).node as HTMLElement;
-  editingEl.addEventListener('scroll', updatePosition);
+  const editingScrollContainerEl = editingRootScrollContainerElement(view);
+  if (editingScrollContainerEl) {
+    editingScrollContainerEl.addEventListener('scroll', updatePosition);
+  }
 
   // main panel that holds the controls
   const panel = createHorizontalPanel();
@@ -376,7 +377,9 @@ function resizeShelf(
     },
 
     remove: () => {
-      editingEl.removeEventListener('scroll', updatePosition);
+      if (editingScrollContainerEl) {
+        editingScrollContainerEl.removeEventListener('scroll', updatePosition);
+      }
       shelf.remove();
     },
 
