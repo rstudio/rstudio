@@ -211,6 +211,8 @@ export class Editor {
       rmdCodeChunks: false,
       rmdImagePreview: false,
       rmdBookdownXRef: false,
+      rmdBookdownXRefCommand: false,
+      rmdBlogdownShortcodes: false,
       formatComment: true,
       ...options,
     };

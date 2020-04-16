@@ -28,7 +28,7 @@ import {
   PandocInlineHTMLReaderFn,
 } from '../api/pandoc';
 
-import { pandocFormatWith, PandocFormat } from '../api/pandoc_format';
+import { pandocFormatWith, PandocFormat, kGfmFormat, kCommonmarkFormat } from '../api/pandoc_format';
 
 import { pandocToProsemirror } from './to_prosemirror';
 import { pandocFromProsemirror } from './from_prosemirror';
@@ -129,7 +129,7 @@ export class PandocConverter {
     // known markdown variants that support tables also support pipe
     // tables so this seems unlikely to ever be required.
     const disable =
-      !format.startsWith('gfm') && !format.startsWith('commonmark') ? '-simple_tables-multiline_tables' : '';
+      !format.startsWith(kGfmFormat) && !format.startsWith(kCommonmarkFormat) ? '-simple_tables-multiline_tables' : '';
     format = pandocFormatWith(format, disable, '');
 
     // render to markdown

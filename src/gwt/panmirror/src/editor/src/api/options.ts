@@ -21,6 +21,8 @@ export interface EditorOptions {
   readonly rmdCodeChunks?: boolean;
   readonly rmdImagePreview?: boolean;
   readonly rmdBookdownXRef?: boolean;
+  readonly rmdBookdownXRefCommand?: boolean;
+  readonly rmdBlogdownShortcodes?: boolean;
   readonly formatComment?: boolean;
   readonly className?: string;
 }

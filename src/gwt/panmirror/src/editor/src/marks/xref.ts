@@ -39,6 +39,10 @@ const extension = (
   _ui: EditorUI, 
   options: EditorOptions): Extension | null => {
 
+  if (!options.rmdBookdownXRef) {
+    return null;
+  }
+
   return {
 
     marks: [
@@ -110,7 +114,7 @@ const extension = (
     },
 
     commands: (schema: Schema) => {
-      if (options.rmdBookdownXRef) {
+      if (options.rmdBookdownXRefCommand) {
         return [
           new ProsemirrorCommand(
             EditorCommandId.CrossReference, [],
