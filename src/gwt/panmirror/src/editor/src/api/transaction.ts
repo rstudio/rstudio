@@ -16,7 +16,7 @@
 import { Transaction, EditorState, Plugin, PluginKey, Selection } from 'prosemirror-state';
 import { Node as ProsemirrorNode, Mark, MarkType, Slice } from 'prosemirror-model';
 import { ChangeSet } from 'prosemirror-changeset';
-import { ReplaceStep, Step } from 'prosemirror-transform';
+import { ReplaceStep, Step, Transform, MapResult } from 'prosemirror-transform';
 
 import { sliceContentLength } from './slice';
 
@@ -176,6 +176,28 @@ export function transactionsChangeSet(transactions: Transaction[], oldState: Edi
     changeSet = changeSet.addSteps(newState.doc, transaction.mapping.maps);
   }
   return changeSet;
+}
+
+export type MappingFn = (pos: number, assoc?: number | undefined) => MapResult;
+
+export function withScopedMapping(tr: Transaction, f: (map: MappingFn) => void) : Transaction {
+  // create a new transform so we can do position mapping relative
+  // to the actions taken here (b/c the transaction might already
+  // have other steps so we can't do tr.mapping.map)
+  const newActions = new Transform(tr.doc);
+
+  // call the function (passing it a mapping function that uses our newActions)
+  f((pos: number, assoc?: number | undefined) => {
+    return newActions.mapping.mapResult(pos, assoc);
+  });
+
+  // copy the contents of newActions to the actual transaction
+  for (const step of newActions.steps) {
+    tr.step(step);
+  }
+
+  // return the transaction for chaining
+  return tr;
 }
 
 export function transactionsHaveChange(
