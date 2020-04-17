@@ -110,6 +110,9 @@ export function fixupTableWidths(view: EditorView) {
       // get table width
       const el = view.domAtPos(table.pos).node as HTMLElement;
       const containerWidth = table.node.attrs.width || el.clientWidth;
+      if (containerWidth === 0) {
+        continue;
+      }
 
       // resolve colpercents (read by tokenzier)
       const colpercents = table.node.attrs.colpercents;
