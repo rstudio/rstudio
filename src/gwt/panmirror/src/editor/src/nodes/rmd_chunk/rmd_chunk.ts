@@ -37,13 +37,13 @@ import './rmd_chunk-styles.css';
 const kRmdCodeChunkClass = '3759D6F8-53AF-4931-8060-E55AF73236B5'.toLowerCase();
 
 const extension = (
-  pandocExtensions: PandocExtensions, 
-  _caps: PandocCapabilities, 
+  _pandocExtensions: PandocExtensions, 
+  _pandocCapabilities: PandocCapabilities, 
   ui: EditorUI, 
   options: EditorOptions
 ) : Extension | null => {
 
-  if (!options.rmdCodeChunks || !pandocExtensions.backtick_code_blocks || !pandocExtensions.fenced_code_attributes) {
+  if (!options.rmdCodeChunks) {
     return null;
   }
 

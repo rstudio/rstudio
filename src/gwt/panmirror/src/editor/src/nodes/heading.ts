@@ -70,9 +70,15 @@ const extension = (pandocExtensions: PandocExtensions): Extension => {
           },
         },
 
-        attr_edit: () => ({
-          type: (schema: Schema) => schema.nodes.heading
-        }),
+        attr_edit: () => {
+          if (headingAttr) {
+            return {
+              type: (schema: Schema) => schema.nodes.heading
+            };
+          } else {
+            return null;
+          }
+        },
 
         pandoc: {
           readers: [

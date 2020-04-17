@@ -37,7 +37,7 @@ const extension = (
   pandocCapabilities: PandocCapabilities, 
   ui: EditorUI): Extension => 
 {
-  const hasAttr = hasFencedCodeAttributes(pandocExtensions);
+  const hasAttr = hasFencedCodeBlocks(pandocExtensions);
 
   return {
     nodes: [
@@ -97,7 +97,9 @@ const extension = (
           writer: (output: PandocOutput, node: ProsemirrorNode) => {
             output.writeToken(PandocTokenType.CodeBlock, () => {
               if (hasAttr) {
-                output.writeAttr(node.attrs.id, node.attrs.classes, node.attrs.keyvalue);
+                const id = pandocExtensions.fenced_code_attributes ? node.attrs.id : '';
+                const keyvalue = pandocExtensions.fenced_code_attributes ? node.attrs.keyvalue : [];
+                output.writeAttr(id, node.attrs.classes, keyvalue);
               } else {
                 output.writeAttr();
               }
@@ -295,7 +297,7 @@ function codeBlockAttrEdit(
   ui: EditorUI
 ) {
   return () => {
-    if (hasFencedCodeAttributes(pandocExtensions)) {
+    if (hasFencedCodeBlocks(pandocExtensions)) {
       return {
         type: (schema: Schema) => schema.nodes.code_block,
         tags: (node: ProsemirrorNode) => {
@@ -325,9 +327,9 @@ function codeBlockAttrEdit(
   };
 }
 
-function hasFencedCodeAttributes(pandocExtensions: PandocExtensions) {
-  return pandocExtensions.fenced_code_blocks || 
-         pandocExtensions.fenced_code_attributes;
+function hasFencedCodeBlocks(pandocExtensions: PandocExtensions) {
+  return pandocExtensions.backtick_code_blocks ||
+         pandocExtensions.fenced_code_blocks;
 }
 
 
