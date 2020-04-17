@@ -60,7 +60,7 @@ export const ImageButton = React.forwardRef<HTMLButtonElement, ImageButtonProps>
   };
   return (
     <button onClick={onClick} title={props.title} className={className} style={props.style} ref={ref}>
-      <img src={props.image} />
+      <img src={props.image} alt={props.title} />
     </button>
   );
 });

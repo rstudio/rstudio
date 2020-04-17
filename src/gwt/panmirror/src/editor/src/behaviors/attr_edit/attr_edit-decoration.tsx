@@ -25,7 +25,6 @@ import { AttrEditOptions } from "../../api/attr_edit";
 import { CommandFn } from '../../api/command';
 import { AttrProps } from '../../api/ui';
 import { WidgetProps, reactRenderForEditorView } from '../../api/widgets/react';
-import { nodeDecoration } from '../../api/decoration';
 
 import { kEditAttrShortcut } from './attr_edit';
 import { attrEditCommandFn } from './attr_edit-command';

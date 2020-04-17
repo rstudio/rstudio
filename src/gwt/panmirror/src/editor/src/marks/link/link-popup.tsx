@@ -186,20 +186,20 @@ const LinkPopup: React.FC<LinkPopupProps> = props => {
         <LinkButton text={linkText} onClick={onLinkClicked}></LinkButton>
         {showCopyButton ? (
           <ImageButton
-            image={props.ui.images.copy}
+            image={props.ui.images.copy!}
             classes={['pm-image-button-copy-link']}
             title={props.ui.context.translateText('Copy Link to Clipboard')}
             ref={setCopyButton}
           />
         ) : null}
         <ImageButton
-          image={props.ui.images.removelink}
+          image={props.ui.images.removelink!}
           classes={['pm-image-button-remove-link']}
           title={props.ui.context.translateText('Remove Link')}
           onClick={onRemoveClicked}
         />
         <ImageButton
-          image={props.ui.images.properties}
+          image={props.ui.images.properties!}
           classes={['pm-image-button-edit-properties']}
           title={props.ui.context.translateText('Edit Attributes')}
           onClick={onEditClicked}

@@ -302,7 +302,7 @@ function resizeShelf(
 
   // edit button
   const editImage = createImageButton(
-    uiImages.properties, 
+    uiImages.properties!, 
     ['pm-image-button-edit-properties'], 
     translateText('Edit Attributes')
   );

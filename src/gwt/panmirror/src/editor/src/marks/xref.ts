@@ -104,7 +104,7 @@ const extension = (
                 return node.isTextblock && node.type.allowsMarkType(markType);
               };
               findChildren(tr.doc, predicate).forEach(nodeWithPos => {
-                const { node, pos } = nodeWithPos;
+                const { pos } = nodeWithPos;
                 detectAndApplyMarks(tr, tr.doc.nodeAt(pos)!, pos, kRefRegEx, markType);
               });
 
