@@ -77,7 +77,7 @@ const extension = (
         (tr: Transaction, context: FixupContext) => {
           if (context === FixupContext.Load) {
             const predicate = (node: ProsemirrorNode) => {
-              return node.isTextblock && node.type.allowsMarkType(node.type.schema.marks.quoted);
+              return node.isTextblock && node.type.allowsMarkType(node.type.schema.marks.xref);
             };
             findChildren(tr.doc, predicate).forEach(nodeWithPos => {
               const { node, pos } = nodeWithPos;
