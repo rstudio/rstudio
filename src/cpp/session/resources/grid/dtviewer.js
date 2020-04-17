@@ -1539,10 +1539,9 @@
   };
 
   // called from RStudio when the underlying object changes
-  window.refreshData = function (structureChanged, sizeChanged) {
+  window.refreshData = function () {
     // restore any scroll handlers (this can get called on tab activate)
     restoreScrollHandlers();
-
     bootstrap();
   };
 
