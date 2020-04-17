@@ -6,15 +6,28 @@ pandoc schema: <https://github.com/jgm/pandoc-types/blob/master/Text/Pandoc/Defi
 
 ## TODO
 
-Bookdown/Blogdown:
 
-- Implement shortcode handling (https://gohugo.io/content-management/shortcodes/)
+
+Implement shortcode handling (https://gohugo.io/content-management/shortcodes/)
+  - Pattern matching based mark detector for just the standard and close variations (standalone marks)
+  - WriteRawMarkdown for < > delimiters
+
+Tex input rule fires for \@ref (where you add the \ after the fact)
+
+Adding a data-foo attribute heading causes decorator to hide on return from dialog
+
+For .unnumbered write all the attributes with writeRawMarkdown (with quote escaping and \ escaping)
+
+Bookdown parts: eliminate the \ in (PART\*) if they type it (check if it's H1 only)
 
 Link popups no longer truncated (see advanced_ui.Rmd)
 Positioning of ellipses in props button
-Copy 2 slides from GDocs and get empty text range error
 
 Alison on blogdown engines, etc.
+
+Consider settings for:
+  - Editor width in pixels
+  - Editor font size
 
 Bookdown & Blogdown docs:
   - @ref has no \
