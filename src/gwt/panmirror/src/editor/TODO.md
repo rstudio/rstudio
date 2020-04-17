@@ -7,17 +7,30 @@ pandoc schema: <https://github.com/jgm/pandoc-types/blob/master/Text/Pandoc/Defi
 ## TODO
 
 Bookdown/Blogdown:
-- Implement universal \@ref handling (parse the \ coming in and remove it, then make sure we write it)
-  This is important for backends that don't escape it (e.g. blackfriday)
+
 - Implement shortcode handling (https://gohugo.io/content-management/shortcodes/)
-- Input rule for (PART\*) to remove the slash
+- Bookdown parts
+   - rmdBookdownPartHeading extension
+   - Input rule for (PART\*) to remove the slash
 - Alison on blogdown engines, etc.
+
+newActions treatment for trailing_p fixup (but we don't map any positions)?
+
+If the format changes when re-activating the editor should we fully re-create it
+(i.e. just reset the plugins and format). I think this used to work until we 
+enabled undo across restore.
 
 Link popups no longer truncated (see advanced_ui.Rmd)
 
 Positioning of ellipses in props button
 
 Round-trip tests in Mastering Shiny
+
+Copy 2 slides from GDocs and get empty text range error
+
+
+
+
 
 More complete docs (cross refs, etc.)
 
