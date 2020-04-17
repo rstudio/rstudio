@@ -127,7 +127,9 @@ class PandocWriter implements PandocOutput {
   }
 
   public writeMark(type: PandocTokenType, parent: Fragment, expelEnclosingWhitespace = false) {
-    if (expelEnclosingWhitespace) {
+    
+    // expel enclosing whitepsace if requested and if the fragment isn't 100% spaces
+    if (expelEnclosingWhitespace && (fragmentText(parent).trim().length > 0)) {
       // build output spec
       const output = {
         spaceBefore: false,
