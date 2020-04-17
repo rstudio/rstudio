@@ -223,6 +223,10 @@ public class Source implements InsertSourceHandler,
                                     HasBeforeSelectionHandlers<Integer>,
                                     HasSelectionHandlers<Integer>
    {
+      void setSource(Source source);
+      void generateName(boolean first);
+      String getName();
+
       void addTab(Widget widget,
                   FileIcon icon,
                   String docId,
@@ -258,6 +262,8 @@ public class Source implements InsertSourceHandler,
                      String value,
                      String tooltip);
 
+      @Handler
+      void onNewSourceDoc();
       HandlerRegistration addBeforeShowHandler(BeforeShowHandler handler);
    }
 
@@ -273,17 +279,26 @@ public class Source implements InsertSourceHandler,
          new ArrayList<Display>();
       }
 
+      public void setActiveDisplay(Display display)
+      {
+         activeDisplay_ = display;
+      }
+
       public Display getActiveDisplay()
       {
-         return activeDisplay_ != null ? activeDisplay_ : getDisplayByEditor(activeEditor);
+         return activeDisplay_ != null ? activeDisplay_ : getDisplayByEditor(activeEditor_);
       }
 
       public Display getDisplayByEditor(EditingTarget target)
       {
-         for (Display display : this)
+         // !!! temporary check, target should never be null
+         if (target != null)
          {
-             if (display.hasTab(target.asWidget()))
-                return display;
+            for (Display display : this)
+            {
+                if (display.hasTab(target.asWidget()))
+                   return display;
+            }
          }
          return null;
       }
@@ -326,6 +341,7 @@ public class Source implements InsertSourceHandler,
    {
       commands_ = commands;
       binder.bind(commands, this);
+      view.setSource(this);
       views_.add(view);
       server_ = server;
       editingTargetSource_ = editingTargetSource;
@@ -998,6 +1014,11 @@ public class Source implements InsertSourceHandler,
    public Widget asWidget()
    {
       return views_.getActiveDisplay().asWidget();
+   }
+
+   public Widget asWidget(Display display)
+   {
+      return display.asWidget();
    }
 
    private void restoreDocuments(final Session session)
@@ -2010,13 +2031,13 @@ public class Source implements InsertSourceHandler,
                public void onResponseReceived(SourceDocument newDoc)
                {
                   EditingTarget target = addTab(newDoc, OPEN_INTERACTIVE);
-                  
+
                   if (contents != null)
                   {
                      target.forceSaveCommandActive();
                      manageSaveCommands();
                   }
-                  
+
                   if (resultCallback != null)
                      resultCallback.onSuccess(target);
                }
@@ -2029,7 +2050,6 @@ public class Source implements InsertSourceHandler,
                }
             });
    }
-   
    @Handler
    public void onFindInFiles()
    {
@@ -2738,9 +2758,41 @@ public class Source implements InsertSourceHandler,
       }
    }
    
+   public Display addView()
+   {
+      Source.Display display = GWT.create(SourcePane.class);
+      display.setSource(this);
+      display.ensureVisible();
+      display.generateName(false);
+      views_.add(display);
+      views_.setActiveDisplay(display);
+      display.onNewSourceDoc();
+      ensureVisible(false);
+
+      return display;
+   }
+
    public Display getView()
    {
       return views_.getActiveDisplay();
+   }
+
+   public ArrayList<Display> getViews()
+   {
+      return views_;
+   }
+
+   public Display getViewByIndex(int index)
+   {
+      return views_.get(index);
+   }
+
+   public ArrayList<Widget> getViewsAsWidgets()
+   {
+      ArrayList<Widget> result = new ArrayList<Widget>();
+      for (Display view : views_)
+         result.add(view.asWidget());
+      return result;
    }
 
    private void revertActiveDocument()
@@ -3570,7 +3622,7 @@ public class Source implements InsertSourceHandler,
             mode);
    }
 
-   private EditingTarget addTab(SourceDocument doc, Integer position, 
+   private EditingTarget addTab(SourceDocument doc, Integer position,
          int mode)
    {
       final String defaultNamePrefix = editingTargetSource_.getDefaultNamePrefix(doc);
@@ -3582,7 +3634,8 @@ public class Source implements InsertSourceHandler,
                   return getNextDefaultName(defaultNamePrefix);
                }
             });
-      
+      final Display targetView = views_.getActiveDisplay();
+
       final Widget widget = createWidget(target);
 
       if (position == null)
@@ -3591,7 +3644,7 @@ public class Source implements InsertSourceHandler,
       }
       else
       {
-         // we're inserting into an existing permuted tabset -- push aside 
+         // we're inserting into an existing permuted tabset -- push aside
          // any tabs physically to the right of this tab
          editors_.add(position, target);
          for (int i = 0; i < tabOrder_.size(); i++)
@@ -3605,33 +3658,33 @@ public class Source implements InsertSourceHandler,
          tabOrder_.add(position, position);
       }
 
-      views_.getActiveDisplay().addTab(widget,
-                   target.getIcon(),
-                   target.getId(),
-                   target.getName().getValue(),
-                   target.getTabTooltip(), // used as tooltip, if non-null
-                   position,
-                   true);
+      targetView.addTab(widget,
+                        target.getIcon(),
+                        target.getId(),
+                        target.getName().getValue(),
+                        target.getTabTooltip(), // used as tooltip, if non-null
+                        position,
+                        true);
       fireDocTabsChanged();
 
       target.getName().addValueChangeHandler(new ValueChangeHandler<String>()
       {
          public void onValueChange(ValueChangeEvent<String> event)
          {
-            views_.getActiveDisplay().renameTab(widget,
-                            target.getIcon(),
-                            event.getValue(),
-                            target.getPath());
+            targetView.renameTab(widget,
+                                 target.getIcon(),
+                                 event.getValue(),
+                                 target.getPath());
             fireDocTabsChanged();
          }
       });
 
-      views_.getActiveDisplay().setDirty(widget, target.dirtyState().getValue());
+      targetView.setDirty(widget, target.dirtyState().getValue());
       target.dirtyState().addValueChangeHandler(new ValueChangeHandler<Boolean>()
       {
          public void onValueChange(ValueChangeEvent<Boolean> event)
          {
-            views_.getActiveDisplay().setDirty(widget, event.getValue());
+            targetView.setDirty(widget, event.getValue());
             manageCommands();
          }
       });
@@ -3640,7 +3693,7 @@ public class Source implements InsertSourceHandler,
       {
          public void onEnsureVisible(EnsureVisibleEvent event)
          {
-            views_.getActiveDisplay().selectTab(widget);
+            targetView.selectTab(widget);
          }
       });
 
@@ -3648,31 +3701,36 @@ public class Source implements InsertSourceHandler,
       {
          public void onClose(CloseEvent<Void> voidCloseEvent)
          {
-            views_.getActiveDisplay().closeTab(widget, false);
+            targetView.closeTab(widget, false);
          }
       });
-      
+
       events_.fireEvent(new SourceDocAddedEvent(doc, mode));
-      
+
       if (target instanceof TextEditingTarget && doc.isReadOnly())
       {
          ((TextEditingTarget) target).setIntendedAsReadOnly(
                JsUtil.toList(doc.getReadOnlyAlternatives()));
       }
-      
-      // adding a tab may enable commands that are only available when 
+
+      // adding a tab may enable commands that are only available when
       // multiple documents are open; if this is the second document, go check
       if (editors_.size() == 2)
          manageMultiTabCommands();
-      
+
       // if the target had an editing session active, attempt to resume it
       if (doc.getCollabParams() != null)
          target.beginCollabSession(doc.getCollabParams());
-      
+
       return target;
    }
 
-   private String getNextDefaultName(String defaultNamePrefix)
+   public void addEditor(EditingTarget target)
+   {
+      editors_.add(target);
+   }
+
+   public String getNextDefaultName(String defaultNamePrefix)
    {
       if (StringUtil.isNullOrEmpty(defaultNamePrefix))
       {
@@ -4849,6 +4907,21 @@ public class Source implements InsertSourceHandler,
       return activeEditor_;
    }
 
+   public EditingTargetSource getEditingTargetSource()
+   {
+      return editingTargetSource_;
+   }
+
+   public SourceServerOperations getServer()
+   {
+      return server_;
+   }
+
+   public RemoteFileSystemContext getFileContext()
+   {
+      return fileContext_;
+   }
+
    public void onOpenProfileEvent(OpenProfileEvent event)
    {
       onShowProfiler(event);
@@ -5196,4 +5269,5 @@ public class Source implements InsertSourceHandler,
    public final static int TYPE_UNTITLED    = 1;
    public final static int OPEN_INTERACTIVE = 0;
    public final static int OPEN_REPLAY      = 1;
+   public final static String COLUMN_PREFIX = "Source";
 }

@@ -268,7 +268,10 @@ public class PaneManager
       tutorialTab_ = tutorialTab;
       
       binder.bind(commands, this);
+
+      ArrayList<Widget> sourceColumns = loadExtraSourceColumns();
       source_.load();
+      source_.loadFullSource();
       
       PaneConfig config = validateConfig(userPrefs.panes().getValue().cast());
       initPanes(config);
@@ -280,7 +283,7 @@ public class PaneManager
       right_ = createSplitWindow(panes_.get(2), panes_.get(3), RIGHT_COLUMN, 0.6, splitterSize);
 
       panel_ = pSplitPanel.get();
-      panel_.initialize(left_, right_);
+      panel_.initialize(sourceColumns, left_, right_);
       
       // count the number of source docs assigned to this window
       JsArray<SourceDocument> docs = 
@@ -296,16 +299,19 @@ public class PaneManager
          }
       }
       
-      if (numDocs == 0 && sourceLogicalWindow_.getState() != WindowState.HIDE)
+      for (LogicalWindow window : sourceLogicalWindows_)
       {
-         sourceLogicalWindow_.onWindowStateChange(
-               new WindowStateChangeEvent(WindowState.HIDE));
-      }
-      else if (numDocs > 0
-               && sourceLogicalWindow_.getState() == WindowState.HIDE)
-      {
-         sourceLogicalWindow_.onWindowStateChange(
-               new WindowStateChangeEvent(WindowState.NORMAL));
+         if (numDocs == 0 && window.getState() != WindowState.HIDE)
+         {
+            window.onWindowStateChange(
+                  new WindowStateChangeEvent(WindowState.HIDE));
+         }
+         else if (numDocs > 0
+                  && window.getState() == WindowState.HIDE)
+         {
+            window.onWindowStateChange(
+                  new WindowStateChangeEvent(WindowState.NORMAL));
+         }
       }
 
       userPrefs.panes().addValueChangeHandler(evt ->
@@ -551,7 +557,8 @@ public class PaneManager
             paneConfig.getTabSet2(),
             paneConfig.getHiddenTabSet(),
             paneConfig.getConsoleLeftOnTop(),
-            paneConfig.getConsoleRightOnTop()).cast());
+            paneConfig.getConsoleRightOnTop(),
+            paneConfig.getExtraSources()).cast());
          userPrefs_.writeUserPrefs();
       }
    }
@@ -775,12 +782,36 @@ public class PaneManager
       }
    }
 
+   private ArrayList<Widget> loadExtraSourceColumns()
+   {
+      sourceColumnCount_ = userPrefs_.panes().getGlobalValue().getExtraSources();
+
+      // determine the number of source columns (add one for the main source)
+      // and add any missing to source_
+      int sourceCount = sourceColumnCount_ + 1;
+      if (source_.getViews().size() < sourceCount)
+      {
+         int difference = sourceCount - source_.getViews().size();
+         for (int i = 0; i < difference; i++)
+            source_.addView();
+      }
+
+      // return source column widgets in a list, if none return null
+      return sourceColumnCount_ > 0 ?
+         new ArrayList<Widget>(source_.getViewsAsWidgets().subList(1, sourceCount)) :
+         null;
+   }
+
    private ArrayList<LogicalWindow> createPanes(PaneConfig config)
    {
       ArrayList<LogicalWindow> results = new ArrayList<>();
 
       JsArrayString panes = config.getQuadrants();
-      for (int i = 0; i < 4; i++)
+      for (int i = 0; i < sourceColumnCount_; i++)
+      {
+         panes.push("Source " + Integer.toString(i));
+      }
+      for (int i = 0; i < panes.length(); i++)
       {
          results.add(panesByName_.get(panes.get(i)));
       }
@@ -791,7 +822,11 @@ public class PaneManager
    {
       panesByName_ = new HashMap<>();
       panesByName_.put("Console", createConsole());
-      panesByName_.put("Source", createSource());
+      for (int i = 0; i < source_.getViews().size(); i++)
+      {
+         Source.Display display = source_.getViewByIndex(i);
+         panesByName_.put(display.getName(), createSource(display.getName(), display));
+      }
 
       Triad<LogicalWindow, WorkbenchTabPanel, MinimizedModuleTabLayoutPanel> ts1 = createTabSet(
             "TabSet1",
@@ -985,7 +1020,8 @@ public class PaneManager
          paneConfig.getTabSet2(),
          tabListToJsArrayString(hiddenTabs_),
          paneConfig.getConsoleLeftOnTop(),
-         paneConfig.getConsoleRightOnTop()).cast());
+         paneConfig.getConsoleRightOnTop(),
+         sourceColumnCount_).cast());
       userPrefs_.writeUserPrefs();
    }
 
@@ -1001,7 +1037,8 @@ public class PaneManager
          tabListToJsArrayString(tabs),
          tabListToJsArrayString(hiddenTabs_),
          paneConfig.getConsoleLeftOnTop(),
-         paneConfig.getConsoleRightOnTop()).cast());
+         paneConfig.getConsoleRightOnTop(),
+         sourceColumnCount_).cast());
       userPrefs_.writeUserPrefs();
    }
 
@@ -1088,12 +1125,34 @@ public class PaneManager
 
    public LogicalWindow getSourceLogicalWindow()
    {
-      return sourceLogicalWindow_;
+      return sourceLogicalWindows_.get(0);
    }
    
    public LogicalWindow getConsoleLogicalWindow()
    {
       return panesByName_.get("Console");
+   }
+
+   public void addSourceWindow()
+   {
+      // create a new Source Display
+      PaneConfig.addSourcePane();
+      Source.Display display = source_.addView();
+      panesByName_.put(display.getName(), createSource(display.getName(), display));
+      panel_.addLeftWidget(display.asWidget());
+      sourceColumnCount_++;
+
+      // Update user preferences
+      PaneConfig paneConfig = getCurrentConfig();
+      userPrefs_.panes().setGlobalValue(PaneConfig.create(
+         JsArrayUtil.copy(paneConfig.getQuadrants()),
+         paneConfig.getTabSet1(),
+         paneConfig.getTabSet2(),
+         paneConfig.getHiddenTabSet(),
+         paneConfig.getConsoleLeftOnTop(),
+         paneConfig.getConsoleRightOnTop(),
+         sourceColumnCount_).cast());
+      userPrefs_.writeUserPrefs();
    }
 
    private DualWindowLayoutPanel createSplitWindow(LogicalWindow top,
@@ -1149,15 +1208,16 @@ public class PaneManager
       return logicalWindow;
    }
 
-   private LogicalWindow createSource()
+   private LogicalWindow createSource(String frameName, Source.Display display)
    {
-      String frameName = "Source";
       WindowFrame sourceFrame = new WindowFrame(frameName);
-      sourceFrame.setFillWidget(source_.asWidget());
+      sourceFrame.setFillWidget(source_.asWidget(display));
       source_.forceLoad();
-      return sourceLogicalWindow_ = new LogicalWindow(
+      LogicalWindow sourceWindow = new LogicalWindow(
             sourceFrame,
             new MinimizedWindowFrame(frameName, frameName));
+      sourceLogicalWindows_.add(sourceWindow);
+      return sourceWindow;
    }
 
    private
@@ -1418,7 +1478,7 @@ public class PaneManager
    private final WorkbenchTab tutorialTab_;
    private final OptionsLoader.Shim optionsLoader_;
    private final MainSplitPanel panel_;
-   private LogicalWindow sourceLogicalWindow_;
+   private ArrayList<LogicalWindow> sourceLogicalWindows_;
    private final HashMap<Tab, WorkbenchTabPanel> tabToPanel_ = new HashMap<>();
    private final HashMap<Tab, Integer> tabToIndex_ = new HashMap<>();
    private final HashMap<WorkbenchTab, Tab> wbTabToTab_ = new HashMap<>();
@@ -1444,4 +1504,6 @@ public class PaneManager
    private ArrayList<Tab> tabs1_;
    private ArrayList<Tab> tabs2_;
    private ArrayList<Tab> hiddenTabs_;
+
+   private int sourceColumnCount_; // this does not include the main source
 }

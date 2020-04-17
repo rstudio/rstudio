@@ -30,15 +30,23 @@ public class PaneConfig extends UserPrefsAccessor.Panes
                                           JsArrayString tabSet2,
                                           JsArrayString hiddenTabSet,
                                           boolean consoleLeftOnTop,
-                                          boolean consoleRightOnTop) /*-{
+                                          boolean consoleRightOnTop,
+                                          int extraSources) /*-{
       return { 
          quadrants: panes, 
          tabSet1: tabSet1, 
          tabSet2: tabSet2,
          hiddenTabSet: hiddenTabSet,
          console_left_on_top: consoleLeftOnTop,
-         console_right_on_top: consoleRightOnTop 
+         console_right_on_top: consoleRightOnTop,
+         extra_sources: extraSources
       };
+   }-*/;
+
+   public native static void addSourcePane() /*-{
+      if (this.extra_source == null)
+         this.extra_source = 0;
+      this.extra_sources++;
    }-*/;
 
    public static PaneConfig createDefault()
@@ -67,7 +75,7 @@ public class PaneConfig extends UserPrefsAccessor.Panes
       tabSet2.push("Viewer");
 
       JsArrayString hiddenTabSet = createArray().cast();
-      return create(panes, tabSet1, tabSet2, hiddenTabSet, false, true);
+      return create(panes, tabSet1, tabSet2, hiddenTabSet, false, true, 0);
    }
 
    public static String[] getAllPanes()
@@ -221,7 +229,8 @@ public class PaneConfig extends UserPrefsAccessor.Panes
                     copy(getTabSet2()),
                     copy(getHiddenTabSet()),
                     getConsoleLeftOnTop(),
-                    getConsoleRightOnTop());
+                    getConsoleRightOnTop(),
+                    getExtraSources());
    }
    
    public final native boolean isEqualTo(PaneConfig other)  /*-{

@@ -33,6 +33,8 @@ import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.helper.JSObjectStateValue;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 
+import java.util.ArrayList;
+
 public class MainSplitPanel extends NotifyingSplitLayoutPanel
       implements SplitterResizedHandler
 {
@@ -115,9 +117,10 @@ public class MainSplitPanel extends NotifyingSplitLayoutPanel
       addSplitterResizedHandler(this);
    }
 
-   public void initialize(Widget left, Widget right)
+   public void initialize(ArrayList<Widget> leftList, Widget center, Widget right)
    {
-      left_ = left;
+      leftList_ = leftList;
+      center_ = center;
       right_ = right;
 
       new JSObjectStateValue(GROUP_WORKBENCH,
@@ -129,6 +132,11 @@ public class MainSplitPanel extends NotifyingSplitLayoutPanel
          @Override
          protected void onInit(JsObject value)
          {
+            double multiplier = 0.90;
+            int widgets = 2 + leftList_.size();
+            multiplier = multiplier / (double)widgets;
+            // !!! need to update this properly
+            /*
             State state = value == null ? null : (State)value.cast();
             if (state != null && state.hasSplitterPos())
             {
@@ -143,12 +151,24 @@ public class MainSplitPanel extends NotifyingSplitLayoutPanel
                }
                else
                {
-                  addEast(right_, state.getSplitterPos());
+                  addEast(right_, state.getSplitterPos() * multiplier);
                }
             }
             else
             {
-               addEast(right_, Window.getClientWidth() * 0.45);
+               addEast(right_, Window.getClientWidth() * multiplier);
+            }
+            */
+            double startValue = Window.getClientWidth() * multiplier;
+            addEast(right_, startValue);
+            if (!leftList_.isEmpty())
+            {
+               startValue += multiplier;
+               for (Widget w : leftList_)
+               {
+                  addWest(w, startValue);
+                  startValue += multiplier;
+               }
             }
 
             Scheduler.get().scheduleDeferred(new ScheduledCommand()
@@ -185,7 +205,7 @@ public class MainSplitPanel extends NotifyingSplitLayoutPanel
          private State lastKnownValue_;
       };
 
-      add(left);
+      add(center_);
       setWidgetMinSize(right_, 0);
    }
 
@@ -194,6 +214,16 @@ public class MainSplitPanel extends NotifyingSplitLayoutPanel
    {
       super.onLoad();
       deferredSaveWidthPercent();
+   }
+
+   public void addLeftWidget(Widget widget)
+   {
+      remove(center_);
+      remove(right_);
+      for (Widget w : leftList_)
+         remove(w);
+      leftList_.add(widget);
+      initialize(leftList_, center_, right_);
    }
 
    public void onSplitterResized(SplitterResizedEvent event)
@@ -273,7 +303,8 @@ public class MainSplitPanel extends NotifyingSplitLayoutPanel
 
    private final Session session_;
    @SuppressWarnings("unused")
-   private Widget left_;
+   private ArrayList<Widget> leftList_;
+   private Widget center_;
    private Widget right_;
    private static final String GROUP_WORKBENCH = "workbenchp";
    private static final String KEY_RIGHTPANESIZE = "rightpanesize";
