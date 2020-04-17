@@ -9,35 +9,23 @@ pandoc schema: <https://github.com/jgm/pandoc-types/blob/master/Text/Pandoc/Defi
 Bookdown/Blogdown:
 
 - Implement shortcode handling (https://gohugo.io/content-management/shortcodes/)
-- Bookdown parts
-   - rmdBookdownPartHeading extension
-   - Input rule for (PART\*) to remove the slash
-- Alison on blogdown engines, etc.
-
-newActions treatment for trailing_p fixup (but we don't map any positions)?
-
-If the format changes when re-activating the editor should we fully re-create it
-(i.e. just reset the plugins and format). I think this used to work until we 
-enabled undo across restore.
 
 Link popups no longer truncated (see advanced_ui.Rmd)
-
 Positioning of ellipses in props button
-
-Round-trip tests in Mastering Shiny
-
 Copy 2 slides from GDocs and get empty text range error
 
+Alison on blogdown engines, etc.
 
-
-
-
-More complete docs (cross refs, etc.)
-
-Bookdown Theroms (equation w/ some narrative)
+Bookdown & Blogdown docs:
+  - @ref has no \
+  - Heading parts (need to explicitly use .unnumbered and don't use the \* escape)
+  - Using blackfriday explicitly
 
 MathJax preview. When containing the selection, the math will show both the code and the preview. When not containing the selection will show the preview. (so probably require a node view for this). Consider a “done” gesture for display math. May need to bring back
 escaping of $ in math as this mode will clearly not be "source mode" style latex equation editing
+
+Possibly have a special editing mode for thereom's?
+
 
 ## Future
 
