@@ -115,6 +115,11 @@ public class SourcePane extends Composite implements Display,
          tabPanel_.selectTab(widget);
    }
 
+   public boolean hasTab(Widget widget)
+   {
+      return tabPanel_.getWidgetIndex(widget) >= 0 ? true : false;
+   }
+
    public void closeTab(Widget child, boolean interactive)
    {
       closeTab(child, interactive, null);
