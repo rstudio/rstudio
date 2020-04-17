@@ -175,6 +175,11 @@
                 "console_right_on_top": {
                     "type": "boolean",
                     "description": "Whether the console is on top when it is on the right side of the workbench."
+                },
+                "extra_sources": {
+                   "type": "integer",
+                   "default": 0,
+                   "description": "The number of columns of full source columns."
                 }
             },
             "default": {
@@ -188,7 +193,8 @@
                 "tabSet2": ["Files", "Plots", "Packages", "Help", "Viewer"],
                 "hiddenTabSet": [],
                 "console_left_on_top": false,
-                "console_right_on_top": true
+                "console_right_on_top": true,
+                "extra_sources": 0
             },
             "description": "Layout of panes in the RStudio workbench."
         },

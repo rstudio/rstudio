@@ -369,8 +369,9 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
          else if (panes.get(3) == kConsole)
             consoleRightOnTop = false;
          
+         // !!! extraSourceCount needs to be update
          userPrefs_.panes().setGlobalValue(PaneConfig.create(
-               panes, tabSet1, tabSet2, hiddenTabSet, consoleLeftOnTop, consoleRightOnTop));
+               panes, tabSet1, tabSet2, hiddenTabSet, consoleLeftOnTop, consoleRightOnTop, extraSourceCount_));
 
          dirty_ = false;
       }
@@ -438,5 +439,5 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
    private final ModuleList tabSet2ModuleList_;
    private final ModuleList hiddenTabSetModuleList_;
    private boolean dirty_ = false;
-  
+   private int extraSourceCount_ = 0;
 }

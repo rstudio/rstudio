@@ -287,6 +287,10 @@ public class UserPrefsAccessor extends Prefs
          return this.console_right_on_top;
       }-*/;
 
+      public final native int getExtraSources() /*-{
+         return this.extra_sources;
+      }-*/;
+
    }
 
    /**
