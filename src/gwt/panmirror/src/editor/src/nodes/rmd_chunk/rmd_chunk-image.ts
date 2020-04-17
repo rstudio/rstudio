@@ -40,7 +40,7 @@ export class RmdChunkImagePreviewPlugin extends Plugin<DecorationSet> {
 
           // doc didn't change, return existing decorations
           if (!tr.docChanged) {
-            return old;
+            return old.map(tr.mapping, tr.doc);
 
             // non-typing change, do a full rescan
           } else if (!transactionsAreTypingChange(transactions)) {
