@@ -60,6 +60,7 @@ export interface CodeViewOptions {
   borderColorClass?: string; 
   firstLineMeta?: boolean;
   lineNumbers?: boolean;
+  bookdownTheorems?: boolean;
   lineNumberFormatter?: (line: number) => string;
 }
 

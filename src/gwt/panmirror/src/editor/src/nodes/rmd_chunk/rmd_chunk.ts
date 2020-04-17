@@ -77,6 +77,7 @@ const extension = (
               return line - 1 + '';
             }
           },
+          bookdownTheorems: options.rmdBookdownTheorems,
           classes: ['pm-chunk-background-color'],
           lang: (_node: ProsemirrorNode, content: string) => {
             const match = content.match(/^[a-zA-Z0-9_]+/);

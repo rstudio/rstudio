@@ -29,6 +29,7 @@ public class PanmirrorOptions
    public boolean rmdImagePreview;
    public boolean rmdBookdownXRef;
    public boolean rmdBookdownXRefCommand;
+   public boolean rmdBookdownTheorems;
    public boolean rmdBlogdownShortcodes;
    public boolean formatComment;
    public String className;

@@ -431,6 +431,7 @@ public class TextEditingTargetVisualMode
          options.rmdImagePreview = options.rmdCodeChunks;
          options.rmdBookdownXRef = enableBookdownXRef();
          options.rmdBookdownXRefCommand = enableBookdownXRefCommand();
+         options.rmdBookdownTheorems = enableBookdownCommands();
          options.rmdBlogdownShortcodes = enableBlogdownShortcodes();
             
          // add focus-visible class to prevent interaction with focus-visible.js
@@ -689,16 +690,25 @@ public class TextEditingTargetVisualMode
       return true;
    }
    
+   
+   // enable bookdown specific commands/behaviors
+   private boolean enableBookdownCommands() {
+      return sessionInfo_.getBuildToolsBookdownWebsite();
+   }
 
    // enable bookdown cross reference command if appropriate (bookdown, blogdown, distill)
-   // we don't want the command to appear in documents where it will be a no-op
+   // (we don't want the command to appear in documents where it will be a no-op)
    private boolean enableBookdownXRefCommand()
    {
-      return sessionInfo_.getBuildToolsBookdownWebsite() || 
+      return enableBookdownCommands() || 
              sessionInfo_.getIsBlogdownProject() ||
              sessionInfo_.getIsDistillProject() ||
              getOutputFormats().contains("distill::distill_article");
    }
+   
+   
+   
+  
    
    // always enable blogdown shortcodes (w/o this we can end up destroying
    // shortcodes during round-tripping, and we don't want to require that 
