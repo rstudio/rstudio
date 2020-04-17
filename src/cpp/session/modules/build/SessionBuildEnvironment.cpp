@@ -28,6 +28,7 @@
 #include <core/r_util/RToolsInfo.hpp>
 
 #include <r/RExec.hpp>
+#include <r/RVersionInfo.hpp>
 
 #include <session/SessionModuleContext.hpp>
 
@@ -135,10 +136,17 @@ bool doAddRtoolsToPathIfNecessary(T* pTarget,
        return false;
     }
 
+    std::string rtoolsHomeEnvVar;
+
+    // Rtools 4.0 will set RTOOLS40_HOME
+    auto rVersion = r::version_info::currentRVersion();
+    if (rVersion.versionMajor() == 4)
+       rtoolsHomeEnvVar = "RTOOLS40_HOME";
+
     // ok so scan for R tools
     bool usingGcc49 = module_context::usingMingwGcc49();
     std::vector<r_util::RToolsInfo> rTools;
-    core::r_util::scanForRTools(usingGcc49, &rTools);
+    core::r_util::scanForRTools(usingGcc49, rtoolsHomeEnvVar, &rTools);
 
     // enumerate them to see if we have a compatible version
     // (go in reverse order for most recent first)
