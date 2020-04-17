@@ -18,23 +18,24 @@ import { EditorState, Transaction } from "prosemirror-state";
 import { toggleMark } from "prosemirror-commands";
 import { InputRule } from "prosemirror-inputrules";
 
-import { setTextSelection, findChildren } from "prosemirror-utils";
+import { setTextSelection, findChildren, findChildrenByMark } from "prosemirror-utils";
 
 import { Extension } from "../api/extension";
 import { PandocExtensions, PandocOutput } from "../api/pandoc";
 import { PandocCapabilities } from "../api/pandoc_capabilities";
 import { EditorOptions } from "../api/options";
 import { EditorUI } from "../api/ui";
-import { detectAndApplyMarks, removeInvalidatedMarks } from "../api/mark";
-import { MarkTransaction } from "../api/transaction";
+import { detectAndApplyMarks, removeInvalidatedMarks, getMarkRange } from "../api/mark";
+import { MarkTransaction, withScopedMapping, MappingFn } from "../api/transaction";
 import { FixupContext } from "../api/fixup";
 import { ProsemirrorCommand, EditorCommandId } from "../api/command";
 import { canInsertNode } from "../api/node";
+import { fragmentText } from "../api/fragment";
 
-const kRefRegEx = /@ref\([A-Za-z0-9:-]*\)/g;
+const kRefRegEx = /\\?@ref\([A-Za-z0-9:-]*\)/g;
 
 const extension = (
-  _pandocExtensions: PandocExtensions, 
+  pandocExtensions: PandocExtensions, 
   _pandocCapabilities: PandocCapabilities, 
   _ui: EditorUI, 
   options: EditorOptions): Extension | null => {
@@ -65,7 +66,25 @@ const extension = (
           writer: {
             priority: 17,
             write: (output: PandocOutput, _mark: Mark, parent: Fragment) => {
-              output.writeInlines(parent);
+
+              // alias xref (may need to transform it to deal with \ prefix)
+              let xref = parent;
+
+              // if it starts with a \ then don't write the slash (pandoc will
+              // either create one automatically or we'll write one explicitly
+              // if pandoc won't b/c it doesn't have all_symbols_escapable)
+              if (fragmentText(xref).startsWith('\\')) {
+                xref = xref.cut(1, xref.size);
+              }
+
+              // if all symbols aren't escapable then we need an explicit \
+              // (because pandoc won't automatically escape the \)
+              if (!pandocExtensions.all_symbols_escapable) {
+                output.writeRawMarkdown('\\');
+              }
+
+              // write xref
+              output.writeInlines(xref);
             },
           },
         },
@@ -76,12 +95,33 @@ const extension = (
       return [
         (tr: Transaction, context: FixupContext) => {
           if (context === FixupContext.Load) {
-            const predicate = (node: ProsemirrorNode) => {
-              return node.isTextblock && node.type.allowsMarkType(node.type.schema.marks.xref);
-            };
-            findChildren(tr.doc, predicate).forEach(nodeWithPos => {
-              const { node, pos } = nodeWithPos;
-              detectAndApplyMarks(tr, tr.doc.nodeAt(pos)!, pos, kRefRegEx, node.type.schema.marks.xref);
+            
+            withScopedMapping(tr, (map: MappingFn) => {
+              
+              // apply marks
+              const markType = schema.marks.xref;
+              const predicate = (node: ProsemirrorNode) => {
+                return node.isTextblock && node.type.allowsMarkType(markType);
+              };
+              findChildren(tr.doc, predicate).forEach(nodeWithPos => {
+                const { node, pos } = nodeWithPos;
+                detectAndApplyMarks(tr, tr.doc.nodeAt(pos)!, pos, kRefRegEx, markType);
+              });
+
+              // remove leading \ as necessary (this would occur if the underlying format includes
+              // a \@ref and doesn't have all_symbols_escapable, e.g. blackfriday)
+              findChildrenByMark(tr.doc, markType).forEach(markedNode => {
+                const mappedPos = map(markedNode.pos);
+                if (markType.isInSet(markedNode.node.marks)) {
+                  const markRange = getMarkRange(tr.doc.resolve(mappedPos.pos), markType);
+                  if (markRange) {
+                    const text = tr.doc.textBetween(markRange.from, markRange.to);
+                    if (text.startsWith('\\')) {
+                      tr.deleteRange(markRange.from, markRange.from + 1);
+                    }
+                  }
+                }
+              });
             });
           }
           return tr;
@@ -104,12 +144,15 @@ const extension = (
 
     inputRules: (_schema: Schema) => {
       return [
+        // recoginize new ref
         new InputRule(/\\?@ref\($/, (state: EditorState, match: string[], start: number, end: number) => {
           const tr = state.tr;
           tr.delete(start, end);
           insertRef(tr);
           return tr;
         }),
+        // if the user tries to put in a \ before the ref, join it (it will then get removed on write)
+        
       ];
     },
 
