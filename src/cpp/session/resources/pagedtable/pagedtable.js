@@ -462,6 +462,7 @@ var PagedTable = function (pagedTable) {
   var table = null;
   var tableDiv = null;
   var header = null;
+  var metaheader = null;
   var footer = null;
   var tbody = null;
 
@@ -528,35 +529,35 @@ var PagedTable = function (pagedTable) {
 
     var fragment = document.createDocumentFragment();
 
-    // show metadata on top of header
-    if (options.metadata !== {}) {
+    // show metadata on top of header as long as we have > 1 entry (the first one is always just
+    // dimensions, which we are already displaying
+    if (Object.keys(options.metadata).length > 1) {
        // create a column that spans the entire header space 
-       var metarow = document.createElement("tr");
+       metaheader = document.createElement("tr");
        var metacell = document.createElement("td");
        metacell.className = "pagedtable-metacell";
-       metacell.setAttribute("colspan", columns.subset.length);
-       metarow.appendChild(metacell);
+       metacell.setAttribute("colspan", columns.total);
+       metaheader.appendChild(metacell);
 
        // create a small table cell inside that column to host the metadata
-       var metatable = document.createElement("table");
-       metacell.appendChild(metatable);
        for (var metafield in options.metadata) {
           if (options.metadata.hasOwnProperty(metafield)) {
-             var metatablerow = document.createElement("tr");
+             var metadiv = document.createElement("div");
 
-             var field = document.createElement("td");
-             field.innerText = metafield;
-             field.className = "pagedtable-info"
-             metatablerow.appendChild(field);
+             var field = document.createElement("span");
+             field.innerText = metafield + ":";
+             field.className = "pagedtable-metafield"
+             metadiv.appendChild(field);
 
-             var val = document.createElement("td");
+             var val = document.createElement("span");
              val.innerText = options.metadata[metafield];
-             metatablerow.appendChild(val);
+             val.className = "pagedtable-metaval"
+             metadiv.appendChild(val);
 
-             metatable.appendChild(metatablerow);
+             metacell.appendChild(metadiv);
          }
        }
-       fragment.appendChild(metarow);
+       fragment.appendChild(metaheader);
     }
     header = document.createElement("tr");
     fragment.appendChild(header);
@@ -969,11 +970,12 @@ var PagedTable = function (pagedTable) {
     measurer.calculate(measuresCell);
 
     var rows = options.rows.min !== null ? options.rows.min : 0;
+    var metaHeight = metaheader !== null && metaheader.offsetHeight > 0 ? metaheader.offsetHeight : 0;
     var headerHeight = header !== null && header.offsetHeight > 0 ? header.offsetHeight : 0;
     var footerHeight = footer !== null && footer.offsetHeight > 0 ? footer.offsetHeight : 0;
 
     if (pagedTable.offsetHeight > 0) {
-      var availableHeight = pagedTable.offsetHeight - headerHeight - footerHeight;
+      var availableHeight = pagedTable.offsetHeight - metaHeight - headerHeight - footerHeight;
       rows = Math.floor((availableHeight) / measurer.measures.height);
     }
 
