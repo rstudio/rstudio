@@ -315,11 +315,6 @@ public class Source implements InsertSourceHandler,
 
       commands_.newSourceDoc().setEnabled(true);
 
-      events.fireEvent(new DocTabsChangedEvent(null,
-                                               new String[0],
-                                               new FileIcon[0],
-                                               new String[0],
-                                               new String[0]));
       dynamicCommands_ = new HashSet<AppCommand>();
       dynamicCommands_.add(commands_.saveSourceDoc());
       dynamicCommands_.add(commands_.reopenSourceDocWithEncoding());
@@ -633,6 +628,12 @@ public class Source implements InsertSourceHandler,
 
    public void loadFullSource()
    {
+      events_.fireEvent(new DocTabsChangedEvent(null,
+                                                new String[0],
+                                                new FileIcon[0],
+                                                new String[0],
+                                                new String[0]));
+
       // fake shortcuts for commands_ which we handle at a lower level
       commands_.goToHelp().setShortcut(new KeyboardShortcut("F1", KeyCodes.KEY_F1, KeyboardShortcut.NONE));
       commands_.goToDefinition().setShortcut(new KeyboardShortcut("F2", KeyCodes.KEY_F2, KeyboardShortcut.NONE));

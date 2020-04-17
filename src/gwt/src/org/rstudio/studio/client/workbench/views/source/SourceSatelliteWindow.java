@@ -49,6 +49,7 @@ public class SourceSatelliteWindow extends SatelliteWindow
                                 Provider<SourceWindow> pSourceWindow,
                                 Provider<FileMRUList> pFileMRUList,
                                 Provider<ProjectMRUList> pProjectMRUList,
+                                Provider<Source> pSource,
                                 CodeSearchLauncher launcher)
    {
       super(pEventBus, pFSManager);
@@ -57,12 +58,14 @@ public class SourceSatelliteWindow extends SatelliteWindow
       pWindowManager_ = pWindowManager;
       pSourceWindow_ = pSourceWindow;
       pFileMRUList_ = pFileMRUList;
+      pSource_ = pSource;
       pProjectMRUList_ = pProjectMRUList;
    }
 
    @Override
    protected void onInitialize(LayoutPanel mainPanel, JavaScriptObject params)
    {
+      pSource_.get().loadFullSource();
       // read the params and set up window ordinal / title
       SourceWindowParams windowParams = params.cast();
       String title = null;
@@ -133,6 +136,7 @@ public class SourceSatelliteWindow extends SatelliteWindow
    private final Provider<SourceSatellitePresenter> pPresenter_;
    private final Provider<SourceWindowManager> pWindowManager_;
    private final Provider<SourceWindow> pSourceWindow_;
+   private final Provider<Source> pSource_;
    @SuppressWarnings("unused") private final Provider<FileMRUList> pFileMRUList_;
    @SuppressWarnings("unused") private final Provider<ProjectMRUList> pProjectMRUList_;
 }
