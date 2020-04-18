@@ -6,28 +6,28 @@ pandoc schema: <https://github.com/jgm/pandoc-types/blob/master/Text/Pandoc/Defi
 
 ## TODO
 
+When detecting a format change, consider prompting for a full reload of the editor
 
+Consider settings for:
+  - Editor width in pixels
+  - Editor font size
+
+Re-organize specification of markdown extensions
 
 Implement shortcode handling (https://gohugo.io/content-management/shortcodes/)
   - Pattern matching based mark detector for just the standard and close variations (standalone marks)
   - WriteRawMarkdown for < > delimiters
+  - Command in UI?
+  - Consider shortcode blocks?
 
-Tex input rule fires for \@ref (where you add the \ after the fact)
-
-Adding a data-foo attribute heading causes decorator to hide on return from dialog
 
 For .unnumbered write all the attributes with writeRawMarkdown (with quote escaping and \ escaping)
-
 Bookdown parts: eliminate the \ in (PART\*) if they type it (check if it's H1 only)
 
 Link popups no longer truncated (see advanced_ui.Rmd)
 Positioning of ellipses in props button
 
 Alison on blogdown engines, etc.
-
-Consider settings for:
-  - Editor width in pixels
-  - Editor font size
 
 Bookdown & Blogdown docs:
   - @ref has no \
