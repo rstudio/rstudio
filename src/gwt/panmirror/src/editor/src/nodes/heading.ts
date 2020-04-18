@@ -73,7 +73,8 @@ const extension = (pandocExtensions: PandocExtensions): Extension => {
         attr_edit: () => {
           if (headingAttr) {
             return {
-              type: (schema: Schema) => schema.nodes.heading
+              type: (schema: Schema) => schema.nodes.heading,
+              offset: 8
             };
           } else {
             return null;
