@@ -30,7 +30,6 @@ import com.google.gwt.user.client.ui.*;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 
-import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.ResultCallback;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.CommandBinder;
@@ -76,22 +75,20 @@ public class SourcePane extends LazyPanel implements Display,
                                                      ProvidesResize,
                                                      BeforeShowCallback,
                                                      RequiresVisibilityChanged,
-                                                     //EnsureVisibleSourceWindowEvent.Handler,
-                                                     MaximizeSourceWindowEvent.Handler,
-                                                     DocWindowChangedEvent.Handler
+                                                     EnsureVisibleSourceWindowEvent.Handler,
+                                                     MaximizeSourceWindowEvent.Handler
 {
    public interface Binder extends CommandBinder<Commands, SourcePane> {}
 
    @Inject
    public SourcePane()
-   {
+   {   
       Commands commands = RStudioGinjector.INSTANCE.getCommands();
       Binder binder = GWT.<Binder>create(Binder.class);
       binder.bind(commands, this);
       events_ = RStudioGinjector.INSTANCE.getEventBus();
       events_.addHandler(MaximizeSourceWindowEvent.TYPE, this);
-      //events_.addHandler(EnsureVisibleSourceWindowEvent.TYPE, this);
-      events_.addHandler(DocWindowChangedEvent.TYPE, this);
+      events_.addHandler(EnsureVisibleSourceWindowEvent.TYPE, this);
 
       setVisible(true);
       ensureWidget();
@@ -140,7 +137,7 @@ public class SourcePane extends LazyPanel implements Display,
       panel_.setWidgetRightWidth(chevron_,
                                  52, Unit.PX,
                                  chevron_.getWidth(), Unit.PX);
-
+      
       return panel_;
    }
 
@@ -150,6 +147,17 @@ public class SourcePane extends LazyPanel implements Display,
       super.onLoad();
       Scheduler.get().scheduleDeferred(() -> onResize());
    }
+
+   protected void onUnload()
+   {
+   }
+
+   @Override
+   public String getName()
+   {
+      return name_;
+   }
+
 
    @Override
    public void generateName(boolean first)
@@ -161,12 +169,6 @@ public class SourcePane extends LazyPanel implements Display,
          else
             name_ = Source.COLUMN_PREFIX + StringUtil.makeRandomId(12);
       }
-   }
-
-   @Override
-   public String getName()
-   {
-      return name_;
    }
 
    public void addTab(Widget widget,
@@ -182,6 +184,289 @@ public class SourcePane extends LazyPanel implements Display,
          tabPanel_.selectTab(widget);
    }
 
+   public boolean hasTab(Widget widget)
+   {
+      return tabPanel_.getWidgetIndex(widget) >= 0 ? true : false;
+   }
+
+   public void closeTab(Widget child, boolean interactive)
+   {
+      closeTab(child, interactive, null);
+   }
+
+   public void closeTab(Widget child, boolean interactive, Command onClosed)
+   {
+      closeTab(tabPanel_.getWidgetIndex(child), interactive, onClosed);
+   }
+   
+   public void closeTab(int index, boolean interactive)
+   {
+      closeTab(index, interactive, null);
+   }
+
+   public void closeTab(int index, boolean interactive, Command onClosed)
+   {
+      if (interactive)
+         tabPanel_.tryCloseTab(index, onClosed);
+      else
+         tabPanel_.closeTab(index, onClosed);
+   }
+   
+   public void setDirty(Widget widget, boolean dirty)
+   {
+      Widget tab = tabPanel_.getTabWidget(widget);
+      if (dirty)
+         tab.addStyleName(ThemeStyles.INSTANCE.dirtyTab());
+      else
+         tab.removeStyleName(ThemeStyles.INSTANCE.dirtyTab());
+   }
+
+   public void ensureVisible()
+   {
+      events_.fireEvent(new EnsureVisibleEvent(true));
+   }
+
+   public void renameTab(Widget child,
+                         FileIcon icon,
+                         String value,
+                         String tooltip)
+   {
+      tabPanel_.replaceDocName(tabPanel_.getWidgetIndex(child),
+                               icon,
+                               value,
+                               tooltip);
+   }
+
+   public void onNewSourceDoc()
+   {
+      String breakpoint = "breakpoint";
+      EditableFileType fileType = FileTypeRegistry.R;
+
+      TextFileType textType = (TextFileType)fileType;
+      source_.getServer().getSourceTemplate("",
+            "default" + textType.getDefaultExtension(),
+            new ServerRequestCallback<String>()
+            {
+               @Override
+               public void onResponseReceived(String template)
+               {
+                  // Create a new document with the supplied template
+                  newDoc(fileType, template, null);
+               }
+
+               @Override
+               public void onError(ServerError error)
+               {
+                  // Ignore errors; there's just not a template for this type
+                  newDoc(fileType, null, null);
+               }
+            });
+   }
+
+   @Override
+   public void setSource(Source source)
+   {
+      source_ = source;
+   }
+
+   public int getActiveTabIndex()
+   {
+      return tabPanel_.getSelectedIndex();
+   }
+
+   public void selectTab(int tabIndex)
+   {
+      tabPanel_.selectTab(tabIndex);
+   }
+
+   public void selectTab(Widget child)
+   {
+      tabPanel_.selectTab(child);
+   }
+
+   public int getTabCount()
+   {
+      return tabPanel_.getWidgetCount();
+   }
+
+   public void addToPanel(Widget w)
+   {
+      panel_.add(w);
+   }
+
+   @Override
+   public void moveTab(int index, int delta)
+   {
+      tabPanel_.moveTab(index, delta);
+   }
+
+   public HandlerRegistration addTabClosingHandler(TabClosingHandler handler)
+   {
+      return tabPanel_.addTabClosingHandler(handler);
+   }
+
+   public HandlerRegistration addTabCloseHandler(
+         TabCloseHandler handler)
+   {
+      return tabPanel_.addTabCloseHandler(handler);
+   }
+   
+   public HandlerRegistration addTabClosedHandler(TabClosedHandler handler)
+   {
+      return tabPanel_.addTabClosedHandler(handler);
+   }
+
+   @Override
+   public HandlerRegistration addTabReorderHandler(TabReorderHandler handler)
+   {
+      return tabPanel_.addTabReorderHandler(handler);
+   }
+ 
+   public HandlerRegistration addSelectionHandler(SelectionHandler<Integer> handler)
+   {
+      return tabPanel_.addSelectionHandler(handler);
+   }
+
+   public HandlerRegistration addBeforeSelectionHandler(BeforeSelectionHandler<Integer> handler)
+   {
+      return tabPanel_.addBeforeSelectionHandler(handler);
+   }
+
+   public Widget asWidget()
+   {
+      ensureVisible();
+      return this;
+   }
+
+   public HandlerRegistration addEnsureVisibleHandler(EnsureVisibleHandler handler)
+   {
+      return addHandler(handler, EnsureVisibleEvent.TYPE);
+   }
+   
+   public HandlerRegistration addEnsureHeightHandler(
+         EnsureHeightHandler handler)
+   {
+      return addHandler(handler, EnsureHeightEvent.TYPE);
+   }
+
+   @Override
+   public void onMaximizeSourceWindow(MaximizeSourceWindowEvent e)
+   {
+      events_.fireEvent(new EnsureVisibleEvent());
+      events_.fireEvent(new EnsureHeightEvent(EnsureHeightEvent.MAXIMIZED));
+   }
+
+   @Override
+   public void onEnsureVisibleSourceWindow(EnsureVisibleSourceWindowEvent e)
+   {
+      if (getTabCount() > 0)
+      {
+         events_.fireEvent(new EnsureVisibleEvent());
+         events_.fireEvent(new EnsureHeightEvent(EnsureHeightEvent.NORMAL));
+      }
+   }
+
+   public void onResize()
+   {
+      panel_.onResize();
+      manageChevronVisibility();
+   }
+
+   public void manageChevronVisibility()
+   {
+      int tabsWidth = tabPanel_.getTabsEffectiveWidth();
+      setOverflowVisible(tabsWidth > getOffsetWidth() - 50);
+   }
+
+   public void showOverflowPopup()
+   {
+      setOverflowVisible(true);
+      tabOverflowPopup_.showRelativeTo(chevron_);
+   }
+   
+   @Override
+   public void showUnsavedChangesDialog(
+         String title,
+         ArrayList<UnsavedChangesTarget> dirtyTargets,
+         OperationWithInput<UnsavedChangesDialog.Result> saveOperation,
+         Command onCancelled)
+   {
+      new UnsavedChangesDialog(title, 
+                               dirtyTargets,
+                               saveOperation,
+                               onCancelled).showModal();
+   }
+
+   private void setOverflowVisible(boolean visible)
+   {
+      utilPanel_.setVisible(visible);
+      chevron_.setVisible(visible);
+   }
+
+   public void onBeforeShow()
+   {
+      for (Widget w : panel_)
+         if (w instanceof BeforeShowCallback)
+            ((BeforeShowCallback)w).onBeforeShow();
+      events_.fireEvent(new BeforeShowEvent());
+   }
+
+   public HandlerRegistration addBeforeShowHandler(BeforeShowHandler handler)
+   {
+      return addHandler(handler, BeforeShowEvent.TYPE);
+   }
+
+   public void onVisibilityChanged(boolean visible)
+   {
+      if (getActiveTabIndex() >= 0)
+      {
+         Widget w = tabPanel_.getTabWidget(getActiveTabIndex());
+         if (w instanceof RequiresVisibilityChanged)
+            ((RequiresVisibilityChanged)w).onVisibilityChanged(visible);
+      }
+   }
+   
+   public void cancelTabDrag()
+   {
+      tabPanel_.cancelTabDrag();
+   }
+
+   private void newDoc(EditableFileType fileType,
+                       final String contents,
+                       final ResultCallback<EditingTarget, ServerError> resultCallback)
+   {
+      ensureVisible();
+      source_.getServer().newDocument(
+            fileType.getTypeId(),
+            contents,
+            JsObject.createJsObject(),
+            new SimpleRequestCallback<SourceDocument>(
+               "Error Creating New Document")
+            {
+               @Override
+               public void onResponseReceived(SourceDocument newDoc)
+               {
+                  EditingTarget target = addTab(newDoc, OPEN_INTERACTIVE);
+
+                  if (contents != null)
+                  {
+                     target.forceSaveCommandActive();
+                     //manageSaveCommands(); !!! how will this work?
+                  }
+   
+                  if (resultCallback != null)
+                     resultCallback.onSuccess(target);
+               }
+
+               @Override
+               public void onError(ServerError error)
+               {
+                  if (resultCallback != null)
+                     resultCallback.onFailure(error);
+               }
+            });
+   }
+
    private EditingTarget addTab(SourceDocument doc, int mode)
    {
       final String defaultNamePrefix = source_.getEditingTargetSource().getDefaultNamePrefix(doc);
@@ -193,14 +478,13 @@ public class SourcePane extends LazyPanel implements Display,
                   return source_.getNextDefaultName(defaultNamePrefix);
                }
             });
-      final Widget widget = target.asWidget();
+      final Widget widget = createWidget(target);
 
       int position = getActiveTabIndex() + 1;
 
       // we're inserting into an existing permuted tabset -- push aside
       // any tabs physically to the right of this tab
       editors_.add(position, target);
-      source_.addEditor(target);
       for (int i = 0; i < tabOrder_.size(); i++)
       {
          int pos = tabOrder_.get(i);
@@ -278,274 +562,9 @@ public class SourcePane extends LazyPanel implements Display,
       return target;
    }
 
-   public boolean hasTab(Widget widget)
+   private Widget createWidget(EditingTarget target)
    {
-      return tabPanel_.getWidgetIndex(widget) >= 0 ? true : false;
-   }
-
-   public void closeTab(Widget child, boolean interactive)
-   {
-      closeTab(child, interactive, null);
-   }
-
-   public void closeTab(Widget child, boolean interactive, Command onClosed)
-   {
-      closeTab(tabPanel_.getWidgetIndex(child), interactive, onClosed);
-   }
-   
-   public void closeTab(int index, boolean interactive)
-   {
-      closeTab(index, interactive, null);
-   }
-
-   public void closeTab(int index, boolean interactive, Command onClosed)
-   {
-      if (interactive)
-         tabPanel_.tryCloseTab(index, onClosed);
-      else
-         tabPanel_.closeTab(index, onClosed);
-   }
-   
-   public void setDirty(Widget widget, boolean dirty)
-   {
-      Widget tab = tabPanel_.getTabWidget(widget);
-      if (dirty)
-         tab.addStyleName(ThemeStyles.INSTANCE.dirtyTab());
-      else
-         tab.removeStyleName(ThemeStyles.INSTANCE.dirtyTab());
-   }
-
-   public void ensureVisible()
-   {
-      fireEvent(new EnsureVisibleEvent());
-   }
-
-   public void renameTab(Widget child,
-                         FileIcon icon,
-                         String value,
-                         String tooltip)
-   {
-      tabPanel_.replaceDocName(tabPanel_.getWidgetIndex(child),
-                               icon,
-                               value,
-                               tooltip);
-   }
-
-   public void onNewSourceDoc()
-   {
-      String breakpoint = "breakpoint";
-      EditableFileType fileType = FileTypeRegistry.R;
-
-      TextFileType textType = (TextFileType)fileType;
-      source_.getServer().getSourceTemplate("",
-            "default" + textType.getDefaultExtension(),
-            new ServerRequestCallback<String>()
-            {
-               @Override
-               public void onResponseReceived(String template)
-               {
-                  // Create a new document with the supplied template
-                  newDoc(fileType, template, null);
-               }
-
-               @Override
-               public void onError(ServerError error)
-               {
-                  // Ignore errors; there's just not a template for this type
-                  newDoc(fileType, null, null);
-               }
-            });
-   }
-
-   @Override
-   public void setSource(Source source)
-   {
-      source_ = source;
-   }
-
-   public int getActiveTabIndex()
-   {
-      return tabPanel_.getSelectedIndex();
-   }
-
-   public void selectTab(int tabIndex)
-   {
-      tabPanel_.selectTab(tabIndex);
-   }
-
-   public void selectTab(Widget child)
-   {
-      tabPanel_.selectTab(child);
-   }
-
-   public int getTabCount()
-   {
-      return tabPanel_.getWidgetCount();
-   }
-
-   @Override
-   public void moveTab(int index, int delta)
-   {
-      tabPanel_.moveTab(index, delta);
-   }
-
-   public HandlerRegistration addTabClosingHandler(TabClosingHandler handler)
-   {
-      return tabPanel_.addTabClosingHandler(handler);
-   }
-
-   public HandlerRegistration addTabCloseHandler(
-         TabCloseHandler handler)
-   {
-      return tabPanel_.addTabCloseHandler(handler);
-   }
-   
-   public HandlerRegistration addTabClosedHandler(TabClosedHandler handler)
-   {
-      return tabPanel_.addTabClosedHandler(handler);
-   }
-
-   @Override
-   public HandlerRegistration addTabReorderHandler(TabReorderHandler handler)
-   {
-      return tabPanel_.addTabReorderHandler(handler);
-   }
- 
-   public HandlerRegistration addSelectionHandler(SelectionHandler<Integer> handler)
-   {
-      return tabPanel_.addSelectionHandler(handler);
-   }
-
-   public HandlerRegistration addBeforeSelectionHandler(BeforeSelectionHandler<Integer> handler)
-   {
-      return tabPanel_.addBeforeSelectionHandler(handler);
-   }
-
-   public Widget asWidget()
-   {
-      return this;
-   }
-
-   public HandlerRegistration addEnsureVisibleHandler(EnsureVisibleHandler handler)
-   {
-      return addHandler(handler, EnsureVisibleEvent.TYPE);
-   }
-   
-   @Override
-   public HandlerRegistration addEnsureHeightHandler(
-         EnsureHeightHandler handler)
-   {
-      return addHandler(handler, EnsureHeightEvent.TYPE);
-   }
-
-   @Override
-   public void onMaximizeSourceWindow(MaximizeSourceWindowEvent e)
-   {
-      events_.fireEvent(new EnsureVisibleEvent());
-      events_.fireEvent(new EnsureHeightEvent(EnsureHeightEvent.MAXIMIZED));
-   }
-
-   public void onResize()
-   {
-      panel_.onResize();
-      manageChevronVisibility();
-   }
-
-   @Override
-   public void onDocWindowChanged(final DocWindowChangedEvent e)
-   {
-   }
-
-   public void manageChevronVisibility()
-   {
-      int tabsWidth = tabPanel_.getTabsEffectiveWidth();
-      setOverflowVisible(tabsWidth > getOffsetWidth() - 50);
-   }
-
-   public void showOverflowPopup()
-   {
-      setOverflowVisible(true);
-      tabOverflowPopup_.showRelativeTo(chevron_);
-   }
-   
-   @Override
-   public void showUnsavedChangesDialog(
-         String title,
-         ArrayList<UnsavedChangesTarget> dirtyTargets,
-         OperationWithInput<UnsavedChangesDialog.Result> saveOperation,
-         Command onCancelled)
-   {
-      new UnsavedChangesDialog(title, 
-                               dirtyTargets,
-                               saveOperation,
-                               onCancelled).showModal();
-   }
-
-   private void setOverflowVisible(boolean visible)
-   {
-      utilPanel_.setVisible(visible);
-      chevron_.setVisible(visible);
-   }
-
-   public void onBeforeShow()
-   {
-      fireEvent(new BeforeShowEvent());
-   }
-
-   public HandlerRegistration addBeforeShowHandler(BeforeShowHandler handler)
-   {
-      return addHandler(handler, BeforeShowEvent.TYPE);
-   }
-
-   public void onVisibilityChanged(boolean visible)
-   {
-      if (getActiveTabIndex() >= 0)
-      {
-         Widget w = tabPanel_.getTabWidget(getActiveTabIndex());
-         if (w instanceof RequiresVisibilityChanged)
-            ((RequiresVisibilityChanged)w).onVisibilityChanged(visible);
-      }
-   }
-   
-   public void cancelTabDrag()
-   {
-      tabPanel_.cancelTabDrag();
-   }
-
-   private void newDoc(EditableFileType fileType,
-                       final String contents,
-                       final ResultCallback<EditingTarget, ServerError> resultCallback)
-   {
-      ensureVisible();
-      source_.getServer().newDocument(
-            fileType.getTypeId(),
-            contents,
-            JsObject.createJsObject(),
-            new SimpleRequestCallback<SourceDocument>(
-               "Error Creating New Document")
-            {
-               @Override
-               public void onResponseReceived(SourceDocument newDoc)
-               {
-                  EditingTarget target = addTab(newDoc, OPEN_INTERACTIVE);
-
-                  if (contents != null)
-                  {
-                     target.forceSaveCommandActive();
-                     //manageSaveCommands(); !!! how will this work?
-                  }
-
-                  if (resultCallback != null)
-                     resultCallback.onSuccess(target);
-               }
-
-               @Override
-               public void onError(ServerError error)
-               {
-                  if (resultCallback != null)
-                     resultCallback.onFailure(error);
-               }
-            });
+      return target.asWidget();
    }
 
    private String name_;
@@ -559,8 +578,5 @@ public class SourcePane extends LazyPanel implements Display,
    ArrayList<EditingTarget> editors_ = new ArrayList<EditingTarget>();
    ArrayList<Integer> tabOrder_ = new ArrayList<Integer>();
 
-   public final static int TYPE_FILE_BACKED = 0;
-   public final static int TYPE_UNTITLED    = 1;
    public final static int OPEN_INTERACTIVE = 0;
-   public final static int OPEN_REPLAY      = 1;
 }
