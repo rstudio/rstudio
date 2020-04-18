@@ -6,7 +6,9 @@ pandoc schema: <https://github.com/jgm/pandoc-types/blob/master/Text/Pandoc/Defi
 
 ## TODO
 
-When detecting a format change, consider prompting for a full reload of the editor
+
+Create node/mark type for format comment. Hidden in editor, auto
+reload panmirror when the format text changes.
 
 Consider settings for:
   - Editor width in pixels
@@ -24,12 +26,15 @@ Implement shortcode handling (https://gohugo.io/content-management/shortcodes/)
 For .unnumbered write all the attributes with writeRawMarkdown (with quote escaping and \ escaping)
 Bookdown parts: eliminate the \ in (PART\*) if they type it (check if it's H1 only)
 
+Consider math in code feature (wrap/unwrap)
+
 Link popups no longer truncated (see advanced_ui.Rmd)
 Positioning of ellipses in props button
 
 Alison on blogdown engines, etc.
 
 Bookdown & Blogdown docs:
+  - Math in code
   - @ref has no \
   - Heading parts (need to explicitly use .unnumbered and don't use the \* escape)
   - Using blackfriday explicitly
