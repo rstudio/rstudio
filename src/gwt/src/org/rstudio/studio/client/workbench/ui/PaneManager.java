@@ -281,7 +281,6 @@ public class PaneManager
       panes_ = createPanes(config);
       left_ = createSplitWindow(panes_.get(0), panes_.get(1), LEFT_COLUMN, 0.4, splitterSize);
       right_ = createSplitWindow(panes_.get(2), panes_.get(3), RIGHT_COLUMN, 0.6, splitterSize);
-
       panel_ = pSplitPanel.get();
 
       // get the widgets for the extra source columns to be displayed
@@ -293,19 +292,19 @@ public class PaneManager
          sourceColumns =  new ArrayList<Widget>();
       panel_.initialize(sourceColumns, left_, right_);
 
-     // count the number of source docs assigned to this window
-     JsArray<SourceDocument> docs = 
-           session_.getSessionInfo().getSourceDocuments();
-     String windowId = SourceWindowManager.getSourceWindowId();
-     int numDocs = 0;
-     for (int i = 0; i < docs.length(); i++)
-     {
-        String docWindowId = docs.get(i).getSourceWindowId();
-        if (docWindowId == windowId)
-        {
-           numDocs++;
-        }
-     }
+      // count the number of source docs assigned to this window
+      JsArray<SourceDocument> docs = 
+            session_.getSessionInfo().getSourceDocuments();
+      String windowId = SourceWindowManager.getSourceWindowId();
+      int numDocs = 0;
+      for (int i = 0; i < docs.length(); i++)
+      {
+         String docWindowId = docs.get(i).getSourceWindowId();
+         if (docWindowId == windowId)
+         {
+            numDocs++;
+         }
+      }
       
       for (LogicalWindow window : sourceLogicalWindows_)
       {
