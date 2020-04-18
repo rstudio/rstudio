@@ -79,13 +79,8 @@ const key = new PluginKey<DecorationSet>('attr_edit_decoration');
 
 class AttrEditDecorationPlugin extends Plugin<DecorationSet> {
   constructor(ui: EditorUI, editors: AttrEditOptions[]) {
-    let editorView: EditorView;
     super({
       key,
-      view(view: EditorView) {
-        editorView = view;
-        return {};
-      },
       state: {
         init: (_config: { [key: string]: any }) => {
           return DecorationSet.empty;
@@ -120,73 +115,70 @@ class AttrEditDecorationPlugin extends Plugin<DecorationSet> {
             const tags = editor.tags(node);
 
             // create a unique key to avoid recreating the decorator when the selection changes
-            const specKey = `attr_edit_decoration_pos:${parentWithAttrs.pos}tags:${tags.join('/')}`;
-        
-            // if the old popup already has a decoration for this key then just use it
-            if (old.find(undefined, undefined, spec => spec.key === specKey).length) {
-              return old.map(tr.mapping, tr.doc);
-            }
-
-            // does the offsetParent have any right padding we need to offset for?
-            // we normally use right: 5px for positioning but that is relative to
-            // the edge of the offsetParent. However, some offset parents (e.g. a 
-            // td or a nested div) have their own internal padding to account for
-            // so we look for it here
-            let rightPaddingOffset = 0;
-            const attrsNode = editorView.nodeDOM(parentWithAttrs.pos);
-            if (attrsNode) {
-              const attrsEl = attrsNode as HTMLElement;
-              if (attrsEl.offsetParent) {
-                const offsetParentStyle = window.getComputedStyle(attrsEl.offsetParent);
-                rightPaddingOffset = -parseInt(offsetParentStyle.paddingRight!, 10) || 0;
-              }
-            }
-          
-            // cacculate position offsets
-            const xOffset = rightPaddingOffset;
-            const yOffset = (13 / 2) + 1; // 13 is from height defined in attr_edit-decoration.css
-            const cssProps: React.CSSProperties = {
-              transform: `translate(${xOffset}px,-${yOffset}px)`
-            };
-
-            // create attr edit react component
-            const attrEdit = (
-              <AttrEditDecoration
-                tags={tags}
-                attrs={attrs}
-                editFn={editor.editFn(ui)}
-                view={editorView}
-                ui={ui}
-                style={cssProps}
-              />
-            );
-
-            // create decorator and render attr editor into it
-            const decoration = window.document.createElement('div');
-            reactRenderForEditorView(attrEdit, decoration, editorView);
-
-            // decorations to return
-            const decorations: Decoration[] = [];
+            const specKey = `tags:${tags.join('/')}`;
             
             // attr_edit controls
-            decorations.push(Decoration.widget(parentWithAttrs.pos, decoration, 
+            const attrEditDecoration = Decoration.widget(
+              parentWithAttrs.pos, 
+              (view: EditorView, getPos: () => number) => {
+
+                // does the offsetParent have any right padding we need to offset for?
+                // we normally use right: 5px for positioning but that is relative to
+                // the edge of the offsetParent. However, some offset parents (e.g. a 
+                // td or a nested div) have their own internal padding to account for
+                // so we look for it here
+                let rightPaddingOffset = 0;
+                const attrsNode = view.nodeDOM(getPos());
+                if (attrsNode) {
+                  const attrsEl = attrsNode as HTMLElement;
+                  if (attrsEl.offsetParent) {
+                    const offsetParentStyle = window.getComputedStyle(attrsEl.offsetParent);
+                    rightPaddingOffset = -parseInt(offsetParentStyle.paddingRight!, 10) || 0;
+                  }
+                }
+              
+                // cacculate position offsets
+                const xOffset = rightPaddingOffset;
+                const yOffset = (13 / 2) + 1; // 13 is from height defined in attr_edit-decoration.css
+                const cssProps: React.CSSProperties = {
+                  transform: `translate(${xOffset}px,-${yOffset}px)`
+                };
+
+                 // create attr edit react component
+                const attrEdit = (
+                  <AttrEditDecoration
+                    tags={tags}
+                    attrs={attrs}
+                    editFn={editor.editFn!(ui)}
+                    view={view}
+                    ui={ui}
+                    style={cssProps}
+                  />
+                );
+
+                // create decorator and render attr editor into it
+                const decoration = window.document.createElement('div');
+                reactRenderForEditorView(attrEdit, decoration, view);
+
+                return decoration;
+              }, 
               { 
-                key: specKey,
+                // re-use existing instance for same tags
+                key: `${tags.join('/')}`,
                 ignoreSelection: true,
                 stopEvent: () => {
                   return true;
                 }
-              })
+              }
             );
 
             // return decorations
-            return DecorationSet.create(tr.doc, decorations);
+            return DecorationSet.create(tr.doc, [attrEditDecoration]);
 
           } else {
             return DecorationSet.empty;
           }
 
-          
          
         },
       },
