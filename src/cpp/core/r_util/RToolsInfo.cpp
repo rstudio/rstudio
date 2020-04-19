@@ -245,10 +245,8 @@ std::string RToolsInfo::url(const std::string& repos) const
 
    if (name() == "4.0")
    {
-      // TODO: Currently, Rtools 4.0 is only available from the 'testing'
-      // sub-directory. Update this URL once it's been promoted.
       std::string arch = core::system::isWin64() ? "x86_64" : "i686";
-      std::string suffix = "bin/windows/testing/rtools40-" + arch + ".exe";
+      std::string suffix = "bin/windows/Rtools/rtools40-" + arch + ".exe";
       url = core::http::URL::complete(repos, suffix);
    }
    else
