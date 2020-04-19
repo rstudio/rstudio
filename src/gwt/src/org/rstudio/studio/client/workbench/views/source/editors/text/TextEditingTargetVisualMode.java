@@ -44,6 +44,7 @@ import org.rstudio.studio.client.panmirror.format.PanmirrorHugoExtensions;
 import org.rstudio.studio.client.panmirror.format.PanmirrorRmdExtensions;
 import org.rstudio.studio.client.panmirror.pandoc.PanmirrorPandocFormat;
 import org.rstudio.studio.client.panmirror.uitools.PanmirrorFormatComment;
+import org.rstudio.studio.client.panmirror.uitools.PanmirrorUITools;
 import org.rstudio.studio.client.panmirror.uitools.PanmirrorUIToolsFormat;
 import org.rstudio.studio.client.rmarkdown.model.YamlFrontMatter;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
@@ -185,7 +186,19 @@ public class TextEditingTargetVisualMode
    
    public void syncFromEditor(Command ready, boolean focus)
    {      
+      // flag to prevent the document being set to dirty when loading
+      // from source mode
       loadingFromSource_ = true;
+      
+      // if there is a previous format comment and it's changed then
+      // we need to tear down the editor instance and create a new one
+      if (panmirrorFormatComment_ != null && panmirrorFormatComment_.hasChanged()) 
+      {
+         panmirrorFormatComment_ = null;
+         view_.editorContainer().removeWidget(panmirror_);
+         panmirror_ = null;
+      }
+      
       withPanmirror(() -> {
          
          panmirror_.setMarkdown(getEditorCode(), true, (done) -> {  
@@ -434,9 +447,11 @@ public class TextEditingTargetVisualMode
          PanmirrorWidget.Options widgetOptions = new PanmirrorWidget.Options();
          PanmirrorWidget.create(context, panmirrorFormat(), options, widgetOptions, (panmirror) -> {
          
-         
             // save reference to panmirror
             panmirror_ = panmirror;
+            
+            // track format comment (used to detect when we need to reload for a new format)
+            panmirrorFormatComment_ = new FormatComment(new PanmirrorUITools().format);
             
             // remove some keybindings that conflict with the ide
             disableKeys(
@@ -812,6 +827,25 @@ public class TextEditingTargetVisualMode
       }
    }
    
+   private class FormatComment
+   {
+      public FormatComment(PanmirrorUIToolsFormat formatTools)
+      {
+         formatTools_ = formatTools;
+         comment_ = formatTools_.parseFormatComment(getEditorCode());
+      }
+      
+      public boolean hasChanged()
+      {
+         PanmirrorFormatComment comment = formatTools_.parseFormatComment(getEditorCode());
+         return !PanmirrorFormatComment.areEqual(comment,  comment_);   
+      }
+      
+      private final PanmirrorUIToolsFormat formatTools_;
+      private final PanmirrorFormatComment comment_;
+   }
+   
+   
    private Commands commands_;
    private UserPrefs prefs_;
    private WorkbenchContext context_;
@@ -832,6 +866,7 @@ public class TextEditingTargetVisualMode
    private DebouncedCommand saveLocationOnIdle_;
    
    private PanmirrorWidget panmirror_;
+   private FormatComment panmirrorFormatComment_;
    
    private final ProgressPanel progress_;
    

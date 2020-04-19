@@ -147,6 +147,22 @@ public class TextEditorContainer extends LayoutPanel implements CanFocus
       forceLayout();
    }
    
+   // remove a widget
+   public boolean removeWidget(IsHideableWidget widget)
+   {
+      if (widget != null)
+      {
+         widgets_.remove(widget);
+         remove(widget.asWidget());
+         forceLayout();
+         return true;
+      } 
+      else
+      {
+         return false;
+      }
+   }
+   
    
    // add a widget (not activated by default)
    private void addWidget(IsHideableWidget widget)

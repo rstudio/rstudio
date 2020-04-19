@@ -15,6 +15,8 @@
 
 package org.rstudio.studio.client.panmirror.uitools;
 
+import org.rstudio.core.client.StringUtil;
+
 import jsinterop.annotations.JsType;
 
 @JsType
@@ -24,5 +26,16 @@ public class PanmirrorFormatComment
    public String extensions;
    public double fillColumn;
    public String[] doctypes;
+   
+   public static boolean areEqual(PanmirrorFormatComment a, PanmirrorFormatComment b)
+   {
+      String aDoctypes = a.doctypes != null ? String.join(",", a.doctypes) : "";
+      String bDoctypes = b.doctypes != null ? String.join(",", b.doctypes) : "";
+      
+      return StringUtil.equals(a.mode, b.mode) &&
+             StringUtil.equals(a.extensions, b.extensions) &&
+             a.fillColumn == b.fillColumn &&
+             aDoctypes == bDoctypes;         
+   }
 }
 
