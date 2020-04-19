@@ -41,6 +41,43 @@ export interface PandocFormatComment {
   mode?: string;
   extensions?: string;
   fillColumn?: number;
+  doctypes?: string[];
+}
+
+export function pandocFormatCommentFromCode(code: string): PandocFormatComment {
+  const magicCommentRegEx = /^<!--\s+-\*-([\s\S]*?)-\*-\s+-->\s*$/m;
+  const keyValueRegEx = /^([^:]+):\s*(.*)$/;
+  const match = code.match(magicCommentRegEx);
+  if (match) {
+    const comment = match[1];
+    // split into semicolons
+    const fields = comment.split(/\s*;\s/).map(field => field.trim());
+    const variables: { [key: string]: string } = {};
+    fields.forEach(field => {
+      const keyValueMatch = field.match(keyValueRegEx);
+      if (keyValueMatch) {
+        variables[keyValueMatch[1].trim()] = keyValueMatch[2].trim();
+      }
+    });
+    const formatComment: PandocFormatComment = {
+      
+    };
+    if (variables.mode) {
+      formatComment.mode = variables.mode;
+    }
+    if (variables.extensions) {
+      formatComment.extensions = variables.extensions;
+    }
+    if (variables['fill-column']) {
+      formatComment.fillColumn = parseInt(variables['fill-column'], 10) || undefined;
+    }
+    if (variables.doctype) {
+      formatComment.doctypes = variables.doctype.split(',').map(str => str.trim());
+    } 
+    return formatComment;
+  } else {
+    return {};
+  }
 }
 
 export async function resolvePandocFormat(pandoc: PandocEngine, format: string) {
@@ -149,68 +186,6 @@ function parseExtensions(options: string) {
 export function pandocFormatWith(format: string, prepend: string, append: string) {
   const split = splitPandocFormatString(format);
   return `${split.format}${prepend}${split.options}${append}`;
-}
-
-export function pandocFormatCommentFromCode(code: string): PandocFormatComment {
-  const magicCommentRegEx = /^<!--\s+-\*-([\s\S]*?)-\*-\s+-->\s*$/m;
-  const keyValueRegEx = /^([^:]+):\s*(.*)$/;
-  const match = code.match(magicCommentRegEx);
-  if (match) {
-    const comment = match[1];
-    // split into semicolons
-    const fields = comment.split(/\s*;\s/).map(field => field.trim());
-    const variables: { [key: string]: string } = {};
-    fields.forEach(field => {
-      const keyValueMatch = field.match(keyValueRegEx);
-      if (keyValueMatch) {
-        variables[keyValueMatch[1].trim()] = keyValueMatch[2].trim();
-      }
-    });
-    const formatComment: PandocFormatComment = {};
-    if (variables.mode) {
-      formatComment.mode = variables.mode;
-    }
-    if (variables.extensions) {
-      formatComment.extensions = variables.extensions;
-    }
-    if (variables['fill-column']) {
-      formatComment.fillColumn = parseInt(variables['fill-column'], 10) || undefined;
-    }
-    return formatComment;
-  } else {
-    return {};
-  }
-}
-
-export function pandocFormatCommentFromState(state: EditorState): PandocFormatComment {
-  let comment: PandocFormatComment = {};
-  let foundFirstRawInline = false;
-  state.doc.descendants((node, pos) => {
-    // don't search once we've found our target
-    if (foundFirstRawInline) {
-      return false;
-    }
-    // if it's a text node with a raw-html then scan it for the format comment
-    if (node.isText && state.schema.marks.raw_html.isInSet(node.marks)) {
-      foundFirstRawInline = true;
-      comment = pandocFormatCommentFromCode(node.textContent);
-      return false;
-    } else {
-      return true;
-    }
-  });
-  return comment;
-}
-
-export function resolvePandocFormatComment(formatComment: PandocFormatComment, defaultFormat: string) {
-  const format = splitPandocFormatString(defaultFormat);
-  if (formatComment.mode) {
-    format.format = formatComment.mode;
-    format.options = formatComment.extensions || '';
-  } else if (formatComment.extensions) {
-    format.options = formatComment.extensions;
-  }
-  return format.format + format.options;
 }
 
 export function splitPandocFormatString(format: string) {

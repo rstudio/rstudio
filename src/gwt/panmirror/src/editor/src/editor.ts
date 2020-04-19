@@ -37,11 +37,8 @@ import { EditorEvent } from './api/events';
 import {
   PandocFormat,
   resolvePandocFormat,
-  splitPandocFormatString,
   PandocFormatComment,
-  resolvePandocFormatComment,
-  pandocFormatCommentFromCode,
-  pandocFormatCommentFromState,
+  pandocFormatCommentFromCode
 } from './api/pandoc_format';
 import { baseKeysPlugin } from './api/basekeys';
 import {
@@ -58,6 +55,7 @@ import { FixupContext } from './api/fixup';
 import { unitToPixels, pixelsToUnit, roundUnit, kValidUnits } from './api/image';
 import { kPercentUnit } from './api/css';
 import { defaultEditorUIImages } from './api/ui-images';
+import { EditorFormat } from './api/format';
 
 import { getTitle, setTitle } from './nodes/yaml_metadata/yaml_metadata-title';
 
@@ -94,7 +92,6 @@ export interface EditorCode {
 
 export interface EditorContext {
   readonly pandoc: PandocEngine;
-  readonly format: string;
   readonly ui: EditorUI;
   readonly hooks?: EditorHooks;
   readonly extensions?: readonly Extension[];
@@ -140,9 +137,14 @@ export interface UIToolsImage {
   roundUnit(value: number, unit: string): string;
 }
 
+export interface UIToolsFormat {
+  parseFormatComment(markdown: string): PandocFormatComment;
+}
+
 export class UITools {
   public readonly attr: UIToolsAttr;
   public readonly image: UIToolsImage;
+  public readonly format: UIToolsFormat;
 
   constructor() {
     this.attr = {
@@ -157,6 +159,10 @@ export class UITools {
       pixelsToUnit,
       roundUnit,
     };
+
+    this.format = {
+      parseFormatComment: pandocFormatCommentFromCode
+    };
   }
 }
 
@@ -170,11 +176,10 @@ export class Editor {
   // options (derived from defaults + config)
   private readonly options: EditorOptions;
 
-  // pandoc format used for reading and writing markdown
-  // note that this can change from what is specified at
-  // construction time based on magic comments being
-  // provided within the document
-  private pandocFormat: PandocFormat;
+  // format (pandocFormat includes additional diagnostics based on the validity of
+  // provided mode + extensions)
+  private readonly format: EditorFormat;
+  private readonly pandocFormat: PandocFormat;
 
   // pandoc capabilities
   private pandocCapabilities: PandocCapabilities;
@@ -199,52 +204,61 @@ export class Editor {
   public static async create(
     parent: HTMLElement,
     context: EditorContext,
-    options: EditorOptions,
-    markdown: string,
+    format: EditorFormat,
+    options: EditorOptions
   ): Promise<Editor> {
-    // provide default options
+
+    // provide option defaults
     options = {
       autoFocus: false,
       spellCheck: false,
-      codemirror: true,
-      braceMatching: true,
-      rmdCodeChunks: false,
+      codemirror: false,
       rmdImagePreview: false,
-      rmdBookdownXRef: false,
-      rmdBookdownXRefCommand: false,
-      rmdBlogdownShortcodes: false,
-      formatComment: true,
+      className: '',
       ...options,
+    };
+
+    // provide format defaults
+    format = {
+      pandocMode: 'markdown',
+      pandocExtensions: '',
+      rmdExtensions: {
+        codeChunks: false,
+        bookdownXRef: false,
+        ...format.rmdExtensions
+      },
+      hugoExtensions: {
+        shortcodes: false,
+        ...format.hugoExtensions
+      },
+      wrapColumn: 0,
+      docTypes: [],
+      ...format,
     };
 
     // provide context defaults
     context = {
-      ...context,
       ui: {
-        ...context.ui,
         images: {
           ...defaultEditorUIImages(),
           ...context.ui.images
-        }
-      }
+        },
+        ...context.ui,
+      },
+      ...context,
     };
-    
-    // default format to what is specified in the config
-    let format = context.format;
-
-    // if markdown was specified then try to read the format from it
-    if (markdown && options.formatComment) {
-      format = resolvePandocFormatComment(pandocFormatCommentFromCode(markdown), format);
-    }
 
     // resolve the format
-    const pandocFmt = await resolvePandocFormat(context.pandoc, format);
+    const pandocFmt = await resolvePandocFormat(
+      context.pandoc, 
+      format.pandocMode + format.pandocExtensions
+    );
 
     // get pandoc capabilities
     const pandocCapabilities = await getPandocCapabilities(context.pandoc);
 
     // create editor
-    const editor = new Editor(parent, context, options, pandocFmt, pandocCapabilities);
+    const editor = new Editor(parent, context, options, format, pandocFmt, pandocCapabilities);
 
     // return editor
     return Promise.resolve(editor);
@@ -254,6 +268,7 @@ export class Editor {
     parent: HTMLElement, 
     context: EditorContext, 
     options: EditorOptions, 
+    format: EditorFormat,
     pandocFormat: PandocFormat,
     pandocCapabilities: PandocCapabilities) 
   {
@@ -261,6 +276,7 @@ export class Editor {
     this.parent = parent;
     this.context = context;
     this.options = options;
+    this.format = format;
     this.keybindings = {};
     this.pandocFormat = pandocFormat;
     this.pandocCapabilities = pandocCapabilities;
@@ -350,9 +366,7 @@ export class Editor {
   }
 
   public async setMarkdown(markdown: string, preserveHistory: boolean, emitUpdate = true): Promise<boolean> {
-    // update format from source code magic comments
-    await this.updatePandocFormat(pandocFormatCommentFromCode(markdown));
-
+     
     // get the doc
     const doc = await this.pandocConverter.toProsemirror(markdown, this.pandocFormat.fullName);
 
@@ -393,16 +407,9 @@ export class Editor {
   }
 
   public async getMarkdown(options: PandocWriterOptions, cursorSentinel: boolean): Promise<EditorCode> {
-    // get current format comment
-    const formatComment = pandocFormatCommentFromState(this.state);
-
-    // update format from source code magic comments
-    await this.updatePandocFormat(formatComment);
-
+    
     // override wrapColumn option if it was specified
-    if (this.options.formatComment) {
-      options.wrapColumn = formatComment.fillColumn || options.wrapColumn;
-    }
+    options.wrapColumn = this.format.wrapColumn || options.wrapColumn;
 
     // apply layout fixups
     this.applyFixups(FixupContext.Save);
@@ -530,26 +537,6 @@ export class Editor {
     return this.pandocFormat;
   }
 
-  private async updatePandocFormat(formatComment: PandocFormatComment) {
-    // don't do it if our options tell us not to
-    if (!this.options.formatComment) {
-      return;
-    }
-
-    // start with existing format
-    const existingFormat = splitPandocFormatString(this.pandocFormat.fullName);
-
-    // determine the target format (this is either from a format comment
-    // or alternatively based on the default format)
-    const targetFormat = splitPandocFormatString(resolvePandocFormatComment(formatComment, this.context.format));
-
-    // if this differs from the one in the source code, then update the format
-    if (targetFormat.format !== existingFormat.format || targetFormat.options !== existingFormat.options) {
-      const format = targetFormat.format + targetFormat.options;
-      this.pandocFormat = await resolvePandocFormat(this.context.pandoc, format);
-    }
-  }
-
   private dispatchTransaction(tr: Transaction) {
     // track previous outline
     const previousOutline = getOutline(this.state);
@@ -593,6 +580,7 @@ export class Editor {
 
   private initExtensions() {
     return initExtensions(
+      this.format,
       this.options,
       this.context.ui,
       { subscribe: this.subscribe.bind(this) },

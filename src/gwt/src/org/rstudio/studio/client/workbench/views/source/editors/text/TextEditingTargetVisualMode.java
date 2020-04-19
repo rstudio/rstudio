@@ -35,9 +35,16 @@ import org.rstudio.studio.client.panmirror.PanmirrorKeybindings;
 import org.rstudio.studio.client.panmirror.PanmirrorOptions;
 import org.rstudio.studio.client.panmirror.PanmirrorUIContext;
 import org.rstudio.studio.client.panmirror.PanmirrorWidget;
+import org.rstudio.studio.client.panmirror.PanmirrorWidget.FormatSource;
 import org.rstudio.studio.client.panmirror.PanmirrorWriterOptions;
 import org.rstudio.studio.client.panmirror.command.PanmirrorCommands;
+import org.rstudio.studio.client.panmirror.format.PanmirrorExtendedDocType;
+import org.rstudio.studio.client.panmirror.format.PanmirrorFormat;
+import org.rstudio.studio.client.panmirror.format.PanmirrorHugoExtensions;
+import org.rstudio.studio.client.panmirror.format.PanmirrorRmdExtensions;
 import org.rstudio.studio.client.panmirror.pandoc.PanmirrorPandocFormat;
+import org.rstudio.studio.client.panmirror.uitools.PanmirrorFormatComment;
+import org.rstudio.studio.client.panmirror.uitools.PanmirrorUIToolsFormat;
 import org.rstudio.studio.client.rmarkdown.model.YamlFrontMatter;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.WorkbenchContext;
@@ -60,7 +67,7 @@ import com.google.gwt.view.client.SelectionChangeEvent;
 import com.google.inject.Inject;
 
 
-public class TextEditingTargetVisualMode 
+public class TextEditingTargetVisualMode
 {
    public TextEditingTargetVisualMode(TextEditingTarget target,
                                       TextEditingTarget.Display view,
@@ -422,29 +429,12 @@ public class TextEditingTargetVisualMode
       if (panmirror_ == null)
       {
          // create panmirror
-         String format = defaultMarkdownFormat();
-         PanmirrorContext context = new PanmirrorContext(format, uiContext());
-         
-         // editing options
-         PanmirrorOptions options = new PanmirrorOptions();
-         options.rmdCodeChunks = enableRmdChunks();
-         options.rmdImagePreview = options.rmdCodeChunks;
-         options.rmdBookdownXRef = enableBookdownXRef();
-         options.rmdBookdownXRefCommand = enableBookdownXRefCommand();
-         options.rmdBookdownTheorems = enableBookdownCommands();
-         options.rmdBlogdownShortcodes = enableBlogdownShortcodes();
-            
-         // add focus-visible class to prevent interaction with focus-visible.js
-         // (it ends up attempting to apply the "focus-visible" class b/c ProseMirror
-         // is contentEditable, and that triggers a dom mutation event for ProseMirror,
-         // which in turn causes us to lose table selections)
-         options.className = "focus-visible";
-           
+         PanmirrorContext context = new PanmirrorContext(uiContext());
+         PanmirrorOptions options = panmirrorOptions();   
          PanmirrorWidget.Options widgetOptions = new PanmirrorWidget.Options();
+         PanmirrorWidget.create(context, panmirrorFormat(), options, widgetOptions, (panmirror) -> {
          
          
-         PanmirrorWidget.create(context, options, widgetOptions, getEditorCode(), (panmirror) -> {
-            
             // save reference to panmirror
             panmirror_ = panmirror;
             
@@ -662,63 +652,118 @@ public class TextEditingTargetVisualMode
       return uiContext;
    }
    
-   
-   // default to standard R Markdown unless we've detected that this is 
-   // a blackfriday file (i.e. a .md or .Rmarkdown in a blogdown site)
-   private String defaultMarkdownFormat()
+   private PanmirrorOptions panmirrorOptions()
    {
-      if (enableBlogdownBlackfriday())
-         return "blackfriday";
-      else 
-         return "markdown+autolink_bare_uris+tex_math_single_backslash";
+      // create options
+      PanmirrorOptions options = new PanmirrorOptions();
+      
+      // use embedded codemirror for code blocks
+      options.codemirror = true;
+      
+      // enable rmdImagePreview if we are an executable rmd
+      options.rmdImagePreview = target_.canExecuteChunks();
+      
+      // add focus-visible class to prevent interaction with focus-visible.js
+      // (it ends up attempting to apply the "focus-visible" class b/c ProseMirror
+      // is contentEditable, and that triggers a dom mutation event for ProseMirror,
+      // which in turn causes us to lose table selections)
+      options.className = "focus-visible";
+      
+      return options;
    }
    
-   
-   // check whether rmd chunks can be executed
-   private boolean enableRmdChunks()
+   private FormatSource panmirrorFormat()
    {
-      return target_.canExecuteChunks();
+      return new PanmirrorWidget.FormatSource()
+      {
+         @Override
+         public PanmirrorFormat getFormat(PanmirrorUIToolsFormat formatTools)
+         {
+            // create format
+            PanmirrorFormat format = new PanmirrorFormat();
+            
+            // see if we have a format comment
+            PanmirrorFormatComment formatComment = formatTools.parseFormatComment(getEditorCode());
+            
+            // pandocMode
+            if (formatComment.mode != null)
+               format.pandocMode = formatComment.mode;
+            else if (enableBlogdownBlackfriday())
+               format.pandocMode = "blackfriday";
+            else
+               format.pandocMode = "markdown";
+               
+            // pandocExtensions
+            if (formatComment.extensions != null)
+               format.pandocExtensions = formatComment.extensions;
+            else if (enableBlogdownBlackfriday())
+               format.pandocExtensions = "";
+            else
+               format.pandocExtensions = "+autolink_bare_uris+tex_math_single_backslash";
+            
+            // rmdExtensions
+            format.rmdExtensions = new PanmirrorRmdExtensions();
+            format.rmdExtensions.codeChunks = target_.canExecuteChunks();
+            // support for cross-reference marks is always enabled b/c they would not 
+            // serialize correctly in markdown modes that don't escape @ if not enabled,
+            // and the odds that someone wants to literally write @ref(foo) w/o the leading
+            // \ are vanishingly small)
+            format.rmdExtensions.bookdownXRef = true;
+            
+            // hugoExtensions
+            format.hugoExtensions = new PanmirrorHugoExtensions();
+            // always enable hugo shortcodes (w/o this we can end up destroying
+            // shortcodes during round-tripping, and we don't want to require that 
+            // blogdown files be opened within projects). this idiom is obscure 
+            // enough that it's vanishingly unlikely to affect non-blogdown docs
+            format.hugoExtensions.shortcodes = true;
+            
+            // fillColumn
+            format.wrapColumn = formatComment.fillColumn;
+            
+            // doctypes
+            ArrayList<String> docTypes = new ArrayList<String>();
+            if (formatComment.doctypes == null || formatComment.doctypes.length == 0)
+            {
+               if (isXRefDocument())
+                  docTypes.add(PanmirrorExtendedDocType.xref);
+               if (isBookdownDocument())
+                  docTypes.add(PanmirrorExtendedDocType.bookdown);
+               if (isBlogdownDocument()) 
+               {
+                  docTypes.add(PanmirrorExtendedDocType.blogdown);
+                  docTypes.add(PanmirrorExtendedDocType.hugo);
+               }  
+               format.docTypes = docTypes.toArray(new String[] {});
+            }
+            
+            // return format
+            return format;
+         }
+      };
    }
    
-
-   // support for cross-reference marks is always enabled b/c they would not 
-   // serialize correctly in markdown modes that don't escape @ if not enabled,
-   // and the odds that someone wants to literally write @ref(foo) w/o the leading
-   // \ are vanishingly small)
-   private boolean enableBookdownXRef()
+   private boolean isXRefDocument()
    {
-      return true;
+      return isBookdownDocument() || isBlogdownDocument() || isDistillDocument();
    }
    
-   
-   // enable bookdown specific commands/behaviors
-   private boolean enableBookdownCommands() {
+   private boolean isBookdownDocument() 
+   {
       return sessionInfo_.getBuildToolsBookdownWebsite();
    }
-
-   // enable bookdown cross reference command if appropriate (bookdown, blogdown, distill)
-   // (we don't want the command to appear in documents where it will be a no-op)
-   private boolean enableBookdownXRefCommand()
+   
+   private boolean isBlogdownDocument() 
    {
-      return enableBookdownCommands() || 
-             sessionInfo_.getIsBlogdownProject() ||
-             sessionInfo_.getIsDistillProject() ||
+      return sessionInfo_.getIsBlogdownProject();
+   }
+   
+   private boolean isDistillDocument()
+   {
+      return sessionInfo_.getIsDistillProject() ||
              getOutputFormats().contains("distill::distill_article");
    }
-   
-   
-   
-  
-   
-   // always enable blogdown shortcodes (w/o this we can end up destroying
-   // shortcodes during round-tripping, and we don't want to require that 
-   // blogdown files be opened within projects). this idiom is obscure 
-   // enough that it's vanishingly unlikely to affect non-blogdown docs
-   public boolean enableBlogdownShortcodes()
-   {
-      return true;
-   }
-   
+ 
    // automatically enable blackfriday markdown engine if this is a blogdown
    // file that isn't an Rmd (e.g. .md or .Rmarkdown). 
    private boolean enableBlogdownBlackfriday()

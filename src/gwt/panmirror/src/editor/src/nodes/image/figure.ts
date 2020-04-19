@@ -52,6 +52,7 @@ import { inlineHTMLIsImage } from './image-util';
 import './figure-styles.css';
 import { PandocCapabilities } from '../../api/pandoc_capabilities';
 import { withScopedMapping, MappingFn } from '../../api/transaction';
+import { EditorFormat } from '../../api/format';
 
 const plugin = new PluginKey('figure');
 
@@ -59,6 +60,7 @@ const extension = (
   pandocExtensions: PandocExtensions,
   _pandocCapabilities: PandocCapabilities,
   ui: EditorUI,
+  _format: EditorFormat,
   _options: EditorOptions,
   events: EditorEvents,
 ): Extension | null => {

@@ -1,5 +1,5 @@
 /*
- * PanmirrorUITools.java
+ * PanmirrorMarkdownFormat.java
  *
  * Copyright (C) 2009-20 by RStudio, PBC
  *
@@ -13,16 +13,19 @@
  *
  */
 
+package org.rstudio.studio.client.panmirror.format;
 
-package org.rstudio.studio.client.panmirror.uitools;
 
 import jsinterop.annotations.JsType;
 
-@JsType(isNative = true, name="UITools", namespace = "Panmirror")
-public class PanmirrorUITools
-{
-   public PanmirrorUIToolsAttr attr;
-   public PanmirrorUIToolsImage image;
-   public PanmirrorUIToolsFormat format;
+@JsType
+public class PanmirrorFormat
+{   
+   public String pandocMode;
+   public String pandocExtensions;
+   public PanmirrorRmdExtensions rmdExtensions;
+   public PanmirrorHugoExtensions hugoExtensions;
+   public double wrapColumn;
+   public String[] docTypes;
 }
 

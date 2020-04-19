@@ -1,5 +1,5 @@
 /*
- * PanmirrorUITools.java
+ * PanmirrorFormatComment.java
  *
  * Copyright (C) 2009-20 by RStudio, PBC
  *
@@ -13,16 +13,16 @@
  *
  */
 
-
 package org.rstudio.studio.client.panmirror.uitools;
 
 import jsinterop.annotations.JsType;
 
-@JsType(isNative = true, name="UITools", namespace = "Panmirror")
-public class PanmirrorUITools
+@JsType
+public class PanmirrorFormatComment
 {
-   public PanmirrorUIToolsAttr attr;
-   public PanmirrorUIToolsImage image;
-   public PanmirrorUIToolsFormat format;
+   public String mode;
+   public String extensions;
+   public double fillColumn;
+   public String[] doctypes;
 }
 

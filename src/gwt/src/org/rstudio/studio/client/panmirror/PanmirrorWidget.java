@@ -34,6 +34,7 @@ import org.rstudio.studio.client.panmirror.command.PanmirrorCommand;
 import org.rstudio.studio.client.panmirror.command.PanmirrorToolbar;
 import org.rstudio.studio.client.panmirror.findreplace.PanmirrorFindReplace;
 import org.rstudio.studio.client.panmirror.findreplace.PanmirrorFindReplaceWidget;
+import org.rstudio.studio.client.panmirror.format.PanmirrorFormat;
 import org.rstudio.studio.client.panmirror.outline.PanmirrorOutlineItem;
 import org.rstudio.studio.client.panmirror.outline.PanmirrorOutlineNavigationEvent;
 import org.rstudio.studio.client.panmirror.outline.PanmirrorOutlineVisibleEvent;
@@ -42,6 +43,8 @@ import org.rstudio.studio.client.panmirror.outline.PanmirrorOutlineWidget;
 import org.rstudio.studio.client.panmirror.pandoc.PanmirrorPandocFormat;
 import org.rstudio.studio.client.panmirror.theme.PanmirrorTheme;
 import org.rstudio.studio.client.panmirror.theme.PanmirrorThemeCreator;
+import org.rstudio.studio.client.panmirror.uitools.PanmirrorUITools;
+import org.rstudio.studio.client.panmirror.uitools.PanmirrorUIToolsFormat;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UserState;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.EditorThemeChangedEvent;
@@ -90,20 +93,27 @@ public class PanmirrorWidget extends DockLayoutPanel implements
       public boolean border = false;
    }
    
+   public static interface FormatSource
+   {
+      PanmirrorFormat getFormat(PanmirrorUIToolsFormat formatTools);
+   }
+   
    public static void create(PanmirrorContext context,
+                             FormatSource formatSource,
                              PanmirrorOptions options,
                              Options widgetOptions,
-                             String code,
                              CommandWithArg<PanmirrorWidget> completed) {
       
       PanmirrorWidget editorWidget = new PanmirrorWidget(widgetOptions);
    
-      
       Panmirror.load(() -> {
+         
+         // get format (now that we have uiTools available)
+         PanmirrorFormat format = formatSource.getFormat(new PanmirrorUITools().format);
                
          // create the editor
          new PromiseWithProgress<PanmirrorEditor>(
-            PanmirrorEditor.create(editorWidget.editorParent_.getElement(), context, options, code),
+            PanmirrorEditor.create(editorWidget.editorParent_.getElement(), context, format, options),
             null,
             kCreationProgressDelayMs,
             editor -> {

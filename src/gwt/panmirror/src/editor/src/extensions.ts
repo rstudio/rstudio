@@ -41,6 +41,7 @@ import {
 import { EditorEvents } from './api/events';
 import { AttrEditOptions } from './api/attr_edit';
 import { PandocCapabilities } from './api/pandoc_capabilities';
+import { EditorFormat } from './api/format';
 
 // required extensions (base non-customiziable pandoc nodes/marks + core behaviors)
 import nodeText from './nodes/text';
@@ -102,6 +103,7 @@ import { attrEditDecorationPlugin } from './behaviors/attr_edit/attr_edit-decora
 
 
 export function initExtensions(
+  format: EditorFormat,
   options: EditorOptions,
   ui: EditorUI,
   events: EditorEvents,
@@ -110,7 +112,7 @@ export function initExtensions(
   pandocCapabilities: PandocCapabilities,
 ): ExtensionManager {
   // create extension manager
-  const manager = new ExtensionManager(pandocExtensions, pandocCapabilities, options, ui, events);
+  const manager = new ExtensionManager(pandocExtensions, pandocCapabilities, format, options, ui, events);
 
   // required extensions
   manager.register([
@@ -197,6 +199,7 @@ export function initExtensions(
 export class ExtensionManager {
   private pandocExtensions: PandocExtensions;
   private pandocCapabilities: PandocCapabilities;
+  private format: EditorFormat;
   private options: EditorOptions;
   private ui: EditorUI;
   private events: EditorEvents;
@@ -205,12 +208,14 @@ export class ExtensionManager {
   public constructor(
     pandocExtensions: PandocExtensions, 
     pandocCapabilities: PandocCapabilities, 
+    format: EditorFormat,
     options: EditorOptions, 
     ui: EditorUI, 
     events: EditorEvents
   ) {
     this.pandocExtensions = pandocExtensions;
     this.pandocCapabilities = pandocCapabilities;
+    this.format = format;
     this.options = options;
     this.ui = ui;
     this.events = events;
@@ -220,7 +225,14 @@ export class ExtensionManager {
   public register(extensions: ReadonlyArray<Extension | ExtensionFn>): void {
     extensions.forEach(extension => {
       if (typeof extension === 'function') {
-        const ext = extension(this.pandocExtensions, this.pandocCapabilities, this.ui, this.options, this.events);
+        const ext = extension(
+          this.pandocExtensions, 
+          this.pandocCapabilities, 
+          this.ui, 
+          this.format, 
+          this.options, 
+          this.events)
+        ;
         if (ext) {
           this.extensions.push(ext);
         }

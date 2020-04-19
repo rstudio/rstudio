@@ -1,5 +1,5 @@
 /*
- * PanmirrorUITools.java
+ * PanmirrorExtendedDocType.java
  *
  * Copyright (C) 2009-20 by RStudio, PBC
  *
@@ -13,16 +13,14 @@
  *
  */
 
+package org.rstudio.studio.client.panmirror.format;
 
-package org.rstudio.studio.client.panmirror.uitools;
 
-import jsinterop.annotations.JsType;
-
-@JsType(isNative = true, name="UITools", namespace = "Panmirror")
-public class PanmirrorUITools
-{
-   public PanmirrorUIToolsAttr attr;
-   public PanmirrorUIToolsImage image;
-   public PanmirrorUIToolsFormat format;
+public class PanmirrorExtendedDocType
+{    
+   public static String xref = "xref";
+   public static String bookdown = "bookdown";
+   public static String blogdown = "blogdown";
+   public static String hugo = "hugo";
 }
 

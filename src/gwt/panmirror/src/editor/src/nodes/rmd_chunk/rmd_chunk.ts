@@ -29,6 +29,7 @@ import { uuidv4 } from '../../api/util';
 
 import { EditorUI } from '../../api/ui';
 import { PandocCapabilities } from '../../api/pandoc_capabilities';
+import { EditorFormat, kBookdownDocType } from '../../api/format';
 
 import { RmdChunkImagePreviewPlugin } from './rmd_chunk-image';
 
@@ -40,10 +41,11 @@ const extension = (
   _pandocExtensions: PandocExtensions, 
   _pandocCapabilities: PandocCapabilities, 
   ui: EditorUI, 
+  format: EditorFormat,
   options: EditorOptions
 ) : Extension | null => {
 
-  if (!options.rmdCodeChunks) {
+  if (!format.rmdExtensions.codeChunks) {
     return null;
   }
 
@@ -77,7 +79,7 @@ const extension = (
               return line - 1 + '';
             }
           },
-          bookdownTheorems: options.rmdBookdownTheorems,
+          bookdownTheorems: format.docTypes.includes(kBookdownDocType),
           classes: ['pm-chunk-background-color'],
           lang: (_node: ProsemirrorNode, content: string) => {
             const match = content.match(/^[a-zA-Z0-9_]+/);

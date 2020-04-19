@@ -31,16 +31,17 @@ import { FixupContext } from "../api/fixup";
 import { ProsemirrorCommand, EditorCommandId } from "../api/command";
 import { canInsertNode } from "../api/node";
 import { fragmentText } from "../api/fragment";
+import { EditorFormat, kXRefDocType } from "../api/format";
 
 const kRefRegEx = /\\?@ref\([A-Za-z0-9:-]*\)/g;
 
 const extension = (
   pandocExtensions: PandocExtensions, 
-  _pandocCapabilities: PandocCapabilities, 
+  _caps: PandocCapabilities, 
   _ui: EditorUI, 
-  options: EditorOptions): Extension | null => {
+  format: EditorFormat): Extension | null => {
 
-  if (!options.rmdBookdownXRef) {
+  if (!format.rmdExtensions.bookdownXRef) {
     return null;
   }
 
@@ -157,7 +158,7 @@ const extension = (
     },
 
     commands: (schema: Schema) => {
-      if (options.rmdBookdownXRefCommand) {
+      if (format.docTypes.includes(kXRefDocType)) {
         return [
           new ProsemirrorCommand(
             EditorCommandId.CrossReference, [],

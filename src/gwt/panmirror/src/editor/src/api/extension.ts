@@ -29,6 +29,7 @@ import { PandocExtensions } from './pandoc';
 import { FixupFn } from './fixup';
 import { EditorEvents } from './events';
 import { PandocCapabilities } from './pandoc_capabilities';
+import { EditorFormat } from './format';
 
 export interface Extension {
   marks?: PandocMark[];
@@ -47,6 +48,7 @@ export type ExtensionFn = (
   pandocExtensions: PandocExtensions,
   pandocCapabilities: PandocCapabilities,
   ui: EditorUI,
+  format: EditorFormat,
   options: EditorOptions,
   events: EditorEvents,
 ) => Extension | null;
