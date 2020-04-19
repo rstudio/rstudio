@@ -6,15 +6,11 @@ pandoc schema: <https://github.com/jgm/pandoc-types/blob/master/Text/Pandoc/Defi
 
 ## TODO
 
-
-Create node/mark type for format comment. Hidden in editor, auto
-reload panmirror when the format text changes.
+options.formatComment: Create node/mark type for format comment (hidden in editor)
 
 Consider settings for:
   - Editor width in pixels
   - Editor font size
-
-Re-organize specification of markdown extensions
 
 Implement shortcode handling (https://gohugo.io/content-management/shortcodes/)
   - Pattern matching based mark detector for just the standard and close variations (standalone marks)
@@ -22,14 +18,17 @@ Implement shortcode handling (https://gohugo.io/content-management/shortcodes/)
   - Command in UI?
   - Consider shortcode blocks?
 
-
 For .unnumbered write all the attributes with writeRawMarkdown (with quote escaping and \ escaping)
-Bookdown parts: eliminate the \ in (PART\*) if they type it (check if it's H1 only)
+Bookdown parts: eliminate the \ in (PART\*) if they type it (check if it's H1 only). Need a
+BookdownExtensions.partHeader for this.
 
-Consider math in code feature (wrap/unwrap)
+Consider math in code feature for blackfriday (wrap/unwrap). Would need BlogdownExtensions.mathInCode
 
 Link popups no longer truncated (see advanced_ui.Rmd)
+
 Positioning of ellipses in props button
+Button ellipses shouldn't require positioning override
+(see EditorPane.module.scss)
 
 Alison on blogdown engines, etc.
 
@@ -42,13 +41,11 @@ Bookdown & Blogdown docs:
 MathJax preview. When containing the selection, the math will show both the code and the preview. When not containing the selection will show the preview. (so probably require a node view for this). Consider a “done” gesture for display math. May need to bring back
 escaping of $ in math as this mode will clearly not be "source mode" style latex equation editing
 
-Possibly have a special editing mode for thereom's?
+Possibly have a special editing mode for thereoms?
 
 
 ## Future
 
-Button ellipses shouldn't require positioning override
-(see EditorPane.module.scss)
 
 Google Docs style list toggling
 
