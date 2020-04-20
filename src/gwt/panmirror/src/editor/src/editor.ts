@@ -231,6 +231,7 @@ export class Editor {
         codeChunks: false,
         bookdownXRef: false,
         bookdownPart: false,
+        blogdownMathInCode: false,
         ...format.rmdExtensions
       },
       hugoExtensions: {
@@ -255,10 +256,7 @@ export class Editor {
     };
 
     // resolve the format
-    const pandocFmt = await resolvePandocFormat(
-      context.pandoc, 
-      format.pandocMode + format.pandocExtensions
-    );
+    const pandocFmt = await resolvePandocFormat(context.pandoc, format);
 
     // get pandoc capabilities
     const pandocCapabilities = await getPandocCapabilities(context.pandoc);

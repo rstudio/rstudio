@@ -719,11 +719,12 @@ public class TextEditingTargetVisualMode
             PanmirrorFormatComment formatComment = formatTools.parseFormatComment(getEditorCode());
             
             // pandocMode
+            final String kBlackfriday = "blackfriday";
             String alternateMode = null;
             if (formatComment.mode != null)
                alternateMode = formatComment.mode;
             else if (enableBlogdownBlackfriday())
-               alternateMode = "blackfriday";
+               alternateMode = kBlackfriday;
             
             // set alternate mode if we have one
             if (alternateMode != null)
@@ -746,19 +747,27 @@ public class TextEditingTargetVisualMode
             // rmdExtensions
             format.rmdExtensions = new PanmirrorRmdExtensions();
             format.rmdExtensions.codeChunks = target_.canExecuteChunks();
+            
             // support for bookdown cross-references is always enabled b/c they would not 
             // serialize correctly in markdown modes that don't escape @ if not enabled,
             // and the odds that someone wants to literally write @ref(foo) w/o the leading
             // \ are vanishingly small)
             format.rmdExtensions.bookdownXRef = true;
+            
             // support for bookdown part headers is always enabled b/c typing 
             // (PART\*) in the visual editor would result in an escaped \, which
             // wouldn't parse as a port. the odds of (PART\*) occurring naturally
             // in an H1 are also vanishingly small
             format.rmdExtensions.bookdownPart = true;
             
+            // enable blogdown math in code (e.g. `$math$`) if we have a blogdown
+            // doctype along with the blackfriday markdown engine
+            format.rmdExtensions.blogdownMathInCode = 
+               isBlogdownDocument() && format.pandocMode.equals(kBlackfriday);
+            
             // hugoExtensions
             format.hugoExtensions = new PanmirrorHugoExtensions();
+            
             // always enable hugo shortcodes (w/o this we can end up destroying
             // shortcodes during round-tripping, and we don't want to require that 
             // blogdown files be opened within projects). this idiom is obscure 

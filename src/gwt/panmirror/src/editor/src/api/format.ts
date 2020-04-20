@@ -26,6 +26,7 @@ export interface EditorRmdExtensions {
   readonly codeChunks?: boolean;
   readonly bookdownXRef?: boolean;
   readonly bookdownPart?: boolean;
+  readonly blogdownMathInCode?: boolean;
 }
 
 export interface EditorHugoExtensions {

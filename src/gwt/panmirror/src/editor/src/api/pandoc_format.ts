@@ -14,6 +14,7 @@
  */
 
 import { PandocEngine, PandocExtensions } from './pandoc';
+import { EditorFormat } from './format';
 
 export const kMarkdownFormat = 'markdown';
 export const kMarkdownPhpextraFormat = 'markdown_phpextra';
@@ -82,25 +83,19 @@ export function pandocFormatCommentFromCode(code: string): PandocFormatComment {
   }
 }
 
-export async function resolvePandocFormat(pandoc: PandocEngine, format: string) {
+export async function resolvePandocFormat(pandoc: PandocEngine, format: EditorFormat) {
 
   // additional markdown variants we support
   const kMarkdownVariants : { [key: string] : string[] } = {
-    // https://github.com/russross/blackfriday/tree/v2#extensions
-    blackfriday: [
-      'intraword_underscores', 'pipe_tables', 'backtick_code_blocks', 
-      'definition_lists', 'footnotes', 'autolink_bare_uris', 'strikeout',  
-      'smart', 'yaml_metadata_block'
-    ]
+    blackfriday: blackfridayExtensions(format)
   };
 
   // setup warnings
   const warnings: PandocFormatWarnings = { invalidFormat: '', invalidOptions: [] };
 
-  // split out base format from options
-  const split = splitPandocFormatString(format);
-  let options = split.options;
-  let baseName = split.format;
+  // alias options and basename
+  let options = format.pandocExtensions;
+  let baseName = format.pandocMode;
 
   // validate the base format (fall back to markdown if it's not known)
   if (
@@ -203,4 +198,18 @@ export function splitPandocFormatString(format: string) {
     options,
   };
 }
+
+// https://github.com/russross/blackfriday/tree/v2#extensions
+function blackfridayExtensions(format: EditorFormat) {
+  const extensions = [
+    'intraword_underscores', 'pipe_tables', 'backtick_code_blocks', 
+    'definition_lists', 'footnotes', 'autolink_bare_uris', 'strikeout',  
+    'smart', 'yaml_metadata_block'
+  ];
+  if (format.rmdExtensions.blogdownMathInCode) {
+    extensions.push('tex_math_dollars');
+  }
+  return extensions;
+}
+
 

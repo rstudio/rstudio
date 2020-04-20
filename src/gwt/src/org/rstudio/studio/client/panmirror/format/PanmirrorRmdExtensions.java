@@ -24,5 +24,6 @@ public class PanmirrorRmdExtensions
    public boolean codeChunks;
    public boolean bookdownXRef;
    public boolean bookdownPart;
+   public boolean blogdownMathInCode;
 }
 
