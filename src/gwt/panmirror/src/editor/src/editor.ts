@@ -230,6 +230,7 @@ export class Editor {
       rmdExtensions: {
         codeChunks: false,
         bookdownXRef: false,
+        bookdownPart: false,
         ...format.rmdExtensions
       },
       hugoExtensions: {

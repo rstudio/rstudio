@@ -746,11 +746,16 @@ public class TextEditingTargetVisualMode
             // rmdExtensions
             format.rmdExtensions = new PanmirrorRmdExtensions();
             format.rmdExtensions.codeChunks = target_.canExecuteChunks();
-            // support for cross-reference marks is always enabled b/c they would not 
+            // support for bookdown cross-references is always enabled b/c they would not 
             // serialize correctly in markdown modes that don't escape @ if not enabled,
             // and the odds that someone wants to literally write @ref(foo) w/o the leading
             // \ are vanishingly small)
             format.rmdExtensions.bookdownXRef = true;
+            // support for bookdown part headers is always enabled b/c typing 
+            // (PART\*) in the visual editor would result in an escaped \, which
+            // wouldn't parse as a port. the odds of (PART\*) occurring naturally
+            // in an H1 are also vanishingly small
+            format.rmdExtensions.bookdownPart = true;
             
             // hugoExtensions
             format.hugoExtensions = new PanmirrorHugoExtensions();
