@@ -235,6 +235,9 @@ public class PanmirrorWidget extends DockLayoutPanel implements
       // sync theme
       syncEditorTheme();
       
+      // set max content width
+      editor_.setMaxContentWidth(700, 20);
+      
       commands_ = editor.commands();
       
       toolbar_.init(commands_, findReplace_);
@@ -511,23 +514,7 @@ public class PanmirrorWidget extends DockLayoutPanel implements
    
    private void resizeEditor() 
    {
-      updateContentWidth();
       editor_.resize();
-   }
-
-   private void updateContentWidth()
-   {
-      final int kContentWidth = 700;
-      final int kMinContentPadding = 20;
-      
-      if (editorParent_ != null && editor_ != null)
-      {
-         double editorSize = editorParent_.getElement().getClientWidth();
-         if (editorSize > 0 && editorSize < (kContentWidth + (2 + kMinContentPadding)))
-            editor_.setContentPadding(kMinContentPadding);
-         else
-            editor_.setContentWidth(kContentWidth);
-      }
    }
    
    private void syncEditorTheme()

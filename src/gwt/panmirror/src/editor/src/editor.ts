@@ -195,6 +195,10 @@ export class Editor {
   // with plugins recreated
   private keybindings: EditorKeybindings;
 
+  // content width constraints (if unset uses default editor CSS)
+  private maxContentWidth = 0;
+  private minContentPadding = 0;
+
   // event sinks
   private readonly events: ReadonlyMap<string, Event>;
 
@@ -484,6 +488,7 @@ export class Editor {
   }
 
   public resize() {
+    this.syncContentWidth();
     this.applyFixupsOnResize();
     this.emitEvent(EditorEvent.Resize);
   }
@@ -520,6 +525,12 @@ export class Editor {
     applyTheme(theme);
   }
 
+  public setMaxContentWidth(maxWidth: number, minPadding = 10) {
+    this.maxContentWidth = maxWidth;
+    this.minContentPadding = minPadding;
+    this.syncContentWidth();
+  }
+
   public setKeybindings(keyBindings: EditorKeybindings) {
     // validate that all of these keys can be rebound
 
@@ -532,21 +543,6 @@ export class Editor {
 
   public getPandocFormat() {
     return this.pandocFormat;
-  }
-
-  
-
-  public setContentWidth(pixels: number) {
-   this.setPadding(`calc((100% - ${pixels}px)/2)`);
-  }
-
-  public setContentPadding(pixels: number) {
-    this.setPadding(pixels + 'px');
-  }
-
-  private setPadding(padding: string) {
-    this.parent.style.paddingLeft = padding;
-    this.parent.style.paddingRight = padding;
   }
 
   private dispatchTransaction(tr: Transaction) {
@@ -763,6 +759,25 @@ export class Editor {
       ...defaultKeys,
       ...this.keybindings,
     };
+  }
+
+  // update parent padding based on content width settings (if specified)
+  private syncContentWidth()
+  {
+    const setPadding = (padding: string) => {
+      this.parent.style.paddingLeft = padding;
+      this.parent.style.paddingRight = padding;
+    };
+
+    if (this.maxContentWidth) {
+      const minContentPadding = this.minContentPadding || 10;
+      const parentWidth = this.parent.clientWidth;
+      if (parentWidth > (this.maxContentWidth + (2 * minContentPadding))) {
+        setPadding(`calc((100% - ${this.maxContentWidth}px)/2)`);
+      } else {
+        setPadding(this.minContentPadding + 'px');
+      }
+    }
   }
 
   private applyFixupsOnResize() {

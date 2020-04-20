@@ -71,8 +71,7 @@ public class PanmirrorEditor
 
    public native void applyTheme(PanmirrorTheme theme);
    
-   public native void setContentWidth(int pixels);
-   public native void setContentPadding(int pixels);
+   public native void setMaxContentWidth(int maxWidth, int minPadding);
    
    public native void setKeybindings(PanmirrorKeybindings keybindings);
    
