@@ -219,28 +219,28 @@ void Logger::writeMessageToDestinations(
 void setProgramId(const std::string& in_programId)
 {
    WRITE_LOCK_BEGIN(logger().Mutex)
+   {
+      if (!logger().ProgramId.empty() && (logger().ProgramId != in_programId))
+         logWarningMessage("Changing the program id from " + logger().ProgramId + " to " + in_programId);
 
-   if (!logger().ProgramId.empty() && (logger().ProgramId != in_programId))
-      logWarningMessage("Changing the program id from " + logger().ProgramId + " to " + in_programId);
-
-   logger().ProgramId = in_programId;
-
+      logger().ProgramId = in_programId;
+   }
    RW_LOCK_END(false)
 }
 
 void addLogDestination(const std::shared_ptr<ILogDestination>& in_destination)
 {
    WRITE_LOCK_BEGIN(logger().Mutex)
-
-   LogMap& logMap = logger().DefaultLogDestinations;
-   if (logMap.find(in_destination->getId()) == logMap.end())
    {
-      logMap.insert(std::make_pair(in_destination->getId(), in_destination));
-      if (in_destination->getLogLevel() > logger().MaxLogLevel)
-         logger().MaxLogLevel = in_destination->getLogLevel();
-      return;
+      LogMap& logMap = logger().DefaultLogDestinations;
+      if (logMap.find(in_destination->getId()) == logMap.end())
+      {
+         logMap.insert(std::make_pair(in_destination->getId(), in_destination));
+         if (in_destination->getLogLevel() > logger().MaxLogLevel)
+            logger().MaxLogLevel = in_destination->getLogLevel();
+         return;
+      }
    }
-
    RW_LOCK_END(false)
 
    logDebugMessage(
@@ -250,25 +250,24 @@ void addLogDestination(const std::shared_ptr<ILogDestination>& in_destination)
 
 void addLogDestination(const std::shared_ptr<ILogDestination>& in_destination, const std::string& in_section)
 {
-
    WRITE_LOCK_BEGIN(logger().Mutex)
-
-   Logger& log = logger();
-   SectionLogMap& secLogMap =log.SectionedLogDestinations;
-   if (secLogMap.find(in_section) == secLogMap.end())
-      secLogMap.insert(std::make_pair(in_section, LogMap()));
-
-   LogMap& logMap = secLogMap.find(in_section)->second;
-
-   if (logMap.find(in_destination->getId()) == logMap.end())
    {
-      logMap.insert(std::make_pair(in_destination->getId(), in_destination));
-      if (log.MaxLogLevel < in_destination->getLogLevel())
-         log.MaxLogLevel = in_destination->getLogLevel();
+      Logger& log = logger();
+      SectionLogMap& secLogMap = log.SectionedLogDestinations;
+      if (secLogMap.find(in_section) == secLogMap.end())
+         secLogMap.insert(std::make_pair(in_section, LogMap()));
 
-      return;
+      LogMap& logMap = secLogMap.find(in_section)->second;
+
+      if (logMap.find(in_destination->getId()) == logMap.end())
+      {
+         logMap.insert(std::make_pair(in_destination->getId(), in_destination));
+         if (log.MaxLogLevel < in_destination->getLogLevel())
+            log.MaxLogLevel = in_destination->getLogLevel();
+
+         return;
+      }
    }
-
    RW_LOCK_END(false)
 
    logDebugMessage(
@@ -383,33 +382,33 @@ void removeLogDestination(unsigned int in_destinationId, const std::string& in_s
       bool found = false;
 
       WRITE_LOCK_BEGIN(log.Mutex)
-
-      auto iter = log.DefaultLogDestinations.find(in_destinationId);
-      if (iter != log.DefaultLogDestinations.end())
       {
-         found = true;
-         log.DefaultLogDestinations.erase(iter);
-      }
-
-      // Remove it from any sections it may have been registered to.
-      std::vector<std::string> sectionsToRemove;
-      for (auto secIter: log.SectionedLogDestinations)
-      {
-         iter = secIter.second.find(in_destinationId);
-         if (iter != secIter.second.end())
+         auto iter = log.DefaultLogDestinations.find(in_destinationId);
+         if (iter != log.DefaultLogDestinations.end())
          {
             found = true;
-            secIter.second.erase(iter);
+            log.DefaultLogDestinations.erase(iter);
          }
 
-         if (secIter.second.empty())
-            sectionsToRemove.push_back(secIter.first);
+         // Remove it from any sections it may have been registered to.
+         std::vector<std::string> sectionsToRemove;
+         for (auto secIter: log.SectionedLogDestinations)
+         {
+            iter = secIter.second.find(in_destinationId);
+            if (iter != secIter.second.end())
+            {
+               found = true;
+               secIter.second.erase(iter);
+            }
+
+            if (secIter.second.empty())
+               sectionsToRemove.push_back(secIter.first);
+         }
+
+         // Clean up any empty sections.
+         for (const std::string& toRemove: sectionsToRemove)
+            log.SectionedLogDestinations.erase(log.SectionedLogDestinations.find(toRemove));
       }
-
-      // Clean up any empty sections.
-      for (const std::string& toRemove: sectionsToRemove)
-         log.SectionedLogDestinations.erase(log.SectionedLogDestinations.find(toRemove));
-
       RW_LOCK_END(false);
 
       // Log a debug message if this destination wasn't registered.
@@ -423,18 +422,18 @@ void removeLogDestination(unsigned int in_destinationId, const std::string& in_s
    else if (log.SectionedLogDestinations.find(in_section) != log.SectionedLogDestinations.end())
    {
       WRITE_LOCK_BEGIN(log.Mutex)
-
-      auto secIter = log.SectionedLogDestinations.find(in_section);
-      auto iter = secIter->second.find(in_destinationId);
-      if (iter != secIter->second.end())
       {
-         secIter->second.erase(iter);
-         if (secIter->second.empty())
-            log.SectionedLogDestinations.erase(secIter);
+         auto secIter = log.SectionedLogDestinations.find(in_section);
+         auto iter = secIter->second.find(in_destinationId);
+         if (iter != secIter->second.end())
+         {
+            secIter->second.erase(iter);
+            if (secIter->second.empty())
+               log.SectionedLogDestinations.erase(secIter);
 
-         return;
+            return;
+         }
       }
-
       RW_LOCK_END(false);
 
       logDebugMessage(
