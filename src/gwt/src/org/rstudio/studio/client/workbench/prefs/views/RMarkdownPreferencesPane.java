@@ -163,8 +163,8 @@ public class RMarkdownPreferencesPane extends PreferencesPane
           
       Label visualMarkdownLabel = new Label(
             "Visual markdown editing is an experimental feature of " +
-            "RStudio v1.4. Please click the link below to learn more about " +
-            "what to expect before enabling this feature.");
+            "RStudio v1.4. Please click the link below for more details " +
+            "before enabling this feature.");
            
       visualMarkdownLabel.addStyleName(baseRes.styles().infoLabel());
       nudgeRight(visualMarkdownLabel);
@@ -201,17 +201,19 @@ public class RMarkdownPreferencesPane extends PreferencesPane
       visualModeFontSize_ = new SelectWidget("Editor font size:", labels, values, false, true, false);
       if (!visualModeFontSize_.setValue(prefs_.visualMarkdownEditingFontSizePoints().getGlobalValue() + ""))
          visualModeFontSize_.getListBox().setSelectedIndex(0);
+      spaced(visualModeFontSize_);
       visualModeOptions.add(visualModeFontSize_);
       
       visualModeContentWidth_ = numericPref(
          "Editor content width (pixels):", 
          100,
          NumericValueWidget.NoMaximum,
-         prefs_.visualMarkdownEditingMaxContentWidth()
+         prefs_.visualMarkdownEditingMaxContentWidth(),
+         false
       );
       visualModeContentWidth_.setWidth("42px");
       visualModeContentWidth_.setLimits(100, NumericValueWidget.NoMaximum);
-      mediumSpaced(visualModeContentWidth_);
+      spaced(visualModeContentWidth_);
       visualModeOptions.add(nudgeRightPlus(visualModeContentWidth_));
      
       CheckBox checkBoxAutoWrap = checkboxPref(

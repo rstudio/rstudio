@@ -121,6 +121,14 @@ public abstract class PreferencesPane extends PreferencesDialogPaneBase<UserPref
             NumericValueWidget.NoMaximum,
             prefValue);
    }
+   
+   protected NumericValueWidget numericPref(String label,
+                                            Integer minValue,
+                                            Integer maxValue,
+                                            final PrefValue<Integer> prefValue)
+   {
+      return numericPref(label, minValue, maxValue, prefValue, true);
+   }
 
    /**
     * Prompt for integer preference value in range [min, max]
@@ -129,15 +137,18 @@ public abstract class PreferencesPane extends PreferencesDialogPaneBase<UserPref
     * @param minValue minimum value or NumericValueWidget.ZeroMinimum
     * @param maxValue maximum value or NumericValueWidget.NoMaximum
     * @param prefValue
+    * @param defaultSpaced
     * @return
     */
    protected NumericValueWidget numericPref(String label,
                                             Integer minValue,
                                             Integer maxValue,
-                                            final PrefValue<Integer> prefValue)
+                                            final PrefValue<Integer> prefValue,
+                                            boolean defaultSpaced)
    {
       final NumericValueWidget widget = new NumericValueWidget(label, minValue, maxValue);
-      lessSpaced(widget);
+      if (defaultSpaced)
+         lessSpaced(widget);
       registerEnsureVisibleHandler(widget);
       widget.setValue(prefValue.getGlobalValue() + "");
       onApplyCommands_.add(new Command()
