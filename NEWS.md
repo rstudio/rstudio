@@ -33,3 +33,4 @@
 * Fixed submission of inconsistently indented Python blocks to `reticulate` (#5094)
 * Fixed error when redirecting inside Plumber applications in RStudio Server Pro (Pro #1570)
 * Fixed failure to open files after an attempt to open a very large file (#6637)
+* Fixed Data Viewer getting out of sync with the underlying data when changing live viewer object (#1819)
