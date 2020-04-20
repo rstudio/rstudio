@@ -6,7 +6,8 @@ pandoc schema: <https://github.com/jgm/pandoc-types/blob/master/Text/Pandoc/Defi
 
 ## TODO
 
-options.formatComment: Create node/mark type for format comment (hidden in editor)
+The editor can sometimes come up empty (on cold start). setTimeout
+issue during init sequence?
 
 Consider settings for:
   - Editor width in pixels
