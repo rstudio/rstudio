@@ -705,20 +705,29 @@ public class TextEditingTargetVisualMode
             PanmirrorFormatComment formatComment = formatTools.parseFormatComment(getEditorCode());
             
             // pandocMode
+            String alternateMode = null;
             if (formatComment.mode != null)
-               format.pandocMode = formatComment.mode;
+               alternateMode = formatComment.mode;
             else if (enableBlogdownBlackfriday())
-               format.pandocMode = "blackfriday";
+               alternateMode = "blackfriday";
+            
+            // set alternate mode if we have one
+            if (alternateMode != null)
+            {
+               format.pandocMode = alternateMode;
+               format.pandocExtensions = "";
+            }
+            // otherwise we're using the default base for R Markdown
             else
+            {
                format.pandocMode = "markdown";
+               format.pandocExtensions = "+autolink_bare_uris+tex_math_single_backslash";
+            }
                
-            // pandocExtensions
+            // custom pandocExtensions
             if (formatComment.extensions != null)
                format.pandocExtensions = formatComment.extensions;
-            else if (enableBlogdownBlackfriday())
-               format.pandocExtensions = "";
-            else
-               format.pandocExtensions = "+autolink_bare_uris+tex_math_single_backslash";
+           
             
             // rmdExtensions
             format.rmdExtensions = new PanmirrorRmdExtensions();
