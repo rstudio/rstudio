@@ -6716,10 +6716,8 @@ public class TextEditingTarget implements
    private void revertEdits()
    {
       docUpdateSentinel_.revert(() -> {
-         if (visualMode_.isActivated())
-            visualMode_.syncFromEditor(null, false);
+         visualMode_.syncFromEditorIfActivated();
       }, false);
-      
    }
    
    private SourcePosition toSourcePosition(Scope func)

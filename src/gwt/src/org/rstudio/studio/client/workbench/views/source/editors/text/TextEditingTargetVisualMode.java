@@ -236,6 +236,20 @@ public class TextEditingTargetVisualMode
          });
       });
    }
+   
+   public void syncFromEditorIfActivated()
+   {
+      if (isActivated()) 
+      {
+         syncFromEditor(() -> {
+            // it's possiblet that the sync could end up removing 
+            // the panmirror widget entirely, in that case be sure
+            // that we re-activate the widget
+            view_.editorContainer().activateWidget(panmirror_, false);
+         }, false);
+      }
+   }
+   
  
    public void manageCommands()
    {

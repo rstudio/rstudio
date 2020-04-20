@@ -64,7 +64,7 @@ public class TextEditorContainer extends LayoutPanel implements CanFocus
    {
       editor_ = editor;
       addStyleName("ace_editor_theme");
-      addWidget(editor);
+      addWidget(editor, false);
    }
    
    @Override
@@ -125,12 +125,16 @@ public class TextEditorContainer extends LayoutPanel implements CanFocus
    public void activateWidget(IsHideableWidget widget, boolean focus)
    {
       // add the widget if don't already have it
-      if (widget != null && !widgets_.contains(widget))
-         addWidget(widget);
+      if (!widgets_.contains(widget))
+         addWidget(widget, true);
+      // otherwise just set it visible
+      else
+         setWidgetVisible(widget.asWidget(), true);
       
-      // set it visible (and others invisible)
+      // set others invisible
       widgets_.forEach(w -> {
-         setWidgetVisible(w.asWidget(), w == widget);
+         if (w != widget)
+            setWidgetVisible(w.asWidget(), false);
       });
       
       // force layout
@@ -139,12 +143,6 @@ public class TextEditorContainer extends LayoutPanel implements CanFocus
       // focus if requested
       if (focus)
          widget.focus();
-   }
-   
-   public void hideWidget(IsHideableWidget widget)
-   {
-      setWidgetVisible(widget.asWidget(), false);
-      forceLayout();
    }
    
    // remove a widget
@@ -165,21 +163,21 @@ public class TextEditorContainer extends LayoutPanel implements CanFocus
    
    
    // add a widget (not activated by default)
-   private void addWidget(IsHideableWidget widget)
+   private void addWidget(IsHideableWidget widget, boolean visible)
    {
       // add editor to container
       add(widget.asWidget());
       
-      // have it take up the full container (but make it invisible by default)
-      setWidgetVisible(widget.asWidget(), false);
+      // have it take up the full container
+      setWidgetVisible(widget.asWidget(), visible);
       setWidgetLeftRight(widget.asWidget(), 0, Unit.PX, 0, Unit.PX);
       setWidgetTopBottom(widget.asWidget(), 0, Unit.PX, 0, Unit.PX);
       
-      // force layout
-      forceLayout();
-      
       // add to list of editors we are managimg
       widgets_.add(widget);
+      
+      // layout
+      forceLayout();
    }
   
    private final Editor editor_;
