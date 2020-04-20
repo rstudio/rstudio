@@ -6,22 +6,12 @@ pandoc schema: <https://github.com/jgm/pandoc-types/blob/master/Text/Pandoc/Defi
 
 ## TODO
 
-The editor can sometimes come up empty (on cold start). setTimeout
-issue during init sequence?
-
-Consider settings for:
-  - Editor width in pixels
-  - Editor font size
-
 Implement shortcode handling (https://gohugo.io/content-management/shortcodes/)
   - Pattern matching based mark detector for just the standard and close variations (standalone marks)
   - WriteRawMarkdown for < > delimiters
   - Command in UI?
   - Consider shortcode blocks?
 
-For .unnumbered write all the attributes with writeRawMarkdown (with quote escaping and \ escaping)
-Bookdown parts: eliminate the \ in (PART\*) if they type it (check if it's H1 only). Need a
-BookdownExtensions.partHeader for this.
 
 Consider math in code feature for blackfriday (wrap/unwrap). Would need BlogdownExtensions.mathInCode
 
