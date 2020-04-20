@@ -520,10 +520,6 @@ export class Editor {
     applyTheme(theme);
   }
 
-  public useFixedPadding(fixed: boolean) {
-    this.parent.classList.toggle('pm-fixed-padding', fixed);
-  }
-
   public setKeybindings(keyBindings: EditorKeybindings) {
     // validate that all of these keys can be rebound
 
@@ -536,6 +532,21 @@ export class Editor {
 
   public getPandocFormat() {
     return this.pandocFormat;
+  }
+
+  
+
+  public setContentWidth(pixels: number) {
+   this.setPadding(`calc((100% - ${pixels}px)/2)`);
+  }
+
+  public setContentPadding(pixels: number) {
+    this.setPadding(pixels + 'px');
+  }
+
+  private setPadding(padding: string) {
+    this.parent.style.paddingLeft = padding;
+    this.parent.style.paddingRight = padding;
   }
 
   private dispatchTransaction(tr: Transaction) {

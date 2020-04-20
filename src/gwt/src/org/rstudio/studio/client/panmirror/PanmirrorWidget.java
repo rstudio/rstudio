@@ -511,18 +511,23 @@ public class PanmirrorWidget extends DockLayoutPanel implements
    
    private void resizeEditor() 
    {
-      useFixedPaddingIfRequired();
+      updateContentWidth();
       editor_.resize();
    }
 
-   private void useFixedPaddingIfRequired()
+   private void updateContentWidth()
    {
+      final int kContentWidth = 700;
+      final int kMinContentPadding = 20;
+      
       if (editorParent_ != null && editor_ != null)
       {
          double editorSize = editorParent_.getElement().getClientWidth();
-         if (editorSize > 0)
-            editor_.useFixedPadding(editorSize < 740);
-         }
+         if (editorSize > 0 && editorSize < (kContentWidth + (2 + kMinContentPadding)))
+            editor_.setContentPadding(kMinContentPadding);
+         else
+            editor_.setContentWidth(kContentWidth);
+      }
    }
    
    private void syncEditorTheme()

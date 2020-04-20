@@ -71,7 +71,8 @@ public class PanmirrorEditor
 
    public native void applyTheme(PanmirrorTheme theme);
    
-   public native void useFixedPadding(boolean fixed);
+   public native void setContentWidth(int pixels);
+   public native void setContentPadding(int pixels);
    
    public native void setKeybindings(PanmirrorKeybindings keybindings);
    
