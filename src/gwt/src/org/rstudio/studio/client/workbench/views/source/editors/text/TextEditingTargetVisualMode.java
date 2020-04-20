@@ -678,6 +678,10 @@ public class TextEditingTargetVisualMode
       // enable rmdImagePreview if we are an executable rmd
       options.rmdImagePreview = target_.canExecuteChunks();
       
+      // hide the format comment so that users must go into
+      // source mode to change formats
+      options.hideFormatComment = true;
+      
       // add focus-visible class to prevent interaction with focus-visible.js
       // (it ends up attempting to apply the "focus-visible" class b/c ProseMirror
       // is contentEditable, and that triggers a dom mutation event for ProseMirror,

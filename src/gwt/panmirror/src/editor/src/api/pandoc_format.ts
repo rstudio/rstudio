@@ -13,8 +13,6 @@
  *
  */
 
-import { EditorState } from 'prosemirror-state';
-
 import { PandocEngine, PandocExtensions } from './pandoc';
 
 export const kMarkdownFormat = 'markdown';
@@ -44,10 +42,14 @@ export interface PandocFormatComment {
   doctypes?: string[];
 }
 
-export function pandocFormatCommentFromCode(code: string): PandocFormatComment {
+export function matchPandocFormatComment(code: string) {
   const magicCommentRegEx = /^<!--\s+-\*-([\s\S]*?)-\*-\s+-->\s*$/m;
+  return code.match(magicCommentRegEx);
+}
+
+export function pandocFormatCommentFromCode(code: string): PandocFormatComment {
   const keyValueRegEx = /^([^:]+):\s*(.*)$/;
-  const match = code.match(magicCommentRegEx);
+  const match = matchPandocFormatComment(code);
   if (match) {
     const comment = match[1];
     // split into semicolons

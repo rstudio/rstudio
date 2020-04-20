@@ -86,6 +86,7 @@ import markMath from './marks/math/math';
 import markCite from './marks/cite/cite';
 import markSpan from './marks/span';
 import markXRef from './marks/xref';
+import markFormatComment from './marks/format_comment';
 
 // nodes
 import nodeFootnote from './nodes/footnote/footnote';
@@ -161,6 +162,7 @@ export function initExtensions(
     markCite,
     markSpan,
     markXRef,
+    markFormatComment,
     
     // nodes
     nodeDiv,
@@ -293,6 +295,11 @@ export class ExtensionManager {
 
   public pandocInlineHTMLReaders(): readonly PandocInlineHTMLReaderFn[] {
     const htmlReaders: PandocInlineHTMLReaderFn[] = [];
+    this.pandocMarks().forEach((mark: PandocMark) => {
+      if (mark.pandoc.inlineHTMLReader) {
+        htmlReaders.push(mark.pandoc.inlineHTMLReader);
+      }
+    });
     this.pandocNodes().forEach((node: PandocNode) => {
       if (node.pandoc.inlineHTMLReader) {
         htmlReaders.push(node.pandoc.inlineHTMLReader);

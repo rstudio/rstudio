@@ -214,6 +214,7 @@ export class Editor {
       spellCheck: false,
       codemirror: false,
       rmdImagePreview: false,
+      hideFormatComment: false,
       className: '',
       ...options,
     };
