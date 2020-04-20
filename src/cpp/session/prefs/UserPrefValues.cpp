@@ -2429,6 +2429,19 @@ core::Error UserPrefValues::setVisualMarkdownEditingWrapColumn(int val)
 }
 
 /**
+ * Maximum content width (in pixels) for visual editing mode
+ */
+int UserPrefValues::visualMarkdownEditingMaxContentWidth()
+{
+   return readPref<int>("visual_markdown_editing_max_content_width");
+}
+
+core::Error UserPrefValues::setVisualMarkdownEditingMaxContentWidth(int val)
+{
+   return writePref("visual_markdown_editing_max_content_width", val);
+}
+
+/**
  * List of aria-live announcements to disable.
  */
 core::json::Array UserPrefValues::disabledAriaLiveAnnouncements()
@@ -2707,6 +2720,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kEnableVisualMarkdownEditingMode,
       kVisualMarkdownEditingWrapAuto,
       kVisualMarkdownEditingWrapColumn,
+      kVisualMarkdownEditingMaxContentWidth,
       kDisabledAriaLiveAnnouncements,
       kScreenreaderConsoleAnnounceLimit,
       kFileMonitorIgnoredComponents,

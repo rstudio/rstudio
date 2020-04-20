@@ -1728,6 +1728,14 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
+    * Maximum content width (in pixels) for visual editing mode
+    */
+   public PrefValue<Integer> visualMarkdownEditingMaxContentWidth()
+   {
+      return integer("visual_markdown_editing_max_content_width", 700);
+   }
+
+   /**
     * List of aria-live announcements to disable.
     */
    public PrefValue<JsArrayString> disabledAriaLiveAnnouncements()
@@ -2167,6 +2175,8 @@ public class UserPrefsAccessor extends Prefs
          visualMarkdownEditingWrapAuto().setValue(layer, source.getBool("visual_markdown_editing_wrap_auto"));
       if (source.hasKey("visual_markdown_editing_wrap_column"))
          visualMarkdownEditingWrapColumn().setValue(layer, source.getInteger("visual_markdown_editing_wrap_column"));
+      if (source.hasKey("visual_markdown_editing_max_content_width"))
+         visualMarkdownEditingMaxContentWidth().setValue(layer, source.getInteger("visual_markdown_editing_max_content_width"));
       if (source.hasKey("disabled_aria_live_announcements"))
          disabledAriaLiveAnnouncements().setValue(layer, source.getObject("disabled_aria_live_announcements"));
       if (source.hasKey("screenreader_console_announce_limit"))

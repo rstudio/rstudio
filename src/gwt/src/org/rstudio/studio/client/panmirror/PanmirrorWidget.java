@@ -223,8 +223,14 @@ public class PanmirrorWidget extends DockLayoutPanel implements
                }
             }.schedule(150);
       }));
+      
       registrations_.add(events.addHandler(ChangeFontSizeEvent.TYPE, (event) -> {
          syncEditorTheme();
+      }));
+      
+      registrations_.add(
+         userPrefs.visualMarkdownEditingMaxContentWidth().addValueChangeHandler((event) -> {
+         syncContentWidth();
       }));
    }
    
@@ -232,12 +238,10 @@ public class PanmirrorWidget extends DockLayoutPanel implements
       
       editor_ = editor;
        
-      // sync theme
+      // initialize css
       syncEditorTheme();
-      
-      // set max content width
-      editor_.setMaxContentWidth(700, 20);
-      
+      syncContentWidth();
+         
       commands_ = editor.commands();
       
       toolbar_.init(commands_, findReplace_);
@@ -521,12 +525,17 @@ public class PanmirrorWidget extends DockLayoutPanel implements
    {
       syncEditorTheme(userState_.theme().getGlobalValue().cast());
    }
-
    
    private void syncEditorTheme(AceTheme theme)
    {
       PanmirrorTheme panmirrorTheme = PanmirrorThemeCreator.themeFromEditorTheme(theme, userPrefs_);
       editor_.applyTheme(panmirrorTheme);;
+   }
+   
+   private void syncContentWidth()
+   {
+      int contentWidth = userPrefs_.visualMarkdownEditingMaxContentWidth().getValue();
+      editor_.setMaxContentWidth(contentWidth, 20);
    }
    
    

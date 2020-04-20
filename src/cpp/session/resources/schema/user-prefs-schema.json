@@ -1054,6 +1054,11 @@
             "default": 80,
             "description": "The column to wrap text at when writing markdown"
         },
+        "visual_markdown_editing_max_content_width": {
+            "type": "integer",
+            "default": 700,
+            "description": "Maximum content width (in pixels) for visual editing mode"
+        },
         "disabled_aria_live_announcements": {
             "type": "array",
             "items": {

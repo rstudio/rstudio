@@ -323,6 +323,7 @@ namespace prefs {
 #define kEnableVisualMarkdownEditingMode "enable_visual_markdown_editing_mode"
 #define kVisualMarkdownEditingWrapAuto "visual_markdown_editing_wrap_auto"
 #define kVisualMarkdownEditingWrapColumn "visual_markdown_editing_wrap_column"
+#define kVisualMarkdownEditingMaxContentWidth "visual_markdown_editing_max_content_width"
 #define kDisabledAriaLiveAnnouncements "disabled_aria_live_announcements"
 #define kScreenreaderConsoleAnnounceLimit "screenreader_console_announce_limit"
 #define kFileMonitorIgnoredComponents "file_monitor_ignored_components"
@@ -1454,6 +1455,12 @@ public:
     */
    int visualMarkdownEditingWrapColumn();
    core::Error setVisualMarkdownEditingWrapColumn(int val);
+
+   /**
+    * Maximum content width (in pixels) for visual editing mode
+    */
+   int visualMarkdownEditingMaxContentWidth();
+   core::Error setVisualMarkdownEditingMaxContentWidth(int val);
 
    /**
     * List of aria-live announcements to disable.

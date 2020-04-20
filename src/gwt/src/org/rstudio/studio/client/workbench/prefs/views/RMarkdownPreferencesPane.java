@@ -186,6 +186,18 @@ public class RMarkdownPreferencesPane extends PreferencesPane
       mediumSpaced(enableVisualMarkdownEditor);
       advanced.add(enableVisualMarkdownEditor);
       
+      
+      visualModeContentWidth_ = numericPref(
+         "Maximum editor content width (pixels):", 
+         100,
+         NumericValueWidget.NoMaximum,
+         prefs_.visualMarkdownEditingMaxContentWidth()
+      );
+      visualModeContentWidth_.setLimits(100, NumericValueWidget.NoMaximum);
+      mediumSpaced(visualModeContentWidth_);
+      advanced.add(nudgeRightPlus(visualModeContentWidth_));
+
+      
       VerticalPanel visualModeOptions = new VerticalPanel();
       CheckBox checkBoxAutoWrap = checkboxPref(
          "Auto-wrap text (break lines at specified fill column)", 
@@ -226,7 +238,8 @@ public class RMarkdownPreferencesPane extends PreferencesPane
    @Override
    public boolean validate()
    {
-      return visualModeWrapColumn_.validate();
+      return visualModeWrapColumn_.validate() &&
+             visualModeContentWidth_.validate();
    }
 
    @Override
@@ -278,6 +291,7 @@ public class RMarkdownPreferencesPane extends PreferencesPane
    private final SelectWidget knitWorkingDir_;
    
    private final NumericValueWidget visualModeWrapColumn_;
+   private final NumericValueWidget visualModeContentWidth_;
    
    
 }
