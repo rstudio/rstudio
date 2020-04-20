@@ -232,6 +232,12 @@ public class PanmirrorWidget extends DockLayoutPanel implements
          userPrefs.visualMarkdownEditingMaxContentWidth().addValueChangeHandler((event) -> {
          syncContentWidth();
       }));
+      
+      registrations_.add(
+         userPrefs_.visualMarkdownEditingFontSizePoints().addValueChangeHandler((event) -> {
+            syncEditorTheme();
+         })
+      );
    }
    
    private void attachEditor(PanmirrorEditor editor) {
