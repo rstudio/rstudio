@@ -6,10 +6,6 @@
 	outline-style: none !important; 
 }
 
-.pm-editing-root-node {
-	padding: 0 0 !important;
-}
-
 .ProseMirror .body {
    padding-top: 2px !important;
 }
