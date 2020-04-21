@@ -211,33 +211,7 @@ public class PanmirrorWidget extends DockLayoutPanel implements
    {
       userPrefs_ = userPrefs;
       userState_ = userState;
-      registrations_.add(events.addHandler(EditorThemeChangedEvent.TYPE, 
-         (EditorThemeChangedEvent event) -> {
-            new Timer()
-            {
-               @Override
-               public void run()
-               {
-                  toolbar_.sync(true);
-                  syncEditorTheme(event.getTheme());
-               }
-            }.schedule(150);
-      }));
-      
-      registrations_.add(events.addHandler(ChangeFontSizeEvent.TYPE, (event) -> {
-         syncEditorTheme();
-      }));
-      
-      registrations_.add(
-         userPrefs.visualMarkdownEditingMaxContentWidth().addValueChangeHandler((event) -> {
-         syncContentWidth();
-      }));
-      
-      registrations_.add(
-         userPrefs_.visualMarkdownEditingFontSizePoints().addValueChangeHandler((event) -> {
-            syncEditorTheme();
-         })
-      );
+      events_ = events;
    }
    
    private void attachEditor(PanmirrorEditor editor) {
@@ -290,6 +264,33 @@ public class PanmirrorWidget extends DockLayoutPanel implements
          
       }));
       
+      registrations_.add(events_.addHandler(EditorThemeChangedEvent.TYPE, 
+         (EditorThemeChangedEvent event) -> {
+            new Timer()
+            {
+               @Override
+               public void run()
+               {
+                  toolbar_.sync(true);
+                  syncEditorTheme(event.getTheme());
+               }
+            }.schedule(150);
+      }));
+      
+      registrations_.add(events_.addHandler(ChangeFontSizeEvent.TYPE, (event) -> {
+         syncEditorTheme();
+      }));
+      
+      registrations_.add(
+         userPrefs_.visualMarkdownEditingMaxContentWidth().addValueChangeHandler((event) -> {
+         syncContentWidth();
+      }));
+      
+      registrations_.add(
+         userPrefs_.visualMarkdownEditingFontSizePoints().addValueChangeHandler((event) -> {
+            syncEditorTheme();
+         })
+      );   
    }
    
    @Override
@@ -547,6 +548,7 @@ public class PanmirrorWidget extends DockLayoutPanel implements
    
    private UserPrefs userPrefs_ = null;
    private UserState userState_ = null;
+   private EventBus events_ = null;
    
    private PanmirrorToolbar toolbar_ = null;
    private boolean findReplaceShowing_ = false;
