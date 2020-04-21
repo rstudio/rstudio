@@ -6,18 +6,20 @@ pandoc schema: <https://github.com/jgm/pandoc-types/blob/master/Text/Pandoc/Defi
 
 ## TODO
 
-executing python line-by-line w/ an Rmd open in visual mode doesn't work
-(because we've disabled that command -- does it not call manageCommands?)
+Null ref (.type) when dragging inline image into figure
 
+Move trTransform handlers into their own functions (so they don't have access to the tr in the closure)
+Or maybe fixups and appendTransaction should take a transform?
 
-Look into Joe's review of the scoped actions handler
+Delete table and leave half a caption (null ref)
+
 
 Implement shortcode handling (https://gohugo.io/content-management/shortcodes/)
   - Pattern matching based mark detector for just the standard and close variations (standalone marks)
-  - WriteRawMarkdown for < > delimiters (but leave inside along)
-  - Command in UI that inserts an inline shortcode
-  - mark detector / deleter
+  - WriteRawMarkdown for < > delimiters (but leave inside alone)
+  - Command in UI that inserts a shortcode 
   - Consider shortcode blocks? (regognize by single-line begin then scan to end)
+    Then, inline could create a block
 
 Link popups no longer truncated (see advanced_ui.Rmd)
 
