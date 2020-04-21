@@ -165,7 +165,7 @@ function tableRepairTransform(tr: Transform) {
   const tables = findChildrenByType(tr.doc, schema.nodes.table);
   tables.forEach(table => {
     // map the position
-    const pos = tr.mapping.map(table.pos);
+    let pos = tr.mapping.map(table.pos);
 
     // get containing node (pos is right before the table)
     const containingNode = tr.doc.resolve(pos).node();
@@ -179,12 +179,14 @@ function tableRepairTransform(tr: Transform) {
     }
 
     // table with no content (possible w/ half caption leftover)
-    if (table.node.firstChild && table.node.firstChild.childCount === 0) {
-      // delete the table
+    else if (table.node.firstChild && table.node.firstChild.childCount === 0) {
+      // delete the table (and container if necessary)
       const hasContainer = containingNode.type === schema.nodes.table_container;
-      const start = hasContainer ? pos : pos + 1;
-      const end = start + (hasContainer ? containingNode.nodeSize : table.node.nodeSize);
-      tr.deleteRange(start, end);
+      if (hasContainer) {
+        tr.deleteRange(pos - 1, pos - 1 + containingNode.nodeSize);
+      } else {
+        tr.deleteRange(pos, table.node.nodeSize);
+      }
     }
   });
 }
