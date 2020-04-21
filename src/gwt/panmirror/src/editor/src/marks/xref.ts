@@ -181,9 +181,9 @@ function insertRef(tr: Transaction) {
 function stripRefBackslashTransform(markType: MarkType) {
   return (tr: Transform) => {
     findChildrenByMark(tr.doc, markType).forEach(markedNode => {
-      const mappedPos = tr.mapping.mapResult(markedNode.pos);
+      const pos = tr.mapping.map(markedNode.pos);
       if (markType.isInSet(markedNode.node.marks)) {
-        const markRange = getMarkRange(tr.doc.resolve(mappedPos.pos), markType);
+        const markRange = getMarkRange(tr.doc.resolve(pos), markType);
         if (markRange) {
           const text = tr.doc.textBetween(markRange.from, markRange.to);
           if (text.startsWith('\\')) {
