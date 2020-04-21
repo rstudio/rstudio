@@ -6,13 +6,9 @@ pandoc schema: <https://github.com/jgm/pandoc-types/blob/master/Text/Pandoc/Defi
 
 ## TODO
 
-Null ref (.type) when dragging inline image into figure
-
-Move trTransform handlers into their own functions (so they don't have access to the tr in the closure)
-Or maybe fixups and appendTransaction should take a transform?
-
 Delete table and leave half a caption (null ref)
 
+Editor width appears to be busted again (moving the registrations?)
 
 Implement shortcode handling (https://gohugo.io/content-management/shortcodes/)
   - Pattern matching based mark detector for just the standard and close variations (standalone marks)
@@ -44,6 +40,13 @@ Possibly have a special editing mode for thereoms?
 
 ## Future
 
+Aggregated fixup/appendTransaction transactions:
+- fixups and mutating appendTransaction handlers should be passed a transform 
+(so that no calls to trTranform are necessary in handlers). this will mean
+that we lose access to selection oriented functions and tr.setMeta. this in 
+turn could ripple out to some other handler code. 
+- We should also always call mapResult and check for deleted
+- alternatively, could we give each handler a fresh transaction and then merge them
 
 Google Docs style list toggling
 
