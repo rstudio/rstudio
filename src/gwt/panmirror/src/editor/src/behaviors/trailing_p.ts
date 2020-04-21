@@ -19,6 +19,7 @@ import { Node as ProsemirrorNode, Schema } from 'prosemirror-model';
 import { Extension } from '../api/extension';
 import { editingRootNode } from '../api/node';
 import { FixupContext } from '../api/fixup';
+import { trTransform } from '../api/transaction';
 
 const extension: Extension = {
 
@@ -53,12 +54,14 @@ const extension: Extension = {
 function insertTrailingP(tr: Transaction) {
   const schema = tr.doc.type.schema;
   const editingNode = editingRootNode(tr.selection);
-  if (editingNode) {
-    tr.insert(
-      editingNode.pos + editingNode.node.nodeSize - 1, 
-      schema.nodes.paragraph.create()
-    );
-  }
+  trTransform(tr, transform => {
+    if (editingNode) {
+      transform.insert(
+        editingNode.pos + editingNode.node.nodeSize - 1, 
+        schema.nodes.paragraph.create()
+      );
+    }
+  });
 }
 
 
