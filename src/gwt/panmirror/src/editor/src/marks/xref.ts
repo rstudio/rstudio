@@ -151,9 +151,7 @@ const extension = (
           tr.delete(start, end);
           insertRef(tr);
           return tr;
-        }),
-        // if the user tries to put in a \ before the ref, join it (it will then get removed on write)
-        
+        })       
       ];
     },
 
