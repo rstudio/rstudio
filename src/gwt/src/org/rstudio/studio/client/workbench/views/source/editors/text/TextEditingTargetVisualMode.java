@@ -253,6 +253,21 @@ public class TextEditingTargetVisualMode
  
    public void manageCommands()
    {
+      if (isActivated())
+      {
+         // if this is the first time we've switched to the doc
+         // while in visual mode then complete initialization
+         if (!haveEditedInVisualMode_)
+         {
+            haveEditedInVisualMode_ = true;
+            manageUI(true, true);
+         }
+         else
+         {
+            syncDevTools();
+         }
+      }
+      
       disableForVisualMode(
         commands_.insertChunk(),
         commands_.jumpTo(),
@@ -332,25 +347,6 @@ public class TextEditingTargetVisualMode
       withPanmirror(() -> {
          panmirror_.activateDevTools();
       });
-   }
-   
-   public void onUserEditingDoc()
-   {
-      if (isActivated())
-      {
-         // if this is the first time we've switched to the doc
-         // while in visual mode then complete initialization
-         if (!haveEditedInVisualMode_)
-         {
-            haveEditedInVisualMode_ = true;
-            manageUI(true, true);
-         }
-         else
-         {
-            syncDevTools();
-         }
-      }
-        
    }
    
    public void onClosing()

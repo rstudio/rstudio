@@ -1744,22 +1744,23 @@ public class TextEditingTarget implements
          }
       });
       
+      
+      // initialize visual mode
+      visualMode_ = new TextEditingTargetVisualMode(
+         TextEditingTarget.this,
+         view_,
+         docDisplay_,
+         dirtyState_, 
+         docUpdateSentinel_,
+         events_,
+         releaseOnDismiss_
+      );
+      
       Scheduler.get().scheduleDeferred(new ScheduledCommand()
       {
          @Override
          public void execute()
-         {
-            // initialize visual mode
-            visualMode_ = new TextEditingTargetVisualMode(
-               TextEditingTarget.this,
-               view_,
-               docDisplay_,
-               dirtyState_, 
-               docUpdateSentinel_,
-               events_,
-               releaseOnDismiss_
-            );
-            
+         {            
             if (!prefs_.restoreSourceDocumentCursorPosition().getValue())
                return;
             
@@ -2228,7 +2229,7 @@ public class TextEditingTarget implements
       if (fileType_.isRmd())
          notebook_.manageCommands();
       
-      if (fileType_.isMarkdown() && (visualMode_ != null))
+      if (fileType_.isMarkdown())
          visualMode_.manageCommands();
    }
    
@@ -2346,7 +2347,7 @@ public class TextEditingTarget implements
       handlers_.fireEvent(event);
    }
 
-   public void onActivate(boolean forUser)
+   public void onActivate()
    {
       // IMPORTANT NOTE: most of this logic is duplicated in 
       // CodeBrowserEditingTarget (no straightforward way to create a
@@ -2395,14 +2396,6 @@ public class TextEditingTarget implements
          notebook_.onActivate();
       
       view_.onActivate();
-      
-      if (forUser) 
-      {
-         // defer interactions with visual mode b/c it's creation is also deferred
-         Scheduler.get().scheduleDeferred(() -> {
-            visualMode_.onUserEditingDoc();
-         });
-      }
    }
 
    public void onDeactivate()
@@ -2440,8 +2433,7 @@ public class TextEditingTarget implements
          public void execute()
          {
             // notify visual mode
-            if (visualMode_ != null)
-               visualMode_.onClosing();
+            visualMode_.onClosing();
             
             // fire close event
             CloseEvent.fire(TextEditingTarget.this, null);
