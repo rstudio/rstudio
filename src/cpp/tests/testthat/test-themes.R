@@ -1,7 +1,7 @@
 #
 # test-themes.R
 #
-# Copyright (C) 2009-2019 by RStudio, PBC
+# Copyright (C) 2009-2020 by RStudio, PBC
 #
 # Unless you have received this program directly from RStudio pursuant
 # to the terms of a commercial license agreement with RStudio, then
@@ -81,7 +81,9 @@ defaultThemes <- list(
    "Dracula" = list("fileName" = "dracula", isDark = TRUE),
    "Dreamweaver" = list("fileName" = "dreamweaver", isDark = FALSE),
    "Eclipse" = list("fileName" = "eclipse", isDark = FALSE),
+   "Gob" = list("fileName" = "gob", isDark = TRUE),
    "Idle Fingers" = list("fileName" = "idle_fingers", isDark = TRUE),
+   "iPlastic" = list("fileName" = "iplastic", isDark = FALSE),
    "Katzenmilch" = list("fileName" = "katzenmilch", isDark = FALSE),
    "Kr Theme" = list("fileName" = "kr_theme", isDark = TRUE),
    "Material" = list("fileName" = "material", isDark = TRUE),
@@ -92,6 +94,7 @@ defaultThemes <- list(
    "Pastel On Dark" = list("fileName" = "pastel_on_dark", isDark = TRUE),
    "Solarized Dark" = list("fileName" = "solarized_dark", isDark = TRUE),
    "Solarized Light" = list("fileName" = "solarized_light", isDark = FALSE),
+   "SQL Server" = list("fileName" = "sqlserver", isDark = FALSE),
    "Textmate (default)" = list("fileName" = "textmate", isDark = FALSE),
    "Tomorrow Night Blue" = list("fileName" = "tomorrow_night_blue", isDark = TRUE),
    "Tomorrow Night Bright" = list("fileName" = "tomorrow_night_bright", isDark = TRUE),
@@ -109,7 +112,7 @@ compareCss <- function(actual, expected, infoStr, parent = NULL, shouldBreak = F
    equal <- TRUE
    msgStart <- paste0("\n", infoStr, "\nCSS")
    if (!is.null(parent)) msgStart <- paste0("\n", infoStr, "\nElement \"", parent, "\"")
-   
+
    if (!all(actual %in% expected) || !all(expected %in% actual))
    {
       # Check length
@@ -126,7 +129,7 @@ compareCss <- function(actual, expected, infoStr, parent = NULL, shouldBreak = F
          cat(msgStart, "has more", msg, "\n")
          equal <- FALSE
       }
-      
+
       acNames <- names(actual)
       exNames <- names(expected)
       if (!all(acNames %in% exNames) || !all(exNames %in% acNames))
@@ -149,7 +152,7 @@ compareCss <- function(actual, expected, infoStr, parent = NULL, shouldBreak = F
                missingNames <- c(missingNames, name)
             }
          }
-         
+
          extraMsg <- sprintf(
             "had %d unexpected elements with names: \n   \"%s\"",
             length(extraNames),
@@ -168,7 +171,7 @@ compareCss <- function(actual, expected, infoStr, parent = NULL, shouldBreak = F
             cat(msgStart, missingMsg, "\n")
          }
       }
-      
+
       # Handle the CSS contents
       for (name in acNames)
       {
@@ -177,7 +180,7 @@ compareCss <- function(actual, expected, infoStr, parent = NULL, shouldBreak = F
             acVal <- actual[[name]]
             exVal <- expected[[name]]
             if (!is.list(acVal)) acVal <- gsub(" +", " ", gsub("^\\s*|\\s*$", "", acVal, perl = TRUE), perl = TRUE)
-            
+
             if (is.list(acVal) && is.list(exVal))
             {
                equal <- equal && compareCss(acVal, exVal, infoStr, name)
@@ -212,7 +215,7 @@ compareCss <- function(actual, expected, infoStr, parent = NULL, shouldBreak = F
          }
       }
    }
-   
+
    equal
 }
 
@@ -265,7 +268,7 @@ unsetThemeLocations <- function()
    Sys.unsetenv("RS_THEME_LOCAL_HOME")
 }
 
-makeNoPermissionDir <- function() 
+makeNoPermissionDir <- function()
 {
    if (dir.exists(noPermissionDir))
       Sys.chmod(noPermissionDir, mode = "0555")
@@ -1488,13 +1491,13 @@ test_that("convertAceTheme works correctly", {
 
       expected <- readLines(expectedResultFile, encoding = "UTF-8")
       aceActualLines <- readLines(inputAceFile, encoding = "UTF-8")
-      
+
       actual <- .rs.convertAceTheme(key, aceActualLines, value$isDark)
 
       # Check the css values
       infoStr = paste0("Theme: ", key)
       expect_true(compareCss(.rs.parseCss(actual), .rs.parseCss(expected), infoStr), info = infoStr)
-      
+
       # Check the metadata values
       expect_equal(getRsThemeName(actual), getRsThemeName(expected), fixed = TRUE, info = infoStr)
       expect_equal(getRsIsDark(actual), getRsIsDark(expected), fixed = TRUE, info = infoStr)
@@ -1697,10 +1700,10 @@ test_that_wrapped("addTheme works correctly with force = TRUE", {
    inputThemePath <- file.path(inputFileLocation, "rsthemes", paste0(themes[[14]]$fileName, ".rstheme"))
    name <- .rs.addTheme(inputThemePath, FALSE, TRUE, FALSE)
    exLines <- readLines(inputThemePath, encoding = "UTF-8")
-   
+
    installedTheme <- .rs.getThemes()[[tolower(name)]]
    acLines <- readLines(.rs.getThemeDirFromUrl(installedTheme$url), encoding = "UTF-8")
-   
+
    expect_equal(name, names(themes)[14])
    expect_equal(acLines, exLines)
 },
@@ -1737,7 +1740,7 @@ test_that_wrapped("rs_getThemes gets default themes correctly", {
       infoStr <- paste("Theme:", themeDetails$name)
       expect_true(themeDetails$name %in% names(defaultThemes), info = infoStr)
       expect_equal(themeName, tolower(themeDetails$name))
-      
+
       expectedTheme <- defaultThemes[[themeDetails$name]]
       expect_equal(
          themeDetails$url,
