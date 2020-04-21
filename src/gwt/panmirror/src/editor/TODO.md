@@ -6,10 +6,6 @@ pandoc schema: <https://github.com/jgm/pandoc-types/blob/master/Text/Pandoc/Defi
 
 ## TODO
 
-Delete table and leave half a caption (null ref)
-
-Editor width appears to be busted again (moving the registrations?)
-
 Implement shortcode handling (https://gohugo.io/content-management/shortcodes/)
   - Pattern matching based mark detector for just the standard and close variations (standalone marks)
   - WriteRawMarkdown for < > delimiters (but leave inside alone)
