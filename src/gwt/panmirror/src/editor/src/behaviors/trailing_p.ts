@@ -15,6 +15,8 @@
 
 import { Transaction, Selection } from 'prosemirror-state';
 import { Node as ProsemirrorNode, Schema } from 'prosemirror-model';
+import { Transform } from 'prosemirror-transform';
+import { ContentNodeWithPos } from 'prosemirror-utils';
 
 import { Extension } from '../api/extension';
 import { editingRootNode } from '../api/node';
@@ -52,15 +54,19 @@ const extension: Extension = {
 };
 
 function insertTrailingP(tr: Transaction) {
-  const schema = tr.doc.type.schema;
   const editingNode = editingRootNode(tr.selection);
-  trTransform(tr, transform => {
-    if (editingNode) {
-      transform.insert(
-        editingNode.pos + editingNode.node.nodeSize - 1, 
-        schema.nodes.paragraph.create()
-      );
-    }
+  if (editingNode) {
+    trTransform(tr, insertTrailingPTransform(editingNode));
+  }
+}
+
+function insertTrailingPTransform(editingNode: ContentNodeWithPos) {
+  return ((tr: Transform) => {
+    const schema = editingNode.node.type.schema;
+    tr.insert(
+      editingNode.pos + editingNode.node.nodeSize - 1, 
+      schema.nodes.paragraph.create()
+    );  
   });
 }
 

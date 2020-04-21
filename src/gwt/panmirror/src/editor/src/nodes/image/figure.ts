@@ -149,7 +149,9 @@ const extension = (
         {
           name: 'figure-convert',
           nodeFilter: node => node.type === schema.nodes.image,
-          append: convertImagesToFigure,
+          append: (tr: Transaction) => {
+            trTransform(tr, imagesToFiguresTransform(tr.doc.type.schema));
+          }
         },
       ];
     },
@@ -198,22 +200,19 @@ export function deleteCaption() {
   };
 }
 
-function convertImagesToFigure(tr: Transaction) {
 
-  const schema = tr.doc.type.schema;
-
-  return trTransform(tr, (transform: Transform) => {
-
-    const images = findChildrenByType(transform.doc, schema.nodes.image);
+function imagesToFiguresTransform(schema: Schema) {
+  return (tr: Transform) => {
+    const images = findChildrenByType(tr.doc, schema.nodes.image);
     images.forEach(image => {
 
       // position reflecting steps already taken in this handler
-      const mappedPos = transform.mapping.mapResult(image.pos);
+      const mappedPos = tr.mapping.mapResult(image.pos);
 
       // process image so long as it wasn't deleted by a previous step
       if (!mappedPos.deleted) {
         // resolve image pos
-        const imagePos = transform.doc.resolve(mappedPos.pos);
+        const imagePos = tr.doc.resolve(mappedPos.pos);
 
         // if it's an image in a standalone paragraph, convert it to a figure
         if (imagePos.parent.type === schema.nodes.paragraph && imagePos.parent.childCount === 1) {
@@ -223,7 +222,7 @@ function convertImagesToFigure(tr: Transaction) {
           // extract linkTo from link mark (if any)
           if (schema.marks.link.isInSet(image.node.marks)) {
             const linkAttrs = getMarkAttrs(
-              transform.doc,
+              tr.doc,
               { from: image.pos, to: image.pos + image.node.nodeSize },
               schema.marks.link,
             );
@@ -235,15 +234,15 @@ function convertImagesToFigure(tr: Transaction) {
           // figure content
           const content = attrs.alt ? Fragment.from(schema.text(attrs.alt)) : Fragment.empty;
 
-          // create figure
+           // replace image with figure
           const figure = schema.nodes.figure.createAndFill(attrs, content);
-
-          // replace image with figure
-          transform.replaceRangeWith(mappedPos.pos, mappedPos.pos + image.node.nodeSize, figure);
+          if (figure) {
+            tr.replaceRangeWith(mappedPos.pos, mappedPos.pos + image.node.nodeSize, figure);
+          }
         }
       }
     });
-  });
+  };
 }
 
 function isParaWrappingFigure(tok: PandocToken) {
