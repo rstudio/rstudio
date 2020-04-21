@@ -241,11 +241,20 @@ public class TextEditingTargetVisualMode
    {
       if (isActivated()) 
       {
+         // get reference to the editing container 
+         TextEditorContainer editorContainer = view_.editorContainer();
+         
+         // show progress
+         progress_.beginProgressOperation(400);
+         editorContainer.activateWidget(progress_);
+         
          syncFromEditor(() -> {
-            // it's possiblet that the sync could end up removing 
-            // the panmirror widget entirely, in that case be sure
-            // that we re-activate the widget
-            view_.editorContainer().activateWidget(panmirror_, false);
+            // clear progress
+            progress_.endProgressOperation();
+            
+            // re-activate panmirror widget
+            editorContainer.activateWidget(panmirror_, false);
+            
          }, false);
       }
    }
