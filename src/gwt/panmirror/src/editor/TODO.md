@@ -6,12 +6,11 @@ pandoc schema: <https://github.com/jgm/pandoc-types/blob/master/Text/Pandoc/Defi
 
 ## TODO
 
-Implement shortcode handling (https://gohugo.io/content-management/shortcodes/)
-  - Pattern matching based mark detector for just the standard and close variations (standalone marks)
-  - WriteRawMarkdown for < > delimiters (but leave inside alone)
-  - Command in UI that inserts a shortcode 
-  - Consider shortcode blocks? (regognize by single-line begin then scan to end)
-    Then, inline could create a block
+Raw dialog should auto-add if it doesn't recognize the format
+
+If we detect docTypes at the project level we need to make sure the edited file is in the project!
+
+Does the smarty plugin paste handler stand down for noInputRules?
 
 Link popups no longer truncated (see advanced_ui.Rmd)
 
