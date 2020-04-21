@@ -628,6 +628,13 @@ public class Source implements InsertSourceHandler,
       
       restoreDocuments(session);
       
+      // if there is only one tab then it's by definition being activate
+      // for the user (w/o this occationally we wouldn't see the correct
+      // value passed for this flag to onActivate -- it wasn't reproducible
+      // so likely some sort of timing issue
+      if (session.getSessionInfo().getSourceDocuments().length() <= 1)
+         tabActivationsAreForUser_ = true;
+      
       // get the key to use for active tab persistence; use ordinal-based key
       // for source windows rather than their ID to avoid unbounded accumulation
       String activeTabKey = KEY_ACTIVETAB;
