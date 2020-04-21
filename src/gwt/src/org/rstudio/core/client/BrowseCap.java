@@ -176,7 +176,7 @@ public class BrowseCap
          return "Firefox";
       else if (BrowseCap.isSafari())
          return "Safari";
-      else if (BrowseCap.INSTANCE.isInternetExplorer())
+      else if (BrowseCap.isInternetExplorer())
          return "IE";
       else
          return "Unknown";
