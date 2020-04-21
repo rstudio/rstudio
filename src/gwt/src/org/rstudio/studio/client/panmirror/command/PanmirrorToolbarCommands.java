@@ -54,7 +54,7 @@ public class PanmirrorToolbarCommands
       add(PanmirrorCommands.CodeBlockFormat, "Code Block...");
       add(PanmirrorCommands.Blockquote, "Blockquote", Roles.getMenuitemcheckboxRole(), icons.BLOCKQUOTE);
       add(PanmirrorCommands.LineBlock, "Line Block", Roles.getMenuitemcheckboxRole());
-      add(PanmirrorCommands.Div, "Section/Div...");
+      add(PanmirrorCommands.Div, "Div Block...");
       add(PanmirrorCommands.AttrEdit, "Edit Attributes...");
       add(PanmirrorCommands.ClearFormatting, "Clear Formatting");
       
@@ -103,7 +103,7 @@ public class PanmirrorToolbarCommands
       add(PanmirrorCommands.ParagraphInsert, "Paragraph");
       add(PanmirrorCommands.YamlMetadata, "YAML Block");
       add(PanmirrorCommands.RmdChunk, "Code Chunk", icons.RMD_CHUNK);
-      add(PanmirrorCommands.InsertDiv, "Section/Div...");
+      add(PanmirrorCommands.InsertDiv, "Div Block...");
       add(PanmirrorCommands.InlineMath, "Inline Math");
       add(PanmirrorCommands.DisplayMath, "Display Math");
       add(PanmirrorCommands.DefinitionList, "Definition List");
