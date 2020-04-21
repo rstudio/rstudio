@@ -38,13 +38,12 @@ import './rmd_chunk-styles.css';
 const kRmdCodeChunkClass = '3759D6F8-53AF-4931-8060-E55AF73236B5'.toLowerCase();
 
 const extension = (
-  _pandocExtensions: PandocExtensions, 
-  _pandocCapabilities: PandocCapabilities, 
-  ui: EditorUI, 
+  _pandocExtensions: PandocExtensions,
+  _pandocCapabilities: PandocCapabilities,
+  ui: EditorUI,
   format: EditorFormat,
-  options: EditorOptions
-) : Extension | null => {
-
+  options: EditorOptions,
+): Extension | null => {
   if (!format.rmdExtensions.codeChunks) {
     return null;
   }
@@ -130,7 +129,7 @@ const extension = (
       } else {
         return [];
       }
-    }
+    },
   };
 };
 
@@ -146,15 +145,17 @@ class RmdChunkCommand extends ProsemirrorCommand {
           return false;
         }
 
-        // must either be at the body top level, within a list item, or within a 
+        // must either be at the body top level, within a list item, or within a
         // blockquote (and never within a table)
         const within = (nodeType: NodeType) => !!findParentNodeOfType(nodeType)(state.selection);
         if (within(schema.nodes.table)) {
           return false;
-        }        
-        if (!selectionIsBodyTopLevel(state.selection) && 
-            !within(schema.nodes.list_item) &&
-            !within(schema.nodes.blockquote)) {
+        }
+        if (
+          !selectionIsBodyTopLevel(state.selection) &&
+          !within(schema.nodes.list_item) &&
+          !within(schema.nodes.blockquote)
+        ) {
           return false;
         }
 

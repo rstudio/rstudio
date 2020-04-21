@@ -289,6 +289,6 @@ function setStyleElement(id: string, css: string) {
     window.document.head.appendChild(styleEl);
   }
 
-  // set css 
+  // set css
   styleEl.innerHTML = css;
 }

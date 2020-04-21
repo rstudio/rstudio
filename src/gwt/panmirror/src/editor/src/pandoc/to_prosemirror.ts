@@ -92,7 +92,6 @@ class Parser {
   }
 
   private writeToken(writer: ProsemirrorWriter, tok: PandocToken) {
-    
     // look for a handler.match function that wants to handle this token
     const handlers = this.handlers[tok.t] || [];
     for (const handler of handlers) {

@@ -57,7 +57,7 @@ export interface PandocNode {
 export interface CodeViewOptions {
   lang: (node: ProsemirrorNode, content: string) => string | null;
   classes?: string[];
-  borderColorClass?: string; 
+  borderColorClass?: string;
   firstLineMeta?: boolean;
   lineNumbers?: boolean;
   bookdownTheorems?: boolean;

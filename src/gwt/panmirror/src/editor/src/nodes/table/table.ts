@@ -165,7 +165,7 @@ function tableRepairTransform(tr: Transform) {
   const tables = findChildrenByType(tr.doc, schema.nodes.table);
   tables.forEach(table => {
     // map the position
-    let pos = tr.mapping.map(table.pos);
+    const pos = tr.mapping.map(table.pos);
 
     // get containing node (pos is right before the table)
     const containingNode = tr.doc.resolve(pos).node();

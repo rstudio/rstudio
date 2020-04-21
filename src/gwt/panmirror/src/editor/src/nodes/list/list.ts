@@ -251,14 +251,14 @@ const extension = (pandocExtensions: PandocExtensions): Extension => {
     commands: (schema: Schema, ui: EditorUI, mac: boolean) => {
       const commands = [
         new ListCommand(
-          EditorCommandId.BulletList, 
-          mac ? ['Shift-Mod-7'] : [], 
-          schema.nodes.bullet_list, 
-          schema.nodes.list_item
+          EditorCommandId.BulletList,
+          mac ? ['Shift-Mod-7'] : [],
+          schema.nodes.bullet_list,
+          schema.nodes.list_item,
         ),
         new ListCommand(
           EditorCommandId.OrderedList,
-          mac ? ['Shift-Mod-8'] : [], 
+          mac ? ['Shift-Mod-8'] : [],
           schema.nodes.ordered_list,
           schema.nodes.list_item,
         ),

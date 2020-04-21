@@ -167,14 +167,13 @@ function texInputRule(schema: Schema) {
         }
       }
 
-      // insert placeholder if it's a standalone \ 
+      // insert placeholder if it's a standalone \
       if (text === '\\' || text.startsWith('\\ ')) {
         tr.insertText(kTexPlaceholder);
         setTexSelectionAfterInsert(tr);
         return tr;
       }
-
-    } 
+    }
 
     // didn't find a valid context for a tex comand
     return null;

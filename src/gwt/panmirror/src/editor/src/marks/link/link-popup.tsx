@@ -90,9 +90,8 @@ export class LinkPopupPlugin extends Plugin<DecorationSet> {
 
             // create decorator
             const linkPopupDecorator = Decoration.widget(
-              decorationPosition.pos, 
+              decorationPosition.pos,
               (view: EditorView, getPos: () => number) => {
-
                 // create link popup component
                 const popup = (
                   <LinkPopup
@@ -110,9 +109,9 @@ export class LinkPopupPlugin extends Plugin<DecorationSet> {
                 reactRenderForEditorView(popup, decoration, view);
                 return decoration;
               },
-              { 
-                key: specKey 
-              }
+              {
+                key: specKey,
+              },
             );
 
             // return decorations

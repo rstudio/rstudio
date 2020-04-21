@@ -259,7 +259,7 @@ export function detectAndApplyMarks(
       const from = pos + 1 + textNode.pos + match.index;
       const to = from + match[0].length;
       const range = getMarkRange(tr.doc.resolve(to), markType);
-      if (!range || (range.from !== from) || range.to !== to) {
+      if (!range || range.from !== from || range.to !== to) {
         const mark = markType.create(attrs);
         tr.addMark(from, to, mark);
         if (tr.selection.anchor === to) {

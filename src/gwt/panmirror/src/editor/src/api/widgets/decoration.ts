@@ -13,7 +13,6 @@
  *
  */
 
-
 import { ResolvedPos } from 'prosemirror-model';
 import { EditorView } from 'prosemirror-view';
 
@@ -24,7 +23,7 @@ import { editingRootNodeClosestToPos } from '../node';
 import { kPixelUnit } from '../css';
 
 export interface DecorationPosition {
-  pos: number; 
+  pos: number;
   style: React.CSSProperties;
 }
 
@@ -41,7 +40,7 @@ export function textRangePopupDecorationPosition(
   // get the (window) DOM coordinates for the current editing root node (body or notes)
   const rangePos = view.state.doc.resolve(range.from);
   const editingBox = getEditingBox(view, rangePos);
- 
+
   // we are going to stick the decoration at the beginning of the containing
   // top level body block, then position it by calculating the relative location of
   // the range within text block. we do this so that the decoration isn't located
@@ -98,4 +97,3 @@ function getEditingBox(view: EditorView, pos$: ResolvedPos) {
   const editingEl = view.domAtPos(editingNode!.pos + 1).node as HTMLElement;
   return editingEl.getBoundingClientRect();
 }
-

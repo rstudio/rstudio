@@ -24,7 +24,6 @@ import { FixupContext } from '../api/fixup';
 import { trTransform } from '../api/transaction';
 
 const extension: Extension = {
-
   fixups: (schema: Schema) => {
     return [
       (tr: Transaction, context: FixupContext) => {
@@ -34,7 +33,7 @@ const extension: Extension = {
           }
         }
         return tr;
-      }
+      },
     ];
   },
 
@@ -47,10 +46,10 @@ const extension: Extension = {
             insertTrailingP(tr);
           }
           return tr;
-        }
-      }
+        },
+      },
     ];
-  }
+  },
 };
 
 function insertTrailingP(tr: Transaction) {
@@ -61,15 +60,11 @@ function insertTrailingP(tr: Transaction) {
 }
 
 function insertTrailingPTransform(editingNode: ContentNodeWithPos) {
-  return ((tr: Transform) => {
+  return (tr: Transform) => {
     const schema = editingNode.node.type.schema;
-    tr.insert(
-      editingNode.pos + editingNode.node.nodeSize - 1, 
-      schema.nodes.paragraph.create()
-    );  
-  });
+    tr.insert(editingNode.pos + editingNode.node.nodeSize - 1, schema.nodes.paragraph.create());
+  };
 }
-
 
 function requiresTrailingP(selection: Selection) {
   const editingRoot = editingRootNode(selection);

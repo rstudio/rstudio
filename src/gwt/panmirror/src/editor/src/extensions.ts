@@ -102,7 +102,6 @@ import nodeDefinitionList from './nodes/definition_list/definition_list';
 import { codeMirrorPlugins } from './optional/codemirror/codemirror';
 import { attrEditDecorationPlugin } from './behaviors/attr_edit/attr_edit-decoration';
 
-
 export function initExtensions(
   format: EditorFormat,
   options: EditorOptions,
@@ -163,7 +162,7 @@ export function initExtensions(
     markSpan,
     markXRef,
     markFormatComment,
-    
+
     // nodes
     nodeDiv,
     nodeFootnote,
@@ -180,19 +179,19 @@ export function initExtensions(
     manager.register(extensions);
   }
 
-   // additional plugins derived from extensions
-   const plugins: Plugin[] = [];
+  // additional plugins derived from extensions
+  const plugins: Plugin[] = [];
 
-   // codemirror code views
-   if (options.codemirror) {
-     plugins.push(...codeMirrorPlugins(manager.codeViews()));
-   }
+  // codemirror code views
+  if (options.codemirror) {
+    plugins.push(...codeMirrorPlugins(manager.codeViews()));
+  }
 
-   // attribute editor plugin
-   plugins.push(attrEditDecorationPlugin(ui, manager.attrEditors()));
+  // attribute editor plugin
+  plugins.push(attrEditDecorationPlugin(ui, manager.attrEditors()));
 
-   // register plugins
-   manager.registerPlugins(plugins);
+  // register plugins
+  manager.registerPlugins(plugins);
 
   // return manager
   return manager;
@@ -208,12 +207,12 @@ export class ExtensionManager {
   private extensions: Extension[];
 
   public constructor(
-    pandocExtensions: PandocExtensions, 
-    pandocCapabilities: PandocCapabilities, 
+    pandocExtensions: PandocExtensions,
+    pandocCapabilities: PandocCapabilities,
     format: EditorFormat,
-    options: EditorOptions, 
-    ui: EditorUI, 
-    events: EditorEvents
+    options: EditorOptions,
+    ui: EditorUI,
+    events: EditorEvents,
   ) {
     this.pandocExtensions = pandocExtensions;
     this.pandocCapabilities = pandocCapabilities;
@@ -228,13 +227,13 @@ export class ExtensionManager {
     extensions.forEach(extension => {
       if (typeof extension === 'function') {
         const ext = extension(
-          this.pandocExtensions, 
-          this.pandocCapabilities, 
-          this.ui, 
-          this.format, 
-          this.options, 
-          this.events)
-        ;
+          this.pandocExtensions,
+          this.pandocCapabilities,
+          this.ui,
+          this.format,
+          this.options,
+          this.events,
+        );
         if (ext) {
           this.extensions.push(ext);
         }

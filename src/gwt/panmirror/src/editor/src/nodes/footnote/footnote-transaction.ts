@@ -15,7 +15,13 @@
 
 import { Fragment, Node as ProsemirrorNode, Schema } from 'prosemirror-model';
 import { Transaction, EditorState, TextSelection } from 'prosemirror-state';
-import { findChildrenByType, NodeWithPos, findSelectedNodeOfType, ContentNodeWithPos, findParentNodeOfType } from 'prosemirror-utils';
+import {
+  findChildrenByType,
+  NodeWithPos,
+  findSelectedNodeOfType,
+  ContentNodeWithPos,
+  findParentNodeOfType,
+} from 'prosemirror-utils';
 import { Transform } from 'prosemirror-transform';
 
 import { uuidv4 } from '../../api/util';
@@ -82,7 +88,7 @@ function footnoteFixupTransform(activeNote: ContentNodeWithPos | undefined) {
         note.pos = tr.mapping.map(note.pos);
 
         // update content if this is a note edit (used to propagate user edits back to data-content)
-        if (activeNote && (activeNote.node.attrs.ref === ref)) {
+        if (activeNote && activeNote.node.attrs.ref === ref) {
           content = JSON.stringify(note.node.content.toJSON());
         }
 

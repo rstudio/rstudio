@@ -178,7 +178,7 @@ export function transactionsChangeSet(transactions: Transaction[], oldState: Edi
   return changeSet;
 }
 
-export function trTransform(tr: Transaction, f: (transform: Transform) => void) : Transaction {
+export function trTransform(tr: Transaction, f: (transform: Transform) => void): Transaction {
   // create a new transform so we can do position mapping relative
   // to the actions taken here (b/c the transaction might already
   // have other steps so we can't do tr.mapping.map)

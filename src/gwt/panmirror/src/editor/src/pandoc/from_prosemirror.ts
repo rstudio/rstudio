@@ -127,9 +127,8 @@ class PandocWriter implements PandocOutput {
   }
 
   public writeMark(type: PandocTokenType, parent: Fragment, expelEnclosingWhitespace = false) {
-    
     // expel enclosing whitepsace if requested and if the fragment isn't 100% spaces
-    if (expelEnclosingWhitespace && (fragmentText(parent).trim().length > 0)) {
+    if (expelEnclosingWhitespace && fragmentText(parent).trim().length > 0) {
       // build output spec
       const output = {
         spaceBefore: false,
@@ -213,7 +212,7 @@ class PandocWriter implements PandocOutput {
         if (ch.charCodeAt(0) === 160) {
           ch = ' '; // convert &nbsp; to ' '
         }
-        if (this.options.writeSpaces && (ch === ' ')) {
+        if (this.options.writeSpaces && ch === ' ') {
           flushTextRun();
           this.writeToken(PandocTokenType.Space);
         } else if (preventEscapeCharacters.includes(ch)) {

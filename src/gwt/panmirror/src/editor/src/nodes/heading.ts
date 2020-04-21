@@ -37,7 +37,7 @@ const extension = (
   pandocExtensions: PandocExtensions,
   _caps: PandocCapabilities,
   _ui: EditorUI,
-  format: EditorFormat
+  format: EditorFormat,
 ): Extension => {
   const headingAttr = pandocExtensions.header_attributes || pandocExtensions.mmd_header_identifiers;
 
@@ -82,7 +82,7 @@ const extension = (
           if (headingAttr) {
             return {
               type: (schema: Schema) => schema.nodes.heading,
-              offset: 8
+              offset: 8,
             };
           } else {
             return null;
@@ -177,10 +177,9 @@ function getHeadingAttrs(level: number, pandocAttrSupported: boolean) {
   };
 }
 
-
 // write a bookdown (PART) H1 w/o spurious \
 function writeBookdownH1(output: PandocOutput, node: ProsemirrorNode) {
-  // see if this is a (PART\*). note we also match and replay any text 
+  // see if this is a (PART\*). note we also match and replay any text
   // before the first ( in case the cursor sentinel ended up there
   const partMatch = node.textContent.match(/^([^()]*)\(PART\\\*\)/);
   if (partMatch) {

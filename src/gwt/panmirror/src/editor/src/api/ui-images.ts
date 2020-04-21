@@ -23,10 +23,10 @@ export interface EditorUIImages {
   removelink?: string;
 }
 
-export function defaultEditorUIImages():  EditorUIImages {
+export function defaultEditorUIImages(): EditorUIImages {
   return {
     copy: copyImage,
     properties: propertiesImage,
-    removelink: removelinkImage
+    removelink: removelinkImage,
   };
 }

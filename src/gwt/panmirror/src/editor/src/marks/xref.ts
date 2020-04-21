@@ -13,40 +13,39 @@
  *
  */
 
-import { Schema, Node as ProsemirrorNode, Mark, Fragment, MarkType } from "prosemirror-model";
-import { EditorState, Transaction } from "prosemirror-state";
-import { toggleMark } from "prosemirror-commands";
-import { InputRule } from "prosemirror-inputrules";
-import { Transform } from "prosemirror-transform";
+import { Schema, Node as ProsemirrorNode, Mark, Fragment, MarkType } from 'prosemirror-model';
+import { EditorState, Transaction } from 'prosemirror-state';
+import { toggleMark } from 'prosemirror-commands';
+import { InputRule } from 'prosemirror-inputrules';
+import { Transform } from 'prosemirror-transform';
 
-import { setTextSelection, findChildren, findChildrenByMark } from "prosemirror-utils";
+import { setTextSelection, findChildren, findChildrenByMark } from 'prosemirror-utils';
 
-import { Extension } from "../api/extension";
-import { PandocExtensions, PandocOutput } from "../api/pandoc";
-import { PandocCapabilities } from "../api/pandoc_capabilities";
-import { EditorUI } from "../api/ui";
-import { detectAndApplyMarks, removeInvalidatedMarks, getMarkRange } from "../api/mark";
-import { MarkTransaction, trTransform } from "../api/transaction";
-import { FixupContext } from "../api/fixup";
-import { ProsemirrorCommand, EditorCommandId } from "../api/command";
-import { canInsertNode } from "../api/node";
-import { fragmentText } from "../api/fragment";
-import { EditorFormat, kXRefDocType } from "../api/format";
+import { Extension } from '../api/extension';
+import { PandocExtensions, PandocOutput } from '../api/pandoc';
+import { PandocCapabilities } from '../api/pandoc_capabilities';
+import { EditorUI } from '../api/ui';
+import { detectAndApplyMarks, removeInvalidatedMarks, getMarkRange } from '../api/mark';
+import { MarkTransaction, trTransform } from '../api/transaction';
+import { FixupContext } from '../api/fixup';
+import { ProsemirrorCommand, EditorCommandId } from '../api/command';
+import { canInsertNode } from '../api/node';
+import { fragmentText } from '../api/fragment';
+import { EditorFormat, kXRefDocType } from '../api/format';
 
 const kRefRegEx = /\\?@ref\([A-Za-z0-9:-]*\)/g;
 
 const extension = (
-  pandocExtensions: PandocExtensions, 
-  _caps: PandocCapabilities, 
-  _ui: EditorUI, 
-  format: EditorFormat): Extension | null => {
-
+  pandocExtensions: PandocExtensions,
+  _caps: PandocCapabilities,
+  _ui: EditorUI,
+  format: EditorFormat,
+): Extension | null => {
   if (!format.rmdExtensions.bookdownXRef) {
     return null;
   }
 
   return {
-
     marks: [
       {
         name: 'xref',
@@ -59,7 +58,7 @@ const extension = (
             },
           ],
           toDOM(_mark: Mark) {
-            return ['span', { class: 'xref pm-link-text-color pm-fixedwidth-font' } ];
+            return ['span', { class: 'xref pm-link-text-color pm-fixedwidth-font' }];
           },
         },
         pandoc: {
@@ -67,7 +66,6 @@ const extension = (
           writer: {
             priority: 17,
             write: (output: PandocOutput, _mark: Mark, parent: Fragment) => {
-
               // alias xref (may need to transform it to deal with \ prefix)
               let xref = parent;
 
@@ -96,7 +94,6 @@ const extension = (
       return [
         (tr: Transaction, context: FixupContext) => {
           if (context === FixupContext.Load) {
-            
             // apply marks
             const markType = schema.marks.xref;
             const predicate = (node: ProsemirrorNode) => {
@@ -112,7 +109,7 @@ const extension = (
             trTransform(tr, stripRefBackslashTransform);
           }
           return tr;
-        }
+        },
       ];
     },
 
@@ -125,7 +122,7 @@ const extension = (
             removeInvalidatedMarks(tr, node, pos, kRefRegEx, node.type.schema.marks.xref);
             detectAndApplyMarks(tr, tr.doc.nodeAt(pos)!, pos, kRefRegEx, node.type.schema.marks.xref);
           },
-        }
+        },
       ];
     },
 
@@ -137,7 +134,7 @@ const extension = (
           tr.delete(start, end);
           insertRef(tr);
           return tr;
-        })       
+        }),
       ];
     },
 
@@ -145,7 +142,8 @@ const extension = (
       if (format.docTypes.includes(kXRefDocType)) {
         return [
           new ProsemirrorCommand(
-            EditorCommandId.CrossReference, [],
+            EditorCommandId.CrossReference,
+            [],
             (state: EditorState, dispatch?: (tr: Transaction<any>) => void) => {
               // enable/disable command
               if (!canInsertNode(state, schema.nodes.text) || !toggleMark(schema.marks.xref)(state)) {
@@ -157,23 +155,20 @@ const extension = (
                 dispatch(tr);
               }
               return true;
-            }
-          )
+            },
+          ),
         ];
       } else {
         return [];
       }
-      
     },
-    
-
   };
 };
 
 function insertRef(tr: Transaction) {
   const schema = tr.doc.type.schema;
   const selection = tr.selection;
-  const refText = "@ref()";
+  const refText = '@ref()';
   tr.replaceSelectionWith(schema.text(refText));
   setTextSelection(tr.mapping.map(selection.head) - 1)(tr);
 }
@@ -192,7 +187,6 @@ function stripRefBackslashTransform(tr: Transform) {
       }
     }
   });
-  
 }
 
 export default extension;

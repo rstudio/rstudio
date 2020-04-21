@@ -206,7 +206,6 @@ function imagesToFiguresTransform(tr: Transform) {
   const schema = tr.doc.type.schema;
   const images = findChildrenByType(tr.doc, schema.nodes.image);
   images.forEach(image => {
-
     // position reflecting steps already taken in this handler
     const mappedPos = tr.mapping.mapResult(image.pos);
 
@@ -235,14 +234,14 @@ function imagesToFiguresTransform(tr: Transform) {
         // figure content
         const content = attrs.alt ? Fragment.from(schema.text(attrs.alt)) : Fragment.empty;
 
-          // replace image with figure
+        // replace image with figure
         const figure = schema.nodes.figure.createAndFill(attrs, content);
         if (figure) {
           tr.replaceRangeWith(mappedPos.pos, mappedPos.pos + image.node.nodeSize, figure);
         }
       }
     }
-  }); 
+  });
 }
 
 function isParaWrappingFigure(tok: PandocToken) {

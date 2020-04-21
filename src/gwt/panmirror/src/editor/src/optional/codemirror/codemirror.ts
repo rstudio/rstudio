@@ -386,12 +386,10 @@ const kBookdownThereomModeMap: { [key: string]: string } = {
   exercise: 'stex',
 };
 
-
 function modeForLang(lang: string, options: CodeViewOptions) {
-
   const modeMap = {
     ...kModeMap,
-    ...(options.bookdownTheorems ? kBookdownThereomModeMap : {})
+    ...(options.bookdownTheorems ? kBookdownThereomModeMap : {}),
   };
 
   if (modeMap.hasOwnProperty(lang)) {

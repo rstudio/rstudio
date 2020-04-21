@@ -71,9 +71,8 @@ export class PandocConverter {
   }
 
   public async toProsemirror(markdown: string, format: string): Promise<ProsemirrorNode> {
-    
     // adjust format. we always need to *read* backtick_code_blocks
-    // b/e that's how codeBlockFilters hoist content through 
+    // b/e that's how codeBlockFilters hoist content through
     // pandoc into our prosemirror token parser.
     format = this.adjustedFormat(format, '+backtick_code_blocks');
 

@@ -33,11 +33,9 @@ export interface EditorHugoExtensions {
   readonly shortcodes?: boolean;
 }
 
-export const kXRefDocType = "xref";
-export const kBookdownDocType = "bookdown";
-export const kBlogdownDocType = "blogdown";
-export const kHugoDocType = "hugo";
+export const kXRefDocType = 'xref';
+export const kBookdownDocType = 'bookdown';
+export const kBlogdownDocType = 'blogdown';
+export const kHugoDocType = 'hugo';
 
-export type EditorExtendedDocType = "xref" | "bookdown" | "blogdown" | "hugo";
-
-
+export type EditorExtendedDocType = 'xref' | 'bookdown' | 'blogdown' | 'hugo';

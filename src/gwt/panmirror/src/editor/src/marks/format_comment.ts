@@ -23,15 +23,13 @@ import { EditorFormat } from '../api/format';
 import { EditorOptions } from '../api/options';
 import { matchPandocFormatComment } from '../api/pandoc_format';
 
-
 const extension = (
   pandocExtensions: PandocExtensions,
   _caps: PandocCapabilities,
   _ui: EditorUI,
   _format: EditorFormat,
-  options: EditorOptions
+  options: EditorOptions,
 ): Extension | null => {
-
   if (!pandocExtensions.raw_html || !options.hideFormatComment) {
     return null;
   }
@@ -41,8 +39,10 @@ const extension = (
       {
         name: 'format_comment',
         spec: {
-          parseDOM: [ { tag: "span[class*='format-comment']" } ],
-          toDOM() { return ['span', { class: 'format-comment', style: 'display: none;' }]; },
+          parseDOM: [{ tag: "span[class*='format-comment']" }],
+          toDOM() {
+            return ['span', { class: 'format-comment', style: 'display: none;' }];
+          },
         },
         pandoc: {
           readers: [],
@@ -66,7 +66,7 @@ const extension = (
         },
       },
     ],
-  };  
+  };
 };
 
 export default extension;

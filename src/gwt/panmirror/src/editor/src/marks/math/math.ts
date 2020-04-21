@@ -52,12 +52,11 @@ const extension = (
   pandocExtensions: PandocExtensions,
   _caps: PandocCapabilities,
   _ui: EditorUI,
-  format: EditorFormat
-) : Extension | null => {
-
+  format: EditorFormat,
+): Extension | null => {
   if (!pandocExtensions.tex_math_dollars) {
     return null;
-  } 
+  }
 
   // special blogdown handling for markdown renderers that don't support math
   const blogdownMathInCode = format.rmdExtensions.blogdownMathInCode;
@@ -90,7 +89,11 @@ const extension = (
           toDOM(mark: Mark) {
             return [
               'span',
-              { class: 'math pm-fixedwidth-font pm-light-text-color', 'data-type': mark.attrs.type, spellcheck: 'false' },
+              {
+                class: 'math pm-fixedwidth-font pm-light-text-color',
+                'data-type': mark.attrs.type,
+                spellcheck: 'false',
+              },
             ];
           },
         },
@@ -110,44 +113,43 @@ const extension = (
               },
             },
             // extract math from backtick code for blogdown
-            ...(blogdownMathInCode ? [{
-              token: PandocTokenType.Code,
-              mark: 'math',
-              match: (tok: PandocToken) => {
-                const text = tok.c[kCodeText];
-                return kSingleLineDisplayMathRegex.test(text) || kInlineMathRegex.test(text);
-              },
-              getAttrs: (tok: PandocToken) => {
-                const text = tok.c[kCodeText];
-                return {
-                  type: kSingleLineDisplayMathRegex.test(text) ? MathType.Display : MathType.Inline
-                };
-              },
-              getText: (tok: PandocToken) => {
-                return tok.c[kCodeText];
-              },
-            }] : [])
-            
+            ...(blogdownMathInCode
+              ? [
+                  {
+                    token: PandocTokenType.Code,
+                    mark: 'math',
+                    match: (tok: PandocToken) => {
+                      const text = tok.c[kCodeText];
+                      return kSingleLineDisplayMathRegex.test(text) || kInlineMathRegex.test(text);
+                    },
+                    getAttrs: (tok: PandocToken) => {
+                      const text = tok.c[kCodeText];
+                      return {
+                        type: kSingleLineDisplayMathRegex.test(text) ? MathType.Display : MathType.Inline,
+                      };
+                    },
+                    getText: (tok: PandocToken) => {
+                      return tok.c[kCodeText];
+                    },
+                  },
+                ]
+              : []),
           ],
           writer: {
             priority: 20,
             write: (output: PandocOutput, mark: Mark, parent: Fragment) => {
-              
-               // collect math content
-               let math = '';
-               parent.forEach((node: ProsemirrorNode) => (math = math + node.textContent));
-               
+              // collect math content
+              let math = '';
+              parent.forEach((node: ProsemirrorNode) => (math = math + node.textContent));
+
               // if this is blogdownMathInCode just write the content in a code mark
               if (blogdownMathInCode) {
-
                 output.writeToken(PandocTokenType.Code, () => {
                   output.writeAttr();
                   output.write(math);
                 });
-
               } else {
-               
-                // strip delimiter 
+                // strip delimiter
                 const delimiter = delimiterForType(mark.attrs.type);
                 math = math.substr(delimiter.length, math.length - 2 * delimiter.length);
 
@@ -177,7 +179,6 @@ const extension = (
       } else {
         return [];
       }
-      
     },
 
     inputRules: (schema: Schema) => {
@@ -244,7 +245,7 @@ const extension = (
         }),
         mathHighlightPlugin(schema),
       ];
-    }
+    },
   };
 };
 
