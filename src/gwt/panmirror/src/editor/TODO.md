@@ -6,8 +6,9 @@ pandoc schema: <https://github.com/jgm/pandoc-types/blob/master/Text/Pandoc/Defi
 
 ## TODO
 
-Scrolling now occurs within body! (not respecting padding)
-Image border is now clipped as well!
+executing python line-by-line w/ an Rmd open in visual mode doesn't work
+(because we've disabled that command -- does it not call manageCommands?)
+
 
 Look into Joe's review of the scoped actions handler
 
