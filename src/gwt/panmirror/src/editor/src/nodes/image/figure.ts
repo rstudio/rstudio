@@ -149,9 +149,7 @@ const extension = (
         {
           name: 'figure-convert',
           nodeFilter: node => node.type === schema.nodes.image,
-          append: (tr: Transaction) => {
-            trTransform(tr, imagesToFiguresTransform(tr.doc.type.schema));
-          }
+          append: convertImagesToFigure,
         },
       ];
     },
@@ -200,6 +198,9 @@ export function deleteCaption() {
   };
 }
 
+function convertImagesToFigure(tr: Transaction) {
+  return trTransform(tr, imagesToFiguresTransform(tr.doc.type.schema));
+}
 
 function imagesToFiguresTransform(schema: Schema) {
   return (tr: Transform) => {
