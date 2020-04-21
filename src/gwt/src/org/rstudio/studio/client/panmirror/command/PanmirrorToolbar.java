@@ -220,6 +220,7 @@ public class PanmirrorToolbar extends SecondaryToolbar implements RequiresResize
       PanmirrorToolbarMenu insertMenu = new PanmirrorToolbarMenu(commands_);
       insertMenu.addCommand(PanmirrorCommands.Image);
       insertMenu.addCommand(PanmirrorCommands.Link);
+      insertMenu.addCommand(PanmirrorCommands.TableInsertTable, "Table...");
       insertMenu.addSeparator();
       insertMenu.addCommand(PanmirrorCommands.HorizontalRule);
       insertMenu.addSeparator();

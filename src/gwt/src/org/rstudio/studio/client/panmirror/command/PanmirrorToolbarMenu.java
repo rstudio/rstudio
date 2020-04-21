@@ -54,7 +54,12 @@ public class PanmirrorToolbarMenu extends ToolbarPopupMenu implements PanmirrorC
    
    public void addCommand(String id)
    {
-      PanmirrorCommandMenuItem item = new PanmirrorCommandMenuItem(commands_.get(id));
+      addCommand(id, null);
+   }
+   
+   public void addCommand(String id, String menuText)
+   {
+      PanmirrorCommandMenuItem item = new PanmirrorCommandMenuItem(commands_.get(id), menuText);
       addItem(item);
       uiObjects_.add(item); 
    }
