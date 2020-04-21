@@ -88,12 +88,12 @@ const extension = (pandocExtensions: PandocExtensions, pandocCapabilities: Pando
           lang: (node: ProsemirrorNode) => {
             return node.attrs.format;
           },
-          borderColorClass: 'pm-raw-block-border'
+          borderColorClass: 'pm-raw-block-border',
         },
 
         attr_edit: () => ({
           type: (schema: Schema) => schema.nodes.raw_block,
-          tags: (node: ProsemirrorNode) => [node.attrs.format] ,
+          tags: (node: ProsemirrorNode) => [node.attrs.format],
           editFn: (ui: EditorUI) => editRawBlockCommand(ui, pandocCapabilities.output_formats),
         }),
 
@@ -197,11 +197,7 @@ class FormatRawBlockCommand extends ProsemirrorCommand {
 // generic raw block command (shows dialog to allow choosing from among raw formats)
 class RawBlockCommand extends ProsemirrorCommand {
   constructor(ui: EditorUI, outputFormats: string[]) {
-    super(
-      EditorCommandId.RawBlock,
-      [],
-      editRawBlockCommand(ui, outputFormats)
-    );
+    super(EditorCommandId.RawBlock, [], editRawBlockCommand(ui, outputFormats));
   }
 }
 

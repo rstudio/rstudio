@@ -1255,6 +1255,14 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
+    * Whether to sort file names naturally, so that e.g., file10.R comes after file9.R
+    */
+   public PrefValue<Boolean> sortFileNamesNaturally()
+   {
+      return bool("sort_file_names_naturally", true);
+   }
+
+   /**
     * The visibility of the Jobs tab.
     */
    public PrefValue<String> jobsTabVisibility()
@@ -1720,6 +1728,22 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
+    * Maximum content width for visual editing mode, in pixels
+    */
+   public PrefValue<Integer> visualMarkdownEditingMaxContentWidth()
+   {
+      return integer("visual_markdown_editing_max_content_width", 700);
+   }
+
+   /**
+    * The default visual editing mode font size, in points
+    */
+   public PrefValue<Integer> visualMarkdownEditingFontSizePoints()
+   {
+      return integer("visual_markdown_editing_font_size_points", 0);
+   }
+
+   /**
     * List of aria-live announcements to disable.
     */
    public PrefValue<JsArrayString> disabledAriaLiveAnnouncements()
@@ -2055,6 +2079,8 @@ public class UserPrefsAccessor extends Prefs
          enableTextDrag().setValue(layer, source.getBool("enable_text_drag"));
       if (source.hasKey("show_hidden_files"))
          showHiddenFiles().setValue(layer, source.getBool("show_hidden_files"));
+      if (source.hasKey("sort_file_names_naturally"))
+         sortFileNamesNaturally().setValue(layer, source.getBool("sort_file_names_naturally"));
       if (source.hasKey("jobs_tab_visibility"))
          jobsTabVisibility().setValue(layer, source.getString("jobs_tab_visibility"));
       if (source.hasKey("show_launcher_jobs_tab"))
@@ -2157,6 +2183,10 @@ public class UserPrefsAccessor extends Prefs
          visualMarkdownEditingWrapAuto().setValue(layer, source.getBool("visual_markdown_editing_wrap_auto"));
       if (source.hasKey("visual_markdown_editing_wrap_column"))
          visualMarkdownEditingWrapColumn().setValue(layer, source.getInteger("visual_markdown_editing_wrap_column"));
+      if (source.hasKey("visual_markdown_editing_max_content_width"))
+         visualMarkdownEditingMaxContentWidth().setValue(layer, source.getInteger("visual_markdown_editing_max_content_width"));
+      if (source.hasKey("visual_markdown_editing_font_size_points"))
+         visualMarkdownEditingFontSizePoints().setValue(layer, source.getInteger("visual_markdown_editing_font_size_points"));
       if (source.hasKey("disabled_aria_live_announcements"))
          disabledAriaLiveAnnouncements().setValue(layer, source.getObject("disabled_aria_live_announcements"));
       if (source.hasKey("screenreader_console_announce_limit"))

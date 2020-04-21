@@ -16,6 +16,7 @@
 package org.rstudio.studio.client.workbench.views.source.editors.text;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.DebouncedCommand;
@@ -34,12 +35,23 @@ import org.rstudio.studio.client.panmirror.PanmirrorKeybindings;
 import org.rstudio.studio.client.panmirror.PanmirrorOptions;
 import org.rstudio.studio.client.panmirror.PanmirrorUIContext;
 import org.rstudio.studio.client.panmirror.PanmirrorWidget;
+import org.rstudio.studio.client.panmirror.PanmirrorWidget.FormatSource;
 import org.rstudio.studio.client.panmirror.PanmirrorWriterOptions;
 import org.rstudio.studio.client.panmirror.command.PanmirrorCommands;
+import org.rstudio.studio.client.panmirror.format.PanmirrorExtendedDocType;
+import org.rstudio.studio.client.panmirror.format.PanmirrorFormat;
+import org.rstudio.studio.client.panmirror.format.PanmirrorHugoExtensions;
+import org.rstudio.studio.client.panmirror.format.PanmirrorRmdExtensions;
 import org.rstudio.studio.client.panmirror.pandoc.PanmirrorPandocFormat;
+import org.rstudio.studio.client.panmirror.uitools.PanmirrorFormatComment;
+import org.rstudio.studio.client.panmirror.uitools.PanmirrorUITools;
+import org.rstudio.studio.client.panmirror.uitools.PanmirrorUIToolsFormat;
+import org.rstudio.studio.client.rmarkdown.model.YamlFrontMatter;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.commands.Commands;
+import org.rstudio.studio.client.workbench.model.Session;
+import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.views.source.model.DirtyState;
 import org.rstudio.studio.client.workbench.views.source.model.DocUpdateSentinel;
@@ -56,10 +68,11 @@ import com.google.gwt.view.client.SelectionChangeEvent;
 import com.google.inject.Inject;
 
 
-public class TextEditingTargetVisualMode 
+public class TextEditingTargetVisualMode
 {
    public TextEditingTargetVisualMode(TextEditingTarget target,
-                                      TextEditingTarget.Display display,
+                                      TextEditingTarget.Display view,
+                                      DocDisplay docDisplay,
                                       DirtyState dirtyState,
                                       DocUpdateSentinel docUpdateSentinel,
                                       EventBus eventBus,
@@ -68,7 +81,8 @@ public class TextEditingTargetVisualMode
       RStudioGinjector.INSTANCE.injectMembers(this);
       
       target_ = target;
-      display_ = display;
+      view_ = view;
+      docDisplay_ = docDisplay;
       dirtyState_ = dirtyState;
       docUpdateSentinel_ = docUpdateSentinel;
       progress_ = new ProgressPanel(ProgressImages.createSmall(), 200);
@@ -92,7 +106,7 @@ public class TextEditingTargetVisualMode
       
       // sync to user pref changed
       releaseOnDismiss.add(prefs_.enableVisualMarkdownEditingMode().addValueChangeHandler((value) -> {
-         display_.manageCommandUI();
+         view_.manageCommandUI();
       }));
       
       // changes to line wrapping prefs make us dirty
@@ -108,12 +122,14 @@ public class TextEditingTargetVisualMode
    public void initialize(Commands commands, 
                           UserPrefs prefs, 
                           SourceServerOperations source, 
-                          WorkbenchContext context)
+                          WorkbenchContext context,
+                          Session session)
    {
       commands_ = commands;
       prefs_ = prefs;
       source_ = source;
       context_ = context;
+      sessionInfo_ = session.getSessionInfo();
    }
    
    public boolean isActivated()
@@ -170,7 +186,19 @@ public class TextEditingTargetVisualMode
    
    public void syncFromEditor(Command ready, boolean focus)
    {      
+      // flag to prevent the document being set to dirty when loading
+      // from source mode
       loadingFromSource_ = true;
+      
+      // if there is a previous format comment and it's changed then
+      // we need to tear down the editor instance and create a new one
+      if (panmirrorFormatComment_ != null && panmirrorFormatComment_.hasChanged()) 
+      {
+         panmirrorFormatComment_ = null;
+         view_.editorContainer().removeWidget(panmirror_);
+         panmirror_ = null;
+      }
+      
       withPanmirror(() -> {
          
          panmirror_.setMarkdown(getEditorCode(), true, (done) -> {  
@@ -197,20 +225,57 @@ public class TextEditingTargetVisualMode
                PanmirrorPandocFormat format = panmirror_.getPandocFormat();
                if (format.warnings.invalidFormat.length() > 0)
                {
-                  display_.showWarningBar("Invalid Pandoc format: " + format.warnings.invalidFormat);
+                  view_.showWarningBar("Invalid Pandoc format: " + format.warnings.invalidFormat);
                }
                else if (format.warnings.invalidOptions.length > 0)
                {
-                  display_.showWarningBar("Pandoc format " + format.baseName + " does not support options: " + 
+                  view_.showWarningBar("Pandoc format " + format.baseName + " does not support options: " + 
                                           String.join(", ", format.warnings.invalidOptions));
                }
             });                
          });
       });
    }
+   
+   public void syncFromEditorIfActivated()
+   {
+      if (isActivated()) 
+      {
+         // get reference to the editing container 
+         TextEditorContainer editorContainer = view_.editorContainer();
+         
+         // show progress
+         progress_.beginProgressOperation(400);
+         editorContainer.activateWidget(progress_);
+         
+         syncFromEditor(() -> {
+            // clear progress
+            progress_.endProgressOperation();
+            
+            // re-activate panmirror widget
+            editorContainer.activateWidget(panmirror_, false);
+            
+         }, false);
+      }
+   }
  
    public void manageCommands()
    {
+      if (isActivated())
+      {
+         // if this is the first time we've switched to the doc
+         // while in visual mode then complete initialization
+         if (!haveEditedInVisualMode_)
+         {
+            haveEditedInVisualMode_ = true;
+            manageUI(true, true);
+         }
+         else
+         {
+            syncDevTools();
+         }
+      }
+      
       disableForVisualMode(
         commands_.insertChunk(),
         commands_.jumpTo(),
@@ -268,6 +333,11 @@ public class TextEditingTargetVisualMode
       );
    }
    
+   public void unmanageCommands()
+   {
+      restoreDisabledForVisualMode();
+   }
+   
    public HasFindReplace getFindReplace()
    {
       if (panmirror_ != null) {
@@ -292,25 +362,6 @@ public class TextEditingTargetVisualMode
       });
    }
    
-   public void onUserEditingDoc()
-   {
-      if (isActivated())
-      {
-         // if this is the first time we've switched to the doc
-         // while in visual mode then complete initialization
-         if (!haveEditedInVisualMode_)
-         {
-            haveEditedInVisualMode_ = true;
-            manageUI(true, true);
-         }
-         else
-         {
-            syncDevTools();
-         }
-      }
-        
-   }
-   
    public void onClosing()
    {
       if (syncOnIdle_ != null)
@@ -331,10 +382,10 @@ public class TextEditingTargetVisualMode
       manageCommands();
       
       // manage toolbar buttons / menus in display
-      display_.manageCommandUI();
+      view_.manageCommandUI();
       
       // get references to the editing container and it's source editor
-      TextEditorContainer editorContainer = display_.editorContainer();
+      TextEditorContainer editorContainer = view_.editorContainer();
         
       // visual mode enabled (panmirror editor)
       if (activate)
@@ -414,33 +465,23 @@ public class TextEditingTargetVisualMode
       if (panmirror_ == null)
       {
          // create panmirror
-         String format = "markdown+autolink_bare_uris+tex_math_single_backslash";
-         PanmirrorContext context = new PanmirrorContext(format, uiContext());
-         
-         PanmirrorOptions options = new PanmirrorOptions();
-         options.rmdCodeChunks = true;
-         options.rmdImagePreview = true;
-         
-         // add focus-visible class to prevent interaction with focus-visible.js
-         // (it ends up attempting to apply the "focus-visible" class b/c ProseMirror
-         // is contentEditable, and that triggers a dom mutation event for ProseMirror,
-         // which in turn causes us to lose table selections)
-         options.className = "focus-visible";
-           
+         PanmirrorContext context = new PanmirrorContext(uiContext());
+         PanmirrorOptions options = panmirrorOptions();   
          PanmirrorWidget.Options widgetOptions = new PanmirrorWidget.Options();
+         PanmirrorWidget.create(context, panmirrorFormat(), options, widgetOptions, (panmirror) -> {
          
-         
-         PanmirrorWidget.create(context, options, widgetOptions, getEditorCode(), (panmirror) -> {
-            
             // save reference to panmirror
             panmirror_ = panmirror;
+            
+            // track format comment (used to detect when we need to reload for a new format)
+            panmirrorFormatComment_ = new FormatComment(new PanmirrorUITools().format);
             
             // remove some keybindings that conflict with the ide
             disableKeys(
                PanmirrorCommands.Paragraph, 
                PanmirrorCommands.Heading1, PanmirrorCommands.Heading2, PanmirrorCommands.Heading3,
                PanmirrorCommands.Heading4, PanmirrorCommands.Heading5, PanmirrorCommands.Heading6,
-               PanmirrorCommands.BulletList, PanmirrorCommands.OrderedList, PanmirrorCommands.TightList
+               PanmirrorCommands.TightList
             );
            
             // periodically sync edits back to main editor
@@ -526,7 +567,7 @@ public class TextEditingTargetVisualMode
    private void withProgress(int delayMs, CommandWithArg<Command> command)
    {
      
-      TextEditorContainer editorContainer = display_.editorContainer();
+      TextEditorContainer editorContainer = view_.editorContainer();
       /*
       IsHideableWidget prevWidget = editorContainer.getActiveWidget();
       progress_.beginProgressOperation(delayMs);
@@ -540,20 +581,20 @@ public class TextEditingTargetVisualMode
    
    private String getEditorCode()
    {
-      TextEditorContainer editorContainer = display_.editorContainer();
+      TextEditorContainer editorContainer = view_.editorContainer();
       TextEditorContainer.Editor editor = editorContainer.getEditor();
       return editor.getCode();
-   }
+   }   
    
    // is our widget active in the editor container
    private boolean isPanmirrorActive()
    {
-      return display_.editorContainer().isWidgetActive(panmirror_);
+      return view_.editorContainer().isWidgetActive(panmirror_);
    }
    
    private TextEditorContainer.Editor getSourceEditor()
    {
-      return display_.editorContainer().getEditor();
+      return view_.editorContainer().getEditor();
    }
   
    private boolean getOutlineVisible()
@@ -619,11 +660,27 @@ public class TextEditingTargetVisualMode
    
    private void disableForVisualMode(AppCommand... commands)
    {
-      for (AppCommand command : commands)
+      if (isActivated())
       {
-         if (command.isVisible())
-            command.setEnabled(!isActivated());
+         for (AppCommand command : commands)
+         {
+            if (command.isVisible() && 
+                command.isEnabled() && 
+                !disabledForVisualMode_.contains(command))
+            {
+               command.setEnabled(false);
+               disabledForVisualMode_.add(command);
+            }
+         }
       }
+   }
+   
+   private void restoreDisabledForVisualMode()
+   {
+      disabledForVisualMode_.forEach((command) -> {
+         command.setEnabled(true);
+      });
+      disabledForVisualMode_.clear();
    }
    
    private HandlerRegistration onDocPropChanged(String prop, ValueChangeHandler<String> handler)
@@ -637,10 +694,7 @@ public class TextEditingTargetVisualMode
       uiContext.mapResourcePath = path -> {
          return ImagePreviewer.imgSrcPathFromHref(uiContext.getResourceDir.getResourceDir(), path);
       };
-      uiContext.getResourceDir = () -> {
-         
-         // TODO: curent knitr directroy
-         
+      uiContext.getResourceDir = () -> {  
          if (docUpdateSentinel_.getPath() != null)
             return FileSystemItem.createDir(docUpdateSentinel_.getPath()).getParentPathString();
          else
@@ -652,14 +706,221 @@ public class TextEditingTargetVisualMode
       return uiContext;
    }
    
+   private PanmirrorOptions panmirrorOptions()
+   {
+      // create options
+      PanmirrorOptions options = new PanmirrorOptions();
+      
+      // use embedded codemirror for code blocks
+      options.codemirror = true;
+      
+      // enable rmdImagePreview if we are an executable rmd
+      options.rmdImagePreview = target_.canExecuteChunks();
+      
+      // hide the format comment so that users must go into
+      // source mode to change formats
+      options.hideFormatComment = true;
+      
+      // add focus-visible class to prevent interaction with focus-visible.js
+      // (it ends up attempting to apply the "focus-visible" class b/c ProseMirror
+      // is contentEditable, and that triggers a dom mutation event for ProseMirror,
+      // which in turn causes us to lose table selections)
+      options.className = "focus-visible";
+      
+      return options;
+   }
+   
+   private FormatSource panmirrorFormat()
+   {
+      return new PanmirrorWidget.FormatSource()
+      {
+         @Override
+         public PanmirrorFormat getFormat(PanmirrorUIToolsFormat formatTools)
+         {
+            // create format
+            PanmirrorFormat format = new PanmirrorFormat();
+            
+            // see if we have a format comment
+            PanmirrorFormatComment formatComment = formatTools.parseFormatComment(getEditorCode());
+            
+            // pandocMode
+            final String kBlackfriday = "blackfriday";
+            String alternateMode = null;
+            if (formatComment.mode != null)
+               alternateMode = formatComment.mode;
+            else if (enableBlogdownBlackfriday())
+               alternateMode = kBlackfriday;
+            
+            // set alternate mode if we have one
+            if (alternateMode != null)
+            {
+               format.pandocMode = alternateMode;
+               format.pandocExtensions = "";
+            }
+            // otherwise we're using the default base for R Markdown
+            else
+            {
+               format.pandocMode = "markdown";
+               format.pandocExtensions = "+autolink_bare_uris+tex_math_single_backslash";
+            }
+               
+            // custom pandocExtensions
+            if (formatComment.extensions != null)
+               format.pandocExtensions = formatComment.extensions;
+           
+            
+            // rmdExtensions
+            format.rmdExtensions = new PanmirrorRmdExtensions();
+            format.rmdExtensions.codeChunks = target_.canExecuteChunks();
+            
+            // support for bookdown cross-references is always enabled b/c they would not 
+            // serialize correctly in markdown modes that don't escape @ if not enabled,
+            // and the odds that someone wants to literally write @ref(foo) w/o the leading
+            // \ are vanishingly small)
+            format.rmdExtensions.bookdownXRef = true;
+            
+            // support for bookdown part headers is always enabled b/c typing 
+            // (PART\*) in the visual editor would result in an escaped \, which
+            // wouldn't parse as a port. the odds of (PART\*) occurring naturally
+            // in an H1 are also vanishingly small
+            format.rmdExtensions.bookdownPart = true;
+            
+            // enable blogdown math in code (e.g. `$math$`) if we have a blogdown
+            // doctype along with the blackfriday markdown engine
+            format.rmdExtensions.blogdownMathInCode = 
+               isBlogdownDocument() && format.pandocMode.equals(kBlackfriday);
+            
+            // hugoExtensions
+            format.hugoExtensions = new PanmirrorHugoExtensions();
+            
+            // always enable hugo shortcodes (w/o this we can end up destroying
+            // shortcodes during round-tripping, and we don't want to require that 
+            // blogdown files be opened within projects). this idiom is obscure 
+            // enough that it's vanishingly unlikely to affect non-blogdown docs
+            format.hugoExtensions.shortcodes = true;
+            
+            // fillColumn
+            format.wrapColumn = formatComment.fillColumn;
+            
+            // doctypes
+            ArrayList<String> docTypes = new ArrayList<String>();
+            if (formatComment.doctypes == null || formatComment.doctypes.length == 0)
+            {
+               if (isXRefDocument())
+                  docTypes.add(PanmirrorExtendedDocType.xref);
+               if (isBookdownDocument())
+                  docTypes.add(PanmirrorExtendedDocType.bookdown);
+               if (isBlogdownDocument()) 
+               {
+                  docTypes.add(PanmirrorExtendedDocType.blogdown);
+                  docTypes.add(PanmirrorExtendedDocType.hugo);
+               }  
+               format.docTypes = docTypes.toArray(new String[] {});
+            }
+            
+            // return format
+            return format;
+         }
+      };
+   }
+   
+   private boolean isXRefDocument()
+   {
+      return isBookdownDocument() || isBlogdownDocument() || isDistillDocument();
+   }
+   
+   private boolean isBookdownDocument() 
+   {
+      return sessionInfo_.getBuildToolsBookdownWebsite();
+   }
+   
+   private boolean isBlogdownDocument() 
+   {
+      return sessionInfo_.getIsBlogdownProject();
+   }
+   
+   private boolean isDistillDocument()
+   {
+      return sessionInfo_.getIsDistillProject() ||
+             getOutputFormats().contains("distill::distill_article");
+   }
+ 
+   // automatically enable blackfriday markdown engine if this is a blogdown
+   // file that isn't an Rmd (e.g. .md or .Rmarkdown). 
+   private boolean enableBlogdownBlackfriday()
+   {
+      // get current docPath
+      String docPath = docUpdateSentinel_.getPath();
+      
+      // if we have a doc
+      if (docPath != null)
+      {
+         // if we are in a blogdown project
+         if (sessionInfo_.getIsBlogdownProject())
+         {
+            // if the doc is in the project directory
+            FileSystemItem docFile = FileSystemItem.createFile(docPath);
+            FileSystemItem projectDir = context_.getActiveProjectDir();
+            if (docFile.getPathRelativeTo(projectDir) != null)
+            {
+               // if it has an extension indicating hugo will render markdown
+               String extension = FileSystemItem.getExtensionFromPath(docPath);
+               return extension.compareToIgnoreCase(".md") == 0 ||
+                      extension.compareToIgnoreCase("Rmarkdown") == 0;
+            }
+         }
+      }
+      
+      // default to false
+      return false;
+   }
+   
+  
+   private List<String> getOutputFormats()
+   {
+      String yaml = YamlFrontMatter.getFrontMatter(docDisplay_);
+      if (yaml == null)
+      {
+         return new ArrayList<String>();
+      }
+      else
+      {
+         List<String> formats = TextEditingTargetRMarkdownHelper.getOutputFormats(yaml);
+         if (formats == null)
+            return new ArrayList<String>();
+         else
+            return formats;   
+      }
+   }
+   
+   private class FormatComment
+   {
+      public FormatComment(PanmirrorUIToolsFormat formatTools)
+      {
+         formatTools_ = formatTools;
+         comment_ = formatTools_.parseFormatComment(getEditorCode());
+      }
+      
+      public boolean hasChanged()
+      {
+         PanmirrorFormatComment comment = formatTools_.parseFormatComment(getEditorCode());
+         return !PanmirrorFormatComment.areEqual(comment,  comment_);   
+      }
+      
+      private final PanmirrorUIToolsFormat formatTools_;
+      private final PanmirrorFormatComment comment_;
+   }
+   
    
    private Commands commands_;
    private UserPrefs prefs_;
    private WorkbenchContext context_;
+   private SessionInfo sessionInfo_;
    private SourceServerOperations source_;
    
    private final TextEditingTarget target_;
-   private final TextEditingTarget.Display display_;
+   private final TextEditingTarget.Display view_;
+   private final DocDisplay docDisplay_;
    private final DirtyState dirtyState_;
    private final DocUpdateSentinel docUpdateSentinel_;
    
@@ -671,6 +932,9 @@ public class TextEditingTargetVisualMode
    private DebouncedCommand saveLocationOnIdle_;
    
    private PanmirrorWidget panmirror_;
+   private FormatComment panmirrorFormatComment_;
+   
+   private ArrayList<AppCommand> disabledForVisualMode_ = new ArrayList<AppCommand>();
    
    private final ProgressPanel progress_;
    

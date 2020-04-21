@@ -25,6 +25,7 @@ import org.rstudio.studio.client.workbench.model.SessionInfo;
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
 
+
 /**
  * Accessor class for user state.
  */ 

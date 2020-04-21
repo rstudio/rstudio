@@ -30,7 +30,7 @@ public class IFrameElementEx extends IFrameElement
    
    public final void setFocus()
    {
-      if (BrowseCap.INSTANCE.isInternetExplorer())
+      if (BrowseCap.isInternetExplorer())
          getContentWindow().focus();
       else
          focus();

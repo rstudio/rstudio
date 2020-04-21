@@ -13,11 +13,8 @@
  *
  */
 
-
-import { ResolvedPos, Node as ProsemirrorNode } from 'prosemirror-model';
+import { ResolvedPos } from 'prosemirror-model';
 import { EditorView } from 'prosemirror-view';
-
-import { ContentNodeWithPos } from 'prosemirror-utils';
 
 import React from 'react';
 
@@ -26,63 +23,9 @@ import { editingRootNodeClosestToPos } from '../node';
 import { kPixelUnit } from '../css';
 
 export interface DecorationPosition {
-  pos: number; 
+  pos: number;
   style: React.CSSProperties;
 }
-
-export function nodeDecorationPosition(
-  doc: ProsemirrorNode,
-  view: EditorView,
-  nodeWithPos: ContentNodeWithPos,
-  offsets?: { top: number, right: number }
-) : DecorationPosition | null {
-
-  // default offsets
-  offsets = offsets || { top: 0, right: 0 };
-
-  // get the dom node
-  const nodeDOM = view.nodeDOM(nodeWithPos.pos);
-  if (!nodeDOM) {
-    return null;
-  }
-
-  // get the editing container element
-  const editingNode = editingRootNodeClosestToPos(doc.resolve(nodeWithPos.pos));
-  if (!editingNode) {
-    return null;
-  }
-  const editingDOM = view.nodeDOM(editingNode.pos);
-  if (!editingDOM) {
-    return null;
-  }
-
-  // cast to HTML element
-  const nodeEl = nodeDOM as HTMLElement;
-  const editingEl = editingDOM as HTMLElement;
-
-  // find the top offset by looping up until we get to the editingEl
-  let topOffset = offsets.top;
-  let offsetTarget: Element | null = nodeEl;
-  while (offsetTarget && (offsetTarget !== editingEl)) {
-    topOffset += (offsetTarget as HTMLElement).offsetTop;
-    offsetTarget = (offsetTarget as HTMLElement).offsetParent;
-  }
-
-  // get the rectangle of each
-  const nodeRect = nodeEl.getBoundingClientRect();
-  const editingRect = editingEl.getBoundingClientRect();
-  
-  return {
-    pos: editingNode.pos + editingNode.node.nodeSize - 1,
-    style: {
-      position: 'absolute',
-      top: topOffset + 'px',
-      right: (editingRect.right - nodeRect.right) + offsets.right + 'px'
-    }
-  };
-
-}
-
 
 export function textRangePopupDecorationPosition(
   view: EditorView,
@@ -97,7 +40,7 @@ export function textRangePopupDecorationPosition(
   // get the (window) DOM coordinates for the current editing root node (body or notes)
   const rangePos = view.state.doc.resolve(range.from);
   const editingBox = getEditingBox(view, rangePos);
- 
+
   // we are going to stick the decoration at the beginning of the containing
   // top level body block, then position it by calculating the relative location of
   // the range within text block. we do this so that the decoration isn't located
@@ -154,4 +97,3 @@ function getEditingBox(view: EditorView, pos$: ResolvedPos) {
   const editingEl = view.domAtPos(editingNode!.pos + 1).node as HTMLElement;
   return editingEl.getBoundingClientRect();
 }
-

@@ -28,7 +28,7 @@ import {
   PandocExtensions,
 } from '../api/pandoc';
 
-import { PandocFormat } from '../api/pandoc_format';
+import { PandocFormat, kGfmFormat } from '../api/pandoc_format';
 import { PandocAttr } from '../api/pandoc_attr';
 import { fragmentText } from '../api/fragment';
 
@@ -127,7 +127,8 @@ class PandocWriter implements PandocOutput {
   }
 
   public writeMark(type: PandocTokenType, parent: Fragment, expelEnclosingWhitespace = false) {
-    if (expelEnclosingWhitespace) {
+    // expel enclosing whitepsace if requested and if the fragment isn't 100% spaces
+    if (expelEnclosingWhitespace && fragmentText(parent).trim().length > 0) {
       // build output spec
       const output = {
         spaceBefore: false,
@@ -211,7 +212,7 @@ class PandocWriter implements PandocOutput {
         if (ch.charCodeAt(0) === 160) {
           ch = ' '; // convert &nbsp; to ' '
         }
-        if (this.options.writeSpaces && (ch === ' ')) {
+        if (this.options.writeSpaces && ch === ' ') {
           flushTextRun();
           this.writeToken(PandocTokenType.Space);
         } else if (preventEscapeCharacters.includes(ch)) {
@@ -378,7 +379,7 @@ class PandocWriter implements PandocOutput {
   private initEscapeCharacters() {
     // gfm disallows [] escaping so that MediaWiki style page links (e.g. [[MyPage]]) work as expected
     // tex_math_single_backslash does not allow escaping of [] or () (as that conflicts with the math syntax)
-    if (this.format.baseName === 'gfm' || this.format.extensions.tex_math_single_backslash) {
+    if (this.format.baseName === kGfmFormat || this.format.extensions.tex_math_single_backslash) {
       this.preventEscapeCharacters.push('[', ']');
     }
     // tex_math_single_backslash does not allow escaping of [] or () (as that conflicts with the math syntax)

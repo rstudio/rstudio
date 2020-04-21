@@ -66,11 +66,13 @@ private:
    core::r_util::RVersion systemVersion_;
    std::vector<r_util::RVersion> cachedVersions_;
 
-   void parseRVersionsFile(const std::string& contents,
+   void parseRVersionsFile(const FilePath& versionsFile,
+                           const std::string& contents,
                            std::vector<FilePath> *pRPaths,
                            std::vector<r_util::RVersion> *pREntries);
 
-   boost::shared_ptr<r_util::RVersion> parseREntry(const std::string& rEntryStr);
+   boost::shared_ptr<r_util::RVersion> parseREntry(const FilePath& versionsFile,
+                                                   const std::string& rEntryStr);
 
    void setFallbackVersion();
 };

@@ -242,7 +242,7 @@ class CodeBlockNodeView implements NodeView {
 
   private updateMode() {
     const lang = this.options.lang(this.node, this.cm.getValue());
-    const mode = lang ? modeForLang(lang) : null;
+    const mode = lang ? modeForLang(lang, this.options) : null;
     if (mode !== this.cm.getOption('mode')) {
       this.cm.setOption('mode', mode);
     }
@@ -375,9 +375,25 @@ const kModeMap: { [key: string]: string } = {
   bash: 'bash',
 };
 
-function modeForLang(lang: string) {
-  if (kModeMap.hasOwnProperty(lang)) {
-    return kModeMap[lang];
+const kBookdownThereomModeMap: { [key: string]: string } = {
+  theorem: 'stex',
+  lemma: 'stex',
+  corollary: 'stex',
+  proposition: 'stex',
+  conjecture: 'stex',
+  definition: 'stex',
+  example: 'stex',
+  exercise: 'stex',
+};
+
+function modeForLang(lang: string, options: CodeViewOptions) {
+  const modeMap = {
+    ...kModeMap,
+    ...(options.bookdownTheorems ? kBookdownThereomModeMap : {}),
+  };
+
+  if (modeMap.hasOwnProperty(lang)) {
+    return modeMap[lang];
   } else {
     return null;
   }

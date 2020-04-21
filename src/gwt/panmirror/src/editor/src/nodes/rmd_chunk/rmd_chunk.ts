@@ -29,21 +29,22 @@ import { uuidv4 } from '../../api/util';
 
 import { EditorUI } from '../../api/ui';
 import { PandocCapabilities } from '../../api/pandoc_capabilities';
+import { EditorFormat, kBookdownDocType } from '../../api/format';
 
 import { RmdChunkImagePreviewPlugin } from './rmd_chunk-image';
 
 import './rmd_chunk-styles.css';
 
-const kRmdCodeChunkClass = 'D34DA053-95B6-4F12-B665-6CA8E4CD5101';
+const kRmdCodeChunkClass = '3759D6F8-53AF-4931-8060-E55AF73236B5'.toLowerCase();
 
 const extension = (
-  pandocExtensions: PandocExtensions, 
-  _caps: PandocCapabilities, 
-  ui: EditorUI, 
-  options: EditorOptions
-) : Extension | null => {
-
-  if (!options.rmdCodeChunks || !pandocExtensions.backtick_code_blocks || !pandocExtensions.fenced_code_attributes) {
+  _pandocExtensions: PandocExtensions,
+  _pandocCapabilities: PandocCapabilities,
+  ui: EditorUI,
+  format: EditorFormat,
+  options: EditorOptions,
+): Extension | null => {
+  if (!format.rmdExtensions.codeChunks) {
     return null;
   }
 
@@ -77,6 +78,7 @@ const extension = (
               return line - 1 + '';
             }
           },
+          bookdownTheorems: format.docTypes.includes(kBookdownDocType),
           classes: ['pm-chunk-background-color'],
           lang: (_node: ProsemirrorNode, content: string) => {
             const match = content.match(/^[a-zA-Z0-9_]+/);
@@ -92,9 +94,9 @@ const extension = (
           codeBlockFilter: {
             preprocessor: (markdown: string) => {
               const md = markdown.replace(
-                /^([\t >]*```+\s*\{)([a-zA-Z0-9_]+( *[ ,].*?)?)(\}\s*)([\W\w]*?)(?:```)(?:[ \t]*)$/gm,
+                /^([\t >]*```+)\s*\{([a-zA-Z0-9_]+( *[ ,].*?)?)(\}\s*)([\W\w]*?)(?:```)(?:[ \t]*)$/gm,
                 (_match: string, p1: string, p2: string, _p3: string, p4: string, p5: string, p6: string) => {
-                  return p1 + '.' + kRmdCodeChunkClass + '}\n' + p2 + '\n' + p5 + '```\n';
+                  return p1 + kRmdCodeChunkClass + '\n' + p2 + '\n' + p5 + '```\n';
                 },
               );
               return md;
@@ -127,7 +129,7 @@ const extension = (
       } else {
         return [];
       }
-    }
+    },
   };
 };
 
@@ -143,15 +145,17 @@ class RmdChunkCommand extends ProsemirrorCommand {
           return false;
         }
 
-        // must either be at the body top level, within a list item, or within a 
+        // must either be at the body top level, within a list item, or within a
         // blockquote (and never within a table)
         const within = (nodeType: NodeType) => !!findParentNodeOfType(nodeType)(state.selection);
         if (within(schema.nodes.table)) {
           return false;
-        }        
-        if (!selectionIsBodyTopLevel(state.selection) && 
-            !within(schema.nodes.list_item) &&
-            !within(schema.nodes.blockquote)) {
+        }
+        if (
+          !selectionIsBodyTopLevel(state.selection) &&
+          !within(schema.nodes.list_item) &&
+          !within(schema.nodes.blockquote)
+        ) {
           return false;
         }
 

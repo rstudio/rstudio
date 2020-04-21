@@ -25,10 +25,6 @@ import { findChildren } from 'prosemirror-utils';
 const QUOTE_TYPE = 0;
 const QUOTED_CHILDREN = 1;
 
-const kDoubleQuoted = /“[^”]*”/;
-const kSingleQuoted = /‘[^’]*’/;
-const kQuoted = /(“[^”]*”|‘[^’]*’)/;
-
 enum QuoteType {
   SingleQuote = 'SingleQuote',
   DoubleQuote = 'DoubleQuote',
@@ -102,6 +98,10 @@ const extension: Extension = {
   ],
 
   fixups: (schema: Schema) => {
+    const kDoubleQuoted = /“[^”]*”/g;
+    const kSingleQuoted = /‘[^’]*’/g;
+    const kQuoted = /(“[^”]*”|‘[^’]*’)/g;
+
     return [
       (tr: Transaction, context: FixupContext) => {
         // only apply on save

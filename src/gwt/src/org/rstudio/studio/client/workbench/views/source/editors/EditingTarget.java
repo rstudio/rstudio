@@ -70,7 +70,7 @@ public interface EditingTarget extends IsWidget,
    void verifyNewSqlPrerequisites();
 
    void focus();
-   void onActivate(boolean forUser);
+   void onActivate();
    void onDeactivate();
 
    void onInitiallyLoaded();

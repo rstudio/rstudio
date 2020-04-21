@@ -462,23 +462,7 @@ private:
 
                // get the host header, which indicates the destination for the request
                // we check for proxy values first as any reverse proxies will modify the host header
-               std::string host = pRequest->headerValue("X-Forwarded-Host");
-               if (host.empty())
-               {
-                  // might be using new Forwarded header, so check there for the host
-                  std::string forwarded = pRequest->headerValue("Forwarded");
-                  if (!forwarded.empty())
-                  {
-                     boost::regex re("host=([\\w.:]+);?");
-                     boost::smatch matches;
-                     if (boost::regex_search(forwarded, matches, re))
-                        host = matches[1];
-                  }
-
-                  // no forwarded information, so use regular host header
-                  if (host.empty())
-                     host = pRequest->headerValue("Host");
-               }
+               std::string host = URL(pRequest->proxiedUri()).host();
 
                if (!originator.empty() && originator != host)
                {
@@ -586,7 +570,7 @@ private:
          continuation(boost::shared_ptr<http::Response>());
    }
 
-   void connectionResponseFilter(const std::string& originalUri,
+   void connectionResponseFilter(const std::string& absoluteUri,
                                  http::Response* pResponse)
    {
       // set server header (evade ref-counting to defend against
@@ -600,7 +584,7 @@ private:
       }
 
       if (responseFilter_)
-         responseFilter_(originalUri, pResponse);
+         responseFilter_(absoluteUri, pResponse);
    }
 
    void waitForScheduledCommandTimer()

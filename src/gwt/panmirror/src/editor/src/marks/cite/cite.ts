@@ -76,7 +76,7 @@ const extension = (pandocExtensions: PandocExtensions, _pandocCapabilities: Pand
             },
           ],
           toDOM(mark: Mark): DOMOutputSpecArray {
-            return { '0': 'span', '1': { class: 'cite-id pm-link-text-color' } };
+            return { '0': 'span', '1': { class: 'cite-id pm-markup-text-color pm-fixedwidth-font' } };
           },
         },
         pandoc: {

@@ -1298,7 +1298,7 @@ public class DocTabLayoutPanel
    {
       // IE only supports textual data; for other browsers, though, use our own
       // format so it doesn't activate text drag targets in other apps
-      if (BrowseCap.INSTANCE.isInternetExplorer()) 
+      if (BrowseCap.isInternetExplorer()) 
          return "text";
       else
          return "application/rstudio-tab";

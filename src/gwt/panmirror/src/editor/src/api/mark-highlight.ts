@@ -66,7 +66,7 @@ export function markHighlightPlugin(key: PluginKey<DecorationSet>, markType: Mar
       apply(tr: Transaction, set: DecorationSet, oldState: EditorState, newState: EditorState) {
         // ignore selection changes
         if (!tr.docChanged) {
-          return set;
+          return set.map(tr.mapping, tr.doc);
         }
 
         // if one of the steps added or removed a mark of our type then rescan the doc.

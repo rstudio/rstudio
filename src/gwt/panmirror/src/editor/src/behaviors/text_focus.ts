@@ -46,7 +46,7 @@ const extension: Extension = {
                 return DecorationSet.empty;
               }
             } else {
-              return set;
+              return set.map(tr.mapping, tr.doc);
             }
           },
         },

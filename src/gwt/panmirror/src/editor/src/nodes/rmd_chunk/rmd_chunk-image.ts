@@ -27,7 +27,6 @@ const key = new PluginKey<DecorationSet>('rmd-chunk-image-preview');
 
 export class RmdChunkImagePreviewPlugin extends Plugin<DecorationSet> {
   constructor(uiContext: EditorUIContext) {
-  
     super({
       key,
       state: {
@@ -35,12 +34,11 @@ export class RmdChunkImagePreviewPlugin extends Plugin<DecorationSet> {
           return imagePreviewDecorations(state, uiContext);
         },
         apply: (tr: Transaction, old: DecorationSet, oldState: EditorState, newState: EditorState) => {
-          
           const transactions = [tr];
 
           // doc didn't change, return existing decorations
           if (!tr.docChanged) {
-            return old;
+            return old.map(tr.mapping, tr.doc);
 
             // non-typing change, do a full rescan
           } else if (!transactionsAreTypingChange(transactions)) {
@@ -66,17 +64,13 @@ export class RmdChunkImagePreviewPlugin extends Plugin<DecorationSet> {
   }
 }
 
-
 function imagePreviewDecorations(state: EditorState, uiContext: EditorUIContext) {
-
   // find all rmd code chunks with knitr::include_graphics
   const decorations: Decoration[] = [];
   findChildrenByType(state.doc, state.schema.nodes.rmd_chunk).forEach(rmdChunk => {
-
     // look for a line with knitr::include_graphics
     const match = rmdChunk.node.textContent.match(/^(knitr::)?include_graphics\((['"])([^\2]+)\2/m);
     if (match) {
-
       // see if we can also find an out.width on the first line
       let width = '';
       const firstLine = rmdChunk.node.textContent.split(/\r?\n/)[0];
@@ -84,18 +78,18 @@ function imagePreviewDecorations(state: EditorState, uiContext: EditorUIContext)
       if (widthMatch) {
         width = stripQuotes(widthMatch[1].trim());
         // revert if they are using out.width = NULL
-        if (width === "NULL") {
+        if (width === 'NULL') {
           width = '';
         }
       }
 
       const imagePath = match[3];
       const decoration = Decoration.widget(
-        rmdChunk.pos + rmdChunk.node.nodeSize, 
+        rmdChunk.pos + rmdChunk.node.nodeSize,
         (view: EditorView, getPos: () => number) => {
           const container = window.document.createElement('div');
           container.style.marginTop = '-1em'; // to bridge back to the codemirror block
-                                              // which has a margin-block-end of 1em
+          // which has a margin-block-end of 1em
           container.classList.add('pm-image-preview');
           container.classList.add('pm-block-border-color');
           const img = window.document.createElement('img');
@@ -118,8 +112,8 @@ function imagePreviewDecorations(state: EditorState, uiContext: EditorUIContext)
           };
           container.append(img);
           return container;
-        }, 
-        { key: imagePath }
+        },
+        { key: imagePath },
       );
       decorations.push(decoration);
     }
@@ -129,12 +123,6 @@ function imagePreviewDecorations(state: EditorState, uiContext: EditorUIContext)
   return DecorationSet.create(state.doc, decorations);
 }
 
-
 function isRmdChunkNode(node: ProsemirrorNode) {
   return node.type === node.type.schema.nodes.rmd_chunk;
 }
-
-
-
-
-

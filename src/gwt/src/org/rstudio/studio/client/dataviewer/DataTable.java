@@ -241,20 +241,15 @@ public class DataTable
       setColumnFrameCallback(getWindow(), getDataTableColumnCallback());
    }
 
-   public void refreshData(boolean structureChanged, boolean sizeChanged)
+   public void refreshData()
    {
-      // if the structure of the data changed, the old search/filter data is
-      // discarded, as it may no longer be applicable to the data's new shape.
-      if (structureChanged)
-      {
-         filtered_= false;
-         if (searchWidget_ != null)
-            searchWidget_.setText("", false);
-         if (filterButton_ != null)
-            filterButton_.setLatched(false);
-      }
+      filtered_= false;
+      if (searchWidget_ != null)
+         searchWidget_.setText("", false);
+      if (filterButton_ != null)
+         filterButton_.setLatched(false);
 
-      refreshData(getWindow(), structureChanged, sizeChanged);
+      refreshData(getWindow());
    }
    
    public void onActivate()
@@ -282,12 +277,10 @@ public class DataTable
          return frame.setFilterUIVisible(visible);
       return false;
    }-*/;
-   
-   private static final native void refreshData(WindowEx frame, 
-         boolean structureChanged,
-         boolean sizeChanged) /*-{
+
+   private static final native void refreshData(WindowEx frame) /*-{
       if (frame && frame.refreshData)
-         frame.refreshData(structureChanged, sizeChanged);
+         frame.refreshData();
    }-*/;
 
    private static final native void applySearch(WindowEx frame, String text) /*-{

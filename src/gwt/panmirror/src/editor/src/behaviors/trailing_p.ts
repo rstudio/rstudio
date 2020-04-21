@@ -15,13 +15,15 @@
 
 import { Transaction, Selection } from 'prosemirror-state';
 import { Node as ProsemirrorNode, Schema } from 'prosemirror-model';
+import { Transform } from 'prosemirror-transform';
+import { ContentNodeWithPos } from 'prosemirror-utils';
 
 import { Extension } from '../api/extension';
 import { editingRootNode } from '../api/node';
 import { FixupContext } from '../api/fixup';
+import { trTransform } from '../api/transaction';
 
 const extension: Extension = {
-
   fixups: (schema: Schema) => {
     return [
       (tr: Transaction, context: FixupContext) => {
@@ -31,7 +33,7 @@ const extension: Extension = {
           }
         }
         return tr;
-      }
+      },
     ];
   },
 
@@ -44,23 +46,25 @@ const extension: Extension = {
             insertTrailingP(tr);
           }
           return tr;
-        }
-      }
+        },
+      },
     ];
-  }
+  },
 };
 
 function insertTrailingP(tr: Transaction) {
-  const schema = tr.doc.type.schema;
   const editingNode = editingRootNode(tr.selection);
   if (editingNode) {
-    tr.insert(
-      editingNode.pos + editingNode.node.nodeSize - 1, 
-      schema.nodes.paragraph.create()
-    );
+    trTransform(tr, insertTrailingPTransform(editingNode));
   }
 }
 
+function insertTrailingPTransform(editingNode: ContentNodeWithPos) {
+  return (tr: Transform) => {
+    const schema = editingNode.node.type.schema;
+    tr.insert(editingNode.pos + editingNode.node.nodeSize - 1, schema.nodes.paragraph.create());
+  };
+}
 
 function requiresTrailingP(selection: Selection) {
   const editingRoot = editingRootNode(selection);

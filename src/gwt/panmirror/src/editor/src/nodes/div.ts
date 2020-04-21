@@ -31,6 +31,8 @@ import { PandocOutput, PandocTokenType, PandocToken } from '../api/pandoc';
 import { ProsemirrorCommand, EditorCommandId, toggleWrap } from '../api/command';
 import { EditorUI } from '../api/ui';
 
+import './div-styles.css';
+
 import { wrapIn, lift } from 'prosemirror-commands';
 
 const DIV_ATTR = 0;
@@ -99,10 +101,7 @@ const extension: Extension = {
   ],
 
   commands: (_schema: Schema, ui: EditorUI) => {
-    return [
-      new DivCommand(EditorCommandId.Div, ui, true),
-      new DivCommand(EditorCommandId.InsertDiv, ui, false)
-    ];
+    return [new DivCommand(EditorCommandId.Div, ui, true), new DivCommand(EditorCommandId.InsertDiv, ui, false)];
   },
 };
 

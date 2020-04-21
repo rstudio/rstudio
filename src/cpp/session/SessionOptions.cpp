@@ -1,7 +1,7 @@
 /*
  * SessionOptions.cpp
  *
- * Copyright (C) 2009-19 by RStudio, PBC
+ * Copyright (C) 2009-20 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -26,6 +26,7 @@
 #include <core/system/Crypto.hpp>
 #include <core/system/System.hpp>
 #include <core/system/Environment.hpp>
+#include <core/system/Xdg.hpp>
 
 #include <shared_core/Error.hpp>
 #include <core/Log.hpp>
@@ -339,7 +340,8 @@ core::ProgramStatus Options::read(int argc, char * const argv[], std::ostream& o
          value<std::string>(&rCRANUrl_)->default_value(""),
          "Default CRAN repository")
       ("r-cran-repos-file",
-         value<std::string>(&rCRANReposFile_)->default_value("/etc/rstudio/repos.conf"),
+         value<std::string>(&rCRANReposFile_)->default_value(
+           core::system::xdg::systemConfigFile("repos.conf").getAbsolutePath()),
          "Path to configuration file with default CRAN repositories")
       ("r-cran-repos-url",
          value<std::string>(&rCRANReposUrl_)->default_value(""),
@@ -459,9 +461,11 @@ core::ProgramStatus Options::read(int argc, char * const argv[], std::ostream& o
    addOverlayOptions(&overlay);
 
    // define program options
-   FilePath defaultConfigPath("/etc/rstudio/rsession.conf");
+   FilePath defaultConfigPath = core::system::xdg::systemConfigFile("rsession.conf");
    std::string configFile = defaultConfigPath.exists() ?
                             defaultConfigPath.getAbsolutePath() : "";
+   if (!configFile.empty())
+       LOG_INFO_MESSAGE("Reading session configuration from " + configFile);
    core::program_options::OptionsDescription optionsDesc("rsession",
                                                          configFile);
 
@@ -546,15 +550,23 @@ core::ProgramStatus Options::read(int argc, char * const argv[], std::ostream& o
       }
    }
 
-   // compute user paths
-   r_util::SessionType sessionType =
-      (programMode_ == kSessionProgramModeDesktop) ?
-                                    r_util::SessionTypeDesktop :
-                                    r_util::SessionTypeServer;
+   // resolve home directory from env vars
+   userHomePath_ = core::system::userHomePath("R_USER|HOME").getAbsolutePath();
 
-   r_util::UserDirectories userDirs = r_util::userDirectories(sessionType);
-   userHomePath_ = userDirs.homePath;
-   userScratchPath_ = userDirs.scratchPath;
+   // use XDG data directory (usually ~/.local/share/rstudio, or LOCALAPPDATA
+   // on Windows) as the scratch path
+   userScratchPath_ = core::system::xdg::userDataDir().getAbsolutePath();
+
+   // migrate data from old state directory to new directory
+   error = core::r_util::migrateUserStateIfNecessary(
+               programMode_ == kSessionProgramModeServer ?
+                   core::r_util::SessionTypeServer :
+                   core::r_util::SessionTypeDesktop);
+   if (error)
+   {
+      LOG_ERROR(error);
+   }
+
 
    // set HOME if we are in standalone mode (this enables us to reflect
    // R_USER back into HOME on Linux)

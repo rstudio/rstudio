@@ -29,7 +29,7 @@ import {
   createTextInput,
 } from '../../api/widgets/widgets';
 import { EditorUI } from '../../api/ui';
-import { editingRootNode } from '../../api/node';
+import { editingRootScrollContainerElement } from '../../api/node';
 import { extractSizeStyles, kPercentUnit, kPixelUnit, removeStyleAttrib } from '../../api/css';
 import {
   imageSizePropWithUnit,
@@ -41,6 +41,7 @@ import {
   isValidImageSizeUnit,
 } from '../../api/image';
 import { kWidthAttrib, kHeightAttrib, kStyleAttrib, kAlignAttrib } from '../../api/pandoc_attr';
+import { EditorUIImages } from '../../api/ui-images';
 
 import { imageDialog } from './image-dialog';
 import { hasPercentWidth, imageDimensionsFromImg } from './image-util';
@@ -173,6 +174,7 @@ export function attachResizeUI(
     onHeightChanged,
     onUnitsChanged,
     onEditImage,
+    ui.images,
     ui.context.translateText,
   );
 
@@ -209,6 +211,7 @@ function resizeShelf(
   onHeightChanged: () => void,
   onUnitsChanged: () => void,
   onEditImage: () => void,
+  uiImages: EditorUIImages,
   translateText: (text: string) => string,
 ) {
   // create resize shelf
@@ -235,9 +238,10 @@ function resizeShelf(
   };
 
   // detect when the editing root note scrolls and update the position
-  const editingNode = editingRootNode(view.state.selection)!;
-  const editingEl = view.domAtPos(editingNode.pos! + 1).node as HTMLElement;
-  editingEl.addEventListener('scroll', updatePosition);
+  const editingScrollContainerEl = editingRootScrollContainerElement(view);
+  if (editingScrollContainerEl) {
+    editingScrollContainerEl.addEventListener('scroll', updatePosition);
+  }
 
   // main panel that holds the controls
   const panel = createHorizontalPanel();
@@ -296,7 +300,11 @@ function resizeShelf(
   addToPanel(lockLabel, 20);
 
   // edit button
-  const editImage = createImageButton(['pm-image-button-edit-properties'], translateText('Edit Attributes'));
+  const editImage = createImageButton(
+    uiImages.properties!,
+    ['pm-image-button-edit-properties'],
+    translateText('Edit Attributes'),
+  );
   editImage.onclick = onEditImage;
   addHorizontalPanelCell(panel, editImage);
 
@@ -368,7 +376,9 @@ function resizeShelf(
     },
 
     remove: () => {
-      editingEl.removeEventListener('scroll', updatePosition);
+      if (editingScrollContainerEl) {
+        editingScrollContainerEl.removeEventListener('scroll', updatePosition);
+      }
       shelf.remove();
     },
 

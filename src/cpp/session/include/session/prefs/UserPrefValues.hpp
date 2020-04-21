@@ -239,6 +239,7 @@ namespace prefs {
 #define kShowRmdRenderCommand "show_rmd_render_command"
 #define kEnableTextDrag "enable_text_drag"
 #define kShowHiddenFiles "show_hidden_files"
+#define kSortFileNamesNaturally "sort_file_names_naturally"
 #define kJobsTabVisibility "jobs_tab_visibility"
 #define kJobsTabVisibilityClosed "closed"
 #define kJobsTabVisibilityShown "shown"
@@ -322,6 +323,8 @@ namespace prefs {
 #define kEnableVisualMarkdownEditingMode "enable_visual_markdown_editing_mode"
 #define kVisualMarkdownEditingWrapAuto "visual_markdown_editing_wrap_auto"
 #define kVisualMarkdownEditingWrapColumn "visual_markdown_editing_wrap_column"
+#define kVisualMarkdownEditingMaxContentWidth "visual_markdown_editing_max_content_width"
+#define kVisualMarkdownEditingFontSizePoints "visual_markdown_editing_font_size_points"
 #define kDisabledAriaLiveAnnouncements "disabled_aria_live_announcements"
 #define kScreenreaderConsoleAnnounceLimit "screenreader_console_announce_limit"
 #define kFileMonitorIgnoredComponents "file_monitor_ignored_components"
@@ -1143,6 +1146,12 @@ public:
    core::Error setShowHiddenFiles(bool val);
 
    /**
+    * Whether to sort file names naturally, so that e.g., file10.R comes after file9.R
+    */
+   bool sortFileNamesNaturally();
+   core::Error setSortFileNamesNaturally(bool val);
+
+   /**
     * The visibility of the Jobs tab.
     */
    std::string jobsTabVisibility();
@@ -1447,6 +1456,18 @@ public:
     */
    int visualMarkdownEditingWrapColumn();
    core::Error setVisualMarkdownEditingWrapColumn(int val);
+
+   /**
+    * Maximum content width for visual editing mode, in pixels
+    */
+   int visualMarkdownEditingMaxContentWidth();
+   core::Error setVisualMarkdownEditingMaxContentWidth(int val);
+
+   /**
+    * The default visual editing mode font size, in points
+    */
+   int visualMarkdownEditingFontSizePoints();
+   core::Error setVisualMarkdownEditingFontSizePoints(int val);
 
    /**
     * List of aria-live announcements to disable.

@@ -24,6 +24,8 @@ import org.rstudio.core.client.widget.FormLabel;
 import org.rstudio.core.client.widget.ModalDialog;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ThemedButton;
+import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorAttrProps;
 import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorLinkCapabilities;
 import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorLinkEditResult;
@@ -148,7 +150,8 @@ public class PanmirrorEditLinkDialog extends ModalDialog<PanmirrorLinkEditResult
       result.link.href = href_.getHRef();
       if (result.link.type != PanmirrorLinkType.Heading)
       {
-         result.link.text = text_.getValue().trim();
+         String text = text_.getValue().trim();
+         result.link.text = text.length() > 0 ? text : result.link.href;
          result.link.title = title_.getValue().trim();
          PanmirrorAttrProps attr = editAttr_.getAttr();
          result.link.id = attr.id;
@@ -166,7 +169,19 @@ public class PanmirrorEditLinkDialog extends ModalDialog<PanmirrorLinkEditResult
    @Override
    protected boolean validate(PanmirrorLinkEditResult result)
    {
-      return true;
+      GlobalDisplay globalDisplay = RStudioGinjector.INSTANCE.getGlobalDisplay();
+      if (StringUtil.isNullOrEmpty(result.link.href))
+      {
+         globalDisplay.showErrorMessage(
+            "Error", "You must provide a value for the link target."
+         );
+         href_.focus();
+         return false;
+      }
+      else 
+      {
+         return true;
+      }
    }
    
    private void manageVisibility()

@@ -1753,6 +1753,19 @@ core::Error UserPrefValues::setShowHiddenFiles(bool val)
 }
 
 /**
+ * Whether to sort file names naturally, so that e.g., file10.R comes after file9.R
+ */
+bool UserPrefValues::sortFileNamesNaturally()
+{
+   return readPref<bool>("sort_file_names_naturally");
+}
+
+core::Error UserPrefValues::setSortFileNamesNaturally(bool val)
+{
+   return writePref("sort_file_names_naturally", val);
+}
+
+/**
  * The visibility of the Jobs tab.
  */
 std::string UserPrefValues::jobsTabVisibility()
@@ -2416,6 +2429,32 @@ core::Error UserPrefValues::setVisualMarkdownEditingWrapColumn(int val)
 }
 
 /**
+ * Maximum content width for visual editing mode, in pixels
+ */
+int UserPrefValues::visualMarkdownEditingMaxContentWidth()
+{
+   return readPref<int>("visual_markdown_editing_max_content_width");
+}
+
+core::Error UserPrefValues::setVisualMarkdownEditingMaxContentWidth(int val)
+{
+   return writePref("visual_markdown_editing_max_content_width", val);
+}
+
+/**
+ * The default visual editing mode font size, in points
+ */
+int UserPrefValues::visualMarkdownEditingFontSizePoints()
+{
+   return readPref<int>("visual_markdown_editing_font_size_points");
+}
+
+core::Error UserPrefValues::setVisualMarkdownEditingFontSizePoints(int val)
+{
+   return writePref("visual_markdown_editing_font_size_points", val);
+}
+
+/**
  * List of aria-live announcements to disable.
  */
 core::json::Array UserPrefValues::disabledAriaLiveAnnouncements()
@@ -2642,6 +2681,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kShowRmdRenderCommand,
       kEnableTextDrag,
       kShowHiddenFiles,
+      kSortFileNamesNaturally,
       kJobsTabVisibility,
       kShowLauncherJobsTab,
       kLauncherJobsSort,
@@ -2693,6 +2733,8 @@ std::vector<std::string> UserPrefValues::allKeys()
       kEnableVisualMarkdownEditingMode,
       kVisualMarkdownEditingWrapAuto,
       kVisualMarkdownEditingWrapColumn,
+      kVisualMarkdownEditingMaxContentWidth,
+      kVisualMarkdownEditingFontSizePoints,
       kDisabledAriaLiveAnnouncements,
       kScreenreaderConsoleAnnounceLimit,
       kFileMonitorIgnoredComponents,

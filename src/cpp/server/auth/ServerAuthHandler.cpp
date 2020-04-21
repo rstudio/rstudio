@@ -103,7 +103,7 @@ Error readRevocationListFromDatabase(std::vector<std::string>* pEntries)
    // first, delete all stale cookies from the database
    std::string expiration = date_time::format(boost::posix_time::microsec_clock::universal_time(),
                                               date_time::kIso8601Format);
-   Query deleteQuery = connection->query("DELETE FROM RevokedCookie WHERE Expiration <= :val")
+   Query deleteQuery = connection->query("DELETE FROM revoked_cookie WHERE expiration <= :val")
          .withInput(expiration);
    Error error = connection->execute(deleteQuery);
    if (error)
@@ -113,7 +113,7 @@ Error readRevocationListFromDatabase(std::vector<std::string>* pEntries)
    }
 
    // get all cookie entries from the database
-   Query fetchQuery = connection->query("SELECT CookieData FROM RevokedCookie");
+   Query fetchQuery = connection->query("SELECT cookie_data FROM revoked_cookie");
    Rowset rowset;
    error = connection->execute(fetchQuery, rowset);
    if (error)
@@ -136,7 +136,7 @@ void removeStaleCookieFromDatabase(const RevokedCookie& cookie,
                                    const boost::shared_ptr<IConnection>& connection)
 {
    std::string expiration = date_time::format(cookie.expiration, date_time::kIso8601Format);
-   Query query = connection->query("DELETE FROM RevokedCookie WHERE CookieData = :dat")
+   Query query = connection->query("DELETE FROM revoked_cookie WHERE cookie_data = :dat")
          .withInput(cookie.cookie);
 
    Error error = connection->execute(query);
@@ -157,7 +157,7 @@ Error writeRevokedCookieToDatabase(const RevokedCookie& cookie,
    if (!connection)
       connection = server_core::database::getConnection();
 
-   Query query = connection->query("INSERT INTO RevokedCookie VALUES (:exp, :dat)")
+   Query query = connection->query("INSERT INTO revoked_cookie VALUES (:exp, :dat)")
          .withInput(expiration)
          .withInput(cookie.cookie);
 

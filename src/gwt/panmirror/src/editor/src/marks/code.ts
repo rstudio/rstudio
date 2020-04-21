@@ -21,8 +21,8 @@ import { pandocAttrSpec, pandocAttrParseDom, pandocAttrToDomAttr, pandocAttrRead
 import { PandocToken, PandocOutput, PandocTokenType, PandocExtensions } from '../api/pandoc';
 import { delimiterMarkInputRule } from '../api/mark';
 
-const CODE_ATTR = 0;
-const CODE_TEXT = 1;
+export const kCodeAttr = 0;
+export const kCodeText = 1;
 
 const extension = (pandocExtensions: PandocExtensions): Extension => {
   const codeAttrs = pandocExtensions.inline_code_attributes;
@@ -64,10 +64,10 @@ const extension = (pandocExtensions: PandocExtensions): Extension => {
             {
               token: PandocTokenType.Code,
               mark: 'code',
-              getText: (tok: PandocToken) => tok.c[CODE_TEXT],
+              getText: (tok: PandocToken) => tok.c[kCodeText],
               getAttrs: (tok: PandocToken) => {
                 if (codeAttrs) {
-                  return pandocAttrReadAST(tok, CODE_ATTR);
+                  return pandocAttrReadAST(tok, kCodeAttr);
                 } else {
                   return {};
                 }

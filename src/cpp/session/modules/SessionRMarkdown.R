@@ -462,6 +462,16 @@
       FALSE
 })
 
+.rs.addFunction("isSiteProject", function(input_dir, encoding, site) {
+   
+   index <- .rs.inputDirToIndexFile(input_dir)
+   if (!is.null(index)) {
+      any(grepl(site, readLines(index, encoding = encoding)))
+   }
+   else
+      FALSE
+})
+
 .rs.addFunction("tinytexRoot", function()
 {
    sysname <- Sys.info()[["sysname"]]

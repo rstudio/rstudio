@@ -6,22 +6,45 @@ pandoc schema: <https://github.com/jgm/pandoc-types/blob/master/Text/Pandoc/Defi
 
 ## TODO
 
+Implement shortcode handling (https://gohugo.io/content-management/shortcodes/)
+  - Pattern matching based mark detector for just the standard and close variations (standalone marks)
+  - WriteRawMarkdown for < > delimiters (but leave inside alone)
+  - Command in UI that inserts a shortcode 
+  - Consider shortcode blocks? (regognize by single-line begin then scan to end)
+    Then, inline could create a block
 
-Support for bookdown @ref (seems to round-trip okay but provide mark / input rule?)
- Would need a rule that runs on startup and an input rule
+Link popups no longer truncated (see advanced_ui.Rmd)
 
-Round-trip tests in Mastering Shiny
+Positioning of ellipses in props button
+Button ellipses shouldn't require positioning override
+(see EditorPane.module.scss)
 
-More complete docs
+Alison on blogdown engines, etc.
+
+Bookdown & Blogdown docs:
+  - Math in code
+  - @ref has no \
+  - Heading parts (need to explicitly use .unnumbered and don't use the \* escape)
+  - Using blackfriday explicitly
+  - Setting the doctype(s) explicitly (should xref be a doctype or should it be distill)
 
 MathJax preview. When containing the selection, the math will show both the code and the preview. When not containing the selection will show the preview. (so probably require a node view for this). Consider a “done” gesture for display math. May need to bring back
 escaping of $ in math as this mode will clearly not be "source mode" style latex equation editing
 
+Possibly have a special editing mode for thereoms?
+
+
 ## Future
 
-Button ellipses shouldn't require positioning override
-(see EditorPane.module.scss)
+Aggregated fixup/appendTransaction transactions:
+- fixups and mutating appendTransaction handlers should be passed a transform 
+(so that no calls to trTranform are necessary in handlers). this will mean
+that we lose access to selection oriented functions and tr.setMeta. this in 
+turn could ripple out to some other handler code. 
+- We should also always call mapResult and check for deleted
+- alternatively, could we give each handler a fresh transaction and then merge them
 
+Google Docs style list toggling
 
 Slack style handling of marks?
 

@@ -1,7 +1,7 @@
 /*
- * heading-styles.css
+ * PanmirrorHugoExtensions.java
  *
- * Copyright (C) 2019-20 by RStudio, PBC
+ * Copyright (C) 2009-20 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -13,12 +13,15 @@
  *
  */
 
- 
-.ProseMirror .pm-heading {
-  /*
-  Note that this value is relied upon by attr_edit-decoration.tsx (for locating the attr_edit
-  button on the outline) so if you change it here, change it there as well
-  */
-  outline-offset: 6px;
+package org.rstudio.studio.client.panmirror.format;
+
+
+import jsinterop.annotations.JsType;
+
+@JsType
+public class PanmirrorHugoExtensions
+{    
+   public boolean shortcodes;
 }
+
 

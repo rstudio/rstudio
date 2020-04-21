@@ -13,8 +13,12 @@
  *
  */
 
+.pm-editing-root-node {
+  padding: 0 10px;
+}
+
 .pm-content {
-  padding: 0 8px;
+  position: relative;
 }
 
 .pm-content p {
@@ -83,7 +87,7 @@
 
 .pm-code-editor {
   border: 1px solid;
-  margin-block-end: 1em;
+  margin-block-end: 1.5em;
   margin-top: 10px;
 }
 
@@ -158,22 +162,4 @@
   border-width: 1px;
   padding: 10px;
 }
-
-.pm-image-button {
-  width: 22px;
-  height: 20px;
-}
-
-.pm-image-button-edit-properties {
-  background-image: url("./images/edit_properties.png");
-}
-
-.pm-image-button-remove-link {
-  background-image: url("./images/break_link.png");
-}
-
-.pm-image-button-copy-link {
-  background-image: url("./images/copy_link.png");
-}
-
 

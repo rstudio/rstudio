@@ -28,7 +28,7 @@ import { selectionIsBodyTopLevel } from '../../api/selection';
 import { uuidv4 } from '../../api/util';
 import { yamlMetadataTitlePlugin } from './yaml_metadata-title';
 
-const kYamlMetadataClass = 'B95ACAB9-77D8-471B-B795-8F59AE9C0B0C';
+const kYamlMetadataClass = '640200CE-B886-44EB-80F0-17E50BA5D146'.toLowerCase();
 
 const extension: Extension = {
   nodes: [
@@ -59,10 +59,11 @@ const extension: Extension = {
       pandoc: {
         codeBlockFilter: {
           preprocessor: (markdown: string) => {
-            return markdown.replace(
+            const filtered = markdown.replace(
               /^(?:---\s*\n)([\W\w]*?)(?:\n---|\n\.\.\.)(?:[ \t]*)$/gm,
-              '```{.' + kYamlMetadataClass + '}\n---\n$1\n---\n```',
+              '```' + kYamlMetadataClass + '\n---\n$1\n---\n```',
             );
+            return filtered;
           },
           class: kYamlMetadataClass,
           nodeType: schema => schema.nodes.yaml_metadata,

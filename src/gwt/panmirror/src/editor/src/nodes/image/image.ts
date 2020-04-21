@@ -48,6 +48,7 @@ import { imageDrop } from './image-events';
 import { ImageNodeView } from './image-view';
 import { imageDimensionsFromImg, imageContainerWidth, inlineHTMLIsImage } from './image-util';
 import { PandocCapabilities } from '../../api/pandoc_capabilities';
+import { EditorFormat } from '../../api/format';
 
 const TARGET_URL = 0;
 const TARGET_TITLE = 1;
@@ -62,6 +63,7 @@ const extension = (
   pandocExtensions: PandocExtensions,
   _pandocCapabilities: PandocCapabilities,
   ui: EditorUI,
+  _format: EditorFormat,
   _options: EditorOptions,
   events: EditorEvents,
 ): Extension => {

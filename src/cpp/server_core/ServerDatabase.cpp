@@ -22,6 +22,7 @@
 #include <core/Settings.hpp>
 #include <core/system/Environment.hpp>
 #include <core/system/System.hpp>
+#include <core/system/Xdg.hpp>
 #include <shared_core/Error.hpp>
 
 namespace rstudio {
@@ -60,7 +61,7 @@ boost::shared_ptr<ConnectionPool> s_connectionPool;
 
 Error readOptions(ConnectionOptions* pOptions)
 {
-   FilePath optionsFile("/etc/rstudio/database.conf");
+   FilePath optionsFile = core::system::xdg::systemConfigFile("database.conf");
    if (optionsFile.exists())
    {
       // the database configuration file can potentially contain sensitive information

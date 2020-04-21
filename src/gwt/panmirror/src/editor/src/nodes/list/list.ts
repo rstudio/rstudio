@@ -248,12 +248,17 @@ const extension = (pandocExtensions: PandocExtensions): Extension => {
       return plugins;
     },
 
-    commands: (schema: Schema, ui: EditorUI) => {
+    commands: (schema: Schema, ui: EditorUI, mac: boolean) => {
       const commands = [
-        new ListCommand(EditorCommandId.BulletList, ['Shift-Ctrl-7'], schema.nodes.bullet_list, schema.nodes.list_item),
+        new ListCommand(
+          EditorCommandId.BulletList,
+          mac ? ['Shift-Mod-7'] : [],
+          schema.nodes.bullet_list,
+          schema.nodes.list_item,
+        ),
         new ListCommand(
           EditorCommandId.OrderedList,
-          ['Shift-Ctrl-8'],
+          mac ? ['Shift-Mod-8'] : [],
           schema.nodes.ordered_list,
           schema.nodes.list_item,
         ),

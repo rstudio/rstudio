@@ -1,7 +1,7 @@
 /*
  * RVersionsScanner.cpp
  *
- * Copyright (C) 2009-19 by RStudio, PBC
+ * Copyright (C) 2009-20 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -24,6 +24,7 @@
 #include <core/r_util/REnvironment.hpp>
 #include <core/r_util/RVersionsPosix.hpp>
 #include <core/text/DcfParser.hpp>
+#include <core/system/Xdg.hpp>
 
 namespace rstudio {
 namespace core {
@@ -157,14 +158,14 @@ std::vector<r_util::RVersion> RVersionsScanner::getRVersions()
 
    // read additional user-specified R home directories
    std::vector<r_util::RVersion> rEntries;
-   FilePath userRDirsPath("/etc/rstudio/r-versions");
+   FilePath userRDirsPath = core::system::xdg::systemConfigFile("r-versions");
    if (userRDirsPath.exists())
    {
       std::string contents;
       Error error = core::readStringFromFile(userRDirsPath, &contents, string_utils::LineEndingPosix);
       if (!error)
       {
-         parseRVersionsFile(contents, &rHomeDirs, &rEntries);
+         parseRVersionsFile(userRDirsPath, contents, &rHomeDirs, &rEntries);
       }
       else
       {
@@ -206,7 +207,8 @@ std::vector<r_util::RVersion> RVersionsScanner::getRVersions()
    return cachedVersions_;
 }
 
-void RVersionsScanner::parseRVersionsFile(const std::string& contents,
+void RVersionsScanner::parseRVersionsFile(const FilePath& versionsFile,
+                                          const std::string& contents,
                                           std::vector<FilePath> *pRPaths,
                                           std::vector<r_util::RVersion> *pREntries)
 {
@@ -242,7 +244,7 @@ void RVersionsScanner::parseRVersionsFile(const std::string& contents,
 
       if (!skipEntry)
       {
-         boost::shared_ptr<r_util::RVersion> pVersion = parseREntry(rEntry);
+         boost::shared_ptr<r_util::RVersion> pVersion = parseREntry(versionsFile, rEntry);
 
          if (pVersion)
          {
@@ -265,8 +267,8 @@ void RVersionsScanner::parseRVersionsFile(const std::string& contents,
                else
                {
                   LOG_ERROR_MESSAGE(
-                     "R version specified in /etc/rstudio/r-versions does not "
-                     "point to a valid directory: " + line);
+                     "R version specified in " + versionsFile.getAbsolutePath() +
+                      " does not point to a valid directory: " + line);
                }
             }
          }
@@ -276,7 +278,8 @@ void RVersionsScanner::parseRVersionsFile(const std::string& contents,
    }
 }
 
-boost::shared_ptr<r_util::RVersion> RVersionsScanner::parseREntry(const std::string& rEntryStr)
+boost::shared_ptr<r_util::RVersion> RVersionsScanner::parseREntry(
+        const FilePath& versionsFile, const std::string& rEntryStr)
 {
    std::map<std::string, std::string> fields;
    std::string err;
@@ -296,8 +299,8 @@ boost::shared_ptr<r_util::RVersion> RVersionsScanner::parseREntry(const std::str
 
    if (module.empty() && (path.empty() || !rPath.exists()))
    {
-      LOG_ERROR_MESSAGE("Invalid R path specified in /etc/rstudio/r-versions: " + path +
-                        "This version of R will be skipped");
+      LOG_ERROR_MESSAGE("Invalid R path specified in " + versionsFile.getAbsolutePath() + ": " +
+                        path + "This version of R will be skipped");
       return pVersion;
    }
 

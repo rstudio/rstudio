@@ -225,7 +225,7 @@ bool isSecureCookie(const core::http::Request& request)
 {
    bool secureCookie = options().authCookiesForceSecure() ||
                      options().getOverlayOption("ssl-enabled") == "1" ||
-                     boost::algorithm::starts_with(request.absoluteUri(), "https");
+                     request.isSecure();
    return secureCookie;                      
 }
 

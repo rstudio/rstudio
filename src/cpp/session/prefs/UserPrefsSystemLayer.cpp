@@ -34,7 +34,7 @@ UserPrefsSystemLayer::UserPrefsSystemLayer():
 core::Error UserPrefsSystemLayer::readPrefs()
 {
    return loadPrefsFromFile(
-      core::system::xdg::systemConfigDir().completePath(kUserPrefsFile),
+      core::system::xdg::systemConfigFile(kUserPrefsFile),
       options().rResourcesPath().completePath("schema").completePath(kUserPrefsSchemaFile));
       
 }

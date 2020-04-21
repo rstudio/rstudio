@@ -146,7 +146,7 @@ public class SlideNavigationToolbarMenu
       @Override
       protected int getMaxHeight()
       {
-         if (BrowseCap.INSTANCE.isInternetExplorer())
+         if (BrowseCap.isInternetExplorer())
          {
             return 300;
          }
