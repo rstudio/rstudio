@@ -18,7 +18,7 @@ import { Plugin, PluginKey, EditorState, Transaction } from 'prosemirror-state';
 import { EditorView } from 'prosemirror-view';
 import { InputRule } from 'prosemirror-inputrules';
 
-import { Extension, extensionIfEnabled } from '../../api/extension';
+import { Extension } from '../../api/extension';
 import { PandocTokenType, PandocToken, PandocOutput, PandocExtensions } from '../../api/pandoc';
 import { BaseKey } from '../../api/basekeys';
 import { markIsActive, getMarkAttrs } from '../../api/mark';

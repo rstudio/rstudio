@@ -113,9 +113,6 @@ class AttrEditDecorationPlugin extends Plugin<DecorationSet> {
             const attrs = node.attrs;
             const tags = editor.tags(node);
 
-            // create a unique key to avoid recreating the decorator when the selection changes
-            const specKey = `tags:${tags.join('/')}`;
-
             // attr_edit controls
             const attrEditDecoration = Decoration.widget(
               parentWithAttrs.pos,

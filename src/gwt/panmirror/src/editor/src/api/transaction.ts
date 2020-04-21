@@ -16,7 +16,7 @@
 import { Transaction, EditorState, Plugin, PluginKey, Selection } from 'prosemirror-state';
 import { Node as ProsemirrorNode, Mark, MarkType, Slice } from 'prosemirror-model';
 import { ChangeSet } from 'prosemirror-changeset';
-import { ReplaceStep, Step, Transform, MapResult } from 'prosemirror-transform';
+import { ReplaceStep, Step, Transform } from 'prosemirror-transform';
 
 import { sliceContentLength } from './slice';
 

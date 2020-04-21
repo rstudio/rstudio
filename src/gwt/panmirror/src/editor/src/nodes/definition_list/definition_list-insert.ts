@@ -13,7 +13,7 @@
  *
  */
 
-import { Node as ProsemirrorNode, NodeType } from 'prosemirror-model';
+import { Node as ProsemirrorNode } from 'prosemirror-model';
 import { Transaction } from 'prosemirror-state';
 import { setTextSelection } from 'prosemirror-utils';
 import { findChildrenByType } from 'prosemirror-utils';
