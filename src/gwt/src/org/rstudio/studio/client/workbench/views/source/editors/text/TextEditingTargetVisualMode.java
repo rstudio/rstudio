@@ -258,7 +258,6 @@ public class TextEditingTargetVisualMode
          }, false);
       }
    }
-   
  
    public void manageCommands()
    {
@@ -332,6 +331,11 @@ public class TextEditingTargetVisualMode
         commands_.restartRRunAllChunks(),
         commands_.profileCode()
       );
+   }
+   
+   public void unmanageCommands()
+   {
+      restoreDisabledForVisualMode();
    }
    
    public HasFindReplace getFindReplace()
@@ -656,11 +660,27 @@ public class TextEditingTargetVisualMode
    
    private void disableForVisualMode(AppCommand... commands)
    {
-      for (AppCommand command : commands)
+      if (isActivated())
       {
-         if (command.isVisible())
-            command.setEnabled(!isActivated());
+         for (AppCommand command : commands)
+         {
+            if (command.isVisible() && 
+                command.isEnabled() && 
+                !disabledForVisualMode_.contains(command))
+            {
+               command.setEnabled(false);
+               disabledForVisualMode_.add(command);
+            }
+         }
       }
+   }
+   
+   private void restoreDisabledForVisualMode()
+   {
+      disabledForVisualMode_.forEach((command) -> {
+         command.setEnabled(true);
+      });
+      disabledForVisualMode_.clear();
    }
    
    private HandlerRegistration onDocPropChanged(String prop, ValueChangeHandler<String> handler)
@@ -913,6 +933,8 @@ public class TextEditingTargetVisualMode
    
    private PanmirrorWidget panmirror_;
    private FormatComment panmirrorFormatComment_;
+   
+   private ArrayList<AppCommand> disabledForVisualMode_ = new ArrayList<AppCommand>();
    
    private final ProgressPanel progress_;
    

@@ -2418,6 +2418,8 @@ public class TextEditingTarget implements
       {
          Debug.log("Exception recording nav position: " + e.toString());
       }
+      
+      visualMode_.unmanageCommands();
    }
 
    @Override
