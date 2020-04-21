@@ -31,9 +31,12 @@ export const kRawInlineFormat = 0;
 export const kRawInlineContent = 1;
 
 const extension = (pandocExtensions: PandocExtensions, pandocCapabilities: PandocCapabilities): Extension | null => {
-  if (!pandocExtensions.raw_attribute) {
-    return null;
-  }
+  
+  // always enabled so that extensions can make use of preprocessors + raw_attribute
+  // to hoist content out of pandoc for further processing by our token handlers.
+  // that means that users can always use the raw attribute in their markdown even
+  // if the editing format doesn't support it (in which case it will just get echoed 
+  // back to the markdown just the way it was written).
 
   // return the extension
   return {

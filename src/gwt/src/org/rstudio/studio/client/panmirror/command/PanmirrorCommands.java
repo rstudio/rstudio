@@ -85,6 +85,7 @@ public class PanmirrorCommands
    public static String ParagraphInsert = "4E68830A-3E68-450A-B3F3-2591F4EB6B9A";
    public static String HorizontalRule = "EAA7115B-181C-49EC-BDB1-F0FF10369278";
    public static String YamlMetadata = "431B5A45-1B25-4A55-9BAF-C0FE95D9B2B6";
+   public static String Shortcode = "0FDDA7E8-419D-4A5D-A1F5-74061466655D";
    public static String RmdChunk = "EBFD21FF-4A6E-4D88-A2E0-B38470B00BB9";
    public static String Citation = "EFFCFC81-F2E7-441E-B7FA-C693146B4185";
    public static String CrossReference = "48CEED4F-1D18-4AF9-8686-9FEB5DF6BCC8";

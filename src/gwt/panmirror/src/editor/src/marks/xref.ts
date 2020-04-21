@@ -41,6 +41,8 @@ const extension = (
   _ui: EditorUI,
   format: EditorFormat,
 ): Extension | null => {
+
+  
   if (!format.rmdExtensions.bookdownXRef) {
     return null;
   }
@@ -51,6 +53,7 @@ const extension = (
         name: 'xref',
         spec: {
           inclusive: false,
+          excludes: '_',
           attrs: {},
           parseDOM: [
             {

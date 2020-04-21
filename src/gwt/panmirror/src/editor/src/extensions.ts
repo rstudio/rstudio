@@ -87,6 +87,7 @@ import markCite from './marks/cite/cite';
 import markSpan from './marks/span';
 import markXRef from './marks/xref';
 import markFormatComment from './marks/format_comment';
+import markShortcode from './marks/shortcode';
 
 // nodes
 import nodeFootnote from './nodes/footnote/footnote';
@@ -162,6 +163,7 @@ export function initExtensions(
     markSpan,
     markXRef,
     markFormatComment,
+    markShortcode,
 
     // nodes
     nodeDiv,
@@ -257,7 +259,11 @@ export class ExtensionManager {
 
   public pandocPreprocessors(): readonly PandocPreprocessorFn[] {
     const preprocessors: PandocPreprocessorFn[] = [];
-
+    this.pandocMarks().forEach((mark: PandocMark) => {
+      if (mark.pandoc.preprocessor) {
+        preprocessors.push(mark.pandoc.preprocessor);
+      }
+    });
     this.pandocNodes().forEach((node: PandocNode) => {
       if (node.pandoc.preprocessor) {
         preprocessors.push(node.pandoc.preprocessor);
