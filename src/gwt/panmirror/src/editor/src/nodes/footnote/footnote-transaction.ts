@@ -49,14 +49,15 @@ export function footnoteAppendTransaction() {
     append: (tr: Transaction) => {
       const schema = tr.doc.type.schema;
       const activeNote = findParentNodeOfType(schema.nodes.note)(tr.selection);
-      trTransform(tr, footnoteFixupTransform(schema, activeNote));
+      trTransform(tr, footnoteFixupTransform(activeNote));
     },
   };
 }
 
-function footnoteFixupTransform(schema: Schema, activeNote: ContentNodeWithPos | undefined) {
+function footnoteFixupTransform(activeNote: ContentNodeWithPos | undefined) {
   return (tr: Transform) => {
     // query for notes and footnotes
+    const schema = tr.doc.type.schema;
     const footnotes = findAllFootnotes(tr.doc);
     const allNotes = findAllNotes(tr.doc);
 

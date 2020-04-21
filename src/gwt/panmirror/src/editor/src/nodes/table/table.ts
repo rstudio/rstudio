@@ -152,7 +152,7 @@ const extension = (pandocExtensions: PandocExtensions): Extension | null => {
           name: 'table-repair',
           nodeFilter: node => node.type === node.type.schema.nodes.table,
           append: (tr: Transaction) => {
-            trTransform(tr, tableRepairTransform(tr.doc.type.schema));
+            trTransform(tr, tableRepairTransform);
           },
         },
       ];
@@ -160,34 +160,33 @@ const extension = (pandocExtensions: PandocExtensions): Extension | null => {
   };
 };
 
-function tableRepairTransform(schema: Schema) {
-  return (tr: Transform) => {
-    const tables = findChildrenByType(tr.doc, schema.nodes.table);
-    tables.forEach(table => {
-      // map the position
-      const pos = tr.mapping.map(table.pos);
+function tableRepairTransform(tr: Transform) {
+  const schema = tr.doc.type.schema;
+  const tables = findChildrenByType(tr.doc, schema.nodes.table);
+  tables.forEach(table => {
+    // map the position
+    const pos = tr.mapping.map(table.pos);
 
-      // get containing node (pos is right before the table)
-      const containingNode = tr.doc.resolve(pos).node();
+    // get containing node (pos is right before the table)
+    const containingNode = tr.doc.resolve(pos).node();
 
-      // table with no container
-      if (containingNode.type !== schema.nodes.table_container) {
-        // add the container
-        const caption = schema.nodes.table_caption.createAndFill({ inactive: true }, undefined)!;
-        const container = schema.nodes.table_container.createAndFill({}, [table.node, caption])!;
-        tr.replaceWith(pos, pos + table.node.nodeSize, container);
-      }
+    // table with no container
+    if (containingNode.type !== schema.nodes.table_container) {
+      // add the container
+      const caption = schema.nodes.table_caption.createAndFill({ inactive: true }, undefined)!;
+      const container = schema.nodes.table_container.createAndFill({}, [table.node, caption])!;
+      tr.replaceWith(pos, pos + table.node.nodeSize, container);
+    }
 
-      // table with no content (possible w/ half caption leftover)
-      if (table.node.firstChild && table.node.firstChild.childCount === 0) {
-        // delete the table
-        const hasContainer = containingNode.type === schema.nodes.table_container;
-        const start = hasContainer ? pos : pos + 1;
-        const end = start + (hasContainer ? containingNode.nodeSize : table.node.nodeSize);
-        tr.deleteRange(start, end);
-      }
-    });
-  };
+    // table with no content (possible w/ half caption leftover)
+    if (table.node.firstChild && table.node.firstChild.childCount === 0) {
+      // delete the table
+      const hasContainer = containingNode.type === schema.nodes.table_container;
+      const start = hasContainer ? pos : pos + 1;
+      const end = start + (hasContainer ? containingNode.nodeSize : table.node.nodeSize);
+      tr.deleteRange(start, end);
+    }
+  });
 }
 
 export default extension;

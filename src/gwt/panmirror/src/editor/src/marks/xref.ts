@@ -109,7 +109,7 @@ const extension = (
 
             // remove leading \ as necessary (this would occur if the underlying format includes
             // a \@ref and doesn't have all_symbols_escapable, e.g. blackfriday)
-            trTransform(tr, stripRefBackslashTransform(markType));
+            trTransform(tr, stripRefBackslashTransform);
           }
           return tr;
         }
@@ -178,21 +178,21 @@ function insertRef(tr: Transaction) {
   setTextSelection(tr.mapping.map(selection.head) - 1)(tr);
 }
 
-function stripRefBackslashTransform(markType: MarkType) {
-  return (tr: Transform) => {
-    findChildrenByMark(tr.doc, markType).forEach(markedNode => {
-      const pos = tr.mapping.map(markedNode.pos);
-      if (markType.isInSet(markedNode.node.marks)) {
-        const markRange = getMarkRange(tr.doc.resolve(pos), markType);
-        if (markRange) {
-          const text = tr.doc.textBetween(markRange.from, markRange.to);
-          if (text.startsWith('\\')) {
-            tr.deleteRange(markRange.from, markRange.from + 1);
-          }
+function stripRefBackslashTransform(tr: Transform) {
+  const markType = tr.doc.type.schema.marks.xref;
+  findChildrenByMark(tr.doc, markType).forEach(markedNode => {
+    const pos = tr.mapping.map(markedNode.pos);
+    if (markType.isInSet(markedNode.node.marks)) {
+      const markRange = getMarkRange(tr.doc.resolve(pos), markType);
+      if (markRange) {
+        const text = tr.doc.textBetween(markRange.from, markRange.to);
+        if (text.startsWith('\\')) {
+          tr.deleteRange(markRange.from, markRange.from + 1);
         }
       }
-    });
-  };
+    }
+  });
+  
 }
 
 export default extension;

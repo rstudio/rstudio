@@ -199,51 +199,50 @@ export function deleteCaption() {
 }
 
 function convertImagesToFigure(tr: Transaction) {
-  return trTransform(tr, imagesToFiguresTransform(tr.doc.type.schema));
+  return trTransform(tr, imagesToFiguresTransform);
 }
 
-function imagesToFiguresTransform(schema: Schema) {
-  return (tr: Transform) => {
-    const images = findChildrenByType(tr.doc, schema.nodes.image);
-    images.forEach(image => {
+function imagesToFiguresTransform(tr: Transform) {
+  const schema = tr.doc.type.schema;
+  const images = findChildrenByType(tr.doc, schema.nodes.image);
+  images.forEach(image => {
 
-      // position reflecting steps already taken in this handler
-      const mappedPos = tr.mapping.mapResult(image.pos);
+    // position reflecting steps already taken in this handler
+    const mappedPos = tr.mapping.mapResult(image.pos);
 
-      // process image so long as it wasn't deleted by a previous step
-      if (!mappedPos.deleted) {
-        // resolve image pos
-        const imagePos = tr.doc.resolve(mappedPos.pos);
+    // process image so long as it wasn't deleted by a previous step
+    if (!mappedPos.deleted) {
+      // resolve image pos
+      const imagePos = tr.doc.resolve(mappedPos.pos);
 
-        // if it's an image in a standalone paragraph, convert it to a figure
-        if (imagePos.parent.type === schema.nodes.paragraph && imagePos.parent.childCount === 1) {
-          // figure attributes
-          const attrs = image.node.attrs;
+      // if it's an image in a standalone paragraph, convert it to a figure
+      if (imagePos.parent.type === schema.nodes.paragraph && imagePos.parent.childCount === 1) {
+        // figure attributes
+        const attrs = image.node.attrs;
 
-          // extract linkTo from link mark (if any)
-          if (schema.marks.link.isInSet(image.node.marks)) {
-            const linkAttrs = getMarkAttrs(
-              tr.doc,
-              { from: image.pos, to: image.pos + image.node.nodeSize },
-              schema.marks.link,
-            );
-            if (linkAttrs && linkAttrs.href) {
-              attrs.linkTo = linkAttrs.href;
-            }
-          }
-
-          // figure content
-          const content = attrs.alt ? Fragment.from(schema.text(attrs.alt)) : Fragment.empty;
-
-           // replace image with figure
-          const figure = schema.nodes.figure.createAndFill(attrs, content);
-          if (figure) {
-            tr.replaceRangeWith(mappedPos.pos, mappedPos.pos + image.node.nodeSize, figure);
+        // extract linkTo from link mark (if any)
+        if (schema.marks.link.isInSet(image.node.marks)) {
+          const linkAttrs = getMarkAttrs(
+            tr.doc,
+            { from: image.pos, to: image.pos + image.node.nodeSize },
+            schema.marks.link,
+          );
+          if (linkAttrs && linkAttrs.href) {
+            attrs.linkTo = linkAttrs.href;
           }
         }
+
+        // figure content
+        const content = attrs.alt ? Fragment.from(schema.text(attrs.alt)) : Fragment.empty;
+
+          // replace image with figure
+        const figure = schema.nodes.figure.createAndFill(attrs, content);
+        if (figure) {
+          tr.replaceRangeWith(mappedPos.pos, mappedPos.pos + image.node.nodeSize, figure);
+        }
       }
-    });
-  };
+    }
+  }); 
 }
 
 function isParaWrappingFigure(tok: PandocToken) {
