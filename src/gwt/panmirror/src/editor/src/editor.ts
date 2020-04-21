@@ -245,14 +245,14 @@ export class Editor {
 
     // provide context defaults
     context = {
+      ...context,
       ui: {
+        ...context.ui,
         images: {
           ...defaultEditorUIImages(),
           ...context.ui.images
         },
-        ...context.ui,
       },
-      ...context,
     };
 
     // resolve the format
