@@ -16,6 +16,7 @@
 import { Node as ProsemirrorNode, Schema, Fragment } from 'prosemirror-model';
 import { Plugin, PluginKey, EditorState, Transaction, NodeSelection } from 'prosemirror-state';
 import { EditorView } from 'prosemirror-view';
+import { Transform } from 'prosemirror-transform';
 
 import { findChildrenByType } from 'prosemirror-utils';
 
@@ -51,7 +52,7 @@ import { inlineHTMLIsImage } from './image-util';
 
 import './figure-styles.css';
 import { PandocCapabilities } from '../../api/pandoc_capabilities';
-import { withScopedMapping, MappingFn } from '../../api/transaction';
+import { trTransform } from '../../api/transaction';
 import { EditorFormat } from '../../api/format';
 
 const plugin = new PluginKey('figure');
@@ -199,19 +200,20 @@ export function deleteCaption() {
 
 function convertImagesToFigure(tr: Transaction) {
 
-  return withScopedMapping(tr, (map: MappingFn) => {
+  const schema = tr.doc.type.schema;
 
-    const schema = tr.doc.type.schema;
-    const images = findChildrenByType(tr.doc, schema.nodes.image);
+  return trTransform(tr, (transform: Transform) => {
+
+    const images = findChildrenByType(transform.doc, schema.nodes.image);
     images.forEach(image => {
 
       // position reflecting steps already taken in this handler
-      const mappedPos = map(image.pos);
+      const mappedPos = transform.mapping.mapResult(image.pos);
 
       // process image so long as it wasn't deleted by a previous step
       if (!mappedPos.deleted) {
         // resolve image pos
-        const imagePos = tr.doc.resolve(mappedPos.pos);
+        const imagePos = transform.doc.resolve(mappedPos.pos);
 
         // if it's an image in a standalone paragraph, convert it to a figure
         if (imagePos.parent.type === schema.nodes.paragraph && imagePos.parent.childCount === 1) {
@@ -221,7 +223,7 @@ function convertImagesToFigure(tr: Transaction) {
           // extract linkTo from link mark (if any)
           if (schema.marks.link.isInSet(image.node.marks)) {
             const linkAttrs = getMarkAttrs(
-              tr.doc,
+              transform.doc,
               { from: image.pos, to: image.pos + image.node.nodeSize },
               schema.marks.link,
             );
@@ -237,7 +239,7 @@ function convertImagesToFigure(tr: Transaction) {
           const figure = schema.nodes.figure.createAndFill(attrs, content);
 
           // replace image with figure
-          tr.replaceRangeWith(mappedPos.pos, mappedPos.pos + image.node.nodeSize, figure);
+          transform.replaceRangeWith(mappedPos.pos, mappedPos.pos + image.node.nodeSize, figure);
         }
       }
     });

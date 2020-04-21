@@ -178,18 +178,14 @@ export function transactionsChangeSet(transactions: Transaction[], oldState: Edi
   return changeSet;
 }
 
-export type MappingFn = (pos: number, assoc?: number | undefined) => MapResult;
-
-export function withScopedMapping(tr: Transaction, f: (map: MappingFn) => void) : Transaction {
+export function trTransform(tr: Transaction, f: (transform: Transform) => void) : Transaction {
   // create a new transform so we can do position mapping relative
   // to the actions taken here (b/c the transaction might already
   // have other steps so we can't do tr.mapping.map)
   const newActions = new Transform(tr.doc);
 
   // call the function (passing it a mapping function that uses our newActions)
-  f((pos: number, assoc?: number | undefined) => {
-    return newActions.mapping.mapResult(pos, assoc);
-  });
+  f(newActions);
 
   // copy the contents of newActions to the actual transaction
   for (const step of newActions.steps) {

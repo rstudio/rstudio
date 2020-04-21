@@ -17,16 +17,16 @@ import { Schema, Node as ProsemirrorNode, Mark, Fragment } from "prosemirror-mod
 import { EditorState, Transaction } from "prosemirror-state";
 import { toggleMark } from "prosemirror-commands";
 import { InputRule } from "prosemirror-inputrules";
+import { Transform } from "prosemirror-transform";
 
 import { setTextSelection, findChildren, findChildrenByMark } from "prosemirror-utils";
 
 import { Extension } from "../api/extension";
 import { PandocExtensions, PandocOutput } from "../api/pandoc";
 import { PandocCapabilities } from "../api/pandoc_capabilities";
-import { EditorOptions } from "../api/options";
 import { EditorUI } from "../api/ui";
 import { detectAndApplyMarks, removeInvalidatedMarks, getMarkRange } from "../api/mark";
-import { MarkTransaction, withScopedMapping, MappingFn } from "../api/transaction";
+import { MarkTransaction, trTransform } from "../api/transaction";
 import { FixupContext } from "../api/fixup";
 import { ProsemirrorCommand, EditorCommandId } from "../api/command";
 import { canInsertNode } from "../api/node";
@@ -97,28 +97,27 @@ const extension = (
         (tr: Transaction, context: FixupContext) => {
           if (context === FixupContext.Load) {
             
-            withScopedMapping(tr, (map: MappingFn) => {
-              
-              // apply marks
-              const markType = schema.marks.xref;
-              const predicate = (node: ProsemirrorNode) => {
-                return node.isTextblock && node.type.allowsMarkType(markType);
-              };
-              findChildren(tr.doc, predicate).forEach(nodeWithPos => {
-                const { pos } = nodeWithPos;
-                detectAndApplyMarks(tr, tr.doc.nodeAt(pos)!, pos, kRefRegEx, markType);
-              });
+            // apply marks
+            const markType = schema.marks.xref;
+            const predicate = (node: ProsemirrorNode) => {
+              return node.isTextblock && node.type.allowsMarkType(markType);
+            };
+            findChildren(tr.doc, predicate).forEach(nodeWithPos => {
+              const { pos } = nodeWithPos;
+              detectAndApplyMarks(tr, tr.doc.nodeAt(pos)!, pos, kRefRegEx, markType);
+            });
 
-              // remove leading \ as necessary (this would occur if the underlying format includes
-              // a \@ref and doesn't have all_symbols_escapable, e.g. blackfriday)
-              findChildrenByMark(tr.doc, markType).forEach(markedNode => {
-                const mappedPos = map(markedNode.pos);
+            // remove leading \ as necessary (this would occur if the underlying format includes
+            // a \@ref and doesn't have all_symbols_escapable, e.g. blackfriday)
+            trTransform(tr, (transform: Transform) => {
+              findChildrenByMark(transform.doc, markType).forEach(markedNode => {
+                const mappedPos = transform.mapping.mapResult(markedNode.pos);
                 if (markType.isInSet(markedNode.node.marks)) {
-                  const markRange = getMarkRange(tr.doc.resolve(mappedPos.pos), markType);
+                  const markRange = getMarkRange(transform.doc.resolve(mappedPos.pos), markType);
                   if (markRange) {
-                    const text = tr.doc.textBetween(markRange.from, markRange.to);
+                    const text = transform.doc.textBetween(markRange.from, markRange.to);
                     if (text.startsWith('\\')) {
-                      tr.deleteRange(markRange.from, markRange.from + 1);
+                      transform.deleteRange(markRange.from, markRange.from + 1);
                     }
                   }
                 }
