@@ -3603,10 +3603,11 @@ public class TextEditingTarget implements
                // push the new doc state into the local source database
                syncLocalSourceDb();
 
+               // !!! Display cannot be null here
                // fire popout event (this triggers a close in the current window
                // and the creation of a new window with the doc)
                events_.fireEvent(new PopoutDocEvent(getId(), 
-                     currentPosition()));
+                     currentPosition(), null));
             }
          });
       }

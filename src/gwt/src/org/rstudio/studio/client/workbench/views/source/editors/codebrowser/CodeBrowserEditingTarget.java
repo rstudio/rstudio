@@ -323,7 +323,8 @@ public class CodeBrowserEditingTarget implements EditingTarget
    @Handler
    void onPopoutDoc()
    {
-      events_.fireEvent(new PopoutDocEvent(getId(), currentPosition()));
+      // !!! the display cannot be null here
+      events_.fireEvent(new PopoutDocEvent(getId(), currentPosition(), null));
    }
 
    @Handler

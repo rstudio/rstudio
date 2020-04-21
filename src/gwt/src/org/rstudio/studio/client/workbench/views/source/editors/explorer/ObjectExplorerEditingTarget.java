@@ -131,7 +131,7 @@ public class ObjectExplorerEditingTarget
    @Override
    public void popoutDoc()
    {
-      events_.fireEvent(new PopoutDocEvent(getId(), null));
+      events_.fireEvent(new PopoutDocEvent(getId(), null, null));
    }
    
    @Override

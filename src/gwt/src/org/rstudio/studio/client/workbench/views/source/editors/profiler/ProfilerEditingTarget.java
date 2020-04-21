@@ -825,7 +825,7 @@ public class ProfilerEditingTarget implements EditingTarget,
    @Handler
    void onPopoutDoc()
    {
-      events_.fireEvent(new PopoutDocEvent(getId(), currentPosition()));
+      events_.fireEvent(new PopoutDocEvent(getId(), currentPosition(), null));
    }
 
    @Handler

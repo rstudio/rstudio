@@ -78,6 +78,16 @@ public class DocWindowChangedEvent
       return newWindowId_;
    }
 
+   public String getOldDisplayName()
+   {
+      return oldMainDisplayName_;
+   }
+
+   public String getNewDisplayName()
+   {
+      return newMainDisplayName_;
+   }
+
    public int getPos()
    {
       return pos_;
@@ -113,6 +123,8 @@ public class DocWindowChangedEvent
    
    private String oldWindowId_;
    private String newWindowId_;
+   private String oldMainDisplayName_;
+   private String newMainDisplayName_;
    private String docId_;
    private DocTabDragParams params_;
    private CollabEditStartParams collabParams_;

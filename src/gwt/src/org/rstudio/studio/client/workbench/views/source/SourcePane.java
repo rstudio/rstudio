@@ -30,6 +30,7 @@ import com.google.gwt.user.client.ui.*;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.ResultCallback;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.CommandBinder;
@@ -190,6 +191,45 @@ public class SourcePane extends LazyPanel implements Display,
       return tabPanel_.getWidgetIndex(widget) >= 0 ? true : false;
    }
 
+   public void closeTabByPath(String path, boolean interactive)
+   {
+      // !!! temporary debugging variable
+      boolean found = false;
+      for (int i = 0; i < editors_.size(); i++)
+      {
+         if (editors_.get(i).getPath() == path)
+         {
+            found = true;
+            closeTab(i, interactive, null);
+            break;
+         }
+      }
+      if (!found)
+         Debug.logToConsole("COULD NOT FIND TAB TO CLOSE BY PATH");
+   }
+
+   public void closeTabByDocId(String docId, boolean interactive)
+   {
+      // !!! temporary debugging variable
+      boolean found = false;
+      for (int i = 0; i < editors_.size(); i++)
+      {
+         if (editors_.get(i).getId() == docId)
+         {
+            found = true;
+            closeTab(i, interactive, null);
+            break;
+         }
+      }
+      if (!found)
+         Debug.logToConsole("COULD NOT FIND TAB TO CLOSE BY ID");
+   }
+
+   public void closeTab(boolean interactive)
+   {
+      closeTab(getActiveTabIndex(), interactive, null);
+   }
+
    public void closeTab(Widget child, boolean interactive)
    {
       closeTab(child, interactive, null);
@@ -200,11 +240,6 @@ public class SourcePane extends LazyPanel implements Display,
       closeTab(tabPanel_.getWidgetIndex(child), interactive, onClosed);
    }
    
-   public void closeTab(int index, boolean interactive)
-   {
-      closeTab(index, interactive, null);
-   }
-
    public void closeTab(int index, boolean interactive, Command onClosed)
    {
       if (interactive)
