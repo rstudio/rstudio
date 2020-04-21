@@ -289,8 +289,6 @@ function setStyleElement(id: string, css: string) {
     window.document.head.appendChild(styleEl);
   }
 
-  // set css if we need to
-  if (styleEl.innerHTML !== css) {
-    styleEl.innerHTML = css;
-  }
+  // set css 
+  styleEl.innerHTML = css;
 }
