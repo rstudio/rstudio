@@ -27,6 +27,7 @@
 #include <boost/regex.hpp>
 #include <boost/date_time/gregorian/gregorian.hpp>
 
+#include <core/http/URL.hpp>
 #include <core/http/Header.hpp>
 #include <core/http/Request.hpp>
 #include <core/http/Response.hpp>
@@ -376,7 +377,8 @@ std::string pathAfterPrefix(const Request& request,
                             const std::string& pathPrefix)
 {
    // get the raw uri & strip its location prefix
-   std::string uri = request.uri();
+   std::string uri = URL::cleanupPath(request.uri());
+   
    if (!pathPrefix.empty() && !uri.compare(0, pathPrefix.length(), pathPrefix))
       uri = uri.substr(pathPrefix.length());
 
