@@ -265,16 +265,32 @@ export function applyTheme(theme: EditorTheme) {
     .cm-s-default .cm-error {color: ${theme.code.errorColor};}
   `;
 
-  // get access to theme element (create if necessary)
-  const themeElementId = 'pm-editor-theme';
-  let themeElement = window.document.getElementById(themeElementId);
-  if (themeElement === null) {
-    themeElement = window.document.createElement('style');
-    themeElement.setAttribute('id', themeElementId);
-    themeElement.setAttribute('type', 'text/css');
-    window.document.head.appendChild(themeElement);
+  // set style
+  setStyleElement('pm-editor-theme-styles-id', themeCss);
+}
+
+export function applyPadding(padding: string) {
+  const paddingCss = `
+    .pm-editing-root-node {
+      padding-left: ${padding} !important;
+      padding-right: ${padding} !important;
+    }
+  `;
+  setStyleElement('pm-editor-padding-styles-id', paddingCss);
+}
+
+function setStyleElement(id: string, css: string) {
+  // get access to style element (create if necessary)
+  let styleEl = window.document.getElementById(id);
+  if (styleEl === null) {
+    styleEl = window.document.createElement('style');
+    styleEl.setAttribute('id', id);
+    styleEl.setAttribute('type', 'text/css');
+    window.document.head.appendChild(styleEl);
   }
 
-  // set theme
-  themeElement.innerHTML = themeCss;
+  // set css if we need to
+  if (styleEl.innerHTML !== css) {
+    styleEl.innerHTML = css;
+  }
 }

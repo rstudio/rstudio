@@ -75,7 +75,7 @@ import {
 
 import { PandocConverter, PandocWriterOptions } from './pandoc/converter';
 
-import { applyTheme, defaultTheme, EditorTheme } from './theme';
+import { defaultTheme, EditorTheme, applyTheme, applyPadding  } from './theme';
 
 import './styles/frame.css';
 import './styles/styles.css';
@@ -763,18 +763,13 @@ export class Editor {
   // update parent padding based on content width settings (if specified)
   private syncContentWidth()
   {
-    const setPadding = (padding: string) => {
-      this.parent.style.paddingLeft = padding;
-      this.parent.style.paddingRight = padding;
-    };
-
     if (this.maxContentWidth) {
       const minContentPadding = this.minContentPadding || 10;
       const parentWidth = this.parent.clientWidth;
       if (parentWidth > (this.maxContentWidth + (2 * minContentPadding))) {
-        setPadding(`calc((100% - ${this.maxContentWidth}px)/2)`);
+        applyPadding(`calc((100% - ${this.maxContentWidth}px)/2)`);
       } else {
-        setPadding(this.minContentPadding + 'px');
+        applyPadding(this.minContentPadding + 'px');
       }
     }
   }
