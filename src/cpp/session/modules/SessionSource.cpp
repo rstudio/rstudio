@@ -507,7 +507,7 @@ Error saveDocumentDiff(const json::JsonRpcRequest& request,
                                   &valid,
                                   &hash);
    if (error)
-      return error ;
+      return error;
    
    // if this has no path then it is an autosave, in this case
    // suppress change detection
@@ -519,36 +519,47 @@ Error saveDocumentDiff(const json::JsonRpcRequest& request,
    boost::shared_ptr<SourceDocument> pDoc(new SourceDocument());
    error = source_database::get(id, pDoc);
    if (error)
-      return error ;
+      return error;
    
    // Don't even attempt anything if we're not working off the same original
-   if (pDoc->hash() == hash)
+   if (pDoc->hash() != hash)
+      return Success();
+   
+   // attempt the document save
+   try
    {
       std::string contents(pDoc->contents());
       
-      // the offsets we receive are in bytes, so we can replace the contents
-      // of the string directly at the supplied offset + length (the contents
-      // string itself is already UTF-8 encoded)
+      // NOTE: this flag denotes whether the front-end successfully
+      // constructed a diff to be saved; we leave this in while still
+      // going down this code path just to ensure that any code that
+      // runs in response to a document save (even if that save fails)
+      // stil has a change to run
       if (valid)
       {
+         // the offsets we receive are in bytes, so we can replace the contents
+         // of the string directly at the supplied offset + length (the contents
+         // string itself is already UTF-8 encoded)
          contents.replace(offset, length, replacement);
       }
-      
+
       // track if we're updating the document contents
       bool hasChanges = contents != pDoc->contents();
       error = saveDocumentCore(contents, jsonPath, jsonType, jsonEncoding,
                                jsonFoldSpec, jsonChunkOutput, pDoc);
       if (error)
          return error;
-      
+
       // write to the source database (don't worry about writing document
       // contents if those have not changed)
       error = sourceDatabasePutWithUpdatedContents(pDoc, hasChanges);
       if (error)
          return error;
 
+      // set document hash
       pResponse->setResult(pDoc->hash());
    }
+   CATCH_UNEXPECTED_EXCEPTION
    
    return Success();
 }

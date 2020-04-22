@@ -1434,7 +1434,18 @@ public class TextEditingTarget implements
       
       name_.setValue(getNameFromDocument(document, defaultNameProvider), true);
       String contents = document.getContents();
-      docDisplay_.setCode(contents, false);
+      
+      // Set document contents, but disable autosave during this
+      // interval (avoid spurious saves immediately after opening a document)
+      try
+      {
+         docUpdateSentinel_.suspendAutosave(true);
+         docDisplay_.setCode(contents, false);
+      }
+      finally
+      {
+         docUpdateSentinel_.suspendAutosave(false);
+      }
       
       // Discover dependencies on file first open.
       packageDependencyHelper_.discoverPackageDependencies();
@@ -3195,11 +3206,53 @@ public class TextEditingTarget implements
    @Handler
    void onReopenSourceDocWithEncoding()
    {
-	   saveThenExecute(null, () -> {
-	      withChooseEncoding(
-	            docUpdateSentinel_.getEncoding(),
-	            (String encoding) -> docUpdateSentinel_.reopenWithEncoding(encoding));
-	   });
+      final Command action = () -> {
+         withChooseEncoding(
+               docUpdateSentinel_.getEncoding(),
+               (String encoding) -> docUpdateSentinel_.reopenWithEncoding(encoding));
+      };
+      
+      // NOTE: we previously attempted to save any existing document diffs
+      // and then re-opened the document with the requested encoding, but
+      // this is a perilous action to take as if the user has opened a document
+      // without specifying the correct encoding, the representation of the document
+      // in the front-end might be corrupt / incorrect and so attempting to save
+      // a document diff could further corrupt the document!
+      //
+      // Since the most common user workflow here should be:
+      //
+      //    1. Open a document,
+      //    2. Discover the document was not opened with the correct encoding,
+      //    3. Attempt to re-open with a separate encoding
+      //
+      // it's most likely that they do not want to persist any changes made to the
+      // "incorrect" version of the document and instead want to discard any
+      // changes and re-open the document as it exists on disk.
+      if (dirtyState_.getValue())
+      {
+         String caption = "Reopen with Encoding";
+         
+         String message =
+               "This document has unsaved changes. These changes will be " +
+               "discarded when re-opening the document.\n\n" +
+               "Would you like to proceed?";
+         
+         globalDisplay_.showYesNoMessage(
+               GlobalDisplay.MSG_WARNING,
+               caption,
+               message,
+               true,
+               () -> action.execute(),
+               () -> {},
+               () -> {},
+               "Open Document",
+               "Cancel",
+               true);
+      }
+      else
+      {
+         action.execute();
+      }
    }
 
    @Handler
@@ -7519,9 +7572,17 @@ public class TextEditingTarget implements
       // Cancel any existing autosave timer
       autoSaveTimer_.cancel();
       
+      // Bail if autosaves are suspended for now
+      if (autoSaveSuspended_)
+         return;
+      
+      // Bail if disalbed
       // Start new timer if enabled
-      if (prefs_.autoSaveOnIdle().getValue() == UserPrefs.AUTO_SAVE_ON_IDLE_COMMIT)
-         autoSaveTimer_.schedule(prefs_.autoSaveMs());
+      if (prefs_.autoSaveOnIdle().getValue() != UserPrefs.AUTO_SAVE_ON_IDLE_COMMIT)
+         return;
+      
+      // OK, schedule autosave
+      autoSaveTimer_.schedule(prefs_.autoSaveMs());
    }
    
    private boolean isVisualModeActivated()
@@ -7595,6 +7656,7 @@ public class TextEditingTarget implements
    private EditingTargetCodeExecution codeExecution_;
    
    // Timer for autosave
+   private boolean autoSaveSuspended_;
    private Timer autoSaveTimer_ = new Timer()
    {
       @Override
