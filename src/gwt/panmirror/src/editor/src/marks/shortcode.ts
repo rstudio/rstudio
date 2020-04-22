@@ -25,7 +25,7 @@ import { PandocCapabilities } from '../api/pandoc_capabilities';
 import { EditorUI } from '../api/ui';
 import { detectAndApplyMarks, removeInvalidatedMarks, getMarkRange } from '../api/mark';
 import { MarkTransaction } from '../api/transaction';
-import { EditorFormat } from '../api/format';
+import { EditorFormat, kBlogdownDocType } from '../api/format';
 import { ProsemirrorCommand, EditorCommandId } from '../api/command';
 import { canInsertNode } from '../api/node';
 import { FixupContext } from '../api/fixup';
@@ -109,6 +109,12 @@ const extension = (
     },
 
     commands: (schema: Schema) => {
+
+      // only create command for blogdown docs
+      if (!format.docTypes.includes(kBlogdownDocType)) {
+        return [];
+      }
+
       return [
         new ProsemirrorCommand(
           EditorCommandId.Shortcode,
