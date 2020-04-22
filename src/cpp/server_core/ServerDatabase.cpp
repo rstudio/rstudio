@@ -23,7 +23,6 @@
 #include <core/system/Environment.hpp>
 #include <core/system/System.hpp>
 #include <core/system/Xdg.hpp>
-#include <shared_core/Error.hpp>
 
 namespace rstudio {
 namespace server_core {
@@ -39,7 +38,7 @@ constexpr const char* kDatabaseProvider = "provider";
 constexpr const char* kDatabaseProviderSqlite = "sqlite";
 constexpr const char* kDatabaseProviderPostgresql = "postgresql";
 constexpr const char* kSqliteDatabaseDirectory = "directory";
-constexpr const char* kDefaultSqliteDatabaseDirectory = "/var/run/rstudio-server";
+constexpr const char* kDefaultSqliteDatabaseDirectory = "/var/lib/rstudio-server";
 constexpr const char* kDatabaseHost = "host";
 constexpr const char* kDefaultDatabaseHost = "localhost";
 constexpr const char* kDatabasePort = "port";
@@ -51,7 +50,6 @@ constexpr const char* kPostgresqlDatabaseConnectionTimeoutSeconds = "connnection
 constexpr const int   kDefaultPostgresqlDatabaseConnectionTimeoutSeconds = 10;
 
 // environment variables
-constexpr const char* kServerDataDirEnvVar = "RS_SERVER_DATA_DIR";
 constexpr const char* kDatabaseMigrationsPathEnvVar = "RS_DB_MIGRATIONS_PATH";
 
 //misc constants
@@ -59,7 +57,8 @@ constexpr const size_t kDefaultConnectionPoolSize = 4;
 
 boost::shared_ptr<ConnectionPool> s_connectionPool;
 
-Error readOptions(ConnectionOptions* pOptions)
+Error readOptions(const boost::optional<system::User>& databaseFileUser,
+                  ConnectionOptions* pOptions)
 {
    FilePath optionsFile = core::system::xdg::systemConfigFile("database.conf");
    if (optionsFile.exists())
@@ -98,18 +97,23 @@ Error readOptions(ConnectionOptions* pOptions)
    {
       SqliteConnectionOptions options;
 
-      // get the database directory - if not specified, we attempt to first default to the
-      // "server tmp dir", and if that's not available, then we fallback to a hardcoded
-      // default path
-      std::string databaseDirectory = settings.get(kSqliteDatabaseDirectory, std::string());
-      if (databaseDirectory.empty())
+      // get the database directory - if not specified, we fallback to a hardcoded default path
+      std::string databaseDirectory = settings.get(kSqliteDatabaseDirectory, kDefaultSqliteDatabaseDirectory);
+      FilePath databaseFile = FilePath(databaseDirectory).completeChildPath("rstudio.sqlite");
+      options.file = databaseFile.getAbsolutePath();
+
+      if (databaseFileUser.has_value())
       {
-         databaseDirectory = core::system::getenv(kServerDataDirEnvVar);
-         if (databaseDirectory.empty())
-            databaseDirectory = kDefaultSqliteDatabaseDirectory;
+         // always ensure the database file user is correct, if specified
+         error = databaseFile.ensureFile();
+         if (error)
+            return error;
+
+         error = databaseFile.changeOwnership(databaseFileUser.get());
+         if (error)
+            return error;
       }
 
-      options.file = FilePath(databaseDirectory).completeChildPath("rstudio.sqlite").getAbsolutePath();
       LOG_INFO_MESSAGE("Connecting to sqlite3 database at " + options.file);
       *pOptions = options;
    }
@@ -158,10 +162,11 @@ Error migrationsDir(FilePath* pMigrationsDir)
 
 } // anonymous namespace
 
-Error initialize(bool updateSchema)
+Error initialize(bool updateSchema,
+                 const boost::optional<system::User>& databaseFileUser)
 {
    ConnectionOptions options;
-   Error error = readOptions(&options);
+   Error error = readOptions(databaseFileUser, &options);
    if (error)
       return error;
 
