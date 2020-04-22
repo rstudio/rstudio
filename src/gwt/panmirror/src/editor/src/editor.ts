@@ -18,7 +18,7 @@ import { keydownHandler } from 'prosemirror-keymap';
 import { MarkSpec, Node as ProsemirrorNode, NodeSpec, Schema, DOMParser, ParseOptions } from 'prosemirror-model';
 import { EditorState, Plugin, PluginKey, Transaction } from 'prosemirror-state';
 import { EditorView } from 'prosemirror-view';
-import { setTextSelection, findParentNodeOfTypeClosestToPos, findParentNode } from 'prosemirror-utils';
+import { setTextSelection } from 'prosemirror-utils';
 import 'prosemirror-view/style/prosemirror.css';
 
 import polyfill from './polyfill/index';
@@ -26,7 +26,7 @@ import polyfill from './polyfill/index';
 import { EditorOptions } from './api/options';
 import { ProsemirrorCommand, CommandFn, EditorCommand } from './api/command';
 import { PandocMark, markIsActive } from './api/mark';
-import { PandocNode } from './api/node';
+import { PandocNode, findTopLevelBodyNodes } from './api/node';
 import { EditorUI, attrPropsToInput, attrInputToProps, AttrProps, AttrEditInput } from './api/ui';
 import { Extension } from './api/extension';
 import { ExtensionManager, initExtensions } from './extensions';
@@ -816,19 +816,23 @@ export class Editor {
     // cursorSentinel to return
     let cursorSentinel: string | undefined;
 
-    // find the beginning of the nearest text block
-    const textBlock = findParentNode(node => node.isTextblock)(tr.selection);
+    // find the anchor of the current selection
+    const { anchor } = tr.selection; 
+
+    // find the closest top-level text block that isn't an Rmd chunk (their
+    // first line gets special processing so we can't put the sentinel there)
+    const topLevelTextBlocks = findTopLevelBodyNodes(tr.doc, node => { 
+      return node.isTextblock && node.type !== this.schema.nodes.rmd_chunk;
+    };
+    const textBlock = topLevelTextBlocks.reverse().find(block => block.pos < anchor);
     if (textBlock) {
-      // only proceed if we are not inside a table (as the sentinel will mess up
-      // table column formatting)
-      const textBlockPos = tr.doc.resolve(textBlock.pos);
-      if (!this.schema.nodes.table || !findParentNodeOfTypeClosestToPos(textBlockPos, this.schema.nodes.table)) {
-        // space at the end of the sentinel so that it doesn't interere with
-        // markdown that is sensitive to contiguous characters (e.g. math)
-        cursorSentinel = 'CursorSentinel-CAFB04C4-080D-4074-898C-F670CAACB8AF';
-        setTextSelection(textBlock.pos)(tr);
-        tr.insertText(cursorSentinel);
+      cursorSentinel = 'CursorSentinel-CAFB04C4-080D-4074-898C-F670CAACB8AF';
+      let pos = textBlock.pos;
+      if ((textBlock.pos + textBlock.node.nodeSize) < anchor) {
+        pos = textBlock.pos + textBlock.node.nodeSize - 1;
       }
+      setTextSelection(pos)(tr);
+      tr.insertText(cursorSentinel);
     }
 
     // return the doc and sentinel (if any)
