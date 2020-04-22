@@ -112,8 +112,11 @@ public class DesktopApplicationHeader implements ApplicationHeader,
 
       pDesktopHooks.get();
 
-      commands.uploadFile().remove();
-      commands.exportFiles().remove();
+      if (!Desktop.isRemoteDesktop())
+      {
+         commands.uploadFile().remove();
+         commands.exportFiles().remove();
+      }
       commands.updateCredentials().remove();
    
       commands.checkForUpdates().setVisible(true);

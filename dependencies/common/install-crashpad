@@ -33,10 +33,35 @@ DEPOT_TOOLS_DIR=$RSTUDIO_TOOLS_DIR/depot_tools
 LLVM_VERSION=4.0.0
 LLVM_SOURCE_URL=https://s3.amazonaws.com/rstudio-buildtools/llvm-$LLVM_VERSION.src.tar.xz
 CLANG_SOURCE_URL=https://s3.amazonaws.com/rstudio-buildtools/cfe-$LLVM_VERSION.src.tar.xz
+CRASHPAD_PRE_BUILT_ROOT_URL=https://s3.amazonaws.com/rstudio-buildtools/crashpad-bin/linux
 LLVM_DIR=$RSTUDIO_TOOLS_DIR/llvm-$LLVM_VERSION
 LLVM_BIN_DIR=$LLVM_DIR/build/bin
 CRASHPAD_DIR=$RSTUDIO_TOOLS_DIR/crashpad
 CRASHPAD_BIN_DIR=$CRASHPAD_DIR/crashpad/out/Default
+
+# check for presence of argument indicating to install pre-built binaries
+# if present, we skip building crashpad altogether and just install from S3
+if test -n "$1"
+then
+   if ! test -e $CRASHPAD_BIN_DIR/crashpad_handler
+   then
+      echo "Installing pre-built Crashpad binaries for $1"
+      cd $RSTUDIO_TOOLS_DIR
+      wget "$CRASHPAD_PRE_BUILT_ROOT_URL/crashpad-$1.tar.gz"
+      tar xvf "crashpad-$1.tar.gz"
+      if ! test -e $CRASHPAD_BIN_DIR/crashpad_handler
+      then
+         echo "An error occured installing pre-built Crashpad binaries - $CRASHPAD_BIN_DIR/crashpad_handler does not exist"
+         exit 1
+      else
+         echo "Successfully installed pre-built Crashpad binaries"
+         exit 0
+      fi
+   else
+      echo "Crashpad already installed"
+      exit 0
+   fi
+fi
 
 # install google depot_tools if not already installed
 # these tools are necessary to properly checkout and build crashpad

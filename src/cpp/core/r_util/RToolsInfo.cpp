@@ -22,7 +22,7 @@
 #include <core/Log.hpp>
 #include <core/http/URL.hpp>
 #include <core/StringUtils.hpp>
-#include <core/system/Types.hpp>
+#include <core/system/System.hpp>
 
 #include <core/system/RegistryKey.hpp>
 
@@ -187,6 +187,41 @@ RToolsInfo::RToolsInfo(const std::string& name,
       clangArgs.push_back(
             "-I" + installPath.completeChildPath(bitsInc).getAbsolutePath());
    }
+   else if (name == "4.0")
+   {
+      versionMin = "4.0.0";
+      versionMax = "5.0.0";
+
+      // PATH for utilities
+      relativePathEntries.push_back("usr/bin");
+
+      // set BINPREF
+      environmentVars.push_back({"BINPREF", "/mingw$(WIN)/bin/"});
+
+      // set clang args
+#ifdef _WIN64
+      std::string baseDir = "mingw64";
+      std::string arch = "x86_64";
+#else
+      std::string baseDir = "mingw32";
+      std::string arch = "i686";
+#endif
+
+      // path to mingw includes
+      boost::format mgwIncFmt("%1%/%2%-w64-mingw32/include");
+      std::string mingwIncludeSuffix = boost::str(mgwIncFmt % baseDir % arch);
+      FilePath mingwIncludePath = installPath.completeChildPath(mingwIncludeSuffix);
+      clangArgs.push_back("-I" + mingwIncludePath.getAbsolutePath());
+
+      // path to C++ headers
+      std::string cppSuffix = "c++/8.3.0";
+      FilePath cppIncludePath = installPath.completeChildPath(cppSuffix);
+      clangArgs.push_back("-I" + cppIncludePath.getAbsolutePath());
+   }
+   else
+   {
+      LOG_DEBUG_MESSAGE("Unrecognized Rtools installation at path '" + installPath.getAbsolutePath() + "'");
+   }
 
    // build version predicate and path list if we can
    if (!versionMin.empty())
@@ -206,10 +241,21 @@ RToolsInfo::RToolsInfo(const std::string& name,
 
 std::string RToolsInfo::url(const std::string& repos) const
 {
-   // strip period from name
-   std::string ver = boost::algorithm::replace_all_copy(name(), ".", "");
-   std::string url = core::http::URL::complete(
-                        repos, "bin/windows/Rtools/Rtools" + ver + ".exe");
+   std::string url;
+
+   if (name() == "4.0")
+   {
+      std::string arch = core::system::isWin64() ? "x86_64" : "i686";
+      std::string suffix = "bin/windows/Rtools/rtools40-" + arch + ".exe";
+      url = core::http::URL::complete(repos, suffix);
+   }
+   else
+   {
+      std::string version = boost::algorithm::replace_all_copy(name(), ".", "");
+      std::string suffix = "bin/windows/Rtools/Rtools" + version + ".exe";
+      url = core::http::URL::complete(repos, suffix);
+   }
+
    return url;
 }
 
@@ -230,6 +276,36 @@ std::ostream& operator<<(std::ostream& os, const RToolsInfo& info)
 }
 
 namespace {
+
+Error scanEnvironmentForRTools(bool usingMingwGcc49,
+                               const std::string& envvar,
+                               std::vector<RToolsInfo>* pRTools)
+{
+   // nothing to do if we have no envvar
+   if (envvar.empty())
+      return Success();
+
+   // read value
+   std::string envval = core::system::getenv(envvar);
+   if (envval.empty())
+      return Success();
+
+   // build info
+   FilePath installPath(envval);
+   RToolsInfo toolsInfo("4.0", installPath, usingMingwGcc49);
+
+   // check that recorded path is valid
+   bool ok =
+       toolsInfo.isStillInstalled() &&
+       toolsInfo.isRecognized();
+
+   // use it if all looks well
+   if (ok)
+      pRTools->push_back(toolsInfo);
+
+   return Success();
+
+}
 
 Error scanRegistryForRTools(HKEY key,
                             bool usingMingwGcc49,
@@ -333,11 +409,14 @@ void scanFoldersForRTools(bool usingMingwGcc49, std::vector<RToolsInfo>* pRTools
 
 } // end anonymous namespace
 
-void scanForRTools(bool usingMingwGcc49, std::vector<RToolsInfo>* pRTools)
+void scanForRTools(bool usingMingwGcc49,
+                   const std::string& rtoolsHomeEnvVar,
+                   std::vector<RToolsInfo>* pRTools)
 {
    std::vector<RToolsInfo> rtoolsInfo;
 
    // scan for Rtools
+   scanEnvironmentForRTools(usingMingwGcc49, rtoolsHomeEnvVar, &rtoolsInfo);
    scanRegistryForRTools(usingMingwGcc49, &rtoolsInfo);
    scanFoldersForRTools(usingMingwGcc49, &rtoolsInfo);
 
@@ -347,6 +426,8 @@ void scanForRTools(bool usingMingwGcc49, std::vector<RToolsInfo>* pRTools)
    {
       if (knownPaths.count(info.installPath()))
          continue;
+
+      knownPaths.insert(info.installPath());
       pRTools->push_back(info);
    }
 
