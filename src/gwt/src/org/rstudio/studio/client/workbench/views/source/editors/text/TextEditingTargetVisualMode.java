@@ -831,17 +831,17 @@ public class TextEditingTargetVisualMode
    
    private boolean isBookdownDocument() 
    {
-      return sessionInfo_.getBuildToolsBookdownWebsite();
+      return sessionInfo_.getBuildToolsBookdownWebsite() && isDocInProject();
    }
    
    private boolean isBlogdownDocument() 
    {
-      return sessionInfo_.getIsBlogdownProject();
+      return sessionInfo_.getIsBlogdownProject() && isDocInProject();
    }
    
    private boolean isDistillDocument()
    {
-      return sessionInfo_.getIsDistillProject() ||
+      return (sessionInfo_.getIsDistillProject() && isDocInProject()) ||
              getOutputFormats().contains("distill::distill_article");
    }
  
@@ -854,25 +854,45 @@ public class TextEditingTargetVisualMode
       
       // if we have a doc
       if (docPath != null)
-      {
-         // if we are in a blogdown project
-         if (sessionInfo_.getIsBlogdownProject())
+      {      
+         // if we are in a blogdown project and the doc is in the project
+         if (sessionInfo_.getIsBlogdownProject() && isDocInProject())
          {
-            // if the doc is in the project directory
-            FileSystemItem docFile = FileSystemItem.createFile(docPath);
-            FileSystemItem projectDir = context_.getActiveProjectDir();
-            if (docFile.getPathRelativeTo(projectDir) != null)
-            {
-               // if it has an extension indicating hugo will render markdown
-               String extension = FileSystemItem.getExtensionFromPath(docPath);
-               return extension.compareToIgnoreCase(".md") == 0 ||
-                      extension.compareToIgnoreCase("Rmarkdown") == 0;
-            }
+            // if it has an extension indicating hugo will render markdown
+            String extension = FileSystemItem.getExtensionFromPath(docPath);
+            return extension.compareToIgnoreCase(".md") == 0 ||
+                   extension.compareToIgnoreCase("Rmarkdown") == 0;
          }
       }
       
       // default to false
       return false;
+   }
+   
+   private boolean isDocInProject()
+   {  
+      // if we are in a project
+      if (context_.isProjectActive())
+      {
+         // if the doc path is  null let's assume it's going to be saved
+         // within the current project
+         String docPath = docUpdateSentinel_.getPath();
+         if (docPath != null)
+         {
+            // if the doc is in the project directory
+            FileSystemItem docFile = FileSystemItem.createFile(docPath);
+            FileSystemItem projectDir = context_.getActiveProjectDir();
+            return docFile.getPathRelativeTo(projectDir) != null;
+         }
+         else
+         {
+            return true;
+         }
+      }
+      else
+      {
+         return false;
+      }
    }
    
   
