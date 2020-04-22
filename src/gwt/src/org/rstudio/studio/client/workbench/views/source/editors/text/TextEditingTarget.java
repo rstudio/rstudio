@@ -7572,12 +7572,7 @@ public class TextEditingTarget implements
       // Cancel any existing autosave timer
       autoSaveTimer_.cancel();
       
-      // Bail if autosaves are suspended for now
-      if (autoSaveSuspended_)
-         return;
-      
-      // Bail if disalbed
-      // Start new timer if enabled
+      // Bail if not enabled
       if (prefs_.autoSaveOnIdle().getValue() != UserPrefs.AUTO_SAVE_ON_IDLE_COMMIT)
          return;
       
@@ -7656,7 +7651,6 @@ public class TextEditingTarget implements
    private EditingTargetCodeExecution codeExecution_;
    
    // Timer for autosave
-   private boolean autoSaveSuspended_;
    private Timer autoSaveTimer_ = new Timer()
    {
       @Override
