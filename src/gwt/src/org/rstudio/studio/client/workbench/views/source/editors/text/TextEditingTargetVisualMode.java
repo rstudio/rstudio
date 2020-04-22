@@ -378,6 +378,18 @@ public class TextEditingTargetVisualMode
    
    private void manageUI(boolean activate, boolean focus, ScheduledCommand completed)
    {
+      // validate the activation
+      if (activate)
+      {
+         String invalid = validateActivation();
+         if (invalid != null) 
+         {
+            docUpdateSentinel_.setBoolProperty(TextEditingTarget.RMD_VISUAL_MODE, false);
+            view_.showWarningBar(invalid);
+            return;
+         }
+      }
+      
       // manage commands
       manageCommands();
       
@@ -824,6 +836,18 @@ public class TextEditingTargetVisualMode
       };
    }
    
+   private String validateActivation()
+   {
+      if (isXaringanDocument())
+      {
+         return "Xaringan presentations cannot be edited in visual mode.";
+      }
+      else
+      {
+         return null;
+      }
+   }
+   
    private boolean isXRefDocument()
    {
       return isBookdownDocument() || isBlogdownDocument() || isDistillDocument();
@@ -843,6 +867,17 @@ public class TextEditingTargetVisualMode
    {
       return (sessionInfo_.getIsDistillProject() && isDocInProject()) ||
              getOutputFormats().contains("distill::distill_article");
+   }
+   
+   private boolean isXaringanDocument()
+   {
+      List<String> formats = getOutputFormats();
+      for (String format : formats)
+      {
+         if (format.startsWith("xaringan"))
+            return true;
+      }
+      return false;
    }
  
    // automatically enable blackfriday markdown engine if this is a blogdown
