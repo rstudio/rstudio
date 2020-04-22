@@ -110,6 +110,7 @@ Error readOptions(ConnectionOptions* pOptions)
       }
 
       options.file = FilePath(databaseDirectory).completeChildPath("rstudio.sqlite").getAbsolutePath();
+      LOG_INFO_MESSAGE("Connecting to sqlite3 database at " + options.file);
       *pOptions = options;
    }
    else if (boost::iequals(databaseProvider, kDatabaseProviderPostgresql))
@@ -123,6 +124,7 @@ Error readOptions(ConnectionOptions* pOptions)
       options.connectionTimeoutSeconds = settings.getInt(kPostgresqlDatabaseConnectionTimeoutSeconds,
                                                          kDefaultPostgresqlDatabaseConnectionTimeoutSeconds);
       *pOptions = options;
+      LOG_INFO_MESSAGE("Connecting to Postgres database " + options.user + "@" + options.host);
    }
    else
    {
