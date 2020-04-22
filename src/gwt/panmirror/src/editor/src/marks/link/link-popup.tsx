@@ -189,29 +189,27 @@ const LinkPopup: React.FC<LinkPopupProps> = props => {
 
   return (
     <Popup classes={['pm-popup-link']} style={props.style}>
-      <Panel>
-        <LinkButton text={linkText} onClick={onLinkClicked} maxWidth={props.maxLinkWidth}></LinkButton>
-        {showCopyButton ? (
-          <ImageButton
-            image={props.ui.images.copy!}
-            classes={['pm-image-button-copy-link']}
-            title={props.ui.context.translateText('Copy Link to Clipboard')}
-            ref={setCopyButton}
-          />
-        ) : null}
+      <LinkButton text={linkText} onClick={onLinkClicked} maxWidth={props.maxLinkWidth}></LinkButton>
+      {showCopyButton ? (
         <ImageButton
-          image={props.ui.images.removelink!}
-          classes={['pm-image-button-remove-link']}
-          title={props.ui.context.translateText('Remove Link')}
-          onClick={onRemoveClicked}
+          image={props.ui.images.copy!}
+          classes={['pm-image-button-copy-link']}
+          title={props.ui.context.translateText('Copy Link to Clipboard')}
+          ref={setCopyButton}
         />
-        <ImageButton
-          image={props.ui.images.properties!}
-          classes={['pm-image-button-edit-properties']}
-          title={props.ui.context.translateText('Edit Attributes')}
-          onClick={onEditClicked}
-        />
-      </Panel>
+      ) : null}
+      <ImageButton
+        image={props.ui.images.removelink!}
+        classes={['pm-image-button-remove-link']}
+        title={props.ui.context.translateText('Remove Link')}
+        onClick={onRemoveClicked}
+      />
+      <ImageButton
+        image={props.ui.images.properties!}
+        classes={['pm-image-button-edit-properties']}
+        title={props.ui.context.translateText('Edit Attributes')}
+        onClick={onEditClicked}
+      />
     </Popup>
   );
 };
