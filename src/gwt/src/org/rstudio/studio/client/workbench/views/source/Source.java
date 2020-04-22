@@ -2290,9 +2290,11 @@ public class Source implements InsertSourceHandler,
    @Override
    public void onDocWindowChanged(final DocWindowChangedEvent e)
    {
+      Debug.logToConsole("SourceWindowManager.getSourceWindowId(): >" +
+            SourceWindowManager.getSourceWindowId() + "<");
+      Debug.logToConsole("e.getNewWindowId(): >" +  e.getNewWindowId() + "<");
       if (e.getNewWindowId() == SourceWindowManager.getSourceWindowId())
       {
-         // for the main source window we need to check if the displays match as well
          ensureVisible(true);
          
          // look for a collaborative editing session currently running inside 
@@ -2340,11 +2342,14 @@ public class Source implements InsertSourceHandler,
       }
       else if (e.getOldWindowId() == SourceWindowManager.getSourceWindowId())
       {
+         Display oldDisplay = views_.getDisplayByName(e.getOldDisplayName());
+         if (oldDisplay == null)
+            oldDisplay = views_.getActiveDisplay();
          // cancel tab drag if it was occurring
-         views_.getActiveDisplay().cancelTabDrag();
+         oldDisplay.cancelTabDrag();
          
          // disown this doc if it was our own
-         disownDoc(e.getDocId(), views_.getDisplayByName(e.getOldDisplayName()));
+         disownDoc(e.getDocId(), oldDisplay);
       }
    }
    
