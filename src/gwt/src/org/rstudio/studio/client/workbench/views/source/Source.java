@@ -182,11 +182,7 @@ public class Source implements InsertSourceHandler,
                                IsWidget,
                                OpenSourceFileHandler,
                                OpenPresentationSourceFileHandler,
-                               TabClosingHandler,
-                               TabCloseHandler,
-                               TabReorderHandler,
                                SelectionHandler<Integer>,
-                               TabClosedHandler,
                                FileEditHandler,
                                ShowContentHandler,
                                ShowDataHandler,
@@ -225,6 +221,7 @@ public class Source implements InsertSourceHandler,
    {
       void setSource(Source source);
       void generateName(boolean first);
+      void addEditor(EditingTarget target);
       String getName();
       void addTab(Widget widget,
                   FileIcon icon,
@@ -246,6 +243,7 @@ public class Source implements InsertSourceHandler,
       void closeTab(int index, boolean interactive, Command onClosed);
       void moveTab(int index, int delta);
       void setDirty(Widget widget, boolean dirty);
+      void setActiveEditor(EditingTarget target);
       void manageChevronVisibility();
       void showOverflowPopup();
       void cancelTabDrag();
@@ -282,18 +280,41 @@ public class Source implements InsertSourceHandler,
          new ArrayList<Display>();
       }
 
-      public void setActiveDisplay(Display display)
+      public void setActive(Display display)
       {
          activeDisplay_ = display;
+      }
+
+      public void setActive(EditingTarget target)
+      {
+         activeDisplay_ = getDisplayByEditor(target);
+         if (activeDisplay_ != null)
+            activeDisplay_.setActiveEditor(target);
+         else
+            Debug.logToConsole("ERROR: WE HAVE AN EDITOR WITHOUT A DISPLAY");
+         /*
+         else
+            activeDisplay_ = getActiveDisplay();
+            */
       }
 
       public Display getActiveDisplay()
       {
          if (activeDisplay_ != null)
             return activeDisplay_;
+
          if (activeEditor_ != null)
-            return getDisplayByEditor(activeEditor_);
-         return this.get(0);
+         {
+            activeDisplay_ = getDisplayByEditor(activeEditor_);
+            // !!! Debug code to be removed
+            if (activeDisplay_ != null)
+                  return activeDisplay_;
+            else
+               Debug.logToConsole("ERROR: WE HAVE AN EDITOR WITHOUT A DISPLAY");
+         }
+         else
+            activeDisplay_ = this.get(0);
+         return activeDisplay_;
       }
 
       public Display getDisplayByEditor(EditingTarget target)
@@ -303,6 +324,8 @@ public class Source implements InsertSourceHandler,
              if (display.hasTab(target.asWidget()))
                 return display;
          }
+         if (target != null)
+            Debug.logToConsole("GETDISPLAYBYEDITOR ERROR");
          return null;
       }
 
@@ -375,8 +398,9 @@ public class Source implements InsertSourceHandler,
       commands_ = commands;
       binder.bind(commands, this);
       view.setSource(this);
+      view.generateName(true);
       views_.add(view);
-      views_.getActiveDisplay().generateName(true);
+      views_.setActive(view);
       server_ = server;
       editingTargetSource_ = editingTargetSource;
       fileTypeRegistry_ = fileTypeRegistry;
@@ -503,10 +527,6 @@ public class Source implements InsertSourceHandler,
 
       for (Display v : views_)
       {
-         v.addTabClosingHandler(this);
-         v.addTabCloseHandler(this);
-         v.addTabClosedHandler(this);
-         v.addTabReorderHandler(this);
          v.addSelectionHandler(this);
          v.addBeforeShowHandler(this);
       }
@@ -713,6 +733,13 @@ public class Source implements InsertSourceHandler,
       else
          ShortcutManager.INSTANCE.setEditorMode(KeyboardShortcut.MODE_DEFAULT);
    
+      // !!! comment why this is needed
+      events_.fireEvent(new DocTabsChangedEvent(null,
+                                                new String[0],
+                                                new FileIcon[0],
+                                                new String[0],
+                                                new String[0]));
+
       // fake shortcuts for commands_ which we handle at a lower level
       commands_.goToHelp().setShortcut(new KeyboardShortcut("F1", KeyCodes.KEY_F1, KeyboardShortcut.NONE));
       commands_.goToDefinition().setShortcut(new KeyboardShortcut("F2", KeyCodes.KEY_F2, KeyboardShortcut.NONE));
@@ -1353,7 +1380,8 @@ public class Source implements InsertSourceHandler,
    @Handler
    public void onNewSourceDoc()
    {
-      newDoc(FileTypeRegistry.R, null);
+      views_.getActiveDisplay().onNewSourceDoc();
+      //newDoc(FileTypeRegistry.R, null);
    }
 
    @Handler
@@ -2120,6 +2148,7 @@ public class Source implements InsertSourceHandler,
             public void onSuccess(EditingTarget target)
             {
                activeEditor_ = target;
+               views_.setActive(target);
                doActivateSource(afterActivation);
             }
             
@@ -2358,7 +2387,6 @@ public class Source implements InsertSourceHandler,
       if (display == null)
          display = views_.getActiveDisplay();
 
-      suspendDocumentClose_ = true;
       for (int i = 0; i < editors_.size(); i++)
       {
          if (editors_.get(i).getId() == docId)
@@ -2367,7 +2395,6 @@ public class Source implements InsertSourceHandler,
             break;
          }
       }
-      suspendDocumentClose_ = false;
    }
 
    @Override
@@ -2809,7 +2836,7 @@ public class Source implements InsertSourceHandler,
       display.ensureVisible();
       display.generateName(false);
       views_.add(display);
-      views_.setActiveDisplay(display);
+      views_.setActive(display);
       display.onNewSourceDoc();
       ensureVisible(false);
 
@@ -3712,6 +3739,7 @@ public class Source implements InsertSourceHandler,
          tabOrder_.add(position, position);
       }
 
+      targetView.addEditor(target);
       targetView.addTab(widget,
                         target.getIcon(),
                         target.getId(),
@@ -3831,133 +3859,16 @@ public class Source implements InsertSourceHandler,
       }
    }
 
-   public void onTabClosing(final TabClosingEvent event)
+   public void closeEditorIfActive(EditingTarget target)
    {
-      EditingTarget target = editors_.get(event.getTabIndex());
-      if (!target.onBeforeDismiss())
-         event.cancel();
-   }
-   
-   @Override
-   public void onTabClose(TabCloseEvent event)
-   {
-      // can't proceed if there is no active editor
-      if (activeEditor_ == null)
-         return;
-
-      if (event.getTabIndex() >= editors_.size())
-         return; // Seems like this should never happen...?
-
-      final String activeEditorId = activeEditor_.getId();
-
-      if (editors_.get(event.getTabIndex()).getId() == activeEditorId)
-      {
-         // scan the source navigation history for an entry that can
-         // be used as the next active tab (anything that doesn't have
-         // the same document id as the currently active tab)
-         SourceNavigation srcNav = sourceNavigationHistory_.scanBack(
-               new SourceNavigationHistory.Filter()
-               {
-                  public boolean includeEntry(SourceNavigation navigation)
-                  {
-                     return navigation.getDocumentId() != activeEditorId;
-                  }
-               });
-
-         // see if the source navigation we found corresponds to an active
-         // tab -- if it does then set this on the event
-         if (srcNav != null)
-         {
-            for (int i=0; i<editors_.size(); i++)
-            {
-               if (srcNav.getDocumentId() == editors_.get(i).getId())
-               {
-                  views_.getDisplayByEditor(editors_.get(i)).selectTab(i);
-                  break;
-               }
-            }
-         }
-      }
-   }
-   
-   private void closeTabIndex(int idx, boolean closeDocument)
-   {
-      EditingTarget target = editors_.remove(idx);
-
-      tabOrder_.remove(new Integer(idx));
-      for (int i = 0; i < tabOrder_.size(); i++)
-      {
-         if (tabOrder_.get(i) > idx)
-         {
-            tabOrder_.set(i, tabOrder_.get(i) - 1);
-         }
-      }
-
-      target.onDismiss(closeDocument ? EditingTarget.DISMISS_TYPE_CLOSE :
-         EditingTarget.DISMISS_TYPE_MOVE);
       if (activeEditor_ == target)
       {
          activeEditor_.onDeactivate();
          activeEditor_ = null;
       }
-
-      if (closeDocument)
-      {
-         events_.fireEvent(new DocTabClosedEvent(target.getId()));
-         server_.closeDocument(target.getId(),
-                               new VoidServerRequestCallback());
-      }
-
-      manageCommands();
-      fireDocTabsChanged();
-
-      if (views_.getDisplayByEditor(target).getTabCount() == 0)
-      {
-         sourceNavigationHistory_.clear();
-         events_.fireEvent(new LastSourceDocClosedEvent());
-      }
    }
 
-   public void onTabClosed(TabClosedEvent event)
-   {
-      closeTabIndex(event.getTabIndex(), !suspendDocumentClose_);
-   }
-
-   
-   @Override
-   public void onTabReorder(TabReorderEvent event)
-   {
-      syncTabOrder();
-      
-      // sanity check: make sure we're moving from a valid location and to a
-      // valid location
-      if (event.getOldPos() < 0 || event.getOldPos() >= tabOrder_.size() ||
-          event.getNewPos() < 0 || event.getNewPos() >= tabOrder_.size())
-      {
-         return;
-      }
-      
-      // remove the tab from its old position
-      int idx = tabOrder_.get(event.getOldPos());
-      tabOrder_.remove(new Integer(idx));  // force type box 
-
-      // add it to its new position 
-      tabOrder_.add(event.getNewPos(), idx);
-      
-      // sort the document IDs and send to the server
-      ArrayList<String> ids = new ArrayList<String>();
-      for (int i = 0; i < tabOrder_.size(); i++)
-      {
-         ids.add(editors_.get(tabOrder_.get(i)).getId());
-      }
-      server_.setDocOrder(ids, new VoidServerRequestCallback());
-      
-      // activate the tab 
-      setPhysicalTabIndex(event.getNewPos());
-
-      fireDocTabsChanged();
-   }
-
+   // !!! this will be removed
    private void syncTabOrder()
    {
       // ensure the tab order is synced to the list of editors
@@ -4013,6 +3924,7 @@ public class Source implements InsertSourceHandler,
       {
          activeEditor_ = editors_.get(event.getSelectedItem());
          activeEditor_.onActivate();
+         views_.setActive(activeEditor_);
          
          // let any listeners know this tab was activated
          events_.fireEvent(new DocTabActivatedEvent(
@@ -5308,7 +5220,6 @@ public class Source implements InsertSourceHandler,
    private SourceVimCommands vimCommands_;
 
    private boolean suspendSourceNavigationAdding_;
-   private boolean suspendDocumentClose_ = false;
   
    private static final String MODULE_SOURCE = "source-pane";
    private static final String KEY_ACTIVETAB = "activeTab";

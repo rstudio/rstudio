@@ -49,6 +49,7 @@ import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
+import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.common.AutoGlassAttacher;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.filetypes.EditableFileType;
@@ -65,20 +66,26 @@ import org.rstudio.studio.client.workbench.views.source.editors.EditingTargetSou
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTarget;
 import org.rstudio.studio.client.workbench.views.source.events.*;
 import org.rstudio.studio.client.workbench.views.source.model.SourceDocument;
+import org.rstudio.studio.client.workbench.views.source.model.SourceNavigation;
+import org.rstudio.studio.client.workbench.views.source.model.SourceNavigationHistory;
 import org.rstudio.studio.client.workbench.views.source.model.SourceServerOperations;
 
 import java.util.ArrayList;
 
 public class SourcePane extends LazyPanel implements Display,
+                                                     BeforeShowCallback,
+                                                     DocWindowChangedEvent.Handler,
+                                                     EnsureVisibleSourceWindowEvent.Handler,
                                                      HasEnsureVisibleHandlers,
                                                      HasEnsureHeightHandlers,
-                                                     RequiresResize,
-                                                     ProvidesResize,
-                                                     BeforeShowCallback,
-                                                     RequiresVisibilityChanged,
-                                                     EnsureVisibleSourceWindowEvent.Handler,
                                                      MaximizeSourceWindowEvent.Handler,
-                                                     DocWindowChangedEvent.Handler
+                                                     ProvidesResize,
+                                                     RequiresResize,
+                                                     RequiresVisibilityChanged,
+                                                     TabCloseHandler,
+                                                     TabClosedHandler,
+                                                     TabClosingHandler,
+                                                     TabReorderHandler
 {
    public interface Binder extends CommandBinder<Commands, SourcePane> {}
 
@@ -89,12 +96,19 @@ public class SourcePane extends LazyPanel implements Display,
       Binder binder = GWT.<Binder>create(Binder.class);
       binder.bind(commands, this);
       events_ = RStudioGinjector.INSTANCE.getEventBus();
+      events_.addHandler(TabClosingEvent.TYPE, this);
+      events_.addHandler(TabCloseEvent.TYPE, this);
+      events_.addHandler(TabClosedEvent.TYPE, this);
+      events_.addHandler(TabReorderEvent.TYPE, this);
       events_.addHandler(MaximizeSourceWindowEvent.TYPE, this);
       events_.addHandler(EnsureVisibleSourceWindowEvent.TYPE, this);
       events_.addHandler(DocWindowChangedEvent.TYPE, this);
 
       setVisible(true);
       ensureWidget();
+
+      if (getTabCount() > 0 && getActiveTabIndex() >= 0)
+         editors_.get(getActiveTabIndex()).onInitiallyLoaded();
    }
 
    @Override
@@ -173,6 +187,22 @@ public class SourcePane extends LazyPanel implements Display,
       }
    }
 
+   public boolean hasTab(Widget widget)
+   {
+      return tabPanel_.getWidgetIndex(widget) >= 0 ? true : false;
+   }
+
+   // public add tab methods
+
+   @Override
+   public void addEditor(EditingTarget target)
+   {
+      if (editors_.contains(target))
+         Debug.logToConsole("Trying to add editor we already have");
+      else
+         editors_.add(target);
+   }
+
    public void addTab(Widget widget,
                       FileIcon icon,
                       String docId,
@@ -186,9 +216,110 @@ public class SourcePane extends LazyPanel implements Display,
          tabPanel_.selectTab(widget);
    }
 
-   public boolean hasTab(Widget widget)
+   public void setPhysicalTabIndex(int idx)
    {
-      return tabPanel_.getWidgetIndex(widget) >= 0 ? true : false;
+      if (idx < tabOrder_.size())
+      {
+         idx = tabOrder_.get(idx);
+      }
+      selectTab(idx);
+   }
+
+   // end public add tab methods
+
+   // update tabs methods
+
+   @Override
+   public void onTabReorder(TabReorderEvent event)
+   {
+      syncTabOrder();
+
+      // sanity check: make sure we're moving from a valid location and to a
+      // valid location
+      if (event.getOldPos() < 0 || event.getOldPos() >= tabOrder_.size() ||
+          event.getNewPos() < 0 || event.getNewPos() >= tabOrder_.size())
+      {
+         return;
+      }
+
+      // sort the document IDs and send to the server
+      ArrayList<String> ids = new ArrayList<String>();
+      for (int i = 0; i < tabOrder_.size(); i++)
+      {
+         ids.add(editors_.get(tabOrder_.get(i)).getId());
+      }
+      source_.getServer().setDocOrder(ids, new VoidServerRequestCallback());
+
+      // activate the tab
+      setPhysicalTabIndex(event.getNewPos());
+
+      //fireDocTabsChanged();
+   }
+
+   private void syncTabOrder()
+   {
+      // ensure the tab order is synced to the list of editors
+      for (int i = tabOrder_.size(); i < editors_.size(); i++)
+      {
+         tabOrder_.add(i);
+      }
+      for (int i = editors_.size(); i < tabOrder_.size(); i++)
+      {
+         tabOrder_.remove(i);
+      }
+   }
+
+   // end update tabs methods
+
+   // close tab methods
+
+   public void onTabClosing(final TabClosingEvent event)
+   {
+      EditingTarget target = editors_.get(event.getTabIndex());
+      if (!target.onBeforeDismiss())
+         event.cancel();
+   }
+
+   @Override
+   public void onTabClose(TabCloseEvent event)
+   {
+      // can't proceed if there is no active editor or display
+      if (activeEditor_ == null)
+         return;
+
+      if (event.getTabIndex() >= editors_.size())
+         return; // Seems like this should never happen...?
+
+      final String activeEditorId = activeEditor_.getId();
+
+      if (editors_.get(event.getTabIndex()).getId() == activeEditorId)
+      {
+         // scan the source navigation history for an entry that can
+         // be used as the next active tab (anything that doesn't have
+         // the same document id as the currently active tab)
+         SourceNavigation srcNav = sourceNavigationHistory_.scanBack(
+               new SourceNavigationHistory.Filter()
+               {
+                  public boolean includeEntry(SourceNavigation navigation)
+                  {
+                     return navigation.getDocumentId() != activeEditorId;
+                  }
+               });
+
+         // see if the source navigation we found corresponds to an active
+         // tab -- if it does then set this on the event
+         if (srcNav != null)
+         {
+            for (int i=0; i<editors_.size(); i++)
+            {
+               if (srcNav.getDocumentId() == editors_.get(i).getId())
+               {
+                  selectTab(i);
+                  break;
+               }
+            }
+         }
+      }
    }
 
    public void closeTabByPath(String path, boolean interactive)
@@ -212,15 +343,18 @@ public class SourcePane extends LazyPanel implements Display,
    {
       // !!! temporary debugging variable
       boolean found = false;
+      suspendDocumentClose_ = true;
       for (int i = 0; i < editors_.size(); i++)
       {
          if (editors_.get(i).getId() == docId)
          {
             found = true;
             closeTab(i, interactive, null);
+
             break;
          }
       }
+      suspendDocumentClose_ = false;
       if (!found)
          Debug.logToConsole("COULD NOT FIND TAB TO CLOSE BY ID");
    }
@@ -247,7 +381,61 @@ public class SourcePane extends LazyPanel implements Display,
       else
          tabPanel_.closeTab(index, onClosed);
    }
+
+   public void onTabClosed(TabClosedEvent event)
+   {
+      closeTabIndex(event.getTabIndex(), !suspendDocumentClose_);
+   }
+
+   private void closeTabIndex(int idx, boolean closeDocument)
+   {
+      EditingTarget target = editors_.remove(idx);
+
+      tabOrder_.remove(new Integer(idx));
+      for (int i = 0; i < tabOrder_.size(); i++)
+      {
+         if (tabOrder_.get(i) > idx)
+         {
+            tabOrder_.set(i, tabOrder_.get(i) - 1);
+         }
+      }
+
+      target.onDismiss(closeDocument ? EditingTarget.DISMISS_TYPE_CLOSE :
+         EditingTarget.DISMISS_TYPE_MOVE);
+      source_.closeEditorIfActive(target);
+
+      if (closeDocument)
+      {
+         events_.fireEvent(new DocTabClosedEvent(target.getId()));
+         source_.getServer().closeDocument(target.getId(),
+                               new VoidServerRequestCallback());
+      }
+
+      //manageCommands(); !!! need to handle this
+      //fireDocTabsChanged(); !!! need to handle this
+
+      // !!! JAVASCRIPT EXCEPTION - "Cannot read property getTabCount of null"
+      if (getTabCount() == 0)
+      {
+         sourceNavigationHistory_.clear();
+         events_.fireEvent(new LastSourceDocClosedEvent());
+      }
+   }
+
+   // public close tab methods
    
+   @Override
+   public void setActiveEditor(EditingTarget target)
+   {
+      activeEditor_ = target;
+      if (!editors_.contains(activeEditor_))
+      {
+         addEditor(activeEditor_);
+         Debug.logToConsole("UNKNOWN ACTIVE EDITOR, ADDED TO LIST");
+      }
+
+   }
+
    public void setDirty(Widget widget, boolean dirty)
    {
       Widget tab = tabPanel_.getTabWidget(widget);
@@ -488,6 +676,7 @@ public class SourcePane extends LazyPanel implements Display,
                public void onResponseReceived(SourceDocument newDoc)
                {
                   EditingTarget target = addTab(newDoc, OPEN_INTERACTIVE);
+                  activeEditor_ = target;
 
                   if (contents != null)
                   {
@@ -521,21 +710,28 @@ public class SourcePane extends LazyPanel implements Display,
             });
       final Widget widget = createWidget(target);
 
-      int position = getActiveTabIndex() + 1;
+      Integer position = getActiveTabIndex() + 1;
 
-      // we're inserting into an existing permuted tabset -- push aside
-      // any tabs physically to the right of this tab
-      editors_.add(position, target);
-      source_.addEditor(target);
-      for (int i = 0; i < tabOrder_.size(); i++)
+      if (position == null)
       {
-         int pos = tabOrder_.get(i);
-         if (pos >= position)
-            tabOrder_.set(i, pos + 1);
+         addEditor(target);
       }
-
-      // add this tab in its "natural" position
-      tabOrder_.add(position, position);
+      else
+      {
+         // we're inserting into an existing permuted tabset -- push aside
+         // any tabs physically to the right of this tab
+         editors_.add(position, target);
+         source_.addEditor(target);
+         for (int i = 0; i < tabOrder_.size(); i++)
+         {
+            int pos = tabOrder_.get(i);
+            if (pos >= position)
+               tabOrder_.set(i, pos + 1);
+         }
+   
+         // add this tab in its "natural" position
+         tabOrder_.add(position, position);
+      }
 
       addTab(widget,
              target.getIcon(),
@@ -609,6 +805,8 @@ public class SourcePane extends LazyPanel implements Display,
       return target.asWidget();
    }
 
+   private boolean suspendDocumentClose_ = false;
+
    private String name_;
    private Source source_;
    private DocTabLayoutPanel tabPanel_;
@@ -617,8 +815,12 @@ public class SourcePane extends LazyPanel implements Display,
    private LayoutPanel panel_;
    private PopupPanel tabOverflowPopup_;
    private EventBus events_;
+
+   EditingTarget activeEditor_;
    ArrayList<EditingTarget> editors_ = new ArrayList<EditingTarget>();
    ArrayList<Integer> tabOrder_ = new ArrayList<Integer>();
 
+   private final SourceNavigationHistory sourceNavigationHistory_ =
+                                              new SourceNavigationHistory(30);
    public final static int OPEN_INTERACTIVE = 0;
 }
