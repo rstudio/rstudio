@@ -722,10 +722,15 @@ public class DocUpdateSentinel
       }
    }
    
+   public void suspendAutosave(boolean value)
+   {
+      suspendAutosave_ = value;
+   }
+   
    public void onValueChange(ValueChangeEvent<Void> voidValueChangeEvent)
    {
       changesPending_ = true;
-      if (autosaver_ != null)
+      if (autosaver_ != null && !suspendAutosave_)
          autosaver_.nudge();
    }
 
@@ -733,7 +738,7 @@ public class DocUpdateSentinel
    public void onFoldChange(FoldChangeEvent event)
    {
       changesPending_ = true;
-      if (autosaver_ != null)
+      if (autosaver_ != null && !suspendAutosave_)
          autosaver_.nudge();
    }
    
@@ -833,6 +838,7 @@ public class DocUpdateSentinel
       }
    }
    
+   private boolean suspendAutosave_ = false;
    private boolean changesPending_ = false;
    private final ChangeTracker changeTracker_;
    private final SourceServerOperations server_;
