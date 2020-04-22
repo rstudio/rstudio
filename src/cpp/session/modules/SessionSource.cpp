@@ -525,7 +525,9 @@ Error saveDocumentDiff(const json::JsonRpcRequest& request,
    if (pDoc->hash() != hash)
       return Success();
    
-   // attempt the document save
+   // attempt the document save. note that if this fails,
+   // we won't set a response hash and RStudio will take this as a signal
+   // to attempt a 'full' document save rather than just a diff-based save
    try
    {
       std::string contents(pDoc->contents());
