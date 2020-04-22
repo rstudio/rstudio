@@ -66,8 +66,7 @@ const AttrEditDecoration: React.FC<AttrEditDecorationProps> = props => {
         title={buttonTitle}
         onClick={onClick}
       >
-        <div style={{ visibility: 'hidden' }}>....</div>
-        <div className="attr-edit-button-ellipses">...</div>
+        <div className="attr-edit-button-ellipsis">&#x2022;&#x2022;&#x2022;</div>
       </div>
     </div>
   );
