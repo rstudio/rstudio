@@ -6,11 +6,7 @@ pandoc schema: <https://github.com/jgm/pandoc-types/blob/master/Text/Pandoc/Defi
 
 ## TODO
 
-Raw dialog should auto-add if it doesn't recognize the format
-
-If we detect docTypes at the project level we need to make sure the edited file is in the project!
-
-Does the smarty plugin paste handler stand down for noInputRules?
+remark.js
 
 Link popups no longer truncated (see advanced_ui.Rmd)
 
@@ -34,6 +30,8 @@ Possibly have a special editing mode for thereoms?
 
 
 ## Future
+
+Markup extension filtering (e.g. shortcodes) might be better done in Lua
 
 Aggregated fixup/appendTransaction transactions:
 - fixups and mutating appendTransaction handlers should be passed a transform 
