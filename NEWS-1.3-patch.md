@@ -4,4 +4,4 @@
 
 - Allow projects to reopen after a crash (#3220)
 - Fixed issue where users could not save files in home directory if specified by UNC path (#6598)
-
+- Added spellcheck blacklist item for preview Latvian dictionary (#6594)
