@@ -160,3 +160,25 @@ a.pagedtable-index-current {
   font-style: italic;
   opacity: 0.3;
 }
+
+td.pagedtable-metacell {
+  padding-left: 0px;
+  padding-bottom: 10px;
+}
+
+td.pagedtable-metacell div {
+  display: inline-block;
+  border: solid 1px #E9E9E9;
+  border-radius: 3px;
+  padding: 4px;
+  font-size: 8pt !important;
+  margin-left: 0px;
+  margin-right: 10px;
+}
+
+td.pagedtable-metacell .pagedtable-metafield {
+  color: #999;
+  padding-right: 4px;
+}
+
+

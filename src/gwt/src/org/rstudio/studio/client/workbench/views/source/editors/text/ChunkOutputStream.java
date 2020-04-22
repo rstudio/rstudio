@@ -354,7 +354,7 @@ public class ChunkOutputStream extends FlowPanel
          NotebookFrameMetadata metadata, int ordinal)
    {
       metadata_.put(ordinal, metadata);
-      addWithOrdinal(new ChunkDataWidget(data, chunkOutputSize_), ordinal);
+      addWithOrdinal(new ChunkDataWidget(data, metadata, chunkOutputSize_), ordinal);
    }
 
    @Override
