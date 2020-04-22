@@ -93,7 +93,9 @@ public class PanmirrorThemeCreator
       theme.paneBorderColor =  DomUtils.extractCssValue(DocumentOutlineWidget.RES.styles().leftSeparator(), "borderLeftColor");
       
       // calculate standard font size in pts
-      double fontSize = prefs.fontSizePoints().getValue();
+      double fontSize = prefs.visualMarkdownEditingFontSizePoints().getValue();
+      if (fontSize == 0)
+         fontSize = prefs.fontSizePoints().getValue();
       fontSize = fontSize + BrowseCap.getFontSkew();
       theme.fixedWidthFont = ThemeFonts.getFixedWidthFont();
       theme.fixedWidthFontSizePt = fontSize;

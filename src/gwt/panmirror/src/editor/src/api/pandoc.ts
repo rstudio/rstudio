@@ -19,7 +19,7 @@ import { PandocAttr } from './pandoc_attr';
 import { PandocCapabilitiesResult } from './pandoc_capabilities';
 
 export interface PandocEngine {
-  getCapabilities() : Promise<PandocCapabilitiesResult>;
+  getCapabilities(): Promise<PandocCapabilitiesResult>;
   markdownToAst(markdown: string, format: string, options: string[]): Promise<PandocAst>;
   astToMarkdown(ast: PandocAst, format: string, options: string[]): Promise<string>;
   listExtensions(format: string): Promise<string>;

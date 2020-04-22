@@ -152,8 +152,8 @@ function isOutlineNode(node: ProsemirrorNode) {
 
 function transactionsAffectOutline(transactions: Transaction[], oldState: EditorState, newState: EditorState) {
   return (
-    transactions.some(tr => tr.getMeta(kSetMarkdownTransaction)) || 
-    hasOutlineIdsTransaction(transactions) || 
+    transactions.some(tr => tr.getMeta(kSetMarkdownTransaction)) ||
+    hasOutlineIdsTransaction(transactions) ||
     transactionsHaveChange(transactions, oldState, newState, isOutlineNode)
   );
 }

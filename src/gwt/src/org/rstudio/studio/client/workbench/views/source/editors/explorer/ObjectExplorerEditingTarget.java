@@ -77,9 +77,9 @@ public class ObjectExplorerEditingTarget
    }
 
    @Override
-   public void onActivate(boolean forUser)
+   public void onActivate()
    {
-      super.onActivate(forUser);
+      super.onActivate();
       view_.onActivate();
       isActive_ = true;
    }

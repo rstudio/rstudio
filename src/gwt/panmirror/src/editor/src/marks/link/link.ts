@@ -42,7 +42,7 @@ const LINK_ATTR = 0;
 const LINK_CHILDREN = 1;
 const LINK_TARGET = 2;
 
-const extension = (pandocExtensions: PandocExtensions): Extension  | null => {
+const extension = (pandocExtensions: PandocExtensions): Extension | null => {
   const capabilities = {
     headings: pandocExtensions.implicit_header_references,
     attributes: pandocExtensions.link_attributes,

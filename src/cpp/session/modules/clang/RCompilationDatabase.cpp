@@ -37,6 +37,7 @@
 #include <core/libclang/LibClang.hpp>
 
 #include <r/RExec.hpp>
+#include <r/RVersionInfo.hpp>
 
 #include <session/projects/SessionProjects.hpp>
 #include <session/SessionModuleContext.hpp>
@@ -989,10 +990,16 @@ std::vector<std::string> RCompilationDatabase::rToolsArgs() const
 #ifdef _WIN32
    if (rToolsArgs_.empty())
    {
+      // Rtools 4.0 will set RTOOLS40_HOME
+      std::string rtoolsHomeEnvVar;
+      auto rVersion = r::version_info::currentRVersion();
+      if (rVersion.versionMajor() == 4)
+         rtoolsHomeEnvVar = "RTOOLS40_HOME";
+
       // scan for Rtools
       bool usingMingwGcc49 = module_context::usingMingwGcc49();
       std::vector<core::r_util::RToolsInfo> rTools;
-      core::r_util::scanForRTools(usingMingwGcc49, &rTools);
+      core::r_util::scanForRTools(usingMingwGcc49, rtoolsHomeEnvVar, &rTools);
 
       // enumerate them to see if we have a compatible version
       // (go in reverse order for most recent first)

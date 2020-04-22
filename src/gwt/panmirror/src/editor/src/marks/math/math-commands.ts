@@ -24,17 +24,17 @@ import { MathType, delimiterForType } from './math';
 
 export class InsertInlineMathCommand extends ProsemirrorCommand {
   constructor() {
-    super(EditorCommandId.InlineMath, [], insertMathCommand(MathType.Inline));
+    super(EditorCommandId.InlineMath, [], insertMathCommand(MathType.Inline, false));
   }
 }
 
 export class InsertDisplayMathCommand extends ProsemirrorCommand {
-  constructor() {
-    super(EditorCommandId.DisplayMath, [], insertMathCommand(MathType.Display));
+  constructor(allowNewline: boolean) {
+    super(EditorCommandId.DisplayMath, [], insertMathCommand(MathType.Display, allowNewline));
   }
 }
 
-function insertMathCommand(type: MathType) {
+function insertMathCommand(type: MathType, allowNewline: boolean) {
   return (state: EditorState, dispatch?: (tr: Transaction) => void) => {
     // enable/disable command
     const schema = state.schema;
@@ -44,20 +44,20 @@ function insertMathCommand(type: MathType) {
 
     if (dispatch) {
       const tr = state.tr;
-      insertMath(state.selection, type, tr);
+      insertMath(state.selection, type, allowNewline, tr);
       dispatch(tr);
     }
     return true;
   };
 }
 
-export function insertMath(selection: Selection, type: MathType, tr: Transaction) {
+export function insertMath(selection: Selection, type: MathType, allowNewline: boolean, tr: Transaction) {
   // include a newline for display math in an empty paragraph
   const schema = tr.doc.type.schema;
   let content = '';
   if (type === MathType.Display) {
     const para = findParentNodeOfType(schema.nodes.paragraph)(selection);
-    if (para && !para.node.textContent.length) {
+    if (allowNewline && para && !para.node.textContent.length) {
       content = '\n\n';
     }
   }

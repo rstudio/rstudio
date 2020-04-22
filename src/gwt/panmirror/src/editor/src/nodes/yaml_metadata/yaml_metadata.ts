@@ -122,4 +122,4 @@ class YamlMetadataCommand extends ProsemirrorCommand {
   }
 }
 
-export default extensionIfEnabled(extension, ['yaml_metadata_block', 'backtick_code_blocks']);
+export default extensionIfEnabled(extension, 'yaml_metadata_block');

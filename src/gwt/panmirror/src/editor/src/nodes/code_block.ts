@@ -33,11 +33,11 @@ import { canInsertNode } from '../api/node';
 import { markIsActive } from '../api/mark';
 
 const extension = (
-  pandocExtensions: PandocExtensions, 
-  pandocCapabilities: PandocCapabilities, 
-  ui: EditorUI): Extension => 
-{
-  const hasAttr = hasFencedCodeAttributes(pandocExtensions);
+  pandocExtensions: PandocExtensions,
+  pandocCapabilities: PandocCapabilities,
+  ui: EditorUI,
+): Extension => {
+  const hasAttr = hasFencedCodeBlocks(pandocExtensions);
 
   return {
     nodes: [
@@ -97,7 +97,9 @@ const extension = (
           writer: (output: PandocOutput, node: ProsemirrorNode) => {
             output.writeToken(PandocTokenType.CodeBlock, () => {
               if (hasAttr) {
-                output.writeAttr(node.attrs.id, node.attrs.classes, node.attrs.keyvalue);
+                const id = pandocExtensions.fenced_code_attributes ? node.attrs.id : '';
+                const keyvalue = pandocExtensions.fenced_code_attributes ? node.attrs.keyvalue : [];
+                output.writeAttr(id, node.attrs.classes, keyvalue);
               } else {
                 output.writeAttr();
               }
@@ -119,9 +121,7 @@ const extension = (
         ),
       ];
       if (hasAttr) {
-        commands.push(
-          new CodeBlockFormatCommand(pandocExtensions, ui, pandocCapabilities.highlight_languages)
-        );
+        commands.push(new CodeBlockFormatCommand(pandocExtensions, ui, pandocCapabilities.highlight_languages));
       }
       return commands;
     },
@@ -136,16 +136,13 @@ const extension = (
     },
 
     inputRules: (schema: Schema) => {
-      return [
-        codeBlockInputRule(schema, ui.context)
-      ];
+      return [codeBlockInputRule(schema, ui.context)];
     },
   };
 };
 
 function codeBlockInputRule(schema: Schema, uiContext: EditorUIContext) {
   return new InputRule(/^```$/, (state: EditorState, match: string[], start: number, end: number) => {
-
     if (!canReplaceNodeWithCodeBlock(schema, state.selection.$from)) {
       return null;
     }
@@ -165,7 +162,6 @@ function codeBlockInputRule(schema: Schema, uiContext: EditorUIContext) {
 
 function codeBlockInputRuleEnter(uiContext: EditorUIContext) {
   return (state: EditorState, dispatch?: (tr: Transaction) => void) => {
-    
     // see if the parent consist of a pending code block input rule
     const { $head } = state.selection;
 
@@ -180,7 +176,7 @@ function codeBlockInputRuleEnter(uiContext: EditorUIContext) {
     if (!markIsActive(state, schema.marks.code)) {
       return false;
     }
-    
+
     // must be able to perform the replacement
     if (!canReplaceNodeWithCodeBlock(schema, $head)) {
       return false;
@@ -188,12 +184,10 @@ function codeBlockInputRuleEnter(uiContext: EditorUIContext) {
 
     // execute
     if (dispatch) {
-
       // insert the code block
       const tr = state.tr;
       const lang = match[1];
-      const attrs = lang.length && lang !== langPlaceholderText(uiContext) 
-        ? pandocAttrFrom({ classes: [lang]} ) : {};
+      const attrs = lang.length && lang !== langPlaceholderText(uiContext) ? pandocAttrFrom({ classes: [lang] }) : {};
       const start = $head.start();
       tr.delete(start, start + $head.parent.textContent.length);
       tr.setBlockType(start, start, schema.nodes.code_block, attrs);
@@ -214,17 +208,12 @@ function canReplaceNodeWithCodeBlock(schema: Schema, $pos: ResolvedPos) {
 
 class CodeBlockFormatCommand extends ProsemirrorCommand {
   constructor(pandocExtensions: PandocExtensions, ui: EditorUI, languages: string[]) {
-    super(
-      EditorCommandId.CodeBlockFormat,
-      [],
-      codeBlockFormatCommandFn(pandocExtensions, ui, languages)
-    );
+    super(EditorCommandId.CodeBlockFormat, [], codeBlockFormatCommandFn(pandocExtensions, ui, languages));
   }
 }
 
 function codeBlockFormatCommandFn(pandocExtensions: PandocExtensions, ui: EditorUI, languages: string[]) {
   return (state: EditorState, dispatch?: (tr: Transaction) => void, view?: EditorView) => {
-
     // enable if we are either inside a code block or we can insert a code block
     const schema = state.schema;
     const codeBlock = findParentNodeOfType(schema.nodes.code_block)(state.selection);
@@ -234,48 +223,46 @@ function codeBlockFormatCommandFn(pandocExtensions: PandocExtensions, ui: Editor
 
     async function asyncEditCodeBlock() {
       if (dispatch) {
-        
-          // get props to edit
-          const codeBlockProps = codeBlock 
-            ? { ...codeBlock.node.attrs as CodeBlockProps, lang: '' }
-            : { id: '', classes: [], keyvalue: [], lang: '' }; 
+        // get props to edit
+        const codeBlockProps = codeBlock
+          ? { ...(codeBlock.node.attrs as CodeBlockProps), lang: '' }
+          : { id: '', classes: [], keyvalue: [], lang: '' };
 
-          // set lang if the first class is from available languages
-          // (alternatively if we don't support attributes then it's 
-          // automatically considered the language)
-          if (codeBlockProps.classes && codeBlockProps.classes.length) {
-            const potentialLang = codeBlockProps.classes[0];
-            if (!pandocExtensions.fenced_code_attributes || languages.includes(potentialLang)) {
-              codeBlockProps.lang = potentialLang;
-              codeBlockProps.classes = codeBlockProps.classes.slice(1);
-            }
+        // set lang if the first class is from available languages
+        // (alternatively if we don't support attributes then it's
+        // automatically considered the language)
+        if (codeBlockProps.classes && codeBlockProps.classes.length) {
+          const potentialLang = codeBlockProps.classes[0];
+          if (!pandocExtensions.fenced_code_attributes || languages.includes(potentialLang)) {
+            codeBlockProps.lang = potentialLang;
+            codeBlockProps.classes = codeBlockProps.classes.slice(1);
+          }
+        }
+
+        // show dialog
+        const result = await ui.dialogs.editCodeBlock(
+          codeBlockProps,
+          pandocExtensions.fenced_code_attributes,
+          languages,
+        );
+        if (result) {
+          // extract lang
+          const newProps = { ...result };
+          if (newProps.classes && newProps.lang) {
+            newProps.classes.unshift(result.lang);
           }
 
-          // show dialog
-          const result = await ui.dialogs.editCodeBlock(
-            codeBlockProps, 
-            pandocExtensions.fenced_code_attributes, 
-            languages
-          );
-          if (result) {
-
-            // extract lang
-            const newProps = { ...result };
-            if (newProps.classes && newProps.lang) {
-              newProps.classes.unshift(result.lang);
-            }
-
-            // edit or insert as appropriate
-            const tr = state.tr;
-            if (codeBlock) {
-              tr.setNodeMarkup(codeBlock.pos, schema.nodes.code_block, newProps);
-            } else {
-              const prevSel = tr.selection;
-              tr.replaceSelectionWith(schema.nodes.code_block.create(newProps));
-              setTextSelection(tr.mapping.map(prevSel.from), -1)(tr);
-            }
-            dispatch(tr);
+          // edit or insert as appropriate
+          const tr = state.tr;
+          if (codeBlock) {
+            tr.setNodeMarkup(codeBlock.pos, schema.nodes.code_block, newProps);
+          } else {
+            const prevSel = tr.selection;
+            tr.replaceSelectionWith(schema.nodes.code_block.create(newProps));
+            setTextSelection(tr.mapping.map(prevSel.from), -1)(tr);
           }
+          dispatch(tr);
+        }
       }
 
       if (view) {
@@ -289,13 +276,9 @@ function codeBlockFormatCommandFn(pandocExtensions: PandocExtensions, ui: Editor
   };
 }
 
-function codeBlockAttrEdit(
-  pandocExtensions: PandocExtensions, 
-  pandocCapabilities: PandocCapabilities,
-  ui: EditorUI
-) {
+function codeBlockAttrEdit(pandocExtensions: PandocExtensions, pandocCapabilities: PandocCapabilities, ui: EditorUI) {
   return () => {
-    if (hasFencedCodeAttributes(pandocExtensions)) {
+    if (hasFencedCodeBlocks(pandocExtensions)) {
       return {
         type: (schema: Schema) => schema.nodes.code_block,
         tags: (node: ProsemirrorNode) => {
@@ -310,14 +293,10 @@ function codeBlockAttrEdit(
             } else {
               tags.push(`.${lang}`);
             }
-          } 
+          }
           return tags;
         },
-        editFn: () => codeBlockFormatCommandFn(
-          pandocExtensions, 
-          ui, 
-          pandocCapabilities.highlight_languages
-        )
+        editFn: () => codeBlockFormatCommandFn(pandocExtensions, ui, pandocCapabilities.highlight_languages),
       };
     } else {
       return null;
@@ -325,10 +304,8 @@ function codeBlockAttrEdit(
   };
 }
 
-function hasFencedCodeAttributes(pandocExtensions: PandocExtensions) {
-  return pandocExtensions.fenced_code_blocks || 
-         pandocExtensions.fenced_code_attributes;
+function hasFencedCodeBlocks(pandocExtensions: PandocExtensions) {
+  return pandocExtensions.backtick_code_blocks || pandocExtensions.fenced_code_blocks;
 }
-
 
 export default extension;

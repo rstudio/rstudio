@@ -37,11 +37,8 @@ import { EditorEvent } from './api/events';
 import {
   PandocFormat,
   resolvePandocFormat,
-  splitPandocFormatString,
   PandocFormatComment,
-  resolvePandocFormatComment,
   pandocFormatCommentFromCode,
-  pandocFormatCommentFromState,
 } from './api/pandoc_format';
 import { baseKeysPlugin } from './api/basekeys';
 import {
@@ -58,6 +55,7 @@ import { FixupContext } from './api/fixup';
 import { unitToPixels, pixelsToUnit, roundUnit, kValidUnits } from './api/image';
 import { kPercentUnit } from './api/css';
 import { defaultEditorUIImages } from './api/ui-images';
+import { EditorFormat } from './api/format';
 
 import { getTitle, setTitle } from './nodes/yaml_metadata/yaml_metadata-title';
 
@@ -77,7 +75,7 @@ import {
 
 import { PandocConverter, PandocWriterOptions } from './pandoc/converter';
 
-import { applyTheme, defaultTheme, EditorTheme } from './theme';
+import { defaultTheme, EditorTheme, applyTheme, applyPadding } from './theme';
 
 import './styles/frame.css';
 import './styles/styles.css';
@@ -94,7 +92,6 @@ export interface EditorCode {
 
 export interface EditorContext {
   readonly pandoc: PandocEngine;
-  readonly format: string;
   readonly ui: EditorUI;
   readonly hooks?: EditorHooks;
   readonly extensions?: readonly Extension[];
@@ -140,9 +137,14 @@ export interface UIToolsImage {
   roundUnit(value: number, unit: string): string;
 }
 
+export interface UIToolsFormat {
+  parseFormatComment(markdown: string): PandocFormatComment;
+}
+
 export class UITools {
   public readonly attr: UIToolsAttr;
   public readonly image: UIToolsImage;
+  public readonly format: UIToolsFormat;
 
   constructor() {
     this.attr = {
@@ -157,6 +159,10 @@ export class UITools {
       pixelsToUnit,
       roundUnit,
     };
+
+    this.format = {
+      parseFormatComment: pandocFormatCommentFromCode,
+    };
   }
 }
 
@@ -170,11 +176,10 @@ export class Editor {
   // options (derived from defaults + config)
   private readonly options: EditorOptions;
 
-  // pandoc format used for reading and writing markdown
-  // note that this can change from what is specified at
-  // construction time based on magic comments being
-  // provided within the document
-  private pandocFormat: PandocFormat;
+  // format (pandocFormat includes additional diagnostics based on the validity of
+  // provided mode + extensions)
+  private readonly format: EditorFormat;
+  private readonly pandocFormat: PandocFormat;
 
   // pandoc capabilities
   private pandocCapabilities: PandocCapabilities;
@@ -190,31 +195,51 @@ export class Editor {
   // with plugins recreated
   private keybindings: EditorKeybindings;
 
+  // content width constraints (if unset uses default editor CSS)
+  private maxContentWidth = 0;
+  private minContentPadding = 0;
+
   // event sinks
   private readonly events: ReadonlyMap<string, Event>;
 
   // create the editor -- note that the markdown argument does not substitute for calling
-  // setMarkdown, rather it's used to read the format comment to determine how to 
+  // setMarkdown, rather it's used to read the format comment to determine how to
   // initialize the various editor features
   public static async create(
     parent: HTMLElement,
     context: EditorContext,
+    format: EditorFormat,
     options: EditorOptions,
-    markdown: string,
   ): Promise<Editor> {
-    // provide default options
+    // provide option defaults
     options = {
       autoFocus: false,
       spellCheck: false,
-      codemirror: true,
-      braceMatching: true,
-      rmdCodeChunks: false,
+      codemirror: false,
       rmdImagePreview: false,
-      rmdBookdownXRef: false,
-      rmdBookdownXRefCommand: false,
-      rmdBlogdownShortcodes: false,
-      formatComment: true,
+      hideFormatComment: false,
+      className: '',
       ...options,
+    };
+
+    // provide format defaults
+    format = {
+      pandocMode: 'markdown',
+      pandocExtensions: '',
+      rmdExtensions: {
+        codeChunks: false,
+        bookdownXRef: false,
+        bookdownPart: false,
+        blogdownMathInCode: false,
+        ...format.rmdExtensions,
+      },
+      hugoExtensions: {
+        shortcodes: false,
+        ...format.hugoExtensions,
+      },
+      wrapColumn: 0,
+      docTypes: [],
+      ...format,
     };
 
     // provide context defaults
@@ -224,18 +249,10 @@ export class Editor {
         ...context.ui,
         images: {
           ...defaultEditorUIImages(),
-          ...context.ui.images
-        }
-      }
+          ...context.ui.images,
+        },
+      },
     };
-    
-    // default format to what is specified in the config
-    let format = context.format;
-
-    // if markdown was specified then try to read the format from it
-    if (markdown && options.formatComment) {
-      format = resolvePandocFormatComment(pandocFormatCommentFromCode(markdown), format);
-    }
 
     // resolve the format
     const pandocFmt = await resolvePandocFormat(context.pandoc, format);
@@ -244,23 +261,25 @@ export class Editor {
     const pandocCapabilities = await getPandocCapabilities(context.pandoc);
 
     // create editor
-    const editor = new Editor(parent, context, options, pandocFmt, pandocCapabilities);
+    const editor = new Editor(parent, context, options, format, pandocFmt, pandocCapabilities);
 
     // return editor
     return Promise.resolve(editor);
   }
 
   private constructor(
-    parent: HTMLElement, 
-    context: EditorContext, 
-    options: EditorOptions, 
+    parent: HTMLElement,
+    context: EditorContext,
+    options: EditorOptions,
+    format: EditorFormat,
     pandocFormat: PandocFormat,
-    pandocCapabilities: PandocCapabilities) 
-  {
+    pandocCapabilities: PandocCapabilities,
+  ) {
     // initialize references
     this.parent = parent;
     this.context = context;
     this.options = options;
+    this.format = format;
     this.keybindings = {};
     this.pandocFormat = pandocFormat;
     this.pandocCapabilities = pandocCapabilities;
@@ -296,13 +315,13 @@ export class Editor {
     });
 
     // add custom restoreFocus handler to the view -- this provides a custom
-    // handler for RStudio's FocusContext, necessary because the default 
-    // ProseMirror dom mutation handler picks up the focus and changes the 
+    // handler for RStudio's FocusContext, necessary because the default
+    // ProseMirror dom mutation handler picks up the focus and changes the
     // selection.
     Object.defineProperty(this.view.dom, 'restoreFocus', {
       value: () => {
         this.focus();
-      }
+      },
     });
 
     // add proportinal font class to parent
@@ -350,15 +369,12 @@ export class Editor {
   }
 
   public async setMarkdown(markdown: string, preserveHistory: boolean, emitUpdate = true): Promise<boolean> {
-    // update format from source code magic comments
-    await this.updatePandocFormat(pandocFormatCommentFromCode(markdown));
-
     // get the doc
     const doc = await this.pandocConverter.toProsemirror(markdown, this.pandocFormat.fullName);
 
     // if we are preserving history but the existing doc is empty then create a new state
     // (resets the undo stack so that the intial setting of the document can't be undone)
-    if (!preserveHistory ||this.state.doc.attrs.initial) {
+    if (!preserveHistory || this.state.doc.attrs.initial) {
       this.state = EditorState.create({
         schema: this.state.schema,
         doc,
@@ -393,16 +409,8 @@ export class Editor {
   }
 
   public async getMarkdown(options: PandocWriterOptions, cursorSentinel: boolean): Promise<EditorCode> {
-    // get current format comment
-    const formatComment = pandocFormatCommentFromState(this.state);
-
-    // update format from source code magic comments
-    await this.updatePandocFormat(formatComment);
-
     // override wrapColumn option if it was specified
-    if (this.options.formatComment) {
-      options.wrapColumn = formatComment.fillColumn || options.wrapColumn;
-    }
+    options.wrapColumn = this.format.wrapColumn || options.wrapColumn;
 
     // apply layout fixups
     this.applyFixups(FixupContext.Save);
@@ -476,6 +484,7 @@ export class Editor {
   }
 
   public resize() {
+    this.syncContentWidth();
     this.applyFixupsOnResize();
     this.emitEvent(EditorEvent.Resize);
   }
@@ -512,8 +521,10 @@ export class Editor {
     applyTheme(theme);
   }
 
-  public useFixedPadding(fixed: boolean) {
-    this.parent.classList.toggle('pm-fixed-padding', fixed);
+  public setMaxContentWidth(maxWidth: number, minPadding = 10) {
+    this.maxContentWidth = maxWidth;
+    this.minContentPadding = minPadding;
+    this.syncContentWidth();
   }
 
   public setKeybindings(keyBindings: EditorKeybindings) {
@@ -528,26 +539,6 @@ export class Editor {
 
   public getPandocFormat() {
     return this.pandocFormat;
-  }
-
-  private async updatePandocFormat(formatComment: PandocFormatComment) {
-    // don't do it if our options tell us not to
-    if (!this.options.formatComment) {
-      return;
-    }
-
-    // start with existing format
-    const existingFormat = splitPandocFormatString(this.pandocFormat.fullName);
-
-    // determine the target format (this is either from a format comment
-    // or alternatively based on the default format)
-    const targetFormat = splitPandocFormatString(resolvePandocFormatComment(formatComment, this.context.format));
-
-    // if this differs from the one in the source code, then update the format
-    if (targetFormat.format !== existingFormat.format || targetFormat.options !== existingFormat.options) {
-      const format = targetFormat.format + targetFormat.options;
-      this.pandocFormat = await resolvePandocFormat(this.context.pandoc, format);
-    }
   }
 
   private dispatchTransaction(tr: Transaction) {
@@ -593,12 +584,13 @@ export class Editor {
 
   private initExtensions() {
     return initExtensions(
+      this.format,
       this.options,
       this.context.ui,
       { subscribe: this.subscribe.bind(this) },
       this.context.extensions,
       this.pandocFormat.extensions,
-      this.pandocCapabilities
+      this.pandocCapabilities,
     );
   }
 
@@ -607,7 +599,7 @@ export class Editor {
     const nodes: { [name: string]: NodeSpec } = {
       doc: {
         attrs: {
-          initial: { default: false }
+          initial: { default: false },
         },
         content: 'body notes',
       },
@@ -617,9 +609,11 @@ export class Editor {
         isolating: true,
         parseDOM: [{ tag: 'div[class*="body"]' }],
         toDOM() {
-          return ['div', { class: 'body pm-cursor-color pm-text-color pm-background-color pm-editing-root-node' }, 
-                   ['div', { class: 'pm-content'}, 0]
-                 ];
+          return [
+            'div',
+            { class: 'body pm-cursor-color pm-text-color pm-background-color pm-editing-root-node' },
+            ['div', { class: 'pm-content' }, 0],
+          ];
         },
       },
 
@@ -627,9 +621,11 @@ export class Editor {
         content: 'note*',
         parseDOM: [{ tag: 'div[class*="notes"]' }],
         toDOM() {
-          return ['div', { class: 'notes pm-cursor-color pm-text-color pm-background-color pm-editing-root-node' }, 
-                   ['div', { class: 'pm-content'}, 0]
-                 ];
+          return [
+            'div',
+            { class: 'notes pm-cursor-color pm-text-color pm-background-color pm-editing-root-node' },
+            ['div', { class: 'pm-content' }, 0],
+          ];
         },
       },
 
@@ -765,6 +761,19 @@ export class Editor {
     };
   }
 
+  // update parent padding based on content width settings (if specified)
+  private syncContentWidth() {
+    if (this.maxContentWidth) {
+      const minContentPadding = this.minContentPadding || 10;
+      const parentWidth = this.parent.clientWidth;
+      if (parentWidth > this.maxContentWidth + 2 * minContentPadding) {
+        applyPadding(`calc((100% - ${this.maxContentWidth}px)/2)`);
+      } else {
+        applyPadding(this.minContentPadding + 'px');
+      }
+    }
+  }
+
   private applyFixupsOnResize() {
     this.applyFixups(FixupContext.Resize);
   }
@@ -790,7 +799,7 @@ export class Editor {
     return this.schema.nodeFromJSON({
       type: 'doc',
       attrs: {
-        initial: true
+        initial: true,
       },
       content: [
         { type: 'body', content: [{ type: 'paragraph' }] },

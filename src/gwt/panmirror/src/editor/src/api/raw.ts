@@ -1,4 +1,3 @@
-
 /*
  * raw.ts
  *
@@ -14,14 +13,14 @@
  *
  */
 
-import { EditorState, Transaction } from "prosemirror-state";
-import { Schema } from "prosemirror-model";
-import { EditorView } from "prosemirror-view";
+import { EditorState, Transaction } from 'prosemirror-state';
+import { Schema } from 'prosemirror-model';
+import { EditorView } from 'prosemirror-view';
 
-import { findParentNodeOfType, setTextSelection } from "prosemirror-utils";
+import { findParentNodeOfType, setTextSelection } from 'prosemirror-utils';
 
-import { canInsertNode } from "./node";
-import { EditorUI } from "./ui";
+import { canInsertNode } from './node';
+import { EditorUI } from './ui';
 
 export const kTexFormat = 'tex';
 export const kHTMLFormat = 'html';
@@ -33,7 +32,6 @@ export function isRawHTMLFormat(format: string) {
 }
 
 export function editRawBlockCommand(ui: EditorUI, outputFormats: string[]) {
-  
   return (state: EditorState, dispatch?: (tr: Transaction) => void, view?: EditorView) => {
     const schema = state.schema;
 
@@ -48,7 +46,7 @@ export function editRawBlockCommand(ui: EditorUI, outputFormats: string[]) {
         // get existing attributes (if any)
         const raw = {
           format: '',
-          content: ''
+          content: '',
         };
         if (rawBlock) {
           raw.format = rawBlock.node.attrs.format;

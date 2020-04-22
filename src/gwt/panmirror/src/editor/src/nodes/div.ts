@@ -101,10 +101,7 @@ const extension: Extension = {
   ],
 
   commands: (_schema: Schema, ui: EditorUI) => {
-    return [
-      new DivCommand(EditorCommandId.Div, ui, true),
-      new DivCommand(EditorCommandId.InsertDiv, ui, false)
-    ];
+    return [new DivCommand(EditorCommandId.Div, ui, true), new DivCommand(EditorCommandId.InsertDiv, ui, false)];
   },
 };
 

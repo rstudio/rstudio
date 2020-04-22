@@ -627,6 +627,7 @@ public class Source implements InsertSourceHandler,
       }
       
       restoreDocuments(session);
+
       
       // get the key to use for active tab persistence; use ordinal-based key
       // for source windows rather than their ID to avoid unbounded accumulation
@@ -641,12 +642,7 @@ public class Source implements InsertSourceHandler,
       {
          @Override
          protected void onInit(Integer value)
-         {
-            // set flag indicating that tab selections are actual "user-level"
-            // document activations (in contrast to onActivated which is fired
-            // for every new tab added during startup)
-            tabActivationsAreForUser_ = true;
-            
+         { 
             if (value == null)
                return;
             if (value >= 0 && view_.getTabCount() > value)
@@ -3760,7 +3756,7 @@ public class Source implements InsertSourceHandler,
       if (event.getSelectedItem() >= 0)
       {
          activeEditor_ = editors_.get(event.getSelectedItem());
-         activeEditor_.onActivate(tabActivationsAreForUser_);
+         activeEditor_.onActivate();
          
          // let any listeners know this tab was activated
          events_.fireEvent(new DocTabActivatedEvent(
@@ -5042,7 +5038,6 @@ public class Source implements InsertSourceHandler,
    private static final String KEY_ACTIVETAB = "activeTab";
    private boolean initialized_;
    private Timer debugSelectionTimer_ = null;
-   private boolean tabActivationsAreForUser_ = false;
    private boolean openingForSourceNavigation_ = false;
    
    private final SourceWindowManager windowManager_;

@@ -493,6 +493,9 @@ if (NOT RSTUDIO_SESSION_WIN32)
    file(GLOB THEME_RESOURCE_FILES "resources/themes/*.rstheme" "resources/themes/*.R")
    install(FILES ${THEME_RESOURCE_FILES}
       DESTINATION ${RSTUDIO_INSTALL_SUPPORTING}/resources/themes)
+   file(GLOB THEME_CSS_FILES "resources/themes/css/*.css")
+   install(FILES ${THEME_CSS_FILES}
+      DESTINATION ${RSTUDIO_INSTALL_SUPPORTING}/resources/themes/css)
 
    # R scripts
    file(GLOB R_MODULE_SRC_FILES "${CMAKE_CURRENT_BINARY_DIR}/modules/R/*.R")

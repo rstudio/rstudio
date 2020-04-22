@@ -163,8 +163,8 @@ public class RMarkdownPreferencesPane extends PreferencesPane
           
       Label visualMarkdownLabel = new Label(
             "Visual markdown editing is an experimental feature of " +
-            "RStudio v1.4. Please click the link below to learn more about " +
-            "what to expect before enabling this feature.");
+            "RStudio v1.4. Please click the link below for more details " +
+            "before enabling this feature.");
            
       visualMarkdownLabel.addStyleName(baseRes.styles().infoLabel());
       nudgeRight(visualMarkdownLabel);
@@ -187,12 +187,40 @@ public class RMarkdownPreferencesPane extends PreferencesPane
       advanced.add(enableVisualMarkdownEditor);
       
       VerticalPanel visualModeOptions = new VerticalPanel();
+      
+      final String kDefault = "(Default)";
+      String[] labels = {kDefault, "7", "8", "9", "10", "11", "12", "13", "14", "16", "18", "24", "36"};
+      String[] values = new String[labels.length];
+      for (int i = 0; i < labels.length; i++) 
+      {
+         if (labels[i].equals(kDefault))
+            values[i] = "0";
+         else
+            values[i] = Double.parseDouble(labels[i]) + "";
+      }
+      visualModeFontSize_ = new SelectWidget("Editor font size:", labels, values, false, true, false);
+      if (!visualModeFontSize_.setValue(prefs_.visualMarkdownEditingFontSizePoints().getGlobalValue() + ""))
+         visualModeFontSize_.getListBox().setSelectedIndex(0);
+      spaced(visualModeFontSize_);
+      visualModeOptions.add(visualModeFontSize_);
+      
+      visualModeContentWidth_ = numericPref(
+         "Editor content width (pixels):", 
+         100,
+         NumericValueWidget.NoMaximum,
+         prefs_.visualMarkdownEditingMaxContentWidth(),
+         false
+      );
+      visualModeContentWidth_.setWidth("42px");
+      visualModeContentWidth_.setLimits(100, NumericValueWidget.NoMaximum);
+      spaced(visualModeContentWidth_);
+      visualModeOptions.add(nudgeRightPlus(visualModeContentWidth_));
+     
       CheckBox checkBoxAutoWrap = checkboxPref(
          "Auto-wrap text (break lines at specified fill column)", 
          prefs.visualMarkdownEditingWrapAuto(),
          false
       );
-     
       visualModeOptions.add(checkBoxAutoWrap);
       visualModeOptions.add(indent(visualModeWrapColumn_ = numericPref(
           "Fill column:", 1, UserPrefs.MAX_WRAP_COLUMN,
@@ -226,7 +254,8 @@ public class RMarkdownPreferencesPane extends PreferencesPane
    @Override
    public boolean validate()
    {
-      return visualModeWrapColumn_.validate();
+      return visualModeWrapColumn_.validate() &&
+             visualModeContentWidth_.validate();
    }
 
    @Override
@@ -259,6 +288,9 @@ public class RMarkdownPreferencesPane extends PreferencesPane
       prefs_.latexPreviewOnCursorIdle().setGlobalValue(
             latexPreviewWidget_.getValue());
       
+      prefs_.visualMarkdownEditingFontSizePoints().setGlobalValue(
+            Integer.parseInt(visualModeFontSize_.getValue())); 
+      
       if (knitWorkingDir_ != null)
       {
          prefs_.knitWorkingDir().setGlobalValue(
@@ -277,7 +309,10 @@ public class RMarkdownPreferencesPane extends PreferencesPane
    private final SelectWidget latexPreviewWidget_;
    private final SelectWidget knitWorkingDir_;
    
+   private final SelectWidget visualModeFontSize_;
+   private final NumericValueWidget visualModeContentWidth_;
    private final NumericValueWidget visualModeWrapColumn_;
+  
    
    
 }

@@ -98,7 +98,6 @@ const extension: Extension = {
   ],
 
   fixups: (schema: Schema) => {
-
     const kDoubleQuoted = /“[^”]*”/g;
     const kSingleQuoted = /‘[^’]*’/g;
     const kQuoted = /(“[^”]*”|‘[^’]*’)/g;

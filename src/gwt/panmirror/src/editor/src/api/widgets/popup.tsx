@@ -13,7 +13,6 @@
  *
  */
 
-
 import React from 'react';
 
 import { WidgetProps } from './react';
@@ -37,4 +36,3 @@ export const Popup: React.FC<PopupProps> = props => {
     </div>
   );
 };
-

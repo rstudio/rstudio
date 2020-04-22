@@ -1,4 +1,3 @@
-
 /*
  * attr_edit.ts
  *
@@ -14,21 +13,19 @@
  *
  */
 
-import { Schema } from "prosemirror-model";
+import { Schema } from 'prosemirror-model';
 
-import { EditorUI } from "../../api/ui";
-import { extensionIfPandocAttrEnabled } from "../../api/pandoc_attr";
+import { EditorUI } from '../../api/ui';
+import { extensionIfPandocAttrEnabled } from '../../api/pandoc_attr';
 
-import { AttrEditCommand } from "./attr_edit-command";
+import { AttrEditCommand } from './attr_edit-command';
 
 export const kEditAttrShortcut = 'F4';
 
 const extension = {
   commands: (_schema: Schema, ui: EditorUI) => {
     return [new AttrEditCommand(ui)];
-  }
+  },
 };
 
 export default extensionIfPandocAttrEnabled(extension);
-
-

@@ -199,10 +199,10 @@ public class DataEditingTargetWidget extends Composite
          table_.setFilterUIVisible(visible);
    }
    
-   public void refreshData(boolean structureChanged, boolean sizeChanged)
+   public void refreshData()
    {
       if (table_ != null)
-         table_.refreshData(structureChanged, sizeChanged);
+         table_.refreshData();
    }
    
    public void onActivate()
