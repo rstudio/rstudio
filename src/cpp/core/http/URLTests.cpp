@@ -25,6 +25,11 @@ namespace util {
 
 test_context("HttpUtil Tests")
 {
+   test_that("URL pass")
+   {
+      URL::test();
+   }
+
    test_that("Can parse simple url")
    {
       URL url("http://www.google.com");

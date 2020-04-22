@@ -20,6 +20,7 @@
 #include <Rversion.h>
 
 #define R_INTERNAL_FUNCTIONS
+#include <Rversion.h>
 #include <r/RInternal.hpp>
 
 #define Win32
