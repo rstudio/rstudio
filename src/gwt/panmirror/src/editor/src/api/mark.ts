@@ -28,7 +28,6 @@ export interface PandocMark {
   readonly noInputRules?: boolean;
   readonly pandoc: {
     readonly readers: readonly PandocTokenReader[];
-    readonly preprocessor?: PandocPreprocessorFn;
     readonly inlineHTMLReader?: PandocInlineHTMLReaderFn;
     readonly writer: {
       priority: number;

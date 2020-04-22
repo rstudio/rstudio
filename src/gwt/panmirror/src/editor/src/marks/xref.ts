@@ -102,9 +102,10 @@ const extension = (
             const predicate = (node: ProsemirrorNode) => {
               return node.isTextblock && node.type.allowsMarkType(markType);
             };
+            const markTr = new MarkTransaction(tr);
             findChildren(tr.doc, predicate).forEach(nodeWithPos => {
               const { pos } = nodeWithPos;
-              detectAndApplyMarks(tr, tr.doc.nodeAt(pos)!, pos, kRefRegEx, markType);
+              detectAndApplyMarks(markTr, tr.doc.nodeAt(pos)!, pos, kRefRegEx, markType);
             });
 
             // remove leading \ as necessary (this would occur if the underlying format includes

@@ -259,11 +259,6 @@ export class ExtensionManager {
 
   public pandocPreprocessors(): readonly PandocPreprocessorFn[] {
     const preprocessors: PandocPreprocessorFn[] = [];
-    this.pandocMarks().forEach((mark: PandocMark) => {
-      if (mark.pandoc.preprocessor) {
-        preprocessors.push(mark.pandoc.preprocessor);
-      }
-    });
     this.pandocNodes().forEach((node: PandocNode) => {
       if (node.pandoc.preprocessor) {
         preprocessors.push(node.pandoc.preprocessor);

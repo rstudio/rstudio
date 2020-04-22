@@ -41,12 +41,38 @@ export interface AppendTransactionHandler {
   append: (tr: Transaction) => void;
 }
 
-export interface MarkTransaction {
-  doc: ProsemirrorNode;
-  selection: Selection;
-  addMark(from: number, to: number, mark: Mark): this;
-  removeMark(from: number, to: number, mark?: Mark | MarkType): this;
-  removeStoredMark(mark: Mark | MarkType): this;
+// wrapper for transaction that is guaranteed not to modify the position of any 
+// nodes in the document (useful for grouping many disparate handlers that arne't
+// aware of each other's actions onto the same trasaction)
+export class MarkTransaction {
+  
+  private tr: Transaction;
+
+  constructor(tr: Transaction) {
+    this.tr = tr;
+  }
+  get doc(): ProsemirrorNode {
+    return this.tr.doc;
+  } 
+  get selection(): Selection {
+    return this.tr.selection;
+  }
+  public addMark(from: number, to: number, mark: Mark): this {
+    this.tr.addMark(from, to, mark);
+    return this;
+  }
+  public removeMark(from: number, to: number, mark?: Mark | MarkType): this {
+    this.tr.removeMark(from, to, mark);
+    return this;
+  }
+  public removeStoredMark(mark: Mark | MarkType): this {
+    this.tr.removeStoredMark(mark);
+    return this;
+  }
+  public insertText(text: string, from: number): this {
+    this.tr.insertText(text, from, from + text.length);
+    return this;
+  }
 }
 
 export interface AppendMarkTransactionHandler {
@@ -68,6 +94,9 @@ export function appendMarkTransactionsPlugin(handlers: AppendMarkTransactionHand
       // create transaction
       const tr = newState.tr;
 
+      // create markTransaction wrapper
+      const markTr = new MarkTransaction(tr);
+
       forChangedNodes(
         oldState,
         newState,
@@ -79,7 +108,7 @@ export function appendMarkTransactionsPlugin(handlers: AppendMarkTransactionHand
 
             // call the handler
             if (handler.filter(node)) {
-              handler.append(tr, node, pos);
+              handler.append(markTr, node, pos);
             }
           }
         },

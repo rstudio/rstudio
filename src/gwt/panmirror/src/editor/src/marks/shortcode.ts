@@ -17,18 +17,19 @@ import { Schema, Node as ProsemirrorNode, Mark, Fragment } from 'prosemirror-mod
 import { Transaction, EditorState } from 'prosemirror-state';
 import { toggleMark } from 'prosemirror-commands';
 
-import { setTextSelection } from 'prosemirror-utils';
+import { setTextSelection, findChildren, findChildrenByMark } from 'prosemirror-utils';
 
 import { Extension } from '../api/extension';
-import { PandocExtensions, PandocOutput, ProsemirrorWriter, PandocTokenType, PandocToken } from '../api/pandoc';
+import { PandocExtensions, PandocOutput } from '../api/pandoc';
 import { PandocCapabilities } from '../api/pandoc_capabilities';
 import { EditorUI } from '../api/ui';
-import { detectAndApplyMarks, removeInvalidatedMarks } from '../api/mark';
+import { detectAndApplyMarks, removeInvalidatedMarks, getMarkRange } from '../api/mark';
 import { MarkTransaction } from '../api/transaction';
 import { EditorFormat } from '../api/format';
 import { ProsemirrorCommand, EditorCommandId } from '../api/command';
 import { canInsertNode } from '../api/node';
-import { kRawInlineFormat, kRawInlineContent } from './raw_inline/raw_inline';
+import { FixupContext } from '../api/fixup';
+import { quotesForType, QuoteType } from '../api/quote';
 
 const kShortcodePattern = "{{([%<])\\s+.*?[%>]}}";
 const kShortcodeRegEx = new RegExp(kShortcodePattern, 'g');
@@ -63,35 +64,7 @@ const extension = (
           },
         },
         pandoc: {
-          readers: [
-            {
-              token: PandocTokenType.RawInline,
-              match: (tok: PandocToken) => {
-                const rawFormat = tok.c[kRawInlineFormat];
-                return rawFormat === 'shortcode';
-              },
-              handler: (schema: Schema) => {
-                return (writer: ProsemirrorWriter, tok: PandocToken) => {
-                  const shortcode = tok.c[kRawInlineContent];
-                  const mark = schema.marks.shortcode.create();
-                  writer.openMark(mark);
-                  writer.writeText(shortcode);
-                  writer.closeMark(mark);
-                };
-              },
-            },
-          ],
-          preprocessor: (markdown: string) => {
-            const md = markdown.replace(
-              kShortcodeRegEx,
-              (match: string) => {
-                // use double-backtick w/ space to allow for ` inside the match, see
-                // https://meta.stackexchange.com/questions/82718/how-do-i-escape-a-backtick-within-in-line-code-in-markdown
-                return '`` ' + match + ' ``{=shortcode}';
-              },
-            );
-            return md;
-          },
+          readers: [],
           writer: {
             priority: 20,
             write: (output: PandocOutput, _mark: Mark, parent: Fragment) => {
@@ -102,6 +75,26 @@ const extension = (
       },
     ],
 
+    fixups: (schema: Schema) => {
+      return [
+        (tr: Transaction, context: FixupContext) => {
+          if (context === FixupContext.Load) {
+            // apply marks
+            const markType = schema.marks.shortcode;
+            const predicate = (node: ProsemirrorNode) => {
+              return node.isTextblock && node.type.allowsMarkType(markType);
+            };
+            const markTr = new MarkTransaction(tr);
+            findChildren(tr.doc, predicate).forEach(nodeWithPos => {
+              const { pos } = nodeWithPos;
+              detectAndCreateShortcodes(schema, markTr, pos);
+            });
+          }
+          return tr;
+        },
+      ];
+    },
+
     appendMarkTransaction: (schema: Schema) => {
       return [
         {
@@ -109,7 +102,7 @@ const extension = (
           filter: (node: ProsemirrorNode) => node.isTextblock && node.type.allowsMarkType(node.type.schema.marks.shortcode),
           append: (tr: MarkTransaction, node: ProsemirrorNode, pos: number) => {
             removeInvalidatedMarks(tr, node, pos, kShortcodeRegEx, node.type.schema.marks.shortcode);
-            detectAndApplyMarks(tr, tr.doc.nodeAt(pos)!, pos, kShortcodeRegEx, node.type.schema.marks.shortcode);
+            detectAndCreateShortcodes(node.type.schema, tr, pos);
           },
         },
       ];
@@ -140,5 +133,35 @@ const extension = (
     },
   };
 };
+
+
+function detectAndCreateShortcodes(schema: Schema, tr: MarkTransaction, pos: number) {
+
+  // create regexs for removing quotes
+  const singleQuote = quotesForType(QuoteType.SingleQuote);
+  const singleQuoteRegEx = new RegExp(`[${singleQuote.begin}${singleQuote.end}]`, 'g');
+  const doubleQuote = quotesForType(QuoteType.DoubleQuote);
+  const doubleQuoteRegEx = new RegExp(`[${doubleQuote.begin}${doubleQuote.end}]`, 'g');
+
+  // apply marks wherever they belong
+  detectAndApplyMarks(tr, tr.doc.nodeAt(pos)!, pos, kShortcodeRegEx, schema.marks.shortcode);
+
+  // remove quotes as necessary 
+  const markType = schema.marks.shortcode;
+  const markedNodes = findChildrenByMark(tr.doc.nodeAt(pos)!, markType, true);
+  markedNodes.forEach(markedNode => {
+    const from = pos + 1 + markedNode.pos;
+    const markedRange = getMarkRange(tr.doc.resolve(from), markType);
+    if (markedRange) {
+      const text = tr.doc.textBetween(markedRange.from, markedRange.to);
+      const replaceText = text
+        .replace(singleQuoteRegEx, "'")
+        .replace(doubleQuoteRegEx, '"');
+      if (replaceText !== text) {
+        tr.insertText(replaceText, markedRange.from);
+      }
+    }
+  });
+}
 
 export default extension;
