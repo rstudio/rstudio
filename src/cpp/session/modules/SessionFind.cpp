@@ -1016,7 +1016,7 @@ private:
          if (!errorMessage.empty())
          {
             json::Array lastErrors = errors.getBack().getArray();
-            errors.erase(errors.end());
+            errors.erase(--errors.end());
             lastErrors.push_back(json::Value(*errorMessage.begin()));
             errors.push_back(lastErrors);
          }
