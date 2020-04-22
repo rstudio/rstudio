@@ -15,6 +15,7 @@
 
 #include <core/http/LocalStreamAsyncServer.hpp>
 #include <core/http/Cookie.hpp>
+#include <core/http/CSRFToken.hpp>
 #include <server_core/http/SecureCookie.hpp>
 #include <core/http/TcpIpAsyncServer.hpp>
 #include <core/PeriodicCommand.hpp>
@@ -168,8 +169,11 @@ void validationLoginHandler(
    // serviced by the session itself (which provides CSRF validation via the session's client ID),
    // we take this additional precaution
    const core::http::Request& request = pConnection->request();
-   std::string headerToken = request.headerValue("X-CSRF-Token");
-   std::string cookieToken = request.cookieValue("csrf-token");
+   std::string headerToken = request.headerValue(kCSRFTokenHeader);
+   std::string cookieToken = request.cookieValue(kCSRFTokenCookie);
+   if (cookieToken.empty())
+      cookieToken = request.cookieValue(kCSRFTokenCookie "-legacy");
+
    if (headerToken.empty())
    {
       LOG_WARNING_MESSAGE("Attempt to request URL " + request.uri() + " without CSRF token");
