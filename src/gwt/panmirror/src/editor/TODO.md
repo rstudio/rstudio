@@ -6,13 +6,10 @@ pandoc schema: <https://github.com/jgm/pandoc-types/blob/master/Text/Pandoc/Defi
 
 ## TODO
 
-remark.js
-
-Link popups no longer truncated (see advanced_ui.Rmd)
-
-Positioning of ellipses in props button
-Button ellipses shouldn't require positioning override
-(see EditorPane.module.scss)
+Don't blow away line widgets when setting code
+Consider applying source/visual transforms as patches. 
+https://gitlab.com/mpapp-public/prosemirror-recreate-steps
+https://www.npmjs.com/package/diff
 
 Alison on blogdown engines, etc.
 
