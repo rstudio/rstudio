@@ -763,7 +763,7 @@ export class Editor {
 
   // update parent padding based on content width settings (if specified)
   private syncContentWidth() {
-    if (this.maxContentWidth) {
+    if (this.maxContentWidth && this.parent.clientWidth) {
       const minContentPadding = this.minContentPadding || 10;
       const parentWidth = this.parent.clientWidth;
       if (parentWidth > this.maxContentWidth + 2 * minContentPadding) {
