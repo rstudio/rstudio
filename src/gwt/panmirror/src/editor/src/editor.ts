@@ -823,7 +823,7 @@ export class Editor {
     // first line gets special processing so we can't put the sentinel there)
     const topLevelTextBlocks = findTopLevelBodyNodes(tr.doc, node => { 
       return node.isTextblock && node.type !== this.schema.nodes.rmd_chunk;
-    };
+    });
     const textBlock = topLevelTextBlocks.reverse().find(block => block.pos < anchor);
     if (textBlock) {
       cursorSentinel = 'CursorSentinel-CAFB04C4-080D-4074-898C-F670CAACB8AF';
