@@ -81,9 +81,9 @@ const extension = (
           bookdownTheorems: format.docTypes.includes(kBookdownDocType),
           classes: ['pm-chunk-background-color'],
           lang: (_node: ProsemirrorNode, content: string) => {
-            const match = content.match(/^[a-zA-Z0-9_]+/);
+            const match = content.match(/^\{([a-zA-Z0-9_])+/);
             if (match) {
-              return match[0];
+              return match[1];
             } else {
               return null;
             }
