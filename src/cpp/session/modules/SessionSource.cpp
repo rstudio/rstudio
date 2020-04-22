@@ -536,7 +536,7 @@ Error saveDocumentDiff(const json::JsonRpcRequest& request,
       // constructed a diff to be saved; we leave this in while still
       // going down this code path just to ensure that any code that
       // runs in response to a document save (even if that save fails)
-      // stil has a change to run
+      // still has a chance to run
       if (valid)
       {
          // the offsets we receive are in bytes, so we can replace the contents
