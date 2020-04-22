@@ -135,6 +135,12 @@
   z-index: -1;
   background-color: #1A1A1A;
 }
+.ace_node-selector {
+  background-color: #fb6f1c
+}
+.ace_comment-highlight {
+  background-color: #5C4916
+}
 .ace_marker-layer .ace_find_line {
   position: absolute;
   z-index: -1;
