@@ -3245,7 +3245,7 @@ public class TextEditingTarget implements
                () -> action.execute(),
                () -> {},
                () -> {},
-               "Open Document",
+               "Reopen Document",
                "Cancel",
                true);
       }
