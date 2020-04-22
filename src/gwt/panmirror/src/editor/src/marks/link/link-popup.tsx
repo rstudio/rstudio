@@ -96,6 +96,7 @@ export class LinkPopupPlugin extends Plugin<DecorationSet> {
                 const popup = (
                   <LinkPopup
                     link={attrs}
+                    maxLinkWidth={kMaxLinkWidth}
                     linkCmd={linkCmd}
                     removeLinkCmd={removeLinkCmd}
                     view={view}
@@ -132,6 +133,7 @@ export class LinkPopupPlugin extends Plugin<DecorationSet> {
 
 interface LinkPopupProps extends WidgetProps {
   link: LinkProps;
+  maxLinkWidth: number;
   view: EditorView;
   ui: EditorUI;
   linkCmd: CommandFn;
@@ -188,7 +190,7 @@ const LinkPopup: React.FC<LinkPopupProps> = props => {
   return (
     <Popup classes={['pm-popup-link']} style={props.style}>
       <Panel>
-        <LinkButton text={linkText} onClick={onLinkClicked}></LinkButton>
+        <LinkButton text={linkText} onClick={onLinkClicked} maxWidth={props.maxLinkWidth}></LinkButton>
         {showCopyButton ? (
           <ImageButton
             image={props.ui.images.copy!}
