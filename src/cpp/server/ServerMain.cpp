@@ -573,7 +573,12 @@ int main(int argc, char * const argv[])
 
          error = file_utils::changeOwnership(serverDataDir, options.serverUser(), true, shouldChown);
          if (error)
-            return core::system::exitFailure(error, ERROR_LOCATION);
+         {
+            error.addProperty("description",
+                              "Could not change owner for path " + serverDataDir.getAbsolutePath() +
+                                 ". Is root squash enabled?");
+            LOG_ERROR(error);
+         }
       }
 
       // ensure permissions - the folder needs to be readable and writeable
