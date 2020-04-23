@@ -1127,6 +1127,9 @@ public class AceEditor implements DocDisplay,
       /*
       AceEditorNative editor = widget_.getEditor();
       widget_.getEditor().getCommandManager().exec("insertstring", editor, "text");
+      widget_.getEditor().getCommandManager().exec("del", editor);
+      widget_.getEditor().getCommandManager().exec("backspace", editor);
+      
       */
       
       // TODO: apply changes
