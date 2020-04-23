@@ -16,9 +16,8 @@
 import { inputRules } from 'prosemirror-inputrules';
 import { keydownHandler } from 'prosemirror-keymap';
 import { MarkSpec, Node as ProsemirrorNode, NodeSpec, Schema, DOMParser, ParseOptions } from 'prosemirror-model';
-import { EditorState, Plugin, PluginKey, Transaction, Selection } from 'prosemirror-state';
+import { EditorState, Plugin, PluginKey, Transaction } from 'prosemirror-state';
 import { EditorView } from 'prosemirror-view';
-import { setTextSelection } from 'prosemirror-utils';
 import 'prosemirror-view/style/prosemirror.css';
 
 import { Diff, Change } from 'diff';
@@ -28,7 +27,7 @@ import polyfill from './polyfill/index';
 import { EditorOptions } from './api/options';
 import { ProsemirrorCommand, CommandFn, EditorCommand } from './api/command';
 import { PandocMark, markIsActive } from './api/mark';
-import { PandocNode, findTopLevelBodyNodes } from './api/node';
+import { PandocNode } from './api/node';
 import { EditorUI, attrPropsToInput, attrInputToProps, AttrProps, AttrEditInput } from './api/ui';
 import { Extension } from './api/extension';
 import { ExtensionManager, initExtensions } from './extensions';
@@ -420,7 +419,7 @@ export class Editor {
     // get the code
     const code = await this.pandocConverter.fromProsemirror(this.state.doc, this.pandocFormat, options);
 
-    // get the changes
+    // get the changes  
     const changes: Change[] = code !== previous ? new Diff().diff(previous, code) : [];
 
     // return code and changes
