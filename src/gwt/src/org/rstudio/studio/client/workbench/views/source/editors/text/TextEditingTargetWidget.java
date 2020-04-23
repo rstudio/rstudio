@@ -34,6 +34,7 @@ import com.google.gwt.user.client.ui.*;
 
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.CommandWithArg;
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.AppCommand;
@@ -1656,41 +1657,29 @@ public class TextEditingTargetWidget
       }
      
       @Override
-      public void setCode(TextEditorContainer.EditorCode editorCode, boolean preserveCursorLocation, boolean activatingEditor)
-      {
-         // if the cursor location is a sentinel within the code string, then pull it out and note it's position
-         final Position cursorPosition = Position.create(0, 0);
-         
-      
-         if (editorCode.cursorSentinel != null) {
-            
-            final Position kNoPosition = Position.create(0,0);
-            
-            editorCode.code = filterCode(editorCode.code, (line, number) -> {
-               if (cursorPosition.isEqualTo(kNoPosition)) {
-                  int sentinelLoc = line.indexOf(editorCode.cursorSentinel);
-                  if (sentinelLoc != -1) {
-                     line = line.substring(0, sentinelLoc) + 
-                            line.substring(sentinelLoc + editorCode.cursorSentinel.length());
-                     cursorPosition.setRow(number); 
-                     cursorPosition.setColumn(sentinelLoc);
-                  }
-               }
-               return line;
-            });        
-         }
-         
-         // set the code
+      public void setCode(TextEditorContainer.EditorCode editorCode, boolean activatingEditor)
+      {   
+         // set the code (preserve cursor location if we aren't activating)
+         boolean preserveCursorLocation = !activatingEditor;
          editor_.setCode(editorCode.code, preserveCursorLocation);
          
-         // set cursor position if we need to
-         if (editorCode.cursorSentinel != null) {
-            editor_.setCursorPosition(cursorPosition);
-         }
+         // TODO: apply incremental changes here (call DocDisplay method w/ changes,
+         // need to manage undo state for background edit propagations)
+         // we should use editSession.insert and editSession.replace
          
-         // indicate that an activation is pending
-         if (activatingEditor)
+         // replaceAll actually does blow away line widgets!
+         
+         // we can actually just set the cursor position based on the 
+         // location of the most recent transaction? 
+         
+         editor_.setCursorPosition(Position.create(editorCode.cursorRow, editorCode.cursorCol));
+         
+         Debug.logObject(editorCode.changes);
+         
+         // set cursor position if we are activating the editor
+         if (activatingEditor) {
             activationPending_ = true;
+         }
       }
       
       @Override
@@ -1701,21 +1690,6 @@ public class TextEditingTargetWidget
       
       private boolean activationPending_ = false;
    };
-   
-   private String filterCode(String code, LineFilter filter) 
-   {
-      ArrayList<String> codeLines = new ArrayList<String>();
-      int lineNumber = 0;
-      for (String line : StringUtil.getLineIterator(code)) {
-         codeLines.add(filter.filterLine(line, lineNumber++));
-      }
-      return String.join("\n", codeLines);         
-   }
-   
-   private interface LineFilter
-   {
-      String filterLine(String line, int number);
-   }
 
    private final TextEditingTarget target_;
    private final DocUpdateSentinel docUpdateSentinel_;

@@ -62,6 +62,7 @@ import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.js.JsMap;
 import org.rstudio.core.client.js.JsObject;
 import org.rstudio.core.client.js.JsUtil;
+import org.rstudio.core.client.jsdiff.JsdiffChange;
 import org.rstudio.core.client.regex.Match;
 import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.core.client.resources.StaticDataResource;
@@ -1118,6 +1119,21 @@ public class AceEditor implements DocDisplay,
    {
       widget_.getEditor().insert(StringUtil.normalizeNewLines(code));
    }
+   
+   public void applyCodeChanges(JsdiffChange[] changes)
+   {
+      
+      // we want to do this for inserts so that they are mergeable by the undo manager
+      /*
+      AceEditorNative editor = widget_.getEditor();
+      widget_.getEditor().getCommandManager().exec("insertstring", editor, "text");
+      */
+      
+      // TODO: apply changes
+      
+     
+   }
+   
 
    public String getCode(Position start, Position end)
    {
