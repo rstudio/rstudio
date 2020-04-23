@@ -245,6 +245,17 @@ public class AceEditorNative extends JavaScriptObject
       return loader.loadEditor(container);
    }-*/;
    
+   public native final void setHistoryCommands(Command undo, Command redo) /*-{
+      this.undo = $entry(function() {
+         undo.@com.google.gwt.user.client.Command::execute()();
+         this.renderer.scrollCursorIntoView(null, 0.5);
+      });
+      this.redo = $entry(function() {
+         redo.@com.google.gwt.user.client.Command::execute()();
+         this.renderer.scrollCursorIntoView(null, 0.5);
+      });
+   }-*/;
+   
    public final native void manageDefaultKeybindings() /*-{
       
       // We bind 'Ctrl + Shift + M' to insert a magrittr shortcut on Windows
