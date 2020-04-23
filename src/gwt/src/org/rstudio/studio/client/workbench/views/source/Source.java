@@ -282,7 +282,6 @@ public class Source implements InsertSourceHandler,
                  Synctex synctex,
                  WorkbenchContext workbenchContext,
                  Provider<FileMRUList> pMruList,
-                 UserPrefs userPrefs,
                  UserState userState,
                  Satellite satellite,
                  ConsoleEditorProvider consoleEditorProvider,
@@ -306,7 +305,6 @@ public class Source implements InsertSourceHandler,
       synctex_ = synctex;
       workbenchContext_ = workbenchContext;
       pMruList_ = pMruList;
-      userPrefs_ = userPrefs;
       userState_ = userState;
       consoleEditorProvider_ = consoleEditorProvider;
       rnwWeaveRegistry_ = rnwWeaveRegistry;
@@ -611,7 +609,16 @@ public class Source implements InsertSourceHandler,
       events_.addHandler(RequestDocumentSaveEvent.TYPE, this);
       events_.addHandler(RequestDocumentCloseEvent.TYPE, this);
       
+      initialized_ = true;
+   }
+
+   public void loadFullSource()
+   {
+      AceEditor.preload();
+
       // sync UI prefs with shortcut manager
+      userPrefs_ = RStudioGinjector.INSTANCE.getUserPrefs();
+
       if (userPrefs_.editorKeybindings().getValue() == UserPrefs.EDITOR_KEYBINDINGS_VIM)
          ShortcutManager.INSTANCE.setEditorMode(KeyboardShortcut.MODE_VIM);
       else if (userPrefs_.editorKeybindings().getValue() == UserPrefs.EDITOR_KEYBINDINGS_EMACS)
@@ -620,14 +627,7 @@ public class Source implements InsertSourceHandler,
          ShortcutManager.INSTANCE.setEditorMode(KeyboardShortcut.MODE_SUBLIME);
       else
          ShortcutManager.INSTANCE.setEditorMode(KeyboardShortcut.MODE_DEFAULT);
-      
-      initialized_ = true;
-
-      AceEditor.preload();
-   }
-
-   public void loadFullSource()
-   {
+   
       events_.fireEvent(new DocTabsChangedEvent(null,
                                                 new String[0],
                                                 new FileIcon[0],
@@ -5142,7 +5142,7 @@ public class Source implements InsertSourceHandler,
    private final Session session_;
    private final Synctex synctex_;
    private final Provider<FileMRUList> pMruList_;
-   private final UserPrefs userPrefs_;
+   private UserPrefs userPrefs_;
    private final UserState userState_;
    private final ConsoleEditorProvider consoleEditorProvider_;
    private final RnwWeaveRegistry rnwWeaveRegistry_;
