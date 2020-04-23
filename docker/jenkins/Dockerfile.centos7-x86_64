@@ -69,9 +69,10 @@ RUN sed -i  's/Defaults    requiretty/Defaults !requiretty/' /etc/sudoers
 COPY dependencies/common/install-boost /tmp/
 RUN bash /tmp/install-boost || bash /tmp/install-boost
 
-# install cmake
+# install cmake; do this with the system compiler by temporarily clearing CC/CXX since cmake
+# can't find the devtoolset compiler in /opt/rh on this platform 
 COPY package/linux/install-dependencies /tmp/
-RUN bash /tmp/install-dependencies
+RUN CC= CXX= /bin/bash /tmp/install-dependencies
 
 # install crashpad and its dependencies
 COPY dependencies/common/install-crashpad /tmp/
