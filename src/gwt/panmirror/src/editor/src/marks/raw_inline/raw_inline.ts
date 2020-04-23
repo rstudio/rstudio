@@ -31,9 +31,12 @@ export const kRawInlineFormat = 0;
 export const kRawInlineContent = 1;
 
 const extension = (pandocExtensions: PandocExtensions, pandocCapabilities: PandocCapabilities): Extension | null => {
-  if (!pandocExtensions.raw_attribute) {
-    return null;
-  }
+  
+  // always enabled so that extensions can make use of preprocessors + raw_attribute
+  // to hoist content out of pandoc for further processing by our token handlers.
+  // that means that users can always use the raw attribute in their markdown even
+  // if the editing format doesn't support it (in which case it will just get echoed 
+  // back to the markdown just the way it was written).
 
   // return the extension
   return {
@@ -100,7 +103,11 @@ const extension = (pandocExtensions: PandocExtensions, pandocCapabilities: Pando
 
     // insert command
     commands: (_schema: Schema, ui: EditorUI) => {
-      return [new RawInlineCommand(EditorCommandId.RawInline, '', ui, pandocCapabilities.output_formats)];
+      if (pandocExtensions.raw_attribute) {
+        return [new RawInlineCommand(EditorCommandId.RawInline, '', ui, pandocCapabilities.output_formats)];
+      } else {
+        return [];
+      }
     },
   };
 };
@@ -151,64 +158,60 @@ export class RawInlineInsertCommand extends ProsemirrorCommand {
 // generic raw inline command (opens dialog that allows picking from among formats)
 export class RawInlineCommand extends ProsemirrorCommand {
   constructor(id: EditorCommandId, defaultFormat: string, ui: EditorUI, outputFormats: string[]) {
-    super(
-      id,
-      [],
-      (state: EditorState, dispatch?: (tr: Transaction) => void, view?: EditorView) => {
-        const schema = state.schema;
+    super(id, [], (state: EditorState, dispatch?: (tr: Transaction) => void, view?: EditorView) => {
+      const schema = state.schema;
 
-        if (!canInsertNode(state, schema.nodes.text) || !toggleMark(schema.marks.raw_inline)(state)) {
-          return false;
-        }
+      if (!canInsertNode(state, schema.nodes.text) || !toggleMark(schema.marks.raw_inline)(state)) {
+        return false;
+      }
 
-        async function asyncInlineRaw() {
-          if (dispatch) {
-            // check if mark is active
-            const isActive = markIsActive(state, schema.marks.raw_inline);
+      async function asyncInlineRaw() {
+        if (dispatch) {
+          // check if mark is active
+          const isActive = markIsActive(state, schema.marks.raw_inline);
 
-            // get the range of the mark
-            let range = { from: state.selection.from, to: state.selection.to };
-            if (isActive) {
-              range = getMarkRange(state.selection.$from, schema.marks.raw_inline) as { from: number; to: number };
-            }
+          // get the range of the mark
+          let range = { from: state.selection.from, to: state.selection.to };
+          if (isActive) {
+            range = getMarkRange(state.selection.$from, schema.marks.raw_inline) as { from: number; to: number };
+          }
 
-            // get raw attributes if we have them
-            let raw: RawFormatProps = { content: '', format: defaultFormat };
-            raw.content = state.doc.textBetween(range.from, range.to);
-            if (isActive) {
-              raw = {
-                ...raw,
-                ...getMarkAttrs(state.doc, state.selection, schema.marks.raw_inline),
-              };
-            }
+          // get raw attributes if we have them
+          let raw: RawFormatProps = { content: '', format: defaultFormat };
+          raw.content = state.doc.textBetween(range.from, range.to);
+          if (isActive) {
+            raw = {
+              ...raw,
+              ...getMarkAttrs(state.doc, state.selection, schema.marks.raw_inline),
+            };
+          }
 
-            const result = await ui.dialogs.editRawInline(raw, outputFormats);
-            if (result) {
-              const tr = state.tr;
-              tr.removeMark(range.from, range.to, schema.marks.raw_inline);
-              if (result.action === 'edit') {
-                const mark = schema.marks.raw_inline.create({ format: result.raw.format });
-                const node = schema.text(result.raw.content, [mark]);
-                // if we are editing a selection then replace it, otherwise insert
-                if (raw.content) {
-                  tr.replaceRangeWith(range.from, range.to, node);
-                } else {
-                  tr.replaceSelectionWith(node, false);
-                }
+          const result = await ui.dialogs.editRawInline(raw, outputFormats);
+          if (result) {
+            const tr = state.tr;
+            tr.removeMark(range.from, range.to, schema.marks.raw_inline);
+            if (result.action === 'edit') {
+              const mark = schema.marks.raw_inline.create({ format: result.raw.format });
+              const node = schema.text(result.raw.content, [mark]);
+              // if we are editing a selection then replace it, otherwise insert
+              if (raw.content) {
+                tr.replaceRangeWith(range.from, range.to, node);
+              } else {
+                tr.replaceSelectionWith(node, false);
               }
-              dispatch(tr);
             }
+            dispatch(tr);
+          }
 
-            if (view) {
-              view.focus();
-            }
+          if (view) {
+            view.focus();
           }
         }
-        asyncInlineRaw();
+      }
+      asyncInlineRaw();
 
-        return true;
-      },
-    );
+      return true;
+    });
   }
 }
 

@@ -56,11 +56,7 @@ interface Citation {
   citationSuffix: PandocToken[];
 }
 
-const extension = (
-  pandocExtensions: PandocExtensions, 
-  _pandocCapabilities: PandocCapabilities, 
-  ui: EditorUI
-) => {
+const extension = (pandocExtensions: PandocExtensions, _pandocCapabilities: PandocCapabilities, ui: EditorUI) => {
   if (!pandocExtensions.citations) {
     return null;
   }

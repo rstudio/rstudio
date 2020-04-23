@@ -14,7 +14,7 @@
  */
 
 import { textblockTypeInputRule } from 'prosemirror-inputrules';
-import { Node as ProsemirrorNode, Schema, NodeType } from 'prosemirror-model';
+import { Node as ProsemirrorNode, Schema, NodeType, Fragment } from 'prosemirror-model';
 import { EditorState } from 'prosemirror-state';
 import { findParentNode } from 'prosemirror-utils';
 
@@ -23,6 +23,9 @@ import { BlockCommand, EditorCommandId } from '../api/command';
 import { Extension } from '../api/extension';
 import { pandocAttrSpec, pandocAttrParseDom, pandocAttrToDomAttr, pandocAttrReadAST } from '../api/pandoc_attr';
 import { uuidv4 } from '../api/util';
+import { PandocCapabilities } from '../api/pandoc_capabilities';
+import { EditorUI } from '../api/ui';
+import { EditorFormat } from '../api/format';
 
 const HEADING_LEVEL = 0;
 const HEADING_ATTR = 1;
@@ -30,7 +33,12 @@ const HEADING_CHILDREN = 2;
 
 const kHeadingLevels = [1, 2, 3, 4, 5, 6];
 
-const extension = (pandocExtensions: PandocExtensions): Extension => {
+const extension = (
+  pandocExtensions: PandocExtensions,
+  _caps: PandocCapabilities,
+  _ui: EditorUI,
+  format: EditorFormat,
+): Extension => {
   const headingAttr = pandocExtensions.header_attributes || pandocExtensions.mmd_header_identifiers;
 
   return {
@@ -70,9 +78,16 @@ const extension = (pandocExtensions: PandocExtensions): Extension => {
           },
         },
 
-        attr_edit: () => ({
-          type: (schema: Schema) => schema.nodes.heading
-        }),
+        attr_edit: () => {
+          if (headingAttr) {
+            return {
+              type: (schema: Schema) => schema.nodes.heading,
+              offset: 8,
+            };
+          } else {
+            return null;
+          }
+        },
 
         pandoc: {
           readers: [
@@ -96,7 +111,11 @@ const extension = (pandocExtensions: PandocExtensions): Extension => {
                 output.writeAttr();
               }
               output.writeArray(() => {
-                output.writeInlines(node.content);
+                if (node.attrs.level === 1 && format.rmdExtensions.bookdownPart) {
+                  writeBookdownH1(output, node);
+                } else {
+                  output.writeInlines(node.content);
+                }
               });
             });
           },
@@ -156,6 +175,20 @@ function getHeadingAttrs(level: number, pandocAttrSupported: boolean) {
       ...(pandocAttrSupported ? pandocAttrParseDom(el, {}) : {}),
     };
   };
+}
+
+// write a bookdown (PART) H1 w/o spurious \
+function writeBookdownH1(output: PandocOutput, node: ProsemirrorNode) {
+  // see if this is a (PART\*). note we also match and replay any text
+  // before the first ( in case the cursor sentinel ended up there
+  const partMatch = node.textContent.match(/^([^()]*)\(PART\\\*\)/);
+  if (partMatch) {
+    const schema = node.type.schema;
+    output.writeInlines(Fragment.from(schema.text(partMatch[1] + '(PART*)')));
+    output.writeInlines(node.content.cut(partMatch[0].length));
+  } else {
+    output.writeInlines(node.content);
+  }
 }
 
 export default extension;

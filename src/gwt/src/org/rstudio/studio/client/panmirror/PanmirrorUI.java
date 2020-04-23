@@ -18,6 +18,7 @@ package org.rstudio.studio.client.panmirror;
 
 import org.rstudio.studio.client.panmirror.dialogs.PanmirrorDialogs;
 
+import elemental2.core.JsObject;
 import jsinterop.annotations.JsType;
 
 @JsType
@@ -31,4 +32,5 @@ public class PanmirrorUI
    public PanmirrorDialogs dialogs = new PanmirrorDialogs();
    public PanmirrorUIDisplay display = new PanmirrorUIDisplay();
    public PanmirrorUIContext context;
+   public JsObject images;
 }

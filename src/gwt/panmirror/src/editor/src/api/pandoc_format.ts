@@ -13,9 +13,8 @@
  *
  */
 
-import { EditorState } from 'prosemirror-state';
-
 import { PandocEngine, PandocExtensions } from './pandoc';
+import { EditorFormat } from './format';
 
 export const kMarkdownFormat = 'markdown';
 export const kMarkdownPhpextraFormat = 'markdown_phpextra';
@@ -41,33 +40,73 @@ export interface PandocFormatComment {
   mode?: string;
   extensions?: string;
   fillColumn?: number;
+  doctypes?: string[];
 }
 
-export async function resolvePandocFormat(pandoc: PandocEngine, format: string) {
+export function matchPandocFormatComment(code: string) {
+  const magicCommentRegEx = /^<!--\s+-\*-([\s\S]*?)-\*-\s+-->\s*$/m;
+  return code.match(magicCommentRegEx);
+}
 
+export function pandocFormatCommentFromCode(code: string): PandocFormatComment {
+  const keyValueRegEx = /^([^:]+):\s*(.*)$/;
+  const match = matchPandocFormatComment(code);
+  if (match) {
+    const comment = match[1];
+    // split into semicolons
+    const fields = comment.split(/\s*;\s/).map(field => field.trim());
+    const variables: { [key: string]: string } = {};
+    fields.forEach(field => {
+      const keyValueMatch = field.match(keyValueRegEx);
+      if (keyValueMatch) {
+        variables[keyValueMatch[1].trim()] = keyValueMatch[2].trim();
+      }
+    });
+    const formatComment: PandocFormatComment = {};
+    if (variables.mode) {
+      formatComment.mode = variables.mode;
+    }
+    if (variables.extensions) {
+      formatComment.extensions = variables.extensions;
+    }
+    if (variables['fill-column']) {
+      formatComment.fillColumn = parseInt(variables['fill-column'], 10) || undefined;
+    }
+    if (variables.doctype) {
+      formatComment.doctypes = variables.doctype.split(',').map(str => str.trim());
+    }
+    return formatComment;
+  } else {
+    return {};
+  }
+}
+
+export async function resolvePandocFormat(pandoc: PandocEngine, format: EditorFormat) {
   // additional markdown variants we support
-  const kMarkdownVariants : { [key: string] : string[] } = {
-    // https://github.com/russross/blackfriday/tree/v2#extensions
-    blackfriday: [
-      'intraword_underscores', 'pipe_tables', 'backtick_code_blocks', 
-      'definition_lists', 'footnotes', 'autolink_bare_uris', 'strikeout',  
-      'smart', 'yaml_metadata_block'
-    ]
+  const kMarkdownVariants: { [key: string]: string[] } = {
+    blackfriday: blackfridayExtensions(format),
   };
 
   // setup warnings
   const warnings: PandocFormatWarnings = { invalidFormat: '', invalidOptions: [] };
 
-  // split out base format from options
-  const split = splitPandocFormatString(format);
-  let options = split.options;
-  let baseName = split.format;
+  // alias options and basename
+  let options = format.pandocExtensions;
+  let baseName = format.pandocMode;
 
   // validate the base format (fall back to markdown if it's not known)
   if (
-    ![kMarkdownFormat, kMarkdownPhpextraFormat, kMarkdownGithubFormat, kMarkdownMmdFormat, kMarkdownStrictFormat,
-      kGfmFormat, kCommonmarkFormat].concat(Object.keys(kMarkdownVariants))
-    .includes(baseName)
+    ![
+      kMarkdownFormat,
+      kMarkdownPhpextraFormat,
+      kMarkdownGithubFormat,
+      kMarkdownMmdFormat,
+      kMarkdownStrictFormat,
+      kGfmFormat,
+      kCommonmarkFormat,
+    ]
+      .concat(Object.keys(kMarkdownVariants))
+      .includes(baseName)
   ) {
     warnings.invalidFormat = baseName;
     baseName = 'markdown';
@@ -88,7 +127,6 @@ export async function resolvePandocFormat(pandoc: PandocEngine, format: string) 
     const extraOptions = (validOptions = await pandoc.listExtensions(baseName));
     formatOptions = formatOptions + extraOptions;
   } else {
-
     // if it's a variant then convert to strict
     if (kMarkdownVariants[baseName]) {
       options = kMarkdownVariants[baseName].map(option => `+${option}`).join('');
@@ -96,7 +134,7 @@ export async function resolvePandocFormat(pandoc: PandocEngine, format: string) 
     }
 
     // query for format options
-    formatOptions = validOptions = await pandoc.listExtensions(baseName);   
+    formatOptions = validOptions = await pandoc.listExtensions(baseName);
   }
 
   // active pandoc extensions
@@ -151,68 +189,6 @@ export function pandocFormatWith(format: string, prepend: string, append: string
   return `${split.format}${prepend}${split.options}${append}`;
 }
 
-export function pandocFormatCommentFromCode(code: string): PandocFormatComment {
-  const magicCommentRegEx = /^<!--\s+-\*-([\s\S]*?)-\*-\s+-->\s*$/m;
-  const keyValueRegEx = /^([^:]+):\s*(.*)$/;
-  const match = code.match(magicCommentRegEx);
-  if (match) {
-    const comment = match[1];
-    // split into semicolons
-    const fields = comment.split(/\s*;\s/).map(field => field.trim());
-    const variables: { [key: string]: string } = {};
-    fields.forEach(field => {
-      const keyValueMatch = field.match(keyValueRegEx);
-      if (keyValueMatch) {
-        variables[keyValueMatch[1].trim()] = keyValueMatch[2].trim();
-      }
-    });
-    const formatComment: PandocFormatComment = {};
-    if (variables.mode) {
-      formatComment.mode = variables.mode;
-    }
-    if (variables.extensions) {
-      formatComment.extensions = variables.extensions;
-    }
-    if (variables['fill-column']) {
-      formatComment.fillColumn = parseInt(variables['fill-column'], 10) || undefined;
-    }
-    return formatComment;
-  } else {
-    return {};
-  }
-}
-
-export function pandocFormatCommentFromState(state: EditorState): PandocFormatComment {
-  let comment: PandocFormatComment = {};
-  let foundFirstRawInline = false;
-  state.doc.descendants((node, pos) => {
-    // don't search once we've found our target
-    if (foundFirstRawInline) {
-      return false;
-    }
-    // if it's a text node with a raw-html then scan it for the format comment
-    if (node.isText && state.schema.marks.raw_html.isInSet(node.marks)) {
-      foundFirstRawInline = true;
-      comment = pandocFormatCommentFromCode(node.textContent);
-      return false;
-    } else {
-      return true;
-    }
-  });
-  return comment;
-}
-
-export function resolvePandocFormatComment(formatComment: PandocFormatComment, defaultFormat: string) {
-  const format = splitPandocFormatString(defaultFormat);
-  if (formatComment.mode) {
-    format.format = formatComment.mode;
-    format.options = formatComment.extensions || '';
-  } else if (formatComment.extensions) {
-    format.options = formatComment.extensions;
-  }
-  return format.format + format.options;
-}
-
 export function splitPandocFormatString(format: string) {
   // split out base format from options
   let optionsPos = format.indexOf('-');
@@ -227,3 +203,21 @@ export function splitPandocFormatString(format: string) {
   };
 }
 
+// https://github.com/russross/blackfriday/tree/v2#extensions
+function blackfridayExtensions(format: EditorFormat) {
+  const extensions = [
+    'intraword_underscores',
+    'pipe_tables',
+    'backtick_code_blocks',
+    'definition_lists',
+    'footnotes',
+    'autolink_bare_uris',
+    'strikeout',
+    'smart',
+    'yaml_metadata_block',
+  ];
+  if (format.rmdExtensions.blogdownMathInCode) {
+    extensions.push('tex_math_dollars');
+  }
+  return extensions;
+}

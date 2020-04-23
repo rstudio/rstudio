@@ -86,7 +86,7 @@ export type ImageEditorFn = (
 export type CodeBlockEditorFn = (
   codeBlock: CodeBlockProps,
   attributes: boolean,
-  languages: string[]
+  languages: string[],
 ) => Promise<CodeBlockEditResult | null>;
 
 export type OrderedListEditorFn = (

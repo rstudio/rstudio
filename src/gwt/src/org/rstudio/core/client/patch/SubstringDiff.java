@@ -28,10 +28,12 @@ public class SubstringDiff
          offset_       = diff.getInteger("offset");
          length_       = diff.getInteger("length");
          valid_        = true;
+        
       }
       catch (Exception e)
       {
          Debug.logException(e);
+         
          replacement_ = "";
          offset_ = 0;
          length_ = 0;
@@ -43,8 +45,8 @@ public class SubstringDiff
    /*-{
    
       // Convert to UTF-8 byte array.
-      var o = new TextEncoder("utf-8").encode(origVal);
-      var n = new TextEncoder("utf-8").encode(newVal);
+      var o = new $wnd.TextEncoder("utf-8").encode(origVal);
+      var n = new $wnd.TextEncoder("utf-8").encode(newVal);
       
       var olen = o.length;
       var nlen = n.length;
@@ -93,8 +95,9 @@ public class SubstringDiff
       }
       
       // Extract the modified slice of data, and decode it back to a string.
-      var slice = n.slice(head, tail + tailDelta);
-      var replacement = new TextDecoder().decode(slice);
+      // NOTE: Internet Explorer does not support slice on Uint8Array objects.
+      var slice = n.subarray(head, tail + tailDelta);
+      var replacement = new $wnd.TextDecoder().decode(slice);
       
       return {
          "replacement": replacement,

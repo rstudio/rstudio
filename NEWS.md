@@ -13,6 +13,7 @@
 
 * The Files pane now sorts file names naturally, so that e.g. `step10.R` comes after `step9.R`. (#5766)
 * Added command to File pane's "More" menu to copy path to clipboard (#6344)
+* Table summaries are shown for `tibble` objects in R Notebooks. (#5970)
 * The user data folder `~/.rstudio` has been moved to `~/.local/share/rstudio`, and its location can now be customized with `XDG_DATA_HOME`. (#1846)
 * The font used in the editor and console can now be customized on RStudio Server. (#2534)
 * `XDG_CONFIG_DIRS` can be used to specify alternate directories for server configuration files. (Pro #1607)
@@ -33,3 +34,4 @@
 * Fixed submission of inconsistently indented Python blocks to `reticulate` (#5094)
 * Fixed error when redirecting inside Plumber applications in RStudio Server Pro (Pro #1570)
 * Fixed failure to open files after an attempt to open a very large file (#6637)
+* Fixed Data Viewer getting out of sync with the underlying data when changing live viewer object (#1819)

@@ -43,7 +43,6 @@ public class DataEditingTarget extends UrlContentEditingTarget
    enum QueuedRefreshType
    {
       NoRefresh,
-      DataRefresh,
       StructureRefresh
    }
 
@@ -89,22 +88,14 @@ public class DataEditingTarget extends UrlContentEditingTarget
    @Override
    public void onDataViewChanged(DataViewChangedEvent event)
    {
-      if (event.getData().getCacheKey() == getDataItem().getCacheKey())
+      if (event.getData().getCacheKey().equals(getDataItem().getCacheKey()))
       {
-         // figure out what kind of refresh we need--if we already have a full
-         // (structural) refresh queued, it trumps other refresh types
-         if (queuedRefresh_ != QueuedRefreshType.StructureRefresh)
-         {
-            queuedRefresh_ = event.getData().structureChanged() ? 
-                  QueuedRefreshType.StructureRefresh : 
-                  QueuedRefreshType.DataRefresh;
-         }
-
+         queuedRefresh_ = QueuedRefreshType.StructureRefresh;
          // perform the refresh immediately if the tab is active; otherwise,
          // leave it in the queue and it'll be run when the tab is activated
          if (isActive_)
          {
-            doQueuedRefresh(false);
+            doQueuedRefresh();
          }
       }
    }
@@ -118,21 +109,16 @@ public class DataEditingTarget extends UrlContentEditingTarget
    }
 
    @Override
-   public void onActivate(boolean forUser)
+   public void onActivate()
    {
-      super.onActivate(forUser);
+      super.onActivate();
       if (view_ != null)
       {
+         // the data change while the window wasn't active, so refresh it,
          if (queuedRefresh_ != QueuedRefreshType.NoRefresh)
-         {
-            // the data change while the window wasn't active, so refresh it,
-            // and recompute the size when finished
-            doQueuedRefresh(true);
-         }
+            doQueuedRefresh();
          else
-         {
             view_.onActivate();
-         }
       }
    }
 
@@ -151,12 +137,9 @@ public class DataEditingTarget extends UrlContentEditingTarget
       // have an associated content URL to clean up
    }
    
-   private void doQueuedRefresh(boolean onActivate)
+   private void doQueuedRefresh()
    {
-      if (queuedRefresh_ == QueuedRefreshType.DataRefresh)
-         view_.refreshData(false, onActivate);
-      else if (queuedRefresh_ == QueuedRefreshType.StructureRefresh)
-         view_.refreshData(true, onActivate);
+      view_.refreshData();
       queuedRefresh_ = QueuedRefreshType.NoRefresh;
    }
 

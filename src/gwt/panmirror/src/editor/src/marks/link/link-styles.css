@@ -18,6 +18,11 @@
   cursor: text;
 }
 
+.ProseMirror .pm-popup-link > * {
+  vertical-align: middle;
+  display: inline-block;
+}
+
 .ProseMirror .pm-popup-link a {
   white-space: nowrap;
   overflow: hidden;

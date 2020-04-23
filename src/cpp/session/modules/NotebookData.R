@@ -92,9 +92,16 @@
       options,
       file = output)
 
-    .Call("rs_recordData", output, list(classes = className,
-                                        nrow = nRow, 
-                                        ncol = nCol))
+    # standard metadata
+    metadata <- list(classes = className, nrow = nRow, ncol = nCol, summary = list())
+
+    # if tibble is loaded, use it to create a summary of the object
+    if ("tibble" %in% loadedNamespaces())
+    {
+       metadata$summary <- as.list(tibble::tbl_sum(original))
+    }
+
+    .Call("rs_recordData", output, metadata, PACKAGE = "(embedding)")
     invisible(original)
   }
 

@@ -20,6 +20,7 @@ import jsinterop.annotations.JsType;
 import org.rstudio.core.client.jsinterop.JsVoidFunction;
 import org.rstudio.studio.client.panmirror.command.PanmirrorCommand;
 import org.rstudio.studio.client.panmirror.findreplace.PanmirrorFindReplace;
+import org.rstudio.studio.client.panmirror.format.PanmirrorFormat;
 import org.rstudio.studio.client.panmirror.outline.PanmirrorOutlineItem;
 import org.rstudio.studio.client.panmirror.pandoc.PanmirrorPandocFormat;
 import org.rstudio.studio.client.panmirror.theme.PanmirrorTheme;
@@ -35,8 +36,8 @@ public class PanmirrorEditor
 {
    public native static Promise<PanmirrorEditor> create(Element parent, 
                                                         PanmirrorContext context, 
-                                                        PanmirrorOptions options, 
-                                                        String code);
+                                                        PanmirrorFormat format,
+                                                        PanmirrorOptions options);
    
    public native void destroy();
    
@@ -70,7 +71,7 @@ public class PanmirrorEditor
 
    public native void applyTheme(PanmirrorTheme theme);
    
-   public native void useFixedPadding(boolean fixed);
+   public native void setMaxContentWidth(int maxWidth, int minPadding);
    
    public native void setKeybindings(PanmirrorKeybindings keybindings);
    

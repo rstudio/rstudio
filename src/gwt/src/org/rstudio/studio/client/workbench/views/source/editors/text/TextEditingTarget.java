@@ -1434,7 +1434,18 @@ public class TextEditingTarget implements
       
       name_.setValue(getNameFromDocument(document, defaultNameProvider), true);
       String contents = document.getContents();
-      docDisplay_.setCode(contents, false);
+      
+      // Set document contents, but disable autosave during this
+      // interval (avoid spurious saves immediately after opening a document)
+      try
+      {
+         docUpdateSentinel_.suspendAutosave(true);
+         docDisplay_.setCode(contents, false);
+      }
+      finally
+      {
+         docUpdateSentinel_.suspendAutosave(false);
+      }
       
       // Discover dependencies on file first open.
       packageDependencyHelper_.discoverPackageDependencies();
@@ -1744,22 +1755,23 @@ public class TextEditingTarget implements
          }
       });
       
+      
+      // initialize visual mode
+      visualMode_ = new TextEditingTargetVisualMode(
+         TextEditingTarget.this,
+         view_,
+         docDisplay_,
+         dirtyState_, 
+         docUpdateSentinel_,
+         events_,
+         releaseOnDismiss_
+      );
+      
       Scheduler.get().scheduleDeferred(new ScheduledCommand()
       {
          @Override
          public void execute()
-         {
-            // initialize visual mode
-            visualMode_ = new TextEditingTargetVisualMode(
-               TextEditingTarget.this,
-               view_,
-               docDisplay_,
-               dirtyState_, 
-               docUpdateSentinel_,
-               events_,
-               releaseOnDismiss_
-            );
-            
+         {            
             if (!prefs_.restoreSourceDocumentCursorPosition().getValue())
                return;
             
@@ -2228,7 +2240,7 @@ public class TextEditingTarget implements
       if (fileType_.isRmd())
          notebook_.manageCommands();
       
-      if (fileType_.isMarkdown() && (visualMode_ != null))
+      if (fileType_.isMarkdown())
          visualMode_.manageCommands();
    }
    
@@ -2346,7 +2358,7 @@ public class TextEditingTarget implements
       handlers_.fireEvent(event);
    }
 
-   public void onActivate(boolean forUser)
+   public void onActivate()
    {
       // IMPORTANT NOTE: most of this logic is duplicated in 
       // CodeBrowserEditingTarget (no straightforward way to create a
@@ -2395,14 +2407,6 @@ public class TextEditingTarget implements
          notebook_.onActivate();
       
       view_.onActivate();
-      
-      if (forUser) 
-      {
-         // defer interactions with visual mode b/c it's creation is also deferred
-         Scheduler.get().scheduleDeferred(() -> {
-            visualMode_.onUserEditingDoc();
-         });
-      }
    }
 
    public void onDeactivate()
@@ -2425,6 +2429,8 @@ public class TextEditingTarget implements
       {
          Debug.log("Exception recording nav position: " + e.toString());
       }
+      
+      visualMode_.unmanageCommands();
    }
 
    @Override
@@ -2440,8 +2446,7 @@ public class TextEditingTarget implements
          public void execute()
          {
             // notify visual mode
-            if (visualMode_ != null)
-               visualMode_.onClosing();
+            visualMode_.onClosing();
             
             // fire close event
             CloseEvent.fire(TextEditingTarget.this, null);
@@ -3201,11 +3206,53 @@ public class TextEditingTarget implements
    @Handler
    void onReopenSourceDocWithEncoding()
    {
-	   saveThenExecute(null, () -> {
-	      withChooseEncoding(
-	            docUpdateSentinel_.getEncoding(),
-	            (String encoding) -> docUpdateSentinel_.reopenWithEncoding(encoding));
-	   });
+      final Command action = () -> {
+         withChooseEncoding(
+               docUpdateSentinel_.getEncoding(),
+               (String encoding) -> docUpdateSentinel_.reopenWithEncoding(encoding));
+      };
+      
+      // NOTE: we previously attempted to save any existing document diffs
+      // and then re-opened the document with the requested encoding, but
+      // this is a perilous action to take as if the user has opened a document
+      // without specifying the correct encoding, the representation of the document
+      // in the front-end might be corrupt / incorrect and so attempting to save
+      // a document diff could further corrupt the document!
+      //
+      // Since the most common user workflow here should be:
+      //
+      //    1. Open a document,
+      //    2. Discover the document was not opened with the correct encoding,
+      //    3. Attempt to re-open with a separate encoding
+      //
+      // it's most likely that they do not want to persist any changes made to the
+      // "incorrect" version of the document and instead want to discard any
+      // changes and re-open the document as it exists on disk.
+      if (dirtyState_.getValue())
+      {
+         String caption = "Reopen with Encoding";
+         
+         String message =
+               "This document has unsaved changes. These changes will be " +
+               "discarded when re-opening the document.\n\n" +
+               "Would you like to proceed?";
+         
+         globalDisplay_.showYesNoMessage(
+               GlobalDisplay.MSG_WARNING,
+               caption,
+               message,
+               true,
+               () -> action.execute(),
+               () -> {},
+               () -> {},
+               "Reopen Document",
+               "Cancel",
+               true);
+      }
+      else
+      {
+         action.execute();
+      }
    }
 
    @Handler
@@ -6728,10 +6775,8 @@ public class TextEditingTarget implements
    private void revertEdits()
    {
       docUpdateSentinel_.revert(() -> {
-         if (visualMode_.isActivated())
-            visualMode_.syncFromEditor(null, false);
+         visualMode_.syncFromEditorIfActivated();
       }, false);
-      
    }
    
    private SourcePosition toSourcePosition(Scope func)
@@ -7539,9 +7584,12 @@ public class TextEditingTarget implements
       // Cancel any existing autosave timer
       autoSaveTimer_.cancel();
       
-      // Start new timer if enabled
-      if (prefs_.autoSaveOnIdle().getValue() == UserPrefs.AUTO_SAVE_ON_IDLE_COMMIT)
-         autoSaveTimer_.schedule(prefs_.autoSaveMs());
+      // Bail if not enabled
+      if (prefs_.autoSaveOnIdle().getValue() != UserPrefs.AUTO_SAVE_ON_IDLE_COMMIT)
+         return;
+      
+      // OK, schedule autosave
+      autoSaveTimer_.schedule(prefs_.autoSaveMs());
    }
    
    private boolean isVisualModeActivated()

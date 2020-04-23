@@ -1,15 +1,9 @@
 @charset "UTF-8";
 
-@external ProseMirror, pm-editing-root-node, pm-fixed-padding, body;
+@external ProseMirror, js-focus-visible, focus-visible, pm-editing-root-node, body;
 
-.ProseMirror .pm-editing-root-node {
-   padding-left: literal("calc((100% - 700px)/2)");
-   padding-right: literal("calc((100% - 700px)/2)");
-}
-
-.pm-fixed-padding .pm-editing-root-node {
-   padding-left: 20px;
-   padding-right: 20px;
+.js-focus-visible .ProseMirror.focus-visible {
+	outline-style: none !important; 
 }
 
 .ProseMirror .body {

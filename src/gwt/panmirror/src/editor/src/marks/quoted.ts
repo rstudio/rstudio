@@ -14,21 +14,18 @@
  */
 
 import { Schema, Mark, Fragment, Node as ProsemirrorNode } from 'prosemirror-model';
+import { Transaction } from 'prosemirror-state';
+import { findChildren } from 'prosemirror-utils';
 
 import { Extension } from '../api/extension';
 import { PandocOutput, PandocToken, PandocTokenType } from '../api/pandoc';
 import { removeInvalidatedMarks, detectAndApplyMarks } from '../api/mark';
 import { FixupContext } from '../api/fixup';
-import { Transaction } from 'prosemirror-state';
-import { findChildren } from 'prosemirror-utils';
+import { MarkTransaction } from '../api/transaction';
+import { QuoteType, quotesForType } from '../api/quote';
 
 const QUOTE_TYPE = 0;
 const QUOTED_CHILDREN = 1;
-
-enum QuoteType {
-  SingleQuote = 'SingleQuote',
-  DoubleQuote = 'DoubleQuote',
-}
 
 const extension: Extension = {
   marks: [
@@ -98,7 +95,6 @@ const extension: Extension = {
   ],
 
   fixups: (schema: Schema) => {
-
     const kDoubleQuoted = /“[^”]*”/g;
     const kSingleQuoted = /‘[^’]*’/g;
     const kQuoted = /(“[^”]*”|‘[^’]*’)/g;
@@ -110,6 +106,9 @@ const extension: Extension = {
           return tr;
         }
 
+        // create mark transation wrapper
+        const markTr = new MarkTransaction(tr);
+
         const predicate = (node: ProsemirrorNode) => {
           return node.isTextblock && node.type.allowsMarkType(node.type.schema.marks.quoted);
         };
@@ -117,13 +116,13 @@ const extension: Extension = {
           const { node, pos } = nodeWithPos;
 
           // find quoted marks where the text is no longer quoted (remove the mark)
-          removeInvalidatedMarks(tr, node, pos, kQuoted, schema.marks.quoted);
+          removeInvalidatedMarks(markTr, node, pos, kQuoted, schema.marks.quoted);
 
           // find quoted text that doesn't have a quoted mark (add the mark)
-          detectAndApplyMarks(tr, tr.doc.nodeAt(pos)!, pos, kDoubleQuoted, schema.marks.quoted, {
+          detectAndApplyMarks(markTr, tr.doc.nodeAt(pos)!, pos, kDoubleQuoted, schema.marks.quoted, {
             type: QuoteType.DoubleQuote,
           });
-          detectAndApplyMarks(tr, tr.doc.nodeAt(pos)!, pos, kSingleQuoted, schema.marks.quoted, {
+          detectAndApplyMarks(markTr, tr.doc.nodeAt(pos)!, pos, kSingleQuoted, schema.marks.quoted, {
             type: QuoteType.SingleQuote,
           });
         });
@@ -134,12 +133,5 @@ const extension: Extension = {
   },
 };
 
-function quotesForType(type: QuoteType) {
-  const dblQuote = type === QuoteType.DoubleQuote;
-  return {
-    begin: dblQuote ? '“' : '‘',
-    end: dblQuote ? '”' : '’',
-  };
-}
 
 export default extension;

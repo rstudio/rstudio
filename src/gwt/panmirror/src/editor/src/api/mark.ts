@@ -17,7 +17,7 @@ import { Mark, MarkSpec, MarkType, ResolvedPos, Node as ProsemirrorNode } from '
 import { EditorState, Selection } from 'prosemirror-state';
 import { InputRule } from 'prosemirror-inputrules';
 
-import { PandocTokenReader, PandocMarkWriterFn } from './pandoc';
+import { PandocTokenReader, PandocMarkWriterFn, PandocInlineHTMLReaderFn, PandocPreprocessorFn } from './pandoc';
 import { mergedTextNodes } from './text';
 import { findChildrenByMark } from 'prosemirror-utils';
 import { MarkTransaction } from './transaction';
@@ -28,6 +28,7 @@ export interface PandocMark {
   readonly noInputRules?: boolean;
   readonly pandoc: {
     readonly readers: readonly PandocTokenReader[];
+    readonly inlineHTMLReader?: PandocInlineHTMLReaderFn;
     readonly writer: {
       priority: number;
       write: PandocMarkWriterFn;
@@ -257,7 +258,8 @@ export function detectAndApplyMarks(
     while (match !== null) {
       const from = pos + 1 + textNode.pos + match.index;
       const to = from + match[0].length;
-      if (!tr.doc.rangeHasMark(from, to, markType)) {
+      const range = getMarkRange(tr.doc.resolve(to), markType);
+      if (!range || range.from !== from || range.to !== to) {
         const mark = markType.create(attrs);
         tr.addMark(from, to, mark);
         if (tr.selection.anchor === to) {

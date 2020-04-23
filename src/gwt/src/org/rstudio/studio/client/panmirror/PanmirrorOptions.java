@@ -24,12 +24,7 @@ public class PanmirrorOptions
    public boolean autoFocus;
    public boolean spellCheck;
    public boolean codemirror;
-   public boolean braceMatching;
-   public boolean rmdCodeChunks;
    public boolean rmdImagePreview;
-   public boolean rmdBookdownXRef;
-   public boolean rmdBookdownXRefCommand;
-   public boolean rmdBlogdownShortcodes;
-   public boolean formatComment;
+   public boolean hideFormatComment;
    public String className;
 }

@@ -13,31 +13,26 @@
  *
  */
 
-import { EditorState, Transaction, NodeSelection } from "prosemirror-state";
-import { EditorView } from "prosemirror-view";
-import { Mark, Node as ProsemirrorNode } from "prosemirror-model";
+import { EditorState, Transaction, NodeSelection } from 'prosemirror-state';
+import { EditorView } from 'prosemirror-view';
+import { Mark, Node as ProsemirrorNode } from 'prosemirror-model';
 
-import { findParentNode } from "prosemirror-utils";
+import { findParentNode } from 'prosemirror-utils';
 
-import { EditorUI } from "../../api/ui";
-import { pandocAttrInSpec } from "../../api/pandoc_attr";
-import { getSelectionMarkRange } from "../../api/mark";
-import { EditorCommandId, ProsemirrorCommand } from "../../api/command";
+import { EditorUI } from '../../api/ui';
+import { pandocAttrInSpec } from '../../api/pandoc_attr';
+import { getSelectionMarkRange } from '../../api/mark';
+import { EditorCommandId, ProsemirrorCommand } from '../../api/command';
 
-import { kEditAttrShortcut } from "./attr_edit";
+import { kEditAttrShortcut } from './attr_edit';
 
 export class AttrEditCommand extends ProsemirrorCommand {
   constructor(ui: EditorUI) {
-    super(
-      EditorCommandId.AttrEdit,
-      [kEditAttrShortcut],
-      attrEditCommandFn(ui),
-    );
+    super(EditorCommandId.AttrEdit, [kEditAttrShortcut], attrEditCommandFn(ui));
   }
 }
 
 export function attrEditCommandFn(ui: EditorUI) {
-
   return (state: EditorState, dispatch?: (tr: Transaction<any>) => void, view?: EditorView) => {
     // see if there is an active mark with attrs or a parent node with attrs
     const marks = state.storedMarks || state.selection.$head.marks();
@@ -113,7 +108,6 @@ async function editNodeAttrs(
   dispatch: (tr: Transaction<any>) => void,
   ui: EditorUI,
 ): Promise<void> {
-
   const attrs = node.attrs;
   const result = await ui.dialogs.editAttr({ ...attrs });
   if (result) {
@@ -123,7 +117,5 @@ async function editNodeAttrs(
         ...result.attr,
       }),
     );
-  }  
+  }
 }
-
-

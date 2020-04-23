@@ -57,7 +57,7 @@ public class PanmirrorEditRawDialog extends ModalDialog<PanmirrorRawFormatResult
       
       inline_ = inline;
    
-      rawFormatSelect_.setFormats(outputFormats);
+      rawFormatSelect_.setFormats(outputFormats, raw.format);
       rawFormatSelect_.setValue(StringUtil.notNull(raw.format));
       rawFormatSelect_.getListBox().getElement().setId(ElementIds.VISUAL_MD_RAW_FORMAT_SELECT);
       

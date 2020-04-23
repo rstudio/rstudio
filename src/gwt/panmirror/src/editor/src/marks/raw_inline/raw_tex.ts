@@ -156,7 +156,6 @@ function texInputRule(schema: Schema) {
       tr.insertText('\\');
 
       // extend the mark to cover any valid tex that immediately follows the \
-      let extended = false;
       const { parent, parentOffset } = tr.selection.$head;
       const text = parent.textContent.slice(parentOffset - 1);
       if (text.length > 0) {
@@ -164,20 +163,20 @@ function texInputRule(schema: Schema) {
         if (length > 1) {
           const startTex = tr.selection.from - 1;
           tr.addMark(startTex, startTex + length, mark);
-          extended = true;
+          return tr;
         }
       }
 
-      // if it wasn't extended then insert/select placeholder
-      if (!extended) {
+      // insert placeholder if it's a standalone \
+      if (text === '\\' || text.startsWith('\\ ')) {
         tr.insertText(kTexPlaceholder);
         setTexSelectionAfterInsert(tr);
+        return tr;
       }
-
-      return tr;
-    } else {
-      return null;
     }
+
+    // didn't find a valid context for a tex comand
+    return null;
   });
 }
 

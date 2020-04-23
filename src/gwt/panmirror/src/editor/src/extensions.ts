@@ -41,6 +41,7 @@ import {
 import { EditorEvents } from './api/events';
 import { AttrEditOptions } from './api/attr_edit';
 import { PandocCapabilities } from './api/pandoc_capabilities';
+import { EditorFormat } from './api/format';
 
 // required extensions (base non-customiziable pandoc nodes/marks + core behaviors)
 import nodeText from './nodes/text';
@@ -85,6 +86,8 @@ import markMath from './marks/math/math';
 import markCite from './marks/cite/cite';
 import markSpan from './marks/span';
 import markXRef from './marks/xref';
+import markFormatComment from './marks/format_comment';
+import markShortcode from './marks/shortcode';
 
 // nodes
 import nodeFootnote from './nodes/footnote/footnote';
@@ -100,8 +103,8 @@ import nodeDefinitionList from './nodes/definition_list/definition_list';
 import { codeMirrorPlugins } from './optional/codemirror/codemirror';
 import { attrEditDecorationPlugin } from './behaviors/attr_edit/attr_edit-decoration';
 
-
 export function initExtensions(
+  format: EditorFormat,
   options: EditorOptions,
   ui: EditorUI,
   events: EditorEvents,
@@ -110,7 +113,7 @@ export function initExtensions(
   pandocCapabilities: PandocCapabilities,
 ): ExtensionManager {
   // create extension manager
-  const manager = new ExtensionManager(pandocExtensions, pandocCapabilities, options, ui, events);
+  const manager = new ExtensionManager(pandocExtensions, pandocCapabilities, format, options, ui, events);
 
   // required extensions
   manager.register([
@@ -159,7 +162,9 @@ export function initExtensions(
     markCite,
     markSpan,
     markXRef,
-    
+    markFormatComment,
+    markShortcode,
+
     // nodes
     nodeDiv,
     nodeFootnote,
@@ -176,19 +181,19 @@ export function initExtensions(
     manager.register(extensions);
   }
 
-   // additional plugins derived from extensions
-   const plugins: Plugin[] = [];
+  // additional plugins derived from extensions
+  const plugins: Plugin[] = [];
 
-   // codemirror code views
-   if (options.codemirror) {
-     plugins.push(...codeMirrorPlugins(manager.codeViews()));
-   }
+  // codemirror code views
+  if (options.codemirror) {
+    plugins.push(...codeMirrorPlugins(manager.codeViews()));
+  }
 
-   // attribute editor plugin
-   plugins.push(attrEditDecorationPlugin(ui, manager.attrEditors()));
+  // attribute editor plugin
+  plugins.push(attrEditDecorationPlugin(ui, manager.attrEditors()));
 
-   // register plugins
-   manager.registerPlugins(plugins);
+  // register plugins
+  manager.registerPlugins(plugins);
 
   // return manager
   return manager;
@@ -197,20 +202,23 @@ export function initExtensions(
 export class ExtensionManager {
   private pandocExtensions: PandocExtensions;
   private pandocCapabilities: PandocCapabilities;
+  private format: EditorFormat;
   private options: EditorOptions;
   private ui: EditorUI;
   private events: EditorEvents;
   private extensions: Extension[];
 
   public constructor(
-    pandocExtensions: PandocExtensions, 
-    pandocCapabilities: PandocCapabilities, 
-    options: EditorOptions, 
-    ui: EditorUI, 
-    events: EditorEvents
+    pandocExtensions: PandocExtensions,
+    pandocCapabilities: PandocCapabilities,
+    format: EditorFormat,
+    options: EditorOptions,
+    ui: EditorUI,
+    events: EditorEvents,
   ) {
     this.pandocExtensions = pandocExtensions;
     this.pandocCapabilities = pandocCapabilities;
+    this.format = format;
     this.options = options;
     this.ui = ui;
     this.events = events;
@@ -220,7 +228,14 @@ export class ExtensionManager {
   public register(extensions: ReadonlyArray<Extension | ExtensionFn>): void {
     extensions.forEach(extension => {
       if (typeof extension === 'function') {
-        const ext = extension(this.pandocExtensions, this.pandocCapabilities, this.ui, this.options, this.events);
+        const ext = extension(
+          this.pandocExtensions,
+          this.pandocCapabilities,
+          this.ui,
+          this.format,
+          this.options,
+          this.events,
+        );
         if (ext) {
           this.extensions.push(ext);
         }
@@ -244,7 +259,6 @@ export class ExtensionManager {
 
   public pandocPreprocessors(): readonly PandocPreprocessorFn[] {
     const preprocessors: PandocPreprocessorFn[] = [];
-
     this.pandocNodes().forEach((node: PandocNode) => {
       if (node.pandoc.preprocessor) {
         preprocessors.push(node.pandoc.preprocessor);
@@ -281,6 +295,11 @@ export class ExtensionManager {
 
   public pandocInlineHTMLReaders(): readonly PandocInlineHTMLReaderFn[] {
     const htmlReaders: PandocInlineHTMLReaderFn[] = [];
+    this.pandocMarks().forEach((mark: PandocMark) => {
+      if (mark.pandoc.inlineHTMLReader) {
+        htmlReaders.push(mark.pandoc.inlineHTMLReader);
+      }
+    });
     this.pandocNodes().forEach((node: PandocNode) => {
       if (node.pandoc.inlineHTMLReader) {
         htmlReaders.push(node.pandoc.inlineHTMLReader);

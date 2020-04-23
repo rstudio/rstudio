@@ -71,8 +71,9 @@ export class PandocConverter {
   }
 
   public async toProsemirror(markdown: string, format: string): Promise<ProsemirrorNode> {
-    // adjust format
-    format = this.adjustedFormat(format);
+    // adjust format. we always need to *read* backtick_code_blocks and raw_attribute b/c
+    // that's how preprocessors hoist content through pandoc into our prosemirror token parser.
+    format = this.adjustedFormat(format, '+backtick_code_blocks+raw_attribute');
 
     // run preprocessors
     this.preprocessors.forEach(preprocessor => {
@@ -111,8 +112,11 @@ export class PandocConverter {
     // generate pandoc ast
     const output = pandocFromProsemirror(doc, this.apiVersion, pandocFormat, this.nodeWriters, this.markWriters);
 
-    // adjust format
-    let format = this.adjustedFormat(pandocFormat.fullName);
+    // adjust format. we always need to be able to write raw_attribute b/c that's how preprocessors 
+    // hoist content through pandoc into our prosemirror token parser. since we open this door when
+    // reading, users could end up writing raw inlines, and in that case we want them to echo back 
+    // to the source document just the way they came in.
+    let format = this.adjustedFormat(pandocFormat.fullName, '+raw_attribute');
 
     // prepare options
     let pandocOptions: string[] = [];
@@ -152,8 +156,8 @@ export class PandocConverter {
 
   // adjust the specified format (remove options that are never applicable
   // to editing scenarios)
-  private adjustedFormat(format: string) {
+  private adjustedFormat(format: string, extensions = '') {
     const kDisabledFormatOptions = '-auto_identifiers-gfm_auto_identifiers';
-    return pandocFormatWith(format, '', kDisabledFormatOptions);
+    return pandocFormatWith(format, '', extensions + kDisabledFormatOptions);
   }
 }

@@ -92,11 +92,21 @@ class Parser {
   }
 
   private writeToken(writer: ProsemirrorWriter, tok: PandocToken) {
-    for (const handler of this.handlers[tok.t] || []) {
+    // look for a handler.match function that wants to handle this token
+    const handlers = this.handlers[tok.t] || [];
+    for (const handler of handlers) {
       // It's not enough for a pandoc reader's preferred token to match the
       // current token; it's possible based on the `match` method for the
       // reader to decline to handle it.
-      if (!handler.match || handler.match(tok)) {
+      if (handler.match && handler.match(tok)) {
+        handler.handler(writer, tok);
+        return;
+      }
+    }
+
+    // if we didn't find one, look for the default handler
+    for (const handler of handlers) {
+      if (!handler.match) {
         handler.handler(writer, tok);
         return;
       }

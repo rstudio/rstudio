@@ -39,7 +39,7 @@ export function footnoteEditorActivationPlugin() {
         if (selectedFootnote(newState.selection) || selectedNote(newState.selection)) {
           // if we are in the same note selection as before just return the set
           if (oldState.selection.$head.node() === newState.selection.$head.node()) {
-            return set;
+            return set.map(tr.mapping, tr.doc);
           } else {
             return footnoteEditorDecorations(newState);
           }

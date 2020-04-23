@@ -557,6 +557,7 @@ int main(int argc, char * const argv[])
       if (error)
          return core::system::exitFailure(error, ERROR_LOCATION);
 
+      boost::optional<system::User> serverUser;
       if (core::system::effectiveUserIsRoot())
       {
          auto shouldChown = [&](int depth, const FilePath& file)
@@ -574,14 +575,21 @@ int main(int argc, char * const argv[])
             return true;
          };
 
-         system::User serverUser;
-         error = system::User::getUserFromIdentifier(options.serverUser(), serverUser);
+         system::User serverUserObj;
+         error = system::User::getUserFromIdentifier(options.serverUser(), serverUserObj);
          if (error)
             return core::system::exitFailure(error, ERROR_LOCATION);
 
-         error = serverDataDir.changeOwnership(serverUser, true, shouldChown);
+         serverUser = serverUserObj;
+
+         error = serverDataDir.changeOwnership(serverUserObj, true, shouldChown);
          if (error)
-            return core::system::exitFailure(error, ERROR_LOCATION);
+         {
+            error.addProperty("description",
+                              "Could not change owner for path " + serverDataDir.getAbsolutePath() +
+                                 ". Is root squash enabled?");
+            LOG_ERROR(error);
+         }
       }
 
       // ensure permissions - the folder needs to be readable and writeable
@@ -627,7 +635,7 @@ int main(int argc, char * const argv[])
          return core::system::exitFailure(error, ERROR_LOCATION);
 
       // initialize database connectivity
-      error = server_core::database::initialize(true);
+      error = server_core::database::initialize(true, serverUser);
       if (error)
          return core::system::exitFailure(error, ERROR_LOCATION);
 

@@ -46,7 +46,6 @@ import { EditorUIImages } from '../../api/ui-images';
 import { imageDialog } from './image-dialog';
 import { hasPercentWidth, imageDimensionsFromImg } from './image-util';
 
-
 const kDataWidth = 'data-width';
 const kDataHeight = 'data-height';
 
@@ -302,9 +301,9 @@ function resizeShelf(
 
   // edit button
   const editImage = createImageButton(
-    uiImages.properties, 
-    ['pm-image-button-edit-properties'], 
-    translateText('Edit Attributes')
+    uiImages.properties!,
+    ['pm-image-button-edit-properties'],
+    translateText('Edit Attributes'),
   );
   editImage.onclick = onEditImage;
   addHorizontalPanelCell(panel, editImage);

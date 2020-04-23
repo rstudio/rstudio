@@ -125,7 +125,12 @@ public:
 
          if (dirs_.at(i) == "..")
          {
-            if (!result.empty() && result.back() != "..")
+            if (result.empty())
+            {
+               continue;
+            }
+
+            if (result.back() != "..")
             {
                result.pop_back();
                continue;
@@ -185,7 +190,9 @@ std::string getDir(std::string fileOrDirPath)
    return fileOrDirPath;
 }
 
-std::string cleanupPath(std::string path)
+} // anonymous namespace
+
+std::string URL::cleanupPath(std::string path)
 {
    std::string suffix;
    splitParts(path, &path, &suffix);
@@ -195,8 +202,6 @@ std::string cleanupPath(std::string path)
    return richPath.value() + suffix;
 }
 
-} // anonymous namespace
-   
 std::string URL::complete(std::string absoluteUri, std::string targetUri)
 {
    URL uri(targetUri);
@@ -224,7 +229,7 @@ std::string URL::complete(std::string absoluteUri, std::string targetUri)
    else
       path = path + targetUri;
 
-   return prefix + cleanupPath(path);
+   return prefix + URL::cleanupPath(path);
 }
 
 std::string URL::uncomplete(std::string baseUri, std::string targetUri)
@@ -269,43 +274,6 @@ std::string URL::uncomplete(std::string baseUri, std::string targetUri)
    return to.value() + targetExtra;
 }
 
-void URL::test()
-{
-   BOOST_ASSERT(cleanupPath("") == "");
-   BOOST_ASSERT(cleanupPath("/") == "/");
-   BOOST_ASSERT(cleanupPath("./") == "");
-   BOOST_ASSERT(cleanupPath("/./") == "/");
-   BOOST_ASSERT(cleanupPath("/.") == "/.");
-   BOOST_ASSERT(cleanupPath("/foo/../") == "/");
-   BOOST_ASSERT(cleanupPath("foo/../") == "");
-   BOOST_ASSERT(cleanupPath("/foo/bar/../../") == "/");
-   BOOST_ASSERT(cleanupPath("foo/bar/../../") == "");
-   BOOST_ASSERT(cleanupPath("/foo/bar/../../") == "/");
-   BOOST_ASSERT(cleanupPath("/foo/bar/../..") == "/foo/..");
-   BOOST_ASSERT(cleanupPath("/foo/?/../") == "/foo/?/../");
-   BOOST_ASSERT(cleanupPath("/foo/#/../") == "/foo/#/../");
-   BOOST_ASSERT(cleanupPath("/foo/?/../#/../") == "/foo/?/../#/../");
-
-   BOOST_ASSERT(complete("http://www.example.com", "foo") == "http://www.example.com/foo");
-   BOOST_ASSERT(complete("http://www.example.com/foo", "bar") == "http://www.example.com/bar");
-   BOOST_ASSERT(complete("http://www.example.com/foo/", "bar") == "http://www.example.com/foo/bar");
-   BOOST_ASSERT(complete("http://www.example.com:80/foo/", "/bar") == "http://www.example.com:80/bar");
-   BOOST_ASSERT(complete("http://www.example.com:80/foo/bar", "baz/qux") == "http://www.example.com:80/foo/baz/qux");
-   BOOST_ASSERT(complete("http://www.example.com:80/foo/bar", "../baz/qux") == "http://www.example.com:80/baz/qux");
-   BOOST_ASSERT(complete("http://www.example.com:80/foo/bar/", "../baz/qux") == "http://www.example.com:80/foo/baz/qux");
-   BOOST_ASSERT(complete("http://www.example.com:80/foo/bar/", "baz/../qux") == "http://www.example.com:80/foo/bar/qux");
-   BOOST_ASSERT(complete("http://www.example.com:80/foo/bar", "http://baz") == "http://baz");
-
-   BOOST_ASSERT(complete("foo/bar/", "baz/qux") == "foo/bar/baz/qux");
-   BOOST_ASSERT(complete("foo/bar/", "../baz/qux") == "foo/baz/qux");
-   BOOST_ASSERT(complete("../foo/bar/", "../baz/qux") == "../foo/baz/qux");
-   BOOST_ASSERT(complete("../../foo/bar/", "../baz/qux") == "../../foo/baz/qux");
-
-   BOOST_ASSERT(uncomplete("/foo/bar/baz", "/foo/qux/quux") == "../qux/quux");
-   BOOST_ASSERT(uncomplete("/foo/bar/baz/", "/foo/qux/quux") == "../../qux/quux");
-   BOOST_ASSERT(uncomplete("/bar/baz", "/qux/quux") == "../qux/quux");
-}
- 
 } // namespace http
 } // namespace core
 } // namespace rstudio

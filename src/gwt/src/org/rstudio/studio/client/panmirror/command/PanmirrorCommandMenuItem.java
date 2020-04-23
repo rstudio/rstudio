@@ -31,14 +31,24 @@ public class PanmirrorCommandMenuItem extends MenuItem implements PanmirrorComma
 {
    public PanmirrorCommandMenuItem(PanmirrorCommandUI commandUI)
    {
+      this(commandUI, null);
+   }
+   
+   public PanmirrorCommandMenuItem(PanmirrorCommandUI commandUI, String menuText)
+   {
       super(
-        AppCommand.formatMenuLabel(null, commandUI.getMenuText(), null), 
+        AppCommand.formatMenuLabel(
+         null, 
+         menuText != null ? menuText : commandUI.getMenuText(), 
+         null
+        ), 
         true, 
         commandUI.getMenuRole(),
         commandUI.isActive(),
         commandUI
       );
       commandUI_ = commandUI;
+      menuText_ = menuText;
       sync(true);
    }
    
@@ -70,7 +80,7 @@ public class PanmirrorCommandMenuItem extends MenuItem implements PanmirrorComma
    {
       return AppCommand.formatMenuLabelWithStyle(
          menuImageResource(), 
-         commandUI_.getMenuText(), 
+         menuText_ != null ? menuText_ : commandUI_.getMenuText(), 
          commandUI_.getShortcut(), 
          isCheckable() ? ThemeStyles.INSTANCE.menuCheckable() : null
       );
@@ -94,6 +104,7 @@ public class PanmirrorCommandMenuItem extends MenuItem implements PanmirrorComma
    
   
    private final PanmirrorCommandUI commandUI_;
+   private final String menuText_;
    
 
 }

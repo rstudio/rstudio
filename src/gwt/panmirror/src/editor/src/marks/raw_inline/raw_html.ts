@@ -88,12 +88,7 @@ const extension = (pandocExtensions: PandocExtensions, pandocCapabilities: Pando
 
     // insert command
     commands: (schema: Schema, ui: EditorUI) => {
-      return [new RawInlineCommand(
-        EditorCommandId.HTMLInline, 
-        kHTMLFormat, 
-        ui, 
-        pandocCapabilities.output_formats
-      )];
+      return [new RawInlineCommand(EditorCommandId.HTMLInline, kHTMLFormat, ui, pandocCapabilities.output_formats)];
     },
   };
 };

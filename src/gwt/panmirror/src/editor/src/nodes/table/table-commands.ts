@@ -256,11 +256,8 @@ export enum CssAlignment {
   Center = 'center',
 }
 
-
 export class TableRowCommand extends ProsemirrorCommand {
-
   public plural(state: EditorState) {
-    
     if (!isInTable(state)) {
       return 1;
     }
@@ -271,9 +268,7 @@ export class TableRowCommand extends ProsemirrorCommand {
 }
 
 export class TableColumnCommand extends ProsemirrorCommand {
-
   public plural(state: EditorState) {
-    
     if (!isInTable(state)) {
       return 1;
     }

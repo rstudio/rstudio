@@ -1,5 +1,3 @@
-
-
 /*
  * node_attr.tsx
  *
@@ -15,17 +13,14 @@
  *
  */
 
-import { Node as ProsemirrorNode, NodeType, Schema } from "prosemirror-model";
+import { Node as ProsemirrorNode, NodeType, Schema } from 'prosemirror-model';
 
-import { CommandFn } from "./command";
-import { EditorUI } from "./ui";
+import { CommandFn } from './command';
+import { EditorUI } from './ui';
 
 export interface AttrEditOptions {
-   type: (schema: Schema) => NodeType;
-   tags?: (node: ProsemirrorNode) => string[];
-   editFn?: (ui: EditorUI) => CommandFn;
+  type: (schema: Schema) => NodeType;
+  tags?: (node: ProsemirrorNode) => string[];
+  editFn?: (ui: EditorUI) => CommandFn;
+  offset?: number;
 }
-
-
-
-

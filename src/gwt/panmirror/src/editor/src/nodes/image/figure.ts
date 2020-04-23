@@ -52,6 +52,8 @@ import { inlineHTMLIsImage } from './image-util';
 
 import './figure-styles.css';
 import { PandocCapabilities } from '../../api/pandoc_capabilities';
+import { trTransform } from '../../api/transaction';
+import { EditorFormat } from '../../api/format';
 
 const plugin = new PluginKey('figure');
 
@@ -59,6 +61,7 @@ const extension = (
   pandocExtensions: PandocExtensions,
   _pandocCapabilities: PandocCapabilities,
   ui: EditorUI,
+  _format: EditorFormat,
   _options: EditorOptions,
   events: EditorEvents,
 ): Extension | null => {
@@ -196,16 +199,15 @@ export function deleteCaption() {
 }
 
 function convertImagesToFigure(tr: Transaction) {
-  // create a new transform so we can do position mapping relative
-  // to the actions taken here (b/c the transaction might already
-  // have other steps so we can't do tr.mapping.map)
-  const newActions = new Transform(tr.doc);
+  return trTransform(tr, imagesToFiguresTransform);
+}
 
+function imagesToFiguresTransform(tr: Transform) {
   const schema = tr.doc.type.schema;
   const images = findChildrenByType(tr.doc, schema.nodes.image);
   images.forEach(image => {
     // position reflecting steps already taken in this handler
-    const mappedPos = newActions.mapping.mapResult(image.pos);
+    const mappedPos = tr.mapping.mapResult(image.pos);
 
     // process image so long as it wasn't deleted by a previous step
     if (!mappedPos.deleted) {
@@ -232,22 +234,14 @@ function convertImagesToFigure(tr: Transaction) {
         // figure content
         const content = attrs.alt ? Fragment.from(schema.text(attrs.alt)) : Fragment.empty;
 
-        // create figure
-        const figure = schema.nodes.figure.createAndFill(attrs, content);
-
         // replace image with figure
-        tr.replaceRangeWith(mappedPos.pos, mappedPos.pos + image.node.nodeSize, figure);
+        const figure = schema.nodes.figure.createAndFill(attrs, content);
+        if (figure) {
+          tr.replaceRangeWith(mappedPos.pos, mappedPos.pos + image.node.nodeSize, figure);
+        }
       }
     }
   });
-
-  // copy the contents of newActions to the actual transaction
-  for (const step of newActions.steps) {
-    tr.step(step);
-  }
-
-  // return transaction
-  return tr;
 }
 
 function isParaWrappingFigure(tok: PandocToken) {

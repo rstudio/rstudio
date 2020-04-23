@@ -15,11 +15,19 @@
 
 import { Fragment, Node as ProsemirrorNode } from 'prosemirror-model';
 import { Transaction, EditorState, TextSelection } from 'prosemirror-state';
-import { findChildrenByType, NodeWithPos, findSelectedNodeOfType, findParentNode } from 'prosemirror-utils';
+import {
+  findChildrenByType,
+  NodeWithPos,
+  findSelectedNodeOfType,
+  ContentNodeWithPos,
+  findParentNodeOfType,
+} from 'prosemirror-utils';
+import { Transform } from 'prosemirror-transform';
 
 import { uuidv4 } from '../../api/util';
 
 import { findNoteNode, selectedNote } from './footnote';
+import { trTransform } from '../../api/transaction';
 
 // examine transactions and filter out attempts to place foonotes within note bodies
 // (this is not allowed by pandoc markdown)
@@ -45,92 +53,98 @@ export function footnoteAppendTransaction() {
     name: 'footnote-renumber',
     nodeFilter: footnoteChange,
     append: (tr: Transaction) => {
-      // alias schema
       const schema = tr.doc.type.schema;
-
-      // query for notes and footnotes
-      const footnotes = findAllFootnotes(tr.doc);
-      const allNotes = findAllNotes(tr.doc);
-
-      // iterate through footnotes in the newState
-      const refs = new Set<string>();
-      footnotes.forEach((footnote, index) => {
-        // footnote number
-        const number = index + 1;
-
-        // alias ref and content (either or both may be updated)
-        let { ref, content } = footnote.node.attrs;
-
-        // we may be creating a new note to append
-        let newNote: any;
-
-        // get reference to note (if any)
-        const note = allNotes.find(noteWithPos => noteWithPos.node.attrs.ref === ref);
-
-        // matching note found
-        if (note) {
-          // map position since we scanned for all of the notes at the top
-          note.pos = tr.mapping.map(note.pos);
-
-          // update content if this is a note edit (used to propagate user edits back to data-content)
-          if (findParentNode(node => node.type === schema.nodes.note && node.attrs.ref === ref)(tr.selection)) {
-            content = JSON.stringify(note.node.content.toJSON());
-          }
-
-          // if we've already processed this ref then it's a duplicate, make a copy w/ a new ref/id
-          if (refs.has(ref)) {
-            // create a new unique id and change the ref to it
-            ref = uuidv4();
-
-            // create and insert new note with this id
-            newNote = schema.nodes.note.createAndFill({ ref, number }, note.node.content);
-
-            // otherwise update the note with the correct number (if necessary)
-          } else {
-            if (note.node.attrs.number !== number) {
-              tr.setNodeMarkup(note.pos, schema.nodes.note, {
-                ...note.node.attrs,
-                number,
-              });
-            }
-          }
-
-          // if there is no note then create one using the content attr
-          // (this can happen for a copy/paste operation from another document)
-        } else if (content) {
-          newNote = schema.nodes.note.createAndFill({ ref, number }, Fragment.fromJSON(schema, JSON.parse(content)));
-        }
-
-        // insert newNote if necessary
-        if (newNote) {
-          const notesContainer = findNotesContainer(tr.doc);
-          tr.insert(notesContainer.pos + 1, newNote as ProsemirrorNode);
-        }
-
-        // indicate that we've seen this ref
-        refs.add(ref);
-
-        // set new footnote markup if necessary
-        const attrs = footnote.node.attrs;
-        if (ref !== attrs.ref || content !== attrs.content || number !== attrs.number) {
-          tr.setNodeMarkup(footnote.pos, schema.nodes.footnote, {
-            ...footnote.node.attrs,
-            ref,
-            content,
-            number,
-          });
-        }
-      });
-
-      // remove ophraned notes (backwards so the positions stay valid)
-      for (let i = allNotes.length - 1; i >= 0; i--) {
-        const note = allNotes[i];
-        const footnote = footnotes.find(fn => fn.node.attrs.ref === note.node.attrs.ref);
-        if (!footnote) {
-          tr.delete(note.pos, note.pos + note.node.nodeSize);
-        }
-      }
+      const activeNote = findParentNodeOfType(schema.nodes.note)(tr.selection);
+      trTransform(tr, footnoteFixupTransform(activeNote));
     },
+  };
+}
+
+function footnoteFixupTransform(activeNote: ContentNodeWithPos | undefined) {
+  return (tr: Transform) => {
+    // query for notes and footnotes
+    const schema = tr.doc.type.schema;
+    const footnotes = findAllFootnotes(tr.doc);
+    const allNotes = findAllNotes(tr.doc);
+
+    // iterate through footnotes in the newState
+    const refs = new Set<string>();
+    footnotes.forEach((footnote, index) => {
+      // footnote number
+      const number = index + 1;
+
+      // alias ref and content (either or both may be updated)
+      let { ref, content } = footnote.node.attrs;
+
+      // we may be creating a new note to append
+      let newNote: any;
+
+      // get reference to note (if any)
+      const note = allNotes.find(noteWithPos => noteWithPos.node.attrs.ref === ref);
+
+      // matching note found
+      if (note) {
+        // map position since we scanned for all of the notes at the top
+        note.pos = tr.mapping.map(note.pos);
+
+        // update content if this is a note edit (used to propagate user edits back to data-content)
+        if (activeNote && activeNote.node.attrs.ref === ref) {
+          content = JSON.stringify(note.node.content.toJSON());
+        }
+
+        // if we've already processed this ref then it's a duplicate, make a copy w/ a new ref/id
+        if (refs.has(ref)) {
+          // create a new unique id and change the ref to it
+          ref = uuidv4();
+
+          // create and insert new note with this id
+          newNote = schema.nodes.note.createAndFill({ ref, number }, note.node.content);
+
+          // otherwise update the note with the correct number (if necessary)
+        } else {
+          if (note.node.attrs.number !== number) {
+            tr.setNodeMarkup(note.pos, schema.nodes.note, {
+              ...note.node.attrs,
+              number,
+            });
+          }
+        }
+
+        // if there is no note then create one using the content attr
+        // (this can happen for a copy/paste operation from another document)
+      } else if (content) {
+        newNote = schema.nodes.note.createAndFill({ ref, number }, Fragment.fromJSON(schema, JSON.parse(content)));
+      }
+
+      // insert newNote if necessary
+      if (newNote) {
+        const notesContainer = findNotesContainer(tr.doc);
+        tr.insert(notesContainer.pos + 1, newNote as ProsemirrorNode);
+      }
+
+      // indicate that we've seen this ref
+      refs.add(ref);
+
+      // set new footnote markup if necessary
+      const attrs = footnote.node.attrs;
+      if (ref !== attrs.ref || content !== attrs.content || number !== attrs.number) {
+        tr.setNodeMarkup(footnote.pos, schema.nodes.footnote, {
+          ...footnote.node.attrs,
+          ref,
+          content,
+          number,
+        });
+      }
+    });
+
+    // remove ophraned notes (backwards so the positions stay valid)
+    for (let i = allNotes.length - 1; i >= 0; i--) {
+      const note = allNotes[i];
+      const footnote = footnotes.find(fn => fn.node.attrs.ref === note.node.attrs.ref);
+      if (!footnote) {
+        tr.delete(note.pos, note.pos + note.node.nodeSize);
+      }
+    }
   };
 }
 

@@ -16,7 +16,7 @@
 import { Transaction, EditorState, Plugin, PluginKey, Selection } from 'prosemirror-state';
 import { Node as ProsemirrorNode, Mark, MarkType, Slice } from 'prosemirror-model';
 import { ChangeSet } from 'prosemirror-changeset';
-import { ReplaceStep, Step } from 'prosemirror-transform';
+import { ReplaceStep, Step, Transform } from 'prosemirror-transform';
 
 import { sliceContentLength } from './slice';
 
@@ -41,12 +41,38 @@ export interface AppendTransactionHandler {
   append: (tr: Transaction) => void;
 }
 
-export interface MarkTransaction {
-  doc: ProsemirrorNode;
-  selection: Selection;
-  addMark(from: number, to: number, mark: Mark): this;
-  removeMark(from: number, to: number, mark?: Mark | MarkType): this;
-  removeStoredMark(mark: Mark | MarkType): this;
+// wrapper for transaction that is guaranteed not to modify the position of any 
+// nodes in the document (useful for grouping many disparate handlers that arne't
+// aware of each other's actions onto the same trasaction)
+export class MarkTransaction {
+  
+  private tr: Transaction;
+
+  constructor(tr: Transaction) {
+    this.tr = tr;
+  }
+  get doc(): ProsemirrorNode {
+    return this.tr.doc;
+  } 
+  get selection(): Selection {
+    return this.tr.selection;
+  }
+  public addMark(from: number, to: number, mark: Mark): this {
+    this.tr.addMark(from, to, mark);
+    return this;
+  }
+  public removeMark(from: number, to: number, mark?: Mark | MarkType): this {
+    this.tr.removeMark(from, to, mark);
+    return this;
+  }
+  public removeStoredMark(mark: Mark | MarkType): this {
+    this.tr.removeStoredMark(mark);
+    return this;
+  }
+  public insertText(text: string, from: number): this {
+    this.tr.insertText(text, from, from + text.length);
+    return this;
+  }
 }
 
 export interface AppendMarkTransactionHandler {
@@ -68,6 +94,9 @@ export function appendMarkTransactionsPlugin(handlers: AppendMarkTransactionHand
       // create transaction
       const tr = newState.tr;
 
+      // create markTransaction wrapper
+      const markTr = new MarkTransaction(tr);
+
       forChangedNodes(
         oldState,
         newState,
@@ -79,7 +108,7 @@ export function appendMarkTransactionsPlugin(handlers: AppendMarkTransactionHand
 
             // call the handler
             if (handler.filter(node)) {
-              handler.append(tr, node, pos);
+              handler.append(markTr, node, pos);
             }
           }
         },
@@ -176,6 +205,24 @@ export function transactionsChangeSet(transactions: Transaction[], oldState: Edi
     changeSet = changeSet.addSteps(newState.doc, transaction.mapping.maps);
   }
   return changeSet;
+}
+
+export function trTransform(tr: Transaction, f: (transform: Transform) => void): Transaction {
+  // create a new transform so we can do position mapping relative
+  // to the actions taken here (b/c the transaction might already
+  // have other steps so we can't do tr.mapping.map)
+  const newActions = new Transform(tr.doc);
+
+  // call the function (passing it a mapping function that uses our newActions)
+  f(newActions);
+
+  // copy the contents of newActions to the actual transaction
+  for (const step of newActions.steps) {
+    tr.step(step);
+  }
+
+  // return the transaction for chaining
+  return tr;
 }
 
 export function transactionsHaveChange(

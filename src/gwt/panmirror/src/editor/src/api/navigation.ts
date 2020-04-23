@@ -31,9 +31,11 @@ export function navigateToId(view: EditorView, id: string) {
 }
 
 export function navigateToHeading(view: EditorView, heading: string) {
-  navigateTo(view, node =>  {
-    return node.type === view.state.schema.nodes.heading && 
-           node.textContent.localeCompare(heading, undefined, { sensitivity: 'accent' }) === 0;
+  navigateTo(view, node => {
+    return (
+      node.type === view.state.schema.nodes.heading &&
+      node.textContent.localeCompare(heading, undefined, { sensitivity: 'accent' }) === 0
+    );
   });
 }
 

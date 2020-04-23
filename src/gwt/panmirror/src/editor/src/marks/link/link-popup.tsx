@@ -86,31 +86,37 @@ export class LinkPopupPlugin extends Plugin<DecorationSet> {
 
             // compute unique key (will allow us to only recreate the popup when necessary)
             const linkText = attrs.heading ? attrs.heading : attrs.href;
-            const specKey = `link_popup_decoration_pos:${decorationPosition.pos}link:${linkText}`;
+            const specKey = `link:${linkText}`;
 
-            // if the old popup already has a decoration for this position then just use it
-            if (old.find(undefined, undefined, spec => spec.key === specKey).length) {
-              return old.map(tr.mapping, tr.doc);
-            }
+            // create decorator
+            const linkPopupDecorator = Decoration.widget(
+              decorationPosition.pos,
+              (view: EditorView, getPos: () => number) => {
+                // create link popup component
+                const popup = (
+                  <LinkPopup
+                    link={attrs}
+                    maxLinkWidth={kMaxLinkWidth}
+                    linkCmd={linkCmd}
+                    removeLinkCmd={removeLinkCmd}
+                    view={view}
+                    ui={ui}
+                    style={decorationPosition.style}
+                  />
+                );
 
-            // create link popup component
-            const popup = (
-              <LinkPopup
-                link={attrs}
-                linkCmd={linkCmd}
-                removeLinkCmd={removeLinkCmd}
-                view={editorView}
-                ui={ui}
-                style={decorationPosition.style}
-              />
+                // create decorator and render popup into it
+                const decoration = window.document.createElement('div');
+                reactRenderForEditorView(popup, decoration, view);
+                return decoration;
+              },
+              {
+                key: specKey,
+              },
             );
 
-            // create decorator and render popup into it
-            const decoration = window.document.createElement('div');
-            reactRenderForEditorView(popup, decoration, editorView);
-
             // return decorations
-            return DecorationSet.create(tr.doc, [Decoration.widget(decorationPosition.pos, decoration, { key: specKey })]);
+            return DecorationSet.create(tr.doc, [linkPopupDecorator]);
           } else {
             return DecorationSet.empty;
           }
@@ -127,6 +133,7 @@ export class LinkPopupPlugin extends Plugin<DecorationSet> {
 
 interface LinkPopupProps extends WidgetProps {
   link: LinkProps;
+  maxLinkWidth: number;
   view: EditorView;
   ui: EditorUI;
   linkCmd: CommandFn;
@@ -182,29 +189,27 @@ const LinkPopup: React.FC<LinkPopupProps> = props => {
 
   return (
     <Popup classes={['pm-popup-link']} style={props.style}>
-      <Panel>
-        <LinkButton text={linkText} onClick={onLinkClicked}></LinkButton>
-        {showCopyButton ? (
-          <ImageButton
-            image={props.ui.images.copy}
-            classes={['pm-image-button-copy-link']}
-            title={props.ui.context.translateText('Copy Link to Clipboard')}
-            ref={setCopyButton}
-          />
-        ) : null}
+      <LinkButton text={linkText} onClick={onLinkClicked} maxWidth={props.maxLinkWidth}></LinkButton>
+      {showCopyButton ? (
         <ImageButton
-          image={props.ui.images.removelink}
-          classes={['pm-image-button-remove-link']}
-          title={props.ui.context.translateText('Remove Link')}
-          onClick={onRemoveClicked}
+          image={props.ui.images.copy!}
+          classes={['pm-image-button-copy-link']}
+          title={props.ui.context.translateText('Copy Link to Clipboard')}
+          ref={setCopyButton}
         />
-        <ImageButton
-          image={props.ui.images.properties}
-          classes={['pm-image-button-edit-properties']}
-          title={props.ui.context.translateText('Edit Attributes')}
-          onClick={onEditClicked}
-        />
-      </Panel>
+      ) : null}
+      <ImageButton
+        image={props.ui.images.removelink!}
+        classes={['pm-image-button-remove-link']}
+        title={props.ui.context.translateText('Remove Link')}
+        onClick={onRemoveClicked}
+      />
+      <ImageButton
+        image={props.ui.images.properties!}
+        classes={['pm-image-button-edit-properties']}
+        title={props.ui.context.translateText('Edit Attributes')}
+        onClick={onEditClicked}
+      />
     </Popup>
   );
 };

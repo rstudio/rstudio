@@ -11,7 +11,7 @@ public class ChunkDataPage extends ChunkOutputPage
    public ChunkDataPage(JavaScriptObject data, NotebookFrameMetadata metadata,
          int ordinal, ChunkOutputSize chunkOutputSize)
    {
-      this(new ChunkDataWidget(data, chunkOutputSize), metadata, ordinal);
+      this(new ChunkDataWidget(data, metadata, chunkOutputSize), metadata, ordinal);
    }
    
    public ChunkDataPage(ChunkDataWidget widget, NotebookFrameMetadata metadata,
@@ -22,7 +22,7 @@ public class ChunkDataPage extends ChunkOutputPage
       if (metadata == null)
       {
          thumbnail_ = new ChunkOutputThumbnail("data.frame", "",
-               new ChunkDataPreview(widget.getData()), 
+               new ChunkDataPreview(widget.getData(), metadata), 
                ChunkOutputWidget.getEditorColors());
       }
       else
@@ -31,7 +31,7 @@ public class ChunkDataPage extends ChunkOutputPage
                metadata.getClasses().get(0) : "data";
          thumbnail_ = new ChunkOutputThumbnail(clazz, 
                metadata.numRows() + " x " + metadata.numCols(),
-               new ChunkDataPreview(widget.getData()), 
+               new ChunkDataPreview(widget.getData(), metadata), 
                ChunkOutputWidget.getEditorColors());
       }
    }

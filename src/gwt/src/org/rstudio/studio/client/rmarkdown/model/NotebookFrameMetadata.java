@@ -1,7 +1,7 @@
 /*
  * NotebookFrameMetadata.java
  *
- * Copyright (C) 2009-16 by RStudio, PBC
+ * Copyright (C) 2009-20 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -13,6 +13,8 @@
  *
  */
 package org.rstudio.studio.client.rmarkdown.model;
+
+import org.rstudio.core.client.js.JsObject;
 
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArrayString;
@@ -34,4 +36,9 @@ public class NotebookFrameMetadata extends JavaScriptObject
    public final native int numCols() /*-{
       return this.ncol || 0;
    }-*/;
+
+   public final native JsObject getSummary() /*-{
+      return this.summary || {};
+   }-*/;
+
 }
