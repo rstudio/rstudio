@@ -107,8 +107,6 @@ public:
    static std::string complete(std::string absoluteUri, std::string targetUri);
    static std::string uncomplete(std::string baseUri, std::string targetUri);
 
-   static void test();
-
 private:
   
    void assign(const URL& rhs)
