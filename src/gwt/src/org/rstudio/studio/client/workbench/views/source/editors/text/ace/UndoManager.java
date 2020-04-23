@@ -24,36 +24,4 @@ public class UndoManager extends JavaScriptObject
    public native final JavaScriptObject peek() /*-{
       return this.peek();
    }-*/;
-   
-   public native final void undo() /*-{
-      this.undo();
-   }-*/;
-   
-   public native final void redo() /*-{
-      this.redo();
-   }-*/;
-   
-   public native final boolean canUndo() /*-{
-      return this.canUndo();
-   }-*/;
-   
-   public native final boolean canRedo() /*-{
-      return this.canRedo();
-   }-*/;
-   
-   public native final int getRevision() /*-{
-      this.getRevision();
-   }-*/;
-   
-   public native final void bookmark() /*-{
-      this.bookmark();
-   }-*/;
-   
-   public native final void bookmark(int revision) /*-{
-      this.bookmark(revision);
-   }-*/;
-   
-   public native final boolean isAtBookmark() /*-{
-      return this.isAtBookmark();
-   }-*/;
 }

@@ -320,7 +320,6 @@ public class AceEditor implements DocDisplay,
    public AceEditor()
    {
       widget_ = new AceEditorWidget();
-      history_ = new AceEditorHistory(this);
       snippets_ = new SnippetHelper(this);
       monitor_ = new AceEditorMonitor(this);
       editorEventListeners_ = new ArrayList<>();
@@ -4141,7 +4140,6 @@ public class AceEditor implements DocDisplay,
    private static final int DEBUG_CONTEXT_LINES = 2;
    private final HandlerManager handlers_ = new HandlerManager(this);
    private final AceEditorWidget widget_;
-   private final AceEditorHistory history_;
    private final SnippetHelper snippets_;
    private final AceEditorMonitor monitor_;
    private ScrollAnimator scrollAnimator_;
