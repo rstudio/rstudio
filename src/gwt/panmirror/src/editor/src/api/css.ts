@@ -1,5 +1,3 @@
-import { kWidthAttrib, kHeightAttrib, kStyleAttrib } from './pandoc_attr';
-
 /*
  * css.ts
  *
@@ -14,6 +12,8 @@ import { kWidthAttrib, kHeightAttrib, kStyleAttrib } from './pandoc_attr';
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
+
+import { kWidthAttrib, kHeightAttrib, kStyleAttrib } from './pandoc_attr';
 
 export const kPercentUnit = '%';
 export const kPixelUnit = 'px';
