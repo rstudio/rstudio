@@ -16,7 +16,7 @@
 import { inputRules } from 'prosemirror-inputrules';
 import { keydownHandler } from 'prosemirror-keymap';
 import { MarkSpec, Node as ProsemirrorNode, NodeSpec, Schema, DOMParser, ParseOptions } from 'prosemirror-model';
-import { EditorState, Plugin, PluginKey, Transaction } from 'prosemirror-state';
+import { EditorState, Plugin, PluginKey, Transaction, Selection } from 'prosemirror-state';
 import { EditorView } from 'prosemirror-view';
 import { setTextSelection } from 'prosemirror-utils';
 import 'prosemirror-view/style/prosemirror.css';
@@ -81,7 +81,6 @@ import { defaultTheme, EditorTheme, applyTheme, applyPadding } from './theme';
 
 import './styles/frame.css';
 import './styles/styles.css';
-import { GapCursor } from 'prosemirror-gapcursor';
 
 // apply polyfills
 polyfill();
@@ -91,8 +90,6 @@ const kMac = typeof navigator !== 'undefined' ? /Mac/.test(navigator.platform) :
 export interface EditorCode {
   code: string;
   changes: Change[];
-  cursorRow: number;
-  cursorCol: number;
 }
 
 export interface EditorContext {
@@ -420,12 +417,17 @@ export class Editor {
     // apply layout fixups
     this.applyFixups(FixupContext.Save);
 
-    // convert doc
-    const docWithSentinel = this.docWithCursorSentinel();
-    const code = await this.pandocConverter.fromProsemirror(docWithSentinel.doc, this.pandocFormat, options);
+    // get the code
+    const code = await this.pandocConverter.fromProsemirror(this.state.doc, this.pandocFormat, options);
 
-    // return editor code object (includes cursor info and change records)
-    return getEditorCode(code, docWithSentinel.sentinel, previous);
+    // get the changes
+    const changes: Change[] = code !== previous ? new Diff().diff(previous, code) : [];
+
+    // return code and changes
+    return {
+      code,
+      changes
+    };
   }
 
   public getHTML(): string {
@@ -808,77 +810,7 @@ export class Editor {
       ],
     });
   }
-
-  private docWithCursorSentinel() {
-    // transaction for inserting the sentinel (won't actually commit since it will
-    // have the sentinel in it but rather will use the computed tr.doc)
-    const tr = this.state.tr;
-
-    // cursorSentinel to return
-    let sentinel: string | undefined;
-
-    // find the anchor of the current selection
-    const { anchor } = tr.selection; 
-
-    // find the closest top-level text block that isn't an Rmd chunk (their
-    // first line gets special processing so we can't put the sentinel there)
-    const topLevelTextBlocks = findTopLevelBodyNodes(tr.doc, node => { 
-      return node.isTextblock && node.type !== this.schema.nodes.rmd_chunk;
-    });
-    const textBlock = topLevelTextBlocks.reverse().find(block => block.pos < anchor);
-    if (textBlock) {
-      sentinel = 'CursorSentinel-CAFB04C4-080D-4074-898C-F670CAACB8AF';
-      let pos = textBlock.pos;
-      if ((textBlock.pos + textBlock.node.nodeSize) < anchor) {
-        pos = textBlock.pos + textBlock.node.nodeSize - 1;
-      }
-      setTextSelection(pos)(tr);
-      tr.insertText(sentinel);
-    }
-
-    // return the doc and sentinel (if any)
-    return {
-      doc: tr.doc,
-      sentinel,
-    };
-  }
 }
-
-// get editor code + cursor location and jsdiff changes from previousCode
-function getEditorCode(code: string, cursorSentinel: string | undefined, previousCode: string) {
-
-  // determine the cursor row and column using the sentinel (remove the sentinel from the code)
-  let newCode = code;
-  let cursorRow = 0;
-  let cursorCol = 0;
-  if (cursorSentinel) {
-    newCode = code
-      .split(/\r?\n/)
-      .map((line, index) => {
-        if (cursorRow === 0) {
-          const sentinelLoc = line.indexOf(cursorSentinel);
-          if (sentinelLoc !== -1) {
-            line = line.replace(cursorSentinel, '');
-            cursorRow = index;
-            cursorCol = sentinelLoc;
-          }
-        }
-        return line;
-      })
-      .join('\n');
-  }
-
-   // generate change records (in case the caller wants to apply changes incrementally)
-  const changes: Change[] = previousCode === newCode ? [] : new Diff().diff(previousCode, newCode);
-
-  return {
-    code: newCode,
-    changes,
-    cursorRow,
-    cursorCol
-  };
-}
-
 
 // custom DOMParser that preserves all whitespace (required by display math marks)
 class EditorDOMParser extends DOMParser {

@@ -25,6 +25,4 @@ public class PanmirrorCode
 {    
    public String code;
    public JsdiffChange[] changes;
-   public int cursorRow;
-   public int cursorCol;
 }

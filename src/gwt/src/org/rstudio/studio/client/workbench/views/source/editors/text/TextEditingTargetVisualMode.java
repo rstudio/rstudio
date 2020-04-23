@@ -167,7 +167,8 @@ public class TextEditingTargetVisualMode
             if (prefs_.visualMarkdownEditingWrapAuto().getValue())
                options.wrapColumn = prefs_.visualMarkdownEditingWrapColumn().getValue();
             panmirror_.getMarkdown(options, getEditorCode(), markdown -> { 
-               TextEditorContainer.EditorCode editorCode = new TextEditorContainer.EditorCode(markdown);
+               TextEditorContainer.EditorCode editorCode = 
+                  new TextEditorContainer.EditorCode(markdown.code, markdown.changes);
                getSourceEditor().setCode(editorCode, activatingEditor); 
                isDirty_ = false;
                if (ready != null)

@@ -44,6 +44,8 @@ import com.google.gwt.event.shared.HandlerManager;
 import com.google.gwt.event.shared.HandlerRegistration;
 
 import java.util.function.BiPredicate;
+import java.util.function.Consumer;
+
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.RootPanel;
@@ -1122,19 +1124,79 @@ public class AceEditor implements DocDisplay,
    
    public void applyCodeChanges(JsdiffChange[] changes)
    {
-      
-      // we want to do this for inserts so that they are mergeable by the undo manager
-      /*
+      // alias apis
       AceEditorNative editor = widget_.getEditor();
-      widget_.getEditor().getCommandManager().exec("insertstring", editor, "text");
-      widget_.getEditor().getCommandManager().exec("del", editor);
-      widget_.getEditor().getCommandManager().exec("backspace", editor);
+      EditSession session = editor.getSession();
+      Selection selection = session.getSelection();
+      AceCommandManager commandManager = editor.getCommandManager();
       
-      */
+      // function to advance the selection
+      Consumer<Integer> advanceSelection = (Integer charsLeft) -> {
+         
+         // start from current line/row
+         Position startPos = selection.getCursor();
+         
+         // iterate through rows until we've consumed all the chars
+         int row;
+         int col = startPos.getColumn();
+         for (row = startPos.getRow(); row < session.getLength(); row++) {
+            
+            // how many chars left in the current column?
+            String line = session.getLine(row);
+            int charsLeftInLine = line.length() - col;
+            
+            // is the number of chars we still need to consume lte
+            // the number of charsLeft?
+            if (charsLeft <= charsLeftInLine) 
+            {
+               col = col + charsLeft;
+               break;
+            }
+            else
+            {
+               charsLeft -= (charsLeftInLine+1); // add 1 for newline
+               col = 0;
+            }
+         }
+         
+         // move the selection
+         selection.moveCursorTo(row, col, false);
+      };
       
-      // TODO: apply changes
       
-     
+      // process changes
+      for (int i = 0; i<changes.length; i++) 
+      {
+         // get change
+         JsdiffChange change = changes[i];
+         
+         // if it's the first change then set the cursor location to the beginning of the file
+         if (i == 0)
+            selection.moveCursorTo(0, 0, false);
+         
+         // insert text (selection will be advanced to the end of the string)
+         if (change.added)
+         {
+            commandManager.exec("insertstring", editor, change.value);
+         }
+         
+         // remove text -- we advance past it and then use the "backspace"
+         // command b/c ace gives nicer undo behavior for this action (compared
+         // to executing the "del" command)
+         else if (change.removed)
+         {
+            advanceSelection.accept(change.count);
+            for (int ch = 0; ch<change.count; ch++)
+               commandManager.exec("backspace", editor);
+         }
+         
+         // advance selection (unless this is the last change, in which 
+         // case it just represents advancing to the end of the file)
+         else if (i != (changes.length-1))
+         {
+            advanceSelection.accept(change.count);
+         } 
+      }  
    }
    
 

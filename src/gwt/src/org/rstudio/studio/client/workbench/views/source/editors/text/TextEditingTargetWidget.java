@@ -34,7 +34,6 @@ import com.google.gwt.user.client.ui.*;
 
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.CommandWithArg;
-import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.AppCommand;
@@ -78,7 +77,6 @@ import org.rstudio.studio.client.workbench.views.source.DocumentOutlineWidget;
 import org.rstudio.studio.client.workbench.views.source.PanelWithToolbars;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTargetToolbar;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTarget.Display;
-import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.findreplace.FindReplaceBar;
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.TextEditingTargetNotebook;
 import org.rstudio.studio.client.workbench.views.source.editors.text.status.StatusBar;
@@ -1659,27 +1657,12 @@ public class TextEditingTargetWidget
       @Override
       public void setCode(TextEditorContainer.EditorCode editorCode, boolean activatingEditor)
       {   
-         // set the code (preserve cursor location if we aren't activating)
-         boolean preserveCursorLocation = !activatingEditor;
-         editor_.setCode(editorCode.code, preserveCursorLocation);
+         // apply changes
+         editor_.applyCodeChanges(editorCode.changes);
          
-         // TODO: apply incremental changes here (call DocDisplay method w/ changes,
-         // need to manage undo state for background edit propagations)
-         // we should use editSession.insert and editSession.replace
-         
-         // replaceAll actually does blow away line widgets!
-         
-         // we can actually just set the cursor position based on the 
-         // location of the most recent transaction? 
-         
-         editor_.setCursorPosition(Position.create(editorCode.cursorRow, editorCode.cursorCol));
-         
-         Debug.logObject(editorCode.changes);
-         
-         // set cursor position if we are activating the editor
-         if (activatingEditor) {
+         // flag activation pending (triggers autoscroll)
+         if (activatingEditor)
             activationPending_ = true;
-         }
       }
       
       @Override

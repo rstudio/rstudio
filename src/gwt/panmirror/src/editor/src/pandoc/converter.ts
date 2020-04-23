@@ -139,8 +139,8 @@ export class PandocConverter {
     // render to markdown
     const markdown = await this.pandoc.astToMarkdown(output.ast, format, pandocOptions);
 
-    // return markdown
-    return markdown;
+    // normalize newlines (don't know if pandoc uses \r\n on windows)
+    return markdown.replace(/\r\n|\n\r|\r/g, '\n');
   }
 
   private wrapColumnOptions(options: PandocWriterOptions) {
