@@ -7,8 +7,6 @@ pandoc schema: <https://github.com/jgm/pandoc-types/blob/master/Text/Pandoc/Defi
 ## TODO
 
 Don't blow away line widgets when setting code
-Consider applying source/visual transforms as patches. 
-https://gitlab.com/mpapp-public/prosemirror-recreate-steps
 https://www.npmjs.com/package/diff
 
 Alison on blogdown engines, etc.
@@ -25,10 +23,15 @@ escaping of $ in math as this mode will clearly not be "source mode" style latex
 
 Possibly have a special editing mode for thereoms?
 
-
 ## Future
 
+Revisit doing smart patches of Prosemirror doc: https://github.com/rstudio/rstudio/tree/feature/panmirror-smart-patch
+
+Consider porting https://gitlab.com/mpapp-public/manuscripts-symbol-picker
+
 Markup extension filtering (e.g. shortcodes) might be better done in Lua
+
+Use Joe's trFindNodes (for loop requires ES6)
 
 Aggregated fixup/appendTransaction transactions:
 - fixups and mutating appendTransaction handlers should be passed a transform 
