@@ -42,6 +42,7 @@ export class ImageNodeView implements NodeView {
   private readonly getPos: () => number;
   private readonly editorUI: EditorUI;
   private readonly imageAttributes: boolean;
+  private readonly implicitFigures: boolean;
 
   // DOM elements
   public readonly dom: HTMLElement;
@@ -74,6 +75,7 @@ export class ImageNodeView implements NodeView {
     this.view = view;
     this.getPos = getPos;
     this.imageAttributes = imageAttributesAvailable(pandocExtensions);
+    this.implicitFigures = pandocExtensions.implicit_figures;
     this.editorUI = editorUI;
     this.resizeUI = null;
     this.imgBroken = false;
@@ -138,13 +140,8 @@ export class ImageNodeView implements NodeView {
       this.contentDOM = this.figcaption;
       this.dom.append(this.figcaption);
 
-      // if there is no support for implicit_figures then hide the caption
-      if (!pandocExtensions.implicit_figures) {
-        this.figcaption.contentEditable = 'false';
-        this.figcaption.style.height = '0';
-        this.figcaption.style.minHeight = '0';
-        this.figcaption.style.margin = '0';
-      }
+      // manage visibility
+      this.manageFigcaption();
 
       // standard inline image
     } else {
@@ -253,6 +250,9 @@ export class ImageNodeView implements NodeView {
     // ensure alt attribute so that we get default browser broken image treatment
     this.img.alt = this.node.textContent || this.node.attrs.src;
 
+    // manage caption visibility
+    this.manageFigcaption();
+
     // update size
     this.updateImageSize();
   }
@@ -305,5 +305,19 @@ export class ImageNodeView implements NodeView {
 
   private containerWidth() {
     return imageContainerWidth(this.getPos(), this.view);
+  }
+
+  private manageFigcaption() {
+
+    // always hide if we don't suppport implicitFigures
+    const hide = !this.implicitFigures;
+    
+    // hide or show if we have a figcaption
+    if (this.figcaption) {
+      this.figcaption.contentEditable = hide ? 'false' : 'true';
+      this.figcaption.style.height = hide ? '0' : '';
+      this.figcaption.style.minHeight = hide ? '0' : '';
+      this.figcaption.style.margin = hide ? '0' : '';
+    }
   }
 }
