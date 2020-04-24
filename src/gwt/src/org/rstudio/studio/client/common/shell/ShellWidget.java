@@ -42,6 +42,7 @@ import org.rstudio.studio.client.workbench.views.console.events.RunCommandWithDe
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor.NewLineMode;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Renderer;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.CursorChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.PasteEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.RenderFinishedEvent;
@@ -102,6 +103,8 @@ public class ShellWidget extends Composite implements ShellDisplay,
       prompt_.addStyleName(KEYWORD_CLASS_NAME);
 
       input_ = editor;
+      renderer_ = input_.getWidget().getEditor().getRenderer();
+      
       input_.setShowLineNumbers(false);
       input_.setShowPrintMargin(false);
       input_.setUseWrapMode(true);
@@ -405,7 +408,6 @@ public class ShellWidget extends Composite implements ShellDisplay,
          prompt = consolify(prompt);
 
       prompt_.getElement().setInnerText(prompt);
-      //input_.clear();
       ensureInputVisible();
 
       // Deal gracefully with multi-line prompts
@@ -421,7 +423,18 @@ public class ShellWidget extends Composite implements ShellDisplay,
    @Override
    public void ensureInputVisible()
    {
-      scrollIntoView();
+      // NOTE: we don't scroll immediately as this is normally called
+      // in response to mutations of the console input buffer, and so
+      // we need to wait until Ace has finished rendering in response
+      // to that change.
+      //
+      // In case there wasn't an Ace render in-flight, we also force a check
+      // for pending scroll (which will then force the cursor into view)
+      if (!scrollIntoViewPending_)
+      {
+         scrollIntoViewPending_ = true;
+         Scheduler.get().scheduleDeferred(() -> checkForPendingScroll());
+      }
    }
    
    private String getErrorClass()
@@ -885,19 +898,27 @@ public class ShellWidget extends Composite implements ShellDisplay,
    {
       int padding = 8;
       
-      // Force Ace to render the cursor element, so that its new position
-      // is properly represented in the DOM after a cursor move.
-      input_.getWidget().getEditor().getRenderer().renderCursor();
-            
       // Get the bounding rectangles for the scroll panel + cursor element.
       // Note that we rely on getBoundingClientRect() here as the Ace cursor
       // element is rendered using CSS transforms, and those transforms are
       // not represented in offsetTop.
-      DOMRect parent = DomUtils.getBoundingClientRect(
-            scrollPanel_.getElement());
+      //
+      // Note that we cannot reliably synchronously force Ace (or the browser)
+      // to render the cursor, so we instead check for a "bogus" rectangle and
+      // conclude this implies there is a pending render in-flight that we can
+      // later respond to.
+      renderer_.renderCursor();
+      DOMRect child = DomUtils.getBoundingClientRect(renderer_.getCursorElement());
       
-      DOMRect child  = DomUtils.getBoundingClientRect(
-            input_.getWidget().getEditor().getRenderer().getCursorElement());
+      boolean isRendering = child.getWidth() == 0 && child.getHeight() == 0;
+      if (isRendering)
+      {
+         scrollIntoViewPending_ = true;
+         Scheduler.get().scheduleDeferred(() -> checkForPendingScroll());
+         return;
+      }
+      
+      DOMRect parent = DomUtils.getBoundingClientRect(scrollPanel_.getElement());
       
       // Scroll the cursor into view as required.
       if (child.getTop() - padding < parent.getTop())
@@ -944,6 +965,7 @@ public class ShellWidget extends Composite implements ShellDisplay,
    private final HTML prompt_;
    private AriaLiveShellWidget liveRegion_ = null;
    protected final AceEditor input_;
+   protected final Renderer renderer_;
    private final DockPanel inputLine_;
    protected final ClickableScrollPanel scrollPanel_;
    private final ConsoleResources.ConsoleStyles styles_;
