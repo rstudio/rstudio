@@ -157,10 +157,20 @@ Error shadowDevDesc(DeviceContext* pDC, pDevDesc* pDev)
          }
       }
       
+      // ensure the directory hosting the plot is available
+      // (plots are often created within the R session's temporary directory,
+      // which seems to be opportunisitically deleted in some environments)
+      //
+      // https://github.com/rstudio/rstudio/issues/2214
+      FilePath targetPath = pDC->targetPath;
+      Error error = targetPath.getParent().ensureDirectory();
+      if (error)
+         return error;
+      
       if (backend == "ragg")
       {
          Error error = r::exec::RFunction("ragg:::agg_png")
-               .addParam("filename", string_utils::utf8ToSystem(pDC->targetPath.getAbsolutePath()))
+               .addParam("filename", string_utils::utf8ToSystem(targetPath.getAbsolutePath()))
                .addParam("width", width)
                .addParam("height", height)
                .addParam("res", res)
@@ -173,7 +183,7 @@ Error shadowDevDesc(DeviceContext* pDC, pDevDesc* pDev)
          // create PNG device (completely bail on error)
          boost::format fmt("grDevices:::png(\"%1%\", %2%, %3%, res = %4% %5%)");
          std::string code = boost::str(fmt %
-                                       string_utils::utf8ToSystem(pDC->targetPath.getAbsolutePath()) %
+                                       string_utils::utf8ToSystem(targetPath.getAbsolutePath()) %
                                        width %
                                        height %
                                        res %
