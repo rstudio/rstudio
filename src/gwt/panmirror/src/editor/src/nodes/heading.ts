@@ -82,7 +82,7 @@ const extension = (
           if (headingAttr) {
             return {
               type: (schema: Schema) => schema.nodes.heading,
-              offset: 8,
+              offset: 2,
             };
           } else {
             return null;
