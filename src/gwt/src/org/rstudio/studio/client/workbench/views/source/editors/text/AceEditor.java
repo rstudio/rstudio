@@ -1163,17 +1163,16 @@ public class AceEditor implements DocDisplay,
          selection.moveCursorTo(row, col, false);
       };
       
+      // if we have at least 1 change then set the cursor location 
+      // to the beginning of the file
+      if (changes.length > 0)
+         selection.moveCursorTo(0, 0, false);      
       
       // process changes
       for (int i = 0; i<changes.length; i++) 
       {
          // get change
          JsdiffChange change = changes[i];
-         
-         // if it's the first change then set the cursor location to the beginning of the file
-         if (i == 0)
-            selection.moveCursorTo(0, 0, false);
-         
          // insert text (selection will be advanced to the end of the string)
          if (change.added)
          {
