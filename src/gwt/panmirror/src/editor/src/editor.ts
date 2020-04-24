@@ -20,7 +20,7 @@ import { EditorState, Plugin, PluginKey, Transaction } from 'prosemirror-state';
 import { EditorView } from 'prosemirror-view';
 import 'prosemirror-view/style/prosemirror.css';
 
-import { Diff, Change } from 'diff';
+import { Change, diffChars } from 'diff';
 
 import polyfill from './polyfill/index';
 
@@ -420,7 +420,7 @@ export class Editor {
     const code = await this.pandocConverter.fromProsemirror(this.state.doc, this.pandocFormat, options);
 
     // get the changes  
-    const changes: Change[] = code !== previous ? new Diff().diff(previous, code) : [];
+    const changes: Change[] = code !== previous ? diffChars(previous, code) : [];
 
     // return code and changes
     return {
