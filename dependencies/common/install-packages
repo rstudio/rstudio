@@ -82,8 +82,12 @@ mv $PACKAGE_ARCHIVE $PACKAGE_ARCHIVE_SHA1
 # install rsconnect master rstudio
 # install renv master rstudio
 
-# default to either the first site library if defined or the last libPaths entry if not
-RPKGLIB=$(Rscript -e 'cat(if(length(.Library.site) > 0) .Library.site[[1]] else .libPaths()[[-1]])')
+# ascertain the site library. this is somewhat tricky since this script must
+# run on a variety of Linux distributions early in the Docker build process.
+# the lookup order is as follows:
+# 1. the first .Library.site, if defined; otherwise
+# 2. the last element of .libPaths()
+RPKGLIB=$(Rscript -e 'cat(if(length(.Library.site) > 0) { .Library.site[[1]] } else { tail(.libPaths(), n = 1) })')
 if [[ ! -w $RPKGLIB ]]; then
   echo "$RPKGLIB is not writable. Creating user R library directory."
   RPKGLIB=$(Rscript -e 'cat(path.expand(Sys.getenv("R_LIBS_USER")))')
