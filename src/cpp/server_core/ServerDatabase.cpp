@@ -66,37 +66,14 @@ Error readOptions(const std::string& databaseConfigFile,
    FilePath optionsFile = !databaseConfigFile.empty() ?
             FilePath(databaseConfigFile) :
             core::system::xdg::systemConfigFile("database.conf");
-   if (optionsFile.exists())
-   {
-      // the database configuration file can potentially contain sensitive information
-      // log a warning if permissions are too lax
-      FileMode fileMode;
-      Error error = optionsFile.getFileMode(fileMode);
-      if (error)
-      {
-         LOG_ERROR_MESSAGE("Could not determine file permissions for database configuration file: " +
-                           optionsFile.getAbsolutePath() + " - please ensure that the file has " +
-                           "only user read/write permissions (600) if it contains sensitive information");
-         LOG_ERROR(error);
-      }
-      else
-      {
-         if (fileMode != FileMode::USER_READ_WRITE_EXECUTE &&
-             fileMode != FileMode::USER_READ_WRITE)
-         {
-            LOG_WARNING_MESSAGE("The database configuration file " + optionsFile.getAbsolutePath() +
-                                " has unrestrictive permissions. Please ensure that the file has"
-                                " only user read/write permissions (600) if it contains sensitive information");
-         }
-      }
-   }
-
+   
    Settings settings;
    Error error = settings.initialize(optionsFile);
    if (error)
       return error;
 
    std::string databaseProvider = settings.get(kDatabaseProvider, kDatabaseProviderSqlite);
+   bool checkConfFilePermissions = false;
 
    if (boost::iequals(databaseProvider, kDatabaseProviderSqlite))
    {
@@ -138,6 +115,8 @@ Error readOptions(const std::string& databaseConfigFile,
                                                          kDefaultPostgresqlDatabaseConnectionTimeoutSeconds);
       *pOptions = options;
       LOG_INFO_MESSAGE("Connecting to Postgres database " + options.user + "@" + options.host);
+
+      checkConfFilePermissions = true;
    }
    else
    {
@@ -146,6 +125,32 @@ Error readOptions(const std::string& databaseConfigFile,
                             ": " + databaseProvider,
                          ERROR_LOCATION);
    }
+
+   if (optionsFile.exists() && checkConfFilePermissions)
+   {
+      // the database configuration file can potentially contain sensitive information
+      // log a warning if permissions are too lax
+      FileMode fileMode;
+      Error error = optionsFile.getFileMode(fileMode);
+      if (error)
+      {
+         LOG_ERROR_MESSAGE("Could not determine file permissions for database configuration file: " +
+                           optionsFile.getAbsolutePath() + " - please ensure that the file has " +
+                           "only user read/write permissions (600) if it contains sensitive information");
+         LOG_ERROR(error);
+      }
+      else
+      {
+         if (fileMode != FileMode::USER_READ_WRITE_EXECUTE &&
+             fileMode != FileMode::USER_READ_WRITE)
+         {
+            LOG_WARNING_MESSAGE("The database configuration file " + optionsFile.getAbsolutePath() +
+                                " has unrestrictive permissions. Please ensure that the file has"
+                                " only user read/write permissions (600) if it contains sensitive information");
+         }
+      }
+   }
+
 
    return Success();
 }
