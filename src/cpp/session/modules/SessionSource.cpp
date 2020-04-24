@@ -99,7 +99,7 @@ std::string inferDocumentType(const FilePath& documentPath,
          continue;
       
       // check for common shells
-      for (auto&& shell : {"sh", "bash", "fish", "zsh"})
+      for (auto&& shell : {"bash", "csh", "fish", "ksh", "zsh"})
          if (*it == shell)
             return kSourceDocumentTypeShell;
       
