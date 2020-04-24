@@ -151,7 +151,6 @@ Error readOptions(const std::string& databaseConfigFile,
       }
    }
 
-
    return Success();
 }
 
