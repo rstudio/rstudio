@@ -417,7 +417,6 @@ public class ShellWidget extends Composite implements ShellDisplay,
          prompt = consolify(prompt);
 
       prompt_.getElement().setInnerText(prompt);
-      //input_.clear();
       ensureInputVisible();
 
       // Deal gracefully with multi-line prompts
@@ -433,7 +432,16 @@ public class ShellWidget extends Composite implements ShellDisplay,
    @Override
    public void ensureInputVisible()
    {
-      scrollIntoView();
+      // NOTE: we don't scroll immediately as this is normally called
+      // in response to mutations of the console input buffer, and so
+      // we need to wait until Ace has finished rendering in response
+      // to that change.
+      scrollIntoViewPending_ = true;
+      
+      Scheduler.get().scheduleFinally(() ->
+      {
+         checkForPendingScroll();
+      });
    }
    
    private String getErrorClass()
