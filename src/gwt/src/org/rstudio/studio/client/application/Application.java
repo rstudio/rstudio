@@ -38,6 +38,7 @@ import com.google.inject.Singleton;
 
 import org.rstudio.core.client.Barrier;
 import org.rstudio.core.client.BrowseCap;
+import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.Barrier.Token;
@@ -211,7 +212,18 @@ public class Application implements ApplicationEventHandlers
                MathJaxLoader.ensureMathJaxLoaded();
 
                // initialize workbench
-               initializeWorkbench();
+               // refresh prefs incase there were loaded without sessionInfo
+               userState_.get().writeState(
+                     new CommandWithArg<Boolean>() {
+                        public void execute(Boolean arg) {
+                           userPrefs_.get().writeUserPrefs(
+                                 new CommandWithArg<Boolean>() {
+                                    public void execute(Boolean arg) {
+                                       initializeWorkbench();
+                                    }
+                                 });
+                           }
+                     });
             });
          }
 

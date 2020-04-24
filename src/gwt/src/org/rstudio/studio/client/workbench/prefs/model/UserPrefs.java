@@ -100,6 +100,7 @@ public class UserPrefs extends UserPrefsComputed
 
    public void writeUserPrefs(CommandWithArg<Boolean> onCompleted)
    {
+      UpdatePrefs(session_.getSessionInfo().getPrefs());
       server_.setUserPrefs(
          session_.getSessionInfo().getUserPrefs(),
          new ServerRequestCallback<Void>() 
