@@ -439,11 +439,14 @@ public class ShellWidget extends Composite implements ShellDisplay,
       // in response to mutations of the console input buffer, and so
       // we need to wait until Ace has finished rendering in response
       // to that change.
-      scrollIntoViewPending_ = true;
-      
-      // In case there wasn't an Ace render in-flight, force a check
+      //
+      // In case there wasn't an Ace render in-flight, we also force a check
       // for pending scroll (which will then force the cursor into view)
-      Scheduler.get().scheduleDeferred(() -> checkForPendingScroll());
+      if (!scrollIntoViewPending_)
+      {
+         scrollIntoViewPending_ = true;
+         Scheduler.get().scheduleDeferred(() -> checkForPendingScroll());
+      }
    }
    
    private String getErrorClass()
