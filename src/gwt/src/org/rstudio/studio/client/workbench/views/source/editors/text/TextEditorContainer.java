@@ -31,14 +31,28 @@ public class TextEditorContainer extends LayoutPanel implements CanFocus
 {     
    public static class EditorCode
    {
-      public EditorCode(String code, JsdiffChange[] changes)
+      public EditorCode(String code, JsdiffChange[] changes, EditorCursor cursor)
       {
          this.code = code;
          this.changes = changes;
+         this.cursor = cursor;
       }
       
-      String code;
-      JsdiffChange[] changes;
+      public final String code;
+      public final JsdiffChange[] changes;
+      public final EditorCursor cursor;
+   }
+   
+   public static class EditorCursor
+   {
+      public EditorCursor(int row, int column)
+      {
+         this.row = row;
+         this.column = column;
+      }
+      
+      public final int row;
+      public final int column;
    }
    
    public static interface Editor extends IsHideableWidget

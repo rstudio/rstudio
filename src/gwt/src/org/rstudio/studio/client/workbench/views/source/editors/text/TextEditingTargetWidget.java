@@ -77,6 +77,7 @@ import org.rstudio.studio.client.workbench.views.source.DocumentOutlineWidget;
 import org.rstudio.studio.client.workbench.views.source.PanelWithToolbars;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTargetToolbar;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTarget.Display;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.findreplace.FindReplaceBar;
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.TextEditingTargetNotebook;
 import org.rstudio.studio.client.workbench.views.source.editors.text.status.StatusBar;
@@ -1660,9 +1661,19 @@ public class TextEditingTargetWidget
          // apply changes
          editor_.applyCodeChanges(editorCode.changes);
          
-         // flag activation pending (triggers autoscroll)
+         // additional actions when activating
          if (activatingEditor)
+         {
+            // set cursor position if one was provided
+            if (editorCode.cursor != null)
+            {
+               TextEditorContainer.EditorCursor cursor = editorCode.cursor;
+               editor_.setCursorPosition(Position.create(cursor.row, cursor.column));
+            }
+            
+            // flag activation pending (triggers autoscroll)
             activationPending_ = true;
+         }
       }
       
       @Override

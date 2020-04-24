@@ -20,6 +20,8 @@ import { EditorState, Plugin, PluginKey, Transaction } from 'prosemirror-state';
 import { EditorView } from 'prosemirror-view';
 import 'prosemirror-view/style/prosemirror.css';
 
+import { setTextSelection } from 'prosemirror-utils';
+
 import { Change, diffChars } from 'diff';
 
 import polyfill from './polyfill/index';
@@ -27,7 +29,7 @@ import polyfill from './polyfill/index';
 import { EditorOptions } from './api/options';
 import { ProsemirrorCommand, CommandFn, EditorCommand } from './api/command';
 import { PandocMark, markIsActive } from './api/mark';
-import { PandocNode } from './api/node';
+import { PandocNode, findTopLevelBodyNodes } from './api/node';
 import { EditorUI, attrPropsToInput, attrInputToProps, AttrProps, AttrEditInput } from './api/ui';
 import { Extension } from './api/extension';
 import { ExtensionManager, initExtensions } from './extensions';
@@ -89,6 +91,7 @@ const kMac = typeof navigator !== 'undefined' ? /Mac/.test(navigator.platform) :
 export interface EditorCode {
   code: string;
   changes: Change[];
+  cursor?: { row: number, column: number };
 }
 
 export interface EditorContext {
@@ -199,6 +202,10 @@ export class Editor {
   // content width constraints (if unset uses default editor CSS)
   private maxContentWidth = 0;
   private minContentPadding = 0;
+
+  // keep track of whether the last transaction was selection-only
+  // (indicates that we should use a cursorSentinel when going to source mode)
+  private lastTrSelectionOnly = false;
 
   // event sinks
   private readonly events: ReadonlyMap<string, Event>;
@@ -413,20 +420,22 @@ export class Editor {
     // override wrapColumn option if it was specified
     options.wrapColumn = this.format.wrapColumn || options.wrapColumn;
 
+    // do we need the cursor sentinel?
+    const useCursorSentinel = this.lastTrSelectionOnly;
+
     // apply layout fixups
     this.applyFixups(FixupContext.Save);
 
+    // insert cursor sentinel if appropriate
+    const target = useCursorSentinel 
+      ? docWithCursorSentinel(this.state)
+      : { doc: this.state.doc, sentinel: undefined };
+    
     // get the code
-    const code = await this.pandocConverter.fromProsemirror(this.state.doc, this.pandocFormat, options);
+    const code = await this.pandocConverter.fromProsemirror(target.doc, this.pandocFormat, options);
 
-    // get the changes  
-    const changes: Change[] = code !== previous ? diffChars(previous, code) : [];
-
-    // return code and changes
-    return {
-      code,
-      changes
-    };
+    // return 
+    return codeWithChangesAndCursor(code, target.sentinel, previous);
   }
 
   public getHTML(): string {
@@ -546,6 +555,9 @@ export class Editor {
   private dispatchTransaction(tr: Transaction) {
     // track previous outline
     const previousOutline = getOutline(this.state);
+
+    // track whether this was a selection-only transaction
+    this.lastTrSelectionOnly = tr.selectionSet && !tr.docChanged;
 
     // apply the transaction
     this.state = this.state.apply(tr);
@@ -809,6 +821,76 @@ export class Editor {
       ],
     });
   }
+}
+
+function docWithCursorSentinel(state: EditorState) {
+  // transaction for inserting the sentinel (won't actually commit since it will
+  // have the sentinel in it but rather will use the computed tr.doc)
+  const tr = state.tr;
+
+  // cursorSentinel to return
+  let sentinel: string | undefined;
+
+  // find the anchor of the current selection
+  const { anchor } = tr.selection; 
+
+  // find the closest top-level text block that isn't an Rmd chunk (their
+  // first line gets special processing so we can't put the sentinel there)
+  const topLevelTextBlocks = findTopLevelBodyNodes(tr.doc, node => { 
+    return node.isTextblock && node.type !== state.doc.type.schema.nodes.rmd_chunk;
+  });
+  const textBlock = topLevelTextBlocks.reverse().find(block => block.pos < anchor);
+  if (textBlock) {
+    sentinel = 'CursorSentinel-CAFB04C4-080D-4074-898C-F670CAACB8AF';
+    let pos = textBlock.pos;
+    if ((textBlock.pos + textBlock.node.nodeSize) < anchor) {
+      pos = textBlock.pos + textBlock.node.nodeSize - 1;
+    }
+    setTextSelection(pos)(tr);
+    tr.insertText(sentinel);
+  }
+
+  // return the doc and sentinel (if any)
+  return {
+    doc: tr.doc,
+    sentinel,
+  };
+}
+
+// get editor code + cursor location and jsdiff changes from previousCode
+function codeWithChangesAndCursor(code: string, cursorSentinel: string | undefined, previousCode: string) {
+
+  // determine the cursor row and column using the sentinel (remove the sentinel from the code)
+  let newCode = code;
+  let cursor: { row: number, column: number} | undefined;
+  if (cursorSentinel) {
+    newCode = code
+      .split(/\r?\n/)
+      .map((line, index) => {
+        if (!cursor) {
+          const sentinelLoc = line.indexOf(cursorSentinel);
+          if (sentinelLoc !== -1) {
+            line = line.replace(cursorSentinel, '');
+            cursor = {
+              row: index,
+              column: sentinelLoc
+            };
+          }
+        }
+        return line;
+      })
+      .join('\n');
+  }
+
+   // generate change records (in case the caller wants to apply changes incrementally)
+  const changes: Change[] = previousCode === newCode ? [] : diffChars(previousCode, newCode);
+
+  return {
+    code: newCode,
+    changes,
+    cursor
+  };
+  
 }
 
 // custom DOMParser that preserves all whitespace (required by display math marks)

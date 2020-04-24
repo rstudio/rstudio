@@ -29,6 +29,7 @@ import org.rstudio.core.client.widget.ProgressPanel;
 import org.rstudio.core.client.widget.images.ProgressImages;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.panmirror.PanmirrorCode;
 import org.rstudio.studio.client.panmirror.PanmirrorContext;
 import org.rstudio.studio.client.panmirror.PanmirrorEditingLocation;
 import org.rstudio.studio.client.panmirror.PanmirrorKeybindings;
@@ -167,8 +168,7 @@ public class TextEditingTargetVisualMode
             if (prefs_.visualMarkdownEditingWrapAuto().getValue())
                options.wrapColumn = prefs_.visualMarkdownEditingWrapColumn().getValue();
             panmirror_.getMarkdown(options, getEditorCode(), markdown -> { 
-               TextEditorContainer.EditorCode editorCode = 
-                  new TextEditorContainer.EditorCode(markdown.code, markdown.changes);
+               TextEditorContainer.EditorCode editorCode = toEditorCode(markdown);
                getSourceEditor().setCode(editorCode, activatingEditor); 
                isDirty_ = false;
                if (ready != null)
@@ -969,6 +969,19 @@ public class TextEditingTargetVisualMode
       private final PanmirrorFormatComment comment_;
    }
    
+   
+   private TextEditorContainer.EditorCode toEditorCode(PanmirrorCode panmirrorCode)
+   {
+      return new TextEditorContainer.EditorCode(
+         panmirrorCode.code, 
+         panmirrorCode.changes,
+         panmirrorCode.cursor != null 
+            ? new TextEditorContainer.EditorCursor(
+                  panmirrorCode.cursor.row, panmirrorCode.cursor.column
+              )
+            : null
+      );
+   }
    
    private Commands commands_;
    private UserPrefs prefs_;
