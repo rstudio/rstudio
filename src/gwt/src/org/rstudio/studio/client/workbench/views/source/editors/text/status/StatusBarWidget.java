@@ -138,7 +138,7 @@ public class StatusBarWidget extends Composite
       if (type == StatusBar.SCOPE_TOP_LEVEL || message_.isVisible())
          scopeIcon_.setVisible(false);
       else
-         scopeIcon_.setVisible(scope_.getContentsVisible());
+         scopeIcon_.setVisible(true);
 
       if (type == StatusBar.SCOPE_CLASS)
       {
