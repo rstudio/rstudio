@@ -3,7 +3,7 @@
 #
 # install-packages
 #
-# Copyright (C) 2009-19 by RStudio, PBC
+# Copyright (C) 2009-20 by RStudio, PBC
 #
 # Unless you have received this program directly from RStudio pursuant
 # to the terms of a commercial license agreement with RStudio, then
@@ -82,14 +82,18 @@ mv $PACKAGE_ARCHIVE $PACKAGE_ARCHIVE_SHA1
 # install rsconnect master rstudio
 # install renv master rstudio
 
-RHOME=$(Rscript -e 'Sys.getenv("R_HOME")')
-if [[ ! -w $RHOME ]]; then
-  echo "$RHOME is not writable. Creating user R library directory."
-  mkdir -p $(Rscript -e 'cat(path.expand(Sys.getenv("R_LIBS_USER")))')
+# default to either the first site library if defined or the last libPaths entry if not
+RPKGLIB=$(Rscript -e 'cat(if(length(.Library.site) > 0) .Library.site[[1]] else .libPaths()[[-1]])')
+if [[ ! -w $RPKGLIB ]]; then
+  echo "$RPKGLIB is not writable. Creating user R library directory."
+  RPKGLIB=$(Rscript -e 'cat(path.expand(Sys.getenv("R_LIBS_USER")))')
+  mkdir -p "$RPKGLIB"
 fi
 
-# Packages needed to run tests
-Rscript -e "if("'!'"require(testthat, quietly = TRUE)) { install.packages('testthat', repos='https://cran.rstudio.com/') }"
+# install testthat (needed to run tests)
+RINSTALLCMD="if("'!'"require(testthat, quietly = TRUE)) { install.packages('testthat', lib=\"$RPKGLIB\", repos='https://cran.rstudio.com/') }"
+echo "> $RINSTALLCMD"
+Rscript -e "$RINSTALLCMD"
 
 # back to install-dir
 cd $INSTALL_DIR
