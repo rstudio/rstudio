@@ -1137,25 +1137,27 @@ public class AceEditor implements DocDisplay,
          Position startPos = selection.getCursor();
          
          // iterate through rows until we've consumed all the chars
-         int row;
+         int row = startPos.getRow();
          int col = startPos.getColumn();
-         for (row = startPos.getRow(); row < session.getLength(); row++) {
+         while (row < session.getLength()) {
             
             // how many chars left in the current column?
             String line = session.getLine(row);
-            int charsLeftInLine = line.length() - col;
+            // +1 is for the newline
+            int charsLeftInLine = line.length() + 1 - col;
             
             // is the number of chars we still need to consume lte
             // the number of charsLeft?
-            if (charsLeft <= charsLeftInLine) 
+            if (charsLeft < charsLeftInLine) 
             {
                col = col + charsLeft;
                break;
             }
             else
             {
-               charsLeft -= (charsLeftInLine+1); // add 1 for newline
+               charsLeft -= charsLeftInLine;
                col = 0;
+               row++;
             }
          }
          
