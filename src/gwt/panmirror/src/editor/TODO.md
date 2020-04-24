@@ -6,16 +6,6 @@ pandoc schema: <https://github.com/jgm/pandoc-types/blob/master/Text/Pandoc/Defi
 
 ## TODO
 
-
-Consider whether we still need a cursor sentinel? Detection went
-wrong last time b/c we called applyFixups first
-
-See about using scope tree for src to visual
-
-Disable visual mode for collaborative editing
-(b/c we have no way to propagate changes from source to visual
-other than when the document swtich happens)
-
 Bookdown & Blogdown docs:
   - Math in code
   - @ref has no \
