@@ -45,7 +45,7 @@ namespace {
 std::string onDetectSourceType(
       boost::shared_ptr<source_database::SourceDocument> pDoc)
 {
-   if ((pDoc->type() == source_database::SourceDocument::SourceDocumentTypeRSource))
+   if ((pDoc->type() == kSourceDocumentTypeRSource))
    {
       static const boost::regex reCustomSourceComment("^#\\s*!source\\s+\\w+.*$");
       std::string contents = pDoc->contents();

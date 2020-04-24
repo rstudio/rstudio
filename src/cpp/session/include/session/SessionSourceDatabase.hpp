@@ -28,6 +28,17 @@
 
 #include <r/RSexp.hpp>
 
+#define kSourceDocumentTypeCpp       "cpp"
+#define kSourceDocumentTypeJS        "js"
+#define kSourceDocumentTypePython    "python"
+#define kSourceDocumentTypeRHTML     "r_html"
+#define kSourceDocumentTypeRMarkdown "r_markdown"
+#define kSourceDocumentTypeRSource   "r_source"
+#define kSourceDocumentTypeSQL       "sql"
+#define kSourceDocumentTypeShell     "sh"
+#define kSourceDocumentTypeSweave    "sweave"
+
+
 namespace rstudio {
 namespace core {
    class Error;
@@ -127,24 +138,24 @@ public:
       type_ = type;
    }
    
-   bool isRMarkdownDocument() const { return type_ == SourceDocumentTypeRMarkdown; }
+   bool isRMarkdownDocument() const { return type_ == kSourceDocumentTypeRMarkdown; }
    
    // is this an R, or potentially R-containing, source file?
    // TODO: Export these types as an 'enum' and provide converters.
    bool canContainRCode()
    {
       return type_.size() > 0 && (
-               type_ == SourceDocumentTypeSweave ||
-               type_ == SourceDocumentTypeRSource ||
-               type_ == SourceDocumentTypeRMarkdown ||
-               type_ == SourceDocumentTypeRHTML ||
-               type_ == SourceDocumentTypeCpp);
+               type_ == kSourceDocumentTypeSweave ||
+               type_ == kSourceDocumentTypeRSource ||
+               type_ == kSourceDocumentTypeRMarkdown ||
+               type_ == kSourceDocumentTypeRHTML ||
+               type_ == kSourceDocumentTypeCpp);
    }
    
    // is this a straight R source file?
    bool isRFile()
    {
-      return type_.size() > 0 && type_ == SourceDocumentTypeRSource;
+      return type_.size() > 0 && type_ == kSourceDocumentTypeRSource;
    }
 
    core::Error readFromJson(core::json::Object* pDocJson);
@@ -174,16 +185,6 @@ private:
    std::string collabServer_;
    std::string sourceWindow_;
    core::json::Object properties_;
-   
-public:
-   
-   static const char * const SourceDocumentTypeSweave;
-   static const char * const SourceDocumentTypeRSource;
-   static const char * const SourceDocumentTypeRMarkdown;
-   static const char * const SourceDocumentTypeRHTML;
-   static const char * const SourceDocumentTypeCpp;
-   static const char * const SourceDocumentTypeJS;
-   static const char * const SourceDocumentTypeSQL;
 
 };
 
