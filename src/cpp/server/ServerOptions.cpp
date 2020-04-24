@@ -302,6 +302,13 @@ ProgramStatus Options::read(int argc,
       ("rsession-process-limit",
          value<int>(&dep.userProcessLimit)->default_value(dep.userProcessLimit),
          "rsession user process limit - DEPRECATED");
+
+   // database
+   options_description database("database");
+   database.add_options()
+      ("database-config-file",
+         value<std::string>(&databaseConfigFile_)->default_value(""),
+         "path to database.conf configuration file");
    
    // still read depracated options (so we don't break config files)
    std::string authMinimumUserId, authLoginPageHtml;
@@ -371,8 +378,8 @@ ProgramStatus Options::read(int argc,
    // overlay hook
    addOverlayOptions(&verify, &server, &www, &rsession, &auth, &monitor);
 
-   optionsDesc.commandLine.add(verify).add(server).add(www).add(rsession).add(auth).add(monitor);
-   optionsDesc.configFile.add(server).add(www).add(rsession).add(auth).add(monitor);
+   optionsDesc.commandLine.add(verify).add(server).add(www).add(rsession).add(database).add(auth).add(monitor);
+   optionsDesc.configFile.add(server).add(www).add(rsession).add(database).add(auth).add(monitor);
  
    // read options
    bool help = false;

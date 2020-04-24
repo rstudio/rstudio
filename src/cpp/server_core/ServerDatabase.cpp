@@ -57,10 +57,15 @@ constexpr const size_t kDefaultConnectionPoolSize = 4;
 
 boost::shared_ptr<ConnectionPool> s_connectionPool;
 
-Error readOptions(const boost::optional<system::User>& databaseFileUser,
+Error readOptions(const std::string& databaseConfigFile,
+                  const boost::optional<system::User>& databaseFileUser,
                   ConnectionOptions* pOptions)
 {
-   FilePath optionsFile = core::system::xdg::systemConfigFile("database.conf");
+   // read the options from the specified configuration file
+   // if not specified, fall back to system configuration
+   FilePath optionsFile = !databaseConfigFile.empty() ?
+            FilePath(databaseConfigFile) :
+            core::system::xdg::systemConfigFile("database.conf");
    if (optionsFile.exists())
    {
       // the database configuration file can potentially contain sensitive information
@@ -98,17 +103,21 @@ Error readOptions(const boost::optional<system::User>& databaseFileUser,
       SqliteConnectionOptions options;
 
       // get the database directory - if not specified, we fallback to a hardcoded default path
-      std::string databaseDirectory = settings.get(kSqliteDatabaseDirectory, kDefaultSqliteDatabaseDirectory);
-      FilePath databaseFile = FilePath(databaseDirectory).completeChildPath("rstudio.sqlite");
+      FilePath databaseDirectory = FilePath(settings.get(kSqliteDatabaseDirectory, kDefaultSqliteDatabaseDirectory));
+      FilePath databaseFile = databaseDirectory.completeChildPath("rstudio.sqlite");
       options.file = databaseFile.getAbsolutePath();
+
+      error = databaseDirectory.ensureDirectory();
+      if (error)
+         return error;
+
+      error = databaseFile.ensureFile();
+      if (error)
+         return error;
 
       if (databaseFileUser.has_value())
       {
          // always ensure the database file user is correct, if specified
-         error = databaseFile.ensureFile();
-         if (error)
-            return error;
-
          error = databaseFile.changeOwnership(databaseFileUser.get());
          if (error)
             return error;
@@ -162,11 +171,12 @@ Error migrationsDir(FilePath* pMigrationsDir)
 
 } // anonymous namespace
 
-Error initialize(bool updateSchema,
+Error initialize(const std::string& databaseConfigFile,
+                 bool updateSchema,
                  const boost::optional<system::User>& databaseFileUser)
 {
    ConnectionOptions options;
-   Error error = readOptions(databaseFileUser, &options);
+   Error error = readOptions(databaseConfigFile, databaseFileUser, &options);
    if (error)
       return error;
 
