@@ -29,7 +29,11 @@ if ! command -v brew &> /dev/null; then
 fi
 
 # install postgres, needed by SOCI
-brew install postgres
+if brew list | grep postgresql &> /dev/null; then
+   echo "postgresql already installed"
+else
+   brew install postgresql
+fi
 
 cd ../common
 ./install-common --install-crashpad-sudo

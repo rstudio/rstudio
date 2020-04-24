@@ -22,6 +22,7 @@
 #include <boost/format.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/algorithm/string.hpp>
+#include <boost/algorithm/string/trim.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/asio/buffer.hpp>
 
@@ -367,7 +368,11 @@ void Response::setFrameOptionHeaders(const std::string& options)
       }
    }
 
-   if (!option.empty())
+   // multiple space-separated domains not supported by X-Frame-Options, so if 
+   // there's a space, don't set the header (modern browsers will use the
+   // previously-set Content-Security-Policy)
+   if (!option.empty() &&
+         boost::algorithm::trim_copy(options).find_first_of(' ') == std::string::npos)
       setHeader("X-Frame-Options", option);
 }
 

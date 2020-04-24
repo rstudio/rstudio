@@ -274,45 +274,6 @@ std::string URL::uncomplete(std::string baseUri, std::string targetUri)
    return to.value() + targetExtra;
 }
 
-void URL::test()
-{
-   BOOST_ASSERT(cleanupPath("") == "");
-   BOOST_ASSERT(cleanupPath("/") == "/");
-   BOOST_ASSERT(cleanupPath("./") == "");
-   BOOST_ASSERT(cleanupPath("/./") == "/");
-   BOOST_ASSERT(cleanupPath("/.") == "/.");
-   BOOST_ASSERT(cleanupPath("/foo/../") == "/");
-   BOOST_ASSERT(cleanupPath("foo/../") == "");
-   BOOST_ASSERT(cleanupPath("/foo/bar/../../") == "/");
-   BOOST_ASSERT(cleanupPath("foo/bar/../../") == "");
-   BOOST_ASSERT(cleanupPath("/foo/bar/../../") == "/");
-   BOOST_ASSERT(cleanupPath("/foo/bar/../..") == "/foo/..");
-   BOOST_ASSERT(cleanupPath("/foo/?/../") == "/foo/?/../");
-   BOOST_ASSERT(cleanupPath("/foo/#/../") == "/foo/#/../");
-   BOOST_ASSERT(cleanupPath("/foo/?/../#/../") == "/foo/?/../#/../");
-   BOOST_ASSERT(cleanupPath("/foo/bar/../../../") == "/");
-   BOOST_ASSERT(cleanupPath("/foo/bar/../../../baz") == "/baz");
-
-   BOOST_ASSERT(complete("http://www.example.com", "foo") == "http://www.example.com/foo");
-   BOOST_ASSERT(complete("http://www.example.com/foo", "bar") == "http://www.example.com/bar");
-   BOOST_ASSERT(complete("http://www.example.com/foo/", "bar") == "http://www.example.com/foo/bar");
-   BOOST_ASSERT(complete("http://www.example.com:80/foo/", "/bar") == "http://www.example.com:80/bar");
-   BOOST_ASSERT(complete("http://www.example.com:80/foo/bar", "baz/qux") == "http://www.example.com:80/foo/baz/qux");
-   BOOST_ASSERT(complete("http://www.example.com:80/foo/bar", "../baz/qux") == "http://www.example.com:80/baz/qux");
-   BOOST_ASSERT(complete("http://www.example.com:80/foo/bar/", "../baz/qux") == "http://www.example.com:80/foo/baz/qux");
-   BOOST_ASSERT(complete("http://www.example.com:80/foo/bar/", "baz/../qux") == "http://www.example.com:80/foo/bar/qux");
-   BOOST_ASSERT(complete("http://www.example.com:80/foo/bar", "http://baz") == "http://baz");
-
-   BOOST_ASSERT(complete("foo/bar/", "baz/qux") == "foo/bar/baz/qux");
-   BOOST_ASSERT(complete("foo/bar/", "../baz/qux") == "foo/baz/qux");
-   BOOST_ASSERT(complete("../foo/bar/", "../baz/qux") == "foo/baz/qux");
-   BOOST_ASSERT(complete("../../foo/bar/", "../baz/qux") == "foo/baz/qux");
-
-   BOOST_ASSERT(uncomplete("/foo/bar/baz", "/foo/qux/quux") == "../qux/quux");
-   BOOST_ASSERT(uncomplete("/foo/bar/baz/", "/foo/qux/quux") == "../../qux/quux");
-   BOOST_ASSERT(uncomplete("/bar/baz", "/qux/quux") == "../qux/quux");
-}
- 
 } // namespace http
 } // namespace core
 } // namespace rstudio
