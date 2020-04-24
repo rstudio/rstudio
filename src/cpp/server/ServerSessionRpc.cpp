@@ -170,7 +170,7 @@ void validationLoginHandler(
    // we take this additional precaution
    const core::http::Request& request = pConnection->request();
    std::string headerToken = request.headerValue(kCSRFTokenHeader);
-   std::string cookieToken = request.cookieValue(kCSRFTokenCookie, options().wwwIFrameEmbedding());
+   std::string cookieToken = request.cookieValue(kCSRFTokenCookie, options().wwwIFrameLegacyCookies());
    if (headerToken.empty())
    {
       LOG_WARNING_MESSAGE("Attempt to request URL " + request.uri() + " without CSRF token");
