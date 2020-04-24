@@ -6,21 +6,15 @@ pandoc schema: <https://github.com/jgm/pandoc-types/blob/master/Text/Pandoc/Defi
 
 ## TODO
 
-Joe code review
+Scope tree doesn't come back when activating source mode. Need some sane way to do this.
 
-Undo of delete leaves selection of previous text.
-
-What's up with the browser askinga about save changes?
+What's up with the browser asking about save changes?
 (check for onunload / onbeforeunload logic)
-
-Status bar navigation popup shows up
 
 Consider whether we still need a cursor sentinel? Detection went
 wrong last time b/c we called applyFixups first
 
 See about using scope tree for src to visual
-
-Set diffs to word boundaries?
 
 Disable visual mode for collaborative editing
 (b/c we have no way to propagate changes from source to visual
