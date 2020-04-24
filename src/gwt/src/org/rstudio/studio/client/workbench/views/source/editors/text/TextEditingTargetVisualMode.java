@@ -452,6 +452,8 @@ public class TextEditingTargetVisualMode
          // sync any pending edits, then activate the editor
          syncToEditor(true, () -> {
             
+            unmanageCommands();
+            
             editorContainer.activateEditor(focus); 
             
             if (syncOnIdle_ != null)
