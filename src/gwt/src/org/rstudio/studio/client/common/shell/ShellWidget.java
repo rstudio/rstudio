@@ -42,6 +42,7 @@ import org.rstudio.studio.client.workbench.views.console.events.RunCommandWithDe
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor.NewLineMode;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Renderer;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.CursorChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.PasteEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.RenderFinishedEvent;
@@ -102,6 +103,8 @@ public class ShellWidget extends Composite implements ShellDisplay,
       prompt_.addStyleName(KEYWORD_CLASS_NAME);
 
       input_ = editor;
+      renderer_ = input_.getWidget().getEditor().getRenderer();
+      
       input_.setShowLineNumbers(false);
       input_.setShowPrintMargin(false);
       input_.setUseWrapMode(true);
@@ -913,18 +916,18 @@ public class ShellWidget extends Composite implements ShellDisplay,
       // to render the cursor, so we instead check for a "bogus" rectangle and
       // conclude this implies there is a pending render in-flight that we can
       // later respond to.
-      DOMRect child  = DomUtils.getBoundingClientRect(
-            input_.getWidget().getEditor().getRenderer().getCursorElement());
+      renderer_.renderCursor();
+      DOMRect child = DomUtils.getBoundingClientRect(renderer_.getCursorElement());
       
       boolean isRendering = child.getWidth() == 0 && child.getHeight() == 0;
       if (isRendering)
       {
          scrollIntoViewPending_ = true;
+         Scheduler.get().scheduleDeferred(() -> checkForPendingScroll());
          return;
       }
       
-      DOMRect parent = DomUtils.getBoundingClientRect(
-            scrollPanel_.getElement());
+      DOMRect parent = DomUtils.getBoundingClientRect(scrollPanel_.getElement());
       
       // Scroll the cursor into view as required.
       int oldScrollPos = scrollPanel_.getVerticalScrollPosition();
@@ -990,6 +993,7 @@ public class ShellWidget extends Composite implements ShellDisplay,
    private final HTML prompt_;
    private AriaLiveShellWidget liveRegion_ = null;
    protected final AceEditor input_;
+   protected final Renderer renderer_;
    private final DockPanel inputLine_;
    protected final ClickableScrollPanel scrollPanel_;
    private final ConsoleResources.ConsoleStyles styles_;
