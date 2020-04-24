@@ -24,6 +24,10 @@
 * New option `server-project-sharing-root-dir` allows project sharing outside user home directories (Pro #1340)
 * New `X-RSP-Request` header for specifying originating URL behind path-rewriting proxies (Pro #1579)
 
+### Miscellaneous
+
+* RStudio now infers document type from shebang (e.g. #!/usr/bin/env sh) for R, Python and shell scripts (#5643)
+
 ### Bugfixes
 
 * Fixed an issue where hovering mouse cursor over C++ completion popup would steal focus. (#5941)
