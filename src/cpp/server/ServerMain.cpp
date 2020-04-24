@@ -635,7 +635,7 @@ int main(int argc, char * const argv[])
          return core::system::exitFailure(error, ERROR_LOCATION);
 
       // initialize database connectivity
-      error = server_core::database::initialize(true, serverUser);
+      error = server_core::database::initialize(options.databaseConfigFile(), true, serverUser);
       if (error)
          return core::system::exitFailure(error, ERROR_LOCATION);
 
