@@ -160,6 +160,11 @@ public class StatusBarElementWidget extends FlowPanel
       if (arrows_ != null)
          arrows_.setVisible(visible);
    }
+   
+   public boolean getContentsVisible()
+   {
+      return label_.isVisible();
+   }
 
    public void setClicksEnabled(boolean enabled)
    {

@@ -17,9 +17,9 @@ package org.rstudio.studio.client.workbench.views.source.editors.text;
 
 import java.util.ArrayList;
 
+import org.rstudio.core.client.jsdiff.JsdiffChange;
 import org.rstudio.core.client.widget.CanFocus;
 import org.rstudio.core.client.widget.IsHideableWidget;
-import org.rstudio.studio.client.panmirror.PanmirrorCode;
 
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.user.client.ui.LayoutPanel;
@@ -31,33 +31,20 @@ public class TextEditorContainer extends LayoutPanel implements CanFocus
 {     
    public static class EditorCode
    {
-      public EditorCode()
+      public EditorCode(String code, JsdiffChange[] changes)
       {
-         this.code = "";
-      }
-      
-      public EditorCode(PanmirrorCode editorCode)
-      {
-         this.code = editorCode.markdown;
-         this.cursorSentinel = editorCode.cursorSentinel;
-      }
-      
-      public PanmirrorCode toPanmirrorCode() 
-      {
-         PanmirrorCode editorCode =  new PanmirrorCode();
-         editorCode.markdown = this.code;
-         editorCode.cursorSentinel = this.cursorSentinel;
-         return editorCode;
+         this.code = code;
+         this.changes = changes;
       }
       
       String code;
-      String cursorSentinel;
+      JsdiffChange[] changes;
    }
    
    public static interface Editor extends IsHideableWidget
    {
       String getCode();
-      void setCode(EditorCode editorCode, boolean preserveCursorLocation, boolean activatingEditor);
+      void setCode(EditorCode editorCode, boolean activatingEditor);
    }
    
    public TextEditorContainer(Editor editor)

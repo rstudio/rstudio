@@ -6,12 +6,15 @@ pandoc schema: <https://github.com/jgm/pandoc-types/blob/master/Text/Pandoc/Defi
 
 ## TODO
 
-Don't blow away line widgets when setting code
-Consider applying source/visual transforms as patches. 
-https://gitlab.com/mpapp-public/prosemirror-recreate-steps
-https://www.npmjs.com/package/diff
 
-Alison on blogdown engines, etc.
+Consider whether we still need a cursor sentinel? Detection went
+wrong last time b/c we called applyFixups first
+
+See about using scope tree for src to visual
+
+Disable visual mode for collaborative editing
+(b/c we have no way to propagate changes from source to visual
+other than when the document swtich happens)
 
 Bookdown & Blogdown docs:
   - Math in code
@@ -20,15 +23,22 @@ Bookdown & Blogdown docs:
   - Using blackfriday explicitly
   - Setting the doctype(s) explicitly (should xref be a doctype or should it be distill)
 
+Alison on blogdown engines, etc.
+
 MathJax preview. When containing the selection, the math will show both the code and the preview. When not containing the selection will show the preview. (so probably require a node view for this). Consider a “done” gesture for display math. May need to bring back
 escaping of $ in math as this mode will clearly not be "source mode" style latex equation editing
 
 Possibly have a special editing mode for thereoms?
 
-
 ## Future
 
+Revisit doing smart patches of Prosemirror doc: https://github.com/rstudio/rstudio/tree/feature/panmirror-smart-patch
+
+Consider porting https://gitlab.com/mpapp-public/manuscripts-symbol-picker
+
 Markup extension filtering (e.g. shortcodes) might be better done in Lua
+
+Use Joe's trFindNodes (for loop requires ES6)
 
 Aggregated fixup/appendTransaction transactions:
 - fixups and mutating appendTransaction handlers should be passed a transform 

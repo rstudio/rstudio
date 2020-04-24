@@ -77,7 +77,6 @@ import org.rstudio.studio.client.workbench.views.source.DocumentOutlineWidget;
 import org.rstudio.studio.client.workbench.views.source.PanelWithToolbars;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTargetToolbar;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTarget.Display;
-import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.findreplace.FindReplaceBar;
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.TextEditingTargetNotebook;
 import org.rstudio.studio.client.workbench.views.source.editors.text.status.StatusBar;
@@ -1656,39 +1655,12 @@ public class TextEditingTargetWidget
       }
      
       @Override
-      public void setCode(TextEditorContainer.EditorCode editorCode, boolean preserveCursorLocation, boolean activatingEditor)
-      {
-         // if the cursor location is a sentinel within the code string, then pull it out and note it's position
-         final Position cursorPosition = Position.create(0, 0);
+      public void setCode(TextEditorContainer.EditorCode editorCode, boolean activatingEditor)
+      {   
+         // apply changes
+         editor_.applyCodeChanges(editorCode.changes);
          
-      
-         if (editorCode.cursorSentinel != null) {
-            
-            final Position kNoPosition = Position.create(0,0);
-            
-            editorCode.code = filterCode(editorCode.code, (line, number) -> {
-               if (cursorPosition.isEqualTo(kNoPosition)) {
-                  int sentinelLoc = line.indexOf(editorCode.cursorSentinel);
-                  if (sentinelLoc != -1) {
-                     line = line.substring(0, sentinelLoc) + 
-                            line.substring(sentinelLoc + editorCode.cursorSentinel.length());
-                     cursorPosition.setRow(number); 
-                     cursorPosition.setColumn(sentinelLoc);
-                  }
-               }
-               return line;
-            });        
-         }
-         
-         // set the code
-         editor_.setCode(editorCode.code, preserveCursorLocation);
-         
-         // set cursor position if we need to
-         if (editorCode.cursorSentinel != null) {
-            editor_.setCursorPosition(cursorPosition);
-         }
-         
-         // indicate that an activation is pending
+         // flag activation pending (triggers autoscroll)
          if (activatingEditor)
             activationPending_ = true;
       }
@@ -1701,21 +1673,6 @@ public class TextEditingTargetWidget
       
       private boolean activationPending_ = false;
    };
-   
-   private String filterCode(String code, LineFilter filter) 
-   {
-      ArrayList<String> codeLines = new ArrayList<String>();
-      int lineNumber = 0;
-      for (String line : StringUtil.getLineIterator(code)) {
-         codeLines.add(filter.filterLine(line, lineNumber++));
-      }
-      return String.join("\n", codeLines);         
-   }
-   
-   private interface LineFilter
-   {
-      String filterLine(String line, int number);
-   }
 
    private final TextEditingTarget target_;
    private final DocUpdateSentinel docUpdateSentinel_;

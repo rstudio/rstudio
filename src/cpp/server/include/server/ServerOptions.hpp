@@ -278,6 +278,12 @@ public:
       return overlayOptions_[name];
    }
 
+   // database
+   std::string databaseConfigFile() const
+   {
+      return databaseConfigFile_;
+   }
+
 private:
 
    void resolvePath(const core::FilePath& basePath,
@@ -355,6 +361,7 @@ private:
    std::string monitorSharedSecret_;
    int monitorIntervalSeconds_;
    std::string secureCookieKeyFile_;
+   std::string databaseConfigFile_;
    std::map<std::string,std::string> overlayOptions_;
 };
       

@@ -18,15 +18,16 @@ import { keydownHandler } from 'prosemirror-keymap';
 import { MarkSpec, Node as ProsemirrorNode, NodeSpec, Schema, DOMParser, ParseOptions } from 'prosemirror-model';
 import { EditorState, Plugin, PluginKey, Transaction } from 'prosemirror-state';
 import { EditorView } from 'prosemirror-view';
-import { setTextSelection } from 'prosemirror-utils';
 import 'prosemirror-view/style/prosemirror.css';
+
+import { Change, diffChars } from 'diff';
 
 import polyfill from './polyfill/index';
 
 import { EditorOptions } from './api/options';
 import { ProsemirrorCommand, CommandFn, EditorCommand } from './api/command';
 import { PandocMark, markIsActive } from './api/mark';
-import { PandocNode, findTopLevelBodyNodes } from './api/node';
+import { PandocNode } from './api/node';
 import { EditorUI, attrPropsToInput, attrInputToProps, AttrProps, AttrEditInput } from './api/ui';
 import { Extension } from './api/extension';
 import { ExtensionManager, initExtensions } from './extensions';
@@ -86,8 +87,8 @@ polyfill();
 const kMac = typeof navigator !== 'undefined' ? /Mac/.test(navigator.platform) : false;
 
 export interface EditorCode {
-  markdown: string;
-  cursorSentinel?: string;
+  code: string;
+  changes: Change[];
 }
 
 export interface EditorContext {
@@ -408,22 +409,23 @@ export class Editor {
     return true;
   }
 
-  public async getMarkdown(options: PandocWriterOptions, cursorSentinel: boolean): Promise<EditorCode> {
+  public async getMarkdown(options: PandocWriterOptions, previous: string): Promise<EditorCode> {
     // override wrapColumn option if it was specified
     options.wrapColumn = this.format.wrapColumn || options.wrapColumn;
 
     // apply layout fixups
     this.applyFixups(FixupContext.Save);
 
-    // convert doc
-    const docWithCursor = cursorSentinel
-      ? this.docWithCursorSentinel()
-      : { doc: this.state.doc, cursorSentinel: undefined };
-    const markdown = await this.pandocConverter.fromProsemirror(docWithCursor.doc, this.pandocFormat, options);
+    // get the code
+    const code = await this.pandocConverter.fromProsemirror(this.state.doc, this.pandocFormat, options);
 
+    // get the changes  
+    const changes: Change[] = code !== previous ? diffChars(previous, code) : [];
+
+    // return code and changes
     return {
-      markdown,
-      cursorSentinel: docWithCursor.cursorSentinel,
+      code,
+      changes
     };
   }
 
@@ -806,40 +808,6 @@ export class Editor {
         { type: 'notes', content: [] },
       ],
     });
-  }
-
-  private docWithCursorSentinel() {
-    // transaction for inserting the sentinel (won't actually commit since it will
-    // have the sentinel in it but rather will use the computed tr.doc)
-    const tr = this.state.tr;
-
-    // cursorSentinel to return
-    let cursorSentinel: string | undefined;
-
-    // find the anchor of the current selection
-    const { anchor } = tr.selection; 
-
-    // find the closest top-level text block that isn't an Rmd chunk (their
-    // first line gets special processing so we can't put the sentinel there)
-    const topLevelTextBlocks = findTopLevelBodyNodes(tr.doc, node => { 
-      return node.isTextblock && node.type !== this.schema.nodes.rmd_chunk;
-    });
-    const textBlock = topLevelTextBlocks.reverse().find(block => block.pos < anchor);
-    if (textBlock) {
-      cursorSentinel = 'CursorSentinel-CAFB04C4-080D-4074-898C-F670CAACB8AF';
-      let pos = textBlock.pos;
-      if ((textBlock.pos + textBlock.node.nodeSize) < anchor) {
-        pos = textBlock.pos + textBlock.node.nodeSize - 1;
-      }
-      setTextSelection(pos)(tr);
-      tr.insertText(cursorSentinel);
-    }
-
-    // return the doc and sentinel (if any)
-    return {
-      doc: tr.doc,
-      cursorSentinel,
-    };
   }
 }
 
