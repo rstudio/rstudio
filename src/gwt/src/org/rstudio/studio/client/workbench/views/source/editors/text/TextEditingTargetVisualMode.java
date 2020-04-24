@@ -841,7 +841,11 @@ public class TextEditingTargetVisualMode
    
    private String validateActivation()
    {
-      if (isXaringanDocument())
+      if (this.docDisplay_.hasActiveCollabSession())
+      {
+         return "You cannot enter visual mode while using realtime collaboration.";
+      }
+      else if (isXaringanDocument())
       {
          return "Xaringan presentations cannot be edited in visual mode.";
       }

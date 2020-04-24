@@ -1196,25 +1196,27 @@ public class TextEditingTarget implements
    @Override
    public void beginCollabSession(CollabEditStartParams params)
    {
-      // the server may notify us of a collab session we're already
-      // participating in; this is okay
-      if (docDisplay_.hasActiveCollabSession())
-      {
-         return;
-      }
-      
-      // were we waiting to process another set of params when these arrived?
-      boolean paramQueueClear = queuedCollabParams_ == null;
-
-      // save params 
-      queuedCollabParams_ = params;
-
-      // if we're not waiting for another set of params to resolve, and we're
-      // the active doc, process these params immediately
-      if (paramQueueClear && isActiveDocument())
-      {
-         beginQueuedCollabSession();
-      }
+      visualMode_.deactivate(() -> {
+         // the server may notify us of a collab session we're already
+         // participating in; this is okay
+         if (docDisplay_.hasActiveCollabSession())
+         {
+            return;
+         }
+         
+         // were we waiting to process another set of params when these arrived?
+         boolean paramQueueClear = queuedCollabParams_ == null;
+   
+         // save params 
+         queuedCollabParams_ = params;
+   
+         // if we're not waiting for another set of params to resolve, and we're
+         // the active doc, process these params immediately
+         if (paramQueueClear && isActiveDocument())
+         {
+            beginQueuedCollabSession();
+         }
+      });
    }
    
    @Override
