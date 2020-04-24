@@ -1767,6 +1767,13 @@ public class TextEditingTarget implements
          releaseOnDismiss_
       );
       
+      // update status bar when visual mode status changes
+      releaseOnDismiss_.add(
+         docUpdateSentinel_.addPropertyValueChangeHandler(RMD_VISUAL_MODE, (value) -> {
+            updateStatusBarLanguage();
+         })
+      );
+      
       Scheduler.get().scheduleDeferred(new ScheduledCommand()
       {
          @Override
