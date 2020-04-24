@@ -438,10 +438,9 @@ public class ShellWidget extends Composite implements ShellDisplay,
       // to that change.
       scrollIntoViewPending_ = true;
       
-      Scheduler.get().scheduleFinally(() ->
-      {
-         checkForPendingScroll();
-      });
+      // In case there wasn't an Ace render in-flight, force a check
+      // for pending scroll (which will then force the cursor into view)
+      Scheduler.get().scheduleDeferred(() -> checkForPendingScroll());
    }
    
    private String getErrorClass()
@@ -905,19 +904,27 @@ public class ShellWidget extends Composite implements ShellDisplay,
    {
       int padding = 8;
       
-      // Force Ace to render the cursor element, so that its new position
-      // is properly represented in the DOM after a cursor move.
-      input_.getWidget().getEditor().getRenderer().renderCursor();
-            
       // Get the bounding rectangles for the scroll panel + cursor element.
       // Note that we rely on getBoundingClientRect() here as the Ace cursor
       // element is rendered using CSS transforms, and those transforms are
       // not represented in offsetTop.
-      DOMRect parent = DomUtils.getBoundingClientRect(
-            scrollPanel_.getElement());
-      
+      //
+      // Note that we cannot reliably synchronously force Ace (or the browser)
+      // to render the cursor, so we instead check for a "bogus" rectangle and
+      // conclude this implies there is a pending render in-flight that we can
+      // later respond to.
       DOMRect child  = DomUtils.getBoundingClientRect(
             input_.getWidget().getEditor().getRenderer().getCursorElement());
+      
+      boolean isRendering = child.getWidth() == 0 && child.getHeight() == 0;
+      if (isRendering)
+      {
+         scrollIntoViewPending_ = true;
+         return;
+      }
+      
+      DOMRect parent = DomUtils.getBoundingClientRect(
+            scrollPanel_.getElement());
       
       // Scroll the cursor into view as required.
       int oldScrollPos = scrollPanel_.getVerticalScrollPosition();
