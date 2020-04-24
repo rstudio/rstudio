@@ -8,6 +8,11 @@ pandoc schema: <https://github.com/jgm/pandoc-types/blob/master/Text/Pandoc/Defi
 
 Joe code review
 
+Undo of delete leaves selection of previous text.
+
+What's up with the browser askinga about save changes?
+(check for onunload / onbeforeunload logic)
+
 Status bar navigation popup shows up
 
 Consider whether we still need a cursor sentinel? Detection went
@@ -20,8 +25,6 @@ Set diffs to word boundaries?
 Disable visual mode for collaborative editing
 (b/c we have no way to propagate changes from source to visual
 other than when the document swtich happens)
-
-Try an embedded div w/ vertical-align middle for edit_attr
 
 Bookdown & Blogdown docs:
   - Math in code
