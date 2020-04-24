@@ -52,7 +52,7 @@ import {
   kSetMarkdownTransaction,
 } from './api/transaction';
 import { EditorOutline } from './api/outline';
-import { EditingLocation, getEditingLocation, restoreEditingLocation } from './api/location';
+import { EditingLocation, getEditingLocation, EditingOutlineLocation, setEditingLocation } from './api/location';
 import { navigateTo } from './api/navigation';
 import { FixupContext } from './api/fixup';
 import { unitToPixels, pixelsToUnit, roundUnit, kValidUnits } from './api/image';
@@ -455,13 +455,8 @@ export class Editor {
     return getEditingLocation(this.view);
   }
 
-  public restoreEditingLocation(location: EditingLocation) {
-    // delay the restore so all of our code mirror instances
-    // can become visible (which allows decorators that reference
-    // offsetTop to draw at the proper location)
-    setTimeout(() => {
-      restoreEditingLocation(this.view, location);
-    }, 100);
+  public setEditingLocation(outlineLocation?: EditingOutlineLocation, previousLocation?: EditingLocation) {
+    setEditingLocation(this.view, outlineLocation, previousLocation);
   }
 
   public getOutline(): EditorOutline {

@@ -21,6 +21,7 @@ import java.util.List;
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.DebouncedCommand;
 import org.rstudio.core.client.Debug;
+import org.rstudio.core.client.Pair;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.files.FileSystemItem;
@@ -31,7 +32,6 @@ import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.panmirror.PanmirrorCode;
 import org.rstudio.studio.client.panmirror.PanmirrorContext;
-import org.rstudio.studio.client.panmirror.PanmirrorEditingLocation;
 import org.rstudio.studio.client.panmirror.PanmirrorKeybindings;
 import org.rstudio.studio.client.panmirror.PanmirrorOptions;
 import org.rstudio.studio.client.panmirror.PanmirrorUIContext;
@@ -43,6 +43,10 @@ import org.rstudio.studio.client.panmirror.format.PanmirrorExtendedDocType;
 import org.rstudio.studio.client.panmirror.format.PanmirrorFormat;
 import org.rstudio.studio.client.panmirror.format.PanmirrorHugoExtensions;
 import org.rstudio.studio.client.panmirror.format.PanmirrorRmdExtensions;
+import org.rstudio.studio.client.panmirror.location.PanmirrorEditingLocation;
+import org.rstudio.studio.client.panmirror.location.PanmirrorEditingOutlineLocation;
+import org.rstudio.studio.client.panmirror.location.PanmirrorEditingOutlineLocationItem;
+import org.rstudio.studio.client.panmirror.outline.PanmirrorOutlineItemType;
 import org.rstudio.studio.client.panmirror.pandoc.PanmirrorPandocFormat;
 import org.rstudio.studio.client.panmirror.uitools.PanmirrorFormatComment;
 import org.rstudio.studio.client.panmirror.uitools.PanmirrorUITools;
@@ -54,10 +58,13 @@ import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.model.DirtyState;
 import org.rstudio.studio.client.workbench.views.source.model.DocUpdateSentinel;
 import org.rstudio.studio.client.workbench.views.source.model.SourceServerOperations;
 
+
+import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.event.dom.client.ChangeEvent;
@@ -164,13 +171,20 @@ public class TextEditingTargetVisualMode
       {
          withPanmirror(() -> {
             PanmirrorWriterOptions options = new PanmirrorWriterOptions();
+            
             options.atxHeaders = true;
+            
             if (prefs_.visualMarkdownEditingWrapAuto().getValue())
                options.wrapColumn = prefs_.visualMarkdownEditingWrapColumn().getValue();
+            
             panmirror_.getMarkdown(options, getEditorCode(), markdown -> { 
+               
                TextEditorContainer.EditorCode editorCode = toEditorCode(markdown);
+               
                getSourceEditor().setCode(editorCode, activatingEditor); 
+               
                isDirty_ = false;
+               
                if (ready != null)
                   ready.execute();
             });
@@ -214,13 +228,9 @@ public class TextEditingTargetVisualMode
             // restore selection if we have one
             Scheduler.get().scheduleDeferred(() -> {
                
-               // restore saved location
-               PanmirrorEditingLocation location = savedEditingLocation();
-               if (location != null)
-                  panmirror_.restoreEditingLocation(location);
+               // set editing location
+               panmirror_.setEditingLocation(getOutlineLocation(), savedEditingLocation());
                
-               if (focus)
-                 panmirror_.focus();
                
                // show any format or extension warnings
                PanmirrorPandocFormat format = panmirror_.getPandocFormat();
@@ -656,6 +666,77 @@ public class TextEditingTargetVisualMode
          return null;
       }
       
+   }
+   
+   private PanmirrorEditingOutlineLocation getOutlineLocation()
+   {
+      // if we are at the very top of the file then this is a not a good 'hint'
+      // for where to navigate to, in that case return null
+      Position cursorPosition = docDisplay_.getCursorPosition();
+      if (cursorPosition.getRow() == 0 && cursorPosition.getColumn() == 0)
+         return null;
+      
+      // build the outline
+      ArrayList<Pair<PanmirrorEditingOutlineLocationItem, Scope>> outlineItems = 
+         new ArrayList<Pair<PanmirrorEditingOutlineLocationItem, Scope>>();
+      buildOutlineLocation(docDisplay_.getScopeTree(), outlineItems);
+      
+      // return the location, set the active item by scanning backwards until
+      // we find an item with a position before the cursor
+      boolean foundActive = false;
+      Position cursorPos = docDisplay_.getCursorPosition();
+      ArrayList<PanmirrorEditingOutlineLocationItem> items = new ArrayList<PanmirrorEditingOutlineLocationItem>();
+      for (int i = outlineItems.size() - 1; i >= 0; i--) 
+      {
+         Pair<PanmirrorEditingOutlineLocationItem, Scope> outlineItem = outlineItems.get(i);
+         PanmirrorEditingOutlineLocationItem item = outlineItem.first;
+         Scope scope = outlineItem.second;
+         if (!foundActive && scope.getPreamble().isBefore(cursorPos))
+         {
+            item.active = true;
+            foundActive = true;
+         }
+         items.add(0, item);
+      }
+   
+      PanmirrorEditingOutlineLocation location = new PanmirrorEditingOutlineLocation();
+      location.items = items.toArray(new PanmirrorEditingOutlineLocationItem[] {});
+      return location;
+   }
+   
+   private void buildOutlineLocation(JsArray<Scope> scopes, 
+                                     ArrayList<Pair<PanmirrorEditingOutlineLocationItem, Scope>> outlineItems)
+   {
+      for (int i = 0; i<scopes.length(); i++)
+      {
+         // get scope
+         Scope scope = scopes.get(i);
+         
+         // create item + default values
+         PanmirrorEditingOutlineLocationItem item = new PanmirrorEditingOutlineLocationItem();
+         item.level = scope.getDepth();
+         item.title = scope.getLabel();
+         item.active = false;
+         
+         // process yaml, headers, and chunks
+         if (scope.isYaml())
+         {
+            item.type = PanmirrorOutlineItemType.YamlMetadata;
+            outlineItems.add(new Pair<PanmirrorEditingOutlineLocationItem, Scope>(item, scope));
+         }
+         else if (scope.isMarkdownHeader())
+         {
+            item.type = PanmirrorOutlineItemType.Heading;
+            outlineItems.add(new Pair<PanmirrorEditingOutlineLocationItem, Scope>(item, scope));
+            buildOutlineLocation(scope.getChildren(), outlineItems);
+         }
+         else if (scope.isChunk())
+         {
+            item.type = PanmirrorOutlineItemType.RmdChunk;
+            item.title = scope.getChunkLabel();
+            outlineItems.add(new Pair<PanmirrorEditingOutlineLocationItem, Scope>(item, scope));
+         }
+      }
    }
    
    private void disableKeys(String... commands)

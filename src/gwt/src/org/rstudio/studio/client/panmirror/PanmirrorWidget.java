@@ -35,6 +35,8 @@ import org.rstudio.studio.client.panmirror.command.PanmirrorToolbar;
 import org.rstudio.studio.client.panmirror.findreplace.PanmirrorFindReplace;
 import org.rstudio.studio.client.panmirror.findreplace.PanmirrorFindReplaceWidget;
 import org.rstudio.studio.client.panmirror.format.PanmirrorFormat;
+import org.rstudio.studio.client.panmirror.location.PanmirrorEditingLocation;
+import org.rstudio.studio.client.panmirror.location.PanmirrorEditingOutlineLocation;
 import org.rstudio.studio.client.panmirror.outline.PanmirrorOutlineItem;
 import org.rstudio.studio.client.panmirror.outline.PanmirrorOutlineNavigationEvent;
 import org.rstudio.studio.client.panmirror.outline.PanmirrorOutlineVisibleEvent;
@@ -451,9 +453,11 @@ public class PanmirrorWidget extends DockLayoutPanel implements
       return editor_.getEditingLocation();
    }
    
-   public void restoreEditingLocation(PanmirrorEditingLocation location)
+   public void setEditingLocation(
+      PanmirrorEditingOutlineLocation outlineLocation, 
+      PanmirrorEditingLocation previousLocation) 
    {
-      editor_.restoreEditingLocation(location);
+      editor_.setEditingLocation(outlineLocation, previousLocation);
    }
    
    public void focus()

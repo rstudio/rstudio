@@ -1,7 +1,7 @@
 /*
- * outline.ts
+ * PanmirrorEditingLocation.java
  *
- * Copyright (C) 2019-20 by RStudio, PBC
+ * Copyright (C) 2009-20 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -13,19 +13,14 @@
  *
  */
 
-export interface EditorOutlineItem {
-  navigation_id: string;
-  type: EditorOutlineItemType;
-  level: number;
-  title: string;
-  pos: number;
-  children: EditorOutlineItem[];
+package org.rstudio.studio.client.panmirror.location;
+
+
+import jsinterop.annotations.JsType;
+
+@JsType
+public class PanmirrorEditingLocation
+{    
+   public int pos;
+   public int scrollTop;
 }
-
-export const kHeadingOutlineItemType = 'heading';
-export const kRmdchunkOutlineItemType = 'rmd_chunk';
-export const kYamlMetadataOutlineItenItem = 'yaml_metadata';
-
-export type EditorOutlineItemType = 'heading' | 'rmd_chunk' | 'yaml_metadata';
-
-export type EditorOutline = EditorOutlineItem[];

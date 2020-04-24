@@ -1,5 +1,5 @@
 /*
- * PanmirrorEditingLocation.java
+ * PanmirrorEditingOutlineLocationItem.java
  *
  * Copyright (C) 2009-20 by RStudio, PBC
  *
@@ -13,14 +13,15 @@
  *
  */
 
-package org.rstudio.studio.client.panmirror;
-
+package org.rstudio.studio.client.panmirror.location;
 
 import jsinterop.annotations.JsType;
 
 @JsType
-public class PanmirrorEditingLocation
-{    
-   public int pos;
-   public int scrollTop;
+public class PanmirrorEditingOutlineLocationItem
+{
+   public String type; 
+   public int level;
+   public String title; 
+   public boolean active;
 }
