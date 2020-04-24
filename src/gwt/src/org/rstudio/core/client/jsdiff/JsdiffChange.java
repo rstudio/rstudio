@@ -1,5 +1,5 @@
 /*
- * PanmirrorCode.java
+ * JsdiffChange.java
  *
  * Copyright (C) 2009-20 by RStudio, PBC
  *
@@ -13,16 +13,15 @@
  *
  */
 
-package org.rstudio.studio.client.panmirror;
-
-
-import org.rstudio.core.client.jsdiff.JsdiffChange;
+package org.rstudio.core.client.jsdiff;
 
 import jsinterop.annotations.JsType;
 
 @JsType
-public class PanmirrorCode
-{    
-   public String code;
-   public JsdiffChange[] changes;
+public class JsdiffChange
+{
+   public int count;
+   public String value;
+   public boolean added;
+   public boolean removed;
 }

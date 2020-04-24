@@ -22,6 +22,7 @@ import java.util.List;
 
 import org.rstudio.core.client.events.HasContextMenuHandlers;
 import org.rstudio.core.client.js.JsMap;
+import org.rstudio.core.client.jsdiff.JsdiffChange;
 import org.rstudio.studio.client.common.debugging.model.Breakpoint;
 import org.rstudio.studio.client.common.filetypes.TextFileType;
 import org.rstudio.studio.client.server.Void;
@@ -116,6 +117,7 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    JsArrayString getLines(int startRow, int endRow);
    void setCode(String code, boolean preserveCursorPosition);
    void insertCode(String code, boolean blockMode);
+   void applyCodeChanges(JsdiffChange[] changes);
    void focus();
    boolean isFocused();
    void print();
