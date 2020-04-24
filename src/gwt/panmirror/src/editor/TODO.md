@@ -6,10 +6,6 @@ pandoc schema: <https://github.com/jgm/pandoc-types/blob/master/Text/Pandoc/Defi
 
 ## TODO
 
-Scope tree doesn't come back when activating source mode. Need some sane way to do this.
-
-What's up with the browser asking about save changes?
-(check for onunload / onbeforeunload logic)
 
 Consider whether we still need a cursor sentinel? Detection went
 wrong last time b/c we called applyFixups first
