@@ -6,6 +6,19 @@ pandoc schema: <https://github.com/jgm/pandoc-types/blob/master/Text/Pandoc/Defi
 
 ## TODO
 
+Code block language diaog won't accept no language
+
+Code blocks with no language keep getting re-created by the editor when you type in them!
+
+Don't show image caption if empty. May need to detect when we are live editing the caption and keep it visible then.
+
+Keyboard selection of image node (arrow handlers)
+
+Check into copy/paste behavior with several sections + image
+(saw some strange header artifacts when doing this)
+
+For main screenshot use image + table + footnote?
+
 Bookdown & Blogdown docs:
   - Math in code
   - @ref has no \
