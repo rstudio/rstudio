@@ -20,6 +20,7 @@ import java.util.TreeMap;
 
 import org.rstudio.core.client.ConsoleOutputWriter;
 import org.rstudio.core.client.ElementIds;
+import org.rstudio.core.client.Rectangle;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.TimeBufferedCommand;
 import org.rstudio.core.client.VirtualConsole;
@@ -435,18 +436,7 @@ public class ShellWidget extends Composite implements ShellDisplay,
    @Override
    public void ensureInputVisible()
    {
-      // NOTE: we don't scroll immediately as this is normally called
-      // in response to mutations of the console input buffer, and so
-      // we need to wait until Ace has finished rendering in response
-      // to that change.
-      //
-      // In case there wasn't an Ace render in-flight, we also force a check
-      // for pending scroll (which will then force the cursor into view)
-      if (!scrollIntoViewPending_)
-      {
-         scrollIntoViewPending_ = true;
-         Scheduler.get().scheduleDeferred(() -> checkForPendingScroll());
-      }
+      scrollIntoView();
    }
    
    private String getErrorClass()
@@ -910,27 +900,10 @@ public class ShellWidget extends Composite implements ShellDisplay,
    {
       int padding = 8;
       
-      // Get the bounding rectangles for the scroll panel + cursor element.
-      // Note that we rely on getBoundingClientRect() here as the Ace cursor
-      // element is rendered using CSS transforms, and those transforms are
-      // not represented in offsetTop.
-      //
-      // Note that we cannot reliably synchronously force Ace (or the browser)
-      // to render the cursor, so we instead check for a "bogus" rectangle and
-      // conclude this implies there is a pending render in-flight that we can
-      // later respond to.
-      renderer_.renderCursor();
-      DOMRect child = DomUtils.getBoundingClientRect(renderer_.getCursorElement());
-      
-      boolean isRendering = child.getWidth() == 0 && child.getHeight() == 0;
-      if (isRendering)
-      {
-         scrollIntoViewPending_ = true;
-         Scheduler.get().scheduleDeferred(() -> checkForPendingScroll());
-         return;
-      }
-      
+      // Compute the screen positions of the scroller, as well
+      // as the Ace cursor element.
       DOMRect parent = DomUtils.getBoundingClientRect(scrollPanel_.getElement());
+      Rectangle child = input_.getCursorBounds();
       
       // Scroll the cursor into view as required.
       int oldScrollPos = scrollPanel_.getVerticalScrollPosition();
