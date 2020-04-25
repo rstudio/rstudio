@@ -14,7 +14,12 @@
 #
 
 cmake_minimum_required(VERSION 3.4.3)
-project (RStudio)
+
+# release name
+include(CMakeRelease.txt)
+
+# project name
+project("RStudio [${RSTUDIO_RELEASE_NAME}]")
 
 # set compiler
 include(CMakeCompiler.txt)
