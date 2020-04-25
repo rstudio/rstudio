@@ -416,7 +416,7 @@ export class Editor {
     return true;
   }
 
-  public async getMarkdown(options: PandocWriterOptions, previous: string): Promise<EditorCode> {
+  public async getMarkdown(options: PandocWriterOptions, previous: string | null): Promise<EditorCode> {
     // override wrapColumn option if it was specified
     options.wrapColumn = this.format.wrapColumn || options.wrapColumn;
 
@@ -429,7 +429,7 @@ export class Editor {
     // insert cursor sentinel if appropriate
     const target = useCursorSentinel 
       ? docWithCursorSentinel(this.state)
-      : { doc: this.state.doc, sentinel: undefined };
+      : { doc: this.state.doc, sentinel: null };
     
     // get the code
     const code = await this.pandocConverter.fromProsemirror(target.doc, this.pandocFormat, options);
@@ -824,7 +824,7 @@ function docWithCursorSentinel(state: EditorState) {
   const tr = state.tr;
 
   // cursorSentinel to return
-  let sentinel: string | undefined;
+  let sentinel: string | null = null;
 
   // find the anchor of the current selection
   const { anchor } = tr.selection; 
@@ -853,7 +853,7 @@ function docWithCursorSentinel(state: EditorState) {
 }
 
 // get editor code + cursor location and jsdiff changes from previousCode
-function codeWithChangesAndCursor(code: string, cursorSentinel: string | undefined, previousCode: string) {
+function codeWithChangesAndCursor(code: string, cursorSentinel: string | null, previousCode: string | null) {
 
   // determine the cursor row and column using the sentinel (remove the sentinel from the code)
   let newCode = code;
@@ -877,7 +877,8 @@ function codeWithChangesAndCursor(code: string, cursorSentinel: string | undefin
       .join('\n');
   }
 
-   // generate change records (in case the caller wants to apply changes incrementally)
+  // generate change records (in case the caller wants to apply changes incrementally)
+  previousCode = previousCode || '';
   const changes: Change[] = previousCode === newCode ? [] : diffChars(previousCode, newCode);
 
   return {
