@@ -167,16 +167,17 @@ public class PanmirrorToolbar extends SecondaryToolbar implements RequiresResize
    private PanmirrorToolbarMenu createFormatMenu()
    {
       PanmirrorToolbarMenu formatMenu = new PanmirrorToolbarMenu(commands_);
+      formatMenu.addCommand(PanmirrorCommands.Strong);
+      formatMenu.addCommand(PanmirrorCommands.Em);
+      formatMenu.addCommand(PanmirrorCommands.Code);
       PanmirrorToolbarMenu textMenu = formatMenu.addSubmenu("Text");
-      textMenu.addCommand(PanmirrorCommands.Strong);
-      textMenu.addCommand(PanmirrorCommands.Em);
-      textMenu.addCommand(PanmirrorCommands.Code);
       textMenu.addCommand(PanmirrorCommands.Strikeout);
       textMenu.addCommand(PanmirrorCommands.Superscript);
       textMenu.addCommand(PanmirrorCommands.Subscript);
       textMenu.addCommand(PanmirrorCommands.Smallcaps);
       textMenu.addSeparator();
       textMenu.addCommand(PanmirrorCommands.Span);
+      formatMenu.addSeparator();
       PanmirrorToolbarMenu listMenu = formatMenu.addSubmenu("Bullets & Numbering");
       listMenu.addCommand(PanmirrorCommands.BulletList);
       listMenu.addCommand(PanmirrorCommands.OrderedList);
@@ -189,12 +190,12 @@ public class PanmirrorToolbar extends SecondaryToolbar implements RequiresResize
       listMenu.addCommand(PanmirrorCommands.ListItemLift);
       listMenu.addSeparator();
       listMenu.addCommand(PanmirrorCommands.OrderedListEdit);
-      formatMenu.addCommand(PanmirrorCommands.Blockquote);
       formatMenu.addSeparator();
-      formatMenu.addCommand(PanmirrorCommands.CodeBlockFormat);
+      formatMenu.addCommand(PanmirrorCommands.Blockquote);
+      formatMenu.addCommand(PanmirrorCommands.LineBlock);
       formatMenu.addSeparator();
       formatMenu.addCommand(PanmirrorCommands.Div);
-      formatMenu.addCommand(PanmirrorCommands.LineBlock);
+      formatMenu.addCommand(PanmirrorCommands.CodeBlockFormat);
       formatMenu.addSeparator();
       if (haveAnyOf(PanmirrorCommands.RawBlock, 
             PanmirrorCommands.TexInline, 
@@ -211,9 +212,9 @@ public class PanmirrorToolbar extends SecondaryToolbar implements RequiresResize
          rawMenu.addCommand(PanmirrorCommands.RawBlock);
          formatMenu.addSeparator();
       }  
-      formatMenu.addCommand(PanmirrorCommands.AttrEdit);
-      formatMenu.addSeparator();
       formatMenu.addCommand(PanmirrorCommands.ClearFormatting);
+      formatMenu.addSeparator();
+      formatMenu.addCommand(PanmirrorCommands.AttrEdit);
       return formatMenu;
    }
    
