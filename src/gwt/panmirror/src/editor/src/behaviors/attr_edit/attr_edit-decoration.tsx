@@ -159,7 +159,7 @@ class AttrEditDecorationPlugin extends Plugin<DecorationSet> {
               },
               {
                 // re-use existing instance for same tags
-                key: `${tags.join('/')}`,
+                key: `tags:${tags.join('/')}`,
                 ignoreSelection: true,
                 stopEvent: () => {
                   return true;
