@@ -6,9 +6,15 @@ pandoc schema: <https://github.com/jgm/pandoc-types/blob/master/Text/Pandoc/Defi
 
 ## TODO
 
+Consider offset heading attr_edit to the right
+
+Should lists be non-tight by default?
+
 Code block language diaog won't accept no language
 
 Code blocks with no language keep getting re-created by the editor when you type in them!
+
+Code block input rule still offers a lang even for markdown_strict
 
 Don't show image caption if empty. May need to detect when we are live editing the caption and keep it visible then.
 
@@ -16,6 +22,16 @@ Keyboard selection of image node (arrow handlers)
 
 Check into copy/paste behavior with several sections + image
 (saw some strange header artifacts when doing this)
+
+attr_edit still off in panmirror-next
+
+## Docs
+
+Emphasize goals: Writing prose, collab w/ non-markdown users, easier to 
+learn introduction to notebooks.
+
+n docs we should get to an editor screenshot sooner 
+(do this instead of showing the latcher and command toolbar).
 
 For main screenshot use image + table + footnote?
 
@@ -25,6 +41,8 @@ Bookdown & Blogdown docs:
   - Heading parts (need to explicitly use .unnumbered and don't use the \* escape)
   - Using blackfriday explicitly
   - Setting the doctype(s) explicitly (should xref be a doctype or should it be distill)
+
+In docs explain that this is for experienced users.
 
 Alison on blogdown engines, etc.
 
