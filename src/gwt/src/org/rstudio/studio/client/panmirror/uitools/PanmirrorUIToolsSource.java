@@ -1,5 +1,5 @@
 /*
- * PanmirrorCode.java
+ * PanmirrorUIToolsSource.java
  *
  * Copyright (C) 2009-20 by RStudio, PBC
  *
@@ -13,14 +13,16 @@
  *
  */
 
-package org.rstudio.studio.client.panmirror;
 
+package org.rstudio.studio.client.panmirror.uitools;
+
+import org.rstudio.core.client.jsdiff.JsdiffChange;
 
 import jsinterop.annotations.JsType;
 
 @JsType
-public class PanmirrorCode
-{    
-   public String code;
-   public PanmirrorCursor cursor;
+public class PanmirrorUIToolsSource
+{
+   public native JsdiffChange[] diffChars(String from, String to);
 }
+

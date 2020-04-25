@@ -1656,20 +1656,17 @@ public class TextEditingTargetWidget
       }
      
       @Override
-      public void setCode(TextEditorContainer.EditorCode editorCode, boolean activatingEditor)
+      public void applyChanges(TextEditorContainer.Changes changes, boolean activatingEditor)
       {   
          // apply changes
-         editor_.applyCodeChanges(editorCode.changes);
+         editor_.applyChanges(changes.changes);
          
          // additional actions when activating
          if (activatingEditor)
          {
             // set cursor position if one was provided
-            if (editorCode.cursor != null)
-            {
-               TextEditorContainer.EditorCursor cursor = editorCode.cursor;
-               editor_.setCursorPosition(Position.create(cursor.row, cursor.column));
-            }
+            if (changes.cursor != null)
+               editor_.setCursorPosition(Position.create(changes.cursor.row, changes.cursor.column));
             
             // flag activation pending (triggers autoscroll)
             activationPending_ = true;

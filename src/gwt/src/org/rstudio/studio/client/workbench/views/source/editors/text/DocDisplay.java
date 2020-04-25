@@ -117,7 +117,7 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    JsArrayString getLines(int startRow, int endRow);
    void setCode(String code, boolean preserveCursorPosition);
    void insertCode(String code, boolean blockMode);
-   void applyCodeChanges(JsdiffChange[] changes);
+   void applyChanges(JsdiffChange[] changes);
    void focus();
    boolean isFocused();
    void print();

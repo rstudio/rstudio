@@ -90,7 +90,6 @@ const kMac = typeof navigator !== 'undefined' ? /Mac/.test(navigator.platform) :
 
 export interface EditorCode {
   code: string;
-  changes: Change[];
   cursor?: { row: number, column: number };
 }
 
@@ -145,10 +144,15 @@ export interface UIToolsFormat {
   parseFormatComment(markdown: string): PandocFormatComment;
 }
 
+export interface UIToolsSource {
+  diffChars(from: string, to: string): Change[];
+}
+
 export class UITools {
   public readonly attr: UIToolsAttr;
   public readonly image: UIToolsImage;
   public readonly format: UIToolsFormat;
+  public readonly source: UIToolsSource;
 
   constructor() {
     this.attr = {
@@ -166,6 +170,10 @@ export class UITools {
 
     this.format = {
       parseFormatComment: pandocFormatCommentFromCode,
+    };
+
+    this.source = {
+      diffChars
     };
   }
 }
@@ -416,7 +424,7 @@ export class Editor {
     return true;
   }
 
-  public async getMarkdown(options: PandocWriterOptions, previous: string | null): Promise<EditorCode> {
+  public async getMarkdown(options: PandocWriterOptions): Promise<EditorCode> {
     // override wrapColumn option if it was specified
     options.wrapColumn = this.format.wrapColumn || options.wrapColumn;
 
@@ -435,7 +443,7 @@ export class Editor {
     const code = await this.pandocConverter.fromProsemirror(target.doc, this.pandocFormat, options);
 
     // return 
-    return codeWithChangesAndCursor(code, target.sentinel, previous);
+    return codeWithCursor(code, target.sentinel);
   }
 
   public getHTML(): string {
@@ -853,7 +861,7 @@ function docWithCursorSentinel(state: EditorState) {
 }
 
 // get editor code + cursor location and jsdiff changes from previousCode
-function codeWithChangesAndCursor(code: string, cursorSentinel: string | null, previousCode: string | null) {
+function codeWithCursor(code: string, cursorSentinel: string | null) {
 
   // determine the cursor row and column using the sentinel (remove the sentinel from the code)
   let newCode = code;
@@ -877,13 +885,8 @@ function codeWithChangesAndCursor(code: string, cursorSentinel: string | null, p
       .join('\n');
   }
 
-  // generate change records (in case the caller wants to apply changes incrementally)
-  previousCode = previousCode || '';
-  const changes: Change[] = previousCode === newCode ? [] : diffChars(previousCode, newCode);
-
   return {
     code: newCode,
-    changes,
     cursor
   };
   

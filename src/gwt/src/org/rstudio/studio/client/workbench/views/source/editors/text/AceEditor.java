@@ -1122,8 +1122,15 @@ public class AceEditor implements DocDisplay,
       widget_.getEditor().insert(StringUtil.normalizeNewLines(code));
    }
    
-   public void applyCodeChanges(JsdiffChange[] changes)
+   public void applyChanges(JsdiffChange[] changes)
    {
+      // special case for a single change that neither adds nor removes
+      // (identity operation). we don't feed this through the code below
+      // because a single non-mutating change will result in a selection
+      // at the beginning of the file
+      if (changes.length == 1 && !changes[0].added && !changes[0].removed)
+         return;
+      
       // alias apis
       AceEditorNative editor = widget_.getEditor();
       EditSession session = editor.getSession();

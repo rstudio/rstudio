@@ -51,6 +51,7 @@ import org.rstudio.studio.client.panmirror.pandoc.PanmirrorPandocFormat;
 import org.rstudio.studio.client.panmirror.uitools.PanmirrorFormatComment;
 import org.rstudio.studio.client.panmirror.uitools.PanmirrorUITools;
 import org.rstudio.studio.client.panmirror.uitools.PanmirrorUIToolsFormat;
+import org.rstudio.studio.client.panmirror.uitools.PanmirrorUIToolsSource;
 import org.rstudio.studio.client.rmarkdown.model.YamlFrontMatter;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.WorkbenchContext;
@@ -177,11 +178,11 @@ public class TextEditingTargetVisualMode
             if (prefs_.visualMarkdownEditingWrapAuto().getValue())
                options.wrapColumn = prefs_.visualMarkdownEditingWrapColumn().getValue();
             
-            panmirror_.getMarkdown(options, getEditorCode(), markdown -> { 
+            panmirror_.getMarkdown(options, markdown -> { 
                
-               TextEditorContainer.EditorCode editorCode = toEditorCode(markdown);
-               
-               getSourceEditor().setCode(editorCode, activatingEditor); 
+               TextEditorContainer.Changes changes = toEditorChanges(markdown);
+      
+               getSourceEditor().applyChanges(changes, activatingEditor); 
                
                isDirty_ = false;
                
@@ -1055,13 +1056,13 @@ public class TextEditingTargetVisualMode
    }
    
    
-   private TextEditorContainer.EditorCode toEditorCode(PanmirrorCode panmirrorCode)
+   private TextEditorContainer.Changes toEditorChanges(PanmirrorCode panmirrorCode)
    {
-      return new TextEditorContainer.EditorCode(
-         panmirrorCode.code, 
-         panmirrorCode.changes,
+      PanmirrorUIToolsSource sourceTools = new PanmirrorUITools().source;
+      return new TextEditorContainer.Changes(
+         sourceTools.diffChars(getEditorCode(), panmirrorCode.code), 
          panmirrorCode.cursor != null 
-            ? new TextEditorContainer.EditorCursor(
+            ? new TextEditorContainer.Cursor(
                   panmirrorCode.cursor.row, panmirrorCode.cursor.column
               )
             : null
