@@ -20,14 +20,11 @@ package org.rstudio.studio.client.panmirror.dialogs;
 import com.google.gwt.aria.client.Roles;
 
 import org.rstudio.core.client.ElementIds;
-import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.theme.DialogTabLayoutPanel;
 import org.rstudio.core.client.theme.VerticalTabPanel;
 import org.rstudio.core.client.widget.FormLabel;
 import org.rstudio.core.client.widget.ModalDialog;
 import org.rstudio.core.client.widget.OperationWithInput;
-import org.rstudio.studio.client.RStudioGinjector;
-import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorAttrProps;
 import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorCodeBlockProps;
 
