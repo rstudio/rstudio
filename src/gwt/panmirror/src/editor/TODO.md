@@ -6,17 +6,9 @@ pandoc schema: <https://github.com/jgm/pandoc-types/blob/master/Text/Pandoc/Defi
 
 ## TODO
 
-Consider offset heading attr_edit to the right
+First double-click on inline image doesn't seem to work?
 
-Should lists be non-tight by default?
-
-Code block language diaog won't accept no language
-
-Code blocks with no language keep getting re-created by the editor when you type in them!
-
-Code block input rule still offers a lang even for markdown_strict
-
-Don't show image caption if empty. May need to detect when we are live editing the caption and keep it visible then.
+Image node selection doesn't paint when in longer text selection
 
 Keyboard selection of image node (arrow handlers)
 
@@ -29,6 +21,8 @@ attr_edit still off in panmirror-next
 
 Emphasize goals: Writing prose, collab w/ non-markdown users, easier to 
 learn introduction to notebooks.
+
+Tables section in docs?
 
 n docs we should get to an editor screenshot sooner 
 (do this instead of showing the latcher and command toolbar).
