@@ -14,7 +14,7 @@
  */
 
 import { Node as ProsemirrorNode, Schema, ResolvedPos } from 'prosemirror-model';
-import { InputRule } from 'prosemirror-inputrules';
+import { InputRule, textblockTypeInputRule } from 'prosemirror-inputrules';
 import { newlineInCode, exitCode } from 'prosemirror-commands';
 import { EditorState, Transaction, TextSelection } from 'prosemirror-state';
 import { EditorView } from 'prosemirror-view';
@@ -136,7 +136,12 @@ const extension = (
     },
 
     inputRules: (schema: Schema) => {
-      return [codeBlockInputRule(schema, ui.context)];
+      if (hasAttr) {
+        return [codeBlockInputRule(schema, ui.context)];
+      } else {
+        return [textblockTypeInputRule(/^```$/, schema.nodes.code_block)];
+      }
+      
     },
   };
 };
