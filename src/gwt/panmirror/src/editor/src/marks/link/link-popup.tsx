@@ -31,7 +31,6 @@ import { selectionIsImageNode } from '../../api/selection';
 import { showTooltip } from '../../api/widgets/tooltip';
 
 import { reactRenderForEditorView, WidgetProps } from '../../api/widgets/react';
-import { Panel } from '../../api/widgets/panel';
 import { LinkButton, ImageButton } from '../../api/widgets/button';
 import { textRangePopupDecorationPosition } from '../../api/widgets/decoration';
 import { Popup } from '../../api/widgets/popup';

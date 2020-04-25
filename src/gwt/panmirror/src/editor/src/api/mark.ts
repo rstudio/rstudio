@@ -17,7 +17,7 @@ import { Mark, MarkSpec, MarkType, ResolvedPos, Node as ProsemirrorNode } from '
 import { EditorState, Selection } from 'prosemirror-state';
 import { InputRule } from 'prosemirror-inputrules';
 
-import { PandocTokenReader, PandocMarkWriterFn, PandocInlineHTMLReaderFn, PandocPreprocessorFn } from './pandoc';
+import { PandocTokenReader, PandocMarkWriterFn, PandocInlineHTMLReaderFn } from './pandoc';
 import { mergedTextNodes } from './text';
 import { findChildrenByMark } from 'prosemirror-utils';
 import { MarkTransaction } from './transaction';
