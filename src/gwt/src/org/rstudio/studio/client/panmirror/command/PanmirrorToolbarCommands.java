@@ -56,7 +56,7 @@ public class PanmirrorToolbarCommands
       add(PanmirrorCommands.LineBlock, "Line Block", Roles.getMenuitemcheckboxRole());
       add(PanmirrorCommands.Div, "Div Block...");
       add(PanmirrorCommands.AttrEdit, "Edit Attributes...");
-      add(PanmirrorCommands.ClearFormatting, "Clear Formatting");
+      add(PanmirrorCommands.ClearFormatting, "Clear Formatting", icons.CLEAR_FORMATTING);
       
       // raw
       add(PanmirrorCommands.TexInline, "TeX Inline", Roles.getMenuitemcheckboxRole());

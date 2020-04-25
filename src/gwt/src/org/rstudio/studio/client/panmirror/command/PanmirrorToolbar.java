@@ -61,6 +61,8 @@ public class PanmirrorToolbar extends SecondaryToolbar implements RequiresResize
          addLeftButton(PanmirrorCommands.Strong),
          addLeftButton(PanmirrorCommands.Em),
          addLeftButton(PanmirrorCommands.Code),
+         addLeftSeparator(),
+         addLeftButton(PanmirrorCommands.ClearFormatting),
          addLeftSeparator()
       );
       
@@ -139,9 +141,9 @@ public class PanmirrorToolbar extends SecondaryToolbar implements RequiresResize
       if (width == 0)
          return;
            
-      showGroup(formatWidgets_, width > 400);
-      showGroup(blockWidgets_, width > 480);
-      showGroup(insertWidgets_, width > 535);
+      showGroup(formatWidgets_, width > 420);
+      showGroup(blockWidgets_, width > 500);
+      showGroup(insertWidgets_, width > 555);
    }
    
    

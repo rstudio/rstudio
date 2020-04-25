@@ -83,6 +83,9 @@ public interface PanmirrorToolbarResources extends ClientBundle
    @Source("table_2x.png")
    ImageResource table();
    
+   @Source("clear_formatting_2x.png")
+   ImageResource clear_formatting();
+   
    public static PanmirrorToolbarResources INSTANCE = 
       (PanmirrorToolbarResources)GWT.create(PanmirrorToolbarResources.class);
 }
