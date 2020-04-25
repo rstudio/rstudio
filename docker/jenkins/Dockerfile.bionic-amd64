@@ -44,6 +44,7 @@ RUN apt-get update && \
     libsqlite3-dev \
     libuser1-dev \
     libssl-dev \
+    libxml2-dev \
     libxslt1-dev \
     lsof \
     openjdk-8-jdk \

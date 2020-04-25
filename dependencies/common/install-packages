@@ -94,10 +94,12 @@ if [[ ! -w $RPKGLIB ]]; then
   mkdir -p "$RPKGLIB"
 fi
 
-# install testthat (needed to run tests)
-RINSTALLCMD="if("'!'"require(testthat, quietly = TRUE)) { install.packages('testthat', lib=\"$RPKGLIB\", repos='https://cran.rstudio.com/') }"
-echo "> $RINSTALLCMD"
-Rscript -e "$RINSTALLCMD"
+# install packages needed to run tests
+for RPKG in testthat xml2; do
+    RINSTALLCMD="if("'!'"require($RPKG, quietly = TRUE)) { install.packages('$RPKG', lib='$RPKGLIB', repos='https://cran.rstudio.com/') }"
+    echo "> $RINSTALLCMD"
+    Rscript -e "$RINSTALLCMD"
+done
 
 # back to install-dir
 cd $INSTALL_DIR
