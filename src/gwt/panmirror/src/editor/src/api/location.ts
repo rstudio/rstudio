@@ -1,5 +1,5 @@
 
-import { Node as ProsemirrorNode, Schema } from 'prosemirror-model';
+import { Node as ProsemirrorNode } from 'prosemirror-model';
 import { EditorView } from 'prosemirror-view';
 import { setTextSelection, NodeWithPos, findChildrenByType } from 'prosemirror-utils';
 
@@ -8,8 +8,7 @@ import { kAddToHistoryTransaction, kRestoreLocationTransaction } from './transac
 import { EditorOutlineItemType, kYamlMetadataOutlineItenItem, kHeadingOutlineItemType, kRmdchunkOutlineItemType } from './outline';
 import { EditorState } from 'prosemirror-state';
 import { findTopLevelBodyNodes } from './node';
-import { strip } from 'strip-markdown';
-import { navigateToId, navigateToPosition } from './navigation';
+import { navigateToPosition } from './navigation';
 
 
 export interface EditingLocation {
