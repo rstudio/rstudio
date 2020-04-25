@@ -109,20 +109,7 @@ public class PanmirrorEditCodeBlockDialog extends ModalDialog<PanmirrorCodeBlock
    @Override
    protected boolean validate(PanmirrorCodeBlockProps input)
    {
-      if (StringUtil.isNullOrEmpty(input.lang))
-      {
-         GlobalDisplay globalDisplay = RStudioGinjector.INSTANCE.getGlobalDisplay();
-         globalDisplay.showErrorMessage(
-            "Language Required", 
-            "You must specify a language for the code block."
-         );
-         lang_.setFocus(true);
-         return false;
-      } 
-      else 
-      {
-         return true;
-      }
+      return true;
    }
    
 
