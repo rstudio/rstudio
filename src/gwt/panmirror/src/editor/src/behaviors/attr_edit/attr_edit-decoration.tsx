@@ -105,7 +105,7 @@ class AttrEditDecorationPlugin extends Plugin<DecorationSet> {
                 return attrTags;
               });
             editor.editFn = editor.editFn || attrEditCommandFn;
-            editor.offset = editor.offset || 0;
+            editor.offset = editor.offset || { top: 0, right: 0 };
 
             // get attrs/tags
             const node = parentWithAttrs.node;
@@ -132,8 +132,9 @@ class AttrEditDecorationPlugin extends Plugin<DecorationSet> {
                 }
 
                 // cacculate position offsets
-                const xOffset = rightPaddingOffset;
-                const yOffset = editor.offset! + 13 / 2 + 1; // 13 is from height defined in attr_edit-decoration.css
+                const baseOffset = editor.offset || { top: 0, right: 0 };
+                const xOffset = baseOffset.right + rightPaddingOffset;
+                const yOffset = baseOffset.top + 13 / 2 + 1; // 13 is from height defined in attr_edit-decoration.css
                 const cssProps: React.CSSProperties = {
                   transform: `translate(${xOffset}px,-${yOffset}px)`,
                 };
