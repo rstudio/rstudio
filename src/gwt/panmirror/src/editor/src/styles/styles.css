@@ -32,6 +32,10 @@
   margin-top: 10px;
 }
 
+h3.pm-heading {
+  font-size: 1.25em;
+}
+
 .pm-link {
   text-decoration: underline;
 }
