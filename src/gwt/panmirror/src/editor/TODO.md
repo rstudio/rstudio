@@ -8,14 +8,12 @@ pandoc schema: <https://github.com/jgm/pandoc-types/blob/master/Text/Pandoc/Defi
 
 
 Comment command:
-  - Break into it's own module
-  - Insert at end of current selection
-  - Auto highlight / unhighlight
-  - Toolbar / keyboard shortcut (Proximity to code chunk toolbar icon)
-  - In dark mode want to use the ace comment color
-  - Make it so that auto-recognition of marks is turned off within inline code
 
-Remove hack for light comments once themes are regenerated
+What happens if you comment out multiple paragraphs? (do we need treat it like display math and allow newlines?)
+
+Generally, look everywhere for uses of .test and .exec and 
+make sure there is no crosstalk (it's definitely in detectAndApply).
+RegEx constants generally shouldn't have /g
 
 Keyboard selection of image node (arrow handlers)
 Also backspace handler for paragraph just after an image (currently deletes image)
@@ -26,6 +24,9 @@ Check into copy/paste behavior with several sections + image
 (saw some strange header artifacts when doing this, also saw some slow performance when doing this)
 
 attr_edit still off in panmirror-next
+
+Remove hack for light/dark comments once themes are regenerated
+(https://github.com/rstudio/rstudio/commit/5526db30d26efa570c6663c83298970ff8d4a3da)
 
 ## Docs
 
