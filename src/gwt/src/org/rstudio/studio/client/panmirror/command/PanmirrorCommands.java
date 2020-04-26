@@ -98,6 +98,7 @@ public class PanmirrorCommands
    public static String TexBlock = "BD11A6A7-E528-40A2-8139-3F8F5F556ED2";
    public static String InlineMath = "A35C562A-0BD6-4B14-93D5-6FF3BE1A0C8A";
    public static String DisplayMath = "3E36BA99-2AE9-47C3-8C85-7CC5314A88DF";
+   public static String HTMLComment = "F973CBA4-2882-4AC5-A642-47F4733EBDD4";
    public static String HTMLInline = "C682C6B5-E58D-498C-A38F-FB07BEC3A82D";
    public static String HTMLBlock = "6F9F64AF-711F-4F91-8642-B51C41717F31";
    public static String RawInline = "984167C8-8582-469C-97D8-42CB12773657";

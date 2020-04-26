@@ -115,8 +115,8 @@ const extension = (pandocExtensions: PandocExtensions, pandocCapabilities: Pando
 // base class for inline commands that auto-insert content
 export class RawInlineInsertCommand extends ProsemirrorCommand {
   private markType: MarkType;
-  constructor(id: EditorCommandId, markType: MarkType, insert: (tr: Transaction) => void) {
-    super(id, [], (state: EditorState, dispatch?: (tr: Transaction) => void) => {
+  constructor(id: EditorCommandId, keymap: readonly string[], markType: MarkType, insert: (tr: Transaction) => void) {
+    super(id, keymap, (state: EditorState, dispatch?: (tr: Transaction) => void) => {
       // if we aren't active then make sure we can insert a text node here
       if (!this.isActive(state) && !canInsertNode(state, markType.schema.nodes.text)) {
         return false;
