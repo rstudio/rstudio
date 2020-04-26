@@ -32,8 +32,9 @@ public class PanmirrorThemeCreator
       // create theme from current app theme
       PanmirrorTheme theme = new PanmirrorTheme(); 
       
-      // set dark mode
+      // set mode info
       theme.darkMode = aceTheme.isDark();
+      boolean solarizedLight = aceTheme.getName().equals("Solarized Light");
       
       theme.cursorColor = DomUtils.extractCssValue("ace_cursor", "color");
       
@@ -70,21 +71,22 @@ public class PanmirrorThemeCreator
       theme.linkTextColor = DomUtils.extractCssValue("ace_keyword", "color");
       theme.markupTextColor = DomUtils.extractCssValue("ace_markup ace_list ace_string", "color");
       
-      if (aceTheme.isDark())
+      // hard code comment colors until themes are regenerated
+      if (solarizedLight)
       {
-         theme.commentColor = DomUtils.extractCssValue("ace_comment", "color");
-         theme.commentFontStyle = DomUtils.extractCssValue("ace_comment", "fontStyle");
+         theme.commentColor = "#5A776B";
+         theme.commentBackgroundColor = "#FAE5B7";
+      }
+      else if (aceTheme.isDark())
+      {
+         theme.commentColor = "#4D4333";
+         theme.commentBackgroundColor = "#D1B78A";
       }
       else
       {
-         theme.commentColor = theme.lightTextColor;
-      }
-      // hard code light mode comment color until themes are regenerated
-      if (!aceTheme.isDark() && !aceTheme.getName().equals("solarized"))
+         theme.commentColor = "#3c4c72";
          theme.commentBackgroundColor = "#FFECCB";
-      else
-         theme.commentBackgroundColor = DomUtils.extractCssValue("ace_comment-highlight", "backgroundColor");
- 
+      }
       
       JsArrayString findTextClasses = JsArrayString.createArray().cast();
       findTextClasses.push("ace_marker-layer");

@@ -512,7 +512,7 @@
 .rs.addFunction("createCommentBgRule", function(themeName, isDark, overrides = list()) {
    commentBgColor <- overrides[[themeName]]
    if (is.null(commentBgColor))
-      commentBgColor <- if (isDark) "#5C4916" else "#FFECCB"
+      commentBgColor <- if (isDark) "#D1B78A" else "#FFECCB"
    
    sprintf(paste(sep = "\n",
                  ".ace_comment-highlight {",
