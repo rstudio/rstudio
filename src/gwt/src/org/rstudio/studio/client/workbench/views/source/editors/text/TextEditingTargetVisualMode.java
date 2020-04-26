@@ -284,7 +284,7 @@ public class TextEditingTargetVisualMode
          }
          else
          {
-            syncDevTools();
+            onActivating();
          }
       }
       
@@ -382,7 +382,6 @@ public class TextEditingTargetVisualMode
          saveLocationOnIdle_.suspend();
    }
   
-  
    private void manageUI(boolean activate, boolean focus)
    {
       manageUI(activate, focus, () -> {});
@@ -436,8 +435,8 @@ public class TextEditingTargetVisualMode
             syncOnIdle_.resume();
             saveLocationOnIdle_.resume();
             
-            // activate devtools if they are loaded
-            syncDevTools();
+            // run activating logic
+            onActivating();
                
             // execute completed hook
             Scheduler.get().scheduleDeferred(completed);    
@@ -478,6 +477,13 @@ public class TextEditingTargetVisualMode
          });  
       }
    }
+   
+   private void onActivating()
+   {
+      syncDevTools();
+      target_.checkForExternalEdit(500);
+   }
+  
    
    private void syncDevTools()
    {
