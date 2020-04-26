@@ -101,7 +101,7 @@ public class PanmirrorToolbarCommands
       add(PanmirrorCommands.Footnote, "Footnote");
       add(PanmirrorCommands.HorizontalRule, "Horizontal Rule");
       add(PanmirrorCommands.ParagraphInsert, "Paragraph");
-      add(PanmirrorCommands.HTMLComment, "Comment");
+      add(PanmirrorCommands.HTMLComment, "Comment", icons.COMMENT);
       add(PanmirrorCommands.YamlMetadata, "YAML Block");
       add(PanmirrorCommands.Shortcode, "Shortcode");
       add(PanmirrorCommands.RmdChunk, "Code Chunk");

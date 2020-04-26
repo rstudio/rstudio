@@ -38,6 +38,7 @@ public class PanmirrorCommandIcons
    public final String RMD_CHUNK = "rmd_chunk";
    public final String TABLE = "table";
    public final String CLEAR_FORMATTING = "clear_formatting";
+   public final String COMMENT = "comment";
    
    private PanmirrorCommandIcons()
    {
@@ -59,6 +60,7 @@ public class PanmirrorCommandIcons
       icons_.put(TABLE, res.table());
       icons_.put(CLEAR_FORMATTING, res.clear_formatting());
       icons_.put(dm(CLEAR_FORMATTING), res.clear_formatting_dm());
+      icons_.put(COMMENT, res.comment());
    }
    
    public ImageResource get(String name)

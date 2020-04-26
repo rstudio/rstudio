@@ -95,6 +95,12 @@ public class PanmirrorToolbar extends SecondaryToolbar implements RequiresResize
          addLeftTextMenu(new ToolbarMenuButton("Table", "Table", null, tableMenu, false));
       }
              
+      if (haveAnyOf(PanmirrorCommands.HTMLComment))
+      {
+         addLeftSeparator();
+         addLeftButton(PanmirrorCommands.HTMLComment);
+      }
+     
       addLeftSeparator();
       findReplaceButton_ = new ToolbarButton(
          ToolbarButton.NoText,
@@ -141,9 +147,9 @@ public class PanmirrorToolbar extends SecondaryToolbar implements RequiresResize
       if (width == 0)
          return;
            
-      showGroup(formatWidgets_, width > 420);
-      showGroup(blockWidgets_, width > 500);
-      showGroup(insertWidgets_, width > 555);
+      showGroup(formatWidgets_, width > 445);
+      showGroup(blockWidgets_, width > 525);
+      showGroup(insertWidgets_, width > 580);
    }
    
    
