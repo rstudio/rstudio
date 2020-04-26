@@ -88,7 +88,12 @@ public class WindowFrameButton extends FocusWidget
    {
       if (isAttached() && clickHandler_ != null)
       {
-         releaseOnUnload_.add(super.addClickHandler(event -> click()));
+         releaseOnUnload_.add(super.addClickHandler(clickEvent ->
+         {
+            clickEvent.preventDefault();
+            clickEvent.stopPropagation();
+            click();
+         }));
 
          releaseOnUnload_.add(addKeyPressHandler(event ->
          {
