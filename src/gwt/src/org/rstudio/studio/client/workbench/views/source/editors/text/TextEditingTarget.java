@@ -1538,15 +1538,7 @@ public class TextEditingTarget implements
             // check to see if the file's been saved externally--we do this even
             // in a collaborative editing session so we can get delete
             // notifications
-            Scheduler.get().scheduleFixedDelay(new RepeatingCommand()
-            {
-               public boolean execute()
-               {
-                  if (view_.isAttached())
-                     checkForExternalEdit();
-                  return false;
-               }
-            }, 500);
+            checkForExternalEdit(500);
          }
       });
       
@@ -6767,6 +6759,19 @@ public class TextEditingTarget implements
                   Debug.logError(error);
                }
             });
+   }
+   
+   public void checkForExternalEdit(int delayMs) 
+   {
+      Scheduler.get().scheduleFixedDelay(new RepeatingCommand()
+      {
+         public boolean execute()
+         {
+            if (view_.isAttached())
+               checkForExternalEdit();
+            return false;
+         }
+      }, delayMs);
    }
    
    private void revertEdits()

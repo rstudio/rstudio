@@ -15,7 +15,7 @@
 
 import { Node as ProsemirrorNode, Schema, DOMOutputSpec } from 'prosemirror-model';
 import { EditorState, NodeSelection, Transaction, Plugin, PluginKey } from 'prosemirror-state';
-import { EditorView } from 'prosemirror-view';
+import { EditorView, DecorationSet } from 'prosemirror-view';
 
 import { ProsemirrorCommand, EditorCommandId } from '../../api/command';
 import { Extension } from '../../api/extension';
@@ -42,13 +42,14 @@ import { ImageDimensions } from '../../api/image';
 import { asHTMLTag } from '../../api/html';
 import { EditorOptions } from '../../api/options';
 import { EditorEvents } from '../../api/events';
+import { EditorFormat } from '../../api/format';
 
 import { imageDialog } from './image-dialog';
 import { imageDrop } from './image-events';
 import { ImageNodeView } from './image-view';
 import { imageDimensionsFromImg, imageContainerWidth, inlineHTMLIsImage } from './image-util';
 import { PandocCapabilities } from '../../api/pandoc_capabilities';
-import { EditorFormat } from '../../api/format';
+import { imageTextSelectionInit, imageTextSelectionApply } from './image-textsel';
 
 const TARGET_URL = 0;
 const TARGET_TITLE = 1;
@@ -57,7 +58,7 @@ const IMAGE_ATTR = 0;
 const IMAGE_ALT = 1;
 const IMAGE_TARGET = 2;
 
-const plugin = new PluginKey('image');
+const pluginKey = new PluginKey<DecorationSet>('image');
 
 const extension = (
   pandocExtensions: PandocExtensions,
@@ -109,8 +110,16 @@ const extension = (
 
     plugins: (schema: Schema) => {
       return [
-        new Plugin({
-          key: plugin,
+        new Plugin<DecorationSet>({
+          key: pluginKey,
+          state: {
+            init(_config: { [key: string]: any }, instance: EditorState) {
+              return imageTextSelectionInit(instance);
+            },
+            apply(tr: Transaction, set: DecorationSet, oldState: EditorState, newState: EditorState) {
+              return imageTextSelectionApply(tr, set, oldState, newState);
+            }
+          },
           props: {
             nodeViews: {
               image(node: ProsemirrorNode, view: EditorView, getPos: boolean | (() => number)) {
@@ -119,6 +128,9 @@ const extension = (
             },
             handleDOMEvents: {
               drop: imageDrop(),
+            },
+            decorations(state: EditorState) {
+              return pluginKey.getState(state);
             },
           },
         }),

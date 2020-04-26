@@ -182,7 +182,7 @@ function texInputRule(schema: Schema) {
 
 class InsertInlineLatexCommand extends RawInlineInsertCommand {
   constructor(schema: Schema) {
-    super(EditorCommandId.TexInline, schema.marks.raw_tex, (tr: Transaction) => {
+    super(EditorCommandId.TexInline, [], schema.marks.raw_tex, (tr: Transaction) => {
       const mark = schema.marks.raw_tex.create();
       const tex = '\\' + kTexPlaceholder;
       const node = schema.text(tex, [mark]);

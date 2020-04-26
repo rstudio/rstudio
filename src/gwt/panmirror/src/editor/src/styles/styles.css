@@ -52,6 +52,15 @@ h3.pm-heading {
   margin-right: 0;
 }
 
+.pm-figure {
+  margin: 0;
+  margin-block-end: 1em;
+}
+
+.pm-img {
+  max-width: 100%;
+}
+
 .pm-div {
   padding: 1em;
   margin-block-end: 1em;

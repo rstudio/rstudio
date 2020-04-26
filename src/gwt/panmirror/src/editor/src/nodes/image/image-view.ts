@@ -108,6 +108,7 @@ export class ImageNodeView implements NodeView {
 
     // create the image (used by both image and figure node types)
     this.img = document.createElement('img');
+    this.img.classList.add('pm-img');
     this.img.onload = () => {
       this.imgBroken = false;
     };
@@ -121,6 +122,7 @@ export class ImageNodeView implements NodeView {
     if (this.type === ImageType.Figure) {
       // create figure wrapper
       this.dom = document.createElement('figure');
+      this.dom.classList.add('pm-figure');
 
       // create container
       const container = document.createElement('div');
