@@ -247,7 +247,7 @@ export function detectAndApplyMarks(
   pos: number,
   re: RegExp,
   markType: MarkType,
-  attrs = {},
+  attrs: {} | ((match: RegExpMatchArray) => {}) = {},
 ) {
   const textNodes = mergedTextNodes(node, (_node: ProsemirrorNode, parentNode: ProsemirrorNode) =>
     parentNode.type.allowsMarkType(markType),
@@ -261,7 +261,7 @@ export function detectAndApplyMarks(
       const range = getMarkRange(tr.doc.resolve(to), markType);
       if ((!range || range.from !== from || range.to !== to) &&
           !tr.doc.rangeHasMark(from, to, markType.schema.marks.code)) {
-        const mark = markType.create(attrs);
+        const mark = markType.create(attrs instanceof Function ? attrs(match) : attrs);
         tr.addMark(from, to, mark);
         if (tr.selection.anchor === to) {
           tr.removeStoredMark(mark.type);

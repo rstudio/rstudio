@@ -143,13 +143,13 @@ function readPandocRawBlock(schema: Schema, tok: PandocToken, writer: Prosemirro
   // highlighting and more seamless editing experience)
   const format = tok.c[kRawBlockFormat];
   const text = tok.c[kRawBlockContent] as string;
-  if (isRawHTMLFormat(format) && isSingleLineHTML(text)) {
+  if (isRawHTMLFormat(format) && isSingleLineHTML(text.trimRight())) {
     writer.openNode(schema.nodes.paragraph, {});
     writer.writeInlineHTML(text.trimRight());
     writer.closeNode();
 
     // similarly, single lines of tex should be read as inline tex
-  } else if (format === kTexFormat && isSingleLineTex(text)) {
+  } else if (format === kTexFormat && isSingleLineTex(text.trimRight())) {
     writer.openNode(schema.nodes.paragraph, {});
     const rawTexMark = schema.marks.raw_tex.create();
     writer.openMark(rawTexMark);

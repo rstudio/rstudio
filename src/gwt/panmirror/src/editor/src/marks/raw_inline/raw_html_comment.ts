@@ -14,7 +14,7 @@
  *
  */
 
-import { Schema, Mark, Fragment } from "prosemirror-model";
+import { Schema, Mark, Fragment, Node as ProsemirrorNode } from "prosemirror-model";
 import { Transaction, TextSelection, EditorState } from "prosemirror-state";
 import { toggleMark } from "prosemirror-commands";
 
@@ -26,10 +26,14 @@ import { PandocExtensions, ProsemirrorWriter, PandocOutput } from "../../api/pan
 import { PandocCapabilities } from "../../api/pandoc_capabilities";
 import { Extension } from "../../api/extension";
 import { EditorUI } from "../../api/ui";
+import { MarkTransaction } from "../../api/transaction";
+import { removeInvalidatedMarks, detectAndApplyMarks } from "../../api/mark";
 
-const kHTMLCommentRegEx = /^<!--([\s\S]*?)-->\s*$/;
 
-const extension = (pandocExtensions: PandocExtensions, pandocCapabilities: PandocCapabilities): Extension | null => {
+const kHTMLCommentRegEx = /<!--([\s\S]*?)-->/;
+const kHTMLEditingCommentRegEx = /^<!--# ([\s\S]*?)-->$/;
+
+const extension = (pandocExtensions: PandocExtensions): Extension | null => {
   if (!pandocExtensions.raw_html) {
     return null;
   }
@@ -40,17 +44,27 @@ const extension = (pandocExtensions: PandocExtensions, pandocCapabilities: Pando
         name: 'raw_html_comment',
         noInputRules: true,
         spec: {
+          attrs: {
+            editing: { default: false }
+          },
           inclusive: false,
           excludes: '_',
           parseDOM: [
             {
               tag: "span[class*='raw-html-comment']",
-              getAttrs(dom: Node | string) { return {}; },
+              getAttrs(dom: Node | string) { 
+                const el = dom as Element;
+                return {
+                  editing: el.getAttribute('data-editing') === '1',
+                };
+              },
             },
           ],
           toDOM(mark: Mark) {
             const attr: any = {
-              class: 'raw-html-comment pm-fixedwidth-font pm-comment-color pm-comment-background-color' ,
+              class: 'raw-html-comment pm-fixedwidth-font ' + 
+                (mark.attrs.editing ? 'pm-comment-color pm-comment-background-color'
+                                    : 'pm-light-text-color')
             };
             return ['span', attr];
           },
@@ -59,7 +73,7 @@ const extension = (pandocExtensions: PandocExtensions, pandocCapabilities: Pando
           readers: [],
           inlineHTMLReader: (schema: Schema, html: string, writer: ProsemirrorWriter) => {
             if (kHTMLCommentRegEx.test(html)) {
-              const mark = schema.marks.raw_html_comment.create();
+              const mark = schema.marks.raw_html_comment.create({ editing: kHTMLEditingCommentRegEx.test(html) });
               writer.openMark(mark);
               writer.writeText(html);
               writer.closeMark(mark);
@@ -77,6 +91,23 @@ const extension = (pandocExtensions: PandocExtensions, pandocCapabilities: Pando
         },
       },
     ],
+
+    appendMarkTransaction: (schema: Schema) => {
+      const markType = schema.marks.raw_html_comment;
+      const kHTMLCommentMarkRegEx = new RegExp(kHTMLCommentRegEx.source, 'g');
+      return [
+        {
+          name: 'html-editing-comment-marks',
+          filter: (node: ProsemirrorNode) => node.isTextblock && node.type.allowsMarkType(markType),
+          append: (tr: MarkTransaction, node: ProsemirrorNode, pos: number) => {
+            removeInvalidatedMarks(tr, node, pos, kHTMLCommentRegEx, markType);
+            detectAndApplyMarks(tr, tr.doc.nodeAt(pos)!, pos, kHTMLCommentMarkRegEx, markType, match => ({ 
+              editing: kHTMLEditingCommentRegEx.test(match[0]) 
+            }));
+          },
+        },
+      ];
+    },
 
     // insert command
     commands: (schema: Schema, ui: EditorUI) => {
@@ -121,14 +152,13 @@ export class InsertHTMLCommentCommand extends ProsemirrorCommand {
         }
 
         // insert the comment
-        const mark = schema.marks.raw_html_comment.create();
-        const comment = '<!--  -->';
-        const node = schema.text(comment, [mark]);
-        tr.insert(tr.selection.from, node);
-
+        const comment = '<!--#  -->';
+        const mark = schema.marks.raw_html_comment.create({ editing: true });
+        tr.insert(tr.selection.to, schema.text(comment, [mark]));
+        
         // set the selection to the middle of the comment
         tr.setSelection(
-          new TextSelection(tr.doc.resolve(tr.selection.from - (comment.length/2 - 1))),
+          new TextSelection(tr.doc.resolve(tr.selection.to - (comment.length/2 - 1))),
         );
 
         // dispatch
