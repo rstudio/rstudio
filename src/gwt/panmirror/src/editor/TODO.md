@@ -6,14 +6,24 @@ pandoc schema: <https://github.com/jgm/pandoc-types/blob/master/Text/Pandoc/Defi
 
 ## TODO
 
-First double-click on inline image doesn't seem to work?
 
-Image node selection doesn't paint when in longer text selection
+Comment command:
+  - Break into it's own module
+  - Insert at end of current selection
+  - Auto highlight / unhighlight
+  - Toolbar / keyboard shortcut (Proximity to code chunk toolbar icon)
+  - In dark mode want to use the ace comment color
+  - Make it so that auto-recognition of marks is turned off within inline code
+
+Remove hack for light comments once themes are regenerated
 
 Keyboard selection of image node (arrow handlers)
+Also backspace handler for paragraph just after an image (currently deletes image)
+
+Tab key handling for image shelf
 
 Check into copy/paste behavior with several sections + image
-(saw some strange header artifacts when doing this)
+(saw some strange header artifacts when doing this, also saw some slow performance when doing this)
 
 attr_edit still off in panmirror-next
 
@@ -22,9 +32,11 @@ attr_edit still off in panmirror-next
 Emphasize goals: Writing prose, collab w/ non-markdown users, easier to 
 learn introduction to notebooks.
 
-Tables section in docs?
+Comment and review (discuss @ top)
 
-n docs we should get to an editor screenshot sooner 
+Tables section in docs? (column and row operations)
+
+In docs we should get to an editor screenshot sooner 
 (do this instead of showing the latcher and command toolbar).
 
 For main screenshot use image + table + footnote?
