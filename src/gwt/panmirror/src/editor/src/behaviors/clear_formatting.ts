@@ -29,10 +29,7 @@ const kFormattingMarks = [
   'strikeout',
   'strong',
   'superscript',
-  'subscript',
-  'raw_tex',
-  'raw_html',
-  'raw_inline',
+  'subscript'
 ];
 
 // for nodes, all nodes with isTextblock === true will be converted to paragraph, and all
