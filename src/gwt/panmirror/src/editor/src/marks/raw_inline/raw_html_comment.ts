@@ -14,16 +14,78 @@
  *
  */
 
-import { Schema } from "prosemirror-model";
+import { Schema, Mark, Fragment } from "prosemirror-model";
 import { Transaction, TextSelection, EditorState } from "prosemirror-state";
 import { toggleMark } from "prosemirror-commands";
 
 import { setTextSelection } from "prosemirror-utils";
 
 import { EditorCommandId, ProsemirrorCommand } from "../../api/command";
-
 import { canInsertNode } from "../../api/node";
+import { PandocExtensions, ProsemirrorWriter, PandocOutput } from "../../api/pandoc";
+import { PandocCapabilities } from "../../api/pandoc_capabilities";
+import { Extension } from "../../api/extension";
+import { EditorUI } from "../../api/ui";
 
+const kHTMLCommentRegEx = /^<!--([\s\S]*?)-->\s*$/;
+
+const extension = (pandocExtensions: PandocExtensions, pandocCapabilities: PandocCapabilities): Extension | null => {
+  if (!pandocExtensions.raw_html) {
+    return null;
+  }
+
+  return {
+    marks: [
+      {
+        name: 'raw_html_comment',
+        noInputRules: true,
+        spec: {
+          inclusive: false,
+          excludes: '_',
+          parseDOM: [
+            {
+              tag: "span[class*='raw-html-comment']",
+              getAttrs(dom: Node | string) { return {}; },
+            },
+          ],
+          toDOM(mark: Mark) {
+            const attr: any = {
+              class: 'raw-html-comment pm-fixedwidth-font pm-comment-color pm-comment-background-color' ,
+            };
+            return ['span', attr];
+          },
+        },
+        pandoc: {
+          readers: [],
+          inlineHTMLReader: (schema: Schema, html: string, writer: ProsemirrorWriter) => {
+            if (kHTMLCommentRegEx.test(html)) {
+              const mark = schema.marks.raw_html_comment.create();
+              writer.openMark(mark);
+              writer.writeText(html);
+              writer.closeMark(mark);
+              return true;
+            } else {
+              return false;
+            }
+          },
+          writer: {
+            priority: 20,
+            write: (output: PandocOutput, _mark: Mark, parent: Fragment) => {
+              output.writeRawMarkdown(parent);
+            },
+          },
+        },
+      },
+    ],
+
+    // insert command
+    commands: (schema: Schema, ui: EditorUI) => {
+      return [
+        new InsertHTMLCommentCommand(schema)
+      ];
+    },
+  };
+};
 
 export class InsertHTMLCommentCommand extends ProsemirrorCommand {
   constructor(schema: Schema) {
@@ -59,7 +121,7 @@ export class InsertHTMLCommentCommand extends ProsemirrorCommand {
         }
 
         // insert the comment
-        const mark = schema.marks.raw_html.create({ comment: true });
+        const mark = schema.marks.raw_html_comment.create();
         const comment = '<!--  -->';
         const node = schema.text(comment, [mark]);
         tr.insert(tr.selection.from, node);
@@ -78,3 +140,4 @@ export class InsertHTMLCommentCommand extends ProsemirrorCommand {
   }
 }
 
+export default extension;

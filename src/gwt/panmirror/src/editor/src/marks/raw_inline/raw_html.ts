@@ -24,7 +24,7 @@ import { PandocCapabilities } from '../../api/pandoc_capabilities';
 
 import { kRawInlineFormat, kRawInlineContent, RawInlineCommand, RawInlineInsertCommand } from './raw_inline';
 
-import { InsertHTMLCommentCommand } from './raw_html-comment';
+import { InsertHTMLCommentCommand } from './raw_html_comment';
 
 const extension = (pandocExtensions: PandocExtensions, pandocCapabilities: PandocCapabilities): Extension | null => {
   if (!pandocExtensions.raw_html) {
@@ -39,28 +39,15 @@ const extension = (pandocExtensions: PandocExtensions, pandocCapabilities: Pando
         spec: {
           inclusive: false,
           excludes: '_',
-          attrs: {
-            comment: { default: false },
-          },
           parseDOM: [
             {
               tag: "span[class*='raw-html']",
-              getAttrs(dom: Node | string) {
-                const el = dom as Element;
-                return {
-                  comment: el.getAttribute('data-comment') === '1',
-                };
-              },
+              getAttrs(dom: Node | string) { return {}; }
             },
           ],
           toDOM(mark: Mark) {
             const attr: any = {
-              class:
-                'raw-html pm-fixedwidth-font ' + (mark.attrs.comment 
-                  ? 'pm-comment-color pm-comment-background-color' 
-                  : 'pm-markup-text-color'
-                ),
-              'data-comment': mark.attrs.comment ? '1' : '0',
+              class: 'raw-html pm-fixedwidth-font pm-markup-text-color'
             };
             return ['span', attr];
           },
