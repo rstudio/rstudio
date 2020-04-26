@@ -58,6 +58,7 @@ public class PanmirrorCommandIcons
       icons_.put(RMD_CHUNK, res.rmd_chunk());
       icons_.put(TABLE, res.table());
       icons_.put(CLEAR_FORMATTING, res.clear_formatting());
+      icons_.put(dm(CLEAR_FORMATTING), res.clear_formatting_dm());
    }
    
    public ImageResource get(String name)
