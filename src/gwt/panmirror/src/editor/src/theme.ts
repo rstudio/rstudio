@@ -23,6 +23,8 @@ export interface EditorTheme {
   chunkBackgroundColor: string;
   spanBackgroundColor: string;
   divBackgroundColor: string;
+  commentColor: string;
+  commentFontStyle: string;
   commentBackgroundColor: string;
   gutterBackgroundColor: string;
   gutterTextColor: string;
@@ -74,6 +76,8 @@ export function defaultTheme(): EditorTheme {
     chunkBackgroundColor: 'rgb(251,251,251)',
     spanBackgroundColor: '#fff8dc',
     divBackgroundColor: 'rgb(243, 243, 243)',
+    commentColor: 'rgb(60, 76, 114)',
+    commentFontStyle: 'normal',
     commentBackgroundColor: 'rgb(254, 155, 243)',
     gutterBackgroundColor: '#f0f0f0',
     gutterTextColor: '#333',
@@ -144,6 +148,12 @@ export function applyTheme(theme: EditorTheme) {
     }
     .pm-div-background-color {
       background-color: ${theme.divBackgroundColor} !important;
+    }
+    .pm-comment-color {
+      color: ${theme.commentColor} !important;
+    }
+    .pm-comment-font-style {
+      font-style: ${theme.commentFontStyle} !important;
     }
     .pm-comment-background-color {
       background-color: ${theme.commentBackgroundColor} !important;

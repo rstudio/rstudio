@@ -55,7 +55,10 @@ const extension = (pandocExtensions: PandocExtensions, pandocCapabilities: Pando
           toDOM(mark: Mark) {
             const attr: any = {
               class:
-                'raw-html pm-fixedwidth-font ' + (mark.attrs.comment ? 'pm-light-text-color pm-comment-background-color' : 'pm-markup-text-color'),
+                'raw-html pm-fixedwidth-font ' + (mark.attrs.comment 
+                  ? 'pm-comment-color pm-comment-background-color pm-comment-font-style' 
+                  : 'pm-markup-text-color'
+                ),
               'data-comment': mark.attrs.comment ? '1' : '0',
             };
             return ['span', attr];
