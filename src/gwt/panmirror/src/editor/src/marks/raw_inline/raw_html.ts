@@ -14,7 +14,6 @@
  */
 
 import { Mark, Schema, Fragment } from 'prosemirror-model';
-import { Transaction, TextSelection } from 'prosemirror-state';
 
 import { PandocExtensions, PandocTokenType, PandocToken, ProsemirrorWriter, PandocOutput } from '../../api/pandoc';
 import { Extension } from '../../api/extension';
@@ -24,6 +23,8 @@ import { EditorCommandId } from '../../api/command';
 import { PandocCapabilities } from '../../api/pandoc_capabilities';
 
 import { kRawInlineFormat, kRawInlineContent, RawInlineCommand, RawInlineInsertCommand } from './raw_inline';
+
+import { InsertHTMLCommentCommand } from './raw_html-comment';
 
 const extension = (pandocExtensions: PandocExtensions, pandocCapabilities: PandocCapabilities): Extension | null => {
   if (!pandocExtensions.raw_html) {
@@ -99,19 +100,5 @@ const extension = (pandocExtensions: PandocExtensions, pandocCapabilities: Pando
     },
   };
 };
-
-class InsertHTMLCommentCommand extends RawInlineInsertCommand {
-  constructor(schema: Schema) {
-    super(EditorCommandId.HTMLComment, ['Shift-Mod-c'], schema.marks.raw_html, (tr: Transaction) => {
-      const mark = schema.marks.raw_html.create({ comment: true });
-      const comment = '<!--  -->';
-      const node = schema.text(comment, [mark]);
-      tr.replaceSelectionWith(node, false);
-      tr.setSelection(
-        new TextSelection(tr.doc.resolve(tr.selection.from - (comment.length/2 - 1))),
-      );
-    });
-  }
-}
 
 export default extension;
