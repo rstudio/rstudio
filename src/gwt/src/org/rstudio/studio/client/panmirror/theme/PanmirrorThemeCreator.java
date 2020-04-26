@@ -53,7 +53,12 @@ public class PanmirrorThemeCreator
       theme.backgroundColor = DomUtils.extractCssValue("ace_editor", "backgroundColor");
       theme.metadataBackgroundColor = theme.backgroundColor;
       theme.nodeSelectionColor = DomUtils.extractCssValue("ace_node-selector", "backgroundColor");
-      theme.commentBackgroundColor = DomUtils.extractCssValue("ace_comment-highlight", "backgroundColor");
+      
+      // hard code light mode comment color until themes are regenerated
+      if (!aceTheme.isDark() && !aceTheme.getName().equals("solarized"))
+         theme.commentBackgroundColor = "#FFECCB";
+      else
+         theme.commentBackgroundColor = DomUtils.extractCssValue("ace_comment-highlight", "backgroundColor");
          
       JsArrayString regionBkgdClasses = JsArrayString.createArray().cast();
       regionBkgdClasses.push("ace_marker-layer");
