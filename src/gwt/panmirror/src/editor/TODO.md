@@ -6,7 +6,8 @@ pandoc schema: <https://github.com/jgm/pandoc-types/blob/master/Text/Pandoc/Defi
 
 ## TODO
 
-- Single apostrophies flip when serialzing to Pandoc (see MANUAL.Rmd)
+- Selection moves around a ton during load of MANUAL.Rmd. Is it because by applying
+  changes to the source buffer incrementally we're driving sets back into the visual editor?
 
 - Use Google diff-match-patch w/ timeout if possible: 
   https://github.com/google/diff-match-patch/wiki/API#diff_maintext1-text2--diffs
