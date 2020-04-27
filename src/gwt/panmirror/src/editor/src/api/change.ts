@@ -1,7 +1,8 @@
+
 /*
- * PanmirrorUIToolsSource.java
+ * diff.ts
  *
- * Copyright (C) 2009-20 by RStudio, PBC
+ * Copyright (C) 2019-20 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -13,18 +14,25 @@
  *
  */
 
+import diff from 'fast-diff';
 
-package org.rstudio.studio.client.panmirror.uitools;
-
-
-
-import org.rstudio.core.client.patch.TextChange;
-
-import jsinterop.annotations.JsType;
-
-@JsType
-public class PanmirrorUIToolsSource
-{
-   public native TextChange[] diffChars(String from, String to);
+export enum EditorChangeType {
+  Insert = 1,
+  Equal = 0,
+  Delete = -1,
 }
+
+export interface EditorChange {
+  type: EditorChangeType;
+  value: string;
+}
+
+export function diffChars(from: string, to: string) : EditorChange[] {
+  return diff(from, to).map(d => ({
+    type: d[0],
+    value: d[1]
+  }));
+}
+
+
 

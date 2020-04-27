@@ -64,7 +64,7 @@ import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.js.JsMap;
 import org.rstudio.core.client.js.JsObject;
 import org.rstudio.core.client.js.JsUtil;
-import org.rstudio.core.client.jsdiff.JsdiffChange;
+import org.rstudio.core.client.patch.TextChange;
 import org.rstudio.core.client.regex.Match;
 import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.core.client.resources.StaticDataResource;
@@ -1122,13 +1122,13 @@ public class AceEditor implements DocDisplay,
       widget_.getEditor().insert(StringUtil.normalizeNewLines(code));
    }
    
-   public void applyChanges(JsdiffChange[] changes)
+   public void applyChanges(TextChange[] changes)
    {
       // special case for a single change that neither adds nor removes
       // (identity operation). we don't feed this through the code below
       // because a single non-mutating change will result in a selection
       // at the beginning of the file
-      if (changes.length == 1 && !changes[0].added && !changes[0].removed)
+      if (changes.length == 1 && changes[0].type == TextChange.Type.Equal)
          return;
       
       // alias apis
@@ -1180,10 +1180,12 @@ public class AceEditor implements DocDisplay,
       // process changes
       for (int i = 0; i<changes.length; i++) 
       {
-         // get change
-         JsdiffChange change = changes[i];
+         // get change and length
+         TextChange change = changes[i];
+         int length = change.value.length();
+         
          // insert text (selection will be advanced to the end of the string)
-         if (change.added)
+         if (change.type == TextChange.Type.Insert)
          {
             commandManager.exec("insertstring", editor, change.value);
          }
@@ -1191,10 +1193,10 @@ public class AceEditor implements DocDisplay,
          // remove text -- we advance past it and then use the "backspace"
          // command b/c ace gives nicer undo behavior for this action (compared
          // to executing the "del" command)
-         else if (change.removed)
+         else if (change.type == TextChange.Type.Delete)
          {
-            advanceSelection.accept(change.count);
-            for (int ch = 0; ch<change.count; ch++)
+            advanceSelection.accept(length);
+            for (int ch = 0; ch<length; ch++)
                commandManager.exec("backspace", editor);
          }
          
@@ -1202,7 +1204,7 @@ public class AceEditor implements DocDisplay,
          // case it just represents advancing to the end of the file)
          else if (i != (changes.length-1))
          {
-            advanceSelection.accept(change.count);
+            advanceSelection.accept(length);
          } 
       }  
    }

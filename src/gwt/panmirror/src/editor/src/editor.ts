@@ -22,8 +22,6 @@ import 'prosemirror-view/style/prosemirror.css';
 
 import { setTextSelection } from 'prosemirror-utils';
 
-import { Change, diffChars } from 'diff';
-
 import polyfill from './polyfill/index';
 
 import { EditorOptions } from './api/options';
@@ -59,6 +57,7 @@ import { unitToPixels, pixelsToUnit, roundUnit, kValidUnits } from './api/image'
 import { kPercentUnit } from './api/css';
 import { defaultEditorUIImages } from './api/ui-images';
 import { EditorFormat } from './api/format';
+import { diffChars, EditorChange } from './api/change';
 
 import { getTitle, setTitle } from './nodes/yaml_metadata/yaml_metadata-title';
 
@@ -145,7 +144,7 @@ export interface UIToolsFormat {
 }
 
 export interface UIToolsSource {
-  diffChars(from: string, to: string): Change[];
+  diffChars(from: string, to: string): EditorChange[];
 }
 
 export class UITools {

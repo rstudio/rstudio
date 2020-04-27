@@ -17,7 +17,7 @@ package org.rstudio.studio.client.workbench.views.source.editors.text;
 
 import java.util.ArrayList;
 
-import org.rstudio.core.client.jsdiff.JsdiffChange;
+import org.rstudio.core.client.patch.TextChange;
 import org.rstudio.core.client.widget.CanFocus;
 import org.rstudio.core.client.widget.IsHideableWidget;
 
@@ -31,13 +31,13 @@ public class TextEditorContainer extends LayoutPanel implements CanFocus
 {     
    public static class Changes
    {
-      public Changes(JsdiffChange[] changes, Cursor cursor)
+      public Changes(TextChange[] changes, Cursor cursor)
       {
          this.changes = changes;
          this.cursor = cursor;
       }
       
-      public final JsdiffChange[] changes;
+      public final TextChange[] changes;
       public final Cursor cursor;
    }
    

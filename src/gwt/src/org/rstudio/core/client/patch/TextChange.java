@@ -1,7 +1,7 @@
 /*
- * JsdiffChange.java
+ * TextChange.java
  *
- * Copyright (C) 2009-20 by RStudio, PBC
+ * Copyright (C) 2009-12 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -13,15 +13,20 @@
  *
  */
 
-package org.rstudio.core.client.jsdiff;
+package org.rstudio.core.client.patch;
 
 import jsinterop.annotations.JsType;
 
 @JsType
-public class JsdiffChange
+public class TextChange
 {
-   public int count;
+   public static class Type
+   {
+      public static final int Insert = 1;
+      public static final int Equal = 0;
+      public static final int Delete = -1;
+   }
+   public int type;
    public String value;
-   public boolean added;
-   public boolean removed;
 }
+
