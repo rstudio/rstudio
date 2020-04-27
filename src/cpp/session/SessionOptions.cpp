@@ -256,6 +256,12 @@ core::ProgramStatus Options::read(int argc, char * const argv[], std::ostream& o
       (kUseSecureCookiesSessionOption,
        value<bool>(&useSecureCookies_)->default_value(false),
        "whether to mark cookies as secure")
+      (kIFrameEmbeddingSessionOption,
+       value<bool>(&iFrameEmbedding_)->default_value(false),
+       "whether to mark cookies as samesite=none for iframe embedding")
+      (kLegacyCookiesSessionOption,
+       value<bool>(&legacyCookies_)->default_value(false),
+       "whether to use legacy cookies without a samesite value or to emit a second legacy cookie for backwards compatibility when iframe embedding is in use")
       ("restrict-directory-view",
        value<bool>(&restrictDirectoryView_)->default_value(false),
        "whether to restrict the directories that can be viewed in the IDE")

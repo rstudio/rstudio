@@ -63,6 +63,7 @@
 #define kRunTestsSessionOption            "run-tests"
 #define kRunScriptSessionOption           "run-script"
 
+#define kLimitSessionOption               "session-limit"
 #define kTimeoutSessionOption             "session-timeout-minutes"
 #define kTimeoutSuspendSessionOption      "session-timeout-suspend"
 #define kDisconnectedTimeoutSessionOption "session-disconnected-timeout-minutes"
@@ -83,6 +84,8 @@
 #define kPackageOutputInPackageFolder     "package-output-to-package-folder"
 
 #define kUseSecureCookiesSessionOption    "session-use-secure-cookies"
+#define kIFrameEmbeddingSessionOption     "session-iframe-embedding"
+#define kLegacyCookiesSessionOption       "legacy-cookies"
 
 // NOTE: literal versions of these are depended upon by the desktop/rsinverse
 // project so they should be updated there as well if they are changed

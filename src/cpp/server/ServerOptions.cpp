@@ -261,6 +261,12 @@ ProgramStatus Options::read(int argc,
       ("www-verify-user-agent",
          value<bool>(&wwwVerifyUserAgent_)->default_value(true),
          "verify that the user agent is compatible")
+      ("www-iframe-embedding",
+         value<bool>(&wwwIFrameEmbedding_)->default_value(false),
+         "indicate whether RStudio is embedded into an iFrame so cookies' SameSite behavior can be adjusted")
+      ("www-legacy-cookies",
+         value<bool>(&wwwLegacyCookies_)->default_value(false),
+         "indicate whether RStudio should revert to legacy behavior and not set SameSite on or to emit a second legacy cookie when iFrame embedding is in use")
       ("www-frame-origin",
          value<std::string>(&wwwFrameOrigin_)->default_value("none"),
          "allowed origin for hosting frame")

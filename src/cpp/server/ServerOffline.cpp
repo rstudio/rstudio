@@ -92,6 +92,9 @@ Error httpServerAddHandlers()
    uri_handlers::addBlocking("/images",
                              gwt::fileHandlerFunction(options.wwwLocalPath(),
                                                       useSecureCookies,
+                                                      options.wwwIFrameEmbedding(),
+                                                      options.wwwLegacyCookies(),
+                                                      options.wwwIFrameLegacyCookies(),
                                                       "/"));
    
    // default handler sends back offline page or json error as appropriate

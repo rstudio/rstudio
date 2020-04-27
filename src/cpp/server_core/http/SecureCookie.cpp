@@ -99,7 +99,9 @@ http::Cookie createSecureCookie(const std::string& name,
                                 const core::http::Request& request,
                                 const boost::posix_time::time_duration& validDuration,
                                 const std::string& path,
-                                bool secure)
+                                bool secure,
+                                bool iFrameEmbedding,
+                                bool legacyCookies)
 {
    // generate expires string
    std::string expires = http::util::httpDate(
@@ -131,15 +133,17 @@ http::Cookie createSecureCookie(const std::string& name,
                        name,
                        signedCookieValue,
                        path,
+                       http::Cookie::selectSameSite(legacyCookies, iFrameEmbedding),
                        true, // HTTP only
                        secure);
 }
 
 std::string readSecureCookie(const core::http::Request& request,
-                             const std::string& name)
+                             const std::string& name,
+                             bool iFrameLegacyCookies)
 {
    // get the signed cookie value
-   std::string signedCookieValue = request.cookieValue(name);
+   std::string signedCookieValue = request.cookieValue(name, iFrameLegacyCookies);
    if (signedCookieValue.empty())
       return std::string();
 
@@ -208,7 +212,10 @@ void set(const std::string& name,
          const boost::posix_time::time_duration& validDuration,
          const std::string& path,
          http::Response* pResponse,
-         bool secure)
+         bool secure,
+         bool iFrameEmbedding,
+         bool legacyCookies,
+         bool iFrameLegacyCookies)
 {
    secure_cookie::set(name,
                       value,
@@ -217,7 +224,10 @@ void set(const std::string& name,
                       boost::optional<boost::gregorian::days>(),
                       path,
                       pResponse,
-                      secure);
+                      secure,
+                      iFrameEmbedding,
+                      legacyCookies,
+                      iFrameLegacyCookies);
 }
 
 void set(const std::string& name,
@@ -227,7 +237,10 @@ void set(const std::string& name,
          const boost::optional<boost::gregorian::days>& cookieExpiresDays,
          const std::string& path,
          http::Response* pResponse,
-         bool secure)
+         bool secure,
+         bool iFrameEmbedding,
+         bool legacyCookies,
+         bool iFrameLegacyCookies)
 {
    // create secure cookie
    http::Cookie cookie = createSecureCookie(name,
@@ -235,14 +248,16 @@ void set(const std::string& name,
                                             request,
                                             validDuration,
                                             path,
-                                            secure);
+                                            secure,
+                                            iFrameEmbedding,
+                                            legacyCookies);
 
    // expire from browser as requested
    if (cookieExpiresDays.is_initialized())
       cookie.setExpires(*cookieExpiresDays);
 
    // add to response
-   pResponse->addCookie(cookie);
+   pResponse->addCookie(cookie, iFrameLegacyCookies);
 }
 
 void set(const std::string& name,
@@ -252,7 +267,10 @@ void set(const std::string& name,
          const boost::optional<boost::posix_time::time_duration>& expiresFromNow,
          const std::string& path,
          http::Response* pResponse,
-         bool secure)
+         bool secure,
+         bool iFrameEmbedding,
+         bool legacyCookies,
+         bool iFrameLegacyCookies)
 {
    // create secure cookie
    http::Cookie cookie = createSecureCookie(name,
@@ -260,21 +278,26 @@ void set(const std::string& name,
                                             request,
                                             validDuration,
                                             path,
-                                            secure);
+                                            secure,
+                                            iFrameEmbedding,
+                                            legacyCookies);
 
    // expire from browser as requested
    if (expiresFromNow.is_initialized())
       cookie.setExpires(*expiresFromNow);
 
    // add to response
-   pResponse->addCookie(cookie);
+   pResponse->addCookie(cookie, iFrameLegacyCookies);
 }
 
 void remove(const http::Request& request,
             const std::string& name,
             const std::string& path,
             core::http::Response* pResponse,
-            bool secure)
+            bool secure,
+            bool iFrameEmbedding,
+            bool legacyCookies,
+            bool iFrameLegacyCookies)
 {
    // create cookie
    http::Cookie cookie(request, name, std::string(), path);
@@ -293,8 +316,10 @@ void remove(const http::Request& request,
       cookie.setSecure();
    }
 
+   cookie.setSameSite(http::Cookie::selectSameSite(legacyCookies, iFrameEmbedding));
+
    // add to response
-   pResponse->addCookie(cookie);
+   pResponse->addCookie(cookie, iFrameLegacyCookies);
 }
 
 const std::string& getKey()

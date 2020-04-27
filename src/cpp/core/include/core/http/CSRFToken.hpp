@@ -27,31 +27,42 @@ namespace rstudio {
 namespace core {
 namespace http {
 
+class Request;
+class Response;
+
 // Adds a CSRF (cross site request forgery) cookie. This is simply a cookie with
 // a random value (token).
 void setCSRFTokenCookie(const Request& request, 
       const boost::optional<boost::gregorian::days>& expiry,
       const std::string& token,
       bool secure,
+      bool iFrameEmbedding,
+      bool legacyCookies,
+      bool iFrameLegacyCookies,
       core::http::Response* pResponse);
 
 void setCSRFTokenCookie(const Request& request,
       const boost::optional<boost::posix_time::time_duration>& expiresFromNow,
       const std::string& token,
       bool secure,
+      bool iFrameEmbedding,
+      bool legacyCookies,
+      bool iFrameLegacyCookies,
       core::http::Response* pResponse);
 
 // Validates an HTTP POST request by ensuring that the submitted fields include
 // a valid CSRF token.
-bool validateCSRFForm(const Request&, Response*);
+bool validateCSRFForm(const Request& request,
+                      Response* response,
+                      bool iFrameLegacyCookies);
 
 // Validates any other HTTP request by ensuring that the CSRF HTTP header matches the accompanying
 // token cookie.
-bool validateCSRFHeaders(const Request& request);
+bool validateCSRFHeaders(const Request& request,
+                         bool iFrameLegacyCookies);
 
 } // namespace http
 } // namespace core
 } // namespace rstudio
 
 #endif // CORE_HTTP_CSRF_TOKEN_HPP
-

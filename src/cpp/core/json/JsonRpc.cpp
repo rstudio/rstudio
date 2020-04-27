@@ -443,6 +443,9 @@ std::string JsonRpcErrorCategory::message( int ev ) const
       case errc::LaunchParametersMissing:
          return "Launch parameters for launcher session missing and should be resent";
 
+      case errc::LimitSessionsReached:
+         return "The maximum amount of concurrent session allowed for the user profile has been reached";
+
       default:
          BOOST_ASSERT(false);
          return "Unknown error type" ;

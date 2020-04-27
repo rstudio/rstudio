@@ -55,6 +55,9 @@ enum errc_t {
    // launcher session parameters not found and should be resent to implicitly resume the session
    LaunchParametersMissing = 17,
 
+   // profile errors - those imposed by limits in user profiles
+   LimitSessionsReached = 20,
+
    // Execution errors -- These errors occurred during execution of the method.
    // Application state is therefore known based on the expected behavior
    // of the error which occurred. More details are provided within the

@@ -159,6 +159,21 @@ public:
       return wwwAllowedOrigins_;
    }
 
+   bool wwwIFrameEmbedding() const
+   {
+      return wwwIFrameEmbedding_;
+   }
+
+   bool wwwLegacyCookies() const
+   {
+      return wwwLegacyCookies_;
+   }
+
+   bool wwwIFrameLegacyCookies() const
+   {
+      return wwwIFrameEmbedding_ && wwwLegacyCookies_;
+   }
+
    // auth
    bool authNone()
    {
@@ -339,6 +354,8 @@ private:
    bool wwwVerifyUserAgent_;
    bool wwwEnableOriginCheck_;
    std::vector<boost::regex> wwwAllowedOrigins_;
+   bool wwwIFrameEmbedding_;
+   bool wwwLegacyCookies_;
    bool authNone_;
    bool authValidateUsers_;
    int authStaySignedInDays_;

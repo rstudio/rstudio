@@ -43,7 +43,7 @@ namespace common {
 
 std::string getUserIdentifier(const core::http::Request& request)
 {
-   return core::http::secure_cookie::readSecureCookie(request, kUserIdCookie);
+   return core::http::secure_cookie::readSecureCookie(request, kUserIdCookie, options().wwwIFrameLegacyCookies());
 }
 
 bool mainPageFilter(const core::http::Request& request,
@@ -190,7 +190,7 @@ std::string signOut(const core::http::Request& request,
                     std::string signOutUrl)
 {
    // validate sign-out request
-   if (!core::http::validateCSRFForm(request, pResponse))
+   if (!core::http::validateCSRFForm(request, pResponse, server::options().wwwIFrameLegacyCookies()))
    {
       return "";
    }
@@ -210,7 +210,7 @@ std::string signOut(const core::http::Request& request,
 
    // invalidate the auth cookie so that it can no longer be used
    clearSignInCookies(request, pResponse);
-   auth::handler::invalidateAuthCookie(request.cookieValue(kUserIdCookie));
+   auth::handler::invalidateAuthCookie(request.cookieValue(kUserIdCookie, options().wwwIFrameLegacyCookies()));
 
    // adjust sign out url point internally
    if (!signOutUrl.empty() && signOutUrl[0] == '/')
@@ -236,21 +236,31 @@ void clearSignInCookies(const core::http::Request& request,
                                      kUserIdCookie,
                                      "/",
                                      pResponse,
-                                     isSecureCookie(request));
+                                     isSecureCookie(request),
+                                     server::options().wwwIFrameEmbedding(),
+                                     server::options().wwwLegacyCookies(),
+                                     server::options().wwwIFrameLegacyCookies());
 
    core::http::secure_cookie::remove(request,
                                      kUserListCookie,
                                      "/",
                                      pResponse,
-                                     isSecureCookie(request));
+                                     isSecureCookie(request),
+                                     server::options().wwwIFrameEmbedding(),
+                                     server::options().wwwLegacyCookies(),
+                                     server::options().wwwIFrameLegacyCookies());
 
    if (options().authTimeoutMinutes() > 0)
    {
+      // not created with core::http::secure_cookie::set() but works!
       core::http::secure_cookie::remove(request,
                                         kPersistAuthCookie,
                                         "/",
                                         pResponse,
-                                        isSecureCookie(request));
+                                        isSecureCookie(request),
+                                        server::options().wwwIFrameEmbedding(),
+                                        server::options().wwwLegacyCookies(),
+                                        server::options().wwwIFrameLegacyCookies());
    }
 }
 
@@ -260,7 +270,7 @@ void setSignInCookies(const core::http::Request& request,
                       core::http::Response* pResponse,
                       bool reuseCsrf /*= false*/)
 {
-   std::string csrfToken = reuseCsrf ? request.cookieValue(kCSRFTokenCookie) : std::string();
+   std::string csrfToken = reuseCsrf ? request.cookieValue(kCSRFTokenCookie, options().wwwIFrameLegacyCookies()) : std::string();
 
    int staySignedInDays = server::options().authStaySignedInDays();
    int authTimeoutMinutes = server::options().authTimeoutMinutes();
@@ -287,7 +297,10 @@ void setSignInCookies(const core::http::Request& request,
                                      expiry,
                                      "/",
                                      pResponse,
-                                     secureCookie);
+                                     secureCookie,
+                                     server::options().wwwIFrameEmbedding(),
+                                     server::options().wwwLegacyCookies(),
+                                     server::options().wwwIFrameLegacyCookies());
 
       // set a cookie that is tied to the specific user list we have written
       // if the user list ever has conflicting changes (e.g. a user is locked),
@@ -299,10 +312,20 @@ void setSignInCookies(const core::http::Request& request,
                                      expiry,
                                      "/",
                                      pResponse,
-                                     secureCookie);
+                                     secureCookie,
+                                     server::options().wwwIFrameEmbedding(),
+                                     server::options().wwwLegacyCookies(),
+                                     server::options().wwwIFrameLegacyCookies());
 
       // add cross site request forgery detection cookie
-      core::http::setCSRFTokenCookie(request, expiry, csrfToken, secureCookie, pResponse);
+      core::http::setCSRFTokenCookie(request,
+                                     expiry,
+                                     csrfToken,
+                                     secureCookie,
+                                     server::options().wwwIFrameEmbedding(),
+                                     server::options().wwwLegacyCookies(),
+                                     server::options().wwwIFrameLegacyCookies(),
+                                     pResponse);
    }
    else
    {
@@ -322,7 +345,10 @@ void setSignInCookies(const core::http::Request& request,
                                      expiry,
                                      "/",
                                      pResponse,
-                                     secureCookie);
+                                     secureCookie,
+                                     server::options().wwwIFrameEmbedding(),
+                                     server::options().wwwLegacyCookies(),
+                                     server::options().wwwIFrameLegacyCookies());
 
       // set a cookie that is tied to the specific user list we have written
       // if the user list ever has conflicting changes (e.g. a user is locked),
@@ -334,7 +360,10 @@ void setSignInCookies(const core::http::Request& request,
                                      expiry,
                                      "/",
                                      pResponse,
-                                     secureCookie);
+                                     secureCookie,
+                                     server::options().wwwIFrameEmbedding(),
+                                     server::options().wwwLegacyCookies(),
+                                     server::options().wwwIFrameLegacyCookies());
 
       // set a cookie indicating whether or not we should persist the auth cookie
       // when it is automatically refreshed
@@ -342,12 +371,21 @@ void setSignInCookies(const core::http::Request& request,
                                        kPersistAuthCookie,
                                        staySignedIn ? "1" : "0",
                                        "/",
+                                       core::http::Cookie::selectSameSite(options().wwwLegacyCookies(),
+                                                                          options().wwwIFrameEmbedding()),
                                        true,
                                        secureCookie);
       persistCookie.setExpires(boost::posix_time::minutes(authTimeoutMinutes));
-      pResponse->addCookie(persistCookie);
+      pResponse->addCookie(persistCookie, options().wwwIFrameLegacyCookies());
 
-      core::http::setCSRFTokenCookie(request, expiry, csrfToken, secureCookie, pResponse);
+      core::http::setCSRFTokenCookie(request,
+                                     expiry,
+                                     csrfToken,
+                                     secureCookie,
+                                     server::options().wwwIFrameEmbedding(),
+                                     server::options().wwwLegacyCookies(),
+                                     server::options().wwwIFrameLegacyCookies(), 
+                                     pResponse);
    }
 }
 

@@ -2947,6 +2947,10 @@ public class TextEditingTarget implements
    @Override
    public void adaptToExtendedFileType(String extendedType)
    {
+      // extended type can affect publish options; we need to sync here even if the type
+      // hasn't changed as the path may have changed
+      syncPublishPath(docUpdateSentinel_.getPath());
+
       // ignore if unchanged
       if (StringUtil.equals(extendedType, extendedType_))
          return;
@@ -2955,9 +2959,6 @@ public class TextEditingTarget implements
       if (extendedType == SourceDocument.XT_RMARKDOWN)
          updateRmdFormatList();
       extendedType_ = extendedType;
-
-      // extended type can affect publish options
-      syncPublishPath(docUpdateSentinel_.getPath());
    }
 
    @Override
@@ -7763,5 +7764,5 @@ public class TextEditingTarget implements
    }
    
    private static final String PROPERTY_CURSOR_POSITION = "cursorPosition";
-   private static final String PROPERTY_SCROLL_LINE = "scrollLine";  
+   private static final String PROPERTY_SCROLL_LINE = "scrollLine";
 }

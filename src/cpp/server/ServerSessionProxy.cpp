@@ -720,12 +720,13 @@ bool shouldRefreshCredentials(const http::Request& request)
 http::Headers getAuthCookies(const http::Response& response)
 {
    http::Headers authCookies;
-   for (const http::Header& cookie : response.getCookies())
+   for (const http::Header& cookie : response.getCookies({ 
+      kCSRFTokenCookie,
+      kUserIdCookie,
+      kUserListCookie,
+      kPersistAuthCookie }, options().wwwIFrameLegacyCookies()))
    {
-      if ((cookie.value.find(kUserIdCookie) != std::string::npos) ||
-          (cookie.value.find(kPersistAuthCookie) != std::string::npos) ||
-          (cookie.value.find(kCSRFTokenCookie) != std::string::npos))
-         authCookies.push_back(cookie);
+      authCookies.push_back(cookie);
    }
    return authCookies;
 }
@@ -960,7 +961,7 @@ void proxyLocalhostRequest(
    }
 
    // extract the port token
-   std::string portToken = ptrConnection->request().cookieValue(kPortTokenCookie);
+   std::string portToken = ptrConnection->request().cookieValue(kPortTokenCookie, options().wwwIFrameLegacyCookies());
    if (portToken.empty())
    {
       // we'll try the default token if no token was supplied on the request

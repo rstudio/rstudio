@@ -20,11 +20,10 @@
 #define kServerLocalSocket            "rserver.socket"
 #define kServerLocalSocketPathEnvVar  "RS_SERVER_LOCAL_SOCKET_PATH"
 #define kServerTmpDir                 "rstudio-rserver"
-#define kUserIdCookie                 "user-id"
-#define kUserListCookie               "user-list-id"
-#define kPersistAuthCookie            "persist-auth"
 #define kServerDataDirEnvVar          "RS_SERVER_DATA_DIR"
 #define kServerTmpDirEnvVar           "RS_SERVER_TMP_DIR"
+
+#include <core/http/AuthCookies.hpp>
 
 #endif // SERVER_CONSTANTS_HPP
 

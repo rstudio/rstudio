@@ -112,6 +112,9 @@ http::UriHandlerFunction blockingFileHandler()
    // return file
    return gwt::fileHandlerFunction(options.wwwLocalPath(),
                                    secure,
+                                   options.wwwIFrameEmbedding(),
+                                   options.wwwLegacyCookies(),
+                                   options.wwwIFrameLegacyCookies(),
                                    "/",
                                    mainPageFilter,
                                    initJs,
@@ -688,7 +691,7 @@ int main(int argc, char * const argv[])
       if (error)
          return core::system::exitFailure(error, ERROR_LOCATION);
 
-      // add handlers and initiliaze addins (offline has distinct behavior)
+      // add handlers and initialize addins (offline has distinct behavior)
       if (server::options().serverOffline())
       {
          offline::httpServerAddHandlers();

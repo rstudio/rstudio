@@ -615,6 +615,21 @@ public:
       return useSecureCookies_;
    }
 
+   bool iFrameEmbedding() const
+   {
+      return iFrameEmbedding_;
+   }
+
+   bool legacyCookies() const
+   {
+      return legacyCookies_;
+   }
+
+   bool iFrameLegacyCookies() const
+   {
+      return iFrameEmbedding_ && legacyCookies_;
+   }
+
    bool restrictDirectoryView() const
    {
       return restrictDirectoryView_;
@@ -704,6 +719,8 @@ private:
    bool packageOutputToPackageFolder_;
    std::string terminalPort_;
    bool useSecureCookies_;
+   bool iFrameEmbedding_;
+   bool legacyCookies_;
    bool restrictDirectoryView_;
    std::string directoryViewWhitelist_;
    std::string envVarSaveBlacklist_;

@@ -2628,6 +2628,7 @@ bool usingMingwGcc49()
 
 namespace {
 
+#ifdef __APPLE__
 void warnXcodeLicense()
 {
    const char* msg =
@@ -2644,6 +2645,7 @@ in a terminal to accept the Xcode license, and then restart RStudio.
    
    std::cerr << msg << std::endl;
 }
+#endif
 
 } // end anonymous namespace
 
