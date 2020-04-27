@@ -91,7 +91,7 @@ const extension = (pandocExtensions: PandocExtensions, _pandocCapabilities: Pand
               // mark would have been broken by this if it wasn't valid). this
               // code predates that, and we leave it in for good measure in case that
               // code is removed or changes in another unexpected way.
-              if (kCiteIdRegEx.test(idText)) {
+              if (idText.match(kCiteIdRegEx)) {
                 const prefixMatch = idText.match(/^-?@/);
                 if (prefixMatch) {
                   output.writeRawMarkdown(prefixMatch.input!);
@@ -140,7 +140,7 @@ const extension = (pandocExtensions: PandocExtensions, _pandocCapabilities: Pand
               if (
                 fragmentText(openCite) === '[' &&
                 fragmentText(closeCite) === ']' &&
-                kCiteRegEx.test(fragmentText(cite))
+                fragmentText(cite).match(kCiteRegEx)
               ) {
                 output.writeRawMarkdown('[');
                 output.writeInlines(cite);
@@ -325,7 +325,7 @@ function readPandocCite(schema: Schema) {
 
 // validate that the cite is still valid (just return 0 or the whole length of the string)
 function citeLength(text: string) {
-  return kFullCiteRegEx.test(text) ? text.length : 0;
+  return text.match(kFullCiteRegEx) ? text.length : 0;
 }
 
 // up to how many characters of the passed text constitute a valid cite_id

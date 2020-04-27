@@ -202,13 +202,10 @@ const key = new PluginKey<DecorationSet>('latex-highlight');
 
 export function latexHighlightingPlugin(schema: Schema) {
   const kLightTextClass = 'pm-light-text-color';
-  const delimiterRegex = /[{}[\]]/g;
-
   return markHighlightPlugin(key, schema.marks.raw_tex, (text, _attrs, markRange) => {
     const kIdClass = 'pm-markup-text-color';
-    const idRegEx = /\\[A-Za-z]+/g;
-    let decorations = markHighlightDecorations(markRange, text, idRegEx, kIdClass);
-    decorations = decorations.concat(markHighlightDecorations(markRange, text, delimiterRegex, kLightTextClass));
+    let decorations = markHighlightDecorations(markRange, text, /\\[A-Za-z]+/g, kIdClass);
+    decorations = decorations.concat(markHighlightDecorations(markRange, text, /[{}[\]]/g, kLightTextClass));
     return decorations;
   });
 }

@@ -208,7 +208,7 @@ export function removeInvalidatedMarks(
     const markedRange = getMarkRange(tr.doc.resolve(from), markType);
     if (markedRange) {
       const text = tr.doc.textBetween(markedRange.from, markedRange.to);
-      if (!re.test(text)) {
+      if (!text.match(re)) {
         tr.removeMark(markedRange.from, markedRange.to, markType);
         tr.removeStoredMark(markType);
       }
@@ -249,6 +249,7 @@ export function detectAndApplyMarks(
   markType: MarkType,
   attrs: {} | ((match: RegExpMatchArray) => {}) = {},
 ) {
+  re.lastIndex = 0;
   const textNodes = mergedTextNodes(node, (_node: ProsemirrorNode, parentNode: ProsemirrorNode) =>
     parentNode.type.allowsMarkType(markType),
   );
@@ -270,4 +271,5 @@ export function detectAndApplyMarks(
       match = re.lastIndex !== 0 ? re.exec(textNode.text) : null;
     }
   });
+  re.lastIndex = 0;
 }

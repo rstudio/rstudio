@@ -72,8 +72,8 @@ const extension = (pandocExtensions: PandocExtensions): Extension | null => {
         pandoc: {
           readers: [],
           inlineHTMLReader: (schema: Schema, html: string, writer: ProsemirrorWriter) => {
-            if (kHTMLCommentRegEx.test(html)) {
-              const mark = schema.marks.raw_html_comment.create({ editing: kHTMLEditingCommentRegEx.test(html) });
+            if (html.match(kHTMLCommentRegEx)) {
+              const mark = schema.marks.raw_html_comment.create({ editing: html.match(kHTMLEditingCommentRegEx) });
               writer.openMark(mark);
               writer.writeText(html);
               writer.closeMark(mark);

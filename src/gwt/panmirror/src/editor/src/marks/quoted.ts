@@ -95,10 +95,7 @@ const extension: Extension = {
   ],
 
   fixups: (schema: Schema) => {
-    const kDoubleQuoted = /“[^”]*”/g;
-    const kSingleQuoted = /‘[^’]*’/g;
-    const kQuoted = /(“[^”]*”|‘[^’]*’)/g;
-
+    
     return [
       (tr: Transaction, context: FixupContext) => {
         // only apply on save
@@ -116,13 +113,13 @@ const extension: Extension = {
           const { node, pos } = nodeWithPos;
 
           // find quoted marks where the text is no longer quoted (remove the mark)
-          removeInvalidatedMarks(markTr, node, pos, kQuoted, schema.marks.quoted);
+          removeInvalidatedMarks(markTr, node, pos, /(“[^”]*”|‘[^’]*’)/g, schema.marks.quoted);
 
           // find quoted text that doesn't have a quoted mark (add the mark)
-          detectAndApplyMarks(markTr, tr.doc.nodeAt(pos)!, pos, kDoubleQuoted, schema.marks.quoted, {
+          detectAndApplyMarks(markTr, tr.doc.nodeAt(pos)!, pos, /“[^”]*”/g, schema.marks.quoted, {
             type: QuoteType.DoubleQuote,
           });
-          detectAndApplyMarks(markTr, tr.doc.nodeAt(pos)!, pos, kSingleQuoted, schema.marks.quoted, {
+          detectAndApplyMarks(markTr, tr.doc.nodeAt(pos)!, pos, /‘[^’]*’/g, schema.marks.quoted, {
             type: QuoteType.SingleQuote,
           });
         });
