@@ -6,13 +6,21 @@ pandoc schema: <https://github.com/jgm/pandoc-types/blob/master/Text/Pandoc/Defi
 
 ## TODO
 
-Keyboard selection of image node (arrow handlers)
-Also backspace handler for paragraph just after an image (currently deletes image)
+- Single apostrophies flip when serialzing to Pandoc (see MANUAL.Rmd)
 
-Tab key handling for image shelf
+- Use Google diff-match-patch w/ timeout if possible: 
+  https://github.com/google/diff-match-patch/wiki/API#diff_maintext1-text2--diffs
 
-Check into copy/paste behavior with several sections + image
-(saw some strange header artifacts when doing this, also saw some slow performance when doing this)
+- getMarkdown from the source editor has an out-of-order issue b/c the fetch of source
+  from the syncOnIdle_ might overlap w/ the one from save or deactivate. Perhaps we 
+  need to wrap this with an invalidation token?
+
+- Get the pandoc-api-version up-front (and use it for getMarkdown so we don't have an ordering issue)
+
+- If you close the tab during document initialization (e.g. try with MANUAL.Rmd) you get some null refs
+
+- Headers acquire {.} attribute during cut/paste
+
 
 attr_edit still off in panmirror-next
 
@@ -51,9 +59,21 @@ Possibly have a special editing mode for thereoms?
 
 ## Future
 
+Revisit use of jsdiff (currently it can end up in a nearly endless loop calling execEditLength,
+see: https://github.com/kpdecker/jsdiff/issues/79). Seems like it's not endless per-se but
+gets exponentially worse with the size of the change.
+
+Alternative: https://github.com/jhchen/fast-diff
+https://github.com/google/diff-match-patch
+
 Revisit doing smart patches of Prosemirror doc: https://github.com/rstudio/rstudio/tree/feature/panmirror-smart-patch
 
 Consider porting https://gitlab.com/mpapp-public/manuscripts-symbol-picker
+
+Keyboard selection of image node (arrow handlers)
+Also backspace handler for paragraph just after an image (currently deletes image)
+
+Tab key handling for image shelf
 
 Markup extension filtering (e.g. shortcodes) might be better done in Lua
 
