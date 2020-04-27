@@ -390,11 +390,11 @@ void Response::addCookie(const Cookie& cookie, bool iFrameLegacyCookies)
    // some browsers may swallow a cookie with SameSite=None
    // so create an additional legacy cookie without SameSite
    // which would be swalllowed by a standard-conforming browser
-   if (iFrameLegacyCookies && cookie.sameSite() != Cookie::SameSite::UNDEFINED_VALUE)
+   if (iFrameLegacyCookies && cookie.sameSite() == Cookie::SameSite::None)
    {
       Cookie legacyCookie = cookie;
       legacyCookie.setName(legacyCookie.name() + kLegacyCookieSuffix);
-      legacyCookie.setSameSite(Cookie::SameSite::UNDEFINED_VALUE);
+      legacyCookie.setSameSite(Cookie::SameSite::Undefined);
       addHeader("Set-Cookie", legacyCookie.cookieHeaderValue());
    }
 }
