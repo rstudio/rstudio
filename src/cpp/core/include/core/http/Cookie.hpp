@@ -34,27 +34,27 @@ class Cookie
 public:
    enum class SameSite
    {
-      UNDEFINED,
-      NONE,
-      LAX,
-      STRICT,
+      UNDEFINED_VALUE,
+      NONE_VALUE,
+      LAX_VALUE,
+      STRICT_VALUE,
    };
 
    static SameSite selectSameSite(bool legacy, bool iFramed)
    {
       // select between legacy and iframe behaviors for the cookie
       return iFramed
-               ? SameSite::NONE
+               ? SameSite::NONE_VALUE
                : (legacy
-                     ? SameSite::UNDEFINED
-                     : SameSite::LAX);
+                     ? SameSite::UNDEFINED_VALUE
+                     : SameSite::LAX_VALUE);
    }
 
    Cookie(const Request& request,
           const std::string& name,
           const std::string& value, 
           const std::string& path,
-          SameSite sameSite = SameSite::UNDEFINED,
+          SameSite sameSite = SameSite::UNDEFINED_VALUE,
           bool httpOnly = false,
           bool secure = false);
    virtual ~Cookie();

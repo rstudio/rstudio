@@ -30,7 +30,7 @@ Cookie::Cookie(const Request& request,
                const std::string& name,
                const std::string& value, 
                const std::string& path,
-               SameSite sameSite /*= SameSite::UNDEFINED*/,
+               SameSite sameSite /*= SameSite::UNDEFINED_VALUE*/,
                bool httpOnly /*= false*/, 
                bool secure /*= false*/) 
    :  name_(name), 
@@ -124,16 +124,16 @@ std::string Cookie::cookieHeaderValue() const
 
    switch (sameSite_)
    {
-      case SameSite::NONE:
+      case SameSite::NONE_VALUE:
          headerValue << "; SameSite=None";
          break;
-      case SameSite::LAX:
+      case SameSite::LAX_VALUE:
          headerValue << "; SameSite=Lax";
          break;
-      case SameSite::STRICT:
+      case SameSite::STRICT_VALUE:
          headerValue << "; SameSite=Strict";
          break;
-      case SameSite::UNDEFINED:
+      case SameSite::UNDEFINED_VALUE:
          // do nothing
          break;
    }
