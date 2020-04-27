@@ -391,7 +391,13 @@ bool PlotCapture::isGraphicsDeviceActive()
    SEXP devlist = R_NilValue;
    Error error = r::exec::RFunction("dev.list").call(&devlist, &protect);
    if (error)
+   {
+      // We have seen AV crashes reading the contents of the devlist pointer, so if there's an error
+      // log it and presume the graphics device is not active. The result will be that we don't
+      // capture plots in this chunk since our graphics device doesn't appear to be engaged.
       LOG_ERROR(error);
+      return false;
+   }
    if (r::sexp::isNull(devlist))
       return false;
    return true;
