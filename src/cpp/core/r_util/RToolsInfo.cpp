@@ -198,6 +198,11 @@ RToolsInfo::RToolsInfo(const std::string& name,
       // set BINPREF
       environmentVars.push_back({"BINPREF", "/mingw$(WIN)/bin/"});
 
+      // set RTOOLS40_HOME
+      std::string rtoolsPath = installPath.getAbsolutePath();
+      std::replace(rtoolsPath.begin(), rtoolsPath.end(), '\\', '/');
+      environmentVars.push_back({"RTOOLS40_HOME", rtoolsPath});
+
       // set clang args
 #ifdef _WIN64
       std::string baseDir = "mingw64";
