@@ -78,9 +78,11 @@ pipeline {
       }
     }
     stage('sleep') {
-       // the deleteDir() step below always fails if run too soon after uploading, so wait 30s for
-       // the process to release its lock
-       sleep 30
+      steps {
+        // the deleteDir() step below always fails if run too soon after uploading, so wait 30s for
+        // the process to release its lock
+        sleep 30
+      }
     }
   }
 
