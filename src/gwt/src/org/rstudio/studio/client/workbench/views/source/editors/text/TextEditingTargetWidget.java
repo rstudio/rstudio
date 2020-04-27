@@ -1654,6 +1654,12 @@ public class TextEditingTargetWidget
       {
         return editorPanel_;
       }
+      
+      @Override
+      public void setCode(String code)
+      {
+         editor_.setCode(code, true);
+      }
      
       @Override
       public void applyChanges(TextEditorContainer.Changes changes, boolean activatingEditor)

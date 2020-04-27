@@ -26,6 +26,13 @@ public class TextChange
       public static final int Equal = 0;
       public static final int Delete = -1;
    }
+   
+   public TextChange(int type, String value)
+   {
+      this.type = type;
+      this.value = value;
+   }
+   
    public int type;
    public String value;
 }

@@ -1139,37 +1139,9 @@ public class AceEditor implements DocDisplay,
       
       // function to advance the selection
       Consumer<Integer> advanceSelection = (Integer charsLeft) -> {
-         
-         // start from current line/row
          Position startPos = selection.getCursor();
-         
-         // iterate through rows until we've consumed all the chars
-         int row = startPos.getRow();
-         int col = startPos.getColumn();
-         while (row < session.getLength()) {
-            
-            // how many chars left in the current column?
-            String line = session.getLine(row);
-            // +1 is for the newline
-            int charsLeftInLine = line.length() + 1 - col;
-            
-            // is the number of chars we still need to consume lte
-            // the number of charsLeft?
-            if (charsLeft < charsLeftInLine) 
-            {
-               col = col + charsLeft;
-               break;
-            }
-            else
-            {
-               charsLeft -= charsLeftInLine;
-               col = 0;
-               row++;
-            }
-         }
-         
-         // move the selection
-         selection.moveCursorTo(row, col, false);
+         Position newPos = advancePosition(session, startPos, charsLeft);
+         selection.moveCursorTo(newPos.getRow(), newPos.getColumn(), false);
       };
       
       // if we have at least 1 change then set the cursor location 
@@ -1195,9 +1167,10 @@ public class AceEditor implements DocDisplay,
          // to executing the "del" command)
          else if (change.type == TextChange.Type.Delete)
          {
-            advanceSelection.accept(length);
-            for (int ch = 0; ch<length; ch++)
-               commandManager.exec("backspace", editor);
+            Range newRange = selection.getRange();
+            newRange.setEnd(advancePosition(session, selection.getCursor(), length));
+            selection.setSelectionRange(newRange);
+            commandManager.exec("backspace", editor);
          }
          
          // advance selection (unless this is the last change, in which 
@@ -1207,6 +1180,36 @@ public class AceEditor implements DocDisplay,
             advanceSelection.accept(length);
          } 
       }  
+   }
+   
+   private static Position advancePosition(EditSession session, Position startPos, Integer chars)
+   {
+      // iterate through rows until we've consumed all the chars
+      int row = startPos.getRow();
+      int col = startPos.getColumn();
+      while (row < session.getLength()) {
+         
+         // how many chars left in the current column?
+         String line = session.getLine(row);
+         // +1 is for the newline
+         int charsLeftInLine = line.length() + 1 - col;
+         
+         // is the number of chars we still need to consume lte
+         // the number of charsLeft?
+         if (chars < charsLeftInLine) 
+         {
+            col = col + chars;
+            break;
+         }
+         else
+         {
+            chars -= charsLeftInLine;
+            col = 0;
+            row++;
+         }
+      }
+      
+      return Position.create(row, col);
    }
    
 

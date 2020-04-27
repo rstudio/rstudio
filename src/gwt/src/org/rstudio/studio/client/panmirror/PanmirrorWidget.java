@@ -333,11 +333,11 @@ public class PanmirrorWidget extends DockLayoutPanel implements
    
   
    
-   public void setMarkdown(String code, boolean emitUpdate, CommandWithArg<Boolean> completed) 
+   public void setMarkdown(String code, PanmirrorWriterOptions options, boolean emitUpdate, CommandWithArg<String> completed) 
    {
-      new PromiseWithProgress<Boolean>(
-         editor_.setMarkdown(code, true, emitUpdate),
-         false,
+      new PromiseWithProgress<String>(
+         editor_.setMarkdown(code, options, emitUpdate),
+         "",
          kSerializationProgressDelayMs,
          completed
       );
@@ -350,6 +350,11 @@ public class PanmirrorWidget extends DockLayoutPanel implements
          kSerializationProgressDelayMs,
          completed   
       );
+   }
+   
+   public boolean isInitialDoc()
+   {
+      return editor_.isInitialDoc();
    }
    
    public HasFindReplace getFindReplace()

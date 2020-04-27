@@ -25,6 +25,8 @@ import org.rstudio.core.client.Pair;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.files.FileSystemItem;
+import org.rstudio.core.client.patch.SubstringDiff;
+import org.rstudio.core.client.patch.TextChange;
 import org.rstudio.core.client.widget.HasFindReplace;
 import org.rstudio.core.client.widget.ProgressPanel;
 import org.rstudio.core.client.widget.images.ProgressImages;
@@ -171,21 +173,17 @@ public class TextEditingTargetVisualMode
       if (isPanmirrorActive() && (activatingEditor || isDirty_))
       {
          withPanmirror(() -> {
-            PanmirrorWriterOptions options = new PanmirrorWriterOptions();
-            
-            options.atxHeaders = true;
-            
-            if (prefs_.visualMarkdownEditingWrapAuto().getValue())
-               options.wrapColumn = prefs_.visualMarkdownEditingWrapColumn().getValue();
-            
-            panmirror_.getMarkdown(options, markdown -> { 
-               
+            getMarkdown(markdown -> { 
+               // determine changes
                TextEditorContainer.Changes changes = toEditorChanges(markdown);
-      
+               
+               // apply them 
                getSourceEditor().applyChanges(changes, activatingEditor); 
                
+               // set flags
                isDirty_ = false;
                
+               // callback
                if (ready != null)
                   ready.execute();
             });
@@ -198,9 +196,9 @@ public class TextEditingTargetVisualMode
             ready.execute();
       }
    }
+
    
-   
-   public void syncFromEditor(Command ready, boolean focus)
+   private void syncFromEditor(Command ready)
    {      
       // flag to prevent the document being set to dirty when loading
       // from source mode
@@ -217,21 +215,28 @@ public class TextEditingTargetVisualMode
       
       withPanmirror(() -> {
          
-         panmirror_.setMarkdown(getEditorCode(), true, (done) -> {  
+         String editorCode = getEditorCode();
+         
+         panmirror_.setMarkdown(editorCode, this.panmirrorWriterOptions(), true, (markdown) -> {  
                
             // activate editor
             if (ready != null)
                ready.execute();
             
+            // update flags
             isDirty_ = false;
             loadingFromSource_ = false;
-          
-            // restore selection if we have one
+            
+            // if pandoc's view of the document doesn't match the editor's we 
+            // need to reset the editor's code (for both dirty state and 
+            // so that diffs are efficient)
+            if (markdown != null && markdown != editorCode)
+               getSourceEditor().setCode(markdown);
+            
             Scheduler.get().scheduleDeferred(() -> {
                
                // set editing location
-               panmirror_.setEditingLocation(getOutlineLocation(), savedEditingLocation());
-               
+               panmirror_.setEditingLocation(getOutlineLocation(), savedEditingLocation()); 
                
                // show any format or extension warnings
                PanmirrorPandocFormat format = panmirror_.getPandocFormat();
@@ -244,7 +249,7 @@ public class TextEditingTargetVisualMode
                   view_.showWarningBar("Pandoc format " + format.baseName + " does not support options: " + 
                                           String.join(", ", format.warnings.invalidOptions));
                }
-            });                
+            });          
          });
       });
    }
@@ -267,7 +272,7 @@ public class TextEditingTargetVisualMode
             // re-activate panmirror widget
             editorContainer.activateWidget(panmirror_, false);
             
-         }, false);
+         });
       }
    }
  
@@ -447,7 +452,7 @@ public class TextEditingTargetVisualMode
             // on what's currently in the source ditor
             if (!isPanmirrorActive()) 
             {
-               syncFromEditor(activator, focus);
+               syncFromEditor(activator);
             }
             else
             {
@@ -522,7 +527,7 @@ public class TextEditingTargetVisualMode
                @Override
                protected void execute()
                {
-                  if (isDirty_)
+                  if (isDirty_ && !panmirror_.isInitialDoc())
                      syncToEditor(false);
                }
             };
@@ -610,6 +615,21 @@ public class TextEditingTargetVisualMode
       });
       */
    }
+   
+   private void getMarkdown(CommandWithArg<PanmirrorCode> completed)
+   {
+      panmirror_.getMarkdown(panmirrorWriterOptions(), completed);
+   }
+   
+   private PanmirrorWriterOptions panmirrorWriterOptions()
+   {
+      PanmirrorWriterOptions options = new PanmirrorWriterOptions();
+      options.atxHeaders = true;
+      if (prefs_.visualMarkdownEditingWrapAuto().getValue())
+         options.wrapColumn = prefs_.visualMarkdownEditingWrapColumn().getValue();
+      return options;
+   }
+   
    
    private String getEditorCode()
    {
@@ -1064,9 +1084,29 @@ public class TextEditingTargetVisualMode
    
    private TextEditorContainer.Changes toEditorChanges(PanmirrorCode panmirrorCode)
    {
-      PanmirrorUIToolsSource sourceTools = new PanmirrorUITools().source;
+      // code to diff
+      String fromCode = getEditorCode();
+      String toCode = panmirrorCode.code;
+      
+      // changes to apply
+      TextChange[] changes = null;
+      
+      // first try our simple substring diff. if there is a single insert
+      // or delete (not a more complex chage) then use it
+      SubstringDiff diff = new SubstringDiff(fromCode, toCode);
+      if (diff.getLength() == 0 || diff.getReplacement().length() == 0)
+      {
+         changes = diff.asTextChanges();
+      }
+      // otherwise use diff-match-patch via fast-diff
+      else
+      {
+         PanmirrorUIToolsSource sourceTools = new PanmirrorUITools().source;
+         changes = sourceTools.diffChars(fromCode, toCode);
+      }
+      
       return new TextEditorContainer.Changes(
-         sourceTools.diffChars(getEditorCode(), panmirrorCode.code), 
+         changes, 
          panmirrorCode.cursor != null 
             ? new TextEditorContainer.Cursor(
                   panmirrorCode.cursor.row, panmirrorCode.cursor.column

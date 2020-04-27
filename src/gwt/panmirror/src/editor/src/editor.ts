@@ -383,13 +383,13 @@ export class Editor {
     }
   }
 
-  public async setMarkdown(markdown: string, preserveHistory: boolean, emitUpdate = true): Promise<boolean> {
+  public async setMarkdown(markdown: string, options: PandocWriterOptions, emitUpdate: boolean): Promise<string> {
     // get the doc
     const doc = await this.pandocConverter.toProsemirror(markdown, this.pandocFormat.fullName);
 
     // if we are preserving history but the existing doc is empty then create a new state
     // (resets the undo stack so that the intial setting of the document can't be undone)
-    if (!preserveHistory || this.state.doc.attrs.initial) {
+    if (this.isInitialDoc()) {
       this.state = EditorState.create({
         schema: this.state.schema,
         doc,
@@ -420,18 +420,23 @@ export class Editor {
       this.emitEvent(EditorEvent.SelectionChange);
     }
 
-    return true;
+    // return our current markdown representation (so the caller know what our
+    // current 'view' of the doc as markdown looks like
+    // return this.pandocConverter.fromProsemirror(this.state.doc)
+    return this.getMarkdownCode(this.state.doc, options);
+  }
+
+  // flag indicating whether we've ever had setMarkdown (currently we need this 
+  // because getMarkdown can only be called after setMarkdown b/c it needs
+  // the API version retreived in setMarkdown -- we should remedy this)
+  public isInitialDoc() {
+    return this.state.doc.attrs.initial;
   }
 
   public async getMarkdown(options: PandocWriterOptions): Promise<EditorCode> {
-    // override wrapColumn option if it was specified
-    options.wrapColumn = this.format.wrapColumn || options.wrapColumn;
-
+    
     // do we need the cursor sentinel?
     const useCursorSentinel = this.lastTrSelectionOnly;
-
-    // apply layout fixups
-    this.applyFixups(FixupContext.Save);
 
     // insert cursor sentinel if appropriate
     const target = useCursorSentinel 
@@ -439,7 +444,7 @@ export class Editor {
       : { doc: this.state.doc, sentinel: null };
     
     // get the code
-    const code = await this.pandocConverter.fromProsemirror(target.doc, this.pandocFormat, options);
+    const code = await this.getMarkdownCode(target.doc, options);
 
     // return 
     return codeWithCursor(code, target.sentinel);
@@ -823,6 +828,17 @@ export class Editor {
       ],
     });
   }
+
+  private async getMarkdownCode(doc: ProsemirrorNode, options: PandocWriterOptions) {
+    // override wrapColumn option if it was specified
+    options.wrapColumn = this.format.wrapColumn || options.wrapColumn;
+
+    // apply layout fixups
+   this.applyFixups(FixupContext.Save);
+
+   // get code
+   return this.pandocConverter.fromProsemirror(doc, this.pandocFormat, options);
+ }
 }
 
 function docWithCursorSentinel(state: EditorState) {
