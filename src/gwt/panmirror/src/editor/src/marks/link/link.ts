@@ -129,7 +129,7 @@ const extension = (pandocExtensions: PandocExtensions): Extension | null => {
             write: (output: PandocOutput, mark: Mark, parent: Fragment) => {
               if (mark.attrs.heading) {
                 output.writeRawMarkdown('[');
-                output.writeRawMarkdown(mark.attrs.heading, true);
+                output.writeText(mark.attrs.heading);
                 output.writeRawMarkdown(']');
               } else {
                 output.writeLink(
