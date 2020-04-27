@@ -17,6 +17,7 @@
 * The user data folder `~/.rstudio` has been moved to `~/.local/share/rstudio`, and its location can now be customized with `XDG_DATA_HOME`. (#1846)
 * The font used in the editor and console can now be customized on RStudio Server. (#2534)
 * `XDG_CONFIG_DIRS` can be used to specify alternate directories for server configuration files. (Pro #1607)
+* For added security, all cookies are now marked as `SameSite=Lax`. The new option `www-iframe-embedding` marks cookies as `SameSite=None` so RStudio can be used embedded in an IFrame. The new option `www-legacy-cookies` provides a behavior compatible with older browsers. (#6608)
 
 ### RStudio Server Pro
 

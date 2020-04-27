@@ -379,12 +379,11 @@ AutoCloseMode ConsoleProcessInfo::closeModeFromPref(std::string prefValue)
 {
    if (prefValue == kTerminalCloseBehaviorAlways)
       return AlwaysAutoClose;
-   else if (prefValue == kTerminalCloseBehaviorClean)
+   if (prefValue == kTerminalCloseBehaviorClean)
       return CleanExitAutoClose;
-   else if (prefValue == kTerminalCloseBehaviorNever)
+   if (prefValue == kTerminalCloseBehaviorNever)
       return NeverAutoClose;
-   else
-      return NeverAutoClose;
+   return NeverAutoClose;
 }
 
 } // namespace console_process_info

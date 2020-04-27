@@ -13,10 +13,11 @@
  *
  */
 
+#include <core/http/CSRFToken.hpp>
+
 #include <boost/algorithm/string/predicate.hpp>
 
 #include <core/http/Cookie.hpp>
-#include <core/http/CSRFToken.hpp>
 #include <core/http/Request.hpp>
 #include <core/http/Response.hpp>
 
@@ -32,19 +33,32 @@ void setCSRFTokenCookie(const http::Request& request,
                         const boost::optional<boost::gregorian::days>& expiry,
                         const std::string& token,
                         bool secure,
+                        bool iFrameEmbedding,
+                        bool legacyCookies,
+                        bool iFrameLegacyCookies,
                         http::Response* pResponse)
 {
    boost::optional<boost::posix_time::time_duration> expiresFromNow;
    if (expiry.is_initialized())
       expiresFromNow = boost::posix_time::time_duration(24 * expiry->days(), 0, 0);
 
-   setCSRFTokenCookie(request, expiresFromNow, token, secure, pResponse);
+   setCSRFTokenCookie(request,
+                      expiresFromNow,
+                      token,
+                      secure,
+                      iFrameEmbedding,
+                      legacyCookies,
+                      iFrameLegacyCookies,
+                      pResponse);
 }
 
 void setCSRFTokenCookie(const http::Request& request,
                         const boost::optional<boost::posix_time::time_duration>& expiresFromNow,
                         const std::string& token,
                         bool secure,
+                        bool iFrameEmbedding,
+                        bool legacyCookies,
+                        bool iFrameLegacyCookies,
                         http::Response* pResponse)
 {
    // generate UUID for token if unspecified
@@ -58,6 +72,7 @@ void setCSRFTokenCookie(const http::Request& request,
             kCSRFTokenCookie,
             csrfToken,
             "/",  // cookie for root path
+            Cookie::selectSameSite(legacyCookies, iFrameEmbedding),
             true, // HTTP only
             secure);
 
@@ -65,14 +80,15 @@ void setCSRFTokenCookie(const http::Request& request,
    if (expiresFromNow.is_initialized())
       cookie.setExpires(*expiresFromNow);
 
-   pResponse->addCookie(cookie);
+   pResponse->addCookie(cookie, iFrameLegacyCookies);
 }
 
 bool validateCSRFForm(const http::Request& request, 
-                      http::Response* pResponse)
+                      http::Response* pResponse,
+                      bool iFrameLegacyCookies)
 {
    // extract token from HTTP cookie (set above)
-   std::string headerToken = request.cookieValue(kCSRFTokenCookie);
+   std::string headerToken = request.cookieValue(kCSRFTokenCookie, iFrameLegacyCookies);
    http::Fields fields;
 
    // parse the form and check for a matching token
@@ -92,10 +108,10 @@ bool validateCSRFForm(const http::Request& request,
    return true;
 }
 
-bool validateCSRFHeaders(const http::Request& request)
+bool validateCSRFHeaders(const http::Request& request, bool iFrameLegacyCookies)
 {
    std::string headerToken = request.headerValue(kCSRFTokenHeader);
-   std::string cookieToken = request.cookieValue(kCSRFTokenCookie);
+   std::string cookieToken = request.cookieValue(kCSRFTokenCookie, iFrameLegacyCookies);
    if (headerToken.empty() || headerToken != cookieToken)
    {
       return false;

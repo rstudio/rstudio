@@ -90,7 +90,7 @@ namespace {
 
 #ifdef RSTUDIO_SERVER
 Error makePortTokenCookie(boost::shared_ptr<HttpConnection> ptrConnection, 
-      boost::shared_ptr<http::Cookie>* pCookie)
+      http::Response& response)
 {
    // extract the base URL
    json::JsonRpcRequest request;
@@ -120,14 +120,17 @@ Error makePortTokenCookie(boost::shared_ptr<HttpConnection> ptrConnection,
    }
 
    // create the cookie; don't set an expiry date as this will be a session cookie
-   *pCookie = boost::make_shared<http::Cookie>(
+   http::Cookie cookie(
             ptrConnection->request(), 
             kPortTokenCookie, 
             persistentState().portToken(), 
-            path,  
+            path,
+            http::Cookie::selectSameSite(options().legacyCookies(),
+                                         options().iFrameEmbedding()),
             true, // HTTP only -- client doesn't get to read this token
             baseURL.substr(0, 5) == "https" // secure if using HTTPS
          );
+   response.addCookie(cookie, options().iFrameLegacyCookies());
 
    return Success();
 }
@@ -143,7 +146,7 @@ void handleClientInit(const boost::function<void()>& initFunction,
    
    // check for valid CSRF headers in server mode 
    if (options.programMode() == kSessionProgramModeServer && 
-       !core::http::validateCSRFHeaders(ptrConnection->request()))
+       !core::http::validateCSRFHeaders(ptrConnection->request(), options.iFrameLegacyCookies()))
    {
       ptrConnection->sendJsonRpcError(Error(json::errc::Unauthorized, ERROR_LOCATION));
       return;
@@ -547,15 +550,10 @@ void handleClientInit(const boost::function<void()>& initFunction,
 #ifdef RSTUDIO_SERVER
    if (options.programMode() == kSessionProgramModeServer)
    {
-      boost::shared_ptr<http::Cookie> pCookie;
-      Error error = makePortTokenCookie(ptrConnection, &pCookie);
+      Error error = makePortTokenCookie(ptrConnection, response);
       if (error)
       {
          LOG_ERROR(error);
-      }
-      else if (pCookie)
-      {
-         response.addCookie(*pCookie);
       }
    }
 #endif

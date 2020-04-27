@@ -383,18 +383,44 @@ void Response::setBrowserCompatible(const Request& request)
       setHeader("X-UA-Compatible", "IE=edge");
 }
 
-void Response::addCookie(const Cookie& cookie) 
+void Response::addCookie(const Cookie& cookie, bool iFrameLegacyCookies) 
 {
    addHeader("Set-Cookie", cookie.cookieHeaderValue());
+
+   // some browsers may swallow a cookie with SameSite=None
+   // so create an additional legacy cookie without SameSite
+   // which would be swalllowed by a standard-conforming browser
+   if (iFrameLegacyCookies && cookie.sameSite() != Cookie::SameSite::UNDEFINED)
+   {
+      Cookie legacyCookie = cookie;
+      legacyCookie.setName(legacyCookie.name() + kLegacyCookieSuffix);
+      legacyCookie.setSameSite(Cookie::SameSite::UNDEFINED);
+      addHeader("Set-Cookie", legacyCookie.cookieHeaderValue());
+   }
 }
 
- Headers Response::getCookies() const
+ Headers Response::getCookies(const std::vector<std::string>& names /*= {}*/, bool iFrameLegacyCookies /*= false*/) const
  {
     http::Headers headers;
     for (const http::Header& header : headers_)
     {
        if (header.name == "Set-Cookie")
-          headers.push_back(header);
+       {
+          if (names.empty())
+          {
+            headers.push_back(header);
+          }
+          else
+          {
+             for (const std::string& name : names)
+             {
+               if (boost::algorithm::starts_with(header.value, name))
+                  headers.push_back(header);
+               else if (iFrameLegacyCookies && boost::algorithm::starts_with(header.value, name + kLegacyCookieSuffix))
+                  headers.push_back(header);
+             }
+          }
+       }
     }
     return headers;
  }

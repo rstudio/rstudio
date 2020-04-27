@@ -19,19 +19,42 @@
 #include <string>
 
 #include <boost/date_time/gregorian/gregorian.hpp>
-#include "Request.hpp"
-
+#include <boost/date_time/posix_time/posix_time.hpp>
 namespace rstudio {
 namespace core {
 namespace http {
 
+class Request;
+
+#define kLegacyCookieSuffix "-legacy"
+
+
 class Cookie
 {
 public:
+   enum class SameSite
+   {
+      UNDEFINED,
+      NONE,
+      LAX,
+      STRICT,
+   };
+
+   static SameSite selectSameSite(bool legacy, bool iFramed)
+   {
+      // select between legacy and iframe behaviors for the cookie
+      return iFramed
+               ? SameSite::NONE
+               : (legacy
+                     ? SameSite::UNDEFINED
+                     : SameSite::LAX);
+   }
+
    Cookie(const Request& request,
           const std::string& name,
           const std::string& value, 
           const std::string& path,
+          SameSite sameSite = SameSite::UNDEFINED,
           bool httpOnly = false,
           bool secure = false);
    virtual ~Cookie();
@@ -56,7 +79,13 @@ public:
    const boost::posix_time::ptime& expires() const { return expires_; }
    
    void setHttpOnly();
+   bool httpOnly() const { return httpOnly_; }
+
    void setSecure();
+   bool secure() const { return secure_; }
+
+   void setSameSite(SameSite sameSite);
+   SameSite sameSite() const { return sameSite_; }
 
    std::string cookieHeaderValue() const ;
 
@@ -66,6 +95,7 @@ private:
    std::string domain_ ;
    std::string path_ ;
    boost::posix_time::ptime expires_ ;
+   SameSite sameSite_;
    bool httpOnly_;
    bool secure_;
 };
