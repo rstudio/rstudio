@@ -6,15 +6,6 @@ pandoc schema: <https://github.com/jgm/pandoc-types/blob/master/Text/Pandoc/Defi
 
 ## TODO
 
-
-Comment command:
-
-What happens if you comment out multiple paragraphs? (do we need treat it like display math and allow newlines?)
-
-Generally, look everywhere for uses of .test and .exec and 
-make sure there is no crosstalk (it's definitely in detectAndApply).
-RegEx constants generally shouldn't have /g
-
 Keyboard selection of image node (arrow handlers)
 Also backspace handler for paragraph just after an image (currently deletes image)
 
