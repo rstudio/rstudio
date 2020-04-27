@@ -33,7 +33,10 @@ UserStateLayer::UserStateLayer():
 
 core::Error UserStateLayer::readPrefs()
 {
-   prefsFile_ = core::system::xdg::userDataDir().completePath(kUserStateFile);
+   prefsFile_ = core::system::xdg::userDataDir().completePath(
+         options().programMode() == kSessionProgramModeDesktop ? 
+            kUserStateFileDesktop : 
+            kUserStateFileServer);
 
    return loadPrefsFromFile(prefsFile_,
       options().rResourcesPath().completePath("schema").completePath(kUserStateSchemaFile));
