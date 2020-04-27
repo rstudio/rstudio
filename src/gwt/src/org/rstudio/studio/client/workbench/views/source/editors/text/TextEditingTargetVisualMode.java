@@ -25,7 +25,6 @@ import org.rstudio.core.client.Pair;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.files.FileSystemItem;
-import org.rstudio.core.client.patch.SubstringDiff;
 import org.rstudio.core.client.patch.TextChange;
 import org.rstudio.core.client.widget.HasFindReplace;
 import org.rstudio.core.client.widget.ProgressPanel;
@@ -1088,23 +1087,11 @@ public class TextEditingTargetVisualMode
       String fromCode = getEditorCode();
       String toCode = panmirrorCode.code;
       
-      // changes to apply
-      TextChange[] changes = null;
-      
-      // first try our simple substring diff. if there is a single insert
-      // or delete (not a more complex chage) then use it
-      SubstringDiff diff = new SubstringDiff(fromCode, toCode);
-      if (diff.getLength() == 0 || diff.getReplacement().length() == 0)
-      {
-         changes = diff.asTextChanges();
-      }
-      // otherwise use diff-match-patch via fast-diff
-      else
-      {
-         PanmirrorUIToolsSource sourceTools = new PanmirrorUITools().source;
-         changes = sourceTools.diffChars(fromCode, toCode);
-      }
-      
+      // do the diff
+      PanmirrorUIToolsSource sourceTools = new PanmirrorUITools().source;
+      TextChange[] changes = sourceTools.diffChars(fromCode, toCode);
+     
+      // return changes w/ cursor
       return new TextEditorContainer.Changes(
          changes, 
          panmirrorCode.cursor != null 
