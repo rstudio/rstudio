@@ -81,10 +81,14 @@ pipeline {
 
   post {
     always {
-      try {
-         deleteDir()
-      } catch(err) {
-         print "Unable to clean up build directory: ${err.toString()}"
+      steps {
+        script {
+          try {
+             deleteDir()
+          } catch(err) {
+             print "Unable to clean up build directory: ${err.toString()}"
+          }
+        }
       }
       sendNotifications slack_channel: SLACK_CHANNEL
     }
