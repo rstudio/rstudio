@@ -77,18 +77,15 @@ pipeline {
         }
       }
     }
-    stage('sleep') {
-      steps {
-        // the deleteDir() step below always fails if run too soon after uploading, so wait 30s for
-        // the process to release its lock
-        sleep 30
-      }
-    }
   }
 
   post {
     always {
-      deleteDir()
+      try {
+         deleteDir()
+      } catch(err) {
+         print "Unable to clean up build directory: ${err.toString()}"
+      }
       sendNotifications slack_channel: SLACK_CHANNEL
     }
   }
