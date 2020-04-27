@@ -320,10 +320,15 @@ export class ImageNodeView implements NodeView {
     
     // hide or show if we have a figcaption
     if (this.figcaption) {
-      this.figcaption.contentEditable = hide ? 'false' : 'true';
-      this.figcaption.style.height = hide ? '0' : '';
-      this.figcaption.style.minHeight = hide ? '0' : '';
-      this.figcaption.style.margin = hide ? '0' : '';
+      if (noImplicitFigures) {
+        this.figcaption.style.display = 'none';
+        this.figcaption.contentEditable = 'false';
+      } else {
+        this.figcaption.contentEditable = hide ? 'false' : 'true';
+        this.figcaption.style.height = hide ? '0' : '';
+        this.figcaption.style.minHeight = hide ? '0' : '';
+        this.figcaption.style.margin = hide ? '0' : '';
+      }
     }
   }
 }
