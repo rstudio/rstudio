@@ -7764,5 +7764,5 @@ public class TextEditingTarget implements
    }
    
    private static final String PROPERTY_CURSOR_POSITION = "cursorPosition";
-   private static final String PROPERTY_SCROLL_LINE = "scrollLine";  
+   private static final String PROPERTY_SCROLL_LINE = "scrollLine";
 }
