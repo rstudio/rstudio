@@ -9,7 +9,7 @@
 
 * Any tab can be hidden from view through Global Options. (#6428)
 
-### Misc
+### Miscellaneous
 
 * The Files pane now sorts file names naturally, so that e.g. `step10.R` comes after `step9.R`. (#5766)
 * Added command to File pane's "More" menu to copy path to clipboard (#6344)
@@ -18,6 +18,7 @@
 * The font used in the editor and console can now be customized on RStudio Server. (#2534)
 * `XDG_CONFIG_DIRS` can be used to specify alternate directories for server configuration files. (Pro #1607)
 * For added security, all cookies are now marked as `SameSite=Lax`. The new option `www-iframe-embedding` marks cookies as `SameSite=None` so RStudio can be used embedded in an IFrame. The new option `www-legacy-cookies` provides a behavior compatible with older browsers. (#6608)
+* RStudio now infers document type from shebang (e.g. #!/usr/bin/env sh) for R, Python and shell scripts (#5643)
 
 ### RStudio Server Pro
 
@@ -26,10 +27,6 @@
 * New `X-RSP-Request` header for specifying originating URL behind path-rewriting proxies (Pro #1579)
 * New user profile option `session-limit` allow limiting the maximum number of sessions a user can have (Pro #540)
 * Project sharing is automatically disabled and a warning is issued when `server-multiple-sessions=0`. (Pro #1263)
-
-### Miscellaneous
-
-* RStudio now infers document type from shebang (e.g. #!/usr/bin/env sh) for R, Python and shell scripts (#5643)
 
 ### Bugfixes
 
