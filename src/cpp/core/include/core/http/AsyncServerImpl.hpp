@@ -356,8 +356,6 @@ private:
                      this, _1, _2)
       ));
 
-      addConnection(ptrNextConnection_);
-
       // wait for next connection
       acceptorService_.asyncAccept(
          ptrNextConnection_->socket(),
@@ -373,6 +371,7 @@ private:
       {
          if (!ec) 
          {
+            addConnection(ptrNextConnection_);
             ptrNextConnection_->startReading();
          }
          else
