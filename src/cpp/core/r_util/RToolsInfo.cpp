@@ -200,7 +200,7 @@ RToolsInfo::RToolsInfo(const std::string& name,
 
       // set RTOOLS40_HOME
       std::string rtoolsPath = installPath.getAbsolutePath();
-      std::replace(rtoolsPath.begin(), rtoolsPath.end(), '\\', '/');
+      std::replace(rtoolsPath.begin(), rtoolsPath.end(), '/', '\\');
       environmentVars.push_back({"RTOOLS40_HOME", rtoolsPath});
 
       // set clang args
