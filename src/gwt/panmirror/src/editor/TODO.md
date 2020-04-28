@@ -6,48 +6,10 @@ pandoc schema: <https://github.com/jgm/pandoc-types/blob/master/Text/Pandoc/Defi
 
 ## TODO
 
-- Selection moves around a ton during load of MANUAL.Rmd. Is it because by applying
-  changes to the source buffer incrementally we're driving sets back into the visual editor?
-
-- Use Google diff-match-patch w/ timeout if possible: 
-  https://github.com/google/diff-match-patch/wiki/API#diff_maintext1-text2--diffs
 
 - getMarkdown from the source editor has an out-of-order issue b/c the fetch of source
   from the syncOnIdle_ might overlap w/ the one from save or deactivate. Perhaps we 
   need to wrap this with an invalidation token?
-
-- Select all of MANUAL.Rmd, delete it, then undo. We get this:
-  27 Apr 2020 17:32:46 [rserver] ERROR CLIENT EXCEPTION (rsession-jjallaire): RangeError: Position 334 out of range;
-http://localhost:8787/js/panmirror/panmirror.js@55#40021::resolve
-http://localhost:8787/js/panmirror/panmirror.js@60#40044::resolveCached
-http://localhost:8787/js/panmirror/panmirror.js@70#40313::resolve
-http://localhost:8787/js/panmirror/panmirror.js@23#40268::replace$1
-http://localhost:8787/js/panmirror/panmirror.js@30#46575::fromReplace
-http://localhost:8787/js/panmirror/panmirror.js@23#46599::apply
-http://localhost:8787/js/panmirror/panmirror.js@21#46462::maybeStep
-http://localhost:8787/js/panmirror/panmirror.js@17#38408::anonymous
-http://localhost:8787/js/panmirror/panmirror.js@13#82600::forEachInvertedInner
-http://localhost:8787/js/panmirror/panmirror.js@12#82545::forEach
-http://localhost:8787/js/panmirror/panmirror.js@14#38386::popEvent
-http://localhost:8787/js/panmirror/panmirror.js@52#38667::histTransaction
-http://localhost:8787/js/panmirror/panmirror.js@19#38751::undo
-http://localhost:8787/js/panmirror/panmirror.js@73#16475::default.normalizeKeyMap._a.<computed>
-http://localhost:8787/js/panmirror/panmirror.js@14#26104::doHandleBinding
-http://localhost:8787/js/panmirror/panmirror.js@61#26175::anonymous
-http://localhost:8787/js/panmirror/panmirror.js@26#25749::lookupKey
-http://localhost:8787/js/panmirror/panmirror.js@37#26117::lookupKeyForEditor
-http://localhost:8787/js/panmirror/panmirror.js@18#26145::dispatchKeyInner
-http://localhost:8787/js/panmirror/panmirror.js@12#26141::dispatchKey
-http://localhost:8787/js/panmirror/panmirror.js@14#26175::handleKeyBinding
-http://localhost:8787/js/panmirror/panmirror.js@19#26193::onKeyDown
-http://localhost:8787/js/panmirror/panmirror.js@22#22919::<anonymous>
-
-- Get the pandoc-api-version up-front (and use it for getMarkdown so we don't have an ordering issue)
-
-- If you close the tab during document initialization (e.g. try with MANUAL.Rmd) you get some null refs
-
-- Headers acquire {.} attribute during cut/paste
-
 
 attr_edit still off in panmirror-next
 
