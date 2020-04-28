@@ -1087,9 +1087,9 @@ public class TextEditingTargetVisualMode
       String fromCode = getEditorCode();
       String toCode = panmirrorCode.code;
       
-      // do the diff
+      // do the diff (timeout after 1 second)
       PanmirrorUIToolsSource sourceTools = new PanmirrorUITools().source;
-      TextChange[] changes = sourceTools.diffChars(fromCode, toCode);
+      TextChange[] changes = sourceTools.diffChars(fromCode, toCode, 1);
      
       // return changes w/ cursor
       return new TextEditorContainer.Changes(

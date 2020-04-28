@@ -27,9 +27,12 @@ export interface EditorChange {
   value: string;
 }
 
-export function diffChars(from: string, to: string) : EditorChange[] {
+export function diffChars(from: string, to: string, timeout: number) : EditorChange[] {
   const dmp = new diff_match_patch();
-  return dmp.diff_main(from, to).map(d => {
+  dmp.Diff_Timeout = timeout;
+  const diff = dmp.diff_main(from, to);
+  dmp.diff_cleanupSemantic(diff);
+  return diff.map(d => {
     let type: EditorChangeType;
     switch(d[0]) {
       case DIFF_INSERT:

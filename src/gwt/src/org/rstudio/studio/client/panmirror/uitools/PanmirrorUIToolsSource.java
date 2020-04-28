@@ -25,6 +25,6 @@ import jsinterop.annotations.JsType;
 @JsType
 public class PanmirrorUIToolsSource
 {
-   public native TextChange[] diffChars(String from, String to);
+   public native TextChange[] diffChars(String from, String to, int timeout);
 }
 

@@ -144,7 +144,7 @@ export interface UIToolsFormat {
 }
 
 export interface UIToolsSource {
-  diffChars(from: string, to: string): EditorChange[];
+  diffChars(from: string, to: string, timeout: number): EditorChange[];
 }
 
 export class UITools {
