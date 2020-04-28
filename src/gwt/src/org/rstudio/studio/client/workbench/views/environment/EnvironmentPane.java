@@ -38,6 +38,7 @@ import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.ImageMenuItem;
 import org.rstudio.studio.client.common.Value;
 import org.rstudio.studio.client.common.icons.StandardIcons;
+import org.rstudio.studio.client.events.ReticulateEvent;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
@@ -70,7 +71,8 @@ import com.google.inject.Inject;
 
 public class EnvironmentPane extends WorkbenchPane 
                              implements EnvironmentPresenter.Display,
-                                        EnvironmentObjectsObserver
+                                        EnvironmentObjectsObserver,
+                                        ReticulateEvent.Handler
 {
    @Inject
    public EnvironmentPane(Commands commands,
@@ -99,6 +101,8 @@ public class EnvironmentPane extends WorkbenchPane
       environmentMonitoring_ = new Value<Boolean>(environmentState.environmentMonitoring());
 
       EnvironmentPaneResources.INSTANCE.environmentPaneStyle().ensureInjected();
+      
+      events.addHandler(ReticulateEvent.TYPE, this);
       
       ensureWidget();
    }
@@ -250,10 +254,11 @@ public class EnvironmentPane extends WorkbenchPane
    {
       environmentName_ = environmentName;
       environmentButton_.setText(friendlyEnvironmentName());
-      environmentButton_.setLeftImage(imageOfEnvironment(environmentName, 
-                                                         local));
-      objects_.setEnvironmentName(friendlyEnvironmentName());
-      if (environmentName.equals(".GlobalEnv"))
+      environmentButton_.setLeftImage(imageOfEnvironment(environmentName, local));
+      
+      String friendlyName = friendlyEnvironmentName();
+      objects_.setEnvironmentName(friendlyName);
+      if (friendlyName.equals(GLOBAL_ENVIRONMENT_NAME))
          commands_.clearWorkspace().setEnabled(true); 
       else
          commands_.clearWorkspace().setEnabled(false);
@@ -495,12 +500,27 @@ public class EnvironmentPane extends WorkbenchPane
    
    private String friendlyNameOfEnvironment(String name)
    {
-      if (name == ".GlobalEnv" || name == "R_GlobalEnv")
+      boolean isGlobalEnv =
+            StringUtil.equals(name, ".GlobalEnv") ||
+            StringUtil.equals(name, "R_GlobalEnv");
+      
+      if (isGlobalEnv)
          return GLOBAL_ENVIRONMENT_NAME;
-      else if (name == "base")
+      
+      boolean isBase =
+            StringUtil.equals(name, "base");
+      
+      if (isBase)
          return "package:base";
-      else 
-         return name;
+      
+      boolean isPythonMain =
+            StringUtil.equals(name, "main") ||
+            StringUtil.equals(name, "__main__");
+      
+      if (isPythonMain)
+         return "Main Module";
+      
+      return name;
    }
    
    private ImageResource imageOfEnvironment(String name, boolean local)
@@ -604,6 +624,12 @@ public class EnvironmentPane extends WorkbenchPane
                   setObjectDisplayType(type);
                }
             }, -1);
+   }
+   
+   @Override
+   public void onReticulate(ReticulateEvent event)
+   {
+      commands_.refreshEnvironment().execute();
    }
    
    // An extension of the toolbar popup menu that gets environment names from

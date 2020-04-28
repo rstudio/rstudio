@@ -578,6 +578,27 @@ json::Value environmentNames(SEXP env)
    }
 }
 
+json::Object pythonEnvironmentStateData()
+{
+   // TODO: Need to pass in 'active' Python module here.
+   SEXP state = R_NilValue;
+   r::sexp::Protect protect;
+   Error error =
+         r::exec::RFunction(".rs.python.environmentState")
+         .addParam("main")
+         .call(&state, &protect);
+   
+   if (error)
+      LOG_ERROR(error);
+   
+   json::Object jsonState;
+   error = r::json::jsonValueFromObject(state, &jsonState);
+   if (error)
+      LOG_ERROR(error);
+   
+   return jsonState;
+}
+
 // create a JSON object that contains information about the current environment;
 // used both to initialize the environment state on first load and to send
 // information about the new environment on a context change
@@ -586,6 +607,9 @@ json::Object commonEnvironmentStateData(
    bool includeContents,
    LineDebugState* pLineDebugState)
 {
+   if (module_context::isPythonReplActive())
+      return pythonEnvironmentStateData();
+   
    json::Object varJson;
    bool useProvidedSource = false;
    std::string functionCode;
@@ -593,6 +617,7 @@ json::Object commonEnvironmentStateData(
 
    // emit the current list of values in the environment, but only if not monitoring (as the intent
    // of the monitoring switch is to avoid implicit environment listing)
+   varJson["language"] = "r";
    varJson["environment_monitoring"] = s_monitoring;
    varJson["environment_list"] = includeContents ? environmentListAsJson() : json::Array();
    
@@ -723,9 +748,21 @@ Error getEnvironmentState(boost::shared_ptr<int> pContextDepth,
                           const json::JsonRpcRequest&,
                           json::JsonRpcResponse* pResponse)
 {
-   pResponse->setResult(commonEnvironmentStateData(*pContextDepth,
-                                                   true, // include contents
-                                                   pLineDebugState.get()));
+   json::Object jsonState;
+   
+   if (module_context::isPythonReplActive())
+   {
+      jsonState = pythonEnvironmentStateData();
+   }
+   else
+   {
+      jsonState = commonEnvironmentStateData(
+               *pContextDepth,
+               true,
+               pLineDebugState.get());
+   }
+   
+   pResponse->setResult(jsonState);
    return Success();
 }
 

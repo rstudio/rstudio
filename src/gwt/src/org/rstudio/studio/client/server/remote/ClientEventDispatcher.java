@@ -55,6 +55,8 @@ import org.rstudio.studio.client.common.synctex.events.SynctexEditFileEvent;
 import org.rstudio.studio.client.common.synctex.model.SourceLocation;
 import org.rstudio.studio.client.events.EditorCommandDispatchEvent;
 import org.rstudio.studio.client.events.EditorCommandEvent;
+import org.rstudio.studio.client.events.ReticulateEvent;
+import org.rstudio.studio.client.events.ReticulateReplStatusChangedEvent;
 import org.rstudio.studio.client.htmlpreview.events.HTMLPreviewCompletedEvent;
 import org.rstudio.studio.client.htmlpreview.events.HTMLPreviewOutputEvent;
 import org.rstudio.studio.client.htmlpreview.events.HTMLPreviewStartedEvent;
@@ -1060,6 +1062,11 @@ public class ClientEventDispatcher
          {
             TutorialLaunchEvent.Data data = event.getData();
             eventBus_.dispatchEvent(new TutorialLaunchEvent(data));
+         }
+         else if (type == ClientEvent.ReticulateEvent)
+         {
+            ReticulateEvent.Data data = event.getData();
+            eventBus_.dispatchEvent(new ReticulateEvent(data));
          }
          else
          {

@@ -83,6 +83,12 @@ options(reticulate.initialized = function() {
    return(TRUE)
 })
 
+.rs.addFunction("reticulate.enqueueClientEvent", function(type, data)
+{
+   data <- list(type = .rs.scalar(type), data = data)
+   .rs.enqueClientEvent("reticulate_event", data)
+})
+
 .rs.addFunction("reticulate.initialize", function()
 {
    # try to default to the tkAgg backend (note that we'll
@@ -178,10 +184,18 @@ options(reticulate.initialized = function() {
       plt$show <- .rs.reticulate.matplotlib.showHook
    }
    
+   # signal a switch to Python context
+   .rs.reticulate.enqueueClientEvent("repl_initialized", list())
+   
 })
 
 .rs.addFunction("reticulate.replHook", function(buffer, contents, trimmed)
 {
+   on.exit(
+      .rs.reticulate.enqueueClientEvent("repl_iteration", list()),
+      add = TRUE
+   )
+   
    # special handling for commands when buffer is currently empty
    if (buffer$empty())
    {
@@ -193,10 +207,10 @@ options(reticulate.initialized = function() {
          return(TRUE)
       }
       
-      reHelp <- "help\\((.*)\\)"
+      reHelp <- "help\\s*\\((.*)\\)"
       if (grepl(reHelp, trimmed))
       {
-         text <- gsub(reHelp, "\\1", trimmed)
+         text <- .rs.trimWhitespace(gsub(reHelp, "\\1", trimmed))
          .Call("rs_showPythonHelp", text, PACKAGE = "(embedding)")
          return(TRUE)
       }
@@ -220,6 +234,8 @@ options(reticulate.initialized = function() {
       plt$show <- show
    }
    
+   # client event
+   .rs.reticulate.enqueueClientEvent("repl_teardown", list())
 })
 
 .rs.addFunction("reticulate.replIsActive", function()
@@ -1410,4 +1426,113 @@ html.heading = _heading
       "()"
    else
       item
+})
+
+#    > str(.rs.describeObject(globalenv(), "a"))
+# List of 10
+#  $ name             : 'rs.scalar' chr "a"
+#  $ type             : 'rs.scalar' chr "numeric"
+#  $ clazz            : chr [1:2] "numeric" "double"
+#  $ is_data          : 'rs.scalar' logi FALSE
+#  $ value            : 'rs.scalar' chr "1"
+#  $ description      : 'rs.scalar' chr " num 1"
+#  $ size             : 'rs.scalar' num 56
+#  $ length           : 'rs.scalar' int 1
+#  $ contents         : list()
+#  $ contents_deferred: 'rs.scalar' logi FALSE
+.rs.addFunction("python.describeObject", function(name, module)
+{
+   builtins <- reticulate::import_builtins(convert = TRUE)
+   object <- reticulate::py_get_attr(module, name)
+   
+   # is this object 'data'? consider non-callable, non-module objects as data
+   is_data <- !any(
+      reticulate:::py_is_callable(object),
+      reticulate:::py_is_module(object),
+      grepl("^__.*__$", name)
+   )
+   
+   # TODO: there isn't really a distinction between an objects "type"
+   # and an objects "class" in Python 3
+   # get object type, value
+   type <- builtins$str(builtins$type(object))
+   value <- builtins$str(object)
+   
+   # get object size
+   sys <- reticulate::import("sys")
+   size <- sys$getsizeof(object)
+   
+   # get object length (note: not all objects in Python have a length)
+   length <- tryCatch(builtins$len(object), error = function(e) 0)
+   
+   list(
+      name              = .rs.scalar(name),
+      type              = .rs.scalar(type),
+      clazz             = type,
+      is_data           = .rs.scalar(is_data),
+      value             = .rs.scalar(value),
+      description       = .rs.scalar(value),
+      size              = .rs.scalar(size),
+      length            = .rs.scalar(length),
+      contents          = list(),
+      contents_deferred = .rs.scalar(FALSE)
+   )
+      
+})
+
+#   "result": {
+#     "language": "r",
+#     "environment_monitoring": true,
+#     "environment_list": [],
+#     "context_depth": 0,
+#     "call_frames": [],
+#     "function_name": "",
+#     "environment_name": ".GlobalEnv",
+#     "environment_is_local": false,
+#     "use_provided_source": false,
+#     "function_code": ""
+#   }
+.rs.addFunction("python.environmentState", function(module)
+{
+   # resolve the requested module
+   module <- if (identical(module, "main")) {
+      reticulate::import_main()
+   } else if (is.character(module)) {
+      reticulate::import(module)
+   } else {
+      module
+   }
+   
+   # list objects within the requested module
+   builtins <- reticulate::import_builtins()
+   objects <- builtins$dir(module)
+   
+   # TODO: do we want to filter certain modules here?
+   # - dunder names, e.g. __builtins__
+   
+   # obtain a description of each Python object, using the already-understood
+   # format used for R objects
+   descriptions <- lapply(objects, .rs.python.describeObject, module = module)
+   
+   # try to get the module name (if any)
+   name <- tryCatch(
+      as.character(reticulate::py_get_attr(module, "__name__")),
+      error = function(e) as.character(module)
+   )
+   
+   list(
+      language               = .rs.scalar("python"),
+      environment_monitoring = .rs.scalar(TRUE),
+      environment_list       = descriptions,
+      
+      # included for compatibility with existing R environment list code
+      context_depth          = .rs.scalar(0L),
+      call_frames            = list(),
+      function_name          = .rs.scalar(""),
+      environment_name       = .rs.scalar(name),
+      environment_is_local   = .rs.scalar(FALSE),
+      use_provided_source    = .rs.scalar(FALSE),
+      function_code          = .rs.scalar("")
+   )
+   
 })
