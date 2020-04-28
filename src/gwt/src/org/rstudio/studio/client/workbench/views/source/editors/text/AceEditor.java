@@ -1159,7 +1159,8 @@ public class AceEditor implements DocDisplay,
          // insert text (selection will be advanced to the end of the string)
          if (change.type == TextChange.Type.Insert)
          {
-            commandManager.exec("insertstring", editor, change.value);
+            if (change.value.length() > 0)
+               commandManager.exec("insertstring", editor, change.value);
          }
          
          // remove text -- we advance past it and then use the "backspace"
