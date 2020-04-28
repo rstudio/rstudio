@@ -39,6 +39,8 @@ const size_t matchOff = 16;
 const std::string kRegexLine("aba OOOkkk okab AAOO aaabbb aa abab");
 const size_t rMatchOn = 4;
 const size_t rMatchOff = 10;
+const size_t caseMatchOn = 21;
+const size_t caseMatchOff = 27;
 
 const std::string kFindRegex("\\([a-z]\\)\\1\\{2\\}\\([a-z]\\)\\2\\{2\\}");
 const std::string kReplaceRegex("\\1\\2\\1\\2");
@@ -67,10 +69,10 @@ TEST_CASE("SessionFind")
       size_t replaceMatchOff;
 
       Replacer replacer(false);
-      replacer.replaceRegex(rMatchOn, rMatchOff,
+      replacer.replaceRegex(caseMatchOn, caseMatchOff,
          kFindRegex, kReplaceString, &line, &replaceMatchOff);
       CHECK(line.compare("aba OOOkkk okab AAOO awesome aa abab") == 0);
-      CHECK(replaceMatchOff == 36);
+      CHECK(replaceMatchOff == 28);
    }
 
    SECTION("Replace regex ignore case")
@@ -98,10 +100,10 @@ TEST_CASE("SessionFind")
       size_t replaceMatchOff;
 
       Replacer replacer(false);
-      replacer.replaceRegex(rMatchOn, rMatchOff, kFindRegex, kReplaceRegex, &line,
+      replacer.replaceRegex(caseMatchOn, caseMatchOff, kFindRegex, kReplaceRegex, &line,
          &replaceMatchOff);
       CHECK(line.compare("aba OOOkkk okab AAOO abab aa abab") == 0);
-      CHECK(replaceMatchOff == 33);
+      CHECK(replaceMatchOff == 25);
    }
 
    SECTION("Attempt replace without valid match")
