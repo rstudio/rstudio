@@ -197,7 +197,7 @@ public class TextEditingTargetVisualMode
    }
 
    
-   private void syncFromEditor(Command ready)
+   private void syncFromEditor(Command ready, boolean focus)
    {      
       // flag to prevent the document being set to dirty when loading
       // from source mode
@@ -237,6 +237,10 @@ public class TextEditingTargetVisualMode
                // set editing location
                panmirror_.setEditingLocation(getOutlineLocation(), savedEditingLocation()); 
                
+               // set focus
+               if (focus)
+                  panmirror_.focus();
+               
                // show any format or extension warnings
                PanmirrorPandocFormat format = panmirror_.getPandocFormat();
                if (format.warnings.invalidFormat.length() > 0)
@@ -271,7 +275,7 @@ public class TextEditingTargetVisualMode
             // re-activate panmirror widget
             editorContainer.activateWidget(panmirror_, false);
             
-         });
+         }, false);
       }
    }
  
@@ -451,7 +455,7 @@ public class TextEditingTargetVisualMode
             // on what's currently in the source ditor
             if (!isPanmirrorActive()) 
             {
-               syncFromEditor(activator);
+               syncFromEditor(activator, focus);
             }
             else
             {
