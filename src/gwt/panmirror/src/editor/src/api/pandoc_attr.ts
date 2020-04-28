@@ -118,7 +118,9 @@ export function pandocAttrParseDom(el: Element, attrs: { [key: string]: string |
       if (name === 'id') {
         attr.id = value;
       } else if (name === 'class') {
-        attr.classes = value.split(/\s+/).filter(val => !val.startsWith('pm-'));
+        attr.classes = value.split(/\s+/)
+          .filter(val => !!val.length)
+          .filter(val => !val.startsWith('pm-'));
       } else {
         attr.keyvalue.push([name, value]);
       }
