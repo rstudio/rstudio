@@ -6,29 +6,25 @@ pandoc schema: <https://github.com/jgm/pandoc-types/blob/master/Text/Pandoc/Defi
 
 ## TODO
 
-
 - getMarkdown from the source editor has an out-of-order issue b/c the fetch of source
   from the syncOnIdle_ might overlap w/ the one from save or deactivate. Perhaps we 
   need to wrap this with an invalidation token?
 
-attr_edit still off in panmirror-next
+- Code Block menu can actually create inline code sometimes
+
+- Should images with no explicit width/height show the natural width/height?
+
+- Put an image in a div -- how do you remove the div? It's now an inline image not a figure.
+  How do you get a selection inside a div?
+
+- attr_edit still off in panmirror-next
 
 Remove hack for light/dark comments once themes are regenerated
 (https://github.com/rstudio/rstudio/commit/5526db30d26efa570c6663c83298970ff8d4a3da)
 
 ## Docs
 
-Emphasize goals: Writing prose, collab w/ non-markdown users, easier to 
-learn introduction to notebooks.
-
-Comment and review (discuss @ top)
-
-Tables section in docs? (column and row operations)
-
-In docs we should get to an editor screenshot sooner 
-(do this instead of showing the latcher and command toolbar).
-
-For main screenshot use image + table + footnote?
+Various missing docs sections
 
 Bookdown & Blogdown docs:
   - Math in code
@@ -37,7 +33,6 @@ Bookdown & Blogdown docs:
   - Using blackfriday explicitly
   - Setting the doctype(s) explicitly (should xref be a doctype or should it be distill)
 
-In docs explain that this is for experienced users.
 
 Alison on blogdown engines, etc.
 
