@@ -256,6 +256,7 @@ public class TextEditingTarget implements
       
       void toggleDocumentOutline();
       void toggleRmdVisualMode();
+      void toggleSoftWrapMode();
       
       void setNotebookUIVisible(boolean visible);
 
@@ -3028,10 +3029,7 @@ public class TextEditingTarget implements
    @Handler
    void onToggleSoftWrapMode()
    {
-      docUpdateSentinel_.setBoolProperty(
-            TextEditingTarget.SOFT_WRAP_LINES, 
-            !docUpdateSentinel_.getBoolProperty(
-                  TextEditingTarget.SOFT_WRAP_LINES, false));
+      view_.toggleSoftWrapMode();
    }
    
    @Handler

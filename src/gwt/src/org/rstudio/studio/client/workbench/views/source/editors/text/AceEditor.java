@@ -2203,6 +2203,14 @@ public class AceEditor implements DocDisplay,
    {
       getSession().setUseWrapMode(useWrapMode);
    }
+   
+   /**
+    * Gets whether or not the editor is using soft wrapping
+    */
+   public boolean getUseWrapMode()
+   {
+      return getSession().getUseWrapMode();
+   }
 
    public void setTabSize(int tabSize)
    {

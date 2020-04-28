@@ -240,6 +240,12 @@ public class TextEditingTargetWidget
       }
    }
    
+   public void toggleSoftWrapMode()
+   {
+      docUpdateSentinel_.setBoolProperty(
+            TextEditingTarget.SOFT_WRAP_LINES, !editor_.getUseWrapMode());
+   }
+
    public void toggleDocumentOutline()
    {
       if (isVisualMode())
