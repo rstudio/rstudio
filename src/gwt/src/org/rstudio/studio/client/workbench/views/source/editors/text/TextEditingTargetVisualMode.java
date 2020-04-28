@@ -18,10 +18,13 @@ package org.rstudio.studio.client.workbench.views.source.editors.text;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.rstudio.core.client.CommandUtil;
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.DebouncedCommand;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.Pair;
+import org.rstudio.core.client.SerializedCommand;
+import org.rstudio.core.client.SerializedCommandQueue;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.files.FileSystemItem;
@@ -168,36 +171,45 @@ public class TextEditingTargetVisualMode
    
    public void syncToEditor(boolean activatingEditor, Command ready)
    {
-      // if panmirror is active then generate markdown & sync it to the editor
-      if (isPanmirrorActive() && (activatingEditor || isDirty_))
-      {
-         withPanmirror(() -> {
-            getMarkdown(markdown -> { 
-               
-               if (markdown == null)
-                  return;
-              
-               // determine changes
-               TextEditorContainer.Changes changes = toEditorChanges(markdown);
-               
-               // apply them 
-               getSourceEditor().applyChanges(changes, activatingEditor); 
-               
-               // set flags
-               isDirty_ = false;
-               
-               // callback
-               if (ready != null)
-                  ready.execute();
-            });
-         });
-      }
-      // otherwise just return (no-op)
-      else
-      {
-         if (ready != null)
-            ready.execute();
-      }
+      syncToEditorQueue_.addCommand(new SerializedCommand() {
+         @Override
+         public void onExecute(Command continuation)
+         {
+            // when completed invoke the ready callback and any continuation we are passsed 
+            // that continuation will have a chain of calls to syncToEditor that came in while
+            // this call was executing
+            Command onComplete = CommandUtil.join(ready, continuation);
+            
+            // if panmirror is active then generate markdown & sync it to the editor
+            if (isPanmirrorActive() && (activatingEditor || isDirty_))
+            {
+               withPanmirror(() -> {
+                  getMarkdown(markdown -> { 
+                     
+                     if (markdown == null)
+                        return;
+                    
+                     // determine changes
+                     TextEditorContainer.Changes changes = toEditorChanges(markdown);
+                     
+                     // apply them 
+                     getSourceEditor().applyChanges(changes, activatingEditor); 
+                     
+                     // set flags
+                     isDirty_ = false;
+                     
+                     // callback
+                     onComplete.execute();
+                  });
+               });
+            }
+            // otherwise just return (no-op)
+            else
+            {
+              onComplete.execute();
+            } 
+         }
+      });
    }
 
    
@@ -1144,6 +1156,8 @@ public class TextEditingTargetVisualMode
    private ArrayList<AppCommand> disabledForVisualMode_ = new ArrayList<AppCommand>();
    
    private final ProgressPanel progress_;
+   
+   private SerializedCommandQueue syncToEditorQueue_ = new SerializedCommandQueue();
    
    private static final String RMD_VISUAL_MODE_LOCATION = "rmdVisualModeLocation";   
 }
