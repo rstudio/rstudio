@@ -1115,11 +1115,11 @@ public class TextEditingTargetVisualMode
    private final DocUpdateSentinel docUpdateSentinel_;
    
    private DebouncedCommand syncOnIdle_; 
+   private DebouncedCommand saveLocationOnIdle_;
+   
    private boolean isDirty_ = false;
    private boolean loadingFromSource_ = false;
    private boolean haveEditedInVisualMode_ = false; 
-   
-   private DebouncedCommand saveLocationOnIdle_;
    
    private PanmirrorWidget panmirror_;
    private FormatComment panmirrorFormatComment_;
