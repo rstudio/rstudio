@@ -18,7 +18,9 @@ package org.rstudio.studio.client.panmirror;
 
 import java.util.ArrayList;
 
-import org.rstudio.core.client.CommandWithArg;import org.rstudio.core.client.ExternalJavaScriptLoader;
+import org.rstudio.core.client.CommandWithArg;
+import org.rstudio.core.client.DebouncedCommand;
+import org.rstudio.core.client.ExternalJavaScriptLoader;
 import org.rstudio.core.client.HandlerRegistrations;
 import org.rstudio.core.client.events.MouseDragHandler;
 import org.rstudio.core.client.jsinterop.JsVoidFunction;
@@ -245,6 +247,18 @@ public class PanmirrorWidget extends DockLayoutPanel implements
       
       }));
       
+      // don't update outline eaglerly (wait for 500ms delay in typing)
+      DebouncedCommand updateOutineOnIdle = new DebouncedCommand(500)
+      {
+         @Override
+         protected void execute()
+         {
+            PanmirrorOutlineItem[] outline = editor_.getOutline();
+            outline_.updateOutline(outline);
+            outline_.updateSelection(editor_.getSelection());
+         }
+      };
+      
       editorEventUnsubscribe_.add(editor_.subscribe(PanmirrorEvent.SelectionChange, () -> {
          
          // sync toolbar commands
@@ -252,17 +266,16 @@ public class PanmirrorWidget extends DockLayoutPanel implements
             toolbar_.sync(false);
          
          // sync outline
-         outline_.updateSelection(editor_.getSelection());
+         updateOutineOnIdle.nudge();
          
          // fire to clients
          SelectionChangeEvent.fire(this);
       }));
       
       editorEventUnsubscribe_.add(editor_.subscribe(PanmirrorEvent.OutlineChange, () -> {
-
-         // sync outline items
-         PanmirrorOutlineItem[] outline = editor_.getOutline();
-         outline_.updateOutline(outline);
+         
+         // sync outline
+         updateOutineOnIdle.nudge();
          
       }));
       
