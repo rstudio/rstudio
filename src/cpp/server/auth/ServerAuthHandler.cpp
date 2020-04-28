@@ -459,8 +459,10 @@ Error initialize()
       error = file_utils::changeOwnership(rootDir, options().serverUser());
       if (error)
       {
-         LOG_ERROR_MESSAGE("Could not change ownership of revocation list directory " + rootDir.getAbsolutePath());
-         return error;
+         error.addProperty("description",
+                           "Could not change owner for path " + rootDir.getAbsolutePath() +
+                              ". Is root squash enabled?");
+         LOG_ERROR(error);
       }
    }
 
@@ -499,7 +501,12 @@ Error initialize()
          // this ensures that it can be written to even when we drop privilege
          error = file_utils::changeOwnership(s_revocationList, options().serverUser());
          if (error)
-            return error;
+         {
+            error.addProperty("description",
+                              "Could not change owner for path " + s_revocationList.getAbsolutePath() +
+                                 ". Is root squash enabled?");
+            LOG_ERROR(error);
+         }
       }
 
       // ensure that only the server user can read/write to it, so other users of the system
@@ -507,8 +514,8 @@ Error initialize()
       error = core::system::changeFileMode(s_revocationList, core::system::UserReadWriteMode);
       if (error)
       {
-         LOG_ERROR_MESSAGE("Could not set revocation file permissions");
-         return error;
+         error.addProperty("description", "Could not set revocation file permissions to 600 for file: " + s_revocationList.getAbsolutePath());
+         LOG_ERROR(error);
       }
 
       // read the current revocation list into memory
