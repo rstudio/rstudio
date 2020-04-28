@@ -173,6 +173,10 @@ public class TextEditingTargetVisualMode
       {
          withPanmirror(() -> {
             getMarkdown(markdown -> { 
+               
+               if (markdown == null)
+                  return;
+              
                // determine changes
                TextEditorContainer.Changes changes = toEditorChanges(markdown);
                
@@ -218,6 +222,10 @@ public class TextEditingTargetVisualMode
          
          panmirror_.setMarkdown(editorCode, this.panmirrorWriterOptions(), true, (markdown) -> {  
                
+            // bail on error
+            if (markdown == null)
+               return;
+            
             // activate editor
             if (ready != null)
                ready.execute();
