@@ -346,7 +346,7 @@ export class Editor {
     this.applyTheme(defaultTheme());
 
     // create pandoc translator
-    this.pandocConverter = new PandocConverter(this.schema, this.extensions, context.pandoc);
+    this.pandocConverter = new PandocConverter(this.schema, this.extensions, context.pandoc, this.pandocCapabilities);
 
     // focus editor immediately if requested
     if (this.options.autoFocus) {

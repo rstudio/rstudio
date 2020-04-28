@@ -117,7 +117,7 @@ export interface PandocAst {
   meta: any;
 }
 
-export type PandocApiVersion = [number, number, number, number];
+export type PandocApiVersion = number[];
 
 export interface PandocToken {
   t: string;
