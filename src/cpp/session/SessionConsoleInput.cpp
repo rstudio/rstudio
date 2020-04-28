@@ -329,8 +329,10 @@ bool rConsoleRead(const std::string& prompt,
          LOG_ERROR(error);
          *pConsoleInput = rstudio::r::session::RConsoleInput("", "");
       }
-      
-      popConsoleInput(pConsoleInput);
+      else
+      {
+         popConsoleInput(pConsoleInput);
+      }
    }
 
    // fire onBeforeExecute and onConsoleInput events if this isn't a cancel
