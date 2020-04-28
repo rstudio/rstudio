@@ -8,7 +8,6 @@ import { kAddToHistoryTransaction, kRestoreLocationTransaction } from './transac
 import { EditorOutlineItemType, kYamlMetadataOutlineItenItem, kHeadingOutlineItemType, kRmdchunkOutlineItemType } from './outline';
 import { EditorState } from 'prosemirror-state';
 import { findTopLevelBodyNodes } from './node';
-import { navigateToPosition } from './navigation';
 
 
 export interface EditingLocation {
@@ -41,6 +40,10 @@ export function setEditingLocation(
   previousLocation?: EditingLocation, 
   scrollIntoView = true
 ) {
+
+  // restore position and scrollTop
+  let restorePos: number | null = null;
+  let restoreScrollTop = -1;
 
   // see we if we can match an outline location
   if (outlineLocation) {
@@ -88,21 +91,25 @@ export function setEditingLocation(
 
     // if we got a location then navigate to it and return
     if (docOutlineLocationNode) {
-      navigateToPosition(view, docOutlineLocationNode.pos, false);
-      return;
+      restorePos = docOutlineLocationNode.pos;
     }
   }
 
-  // didn't navigate to an outline position, continue on with previous location....
-
-  // ensure location is valid
-  if (!previousLocation || (previousLocation.pos >= view.state.doc.nodeSize)) {
-    return;
+  // if we don't have a restorePos then see if there is a previous location
+  if (restorePos === null) {
+    if (previousLocation && previousLocation.pos < view.state.doc.nodeSize) {
+      restorePos = previousLocation.pos;
+      restoreScrollTop = previousLocation.scrollTop;
+    }
   }
 
+  // bail if we don't have a restorePos
+  if (restorePos === null) {
+    return;
+  }
   // restore selection
   const tr = view.state.tr;
-  setTextSelection(previousLocation.pos)(tr)
+  setTextSelection(restorePos)(tr)
     .setMeta(kRestoreLocationTransaction, true)
     .setMeta(kAddToHistoryTransaction, false);
   view.dispatch(tr);
@@ -110,11 +117,10 @@ export function setEditingLocation(
   // scroll to selection
   if (scrollIntoView) {
     // if the scrollTop is -1 then get it from the selection
-    if (previousLocation.scrollTop === -1) {
-      previousLocation.scrollTop = Math.max(view.coordsAtPos(previousLocation.pos).top - 250, 0);
+    if (restoreScrollTop === -1) {
+      restoreScrollTop = Math.max(view.coordsAtPos(restorePos).top - 250, 0);
     }
-
-    bodyElement(view).scrollTop = previousLocation.scrollTop;
+    bodyElement(view).scrollTop = restoreScrollTop;
   }
 }
 

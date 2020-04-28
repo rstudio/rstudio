@@ -20,7 +20,7 @@ import { EditorState, Plugin, PluginKey, Transaction } from 'prosemirror-state';
 import { EditorView } from 'prosemirror-view';
 import 'prosemirror-view/style/prosemirror.css';
 
-import { setTextSelection } from 'prosemirror-utils';
+import { setTextSelection, findChildrenByType } from 'prosemirror-utils';
 
 import polyfill from './polyfill/index';
 
@@ -407,6 +407,10 @@ export class Editor {
         i++;
         return false;
       });
+      // set selection to the beginning of the doc
+      const bodyNode = findChildrenByType(tr.doc, this.schema.nodes.body)[0];
+      setTextSelection(bodyNode.pos)(tr);
+      // dispatch
       this.view.dispatch(tr);
     }
 
