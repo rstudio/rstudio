@@ -204,6 +204,8 @@ public class TextEditingTarget implements
    public final static String DOC_OUTLINE_VISIBLE = "docOutlineVisible";
    
    public static final String RMD_VISUAL_MODE = "rmdVisualMode";
+   
+   public static final String SOFT_WRAP_LINES = "softWrapLines";
   
    private static final MyCommandBinder commandBinder =
          GWT.create(MyCommandBinder.class);
@@ -3021,6 +3023,15 @@ public class TextEditingTarget implements
    void onToggleRmdVisualMode()
    {
       view_.toggleRmdVisualMode();
+   }
+   
+   @Handler
+   void onToggleSoftWrapMode()
+   {
+      docUpdateSentinel_.setBoolProperty(
+            TextEditingTarget.SOFT_WRAP_LINES, 
+            !docUpdateSentinel_.getBoolProperty(
+                  TextEditingTarget.SOFT_WRAP_LINES, false));
    }
    
    @Handler

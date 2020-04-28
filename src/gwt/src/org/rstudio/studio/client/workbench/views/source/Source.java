@@ -403,6 +403,7 @@ public class Source implements InsertSourceHandler,
       dynamicCommands_.add(commands.sourceAsJob());
       dynamicCommands_.add(commands.runSelectionAsJob());
       dynamicCommands_.add(commands.runSelectionAsLauncherJob());
+      dynamicCommands_.add(commands.toggleSoftWrapMode());
       for (AppCommand command : dynamicCommands_)
       {
          command.setVisible(false);

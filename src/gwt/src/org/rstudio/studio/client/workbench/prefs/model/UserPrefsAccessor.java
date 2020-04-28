@@ -652,6 +652,14 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
+    * Whether to soft-wrap R Markdown files (and similar types such as R HTML and R Notebooks)
+    */
+   public PrefValue<Boolean> softWrapRmdFiles()
+   {
+      return bool("soft_wrap_rmd_files", true);
+   }
+
+   /**
     * Whether to focus the R console after executing an R command from a script.
     */
    public PrefValue<Boolean> focusConsoleAfterExec()
@@ -1939,6 +1947,8 @@ public class UserPrefsAccessor extends Prefs
          verticallyAlignArgumentsIndent().setValue(layer, source.getBool("vertically_align_arguments_indent"));
       if (source.hasKey("soft_wrap_r_files"))
          softWrapRFiles().setValue(layer, source.getBool("soft_wrap_r_files"));
+      if (source.hasKey("soft_wrap_rmd_files"))
+         softWrapRmdFiles().setValue(layer, source.getBool("soft_wrap_rmd_files"));
       if (source.hasKey("focus_console_after_exec"))
          focusConsoleAfterExec().setValue(layer, source.getBool("focus_console_after_exec"));
       if (source.hasKey("fold_style"))
