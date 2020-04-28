@@ -77,7 +77,7 @@ const extension: Extension = {
         defining: true,
         parseDOM: [{ tag: 'dl' }],
         toDOM(node) {
-          return ['dl', 0];
+          return ['dl', { class: 'pm-definition-list' }, 0];
         },
       },
       pandoc: {

@@ -104,6 +104,10 @@ h3.pm-heading {
   margin-top: 10px;
 }
 
+.pm-definition-list {
+  margin-block-end: 1.5em;
+}
+
 .pm-definition-term {
   font-weight: 600;
   margin-bottom: 0.5rem;
