@@ -253,9 +253,12 @@ public class PanmirrorWidget extends DockLayoutPanel implements
          @Override
          protected void execute()
          {
-            PanmirrorOutlineItem[] outline = editor_.getOutline();
-            outline_.updateOutline(outline);
-            outline_.updateSelection(editor_.getSelection());
+            if (editor_ != null) // would be null during teardown of tab
+            {
+               PanmirrorOutlineItem[] outline = editor_.getOutline();
+               outline_.updateOutline(outline);
+               outline_.updateSelection(editor_.getSelection());
+            }
          }
       };
       
