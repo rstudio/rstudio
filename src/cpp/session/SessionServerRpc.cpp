@@ -117,13 +117,14 @@ Error invokeServerRpc(const std::string& endpoint,
       {
          // not a valid url - we assume this is just a hostname or IP address
          std::string tcpPort = options().getOverlayOption(kRServerTcpPort);
-         return socket_rpc::invokeRpc(serverAddress, tcpPort, false, endpoint, request, pResult);
+         return socket_rpc::invokeRpc(serverAddress, tcpPort, false, false, endpoint, request, pResult);
       }
       else
       {
          // valid url - combine url path with requested endpoint
+         bool sslVerify = options().getOverlayOption(kRServerSslVerify) == "1";
          return socket_rpc::invokeRpc(url.hostname(), url.portStr(), url.protocol() == "https",
-                                      url.path() + endpoint, request, pResult);
+                                      sslVerify, url.path() + endpoint, request, pResult);
       }
    }
 }
@@ -170,6 +171,7 @@ void invokeServerRpcAsync(const std::string& endpoint,
                                            serverAddress,
                                            tcpPort,
                                            false,
+                                           false,
                                            endpoint,
                                            request,
                                            onResult,
@@ -178,10 +180,12 @@ void invokeServerRpcAsync(const std::string& endpoint,
       else
       {
          // valid url - combine url path with requested endpoint
+         bool sslVerify = options().getOverlayOption(kRServerSslVerify) == "1";
          return socket_rpc::invokeRpcAsync(s_ioService,
                                            url.hostname(),
                                            url.portStr(),
                                            url.protocol() == "https",
+                                           sslVerify,
                                            url.path() + endpoint,
                                            request,
                                            onResult,
