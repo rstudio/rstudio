@@ -1086,8 +1086,13 @@ public class TextEditingTargetVisualMode
       // code to diff
       String fromCode = getEditorCode();
       String toCode = panmirrorCode.code;
-      
-      // do the diff (timeout after 1 second)
+         
+      // do the diff (timeout after 1 second). note that we only do this 
+      // once the user has stopped typing for 1 second so it's not something
+      // that will run continuously during editing (in which case a much
+      // lower timeout would be warranted). note also that timeouts are for
+      // the diff planning phase so we will still get a valid diff back
+      // even if the timeout occurs.
       PanmirrorUIToolsSource sourceTools = new PanmirrorUITools().source;
       TextChange[] changes = sourceTools.diffChars(fromCode, toCode, 1);
      
