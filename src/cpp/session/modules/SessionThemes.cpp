@@ -563,6 +563,14 @@ void onDeferredInit(bool)
    s_deferredInitComplete = true;
 }
 
+void setCacheableFile(const FilePath& filePath,
+                      const http::Request& request,
+                      http::Response* pResponse)
+{
+   pResponse->setCacheWithRevalidationHeaders();
+   pResponse->setCacheableFile(filePath, request);
+}
+
 } // anonymous namespace
 
 /**
@@ -576,7 +584,7 @@ void handleDefaultThemeRequest(const http::Request& request,
 {
    std::string prefix = "/" + kDefaultThemeLocation;
    std::string fileName = http::util::pathAfterPrefix(request, prefix);
-   pResponse->setCacheableFile(getDefaultThemePath().completeChildPath(fileName), request);
+   setCacheableFile(getDefaultThemePath().completeChildPath(fileName), request, pResponse);
 }
 
 /**
@@ -593,9 +601,10 @@ void handleGlobalCustomThemeRequest(const http::Request& request,
    std::string prefix = "/" + kGlobalCustomThemeLocation;
    std::string fileName = http::util::pathAfterPrefix(request, prefix);
    FilePath requestedTheme = getGlobalCustomThemePath().completeChildPath(fileName);
-   pResponse->setCacheableFile(
+   setCacheableFile(
       requestedTheme.exists() ? requestedTheme : getDefaultTheme(request),
-      request);
+      request,
+      pResponse);
 }
 
 /**
@@ -613,10 +622,10 @@ void handleLocalCustomThemeRequest(const http::Request& request,
    std::string fileName = http::util::pathAfterPrefix(request, prefix);
 
    FilePath requestedTheme = getLocalCustomTheme(fileName);
-
-   pResponse->setCacheableFile(
+   setCacheableFile(
       requestedTheme.exists() ? requestedTheme : getDefaultTheme(request),
-      request);
+      request,
+      pResponse);
 }
 
 Error syncThemePrefs()
