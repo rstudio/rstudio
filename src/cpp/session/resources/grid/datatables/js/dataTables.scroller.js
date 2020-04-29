@@ -300,6 +300,36 @@ Scroller.prototype = /** @lends Scroller.prototype */{
 			row;
 	},
 
+	/**
+	 * Find the visible first and last rows inside the scrollbody by grabbing the elements
+	 * by pixel position. This is dramatically superior to the fnPixelsToRow method as it isn't
+	 * vulnerable to irregular row sizes, pixel density, or zoom.
+	 */
+	"fnFirstAndLastVisibleCells": function()
+	{
+		var scrollBody = document.getElementsByClassName("dataTables_scrollBody")[0].getBoundingClientRect();
+
+		// we shift our selection x over a few pixels due to some invisible divs dataTables adds
+		var topCell = document.elementFromPoint(3, scrollBody.top + 1);
+		var bottomCell = document.elementFromPoint(3, scrollBody.bottom - 1);
+
+		// if a child of the row element was grabbed, traverse up to the row
+		if (!!topCell && topCell.tagName !== "TR") {
+			topCell = topCell.closest("tr");
+		}
+		if (!!bottomCell && bottomCell.tagName !== "TR") {
+			bottomCell = bottomCell.closest("tr");
+		}
+		
+		var first = !!topCell ? parseInt(topCell.getAttribute("data-row")) + 1 : 1;
+		var last = !!bottomCell ? parseInt(bottomCell.getAttribute("data-row")) + 1 : this.s.dt.fnRecordsTotal();
+
+		// edge case of degenerate window sizes
+		if (!first) first = 1;
+		if (!last) last = 1;
+
+		return [first, last];
+	},
 
 	/**
 	 * Calculate the row number that will be found at the given pixel position (y-scroll)
@@ -933,15 +963,17 @@ Scroller.prototype = /** @lends Scroller.prototype */{
 			return;
 		}
 
+		var firstAndLastCells = this.fnFirstAndLastVisibleCells();
+
 		var
 			dt = this.s.dt,
 			language = dt.oLanguage,
 			iScrollTop = this.dom.scroller.scrollTop,
-			iStart = Math.floor( this.fnPixelsToRow(iScrollTop, false, this.s.ani)+1 ),
+			iStart = firstAndLastCells[0],
 			iMax = dt.fnRecordsTotal(),
 			iTotal = dt.fnRecordsDisplay(),
 			iPossibleEnd = Math.ceil( this.fnPixelsToRow(iScrollTop+this.s.heights.viewport, false, this.s.ani) ),
-			iEnd = iTotal < iPossibleEnd ? iTotal : iPossibleEnd,
+			iEnd = firstAndLastCells[1],
 			sStart = dt.fnFormatNumber( iStart ),
 			sEnd = dt.fnFormatNumber( iEnd ),
 			sMax = dt.fnFormatNumber( iMax ),

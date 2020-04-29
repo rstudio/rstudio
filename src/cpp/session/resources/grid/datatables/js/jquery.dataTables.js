@@ -1636,7 +1636,8 @@
     if ( row.nTr === null )
     {
       nTr = nTrIn || document.createElement('tr');
-  
+      nTr.setAttribute("data-row", iRow);
+
       row.nTr = nTr;
       row.anCells = cells;
   
