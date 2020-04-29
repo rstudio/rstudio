@@ -75,8 +75,12 @@ docker create -i --name %CONTAINER_ID% %REPO%:%IMAGE% cmd.exe
 :: This issue is apparently fixed in latest MSVC 2019 so can reevaluate this approach when
 :: we update to newer toolchain and use -v %HOSTPATH%:c:/src instead of copying repo.
 :: 
-:: A volume mount does work when using "--isolation process" but this Docker option isn't 
-:: available with Windows-10 Pro, only with Windows Server.
+:: A volume mount does work when using "--isolation process" but this mode of operation
+:: requires a close Windows version match between the base image and the host operating
+:: system (largely defeating the whole point of containerization).
+::
+:: https://docs.microsoft.com/en-us/virtualization/windowscontainers/deploy-containers/version-compatibility
+::
 echo Copying repo into container...
 docker cp %HOSTPATH% %CONTAINER_ID%:/src
 
