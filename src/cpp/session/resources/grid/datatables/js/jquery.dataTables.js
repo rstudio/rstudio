@@ -5124,7 +5124,14 @@
   function _fnBindAction( n, oData, fn )
   {
     $(n)
-      .bind( 'click.DT', oData, function (e) {
+      // we get a lot more control over these custom events on mousedown vs click 
+      // and functionally to the user it will feel a little more responsive
+      .bind( 'mousedown.DT', oData, function (e) {
+          // our resizer doesn't play nice with the custom jquery click
+          // events. catch when we click on a resizer immediately on
+          // mousedown and exit
+          if (!!e.target && e.target.className === "resizer") return;
+
           n.blur(); // Remove focus outline for mouse users
           fn(e);
         } )
