@@ -98,7 +98,8 @@
   background-color: rgb(102, 155, 243)
 }
 .ace_comment-highlight {
-  background-color: rgb(254, 155, 243)
+  color: #3C4C72;
+  background-color: #FFECCB;
 }
 .ace_marker-layer .ace_active_debug_line {
   position: absolute;

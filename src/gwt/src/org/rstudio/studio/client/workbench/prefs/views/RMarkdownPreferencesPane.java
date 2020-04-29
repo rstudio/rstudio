@@ -47,9 +47,8 @@ public class RMarkdownPreferencesPane extends PreferencesPane
       
       basic.add(headerLabel("R Markdown"));
       
-      basic.add(checkboxPref("Show inline toolbar for R code chunks", prefs_.showInlineToolbarForRCodeChunks()));
       basic.add(checkboxPref("Show document outline by default", prefs_.showDocOutlineRmd()));
-      basic.add(checkboxPref("Enable chunk background highlight", prefs_.highlightCodeChunks()));
+      basic.add(checkboxPref("Soft-wrap R Markdown files", prefs_.softWrapRmdFiles()));
       
       docOutlineDisplay_ = new SelectWidget(
             "Show in document outline: ",
@@ -134,11 +133,6 @@ public class RMarkdownPreferencesPane extends PreferencesPane
          knitWorkingDir_ = null;
       }
       
-      final CheckBox showRmdRenderCommand = checkboxPref(
-            "Display render command in R Markdown tab",
-            prefs_.showRmdRenderCommand());
-      basic.add(showRmdRenderCommand);
-      
       basic.add(spacedBefore(headerLabel("R Notebooks")));
 
       // auto-execute the setup chunk
@@ -159,7 +153,15 @@ public class RMarkdownPreferencesPane extends PreferencesPane
       VerticalTabPanel advanced = new VerticalTabPanel(ElementIds.RMARKDOWN_ADVANCED_PREFS);
       
      
-      advanced.add(headerLabel("Visual Markdown Editing"));
+      advanced.add(headerLabel("R Markdown"));
+
+      advanced.add(checkboxPref("Enable chunk background highlight", prefs_.highlightCodeChunks()));
+      advanced.add(checkboxPref("Show inline toolbar for R code chunks", prefs_.showInlineToolbarForRCodeChunks()));
+      final CheckBox showRmdRenderCommand = checkboxPref( "Display render command in R Markdown tab",
+            prefs_.showRmdRenderCommand());
+      advanced.add(showRmdRenderCommand);
+      
+      advanced.add(spacedBefore(headerLabel("Visual Markdown Editing")));
           
       Label visualMarkdownLabel = new Label(
             "Visual markdown editing is an experimental feature of " +

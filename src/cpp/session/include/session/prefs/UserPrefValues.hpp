@@ -136,6 +136,7 @@ namespace prefs {
 #define kReindentOnPaste "reindent_on_paste"
 #define kVerticallyAlignArgumentsIndent "vertically_align_arguments_indent"
 #define kSoftWrapRFiles "soft_wrap_r_files"
+#define kSoftWrapRmdFiles "soft_wrap_rmd_files"
 #define kFocusConsoleAfterExec "focus_console_after_exec"
 #define kFoldStyle "fold_style"
 #define kFoldStyleBeginOnly "begin-only"
@@ -724,6 +725,12 @@ public:
     */
    bool softWrapRFiles();
    core::Error setSoftWrapRFiles(bool val);
+
+   /**
+    * Whether to soft-wrap R Markdown files (and similar types such as R HTML and R Notebooks)
+    */
+   bool softWrapRmdFiles();
+   core::Error setSoftWrapRmdFiles(bool val);
 
    /**
     * Whether to focus the R console after executing an R command from a script.

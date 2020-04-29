@@ -894,7 +894,6 @@ public class AceEditor implements DocDisplay,
       
       handlers_.fireEvent(new EditorModeChangedEvent(getModeId()));
 
-      getSession().setUseWrapMode(fileType_.getWordWrap());
       syncWrapLimit();
    }
 
@@ -2198,11 +2197,19 @@ public class AceEditor implements DocDisplay,
    }
 
    /**
-    * Warning: This will be overridden whenever the file type is set
+    * Sets the soft wrap mode for the editor
     */
    public void setUseWrapMode(boolean useWrapMode)
    {
       getSession().setUseWrapMode(useWrapMode);
+   }
+   
+   /**
+    * Gets whether or not the editor is using soft wrapping
+    */
+   public boolean getUseWrapMode()
+   {
+      return getSession().getUseWrapMode();
    }
 
    public void setTabSize(int tabSize)

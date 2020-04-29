@@ -1,7 +1,7 @@
 /*
  * DocDisplay.java
  *
- * Copyright (C) 2009-19 by RStudio, PBC
+ * Copyright (C) 2009-20 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -183,6 +183,7 @@ public interface DocDisplay extends HasValueChangeHandlers<Void>,
    void setShowLineNumbers(boolean on);
    void setUseSoftTabs(boolean on);
    void setUseWrapMode(boolean on);
+   boolean getUseWrapMode();
    void setTabSize(int tabSize);
    void autoDetectIndentation(boolean on);
    void setShowPrintMargin(boolean on);

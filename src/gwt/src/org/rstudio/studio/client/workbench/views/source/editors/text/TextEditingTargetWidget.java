@@ -199,6 +199,16 @@ public class TextEditingTargetWidget
 
       initWidget(panel_);
       
+      // Update wrap mode on the editor when the soft wrap property changes
+      docUpdateSentinel_.addPropertyValueChangeHandler(
+            TextEditingTarget.SOFT_WRAP_LINES, (newval) ->
+            {
+               boolean wrap = StringUtil.equals(newval.getValue(), 
+                     DocUpdateSentinel.PROPERTY_TRUE);
+               commands_.toggleSoftWrapMode().setChecked(wrap);
+               editor_.setUseWrapMode(wrap);
+            });
+
       userPrefs_.autoSaveOnBlur().addValueChangeHandler((evt) ->
       {
          // Re-adapt to file type when this preference changes; it may bring
@@ -230,6 +240,12 @@ public class TextEditingTargetWidget
       }
    }
    
+   public void toggleSoftWrapMode()
+   {
+      docUpdateSentinel_.setBoolProperty(
+            TextEditingTarget.SOFT_WRAP_LINES, !editor_.getUseWrapMode());
+   }
+
    public void toggleDocumentOutline()
    {
       if (isVisualMode())
@@ -847,6 +863,9 @@ public class TextEditingTargetWidget
       
       toggleVisualModeOutlineButton_.setVisible(visualRmdMode);
       
+      // update wrap mode for filetype
+      syncWrapMode();
+      
       toolbar_.invalidateSeparators();
    }
    
@@ -1078,6 +1097,9 @@ public class TextEditingTargetWidget
    public void onActivate()
    {
       editor_.onActivate();
+      
+      // sync the state of the command marking word wrap mode for this document
+      syncWrapMode();
       
       Scheduler.get().scheduleDeferred(() -> manageToolbarSizes());
    }
@@ -1687,6 +1709,20 @@ public class TextEditingTargetWidget
       
       private boolean activationPending_ = false;
    };
+   
+   private void syncWrapMode()
+   {
+      // set wrap mode from the file type (unless we have a wrap mode specified
+      // explicitly)
+      boolean wrapMode = editor_.getFileType().getWordWrap();
+      if (docUpdateSentinel_.hasProperty(TextEditingTarget.SOFT_WRAP_LINES))
+      {
+         wrapMode = docUpdateSentinel_.getBoolProperty(TextEditingTarget.SOFT_WRAP_LINES, 
+               wrapMode);
+      }
+      editor_.setUseWrapMode(wrapMode);
+      commands_.toggleSoftWrapMode().setChecked(wrapMode);
+   }
 
    private final TextEditingTarget target_;
    private final DocUpdateSentinel docUpdateSentinel_;
@@ -1757,5 +1793,4 @@ public class TextEditingTargetWidget
    private String sourceCommandText_ = "Source";
    private String knitCommandText_ = "Knit";
    private String previewCommandText_ = "Preview";
-
 }

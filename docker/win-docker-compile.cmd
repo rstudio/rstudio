@@ -92,7 +92,11 @@ docker exec %CONTAINER_ID% cmd.exe /C "cd \src\package\win32 && make-package.bat
 echo Stopping container...
 docker stop %CONTAINER_ID%
 
-set PKG_FILENAME=RStudio-99.9.9-RelWithDebInfo
+if "%REPO%" == "rstudio-pro" (
+    set PKG_FILENAME=RStudio-pro-99.9.9-RelWithDebInfo
+) ELSE (
+    set PKG_FILENAME=RStudio-99.9.9-RelWithDebInfo
+)
 echo Copying build result (%PKG_FILENAME%.zip) to %HOSTPATH%/docker/package
 docker cp %CONTAINER_ID%:/src/package/win32/build/%PKG_FILENAME%.zip %HOSTPATH%/docker/package/%PKG_FILENAME%.zip
 
