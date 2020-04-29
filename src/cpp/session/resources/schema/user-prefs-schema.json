@@ -411,6 +411,11 @@
             "default": false,
             "description": "Whether to soft-wrap R source files, wrapping the text for display without inserting newline characters."
         },
+        "soft_wrap_rmd_files": {
+            "type": "boolean",
+            "default": true,
+            "description": "Whether to soft-wrap R Markdown files (and similar types such as R HTML and R Notebooks)"
+        },
         "focus_console_after_exec": {
             "type": "boolean",
             "default": false,

@@ -19,6 +19,7 @@
 * `XDG_CONFIG_DIRS` can be used to specify alternate directories for server configuration files. (Pro #1607)
 * For added security, all cookies are now marked as `SameSite=Lax`. The new option `www-iframe-embedding` marks cookies as `SameSite=None` so RStudio can be used embedded in an IFrame. The new option `www-legacy-cookies` provides a behavior compatible with older browsers. (#6608)
 * RStudio now infers document type from shebang (e.g. #!/usr/bin/env sh) for R, Python and shell scripts (#5643)
+* New option to configure soft wrapping for R Markdown files, and command to change the soft wrap mode of the editor on the fly (#2341)
 
 ### RStudio Server Pro
 
