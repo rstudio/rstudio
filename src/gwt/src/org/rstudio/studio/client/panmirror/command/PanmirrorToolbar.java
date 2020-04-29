@@ -74,6 +74,8 @@ public class PanmirrorToolbar extends SecondaryToolbar implements RequiresResize
       );
       
       insertWidgets_ = addWidgetGroup(
+         addLeftButton(PanmirrorCommands.RmdChunk),
+         addLeftSeparator(),
          addLeftButton(PanmirrorCommands.Link),
          addLeftButton(PanmirrorCommands.Image),
          addLeftSeparator()
@@ -147,9 +149,9 @@ public class PanmirrorToolbar extends SecondaryToolbar implements RequiresResize
       if (width == 0)
          return;
            
-      showGroup(formatWidgets_, width > 445);
-      showGroup(blockWidgets_, width > 525);
-      showGroup(insertWidgets_, width > 580);
+      showGroup(formatWidgets_, width > 475);
+      showGroup(blockWidgets_, width > 555);
+      showGroup(insertWidgets_, width > 610);
    }
    
    
@@ -227,6 +229,8 @@ public class PanmirrorToolbar extends SecondaryToolbar implements RequiresResize
    private PanmirrorToolbarMenu createInsertMenu()
    {
       PanmirrorToolbarMenu insertMenu = new PanmirrorToolbarMenu(commands_);
+      insertMenu.addCommand(PanmirrorCommands.RmdChunk);
+      insertMenu.addSeparator();
       insertMenu.addCommand(PanmirrorCommands.Image);
       insertMenu.addCommand(PanmirrorCommands.Link);
       insertMenu.addCommand(PanmirrorCommands.TableInsertTable, "Table...");
@@ -235,8 +239,9 @@ public class PanmirrorToolbar extends SecondaryToolbar implements RequiresResize
       insertMenu.addSeparator();
       insertMenu.addCommand(PanmirrorCommands.HTMLComment);
       insertMenu.addSeparator();
-      insertMenu.addCommand(PanmirrorCommands.RmdChunk);
+      insertMenu.addCommand(PanmirrorCommands.InsertDiv);
       insertMenu.addCommand(PanmirrorCommands.YamlMetadata);
+      insertMenu.addSeparator();
       insertMenu.addCommand(PanmirrorCommands.Shortcode);
       insertMenu.addSeparator();
       if (haveAnyOf(PanmirrorCommands.DefinitionList,

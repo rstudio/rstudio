@@ -104,7 +104,7 @@ public class PanmirrorToolbarCommands
       add(PanmirrorCommands.HTMLComment, "Comment", icons.COMMENT);
       add(PanmirrorCommands.YamlMetadata, "YAML Block");
       add(PanmirrorCommands.Shortcode, "Shortcode");
-      add(PanmirrorCommands.RmdChunk, "Code Chunk");
+      add(PanmirrorCommands.RmdChunk, "R Code Chunk", icons.RMD_CHUNK);
       add(PanmirrorCommands.InsertDiv, "Div Block...");
       add(PanmirrorCommands.InlineMath, "Inline Math");
       add(PanmirrorCommands.DisplayMath, "Display Math");
