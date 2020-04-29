@@ -103,7 +103,7 @@ Error sendRequest(const FilePath& socketPath,
 Error sendRequest(const std::string& address,
                   const std::string& port,
                   bool useSsl,
-                  bool sslVerify,
+                  bool verifySslCerts,
                   const std::string& endpoint,
                   const http::Request& request,
                   json::Value* pResult)
@@ -112,7 +112,7 @@ Error sendRequest(const std::string& address,
 
    Error error;
    if (useSsl)
-      error = http::sendSslRequest(address, port, sslVerify, request, &response);
+      error = http::sendSslRequest(address, port, verifySslCerts, request, &response);
    else
       error = http::sendRequest(address, port, request, &response);
 
@@ -158,8 +158,8 @@ void sendRequestAsync(boost::asio::io_service& ioService,
 void sendRequestAsync(boost::asio::io_service& ioService,
                       const std::string& address,
                       const std::string& port,
-                      bool ssl,
-                      bool sslVerify,
+                      bool useSsl,
+                      bool verifySslCerts,
                       const std::string& endpoint,
                       const http::Request& request,
                       const RpcResultHandler& onResult,
@@ -167,12 +167,12 @@ void sendRequestAsync(boost::asio::io_service& ioService,
 {
    boost::shared_ptr<http::IAsyncClient> pClient;
 
-   if (ssl)
+   if (useSsl)
    {
       pClient.reset(new http::TcpIpAsyncClientSsl(ioService,
                                                   address,
                                                   port,
-                                                  sslVerify));
+                                                  verifySslCerts));
    }
    else
    {
@@ -242,22 +242,22 @@ void invokeRpcAsync(boost::asio::io_service& ioService,
 
 Error invokeRpc(const std::string& address,
                 const std::string& port,
-                bool ssl,
-                bool sslVerify,
+                bool useSsl,
+                bool verifySslCerts,
                 const std::string& endpoint,
                 const json::Object& request,
                 json::Value *pResult)
 {
    http::Request req;
    constructTcpRequest(address, endpoint, request, &req);
-   return sendRequest(address, port, ssl, sslVerify, endpoint, req, pResult);
+   return sendRequest(address, port, useSsl, verifySslCerts, endpoint, req, pResult);
 }
 
 void invokeRpcAsync(boost::asio::io_service& ioService,
                     const std::string& address,
                     const std::string& port,
-                    bool ssl,
-                    bool sslVerify,
+                    bool useSsl,
+                    bool verifySslCerts,
                     const std::string& endpoint,
                     const json::Object& request,
                     const RpcResultHandler& onResult,
@@ -265,7 +265,7 @@ void invokeRpcAsync(boost::asio::io_service& ioService,
 {
    http::Request req;
    constructTcpRequest(address, endpoint, request, &req);
-   sendRequestAsync(ioService, address, port, ssl, sslVerify, endpoint, req, onResult, onError);
+   sendRequestAsync(ioService, address, port, useSsl, verifySslCerts, endpoint, req, onResult, onError);
 }
 
 Error initialize()
