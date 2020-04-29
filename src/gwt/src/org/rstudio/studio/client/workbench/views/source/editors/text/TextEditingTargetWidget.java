@@ -1004,11 +1004,15 @@ public class TextEditingTargetWidget
          for (String pkg: packages)
             deps.add(Dependency.cranPackage(pkg));
          
+         String scriptName = StringUtil.isNullOrEmpty(docUpdateSentinel_.getPath()) ?
+            "R Script" :
+            FilePathUtils.friendlyFileName(docUpdateSentinel_.getPath());
+            
          // Install them using the dependency manager; provide a "prompt"
          // function that just accepts the list (since the user has already been
          // prompted here in the editor)
          RStudioGinjector.INSTANCE.getDependencyManager().withDependencies(
-               "Install " + FilePathUtils.friendlyFileName(docUpdateSentinel_.getPath()) + " dependencies", 
+               "Install " + scriptName + " dependencies", 
                (String dependencies, CommandWithArg<Boolean> result) -> result.execute(true),
                deps, false, null);
          hideWarningBar();
