@@ -117,6 +117,8 @@ public class UserInterfaceHighlighter
                @Override
                public void onError(ServerError error)
                {
+                  // Remove listener from this element and all other elements with the same query
+                  highlighter_.clearEvents();
                   Debug.logError(error);
                }
             });
@@ -125,22 +127,22 @@ public class UserInterfaceHighlighter
 
       private HandlerRegistration addListener()
       {
-         final JavaScriptObject functor = addEventListener(callback_, monitoredElement_);
+         final JavaScriptObject function = addEventListener(callback_, monitoredElement_);
 
          return new HandlerRegistration()
          {
             public void removeHandler()
             {
-               invokeFunctor(functor);
+               invokeJavaScriptFunction(function);
             }
          };
       }
 
       private native JavaScriptObject addEventListener(String code, Element el)/*-{
          var thiz = this;
-         var callback = function() {
+         var callback = $entry(function() {
             thiz.@org.rstudio.studio.client.workbench.UserInterfaceHighlighter.HighlightPair::executeCallback()();
-            };
+            });
          el.addEventListener("click", callback, true);
          el.addEventListener("focus", callback, true);
 
@@ -150,8 +152,8 @@ public class UserInterfaceHighlighter
          };
       }-*/;
 
-      private static native void invokeFunctor(JavaScriptObject functor)/*-{
-         functor();
+      private static native void invokeJavaScriptFunction(JavaScriptObject jsFunc)/*-{
+         jsFunc();
       }-*/;
 
       private final int index_;
@@ -416,7 +418,7 @@ public class UserInterfaceHighlighter
    // Private members ----
    
    private JsVector<HighlightQuery> highlightQueries_;
-   private ArrayList<Boolean> queryCallbackStatuses_;
+   private List<Boolean> queryCallbackStatuses_;
    private final List<HighlightPair> highlightPairs_;
    private final Timer repositionTimer_;
    private final MutationObserver observer_;
