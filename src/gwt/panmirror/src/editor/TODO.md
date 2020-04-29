@@ -10,11 +10,15 @@ pandoc schema: <https://github.com/jgm/pandoc-types/blob/master/Text/Pandoc/Defi
   from the syncOnIdle_ might overlap w/ the one from save or deactivate. Perhaps we 
   need to wrap this with an invalidation token?
 
-- Code Block menu can actually create inline code sometimes
+- Async UI functions and state shifting under dialog (e.g. via revert)
+  Options: 
+    * Use view directly
+    * Dismiss the dialog when state changes underneath?
+    * Track the current version of the state and no-op if changed
 
 - Should images with no explicit width/height show the natural width/height?
 
-- Put an image in a div -- how do you remove the div? It's now an inline image not a figure.
+- Put an image in a div -- It's now an inline image not a figure.
   How do you get a selection inside a div?
 
 - attr_edit still off in panmirror-next
@@ -43,12 +47,7 @@ Possibly have a special editing mode for thereoms?
 
 ## Future
 
-Revisit use of jsdiff (currently it can end up in a nearly endless loop calling execEditLength,
-see: https://github.com/kpdecker/jsdiff/issues/79). Seems like it's not endless per-se but
-gets exponentially worse with the size of the change.
-
-Alternative: https://github.com/jhchen/fast-diff
-https://github.com/google/diff-match-patch
+Async dialogs won't work with collab (b/c they could use an old state).
 
 Revisit doing smart patches of Prosemirror doc: https://github.com/rstudio/rstudio/tree/feature/panmirror-smart-patch
 
