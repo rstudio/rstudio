@@ -22,6 +22,9 @@ import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.DebouncedCommand;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.Pair;
+import org.rstudio.core.client.Rendezvous;
+import org.rstudio.core.client.SerializedCommand;
+import org.rstudio.core.client.SerializedCommandQueue;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.files.FileSystemItem;
@@ -64,7 +67,6 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Positio
 import org.rstudio.studio.client.workbench.views.source.model.DirtyState;
 import org.rstudio.studio.client.workbench.views.source.model.DocUpdateSentinel;
 import org.rstudio.studio.client.workbench.views.source.model.SourceServerOperations;
-
 
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.Scheduler;
@@ -165,38 +167,97 @@ public class TextEditingTargetVisualMode
    {
       syncToEditor(activatingEditor, null);
    }
-   
+
    public void syncToEditor(boolean activatingEditor, Command ready)
    {
-      // if panmirror is active then generate markdown & sync it to the editor
-      if (isPanmirrorActive() && (activatingEditor || isDirty_))
-      {
+      // This is an asynchronous task, that we want to behave in a mostly FIFO
+      // way when overlapping calls to syncToEditor are made.
+
+      // Each syncToEditor operation can be thought of as taking place in three
+      // phases:
+      //
+      // 1 - Synchronously gathering state from panmirror, and kicking off the
+      //     async pandoc operation
+      // 2 - The pandoc operation itself--this happens completely off the UI
+      //     thread (in a different process in fact)
+      // 3 - With the result from pandoc, do some synchronous processing, sync
+      //     the source editor, and invoke the `ready` parameter
+      //
+      // Part 2 is a "pure" operation so it doesn't matter when it runs. What
+      // matters is that phase 1 gathers state at the moment it's called, and
+      // if there are multiple operations in progress simultaneously, that the
+      // order in which different phase 3's are invoked reflect the order the
+      // operations were started. For example, if syncToEditor was called once
+      // (A) and then again (B), any of these sequences are fine:
+      //   A1->A2->A3->B1->B2->B3
+      //   A1->B1->A2->B2->A3->B3
+      // or even
+      //   A1->B1->B2->A2->A3->B3
+      // but NOT
+      //   A1->A2->B1->B2->B3->A3
+      //
+      // because if A1 comes before B1, then A3 must come before B3.
+
+      // Our plan of execution is:
+      // 1. Start the async operation
+      // 2a. Wait for the async operation to finish
+      // 2b. Wait for all preceding async operations to finish
+      // 3. Run our phase 3 logic and ready.execute()
+      // 4. Signal to the next succeeding async operation (if any) that we're
+      //    done
+
+      // We use syncToEditorQueue_ to enforce the FIFO ordering. Because we
+      // don't know whether the syncToEditorQueue_ or the pandoc operation will
+      // finish first, we use a Rendezvous object to make sure both conditions
+      // are satisfied before we proceed.
+      Rendezvous rv = new Rendezvous(2);
+
+      syncToEditorQueue_.addCommand(new SerializedCommand() {
+         @Override
+         public void onExecute(Command continuation)
+         {
+            // We pass false to arrive() because it's important to not invoke
+            // the continuation before our phase 3 work has completed; the whole
+            // point is to enforce ordering of phase 3.
+            rv.arrive(() -> {
+               continuation.execute();
+            }, false);
+         }
+      });
+
+      if (isPanmirrorActive() && (activatingEditor || isDirty_)) {
+         // set flags
+         isDirty_ = false;
+         
          withPanmirror(() -> {
-            getMarkdown(markdown -> { 
-               
-               if (markdown == null)
-                  return;
+            getMarkdown(markdown -> {
+               rv.arrive(() -> {
+                  if (markdown == null) {
+                     // note that ready.execute() is never called in the error case
+                     return;
+                  }
               
-               // determine changes
-               TextEditorContainer.Changes changes = toEditorChanges(markdown);
-               
-               // apply them 
-               getSourceEditor().applyChanges(changes, activatingEditor); 
-               
-               // set flags
-               isDirty_ = false;
-               
-               // callback
-               if (ready != null)
-                  ready.execute();
+                  // determine changes
+                  TextEditorContainer.Changes changes = toEditorChanges(markdown);
+                  
+                  // apply them 
+                  getSourceEditor().applyChanges(changes, activatingEditor); 
+                  
+                  // callback
+                  if (ready != null) {
+                     ready.execute();
+                  }
+               }, true);
             });
          });
-      }
-      // otherwise just return (no-op)
-      else
-      {
-         if (ready != null)
-            ready.execute();
+      } else {
+         // Even if ready is null, it's important to arrive() so the
+         // syncToEditorQueue knows it can continue
+         rv.arrive(() -> {
+            if (ready != null) {
+               ready.execute();
+            }
+         }, true);
       }
    }
 
@@ -1144,6 +1205,8 @@ public class TextEditingTargetVisualMode
    private ArrayList<AppCommand> disabledForVisualMode_ = new ArrayList<AppCommand>();
    
    private final ProgressPanel progress_;
+   
+   private SerializedCommandQueue syncToEditorQueue_ = new SerializedCommandQueue();
    
    private static final String RMD_VISUAL_MODE_LOCATION = "rmdVisualModeLocation";   
 }
