@@ -19,9 +19,9 @@ import { newlineInCode, exitCode } from 'prosemirror-commands';
 import { EditorState, Transaction, TextSelection } from 'prosemirror-state';
 import { EditorView } from 'prosemirror-view';
 
-import { findParentNodeOfType, setTextSelection } from 'prosemirror-utils';
+import { findParentNodeOfType } from 'prosemirror-utils';
 
-import { BlockCommand, EditorCommandId, ProsemirrorCommand } from '../api/command';
+import { BlockCommand, EditorCommandId, ProsemirrorCommand, toggleBlockType } from '../api/command';
 import { Extension } from '../api/extension';
 import { BaseKey } from '../api/basekeys';
 import { codeNodeSpec } from '../api/code';
@@ -29,7 +29,6 @@ import { PandocOutput, PandocTokenType, PandocExtensions } from '../api/pandoc';
 import { pandocAttrSpec, pandocAttrParseDom, pandocAttrToDomAttr, pandocAttrFrom } from '../api/pandoc_attr';
 import { PandocCapabilities } from '../api/pandoc_capabilities';
 import { EditorUI, CodeBlockProps, EditorUIContext } from '../api/ui';
-import { canInsertNode } from '../api/node';
 import { markIsActive } from '../api/mark';
 
 const extension = (
@@ -219,10 +218,10 @@ class CodeBlockFormatCommand extends ProsemirrorCommand {
 
 function codeBlockFormatCommandFn(pandocExtensions: PandocExtensions, ui: EditorUI, languages: string[]) {
   return (state: EditorState, dispatch?: (tr: Transaction) => void, view?: EditorView) => {
-    // enable if we are either inside a code block or we can insert a code block
+    // enable if we are either inside a code block or we can toggle to a code block
     const schema = state.schema;
     const codeBlock = findParentNodeOfType(schema.nodes.code_block)(state.selection);
-    if (!codeBlock && !canInsertNode(state, schema.nodes.code_block)) {
+    if (!codeBlock && !toggleBlockType(schema.nodes.code_block, schema.nodes.paragraph)(state)) {
       return false;
     }
 
@@ -257,16 +256,14 @@ function codeBlockFormatCommandFn(pandocExtensions: PandocExtensions, ui: Editor
             newProps.classes.unshift(result.lang);
           }
 
-          // edit or insert as appropriate
-          const tr = state.tr;
+          // edit or toggle as appropriate  
           if (codeBlock) {
+            const tr = state.tr;
             tr.setNodeMarkup(codeBlock.pos, schema.nodes.code_block, newProps);
+            dispatch(tr);
           } else {
-            const prevSel = tr.selection;
-            tr.replaceSelectionWith(schema.nodes.code_block.create(newProps));
-            setTextSelection(tr.mapping.map(prevSel.from), -1)(tr);
-          }
-          dispatch(tr);
+            toggleBlockType(schema.nodes.code_block, schema.nodes.paragraph, newProps)(state, dispatch, view);
+          } 
         }
       }
 
