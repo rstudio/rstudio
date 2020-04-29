@@ -37,7 +37,7 @@ public class PanmirrorEditAttrDialog extends ModalDialog<PanmirrorAttrEditResult
 { 
    public PanmirrorEditAttrDialog(
                String caption,
-               boolean removeEnabled,
+               String removeButtonCaption,
                PanmirrorAttrProps attr,
                OperationWithInput<PanmirrorAttrEditResult> operation)
    {
@@ -49,9 +49,9 @@ public class PanmirrorEditAttrDialog extends ModalDialog<PanmirrorAttrEditResult
        
       editAttr_.setAttr(attr);
       
-      if (removeEnabled)
+      if (removeButtonCaption != null)
       {
-         ThemedButton removeAttributesButton = new ThemedButton("Remove Attributes");
+         ThemedButton removeAttributesButton = new ThemedButton(removeButtonCaption);
          removeAttributesButton.addClickHandler((event) -> {
             PanmirrorAttrEditResult result = collectInput();
             result.action = "remove";
