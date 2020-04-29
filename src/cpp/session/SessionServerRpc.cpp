@@ -122,9 +122,9 @@ Error invokeServerRpc(const std::string& endpoint,
       else
       {
          // valid url - combine url path with requested endpoint
-         bool sslVerify = options().getOverlayOption(kRServerSslVerify) == "1";
+         bool verifySslCerts = options().getOverlayOption(kRServerVerifySslCerts) == "1";
          return socket_rpc::invokeRpc(url.hostname(), url.portStr(), url.protocol() == "https",
-                                      sslVerify, url.path() + endpoint, request, pResult);
+                                      verifySslCerts, url.path() + endpoint, request, pResult);
       }
    }
 }
@@ -180,12 +180,12 @@ void invokeServerRpcAsync(const std::string& endpoint,
       else
       {
          // valid url - combine url path with requested endpoint
-         bool sslVerify = options().getOverlayOption(kRServerSslVerify) == "1";
+         bool verifySslCerts = options().getOverlayOption(kRServerVerifySslCerts) == "1";
          return socket_rpc::invokeRpcAsync(s_ioService,
                                            url.hostname(),
                                            url.portStr(),
                                            url.protocol() == "https",
-                                           sslVerify,
+                                           verifySslCerts,
                                            url.path() + endpoint,
                                            request,
                                            onResult,
