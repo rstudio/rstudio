@@ -1763,6 +1763,17 @@ body.ubuntu_mono .searchBox {
    background-color: white;
 }
 
+.showFilePreFixed {
+   overflow-x: auto;
+   white-space: pre-wrap;
+   white-space: -moz-pre-wrap;
+   word-wrap: break-word;
+   -ms-user-select: text;
+   -moz-user-select: text;
+   -webkit-user-select: text;
+   user-select: text;
+}
+
 .fileUploadPanel {
    width: 350px;
 }
