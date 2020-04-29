@@ -137,6 +137,7 @@ public interface ThemeStyles extends CssResource
    
    String showFile();
    String showFileFixed();
+   String showFilePreFixed();
    
    String fileUploadPanel();
    String fileUploadField();

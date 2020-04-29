@@ -44,7 +44,8 @@ public class ShowContentDialog extends ModalDialogBase
       }
       else
       {
-         content_ = "<pre>" + content + "</pre>";
+         content_ = "<pre class=\"" + ThemeResources.INSTANCE.themeStyles().showFilePreFixed() +
+            "\">" + content + "</pre>";
          styleName_ = ThemeResources.INSTANCE.themeStyles().showFileFixed();
          isFixedFont_ = true;
       }
