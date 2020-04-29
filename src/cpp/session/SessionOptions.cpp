@@ -146,13 +146,6 @@ core::ProgramStatus Options::read(int argc, char * const argv[], std::ostream& o
       value<bool>(&logStderr_)->default_value(false),
       "write log entries to stderr");
 
-   // agreement
-   options_description agreement("agreement");
-   agreement.add_options()
-      ("agreement-file",
-      value<std::string>(&agreementFilePath_)->default_value(""),
-      "agreement file");
-
    // docs url
    options_description docs("docs");
    docs.add_options()
@@ -480,7 +473,6 @@ core::ProgramStatus Options::read(int argc, char * const argv[], std::ostream& o
    optionsDesc.commandLine.add(runScript);
    optionsDesc.commandLine.add(program);
    optionsDesc.commandLine.add(log);
-   optionsDesc.commandLine.add(agreement);
    optionsDesc.commandLine.add(docs);
    optionsDesc.commandLine.add(www);
    optionsDesc.commandLine.add(session);
@@ -495,7 +487,6 @@ core::ProgramStatus Options::read(int argc, char * const argv[], std::ostream& o
    // define groups included in config-file processing
    optionsDesc.configFile.add(program);
    optionsDesc.configFile.add(log);
-   optionsDesc.configFile.add(agreement);
    optionsDesc.configFile.add(docs);
    optionsDesc.configFile.add(www);
    optionsDesc.configFile.add(session);
@@ -605,7 +596,6 @@ core::ProgramStatus Options::read(int argc, char * const argv[], std::ostream& o
    
    // convert relative paths by completing from the app resource path
    resolvePath(resourcePath_, &rResourcesPath_);
-   resolvePath(resourcePath_, &agreementFilePath_);
    resolvePath(resourcePath_, &wwwLocalPath_);
    resolvePath(resourcePath_, &wwwSymbolMapsPath_);
    resolvePath(resourcePath_, &coreRSourcePath_);

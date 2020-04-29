@@ -1,7 +1,7 @@
 /*
  * SessionClientInit.hpp
  *
- * Copyright (C) 2009-19 by RStudio, PBC
+ * Copyright (C) 2009-20 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -19,7 +19,6 @@
 #include "SessionHttpMethods.hpp"
 #include "SessionDirs.hpp"
 
-#include "modules/SessionAgreement.hpp"
 #include "modules/SessionAuthoring.hpp"
 #include "modules/rmarkdown/SessionRMarkdown.hpp"
 #include "modules/connections/SessionConnections.hpp"
@@ -229,10 +228,6 @@ void handleClientInit(const boost::function<void()>& initFunction,
       LOG_ERROR(error);
    sessionInfo["source_documents"] = jsonDocs;
    
-   // agreement
-   sessionInfo["hasAgreement"] = modules::agreement::hasAgreement();
-   sessionInfo["pendingAgreement"] = modules::agreement::pendingAgreement();
-
    // docs url
    sessionInfo["docsURL"] = session::options().docsURL();
 

@@ -253,9 +253,6 @@ core::Error migratePrefs(const FilePath& src)
    std::string contextId = settings.get("contextIdentifier");
    if (!contextId.empty())
       destState[kContextId] = contextId;
-   std::string agreementHash = settings.get("agreedToHash");
-   if (!agreementHash.empty())
-      destState[kAgreementHash] = agreementHash;
    int handlerType = settings.getInt("errorHandlerType", 1);
    if (handlerType == 0)
       destState[kErrorHandlerType] = kErrorHandlerTypeMessage;
