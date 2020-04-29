@@ -6,15 +6,6 @@ pandoc schema: <https://github.com/jgm/pandoc-types/blob/master/Text/Pandoc/Defi
 
 ## TODO
 
-- getMarkdown from the source editor has an out-of-order issue b/c the fetch of source
-  from the syncOnIdle_ might overlap w/ the one from save or deactivate. Perhaps we 
-  need to wrap this with an invalidation token?
-
-- Async UI functions and state shifting under dialog (e.g. via revert)
-  Options: 
-    * Use view directly
-    * Dismiss the dialog when state changes underneath?
-    * Track the current version of the state and no-op if changed
 
 - Should images with no explicit width/height show the natural width/height?
 
