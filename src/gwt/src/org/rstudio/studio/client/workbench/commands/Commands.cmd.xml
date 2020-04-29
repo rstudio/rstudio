@@ -544,8 +544,6 @@ well as menu structures (for main menu and popup menus).
          <cmd refid="markdownHelp"/>
          <cmd refid="openRoxygenQuickReference"/>
          <separator/>
-         <cmd refid="rstudioAgreement"/>
-         <separator/>
          <menu label="Dia_gnostics">
             <cmd refid="showRequestLog"/>
             <cmd refid="showLogFiles"/>
@@ -3124,10 +3122,6 @@ well as menu structures (for main menu and popup menus).
         menuLabel="RStudio _Support"
         rebindable="false"
         windowMode="main"/>
-
-   <cmd id="rstudioAgreement"
-        menuLabel="RStudio Agreement"
-        rebindable="false"/>
 
     <cmd id="rstudioLicense"
         menuLabel="RStudio _License"

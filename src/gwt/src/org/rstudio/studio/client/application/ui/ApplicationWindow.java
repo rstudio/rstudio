@@ -115,18 +115,6 @@ public class ApplicationWindow extends Composite
       applicationHeader_.focusToolbar();
    }
 
-   @Override
-   public void showApplicationAgreement(String title,
-                                        String contents,
-                                        Operation doNotAcceptOperation,
-                                        Operation acceptOperation)
-   {
-      new ApplicationAgreementDialog(title,
-                                   contents,
-                                   doNotAcceptOperation,
-                                   acceptOperation).showModal();
-   }
-   
    public Widget getWidget()
    {
       return this;
