@@ -15,8 +15,8 @@
 
 import { NodeSpec, MarkSpec } from 'prosemirror-model';
 
-import { PandocToken } from './pandoc';
-import { extensionIfEnabled, Extension } from './extension';
+import { PandocToken, PandocExtensions } from './pandoc';
+import { extensionEnabled, extensionIfEnabled, Extension } from './extension';
 
 const PANDOC_ATTR_ID = 0;
 const PANDOC_ATTR_CLASSES = 1;
@@ -130,16 +130,22 @@ export function pandocAttrParseDom(el: Element, attrs: { [key: string]: string |
 }
 
 export function extensionIfPandocAttrEnabled(extension: Extension) {
-  return extensionIfEnabled(extension, [
-    'link_attributes',
-    'mmd_link_attributes',
-    'mmd_header_identifiers',
-    'header_attributes',
-    'fenced_code_attributes',
-    'inline_code_attributes',
-    'bracketed_spans',
-    'native_spans',
-    'fenced_divs',
-    'native_divs',
-  ]);
+  return extensionIfEnabled(extension, kPandocAttrExtensions);
 }
+
+export function pandocAttrEnabled(pandocExtensions: PandocExtensions) {
+  return extensionEnabled(pandocExtensions, kPandocAttrExtensions);
+}
+
+const kPandocAttrExtensions = [
+  'link_attributes',
+  'mmd_link_attributes',
+  'mmd_header_identifiers',
+  'header_attributes',
+  'fenced_code_attributes',
+  'inline_code_attributes',
+  'bracketed_spans',
+  'native_spans',
+  'fenced_divs',
+  'native_divs',
+];

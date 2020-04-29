@@ -154,7 +154,7 @@ public class PanmirrorDialogs {
    
    public Promise<PanmirrorAttrEditResult> editDiv(PanmirrorAttrProps attr, boolean removeEnabled)
    {
-      return editPanmirrorAttr("Section/Div Attributes", "Unwrap Div", attr);
+      return editPanmirrorAttr("Div Attributes", removeEnabled ? "Unwrap Div" : null, attr);
    }
 
 

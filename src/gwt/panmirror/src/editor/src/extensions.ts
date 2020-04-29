@@ -67,7 +67,6 @@ import behaviorClearFormatting from './behaviors/clear_formatting';
 
 // behaviors
 import behaviorSmarty from './behaviors/smarty';
-import behaviorAttrEdit from './behaviors/attr_edit/attr_edit';
 import behaviorAttrDuplicateId from './behaviors/attr_duplicate_id';
 import behaviorTrailingP from './behaviors/trailing_p';
 import behaviorOutline from './behaviors/outline';
@@ -100,9 +99,9 @@ import nodeLineBlock from './nodes/line_block';
 import nodeTable from './nodes/table/table';
 import nodeDefinitionList from './nodes/definition_list/definition_list';
 
-// plugin factories
+// extension/plugin factories
 import { codeMirrorPlugins } from './optional/codemirror/codemirror';
-import { attrEditDecorationPlugin } from './behaviors/attr_edit/attr_edit-decoration';
+import { attrEditExtension } from './behaviors/attr_edit/attr_edit';
 
 export function initExtensions(
   format: EditorFormat,
@@ -144,7 +143,6 @@ export function initExtensions(
   manager.register([
     // behaviors
     behaviorSmarty,
-    behaviorAttrEdit,
     behaviorAttrDuplicateId,
     behaviorTrailingP,
     behaviorOutline,
@@ -183,16 +181,17 @@ export function initExtensions(
     manager.register(extensions);
   }
 
+  // additional extensions dervied from other extensions 
+  // (e.g. extensions that have registered attr editors)
+  manager.register([
+    attrEditExtension(pandocExtensions, manager.attrEditors())
+  ]);
+
   // additional plugins derived from extensions
   const plugins: Plugin[] = [];
-
-  // codemirror code views
   if (options.codemirror) {
     plugins.push(...codeMirrorPlugins(manager.codeViews()));
   }
-
-  // attribute editor plugin
-  plugins.push(attrEditDecorationPlugin(ui, manager.attrEditors()));
 
   // register plugins
   manager.registerPlugins(plugins);

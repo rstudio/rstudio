@@ -74,7 +74,7 @@ const AttrEditDecoration: React.FC<AttrEditDecorationProps> = props => {
 
 const key = new PluginKey<DecorationSet>('attr_edit_decoration');
 
-class AttrEditDecorationPlugin extends Plugin<DecorationSet> {
+export class AttrEditDecorationPlugin extends Plugin<DecorationSet> {
   constructor(ui: EditorUI, editors: AttrEditOptions[]) {
     super({
       key,
@@ -104,8 +104,10 @@ class AttrEditDecorationPlugin extends Plugin<DecorationSet> {
                 }
                 return attrTags;
               });
-            editor.editFn = editor.editFn || attrEditCommandFn;
             editor.offset = editor.offset || { top: 0, right: 0 };
+
+            // get editFn
+            const editFn =  ((editorUI: EditorUI) => attrEditCommandFn(editorUI, editors));
 
             // get attrs/tags
             const node = parentWithAttrs.node;
@@ -144,7 +146,7 @@ class AttrEditDecorationPlugin extends Plugin<DecorationSet> {
                   <AttrEditDecoration
                     tags={tags}
                     attrs={attrs}
-                    editFn={editor.editFn!(ui)}
+                    editFn={editFn(ui)}
                     view={view}
                     ui={ui}
                     style={cssProps}
@@ -181,8 +183,4 @@ class AttrEditDecorationPlugin extends Plugin<DecorationSet> {
       },
     });
   }
-}
-
-export function attrEditDecorationPlugin(ui: EditorUI, editors: AttrEditOptions[]) {
-  return new AttrEditDecorationPlugin(ui, editors);
 }
