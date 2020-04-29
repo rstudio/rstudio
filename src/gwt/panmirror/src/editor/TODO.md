@@ -6,11 +6,7 @@ pandoc schema: <https://github.com/jgm/pandoc-types/blob/master/Text/Pandoc/Defi
 
 ## TODO
 
-
-- Should images with no explicit width/height show the natural width/height?
-
-- Put an image in a div -- It's now an inline image not a figure.
-  How do you get a selection inside a div?
+- reformat / sync to rstudio-internal (fix pink comments) 
 
 - attr_edit still off in panmirror-next
 
