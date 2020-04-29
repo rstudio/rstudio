@@ -82,6 +82,11 @@ const extension = (
               return null;
             }
           },
+          attrEditFn: codeBlockFormatCommandFn(
+                        pandocExtensions, 
+                        ui, 
+                        pandocCapabilities.highlight_languages
+                      ),
         },
 
         attr_edit: codeBlockAttrEdit(pandocExtensions, pandocCapabilities, ui),

@@ -38,6 +38,7 @@ import {
 } from './pandoc';
 
 import { AttrEditOptions } from './attr_edit';
+import { CommandFn } from './command';
 
 export interface PandocNode {
   readonly name: string;
@@ -56,6 +57,7 @@ export interface PandocNode {
 
 export interface CodeViewOptions {
   lang: (node: ProsemirrorNode, content: string) => string | null;
+  attrEditFn?: CommandFn;
   classes?: string[];
   borderColorClass?: string;
   firstLineMeta?: boolean;

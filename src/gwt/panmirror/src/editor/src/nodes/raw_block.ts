@@ -40,7 +40,7 @@ import { kHTMLFormat, kTexFormat, editRawBlockCommand, isRawHTMLFormat } from '.
 import { isSingleLineTex } from '../api/tex';
 import { PandocCapabilities } from '../api/pandoc_capabilities';
 
-const extension = (pandocExtensions: PandocExtensions, pandocCapabilities: PandocCapabilities): Extension | null => {
+const extension = (pandocExtensions: PandocExtensions, pandocCapabilities: PandocCapabilities, ui: EditorUI): Extension | null => {
   // requires either raw_attribute or raw_html
   if (!pandocExtensions.raw_attribute && !pandocExtensions.raw_html) {
     return null;
@@ -88,13 +88,14 @@ const extension = (pandocExtensions: PandocExtensions, pandocCapabilities: Pando
           lang: (node: ProsemirrorNode) => {
             return node.attrs.format;
           },
+          attrEditFn: editRawBlockCommand(ui, pandocCapabilities.output_formats),
           borderColorClass: 'pm-raw-block-border',
         },
 
         attr_edit: () => ({
           type: (schema: Schema) => schema.nodes.raw_block,
           tags: (node: ProsemirrorNode) => [node.attrs.format],
-          editFn: (ui: EditorUI) => editRawBlockCommand(ui, pandocCapabilities.output_formats),
+          editFn: () => editRawBlockCommand(ui, pandocCapabilities.output_formats),
         }),
 
         pandoc: {
@@ -124,7 +125,7 @@ const extension = (pandocExtensions: PandocExtensions, pandocCapabilities: Pando
       },
     ],
 
-    commands: (schema: Schema, ui: EditorUI) => {
+    commands: (schema: Schema) => {
       const commands: ProsemirrorCommand[] = [];
 
       if (pandocExtensions.raw_attribute) {
