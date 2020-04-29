@@ -78,19 +78,8 @@ public class Rendezvous
    {
       try
       {
-         this.joined.forEach(cmd ->
-         {
-            try
-            {
-               if (cmd == null) {
-                  Debug.log("GOT HERE");
-               }
-               cmd.execute();
-            } catch (Exception e) {
-               // TODO: Is this the right thing to do here?
-               Debug.logException(e);
-            }
-   
+         this.joined.forEach(cmd -> {
+            cmd.execute();  
          });
       }
       finally
