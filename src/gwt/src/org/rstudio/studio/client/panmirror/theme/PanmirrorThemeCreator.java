@@ -71,22 +71,8 @@ public class PanmirrorThemeCreator
       theme.linkTextColor = DomUtils.extractCssValue("ace_keyword", "color");
       theme.markupTextColor = DomUtils.extractCssValue("ace_markup ace_list ace_string", "color");
       
-      // hard code comment colors until themes are regenerated
-      if (solarizedLight)
-      {
-         theme.commentColor = "#5A776B";
-         theme.commentBackgroundColor = "#FAE5B7";
-      }
-      else if (aceTheme.isDark())
-      {
-         theme.commentColor = "#4D4333";
-         theme.commentBackgroundColor = "#D1B78A";
-      }
-      else
-      {
-         theme.commentColor = "#3c4c72";
-         theme.commentBackgroundColor = "#FFECCB";
-      }
+      theme.commentColor = DomUtils.extractCssValue("ace_comment-highlight", "color");
+      theme.commentBackgroundColor = DomUtils.extractCssValue("ace_comment-highlight", "backgroundColor");
       
       JsArrayString findTextClasses = JsArrayString.createArray().cast();
       findTextClasses.push("ace_marker-layer");
