@@ -61,6 +61,10 @@ h3.pm-heading {
   max-width: 100%;
 }
 
+.pm-image-preview img {
+  max-width: 100%;
+}
+
 .pm-div {
   padding: 1em;
   margin-block-end: 1em;
