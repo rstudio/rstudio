@@ -6,12 +6,39 @@ pandoc schema: <https://github.com/jgm/pandoc-types/blob/master/Text/Pandoc/Defi
 
 ## TODO
 
-Goldmark engine
+Backtick code blocks w/ no fenced code attributes don't get an edit button
 
-MathJax preview. When containing the selection, the math will show both the code and the preview. When not containing the selection will show the preview. (so probably require a node view for this). Consider a “done” gesture for display math. May need to bring back
+Extension raw_attribute not supported for gfm -- error
+
+Edit props button goes off the right for long link
+
+Task lists getting extra bullet (check recent change to list css)
+
+Table column alignment is applying to cols 2 and 3 even though only col 2 selected
+
+Dragging RStudio logo from https://www.google.com/search?q=rstudio+logo&rlz=1C5CHFA_enUS876US876&tbm=isch&source=iu&ictx=1&fir=8E1_BBssraY4wM%253A%252CXPdzCFYOHCtk2M%252C_&vet=1&usg=AI4_-kRG-CQGiFkAxrnefmboFqB3d_U_Vw&sa=X&ved=2ahUKEwiBm6yR7pDpAhWalnIEHQ55COsQ9QEwAHoECAoQIg#imgrc=ZCE4td9TNKG2ZM
+should strip these: data-noaft="1" jsname="HiaYvf" jsaction="load:XAeZkd;"
+
+Blogdown/Goldmark:
+
+- Browsing for images: static, assets, and page bundles
+  https://github.com/tidymodels/tidymodels.org/tree/master/content/start/case-study
+
+- Doubling up of second quote in goldmark (goldmark bug?)
+
+- Auto-detect when unsafe enabled and turn on raw html in that case. 
+  https://github.com/tidymodels/tidymodels.org/blob/master/config.toml#L46-L47
+  Perhaps consider round-tripping raw_html no matter what?
+
+- We can't read the format comment in goldmark b/c raw_html is off!!!!
+
+
+Math:
+
+- MathJax preview. When containing the selection, the math will show both the code and the preview. When not containing the selection will show the preview. (so probably require a node view for this). Consider a “done” gesture for display math. May need to bring back
 escaping of $ in math as this mode will clearly not be "source mode" style latex equation editing
 
-Possibly have a special editing mode for thereoms?
+- Possibly have a special editing mode for thereoms?
 
 ## Docs
 
