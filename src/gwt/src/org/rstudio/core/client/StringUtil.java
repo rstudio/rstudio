@@ -944,6 +944,40 @@ public class StringUtil
       return getExtension(string, 1);
    }
    
+   public static String getCssIdentifier(String string)
+   {
+      // Each character must be one of the following:
+      // alphanumeric, an ISO 10646 character U+00A0 or higher, a hyphen, or an underscore.
+      // Identifiers cannot start with a hyphen, two hyphens, or a hyphen followed by a digit.
+      // This implementation considers escaped characters invalid.
+      // If an invalid character is found, it is replaced with an 'x'.
+      
+
+      // return the string if it's already valid,
+      // otherwise replace invalid characters with 'x'
+      Pattern pattern =
+         Pattern.create("(^[a-zA-Z][a-zA-Z0-9\\-\\_]+$)|(^-[a-zA-Z][a-zA-Z0-9\\-\\_]+$)");
+      if (pattern.test(string))
+         return string;
+      else
+      {
+         StringBuilder builder = new StringBuilder();
+         for (int i = 0; i < string.length(); i++)
+         {
+            char c = string.charAt(i);
+            if (c == '_' ||
+                c > 0x00A0 ||
+                (c >= 'a' && c <= 'z') ||
+                (c >= 'A' && c <= 'Z') ||
+                (i > 0 && (c == '-' || (c >= '0' && c <= '9'))))
+               builder.append(c);
+            else
+               builder.append("x");
+         }
+         return builder.toString();
+      }
+   }
+
    public static String getToken(String string,
                                  int pos,
                                  String tokenRegex,

@@ -24,6 +24,7 @@ import org.rstudio.core.client.regex.Match;
 import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
+import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkContextUi;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -141,39 +142,6 @@ public class DefaultChunkOptionsPopupPanel extends ChunkOptionsPopupPanel
       return label;
    }
    
-   private String extractChunkLabel(String extractedChunkHeader)
-   {
-      // if there are no spaces within the chunk header,
-      // there cannot be a label
-      int firstSpaceIdx = extractedChunkHeader.indexOf(' ');
-      if (firstSpaceIdx == -1)
-         return "";
-      
-      // find the indices of the first '=' and ',' characters
-      int firstEqualsIdx = extractedChunkHeader.indexOf('=');
-      int firstCommaIdx  = extractedChunkHeader.indexOf(',');
-      
-      // if we found neither an '=' nor a ',', then the label
-      // must be all the text following the first space
-      if (firstEqualsIdx == -1 && firstCommaIdx == -1)
-         return extractedChunkHeader.substring(firstSpaceIdx + 1).trim();
-      
-      // if we found an '=' before we found a ',' (or we didn't find
-      // a ',' at all), that implies a chunk header like:
-      //
-      //    ```{r message=TRUE, echo=FALSE}
-      //
-      // and so there is no label.
-      if (firstCommaIdx == -1)
-         return "";
-         
-      if (firstEqualsIdx != -1 && firstEqualsIdx < firstCommaIdx)
-         return "";
-      
-      // otherwise, the text from the first space to that comma gives the label
-      return extractedChunkHeader.substring(firstSpaceIdx + 1, firstCommaIdx).trim();
-   }
-   
    private void parseChunkHeader(String line, HashMap<String, String> chunkOptions)
    {
       String modeId = display_.getModeId();
@@ -194,9 +162,9 @@ public class DefaultChunkOptionsPopupPanel extends ChunkOptionsPopupPanel
       String extracted = match.getGroup(1);
       chunkPreamble_ = extractChunkPreamble(extracted, modeId);
       
-      String chunkLabel = extractChunkLabel(extracted);
+      String chunkLabel = ChunkContextUi.extractChunkLabel(extracted);
       if (!StringUtil.isNullOrEmpty(chunkLabel))
-         tbChunkLabel_.setText(extractChunkLabel(extracted));
+         tbChunkLabel_.setText(ChunkContextUi.extractChunkLabel(extracted));
       
       // if we had a chunk label, then we want to navigate our cursor to
       // the first comma in the chunk header; otherwise, we start at the

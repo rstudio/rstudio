@@ -15,6 +15,7 @@
 package org.rstudio.studio.client.workbench.views.source.editors.text.rmd;
 
 import org.rstudio.core.client.BrowseCap;
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.widget.ToolbarPopupMenu;
@@ -108,7 +109,8 @@ public class ChunkContextToolbar extends Composite
    
    public void setId(String id)
    {
-      this.getElement().setPropertyString("id", id);
+      this.getElement().setPropertyString("id",
+                                          StringUtil.getCssIdentifier(id));
    }
 
    // Private methods ---------------------------------------------------------
