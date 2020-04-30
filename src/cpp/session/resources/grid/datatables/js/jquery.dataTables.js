@@ -1636,7 +1636,7 @@
     if ( row.nTr === null )
     {
       nTr = nTrIn || document.createElement('tr');
-      nTr.setAttribute("data-row", iRow);
+      nTr.setAttribute("data-row", iRow + oSettings._iDisplayStart);
 
       row.nTr = nTr;
       row.anCells = cells;

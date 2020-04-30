@@ -307,16 +307,25 @@ Scroller.prototype = /** @lends Scroller.prototype */{
 	 */
 	"fnFirstAndLastVisibleCells": function()
 	{
-		var scrollBody = document.getElementsByClassName("dataTables_scrollBody")[0].getBoundingClientRect();
+		var scrollBody = document.getElementsByClassName("dataTables_scrollBody")[0];
+		var scrollBodyRect = scrollBody.getBoundingClientRect();
 
 		// we shift our selection x over a few pixels due to some invisible divs dataTables adds
-		var topCell = document.elementFromPoint(3, scrollBody.top + 1);
-		var bottomCell = document.elementFromPoint(3, scrollBody.bottom - 1);
+		var topCell = document.elementFromPoint(3, scrollBodyRect.top + 1);
+
+		// if the horizontal scrollbar is visible we could accidentally hit scrollbody
+		// try grabbing from one cell height up (if within bounds)
+		var bottomCell = document.elementFromPoint(3, scrollBodyRect.bottom - 1);
+		if (bottomCell === scrollBody &&
+			 (scrollBodyRect.bottom - 1 - this.s.heights.row) > scrollBodyRect.top + 1) {
+			bottomCell = document.elementFromPoint(3, scrollBodyRect.bottom - 1 - this.s.heights.row);
+		}
 
 		// if a child of the row element was grabbed, traverse up to the row
 		if (!!topCell && topCell.tagName !== "TR") {
 			topCell = topCell.closest("tr");
 		}
+
 		if (!!bottomCell && bottomCell.tagName !== "TR") {
 			bottomCell = bottomCell.closest("tr");
 		}
