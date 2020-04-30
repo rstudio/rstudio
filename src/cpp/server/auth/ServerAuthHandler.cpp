@@ -25,6 +25,7 @@
 #include <core/json/JsonRpc.hpp>
 #include <core/system/FileMode.hpp>
 #include <core/system/PosixUser.hpp>
+#include <core/system/PosixSystem.hpp>
 #include <core/Thread.hpp>
 
 #include <server/ServerConstants.hpp>
@@ -445,61 +446,30 @@ Error initialize()
 {
    // initialize by loading the current contents of the revocation list into memory
 
-   // create revocation list directory and ensure the server user has permission to write to it
    FilePath rootDir = options().authRevocationListDir();
-   Error error = rootDir.ensureDirectory();
-   if (error)
-   {
-      LOG_ERROR_MESSAGE("Could not create revocation list directory " + rootDir.getAbsolutePath());
-      return error;
-   }
-
-   if (core::system::effectiveUserIsRoot())
-   {
-      error = file_utils::changeOwnership(rootDir, options().serverUser());
-      if (error)
-      {
-         error.addProperty("description",
-                           "Could not change owner for path " + rootDir.getAbsolutePath() +
-                              ". Is root squash enabled?");
-         LOG_ERROR(error);
-      }
-   }
-
    s_revocationList = rootDir.completeChildPath("revocation-list");
    s_revocationLockFile = rootDir.completeChildPath("revocation-list.lock");
 
-   // create a file lock to gain exclusive access to the revocation list
-   boost::shared_ptr<FileLock> lock = FileLock::createDefault();
-   int numTries = 0;
-
-   while (numTries < 30)
+   // first, if we are running as root, attempt to fixup the user/permissions on the
+   // revocation list files - we attempt to do this to be more flexible in allowing
+   // admins to change the server-user when convenient
+   if (core::system::effectiveUserIsRoot())
    {
-      ScopedFileLock fileLock(lock, s_revocationLockFile);
-      Error error = fileLock.error();
-      if (error)
+      if (rootDir.exists())
       {
-         // if we could not acquire the lock, some other rserver process has
-         // keep trying for some time before giving up
-         ++numTries;
-         boost::this_thread::sleep(boost::posix_time::seconds(1));
-         continue;
+         Error error = file_utils::changeOwnership(rootDir, options().serverUser());
+         if (error)
+         {
+            error.addProperty("description",
+                              "Could not change owner for path " + rootDir.getAbsolutePath() +
+                                 ". Is root squash enabled?");
+            LOG_ERROR(error);
+         }
       }
 
-      // successfully acquired lock
-      // create file if it does not exist
-      error = s_revocationList.ensureFile();
-      if (error)
+      if (s_revocationList.exists())
       {
-         LOG_ERROR_MESSAGE("Could not create revocation list");
-         return error;
-      }
-
-      if (core::system::effectiveUserIsRoot())
-      {
-         // ensure revocation file is owned by the server user
-         // this ensures that it can be written to even when we drop privilege
-         error = file_utils::changeOwnership(s_revocationList, options().serverUser());
+         Error error = file_utils::changeOwnership(s_revocationList, options().serverUser());
          if (error)
          {
             error.addProperty("description",
@@ -509,33 +479,86 @@ Error initialize()
          }
       }
 
-      // ensure that only the server user can read/write to it, so other users of the system
-      // cannot muck with the contents!
-      error = core::system::changeFileMode(s_revocationList, core::system::UserReadWriteMode);
+      // now that we have attempted to fix up permissions on the files, lower privilege
+      // we want to ensure the files are created by the server user itself instead of root,
+      // as root is problematic (i.e. has no actual permissions) on root squash mounts
+      Error error = core::system::temporarilyDropPriv(options().serverUser());
       if (error)
-      {
-         error.addProperty("description", "Could not set revocation file permissions to 600 for file: " + s_revocationList.getAbsolutePath());
-         LOG_ERROR(error);
-      }
-
-      // read the current revocation list into memory
-      std::vector<std::string> revokedCookies;
-      error = readRevocationList(&revokedCookies);
-      if (error)
-      {
-         LOG_ERROR_MESSAGE("Could not read revocation list");
          return error;
-      }
+   }
 
-      for (const std::string& cookie : revokedCookies)
-         insertRevokedCookie(RevokedCookie(cookie));
+   // create revocation list directory and ensure the server user has permission to write to it
+   Error error = rootDir.ensureDirectory();
+   if (error)
+   {
+      LOG_ERROR_MESSAGE("Could not create revocation list directory " + rootDir.getAbsolutePath());
+      return error;
+   }
 
-      // write the contents back out to file as stale entries have been removed
-      error = writeStringVectorToFile(s_revocationList, revokedCookies);
-      if (error)
+   // create a file lock to gain exclusive access to the revocation list
+   boost::shared_ptr<FileLock> lock = FileLock::createDefault();
+   int numTries = 0;
+
+   while (numTries < 30)
+   {
+      {  // begin scope for ScopedFileLock
+         ScopedFileLock fileLock(lock, s_revocationLockFile);
+         Error error = fileLock.error();
+         if (error)
+         {
+            // if we could not acquire the lock, some other rserver process has
+            // keep trying for some time before giving up
+            ++numTries;
+            boost::this_thread::sleep(boost::posix_time::seconds(1));
+            continue;
+         }
+
+         // successfully acquired lock
+         // create file if it does not exist
+         error = s_revocationList.ensureFile();
+         if (error)
+         {
+            LOG_ERROR_MESSAGE("Could not create revocation list");
+            return error;
+         }
+
+         // ensure that only the server user can read/write to it, so other users of the system
+         // cannot muck with the contents!
+         error = core::system::changeFileMode(s_revocationList, core::system::UserReadWriteMode);
+         if (error)
+         {
+            error.addProperty("description", "Could not set revocation file permissions to 600 for file: " + s_revocationList.getAbsolutePath());
+            LOG_ERROR(error);
+         }
+
+         // read the current revocation list into memory
+         std::vector<std::string> revokedCookies;
+         error = readRevocationList(&revokedCookies);
+         if (error)
+         {
+            LOG_ERROR_MESSAGE("Could not read revocation list");
+            return error;
+         }
+
+         for (const std::string& cookie : revokedCookies)
+            insertRevokedCookie(RevokedCookie(cookie));
+
+         // write the contents back out to file as stale entries have been removed
+         error = writeStringVectorToFile(s_revocationList, revokedCookies);
+         if (error)
+         {
+            LOG_ERROR_MESSAGE("Could not write to revocation list");
+            return error;
+         }
+      }  // end scope for ScopedFileLock
+
+      // now that basic auth has been fully initialized, restore root privilege
+      // so the rest of initialization routines have proper permissions
+      if (core::system::realUserIsRoot())
       {
-         LOG_ERROR_MESSAGE("Could not write to revocation list");
-         return error;
+         error = core::system::restorePriv();
+         if (error)
+            return error;
       }
 
       return overlay::initialize();
