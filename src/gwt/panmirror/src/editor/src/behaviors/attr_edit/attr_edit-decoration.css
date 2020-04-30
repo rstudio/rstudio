@@ -45,7 +45,7 @@
 .pm-attr-edit-decoration .attr-edit-button .attr-edit-button-ellipsis {
   display: inline-block;
   width: 18px;
-  transform: scale(0.6, 0.6);
+  transform: scale(0.5, 0.5);
   font-weight: lighter;
   letter-spacing: 0;
 }

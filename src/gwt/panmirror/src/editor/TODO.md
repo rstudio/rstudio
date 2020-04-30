@@ -6,26 +6,21 @@ pandoc schema: <https://github.com/jgm/pandoc-types/blob/master/Text/Pandoc/Defi
 
 ## TODO
 
-## Docs
-
-Various missing docs sections
-
-Bookdown & Blogdown docs:
-  - Math in code
-  - @ref has no \
-  - Heading parts (need to explicitly use .unnumbered and don't use the \* escape)
-  - Using blackfriday explicitly
-  - Setting the doctype(s) explicitly (should xref be a doctype or should it be distill)
-
-
-Alison on blogdown engines, etc.
+Goldmark engine
 
 MathJax preview. When containing the selection, the math will show both the code and the preview. When not containing the selection will show the preview. (so probably require a node view for this). Consider a “done” gesture for display math. May need to bring back
 escaping of $ in math as this mode will clearly not be "source mode" style latex equation editing
 
 Possibly have a special editing mode for thereoms?
 
+## Docs
+
+
+
+
 ## Future
+
+Parse plain text for markdown
 
 Async dialogs won't work with collab (b/c they could use an old state).
 
@@ -33,10 +28,20 @@ Revisit doing smart patches of Prosemirror doc: https://github.com/rstudio/rstud
 
 Consider porting https://gitlab.com/mpapp-public/manuscripts-symbol-picker
 
+Fixed size tables (with last column resized) overflow-x when editing
+container is made very small.
+
 Keyboard selection of image node (arrow handlers)
 Also backspace handler for paragraph just after an image (currently deletes image)
 
+You can arrow horizontally into figure captions within tables (e.g. put 3
+images in cells of the same row)
+
 Tab key handling for image shelf
+
+Tables must have some sort of arrow key handler that is causing us to 
+enter an empty table caption directly above the table (doesn't happen
+with paragraphs, etc.)
 
 Markup extension filtering (e.g. shortcodes) might be better done in Lua
 

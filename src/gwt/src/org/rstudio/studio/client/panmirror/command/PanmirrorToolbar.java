@@ -233,17 +233,7 @@ public class PanmirrorToolbar extends SecondaryToolbar implements RequiresResize
       insertMenu.addSeparator();
       insertMenu.addCommand(PanmirrorCommands.Image);
       insertMenu.addCommand(PanmirrorCommands.Link);
-      insertMenu.addCommand(PanmirrorCommands.TableInsertTable, "Table...");
-      insertMenu.addSeparator();
       insertMenu.addCommand(PanmirrorCommands.HorizontalRule);
-      insertMenu.addSeparator();
-      insertMenu.addCommand(PanmirrorCommands.HTMLComment);
-      insertMenu.addSeparator();
-      insertMenu.addCommand(PanmirrorCommands.CodeBlockInsert);
-      insertMenu.addCommand(PanmirrorCommands.InsertDiv);
-      insertMenu.addCommand(PanmirrorCommands.YamlMetadata);
-      insertMenu.addSeparator();
-      insertMenu.addCommand(PanmirrorCommands.Shortcode);
       insertMenu.addSeparator();
       if (haveAnyOf(PanmirrorCommands.DefinitionList,
                     PanmirrorCommands.DefinitionTerm,
@@ -254,8 +244,8 @@ public class PanmirrorToolbar extends SecondaryToolbar implements RequiresResize
          definitionMenu.addSeparator();
          definitionMenu.addCommand(PanmirrorCommands.DefinitionTerm);
          definitionMenu.addCommand(PanmirrorCommands.DefinitionDescription);
-         insertMenu.addSeparator();
       }
+      insertMenu.addSeparator();
       insertMenu.addCommand(PanmirrorCommands.InlineMath);
       insertMenu.addCommand(PanmirrorCommands.DisplayMath);
       insertMenu.addSeparator();
@@ -264,6 +254,15 @@ public class PanmirrorToolbar extends SecondaryToolbar implements RequiresResize
       insertMenu.addCommand(PanmirrorCommands.Footnote);
       insertMenu.addCommand(PanmirrorCommands.Citation);
       insertMenu.addSeparator();
+      insertMenu.addCommand(PanmirrorCommands.InsertDiv);
+      insertMenu.addCommand(PanmirrorCommands.CodeBlockInsert);
+      insertMenu.addCommand(PanmirrorCommands.YamlMetadata);
+      insertMenu.addSeparator();
+      insertMenu.addCommand(PanmirrorCommands.Shortcode);
+      insertMenu.addSeparator();
+      insertMenu.addCommand(PanmirrorCommands.HTMLComment);
+  
+   
       
       return insertMenu;
    }
