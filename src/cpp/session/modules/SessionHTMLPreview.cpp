@@ -1077,7 +1077,7 @@ SEXP rs_showPageViewer(SEXP urlSEXP, SEXP titleSEXP, SEXP selfContainedSEXP)
       else
          return r::sexp::create(url, &rProtect);
    }
-   catch(r::exec::RErrorException e)
+   catch(r::exec::RErrorException& e)
    {
       r::exec::error(e.message());
    }
