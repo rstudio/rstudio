@@ -103,7 +103,7 @@ const extension = (pandocExtensions: PandocExtensions): Extension => {
           ],
           toDOM(node) {
             const attrs: any = {
-              class: 'pm-list-item'
+              class: 'pm-list-item',
             };
             if (capabilities.tasks && node.attrs.checked !== null) {
               attrs['data-checked'] = node.attrs.checked ? 'true' : 'false';

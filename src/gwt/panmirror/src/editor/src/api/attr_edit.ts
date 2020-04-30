@@ -23,7 +23,7 @@ export interface AttrEditOptions {
   tags?: (node: ProsemirrorNode) => string[];
   editFn?: (ui: EditorUI) => CommandFn;
   offset?: {
-    top: number,
-    right: number
+    top: number;
+    right: number;
   };
 }

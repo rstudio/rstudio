@@ -75,7 +75,7 @@ const extension: Extension = {
 
       attr_edit: () => ({
         type: (schema: Schema) => schema.nodes.div,
-        editFn: (ui: EditorUI) => divCommand(ui, true)
+        editFn: (ui: EditorUI) => divCommand(ui, true),
       }),
 
       pandoc: {

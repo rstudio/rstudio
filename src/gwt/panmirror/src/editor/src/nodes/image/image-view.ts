@@ -310,14 +310,13 @@ export class ImageNodeView implements NodeView {
   }
 
   private manageFigcaption() {
-
     // hide the figcaption if appropriate
     const noImplicitFigures = !this.implicitFigures;
     const emptyFigcaption = this.figcaption && this.node.textContent.length === 0;
     const selection = this.view.state.selection;
     const selectionInFigcaption = selection.empty && selection.$head.node() === this.node;
     const hide = noImplicitFigures || (emptyFigcaption && !selectionInFigcaption);
-    
+
     // hide or show if we have a figcaption
     if (this.figcaption) {
       if (noImplicitFigures) {

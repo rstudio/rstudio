@@ -1,14 +1,17 @@
-
 import { Node as ProsemirrorNode } from 'prosemirror-model';
 import { EditorView } from 'prosemirror-view';
 import { setTextSelection, NodeWithPos, findChildrenByType } from 'prosemirror-utils';
 
 import { bodyElement } from './dom';
 import { kAddToHistoryTransaction, kRestoreLocationTransaction } from './transaction';
-import { EditorOutlineItemType, kYamlMetadataOutlineItenItem, kHeadingOutlineItemType, kRmdchunkOutlineItemType } from './outline';
+import {
+  EditorOutlineItemType,
+  kYamlMetadataOutlineItenItem,
+  kHeadingOutlineItemType,
+  kRmdchunkOutlineItemType,
+} from './outline';
 import { EditorState } from 'prosemirror-state';
 import { findTopLevelBodyNodes } from './node';
-
 
 export interface EditingLocation {
   pos: number;
@@ -26,7 +29,6 @@ export interface EditingOutlineLocation {
   items: EditingOutlineLocationItem[];
 }
 
-
 export function getEditingLocation(view: EditorView): EditingLocation {
   const pos = view.state.selection.from;
   const bodyEl = bodyElement(view);
@@ -35,28 +37,25 @@ export function getEditingLocation(view: EditorView): EditingLocation {
 }
 
 export function setEditingLocation(
-  view: EditorView, 
-  outlineLocation?: EditingOutlineLocation, 
-  previousLocation?: EditingLocation, 
-  scrollIntoView = true
+  view: EditorView,
+  outlineLocation?: EditingOutlineLocation,
+  previousLocation?: EditingLocation,
+  scrollIntoView = true,
 ) {
-
   // restore position and scrollTop
   let restorePos: number | null = null;
   let restoreScrollTop = -1;
 
   // see we if we can match an outline location
   if (outlineLocation) {
-
     // get the current document outline
     const documentOutline = getDocumentOutline(view.state);
 
     // if all of the types and levels match up to the active outline item,
     // then we have a candidate match
     let docOutlineLocationNode: NodeWithPos | undefined;
-   
-    for (let i = 0; i<outlineLocation.items.length && i<documentOutline.length; i++) {
-      
+
+    for (let i = 0; i < outlineLocation.items.length && i < documentOutline.length; i++) {
       // get the item and it's peer
       const item = outlineLocation.items[i];
       const docOutlineNode = documentOutline[i];
@@ -65,13 +64,12 @@ export function setEditingLocation(
       if (!outlineItemSimillarToNode(item, docOutlineNode.node)) {
         break;
       }
-      
-      // if this is the active item 
-      if (item.active) {
 
+      // if this is the active item
+      if (item.active) {
         // see if the previous location is actually a better target (because it's
         // between this location and the next outline node)
-        if (!locationIsBetweenDocOutlineNodes(docOutlineNode, documentOutline[i+1], previousLocation)) {
+        if (!locationIsBetweenDocOutlineNodes(docOutlineNode, documentOutline[i + 1], previousLocation)) {
           // set the target
           docOutlineLocationNode = docOutlineNode;
 
@@ -84,7 +82,7 @@ export function setEditingLocation(
             }
           }
         }
-        
+
         break;
       }
     }
@@ -124,13 +122,11 @@ export function setEditingLocation(
   }
 }
 
-
 // get a document outline that matches the scheme provided in EditingOutlineLocation:
 //  - yaml metadata blocks
 //  - top-level headings
-//  - rmd chunks at the top level or within a top-level list 
+//  - rmd chunks at the top level or within a top-level list
 function getDocumentOutline(state: EditorState) {
-
   // get top level body nodes
   const schema = state.schema;
   const bodyNodes = findTopLevelBodyNodes(state.doc, node => {
@@ -139,8 +135,7 @@ function getDocumentOutline(state: EditorState) {
       schema.nodes.rmd_chunk,
       schema.nodes.heading,
       schema.nodes.bullet_list,
-      schema.nodes.ordered_list
-
+      schema.nodes.ordered_list,
     ].includes(node.type);
   });
 
@@ -149,18 +144,17 @@ function getDocumentOutline(state: EditorState) {
   bodyNodes.forEach(bodyNode => {
     // explode lists
     if ([schema.nodes.bullet_list, schema.nodes.ordered_list].includes(bodyNode.node.type)) {
-
       // look for rmd chunks within list items (non-recursive, only want top level)
       findChildrenByType(bodyNode.node, schema.nodes.list_item, false).forEach(listItemNode => {
         findChildrenByType(listItemNode.node, schema.nodes.rmd_chunk, false).forEach(rmdChunkNode => {
           outlineNodes.push({
             node: rmdChunkNode.node,
-            pos: bodyNode.pos + 1 + listItemNode.pos + 1 + rmdChunkNode.pos
+            pos: bodyNode.pos + 1 + listItemNode.pos + 1 + rmdChunkNode.pos,
           });
         });
       });
 
-    // other nodes go straight through
+      // other nodes go straight through
     } else {
       outlineNodes.push(bodyNode);
     }
@@ -168,7 +162,6 @@ function getDocumentOutline(state: EditorState) {
 
   // return outline nodes
   return outlineNodes;
-
 }
 
 function outlineItemSimillarToNode(outlineItem: EditingOutlineLocationItem, docOutlneNode: ProsemirrorNode) {
@@ -178,8 +171,7 @@ function outlineItemSimillarToNode(outlineItem: EditingOutlineLocationItem, docO
   } else if (outlineItem.type === kRmdchunkOutlineItemType) {
     return docOutlneNode.type === schema.nodes.rmd_chunk;
   } else if (outlineItem.type === kHeadingOutlineItemType) {
-    return docOutlneNode.type === schema.nodes.heading &&
-           docOutlneNode.attrs.level === outlineItem.level;
+    return docOutlneNode.type === schema.nodes.heading && docOutlneNode.attrs.level === outlineItem.level;
   } else {
     return false;
   }
@@ -190,5 +182,5 @@ function locationIsBetweenDocOutlineNodes(nodeA: NodeWithPos, nodeB?: NodeWithPo
   if (!nodeB || !location) {
     return false;
   }
-  return nodeA.pos < location.pos &&  nodeB.pos > location.pos;
+  return nodeA.pos < location.pos && nodeB.pos > location.pos;
 }

@@ -1,4 +1,3 @@
-
 /*
  * image-textsel.ts
  *
@@ -14,31 +13,32 @@
  *
  */
 
-import { EditorState, Transaction, NodeSelection } from "prosemirror-state";
-import { DecorationSet, Decoration } from "prosemirror-view";
-import { nodeDecoration } from "../../api/decoration";
-
+import { EditorState, Transaction, NodeSelection } from 'prosemirror-state';
+import { DecorationSet, Decoration } from 'prosemirror-view';
+import { nodeDecoration } from '../../api/decoration';
 
 export function imageTextSelectionInit(instance: EditorState) {
   return DecorationSet.empty;
 }
 
-export function imageTextSelectionApply(tr: Transaction, set: DecorationSet, oldState: EditorState, newState: EditorState) {
-  
+export function imageTextSelectionApply(
+  tr: Transaction,
+  set: DecorationSet,
+  oldState: EditorState,
+  newState: EditorState,
+) {
   // no decorations for empty or node selection
   if (tr.selection.empty || tr.selection instanceof NodeSelection) {
     return DecorationSet.empty;
   }
 
   const schema = newState.schema;
-  const decorations : Decoration[] = [];
+  const decorations: Decoration[] = [];
   tr.doc.nodesBetween(tr.selection.from, tr.selection.to, (node, pos) => {
     if ([schema.nodes.image, schema.nodes.figure].includes(node.type)) {
       decorations.push(nodeDecoration({ node, pos }, { class: 'pm-image-text-selection' }));
-    } 
+    }
   });
 
   return DecorationSet.create(tr.doc, decorations);
 }
-
-

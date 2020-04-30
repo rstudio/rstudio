@@ -83,11 +83,7 @@ const extension = (
               return null;
             }
           },
-          attrEditFn: codeBlockFormatCommandFn(
-                        pandocExtensions, 
-                        ui, 
-                        pandocCapabilities.highlight_languages
-                      ),
+          attrEditFn: codeBlockFormatCommandFn(pandocExtensions, ui, pandocCapabilities.highlight_languages),
         },
 
         attr_edit: codeBlockAttrEdit(pandocExtensions, pandocCapabilities, ui),
@@ -124,7 +120,7 @@ const extension = (
           schema.nodes.paragraph,
           {},
         ),
-        new CodeBlockInsertCommand(pandocExtensions, ui, pandocCapabilities.highlight_languages)
+        new CodeBlockInsertCommand(pandocExtensions, ui, pandocCapabilities.highlight_languages),
       ];
       if (hasAttr) {
         commands.push(new CodeBlockFormatCommand(pandocExtensions, ui, pandocCapabilities.highlight_languages));
@@ -179,7 +175,7 @@ class CodeBlockInsertCommand extends ProsemirrorCommand {
               insertCodeBlock(tr, applyProps);
               dispatch(tr);
             }
-            
+
             if (view) {
               view.focus();
             }
@@ -188,12 +184,10 @@ class CodeBlockInsertCommand extends ProsemirrorCommand {
 
         // prompt for code block lang/attribs
         if (hasFencedCodeBlocks(pandocExtensions)) {
-
           asyncEditCodeBlock();
 
-        // insert plain code block
+          // insert plain code block
         } else {
-         
           if (dispatch) {
             const tr = state.tr;
             insertCodeBlock(tr);
@@ -250,14 +244,14 @@ function codeBlockFormatCommandFn(pandocExtensions: PandocExtensions, ui: Editor
           // extract lang
           const applyProps = propsWithLangClass(result);
 
-          // edit or toggle as appropriate  
+          // edit or toggle as appropriate
           if (codeBlock) {
             const tr = state.tr;
             tr.setNodeMarkup(codeBlock.pos, schema.nodes.code_block, applyProps);
             dispatch(tr);
           } else {
             toggleBlockType(schema.nodes.code_block, schema.nodes.paragraph, applyProps)(state, dispatch, view);
-          } 
+          }
         }
       }
 

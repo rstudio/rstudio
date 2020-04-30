@@ -41,11 +41,10 @@ export interface AppendTransactionHandler {
   append: (tr: Transaction) => void;
 }
 
-// wrapper for transaction that is guaranteed not to modify the position of any 
+// wrapper for transaction that is guaranteed not to modify the position of any
 // nodes in the document (useful for grouping many disparate handlers that arne't
 // aware of each other's actions onto the same trasaction)
 export class MarkTransaction {
-  
   private tr: Transaction;
 
   constructor(tr: Transaction) {
@@ -53,7 +52,7 @@ export class MarkTransaction {
   }
   get doc(): ProsemirrorNode {
     return this.tr.doc;
-  } 
+  }
   get selection(): Selection {
     return this.tr.selection;
   }

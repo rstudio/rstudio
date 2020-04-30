@@ -54,7 +54,12 @@ export class PandocConverter {
   private readonly pandoc: PandocEngine;
   private readonly pandocCapabilities: PandocCapabilities;
 
-  constructor(schema: Schema, extensions: ExtensionManager, pandoc: PandocEngine, pandocCapabilities: PandocCapabilities) {
+  constructor(
+    schema: Schema,
+    extensions: ExtensionManager,
+    pandoc: PandocEngine,
+    pandocCapabilities: PandocCapabilities,
+  ) {
     this.schema = schema;
 
     this.preprocessors = extensions.pandocPreprocessors();
@@ -104,19 +109,18 @@ export class PandocConverter {
     pandocFormat: PandocFormat,
     options: PandocWriterOptions,
   ): Promise<string> {
-
     // generate pandoc ast
     const output = pandocFromProsemirror(
-      doc, 
-      this.pandocCapabilities.api_version, 
-      pandocFormat, 
-      this.nodeWriters, 
-      this.markWriters
+      doc,
+      this.pandocCapabilities.api_version,
+      pandocFormat,
+      this.nodeWriters,
+      this.markWriters,
     );
 
-    // adjust format. we always need to be able to write raw_attribute b/c that's how preprocessors 
+    // adjust format. we always need to be able to write raw_attribute b/c that's how preprocessors
     // hoist content through pandoc into our prosemirror token parser. since we open this door when
-    // reading, users could end up writing raw inlines, and in that case we want them to echo back 
+    // reading, users could end up writing raw inlines, and in that case we want them to echo back
     // to the source document just the way they came in.
     let format = this.adjustedFormat(pandocFormat.fullName, '+raw_attribute');
 

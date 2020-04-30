@@ -54,7 +54,7 @@ export function markPasteHandler(regexp: RegExp, type: MarkType, getAttrs: (s: s
     });
 
     regexp.lastIndex = 0;
-    
+
     return Fragment.fromArray(nodes);
   };
 

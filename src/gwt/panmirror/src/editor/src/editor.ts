@@ -89,7 +89,7 @@ const kMac = typeof navigator !== 'undefined' ? /Mac/.test(navigator.platform) :
 
 export interface EditorCode {
   code: string;
-  cursor?: { row: number, column: number };
+  cursor?: { row: number; column: number };
 }
 
 export interface EditorContext {
@@ -172,7 +172,7 @@ export class UITools {
     };
 
     this.source = {
-      diffChars
+      diffChars,
     };
   }
 }
@@ -430,7 +430,7 @@ export class Editor {
     return this.getMarkdownCode(this.state.doc, options);
   }
 
-  // flag indicating whether we've ever had setMarkdown (currently we need this 
+  // flag indicating whether we've ever had setMarkdown (currently we need this
   // because getMarkdown can only be called after setMarkdown b/c it needs
   // the API version retreived in setMarkdown -- we should remedy this)
   public isInitialDoc() {
@@ -438,19 +438,16 @@ export class Editor {
   }
 
   public async getMarkdown(options: PandocWriterOptions): Promise<EditorCode> {
-    
     // do we need the cursor sentinel?
     const useCursorSentinel = this.lastTrSelectionOnly;
 
     // insert cursor sentinel if appropriate
-    const target = useCursorSentinel 
-      ? docWithCursorSentinel(this.state)
-      : { doc: this.state.doc, sentinel: null };
-    
+    const target = useCursorSentinel ? docWithCursorSentinel(this.state) : { doc: this.state.doc, sentinel: null };
+
     // get the code
     const code = await this.getMarkdownCode(target.doc, options);
 
-    // return 
+    // return
     return codeWithCursor(code, target.sentinel);
   }
 
@@ -838,11 +835,11 @@ export class Editor {
     options.wrapColumn = this.format.wrapColumn || options.wrapColumn;
 
     // apply layout fixups
-   this.applyFixups(FixupContext.Save);
+    this.applyFixups(FixupContext.Save);
 
-   // get code
-   return this.pandocConverter.fromProsemirror(doc, this.pandocFormat, options);
- }
+    // get code
+    return this.pandocConverter.fromProsemirror(doc, this.pandocFormat, options);
+  }
 }
 
 function docWithCursorSentinel(state: EditorState) {
@@ -854,18 +851,18 @@ function docWithCursorSentinel(state: EditorState) {
   let sentinel: string | null = null;
 
   // find the anchor of the current selection
-  const { anchor } = tr.selection; 
+  const { anchor } = tr.selection;
 
   // find the closest top-level text block that isn't an Rmd chunk (their
   // first line gets special processing so we can't put the sentinel there)
-  const topLevelTextBlocks = findTopLevelBodyNodes(tr.doc, node => { 
+  const topLevelTextBlocks = findTopLevelBodyNodes(tr.doc, node => {
     return node.isTextblock && node.type !== state.doc.type.schema.nodes.rmd_chunk;
   });
   const textBlock = topLevelTextBlocks.reverse().find(block => block.pos < anchor);
   if (textBlock) {
     sentinel = 'CursorSentinel-CAFB04C4-080D-4074-898C-F670CAACB8AF';
     let pos = textBlock.pos;
-    if ((textBlock.pos + textBlock.node.nodeSize) < anchor) {
+    if (textBlock.pos + textBlock.node.nodeSize < anchor) {
       pos = textBlock.pos + textBlock.node.nodeSize - 1;
     }
     setTextSelection(pos)(tr);
@@ -881,10 +878,9 @@ function docWithCursorSentinel(state: EditorState) {
 
 // get editor code + cursor location and jsdiff changes from previousCode
 function codeWithCursor(code: string, cursorSentinel: string | null) {
-
   // determine the cursor row and column using the sentinel (remove the sentinel from the code)
   let newCode = code;
-  let cursor: { row: number, column: number} | undefined;
+  let cursor: { row: number; column: number } | undefined;
   if (cursorSentinel) {
     newCode = code
       .split(/\r?\n/)
@@ -895,7 +891,7 @@ function codeWithCursor(code: string, cursorSentinel: string | null) {
             line = line.replace(cursorSentinel, '');
             cursor = {
               row: index,
-              column: sentinelLoc
+              column: sentinelLoc,
             };
           }
         }
@@ -906,9 +902,8 @@ function codeWithCursor(code: string, cursorSentinel: string | null) {
 
   return {
     code: newCode,
-    cursor
+    cursor,
   };
-  
 }
 
 // custom DOMParser that preserves all whitespace (required by display math marks)

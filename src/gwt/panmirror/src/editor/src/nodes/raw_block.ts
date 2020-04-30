@@ -40,7 +40,11 @@ import { kHTMLFormat, kTexFormat, editRawBlockCommand, isRawHTMLFormat } from '.
 import { isSingleLineTex } from '../api/tex';
 import { PandocCapabilities } from '../api/pandoc_capabilities';
 
-const extension = (pandocExtensions: PandocExtensions, pandocCapabilities: PandocCapabilities, ui: EditorUI): Extension | null => {
+const extension = (
+  pandocExtensions: PandocExtensions,
+  pandocCapabilities: PandocCapabilities,
+  ui: EditorUI,
+): Extension | null => {
   // requires either raw_attribute or raw_html
   if (!pandocExtensions.raw_attribute && !pandocExtensions.raw_html) {
     return null;

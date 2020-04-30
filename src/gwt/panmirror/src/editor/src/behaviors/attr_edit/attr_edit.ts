@@ -26,8 +26,7 @@ import { Extension } from '../../api/extension';
 
 export const kEditAttrShortcut = 'F4';
 
-export function attrEditExtension(pandocExtensions: PandocExtensions, editors: AttrEditOptions[]) : Extension {
-
+export function attrEditExtension(pandocExtensions: PandocExtensions, editors: AttrEditOptions[]): Extension {
   const hasAttr = pandocAttrEnabled(pandocExtensions);
 
   return {
@@ -45,7 +44,6 @@ export function attrEditExtension(pandocExtensions: PandocExtensions, editors: A
       } else {
         return [];
       }
-    }
+    },
   };
 }
-

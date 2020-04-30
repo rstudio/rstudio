@@ -1,4 +1,3 @@
-
 /*
  * diff.ts
  *
@@ -27,14 +26,14 @@ export interface EditorChange {
   value: string;
 }
 
-export function diffChars(from: string, to: string, timeout: number) : EditorChange[] {
+export function diffChars(from: string, to: string, timeout: number): EditorChange[] {
   const dmp = new diff_match_patch();
   dmp.Diff_Timeout = timeout;
   const diff = dmp.diff_main(from, to);
   dmp.diff_cleanupSemantic(diff);
   return diff.map(d => {
     let type: EditorChangeType;
-    switch(d[0]) {
+    switch (d[0]) {
       case DIFF_INSERT:
         type = EditorChangeType.Insert;
         break;
@@ -45,14 +44,11 @@ export function diffChars(from: string, to: string, timeout: number) : EditorCha
         type = EditorChangeType.Delete;
         break;
       default:
-        throw new Error("Unexpected diff type: " + d[0]);
+        throw new Error('Unexpected diff type: ' + d[0]);
     }
     return {
       type,
-      value: d[1]
+      value: d[1],
     };
   });
 }
-
-
-

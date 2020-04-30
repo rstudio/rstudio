@@ -95,7 +95,6 @@ const extension: Extension = {
   ],
 
   fixups: (schema: Schema) => {
-    
     return [
       (tr: Transaction, context: FixupContext) => {
         // only apply on save
@@ -129,6 +128,5 @@ const extension: Extension = {
     ];
   },
 };
-
 
 export default extension;

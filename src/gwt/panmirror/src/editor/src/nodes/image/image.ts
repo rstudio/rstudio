@@ -118,7 +118,7 @@ const extension = (
             },
             apply(tr: Transaction, set: DecorationSet, oldState: EditorState, newState: EditorState) {
               return imageTextSelectionApply(tr, set, oldState, newState);
-            }
+            },
           },
           props: {
             nodeViews: {

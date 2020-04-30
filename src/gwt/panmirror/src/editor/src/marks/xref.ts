@@ -41,8 +41,6 @@ const extension = (
   _ui: EditorUI,
   format: EditorFormat,
 ): Extension | null => {
-
-  
   if (!format.rmdExtensions.bookdownXRef) {
     return null;
   }

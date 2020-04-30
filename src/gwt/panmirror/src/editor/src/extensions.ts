@@ -181,11 +181,9 @@ export function initExtensions(
     manager.register(extensions);
   }
 
-  // additional extensions dervied from other extensions 
+  // additional extensions dervied from other extensions
   // (e.g. extensions that have registered attr editors)
-  manager.register([
-    attrEditExtension(pandocExtensions, manager.attrEditors())
-  ]);
+  manager.register([attrEditExtension(pandocExtensions, manager.attrEditors())]);
 
   // additional plugins derived from extensions
   const plugins: Plugin[] = [];

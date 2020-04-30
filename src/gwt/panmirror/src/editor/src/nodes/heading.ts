@@ -84,7 +84,7 @@ const extension = (
               type: (schema: Schema) => schema.nodes.heading,
               offset: {
                 top: 8,
-                right: 10
+                right: 10,
               },
             };
           } else {

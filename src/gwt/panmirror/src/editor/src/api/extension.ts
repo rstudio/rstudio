@@ -56,7 +56,6 @@ export type ExtensionFn = (
 // create an ExtensionFn for a given extension and format option that must be enabled
 export function extensionIfEnabled(extension: Extension, name: string | string[]) {
   return (pandocExtensions: PandocExtensions) => {
-
     if (extensionEnabled(pandocExtensions, name)) {
       return extension;
     } else {
@@ -66,7 +65,6 @@ export function extensionIfEnabled(extension: Extension, name: string | string[]
 }
 
 export function extensionEnabled(pandocExtensions: PandocExtensions, name: string | string[]) {
-
   // match single extension name
   if (typeof name === 'string') {
     if (pandocExtensions[name]) {

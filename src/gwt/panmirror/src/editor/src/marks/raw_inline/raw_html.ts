@@ -42,12 +42,14 @@ const extension = (pandocExtensions: PandocExtensions, pandocCapabilities: Pando
           parseDOM: [
             {
               tag: "span[class*='raw-html']",
-              getAttrs(dom: Node | string) { return {}; }
+              getAttrs(dom: Node | string) {
+                return {};
+              },
             },
           ],
           toDOM(mark: Mark) {
             const attr: any = {
-              class: 'raw-html pm-fixedwidth-font pm-markup-text-color'
+              class: 'raw-html pm-fixedwidth-font pm-markup-text-color',
             };
             return ['span', attr];
           },
@@ -82,7 +84,7 @@ const extension = (pandocExtensions: PandocExtensions, pandocCapabilities: Pando
     commands: (schema: Schema, ui: EditorUI) => {
       return [
         new RawInlineCommand(EditorCommandId.HTMLInline, kHTMLFormat, ui, pandocCapabilities.output_formats),
-        new InsertHTMLCommentCommand(schema)
+        new InsertHTMLCommentCommand(schema),
       ];
     },
   };

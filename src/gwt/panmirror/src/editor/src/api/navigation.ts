@@ -31,14 +31,15 @@ export function navigateToId(view: EditorView, id: string, animate = true) {
 }
 
 export function navigateToHeading(view: EditorView, heading: string, animate = true) {
-  navigateTo(view, 
+  navigateTo(
+    view,
     node => {
       return (
         node.type === view.state.schema.nodes.heading &&
         node.textContent.localeCompare(heading, undefined, { sensitivity: 'accent' }) === 0
       );
     },
-    animate
+    animate,
   );
 }
 

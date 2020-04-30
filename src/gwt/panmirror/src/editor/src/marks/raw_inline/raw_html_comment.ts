@@ -1,4 +1,3 @@
-
 /*
  * raw_html-comment.ts
  *
@@ -14,21 +13,20 @@
  *
  */
 
-import { Schema, Mark, Fragment, Node as ProsemirrorNode } from "prosemirror-model";
-import { Transaction, TextSelection, EditorState } from "prosemirror-state";
-import { toggleMark } from "prosemirror-commands";
+import { Schema, Mark, Fragment, Node as ProsemirrorNode } from 'prosemirror-model';
+import { Transaction, TextSelection, EditorState } from 'prosemirror-state';
+import { toggleMark } from 'prosemirror-commands';
 
-import { setTextSelection } from "prosemirror-utils";
+import { setTextSelection } from 'prosemirror-utils';
 
-import { EditorCommandId, ProsemirrorCommand } from "../../api/command";
-import { canInsertNode } from "../../api/node";
-import { PandocExtensions, ProsemirrorWriter, PandocOutput } from "../../api/pandoc";
-import { PandocCapabilities } from "../../api/pandoc_capabilities";
-import { Extension } from "../../api/extension";
-import { EditorUI } from "../../api/ui";
-import { MarkTransaction } from "../../api/transaction";
-import { removeInvalidatedMarks, detectAndApplyMarks } from "../../api/mark";
-
+import { EditorCommandId, ProsemirrorCommand } from '../../api/command';
+import { canInsertNode } from '../../api/node';
+import { PandocExtensions, ProsemirrorWriter, PandocOutput } from '../../api/pandoc';
+import { PandocCapabilities } from '../../api/pandoc_capabilities';
+import { Extension } from '../../api/extension';
+import { EditorUI } from '../../api/ui';
+import { MarkTransaction } from '../../api/transaction';
+import { removeInvalidatedMarks, detectAndApplyMarks } from '../../api/mark';
 
 const kHTMLCommentRegEx = /<!--([\s\S]*?)-->/;
 const kHTMLEditingCommentRegEx = /^<!--# ([\s\S]*?)-->$/;
@@ -45,14 +43,14 @@ const extension = (pandocExtensions: PandocExtensions): Extension | null => {
         noInputRules: true,
         spec: {
           attrs: {
-            editing: { default: false }
+            editing: { default: false },
           },
           inclusive: false,
           excludes: '_',
           parseDOM: [
             {
               tag: "span[class*='raw-html-comment']",
-              getAttrs(dom: Node | string) { 
+              getAttrs(dom: Node | string) {
                 const el = dom as Element;
                 return {
                   editing: el.getAttribute('data-editing') === '1',
@@ -62,9 +60,9 @@ const extension = (pandocExtensions: PandocExtensions): Extension | null => {
           ],
           toDOM(mark: Mark) {
             const attr: any = {
-              class: 'raw-html-comment pm-fixedwidth-font ' + 
-                (mark.attrs.editing ? 'pm-comment-color pm-comment-background-color'
-                                    : 'pm-light-text-color')
+              class:
+                'raw-html-comment pm-fixedwidth-font ' +
+                (mark.attrs.editing ? 'pm-comment-color pm-comment-background-color' : 'pm-light-text-color'),
             };
             return ['span', attr];
           },
@@ -101,8 +99,8 @@ const extension = (pandocExtensions: PandocExtensions): Extension | null => {
           filter: (node: ProsemirrorNode) => node.isTextblock && node.type.allowsMarkType(markType),
           append: (tr: MarkTransaction, node: ProsemirrorNode, pos: number) => {
             removeInvalidatedMarks(tr, node, pos, kHTMLCommentRegEx, markType);
-            detectAndApplyMarks(tr, tr.doc.nodeAt(pos)!, pos, kHTMLCommentMarkRegEx, markType, match => ({ 
-              editing: kHTMLEditingCommentRegEx.test(match[0]) 
+            detectAndApplyMarks(tr, tr.doc.nodeAt(pos)!, pos, kHTMLCommentMarkRegEx, markType, match => ({
+              editing: kHTMLEditingCommentRegEx.test(match[0]),
             }));
           },
         },
@@ -111,9 +109,7 @@ const extension = (pandocExtensions: PandocExtensions): Extension | null => {
 
     // insert command
     commands: (schema: Schema, ui: EditorUI) => {
-      return [
-        new InsertHTMLCommentCommand(schema)
-      ];
+      return [new InsertHTMLCommentCommand(schema)];
     },
   };
 };
@@ -121,7 +117,6 @@ const extension = (pandocExtensions: PandocExtensions): Extension | null => {
 export class InsertHTMLCommentCommand extends ProsemirrorCommand {
   constructor(schema: Schema) {
     super(EditorCommandId.HTMLComment, ['Shift-Mod-c'], (state: EditorState, dispatch?: (tr: Transaction) => void) => {
-      
       // make sure we can insert a text node here
       if (!canInsertNode(state, schema.nodes.text)) {
         return false;
@@ -132,9 +127,9 @@ export class InsertHTMLCommentCommand extends ProsemirrorCommand {
         return false;
       }
 
-      // make sure the end of the selection (where we will insert the comment) 
+      // make sure the end of the selection (where we will insert the comment)
       // isn't already in a mark of this type
-      if (state.doc.rangeHasMark(state.selection.to, state.selection.to+1, schema.marks.raw_html)) {
+      if (state.doc.rangeHasMark(state.selection.to, state.selection.to + 1, schema.marks.raw_html)) {
         return false;
       }
 
@@ -155,11 +150,9 @@ export class InsertHTMLCommentCommand extends ProsemirrorCommand {
         const comment = '<!--#  -->';
         const mark = schema.marks.raw_html_comment.create({ editing: true });
         tr.insert(tr.selection.to, schema.text(comment, [mark]));
-        
+
         // set the selection to the middle of the comment
-        tr.setSelection(
-          new TextSelection(tr.doc.resolve(tr.selection.to - (comment.length/2 - 1))),
-        );
+        tr.setSelection(new TextSelection(tr.doc.resolve(tr.selection.to - (comment.length / 2 - 1))));
 
         // dispatch
         dispatch(tr);

@@ -107,7 +107,7 @@ export class AttrEditDecorationPlugin extends Plugin<DecorationSet> {
             editor.offset = editor.offset || { top: 0, right: 0 };
 
             // get editFn
-            const editFn =  ((editorUI: EditorUI) => attrEditCommandFn(editorUI, editors));
+            const editFn = (editorUI: EditorUI) => attrEditCommandFn(editorUI, editors);
 
             // get attrs/tags
             const node = parentWithAttrs.node;
