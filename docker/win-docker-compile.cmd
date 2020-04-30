@@ -48,7 +48,7 @@ if defined DOCKER_GITHUB_LOGIN (
 )
 
 REM rebuild the image if necessary
-docker build --tag %REPO%:%IMAGE% --file docker\jenkins\Dockerfile.%IMAGE% %BUILD_ARGS% -m 2GB .\docker\jenkins
+docker build --tag %REPO%:%IMAGE% --file docker\jenkins\Dockerfile.%IMAGE% %BUILD_ARGS% -m 4GB .\docker\jenkins
 
 REM set up build flags
 git rev-parse HEAD > %TEMPFILE%
@@ -67,7 +67,7 @@ docker rm %CONTAINER_ID%
 for %%A in ("%cd%") do set HOSTPATH=%%~sA
 
 echo Creating container %CONTAINER_ID%...
-docker create -i --name %CONTAINER_ID% %REPO%:%IMAGE% cmd.exe
+docker create -m 6GB -i --name %CONTAINER_ID% %REPO%:%IMAGE% cmd.exe
 
 :: Copy sources into the container; a volume mount doesn't work due to problems with the 
 :: MSVC toolchain used by RStudio: https://github.com/docker/for-win/issues/829
