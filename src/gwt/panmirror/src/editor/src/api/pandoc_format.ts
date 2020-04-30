@@ -84,6 +84,7 @@ export function pandocFormatCommentFromCode(code: string): PandocFormatComment {
 export async function resolvePandocFormat(pandoc: PandocEngine, format: EditorFormat) {
   // additional markdown variants we support
   const kMarkdownVariants: { [key: string]: string[] } = {
+    goldmark: goldmarkExtensions(format),
     blackfriday: blackfridayExtensions(format),
   };
 
@@ -129,7 +130,7 @@ export async function resolvePandocFormat(pandoc: PandocEngine, format: EditorFo
   } else {
     // if it's a variant then convert to strict
     if (kMarkdownVariants[baseName]) {
-      options = kMarkdownVariants[baseName].map(option => `+${option}`).join('');
+      options = kMarkdownVariants[baseName].map(option => `${option}`).join('');
       baseName = 'markdown_strict';
     }
 
@@ -203,21 +204,49 @@ export function splitPandocFormatString(format: string) {
   };
 }
 
+// https://gohugo.io/getting-started/configuration-markup/#goldmark
+// https://github.com/yuin/goldmark/#html-renderer-options
+function goldmarkExtensions(format: EditorFormat) {
+  const extensions = [
+     // disables raw_html by default
+    '-raw_html',
+    
+    // adds most of gfm
+    '+pipe_tables',
+    '+strikeout',
+    '+autolink_bare_uris',
+    '+task_lists',
+    '+backtick_code_blocks',
+
+    // plus some extras
+    '+definition_lists',
+    '+footnotes',
+    '+smart',
+
+    // hugo preprocessor supports yaml metadata
+    '+yaml_metadata_block'
+  ];
+  if (format.rmdExtensions.blogdownMathInCode) {
+    extensions.push('+tex_math_dollars');
+  }
+  return extensions;
+}
+
 // https://github.com/russross/blackfriday/tree/v2#extensions
 function blackfridayExtensions(format: EditorFormat) {
   const extensions = [
-    'intraword_underscores',
-    'pipe_tables',
-    'backtick_code_blocks',
-    'definition_lists',
-    'footnotes',
-    'autolink_bare_uris',
-    'strikeout',
-    'smart',
-    'yaml_metadata_block',
+    '+intraword_underscores',
+    '+pipe_tables',
+    '+backtick_code_blocks',
+    '+definition_lists',
+    '+footnotes',
+    '+autolink_bare_uris',
+    '+strikeout',
+    '+smart',
+    '+yaml_metadata_block',
   ];
   if (format.rmdExtensions.blogdownMathInCode) {
-    extensions.push('tex_math_dollars');
+    extensions.push('+tex_math_dollars');
   }
   return extensions;
 }

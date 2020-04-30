@@ -16,6 +16,7 @@
 package org.rstudio.studio.client.workbench.views.source.editors.text;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import org.rstudio.core.client.CommandWithArg;
@@ -938,13 +939,31 @@ public class TextEditingTargetVisualMode
             // see if we have a format comment
             PanmirrorFormatComment formatComment = formatTools.parseFormatComment(getEditorCode());
             
+            // doctypes
+            List<String> docTypes = new ArrayList<String>();
+            if (formatComment.doctypes == null || formatComment.doctypes.length == 0)
+            {
+               if (isXRefDocument())
+                  docTypes.add(PanmirrorExtendedDocType.xref);
+               if (isBookdownDocument())
+                  docTypes.add(PanmirrorExtendedDocType.bookdown);
+               if (isBlogdownDocument()) 
+               {
+                  docTypes.add(PanmirrorExtendedDocType.blogdown);
+                  docTypes.add(PanmirrorExtendedDocType.hugo);
+               }  
+               format.docTypes = docTypes.toArray(new String[] {});
+            }
+            docTypes = Arrays.asList(format.docTypes);
+            
             // pandocMode
             final String kBlackfriday = "blackfriday";
+            final String kGoldmark = "goldmark";
             String alternateMode = null;
             if (formatComment.mode != null)
                alternateMode = formatComment.mode;
-            else if (enableBlogdownBlackfriday())
-               alternateMode = kBlackfriday;
+            else if (enableBlogdownGoldmark())
+               alternateMode = kGoldmark;
             
             // set alternate mode if we have one
             if (alternateMode != null)
@@ -981,9 +1000,10 @@ public class TextEditingTargetVisualMode
             format.rmdExtensions.bookdownPart = true;
             
             // enable blogdown math in code (e.g. `$math$`) if we have a blogdown
-            // doctype along with the blackfriday markdown engine
+            // doctype along with the blackfriday or goldmark markdown engine
             format.rmdExtensions.blogdownMathInCode = 
-               isBlogdownDocument() && format.pandocMode.equals(kBlackfriday);
+               docTypes.contains(PanmirrorExtendedDocType.blogdown) && 
+               (format.pandocMode.equals(kBlackfriday) || format.pandocMode.equals(kGoldmark));
             
             // hugoExtensions
             format.hugoExtensions = new PanmirrorHugoExtensions();
@@ -996,22 +1016,6 @@ public class TextEditingTargetVisualMode
             
             // fillColumn
             format.wrapColumn = formatComment.fillColumn;
-            
-            // doctypes
-            ArrayList<String> docTypes = new ArrayList<String>();
-            if (formatComment.doctypes == null || formatComment.doctypes.length == 0)
-            {
-               if (isXRefDocument())
-                  docTypes.add(PanmirrorExtendedDocType.xref);
-               if (isBookdownDocument())
-                  docTypes.add(PanmirrorExtendedDocType.bookdown);
-               if (isBlogdownDocument()) 
-               {
-                  docTypes.add(PanmirrorExtendedDocType.blogdown);
-                  docTypes.add(PanmirrorExtendedDocType.hugo);
-               }  
-               format.docTypes = docTypes.toArray(new String[] {});
-            }
             
             // return format
             return format;
@@ -1067,9 +1071,9 @@ public class TextEditingTargetVisualMode
       return false;
    }
  
-   // automatically enable blackfriday markdown engine if this is a blogdown
+   // automatically enable goldmark markdown engine if this is a blogdown
    // file that isn't an Rmd (e.g. .md or .Rmarkdown). 
-   private boolean enableBlogdownBlackfriday()
+   private boolean enableBlogdownGoldmark()
    {
       // get current docPath
       String docPath = docUpdateSentinel_.getPath();
