@@ -199,6 +199,16 @@ public class TextEditingTargetWidget
 
       initWidget(panel_);
       
+      // Update wrap mode on the editor when the soft wrap property changes
+      docUpdateSentinel_.addPropertyValueChangeHandler(
+            TextEditingTarget.SOFT_WRAP_LINES, (newval) ->
+            {
+               boolean wrap = StringUtil.equals(newval.getValue(), 
+                     DocUpdateSentinel.PROPERTY_TRUE);
+               commands_.toggleSoftWrapMode().setChecked(wrap);
+               editor_.setUseWrapMode(wrap);
+            });
+
       userPrefs_.autoSaveOnBlur().addValueChangeHandler((evt) ->
       {
          // Re-adapt to file type when this preference changes; it may bring
@@ -230,6 +240,12 @@ public class TextEditingTargetWidget
       }
    }
    
+   public void toggleSoftWrapMode()
+   {
+      docUpdateSentinel_.setBoolProperty(
+            TextEditingTarget.SOFT_WRAP_LINES, !editor_.getUseWrapMode());
+   }
+
    public void toggleDocumentOutline()
    {
       if (isVisualMode())
@@ -847,6 +863,9 @@ public class TextEditingTargetWidget
       
       toggleVisualModeOutlineButton_.setVisible(visualRmdMode);
       
+      // update wrap mode for filetype
+      syncWrapMode();
+      
       toolbar_.invalidateSeparators();
    }
    
@@ -985,11 +1004,15 @@ public class TextEditingTargetWidget
          for (String pkg: packages)
             deps.add(Dependency.cranPackage(pkg));
          
+         String scriptName = StringUtil.isNullOrEmpty(docUpdateSentinel_.getPath()) ?
+            "R Script" :
+            FilePathUtils.friendlyFileName(docUpdateSentinel_.getPath());
+            
          // Install them using the dependency manager; provide a "prompt"
          // function that just accepts the list (since the user has already been
          // prompted here in the editor)
          RStudioGinjector.INSTANCE.getDependencyManager().withDependencies(
-               "Install " + FilePathUtils.friendlyFileName(docUpdateSentinel_.getPath()) + " dependencies", 
+               "Install " + scriptName + " dependencies", 
                (String dependencies, CommandWithArg<Boolean> result) -> result.execute(true),
                deps, false, null);
          hideWarningBar();
@@ -1078,6 +1101,9 @@ public class TextEditingTargetWidget
    public void onActivate()
    {
       editor_.onActivate();
+      
+      // sync the state of the command marking word wrap mode for this document
+      syncWrapMode();
       
       Scheduler.get().scheduleDeferred(() -> manageToolbarSizes());
    }
@@ -1654,43 +1680,29 @@ public class TextEditingTargetWidget
       {
         return editorPanel_;
       }
+      
+      @Override
+      public void setCode(String code)
+      {
+         editor_.setCode(code, true);
+      }
      
       @Override
-      public void setCode(TextEditorContainer.EditorCode editorCode, boolean preserveCursorLocation, boolean activatingEditor)
-      {
-         // if the cursor location is a sentinel within the code string, then pull it out and note it's position
-         final Position cursorPosition = Position.create(0, 0);
+      public void applyChanges(TextEditorContainer.Changes changes, boolean activatingEditor)
+      {   
+         // apply changes
+         editor_.applyChanges(changes.changes);
          
-      
-         if (editorCode.cursorSentinel != null) {
-            
-            final Position kNoPosition = Position.create(0,0);
-            
-            editorCode.code = filterCode(editorCode.code, (line, number) -> {
-               if (cursorPosition.isEqualTo(kNoPosition)) {
-                  int sentinelLoc = line.indexOf(editorCode.cursorSentinel);
-                  if (sentinelLoc != -1) {
-                     line = line.substring(0, sentinelLoc) + 
-                            line.substring(sentinelLoc + editorCode.cursorSentinel.length());
-                     cursorPosition.setRow(number); 
-                     cursorPosition.setColumn(sentinelLoc);
-                  }
-               }
-               return line;
-            });        
-         }
-         
-         // set the code
-         editor_.setCode(editorCode.code, preserveCursorLocation);
-         
-         // set cursor position if we need to
-         if (editorCode.cursorSentinel != null) {
-            editor_.setCursorPosition(cursorPosition);
-         }
-         
-         // indicate that an activation is pending
+         // additional actions when activating
          if (activatingEditor)
+         {
+            // set cursor position if one was provided
+            if (changes.cursor != null)
+               editor_.setCursorPosition(Position.create(changes.cursor.row, changes.cursor.column));
+            
+            // flag activation pending (triggers autoscroll)
             activationPending_ = true;
+         }
       }
       
       @Override
@@ -1702,19 +1714,18 @@ public class TextEditingTargetWidget
       private boolean activationPending_ = false;
    };
    
-   private String filterCode(String code, LineFilter filter) 
+   private void syncWrapMode()
    {
-      ArrayList<String> codeLines = new ArrayList<String>();
-      int lineNumber = 0;
-      for (String line : StringUtil.getLineIterator(code)) {
-         codeLines.add(filter.filterLine(line, lineNumber++));
+      // set wrap mode from the file type (unless we have a wrap mode specified
+      // explicitly)
+      boolean wrapMode = editor_.getFileType().getWordWrap();
+      if (docUpdateSentinel_.hasProperty(TextEditingTarget.SOFT_WRAP_LINES))
+      {
+         wrapMode = docUpdateSentinel_.getBoolProperty(TextEditingTarget.SOFT_WRAP_LINES, 
+               wrapMode);
       }
-      return String.join("\n", codeLines);         
-   }
-   
-   private interface LineFilter
-   {
-      String filterLine(String line, int number);
+      editor_.setUseWrapMode(wrapMode);
+      commands_.toggleSoftWrapMode().setChecked(wrapMode);
    }
 
    private final TextEditingTarget target_;
@@ -1786,5 +1797,4 @@ public class TextEditingTargetWidget
    private String sourceCommandText_ = "Source";
    private String knitCommandText_ = "Knit";
    private String previewCommandText_ = "Preview";
-
 }

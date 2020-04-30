@@ -507,11 +507,11 @@ function shelfSizeFromImage(img: HTMLImageElement) {
   const width = img.getAttribute(kDataWidth);
   const height = img.getAttribute(kDataHeight);
 
-  // if there is no width and no height, then use pixels
+  // if there is no width and no height, then use naturalWidth/naturalHeight
   if (!width && !height) {
     return {
-      width: img.offsetWidth,
-      height: img.offsetHeight,
+      width: img.naturalWidth || img.offsetWidth,
+      height: img.naturalHeight || img.offsetHeight,
       unit: kPixelUnit,
     };
 

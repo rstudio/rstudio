@@ -33,7 +33,7 @@ import { canInsertNode } from '../api/node';
 import { fragmentText } from '../api/fragment';
 import { EditorFormat, kXRefDocType } from '../api/format';
 
-const kRefRegEx = /\\?@ref\([A-Za-z0-9:-]*\)/g;
+const kRefRegEx = /\\?@ref\([A-Za-z0-9:-]*\)/;
 
 const extension = (
   pandocExtensions: PandocExtensions,
@@ -51,6 +51,7 @@ const extension = (
         name: 'xref',
         spec: {
           inclusive: false,
+          excludes: '_',
           attrs: {},
           parseDOM: [
             {
@@ -91,6 +92,7 @@ const extension = (
     ],
 
     fixups: (schema: Schema) => {
+      const kRefRegExGlobal = new RegExp(kRefRegEx.source, 'g');
       return [
         (tr: Transaction, context: FixupContext) => {
           if (context === FixupContext.Load) {
@@ -99,9 +101,10 @@ const extension = (
             const predicate = (node: ProsemirrorNode) => {
               return node.isTextblock && node.type.allowsMarkType(markType);
             };
+            const markTr = new MarkTransaction(tr);
             findChildren(tr.doc, predicate).forEach(nodeWithPos => {
               const { pos } = nodeWithPos;
-              detectAndApplyMarks(tr, tr.doc.nodeAt(pos)!, pos, kRefRegEx, markType);
+              detectAndApplyMarks(markTr, tr.doc.nodeAt(pos)!, pos, kRefRegExGlobal, markType);
             });
 
             // remove leading \ as necessary (this would occur if the underlying format includes
@@ -114,13 +117,14 @@ const extension = (
     },
 
     appendMarkTransaction: (schema: Schema) => {
+      const kRefRegExGlobal = new RegExp(kRefRegEx.source, 'g');
       return [
         {
           name: 'xref-marks',
           filter: (node: ProsemirrorNode) => node.isTextblock && node.type.allowsMarkType(node.type.schema.marks.xref),
           append: (tr: MarkTransaction, node: ProsemirrorNode, pos: number) => {
-            removeInvalidatedMarks(tr, node, pos, kRefRegEx, node.type.schema.marks.xref);
-            detectAndApplyMarks(tr, tr.doc.nodeAt(pos)!, pos, kRefRegEx, node.type.schema.marks.xref);
+            removeInvalidatedMarks(tr, node, pos, kRefRegExGlobal, node.type.schema.marks.xref);
+            detectAndApplyMarks(tr, tr.doc.nodeAt(pos)!, pos, kRefRegExGlobal, node.type.schema.marks.xref);
           },
         },
       ];

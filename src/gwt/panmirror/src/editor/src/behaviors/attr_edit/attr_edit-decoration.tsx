@@ -51,31 +51,30 @@ const AttrEditDecoration: React.FC<AttrEditDecorationProps> = props => {
       {props.tags.length
         ? props.tags.map(tag => {
             return (
-              <div
+              <span
                 key={tag}
                 className="attr-edit-tag attr-edit-widget pm-block-border-color pm-border-background-color"
                 onClick={onClick}
               >
-                <div>{tag}</div>
-              </div>
+                {tag}
+              </span>
             );
           })
         : null}
-      <div
+      <span
         className="attr-edit-button attr-edit-widget pm-block-border-color pm-border-background-color"
         title={buttonTitle}
         onClick={onClick}
       >
-        <div style={{ visibility: 'hidden' }}>....</div>
-        <div className="attr-edit-button-ellipses">...</div>
-      </div>
+        <span className="attr-edit-button-ellipsis">&#x2022;&#x2022;&#x2022;</span>
+      </span>
     </div>
   );
 };
 
 const key = new PluginKey<DecorationSet>('attr_edit_decoration');
 
-class AttrEditDecorationPlugin extends Plugin<DecorationSet> {
+export class AttrEditDecorationPlugin extends Plugin<DecorationSet> {
   constructor(ui: EditorUI, editors: AttrEditOptions[]) {
     super({
       key,
@@ -105,8 +104,10 @@ class AttrEditDecorationPlugin extends Plugin<DecorationSet> {
                 }
                 return attrTags;
               });
-            editor.editFn = editor.editFn || attrEditCommandFn;
-            editor.offset = editor.offset || 0;
+            editor.offset = editor.offset || { top: 0, right: 0 };
+
+            // get editFn
+            const editFn = (editorUI: EditorUI) => attrEditCommandFn(editorUI, editors);
 
             // get attrs/tags
             const node = parentWithAttrs.node;
@@ -133,8 +134,9 @@ class AttrEditDecorationPlugin extends Plugin<DecorationSet> {
                 }
 
                 // cacculate position offsets
-                const xOffset = rightPaddingOffset;
-                const yOffset = editor.offset! + 13 / 2 + 1; // 13 is from height defined in attr_edit-decoration.css
+                const baseOffset = editor.offset || { top: 0, right: 0 };
+                const xOffset = baseOffset.right + rightPaddingOffset;
+                const yOffset = baseOffset.top + 6; 
                 const cssProps: React.CSSProperties = {
                   transform: `translate(${xOffset}px,-${yOffset}px)`,
                 };
@@ -144,7 +146,7 @@ class AttrEditDecorationPlugin extends Plugin<DecorationSet> {
                   <AttrEditDecoration
                     tags={tags}
                     attrs={attrs}
-                    editFn={editor.editFn!(ui)}
+                    editFn={editFn(ui)}
                     view={view}
                     ui={ui}
                     style={cssProps}
@@ -159,7 +161,7 @@ class AttrEditDecorationPlugin extends Plugin<DecorationSet> {
               },
               {
                 // re-use existing instance for same tags
-                key: `${tags.join('/')}`,
+                key: `tags:${tags.join('/')}`,
                 ignoreSelection: true,
                 stopEvent: () => {
                   return true;
@@ -181,8 +183,4 @@ class AttrEditDecorationPlugin extends Plugin<DecorationSet> {
       },
     });
   }
-}
-
-export function attrEditDecorationPlugin(ui: EditorUI, editors: AttrEditOptions[]) {
-  return new AttrEditDecorationPlugin(ui, editors);
 }

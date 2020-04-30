@@ -1,7 +1,7 @@
 /*
  * URLTests.cpp
  *
- * Copyright (C) 2018 by RStudio, PBC
+ * Copyright (C) 2018-20 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -90,6 +90,51 @@ test_context("HttpUtil Tests")
       URL url("127.0.0.1");
 
       expect_false(url.isValid());
+   }
+
+   test_that("Can clean up paths")
+   {
+      expect_equal(URL::cleanupPath(""), "");
+      expect_equal(URL::cleanupPath("/"), "/");
+      expect_equal(URL::cleanupPath("./"), "");
+      expect_equal(URL::cleanupPath("/./"), "/");
+      expect_equal(URL::cleanupPath("/."), "/.");
+      expect_equal(URL::cleanupPath("/foo/../"), "/");
+      expect_equal(URL::cleanupPath("foo/../"), "");
+      expect_equal(URL::cleanupPath("/foo/bar/../../"), "/");
+      expect_equal(URL::cleanupPath("foo/bar/../../"), "");
+      expect_equal(URL::cleanupPath("/foo/bar/../../"), "/");
+      expect_equal(URL::cleanupPath("/foo/bar/../.."), "/foo/..");
+      expect_equal(URL::cleanupPath("/foo/?/../"), "/foo/?/../");
+      expect_equal(URL::cleanupPath("/foo/#/../"), "/foo/#/../");
+      expect_equal(URL::cleanupPath("/foo/?/../#/../"), "/foo/?/../#/../");
+      expect_equal(URL::cleanupPath("/foo/bar/../../../"), "/");
+      expect_equal(URL::cleanupPath("/foo/bar/../../../baz"), "/baz");
+   }
+
+   test_that("Can complete URLs")
+   {
+      expect_equal(URL::complete("http://www.example.com", "foo"), "http://www.example.com/foo");
+      expect_equal(URL::complete("http://www.example.com/foo", "bar"), "http://www.example.com/bar");
+      expect_equal(URL::complete("http://www.example.com/foo/", "bar"), "http://www.example.com/foo/bar");
+      expect_equal(URL::complete("http://www.example.com:80/foo/", "/bar"), "http://www.example.com:80/bar");
+      expect_equal(URL::complete("http://www.example.com:80/foo/bar", "baz/qux"), "http://www.example.com:80/foo/baz/qux");
+      expect_equal(URL::complete("http://www.example.com:80/foo/bar", "../baz/qux"), "http://www.example.com:80/baz/qux");
+      expect_equal(URL::complete("http://www.example.com:80/foo/bar/", "../baz/qux"), "http://www.example.com:80/foo/baz/qux");
+      expect_equal(URL::complete("http://www.example.com:80/foo/bar/", "baz/../qux"), "http://www.example.com:80/foo/bar/qux");
+      expect_equal(URL::complete("http://www.example.com:80/foo/bar", "http://baz"), "http://baz");
+
+      expect_equal(URL::complete("foo/bar/", "baz/qux"), "foo/bar/baz/qux");
+      expect_equal(URL::complete("foo/bar/", "../baz/qux"), "foo/baz/qux");
+      expect_equal(URL::complete("../foo/bar/", "../baz/qux"), "foo/baz/qux");
+      expect_equal(URL::complete("../../foo/bar/", "../baz/qux"), "foo/baz/qux");
+   }
+
+   test_that("Can uncomplete URLs")
+   {
+      expect_equal(URL::uncomplete("/foo/bar/baz", "/foo/qux/quux"), "../qux/quux");
+      expect_equal(URL::uncomplete("/foo/bar/baz/", "/foo/qux/quux"), "../../qux/quux");
+      expect_equal(URL::uncomplete("/bar/baz", "/qux/quux"), "../qux/quux");
    }
 }
 

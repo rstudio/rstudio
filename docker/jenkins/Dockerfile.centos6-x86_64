@@ -20,6 +20,7 @@ RUN yum install -y \
     libcap-devel \ 
     libffi \
     libuuid-devel \
+    libxml2-devel \
     lsof \
     make \
     openssl-devel \

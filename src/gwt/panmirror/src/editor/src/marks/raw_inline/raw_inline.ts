@@ -31,9 +31,11 @@ export const kRawInlineFormat = 0;
 export const kRawInlineContent = 1;
 
 const extension = (pandocExtensions: PandocExtensions, pandocCapabilities: PandocCapabilities): Extension | null => {
-  if (!pandocExtensions.raw_attribute) {
-    return null;
-  }
+  // always enabled so that extensions can make use of preprocessors + raw_attribute
+  // to hoist content out of pandoc for further processing by our token handlers.
+  // that means that users can always use the raw attribute in their markdown even
+  // if the editing format doesn't support it (in which case it will just get echoed
+  // back to the markdown just the way it was written).
 
   // return the extension
   return {
@@ -100,7 +102,11 @@ const extension = (pandocExtensions: PandocExtensions, pandocCapabilities: Pando
 
     // insert command
     commands: (_schema: Schema, ui: EditorUI) => {
-      return [new RawInlineCommand(EditorCommandId.RawInline, '', ui, pandocCapabilities.output_formats)];
+      if (pandocExtensions.raw_attribute) {
+        return [new RawInlineCommand(EditorCommandId.RawInline, '', ui, pandocCapabilities.output_formats)];
+      } else {
+        return [];
+      }
     },
   };
 };
@@ -108,8 +114,8 @@ const extension = (pandocExtensions: PandocExtensions, pandocCapabilities: Pando
 // base class for inline commands that auto-insert content
 export class RawInlineInsertCommand extends ProsemirrorCommand {
   private markType: MarkType;
-  constructor(id: EditorCommandId, markType: MarkType, insert: (tr: Transaction) => void) {
-    super(id, [], (state: EditorState, dispatch?: (tr: Transaction) => void) => {
+  constructor(id: EditorCommandId, keymap: readonly string[], markType: MarkType, insert: (tr: Transaction) => void) {
+    super(id, keymap, (state: EditorState, dispatch?: (tr: Transaction) => void) => {
       // if we aren't active then make sure we can insert a text node here
       if (!this.isActive(state) && !canInsertNode(state, markType.schema.nodes.text)) {
         return false;

@@ -261,6 +261,12 @@ ProgramStatus Options::read(int argc,
       ("www-verify-user-agent",
          value<bool>(&wwwVerifyUserAgent_)->default_value(true),
          "verify that the user agent is compatible")
+      ("www-iframe-embedding",
+         value<bool>(&wwwIFrameEmbedding_)->default_value(false),
+         "indicate whether RStudio is embedded into an iFrame so cookies' SameSite behavior can be adjusted")
+      ("www-legacy-cookies",
+         value<bool>(&wwwLegacyCookies_)->default_value(false),
+         "indicate whether RStudio should revert to legacy behavior and not set SameSite on or to emit a second legacy cookie when iFrame embedding is in use")
       ("www-frame-origin",
          value<std::string>(&wwwFrameOrigin_)->default_value("none"),
          "allowed origin for hosting frame")
@@ -302,6 +308,13 @@ ProgramStatus Options::read(int argc,
       ("rsession-process-limit",
          value<int>(&dep.userProcessLimit)->default_value(dep.userProcessLimit),
          "rsession user process limit - DEPRECATED");
+
+   // database
+   options_description database("database");
+   database.add_options()
+      ("database-config-file",
+         value<std::string>(&databaseConfigFile_)->default_value(""),
+         "path to database.conf configuration file");
    
    // still read depracated options (so we don't break config files)
    std::string authMinimumUserId, authLoginPageHtml;
@@ -371,8 +384,8 @@ ProgramStatus Options::read(int argc,
    // overlay hook
    addOverlayOptions(&verify, &server, &www, &rsession, &auth, &monitor);
 
-   optionsDesc.commandLine.add(verify).add(server).add(www).add(rsession).add(auth).add(monitor);
-   optionsDesc.configFile.add(server).add(www).add(rsession).add(auth).add(monitor);
+   optionsDesc.commandLine.add(verify).add(server).add(www).add(rsession).add(database).add(auth).add(monitor);
+   optionsDesc.configFile.add(server).add(www).add(rsession).add(database).add(auth).add(monitor);
  
    // read options
    bool help = false;

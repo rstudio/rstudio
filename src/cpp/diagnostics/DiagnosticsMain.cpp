@@ -83,7 +83,7 @@ void writeUserPrefs(std::ostream& ostr)
          ostr);
    writeFile("System prefs", core::system::xdg::systemConfigFile("rstudio-prefs.json"),
          ostr);
-   writeFile("User state", core::system::xdg::userDataDir().completePath("rstudio-state.json"),
+   writeFile("User state", core::system::xdg::userDataDir().completePath("rstudio-desktop.json"),
          ostr);
 }
 

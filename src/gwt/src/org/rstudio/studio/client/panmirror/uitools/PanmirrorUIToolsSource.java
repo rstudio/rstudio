@@ -1,5 +1,5 @@
 /*
- * PanmirrorEditingLocation.java
+ * PanmirrorUIToolsSource.java
  *
  * Copyright (C) 2009-20 by RStudio, PBC
  *
@@ -13,14 +13,18 @@
  *
  */
 
-package org.rstudio.studio.client.panmirror;
 
+package org.rstudio.studio.client.panmirror.uitools;
+
+
+
+import org.rstudio.core.client.patch.TextChange;
 
 import jsinterop.annotations.JsType;
 
 @JsType
-public class PanmirrorEditingLocation
-{    
-   public int pos;
-   public int scrollTop;
+public class PanmirrorUIToolsSource
+{
+   public native TextChange[] diffChars(String from, String to, int timeout);
 }
+

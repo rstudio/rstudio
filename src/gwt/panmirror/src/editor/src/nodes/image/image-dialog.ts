@@ -44,7 +44,7 @@ export async function imageDialog(
     // base attributess
     image = {
       ...(node.attrs as ImageProps),
-      alt: node.textContent || node.attrs.alt,
+      alt: nodeType === schema.nodes.figure ? node.textContent : node.attrs.alt,
     };
 
     // move width and height out of style and into keyvalue if necessary

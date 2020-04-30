@@ -26,6 +26,7 @@ import org.rstudio.core.client.HandlerRegistrations;
 import org.rstudio.core.client.layout.WindowState;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.core.client.widget.CanSetControlId;
+import org.rstudio.core.client.widget.DoubleClickState;
 
 /**
  * Minimize/maximize/restore buttons in logical windows (the 4 quadrants)
@@ -88,7 +89,13 @@ public class WindowFrameButton extends FocusWidget
    {
       if (isAttached() && clickHandler_ != null)
       {
-         releaseOnUnload_.add(super.addClickHandler(event -> click()));
+         releaseOnUnload_.add(super.addClickHandler(clickEvent ->
+         {
+            clickEvent.preventDefault();
+            clickEvent.stopPropagation();
+            if (!doubleClickState_.checkForDoubleClick(clickEvent.getNativeEvent()))
+               click();
+         }));
 
          releaseOnUnload_.add(addKeyPressHandler(event ->
          {
@@ -159,4 +166,5 @@ public class WindowFrameButton extends FocusWidget
 
    private Command clickHandler_;
    private final HandlerRegistrations releaseOnUnload_ = new HandlerRegistrations();
+   private final DoubleClickState doubleClickState_ = new DoubleClickState();
 }

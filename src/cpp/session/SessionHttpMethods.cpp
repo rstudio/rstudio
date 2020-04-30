@@ -114,7 +114,7 @@ bool parseAndValidateJsonRpcConnection(
 
    // check for valid CSRF headers in server mode 
    if (options().programMode() == kSessionProgramModeServer && 
-       !core::http::validateCSRFHeaders(ptrConnection->request()))
+       !core::http::validateCSRFHeaders(ptrConnection->request(), options().iFrameLegacyCookies()))
    {
       ptrConnection->sendJsonRpcError(Error(json::errc::Unauthorized, ERROR_LOCATION));
       return false;
@@ -833,8 +833,14 @@ void registerGwtHandlers()
    std::string initJs = "window.program_mode = \"" + options.programMode() + "\";\n";
 
    // set default handler
-   s_defaultUriHandler = gwt::fileHandlerFunction(options.wwwLocalPath(), options.useSecureCookies(), "/",
-         http::UriFilterFunction(), initJs);
+   s_defaultUriHandler = gwt::fileHandlerFunction(options.wwwLocalPath(),
+                                                  options.useSecureCookies(),
+                                                  options.iFrameEmbedding(),
+                                                  options.legacyCookies(),
+                                                  options.iFrameLegacyCookies(),
+                                                  "/",
+                                                  http::UriFilterFunction(),
+                                                  initJs);
 }
 
 std::string nextSessionUrl()

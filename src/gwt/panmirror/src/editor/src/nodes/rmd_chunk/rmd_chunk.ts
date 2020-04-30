@@ -81,9 +81,9 @@ const extension = (
           bookdownTheorems: format.docTypes.includes(kBookdownDocType),
           classes: ['pm-chunk-background-color'],
           lang: (_node: ProsemirrorNode, content: string) => {
-            const match = content.match(/^[a-zA-Z0-9_]+/);
+            const match = content.match(/^\{([a-zA-Z0-9_])+/);
             if (match) {
-              return match[0];
+              return match[1];
             } else {
               return null;
             }
@@ -94,7 +94,7 @@ const extension = (
           codeBlockFilter: {
             preprocessor: (markdown: string) => {
               const md = markdown.replace(
-                /^([\t >]*```+)\s*\{([a-zA-Z0-9_]+( *[ ,].*?)?)(\}\s*)([\W\w]*?)(?:```)(?:[ \t]*)$/gm,
+                /^([\t >]*```+)\s*(\{[a-zA-Z0-9_]+( *[ ,].*?)?\})(\s*)([\W\w]*?)(?:```)(?:[ \t]*)$/gm,
                 (_match: string, p1: string, p2: string, _p3: string, p4: string, p5: string, p6: string) => {
                   return p1 + kRmdCodeChunkClass + '\n' + p2 + '\n' + p5 + '```\n';
                 },
@@ -111,7 +111,8 @@ const extension = (
               // split text content into first and subsequent lines
               const lines = node.textContent.split('\n');
               if (lines.length > 0) {
-                output.writeRawMarkdown('```{' + lines[0] + '}\n' + lines.slice(1).join('\n') + '\n```\n');
+                const first = lines[0].replace(/^.*?\{([^}]*)\}.*?$/, '$1');
+                output.writeRawMarkdown('```{' + first + '}\n' + lines.slice(1).join('\n') + '\n```\n');
               }
             });
           },

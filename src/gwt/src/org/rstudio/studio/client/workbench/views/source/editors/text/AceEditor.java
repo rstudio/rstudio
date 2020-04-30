@@ -44,6 +44,8 @@ import com.google.gwt.event.shared.HandlerManager;
 import com.google.gwt.event.shared.HandlerRegistration;
 
 import java.util.function.BiPredicate;
+import java.util.function.Consumer;
+
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.RootPanel;
@@ -62,6 +64,7 @@ import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.js.JsMap;
 import org.rstudio.core.client.js.JsObject;
 import org.rstudio.core.client.js.JsUtil;
+import org.rstudio.core.client.patch.TextChange;
 import org.rstudio.core.client.regex.Match;
 import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.core.client.resources.StaticDataResource;
@@ -891,7 +894,6 @@ public class AceEditor implements DocDisplay,
       
       handlers_.fireEvent(new EditorModeChangedEvent(getModeId()));
 
-      getSession().setUseWrapMode(fileType_.getWordWrap());
       syncWrapLimit();
    }
 
@@ -1118,6 +1120,98 @@ public class AceEditor implements DocDisplay,
    {
       widget_.getEditor().insert(StringUtil.normalizeNewLines(code));
    }
+   
+   public void applyChanges(TextChange[] changes)
+   {
+      // special case for a single change that neither adds nor removes
+      // (identity operation). we don't feed this through the code below
+      // because a single non-mutating change will result in a selection
+      // at the beginning of the file
+      if (changes.length == 1 && changes[0].type == TextChange.Type.Equal)
+         return;
+      
+      // alias apis
+      AceEditorNative editor = widget_.getEditor();
+      EditSession session = editor.getSession();
+      Selection selection = session.getSelection();
+      AceCommandManager commandManager = editor.getCommandManager();
+      
+      // function to advance the selection
+      Consumer<Integer> advanceSelection = (Integer charsLeft) -> {
+         Position startPos = selection.getCursor();
+         Position newPos = advancePosition(session, startPos, charsLeft);
+         selection.moveCursorTo(newPos.getRow(), newPos.getColumn(), false);
+      };
+      
+      // if we have at least 1 change then set the cursor location 
+      // to the beginning of the file
+      if (changes.length > 0)
+         selection.moveCursorTo(0, 0, false);      
+      
+      // process changes
+      for (int i = 0; i<changes.length; i++) 
+      {
+         // get change and length
+         TextChange change = changes[i];
+         int length = change.value.length();
+         
+         // insert text (selection will be advanced to the end of the string)
+         if (change.type == TextChange.Type.Insert)
+         {
+            if (change.value.length() > 0)
+               commandManager.exec("insertstring", editor, change.value);
+         }
+         
+         // remove text -- we advance past it and then use the "backspace"
+         // command b/c ace gives nicer undo behavior for this action (compared
+         // to executing the "del" command)
+         else if (change.type == TextChange.Type.Delete)
+         {
+            Range newRange = selection.getRange();
+            newRange.setEnd(advancePosition(session, selection.getCursor(), length));
+            selection.setSelectionRange(newRange);
+            commandManager.exec("backspace", editor);
+         }
+         
+         // advance selection (unless this is the last change, in which 
+         // case it just represents advancing to the end of the file)
+         else if (i != (changes.length-1))
+         {
+            advanceSelection.accept(length);
+         } 
+      }  
+   }
+   
+   private static Position advancePosition(EditSession session, Position startPos, Integer chars)
+   {
+      // iterate through rows until we've consumed all the chars
+      int row = startPos.getRow();
+      int col = startPos.getColumn();
+      while (row < session.getLength()) {
+         
+         // how many chars left in the current column?
+         String line = session.getLine(row);
+         // +1 is for the newline
+         int charsLeftInLine = line.length() + 1 - col;
+         
+         // is the number of chars we still need to consume lte
+         // the number of charsLeft?
+         if (chars < charsLeftInLine) 
+         {
+            col = col + chars;
+            break;
+         }
+         else
+         {
+            chars -= charsLeftInLine;
+            col = 0;
+            row++;
+         }
+      }
+      
+      return Position.create(row, col);
+   }
+   
 
    public String getCode(Position start, Position end)
    {
@@ -2103,11 +2197,19 @@ public class AceEditor implements DocDisplay,
    }
 
    /**
-    * Warning: This will be overridden whenever the file type is set
+    * Sets the soft wrap mode for the editor
     */
    public void setUseWrapMode(boolean useWrapMode)
    {
       getSession().setUseWrapMode(useWrapMode);
+   }
+   
+   /**
+    * Gets whether or not the editor is using soft wrapping
+    */
+   public boolean getUseWrapMode()
+   {
+      return getSession().getUseWrapMode();
    }
 
    public void setTabSize(int tabSize)

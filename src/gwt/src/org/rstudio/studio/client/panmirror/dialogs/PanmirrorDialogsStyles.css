@@ -29,6 +29,11 @@
    margin-top: 5px;
 }
 
+.dialog .inlineInfoLabel {
+   margin-left: 6px;
+   color: rgb(96,96,96);
+}
+
 .dialog .heightAuto {
 	color: #606060;
 	margin-right: 7px;

@@ -20,17 +20,16 @@ package org.rstudio.studio.client.panmirror.dialogs;
 import com.google.gwt.aria.client.Roles;
 
 import org.rstudio.core.client.ElementIds;
-import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.theme.DialogTabLayoutPanel;
 import org.rstudio.core.client.theme.VerticalTabPanel;
 import org.rstudio.core.client.widget.FormLabel;
 import org.rstudio.core.client.widget.ModalDialog;
 import org.rstudio.core.client.widget.OperationWithInput;
-import org.rstudio.studio.client.RStudioGinjector;
-import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorAttrProps;
 import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorCodeBlockProps;
 
+import com.google.gwt.user.client.ui.HorizontalPanel;
+import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.SuggestBox;
 import com.google.gwt.user.client.ui.Widget;
 
@@ -51,7 +50,12 @@ public class PanmirrorEditCodeBlockDialog extends ModalDialog<PanmirrorCodeBlock
       // create lang (defer parent until we determine whether we support attributes)
       VerticalTabPanel langTab = new VerticalTabPanel(ElementIds.VISUAL_MD_CODE_BLOCK_TAB_LANGUAGE);
       langTab.addStyleName(RES.styles().dialog());
-      langTab.add(new FormLabel("Language:"));
+      HorizontalPanel labelPanel = new HorizontalPanel();
+      labelPanel.add(new FormLabel("Language"));
+      Label langInfo = new Label("(optional)");
+      langInfo.addStyleName(RES.styles().inlineInfoLabel());
+      labelPanel.add(langInfo);
+      langTab.add(labelPanel);
       lang_ = new PanmirrorLangSuggestBox(languages);
       lang_.getElement().setId(ElementIds.VISUAL_MD_CODE_BLOCK_LANG);
       lang_.setText(codeBlock.lang);
@@ -109,20 +113,7 @@ public class PanmirrorEditCodeBlockDialog extends ModalDialog<PanmirrorCodeBlock
    @Override
    protected boolean validate(PanmirrorCodeBlockProps input)
    {
-      if (StringUtil.isNullOrEmpty(input.lang))
-      {
-         GlobalDisplay globalDisplay = RStudioGinjector.INSTANCE.getGlobalDisplay();
-         globalDisplay.showErrorMessage(
-            "Language Required", 
-            "You must specify a language for the code block."
-         );
-         lang_.setFocus(true);
-         return false;
-      } 
-      else 
-      {
-         return true;
-      }
+      return true;
    }
    
 

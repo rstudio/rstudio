@@ -31,7 +31,6 @@ import { selectionIsImageNode } from '../../api/selection';
 import { showTooltip } from '../../api/widgets/tooltip';
 
 import { reactRenderForEditorView, WidgetProps } from '../../api/widgets/react';
-import { Panel } from '../../api/widgets/panel';
 import { LinkButton, ImageButton } from '../../api/widgets/button';
 import { textRangePopupDecorationPosition } from '../../api/widgets/decoration';
 import { Popup } from '../../api/widgets/popup';
@@ -96,6 +95,7 @@ export class LinkPopupPlugin extends Plugin<DecorationSet> {
                 const popup = (
                   <LinkPopup
                     link={attrs}
+                    maxLinkWidth={kMaxLinkWidth}
                     linkCmd={linkCmd}
                     removeLinkCmd={removeLinkCmd}
                     view={view}
@@ -132,6 +132,7 @@ export class LinkPopupPlugin extends Plugin<DecorationSet> {
 
 interface LinkPopupProps extends WidgetProps {
   link: LinkProps;
+  maxLinkWidth: number;
   view: EditorView;
   ui: EditorUI;
   linkCmd: CommandFn;
@@ -187,29 +188,27 @@ const LinkPopup: React.FC<LinkPopupProps> = props => {
 
   return (
     <Popup classes={['pm-popup-link']} style={props.style}>
-      <Panel>
-        <LinkButton text={linkText} onClick={onLinkClicked}></LinkButton>
-        {showCopyButton ? (
-          <ImageButton
-            image={props.ui.images.copy!}
-            classes={['pm-image-button-copy-link']}
-            title={props.ui.context.translateText('Copy Link to Clipboard')}
-            ref={setCopyButton}
-          />
-        ) : null}
+      <LinkButton text={linkText} onClick={onLinkClicked} maxWidth={props.maxLinkWidth}></LinkButton>
+      {showCopyButton ? (
         <ImageButton
-          image={props.ui.images.removelink!}
-          classes={['pm-image-button-remove-link']}
-          title={props.ui.context.translateText('Remove Link')}
-          onClick={onRemoveClicked}
+          image={props.ui.images.copy!}
+          classes={['pm-image-button-copy-link']}
+          title={props.ui.context.translateText('Copy Link to Clipboard')}
+          ref={setCopyButton}
         />
-        <ImageButton
-          image={props.ui.images.properties!}
-          classes={['pm-image-button-edit-properties']}
-          title={props.ui.context.translateText('Edit Attributes')}
-          onClick={onEditClicked}
-        />
-      </Panel>
+      ) : null}
+      <ImageButton
+        image={props.ui.images.removelink!}
+        classes={['pm-image-button-remove-link']}
+        title={props.ui.context.translateText('Remove Link')}
+        onClick={onRemoveClicked}
+      />
+      <ImageButton
+        image={props.ui.images.properties!}
+        classes={['pm-image-button-edit-properties']}
+        title={props.ui.context.translateText('Edit Attributes')}
+        onClick={onEditClicked}
+      />
     </Popup>
   );
 };

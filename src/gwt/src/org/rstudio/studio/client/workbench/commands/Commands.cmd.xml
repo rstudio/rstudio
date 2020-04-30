@@ -208,6 +208,7 @@ well as menu structures (for main menu and popup menus).
          <cmd refid="goToFileFunction"/>
          <separator/>
          <cmd refid="toggleDocumentOutline"/>
+         <cmd refid="toggleSoftWrapMode"/>
          <separator/>
          <cmd refid="showDiagnosticsActiveDocument"/>
          <cmd refid="showDiagnosticsProject"/>
@@ -542,8 +543,6 @@ well as menu structures (for main menu and popup menus).
          <cmd refid="helpKeyboardShortcuts"/>
          <cmd refid="markdownHelp"/>
          <cmd refid="openRoxygenQuickReference"/>
-         <separator/>
-         <cmd refid="rstudioAgreement"/>
          <separator/>
          <menu label="Dia_gnostics">
             <cmd refid="showRequestLog"/>
@@ -3124,10 +3123,6 @@ well as menu structures (for main menu and popup menus).
         rebindable="false"
         windowMode="main"/>
 
-   <cmd id="rstudioAgreement"
-        menuLabel="RStudio Agreement"
-        rebindable="false"/>
-
     <cmd id="rstudioLicense"
         menuLabel="RStudio _License"
         visible="false"
@@ -3272,6 +3267,12 @@ well as menu structures (for main menu and popup menus).
    <cmd id="openPreviousFileOnFilesystem"
         label="Open Previous File on Filesystem"/>
         
+   <cmd id="toggleSoftWrapMode"
+        label="Toggle Soft Wrap Mode"
+        menuLabel="Soft Wrap Long Lines"
+        checkable="true"
+        context="editor"/>
+
    <cmd id="maximizeConsole"
         menuLabel="Maximize Console"/>
 

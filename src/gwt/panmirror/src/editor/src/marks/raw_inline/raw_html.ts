@@ -20,9 +20,11 @@ import { Extension } from '../../api/extension';
 import { isRawHTMLFormat, kHTMLFormat } from '../../api/raw';
 import { EditorUI } from '../../api/ui';
 import { EditorCommandId } from '../../api/command';
+import { PandocCapabilities } from '../../api/pandoc_capabilities';
 
 import { kRawInlineFormat, kRawInlineContent, RawInlineCommand } from './raw_inline';
-import { PandocCapabilities } from '../../api/pandoc_capabilities';
+
+import { InsertHTMLCommentCommand } from './raw_html_comment';
 
 const extension = (pandocExtensions: PandocExtensions, pandocCapabilities: PandocCapabilities): Extension | null => {
   if (!pandocExtensions.raw_html) {
@@ -37,25 +39,17 @@ const extension = (pandocExtensions: PandocExtensions, pandocCapabilities: Pando
         spec: {
           inclusive: false,
           excludes: '_',
-          attrs: {
-            comment: { default: false },
-          },
           parseDOM: [
             {
               tag: "span[class*='raw-html']",
               getAttrs(dom: Node | string) {
-                const el = dom as Element;
-                return {
-                  comment: el.getAttribute('data-comment') === '1',
-                };
+                return {};
               },
             },
           ],
           toDOM(mark: Mark) {
             const attr: any = {
-              class:
-                'raw-html pm-fixedwidth-font ' + (mark.attrs.comment ? 'pm-light-text-color' : 'pm-markup-text-color'),
-              'data-comment': mark.attrs.comment ? '1' : '0',
+              class: 'raw-html pm-fixedwidth-font pm-markup-text-color',
             };
             return ['span', attr];
           },
@@ -88,7 +82,10 @@ const extension = (pandocExtensions: PandocExtensions, pandocCapabilities: Pando
 
     // insert command
     commands: (schema: Schema, ui: EditorUI) => {
-      return [new RawInlineCommand(EditorCommandId.HTMLInline, kHTMLFormat, ui, pandocCapabilities.output_formats)];
+      return [
+        new RawInlineCommand(EditorCommandId.HTMLInline, kHTMLFormat, ui, pandocCapabilities.output_formats),
+        new InsertHTMLCommentCommand(schema),
+      ];
     },
   };
 };

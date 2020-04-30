@@ -29,6 +29,8 @@ public class PanmirrorTheme
    public String chunkBackgroundColor;
    public String spanBackgroundColor;
    public String divBackgroundColor;
+   public String commentColor;
+   public String commentFontStyle;
    public String commentBackgroundColor;
    public String gutterBackgroundColor;
    public String gutterTextColor;

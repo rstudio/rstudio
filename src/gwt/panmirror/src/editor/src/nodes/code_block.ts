@@ -13,24 +13,23 @@
  *
  */
 
-import { Node as ProsemirrorNode, Schema, ResolvedPos } from 'prosemirror-model';
-import { InputRule } from 'prosemirror-inputrules';
+import { Node as ProsemirrorNode, Schema } from 'prosemirror-model';
+import { textblockTypeInputRule } from 'prosemirror-inputrules';
 import { newlineInCode, exitCode } from 'prosemirror-commands';
-import { EditorState, Transaction, TextSelection } from 'prosemirror-state';
+import { EditorState, Transaction } from 'prosemirror-state';
 import { EditorView } from 'prosemirror-view';
 
 import { findParentNodeOfType, setTextSelection } from 'prosemirror-utils';
 
-import { BlockCommand, EditorCommandId, ProsemirrorCommand } from '../api/command';
+import { BlockCommand, EditorCommandId, ProsemirrorCommand, toggleBlockType } from '../api/command';
 import { Extension } from '../api/extension';
 import { BaseKey } from '../api/basekeys';
 import { codeNodeSpec } from '../api/code';
 import { PandocOutput, PandocTokenType, PandocExtensions } from '../api/pandoc';
-import { pandocAttrSpec, pandocAttrParseDom, pandocAttrToDomAttr, pandocAttrFrom } from '../api/pandoc_attr';
+import { pandocAttrSpec, pandocAttrParseDom, pandocAttrToDomAttr } from '../api/pandoc_attr';
 import { PandocCapabilities } from '../api/pandoc_capabilities';
-import { EditorUI, CodeBlockProps, EditorUIContext } from '../api/ui';
+import { EditorUI, CodeBlockProps } from '../api/ui';
 import { canInsertNode } from '../api/node';
-import { markIsActive } from '../api/mark';
 
 const extension = (
   pandocExtensions: PandocExtensions,
@@ -83,6 +82,7 @@ const extension = (
               return null;
             }
           },
+          attrEditFn: codeBlockFormatCommandFn(pandocExtensions, ui, pandocCapabilities.highlight_languages),
         },
 
         attr_edit: codeBlockAttrEdit(pandocExtensions, pandocCapabilities, ui),
@@ -119,6 +119,7 @@ const extension = (
           schema.nodes.paragraph,
           {},
         ),
+        new CodeBlockInsertCommand(pandocExtensions, ui, pandocCapabilities.highlight_languages),
       ];
       if (hasAttr) {
         commands.push(new CodeBlockFormatCommand(pandocExtensions, ui, pandocCapabilities.highlight_languages));
@@ -129,81 +130,74 @@ const extension = (
     baseKeys: () => {
       return [
         { key: BaseKey.Enter, command: newlineInCode },
-        { key: BaseKey.Enter, command: codeBlockInputRuleEnter(ui.context) },
         { key: BaseKey.ModEnter, command: exitCode },
         { key: BaseKey.ShiftEnter, command: exitCode },
       ];
     },
 
     inputRules: (schema: Schema) => {
-      return [codeBlockInputRule(schema, ui.context)];
+      return [textblockTypeInputRule(/^```$/, schema.nodes.code_block)];
     },
   };
 };
 
-function codeBlockInputRule(schema: Schema, uiContext: EditorUIContext) {
-  return new InputRule(/^```$/, (state: EditorState, match: string[], start: number, end: number) => {
-    if (!canReplaceNodeWithCodeBlock(schema, state.selection.$from)) {
-      return null;
-    }
+class CodeBlockInsertCommand extends ProsemirrorCommand {
+  constructor(pandocExtensions: PandocExtensions, ui: EditorUI, languages: string[]) {
+    super(
+      EditorCommandId.CodeBlockInsert,
+      [],
+      (state: EditorState, dispatch?: (tr: Transaction) => void, view?: EditorView) => {
+        const schema = state.schema;
 
-    const tr = state.tr;
-    tr.deleteRange(start, end);
-    const langText = langPlaceholderText(uiContext);
-    const insertText = match[0] + langText;
-    const codeMark = schema.marks.code.create();
-    tr.addStoredMark(codeMark);
-    tr.insertText(insertText);
-    tr.removeStoredMark(codeMark);
-    tr.setSelection(TextSelection.create(tr.doc, start + match[0].length, start + insertText.length));
-    return tr;
-  });
-}
+        if (!canInsertNode(state, schema.nodes.code_block)) {
+          return false;
+        }
 
-function codeBlockInputRuleEnter(uiContext: EditorUIContext) {
-  return (state: EditorState, dispatch?: (tr: Transaction) => void) => {
-    // see if the parent consist of a pending code block input rule
-    const { $head } = state.selection;
+        function insertCodeBlock(tr: Transaction, attrs = {}) {
+          const codeBlock = schema.nodes.code_block.create(attrs);
+          tr.replaceSelectionWith(codeBlock);
+          setTextSelection(tr.selection.from - 2)(tr);
+          return tr;
+        }
 
-    // full text of parent must meet the pattern
-    const match = $head.parent.textContent.match(/^```(\w*)$/);
-    if (!match) {
-      return false;
-    }
+        async function asyncEditCodeBlock() {
+          if (dispatch) {
+            const result = await ui.dialogs.editCodeBlock(
+              defaultCodeBlockProps(),
+              pandocExtensions.fenced_code_attributes,
+              languages,
+            );
 
-    // must be enclosed in a code mark
-    const schema = state.schema;
-    if (!markIsActive(state, schema.marks.code)) {
-      return false;
-    }
+            if (result) {
+              const applyProps = propsWithLangClass(result);
+              const tr = state.tr;
+              insertCodeBlock(tr, applyProps);
+              dispatch(tr);
+            }
 
-    // must be able to perform the replacement
-    if (!canReplaceNodeWithCodeBlock(schema, $head)) {
-      return false;
-    }
+            if (view) {
+              view.focus();
+            }
+          }
+        }
 
-    // execute
-    if (dispatch) {
-      // insert the code block
-      const tr = state.tr;
-      const lang = match[1];
-      const attrs = lang.length && lang !== langPlaceholderText(uiContext) ? pandocAttrFrom({ classes: [lang] }) : {};
-      const start = $head.start();
-      tr.delete(start, start + $head.parent.textContent.length);
-      tr.setBlockType(start, start, schema.nodes.code_block, attrs);
-      dispatch(tr);
-    }
+        // prompt for code block lang/attribs
+        if (hasFencedCodeBlocks(pandocExtensions)) {
+          asyncEditCodeBlock();
 
-    return true;
-  };
-}
+          // insert plain code block
+        } else {
+          if (dispatch) {
+            const tr = state.tr;
+            insertCodeBlock(tr);
+            dispatch(tr);
+          }
+        }
 
-function langPlaceholderText(uiContext: EditorUIContext) {
-  return uiContext.translateText('lang');
-}
-
-function canReplaceNodeWithCodeBlock(schema: Schema, $pos: ResolvedPos) {
-  return $pos.node(-1).canReplaceWith($pos.index(-1), $pos.indexAfter(-1), schema.nodes.code_block);
+        return true;
+      },
+    );
+  }
 }
 
 class CodeBlockFormatCommand extends ProsemirrorCommand {
@@ -214,10 +208,10 @@ class CodeBlockFormatCommand extends ProsemirrorCommand {
 
 function codeBlockFormatCommandFn(pandocExtensions: PandocExtensions, ui: EditorUI, languages: string[]) {
   return (state: EditorState, dispatch?: (tr: Transaction) => void, view?: EditorView) => {
-    // enable if we are either inside a code block or we can insert a code block
+    // enable if we are either inside a code block or we can toggle to a code block
     const schema = state.schema;
     const codeBlock = findParentNodeOfType(schema.nodes.code_block)(state.selection);
-    if (!codeBlock && !canInsertNode(state, schema.nodes.code_block)) {
+    if (!codeBlock && !toggleBlockType(schema.nodes.code_block, schema.nodes.paragraph)(state)) {
       return false;
     }
 
@@ -226,7 +220,7 @@ function codeBlockFormatCommandFn(pandocExtensions: PandocExtensions, ui: Editor
         // get props to edit
         const codeBlockProps = codeBlock
           ? { ...(codeBlock.node.attrs as CodeBlockProps), lang: '' }
-          : { id: '', classes: [], keyvalue: [], lang: '' };
+          : defaultCodeBlockProps();
 
         // set lang if the first class is from available languages
         // (alternatively if we don't support attributes then it's
@@ -247,21 +241,16 @@ function codeBlockFormatCommandFn(pandocExtensions: PandocExtensions, ui: Editor
         );
         if (result) {
           // extract lang
-          const newProps = { ...result };
-          if (newProps.classes && newProps.lang) {
-            newProps.classes.unshift(result.lang);
-          }
+          const applyProps = propsWithLangClass(result);
 
-          // edit or insert as appropriate
-          const tr = state.tr;
+          // edit or toggle as appropriate
           if (codeBlock) {
-            tr.setNodeMarkup(codeBlock.pos, schema.nodes.code_block, newProps);
+            const tr = state.tr;
+            tr.setNodeMarkup(codeBlock.pos, schema.nodes.code_block, applyProps);
+            dispatch(tr);
           } else {
-            const prevSel = tr.selection;
-            tr.replaceSelectionWith(schema.nodes.code_block.create(newProps));
-            setTextSelection(tr.mapping.map(prevSel.from), -1)(tr);
+            toggleBlockType(schema.nodes.code_block, schema.nodes.paragraph, applyProps)(state, dispatch, view);
           }
-          dispatch(tr);
         }
       }
 
@@ -274,6 +263,18 @@ function codeBlockFormatCommandFn(pandocExtensions: PandocExtensions, ui: Editor
 
     return true;
   };
+}
+
+function defaultCodeBlockProps() {
+  return { id: '', classes: [], keyvalue: [], lang: '' };
+}
+
+function propsWithLangClass(props: CodeBlockProps) {
+  const newProps = { ...props };
+  if (newProps.classes && newProps.lang) {
+    newProps.classes.unshift(props.lang);
+  }
+  return newProps;
 }
 
 function codeBlockAttrEdit(pandocExtensions: PandocExtensions, pandocCapabilities: PandocCapabilities, ui: EditorUI) {

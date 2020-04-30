@@ -1,7 +1,7 @@
 /*
  * ChunkDataPreview.java
  *
- * Copyright (C) 2009-16 by RStudio, PBC
+ * Copyright (C) 2009-20 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -13,6 +13,8 @@
  *
  */
 package org.rstudio.studio.client.workbench.views.source.editors.text;
+
+import org.rstudio.studio.client.rmarkdown.model.NotebookFrameMetadata;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JavaScriptObject;
@@ -38,9 +40,9 @@ public class ChunkDataPreview extends Composite
       String data();
    }
    
-   public ChunkDataPreview(JavaScriptObject data)
+   public ChunkDataPreview(JavaScriptObject data, NotebookFrameMetadata metadata)
    {
-      data_ = new ChunkDataWidget(data, ChunkOutputSize.Default);
+      data_ = new ChunkDataWidget(data, metadata, ChunkOutputSize.Default);
 
       initWidget(uiBinder.createAndBindUi(this));
       dataHost_.add(data_);

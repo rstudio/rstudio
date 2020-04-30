@@ -154,9 +154,9 @@ public:
    
    void setBrowserCompatible(const Request& request);
 
-   void addCookie(const Cookie& cookie);
+   void addCookie(const Cookie& cookie, bool iFrameLegacyCookies);
    void clearCookies();
-   Headers getCookies() const;
+   Headers getCookies(const std::vector<std::string>& names = {}, bool iFrameLegacyCookies = false) const;
    
    Error setBody(const std::string& content);
    

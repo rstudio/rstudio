@@ -23,13 +23,12 @@
 
 .pm-attr-edit-decoration .attr-edit-widget {
   padding: 2px;
-  height: 13px;
+  height: 18px;
   user-select: none;
   cursor: pointer;
 }
 
 .pm-attr-edit-decoration .attr-edit-tag {
-  float: left;
   border-radius: 20px;
   margin-right: 6px;
   padding-left: 7px;
@@ -38,16 +37,15 @@
 }
 
 .pm-attr-edit-decoration .attr-edit-button {
-  float: right;
-  position: relative;
   border-radius: 50%;
-  width: 13px;
+  padding-left: 0;
+  padding-right: 0;
 }
 
-.pm-attr-edit-decoration .attr-edit-button-ellipses {
-  position: absolute;
-  top: -1px;
-  left: 4px;
-  font-weight: bolder;
-  letter-spacing: 1px;
+.pm-attr-edit-decoration .attr-edit-button .attr-edit-button-ellipsis {
+  display: inline-block;
+  width: 18px;
+  transform: scale(0.6, 0.6);
+  font-weight: lighter;
+  letter-spacing: 0;
 }

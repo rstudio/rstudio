@@ -16,16 +16,34 @@
 import { Schema } from 'prosemirror-model';
 
 import { EditorUI } from '../../api/ui';
-import { extensionIfPandocAttrEnabled } from '../../api/pandoc_attr';
+import { pandocAttrEnabled } from '../../api/pandoc_attr';
 
 import { AttrEditCommand } from './attr_edit-command';
+import { AttrEditOptions } from '../../api/attr_edit';
+import { PandocExtensions } from '../../api/pandoc';
+import { AttrEditDecorationPlugin } from './attr_edit-decoration';
+import { Extension } from '../../api/extension';
 
 export const kEditAttrShortcut = 'F4';
 
-const extension = {
-  commands: (_schema: Schema, ui: EditorUI) => {
-    return [new AttrEditCommand(ui)];
-  },
-};
+export function attrEditExtension(pandocExtensions: PandocExtensions, editors: AttrEditOptions[]): Extension {
+  const hasAttr = pandocAttrEnabled(pandocExtensions);
 
-export default extensionIfPandocAttrEnabled(extension);
+  return {
+    commands: (_schema: Schema, ui: EditorUI) => {
+      if (hasAttr) {
+        return [new AttrEditCommand(ui, editors)];
+      } else {
+        return [];
+      }
+    },
+
+    plugins: (schema: Schema, ui: EditorUI) => {
+      if (hasAttr) {
+        return [new AttrEditDecorationPlugin(ui, editors)];
+      } else {
+        return [];
+      }
+    },
+  };
+}

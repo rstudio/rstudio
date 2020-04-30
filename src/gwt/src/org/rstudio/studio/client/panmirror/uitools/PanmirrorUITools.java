@@ -24,5 +24,6 @@ public class PanmirrorUITools
    public PanmirrorUIToolsAttr attr;
    public PanmirrorUIToolsImage image;
    public PanmirrorUIToolsFormat format;
+   public PanmirrorUIToolsSource source;
 }
 

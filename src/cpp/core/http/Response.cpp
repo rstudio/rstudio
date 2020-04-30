@@ -22,6 +22,7 @@
 #include <boost/format.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/algorithm/string.hpp>
+#include <boost/algorithm/string/trim.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/asio/buffer.hpp>
 
@@ -367,7 +368,11 @@ void Response::setFrameOptionHeaders(const std::string& options)
       }
    }
 
-   if (!option.empty())
+   // multiple space-separated domains not supported by X-Frame-Options, so if 
+   // there's a space, don't set the header (modern browsers will use the
+   // previously-set Content-Security-Policy)
+   if (!option.empty() &&
+         boost::algorithm::trim_copy(options).find_first_of(' ') == std::string::npos)
       setHeader("X-Frame-Options", option);
 }
 
@@ -378,18 +383,44 @@ void Response::setBrowserCompatible(const Request& request)
       setHeader("X-UA-Compatible", "IE=edge");
 }
 
-void Response::addCookie(const Cookie& cookie) 
+void Response::addCookie(const Cookie& cookie, bool iFrameLegacyCookies) 
 {
    addHeader("Set-Cookie", cookie.cookieHeaderValue());
+
+   // some browsers may swallow a cookie with SameSite=None
+   // so create an additional legacy cookie without SameSite
+   // which would be swalllowed by a standard-conforming browser
+   if (iFrameLegacyCookies && cookie.sameSite() == Cookie::SameSite::None)
+   {
+      Cookie legacyCookie = cookie;
+      legacyCookie.setName(legacyCookie.name() + kLegacyCookieSuffix);
+      legacyCookie.setSameSite(Cookie::SameSite::Undefined);
+      addHeader("Set-Cookie", legacyCookie.cookieHeaderValue());
+   }
 }
 
- Headers Response::getCookies() const
+ Headers Response::getCookies(const std::vector<std::string>& names /*= {}*/, bool iFrameLegacyCookies /*= false*/) const
  {
     http::Headers headers;
     for (const http::Header& header : headers_)
     {
        if (header.name == "Set-Cookie")
-          headers.push_back(header);
+       {
+          if (names.empty())
+          {
+            headers.push_back(header);
+          }
+          else
+          {
+             for (const std::string& name : names)
+             {
+               if (boost::algorithm::starts_with(header.value, name))
+                  headers.push_back(header);
+               else if (iFrameLegacyCookies && boost::algorithm::starts_with(header.value, name + kLegacyCookieSuffix))
+                  headers.push_back(header);
+             }
+          }
+       }
     }
     return headers;
  }

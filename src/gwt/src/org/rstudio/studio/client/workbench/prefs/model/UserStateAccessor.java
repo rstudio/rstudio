@@ -46,14 +46,6 @@ public class UserStateAccessor extends Prefs
    }
 
    /**
-    * Hash of the agreement that the user has accepted.
-    */
-   public PrefValue<String> agreementHash()
-   {
-      return string("agreement_hash", "");
-   }
-
-   /**
     * Whether we have automatically created an .Rprofile for this user.
     */
    public PrefValue<Boolean> autoCreatedProfile()
@@ -338,8 +330,6 @@ public class UserStateAccessor extends Prefs
    {
       if (source.hasKey("context_id"))
          contextId().setValue(layer, source.getString("context_id"));
-      if (source.hasKey("agreement_hash"))
-         agreementHash().setValue(layer, source.getString("agreement_hash"));
       if (source.hasKey("auto_created_profile"))
          autoCreatedProfile().setValue(layer, source.getBool("auto_created_profile"));
       if (source.hasKey("theme"))

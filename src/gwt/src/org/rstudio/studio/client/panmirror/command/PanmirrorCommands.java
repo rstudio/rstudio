@@ -41,6 +41,7 @@ public class PanmirrorCommands
    public static String Heading6 = "DB495DF5-8501-43C7-AE07-59CE9D9C373D";
    public static String CodeBlock = "3BA12A49-3E29-4ABC-9A49-436A3B49B880";
    public static String CodeBlockFormat = "07A6F2AA-01DC-41D7-9F01-AA91EAD856EE";
+   public static String CodeBlockInsert = "6110667A-309D-4245-BB1F-3B442EC826BC";
    public static String Blockquote = "AF0717E7-E4BA-4909-9F10-17EB757CDD0F";
    public static String LineBlock = "F401687C-B995-49AF-B2B0-59C158174FD5";
    public static String AttrEdit = "0F8A254D-9272-46BF-904D-3A9D68B91032";
@@ -85,6 +86,7 @@ public class PanmirrorCommands
    public static String ParagraphInsert = "4E68830A-3E68-450A-B3F3-2591F4EB6B9A";
    public static String HorizontalRule = "EAA7115B-181C-49EC-BDB1-F0FF10369278";
    public static String YamlMetadata = "431B5A45-1B25-4A55-9BAF-C0FE95D9B2B6";
+   public static String Shortcode = "0FDDA7E8-419D-4A5D-A1F5-74061466655D";
    public static String RmdChunk = "EBFD21FF-4A6E-4D88-A2E0-B38470B00BB9";
    public static String Citation = "EFFCFC81-F2E7-441E-B7FA-C693146B4185";
    public static String CrossReference = "48CEED4F-1D18-4AF9-8686-9FEB5DF6BCC8";
@@ -97,6 +99,7 @@ public class PanmirrorCommands
    public static String TexBlock = "BD11A6A7-E528-40A2-8139-3F8F5F556ED2";
    public static String InlineMath = "A35C562A-0BD6-4B14-93D5-6FF3BE1A0C8A";
    public static String DisplayMath = "3E36BA99-2AE9-47C3-8C85-7CC5314A88DF";
+   public static String HTMLComment = "F973CBA4-2882-4AC5-A642-47F4733EBDD4";
    public static String HTMLInline = "C682C6B5-E58D-498C-A38F-FB07BEC3A82D";
    public static String HTMLBlock = "6F9F64AF-711F-4F91-8642-B51C41717F31";
    public static String RawInline = "984167C8-8582-469C-97D8-42CB12773657";

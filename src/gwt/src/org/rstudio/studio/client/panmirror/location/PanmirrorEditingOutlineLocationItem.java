@@ -1,7 +1,7 @@
 /*
- * figure-styles.css
+ * PanmirrorEditingOutlineLocationItem.java
  *
- * Copyright (C) 2019-20 by RStudio, PBC
+ * Copyright (C) 2009-20 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -13,21 +13,15 @@
  *
  */
 
-.ProseMirror figure {
-  margin: 0;
-  margin-block-end: 1em;
-  cursor: default;
+package org.rstudio.studio.client.panmirror.location;
+
+import jsinterop.annotations.JsType;
+
+@JsType
+public class PanmirrorEditingOutlineLocationItem
+{
+   public String type; 
+   public int level;
+   public String title; 
+   public boolean active;
 }
-
-/* Note that ::selection and ::-moz-selection can't be combined into a single rule*/
-
-.ProseMirror .ProseMirror-selectednode *::selection {
-  background-color: transparent !important;
-}
-
-.ProseMirror .ProseMirror-selectednode *::-moz-selection {
-  background-color: transparent !important;
-}
-
-
-

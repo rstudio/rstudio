@@ -843,6 +843,19 @@ core::Error UserPrefValues::setSoftWrapRFiles(bool val)
 }
 
 /**
+ * Whether to soft-wrap R Markdown files (and similar types such as R HTML and R Notebooks)
+ */
+bool UserPrefValues::softWrapRmdFiles()
+{
+   return readPref<bool>("soft_wrap_rmd_files");
+}
+
+core::Error UserPrefValues::setSoftWrapRmdFiles(bool val)
+{
+   return writePref("soft_wrap_rmd_files", val);
+}
+
+/**
  * Whether to focus the R console after executing an R command from a script.
  */
 bool UserPrefValues::focusConsoleAfterExec()
@@ -2611,6 +2624,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kReindentOnPaste,
       kVerticallyAlignArgumentsIndent,
       kSoftWrapRFiles,
+      kSoftWrapRmdFiles,
       kFocusConsoleAfterExec,
       kFoldStyle,
       kSaveBeforeSourcing,

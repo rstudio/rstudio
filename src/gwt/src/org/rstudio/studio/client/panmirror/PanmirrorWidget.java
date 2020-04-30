@@ -18,7 +18,9 @@ package org.rstudio.studio.client.panmirror;
 
 import java.util.ArrayList;
 
-import org.rstudio.core.client.CommandWithArg;import org.rstudio.core.client.ExternalJavaScriptLoader;
+import org.rstudio.core.client.CommandWithArg;
+import org.rstudio.core.client.DebouncedCommand;
+import org.rstudio.core.client.ExternalJavaScriptLoader;
 import org.rstudio.core.client.HandlerRegistrations;
 import org.rstudio.core.client.events.MouseDragHandler;
 import org.rstudio.core.client.jsinterop.JsVoidFunction;
@@ -35,6 +37,8 @@ import org.rstudio.studio.client.panmirror.command.PanmirrorToolbar;
 import org.rstudio.studio.client.panmirror.findreplace.PanmirrorFindReplace;
 import org.rstudio.studio.client.panmirror.findreplace.PanmirrorFindReplaceWidget;
 import org.rstudio.studio.client.panmirror.format.PanmirrorFormat;
+import org.rstudio.studio.client.panmirror.location.PanmirrorEditingLocation;
+import org.rstudio.studio.client.panmirror.location.PanmirrorEditingOutlineLocation;
 import org.rstudio.studio.client.panmirror.outline.PanmirrorOutlineItem;
 import org.rstudio.studio.client.panmirror.outline.PanmirrorOutlineNavigationEvent;
 import org.rstudio.studio.client.panmirror.outline.PanmirrorOutlineVisibleEvent;
@@ -243,6 +247,21 @@ public class PanmirrorWidget extends DockLayoutPanel implements
       
       }));
       
+      // don't update outline eaglerly (wait for 500ms delay in typing)
+      DebouncedCommand updateOutineOnIdle = new DebouncedCommand(500)
+      {
+         @Override
+         protected void execute()
+         {
+            if (editor_ != null) // would be null during teardown of tab
+            {
+               PanmirrorOutlineItem[] outline = editor_.getOutline();
+               outline_.updateOutline(outline);
+               outline_.updateSelection(editor_.getSelection());
+            }
+         }
+      };
+      
       editorEventUnsubscribe_.add(editor_.subscribe(PanmirrorEvent.SelectionChange, () -> {
          
          // sync toolbar commands
@@ -250,17 +269,16 @@ public class PanmirrorWidget extends DockLayoutPanel implements
             toolbar_.sync(false);
          
          // sync outline
-         outline_.updateSelection(editor_.getSelection());
+         updateOutineOnIdle.nudge();
          
          // fire to clients
          SelectionChangeEvent.fire(this);
       }));
       
       editorEventUnsubscribe_.add(editor_.subscribe(PanmirrorEvent.OutlineChange, () -> {
-
-         // sync outline items
-         PanmirrorOutlineItem[] outline = editor_.getOutline();
-         outline_.updateOutline(outline);
+         
+         // sync outline
+         updateOutineOnIdle.nudge();
          
       }));
       
@@ -331,23 +349,28 @@ public class PanmirrorWidget extends DockLayoutPanel implements
    
   
    
-   public void setMarkdown(String code, boolean emitUpdate, CommandWithArg<Boolean> completed) 
+   public void setMarkdown(String code, PanmirrorWriterOptions options, boolean emitUpdate, CommandWithArg<String> completed) 
    {
-      new PromiseWithProgress<Boolean>(
-         editor_.setMarkdown(code, true, emitUpdate),
-         false,
+      new PromiseWithProgress<String>(
+         editor_.setMarkdown(code, options, emitUpdate),
+         "",
          kSerializationProgressDelayMs,
          completed
       );
    }
    
-   public void getMarkdown(PanmirrorWriterOptions options, boolean cursorSentinel, CommandWithArg<PanmirrorCode> completed) {
+   public void getMarkdown(PanmirrorWriterOptions options, CommandWithArg<PanmirrorCode> completed) {
       new PromiseWithProgress<PanmirrorCode>(
-         editor_.getMarkdown(options, cursorSentinel),
+         editor_.getMarkdown(options),
          null,
          kSerializationProgressDelayMs,
          completed   
       );
+   }
+   
+   public boolean isInitialDoc()
+   {
+      return editor_.isInitialDoc();
    }
    
    public HasFindReplace getFindReplace()
@@ -451,9 +474,11 @@ public class PanmirrorWidget extends DockLayoutPanel implements
       return editor_.getEditingLocation();
    }
    
-   public void restoreEditingLocation(PanmirrorEditingLocation location)
+   public void setEditingLocation(
+      PanmirrorEditingOutlineLocation outlineLocation, 
+      PanmirrorEditingLocation previousLocation) 
    {
-      editor_.restoreEditingLocation(location);
+      editor_.setEditingLocation(outlineLocation, previousLocation);
    }
    
    public void focus()

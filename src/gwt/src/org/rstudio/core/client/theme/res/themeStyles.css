@@ -1763,6 +1763,17 @@ body.ubuntu_mono .searchBox {
    background-color: white;
 }
 
+.showFilePreFixed {
+   overflow-x: auto;
+   white-space: pre-wrap;
+   white-space: -moz-pre-wrap;
+   word-wrap: break-word;
+   -ms-user-select: text;
+   -moz-user-select: text;
+   -webkit-user-select: text;
+   user-select: text;
+}
+
 .fileUploadPanel {
    width: 350px;
 }
@@ -2529,11 +2540,13 @@ body.rstudio-themes-flat .rstudio-themes-default {
 
 .rstudio-themes-flat .rstudio-themes-default .gwt-TabLayoutPanelTabs table.rstheme_tabLayoutCenter,
 .rstudio-themes-flat .rstudio-themes-default .rstheme_minimizedWindowObject table.rstheme_tabLayoutCenter {
+   background-image: none;
    background: THEME_DEFAULT_INACTIVE;
 }
 
 .rstudio-themes-flat .rstudio-themes-default .gwt-TabLayoutPanelTabs,
 .rstudio-themes-flat .rstudio-themes-default .rstheme_minimizedWindowObject .rstheme_center {
+   background-image: none;
    background: THEME_DEFAULT_MOST_INACTIVE;
 }
 
@@ -2591,11 +2604,13 @@ body.rstudio-themes-flat .rstudio-themes-dark-grey {
 
 .rstudio-themes-flat .rstudio-themes-dark-grey .gwt-TabLayoutPanelTabs table.rstheme_tabLayoutCenter,
 .rstudio-themes-flat .rstudio-themes-dark-grey .rstheme_minimizedWindowObject table.rstheme_tabLayoutCenter {
+   background-image: none;
    background: THEME_DARKGREY_INACTIVE;
 }
 
 .rstudio-themes-flat .rstudio-themes-dark-grey .gwt-TabLayoutPanelTabs,
 .rstudio-themes-flat .rstudio-themes-dark-grey .rstheme_minimizedWindowObject .rstheme_center {
+   background-image: none;
    background: THEME_DARKGREY_MOST_INACTIVE;
 }
 
@@ -2656,11 +2671,13 @@ body.rstudio-themes-flat .rstudio-themes-alternate {
 
 .rstudio-themes-flat .rstudio-themes-alternate .gwt-TabLayoutPanelTabs table.rstheme_tabLayoutCenter,
 .rstudio-themes-flat .rstudio-themes-alternate .rstheme_minimizedWindowObject table.rstheme_tabLayoutCenter {
+   background-image: none;
    background: THEME_ALTERNATE_INACTIVE;
 }
 
 .rstudio-themes-flat .rstudio-themes-alternate .gwt-TabLayoutPanelTabs,
 .rstudio-themes-flat .rstudio-themes-alternate .rstheme_minimizedWindowObject .rstheme_center {
+   background-image: none;
    background: THEME_ALTERNATE_MOST_INACTIVE;
 }
 

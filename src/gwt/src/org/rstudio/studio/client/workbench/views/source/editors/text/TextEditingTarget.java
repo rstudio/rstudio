@@ -204,6 +204,8 @@ public class TextEditingTarget implements
    public final static String DOC_OUTLINE_VISIBLE = "docOutlineVisible";
    
    public static final String RMD_VISUAL_MODE = "rmdVisualMode";
+   
+   public static final String SOFT_WRAP_LINES = "softWrapLines";
   
    private static final MyCommandBinder commandBinder =
          GWT.create(MyCommandBinder.class);
@@ -254,6 +256,7 @@ public class TextEditingTarget implements
       
       void toggleDocumentOutline();
       void toggleRmdVisualMode();
+      void toggleSoftWrapMode();
       
       void setNotebookUIVisible(boolean visible);
 
@@ -1196,25 +1199,27 @@ public class TextEditingTarget implements
    @Override
    public void beginCollabSession(CollabEditStartParams params)
    {
-      // the server may notify us of a collab session we're already
-      // participating in; this is okay
-      if (docDisplay_.hasActiveCollabSession())
-      {
-         return;
-      }
-      
-      // were we waiting to process another set of params when these arrived?
-      boolean paramQueueClear = queuedCollabParams_ == null;
-
-      // save params 
-      queuedCollabParams_ = params;
-
-      // if we're not waiting for another set of params to resolve, and we're
-      // the active doc, process these params immediately
-      if (paramQueueClear && isActiveDocument())
-      {
-         beginQueuedCollabSession();
-      }
+      visualMode_.deactivate(() -> {
+         // the server may notify us of a collab session we're already
+         // participating in; this is okay
+         if (docDisplay_.hasActiveCollabSession())
+         {
+            return;
+         }
+         
+         // were we waiting to process another set of params when these arrived?
+         boolean paramQueueClear = queuedCollabParams_ == null;
+   
+         // save params 
+         queuedCollabParams_ = params;
+   
+         // if we're not waiting for another set of params to resolve, and we're
+         // the active doc, process these params immediately
+         if (paramQueueClear && isActiveDocument())
+         {
+            beginQueuedCollabSession();
+         }
+      });
    }
    
    @Override
@@ -1434,7 +1439,18 @@ public class TextEditingTarget implements
       
       name_.setValue(getNameFromDocument(document, defaultNameProvider), true);
       String contents = document.getContents();
-      docDisplay_.setCode(contents, false);
+      
+      // Set document contents, but disable autosave during this
+      // interval (avoid spurious saves immediately after opening a document)
+      try
+      {
+         docUpdateSentinel_.suspendAutosave(true);
+         docDisplay_.setCode(contents, false);
+      }
+      finally
+      {
+         docUpdateSentinel_.suspendAutosave(false);
+      }
       
       // Discover dependencies on file first open.
       packageDependencyHelper_.discoverPackageDependencies();
@@ -1525,15 +1541,7 @@ public class TextEditingTarget implements
             // check to see if the file's been saved externally--we do this even
             // in a collaborative editing session so we can get delete
             // notifications
-            Scheduler.get().scheduleFixedDelay(new RepeatingCommand()
-            {
-               public boolean execute()
-               {
-                  if (view_.isAttached())
-                     checkForExternalEdit();
-                  return false;
-               }
-            }, 500);
+            checkForExternalEdit(500);
          }
       });
       
@@ -1754,6 +1762,13 @@ public class TextEditingTarget implements
          docUpdateSentinel_,
          events_,
          releaseOnDismiss_
+      );
+      
+      // update status bar when visual mode status changes
+      releaseOnDismiss_.add(
+         docUpdateSentinel_.addPropertyValueChangeHandler(RMD_VISUAL_MODE, (value) -> {
+            updateStatusBarLanguage();
+         })
       );
       
       Scheduler.get().scheduleDeferred(new ScheduledCommand()
@@ -2935,6 +2950,10 @@ public class TextEditingTarget implements
    @Override
    public void adaptToExtendedFileType(String extendedType)
    {
+      // extended type can affect publish options; we need to sync here even if the type
+      // hasn't changed as the path may have changed
+      syncPublishPath(docUpdateSentinel_.getPath());
+
       // ignore if unchanged
       if (StringUtil.equals(extendedType, extendedType_))
          return;
@@ -2943,9 +2962,6 @@ public class TextEditingTarget implements
       if (extendedType == SourceDocument.XT_RMARKDOWN)
          updateRmdFormatList();
       extendedType_ = extendedType;
-
-      // extended type can affect publish options
-      syncPublishPath(docUpdateSentinel_.getPath());
    }
 
    @Override
@@ -3008,6 +3024,12 @@ public class TextEditingTarget implements
    void onToggleRmdVisualMode()
    {
       view_.toggleRmdVisualMode();
+   }
+   
+   @Handler
+   void onToggleSoftWrapMode()
+   {
+      view_.toggleSoftWrapMode();
    }
    
    @Handler
@@ -3195,11 +3217,53 @@ public class TextEditingTarget implements
    @Handler
    void onReopenSourceDocWithEncoding()
    {
-	   saveThenExecute(null, () -> {
-	      withChooseEncoding(
-	            docUpdateSentinel_.getEncoding(),
-	            (String encoding) -> docUpdateSentinel_.reopenWithEncoding(encoding));
-	   });
+      final Command action = () -> {
+         withChooseEncoding(
+               docUpdateSentinel_.getEncoding(),
+               (String encoding) -> docUpdateSentinel_.reopenWithEncoding(encoding));
+      };
+      
+      // NOTE: we previously attempted to save any existing document diffs
+      // and then re-opened the document with the requested encoding, but
+      // this is a perilous action to take as if the user has opened a document
+      // without specifying the correct encoding, the representation of the document
+      // in the front-end might be corrupt / incorrect and so attempting to save
+      // a document diff could further corrupt the document!
+      //
+      // Since the most common user workflow here should be:
+      //
+      //    1. Open a document,
+      //    2. Discover the document was not opened with the correct encoding,
+      //    3. Attempt to re-open with a separate encoding
+      //
+      // it's most likely that they do not want to persist any changes made to the
+      // "incorrect" version of the document and instead want to discard any
+      // changes and re-open the document as it exists on disk.
+      if (dirtyState_.getValue())
+      {
+         String caption = "Reopen with Encoding";
+         
+         String message =
+               "This document has unsaved changes. These changes will be " +
+               "discarded when re-opening the document.\n\n" +
+               "Would you like to proceed?";
+         
+         globalDisplay_.showYesNoMessage(
+               GlobalDisplay.MSG_WARNING,
+               caption,
+               message,
+               true,
+               () -> action.execute(),
+               () -> {},
+               () -> {},
+               "Reopen Document",
+               "Cancel",
+               true);
+      }
+      else
+      {
+         action.execute();
+      }
    }
 
    @Handler
@@ -6707,6 +6771,19 @@ public class TextEditingTarget implements
             });
    }
    
+   public void checkForExternalEdit(int delayMs) 
+   {
+      Scheduler.get().scheduleFixedDelay(new RepeatingCommand()
+      {
+         public boolean execute()
+         {
+            if (view_.isAttached())
+               checkForExternalEdit();
+            return false;
+         }
+      }, delayMs);
+   }
+   
    private void revertEdits()
    {
       docUpdateSentinel_.revert(() -> {
@@ -7519,9 +7596,12 @@ public class TextEditingTarget implements
       // Cancel any existing autosave timer
       autoSaveTimer_.cancel();
       
-      // Start new timer if enabled
-      if (prefs_.autoSaveOnIdle().getValue() == UserPrefs.AUTO_SAVE_ON_IDLE_COMMIT)
-         autoSaveTimer_.schedule(prefs_.autoSaveMs());
+      // Bail if not enabled
+      if (prefs_.autoSaveOnIdle().getValue() != UserPrefs.AUTO_SAVE_ON_IDLE_COMMIT)
+         return;
+      
+      // OK, schedule autosave
+      autoSaveTimer_.schedule(prefs_.autoSaveMs());
    }
    
    private boolean isVisualModeActivated()
@@ -7693,5 +7773,5 @@ public class TextEditingTarget implements
    }
    
    private static final String PROPERTY_CURSOR_POSITION = "cursorPosition";
-   private static final String PROPERTY_SCROLL_LINE = "scrollLine";  
+   private static final String PROPERTY_SCROLL_LINE = "scrollLine";
 }

@@ -25,6 +25,7 @@ RUN yum install -y \
     libcap-devel \ 
     libpq-devel \
     libuuid-devel \
+    libxml2-devel \
     libXcursor-devel \
     libXrandr-devel \
     libXScrnSaver-devel \

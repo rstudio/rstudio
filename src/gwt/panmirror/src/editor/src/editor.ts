@@ -18,15 +18,16 @@ import { keydownHandler } from 'prosemirror-keymap';
 import { MarkSpec, Node as ProsemirrorNode, NodeSpec, Schema, DOMParser, ParseOptions } from 'prosemirror-model';
 import { EditorState, Plugin, PluginKey, Transaction } from 'prosemirror-state';
 import { EditorView } from 'prosemirror-view';
-import { setTextSelection, findParentNodeOfTypeClosestToPos, findParentNode } from 'prosemirror-utils';
 import 'prosemirror-view/style/prosemirror.css';
+
+import { setTextSelection, findChildrenByType } from 'prosemirror-utils';
 
 import polyfill from './polyfill/index';
 
 import { EditorOptions } from './api/options';
 import { ProsemirrorCommand, CommandFn, EditorCommand } from './api/command';
 import { PandocMark, markIsActive } from './api/mark';
-import { PandocNode } from './api/node';
+import { PandocNode, findTopLevelBodyNodes } from './api/node';
 import { EditorUI, attrPropsToInput, attrInputToProps, AttrProps, AttrEditInput } from './api/ui';
 import { Extension } from './api/extension';
 import { ExtensionManager, initExtensions } from './extensions';
@@ -49,13 +50,14 @@ import {
   kSetMarkdownTransaction,
 } from './api/transaction';
 import { EditorOutline } from './api/outline';
-import { EditingLocation, getEditingLocation, restoreEditingLocation } from './api/location';
+import { EditingLocation, getEditingLocation, EditingOutlineLocation, setEditingLocation } from './api/location';
 import { navigateTo } from './api/navigation';
 import { FixupContext } from './api/fixup';
 import { unitToPixels, pixelsToUnit, roundUnit, kValidUnits } from './api/image';
 import { kPercentUnit } from './api/css';
 import { defaultEditorUIImages } from './api/ui-images';
 import { EditorFormat } from './api/format';
+import { diffChars, EditorChange } from './api/change';
 
 import { getTitle, setTitle } from './nodes/yaml_metadata/yaml_metadata-title';
 
@@ -86,8 +88,8 @@ polyfill();
 const kMac = typeof navigator !== 'undefined' ? /Mac/.test(navigator.platform) : false;
 
 export interface EditorCode {
-  markdown: string;
-  cursorSentinel?: string;
+  code: string;
+  cursor?: { row: number; column: number };
 }
 
 export interface EditorContext {
@@ -141,10 +143,15 @@ export interface UIToolsFormat {
   parseFormatComment(markdown: string): PandocFormatComment;
 }
 
+export interface UIToolsSource {
+  diffChars(from: string, to: string, timeout: number): EditorChange[];
+}
+
 export class UITools {
   public readonly attr: UIToolsAttr;
   public readonly image: UIToolsImage;
   public readonly format: UIToolsFormat;
+  public readonly source: UIToolsSource;
 
   constructor() {
     this.attr = {
@@ -162,6 +169,10 @@ export class UITools {
 
     this.format = {
       parseFormatComment: pandocFormatCommentFromCode,
+    };
+
+    this.source = {
+      diffChars,
     };
   }
 }
@@ -198,6 +209,10 @@ export class Editor {
   // content width constraints (if unset uses default editor CSS)
   private maxContentWidth = 0;
   private minContentPadding = 0;
+
+  // keep track of whether the last transaction was selection-only
+  // (indicates that we should use a cursorSentinel when going to source mode)
+  private lastTrSelectionOnly = false;
 
   // event sinks
   private readonly events: ReadonlyMap<string, Event>;
@@ -331,7 +346,7 @@ export class Editor {
     this.applyTheme(defaultTheme());
 
     // create pandoc translator
-    this.pandocConverter = new PandocConverter(this.schema, this.extensions, context.pandoc);
+    this.pandocConverter = new PandocConverter(this.schema, this.extensions, context.pandoc, this.pandocCapabilities);
 
     // focus editor immediately if requested
     if (this.options.autoFocus) {
@@ -368,13 +383,13 @@ export class Editor {
     }
   }
 
-  public async setMarkdown(markdown: string, preserveHistory: boolean, emitUpdate = true): Promise<boolean> {
+  public async setMarkdown(markdown: string, options: PandocWriterOptions, emitUpdate: boolean): Promise<string> {
     // get the doc
     const doc = await this.pandocConverter.toProsemirror(markdown, this.pandocFormat.fullName);
 
     // if we are preserving history but the existing doc is empty then create a new state
     // (resets the undo stack so that the intial setting of the document can't be undone)
-    if (!preserveHistory || this.state.doc.attrs.initial) {
+    if (this.isInitialDoc()) {
       this.state = EditorState.create({
         schema: this.state.schema,
         doc,
@@ -392,6 +407,10 @@ export class Editor {
         i++;
         return false;
       });
+      // set selection to the beginning of the doc
+      const bodyNode = findChildrenByType(tr.doc, this.schema.nodes.body)[0];
+      setTextSelection(bodyNode.pos)(tr);
+      // dispatch
       this.view.dispatch(tr);
     }
 
@@ -405,26 +424,31 @@ export class Editor {
       this.emitEvent(EditorEvent.SelectionChange);
     }
 
-    return true;
+    // return our current markdown representation (so the caller know what our
+    // current 'view' of the doc as markdown looks like
+    // return this.pandocConverter.fromProsemirror(this.state.doc)
+    return this.getMarkdownCode(this.state.doc, options);
   }
 
-  public async getMarkdown(options: PandocWriterOptions, cursorSentinel: boolean): Promise<EditorCode> {
-    // override wrapColumn option if it was specified
-    options.wrapColumn = this.format.wrapColumn || options.wrapColumn;
+  // flag indicating whether we've ever had setMarkdown (currently we need this
+  // because getMarkdown can only be called after setMarkdown b/c it needs
+  // the API version retreived in setMarkdown -- we should remedy this)
+  public isInitialDoc() {
+    return this.state.doc.attrs.initial;
+  }
 
-    // apply layout fixups
-    this.applyFixups(FixupContext.Save);
+  public async getMarkdown(options: PandocWriterOptions): Promise<EditorCode> {
+    // do we need the cursor sentinel?
+    const useCursorSentinel = this.lastTrSelectionOnly;
 
-    // convert doc
-    const docWithCursor = cursorSentinel
-      ? this.docWithCursorSentinel()
-      : { doc: this.state.doc, cursorSentinel: undefined };
-    const markdown = await this.pandocConverter.fromProsemirror(docWithCursor.doc, this.pandocFormat, options);
+    // insert cursor sentinel if appropriate
+    const target = useCursorSentinel ? docWithCursorSentinel(this.state) : { doc: this.state.doc, sentinel: null };
 
-    return {
-      markdown,
-      cursorSentinel: docWithCursor.cursorSentinel,
-    };
+    // get the code
+    const code = await this.getMarkdownCode(target.doc, options);
+
+    // return
+    return codeWithCursor(code, target.sentinel);
   }
 
   public getHTML(): string {
@@ -444,13 +468,8 @@ export class Editor {
     return getEditingLocation(this.view);
   }
 
-  public restoreEditingLocation(location: EditingLocation) {
-    // delay the restore so all of our code mirror instances
-    // can become visible (which allows decorators that reference
-    // offsetTop to draw at the proper location)
-    setTimeout(() => {
-      restoreEditingLocation(this.view, location);
-    }, 100);
+  public setEditingLocation(outlineLocation?: EditingOutlineLocation, previousLocation?: EditingLocation) {
+    setEditingLocation(this.view, outlineLocation, previousLocation);
   }
 
   public getOutline(): EditorOutline {
@@ -544,6 +563,9 @@ export class Editor {
   private dispatchTransaction(tr: Transaction) {
     // track previous outline
     const previousOutline = getOutline(this.state);
+
+    // track whether this was a selection-only transaction
+    this.lastTrSelectionOnly = tr.selectionSet && !tr.docChanged;
 
     // apply the transaction
     this.state = this.state.apply(tr);
@@ -763,7 +785,7 @@ export class Editor {
 
   // update parent padding based on content width settings (if specified)
   private syncContentWidth() {
-    if (this.maxContentWidth) {
+    if (this.maxContentWidth && this.parent.clientWidth) {
       const minContentPadding = this.minContentPadding || 10;
       const parentWidth = this.parent.clientWidth;
       if (parentWidth > this.maxContentWidth + 2 * minContentPadding) {
@@ -808,35 +830,80 @@ export class Editor {
     });
   }
 
-  private docWithCursorSentinel() {
-    // transaction for inserting the sentinel (won't actually commit since it will
-    // have the sentinel in it but rather will use the computed tr.doc)
-    const tr = this.state.tr;
+  private async getMarkdownCode(doc: ProsemirrorNode, options: PandocWriterOptions) {
+    // override wrapColumn option if it was specified
+    options.wrapColumn = this.format.wrapColumn || options.wrapColumn;
 
-    // cursorSentinel to return
-    let cursorSentinel: string | undefined;
+    // apply layout fixups
+    this.applyFixups(FixupContext.Save);
 
-    // find the beginning of the nearest text block
-    const textBlock = findParentNode(node => node.isTextblock)(tr.selection);
-    if (textBlock) {
-      // only proceed if we are not inside a table (as the sentinel will mess up
-      // table column formatting)
-      const textBlockPos = tr.doc.resolve(textBlock.pos);
-      if (!this.schema.nodes.table || !findParentNodeOfTypeClosestToPos(textBlockPos, this.schema.nodes.table)) {
-        // space at the end of the sentinel so that it doesn't interere with
-        // markdown that is sensitive to contiguous characters (e.g. math)
-        cursorSentinel = 'CursorSentinel-CAFB04C4-080D-4074-898C-F670CAACB8AF';
-        setTextSelection(textBlock.pos)(tr);
-        tr.insertText(cursorSentinel);
-      }
-    }
-
-    // return the doc and sentinel (if any)
-    return {
-      doc: tr.doc,
-      cursorSentinel,
-    };
+    // get code
+    return this.pandocConverter.fromProsemirror(doc, this.pandocFormat, options);
   }
+}
+
+function docWithCursorSentinel(state: EditorState) {
+  // transaction for inserting the sentinel (won't actually commit since it will
+  // have the sentinel in it but rather will use the computed tr.doc)
+  const tr = state.tr;
+
+  // cursorSentinel to return
+  let sentinel: string | null = null;
+
+  // find the anchor of the current selection
+  const { anchor } = tr.selection;
+
+  // find the closest top-level text block that isn't an Rmd chunk (their
+  // first line gets special processing so we can't put the sentinel there)
+  const topLevelTextBlocks = findTopLevelBodyNodes(tr.doc, node => {
+    return node.isTextblock && node.type !== state.doc.type.schema.nodes.rmd_chunk;
+  });
+  const textBlock = topLevelTextBlocks.reverse().find(block => block.pos < anchor);
+  if (textBlock) {
+    sentinel = 'CursorSentinel-CAFB04C4-080D-4074-898C-F670CAACB8AF';
+    let pos = textBlock.pos;
+    if (textBlock.pos + textBlock.node.nodeSize < anchor) {
+      pos = textBlock.pos + textBlock.node.nodeSize - 1;
+    }
+    setTextSelection(pos)(tr);
+    tr.insertText(sentinel);
+  }
+
+  // return the doc and sentinel (if any)
+  return {
+    doc: tr.doc,
+    sentinel,
+  };
+}
+
+// get editor code + cursor location and jsdiff changes from previousCode
+function codeWithCursor(code: string, cursorSentinel: string | null) {
+  // determine the cursor row and column using the sentinel (remove the sentinel from the code)
+  let newCode = code;
+  let cursor: { row: number; column: number } | undefined;
+  if (cursorSentinel) {
+    newCode = code
+      .split(/\r?\n/)
+      .map((line, index) => {
+        if (!cursor) {
+          const sentinelLoc = line.indexOf(cursorSentinel);
+          if (sentinelLoc !== -1) {
+            line = line.replace(cursorSentinel, '');
+            cursor = {
+              row: index,
+              column: sentinelLoc,
+            };
+          }
+        }
+        return line;
+      })
+      .join('\n');
+  }
+
+  return {
+    code: newCode,
+    cursor,
+  };
 }
 
 // custom DOMParser that preserves all whitespace (required by display math marks)

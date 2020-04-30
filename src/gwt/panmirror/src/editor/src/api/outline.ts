@@ -22,6 +22,10 @@ export interface EditorOutlineItem {
   children: EditorOutlineItem[];
 }
 
+export const kHeadingOutlineItemType = 'heading';
+export const kRmdchunkOutlineItemType = 'rmd_chunk';
+export const kYamlMetadataOutlineItenItem = 'yaml_metadata';
+
 export type EditorOutlineItemType = 'heading' | 'rmd_chunk' | 'yaml_metadata';
 
 export type EditorOutline = EditorOutlineItem[];

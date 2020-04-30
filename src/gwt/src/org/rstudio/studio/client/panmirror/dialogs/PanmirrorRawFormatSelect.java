@@ -27,19 +27,21 @@ public class PanmirrorRawFormatSelect extends SelectWidget
       super("Format:", new String[] {}, new String[] {}, false);
    }
    
-   public void setFormats(String[] formats)
+   public void setFormats(String[] formats, String value)
    {
       this.setChoices(
-         getFormatList("(Choose Format)", formats),
-         getFormatList("", formats)
+         getFormatList("(Choose Format)", formats, value),
+         getFormatList("", formats, value)
       );
    }
    
-   private static String[] getFormatList(String firstItem, String[] formats)
+   private static String[] getFormatList(String firstItem, String[] formats, String value)
    {
       ArrayList<String> options = new ArrayList<String>();
       options.add(firstItem);
       options.addAll(Arrays.asList(formats));
+      if (!options.contains(value))
+         options.add(value);
       return options.toArray(new String[]{});
    }
 

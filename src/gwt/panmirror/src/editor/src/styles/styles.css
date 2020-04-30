@@ -32,6 +32,10 @@
   margin-top: 10px;
 }
 
+h3.pm-heading {
+  font-size: 1.25em;
+}
+
 .pm-link {
   text-decoration: underline;
 }
@@ -48,8 +52,22 @@
   margin-right: 0;
 }
 
+.pm-list {
+  margin-block-end: 0;
+}
+
+.pm-figure {
+  margin: 0;
+  margin-block-end: 1em;
+}
+
+.pm-img {
+  max-width: 100%;
+}
+
 .pm-div {
   padding: 1em;
+  padding-bottom: 0;
   margin-block-end: 1em;
 }
 
@@ -66,7 +84,7 @@
 }
 
 .pm-table-container {
-  margin-bottom: 1em;
+  margin-block-end: 1.5em;
 }
 
 .pm-table-container th {
@@ -89,6 +107,10 @@
   border: 1px solid;
   margin-block-end: 1.5em;
   margin-top: 10px;
+}
+
+.pm-definition-list {
+  margin-block-end: 1.5em;
 }
 
 .pm-definition-term {

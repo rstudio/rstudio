@@ -16,23 +16,22 @@
 #ifndef SERVER_CORE_SERVER_DATABASE_HPP
 #define SERVER_CORE_SERVER_DATABASE_HPP
 
+#include <boost/optional.hpp>
+
 #include <core/Database.hpp>
+
 #include <shared_core/Error.hpp>
+#include <shared_core/system/User.hpp>
 
 namespace rstudio {
-
-namespace core {
-
-class Error;
-
-} // namespace core
-
 namespace server_core {
 namespace database {
 
 // initialize server database, optionally performing migration
 // to the latest database schema version
-core::Error initialize(bool updateSchema = false);
+core::Error initialize(const std::string& databaseConfigFile = std::string(),
+                       bool updateSchema = false,
+                       const boost::optional<core::system::User>& databaseFileUser = boost::none);
 
 boost::shared_ptr<core::database::IConnection> getConnection();
 bool getConnection(const boost::posix_time::time_duration& waitTime,

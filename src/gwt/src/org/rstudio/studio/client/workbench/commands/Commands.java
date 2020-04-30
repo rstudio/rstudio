@@ -199,6 +199,7 @@ public abstract class
    public abstract AppCommand insertPipeOperator();
    public abstract AppCommand openNextFileOnFilesystem();
    public abstract AppCommand openPreviousFileOnFilesystem();
+   public abstract AppCommand toggleSoftWrapMode();
  
    // Projects
    public abstract AppCommand newProject();

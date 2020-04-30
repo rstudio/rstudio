@@ -159,6 +159,21 @@ public:
       return wwwAllowedOrigins_;
    }
 
+   bool wwwIFrameEmbedding() const
+   {
+      return wwwIFrameEmbedding_;
+   }
+
+   bool wwwLegacyCookies() const
+   {
+      return wwwLegacyCookies_;
+   }
+
+   bool wwwIFrameLegacyCookies() const
+   {
+      return wwwIFrameEmbedding_ && wwwLegacyCookies_;
+   }
+
    // auth
    bool authNone()
    {
@@ -278,6 +293,12 @@ public:
       return overlayOptions_[name];
    }
 
+   // database
+   std::string databaseConfigFile() const
+   {
+      return databaseConfigFile_;
+   }
+
 private:
 
    void resolvePath(const core::FilePath& basePath,
@@ -333,6 +354,8 @@ private:
    bool wwwVerifyUserAgent_;
    bool wwwEnableOriginCheck_;
    std::vector<boost::regex> wwwAllowedOrigins_;
+   bool wwwIFrameEmbedding_;
+   bool wwwLegacyCookies_;
    bool authNone_;
    bool authValidateUsers_;
    int authStaySignedInDays_;
@@ -355,6 +378,7 @@ private:
    std::string monitorSharedSecret_;
    int monitorIntervalSeconds_;
    std::string secureCookieKeyFile_;
+   std::string databaseConfigFile_;
    std::map<std::string,std::string> overlayOptions_;
 };
       

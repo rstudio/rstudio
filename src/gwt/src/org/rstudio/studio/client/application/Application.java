@@ -49,7 +49,6 @@ import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.events.BarrierReleasedEvent;
 import org.rstudio.core.client.events.BarrierReleasedHandler;
 import org.rstudio.core.client.widget.ModalDialogTracker;
-import org.rstudio.core.client.widget.Operation;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.ApplicationQuit.QuitContext;
 import org.rstudio.studio.client.application.events.*;
@@ -63,7 +62,6 @@ import org.rstudio.studio.client.application.ui.AboutDialog;
 import org.rstudio.studio.client.application.ui.RTimeoutOptions;
 import org.rstudio.studio.client.application.ui.RequestLogVisualization;
 import org.rstudio.studio.client.common.GlobalDisplay;
-import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.SuperDevMode;
 import org.rstudio.studio.client.common.mathjax.MathJaxLoader;
 import org.rstudio.studio.client.common.satellite.Satellite;
@@ -78,7 +76,6 @@ import org.rstudio.studio.client.workbench.Workbench;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.events.LastChanceSaveEvent;
 import org.rstudio.studio.client.workbench.events.SessionInitEvent;
-import org.rstudio.studio.client.workbench.model.Agreement;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.model.SessionOpener;
@@ -181,38 +178,35 @@ public class Application implements ApplicationEventHandlers
 
          public void onResponseReceived(final SessionInfo sessionInfo)
          {
-            // initialize workbench after verifying agreement
-            verifyAgreement(sessionInfo, () ->
+            // initialize workbench
+            // if this is a switch project then wait to dismiss the
+            // loading progress animation for 10 seconds. typically
+            // this will be enough time to switch projects. if it
+            // isn't then it's nice to reveal whatever progress
+            // operation or error state is holding up the switch
+            // directly to the user
+            if (ApplicationAction.isSwitchProject())
             {
-               // if this is a switch project then wait to dismiss the
-               // loading progress animation for 10 seconds. typically
-               // this will be enough time to switch projects. if it
-               // isn't then it's nice to reveal whatever progress
-               // operation or error state is holding up the switch
-               // directly to the user
-               if (ApplicationAction.isSwitchProject())
-               {
-                  new Timer() {
-                     @Override
-                     public void run()
-                     {
-                        dismissLoadingProgress.execute();
-                     }
-                  }.schedule(10000);
-               }
-               else
-               {
-                  dismissLoadingProgress.execute();
-               }
+               new Timer() {
+                  @Override
+                  public void run()
+                  {
+                     dismissLoadingProgress.execute();
+                  }
+               }.schedule(10000);
+            }
+            else
+            {
+               dismissLoadingProgress.execute();
+            }
 
-               session_.setSessionInfo(sessionInfo);
+            session_.setSessionInfo(sessionInfo);
 
-               // load MathJax
-               MathJaxLoader.ensureMathJaxLoaded();
+            // load MathJax
+            MathJaxLoader.ensureMathJaxLoaded();
 
-               // initialize workbench
-               initializeWorkbench();
-            });
+            // initialize workbench
+            initializeWorkbench();
          }
 
          public void onError(ServerError error)
@@ -419,12 +413,6 @@ public class Application implements ApplicationEventHandlers
       globalDisplay_.openRStudioLink("support");
    }
 
-   @Handler
-   public void onRstudioAgreement()
-   {
-      showAgreement();
-   }
-   
    @Handler
    public void onUpdateCredentials()
    {
@@ -810,63 +798,6 @@ public class Application implements ApplicationEventHandlers
       }
    }
    
-   private void verifyAgreement(SessionInfo sessionInfo,
-                              final Operation verifiedOperation)
-   {
-      // get the agreement (if any)
-      final Agreement agreement = sessionInfo.pendingAgreement();
-      
-      // if there is an agreement then prompt user for agreement (otherwise just
-      // execute the verifiedOperation immediately)
-      if (agreement != null)
-      {
-         // append updated to the title if necessary
-         String title = agreement.getTitle();
-         if (agreement.getUpdated())
-            title += " (Updated)";
-         
-         view_.showApplicationAgreement(
-            
-            // title and contents   
-            title,
-            agreement.getContents(),
-             
-            // bail to sign in page if the user doesn't confirm
-            () ->
-            {
-               if (Desktop.isDesktop())
-               {
-                  Desktop.getFrame().setPendingQuit(
-                                    DesktopFrame.PENDING_QUIT_AND_EXIT);
-                  server_.quitSession(false,
-                                      null,
-                                      null,
-                                      GWT.getHostPageBaseURL(),
-                                      new SimpleRequestCallback<Boolean>());
-               }
-               else
-                  navigateToSignIn();
-            },
-
-            // user confirmed
-            () ->
-            {
-               // call verified operation
-               verifiedOperation.execute();
-
-               // record agreement on server
-               server_.acceptAgreement(agreement,
-                                       new VoidServerRequestCallback());
-            }
-         );
-      }
-      else
-      {
-         // no agreement pending
-         verifiedOperation.execute();
-      }
-   }
-   
    private void navigateWindowTo(String relativeUrl)
    {
       navigateWindowTo(relativeUrl, true);
@@ -966,10 +897,6 @@ public class Application implements ApplicationEventHandlers
          commands_.publishHTML().remove();
       } 
       
-      // hide the agreement menu item if we don't have one
-      if (!session_.getSessionInfo().hasAgreement())
-         commands_.rstudioAgreement().setVisible(false);
-           
       // remove knit params if they aren't supported
       if (!sessionInfo.getKnitParamsAvailable())
          commands_.knitWithParameters().remove();

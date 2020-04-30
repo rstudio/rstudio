@@ -120,7 +120,6 @@
 
 #include "modules/RStudioAPI.hpp"
 #include "modules/SessionAbout.hpp"
-#include "modules/SessionAgreement.hpp"
 #include "modules/SessionAskPass.hpp"
 #include "modules/SessionAskSecret.hpp"
 #include "modules/SessionAuthoring.hpp"
@@ -511,7 +510,6 @@ Error rInit(const rstudio::r::session::RInitInfo& rInitInfo)
       (modules::limits::initialize)
       (modules::ppe::initialize)
       (modules::ask_pass::initialize)
-      (modules::agreement::initialize)
       (modules::console::initialize)
 #ifdef RSTUDIO_SERVER
       (modules::crypto::initialize)
