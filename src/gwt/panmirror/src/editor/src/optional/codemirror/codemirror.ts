@@ -277,7 +277,7 @@ class CodeBlockNodeView implements NodeView {
       'Ctrl-Enter': exitBlock,
       'Shift-Enter': exitBlock,
       [`${mod}-Enter`]: exitBlock,
-      ['F4']: () => {
+      F4: () => {
         return this.options.attrEditFn ? this.options.attrEditFn(view.state, view.dispatch, view) : CodeMirror.Pass;
       },
     });

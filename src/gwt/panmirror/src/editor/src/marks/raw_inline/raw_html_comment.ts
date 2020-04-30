@@ -22,7 +22,6 @@ import { setTextSelection } from 'prosemirror-utils';
 import { EditorCommandId, ProsemirrorCommand } from '../../api/command';
 import { canInsertNode } from '../../api/node';
 import { PandocExtensions, ProsemirrorWriter, PandocOutput } from '../../api/pandoc';
-import { PandocCapabilities } from '../../api/pandoc_capabilities';
 import { Extension } from '../../api/extension';
 import { EditorUI } from '../../api/ui';
 import { MarkTransaction } from '../../api/transaction';

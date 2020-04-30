@@ -19,7 +19,6 @@ import {
   PandocEngine,
   PandocTokenReader,
   PandocNodeWriter,
-  PandocApiVersion,
   PandocMarkWriter,
   PandocPreprocessorFn,
   PandocBlockReaderFn,

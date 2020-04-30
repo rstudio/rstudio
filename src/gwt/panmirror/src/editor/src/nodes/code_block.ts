@@ -13,10 +13,10 @@
  *
  */
 
-import { Node as ProsemirrorNode, Schema, ResolvedPos } from 'prosemirror-model';
-import { InputRule, textblockTypeInputRule } from 'prosemirror-inputrules';
+import { Node as ProsemirrorNode, Schema } from 'prosemirror-model';
+import { textblockTypeInputRule } from 'prosemirror-inputrules';
 import { newlineInCode, exitCode } from 'prosemirror-commands';
-import { EditorState, Transaction, TextSelection } from 'prosemirror-state';
+import { EditorState, Transaction } from 'prosemirror-state';
 import { EditorView } from 'prosemirror-view';
 
 import { findParentNodeOfType, setTextSelection } from 'prosemirror-utils';
@@ -26,10 +26,9 @@ import { Extension } from '../api/extension';
 import { BaseKey } from '../api/basekeys';
 import { codeNodeSpec } from '../api/code';
 import { PandocOutput, PandocTokenType, PandocExtensions } from '../api/pandoc';
-import { pandocAttrSpec, pandocAttrParseDom, pandocAttrToDomAttr, pandocAttrFrom } from '../api/pandoc_attr';
+import { pandocAttrSpec, pandocAttrParseDom, pandocAttrToDomAttr } from '../api/pandoc_attr';
 import { PandocCapabilities } from '../api/pandoc_capabilities';
-import { EditorUI, CodeBlockProps, EditorUIContext } from '../api/ui';
-import { markIsActive } from '../api/mark';
+import { EditorUI, CodeBlockProps } from '../api/ui';
 import { canInsertNode } from '../api/node';
 
 const extension = (

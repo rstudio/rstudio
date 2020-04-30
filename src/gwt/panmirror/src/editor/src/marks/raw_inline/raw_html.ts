@@ -22,7 +22,7 @@ import { EditorUI } from '../../api/ui';
 import { EditorCommandId } from '../../api/command';
 import { PandocCapabilities } from '../../api/pandoc_capabilities';
 
-import { kRawInlineFormat, kRawInlineContent, RawInlineCommand, RawInlineInsertCommand } from './raw_inline';
+import { kRawInlineFormat, kRawInlineContent, RawInlineCommand } from './raw_inline';
 
 import { InsertHTMLCommentCommand } from './raw_html_comment';
 
