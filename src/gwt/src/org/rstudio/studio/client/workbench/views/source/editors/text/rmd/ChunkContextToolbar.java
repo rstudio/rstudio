@@ -106,6 +106,11 @@ public class ChunkContextToolbar extends Composite
       chunkTypeLabel_.setText(engine);
    }
    
+   public void setId(String id)
+   {
+      this.getElement().setPropertyString("id", id);
+   }
+
    // Private methods ---------------------------------------------------------
    
    private void initOptions(boolean dark)

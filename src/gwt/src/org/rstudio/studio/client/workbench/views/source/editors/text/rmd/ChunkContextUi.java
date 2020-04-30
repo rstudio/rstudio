@@ -92,6 +92,7 @@ public class ChunkContextUi implements ChunkContextToolbar.Host
          engine_ = engine;
          toolbar_.setEngine(engine);
       }
+      toolbar_.setId(chunk_.getLabel());
    }
    
    public void setRenderPass(int pass)
@@ -205,6 +206,7 @@ public class ChunkContextUi implements ChunkContextToolbar.Host
    {
       toolbar_ = new ChunkContextToolbar(this, dark_, !isSetup_, engine_);
       toolbar_.setHeight("0px"); 
+      toolbar_.setId(chunk_.getLabel());
       lineWidget_ = new PinnedLineWidget(
             ChunkContextToolbar.LINE_WIDGET_TYPE, target_.getDocDisplay(), 
             toolbar_, row, null, host_);
