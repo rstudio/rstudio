@@ -6,13 +6,6 @@ pandoc schema: <https://github.com/jgm/pandoc-types/blob/master/Text/Pandoc/Defi
 
 ## TODO
 
-- reformat / sync to rstudio-internal (fix pink comments) 
-
-- attr_edit still off in panmirror-next
-
-Remove hack for light/dark comments once themes are regenerated
-(https://github.com/rstudio/rstudio/commit/5526db30d26efa570c6663c83298970ff8d4a3da)
-
 ## Docs
 
 Various missing docs sections
