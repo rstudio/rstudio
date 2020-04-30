@@ -83,8 +83,8 @@ const extension = (
             return {
               type: (schema: Schema) => schema.nodes.heading,
               offset: {
-                top: 8,
-                right: 10,
+                top: 5,
+                right: 5,
               },
             };
           } else {

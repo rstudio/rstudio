@@ -51,23 +51,23 @@ const AttrEditDecoration: React.FC<AttrEditDecorationProps> = props => {
       {props.tags.length
         ? props.tags.map(tag => {
             return (
-              <div
+              <span
                 key={tag}
                 className="attr-edit-tag attr-edit-widget pm-block-border-color pm-border-background-color"
                 onClick={onClick}
               >
-                <div>{tag}</div>
-              </div>
+                {tag}
+              </span>
             );
           })
         : null}
-      <div
+      <span
         className="attr-edit-button attr-edit-widget pm-block-border-color pm-border-background-color"
         title={buttonTitle}
         onClick={onClick}
       >
-        <div className="attr-edit-button-ellipsis">&#x2022;&#x2022;&#x2022;</div>
-      </div>
+        <span className="attr-edit-button-ellipsis">&#x2022;&#x2022;&#x2022;</span>
+      </span>
     </div>
   );
 };
@@ -136,7 +136,7 @@ export class AttrEditDecorationPlugin extends Plugin<DecorationSet> {
                 // cacculate position offsets
                 const baseOffset = editor.offset || { top: 0, right: 0 };
                 const xOffset = baseOffset.right + rightPaddingOffset;
-                const yOffset = baseOffset.top + 13 / 2 + 1; // 13 is from height defined in attr_edit-decoration.css
+                const yOffset = baseOffset.top + 6; 
                 const cssProps: React.CSSProperties = {
                   transform: `translate(${xOffset}px,-${yOffset}px)`,
                 };
