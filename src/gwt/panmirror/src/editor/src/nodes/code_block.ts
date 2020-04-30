@@ -30,6 +30,7 @@ import { pandocAttrSpec, pandocAttrParseDom, pandocAttrToDomAttr } from '../api/
 import { PandocCapabilities } from '../api/pandoc_capabilities';
 import { EditorUI, CodeBlockProps } from '../api/ui';
 import { canInsertNode } from '../api/node';
+import { hasFencedCodeBlocks } from '../api/pandoc_format';
 
 const extension = (
   pandocExtensions: PandocExtensions,
@@ -305,8 +306,5 @@ function codeBlockAttrEdit(pandocExtensions: PandocExtensions, pandocCapabilitie
   };
 }
 
-function hasFencedCodeBlocks(pandocExtensions: PandocExtensions) {
-  return pandocExtensions.backtick_code_blocks || pandocExtensions.fenced_code_blocks;
-}
 
 export default extension;

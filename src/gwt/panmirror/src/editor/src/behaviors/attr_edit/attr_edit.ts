@@ -23,11 +23,12 @@ import { AttrEditOptions } from '../../api/attr_edit';
 import { PandocExtensions } from '../../api/pandoc';
 import { AttrEditDecorationPlugin } from './attr_edit-decoration';
 import { Extension } from '../../api/extension';
+import { hasFencedCodeBlocks } from '../../api/pandoc_format';
 
 export const kEditAttrShortcut = 'F4';
 
 export function attrEditExtension(pandocExtensions: PandocExtensions, editors: AttrEditOptions[]): Extension {
-  const hasAttr = pandocAttrEnabled(pandocExtensions);
+  const hasAttr = pandocAttrEnabled(pandocExtensions) || hasFencedCodeBlocks(pandocExtensions);
 
   return {
     commands: (_schema: Schema, ui: EditorUI) => {

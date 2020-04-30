@@ -204,6 +204,10 @@ export function splitPandocFormatString(format: string) {
   };
 }
 
+export function hasFencedCodeBlocks(pandocExtensions: PandocExtensions) {
+  return pandocExtensions.backtick_code_blocks || pandocExtensions.fenced_code_blocks;
+}
+
 // https://gohugo.io/getting-started/configuration-markup/#goldmark
 // https://github.com/yuin/goldmark/#html-renderer-options
 function goldmarkExtensions(format: EditorFormat) {
