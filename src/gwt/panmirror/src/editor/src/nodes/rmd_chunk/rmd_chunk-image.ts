@@ -93,7 +93,7 @@ function imagePreviewDecorations(state: EditorState, uiContext: EditorUIContext)
           container.classList.add('pm-image-preview');
           container.classList.add('pm-block-border-color');
           const img = window.document.createElement('img');
-          img.src = uiContext.mapResourcePath(imagePath);
+          img.src = uiContext.mapResourceToURL(imagePath);
           if (width) {
             img.setAttribute('width', width);
           }
