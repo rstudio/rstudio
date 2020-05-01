@@ -243,6 +243,9 @@ function resizeShelf(
     editingScrollContainerEl.addEventListener('scroll', updatePosition);
   }
 
+  // update position every 50ms (cleanup drag/drop copy/paste mispositioning)
+  const positionTimer = setInterval(updatePosition, 50);
+
   // main panel that holds the controls
   const panel = createHorizontalPanel();
   shelf.append(panel);
@@ -379,6 +382,7 @@ function resizeShelf(
       if (editingScrollContainerEl) {
         editingScrollContainerEl.removeEventListener('scroll', updatePosition);
       }
+      clearInterval(positionTimer);
       shelf.remove();
     },
 
