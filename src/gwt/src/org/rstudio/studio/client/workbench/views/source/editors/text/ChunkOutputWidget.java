@@ -21,6 +21,7 @@ import java.util.List;
 import org.rstudio.core.client.ColorUtil;
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.Size;
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.widget.ProgressSpinner;
 import org.rstudio.studio.client.RStudioGinjector;
@@ -240,6 +241,12 @@ public class ChunkOutputWidget extends Composite
    public int getState()
    {
       return state_;
+   }
+
+   public void setId(String id)
+   {
+      this.getElement().setPropertyString("id",
+                                          StringUtil.getCssIdentifier(id));
    }
 
    public void setOptions(RmdChunkOptions options)

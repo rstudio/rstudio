@@ -1139,6 +1139,8 @@ public class TextEditingTargetNotebook
                   docUpdateSentinel_.getId(), output.getChunkId(), "", 0, 
                   ChunkChangeEvent.CHANGE_REMOVE));
          }
+         if (!StringUtil.equals(scope.getChunkLabel(), output.getChunkLabel()))
+            output.setChunkLabel(scope.getChunkLabel());
       }
    }
 
