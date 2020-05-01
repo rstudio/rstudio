@@ -95,7 +95,7 @@ export class LinkPopupPlugin extends Plugin<DecorationSet> {
                 const popup = (
                   <LinkPopup
                     link={attrs}
-                    maxLinkWidth={kMaxLinkWidth}
+                    maxLinkWidth={kMaxLinkWidth-10} // prevent off by pixel(s) overflow
                     linkCmd={linkCmd}
                     removeLinkCmd={removeLinkCmd}
                     view={view}

@@ -75,9 +75,9 @@ export class PandocConverter {
   }
 
   public async toProsemirror(markdown: string, format: string): Promise<ProsemirrorNode> {
-    // adjust format. we always need to *read* backtick_code_blocks and raw_attribute b/c
+    // adjust format. we always need to *read* raw_html, raw_attribute, and backtick_code_blocks b/c
     // that's how preprocessors hoist content through pandoc into our prosemirror token parser.
-    format = this.adjustedFormat(format, '+backtick_code_blocks+raw_attribute');
+    format = this.adjustedFormat(format, ['raw_html', 'raw_attribute', 'backtick_code_blocks']);
 
     // run preprocessors
     this.preprocessors.forEach(preprocessor => {
@@ -121,7 +121,7 @@ export class PandocConverter {
     // hoist content through pandoc into our prosemirror token parser. since we open this door when
     // reading, users could end up writing raw inlines, and in that case we want them to echo back
     // to the source document just the way they came in.
-    let format = this.adjustedFormat(pandocFormat.fullName, '+raw_attribute');
+    let format = this.adjustedFormat(pandocFormat.fullName, ['raw_html', 'raw_attribute']);
 
     // prepare options
     let pandocOptions: string[] = [];
@@ -161,8 +161,15 @@ export class PandocConverter {
 
   // adjust the specified format (remove options that are never applicable
   // to editing scenarios)
-  private adjustedFormat(format: string, extensions = '') {
+  private adjustedFormat(format: string, extensions: string[]) {
     const kDisabledFormatOptions = '-auto_identifiers-gfm_auto_identifiers';
-    return pandocFormatWith(format, '', extensions + kDisabledFormatOptions);
+    let newFormat = pandocFormatWith(format, '', extensions.map(ext => `+${ext}`).join('') + kDisabledFormatOptions);
+
+    // any extension specified needs to not have a - anywhere in the format
+    extensions.forEach(ext => {
+      newFormat = newFormat.replace('-' + ext, '');
+    });
+
+    return newFormat;
   }
 }

@@ -30,6 +30,7 @@ import { pandocAttrSpec, pandocAttrParseDom, pandocAttrToDomAttr } from '../api/
 import { PandocCapabilities } from '../api/pandoc_capabilities';
 import { EditorUI, CodeBlockProps } from '../api/ui';
 import { canInsertNode } from '../api/node';
+import { hasFencedCodeBlocks } from '../api/pandoc_format';
 
 const extension = (
   pandocExtensions: PandocExtensions,
@@ -149,14 +150,15 @@ class CodeBlockInsertCommand extends ProsemirrorCommand {
       (state: EditorState, dispatch?: (tr: Transaction) => void, view?: EditorView) => {
         const schema = state.schema;
 
-        if (!canInsertNode(state, schema.nodes.code_block)) {
+        if (!toggleBlockType(schema.nodes.code_block, schema.nodes.paragraph)(state)) {
           return false;
         }
 
         function insertCodeBlock(tr: Transaction, attrs = {}) {
           const codeBlock = schema.nodes.code_block.create(attrs);
+          const prevSel = tr.selection.from;
           tr.replaceSelectionWith(codeBlock);
-          setTextSelection(tr.selection.from - 2)(tr);
+          setTextSelection(tr.mapping.map(prevSel - 1))(tr);
           return tr;
         }
 
@@ -305,8 +307,5 @@ function codeBlockAttrEdit(pandocExtensions: PandocExtensions, pandocCapabilitie
   };
 }
 
-function hasFencedCodeBlocks(pandocExtensions: PandocExtensions) {
-  return pandocExtensions.backtick_code_blocks || pandocExtensions.fenced_code_blocks;
-}
 
 export default extension;

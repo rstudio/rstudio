@@ -30,12 +30,20 @@ public class SessionRelaunchEvent extends GwtEvent<SessionRelaunchEvent.Handler>
    public SessionRelaunchEvent(Type type)
    {
       type_ = type;
+      redirectUrl_ = "";
+   }
+
+   public SessionRelaunchEvent(Type type, String redirectUrl)
+   {
+      type_ = type;
+      redirectUrl_ = redirectUrl;
    }
 
    public Type getType()
    {
       return type_;
    }
+   public String getRedirectUrl() { return redirectUrl_; }
 
    @Override
    protected void dispatch(Handler handler)
@@ -50,6 +58,7 @@ public class SessionRelaunchEvent extends GwtEvent<SessionRelaunchEvent.Handler>
    }
 
    private final Type type_;
+   private final String redirectUrl_;
 
    public interface Handler extends EventHandler
    {

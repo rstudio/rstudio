@@ -1,7 +1,7 @@
 /*
- * PanmirrorUI.java
+ * BlogdownConfig.java
  *
- * Copyright (C) 2009-20 by RStudio, PBC
+ * Copyright (C) 2009-12 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -12,26 +12,19 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
+package org.rstudio.studio.client.workbench.model;
 
-package org.rstudio.studio.client.panmirror;
+import org.rstudio.core.client.files.FileSystemItem;
 
-
-import org.rstudio.studio.client.panmirror.dialogs.PanmirrorDialogs;
-
-import elemental2.core.JsObject;
 import jsinterop.annotations.JsType;
 
 @JsType
-public class PanmirrorUI
-{    
-   public PanmirrorUI(PanmirrorUIContext context)
-   {
-      this.context = context;
-      this.dialogs = new PanmirrorDialogs(this.context);
-   }
-   
-   public PanmirrorDialogs dialogs;
-   public PanmirrorUIDisplay display = new PanmirrorUIDisplay();
-   public PanmirrorUIContext context;
-   public JsObject images;
+public class BlogdownConfig
+{
+   public boolean is_blogdown_project;
+   public boolean is_hugo_project;
+   public FileSystemItem site_dir;
+   public String[] static_dirs;
+   public String markdown_engine;
+   public String markdown_extensions;
 }

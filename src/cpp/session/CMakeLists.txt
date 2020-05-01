@@ -204,6 +204,7 @@ set (SESSION_SOURCE_FILES
    modules/presentation/SlideRenderer.cpp
    modules/presentation/SlideRequestHandler.cpp
    modules/preview/SessionPreview.cpp
+   modules/rmarkdown/SessionBlogdown.cpp
    modules/rmarkdown/SessionRMarkdown.cpp
    modules/rmarkdown/SessionRmdNotebook.cpp
    modules/rmarkdown/SessionExecuteChunkOperation.cpp

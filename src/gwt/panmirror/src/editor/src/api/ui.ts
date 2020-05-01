@@ -44,12 +44,15 @@ export interface EditorDialogs {
 }
 
 export interface EditorUIContext {
-  // get the current resource directory (e.g. where relative links point to)
-  getResourceDir: () => string;
+  // get the default directory for resources (e.g. where relative links point to)
+  getDefaultResourceDir: () => string;
 
-  // provide a URL that can be used to fetch the given resource path
-  mapResourcePath: (path: string) => string;
+  // map from a filesystem path to a resource reference
+  mapPathToResource: (path: string) =>  string;
 
+  // map from a resource reference (e.g. images/foo.png) to a URL we can use in the document
+  mapResourceToURL: (path: string) =>  string;
+  
   // translate a string
   translateText: (text: string) => string;
 }
@@ -79,7 +82,6 @@ export type LinkEditorFn = (
 export type ImageEditorFn = (
   image: ImageProps,
   dims: ImageDimensions | null,
-  resourceDir: string,
   editAttributes: boolean,
 ) => Promise<ImageEditResult | null>;
 

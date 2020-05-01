@@ -6,17 +6,16 @@ pandoc schema: <https://github.com/jgm/pandoc-types/blob/master/Text/Pandoc/Defi
 
 ## TODO
 
-Goldmark engine
 
-MathJax preview. When containing the selection, the math will show both the code and the preview. When not containing the selection will show the preview. (so probably require a node view for this). Consider a “done” gesture for display math. May need to bring back
+- Insert code/rmd/div block in empty bullet should join to bullet above?
+
+
+Math:
+
+- MathJax preview. When containing the selection, the math will show both the code and the preview. When not containing the selection will show the preview. (so probably require a node view for this). Consider a “done” gesture for display math. May need to bring back
 escaping of $ in math as this mode will clearly not be "source mode" style latex equation editing
 
-Possibly have a special editing mode for thereoms?
-
-## Docs
-
-
-
+- Possibly have a special editing mode for thereoms?
 
 ## Future
 
@@ -95,6 +94,8 @@ pandoc scholar: <https://pandoc-scholar.github.io/> pandoc jats: <https://github
 Notes on preformance implications of scanning the entire document + some discussion of the tricky nature of doing step by step inspection: <https://discuss.prosemirror.net/t/changed-part-of-document/992> <https://discuss.prosemirror.net/t/reacting-to-node-adding-removing-changing/676> <https://discuss.prosemirror.net/t/undo-and-cursor-position/677/5>
 
 ## Known issues:
+
+- Can only preview images in the first listed hugo static dir
 
 - When dragging and dropping an image to a place in the document above the original position the shelf sometimes
   stays in it's original position (until you scroll)

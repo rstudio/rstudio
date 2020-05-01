@@ -19,8 +19,8 @@ import { EditorView } from 'prosemirror-view';
 
 import { findParentNodeOfType, setTextSelection } from 'prosemirror-utils';
 
-import { canInsertNode } from './node';
 import { EditorUI } from './ui';
+import { setBlockType } from 'prosemirror-commands';
 
 export const kTexFormat = 'tex';
 export const kHTMLFormat = 'html';
@@ -37,7 +37,8 @@ export function editRawBlockCommand(ui: EditorUI, outputFormats: string[]) {
 
     // enable if we are either inside a raw block or we can insert a raw block
     const rawBlock = findParentNodeOfType(schema.nodes.raw_block)(state.selection);
-    if (!rawBlock && !canInsertNode(state, schema.nodes.raw_block)) {
+    
+    if (!rawBlock && !setBlockType(schema.nodes.raw_block, { format: 'html' })(state)) {
       return false;
     }
 

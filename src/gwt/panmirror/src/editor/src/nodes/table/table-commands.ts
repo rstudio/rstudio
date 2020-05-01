@@ -292,7 +292,7 @@ export class TableColumnAlignmentCommand extends ProsemirrorCommand {
         const tr = state.tr;
         table.forEach((rowNode, rowOffset) => {
           rowNode.forEach((cellNode, cellOffset, i) => {
-            if (i >= left && i <= right) {
+            if (i >= left && i < right) {
               const cellPos = tableStart + 1 + rowOffset + cellOffset;
               tr.setNodeMarkup(cellPos, cellNode.type, {
                 ...cellNode.attrs,

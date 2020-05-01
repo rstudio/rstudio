@@ -285,8 +285,8 @@ struct CachedFrame
    };
 
    // The current order column and direction
-   int workingOrderCol;
-   std::string workingOrderDir;
+   std::vector<int> workingOrderCols;
+   std::vector<std::string> workingOrderDirs;
 
    // NB: There's no protection on this SEXP and it may be a stale pointer!
    // Used only to test for changes.
@@ -483,14 +483,32 @@ json::Value getData(SEXP dataSEXP, const http::Fields& fields)
    int draw = http::util::fieldValue<int>(fields, "draw", 0);
    int start = http::util::fieldValue<int>(fields, "start", 0);
    int length = http::util::fieldValue<int>(fields, "length", 0);
-   int ordercol = http::util::fieldValue<int>(fields, "order[0][column]", 
-         -1);
-   std::string orderdir = http::util::fieldValue<std::string>(fields, 
-         "order[0][dir]", "asc");
    std::string search = http::util::urlDecode(
          http::util::fieldValue<std::string>(fields, "search[value]", ""));
    std::string cacheKey = http::util::urlDecode(
          http::util::fieldValue<std::string>(fields, "cache_key", ""));
+
+   // loop through sort columns
+   std::vector<int> ordercols;
+   std::vector<std::string> orderdirs;
+   int orderIdx = 0;
+   int ordercol = -1;
+   std::string orderdir;
+   do
+   {
+      std::string ordercolstr = "order[" + std::to_string(orderIdx) + "][column]";
+      std::string orderdirstr = "order[" + std::to_string(orderIdx) + "][dir]";
+      ordercol = http::util::fieldValue<int>(fields, ordercolstr,  -1);
+      orderdir = http::util::fieldValue<std::string>(fields, orderdirstr, "asc");
+
+      if (ordercol > 0)
+      {
+         ordercols.push_back(ordercol);
+         orderdirs.push_back(orderdir);
+      }
+
+      orderIdx++;
+   } while (ordercol > 0);
 
    // Parameters from the client to delimit the column slice to return
    int columnOffset = http::util::fieldValue<int>(fields, "column_offset", 0);
@@ -527,7 +545,7 @@ json::Value getData(SEXP dataSEXP, const http::Fields& fields)
       filters.push_back(filterVal);
    }
 
-   bool needsTransform = ordercol > 0 || hasFilter || !search.empty();
+   bool needsTransform = ordercols.size() > 0 || hasFilter || !search.empty();
    bool hasTransform = false;
 
    // check to see if we have an ordered/filtered view we can build from
@@ -546,15 +564,15 @@ json::Value getData(SEXP dataSEXP, const http::Fields& fields)
          {
             if (cachedFrame->second.workingSearch == search &&
                 cachedFrame->second.workingFilters == filters && 
-                cachedFrame->second.workingOrderDir == orderdir &&
-                cachedFrame->second.workingOrderCol == ordercol)
+                cachedFrame->second.workingOrderDirs == orderdirs &&
+                cachedFrame->second.workingOrderCols == ordercols)
             {
                // we have one with exactly the same parameters as requested;
                // use it exactly as is
                dataSEXP = workingDataSEXP;
                needsTransform = false;
                hasTransform = true;
-            } 
+            }
             else if (cachedFrame->second.isSupersetOf(search, filters))
             {
                // we have one that is a strict superset of the parameters
@@ -574,8 +592,8 @@ json::Value getData(SEXP dataSEXP, const http::Fields& fields)
       transform.addParam("x", dataSEXP);       // data to transform
       transform.addParam("filtered", filters); // which columns are filtered
       transform.addParam("search", search);    // global search (across cols)
-      transform.addParam("col", ordercol);     // which column to order on
-      transform.addParam("dir", orderdir);     // order direction ("asc"/"desc")
+      transform.addParam("cols", ordercols);     // which column to order on
+      transform.addParam("dirs", orderdirs);     // order direction ("asc"/"desc")
       transform.call(&dataSEXP, &protect);
       if (error)
          throw r::exec::RErrorException(error.getSummary());
@@ -595,8 +613,8 @@ json::Value getData(SEXP dataSEXP, const http::Fields& fields)
       {
          cachedFrame->second.workingSearch = search;
          cachedFrame->second.workingFilters = filters;
-         cachedFrame->second.workingOrderDir = orderdir;
-         cachedFrame->second.workingOrderCol = ordercol;
+         cachedFrame->second.workingOrderDirs = orderdirs;
+         cachedFrame->second.workingOrderCols = ordercols;
       }
    }
 

@@ -137,12 +137,6 @@ enum
    RExecutionBusy  = 1
 };
 
-std::string projectDir()
-{
-   return string_utils::utf8ToSystem(
-      projects::projectContext().directory().getAbsolutePath());
-}
-
 std::string projectBuildDir()
 {
    return string_utils::utf8ToSystem(
@@ -1456,6 +1450,23 @@ bool rmarkdownPackageAvailable()
    }
 }
 
+bool isSiteProject(const std::string& site)
+{
+   if (!modules::rmarkdown::rmarkdownPackageAvailable() ||
+       !projects::projectContext().hasProject() ||
+       projects::projectContext().config().buildType != r_util::kBuildTypeWebsite)
+      return false;
+
+   bool isSite = false;
+   std::string encoding = projects::projectContext().defaultEncoding();
+   Error error = r::exec::RFunction(".rs.isSiteProject",
+                                    projectBuildDir(), encoding, site).call(&isSite);
+   if (error)
+      LOG_ERROR(error);
+   return isSite;
+}
+
+
 Error initialize()
 {
    using boost::bind;
@@ -1509,23 +1520,6 @@ Error initialize()
 
 namespace module_context {
 
-namespace {
-
-bool isSiteProject(const std::string& site)
-{
-   if (!modules::rmarkdown::rmarkdownPackageAvailable() || !projects::projectContext().hasProject())
-      return false;
-
-   bool isSite = false;
-   std::string encoding = projects::projectContext().defaultEncoding();
-   Error error = r::exec::RFunction(".rs.isSiteProject",
-                              projectDir(), encoding, site).call(&isSite);
-   if (error)
-      LOG_ERROR(error);
-   return isSite;
-}
-
-}
 
 bool isWebsiteProject()
 {
@@ -1550,14 +1544,12 @@ bool isBookdownWebsite()
    return isBookdown;
 }
 
-bool isBlogdownProject()
-{
-   return isSiteProject("blogdown_site");
-}
-
 bool isDistillProject()
 {
-   return isSiteProject("distill_website");
+   if (!isWebsiteProject())
+      return false;
+   
+   return session::modules::rmarkdown::isSiteProject("distill_website");
 }
 
 

@@ -16,6 +16,7 @@
 package org.rstudio.studio.client.workbench.views.source.editors.text;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import org.rstudio.core.client.CommandWithArg;
@@ -60,6 +61,7 @@ import org.rstudio.studio.client.rmarkdown.model.YamlFrontMatter;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.commands.Commands;
+import org.rstudio.studio.client.workbench.model.BlogdownConfig;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
@@ -318,8 +320,8 @@ public class TextEditingTargetVisualMode
                }
                else if (format.warnings.invalidOptions.length > 0)
                {
-                  view_.showWarningBar("Pandoc format " + format.baseName + " does not support options: " + 
-                                          String.join(", ", format.warnings.invalidOptions));
+                  view_.showWarningBar("Unsupported extensions for markdown mode: " + String.join(", ", format.warnings.invalidOptions));
+      ;
                }
             });          
          });
@@ -886,14 +888,35 @@ public class TextEditingTargetVisualMode
    private PanmirrorUIContext uiContext()
    {
       PanmirrorUIContext uiContext = new PanmirrorUIContext();
-      uiContext.mapResourcePath = path -> {
-         return ImagePreviewer.imgSrcPathFromHref(uiContext.getResourceDir.getResourceDir(), path);
-      };
-      uiContext.getResourceDir = () -> {  
+      uiContext.getDefaultResourceDir = () -> {  
          if (docUpdateSentinel_.getPath() != null)
             return FileSystemItem.createDir(docUpdateSentinel_.getPath()).getParentPathString();
          else
             return context_.getCurrentWorkingDir().getPath();
+      };
+      FileSystemItem resourceDir = FileSystemItem.createDir(uiContext.getDefaultResourceDir.get());
+      
+      uiContext.mapPathToResource = path -> {
+         FileSystemItem file = FileSystemItem.createFile(path);
+         String resourcePath = file.getPathRelativeTo(resourceDir);
+         if (resourcePath != null)
+         {
+            return resourcePath;
+         }
+         else
+         {
+            // try for hugo asset
+            return pathToHugoAsset(path);
+         }
+      };
+      uiContext.mapResourceToURL = path -> {
+         
+         // see if this a hugo asset
+         String hugoPath = hugoAssetPath(path);
+         if (hugoPath != null)
+            path = hugoPath;
+         
+         return ImagePreviewer.imgSrcPathFromHref(resourceDir.getPath(), path);
       };
       uiContext.translateText = text -> {
          return text;
@@ -938,32 +961,47 @@ public class TextEditingTargetVisualMode
             // see if we have a format comment
             PanmirrorFormatComment formatComment = formatTools.parseFormatComment(getEditorCode());
             
-            // pandocMode
-            final String kBlackfriday = "blackfriday";
-            String alternateMode = null;
-            if (formatComment.mode != null)
-               alternateMode = formatComment.mode;
-            else if (enableBlogdownBlackfriday())
-               alternateMode = kBlackfriday;
-            
-            // set alternate mode if we have one
-            if (alternateMode != null)
+            // doctypes
+            List<String> docTypes = new ArrayList<String>();
+            if (formatComment.doctypes == null || formatComment.doctypes.length == 0)
             {
-               format.pandocMode = alternateMode;
-               format.pandocExtensions = "";
+               if (isXRefDocument())
+                  docTypes.add(PanmirrorExtendedDocType.xref);
+               if (isBookdownDocument())
+                  docTypes.add(PanmirrorExtendedDocType.bookdown);
+               if (isBlogdownDocument()) 
+                  docTypes.add(PanmirrorExtendedDocType.blogdown);
+               if (isHugoDocument())
+                  docTypes.add(PanmirrorExtendedDocType.hugo);
+               format.docTypes = docTypes.toArray(new String[] {});
             }
-            // otherwise we're using the default base for R Markdown
+            docTypes = Arrays.asList(format.docTypes);
+            
+            // mode and extensions         
+            // non-standard mode and extension either come from a format comment,
+            // a detection of an alternate engine (likely due to blogdown/hugo)
+            
+            Pair<String,String> alternateEngine = alternateMarkdownEngine();
+            if (formatComment.mode != null)
+            {
+               format.pandocMode = formatComment.mode;
+               format.pandocExtensions = StringUtil.notNull(formatComment.extensions);
+            }
+            else if (alternateEngine != null)
+            {
+               format.pandocMode = alternateEngine.first;
+               format.pandocExtensions = alternateEngine.second;
+               if (formatComment.extensions != null)
+                  format.pandocExtensions += formatComment.extensions;
+            }
             else
             {
                format.pandocMode = "markdown";
                format.pandocExtensions = "+autolink_bare_uris+tex_math_single_backslash";
+               if (formatComment.extensions != null)
+                  format.pandocExtensions += formatComment.extensions;
             }
-               
-            // custom pandocExtensions
-            if (formatComment.extensions != null)
-               format.pandocExtensions = formatComment.extensions;
-           
-            
+              
             // rmdExtensions
             format.rmdExtensions = new PanmirrorRmdExtensions();
             format.rmdExtensions.codeChunks = target_.canExecuteChunks();
@@ -981,9 +1019,10 @@ public class TextEditingTargetVisualMode
             format.rmdExtensions.bookdownPart = true;
             
             // enable blogdown math in code (e.g. `$math$`) if we have a blogdown
-            // doctype along with the blackfriday markdown engine
+            // doctype along with a custom markdown engine
             format.rmdExtensions.blogdownMathInCode = 
-               isBlogdownDocument() && format.pandocMode.equals(kBlackfriday);
+               docTypes.contains(PanmirrorExtendedDocType.blogdown) && 
+               (getBlogdownConfig().markdown_engine != null);
             
             // hugoExtensions
             format.hugoExtensions = new PanmirrorHugoExtensions();
@@ -996,22 +1035,6 @@ public class TextEditingTargetVisualMode
             
             // fillColumn
             format.wrapColumn = formatComment.fillColumn;
-            
-            // doctypes
-            ArrayList<String> docTypes = new ArrayList<String>();
-            if (formatComment.doctypes == null || formatComment.doctypes.length == 0)
-            {
-               if (isXRefDocument())
-                  docTypes.add(PanmirrorExtendedDocType.xref);
-               if (isBookdownDocument())
-                  docTypes.add(PanmirrorExtendedDocType.bookdown);
-               if (isBlogdownDocument()) 
-               {
-                  docTypes.add(PanmirrorExtendedDocType.blogdown);
-                  docTypes.add(PanmirrorExtendedDocType.hugo);
-               }  
-               format.docTypes = docTypes.toArray(new String[] {});
-            }
             
             // return format
             return format;
@@ -1047,7 +1070,62 @@ public class TextEditingTargetVisualMode
    
    private boolean isBlogdownDocument() 
    {
-      return sessionInfo_.getIsBlogdownProject() && isDocInProject();
+      return getBlogdownConfig().is_blogdown_project && isDocInProject();
+   }
+   
+   private boolean isHugoDocument()
+   {
+      return getBlogdownConfig().is_hugo_project && isDocInProject();
+   }
+   
+   private String pathToHugoAsset(String path)
+   {
+      if (isHugoDocument())
+      {
+         FileSystemItem file = FileSystemItem.createFile(path);
+         for (FileSystemItem dir : hugoStaticDirs())
+         {
+            String assetPath = file.getPathRelativeTo(dir);
+            if (assetPath != null)
+               return "/" + assetPath;
+         }
+         
+         return null;
+      }
+      else
+      {
+         return null;
+      }
+   }
+   
+   // TODO: currently can only serve image preview out of main static dir
+   // (to resolve we'd need to create a server-side handler that presents
+   // a union view of the various static dirs, much as hugo does internally)
+   private String hugoAssetPath(String asset)
+   {
+      if (isHugoDocument() && asset.startsWith("/"))
+      {
+         return hugoStaticDirs().get(0).completePath(asset.substring(1));
+      }
+      else
+      {
+         return null;
+      }
+   }
+   
+   private List<FileSystemItem> hugoStaticDirs()
+   {
+      FileSystemItem siteDir = getBlogdownConfig().site_dir;
+      List<FileSystemItem> staticDirs = new ArrayList<FileSystemItem>();
+      for (String dir : getBlogdownConfig().static_dirs)
+         staticDirs.add(FileSystemItem.createDir(siteDir.completePath(dir)));
+      return staticDirs;
+    
+   }
+   
+   private BlogdownConfig getBlogdownConfig()
+   {
+      return sessionInfo_.getBlogdownConfig();
    }
    
    private boolean isDistillDocument()
@@ -1066,30 +1144,43 @@ public class TextEditingTargetVisualMode
       }
       return false;
    }
- 
-   // automatically enable blackfriday markdown engine if this is a blogdown
-   // file that isn't an Rmd (e.g. .md or .Rmarkdown). 
-   private boolean enableBlogdownBlackfriday()
+   
+   // see if there's an alternate markdown engine in play
+   private Pair<String,String> alternateMarkdownEngine()
    {
-      // get current docPath
-      String docPath = docUpdateSentinel_.getPath();
-      
       // if we have a doc
+      String docPath = docUpdateSentinel_.getPath();
       if (docPath != null)
-      {      
-         // if we are in a blogdown project and the doc is in the project
-         if (sessionInfo_.getIsBlogdownProject() && isDocInProject())
+      {   
+         // collect any alternate mode we may have
+         BlogdownConfig config = getBlogdownConfig();
+         Pair<String,String> alternateMode = new Pair<String,String>(
+            config.markdown_engine,
+            config.markdown_extensions
+         );
+         
+         // if it's a blogdown document
+         if (isBlogdownDocument())
          {
             // if it has an extension indicating hugo will render markdown
             String extension = FileSystemItem.getExtensionFromPath(docPath);
-            return extension.compareToIgnoreCase(".md") == 0 ||
-                   extension.compareToIgnoreCase("Rmarkdown") == 0;
+            if (extension.compareToIgnoreCase(".md") == 0 ||
+                extension.compareToIgnoreCase("Rmarkdown") == 0)
+            {
+               return alternateMode;
+            }
          }
+         // if it's a hugo document (that is not a blogdown document)
+         else if (isHugoDocument())
+         {
+            return alternateMode;
+         }
+         
       }
-      
-      // default to false
-      return false;
+   
+      return null;   
    }
+ 
    
    private boolean isDocInProject()
    {  
