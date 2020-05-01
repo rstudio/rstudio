@@ -30,7 +30,7 @@ const extension = (
   _format: EditorFormat,
   options: EditorOptions,
 ): Extension | null => {
-  if (!pandocExtensions.raw_html || !options.hideFormatComment) {
+  if (!options.hideFormatComment) {
     return null;
   }
 

@@ -98,7 +98,7 @@ const extension = (
               handler: pandocImageHandler(false, imageAttr),
             },
           ],
-          inlineHTMLReader: imageInlineHTMLReader,
+          inlineHTMLReader: pandocExtensions.raw_html ? imageInlineHTMLReader : undefined,
           writer: imagePandocOutputWriter(false, ui),
         },
       },

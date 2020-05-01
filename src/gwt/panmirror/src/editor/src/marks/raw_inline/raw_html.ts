@@ -27,10 +27,7 @@ import { kRawInlineFormat, kRawInlineContent, RawInlineCommand } from './raw_inl
 import { InsertHTMLCommentCommand } from './raw_html_comment';
 
 const extension = (pandocExtensions: PandocExtensions, pandocCapabilities: PandocCapabilities): Extension | null => {
-  if (!pandocExtensions.raw_html) {
-    return null;
-  }
-
+  
   return {
     marks: [
       {
@@ -82,10 +79,15 @@ const extension = (pandocExtensions: PandocExtensions, pandocCapabilities: Pando
 
     // insert command
     commands: (schema: Schema, ui: EditorUI) => {
-      return [
-        new RawInlineCommand(EditorCommandId.HTMLInline, kHTMLFormat, ui, pandocCapabilities.output_formats),
-        new InsertHTMLCommentCommand(schema),
+      const commands = [
+        new InsertHTMLCommentCommand(schema)
       ];
+      if (pandocExtensions.raw_html) {
+        commands.push(
+          new RawInlineCommand(EditorCommandId.HTMLInline, kHTMLFormat, ui, pandocCapabilities.output_formats)
+        );
+      }
+      return commands;
     },
   };
 };

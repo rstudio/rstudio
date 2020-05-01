@@ -30,11 +30,8 @@ import { removeInvalidatedMarks, detectAndApplyMarks } from '../../api/mark';
 const kHTMLCommentRegEx = /<!--([\s\S]*?)-->/;
 const kHTMLEditingCommentRegEx = /^<!--# ([\s\S]*?)-->$/;
 
-const extension = (pandocExtensions: PandocExtensions): Extension | null => {
-  if (!pandocExtensions.raw_html) {
-    return null;
-  }
-
+const extension = (): Extension | null => {
+  
   return {
     marks: [
       {

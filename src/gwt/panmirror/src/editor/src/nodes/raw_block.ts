@@ -45,11 +45,7 @@ const extension = (
   pandocCapabilities: PandocCapabilities,
   ui: EditorUI,
 ): Extension | null => {
-  // requires either raw_attribute or raw_html
-  if (!pandocExtensions.raw_attribute && !pandocExtensions.raw_html) {
-    return null;
-  }
-
+  
   return {
     nodes: [
       {
