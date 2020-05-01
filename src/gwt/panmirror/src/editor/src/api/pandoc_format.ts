@@ -128,9 +128,11 @@ export async function resolvePandocFormat(pandoc: PandocEngine, format: EditorFo
     const extraOptions = (validOptions = await pandoc.listExtensions(baseName));
     formatOptions = formatOptions + extraOptions;
   } else {
-    // if it's a variant then convert to strict
+    // if it's a variant then convert to strict, add the variant's default options
+    // then add back any options provided by the caller (so they override the defaults)
     if (kMarkdownVariants[baseName]) {
-      options = kMarkdownVariants[baseName].map(option => `${option}`).join('');
+      const variant = kMarkdownVariants[baseName];
+      options = variant.map(option => `${option}`).join('') + options;
       baseName = 'markdown_strict';
     }
 

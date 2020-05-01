@@ -61,6 +61,7 @@ import org.rstudio.studio.client.rmarkdown.model.YamlFrontMatter;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.commands.Commands;
+import org.rstudio.studio.client.workbench.model.BlogdownConfig;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
@@ -948,41 +949,38 @@ public class TextEditingTargetVisualMode
                if (isBookdownDocument())
                   docTypes.add(PanmirrorExtendedDocType.bookdown);
                if (isBlogdownDocument()) 
-               {
                   docTypes.add(PanmirrorExtendedDocType.blogdown);
+               if (isHugoDocument())
                   docTypes.add(PanmirrorExtendedDocType.hugo);
-               }  
                format.docTypes = docTypes.toArray(new String[] {});
             }
             docTypes = Arrays.asList(format.docTypes);
             
-            // pandocMode
-            final String kBlackfriday = "blackfriday";
-            final String kGoldmark = "goldmark";
-            String alternateMode = null;
-            if (formatComment.mode != null)
-               alternateMode = formatComment.mode;
-            else if (enableBlogdownGoldmark())
-               alternateMode = kGoldmark;
+            // mode and extensions         
+            // non-standard mode and extension either come from a format comment,
+            // a detection of an alternate engine (likely due to blogdown/hugo)
             
-            // set alternate mode if we have one
-            if (alternateMode != null)
+            Pair<String,String> alternateEngine = alternateMarkdownEngine();
+            if (formatComment.mode != null)
             {
-               format.pandocMode = alternateMode;
-               format.pandocExtensions = "";
+               format.pandocMode = formatComment.mode;
+               format.pandocExtensions = StringUtil.notNull(formatComment.extensions);
             }
-            // otherwise we're using the default base for R Markdown
+            else if (alternateEngine != null)
+            {
+               format.pandocMode = alternateEngine.first;
+               format.pandocExtensions = alternateEngine.second;
+               if (formatComment.extensions != null)
+                  format.pandocExtensions += formatComment.extensions;
+            }
             else
             {
                format.pandocMode = "markdown";
                format.pandocExtensions = "+autolink_bare_uris+tex_math_single_backslash";
+               if (formatComment.extensions != null)
+                  format.pandocExtensions += formatComment.extensions;
             }
-               
-            // custom pandocExtensions
-            if (formatComment.extensions != null)
-               format.pandocExtensions = formatComment.extensions;
-           
-            
+              
             // rmdExtensions
             format.rmdExtensions = new PanmirrorRmdExtensions();
             format.rmdExtensions.codeChunks = target_.canExecuteChunks();
@@ -1000,10 +998,10 @@ public class TextEditingTargetVisualMode
             format.rmdExtensions.bookdownPart = true;
             
             // enable blogdown math in code (e.g. `$math$`) if we have a blogdown
-            // doctype along with the blackfriday or goldmark markdown engine
+            // doctype along with a custom markdown engine
             format.rmdExtensions.blogdownMathInCode = 
                docTypes.contains(PanmirrorExtendedDocType.blogdown) && 
-               (format.pandocMode.equals(kBlackfriday) || format.pandocMode.equals(kGoldmark));
+               (getBlogdownConfig().markdown_engine != null);
             
             // hugoExtensions
             format.hugoExtensions = new PanmirrorHugoExtensions();
@@ -1051,7 +1049,17 @@ public class TextEditingTargetVisualMode
    
    private boolean isBlogdownDocument() 
    {
-      return sessionInfo_.getBlogdownConfig().is_blogdown_project && isDocInProject();
+      return getBlogdownConfig().is_blogdown_project && isDocInProject();
+   }
+   
+   private boolean isHugoDocument()
+   {
+      return getBlogdownConfig().is_hugo_project && isDocInProject();
+   }
+   
+   private BlogdownConfig getBlogdownConfig()
+   {
+      return sessionInfo_.getBlogdownConfig();
    }
    
    private boolean isDistillDocument()
@@ -1070,30 +1078,43 @@ public class TextEditingTargetVisualMode
       }
       return false;
    }
- 
-   // automatically enable goldmark markdown engine if this is a blogdown
-   // file that isn't an Rmd (e.g. .md or .Rmarkdown). 
-   private boolean enableBlogdownGoldmark()
+   
+   // see if there's an alternate markdown engine in play
+   private Pair<String,String> alternateMarkdownEngine()
    {
-      // get current docPath
-      String docPath = docUpdateSentinel_.getPath();
-      
       // if we have a doc
+      String docPath = docUpdateSentinel_.getPath();
       if (docPath != null)
-      {      
+      {   
+         // collect any alternate mode we may have
+         BlogdownConfig config = getBlogdownConfig();
+         Pair<String,String> alternateMode = new Pair<String,String>(
+            config.markdown_engine,
+            config.markdown_extensions
+         );
+         
          // if it's a blogdown document
          if (isBlogdownDocument())
          {
             // if it has an extension indicating hugo will render markdown
             String extension = FileSystemItem.getExtensionFromPath(docPath);
-            return extension.compareToIgnoreCase(".md") == 0 ||
-                   extension.compareToIgnoreCase("Rmarkdown") == 0;
+            if (extension.compareToIgnoreCase(".md") == 0 ||
+                extension.compareToIgnoreCase("Rmarkdown") == 0)
+            {
+               return alternateMode;
+            }
          }
+         // if it's a hugo document (that is not a blogdown document)
+         else if (isHugoDocument())
+         {
+            return alternateMode;
+         }
+         
       }
-      
-      // default to false
-      return false;
+   
+      return null;   
    }
+ 
    
    private boolean isDocInProject()
    {  
