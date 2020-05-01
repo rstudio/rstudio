@@ -147,7 +147,13 @@ public:
 
    virtual ~AsyncConnectionImpl()
    {
-      close();
+      try
+      {
+         close();
+      }
+      catch(...)
+      {
+      }
    }
 
    SocketType& socket()
@@ -290,6 +296,7 @@ public:
    {
       // ensure the socket is only closed once - boost considers
       // multiple closes an error, and this can lead to a segfault
+      ClosedHandler closeHandler;
       RECURSIVE_LOCK_MUTEX(mutex_)
       {
          if (!closed_)
@@ -302,12 +309,23 @@ public:
 
             // cleanup any associated data with the connection
             connectionData_.clear();
-
-            // notify that we have closed the connection
-            onClosed_(AsyncConnectionImpl<SocketType>::shared_from_this());
          }
       }
       END_LOCK_MUTEX;
+
+      // notify that we have closed the connection
+      // we do this after giving up the mutex to prevent potential deadlock
+      try
+      {
+         if (closeHandler)
+            closeHandler(AsyncConnectionImpl<SocketType>::shared_from_this());
+      }
+      catch (const boost::bad_weak_ptr&)
+      {
+         // our instance is no longer valid
+         // this indicates a benign but potentially concerning error, so log it
+         LOG_WARNING_MESSAGE("Connection called close but no shared_ptr to it was around");
+      }
    }
 
    void setUploadHandler(const AsyncUriUploadHandlerFunction& handler)
