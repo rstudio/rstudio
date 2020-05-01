@@ -6,32 +6,21 @@ pandoc schema: <https://github.com/jgm/pandoc-types/blob/master/Text/Pandoc/Defi
 
 ## TODO
 
-Backtick code blocks w/ no fenced code attributes don't get an edit button
-
 Extension raw_attribute not supported for gfm -- error
+- May need to manually define gfm and commonmark subsets
+
+When code block is a list item the attr_edit button is too high
+
+When existing definition_list w/ enter an extra term ends up below
 
 Edit props button goes off the right for long link
 
-Task lists getting extra bullet (check recent change to list css)
+Task lists getting extra bullet when create using input rule
 
 Table column alignment is applying to cols 2 and 3 even though only col 2 selected
 
 Dragging RStudio logo from https://www.google.com/search?q=rstudio+logo&rlz=1C5CHFA_enUS876US876&tbm=isch&source=iu&ictx=1&fir=8E1_BBssraY4wM%253A%252CXPdzCFYOHCtk2M%252C_&vet=1&usg=AI4_-kRG-CQGiFkAxrnefmboFqB3d_U_Vw&sa=X&ved=2ahUKEwiBm6yR7pDpAhWalnIEHQ55COsQ9QEwAHoECAoQIg#imgrc=ZCE4td9TNKG2ZM
 should strip these: data-noaft="1" jsname="HiaYvf" jsaction="load:XAeZkd;"
-
-Blogdown/Goldmark:
-
-- Browsing for images: static, assets, and page bundles
-  https://github.com/tidymodels/tidymodels.org/tree/master/content/start/case-study
-
-- Doubling up of second quote in goldmark (goldmark bug?)
-
-- Auto-detect when unsafe enabled and turn on raw html in that case. 
-  https://github.com/tidymodels/tidymodels.org/blob/master/config.toml#L46-L47
-  Perhaps consider round-tripping raw_html no matter what?
-
-- We can't read the format comment in goldmark b/c raw_html is off!!!!
-
 
 Math:
 
@@ -122,6 +111,8 @@ pandoc scholar: <https://pandoc-scholar.github.io/> pandoc jats: <https://github
 Notes on preformance implications of scanning the entire document + some discussion of the tricky nature of doing step by step inspection: <https://discuss.prosemirror.net/t/changed-part-of-document/992> <https://discuss.prosemirror.net/t/reacting-to-node-adding-removing-changing/676> <https://discuss.prosemirror.net/t/undo-and-cursor-position/677/5>
 
 ## Known issues:
+
+- Can only preview images in the first listed hugo static dir
 
 - When dragging and dropping an image to a place in the document above the original position the shelf sometimes
   stays in it's original position (until you scroll)
