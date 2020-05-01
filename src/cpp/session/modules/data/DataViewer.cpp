@@ -499,7 +499,7 @@ json::Value getData(SEXP dataSEXP, const http::Fields& fields)
       std::string ordercolstr = "order[" + std::to_string(orderIdx) + "][column]";
       std::string orderdirstr = "order[" + std::to_string(orderIdx) + "][dir]";
       ordercol = http::util::fieldValue<int>(fields, ordercolstr,  -1);
-      orderdir = http::util::fieldValue<std::string>(fields,  orderdirstr, "asc");
+      orderdir = http::util::fieldValue<std::string>(fields, orderdirstr, "asc");
 
       if (ordercol > 0)
       {

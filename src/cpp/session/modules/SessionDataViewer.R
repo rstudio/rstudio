@@ -422,7 +422,7 @@
       idx <- cols[[i]]
       if (length(x[[idx]]) > 0)
       {
-        if (dirs[[i]] == "asc")
+        if (identical(dirs[[i]], "asc"))
         {
           vals <- append(vals, list(x[[idx]]))
         }
