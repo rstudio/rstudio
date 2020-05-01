@@ -153,6 +153,8 @@ function termEnter(term: ContentNodeWithPos, state: EditorState, dispatch?: (tr:
     if (dispatch) {
       const tr = state.tr;
       tr.deleteRange(term.pos, term.pos + term.node.nodeSize);
+      tr.replaceSelectionWith(schema.nodes.paragraph.create());
+      setTextSelection(tr.mapping.map(state.selection.from), 1)(tr);
       dispatch(tr);
     }
     return true;
