@@ -72,7 +72,12 @@ public class ChunkContextUi implements ChunkContextToolbar.Host
       // if we found neither an '=' nor a ',', then the label
       // must be all the text following the first space
       if (firstEqualsIdx == -1 && firstCommaIdx == -1)
-         return extractedChunkHeader.substring(firstSpaceIdx + 1).trim();
+      {
+         extractedChunkHeader = extractedChunkHeader.substring(firstSpaceIdx + 1).trim();
+         if (extractedChunkHeader.endsWith("}"))
+            extractedChunkHeader = extractedChunkHeader.substring(0, extractedChunkHeader.length() -1);
+         return extractedChunkHeader;
+      }
 
       // if we found an '=' before we found a ',' (or we didn't find
       // a ',' at all), that implies a chunk header like:

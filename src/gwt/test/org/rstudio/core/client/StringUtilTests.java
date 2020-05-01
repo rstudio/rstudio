@@ -15,6 +15,8 @@
 package org.rstudio.core.client;
 
 import java.util.Date;
+import java.util.List;
+import java.util.ArrayList;
 
 import com.google.gwt.core.client.JavaScriptException;
 import com.google.gwt.junit.client.GWTTestCase;
@@ -240,35 +242,17 @@ public class StringUtilTests extends GWTTestCase
   
    public void testGetCssIdentifier()
    {
-      for (int pass = 0; pass < 5; pass++)
+      List<Pair<String, String>> testList = new ArrayList<>();
+      testList.add(new Pair<>("4abc_bad",        "_abc_bad"));
+      testList.add(new Pair<>("--verybad",       "_-verybad"));
+      testList.add(new Pair<>("-2badagain?",     "_2badagain_"));
+      testList.add(new Pair<>("great342_-↲",     "great342_-↲"));
+      testList.add(new Pair<>("-_perfectlyfine", "-_perfectlyfine"));
+
+      for (Pair<String, String> td  : testList)
       {
-         String input, expected, result;
-         switch (pass) {
-            case 0:
-               input = "-_perfectlyfine";
-               expected = input;
-               break;
-            case 1:
-               input = "--verybad";
-               expected = "_-verybad";
-               break;
-            case 2:
-               input = "-2badagain?";
-               expected = "_2badagain_";
-               break;
-            case 3:
-               input = "great342_-↲";
-               expected = input;
-               break;
-            case 4:
-               input = "4abc_bad";
-               expected = "_abc_bad";
-               break;
-            default:
-               input = expected  = "";
-         }
-         result = StringUtil.getCssIdentifier(input);
-         assertTrue(StringUtil.equals(expected, result));
+         String result = StringUtil.getCssIdentifier(td.first);
+         assertTrue(StringUtil.equals(td.second, result));
       }
    }
 

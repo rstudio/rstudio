@@ -15,7 +15,10 @@
 package org.rstudio.studio.client.workbench.views.source.editors.text.rmd;
 
 import com.google.gwt.junit.client.GWTTestCase;
+import org.rstudio.core.client.Pair;
 
+import java.util.List;
+import java.util.ArrayList;
 
 public class ChunkContextUiTests extends GWTTestCase
 {
@@ -27,8 +30,15 @@ public class ChunkContextUiTests extends GWTTestCase
    
    public void testExtractChunkLabel()
    {
-      String input = "```{r testingChunks, echo=FALSE}";
-      String result = ChunkContextUi.extractChunkLabel(input);
-      assertTrue(result.equals("testingChunks"));
+      List<Pair<String, String>> testList = new ArrayList<>();
+      testList.add(new Pair<>("```{r echo=FALSE}",        ""));
+      testList.add(new Pair<>("```{r testingChunks}",        "testingChunks"));
+      testList.add(new Pair<>("```{r testingChunks, echo=FALSE}",        "testingChunks"));
+
+      for (Pair<String, String> td  : testList)
+      {
+         String result = ChunkContextUi.extractChunkLabel(td.first);
+         assertTrue(result.equals(td.second));
+      }
    }
 }

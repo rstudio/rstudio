@@ -248,12 +248,12 @@ public class ChunkOutputWidget extends Composite
    {
       // ensure value has the correct prefix
       if (!value.startsWith(ChunkContextToolbar.CHUNK_CLASS_PREFIX + CHUNK_OUTPUT_PREFIX))
-               value = new String(ChunkContextToolbar.CHUNK_CLASS_PREFIX +
-                                  CHUNK_OUTPUT_PREFIX +
-                                  value);
+         value = new String(ChunkContextToolbar.CHUNK_CLASS_PREFIX +
+                            CHUNK_OUTPUT_PREFIX +
+                            value);
       value = StringUtil.getCssIdentifier(value);
 
-      if (value != label_)
+      if (!StringUtil.equals(value, label_))
       {
          // if we've already added a label style, remove it
          if (!StringUtil.isNullOrEmpty(label_))
