@@ -156,8 +156,9 @@ class CodeBlockInsertCommand extends ProsemirrorCommand {
 
         function insertCodeBlock(tr: Transaction, attrs = {}) {
           const codeBlock = schema.nodes.code_block.create(attrs);
+          const prevSel = tr.selection.from;
           tr.replaceSelectionWith(codeBlock);
-          setTextSelection(tr.selection.from - 2)(tr);
+          setTextSelection(tr.mapping.map(prevSel - 1))(tr);
           return tr;
         }
 
