@@ -39,13 +39,24 @@ namespace rmarkdown {
 namespace blogdown {
 namespace {
 
+
+FilePath hugoRootPath()
+{
+   return projects::projectContext().config().buildType != r_util::kBuildTypeNone
+      ? projects::projectContext().buildTargetPath()
+      : projects::projectContext().directory();
+}
+
 template <typename Args>
-std::string runHugo(const Args& args)
+std::string runHugo(const Args& args, bool logErrors = true)
 {
    ShellCommand hugo("hugo");
 
    core::system::ProcessOptions options;
-   options.workingDir = projects::projectContext().buildTargetPath();
+
+   // use build target path if this project has a build type
+   options.workingDir = hugoRootPath();
+
    // detach the session so there is no terminal
 #ifndef _WIN32
    options.detachSession = true;
@@ -55,12 +66,14 @@ std::string runHugo(const Args& args)
    Error error = core::system::runCommand(hugo << args, options, &result);
    if (error)
    {
-      LOG_ERROR(error);
+      if (logErrors)
+         LOG_ERROR(error);
       return "";
    }
    else if (result.exitStatus != EXIT_SUCCESS)
    {
-      LOG_ERROR_MESSAGE("Error running hugo: " + result.stdErr);
+      if (logErrors)
+         LOG_ERROR_MESSAGE("Error running hugo: " + result.stdErr);
       return "";
    }
    else
@@ -74,18 +87,49 @@ std::string runHugo(const Args& args)
 
 core::json::Object blogdownConfig()
 {
+
    const char* const kIsBlogdownProject = "is_blogdown_project";
+   const char* const kIsHugoProject = "is_hugo_project";
    const char* const kMarkdownEngine = "markdown_engine";
    const char* const kMarkdownEngineGoldmark = "goldmark";
    const char* const kMarkdownEngineBlackfriday = "blackfriday";
    const char* const kMarkdownExtensions = "markdown_extensions";
 
    json::Object config;
-   if (rmarkdown::isSiteProject("blogdown_site"))
-   {
-      // is a blogdown project
-      config[kIsBlogdownProject] = true;
 
+   // detect project type(s)
+   bool isBlogdownProject = rmarkdown::isSiteProject("blogdown_site");
+   bool isHugoProject = isBlogdownProject;
+
+   // if it's not a blogdown project, see if it's a hugo project. note that
+   // we don't want to run hugo if we don't need to (startup time impacting
+   // IDE startup time), so we gate the check by looking for a few sentinel
+   // files + the presence of hugo on the system
+   if (!isHugoProject)
+   {
+      if (projects::projectContext().hasProject())
+      {
+         FilePath hugoRoot = hugoRootPath();
+         if (hugoRoot.completeChildPath("config.toml").exists() ||
+             hugoRoot.completeChildPath("config.yaml").exists() ||
+             hugoRoot.completeChildPath("config.json").exists() ||
+             hugoRoot.completeChildPath("config").exists())
+         {
+            if (!module_context::findProgram("hugo").isEmpty())
+            {
+               if (runHugo("config", false).size() > 0)
+                  isHugoProject = true;
+            }
+         }
+      }
+   }
+
+   // set into config
+   config[kIsBlogdownProject] = isBlogdownProject;
+   config[kIsHugoProject] = isHugoProject;
+
+   if (isBlogdownProject || isHugoProject)
+   {
       // get the hugo version and use it to determine the default markdown engine
       std::string defaultMarkdownEngine = kMarkdownEngineGoldmark;
       std::string version = runHugo("version");

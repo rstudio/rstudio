@@ -1459,7 +1459,8 @@ bool rmarkdownPackageAvailable()
 bool isSiteProject(const std::string& site)
 {
    if (!modules::rmarkdown::rmarkdownPackageAvailable() ||
-       !projects::projectContext().hasProject())
+       !projects::projectContext().hasProject() ||
+       projects::projectContext().config().buildType != r_util::kBuildTypeWebsite)
       return false;
 
    bool isSite = false;
@@ -1537,6 +1538,9 @@ bool isWebsiteProject()
 
 bool isBookdownWebsite()
 {
+   if (!isWebsiteProject())
+      return false;
+
    bool isBookdown = false;
    std::string encoding = projects::projectContext().defaultEncoding();
    Error error = r::exec::RFunction(".rs.isBookdownWebsite",

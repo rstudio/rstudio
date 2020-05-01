@@ -20,6 +20,7 @@ import jsinterop.annotations.JsType;
 public class BlogdownConfig
 {
    public boolean is_blogdown_project;
+   public boolean is_hugo_project;
    public String markdown_engine;
    public String markdown_extensions;
 }
