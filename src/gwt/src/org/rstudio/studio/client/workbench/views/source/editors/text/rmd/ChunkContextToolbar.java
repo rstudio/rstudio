@@ -113,7 +113,7 @@ public class ChunkContextToolbar extends Composite
          value = new String(CHUNK_CLASS_PREFIX + value);
       value = StringUtil.getCssIdentifier(value);
 
-      if (value != label_)
+      if (!StringUtil.equals(value, label_))
       {
          // if we've already added a label style, remove it
          if (!StringUtil.isNullOrEmpty(label_))
