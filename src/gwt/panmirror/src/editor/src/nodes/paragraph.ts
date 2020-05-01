@@ -29,7 +29,7 @@ const extension: Extension = {
       name: 'paragraph',
       spec: {
         content: 'inline*',
-        group: 'block',
+        group: 'block list_item_block',
         parseDOM: [{ tag: 'p' }],
         toDOM() {
           return ['p', 0];
