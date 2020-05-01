@@ -1,7 +1,7 @@
 /*
- * SessionRMarkdown.hpp
+ * SessionBlogdown.hpp
  *
- * Copyright (C) 2009-12 by RStudio, PBC
+ * Copyright (C) 2009-17 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -12,44 +12,29 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-
-#ifndef SESSION_SESSION_RMARKDOWN_HPP
-#define SESSION_SESSION_RMARKDOWN_HPP
-
-#include <string>
-
-#define kRenderTypeStatic   0
-#define kRenderTypeShiny    1
-#define kRenderTypeNotebook 2
+#ifndef SESSION_SESSION_BLOGDOWN_HPP
+#define SESSION_SESSION_BLOGDOWN_HPP
 
 namespace rstudio {
-namespace core {
-   class Error;
+   namespace core {
+      namespace json {
+         class Object;
+      }
+   }
 }
-}
- 
+
 namespace rstudio {
 namespace session {
-namespace modules {      
+namespace modules {
 namespace rmarkdown {
+namespace blogdown {
 
-bool rmarkdownPackageAvailable();
+core::json::Object blogdownConfig();
 
-bool isSiteProject(const std::string& site);
-
-bool knitParamsAvailable();
-
-bool knitWorkingDirAvailable();
-
-bool pptAvailable();
-
-core::Error evaluateRmdParams(const std::string& docId);
-
-core::Error initialize();
-
+} // namespace blogdown
 } // namespace rmarkdown
-} // namepace handlers
+} // namespace modules
 } // namespace session
 } // namespace rstudio
 
-#endif // SESSION_SESSION_RMARKDOWN_HPP
+#endif // SESSION_SESSION_BLOGDOWN_HPP

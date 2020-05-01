@@ -1051,7 +1051,7 @@ public class TextEditingTargetVisualMode
    
    private boolean isBlogdownDocument() 
    {
-      return sessionInfo_.getIsBlogdownProject() && isDocInProject();
+      return sessionInfo_.getBlogdownConfig().is_blogdown_project && isDocInProject();
    }
    
    private boolean isDistillDocument()
@@ -1081,8 +1081,8 @@ public class TextEditingTargetVisualMode
       // if we have a doc
       if (docPath != null)
       {      
-         // if we are in a blogdown project and the doc is in the project
-         if (sessionInfo_.getIsBlogdownProject() && isDocInProject())
+         // if it's a blogdown document
+         if (isBlogdownDocument())
          {
             // if it has an extension indicating hugo will render markdown
             String extension = FileSystemItem.getExtensionFromPath(docPath);
