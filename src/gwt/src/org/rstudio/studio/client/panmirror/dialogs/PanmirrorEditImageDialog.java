@@ -19,7 +19,6 @@ package org.rstudio.studio.client.panmirror.dialogs;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.dom.DomUtils;
-import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.theme.DialogTabLayoutPanel;
 import org.rstudio.core.client.theme.VerticalTabPanel;
 import org.rstudio.core.client.widget.FormLabel;
@@ -28,6 +27,7 @@ import org.rstudio.core.client.widget.NumericTextBox;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.GlobalDisplay;
+import org.rstudio.studio.client.panmirror.PanmirrorUIContext;
 import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorAttrProps;
 import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorImageDimensions;
 import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorImageProps;
@@ -50,8 +50,8 @@ public class PanmirrorEditImageDialog extends ModalDialog<PanmirrorImageProps>
 {
    public PanmirrorEditImageDialog(PanmirrorImageProps props,
                                    PanmirrorImageDimensions dims,
-                                   String resourceDir,
                                    boolean editAttributes,
+                                   PanmirrorUIContext uiContext,
                                    OperationWithInput<PanmirrorImageProps> operation)
    {
       super("Image", Roles.getDialogRole(), operation, () -> {
@@ -82,7 +82,7 @@ public class PanmirrorEditImageDialog extends ModalDialog<PanmirrorImageProps>
       sizePanel.setVerticalAlignment(HasVerticalAlignment.ALIGN_MIDDLE);
       
       // image url picker
-      imageTab.add(url_ = new PanmirrorImageChooser(FileSystemItem.createDir(resourceDir)));
+      imageTab.add(url_ = new PanmirrorImageChooser(uiContext));
       url_.addStyleName(RES.styles().spaced());
       if (!StringUtil.isNullOrEmpty(props.src))
          url_.setText(props.src);

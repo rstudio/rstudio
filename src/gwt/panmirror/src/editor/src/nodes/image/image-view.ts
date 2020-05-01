@@ -241,7 +241,7 @@ export class ImageNodeView implements NodeView {
   // map node to img tag
   private updateImg() {
     // map to path reachable within current editing frame
-    this.img.src = this.editorUI.context.mapResourcePath(this.node.attrs.src);
+    this.img.src = this.editorUI.context.mapResourceToURL(this.node.attrs.src);
 
     // title/tooltip
     this.img.title = '';

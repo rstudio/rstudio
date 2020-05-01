@@ -22,26 +22,22 @@ import jsinterop.annotations.JsType;
 @JsType
 public class PanmirrorUIContext
 {
-   public GetResourceDir getResourceDir;
-   public MapResourcePath mapResourcePath;
-   public TranslateText translateText;
+   public Getter getDefaultResourceDir;
+   public Mapper mapPathToResource;
+   public Mapper mapResourceToURL;
+   public Mapper translateText;
 
-   @JsFunction
-   public interface GetResourceDir
+   
+   @JsFunction 
+   public interface Getter
    {
-      String getResourceDir();
+      String get();
    }
    
    @JsFunction
-   public interface MapResourcePath
+   public interface Mapper
    {
-      String mapResourcePath(String path);
-   }
-   
-   @JsFunction
-   public interface TranslateText
-   {
-      String translateText(String path);
+      String map(String path);
    }
 }
 

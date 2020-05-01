@@ -888,14 +888,20 @@ public class TextEditingTargetVisualMode
    private PanmirrorUIContext uiContext()
    {
       PanmirrorUIContext uiContext = new PanmirrorUIContext();
-      uiContext.mapResourcePath = path -> {
-         return ImagePreviewer.imgSrcPathFromHref(uiContext.getResourceDir.getResourceDir(), path);
-      };
-      uiContext.getResourceDir = () -> {  
+      uiContext.getDefaultResourceDir = () -> {  
          if (docUpdateSentinel_.getPath() != null)
             return FileSystemItem.createDir(docUpdateSentinel_.getPath()).getParentPathString();
          else
             return context_.getCurrentWorkingDir().getPath();
+      };
+      FileSystemItem resourceDir = FileSystemItem.createDir(uiContext.getDefaultResourceDir.get());
+      
+      uiContext.mapPathToResource = path -> {
+         FileSystemItem file = FileSystemItem.createFile(path);
+         return file.getPathRelativeTo(resourceDir);
+      };
+      uiContext.mapResourceToURL = path -> {
+         return ImagePreviewer.imgSrcPathFromHref(resourceDir.getPath(), path);
       };
       uiContext.translateText = text -> {
          return text;

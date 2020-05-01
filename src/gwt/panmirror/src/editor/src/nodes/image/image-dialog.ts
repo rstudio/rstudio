@@ -77,7 +77,7 @@ export async function imageDialog(
   const type = nodeType === view.state.schema.nodes.image ? ImageType.Image : ImageType.Figure;
 
   // edit the image
-  const result = await editorUI.dialogs.editImage(image, dims, editorUI.context.getResourceDir(), imageAttributes);
+  const result = await editorUI.dialogs.editImage(image, dims, imageAttributes);
   if (result) {
     // figures treat 'alt' as their content (the caption), but since captions support
     // inline formatting (and the dialog doesn't) we only want to update the

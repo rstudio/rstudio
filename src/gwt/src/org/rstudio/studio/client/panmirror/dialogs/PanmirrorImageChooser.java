@@ -1,3 +1,4 @@
+
 /*
  * PanmirrorImageChooser.java
  *
@@ -21,13 +22,15 @@ import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.core.client.widget.TextBoxWithButton;
 import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.panmirror.PanmirrorUIContext;
 
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
 
 public class PanmirrorImageChooser extends TextBoxWithButton {
 
-   public PanmirrorImageChooser(FileSystemItem documentDir)
+   
+   public PanmirrorImageChooser(PanmirrorUIContext uiContext)
    {
       super("Image (File or URL):", "", "Browse...", null, TextBoxButtonId.CHOOSE_IMAGE, false, null);
       PanmirrorDialogsUtil.setFullWidthStyles(this);
@@ -37,10 +40,12 @@ public class PanmirrorImageChooser extends TextBoxWithButton {
          @Override
          public void onClick(ClickEvent event)
          {
+            FileSystemItem defaultDir = FileSystemItem.createDir(uiContext.getDefaultResourceDir.get());
+               
             RStudioGinjector.INSTANCE.getFileDialogs().openFile(
                "Choose Image",
                RStudioGinjector.INSTANCE.getRemoteFileSystemContext(),
-               documentDir,
+               defaultDir,
                new ProgressOperationWithInput<FileSystemItem>()
                {
                   public void execute(FileSystemItem input,
@@ -50,18 +55,19 @@ public class PanmirrorImageChooser extends TextBoxWithButton {
                         return;
 
                      // compute relative path
-                     String relativePath = input.getPathRelativeTo(documentDir);
-                     if (relativePath != null) 
+                     String mappedPath = uiContext.mapPathToResource.map(input.getPath());
+                     if (mappedPath != null) 
                      {
-                        setText(input.getPathRelativeTo(documentDir));
+                        setText(mappedPath);
                      }
                      else
                      {
                         RStudioGinjector.INSTANCE.getGlobalDisplay().showErrorMessage(
                            "Image Location Error",
-                           "The selected image is not contained " +
-                           "within the document directory (" + documentDir.getPath() + ").\n\n" +
-                           "Please select only images within the document directory.");
+                           "The selected image cannot be included in this document.\n\n" +
+                           "Normally, images should be located within the document directory (" + 
+                           uiContext.getDefaultResourceDir.get() + ")");
+                          
                      }
                      indicator.onCompleted();
                     

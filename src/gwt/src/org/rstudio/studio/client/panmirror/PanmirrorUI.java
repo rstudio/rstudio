@@ -27,9 +27,10 @@ public class PanmirrorUI
    public PanmirrorUI(PanmirrorUIContext context)
    {
       this.context = context;
+      this.dialogs = new PanmirrorDialogs(this.context);
    }
    
-   public PanmirrorDialogs dialogs = new PanmirrorDialogs();
+   public PanmirrorDialogs dialogs;
    public PanmirrorUIDisplay display = new PanmirrorUIDisplay();
    public PanmirrorUIContext context;
    public JsObject images;

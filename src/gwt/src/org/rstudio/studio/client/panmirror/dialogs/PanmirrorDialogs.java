@@ -22,6 +22,7 @@ import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorAttrProps;
 import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorCodeBlockProps;
 import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorImageDimensions;
+import org.rstudio.studio.client.panmirror.PanmirrorUIContext;
 import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorAttrEditResult;
 import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorImageProps;
 import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorInsertCitationResult;
@@ -55,7 +56,8 @@ enum AlertType {
 public class PanmirrorDialogs {
    
   
-   public PanmirrorDialogs() {
+   public PanmirrorDialogs(PanmirrorUIContext uiContext) {
+      this.uiContext_ = uiContext;
       RStudioGinjector.INSTANCE.injectMembers(this);
    }
    
@@ -104,11 +106,11 @@ public class PanmirrorDialogs {
       );
    }
    
-   public Promise<PanmirrorImageProps> editImage(PanmirrorImageProps image, PanmirrorImageDimensions dims, String resourceDir, boolean editAttributes)
+   public Promise<PanmirrorImageProps> editImage(PanmirrorImageProps image, PanmirrorImageDimensions dims, boolean editAttributes)
    {
       return new Promise<PanmirrorImageProps>(
          (ResolveCallbackFn<PanmirrorImageProps> resolve, RejectCallbackFn reject) -> {  
-            PanmirrorEditImageDialog dialog = new PanmirrorEditImageDialog(image, dims, resourceDir, editAttributes,
+            PanmirrorEditImageDialog dialog = new PanmirrorEditImageDialog(image, dims, editAttributes, uiContext_,
                (result) -> { resolve.onInvoke(result); }
             );
             dialog.showModal(false);
@@ -221,6 +223,7 @@ public class PanmirrorDialogs {
 
    
    private GlobalDisplay globalDisplay_; 
+   private PanmirrorUIContext uiContext_;
 }
 
 
