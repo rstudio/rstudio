@@ -238,6 +238,40 @@ public class StringUtilTests extends GWTTestCase
       assertEquals("2:02:01:01", days);
    }
   
+   public void testGetCssIdentifier()
+   {
+      for (int pass = 0; pass < 5; pass++)
+      {
+         String input, expected, result;
+         switch (pass) {
+            case 0:
+               input = "-_perfectlyfine";
+               expected = input;
+               break;
+            case 1:
+               input = "--verybad";
+               expected = "_-verybad";
+               break;
+            case 2:
+               input = "-2badagain?";
+               expected = "_2badagain_";
+               break;
+            case 3:
+               input = "great342_-↲";
+               expected = input;
+               break;
+            case 4:
+               input = "4abc_bad";
+               expected = "_abc_bad";
+               break;
+            default:
+               input = expected  = "";
+         }
+         result = StringUtil.getCssIdentifier(input);
+         assertTrue(StringUtil.equals(expected, result));
+      }
+   }
+
    public void testEscapeBashPathNoSpecialChars()
    {
       String input = "NothingSpecialHere.129,._+@%/-";

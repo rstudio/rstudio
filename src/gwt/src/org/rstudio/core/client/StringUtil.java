@@ -955,7 +955,7 @@ public class StringUtil
 
       // return the string if it's already valid,
       // otherwise replace invalid characters with '_'
-      Pattern pattern = Pattern.create("(^-?[a-zA-Z][a-zA-Z0-9\\-\\_]+$)");
+      Pattern pattern = Pattern.create("(^-?[a-zA-Z_][a-zA-Z0-9\\-_]+$)");
       if (pattern.test(string))
          return string;
       else
