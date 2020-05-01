@@ -121,7 +121,7 @@ public class ChunkOutputUi
       {
          label_ = label;
          if (outputWidget_ != null)
-            outputWidget_.setId("output_" + label_);
+            outputWidget_.setLabelClass(label);
       }
    }
 

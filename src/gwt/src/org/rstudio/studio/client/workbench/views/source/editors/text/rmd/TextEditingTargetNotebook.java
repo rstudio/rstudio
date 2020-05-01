@@ -1108,13 +1108,15 @@ public class TextEditingTargetNotebook
       {
          Position thisStart = thisScope.getBodyStart();
          Position thisEnd = thisScope.getEnd();
+         String chunkId = getCurrentChunkId();
+
          if (((lastStart_ == null && thisStart == null) ||
               (lastStart_ != null && lastStart_.compareTo(thisStart) == 0)) &&
              ((lastEnd_ == null && thisEnd == null) ||
-              (lastEnd_ != null && lastEnd_.compareTo(thisEnd) == 0))) 
-         {
+              (lastEnd_ != null && lastEnd_.compareTo(thisEnd) == 0)) &&
+             ((chunkId != null && outputs_.containsKey(chunkId)) &&
+              outputs_.get(chunkId).getChunkLabel() == thisScope.getLabel()))
             return;
-         }
 
          lastStart_ = Position.create(thisScope.getBodyStart());
          lastEnd_ = Position.create(thisScope.getEnd());
