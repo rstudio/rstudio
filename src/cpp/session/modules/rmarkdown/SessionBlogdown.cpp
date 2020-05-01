@@ -91,6 +91,7 @@ core::json::Object blogdownConfig()
    const char* const kIsBlogdownProject = "is_blogdown_project";
    const char* const kIsHugoProject = "is_hugo_project";
    const char* const kSiteDir = "site_dir";
+   const char* const kStaticDirs = "static_dirs";
    const char* const kMarkdownEngine = "markdown_engine";
    const char* const kMarkdownEngineGoldmark = "goldmark";
    const char* const kMarkdownEngineBlackfriday = "blackfriday";
@@ -133,6 +134,11 @@ core::json::Object blogdownConfig()
    {
       // get the site dir
       config[kSiteDir] = module_context::createFileSystemItem(hugoRootPath());
+
+      // set the default static dirs
+      json::Array staticDirs;
+      staticDirs.push_back("static");
+      config[kStaticDirs] = staticDirs;
 
       // get the hugo version and use it to determine the default markdown engine
       std::string defaultMarkdownEngine = kMarkdownEngineGoldmark;
@@ -201,6 +207,28 @@ core::json::Object blogdownConfig()
                }
 
             }
+         }
+
+         // see if there is a staticdir variable
+         std::string staticdir = variables["staticdir"];
+         if (staticdir.size() > 0)
+         {
+            staticDirs.clear();
+
+            staticdir = string_utils::strippedOfQuotes(staticdir);
+            if (boost::algorithm::starts_with(staticdir, "["))
+            {
+               boost::algorithm::replace_first(staticdir, "[", "");
+               boost::algorithm::replace_last(staticdir, "]", "");
+               std::vector<std::string> dirs;
+               boost::algorithm::split(dirs, staticdir, boost::algorithm::is_any_of(" "));
+               staticDirs = core::json::toJsonArray(dirs);
+            }
+            else
+            {
+               staticDirs.push_back(staticdir);
+            }
+            config[kStaticDirs] = staticDirs;
          }
       }
 

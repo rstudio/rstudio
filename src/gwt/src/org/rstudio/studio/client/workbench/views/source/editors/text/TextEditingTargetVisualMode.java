@@ -1083,11 +1083,14 @@ public class TextEditingTargetVisualMode
       if (isHugoDocument())
       {
          FileSystemItem file = FileSystemItem.createFile(path);
-         String assetPath = file.getPathRelativeTo(hugoStaticDir());
-         if (assetPath != null)
-            return "/" + assetPath;
-         else
-            return null;
+         for (FileSystemItem dir : hugoStaticDirs())
+         {
+            String assetPath = file.getPathRelativeTo(dir);
+            if (assetPath != null)
+               return "/" + assetPath;
+         }
+         
+         return null;
       }
       else
       {
@@ -1095,11 +1098,14 @@ public class TextEditingTargetVisualMode
       }
    }
    
+   // TODO: currently can only serve image preview out of main static dir
+   // (to resolve we'd need to create a server-side handler that presents
+   // a union view of the various static dirs, much as hugo does internally)
    private String hugoAssetPath(String asset)
    {
       if (isHugoDocument() && asset.startsWith("/"))
       {
-         return hugoStaticDir().completePath(asset.substring(1));
+         return hugoStaticDirs().get(0).completePath(asset.substring(1));
       }
       else
       {
@@ -1107,11 +1113,14 @@ public class TextEditingTargetVisualMode
       }
    }
    
-   private FileSystemItem hugoStaticDir()
+   private List<FileSystemItem> hugoStaticDirs()
    {
-      return FileSystemItem.createDir(
-         getBlogdownConfig().site_dir.completePath("static")
-      );
+      FileSystemItem siteDir = getBlogdownConfig().site_dir;
+      List<FileSystemItem> staticDirs = new ArrayList<FileSystemItem>();
+      for (String dir : getBlogdownConfig().static_dirs)
+         staticDirs.add(FileSystemItem.createDir(siteDir.completePath(dir)));
+      return staticDirs;
+    
    }
    
    private BlogdownConfig getBlogdownConfig()
