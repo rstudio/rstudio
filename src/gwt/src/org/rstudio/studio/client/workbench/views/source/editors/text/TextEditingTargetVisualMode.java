@@ -898,9 +898,24 @@ public class TextEditingTargetVisualMode
       
       uiContext.mapPathToResource = path -> {
          FileSystemItem file = FileSystemItem.createFile(path);
-         return file.getPathRelativeTo(resourceDir);
+         String resourcePath = file.getPathRelativeTo(resourceDir);
+         if (resourcePath != null)
+         {
+            return resourcePath;
+         }
+         else
+         {
+            // try for hugo asset
+            return pathToHugoAsset(path);
+         }
       };
       uiContext.mapResourceToURL = path -> {
+         
+         // see if this a hugo asset
+         String hugoPath = hugoAssetPath(path);
+         if (hugoPath != null)
+            path = hugoPath;
+         
          return ImagePreviewer.imgSrcPathFromHref(resourceDir.getPath(), path);
       };
       uiContext.translateText = text -> {
@@ -1061,6 +1076,42 @@ public class TextEditingTargetVisualMode
    private boolean isHugoDocument()
    {
       return getBlogdownConfig().is_hugo_project && isDocInProject();
+   }
+   
+   private String pathToHugoAsset(String path)
+   {
+      if (isHugoDocument())
+      {
+         FileSystemItem file = FileSystemItem.createFile(path);
+         String assetPath = file.getPathRelativeTo(hugoStaticDir());
+         if (assetPath != null)
+            return "/" + assetPath;
+         else
+            return null;
+      }
+      else
+      {
+         return null;
+      }
+   }
+   
+   private String hugoAssetPath(String asset)
+   {
+      if (isHugoDocument() && asset.startsWith("/"))
+      {
+         return hugoStaticDir().completePath(asset.substring(1));
+      }
+      else
+      {
+         return null;
+      }
+   }
+   
+   private FileSystemItem hugoStaticDir()
+   {
+      return FileSystemItem.createDir(
+         getBlogdownConfig().site_dir.completePath("static")
+      );
    }
    
    private BlogdownConfig getBlogdownConfig()

@@ -14,6 +14,8 @@
  */
 package org.rstudio.studio.client.workbench.model;
 
+import org.rstudio.core.client.files.FileSystemItem;
+
 import jsinterop.annotations.JsType;
 
 @JsType
@@ -21,6 +23,7 @@ public class BlogdownConfig
 {
    public boolean is_blogdown_project;
    public boolean is_hugo_project;
+   public FileSystemItem site_dir;
    public String markdown_engine;
    public String markdown_extensions;
 }

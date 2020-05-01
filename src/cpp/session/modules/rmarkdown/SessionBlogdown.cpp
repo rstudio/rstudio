@@ -90,6 +90,7 @@ core::json::Object blogdownConfig()
 
    const char* const kIsBlogdownProject = "is_blogdown_project";
    const char* const kIsHugoProject = "is_hugo_project";
+   const char* const kSiteDir = "site_dir";
    const char* const kMarkdownEngine = "markdown_engine";
    const char* const kMarkdownEngineGoldmark = "goldmark";
    const char* const kMarkdownEngineBlackfriday = "blackfriday";
@@ -130,6 +131,9 @@ core::json::Object blogdownConfig()
 
    if (isBlogdownProject || isHugoProject)
    {
+      // get the site dir
+      config[kSiteDir] = module_context::createFileSystemItem(hugoRootPath());
+
       // get the hugo version and use it to determine the default markdown engine
       std::string defaultMarkdownEngine = kMarkdownEngineGoldmark;
       std::string version = runHugo("version");
