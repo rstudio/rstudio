@@ -137,12 +137,6 @@ enum
    RExecutionBusy  = 1
 };
 
-std::string projectDir()
-{
-   return string_utils::utf8ToSystem(
-      projects::projectContext().directory().getAbsolutePath());
-}
-
 std::string projectBuildDir()
 {
    return string_utils::utf8ToSystem(
