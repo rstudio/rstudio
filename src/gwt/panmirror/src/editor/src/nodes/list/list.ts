@@ -83,7 +83,7 @@ const extension = (pandocExtensions: PandocExtensions): Extension => {
       {
         name: 'list_item',
         spec: {
-          content: 'list_item_block block*',
+          content: 'paragraph block*',
           attrs: {
             checked: { default: null },
           },

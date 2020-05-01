@@ -48,7 +48,7 @@ const extension: Extension = {
         },
         defining: true,
         content: 'block+',
-        group: 'block list_item_block',
+        group: 'block',
         parseDOM: [
           {
             tag: 'div[data-div="1"]',
