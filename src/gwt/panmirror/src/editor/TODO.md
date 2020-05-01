@@ -6,11 +6,8 @@ pandoc schema: <https://github.com/jgm/pandoc-types/blob/master/Text/Pandoc/Defi
 
 ## TODO
 
-- Insert cursor loc is off in when inserting code block into list
-- List item text followed by Rmd chunk doesn't round trip (and ends up w/ uuid!!!!)
-- Insert list item after code block in list (how? perhaps just make a new bullet and it joins, or maybe custom arrow key?)
-- Serialization of blockquote as first list item (should it be supported?)
-- Line block in lists wraps a div around it
+
+- Insert code/rmd/div block in empty bullet should join to bullet above?
 
 
 Math:
