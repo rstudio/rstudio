@@ -150,7 +150,7 @@ class CodeBlockInsertCommand extends ProsemirrorCommand {
       (state: EditorState, dispatch?: (tr: Transaction) => void, view?: EditorView) => {
         const schema = state.schema;
 
-        if (!canInsertNode(state, schema.nodes.code_block)) {
+        if (!toggleBlockType(schema.nodes.code_block, schema.nodes.paragraph)(state)) {
           return false;
         }
 

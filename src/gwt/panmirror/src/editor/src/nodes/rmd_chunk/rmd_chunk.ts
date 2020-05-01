@@ -22,7 +22,7 @@ import { Extension } from '../../api/extension';
 import { EditorOptions } from '../../api/options';
 import { PandocOutput, PandocTokenType, PandocExtensions } from '../../api/pandoc';
 import { codeNodeSpec } from '../../api/code';
-import { ProsemirrorCommand, EditorCommandId } from '../../api/command';
+import { ProsemirrorCommand, EditorCommandId, toggleBlockType } from '../../api/command';
 import { canInsertNode } from '../../api/node';
 import { selectionIsBodyTopLevel } from '../../api/selection';
 import { uuidv4 } from '../../api/util';
@@ -142,7 +142,7 @@ class RmdChunkCommand extends ProsemirrorCommand {
       (state: EditorState, dispatch?: (tr: Transaction) => void, view?: EditorView) => {
         const schema = state.schema;
 
-        if (!canInsertNode(state, schema.nodes.rmd_chunk)) {
+        if (!toggleBlockType(schema.nodes.rmd_chunk, schema.nodes.paragraph)(state)) {
           return false;
         }
 
