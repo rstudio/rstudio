@@ -6,21 +6,12 @@ pandoc schema: <https://github.com/jgm/pandoc-types/blob/master/Text/Pandoc/Defi
 
 ## TODO
 
-Extension raw_attribute not supported for gfm -- error
-- May need to manually define gfm and commonmark subsets
+- Insert cursor loc is off in when inserting code block into list
+- List item text followed by Rmd chunk doesn't round trip (and ends up w/ uuid!!!!)
+- Insert list item after code block in list (how? perhaps just make a new bullet and it joins, or maybe custom arrow key?)
+- Serialization of blockquote as first list item (should it be supported?)
+- Line block in lists wraps a div around it
 
-When code block is a list item the attr_edit button is too high
-
-When existing definition_list w/ enter an extra term ends up below
-
-Edit props button goes off the right for long link
-
-Task lists getting extra bullet when create using input rule
-
-Table column alignment is applying to cols 2 and 3 even though only col 2 selected
-
-Dragging RStudio logo from https://www.google.com/search?q=rstudio+logo&rlz=1C5CHFA_enUS876US876&tbm=isch&source=iu&ictx=1&fir=8E1_BBssraY4wM%253A%252CXPdzCFYOHCtk2M%252C_&vet=1&usg=AI4_-kRG-CQGiFkAxrnefmboFqB3d_U_Vw&sa=X&ved=2ahUKEwiBm6yR7pDpAhWalnIEHQ55COsQ9QEwAHoECAoQIg#imgrc=ZCE4td9TNKG2ZM
-should strip these: data-noaft="1" jsname="HiaYvf" jsaction="load:XAeZkd;"
 
 Math:
 
@@ -28,11 +19,6 @@ Math:
 escaping of $ in math as this mode will clearly not be "source mode" style latex equation editing
 
 - Possibly have a special editing mode for thereoms?
-
-## Docs
-
-
-
 
 ## Future
 
