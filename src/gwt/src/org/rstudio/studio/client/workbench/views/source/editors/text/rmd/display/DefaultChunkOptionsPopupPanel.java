@@ -164,7 +164,7 @@ public class DefaultChunkOptionsPopupPanel extends ChunkOptionsPopupPanel
       
       String chunkLabel = ChunkContextUi.extractChunkLabel(extracted);
       if (!StringUtil.isNullOrEmpty(chunkLabel))
-         tbChunkLabel_.setText(ChunkContextUi.extractChunkLabel(extracted));
+         tbChunkLabel_.setText(chunkLabel);
       
       // if we had a chunk label, then we want to navigate our cursor to
       // the first comma in the chunk header; otherwise, we start at the
