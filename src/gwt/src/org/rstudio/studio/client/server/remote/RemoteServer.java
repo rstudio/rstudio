@@ -39,6 +39,7 @@ import org.rstudio.core.client.jsonrpc.RpcRequestCallback;
 import org.rstudio.core.client.jsonrpc.RpcResponse;
 import org.rstudio.core.client.jsonrpc.RpcResponseHandler;
 import org.rstudio.studio.client.application.ApplicationTutorialEvent;
+import org.rstudio.studio.client.application.ApplicationUtils;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.*;
 import org.rstudio.studio.client.application.model.*;
@@ -3488,30 +3489,10 @@ public class RemoteServer implements Server
          // attempting to resolve
          return true;
       }
-      // launch params missing means we are in a launcher session that needs to be implicitly resumed
+      // launch params missing means we are in a launcher session
       else if (error.getCode() == RpcError.LAUNCH_PARAMETERS_MISSING)
       {
-         if (launchParameters_ == null)
-            return false;
-
-         // resend the RPC with the launch params received earlier via client_init
-         JSONObject kwParams = new JSONObject();
-         kwParams.put("launch_parameters", new JSONObject(launchParameters_));
-
-         RpcRequest modifiedRequest = new RpcRequest(request.getUrl(),
-                                                     request.getMethod(),
-                                                     request.getParams(),
-                                                     kwParams,
-                                                     request.getRedactLog(),
-                                                     request.getResultFieldName(),
-                                                     request.getSourceWindow(),
-                                                     request.getClientId(),
-                                                     request.getClientVersion(),
-                                                     request.getRefreshCreds());
-
-         setSessionRelaunchPending();
-
-         retryHandler.onModifiedRetry(modifiedRequest);
+         setSessionRelaunchPending(error.getRedirectUrl());
          return true;
       }
       else
@@ -3520,14 +3501,14 @@ public class RemoteServer implements Server
       }
    }
 
-   private void setSessionRelaunchPending()
+   private void setSessionRelaunchPending(String redirectUrl)
    {
       if (!sessionRelaunchPending_)
       {
          sessionRelaunchPending_ = true;
 
          // fire event to inform UI that we are attempting to relaunch the session
-         eventBus_.dispatchEvent(new SessionRelaunchEvent(SessionRelaunchEvent.Type.RELAUNCH_INITIATED));
+         eventBus_.dispatchEvent(new SessionRelaunchEvent(SessionRelaunchEvent.Type.RELAUNCH_INITIATED, redirectUrl));
       }
    }
 

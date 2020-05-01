@@ -523,11 +523,18 @@ public class Application implements ApplicationEventHandlers
       switch (event.getType())
       {
       case RELAUNCH_INITIATED:
-         view_.showSerializationProgress(
-               "Relaunching R session (this may take awhile)...",
-               true, // modal - we don't want the user using the session while we relaunch it
-               0, // show immediately
-               0); // never timeout
+         // session needs to be relaunched
+         // redirect to where the server instructed us to go
+         if (!event.getRedirectUrl().isEmpty())
+         {
+            String url = ApplicationUtils.getHostPageBaseURLWithoutContext(false) + event.getRedirectUrl();
+            navigateWindowWithDelay(url);
+         }
+         else
+         {
+            // server did not specify where to redirect - fallback to the home page
+            loadUserHomePage();
+         }
          break;
       case RELAUNCH_COMPLETE:
          view_.hideSerializationProgress();
