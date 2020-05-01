@@ -320,8 +320,8 @@ public class TextEditingTargetVisualMode
                }
                else if (format.warnings.invalidOptions.length > 0)
                {
-                  view_.showWarningBar("Pandoc format " + format.baseName + " does not support options: " + 
-                                          String.join(", ", format.warnings.invalidOptions));
+                  view_.showWarningBar("Unsupported extensions for markdown mode: " + String.join(", ", format.warnings.invalidOptions));
+      ;
                }
             });          
          });
