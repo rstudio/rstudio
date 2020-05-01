@@ -545,7 +545,7 @@ json::Value getData(SEXP dataSEXP, const http::Fields& fields)
       filters.push_back(filterVal);
    }
 
-   bool needsTransform = std::size(ordercols) > 0 || hasFilter || !search.empty();
+   bool needsTransform = ordercols.size() > 0 || hasFilter || !search.empty();
    bool hasTransform = false;
 
    // check to see if we have an ordered/filtered view we can build from
