@@ -29,6 +29,7 @@ import org.rstudio.studio.client.workbench.views.jobs.view.JobsListTests;
 // import org.rstudio.studio.client.workbench.views.source.editors.text.assist.RChunkHeaderParserTests;
 import org.rstudio.studio.client.workbench.views.terminal.TerminalLocalEchoTests;
 import org.rstudio.studio.client.workbench.views.terminal.TerminalSessionSocketTests;
+import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkContextUiTests;
 
 import com.google.gwt.junit.tools.GWTTestSuite;
 
@@ -54,6 +55,7 @@ public class RStudioUnitTestSuite extends GWTTestSuite
       suite.addTestSuite(SessionScopeTests.class);
       suite.addTestSuite(JobsListTests.class);
       suite.addTestSuite(ElementIdsTests.class);
+      suite.addTestSuite(ChunkContextUiTests.class);
       
       // Pro-only tests
       

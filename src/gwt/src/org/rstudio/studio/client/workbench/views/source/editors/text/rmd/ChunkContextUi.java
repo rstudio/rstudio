@@ -1,7 +1,7 @@
 /*
  * ChunkContextUi.java
  *
- * Copyright (C) 2009-16 by RStudio, PBC
+ * Copyright (C) 2009-20 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -55,6 +55,46 @@ public class ChunkContextUi implements ChunkContextToolbar.Host
       createToolbar(preambleRow);
    }
    
+   // Public static methods ---------------------------------------------------
+
+   public static String extractChunkLabel(String extractedChunkHeader)
+   {
+      // if there are no spaces within the chunk header,
+      // there cannot be a label
+      int firstSpaceIdx = extractedChunkHeader.indexOf(' ');
+      if (firstSpaceIdx == -1)
+         return "";
+
+      // find the indices of the first '=' and ',' characters
+      int firstEqualsIdx = extractedChunkHeader.indexOf('=');
+      int firstCommaIdx  = extractedChunkHeader.indexOf(',');
+
+      // if we found neither an '=' nor a ',', then the label
+      // must be all the text following the first space
+      if (firstEqualsIdx == -1 && firstCommaIdx == -1)
+      {
+         extractedChunkHeader = extractedChunkHeader.substring(firstSpaceIdx + 1).trim();
+         if (extractedChunkHeader.endsWith("}"))
+            extractedChunkHeader = extractedChunkHeader.substring(0, extractedChunkHeader.length() -1);
+         return extractedChunkHeader;
+      }
+
+      // if we found an '=' before we found a ',' (or we didn't find
+      // a ',' at all), that implies a chunk header like:
+      //
+      //    ```{r message=TRUE, echo=FALSE}
+      //
+      // and so there is no label.
+      if (firstCommaIdx == -1)
+         return "";
+
+      if (firstEqualsIdx != -1 && firstEqualsIdx < firstCommaIdx)
+         return "";
+
+      // otherwise, the text from the first space to that comma gives the label
+      return extractedChunkHeader.substring(firstSpaceIdx + 1, firstCommaIdx).trim();
+   }
+
    // Public methods ----------------------------------------------------------
 
    public int getPreambleRow()
@@ -92,8 +132,9 @@ public class ChunkContextUi implements ChunkContextToolbar.Host
          engine_ = engine;
          toolbar_.setEngine(engine);
       }
+      toolbar_.setLabelClass(getLabel(row));
    }
-   
+
    public void setRenderPass(int pass)
    {
       renderPass_ = pass;
@@ -205,6 +246,7 @@ public class ChunkContextUi implements ChunkContextToolbar.Host
    {
       toolbar_ = new ChunkContextToolbar(this, dark_, !isSetup_, engine_);
       toolbar_.setHeight("0px"); 
+      toolbar_.setLabelClass(getLabel(row));
       lineWidget_ = new PinnedLineWidget(
             ChunkContextToolbar.LINE_WIDGET_TYPE, target_.getDocDisplay(), 
             toolbar_, row, null, host_);
@@ -218,6 +260,12 @@ public class ChunkContextUi implements ChunkContextToolbar.Host
       return engine;
    }
    
+   private String getLabel(int row)
+   {
+      String line = target_.getDocDisplay().getLine(row);
+      return extractChunkLabel(line);
+   }
+
    private ChunkOptionsPopupPanel createPopupPanel()
    {
       int row = lineWidget_.getRow();
