@@ -302,7 +302,7 @@ const extension = (pandocExtensions: PandocExtensions): Extension => {
         ),
       ];
       if (capabilities.tasks) {
-        rules.push(checkedListInputRule(schema), checkedListItemInputRule());
+        rules.push(checkedListItemInputRule(), checkedListInputRule(schema));
       }
       return rules;
     },
