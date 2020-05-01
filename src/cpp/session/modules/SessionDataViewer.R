@@ -336,7 +336,7 @@
   x
 })
 
-.rs.addFunction("applyTransform", function(x, filtered, search, col, dir) 
+.rs.addFunction("applyTransform", function(x, filtered, search, cols, dirs)
 {
   # mark encoding on character inputs if not already marked
   filtered <- vapply(filtered, function(colfilter) {
@@ -414,22 +414,28 @@
   }
 
   # apply sort
-  if (col > 0 && length(x[[col]]) > 0)
+  if (length(cols) > 0)
   {
-    if (is.list(x[[col]][[1]]) || length(x[[col]][[1]]) > 1)
+    vals <- list()
+    for (i in length(cols))
     {
-      # extract the first value from each cell for ordering (handle
-      # vector-valued columns gracefully)
-      x <- as.data.frame(x[order(vapply(x[[col]], `[`, 0, 1), 
-                                 decreasing = identical(dir, "desc")), ,
-                           drop = FALSE])
+      idx <- cols[[i]]
+      if (length(x[[idx]]) > 0)
+      {
+        if (identical(dirs[[i]], "asc"))
+        {
+          vals <- append(vals, list(x[[idx]]))
+        }
+        else
+        {
+          vals <- append(vals, list(-xtfrm(x[[idx]])))
+        }
+      }
     }
-    else
+
+    if (length(vals) > 0)
     {
-      # skip the expensive vapply when we're dealing with scalars
-      x <- as.data.frame(x[order(x[[col]], 
-                                 decreasing = identical(dir, "desc")), ,
-                           drop = FALSE])
+      x <- x[do.call(order, vals), , drop = FALSE]
     }
   }
 
