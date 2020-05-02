@@ -115,7 +115,7 @@ const extension = (
       const commands: ProsemirrorCommand[] = [
         new BlockCommand(
           EditorCommandId.CodeBlock,
-          ['Shift-Ctrl-\\'],
+          [],
           schema.nodes.code_block,
           schema.nodes.paragraph,
           {},
@@ -141,6 +141,8 @@ const extension = (
     },
   };
 };
+
+
 
 
 class CodeBlockInsertCommand extends ProsemirrorCommand {
@@ -211,7 +213,7 @@ class CodeBlockInsertCommand extends ProsemirrorCommand {
 
 class CodeBlockFormatCommand extends ProsemirrorCommand {
   constructor(pandocExtensions: PandocExtensions, ui: EditorUI, languages: string[]) {
-    super(EditorCommandId.CodeBlockFormat, [], codeBlockFormatCommandFn(pandocExtensions, ui, languages));
+    super(EditorCommandId.CodeBlockFormat, ['Shift-Mod-\\'], codeBlockFormatCommandFn(pandocExtensions, ui, languages));
   }
 }
 
@@ -220,7 +222,9 @@ function codeBlockFormatCommandFn(pandocExtensions: PandocExtensions, ui: Editor
     // enable if we are either inside a code block or we can toggle to a code block
     const schema = state.schema;
     const codeBlock = findParentNodeOfType(schema.nodes.code_block)(state.selection);
-    if (!codeBlock && !toggleBlockType(schema.nodes.code_block, schema.nodes.paragraph)(state)) {
+    if (!codeBlock && 
+        !toggleBlockType(schema.nodes.code_block, schema.nodes.paragraph)(state) &&
+        !precedingListItemInsertPos(state.doc, state.selection)) {
       return false;
     }
 
@@ -258,7 +262,15 @@ function codeBlockFormatCommandFn(pandocExtensions: PandocExtensions, ui: Editor
             tr.setNodeMarkup(codeBlock.pos, schema.nodes.code_block, applyProps);
             dispatch(tr);
           } else {
-            toggleBlockType(schema.nodes.code_block, schema.nodes.paragraph, applyProps)(state, dispatch, view);
+            const prevListItemPos = precedingListItemInsertPos(state.doc, state.selection);
+            if (prevListItemPos) {
+              const tr = state.tr;
+              const block = schema.nodes.code_block.create(applyProps);
+              precedingListItemInsert(tr, prevListItemPos, block);
+              dispatch(tr);
+            } else {
+              toggleBlockType(schema.nodes.code_block, schema.nodes.paragraph, applyProps)(state, dispatch, view);
+            }
           }
         }
       }
