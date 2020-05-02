@@ -29,8 +29,8 @@ import { PandocOutput, PandocTokenType, PandocExtensions } from '../api/pandoc';
 import { pandocAttrSpec, pandocAttrParseDom, pandocAttrToDomAttr } from '../api/pandoc_attr';
 import { PandocCapabilities } from '../api/pandoc_capabilities';
 import { EditorUI, CodeBlockProps } from '../api/ui';
-import { canInsertNode } from '../api/node';
 import { hasFencedCodeBlocks } from '../api/pandoc_format';
+import { precedingListItemInsertPos, precedingListItemInsert } from '../api/list';
 
 const extension = (
   pandocExtensions: PandocExtensions,
@@ -142,6 +142,7 @@ const extension = (
   };
 };
 
+
 class CodeBlockInsertCommand extends ProsemirrorCommand {
   constructor(pandocExtensions: PandocExtensions, ui: EditorUI, languages: string[]) {
     super(
@@ -150,16 +151,22 @@ class CodeBlockInsertCommand extends ProsemirrorCommand {
       (state: EditorState, dispatch?: (tr: Transaction) => void, view?: EditorView) => {
         const schema = state.schema;
 
-        if (!toggleBlockType(schema.nodes.code_block, schema.nodes.paragraph)(state)) {
+        if (!toggleBlockType(schema.nodes.code_block, schema.nodes.paragraph)(state) &&
+            !precedingListItemInsertPos(state.doc, state.selection)) {
           return false;
         }
 
         function insertCodeBlock(tr: Transaction, attrs = {}) {
           const codeBlock = schema.nodes.code_block.create(attrs);
-          const prevSel = tr.selection.from;
-          tr.replaceSelectionWith(codeBlock);
-          setTextSelection(tr.mapping.map(prevSel - 1))(tr);
-          return tr;
+          const prevListItemPos = precedingListItemInsertPos(tr.doc, tr.selection);
+          if (prevListItemPos) {
+            precedingListItemInsert(tr, prevListItemPos, codeBlock);
+          } else {
+            const prevSel = tr.selection.from;
+            tr.replaceSelectionWith(codeBlock);
+            setTextSelection(tr.mapping.map(prevSel - 1))(tr);
+            return tr;
+          }
         }
 
         async function asyncEditCodeBlock() {

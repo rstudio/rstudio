@@ -17,6 +17,7 @@ import { Node as ProsemirrorNode, Schema } from 'prosemirror-model';
 import { EditorState, Transaction } from 'prosemirror-state';
 import { EditorView } from 'prosemirror-view';
 import { findParentNodeOfType, ContentNodeWithPos } from 'prosemirror-utils';
+import { wrapIn, lift } from 'prosemirror-commands';
 
 import { Extension, extensionIfEnabled } from '../api/extension';
 import {
@@ -30,10 +31,10 @@ import {
 import { PandocOutput, PandocTokenType, PandocToken } from '../api/pandoc';
 import { ProsemirrorCommand, EditorCommandId, toggleWrap } from '../api/command';
 import { EditorUI } from '../api/ui';
+import { precedingListItemInsertPos, precedingListItemInsert } from '../api/list';
 
 import './div-styles.css';
 
-import { wrapIn, lift } from 'prosemirror-commands';
 
 const DIV_ATTR = 0;
 const DIV_CHILDREN = 1;
@@ -113,7 +114,9 @@ function divCommand(ui: EditorUI, allowEdit: boolean) {
     //  - wrapping (a la blockquote)
     const schema = state.schema;
     const div = allowEdit ? findParentNodeOfType(schema.nodes.div)(state.selection) : undefined;
-    if (!div && !toggleWrap(schema.nodes.div)(state)) {
+    if (!div && 
+        !toggleWrap(schema.nodes.div)(state) && 
+        !precedingListItemInsertPos(state.doc, state.selection)) {
       return false;
     }
 
@@ -161,11 +164,21 @@ async function editDiv(ui: EditorUI, state: EditorState, dispatch: (tr: Transact
 async function createDiv(ui: EditorUI, state: EditorState, dispatch: (tr: Transaction) => void) {
   const result = await ui.dialogs.editDiv({}, false);
   if (result) {
-    wrapIn(state.schema.nodes.div)(state, (tr: Transaction) => {
-      const div = findParentNodeOfType(state.schema.nodes.div)(tr.selection)!;
-      tr.setNodeMarkup(div.pos, div.node.type, result.attr);
+    const prevListItemPos = precedingListItemInsertPos(state.doc, state.selection);
+    if (prevListItemPos) {
+      const para = state.schema.nodes.paragraph.create();
+      const div = state.schema.nodes.div.createAndFill(result.attr, para);
+      const tr = state.tr;
+      precedingListItemInsert(tr, prevListItemPos, div);
       dispatch(tr);
-    });
+    } else {
+      wrapIn(state.schema.nodes.div)(state, (tr: Transaction) => {
+        const div = findParentNodeOfType(state.schema.nodes.div)(tr.selection)!;
+        tr.setNodeMarkup(div.pos, div.node.type, result.attr);
+        dispatch(tr);
+      });
+    }
+    
   }
 }
 

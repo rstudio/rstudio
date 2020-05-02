@@ -23,9 +23,9 @@ import { EditorOptions } from '../../api/options';
 import { PandocOutput, PandocTokenType, PandocExtensions } from '../../api/pandoc';
 import { codeNodeSpec } from '../../api/code';
 import { ProsemirrorCommand, EditorCommandId, toggleBlockType } from '../../api/command';
-import { canInsertNode } from '../../api/node';
 import { selectionIsBodyTopLevel } from '../../api/selection';
 import { uuidv4 } from '../../api/util';
+import { precedingListItemInsertPos, precedingListItemInsert } from '../../api/list';
 
 import { EditorUI } from '../../api/ui';
 import { PandocCapabilities } from '../../api/pandoc_capabilities';
@@ -142,7 +142,8 @@ class RmdChunkCommand extends ProsemirrorCommand {
       (state: EditorState, dispatch?: (tr: Transaction) => void, view?: EditorView) => {
         const schema = state.schema;
 
-        if (!toggleBlockType(schema.nodes.rmd_chunk, schema.nodes.paragraph)(state)) {
+        if (!toggleBlockType(schema.nodes.rmd_chunk, schema.nodes.paragraph)(state) &&
+            !precedingListItemInsertPos(state.doc, state.selection)) {
           return false;
         }
 
@@ -166,8 +167,13 @@ class RmdChunkCommand extends ProsemirrorCommand {
           const kRmdText = 'r\n';
           const rmdText = schema.text(kRmdText);
           const rmdNode = schema.nodes.rmd_chunk.create({}, rmdText);
-          tr.replaceSelectionWith(rmdNode);
-          setTextSelection(tr.mapping.map(state.selection.from) - 1)(tr);
+          const prevListItemPos = precedingListItemInsertPos(tr.doc, tr.selection);
+          if (prevListItemPos) {
+            precedingListItemInsert(tr, prevListItemPos, rmdNode);
+          } else {
+            tr.replaceSelectionWith(rmdNode);
+            setTextSelection(tr.mapping.map(state.selection.from) - 1)(tr);
+          }
           dispatch(tr);
         }
 
