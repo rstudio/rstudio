@@ -48,11 +48,11 @@ export interface EditorUIContext {
   getDefaultResourceDir: () => string;
 
   // map from a filesystem path to a resource reference
-  mapPathToResource: (path: string) =>  string;
+  mapPathToResource: (path: string) => string;
 
   // map from a resource reference (e.g. images/foo.png) to a URL we can use in the document
-  mapResourceToURL: (path: string) =>  string;
-  
+  mapResourceToURL: (path: string) => string;
+
   // translate a string
   translateText: (text: string) => string;
 }

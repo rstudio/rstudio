@@ -142,8 +142,10 @@ class RmdChunkCommand extends ProsemirrorCommand {
       (state: EditorState, dispatch?: (tr: Transaction) => void, view?: EditorView) => {
         const schema = state.schema;
 
-        if (!toggleBlockType(schema.nodes.rmd_chunk, schema.nodes.paragraph)(state) &&
-            !precedingListItemInsertPos(state.doc, state.selection)) {
+        if (
+          !toggleBlockType(schema.nodes.rmd_chunk, schema.nodes.paragraph)(state) &&
+          !precedingListItemInsertPos(state.doc, state.selection)
+        ) {
           return false;
         }
 

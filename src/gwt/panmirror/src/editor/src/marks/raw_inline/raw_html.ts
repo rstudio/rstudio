@@ -27,7 +27,6 @@ import { kRawInlineFormat, kRawInlineContent, RawInlineCommand } from './raw_inl
 import { InsertHTMLCommentCommand } from './raw_html_comment';
 
 const extension = (pandocExtensions: PandocExtensions, pandocCapabilities: PandocCapabilities): Extension | null => {
-  
   return {
     marks: [
       {
@@ -79,12 +78,10 @@ const extension = (pandocExtensions: PandocExtensions, pandocCapabilities: Pando
 
     // insert command
     commands: (schema: Schema, ui: EditorUI) => {
-      const commands = [
-        new InsertHTMLCommentCommand(schema)
-      ];
+      const commands = [new InsertHTMLCommentCommand(schema)];
       if (pandocExtensions.raw_html) {
         commands.push(
-          new RawInlineCommand(EditorCommandId.HTMLInline, kHTMLFormat, ui, pandocCapabilities.output_formats)
+          new RawInlineCommand(EditorCommandId.HTMLInline, kHTMLFormat, ui, pandocCapabilities.output_formats),
         );
       }
       return commands;

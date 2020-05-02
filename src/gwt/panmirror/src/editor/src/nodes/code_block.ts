@@ -113,13 +113,7 @@ const extension = (
 
     commands: (schema: Schema) => {
       const commands: ProsemirrorCommand[] = [
-        new BlockCommand(
-          EditorCommandId.CodeBlock,
-          [],
-          schema.nodes.code_block,
-          schema.nodes.paragraph,
-          {},
-        ),
+        new BlockCommand(EditorCommandId.CodeBlock, [], schema.nodes.code_block, schema.nodes.paragraph, {}),
       ];
       if (hasAttr) {
         commands.push(new CodeBlockFormatCommand(pandocExtensions, ui, pandocCapabilities.highlight_languages));
@@ -136,14 +130,10 @@ const extension = (
     },
 
     inputRules: (schema: Schema) => {
-      return [
-        textblockTypeInputRule(/^```$/, schema.nodes.code_block),
-        codeBlockListItemInputRule(schema)
-      ];
+      return [textblockTypeInputRule(/^```$/, schema.nodes.code_block), codeBlockListItemInputRule(schema)];
     },
   };
 };
-
 
 class CodeBlockFormatCommand extends ProsemirrorCommand {
   constructor(pandocExtensions: PandocExtensions, ui: EditorUI, languages: string[]) {
@@ -156,9 +146,11 @@ function codeBlockFormatCommandFn(pandocExtensions: PandocExtensions, ui: Editor
     // enable if we are either inside a code block or we can toggle to a code block
     const schema = state.schema;
     const codeBlock = findParentNodeOfType(schema.nodes.code_block)(state.selection);
-    if (!codeBlock && 
-        !toggleBlockType(schema.nodes.code_block, schema.nodes.paragraph)(state) &&
-        !precedingListItemInsertPos(state.doc, state.selection)) {
+    if (
+      !codeBlock &&
+      !toggleBlockType(schema.nodes.code_block, schema.nodes.paragraph)(state) &&
+      !precedingListItemInsertPos(state.doc, state.selection)
+    ) {
       return false;
     }
 
@@ -262,12 +254,11 @@ function codeBlockAttrEdit(pandocExtensions: PandocExtensions, pandocCapabilitie
 
 function codeBlockListItemInputRule(schema: Schema) {
   return new InputRule(/^```$/, (state: EditorState, match: string[], start: number, end: number) => {
-    
     const prevListItemPos = precedingListItemInsertPos(state.doc, state.selection, '``');
     if (!prevListItemPos) {
       return null;
     }
-   
+
     const tr = state.tr;
     tr.deleteRange(start, end);
     const block = state.schema.nodes.code_block.create();
@@ -275,6 +266,5 @@ function codeBlockListItemInputRule(schema: Schema) {
     return tr;
   });
 }
-
 
 export default extension;

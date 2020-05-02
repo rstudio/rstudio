@@ -35,7 +35,6 @@ import { precedingListItemInsertPos, precedingListItemInsert } from '../api/list
 
 import './div-styles.css';
 
-
 const DIV_ATTR = 0;
 const DIV_CHILDREN = 1;
 
@@ -114,9 +113,7 @@ function divCommand(ui: EditorUI, allowEdit: boolean) {
     //  - wrapping (a la blockquote)
     const schema = state.schema;
     const div = allowEdit ? findParentNodeOfType(schema.nodes.div)(state.selection) : undefined;
-    if (!div && 
-        !toggleWrap(schema.nodes.div)(state) && 
-        !precedingListItemInsertPos(state.doc, state.selection)) {
+    if (!div && !toggleWrap(schema.nodes.div)(state) && !precedingListItemInsertPos(state.doc, state.selection)) {
       return false;
     }
 
@@ -178,7 +175,6 @@ async function createDiv(ui: EditorUI, state: EditorState, dispatch: (tr: Transa
         dispatch(tr);
       });
     }
-    
   }
 }
 

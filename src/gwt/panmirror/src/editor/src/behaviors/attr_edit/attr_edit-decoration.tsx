@@ -136,7 +136,7 @@ export class AttrEditDecorationPlugin extends Plugin<DecorationSet> {
                 // cacculate position offsets
                 const baseOffset = editor.offset || { top: 0, right: 0 };
                 const xOffset = baseOffset.right + rightPaddingOffset;
-                const yOffset = baseOffset.top + 6; 
+                const yOffset = baseOffset.top + 6;
                 const cssProps: React.CSSProperties = {
                   transform: `translate(${xOffset}px,-${yOffset}px)`,
                 };

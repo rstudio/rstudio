@@ -13,10 +13,10 @@
  *
  */
 
-import { Node as ProsemirrorNode } from 'prosemirror-model'; 
-import { Transaction, Selection } from "prosemirror-state";
+import { Node as ProsemirrorNode } from 'prosemirror-model';
+import { Transaction, Selection } from 'prosemirror-state';
 
-import { findParentNodeOfType, setTextSelection } from "prosemirror-utils";
+import { findParentNodeOfType, setTextSelection } from 'prosemirror-utils';
 
 export interface ListCapabilities {
   tasks: boolean;
@@ -25,12 +25,7 @@ export interface ListCapabilities {
   order: boolean;
 }
 
-
-export function precedingListItemInsertPos(
-  doc: ProsemirrorNode, 
-  selection: Selection,
-  matchText = '') {
-
+export function precedingListItemInsertPos(doc: ProsemirrorNode, selection: Selection, matchText = '') {
   // selection just be empty
   if (!selection.empty) {
     return null;

@@ -37,7 +37,7 @@ export function editRawBlockCommand(ui: EditorUI, outputFormats: string[]) {
 
     // enable if we are either inside a raw block or we can insert a raw block
     const rawBlock = findParentNodeOfType(schema.nodes.raw_block)(state.selection);
-    
+
     if (!rawBlock && !setBlockType(schema.nodes.raw_block, { format: 'html' })(state)) {
       return false;
     }

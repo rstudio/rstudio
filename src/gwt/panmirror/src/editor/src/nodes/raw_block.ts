@@ -45,7 +45,6 @@ const extension = (
   pandocCapabilities: PandocCapabilities,
   ui: EditorUI,
 ): Extension | null => {
-  
   return {
     nodes: [
       {

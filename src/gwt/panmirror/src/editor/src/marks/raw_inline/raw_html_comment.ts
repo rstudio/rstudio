@@ -31,7 +31,6 @@ const kHTMLCommentRegEx = /<!--([\s\S]*?)-->/;
 const kHTMLEditingCommentRegEx = /^<!--# ([\s\S]*?)-->$/;
 
 const extension = (): Extension | null => {
-  
   return {
     marks: [
       {
