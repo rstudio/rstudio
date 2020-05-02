@@ -247,27 +247,41 @@ public:
       // stop the server 
       acceptorService_.ioService().stop();
 
-      // update state
+      std::set<boost::shared_ptr<AsyncConnectionImpl<typename ProtocolType::socket> >> connections;
+      boost::shared_ptr<AsyncConnectionImpl<typename ProtocolType::socket>> pendingConnection;
       RECURSIVE_LOCK_MUTEX(mutex_)
       {
          running_ = false;
-
-         // gracefully stop all open connections to ensure they are freed
-         // before our io service (socket acceptor) is freed - if this is
-         // not gauranteed, boost will crash when attempting to free socket objects
-         //
-         // note that we create a copy of the connections list here because as connections
-         // are closed, they will remove themselves from the list
-        auto connections = connections_;
-        for (const auto& connection : connections)
-        {
-           connection->close();
-        }
-
-        // the list should be empty now, but clear it to make sure
-        connections_.clear();
+         connections = connections_;
+         pendingConnection = ptrNextConnection_;
       }
       END_LOCK_MUTEX
+
+      // gracefully stop all open connections to ensure they are freed
+      // before our io service (socket acceptor) is freed - if this is
+      // not gauranteed, boost will crash when attempting to free socket objects
+      //
+      // note that we create a copy of the connections list here because as connections
+      // are closed, they will remove themselves from the list
+      //
+      // we do this outside of the lock to prevent potential deadlock
+      // since the connection mutex and the server mutex are intertwined here
+      for (const auto& connection : connections)
+      {
+         connection->close();
+      }
+
+      // the list should be empty now, but clear it to make sure
+      RECURSIVE_LOCK_MUTEX(mutex_)
+      {
+         connections_.clear();
+      }
+      END_LOCK_MUTEX
+
+      // ensure we "close" the empty connection that is always created to handle the next incoming connection
+      // if we do not specifically close it here, it will attempt to close itself when no shared_ptr to
+      // it is held by this server object, causing a bad_weak_ptr exception to be thrown
+      ptrNextConnection_->close();
    }
    
    virtual void waitUntilStopped()
