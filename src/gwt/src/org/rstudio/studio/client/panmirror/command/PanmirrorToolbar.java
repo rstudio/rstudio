@@ -26,6 +26,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.findreplace
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.RequiresResize;
 import com.google.gwt.user.client.ui.Widget;
 
@@ -57,7 +58,6 @@ public class PanmirrorToolbar extends SecondaryToolbar implements RequiresResize
       addLeftSeparator();
       
       formatWidgets_ = addWidgetGroup(
-         addLeftSeparator(),
          addLeftButton(PanmirrorCommands.Strong),
          addLeftButton(PanmirrorCommands.Em),
          addLeftButton(PanmirrorCommands.Code),
@@ -75,7 +75,6 @@ public class PanmirrorToolbar extends SecondaryToolbar implements RequiresResize
       
       insertWidgets_ = addWidgetGroup(
          addLeftButton(PanmirrorCommands.RmdChunk),
-         addLeftSeparator(),
          addLeftButton(PanmirrorCommands.Link),
          addLeftButton(PanmirrorCommands.Image),
          addLeftSeparator()
@@ -148,10 +147,11 @@ public class PanmirrorToolbar extends SecondaryToolbar implements RequiresResize
       int width = getOffsetWidth();
       if (width == 0)
          return;
-           
-      showGroup(formatWidgets_, width > 475);
-      showGroup(blockWidgets_, width > 555);
-      showGroup(insertWidgets_, width > 610);
+         
+      formatWidgets_.setVisible(width > 475);
+      blockWidgets_.setVisible(width > 555);
+      insertWidgets_.setVisible(width > 610);
+      
    }
    
    
@@ -330,30 +330,20 @@ public class PanmirrorToolbar extends SecondaryToolbar implements RequiresResize
       return button;
    }
    
-   private ArrayList<Widget> addWidgetGroup(Widget...widgets)
+   private HorizontalPanel addWidgetGroup(Widget...widgets)
    {
-      ArrayList<Widget> group = new ArrayList<Widget>();
+      HorizontalPanel group = new HorizontalPanel();
       for (Widget widget : widgets)
          group.add(widget);
+      addLeftWidget(group);
       return group;
    }
    
-   private void showGroup(ArrayList<Widget> group, boolean show)
-   {
-      if (group !=  null) 
-      {
-         group.forEach((widget) -> {
-           widget.setVisible(show);
-         });
-      }
-   }
-   
-   
    private static final PanmirrorToolbarResources RES = PanmirrorToolbarResources.INSTANCE;
    
-   private ArrayList<Widget> formatWidgets_ = null;
-   private ArrayList<Widget> insertWidgets_ = null;
-   private ArrayList<Widget> blockWidgets_ = null;
+   private HorizontalPanel formatWidgets_ = null;
+   private HorizontalPanel insertWidgets_ = null;
+   private HorizontalPanel blockWidgets_ = null;
   
    private ToolbarButton findReplaceButton_ = null;
    
