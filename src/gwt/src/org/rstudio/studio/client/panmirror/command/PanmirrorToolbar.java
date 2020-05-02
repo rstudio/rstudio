@@ -202,8 +202,8 @@ public class PanmirrorToolbar extends SecondaryToolbar implements RequiresResize
       formatMenu.addCommand(PanmirrorCommands.Blockquote);
       formatMenu.addCommand(PanmirrorCommands.LineBlock);
       formatMenu.addSeparator();
-      formatMenu.addCommand(PanmirrorCommands.Div);
       formatMenu.addCommand(PanmirrorCommands.CodeBlockFormat);
+      formatMenu.addCommand(PanmirrorCommands.Div);
       formatMenu.addSeparator();
       if (haveAnyOf(PanmirrorCommands.RawBlock, 
             PanmirrorCommands.TexInline, 
@@ -254,8 +254,8 @@ public class PanmirrorToolbar extends SecondaryToolbar implements RequiresResize
       insertMenu.addCommand(PanmirrorCommands.Footnote);
       insertMenu.addCommand(PanmirrorCommands.Citation);
       insertMenu.addSeparator();
+      insertMenu.addCommand(PanmirrorCommands.CodeBlockFormat);
       insertMenu.addCommand(PanmirrorCommands.InsertDiv);
-      insertMenu.addCommand(PanmirrorCommands.CodeBlockInsert);
       insertMenu.addCommand(PanmirrorCommands.YamlMetadata);
       insertMenu.addSeparator();
       insertMenu.addCommand(PanmirrorCommands.Shortcode);
