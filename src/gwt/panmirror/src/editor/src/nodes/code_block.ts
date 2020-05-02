@@ -19,7 +19,7 @@ import { newlineInCode, exitCode } from 'prosemirror-commands';
 import { EditorState, Transaction } from 'prosemirror-state';
 import { EditorView } from 'prosemirror-view';
 
-import { findParentNodeOfType, setTextSelection } from 'prosemirror-utils';
+import { findParentNodeOfType } from 'prosemirror-utils';
 
 import { BlockCommand, EditorCommandId, ProsemirrorCommand, toggleBlockType } from '../api/command';
 import { Extension } from '../api/extension';
