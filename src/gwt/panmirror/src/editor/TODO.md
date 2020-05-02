@@ -6,9 +6,7 @@ pandoc schema: <https://github.com/jgm/pandoc-types/blob/master/Text/Pandoc/Defi
 
 ## TODO
 
-
-- Insert code/rmd/div block in empty bullet should join to bullet above?
-
+- Doc section on list items (indent, multi-paragraph, block)
 
 Math:
 
