@@ -6,7 +6,6 @@ pandoc schema: <https://github.com/jgm/pandoc-types/blob/master/Text/Pandoc/Defi
 
 ## TODO
 
-- Doc section on list items (indent, multi-paragraph, block)
 
 Math:
 
