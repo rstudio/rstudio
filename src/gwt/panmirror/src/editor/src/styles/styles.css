@@ -78,6 +78,10 @@ h3.pm-heading {
   border: 1px solid;
 }
 
+.pm-list {
+  padding-inline-start: 25px;
+}
+
 .pm-figcaption {
   margin-top: 3px;
 }
