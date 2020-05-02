@@ -29,6 +29,7 @@ import org.rstudio.core.client.dom.ElementEx;
 import org.rstudio.core.client.dom.MutationObserver;
 import org.rstudio.core.client.events.HighlightEvent;
 import org.rstudio.core.client.events.HighlightEvent.HighlightQuery;
+import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import com.google.gwt.core.client.GWT;
@@ -178,7 +179,10 @@ public class UserInterfaceHighlighter
          
          // create highlight element
          Element highlightEl = Document.get().createDivElement();
-         highlightEl.addClassName(RES.styles().highlightEl());
+         if (!RStudioGinjector.INSTANCE.getUserPrefs().reducedMotion().getValue())
+            highlightEl.addClassName(RES.styles().highlightEl());
+         else
+            highlightEl.addClassName(RES.styles().staticHighlightEl());
          Document.get().getBody().appendChild(highlightEl);
          
          // record the pair of elements
@@ -277,6 +281,7 @@ public class UserInterfaceHighlighter
    public interface Styles extends CssResource
    {
       String highlightEl();
+      String staticHighlightEl();
    }
 
    public interface Resources extends ClientBundle
