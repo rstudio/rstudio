@@ -41,7 +41,6 @@ public class PanmirrorCommands
    public static String Heading6 = "DB495DF5-8501-43C7-AE07-59CE9D9C373D";
    public static String CodeBlock = "3BA12A49-3E29-4ABC-9A49-436A3B49B880";
    public static String CodeBlockFormat = "07A6F2AA-01DC-41D7-9F01-AA91EAD856EE";
-   public static String CodeBlockInsert = "6110667A-309D-4245-BB1F-3B442EC826BC";
    public static String Blockquote = "AF0717E7-E4BA-4909-9F10-17EB757CDD0F";
    public static String LineBlock = "F401687C-B995-49AF-B2B0-59C158174FD5";
    public static String AttrEdit = "0F8A254D-9272-46BF-904D-3A9D68B91032";

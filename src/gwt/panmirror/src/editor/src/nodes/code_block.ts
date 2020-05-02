@@ -120,7 +120,6 @@ const extension = (
           schema.nodes.paragraph,
           {},
         ),
-        new CodeBlockInsertCommand(pandocExtensions, ui, pandocCapabilities.highlight_languages),
       ];
       if (hasAttr) {
         commands.push(new CodeBlockFormatCommand(pandocExtensions, ui, pandocCapabilities.highlight_languages));
@@ -142,74 +141,6 @@ const extension = (
   };
 };
 
-
-
-
-class CodeBlockInsertCommand extends ProsemirrorCommand {
-  constructor(pandocExtensions: PandocExtensions, ui: EditorUI, languages: string[]) {
-    super(
-      EditorCommandId.CodeBlockInsert,
-      [],
-      (state: EditorState, dispatch?: (tr: Transaction) => void, view?: EditorView) => {
-        const schema = state.schema;
-
-        if (!toggleBlockType(schema.nodes.code_block, schema.nodes.paragraph)(state) &&
-            !precedingListItemInsertPos(state.doc, state.selection)) {
-          return false;
-        }
-
-        function insertCodeBlock(tr: Transaction, attrs = {}) {
-          const codeBlock = schema.nodes.code_block.create(attrs);
-          const prevListItemPos = precedingListItemInsertPos(tr.doc, tr.selection);
-          if (prevListItemPos) {
-            precedingListItemInsert(tr, prevListItemPos, codeBlock);
-          } else {
-            const prevSel = tr.selection.from;
-            tr.replaceSelectionWith(codeBlock);
-            setTextSelection(tr.mapping.map(prevSel - 1))(tr);
-            return tr;
-          }
-        }
-
-        async function asyncEditCodeBlock() {
-          if (dispatch) {
-            const result = await ui.dialogs.editCodeBlock(
-              defaultCodeBlockProps(),
-              pandocExtensions.fenced_code_attributes,
-              languages,
-            );
-
-            if (result) {
-              const applyProps = propsWithLangClass(result);
-              const tr = state.tr;
-              insertCodeBlock(tr, applyProps);
-              dispatch(tr);
-            }
-
-            if (view) {
-              view.focus();
-            }
-          }
-        }
-
-        // prompt for code block lang/attribs
-        if (hasFencedCodeBlocks(pandocExtensions)) {
-          asyncEditCodeBlock();
-
-          // insert plain code block
-        } else {
-          if (dispatch) {
-            const tr = state.tr;
-            insertCodeBlock(tr);
-            dispatch(tr);
-          }
-        }
-
-        return true;
-      },
-    );
-  }
-}
 
 class CodeBlockFormatCommand extends ProsemirrorCommand {
   constructor(pandocExtensions: PandocExtensions, ui: EditorUI, languages: string[]) {
