@@ -121,6 +121,23 @@ public class PanmirrorToolbarCommands
       return commandsUI_.get(id);
    }
    
+   public boolean exec(String id)
+   {
+      PanmirrorCommandUI command = get(id);
+      if (command != null)
+      {
+         if (command.isEnabled())
+         {
+            command.execute();
+         }
+         return true;
+      }
+      else
+      {
+         return false;
+      }
+   }
+   
    
    private void add(String id, String menuText)
    {
@@ -161,6 +178,8 @@ public class PanmirrorToolbarCommands
       // add it
       commandsUI_.put(id, new PanmirrorCommandUI(command, menuText, pluralMenuText, role, image));
    }
+   
+   
    
    
    private PanmirrorCommand[] commands_ = null;

@@ -23,9 +23,9 @@ import jsinterop.annotations.JsType;
 @JsType
 public class PanmirrorContext
 {  
-   public PanmirrorContext(PanmirrorUIContext uiContext)
+   public PanmirrorContext(PanmirrorUIContext uiContext, PanmirrorUIDisplay uiDisplay)
    {
-      ui = new PanmirrorUI(uiContext);
+      ui = new PanmirrorUI(uiContext, uiDisplay);
    }
    
    public PanmirrorUI ui;

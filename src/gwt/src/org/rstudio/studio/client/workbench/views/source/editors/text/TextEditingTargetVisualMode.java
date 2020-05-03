@@ -40,6 +40,7 @@ import org.rstudio.studio.client.panmirror.PanmirrorContext;
 import org.rstudio.studio.client.panmirror.PanmirrorKeybindings;
 import org.rstudio.studio.client.panmirror.PanmirrorOptions;
 import org.rstudio.studio.client.panmirror.PanmirrorUIContext;
+import org.rstudio.studio.client.panmirror.PanmirrorUIDisplay;
 import org.rstudio.studio.client.panmirror.PanmirrorWidget;
 import org.rstudio.studio.client.panmirror.PanmirrorWidget.FormatSource;
 import org.rstudio.studio.client.panmirror.PanmirrorWriterOptions;
@@ -576,7 +577,7 @@ public class TextEditingTargetVisualMode
       if (panmirror_ == null)
       {
          // create panmirror
-         PanmirrorContext context = new PanmirrorContext(uiContext());
+         PanmirrorContext context = new PanmirrorContext(uiContext(), uiDisplay());
          PanmirrorOptions options = panmirrorOptions();   
          PanmirrorWidget.Options widgetOptions = new PanmirrorWidget.Options();
          PanmirrorWidget.create(context, panmirrorFormat(), options, widgetOptions, (panmirror) -> {
@@ -922,6 +923,17 @@ public class TextEditingTargetVisualMode
          return text;
       };
       return uiContext;
+   }
+   
+   private PanmirrorUIDisplay uiDisplay()
+   {
+      PanmirrorUIDisplay uiDisplay = new PanmirrorUIDisplay();
+      
+      uiDisplay.showContextMenu = (commands, clientX, clientY) -> {
+         panmirror_.showContextMenu(commands, clientX, clientY);
+      };
+      
+      return uiDisplay;
    }
    
    private PanmirrorOptions panmirrorOptions()

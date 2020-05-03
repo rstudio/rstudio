@@ -45,10 +45,10 @@ public class PanmirrorToolbar extends SecondaryToolbar implements RequiresResize
       return 23;
    }
  
-   public void init(PanmirrorCommand[] commands, HasFindReplace findReplace)
+   public void init(PanmirrorToolbarCommands commands, HasFindReplace findReplace)
    { 
       
-      commands_ = new PanmirrorToolbarCommands(commands);
+      commands_ = commands;
       commandObjects_.clear();
       removeAllWidgets();
       

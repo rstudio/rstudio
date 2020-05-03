@@ -59,6 +59,7 @@ export interface EditorUIContext {
 
 export interface EditorDisplay {
   openURL: (url: string) => void;
+  showContextMenu?: (commands: string[], clientX: number, clientY: number) => void;
 }
 
 export enum AlertType {
