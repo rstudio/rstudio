@@ -6,6 +6,17 @@ pandoc schema: <https://github.com/jgm/pandoc-types/blob/master/Text/Pandoc/Defi
 
 ## TODO
 
+- Provide editor menus from panmirror
+
+- Move editor into it's own directory
+
+- docs on tables (including update screenshot of menu)
+
+- if the mouse click happened in the table but the selection isn't in the table
+  then the context menu isn't active
+
+- Table selection blown away by contextmenu invocation
+  (look in prosemirror-tables source)
 
 Math:
 
