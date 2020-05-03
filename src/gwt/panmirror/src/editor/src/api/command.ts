@@ -24,8 +24,6 @@ import { markIsActive } from './mark';
 import { canInsertNode, nodeIsActive } from './node';
 import { pandocAttrInSpec, pandocAttrAvailable, pandocAttrFrom } from './pandoc_attr';
 
-export const kCommandMenuSeparator = '---';
-
 export enum EditorCommandId {
   // text editing
   Undo = '201CA961-829E-4708-8FBC-8896FDE85A10',

@@ -57,9 +57,18 @@ export interface EditorUIContext {
   translateText: (text: string) => string;
 }
 
+export interface EditorMenuItem {
+  command?: string;
+  separator?: boolean;
+  subMenu?: {
+    text: string;
+    items: EditorMenuItem[];
+  };
+}
+
 export interface EditorDisplay {
   openURL: (url: string) => void;
-  showContextMenu?: (commands: string[], clientX: number, clientY: number) => void;
+  showContextMenu?: (items: EditorMenuItem[], clientX: number, clientY: number) => void;
 }
 
 export enum AlertType {

@@ -45,6 +45,12 @@ public class PanmirrorToolbarMenu extends ToolbarPopupMenu implements PanmirrorC
    }
    
    @Override
+   public void sync(boolean images)
+   {
+      uiObjects_.forEach(object -> object.sync(images));
+   }
+   
+   @Override
    public void getDynamicPopupMenu 
       (final ToolbarPopupMenu.DynamicPopupMenuCallback callback)
    {
@@ -72,13 +78,33 @@ public class PanmirrorToolbarMenu extends ToolbarPopupMenu implements PanmirrorC
       uiObjects_.add(submenu);
       return submenu;
    }
-  
-   @Override
-   public void sync(boolean images)
+   
+   public void addItems(PanmirrorMenuItem[] items)
    {
-      uiObjects_.forEach(object -> object.sync(images));
+      addItems(this, items);
    }
    
+   private void addItems(PanmirrorToolbarMenu menu, PanmirrorMenuItem[] items)
+   {
+      for (PanmirrorMenuItem item : items)
+      {
+         if (item.command != null)
+         {
+            menu.addCommand(item.command);
+         }
+         else if (item.subMenu != null)
+         {
+            PanmirrorToolbarMenu subMenu = menu.addSubmenu(item.subMenu.text);
+            addItems(subMenu, item.subMenu.items);
+         }
+         else if (item.separator)
+         {
+            menu.addSeparator();
+         }
+      }
+   }
+  
+  
    private static SafeHtml menuText(String text)
    {
       return SafeHtmlUtils.fromTrustedString(AppCommand.formatMenuLabel(null, text, null));

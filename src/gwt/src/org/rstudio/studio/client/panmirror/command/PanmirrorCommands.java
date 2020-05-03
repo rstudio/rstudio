@@ -103,8 +103,4 @@ public class PanmirrorCommands
    public static final String HTMLBlock = "6F9F64AF-711F-4F91-8642-B51C41717F31";
    public static final String RawInline = "984167C8-8582-469C-97D8-42CB12773657";
    public static final String RawBlock = "F5757992-4D33-45E6-86DC-F7D7B174B1EC";
-   
-   // special constants
-   public static final String kCommandMenuSeparator = "---";
-
 }

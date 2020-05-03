@@ -32,7 +32,7 @@ import org.rstudio.core.client.widget.IsHideableWidget;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.ChangeFontSizeEvent;
 import org.rstudio.studio.client.application.events.EventBus;
-import org.rstudio.studio.client.panmirror.command.PanmirrorCommands;
+import org.rstudio.studio.client.panmirror.command.PanmirrorMenuItem;
 import org.rstudio.studio.client.panmirror.command.PanmirrorToolbar;
 import org.rstudio.studio.client.panmirror.command.PanmirrorToolbarCommands;
 import org.rstudio.studio.client.panmirror.command.PanmirrorToolbarMenu;
@@ -477,18 +477,10 @@ public class PanmirrorWidget extends DockLayoutPanel implements
       editor_.blur();
    }
    
-   public void showContextMenu(String[] commands, int clientX, int clientY)
+   public void showContextMenu(PanmirrorMenuItem[] items, int clientX, int clientY)
    {
       final PanmirrorToolbarMenu menu = new PanmirrorToolbarMenu(commands_);
-      
-      for (String id : commands)
-      {
-         if (id.equals(PanmirrorCommands.kCommandMenuSeparator))
-            menu.addSeparator();
-         else
-            menu.addCommand(id);    
-      }
-    
+      menu.addItems(items);
       menu.setPopupPositionAndShow(new PositionCallback() {
          @Override
          public void setPosition(int offsetWidth, int offsetHeight)
