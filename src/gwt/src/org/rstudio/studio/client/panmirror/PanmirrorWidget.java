@@ -231,7 +231,7 @@ public class PanmirrorWidget extends DockLayoutPanel implements
          
       commands_ = new PanmirrorToolbarCommands(editor.commands());
       
-      toolbar_.init(commands_, findReplace_);
+      toolbar_.init(commands_, editor_.getMenus(), findReplace_);
       
       outline_.addPanmirrorOutlineNavigationHandler(new PanmirrorOutlineNavigationEvent.Handler() {
          @Override
@@ -437,7 +437,7 @@ public class PanmirrorWidget extends DockLayoutPanel implements
    {
       editor_.setKeybindings(keybindings);
       commands_ = new PanmirrorToolbarCommands(editor_.commands());
-      toolbar_.init(commands_, findReplace_);
+      toolbar_.init(commands_, editor_.getMenus(), findReplace_);
    }
    
    public String getHTML()

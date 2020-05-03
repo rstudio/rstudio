@@ -1,5 +1,5 @@
 /*
- * extensions.ts
+ * editor-extensions.ts
  *
  * Copyright (C) 2019-20 by RStudio, PBC
  *

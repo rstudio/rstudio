@@ -31,6 +31,13 @@ public class PanmirrorToolbarMenu extends ToolbarPopupMenu implements PanmirrorC
       init(commands);
    }
    
+   public PanmirrorToolbarMenu(PanmirrorToolbarCommands commands, PanmirrorMenuItem[] items)
+   {
+      this(commands);
+      addItems(this, items);
+   }
+   
+   
    private PanmirrorToolbarMenu(PanmirrorToolbarMenu parent, PanmirrorToolbarCommands commands)
    {
       super(parent);
@@ -94,14 +101,36 @@ public class PanmirrorToolbarMenu extends ToolbarPopupMenu implements PanmirrorC
          }
          else if (item.subMenu != null)
          {
-            PanmirrorToolbarMenu subMenu = menu.addSubmenu(item.subMenu.text);
-            addItems(subMenu, item.subMenu.items);
+            if (haveCommandsFrom(item.subMenu.items))
+            {
+               PanmirrorToolbarMenu subMenu = menu.addSubmenu(item.subMenu.text);
+               addItems(subMenu, item.subMenu.items);
+            }
          }
          else if (item.separator)
          {
             menu.addSeparator();
          }
       }
+   }
+   
+   private boolean haveCommandsFrom(PanmirrorMenuItem[] items)
+   {
+      for (PanmirrorMenuItem item : items)
+      {  
+         if (item.command != null)
+         {
+            if (commands_.get(item.command) != null)
+               return true;
+         }
+         else if (item.subMenu != null)
+         {
+            if (haveCommandsFrom(item.subMenu.items))
+               return true;
+         }
+      }
+      
+     return false;
    }
   
   

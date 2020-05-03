@@ -75,8 +75,8 @@ import {
 import { PandocConverter, PandocWriterOptions } from '../pandoc/converter';
 
 import { defaultTheme, EditorTheme, applyTheme, applyPadding } from './editor-theme';
-
 import { defaultEditorUIImages } from './editor-images';
+import { editorMenus, EditorMenus } from './editor-menus';
 
 // import styles
 import './styles/frame.css';
@@ -507,6 +507,10 @@ export class Editor {
 
   public enableDevTools(initFn: (view: EditorView, stateClass: any) => void) {
     initFn(this.view, { EditorState });
+  }
+
+  public getMenus(): EditorMenus {
+    return editorMenus(this.context.ui);
   }
 
   public commands(): EditorCommand[] {

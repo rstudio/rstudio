@@ -19,6 +19,7 @@ import jsinterop.annotations.JsType;
 
 import org.rstudio.core.client.jsinterop.JsVoidFunction;
 import org.rstudio.studio.client.panmirror.command.PanmirrorCommand;
+import org.rstudio.studio.client.panmirror.command.PanmirrorMenus;
 import org.rstudio.studio.client.panmirror.findreplace.PanmirrorFindReplace;
 import org.rstudio.studio.client.panmirror.format.PanmirrorFormat;
 import org.rstudio.studio.client.panmirror.location.PanmirrorEditingLocation;
@@ -57,6 +58,8 @@ public class PanmirrorEditor
    public native String getHTML();
    
    public native PanmirrorSelection getSelection();
+   
+   public native PanmirrorMenus getMenus();
    
    public native PanmirrorOutlineItem[] getOutline();
    
