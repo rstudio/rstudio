@@ -49,7 +49,7 @@ context(
 const bundle = (fuse) => {
   return fuse
     .bundle(kLibraryNameLower)
-    .instructions("> editor.ts")
+    .instructions("> index.ts")
 } 
 
 const watch = (fuse, hmrReload) => {

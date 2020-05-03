@@ -18,15 +18,15 @@ import { Schema } from 'prosemirror-model';
 import { Plugin } from 'prosemirror-state';
 import { EditorView } from 'prosemirror-view';
 
-import { EditorOptions } from './api/options';
-import { EditorUI } from './api/ui';
-import { ProsemirrorCommand } from './api/command';
-import { PandocMark } from './api/mark';
-import { PandocNode, CodeViewOptions } from './api/node';
-import { Extension, ExtensionFn } from './api/extension';
-import { BaseKeyBinding } from './api/basekeys';
-import { AppendTransactionHandler, AppendMarkTransactionHandler } from './api/transaction';
-import { FixupFn } from './api/fixup';
+import { EditorOptions } from '../api/options';
+import { EditorUI } from '../api/ui';
+import { ProsemirrorCommand } from '../api/command';
+import { PandocMark } from '../api/mark';
+import { PandocNode, CodeViewOptions } from '../api/node';
+import { Extension, ExtensionFn } from '../api/extension';
+import { BaseKeyBinding } from '../api/basekeys';
+import { AppendTransactionHandler, AppendMarkTransactionHandler } from '../api/transaction';
+import { FixupFn } from '../api/fixup';
 import {
   PandocTokenReader,
   PandocMarkWriter,
@@ -37,71 +37,71 @@ import {
   PandocCodeBlockFilter,
   PandocExtensions,
   PandocInlineHTMLReaderFn,
-} from './api/pandoc';
-import { EditorEvents } from './api/events';
-import { AttrEditOptions } from './api/attr_edit';
-import { PandocCapabilities } from './api/pandoc_capabilities';
-import { EditorFormat } from './api/format';
+} from '../api/pandoc';
+import { EditorEvents } from '../api/events';
+import { AttrEditOptions } from '../api/attr_edit';
+import { PandocCapabilities } from '../api/pandoc_capabilities';
+import { EditorFormat } from '../api/format';
 
 // required extensions (base non-customiziable pandoc nodes/marks + core behaviors)
-import nodeText from './nodes/text';
-import nodeParagraph from './nodes/paragraph';
-import nodeHeading from './nodes/heading';
-import nodeBlockquote from './nodes/blockquote';
-import nodeCodeBlock from './nodes/code_block';
-import nodeLists from './nodes/list/list';
-import nodeImage from './nodes/image/image';
-import nodeFigure from './nodes/image/figure';
-import nodeHr from './nodes/hr';
-import nodeHardBreak from './nodes/hard_break';
-import nodeNull from './nodes/null';
-import markEm from './marks/em';
-import markStrong from './marks/strong';
-import markCode from './marks/code';
-import markLink from './marks/link/link';
-import behaviorHistory from './behaviors/history';
-import behaviorSelectAll from './behaviors/select_all';
-import behaviorCursor from './behaviors/cursor';
-import behaviorFind from './behaviors/find';
-import behaviorClearFormatting from './behaviors/clear_formatting';
+import nodeText from '../nodes/text';
+import nodeParagraph from '../nodes/paragraph';
+import nodeHeading from '../nodes/heading';
+import nodeBlockquote from '../nodes/blockquote';
+import nodeCodeBlock from '../nodes/code_block';
+import nodeLists from '../nodes/list/list';
+import nodeImage from '../nodes/image/image';
+import nodeFigure from '../nodes/image/figure';
+import nodeHr from '../nodes/hr';
+import nodeHardBreak from '../nodes/hard_break';
+import nodeNull from '../nodes/null';
+import markEm from '../marks/em';
+import markStrong from '../marks/strong';
+import markCode from '../marks/code';
+import markLink from '../marks/link/link';
+import behaviorHistory from '../behaviors/history';
+import behaviorSelectAll from '../behaviors/select_all';
+import behaviorCursor from '../behaviors/cursor';
+import behaviorFind from '../behaviors/find';
+import behaviorClearFormatting from '../behaviors/clear_formatting';
 
 // behaviors
-import behaviorSmarty from './behaviors/smarty';
-import behaviorAttrDuplicateId from './behaviors/attr_duplicate_id';
-import behaviorTrailingP from './behaviors/trailing_p';
-import behaviorOutline from './behaviors/outline';
-import behaviorTextFocus from './behaviors/text_focus';
+import behaviorSmarty from '../behaviors/smarty';
+import behaviorAttrDuplicateId from '../behaviors/attr_duplicate_id';
+import behaviorTrailingP from '../behaviors/trailing_p';
+import behaviorOutline from '../behaviors/outline';
+import behaviorTextFocus from '../behaviors/text_focus';
 
 // marks
-import markStrikeout from './marks/strikeout';
-import markSuperscript from './marks/superscript';
-import markSubscript from './marks/subscript';
-import markSmallcaps from './marks/smallcaps';
-import markQuoted from './marks/quoted';
-import markRawInline from './marks/raw_inline/raw_inline';
-import markRawTex from './marks/raw_inline/raw_tex';
-import markRawHTML from './marks/raw_inline/raw_html';
-import markMath from './marks/math/math';
-import markCite from './marks/cite/cite';
-import markSpan from './marks/span';
-import markXRef from './marks/xref';
-import markFormatComment from './marks/format_comment';
-import markHTMLComment from './marks/raw_inline/raw_html_comment';
-import markShortcode from './marks/shortcode';
+import markStrikeout from '../marks/strikeout';
+import markSuperscript from '../marks/superscript';
+import markSubscript from '../marks/subscript';
+import markSmallcaps from '../marks/smallcaps';
+import markQuoted from '../marks/quoted';
+import markRawInline from '../marks/raw_inline/raw_inline';
+import markRawTex from '../marks/raw_inline/raw_tex';
+import markRawHTML from '../marks/raw_inline/raw_html';
+import markMath from '../marks/math/math';
+import markCite from '../marks/cite/cite';
+import markSpan from '../marks/span';
+import markXRef from '../marks/xref';
+import markFormatComment from '../marks/format_comment';
+import markHTMLComment from '../marks/raw_inline/raw_html_comment';
+import markShortcode from '../marks/shortcode';
 
 // nodes
-import nodeFootnote from './nodes/footnote/footnote';
-import nodeRawBlock from './nodes/raw_block';
-import nodeYamlMetadata from './nodes/yaml_metadata/yaml_metadata';
-import nodeRmdCodeChunk from './nodes/rmd_chunk/rmd_chunk';
-import nodeDiv from './nodes/div';
-import nodeLineBlock from './nodes/line_block';
-import nodeTable from './nodes/table/table';
-import nodeDefinitionList from './nodes/definition_list/definition_list';
+import nodeFootnote from '../nodes/footnote/footnote';
+import nodeRawBlock from '../nodes/raw_block';
+import nodeYamlMetadata from '../nodes/yaml_metadata/yaml_metadata';
+import nodeRmdCodeChunk from '../nodes/rmd_chunk/rmd_chunk';
+import nodeDiv from '../nodes/div';
+import nodeLineBlock from '../nodes/line_block';
+import nodeTable from '../nodes/table/table';
+import nodeDefinitionList from '../nodes/definition_list/definition_list';
 
 // extension/plugin factories
-import { codeMirrorPlugins } from './optional/codemirror/codemirror';
-import { attrEditExtension } from './behaviors/attr_edit/attr_edit';
+import { codeMirrorPlugins } from '../optional/codemirror/codemirror';
+import { attrEditExtension } from '../behaviors/attr_edit/attr_edit';
 
 export function initExtensions(
   format: EditorFormat,

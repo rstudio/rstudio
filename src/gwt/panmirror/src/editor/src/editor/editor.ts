@@ -22,46 +22,43 @@ import 'prosemirror-view/style/prosemirror.css';
 
 import { setTextSelection, findChildrenByType } from 'prosemirror-utils';
 
-import polyfill from './polyfill/index';
-
-import { EditorOptions } from './api/options';
-import { ProsemirrorCommand, CommandFn, EditorCommand } from './api/command';
-import { PandocMark, markIsActive } from './api/mark';
-import { PandocNode, findTopLevelBodyNodes } from './api/node';
-import { EditorUI, attrPropsToInput, attrInputToProps, AttrProps, AttrEditInput } from './api/ui';
-import { Extension } from './api/extension';
-import { ExtensionManager, initExtensions } from './extensions';
-import { PandocEngine } from './api/pandoc';
-import { PandocCapabilities, getPandocCapabilities } from './api/pandoc_capabilities';
-import { fragmentToHTML } from './api/html';
-import { EditorEvent } from './api/events';
+import { EditorOptions } from '../api/options';
+import { ProsemirrorCommand, CommandFn, EditorCommand } from '../api/command';
+import { PandocMark, markIsActive } from '../api/mark';
+import { PandocNode, findTopLevelBodyNodes } from '../api/node';
+import { EditorUI, attrPropsToInput, attrInputToProps, AttrProps, AttrEditInput } from '../api/ui';
+import { Extension } from '../api/extension';
+import { ExtensionManager, initExtensions } from './editor-extensions';
+import { PandocEngine } from '../api/pandoc';
+import { PandocCapabilities, getPandocCapabilities } from '../api/pandoc_capabilities';
+import { fragmentToHTML } from '../api/html';
+import { EditorEvent } from '../api/events';
 import {
   PandocFormat,
   resolvePandocFormat,
   PandocFormatComment,
   pandocFormatCommentFromCode,
-} from './api/pandoc_format';
-import { baseKeysPlugin } from './api/basekeys';
+} from '../api/pandoc_format';
+import { baseKeysPlugin } from '../api/basekeys';
 import {
   appendTransactionsPlugin,
   appendMarkTransactionsPlugin,
   kFixupTransaction,
   kAddToHistoryTransaction,
   kSetMarkdownTransaction,
-} from './api/transaction';
-import { EditorOutline } from './api/outline';
-import { EditingLocation, getEditingLocation, EditingOutlineLocation, setEditingLocation } from './api/location';
-import { navigateTo } from './api/navigation';
-import { FixupContext } from './api/fixup';
-import { unitToPixels, pixelsToUnit, roundUnit, kValidUnits } from './api/image';
-import { kPercentUnit } from './api/css';
-import { defaultEditorUIImages } from './api/ui-images';
-import { EditorFormat } from './api/format';
-import { diffChars, EditorChange } from './api/change';
+} from '../api/transaction';
+import { EditorOutline } from '../api/outline';
+import { EditingLocation, getEditingLocation, EditingOutlineLocation, setEditingLocation } from '../api/location';
+import { navigateTo } from '../api/navigation';
+import { FixupContext } from '../api/fixup';
+import { unitToPixels, pixelsToUnit, roundUnit, kValidUnits } from '../api/image';
+import { kPercentUnit } from '../api/css';
+import { EditorFormat } from '../api/format';
+import { diffChars, EditorChange } from '../api/change';
 
-import { getTitle, setTitle } from './nodes/yaml_metadata/yaml_metadata-title';
+import { getTitle, setTitle } from '../nodes/yaml_metadata/yaml_metadata-title';
 
-import { getOutline } from './behaviors/outline';
+import { getOutline } from '../behaviors/outline';
 import {
   FindOptions,
   find,
@@ -73,17 +70,17 @@ import {
   replaceAll,
   clear,
   selectCurrent,
-} from './behaviors/find';
+} from '../behaviors/find';
 
-import { PandocConverter, PandocWriterOptions } from './pandoc/converter';
+import { PandocConverter, PandocWriterOptions } from '../pandoc/converter';
 
-import { defaultTheme, EditorTheme, applyTheme, applyPadding } from './theme';
+import { defaultTheme, EditorTheme, applyTheme, applyPadding } from './editor-theme';
 
+import { defaultEditorUIImages } from './editor-images';
+
+// import styles
 import './styles/frame.css';
 import './styles/styles.css';
-
-// apply polyfills
-polyfill();
 
 const kMac = typeof navigator !== 'undefined' ? /Mac/.test(navigator.platform) : false;
 
@@ -124,7 +121,7 @@ export interface EditorFindReplace {
   clear: () => boolean;
 }
 
-export { EditorCommandId as EditorCommands } from './api/command';
+export { EditorCommandId as EditorCommands } from '../api/command';
 
 export interface UIToolsAttr {
   propsToInput(attr: AttrProps): AttrEditInput;

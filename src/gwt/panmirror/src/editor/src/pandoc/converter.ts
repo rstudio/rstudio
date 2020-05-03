@@ -32,7 +32,7 @@ import { PandocCapabilities } from '../api/pandoc_capabilities';
 
 import { pandocToProsemirror } from './to_prosemirror';
 import { pandocFromProsemirror } from './from_prosemirror';
-import { ExtensionManager } from '../extensions';
+import { ExtensionManager } from '../editor/editor-extensions';
 
 export interface PandocWriterOptions {
   atxHeaders?: boolean;
