@@ -272,16 +272,6 @@ public class PanmirrorToolbar extends SecondaryToolbar implements RequiresResize
       PanmirrorToolbarMenu tableMenu = new PanmirrorToolbarMenu(commands_);
       tableMenu.addCommand(PanmirrorCommands.TableInsertTable);
       tableMenu.addSeparator();
-      tableMenu.addCommand(PanmirrorCommands.TableToggleHeader);
-      tableMenu.addCommand(PanmirrorCommands.TableToggleCaption);
-      tableMenu.addSeparator();
-      PanmirrorToolbarMenu alignMenu = tableMenu.addSubmenu("Align Column");
-      alignMenu.addCommand(PanmirrorCommands.TableAlignColumnLeft);
-      alignMenu.addCommand(PanmirrorCommands.TableAlignColumnCenter);
-      alignMenu.addCommand(PanmirrorCommands.TableAlignColumnRight);
-      alignMenu.addSeparator();
-      alignMenu.addCommand(PanmirrorCommands.TableAlignColumnDefault);
-      tableMenu.addSeparator();
       tableMenu.addCommand(PanmirrorCommands.TableAddRowBefore);
       tableMenu.addCommand(PanmirrorCommands.TableAddRowAfter);
       tableMenu.addSeparator();
@@ -290,8 +280,17 @@ public class PanmirrorToolbar extends SecondaryToolbar implements RequiresResize
       tableMenu.addSeparator();
       tableMenu.addCommand(PanmirrorCommands.TableDeleteRow);
       tableMenu.addCommand(PanmirrorCommands.TableDeleteColumn);
-      tableMenu.addSeparator();
       tableMenu.addCommand(PanmirrorCommands.TableDeleteTable);
+      tableMenu.addSeparator();
+      PanmirrorToolbarMenu alignMenu = tableMenu.addSubmenu("Align Column");
+      alignMenu.addCommand(PanmirrorCommands.TableAlignColumnLeft);
+      alignMenu.addCommand(PanmirrorCommands.TableAlignColumnCenter);
+      alignMenu.addCommand(PanmirrorCommands.TableAlignColumnRight);
+      alignMenu.addSeparator();
+      alignMenu.addCommand(PanmirrorCommands.TableAlignColumnDefault);
+      tableMenu.addSeparator();
+      tableMenu.addCommand(PanmirrorCommands.TableToggleHeader);
+      tableMenu.addCommand(PanmirrorCommands.TableToggleCaption);      
       return tableMenu;
    }
    
