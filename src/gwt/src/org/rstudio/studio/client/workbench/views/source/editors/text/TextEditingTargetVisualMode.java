@@ -632,7 +632,7 @@ public class TextEditingTargetVisualMode
                   // update editor dirty state if necessary
                   if (!loadingFromSource_ && !dirtyState_.getValue())
                   {
-                     dirtyState_.markDirty(false);
+                     dirtyState_.markDirty(true);
                      source_.setSourceDocumentDirty(
                            docUpdateSentinel_.getId(), true, 
                            new VoidServerRequestCallback());
