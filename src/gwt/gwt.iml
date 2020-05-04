@@ -33,5 +33,6 @@
     <orderEntry type="library" name="gwt" level="project" />
     <orderEntry type="library" name="gin" level="project" />
     <orderEntry type="library" scope="TEST" name="junit-4.9b3" level="project" />
+    <orderEntry type="library" name="elemental2" level="project" />
   </component>
 </module>
