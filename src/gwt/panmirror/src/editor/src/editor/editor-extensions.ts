@@ -85,7 +85,6 @@ import markMath from '../marks/math/math';
 import markCite from '../marks/cite/cite';
 import markSpan from '../marks/span';
 import markXRef from '../marks/xref';
-import markFormatComment from '../marks/format_comment';
 import markHTMLComment from '../marks/raw_inline/raw_html_comment';
 import markShortcode from '../marks/shortcode';
 
@@ -161,7 +160,6 @@ export function initExtensions(
     markCite,
     markSpan,
     markXRef,
-    markFormatComment,
     markHTMLComment,
     markShortcode,
 
