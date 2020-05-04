@@ -496,7 +496,7 @@ export class Editor {
   }
 
   public navigate(id: string) {
-    navigateTo(this.view, node => id === node.attrs.navigation_id);
+    navigateTo(this.view, node => id === node.attrs.navigation_id, false);
   }
 
   public resize() {
