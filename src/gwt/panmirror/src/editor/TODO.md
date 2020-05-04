@@ -4,17 +4,32 @@ pandoc schema: <https://github.com/jgm/pandoc-types/blob/master/Text/Pandoc/Defi
 
 ## Feedback
 
+
+### Gabor
+
+rstudioapi function for saveCannonical
+
+### Hadley
+
+Evaluate markdown for link text
+
+Hard to tell when you've selected a code block (when selecting text)
+
+Ctrl+Enter and Cmd+Shift to execute code
+Ace mode?
+
+Inline spell check (QtWebEngine?)
+Reference linking/lookup
+Named footnotes
+
+
 ## TODO
 
-- if the mouse click happened in the table but the selection isn't in the table
-  then the context menu isn't active
-
-- Table selection blown away by contextmenu invocation
-  (look in prosemirror-tables source)
 
 - docs on tables (including update screenshot of menu)
 
 - Consider showing more classes in attr_edit
+
 
 Math:
 
@@ -24,6 +39,10 @@ escaping of $ in math as this mode will clearly not be "source mode" style latex
 - Possibly have a special editing mode for thereoms?
 
 ## Future
+
+@ref hot-linking / dialog / +invalid link detection
+
+Inlne spell checking
 
 Parse plain text for markdown
 
