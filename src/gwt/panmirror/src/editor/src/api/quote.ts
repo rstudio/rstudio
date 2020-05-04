@@ -25,7 +25,3 @@ export function quotesForType(type: QuoteType) {
     end: dblQuote ? '”' : '’',
   };
 }
-
-
-
-

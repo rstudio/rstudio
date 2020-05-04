@@ -98,7 +98,8 @@
   background-color: #fb6f1c
 }
 .ace_comment-highlight {
-  background-color: #5C4916
+  color: #4D4333;
+  background-color: #D1B78A;
 }
 .ace_marker-layer .ace_active_debug_line {
   position: absolute;

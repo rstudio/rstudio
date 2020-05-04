@@ -62,7 +62,6 @@ inline core::Error sendSessionRequest(const std::string& uri,
    std::string token = core::system::generateUuid();
    request.setHeader(kCSRFTokenHeader, token);
    request.addCookie(kCSRFTokenCookie, token);
-
    request.setBody(body);
 
    // first, attempt to send a plain old http request

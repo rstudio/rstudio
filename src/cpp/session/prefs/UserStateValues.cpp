@@ -37,19 +37,6 @@ core::Error UserStateValues::setContextId(std::string val)
 }
 
 /**
- * Hash of the agreement that the user has accepted.
- */
-std::string UserStateValues::agreementHash()
-{
-   return readPref<std::string>("agreement_hash");
-}
-
-core::Error UserStateValues::setAgreementHash(std::string val)
-{
-   return writePref("agreement_hash", val);
-}
-
-/**
  * Whether we have automatically created an .Rprofile for this user.
  */
 bool UserStateValues::autoCreatedProfile()
@@ -261,7 +248,6 @@ std::vector<std::string> UserStateValues::allKeys()
 {
    return std::vector<std::string>({
       kContextId,
-      kAgreementHash,
       kAutoCreatedProfile,
       kTheme,
       kDefaultProjectLocation,

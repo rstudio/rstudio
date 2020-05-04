@@ -22,6 +22,7 @@ import { keymap } from 'prosemirror-keymap';
 import { undoInputRule } from 'prosemirror-inputrules';
 
 import { CodeViewOptions } from '../../api/node';
+import { insertParagraph } from '../../api/paragraph';
 
 import { selectAll } from '../../behaviors/select_all';
 
@@ -277,6 +278,10 @@ class CodeBlockNodeView implements NodeView {
       'Ctrl-Enter': exitBlock,
       'Shift-Enter': exitBlock,
       [`${mod}-Enter`]: exitBlock,
+      [`${mod}-\\`]: () => insertParagraph(view.state, view.dispatch ),
+      F4: () => {
+        return this.options.attrEditFn ? this.options.attrEditFn(view.state, view.dispatch, view) : CodeMirror.Pass;
+      },
     });
   }
 

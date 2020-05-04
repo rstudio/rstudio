@@ -1,5 +1,5 @@
 /*
- * JsdiffChange.java
+ * PanmirrorMenus.java
  *
  * Copyright (C) 2009-20 by RStudio, PBC
  *
@@ -13,15 +13,14 @@
  *
  */
 
-package org.rstudio.core.client.jsdiff;
+package org.rstudio.studio.client.panmirror.command;
 
 import jsinterop.annotations.JsType;
 
 @JsType
-public class JsdiffChange
+public class PanmirrorMenus
 {
-   public int count;
-   public String value;
-   public boolean added;
-   public boolean removed;
+   public PanmirrorMenuItem[] format;
+   public PanmirrorMenuItem[] insert;
+   public PanmirrorMenuItem[] table;
 }

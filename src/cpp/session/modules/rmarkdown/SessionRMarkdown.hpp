@@ -35,6 +35,8 @@ namespace rmarkdown {
 
 bool rmarkdownPackageAvailable();
 
+bool isSiteProject(const std::string& site);
+
 bool knitParamsAvailable();
 
 bool knitWorkingDirAvailable();

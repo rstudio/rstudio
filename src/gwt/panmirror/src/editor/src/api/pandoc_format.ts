@@ -84,6 +84,9 @@ export function pandocFormatCommentFromCode(code: string): PandocFormatComment {
 export async function resolvePandocFormat(pandoc: PandocEngine, format: EditorFormat) {
   // additional markdown variants we support
   const kMarkdownVariants: { [key: string]: string[] } = {
+    [kCommonmarkFormat]: commonmarkExtensions(),
+    [kGfmFormat]: gfmExtensions(),
+    goldmark: goldmarkExtensions(format),
     blackfriday: blackfridayExtensions(format),
   };
 
@@ -115,26 +118,26 @@ export async function resolvePandocFormat(pandoc: PandocEngine, format: EditorFo
   // format options we will be building
   let formatOptions: string;
 
-  // if the base format is commonmark or gfm then it's expressed as a set of
-  // deltas on top of markdown
+  // determine valid options (normally all options, but for gfm and commonmark then
+  // the valid optoins are constrained)
   let validOptions: string = '';
   if ([kGfmFormat, kCommonmarkFormat].includes(baseName)) {
-    // query for available options then disable them all by default
-    formatOptions = await pandoc.listExtensions('markdown');
-    formatOptions = formatOptions.replace(/\+/g, '-');
-
-    // layer on gfm or commonmark
-    const extraOptions = (validOptions = await pandoc.listExtensions(baseName));
-    formatOptions = formatOptions + extraOptions;
+    validOptions = await pandoc.listExtensions(baseName);
   } else {
-    // if it's a variant then convert to strict
-    if (kMarkdownVariants[baseName]) {
-      options = kMarkdownVariants[baseName].map(option => `+${option}`).join('');
-      baseName = 'markdown_strict';
-    }
+    // will fill in below when retreiving formatOptions (don't want to make 2 calls)
+  }
 
-    // query for format options
-    formatOptions = validOptions = await pandoc.listExtensions(baseName);
+  // if we are using a variant then get it's base options and merge with user options
+  if (kMarkdownVariants[baseName]) {
+    const variant = kMarkdownVariants[baseName];
+    options = variant.map(option => `${option}`).join('') + options;
+    baseName = 'markdown_strict';
+  }
+
+  // query for format options (set validOptions if we don't have them yet)
+  formatOptions = await pandoc.listExtensions(baseName);
+  if (!validOptions) {
+    validOptions = formatOptions;
   }
 
   // active pandoc extensions
@@ -203,21 +206,79 @@ export function splitPandocFormatString(format: string) {
   };
 }
 
+export function hasFencedCodeBlocks(pandocExtensions: PandocExtensions) {
+  return pandocExtensions.backtick_code_blocks || pandocExtensions.fenced_code_blocks;
+}
+
+function commonmarkExtensions() {
+  const extensions = ['+raw_html'];
+  return extensions;
+}
+
+function gfmExtensions() {
+  const extensions = [
+    '+all_symbols_escapable',
+    '+auto_identifiers',
+    '+autolink_bare_uris',
+    '+backtick_code_blocks',
+    '+emoji',
+    '+fenced_code_blocks',
+    '+gfm_auto_identifiers',
+    '+intraword_underscores',
+    '+lists_without_preceding_blankline',
+    '+pipe_tables',
+    '+raw_html',
+    '+shortcut_reference_links',
+    '+space_in_atx_header',
+    '+strikeout',
+    '+task_lists',
+  ];
+  return extensions;
+}
+
+// https://gohugo.io/getting-started/configuration-markup/#goldmark
+// https://github.com/yuin/goldmark/#html-renderer-options
+function goldmarkExtensions(format: EditorFormat) {
+  const extensions = [
+    // disables raw_html by default
+    '-raw_html',
+
+    // adds most of gfm
+    '+pipe_tables',
+    '+strikeout',
+    '+autolink_bare_uris',
+    '+task_lists',
+    '+backtick_code_blocks',
+
+    // plus some extras
+    '+definition_lists',
+    '+footnotes',
+    '+smart',
+
+    // hugo preprocessor supports yaml metadata
+    '+yaml_metadata_block',
+  ];
+  if (format.rmdExtensions.blogdownMathInCode) {
+    extensions.push('+tex_math_dollars');
+  }
+  return extensions;
+}
+
 // https://github.com/russross/blackfriday/tree/v2#extensions
 function blackfridayExtensions(format: EditorFormat) {
   const extensions = [
-    'intraword_underscores',
-    'pipe_tables',
-    'backtick_code_blocks',
-    'definition_lists',
-    'footnotes',
-    'autolink_bare_uris',
-    'strikeout',
-    'smart',
-    'yaml_metadata_block',
+    '+intraword_underscores',
+    '+pipe_tables',
+    '+backtick_code_blocks',
+    '+definition_lists',
+    '+footnotes',
+    '+autolink_bare_uris',
+    '+strikeout',
+    '+smart',
+    '+yaml_metadata_block',
   ];
   if (format.rmdExtensions.blogdownMathInCode) {
-    extensions.push('tex_math_dollars');
+    extensions.push('+tex_math_dollars');
   }
   return extensions;
 }

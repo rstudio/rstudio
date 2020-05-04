@@ -88,12 +88,12 @@ function imagePreviewDecorations(state: EditorState, uiContext: EditorUIContext)
         rmdChunk.pos + rmdChunk.node.nodeSize,
         (view: EditorView, getPos: () => number) => {
           const container = window.document.createElement('div');
-          container.style.marginTop = '-1em'; // to bridge back to the codemirror block
+          container.style.marginTop = '-1.5em'; // to bridge back to the codemirror block
           // which has a margin-block-end of 1em
           container.classList.add('pm-image-preview');
           container.classList.add('pm-block-border-color');
           const img = window.document.createElement('img');
-          img.src = uiContext.mapResourcePath(imagePath);
+          img.src = uiContext.mapResourceToURL(imagePath);
           if (width) {
             img.setAttribute('width', width);
           }

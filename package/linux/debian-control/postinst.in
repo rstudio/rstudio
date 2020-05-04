@@ -89,7 +89,16 @@ if test "$INIT_SYSTEM" = "systemd"
 then
    systemctl stop rstudio-server.service 2>/dev/null
    systemctl disable rstudio-server.service 2>/dev/null
-   cp ${CMAKE_INSTALL_PREFIX}/extras/systemd/rstudio-server.service /lib/systemd/system/rstudio-server.service
+  
+   if test -e /lib/systemd
+   then
+      SYSTEMD_PREFIX="/lib/systemd"
+   else
+      SYSTEMD_PREFIX="/usr/lib/systemd"
+   fi
+
+   cp ${CMAKE_INSTALL_PREFIX}/extras/systemd/rstudio-server.service $${EMPTY}{SYSTEMD_PREFIX}/system/rstudio-server.service
+  
    systemctl daemon-reload
    systemctl enable rstudio-server.service
    systemctl start rstudio-server.service

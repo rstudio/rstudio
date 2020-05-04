@@ -27,7 +27,6 @@ namespace session {
 namespace prefs {
 
 #define kContextId "context_id"
-#define kAgreementHash "agreement_hash"
 #define kAutoCreatedProfile "auto_created_profile"
 #define kTheme "theme"
 #define kThemeName "name"
@@ -88,12 +87,6 @@ public:
     */
    std::string contextId();
    core::Error setContextId(std::string val);
-
-   /**
-    * Hash of the agreement that the user has accepted.
-    */
-   std::string agreementHash();
-   core::Error setAgreementHash(std::string val);
 
    /**
     * Whether we have automatically created an .Rprofile for this user.

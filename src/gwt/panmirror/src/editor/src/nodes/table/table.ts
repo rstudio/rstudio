@@ -58,8 +58,15 @@ import 'prosemirror-tables/style/tables.css';
 import './table-styles.css';
 import { TableCapabilities } from '../../api/table';
 import { trTransform } from '../../api/transaction';
+import { tableContextMenu } from './table-contextmenu';
+import { PandocCapabilities } from '../../api/pandoc_capabilities';
 
-const extension = (pandocExtensions: PandocExtensions): Extension | null => {
+const extension = (
+  pandocExtensions: PandocExtensions, 
+  _caps: PandocCapabilities, 
+  ui: EditorUI)
+: Extension | null => {
+
   // not enabled if there are no tables enabled
   if (
     !pandocExtensions.grid_tables &&
@@ -87,7 +94,7 @@ const extension = (pandocExtensions: PandocExtensions): Extension | null => {
       tableRowNode,
     ],
 
-    commands: (_schema: Schema, ui: EditorUI) => {
+    commands: (_schema: Schema) => {
       const commands = [
         new ProsemirrorCommand(EditorCommandId.TableInsertTable, ['Alt-Mod-t'], insertTable(capabilities, ui)),
         new ProsemirrorCommand(EditorCommandId.TableNextCell, ['Tab'], goToNextCell(1)),
@@ -113,13 +120,14 @@ const extension = (pandocExtensions: PandocExtensions): Extension | null => {
       return commands;
     },
 
-    plugins: (_schema: Schema) => {
+    plugins: (schema: Schema) => {
       return [
         columnResizing({
           handleWidth: 5,
         }),
         tableEditing(),
         tablePaste(),
+        tableContextMenu(schema, ui)
       ];
     },
 

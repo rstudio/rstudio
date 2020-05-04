@@ -13,16 +13,18 @@
  *
  */
 
-import { PandocEngine, parsePandocListOutput } from './pandoc';
+import { PandocEngine, parsePandocListOutput, PandocApiVersion } from './pandoc';
 
 export interface PandocCapabilitiesResult {
   version: string;
+  api_version: PandocApiVersion;
   output_formats: string;
   highlight_languages: string;
 }
 
 export interface PandocCapabilities {
   version: string;
+  api_version: PandocApiVersion;
   output_formats: string[];
   highlight_languages: string[];
 }
@@ -31,6 +33,7 @@ export async function getPandocCapabilities(engine: PandocEngine) {
   const result = await engine.getCapabilities();
   return {
     version: result.version,
+    api_version: result.api_version,
     output_formats: parsePandocListOutput(result.output_formats),
     highlight_languages: parsePandocListOutput(result.highlight_languages),
   };

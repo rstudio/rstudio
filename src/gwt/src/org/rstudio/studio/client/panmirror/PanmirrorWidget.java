@@ -18,7 +18,9 @@ package org.rstudio.studio.client.panmirror;
 
 import java.util.ArrayList;
 
-import org.rstudio.core.client.CommandWithArg;import org.rstudio.core.client.ExternalJavaScriptLoader;
+import org.rstudio.core.client.CommandWithArg;
+import org.rstudio.core.client.DebouncedCommand;
+import org.rstudio.core.client.ExternalJavaScriptLoader;
 import org.rstudio.core.client.HandlerRegistrations;
 import org.rstudio.core.client.events.MouseDragHandler;
 import org.rstudio.core.client.jsinterop.JsVoidFunction;
@@ -30,11 +32,15 @@ import org.rstudio.core.client.widget.IsHideableWidget;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.ChangeFontSizeEvent;
 import org.rstudio.studio.client.application.events.EventBus;
-import org.rstudio.studio.client.panmirror.command.PanmirrorCommand;
+import org.rstudio.studio.client.panmirror.command.PanmirrorMenuItem;
 import org.rstudio.studio.client.panmirror.command.PanmirrorToolbar;
+import org.rstudio.studio.client.panmirror.command.PanmirrorToolbarCommands;
+import org.rstudio.studio.client.panmirror.command.PanmirrorToolbarMenu;
 import org.rstudio.studio.client.panmirror.findreplace.PanmirrorFindReplace;
 import org.rstudio.studio.client.panmirror.findreplace.PanmirrorFindReplaceWidget;
 import org.rstudio.studio.client.panmirror.format.PanmirrorFormat;
+import org.rstudio.studio.client.panmirror.location.PanmirrorEditingLocation;
+import org.rstudio.studio.client.panmirror.location.PanmirrorEditingOutlineLocation;
 import org.rstudio.studio.client.panmirror.outline.PanmirrorOutlineItem;
 import org.rstudio.studio.client.panmirror.outline.PanmirrorOutlineNavigationEvent;
 import org.rstudio.studio.client.panmirror.outline.PanmirrorOutlineVisibleEvent;
@@ -65,6 +71,7 @@ import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.DockLayoutPanel;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.RequiresResize;
+import com.google.gwt.user.client.ui.PopupPanel.PositionCallback;
 import com.google.gwt.view.client.SelectionChangeEvent;
 import com.google.gwt.view.client.SelectionChangeEvent.HasSelectionChangedHandlers;
 import com.google.inject.Inject;
@@ -222,9 +229,9 @@ public class PanmirrorWidget extends DockLayoutPanel implements
       syncEditorTheme();
       syncContentWidth();
          
-      commands_ = editor.commands();
+      commands_ = new PanmirrorToolbarCommands(editor.commands());
       
-      toolbar_.init(commands_, findReplace_);
+      toolbar_.init(commands_, editor_.getMenus(), findReplace_);
       
       outline_.addPanmirrorOutlineNavigationHandler(new PanmirrorOutlineNavigationEvent.Handler() {
          @Override
@@ -243,6 +250,21 @@ public class PanmirrorWidget extends DockLayoutPanel implements
       
       }));
       
+      // don't update outline eaglerly (wait for 500ms delay in typing)
+      DebouncedCommand updateOutineOnIdle = new DebouncedCommand(500)
+      {
+         @Override
+         protected void execute()
+         {
+            if (editor_ != null) // would be null during teardown of tab
+            {
+               PanmirrorOutlineItem[] outline = editor_.getOutline();
+               outline_.updateOutline(outline);
+               outline_.updateSelection(editor_.getSelection());
+            }
+         }
+      };
+      
       editorEventUnsubscribe_.add(editor_.subscribe(PanmirrorEvent.SelectionChange, () -> {
          
          // sync toolbar commands
@@ -250,17 +272,16 @@ public class PanmirrorWidget extends DockLayoutPanel implements
             toolbar_.sync(false);
          
          // sync outline
-         outline_.updateSelection(editor_.getSelection());
+         updateOutineOnIdle.nudge();
          
          // fire to clients
          SelectionChangeEvent.fire(this);
       }));
       
       editorEventUnsubscribe_.add(editor_.subscribe(PanmirrorEvent.OutlineChange, () -> {
-
-         // sync outline items
-         PanmirrorOutlineItem[] outline = editor_.getOutline();
-         outline_.updateOutline(outline);
+         
+         // sync outline
+         updateOutineOnIdle.nudge();
          
       }));
       
@@ -331,23 +352,28 @@ public class PanmirrorWidget extends DockLayoutPanel implements
    
   
    
-   public void setMarkdown(String code, boolean emitUpdate, CommandWithArg<Boolean> completed) 
+   public void setMarkdown(String code, PanmirrorWriterOptions options, boolean emitUpdate, CommandWithArg<String> completed) 
    {
-      new PromiseWithProgress<Boolean>(
-         editor_.setMarkdown(code, true, emitUpdate),
-         false,
+      new PromiseWithProgress<String>(
+         editor_.setMarkdown(code, options, emitUpdate),
+         "",
          kSerializationProgressDelayMs,
          completed
       );
    }
    
-   public void getMarkdown(PanmirrorWriterOptions options, String previous, CommandWithArg<PanmirrorCode> completed) {
+   public void getMarkdown(PanmirrorWriterOptions options, CommandWithArg<PanmirrorCode> completed) {
       new PromiseWithProgress<PanmirrorCode>(
-         editor_.getMarkdown(options, previous),
+         editor_.getMarkdown(options),
          null,
          kSerializationProgressDelayMs,
          completed   
       );
+   }
+   
+   public boolean isInitialDoc()
+   {
+      return editor_.isInitialDoc();
    }
    
    public HasFindReplace getFindReplace()
@@ -396,26 +422,9 @@ public class PanmirrorWidget extends DockLayoutPanel implements
       setWidgetHidden(toolbar_, !show);
    }
   
-   
-   public PanmirrorCommand[] getCommands()
-   {
-      return commands_;
-   }
-  
    public boolean execCommand(String id)
    {
-      for (PanmirrorCommand command : commands_)
-      {
-         if (command.id == id)
-         {
-            if (command.isEnabled())
-            {
-               command.execute();
-            }
-            return true;
-          }
-      }
-      return false;
+      return commands_.exec(id);
    }
    
    
@@ -427,8 +436,8 @@ public class PanmirrorWidget extends DockLayoutPanel implements
    public void setKeybindings(PanmirrorKeybindings keybindings) 
    {
       editor_.setKeybindings(keybindings);
-      commands_ = editor_.commands();
-      toolbar_.init(commands_, findReplace_);
+      commands_ = new PanmirrorToolbarCommands(editor_.commands());
+      toolbar_.init(commands_, editor_.getMenus(), findReplace_);
    }
    
    public String getHTML()
@@ -451,9 +460,11 @@ public class PanmirrorWidget extends DockLayoutPanel implements
       return editor_.getEditingLocation();
    }
    
-   public void restoreEditingLocation(PanmirrorEditingLocation location)
+   public void setEditingLocation(
+      PanmirrorEditingOutlineLocation outlineLocation, 
+      PanmirrorEditingLocation previousLocation) 
    {
-      editor_.restoreEditingLocation(location);
+      editor_.setEditingLocation(outlineLocation, previousLocation);
    }
    
    public void focus()
@@ -464,6 +475,19 @@ public class PanmirrorWidget extends DockLayoutPanel implements
    public void blur()
    {
       editor_.blur();
+   }
+   
+   public void showContextMenu(PanmirrorMenuItem[] items, int clientX, int clientY)
+   {
+      final PanmirrorToolbarMenu menu = new PanmirrorToolbarMenu(commands_);
+      menu.addItems(items);
+      menu.setPopupPositionAndShow(new PositionCallback() {
+         @Override
+         public void setPosition(int offsetWidth, int offsetHeight)
+         {
+            menu.setPopupPosition(clientX, clientY);
+         }
+      });
    }
    
    public void activateDevTools() 
@@ -557,7 +581,7 @@ public class PanmirrorWidget extends DockLayoutPanel implements
    private HTML editorParent_ = null;
    
    private PanmirrorEditor editor_ = null;
-   private PanmirrorCommand[] commands_ = null;
+   private PanmirrorToolbarCommands commands_ = null;
    
    private final HandlerManager handlers_ = new HandlerManager(this);
    private final HandlerRegistrations registrations_ = new HandlerRegistrations();

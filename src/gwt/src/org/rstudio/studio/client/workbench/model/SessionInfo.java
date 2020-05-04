@@ -1,7 +1,7 @@
 /*
  * SessionInfo.java
  *
- * Copyright (C) 2009-18 by RStudio, PBC
+ * Copyright (C) 2009-20 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -185,14 +185,6 @@ public class SessionInfo extends JavaScriptObject
       return this.lists;
    }-*/;
 
-   public final native boolean hasAgreement() /*-{
-      return this.hasAgreement;
-   }-*/;
-   
-   public final native Agreement pendingAgreement() /*-{
-      return this.pendingAgreement;
-   }-*/;
-   
    public final native String docsURL() /*-{
       return this.docsURL;
    }-*/;
@@ -331,8 +323,8 @@ public class SessionInfo extends JavaScriptObject
       return this.build_target_dir;
    }-*/;
    
-   public final native boolean getIsBlogdownProject() /*-{
-      return this.is_blogdown_project;
+   public final native BlogdownConfig getBlogdownConfig() /*-{
+      return this.blogdown_config;
    }-*/;
    
    public final native boolean getIsDistillProject() /*-{

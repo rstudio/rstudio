@@ -17,10 +17,8 @@
 #define CORE_HTTP_REQUEST_HPP
 
 #include "Message.hpp"
-
-#include <boost/date_time/posix_time/posix_time.hpp>
-
 #include "Util.hpp"
+#include "Cookie.hpp"
 
 namespace rstudio {
 namespace core {
@@ -95,7 +93,7 @@ public:
    }
    
 
-   std::string cookieValue(const std::string& name) const;
+   std::string cookieValue(const std::string& name, bool iFrameLegacyCookies) const;
    std::string cookieValueFromHeader(const std::string& headerName) const;
    void addCookie(const std::string& name, const std::string& value);
    

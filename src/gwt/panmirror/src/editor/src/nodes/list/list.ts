@@ -83,7 +83,7 @@ const extension = (pandocExtensions: PandocExtensions): Extension => {
       {
         name: 'list_item',
         spec: {
-          content: 'block+',
+          content: 'paragraph block*',
           attrs: {
             checked: { default: null },
           },
@@ -102,7 +102,9 @@ const extension = (pandocExtensions: PandocExtensions): Extension => {
             },
           ],
           toDOM(node) {
-            const attrs: any = {};
+            const attrs: any = {
+              class: 'pm-list-item',
+            };
             if (capabilities.tasks && node.attrs.checked !== null) {
               attrs['data-checked'] = node.attrs.checked ? 'true' : 'false';
             }
@@ -134,6 +136,7 @@ const extension = (pandocExtensions: PandocExtensions): Extension => {
           ],
           toDOM(node) {
             const attrs: { [key: string]: string } = {};
+            attrs.class = 'pm-list pm-bullet-list';
             if (node.attrs.tight) {
               attrs['data-tight'] = 'true';
             }
@@ -196,6 +199,7 @@ const extension = (pandocExtensions: PandocExtensions): Extension => {
           ],
           toDOM(node) {
             const attrs: { [key: string]: string } = {};
+            attrs.class = 'pm-list pm-ordered-list';
             if (node.attrs.tight) {
               attrs['data-tight'] = 'true';
             }
@@ -298,7 +302,7 @@ const extension = (pandocExtensions: PandocExtensions): Extension => {
         ),
       ];
       if (capabilities.tasks) {
-        rules.push(checkedListInputRule(schema), checkedListItemInputRule());
+        rules.push(checkedListItemInputRule(), checkedListInputRule(schema));
       }
       return rules;
     },

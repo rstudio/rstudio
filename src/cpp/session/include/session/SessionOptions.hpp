@@ -1,7 +1,7 @@
 /*
  * SessionOptions.hpp
  *
- * Copyright (C) 2009-19 by RStudio, PBC
+ * Copyright (C) 2009-20 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -98,15 +98,6 @@ public:
    bool logStderr() const
    {
       return logStderr_;
-   }
-   
-   // agreement
-   core::FilePath agreementFilePath() const
-   { 
-      if (!agreementFilePath_.empty())
-         return core::FilePath(agreementFilePath_.c_str());
-      else
-         return core::FilePath();
    }
 
    // docs
@@ -615,6 +606,21 @@ public:
       return useSecureCookies_;
    }
 
+   bool iFrameEmbedding() const
+   {
+      return iFrameEmbedding_;
+   }
+
+   bool legacyCookies() const
+   {
+      return legacyCookies_;
+   }
+
+   bool iFrameLegacyCookies() const
+   {
+      return iFrameEmbedding_ && legacyCookies_;
+   }
+
    bool restrictDirectoryView() const
    {
       return restrictDirectoryView_;
@@ -662,9 +668,6 @@ private:
    // log
    bool logStderr_;
 
-   // agreement
-   std::string agreementFilePath_;
-
    // docs
    std::string docsURL_;
    
@@ -704,6 +707,8 @@ private:
    bool packageOutputToPackageFolder_;
    std::string terminalPort_;
    bool useSecureCookies_;
+   bool iFrameEmbedding_;
+   bool legacyCookies_;
    bool restrictDirectoryView_;
    std::string directoryViewWhitelist_;
    std::string envVarSaveBlacklist_;

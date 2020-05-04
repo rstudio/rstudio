@@ -4,37 +4,65 @@ pandoc schema: <https://github.com/jgm/pandoc-types/blob/master/Text/Pandoc/Defi
 
 ## Feedback
 
+
+### Gabor
+
+rstudioapi function for saveCannonical
+
+### Hadley
+
+Evaluate markdown for link text
+
+Ctrl+Enter and Cmd+Shift to execute code
+Ace mode
+
+Chunk execution
+Inline spell check (QtWebEngine?)
+Reference linking/lookup
+Named footnotes
+
+
 ## TODO
 
+Math:
 
-Consider whether we still need a cursor sentinel? Detection went
-wrong last time b/c we called applyFixups first
-
-See about using scope tree for src to visual
-
-Disable visual mode for collaborative editing
-(b/c we have no way to propagate changes from source to visual
-other than when the document swtich happens)
-
-Bookdown & Blogdown docs:
-  - Math in code
-  - @ref has no \
-  - Heading parts (need to explicitly use .unnumbered and don't use the \* escape)
-  - Using blackfriday explicitly
-  - Setting the doctype(s) explicitly (should xref be a doctype or should it be distill)
-
-Alison on blogdown engines, etc.
-
-MathJax preview. When containing the selection, the math will show both the code and the preview. When not containing the selection will show the preview. (so probably require a node view for this). Consider a “done” gesture for display math. May need to bring back
+- MathJax preview. When containing the selection, the math will show both the code and the preview. When not containing the selection will show the preview. (so probably require a node view for this). Consider a “done” gesture for display math. May need to bring back
 escaping of $ in math as this mode will clearly not be "source mode" style latex equation editing
 
-Possibly have a special editing mode for thereoms?
+- Possibly have a special editing mode for thereoms?
+
+- Interactive spell check
 
 ## Future
+
+Handling unrecognized pandoc tokens.
+
+@ref hot-linking / dialog / +invalid link detection
+
+Inlne spell checking
+
+Parse plain text for markdown
+
+Async dialogs won't work with collab (b/c they could use an old state).
 
 Revisit doing smart patches of Prosemirror doc: https://github.com/rstudio/rstudio/tree/feature/panmirror-smart-patch
 
 Consider porting https://gitlab.com/mpapp-public/manuscripts-symbol-picker
+
+Fixed size tables (with last column resized) overflow-x when editing
+container is made very small.
+
+Keyboard selection of image node (arrow handlers)
+Also backspace handler for paragraph just after an image (currently deletes image)
+
+You can arrow horizontally into figure captions within tables (e.g. put 3
+images in cells of the same row)
+
+Tab key handling for image shelf
+
+Tables must have some sort of arrow key handler that is causing us to 
+enter an empty table caption directly above the table (doesn't happen
+with paragraphs, etc.)
 
 Markup extension filtering (e.g. shortcodes) might be better done in Lua
 
@@ -88,6 +116,8 @@ pandoc scholar: <https://pandoc-scholar.github.io/> pandoc jats: <https://github
 Notes on preformance implications of scanning the entire document + some discussion of the tricky nature of doing step by step inspection: <https://discuss.prosemirror.net/t/changed-part-of-document/992> <https://discuss.prosemirror.net/t/reacting-to-node-adding-removing-changing/676> <https://discuss.prosemirror.net/t/undo-and-cursor-position/677/5>
 
 ## Known issues:
+
+- Can only preview images in the first listed hugo static dir
 
 - When dragging and dropping an image to a place in the document above the original position the shelf sometimes
   stays in it's original position (until you scroll)

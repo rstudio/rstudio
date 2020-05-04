@@ -19,27 +19,31 @@ import { setTextSelection, Predicate, findChildren } from 'prosemirror-utils';
 import zenscroll from 'zenscroll';
 import { editingRootNode } from './node';
 
-export function navigateTo(view: EditorView, predicate: Predicate) {
+export function navigateTo(view: EditorView, predicate: Predicate, animate = true) {
   const result = findChildren(view.state.doc, predicate);
   if (result.length) {
-    navigateToPosition(view, result[0].pos);
+    navigateToPosition(view, result[0].pos, animate);
   }
 }
 
-export function navigateToId(view: EditorView, id: string) {
-  navigateTo(view, node => node.attrs.id === id);
+export function navigateToId(view: EditorView, id: string, animate = true) {
+  navigateTo(view, node => node.attrs.id === id, animate);
 }
 
-export function navigateToHeading(view: EditorView, heading: string) {
-  navigateTo(view, node => {
-    return (
-      node.type === view.state.schema.nodes.heading &&
-      node.textContent.localeCompare(heading, undefined, { sensitivity: 'accent' }) === 0
-    );
-  });
+export function navigateToHeading(view: EditorView, heading: string, animate = true) {
+  navigateTo(
+    view,
+    node => {
+      return (
+        node.type === view.state.schema.nodes.heading &&
+        node.textContent.localeCompare(heading, undefined, { sensitivity: 'accent' }) === 0
+      );
+    },
+    animate,
+  );
 }
 
-export function navigateToPosition(view: EditorView, pos: number) {
+export function navigateToPosition(view: EditorView, pos: number, animate = true) {
   // set selection
   view.dispatch(setTextSelection(pos)(view.state.tr));
 
@@ -49,6 +53,10 @@ export function navigateToPosition(view: EditorView, pos: number) {
     const editingRoot = editingRootNode(view.state.selection)!;
     const container = view.nodeDOM(editingRoot.pos) as HTMLElement;
     const scroller = zenscroll.createScroller(container, 700, 20);
-    scroller.to(node);
+    if (animate) {
+      scroller.to(node);
+    } else {
+      scroller.to(node, 0);
+    }
   }
 }

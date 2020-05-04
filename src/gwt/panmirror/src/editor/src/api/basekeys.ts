@@ -26,6 +26,7 @@ import {
 } from 'prosemirror-commands';
 import { undoInputRule } from 'prosemirror-inputrules';
 import { keymap } from 'prosemirror-keymap';
+import { EditorState, Transaction } from 'prosemirror-state';
 
 import { CommandFn } from './command';
 
@@ -62,6 +63,10 @@ export function baseKeysPlugin(keys: BaseKeyBinding[]) {
     { key: BaseKey.Delete, command: joinForward },
     { key: BaseKey.Delete, command: deleteSelection },
 
+    // base tab key behavior (ignore)
+    { key: BaseKey.Tab, command: ignoreKey },
+    { key: BaseKey.ShiftTab, command: ignoreKey },
+
     // merge keys provided by extensions
     ...keys,
 
@@ -90,3 +95,9 @@ export function baseKeysPlugin(keys: BaseKeyBinding[]) {
   // return keymap
   return keymap(bindings);
 }
+
+
+function ignoreKey(state: EditorState, dispatch?: (tr: Transaction) => void) {
+  return true;
+}
+

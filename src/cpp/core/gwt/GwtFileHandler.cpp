@@ -42,7 +42,13 @@ struct FileRequestOptions
    std::string initJs;
    std::string gwtPrefix;
    bool useEmulatedStack;
-   bool useSecureCookies;
+   struct CookieOptions
+   {
+      bool useSecureCookies;
+      bool iFrameEmbedding;
+      bool legacyCookies;
+      bool iFrameLegacyCookies;
+   } cookies;
    std::string frameOptions;
 };
 
@@ -145,14 +151,21 @@ void handleFileRequest(const FileRequestOptions& options,
 #endif
 
       // read existing CSRF token
-      std::string csrfToken = request.cookieValue("csrf-token");
+      std::string csrfToken = request.cookieValue(kCSRFTokenCookie, options.cookies.iFrameLegacyCookies);
       if (csrfToken.empty())
       {
          // no CSRF token set up yet; we usually set this at login but it's normal for it to not be
          // set when using proxied authentication. generate and apply a new token.
          csrfToken = core::system::generateUuid();
-         bool secure = options.useSecureCookies || request.isSecure();
-         core::http::setCSRFTokenCookie(request, boost::optional<boost::gregorian::days>(), csrfToken, secure, pResponse);
+         bool secure = options.cookies.useSecureCookies || request.isSecure();
+         core::http::setCSRFTokenCookie(request,
+                                        boost::optional<boost::gregorian::days>(),
+                                        csrfToken,
+                                        secure,
+                                        options.cookies.iFrameEmbedding,
+                                        options.cookies.legacyCookies,
+                                        options.cookies.iFrameLegacyCookies,
+                                        pResponse);
       }
       vars["csrf_token"] = string_utils::htmlEscape(csrfToken, true /* isAttribute */);
 
@@ -178,6 +191,9 @@ void handleFileRequest(const FileRequestOptions& options,
 http::UriHandlerFunction fileHandlerFunction(
                                        const std::string& wwwLocalPath,
                                        bool useSecureCookies,
+                                       bool iFrameEmbedding,
+                                       bool legacyCookies,
+                                       bool iFrameLegacyCookies,
                                        const std::string& baseUri,
                                        http::UriFilterFunction mainPageFilter,
                                        const std::string& initJs,
@@ -186,7 +202,13 @@ http::UriHandlerFunction fileHandlerFunction(
                                        const std::string& frameOptions)
 {
    FileRequestOptions options { wwwLocalPath, baseUri, mainPageFilter, initJs,
-                                gwtPrefix, useEmulatedStack, useSecureCookies, frameOptions };
+                                gwtPrefix, useEmulatedStack, 
+                                FileRequestOptions::CookieOptions { 
+                                   useSecureCookies,
+                                   iFrameEmbedding,
+                                   legacyCookies,
+                                   iFrameLegacyCookies
+                                }, frameOptions };
 
    return boost::bind(handleFileRequest,
                       options,

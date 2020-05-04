@@ -15,6 +15,7 @@
 
 #include <core/http/Cookie.hpp>
 
+#include <core/http/Request.hpp>
 #include <core/http/URL.hpp>
 #include <shared_core/Error.hpp>
 #include <core/Log.hpp>
@@ -29,12 +30,14 @@ Cookie::Cookie(const Request& request,
                const std::string& name,
                const std::string& value, 
                const std::string& path,
-               bool httpOnly, 
-               bool secure) 
+               SameSite sameSite /*= SameSite::Undefined*/,
+               bool httpOnly /*= false*/, 
+               bool secure /*= false*/) 
    :  name_(name), 
       value_(value), 
       path_(path), 
       expires_(not_a_date_time),
+      sameSite_(sameSite),
       httpOnly_(httpOnly),
       secure_(secure)
 {
@@ -81,7 +84,12 @@ void Cookie::setSecure()
 {
    secure_ = true;
 }
-   
+
+void Cookie::setSameSite(SameSite sameSite)
+{
+   sameSite_ = sameSite;
+}
+
 std::string Cookie::cookieHeaderValue() const
 {
    // basic name/value
@@ -113,6 +121,22 @@ std::string Cookie::cookieHeaderValue() const
    // http only if specified
    if (httpOnly_)
       headerValue << "; HttpOnly";
+
+   switch (sameSite_)
+   {
+      case SameSite::None:
+         headerValue << "; SameSite=None";
+         break;
+      case SameSite::Lax:
+         headerValue << "; SameSite=Lax";
+         break;
+      case SameSite::Strict:
+         headerValue << "; SameSite=Strict";
+         break;
+      case SameSite::Undefined:
+         // do nothing
+         break;
+   }
 
    // secure if specified
    if (secure_)

@@ -204,6 +204,8 @@ public class TextEditingTarget implements
    public final static String DOC_OUTLINE_VISIBLE = "docOutlineVisible";
    
    public static final String RMD_VISUAL_MODE = "rmdVisualMode";
+   
+   public static final String SOFT_WRAP_LINES = "softWrapLines";
   
    private static final MyCommandBinder commandBinder =
          GWT.create(MyCommandBinder.class);
@@ -254,6 +256,7 @@ public class TextEditingTarget implements
       
       void toggleDocumentOutline();
       void toggleRmdVisualMode();
+      void toggleSoftWrapMode();
       
       void setNotebookUIVisible(boolean visible);
 
@@ -1196,25 +1199,27 @@ public class TextEditingTarget implements
    @Override
    public void beginCollabSession(CollabEditStartParams params)
    {
-      // the server may notify us of a collab session we're already
-      // participating in; this is okay
-      if (docDisplay_.hasActiveCollabSession())
-      {
-         return;
-      }
-      
-      // were we waiting to process another set of params when these arrived?
-      boolean paramQueueClear = queuedCollabParams_ == null;
-
-      // save params 
-      queuedCollabParams_ = params;
-
-      // if we're not waiting for another set of params to resolve, and we're
-      // the active doc, process these params immediately
-      if (paramQueueClear && isActiveDocument())
-      {
-         beginQueuedCollabSession();
-      }
+      visualMode_.deactivate(() -> {
+         // the server may notify us of a collab session we're already
+         // participating in; this is okay
+         if (docDisplay_.hasActiveCollabSession())
+         {
+            return;
+         }
+         
+         // were we waiting to process another set of params when these arrived?
+         boolean paramQueueClear = queuedCollabParams_ == null;
+   
+         // save params 
+         queuedCollabParams_ = params;
+   
+         // if we're not waiting for another set of params to resolve, and we're
+         // the active doc, process these params immediately
+         if (paramQueueClear && isActiveDocument())
+         {
+            beginQueuedCollabSession();
+         }
+      });
    }
    
    @Override
@@ -1536,15 +1541,7 @@ public class TextEditingTarget implements
             // check to see if the file's been saved externally--we do this even
             // in a collaborative editing session so we can get delete
             // notifications
-            Scheduler.get().scheduleFixedDelay(new RepeatingCommand()
-            {
-               public boolean execute()
-               {
-                  if (view_.isAttached())
-                     checkForExternalEdit();
-                  return false;
-               }
-            }, 500);
+            checkForExternalEdit(500);
          }
       });
       
@@ -2953,6 +2950,10 @@ public class TextEditingTarget implements
    @Override
    public void adaptToExtendedFileType(String extendedType)
    {
+      // extended type can affect publish options; we need to sync here even if the type
+      // hasn't changed as the path may have changed
+      syncPublishPath(docUpdateSentinel_.getPath());
+
       // ignore if unchanged
       if (StringUtil.equals(extendedType, extendedType_))
          return;
@@ -2961,9 +2962,6 @@ public class TextEditingTarget implements
       if (extendedType == SourceDocument.XT_RMARKDOWN)
          updateRmdFormatList();
       extendedType_ = extendedType;
-
-      // extended type can affect publish options
-      syncPublishPath(docUpdateSentinel_.getPath());
    }
 
    @Override
@@ -3026,6 +3024,12 @@ public class TextEditingTarget implements
    void onToggleRmdVisualMode()
    {
       view_.toggleRmdVisualMode();
+   }
+   
+   @Handler
+   void onToggleSoftWrapMode()
+   {
+      view_.toggleSoftWrapMode();
    }
    
    @Handler
@@ -6779,6 +6783,19 @@ public class TextEditingTarget implements
             });
    }
    
+   public void checkForExternalEdit(int delayMs) 
+   {
+      Scheduler.get().scheduleFixedDelay(new RepeatingCommand()
+      {
+         public boolean execute()
+         {
+            if (view_.isAttached())
+               checkForExternalEdit();
+            return false;
+         }
+      }, delayMs);
+   }
+   
    private void revertEdits()
    {
       docUpdateSentinel_.revert(() -> {
@@ -7768,5 +7785,5 @@ public class TextEditingTarget implements
    }
    
    private static final String PROPERTY_CURSOR_POSITION = "cursorPosition";
-   private static final String PROPERTY_SCROLL_LINE = "scrollLine";  
+   private static final String PROPERTY_SCROLL_LINE = "scrollLine";
 }

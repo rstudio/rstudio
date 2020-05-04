@@ -82,8 +82,8 @@ public:
    LocalhostAsyncClientSsl(boost::asio::io_service& ioService,
                            const std::string& address,
                            const std::string& port,
-                           bool verify)
-      : core::http::TcpIpAsyncClientSsl(ioService, address, port, verify)
+                           bool verifySslCerts)
+      : core::http::TcpIpAsyncClientSsl(ioService, address, port, verifySslCerts)
    {
    }
 

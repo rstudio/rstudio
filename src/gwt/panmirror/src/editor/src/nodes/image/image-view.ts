@@ -42,6 +42,7 @@ export class ImageNodeView implements NodeView {
   private readonly getPos: () => number;
   private readonly editorUI: EditorUI;
   private readonly imageAttributes: boolean;
+  private readonly implicitFigures: boolean;
 
   // DOM elements
   public readonly dom: HTMLElement;
@@ -74,6 +75,7 @@ export class ImageNodeView implements NodeView {
     this.view = view;
     this.getPos = getPos;
     this.imageAttributes = imageAttributesAvailable(pandocExtensions);
+    this.implicitFigures = pandocExtensions.implicit_figures;
     this.editorUI = editorUI;
     this.resizeUI = null;
     this.imgBroken = false;
@@ -106,6 +108,7 @@ export class ImageNodeView implements NodeView {
 
     // create the image (used by both image and figure node types)
     this.img = document.createElement('img');
+    this.img.classList.add('pm-img');
     this.img.onload = () => {
       this.imgBroken = false;
     };
@@ -119,6 +122,7 @@ export class ImageNodeView implements NodeView {
     if (this.type === ImageType.Figure) {
       // create figure wrapper
       this.dom = document.createElement('figure');
+      this.dom.classList.add('pm-figure');
 
       // create container
       const container = document.createElement('div');
@@ -138,13 +142,8 @@ export class ImageNodeView implements NodeView {
       this.contentDOM = this.figcaption;
       this.dom.append(this.figcaption);
 
-      // if there is no support for implicit_figures then hide the caption
-      if (!pandocExtensions.implicit_figures) {
-        this.figcaption.contentEditable = 'false';
-        this.figcaption.style.height = '0';
-        this.figcaption.style.minHeight = '0';
-        this.figcaption.style.margin = '0';
-      }
+      // manage visibility
+      this.manageFigcaption();
 
       // standard inline image
     } else {
@@ -242,7 +241,7 @@ export class ImageNodeView implements NodeView {
   // map node to img tag
   private updateImg() {
     // map to path reachable within current editing frame
-    this.img.src = this.editorUI.context.mapResourcePath(this.node.attrs.src);
+    this.img.src = this.editorUI.context.mapResourceToURL(this.node.attrs.src);
 
     // title/tooltip
     this.img.title = '';
@@ -252,6 +251,9 @@ export class ImageNodeView implements NodeView {
 
     // ensure alt attribute so that we get default browser broken image treatment
     this.img.alt = this.node.textContent || this.node.attrs.src;
+
+    // manage caption visibility
+    this.manageFigcaption();
 
     // update size
     this.updateImageSize();
@@ -305,5 +307,27 @@ export class ImageNodeView implements NodeView {
 
   private containerWidth() {
     return imageContainerWidth(this.getPos(), this.view);
+  }
+
+  private manageFigcaption() {
+    // hide the figcaption if appropriate
+    const noImplicitFigures = !this.implicitFigures;
+    const emptyFigcaption = this.figcaption && this.node.textContent.length === 0;
+    const selection = this.view.state.selection;
+    const selectionInFigcaption = selection.empty && selection.$head.node() === this.node;
+    const hide = noImplicitFigures || (emptyFigcaption && !selectionInFigcaption);
+
+    // hide or show if we have a figcaption
+    if (this.figcaption) {
+      if (noImplicitFigures) {
+        this.figcaption.style.display = 'none';
+        this.figcaption.contentEditable = 'false';
+      } else {
+        this.figcaption.contentEditable = hide ? 'false' : 'true';
+        this.figcaption.style.height = hide ? '0' : '';
+        this.figcaption.style.minHeight = hide ? '0' : '';
+        this.figcaption.style.margin = hide ? '0' : '';
+      }
+    }
   }
 }

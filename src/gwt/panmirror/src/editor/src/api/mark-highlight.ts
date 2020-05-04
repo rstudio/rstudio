@@ -35,6 +35,7 @@ export function markHighlightDecorations(
   className: string,
 ) {
   const decorations: Decoration[] = [];
+  re.lastIndex = 0;
   let match = re.exec(text);
   while (match) {
     decorations.push(
@@ -42,6 +43,7 @@ export function markHighlightDecorations(
     );
     match = re.exec(text);
   }
+  re.lastIndex = 0;
   return decorations;
 }
 

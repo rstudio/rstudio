@@ -2,9 +2,11 @@ package org.rstudio.studio.client.panmirror;
 
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.GlobalDisplay;
+import org.rstudio.studio.client.panmirror.command.PanmirrorMenuItem;
 
 import com.google.inject.Inject;
 
+import jsinterop.annotations.JsFunction;
 import jsinterop.annotations.JsType;
 
 @JsType
@@ -24,6 +26,14 @@ public class PanmirrorUIDisplay {
    public void openURL(String url) 
    {
       globalDisplay_.openWindow(url);
+   }
+
+   public ShowContextMenu showContextMenu;   
+   
+   @JsFunction
+   public interface ShowContextMenu
+   {
+      void show(PanmirrorMenuItem[] items, int clientX, int clientY);
    }
    
    private GlobalDisplay globalDisplay_;

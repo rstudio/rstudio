@@ -22,10 +22,10 @@ import { Extension } from '../../api/extension';
 import { EditorOptions } from '../../api/options';
 import { PandocOutput, PandocTokenType, PandocExtensions } from '../../api/pandoc';
 import { codeNodeSpec } from '../../api/code';
-import { ProsemirrorCommand, EditorCommandId } from '../../api/command';
-import { canInsertNode } from '../../api/node';
+import { ProsemirrorCommand, EditorCommandId, toggleBlockType } from '../../api/command';
 import { selectionIsBodyTopLevel } from '../../api/selection';
 import { uuidv4 } from '../../api/util';
+import { precedingListItemInsertPos, precedingListItemInsert } from '../../api/list';
 
 import { EditorUI } from '../../api/ui';
 import { PandocCapabilities } from '../../api/pandoc_capabilities';
@@ -94,7 +94,7 @@ const extension = (
           codeBlockFilter: {
             preprocessor: (markdown: string) => {
               const md = markdown.replace(
-                /^([\t >]*```+)\s*(\{[a-zA-Z0-9_]+( *[ ,].*?)?\})(\s*)([\W\w]*?)(?:```)(?:[ \t]*)$/gm,
+                /^([\t >]*```+)\s*(\{[a-zA-Z0-9_]+( *[ ,].*?)?\})([ \t]*\n)([\W\w]*?)(?:```)(?:[ \t]*)$/gm,
                 (_match: string, p1: string, p2: string, _p3: string, p4: string, p5: string, p6: string) => {
                   return p1 + kRmdCodeChunkClass + '\n' + p2 + '\n' + p5 + '```\n';
                 },
@@ -142,7 +142,10 @@ class RmdChunkCommand extends ProsemirrorCommand {
       (state: EditorState, dispatch?: (tr: Transaction) => void, view?: EditorView) => {
         const schema = state.schema;
 
-        if (!canInsertNode(state, schema.nodes.rmd_chunk)) {
+        if (
+          !toggleBlockType(schema.nodes.rmd_chunk, schema.nodes.paragraph)(state) &&
+          !precedingListItemInsertPos(state.doc, state.selection)
+        ) {
           return false;
         }
 
@@ -163,11 +166,16 @@ class RmdChunkCommand extends ProsemirrorCommand {
         // create chunk text
         if (dispatch) {
           const tr = state.tr;
-          const kRmdText = 'r\n';
+          const kRmdText = '{r}\n';
           const rmdText = schema.text(kRmdText);
           const rmdNode = schema.nodes.rmd_chunk.create({}, rmdText);
-          tr.replaceSelectionWith(rmdNode);
-          setTextSelection(tr.mapping.map(state.selection.from) - 1)(tr);
+          const prevListItemPos = precedingListItemInsertPos(tr.doc, tr.selection);
+          if (prevListItemPos) {
+            precedingListItemInsert(tr, prevListItemPos, rmdNode);
+          } else {
+            tr.replaceSelectionWith(rmdNode);
+            setTextSelection(tr.mapping.map(state.selection.from) - 1)(tr);
+          }
           dispatch(tr);
         }
 

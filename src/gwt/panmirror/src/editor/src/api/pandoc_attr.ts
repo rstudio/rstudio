@@ -15,8 +15,8 @@
 
 import { NodeSpec, MarkSpec } from 'prosemirror-model';
 
-import { PandocToken } from './pandoc';
-import { extensionIfEnabled, Extension } from './extension';
+import { PandocToken, PandocExtensions } from './pandoc';
+import { extensionEnabled, extensionIfEnabled, Extension } from './extension';
 
 const PANDOC_ATTR_ID = 0;
 const PANDOC_ATTR_CLASSES = 1;
@@ -102,9 +102,10 @@ export function pandocAttrParseDom(el: Element, attrs: { [key: string]: string |
   // exclude any keys passed to us
   const excludedNames = Object.keys(attrs);
 
-  // if this isn't from a prosemirror pandoc node then exclude id, style, and classes
+  // if this isn't from a prosemirror pandoc node then include only src and alt
+  const includedNames: string[] = [];
   if (!forceAttrs && !el.hasAttribute(kDataPmPandocAttr)) {
-    excludedNames.push('id', 'class', 'style');
+    includedNames.push('src', 'alt');
   }
 
   // read attributes
@@ -115,12 +116,18 @@ export function pandocAttrParseDom(el: Element, attrs: { [key: string]: string |
     const value: string = el.getAttribute(name) as string;
     // exclude attributes already parsed and prosemirror internal attributes
     if (excludedNames.indexOf(name) === -1 && !name.startsWith('data-pm')) {
-      if (name === 'id') {
-        attr.id = value;
-      } else if (name === 'class') {
-        attr.classes = value.split(/\s+/).filter(val => !val.startsWith('pm-'));
-      } else {
-        attr.keyvalue.push([name, value]);
+      // if we have an include filter then use it
+      if (!includedNames.length || includedNames.includes(name)) {
+        if (name === 'id') {
+          attr.id = value;
+        } else if (name === 'class') {
+          attr.classes = value
+            .split(/\s+/)
+            .filter(val => !!val.length)
+            .filter(val => !val.startsWith('pm-'));
+        } else {
+          attr.keyvalue.push([name, value]);
+        }
       }
     }
   });
@@ -128,16 +135,22 @@ export function pandocAttrParseDom(el: Element, attrs: { [key: string]: string |
 }
 
 export function extensionIfPandocAttrEnabled(extension: Extension) {
-  return extensionIfEnabled(extension, [
-    'link_attributes',
-    'mmd_link_attributes',
-    'mmd_header_identifiers',
-    'header_attributes',
-    'fenced_code_attributes',
-    'inline_code_attributes',
-    'bracketed_spans',
-    'native_spans',
-    'fenced_divs',
-    'native_divs',
-  ]);
+  return extensionIfEnabled(extension, kPandocAttrExtensions);
 }
+
+export function pandocAttrEnabled(pandocExtensions: PandocExtensions) {
+  return extensionEnabled(pandocExtensions, kPandocAttrExtensions);
+}
+
+const kPandocAttrExtensions = [
+  'link_attributes',
+  'mmd_link_attributes',
+  'mmd_header_identifiers',
+  'header_attributes',
+  'fenced_code_attributes',
+  'inline_code_attributes',
+  'bracketed_spans',
+  'native_spans',
+  'fenced_divs',
+  'native_divs',
+];

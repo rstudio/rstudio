@@ -1,17 +1,18 @@
 @echo off
 setlocal enableextensions enabledelayedexpansion
 
-REM **************************************************************************
-REM Build Windows docker image containing tools to build RStudio IDE
-REM **************************************************************************
-REM Currently this goes as far as creating an image, but doesn't 
-REM run the build itself. See TODO's at end of this file.
-REM **************************************************************************
-REM Build this image and run the build using it on Windows Server 2016,
-REM where Docker can be run in process-isolation mode. Building RStudio in
-REM a container using Hyper-V will not work due to:
-REM     https://github.com/docker/for-win/issues/829
-REM **************************************************************************
+:: Script to build RStudio Desktop for Windows using Docker
+:: 
+:: Requires a Windows machine, with Docker installed and set to use Windows
+:: containers, and the RStudio repo cloned onto the machine. Then simply execute
+:: this script from a command prompt in rstudio\docker directory.
+::
+:: For best reproduction of an official build use a pristine repo containing no 
+:: previous local builds or installed dependencies. For example you could use
+:: git clean -ffdx.
+::
+:: Reason: The entire repo is copied into the container on each run (see comment
+:: later in this script on why this is).
 
 set IMAGE=windows
 set FLAVOR=desktop
@@ -47,13 +48,7 @@ if defined DOCKER_GITHUB_LOGIN (
 )
 
 REM rebuild the image if necessary
-docker build --tag %REPO%:%IMAGE% --file docker\jenkins\Dockerfile.%IMAGE% %BUILD_ARGS% -m 2GB .\docker\jenkins
-
-echo Produced image.
-exit /b 0
-
-REM Everything below here is a work-in-progress. Up to here we've produced the image.
-REM Below here, we need to trigger the build, and report the results.
+docker build --tag %REPO%:%IMAGE% --file docker\jenkins\Dockerfile.%IMAGE% %BUILD_ARGS% -m 4GB .\docker\jenkins
 
 REM set up build flags
 git rev-parse HEAD > %TEMPFILE%
@@ -62,28 +57,52 @@ del %TEMPFILE%
 set BUILD_ID=local
 
 REM infer make parallelism
-set "MAKEFLAGS=-j%NUMBER_OF_PROCESSORS%
+set "MAKEFLAGS=-j%NUMBER_OF_PROCESSORS%"
 
 REM remove previous image if it exists
 set CONTAINER_ID=build-%REPO%-%IMAGE%
 echo Cleaning up container %CONTAINER_ID% if it exists...
 docker rm %CONTAINER_ID%
 
-REM Startup the container. To build, run "install-dependencies.cmd" then "make-package" inside 
-REM it as you would on a Windows dev box.
 for %%A in ("%cd%") do set HOSTPATH=%%~sA
-docker run -it --isolation process --name %CONTAINER_ID% -v %HOSTPATH%:c:/src %REPO%:%IMAGE%
 
-REM extract logs to get filename (should be on the last line)
-REM TODO
-REM PKG_FILENAME=$(docker logs --tail 1 "$CONTAINER_ID")
+echo Creating container %CONTAINER_ID%...
+docker create -m 6GB -i --name %CONTAINER_ID% %REPO%:%IMAGE% cmd.exe
 
-REM report name of produced package
-REM TODO
+:: Copy sources into the container; a volume mount doesn't work due to problems with the 
+:: MSVC toolchain used by RStudio: https://github.com/docker/for-win/issues/829
+::
+:: This issue is apparently fixed in latest MSVC 2019 so can reevaluate this approach when
+:: we update to newer toolchain and use -v %HOSTPATH%:c:/src instead of copying repo.
+:: 
+:: A volume mount does work when using "--isolation process" but this mode of operation
+:: requires a close Windows version match between the base image and the host operating
+:: system (largely defeating the whole point of containerization).
+::
+:: https://docs.microsoft.com/en-us/virtualization/windowscontainers/deploy-containers/version-compatibility
+::
+echo Copying repo into container...
+docker cp %HOSTPATH% %CONTAINER_ID%:/src
 
-REM stop the container
-REM TODO
-REM docker stop %CONTAINER_ID%
-REM echo Container image saved in %CONTAINER_ID%.
+echo Starting container...
+docker start %CONTAINER_ID%
 
+echo Installing dependencies...
+docker exec %CONTAINER_ID% cmd.exe /C "cd \src\dependencies\windows && set RSTUDIO_SKIP_QT=1 && install-dependencies.cmd"
 
+echo Building RStudio...
+docker exec %CONTAINER_ID% cmd.exe /C "cd \src\package\win32 && make-package.bat clean"
+
+echo Stopping container...
+docker stop %CONTAINER_ID%
+
+if "%REPO%" == "rstudio-pro" (
+    set PKG_FILENAME=RStudio-pro-99.9.9-RelWithDebInfo
+) ELSE (
+    set PKG_FILENAME=RStudio-99.9.9-RelWithDebInfo
+)
+echo Copying build result (%PKG_FILENAME%.zip) to %HOSTPATH%/docker/package
+docker cp %CONTAINER_ID%:/src/package/win32/build/%PKG_FILENAME%.zip %HOSTPATH%/docker/package/%PKG_FILENAME%.zip
+
+echo Copying build result (%PKG_FILENAME%.exe) to %HOSTPATH%/docker/package
+docker cp %CONTAINER_ID%:/src/package/win32/build/%PKG_FILENAME%.exe %HOSTPATH%/docker/package/%PKG_FILENAME%.exe

@@ -2390,7 +2390,30 @@ bool isSessionTempPath(FilePath filePath)
 
 std::string sessionTempDirUrl(const std::string& sessionTempPath)
 {
-   if (session::options().programMode() == kSessionProgramModeDesktop)
+   static boost::optional<bool> useRHelpServer;
+
+   if (!useRHelpServer)
+   {
+      // Initialize the flag indicating whether we should use the R help server;
+      // in desktop mode we can have R itself handle requests for content in
+      // the session temporary folder.
+      useRHelpServer = session::options().programMode() == kSessionProgramModeDesktop;
+
+#ifdef _WIN32
+      if (*useRHelpServer)
+      {
+         // There is a known issue serving content from the session temporary folder
+         // on R 4.0+ for Windows, so if we were planning to use it, only do so if
+         // we are on an older version of R.
+         //
+         // https://github.com/rstudio/rstudio/issues/6737
+         //
+         useRHelpServer = !r::util::hasRequiredVersion("4.0");
+      }
+#endif
+   }
+
+   if (*useRHelpServer)
    {
       boost::format fmt("http://localhost:%1%/session/%2%");
       return boost::str(fmt % rLocalHelpPort() % sessionTempPath);
@@ -2628,6 +2651,7 @@ bool usingMingwGcc49()
 
 namespace {
 
+#ifdef __APPLE__
 void warnXcodeLicense()
 {
    const char* msg =
@@ -2644,6 +2668,7 @@ in a terminal to accept the Xcode license, and then restart RStudio.
    
    std::cerr << msg << std::endl;
 }
+#endif
 
 } // end anonymous namespace
 

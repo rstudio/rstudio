@@ -1,7 +1,7 @@
 /*
- * SessionAgreement.hpp
+ * PanmirrorUIToolsSource.java
  *
- * Copyright (C) 2009-12 by RStudio, PBC
+ * Copyright (C) 2009-20 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -13,32 +13,18 @@
  *
  */
 
-#ifndef SESSION_AGREEMENT_HPP
-#define SESSION_AGREEMENT_HPP
 
-#include <core/json/JsonRpc.hpp>
+package org.rstudio.studio.client.panmirror.uitools;
 
-namespace rstudio {
-namespace core {
-   class Error;
+
+
+import org.rstudio.core.client.patch.TextChange;
+
+import jsinterop.annotations.JsType;
+
+@JsType
+public class PanmirrorUIToolsSource
+{
+   public native TextChange[] diffChars(String from, String to, int timeout);
 }
-}
-
-namespace rstudio {
-namespace session {
-namespace modules {
-namespace agreement {
-
-bool hasAgreement();
-
-core::json::Value pendingAgreement();
-   
-core::Error initialize();
-   
-} // namespace agreeement
-} // namespace modules
-} // namespace session
-} // namespace rstudio
-
-#endif // SESSION_AGREEMENT_HPP
 

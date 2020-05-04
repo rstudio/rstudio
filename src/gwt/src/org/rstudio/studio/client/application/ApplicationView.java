@@ -17,17 +17,10 @@ package org.rstudio.studio.client.application;
 
 import com.google.gwt.user.client.ui.Widget;
 import org.rstudio.core.client.widget.AriaLiveStatusReporter;
-import org.rstudio.core.client.widget.Operation;
 import org.rstudio.studio.client.application.events.AriaLiveStatusEvent.Severity;
 
 public interface ApplicationView extends AriaLiveStatusReporter
-{       
-   // show application agreement
-   void showApplicationAgreement(String title,
-                             String contents, 
-                             Operation doNotAcceptOperation,
-                             Operation acceptOperation);
-   
+{
    // set current main view for application
    void showWorkbenchView(Widget widget);
    

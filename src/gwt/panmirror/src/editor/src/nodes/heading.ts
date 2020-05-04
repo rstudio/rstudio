@@ -82,7 +82,10 @@ const extension = (
           if (headingAttr) {
             return {
               type: (schema: Schema) => schema.nodes.heading,
-              offset: 8,
+              offset: {
+                top: 5,
+                right: 5,
+              },
             };
           } else {
             return null;
@@ -141,6 +144,7 @@ const extension = (
           schema.nodes.heading,
           match => ({
             level: match[1].length,
+            navigation_id: uuidv4()
           }),
         ),
       ];

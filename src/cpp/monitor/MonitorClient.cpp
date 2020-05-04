@@ -88,24 +88,26 @@ void initializeMonitorClient(const std::string& metricsSocket,
 void initializeMonitorClient(const std::string& tcpAddress,
                              const std::string& tcpPort,
                              bool useSsl,
+                             bool verifySslCerts,
                              const std::string& prefixUri,
                              const std::string& auth,
                              bool useSharedSecret)
 {
    BOOST_ASSERT(s_pClient == NULL);
-   s_pClient = new SyncClient(tcpAddress, tcpPort, useSsl, prefixUri, auth, useSharedSecret);
+   s_pClient = new SyncClient(tcpAddress, tcpPort, useSsl, verifySslCerts, prefixUri, auth, useSharedSecret);
 }
 
 void initializeMonitorClient(const std::string& tcpAddress,
                              const std::string& tcpPort,
                              bool useSsl,
+                             bool verifySslCerts,
                              const std::string& prefixUri,
                              const std::string& auth,
                              boost::asio::io_service& ioService,
                              bool useSharedSecret)
 {
    BOOST_ASSERT(s_pClient == NULL);
-   s_pClient = new AsyncClient(tcpAddress, tcpPort, useSsl, prefixUri, auth, ioService, useSharedSecret);
+   s_pClient = new AsyncClient(tcpAddress, tcpPort, useSsl, verifySslCerts, prefixUri, auth, ioService, useSharedSecret);
 }
 
 Client& client()

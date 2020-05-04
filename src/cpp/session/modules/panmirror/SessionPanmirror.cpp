@@ -146,6 +146,34 @@ Error pandocAstToMarkdown(const json::JsonRpcRequest& request,
    return Success();
 }
 
+bool readJsonAst(const std::string& output, json::Object* pAst, json::JsonRpcResponse* pResponse)
+{
+   using namespace json;
+   json::Value jsonAst;
+   Error error = jsonAst.parse(output);
+   if (error)
+   {
+      Error parseError(boost::system::errc::state_not_recoverable,
+                       errorMessage(error),
+                       ERROR_LOCATION);
+      setPandocErrorResponse(parseError, pResponse);
+      return false;
+   }
+   else if (!isType<json::Object>(jsonAst))
+   {
+      Error outputError(boost::system::errc::state_not_recoverable,
+                        "Unexpected JSON output from pandoc",
+                        ERROR_LOCATION);
+      setPandocErrorResponse(outputError, pResponse);
+      return false;
+   }
+   else
+   {
+      *pAst = jsonAst.getObject();
+      return true;
+   }
+}
+
 Error pandocMarkdownToAst(const json::JsonRpcRequest& request,
                           json::JsonRpcResponse* pResponse)
 {
@@ -186,27 +214,9 @@ Error pandocMarkdownToAst(const json::JsonRpcRequest& request,
    // return output on success
    if (result.exitStatus == EXIT_SUCCESS)
    {
-      using namespace json;
-      json::Value jsonAst;
-      Error error = jsonAst.parse(result.stdOut);
-      if (error)
-      {
-         Error parseError(boost::system::errc::state_not_recoverable,
-                          errorMessage(error),
-                          ERROR_LOCATION);
-         setPandocErrorResponse(parseError, pResponse);
-      }
-      else if (!isType<json::Object>(jsonAst))
-      {
-         Error outputError(boost::system::errc::state_not_recoverable,
-                           "Unexpected JSON output from pandoc",
-                           ERROR_LOCATION);
-         setPandocErrorResponse(outputError, pResponse);
-      }
-      else
-      {
-         pResponse->setResult(jsonAst);
-      }
+      json::Object jsonAst;
+      if (readJsonAst(result.stdOut, &jsonAst, pResponse))
+        pResponse->setResult(jsonAst);
    }
    else
    {
@@ -217,15 +227,14 @@ Error pandocMarkdownToAst(const json::JsonRpcRequest& request,
 }
 
 
-bool pandocCaptureOutput(const std::string& arg, std::string* pOutput, json::JsonRpcResponse* pResponse)
+bool pandocCaptureOutput(const std::vector<std::string>& args,
+                         const std::string& input,
+                         std::string* pOutput,
+                         json::JsonRpcResponse* pResponse)
 {
-   // build args
-   std::vector<std::string> args;
-   args.push_back(arg);
-
    // run pandoc
    core::system::ProcessResult result;
-   Error error = runPandoc(args, "", &result);
+   Error error = runPandoc(args, input, &result);
    if (error)
    {
       setPandocErrorResponse(error, pResponse);
@@ -243,6 +252,12 @@ bool pandocCaptureOutput(const std::string& arg, std::string* pOutput, json::Jso
    }
 }
 
+bool pandocCaptureOutput(const std::string& arg, std::string* pOutput, json::JsonRpcResponse* pResponse)
+{
+   std::vector<std::string> args;
+   args.push_back(arg);
+   return pandocCaptureOutput(args, "", pOutput, pResponse);
+}
 
 Error pandocGetCapabilities(const json::JsonRpcRequest&,
                             json::JsonRpcResponse* pResponse)
@@ -250,6 +265,17 @@ Error pandocGetCapabilities(const json::JsonRpcRequest&,
    std::string version;
    if (!pandocCaptureOutput("--version", &version, pResponse))
       return Success();
+
+   std::vector<std::string> apiArgs;
+   apiArgs.push_back("--to");
+   apiArgs.push_back("json");
+   std::string apiOutput;
+   if (!pandocCaptureOutput(apiArgs, " ", &apiOutput, pResponse))
+      return Success();
+   json::Object jsonAst;
+   if (!readJsonAst(apiOutput, &jsonAst, pResponse))
+      return Success();
+   json::Array apiVersion = jsonAst["pandoc-api-version"].getArray();
 
    std::string outputFormats;
    if (!pandocCaptureOutput("--list-output-formats", &outputFormats, pResponse))
@@ -261,6 +287,7 @@ Error pandocGetCapabilities(const json::JsonRpcRequest&,
 
    json::Object capabilities;
    capabilities["version"] = version;
+   capabilities["api_version"] = apiVersion;
    capabilities["output_formats"] = outputFormats;
    capabilities["highlight_languages"] = highlightLanguages;
    pResponse->setResult(capabilities);

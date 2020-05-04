@@ -50,7 +50,7 @@ public:
 
    virtual ~PAM();
 
-   std::pair<int, const std::string> lastError();
+   std::string lastError();
 
    int status() const { return status_; }
 

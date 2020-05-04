@@ -189,7 +189,7 @@ const Fields& Request::queryParams() const
    return queryParams_;
 }
    
-std::string Request::cookieValue(const std::string& name) const
+std::string Request::cookieValue(const std::string& name, bool iFrameLegacyCookies) const
 {
    // parse cookies on demand
    if ( !parsedCookies_ )
@@ -203,7 +203,15 @@ std::string Request::cookieValue(const std::string& name) const
    }
 
    // lookup the cookie
-   return util::fieldValue(cookies_, name);
+   std::string cookie = util::fieldValue(cookies_, name);
+
+   // when embedded into an iFrame a legacy cookie
+   // may be present for old, non-conforming browsers
+   if (cookie.empty() && iFrameLegacyCookies)
+   {
+      cookie = util::fieldValue(cookies_, name + kLegacyCookieSuffix);
+   }
+   return cookie;
 }
 
 void Request::addCookie(const std::string& name, const std::string& value)
@@ -214,7 +222,7 @@ void Request::addCookie(const std::string& name, const std::string& value)
    {
       cookies.push_back(cookie.first + "=" + cookie.second); 
    }
-   setHeader("Cookie", boost::algorithm::join(cookies, "; ")); 
+   setHeader("Cookie", boost::algorithm::join(cookies, "; "));
 }
 
 std::string Request::cookieValueFromHeader(const std::string& headerName) const

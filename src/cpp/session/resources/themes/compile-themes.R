@@ -510,14 +510,22 @@
 })
 
 .rs.addFunction("createCommentBgRule", function(themeName, isDark, overrides = list()) {
-   commentBgColor <- overrides[[themeName]]
-   if (is.null(commentBgColor))
-      commentBgColor <- if (isDark) "#5C4916" else "rgb(254, 155, 243)"
+   commentFgColor <- if (isDark) "#4D4333" else "#3C4C72"
+   commentBgColor <- if (isDark) "#D1B78A" else "#FFECCB"
+   
+   override <- overrides[[themeName]]
+   if (!is.null(override) && !is.null(override$fg))
+      commentFgColor <- override$fg
+   
+   if (!is.null(override) && !is.null(override$bg))
+      commentBgColor <- override$bg
    
    sprintf(paste(sep = "\n",
                  ".ace_comment-highlight {",
-                 "  background-color: %s",
+                 "  color: %s;",
+                 "  background-color: %s;",
                  "}"),
+           commentFgColor,
            commentBgColor)
 })
 

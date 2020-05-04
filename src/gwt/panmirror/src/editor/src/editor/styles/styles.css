@@ -32,6 +32,10 @@
   margin-top: 10px;
 }
 
+h3.pm-heading {
+  font-size: 1.25em;
+}
+
 .pm-link {
   text-decoration: underline;
 }
@@ -48,12 +52,29 @@
   margin-right: 0;
 }
 
+.pm-figure {
+  margin: 0;
+  margin-block-end: 1em;
+}
+
+.pm-img {
+  max-width: 100%;
+}
+
+.pm-image-preview img {
+  max-width: 100%;
+}
+
+.pm-code {
+  padding: 2px 4px;
+}
+
 .pm-div {
   padding: 1em;
   margin-block-end: 1em;
 }
 
-.pm-div p:last-child {
+.pm-div *:last-child {
   margin-bottom: 0;
 }
 
@@ -61,12 +82,16 @@
   border: 1px solid;
 }
 
+.pm-list {
+  padding-inline-start: 25px;
+}
+
 .pm-figcaption {
   margin-top: 3px;
 }
 
 .pm-table-container {
-  margin-bottom: 1em;
+  margin-block-end: 1.5em;
 }
 
 .pm-table-container th {
@@ -89,6 +114,10 @@
   border: 1px solid;
   margin-block-end: 1.5em;
   margin-top: 10px;
+}
+
+.pm-definition-list {
+  margin-block-end: 1.5em;
 }
 
 .pm-definition-term {
@@ -163,3 +192,6 @@
   padding: 10px;
 }
 
+p.ProseMirror-selectednode {
+  outline: none;
+}

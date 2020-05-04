@@ -22,6 +22,7 @@ import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorAttrProps;
 import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorCodeBlockProps;
 import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorImageDimensions;
+import org.rstudio.studio.client.panmirror.PanmirrorUIContext;
 import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorAttrEditResult;
 import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorImageProps;
 import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorInsertCitationResult;
@@ -55,7 +56,8 @@ enum AlertType {
 public class PanmirrorDialogs {
    
   
-   public PanmirrorDialogs() {
+   public PanmirrorDialogs(PanmirrorUIContext uiContext) {
+      this.uiContext_ = uiContext;
       RStudioGinjector.INSTANCE.injectMembers(this);
    }
    
@@ -104,11 +106,11 @@ public class PanmirrorDialogs {
       );
    }
    
-   public Promise<PanmirrorImageProps> editImage(PanmirrorImageProps image, PanmirrorImageDimensions dims, String resourceDir, boolean editAttributes)
+   public Promise<PanmirrorImageProps> editImage(PanmirrorImageProps image, PanmirrorImageDimensions dims, boolean editAttributes)
    {
       return new Promise<PanmirrorImageProps>(
          (ResolveCallbackFn<PanmirrorImageProps> resolve, RejectCallbackFn reject) -> {  
-            PanmirrorEditImageDialog dialog = new PanmirrorEditImageDialog(image, dims, resourceDir, editAttributes,
+            PanmirrorEditImageDialog dialog = new PanmirrorEditImageDialog(image, dims, editAttributes, uiContext_,
                (result) -> { resolve.onInvoke(result); }
             );
             dialog.showModal(false);
@@ -143,26 +145,26 @@ public class PanmirrorDialogs {
    
    public Promise<PanmirrorAttrEditResult> editAttr(PanmirrorAttrProps attr)
    {
-      return editPanmirrorAttr("Edit Attributes", false, attr);
+      return editPanmirrorAttr("Edit Attributes", null, attr);
    }
 
    
    public Promise<PanmirrorAttrEditResult> editSpan(PanmirrorAttrProps attr)
    {
-      return editPanmirrorAttr("Span Attributes", true, attr);
+      return editPanmirrorAttr("Span Attributes", "Unwrap Span", attr);
    }
    
    public Promise<PanmirrorAttrEditResult> editDiv(PanmirrorAttrProps attr, boolean removeEnabled)
    {
-      return editPanmirrorAttr("Section/Div Attributes", removeEnabled, attr);
+      return editPanmirrorAttr("Div Attributes", removeEnabled ? "Unwrap Div" : null, attr);
    }
 
 
-   private Promise<PanmirrorAttrEditResult> editPanmirrorAttr(String caption, boolean removeEnabled, PanmirrorAttrProps attr) 
+   private Promise<PanmirrorAttrEditResult> editPanmirrorAttr(String caption, String removeButtonCaption, PanmirrorAttrProps attr) 
    {
       return new Promise<PanmirrorAttrEditResult>(
          (ResolveCallbackFn<PanmirrorAttrEditResult> resolve, RejectCallbackFn reject) -> {  
-            PanmirrorEditAttrDialog dialog = new PanmirrorEditAttrDialog(caption, removeEnabled, attr, 
+            PanmirrorEditAttrDialog dialog = new PanmirrorEditAttrDialog(caption, removeButtonCaption, attr, 
                (result) -> { resolve.onInvoke(result); }
             );
             dialog.showModal(false);
@@ -221,6 +223,7 @@ public class PanmirrorDialogs {
 
    
    private GlobalDisplay globalDisplay_; 
+   private PanmirrorUIContext uiContext_;
 }
 
 

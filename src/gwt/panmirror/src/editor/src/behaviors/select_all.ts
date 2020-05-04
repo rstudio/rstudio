@@ -32,8 +32,15 @@ export function selectAll(state: EditorState, dispatch?: (tr: Transaction) => vo
   if (dispatch) {
     const editingRoot = editingRootNode(state.selection);
     if (editingRoot) {
+      const schema = state.schema;
       const tr = state.tr;
-      tr.setSelection(childBlocksSelection(tr.doc, editingRoot));
+      if (editingRoot.node.type === schema.nodes.note) {
+        tr.setSelection(childBlocksSelection(tr.doc, editingRoot));
+      } else {
+        const start = tr.doc.resolve(editingRoot.pos);
+        const end = tr.doc.resolve(editingRoot.pos + editingRoot.node.nodeSize);
+        tr.setSelection(new TextSelection(start, end));
+      }
       dispatch(tr);
       if (view) {
         // we do this to escape from embedded editors e.g. codemirror

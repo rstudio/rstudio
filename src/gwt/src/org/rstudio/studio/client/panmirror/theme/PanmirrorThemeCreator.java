@@ -32,7 +32,7 @@ public class PanmirrorThemeCreator
       // create theme from current app theme
       PanmirrorTheme theme = new PanmirrorTheme(); 
       
-      // set dark mode
+      // set mode info
       theme.darkMode = aceTheme.isDark();
       
       theme.cursorColor = DomUtils.extractCssValue("ace_cursor", "color");
@@ -53,8 +53,7 @@ public class PanmirrorThemeCreator
       theme.backgroundColor = DomUtils.extractCssValue("ace_editor", "backgroundColor");
       theme.metadataBackgroundColor = theme.backgroundColor;
       theme.nodeSelectionColor = DomUtils.extractCssValue("ace_node-selector", "backgroundColor");
-      theme.commentBackgroundColor = DomUtils.extractCssValue("ace_comment-highlight", "backgroundColor");
-         
+
       JsArrayString regionBkgdClasses = JsArrayString.createArray().cast();
       regionBkgdClasses.push("ace_marker-layer");
       regionBkgdClasses.push("ace_foreign_line");
@@ -70,6 +69,9 @@ public class PanmirrorThemeCreator
       theme.lightTextColor = DomUtils.extractCssValue("ace_support ace_function", "color");
       theme.linkTextColor = DomUtils.extractCssValue("ace_keyword", "color");
       theme.markupTextColor = DomUtils.extractCssValue("ace_markup ace_list ace_string", "color");
+      
+      theme.commentColor = DomUtils.extractCssValue("ace_comment-highlight", "color");
+      theme.commentBackgroundColor = DomUtils.extractCssValue("ace_comment-highlight", "backgroundColor");
       
       JsArrayString findTextClasses = JsArrayString.createArray().cast();
       findTextClasses.push("ace_marker-layer");

@@ -16,8 +16,13 @@
 # set minimum version
 cmake_minimum_required(VERSION 3.4.3)
 
-project (RSTUDIO_CPP)
+# read release name
+include("${CMAKE_CURRENT_SOURCE_DIR}/../../CMakeRelease.txt")
 
+# set project name
+project("RStudio [${RSTUDIO_RELEASE_NAME}]")
+
+# tools for reading executable file pre-requisites
 include(GetPrerequisites)
 
 # set compiler

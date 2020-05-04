@@ -117,7 +117,7 @@ const extension: Extension = {
   },
 
   commands: (_schema: Schema) => {
-    return [new ProsemirrorCommand(EditorCommandId.Footnote, ['Mod-Shift-F7'], footnoteCommandFn())];
+    return [new ProsemirrorCommand(EditorCommandId.Footnote, ['Shift-Mod-F7'], footnoteCommandFn())];
   },
 };
 
@@ -188,7 +188,7 @@ function insertFootnote(
   if (edit) {
     const noteNode = findNoteNode(tr.doc, ref);
     if (noteNode) {
-      tr.setSelection(TextSelection.near(tr.doc.resolve(noteNode.pos)));
+      tr.setSelection(TextSelection.create(tr.doc, noteNode.pos + 1));
     }
   }
 

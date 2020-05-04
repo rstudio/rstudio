@@ -1,7 +1,7 @@
 /*
  * SessionClientInit.hpp
  *
- * Copyright (C) 2009-19 by RStudio, PBC
+ * Copyright (C) 2009-20 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -19,9 +19,9 @@
 #include "SessionHttpMethods.hpp"
 #include "SessionDirs.hpp"
 
-#include "modules/SessionAgreement.hpp"
 #include "modules/SessionAuthoring.hpp"
 #include "modules/rmarkdown/SessionRMarkdown.hpp"
+#include "modules/rmarkdown/SessionBlogdown.hpp"
 #include "modules/connections/SessionConnections.hpp"
 #include "modules/SessionBreakpoints.hpp"
 #include "modules/SessionDependencyList.hpp"
@@ -90,7 +90,7 @@ namespace {
 
 #ifdef RSTUDIO_SERVER
 Error makePortTokenCookie(boost::shared_ptr<HttpConnection> ptrConnection, 
-      boost::shared_ptr<http::Cookie>* pCookie)
+      http::Response& response)
 {
    // extract the base URL
    json::JsonRpcRequest request;
@@ -120,14 +120,17 @@ Error makePortTokenCookie(boost::shared_ptr<HttpConnection> ptrConnection,
    }
 
    // create the cookie; don't set an expiry date as this will be a session cookie
-   *pCookie = boost::make_shared<http::Cookie>(
+   http::Cookie cookie(
             ptrConnection->request(), 
             kPortTokenCookie, 
             persistentState().portToken(), 
-            path,  
+            path,
+            http::Cookie::selectSameSite(options().legacyCookies(),
+                                         options().iFrameEmbedding()),
             true, // HTTP only -- client doesn't get to read this token
             baseURL.substr(0, 5) == "https" // secure if using HTTPS
          );
+   response.addCookie(cookie, options().iFrameLegacyCookies());
 
    return Success();
 }
@@ -143,7 +146,7 @@ void handleClientInit(const boost::function<void()>& initFunction,
    
    // check for valid CSRF headers in server mode 
    if (options.programMode() == kSessionProgramModeServer && 
-       !core::http::validateCSRFHeaders(ptrConnection->request()))
+       !core::http::validateCSRFHeaders(ptrConnection->request(), options.iFrameLegacyCookies()))
    {
       ptrConnection->sendJsonRpcError(Error(json::errc::Unauthorized, ERROR_LOCATION));
       return;
@@ -226,10 +229,6 @@ void handleClientInit(const boost::function<void()>& initFunction,
       LOG_ERROR(error);
    sessionInfo["source_documents"] = jsonDocs;
    
-   // agreement
-   sessionInfo["hasAgreement"] = modules::agreement::hasAgreement();
-   sessionInfo["pendingAgreement"] = modules::agreement::pendingAgreement();
-
    // docs url
    sessionInfo["docsURL"] = session::options().docsURL();
 
@@ -382,7 +381,8 @@ void handleClientInit(const boost::function<void()>& initFunction,
       sessionInfo["has_pkg_vig"] = false;
    }
 
-   sessionInfo["is_blogdown_project"] = module_context::isBlogdownProject();
+   sessionInfo["blogdown_config"] = modules::rmarkdown::blogdown::blogdownConfig();
+
    sessionInfo["is_distill_project"] = module_context::isDistillProject();
    
    sessionInfo["graphics_backends"] = modules::graphics::supportedBackends();
@@ -547,15 +547,10 @@ void handleClientInit(const boost::function<void()>& initFunction,
 #ifdef RSTUDIO_SERVER
    if (options.programMode() == kSessionProgramModeServer)
    {
-      boost::shared_ptr<http::Cookie> pCookie;
-      Error error = makePortTokenCookie(ptrConnection, &pCookie);
+      Error error = makePortTokenCookie(ptrConnection, response);
       if (error)
       {
          LOG_ERROR(error);
-      }
-      else if (pCookie)
-      {
-         response.addCookie(*pCookie);
       }
    }
 #endif

@@ -73,7 +73,8 @@ public class AceThemes
       themeUrl.append(GWT.getHostPageBaseURL())
          .append(theme.getUrl())
          .append("?dark=")
-         .append(theme.isDark() ? "1" : "0");
+         .append(theme.isDark() ? "1" : "0")
+         .append("&refresh=1");
       
       LinkElement currentStyleEl = document.createLinkElement();
       currentStyleEl.setType("text/css");

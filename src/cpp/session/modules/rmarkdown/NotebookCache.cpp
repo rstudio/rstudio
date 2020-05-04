@@ -575,7 +575,7 @@ Error extractRmdFromNotebook(const json::JsonRpcRequest& request,
       using namespace source_database;
 
       boost::shared_ptr<SourceDocument> pDoc(
-            new SourceDocument(SourceDocument::SourceDocumentTypeRMarkdown));
+            new SourceDocument(kSourceDocumentTypeRMarkdown));
       pDoc->setContents(nbRmdContents);
       error = put(pDoc);
       if (error)

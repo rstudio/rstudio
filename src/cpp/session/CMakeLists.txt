@@ -95,7 +95,6 @@ set (SESSION_SOURCE_FILES
    http/SessionHttpConnectionUtils.cpp
    modules/RStudioAPI.cpp
    modules/SessionAbout.cpp
-   modules/SessionAgreement.cpp
    modules/SessionApiPrefs.cpp
    modules/SessionAskPass.cpp
    modules/SessionAskSecret.cpp
@@ -205,6 +204,7 @@ set (SESSION_SOURCE_FILES
    modules/presentation/SlideRenderer.cpp
    modules/presentation/SlideRequestHandler.cpp
    modules/preview/SessionPreview.cpp
+   modules/rmarkdown/SessionBlogdown.cpp
    modules/rmarkdown/SessionRMarkdown.cpp
    modules/rmarkdown/SessionRmdNotebook.cpp
    modules/rmarkdown/SessionExecuteChunkOperation.cpp

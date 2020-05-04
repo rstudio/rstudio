@@ -182,7 +182,7 @@ function texInputRule(schema: Schema) {
 
 class InsertInlineLatexCommand extends RawInlineInsertCommand {
   constructor(schema: Schema) {
-    super(EditorCommandId.TexInline, schema.marks.raw_tex, (tr: Transaction) => {
+    super(EditorCommandId.TexInline, [], schema.marks.raw_tex, (tr: Transaction) => {
       const mark = schema.marks.raw_tex.create();
       const tex = '\\' + kTexPlaceholder;
       const node = schema.text(tex, [mark]);
@@ -202,13 +202,10 @@ const key = new PluginKey<DecorationSet>('latex-highlight');
 
 export function latexHighlightingPlugin(schema: Schema) {
   const kLightTextClass = 'pm-light-text-color';
-  const delimiterRegex = /[{}[\]]/g;
-
   return markHighlightPlugin(key, schema.marks.raw_tex, (text, _attrs, markRange) => {
     const kIdClass = 'pm-markup-text-color';
-    const idRegEx = /\\[A-Za-z]+/g;
-    let decorations = markHighlightDecorations(markRange, text, idRegEx, kIdClass);
-    decorations = decorations.concat(markHighlightDecorations(markRange, text, delimiterRegex, kLightTextClass));
+    let decorations = markHighlightDecorations(markRange, text, /\\[A-Za-z]+/g, kIdClass);
+    decorations = decorations.concat(markHighlightDecorations(markRange, text, /[{}[\]]/g, kLightTextClass));
     return decorations;
   });
 }

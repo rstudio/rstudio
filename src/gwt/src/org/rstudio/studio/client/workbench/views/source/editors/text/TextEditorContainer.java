@@ -17,7 +17,7 @@ package org.rstudio.studio.client.workbench.views.source.editors.text;
 
 import java.util.ArrayList;
 
-import org.rstudio.core.client.jsdiff.JsdiffChange;
+import org.rstudio.core.client.patch.TextChange;
 import org.rstudio.core.client.widget.CanFocus;
 import org.rstudio.core.client.widget.IsHideableWidget;
 
@@ -29,22 +29,35 @@ import com.google.gwt.user.client.ui.LayoutPanel;
 
 public class TextEditorContainer extends LayoutPanel implements CanFocus
 {     
-   public static class EditorCode
+   public static class Changes
    {
-      public EditorCode(String code, JsdiffChange[] changes)
+      public Changes(TextChange[] changes, Cursor cursor)
       {
-         this.code = code;
          this.changes = changes;
+         this.cursor = cursor;
       }
       
-      String code;
-      JsdiffChange[] changes;
+      public final TextChange[] changes;
+      public final Cursor cursor;
+   }
+   
+   public static class Cursor
+   {
+      public Cursor(int row, int column)
+      {
+         this.row = row;
+         this.column = column;
+      }
+      
+      public final int row;
+      public final int column;
    }
    
    public static interface Editor extends IsHideableWidget
    {
       String getCode();
-      void setCode(EditorCode editorCode, boolean activatingEditor);
+      void setCode(String code);
+      void applyChanges(Changes changes, boolean activatingEditor);
    }
    
    public TextEditorContainer(Editor editor)

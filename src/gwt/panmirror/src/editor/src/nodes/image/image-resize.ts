@@ -243,6 +243,9 @@ function resizeShelf(
     editingScrollContainerEl.addEventListener('scroll', updatePosition);
   }
 
+  // update position every 50ms (cleanup drag/drop copy/paste mispositioning)
+  const positionTimer = setInterval(updatePosition, 50);
+
   // main panel that holds the controls
   const panel = createHorizontalPanel();
   shelf.append(panel);
@@ -379,6 +382,7 @@ function resizeShelf(
       if (editingScrollContainerEl) {
         editingScrollContainerEl.removeEventListener('scroll', updatePosition);
       }
+      clearInterval(positionTimer);
       shelf.remove();
     },
 
@@ -507,11 +511,11 @@ function shelfSizeFromImage(img: HTMLImageElement) {
   const width = img.getAttribute(kDataWidth);
   const height = img.getAttribute(kDataHeight);
 
-  // if there is no width and no height, then use pixels
+  // if there is no width and no height, then use naturalWidth/naturalHeight
   if (!width && !height) {
     return {
-      width: img.offsetWidth,
-      height: img.offsetHeight,
+      width: img.naturalWidth || img.offsetWidth,
+      height: img.naturalHeight || img.offsetHeight,
       unit: kPixelUnit,
     };
 

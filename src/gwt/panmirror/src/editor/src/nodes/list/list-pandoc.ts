@@ -144,10 +144,19 @@ interface ListNodeOptions {
 }
 
 function listNodeOptions(node: ProsemirrorNode, capabilities: ListCapabilities): ListNodeOptions {
-  return {
+  const options = {
     tight: node.attrs.tight,
     example: capabilities.example ? node.attrs.number_style === ListNumberStyle.Example : false,
   };
+
+  // if it's tight see if we need to override b/c of multiple blocks
+  node.forEach(item => {
+    if (options.tight && item.childCount > 1) {
+      options.tight = false;
+    }
+  });
+
+  return options;
 }
 
 function writePandocListItem(output: PandocOutput, options: ListNodeOptions, node: ProsemirrorNode) {

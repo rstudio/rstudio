@@ -1243,7 +1243,7 @@ SEXP rs_pathInfo(SEXP pathSEXP)
       r::sexp::Protect rProtect;
       return r::sexp::create(pathInfo, &rProtect);
    }
-   catch(r::exec::RErrorException e)
+   catch(r::exec::RErrorException& e)
    {
       r::exec::error(e.message());
    }

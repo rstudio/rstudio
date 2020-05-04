@@ -18,6 +18,8 @@ import { Slice, Fragment, MarkType, Node as ProsemirrorNode } from 'prosemirror-
 // add marks to plain text pasted into the editor (e.g. urls become links)
 export function markPasteHandler(regexp: RegExp, type: MarkType, getAttrs: (s: string) => {}) {
   const handler = (fragment: Fragment) => {
+    regexp.lastIndex = 0;
+
     const nodes: ProsemirrorNode[] = [];
 
     fragment.forEach((child: ProsemirrorNode) => {
@@ -50,6 +52,8 @@ export function markPasteHandler(regexp: RegExp, type: MarkType, getAttrs: (s: s
         nodes.push(child.copy(handler(child.content)));
       }
     });
+
+    regexp.lastIndex = 0;
 
     return Fragment.fromArray(nodes);
   };

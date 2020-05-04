@@ -39,6 +39,7 @@ import org.rstudio.core.client.jsonrpc.RpcRequestCallback;
 import org.rstudio.core.client.jsonrpc.RpcResponse;
 import org.rstudio.core.client.jsonrpc.RpcResponseHandler;
 import org.rstudio.studio.client.application.ApplicationTutorialEvent;
+import org.rstudio.studio.client.application.ApplicationUtils;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.*;
 import org.rstudio.studio.client.application.model.*;
@@ -139,7 +140,6 @@ import org.rstudio.studio.client.workbench.codesearch.model.SearchPathFunctionDe
 import org.rstudio.studio.client.workbench.events.SessionInitEvent;
 import org.rstudio.studio.client.workbench.events.SessionInitHandler;
 import org.rstudio.studio.client.workbench.exportplot.model.SavePlotAsImageContext;
-import org.rstudio.studio.client.workbench.model.Agreement;
 import org.rstudio.studio.client.workbench.model.HTMLCapabilities;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
@@ -396,24 +396,13 @@ public class RemoteServer implements Server
    private static final native String getUserHomePath(SessionInfo info) /*-{
       return info.user_home_path;
    }-*/;
-   
-   // accept application agreement
-   public void acceptAgreement(Agreement agreement, 
-                               ServerRequestCallback<Void> requestCallback)
-   {
-      sendRequest(RPC_SCOPE, 
-                  ACCEPT_AGREEMENT, 
-                  agreement.getHash(),
-                  requestCallback);
-   }
-   
-   
+
    public void suspendSession(boolean force,
                               ServerRequestCallback<Void> requestCallback)
    {
       sendRequest(RPC_SCOPE, SUSPEND_SESSION, force, requestCallback);
    }
-   
+
 
    public void handleUnsavedChangesCompleted(
                             boolean handled,
@@ -3500,30 +3489,10 @@ public class RemoteServer implements Server
          // attempting to resolve
          return true;
       }
-      // launch params missing means we are in a launcher session that needs to be implicitly resumed
+      // launch params missing means we are in a launcher session
       else if (error.getCode() == RpcError.LAUNCH_PARAMETERS_MISSING)
       {
-         if (launchParameters_ == null)
-            return false;
-
-         // resend the RPC with the launch params received earlier via client_init
-         JSONObject kwParams = new JSONObject();
-         kwParams.put("launch_parameters", new JSONObject(launchParameters_));
-
-         RpcRequest modifiedRequest = new RpcRequest(request.getUrl(),
-                                                     request.getMethod(),
-                                                     request.getParams(),
-                                                     kwParams,
-                                                     request.getRedactLog(),
-                                                     request.getResultFieldName(),
-                                                     request.getSourceWindow(),
-                                                     request.getClientId(),
-                                                     request.getClientVersion(),
-                                                     request.getRefreshCreds());
-
-         setSessionRelaunchPending();
-
-         retryHandler.onModifiedRetry(modifiedRequest);
+         setSessionRelaunchPending(error.getRedirectUrl());
          return true;
       }
       else
@@ -3532,14 +3501,14 @@ public class RemoteServer implements Server
       }
    }
 
-   private void setSessionRelaunchPending()
+   private void setSessionRelaunchPending(String redirectUrl)
    {
       if (!sessionRelaunchPending_)
       {
          sessionRelaunchPending_ = true;
 
          // fire event to inform UI that we are attempting to relaunch the session
-         eventBus_.dispatchEvent(new SessionRelaunchEvent(SessionRelaunchEvent.Type.RELAUNCH_INITIATED));
+         eventBus_.dispatchEvent(new SessionRelaunchEvent(SessionRelaunchEvent.Type.RELAUNCH_INITIATED, redirectUrl));
       }
    }
 
@@ -6198,7 +6167,6 @@ public class RemoteServer implements Server
 
    // session methods
    private static final String CLIENT_INIT = "client_init";
-   private static final String ACCEPT_AGREEMENT = "accept_agreement";
    private static final String SUSPEND_SESSION = "suspend_session";
    private static final String HANDLE_UNSAVED_CHANGES_COMPLETED = "handle_unsaved_changes_completed";
    private static final String QUIT_SESSION = "quit_session";

@@ -1,7 +1,7 @@
 /*
- * figure-styles.css
+ * PanmirrorMenuItem.java
  *
- * Copyright (C) 2019-20 by RStudio, PBC
+ * Copyright (C) 2009-20 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -13,21 +13,21 @@
  *
  */
 
-.ProseMirror figure {
-  margin: 0;
-  margin-block-end: 1em;
-  cursor: default;
+package org.rstudio.studio.client.panmirror.command;
+
+import jsinterop.annotations.JsType;
+
+@JsType
+public class PanmirrorMenuItem
+{
+   @JsType
+   public class SubMenu
+   {
+      public String text;
+      public PanmirrorMenuItem[] items;
+   }
+   
+   public String command;
+   public boolean separator;
+   public SubMenu subMenu;
 }
-
-/* Note that ::selection and ::-moz-selection can't be combined into a single rule*/
-
-.ProseMirror .ProseMirror-selectednode *::selection {
-  background-color: transparent !important;
-}
-
-.ProseMirror .ProseMirror-selectednode *::-moz-selection {
-  background-color: transparent !important;
-}
-
-
-

@@ -13,20 +13,9 @@
  *
  */
 
-import copyImage from '../styles/images/copy.png';
-import propertiesImage from '../styles/images/properties.png';
-import removelinkImage from '../styles/images/removelink.png';
-
 export interface EditorUIImages {
   copy?: string;
   properties?: string;
   removelink?: string;
 }
 
-export function defaultEditorUIImages(): EditorUIImages {
-  return {
-    copy: copyImage,
-    properties: propertiesImage,
-    removelink: removelinkImage,
-  };
-}

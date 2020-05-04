@@ -40,12 +40,11 @@ import { kHTMLFormat, kTexFormat, editRawBlockCommand, isRawHTMLFormat } from '.
 import { isSingleLineTex } from '../api/tex';
 import { PandocCapabilities } from '../api/pandoc_capabilities';
 
-const extension = (pandocExtensions: PandocExtensions, pandocCapabilities: PandocCapabilities): Extension | null => {
-  // requires either raw_attribute or raw_html
-  if (!pandocExtensions.raw_attribute && !pandocExtensions.raw_html) {
-    return null;
-  }
-
+const extension = (
+  pandocExtensions: PandocExtensions,
+  pandocCapabilities: PandocCapabilities,
+  ui: EditorUI,
+): Extension | null => {
   return {
     nodes: [
       {
@@ -88,13 +87,14 @@ const extension = (pandocExtensions: PandocExtensions, pandocCapabilities: Pando
           lang: (node: ProsemirrorNode) => {
             return node.attrs.format;
           },
+          attrEditFn: editRawBlockCommand(ui, pandocCapabilities.output_formats),
           borderColorClass: 'pm-raw-block-border',
         },
 
         attr_edit: () => ({
           type: (schema: Schema) => schema.nodes.raw_block,
           tags: (node: ProsemirrorNode) => [node.attrs.format],
-          editFn: (ui: EditorUI) => editRawBlockCommand(ui, pandocCapabilities.output_formats),
+          editFn: () => editRawBlockCommand(ui, pandocCapabilities.output_formats),
         }),
 
         pandoc: {
@@ -124,7 +124,7 @@ const extension = (pandocExtensions: PandocExtensions, pandocCapabilities: Pando
       },
     ],
 
-    commands: (schema: Schema, ui: EditorUI) => {
+    commands: (schema: Schema) => {
       const commands: ProsemirrorCommand[] = [];
 
       if (pandocExtensions.raw_attribute) {
@@ -143,13 +143,13 @@ function readPandocRawBlock(schema: Schema, tok: PandocToken, writer: Prosemirro
   // highlighting and more seamless editing experience)
   const format = tok.c[kRawBlockFormat];
   const text = tok.c[kRawBlockContent] as string;
-  if (isRawHTMLFormat(format) && isSingleLineHTML(text)) {
+  if (isRawHTMLFormat(format) && isSingleLineHTML(text.trimRight())) {
     writer.openNode(schema.nodes.paragraph, {});
     writer.writeInlineHTML(text.trimRight());
     writer.closeNode();
 
     // similarly, single lines of tex should be read as inline tex
-  } else if (format === kTexFormat && isSingleLineTex(text)) {
+  } else if (format === kTexFormat && isSingleLineTex(text.trimRight())) {
     writer.openNode(schema.nodes.paragraph, {});
     const rawTexMark = schema.marks.raw_tex.create();
     writer.openMark(rawTexMark);

@@ -77,6 +77,7 @@ import org.rstudio.studio.client.workbench.views.source.DocumentOutlineWidget;
 import org.rstudio.studio.client.workbench.views.source.PanelWithToolbars;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTargetToolbar;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTarget.Display;
+import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.findreplace.FindReplaceBar;
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.TextEditingTargetNotebook;
 import org.rstudio.studio.client.workbench.views.source.editors.text.status.StatusBar;
@@ -198,6 +199,16 @@ public class TextEditingTargetWidget
 
       initWidget(panel_);
       
+      // Update wrap mode on the editor when the soft wrap property changes
+      docUpdateSentinel_.addPropertyValueChangeHandler(
+            TextEditingTarget.SOFT_WRAP_LINES, (newval) ->
+            {
+               boolean wrap = StringUtil.equals(newval.getValue(), 
+                     DocUpdateSentinel.PROPERTY_TRUE);
+               commands_.toggleSoftWrapMode().setChecked(wrap);
+               editor_.setUseWrapMode(wrap);
+            });
+
       userPrefs_.autoSaveOnBlur().addValueChangeHandler((evt) ->
       {
          // Re-adapt to file type when this preference changes; it may bring
@@ -229,6 +240,12 @@ public class TextEditingTargetWidget
       }
    }
    
+   public void toggleSoftWrapMode()
+   {
+      docUpdateSentinel_.setBoolProperty(
+            TextEditingTarget.SOFT_WRAP_LINES, !editor_.getUseWrapMode());
+   }
+
    public void toggleDocumentOutline()
    {
       if (isVisualMode())
@@ -846,6 +863,9 @@ public class TextEditingTargetWidget
       
       toggleVisualModeOutlineButton_.setVisible(visualRmdMode);
       
+      // update wrap mode for filetype
+      syncWrapMode();
+      
       toolbar_.invalidateSeparators();
    }
    
@@ -984,11 +1004,15 @@ public class TextEditingTargetWidget
          for (String pkg: packages)
             deps.add(Dependency.cranPackage(pkg));
          
+         String scriptName = StringUtil.isNullOrEmpty(docUpdateSentinel_.getPath()) ?
+            "R Script" :
+            FilePathUtils.friendlyFileName(docUpdateSentinel_.getPath());
+            
          // Install them using the dependency manager; provide a "prompt"
          // function that just accepts the list (since the user has already been
          // prompted here in the editor)
          RStudioGinjector.INSTANCE.getDependencyManager().withDependencies(
-               "Install " + FilePathUtils.friendlyFileName(docUpdateSentinel_.getPath()) + " dependencies", 
+               "Install " + scriptName + " dependencies", 
                (String dependencies, CommandWithArg<Boolean> result) -> result.execute(true),
                deps, false, null);
          hideWarningBar();
@@ -1077,6 +1101,9 @@ public class TextEditingTargetWidget
    public void onActivate()
    {
       editor_.onActivate();
+      
+      // sync the state of the command marking word wrap mode for this document
+      syncWrapMode();
       
       Scheduler.get().scheduleDeferred(() -> manageToolbarSizes());
    }
@@ -1653,16 +1680,29 @@ public class TextEditingTargetWidget
       {
         return editorPanel_;
       }
+      
+      @Override
+      public void setCode(String code)
+      {
+         editor_.setCode(code, true);
+      }
      
       @Override
-      public void setCode(TextEditorContainer.EditorCode editorCode, boolean activatingEditor)
+      public void applyChanges(TextEditorContainer.Changes changes, boolean activatingEditor)
       {   
          // apply changes
-         editor_.applyCodeChanges(editorCode.changes);
+         editor_.applyChanges(changes.changes);
          
-         // flag activation pending (triggers autoscroll)
+         // additional actions when activating
          if (activatingEditor)
+         {
+            // set cursor position if one was provided
+            if (changes.cursor != null)
+               editor_.setCursorPosition(Position.create(changes.cursor.row, changes.cursor.column));
+            
+            // flag activation pending (triggers autoscroll)
             activationPending_ = true;
+         }
       }
       
       @Override
@@ -1673,6 +1713,20 @@ public class TextEditingTargetWidget
       
       private boolean activationPending_ = false;
    };
+   
+   private void syncWrapMode()
+   {
+      // set wrap mode from the file type (unless we have a wrap mode specified
+      // explicitly)
+      boolean wrapMode = editor_.getFileType().getWordWrap();
+      if (docUpdateSentinel_.hasProperty(TextEditingTarget.SOFT_WRAP_LINES))
+      {
+         wrapMode = docUpdateSentinel_.getBoolProperty(TextEditingTarget.SOFT_WRAP_LINES, 
+               wrapMode);
+      }
+      editor_.setUseWrapMode(wrapMode);
+      commands_.toggleSoftWrapMode().setChecked(wrapMode);
+   }
 
    private final TextEditingTarget target_;
    private final DocUpdateSentinel docUpdateSentinel_;
@@ -1743,5 +1797,4 @@ public class TextEditingTargetWidget
    private String sourceCommandText_ = "Source";
    private String knitCommandText_ = "Knit";
    private String previewCommandText_ = "Preview";
-
 }

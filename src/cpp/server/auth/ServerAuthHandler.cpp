@@ -348,7 +348,7 @@ std::string getUserIdentifier(const core::http::Request& request,
                               bool requireUserListCookie,
                               http::Response* pResponse)
 {
-   if (isCookieRevoked(request.cookieValue(kUserIdCookie)))
+   if (isCookieRevoked(request.cookieValue(kUserIdCookie, options().wwwIFrameLegacyCookies())))
       return std::string();
 
    std::string userIdentifier = s_handler.getUserIdentifier(request, pResponse);
@@ -357,7 +357,7 @@ std::string getUserIdentifier(const core::http::Request& request,
 
    if (requireUserListCookie)
    {
-      if (!overlay::isUserListCookieValid(request.cookieValue(kUserListCookie)))
+      if (!overlay::isUserListCookieValid(request.cookieValue(kUserListCookie, options().wwwIFrameLegacyCookies())))
          return std::string();
    }
 
@@ -477,7 +477,8 @@ void refreshAuthCookies(const std::string& userIdentifier,
       // clear any existing auth cookies first - this method can be invoked multiple
       // times depending on the handler type (for example, an upload handler)
       pResponse->clearCookies();
-      bool persist = request.cookieValue(kPersistAuthCookie) == "1" ? true : false;
+      std::string persistCookie = request.cookieValue(kPersistAuthCookie, options().wwwIFrameLegacyCookies());
+      bool persist = persistCookie == "1" ? true : false;
       s_handler.refreshAuthCookies(request, userIdentifier, persist, pResponse);
    }
 }

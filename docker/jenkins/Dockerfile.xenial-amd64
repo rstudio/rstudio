@@ -43,6 +43,7 @@ RUN apt-get update && \
     libssl-dev \
     libuser1-dev \
     libxslt1-dev \
+    libxml2-dev \
     lsof \
     openjdk-8-jdk \
     p7zip-full \

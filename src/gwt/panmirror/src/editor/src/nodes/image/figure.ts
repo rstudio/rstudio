@@ -38,6 +38,9 @@ import {
   kRawBlockFormat,
   imageAttributesAvailable,
 } from '../../api/pandoc';
+import { PandocCapabilities } from '../../api/pandoc_capabilities';
+import { trTransform } from '../../api/transaction';
+import { EditorFormat } from '../../api/format';
 
 import {
   imageAttrsFromDOM,
@@ -49,11 +52,6 @@ import {
 } from './image';
 import { ImageNodeView } from './image-view';
 import { inlineHTMLIsImage } from './image-util';
-
-import './figure-styles.css';
-import { PandocCapabilities } from '../../api/pandoc_capabilities';
-import { trTransform } from '../../api/transaction';
-import { EditorFormat } from '../../api/format';
 
 const plugin = new PluginKey('figure');
 

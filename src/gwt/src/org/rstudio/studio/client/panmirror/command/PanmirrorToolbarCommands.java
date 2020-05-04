@@ -52,11 +52,12 @@ public class PanmirrorToolbarCommands
       add(PanmirrorCommands.Heading6, "Heading 6", Roles.getMenuitemradioRole());
       add(PanmirrorCommands.CodeBlock, "Code Block", Roles.getMenuitemradioRole());
       add(PanmirrorCommands.CodeBlockFormat, "Code Block...");
+      
       add(PanmirrorCommands.Blockquote, "Blockquote", Roles.getMenuitemcheckboxRole(), icons.BLOCKQUOTE);
       add(PanmirrorCommands.LineBlock, "Line Block", Roles.getMenuitemcheckboxRole());
       add(PanmirrorCommands.Div, "Div Block...");
       add(PanmirrorCommands.AttrEdit, "Edit Attributes...");
-      add(PanmirrorCommands.ClearFormatting, "Clear Formatting");
+      add(PanmirrorCommands.ClearFormatting, "Clear Formatting", icons.CLEAR_FORMATTING);
       
       // raw
       add(PanmirrorCommands.TexInline, "TeX Inline", Roles.getMenuitemcheckboxRole());
@@ -101,9 +102,10 @@ public class PanmirrorToolbarCommands
       add(PanmirrorCommands.Footnote, "Footnote");
       add(PanmirrorCommands.HorizontalRule, "Horizontal Rule");
       add(PanmirrorCommands.ParagraphInsert, "Paragraph");
+      add(PanmirrorCommands.HTMLComment, "Comment", icons.COMMENT);
       add(PanmirrorCommands.YamlMetadata, "YAML Block");
       add(PanmirrorCommands.Shortcode, "Shortcode");
-      add(PanmirrorCommands.RmdChunk, "Code Chunk", icons.RMD_CHUNK);
+      add(PanmirrorCommands.RmdChunk, "Rmd Chunk", icons.RMD_CHUNK);
       add(PanmirrorCommands.InsertDiv, "Div Block...");
       add(PanmirrorCommands.InlineMath, "Inline Math");
       add(PanmirrorCommands.DisplayMath, "Display Math");
@@ -117,6 +119,23 @@ public class PanmirrorToolbarCommands
    public PanmirrorCommandUI get(String id)
    {
       return commandsUI_.get(id);
+   }
+   
+   public boolean exec(String id)
+   {
+      PanmirrorCommandUI command = get(id);
+      if (command != null)
+      {
+         if (command.isEnabled())
+         {
+            command.execute();
+         }
+         return true;
+      }
+      else
+      {
+         return false;
+      }
    }
    
    
@@ -159,6 +178,8 @@ public class PanmirrorToolbarCommands
       // add it
       commandsUI_.put(id, new PanmirrorCommandUI(command, menuText, pluralMenuText, role, image));
    }
+   
+   
    
    
    private PanmirrorCommand[] commands_ = null;

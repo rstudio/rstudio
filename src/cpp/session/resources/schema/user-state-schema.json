@@ -9,11 +9,6 @@
             "default": "",
             "description": "A unique identifier representing the user and machine."
         },
-        "agreement_hash": {
-            "type": "string",
-            "default": "",
-            "description": "Hash of the agreement that the user has accepted."
-        },
         "auto_created_profile": {
             "type": "boolean",
             "default": false,

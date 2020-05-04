@@ -2,37 +2,41 @@
 
 @external rstudio-themes-light-menus, rstudio-themes-dark-menus;
 
-.highlightEl {
+.highlightEl, .staticHighlightEl {
    position: fixed;
    pointer-events: none;
 }
 
 .rstudio-themes-light-menus .highlightEl {
+   border: 2px solid rgba(30, 119, 188, 1.00);
    animation-name: pulse-light;
-   animation-duration: 2s;
-   animation-timing-function: ease-in-out;
+   animation-duration: 1.65s;
    animation-iteration-count: infinite;
 }
 
+.rstudio-themes-light-menus .staticHighlightEl {
+   border: 2px solid rgba(30, 119, 188, 1.00);
+}
+
 .rstudio-themes-dark-menus .highlightEl {
+   border: 2px solid rgba(255, 255, 255, 1.00);
    animation-name: pulse-dark;
-   animation-duration: 2s;
-   animation-timing-function: ease-in-out;
+   animation-duration: 1.65s;
    animation-iteration-count: infinite;
+}
+
+.rstudio-themes-dark-menus .staticHighlightEl {
+   border: 2px solid rgba(255, 255, 255, 1.00);
 }
 
 @keyframes pulse-dark { 
    
    0%   {
-      box-shadow: 0 0 2px 2px rgba(255, 255, 255, 1.00);
+      box-shadow: 0 0 0 1px rgba(255, 255, 255, 1.00);
    }
     
-   50%  {
-      box-shadow: 0 0 2px 2px rgba(255, 255, 255, 0.75);
-   }
-   
    100% {
-      box-shadow: 0 0 2px 2px rgba(255, 255, 255, 1.00);
+      box-shadow: 0 0 0 15px rgba(255, 255, 255, 0);
    }
    
 };
@@ -40,15 +44,11 @@
 @keyframes pulse-light { 
    
    0%   {
-      box-shadow: 0 0 2px 2px rgba(30, 119, 188, 1.00);
+      box-shadow: 0 0 0 2px rgba(30, 119, 188, 1.00);
    }
     
-   50%  {
-      box-shadow: 0 0 2px 2px rgba(30, 119, 188, 0.75);
-   }
-   
    100% {
-      box-shadow: 0 0 2px 2px rgba(30, 119, 188, 1.00);
+      box-shadow: 0 0 0 15px rgba(30, 119, 188, 0);
    }
    
 };

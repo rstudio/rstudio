@@ -56,22 +56,29 @@ export type ExtensionFn = (
 // create an ExtensionFn for a given extension and format option that must be enabled
 export function extensionIfEnabled(extension: Extension, name: string | string[]) {
   return (pandocExtensions: PandocExtensions) => {
-    // match single extension name
-    if (typeof name === 'string') {
-      if (pandocExtensions[name]) {
-        return extension;
-      }
+    if (extensionEnabled(pandocExtensions, name)) {
+      return extension;
+    } else {
+      return null;
+    }
+  };
+}
 
-      // match any one of several names
-    } else if (Array.isArray(name)) {
-      for (const nm of name) {
-        if (pandocExtensions[nm]) {
-          return extension;
-        }
-      }
+export function extensionEnabled(pandocExtensions: PandocExtensions, name: string | string[]) {
+  // match single extension name
+  if (typeof name === 'string') {
+    if (pandocExtensions[name]) {
+      return true;
     }
 
-    // didn't find match
-    return null;
-  };
+    // match any one of several names
+  } else if (Array.isArray(name)) {
+    for (const nm of name) {
+      if (pandocExtensions[nm]) {
+        return true;
+      }
+    }
+  }
+
+  return false;
 }

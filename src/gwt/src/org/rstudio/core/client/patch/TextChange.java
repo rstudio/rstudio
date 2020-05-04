@@ -1,5 +1,5 @@
 /*
- * Agreement.java
+ * TextChange.java
  *
  * Copyright (C) 2009-12 by RStudio, PBC
  *
@@ -12,30 +12,28 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-package org.rstudio.studio.client.workbench.model;
 
-import com.google.gwt.core.client.JavaScriptObject;
+package org.rstudio.core.client.patch;
 
-public class Agreement extends JavaScriptObject
+import jsinterop.annotations.JsType;
+
+@JsType
+public class TextChange
 {
-   protected Agreement()
+   public static class Type
    {
+      public static final int Insert = 1;
+      public static final int Equal = 0;
+      public static final int Delete = -1;
    }
    
-   public final native String getTitle() /*-{
-      return this.title;
-   }-*/;
-
-   public final native String getContents() /*-{
-      return this.contents;
-   }-*/;
-
-   public final native String getHash() /*-{
-      return this.hash;
-   }-*/;
+   public TextChange(int type, String value)
+   {
+      this.type = type;
+      this.value = value;
+   }
    
-   public final native boolean getUpdated() /*-{
-      return this.updated;
-   }-*/;
-
+   public int type;
+   public String value;
 }
+
