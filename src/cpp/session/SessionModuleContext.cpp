@@ -85,6 +85,7 @@
 #include "modules/SessionBreakpoints.hpp"
 #include "modules/SessionVCS.hpp"
 #include "modules/SessionFiles.hpp"
+#include "modules/SessionTempDir.hpp"
 
 #include "session-config.h"
 

@@ -65,7 +65,7 @@ void viewerNavigate(const std::string& url,
    dataJson["has_previous"] = isHTMLWidget && viewerHistory().hasPrevious();
    dataJson["bring_to_front"] = bringToFront;
    ClientEvent event(client_events::kViewerNavigate, dataJson);
-   module_context::enqueClientEvent(event);
+   std::cerr << "navigate: " << s_currentUrl << std::endl;
 }
 
 void viewerNavigateToCurrent(bool bringToFront = true)
@@ -295,10 +295,8 @@ SEXP rs_viewer(SEXP urlSEXP, SEXP heightSEXP)
          if (error)
             LOG_ERROR(error);
 
-         // if it's in the temp dir and we're running R >= 2.14 then
-         // we can serve it via the help server, otherwise we need
-         // to show it in an external browser
-         if (filePath.isWithin(tempDir) && r::util::hasRequiredVersion("2.14"))
+         // If it's inside the temporary directory, we can serve it ourselves.
+         if (filePath.isWithin(tempDir))
          {
             // calculate the relative path
             std::string path = filePath.getRelativePath(tempDir);
