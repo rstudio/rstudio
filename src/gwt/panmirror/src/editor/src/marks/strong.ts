@@ -59,7 +59,10 @@ const extension: Extension = {
   },
 
   inputRules: (schema: Schema) => {
-    return [delimiterMarkInputRule('\\*\\*', schema.marks.strong)];
+    return [
+      delimiterMarkInputRule('\\*\\*', schema.marks.strong),
+      delimiterMarkInputRule('__', schema.marks.strong)
+    ];
   },
 };
 
