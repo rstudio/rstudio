@@ -247,7 +247,7 @@ public:
       // stop the server 
       acceptorService_.ioService().stop();
 
-      std::set<boost::shared_ptr<AsyncConnectionImpl<typename ProtocolType::socket> >> connections;
+      std::set<boost::weak_ptr<AsyncConnectionImpl<typename ProtocolType::socket> >> connections;
       boost::shared_ptr<AsyncConnectionImpl<typename ProtocolType::socket>> pendingConnection;
       RECURSIVE_LOCK_MUTEX(mutex_)
       {
@@ -268,7 +268,8 @@ public:
       // since the connection mutex and the server mutex are intertwined here
       for (const auto& connection : connections)
       {
-         connection->close();
+         if (auto instance = connection.lock())
+            instance->close();
       }
 
       // the list should be empty now, but clear it to make sure
@@ -320,8 +321,11 @@ private:
       CATCH_UNEXPECTED_EXCEPTION
    }
 
-   void addConnection(const boost::shared_ptr<AsyncConnectionImpl<typename ProtocolType::socket>>& connection)
+   void addConnection(const boost::weak_ptr<AsyncConnectionImpl<typename ProtocolType::socket>>& connection)
    {
+      // add connection to our map
+      // note that we only hold a weak_ptr to the connection so that it can go out of scope on its own
+      // if we didn't allow this, unused (finished) connections may never close
       RECURSIVE_LOCK_MUTEX(mutex_)
       {
          connections_.insert(connection);
@@ -329,7 +333,7 @@ private:
       END_LOCK_MUTEX
    }
 
-   void onConnectionClosed(const boost::shared_ptr<AsyncConnectionImpl<typename ProtocolType::socket>>& connection)
+   void onConnectionClosed(const boost::weak_ptr<AsyncConnectionImpl<typename ProtocolType::socket>>& connection)
    {
       RECURSIVE_LOCK_MUTEX(mutex_)
       {
@@ -385,7 +389,8 @@ private:
       {
          if (!ec) 
          {
-            addConnection(ptrNextConnection_);
+            boost::weak_ptr<AsyncConnectionImpl<typename ProtocolType::socket>> weak(ptrNextConnection_);
+            addConnection(weak);
             ptrNextConnection_->startReading();
          }
          else
@@ -750,7 +755,7 @@ private:
    Headers additionalResponseHeaders_;
    boost::shared_ptr<boost::asio::ssl::context> sslContext_;
    boost::shared_ptr<AsyncConnectionImpl<typename ProtocolType::socket> > ptrNextConnection_;
-   std::set<boost::shared_ptr<AsyncConnectionImpl<typename ProtocolType::socket> >> connections_;
+   std::set<boost::weak_ptr<AsyncConnectionImpl<typename ProtocolType::socket> >> connections_;
    AsyncUriHandlers uriHandlers_ ;
    AsyncUriHandlerFunction defaultHandler_;
    std::vector<boost::shared_ptr<boost::thread> > threads_;
