@@ -895,9 +895,9 @@ public class TextEditingTargetVisualMode
          else
             return context_.getCurrentWorkingDir().getPath();
       };
-      FileSystemItem resourceDir = FileSystemItem.createDir(uiContext.getDefaultResourceDir.get());
       
       uiContext.mapPathToResource = path -> {
+         FileSystemItem resourceDir = FileSystemItem.createDir(uiContext.getDefaultResourceDir.get());
          FileSystemItem file = FileSystemItem.createFile(path);
          String resourcePath = file.getPathRelativeTo(resourceDir);
          if (resourcePath != null)
@@ -917,6 +917,7 @@ public class TextEditingTargetVisualMode
          if (hugoPath != null)
             path = hugoPath;
          
+         FileSystemItem resourceDir = FileSystemItem.createDir(uiContext.getDefaultResourceDir.get());
          return ImagePreviewer.imgSrcPathFromHref(resourceDir.getPath(), path);
       };
       uiContext.translateText = text -> {
