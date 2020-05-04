@@ -188,3 +188,6 @@ h3.pm-heading {
   padding: 10px;
 }
 
+p.ProseMirror-selectednode {
+  outline: none;
+}
