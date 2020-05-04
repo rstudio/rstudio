@@ -862,12 +862,11 @@ public class TextEditingTargetVisualMode
       {
          for (AppCommand command : commands)
          {
-            if (command.isVisible() && 
-                command.isEnabled() && 
-                !disabledForVisualMode_.contains(command))
+            if (command.isVisible() && command.isEnabled())
             {
                command.setEnabled(false);
-               disabledForVisualMode_.add(command);
+               if (!disabledForVisualMode_.contains(command))
+                  disabledForVisualMode_.add(command);
             }
          }
       }
