@@ -119,6 +119,7 @@ function insertMenu(ui: EditorUI) {
     { command: EditorCommandId.Footnote },
     { command: EditorCommandId.Citation },
     { separator: true },
+    { command: EditorCommandId.ParagraphInsert },
     { command: EditorCommandId.CodeBlockFormat },
     { command: EditorCommandId.InsertDiv },
     { command: EditorCommandId.YamlMetadata },

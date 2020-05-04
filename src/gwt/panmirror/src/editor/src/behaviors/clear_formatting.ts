@@ -29,7 +29,7 @@ const kLiftFormattingNodes = ['blockquote', 'line_block', 'div', 'raw_block'];
 
 const extension: Extension = {
   commands: () => {
-    return [new ProsemirrorCommand(EditorCommandId.ClearFormatting, ['Mod-\\'], clearFormatting)];
+    return [new ProsemirrorCommand(EditorCommandId.ClearFormatting, [], clearFormatting)];
   },
 };
 
