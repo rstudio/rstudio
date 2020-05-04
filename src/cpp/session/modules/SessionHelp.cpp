@@ -82,10 +82,6 @@ const std::string kPythonLocation = "/python";
 const char * const kCustomLocation = "/custom";
 const char * const kSessionLocation = "/session";
 
-// flag indicating whether we should send headers to custom handlers
-// (only do this for 2.13 or higher)
-bool s_provideHeaders = false;
-
 // are we handling custom urls internally or allowing them to
 // show in an external browser
 bool s_handleCustom = false;
@@ -647,21 +643,11 @@ SEXP callHandler(const std::string& path,
    SEXP requestBodySEXP = parseRequestBody(request, pProtect);
    SEXP headersSEXP = headersBuffer(request, pProtect);
 
-   // only provide headers if appropriate
    SEXP argsSEXP;
-   if (s_provideHeaders)
-   {
-      argsSEXP = Rf_list4(Rf_mkString(path.c_str()),
-                          queryStringSEXP,
-                          requestBodySEXP,
-                          headersSEXP);
-   }
-   else
-   {
-      argsSEXP = Rf_list3(Rf_mkString(path.c_str()),
-                          queryStringSEXP,
-                          requestBodySEXP);
-   }
+   argsSEXP = Rf_list4(Rf_mkString(path.c_str()),
+                       queryStringSEXP,
+                       requestBodySEXP,
+                       headersSEXP);
    pProtect->add(argsSEXP);
 
    // form the call expression
@@ -1016,9 +1002,6 @@ SEXP rs_showPythonHelp(SEXP codeSEXP)
    
 Error initialize()
 {
-   // determine whether we should provide headers to custom handlers
-   s_provideHeaders = r::util::hasRequiredVersion("2.13");
-
    RS_REGISTER_CALL_METHOD(rs_previewRd, 1);
    RS_REGISTER_CALL_METHOD(rs_showPythonHelp, 1);
 
@@ -1044,6 +1027,16 @@ Error initialize()
                                                             &s_handleCustom);
    if (error)
       LOG_ERROR(error);
+
+#ifdef _WIN32
+   // we also need to handle custom session URLs on Windows for R > 4.0
+   // (see comments in module_context::sessionTempDirUrl)
+
+   if (!s_handleCustom)
+   {
+      s_handleCustom = r::util::hasRequiredVersion("4.0");
+   }
+#endif
 
    // handle /custom and /session urls internally if necessary (always in
    // server mode, in desktop mode if the internal http server can't
