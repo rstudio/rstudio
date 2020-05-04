@@ -13,23 +13,16 @@ rstudioapi function for saveCannonical
 
 Evaluate markdown for link text
 
-Hard to tell when you've selected a code block (when selecting text)
-
 Ctrl+Enter and Cmd+Shift to execute code
-Ace mode?
+Ace mode
 
+Chunk execution
 Inline spell check (QtWebEngine?)
 Reference linking/lookup
 Named footnotes
 
 
 ## TODO
-
-
-- docs on tables (including update screenshot of menu)
-
-- Consider showing more classes in attr_edit
-
 
 Math:
 
@@ -38,7 +31,11 @@ escaping of $ in math as this mode will clearly not be "source mode" style latex
 
 - Possibly have a special editing mode for thereoms?
 
+- Interactive spell check
+
 ## Future
+
+Handling unrecognized pandoc tokens.
 
 @ref hot-linking / dialog / +invalid link detection
 
