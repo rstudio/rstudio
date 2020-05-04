@@ -65,6 +65,10 @@ h3.pm-heading {
   max-width: 100%;
 }
 
+.pm-code {
+  padding: 2px 4px;
+}
+
 .pm-div {
   padding: 1em;
   margin-block-end: 1em;
