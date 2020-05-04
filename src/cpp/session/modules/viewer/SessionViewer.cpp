@@ -295,10 +295,9 @@ SEXP rs_viewer(SEXP urlSEXP, SEXP heightSEXP)
          if (error)
             LOG_ERROR(error);
 
-         // if it's in the temp dir and we're running R >= 2.14 then
-         // we can serve it via the help server, otherwise we need
-         // to show it in an external browser
-         if (filePath.isWithin(tempDir) && r::util::hasRequiredVersion("2.14"))
+         // if it's in the temp dir then we can serve it via the help server,
+         // otherwise we need to show it in an external browser
+         if (filePath.isWithin(tempDir))
          {
             // calculate the relative path
             std::string path = filePath.getRelativePath(tempDir);
