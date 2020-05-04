@@ -166,7 +166,7 @@ class RmdChunkCommand extends ProsemirrorCommand {
         // create chunk text
         if (dispatch) {
           const tr = state.tr;
-          const kRmdText = 'r\n';
+          const kRmdText = '{r}\n';
           const rmdText = schema.text(kRmdText);
           const rmdNode = schema.nodes.rmd_chunk.create({}, rmdText);
           const prevListItemPos = precedingListItemInsertPos(tr.doc, tr.selection);
