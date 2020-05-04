@@ -60,7 +60,7 @@ const extension: Extension = {
         codeBlockFilter: {
           preprocessor: (markdown: string) => {
             const filtered = markdown.replace(
-              /^(?:---\s*\n)([\W\w]*?)(?:\n---|\n\.\.\.)(?:[ \t]*)$/gm,
+              /^(?:---[ \t]*\n)([\W\w]*?)(?:\n---|\n\.\.\.)(?:[ \t]*)$/gm,
               '```' + kYamlMetadataClass + '\n---\n$1\n---\n```',
             );
             return filtered;
