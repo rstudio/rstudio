@@ -107,6 +107,7 @@ public class TextEditingTargetChunks
    @Inject
    private void initialize(UserPrefs prefs, UserState state)
    {
+      initialized_ = true;
       prefs_ = prefs;
       state_ = state;
       dark_ = state.theme().getValue().getIsDark();
