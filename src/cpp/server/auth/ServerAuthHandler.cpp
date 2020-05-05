@@ -518,23 +518,6 @@ Error initialize()
          error = s_revocationList.ensureFile();
          if (error)
          {
-<<<<<<< HEAD
-            error.addProperty("description",
-                              "Could not change owner for path " + s_revocationList.getAbsolutePath() +
-                                 ". Is root squash enabled?");
-            LOG_ERROR(error);
-         }
-      }
-
-      // ensure that only the server user can read/write to it, so other users of the system
-      // cannot muck with the contents!
-      error = core::system::changeFileMode(s_revocationList, core::system::UserReadWriteMode);
-      if (error)
-      {
-         error.addProperty("description", "Could not set revocation file permissions to 600 for file: " + s_revocationList.getAbsolutePath());
-         LOG_ERROR(error);
-      }
-=======
             LOG_ERROR_MESSAGE("Could not create revocation list");
             return error;
          }
@@ -547,7 +530,6 @@ Error initialize()
             error.addProperty("description", "Could not set revocation file permissions to 600 for file: " + s_revocationList.getAbsolutePath());
             LOG_ERROR(error);
          }
->>>>>>> origin/v1.3
 
          // read the current revocation list into memory
          std::vector<std::string> revokedCookies;
