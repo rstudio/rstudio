@@ -39,7 +39,6 @@ import org.rstudio.core.client.jsonrpc.RpcRequestCallback;
 import org.rstudio.core.client.jsonrpc.RpcResponse;
 import org.rstudio.core.client.jsonrpc.RpcResponseHandler;
 import org.rstudio.studio.client.application.ApplicationTutorialEvent;
-import org.rstudio.studio.client.application.ApplicationUtils;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.*;
 import org.rstudio.studio.client.application.model.*;
