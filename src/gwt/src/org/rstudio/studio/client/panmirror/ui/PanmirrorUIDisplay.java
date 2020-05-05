@@ -1,7 +1,8 @@
-package org.rstudio.studio.client.panmirror;
+package org.rstudio.studio.client.panmirror.ui;
 
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.GlobalDisplay;
+import org.rstudio.studio.client.panmirror.PanmirrorRmdChunk;
 import org.rstudio.studio.client.panmirror.command.PanmirrorMenuItem;
 
 import com.google.inject.Inject;
@@ -29,11 +30,18 @@ public class PanmirrorUIDisplay {
    }
 
    public ShowContextMenu showContextMenu;   
+   public ExecuteRmdChunk executeRmdChunk;
    
    @JsFunction
    public interface ShowContextMenu
    {
       void show(PanmirrorMenuItem[] items, int clientX, int clientY);
+   }
+   
+   @JsFunction
+   public interface ExecuteRmdChunk
+   {
+      void execute(PanmirrorRmdChunk chunk);
    }
    
    private GlobalDisplay globalDisplay_;

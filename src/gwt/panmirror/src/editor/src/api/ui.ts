@@ -20,6 +20,7 @@ import { ImageDimensions } from './image';
 import { EditorUIImages } from './ui-images';
 
 import { kStyleAttrib } from './pandoc_attr';
+import { EditorRmdChunk } from './rmd';
 
 export interface EditorUI {
   dialogs: EditorDialogs;
@@ -42,6 +43,7 @@ export interface EditorDialogs {
   insertTable: InsertTableFn;
   insertCitation: InsertCitationFn;
 }
+
 
 export interface EditorUIContext {
   // get the default directory for resources (e.g. where relative links point to)
@@ -69,6 +71,7 @@ export interface EditorMenuItem {
 export interface EditorDisplay {
   openURL: (url: string) => void;
   showContextMenu?: (items: EditorMenuItem[], clientX: number, clientY: number) => void;
+  executeRmdChunk?: (chunk: EditorRmdChunk) => void;
 }
 
 export enum AlertType {

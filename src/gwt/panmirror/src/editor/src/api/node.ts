@@ -39,6 +39,7 @@ import {
 
 import { AttrEditOptions } from './attr_edit';
 import { CommandFn } from './command';
+import { ExecuteRmdChunkFn } from './rmd';
 
 export interface PandocNode {
   readonly name: string;
@@ -58,7 +59,7 @@ export interface PandocNode {
 export interface CodeViewOptions {
   lang: (node: ProsemirrorNode, content: string) => string | null;
   attrEditFn?: CommandFn;
-  executeFn?: VoidFunction;
+  executeRmdChunkFn?: ExecuteRmdChunkFn;
   classes?: string[];
   borderColorClass?: string;
   firstLineMeta?: boolean;

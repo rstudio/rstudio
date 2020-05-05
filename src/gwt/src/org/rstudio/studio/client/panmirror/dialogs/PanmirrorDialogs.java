@@ -22,7 +22,6 @@ import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorAttrProps;
 import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorCodeBlockProps;
 import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorImageDimensions;
-import org.rstudio.studio.client.panmirror.PanmirrorUIContext;
 import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorAttrEditResult;
 import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorImageProps;
 import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorInsertCitationResult;
@@ -36,6 +35,7 @@ import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorOrderedListPro
 import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorRawFormatProps;
 import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorRawFormatResult;
 import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorTableCapabilities;
+import org.rstudio.studio.client.panmirror.ui.PanmirrorUIContext;
 
 import com.google.inject.Inject;
 

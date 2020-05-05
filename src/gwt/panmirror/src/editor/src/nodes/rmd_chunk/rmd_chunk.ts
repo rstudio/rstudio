@@ -34,8 +34,8 @@ import { EditorFormat, kBookdownDocType } from '../../api/format';
 import { RmdChunkImagePreviewPlugin } from './rmd_chunk-image';
 
 import './rmd_chunk-styles.css';
-import { rmdChunk } from '../../api/rmd';
-import { EditorEvents, EditorEvent } from '../../api/events';
+import { rmdChunk, EditorRmdChunk } from '../../api/rmd';
+import { EditorEvents } from '../../api/events';
 
 const kRmdCodeChunkClass = '3759D6F8-53AF-4931-8060-E55AF73236B5'.toLowerCase();
 
@@ -84,16 +84,16 @@ const extension = (
           bookdownTheorems: format.docTypes.includes(kBookdownDocType),
           classes: ['pm-chunk-background-color'],
           lang: (_node: ProsemirrorNode, content: string) => {
-            const match = content.match(/^\{([a-zA-Z0-9_])+/);
+            const match = content.match(/^\{([a-zA-Z0-9_]+)/);
             if (match) {
               return match[1];
             } else {
               return null;
             }
           },
-          executeFn: () => {
-            events.emit(EditorEvent.ExecuteRmdChunk);
-          }
+          executeRmdChunkFn: ui.display.executeRmdChunk 
+            ? (chunk: EditorRmdChunk) => ui.display.executeRmdChunk!(chunk)
+            : undefined
         },
 
         pandoc: {

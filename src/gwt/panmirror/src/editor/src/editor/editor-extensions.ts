@@ -186,7 +186,7 @@ export function initExtensions(
   // additional plugins derived from extensions
   const plugins: Plugin[] = [];
   if (options.codemirror) {
-    plugins.push(...codeMirrorPlugins(manager.codeViews()));
+    plugins.push(...codeMirrorPlugins(manager.codeViews(), ui, options));
   }
 
   // register plugins
@@ -350,10 +350,10 @@ export class ExtensionManager {
     return writers;
   }
 
-  public commands(schema: Schema, ui: EditorUI, mac: boolean): readonly ProsemirrorCommand[] {
+  public commands(schema: Schema, ui: EditorUI): readonly ProsemirrorCommand[] {
     return this.collect<ProsemirrorCommand>((extension: Extension) => {
       if (extension.commands) {
-        return extension.commands(schema, ui, mac);
+        return extension.commands(schema, ui);
       } else {
         return undefined;
       }
@@ -413,10 +413,10 @@ export class ExtensionManager {
     });
   }
 
-  public plugins(schema: Schema, ui: EditorUI, mac: boolean): readonly Plugin[] {
+  public plugins(schema: Schema, ui: EditorUI): readonly Plugin[] {
     return this.collect<Plugin>((extension: Extension) => {
       if (extension.plugins) {
-        return extension.plugins(schema, ui, mac);
+        return extension.plugins(schema, ui);
       } else {
         return undefined;
       }

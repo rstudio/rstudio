@@ -18,11 +18,13 @@ import { EditorUIImages } from '../api/ui-images';
 import copyImage from './images/copy.png';
 import propertiesImage from './images/properties.png';
 import removelinkImage from './images/removelink.png';
+import runchunkImage from './images/runchunk.png';
 
 export function defaultEditorUIImages(): EditorUIImages {
   return {
     copy: copyImage,
     properties: propertiesImage,
     removelink: removelinkImage,
+    runchunk: runchunkImage,
   };
 }

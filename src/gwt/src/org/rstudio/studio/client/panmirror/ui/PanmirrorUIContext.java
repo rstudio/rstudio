@@ -13,7 +13,7 @@
  *
  */
 
-package org.rstudio.studio.client.panmirror;
+package org.rstudio.studio.client.panmirror.ui;
 
 
 import jsinterop.annotations.JsFunction;

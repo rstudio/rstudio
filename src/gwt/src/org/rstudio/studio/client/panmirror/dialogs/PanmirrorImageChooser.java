@@ -22,7 +22,7 @@ import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.core.client.widget.TextBoxWithButton;
 import org.rstudio.studio.client.RStudioGinjector;
-import org.rstudio.studio.client.panmirror.PanmirrorUIContext;
+import org.rstudio.studio.client.panmirror.ui.PanmirrorUIContext;
 
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;

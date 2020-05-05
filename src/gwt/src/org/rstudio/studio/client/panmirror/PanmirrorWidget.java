@@ -39,8 +39,6 @@ import org.rstudio.studio.client.panmirror.command.PanmirrorToolbarMenu;
 import org.rstudio.studio.client.panmirror.events.PanmirrorOutlineNavigationEvent;
 import org.rstudio.studio.client.panmirror.events.PanmirrorOutlineVisibleEvent;
 import org.rstudio.studio.client.panmirror.events.PanmirrorOutlineWidthEvent;
-import org.rstudio.studio.client.panmirror.events.PanmirrorExecuteRmdChunkEvent;
-import org.rstudio.studio.client.panmirror.events.PanmirrorExecuteRmdChunkEvent.Handler;
 import org.rstudio.studio.client.panmirror.findreplace.PanmirrorFindReplace;
 import org.rstudio.studio.client.panmirror.findreplace.PanmirrorFindReplaceWidget;
 import org.rstudio.studio.client.panmirror.format.PanmirrorFormat;
@@ -90,8 +88,7 @@ public class PanmirrorWidget extends DockLayoutPanel implements
    HasChangeHandlers, 
    HasSelectionChangedHandlers,
    PanmirrorOutlineVisibleEvent.HasPanmirrorOutlineVisibleHandlers,
-   PanmirrorOutlineWidthEvent.HasPanmirrorOutlineWidthHandlers,
-   PanmirrorExecuteRmdChunkEvent.HasPanmirrorExecuteRmdChunkHandlers
+   PanmirrorOutlineWidthEvent.HasPanmirrorOutlineWidthHandlers
    
 {
    
@@ -288,10 +285,6 @@ public class PanmirrorWidget extends DockLayoutPanel implements
          
       }));
       
-      editorEventUnsubscribe_.add(editor_.subscribe(PanmirrorEvent.ExecuteRmdChunk, () -> {
-         fireEvent(new PanmirrorExecuteRmdChunkEvent(editor_.getActiveRmdChunk()));       
-      }));
-      
       registrations_.add(events_.addHandler(EditorThemeChangedEvent.TYPE, 
          (EditorThemeChangedEvent event) -> {
             new Timer()
@@ -381,6 +374,11 @@ public class PanmirrorWidget extends DockLayoutPanel implements
    public boolean isInitialDoc()
    {
       return editor_.isInitialDoc();
+   }
+   
+   public PanmirrorRmdChunk getActiveRmdChunk()
+   {
+      return editor_.getActiveRmdChunk();
    }
    
    public HasFindReplace getFindReplace()
@@ -531,12 +529,6 @@ public class PanmirrorWidget extends DockLayoutPanel implements
    public HandlerRegistration addPanmirrorOutlineVisibleHandler(PanmirrorOutlineVisibleEvent.Handler handler)
    {
       return handlers_.addHandler(PanmirrorOutlineVisibleEvent.getType(), handler);
-   }
-   
-   @Override
-   public HandlerRegistration addPanmirrorExecuteRmdChunkHandler(Handler handler)
-   {
-      return handlers_.addHandler(PanmirrorExecuteRmdChunkEvent.getType(), handler);
    }
    
    @Override

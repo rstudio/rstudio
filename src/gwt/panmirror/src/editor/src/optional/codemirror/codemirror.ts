@@ -23,6 +23,9 @@ import { undoInputRule } from 'prosemirror-inputrules';
 
 import { CodeViewOptions } from '../../api/node';
 import { insertParagraph } from '../../api/paragraph';
+import { createImageButton } from '../../api/widgets/widgets';
+import { EditorUI } from '../../api/ui';
+import { EditorOptions } from '../../api/options';
 
 import { selectAll } from '../../behaviors/select_all';
 
@@ -45,10 +48,13 @@ import 'codemirror/addon/selection/mark-selection.js';
 
 import 'codemirror/lib/codemirror.css';
 import './codemirror.css';
+import { kPlatformMac } from '../../api/platform';
+import { rmdChunk } from '../../api/rmd';
+
 
 const plugin = new PluginKey('codemirror');
 
-export function codeMirrorPlugins(codeViews: { [key: string]: CodeViewOptions }) {
+export function codeMirrorPlugins(codeViews: { [key: string]: CodeViewOptions }, ui: EditorUI, options: EditorOptions) {
   // build nodeViews
   const nodeTypes = Object.keys(codeViews);
   const nodeViews: {
@@ -56,7 +62,7 @@ export function codeMirrorPlugins(codeViews: { [key: string]: CodeViewOptions })
   } = {};
   nodeTypes.forEach(name => {
     nodeViews[name] = (node: ProsemirrorNode, view: EditorView, getPos: boolean | (() => number)) => {
-      return new CodeBlockNodeView(node, view, getPos as () => number, codeViews[name]);
+      return new CodeBlockNodeView(node, view, getPos as () => number, ui, options, codeViews[name]);
     };
   });
 
@@ -83,20 +89,23 @@ class CodeBlockNodeView implements NodeView {
   private readonly view: EditorView;
   private readonly getPos: () => number;
   private readonly cm: CodeMirror.Editor;
+  private readonly runChunk?: HTMLButtonElement;
+  private readonly editorOptions: EditorOptions;
   private readonly options: CodeViewOptions;
 
   private node: ProsemirrorNode;
   private incomingChanges: boolean;
   private updating: boolean;
 
-  constructor(node: ProsemirrorNode, view: EditorView, getPos: () => number, options: CodeViewOptions) {
+  constructor(node: ProsemirrorNode, view: EditorView, getPos: () => number, ui: EditorUI, editorOptions: EditorOptions, options: CodeViewOptions) {
     // Store for later
     this.node = node;
     this.view = view;
     this.getPos = getPos;
     this.incomingChanges = false;
 
-    // option defaults
+    // options
+    this.editorOptions = editorOptions;
     this.options = options;
 
     // CodeMirror options
@@ -117,11 +126,24 @@ class CodeBlockNodeView implements NodeView {
     // Create a CodeMirror instance
     this.cm = CodeMirror(null!, cmOptions as CodeMirror.EditorConfiguration);
 
+     // The editor's outer node is our DOM representation
+     this.dom = this.cm.getWrapperElement();
+
+    // add a chunk execution button if execution is supported
+    if (this.options.executeRmdChunkFn) {
+      // edit button
+      const shortcut = kPlatformMac ? '⇧⌘↩︎' : 'Ctrl+Shift+Enter';
+      this.runChunk = createImageButton(
+        ui.images.runchunk!,
+        ['pm-image-button-run-chunk'],
+        `${ui.context.translateText('Run Chunk')} (${shortcut})`,
+      );
+      this.runChunk.onclick = this.executeChunk.bind(this);
+      this.dom.append(this.runChunk);
+    }
+
     // update mode
     this.updateMode();
-
-    // The editor's outer node is our DOM representation
-    this.dom = this.cm.getWrapperElement();
 
     // theming
     this.dom.classList.add('pm-code-editor');
@@ -242,16 +264,30 @@ class CodeBlockNodeView implements NodeView {
   }
 
   private updateMode() {
+
+    // get lang
     const lang = this.options.lang(this.node, this.cm.getValue());
+
+    // syntax highlighting
     const mode = lang ? modeForLang(lang, this.options) : null;
     if (mode !== this.cm.getOption('mode')) {
       this.cm.setOption('mode', mode);
+    }
+
+    // if we have a language check whether execution should be enabled for this language
+    if (lang && this.canExecuteChunks()) {
+      const enabled = !!this.editorOptions.rmdChunkExecution!.find(rmdChunkLang => {
+        return lang.localeCompare(rmdChunkLang, undefined, { sensitivity: 'accent' }) === 0;
+      });
+      this.enableChunkExecution(enabled);
+    } else {
+      this.enableChunkExecution(false);
     }
   }
 
   private codeMirrorKeymap() {
     const view = this.view;
-    const mod = /Mac/.test(navigator.platform) ? 'Cmd' : 'Ctrl';
+    const mod = kPlatformMac ? 'Cmd' : 'Ctrl';
 
     // exit code block
     const exitBlock = () => {
@@ -283,13 +319,22 @@ class CodeBlockNodeView implements NodeView {
         return this.options.attrEditFn ? this.options.attrEditFn(view.state, view.dispatch, view) : CodeMirror.Pass;
       },
     });
-    if (this.options.executeFn) {
+    if (this.canExecuteChunks()) {
       cmKeymap[`Shift-${mod}-Enter`] = () => {
-        this.options.executeFn!();
+        this.executeChunk();
         return true;
       };
     }
     return cmKeymap;
+  }
+
+  private executeChunk() {
+    if (this.isChunkExecutionEnabled()) {
+      const chunk = rmdChunk(this.node.textContent);
+      if (chunk != null) {
+        this.options.executeRmdChunkFn!(chunk);
+      }
+    }
   }
 
   private backspaceMaybeDeleteNode() {
@@ -326,6 +371,20 @@ class CodeBlockNodeView implements NodeView {
     const selection = Selection.near(this.view.state.doc.resolve(targetPos), dir);
     this.view.dispatch(this.view.state.tr.setSelection(selection).scrollIntoView());
     this.view.focus();
+  }
+
+  private canExecuteChunks() {
+    return this.editorOptions.rmdChunkExecution && this.options.executeRmdChunkFn;
+  }
+
+  private enableChunkExecution(enable: boolean) {
+    if (this.runChunk) {
+      this.runChunk.style.display = enable ? 'initial' : 'none';
+    }
+  }
+
+  private isChunkExecutionEnabled() {
+    return this.runChunk && this.runChunk.style.display !== 'none';
   }
 }
 

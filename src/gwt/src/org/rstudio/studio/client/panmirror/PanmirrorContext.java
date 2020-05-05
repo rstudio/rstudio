@@ -16,6 +16,9 @@
 package org.rstudio.studio.client.panmirror;
 
 import org.rstudio.studio.client.panmirror.pandoc.PanmirrorPandocEngine;
+import org.rstudio.studio.client.panmirror.ui.PanmirrorUI;
+import org.rstudio.studio.client.panmirror.ui.PanmirrorUIContext;
+import org.rstudio.studio.client.panmirror.ui.PanmirrorUIDisplay;
 
 import elemental2.core.JsObject;
 import jsinterop.annotations.JsType;

@@ -34,5 +34,17 @@
   color: inherit !important;
 }
 
+.ProseMirror .CodeMirror .pm-image-button-run-chunk {
+  position: absolute;
+  right: 0;
+  top: 0;
+  z-index: 10;
+}
+
+.ProseMirror .CodeMirror .pm-image-button-run-chunk img {
+  width: 20px;
+  height: 13px;
+}
+
 
 

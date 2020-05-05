@@ -23,6 +23,8 @@ export interface EditorRmdChunk {
   code: string;
 }
 
+export type ExecuteRmdChunkFn = (chunk: EditorRmdChunk) => void;
+
 export function activeRmdChunk(state: EditorState) : EditorRmdChunk | null {
   if (state.schema.nodes.rmd_chunk) {
     const rmdNode = findParentNodeOfType(state.schema.nodes.rmd_chunk)(state.selection);
