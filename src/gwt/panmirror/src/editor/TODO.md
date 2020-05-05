@@ -24,9 +24,6 @@ Named footnotes
 
 ## TODO
 
-Add execute arrow button 
-Only add button for known executable types (R, Python, ?)
-
 Pasting in this document results in an error: https://docs.google.com/document/d/1g_Vh_RAmkC5uocaiJkf8gHq97QjhzsbhnJSHqpOagLw/edit#
 
 Steal Clear Formatting shortcut back
