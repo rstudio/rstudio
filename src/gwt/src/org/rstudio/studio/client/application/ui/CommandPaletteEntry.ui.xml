@@ -5,11 +5,36 @@
 		.entry {
 			width: 100%;
 			font-size: 10pt;
-			margin-bottom: 5px;
+			padding-top: 6px;
+			padding-bottom: 6px;
+			padding-left: 6px;
+			padding-right: 6px;
+		}
+		
+		.entry:hover {
+			background-color: #F0F0FF;
 		}
 		
 		.selected {
-			background-color: #A0A0FF;
+			background-color: #D0D0FF;
+		}
+		
+		.keyboard {
+			border: 1px solid #a0a0a0;
+			border-radius: 3px;
+			padding: 3px;
+			margin-left: 3px;
+			margin-right: 3px;
+			font-size: 8pt;
+		}
+		
+		.shortcut {
+			display: inline-block;
+			margin-left: -10px;
+		}
+		
+		.searchMatch {
+			font-weight: bold;
 		}
 	</ui:style>
 	<g:HorizontalPanel styleName="{styles_.entry}">
@@ -17,7 +42,7 @@
 			<g:Label ui:field="name_"></g:Label>
 		</g:cell>
 		<g:cell horizontalAlignment="ALIGN_RIGHT">
-			<g:Label ui:field="shortcut_"></g:Label>
+			<g:Label styleName="{styles_.shortcut} rstudio-fixed-width-font" ui:field="shortcut_"></g:Label>
 		</g:cell>
 	</g:HorizontalPanel>
 </ui:UiBinder> 

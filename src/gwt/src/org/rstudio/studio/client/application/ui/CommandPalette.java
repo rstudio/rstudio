@@ -21,6 +21,14 @@ import java.util.Map;
 
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.AppCommand;
+import org.rstudio.core.client.command.KeyMap;
+import org.rstudio.core.client.command.KeySequence;
+import org.rstudio.core.client.command.ShortcutManager;
+import org.rstudio.core.client.command.KeyMap.KeyMapType;
+import org.rstudio.core.client.js.JsUtil;
+import org.rstudio.studio.client.workbench.addins.Addins.AddinExecutor;
+import org.rstudio.studio.client.workbench.addins.Addins.RAddin;
+import org.rstudio.studio.client.workbench.addins.Addins.RAddins;
 import org.rstudio.studio.client.workbench.commands.Commands;
 
 import com.google.gwt.core.client.GWT;
@@ -46,20 +54,37 @@ public class CommandPalette extends Composite
       public void dismiss();
    }
 
-   public CommandPalette(Commands commands, Host host)
+   public CommandPalette(Commands commands, RAddins addins, ShortcutManager shortcuts, Host host)
    {
       initWidget(uiBinder.createAndBindUi(this));
+
       entries_ = new ArrayList<CommandPaletteEntry>();
       host_ = host;
+      shortcuts_ = shortcuts;
       
+      KeyMap map = shortcuts_.getKeyMap(KeyMapType.APPLICATION);
       Map<String, AppCommand> allCommands = commands.getCommands();
       for (String command: allCommands.keySet())
       {
-         CommandPaletteEntry entry = new CommandPaletteEntry(allCommands.get(command));
+         AppCommand appCommand = allCommands.get(command);
+         List<KeySequence> keys = map.getBindings(command);
+         CommandPaletteEntry entry = new AppCommandPaletteEntry(appCommand, keys);
          entries_.add(entry);
          commandList_.add(entry);
       }
-      searchBox_.addKeyDownHandler((evt) -> 
+      
+      map = shortcuts_.getKeyMap(KeyMapType.ADDIN);
+      AddinExecutor executor = new AddinExecutor();
+      for (String addin: JsUtil.asIterable(addins.keys()))
+      {
+         RAddin rAddin = addins.get(addin);
+         List<KeySequence> keys = map.getBindings(rAddin.getId());
+         CommandPaletteEntry entry = new RAddinCommandPaletteEntry(rAddin, executor, keys);
+         entries_.add(entry);
+         commandList_.add(entry);
+      }
+
+      searchBox_.addKeyUpHandler((evt) -> 
       {
          if (evt.getNativeKeyCode() == KeyCode.UP)
          {
@@ -90,7 +115,7 @@ public class CommandPalette extends Composite
       String needle = searchBox_.getText().toLowerCase();
       for (CommandPaletteEntry entry: entries_)
       {
-         String hay = entry.getText().toLowerCase();
+         String hay = entry.getLabel().toLowerCase();
          if (hay.contains(needle))
          {
             entry.setSearchHighlight(needle);
@@ -175,6 +200,7 @@ public class CommandPalette extends Composite
    }
    
    private final Host host_;
+   private final ShortcutManager shortcuts_;
    private CommandPaletteEntry selected_;
    private List<CommandPaletteEntry> entries_;
 

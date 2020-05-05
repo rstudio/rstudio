@@ -14,18 +14,22 @@
  */
 package org.rstudio.studio.client.application.ui;
 
-import org.rstudio.core.client.StringUtil;
-import org.rstudio.core.client.command.AppCommand;
+import java.util.List;
+
+import org.rstudio.core.client.BrowseCap;
+import org.rstudio.core.client.command.KeyCombination;
+import org.rstudio.core.client.command.KeySequence;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.resources.client.CssResource;
+import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
 
-public class CommandPaletteEntry extends Composite
+public abstract class CommandPaletteEntry extends Composite
 {
 
    private static CommandPaletteEntryUiBinder uiBinder = GWT
@@ -39,30 +43,53 @@ public class CommandPaletteEntry extends Composite
    {
       String entry();
       String selected();
+      String keyboard();
+      String searchMatch();
    }
 
-   public CommandPaletteEntry(AppCommand command)
+   public CommandPaletteEntry(List<KeySequence> keys)
    {
-      command_ = command;
-      
       initWidget(uiBinder.createAndBindUi(this));
-      String label = command.getLabel();
-      if (StringUtil.isNullOrEmpty(label))
-         label = command.getButtonLabel();
-      if (StringUtil.isNullOrEmpty(label))
-         label = command.getDesc();
-      name_.setText(label);
-      shortcut_.getElement().setInnerHTML(command.getShortcutPrettyHtml());
+      keys_ = keys;
    }
-   
-   public String getText()
+
+   private void appendKey(SafeHtmlBuilder b, String key)
    {
-      return name_.getText();
+      b.appendHtmlConstant("<span class=\"" + 
+             styles_.keyboard() + "\">");
+      b.appendHtmlConstant(key);
+      b.appendHtmlConstant("</span>");
    }
-   
-   public void setSearchHighlight(String text)
+
+   public void initialize()
    {
-      
+      name_.setText(getLabel());
+      SafeHtmlBuilder b = new SafeHtmlBuilder();
+      for (KeySequence k: keys_)
+      {
+         List<KeyCombination> combos = k.getData();
+         for (int i = 0; i < combos.size(); i++)
+         {
+            KeyCombination combo = combos.get(i);
+            if (combo.isCtrlPressed())
+               appendKey(b, "Ctrl");
+            if (combo.isAltPressed())
+               appendKey(b, "Alt");
+            if (combo.isShiftPressed())
+               appendKey(b, "Shift");
+            if (combo.isMetaPressed())
+               appendKey(b, BrowseCap.hasMetaKey() ? "&#8984;" : "Cmd");
+            appendKey(b, combo.key());
+            
+            // Is this a multi-key sequence?
+            if (i < (combos.size() - 1))
+            {
+               b.appendEscaped(",");
+            }
+         }
+         break;
+      }
+      shortcut_.getElement().setInnerSafeHtml(b.toSafeHtml());
    }
    
    public void setSelected(boolean selected)
@@ -73,17 +100,32 @@ public class CommandPaletteEntry extends Composite
          removeStyleName(styles_.selected());
    }
    
-   public void invoke()
+   public void setSearchHighlight(String text)
    {
-      command_.execute();
+      String label = getLabel();
+      int idx = label.toLowerCase().indexOf(text.toLowerCase());
+      if (idx >= 0)
+      {
+         SafeHtmlBuilder b = new SafeHtmlBuilder();
+         b.appendEscaped(label.substring(0, idx));
+         b.appendHtmlConstant("<span class=\"" + styles_.searchMatch() + "\">");
+         b.appendEscaped(label.substring(idx, idx + text.length()));
+         b.appendHtmlConstant("</span>");
+         b.appendEscaped(label.substring(idx + text.length(), label.length()));
+         name_.getElement().setInnerSafeHtml(b.toSafeHtml());
+      }
+      else
+      {
+         name_.setText(label);
+      }
    }
    
-   public String getId()
-   {
-      return command_.getId();
-   }
+   abstract public String getLabel();
+   abstract public void invoke();
+   abstract public String getId();
+   
+   private final List<KeySequence> keys_;
 
-   final AppCommand command_;
    @UiField public Label name_;
    @UiField public Label shortcut_;
    @UiField public Styles styles_;

@@ -17,6 +17,8 @@ package org.rstudio.studio.client.application.ui;
 
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
+import org.rstudio.core.client.command.ShortcutManager;
+import org.rstudio.studio.client.workbench.addins.AddinsCommandManager;
 import org.rstudio.studio.client.workbench.commands.Commands;
 
 import com.google.gwt.user.client.ui.PopupPanel;
@@ -31,29 +33,36 @@ public class CommandPaletteLauncher implements CommandPalette.Host
    
    @Inject 
    public CommandPaletteLauncher(Commands commands,
+         AddinsCommandManager addins,
          Binder binder)
    {
       binder.bind(commands, this);
+      addins_ = addins;
       commands_ = commands;
    }
-    
+   
    @Handler
    public void onShowCommandPalette()
    {
-      if (panel_ != null)
-      {
-         panel_.show();
-         palette_.focus();
-         return;
-      }
-      
-      palette_ = new CommandPalette(commands_, this);
-      
+      // Create the command palette widget
+      palette_ = new CommandPalette(commands_, addins_.getRAddins(), 
+            ShortcutManager.INSTANCE, this);
+
       panel_ = new PopupPanel(true, true);
       panel_.add(palette_);
       panel_.show();
       panel_.center();
+      
+      // Set z-index above panel splitters (otherwise they overlap the popup)
+      panel_.getElement().getStyle().setZIndex(250);
+
       palette_.focus();
+      
+      // Free our reference to the panel when it closes
+      panel_.addCloseHandler((evt) -> 
+      {
+         panel_ = null;
+      });
    }
 
    @Override
@@ -65,4 +74,5 @@ public class CommandPaletteLauncher implements CommandPalette.Host
    private PopupPanel panel_;
    private CommandPalette palette_;
    private final Commands commands_;
+   private final AddinsCommandManager addins_;
 }
