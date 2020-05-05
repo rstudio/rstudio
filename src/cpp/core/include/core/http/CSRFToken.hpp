@@ -32,12 +32,14 @@ namespace http {
 void setCSRFTokenCookie(const Request& request, 
       const boost::optional<boost::gregorian::days>& expiry,
       const std::string& token,
+      const std::string& path,
       bool secure,
       core::http::Response* pResponse);
 
 void setCSRFTokenCookie(const Request& request,
       const boost::optional<boost::posix_time::time_duration>& expiresFromNow,
       const std::string& token,
+      const std::string& path,
       bool secure,
       core::http::Response* pResponse);
 

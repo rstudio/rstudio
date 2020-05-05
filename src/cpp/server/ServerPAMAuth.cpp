@@ -239,7 +239,7 @@ void signIn(const http::Request& request,
 {
    core::http::secure_cookie::remove(request,
       kUserIdCookie,
-      "/",
+      server::options().wwwUrlPathPrefix(),
       pResponse,
       boost::algorithm::starts_with(request.absoluteUri(), "https"));
 
@@ -328,7 +328,7 @@ void setSignInCookies(const core::http::Request& request,
                                                                       0,
                                                                       0),
                                      expiry,
-                                     "/",
+                                     server::options().wwwUrlPathPrefix(),
                                      pResponse,
                                      secureCookie);
 
@@ -343,12 +343,12 @@ void setSignInCookies(const core::http::Request& request,
                                                                       0,
                                                                       0),
                                      expiry,
-                                     "/",
+                                     server::options().wwwUrlPathPrefix(),
                                      pResponse,
                                      secureCookie);
 
       // add cross site request forgery detection cookie
-      core::http::setCSRFTokenCookie(request, expiry, csrfToken, secureCookie, pResponse);
+      core::http::setCSRFTokenCookie(request, expiry, csrfToken, server::options().wwwUrlPathPrefix(), secureCookie, pResponse);
    }
    else
    {
@@ -366,7 +366,7 @@ void setSignInCookies(const core::http::Request& request,
                                      request,
                                      boost::posix_time::minutes(authTimeoutMinutes),
                                      expiry,
-                                     "/",
+                                     server::options().wwwUrlPathPrefix(),
                                      pResponse,
                                      secureCookie);
 
@@ -378,7 +378,7 @@ void setSignInCookies(const core::http::Request& request,
                                      request,
                                      boost::posix_time::minutes(authTimeoutMinutes),
                                      expiry,
-                                     "/",
+                                     server::options().wwwUrlPathPrefix(),
                                      pResponse,
                                      secureCookie);
 
@@ -387,13 +387,13 @@ void setSignInCookies(const core::http::Request& request,
       core::http::Cookie persistCookie(request,
                                        kPersistAuthCookie,
                                        persist ? "1" : "0",
-                                       "/",
+                                       server::options().wwwUrlPathPrefix(),
                                        true,
                                        secureCookie);
       persistCookie.setExpires(boost::posix_time::minutes(authTimeoutMinutes));
       pResponse->addCookie(persistCookie);
 
-      core::http::setCSRFTokenCookie(request, expiry, csrfToken, secureCookie, pResponse);
+      core::http::setCSRFTokenCookie(request, expiry, csrfToken, server::options().wwwUrlPathPrefix(), secureCookie, pResponse);
    }
 }
 
@@ -548,7 +548,7 @@ void signOut(const http::Request& request,
    // instruct browser to clear the user's auth cookies
    core::http::secure_cookie::remove(request,
       kUserIdCookie,
-      "/",
+      server::options().wwwUrlPathPrefix(),
       pResponse,
       boost::algorithm::starts_with(request.absoluteUri(), "https"));
 
@@ -556,7 +556,7 @@ void signOut(const http::Request& request,
    {
       core::http::secure_cookie::remove(request,
                                         kPersistAuthCookie,
-                                        "/",
+                                        server::options().wwwUrlPathPrefix(),
                                         pResponse,
                                         boost::algorithm::starts_with(request.absoluteUri(), "https"));
    }
