@@ -9,3 +9,4 @@
 - Fixed Chromium issue when using RStudio Desktop on Linux systems with newer glibc (#6379)
 - Allow multiple space-separated domains in `www-frame-origin` for Tutorial API (Pro)
 - Fix dependency installation for untitled buffers (#6762)
+- Add option `www-url-path-prefix` to force a path on auth cookies (Pro #1608)
