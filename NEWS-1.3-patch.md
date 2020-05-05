@@ -12,3 +12,4 @@
 - Fix dependency installation for untitled buffers (#6762)
 - Update `rstudioapi` highlightUi call to accept a callback variable containing an R script to be executed after the highlight element has been selected (#67565)
 - Adds class attributed to RMarkdown chunks, their control buttons, and their output based on their given labels. (#6787)
+- Add option `www-url-path-prefix` to force a path on auth cookies (Pro #1608)
