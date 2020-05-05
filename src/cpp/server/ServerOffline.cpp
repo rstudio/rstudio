@@ -92,8 +92,6 @@ Error httpServerAddHandlers()
    uri_handlers::addBlocking("/images",
                              gwt::fileHandlerFunction(options.wwwLocalPath(),
                                                       useSecureCookies,
-                                                      options.wwwIFrameEmbedding(),
-                                                      options.wwwLegacyCookies(),
                                                       options.wwwIFrameLegacyCookies(),
                                                       "/"));
    
