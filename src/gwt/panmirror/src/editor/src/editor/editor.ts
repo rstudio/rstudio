@@ -510,7 +510,7 @@ export class Editor {
   }
 
   public getMenus(): EditorMenus {
-    return editorMenus(this.context.ui);
+    return editorMenus(this.context.ui, this.commands());
   }
 
   public commands(): EditorCommand[] {

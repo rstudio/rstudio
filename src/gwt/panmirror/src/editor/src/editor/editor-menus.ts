@@ -17,7 +17,7 @@
 
 import { EditorMenuItem, EditorUI } from "../api/ui";
 import { tableMenu } from "../api/table";
-import { EditorCommandId } from "../api/command";
+import { EditorCommandId, EditorCommand } from "../api/command";
 
 export interface EditorMenus {
   format: EditorMenuItem[];
@@ -25,15 +25,15 @@ export interface EditorMenus {
   table: EditorMenuItem[];
 }
 
-export function editorMenus(ui: EditorUI) {
+export function editorMenus(ui: EditorUI, commands: EditorCommand[]) {
   return {
-    format: formatMenu(ui),
-    insert: insertMenu(ui),
+    format: formatMenu(ui, commands),
+    insert: insertMenu(ui, commands),
     table: tableMenu(true, ui)
   };
 }
 
-function formatMenu(ui: EditorUI) {
+function formatMenu(ui: EditorUI, commands: EditorCommand[]) {
   return [
     { command: EditorCommandId.Strong },
     { command: EditorCommandId.Em },
@@ -69,8 +69,8 @@ function formatMenu(ui: EditorUI) {
     { separator: true },
     { command: EditorCommandId.Blockquote },
     { command: EditorCommandId.LineBlock },
-    { separator: true },
-    { command: EditorCommandId.CodeBlockFormat },
+    { separator: haveAnyOf(commands, EditorCommandId.Div) },
+    { command: codeBlockCommand(commands) },
     { command: EditorCommandId.Div },
     { separator: true },
     { subMenu: {
@@ -93,7 +93,7 @@ function formatMenu(ui: EditorUI) {
   ];
 }
 
-function insertMenu(ui: EditorUI) {
+function insertMenu(ui: EditorUI, commands: EditorCommand[]) {
   return [
     { command: EditorCommandId.RmdChunk },
     { separator: true },
@@ -128,4 +128,19 @@ function insertMenu(ui: EditorUI) {
     { separator: true },
     { command: EditorCommandId.HTMLComment },
   ];
+}
+
+function haveAnyOf(commands: EditorCommand[], ...ids: EditorCommandId[]) {
+  for (const command of commands) {
+    if (ids.includes(command.id)) {
+      return true;
+    } 
+  }
+  return false;
+}
+
+function codeBlockCommand(commands: EditorCommand[]) {
+  return haveAnyOf(commands, EditorCommandId.CodeBlockFormat) 
+    ? EditorCommandId.CodeBlockFormat
+    : EditorCommandId.CodeBlock;
 }
