@@ -39,6 +39,7 @@ import org.rstudio.studio.client.panmirror.PanmirrorCode;
 import org.rstudio.studio.client.panmirror.PanmirrorContext;
 import org.rstudio.studio.client.panmirror.PanmirrorKeybindings;
 import org.rstudio.studio.client.panmirror.PanmirrorOptions;
+import org.rstudio.studio.client.panmirror.PanmirrorRmdChunk;
 import org.rstudio.studio.client.panmirror.PanmirrorUIContext;
 import org.rstudio.studio.client.panmirror.PanmirrorUIDisplay;
 import org.rstudio.studio.client.panmirror.PanmirrorWidget;
@@ -66,6 +67,7 @@ import org.rstudio.studio.client.workbench.model.BlogdownConfig;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
+import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.model.DirtyState;
 import org.rstudio.studio.client.workbench.views.source.model.DocUpdateSentinel;
@@ -136,12 +138,14 @@ public class TextEditingTargetVisualMode
    @Inject
    public void initialize(Commands commands, 
                           UserPrefs prefs, 
+                          EventBus events,
                           SourceServerOperations source, 
                           WorkbenchContext context,
                           Session session)
    {
       commands_ = commands;
       prefs_ = prefs;
+      events_ = events;
       source_ = source;
       context_ = context;
       sessionInfo_ = session.getSessionInfo();
@@ -657,7 +661,12 @@ public class TextEditingTargetVisualMode
             panmirror_.addPanmirrorOutlineWidthHandler((event) -> {
                setOutlineWidth(event.getWidth());
             });
-           
+            
+            // execute rmd chunks
+            panmirror_.addPanmirrorExecuteRmdChunkHandler((event) -> {
+               executeRmdChunk(event.getChunk());
+            });
+            
             // good to go!
             ready.execute();
          });
@@ -669,6 +678,7 @@ public class TextEditingTargetVisualMode
       }
    } 
    
+ 
    // bizzarly, removing this method triggers a gwt compiler issue that
    // results in the Panmirror interop breaking! we need to investigate
    // this, but in the meantime the method remains. note that this method
@@ -880,6 +890,24 @@ public class TextEditingTargetVisualMode
       disabledForVisualMode_.clear();
    }
    
+   private void executeRmdChunk(PanmirrorRmdChunk chunk)
+   { 
+      if (chunk != null)
+      {
+         String chunkLang = null;
+         for (String lang : kRmdChunkExecutionLangs) 
+         {
+            if (chunk.lang.equalsIgnoreCase(lang)) 
+            {
+               chunkLang = lang;
+               break;
+            }
+         }
+         if (chunkLang != null)
+            events_.fireEvent(new SendToConsoleEvent(chunk.code, chunkLang, true));
+      }
+   }
+   
    private HandlerRegistration onDocPropChanged(String prop, ValueChangeHandler<String> handler)
    {
       return docUpdateSentinel_.addPropertyValueChangeHandler(prop, handler);
@@ -946,6 +974,9 @@ public class TextEditingTargetVisualMode
       
       // enable rmdImagePreview if we are an executable rmd
       options.rmdImagePreview = target_.canExecuteChunks();
+      
+      // enable chunk execution for R and Python
+      options.rmdChunkExecution = kRmdChunkExecutionLangs;
       
       // hide the format comment so that users must go into
       // source mode to change formats
@@ -1284,6 +1315,7 @@ public class TextEditingTargetVisualMode
    }
    
    private Commands commands_;
+   private EventBus events_;
    private UserPrefs prefs_;
    private WorkbenchContext context_;
    private SessionInfo sessionInfo_;
@@ -1312,6 +1344,7 @@ public class TextEditingTargetVisualMode
    private SerializedCommandQueue syncToEditorQueue_ = new SerializedCommandQueue();
    
    private static final String RMD_VISUAL_MODE_LOCATION = "rmdVisualModeLocation";   
+   private final static String[] kRmdChunkExecutionLangs = new String[] { "R", "Python" }; 
 }
 
 

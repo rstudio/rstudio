@@ -18,8 +18,10 @@ export enum EditorEvent {
   OutlineChange = 'panmirrorOutlineChange',
   SelectionChange = 'panmirrorSelectionChange',
   Resize = 'panmirrorResize',
+  ExecuteRmdChunk = 'panmirrorExecuteRmdChunk'
 }
 
 export interface EditorEvents {
   subscribe: (event: EditorEvent, handler: VoidFunction) => VoidFunction;
+  emit: (event: EditorEvent) => void;
 }

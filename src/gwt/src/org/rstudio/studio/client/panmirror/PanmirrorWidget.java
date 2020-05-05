@@ -36,15 +36,17 @@ import org.rstudio.studio.client.panmirror.command.PanmirrorMenuItem;
 import org.rstudio.studio.client.panmirror.command.PanmirrorToolbar;
 import org.rstudio.studio.client.panmirror.command.PanmirrorToolbarCommands;
 import org.rstudio.studio.client.panmirror.command.PanmirrorToolbarMenu;
+import org.rstudio.studio.client.panmirror.events.PanmirrorOutlineNavigationEvent;
+import org.rstudio.studio.client.panmirror.events.PanmirrorOutlineVisibleEvent;
+import org.rstudio.studio.client.panmirror.events.PanmirrorOutlineWidthEvent;
+import org.rstudio.studio.client.panmirror.events.PanmirrorExecuteRmdChunkEvent;
+import org.rstudio.studio.client.panmirror.events.PanmirrorExecuteRmdChunkEvent.Handler;
 import org.rstudio.studio.client.panmirror.findreplace.PanmirrorFindReplace;
 import org.rstudio.studio.client.panmirror.findreplace.PanmirrorFindReplaceWidget;
 import org.rstudio.studio.client.panmirror.format.PanmirrorFormat;
 import org.rstudio.studio.client.panmirror.location.PanmirrorEditingLocation;
 import org.rstudio.studio.client.panmirror.location.PanmirrorEditingOutlineLocation;
 import org.rstudio.studio.client.panmirror.outline.PanmirrorOutlineItem;
-import org.rstudio.studio.client.panmirror.outline.PanmirrorOutlineNavigationEvent;
-import org.rstudio.studio.client.panmirror.outline.PanmirrorOutlineVisibleEvent;
-import org.rstudio.studio.client.panmirror.outline.PanmirrorOutlineWidthEvent;
 import org.rstudio.studio.client.panmirror.outline.PanmirrorOutlineWidget;
 import org.rstudio.studio.client.panmirror.pandoc.PanmirrorPandocFormat;
 import org.rstudio.studio.client.panmirror.theme.PanmirrorTheme;
@@ -88,7 +90,8 @@ public class PanmirrorWidget extends DockLayoutPanel implements
    HasChangeHandlers, 
    HasSelectionChangedHandlers,
    PanmirrorOutlineVisibleEvent.HasPanmirrorOutlineVisibleHandlers,
-   PanmirrorOutlineWidthEvent.HasPanmirrorOutlineWidthHandlers
+   PanmirrorOutlineWidthEvent.HasPanmirrorOutlineWidthHandlers,
+   PanmirrorExecuteRmdChunkEvent.HasPanmirrorExecuteRmdChunkHandlers
    
 {
    
@@ -283,6 +286,10 @@ public class PanmirrorWidget extends DockLayoutPanel implements
          // sync outline
          updateOutineOnIdle.nudge();
          
+      }));
+      
+      editorEventUnsubscribe_.add(editor_.subscribe(PanmirrorEvent.ExecuteRmdChunk, () -> {
+         fireEvent(new PanmirrorExecuteRmdChunkEvent(editor_.getActiveRmdChunk()));       
       }));
       
       registrations_.add(events_.addHandler(EditorThemeChangedEvent.TYPE, 
@@ -524,6 +531,12 @@ public class PanmirrorWidget extends DockLayoutPanel implements
    public HandlerRegistration addPanmirrorOutlineVisibleHandler(PanmirrorOutlineVisibleEvent.Handler handler)
    {
       return handlers_.addHandler(PanmirrorOutlineVisibleEvent.getType(), handler);
+   }
+   
+   @Override
+   public HandlerRegistration addPanmirrorExecuteRmdChunkHandler(Handler handler)
+   {
+      return handlers_.addHandler(PanmirrorExecuteRmdChunkEvent.getType(), handler);
    }
    
    @Override

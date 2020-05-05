@@ -1,5 +1,5 @@
 /*
- * PanmirrorOptions.java
+ * PanmirrorRmdChunk.java
  *
  * Copyright (C) 2009-20 by RStudio, PBC
  *
@@ -19,13 +19,9 @@ package org.rstudio.studio.client.panmirror;
 import jsinterop.annotations.JsType;
 
 @JsType
-public class PanmirrorOptions
+public class PanmirrorRmdChunk
 {    
-   public boolean autoFocus;
-   public boolean spellCheck;
-   public boolean codemirror;
-   public boolean rmdImagePreview;
-   public String[] rmdChunkExecution;
-   public boolean hideFormatComment;
-   public String className;
+   public String lang;
+   public String meta;
+   public String code;
 }

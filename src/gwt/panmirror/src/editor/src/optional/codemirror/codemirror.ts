@@ -262,7 +262,7 @@ class CodeBlockNodeView implements NodeView {
 
     // Note: normalizeKeyMap not declared in CodeMirror types
     // so we cast to any
-    return (CodeMirror as any).normalizeKeyMap({
+    const cmKeymap = (CodeMirror as any).normalizeKeyMap({
       Up: () => this.arrowMaybeEscape('line', -1),
       Left: () => this.arrowMaybeEscape('char', -1),
       Down: () => this.arrowMaybeEscape('line', 1),
@@ -283,6 +283,13 @@ class CodeBlockNodeView implements NodeView {
         return this.options.attrEditFn ? this.options.attrEditFn(view.state, view.dispatch, view) : CodeMirror.Pass;
       },
     });
+    if (this.options.executeFn) {
+      cmKeymap[`Shift-${mod}-Enter`] = () => {
+        this.options.executeFn!();
+        return true;
+      };
+    }
+    return cmKeymap;
   }
 
   private backspaceMaybeDeleteNode() {

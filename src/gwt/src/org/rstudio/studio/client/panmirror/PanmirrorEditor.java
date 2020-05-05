@@ -87,6 +87,8 @@ public class PanmirrorEditor
    
    public native PanmirrorPandocFormat getPandocFormat();
    
+   public native PanmirrorRmdChunk getActiveRmdChunk();
+   
    public native void enableDevTools(JsObject initFn);
  
 }

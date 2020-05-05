@@ -34,6 +34,8 @@ import { EditorFormat, kBookdownDocType } from '../../api/format';
 import { RmdChunkImagePreviewPlugin } from './rmd_chunk-image';
 
 import './rmd_chunk-styles.css';
+import { rmdChunk } from '../../api/rmd';
+import { EditorEvents, EditorEvent } from '../../api/events';
 
 const kRmdCodeChunkClass = '3759D6F8-53AF-4931-8060-E55AF73236B5'.toLowerCase();
 
@@ -43,6 +45,7 @@ const extension = (
   ui: EditorUI,
   format: EditorFormat,
   options: EditorOptions,
+  events: EditorEvents
 ): Extension | null => {
   if (!format.rmdExtensions.codeChunks) {
     return null;
@@ -88,6 +91,9 @@ const extension = (
               return null;
             }
           },
+          executeFn: () => {
+            events.emit(EditorEvent.ExecuteRmdChunk);
+          }
         },
 
         pandoc: {
@@ -108,11 +114,9 @@ const extension = (
 
           writer: (output: PandocOutput, node: ProsemirrorNode) => {
             output.writeToken(PandocTokenType.Para, () => {
-              // split text content into first and subsequent lines
-              const lines = node.textContent.split('\n');
-              if (lines.length > 0) {
-                const first = lines[0].replace(/^.*?\{([^}]*)\}.*?$/, '$1');
-                output.writeRawMarkdown('```{' + first + '}\n' + lines.slice(1).join('\n') + '\n```\n');
+              const parts = rmdChunk(node.textContent);
+              if (parts) {
+                output.writeRawMarkdown('```{' + parts.meta + '}\n' + parts.code + '\n```\n');
               }
             });
           },

@@ -55,6 +55,7 @@ import { unitToPixels, pixelsToUnit, roundUnit, kValidUnits } from '../api/image
 import { kPercentUnit } from '../api/css';
 import { EditorFormat } from '../api/format';
 import { diffChars, EditorChange } from '../api/change';
+import { activeRmdChunk } from '../api/rmd';
 
 import { getTitle, setTitle } from '../nodes/yaml_metadata/yaml_metadata-title';
 
@@ -561,6 +562,10 @@ export class Editor {
     return this.pandocFormat;
   }
 
+  public getActiveRmdChunk() {
+    return activeRmdChunk(this.state);
+  }
+
   private dispatchTransaction(tr: Transaction) {
     // track previous outline
     const previousOutline = getOutline(this.state);
@@ -602,6 +607,7 @@ export class Editor {
     events.set(EditorEvent.OutlineChange, new Event(EditorEvent.OutlineChange));
     events.set(EditorEvent.SelectionChange, new Event(EditorEvent.SelectionChange));
     events.set(EditorEvent.Resize, new Event(EditorEvent.Resize));
+    events.set(EditorEvent.ExecuteRmdChunk, new Event(EditorEvent.ExecuteRmdChunk));
     return events;
   }
 
@@ -610,7 +616,8 @@ export class Editor {
       this.format,
       this.options,
       this.context.ui,
-      { subscribe: this.subscribe.bind(this) },
+      { subscribe: this.subscribe.bind(this),
+        emit: this.emitEvent.bind(this) },
       this.context.extensions,
       this.pandocFormat.extensions,
       this.pandocCapabilities,

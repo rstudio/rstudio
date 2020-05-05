@@ -58,6 +58,7 @@ export interface PandocNode {
 export interface CodeViewOptions {
   lang: (node: ProsemirrorNode, content: string) => string | null;
   attrEditFn?: CommandFn;
+  executeFn?: VoidFunction;
   classes?: string[];
   borderColorClass?: string;
   firstLineMeta?: boolean;
