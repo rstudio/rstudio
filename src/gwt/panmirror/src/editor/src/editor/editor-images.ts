@@ -19,6 +19,7 @@ import copyImage from './images/copy.png';
 import propertiesImage from './images/properties.png';
 import removelinkImage from './images/removelink.png';
 import runchunkImage from './images/runchunk.png';
+import runprevchunksImage from './images/runprevchunks.png';
 
 export function defaultEditorUIImages(): EditorUIImages {
   return {
@@ -26,5 +27,6 @@ export function defaultEditorUIImages(): EditorUIImages {
     properties: propertiesImage,
     removelink: removelinkImage,
     runchunk: runchunkImage,
+    runprevchunks: runprevchunksImage,
   };
 }

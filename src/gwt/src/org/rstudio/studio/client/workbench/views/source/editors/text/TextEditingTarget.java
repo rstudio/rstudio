@@ -5022,7 +5022,14 @@ public class TextEditingTarget implements
    @Handler
    void onExecutePreviousChunks()
    {
-      executeChunks(null, TextEditingTargetScopeHelper.PREVIOUS_CHUNKS);
+      if (visualMode_.isActivated())
+      {
+         visualMode_.executePreviousChunks();
+      }
+      else
+      {
+         executeChunks(null, TextEditingTargetScopeHelper.PREVIOUS_CHUNKS);
+      }
    }
    
    @Handler

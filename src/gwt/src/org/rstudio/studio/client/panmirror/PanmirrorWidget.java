@@ -381,6 +381,11 @@ public class PanmirrorWidget extends DockLayoutPanel implements
       return editor_.getActiveRmdChunk();
    }
    
+   public PanmirrorRmdChunk getPreviousExecutableRmdChunks()
+   {
+      return editor_.getPreviousExecutableRmdChunks();
+   }
+   
    public HasFindReplace getFindReplace()
    {
       return findReplace_;

@@ -34,17 +34,27 @@
   color: inherit !important;
 }
 
-.ProseMirror .CodeMirror .pm-image-button-run-chunk {
+.ProseMirror .CodeMirror .pm-codemirror-toolbar {
   position: absolute;
   right: 0;
   top: 0;
   z-index: 10;
 }
 
-.ProseMirror .CodeMirror .pm-image-button-run-chunk img {
+.ProseMirror .CodeMirror .pm-image-button {
+  margin-left: 5px;
+}
+
+.ProseMirror .CodeMirror .pm-codemirror-toolbar .pm-run-previous-chunks-button img {
+  width: 13px;
+  height: 13px;
+}
+
+.ProseMirror .CodeMirror .pm-codemirror-toolbar .pm-run-chunk-button img {
   width: 20px;
   height: 13px;
 }
+
 
 
 

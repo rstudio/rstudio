@@ -26,6 +26,8 @@ import { insertParagraph } from '../../api/paragraph';
 import { createImageButton } from '../../api/widgets/widgets';
 import { EditorUI } from '../../api/ui';
 import { EditorOptions } from '../../api/options';
+import { kPlatformMac } from '../../api/platform';
+import { rmdChunk, previousExecutableRmdChunks, mergeRmdChunks } from '../../api/rmd';
 
 import { selectAll } from '../../behaviors/select_all';
 
@@ -48,9 +50,6 @@ import 'codemirror/addon/selection/mark-selection.js';
 
 import 'codemirror/lib/codemirror.css';
 import './codemirror.css';
-import { kPlatformMac } from '../../api/platform';
-import { rmdChunk } from '../../api/rmd';
-
 
 const plugin = new PluginKey('codemirror');
 
@@ -89,9 +88,10 @@ class CodeBlockNodeView implements NodeView {
   private readonly view: EditorView;
   private readonly getPos: () => number;
   private readonly cm: CodeMirror.Editor;
-  private readonly runChunk?: HTMLButtonElement;
   private readonly editorOptions: EditorOptions;
   private readonly options: CodeViewOptions;
+
+  private readonly runChunkToolbar: HTMLDivElement;
 
   private node: ProsemirrorNode;
   private incomingChanges: boolean;
@@ -126,22 +126,13 @@ class CodeBlockNodeView implements NodeView {
     // Create a CodeMirror instance
     this.cm = CodeMirror(null!, cmOptions as CodeMirror.EditorConfiguration);
 
-     // The editor's outer node is our DOM representation
-     this.dom = this.cm.getWrapperElement();
+    // The editor's outer node is our DOM representation
+    this.dom = this.cm.getWrapperElement();
 
     // add a chunk execution button if execution is supported
-    if (this.options.executeRmdChunkFn) {
-      // edit button
-      const shortcut = kPlatformMac ? '⇧⌘↩︎' : 'Ctrl+Shift+Enter';
-      this.runChunk = createImageButton(
-        ui.images.runchunk!,
-        ['pm-image-button-run-chunk'],
-        `${ui.context.translateText('Run Chunk')} (${shortcut})`,
-      );
-      this.runChunk.onclick = this.executeChunk.bind(this);
-      this.dom.append(this.runChunk);
-    }
-
+    this.runChunkToolbar = this.initRunChunkToolbar(ui);
+    this.dom.append(this.runChunkToolbar);
+  
     // update mode
     this.updateMode();
 
@@ -319,22 +310,7 @@ class CodeBlockNodeView implements NodeView {
         return this.options.attrEditFn ? this.options.attrEditFn(view.state, view.dispatch, view) : CodeMirror.Pass;
       },
     });
-    if (this.canExecuteChunks()) {
-      cmKeymap[`Shift-${mod}-Enter`] = () => {
-        this.executeChunk();
-        return true;
-      };
-    }
     return cmKeymap;
-  }
-
-  private executeChunk() {
-    if (this.isChunkExecutionEnabled()) {
-      const chunk = rmdChunk(this.node.textContent);
-      if (chunk != null) {
-        this.options.executeRmdChunkFn!(chunk);
-      }
-    }
   }
 
   private backspaceMaybeDeleteNode() {
@@ -373,18 +349,65 @@ class CodeBlockNodeView implements NodeView {
     this.view.focus();
   }
 
+  private initRunChunkToolbar(ui: EditorUI) {
+
+    const toolbar = window.document.createElement('div');
+    toolbar.classList.add('pm-codemirror-toolbar');
+    if (this.options.executeRmdChunkFn) {
+
+      // run previous chunks button
+      const runPreivousChunkShortcut = kPlatformMac ? '⌥⌘P' : 'Ctrl+Alt+P';
+      const runPreviousChunksButton = createImageButton(
+        ui.images.runprevchunks!,
+        ['pm-run-previous-chunks-button'],
+        `${ui.context.translateText('Run All Chunks Above')} (${runPreivousChunkShortcut})`,
+      );
+      runPreviousChunksButton.onclick = this.executePreviousChunks.bind(this);
+      toolbar.append(runPreviousChunksButton);
+
+      // run chunk button
+      const runChunkShortcut = kPlatformMac ? '⇧⌘↩︎' : 'Ctrl+Shift+Enter';
+      const runChunkButton = createImageButton(
+        ui.images.runchunk!,
+        ['pm-run-chunk-button'],
+        `${ui.context.translateText('Run Chunk')} (${runChunkShortcut})`,
+      );
+      runChunkButton.onclick = this.executeChunk.bind(this);
+      toolbar.append(runChunkButton);
+    }
+
+    return toolbar;
+  }
+
+  private executeChunk() {
+    if (this.isChunkExecutionEnabled()) {
+      const chunk = rmdChunk(this.node.textContent);
+      if (chunk != null) {
+        this.options.executeRmdChunkFn!(chunk);
+      }
+    }
+  }
+
+  private executePreviousChunks() {
+    if (this.isChunkExecutionEnabled()) {
+      const prevChunks = previousExecutableRmdChunks(this.view.state, this.getPos());
+      const mergedChunk = mergeRmdChunks(prevChunks);
+      if (mergedChunk) {
+        this.options.executeRmdChunkFn!(mergedChunk);
+      }
+    }
+  }
+
   private canExecuteChunks() {
     return this.editorOptions.rmdChunkExecution && this.options.executeRmdChunkFn;
   }
 
   private enableChunkExecution(enable: boolean) {
-    if (this.runChunk) {
-      this.runChunk.style.display = enable ? 'initial' : 'none';
-    }
+    this.runChunkToolbar.style.display = enable ? 'initial' : 'none';
   }
 
   private isChunkExecutionEnabled() {
-    return this.runChunk && this.runChunk.style.display !== 'none';
+    return this.runChunkToolbar.style.display !== 'none';
   }
 }
 

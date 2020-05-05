@@ -404,7 +404,6 @@ public class TextEditingTargetVisualMode
         commands_.executeFromCurrentLine(),
         commands_.executeLastCode(),
         commands_.executeNextChunk(),
-        commands_.executePreviousChunks(),
         commands_.executeSubsequentChunks(),
         commands_.executeToCurrentLine(),
         commands_.sendToTerminal(),
@@ -430,6 +429,7 @@ public class TextEditingTargetVisualMode
       );
    }
    
+   
    public void unmanageCommands()
    {
       restoreDisabledForVisualMode();
@@ -439,7 +439,13 @@ public class TextEditingTargetVisualMode
    {
       PanmirrorRmdChunk chunk = panmirror_.getActiveRmdChunk();
       if (chunk != null)
-         this.executeRmdChunk(chunk);
+         executeRmdChunk(chunk);
+   }
+   
+   public void executePreviousChunks()
+   {
+      PanmirrorRmdChunk chunk = panmirror_.getPreviousExecutableRmdChunks();
+      executeRmdChunk(chunk);
    }
    
    public HasFindReplace getFindReplace()
