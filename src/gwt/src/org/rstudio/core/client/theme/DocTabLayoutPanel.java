@@ -937,7 +937,7 @@ public class DocTabLayoutPanel
             
             events_.fireEvent(new DocWindowChangedEvent(pieces[0],
                   pieces.length > 1 ? pieces[1] : "", 
-                  initDragParams_, null, destPos_));
+                  initDragParams_, null, destPos_, evt.getClientX()));
          }
          
          if (Desktop.hasDesktopFrame())

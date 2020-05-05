@@ -1245,12 +1245,10 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
                   {
                      assignSourceDocWindowId(sourceDocs.get(i).getId(), 
                            getSourceWindowId(), null);
-                     // !!! here we need to send the display with the event
-                     // need to look up display by editor by sourcedoc          
                      fireEventToSourceWindow(sourceWindowId, 
                            new DocWindowChangedEvent(
                                  sourceDocs.get(i).getId(), sourceWindowId, 
-                                 null, sourceDocs.get(i).getCollabParams(), 0),
+                                 null, sourceDocs.get(i).getCollabParams(), 0, -1),
                            true);
                      return new NavigationResult(
                            NavigationResult.RESULT_RELOCATE, 
@@ -1289,7 +1287,7 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
                         getSourceWindowId(), null);
                   events_.fireEventToMainWindow(new DocWindowChangedEvent(
                               sourceDocs.get(i).getId(), sourceWindowId, null, 
-                              sourceDocs.get(i).getCollabParams(), 0));
+                              sourceDocs.get(i).getCollabParams(), 0, -1));
                   return new NavigationResult(NavigationResult.RESULT_RELOCATE,
                         sourceDocs.get(i).getId());
                }

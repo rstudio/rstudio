@@ -187,9 +187,15 @@ public class SourcePane extends LazyPanel implements Display,
       }
    }
 
-   public boolean hasTab(Widget widget)
+   @Override
+   public boolean hasDoc(String docId)
    {
-      return tabPanel_.getWidgetIndex(widget) >= 0 ? true : false;
+      for (EditingTarget target : editors_)
+      {
+         if (StringUtil.equals(docId, target.getId()))
+            return true;
+      }
+      return false;
    }
 
    // public add tab methods
@@ -341,22 +347,16 @@ public class SourcePane extends LazyPanel implements Display,
 
    public void closeTabByDocId(String docId, boolean interactive)
    {
-      // !!! temporary debugging variable
-      boolean found = false;
       suspendDocumentClose_ = true;
       for (int i = 0; i < editors_.size(); i++)
       {
          if (editors_.get(i).getId() == docId)
          {
-            found = true;
             closeTab(i, interactive, null);
-
             break;
          }
       }
       suspendDocumentClose_ = false;
-      if (!found)
-         Debug.logToConsole("COULD NOT FIND TAB TO CLOSE BY ID");
    }
 
    public void closeTab(boolean interactive)
@@ -377,9 +377,15 @@ public class SourcePane extends LazyPanel implements Display,
    public void closeTab(int index, boolean interactive, Command onClosed)
    {
       if (interactive)
-         tabPanel_.tryCloseTab(index, onClosed);
+      {
+         if (tabPanel_.tryCloseTab(index, onClosed))
+            editors_.remove(index);
+      }
       else
+      {
          tabPanel_.closeTab(index, onClosed);
+         editors_.remove(index);
+      }
    }
 
    public void onTabClosed(TabClosedEvent event)

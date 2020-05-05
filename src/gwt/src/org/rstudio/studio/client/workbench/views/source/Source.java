@@ -219,6 +219,7 @@ public class Source implements InsertSourceHandler,
                                     HasBeforeSelectionHandlers<Integer>,
                                     HasSelectionHandlers<Integer>
    {
+      // !!! make thie neater 
       void setSource(Source source);
       void generateName(boolean first);
       void addEditor(EditingTarget target);
@@ -234,7 +235,7 @@ public class Source implements InsertSourceHandler,
       void selectTab(Widget widget);
       int getTabCount();
       int getActiveTabIndex();
-      boolean hasTab(Widget widget);
+      boolean hasDoc(String string);
       void closeTabByDocId(String docId, boolean interactive);
       void closeTabByPath(String path, boolean interactive);
       void closeTab(boolean interactive);
@@ -273,6 +274,7 @@ public class Source implements InsertSourceHandler,
       void execute(EditingTarget editingTarget, Command continuation);
    }
 
+   // !!! if we can determine a consistent look up id, make this a map
    private class DisplayList extends ArrayList<Display>
    {
       public DisplayList()
@@ -287,15 +289,11 @@ public class Source implements InsertSourceHandler,
 
       public void setActive(EditingTarget target)
       {
-         activeDisplay_ = getDisplayByEditor(target);
+         activeDisplay_ = getDisplayByDocument(target.getId());
          if (activeDisplay_ != null)
             activeDisplay_.setActiveEditor(target);
          else
             Debug.logToConsole("ERROR: WE HAVE AN EDITOR WITHOUT A DISPLAY");
-         /*
-         else
-            activeDisplay_ = getActiveDisplay();
-            */
       }
 
       public Display getActiveDisplay()
@@ -305,10 +303,10 @@ public class Source implements InsertSourceHandler,
 
          if (activeEditor_ != null)
          {
-            activeDisplay_ = getDisplayByEditor(activeEditor_);
+            activeDisplay_ = getDisplayByDocument(activeEditor_.getId());
             // !!! Debug code to be removed
             if (activeDisplay_ != null)
-                  return activeDisplay_;
+               return activeDisplay_;
             else
                Debug.logToConsole("ERROR: WE HAVE AN EDITOR WITHOUT A DISPLAY");
          }
@@ -317,15 +315,14 @@ public class Source implements InsertSourceHandler,
          return activeDisplay_;
       }
 
-      public Display getDisplayByEditor(EditingTarget target)
+      public Display getDisplayByDocument(String docId)
       {
          for (Display display : this)
          {
-             if (display.hasTab(target.asWidget()))
-                return display;
+            if (display.hasDoc(docId))
+               return display;
          }
-         if (target != null)
-            Debug.logToConsole("GETDISPLAYBYEDITOR ERROR");
+         Debug.logWarning("Could not located display for docId: " + docId);
          return null;
       }
 
@@ -334,6 +331,20 @@ public class Source implements InsertSourceHandler,
          for (Display display : this)
          {
             if (StringUtil.equals(name, display.getName()))
+               return display;
+         }
+         return null;
+      }
+
+      public Display getDisplayByPosition(int x)
+      {
+         for (Display display : this)
+         {
+            Widget w = display.asWidget();
+            int left = w.getAbsoluteLeft();
+            int right = w.getAbsoluteLeft() + w.getOffsetWidth();
+
+            if (x > left && x < right)
                return display;
          }
          return null;
@@ -817,7 +828,7 @@ public class Source implements InsertSourceHandler,
          @Override
          protected Integer getValue()
          {
-            return getPhysicalTabIndex();
+            return getPhysicalTabIndex(null);
          }
       };
       
@@ -2248,7 +2259,7 @@ public class Source implements InsertSourceHandler,
       
       ensureVisible(false);
 
-      int targetIndex = getPhysicalTabIndex() + delta;
+      int targetIndex = getPhysicalTabIndex(null) + delta;
       if (targetIndex > (views_.getActiveDisplay().getTabCount() - 1))
       {
          if (wrap)
@@ -2269,26 +2280,26 @@ public class Source implements InsertSourceHandler,
    @Handler
    public void onMoveTabRight()
    {
-      views_.getActiveDisplay().moveTab(getPhysicalTabIndex(), 1);
+      views_.getActiveDisplay().moveTab(getPhysicalTabIndex(null), 1);
    }
 
    @Handler
    public void onMoveTabLeft()
    {
-      views_.getActiveDisplay().moveTab(getPhysicalTabIndex(), -1);
+      views_.getActiveDisplay().moveTab(getPhysicalTabIndex(null), -1);
    }
    
    @Handler
    public void onMoveTabToFirst()
    {
-      views_.getActiveDisplay().moveTab(getPhysicalTabIndex(), getPhysicalTabIndex() * -1);
+      views_.getActiveDisplay().moveTab(getPhysicalTabIndex(null), getPhysicalTabIndex(null) * -1);
    }
 
    @Handler
    public void onMoveTabToLast()
    {
-      views_.getActiveDisplay().moveTab(getPhysicalTabIndex(), (views_.getActiveDisplay().getTabCount() - 
-            getPhysicalTabIndex()) - 1);
+      views_.getActiveDisplay().moveTab(getPhysicalTabIndex(null), (views_.getActiveDisplay().getTabCount() - 
+            getPhysicalTabIndex(null)) - 1);
    }
 
    @Override
@@ -2319,9 +2330,7 @@ public class Source implements InsertSourceHandler,
    @Override
    public void onDocWindowChanged(final DocWindowChangedEvent e)
    {
-      Debug.logToConsole("SourceWindowManager.getSourceWindowId(): >" +
-            SourceWindowManager.getSourceWindowId() + "<");
-      Debug.logToConsole("e.getNewWindowId(): >" +  e.getNewWindowId() + "<");
+      Display oldDisplay = null;
       if (e.getNewWindowId() == SourceWindowManager.getSourceWindowId())
       {
          ensureVisible(true);
@@ -2335,6 +2344,29 @@ public class Source implements InsertSourceHandler,
                      pWindowManager_.get().getDocCollabParams(e.getDocId()) :
                      e.getCollabParams();
          
+         // If we are the main window we need to determine the display columns we are moving to and
+         // from. If we can not determine these, cancel the tab change to prevent the tab from
+         // moving to the wrong tab or having duplicate instances of the same tab. newDisplay must
+         // be final to be used in the onResponseReceived function below.
+         final Display newDisplay = SourceWindowManager.isMainSourceWindow() ?
+                                    views_.getDisplayByPosition(e.getXPos()) :
+                                    null;
+         if (SourceWindowManager.isMainSourceWindow())
+         {
+            if (newDisplay == null)
+            {
+               Debug.logWarning("Could not determine new source column."); 
+               return;
+            }
+            // when we're moving between columns in the main source window
+            // we need to set the oldDisplay before we add the new one
+            oldDisplay = e.getOldWindowId() == e.getNewWindowId() ? 
+                         views_.getDisplayByDocument(e.getDocId()) :
+                         views_.getActiveDisplay();
+            Debug.logToConsole("newDisplay: " + newDisplay.getName());
+            Debug.logToConsole("oldDisplay: " + oldDisplay.getName());
+         }
+
          // if we're the adopting window, add the doc
          server_.getSourceDocument(e.getDocId(),
                new ServerRequestCallback<SourceDocument>()
@@ -2342,11 +2374,8 @@ public class Source implements InsertSourceHandler,
             @Override
             public void onResponseReceived(final SourceDocument doc)
             {
-               Display display =
-                  SourceWindowManager.isMainSourceWindow() ? 
-                     views_.getDisplayByName(e.getNewDisplayName()) :
-                     null;
-               final EditingTarget target = addTab(doc, e.getPos(), display);
+               Debug.logToConsole("e.getPos(): " + Integer.toString(e.getPos()));
+               final EditingTarget target = addTab(doc, e.getPos(), newDisplay);
                
                Scheduler.get().scheduleDeferred(new Scheduler.ScheduledCommand()
                {
@@ -2369,11 +2398,17 @@ public class Source implements InsertSourceHandler,
             }
          });
       }
-      else if (e.getOldWindowId() == SourceWindowManager.getSourceWindowId())
+
+      // the new and old window Ids will be the same when moving documents between columns
+      // in the main source window
+      if (e.getOldWindowId() == SourceWindowManager.getSourceWindowId())
       {
-         Display oldDisplay = views_.getDisplayByName(e.getOldDisplayName());
          if (oldDisplay == null)
-            oldDisplay = views_.getActiveDisplay();
+         {
+            oldDisplay = SourceWindowManager.isMainSourceWindow() ?
+                         views_.getDisplayByDocument(e.getDocId()) :
+                         views_.getActiveDisplay();
+         }
          // cancel tab drag if it was occurring
          oldDisplay.cancelTabDrag();
          
@@ -2406,10 +2441,12 @@ public class Source implements InsertSourceHandler,
          @Override
          public void execute(EditingTarget editor)
          {
+            Debug.logToConsole("onDocTabDragInitiated----");
             DocTabDragParams params = event.getDragParams();
+            Debug.logToConsole("docId: " + params.getDocId());
             params.setSourcePosition(editor.currentPosition());
-               params.setDisplayName(views_.getDisplayByEditor(editor).getName());
-               events_.fireEvent(new DocTabDragStartedEvent(params));
+            params.setDisplayName(views_.getDisplayByDocument(editor.getId()).getName());
+            events_.fireEvent(new DocTabDragStartedEvent(params));
           }
        });
    }
@@ -2434,14 +2471,14 @@ public class Source implements InsertSourceHandler,
                   {
                      textEditor.syncLocalSourceDb();
                      events_.fireEvent(new PopoutDocEvent(event, 
-                        textEditor.currentPosition(), views_.getDisplayByEditor(textEditor)));
+                        textEditor.currentPosition(), views_.getDisplayByDocument(textEditor.getId())));
                   }
                });
             }
             else
             {
                events_.fireEvent(new PopoutDocEvent(event, 
-                     editor.currentPosition(), views_.getDisplayByEditor(editor)));
+                     editor.currentPosition(), views_.getDisplayByDocument(editor.getId())));
             }
          }
       });
@@ -2861,7 +2898,7 @@ public class Source implements InsertSourceHandler,
    private Display getViewByDocId(String docId)
    {
       final EditingTarget target = getEditingTargetForId(docId);
-      return views_.getDisplayByEditor(target);
+      return views_.getDisplayByDocument(target.getId());
 
    }
    public ArrayList<Widget> getViewsAsWidgets()
@@ -2918,7 +2955,7 @@ public class Source implements InsertSourceHandler,
                else
                {
                   // untitled document -- just close the tab non-interactively
-                  views_.getDisplayByEditor(saveTarget).closeTab(
+                  views_.getDisplayByDocument(saveTarget.getId()).closeTab(
                      saveTarget.asWidget(), false, continuation);
                }
             }
@@ -3273,7 +3310,7 @@ public class Source implements InsertSourceHandler,
                }
                else
                {
-                  views_.getDisplayByEditor(target).selectTab(i);
+                  views_.getDisplayByDocument(target.getId()).selectTab(i);
                   editingTargetAction.execute(target);
                }
                return;
@@ -3538,7 +3575,7 @@ public class Source implements InsertSourceHandler,
          if (thisPath != null
              && thisPath.equalsIgnoreCase(file.getPath()))
          {
-            views_.getDisplayByEditor(target).selectTab(i);
+            views_.getDisplayByDocument(target.getId()).selectTab(i);
             pMruList_.get().add(thisPath);
             if (resultCallback != null)
                resultCallback.onSuccess(target);
@@ -3699,7 +3736,7 @@ public class Source implements InsertSourceHandler,
          int mode, Display display)
    {
       // by default, add at the tab immediately after the current tab
-      return addTab(doc, atEnd ? null : getPhysicalTabIndex() + 1,
+      return addTab(doc, atEnd ? null : getPhysicalTabIndex(display) + 1,
             mode, display);
    }
 
@@ -4518,7 +4555,7 @@ public class Source implements InsertSourceHandler,
             suspendSourceNavigationAdding_ = true;
             try
             {
-               views_.getDisplayByEditor(target).selectTab(target.asWidget());
+               views_.getDisplayByDocument(target.getId()).selectTab(target.asWidget());
                target.restorePosition(navigation.getPosition());
             }
             finally
@@ -4627,7 +4664,7 @@ public class Source implements InsertSourceHandler,
             {
                if (editors_.get(i).getPath() == path)
                {
-                  views_.getDisplayByEditor(editors_.get(i)).closeTabByPath(path, false);
+                  views_.getDisplayByDocument(editors_.get(i).getId()).closeTabByPath(path, false);
                   return;
                }
             }
@@ -4702,7 +4739,7 @@ public class Source implements InsertSourceHandler,
          {
             // select the tab
             ensureVisible(false);
-            views_.getDisplayByEditor(editors_.get(i)).selectTab(i);
+            views_.getDisplayByDocument(editors_.get(i).getId()).selectTab(i);
             
             // callback
             callback.onSuccess((CodeBrowserEditingTarget) editors_.get(i));
@@ -4852,9 +4889,12 @@ public class Source implements InsertSourceHandler,
    // when tabs have been reordered in the session, the physical layout of the
    // tabs doesn't match the logical order of editors_. it's occasionally
    // necessary to get or set the tabs by their physical order.
-   public int getPhysicalTabIndex()
+   public int getPhysicalTabIndex(Display display)
    {
-      int idx = views_.getActiveDisplay().getActiveTabIndex();
+      if (display == null)
+         display = views_.getActiveDisplay();
+
+      int idx = display.getActiveTabIndex();
       if (idx < tabOrder_.size())
       {
          idx = tabOrder_.indexOf(idx);
@@ -4965,7 +5005,7 @@ public class Source implements InsertSourceHandler,
             {
               if (JsArrayUtil.jsArrayStringContains(ids, target.getId()))
               {
-                 views_.getDisplayByEditor(target).closeTab(
+                 views_.getDisplayByDocument(target.getId()).closeTab(
                        target.asWidget(), false /* non interactive */);
               }
             }
