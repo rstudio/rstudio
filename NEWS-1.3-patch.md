@@ -1,5 +1,6 @@
 ## v1.3 Patch 1 (Water Lily) - Release Notes
 
+
 ### Misc
 
 - Allow projects to reopen after a crash (#3220)
@@ -9,3 +10,5 @@
 - Fixed Chromium issue when using RStudio Desktop on Linux systems with newer glibc (#6379)
 - Allow multiple space-separated domains in `www-frame-origin` for Tutorial API (Pro)
 - Fix dependency installation for untitled buffers (#6762)
+- Update `rstudioapi` highlightUi call to accept a callback variable containing an R script to be executed after the highlight element has been selected (#67565)
+- Adds class attributed to RMarkdown chunks, their control buttons, and their output based on their given labels. (#6787)
