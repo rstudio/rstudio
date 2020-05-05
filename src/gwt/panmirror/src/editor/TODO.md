@@ -24,12 +24,32 @@ Named footnotes
 
 ## TODO
 
+Add execute arrow button 
+Only add button for known executable types (R, Python, ?)
+
+Pasting in this document results in an error: https://docs.google.com/document/d/1g_Vh_RAmkC5uocaiJkf8gHq97QjhzsbhnJSHqpOagLw/edit#
+
+Steal Clear Formatting shortcut back
+Make clear formatting remove stored marks when no selection
+
+minor css issue: inline code in headings is too small, e.g.
+
+Arrowing through 2 vertically adjacent code blocks (with empty paragraph in between) seems to re-render the bottom code block dom element.
+
+When 2 markdown input rules fire consectively marks are not cleared for subsequent typing.
+The problem is that the delete in the second markInputRule to fire is wiping out the other mark?
+
+There is a scenario where we have pending edits but the dirty state is still false (seems like on 
+full reload of the IDE in a new session?)
+
+Copy/paste of markdown source
+
 Math:
 
 - MathJax preview. When containing the selection, the math will show both the code and the preview. When not containing the selection will show the preview. (so probably require a node view for this). Consider a “done” gesture for display math. May need to bring back
 escaping of $ in math as this mode will clearly not be "source mode" style latex equation editing
 
-- Possibly have a special editing mode for thereoms?
+- Possibly have a special editing mode for thereoms? Or just make sure they work.
 
 - Interactive spell check
 
