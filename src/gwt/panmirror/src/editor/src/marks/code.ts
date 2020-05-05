@@ -47,7 +47,7 @@ const extension = (pandocExtensions: PandocExtensions): Extension => {
             },
           ],
           toDOM(mark: Mark) {
-            const fontClass = 'pm-code pm-fixedwidth-font pm-chunk-background-color';
+            const fontClass = 'pm-code pm-fixedwidth-font pm-chunk-background-color pm-block-border-color';
             const attrs = codeAttrs
               ? pandocAttrToDomAttr({
                   ...mark.attrs,

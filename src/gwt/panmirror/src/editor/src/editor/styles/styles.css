@@ -67,6 +67,8 @@ h3.pm-heading {
 
 .pm-code {
   padding: 2px 4px;
+  border: 1px solid;
+  border-radius: 4px;
 }
 
 .pm-div {
