@@ -25,6 +25,8 @@ gocs style delete handling in lists: first delete = continuing paragraph of bull
 
 ## TODO
 
+End line of indented Rmd chunk is consider part of the chunk when it's not
+
 You can't toggle 2 marks off (subsequent typing clears both). Note that this doesn't occur
 in prosemirror-schema-basic (perhaps a bug that's been fixed?)
 
@@ -41,8 +43,27 @@ full reload of the IDE in a new session?). Probably still related to editing out
 
 Yihui verbatim R code chunks:
 https://github.com/yihui/rmarkdown-cookbook/blob/30d92f454bbc8a462c7e086088e8a6d85ea86f25/02-basics.Rmd#L39-L42
-
 Also, yaml within fenced block will break. May just need to exclude fenced sections and raw blocks entirely during pre-processing
+
+  ---
+  magic: uuid
+  contents: base64(original source)
+  ---
+
+  Do this everywhere (textually)
+
+  For legit YAML blocks just implement getText
+  Also crawl the entire pandoc ast via mapTokens and do the same replacement
+
+  For Rmd, do the same dance that we do now, but also do the mapToken thing
+  for the textual replacement
+
+
+  ```
+  magic: uuid
+  contents: base64(original source)
+  ```
+
 
 Copy/paste of markdown source
 
