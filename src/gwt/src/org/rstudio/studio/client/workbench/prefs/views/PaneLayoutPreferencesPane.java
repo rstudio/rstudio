@@ -181,16 +181,13 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
 
       extraSourceCount_ = userPrefs.panes().getGlobalValue().getExtraSources();
       addSource_ = new ImageButton("Add source", res_.iconAddSourcePane2x());
-      if (false)
+      addSource_.setVisible(true);
+      add(addSource_);
+      addSource_.addClickHandler(clickEvent ->
       {
-         addSource_.setVisible(true);
-         add(addSource_);
-         addSource_.addClickHandler(clickEvent ->
-         {
-            extraSourceCount_++;
-            paneManager_.addSourceWindow();
-         });
-      }
+         extraSourceCount_++;
+         paneManager_.addSourceWindow();
+      });
       String[] visiblePanes = PaneConfig.getVisiblePanes();
 
       leftTop_ = new ListBox();

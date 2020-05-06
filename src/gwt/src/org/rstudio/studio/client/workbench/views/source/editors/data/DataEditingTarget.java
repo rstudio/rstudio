@@ -191,6 +191,7 @@ public class DataEditingTarget extends UrlContentEditingTarget
    @Override
    public void popoutDoc()
    {
+      Debug.logToConsole("initiating popout from dataEditingTarget for: " + getId());
       events_.fireEvent(new PopoutDocEvent(getId(), null, null));
    }
 

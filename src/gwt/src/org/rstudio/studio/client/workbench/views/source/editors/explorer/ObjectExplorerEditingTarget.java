@@ -18,6 +18,7 @@ import com.google.gwt.aria.client.Roles;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.widget.SimplePanelWithProgress;
 import org.rstudio.studio.client.application.events.EventBus;
@@ -131,6 +132,7 @@ public class ObjectExplorerEditingTarget
    @Override
    public void popoutDoc()
    {
+      Debug.logToConsole("new popoutDoc event from objectExporerEditingTarget: " + getId());
       events_.fireEvent(new PopoutDocEvent(getId(), null, null));
    }
    

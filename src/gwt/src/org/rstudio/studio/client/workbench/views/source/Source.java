@@ -349,6 +349,7 @@ public class Source implements InsertSourceHandler,
 
       public void closeTabs(EditingTarget editingTarget, boolean interactive, Command continuation)
       {
+         editors_.remove(editingTarget);
          getDisplayByDocument(editingTarget.getId()).closeTab(
                                                       editingTarget.asWidget(),
                                                       interactive,
@@ -2293,7 +2294,8 @@ public class Source implements InsertSourceHandler,
          @Override
          public void execute()
          {
-            disownDoc(e.getDocId(), e.getDisplay());
+            Debug.logToConsole("onPopoutDoc display: " + views_.getDisplayByDocument(e.getDocId()).getName() + " disowning " + e.getDocId());
+            disownDoc(e.getDocId(), views_.getDisplayByDocument(e.getDocId()));
          }
       });
    }
@@ -2346,6 +2348,7 @@ public class Source implements InsertSourceHandler,
                          views_.getActiveDisplay();
             Debug.logToConsole("newDisplay: " + newDisplay.getName());
             Debug.logToConsole("oldDisplay: " + oldDisplay.getName());
+            Debug.logToConsole("initial docId: " + e.getDocId());
          }
 
          // if we're the adopting window, add the doc
@@ -2355,9 +2358,11 @@ public class Source implements InsertSourceHandler,
             @Override
             public void onResponseReceived(final SourceDocument doc)
             {
-               Debug.logToConsole("e.getPos(): " + Integer.toString(e.getPos()));
+               Debug.logToConsole("newDisplay: " + newDisplay.getName() + " onResponseReceived docId: " + doc.getId());
+               Debug.logToConsole("doc.getSourceWindowId(): " + doc.getSourceWindowId());
                final EditingTarget target = addTab(doc, e.getPos(), newDisplay);
                
+               Debug.logToConsole("doc.getSourceWindowId(): >" + doc.getSourceWindowId() + "<");
                Scheduler.get().scheduleDeferred(new Scheduler.ScheduledCommand()
                {
                   @Override
@@ -2393,6 +2398,7 @@ public class Source implements InsertSourceHandler,
          // cancel tab drag if it was occurring
          oldDisplay.cancelTabDrag();
          
+         Debug.logToConsole("oldDisplay: " + oldDisplay.getName() + " disowning doc: " + e.getDocId());
          // disown this doc if it was our own
          disownDoc(e.getDocId(), oldDisplay);
       }
@@ -2445,6 +2451,7 @@ public class Source implements InsertSourceHandler,
             if (editor instanceof TextEditingTarget)
             {
                final TextEditingTarget textEditor = (TextEditingTarget)editor;
+      Debug.logToConsole("initiating popout doc: " + event.getDocId() + " from display: " + views_.getDisplayByDocument(textEditor.getId()).getName());
                textEditor.withSavedDoc(new Command()
                {
                   @Override
@@ -2458,6 +2465,7 @@ public class Source implements InsertSourceHandler,
             }
             else
             {
+      Debug.logToConsole("initiating non text editor popout doc: " + event.getDocId() + " from display: " + editor.getId());
                events_.fireEvent(new PopoutDocEvent(event, 
                      editor.currentPosition(), views_.getDisplayByDocument(editor.getId())));
             }

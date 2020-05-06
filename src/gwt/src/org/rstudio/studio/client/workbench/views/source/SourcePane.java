@@ -229,6 +229,7 @@ public class SourcePane extends LazyPanel implements Display,
    @Override
    public boolean hasDoc(String docId)
    {
+      Debug.logToConsole("hasDoc: " + docId);
       for (EditingTarget target : editors_)
       {
          if (StringUtil.equals(docId, target.getId()))
@@ -296,6 +297,7 @@ public class SourcePane extends LazyPanel implements Display,
       {
          if (editors_.get(i).getId() == docId)
          {
+            Debug.logToConsole("DocId: " + docId + " succesfully closed");
             closeTab(i, interactive, null);
             break;
          }

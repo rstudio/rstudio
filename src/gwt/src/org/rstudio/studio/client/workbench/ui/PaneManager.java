@@ -285,7 +285,7 @@ public class PaneManager
 
       // get the widgets for the extra source columns to be displayed
       ArrayList<Widget> sourceColumns;
-      if (source_.getViews().size() > 1)
+      if (source_.getViews().size() > 1 && sourceColumnCount_ > 1)
          sourceColumns = new ArrayList<Widget>(
                source_.getViewsAsWidgets().subList(1, sourceColumnCount_ -1));
       else

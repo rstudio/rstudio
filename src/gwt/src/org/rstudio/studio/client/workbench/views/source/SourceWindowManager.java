@@ -627,6 +627,7 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
    @Override
    public void onPopoutDoc(final PopoutDocEvent evt)
    {
+      Debug.logToConsole("onPopoutDoc for ID: " + evt.getDocId());
       // assign a new window ID to the source document 
       final String windowId = createSourceWindowId();
       assignSourceDocWindowId(evt.getDocId(), windowId, 
