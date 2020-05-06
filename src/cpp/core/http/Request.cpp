@@ -62,7 +62,7 @@ std::string Request::proxiedUri() const
    // if using the product-specific header use it
    // it should contain the exact scheme/host/port/path
    // of the original request as send by the browser
-   std::string overrideHeader = headerValue("X-RSP-Request");
+   std::string overrideHeader = headerValue("X-RStudio-Request");
    if (!overrideHeader.empty())
    {
       return overrideHeader;
