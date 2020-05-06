@@ -147,6 +147,16 @@ export function initExtensions(
     behaviorOutline,
     behaviorTextFocus,
 
+    // nodes
+    nodeDiv,
+    nodeFootnote,
+    nodeYamlMetadata,
+    nodeRmdCodeChunk,
+    nodeTable,
+    nodeDefinitionList,
+    nodeLineBlock,
+    nodeRawBlock,
+
     // marks
     markStrikeout,
     markSuperscript,
@@ -162,16 +172,6 @@ export function initExtensions(
     markXRef,
     markHTMLComment,
     markShortcode,
-
-    // nodes
-    nodeDiv,
-    nodeFootnote,
-    nodeYamlMetadata,
-    nodeRmdCodeChunk,
-    nodeTable,
-    nodeDefinitionList,
-    nodeLineBlock,
-    nodeRawBlock,
   ]);
 
   // register external extensions
