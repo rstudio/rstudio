@@ -55,7 +55,6 @@ import { unitToPixels, pixelsToUnit, roundUnit, kValidUnits } from '../api/image
 import { kPercentUnit } from '../api/css';
 import { EditorFormat } from '../api/format';
 import { diffChars, EditorChange } from '../api/change';
-import { activeRmdChunk, previousExecutableRmdChunks, mergeRmdChunks } from '../api/rmd';
 
 import { getTitle, setTitle } from '../nodes/yaml_metadata/yaml_metadata-title';
 
@@ -558,14 +557,6 @@ export class Editor {
 
   public getPandocFormat() {
     return this.pandocFormat;
-  }
-
-  public getActiveRmdChunk() {
-    return activeRmdChunk(this.state);
-  }
-
-  public getPreviousExecutableRmdChunks() {
-    return mergeRmdChunks(previousExecutableRmdChunks(this.state, this.state.selection.from));
   }
 
   private dispatchTransaction(tr: Transaction) {

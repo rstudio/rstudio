@@ -35,7 +35,7 @@ export function activeRmdChunk(state: EditorState) : EditorRmdChunk | null {
   return null;
 }
 
-export function previousExecutableRmdChunks(state: EditorState, pos: number) : EditorRmdChunk[] {
+export function previousExecutableRmdChunks(state: EditorState, pos = state.selection.from) : EditorRmdChunk[] {
   const activeChunk = activeRmdChunk(state);
   const lang = activeChunk ? activeChunk.lang : 'r';
   const kEvalFalseRegEx = /eval\s*=\s*F(?:ALSE)?/;

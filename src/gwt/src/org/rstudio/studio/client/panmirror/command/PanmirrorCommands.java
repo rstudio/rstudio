@@ -86,7 +86,6 @@ public class PanmirrorCommands
    public static final String HorizontalRule = "EAA7115B-181C-49EC-BDB1-F0FF10369278";
    public static final String YamlMetadata = "431B5A45-1B25-4A55-9BAF-C0FE95D9B2B6";
    public static final String Shortcode = "0FDDA7E8-419D-4A5D-A1F5-74061466655D";
-   public static final String RmdChunk = "EBFD21FF-4A6E-4D88-A2E0-B38470B00BB9";
    public static final String Citation = "EFFCFC81-F2E7-441E-B7FA-C693146B4185";
    public static final String CrossReference = "48CEED4F-1D18-4AF9-8686-9FEB5DF6BCC8";
    public static final String DefinitionList = "CFAB8F4D-3350-4398-9754-8DE0FB95167B";
@@ -103,4 +102,9 @@ public class PanmirrorCommands
    public static final String HTMLBlock = "6F9F64AF-711F-4F91-8642-B51C41717F31";
    public static final String RawInline = "984167C8-8582-469C-97D8-42CB12773657";
    public static final String RawBlock = "F5757992-4D33-45E6-86DC-F7D7B174B1EC";
+   
+   // chunk
+   public static final String RmdChunk = "EBFD21FF-4A6E-4D88-A2E0-B38470B00BB9";
+   public static final String ExecuteCurrentRmdChunk = "31C799F3-EF18-4F3A-92E6-51F7A3193A1B";
+   public static final String ExecutePreviousRmdChunks = "D3FDE96-0264-4364-ADFF-E87A75405B0B";
 }

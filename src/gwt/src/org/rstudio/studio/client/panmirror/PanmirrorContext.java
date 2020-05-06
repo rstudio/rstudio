@@ -19,6 +19,7 @@ import org.rstudio.studio.client.panmirror.pandoc.PanmirrorPandocEngine;
 import org.rstudio.studio.client.panmirror.ui.PanmirrorUI;
 import org.rstudio.studio.client.panmirror.ui.PanmirrorUIContext;
 import org.rstudio.studio.client.panmirror.ui.PanmirrorUIDisplay;
+import org.rstudio.studio.client.panmirror.ui.PanmirrorUIExecute;
 
 import elemental2.core.JsObject;
 import jsinterop.annotations.JsType;
@@ -26,9 +27,11 @@ import jsinterop.annotations.JsType;
 @JsType
 public class PanmirrorContext
 {  
-   public PanmirrorContext(PanmirrorUIContext uiContext, PanmirrorUIDisplay uiDisplay)
+   public PanmirrorContext(PanmirrorUIContext uiContext, 
+                           PanmirrorUIDisplay uiDisplay,
+                           PanmirrorUIExecute uiExecute)
    {
-      ui = new PanmirrorUI(uiContext, uiDisplay);
+      ui = new PanmirrorUI(uiContext, uiDisplay, uiExecute);
    }
    
    public PanmirrorUI ui;

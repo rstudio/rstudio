@@ -36,6 +36,7 @@ import { RmdChunkImagePreviewPlugin } from './rmd_chunk-image';
 import './rmd_chunk-styles.css';
 import { rmdChunk, EditorRmdChunk } from '../../api/rmd';
 import { EditorEvents } from '../../api/events';
+import { ExecuteCurrentRmdChunkCommand, ExecutePreviousRmdChunksCommand } from './rmd_chunk-commands';
 
 const kRmdCodeChunkClass = '3759D6F8-53AF-4931-8060-E55AF73236B5'.toLowerCase();
 
@@ -91,8 +92,8 @@ const extension = (
               return null;
             }
           },
-          executeRmdChunkFn: ui.display.executeRmdChunk 
-            ? (chunk: EditorRmdChunk) => ui.display.executeRmdChunk!(chunk)
+          executeRmdChunkFn: ui.execute.executeRmdChunk 
+            ? (chunk: EditorRmdChunk) => ui.execute.executeRmdChunk!(chunk)
             : undefined
         },
 
@@ -125,7 +126,14 @@ const extension = (
     ],
 
     commands: (_schema: Schema) => {
-      return [new RmdChunkCommand()];
+      const commands = [new RmdChunkCommand()];
+      if (ui.execute.executeRmdChunk) {
+        commands.push(
+          new ExecuteCurrentRmdChunkCommand(ui),
+          new ExecutePreviousRmdChunksCommand(ui)
+        );
+      }
+      return commands;
     },
 
     plugins: (_schema: Schema) => {

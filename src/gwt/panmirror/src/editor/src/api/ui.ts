@@ -25,6 +25,7 @@ import { EditorRmdChunk } from './rmd';
 export interface EditorUI {
   dialogs: EditorDialogs;
   display: EditorDisplay;
+  execute: EditorUIExecute;
   context: EditorUIContext;
   images: EditorUIImages;
 }
@@ -43,7 +44,6 @@ export interface EditorDialogs {
   insertTable: InsertTableFn;
   insertCitation: InsertCitationFn;
 }
-
 
 export interface EditorUIContext {
   // get the default directory for resources (e.g. where relative links point to)
@@ -68,10 +68,14 @@ export interface EditorMenuItem {
   };
 }
 
+export interface EditorUIExecute {
+  executeRmdChunk?: (chunk: EditorRmdChunk) => void;
+}
+
 export interface EditorDisplay {
   openURL: (url: string) => void;
   showContextMenu?: (items: EditorMenuItem[], clientX: number, clientY: number) => void;
-  executeRmdChunk?: (chunk: EditorRmdChunk) => void;
+  
 }
 
 export enum AlertType {

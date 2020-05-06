@@ -55,6 +55,7 @@ import org.rstudio.studio.client.panmirror.outline.PanmirrorOutlineItemType;
 import org.rstudio.studio.client.panmirror.pandoc.PanmirrorPandocFormat;
 import org.rstudio.studio.client.panmirror.ui.PanmirrorUIContext;
 import org.rstudio.studio.client.panmirror.ui.PanmirrorUIDisplay;
+import org.rstudio.studio.client.panmirror.ui.PanmirrorUIExecute;
 import org.rstudio.studio.client.panmirror.uitools.PanmirrorFormatComment;
 import org.rstudio.studio.client.panmirror.uitools.PanmirrorUITools;
 import org.rstudio.studio.client.panmirror.uitools.PanmirrorUIToolsFormat;
@@ -437,15 +438,12 @@ public class TextEditingTargetVisualMode
    
    public void executeChunk()
    {
-      PanmirrorRmdChunk chunk = panmirror_.getActiveRmdChunk();
-      if (chunk != null)
-         executeRmdChunk(chunk);
+      panmirror_.execCommand(PanmirrorCommands.ExecuteCurrentRmdChunk);
    }
    
    public void executePreviousChunks()
    {
-      PanmirrorRmdChunk chunk = panmirror_.getPreviousExecutableRmdChunks();
-      executeRmdChunk(chunk);
+      panmirror_.execCommand(PanmirrorCommands.ExecutePreviousRmdChunks);
    }
    
    public HasFindReplace getFindReplace()
@@ -595,7 +593,7 @@ public class TextEditingTargetVisualMode
       if (panmirror_ == null)
       {
          // create panmirror
-         PanmirrorContext context = new PanmirrorContext(uiContext(), uiDisplay());
+         PanmirrorContext context = new PanmirrorContext(uiContext(), uiDisplay(), uiExecute());
          PanmirrorOptions options = panmirrorOptions();   
          PanmirrorWidget.Options widgetOptions = new PanmirrorWidget.Options();
          PanmirrorWidget.create(context, panmirrorFormat(), options, widgetOptions, (panmirror) -> {
@@ -994,12 +992,17 @@ public class TextEditingTargetVisualMode
       uiDisplay.showContextMenu = (commands, clientX, clientY) -> {
          panmirror_.showContextMenu(commands, clientX, clientY);
       };
-      
-      uiDisplay.executeRmdChunk = (chunk) -> {
+       
+      return uiDisplay;
+   }
+   
+   private PanmirrorUIExecute uiExecute()
+   {
+      PanmirrorUIExecute uiExecute = new PanmirrorUIExecute();
+      uiExecute.executeRmdChunk = (chunk) -> {
          executeRmdChunk(chunk);
       };
-      
-      return uiDisplay;
+      return uiExecute;
    }
    
    private PanmirrorOptions panmirrorOptions()
