@@ -40,9 +40,16 @@ const emDash = new InputRule(/–-$/, (state: EditorState, match: string[], star
   return tr;
 });
 
+// from: https://github.com/ProseMirror/prosemirror-inputrules/blob/master/src/rules.js
+// (forked so we could customize/override default behavior behavior)
+const openDoubleQuote = new InputRule(/(?:^|[\s`\*_\{\[\(\<'"\u2018\u201C])(")$/, "“")
+const closeDoubleQuote = new InputRule(/"$/, "”");
+const openSingleQuote = new InputRule(/(?:^|[\s`\*_\{\[\(\<'"\u2018\u201C])(')$/, "‘")
+const closeSingleQuote = new InputRule(/'$/, "’");
+
 const extension: Extension = {
   inputRules: () => {
-    return [...smartQuotes, ellipsis, enDash, emDash];
+    return [...[openDoubleQuote, closeDoubleQuote, openSingleQuote, closeSingleQuote], ellipsis, enDash, emDash];
   },
 
   plugins: (schema: Schema) => {
