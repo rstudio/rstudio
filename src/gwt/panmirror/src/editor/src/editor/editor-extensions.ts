@@ -245,13 +245,6 @@ export class ExtensionManager {
     this.register([{ plugins: () => plugins }]);
   }
 
-  public view(view: EditorView) {
-    this.collect(extension => {
-      extension.view?.(view);
-      return undefined;
-    });
-  }
-
   public pandocMarks(): readonly PandocMark[] {
     return this.collect(extension => extension.marks);
   }
@@ -344,8 +337,8 @@ export class ExtensionManager {
     });
   }
 
-  public baseKeys(schema: Schema, mac: boolean): readonly BaseKeyBinding[] {
-    return this.collect(extension => extension.baseKeys?.(schema, mac));
+  public baseKeys(schema: Schema): readonly BaseKeyBinding[] {
+    return this.collect(extension => extension.baseKeys?.(schema));
   }
 
   public appendTransactions(schema: Schema): readonly AppendTransactionHandler[] {

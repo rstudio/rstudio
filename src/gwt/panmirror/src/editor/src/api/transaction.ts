@@ -80,7 +80,7 @@ export interface AppendMarkTransactionHandler {
   append: (tr: MarkTransaction, node: ProsemirrorNode, pos: number) => void;
 }
 
-export function appendMarkTransactionsPlugin(handlers: AppendMarkTransactionHandler[]): Plugin {
+export function appendMarkTransactionsPlugin(handlers: readonly AppendMarkTransactionHandler[]): Plugin {
   return new Plugin({
     key: new PluginKey('appendMarkTransactions'),
 
@@ -121,7 +121,7 @@ export function appendMarkTransactionsPlugin(handlers: AppendMarkTransactionHand
   });
 }
 
-export function appendTransactionsPlugin(handlers: AppendTransactionHandler[]): Plugin {
+export function appendTransactionsPlugin(handlers: readonly AppendTransactionHandler[]): Plugin {
   return new Plugin({
     key: new PluginKey('appendTransactions'),
 
