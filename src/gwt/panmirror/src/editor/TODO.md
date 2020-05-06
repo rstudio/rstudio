@@ -9,35 +9,47 @@ pandoc schema: <https://github.com/jgm/pandoc-types/blob/master/Text/Pandoc/Defi
 
 rstudioapi function for saveCannonical
 
+rstudioapi hook for saveCannonical (user processing) to keep linebreaks consistent.
+
 ### Hadley
+
+Hadley: also if I switch to raw view, close RStudio, reopen, and then switch to visual view, I don't seem to be reliably navigated to the right place
+it only seems to happen the first time I switch to visual view after opening rstudio
 
 Evaluate markdown for link text
 
-Ctrl+Enter and Cmd+Shift to execute code
-Ace mode
+Extra line (not actually a line) at bottom of codemirror (switching from visual->source->visual resolves it)
+https://github.com/hadley/mastering-shiny/blob/master/action-graphics.Rmd
 
-Chunk execution
-Inline spell check (QtWebEngine?)
-Reference linking/lookup
-Named footnotes
-
+gocs style delete handling in lists: first delete = continuing paragraph of bullet; second delete = new paragraph; third delete = back into previous bullet (currently our second delete goes back into previous bullet)
 
 ## TODO
 
-Pasting in this document results in an error: https://docs.google.com/document/d/1g_Vh_RAmkC5uocaiJkf8gHq97QjhzsbhnJSHqpOagLw/edit#
-
-Steal Clear Formatting shortcut back
-Make clear formatting remove stored marks when no selection
-
-minor css issue: inline code in headings is too small, e.g.
-
-Arrowing through 2 vertically adjacent code blocks (with empty paragraph in between) seems to re-render the bottom code block dom element.
+You can't toggle 2 marks off (subsequent typing clears both). Note that this doesn't occur
+in prosemirror-schema-basic (perhaps a bug that's been fixed?)
 
 When 2 markdown input rules fire consectively marks are not cleared for subsequent typing.
 The problem is that the delete in the second markInputRule to fire is wiping out the other mark?
 
+Consider attempting to update dependencies now?
+
+Try pasting from Excel. Try pasting tables from GDocs.
+
+Do we need to fixup non-rectangualar tables before sending to pandoc.
+
+
+Arrowing through 2 vertically adjacent code blocks (with empty paragraph in between) seems to re-render the bottom code block dom element.
+
+
 There is a scenario where we have pending edits but the dirty state is still false (seems like on 
-full reload of the IDE in a new session?)
+full reload of the IDE in a new session?). Probably still related to editing outside of the IDE (crosstalk)
+
+Dash allowed in cite, see [@R-tinytex]
+
+Yihui verbatim R code chunks:
+https://github.com/yihui/rmarkdown-cookbook/blob/30d92f454bbc8a462c7e086088e8a6d85ea86f25/02-basics.Rmd#L39-L42
+
+Also, yaml within fenced block will break. May just need to exclude fenced sections and raw blocks entirely during pre-processing
 
 Copy/paste of markdown source
 
@@ -51,6 +63,10 @@ escaping of $ in math as this mode will clearly not be "source mode" style latex
 - Interactive spell check
 
 ## Future
+
+Spelling
+
+@ref link treatment
 
 Handling unrecognized pandoc tokens.
 
@@ -133,6 +149,9 @@ pandoc scholar: <https://pandoc-scholar.github.io/> pandoc jats: <https://github
 Notes on preformance implications of scanning the entire document + some discussion of the tricky nature of doing step by step inspection: <https://discuss.prosemirror.net/t/changed-part-of-document/992> <https://discuss.prosemirror.net/t/reacting-to-node-adding-removing-changing/676> <https://discuss.prosemirror.net/t/undo-and-cursor-position/677/5>
 
 ## Known issues:
+
+- If you have 2 marks active and you toggle both of them off (either by explicit toggle or via Clear Formatting)
+  then both of the marks dissapear.
 
 - Can only preview images in the first listed hugo static dir
 
