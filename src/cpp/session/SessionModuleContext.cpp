@@ -253,6 +253,8 @@ SEXP rs_enqueClientEvent(SEXP nameSEXP, SEXP dataSEXP)
          type = session::client_events::kTutorialCommand;
       else if (name == "tutorial_launch")
          type = session::client_events::kTutorialLaunch;
+      else if (name == "reticulate_event")
+         type = session::client_events::kReticulateEvent;
 
       if (type != -1)
       {
@@ -264,7 +266,7 @@ SEXP rs_enqueClientEvent(SEXP nameSEXP, SEXP dataSEXP)
          LOG_ERROR_MESSAGE("Unexpected event name from R: " + name);
       }
    }
-   catch(r::exec::RErrorException& e)
+   catch (r::exec::RErrorException& e)
    {
       r::exec::error(e.message());
    }
