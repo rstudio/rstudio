@@ -219,11 +219,9 @@ public class Source implements InsertSourceHandler,
                                     HasBeforeSelectionHandlers<Integer>,
                                     HasSelectionHandlers<Integer>
    {
-      // !!! make thie neater 
       void setSource(Source source);
       void generateName(boolean first);
       void addEditor(EditingTarget target);
-      String getName();
       void addTab(Widget widget,
                   FileIcon icon,
                   String docId,
@@ -231,42 +229,43 @@ public class Source implements InsertSourceHandler,
                   String tooltip,
                   Integer position,
                   boolean switchToTab);
-      void selectTab(int tabIndex);
-      void selectTab(Widget widget);
+
+      String getName();
       int getTabCount();
       int getActiveTabIndex();
       boolean hasDoc(String string);
+
+      void selectTab(int tabIndex);
+      void selectTab(Widget widget);
+      void moveTab(int index, int delta);
+      void renameTab(Widget child,
+                     FileIcon icon,
+                     String value,
+                     String tooltip);
+
+      void setDirty(Widget widget, boolean dirty);
+      void setActiveEditor(EditingTarget target);
+
       void closeTabByDocId(String docId, boolean interactive);
       void closeTabByPath(String path, boolean interactive);
       void closeTab(boolean interactive);
       void closeTab(Widget widget, boolean interactive);
       void closeTab(Widget widget, boolean interactive, Command onClosed);
-      void closeTab(int index, boolean interactive, Command onClosed);
-      void moveTab(int index, int delta);
-      void setDirty(Widget widget, boolean dirty);
-      void setActiveEditor(EditingTarget target);
-      void manageChevronVisibility();
-      void showOverflowPopup();
-      void cancelTabDrag();
-      
+
       void showUnsavedChangesDialog(
             String title,
             ArrayList<UnsavedChangesTarget> dirtyTargets,
             OperationWithInput<UnsavedChangesDialog.Result> saveOperation,
             Command onCancelled);
 
+      void manageChevronVisibility();
+      void showOverflowPopup();
+      void cancelTabDrag();
+      
       void ensureVisible();
 
-      void renameTab(Widget child,
-                     FileIcon icon,
-                     String value,
-                     String tooltip);
-
-      @Handler
       void onNewSourceDoc();
       HandlerRegistration addBeforeShowHandler(BeforeShowHandler handler);
-
-      public void onEnsureVisibleSourceWindow(EnsureVisibleSourceWindowEvent e);
    }
 
    public interface CPSEditingTargetCommand
@@ -274,7 +273,6 @@ public class Source implements InsertSourceHandler,
       void execute(EditingTarget editingTarget, Command continuation);
    }
 
-   // !!! if we can determine a consistent look up id, make this a map
    private class DisplayList extends ArrayList<Display>
    {
       public DisplayList()
@@ -322,17 +320,6 @@ public class Source implements InsertSourceHandler,
             if (display.hasDoc(docId))
                return display;
          }
-         Debug.logWarning("Could not located display for docId: " + docId);
-         return null;
-      }
-
-      public Display getDisplayByName(String name)
-      {
-         for (Display display : this)
-         {
-            if (StringUtil.equals(name, display.getName()))
-               return display;
-         }
          return null;
       }
 
@@ -350,11 +337,6 @@ public class Source implements InsertSourceHandler,
          return null;
       }
 
-      public String getDisplayOfDocId()
-      {
-         return "";
-      }
-
       public int getTabCount()
       {
          int tabCount = 0;
@@ -367,11 +349,10 @@ public class Source implements InsertSourceHandler,
 
       public void closeTabs(EditingTarget editingTarget, boolean interactive, Command continuation)
       {
-         for (Display view : this)
-            view.closeTab(
-                  editingTarget.asWidget(),
-                  interactive,
-                  continuation);
+         getDisplayByDocument(editingTarget.getId()).closeTab(
+                                                      editingTarget.asWidget(),
+                                                      interactive,
+                                                      continuation);
       }
 
       public void manageChevronVisibility()
@@ -3905,7 +3886,6 @@ public class Source implements InsertSourceHandler,
       }
    }
 
-   // !!! this will be removed
    private void syncTabOrder()
    {
       // ensure the tab order is synced to the list of editors
@@ -4905,10 +4885,9 @@ public class Source implements InsertSourceHandler,
    public void setPhysicalTabIndex(int idx)
    {
       if (idx < tabOrder_.size())
-      {
          idx = tabOrder_.get(idx);
-      }
-      views_.getActiveDisplay().selectTab(idx);
+      
+      views_.getDisplayByDocument(editors_.get(idx).getId()).selectTab(idx);
    }
    
    public EditingTarget getActiveEditor()
