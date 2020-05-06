@@ -2,10 +2,12 @@
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
 	xmlns:g="urn:import:com.google.gwt.user.client.ui">
 	<ui:style>
+		@eval proportionalFont org.rstudio.core.client.theme.ThemeFonts.getProportionalFont();
+		@external editor_dark;
+
 		.popup {
 			height: 400px;
 			width: 600px;
-			background-color: white;
 			border: 2px solid #a0a0a0;
 			border-radius: 4px;
 			padding: 10px;
@@ -14,11 +16,22 @@
 			box-shadow: 0px 0px 22px 0px rgba(0,0,0,0.75);
 		}
 		
+		.popup td {
+			font-family: proportionalFont;
+		}
+		
 		.searchBox {
 			width: 100%;
 			font-size: 14pt;
 			margin-bottom: 10px;
 			box-sizing: border-box;
+			padding: 10px;
+			border: 0px;
+		}
+		
+		.editor_dark .searchBox {
+			background-color: #000000;
+			color: #FFFFFF;
 		}
 		
 		.commandList {
@@ -34,7 +47,7 @@
 			padding-right: 20px;
 		}
 	</ui:style>
-	<g:FlowPanel styleName="{style.popup}">
+	<g:FlowPanel styleName="ace_editor {style.popup}">
 		<g:TextBox styleName="{style.searchBox}" ui:field="searchBox_">
 		</g:TextBox>
 		<g:ScrollPanel styleName="{style.commandPanel}">

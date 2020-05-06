@@ -59,6 +59,12 @@ public class RAddinCommandPaletteEntry extends CommandPaletteEntry
       return addin_.getId();
    }
 
+   @Override
+   public String getContext()
+   {
+      return addin_.getPackage();
+   }
+
    private String label_;
    private final RAddin addin_;
    private final AddinExecutor executor_;

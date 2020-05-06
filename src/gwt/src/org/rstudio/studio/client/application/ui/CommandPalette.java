@@ -62,6 +62,7 @@ public class CommandPalette extends Composite
       host_ = host;
       shortcuts_ = shortcuts;
       
+      // Add all of the application commands
       KeyMap map = shortcuts_.getKeyMap(KeyMapType.APPLICATION);
       Map<String, AppCommand> allCommands = commands.getCommands();
       for (String command: allCommands.keySet())
@@ -73,6 +74,7 @@ public class CommandPalette extends Composite
          commandList_.add(entry);
       }
       
+      // Add all of the addin commands
       map = shortcuts_.getKeyMap(KeyMapType.ADDIN);
       AddinExecutor executor = new AddinExecutor();
       for (String addin: JsUtil.asIterable(addins.keys()))
@@ -84,6 +86,9 @@ public class CommandPalette extends Composite
          commandList_.add(entry);
       }
 
+      searchBox_.getElement().setAttribute("placeholder", "Search and run commands");
+      searchBox_.getElement().setAttribute("spellcheck", "false");
+      
       searchBox_.addKeyUpHandler((evt) -> 
       {
          if (evt.getNativeKeyCode() == KeyCode.UP)

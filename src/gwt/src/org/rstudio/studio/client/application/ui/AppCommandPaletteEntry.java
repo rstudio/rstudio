@@ -31,6 +31,8 @@ public class AppCommandPaletteEntry extends CommandPaletteEntry
       if (StringUtil.isNullOrEmpty(label_))
          label_ = command.getDesc();
       if (StringUtil.isNullOrEmpty(label_))
+         label_ = command.getMenuLabel(false);
+      if (StringUtil.isNullOrEmpty(label_))
          label_ = "";
       command_ = command;
       initialize();
@@ -49,6 +51,12 @@ public class AppCommandPaletteEntry extends CommandPaletteEntry
    public String getId()
    {
       return command_.getId();
+   }
+
+   @Override
+   public String getContext()
+   {
+      return null;
    }
 
    private String label_;

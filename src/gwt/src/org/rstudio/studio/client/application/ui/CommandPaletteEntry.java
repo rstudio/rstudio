@@ -17,6 +17,7 @@ package org.rstudio.studio.client.application.ui;
 import java.util.List;
 
 import org.rstudio.core.client.BrowseCap;
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.KeyCombination;
 import org.rstudio.core.client.command.KeySequence;
 
@@ -90,6 +91,17 @@ public abstract class CommandPaletteEntry extends Composite
          break;
       }
       shortcut_.getElement().setInnerSafeHtml(b.toSafeHtml());
+      
+      String context = getContext();
+      if (StringUtil.isNullOrEmpty(context))
+      {
+         context_.setVisible(false);
+      }
+      else
+      {
+         context_.setText(context);
+         context_.setVisible(true);
+      }
    }
    
    public void setSelected(boolean selected)
@@ -123,9 +135,11 @@ public abstract class CommandPaletteEntry extends Composite
    abstract public String getLabel();
    abstract public void invoke();
    abstract public String getId();
+   abstract public String getContext();
    
    private final List<KeySequence> keys_;
 
+   @UiField public Label context_;
    @UiField public Label name_;
    @UiField public Label shortcut_;
    @UiField public Styles styles_;
