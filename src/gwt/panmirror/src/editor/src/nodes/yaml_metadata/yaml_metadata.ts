@@ -18,7 +18,7 @@ import { EditorState, Transaction } from 'prosemirror-state';
 import { EditorView } from 'prosemirror-view';
 import { setTextSelection } from 'prosemirror-utils';
 
-import { Extension, extensionIfEnabled } from '../../api/extension';
+import { Extension } from '../../api/extension';
 import { PandocOutput, PandocTokenType } from '../../api/pandoc';
 import { EditorUI } from '../../api/ui';
 import { ProsemirrorCommand, EditorCommandId } from '../../api/command';
