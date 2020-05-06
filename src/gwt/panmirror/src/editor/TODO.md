@@ -16,7 +16,7 @@ rstudioapi hook for saveCannonical (user processing) to keep linebreaks consiste
 Hadley: also if I switch to raw view, close RStudio, reopen, and then switch to visual view, I don't seem to be reliably navigated to the right place
 it only seems to happen the first time I switch to visual view after opening rstudio
 
-Evaluate markdown for link text
+ok, that was another instance where switching back and forth from the visual editor lost my scroll position. Interestingly however, it preserved the cursor position so just pushing an arrow key scrolled me back to the right place
 
 Extra line (not actually a line) at bottom of codemirror (switching from visual->source->visual resolves it)
 https://github.com/hadley/mastering-shiny/blob/master/action-graphics.Rmd
@@ -30,21 +30,14 @@ in prosemirror-schema-basic (perhaps a bug that's been fixed?)
 
 When 2 markdown input rules fire consectively marks are not cleared for subsequent typing.
 The problem is that the delete in the second markInputRule to fire is wiping out the other mark?
-
-Consider attempting to update dependencies now?
+Seems to work fine with quote though, the issue may be the stickiness of the mark indicator.
 
 Try pasting from Excel. Try pasting tables from GDocs.
 
 Do we need to fixup non-rectangualar tables before sending to pandoc.
 
-
-Arrowing through 2 vertically adjacent code blocks (with empty paragraph in between) seems to re-render the bottom code block dom element.
-
-
 There is a scenario where we have pending edits but the dirty state is still false (seems like on 
 full reload of the IDE in a new session?). Probably still related to editing outside of the IDE (crosstalk)
-
-Dash allowed in cite, see [@R-tinytex]
 
 Yihui verbatim R code chunks:
 https://github.com/yihui/rmarkdown-cookbook/blob/30d92f454bbc8a462c7e086088e8a6d85ea86f25/02-basics.Rmd#L39-L42
@@ -60,27 +53,28 @@ escaping of $ in math as this mode will clearly not be "source mode" style latex
 
 - Possibly have a special editing mode for thereoms? Or just make sure they work.
 
-- Interactive spell check
-
 ## Future
 
-Spelling
+Interactive spelling
+Inline spelling
 
 @ref link treatment
-
-Handling unrecognized pandoc tokens.
-
 @ref hot-linking / dialog / +invalid link detection
 
-Inlne spell checking
+Consider porting https://gitlab.com/mpapp-public/manuscripts-symbol-picker
+
+
+Evaluate markdown for link text
+
+Consider attempting to update dependencies now?
+
+Handling unrecognized pandoc tokens.
 
 Parse plain text for markdown
 
 Async dialogs won't work with collab (b/c they could use an old state).
 
 Revisit doing smart patches of Prosemirror doc: https://github.com/rstudio/rstudio/tree/feature/panmirror-smart-patch
-
-Consider porting https://gitlab.com/mpapp-public/manuscripts-symbol-picker
 
 Fixed size tables (with last column resized) overflow-x when editing
 container is made very small.
