@@ -175,11 +175,12 @@ const extension = (pandocExtensions: PandocExtensions): Extension => {
                 attrs.tight = el.hasAttribute('data-tight');
 
                 if (capabilities.order) {
-                  let order: string | number | null = el.getAttribute('start');
+                  const order: string | null = el.getAttribute('start');
                   if (!order) {
-                    order = 1;
+                    attrs.order = 1;
+                  } else {
+                    attrs.order = parseInt(order, 10) || 1;
                   }
-                  attrs.order = order;
                 }
 
                 if (capabilities.fancy) {
