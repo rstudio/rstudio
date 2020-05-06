@@ -39,7 +39,6 @@ import {
   PandocInlineHTMLReaderFn,
 } from '../api/pandoc';
 import { EditorEvents } from '../api/events';
-import { AttrEditOptions } from '../api/attr_edit';
 import { PandocCapabilities } from '../api/pandoc_capabilities';
 import { EditorFormat } from '../api/format';
 
@@ -246,12 +245,19 @@ export class ExtensionManager {
     this.register([{ plugins: () => plugins }]);
   }
 
+  public view(view: EditorView) {
+    this.collect(extension => {
+      extension.view?.(view);
+      return undefined;
+    });
+  }
+
   public pandocMarks(): readonly PandocMark[] {
-    return this.collect<PandocMark>((extension: Extension) => extension.marks);
+    return this.collect(extension => extension.marks);
   }
 
   public pandocNodes(): readonly PandocNode[] {
-    return this.collect<PandocNode>((extension: Extension) => extension.nodes);
+    return this.collect(extension => extension.nodes);
   }
 
   public pandocPreprocessors(): readonly PandocPreprocessorFn[] {
@@ -269,96 +275,58 @@ export class ExtensionManager {
   }
 
   public pandocPostprocessors(): readonly PandocPostprocessorFn[] {
-    const postprocessors: PandocPostprocessorFn[] = [];
-
-    this.pandocReaders().forEach((reader: PandocTokenReader) => {
-      if (reader.postprocessor) {
-        postprocessors.push(reader.postprocessor);
+    return this.pandocReaders().flatMap(
+      reader => reader.postprocessor ? [reader.postprocessor] : []
+    );
       }
-    });
-
-    return postprocessors;
-  }
 
   public pandocBlockReaders(): readonly PandocBlockReaderFn[] {
-    const blockReaders: PandocBlockReaderFn[] = [];
-    this.pandocNodes().forEach((node: PandocNode) => {
-      if (node.pandoc.blockReader) {
-        blockReaders.push(node.pandoc.blockReader);
-      }
+    return this.collectFrom({
+      node: node => [node.pandoc.blockReader]
     });
-    return blockReaders;
   }
 
   public pandocInlineHTMLReaders(): readonly PandocInlineHTMLReaderFn[] {
-    const htmlReaders: PandocInlineHTMLReaderFn[] = [];
-    this.pandocMarks().forEach((mark: PandocMark) => {
-      if (mark.pandoc.inlineHTMLReader) {
-        htmlReaders.push(mark.pandoc.inlineHTMLReader);
-      }
+    return this.collectFrom({
+      mark: mark => [mark.pandoc.inlineHTMLReader],
+      node: node => [node.pandoc.inlineHTMLReader]
     });
-    this.pandocNodes().forEach((node: PandocNode) => {
-      if (node.pandoc.inlineHTMLReader) {
-        htmlReaders.push(node.pandoc.inlineHTMLReader);
       }
-    });
-    return htmlReaders;
-  }
 
   public pandocCodeBlockFilters(): readonly PandocCodeBlockFilter[] {
-    const codeBlockFilters: PandocCodeBlockFilter[] = [];
-    this.pandocNodes().forEach((node: PandocNode) => {
-      if (node.pandoc.codeBlockFilter) {
-        codeBlockFilters.push(node.pandoc.codeBlockFilter);
-      }
+    return this.collectFrom({
+      node: node => [node.pandoc.codeBlockFilter]
     });
-    return codeBlockFilters;
   }
 
   public pandocReaders(): readonly PandocTokenReader[] {
-    const readers: PandocTokenReader[] = [];
-    this.pandocMarks().forEach((mark: PandocMark) => {
-      readers.push(...mark.pandoc.readers);
+    return this.collectFrom({
+      mark: mark => mark.pandoc.readers,
+      node: node => node.pandoc.readers ?? []
     });
-    this.pandocNodes().forEach((node: PandocNode) => {
-      if (node.pandoc.readers) {
-        readers.push(...node.pandoc.readers);
       }
-    });
-    return readers;
-  }
 
   public pandocMarkWriters(): readonly PandocMarkWriter[] {
-    return this.pandocMarks().map((mark: PandocMark) => {
-      return {
-        name: mark.name,
-        ...mark.pandoc.writer,
-      };
+    return this.collectFrom({
+      mark: mark => [{name: mark.name, ...mark.pandoc.writer}]
     });
   }
 
   public pandocNodeWriters(): readonly PandocNodeWriter[] {
-    const writers: PandocNodeWriter[] = [];
-    this.pandocNodes().forEach((node: PandocNode) => {
-      if (node.pandoc.writer) {
-        writers.push({
-          name: node.name,
-          write: node.pandoc.writer,
-        });
+    return this.collectFrom({
+      node: node => {
+        return node.pandoc.writer
+          ? [{name: node.name, write: node.pandoc.writer!}]
+          : [];
       }
     });
-    return writers;
   }
 
   public commands(schema: Schema, ui: EditorUI): readonly ProsemirrorCommand[] {
-    return this.collect<ProsemirrorCommand>((extension: Extension) => {
-      if (extension.commands) {
-        return extension.commands(schema, ui);
-      } else {
-        return undefined;
+    return this.collect<ProsemirrorCommand>(
+      extension => extension.commands?.(schema, ui)
+    );
       }
-    });
-  }
 
   public codeViews() {
     const views: { [key: string]: CodeViewOptions } = {};
@@ -371,88 +339,74 @@ export class ExtensionManager {
   }
 
   public attrEditors() {
-    const editors: AttrEditOptions[] = [];
-    this.pandocNodes().forEach((node: PandocNode) => {
-      if (node.attr_edit) {
-        const attrEdit = node.attr_edit();
-        if (attrEdit) {
-          editors.push(attrEdit);
-        }
-      }
-    });
-    return editors;
-  }
-
-  public baseKeys(schema: Schema) {
-    return this.collect<BaseKeyBinding>((extension: Extension) => {
-      if (extension.baseKeys) {
-        return extension.baseKeys(schema);
-      } else {
-        return undefined;
-      }
+    return this.collectFrom({
+      node: node => [node.attr_edit?.()]
     });
   }
 
-  public appendTransactions(schema: Schema) {
-    return this.collect<AppendTransactionHandler>((extension: Extension) => {
-      if (extension.appendTransaction) {
-        return extension.appendTransaction(schema);
-      } else {
-        return undefined;
-      }
-    });
+  public baseKeys(schema: Schema, mac: boolean): readonly BaseKeyBinding[] {
+    return this.collect(extension => extension.baseKeys?.(schema, mac));
   }
 
-  public appendMarkTransactions(schema: Schema) {
-    return this.collect<AppendMarkTransactionHandler>((extension: Extension) => {
-      if (extension.appendMarkTransaction) {
-        return extension.appendMarkTransaction(schema);
-      } else {
-        return undefined;
-      }
-    });
+  public appendTransactions(schema: Schema): readonly AppendTransactionHandler[] {
+    return this.collect(extension => extension.appendTransaction?.(schema));
+  }
+
+  public appendMarkTransactions(schema: Schema): readonly AppendMarkTransactionHandler[] {
+    return this.collect(extension => extension.appendMarkTransaction?.(schema));
   }
 
   public plugins(schema: Schema, ui: EditorUI): readonly Plugin[] {
-    return this.collect<Plugin>((extension: Extension) => {
-      if (extension.plugins) {
-        return extension.plugins(schema, ui);
-      } else {
-        return undefined;
-      }
-    });
+    return this.collect(extension => extension.plugins?.(schema, ui));
   }
 
-  public fixups(schema: Schema, view: EditorView) {
-    return this.collect<FixupFn>((extension: Extension) => {
-      if (extension.fixups) {
-        return extension.fixups(schema, view);
-      } else {
-        return undefined;
-      }
-    });
+  public fixups(schema: Schema, view: EditorView): readonly FixupFn[] {
+    return this.collect(extension => extension.fixups?.(schema, view));
   }
 
   // NOTE: return value not readonly b/c it will be fed directly to a
   // Prosemirror interface that doesn't take readonly
   public inputRules(schema: Schema): InputRule[] {
-    return this.collect<InputRule>((extension: Extension) => {
-      if (extension.inputRules) {
-        return extension.inputRules(schema);
-      } else {
-        return undefined;
+    return this.collect<InputRule>(extension => extension.inputRules?.(schema));
       }
+
+  private collect<T>(collector: (extension: Extension) => readonly T[] | undefined) {
+    return this.collectFrom({
+      extension: extension => collector(extension) ?? []
     });
   }
 
-  private collect<T>(collector: (extension: Extension) => readonly T[] | undefined) {
-    let items: T[] = [];
+  /**
+   * Visits extensions in order of registration, providing optional callbacks
+   * for extension, mark, and node. The return value of callbacks should be
+   * arrays of (T | undefined | null); these will all be concatenated together,
+   * with the undefined and nulls filtered out.
+   *
+   * @param visitor Object containing callback methods for the different
+   * extension parts.
+   */
+  private collectFrom<T>(visitor: {
+    extension?: (extension: Extension) => ReadonlyArray<T | undefined | null>,
+    mark?: (mark: PandocMark) => ReadonlyArray<T | undefined | null>,
+    node?: (node: PandocNode) => ReadonlyArray<T | undefined | null>
+  }) : T[] {
+
+    const results: Array<T | undefined | null> = [];
+
     this.extensions.forEach(extension => {
-      const collected: readonly T[] | undefined = collector(extension);
-      if (collected !== undefined) {
-        items = items.concat(collected);
+      if (visitor.extension) {
+        results.push(...visitor.extension(extension));
+      }
+      if (visitor.mark && extension.marks) {
+        results.push(...extension.marks.flatMap(visitor.mark));
+      }
+      if (visitor.node && extension.nodes) {
+        results.push(...extension.nodes.flatMap(visitor.node));
       }
     });
-    return items;
+
+    return results.filter(
+      value => typeof(value) !== "undefined" && value !== null
+    ) as T[];
   }
 }
