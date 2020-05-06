@@ -56,7 +56,7 @@ const extension: Extension = {
 
 class InsertParagraphCommand extends ProsemirrorCommand {
   constructor() {
-    super(EditorCommandId.ParagraphInsert, ['Mod-\\'], insertParagraph);
+    super(EditorCommandId.ParagraphInsert, [], insertParagraph);
   }
 }
 
