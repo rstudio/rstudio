@@ -38,7 +38,7 @@ export interface AppendTransactionHandler {
   name: string;
   filter?: TransactionsFilter;
   nodeFilter?: TransactionNodeFilter;
-  append: (tr: Transaction) => void;
+  append: (tr: Transaction, transactions: Transaction[]) => void;
 }
 
 // wrapper for transaction that is guaranteed not to modify the position of any
@@ -177,13 +177,13 @@ export function appendTransactionsPlugin(handlers: AppendTransactionHandler[]): 
 
           // run the handler if applicable
           if (haveChange) {
-            handler.append(tr);
+            handler.append(tr, transactions);
           }
         }
 
         // run them all if this is a larger change
       } else {
-        handlers.forEach(handler => handler.append(tr));
+        handlers.forEach(handler => handler.append(tr, transactions));
       }
 
       // return transaction
