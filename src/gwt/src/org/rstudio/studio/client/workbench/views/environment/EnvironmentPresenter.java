@@ -100,6 +100,8 @@ public class EnvironmentPresenter extends BasePresenter
    
    public interface Display extends WorkbenchView
    {
+      void setActiveLanguage(String language);
+      String getActiveLanguage();
       void addObject(RObject object);
       void addObjects(JsArray<RObject> objects);
       void clearObjects();
@@ -857,6 +859,7 @@ public class EnvironmentPresenter extends BasePresenter
       view_.setProgress(true);
       refreshingView_ = true;
       server_.getEnvironmentState(
+            view_.getActiveLanguage(),
             new ServerRequestCallback<EnvironmentContextData>()
       {
 

@@ -18,6 +18,7 @@ package org.rstudio.studio.client.workbench.views.environment;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.DebugFilePosition;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.StringUtil;
@@ -42,6 +43,7 @@ import org.rstudio.studio.client.events.ReticulateEvent;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
+import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
@@ -64,6 +66,7 @@ import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.resources.client.ImageResource;
+import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.MenuItem;
 import com.google.gwt.user.client.ui.SuggestOracle;
 import com.google.gwt.user.client.ui.Widget;
@@ -101,6 +104,15 @@ public class EnvironmentPane extends WorkbenchPane
       environmentMonitoring_ = new Value<Boolean>(environmentState.environmentMonitoring());
 
       EnvironmentPaneResources.INSTANCE.environmentPaneStyle().ensureInjected();
+      
+      refreshTimer_ = new Timer()
+      {
+         @Override
+         public void run()
+         {
+            commands_.refreshEnvironment().execute();
+         }
+      };
       
       events.addHandler(ReticulateEvent.TYPE, this);
       
@@ -156,6 +168,22 @@ public class EnvironmentPane extends WorkbenchPane
    protected SecondaryToolbar createSecondaryToolbar()
    {
       SecondaryToolbar toolbar = new SecondaryToolbar("Environment Tab Second");
+      
+      languageMenu_ = new ToolbarPopupMenu();
+      
+      MenuItem rMenuItem = new MenuItem("R", () -> setActiveLanguage("R"));
+      languageMenu_.addItem(rMenuItem);
+      
+      MenuItem pyMenuItem = new MenuItem("Python", () -> setActiveLanguage("Python"));
+      languageMenu_.addItem(pyMenuItem);
+      
+      languageButton_ = new ToolbarMenuButton(
+            "R",
+            ToolbarButton.NoTitle,
+            (ImageResource) null,
+            languageMenu_);
+      toolbar.addLeftWidget(languageButton_);
+      toolbar.addLeftSeparator();
       
       environmentMenu_ = new EnvironmentPopupMenu();
       environmentButton_ = new ToolbarMenuButton(
@@ -629,7 +657,16 @@ public class EnvironmentPane extends WorkbenchPane
    @Override
    public void onReticulate(ReticulateEvent event)
    {
-      commands_.refreshEnvironment().execute();
+      String type = event.getType();
+      
+      if (StringUtil.equals(type, ReticulateEvent.TYPE_REPL_INITIALIZED))
+      {
+         setActiveLanguage("Python");
+      }
+      else if (StringUtil.equals(type, ReticulateEvent.TYPE_REPL_TEARDOWN))
+      {
+         setActiveLanguage("R");
+      }
    }
    
    // An extension of the toolbar popup menu that gets environment names from
@@ -641,6 +678,7 @@ public class EnvironmentPane extends WorkbenchPane
          (final ToolbarPopupMenu.DynamicPopupMenuCallback callback)
       {
          server_.getEnvironmentNames(
+               activeLanguage_,
                new ServerRequestCallback<JsArray<EnvironmentFrame>>()
                {
                   @Override
@@ -694,6 +732,46 @@ public class EnvironmentPane extends WorkbenchPane
       }
    }
    
+   public void setActiveLanguage(String language)
+   {
+      server_.environmentSetLanguage(
+            language,
+            new VoidServerRequestCallback()
+            {
+               @Override
+               public void onResponseReceived(Void response)
+               {
+                  setActiveLanguageImpl(language);
+               }
+            });
+   }
+   
+   private void setActiveLanguageImpl(String language)
+   {
+      languageButton_.setText(language);
+      activeLanguage_ = language;
+      
+      if (StringUtil.equals(language, "R"))
+      {
+         setEnvironmentName("R_GlobalEnv", false);
+      }
+      else if (StringUtil.equals(language, "Python"))
+      {
+         setEnvironmentName("__main__", false);
+      }
+      else
+      {
+         Debug.logWarning("Unknown language '" + language + "'");
+      }
+      
+      Scheduler.get().scheduleDeferred(() -> commands_.refreshEnvironment().execute());
+   }
+   
+   public String getActiveLanguage()
+   {
+      return activeLanguage_;
+   }
+   
    public static final String GLOBAL_ENVIRONMENT_NAME = "Global Environment";
 
    private final Commands commands_;
@@ -701,18 +779,22 @@ public class EnvironmentPane extends WorkbenchPane
    private final EnvironmentServerOperations server_;
    private final UserPrefs prefs_;
    private final Value<Boolean> environmentMonitoring_;
+   private final Timer refreshTimer_;
 
+   private ToolbarMenuButton languageButton_;
+   private ToolbarPopupMenu languageMenu_;
    private ToolbarMenuButton dataImportButton_;
    private ToolbarPopupMenu environmentMenu_;
    private ToolbarMenuButton environmentButton_;
    private ToolbarMenuButton viewButton_;
    private ToolbarButton refreshButton_; 
    private EnvironmentObjects objects_;
-
+   
    private ArrayList<String> expandedObjects_;
    private int scrollPosition_;
    private boolean isClientStateDirty_;
    private JsArray<EnvironmentFrame> environments_;
    private String environmentName_;
    private boolean environmentIsLocal_;
+   private String activeLanguage_ = "R";
 }

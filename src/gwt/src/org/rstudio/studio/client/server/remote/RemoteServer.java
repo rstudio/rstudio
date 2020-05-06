@@ -4548,19 +4548,31 @@ public class RemoteServer implements Server
 
    @Override
    public void getEnvironmentNames(
+         String language,
          ServerRequestCallback<JsArray<EnvironmentFrame>> requestCallback)
    {
+      JSONArray params = new JSONArrayBuilder()
+            .add(language)
+            .get();
+      
       sendRequest(RPC_SCOPE,
                   GET_ENVIRONMENT_NAMES,
+                  params,
                   requestCallback);
    }
    
    @Override
    public void getEnvironmentState(
+         String language,
          ServerRequestCallback<EnvironmentContextData> requestCallback)
    {
+      JSONArray params = new JSONArrayBuilder()
+            .add(language)
+            .get();
+      
       sendRequest(RPC_SCOPE,
                   GET_ENVIRONMENT_STATE,
+                  params,
                   requestCallback);
    }
 
@@ -4569,6 +4581,20 @@ public class RemoteServer implements Server
    {
       sendRequest(RPC_SCOPE,
                   REQUERY_CONTEXT,
+                  requestCallback);
+   }
+   
+   @Override
+   public void environmentSetLanguage(String language,
+                                      ServerRequestCallback<Void> requestCallback)
+   {
+      JSONArray params = new JSONArrayBuilder()
+            .add(language)
+            .get();
+      
+      sendRequest(RPC_SCOPE,
+                  ENVIRONMENT_SET_LANGUAGE,
+                  params,
                   requestCallback);
    }
 
@@ -6483,6 +6509,7 @@ public class RemoteServer implements Server
    private static final String GET_ENVIRONMENT_STATE = "get_environment_state";
    private static final String GET_OBJECT_CONTENTS = "get_object_contents";
    private static final String REQUERY_CONTEXT = "requery_context";
+   private static final String ENVIRONMENT_SET_LANGUAGE = "environment_set_language";
    private static final String SET_ENVIRONMENT_MONITORING = "set_environment_monitoring";
    
    private static final String GET_FUNCTION_STEPS = "get_function_steps";

@@ -191,10 +191,16 @@ options(reticulate.initialized = function() {
 
 .rs.addFunction("reticulate.replHook", function(buffer, contents, trimmed)
 {
+   # ensure we call repl_iteration hook on exit
    on.exit(
       .rs.reticulate.enqueueClientEvent("repl_iteration", list()),
       add = TRUE
    )
+   
+   # check for changes in Python environment state
+   # TODO: needs to be called on exit in parent frame, so we use a hack
+   call <- quote(.rs.reticulate.detectChanges())
+   do.call(base::on.exit, list(call), envir = parent.frame())
    
    # special handling for commands when buffer is currently empty
    if (buffer$empty())
@@ -1440,10 +1446,13 @@ html.heading = _heading
 #  $ length           : 'rs.scalar' int 1
 #  $ contents         : list()
 #  $ contents_deferred: 'rs.scalar' logi FALSE
-.rs.addFunction("python.describeObject", function(name, module)
+.rs.addFunction("reticulate.describeObject", function(name, parent)
 {
    builtins <- reticulate::import_builtins(convert = TRUE)
-   object <- reticulate::py_get_attr(module, name)
+   object <- if (inherits(parent, "python.builtin.dict"))
+      reticulate::py_get_item(parent, name)
+   else
+      reticulate::py_get_attr(parent, name)
    
    # is this object 'data'? consider non-callable, non-module objects as data
    is_data <- !any(
@@ -1492,7 +1501,7 @@ html.heading = _heading
 #     "use_provided_source": false,
 #     "function_code": ""
 #   }
-.rs.addFunction("python.environmentState", function(module)
+.rs.addFunction("reticulate.environmentState", function(module)
 {
    # resolve the requested module
    module <- if (identical(module, "main")) {
@@ -1512,7 +1521,7 @@ html.heading = _heading
    
    # obtain a description of each Python object, using the already-understood
    # format used for R objects
-   descriptions <- lapply(objects, .rs.python.describeObject, module = module)
+   descriptions <- lapply(objects, .rs.reticulate.describeObject, module = module)
    
    # try to get the module name (if any)
    name <- tryCatch(
@@ -1521,7 +1530,6 @@ html.heading = _heading
    )
    
    list(
-      language               = .rs.scalar("python"),
       environment_monitoring = .rs.scalar(TRUE),
       environment_list       = descriptions,
       
@@ -1534,5 +1542,85 @@ html.heading = _heading
       use_provided_source    = .rs.scalar(FALSE),
       function_code          = .rs.scalar("")
    )
+   
+})
+
+# > str(.rs.environmentList(globalenv()))
+# List of 9
+#  $ :List of 3
+#   ..$ name : 'rs.scalar' chr "R_GlobalEnv"
+#   ..$ frame: 'rs.scalar' int 0
+#   ..$ local: 'rs.scalar' logi FALSE
+# < ... >
+.rs.addFunction("reticulate.listLoadedModules", function()
+{
+   if (!requireNamespace("reticulate", quietly = TRUE))
+      return(list())
+   
+   # read available loaded modules
+   stack <- .rs.listBuilder()
+   
+   globals <- reticulate::py_run_string("globals()", convert = FALSE)
+   reticulate::iterate(globals, function(variable) {
+      object <- reticulate::py_get_item(globals, variable, silent = TRUE)
+      if (inherits(object, "python.builtin.module"))
+         stack$append(as.character(variable))
+   })
+   
+   # retrieve modules
+   modules <- stack$data()
+   
+   # ensure main module is always included first
+   modules <- c("__main__", setdiff(modules, "__main__"))
+   
+   # return in format suitable for environment pane
+   lapply(modules, function(module) {
+      list(
+         name  = .rs.scalar(module),
+         frame = .rs.scalar(0L),
+         local = .rs.scalar(FALSE)
+      )
+   })
+   
+})
+
+.rs.addFunction("reticulate.detectChanges", function()
+{
+   # TODO: make this work for arbitrary monitored modules
+   
+   # retrieve current + previously-cached globals
+   newGlobals <- reticulate::py_run_string("globals()", convert = FALSE)
+   oldGlobals <- .rs.nullCoalesce(.rs.getVar("reticulate.globals"), newGlobals)
+   
+   # create copy of dictionary
+   copy <- reticulate::import("copy", convert = FALSE)
+   newGlobals <- copy$copy(newGlobals)
+   
+   # update cached globals
+   .rs.setVar("reticulate.globals", newGlobals)
+   
+   # check for potential changes
+   stack <- .rs.listBuilder()
+   reticulate::iterate(newGlobals, function(key)
+   {
+      old <- oldGlobals[[key]]
+      new <- newGlobals[[key]]
+      
+      changed <- reticulate:::py_compare(old, new, "!=")
+      if (changed)
+         stack$append(key)
+   })
+   
+   changedVars <- stack$data()
+   if (length(changedVars) == 0)
+      return()
+   
+   lapply(changedVars, function(var)
+   {
+      .rs.tryCatch({
+         data <- .rs.reticulate.describeObject(var, newGlobals)
+         .rs.enqueClientEvent("environment_assigned", data)
+      })
+   })
    
 })
