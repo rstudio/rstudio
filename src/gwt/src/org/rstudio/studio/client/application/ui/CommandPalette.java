@@ -35,6 +35,7 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.Composite;
+import com.google.gwt.user.client.ui.ScrollPanel;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
@@ -141,10 +142,7 @@ public class CommandPalette extends Composite
       {
          if (!entry.isVisible())
             continue;
-         if (selected_ != null)
-            selected_.setSelected(false);
-         selected_ = entry;
-         selected_.setSelected(true);
+         selectNewCommand(entry);
          break;
       }
    }
@@ -178,12 +176,8 @@ public class CommandPalette extends Composite
             }
             while (!candidate.isVisible());
             
-            // Clear previous selection
-            selected_.setSelected(false);
+            selectNewCommand(candidate);
             
-            // Set new selection
-            selected_ = candidate;
-            selected_.setSelected(true);
             break;
          }
       }
@@ -204,6 +198,18 @@ public class CommandPalette extends Composite
       }
    }
    
+   private void selectNewCommand(CommandPaletteEntry cmd)
+   {
+      // Clear previous selection, if any
+      if (selected_ != null)
+         selected_.setSelected(false);
+            
+      // Set new selection
+      selected_ = cmd;
+      selected_.setSelected(true);
+      scroller_.ensureVisible(selected_);
+   }
+   
    private final Host host_;
    private final ShortcutManager shortcuts_;
    private CommandPaletteEntry selected_;
@@ -211,4 +217,5 @@ public class CommandPalette extends Composite
 
    @UiField public TextBox searchBox_;
    @UiField public VerticalPanel commandList_;
+   @UiField ScrollPanel scroller_;
 }

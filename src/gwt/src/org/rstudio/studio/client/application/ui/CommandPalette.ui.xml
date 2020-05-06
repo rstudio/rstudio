@@ -50,7 +50,7 @@
 	<g:FlowPanel styleName="ace_editor {style.popup}">
 		<g:TextBox styleName="{style.searchBox}" ui:field="searchBox_">
 		</g:TextBox>
-		<g:ScrollPanel styleName="{style.commandPanel}">
+		<g:ScrollPanel ui:field="scroller_" styleName="{style.commandPanel}">
 			<g:VerticalPanel styleName="{style.commandList}" ui:field="commandList_"></g:VerticalPanel>
 		</g:ScrollPanel>
 	</g:FlowPanel>
