@@ -271,7 +271,7 @@ export class ExtensionManager {
     return this.pandocReaders().flatMap(
       reader => reader.postprocessor ? [reader.postprocessor] : []
     );
-      }
+  }
 
   public pandocBlockReaders(): readonly PandocBlockReaderFn[] {
     return this.collectFrom({
@@ -284,7 +284,7 @@ export class ExtensionManager {
       mark: mark => [mark.pandoc.inlineHTMLReader],
       node: node => [node.pandoc.inlineHTMLReader]
     });
-      }
+  }
 
   public pandocCodeBlockFilters(): readonly PandocCodeBlockFilter[] {
     return this.collectFrom({
@@ -297,7 +297,7 @@ export class ExtensionManager {
       mark: mark => mark.pandoc.readers,
       node: node => node.pandoc.readers ?? []
     });
-      }
+  }
 
   public pandocMarkWriters(): readonly PandocMarkWriter[] {
     return this.collectFrom({
@@ -319,7 +319,7 @@ export class ExtensionManager {
     return this.collect<ProsemirrorCommand>(
       extension => extension.commands?.(schema, ui)
     );
-      }
+  }
 
   public codeViews() {
     const views: { [key: string]: CodeViewOptions } = {};
@@ -361,7 +361,7 @@ export class ExtensionManager {
   // Prosemirror interface that doesn't take readonly
   public inputRules(schema: Schema): InputRule[] {
     return this.collect<InputRule>(extension => extension.inputRules?.(schema));
-      }
+  }
 
   private collect<T>(collector: (extension: Extension) => readonly T[] | undefined) {
     return this.collectFrom({
