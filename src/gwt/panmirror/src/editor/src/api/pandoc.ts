@@ -124,6 +124,7 @@ export interface PandocToken {
   c?: any;
 }
 
+// https://github.com/jgm/pandoc-types/blob/master/Text/Pandoc/Definition.hs
 export enum PandocTokenType {
   Str = 'Str',
   Space = 'Space',
@@ -205,13 +206,30 @@ export type PandocBlockReaderFn = (schema: Schema, tok: PandocToken, writer: Pro
 // reader that gets a first shot at inline html (e.g. image node parsing an <img> tag)
 export type PandocInlineHTMLReaderFn = (schema: Schema, html: string, writer: ProsemirrorWriter) => boolean;
 
-// reader for code blocks that require special handling
-export interface PandocCodeBlockFilter {
-  preprocessor: (markdown: string) => string;
-  class: string;
-  nodeType: (schema: Schema) => NodeType;
-  getAttrs: (tok: PandocToken) => any;
+// block capsule
+export interface PandocBlockCapsule {
+  type: string;
+  prefix: string;
+  source: string;
+  suffix: string;
 }
+
+// preserve block source code through markdown parsing (e.g. for yaml metadata or rmd chunks)
+export interface PandocBlockCapsuleFilter {
+  // unique type id for this capsule
+  type: string;
+
+  // regex that matches a prefix (match[1]), the source to preserve (match[2]), and a suffix (match[3])
+  // we need the prefix/suffix for the cases where the preserved source needs to be put back exactly 
+  // where it came from (e.g. in a multi-line html comment). the prefix and suffix must consist
+  // entirely of whitespace (e.g. leading space for indented block or incidental whitespace after
+  // block delimiter)
+  match: RegExp;
+
+  // function used to write a node from preserved source
+  writeNode: (schema: Schema, writer: ProsemirrorWriter, capsule: PandocBlockCapsule) => void;  
+}
+
 
 export interface ProsemirrorWriter {
   // open (then close) a node container

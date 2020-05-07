@@ -20,7 +20,7 @@ import { setTextSelection, findParentNodeOfType } from 'prosemirror-utils';
 
 import { Extension } from '../../api/extension';
 import { EditorOptions } from '../../api/options';
-import { PandocOutput, PandocTokenType, PandocExtensions } from '../../api/pandoc';
+import { PandocOutput, PandocTokenType, PandocExtensions, ProsemirrorWriter, PandocBlockCapsule } from '../../api/pandoc';
 import { codeNodeSpec } from '../../api/code';
 import { ProsemirrorCommand, EditorCommandId, toggleBlockType } from '../../api/command';
 import { selectionIsBodyTopLevel } from '../../api/selection';
@@ -30,15 +30,14 @@ import { precedingListItemInsertPos, precedingListItemInsert } from '../../api/l
 import { EditorUI } from '../../api/ui';
 import { PandocCapabilities } from '../../api/pandoc_capabilities';
 import { EditorFormat, kBookdownDocType } from '../../api/format';
-
-import { RmdChunkImagePreviewPlugin } from './rmd_chunk-image';
-
-import './rmd_chunk-styles.css';
 import { rmdChunk, EditorRmdChunk } from '../../api/rmd';
 import { EditorEvents } from '../../api/events';
+
+import { RmdChunkImagePreviewPlugin } from './rmd_chunk-image';
 import { ExecuteCurrentRmdChunkCommand, ExecutePreviousRmdChunksCommand } from './rmd_chunk-commands';
 
-const kRmdCodeChunkClass = '3759D6F8-53AF-4931-8060-E55AF73236B5'.toLowerCase();
+import './rmd_chunk-styles.css';
+
 
 const extension = (
   _pandocExtensions: PandocExtensions,
@@ -98,19 +97,31 @@ const extension = (
         },
 
         pandoc: {
-          codeBlockFilter: {
-            preprocessor: (markdown: string) => {
-              const md = markdown.replace(
-                /^([\t >]*```+)\s*(\{[a-zA-Z0-9_]+( *[ ,].*?)?\})([ \t]*\n)([\W\w]*?)(?:```)(?:[ \t]*)$/gm,
-                (_match: string, p1: string, p2: string, _p3: string, p4: string, p5: string, p6: string) => {
-                  return p1 + kRmdCodeChunkClass + '\n' + p2 + '\n' + p5 + '```\n';
-                },
-              );
-              return md;
-            },
-            class: kRmdCodeChunkClass,
-            nodeType: (schema: Schema) => schema.nodes.rmd_chunk,
-            getAttrs: () => ({ navigation_id: uuidv4() }),
+
+          blockCapsuleFilter: {
+            type: '3F175F2A-E8A0-4436-BE12-B33925B6D220',
+            match: /^([\t >]*)(```+\s*\{[a-zA-Z0-9_]+(?: *[ ,].*?)?\}[ \t]*\n[\W\w]*?\n[\t >]*```+)([ \t]*)$/gm,
+            writeNode: (schema: Schema, writer: ProsemirrorWriter, capsule: PandocBlockCapsule) => {
+
+              // open node
+              writer.openNode(schema.nodes.rmd_chunk, { navigation_id: uuidv4() });
+
+              // source still has leading and trailing backticks, remove them
+              const source = capsule.source.replace(/^```+/, '').replace(/\n[\t >]*```+$/, '');
+
+              // prefix represents the indentation level of the block's source code, strip that
+              // same prefix from all the lines of code save for the first one
+              const prefixStripRegEx = new RegExp('^' + capsule.prefix);
+              const lines = source.split('\n').map((line, index) => {
+                return index > 0 ? line.replace(prefixStripRegEx, '') : line;
+              });
+
+              // write the lines
+              writer.writeText(lines.join('\n'));
+
+              // all done
+              writer.closeNode();
+            }
           },
 
           writer: (output: PandocOutput, node: ProsemirrorNode) => {

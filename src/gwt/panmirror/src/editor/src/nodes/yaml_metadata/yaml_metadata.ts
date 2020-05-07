@@ -19,16 +19,16 @@ import { EditorView } from 'prosemirror-view';
 import { setTextSelection } from 'prosemirror-utils';
 
 import { Extension } from '../../api/extension';
-import { PandocOutput, PandocTokenType } from '../../api/pandoc';
+import { PandocOutput, PandocTokenType, ProsemirrorWriter, PandocBlockCapsule } from '../../api/pandoc';
 import { EditorUI } from '../../api/ui';
 import { ProsemirrorCommand, EditorCommandId } from '../../api/command';
 import { canInsertNode } from '../../api/node';
 import { codeNodeSpec } from '../../api/code';
 import { selectionIsBodyTopLevel } from '../../api/selection';
 import { uuidv4 } from '../../api/util';
+
 import { yamlMetadataTitlePlugin } from './yaml_metadata-title';
 
-const kYamlMetadataClass = '640200CE-B886-44EB-80F0-17E50BA5D146'.toLowerCase();
 
 const extension: Extension = {
   nodes: [
@@ -57,19 +57,17 @@ const extension: Extension = {
       },
 
       pandoc: {
-        codeBlockFilter: {
-          preprocessor: (markdown: string) => {
-            const filtered = markdown.replace(
-              /^(?:---[ \t]*\n)([\W\w]*?)(?:\n---|\n\.\.\.)(?:[ \t]*)$/gm,
-              '```' + kYamlMetadataClass + '\n---\n$1\n---\n```',
-            );
-            return filtered;
-          },
-          class: kYamlMetadataClass,
-          nodeType: schema => schema.nodes.yaml_metadata,
-          getAttrs: () => ({ navigation_id: uuidv4() }),
+       
+        blockCapsuleFilter: {
+          type: '181E9605-0ACD-4FAE-8B99-9C1B7BD7C0F1',
+          match: /^([\t >]*)(---[ \t]*\n[\W\w]*?(?:\n---|\n\.\.\.))([ \t]*)$/gm,
+          writeNode: (schema: Schema, writer: ProsemirrorWriter, capsule: PandocBlockCapsule) => {
+            writer.openNode(schema.nodes.yaml_metadata, { navigation_id: uuidv4() });
+            writer.writeText(capsule.source);
+            writer.closeNode();
+          }
         },
-
+        
         writer: (output: PandocOutput, node: ProsemirrorNode) => {
           output.writeToken(PandocTokenType.Para, () => {
             output.writeRawMarkdown(node.content);

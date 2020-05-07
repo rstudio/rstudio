@@ -21,10 +21,12 @@ import {
   PandocAst,
   ProsemirrorWriter,
   PandocBlockReaderFn,
-  PandocCodeBlockFilter,
+  PandocBlockCapsuleFilter,
   PandocInlineHTMLReaderFn,
 } from '../api/pandoc';
 import { pandocAttrReadAST, PandocAttr } from '../api/pandoc_attr';
+
+import { pandocBlockCapsule, isPandocBlockCapsule, resolvePandocBlockCapsuleText } from './pandoc_block_capsule';
 
 export function pandocToProsemirror(
   ast: PandocAst,
@@ -32,9 +34,9 @@ export function pandocToProsemirror(
   readers: readonly PandocTokenReader[],
   blockReaders: readonly PandocBlockReaderFn[],
   inlineHTMLReaders: readonly PandocInlineHTMLReaderFn[],
-  codeBlockFilters: readonly PandocCodeBlockFilter[],
+  blockCapsuleFilters: readonly PandocBlockCapsuleFilter[],
 ) {
-  const parser = new Parser(schema, readers, blockReaders, inlineHTMLReaders, codeBlockFilters);
+  const parser = new Parser(schema, readers, blockReaders, inlineHTMLReaders, blockCapsuleFilters);
   return parser.parse(ast);
 }
 
@@ -44,6 +46,7 @@ const CODE_BLOCK_TEXT = 1;
 class Parser {
   private readonly schema: Schema;
   private readonly inlineHTMLReaders: readonly PandocInlineHTMLReaderFn[];
+  private readonly blockCapsuleFilters: readonly PandocBlockCapsuleFilter[];
   private readonly handlers: { [token: string]: ParserTokenHandlerCandidate[] };
 
   constructor(
@@ -51,11 +54,12 @@ class Parser {
     readers: readonly PandocTokenReader[],
     blockReaders: readonly PandocBlockReaderFn[],
     inlineHTMLReaders: readonly PandocInlineHTMLReaderFn[],
-    codeBlockFilters: readonly PandocCodeBlockFilter[],
+    blockCapsuleFilters : readonly PandocBlockCapsuleFilter[]
   ) {
     this.schema = schema;
     this.inlineHTMLReaders = inlineHTMLReaders;
-    this.handlers = this.createHandlers(readers, blockReaders, codeBlockFilters);
+    this.blockCapsuleFilters = blockCapsuleFilters;
+    this.handlers = this.createHandlers(readers, blockReaders);
   }
 
   public parse(ast: any): ProsemirrorNode {
@@ -80,8 +84,12 @@ class Parser {
       },
     };
 
+    // resolve block capsule text (text that looks like a block capsule but
+    // is actually contained within a raw block, backtick code block, etc.)
+    const astBlocks = resolvePandocBlockCapsuleText(ast.blocks);
+
     // write all tokens
-    writer.writeTokens(ast.blocks);
+    writer.writeTokens(astBlocks);
 
     // return the doc
     return state.doc();
@@ -92,6 +100,19 @@ class Parser {
   }
 
   private writeToken(writer: ProsemirrorWriter, tok: PandocToken) {
+
+    // see if this is a block capsule
+    if (isPandocBlockCapsule(tok)) {
+      const blockCapsule = pandocBlockCapsule(tok);
+      const handler = this.blockCapsuleFilters.find(filter => filter.type === blockCapsule.type);
+      if (handler) {
+        handler.writeNode(this.schema, writer, blockCapsule);
+        return;
+      } else {
+        throw new Error(`No handler for pandoc block capsule with type ${blockCapsule.type}`);
+      }
+    }
+   
     // look for a handler.match function that wants to handle this token
     const handlers = this.handlers[tok.t] || [];
     for (const handler of handlers) {
@@ -133,8 +154,7 @@ class Parser {
   // create parser token handler functions based on the passed readers
   private createHandlers(
     readers: readonly PandocTokenReader[],
-    blockReaders: readonly PandocBlockReaderFn[],
-    codeBlockFilters: readonly PandocCodeBlockFilter[],
+    blockReaders: readonly PandocBlockReaderFn[]
   ) {
     const handlers: { [token: string]: ParserTokenHandlerCandidate[] } = {};
 
@@ -216,20 +236,9 @@ class Parser {
         // code blocks
       } else if (reader.code_block) {
         handler = (writer: ProsemirrorWriter, tok: PandocToken) => {
-          // default attr and nodeType (before filters)
-          let attr: {} = pandocAttrReadAST(tok, CODE_BLOCK_ATTR);
-          let nodeType = this.schema.nodes.code_block;
-
-          // allow code block filters (e.g. yaml passthrough, rmd chunks) to have a shot
-          for (const filter of codeBlockFilters) {
-            if ((attr as PandocAttr).classes.includes(filter.class)) {
-              attr = filter.getAttrs(tok);
-              nodeType = filter.nodeType(this.schema);
-              break;
-            }
-          }
-
-          // get text
+          // type/attr/text
+          const nodeType = this.schema.nodes.code_block;
+          const attr: {} = pandocAttrReadAST(tok, CODE_BLOCK_ATTR);
           const text = tok.c[CODE_BLOCK_TEXT] as string;
           
           // write node
@@ -360,3 +369,5 @@ interface ParserTokenHandlerCandidate {
   match?: (tok: PandocToken) => boolean;
   handler: ParserTokenHandler;
 }
+
+
