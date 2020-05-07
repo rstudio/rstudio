@@ -507,4 +507,9 @@ public class ElementIds
    
    // SatelliteWindow
    public final static String SATELLITE_PANEL = "satellite_panel";
+   
+   // CommandPalette
+   public final static String COMMAND_PALETTE_LIST = "command_palette_list";
+   public final static String COMMAND_PALETTE_SEARCH = "command_palette_search";
+   public final static String COMMAND_ENTRY_PREFIX = "command_entry_";
 }

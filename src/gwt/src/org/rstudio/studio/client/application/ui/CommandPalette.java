@@ -19,7 +19,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import org.rstudio.core.client.DebouncedCommand;
+import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.a11y.A11y;
 import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.command.KeyMap;
 import org.rstudio.core.client.command.KeySequence;
@@ -31,8 +34,12 @@ import org.rstudio.studio.client.workbench.addins.Addins.RAddin;
 import org.rstudio.studio.client.workbench.addins.Addins.RAddins;
 import org.rstudio.studio.client.workbench.commands.Commands;
 
+import com.google.gwt.aria.client.Id;
+import com.google.gwt.aria.client.LiveValue;
+import com.google.gwt.aria.client.Roles;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.uibinder.client.UiBinder;
@@ -40,6 +47,7 @@ import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.FlowPanel;
+import com.google.gwt.user.client.ui.HTMLPanel;
 import com.google.gwt.user.client.ui.ScrollPanel;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
@@ -79,11 +87,48 @@ public class CommandPalette extends Composite
       commands_ = commands;
       styles_.ensureInjected();
       
+      Element searchBox = searchBox_.getElement();
+      searchBox.setAttribute("placeholder", "Search and run commands");
+      searchBox.setAttribute("spellcheck", "false");
+
+      // Accessibility attributes: list box
+      Roles.getListboxRole().set(commandList_.getElement());
+      ElementIds.assignElementId(commandList_, ElementIds.COMMAND_PALETTE_LIST);
+
+      // Accessibility attributes: search box
+      ElementIds.assignElementId(searchBox_, ElementIds.COMMAND_PALETTE_SEARCH);
+      Roles.getComboboxRole().setAriaOwnsProperty(searchBox, Id.of(commandList_.getElement()));
+      Roles.getComboboxRole().set(searchBox);
+      Roles.getComboboxRole().setAriaLabelProperty(searchBox, "Search for and run a command");
+      A11y.setARIAAutocomplete(searchBox_, "list");
+      
+      // Accessibility attributes: announcement region; we want this to be read
+      // when filter updates are complete
+      A11y.setVisuallyHidden(resultsCount_);
+      Roles.getAlertRole().setAriaLiveProperty(resultsCount_.getElement(), LiveValue.ASSERTIVE);
+
       // Populate the palette on a deferred callback so that it appears immediately
       Scheduler.get().scheduleDeferred(() ->
       {
          populate();
       });
+      
+      // Debounced update of the result count for screen readers
+      updateResultsCount_ = new DebouncedCommand(1000)
+      {
+         @Override
+         protected void execute()
+         {
+            int count = 0;
+            for (CommandPaletteEntry entry: entries_)
+            {
+               if (entry.isVisible())
+                  count++;
+            }
+            resultsCount_.getElement().setInnerText(count + " " +
+                  "commands found, press up and down to navigate");
+         }
+      };
    }
    
    private void populate()
@@ -142,8 +187,6 @@ public class CommandPalette extends Composite
          commandList_.add(entry);
       }
 
-      searchBox_.getElement().setAttribute("placeholder", "Search and run commands");
-      searchBox_.getElement().setAttribute("spellcheck", "false");
       
       searchBox_.addKeyUpHandler((evt) ->
       {
@@ -202,7 +245,8 @@ public class CommandPalette extends Composite
             entry.setVisible(false);
          }
       }
-
+      
+      updateResultsCount_.nudge();
       updateSelection();
    }
    
@@ -266,23 +310,30 @@ public class CommandPalette extends Composite
       {
          entries_.get(selected_).setSelected(false);
       }
-            
+      
       // Set new selection
       selected_ = target;
-      entries_.get(selected_).setSelected(true);
-      scroller_.ensureVisible(entries_.get(selected_));
+      CommandPaletteEntry selected = entries_.get(selected_);
+      selected.setSelected(true);
+      scroller_.ensureVisible(selected);
+
+      // Update active descendant for accessibility
+      Roles.getComboboxRole().setAriaActivedescendantProperty(
+            searchBox_.getElement(), Id.of(selected.getElement()));
    }
    
    private final Host host_;
    private final ShortcutManager shortcuts_;
    private final Commands commands_;
    private final RAddins addins_;
+   private final DebouncedCommand updateResultsCount_;
    private int selected_;
    private List<CommandPaletteEntry> entries_;
    private String searchText_;
 
    @UiField public TextBox searchBox_;
    @UiField public FlowPanel commandList_;
+   @UiField HTMLPanel resultsCount_;
    @UiField ScrollPanel scroller_;
    @UiField Styles styles_;
 }

@@ -17,10 +17,13 @@ package org.rstudio.studio.client.application.ui;
 import java.util.List;
 
 import org.rstudio.core.client.BrowseCap;
+import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.KeyCombination;
 import org.rstudio.core.client.command.KeySequence;
 
+import com.google.gwt.aria.client.Roles;
+import com.google.gwt.aria.client.SelectedValue;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
@@ -52,6 +55,8 @@ public abstract class CommandPaletteEntry extends Composite
    {
       initWidget(uiBinder.createAndBindUi(this));
       keys_ = keys;
+      Roles.getOptionRole().set(getElement());
+      Roles.getOptionRole().setAriaSelectedState(getElement(), SelectedValue.FALSE);
    }
 
    private void appendKey(SafeHtmlBuilder b, String key)
@@ -64,6 +69,16 @@ public abstract class CommandPaletteEntry extends Composite
 
    public void initialize()
    {
+      String id = getId();
+      if (id != null)
+      {
+         // Assign a unique element ID (for accessibility tree). There's no need
+         // to do this if there's no ID as we'll ultimately discard widgets
+         // which don't have an addressable ID.
+         ElementIds.assignElementId(getElement(), ElementIds.COMMAND_ENTRY_PREFIX + 
+               ElementIds.idSafeString(id));
+      }
+
       name_.setText(getLabel());
       SafeHtmlBuilder b = new SafeHtmlBuilder();
       for (KeySequence k: keys_)
@@ -110,6 +125,9 @@ public abstract class CommandPaletteEntry extends Composite
          addStyleName(styles_.selected());
       else
          removeStyleName(styles_.selected());
+
+      Roles.getOptionRole().setAriaSelectedState(getElement(), 
+            selected ? SelectedValue.TRUE : SelectedValue.FALSE);
    }
    
    public void setSearchHighlight(String text)

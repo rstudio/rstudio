@@ -25,7 +25,7 @@
 			font-size: 14pt;
 			box-sizing: border-box;
 			padding: 10px;
-			border: 0px;
+			border: 1px solid;
 		}
 		
 		.searchBar {
@@ -57,5 +57,6 @@
 		<g:ScrollPanel ui:field="scroller_" styleName="ace_editor {styles_.commandPanel}">
 			<g:FlowPanel styleName="{styles_.commandList}" ui:field="commandList_"></g:FlowPanel>
 		</g:ScrollPanel>
+		<g:HTMLPanel ui:field="resultsCount_"></g:HTMLPanel>
 	</g:HTMLPanel>
 </ui:UiBinder> 
