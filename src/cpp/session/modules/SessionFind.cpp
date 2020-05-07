@@ -441,25 +441,6 @@ private:
       return findResults().isRunning() && findResults().handle() == handle();
    }
 
-   std::string decode(const std::string& encoded)
-   {
-      if (encoded.empty())
-         return encoded;
-
-      std::string decoded;
-      Error error = r::util::iconvstr(encoded, encoding_, "UTF-8", true,
-                                      &decoded);
-
-      // Log error, but only once per grep operation
-      if (error && firstDecodeError_)
-      {
-         firstDecodeError_ = false;
-         LOG_ERROR(error);
-      }
-
-      return decoded;
-   }
-
    void addReplaceErrorMessage(const std::string& contents,
                                std::set<std::string>* pErrorSet,
                                json::Array* pReplaceMatchOn,
@@ -628,7 +609,7 @@ private:
       {
          // decode the current match, and append it
          std::string matchedString(inputPos, inputPos + match.position());
-         std::string decoded = decode(matchedString);
+         std::string decoded = Replacer::decode(matchedString, encoding_, firstDecodeError_);
 
          // append and update
          decodedLine.append(decoded);
@@ -652,7 +633,8 @@ private:
       }
 
       if (inputPos != end)
-         decodedLine.append(decode(std::string(inputPos, end)));
+         decodedLine.append(
+            Replacer::decode(std::string(inputPos, end), encoding_, firstDecodeError_));
 
       *pFullLineContent = decodedLine;
       if (!findResults().replace())
@@ -710,19 +692,15 @@ private:
          subtractOffsetIntegerToJsonArray(value, offset, pJsonArray);
    }
 
-   Error encodeAndWriteLineToFile(
-      const std::string& decodedLine, const std::string& lineLeftContents,
+   Error writeToFile(
+      const std::string& line, const std::string& lineLeftContents,
       const std::string& lineRightContents)
    {
-      std::string encodedNewLine;
-      Error error = r::util::iconvstr(decodedLine,
-         "UTF-8",
-         encoding_,
-         false,
-         &encodedNewLine);
-      encodedNewLine.insert(0, lineLeftContents);
-      encodedNewLine.insert(encodedNewLine.length(), lineRightContents);
-      addNewLine(encodedNewLine);
+      Error error;
+      std::string newLine(line);
+      newLine.insert(0, lineLeftContents);
+      newLine.insert(newLine.length(), lineRightContents);
+      addNewLine(newLine);
 
       if (error)
          return error;
@@ -730,7 +708,7 @@ private:
       {
          try
          {
-            outputStream_->write(encodedNewLine.c_str(), encodedNewLine.size());
+            outputStream_->write(newLine.c_str(), newLine.size());
             outputStream_->flush();
          }
          catch (const std::ios_base::failure& e)
@@ -739,6 +717,40 @@ private:
          }
       }
       return error;
+   }
+
+   void cleanLineAndGetMatches(std::string* pEncodedLine,
+                               json::Array* pMatchOn, json::Array* pMatchOff)
+   {
+      // The incoming string is assumed to have color encodings from the initial grep command.
+      // These encodings are parsed out and their positions are placed in pMatchOn and pMatchOff.
+
+      const char* inputPos = pEncodedLine->c_str();
+      const char* end = inputPos + pEncodedLine->size();
+      std::size_t charactersProcessed = 0;
+      boost::cmatch match;
+      std::string cleanLine;
+
+      while (regex_utils::search(inputPos, match, getColorEncodingRegex(findResults().gitFlag())))
+      {
+         std::string matchedString(inputPos, inputPos + match.position());
+         inputPos += match.position() + match.length();
+         
+         cleanLine.append(matchedString);
+
+         charactersProcessed += matchedString.size();
+   
+         // Match now contains the regex results by capturing group. Depending on which color
+         // encoding regex is used in the search, the first match will always contain '1' or '01'.
+         if ((match.size() > 2 && match[2] == "1" && findResults().gitFlag()) ||
+             (match[1] == "01" && !findResults().gitFlag()))
+            pMatchOn->push_back(json::Value(gsl::narrow_cast<int>(charactersProcessed)));
+         else
+            pMatchOff->push_back(json::Value(gsl::narrow_cast<int>(charactersProcessed)));
+      }
+      if (inputPos != end)
+         cleanLine.append(std::string(inputPos, end));
+      *pEncodedLine = cleanLine;
    }
 
    Error processReplace(const int& lineNum,
@@ -753,6 +765,16 @@ private:
       const std::string searchPattern = findResults().searchPattern();
       const std::string replacePattern = findResults().replacePattern();
       LocalProgress* pProgress = findResults().replaceProgress();
+
+      // when the system is not using utf8 we encoded the line before performing the replace
+      json::Array eMatchOnArray;
+      json::Array eMatchOffArray;
+      size_t eMatchOn = 0;
+      size_t eMatchOff = 0;
+
+      if (!encoding_.empty())
+         cleanLineAndGetMatches(&pLineInfo->encodedContents, &eMatchOnArray, &eMatchOffArray);
+
       while (findResults().isRunning() &&
              inputLineNum_ < lineNum && std::getline(*inputStream_, line))
       {
@@ -770,7 +792,6 @@ private:
          else // perform replace
          {
             int pos = gsl::narrow_cast<int>(matchOnArray.getSize()) - 1;
-            std::string newLine;
             while (pos > -1)
             {
                const size_t matchOn =
@@ -780,55 +801,81 @@ private:
                const size_t matchSize = matchOff - matchOn;
                size_t replaceMatchOff = matchOff;
                Error error;
-               Replacer replacer(findResults().ignoreCase());
-               std::string newLine(pLineInfo->decodedContents);
+               Replacer replacer(findResults().ignoreCase(), encoding_);
+
+               if (!encoding_.empty())
+               {
+                  eMatchOn =
+                     static_cast<size_t>(eMatchOnArray.getValueAt(static_cast<size_t>(pos)).getInt());
+                  eMatchOff =
+                     static_cast<size_t>(eMatchOffArray.getValueAt(static_cast<size_t>(pos)).getInt());
+               }
+
+               // If we found a different number of matches searching the encoded string,
+               // we shouldn't perform the replace as the expected vs actual results may differ.
+               if (!encoding_.empty() && eMatchOnArray.getSize() != matchOnArray.getSize())
+               {
+                  core::Error error(
+                     errc::findCategory(),
+                     errc::RegexError,
+                     "Found " + std::to_string(matchOnArray.getSize()) +  " matches in line but " + std::to_string(eMatchOnArray.getSize()) + " matches in encoded line; skipping replace.",
+                     ERROR_LOCATION);
+                  addReplaceErrorMessage(error.asString(), pErrorMessage, pReplaceMatchOn,
+                     pReplaceMatchOff, &lineSuccess);
+
+                  return error;
+               }
 
                // if previewing, we need to display the original and replacement text
                if (findResults().preview())
                {
-                  std::string replaceString(replacePattern);
-                  std::string previewLine(newLine);
-                  error = replacer.replaceRegex(matchOn, matchOff, searchPattern, replacePattern,
-                     &previewLine, &replaceMatchOff);
-                  if (!error)
-                  {
-                     replaceString = previewLine.substr(matchOn, (replaceMatchOff - matchOn));
-                     replaceString.insert(0, pLineInfo->decodedContents.substr(matchOn, matchSize));
-                     replacer.replaceLiteral(matchOn, matchOff, replaceString, &newLine,
-                        &replaceMatchOff);
-                  }
-                  else
-                  {
-                     addReplaceErrorMessage(error.asString(), pErrorMessage, pReplaceMatchOn,
-                        pReplaceMatchOff, &lineSuccess);
-                     return error;
-                  }
-               }
-               else // perform replace
-               {
-                  pProgress->addUnits(1);
-                  if (findResults().regex())
-                     error = replacer.replaceRegex(matchOn, matchOff, searchPattern,
-                        replacePattern, &newLine, &replaceMatchOff);
-                  else if (findResults().regex())
-                     error = replacer.replaceRegex(matchOn, matchOff, searchPattern,
-                        replacePattern, &newLine, &replaceMatchOff);
-                  else
-                     replacer.replaceLiteral(matchOn, matchOff, replacePattern, &newLine,
-                        &replaceMatchOff);
-
+                  error = replacer.replacePreview(matchOn, matchOff, eMatchOn, eMatchOff,
+                      &pLineInfo->encodedContents, &pLineInfo->decodedContents, &replaceMatchOff);
                   if (error)
                      addReplaceErrorMessage(error.asString(), pErrorMessage, pReplaceMatchOn,
                         pReplaceMatchOff, &lineSuccess);
+               }
+               else // perform replace
+               {
+                  if (encoding_.empty())
+                  {
+                     eMatchOn = matchOn;
+                     eMatchOff = matchOff;
+                  }
+
+                  pProgress->addUnits(1);
+
+                  if (findResults().regex())
+                     error = replacer.replaceRegex(eMatchOn, eMatchOff, searchPattern,
+                        replacePattern, &pLineInfo->encodedContents, &replaceMatchOff);
+                  else
+                     replacer.replaceLiteral(eMatchOn, eMatchOff, replacePattern,
+                           &pLineInfo->encodedContents, &replaceMatchOff);
+
+                  if (!encoding_.empty())
+                  {
+                     // calculate utf8 matchOff
+                     size_t utf8Length;
+                     error = string_utils::utf8Distance(pLineInfo->decodedContents.begin(),
+                                                        pLineInfo->decodedContents.end(),
+                                                        &utf8Length);
+                     pLineInfo->decodedContents =
+                        replacer.decode(pLineInfo->encodedContents);
+   
+                     size_t newUtf8Length;
+                     error = string_utils::utf8Distance(pLineInfo->decodedContents.begin(),
+                                                        pLineInfo->decodedContents.end(),
+                                                        &newUtf8Length);
+                     replaceMatchOff = matchOff + (newUtf8Length - utf8Length);
+                  }
                }
 
                // Handle side-effects when replace is successful
                if (lineSuccess)
                {
-                  pLineInfo->decodedContents = newLine;
-
-                  // if multiple replaces in line, readjust previous match numbers to account for
-                  // difference in find and replace sizes
+                  // If multiple replaces in line, readjust previous match numbers to account for
+                  // difference in find and replace sizes. This is only for display purposes so we
+                  // don't consider encoded values.
                   size_t replaceSize = replaceMatchOff - matchOn;
                   if (pReplaceMatchOn->getSize() > 0 &&
                       matchSize != replaceSize)
@@ -852,15 +899,14 @@ private:
                }
                pos--;
             }
-            // encode and write the new line to file
+            // write the new line to file
             if (!findResults().preview())
             {
-               Error error = encodeAndWriteLineToFile(pLineInfo->decodedContents,
-                  pLineInfo->leadingWhitespace, pLineInfo->trailingWhitespace);
+               Error error = writeToFile(pLineInfo->encodedContents,
+                     pLineInfo->leadingWhitespace, pLineInfo->trailingWhitespace);
                if (error)
                   addReplaceErrorMessage(error.asString(), pErrorMessage, pReplaceMatchOn,
                      pReplaceMatchOff, &lineSuccess);
-
             }
          }
       }
@@ -938,10 +984,15 @@ private:
             boost::algorithm::trim(lineInfo.decodedPreview);
             if (lineInfo.encodedContents != lineInfo.decodedPreview)
             {
-               size_t pos = lineInfo.encodedContents.find(lineInfo.decodedPreview);
-               lineInfo.leadingWhitespace = lineInfo.encodedContents.substr(0,pos);
+               std::string trimmed(lineInfo.encodedContents);
+               boost::algorithm::trim(trimmed);
+
+               size_t pos = lineInfo.encodedContents.find(trimmed);
+               lineInfo.leadingWhitespace =
+                  lineInfo.encodedContents.substr(0, pos);
                lineInfo.trailingWhitespace =
-                  lineInfo.encodedContents.substr(pos + lineInfo.decodedPreview.length());
+                  lineInfo.encodedContents.substr(pos + trimmed.length());
+               lineInfo.encodedContents = trimmed;
             }
 
             json::Array matchOn, matchOff;
@@ -1620,15 +1671,73 @@ boost::regex getColorEncodingRegex(bool isGitGrep)
    return regex;
 }
 
+
+Error Replacer::replacePreview(const size_t dMatchOn, const size_t dMatchOff,
+                               size_t eMatchOn, size_t eMatchOff,
+                               std::string* pEncodedLine, std::string* pDecodedLine,
+                               size_t* pReplaceMatchOff) const
+{
+   // if we're not encoded, we can avoid some logic
+   if (encoding_.empty())
+   {
+      eMatchOn = dMatchOn;
+      eMatchOff = dMatchOff;
+   }
+
+   // attempt to perform the replace based on the encoded data
+   std::string previewLine(encoding_.empty() ? *pDecodedLine : *pEncodedLine);
+   std::string originalValue = previewLine.substr(eMatchOn, eMatchOff  - eMatchOn);
+   Error error = replaceRegex(eMatchOn, eMatchOff,
+                              findResults().searchPattern(),
+                              findResults().replacePattern(),
+                              &previewLine,
+                              pReplaceMatchOff);
+   
+   // Concatenate the replace string to the matched string and insert this into the original line
+   // so it contains the before and after.
+   // The preview string is always returned in the decoded string.
+   if (!error)
+   {
+      std::string replaceString = previewLine.substr(eMatchOn, *pReplaceMatchOff - eMatchOn);
+      replaceString.insert(0, originalValue);
+      replaceLiteral(eMatchOn, eMatchOff, replaceString, pEncodedLine, pReplaceMatchOff);
+
+      if (encoding_.empty())
+         pDecodedLine = pEncodedLine;
+      else
+      {
+         // adjust pReplaceMatchOff for display
+
+         size_t originalDecodedSize;
+         error = string_utils::utf8Distance(pDecodedLine->begin(),
+                                            pDecodedLine->end(),
+                                            &originalDecodedSize);
+   
+         *pDecodedLine = decode(*pEncodedLine);
+   
+         size_t newDecodedSize;
+         error = string_utils::utf8Distance(pDecodedLine->begin(),
+                                            pDecodedLine->end(),
+                                            &newDecodedSize);
+   
+         *pReplaceMatchOff = dMatchOff + (newDecodedSize - originalDecodedSize);
+      }
+   }
+   return error;
+}
+
 core::Error Replacer::completeReplace(const boost::regex& searchRegex,
                                       const std::string& replaceRegex,
                                       size_t matchOn, size_t matchOff, std::string* pLine,
-                                      size_t* pReplaceMatchOff)
+                                      size_t* pReplaceMatchOff) const
 {
-   std::string temp;
+   std::string begin(pLine->substr(0, matchOn));
+   std::string end(pLine->substr(matchOff));
+   std::string newLine;
+
    try
    {
-      temp = boost::regex_replace(pLine->substr(matchOn), searchRegex, replaceRegex,
+      newLine = boost::regex_replace(pLine->substr(matchOn), searchRegex, replaceRegex,
          boost::format_sed | boost::format_first_only);
    }
    catch (const boost::regex_error& e)
@@ -1643,24 +1752,17 @@ core::Error Replacer::completeReplace(const boost::regex& searchRegex,
       return error;
    }
 
-   temp.insert(0, pLine->substr(0, matchOn));
-   std::string endOfString = pLine->substr(matchOff).c_str();
-   size_t replaceMatchOff;
-   if (endOfString.empty())
-      replaceMatchOff = temp.length();
-   else
-      replaceMatchOff = temp.find(endOfString);
+   newLine.insert(0, begin);
+   *pReplaceMatchOff = newLine.length() - end.length();
+   *pLine = newLine;
 
-   *pLine = temp;
-   std::string replaceString = temp.substr(matchOn, (replaceMatchOff - matchOn));
-   *pReplaceMatchOff = matchOn  + replaceString.size();
    return core::Success();
 }
 
 core::Error Replacer::replaceRegexIgnoreCase(size_t matchOn, size_t matchOff,
                                              const std::string& findRegex,
                                              const std::string& replaceRegex, std::string* pLine,
-                                             size_t* pReplaceMatchOff)
+                                             size_t* pReplaceMatchOff) const
 {
    try
    {
@@ -1685,7 +1787,7 @@ core::Error Replacer::replaceRegexIgnoreCase(size_t matchOn, size_t matchOff,
 core::Error Replacer::replaceRegexWithCase(size_t matchOn, size_t matchOff,
                                            const std::string& findRegex,
                                            const std::string& replaceRegex, std::string* pLine,
-                                           size_t* pReplaceMatchOff)
+                                           size_t* pReplaceMatchOff) const
 {
    try
    {
@@ -1706,6 +1808,33 @@ core::Error Replacer::replaceRegexWithCase(size_t matchOn, size_t matchOff,
       return error;
    }
 }
+
+std::string Replacer::decode(const std::string& encoded) const
+{
+   bool firstDecodeError = false;
+   return decode(encoded, encoding_, firstDecodeError);
+}
+
+std::string Replacer::decode(const std::string& encoded, const std::string& encoding,
+                             bool& firstDecodeError)
+{
+   if (encoded.empty())
+      return encoded;
+
+   std::string decoded;
+   Error error = r::util::iconvstr(encoded, encoding, "UTF-8", true,
+                                   &decoded);
+
+   // Log error, but only once per grep operation
+   if (error && firstDecodeError)
+   {
+      firstDecodeError = false;
+      LOG_ERROR(error);
+   }
+
+   return decoded;
+}
+
 
 } // namespace find
 } // namespace modules
