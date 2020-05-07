@@ -32,7 +32,8 @@ if [ "$1" != "--install-crashpad-sudo" ]
 then
    ./install-crashpad
 else
-   sudo ./install-crashpad
+   # pass distro name (such as 'bionic') via $2 to install pre-built binary
+   sudo ./install-crashpad "$2"
 fi
 
 if [ -e install-overlay ]
