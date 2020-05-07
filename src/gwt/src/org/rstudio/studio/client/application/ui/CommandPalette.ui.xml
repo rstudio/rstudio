@@ -8,12 +8,10 @@
 		.popup {
 			height: 400px;
 			width: 600px;
-			border: 2px solid #a0a0a0;
+			border: 1px solid;
 			border-radius: 4px;
-			padding: 10px;
 			overflow: hidden;
 			box-shadow: 0px 0px 22px 0px rgba(0,0,0,0.75);
-			margin-top: -50px;
 		}
 		
 		.popup td {
@@ -23,10 +21,14 @@
 		.searchBox {
 			width: 100%;
 			font-size: 14pt;
-			margin-bottom: 10px;
 			box-sizing: border-box;
 			padding: 10px;
 			border: 0px;
+		}
+		
+		.searchBar {
+			padding: 15px;
+			border-bottom: 1px solid;
 		}
 		
 		.editor_dark .searchBox {
@@ -42,17 +44,15 @@
 		.commandPanel {
 			height: 100%;
 			width: 100%;
-			margin-top: 10px;
-			margin-bottom: 10px;
-			padding-right: 20px;
+			padding-top: 10px;
 		}
 	</ui:style>
-	<g:FlowPanel styleName="ace_editor {styles_.popup}">
-		<g:HTMLPanel styleName="rstudio-themes-background">
-			<g:TextBox styleName="{styles_.searchBox}" ui:field="searchBox_">
+	<g:FlowPanel styleName="rstudio-themes-border {styles_.popup}">
+		<g:HTMLPanel styleName="{styles_.searchBar} rstudio-themes-background rstudio-themes-border">
+			<g:TextBox styleName="{styles_.searchBox} rstudio-themes-border" ui:field="searchBox_">
 			</g:TextBox>
 		</g:HTMLPanel>
-		<g:ScrollPanel ui:field="scroller_" styleName="{styles_.commandPanel}">
+		<g:ScrollPanel ui:field="scroller_" styleName="ace_editor {styles_.commandPanel}">
 			<g:VerticalPanel styleName="ace_marker-layer {styles_.commandList}" ui:field="commandList_"></g:VerticalPanel>
 		</g:ScrollPanel>
 	</g:FlowPanel>

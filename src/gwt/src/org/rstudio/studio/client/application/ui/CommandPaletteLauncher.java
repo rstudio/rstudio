@@ -22,6 +22,8 @@ import org.rstudio.studio.client.workbench.addins.AddinsCommandManager;
 import org.rstudio.studio.client.workbench.commands.Commands;
 
 import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.dom.client.Document;
+import com.google.gwt.dom.client.Element;
 import com.google.gwt.user.client.ui.PopupPanel;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -38,7 +40,7 @@ public class CommandPaletteLauncher implements CommandPalette.Host
       Initializing,
       Initialized
    }
-
+   
    @Inject 
    public CommandPaletteLauncher(Commands commands,
          AddinsCommandManager addins,
@@ -80,6 +82,15 @@ public class CommandPaletteLauncher implements CommandPalette.Host
    private void createPanel()
    {
       panel_ = new PopupPanel(true, true);
+      
+      // Copy classes from the root RStudio container onto this panel. This is
+      // necessary so that we can properly inherit theme colors.
+      Element root = Document.get().getElementById("rstudio_container");
+      if (root != null)
+      {
+         panel_.addStyleName(root.getClassName());
+      }
+
       panel_.add(palette_);
       panel_.show();
       panel_.center();

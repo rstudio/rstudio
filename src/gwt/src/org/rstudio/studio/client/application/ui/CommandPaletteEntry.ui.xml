@@ -9,7 +9,7 @@
 			font-size: 10pt;
 			padding-top: 6px;
 			padding-bottom: 6px;
-			padding-left: 6px;
+			padding-left: 15px;
 			padding-right: 6px;
 			position: relative;
 		}
