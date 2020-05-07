@@ -12,6 +12,8 @@
 			border-radius: 4px;
 			overflow: hidden;
 			box-shadow: 0px 0px 22px 0px rgba(0,0,0,0.75);
+			display: flex;
+			flex-direction: column;
 		}
 		
 		.popup td {
@@ -42,18 +44,18 @@
 		}
 		
 		.commandPanel {
-			height: 100%;
 			width: 100%;
+			height: 100%;
 			padding-top: 10px;
 		}
 	</ui:style>
-	<g:FlowPanel styleName="rstudio-themes-border {styles_.popup}">
+	<g:HTMLPanel styleName="rstudio-themes-border {styles_.popup}">
 		<g:HTMLPanel styleName="{styles_.searchBar} rstudio-themes-background rstudio-themes-border">
 			<g:TextBox styleName="{styles_.searchBox} rstudio-themes-border" ui:field="searchBox_">
 			</g:TextBox>
 		</g:HTMLPanel>
 		<g:ScrollPanel ui:field="scroller_" styleName="ace_editor {styles_.commandPanel}">
-			<g:VerticalPanel styleName="ace_marker-layer {styles_.commandList}" ui:field="commandList_"></g:VerticalPanel>
+			<g:FlowPanel styleName="{styles_.commandList}" ui:field="commandList_"></g:FlowPanel>
 		</g:ScrollPanel>
-	</g:FlowPanel>
+	</g:HTMLPanel>
 </ui:UiBinder> 

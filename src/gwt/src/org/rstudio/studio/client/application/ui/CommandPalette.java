@@ -39,9 +39,9 @@ import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.ui.Composite;
+import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.ScrollPanel;
 import com.google.gwt.user.client.ui.TextBox;
-import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 
 import elemental.events.KeyboardEvent.KeyCode;
@@ -282,7 +282,7 @@ public class CommandPalette extends Composite
    private String searchText_;
 
    @UiField public TextBox searchBox_;
-   @UiField public VerticalPanel commandList_;
+   @UiField public FlowPanel commandList_;
    @UiField ScrollPanel scroller_;
    @UiField Styles styles_;
 }
