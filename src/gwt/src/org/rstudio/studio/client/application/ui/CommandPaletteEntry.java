@@ -43,9 +43,9 @@ public abstract class CommandPaletteEntry extends Composite
    public interface Styles extends CssResource
    {
       String entry();
-      String selected();
       String keyboard();
       String searchMatch();
+      String selected();
    }
 
    public CommandPaletteEntry(List<KeySequence> keys)

@@ -19,7 +19,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.command.KeyMap;
 import org.rstudio.core.client.command.KeySequence;
@@ -32,8 +31,10 @@ import org.rstudio.studio.client.workbench.addins.Addins.RAddins;
 import org.rstudio.studio.client.workbench.commands.Commands;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
+import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.ScrollPanel;
 import com.google.gwt.user.client.ui.TextBox;
@@ -62,6 +63,7 @@ public class CommandPalette extends Composite
       entries_ = new ArrayList<CommandPaletteEntry>();
       host_ = host;
       shortcuts_ = shortcuts;
+      selected_ = -1;
       
       // Add all of the application commands
       KeyMap map = shortcuts_.getKeyMap(KeyMapType.APPLICATION);
@@ -72,7 +74,6 @@ public class CommandPalette extends Composite
          List<KeySequence> keys = map.getBindings(command);
          CommandPaletteEntry entry = new AppCommandPaletteEntry(appCommand, keys);
          entries_.add(entry);
-         commandList_.add(entry);
       }
       
       // Add all of the addin commands
@@ -84,6 +85,15 @@ public class CommandPalette extends Composite
          List<KeySequence> keys = map.getBindings(rAddin.getId());
          CommandPaletteEntry entry = new RAddinCommandPaletteEntry(rAddin, executor, keys);
          entries_.add(entry);
+      }
+      
+      for (CommandPaletteEntry entry: entries_)
+      {
+         entry.sinkEvents(Event.ONCLICK);
+         entry.addHandler((evt) -> {
+            host_.dismiss();
+            entry.invoke();
+         }, ClickEvent.getType());
          commandList_.add(entry);
       }
 
@@ -136,51 +146,42 @@ public class CommandPalette extends Composite
       updateSelection();
    }
    
+   /**
+    * Selects the topmost search result in the palette
+    */
    public void updateSelection()
    {
-      for (CommandPaletteEntry entry: entries_)
+      for (int i = 0; i < entries_.size(); i++)
       {
-         if (!entry.isVisible())
+         if (!entries_.get(i).isVisible())
+         {
             continue;
-         selectNewCommand(entry);
+         }
+         
+         selectNewCommand(i);
          break;
       }
    }
    
    private void moveSelection(int units)
    {
-      // If there's no selection, create one and return
-      if (selected_ == null)
+      // Select the first visible command in the given direction
+      CommandPaletteEntry candidate = null;
+      int pass = 1;
+      int target = 0;
+      do
       {
-         updateSelection();
-         return;
-      }
-      
-      for (int i = 0; i < entries_.size(); i++)
-      {
-         if (StringUtil.equals(entries_.get(i).getId(), 
-                               selected_.getId()))
+         target = selected_ + (units * pass++);
+         if (target < 0 || target >= entries_.size())
          {
-            // Select the first visible command in the given direction
-            CommandPaletteEntry candidate = null;
-            int pass = 1;
-            do
-            {
-               int target = i + (units * pass++);
-               if (target < 0 || target >= entries_.size())
-               {
-                  // Request to navigate outside the boundaries of the palette
-                  return;
-               }
-               candidate = entries_.get(target);
-            }
-            while (!candidate.isVisible());
-            
-            selectNewCommand(candidate);
-            
-            break;
+            // Request to navigate outside the boundaries of the palette
+            return;
          }
+         candidate = entries_.get(target);
       }
+      while (!candidate.isVisible());
+      
+      selectNewCommand(target);
    }
    
    public void focus()
@@ -191,28 +192,30 @@ public class CommandPalette extends Composite
    
    private void invokeSelection()
    {
-      if (selected_ != null)
+      if (selected_ >= 0)
       {
          host_.dismiss();
-         selected_.invoke();
+         entries_.get(selected_).invoke();
       }
    }
    
-   private void selectNewCommand(CommandPaletteEntry cmd)
+   private void selectNewCommand(int target)
    {
       // Clear previous selection, if any
-      if (selected_ != null)
-         selected_.setSelected(false);
+      if (selected_ >= 0)
+      {
+         entries_.get(selected_).setSelected(false);
+      }
             
       // Set new selection
-      selected_ = cmd;
-      selected_.setSelected(true);
-      scroller_.ensureVisible(selected_);
+      selected_ = target;
+      entries_.get(selected_).setSelected(true);
+      scroller_.ensureVisible(entries_.get(selected_));
    }
    
    private final Host host_;
    private final ShortcutManager shortcuts_;
-   private CommandPaletteEntry selected_;
+   private int selected_;
    private List<CommandPaletteEntry> entries_;
 
    @UiField public TextBox searchBox_;
