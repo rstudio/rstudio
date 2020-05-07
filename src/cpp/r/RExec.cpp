@@ -129,7 +129,7 @@ Error evaluateExpressionsUnsafe(SEXP expr,
                                 EvalType evalType)
 {
    // detect if an error occurred (only relevant for EvalTry)
-   int errorCode = 0;
+   int errorOccurred = 0;
    
    // if we have an entire expression list, evaluate its contents one-by-one 
    // and return only the last one
@@ -141,8 +141,8 @@ Error evaluateExpressionsUnsafe(SEXP expr,
       {
          if (evalType == EvalTry)
          {
-            SEXP result = R_tryEval(VECTOR_ELT(expr, i), envir, &errorCode);
-            if (errorCode == 0)
+            SEXP result = R_tryEval(VECTOR_ELT(expr, i), envir, &errorOccurred);
+            if (errorOccurred == 0)
                *pSEXP = result;
          }
          else
@@ -156,10 +156,11 @@ Error evaluateExpressionsUnsafe(SEXP expr,
    else
    {
       DisableDebugScope disableStepInto(envir);
+      
       if (evalType == EvalTry)
       {
-         SEXP result = R_tryEval(expr, envir, &errorCode);
-         if (errorCode == 0)
+         SEXP result = R_tryEval(expr, envir, &errorOccurred);
+         if (errorOccurred == 0)
             *pSEXP = result;
       }
       else
@@ -171,7 +172,7 @@ Error evaluateExpressionsUnsafe(SEXP expr,
    // protect the result
    pProtect->add(*pSEXP);
    
-   if (errorCode)
+   if (errorOccurred)
    {
       // get error message -- note this results in a recursive call to
       // evaluate expressions during the fetching of the error. if this 
