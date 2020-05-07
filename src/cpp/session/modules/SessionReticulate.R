@@ -1521,7 +1521,7 @@ html.heading = _heading
    
    # obtain a description of each Python object, using the already-understood
    # format used for R objects
-   descriptions <- lapply(objects, .rs.reticulate.describeObject, module = module)
+   descriptions <- lapply(objects, .rs.reticulate.describeObject, parent = module)
    
    # try to get the module name (if any)
    name <- tryCatch(
