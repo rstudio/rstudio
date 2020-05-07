@@ -1,7 +1,7 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
 	xmlns:g="urn:import:com.google.gwt.user.client.ui">
-	<ui:style>
+	<ui:style field="styles_" type="org.rstudio.studio.client.application.ui.CommandPalette.Styles">
 		@eval proportionalFont org.rstudio.core.client.theme.ThemeFonts.getProportionalFont();
 		@external editor_dark;
 
@@ -12,8 +12,8 @@
 			border-radius: 4px;
 			padding: 10px;
 			overflow: hidden;
-			margin-top: 50px;
 			box-shadow: 0px 0px 22px 0px rgba(0,0,0,0.75);
+			margin-top: -50px;
 		}
 		
 		.popup td {
@@ -47,13 +47,13 @@
 			padding-right: 20px;
 		}
 	</ui:style>
-	<g:FlowPanel styleName="ace_editor {style.popup}">
+	<g:FlowPanel styleName="ace_editor {styles_.popup}">
 		<g:HTMLPanel styleName="rstudio-themes-background">
-			<g:TextBox styleName="{style.searchBox}" ui:field="searchBox_">
+			<g:TextBox styleName="{styles_.searchBox}" ui:field="searchBox_">
 			</g:TextBox>
 		</g:HTMLPanel>
-		<g:ScrollPanel ui:field="scroller_" styleName="{style.commandPanel}">
-			<g:VerticalPanel styleName="ace_marker-layer {style.commandList}" ui:field="commandList_"></g:VerticalPanel>
+		<g:ScrollPanel ui:field="scroller_" styleName="{styles_.commandPanel}">
+			<g:VerticalPanel styleName="ace_marker-layer {styles_.commandList}" ui:field="commandList_"></g:VerticalPanel>
 		</g:ScrollPanel>
 	</g:FlowPanel>
 </ui:UiBinder> 

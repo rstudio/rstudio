@@ -21,6 +21,7 @@ import org.rstudio.core.client.command.ShortcutManager;
 import org.rstudio.studio.client.workbench.addins.AddinsCommandManager;
 import org.rstudio.studio.client.workbench.commands.Commands;
 
+import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.user.client.ui.PopupPanel;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -31,6 +32,13 @@ public class CommandPaletteLauncher implements CommandPalette.Host
    public interface Binder
           extends CommandBinder<Commands, CommandPaletteLauncher> {}
    
+   private enum State
+   {
+      Uninitialized,
+      Initializing,
+      Initialized
+   }
+
    @Inject 
    public CommandPaletteLauncher(Commands commands,
          AddinsCommandManager addins,
@@ -39,6 +47,7 @@ public class CommandPaletteLauncher implements CommandPalette.Host
       binder.bind(commands, this);
       addins_ = addins;
       commands_ = commands;
+      state_ = State.Uninitialized;
    }
    
    @Handler
@@ -47,7 +56,29 @@ public class CommandPaletteLauncher implements CommandPalette.Host
       // Create the command palette widget
       palette_ = new CommandPalette(commands_, addins_.getRAddins(), 
             ShortcutManager.INSTANCE, this);
-
+      
+      if (state_ == State.Initialized)
+      {
+         // Already initialized; just show the panel
+         createPanel();
+      }
+      else if (state_ == State.Uninitialized)
+      {
+         // Not yet initialized. The first load happens behind the browser event
+         // loop so that the CSS resources can be injected. We could fix this by
+         // eagerly injecting these when RStudio starts, but this way we don't
+         // pay any boot time penalty.
+         state_ = State.Initializing;
+         Scheduler.get().scheduleDeferred(() ->
+         {
+            state_ = State.Initialized;
+            createPanel();
+         });
+      }
+   }
+   
+   private void createPanel()
+   {
       panel_ = new PopupPanel(true, true);
       panel_.add(palette_);
       panel_.show();
@@ -61,7 +92,7 @@ public class CommandPaletteLauncher implements CommandPalette.Host
       // Free our reference to the panel when it closes
       panel_.addCloseHandler((evt) -> 
       {
-         panel_ = null;
+         cleanup();
       });
    }
 
@@ -69,10 +100,18 @@ public class CommandPaletteLauncher implements CommandPalette.Host
    public void dismiss()
    {
       panel_.hide();
+      cleanup();
+   }
+   
+   private void cleanup()
+   {
+      palette_ = null;
+      panel_ = null;
    }
    
    private PopupPanel panel_;
    private CommandPalette palette_;
    private final Commands commands_;
    private final AddinsCommandManager addins_;
+   private State state_;
 }

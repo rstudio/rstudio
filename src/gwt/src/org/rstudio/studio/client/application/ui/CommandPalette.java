@@ -34,6 +34,7 @@ import org.rstudio.studio.client.workbench.commands.Commands;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.Event;
@@ -57,6 +58,14 @@ public class CommandPalette extends Composite
    {
       public void dismiss();
    }
+   
+   public interface Styles extends CssResource
+   {
+      String popup();
+      String searchBox();
+      String commandList();
+      String commandPanel();
+   }
 
    public CommandPalette(Commands commands, RAddins addins, ShortcutManager shortcuts, Host host)
    {
@@ -68,6 +77,7 @@ public class CommandPalette extends Composite
       selected_ = -1;
       addins_ = addins;
       commands_ = commands;
+      styles_.ensureInjected();
       
       // Populate the palette on a deferred callback so that it appears immediately
       Scheduler.get().scheduleDeferred(() ->
@@ -258,4 +268,5 @@ public class CommandPalette extends Composite
    @UiField public TextBox searchBox_;
    @UiField public VerticalPanel commandList_;
    @UiField ScrollPanel scroller_;
+   @UiField Styles styles_;
 }
