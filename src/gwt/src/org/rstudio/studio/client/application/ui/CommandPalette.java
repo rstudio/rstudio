@@ -145,7 +145,34 @@ public class CommandPalette extends Composite
       searchBox_.getElement().setAttribute("placeholder", "Search and run commands");
       searchBox_.getElement().setAttribute("spellcheck", "false");
       
-      searchBox_.addKeyUpHandler((evt) -> 
+      searchBox_.addKeyUpHandler((evt) ->
+      {
+         if (evt.getNativeKeyCode() == KeyCode.ESC)
+         {
+            // Pressing ESC dismisses the host (removing the palette popup)
+            host_.dismiss();
+         }
+         else if (evt.getNativeKeyCode() == KeyCode.ENTER)
+         {
+            // Enter runs the selected command
+            invokeSelection();
+         }
+         else
+         {
+            // Just update the filter if the text has changed
+            String searchText = searchBox_.getText();
+            if (!StringUtil.equals(searchText_, searchText))
+            {
+               searchText_ = searchText;
+               applyFilter();
+            }
+         }
+      });
+
+      // Up and Down arrows need to be handled on KeyDown to account for
+      // repetition (a held arrow key will generate multiple KeyDown events and
+      // then a single KeyUp when released)
+      searchBox_.addKeyDownHandler((evt) -> 
       {
          if (evt.getNativeKeyCode() == KeyCode.UP)
          {
@@ -155,20 +182,8 @@ public class CommandPalette extends Composite
          {
             moveSelection(1);
          }
-         else if (evt.getNativeKeyCode() == KeyCode.ESC)
-         {
-            host_.dismiss();
-         }
-         else if (evt.getNativeKeyCode() == KeyCode.ENTER)
-         {
-            invokeSelection();
-         }
-         else
-         {
-            // just update the filter
-            applyFilter();
-         }
       });
+      
    }
    
    public void applyFilter()
@@ -264,6 +279,7 @@ public class CommandPalette extends Composite
    private final RAddins addins_;
    private int selected_;
    private List<CommandPaletteEntry> entries_;
+   private String searchText_;
 
    @UiField public TextBox searchBox_;
    @UiField public VerticalPanel commandList_;
