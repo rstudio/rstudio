@@ -1,7 +1,7 @@
 /*
  * AppCommandPaletteEntry.java
  *
- * Copyright (C) 2009-19 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -20,6 +20,10 @@ import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.command.KeySequence;
 
+/**
+ * AppCommandPaletteEntry is a widget that represents an AppCommand in RStudio's
+ * command palette.
+ */
 public class AppCommandPaletteEntry extends CommandPaletteEntry
 {
    public AppCommandPaletteEntry(AppCommand command, List<KeySequence> keys)

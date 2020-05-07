@@ -36,9 +36,9 @@ public class CommandPaletteLauncher implements CommandPalette.Host
    
    private enum State
    {
-      Uninitialized,
-      Initializing,
-      Initialized
+      Uninitialized,  // The panel has never been shown
+      Initializing,   // The panel is getting ready to show for the first time
+      Initialized     // The panel has been shown at least once and is fully initialized
    }
    
    @Inject 
@@ -79,6 +79,11 @@ public class CommandPaletteLauncher implements CommandPalette.Host
       }
    }
    
+   /**
+    * Creates the popup panel that hosts the palette. Since this panel is
+    * relatively heavyweight (it can hold a large number of commands), we create
+    * it anew each time the palette is shown.
+    */
    private void createPanel()
    {
       panel_ = new PopupPanel(true, true);
@@ -114,6 +119,9 @@ public class CommandPaletteLauncher implements CommandPalette.Host
       cleanup();
    }
    
+   /**
+    * Free references to the palette and panel 
+    */
    private void cleanup()
    {
       palette_ = null;

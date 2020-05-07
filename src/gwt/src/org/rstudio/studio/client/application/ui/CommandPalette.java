@@ -138,7 +138,7 @@ public class CommandPalette extends Composite
       Map<String, AppCommand> allCommands = commands_.getCommands();
       for (String command: allCommands.keySet())
       {
-         if (command.contains("Mru") || command.contains("Dummy"))
+         if (command.contains("Mru") || command.startsWith("mru") || command.contains("Dummy"))
          {
             // MRU entries and dummy commands should not appear in the palette
             continue;
@@ -219,17 +219,23 @@ public class CommandPalette extends Composite
       {
          if (evt.getNativeKeyCode() == KeyCode.UP)
          {
+            // Directional keys often trigger behavior in textboxes (e.g. moving
+            // the cursor to the beginning/end of text) but we're hijacking them
+            // to do navigation in the results list, so disable that.
+            evt.stopPropagation();
+            evt.preventDefault();
             moveSelection(-1);
          }
          else if (evt.getNativeKeyCode() == KeyCode.DOWN)
          {
+            evt.stopPropagation();
+            evt.preventDefault();
             moveSelection(1);
          }
       });
-      
    }
    
-   public void applyFilter()
+   private void applyFilter()
    {
       String needle = searchBox_.getText().toLowerCase();
       for (CommandPaletteEntry entry: entries_)
@@ -267,6 +273,11 @@ public class CommandPalette extends Composite
       }
    }
    
+   /**
+    * Changes the selected palette entry in response to user input.
+    * 
+    * @param units The direction to move selection (1 forward, -1 backward)
+    */
    private void moveSelection(int units)
    {
       // Select the first visible command in the given direction
@@ -288,12 +299,18 @@ public class CommandPalette extends Composite
       selectNewCommand(target);
    }
    
+   /**
+    * Focuses the palette's search box in preparation for user input.
+    */
    public void focus()
    {
       searchBox_.setFocus(true);
       updateSelection();
    }
    
+   /**
+    * Invoke the currently selected command.
+    */
    private void invokeSelection()
    {
       if (selected_ >= 0)
@@ -303,6 +320,11 @@ public class CommandPalette extends Composite
       }
    }
    
+   /**
+    * Change the selected command.
+    * 
+    * @param target The index of the command to select.
+    */
    private void selectNewCommand(int target)
    {
       // Clear previous selection, if any
