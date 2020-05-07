@@ -1,7 +1,7 @@
 /*
  * RExec.cpp
  *
- * Copyright (C) 2009-19 by RStudio, PBC
+ * Copyright (C) 2009-20 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -123,43 +123,56 @@ enum EvalType {
    EvalDirect  // use Rf_eval directly
 };
 Error evaluateExpressionsUnsafe(SEXP expr,
-                                SEXP env,
+                                SEXP envir,
                                 SEXP* pSEXP,
                                 sexp::Protect* pProtect,
                                 EvalType evalType)
 {
-   int er=0;
-   int i=0,l;
+   // detect if an error occurred (only relevant for EvalTry)
+   int errorOccurred = 0;
    
    // if we have an entire expression list, evaluate its contents one-by-one 
    // and return only the last one
-   if (TYPEOF(expr)==EXPRSXP) 
+   if (TYPEOF(expr) == EXPRSXP) 
    {
-      DisableDebugScope disableStepInto(env);
-      l = LENGTH(expr);
-      while (i<l) 
+      DisableDebugScope disableStepInto(envir);
+
+      for (int i = 0, n = LENGTH(expr); i < n; i++)
       {
          if (evalType == EvalTry)
-            *pSEXP = R_tryEval(VECTOR_ELT(expr, i), env, &er);
+         {
+            SEXP result = R_tryEval(VECTOR_ELT(expr, i), envir, &errorOccurred);
+            if (errorOccurred == 0)
+               *pSEXP = result;
+         }
          else
-            *pSEXP = Rf_eval(VECTOR_ELT(expr, i), env);
-         i++;
+         {
+            *pSEXP = Rf_eval(VECTOR_ELT(expr, i), envir);
+         }
       }
-   } 
-   // evaluate single expression
+   }
+   
+   // otherwise, evaluate a single expression / call
    else
    {
-      DisableDebugScope disableStepInto(R_GlobalEnv);
+      DisableDebugScope disableStepInto(envir);
+      
       if (evalType == EvalTry)
-         *pSEXP = R_tryEval(expr, R_GlobalEnv, &er);
+      {
+         SEXP result = R_tryEval(expr, envir, &errorOccurred);
+         if (errorOccurred == 0)
+            *pSEXP = result;
+      }
       else
-         *pSEXP = Rf_eval(expr, R_GlobalEnv);
+      {
+         *pSEXP = Rf_eval(expr, envir);
+      }
    }
    
    // protect the result
    pProtect->add(*pSEXP);
    
-   if (er)
+   if (errorOccurred)
    {
       // get error message -- note this results in a recursive call to
       // evaluate expressions during the fetching of the error. if this 
