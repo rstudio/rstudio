@@ -2,7 +2,7 @@
  * 
  * DocTabLayoutPanel.java
  *
- * Copyright (C) 2009-19 by RStudio, PBC
+ * Copyright (C) 2009-20 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -16,6 +16,7 @@
 package org.rstudio.core.client.theme;
 
 import org.rstudio.core.client.BrowseCap;
+import org.rstudio.core.client.ClassIds;
 import org.rstudio.core.client.Point;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.dom.DomUtils;
@@ -112,6 +113,7 @@ public class DocTabLayoutPanel
       styles_ = ThemeResources.INSTANCE.themeStyles();
       addStyleName(styles_.docTabPanel());
       addStyleName(styles_.moduleTabPanel());
+      ClassIds.assignClassId(this, ClassIds.SOURCE_PANEL);
       dragManager_ = new DragManager();
       
       // listen for global drag events (these are broadcast from other windows
