@@ -10,3 +10,4 @@
 - Allow multiple space-separated domains in `www-frame-origin` for Tutorial API (Pro)
 - Fix dependency installation for untitled buffers (#6762)
 - Add option `www-url-path-prefix` to force a path on auth cookies (Pro #1608)
+- Fix Terminal to works with both Git-Bash and RTools4 MSYS2 installed on Windows (#6696)
