@@ -144,8 +144,6 @@ void handleFileRequest(const FileRequestOptions& options,
       // check for initJs
       if (!options.initJs.empty())
          vars["head_tags"] = vars["head_tags"] + "<script>" + options.initJs + "</script>";
-      else
-         vars["head_tags"] = vars["head_tags"] + std::string();
 
       // gwt prefix
       vars["gwt_prefix"] = options.gwtPrefix;
