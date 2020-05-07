@@ -226,9 +226,54 @@ export interface PandocBlockCapsuleFilter {
   // block delimiter)
   match: RegExp;
 
-  // function used to write a node from preserved source
-  writeNode: (schema: Schema, writer: ProsemirrorWriter, capsule: PandocBlockCapsule) => void;  
+  // provide a (text) envelope around the capsule, e.g. 
+  //  - newlines to ensure that yaml is standalone;
+  //  - backticks to ensure an Rmd is structurally parsed by pandoc as a codeblock
+  enclose: (capsuleText: string, capsule: PandocBlockCapsule) => string;
+
+  // unpack text from envelope
+  handleText: (text: string) => string;
+  
+  // do you want to handle this token as a capsule object
+  handleToken: (tok: PandocToken) => string | null;
+
+ 
+  // function that writes capsules as nodes
+  writeNode: (schema: Schema, writer: ProsemirrorWriter, capsule: PandocBlockCapsule) => void;
 }
+
+// constants used for creating/consuming capsules
+const kFieldDelimiter = '\n';
+const kValueDelimiter = ':';
+const kTypeField = 'type';
+const kPrefixField = 'prefix';
+const kSourceField = 'source';
+const kSuffixField = 'suffix';
+const kBlockCapsuleSentinel = '31B8E172-B470-440E-83D8-E6B185028602'.toLowerCase();
+export const kEncodedBlockCapsuleRegEx = new RegExp(
+  kBlockCapsuleSentinel + 
+  kValueDelimiter + 
+  '(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?' + 
+  kValueDelimiter + 
+  kBlockCapsuleSentinel, 'g'
+);
+
+// remove envelope then parse the remaining text into a block capsule 
+export function parsePandocBlockCapsule(text: string) : PandocBlockCapsule {
+  const envelopeLen = kBlockCapsuleSentinel.length + kFieldDelimiter.length;
+  const record = text.substring(envelopeLen, text.length - envelopeLen);
+  const decodedRecord = atob(record);
+  const fields = decodedRecord.split(kFieldDelimiter);
+  const fieldValue = (i: number) => atob(fields[i].split(kValueDelimiter)[1]);
+  return {
+    [kTypeField]: fieldValue(0),
+    [kPrefixField]: fieldValue(1),
+    [kSourceField]: fieldValue(2),
+    [kSuffixField]: fieldValue(3),
+  };
+}
+
+
 
 
 export interface ProsemirrorWriter {

@@ -20,7 +20,7 @@ import { setTextSelection, findParentNodeOfType } from 'prosemirror-utils';
 
 import { Extension } from '../../api/extension';
 import { EditorOptions } from '../../api/options';
-import { PandocOutput, PandocTokenType, PandocExtensions, ProsemirrorWriter, PandocBlockCapsule } from '../../api/pandoc';
+import { PandocOutput, PandocTokenType, PandocExtensions, ProsemirrorWriter, PandocBlockCapsule, PandocToken, parsePandocBlockCapsule } from '../../api/pandoc';
 import { codeNodeSpec } from '../../api/code';
 import { ProsemirrorCommand, EditorCommandId, toggleBlockType } from '../../api/command';
 import { selectionIsBodyTopLevel } from '../../api/selection';
@@ -37,7 +37,11 @@ import { RmdChunkImagePreviewPlugin } from './rmd_chunk-image';
 import { ExecuteCurrentRmdChunkCommand, ExecutePreviousRmdChunksCommand } from './rmd_chunk-commands';
 
 import './rmd_chunk-styles.css';
+import { pandocAttrReadAST, PandocAttr } from '../../api/pandoc_attr';
 
+const kBlockCapsuleType = 'F3175F2A-E8A0-4436-BE12-B33925B6D220'.toLowerCase();
+
+const kBlockCapsuleTextRegEx = new RegExp('```' + kBlockCapsuleType + '\\n[ \\t>]*([^`]+)\\n[ \\t>]*```', 'g');
 
 const extension = (
   _pandocExtensions: PandocExtensions,
@@ -99,8 +103,31 @@ const extension = (
         pandoc: {
 
           blockCapsuleFilter: {
-            type: '3F175F2A-E8A0-4436-BE12-B33925B6D220',
+            type: kBlockCapsuleType,
             match: /^([\t >]*)(```+\s*\{[a-zA-Z0-9_]+(?: *[ ,].*?)?\}[ \t]*\n[\W\w]*?\n[\t >]*```+)([ \t]*)$/gm,
+            
+            enclose: (capsuleText: string, capsule: PandocBlockCapsule) => 
+              '```' + kBlockCapsuleType + '\n' + capsule.prefix + capsuleText + '\n' + capsule.prefix + '```' + capsule.suffix
+            ,
+
+            handleText: (text: string) => {
+              return text.replace(kBlockCapsuleTextRegEx, (_match, p1) => {
+                const capsuleText = p1;
+                const capsule = parsePandocBlockCapsule(capsuleText);
+                return capsule.source;
+              });
+            },
+            
+            handleToken: (tok: PandocToken) => {
+              if (tok.t === PandocTokenType.CodeBlock) {
+                const attr = pandocAttrReadAST(tok, 0);
+                if ((attr as PandocAttr).classes.includes(kBlockCapsuleType)) {
+                  return tok.c[1];
+                }
+              }
+              return null;
+            },
+
             writeNode: (schema: Schema, writer: ProsemirrorWriter, capsule: PandocBlockCapsule) => {
 
               // open node

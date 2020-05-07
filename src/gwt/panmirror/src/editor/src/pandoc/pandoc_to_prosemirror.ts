@@ -23,10 +23,11 @@ import {
   PandocBlockReaderFn,
   PandocBlockCapsuleFilter,
   PandocInlineHTMLReaderFn,
+  parsePandocBlockCapsule,
 } from '../api/pandoc';
-import { pandocAttrReadAST, PandocAttr } from '../api/pandoc_attr';
+import { pandocAttrReadAST } from '../api/pandoc_attr';
 
-import { pandocBlockCapsule, isPandocBlockCapsule, resolvePandocBlockCapsuleText } from './pandoc_block_capsule';
+import { resolvePandocBlockCapsuleText } from './pandoc_block_capsule';
 
 export function pandocToProsemirror(
   ast: PandocAst,
@@ -84,9 +85,11 @@ class Parser {
       },
     };
 
-    // resolve block capsule text (text that looks like a block capsule but
-    // is actually contained within a raw block, backtick code block, etc.)
-    const astBlocks = resolvePandocBlockCapsuleText(ast.blocks);
+    // process raw text capsules
+    let astBlocks = ast.blocks;
+    for (const filter of this.blockCapsuleFilters) {
+      astBlocks = resolvePandocBlockCapsuleText(astBlocks, filter);
+    }
 
     // write all tokens
     writer.writeTokens(astBlocks);
@@ -101,18 +104,16 @@ class Parser {
 
   private writeToken(writer: ProsemirrorWriter, tok: PandocToken) {
 
-    // see if this is a block capsule
-    if (isPandocBlockCapsule(tok)) {
-      const blockCapsule = pandocBlockCapsule(tok);
-      const handler = this.blockCapsuleFilters.find(filter => filter.type === blockCapsule.type);
-      if (handler) {
-        handler.writeNode(this.schema, writer, blockCapsule);
+    // process block-level capsules
+    for (const filter of this.blockCapsuleFilters) {
+      const capsuleText = filter.handleToken?.(tok);
+      if (capsuleText) {
+        const blockCapsule = parsePandocBlockCapsule(capsuleText);
+        filter.writeNode(this.schema, writer, blockCapsule);
         return;
-      } else {
-        throw new Error(`No handler for pandoc block capsule with type ${blockCapsule.type}`);
       }
     }
-   
+
     // look for a handler.match function that wants to handle this token
     const handlers = this.handlers[tok.t] || [];
     for (const handler of handlers) {
