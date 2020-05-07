@@ -62,7 +62,7 @@ public class RAddinCommandPaletteEntry extends CommandPaletteEntry
    @Override
    public String getContext()
    {
-      return addin_.getPackage();
+      return "&#9865; " + addin_.getPackage();
    }
 
    private String label_;

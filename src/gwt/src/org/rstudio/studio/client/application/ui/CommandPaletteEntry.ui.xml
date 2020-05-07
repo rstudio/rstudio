@@ -58,6 +58,10 @@
 			padding-right: 5px;
 			padding-left: 5px;
 		}
+		
+		.editor_dark .context {
+			background-color: rgba(255, 255, 255, 0.1);
+		}
 	</ui:style>
 	<g:HorizontalPanel styleName="{styles_.entry}">
 		<g:cell horizontalAlignment="ALIGN_LEFT">

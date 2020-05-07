@@ -19,6 +19,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.command.KeyMap;
 import org.rstudio.core.client.command.KeySequence;
@@ -31,6 +32,7 @@ import org.rstudio.studio.client.workbench.addins.Addins.RAddins;
 import org.rstudio.studio.client.workbench.commands.Commands;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
@@ -64,29 +66,62 @@ public class CommandPalette extends Composite
       host_ = host;
       shortcuts_ = shortcuts;
       selected_ = -1;
+      addins_ = addins;
+      commands_ = commands;
       
+      // Populate the palette on a deferred callback so that it appears immediately
+      Scheduler.get().scheduleDeferred(() ->
+      {
+         populate();
+      });
+   }
+   
+   private void populate()
+   {
       // Add all of the application commands
       KeyMap map = shortcuts_.getKeyMap(KeyMapType.APPLICATION);
-      Map<String, AppCommand> allCommands = commands.getCommands();
+      Map<String, AppCommand> allCommands = commands_.getCommands();
       for (String command: allCommands.keySet())
       {
+         if (command.contains("Mru") || command.contains("Dummy"))
+         {
+            // MRU entries and dummy commands should not appear in the palette
+            continue;
+         }
+
+         // Look up the key binding for this command
          AppCommand appCommand = allCommands.get(command);
          List<KeySequence> keys = map.getBindings(command);
+         
+         // Create an application command entry
          CommandPaletteEntry entry = new AppCommandPaletteEntry(appCommand, keys);
+         if (StringUtil.isNullOrEmpty(entry.getLabel()))
+         {
+            // Ignore app commands which have no label
+            continue;
+         }
          entries_.add(entry);
       }
       
-      // Add all of the addin commands
+      // Add all of the R addin commands
       map = shortcuts_.getKeyMap(KeyMapType.ADDIN);
       AddinExecutor executor = new AddinExecutor();
-      for (String addin: JsUtil.asIterable(addins.keys()))
+      for (String addin: JsUtil.asIterable(addins_.keys()))
       {
-         RAddin rAddin = addins.get(addin);
+         RAddin rAddin = addins_.get(addin);
+         
+         // Look up the key binding for this addin
          List<KeySequence> keys = map.getBindings(rAddin.getId());
          CommandPaletteEntry entry = new RAddinCommandPaletteEntry(rAddin, executor, keys);
+         if (StringUtil.isNullOrEmpty(entry.getLabel()))
+         {
+            // Ignore addin commands which have no label
+            continue;
+         }
          entries_.add(entry);
       }
       
+      // Invoke commands when they're clicked on
       for (CommandPaletteEntry entry: entries_)
       {
          entry.sinkEvents(Event.ONCLICK);
@@ -215,6 +250,8 @@ public class CommandPalette extends Composite
    
    private final Host host_;
    private final ShortcutManager shortcuts_;
+   private final Commands commands_;
+   private final RAddins addins_;
    private int selected_;
    private List<CommandPaletteEntry> entries_;
 

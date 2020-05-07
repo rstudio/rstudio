@@ -56,7 +56,7 @@ public class AppCommandPaletteEntry extends CommandPaletteEntry
    @Override
    public String getContext()
    {
-      return null;
+      return command_.getContext().name();
    }
 
    private String label_;

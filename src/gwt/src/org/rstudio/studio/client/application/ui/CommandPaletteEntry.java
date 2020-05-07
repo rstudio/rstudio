@@ -99,7 +99,7 @@ public abstract class CommandPaletteEntry extends Composite
       }
       else
       {
-         context_.setText(context);
+         context_.getElement().setInnerHTML(context);
          context_.setVisible(true);
       }
    }
