@@ -1,5 +1,5 @@
 /*
- * from_prosemirror.ts
+ * pandoc_from_prosemirror.ts
  *
  * Copyright (C) 2019-20 by RStudio, PBC
  *

@@ -1,5 +1,5 @@
 /*
- * converter.ts
+ * pandoc_converter.ts
  *
  * Copyright (C) 2019-20 by RStudio, PBC
  *
@@ -30,8 +30,8 @@ import {
 import { pandocFormatWith, PandocFormat, kGfmFormat, kCommonmarkFormat } from '../api/pandoc_format';
 import { PandocCapabilities } from '../api/pandoc_capabilities';
 
-import { pandocToProsemirror } from './to_prosemirror';
-import { pandocFromProsemirror } from './from_prosemirror';
+import { pandocToProsemirror } from './pandoc_to_prosemirror';
+import { pandocFromProsemirror } from './pandoc_from_prosemirror';
 import { ExtensionManager } from '../editor/editor-extensions';
 
 export interface PandocWriterOptions {
