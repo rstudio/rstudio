@@ -72,7 +72,7 @@ import {
   selectCurrent,
 } from '../behaviors/find';
 
-import { PandocConverter, PandocWriterOptions } from '../pandoc/converter';
+import { PandocConverter, PandocWriterOptions } from '../pandoc/pandoc_converter';
 
 import { defaultTheme, EditorTheme, applyTheme, applyPadding } from './editor-theme';
 import { defaultEditorUIImages } from './editor-images';

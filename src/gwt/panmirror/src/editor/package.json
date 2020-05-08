@@ -57,6 +57,7 @@
     "prettier": "^1.18.2",
     "terser": "^4.6.2",
     "tslint": "^5.20.0",
+    "tslint-react": "^5.0.0",
     "tslint-config-prettier": "^1.18.0",
     "typescript-tslint-plugin": "^0.5.5",
     "uglify-js": "^3.7.4"
