@@ -22,27 +22,10 @@ gocs style delete handling in lists: first delete = continuing paragraph of bull
 
 ## TODO
 
-
-If there is an invalid yaml block w/ an embedded chunk we never unwrap it:
-
----
- a
-
-```{r}
-```
----
-
-
-
-Rmd "inside yaml" does exist b/c we are mis-parsing --- as a horizontal rule as yaml!!!! (need more rules on this)
-
-Loading up MANUAL.Rmd now locks the browser (probably the regexes?, perhaps scope by type)
-
 [`x_y` `y]  then type _, and it maches the previous _
 
 [`"y] then type "
 
-Yihui style Rmd example blocks
 
 Try additional Yihui chapters (e.g chunk_options.Rmd)
 
@@ -66,14 +49,6 @@ Seems to work fine with quote though, the issue may be the stickiness of the mar
 Try pasting from Excel. Try pasting tables from GDocs.
 
 Do we need to fixup non-rectangualar tables before sending to pandoc.
-
-Pandoc does allow a div to start a list. Look at re-enabling:
-* <div class="blue"> Solutions Engineer [Started, 4/1/20] </div>
-* <div class="blue"> Data Scientist [Started, 4/1/20] </div> 
-* <div class="blue"> Solutions Engineer, Europe [Started, 4/1/20] </div>
-* <div class="blue"> UI/UX Designer, RStudio Connect [Started, 4/22/20] </div>
-* <div class="blue"> Software Architect [Accepted, 5/15/20] </div>
-
 
 
 Math:
