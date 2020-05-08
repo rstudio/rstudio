@@ -19,7 +19,8 @@ import { EditorView } from 'prosemirror-view';
 import { setTextSelection } from 'prosemirror-utils';
 
 import { Extension } from '../../api/extension';
-import { PandocOutput, PandocTokenType, ProsemirrorWriter, PandocBlockCapsule, PandocToken, kEncodedBlockCapsuleRegEx, parsePandocBlockCapsule } from '../../api/pandoc';
+import { PandocOutput, PandocTokenType, ProsemirrorWriter, PandocToken } from '../../api/pandoc';
+import { kEncodedBlockCapsuleRegEx, parsePandocBlockCapsule, PandocBlockCapsule } from '../../api/pandoc_capsule';
 import { EditorUI } from '../../api/ui';
 import { ProsemirrorCommand, EditorCommandId } from '../../api/command';
 import { canInsertNode } from '../../api/node';

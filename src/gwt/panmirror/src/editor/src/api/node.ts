@@ -33,9 +33,9 @@ import {
   PandocNodeWriterFn,
   PandocPreprocessorFn,
   PandocBlockReaderFn,
-  PandocBlockCapsuleFilter,
   PandocInlineHTMLReaderFn,
 } from './pandoc';
+import { PandocBlockCapsuleFilter } from './pandoc_capsule';
 
 import { AttrEditOptions } from './attr_edit';
 import { CommandFn } from './command';

@@ -22,19 +22,18 @@ import {
   PandocMarkWriter,
   PandocPreprocessorFn,
   PandocBlockReaderFn,
-  PandocBlockCapsuleFilter,
   PandocPostprocessorFn,
   PandocInlineHTMLReaderFn,
 } from '../api/pandoc';
 
 import { pandocFormatWith, PandocFormat, kGfmFormat, kCommonmarkFormat } from '../api/pandoc_format';
 import { PandocCapabilities } from '../api/pandoc_capabilities';
+import { PandocBlockCapsuleFilter, pandocMarkdownWithBlockCapsules } from '../api/pandoc_capsule';
 
 import { ExtensionManager } from '../editor/editor-extensions';
 
 import { pandocToProsemirror } from './pandoc_to_prosemirror';
 import { pandocFromProsemirror } from './pandoc_from_prosemirror';
-import { pandocMarkdownWithBlockCapsules } from './pandoc_block_capsule';
 
 export interface PandocWriterOptions {
   atxHeaders?: boolean;

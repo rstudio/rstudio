@@ -20,7 +20,10 @@ import { setTextSelection, findParentNodeOfType } from 'prosemirror-utils';
 
 import { Extension } from '../../api/extension';
 import { EditorOptions } from '../../api/options';
-import { PandocOutput, PandocTokenType, PandocExtensions, ProsemirrorWriter, PandocBlockCapsule, PandocToken, parsePandocBlockCapsule } from '../../api/pandoc';
+import { PandocOutput, PandocTokenType, PandocExtensions, ProsemirrorWriter, PandocToken } from '../../api/pandoc';
+import { pandocAttrReadAST, PandocAttr } from '../../api/pandoc_attr';
+import { PandocBlockCapsule, parsePandocBlockCapsule } from '../../api/pandoc_capsule';
+
 import { codeNodeSpec } from '../../api/code';
 import { ProsemirrorCommand, EditorCommandId, toggleBlockType } from '../../api/command';
 import { selectionIsBodyTopLevel } from '../../api/selection';
@@ -37,7 +40,6 @@ import { RmdChunkImagePreviewPlugin } from './rmd_chunk-image';
 import { ExecuteCurrentRmdChunkCommand, ExecutePreviousRmdChunksCommand } from './rmd_chunk-commands';
 
 import './rmd_chunk-styles.css';
-import { pandocAttrReadAST, PandocAttr } from '../../api/pandoc_attr';
 
 const kBlockCapsuleType = 'F3175F2A-E8A0-4436-BE12-B33925B6D220'.toLowerCase();
 

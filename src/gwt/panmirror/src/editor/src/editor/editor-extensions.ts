@@ -34,10 +34,10 @@ import {
   PandocPreprocessorFn,
   PandocPostprocessorFn,
   PandocBlockReaderFn,
-  PandocBlockCapsuleFilter,
   PandocExtensions,
   PandocInlineHTMLReaderFn,
 } from '../api/pandoc';
+import { PandocBlockCapsuleFilter } from '../api/pandoc_capsule';
 import { EditorEvents } from '../api/events';
 import { PandocCapabilities } from '../api/pandoc_capabilities';
 import { EditorFormat } from '../api/format';

@@ -21,13 +21,10 @@ import {
   PandocAst,
   ProsemirrorWriter,
   PandocBlockReaderFn,
-  PandocBlockCapsuleFilter,
   PandocInlineHTMLReaderFn,
-  parsePandocBlockCapsule,
 } from '../api/pandoc';
 import { pandocAttrReadAST } from '../api/pandoc_attr';
-
-import { resolvePandocBlockCapsuleText } from './pandoc_block_capsule';
+import { PandocBlockCapsuleFilter, parsePandocBlockCapsule, resolvePandocBlockCapsuleText } from '../api/pandoc_capsule';
 
 export function pandocToProsemirror(
   ast: PandocAst,
