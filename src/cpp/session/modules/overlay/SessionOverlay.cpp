@@ -49,7 +49,7 @@ int verifyInstallation()
    return EXIT_SUCCESS;
 }
 
-void initMonitorClient()
+void initMonitorClient(boost::asio::io_service& ioService)
 {
 }
 

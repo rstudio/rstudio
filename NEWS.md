@@ -45,3 +45,4 @@
 * Fixed failure to open files after an attempt to open a very large file (#6637)
 * Fixed Data Viewer getting out of sync with the underlying data when changing live viewer object (#1819)
 * Fixed issue where attempts to plot could fail if R tempdir was deleted (#2214)
+* Fixed issue that caused sessions to freeze due to slow I/O for monitor logs (Pro #1259)
