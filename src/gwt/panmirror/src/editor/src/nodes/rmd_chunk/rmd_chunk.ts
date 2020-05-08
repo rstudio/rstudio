@@ -21,7 +21,7 @@ import { setTextSelection, findParentNodeOfType } from 'prosemirror-utils';
 import { Extension } from '../../api/extension';
 import { EditorOptions } from '../../api/options';
 import { PandocOutput, PandocTokenType, PandocExtensions, ProsemirrorWriter, PandocToken } from '../../api/pandoc';
-import { pandocAttrReadAST, PandocAttr } from '../../api/pandoc_attr';
+import { pandocAttrReadAST, PandocAttr, kCodeBlockAttr, kCodeBlockText } from '../../api/pandoc_attr';
 import { PandocBlockCapsule, parsePandocBlockCapsule } from '../../api/pandoc_capsule';
 
 import { codeNodeSpec } from '../../api/code';
@@ -38,6 +38,7 @@ import { EditorEvents } from '../../api/events';
 
 import { RmdChunkImagePreviewPlugin } from './rmd_chunk-image';
 import { ExecuteCurrentRmdChunkCommand, ExecutePreviousRmdChunksCommand } from './rmd_chunk-commands';
+import { rmdExampleChunkReader, isRmdExampleChunk, writeRmdExampleChunk } from './rmd_chunk-example';
 
 import './rmd_chunk-styles.css';
 
@@ -76,11 +77,11 @@ const extension = (
         code_view: {
           firstLineMeta: true,
           lineNumbers: true,
-          lineNumberFormatter: (line: number) => {
-            if (line === 1) {
+          lineNumberFormatter: (lineNumber: number, lineCount?: number, line?: string) => {
+            if (lineNumber === 1) {
               return '';
             } else {
-              return line - 1 + '';
+              return lineNumber - 1 + '';
             }
           },
           bookdownTheorems: format.docTypes.includes(kBookdownDocType),
@@ -102,14 +103,25 @@ const extension = (
 
           blockCapsuleFilter: rmdChunkBlockCapsuleFilter(),
 
+          readers:  options.rmdExampleChunks ? [rmdExampleChunkReader()] : [],
+
           writer: (output: PandocOutput, node: ProsemirrorNode) => {
-            output.writeToken(PandocTokenType.Para, () => {
-              const parts = rmdChunk(node.textContent);
-              if (parts) {
-                const code = parts.code ? parts.code + '\n' : '';
-                output.writeRawMarkdown('```{' + parts.meta + '}\n' + code + '```\n');
-              }
-            });
+            
+            // write example chunk if the feature is enabled and we detect one
+            if (options.rmdExampleChunks &&isRmdExampleChunk(node)) {
+              
+             writeRmdExampleChunk(output, node);
+
+            // otherwise normal processing
+            } else {
+              output.writeToken(PandocTokenType.Para, () => {
+                const parts = rmdChunk(node.textContent);
+                if (parts) {
+                  const code = parts.code ? parts.code + '\n' : '';
+                  output.writeRawMarkdown('```{' + parts.meta + '}\n' + code + '```\n');
+                }
+              });
+            }
           },
         },
       },
@@ -221,9 +233,9 @@ function rmdChunkBlockCapsuleFilter() {
     // presence of a special css class)
     handleToken: (tok: PandocToken) => {
       if (tok.t === PandocTokenType.CodeBlock) {
-        const attr = pandocAttrReadAST(tok, 0);
-        if ((attr as PandocAttr).classes.includes(kBlockCapsuleType)) {
-          return tok.c[1];
+        const attr = pandocAttrReadAST(tok, kCodeBlockAttr) as PandocAttr;
+        if (attr.classes.includes(kBlockCapsuleType)) {
+          return tok.c[kCodeBlockText];
         }
       }
       return null;

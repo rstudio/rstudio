@@ -120,7 +120,11 @@ class CodeBlockNodeView implements NodeView {
       styleSelectedText: true,
     };
     if (this.options.lineNumberFormatter) {
-      cmOptions.lineNumberFormatter = this.options.lineNumberFormatter;
+      cmOptions.lineNumberFormatter = (lineNumber: number) => {
+        const lineCount = this.cm?.lineCount();
+        const line = this.cm?.getLine(lineNumber - 1);
+        return this.options.lineNumberFormatter!(lineNumber, lineCount, line);
+      };
     }
 
     // Create a CodeMirror instance
