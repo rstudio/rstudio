@@ -18,6 +18,7 @@ import java.util.List;
 
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.ElementIds;
+import org.rstudio.core.client.SafeHtmlUtil;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.KeyCombination;
 import org.rstudio.core.client.command.KeySequence;
@@ -130,23 +131,18 @@ public abstract class CommandPaletteEntry extends Composite
             selected ? SelectedValue.TRUE : SelectedValue.FALSE);
    }
    
-   public void setSearchHighlight(String text)
+   public void setSearchHighlight(String[] keywords)
    {
-      String label = getLabel();
-      int idx = label.toLowerCase().indexOf(text.toLowerCase());
-      if (idx >= 0)
+      if (keywords.length == 0)
       {
-         SafeHtmlBuilder b = new SafeHtmlBuilder();
-         b.appendEscaped(label.substring(0, idx));
-         b.appendHtmlConstant("<span class=\"" + styles_.searchMatch() + "\">");
-         b.appendEscaped(label.substring(idx, idx + text.length()));
-         b.appendHtmlConstant("</span>");
-         b.appendEscaped(label.substring(idx + text.length(), label.length()));
-         name_.getElement().setInnerSafeHtml(b.toSafeHtml());
+         name_.setText(getLabel());
       }
       else
       {
-         name_.setText(label);
+         SafeHtmlBuilder sb = new SafeHtmlBuilder();
+         SafeHtmlUtil.highlightSearchMatch(sb, getLabel(), keywords, 
+               styles_.searchMatch());
+         name_.getElement().setInnerSafeHtml(sb.toSafeHtml());
       }
    }
    

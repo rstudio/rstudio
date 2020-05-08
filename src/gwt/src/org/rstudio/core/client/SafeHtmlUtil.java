@@ -1,7 +1,7 @@
 /*
  * SafeHtmlUtil.java
  *
- * Copyright (C) 2009-12 by RStudio, PBC
+ * Copyright (C) 2009-20 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -13,6 +13,9 @@
  *
  */
 package org.rstudio.core.client;
+
+import java.util.Set;
+import java.util.TreeSet;
 
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.safehtml.shared.SafeHtml;
@@ -164,6 +167,82 @@ public class SafeHtmlUtil
       // needle not found; append text directly
       if (!hasMatch)
          sb.appendEscaped(haystack);
+   }
+
+   /**
+    * Appends text to a SafeHtmlBuilder with multiple search matches highlighted.
+    * 
+    * @param sb The SafeHtmlBuilder to append the search match to
+    * @param haystack The text to append. 
+    * @param needles The strings to search for and highlight.
+    * @param matchClass The CSS class to assign to matches.
+    */
+   public static void highlightSearchMatch(SafeHtmlBuilder sb, String haystack, 
+                                           String[] needles, String matchClass)
+   {
+      // Do nothing if we weren't given a string
+      if (StringUtil.isNullOrEmpty(haystack))
+         return;
+      
+      // Inner class representing a search match found in the haystack
+      class SearchMatch
+      {
+         public SearchMatch(int indexIn, int lengthIn)
+         {
+            index = indexIn;
+            length = lengthIn;
+         }
+         public final Integer index;
+         public final Integer length;
+      };
+      
+      // Store matches in a tree set ordered by the index at which the match was
+      // found.
+      Set<SearchMatch> matches = new TreeSet<SearchMatch>(
+            (SearchMatch o1, SearchMatch o2) -> {
+                  return o1.index.compareTo(o2.index);
+            });
+
+      // Find all the matches and add them to the result set.
+      for (int i = 0; i < needles.length; i++)
+      {
+         int idx = haystack.toLowerCase().indexOf(needles[i]);
+         if (idx >= 0)
+         {
+            matches.add(new SearchMatch(idx, needles[i].length()));
+         }
+      }
+      
+      // Build the HTML from the input string and the found matches.
+      if (matches.size() > 0)
+      {
+         int idx = 0;
+         for (SearchMatch match: matches)
+         {
+            // Emit all the text from the last index to the beginning of this
+            // match. 
+            sb.appendEscaped(haystack.substring(idx, match.index));
+            
+            // Emit the match itself.
+            idx = match.index;
+            sb.appendHtmlConstant(
+                  "<span class=\"" + matchClass + "\">");
+            sb.appendEscaped(haystack.substring(idx, 
+                  idx + match.length));
+            sb.appendHtmlConstant("</span>");
+            
+            // Move the index to the end of this match
+            idx += match.length;
+         }
+         
+         // Emit the text from end of the last match to the end of the string
+         sb.appendEscaped(haystack.substring(idx, haystack.length()));
+      }
+      else
+      {
+         // We found no matches at all. Just emit the string into the builder.
+         sb.appendEscaped(haystack);
+      }
    }
 }
 

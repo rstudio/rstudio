@@ -54,6 +54,10 @@ import com.google.gwt.user.client.ui.Widget;
 
 import elemental.events.KeyboardEvent.KeyCode;
 
+/**
+ * CommandPalette is a widget that displays all available RStudio commands in a
+ * searchable list.
+ */
 public class CommandPalette extends Composite
 {
    private static CommandPaletteUiBinder uiBinder = GWT.create(CommandPaletteUiBinder.class);
@@ -62,6 +66,10 @@ public class CommandPalette extends Composite
    {
    }
    
+   /**
+    * The host interface represents the class hosting the widget (not a widget
+    * itself), which is currently the CommandPaletteLauncher.
+    */
    public interface Host
    {
       public void dismiss();
@@ -113,7 +121,8 @@ public class CommandPalette extends Composite
          populate();
       });
       
-      // Debounced update of the result count for screen readers
+      // Debounced update of the result count for screen readers; we debounce
+      // this so that every keystroke doesn't trigger an announcement.
       updateResultsCount_ = new DebouncedCommand(1000)
       {
          @Override
@@ -131,6 +140,9 @@ public class CommandPalette extends Composite
       };
    }
    
+   /**
+    * Performs a one-time population of the palette with all available commands.
+    */
    private void populate()
    {
       // Add all of the application commands
@@ -138,14 +150,24 @@ public class CommandPalette extends Composite
       Map<String, AppCommand> allCommands = commands_.getCommands();
       for (String command: allCommands.keySet())
       {
-         if (command.contains("Mru") || command.startsWith("mru") || command.contains("Dummy"))
+         if (command.contains("Mru") || command.startsWith("mru") || 
+               command.contains("Dummy"))
          {
             // MRU entries and dummy commands should not appear in the palette
             continue;
          }
+         
+         // Ensure the command can be used. It'd be nice to show all commands in
+         // the palette for the purposes of examining key bindings, discovery,
+         // etc., but there's no good user experience if a user attempts to
+         // invoke one of those commands.
+         AppCommand appCommand = allCommands.get(command);
+         if (!appCommand.isEnabled() || !appCommand.isVisible())
+         {
+            continue;
+         }
 
          // Look up the key binding for this command
-         AppCommand appCommand = allCommands.get(command);
          List<KeySequence> keys = map.getBindings(command);
          
          // Create an application command entry
@@ -188,6 +210,8 @@ public class CommandPalette extends Composite
       }
 
       
+      // Handle most keystrokes on KeyUp so that the contents of the text box
+      // have already been changed
       searchBox_.addKeyUpHandler((evt) ->
       {
          if (evt.getNativeKeyCode() == KeyCode.ESC)
@@ -217,6 +241,11 @@ public class CommandPalette extends Composite
       // then a single KeyUp when released)
       searchBox_.addKeyDownHandler((evt) -> 
       {
+         // Ignore modified arrows so that e.g. Shift Up/Down to select the
+         // contents of the textbox work as expected
+         if (evt.isAnyModifierKeyDown())
+            return;
+         
          if (evt.getNativeKeyCode() == KeyCode.UP)
          {
             // Directional keys often trigger behavior in textboxes (e.g. moving
@@ -235,20 +264,36 @@ public class CommandPalette extends Composite
       });
    }
    
+   /**
+    * Filter the commands by the current contents of the search box
+    */
    private void applyFilter()
    {
-      String needle = searchBox_.getText().toLowerCase();
+      // Split the search text into a series of lowercase words. This provides a
+      // kind of partial fuzzy matching, so that e.g., "new py" matches the command
+      // "Create a new Python script".
+      String[] needles = searchBox_.getText().toLowerCase().split("\\s+");
+      
       for (CommandPaletteEntry entry: entries_)
       {
          String hay = entry.getLabel().toLowerCase();
-         if (hay.contains(needle))
+         boolean matched = true;
+         for (int i = 0; i < needles.length; i++)
          {
-            entry.setSearchHighlight(needle);
-            entry.setVisible(true);
+            // The haystack doesn't have this needle, so this entry does not match.
+            if (!hay.contains(needles[i]))
+            {
+               entry.setVisible(false);
+               matched = false;
+               break;
+            }
          }
-         else
+
+         // We matched all needles, so highlight and show the entry.
+         if (matched)
          {
-            entry.setVisible(false);
+            entry.setSearchHighlight(needles);
+            entry.setVisible(true);
          }
       }
       
