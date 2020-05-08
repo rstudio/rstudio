@@ -122,7 +122,7 @@ export function pandocMarkdownWithBlockCapsules(markdown: string, capsuleFilter:
 // token (e.g. within a backtick code block or raw_block). this function takes a set
 // of pandoc tokens and recursively converts block capsules that aren't of type
 // PandocTokenType.Str (which is what we'd see in a paragraph) into their original form
-export function resolvePandocBlockCapsuleText(tokens: PandocToken[], capsuleFilter: PandocBlockCapsuleFilter) : PandocToken[] {
+export function resolvePandocBlockCapsuleText(tokens: PandocToken[], filters: readonly PandocBlockCapsuleFilter[]) : PandocToken[] {
  
   // process all tokens
   return mapTokens(tokens, token => {
@@ -130,12 +130,12 @@ export function resolvePandocBlockCapsuleText(tokens: PandocToken[], capsuleFilt
     // look for non-string pandoc tokens
     if ((token.t !== PandocTokenType.Str) && token.c) {
       if (typeof token.c === "string") {
-        token.c = capsuleFilter.handleText(token.c);
+        token.c = decodeBlockCapsuleText(token.c, filters);
       } else if (Array.isArray(token.c)) {
         const children = token.c.length;
         for (let i=0; i<children; i++) {
           if (typeof token.c[i] === "string") {
-            token.c[i] = capsuleFilter.handleText(token.c[i]);
+            token.c[i] = decodeBlockCapsuleText(token.c[i], filters);
           }
         }
       }
@@ -145,6 +145,15 @@ export function resolvePandocBlockCapsuleText(tokens: PandocToken[], capsuleFilt
   });
 
 }
+
+// decode the text capsule by running all of the filters (as there could be nesting)
+export function decodeBlockCapsuleText(text: string, filters: readonly PandocBlockCapsuleFilter[]) {
+  filters.forEach(filter => {
+    text = filter.handleText(text);
+  });
+  return text;
+}
+
 
 // create a regex that can be used to match a block capsule
 export function encodedBlockCapsuleRegex(prefix?: string, suffix?: string, flags?: string) {

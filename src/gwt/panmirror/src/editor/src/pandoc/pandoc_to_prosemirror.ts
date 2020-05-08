@@ -23,8 +23,8 @@ import {
   PandocBlockReaderFn,
   PandocInlineHTMLReaderFn,
 } from '../api/pandoc';
-import { pandocAttrReadAST } from '../api/pandoc_attr';
-import { PandocBlockCapsuleFilter, parsePandocBlockCapsule, resolvePandocBlockCapsuleText } from '../api/pandoc_capsule';
+import { pandocAttrReadAST, kCodeBlockAttr, kCodeBlockText } from '../api/pandoc_attr';
+import { PandocBlockCapsuleFilter, parsePandocBlockCapsule, resolvePandocBlockCapsuleText, decodeBlockCapsuleText } from '../api/pandoc_capsule';
 
 export function pandocToProsemirror(
   ast: PandocAst,
@@ -37,9 +37,6 @@ export function pandocToProsemirror(
   const parser = new Parser(schema, readers, blockReaders, inlineHTMLReaders, blockCapsuleFilters);
   return parser.parse(ast);
 }
-
-const CODE_BLOCK_ATTR = 0;
-const CODE_BLOCK_TEXT = 1;
 
 class Parser {
   private readonly schema: Schema;
@@ -56,7 +53,8 @@ class Parser {
   ) {
     this.schema = schema;
     this.inlineHTMLReaders = inlineHTMLReaders;
-    this.blockCapsuleFilters = blockCapsuleFilters;
+    // apply filters in reverse order
+    this.blockCapsuleFilters = blockCapsuleFilters.slice().reverse();
     this.handlers = this.createHandlers(readers, blockReaders);
   }
 
@@ -83,11 +81,8 @@ class Parser {
     };
 
     // process raw text capsules
-    let astBlocks = ast.blocks;
-    for (const filter of this.blockCapsuleFilters) {
-      astBlocks = resolvePandocBlockCapsuleText(astBlocks, filter);
-    }
-
+    const astBlocks = resolvePandocBlockCapsuleText(ast.blocks, this.blockCapsuleFilters);
+  
     // write all tokens
     writer.writeTokens(astBlocks);
 
@@ -106,6 +101,8 @@ class Parser {
       const capsuleText = filter.handleToken?.(tok);
       if (capsuleText) {
         const blockCapsule = parsePandocBlockCapsule(capsuleText);
+        // run all of the text filters in case there was nesting
+        blockCapsule.source = decodeBlockCapsuleText(blockCapsule.source, this.blockCapsuleFilters);
         filter.writeNode(this.schema, writer, blockCapsule);
         return;
       }
@@ -236,8 +233,8 @@ class Parser {
         handler = (writer: ProsemirrorWriter, tok: PandocToken) => {
           // type/attr/text
           const nodeType = this.schema.nodes.code_block;
-          const attr: {} = pandocAttrReadAST(tok, CODE_BLOCK_ATTR);
-          const text = tok.c[CODE_BLOCK_TEXT] as string;
+          const attr: {} = pandocAttrReadAST(tok, kCodeBlockAttr);
+          const text = tok.c[kCodeBlockText] as string;
           
           // write node
           writer.openNode(nodeType, attr);
