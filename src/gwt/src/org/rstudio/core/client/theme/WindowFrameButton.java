@@ -21,6 +21,7 @@ import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.FocusWidget;
 import com.google.gwt.user.client.ui.HTML;
+import org.rstudio.core.client.ClassIds;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.HandlerRegistrations;
 import org.rstudio.core.client.layout.WindowState;
@@ -131,6 +132,11 @@ public class WindowFrameButton extends FocusWidget
    public void setElementId(String id)
    {
       getElement().setId(id);
+   }
+
+   public void setClassId(String classId, String panelName)
+   {
+      ClassIds.assignClassId(getElement(), classId + "_" + ClassIds.idSafeString(panelName));
    }
 
    private String stateString(WindowState state)
