@@ -31,11 +31,15 @@ import { PandocCapabilities } from '../api/pandoc_capabilities';
 import { EditorUI, CodeBlockProps } from '../api/ui';
 import { hasFencedCodeBlocks } from '../api/pandoc_format';
 import { precedingListItemInsertPos, precedingListItemInsert } from '../api/list';
+import { EditorFormat } from '../api/format';
+import { EditorOptions } from '../api/options';
 
 const extension = (
   pandocExtensions: PandocExtensions,
   pandocCapabilities: PandocCapabilities,
   ui: EditorUI,
+  _format: EditorFormat,
+  options: EditorOptions,
 ): Extension => {
   const hasAttr = hasFencedCodeBlocks(pandocExtensions);
 
@@ -77,11 +81,7 @@ const extension = (
 
         code_view: {
           lang: (node: ProsemirrorNode) => {
-            if (node.attrs.classes && node.attrs.classes.length) {
-              return node.attrs.classes[0];
-            } else {
-              return null;
-            }
+            return codeBlockLang(node, options);
           },
           attrEditFn: codeBlockFormatCommandFn(pandocExtensions, ui, pandocCapabilities.highlight_languages),
         },
@@ -222,6 +222,23 @@ function propsWithLangClass(props: CodeBlockProps) {
     newProps.classes.unshift(props.lang);
   }
   return newProps;
+}
+
+// determine the code block language. if it's an Rmd example (i.e. with `r ''`) and 
+// we have rmdExampleHighlight enabled then use the Rmd chunk language for highlighting
+function codeBlockLang(node: ProsemirrorNode, options: EditorOptions) {
+  if (node.attrs.classes && node.attrs.classes.length) {
+    const lang = node.attrs.classes[0];
+    if (options.rmdExampleHighlight && lang === 'md') {
+      const match = node.textContent.match(/^```+\s*\{([a-zA-Z0-9_]+)( *[ ,].*)?\}`r ''`/);
+      if (match) {
+        return match[1];
+      }
+    }
+    return lang;
+  } else {
+    return null;
+  }
 }
 
 function codeBlockAttrEdit(pandocExtensions: PandocExtensions, pandocCapabilities: PandocCapabilities, ui: EditorUI) {

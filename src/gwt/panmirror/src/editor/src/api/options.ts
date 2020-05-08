@@ -18,6 +18,7 @@ export interface EditorOptions {
   readonly spellCheck?: boolean;
   readonly codemirror?: boolean;
   readonly rmdImagePreview?: boolean;
+  readonly rmdExampleHighlight?: boolean;
   readonly rmdChunkExecution?: string[];
   readonly hideFormatComment?: boolean;
   readonly className?: string;

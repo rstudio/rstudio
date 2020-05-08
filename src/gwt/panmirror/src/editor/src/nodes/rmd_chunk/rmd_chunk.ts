@@ -34,11 +34,9 @@ import { EditorUI } from '../../api/ui';
 import { PandocCapabilities } from '../../api/pandoc_capabilities';
 import { EditorFormat, kBookdownDocType } from '../../api/format';
 import { rmdChunk, EditorRmdChunk } from '../../api/rmd';
-import { EditorEvents } from '../../api/events';
 
 import { RmdChunkImagePreviewPlugin } from './rmd_chunk-image';
 import { ExecuteCurrentRmdChunkCommand, ExecutePreviousRmdChunksCommand } from './rmd_chunk-commands';
-import { rmdExampleChunkReader, isRmdExampleChunk, writeRmdExampleChunk } from './rmd_chunk-example';
 
 import './rmd_chunk-styles.css';
 
@@ -47,8 +45,7 @@ const extension = (
   _pandocCapabilities: PandocCapabilities,
   ui: EditorUI,
   format: EditorFormat,
-  options: EditorOptions,
-  events: EditorEvents
+  options: EditorOptions
 ): Extension | null => {
   if (!format.rmdExtensions.codeChunks) {
     return null;
@@ -103,25 +100,14 @@ const extension = (
 
           blockCapsuleFilter: rmdChunkBlockCapsuleFilter(),
 
-          readers:  options.rmdExampleChunks ? [rmdExampleChunkReader()] : [],
-
           writer: (output: PandocOutput, node: ProsemirrorNode) => {
-            
-            // write example chunk if the feature is enabled and we detect one
-            if (options.rmdExampleChunks &&isRmdExampleChunk(node)) {
-              
-             writeRmdExampleChunk(output, node);
-
-            // otherwise normal processing
-            } else {
-              output.writeToken(PandocTokenType.Para, () => {
-                const parts = rmdChunk(node.textContent);
-                if (parts) {
-                  const code = parts.code ? parts.code + '\n' : '';
-                  output.writeRawMarkdown('```{' + parts.meta + '}\n' + code + '```\n');
-                }
-              });
-            }
+            output.writeToken(PandocTokenType.Para, () => {
+              const parts = rmdChunk(node.textContent);
+              if (parts) {
+                const code = parts.code ? parts.code + '\n' : '';
+                output.writeRawMarkdown('```{' + parts.meta + '}\n' + code + '```\n');
+              }
+            });
           },
         },
       },

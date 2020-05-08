@@ -1027,6 +1027,9 @@ public class TextEditingTargetVisualMode
       // enable rmdImagePreview if we are an executable rmd
       options.rmdImagePreview = target_.canExecuteChunks();
       
+      // highlight rmd example chunks
+      options.rmdExampleHighlight = true;
+      
       // enable chunk execution for R and Python
       options.rmdChunkExecution = kRmdChunkExecutionLangs;
       
