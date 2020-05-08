@@ -195,7 +195,7 @@ function rmdChunkBlockCapsuleFilter() {
 
     type: kBlockCapsuleType,
     
-    match: /^([\t >]*)(```+\s*\{[a-zA-Z0-9_]+(?: *[ ,].*?)?\}[ \t]*\n[\W\w]*?\n[\t >]*```+)([ \t]*)$/gm,
+    match: /^([\t >]*)(```+\s*\{[a-zA-Z0-9_]+(?: *[ ,].*?)?\}[ \t]*\n[\W\w]*?(?:\n[\t >]*```+|[\t >]*```+))([ \t]*)$/gm,
     
     // textually enclose the capsule so that pandoc parses it as the type of block we want it to
     // (in this case a code block). we use the capsule prefix here to make sure that the code block's
