@@ -36,7 +36,6 @@ import com.google.gwt.user.client.ui.Widget;
 
 public abstract class CommandPaletteEntry extends Composite
 {
-
    private static CommandPaletteEntryUiBinder uiBinder = GWT
          .create(CommandPaletteEntryUiBinder.class);
 
@@ -56,6 +55,8 @@ public abstract class CommandPaletteEntry extends Composite
    {
       initWidget(uiBinder.createAndBindUi(this));
       keys_ = keys;
+      selected_ = false;
+      
       Roles.getOptionRole().set(getElement());
       Roles.getOptionRole().setAriaSelectedState(getElement(), SelectedValue.FALSE);
    }
@@ -120,17 +121,32 @@ public abstract class CommandPaletteEntry extends Composite
       }
    }
    
+   /*
+    * Set whether or not the command should appear selected.
+    */
    public void setSelected(boolean selected)
    {
+      // No-op if we're not changing state
+      if (selected_ == selected)
+         return;
+      
+      // Add the CSS class indicating that this entry is selected
       if (selected)
          addStyleName(styles_.selected());
       else
          removeStyleName(styles_.selected());
 
+      // Update ARIA state to indicate that we're selected. (The host is
+      // responsible for updating other ARIA state such as active descendant.)
       Roles.getOptionRole().setAriaSelectedState(getElement(), 
             selected ? SelectedValue.TRUE : SelectedValue.FALSE);
+      
+      selected_ = selected;
    }
    
+   /**
+    * Highlights the given keywords on the command entry.
+    */
    public void setSearchHighlight(String[] keywords)
    {
       if (keywords.length == 0)
@@ -152,6 +168,7 @@ public abstract class CommandPaletteEntry extends Composite
    abstract public String getContext();
    
    private final List<KeySequence> keys_;
+   private boolean selected_;
 
    @UiField public Label context_;
    @UiField public Label name_;

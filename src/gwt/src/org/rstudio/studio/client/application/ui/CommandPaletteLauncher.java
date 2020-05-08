@@ -49,12 +49,20 @@ public class CommandPaletteLauncher implements CommandPalette.Host
       binder.bind(commands, this);
       addins_ = addins;
       commands_ = commands;
+      showing_ = false;
       state_ = State.Uninitialized;
    }
    
    @Handler
    public void onShowCommandPalette()
    {
+      // If the palette is already showing, treat this as a hide.
+      if (showing_)
+      {
+         dismiss();
+         return;
+      }
+
       // Create the command palette widget
       palette_ = new CommandPalette(commands_, addins_.getRAddins(), 
             ShortcutManager.INSTANCE, this);
@@ -86,6 +94,7 @@ public class CommandPaletteLauncher implements CommandPalette.Host
     */
    private void createPanel()
    {
+      showing_ = true;
       panel_ = new PopupPanel(true, true);
       
       // Copy classes from the root RStudio container onto this panel. This is
@@ -126,11 +135,14 @@ public class CommandPaletteLauncher implements CommandPalette.Host
    {
       palette_ = null;
       panel_ = null;
+      showing_ = false;
    }
    
    private PopupPanel panel_;
    private CommandPalette palette_;
+   private boolean showing_;
+   private State state_;
+
    private final Commands commands_;
    private final AddinsCommandManager addins_;
-   private State state_;
 }
