@@ -106,7 +106,8 @@ const extension = (
             output.writeToken(PandocTokenType.Para, () => {
               const parts = rmdChunk(node.textContent);
               if (parts) {
-                output.writeRawMarkdown('```{' + parts.meta + '}\n' + parts.code + '\n```\n');
+                const code = parts.code ? parts.code + '\n' : '';
+                output.writeRawMarkdown('```{' + parts.meta + '}\n' + code + '```\n');
               }
             });
           },
@@ -195,7 +196,7 @@ function rmdChunkBlockCapsuleFilter() {
 
     type: kBlockCapsuleType,
     
-    match: /^([\t >]*)(```+\s*\{[a-zA-Z0-9_]+(?: *[ ,].*?)?\}[ \t]*\n[\W\w]*?\n[\t >]*```+)([ \t]*)$/gm,
+    match: /^([\t >]*)(```+\s*\{[a-zA-Z0-9_]+(?: *[ ,].*?)?\}[ \t]*\n[\W\w]*?(?:\n[\t >]*```+|[\t >]*```+))([ \t]*)$/gm,
     
     // textually enclose the capsule so that pandoc parses it as the type of block we want it to
     // (in this case a code block). we use the capsule prefix here to make sure that the code block's

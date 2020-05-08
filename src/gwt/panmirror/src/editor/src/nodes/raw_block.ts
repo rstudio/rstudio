@@ -115,10 +115,17 @@ const extension = (
             }
           },
           writer: (output: PandocOutput, node: ProsemirrorNode) => {
-            output.writeToken(PandocTokenType.RawBlock, () => {
-              output.write(node.attrs.format);
-              output.write(node.textContent);
-            });
+            if ([kHTMLFormat, kTexFormat].includes(node.attrs.format)) {
+              output.writeToken(PandocTokenType.Para, () => {
+                output.writeRawMarkdown(node.textContent);
+              });
+           
+            } else {
+              output.writeToken(PandocTokenType.RawBlock, () => {
+                output.write(node.attrs.format);
+                output.write(node.textContent);
+              });
+            }
           },
         },
       },

@@ -272,7 +272,7 @@ public class TextEditingTargetVisualMode
    }
 
    
-   private void syncFromEditor(Command ready, boolean focus)
+   private void syncFromEditor(CommandWithArg<Boolean> done, boolean focus)
    {      
       // flag to prevent the document being set to dirty when loading
       // from source mode
@@ -295,11 +295,14 @@ public class TextEditingTargetVisualMode
                
             // bail on error
             if (markdown == null)
+            {
+               done.execute(false);
                return;
+            }
             
             // activate editor
-            if (ready != null)
-               ready.execute();
+            if (done != null)
+               done.execute(true);
             
             // update flags
             isDirty_ = false;
@@ -347,7 +350,7 @@ public class TextEditingTargetVisualMode
          progress_.beginProgressOperation(400);
          editorContainer.activateWidget(progress_);
          
-         syncFromEditor(() -> {
+         syncFromEditor((success) -> {
             // clear progress
             progress_.endProgressOperation();
             
@@ -516,26 +519,34 @@ public class TextEditingTargetVisualMode
          progress_.beginProgressOperation(400);
          editorContainer.activateWidget(progress_);
          
-         Command activator = () -> {
+         CommandWithArg<Boolean> done = (success) -> {
             
             // clear progress
             progress_.endProgressOperation();
             
-            // sync to editor outline prefs
-            panmirror_.showOutline(getOutlineVisible(), getOutlineWidth());
-            
-            // activate widget
-            editorContainer.activateWidget(panmirror_, focus);
-            
-            // begin save-on-idle behavior
-            syncOnIdle_.resume();
-            saveLocationOnIdle_.resume();
-            
-            // run activating logic
-            onActivating();
+            if (success)
+            {
+               // sync to editor outline prefs
+               panmirror_.showOutline(getOutlineVisible(), getOutlineWidth());
                
-            // execute completed hook
-            Scheduler.get().scheduleDeferred(completed);    
+               // activate widget
+               editorContainer.activateWidget(panmirror_, focus);
+               
+               // begin save-on-idle behavior
+               syncOnIdle_.resume();
+               saveLocationOnIdle_.resume();
+               
+               // run activating logic
+               onActivating();
+                  
+               // execute completed hook
+               Scheduler.get().scheduleDeferred(completed);  
+            }
+            else
+            {
+               editorContainer.activateEditor(focus);
+               docUpdateSentinel_.setBoolProperty(TextEditingTarget.RMD_VISUAL_MODE, false);
+            }
          };
          
          withPanmirror(() -> {
@@ -543,11 +554,11 @@ public class TextEditingTargetVisualMode
             // on what's currently in the source ditor
             if (!isPanmirrorActive()) 
             {
-               syncFromEditor(activator, focus);
+               syncFromEditor(done, focus);
             }
             else
             {
-               activator.execute();
+               done.execute(true);
             }  
          });
       }

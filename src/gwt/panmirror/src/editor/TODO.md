@@ -18,17 +18,43 @@ it only seems to happen the first time I switch to visual view after opening rst
 
 ok, that was another instance where switching back and forth from the visual editor lost my scroll position. Interestingly however, it preserved the cursor position so just pushing an arrow key scrolled me back to the right place
 
-Extra line (not actually a line) at bottom of codemirror (switching from visual->source->visual resolves it)
-https://github.com/hadley/mastering-shiny/blob/master/action-graphics.Rmd
-
 gocs style delete handling in lists: first delete = continuing paragraph of bullet; second delete = new paragraph; third delete = back into previous bullet (currently our second delete goes back into previous bullet)
 
 ## TODO
 
-HTML comment block is written with ``` {=html}
 
-Do we set the code back into the editor even if there is an error in setMarkdown?
-Should we even switch if there is an error?
+If there is an invalid yaml block w/ an embedded chunk we never unwrap it:
+
+---
+ a
+
+```{r}
+```
+---
+
+
+
+Rmd "inside yaml" does exist b/c we are mis-parsing --- as a horizontal rule as yaml!!!! (need more rules on this)
+
+Loading up MANUAL.Rmd now locks the browser (probably the regexes?, perhaps scope by type)
+
+[`x_y` `y]  then type _, and it maches the previous _
+
+[`"y] then type "
+
+Yihui style Rmd example blocks
+
+Try additional Yihui chapters (e.g chunk_options.Rmd)
+
+There is a scenario where we have pending edits but the dirty state is still false (seems like on 
+full reload of the IDE in a new session?). Probably still related to editing outside of the IDE (crosstalk)
+Had the repro in foo.Rmd w/ block capsule. The issue was a dirty file (unsaved transform) that didn't 
+show up as dirty on startup.
+Here it is:
+    - Open an Rmd from source that has "cannonical" transformations (note it's marked dirty)
+    - Switch to another tab
+    - Reload the browser (note it's no longer dirty)
+
 
 You can't toggle 2 marks off (subsequent typing clears both). Note that this doesn't occur
 in prosemirror-schema-basic (perhaps a bug that's been fixed?)
@@ -41,21 +67,14 @@ Try pasting from Excel. Try pasting tables from GDocs.
 
 Do we need to fixup non-rectangualar tables before sending to pandoc.
 
-There is a scenario where we have pending edits but the dirty state is still false (seems like on 
-full reload of the IDE in a new session?). Probably still related to editing outside of the IDE (crosstalk)
-Had the repro in foo.Rmd w/ block capsule. The issue was a dirty file (unsaved transform) that didn't 
-show up as dirty on startup.
-Here it is:
-    - Open an Rmd from source that has "cannonical" transformations (note it's marked dirty)
-    - Switch to another tab
-    - Reload the browser (note it's no longer dirty)
+Pandoc does allow a div to start a list. Look at re-enabling:
+* <div class="blue"> Solutions Engineer [Started, 4/1/20] </div>
+* <div class="blue"> Data Scientist [Started, 4/1/20] </div> 
+* <div class="blue"> Solutions Engineer, Europe [Started, 4/1/20] </div>
+* <div class="blue"> UI/UX Designer, RStudio Connect [Started, 4/22/20] </div>
+* <div class="blue"> Software Architect [Accepted, 5/15/20] </div>
 
 
-CodeMirror blocks sometimes don't update after switch to visual (until you click them)
-
-
-
-Copy/paste of markdown source
 
 Math:
 
@@ -74,6 +93,13 @@ Inline spelling
 
 Consider porting https://gitlab.com/mpapp-public/manuscripts-symbol-picker
 
+Citation handling
+
+Copy/paste of markdown source
+
+Slack style handling of marks?
+Reveal codes / typora behavior
+Breadcrump for current nodes / marks
 
 Evaluate markdown for link text
 
@@ -116,10 +142,6 @@ turn could ripple out to some other handler code.
 
 Google Docs style list toggling
 
-Slack style handling of marks?
-
-Reveal codes / typora behavior
-Breadcrump for current nodes / marks
 
 Unit testing for core panmirror code
 
