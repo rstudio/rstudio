@@ -104,54 +104,7 @@ const extension = (
 
         pandoc: {
 
-          blockCapsuleFilter: {
-            type: kBlockCapsuleType,
-            match: /^([\t >]*)(```+\s*\{[a-zA-Z0-9_]+(?: *[ ,].*?)?\}[ \t]*\n[\W\w]*?\n[\t >]*```+)([ \t]*)$/gm,
-            
-            enclose: (capsuleText: string, capsule: PandocBlockCapsule) => 
-              '```' + kBlockCapsuleType + '\n' + capsule.prefix + capsuleText + '\n' + capsule.prefix + '```' + capsule.suffix
-            ,
-
-            handleText: (text: string) => {
-              return text.replace(kBlockCapsuleTextRegEx, (_match, p1) => {
-                const capsuleText = p1;
-                const capsule = parsePandocBlockCapsule(capsuleText);
-                return capsule.source;
-              });
-            },
-            
-            handleToken: (tok: PandocToken) => {
-              if (tok.t === PandocTokenType.CodeBlock) {
-                const attr = pandocAttrReadAST(tok, 0);
-                if ((attr as PandocAttr).classes.includes(kBlockCapsuleType)) {
-                  return tok.c[1];
-                }
-              }
-              return null;
-            },
-
-            writeNode: (schema: Schema, writer: ProsemirrorWriter, capsule: PandocBlockCapsule) => {
-
-              // open node
-              writer.openNode(schema.nodes.rmd_chunk, { navigation_id: uuidv4() });
-
-              // source still has leading and trailing backticks, remove them
-              const source = capsule.source.replace(/^```+/, '').replace(/\n[\t >]*```+$/, '');
-
-              // prefix represents the indentation level of the block's source code, strip that
-              // same prefix from all the lines of code save for the first one
-              const prefixStripRegEx = new RegExp('^' + capsule.prefix);
-              const lines = source.split('\n').map((line, index) => {
-                return index > 0 ? line.replace(prefixStripRegEx, '') : line;
-              });
-
-              // write the lines
-              writer.writeText(lines.join('\n'));
-
-              // all done
-              writer.closeNode();
-            }
-          },
+          blockCapsuleFilter: rmdChunkBlockCapsuleFilter(),
 
           writer: (output: PandocOutput, node: ProsemirrorNode) => {
             output.writeToken(PandocTokenType.Para, () => {
@@ -235,6 +188,60 @@ class RmdChunkCommand extends ProsemirrorCommand {
       },
     );
   }
+}
+
+function rmdChunkBlockCapsuleFilter() {
+
+  return {
+
+    type: kBlockCapsuleType,
+    
+    match: /^([\t >]*)(```+\s*\{[a-zA-Z0-9_]+(?: *[ ,].*?)?\}[ \t]*\n[\W\w]*?\n[\t >]*```+)([ \t]*)$/gm,
+    
+    enclose: (capsuleText: string, capsule: PandocBlockCapsule) => 
+      '```' + kBlockCapsuleType + '\n' + capsule.prefix + capsuleText + '\n' + capsule.prefix + '```' + capsule.suffix
+    ,
+
+    handleText: (text: string) => {
+      return text.replace(kBlockCapsuleTextRegEx, (_match, p1) => {
+        const capsuleText = p1;
+        const capsule = parsePandocBlockCapsule(capsuleText);
+        return capsule.source;
+      });
+    },
+    
+    handleToken: (tok: PandocToken) => {
+      if (tok.t === PandocTokenType.CodeBlock) {
+        const attr = pandocAttrReadAST(tok, 0);
+        if ((attr as PandocAttr).classes.includes(kBlockCapsuleType)) {
+          return tok.c[1];
+        }
+      }
+      return null;
+    },
+
+    writeNode: (schema: Schema, writer: ProsemirrorWriter, capsule: PandocBlockCapsule) => {
+
+      // open node
+      writer.openNode(schema.nodes.rmd_chunk, { navigation_id: uuidv4() });
+
+      // source still has leading and trailing backticks, remove them
+      const source = capsule.source.replace(/^```+/, '').replace(/\n[\t >]*```+$/, '');
+
+      // prefix represents the indentation level of the block's source code, strip that
+      // same prefix from all the lines of code save for the first one
+      const prefixStripRegEx = new RegExp('^' + capsule.prefix);
+      const lines = source.split('\n').map((line, index) => {
+        return index > 0 ? line.replace(prefixStripRegEx, '') : line;
+      });
+
+      // write the lines
+      writer.writeText(lines.join('\n'));
+
+      // all done
+      writer.closeNode();
+    }
+  };
 }
 
 export default extension;

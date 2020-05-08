@@ -13,6 +13,13 @@
  *
  */
 
+ // TODO: handle removing the \n envelope from after the YAML when found in text
+    // TODO: We may need to check for Str here to make sure 
+    // TODO: Make sure we cover the scenairo of YAML inside an Rmd chunk (handle via ordering?)
+
+
+    
+
 import { Schema } from "prosemirror-model";
 
 import { PandocToken, ProsemirrorWriter, mapTokens } from "./pandoc";
@@ -137,9 +144,6 @@ export function resolvePandocBlockCapsuleText(tokens: PandocToken[], filter: Pan
  
   // process all tokens
   return mapTokens(tokens, token => {
-
-    // TODO: We may need to check for Str here to make sure 
-    // TODO: Make sure we cover the scenairo of YAML inside an Rmd chunk (handle via ordering?)
 
     // look for non pandoc string content
     if (token.c) {

@@ -60,50 +60,7 @@ const extension: Extension = {
 
       pandoc: {
        
-        blockCapsuleFilter: {
-          type: kYamlMetadataCapsuleType,
-          match: /^([\t >]*)(---[ \t]*\n[\W\w]*?(?:\n---|\n\.\.\.))([ \t]*)$/gm,
-          enclose: (capsuleText: string) => 
-            capsuleText + '\n'
-          ,
-
-          handleText: (text: string) : string => {
-            kEncodedBlockCapsuleRegEx.lastIndex = 0;
-            // TODO: strip off the newline
-            return text.replace(kEncodedBlockCapsuleRegEx, (match, p1) => {
-              const capsuleText = p1;
-              const capsule = parsePandocBlockCapsule(capsuleText);
-              if (capsule.type === kYamlMetadataCapsuleType) {
-                return capsule.source;
-              } else {
-                return match;
-              }
-            });
-          },
-
-          handleToken: (tok: PandocToken) => {
-            if (tok.t === PandocTokenType.Para) {
-              if (tok.c.length === 1 && tok.c[0].t === PandocTokenType.Str) {
-                const text = tok.c[0].c as string;
-                kEncodedBlockCapsuleRegEx.lastIndex = 0;
-                const match = text.match(kEncodedBlockCapsuleRegEx);
-                if (match) {
-                  const capsuleRecord = parsePandocBlockCapsule(match[0]);
-                  if (capsuleRecord.type === kYamlMetadataCapsuleType) {
-                    return match[0];
-                  }
-                }
-              }
-            }
-            return null;
-          },
-
-          writeNode: (schema: Schema, writer: ProsemirrorWriter, capsule: PandocBlockCapsule) => {
-            writer.openNode(schema.nodes.yaml_metadata, { navigation_id: uuidv4() });
-            writer.writeText(capsule.source);
-            writer.closeNode();
-          }
-        },
+        blockCapsuleFilter: yamlMetadataBlockCapsuleFilter(),
         
         writer: (output: PandocOutput, node: ProsemirrorNode) => {
           output.writeToken(PandocTokenType.Para, () => {
@@ -155,6 +112,53 @@ class YamlMetadataCommand extends ProsemirrorCommand {
       },
     );
   }
+}
+
+function yamlMetadataBlockCapsuleFilter() {
+  return {
+    type: kYamlMetadataCapsuleType,
+    match: /^([\t >]*)(---[ \t]*\n[\W\w]*?(?:\n---|\n\.\.\.))([ \t]*)$/gm,
+    enclose: (capsuleText: string) => 
+      capsuleText + '\n'
+    ,
+
+    handleText: (text: string) : string => {
+      kEncodedBlockCapsuleRegEx.lastIndex = 0;
+      // TODO: strip off the newline
+      return text.replace(kEncodedBlockCapsuleRegEx, (match, p1) => {
+        const capsuleText = p1;
+        const capsule = parsePandocBlockCapsule(capsuleText);
+        if (capsule.type === kYamlMetadataCapsuleType) {
+          return capsule.source;
+        } else {
+          return match;
+        }
+      });
+    },
+
+    handleToken: (tok: PandocToken) => {
+      if (tok.t === PandocTokenType.Para) {
+        if (tok.c.length === 1 && tok.c[0].t === PandocTokenType.Str) {
+          const text = tok.c[0].c as string;
+          kEncodedBlockCapsuleRegEx.lastIndex = 0;
+          const match = text.match(kEncodedBlockCapsuleRegEx);
+          if (match) {
+            const capsuleRecord = parsePandocBlockCapsule(match[0]);
+            if (capsuleRecord.type === kYamlMetadataCapsuleType) {
+              return match[0];
+            }
+          }
+        }
+      }
+      return null;
+    },
+
+    writeNode: (schema: Schema, writer: ProsemirrorWriter, capsule: PandocBlockCapsule) => {
+      writer.openNode(schema.nodes.yaml_metadata, { navigation_id: uuidv4() });
+      writer.writeText(capsule.source);
+      writer.closeNode();
+    }
+  };
 }
 
 export default extension;
