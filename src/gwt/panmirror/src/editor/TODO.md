@@ -22,6 +22,10 @@ gocs style delete handling in lists: first delete = continuing paragraph of bull
 
 ## TODO
 
+Treat YAML as we treat knitr (allow leading whitespace and allow blockquotes)
+Might require some different prefix/suffix handling. Need to try MANUAL.Rmd once we have this working.
+Also need to update the docs if we get it working.
+
 There is a scenario where we have pending edits but the dirty state is still false (seems like on 
 full reload of the IDE in a new session?). Probably still related to editing outside of the IDE (crosstalk)
 Had the repro in foo.Rmd w/ block capsule. The issue was a dirty file (unsaved transform) that didn't 
@@ -35,11 +39,6 @@ Here it is:
 
 [`"y] then type "
 
-
-Try additional Yihui chapters (e.g chunk_options.Rmd)
-https://github.com/jjallaire/rmarkdown-cookbook/compare/master...panmirror-import
-Only surprise to me was that you don't need :::: if you have a distinct set of attributes
-
 You can't toggle 2 marks off (subsequent typing clears both). Note that this doesn't occur
 in prosemirror-schema-basic (perhaps a bug that's been fixed?)
 
@@ -52,6 +51,12 @@ Try pasting from Excel. Try pasting tables from GDocs.
 Do we need to fixup non-rectangualar tables before sending to pandoc.
 
 
+Demo for Yihui
+https://github.com/jjallaire/rmarkdown-cookbook/compare/master...panmirror-import
+Only surprise to me was that you don't need :::: if you have a distinct set of attributes
+Also, code chunks without attributes are written as indented
+
+
 Math:
 
 - MathJax preview. When containing the selection, the math will show both the code and the preview. When not containing the selection will show the preview. (so probably require a node view for this). Consider a “done” gesture for display math. May need to bring back
@@ -60,6 +65,8 @@ escaping of $ in math as this mode will clearly not be "source mode" style latex
 - Possibly have a special editing mode for thereoms? Or just make sure they work.
 
 ## Future
+
+Customizable footnote location: --reference-location = block|section|document
 
 Interactive spelling
 Inline spelling
@@ -174,6 +181,18 @@ Notes on preformance implications of scanning the entire document + some discuss
 
 - Edit attributes button is incorrectly positioned in note (this is due to the additional dom elements created by the node view)
   Note however that headings and divs seem to be poorly supported in notes anyway.
+
+- One more bit of cleanup. My YAML regex had a prefix match allowing whitespace before the YAML (like knitr) but 
+  a postfix match that required newline immediately followed by --- or .... I could have fixed this by just allowing
+  comparable whitespace before the terminator, however then I'd end up mis-recognizing indented code blocks that consist 
+  only of YAML as YAML (there are many of these in MANUAL.Rmd, which is how I discovered this). The problem doesn't exist
+  for Rmd code chunks b/c you actually can't have an indented code chunk that contains an Rmd chunk (knitr will always 
+  parse it as a real  Rmd chunk). Pandoc is actually able to distinguish between an indented code chunk and a list block
+  b/c it has the parsing context build up. Our global regex however does not. My solution is to just say it's a known
+  limitation that YAML not at the top level of the file will be dropped (and update the regex to not allow whitespace
+  before ---). I think this is limitation unlikely to ever matter b/c people don't put YAML metadata in list items and
+  block quotes (99% of the time they put it at the top, other times they'll include it below as a bibliography,  
+  but I've never seen it within another block type).
 
 ## Project/Build
 
