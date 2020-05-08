@@ -106,7 +106,8 @@ const extension = (
             output.writeToken(PandocTokenType.Para, () => {
               const parts = rmdChunk(node.textContent);
               if (parts) {
-                output.writeRawMarkdown('```{' + parts.meta + '}\n' + parts.code + '\n```\n');
+                const code = parts.code ? parts.code + '\n' : '';
+                output.writeRawMarkdown('```{' + parts.meta + '}\n' + code + '```\n');
               }
             });
           },
