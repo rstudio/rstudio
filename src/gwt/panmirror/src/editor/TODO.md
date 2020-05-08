@@ -18,28 +18,9 @@ it only seems to happen the first time I switch to visual view after opening rst
 
 ok, that was another instance where switching back and forth from the visual editor lost my scroll position. Interestingly however, it preserved the cursor position so just pushing an arrow key scrolled me back to the right place
 
-Extra line (not actually a line) at bottom of codemirror (switching from visual->source->visual resolves it)
-https://github.com/hadley/mastering-shiny/blob/master/action-graphics.Rmd
-
 gocs style delete handling in lists: first delete = continuing paragraph of bullet; second delete = new paragraph; third delete = back into previous bullet (currently our second delete goes back into previous bullet)
 
 ## TODO
-
-HTML comment block is written with ``` {=html}
-
-Do we set the code back into the editor even if there is an error in setMarkdown?
-Should we even switch if there is an error?
-
-You can't toggle 2 marks off (subsequent typing clears both). Note that this doesn't occur
-in prosemirror-schema-basic (perhaps a bug that's been fixed?)
-
-When 2 markdown input rules fire consectively marks are not cleared for subsequent typing.
-The problem is that the delete in the second markInputRule to fire is wiping out the other mark?
-Seems to work fine with quote though, the issue may be the stickiness of the mark indicator.
-
-Try pasting from Excel. Try pasting tables from GDocs.
-
-Do we need to fixup non-rectangualar tables before sending to pandoc.
 
 There is a scenario where we have pending edits but the dirty state is still false (seems like on 
 full reload of the IDE in a new session?). Probably still related to editing outside of the IDE (crosstalk)
@@ -51,8 +32,16 @@ Here it is:
     - Reload the browser (note it's no longer dirty)
 
 
-CodeMirror blocks sometimes don't update after switch to visual (until you click them)
+You can't toggle 2 marks off (subsequent typing clears both). Note that this doesn't occur
+in prosemirror-schema-basic (perhaps a bug that's been fixed?)
 
+When 2 markdown input rules fire consectively marks are not cleared for subsequent typing.
+The problem is that the delete in the second markInputRule to fire is wiping out the other mark?
+Seems to work fine with quote though, the issue may be the stickiness of the mark indicator.
+
+Try pasting from Excel. Try pasting tables from GDocs.
+
+Do we need to fixup non-rectangualar tables before sending to pandoc.
 
 
 Copy/paste of markdown source
@@ -74,6 +63,11 @@ Inline spelling
 
 Consider porting https://gitlab.com/mpapp-public/manuscripts-symbol-picker
 
+Citation handling
+
+Slack style handling of marks?
+Reveal codes / typora behavior
+Breadcrump for current nodes / marks
 
 Evaluate markdown for link text
 
@@ -116,10 +110,6 @@ turn could ripple out to some other handler code.
 
 Google Docs style list toggling
 
-Slack style handling of marks?
-
-Reveal codes / typora behavior
-Breadcrump for current nodes / marks
 
 Unit testing for core panmirror code
 
