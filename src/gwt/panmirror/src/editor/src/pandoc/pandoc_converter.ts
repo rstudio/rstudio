@@ -37,6 +37,7 @@ import { pandocFromProsemirror } from './pandoc_from_prosemirror';
 
 export interface PandocWriterOptions {
   atxHeaders?: boolean;
+  referenceLocation?: 'block' | 'section' | 'document';
   wrapColumn?: boolean | number;
   dpi?: number;
 }
@@ -137,6 +138,8 @@ export class PandocConverter {
     if (options.dpi) {
       pandocOptions.push('--dpi');
     }
+    // default to block level references
+    pandocOptions.push(`--reference-location=${options.referenceLocation || 'block'}`);
     pandocOptions = pandocOptions.concat(this.wrapColumnOptions(options));
 
     // format (prefer pipe and grid tables). users can still force the
