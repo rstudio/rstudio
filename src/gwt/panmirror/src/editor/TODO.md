@@ -22,13 +22,6 @@ gocs style delete handling in lists: first delete = continuing paragraph of bull
 
 ## TODO
 
-[`x_y` `y]  then type _, and it maches the previous _
-
-[`"y] then type "
-
-
-Try additional Yihui chapters (e.g chunk_options.Rmd)
-
 There is a scenario where we have pending edits but the dirty state is still false (seems like on 
 full reload of the IDE in a new session?). Probably still related to editing outside of the IDE (crosstalk)
 Had the repro in foo.Rmd w/ block capsule. The issue was a dirty file (unsaved transform) that didn't 
@@ -38,6 +31,14 @@ Here it is:
     - Switch to another tab
     - Reload the browser (note it's no longer dirty)
 
+[`x_y` `y]  then type _, and it maches the previous _
+
+[`"y] then type "
+
+
+Try additional Yihui chapters (e.g chunk_options.Rmd)
+https://github.com/jjallaire/rmarkdown-cookbook/compare/master...panmirror-import
+Only surprise to me was that you don't need :::: if you have a distinct set of attributes
 
 You can't toggle 2 marks off (subsequent typing clears both). Note that this doesn't occur
 in prosemirror-schema-basic (perhaps a bug that's been fixed?)
