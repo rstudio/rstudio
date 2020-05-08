@@ -123,7 +123,7 @@ function yamlMetadataBlockCapsuleFilter() {
 
     type: kYamlMetadataCapsuleType,
     
-    match: /^([\t >]*)(---[ \t]*\n[\W\w]*?(?:\n---|\n\.\.\.))([ \t]*)$/gm,
+    match: /^([\t >]*)(---[ \t]*\n(?:[^\n]+)[\W\w]*?(?:\n---|\n\.\.\.))([ \t]*)$/gm,
     
     // add a newline to ensure that if the metadata block has text right
     // below it we still end up in our own pandoc paragarph block
