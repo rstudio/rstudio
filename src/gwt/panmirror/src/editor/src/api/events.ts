@@ -17,8 +17,7 @@ export enum EditorEvent {
   Update = 'panmirrorUpdate',
   OutlineChange = 'panmirrorOutlineChange',
   SelectionChange = 'panmirrorSelectionChange',
-  Resize = 'panmirrorResize',
-  ExecuteRmdChunk = 'panmirrorExecuteRmdChunk'
+  Resize = 'panmirrorResize'
 }
 
 export interface EditorEvents {

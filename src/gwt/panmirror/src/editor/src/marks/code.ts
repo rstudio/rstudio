@@ -14,12 +14,16 @@
  */
 
 import { Fragment, Mark, Node as ProsemirrorNode, Schema } from 'prosemirror-model';
+import { Step, AddMarkStep } from 'prosemirror-transform';
+import { Transaction } from 'prosemirror-state';
 
 import { MarkCommand, EditorCommandId } from '../api/command';
 import { Extension } from '../api/extension';
 import { pandocAttrSpec, pandocAttrParseDom, pandocAttrToDomAttr, pandocAttrReadAST } from '../api/pandoc_attr';
 import { PandocToken, PandocOutput, PandocTokenType, PandocExtensions } from '../api/pandoc';
 import { delimiterMarkInputRule } from '../api/mark';
+
+import { fancyQuotesToSimple } from '../api/quote';
 
 export const kCodeAttr = 0;
 export const kCodeText = 1;
@@ -99,6 +103,33 @@ const extension = (pandocExtensions: PandocExtensions): Extension => {
 
     inputRules: (schema: Schema) => {
       return [delimiterMarkInputRule('`', schema.marks.code)];
+    },
+
+    appendTransaction: (schema: Schema) => {
+  
+       // detect add code steps
+      const isAddCodeMarkStep = (step: Step) => {
+        return step instanceof AddMarkStep && (step as any).mark.type === schema.marks.code;
+      };
+
+      return [
+        {
+          name: 'code_remove_quotes',
+          filter: (transactions: Transaction[]) => transactions.some(transaction => transaction.steps.some(isAddCodeMarkStep)),
+          append: (tr: Transaction, transactions: Transaction[]) => {
+            transactions.forEach(transaction => {
+              transaction.steps.filter(isAddCodeMarkStep).forEach(step => {
+                const { from, to } = step as any;
+                const code = tr.doc.textBetween(from, to);
+                const newCode = fancyQuotesToSimple(code);
+                if (newCode !== code) {
+                  tr.insertText(newCode, from, to);
+                }
+              });
+            });
+          },
+        },
+      ];
     },
   };
 };

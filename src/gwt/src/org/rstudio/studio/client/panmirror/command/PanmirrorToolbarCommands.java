@@ -66,6 +66,11 @@ public class PanmirrorToolbarCommands
       add(PanmirrorCommands.HTMLBlock, "HTML Block", Roles.getMenuitemcheckboxRole());
       add(PanmirrorCommands.RawInline, "Raw Inline...");
       add(PanmirrorCommands.RawBlock, "Raw Block...");
+      
+      // chunk
+      add(PanmirrorCommands.RmdChunk, "Rmd Chunk", icons.RMD_CHUNK);
+      add(PanmirrorCommands.ExecuteCurrentRmdChunk, "Run Current Chunk");
+      add(PanmirrorCommands.ExecutePreviousRmdChunks, "Run All Chunks Above");
 
       // lists
       add(PanmirrorCommands.BulletList, "Bullet List", Roles.getMenuitemcheckboxRole(), icons.BULLET_LIST);
@@ -105,7 +110,6 @@ public class PanmirrorToolbarCommands
       add(PanmirrorCommands.HTMLComment, "Comment", icons.COMMENT);
       add(PanmirrorCommands.YamlMetadata, "YAML Block");
       add(PanmirrorCommands.Shortcode, "Shortcode");
-      add(PanmirrorCommands.RmdChunk, "Rmd Chunk", icons.RMD_CHUNK);
       add(PanmirrorCommands.InsertDiv, "Div Block...");
       add(PanmirrorCommands.InlineMath, "Inline Math");
       add(PanmirrorCommands.DisplayMath, "Display Math");

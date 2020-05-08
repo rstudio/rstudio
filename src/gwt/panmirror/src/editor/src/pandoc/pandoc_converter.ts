@@ -1,5 +1,5 @@
 /*
- * converter.ts
+ * pandoc_converter.ts
  *
  * Copyright (C) 2019-20 by RStudio, PBC
  *
@@ -22,17 +22,18 @@ import {
   PandocMarkWriter,
   PandocPreprocessorFn,
   PandocBlockReaderFn,
-  PandocCodeBlockFilter,
   PandocPostprocessorFn,
   PandocInlineHTMLReaderFn,
 } from '../api/pandoc';
 
 import { pandocFormatWith, PandocFormat, kGfmFormat, kCommonmarkFormat } from '../api/pandoc_format';
 import { PandocCapabilities } from '../api/pandoc_capabilities';
+import { PandocBlockCapsuleFilter, pandocMarkdownWithBlockCapsules } from '../api/pandoc_capsule';
 
-import { pandocToProsemirror } from './to_prosemirror';
-import { pandocFromProsemirror } from './from_prosemirror';
 import { ExtensionManager } from '../editor/editor-extensions';
+
+import { pandocToProsemirror } from './pandoc_to_prosemirror';
+import { pandocFromProsemirror } from './pandoc_from_prosemirror';
 
 export interface PandocWriterOptions {
   atxHeaders?: boolean;
@@ -47,7 +48,7 @@ export class PandocConverter {
   private readonly readers: readonly PandocTokenReader[];
   private readonly blockReaders: readonly PandocBlockReaderFn[];
   private readonly inlineHTMLReaders: readonly PandocInlineHTMLReaderFn[];
-  private readonly codeBlockFilters: readonly PandocCodeBlockFilter[];
+  private readonly blockCapsuleFilters: readonly PandocBlockCapsuleFilter[];
   private readonly nodeWriters: readonly PandocNodeWriter[];
   private readonly markWriters: readonly PandocMarkWriter[];
   private readonly pandoc: PandocEngine;
@@ -66,7 +67,7 @@ export class PandocConverter {
     this.readers = extensions.pandocReaders();
     this.blockReaders = extensions.pandocBlockReaders();
     this.inlineHTMLReaders = extensions.pandocInlineHTMLReaders();
-    this.codeBlockFilters = extensions.pandocCodeBlockFilters();
+    this.blockCapsuleFilters = extensions.pandocBlockCapsuleFilters();
     this.nodeWriters = extensions.pandocNodeWriters();
     this.markWriters = extensions.pandocMarkWriters();
 
@@ -84,6 +85,11 @@ export class PandocConverter {
       markdown = preprocessor(markdown);
     });
 
+    // create source capsules
+    this.blockCapsuleFilters.forEach(filter => {
+      markdown = pandocMarkdownWithBlockCapsules(markdown, filter);
+    });
+
     const ast = await this.pandoc.markdownToAst(markdown, format, []);
     let doc = pandocToProsemirror(
       ast,
@@ -91,7 +97,7 @@ export class PandocConverter {
       this.readers,
       this.blockReaders,
       this.inlineHTMLReaders,
-      this.codeBlockFilters,
+      this.blockCapsuleFilters
     );
 
     // run post-processors

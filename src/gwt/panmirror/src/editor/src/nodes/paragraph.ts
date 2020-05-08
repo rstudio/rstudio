@@ -26,7 +26,7 @@ const extension: Extension = {
       name: 'paragraph',
       spec: {
         content: 'inline*',
-        group: 'block',
+        group: 'block list_item_block',
         parseDOM: [{ tag: 'p' }],
         toDOM() {
           return ['p', 0];
@@ -56,7 +56,7 @@ const extension: Extension = {
 
 class InsertParagraphCommand extends ProsemirrorCommand {
   constructor() {
-    super(EditorCommandId.ParagraphInsert, ['Mod-\\'], insertParagraph);
+    super(EditorCommandId.ParagraphInsert, [], insertParagraph);
   }
 }
 

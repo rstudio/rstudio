@@ -15,13 +15,15 @@
  */
 
 import { EditorState } from "prosemirror-state";
-import { findParentNodeOfType } from "prosemirror-utils";
+import { findParentNodeOfType, findChildrenByType } from "prosemirror-utils";
 
 export interface EditorRmdChunk {
   lang: string;
   meta: string;
   code: string;
 }
+
+export type ExecuteRmdChunkFn = (chunk: EditorRmdChunk) => void;
 
 export function activeRmdChunk(state: EditorState) : EditorRmdChunk | null {
   if (state.schema.nodes.rmd_chunk) {
@@ -31,6 +33,38 @@ export function activeRmdChunk(state: EditorState) : EditorRmdChunk | null {
     } 
   } 
   return null;
+}
+
+export function previousExecutableRmdChunks(state: EditorState, pos = state.selection.from) : EditorRmdChunk[] {
+  const activeChunk = activeRmdChunk(state);
+  const lang = activeChunk ? activeChunk.lang : 'r';
+  const kEvalFalseRegEx = /eval\s*=\s*F(?:ALSE)?/;
+  return previousRmdChunks(state, pos, chunk => {
+    return chunk.lang.localeCompare(lang, undefined, { sensitivity: 'accent' }) === 0 &&
+           !kEvalFalseRegEx.test(chunk.meta);
+  });
+}
+
+export function previousRmdChunks(state: EditorState, pos: number, filter?: (chunk: EditorRmdChunk) => boolean) {
+
+  // chunks to return
+  const chunks: EditorRmdChunk[] = [];
+
+  // find all chunks in the document and return ones before the position that pass the specified filter
+  const schema = state.schema;
+  const rmdChunkNodes = findChildrenByType(state.doc, schema.nodes.rmd_chunk);
+  for (const rmdChunkNode of rmdChunkNodes) {
+    if ((rmdChunkNode.pos + rmdChunkNode.node.nodeSize) > pos) {
+      break;
+    }
+    const chunk = rmdChunk(rmdChunkNode.node.textContent);
+    if (chunk && (!filter || filter(chunk))) {
+      chunks.push(chunk);
+    }
+  }
+
+  // return chunks
+  return chunks;
 }
 
 export function rmdChunk(code: string) : EditorRmdChunk | null {
@@ -44,6 +78,20 @@ export function rmdChunk(code: string) : EditorRmdChunk | null {
       meta,
       code: lines.slice(1).join('\n')
     };
+  } else {
+    return null;
+  }
+}
+
+export function mergeRmdChunks(chunks: EditorRmdChunk[]) {
+  if (chunks.length) {
+    const merged = {
+      lang: chunks[0].lang,
+      meta: '',
+      code: ''
+    };
+    chunks.forEach(chunk => merged.code += chunk.code + '\n');
+    return merged;
   } else {
     return null;
   }

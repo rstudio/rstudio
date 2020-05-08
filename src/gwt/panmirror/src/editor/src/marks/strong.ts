@@ -26,7 +26,9 @@ const extension: Extension = {
       name: 'strong',
       spec: {
         parseDOM: [
-          { tag: 'b' },
+          // This works around a Google Docs misbehavior where pasted content will be inexplicably wrapped in `<b>`
+          // tags with a font-weight normal.
+          { tag: "b", getAttrs: (value: string | Node) => (value as HTMLElement).style.fontWeight !== "normal" && null },
           { tag: 'strong' },
           {
             style: 'font-weight',

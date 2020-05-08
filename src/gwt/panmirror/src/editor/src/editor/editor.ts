@@ -55,7 +55,6 @@ import { unitToPixels, pixelsToUnit, roundUnit, kValidUnits } from '../api/image
 import { kPercentUnit } from '../api/css';
 import { EditorFormat } from '../api/format';
 import { diffChars, EditorChange } from '../api/change';
-import { activeRmdChunk } from '../api/rmd';
 
 import { getTitle, setTitle } from '../nodes/yaml_metadata/yaml_metadata-title';
 
@@ -73,7 +72,7 @@ import {
   selectCurrent,
 } from '../behaviors/find';
 
-import { PandocConverter, PandocWriterOptions } from '../pandoc/converter';
+import { PandocConverter, PandocWriterOptions } from '../pandoc/pandoc_converter';
 
 import { defaultTheme, EditorTheme, applyTheme, applyPadding } from './editor-theme';
 import { defaultEditorUIImages } from './editor-images';
@@ -82,8 +81,6 @@ import { editorMenus, EditorMenus } from './editor-menus';
 // import styles
 import './styles/frame.css';
 import './styles/styles.css';
-
-const kMac = typeof navigator !== 'undefined' ? /Mac/.test(navigator.platform) : false;
 
 export interface EditorCode {
   code: string;
@@ -518,7 +515,7 @@ export class Editor {
     // get keybindings (merge user + default)
     const commandKeys = this.commandKeys();
 
-    return this.extensions.commands(this.schema, this.context.ui, kMac).map((command: ProsemirrorCommand) => {
+    return this.extensions.commands(this.schema, this.context.ui).map((command: ProsemirrorCommand) => {
       return {
         id: command.id,
         keymap: commandKeys[command.id],
@@ -562,10 +559,6 @@ export class Editor {
     return this.pandocFormat;
   }
 
-  public getActiveRmdChunk() {
-    return activeRmdChunk(this.state);
-  }
-
   private dispatchTransaction(tr: Transaction) {
     // track previous outline
     const previousOutline = getOutline(this.state);
@@ -607,7 +600,6 @@ export class Editor {
     events.set(EditorEvent.OutlineChange, new Event(EditorEvent.OutlineChange));
     events.set(EditorEvent.SelectionChange, new Event(EditorEvent.SelectionChange));
     events.set(EditorEvent.Resize, new Event(EditorEvent.Resize));
-    events.set(EditorEvent.ExecuteRmdChunk, new Event(EditorEvent.ExecuteRmdChunk));
     return events;
   }
 
@@ -709,7 +701,7 @@ export class Editor {
       this.keybindingsPlugin(),
       appendTransactionsPlugin(this.extensions.appendTransactions(this.schema)),
       appendMarkTransactionsPlugin(this.extensions.appendMarkTransactions(this.schema)),
-      ...this.extensions.plugins(this.schema, this.context.ui, kMac),
+      ...this.extensions.plugins(this.schema, this.context.ui),
       this.inputRulesPlugin(),
       this.editablePlugin(),
     ];
@@ -757,7 +749,7 @@ export class Editor {
 
     // command keys from extensions
     const pluginKeys: { [key: string]: CommandFn } = {};
-    const commands = this.extensions.commands(this.schema, this.context.ui, kMac);
+    const commands = this.extensions.commands(this.schema, this.context.ui);
     commands.forEach((command: ProsemirrorCommand) => {
       const keys = commandKeys[command.id];
       if (keys) {
@@ -778,7 +770,7 @@ export class Editor {
 
   private commandKeys(): { [key: string]: readonly string[] } {
     // start with keys provided within command definitions
-    const commands = this.extensions.commands(this.schema, this.context.ui, kMac);
+    const commands = this.extensions.commands(this.schema, this.context.ui);
     const defaultKeys = commands.reduce((keys: { [key: string]: readonly string[] }, command: ProsemirrorCommand) => {
       keys[command.id] = command.keymap;
       return keys;

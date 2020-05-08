@@ -36,8 +36,8 @@ export interface Extension {
   nodes?: PandocNode[];
   baseKeys?: (schema: Schema) => readonly BaseKeyBinding[];
   inputRules?: (schema: Schema) => readonly InputRule[];
-  commands?: (schema: Schema, ui: EditorUI, mac: boolean) => readonly ProsemirrorCommand[];
-  plugins?: (schema: Schema, ui: EditorUI, mac: boolean) => readonly Plugin[];
+  commands?: (schema: Schema, ui: EditorUI) => readonly ProsemirrorCommand[];
+  plugins?: (schema: Schema, ui: EditorUI) => readonly Plugin[];
   appendTransaction?: (schema: Schema) => readonly AppendTransactionHandler[];
   appendMarkTransaction?: (schema: Schema) => readonly AppendMarkTransactionHandler[];
   fixups?: (schema: Schema, view: EditorView) => Readonly<FixupFn[]>;

@@ -1,7 +1,7 @@
 /*
- * PanmirrorEvent.java
+ * platform.ts
  *
- * Copyright (C) 2009-20 by RStudio, PBC
+ * Copyright (C) 2019-20 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -13,15 +13,5 @@
  *
  */
 
-package org.rstudio.studio.client.panmirror;
 
-public class PanmirrorEvent
-{
-   public static String Update = "panmirrorUpdate";
-   public static String OutlineChange = "panmirrorOutlineChange";
-   public static String SelectionChange = "panmirrorSelectionChange";
-   public static String Resize = "panmirrorResize";
-}
-
-
-
+export const kPlatformMac = typeof navigator !== 'undefined' ? /Mac/.test(navigator.platform) : false;

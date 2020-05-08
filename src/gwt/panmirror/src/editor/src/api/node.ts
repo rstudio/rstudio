@@ -33,12 +33,13 @@ import {
   PandocNodeWriterFn,
   PandocPreprocessorFn,
   PandocBlockReaderFn,
-  PandocCodeBlockFilter,
   PandocInlineHTMLReaderFn,
 } from './pandoc';
+import { PandocBlockCapsuleFilter } from './pandoc_capsule';
 
 import { AttrEditOptions } from './attr_edit';
 import { CommandFn } from './command';
+import { ExecuteRmdChunkFn } from './rmd';
 
 export interface PandocNode {
   readonly name: string;
@@ -51,14 +52,14 @@ export interface PandocNode {
     readonly preprocessor?: PandocPreprocessorFn;
     readonly blockReader?: PandocBlockReaderFn;
     readonly inlineHTMLReader?: PandocInlineHTMLReaderFn;
-    readonly codeBlockFilter?: PandocCodeBlockFilter;
+    readonly blockCapsuleFilter?: PandocBlockCapsuleFilter;
   };
 }
 
 export interface CodeViewOptions {
   lang: (node: ProsemirrorNode, content: string) => string | null;
   attrEditFn?: CommandFn;
-  executeFn?: VoidFunction;
+  executeRmdChunkFn?: ExecuteRmdChunkFn;
   classes?: string[];
   borderColorClass?: string;
   firstLineMeta?: boolean;

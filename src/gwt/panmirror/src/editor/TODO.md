@@ -9,40 +9,72 @@ pandoc schema: <https://github.com/jgm/pandoc-types/blob/master/Text/Pandoc/Defi
 
 rstudioapi function for saveCannonical
 
+rstudioapi hook for saveCannonical (user processing) to keep linebreaks consistent.
+
 ### Hadley
 
-Evaluate markdown for link text
+Hadley: also if I switch to raw view, close RStudio, reopen, and then switch to visual view, I don't seem to be reliably navigated to the right place
+it only seems to happen the first time I switch to visual view after opening rstudio
 
-Ctrl+Enter and Cmd+Shift to execute code
-Ace mode
+ok, that was another instance where switching back and forth from the visual editor lost my scroll position. Interestingly however, it preserved the cursor position so just pushing an arrow key scrolled me back to the right place
 
-Chunk execution
-Inline spell check (QtWebEngine?)
-Reference linking/lookup
-Named footnotes
-
+gocs style delete handling in lists: first delete = continuing paragraph of bullet; second delete = new paragraph; third delete = back into previous bullet (currently our second delete goes back into previous bullet)
 
 ## TODO
 
-Add execute arrow button 
-Only add button for known executable types (R, Python, ?)
 
-Pasting in this document results in an error: https://docs.google.com/document/d/1g_Vh_RAmkC5uocaiJkf8gHq97QjhzsbhnJSHqpOagLw/edit#
+If there is an invalid yaml block w/ an embedded chunk we never unwrap it:
 
-Steal Clear Formatting shortcut back
-Make clear formatting remove stored marks when no selection
+---
+ a
 
-minor css issue: inline code in headings is too small, e.g.
+```{r}
+```
+---
 
-Arrowing through 2 vertically adjacent code blocks (with empty paragraph in between) seems to re-render the bottom code block dom element.
+
+
+Rmd "inside yaml" does exist b/c we are mis-parsing --- as a horizontal rule as yaml!!!! (need more rules on this)
+
+Loading up MANUAL.Rmd now locks the browser (probably the regexes?, perhaps scope by type)
+
+[`x_y` `y]  then type _, and it maches the previous _
+
+[`"y] then type "
+
+Yihui style Rmd example blocks
+
+Try additional Yihui chapters (e.g chunk_options.Rmd)
+
+There is a scenario where we have pending edits but the dirty state is still false (seems like on 
+full reload of the IDE in a new session?). Probably still related to editing outside of the IDE (crosstalk)
+Had the repro in foo.Rmd w/ block capsule. The issue was a dirty file (unsaved transform) that didn't 
+show up as dirty on startup.
+Here it is:
+    - Open an Rmd from source that has "cannonical" transformations (note it's marked dirty)
+    - Switch to another tab
+    - Reload the browser (note it's no longer dirty)
+
+
+You can't toggle 2 marks off (subsequent typing clears both). Note that this doesn't occur
+in prosemirror-schema-basic (perhaps a bug that's been fixed?)
 
 When 2 markdown input rules fire consectively marks are not cleared for subsequent typing.
 The problem is that the delete in the second markInputRule to fire is wiping out the other mark?
+Seems to work fine with quote though, the issue may be the stickiness of the mark indicator.
 
-There is a scenario where we have pending edits but the dirty state is still false (seems like on 
-full reload of the IDE in a new session?)
+Try pasting from Excel. Try pasting tables from GDocs.
 
-Copy/paste of markdown source
+Do we need to fixup non-rectangualar tables before sending to pandoc.
+
+Pandoc does allow a div to start a list. Look at re-enabling:
+* <div class="blue"> Solutions Engineer [Started, 4/1/20] </div>
+* <div class="blue"> Data Scientist [Started, 4/1/20] </div> 
+* <div class="blue"> Solutions Engineer, Europe [Started, 4/1/20] </div>
+* <div class="blue"> UI/UX Designer, RStudio Connect [Started, 4/22/20] </div>
+* <div class="blue"> Software Architect [Accepted, 5/15/20] </div>
+
+
 
 Math:
 
@@ -51,23 +83,35 @@ escaping of $ in math as this mode will clearly not be "source mode" style latex
 
 - Possibly have a special editing mode for thereoms? Or just make sure they work.
 
-- Interactive spell check
-
 ## Future
 
-Handling unrecognized pandoc tokens.
+Interactive spelling
+Inline spelling
 
+@ref link treatment
 @ref hot-linking / dialog / +invalid link detection
 
-Inlne spell checking
+Consider porting https://gitlab.com/mpapp-public/manuscripts-symbol-picker
+
+Citation handling
+
+Copy/paste of markdown source
+
+Slack style handling of marks?
+Reveal codes / typora behavior
+Breadcrump for current nodes / marks
+
+Evaluate markdown for link text
+
+Consider attempting to update dependencies now?
+
+Handling unrecognized pandoc tokens.
 
 Parse plain text for markdown
 
 Async dialogs won't work with collab (b/c they could use an old state).
 
 Revisit doing smart patches of Prosemirror doc: https://github.com/rstudio/rstudio/tree/feature/panmirror-smart-patch
-
-Consider porting https://gitlab.com/mpapp-public/manuscripts-symbol-picker
 
 Fixed size tables (with last column resized) overflow-x when editing
 container is made very small.
@@ -98,9 +142,6 @@ turn could ripple out to some other handler code.
 
 Google Docs style list toggling
 
-Slack style handling of marks?
-
-Reveal codes / typora behavior
 
 Unit testing for core panmirror code
 
@@ -136,6 +177,9 @@ pandoc scholar: <https://pandoc-scholar.github.io/> pandoc jats: <https://github
 Notes on preformance implications of scanning the entire document + some discussion of the tricky nature of doing step by step inspection: <https://discuss.prosemirror.net/t/changed-part-of-document/992> <https://discuss.prosemirror.net/t/reacting-to-node-adding-removing-changing/676> <https://discuss.prosemirror.net/t/undo-and-cursor-position/677/5>
 
 ## Known issues:
+
+- If you have 2 marks active and you toggle both of them off (either by explicit toggle or via Clear Formatting)
+  then both of the marks dissapear.
 
 - Can only preview images in the first listed hugo static dir
 

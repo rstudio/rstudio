@@ -1,5 +1,5 @@
 /*
- * PanmirrorEvent.java
+ * PanmirrorUIContext.java
  *
  * Copyright (C) 2009-20 by RStudio, PBC
  *
@@ -13,15 +13,32 @@
  *
  */
 
-package org.rstudio.studio.client.panmirror;
+package org.rstudio.studio.client.panmirror.ui;
 
-public class PanmirrorEvent
+
+import jsinterop.annotations.JsFunction;
+import jsinterop.annotations.JsType;
+
+@JsType
+public class PanmirrorUIContext
 {
-   public static String Update = "panmirrorUpdate";
-   public static String OutlineChange = "panmirrorOutlineChange";
-   public static String SelectionChange = "panmirrorSelectionChange";
-   public static String Resize = "panmirrorResize";
-}
+   public Getter getDefaultResourceDir;
+   public Mapper mapPathToResource;
+   public Mapper mapResourceToURL;
+   public Mapper translateText;
 
+   
+   @JsFunction 
+   public interface Getter
+   {
+      String get();
+   }
+   
+   @JsFunction
+   public interface Mapper
+   {
+      String map(String path);
+   }
+}
 
 

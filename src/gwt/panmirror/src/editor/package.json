@@ -44,7 +44,7 @@
     "react": "^16.13.1",
     "react-dom": "^16.13.1",
     "tlite": "^0.1.9",
-    "typescript": "3.6.3",
+    "typescript": "^3.8.3",
     "zenscroll": "^4.0.2"
   },
   "scripts": {
@@ -57,6 +57,7 @@
     "prettier": "^1.18.2",
     "terser": "^4.6.2",
     "tslint": "^5.20.0",
+    "tslint-react": "^5.0.0",
     "tslint-config-prettier": "^1.18.0",
     "typescript-tslint-plugin": "^0.5.5",
     "uglify-js": "^3.7.4"
