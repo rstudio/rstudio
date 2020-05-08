@@ -149,8 +149,8 @@ export function initExtensions(
     // nodes
     nodeDiv,
     nodeFootnote,
-    nodeYamlMetadata,
     nodeRmdCodeChunk,
+    nodeYamlMetadata,
     nodeTable,
     nodeDefinitionList,
     nodeLineBlock,

@@ -41,10 +41,6 @@ import { ExecuteCurrentRmdChunkCommand, ExecutePreviousRmdChunksCommand } from '
 
 import './rmd_chunk-styles.css';
 
-const kBlockCapsuleType = 'F3175F2A-E8A0-4436-BE12-B33925B6D220'.toLowerCase();
-
-const kBlockCapsuleTextRegEx = new RegExp('```' + kBlockCapsuleType + '\\n[ \\t>]*([^`]+)\\n[ \\t>]*```', 'g');
-
 const extension = (
   _pandocExtensions: PandocExtensions,
   _pandocCapabilities: PandocCapabilities,
@@ -192,16 +188,26 @@ class RmdChunkCommand extends ProsemirrorCommand {
 
 function rmdChunkBlockCapsuleFilter() {
 
+  const kBlockCapsuleType = 'F3175F2A-E8A0-4436-BE12-B33925B6D220'.toLowerCase();
+  const kBlockCapsuleTextRegEx = new RegExp('```' + kBlockCapsuleType + '\\n[ \\t>]*([^`]+)\\n[ \\t>]*```', 'g');
+
   return {
 
     type: kBlockCapsuleType,
     
     match: /^([\t >]*)(```+\s*\{[a-zA-Z0-9_]+(?: *[ ,].*?)?\}[ \t]*\n[\W\w]*?\n[\t >]*```+)([ \t]*)$/gm,
     
+    // textually enclose the capsule so that pandoc parses it as the type of block we want it to
+    // (in this case a code block). we use the capsule prefix here to make sure that the code block's
+    // content and end backticks match the indentation level of the first line correctly
     enclose: (capsuleText: string, capsule: PandocBlockCapsule) => 
-      '```' + kBlockCapsuleType + '\n' + capsule.prefix + capsuleText + '\n' + capsule.prefix + '```' + capsule.suffix
+      '```' + kBlockCapsuleType + '\n' + 
+      capsule.prefix + capsuleText + '\n' +
+      capsule.prefix + '```'
     ,
 
+    // look for one of our block capsules within pandoc ast text (e.g. a code or raw block)
+    // and if we find it, parse and return the original source code
     handleText: (text: string) => {
       return text.replace(kBlockCapsuleTextRegEx, (_match, p1) => {
         const capsuleText = p1;
@@ -210,6 +216,8 @@ function rmdChunkBlockCapsuleFilter() {
       });
     },
     
+    // look for a block capsule of our type within a code block (indicated by the 
+    // presence of a special css class)
     handleToken: (tok: PandocToken) => {
       if (tok.t === PandocTokenType.CodeBlock) {
         const attr = pandocAttrReadAST(tok, 0);
@@ -220,6 +228,9 @@ function rmdChunkBlockCapsuleFilter() {
       return null;
     },
 
+    // write the node as an rmd_chunk, being careful to remove the backticks 
+    // preserved as part of the source, and stripping out the base indentation
+    // level implied by the prefix
     writeNode: (schema: Schema, writer: ProsemirrorWriter, capsule: PandocBlockCapsule) => {
 
       // open node
