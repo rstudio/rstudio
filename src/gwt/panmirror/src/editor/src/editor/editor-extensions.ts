@@ -34,10 +34,10 @@ import {
   PandocPreprocessorFn,
   PandocPostprocessorFn,
   PandocBlockReaderFn,
-  PandocCodeBlockFilter,
   PandocExtensions,
   PandocInlineHTMLReaderFn,
 } from '../api/pandoc';
+import { PandocBlockCapsuleFilter } from '../api/pandoc_capsule';
 import { EditorEvents } from '../api/events';
 import { PandocCapabilities } from '../api/pandoc_capabilities';
 import { EditorFormat } from '../api/format';
@@ -149,8 +149,8 @@ export function initExtensions(
     // nodes
     nodeDiv,
     nodeFootnote,
-    nodeYamlMetadata,
     nodeRmdCodeChunk,
+    nodeYamlMetadata,
     nodeTable,
     nodeDefinitionList,
     nodeLineBlock,
@@ -254,17 +254,9 @@ export class ExtensionManager {
   }
 
   public pandocPreprocessors(): readonly PandocPreprocessorFn[] {
-    const preprocessors: PandocPreprocessorFn[] = [];
-    this.pandocNodes().forEach((node: PandocNode) => {
-      if (node.pandoc.preprocessor) {
-        preprocessors.push(node.pandoc.preprocessor);
-      }
-      if (node.pandoc.codeBlockFilter) {
-        preprocessors.push(node.pandoc.codeBlockFilter.preprocessor);
-      }
+    return this.collectFrom({
+      node: node => [node.pandoc.preprocessor]
     });
-
-    return preprocessors;
   }
 
   public pandocPostprocessors(): readonly PandocPostprocessorFn[] {
@@ -286,9 +278,9 @@ export class ExtensionManager {
     });
   }
 
-  public pandocCodeBlockFilters(): readonly PandocCodeBlockFilter[] {
+  public pandocBlockCapsuleFilters(): readonly PandocBlockCapsuleFilter[] {
     return this.collectFrom({
-      node: node => [node.pandoc.codeBlockFilter]
+      node: node => [node.pandoc.blockCapsuleFilter]
     });
   }
 
