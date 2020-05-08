@@ -116,7 +116,7 @@ function yamlMetadataBlockCapsuleFilter() {
 
   const kYamlMetadataCapsuleType = 'E1819605-0ACD-4FAE-8B99-9C1B7BD7C0F1'.toLowerCase();
 
-  const textRegex = encodedBlockCapsuleRegex(undefined, '\\n', 'g');
+  const textRegex = encodedBlockCapsuleRegex(undefined, '\\n', 'gm');
   const tokenRegex = encodedBlockCapsuleRegex('^', '$');
 
   return {
@@ -133,8 +133,8 @@ function yamlMetadataBlockCapsuleFilter() {
 
     // globally replace any instances of our block capsule found in text
     handleText: (text: string) : string => {
-      return text.replace(textRegex, (match, p1) => {
-        const capsuleText = p1;
+      return text.replace(textRegex, (match) => {
+        const capsuleText = match.substring(0, match.length - 1); // trim off newline
         const capsule = parsePandocBlockCapsule(capsuleText);
         if (capsule.type === kYamlMetadataCapsuleType) {
           return capsule.source;
