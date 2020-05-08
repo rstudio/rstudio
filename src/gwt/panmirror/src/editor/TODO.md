@@ -25,7 +25,10 @@ gocs style delete handling in lists: first delete = continuing paragraph of bull
 
 ## TODO
 
-End line of indented Rmd chunk is consider part of the chunk when it's not
+HTML comment block is written with ``` {=html}
+
+Do we set the code back into the editor even if there is an error in setMarkdown?
+Should we even switch if there is an error?
 
 You can't toggle 2 marks off (subsequent typing clears both). Note that this doesn't occur
 in prosemirror-schema-basic (perhaps a bug that's been fixed?)
@@ -40,29 +43,16 @@ Do we need to fixup non-rectangualar tables before sending to pandoc.
 
 There is a scenario where we have pending edits but the dirty state is still false (seems like on 
 full reload of the IDE in a new session?). Probably still related to editing outside of the IDE (crosstalk)
-
-Yihui verbatim R code chunks:
-https://github.com/yihui/rmarkdown-cookbook/blob/30d92f454bbc8a462c7e086088e8a6d85ea86f25/02-basics.Rmd#L39-L42
-Also, yaml within fenced block will break. May just need to exclude fenced sections and raw blocks entirely during pre-processing
-
-  ---
-  magic: uuid
-  contents: base64(original source)
-  ---
-
-  Do this everywhere (textually)
-
-  For legit YAML blocks just implement getText
-  Also crawl the entire pandoc ast via mapTokens and do the same replacement
-
-  For Rmd, do the same dance that we do now, but also do the mapToken thing
-  for the textual replacement
+Had the repro in foo.Rmd w/ block capsule. The issue was a dirty file (unsaved transform) that didn't 
+show up as dirty on startup.
+Here it is:
+    - Open an Rmd from source that has "cannonical" transformations (note it's marked dirty)
+    - Switch to another tab
+    - Reload the browser (note it's no longer dirty)
 
 
-  ```
-  magic: uuid
-  contents: base64(original source)
-  ```
+CodeMirror blocks sometimes don't update after switch to visual (until you click them)
+
 
 
 Copy/paste of markdown source
@@ -129,6 +119,7 @@ Google Docs style list toggling
 Slack style handling of marks?
 
 Reveal codes / typora behavior
+Breadcrump for current nodes / marks
 
 Unit testing for core panmirror code
 
