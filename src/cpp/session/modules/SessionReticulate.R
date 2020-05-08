@@ -13,8 +13,23 @@
 #
 #
 
+# synchronize with ReticulateEvent.java
+.rs.setVar("reticulateEvents", list(
+   PYTHON_INITIALIZED = "python_initialized",
+   REPL_INITIALIZED   = "repl_initialized",
+   REPL_ITERATION     = "repl_iteration",
+   REPL_TEARDOWN      = "repl_teardown"
+))
+
 options(reticulate.initialized = function() {
+   
+   .rs.reticulate.enqueueClientEvent(
+      .rs.reticulateEvents$PYTHON_INITIALIZED,
+      list()
+   )
+   
    .Call("rs_reticulateInitialized", PACKAGE = "(embedding)")
+   
 })
 
 .rs.setVar("python.moduleCache", new.env(parent = emptyenv()))
@@ -185,7 +200,10 @@ options(reticulate.initialized = function() {
    }
    
    # signal a switch to Python context
-   .rs.reticulate.enqueueClientEvent("repl_initialized", list())
+   .rs.reticulate.enqueueClientEvent(
+      .rs.reticulateEvents$REPL_INITIALIZED,
+      list()
+   )
    
 })
 
@@ -193,7 +211,10 @@ options(reticulate.initialized = function() {
 {
    # ensure we call repl_iteration hook on exit
    on.exit(
-      .rs.reticulate.enqueueClientEvent("repl_iteration", list()),
+      .rs.reticulate.enqueueClientEvent(
+         .rs.reticulateEvents$REPL_ITERATION,
+         list()
+      ),
       add = TRUE
    )
    
@@ -241,7 +262,10 @@ options(reticulate.initialized = function() {
    }
    
    # client event
-   .rs.reticulate.enqueueClientEvent("repl_teardown", list())
+   .rs.reticulate.enqueueClientEvent(
+      .rs.reticulateEvents$REPL_TEARDOWN,
+      list()
+   )
 })
 
 .rs.addFunction("reticulate.replIsActive", function()
@@ -1623,4 +1647,10 @@ html.heading = _heading
       })
    })
    
+})
+
+.rs.addFunction("reticulate.isPythonInitialized", function()
+{
+   "reticulate" %in% loadedNamespaces() &&
+      reticulate::py_available(initialize = FALSE)
 })

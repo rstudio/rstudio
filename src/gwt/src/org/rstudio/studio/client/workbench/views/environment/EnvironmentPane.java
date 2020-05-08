@@ -45,6 +45,8 @@ import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.commands.Commands;
+import org.rstudio.studio.client.workbench.events.SessionInitEvent;
+import org.rstudio.studio.client.workbench.events.SessionInitHandler;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.ui.WorkbenchPane;
@@ -75,6 +77,7 @@ import com.google.inject.Inject;
 public class EnvironmentPane extends WorkbenchPane 
                              implements EnvironmentPresenter.Display,
                                         EnvironmentObjectsObserver,
+                                        SessionInitHandler,
                                         ReticulateEvent.Handler
 {
    @Inject
@@ -90,6 +93,7 @@ public class EnvironmentPane extends WorkbenchPane
       commands_ = commands;
       server_ = serverOperations;
       globalDisplay_ = globalDisplay;
+      session_ = session;
       prefs_ = prefs;
 
       expandedObjects_ = new ArrayList<String>();
@@ -114,6 +118,7 @@ public class EnvironmentPane extends WorkbenchPane
          }
       };
       
+      events.addHandler(SessionInitEvent.TYPE, this);
       events.addHandler(ReticulateEvent.TYPE, this);
       
       ensureWidget();
@@ -167,14 +172,20 @@ public class EnvironmentPane extends WorkbenchPane
    @Override
    protected SecondaryToolbar createSecondaryToolbar()
    {
+      initSecondaryToolbar();
+      return secondaryToolbar_;
+   }
+   
+   private void initSecondaryToolbar()
+   {
       SecondaryToolbar toolbar = new SecondaryToolbar("Environment Tab Second");
       
       languageMenu_ = new ToolbarPopupMenu();
       
-      MenuItem rMenuItem = new MenuItem("R", () -> setActiveLanguage("R"));
+      MenuItem rMenuItem = new MenuItem("R", () -> setActiveLanguage("R", true));
       languageMenu_.addItem(rMenuItem);
       
-      MenuItem pyMenuItem = new MenuItem("Python", () -> setActiveLanguage("Python"));
+      MenuItem pyMenuItem = new MenuItem("Python", () -> setActiveLanguage("Python", true));
       languageMenu_.addItem(pyMenuItem);
       
       languageButton_ = new ToolbarMenuButton(
@@ -182,6 +193,10 @@ public class EnvironmentPane extends WorkbenchPane
             ToolbarButton.NoTitle,
             (ImageResource) null,
             languageMenu_);
+      
+      languageButton_.setVisible(false);
+      languageButton_.setEnabled(false);
+      
       toolbar.addLeftWidget(languageButton_);
       toolbar.addLeftSeparator();
       
@@ -223,7 +238,7 @@ public class EnvironmentPane extends WorkbenchPane
 
       toolbar.addRightWidget(searchWidget);
 
-      return toolbar;
+      secondaryToolbar_ = toolbar;
    }
 
    @Override
@@ -655,17 +670,28 @@ public class EnvironmentPane extends WorkbenchPane
    }
    
    @Override
+   public void onSessionInit(SessionInitEvent sie)
+   {
+      boolean initialized = session_.getSessionInfo().getPythonInitialized();
+      setPythonEnabled(initialized, false);
+   }
+   
+   @Override
    public void onReticulate(ReticulateEvent event)
    {
       String type = event.getType();
       
-      if (StringUtil.equals(type, ReticulateEvent.TYPE_REPL_INITIALIZED))
+      if (StringUtil.equals(type, ReticulateEvent.TYPE_PYTHON_INITIALIZED))
       {
-         setActiveLanguage("Python");
+         setPythonEnabled(true, false);
+      }
+      else if (StringUtil.equals(type, ReticulateEvent.TYPE_REPL_INITIALIZED))
+      {
+         setActiveLanguage("Python", true);
       }
       else if (StringUtil.equals(type, ReticulateEvent.TYPE_REPL_TEARDOWN))
       {
-         setActiveLanguage("R");
+         setActiveLanguage("R", true);
       }
    }
    
@@ -732,8 +758,31 @@ public class EnvironmentPane extends WorkbenchPane
       }
    }
    
-   public void setActiveLanguage(String language)
+   public void setPythonEnabled(boolean enabled,
+                                boolean syncWithSession)
    {
+      languageButton_.setEnabled(enabled);
+      languageButton_.setVisible(enabled);
+      secondaryToolbar_.manageSeparators();
+      
+      if (!enabled)
+         setActiveLanguage("R", syncWithSession);
+   }
+   
+   // NOTE: 'syncWithSession = false' should only be used
+   // for cases where the front-end is synchronizing based
+   // on the state of the session; 'syncWithSession = true'
+   // is normally done to reflect a user action that should
+   // then update the session state as well
+   public void setActiveLanguage(String language,
+                                 boolean syncWithSession)
+   {
+      if (!syncWithSession)
+      {
+         setActiveLanguageImpl(language);
+         return;
+      }
+      
       server_.environmentSetLanguage(
             language,
             new VoidServerRequestCallback()
@@ -777,10 +826,12 @@ public class EnvironmentPane extends WorkbenchPane
    private final Commands commands_;
    private final GlobalDisplay globalDisplay_;
    private final EnvironmentServerOperations server_;
+   private final Session session_;
    private final UserPrefs prefs_;
    private final Value<Boolean> environmentMonitoring_;
    private final Timer refreshTimer_;
 
+   private SecondaryToolbar secondaryToolbar_;
    private ToolbarMenuButton languageButton_;
    private ToolbarPopupMenu languageMenu_;
    private ToolbarMenuButton dataImportButton_;

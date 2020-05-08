@@ -28,6 +28,12 @@ public class SecondaryToolbar extends Toolbar
       if (!appearAsPrimary)
          addStyleName(styles_.rstheme_secondaryToolbar());
    }
+   
+   @Override
+   public void manageSeparators()
+   {
+      super.manageSeparators();
+   }
 
    @Override
    public int getHeight()

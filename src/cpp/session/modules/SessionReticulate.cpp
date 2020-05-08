@@ -56,6 +56,27 @@ void onDeferredInit(bool)
 }
 
 } // end anonymous namespace
+
+bool isPythonInitialized()
+{
+   // NOTE: once initialized Python cannot be un-initialized
+   // so we disable this check as soon as we know the answer
+   static bool s_initialized = false;
+   
+   if (!s_initialized)
+   {
+      Error error = 
+            r::exec::RFunction(".rs.reticulate.isPythonInitialized")
+            .call(&s_initialized);
+      
+      if (error)
+         LOG_ERROR(error);
+   }
+   
+   return s_initialized;
+   
+}
+
 bool isReplActive()
 {
    bool active = false;

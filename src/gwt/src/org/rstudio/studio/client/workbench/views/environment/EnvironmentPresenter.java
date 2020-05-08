@@ -100,7 +100,7 @@ public class EnvironmentPresenter extends BasePresenter
    
    public interface Display extends WorkbenchView
    {
-      void setActiveLanguage(String language);
+      void setActiveLanguage(String language, boolean syncWithSession);
       String getActiveLanguage();
       void addObject(RObject object);
       void addObjects(JsArray<RObject> objects);

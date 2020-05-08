@@ -235,6 +235,9 @@ void handleClientInit(const boost::function<void()>& initFunction,
    // get alias to console_actions and get limit
    rstudio::r::session::ConsoleActions& consoleActions = rstudio::r::session::consoleActions();
    sessionInfo["console_actions_limit"] = consoleActions.capacity();
+ 
+   // check if reticulate's Python session has been initialized
+   sessionInfo["python_initialized"] = modules::reticulate::isPythonInitialized();
    
    // get current console language
    sessionInfo["console_language"] = modules::reticulate::isReplActive() ? "Python" : "R";
