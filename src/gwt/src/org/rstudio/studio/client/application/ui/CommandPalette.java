@@ -269,6 +269,8 @@ public class CommandPalette extends Composite
     */
    private void applyFilter()
    {
+      int matches = 0;
+
       // Split the search text into a series of lowercase words. This provides a
       // kind of partial fuzzy matching, so that e.g., "new py" matches the command
       // "Create a new Python script".
@@ -294,11 +296,30 @@ public class CommandPalette extends Composite
          {
             entry.setSearchHighlight(needles);
             entry.setVisible(true);
+            matches++;
          }
+      }
+      
+      // If not searching for anything, then searching for everything.
+      if (needles.length == 0)
+      {
+         matches = entries_.size();
       }
       
       updateResultsCount_.nudge();
       updateSelection();
+      
+      // Show "no results" message if appropriate
+      if (matches == 0 && !noResults_.isVisible())
+      {
+         scroller_.setVisible(false);
+         noResults_.setVisible(true);
+      }
+      else if (matches > 0 && noResults_.isVisible())
+      {
+         scroller_.setVisible(true);
+         noResults_.setVisible(false);
+      }
    }
    
    /**
@@ -401,6 +422,7 @@ public class CommandPalette extends Composite
    @UiField public TextBox searchBox_;
    @UiField public FlowPanel commandList_;
    @UiField HTMLPanel resultsCount_;
+   @UiField HTMLPanel noResults_;
    @UiField ScrollPanel scroller_;
    @UiField Styles styles_;
 }
