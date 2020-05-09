@@ -325,6 +325,7 @@ namespace prefs {
 #define kVisualMarkdownEditingWrapAuto "visual_markdown_editing_wrap_auto"
 #define kVisualMarkdownEditingWrapColumn "visual_markdown_editing_wrap_column"
 #define kVisualMarkdownEditingMaxContentWidth "visual_markdown_editing_max_content_width"
+#define kVisualMarkdownEditingShowDocOutline "visual_markdown_editing_show_doc_outline"
 #define kVisualMarkdownEditingFontSizePoints "visual_markdown_editing_font_size_points"
 #define kDisabledAriaLiveAnnouncements "disabled_aria_live_announcements"
 #define kScreenreaderConsoleAnnounceLimit "screenreader_console_announce_limit"
@@ -1469,6 +1470,12 @@ public:
     */
    int visualMarkdownEditingMaxContentWidth();
    core::Error setVisualMarkdownEditingMaxContentWidth(int val);
+
+   /**
+    * Whether to show the document outline by default when opening R Markdown documents in visual mode.
+    */
+   bool visualMarkdownEditingShowDocOutline();
+   core::Error setVisualMarkdownEditingShowDocOutline(bool val);
 
    /**
     * The default visual editing mode font size, in points

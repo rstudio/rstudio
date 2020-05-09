@@ -1064,6 +1064,11 @@
             "default": 700,
             "description": "Maximum content width for visual editing mode, in pixels"
         },
+        "visual_markdown_editing_show_doc_outline": {
+            "type": "boolean",
+            "default": true,
+            "description": "Whether to show the document outline by default when opening R Markdown documents in visual mode."
+        },
         "visual_markdown_editing_font_size_points": {
           "type": "integer",
           "default": 0,

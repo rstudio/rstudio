@@ -7275,9 +7275,14 @@ public class TextEditingTarget implements
    
    public boolean getPreferredOutlineWidgetVisibility()
    {
+      return getPreferredOutlineWidgetVisibility(prefs_.showDocOutlineRmd().getGlobalValue());
+   }
+   
+   public boolean getPreferredOutlineWidgetVisibility(boolean defaultValue)
+   {
       String property = docUpdateSentinel_.getProperty(DOC_OUTLINE_VISIBLE);
       return StringUtil.isNullOrEmpty(property)
-            ? (getTextFileType().isRmd() && prefs_.showDocOutlineRmd().getGlobalValue())
+            ? (getTextFileType().isRmd() && defaultValue)
             : Integer.parseInt(property) > 0;
    }
    

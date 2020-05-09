@@ -754,7 +754,9 @@ public class TextEditingTargetVisualMode
   
    private boolean getOutlineVisible()
    {
-      return target_.getPreferredOutlineWidgetVisibility();
+      return target_.getPreferredOutlineWidgetVisibility(
+         prefs_.visualMarkdownEditingShowDocOutline().getValue()
+      );
    }
    
    private void setOutlineVisible(boolean visible)
