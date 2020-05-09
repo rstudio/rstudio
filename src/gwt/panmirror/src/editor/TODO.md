@@ -4,13 +4,6 @@ pandoc schema: <https://github.com/jgm/pandoc-types/blob/master/Text/Pandoc/Defi
 
 ## Feedback
 
-
-### Gabor
-
-rstudioapi function for saveCannonical
-
-rstudioapi hook for saveCannonical (user processing) to keep linebreaks consistent.
-
 ### Hadley
 
 Hadley: also if I switch to raw view, close RStudio, reopen, and then switch to visual view, I don't seem to be reliably navigated to the right place
@@ -25,6 +18,8 @@ gocs style delete handling in lists: first delete = continuing paragraph of bull
 Treat YAML as we treat knitr (allow leading whitespace and allow blockquotes)
 Might require some different prefix/suffix handling. Need to try MANUAL.Rmd once we have this working.
 Also need to update the docs if we get it working.
+
+Fix \W\w* regex with suggestion from Joe.
 
 There is a scenario where we have pending edits but the dirty state is still false (seems like on 
 full reload of the IDE in a new session?). Probably still related to editing outside of the IDE (crosstalk)
@@ -56,6 +51,7 @@ https://github.com/jjallaire/rmarkdown-cookbook/compare/master...panmirror-impor
 Only surprise to me was that you don't need :::: if you have a distinct set of attributes
 Also, code chunks without attributes are written as indented
 
+Handling unrecognized pandoc tokens.
 
 Math:
 
@@ -88,9 +84,10 @@ Evaluate markdown for link text
 
 Consider attempting to update dependencies now?
 
-Handling unrecognized pandoc tokens.
 
-Parse plain text for markdown
+
+rstudioapi function for saveCannonical
+rstudioapi hook for saveCannonical (user processing) to keep linebreaks consistent.
 
 Async dialogs won't work with collab (b/c they could use an old state).
 
@@ -128,10 +125,7 @@ Google Docs style list toggling
 
 Unit testing for core panmirror code
 
-Insert special character UX
-
 Deleting withProgress in TextEditingTargetVisualMode breaks everything! (see inline comment)
-
 
 multimarkdown support is incomplete: -mmd\_title\_block -mmd\_link\_attributes (not written, likely limitation of pandoc) -mmd\_header\_identifiers (work fine, but we currently allow edit of classes + keyvalue for markdown\_mmd)
 
@@ -148,8 +142,6 @@ allow more control over markdown output, particularly list indenting (perhaps ge
 as with above, make character escaping configurable
 
 No editing support for fancy list auto-numbering (\#. as list item that is auto-numbered)
-
-Consider special Knit behavior from Visual Mode: execute w/ keep_md and only re-executes R code when the code chunks have actually changed.
 
 MathQuill/MathJax: <https://pboysen.github.io/> <https://discuss.prosemirror.net/t/odd-behavior-with-nodeview-and-atom-node/1521>
 
