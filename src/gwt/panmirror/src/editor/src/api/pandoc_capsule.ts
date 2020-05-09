@@ -184,5 +184,17 @@ export function parsePandocBlockCapsule(text: string) : PandocBlockCapsule {
   };
 }
 
-
+// provide a version of the block capsule source with the prefix removed
+// from all but the very first line. this allows us to restore the text
+// to the level of indentation implied by the markdown (as opposed to the
+// level found literally in the source file)
+export function blockCapsuleSourceWithoutPrefix(source: string, prefix: string) {
+  // prefix represents the indentation level of the block's source code, strip that
+  // same prefix from all the lines of code save for the first one
+  const prefixStripRegEx = new RegExp('^' + prefix);
+  const lines = source.split('\n').map((line, index) => {
+    return index > 0 ? line.replace(prefixStripRegEx, '') : line;
+  });
+  return lines.join('\n');
+}
 

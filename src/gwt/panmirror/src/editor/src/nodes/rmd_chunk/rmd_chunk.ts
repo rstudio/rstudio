@@ -22,7 +22,7 @@ import { Extension } from '../../api/extension';
 import { EditorOptions } from '../../api/options';
 import { PandocOutput, PandocTokenType, PandocExtensions, ProsemirrorWriter, PandocToken } from '../../api/pandoc';
 import { pandocAttrReadAST, PandocAttr, kCodeBlockAttr, kCodeBlockText } from '../../api/pandoc_attr';
-import { PandocBlockCapsule, parsePandocBlockCapsule } from '../../api/pandoc_capsule';
+import { PandocBlockCapsule, parsePandocBlockCapsule, blockCapsuleSourceWithoutPrefix } from '../../api/pandoc_capsule';
 
 import { codeNodeSpec } from '../../api/code';
 import { ProsemirrorCommand, EditorCommandId, toggleBlockType } from '../../api/command';
@@ -238,15 +238,8 @@ function rmdChunkBlockCapsuleFilter() {
       // source still has leading and trailing backticks, remove them
       const source = capsule.source.replace(/^```+/, '').replace(/\n[\t >]*```+$/, '');
 
-      // prefix represents the indentation level of the block's source code, strip that
-      // same prefix from all the lines of code save for the first one
-      const prefixStripRegEx = new RegExp('^' + capsule.prefix);
-      const lines = source.split('\n').map((line, index) => {
-        return index > 0 ? line.replace(prefixStripRegEx, '') : line;
-      });
-
-      // write the lines
-      writer.writeText(lines.join('\n'));
+      // write the lines w/o the source-level prefix
+      writer.writeText(blockCapsuleSourceWithoutPrefix(source, capsule.prefix));
 
       // all done
       writer.closeNode();
