@@ -312,7 +312,10 @@ public class TextEditingTargetVisualMode
             // need to reset the editor's code (for both dirty state and 
             // so that diffs are efficient)
             if (result.cannonical != editorCode)
+            {
                getSourceEditor().setCode(result.cannonical);
+               markDirty();
+            }
             
             Scheduler.get().scheduleDeferred(() -> {
                
@@ -661,12 +664,7 @@ public class TextEditingTargetVisualMode
                   
                   // update editor dirty state if necessary
                   if (!loadingFromSource_ && !dirtyState_.getValue())
-                  {
-                     dirtyState_.markDirty(true);
-                     source_.setSourceDocumentDirty(
-                           docUpdateSentinel_.getId(), true, 
-                           new VoidServerRequestCallback());
-                  }
+                     markDirty();
                }  
             });
             
@@ -698,6 +696,14 @@ public class TextEditingTargetVisualMode
          ready.execute();
       }
    } 
+   
+   private void markDirty()
+   {
+      dirtyState_.markDirty(true);
+      source_.setSourceDocumentDirty(
+            docUpdateSentinel_.getId(), true, 
+            new VoidServerRequestCallback());
+   }
    
  
    // bizzarly, removing this method triggers a gwt compiler issue that
