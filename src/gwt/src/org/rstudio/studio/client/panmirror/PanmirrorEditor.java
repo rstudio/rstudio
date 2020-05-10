@@ -47,8 +47,16 @@ public class PanmirrorEditor
    public native void setTitle(String title);
    public native String getTitle();
    
-   public native Promise<String> setMarkdown(String code, PanmirrorWriterOptions options, boolean emitUpdate);
+   @JsType
+   public class SetMarkdownResult
+   {
+      public String cannonical;
+      public String[] unrecognized;
+   }
+   public native Promise<SetMarkdownResult> setMarkdown(String code, PanmirrorWriterOptions options, boolean emitUpdate);
+   
    public native Promise<PanmirrorCode> getMarkdown(PanmirrorWriterOptions option);
+   
    public native boolean isInitialDoc();
    
    public native JsVoidFunction subscribe(String event, JsVoidFunction handler);

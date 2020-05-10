@@ -229,6 +229,9 @@ export interface ProsemirrorWriter {
 
   // write tokens into the current node
   writeTokens(tokens: PandocToken[]): void;
+
+  // log an unrecoginzed token type
+  logUnrecognized(token: string): void;
 }
 
 export interface PandocNodeWriter {

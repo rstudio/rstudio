@@ -26,6 +26,8 @@ import {
 import { pandocAttrReadAST, kCodeBlockAttr, kCodeBlockText } from '../api/pandoc_attr';
 import { PandocBlockCapsuleFilter, parsePandocBlockCapsule, resolvePandocBlockCapsuleText, decodeBlockCapsuleText } from '../api/pandoc_capsule';
 
+import { PandocToProsemirrorResult } from './pandoc_converter';
+
 export function pandocToProsemirror(
   ast: PandocAst,
   schema: Schema,
@@ -33,7 +35,7 @@ export function pandocToProsemirror(
   blockReaders: readonly PandocBlockReaderFn[],
   inlineHTMLReaders: readonly PandocInlineHTMLReaderFn[],
   blockCapsuleFilters: readonly PandocBlockCapsuleFilter[],
-) {
+) : PandocToProsemirrorResult {
   const parser = new Parser(schema, readers, blockReaders, inlineHTMLReaders, blockCapsuleFilters);
   return parser.parse(ast);
 }
@@ -58,10 +60,9 @@ class Parser {
     this.handlers = this.createHandlers(readers, blockReaders);
   }
 
-  public parse(ast: any): ProsemirrorNode {
+  public parse(ast: any) {
     // create state
     const state: ParserState = new ParserState(this.schema);
-
     // create writer (compose state w/ writeTokens function)
     const parser = this;
     const writer: ProsemirrorWriter = {
@@ -78,6 +79,9 @@ class Parser {
       writeTokens(tokens: PandocToken[]) {
         parser.writeTokens(this, tokens);
       },
+      logUnrecognized(type: string) {
+        state.logUnrecognized(type);
+      }
     };
 
     // process raw text capsules
@@ -86,8 +90,11 @@ class Parser {
     // write all tokens
     writer.writeTokens(astBlocks);
 
-    // return the doc
-    return state.doc();
+    // return 
+    return {
+      doc: state.doc(),
+      unrecognized: state.unrecognized()
+    };
   }
 
   private writeTokens(writer: ProsemirrorWriter, tokens: PandocToken[]) {
@@ -128,7 +135,8 @@ class Parser {
       }
     }
 
-    throw new Error(`No handler for pandoc token ${tok.t}`);
+    // log unrecognized token
+    writer.logUnrecognized(tok.t);
   }
 
   private writeInlineHTML(writer: ProsemirrorWriter, html: string) {
@@ -263,6 +271,7 @@ class ParserState {
   private readonly notes: ProsemirrorNode[];
   private marks: Mark[];
   private footnoteNumber: number;
+  private unrecognizedTokens: string[];
 
   constructor(schema: Schema) {
     this.schema = schema;
@@ -270,6 +279,7 @@ class ParserState {
     this.notes = [];
     this.marks = Mark.none;
     this.footnoteNumber = 1;
+    this.unrecognizedTokens = [];
   }
 
   public doc(): ProsemirrorNode {
@@ -277,6 +287,10 @@ class ParserState {
     content.push(this.top().type.createAndFill(null, this.top().content) as ProsemirrorNode);
     content.push(this.schema.nodes.notes.createAndFill(null, this.notes) as ProsemirrorNode);
     return this.schema.topNodeType.createAndFill({}, content) as ProsemirrorNode;
+  }
+
+  public unrecognized(): string[] {
+    return this.unrecognizedTokens;
   }
 
   public writeText(text: string) {
@@ -337,6 +351,12 @@ class ParserState {
 
   public openNoteNode(ref: string) {
     this.openNode(this.schema.nodes.note, { ref, number: this.footnoteNumber++ });
+  }
+
+  public logUnrecognized(type: string) {
+    if (!this.unrecognizedTokens.includes(type)) {
+      this.unrecognizedTokens.push(type);
+    }
   }
 
   private top(): ParserStackElement {

@@ -291,10 +291,10 @@ public class TextEditingTargetVisualMode
          
          String editorCode = getEditorCode();
          
-         panmirror_.setMarkdown(editorCode, this.panmirrorWriterOptions(), true, (markdown) -> {  
+         panmirror_.setMarkdown(editorCode, this.panmirrorWriterOptions(), true, (result) -> {  
                
             // bail on error
-            if (markdown == null)
+            if (result == null)
             {
                done.execute(false);
                return;
@@ -311,8 +311,8 @@ public class TextEditingTargetVisualMode
             // if pandoc's view of the document doesn't match the editor's we 
             // need to reset the editor's code (for both dirty state and 
             // so that diffs are efficient)
-            if (markdown != null && markdown != editorCode)
-               getSourceEditor().setCode(markdown);
+            if (result.cannonical != editorCode)
+               getSourceEditor().setCode(result.cannonical);
             
             Scheduler.get().scheduleDeferred(() -> {
                
@@ -323,16 +323,19 @@ public class TextEditingTargetVisualMode
                if (focus)
                   panmirror_.focus();
                
-               // show any format or extension warnings
+               // show any warnings
                PanmirrorPandocFormat format = panmirror_.getPandocFormat();
-               if (format.warnings.invalidFormat.length() > 0)
+               if (result.unrecognized.length > 0) 
+               {
+                  view_.showWarningBar("Unrecognized Pandoc token(s); " + String.join(", ", result.unrecognized));
+               } 
+               else if (format.warnings.invalidFormat.length() > 0)
                {
                   view_.showWarningBar("Invalid Pandoc format: " + format.warnings.invalidFormat);
                }
                else if (format.warnings.invalidOptions.length > 0)
                {
-                  view_.showWarningBar("Unsupported extensions for markdown mode: " + String.join(", ", format.warnings.invalidOptions));
-      ;
+                  view_.showWarningBar("Unsupported extensions for markdown mode: " + String.join(", ", format.warnings.invalidOptions));;
                }
             });          
          });

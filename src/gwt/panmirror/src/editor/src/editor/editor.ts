@@ -87,6 +87,16 @@ export interface EditorCode {
   cursor?: { row: number; column: number };
 }
 
+export interface EditorSetMarkdownResult {
+  
+  // editor view of markdown (as it will be persisted)
+  cannonical: string;
+
+  // unrecoginized pandoc tokens
+  unrecognized: string[];
+
+}
+
 export interface EditorContext {
   readonly pandoc: PandocEngine;
   readonly ui: EditorUI;
@@ -378,10 +388,13 @@ export class Editor {
     }
   }
 
-  public async setMarkdown(markdown: string, options: PandocWriterOptions, emitUpdate: boolean): Promise<string> {
-    // get the doc
-    const doc = await this.pandocConverter.toProsemirror(markdown, this.pandocFormat.fullName);
-
+  public async setMarkdown(markdown: string, options: PandocWriterOptions, emitUpdate: boolean)
+    : Promise<EditorSetMarkdownResult> {
+    
+    // get the result
+    const result = await this.pandocConverter.toProsemirror(markdown, this.pandocFormat.fullName);
+    const { doc, unrecognized } = result;
+    
     // if we are preserving history but the existing doc is empty then create a new state
     // (resets the undo stack so that the intial setting of the document can't be undone)
     if (this.isInitialDoc()) {
@@ -422,7 +435,13 @@ export class Editor {
     // return our current markdown representation (so the caller know what our
     // current 'view' of the doc as markdown looks like
     // return this.pandocConverter.fromProsemirror(this.state.doc)
-    return this.getMarkdownCode(this.state.doc, options);
+    const cannonical = await this.getMarkdownCode(this.state.doc, options);
+
+    // return 
+    return {
+      cannonical, 
+      unrecognized
+    };
   }
 
   // flag indicating whether we've ever had setMarkdown (currently we need this

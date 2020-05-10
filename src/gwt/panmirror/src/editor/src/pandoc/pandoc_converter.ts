@@ -42,6 +42,11 @@ export interface PandocWriterOptions {
   dpi?: number;
 }
 
+export interface PandocToProsemirrorResult {
+  doc: ProsemirrorNode;
+  unrecognized: string[];
+}
+
 export class PandocConverter {
   private readonly schema: Schema;
   private readonly preprocessors: readonly PandocPreprocessorFn[];
@@ -76,7 +81,7 @@ export class PandocConverter {
     this.pandocCapabilities = pandocCapabilities;
   }
 
-  public async toProsemirror(markdown: string, format: string): Promise<ProsemirrorNode> {
+  public async toProsemirror(markdown: string, format: string): Promise<PandocToProsemirrorResult> {
     // adjust format. we always need to *read* raw_html, raw_attribute, and backtick_code_blocks b/c
     // that's how preprocessors hoist content through pandoc into our prosemirror token parser.
     format = this.adjustedFormat(format, ['raw_html', 'raw_attribute', 'backtick_code_blocks']);
@@ -92,7 +97,7 @@ export class PandocConverter {
     });
 
     const ast = await this.pandoc.markdownToAst(markdown, format, []);
-    let doc = pandocToProsemirror(
+    const result = pandocToProsemirror(
       ast,
       this.schema,
       this.readers,
@@ -103,11 +108,11 @@ export class PandocConverter {
 
     // run post-processors
     this.postprocessors.forEach(postprocessor => {
-      doc = postprocessor(doc);
+      result.doc = postprocessor(result.doc);
     });
 
     // return the doc
-    return doc;
+    return result;
   }
 
   public async fromProsemirror(
