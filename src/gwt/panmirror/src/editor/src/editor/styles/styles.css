@@ -97,7 +97,7 @@ h3.pm-heading {
 }
 
 .pm-list li:last-child *:last-child {
-  margin-bottom: 0;
+  margin-bottom: 0.1em;
 }
 
 .pm-figcaption {
