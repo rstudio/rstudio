@@ -24,9 +24,8 @@ import { PandocToken, PandocOutput, PandocTokenType, PandocExtensions } from '..
 import { delimiterMarkInputRule } from '../api/mark';
 
 import { fancyQuotesToSimple } from '../api/quote';
+import { kCodeText, kCodeAttr } from '../api/code';
 
-export const kCodeAttr = 0;
-export const kCodeText = 1;
 
 const extension = (pandocExtensions: PandocExtensions): Extension => {
   const codeAttrs = pandocExtensions.inline_code_attributes;

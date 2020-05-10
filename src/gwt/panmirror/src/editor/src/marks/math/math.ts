@@ -25,8 +25,7 @@ import { markIsActive, getMarkAttrs } from '../../api/mark';
 import { PandocCapabilities } from '../../api/pandoc_capabilities';
 import { EditorFormat } from '../../api/format';
 import { EditorUI } from '../../api/ui';
-
-import { kCodeText } from '../code';
+import { kCodeText } from '../../api/code';
 
 import { InsertInlineMathCommand, InsertDisplayMathCommand, insertMath } from './math-commands';
 import { mathAppendMarkTransaction } from './math-transaction';
