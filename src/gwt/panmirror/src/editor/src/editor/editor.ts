@@ -55,6 +55,7 @@ import { unitToPixels, pixelsToUnit, roundUnit, kValidUnits } from '../api/image
 import { kPercentUnit } from '../api/css';
 import { EditorFormat } from '../api/format';
 import { diffChars, EditorChange } from '../api/change';
+import { markInputRuleFilter } from '../api/input_rule';
 
 import { getTitle, setTitle } from '../nodes/yaml_metadata/yaml_metadata-title';
 
@@ -737,13 +738,9 @@ export class Editor {
   }
 
   private inputRulesPlugin() {
-    // see which marks disable input rules
-    const disabledMarks: string[] = [];
-    this.extensions.pandocMarks().forEach((mark: PandocMark) => {
-      if (mark.noInputRules) {
-        disabledMarks.push(mark.name);
-      }
-    });
+
+    // filter for disabling input rules for selected marks
+    const markFilter = markInputRuleFilter(this.schema, this.extensions.pandocMarks());
 
     // create the defautl inputRules plugin
     const plugin = inputRules({ rules: this.extensions.inputRules(this.schema) });
@@ -752,10 +749,8 @@ export class Editor {
     // override to disable input rules as requested
     // https://github.com/ProseMirror/prosemirror-inputrules/commit/b4bf67623aa4c4c1e096c20aa649c0e63751f337
     plugin.props.handleTextInput = (view: EditorView<any>, from: number, to: number, text: string) => {
-      for (const mark of disabledMarks) {
-        if (markIsActive(view.state, this.schema.marks[mark])) {
-          return false;
-        }
+      if (!markFilter(view.state)) {
+        return false;
       }
       return handleTextInput(view, from, to, text);
     };

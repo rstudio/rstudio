@@ -30,6 +30,7 @@ import { MarkTransaction } from '../../api/transaction';
 import { markIsActive, splitInvalidatedMarks } from '../../api/mark';
 import { EditorCommandId } from '../../api/command';
 import { texLength } from '../../api/tex';
+import { MarkInputRuleFilter } from '../../api/input_rule';
 
 import { kRawInlineFormat, kRawInlineContent, RawInlineInsertCommand } from './raw_inline';
 
@@ -102,8 +103,8 @@ const extension = (pandocExtensions: PandocExtensions): Extension | null => {
       ];
     },
 
-    inputRules: (schema: Schema) => {
-      return [texInputRule(schema)];
+    inputRules: (schema: Schema, filter: MarkInputRuleFilter) => {
+      return [texInputRule(schema, filter)];
     },
 
     // plugin to add highlighting decorations
@@ -142,11 +143,21 @@ const extension = (pandocExtensions: PandocExtensions): Extension | null => {
   };
 };
 
-function texInputRule(schema: Schema) {
+function texInputRule(schema: Schema, filter: MarkInputRuleFilter) {
   return new InputRule(/(^| )\\$/, (state: EditorState, match: string[], start: number, end: number) => {
     const rawTexMark = schema.marks.raw_tex;
 
     if (state.selection.empty && toggleMark(rawTexMark)(state)) {
+
+      // if there is no tex ahead of us or we don't pass the fitler (b/c marks that don't allow 
+      // input rules are active) then bail
+      const $head = state.selection.$head;
+      const texText = '\\' + $head.parent.textContent.slice($head.parentOffset);
+      const texMatchLength = texLength(texText);
+      if (texMatchLength === 0 || !filter(state, state.selection.from, state.selection.from + texMatchLength)) {
+        return null;
+      }
+
       // create transaction
       const tr = state.tr;
 

@@ -18,16 +18,16 @@ import { InputRule } from 'prosemirror-inputrules';
 import { EditorState } from 'prosemirror-state';
 import { setTextSelection } from 'prosemirror-utils';
 
-import { markInputRule } from '../../api/mark';
+import { markInputRule, MarkInputRuleFilter } from '../../api/input_rule';
 import { markPasteHandler } from '../../api/clipboard';
 
 export function linkInputRules(autoLink: boolean, headingLink: boolean) {
-  return (schema: Schema) => {
+  return (schema: Schema, filter: MarkInputRuleFilter) => {
     const rules = [
       // <link> style link
-      markInputRule(/(?:<)([a-z]+:\/\/[^>]+)(?:>)$/, schema.marks.link, (match: string[]) => ({ href: match[1] })),
+      markInputRule(/(?:<)([a-z]+:\/\/[^>]+)(?:>)$/, schema.marks.link, filter, (match: string[]) => ({ href: match[1] })),
       // full markdown link
-      markInputRule(/(?:\[)([^\]]+)(?:\]\()([^)]+)(?:\))$/, schema.marks.link, (match: string[]) => ({
+      markInputRule(/(?:\[)([^\]]+)(?:\]\()([^)]+)(?:\))$/, schema.marks.link, filter, (match: string[]) => ({
         href: match[2],
       })),
     ];
