@@ -25,6 +25,7 @@ import { EditorUI } from '../../api/ui';
 import { ListCapabilities } from '../../api/list';
 import { ProsemirrorCommand, EditorCommandId } from '../../api/command';
 import { PandocTokenType, PandocExtensions } from '../../api/pandoc';
+import { kPlatformMac } from '../../api/platform';
 
 import { ListCommand, TightListCommand, OrderedListEditCommand } from './list-commands';
 
@@ -39,7 +40,6 @@ import {
 import { writePandocBulletList, writePandocOrderedList, readPandocList } from './list-pandoc';
 
 import './list-styles.css';
-import { kPlatformMac } from '../../api/platform';
 
 export enum ListNumberStyle {
   DefaultStyle = 'DefaultStyle',
