@@ -51,7 +51,7 @@ const extension: Extension = {
             'data-span': '1',
             ...pandocAttrToDomAttr({
               ...mark.attrs,
-              classes: [...mark.attrs.classes, 'pm-span-background-color'],
+              classes: [...mark.attrs.classes, 'pm-span pm-span-background-color'],
             }),
           };
           return ['span', attr];

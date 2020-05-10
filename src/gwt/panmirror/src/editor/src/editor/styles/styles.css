@@ -69,8 +69,12 @@ h3.pm-heading {
   max-width: 100%;
 }
 
+.pm-code, 
+.pm-span {
+  padding: 0 3px;
+}
+
 .pm-code {
-  padding: 2px 4px;
   border: 1px solid;
   border-radius: 4px;
 }
