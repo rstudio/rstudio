@@ -229,7 +229,13 @@ function compute_url(){
         )
 
         for REMOTE_BASE in ${REMOTE_BASES[*]}; do
-            REMOTE_PATH="$(${CURL} ${BASE_URL}/${REMOTE_BASE}/ | grep -o -E "[[:alnum:]_.\-]*7z" | grep "${COMPONENT}" | tail -1)"
+            if [[ "${HOST_OS}" == "linux_x64" && "${VERSION}" == "5.12.8" ]]; then
+                # Qt 5.12.8 Linux release has multiple files in release folders; install the correct one!
+                # https://github.com/rstudio/rstudio/issues/6782
+                REMOTE_PATH="$(${CURL} ${BASE_URL}/${REMOTE_BASE}/ | grep -o -E "5\.12\.8\-0\-20200405[[:alnum:]_.\-]*7z" | grep "${COMPONENT}" | tail -1)"
+            else
+                REMOTE_PATH="$(${CURL} ${BASE_URL}/${REMOTE_BASE}/ | grep -o -E "[[:alnum:]_.\-]*7z" | grep "${COMPONENT}" | tail -1)"
+            fi
             if [ ! -z "${REMOTE_PATH}" ]; then
                 echo "${BASE_URL}/${REMOTE_BASE}/${REMOTE_PATH}"
                 return 0
