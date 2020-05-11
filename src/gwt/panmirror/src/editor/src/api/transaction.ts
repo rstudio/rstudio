@@ -114,7 +114,7 @@ export function appendMarkTransactionsPlugin(handlers: readonly AppendMarkTransa
       );
 
       // return transaction
-      if (tr.docChanged || tr.selectionSet) {
+      if (tr.docChanged || tr.selectionSet || tr.storedMarksSet) {
         return tr;
       }
     },
