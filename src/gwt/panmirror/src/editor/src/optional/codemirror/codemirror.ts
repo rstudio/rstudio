@@ -23,6 +23,11 @@ import { undoInputRule } from 'prosemirror-inputrules';
 
 import { CodeViewOptions } from '../../api/node';
 import { insertParagraph } from '../../api/paragraph';
+import { createImageButton } from '../../api/widgets/widgets';
+import { EditorUI } from '../../api/ui';
+import { EditorOptions } from '../../api/options';
+import { kPlatformMac } from '../../api/platform';
+import { rmdChunk, previousExecutableRmdChunks, mergeRmdChunks } from '../../api/rmd';
 
 import { selectAll } from '../../behaviors/select_all';
 
@@ -48,7 +53,7 @@ import './codemirror.css';
 
 const plugin = new PluginKey('codemirror');
 
-export function codeMirrorPlugins(codeViews: { [key: string]: CodeViewOptions }) {
+export function codeMirrorPlugins(codeViews: { [key: string]: CodeViewOptions }, ui: EditorUI, options: EditorOptions) {
   // build nodeViews
   const nodeTypes = Object.keys(codeViews);
   const nodeViews: {
@@ -56,7 +61,7 @@ export function codeMirrorPlugins(codeViews: { [key: string]: CodeViewOptions })
   } = {};
   nodeTypes.forEach(name => {
     nodeViews[name] = (node: ProsemirrorNode, view: EditorView, getPos: boolean | (() => number)) => {
-      return new CodeBlockNodeView(node, view, getPos as () => number, codeViews[name]);
+      return new CodeBlockNodeView(node, view, getPos as () => number, ui, options, codeViews[name]);
     };
   });
 
@@ -83,20 +88,24 @@ class CodeBlockNodeView implements NodeView {
   private readonly view: EditorView;
   private readonly getPos: () => number;
   private readonly cm: CodeMirror.Editor;
+  private readonly editorOptions: EditorOptions;
   private readonly options: CodeViewOptions;
+
+  private readonly runChunkToolbar: HTMLDivElement;
 
   private node: ProsemirrorNode;
   private incomingChanges: boolean;
   private updating: boolean;
 
-  constructor(node: ProsemirrorNode, view: EditorView, getPos: () => number, options: CodeViewOptions) {
+  constructor(node: ProsemirrorNode, view: EditorView, getPos: () => number, ui: EditorUI, editorOptions: EditorOptions, options: CodeViewOptions) {
     // Store for later
     this.node = node;
     this.view = view;
     this.getPos = getPos;
     this.incomingChanges = false;
 
-    // option defaults
+    // options
+    this.editorOptions = editorOptions;
     this.options = options;
 
     // CodeMirror options
@@ -111,17 +120,25 @@ class CodeBlockNodeView implements NodeView {
       styleSelectedText: true,
     };
     if (this.options.lineNumberFormatter) {
-      cmOptions.lineNumberFormatter = this.options.lineNumberFormatter;
+      cmOptions.lineNumberFormatter = (lineNumber: number) => {
+        const lineCount = this.cm?.lineCount();
+        const line = this.cm?.getLine(lineNumber - 1);
+        return this.options.lineNumberFormatter!(lineNumber, lineCount, line);
+      };
     }
 
     // Create a CodeMirror instance
     this.cm = CodeMirror(null!, cmOptions as CodeMirror.EditorConfiguration);
 
-    // update mode
-    this.updateMode();
-
     // The editor's outer node is our DOM representation
     this.dom = this.cm.getWrapperElement();
+
+    // add a chunk execution button if execution is supported
+    this.runChunkToolbar = this.initRunChunkToolbar(ui);
+    this.dom.append(this.runChunkToolbar);
+  
+    // update mode
+    this.updateMode();
 
     // theming
     this.dom.classList.add('pm-code-editor');
@@ -242,16 +259,30 @@ class CodeBlockNodeView implements NodeView {
   }
 
   private updateMode() {
+
+    // get lang
     const lang = this.options.lang(this.node, this.cm.getValue());
+
+    // syntax highlighting
     const mode = lang ? modeForLang(lang, this.options) : null;
     if (mode !== this.cm.getOption('mode')) {
       this.cm.setOption('mode', mode);
+    }
+
+    // if we have a language check whether execution should be enabled for this language
+    if (lang && this.canExecuteChunks()) {
+      const enabled = !!this.editorOptions.rmdChunkExecution!.find(rmdChunkLang => {
+        return lang.localeCompare(rmdChunkLang, undefined, { sensitivity: 'accent' }) === 0;
+      });
+      this.enableChunkExecution(enabled);
+    } else {
+      this.enableChunkExecution(false);
     }
   }
 
   private codeMirrorKeymap() {
     const view = this.view;
-    const mod = /Mac/.test(navigator.platform) ? 'Cmd' : 'Ctrl';
+    const mod = kPlatformMac ? 'Cmd' : 'Ctrl';
 
     // exit code block
     const exitBlock = () => {
@@ -262,7 +293,7 @@ class CodeBlockNodeView implements NodeView {
 
     // Note: normalizeKeyMap not declared in CodeMirror types
     // so we cast to any
-    return (CodeMirror as any).normalizeKeyMap({
+    const cmKeymap = (CodeMirror as any).normalizeKeyMap({
       Up: () => this.arrowMaybeEscape('line', -1),
       Left: () => this.arrowMaybeEscape('char', -1),
       Down: () => this.arrowMaybeEscape('line', 1),
@@ -283,6 +314,7 @@ class CodeBlockNodeView implements NodeView {
         return this.options.attrEditFn ? this.options.attrEditFn(view.state, view.dispatch, view) : CodeMirror.Pass;
       },
     });
+    return cmKeymap;
   }
 
   private backspaceMaybeDeleteNode() {
@@ -319,6 +351,67 @@ class CodeBlockNodeView implements NodeView {
     const selection = Selection.near(this.view.state.doc.resolve(targetPos), dir);
     this.view.dispatch(this.view.state.tr.setSelection(selection).scrollIntoView());
     this.view.focus();
+  }
+
+  private initRunChunkToolbar(ui: EditorUI) {
+
+    const toolbar = window.document.createElement('div');
+    toolbar.classList.add('pm-codemirror-toolbar');
+    if (this.options.executeRmdChunkFn) {
+
+      // run previous chunks button
+      const runPreivousChunkShortcut = kPlatformMac ? '⌥⌘P' : 'Ctrl+Alt+P';
+      const runPreviousChunksButton = createImageButton(
+        ui.images.runprevchunks!,
+        ['pm-run-previous-chunks-button'],
+        `${ui.context.translateText('Run All Chunks Above')} (${runPreivousChunkShortcut})`,
+      );
+      runPreviousChunksButton.onclick = this.executePreviousChunks.bind(this);
+      toolbar.append(runPreviousChunksButton);
+
+      // run chunk button
+      const runChunkShortcut = kPlatformMac ? '⇧⌘↩︎' : 'Ctrl+Shift+Enter';
+      const runChunkButton = createImageButton(
+        ui.images.runchunk!,
+        ['pm-run-chunk-button'],
+        `${ui.context.translateText('Run Chunk')} (${runChunkShortcut})`,
+      );
+      runChunkButton.onclick = this.executeChunk.bind(this);
+      toolbar.append(runChunkButton);
+    }
+
+    return toolbar;
+  }
+
+  private executeChunk() {
+    if (this.isChunkExecutionEnabled()) {
+      const chunk = rmdChunk(this.node.textContent);
+      if (chunk != null) {
+        this.options.executeRmdChunkFn!(chunk);
+      }
+    }
+  }
+
+  private executePreviousChunks() {
+    if (this.isChunkExecutionEnabled()) {
+      const prevChunks = previousExecutableRmdChunks(this.view.state, this.getPos());
+      const mergedChunk = mergeRmdChunks(prevChunks);
+      if (mergedChunk) {
+        this.options.executeRmdChunkFn!(mergedChunk);
+      }
+    }
+  }
+
+  private canExecuteChunks() {
+    return this.editorOptions.rmdChunkExecution && this.options.executeRmdChunkFn;
+  }
+
+  private enableChunkExecution(enable: boolean) {
+    this.runChunkToolbar.style.display = enable ? 'initial' : 'none';
+  }
+
+  private isChunkExecutionEnabled() {
+    return this.runChunkToolbar.style.display !== 'none';
   }
 }
 

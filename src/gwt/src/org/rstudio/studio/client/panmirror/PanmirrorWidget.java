@@ -36,15 +36,15 @@ import org.rstudio.studio.client.panmirror.command.PanmirrorMenuItem;
 import org.rstudio.studio.client.panmirror.command.PanmirrorToolbar;
 import org.rstudio.studio.client.panmirror.command.PanmirrorToolbarCommands;
 import org.rstudio.studio.client.panmirror.command.PanmirrorToolbarMenu;
+import org.rstudio.studio.client.panmirror.events.PanmirrorOutlineNavigationEvent;
+import org.rstudio.studio.client.panmirror.events.PanmirrorOutlineVisibleEvent;
+import org.rstudio.studio.client.panmirror.events.PanmirrorOutlineWidthEvent;
 import org.rstudio.studio.client.panmirror.findreplace.PanmirrorFindReplace;
 import org.rstudio.studio.client.panmirror.findreplace.PanmirrorFindReplaceWidget;
 import org.rstudio.studio.client.panmirror.format.PanmirrorFormat;
 import org.rstudio.studio.client.panmirror.location.PanmirrorEditingLocation;
 import org.rstudio.studio.client.panmirror.location.PanmirrorEditingOutlineLocation;
 import org.rstudio.studio.client.panmirror.outline.PanmirrorOutlineItem;
-import org.rstudio.studio.client.panmirror.outline.PanmirrorOutlineNavigationEvent;
-import org.rstudio.studio.client.panmirror.outline.PanmirrorOutlineVisibleEvent;
-import org.rstudio.studio.client.panmirror.outline.PanmirrorOutlineWidthEvent;
 import org.rstudio.studio.client.panmirror.outline.PanmirrorOutlineWidget;
 import org.rstudio.studio.client.panmirror.pandoc.PanmirrorPandocFormat;
 import org.rstudio.studio.client.panmirror.theme.PanmirrorTheme;
@@ -352,11 +352,14 @@ public class PanmirrorWidget extends DockLayoutPanel implements
    
   
    
-   public void setMarkdown(String code, PanmirrorWriterOptions options, boolean emitUpdate, CommandWithArg<String> completed) 
+   public void setMarkdown(String code, 
+                           PanmirrorWriterOptions options, 
+                           boolean emitUpdate, 
+                           CommandWithArg<PanmirrorEditor.SetMarkdownResult> completed) 
    {
-      new PromiseWithProgress<String>(
+      new PromiseWithProgress<PanmirrorEditor.SetMarkdownResult>(
          editor_.setMarkdown(code, options, emitUpdate),
-         "",
+         null,
          kSerializationProgressDelayMs,
          completed
       );

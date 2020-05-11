@@ -188,7 +188,7 @@ const LinkPopup: React.FC<LinkPopupProps> = props => {
 
   return (
     <Popup classes={['pm-popup-link']} style={props.style}>
-      <LinkButton text={linkText} onClick={onLinkClicked} maxWidth={props.maxLinkWidth}></LinkButton>
+      <LinkButton text={linkText} onClick={onLinkClicked} maxWidth={props.maxLinkWidth}/>
       {showCopyButton ? (
         <ImageButton
           image={props.ui.images.copy!}

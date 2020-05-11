@@ -48,7 +48,7 @@ const extension: Extension = {
         },
         defining: true,
         content: 'block+',
-        group: 'block',
+        group: 'block list_item_block',
         parseDOM: [
           {
             tag: 'div[data-div="1"]',
@@ -113,7 +113,7 @@ function divCommand(ui: EditorUI, allowEdit: boolean) {
     //  - wrapping (a la blockquote)
     const schema = state.schema;
     const div = allowEdit ? findParentNodeOfType(schema.nodes.div)(state.selection) : undefined;
-    if (!div && !toggleWrap(schema.nodes.div)(state) && !precedingListItemInsertPos(state.doc, state.selection)) {
+    if (!div && !toggleWrap(schema.nodes.div)(state)) {
       return false;
     }
 
@@ -161,20 +161,11 @@ async function editDiv(ui: EditorUI, state: EditorState, dispatch: (tr: Transact
 async function createDiv(ui: EditorUI, state: EditorState, dispatch: (tr: Transaction) => void) {
   const result = await ui.dialogs.editDiv({}, false);
   if (result) {
-    const prevListItemPos = precedingListItemInsertPos(state.doc, state.selection);
-    if (prevListItemPos) {
-      const para = state.schema.nodes.paragraph.create();
-      const div = state.schema.nodes.div.createAndFill(result.attr, para);
-      const tr = state.tr;
-      precedingListItemInsert(tr, prevListItemPos, div);
+    wrapIn(state.schema.nodes.div)(state, (tr: Transaction) => {
+      const div = findParentNodeOfType(state.schema.nodes.div)(tr.selection)!;
+      tr.setNodeMarkup(div.pos, div.node.type, result.attr);
       dispatch(tr);
-    } else {
-      wrapIn(state.schema.nodes.div)(state, (tr: Transaction) => {
-        const div = findParentNodeOfType(state.schema.nodes.div)(tr.selection)!;
-        tr.setNodeMarkup(div.pos, div.node.type, result.attr);
-        dispatch(tr);
-      });
-    }
+    }); 
   }
 }
 

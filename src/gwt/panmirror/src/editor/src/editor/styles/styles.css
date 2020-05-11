@@ -33,7 +33,11 @@
 }
 
 h3.pm-heading {
-  font-size: 1.25em;
+  font-size: 1.25em !important;
+}
+
+.pm-heading .pm-fixedwidth-font {
+  font-size: inherit !important;
 }
 
 .pm-link {
@@ -65,8 +69,14 @@ h3.pm-heading {
   max-width: 100%;
 }
 
+.pm-code, 
+.pm-span {
+  padding: 0 3px;
+}
+
 .pm-code {
-  padding: 2px 4px;
+  border: 1px solid;
+  border-radius: 4px;
 }
 
 .pm-div {
@@ -84,6 +94,10 @@ h3.pm-heading {
 
 .pm-list {
   padding-inline-start: 25px;
+}
+
+.pm-list li:last-child *:last-child {
+  margin-bottom: 0.1em;
 }
 
 .pm-figcaption {

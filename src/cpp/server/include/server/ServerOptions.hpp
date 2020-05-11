@@ -113,7 +113,12 @@ public:
             return std::string("8787");
       }
    }
-   
+
+   std::string wwwUrlPathPrefix() const
+   {
+      return std::string(wwwUrlPathPrefix_.c_str()); 
+   }
+
    std::string wwwLocalPath() const
    {
       return std::string(wwwLocalPath_.c_str()); 
@@ -345,6 +350,7 @@ private:
    std::vector<std::string> serverAddHeaders_;
    std::string wwwAddress_ ;
    std::string wwwPort_ ;
+   std::string wwwUrlPathPrefix_ ;
    std::string wwwLocalPath_ ;
    std::string wwwSymbolMapsPath_;
    std::string wwwFrameOrigin_;

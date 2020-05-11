@@ -29,7 +29,7 @@ import { EditorFormat, kBlogdownDocType } from '../api/format';
 import { ProsemirrorCommand, EditorCommandId } from '../api/command';
 import { canInsertNode } from '../api/node';
 import { FixupContext } from '../api/fixup';
-import { quotesForType, QuoteType } from '../api/quote';
+import { fancyQuotesToSimple } from '../api/quote';
 
 const kShortcodePattern = '{{([%<])\\s+.*?[%>]}}';
 const kShortcodeRegEx = new RegExp(kShortcodePattern, 'g');
@@ -140,12 +140,7 @@ const extension = (
 };
 
 function detectAndCreateShortcodes(schema: Schema, tr: MarkTransaction, pos: number) {
-  // create regexs for removing quotes
-  const singleQuote = quotesForType(QuoteType.SingleQuote);
-  const singleQuoteRegEx = new RegExp(`[${singleQuote.begin}${singleQuote.end}]`, 'g');
-  const doubleQuote = quotesForType(QuoteType.DoubleQuote);
-  const doubleQuoteRegEx = new RegExp(`[${doubleQuote.begin}${doubleQuote.end}]`, 'g');
-
+ 
   // apply marks wherever they belong
   detectAndApplyMarks(tr, tr.doc.nodeAt(pos)!, pos, kShortcodeRegEx, schema.marks.shortcode);
 
@@ -157,7 +152,7 @@ function detectAndCreateShortcodes(schema: Schema, tr: MarkTransaction, pos: num
     const markedRange = getMarkRange(tr.doc.resolve(from), markType);
     if (markedRange) {
       const text = tr.doc.textBetween(markedRange.from, markedRange.to);
-      const replaceText = text.replace(singleQuoteRegEx, "'").replace(doubleQuoteRegEx, '"');
+      const replaceText = fancyQuotesToSimple(text);
       if (replaceText !== text) {
         tr.insertText(replaceText, markedRange.from);
       }

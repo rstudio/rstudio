@@ -45,7 +45,7 @@ export interface BaseKeyBinding {
   command: CommandFn;
 }
 
-export function baseKeysPlugin(keys: BaseKeyBinding[]) {
+export function baseKeysPlugin(keys: readonly BaseKeyBinding[]) {
   // collect all keys
   const pluginKeys = [
     // base enter key behaviors

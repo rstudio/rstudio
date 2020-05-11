@@ -25,8 +25,8 @@ import { markIsActive, getMarkAttrs } from '../../api/mark';
 import { PandocCapabilities } from '../../api/pandoc_capabilities';
 import { EditorFormat } from '../../api/format';
 import { EditorUI } from '../../api/ui';
-
-import { kCodeText } from '../code';
+import { kCodeText } from '../../api/code';
+import { MarkInputRuleFilter } from '../../api/input_rule';
 
 import { InsertInlineMathCommand, InsertDisplayMathCommand, insertMath } from './math-commands';
 import { mathAppendMarkTransaction } from './math-transaction';
@@ -181,13 +181,13 @@ const extension = (
       }
     },
 
-    inputRules: (schema: Schema) => {
+    inputRules: (schema: Schema, filter: MarkInputRuleFilter) => {
       return [
         // inline math
         new InputRule(
           new RegExp(kInlineMathPattern + '$'),
           (state: EditorState, match: string[], start: number, end: number) => {
-            if (!markIsActive(state, schema.marks.math)) {
+            if (!markIsActive(state, schema.marks.math) && filter(state, start, end)) {
               const tr = state.tr;
               tr.insertText('$');
               const mark = schema.marks.math.create({ type: MathType.Inline });
@@ -205,12 +205,14 @@ const extension = (
             if (text.length > 0) {
               const length = mathLength(text);
               if (length > 1) {
-                const tr = state.tr;
-                tr.insertText('$');
-                const startMath = tr.selection.from - 1;
-                const mark = schema.marks.math.create({ type: MathType.Inline });
-                tr.addMark(startMath, startMath + length, mark);
-                return tr;
+                if (filter(state, start, start + length)) {
+                  const tr = state.tr;
+                  tr.insertText('$');
+                  const startMath = tr.selection.from - 1;
+                  const mark = schema.marks.math.create({ type: MathType.Inline });
+                  tr.addMark(startMath, startMath + length, mark);
+                  return tr;
+                }
               }
             }
           }
@@ -218,10 +220,14 @@ const extension = (
         }),
         // display math
         new InputRule(/^\$\$$/, (state: EditorState, match: string[], start: number, end: number) => {
-          const tr = state.tr;
-          tr.delete(start, end);
-          insertMath(tr.selection, MathType.Display, !singleLineDisplayMath, tr);
-          return tr;
+          if (filter(state, start, end)) {
+            const tr = state.tr;
+            tr.delete(start, end);
+            insertMath(tr.selection, MathType.Display, !singleLineDisplayMath, tr);
+            return tr;
+          } else {
+            return null;
+          }
         }),
       ];
     },

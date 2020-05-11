@@ -20,10 +20,12 @@ import { ImageDimensions } from './image';
 import { EditorUIImages } from './ui-images';
 
 import { kStyleAttrib } from './pandoc_attr';
+import { EditorRmdChunk } from './rmd';
 
 export interface EditorUI {
   dialogs: EditorDialogs;
   display: EditorDisplay;
+  execute: EditorUIExecute;
   context: EditorUIContext;
   images: EditorUIImages;
 }
@@ -66,9 +68,14 @@ export interface EditorMenuItem {
   };
 }
 
+export interface EditorUIExecute {
+  executeRmdChunk?: (chunk: EditorRmdChunk) => void;
+}
+
 export interface EditorDisplay {
   openURL: (url: string) => void;
   showContextMenu?: (items: EditorMenuItem[], clientX: number, clientY: number) => void;
+  
 }
 
 export enum AlertType {

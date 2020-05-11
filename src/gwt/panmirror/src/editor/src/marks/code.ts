@@ -14,15 +14,18 @@
  */
 
 import { Fragment, Mark, Node as ProsemirrorNode, Schema } from 'prosemirror-model';
+import { Step, AddMarkStep } from 'prosemirror-transform';
+import { Transaction } from 'prosemirror-state';
 
 import { MarkCommand, EditorCommandId } from '../api/command';
 import { Extension } from '../api/extension';
 import { pandocAttrSpec, pandocAttrParseDom, pandocAttrToDomAttr, pandocAttrReadAST } from '../api/pandoc_attr';
 import { PandocToken, PandocOutput, PandocTokenType, PandocExtensions } from '../api/pandoc';
-import { delimiterMarkInputRule } from '../api/mark';
 
-export const kCodeAttr = 0;
-export const kCodeText = 1;
+import { fancyQuotesToSimple } from '../api/quote';
+import { kCodeText, kCodeAttr } from '../api/code';
+import { delimiterMarkInputRule, MarkInputRuleFilter } from '../api/input_rule';
+
 
 const extension = (pandocExtensions: PandocExtensions): Extension => {
   const codeAttrs = pandocExtensions.inline_code_attributes;
@@ -47,7 +50,7 @@ const extension = (pandocExtensions: PandocExtensions): Extension => {
             },
           ],
           toDOM(mark: Mark) {
-            const fontClass = 'pm-code pm-fixedwidth-font pm-chunk-background-color';
+            const fontClass = 'pm-code pm-fixedwidth-font pm-chunk-background-color pm-block-border-color';
             const attrs = codeAttrs
               ? pandocAttrToDomAttr({
                   ...mark.attrs,
@@ -97,8 +100,35 @@ const extension = (pandocExtensions: PandocExtensions): Extension => {
       return [new MarkCommand(EditorCommandId.Code, ['Mod-d'], schema.marks.code)];
     },
 
-    inputRules: (schema: Schema) => {
-      return [delimiterMarkInputRule('`', schema.marks.code)];
+    inputRules: (schema: Schema, filter: MarkInputRuleFilter) => {
+      return [delimiterMarkInputRule('`', schema.marks.code, filter)];
+    },
+
+    appendTransaction: (schema: Schema) => {
+  
+       // detect add code steps
+      const isAddCodeMarkStep = (step: Step) => {
+        return step instanceof AddMarkStep && (step as any).mark.type === schema.marks.code;
+      };
+
+      return [
+        {
+          name: 'code_remove_quotes',
+          filter: (transactions: Transaction[]) => transactions.some(transaction => transaction.steps.some(isAddCodeMarkStep)),
+          append: (tr: Transaction, transactions: Transaction[]) => {
+            transactions.forEach(transaction => {
+              transaction.steps.filter(isAddCodeMarkStep).forEach(step => {
+                const { from, to } = step as any;
+                const code = tr.doc.textBetween(from, to);
+                const newCode = fancyQuotesToSimple(code);
+                if (newCode !== code) {
+                  tr.insertText(newCode, from, to);
+                }
+              });
+            });
+          },
+        },
+      ];
     },
   };
 };

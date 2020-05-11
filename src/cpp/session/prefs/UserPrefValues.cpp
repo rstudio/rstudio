@@ -2455,6 +2455,19 @@ core::Error UserPrefValues::setVisualMarkdownEditingMaxContentWidth(int val)
 }
 
 /**
+ * Whether to show the document outline by default when opening R Markdown documents in visual mode.
+ */
+bool UserPrefValues::visualMarkdownEditingShowDocOutline()
+{
+   return readPref<bool>("visual_markdown_editing_show_doc_outline");
+}
+
+core::Error UserPrefValues::setVisualMarkdownEditingShowDocOutline(bool val)
+{
+   return writePref("visual_markdown_editing_show_doc_outline", val);
+}
+
+/**
  * The default visual editing mode font size, in points
  */
 int UserPrefValues::visualMarkdownEditingFontSizePoints()
@@ -2748,6 +2761,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kVisualMarkdownEditingWrapAuto,
       kVisualMarkdownEditingWrapColumn,
       kVisualMarkdownEditingMaxContentWidth,
+      kVisualMarkdownEditingShowDocOutline,
       kVisualMarkdownEditingFontSizePoints,
       kDisabledAriaLiveAnnouncements,
       kScreenreaderConsoleAnnounceLimit,

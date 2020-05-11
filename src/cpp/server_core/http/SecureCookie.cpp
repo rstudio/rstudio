@@ -210,60 +210,6 @@ void set(const std::string& name,
          const std::string& value,
          const http::Request& request,
          const boost::posix_time::time_duration& validDuration,
-         const std::string& path,
-         http::Response* pResponse,
-         bool secure,
-         bool iFrameEmbedding,
-         bool legacyCookies,
-         bool iFrameLegacyCookies)
-{
-   secure_cookie::set(name,
-                      value,
-                      request,
-                      validDuration,
-                      boost::optional<boost::gregorian::days>(),
-                      path,
-                      pResponse,
-                      secure,
-                      iFrameEmbedding,
-                      legacyCookies,
-                      iFrameLegacyCookies);
-}
-
-void set(const std::string& name,
-         const std::string& value,
-         const http::Request& request,
-         const boost::posix_time::time_duration& validDuration,
-         const boost::optional<boost::gregorian::days>& cookieExpiresDays,
-         const std::string& path,
-         http::Response* pResponse,
-         bool secure,
-         bool iFrameEmbedding,
-         bool legacyCookies,
-         bool iFrameLegacyCookies)
-{
-   // create secure cookie
-   http::Cookie cookie = createSecureCookie(name,
-                                            value,
-                                            request,
-                                            validDuration,
-                                            path,
-                                            secure,
-                                            iFrameEmbedding,
-                                            legacyCookies);
-
-   // expire from browser as requested
-   if (cookieExpiresDays.is_initialized())
-      cookie.setExpires(*cookieExpiresDays);
-
-   // add to response
-   pResponse->addCookie(cookie, iFrameLegacyCookies);
-}
-
-void set(const std::string& name,
-         const std::string& value,
-         const http::Request& request,
-         const boost::posix_time::time_duration& validDuration,
          const boost::optional<boost::posix_time::time_duration>& expiresFromNow,
          const std::string& path,
          http::Response* pResponse,

@@ -126,7 +126,7 @@ void signIn(const http::Request& request,
       variables[kFormAction] = "action=\"javascript:void\" "
                                "onsubmit=\"submitRealForm();return false\"";
    else
-      variables[kFormAction] = "action=\"" + variables["action"] + "\" "
+      variables[kFormAction] = "action=\"" + std::string(kDoSignIn) + "\" "
                                "onsubmit=\"return verifyMe()\"";
    const std::string& templatePath = "templates/encrypted-sign-in.htm";
    auth::common::signIn(request, pResponse, templatePath, kDoSignIn, variables);
@@ -145,6 +145,9 @@ void publicKey(const http::Request&,
 void doSignIn(const http::Request& request,
               http::Response* pResponse)
 {
+   if (!auth::common::validateSignIn(request, pResponse))
+      return;
+
    std::string appUri = request.formFieldValue(kAppUri);
 
    bool persist = false;
@@ -189,11 +192,11 @@ void doSignIn(const http::Request& request,
 
    bool authenticated = pamLogin(username, password);
    if (!auth::common::doSignIn(request,
-                             pResponse,
-                             username,
-                             appUri,
-                             persist,
-                             authenticated))
+                               pResponse,
+                               username,
+                               appUri,
+                               persist,
+                               authenticated))
    {
       return;
    }
@@ -270,7 +273,7 @@ Error initialize()
                                 getUserIdentifier);
    pamHandler.signOut = signOut;
    if (canSetSignInCookies())
-      pamHandler.setSignInCookies = boost::bind(auth::common::setSignInCookies, _1, _2, _3, _4, false);
+      pamHandler.setSignInCookies = boost::bind(auth::common::setSignInCookies, _1, _2, _3, _4);
    auth::handler::registerHandler(pamHandler);
 
    // add pam-specific auth handlers

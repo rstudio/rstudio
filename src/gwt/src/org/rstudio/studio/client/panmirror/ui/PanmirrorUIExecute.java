@@ -1,5 +1,5 @@
 /*
- * PanmirrorUIContext.java
+ * PanmirrorUIExecute.java
  *
  * Copyright (C) 2009-20 by RStudio, PBC
  *
@@ -13,32 +13,23 @@
  *
  */
 
-package org.rstudio.studio.client.panmirror;
 
+
+package org.rstudio.studio.client.panmirror.ui;
+
+import org.rstudio.studio.client.panmirror.PanmirrorRmdChunk;
 
 import jsinterop.annotations.JsFunction;
 import jsinterop.annotations.JsType;
 
 @JsType
-public class PanmirrorUIContext
-{
-   public Getter getDefaultResourceDir;
-   public Mapper mapPathToResource;
-   public Mapper mapResourceToURL;
-   public Mapper translateText;
-
+public class PanmirrorUIExecute {
    
-   @JsFunction 
-   public interface Getter
-   {
-      String get();
-   }
+   public ExecuteRmdChunk executeRmdChunk;
    
    @JsFunction
-   public interface Mapper
+   public interface ExecuteRmdChunk
    {
-      String map(String path);
+      void execute(PanmirrorRmdChunk chunk);
    }
 }
-
-

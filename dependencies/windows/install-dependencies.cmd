@@ -20,8 +20,8 @@ set OPENSSL_FILES=openssl-1.1.1d.zip
 set BOOST_FILES=boost-1.69.0-win-msvc141.zip
 
 set PANDOC_VERSION=2.9.2.1
-set PANDOC_NAME=pandoc-%PANDOC_VERSION%-windows-x86_64
-set PANDOC_FILE=%PANDOC_NAME%.zip
+set PANDOC_NAME=pandoc-%PANDOC_VERSION%
+set PANDOC_FILE=%PANDOC_NAME%-windows-x86_64.zip
 
 set LIBCLANG_VERSION=5.0.2
 set LIBCLANG_NAME=libclang-windows-%LIBCLANG_VERSION%

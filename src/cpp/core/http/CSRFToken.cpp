@@ -29,37 +29,15 @@ namespace rstudio {
 namespace core {
 namespace http {
 
-void setCSRFTokenCookie(const http::Request& request, 
-                        const boost::optional<boost::gregorian::days>& expiry,
-                        const std::string& token,
-                        bool secure,
-                        bool iFrameEmbedding,
-                        bool legacyCookies,
-                        bool iFrameLegacyCookies,
-                        http::Response* pResponse)
-{
-   boost::optional<boost::posix_time::time_duration> expiresFromNow;
-   if (expiry.is_initialized())
-      expiresFromNow = boost::posix_time::time_duration(24 * expiry->days(), 0, 0);
-
-   setCSRFTokenCookie(request,
-                      expiresFromNow,
-                      token,
-                      secure,
-                      iFrameEmbedding,
-                      legacyCookies,
-                      iFrameLegacyCookies,
-                      pResponse);
-}
-
-void setCSRFTokenCookie(const http::Request& request,
-                        const boost::optional<boost::posix_time::time_duration>& expiresFromNow,
-                        const std::string& token,
-                        bool secure,
-                        bool iFrameEmbedding,
-                        bool legacyCookies,
-                        bool iFrameLegacyCookies,
-                        http::Response* pResponse)
+std::string setCSRFTokenCookie(const http::Request& request,
+                               const boost::optional<boost::posix_time::time_duration>& expiresFromNow,
+                               const std::string& token,
+                               const std::string& path,
+                               bool secure,
+                               bool iFrameEmbedding,
+                               bool legacyCookies,
+                               bool iFrameLegacyCookies,
+                               http::Response* pResponse)
 {
    // generate UUID for token if unspecified
    std::string csrfToken(token);
@@ -71,7 +49,7 @@ void setCSRFTokenCookie(const http::Request& request,
             request,
             kCSRFTokenCookie,
             csrfToken,
-            "/",  // cookie for root path
+            path,
             Cookie::selectSameSite(legacyCookies, iFrameEmbedding),
             true, // HTTP only
             secure);
@@ -81,6 +59,7 @@ void setCSRFTokenCookie(const http::Request& request,
       cookie.setExpires(*expiresFromNow);
 
    pResponse->addCookie(cookie, iFrameLegacyCookies);
+   return csrfToken;
 }
 
 bool validateCSRFForm(const http::Request& request, 

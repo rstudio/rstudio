@@ -52,6 +52,9 @@ void signIn(const core::http::Request& request,
             const std::string& formAction,
             std::map<std::string,std::string> variables = std::map<std::string,std::string>());
 
+bool validateSignIn(const core::http::Request& request,
+                    core::http::Response* pResponse);
+
 bool doSignIn(const core::http::Request& request,
               core::http::Response* pResponse,
               const std::string& username,
@@ -72,8 +75,7 @@ void clearSignInCookies(const core::http::Request& request,
 void setSignInCookies(const core::http::Request& request,
                       const std::string& userIdentifier,
                       bool staySignedIn,
-                      core::http::Response* pResponse,
-                      bool reuseCsrf = false);
+                      core::http::Response* pResponse);
 
 void prepareHandler(handler::Handler& handler,
                     core::http::UriHandlerFunction signIn,
