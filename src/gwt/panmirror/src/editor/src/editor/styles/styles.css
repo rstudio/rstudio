@@ -36,6 +36,10 @@ h3.pm-heading {
   font-size: 1.25em !important;
 }
 
+h4.pm-heading {
+  font-size: 1.10em !important;
+}
+
 .pm-heading .pm-fixedwidth-font {
   font-size: inherit !important;
 }
