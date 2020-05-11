@@ -2930,13 +2930,11 @@ public class Source implements InsertSourceHandler,
          });
    }
    
-   // !!! investigate if this is needed before PR
    public void forceLoad()
    {
       AceEditor.preload();
    }
 
-   // !!! investigate if this is needed before PR
    public String getCurrentDocId()
    {
       if (getActiveEditor() == null)
