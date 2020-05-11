@@ -46,4 +46,5 @@ mkdir -p ${QT_SDK_DIR}
     qttranslations \
     qtwayland \
     qtwebsockets \
+    qtimageformats \
 
