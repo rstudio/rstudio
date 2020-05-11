@@ -122,7 +122,8 @@ const extension = (pandocExtensions: PandocExtensions): Extension => {
                 const code = tr.doc.textBetween(from, to);
                 const newCode = fancyQuotesToSimple(code);
                 if (newCode !== code) {
-                  tr.insertText(newCode, from, to);
+                  tr.replaceWith(from, to, schema.text(newCode, [schema.marks.code.create()]));
+                  tr.removeStoredMark(schema.marks.code);
                 }
               });
             });
