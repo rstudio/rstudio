@@ -29,6 +29,9 @@ export const kHeightAttrib = 'height';
 export const kStyleAttrib = 'style';
 export const kAlignAttrib = 'align';
 
+export const kCodeBlockAttr = 0;
+export const kCodeBlockText = 1;
+
 export interface PandocAttr {
   id: string;
   classes: string[];

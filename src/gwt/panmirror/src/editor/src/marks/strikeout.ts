@@ -18,7 +18,7 @@ import { Schema, Mark, Fragment } from 'prosemirror-model';
 import { MarkCommand, EditorCommandId } from '../api/command';
 import { Extension, extensionIfEnabled } from '../api/extension';
 import { PandocOutput, PandocTokenType } from '../api/pandoc';
-import { delimiterMarkInputRule } from '../api/mark';
+import { delimiterMarkInputRule, MarkInputRuleFilter } from '../api/input_rule';
 
 const extension: Extension = {
   marks: [
@@ -58,8 +58,8 @@ const extension: Extension = {
     return [new MarkCommand(EditorCommandId.Strikeout, [], schema.marks.strikeout)];
   },
 
-  inputRules: (schema: Schema) => {
-    return [delimiterMarkInputRule('~~', schema.marks.strikeout)];
+  inputRules: (schema: Schema, filter: MarkInputRuleFilter) => {
+    return [delimiterMarkInputRule('~~', schema.marks.strikeout, filter)];
   },
 };
 

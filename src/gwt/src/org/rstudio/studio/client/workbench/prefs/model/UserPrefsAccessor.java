@@ -1744,6 +1744,14 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
+    * Whether to show the document outline by default when opening R Markdown documents in visual mode.
+    */
+   public PrefValue<Boolean> visualMarkdownEditingShowDocOutline()
+   {
+      return bool("visual_markdown_editing_show_doc_outline", true);
+   }
+
+   /**
     * The default visual editing mode font size, in points
     */
    public PrefValue<Integer> visualMarkdownEditingFontSizePoints()
@@ -2195,6 +2203,8 @@ public class UserPrefsAccessor extends Prefs
          visualMarkdownEditingWrapColumn().setValue(layer, source.getInteger("visual_markdown_editing_wrap_column"));
       if (source.hasKey("visual_markdown_editing_max_content_width"))
          visualMarkdownEditingMaxContentWidth().setValue(layer, source.getInteger("visual_markdown_editing_max_content_width"));
+      if (source.hasKey("visual_markdown_editing_show_doc_outline"))
+         visualMarkdownEditingShowDocOutline().setValue(layer, source.getBool("visual_markdown_editing_show_doc_outline"));
       if (source.hasKey("visual_markdown_editing_font_size_points"))
          visualMarkdownEditingFontSizePoints().setValue(layer, source.getInteger("visual_markdown_editing_font_size_points"));
       if (source.hasKey("disabled_aria_live_announcements"))

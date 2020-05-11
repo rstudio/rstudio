@@ -21,12 +21,11 @@ import { MarkCommand, EditorCommandId } from '../api/command';
 import { Extension } from '../api/extension';
 import { pandocAttrSpec, pandocAttrParseDom, pandocAttrToDomAttr, pandocAttrReadAST } from '../api/pandoc_attr';
 import { PandocToken, PandocOutput, PandocTokenType, PandocExtensions } from '../api/pandoc';
-import { delimiterMarkInputRule } from '../api/mark';
 
 import { fancyQuotesToSimple } from '../api/quote';
+import { kCodeText, kCodeAttr } from '../api/code';
+import { delimiterMarkInputRule, MarkInputRuleFilter } from '../api/input_rule';
 
-export const kCodeAttr = 0;
-export const kCodeText = 1;
 
 const extension = (pandocExtensions: PandocExtensions): Extension => {
   const codeAttrs = pandocExtensions.inline_code_attributes;
@@ -101,8 +100,8 @@ const extension = (pandocExtensions: PandocExtensions): Extension => {
       return [new MarkCommand(EditorCommandId.Code, ['Mod-d'], schema.marks.code)];
     },
 
-    inputRules: (schema: Schema) => {
-      return [delimiterMarkInputRule('`', schema.marks.code)];
+    inputRules: (schema: Schema, filter: MarkInputRuleFilter) => {
+      return [delimiterMarkInputRule('`', schema.marks.code, filter)];
     },
 
     appendTransaction: (schema: Schema) => {

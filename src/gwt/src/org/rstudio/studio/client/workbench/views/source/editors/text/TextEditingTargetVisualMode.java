@@ -291,10 +291,10 @@ public class TextEditingTargetVisualMode
          
          String editorCode = getEditorCode();
          
-         panmirror_.setMarkdown(editorCode, this.panmirrorWriterOptions(), true, (markdown) -> {  
+         panmirror_.setMarkdown(editorCode, this.panmirrorWriterOptions(), true, (result) -> {  
                
             // bail on error
-            if (markdown == null)
+            if (result == null)
             {
                done.execute(false);
                return;
@@ -311,8 +311,11 @@ public class TextEditingTargetVisualMode
             // if pandoc's view of the document doesn't match the editor's we 
             // need to reset the editor's code (for both dirty state and 
             // so that diffs are efficient)
-            if (markdown != null && markdown != editorCode)
-               getSourceEditor().setCode(markdown);
+            if (result.cannonical != editorCode)
+            {
+               getSourceEditor().setCode(result.cannonical);
+               markDirty();
+            }
             
             Scheduler.get().scheduleDeferred(() -> {
                
@@ -323,16 +326,19 @@ public class TextEditingTargetVisualMode
                if (focus)
                   panmirror_.focus();
                
-               // show any format or extension warnings
+               // show any warnings
                PanmirrorPandocFormat format = panmirror_.getPandocFormat();
-               if (format.warnings.invalidFormat.length() > 0)
+               if (result.unrecognized.length > 0) 
+               {
+                  view_.showWarningBar("Unrecognized Pandoc token(s); " + String.join(", ", result.unrecognized));
+               } 
+               else if (format.warnings.invalidFormat.length() > 0)
                {
                   view_.showWarningBar("Invalid Pandoc format: " + format.warnings.invalidFormat);
                }
                else if (format.warnings.invalidOptions.length > 0)
                {
-                  view_.showWarningBar("Unsupported extensions for markdown mode: " + String.join(", ", format.warnings.invalidOptions));
-      ;
+                  view_.showWarningBar("Unsupported extensions for markdown mode: " + String.join(", ", format.warnings.invalidOptions));;
                }
             });          
          });
@@ -658,12 +664,7 @@ public class TextEditingTargetVisualMode
                   
                   // update editor dirty state if necessary
                   if (!loadingFromSource_ && !dirtyState_.getValue())
-                  {
-                     dirtyState_.markDirty(true);
-                     source_.setSourceDocumentDirty(
-                           docUpdateSentinel_.getId(), true, 
-                           new VoidServerRequestCallback());
-                  }
+                     markDirty();
                }  
             });
             
@@ -695,6 +696,14 @@ public class TextEditingTargetVisualMode
          ready.execute();
       }
    } 
+   
+   private void markDirty()
+   {
+      dirtyState_.markDirty(true);
+      source_.setSourceDocumentDirty(
+            docUpdateSentinel_.getId(), true, 
+            new VoidServerRequestCallback());
+   }
    
  
    // bizzarly, removing this method triggers a gwt compiler issue that
@@ -754,7 +763,9 @@ public class TextEditingTargetVisualMode
   
    private boolean getOutlineVisible()
    {
-      return target_.getPreferredOutlineWidgetVisibility();
+      return target_.getPreferredOutlineWidgetVisibility(
+         prefs_.visualMarkdownEditingShowDocOutline().getValue()
+      );
    }
    
    private void setOutlineVisible(boolean visible)
@@ -1026,6 +1037,9 @@ public class TextEditingTargetVisualMode
       
       // enable rmdImagePreview if we are an executable rmd
       options.rmdImagePreview = target_.canExecuteChunks();
+      
+      // highlight rmd example chunks
+      options.rmdExampleHighlight = true;
       
       // enable chunk execution for R and Python
       options.rmdChunkExecution = kRmdChunkExecutionLangs;

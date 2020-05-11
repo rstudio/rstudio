@@ -41,6 +41,7 @@ import { PandocBlockCapsuleFilter } from '../api/pandoc_capsule';
 import { EditorEvents } from '../api/events';
 import { PandocCapabilities } from '../api/pandoc_capabilities';
 import { EditorFormat } from '../api/format';
+import { markInputRuleFilter } from '../api/input_rule';
 
 // required extensions (base non-customiziable pandoc nodes/marks + core behaviors)
 import nodeText from '../nodes/text';
@@ -149,8 +150,8 @@ export function initExtensions(
     // nodes
     nodeDiv,
     nodeFootnote,
-    nodeRmdCodeChunk,
     nodeYamlMetadata,
+    nodeRmdCodeChunk,
     nodeTable,
     nodeDefinitionList,
     nodeLineBlock,
@@ -352,7 +353,8 @@ export class ExtensionManager {
   // NOTE: return value not readonly b/c it will be fed directly to a
   // Prosemirror interface that doesn't take readonly
   public inputRules(schema: Schema): InputRule[] {
-    return this.collect<InputRule>(extension => extension.inputRules?.(schema));
+    const markFilter = markInputRuleFilter(schema, this.pandocMarks());
+    return this.collect<InputRule>(extension => extension.inputRules?.(schema, markFilter));
   }
 
   private collect<T>(collector: (extension: Extension) => readonly T[] | undefined) {

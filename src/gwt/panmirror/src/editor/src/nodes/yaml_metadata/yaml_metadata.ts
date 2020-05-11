@@ -20,7 +20,7 @@ import { setTextSelection } from 'prosemirror-utils';
 
 import { Extension } from '../../api/extension';
 import { PandocOutput, PandocTokenType, ProsemirrorWriter, PandocToken } from '../../api/pandoc';
-import { parsePandocBlockCapsule, PandocBlockCapsule, encodedBlockCapsuleRegex } from '../../api/pandoc_capsule';
+import { parsePandocBlockCapsule, PandocBlockCapsule, encodedBlockCapsuleRegex, blockCapsuleSourceWithoutPrefix } from '../../api/pandoc_capsule';
 import { EditorUI } from '../../api/ui';
 import { ProsemirrorCommand, EditorCommandId } from '../../api/command';
 import { canInsertNode } from '../../api/node';
@@ -123,7 +123,7 @@ function yamlMetadataBlockCapsuleFilter() {
 
     type: kYamlMetadataCapsuleType,
     
-    match: /^([\t >]*)(---[ \t]*\n(?:[^\n]+)[\W\w]*?(?:\n---|\n\.\.\.))([ \t]*)$/gm,
+    match: /^([\t >]*)(---[ \t]*\n(?![ \t]*\n)[\W\w]*?\n[\t >]*(?:---|\.\.\.))([ \t]*)$/gm,
     
     // add a newline to ensure that if the metadata block has text right
     // below it we still end up in our own pandoc paragarph block
@@ -133,6 +133,21 @@ function yamlMetadataBlockCapsuleFilter() {
 
     // globally replace any instances of our block capsule found in text
     handleText: (text: string) : string => {
+
+      // if we have an exact match of the token regex, then the yaml got parsed into 
+      // a block (this could have happended if it was a 4-space indented code block
+      // that "looks like" it's yaml to our regex -- several of these apppear in the
+      // pandoc MANUAL.md). In this case we need to strip the prefix from the lines
+      // of the yaml (since pandoc would have effectively eliminated these when 
+      // collecting the text into a block)
+      const tokenMatch = text.match(tokenRegex);
+      if (tokenMatch) {
+        const capsule = parsePandocBlockCapsule(tokenMatch[0]);
+        if (capsule.type === kYamlMetadataCapsuleType) {
+          return blockCapsuleSourceWithoutPrefix(capsule.source, capsule.prefix);
+        }
+      }
+
       return text.replace(textRegex, (match) => {
         const capsuleText = match.substring(0, match.length - 1); // trim off newline
         const capsule = parsePandocBlockCapsule(capsuleText);
@@ -166,7 +181,8 @@ function yamlMetadataBlockCapsuleFilter() {
     // write as yaml_metadata
     writeNode: (schema: Schema, writer: ProsemirrorWriter, capsule: PandocBlockCapsule) => {
       writer.openNode(schema.nodes.yaml_metadata, { navigation_id: uuidv4() });
-      writer.writeText(capsule.source);
+      // write the lines w/o the source-level prefix
+      writer.writeText(blockCapsuleSourceWithoutPrefix(capsule.source, capsule.prefix));
       writer.closeNode();
     }
   };

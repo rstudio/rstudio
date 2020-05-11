@@ -21,8 +21,8 @@ import { setTextSelection, findParentNodeOfType } from 'prosemirror-utils';
 import { Extension } from '../../api/extension';
 import { EditorOptions } from '../../api/options';
 import { PandocOutput, PandocTokenType, PandocExtensions, ProsemirrorWriter, PandocToken } from '../../api/pandoc';
-import { pandocAttrReadAST, PandocAttr } from '../../api/pandoc_attr';
-import { PandocBlockCapsule, parsePandocBlockCapsule } from '../../api/pandoc_capsule';
+import { pandocAttrReadAST, PandocAttr, kCodeBlockAttr, kCodeBlockText } from '../../api/pandoc_attr';
+import { PandocBlockCapsule, parsePandocBlockCapsule, blockCapsuleSourceWithoutPrefix } from '../../api/pandoc_capsule';
 
 import { codeNodeSpec } from '../../api/code';
 import { ProsemirrorCommand, EditorCommandId, toggleBlockType } from '../../api/command';
@@ -34,7 +34,6 @@ import { EditorUI } from '../../api/ui';
 import { PandocCapabilities } from '../../api/pandoc_capabilities';
 import { EditorFormat, kBookdownDocType } from '../../api/format';
 import { rmdChunk, EditorRmdChunk } from '../../api/rmd';
-import { EditorEvents } from '../../api/events';
 
 import { RmdChunkImagePreviewPlugin } from './rmd_chunk-image';
 import { ExecuteCurrentRmdChunkCommand, ExecutePreviousRmdChunksCommand } from './rmd_chunk-commands';
@@ -46,8 +45,7 @@ const extension = (
   _pandocCapabilities: PandocCapabilities,
   ui: EditorUI,
   format: EditorFormat,
-  options: EditorOptions,
-  events: EditorEvents
+  options: EditorOptions
 ): Extension | null => {
   if (!format.rmdExtensions.codeChunks) {
     return null;
@@ -76,11 +74,11 @@ const extension = (
         code_view: {
           firstLineMeta: true,
           lineNumbers: true,
-          lineNumberFormatter: (line: number) => {
-            if (line === 1) {
+          lineNumberFormatter: (lineNumber: number, lineCount?: number, line?: string) => {
+            if (lineNumber === 1) {
               return '';
             } else {
-              return line - 1 + '';
+              return lineNumber - 1 + '';
             }
           },
           bookdownTheorems: format.docTypes.includes(kBookdownDocType),
@@ -196,7 +194,7 @@ function rmdChunkBlockCapsuleFilter() {
 
     type: kBlockCapsuleType,
     
-    match: /^([\t >]*)(```+\s*\{[a-zA-Z0-9_]+(?: *[ ,].*?)?\}[ \t]*\n[\W\w]*?(?:\n[\t >]*```+|[\t >]*```+))([ \t]*)$/gm,
+    match: /^([\t >]*)(```+\s*\{[a-zA-Z0-9_]+(?: *[ ,].*?)?\}[ \t]*\n(?:[\W\w]*?\n)?[\t >]*```+)([ \t]*)$/gm,
     
     // textually enclose the capsule so that pandoc parses it as the type of block we want it to
     // (in this case a code block). we use the capsule prefix here to make sure that the code block's
@@ -221,9 +219,9 @@ function rmdChunkBlockCapsuleFilter() {
     // presence of a special css class)
     handleToken: (tok: PandocToken) => {
       if (tok.t === PandocTokenType.CodeBlock) {
-        const attr = pandocAttrReadAST(tok, 0);
-        if ((attr as PandocAttr).classes.includes(kBlockCapsuleType)) {
-          return tok.c[1];
+        const attr = pandocAttrReadAST(tok, kCodeBlockAttr) as PandocAttr;
+        if (attr.classes.includes(kBlockCapsuleType)) {
+          return tok.c[kCodeBlockText];
         }
       }
       return null;
@@ -240,15 +238,8 @@ function rmdChunkBlockCapsuleFilter() {
       // source still has leading and trailing backticks, remove them
       const source = capsule.source.replace(/^```+/, '').replace(/\n[\t >]*```+$/, '');
 
-      // prefix represents the indentation level of the block's source code, strip that
-      // same prefix from all the lines of code save for the first one
-      const prefixStripRegEx = new RegExp('^' + capsule.prefix);
-      const lines = source.split('\n').map((line, index) => {
-        return index > 0 ? line.replace(prefixStripRegEx, '') : line;
-      });
-
-      // write the lines
-      writer.writeText(lines.join('\n'));
+      // write the lines w/o the source-level prefix
+      writer.writeText(blockCapsuleSourceWithoutPrefix(source, capsule.prefix));
 
       // all done
       writer.closeNode();
