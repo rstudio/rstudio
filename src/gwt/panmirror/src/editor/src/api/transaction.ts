@@ -38,7 +38,7 @@ export interface AppendTransactionHandler {
   name: string;
   filter?: TransactionsFilter;
   nodeFilter?: TransactionNodeFilter;
-  append: (tr: Transaction, transactions: Transaction[]) => void;
+  append: (tr: Transaction, transactions: Transaction[], oldState: EditorState, newState: EditorState) => void;
 }
 
 // wrapper for transaction that is guaranteed not to modify the position of any
@@ -77,7 +77,7 @@ export class MarkTransaction {
 export interface AppendMarkTransactionHandler {
   name: string;
   filter: (node: ProsemirrorNode) => boolean;
-  append: (tr: MarkTransaction, node: ProsemirrorNode, pos: number) => void;
+  append: (tr: MarkTransaction, node: ProsemirrorNode, pos: number, state: EditorState) => void;
 }
 
 export function appendMarkTransactionsPlugin(handlers: readonly AppendMarkTransactionHandler[]): Plugin {
@@ -107,7 +107,7 @@ export function appendMarkTransactionsPlugin(handlers: readonly AppendMarkTransa
 
             // call the handler
             if (handler.filter(node)) {
-              handler.append(markTr, node, pos);
+              handler.append(markTr, node, pos, newState);
             }
           }
         },
@@ -177,17 +177,17 @@ export function appendTransactionsPlugin(handlers: readonly AppendTransactionHan
 
           // run the handler if applicable
           if (haveChange) {
-            handler.append(tr, transactions);
+            handler.append(tr, transactions, oldState, newState);
           }
         }
 
         // run them all if this is a larger change
       } else {
-        handlers.forEach(handler => handler.append(tr, transactions));
+        handlers.forEach(handler => handler.append(tr, transactions, oldState, newState));
       }
 
       // return transaction
-      if (tr.docChanged || tr.selectionSet) {
+      if (tr.docChanged || tr.selectionSet || tr.storedMarksSet) {
         return tr;
       }
     },

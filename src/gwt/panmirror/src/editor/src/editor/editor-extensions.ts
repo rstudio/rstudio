@@ -69,6 +69,7 @@ import behaviorClearFormatting from '../behaviors/clear_formatting';
 import behaviorSmarty from '../behaviors/smarty';
 import behaviorAttrDuplicateId from '../behaviors/attr_duplicate_id';
 import behaviorTrailingP from '../behaviors/trailing_p';
+import behaviorEmptyMark from '../behaviors/empty_mark';
 import behaviorOutline from '../behaviors/outline';
 import behaviorTextFocus from '../behaviors/text_focus';
 
@@ -144,6 +145,7 @@ export function initExtensions(
     behaviorSmarty,
     behaviorAttrDuplicateId,
     behaviorTrailingP,
+    behaviorEmptyMark,
     behaviorOutline,
     behaviorTextFocus,
 
