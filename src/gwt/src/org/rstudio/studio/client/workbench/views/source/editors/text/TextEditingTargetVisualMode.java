@@ -1273,7 +1273,7 @@ public class TextEditingTargetVisualMode
             // if it has an extension indicating hugo will render markdown
             String extension = FileSystemItem.getExtensionFromPath(docPath);
             if (extension.compareToIgnoreCase(".md") == 0 ||
-                extension.compareToIgnoreCase("Rmarkdown") == 0)
+                extension.compareToIgnoreCase(".Rmarkdown") == 0)
             {
                return alternateMode;
             }
