@@ -18,13 +18,13 @@ package org.rstudio.studio.client.application.ui;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.command.ShortcutManager;
+import org.rstudio.core.client.widget.ModalPopupPanel;
 import org.rstudio.studio.client.workbench.addins.AddinsCommandManager;
 import org.rstudio.studio.client.workbench.commands.Commands;
 
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
-import com.google.gwt.user.client.ui.PopupPanel;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
@@ -95,7 +95,12 @@ public class CommandPaletteLauncher implements CommandPalette.Host
    private void createPanel()
    {
       showing_ = true;
-      panel_ = new PopupPanel(true, true);
+      panel_ = new ModalPopupPanel(
+            true,  // Auto hide
+            true,  // Modal
+            false, // Glass (main window overlay)
+            true   // Close on Esc
+      );
       
       // Copy classes from the root RStudio container onto this panel. This is
       // necessary so that we can properly inherit theme colors.
@@ -138,7 +143,7 @@ public class CommandPaletteLauncher implements CommandPalette.Host
       showing_ = false;
    }
    
-   private PopupPanel panel_;
+   private ModalPopupPanel panel_;
    private CommandPalette palette_;
    private boolean showing_;
    private State state_;

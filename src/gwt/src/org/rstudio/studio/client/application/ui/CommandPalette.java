@@ -241,6 +241,16 @@ public class CommandPalette extends Composite
       // then a single KeyUp when released)
       searchBox_.addKeyDownHandler((evt) -> 
       {
+         // Ignore the Tab key so we don't lose focus accidentally (there is
+         // only one focusable element in the palette and we don't want Tab to
+         // dismiss it)
+         if (evt.getNativeKeyCode() == KeyCode.TAB)
+         {
+            evt.stopPropagation();
+            evt.preventDefault();
+            return;
+         }
+
          // Ignore modified arrows so that e.g. Shift Up/Down to select the
          // contents of the textbox work as expected
          if (evt.isAnyModifierKeyDown())
