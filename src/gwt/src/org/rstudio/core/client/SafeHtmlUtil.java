@@ -192,8 +192,8 @@ public class SafeHtmlUtil
             index = indexIn;
             length = lengthIn;
          }
-         public final Integer index;
-         public final Integer length;
+         public Integer index;
+         public Integer length;
       };
       
       // Store matches in a tree set ordered by the index at which the match was
@@ -209,7 +209,46 @@ public class SafeHtmlUtil
          int idx = haystack.toLowerCase().indexOf(needles[i]);
          if (idx >= 0)
          {
-            matches.add(new SearchMatch(idx, needles[i].length()));
+            int endIdx = idx + needles[i].length();
+
+            // Check the existing set of matches; if this overlaps with an
+            // existing match we don't want to create overlapping match results.
+            boolean overlaps = false;
+            for (SearchMatch match: matches)
+            {
+               if (match.index >= endIdx)
+               {
+                  // Performance optimization: neither this match nor any
+                  // following can overlap since it starts after this match ends
+                  // (and matches are sorted by start index.)
+                  break;
+               }
+
+               // If this match overlaps an existing match, merge it into that
+               // match instead of creating a new match.
+               int overlap = Math.min(endIdx, match.index + match.length) -
+                             Math.max(idx, match.index);
+               if (overlap > 0)
+               {
+                  // The match starts at the earlier of the indices
+                  match.index = Math.min(match.index, idx);
+                  
+                  // The match's new length is the distance to its new endpoint
+                  // (the greater of the two matches we're merging)
+                  match.length = Math.max(endIdx,  match.index + match.length) - 
+                        match.index;
+                        
+                  overlaps = true;
+                  break;
+               }
+            }
+
+            // If this match does not overlap any existing matches, add it as a
+            // new match.
+            if (!overlaps)
+            {
+               matches.add(new SearchMatch(idx, needles[i].length()));
+            }
          }
       }
       

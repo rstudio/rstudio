@@ -32,9 +32,10 @@ public class SafeHtmlUtilTests extends GWTTestCase
 
       SafeHtmlUtil.highlightSearchMatch(sb, haystack, needles, "match");
       
-      assertEquals(sb.toSafeHtml().asString(), 
+      assertEquals(
             "Sphinx of <span class=\"match\">black</span> quartz, " +
-            "<span class=\"match\">judge</span> my vow.");
+            "<span class=\"match\">judge</span> my vow.",
+            sb.toSafeHtml().asString());
    }
 
    /**
@@ -49,7 +50,25 @@ public class SafeHtmlUtilTests extends GWTTestCase
 
       SafeHtmlUtil.highlightSearchMatch(sb, haystack, needles, "match");
       
-      assertEquals(sb.toSafeHtml().asString(), haystack);
+      assertEquals(haystack, sb.toSafeHtml().asString());
+   }
+
+   /**
+    * Are overlapping search matches only emitted once?
+    */
+   public void testOverlappingMatch()
+   {
+      String haystack = "A closed mouth gathers no foot.";
+      String[] needles = { "gather", "gat", "her" };
+
+      SafeHtmlBuilder sb = new SafeHtmlBuilder();
+
+      SafeHtmlUtil.highlightSearchMatch(sb, haystack, needles, "match");
+      
+      assertEquals(
+            "A closed mouth <span class=\"match\">gather</span>s no foot.",
+            sb.toSafeHtml().asString());
+            
    }
 
    @Override
