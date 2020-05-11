@@ -594,7 +594,8 @@ export class Editor {
     this.emitEvent(EditorEvent.SelectionChange);
 
     // notify listeners of updates
-    if (tr.docChanged) {
+    if (tr.docChanged || tr.storedMarksSet) {
+
       // fire updated (unless this was a fixup)
       if (!tr.getMeta(kFixupTransaction)) {
         this.emitEvent(EditorEvent.Update);
