@@ -27,7 +27,7 @@ import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.panmirror.PanmirrorSelection;
-import org.rstudio.studio.client.panmirror.outline.PanmirrorOutlineNavigationEvent;
+import org.rstudio.studio.client.panmirror.events.PanmirrorOutlineNavigationEvent;
 import org.rstudio.studio.client.workbench.views.source.DocumentOutlineWidget;
 
 import com.google.gwt.aria.client.Roles;
@@ -170,7 +170,8 @@ public class PanmirrorOutlineWidget extends Composite
    private void doFlattenOutline(PanmirrorOutlineItem[] items,  ArrayList<PanmirrorOutlineItem> flattenedItems)
    {
       Arrays.stream(items).forEach(item -> {
-         if (item.type == PanmirrorOutlineItemType.Heading)
+         if (item.type == PanmirrorOutlineItemType.Heading && 
+             !StringUtil.isNullOrEmpty(item.title))
          {
             flattenedItems.add(item);
             doFlattenOutline(item.children, flattenedItems);

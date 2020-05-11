@@ -13,6 +13,9 @@
  *
  */
 
+export const kCodeAttr = 0;
+export const kCodeText = 1;
+
 export function codeNodeSpec() {
   return {
     content: 'text*',

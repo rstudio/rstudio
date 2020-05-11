@@ -1,5 +1,5 @@
 /*
- * PanmirrorUIContext.java
+ * PanmirrorMenuItem.java
  *
  * Copyright (C) 2009-20 by RStudio, PBC
  *
@@ -13,32 +13,21 @@
  *
  */
 
-package org.rstudio.studio.client.panmirror;
+package org.rstudio.studio.client.panmirror.command;
 
-
-import jsinterop.annotations.JsFunction;
 import jsinterop.annotations.JsType;
 
 @JsType
-public class PanmirrorUIContext
+public class PanmirrorMenuItem
 {
-   public Getter getDefaultResourceDir;
-   public Mapper mapPathToResource;
-   public Mapper mapResourceToURL;
-   public Mapper translateText;
-
-   
-   @JsFunction 
-   public interface Getter
+   @JsType
+   public class SubMenu
    {
-      String get();
+      public String text;
+      public PanmirrorMenuItem[] items;
    }
    
-   @JsFunction
-   public interface Mapper
-   {
-      String map(String path);
-   }
+   public String command;
+   public boolean separator;
+   public SubMenu subMenu;
 }
-
-

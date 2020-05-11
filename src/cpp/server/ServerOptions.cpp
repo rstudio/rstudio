@@ -242,6 +242,9 @@ ProgramStatus Options::read(int argc,
       ("www-port",
          value<std::string>(&wwwPort_)->default_value(""),
          "port to listen on")
+      ("www-url-path-prefix",
+         value<std::string>(&wwwUrlPathPrefix_)->default_value("/"),
+         "the path prefix added by a proxy to the RStudio url")
       ("www-local-path",
          value<std::string>(&wwwLocalPath_)->default_value("www"),
          "www files path")
@@ -285,7 +288,7 @@ ProgramStatus Options::read(int argc,
          value<std::string>(&rsessionWhichR_)->default_value(""),
          "path to main R program (e.g. /usr/bin/R)")
       ("rsession-path", 
-         value<std::string>(&rsessionPath_)->default_value("rsession"),
+         value<std::string>(&rsessionPath_)->default_value("rsessio"),
          "path to rsession executable")
       ("rldpath-path",
          value<std::string>(&rldpathPath_)->default_value("r-ldpath"),

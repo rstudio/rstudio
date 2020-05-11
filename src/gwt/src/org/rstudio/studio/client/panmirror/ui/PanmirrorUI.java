@@ -13,7 +13,7 @@
  *
  */
 
-package org.rstudio.studio.client.panmirror;
+package org.rstudio.studio.client.panmirror.ui;
 
 
 import org.rstudio.studio.client.panmirror.dialogs.PanmirrorDialogs;
@@ -24,14 +24,19 @@ import jsinterop.annotations.JsType;
 @JsType
 public class PanmirrorUI
 {    
-   public PanmirrorUI(PanmirrorUIContext context)
+   public PanmirrorUI(PanmirrorUIContext context, 
+                      PanmirrorUIDisplay display,
+                      PanmirrorUIExecute execute)
    {
       this.context = context;
+      this.display = display;
+      this.execute = execute;
       this.dialogs = new PanmirrorDialogs(this.context);
    }
    
    public PanmirrorDialogs dialogs;
-   public PanmirrorUIDisplay display = new PanmirrorUIDisplay();
+   public PanmirrorUIDisplay display;
+   public PanmirrorUIExecute execute;
    public PanmirrorUIContext context;
    public JsObject images;
 }

@@ -63,12 +63,6 @@ void Cookie::setExpires(const boost::posix_time::time_duration& expiresFromNow)
    expires_ = boost::posix_time::ptime(boost::posix_time::second_clock::universal_time() + expiresFromNow);
 }
 
-void Cookie::setExpires(const days& expiresDays) 
-{
-   expires_ = boost::posix_time::ptime(date(day_clock::universal_day() + expiresDays),
-                                       boost::posix_time::time_duration(23, 59, 59)) ;
-}
-
 void Cookie::setExpiresDelete() 
 {
    expires_ = boost::posix_time::ptime(date(day_clock::universal_day() - days(2)),

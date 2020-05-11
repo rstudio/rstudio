@@ -17,6 +17,7 @@
 #define SESSION_OVERLAY_HPP
 
 #include <string>
+#include <boost/asio/io_service.hpp>
 
 namespace rstudio {
 namespace core {
@@ -38,7 +39,7 @@ void streamLauncherOutput(const std::string& jobId,
 
 int verifyInstallation();
 
-void initMonitorClient();
+void initMonitorClient(boost::asio::io_service& ioService);
 
 core::Error initialize();
    

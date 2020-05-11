@@ -74,7 +74,6 @@ public:
    const std::string& path() const { return path_; }
 
    void setExpires(const boost::posix_time::time_duration& expiresFromNow);
-   void setExpires(const boost::gregorian::days& days);
    void setExpiresDelete() ;
    const boost::posix_time::ptime& expires() const { return expires_; }
    

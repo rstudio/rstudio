@@ -21,17 +21,28 @@ import { setTextSelection } from 'prosemirror-utils';
 
 import { EditorCommandId, ProsemirrorCommand } from '../../api/command';
 import { canInsertNode } from '../../api/node';
-import { PandocExtensions, ProsemirrorWriter, PandocOutput } from '../../api/pandoc';
+import { ProsemirrorWriter, PandocOutput, PandocExtensions } from '../../api/pandoc';
 import { Extension } from '../../api/extension';
 import { EditorUI } from '../../api/ui';
 import { MarkTransaction } from '../../api/transaction';
 import { removeInvalidatedMarks, detectAndApplyMarks } from '../../api/mark';
+import { matchPandocFormatComment } from '../../api/pandoc_format';
+import { PandocCapabilities } from '../../api/pandoc_capabilities';
+import { EditorFormat } from '../../api/format';
+import { EditorOptions } from '../../api/options';
+
+import './raw_html_comment-styles.css';
 
 const kHTMLCommentRegEx = /<!--([\s\S]*?)-->/;
 const kHTMLEditingCommentRegEx = /^<!--# ([\s\S]*?)-->$/;
 
-const extension = (): Extension | null => {
-  
+const extension = (
+  _exts: PandocExtensions,
+  _caps: PandocCapabilities,
+  _ui: EditorUI,
+  _format: EditorFormat,
+  options: EditorOptions,
+): Extension | null => {
   return {
     marks: [
       {
@@ -40,6 +51,7 @@ const extension = (): Extension | null => {
         spec: {
           attrs: {
             editing: { default: false },
+            format: { default: false }
           },
           inclusive: false,
           excludes: '_',
@@ -50,6 +62,7 @@ const extension = (): Extension | null => {
                 const el = dom as Element;
                 return {
                   editing: el.getAttribute('data-editing') === '1',
+                  format: el.getAttribute('data-format') === '1'
                 };
               },
             },
@@ -58,7 +71,10 @@ const extension = (): Extension | null => {
             const attr: any = {
               class:
                 'raw-html-comment pm-fixedwidth-font ' +
-                (mark.attrs.editing ? 'pm-comment-color pm-comment-background-color' : 'pm-light-text-color'),
+                (mark.attrs.editing ? 'pm-comment-color pm-comment-background-color' : 'pm-light-text-color') + 
+                (mark.attrs.format && options.hideFormatComment ? ' pm-comment-hidden' : ''),
+              'data-editing': mark.attrs.editing ? "1" : "0",
+              'data-format': mark.attrs.format ? "1" : "0"
             };
             return ['span', attr];
           },
@@ -67,7 +83,7 @@ const extension = (): Extension | null => {
           readers: [],
           inlineHTMLReader: (schema: Schema, html: string, writer: ProsemirrorWriter) => {
             if (html.match(kHTMLCommentRegEx)) {
-              const mark = schema.marks.raw_html_comment.create({ editing: html.match(kHTMLEditingCommentRegEx) });
+              const mark = schema.marks.raw_html_comment.create(commentMarkAttribs(html));
               writer.openMark(mark);
               writer.writeText(html);
               writer.closeMark(mark);
@@ -95,9 +111,14 @@ const extension = (): Extension | null => {
           filter: (node: ProsemirrorNode) => node.isTextblock && node.type.allowsMarkType(markType),
           append: (tr: MarkTransaction, node: ProsemirrorNode, pos: number) => {
             removeInvalidatedMarks(tr, node, pos, kHTMLCommentRegEx, markType);
-            detectAndApplyMarks(tr, tr.doc.nodeAt(pos)!, pos, kHTMLCommentMarkRegEx, markType, match => ({
-              editing: kHTMLEditingCommentRegEx.test(match[0]),
-            }));
+            detectAndApplyMarks(
+              tr, 
+              tr.doc.nodeAt(pos)!, 
+              pos, 
+              kHTMLCommentMarkRegEx, 
+              markType, 
+              match => commentMarkAttribs(match[0])
+            );
           },
         },
       ];
@@ -158,5 +179,13 @@ export class InsertHTMLCommentCommand extends ProsemirrorCommand {
     });
   }
 }
+
+function commentMarkAttribs(comment: string) {
+  return { 
+    editing: !!comment.match(kHTMLEditingCommentRegEx),
+    format: !!matchPandocFormatComment(comment)
+  };
+}
+
 
 export default extension;

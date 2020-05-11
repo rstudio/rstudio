@@ -22,46 +22,44 @@ import 'prosemirror-view/style/prosemirror.css';
 
 import { setTextSelection, findChildrenByType } from 'prosemirror-utils';
 
-import polyfill from './polyfill/index';
-
-import { EditorOptions } from './api/options';
-import { ProsemirrorCommand, CommandFn, EditorCommand } from './api/command';
-import { PandocMark, markIsActive } from './api/mark';
-import { PandocNode, findTopLevelBodyNodes } from './api/node';
-import { EditorUI, attrPropsToInput, attrInputToProps, AttrProps, AttrEditInput } from './api/ui';
-import { Extension } from './api/extension';
-import { ExtensionManager, initExtensions } from './extensions';
-import { PandocEngine } from './api/pandoc';
-import { PandocCapabilities, getPandocCapabilities } from './api/pandoc_capabilities';
-import { fragmentToHTML } from './api/html';
-import { EditorEvent } from './api/events';
+import { EditorOptions } from '../api/options';
+import { ProsemirrorCommand, CommandFn, EditorCommand } from '../api/command';
+import { PandocMark, markIsActive } from '../api/mark';
+import { PandocNode, findTopLevelBodyNodes } from '../api/node';
+import { EditorUI, attrPropsToInput, attrInputToProps, AttrProps, AttrEditInput } from '../api/ui';
+import { Extension } from '../api/extension';
+import { ExtensionManager, initExtensions } from './editor-extensions';
+import { PandocEngine } from '../api/pandoc';
+import { PandocCapabilities, getPandocCapabilities } from '../api/pandoc_capabilities';
+import { fragmentToHTML } from '../api/html';
+import { EditorEvent } from '../api/events';
 import {
   PandocFormat,
   resolvePandocFormat,
   PandocFormatComment,
   pandocFormatCommentFromCode,
-} from './api/pandoc_format';
-import { baseKeysPlugin } from './api/basekeys';
+} from '../api/pandoc_format';
+import { baseKeysPlugin } from '../api/basekeys';
 import {
   appendTransactionsPlugin,
   appendMarkTransactionsPlugin,
   kFixupTransaction,
   kAddToHistoryTransaction,
   kSetMarkdownTransaction,
-} from './api/transaction';
-import { EditorOutline } from './api/outline';
-import { EditingLocation, getEditingLocation, EditingOutlineLocation, setEditingLocation } from './api/location';
-import { navigateTo } from './api/navigation';
-import { FixupContext } from './api/fixup';
-import { unitToPixels, pixelsToUnit, roundUnit, kValidUnits } from './api/image';
-import { kPercentUnit } from './api/css';
-import { defaultEditorUIImages } from './api/ui-images';
-import { EditorFormat } from './api/format';
-import { diffChars, EditorChange } from './api/change';
+} from '../api/transaction';
+import { EditorOutline } from '../api/outline';
+import { EditingLocation, getEditingLocation, EditingOutlineLocation, setEditingLocation } from '../api/location';
+import { navigateTo } from '../api/navigation';
+import { FixupContext } from '../api/fixup';
+import { unitToPixels, pixelsToUnit, roundUnit, kValidUnits } from '../api/image';
+import { kPercentUnit } from '../api/css';
+import { EditorFormat } from '../api/format';
+import { diffChars, EditorChange } from '../api/change';
+import { markInputRuleFilter } from '../api/input_rule';
 
-import { getTitle, setTitle } from './nodes/yaml_metadata/yaml_metadata-title';
+import { getTitle, setTitle } from '../nodes/yaml_metadata/yaml_metadata-title';
 
-import { getOutline } from './behaviors/outline';
+import { getOutline } from '../behaviors/outline';
 import {
   FindOptions,
   find,
@@ -73,23 +71,31 @@ import {
   replaceAll,
   clear,
   selectCurrent,
-} from './behaviors/find';
+} from '../behaviors/find';
 
-import { PandocConverter, PandocWriterOptions } from './pandoc/converter';
+import { PandocConverter, PandocWriterOptions } from '../pandoc/pandoc_converter';
 
-import { defaultTheme, EditorTheme, applyTheme, applyPadding } from './theme';
+import { defaultTheme, EditorTheme, applyTheme, applyPadding } from './editor-theme';
+import { defaultEditorUIImages } from './editor-images';
+import { editorMenus, EditorMenus } from './editor-menus';
 
+// import styles
 import './styles/frame.css';
 import './styles/styles.css';
-
-// apply polyfills
-polyfill();
-
-const kMac = typeof navigator !== 'undefined' ? /Mac/.test(navigator.platform) : false;
 
 export interface EditorCode {
   code: string;
   cursor?: { row: number; column: number };
+}
+
+export interface EditorSetMarkdownResult {
+  
+  // editor view of markdown (as it will be persisted)
+  cannonical: string;
+
+  // unrecoginized pandoc tokens
+  unrecognized: string[];
+
 }
 
 export interface EditorContext {
@@ -124,7 +130,7 @@ export interface EditorFindReplace {
   clear: () => boolean;
 }
 
-export { EditorCommandId as EditorCommands } from './api/command';
+export { EditorCommandId as EditorCommands } from '../api/command';
 
 export interface UIToolsAttr {
   propsToInput(attr: AttrProps): AttrEditInput;
@@ -383,10 +389,13 @@ export class Editor {
     }
   }
 
-  public async setMarkdown(markdown: string, options: PandocWriterOptions, emitUpdate: boolean): Promise<string> {
-    // get the doc
-    const doc = await this.pandocConverter.toProsemirror(markdown, this.pandocFormat.fullName);
-
+  public async setMarkdown(markdown: string, options: PandocWriterOptions, emitUpdate: boolean)
+    : Promise<EditorSetMarkdownResult> {
+    
+    // get the result
+    const result = await this.pandocConverter.toProsemirror(markdown, this.pandocFormat.fullName);
+    const { doc, unrecognized } = result;
+    
     // if we are preserving history but the existing doc is empty then create a new state
     // (resets the undo stack so that the intial setting of the document can't be undone)
     if (this.isInitialDoc()) {
@@ -427,7 +436,13 @@ export class Editor {
     // return our current markdown representation (so the caller know what our
     // current 'view' of the doc as markdown looks like
     // return this.pandocConverter.fromProsemirror(this.state.doc)
-    return this.getMarkdownCode(this.state.doc, options);
+    const cannonical = await this.getMarkdownCode(this.state.doc, options);
+
+    // return 
+    return {
+      cannonical, 
+      unrecognized
+    };
   }
 
   // flag indicating whether we've ever had setMarkdown (currently we need this
@@ -499,7 +514,7 @@ export class Editor {
   }
 
   public navigate(id: string) {
-    navigateTo(this.view, node => id === node.attrs.navigation_id);
+    navigateTo(this.view, node => id === node.attrs.navigation_id, false);
   }
 
   public resize() {
@@ -512,11 +527,15 @@ export class Editor {
     initFn(this.view, { EditorState });
   }
 
+  public getMenus(): EditorMenus {
+    return editorMenus(this.context.ui, this.commands());
+  }
+
   public commands(): EditorCommand[] {
     // get keybindings (merge user + default)
     const commandKeys = this.commandKeys();
 
-    return this.extensions.commands(this.schema, this.context.ui, kMac).map((command: ProsemirrorCommand) => {
+    return this.extensions.commands(this.schema, this.context.ui).map((command: ProsemirrorCommand) => {
       return {
         id: command.id,
         keymap: commandKeys[command.id],
@@ -609,7 +628,8 @@ export class Editor {
       this.format,
       this.options,
       this.context.ui,
-      { subscribe: this.subscribe.bind(this) },
+      { subscribe: this.subscribe.bind(this),
+        emit: this.emitEvent.bind(this) },
       this.context.extensions,
       this.pandocFormat.extensions,
       this.pandocCapabilities,
@@ -701,7 +721,7 @@ export class Editor {
       this.keybindingsPlugin(),
       appendTransactionsPlugin(this.extensions.appendTransactions(this.schema)),
       appendMarkTransactionsPlugin(this.extensions.appendMarkTransactions(this.schema)),
-      ...this.extensions.plugins(this.schema, this.context.ui, kMac),
+      ...this.extensions.plugins(this.schema, this.context.ui),
       this.inputRulesPlugin(),
       this.editablePlugin(),
     ];
@@ -718,13 +738,9 @@ export class Editor {
   }
 
   private inputRulesPlugin() {
-    // see which marks disable input rules
-    const disabledMarks: string[] = [];
-    this.extensions.pandocMarks().forEach((mark: PandocMark) => {
-      if (mark.noInputRules) {
-        disabledMarks.push(mark.name);
-      }
-    });
+
+    // filter for disabling input rules for selected marks
+    const markFilter = markInputRuleFilter(this.schema, this.extensions.pandocMarks());
 
     // create the defautl inputRules plugin
     const plugin = inputRules({ rules: this.extensions.inputRules(this.schema) });
@@ -733,10 +749,8 @@ export class Editor {
     // override to disable input rules as requested
     // https://github.com/ProseMirror/prosemirror-inputrules/commit/b4bf67623aa4c4c1e096c20aa649c0e63751f337
     plugin.props.handleTextInput = (view: EditorView<any>, from: number, to: number, text: string) => {
-      for (const mark of disabledMarks) {
-        if (markIsActive(view.state, this.schema.marks[mark])) {
-          return false;
-        }
+      if (!markFilter(view.state)) {
+        return false;
       }
       return handleTextInput(view, from, to, text);
     };
@@ -749,7 +763,7 @@ export class Editor {
 
     // command keys from extensions
     const pluginKeys: { [key: string]: CommandFn } = {};
-    const commands = this.extensions.commands(this.schema, this.context.ui, kMac);
+    const commands = this.extensions.commands(this.schema, this.context.ui);
     commands.forEach((command: ProsemirrorCommand) => {
       const keys = commandKeys[command.id];
       if (keys) {
@@ -770,7 +784,7 @@ export class Editor {
 
   private commandKeys(): { [key: string]: readonly string[] } {
     // start with keys provided within command definitions
-    const commands = this.extensions.commands(this.schema, this.context.ui, kMac);
+    const commands = this.extensions.commands(this.schema, this.context.ui);
     const defaultKeys = commands.reduce((keys: { [key: string]: readonly string[] }, command: ProsemirrorCommand) => {
       keys[command.id] = command.keymap;
       return keys;

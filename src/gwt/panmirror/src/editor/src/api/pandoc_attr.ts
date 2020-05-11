@@ -29,6 +29,9 @@ export const kHeightAttrib = 'height';
 export const kStyleAttrib = 'style';
 export const kAlignAttrib = 'align';
 
+export const kCodeBlockAttr = 0;
+export const kCodeBlockText = 1;
+
 export interface PandocAttr {
   id: string;
   classes: string[];
@@ -103,7 +106,7 @@ export function pandocAttrParseDom(el: Element, attrs: { [key: string]: string |
   const excludedNames = Object.keys(attrs);
 
   // if this isn't from a prosemirror pandoc node then include only src and alt
-  const includedNames : string[] = [];
+  const includedNames: string[] = [];
   if (!forceAttrs && !el.hasAttribute(kDataPmPandocAttr)) {
     includedNames.push('src', 'alt');
   }
@@ -116,7 +119,6 @@ export function pandocAttrParseDom(el: Element, attrs: { [key: string]: string |
     const value: string = el.getAttribute(name) as string;
     // exclude attributes already parsed and prosemirror internal attributes
     if (excludedNames.indexOf(name) === -1 && !name.startsWith('data-pm')) {
-
       // if we have an include filter then use it
       if (!includedNames.length || includedNames.includes(name)) {
         if (name === 'id') {

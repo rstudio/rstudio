@@ -112,8 +112,6 @@ http::UriHandlerFunction blockingFileHandler()
    // return file
    return gwt::fileHandlerFunction(options.wwwLocalPath(),
                                    secure,
-                                   options.wwwIFrameEmbedding(),
-                                   options.wwwLegacyCookies(),
                                    options.wwwIFrameLegacyCookies(),
                                    "/",
                                    mainPageFilter,

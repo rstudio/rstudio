@@ -1662,17 +1662,33 @@ bool ensureUtf8Charset()
 #endif
 }
 
+// io_service for performing monitor work on the thread
+boost::asio::io_service s_ioService;
+
+void monitorWorkerThreadFunc()
+{
+   boost::asio::io_service::work work(s_ioService);
+   s_ioService.run();
+}
+
 void initMonitorClient()
 {
    if (!options().getBoolOverlayOption(kLauncherSessionOption))
    {
       monitor::initializeMonitorClient(core::system::getenv(kMonitorSocketPathEnvVar),
-                                       options().monitorSharedSecret());
+                                       options().monitorSharedSecret(),
+                                       s_ioService);
    }
    else
    {
-      modules::overlay::initMonitorClient();
+      modules::overlay::initMonitorClient(s_ioService);
    }
+
+   // start the monitor work thread
+   // we handle monitor calls in a separate thread to ensure that calls
+   // to the monitor (which are likely across machines and thus very expensive)
+   // do not hamper the liveliness of the session as a whole
+   core::thread::safeLaunchThread(monitorWorkerThreadFunc);
 }
 
 } // anonymous namespace

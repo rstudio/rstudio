@@ -1,3 +1,4 @@
+
 /*
  * table.ts
  *
@@ -13,8 +14,41 @@
  *
  */
 
+import { EditorCommandId } from "./command";
+import { EditorUI } from "./ui";
+
 export interface TableCapabilities {
   captions: boolean;
   headerOptional: boolean;
   multiline: boolean;
+}
+
+export function tableMenu(insert: boolean, ui: EditorUI) {
+  return [
+    ...(insert ? [{ command: EditorCommandId.TableInsertTable }] : []),
+    { command: EditorCommandId.TableAddRowBefore },
+    { command: EditorCommandId.TableAddRowAfter },
+    { separator: true },
+    { command: EditorCommandId.TableAddColumnBefore },
+    { command: EditorCommandId.TableAddColumnAfter },
+    { separator: true },
+    { command: EditorCommandId.TableDeleteRow },
+    { command: EditorCommandId.TableDeleteColumn },
+    { separator: true },
+    { command: EditorCommandId.TableDeleteTable },
+    { separator: true },
+    { subMenu: {
+      text: ui.context.translateText('Align Column'),
+      items: [
+        { command: EditorCommandId.TableAlignColumnLeft },
+        { command: EditorCommandId.TableAlignColumnCenter },
+        { command: EditorCommandId.TableAlignColumnRight },
+        { separator: true },
+        { command: EditorCommandId.TableAlignColumnDefault }
+      ]
+    }},
+    { separator: true },
+    { command: EditorCommandId.TableToggleHeader },
+    { command: EditorCommandId.TableToggleCaption },
+  ];
 }

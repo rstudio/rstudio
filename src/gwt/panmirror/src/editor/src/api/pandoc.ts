@@ -124,6 +124,7 @@ export interface PandocToken {
   c?: any;
 }
 
+// https://github.com/jgm/pandoc-types/blob/master/Text/Pandoc/Definition.hs
 export enum PandocTokenType {
   Str = 'Str',
   Space = 'Space',
@@ -205,14 +206,6 @@ export type PandocBlockReaderFn = (schema: Schema, tok: PandocToken, writer: Pro
 // reader that gets a first shot at inline html (e.g. image node parsing an <img> tag)
 export type PandocInlineHTMLReaderFn = (schema: Schema, html: string, writer: ProsemirrorWriter) => boolean;
 
-// reader for code blocks that require special handling
-export interface PandocCodeBlockFilter {
-  preprocessor: (markdown: string) => string;
-  class: string;
-  nodeType: (schema: Schema) => NodeType;
-  getAttrs: (tok: PandocToken) => any;
-}
-
 export interface ProsemirrorWriter {
   // open (then close) a node container
   openNode(type: NodeType, attrs: {}): void;
@@ -236,6 +229,9 @@ export interface ProsemirrorWriter {
 
   // write tokens into the current node
   writeTokens(tokens: PandocToken[]): void;
+
+  // log an unrecoginzed token type
+  logUnrecognized(token: string): void;
 }
 
 export interface PandocNodeWriter {

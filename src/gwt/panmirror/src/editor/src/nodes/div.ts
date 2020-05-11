@@ -17,6 +17,7 @@ import { Node as ProsemirrorNode, Schema } from 'prosemirror-model';
 import { EditorState, Transaction } from 'prosemirror-state';
 import { EditorView } from 'prosemirror-view';
 import { findParentNodeOfType, ContentNodeWithPos } from 'prosemirror-utils';
+import { wrapIn, lift } from 'prosemirror-commands';
 
 import { Extension, extensionIfEnabled } from '../api/extension';
 import {
@@ -30,10 +31,9 @@ import {
 import { PandocOutput, PandocTokenType, PandocToken } from '../api/pandoc';
 import { ProsemirrorCommand, EditorCommandId, toggleWrap } from '../api/command';
 import { EditorUI } from '../api/ui';
+import { precedingListItemInsertPos, precedingListItemInsert } from '../api/list';
 
 import './div-styles.css';
-
-import { wrapIn, lift } from 'prosemirror-commands';
 
 const DIV_ATTR = 0;
 const DIV_CHILDREN = 1;
@@ -48,7 +48,7 @@ const extension: Extension = {
         },
         defining: true,
         content: 'block+',
-        group: 'block',
+        group: 'block list_item_block',
         parseDOM: [
           {
             tag: 'div[data-div="1"]',
@@ -165,7 +165,7 @@ async function createDiv(ui: EditorUI, state: EditorState, dispatch: (tr: Transa
       const div = findParentNodeOfType(state.schema.nodes.div)(tr.selection)!;
       tr.setNodeMarkup(div.pos, div.node.type, result.attr);
       dispatch(tr);
-    });
+    }); 
   }
 }
 

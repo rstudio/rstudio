@@ -25,3 +25,13 @@ export function quotesForType(type: QuoteType) {
     end: dblQuote ? '”' : '’',
   };
 }
+
+// create regexs for removing quotes
+const kSingleQuotes = quotesForType(QuoteType.SingleQuote);
+const kSingleQuoteRegEx = new RegExp(`[${kSingleQuotes.begin}${kSingleQuotes.end}]`, 'g');
+const kDoubleQuotes = quotesForType(QuoteType.DoubleQuote);
+const kDoubleQuoteRegEx = new RegExp(`[${kDoubleQuotes.begin}${kDoubleQuotes.end}]`, 'g');
+
+export function fancyQuotesToSimple(text: string) {
+  return text.replace(kSingleQuoteRegEx, "'").replace(kDoubleQuoteRegEx, '"');
+}

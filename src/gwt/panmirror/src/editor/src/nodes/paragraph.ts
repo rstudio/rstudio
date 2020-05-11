@@ -14,14 +14,11 @@
  */
 
 import { Node as ProsemirrorNode, Schema } from 'prosemirror-model';
-import { EditorState, Transaction } from 'prosemirror-state';
-import { EditorView } from 'prosemirror-view';
-import { setTextSelection } from 'prosemirror-utils';
 
-import { canInsertNode } from '../api/node';
 import { BlockCommand, EditorCommandId, ProsemirrorCommand } from '../api/command';
 import { Extension } from '../api/extension';
 import { PandocOutput, PandocTokenType } from '../api/pandoc';
+import { insertParagraph } from '../api/paragraph';
 
 const extension: Extension = {
   nodes: [
@@ -29,7 +26,7 @@ const extension: Extension = {
       name: 'paragraph',
       spec: {
         content: 'inline*',
-        group: 'block',
+        group: 'block list_item_block',
         parseDOM: [{ tag: 'p' }],
         toDOM() {
           return ['p', 0];
@@ -59,26 +56,7 @@ const extension: Extension = {
 
 class InsertParagraphCommand extends ProsemirrorCommand {
   constructor() {
-    super(
-      EditorCommandId.ParagraphInsert,
-      [],
-      (state: EditorState, dispatch?: (tr: Transaction) => void, view?: EditorView) => {
-        const schema = state.schema;
-
-        if (!canInsertNode(state, schema.nodes.paragraph)) {
-          return false;
-        }
-
-        if (dispatch) {
-          const tr = state.tr;
-          tr.replaceSelectionWith(schema.nodes.paragraph.create());
-          setTextSelection(state.selection.from, -1)(tr);
-          dispatch(tr);
-        }
-
-        return true;
-      },
-    );
+    super(EditorCommandId.ParagraphInsert, [], insertParagraph);
   }
 }
 

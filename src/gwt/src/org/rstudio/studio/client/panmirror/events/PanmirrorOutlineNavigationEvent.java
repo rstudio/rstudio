@@ -13,7 +13,7 @@
  *
  */
 
-package org.rstudio.studio.client.panmirror.outline;
+package org.rstudio.studio.client.panmirror.events;
 
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
@@ -21,7 +21,7 @@ import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.event.shared.HasHandlers;
 
 /**
- * Represents a selection change event.
+ * Represents an outline navigation event
  */
 public class PanmirrorOutlineNavigationEvent extends
     GwtEvent<PanmirrorOutlineNavigationEvent.Handler> {

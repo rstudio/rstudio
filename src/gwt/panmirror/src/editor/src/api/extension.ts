@@ -30,14 +30,15 @@ import { FixupFn } from './fixup';
 import { EditorEvents } from './events';
 import { PandocCapabilities } from './pandoc_capabilities';
 import { EditorFormat } from './format';
+import { MarkInputRuleFilter } from './input_rule';
 
 export interface Extension {
   marks?: PandocMark[];
   nodes?: PandocNode[];
   baseKeys?: (schema: Schema) => readonly BaseKeyBinding[];
-  inputRules?: (schema: Schema) => readonly InputRule[];
-  commands?: (schema: Schema, ui: EditorUI, mac: boolean) => readonly ProsemirrorCommand[];
-  plugins?: (schema: Schema, ui: EditorUI, mac: boolean) => readonly Plugin[];
+  inputRules?: (schema: Schema, markFilter: MarkInputRuleFilter) => readonly InputRule[];
+  commands?: (schema: Schema, ui: EditorUI) => readonly ProsemirrorCommand[];
+  plugins?: (schema: Schema, ui: EditorUI) => readonly Plugin[];
   appendTransaction?: (schema: Schema) => readonly AppendTransactionHandler[];
   appendMarkTransaction?: (schema: Schema) => readonly AppendMarkTransactionHandler[];
   fixups?: (schema: Schema, view: EditorView) => Readonly<FixupFn[]>;

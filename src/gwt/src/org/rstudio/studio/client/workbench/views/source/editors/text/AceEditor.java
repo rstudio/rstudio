@@ -423,7 +423,10 @@ public class AceEditor implements DocDisplay,
          if (event.isAttached())
          {
             attachToWidget(widget_.getElement(), AceEditor.this);
-            ElementIds.assignElementId(widget_, ElementIds.SOURCE_TEXT_EDITOR);
+
+            // If the ID was set earlier, as is done for the Console's edit field, don't stomp over it
+            if (StringUtil.isNullOrEmpty(widget_.getElement().getId()))
+               ElementIds.assignElementId(widget_, ElementIds.SOURCE_TEXT_EDITOR);
          }
          else
             detachFromWidget(widget_.getElement());

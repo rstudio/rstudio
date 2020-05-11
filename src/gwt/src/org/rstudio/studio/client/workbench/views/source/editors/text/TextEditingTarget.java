@@ -1757,6 +1757,7 @@ public class TextEditingTarget implements
       visualMode_ = new TextEditingTargetVisualMode(
          TextEditingTarget.this,
          view_,
+         rmarkdownHelper_,
          docDisplay_,
          dirtyState_, 
          docUpdateSentinel_,
@@ -4987,13 +4988,20 @@ public class TextEditingTarget implements
    @Handler
    void onExecuteCurrentChunk()
    {
-      // HACK: This is just to force the entire function tree to be built.
-      // It's the easiest way to make sure getCurrentScope() returns
-      // a Scope with an end.
-      docDisplay_.getScopeTree();
-      
-      executeSweaveChunk(scopeHelper_.getCurrentSweaveChunk(), 
-           NotebookQueueUnit.EXEC_MODE_SINGLE, false);
+      if (visualMode_.isActivated())
+      {
+         visualMode_.executeChunk();
+      }
+      else
+      {
+         // HACK: This is just to force the entire function tree to be built.
+         // It's the easiest way to make sure getCurrentScope() returns
+         // a Scope with an end.
+         docDisplay_.getScopeTree();
+         
+         executeSweaveChunk(scopeHelper_.getCurrentSweaveChunk(), 
+              NotebookQueueUnit.EXEC_MODE_SINGLE, false);
+      }
    }
    
    @Handler
@@ -5014,7 +5022,14 @@ public class TextEditingTarget implements
    @Handler
    void onExecutePreviousChunks()
    {
-      executeChunks(null, TextEditingTargetScopeHelper.PREVIOUS_CHUNKS);
+      if (visualMode_.isActivated())
+      {
+         visualMode_.executePreviousChunks();
+      }
+      else
+      {
+         executeChunks(null, TextEditingTargetScopeHelper.PREVIOUS_CHUNKS);
+      }
    }
    
    @Handler
@@ -7260,9 +7275,14 @@ public class TextEditingTarget implements
    
    public boolean getPreferredOutlineWidgetVisibility()
    {
+      return getPreferredOutlineWidgetVisibility(prefs_.showDocOutlineRmd().getGlobalValue());
+   }
+   
+   public boolean getPreferredOutlineWidgetVisibility(boolean defaultValue)
+   {
       String property = docUpdateSentinel_.getProperty(DOC_OUTLINE_VISIBLE);
       return StringUtil.isNullOrEmpty(property)
-            ? (getTextFileType().isRmd() && prefs_.showDocOutlineRmd().getGlobalValue())
+            ? (getTextFileType().isRmd() && defaultValue)
             : Integer.parseInt(property) > 0;
    }
    

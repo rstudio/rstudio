@@ -82,7 +82,6 @@ export function pandocFormatCommentFromCode(code: string): PandocFormatComment {
 }
 
 export async function resolvePandocFormat(pandoc: PandocEngine, format: EditorFormat) {
-  
   // additional markdown variants we support
   const kMarkdownVariants: { [key: string]: string[] } = {
     [kCommonmarkFormat]: commonmarkExtensions(),
@@ -119,7 +118,7 @@ export async function resolvePandocFormat(pandoc: PandocEngine, format: EditorFo
   // format options we will be building
   let formatOptions: string;
 
-  // determine valid options (normally all options, but for gfm and commonmark then 
+  // determine valid options (normally all options, but for gfm and commonmark then
   // the valid optoins are constrained)
   let validOptions: string = '';
   if ([kGfmFormat, kCommonmarkFormat].includes(baseName)) {
@@ -211,11 +210,8 @@ export function hasFencedCodeBlocks(pandocExtensions: PandocExtensions) {
   return pandocExtensions.backtick_code_blocks || pandocExtensions.fenced_code_blocks;
 }
 
-
 function commonmarkExtensions() {
-  const extensions = [
-    '+raw_html'
-  ];
+  const extensions = ['+raw_html'];
   return extensions;
 }
 
@@ -240,14 +236,13 @@ function gfmExtensions() {
   return extensions;
 }
 
-
 // https://gohugo.io/getting-started/configuration-markup/#goldmark
 // https://github.com/yuin/goldmark/#html-renderer-options
 function goldmarkExtensions(format: EditorFormat) {
   const extensions = [
-     // disables raw_html by default
+    // disables raw_html by default
     '-raw_html',
-    
+
     // adds most of gfm
     '+pipe_tables',
     '+strikeout',
@@ -261,7 +256,7 @@ function goldmarkExtensions(format: EditorFormat) {
     '+smart',
 
     // hugo preprocessor supports yaml metadata
-    '+yaml_metadata_block'
+    '+yaml_metadata_block',
   ];
   if (format.rmdExtensions.blogdownMathInCode) {
     extensions.push('+tex_math_dollars');

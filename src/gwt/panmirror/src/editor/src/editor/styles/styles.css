@@ -33,7 +33,11 @@
 }
 
 h3.pm-heading {
-  font-size: 1.25em;
+  font-size: 1.25em !important;
+}
+
+.pm-heading .pm-fixedwidth-font {
+  font-size: inherit !important;
 }
 
 .pm-link {
@@ -65,6 +69,16 @@ h3.pm-heading {
   max-width: 100%;
 }
 
+.pm-code, 
+.pm-span {
+  padding: 0 3px;
+}
+
+.pm-code {
+  border: 1px solid;
+  border-radius: 4px;
+}
+
 .pm-div {
   padding: 1em;
   margin-block-end: 1em;
@@ -76,6 +90,14 @@ h3.pm-heading {
 
 .pm-div .pm-div {
   border: 1px solid;
+}
+
+.pm-list {
+  padding-inline-start: 25px;
+}
+
+.pm-list li:last-child *:last-child {
+  margin-bottom: 0.1em;
 }
 
 .pm-figcaption {
@@ -184,3 +206,6 @@ h3.pm-heading {
   padding: 10px;
 }
 
+p.ProseMirror-selectednode {
+  outline: none;
+}

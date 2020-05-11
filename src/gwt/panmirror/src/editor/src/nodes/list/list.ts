@@ -25,6 +25,7 @@ import { EditorUI } from '../../api/ui';
 import { ListCapabilities } from '../../api/list';
 import { ProsemirrorCommand, EditorCommandId } from '../../api/command';
 import { PandocTokenType, PandocExtensions } from '../../api/pandoc';
+import { kPlatformMac } from '../../api/platform';
 
 import { ListCommand, TightListCommand, OrderedListEditCommand } from './list-commands';
 
@@ -83,7 +84,7 @@ const extension = (pandocExtensions: PandocExtensions): Extension => {
       {
         name: 'list_item',
         spec: {
-          content: 'paragraph block*',
+          content: 'list_item_block block*',
           attrs: {
             checked: { default: null },
           },
@@ -174,11 +175,12 @@ const extension = (pandocExtensions: PandocExtensions): Extension => {
                 attrs.tight = el.hasAttribute('data-tight');
 
                 if (capabilities.order) {
-                  let order: string | number | null = el.getAttribute('start');
+                  const order: string | null = el.getAttribute('start');
                   if (!order) {
-                    order = 1;
+                    attrs.order = 1;
+                  } else {
+                    attrs.order = parseInt(order, 10) || 1;
                   }
-                  attrs.order = order;
                 }
 
                 if (capabilities.fancy) {
@@ -252,17 +254,17 @@ const extension = (pandocExtensions: PandocExtensions): Extension => {
       return plugins;
     },
 
-    commands: (schema: Schema, ui: EditorUI, mac: boolean) => {
+    commands: (schema: Schema, ui: EditorUI) => {
       const commands = [
         new ListCommand(
           EditorCommandId.BulletList,
-          mac ? ['Shift-Mod-7'] : [],
+          kPlatformMac ? ['Shift-Mod-7'] : [],
           schema.nodes.bullet_list,
           schema.nodes.list_item,
         ),
         new ListCommand(
           EditorCommandId.OrderedList,
-          mac ? ['Shift-Mod-8'] : [],
+          kPlatformMac ? ['Shift-Mod-8'] : [],
           schema.nodes.ordered_list,
           schema.nodes.list_item,
         ),

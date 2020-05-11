@@ -26,6 +26,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.findreplace
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.user.client.ui.HorizontalPanel;
 import com.google.gwt.user.client.ui.RequiresResize;
 import com.google.gwt.user.client.ui.Widget;
 
@@ -44,10 +45,11 @@ public class PanmirrorToolbar extends SecondaryToolbar implements RequiresResize
       return 23;
    }
  
-   public void init(PanmirrorCommand[] commands, HasFindReplace findReplace)
+   public void init(PanmirrorToolbarCommands commands, PanmirrorMenus menus, HasFindReplace findReplace)
    { 
       
-      commands_ = new PanmirrorToolbarCommands(commands);
+      commands_ = commands;
+      menus_ = menus;
       commandObjects_.clear();
       removeAllWidgets();
       
@@ -57,7 +59,6 @@ public class PanmirrorToolbar extends SecondaryToolbar implements RequiresResize
       addLeftSeparator();
       
       formatWidgets_ = addWidgetGroup(
-         addLeftSeparator(),
          addLeftButton(PanmirrorCommands.Strong),
          addLeftButton(PanmirrorCommands.Em),
          addLeftButton(PanmirrorCommands.Code),
@@ -75,25 +76,24 @@ public class PanmirrorToolbar extends SecondaryToolbar implements RequiresResize
       
       insertWidgets_ = addWidgetGroup(
          addLeftButton(PanmirrorCommands.RmdChunk),
-         addLeftSeparator(),
          addLeftButton(PanmirrorCommands.Link),
          addLeftButton(PanmirrorCommands.Image),
          addLeftSeparator()
       );
       
       
-      PanmirrorToolbarMenu formatMenu = createFormatMenu();
+      PanmirrorToolbarMenu formatMenu = new PanmirrorToolbarMenu(commands_, menus_.format);
       addLeftTextMenu(new ToolbarMenuButton("Format", "Format", null, formatMenu, false));
             
       addLeftSeparator();
       
-      PanmirrorToolbarMenu insertMenu = createInsertMenu();
+      PanmirrorToolbarMenu insertMenu = new PanmirrorToolbarMenu(commands_, menus_.insert);
       addLeftTextMenu(new ToolbarMenuButton("Insert", "Insert", null, insertMenu, false)); 
       
       if (haveAnyOf(PanmirrorCommands.TableInsertTable)) 
       {
          addLeftSeparator();
-         PanmirrorToolbarMenu tableMenu = createTableMenu();
+         PanmirrorToolbarMenu tableMenu = new PanmirrorToolbarMenu(commands_, menus_.table);
          addLeftTextMenu(new ToolbarMenuButton("Table", "Table", null, tableMenu, false));
       }
              
@@ -148,10 +148,11 @@ public class PanmirrorToolbar extends SecondaryToolbar implements RequiresResize
       int width = getOffsetWidth();
       if (width == 0)
          return;
-           
-      showGroup(formatWidgets_, width > 475);
-      showGroup(blockWidgets_, width > 555);
-      showGroup(insertWidgets_, width > 610);
+         
+      formatWidgets_.setVisible(width > 475);
+      blockWidgets_.setVisible(width > 555);
+      insertWidgets_.setVisible(width > 610);
+      
    }
    
    
@@ -171,129 +172,7 @@ public class PanmirrorToolbar extends SecondaryToolbar implements RequiresResize
       return blockMenu;
    }
    
-   
-   private PanmirrorToolbarMenu createFormatMenu()
-   {
-      PanmirrorToolbarMenu formatMenu = new PanmirrorToolbarMenu(commands_);
-      formatMenu.addCommand(PanmirrorCommands.Strong);
-      formatMenu.addCommand(PanmirrorCommands.Em);
-      formatMenu.addCommand(PanmirrorCommands.Code);
-      PanmirrorToolbarMenu textMenu = formatMenu.addSubmenu("Text");
-      textMenu.addCommand(PanmirrorCommands.Strikeout);
-      textMenu.addCommand(PanmirrorCommands.Superscript);
-      textMenu.addCommand(PanmirrorCommands.Subscript);
-      textMenu.addCommand(PanmirrorCommands.Smallcaps);
-      textMenu.addSeparator();
-      textMenu.addCommand(PanmirrorCommands.Span);
-      formatMenu.addSeparator();
-      PanmirrorToolbarMenu listMenu = formatMenu.addSubmenu("Bullets & Numbering");
-      listMenu.addCommand(PanmirrorCommands.BulletList);
-      listMenu.addCommand(PanmirrorCommands.OrderedList);
-      listMenu.addCommand(PanmirrorCommands.TightList);
-      listMenu.addSeparator();
-      listMenu.addCommand(PanmirrorCommands.ListItemCheck);
-      listMenu.addCommand(PanmirrorCommands.ListItemCheckToggle);
-      listMenu.addSeparator();
-      listMenu.addCommand(PanmirrorCommands.ListItemSink);
-      listMenu.addCommand(PanmirrorCommands.ListItemLift);
-      listMenu.addSeparator();
-      listMenu.addCommand(PanmirrorCommands.OrderedListEdit);
-      formatMenu.addSeparator();
-      formatMenu.addCommand(PanmirrorCommands.Blockquote);
-      formatMenu.addCommand(PanmirrorCommands.LineBlock);
-      formatMenu.addSeparator();
-      formatMenu.addCommand(PanmirrorCommands.Div);
-      formatMenu.addCommand(PanmirrorCommands.CodeBlockFormat);
-      formatMenu.addSeparator();
-      if (haveAnyOf(PanmirrorCommands.RawBlock, 
-            PanmirrorCommands.TexInline, 
-            PanmirrorCommands.HTMLInline))
-      {
-         PanmirrorToolbarMenu rawMenu = formatMenu.addSubmenu("Raw");
-         rawMenu.addCommand(PanmirrorCommands.HTMLInline);
-         rawMenu.addCommand(PanmirrorCommands.HTMLBlock);
-         rawMenu.addSeparator();
-         rawMenu.addCommand(PanmirrorCommands.TexInline);
-         rawMenu.addCommand(PanmirrorCommands.TexBlock);
-         rawMenu.addSeparator();
-         rawMenu.addCommand(PanmirrorCommands.RawInline);
-         rawMenu.addCommand(PanmirrorCommands.RawBlock);
-         formatMenu.addSeparator();
-      }  
-      formatMenu.addCommand(PanmirrorCommands.ClearFormatting);
-      formatMenu.addSeparator();
-      formatMenu.addCommand(PanmirrorCommands.AttrEdit);
-      return formatMenu;
-   }
-   
-   private PanmirrorToolbarMenu createInsertMenu()
-   {
-      PanmirrorToolbarMenu insertMenu = new PanmirrorToolbarMenu(commands_);
-      insertMenu.addCommand(PanmirrorCommands.RmdChunk);
-      insertMenu.addSeparator();
-      insertMenu.addCommand(PanmirrorCommands.Image);
-      insertMenu.addCommand(PanmirrorCommands.Link);
-      insertMenu.addCommand(PanmirrorCommands.HorizontalRule);
-      insertMenu.addSeparator();
-      if (haveAnyOf(PanmirrorCommands.DefinitionList,
-                    PanmirrorCommands.DefinitionTerm,
-                    PanmirrorCommands.DefinitionDescription))
-      {
-         PanmirrorToolbarMenu definitionMenu = insertMenu.addSubmenu("Definition");
-         definitionMenu.addCommand(PanmirrorCommands.DefinitionList);
-         definitionMenu.addSeparator();
-         definitionMenu.addCommand(PanmirrorCommands.DefinitionTerm);
-         definitionMenu.addCommand(PanmirrorCommands.DefinitionDescription);
-      }
-      insertMenu.addSeparator();
-      insertMenu.addCommand(PanmirrorCommands.InlineMath);
-      insertMenu.addCommand(PanmirrorCommands.DisplayMath);
-      insertMenu.addSeparator();
-      insertMenu.addCommand(PanmirrorCommands.CrossReference);
-      insertMenu.addSeparator();
-      insertMenu.addCommand(PanmirrorCommands.Footnote);
-      insertMenu.addCommand(PanmirrorCommands.Citation);
-      insertMenu.addSeparator();
-      insertMenu.addCommand(PanmirrorCommands.InsertDiv);
-      insertMenu.addCommand(PanmirrorCommands.CodeBlockInsert);
-      insertMenu.addCommand(PanmirrorCommands.YamlMetadata);
-      insertMenu.addSeparator();
-      insertMenu.addCommand(PanmirrorCommands.Shortcode);
-      insertMenu.addSeparator();
-      insertMenu.addCommand(PanmirrorCommands.HTMLComment);
-  
-   
-      
-      return insertMenu;
-   }
-   
-   private PanmirrorToolbarMenu createTableMenu()
-   {
-      PanmirrorToolbarMenu tableMenu = new PanmirrorToolbarMenu(commands_);
-      tableMenu.addCommand(PanmirrorCommands.TableInsertTable);
-      tableMenu.addSeparator();
-      tableMenu.addCommand(PanmirrorCommands.TableToggleHeader);
-      tableMenu.addCommand(PanmirrorCommands.TableToggleCaption);
-      tableMenu.addSeparator();
-      PanmirrorToolbarMenu alignMenu = tableMenu.addSubmenu("Align Column");
-      alignMenu.addCommand(PanmirrorCommands.TableAlignColumnLeft);
-      alignMenu.addCommand(PanmirrorCommands.TableAlignColumnCenter);
-      alignMenu.addCommand(PanmirrorCommands.TableAlignColumnRight);
-      alignMenu.addSeparator();
-      alignMenu.addCommand(PanmirrorCommands.TableAlignColumnDefault);
-      tableMenu.addSeparator();
-      tableMenu.addCommand(PanmirrorCommands.TableAddRowBefore);
-      tableMenu.addCommand(PanmirrorCommands.TableAddRowAfter);
-      tableMenu.addSeparator();
-      tableMenu.addCommand(PanmirrorCommands.TableAddColumnBefore);
-      tableMenu.addCommand(PanmirrorCommands.TableAddColumnAfter);
-      tableMenu.addSeparator();
-      tableMenu.addCommand(PanmirrorCommands.TableDeleteRow);
-      tableMenu.addCommand(PanmirrorCommands.TableDeleteColumn);
-      tableMenu.addSeparator();
-      tableMenu.addCommand(PanmirrorCommands.TableDeleteTable);
-      return tableMenu;
-   }
+
    
    private boolean haveAnyOf(String...ids)
    {
@@ -330,33 +209,24 @@ public class PanmirrorToolbar extends SecondaryToolbar implements RequiresResize
       return button;
    }
    
-   private ArrayList<Widget> addWidgetGroup(Widget...widgets)
+   private HorizontalPanel addWidgetGroup(Widget...widgets)
    {
-      ArrayList<Widget> group = new ArrayList<Widget>();
+      HorizontalPanel group = new HorizontalPanel();
       for (Widget widget : widgets)
          group.add(widget);
+      addLeftWidget(group);
       return group;
    }
    
-   private void showGroup(ArrayList<Widget> group, boolean show)
-   {
-      if (group !=  null) 
-      {
-         group.forEach((widget) -> {
-           widget.setVisible(show);
-         });
-      }
-   }
-   
-   
    private static final PanmirrorToolbarResources RES = PanmirrorToolbarResources.INSTANCE;
    
-   private ArrayList<Widget> formatWidgets_ = null;
-   private ArrayList<Widget> insertWidgets_ = null;
-   private ArrayList<Widget> blockWidgets_ = null;
+   private HorizontalPanel formatWidgets_ = null;
+   private HorizontalPanel insertWidgets_ = null;
+   private HorizontalPanel blockWidgets_ = null;
   
    private ToolbarButton findReplaceButton_ = null;
    
    private PanmirrorToolbarCommands commands_ = null;
+   private PanmirrorMenus menus_ = null;
    private ArrayList<PanmirrorCommandUIObject> commandObjects_ = new ArrayList<PanmirrorCommandUIObject>();
 }

@@ -20,10 +20,12 @@ import { ImageDimensions } from './image';
 import { EditorUIImages } from './ui-images';
 
 import { kStyleAttrib } from './pandoc_attr';
+import { EditorRmdChunk } from './rmd';
 
 export interface EditorUI {
   dialogs: EditorDialogs;
   display: EditorDisplay;
+  execute: EditorUIExecute;
   context: EditorUIContext;
   images: EditorUIImages;
 }
@@ -48,17 +50,32 @@ export interface EditorUIContext {
   getDefaultResourceDir: () => string;
 
   // map from a filesystem path to a resource reference
-  mapPathToResource: (path: string) =>  string;
+  mapPathToResource: (path: string) => string;
 
   // map from a resource reference (e.g. images/foo.png) to a URL we can use in the document
-  mapResourceToURL: (path: string) =>  string;
-  
+  mapResourceToURL: (path: string) => string;
+
   // translate a string
   translateText: (text: string) => string;
 }
 
+export interface EditorMenuItem {
+  command?: string;
+  separator?: boolean;
+  subMenu?: {
+    text: string;
+    items: EditorMenuItem[];
+  };
+}
+
+export interface EditorUIExecute {
+  executeRmdChunk?: (chunk: EditorRmdChunk) => void;
+}
+
 export interface EditorDisplay {
   openURL: (url: string) => void;
+  showContextMenu?: (items: EditorMenuItem[], clientX: number, clientY: number) => void;
+  
 }
 
 export enum AlertType {

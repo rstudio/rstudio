@@ -51,7 +51,7 @@ const extension: Extension = {
 
   commands: (schema: Schema) => {
     return [
-      new ProsemirrorCommand(EditorCommandId.HorizontalRule, ['Mod-_'], insertNode(schema.nodes.horizontal_rule)),
+      new ProsemirrorCommand(EditorCommandId.HorizontalRule, [], insertNode(schema.nodes.horizontal_rule)),
     ];
   },
 

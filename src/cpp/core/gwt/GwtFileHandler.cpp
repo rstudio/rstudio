@@ -45,8 +45,6 @@ struct FileRequestOptions
    struct CookieOptions
    {
       bool useSecureCookies;
-      bool iFrameEmbedding;
-      bool legacyCookies;
       bool iFrameLegacyCookies;
    } cookies;
    std::string frameOptions;
@@ -135,11 +133,17 @@ void handleFileRequest(const FileRequestOptions& options,
                          (request.queryParamValue("emulatedStack") == "1");
       vars["compiler_stack_mode"] = useEmulatedStack ? "emulated" : "native";
 
+      // polyfill for IE11 (only)
+      std::string polyfill = "<script type=\"text/javascript\" language=\"javascript\" src=\"js/core-js/minified.js\"></script>\n";
+      if (regex_utils::match(request.userAgent(), boost::regex(".*Trident.*"))) {
+         vars["head_tags"] = polyfill;
+      } else {
+         vars["head_tags"] = std::string();
+      }
+
       // check for initJs
       if (!options.initJs.empty())
-         vars["head_tags"] = "<script>" + options.initJs + "</script>";
-      else
-         vars["head_tags"] = std::string();
+         vars["head_tags"] = vars["head_tags"] + "<script>" + options.initJs + "</script>";
 
       // gwt prefix
       vars["gwt_prefix"] = options.gwtPrefix;
@@ -152,21 +156,6 @@ void handleFileRequest(const FileRequestOptions& options,
 
       // read existing CSRF token
       std::string csrfToken = request.cookieValue(kCSRFTokenCookie, options.cookies.iFrameLegacyCookies);
-      if (csrfToken.empty())
-      {
-         // no CSRF token set up yet; we usually set this at login but it's normal for it to not be
-         // set when using proxied authentication. generate and apply a new token.
-         csrfToken = core::system::generateUuid();
-         bool secure = options.cookies.useSecureCookies || request.isSecure();
-         core::http::setCSRFTokenCookie(request,
-                                        boost::optional<boost::gregorian::days>(),
-                                        csrfToken,
-                                        secure,
-                                        options.cookies.iFrameEmbedding,
-                                        options.cookies.legacyCookies,
-                                        options.cookies.iFrameLegacyCookies,
-                                        pResponse);
-      }
       vars["csrf_token"] = string_utils::htmlEscape(csrfToken, true /* isAttribute */);
 
       // don't allow main page to be framed by other domains (clickjacking
@@ -191,8 +180,6 @@ void handleFileRequest(const FileRequestOptions& options,
 http::UriHandlerFunction fileHandlerFunction(
                                        const std::string& wwwLocalPath,
                                        bool useSecureCookies,
-                                       bool iFrameEmbedding,
-                                       bool legacyCookies,
                                        bool iFrameLegacyCookies,
                                        const std::string& baseUri,
                                        http::UriFilterFunction mainPageFilter,
@@ -203,10 +190,8 @@ http::UriHandlerFunction fileHandlerFunction(
 {
    FileRequestOptions options { wwwLocalPath, baseUri, mainPageFilter, initJs,
                                 gwtPrefix, useEmulatedStack, 
-                                FileRequestOptions::CookieOptions { 
+                                FileRequestOptions::CookieOptions {
                                    useSecureCookies,
-                                   iFrameEmbedding,
-                                   legacyCookies,
                                    iFrameLegacyCookies
                                 }, frameOptions };
 
