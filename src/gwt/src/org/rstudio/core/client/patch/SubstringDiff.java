@@ -106,13 +106,22 @@ public class SubstringDiff
       {
       }
       
+      // Early check for case with no diff.
+      if (olen === nlen && head === tail) {
+         return {
+            "replacement": "",
+            "offset": 0,
+            "length": 0
+         }
+      }
+      
       // Move head and tail to ensure we align on starts of UTF-8 characters.
       // UTF-8 continuation bytes match the byte sequence 10xxxxxx;
       // that is, are values in the range [128, 192). So we want to ensure
       // head + tail land on bytes not containing those values.
       while (head > 0)
       {
-         var ch = o[head];
+         var ch = o[head] || 0;
          if (ch < 128 || ch >= 192)
             break;
          head--;
@@ -120,7 +129,7 @@ public class SubstringDiff
       
       while (tail < olen)
       {
-         var ch = o[tail];
+         var ch = o[tail] || 0;
          if (ch < 128 || ch >= 192)
             break;
          tail++;
