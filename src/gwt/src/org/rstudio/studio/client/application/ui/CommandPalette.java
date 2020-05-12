@@ -94,6 +94,8 @@ public class CommandPalette extends Composite
       selected_ = -1;
       addins_ = addins;
       commands_ = commands;
+      attached_ = false;
+      pageSize_ = 0;
       styles_.ensureInjected();
       
       Element searchBox = searchBox_.getElement();
@@ -144,6 +146,23 @@ public class CommandPalette extends Composite
       };
    }
    
+   @Override
+   public void onAttach()
+   {
+      super.onAttach();
+
+      // If we have already populated, compute the page size. Do this deferred
+      // so that a render pass occurs (otherwise the page size computations will
+      // take place with unrendered elements)
+      if (entries_.size() > 0)
+      {
+         Scheduler.get().scheduleDeferred(() ->
+         {
+            computePageSize();
+         });
+      }
+   }
+
    /**
     * Performs a one-time population of the palette with all available commands.
     */
@@ -275,7 +294,46 @@ public class CommandPalette extends Composite
             evt.preventDefault();
             moveSelection(1);
          }
+         else if (evt.getNativeKeyCode() == KeyCode.PAGE_UP)
+         {
+            // Page Up moves up by the page size (computed based on the size of
+            // entries in the DOM)
+            moveSelection(-1 * pageSize_);
+         }
+         else if (evt.getNativeKeyCode() == KeyCode.PAGE_DOWN)
+         {
+            moveSelection(pageSize_);
+         }
       });
+      
+      // If we are already attached to the DOM at this point, compute the page
+      // size for scrolling by pages. 
+      if (attached_)
+      {
+         computePageSize();
+      }
+   }
+   
+   /**
+    * Compute the size of a "page" of results (for Page Up / Page Down). We do
+    * this dynamically based on measuring DOM elements since the number of items
+    * that fit in a page can vary based on platform, browser, and available
+    * fonts.
+    */
+   private void computePageSize()
+   {
+      // Find the first visible entry (we can't measure an invisible one)
+      for (int i = 0; i < entries_.size(); i++)
+      {
+         if (entries_.get(i).isVisible())
+         {
+            // Compute the page size: the total size of the scrolling area
+            // divided by the size of a visible entry
+            pageSize_ = Math.floorDiv(scroller_.getElement().getClientHeight(), 
+                  entries_.get(i).getElement().getOffsetHeight());
+            break;
+         }
+      }
    }
    
    /**
@@ -356,27 +414,45 @@ public class CommandPalette extends Composite
    /**
     * Changes the selected palette entry in response to user input.
     * 
-    * @param units The direction to move selection (1 forward, -1 backward)
+    * @param units The number of units to move selection (negative to go
+    *   backwards)
     */
    private void moveSelection(int units)
    {
       // Select the first visible command in the given direction
       CommandPaletteEntry candidate = null;
-      int pass = 1;
-      int target = 0;
+
+      int direction = units / Math.abs(units);  // -1 (backwards) or 1 (forwards)
+      int consumed = 0; // Number of units consumed to goal
+      int target = 0;   // Target element to select
+      int pass = 1;     // Number of entries passed so far
+      int viable = -1;  // The last visited viable (selectable) entry
       do
       {
-         target = selected_ + (units * pass++);
+         target = selected_ + (direction * pass++);
          if (target < 0 || target >= entries_.size())
          {
             // Request to navigate outside the boundaries of the palette
-            return;
+            break;
          }
          candidate = entries_.get(target);
+
+         if (candidate.isVisible())
+         {
+            // This entry is visible, so it counts against our goal.
+            consumed += direction;
+            viable = target;
+         }
       }
-      while (!candidate.isVisible());
+      while (consumed != units);
       
-      selectNewCommand(target);
+      // Select a viable entry if we found one; this may not be the desired
+      // element but will be as far as we could move (e.g. requested to move
+      // 20 units but had to stop at 15).
+      if (viable >= 0)
+      {
+         selectNewCommand(viable);
+      }
    }
    
    /**
@@ -407,6 +483,10 @@ public class CommandPalette extends Composite
     */
    private void selectNewCommand(int target)
    {
+      // No-op if target was already selected
+      if (selected_ == target)
+         return;
+      
       // Clear previous selection, if any
       if (selected_ >= 0)
       {
@@ -417,7 +497,7 @@ public class CommandPalette extends Composite
       selected_ = target;
       CommandPaletteEntry selected = entries_.get(selected_);
       selected.setSelected(true);
-      scroller_.ensureVisible(selected);
+      selected.getElement().scrollIntoView();
 
       // Update active descendant for accessibility
       Roles.getComboboxRole().setAriaActivedescendantProperty(
@@ -432,6 +512,8 @@ public class CommandPalette extends Composite
    private int selected_;
    private List<CommandPaletteEntry> entries_;
    private String searchText_;
+   private boolean attached_;
+   private int pageSize_;
 
    @UiField public TextBox searchBox_;
    @UiField public FlowPanel commandList_;
