@@ -36,6 +36,10 @@ h3.pm-heading {
   font-size: 1.25em !important;
 }
 
+h4.pm-heading {
+  font-size: 1.10em !important;
+}
+
 .pm-heading .pm-fixedwidth-font {
   font-size: inherit !important;
 }
@@ -194,11 +198,6 @@ h3.pm-heading {
   padding: 15px;
   margin-block-end: 1em;
 }
-
-.pm-show-text-focus.pm-text-focused {
-  outline: 1px dotted;
-}
- 
 .pm-popup {
   border-radius: 8px;
   border-style: solid;

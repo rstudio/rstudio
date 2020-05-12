@@ -44,6 +44,8 @@ import org.rstudio.studio.client.panmirror.PanmirrorWidget;
 import org.rstudio.studio.client.panmirror.PanmirrorWidget.FormatSource;
 import org.rstudio.studio.client.panmirror.PanmirrorWriterOptions;
 import org.rstudio.studio.client.panmirror.command.PanmirrorCommands;
+import org.rstudio.studio.client.panmirror.events.PanmirrorSelectionChangedEvent;
+import org.rstudio.studio.client.panmirror.events.PanmirrorUpdatedEvent;
 import org.rstudio.studio.client.panmirror.format.PanmirrorExtendedDocType;
 import org.rstudio.studio.client.panmirror.format.PanmirrorFormat;
 import org.rstudio.studio.client.panmirror.format.PanmirrorHugoExtensions;
@@ -77,12 +79,9 @@ import org.rstudio.studio.client.workbench.views.source.model.SourceServerOperat
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
-import com.google.gwt.event.dom.client.ChangeEvent;
-import com.google.gwt.event.dom.client.ChangeHandler;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.Command;
-import com.google.gwt.view.client.SelectionChangeEvent;
 import com.google.inject.Inject;
 
 
@@ -653,10 +652,10 @@ public class TextEditingTargetVisualMode
             };
             
             // set dirty flag + nudge idle sync on change
-            panmirror_.addChangeHandler(new ChangeHandler() 
+            panmirror_.addPanmirrorUpdatedHandler(new PanmirrorUpdatedEvent.Handler()
             {
                @Override
-               public void onChange(ChangeEvent event)
+               public void onPanmirrorUpdated(PanmirrorUpdatedEvent event)
                {
                   // set flag and nudge sync on idle
                   isDirty_ = true;
@@ -669,10 +668,10 @@ public class TextEditingTargetVisualMode
             });
             
             // save selection
-            panmirror_.addSelectionChangeHandler(new SelectionChangeEvent.Handler()
+            panmirror_.addPanmirrorSelectionChangedHandler(new PanmirrorSelectionChangedEvent.Handler()
             {
                @Override
-               public void onSelectionChange(SelectionChangeEvent event)
+               public void onPanmirrorSelectionChanged(PanmirrorSelectionChangedEvent event)
                {
                   saveLocationOnIdle_.nudge();
                }
@@ -1274,7 +1273,7 @@ public class TextEditingTargetVisualMode
             // if it has an extension indicating hugo will render markdown
             String extension = FileSystemItem.getExtensionFromPath(docPath);
             if (extension.compareToIgnoreCase(".md") == 0 ||
-                extension.compareToIgnoreCase("Rmarkdown") == 0)
+                extension.compareToIgnoreCase(".Rmarkdown") == 0)
             {
                return alternateMode;
             }

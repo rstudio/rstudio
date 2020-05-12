@@ -14,7 +14,6 @@
  */
 
 import { Node as ProsemirrorNode, Schema } from 'prosemirror-model';
-import { textblockTypeInputRule, InputRule } from 'prosemirror-inputrules';
 import { newlineInCode, exitCode } from 'prosemirror-commands';
 import { EditorState, Transaction } from 'prosemirror-state';
 import { EditorView } from 'prosemirror-view';
@@ -129,9 +128,6 @@ const extension = (
       ];
     },
 
-    inputRules: (schema: Schema) => {
-      return [textblockTypeInputRule(/^```$/, schema.nodes.code_block), codeBlockListItemInputRule(schema)];
-    },
   };
 };
 
@@ -269,19 +265,6 @@ function codeBlockAttrEdit(pandocExtensions: PandocExtensions, pandocCapabilitie
   };
 }
 
-function codeBlockListItemInputRule(schema: Schema) {
-  return new InputRule(/^```$/, (state: EditorState, match: string[], start: number, end: number) => {
-    const prevListItemPos = precedingListItemInsertPos(state.doc, state.selection, '``');
-    if (!prevListItemPos) {
-      return null;
-    }
 
-    const tr = state.tr;
-    tr.deleteRange(start, end);
-    const block = state.schema.nodes.code_block.create();
-    precedingListItemInsert(tr, prevListItemPos, block);
-    return tr;
-  });
-}
 
 export default extension;

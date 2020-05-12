@@ -37,12 +37,12 @@
 }
 
 .ProseMirror .body.editing-footnote {
-  bottom: 100px;
+  bottom: 160px;
   border-bottom: 1px solid;
 }
 
 .ProseMirror .notes.editing-footnote {
-  height: 90px;
+  height: 150px;
   padding-top: 10px;
   z-index: 5;
 }

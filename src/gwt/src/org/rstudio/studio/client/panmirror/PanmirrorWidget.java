@@ -39,6 +39,8 @@ import org.rstudio.studio.client.panmirror.command.PanmirrorToolbarMenu;
 import org.rstudio.studio.client.panmirror.events.PanmirrorOutlineNavigationEvent;
 import org.rstudio.studio.client.panmirror.events.PanmirrorOutlineVisibleEvent;
 import org.rstudio.studio.client.panmirror.events.PanmirrorOutlineWidthEvent;
+import org.rstudio.studio.client.panmirror.events.PanmirrorSelectionChangedEvent;
+import org.rstudio.studio.client.panmirror.events.PanmirrorUpdatedEvent;
 import org.rstudio.studio.client.panmirror.findreplace.PanmirrorFindReplace;
 import org.rstudio.studio.client.panmirror.findreplace.PanmirrorFindReplaceWidget;
 import org.rstudio.studio.client.panmirror.format.PanmirrorFormat;
@@ -56,12 +58,7 @@ import org.rstudio.studio.client.workbench.prefs.model.UserState;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.EditorThemeChangedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.themes.AceTheme;
 
-import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Style;
-import com.google.gwt.event.dom.client.ChangeEvent;
-import com.google.gwt.event.dom.client.ChangeHandler;
-import com.google.gwt.event.dom.client.DomEvent;
-import com.google.gwt.event.dom.client.HasChangeHandlers;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HandlerManager;
 import com.google.gwt.event.shared.HandlerRegistration;
@@ -72,8 +69,6 @@ import com.google.gwt.user.client.ui.DockLayoutPanel;
 import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.RequiresResize;
 import com.google.gwt.user.client.ui.PopupPanel.PositionCallback;
-import com.google.gwt.view.client.SelectionChangeEvent;
-import com.google.gwt.view.client.SelectionChangeEvent.HasSelectionChangedHandlers;
 import com.google.inject.Inject;
 
 import elemental2.core.JsObject;
@@ -85,8 +80,8 @@ import jsinterop.annotations.JsType;
 public class PanmirrorWidget extends DockLayoutPanel implements 
    IsHideableWidget,
    RequiresResize, 
-   HasChangeHandlers, 
-   HasSelectionChangedHandlers,
+   PanmirrorUpdatedEvent.HasPanmirrorUpdatedHandlers,
+   PanmirrorSelectionChangedEvent.HasPanmirrorSelectionChangedHandlers,
    PanmirrorOutlineVisibleEvent.HasPanmirrorOutlineVisibleHandlers,
    PanmirrorOutlineWidthEvent.HasPanmirrorOutlineWidthHandlers
    
@@ -242,12 +237,8 @@ public class PanmirrorWidget extends DockLayoutPanel implements
          }
       });
       
-      
       editorEventUnsubscribe_.add(editor_.subscribe(PanmirrorEvent.Update, () -> {
-         
-         // fire to clients
-         DomEvent.fireNativeEvent(Document.get().createChangeEvent(), handlers_);
-      
+         fireEvent(new PanmirrorUpdatedEvent());
       }));
       
       // don't update outline eaglerly (wait for 500ms delay in typing)
@@ -275,7 +266,7 @@ public class PanmirrorWidget extends DockLayoutPanel implements
          updateOutineOnIdle.nudge();
          
          // fire to clients
-         SelectionChangeEvent.fire(this);
+         fireEvent(new PanmirrorSelectionChangedEvent());
       }));
       
       editorEventUnsubscribe_.add(editor_.subscribe(PanmirrorEvent.OutlineChange, () -> {
@@ -506,15 +497,15 @@ public class PanmirrorWidget extends DockLayoutPanel implements
    }
    
    @Override
-   public HandlerRegistration addChangeHandler(ChangeHandler handler)
+   public HandlerRegistration addPanmirrorUpdatedHandler(PanmirrorUpdatedEvent.Handler handler)
    {
-      return handlers_.addHandler(ChangeEvent.getType(), handler);
+      return handlers_.addHandler(PanmirrorUpdatedEvent.getType(), handler);
    }
    
    @Override
-   public HandlerRegistration addSelectionChangeHandler(SelectionChangeEvent.Handler handler)
+   public HandlerRegistration addPanmirrorSelectionChangedHandler(PanmirrorSelectionChangedEvent.Handler handler)
    {
-      return handlers_.addHandler(SelectionChangeEvent.getType(), handler);
+      return handlers_.addHandler(PanmirrorSelectionChangedEvent.getType(), handler);
    }
    
    @Override

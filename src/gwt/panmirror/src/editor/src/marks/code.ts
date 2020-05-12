@@ -25,6 +25,7 @@ import { PandocToken, PandocOutput, PandocTokenType, PandocExtensions } from '..
 import { fancyQuotesToSimple } from '../api/quote';
 import { kCodeText, kCodeAttr } from '../api/code';
 import { delimiterMarkInputRule, MarkInputRuleFilter } from '../api/input_rule';
+import { fragmentText } from '../api/fragment';
 
 
 const extension = (pandocExtensions: PandocExtensions): Extension => {
@@ -123,6 +124,10 @@ const extension = (pandocExtensions: PandocExtensions): Extension => {
                 const newCode = fancyQuotesToSimple(code);
                 if (newCode !== code) {
                   tr.insertText(newCode, from, to);
+                  tr.addMark(from, to, schema.marks.code.create());
+                  if (tr.selection.empty && tr.selection.from === to) {
+                    tr.removeStoredMark(schema.marks.code);
+                  }
                 }
               });
             });

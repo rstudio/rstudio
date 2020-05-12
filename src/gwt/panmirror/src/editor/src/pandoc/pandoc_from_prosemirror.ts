@@ -128,7 +128,7 @@ class PandocWriter implements PandocOutput {
 
   public writeMark(type: PandocTokenType, parent: Fragment, expelEnclosingWhitespace = false) {
     // expel enclosing whitepsace if requested and if the fragment isn't 100% spaces
-    if (expelEnclosingWhitespace && fragmentText(parent).trim().length > 0) {
+    if (expelEnclosingWhitespace) {
       // build output spec
       const output = {
         spaceBefore: false,
@@ -144,37 +144,47 @@ class PandocWriter implements PandocOutput {
           let outputText = node.textContent;
 
           // checking for leading space in first node
-          if (index === 0 && node.textContent.match(/^\s+/)) {
+          if (output.nodes.length === 0 && node.textContent.match(/^\s+/)) {
             output.spaceBefore = true;
             outputText = outputText.trimLeft();
           }
 
           // check for trailing space in last node
-          if (index === parent.childCount - 1 && node.textContent.match(/\s+$/)) {
+          if ((index === parent.childCount - 1) && node.textContent.match(/\s+$/)) {
             output.spaceAfter = true;
             outputText = outputText.trimRight();
           }
 
-          // if we modified the node's text then create a new node
-          if (outputText !== node.textContent) {
-            output.nodes.push(node.type.schema.text(outputText, node.marks));
-          } else {
-            output.nodes.push(node);
+          // check for an entirely blank node 
+          if (outputText.match(/^\s*$/)) {
+            outputText = '';
           }
+
+          // skip the node if it has nothing in it
+          if (outputText.length > 0) {
+            // if we modified the node's text then create a new node
+            if (outputText !== node.textContent) {
+              output.nodes.push(node.type.schema.text(outputText, node.marks));
+            } else {
+              output.nodes.push(node);
+            } 
+          } 
         } else {
           output.nodes.push(node);
         }
       });
 
       // output space tokens before/after mark as necessary
-      if (output.spaceBefore) {
-        this.writeToken(PandocTokenType.Space);
-      }
-      this.writeToken(type, () => {
-        this.writeInlines(Fragment.from(output.nodes));
-      });
-      if (output.spaceAfter) {
-        this.writeToken(PandocTokenType.Space);
+      if (output.nodes.length > 0) {
+        if (output.spaceBefore) {
+          this.writeToken(PandocTokenType.Space);
+        }
+        this.writeToken(type, () => {
+          this.writeInlines(Fragment.from(output.nodes));
+        });
+        if (output.spaceAfter) {
+          this.writeToken(PandocTokenType.Space);
+        }
       }
 
       // normal codepath (not expelling existing whitespace)
@@ -247,10 +257,17 @@ class PandocWriter implements PandocOutput {
   }
 
   public writeNote(note: ProsemirrorNode) {
+
+    // get corresponding note body
     const noteBody = this.notes[note.attrs.ref];
-    this.writeToken(PandocTokenType.Note, () => {
-      this.writeNodes(noteBody);
-    });
+
+    // don't write empty footnotes (otherwise in block or section mode they gobble up the section below them)
+    if (noteBody.textContent.trim().length > 0) {
+      this.writeToken(PandocTokenType.Note, () => {
+        this.writeNodes(noteBody);
+      });
+    }
+
   }
 
   public writeNode(node: ProsemirrorNode) {

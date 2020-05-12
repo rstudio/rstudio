@@ -132,27 +132,21 @@ function yamlMetadataBlockCapsuleFilter() {
     ,
 
     // globally replace any instances of our block capsule found in text
-    handleText: (text: string) : string => {
+    handleText: (text: string, tok: PandocToken) : string => {
 
-      // if we have an exact match of the token regex, then the yaml got parsed into 
-      // a block (this could have happended if it was a 4-space indented code block
-      // that "looks like" it's yaml to our regex -- several of these apppear in the
-      // pandoc MANUAL.md). In this case we need to strip the prefix from the lines
-      // of the yaml (since pandoc would have effectively eliminated these when 
-      // collecting the text into a block)
-      const tokenMatch = text.match(tokenRegex);
-      if (tokenMatch) {
-        const capsule = parsePandocBlockCapsule(tokenMatch[0]);
-        if (capsule.type === kYamlMetadataCapsuleType) {
-          return blockCapsuleSourceWithoutPrefix(capsule.source, capsule.prefix);
-        }
-      }
+      // if this is a code block then we need to strip the prefix
+      const stripPrefix = tok.t === PandocTokenType.CodeBlock;
 
+      // replace text
       return text.replace(textRegex, (match) => {
         const capsuleText = match.substring(0, match.length - 1); // trim off newline
         const capsule = parsePandocBlockCapsule(capsuleText);
         if (capsule.type === kYamlMetadataCapsuleType) {
-          return capsule.source;
+          if (stripPrefix) {
+            return blockCapsuleSourceWithoutPrefix(capsule.source, capsule.prefix);
+          } else {
+            return capsule.source;
+          }
         } else {
           return match;
         }

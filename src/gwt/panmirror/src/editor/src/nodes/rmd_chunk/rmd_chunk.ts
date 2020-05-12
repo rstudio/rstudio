@@ -194,7 +194,7 @@ function rmdChunkBlockCapsuleFilter() {
 
     type: kBlockCapsuleType,
     
-    match: /^([\t >]*)(```+\s*\{[a-zA-Z0-9_]+(?: *[ ,].*?)?\}[ \t]*\n(?:[\W\w]*?\n)?[\t >]*```+)([ \t]*)$/gm,
+    match: /^([\t >]*)(```+\s*\{[a-zA-Z0-9_]+(?: *[ ,].*?)?\}[ \t]*\n(?:[\t >]*```+|[\W\w]*?\n[\t >]*```+))([ \t]*)$/gm,
     
     // textually enclose the capsule so that pandoc parses it as the type of block we want it to
     // (in this case a code block). we use the capsule prefix here to make sure that the code block's
@@ -207,11 +207,19 @@ function rmdChunkBlockCapsuleFilter() {
 
     // look for one of our block capsules within pandoc ast text (e.g. a code or raw block)
     // and if we find it, parse and return the original source code
-    handleText: (text: string) => {
+    handleText: (text: string, tok: PandocToken) => {
+      
+      // if this is a code block then we need to strip the prefix
+      const stripPrefix = tok.t === PandocTokenType.CodeBlock;
+
       return text.replace(kBlockCapsuleTextRegEx, (_match, p1) => {
         const capsuleText = p1;
         const capsule = parsePandocBlockCapsule(capsuleText);
-        return capsule.source;
+        if (stripPrefix) {
+          return blockCapsuleSourceWithoutPrefix(capsule.source, capsule.prefix);
+        } else {
+          return capsule.source;
+        }
       });
     },
     
@@ -228,7 +236,7 @@ function rmdChunkBlockCapsuleFilter() {
     },
 
     // write the node as an rmd_chunk, being careful to remove the backticks 
-    // preserved as part of the source, and stripping out the base indentation
+    // preserved as part of the source, and striping out the base indentation
     // level implied by the prefix
     writeNode: (schema: Schema, writer: ProsemirrorWriter, capsule: PandocBlockCapsule) => {
 
