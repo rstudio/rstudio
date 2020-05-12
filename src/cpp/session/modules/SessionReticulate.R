@@ -1134,9 +1134,7 @@ options(reticulate.repl.teardown   = .rs.reticulate.replTeardown)
       # try to infer the completion type
       if (inherits(item, "python.builtin.module"))
          .rs.acCompletionTypes$ENVIRONMENT
-      else if (inherits(item, "python.builtin.builtin_function_or_method") ||
-               inherits(item, "python.builtin.function") ||
-               inherits(item, "python.builtin.instancemethod"))
+      else if (.rs.reticulate.isFunction(item))
          .rs.acCompletionTypes$FUNCTION
       else if (inherits(item, "pandas.core.frame.DataFrame"))
          .rs.acCompletionTypes$DATAFRAME
@@ -1483,7 +1481,7 @@ html.heading = _heading
    # TODO: there isn't really a distinction between an objects "type"
    # and an objects "class" in Python 3
    # get object type, value
-   type <- if (inherits(object, "python.builtin.function"))
+   type <- if (.rs.reticulate.isFunction(object))
       "function"
    else
       builtins$str(builtins$type(object))
@@ -1736,4 +1734,13 @@ html.heading = _heading
       error = function(e) FALSE
    )
 
+})
+
+.rs.addFunction("reticulate.isFunction", function(object)
+{
+   inherits(object, c(
+      "python.builtin.builtin_function_or_method",
+      "python.builtin.function",
+      "python.builtin.instancemethod"
+   ))
 })
