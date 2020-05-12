@@ -22,6 +22,7 @@ import org.rstudio.core.client.widget.ModalPopupPanel;
 import org.rstudio.studio.client.workbench.addins.AddinsCommandManager;
 import org.rstudio.studio.client.workbench.commands.Commands;
 
+import com.google.gwt.aria.client.Roles;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
@@ -109,6 +110,11 @@ public class CommandPaletteLauncher implements CommandPalette.Host
       {
          panel_.addStyleName(root.getClassName());
       }
+      
+      // Assign the appropriate ARIA role to this panel
+      Element ele = panel_.getElement();
+      Roles.getDialogRole().set(ele);
+      Roles.getDialogRole().setAriaLabelProperty(ele, "Search for commands");
 
       panel_.add(palette_);
       panel_.show();

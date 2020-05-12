@@ -34,6 +34,7 @@ import org.rstudio.studio.client.workbench.addins.Addins.RAddin;
 import org.rstudio.studio.client.workbench.addins.Addins.RAddins;
 import org.rstudio.studio.client.workbench.commands.Commands;
 
+import com.google.gwt.aria.client.ExpandedValue;
 import com.google.gwt.aria.client.Id;
 import com.google.gwt.aria.client.LiveValue;
 import com.google.gwt.aria.client.Roles;
@@ -100,14 +101,17 @@ public class CommandPalette extends Composite
       searchBox.setAttribute("spellcheck", "false");
 
       // Accessibility attributes: list box
-      Roles.getListboxRole().set(commandList_.getElement());
-      ElementIds.assignElementId(commandList_, ElementIds.COMMAND_PALETTE_LIST);
+      Element commandList = commandList_.getElement();
+      ElementIds.assignElementId(commandList, ElementIds.COMMAND_PALETTE_LIST);
+      Roles.getListboxRole().set(commandList);
+      Roles.getListboxRole().setAriaLabelProperty(commandList, "Matching commands");
 
       // Accessibility attributes: search box
       ElementIds.assignElementId(searchBox_, ElementIds.COMMAND_PALETTE_SEARCH);
       Roles.getComboboxRole().setAriaOwnsProperty(searchBox, Id.of(commandList_.getElement()));
       Roles.getComboboxRole().set(searchBox);
       Roles.getComboboxRole().setAriaLabelProperty(searchBox, "Search for and run a command");
+      Roles.getComboboxRole().setAriaExpandedState(searchBox, ExpandedValue.TRUE);
       A11y.setARIAAutocomplete(searchBox_, "list");
       
       // Accessibility attributes: announcement region; we want this to be read
