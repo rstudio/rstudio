@@ -154,6 +154,7 @@
 * Fix carryover of light ANSI background colors (#6092)
 * Fix issue where Shiny applications using `reticulate` on Windows could crash on run (#6140)
 * Fix issue where pasting text into last chunk in document could occasionally cause hang (#6226)
+* Fix blank Viewer Pane when displaying most HTML widgets with R 4.0.0 (#6737)
 
 ### RStudio Professional
 

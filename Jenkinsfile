@@ -179,7 +179,7 @@ try {
                 prepareWorkspace()
 
                 container = pullBuildPush(image_name: 'jenkins/ide', dockerfile: "docker/jenkins/Dockerfile.versioning", image_tag: "rstudio-versioning", build_args: jenkins_user_build_args())
-                container.inside() {
+                container.inside("--privileged") {
                     stage('bump version') {
                         def rstudioVersion = sh (
                           script: "docker/jenkins/rstudio-version.sh bump ${params.RSTUDIO_VERSION_MAJOR}.${params.RSTUDIO_VERSION_MINOR}",
