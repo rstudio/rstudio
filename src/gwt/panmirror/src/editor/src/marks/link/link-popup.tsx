@@ -13,6 +13,7 @@
  *
  */
 
+import { Node as ProsemirrorNode } from 'prosemirror-model';
 import { DecorationSet, Decoration, EditorView } from 'prosemirror-view';
 import { Plugin, PluginKey, EditorState, Transaction } from 'prosemirror-state';
 
@@ -20,7 +21,7 @@ import * as React from 'react';
 
 import ClipboardJS from 'clipboard';
 
-import { getMarkRange, getMarkAttrs } from '../../api/mark';
+import { getMarkRange, getMarkAttrs, markIsActive } from '../../api/mark';
 import { LinkProps, EditorUI } from '../../api/ui';
 import { CommandFn } from '../../api/command';
 import { kRestoreLocationTransaction } from '../../api/transaction';
@@ -34,6 +35,7 @@ import { reactRenderForEditorView, WidgetProps } from '../../api/widgets/react';
 import { LinkButton, ImageButton } from '../../api/widgets/button';
 import { textRangePopupDecorationPosition } from '../../api/widgets/decoration';
 import { Popup } from '../../api/widgets/popup';
+import { kPlatformMac } from '../../api/platform';
 
 const key = new PluginKey<DecorationSet>('link-popup');
 
@@ -125,6 +127,20 @@ export class LinkPopupPlugin extends Plugin<DecorationSet> {
         decorations: (state: EditorState) => {
           return key.getState(state);
         },
+        handleClick: (view: EditorView, pos: number, event: MouseEvent) => {
+          const keyPressed = kPlatformMac && event.metaKey;
+          if (keyPressed) {
+            const schema = view.state.schema;
+            const linkAttrs = getMarkAttrs(view.state.doc, { from: pos, to: pos}, schema.marks.link);
+            if (linkAttrs) {
+              event.stopPropagation();
+              event.preventDefault();
+              ui.display.openURL(linkAttrs.href);
+              return true;
+            }
+          }
+          return false;
+        }
       },
     });
   }
