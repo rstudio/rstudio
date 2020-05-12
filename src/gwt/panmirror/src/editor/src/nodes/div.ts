@@ -31,7 +31,6 @@ import {
 import { PandocOutput, PandocTokenType, PandocToken } from '../api/pandoc';
 import { ProsemirrorCommand, EditorCommandId, toggleWrap } from '../api/command';
 import { EditorUI } from '../api/ui';
-import { precedingListItemInsertPos, precedingListItemInsert } from '../api/list';
 
 import './div-styles.css';
 

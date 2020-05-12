@@ -25,7 +25,7 @@ export interface ListCapabilities {
   order: boolean;
 }
 
-export function precedingListItemInsertPos(doc: ProsemirrorNode, selection: Selection, matchText = '') {
+export function precedingListItemInsertPos(doc: ProsemirrorNode, selection: Selection) {
   // selection just be empty
   if (!selection.empty) {
     return null;
@@ -34,7 +34,7 @@ export function precedingListItemInsertPos(doc: ProsemirrorNode, selection: Sele
   // check for insert position in preceding list item
   const schema = doc.type.schema;
   const parentListItem = findParentNodeOfType(schema.nodes.list_item)(selection);
-  if (parentListItem && parentListItem.node.textContent === matchText) {
+  if (parentListItem) {
     const $liPos = doc.resolve(parentListItem.pos);
     const listIndex = $liPos.index();
     if (listIndex > 0) {

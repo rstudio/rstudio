@@ -72,6 +72,7 @@ import behaviorTrailingP from '../behaviors/trailing_p';
 import behaviorEmptyMark from '../behaviors/empty_mark';
 import behaviorOutline from '../behaviors/outline';
 import behaviorTextFocus from '../behaviors/text_focus';
+import beahviorCodeBlockInput from '../behaviors/code_block_input';
 
 // marks
 import markStrikeout from '../marks/strikeout';
@@ -121,8 +122,8 @@ export function initExtensions(
     nodeParagraph,
     nodeHeading,
     nodeBlockquote,
-    nodeCodeBlock,
     nodeLists,
+    nodeCodeBlock,
     nodeImage,
     nodeFigure,
     nodeHr,
@@ -148,6 +149,7 @@ export function initExtensions(
     behaviorEmptyMark,
     behaviorOutline,
     behaviorTextFocus,
+    beahviorCodeBlockInput,
 
     // nodes
     nodeDiv,
