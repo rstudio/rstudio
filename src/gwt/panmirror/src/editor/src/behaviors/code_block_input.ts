@@ -28,6 +28,7 @@ import { precedingListItemInsertPos, precedingListItemInsert } from "../api/list
 import { pandocAttrFrom } from "../api/pandoc_attr";
 import { BaseKey } from "../api/basekeys";
 import { fancyQuotesToSimple } from "../api/quote";
+import { markIsActive } from "../api/mark";
 
 const extension = (
   pandocExtensions: PandocExtensions,
@@ -74,9 +75,19 @@ function codeBlockInputRuleEnter(fencedAttributes: boolean, format: EditorFormat
     const schema = state.schema;
     const { $head } = state.selection;
 
+    // selection must be empty
+    if (!state.selection.empty) {
+      return false;
+    }
+
     // full text of parent must meet the pattern
     const match = $head.parent.textContent.match(/^```(?:(\w+)|\{(\.?[^\}]+)\})$/);
     if (!match) {
+      return false;
+    }
+
+    // no inline code marks
+    if (markIsActive(state, schema.marks.code)) {
       return false;
     }
 
