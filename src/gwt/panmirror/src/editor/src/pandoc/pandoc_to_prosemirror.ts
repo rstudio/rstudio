@@ -109,7 +109,7 @@ class Parser {
       if (capsuleText) {
         const blockCapsule = parsePandocBlockCapsule(capsuleText);
         // run all of the text filters in case there was nesting
-        blockCapsule.source = decodeBlockCapsuleText(blockCapsule.source, this.blockCapsuleFilters);
+        blockCapsule.source = decodeBlockCapsuleText(blockCapsule.source, tok, this.blockCapsuleFilters);
         filter.writeNode(this.schema, writer, blockCapsule);
         return;
       }

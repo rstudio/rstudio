@@ -61,7 +61,7 @@ export interface PandocBlockCapsuleFilter {
   // this method will generally use encodedBlockCapsuleRegex to create a regex to search
   // with, then upon finding a capsule, will unpack it with parsePandocBlockCapsule, compare
   // the type against our own type, and in the case they match do the substitution.
-  handleText: (text: string) => string;
+  handleText: (text: string, tok: PandocToken) => string;
   
   // do you want to handle this token as a capsule object? if so return the capsule text
   // (only the filter will know how to extract it from a pandoc token b/c it knows
@@ -130,12 +130,12 @@ export function resolvePandocBlockCapsuleText(tokens: PandocToken[], filters: re
     // look for non-string pandoc tokens
     if ((token.t !== PandocTokenType.Str) && token.c) {
       if (typeof token.c === "string") {
-        token.c = decodeBlockCapsuleText(token.c, filters);
+        token.c = decodeBlockCapsuleText(token.c, token, filters);
       } else if (Array.isArray(token.c)) {
         const children = token.c.length;
         for (let i=0; i<children; i++) {
           if (typeof token.c[i] === "string") {
-            token.c[i] = decodeBlockCapsuleText(token.c[i], filters);
+            token.c[i] = decodeBlockCapsuleText(token.c[i], token, filters);
           }
         }
       }
@@ -147,9 +147,9 @@ export function resolvePandocBlockCapsuleText(tokens: PandocToken[], filters: re
 }
 
 // decode the text capsule by running all of the filters (as there could be nesting)
-export function decodeBlockCapsuleText(text: string, filters: readonly PandocBlockCapsuleFilter[]) {
+export function decodeBlockCapsuleText(text: string, tok: PandocToken, filters: readonly PandocBlockCapsuleFilter[]) {
   filters.forEach(filter => {
-    text = filter.handleText(text);
+    text = filter.handleText(text, tok);
   });
   return text;
 }
