@@ -144,13 +144,13 @@ class PandocWriter implements PandocOutput {
           let outputText = node.textContent;
 
           // checking for leading space in first node
-          if (index === 0 && node.textContent.match(/^\s+/)) {
+          if (index === 0 && node.textContent.match(/^\s+\S]/)) {
             output.spaceBefore = true;
             outputText = outputText.trimLeft();
           }
 
           // check for trailing space in last node
-          if (index === parent.childCount - 1 && node.textContent.match(/\s+$/)) {
+          if (index === parent.childCount - 1 && node.textContent.match(/\S\s+$/)) {
             output.spaceAfter = true;
             outputText = outputText.trimRight();
           }
