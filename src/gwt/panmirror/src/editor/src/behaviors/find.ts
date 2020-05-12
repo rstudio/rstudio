@@ -22,6 +22,7 @@ import zenscroll from 'zenscroll';
 import { mergedTextNodes } from '../api/text';
 import { editingRootNode } from '../api/node';
 import { kAddToHistoryTransaction } from '../api/transaction';
+import { findParentNodeOfType } from 'prosemirror-utils';
 
 const key = new PluginKey<DecorationSet>('find-plugin');
 
@@ -303,17 +304,17 @@ class FindPlugin extends Plugin<DecorationSet> {
   }
 
   private scrollToSelectedResult(view: EditorView) {
+    const schema = view.state.schema;
     const selection = view.state.selection;
     const editingRoot = editingRootNode(selection);
     if (editingRoot) {
       const container = view.nodeDOM(editingRoot.pos) as HTMLElement;
-      const node = view.nodeDOM(view.state.doc.resolve(selection.from).before()) as HTMLElement;
-      if (container && node) {
-        const rect = node.getBoundingClientRect();
-        if (rect.top < 0 || rect.bottom > container.clientHeight) {
-          const scroller = zenscroll.createScroller(container);
-          scroller.center(node, 350, 50);
-        }
+      const parentList = findParentNodeOfType([schema.nodes.ordered_list,schema.nodes.bullet_list])(selection);
+      const resultPos = parentList ? parentList.pos : selection.$head.before();
+      const resultNode = view.nodeDOM(resultPos) as HTMLElement;
+      if (container && resultNode) {
+        const scroller = zenscroll.createScroller(container);
+        scroller.center(resultNode, 350, 100);
       }
     }
   }
