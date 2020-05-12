@@ -33,6 +33,7 @@ const extension: Extension = {
       name: 'quoted',
       spec: {
         inclusive: false,
+        excludes: '',
         attrs: {
           type: {},
         },
