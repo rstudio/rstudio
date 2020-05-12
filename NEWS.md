@@ -47,3 +47,4 @@
 * Fixed issue where attempts to plot could fail if R tempdir was deleted (#2214)
 * Fixed issue that caused sessions to freeze due to slow I/O for monitor logs (Pro #1259)
 * Added CSRF protection to sign-in pages (Pro #1469)
+* Fixed issue that allowed multiple concurrent sign-in requests (#6502)

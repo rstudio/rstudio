@@ -24,6 +24,10 @@
 <script>
 function verifyMe()
 {
+   if (document.getElementById('signinbutton').disabled)
+   {
+      return false;
+   }
    if(document.getElementById('username').value=='')
    {
       document.getElementById('username').focus();
@@ -36,6 +40,13 @@ function verifyMe()
       showError('You must enter a password');
       return false;
    }
+   document.getElementById('username').disabled = true;
+   document.getElementById('password').disabled = true;
+   document.getElementById('staySignedIn').disabled = true;
+   document.getElementById('signinbutton').disabled = true;
+   document.getElementById('signinbutton').classList.add('disabled');
+   document.getElementById('spinner').classList.remove('signin-hidden');
+   document.getElementById('progress-message').innerText = "Signing in";
    return true;
 }
 </script>
@@ -71,7 +82,8 @@ input[type=text], input[type=password] {
 
 #buttonpanel {
   text-align: center;
-  margin-top: 12px;
+  margin-top: 20px;
+  margin-bottom: 20px;
 }
 #errorpanel {
   text-align: center;
@@ -91,6 +103,12 @@ button.fancy {
   outline: none;
   border: 0;
   color: white;
+  min-width: 200px;
+}
+
+button.disabled {
+  background-color: #e0e2e5;
+  color: grey;
 }
 </style>
 
@@ -168,6 +186,10 @@ function submitRealForm() {
   <div id="logo">
     <a href="https://www.rstudio.com/"><img src="images/rstudio.png" width="78" height="27" alt="RStudio Logo (goes to external site)"/></a>
   </div>
+  <div id="licensed-to">
+    <span id="license-prefix">#licensePrefix#</span>
+    <span id="licensee">#licensee#</span>
+  </div>
 </header>
 <main role="main">
 <div id="errorpanel">
@@ -181,49 +203,59 @@ function submitRealForm() {
     <td>
       <h1 id="caption">Sign in to RStudio</h1>
       <div role="group" aria-labelledby="caption">
-      <p>
-         <label for="username">Username:</label><br />
-         <input type='text' 
-                name='username' 
-                autocomplete='off'
-                autocorrect='off'
-                autocapitalize='off'
-                spellcheck='false'
-                value='' 
-                id='username' 
-                size='45'/><br />
-      </p>
-      <p>
-         <label for="password">Password:</label><br />
-         <input type='password' 
-                name='password' 
-                autocomplete='off'
-                autocorrect='off'
-                autocapitalize='off'
-                spellcheck='false'
-                value='' 
-                id='password' 
-                size='45'/><br />
-      </p>
-      <div style="display: #staySignedInDisplay#;">
-         <input type="checkbox" name="staySignedIn" id="staySignedIn" value="1"/>
-         <label for="staySignedIn">Stay signed in when browser closes</label>
-         <p style="display: #authTimeoutMinutesDisplay#;">
-            <span style="font-size:10px">You will automatically be signed out after #authTimeoutMinutes# minutes of inactivity.</span>
+         <p>
+            <label for="username">Username:</label><br />
+            <input type='text' 
+                     name='username' 
+                     autocomplete='off'
+                     autocorrect='off'
+                     autocapitalize='off'
+                     spellcheck='false'
+                     value='' 
+                     id='username' 
+                     size='45'/><br />
          </p>
-      </div>
-      <input type="hidden" id="csrf-token" name="csrf-token" value="#csrf_token#" />
-      <input type="hidden" name="appUri" value="#appUri#"/>
-      <div id="buttonpanel"><button class="fancy" type="submit">Sign In</button></div>
+         <p>
+            <label for="password">Password:</label><br />
+            <input type='password' 
+                     name='password' 
+                     autocomplete='off'
+                     autocorrect='off'
+                     autocapitalize='off'
+                     spellcheck='false'
+                     value='' 
+                     id='password' 
+                     size='45'/><br />
+         </p>
+         <div style="display: #staySignedInDisplay#;">
+            <input type="checkbox" name="staySignedIn" id="staySignedIn" value="1"/>
+            <label for="staySignedIn">Stay signed in when browser closes</label>
+            <p style="display: #authTimeoutMinutesDisplay#;">
+               <span style="font-size:10px">You will automatically be signed out after #authTimeoutMinutes# minutes of inactivity.</span>
+            </p>
+         </div>
+         <input type="hidden" name="csrf-token" value="#csrf_token#" />
+         <input type="hidden" name="appUri" value="#appUri#"/>
+         <div id="buttonpanel">
+            <button id="signinbutton" class="fancy" type="submit">Sign In</button>
+         </div>
       </div>
     </td>
   </tr>
 </table>
 </form>
+<div class="signin-spinner-holder">
+   <div aria-live="polite" class="visuallyhidden" id="progress-message"></div>
+   <div role="progressbar" aria-labelledby="progress-message" id="spinner" class="signin-hidden signin-spinner">
+      <div></div><div></div><div></div><div></div>
+      <div></div><div></div><div></div><div></div>
+      <div></div><div></div><div></div><div></div>
+   </div>
+</div>
 
 <form action="#action#" name="realform" method="POST">
    <input type="hidden" name="persist" id="persist" value=""/>
-   <input type="hidden" id="csrf-token" name="csrf-token" value="#csrf_token#" />
+   <input type="hidden" name="csrf-token" value="#csrf_token#" />
    <input type="hidden" name="appUri" value="#appUri#"/>
    <input type="hidden" name="clientPath" id="clientPath" value=""/>
    <input id="package" type="hidden" name="v" value=""/>
