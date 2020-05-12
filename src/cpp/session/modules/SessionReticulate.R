@@ -1614,7 +1614,7 @@ html.heading = _heading
 #   ..$ frame: 'rs.scalar' int 0
 #   ..$ local: 'rs.scalar' logi FALSE
 # < ... >
-.rs.addFunction("reticulate.listLoadedModules", function()
+.rs.addFunction("reticulate.listLoadedModules", function(includeBuiltins = FALSE)
 {
    if (!requireNamespace("reticulate", quietly = TRUE))
       return(list())
@@ -1635,7 +1635,12 @@ html.heading = _heading
          variable
       )
       
-      stack$append(as.character(name))
+      # ignore builtins if requested
+      name <- as.character(name)
+      if (!includeBuiltins && name %in% c("builtins", "__builtins__"))
+         return(FALSE)
+      
+      stack$append(name)
       TRUE
       
    })
