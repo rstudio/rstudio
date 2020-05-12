@@ -26,6 +26,7 @@ import { InsertCitationCommand } from './cite-commands';
 import { markIsActive, splitInvalidatedMarks } from '../../api/mark';
 import { MarkTransaction } from '../../api/transaction';
 import { PandocCapabilities } from '../../api/pandoc_capabilities';
+import { Extension } from '../../api/extension';
 
 const CITE_CITATIONS = 0;
 
@@ -56,7 +57,7 @@ interface Citation {
   citationSuffix: PandocToken[];
 }
 
-const extension = (pandocExtensions: PandocExtensions, _pandocCapabilities: PandocCapabilities, ui: EditorUI) => {
+const extension = (pandocExtensions: PandocExtensions, _pandocCapabilities: PandocCapabilities, ui: EditorUI) : Extension | null => {
   if (!pandocExtensions.citations) {
     return null;
   }
