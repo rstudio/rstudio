@@ -86,11 +86,7 @@ const extension: Extension = {
           },
         ],
         writer: (output: PandocOutput, node: ProsemirrorNode) => {
-          // don't write empty footnotes (otherwise in block or section mode they gobble up
-          // the section below them)
-          if (node.childCount > 0) {
-            output.writeNote(node);
-          }
+          output.writeNote(node);
         },
       },
     },

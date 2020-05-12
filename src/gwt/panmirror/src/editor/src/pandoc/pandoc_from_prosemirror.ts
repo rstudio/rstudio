@@ -257,10 +257,17 @@ class PandocWriter implements PandocOutput {
   }
 
   public writeNote(note: ProsemirrorNode) {
+
+    // get corresponding note body
     const noteBody = this.notes[note.attrs.ref];
-    this.writeToken(PandocTokenType.Note, () => {
-      this.writeNodes(noteBody);
-    });
+
+    // don't write empty footnotes (otherwise in block or section mode they gobble up the section below them)
+    if (noteBody.textContent.trim().length > 0) {
+      this.writeToken(PandocTokenType.Note, () => {
+        this.writeNodes(noteBody);
+      });
+    }
+
   }
 
   public writeNode(node: ProsemirrorNode) {
