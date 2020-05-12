@@ -27,6 +27,7 @@ import { Extension } from "../api/extension";
 import { precedingListItemInsertPos, precedingListItemInsert } from "../api/list";
 import { pandocAttrFrom } from "../api/pandoc_attr";
 import { BaseKey } from "../api/basekeys";
+import { fancyQuotesToSimple } from "../api/quote";
 
 const extension = (
   pandocExtensions: PandocExtensions,
@@ -74,7 +75,7 @@ function codeBlockInputRuleEnter(fencedAttributes: boolean, format: EditorFormat
     const { $head } = state.selection;
 
     // full text of parent must meet the pattern
-    const match = $head.parent.textContent.match(/^```(?:(\w+)|(\{\.?[^\}]+\}))$/);
+    const match = $head.parent.textContent.match(/^```(?:(\w+)|\{(\.?[^\}]+)\})$/);
     if (!match) {
       return false;
     }
@@ -101,7 +102,7 @@ function codeBlockInputRuleEnter(fencedAttributes: boolean, format: EditorFormat
 
       // determine type and attrs
       const type = rmdChunk ? schema.nodes.rmd_chunk : schema.nodes.code_block; 
-      const content = rmdChunk ?  schema.text(match[2] + '\n') : Fragment.empty;
+      const content = rmdChunk ? schema.text(`{${fancyQuotesToSimple(match[2])}}\n`) : Fragment.empty;
       const attrs = !rmdChunk && lang.length ? pandocAttrFrom({ classes: [lang] }) : {};
 
       // see if this should go into a preceding list item
