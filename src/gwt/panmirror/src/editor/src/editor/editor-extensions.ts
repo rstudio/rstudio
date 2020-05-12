@@ -71,7 +71,6 @@ import behaviorAttrDuplicateId from '../behaviors/attr_duplicate_id';
 import behaviorTrailingP from '../behaviors/trailing_p';
 import behaviorEmptyMark from '../behaviors/empty_mark';
 import behaviorOutline from '../behaviors/outline';
-import behaviorTextFocus from '../behaviors/text_focus';
 import beahviorCodeBlockInput from '../behaviors/code_block_input';
 
 // marks
@@ -148,7 +147,6 @@ export function initExtensions(
     behaviorTrailingP,
     behaviorEmptyMark,
     behaviorOutline,
-    behaviorTextFocus,
     beahviorCodeBlockInput,
 
     // nodes
