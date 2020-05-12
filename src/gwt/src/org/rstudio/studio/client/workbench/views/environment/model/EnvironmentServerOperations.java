@@ -63,6 +63,7 @@ public interface EnvironmentServerOperations
    
    void getEnvironmentState(
               String language,
+              String environment,
               ServerRequestCallback<EnvironmentContextData> requestCallback);
    
    void setEnvironmentMonitoring(boolean monitoring,

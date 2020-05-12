@@ -628,12 +628,18 @@ public class EnvironmentPane extends WorkbenchPane
             
          }
       };
-      // If the frame's an active call frame, set it by its index 
+      
       if (frame.getFrame() > 0)
+      {
+         // If the frame's an active call frame, set it by its index 
          server_.setEnvironmentFrame(frame.getFrame(), callback);
-      // Otherwise, set it by its name
+      }
       else
+      {
+         // Otherwise, set it by its name
+         setEnvironmentName(frame.getName(), frame.isLocal());
          server_.setEnvironment(frame.getName(), callback);
+      }
    }
    
    private String nameOfViewType(int type)
@@ -819,6 +825,11 @@ public class EnvironmentPane extends WorkbenchPane
    public String getActiveLanguage()
    {
       return activeLanguage_;
+   }
+   
+   public String getMonitoredEnvironment()
+   {
+      return environmentName_;
    }
    
    public static final String GLOBAL_ENVIRONMENT_NAME = "Global Environment";

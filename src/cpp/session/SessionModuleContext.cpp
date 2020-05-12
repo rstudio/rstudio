@@ -255,6 +255,12 @@ SEXP rs_enqueClientEvent(SEXP nameSEXP, SEXP dataSEXP)
          type = session::client_events::kTutorialLaunch;
       else if (name == "reticulate_event")
          type = session::client_events::kReticulateEvent;
+      else if (name == "environment_assigned")
+         type = session::client_events::kEnvironmentAssigned;
+      else if (name == "environment_refresh")
+         type = session::client_events::kEnvironmentRefresh;
+      else if (name == "environment_removed")
+         type = session::client_events::kEnvironmentRemoved;
 
       if (type != -1)
       {

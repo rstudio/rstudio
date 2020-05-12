@@ -102,6 +102,7 @@ public class EnvironmentPresenter extends BasePresenter
    {
       void setActiveLanguage(String language, boolean syncWithSession);
       String getActiveLanguage();
+      String getMonitoredEnvironment();
       void addObject(RObject object);
       void addObjects(JsArray<RObject> objects);
       void clearObjects();
@@ -855,11 +856,13 @@ public class EnvironmentPresenter extends BasePresenter
       {
          return;
       }
+      
       // start showing the progress spinner and initiate the request
       view_.setProgress(true);
       refreshingView_ = true;
       server_.getEnvironmentState(
             view_.getActiveLanguage(),
+            view_.getMonitoredEnvironment(),
             new ServerRequestCallback<EnvironmentContextData>()
       {
 

@@ -54,6 +54,9 @@ std::string s_environmentLanguage = "R";
 // R has already shut down)
 EnvironmentMonitor* s_pEnvironmentMonitor = nullptr;
 
+// which Python module is currently being monitored, if any?
+std::string s_monitoredPythonModule;
+
 // is the browser currently active? we store this state
 // so that we can query this from R, without 'hiding' the
 // browser state by pushing new contexts / frames on the stack
@@ -490,9 +493,25 @@ Error setEnvironment(boost::shared_ptr<int> pContextDepth,
    if (error)
       return error;
 
-   error = setEnvironmentName(*pContextDepth,
-                              *pCurrentContext,
-                              environmentName);
+   s_monitoredPythonModule = std::string();
+   
+   if (s_environmentLanguage == "R")
+   {
+      error = setEnvironmentName(*pContextDepth,
+                                 *pCurrentContext,
+                                 environmentName);
+   }
+   else if (s_environmentLanguage == "Python")
+   {
+      if (environmentName != s_monitoredPythonModule)
+      {
+         s_monitoredPythonModule = environmentName;
+         
+         ClientEvent event(client_events::kEnvironmentRefresh);
+         module_context::enqueClientEvent(event);
+      }
+   }
+   
    if (error)
       return error;
 
@@ -531,10 +550,12 @@ bool functionIsOutOfSync(const r::context::RCntxt& context,
    SEXP sexpCode = R_NilValue;
 
    // start by extracting the source code from the call site
-   error = r::exec::RFunction(".rs.deparseFunction",
-                              context.originalFunctionCall(),
-                              true, true)
+   error = r::exec::RFunction(".rs.deparseFunction")
+         .addParam(context.originalFunctionCall())
+         .addParam(true)
+         .addParam(true)
          .call(&sexpCode, &protect);
+   
    if (error)
    {
       LOG_ERROR(error);
@@ -583,23 +604,29 @@ json::Value environmentNames(SEXP env)
    }
 }
 
-json::Object pythonEnvironmentStateData()
+json::Object pythonEnvironmentStateData(const std::string& environment)
 {
    // TODO: Need to pass in 'active' Python module here.
    SEXP state = R_NilValue;
    r::sexp::Protect protect;
    Error error =
          r::exec::RFunction(".rs.reticulate.environmentState")
-         .addParam("main")
+         .addParam(environment)
          .call(&state, &protect);
    
    if (error)
+   {
       LOG_ERROR(error);
+      return json::Object();
+   }
    
    json::Object jsonState;
    error = r::json::jsonValueFromObject(state, &jsonState);
    if (error)
+   {
       LOG_ERROR(error);
+      return json::Object();
+   }
    
    return jsonState;
 }
@@ -612,9 +639,6 @@ json::Object commonEnvironmentStateData(
    bool includeContents,
    LineDebugState* pLineDebugState)
 {
-   if (module_context::isPythonReplActive())
-      return pythonEnvironmentStateData();
-   
    json::Object varJson;
    bool useProvidedSource = false;
    std::string functionCode;
@@ -753,7 +777,8 @@ Error getEnvironmentState(boost::shared_ptr<int> pContextDepth,
                           json::JsonRpcResponse* pResponse)
 {
    std::string language = "R";
-   Error error = json::readParams(request.params, &language);
+   std::string environment = "R_GlobalEnv";
+   Error error = json::readParams(request.params, &language, &environment);
    if (error)
       LOG_ERROR(error);
    
@@ -761,7 +786,7 @@ Error getEnvironmentState(boost::shared_ptr<int> pContextDepth,
    
    if (language == "Python")
    {
-      jsonState = pythonEnvironmentStateData();
+      jsonState = pythonEnvironmentStateData(environment);
    }
    else
    {
@@ -780,11 +805,24 @@ void onDetectChanges(module_context::ChangeSource /* source */)
    // Prevent recursive calls to this function
    DROP_RECURSIVE_CALLS;
 
+   // Check for Python changes.
+   if (s_environmentLanguage == "Python" && !s_monitoredPythonModule.empty())
+   {
+      Error error =
+            r::exec::RFunction(".rs.reticulate.detectChanges")
+            .addParam(s_monitoredPythonModule)
+            .call();
+      
+      if (error)
+         LOG_ERROR(error);
+   }
+   
    // Ignore if not monitoring
    if (!s_monitoring)
       return;
 
    s_pEnvironmentMonitor->checkForChanges();
+   
 }
 
 void onConsolePrompt(boost::shared_ptr<int> pContextDepth,
@@ -1085,6 +1123,8 @@ Error environmentSetLanguage(const json::JsonRpcRequest& request,
       LOG_ERROR(error);
    
    s_environmentLanguage = language;
+   s_monitoredPythonModule = "__main__";
+   
    return Success();
 }
 

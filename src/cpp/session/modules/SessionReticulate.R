@@ -218,11 +218,6 @@ options(reticulate.initialized = function() {
       add = TRUE
    )
    
-   # check for changes in Python environment state
-   # TODO: needs to be called on exit in parent frame, so we use a hack
-   call <- quote(.rs.reticulate.detectChanges())
-   do.call(base::on.exit, list(call), envir = parent.frame())
-   
    # special handling for commands when buffer is currently empty
    if (buffer$empty())
    {
@@ -1488,8 +1483,12 @@ html.heading = _heading
    # TODO: there isn't really a distinction between an objects "type"
    # and an objects "class" in Python 3
    # get object type, value
-   type <- builtins$str(builtins$type(object))
-   value <- builtins$str(object)
+   type <- if (inherits(object, "python.builtin.function"))
+      "function"
+   else
+      builtins$str(builtins$type(object))
+   
+   value <- .rs.reticulate.describeObjectValue(object)
    
    # get object size
    sys <- reticulate::import("sys")
@@ -1510,7 +1509,52 @@ html.heading = _heading
       contents          = list(),
       contents_deferred = .rs.scalar(FALSE)
    )
+
+})
+
+.rs.addFunction("reticulate.describeObjectValue", function(object)
+{
+   if (inherits(object, "pandas.core.frame.DataFrame"))
+   {
+      builtins <- reticulate::import_builtins(convert = TRUE)
+      rows     <- builtins$len(object)
+      columns  <- builtins$len(object$columns) 
       
+      fmt <- "DataFrame: [%i rows x %i columns]"
+      sprintf(fmt, rows, columns)
+   }
+   else if (inherits(object, "__main__.R"))
+   {
+      "[R interface object]"
+   }
+   else
+   {
+      pprint <- reticulate::import("pprint", convert = TRUE)
+      
+      printer <- pprint$PrettyPrinter(
+         indent = 1L,
+         width  = as.integer(getOption("width")),
+         depth  = 1L
+      )
+      
+      formatted <- printer$pformat(object)
+      .rs.truncate(formatted)
+   }
+   
+})
+.rs.addFunction("reticulate.resolveModule", function(module)
+{
+   # return module objects as-is
+   if (inherits(module, "python.builtin.object"))
+      return(module)
+   
+   # resolve modules by name otherwise
+   if (module %in% c("main", "__main__"))
+      reticulate::import_main(convert = FALSE)
+   else if (module %in% c("builtins", "__builtins__"))
+      reticulate::import_builtins(convert = FALSE)
+   else
+      reticulate::import(module, convert = FALSE)
 })
 
 #   "result": {
@@ -1528,20 +1572,16 @@ html.heading = _heading
 .rs.addFunction("reticulate.environmentState", function(module)
 {
    # resolve the requested module
-   module <- if (identical(module, "main")) {
-      reticulate::import_main()
-   } else if (is.character(module)) {
-      reticulate::import(module)
-   } else {
-      module
-   }
+   module <- .rs.reticulate.resolveModule(module)
    
    # list objects within the requested module
    builtins <- reticulate::import_builtins()
    objects <- builtins$dir(module)
    
-   # TODO: do we want to filter certain modules here?
-   # - dunder names, e.g. __builtins__
+   # don't include double-under (dunder; e.g __foo__) objects from main
+   name <- as.character(reticulate::py_get_attr(module, "__name__", silent = TRUE))
+   if (identical(name, "__main__"))
+      objects <- grep("^__.*__$", objects, perl = TRUE, value = TRUE, invert = TRUE)
    
    # obtain a description of each Python object, using the already-understood
    # format used for R objects
@@ -1586,9 +1626,20 @@ html.heading = _heading
    
    globals <- reticulate::py_run_string("globals()", convert = FALSE)
    reticulate::iterate(globals, function(variable) {
+      
       object <- reticulate::py_get_item(globals, variable, silent = TRUE)
-      if (inherits(object, "python.builtin.module"))
-         stack$append(as.character(variable))
+      if (!inherits(object, "python.builtin.module"))
+         return(FALSE)
+      
+      # take module name rather than binding name discovered in globals
+      name <- .rs.nullCoalesce(
+         reticulate::py_get_attr(object, "__name__", silent = TRUE),
+         variable
+      )
+      
+      stack$append(as.character(name))
+      TRUE
+      
    })
    
    # retrieve modules
@@ -1608,41 +1659,51 @@ html.heading = _heading
    
 })
 
-.rs.addFunction("reticulate.detectChanges", function()
+.rs.addFunction("reticulate.detectChanges", function(moduleName)
 {
-   # TODO: make this work for arbitrary monitored modules
+   # resolve module
+   module <- .rs.reticulate.resolveModule(moduleName)
    
-   # retrieve current + previously-cached globals
-   newGlobals <- reticulate::py_run_string("globals()", convert = FALSE)
-   oldGlobals <- .rs.nullCoalesce(.rs.getVar("reticulate.globals"), newGlobals)
+   # list objects within this module
+   builtins <- reticulate::import_builtins(convert = TRUE)
+   newObjects <- reticulate::py_get_attr(module, "__dict__")
+   
+   # retrieve previously-cached objects in this module
+   oldObjects <- .rs.nullCoalesce(
+      .rs.getVar("reticulate.monitoredModuleObjects"),
+      newObjects
+   )
    
    # create copy of dictionary
    copy <- reticulate::import("copy", convert = FALSE)
-   newGlobals <- copy$copy(newGlobals)
+   newObjects <- copy$copy(newObjects)
    
    # update cached globals
-   .rs.setVar("reticulate.globals", newGlobals)
+   .rs.setVar("reticulate.monitoredModuleObjects", newObjects)
    
    # check for potential changes
    stack <- .rs.listBuilder()
-   reticulate::iterate(newGlobals, function(key)
+   reticulate::iterate(newObjects, function(key)
    {
-      old <- oldGlobals[[key]]
-      new <- newGlobals[[key]]
+      old <- newObjects[[key]]
+      new <- oldObjects[[key]]
       
-      changed <- reticulate:::py_compare(old, new, "!=")
-      if (changed)
-         stack$append(key)
+      if (!.rs.reticulate.objectsEqual(old, new))
+         stack$append(as.character(key))
+      
    })
    
-   changedVars <- stack$data()
-   if (length(changedVars) == 0)
+   # bail if no changes
+   if (stack$empty())
       return()
    
+   # emit client events for changed vars
+   changedVars <- stack$data()
    lapply(changedVars, function(var)
    {
+      # TODO: should we bundle changes into a single 'environment_assigned' event?
       .rs.tryCatch({
-         data <- .rs.reticulate.describeObject(var, newGlobals)
+         data <- .rs.reticulate.describeObject(var, newObjects)
          .rs.enqueClientEvent("environment_assigned", data)
       })
    })
@@ -1653,4 +1714,26 @@ html.heading = _heading
 {
    "reticulate" %in% loadedNamespaces() &&
       reticulate::py_available(initialize = FALSE)
+})
+
+.rs.addFunction("reticulate.objectsEqual", function(lhs, rhs)
+{
+   # compare Pandas DataFrame objects with special method
+   pandas <-
+      inherits(lhs, "pandas.core.frame.DataFrame") &&
+      inherits(rhs, "pandas.core.frame.DataFrame")
+   
+   if (pandas)
+   {
+      pandas <- reticulate::import("pandas", convert = TRUE)
+      return(pandas$DataFrame$equals(lhs, rhs))
+   }
+   
+   # default comparison method
+   # otherwise, fall back to default '!=' comparison method
+   tryCatch(
+      reticulate:::py_compare(lhs, rhs, "=="),
+      error = function(e) FALSE
+   )
+
 })

@@ -4564,10 +4564,12 @@ public class RemoteServer implements Server
    @Override
    public void getEnvironmentState(
          String language,
+         String environment,
          ServerRequestCallback<EnvironmentContextData> requestCallback)
    {
       JSONArray params = new JSONArrayBuilder()
             .add(language)
+            .add(environment)
             .get();
       
       sendRequest(RPC_SCOPE,
