@@ -40,7 +40,7 @@ const extension: Extension = {
         writer: {
           priority: 9,
           write: (output: PandocOutput, _mark: Mark, parent: Fragment) => {
-            output.writeMark(PandocTokenType.Subscript, parent);
+            output.writeMark(PandocTokenType.Subscript, parent, true);
           },
         },
       },
