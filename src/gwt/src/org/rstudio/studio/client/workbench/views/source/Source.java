@@ -599,14 +599,19 @@ public class Source implements InsertSourceHandler,
       events_.addHandler(OpenProfileEvent.TYPE, this);
       events_.addHandler(RequestDocumentSaveEvent.TYPE, this);
       events_.addHandler(RequestDocumentCloseEvent.TYPE, this);
-      
+
       initialized_ = true;
    }
 
-   public void loadFullSource()
+   public void load()
    {
-      AceEditor.preload();
+      AceEditor.load(() -> {
+         loadFullSource();
+      });
+   }
 
+   private void loadFullSource()
+   {
       // sync UI prefs with shortcut manager
       userPrefs_ = RStudioGinjector.INSTANCE.getUserPrefs();
 

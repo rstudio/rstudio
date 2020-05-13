@@ -268,7 +268,7 @@ public class PaneManager
       tutorialTab_ = tutorialTab;
       
       binder.bind(commands, this);
-      source_.loadFullSource();
+      source_.load();
       
       PaneConfig config = validateConfig(userPrefs.panes().getValue().cast());
       initPanes(config);
