@@ -1,7 +1,7 @@
 #
 # SessionReticulate.R
 #
-# Copyright (C) 2009-18 by RStudio, PBC
+# Copyright (C) 2009-20 by RStudio, PBC
 #
 # Unless you have received this program directly from RStudio pursuant
 # to the terms of a commercial license agreement with RStudio, then
@@ -1684,32 +1684,48 @@ html.heading = _heading
    # update cached globals
    .rs.setVar("reticulate.monitoredModuleObjects", newObjects)
    
-   # check for potential changes
-   stack <- .rs.listBuilder()
-   reticulate::iterate(newObjects, function(key)
-   {
-      old <- newObjects[[key]]
-      new <- oldObjects[[key]]
-      
-      if (!.rs.reticulate.objectsEqual(old, new))
-         stack$append(as.character(key))
-      
-   })
+   # collect all vars
+   vars <- sort(union(names(oldObjects), names(newObjects)))
    
-   # bail if no changes
-   if (stack$empty())
+   # iterate and check for changes
+   changedObjects <- .rs.listBuilder()
+   removedObjects <- .rs.listBuilder()
+   
+   for (var in vars)
+   {
+      old <- reticulate::py_get_item(oldObjects, var, silent = TRUE)
+      new <- reticulate::py_get_item(newObjects, var, silent = TRUE)
+      
+      if (is.null(old) && is.null(new))
+      {
+         # shouldn't happen, but this implies no object before or after
+      }
+      else if (is.null(old))
+      {
+         # an object was added (treat as 'changed')
+         changedObjects$append(.rs.reticulate.describeObject(var, newObjects))
+      }
+      else if (is.null(new))
+      {
+         # an object was removed
+         removedObjects$append(var)
+      }
+      else if (!.rs.reticulate.objectsEqual(old, new))
+      {
+         # an object was changed
+         changedObjects$append(.rs.reticulate.describeObject(var, newObjects))
+      }
+   }
+   
+   # bail if nothing to report
+   if (changedObjects$empty() && removedObjects$empty())
       return()
    
-   # emit client events for changed vars
-   changedVars <- stack$data()
-   lapply(changedVars, function(var)
-   {
-      # TODO: should we bundle changes into a single 'environment_assigned' event?
-      .rs.tryCatch({
-         data <- .rs.reticulate.describeObject(var, newObjects)
-         .rs.enqueClientEvent("environment_assigned", data)
-      })
-   })
+   # emit change event
+   .rs.enqueClientEvent("environment_changed", list(
+      changed = changedObjects$data(),
+      removed = as.character(removedObjects$data())
+   ))
    
 })
 

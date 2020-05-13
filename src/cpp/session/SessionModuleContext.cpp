@@ -261,6 +261,8 @@ SEXP rs_enqueClientEvent(SEXP nameSEXP, SEXP dataSEXP)
          type = session::client_events::kEnvironmentRefresh;
       else if (name == "environment_removed")
          type = session::client_events::kEnvironmentRemoved;
+      else if (name == "environment_changed")
+         type = session::client_events::kEnvironmentChanged;
 
       if (type != -1)
       {

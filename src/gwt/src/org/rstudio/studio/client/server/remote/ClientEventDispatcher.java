@@ -592,6 +592,11 @@ public class ClientEventDispatcher
             String objectName = event.getData();
             eventBus_.dispatchEvent(new EnvironmentObjectRemovedEvent(objectName));
          }
+         else if (type == ClientEvent.EnvironmentChanged)
+         {
+            EnvironmentChangedEvent.Data data = event.getData();
+            eventBus_.dispatchEvent(new EnvironmentChangedEvent(data));
+         }
          else if (type == ClientEvent.BrowserLineChanged)
          {
             LineData lineData = event.getData();

@@ -606,7 +606,6 @@ json::Value environmentNames(SEXP env)
 
 json::Object pythonEnvironmentStateData(const std::string& environment)
 {
-   // TODO: Need to pass in 'active' Python module here.
    SEXP state = R_NilValue;
    r::sexp::Protect protect;
    Error error =
@@ -1123,7 +1122,11 @@ Error environmentSetLanguage(const json::JsonRpcRequest& request,
       LOG_ERROR(error);
    
    s_environmentLanguage = language;
-   s_monitoredPythonModule = "__main__";
+   
+   if (language == "Python")
+   {
+      s_monitoredPythonModule = "__main__";
+   }
    
    return Success();
 }
