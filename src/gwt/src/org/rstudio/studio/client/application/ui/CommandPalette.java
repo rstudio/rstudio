@@ -19,7 +19,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import org.rstudio.core.client.DebouncedCommand;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.a11y.A11y;
@@ -29,6 +28,9 @@ import org.rstudio.core.client.command.KeySequence;
 import org.rstudio.core.client.command.ShortcutManager;
 import org.rstudio.core.client.command.KeyMap.KeyMapType;
 import org.rstudio.core.client.js.JsUtil;
+import org.rstudio.core.client.widget.AriaLiveStatusWidget;
+import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.application.events.AriaLiveStatusEvent.Severity;
 import org.rstudio.studio.client.workbench.addins.Addins.AddinExecutor;
 import org.rstudio.studio.client.workbench.addins.Addins.RAddin;
 import org.rstudio.studio.client.workbench.addins.Addins.RAddins;
@@ -36,7 +38,6 @@ import org.rstudio.studio.client.workbench.commands.Commands;
 
 import com.google.gwt.aria.client.ExpandedValue;
 import com.google.gwt.aria.client.Id;
-import com.google.gwt.aria.client.LiveValue;
 import com.google.gwt.aria.client.Roles;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
@@ -73,7 +74,7 @@ public class CommandPalette extends Composite
     */
    public interface Host
    {
-      public void dismiss();
+      void dismiss();
    }
    
    public interface Styles extends CssResource
@@ -88,7 +89,7 @@ public class CommandPalette extends Composite
    {
       initWidget(uiBinder.createAndBindUi(this));
 
-      entries_ = new ArrayList<CommandPaletteEntry>();
+      entries_ = new ArrayList<>();
       host_ = host;
       shortcuts_ = shortcuts;
       selected_ = -1;
@@ -116,34 +117,12 @@ public class CommandPalette extends Composite
       Roles.getComboboxRole().setAriaExpandedState(searchBox, ExpandedValue.TRUE);
       A11y.setARIAAutocomplete(searchBox_, "list");
       
-      // Accessibility attributes: announcement region; we want this to be read
-      // when filter updates are complete
-      A11y.setVisuallyHidden(resultsCount_);
-      Roles.getAlertRole().setAriaLiveProperty(resultsCount_.getElement(), LiveValue.ASSERTIVE);
-
       // Populate the palette on a deferred callback so that it appears immediately
       Scheduler.get().scheduleDeferred(() ->
       {
          populate();
       });
       
-      // Debounced update of the result count for screen readers; we debounce
-      // this so that every keystroke doesn't trigger an announcement.
-      updateResultsCount_ = new DebouncedCommand(1000)
-      {
-         @Override
-         protected void execute()
-         {
-            int count = 0;
-            for (CommandPaletteEntry entry: entries_)
-            {
-               if (entry.isVisible())
-                  count++;
-            }
-            resultsCount_.getElement().setInnerText(count + " " +
-                  "commands found, press up and down to navigate");
-         }
-      };
    }
    
    @Override
@@ -323,14 +302,14 @@ public class CommandPalette extends Composite
    private void computePageSize()
    {
       // Find the first visible entry (we can't measure an invisible one)
-      for (int i = 0; i < entries_.size(); i++)
+      for (CommandPaletteEntry entry: entries_)
       {
-         if (entries_.get(i).isVisible())
+         if (entry.isVisible())
          {
             // Compute the page size: the total size of the scrolling area
             // divided by the size of a visible entry
-            pageSize_ = Math.floorDiv(scroller_.getElement().getClientHeight(), 
-                  entries_.get(i).getElement().getOffsetHeight());
+            pageSize_ = Math.floorDiv(scroller_.getOffsetHeight(), 
+                  entry.getOffsetHeight());
             break;
          }
       }
@@ -352,10 +331,10 @@ public class CommandPalette extends Composite
       {
          String hay = entry.getLabel().toLowerCase();
          boolean matched = true;
-         for (int i = 0; i < needles.length; i++)
+         for (String needle: needles)
          {
             // The haystack doesn't have this needle, so this entry does not match.
-            if (!hay.contains(needles[i]))
+            if (!hay.contains(needle))
             {
                entry.setVisible(false);
                matched = false;
@@ -378,7 +357,6 @@ public class CommandPalette extends Composite
          matches = entries_.size();
       }
       
-      updateResultsCount_.nudge();
       updateSelection();
       
       // Show "no results" message if appropriate
@@ -392,6 +370,12 @@ public class CommandPalette extends Composite
          scroller_.setVisible(true);
          noResults_.setVisible(false);
       }
+
+      // Report results count to screen reader
+      resultsCount_.reportStatus(matches + " " +
+            "commands found, press up and down to navigate",
+            RStudioGinjector.INSTANCE.getUserPrefs().typingStatusDelayMs().getValue(),
+            Severity.ALERT);
    }
    
    /**
@@ -508,7 +492,6 @@ public class CommandPalette extends Composite
    private final ShortcutManager shortcuts_;
    private final Commands commands_;
    private final RAddins addins_;
-   private final DebouncedCommand updateResultsCount_;
    private int selected_;
    private List<CommandPaletteEntry> entries_;
    private String searchText_;
@@ -517,7 +500,7 @@ public class CommandPalette extends Composite
 
    @UiField public TextBox searchBox_;
    @UiField public FlowPanel commandList_;
-   @UiField HTMLPanel resultsCount_;
+   @UiField AriaLiveStatusWidget resultsCount_;
    @UiField HTMLPanel noResults_;
    @UiField ScrollPanel scroller_;
    @UiField Styles styles_;

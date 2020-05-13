@@ -147,16 +147,6 @@ public class A11y
       }
    }
    
-   public static void setARIALabel(Element el, String text)
-   {
-      el.setAttribute("aria-label", text);
-   }
-   
-   public static void setARIALabel(Widget widget, String text)
-   {
-      setARIALabel(widget.getElement(), text);
-   }
-
    public static void setARIAAutocomplete(Element el, String val)
    {
       el.setAttribute("aria-autocomplete", val);

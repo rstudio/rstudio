@@ -1,6 +1,7 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
-	xmlns:g="urn:import:com.google.gwt.user.client.ui">
+	xmlns:g="urn:import:com.google.gwt.user.client.ui"
+	xmlns:rw="urn:import:org.rstudio.core.client.widget">
 	<ui:style field="styles_" type="org.rstudio.studio.client.application.ui.CommandPalette.Styles">
 		@eval proportionalFont org.rstudio.core.client.theme.ThemeFonts.getProportionalFont();
 		@external editor_dark, .gwt-Label;
@@ -72,6 +73,6 @@
 		<g:HTMLPanel styleName="ace_editor {styles_.noResults}" ui:field="noResults_" visible="false">
 			<g:Label text="No matching commands found."></g:Label>
 		</g:HTMLPanel>
-		<g:HTMLPanel ui:field="resultsCount_"></g:HTMLPanel>
+		<rw:AriaLiveStatusWidget ui:field="resultsCount_"></rw:AriaLiveStatusWidget>
 	</g:HTMLPanel>
 </ui:UiBinder> 
