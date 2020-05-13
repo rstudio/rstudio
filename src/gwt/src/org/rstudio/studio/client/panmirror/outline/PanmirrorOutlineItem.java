@@ -24,6 +24,5 @@ public class PanmirrorOutlineItem
    public String type;
    public int level;
    public String title;
-   public int pos;
    public PanmirrorOutlineItem[] children;
 }
