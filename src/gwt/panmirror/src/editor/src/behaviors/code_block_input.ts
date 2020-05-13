@@ -81,7 +81,7 @@ function codeBlockInputRuleEnter(fencedAttributes: boolean, format: EditorFormat
     }
 
     // full text of parent must meet the pattern
-    const match = $head.parent.textContent.match(/^```(?:(\w+)|\{(\.?[^\}]+)\})$/);
+    const match = $head.parent.textContent.match(/^```(?:(\w+)|\{(\.?[^\}]+)\})?$/);
     if (!match) {
       return false;
     }

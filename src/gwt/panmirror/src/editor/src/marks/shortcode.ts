@@ -31,7 +31,7 @@ import { canInsertNode } from '../api/node';
 import { FixupContext } from '../api/fixup';
 import { fancyQuotesToSimple } from '../api/quote';
 
-const kShortcodePattern = '{{([%<])\\s+.*?[%>]}}';
+const kShortcodePattern = '(?:^|[^`])({{([%<])\\s+.*?[%>]}})';
 const kShortcodeRegEx = new RegExp(kShortcodePattern, 'g');
 
 const extension = (
@@ -142,7 +142,15 @@ const extension = (
 function detectAndCreateShortcodes(schema: Schema, tr: MarkTransaction, pos: number) {
  
   // apply marks wherever they belong
-  detectAndApplyMarks(tr, tr.doc.nodeAt(pos)!, pos, kShortcodeRegEx, schema.marks.shortcode);
+  detectAndApplyMarks(
+    tr, 
+    tr.doc.nodeAt(pos)!, 
+    pos, 
+    kShortcodeRegEx, 
+    schema.marks.shortcode,
+    () => ({}),
+    match => match[1]
+  );
 
   // remove quotes as necessary
   const markType = schema.marks.shortcode;

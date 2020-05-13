@@ -15,7 +15,7 @@
 
 import { inputRules } from 'prosemirror-inputrules';
 import { keydownHandler } from 'prosemirror-keymap';
-import { MarkSpec, Node as ProsemirrorNode, NodeSpec, Schema, DOMParser, ParseOptions } from 'prosemirror-model';
+import { Node as ProsemirrorNode, Schema, DOMParser, ParseOptions } from 'prosemirror-model';
 import { EditorState, Plugin, PluginKey, Transaction } from 'prosemirror-state';
 import { EditorView } from 'prosemirror-view';
 import 'prosemirror-view/style/prosemirror.css';
@@ -24,8 +24,7 @@ import { setTextSelection, findChildrenByType } from 'prosemirror-utils';
 
 import { EditorOptions } from '../api/options';
 import { ProsemirrorCommand, CommandFn, EditorCommand } from '../api/command';
-import { PandocMark, markIsActive } from '../api/mark';
-import { PandocNode, findTopLevelBodyNodes } from '../api/node';
+import { findTopLevelBodyNodes } from '../api/node';
 import { EditorUI, attrPropsToInput, attrInputToProps, AttrProps, AttrEditInput } from '../api/ui';
 import { Extension } from '../api/extension';
 import { ExtensionManager, initExtensions } from './editor-extensions';
@@ -47,9 +46,9 @@ import {
   kAddToHistoryTransaction,
   kSetMarkdownTransaction,
 } from '../api/transaction';
-import { EditorOutline } from '../api/outline';
+import { EditorOutline, outlineNodes } from '../api/outline';
 import { EditingLocation, getEditingLocation, EditingOutlineLocation, setEditingLocation } from '../api/location';
-import { navigateTo } from '../api/navigation';
+import { navigateTo, navigateToPosition } from '../api/navigation';
 import { FixupContext } from '../api/fixup';
 import { unitToPixels, pixelsToUnit, roundUnit, kValidUnits } from '../api/image';
 import { kPercentUnit } from '../api/css';
@@ -78,6 +77,7 @@ import { PandocConverter, PandocWriterOptions } from '../pandoc/pandoc_converter
 import { defaultTheme, EditorTheme, applyTheme, applyPadding } from './editor-theme';
 import { defaultEditorUIImages } from './editor-images';
 import { editorMenus, EditorMenus } from './editor-menus';
+import { editorSchema } from './editor-schema';
 
 // import styles
 import './styles/frame.css';
@@ -116,6 +116,7 @@ export interface EditorKeybindings {
 export interface EditorSelection {
   from: number;
   to: number;
+  navigation_id: string | null;
 }
 
 export interface EditorFindReplace {
@@ -312,7 +313,7 @@ export class Editor {
     this.extensions = this.initExtensions();
 
     // create schema
-    this.schema = this.initSchema();
+    this.schema = editorSchema(this.extensions);
 
     // create state
     this.state = EditorState.create({
@@ -476,7 +477,11 @@ export class Editor {
 
   public getSelection(): EditorSelection {
     const { from, to } = this.state.selection;
-    return { from, to };
+    return { 
+      from, 
+      to,
+      navigation_id: navigationIdForSelection(this.state)
+     };
   }
 
   public getEditingLocation(): EditingLocation {
@@ -637,85 +642,6 @@ export class Editor {
     );
   }
 
-  private initSchema(): Schema {
-    // build in doc node + nodes from extensions
-    const nodes: { [name: string]: NodeSpec } = {
-      doc: {
-        attrs: {
-          initial: { default: false },
-        },
-        content: 'body notes',
-      },
-
-      body: {
-        content: 'block+',
-        isolating: true,
-        parseDOM: [{ tag: 'div[class*="body"]' }],
-        toDOM() {
-          return [
-            'div',
-            { class: 'body pm-cursor-color pm-text-color pm-background-color pm-editing-root-node' },
-            ['div', { class: 'pm-content' }, 0],
-          ];
-        },
-      },
-
-      notes: {
-        content: 'note*',
-        parseDOM: [{ tag: 'div[class*="notes"]' }],
-        toDOM() {
-          return [
-            'div',
-            { class: 'notes pm-cursor-color pm-text-color pm-background-color pm-editing-root-node' },
-            ['div', { class: 'pm-content' }, 0],
-          ];
-        },
-      },
-
-      note: {
-        content: 'block+',
-        attrs: {
-          ref: {},
-          number: { default: 1 },
-        },
-        isolating: true,
-        parseDOM: [
-          {
-            tag: 'div[class*="note"]',
-            getAttrs(dom: Node | string) {
-              const el = dom as Element;
-              return {
-                ref: el.getAttribute('data-ref'),
-              };
-            },
-          },
-        ],
-        toDOM(node: ProsemirrorNode) {
-          return [
-            'div',
-            { 'data-ref': node.attrs.ref, class: 'note pm-footnote-body', 'data-number': node.attrs.number },
-            0,
-          ];
-        },
-      },
-    };
-    this.extensions.pandocNodes().forEach((node: PandocNode) => {
-      nodes[node.name] = node.spec;
-    });
-
-    // marks from extensions
-    const marks: { [name: string]: MarkSpec } = {};
-    this.extensions.pandocMarks().forEach((mark: PandocMark) => {
-      marks[mark.name] = mark.spec;
-    });
-
-    // return schema
-    return new Schema({
-      nodes,
-      marks,
-    });
-  }
-
   private createPlugins(): Plugin[] {
     return [
       baseKeysPlugin(this.extensions.baseKeys(this.schema)),
@@ -854,6 +780,16 @@ export class Editor {
 
     // get code
     return this.pandocConverter.fromProsemirror(doc, this.pandocFormat, options);
+  }
+}
+
+function navigationIdForSelection(state: EditorState) : string | null {
+  const outline = outlineNodes(state.doc);
+  const outlineNode = outline.reverse().find(node => node.pos < state.selection.from);
+  if (outlineNode) {
+    return outlineNode.node.attrs.navigation_id;
+  } else {
+    return null;
   }
 }
 

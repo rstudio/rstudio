@@ -13,12 +13,15 @@
  *
  */
 
+import { Node as ProsemirrorNode } from 'prosemirror-model';
+
+import { findTopLevelBodyNodes } from './node';
+
 export interface EditorOutlineItem {
   navigation_id: string;
   type: EditorOutlineItemType;
   level: number;
   title: string;
-  pos: number;
   children: EditorOutlineItem[];
 }
 
@@ -29,3 +32,16 @@ export const kYamlMetadataOutlineItenItem = 'yaml_metadata';
 export type EditorOutlineItemType = 'heading' | 'rmd_chunk' | 'yaml_metadata';
 
 export type EditorOutline = EditorOutlineItem[];
+
+
+export function outlineNodes(doc: ProsemirrorNode) {
+  return findTopLevelBodyNodes(doc, isOutlineNode);
+}
+
+export function isOutlineNode(node: ProsemirrorNode) {
+  if (node.type.spec.attrs) {
+    return node.type.spec.attrs.hasOwnProperty('navigation_id');
+  } else {
+    return false;
+  }
+}

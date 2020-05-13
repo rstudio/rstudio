@@ -15,6 +15,8 @@
 
 import { Schema, Node as ProsemirrorNode } from 'prosemirror-model';
 
+import { findChildren } from 'prosemirror-utils';
+
 import {
   PandocEngine,
   PandocTokenReader,
@@ -82,9 +84,10 @@ export class PandocConverter {
   }
 
   public async toProsemirror(markdown: string, format: string): Promise<PandocToProsemirrorResult> {
+
     // adjust format. we always need to *read* raw_html, raw_attribute, and backtick_code_blocks b/c
     // that's how preprocessors hoist content through pandoc into our prosemirror token parser.
-    format = this.adjustedFormat(format, ['raw_html', 'raw_attribute', 'backtick_code_blocks']);
+    format = adjustedFormat(format, ['raw_html', 'raw_attribute', 'backtick_code_blocks']);
 
     // run preprocessors
     this.preprocessors.forEach(preprocessor => {
@@ -120,6 +123,7 @@ export class PandocConverter {
     pandocFormat: PandocFormat,
     options: PandocWriterOptions,
   ): Promise<string> {
+
     // generate pandoc ast
     const output = pandocFromProsemirror(
       doc,
@@ -133,9 +137,12 @@ export class PandocConverter {
     // hoist content through pandoc into our prosemirror token parser. since we open this door when
     // reading, users could end up writing raw inlines, and in that case we want them to echo back
     // to the source document just the way they came in.
-    let format = this.adjustedFormat(pandocFormat.fullName, ['raw_html', 'raw_attribute']);
+    let format = adjustedFormat(pandocFormat.fullName, ['raw_html', 'raw_attribute']);
 
-    // prepare options
+    // disable selected format options
+    format = pandocFormatWith(format, disabledFormatOptions(format, doc), '');
+  
+    // prepare pandoc options
     let pandocOptions: string[] = [];
     if (options.atxHeaders) {
       pandocOptions.push('--atx-headers');
@@ -145,15 +152,7 @@ export class PandocConverter {
     }
     // default to block level references
     pandocOptions.push(`--reference-location=${options.referenceLocation || 'block'}`);
-    pandocOptions = pandocOptions.concat(this.wrapColumnOptions(options));
-
-    // format (prefer pipe and grid tables). users can still force the
-    // availability of these by adding those format flags but all
-    // known markdown variants that support tables also support pipe
-    // tables so this seems unlikely to ever be required.
-    const disable =
-      !format.startsWith(kGfmFormat) && !format.startsWith(kCommonmarkFormat) ? '-simple_tables-multiline_tables' : '';
-    format = pandocFormatWith(format, disable, '');
+    pandocOptions = pandocOptions.concat(wrapColumnOptions(options));
 
     // render to markdown
     const markdown = await this.pandoc.astToMarkdown(output.ast, format, pandocOptions);
@@ -161,29 +160,63 @@ export class PandocConverter {
     // normalize newlines (don't know if pandoc uses \r\n on windows)
     return markdown.replace(/\r\n|\n\r|\r/g, '\n');
   }
+}
 
-  private wrapColumnOptions(options: PandocWriterOptions) {
-    const pandocOptions: string[] = [];
-    if (options.wrapColumn) {
-      pandocOptions.push('--wrap=auto');
-      pandocOptions.push(`--columns=${options.wrapColumn}`);
-    } else {
-      pandocOptions.push('--wrap=none');
-    }
-    return pandocOptions;
+
+// adjust the specified format (remove options that are never applicable
+// to editing scenarios)
+function adjustedFormat(format: string, extensions: string[]) {
+  const kDisabledFormatOptions = '-auto_identifiers-gfm_auto_identifiers';
+  let newFormat = pandocFormatWith(format, '', extensions.map(ext => `+${ext}`).join('') + kDisabledFormatOptions);
+
+  // any extension specified needs to not have a - anywhere in the format
+  extensions.forEach(ext => {
+    newFormat = newFormat.replace('-' + ext, '');
+  });
+
+  return newFormat;
+}
+
+
+function disabledFormatOptions(format: string, doc: ProsemirrorNode) {
+
+  // (prefer pipe and grid tables). users can still force the availability of these by
+  // adding those format flags but all known markdown variants that support tables also
+  // support pipe tables so this seems unlikely to ever be required.
+  let disabledTableTypes = '-simple_tables-multiline_tables';
+
+  // if there aren't any tables with multiple blocks in a cell then also disable grid
+  // tables. This is because grid tables are more finicky about column alignment, and 
+  // if there is dynamic text in the table (e.g. an inline `r` expression) it will 
+  // actually throw off the table columns and mess up the table
+  if (!haveMultiBlockTableCells(doc)) {
+    disabledTableTypes += '-grid_tables';
   }
 
-  // adjust the specified format (remove options that are never applicable
-  // to editing scenarios)
-  private adjustedFormat(format: string, extensions: string[]) {
-    const kDisabledFormatOptions = '-auto_identifiers-gfm_auto_identifiers';
-    let newFormat = pandocFormatWith(format, '', extensions.map(ext => `+${ext}`).join('') + kDisabledFormatOptions);
-
-    // any extension specified needs to not have a - anywhere in the format
-    extensions.forEach(ext => {
-      newFormat = newFormat.replace('-' + ext, '');
-    });
-
-    return newFormat;
+  // gfm and commonmark variants don't allow simple/multiline/grid tables (just pipe tables)
+  // and it's an error to even include these in the markdown format specifier -- so for 
+  // these modes we just nix the disabling
+  if (format.startsWith(kGfmFormat) || format.startsWith(kCommonmarkFormat)) {
+    disabledTableTypes = '';
   }
+
+  // return 
+  return disabledTableTypes;
+}
+
+function haveMultiBlockTableCells(doc: ProsemirrorNode) {
+  const schema = doc.type.schema;
+  const isTableCell = (node: ProsemirrorNode) => node.type === schema.nodes.table_cell || node.type === schema.nodes.table_header;
+  return findChildren(doc, isTableCell).some(cell => cell.node.childCount > 1);
+}
+
+function wrapColumnOptions(options: PandocWriterOptions) {
+  const pandocOptions: string[] = [];
+  if (options.wrapColumn) {
+    pandocOptions.push('--wrap=auto');
+    pandocOptions.push(`--columns=${options.wrapColumn}`);
+  } else {
+    pandocOptions.push('--wrap=none');
+  }
+  return pandocOptions;
 }

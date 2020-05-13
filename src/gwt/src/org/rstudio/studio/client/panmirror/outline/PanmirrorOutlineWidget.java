@@ -217,17 +217,11 @@ public class PanmirrorOutlineWidget extends Composite
       {
          OutlineTreeItem treeItem = (OutlineTreeItem)tree_.getItem(i);
          PanmirrorOutlineItem item = treeItem.getEntry().getItem();
-         
-         if (item.pos >= selection_.from)
+         if (item.navigation_id.equals(selection_.navigation_id)) 
          {
-            if (activeItem_ == null)
-               activeItem_ = item;
+            activeItem_ = item;
             break;
-         }
-         
-         
-         activeItem_ = item;
-         
+         } 
       }
         
       resetTreeStyles();

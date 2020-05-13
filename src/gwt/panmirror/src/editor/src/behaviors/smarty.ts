@@ -42,9 +42,9 @@ const emDash = new InputRule(/–-$/, (state: EditorState, match: string[], star
 
 // from: https://github.com/ProseMirror/prosemirror-inputrules/blob/master/src/rules.js
 // (forked so we could customize/override default behavior behavior)
-const openDoubleQuote = new InputRule(/(?:^|[\s`\*_\{\[\(\<'"\u2018\u201C])(")$/, "“");
+const openDoubleQuote = new InputRule(/(?:^|[\s`\*_=\{\[\(\<'"\u2018\u201C])(")$/, "“");
 const closeDoubleQuote = new InputRule(/"$/, "”");
-const openSingleQuote = new InputRule(/(?:^|[\s`\*_\{\[\(\<'"\u2018\u201C])(')$/, "‘");
+const openSingleQuote = new InputRule(/(?:^|[\s`\*_=\{\[\(\<'"\u2018\u201C])(')$/, "‘");
 const closeSingleQuote = new InputRule(/'$/, "’");
 
 const extension: Extension = {

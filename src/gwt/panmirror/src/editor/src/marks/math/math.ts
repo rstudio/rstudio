@@ -185,20 +185,20 @@ const extension = (
       return [
         // inline math
         new InputRule(
-          new RegExp(kInlineMathPattern + '$'),
+          new RegExp('(^|[^`])' + kInlineMathPattern + '$'),
           (state: EditorState, match: string[], start: number, end: number) => {
             if (!markIsActive(state, schema.marks.math) && filter(state, start, end)) {
               const tr = state.tr;
               tr.insertText('$');
               const mark = schema.marks.math.create({ type: MathType.Inline });
-              tr.addMark(start, end + 1, mark);
+              tr.addMark(start + match[1].length, end + 1, mark);
               return tr;
             } else {
               return null;
             }
           },
         ),
-        new InputRule(/\$$/, (state: EditorState, match: string[], start: number, end: number) => {
+        new InputRule(/(?:^|[^`])\$$/, (state: EditorState, match: string[], start: number, end: number) => {
           if (!markIsActive(state, schema.marks.math)) {
             const { parent, parentOffset } = state.selection.$head;
             const text = '$' + parent.textContent.slice(parentOffset);

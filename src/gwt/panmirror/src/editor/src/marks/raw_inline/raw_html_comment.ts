@@ -33,7 +33,7 @@ import { EditorOptions } from '../../api/options';
 
 import './raw_html_comment-styles.css';
 
-const kHTMLCommentRegEx = /<!--([\s\S]*?)-->/;
+const kHTMLCommentRegEx = /(?:^|[^`])(<!--([\s\S]*?)-->)/;
 const kHTMLEditingCommentRegEx = /^<!--# ([\s\S]*?)-->$/;
 
 const extension = (
@@ -117,7 +117,8 @@ const extension = (
               pos, 
               kHTMLCommentMarkRegEx, 
               markType, 
-              match => commentMarkAttribs(match[0])
+              match => commentMarkAttribs(match[0]),
+              match => match[1]
             );
           },
         },
