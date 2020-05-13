@@ -628,12 +628,6 @@ public class Source implements InsertSourceHandler,
       else
          ShortcutManager.INSTANCE.setEditorMode(KeyboardShortcut.MODE_DEFAULT);
    
-      events_.fireEvent(new DocTabsChangedEvent(null,
-                                                new String[0],
-                                                new FileIcon[0],
-                                                new String[0],
-                                                new String[0]));
-
       // fake shortcuts for commands_ which we handle at a lower level
       commands_.goToHelp().setShortcut(new KeyboardShortcut("F1", KeyCodes.KEY_F1, KeyboardShortcut.NONE));
       commands_.goToDefinition().setShortcut(new KeyboardShortcut("F2", KeyCodes.KEY_F2, KeyboardShortcut.NONE));
