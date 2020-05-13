@@ -1663,16 +1663,12 @@ bool ensureUtf8Charset()
 }
 
 // io_service for performing monitor work on the thread
-boost::asio::io_service& getIoService()
-{
-   static boost::asio::io_service s_ioService;
-   return s_ioService;
-}
+boost::asio::io_service s_ioService;
 
 void monitorWorkerThreadFunc()
 {
-   boost::asio::io_service::work work(getIoService());
-   getIoService().run();
+   boost::asio::io_service::work work(s_ioService);
+   s_ioService.run();
 }
 
 void initMonitorClient()
@@ -1681,11 +1677,11 @@ void initMonitorClient()
    {
       monitor::initializeMonitorClient(core::system::getenv(kMonitorSocketPathEnvVar),
                                        options().monitorSharedSecret(),
-                                       getIoService());
+                                       s_ioService);
    }
    else
    {
-      modules::overlay::initMonitorClient(getIoService());
+      modules::overlay::initMonitorClient(s_ioService);
    }
 
    // start the monitor work thread
@@ -2154,5 +2150,6 @@ int main (int argc, char * const argv[])
    // if we got this far we had an unexpected exception
    return EXIT_FAILURE ;
 }
+
 
 
