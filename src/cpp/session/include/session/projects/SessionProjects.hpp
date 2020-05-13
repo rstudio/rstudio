@@ -236,6 +236,10 @@ private:
 
    void augmentRbuildignore();
 
+   // adds default open docs if specified in the project and it has
+   // never been opened before
+   void addDefaultOpenDocs();
+
 private:
    core::FilePath file_;
    core::FilePath directory_;
