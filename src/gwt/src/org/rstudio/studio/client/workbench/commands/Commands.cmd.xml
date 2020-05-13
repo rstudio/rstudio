@@ -1565,11 +1565,14 @@ well as menu structures (for main menu and popup menus).
         menuLabel="Toggle Full Screen"/>
 
    <cmd id="findFromSelection"
+        context="editor"
         menuLabel="_Use Selection for Find"/>
         
    <cmd id="quickAddNext"
+        label="Find and Add Next"
         buttonLabel="Add"
         menuLabel="Find and Add Next"
+        context="editor"
         desc="Find and add next occurence"/>
         
    <cmd id="findAll"
@@ -1578,30 +1581,39 @@ well as menu structures (for main menu and popup menus).
    
    <cmd id="findReplace"
         label="Find / Replace Text..."
+        context="editor"
         menuLabel="_Find..."/>
         
    <cmd id="findNext"
+        label="Find Next Occurence"
         buttonLabel="Next"
         menuLabel="Find _Next"
         desc="Find next occurrence"
+        context="editor"
         rebindable="false"/>
         
    <cmd id="findPrevious"
+        label="Find Previous Occurence"
         buttonLabel="Prev"
         menuLabel="Find Pre_vious"
         desc="Find previous occurrence"
+        context="editor"
         rebindable="false"/>
         
    <cmd id="findSelectAll"
+        label="Find and Select All"
         buttonLabel="All"
         menuLabel="Find And Select All"
+        context="editor"
         desc="Find and select all matches"
         rebindable="false"/>
         
    <cmd id="replaceAndFind"
+        label="Replace and Find Next"
         buttonLabel="Replace"
         menuLabel="_Replace and Find"
         desc="Replace and find next occurrence"
+        context="editor"
         rebindable="false"/>
         
    <cmd id="findInFiles"
@@ -1609,15 +1621,23 @@ well as menu structures (for main menu and popup menus).
         windowMode="main"/>
         
    <cmd id="fold"
+        label="Collapse Fold"
+        context="editor"
         menuLabel="_Collapse"/>
         
    <cmd id="unfold"
+        label="Expand Fold"
+        context="editor"
         menuLabel="E_xpand"/>
         
    <cmd id="foldAll"
+        label="Collapse All Folds"
+        context="editor"
         menuLabel="Collapse _All"/>
         
    <cmd id="unfoldAll"
+        label="Expand All Folds"
+        context="editor"
         menuLabel="Ex_pand All"/>
         
    <cmd id="jumpToMatching"
@@ -2013,7 +2033,8 @@ well as menu structures (for main menu and popup menus).
         
    <cmd id="openRoxygenQuickReference"
         menuLabel="_Roxygen Quick Reference"
-        desc="Roxygen quick reference"/>
+        desc="Roxygen quick reference"
+        context="help"/>
 
    <cmd id="toggleDocumentOutline"
         label="Toggle Document Outline"
@@ -2181,22 +2202,26 @@ well as menu structures (for main menu and popup menus).
 
    <cmd id="checkSpelling"
         menuLabel="Check _Spelling..."
+        context="editor"
         desc="Check spelling in document"/>
 
    <cmd id="wordCount"
         menuLabel="_Word Count"
+        context="editor"
         desc="Count words in selection or document"/>
 
    <cmd id="newFolder"
         label="Create a New Folder..."
         menuLabel="Folder..."
         buttonLabel="New Folder"
+        context="files"
         desc="Create a new folder"/>
         
    <cmd id="uploadFile"
         label="Upload Files..."
         menuLabel="Upload Files..."
         buttonLabel="Upload"
+        context="files"
         desc="Upload files to server"/>
         
    <cmd id="copyFile"
@@ -2204,12 +2229,14 @@ well as menu structures (for main menu and popup menus).
         menuLabel="Copy..."
         buttonLabel="Copy"
         desc="Copy selected file or folder"
+        context="files"
         rebindable="false"/>
         
    <cmd id="copyFileTo"
         label="Copy Files To..."
         menuLabel="Copy To..."
         buttonLabel="Copy To"
+        context="files"
         desc="Copy selected file or folder to another folder"
         rebindable="false"/>
         
@@ -2218,6 +2245,7 @@ well as menu structures (for main menu and popup menus).
         menuLabel="Move..."
         buttonLabel="Move"
         desc="Move selected files or folders"
+        context="files"
         rebindable="false"/>
         
    <cmd id="exportFiles"
@@ -2225,28 +2253,33 @@ well as menu structures (for main menu and popup menus).
         menuLabel="Export..."
         buttonLabel="Export"
         desc="Export selected files or folders"
+        context="files"
         rebindable="false"/>
        
    <cmd id="renameFile"
         label="Rename Current File..."
         buttonLabel="Rename"
         desc="Rename selected file or folder"
+        context="files"
         rebindable="false"/>
         
    <cmd id="deleteFiles"
         label="Delete Files..."
         buttonLabel="Delete"
         desc="Delete selected files or folders"
+        context="files"
         rebindable="false"/>
         
    <cmd id="refreshFiles"
         menuLabel="Refresh"
         desc="Refresh file listing"
+        context="files"
         rebindable="false"/>
         
    <cmd id="goToWorkingDir"
         buttonLabel=""
         menuLabel="Go To Working Directory"
+        context="files"
         desc="View the current working directory"
         rebindable="false"/>
         
@@ -2256,14 +2289,17 @@ well as menu structures (for main menu and popup menus).
 
    <cmd id="copyFilesPaneCurrentDirectory"
         label="Copy Folder Path to Clipboard"
+        context="files"
         rebindable="false"/>
 
    <cmd id="showFolder"
         label="Show Folder in New Window"
         visible="false"
+        context="files"
         rebindable="false"/>
         
    <cmd id="vcsAddFiles"
+        label="Add Files or Folders"
         menuLabel="Add"
         buttonLabel="Add"
         desc="Add the selected files or folders"
@@ -2271,6 +2307,7 @@ well as menu structures (for main menu and popup menus).
         context="vcs"/>
         
    <cmd id="vcsRemoveFiles"
+        label="Remove Files or Folders"
         menuLabel="Delete"
         buttonLabel="Delete"
         desc="Delete the selected files or folders"
@@ -2279,12 +2316,14 @@ well as menu structures (for main menu and popup menus).
 
    <!-- VCS pane -->
    <cmd id="vcsDiff"
+        label="Diff Selected Files"
         buttonLabel="Diff"
         menuLabel="Diff"
         desc="Diff selected file(s)"
         context="vcs"/>
         
    <cmd id="vcsCommit"
+        label="Commit Pending Changes"
         buttonLabel="Commit"
         menuLabel="_Commit..."
         desc="Commit pending changes"
@@ -2292,6 +2331,7 @@ well as menu structures (for main menu and popup menus).
         windowMode="review_changes"/>
 
    <cmd id="vcsRevert"
+        label="Revert Changes"
         buttonLabel="Revert"
         menuLabel="Revert..."
         desc="Revert selected changes"
@@ -2299,6 +2339,7 @@ well as menu structures (for main menu and popup menus).
         context="vcs"/>
         
    <cmd id="vcsShowHistory"
+        label="View History of Previous Commits"
         menuLabel="_History"
         buttonLabel="History"
         desc="View history of previous commits"
@@ -2307,6 +2348,7 @@ well as menu structures (for main menu and popup menus).
         windowMode="main"/>
         
    <cmd id="vcsRefresh"
+        label="Refresh File List from Source Control"
         desc="Refresh listing"
         context="vcs"/>
         
@@ -2315,12 +2357,14 @@ well as menu structures (for main menu and popup menus).
         context="vcs"/>
         
    <cmd id="vcsOpen"
+        label="Open Selected Files(s)"
         menuLabel="Open File"
         desc="Open selected file(s)"
         rebindable="false"
         context="vcs"/>
         
    <cmd id="vcsIgnore"
+        label="Ignore Files or Folders"
         menuLabel="Ignore..."
         buttonLabel="Ignore"
         desc="Ignore the selected files or folders"
@@ -2479,38 +2523,46 @@ well as menu structures (for main menu and popup menus).
         context="presentation"/>
         
    <cmd id="historySendToSource"
+        label="Insert Command into Document"
         menuLabel="Insert into _Source"
         buttonLabel="To Source"
         desc="Insert the selected commands into the current document (Shift+Enter)"
+        context="history"
         rebindable="false"/>
         
    <cmd id="historySendToConsole"
+        label="Send Command to Console"
         menuLabel="Send to _Console"
         buttonLabel="To Console"
         desc="Send the selected commands to the R console (Enter)"
+        context="history"
         rebindable="false"/>
         
    <cmd id="searchHistory"
         menuLabel="Search History"
         buttonLabel=""
         desc="Search history for commands matching a pattern"
+        context="history"
         rebindable="false"/>
         
    <cmd id="loadHistory"
         menuLabel="_Load History..."
         buttonLabel=""
         desc="Load history from an existing file"
+        context="history"
         rebindable="false"/>
         
    <cmd id="saveHistory"
         menuLabel="Sa_ve History As..."
         buttonLabel=""
         desc="Save history into a file"
+        context="history"
         rebindable="false"/>
         
    <cmd id="historyRemoveEntries"
         menuLabel="_Remove Entries..."
         buttonLabel=""
+        context="history"
         desc="Remove the selected history entries"
         rebindable="false"/>
         
@@ -2518,18 +2570,24 @@ well as menu structures (for main menu and popup menus).
         menuLabel="Clear _All..."
         buttonLabel=""
         desc="Clear all history entries"
+        context="history"
         rebindable="false"/>
         
    <cmd id="historyDismissResults"
-        label="Done"
+        label="Dismiss History Results"
+        buttonLabel="Done"
+        context="history"
         rebindable="false"/>
         
    <cmd id="historyShowContext"
         label="Show In Context"
+        context="history"
         rebindable="false"/>
         
    <cmd id="historyDismissContext"
-        label="&#x00AB; Back"
+        label="Dismiss History Context"
+        buttonLabel="&#x00AB; Back"
+        context="history"
         rebindable="false"/>
 
    <cmd id="nextPlot"
@@ -2597,6 +2655,7 @@ well as menu structures (for main menu and popup menus).
    <cmd id="loadWorkspace"
         menuLabel="_Load Workspace..."
         windowMode="main"
+        context="import"
         desc="Load workspace"/>
         
    <cmd id="saveWorkspace"
@@ -2607,51 +2666,61 @@ well as menu structures (for main menu and popup menus).
    <cmd id="importDatasetFromFile"
         label="Import Dataset from File..."
         menuLabel="From _Local File..."
+        context="import"
         windowMode="main"/>
 
    <cmd id="importDatasetFromURL"
         label="Import Dataset from URL..."
         menuLabel="From _Web URL..."
+        context="import"
         windowMode="main"/>
 
    <cmd id="importDatasetFromCsv"
         label="From CSV"
         menuLabel="From _CSV"
+        context="import"
         windowMode="main"/>
 
    <cmd id="importDatasetFromCsvUsingReadr"
         label="From Text (readr)..."
         menuLabel="From Text (_readr)..."
+        context="import"
         windowMode="main"/>
 
    <cmd id="importDatasetFromCsvUsingBase"
         label="From Text (base)..."
         menuLabel="From Text (_base)..."
+        context="import"
         windowMode="main"/>
 
    <cmd id="importDatasetFromSAV"
         label="Import Dataset from SAV..."
         menuLabel="From _SAV..."
+        context="import"
         windowMode="main"/>
 
    <cmd id="importDatasetFromSAV"
         label="Import Dataset from SPSS..."
         menuLabel="From _SPSS..."
+        context="import"
         windowMode="main"/>
 
    <cmd id="importDatasetFromSAS"
         label="Import Dataset from SAS..."
         menuLabel="From S_AS..."
+        context="import"
         windowMode="main"/>
 
    <cmd id="importDatasetFromStata"
         label="Import Dataset from Stata..."
         menuLabel="From S_tata..."
+        context="import"
         windowMode="main"/>
 
    <cmd id="importDatasetFromXLS"
         label="Import Dataset from Excel..."
         menuLabel="From _Excel..."
+        context="import"
         windowMode="main"/>
 
    <cmd id="refreshWorkspace"
@@ -2813,7 +2882,8 @@ well as menu structures (for main menu and popup menus).
         label="Terminal Diagnostics..."
         buttonLabel=""
         menuLabel="Terminal _Diagnostics..."
-        desc="Show info on current terminal"/>
+        desc="Show info on current terminal"
+        context="diagnostics"/>
 
    <cmd id="interruptTerminal"
         buttonLabel=""
@@ -2886,10 +2956,13 @@ well as menu structures (for main menu and popup menus).
         context="help"/>
 
    <cmd id="helpBack"
+        label="Previous Help Topic"
         buttonLabel=""
+        context="help"
         desc="Previous topic"/>
 
    <cmd id="helpForward"
+        label="Next Help Topic"
         buttonLabel=""
         desc="Next topic"/>
 
@@ -2905,11 +2978,13 @@ well as menu structures (for main menu and popup menus).
         windowMode="main"/>
 
    <cmd id="printHelp"
+        label="Print Help Topic"
         buttonLabel=""
         desc="Print topic"
         rebindable="false"/>
         
    <cmd id="clearHelpHistory"
+        label="Clear Help History"
         menuLabel="Clear history"
         desc="Clear history"
         rebindable="false"/>
@@ -2921,97 +2996,118 @@ well as menu structures (for main menu and popup menus).
         context="help"/>
         
    <cmd id="refreshHelp"
+        label="Refresh Help Topic"
         menuLabel="Refresh"
-        desc="Refresh topic"/>
+        desc="Refresh topic"
+        context="help"/>
         
    <cmd id="tutorialPopout"
         buttonLabel=""
-        desc="Show in new window"/>
+        desc="Show in new window"
+        context="tutorial"/>
         
    <cmd id="tutorialBack"
         buttonLabel=""
         desc="Go back"
-        rebindable="false"/>
+        rebindable="false"
+        context="tutorial"/>
         
    <cmd id="tutorialForward"
         buttonLabel=""
         desc="Go forward"
-        rebindable="false"/>
+        rebindable="false"
+        context="tutorial"/>
         
    <cmd id="tutorialZoom"
         buttonLabel="Zoom"
         desc="View a larger version in a new window"
-        rebindable="false"/>
+        rebindable="false"
+        context="tutorial"/>
         
    <cmd id="tutorialRefresh"
         desc="Refresh tutorial"
-        rebindable="false"/>
+        rebindable="false"
+        context="tutorial"/>
         
    <cmd id="tutorialStop"
         buttonLabel=""
         desc="Stop tutorial"
-        rebindable="false"/>
+        rebindable="false"
+        context="tutorial"/>
         
    <cmd id="tutorialHome"
         buttonLabel=""
         desc="Return to home"
-        rebindable="false"/>
+        rebindable="false"
+        context="tutorial"/>
         
    <cmd id="viewerPopout"
         buttonLabel=""
-        desc="Show in new window"/>
+        desc="Show in new window"
+        context="viewer"/>
         
    <cmd id="viewerBack"
         buttonLabel=""
         desc="Go back"
-        rebindable="false"/>
+        rebindable="false"
+        context="viewer"/>
         
    <cmd id="viewerForward"
         buttonLabel=""
         desc="Go forward"
-        rebindable="false"/>
+        rebindable="false"
+        context="viewer"/>
         
    <cmd id="viewerZoom"
         buttonLabel="Zoom"
         desc="View a larger version in a new window"
-        rebindable="false"/>
+        rebindable="false"
+        context="viewer"/>
         
    <cmd id="viewerRefresh"
         desc="Refresh viewer"
-        rebindable="false"/>
+        rebindable="false"
+        context="viewer"/>
         
    <cmd id="viewerSaveAllAndRefresh"
         desc="Save source files and refresh viewer"
+        context="viewer"
         rebindable="false"/>
         
    <cmd id="viewerStop"
         buttonLabel=""
         desc="Stop application"
+        context="viewer"
         rebindable="false"/>
         
    <cmd id="viewerClear"
         buttonLabel=""
         desc="Remove current viewer item"
+        context="viewer"
         rebindable="false"/>
         
    <cmd id="viewerClearAll"
         buttonLabel=""
         desc="Clear all viewer items"
+        context="viewer"
         rebindable="false"/>
         
    <cmd id="viewerSaveAsImage"
         menuLabel = "Save as Image..."
         desc="Save as an image file"
+        context="viewer"
         rebindable="false"/>
         
    <cmd id="viewerSaveAsWebPage"
         menuLabel="Save as Web Page..."
         desc="Save as a standalone web page"
+        context="viewer"
         rebindable="false"/>
         
    <cmd id="viewerCopyToClipboard"
         menuLabel="Copy to Clipboard..."
         desc="Copy to the system clipboard"
+        context="viewer"
         rebindable="false"/>
         
    <cmd id="raiseException"
@@ -3028,34 +3124,42 @@ well as menu structures (for main menu and popup menus).
         
    <cmd id="showRequestLog"
         menuLabel="_Request Log"
+        context="diagnostics"
         rebindable="false"/>
         
    <cmd id="diagnosticsReport"
         menuLabel="_Write Diagnostics Report"
+        context="diagnostics"
         visible="false"/>
         
    <cmd id="openDeveloperConsole"
         menuLabel="Open Developer Console"
         rebindable="false"
+        context="diagnostics"
         windowMode="main"/>
         
    <cmd id="reloadUi"
         menuLabel="Reload _UI"
+        context="diagnostics"
         rebindable="false"/>
 
    <cmd id="logFocusedElement"
         menuLabel="Log focused element"
+        context="diagnostics"
         rebindable="false"/>
         
    <cmd id="debugDumpContents"
         menuLabel="_Dump Editor Contents..."
+        context="diagnostics"
         rebindable="false"/>
         
    <cmd id="debugImportDump"
         menuLabel="_Import Editor Contents..."
+        context="diagnostics"
         rebindable="false"/>
         
    <cmd id="refreshSuperDevMode"
+        context="diagnostics"
         rebindable="false"/>
 
    <cmd id="newSession"
@@ -3188,13 +3292,13 @@ well as menu structures (for main menu and popup menus).
         context="packageDevelopment"/>
 
    <cmd id="testTestthatFile"
-        label="Run Tests"
+        label="Run testthat Tests"
         menuLabel="Run tests for file"
         buttonLabel="Run Tests"
         desc="Run tests using the testthat package"/>
 
    <cmd id="testShinytestFile"
-        label="Run Test"
+        label="Run shinytest Test"
         menuLabel="Run test for file"
         buttonLabel="Run Test"
         desc="Run test using the shinytest package"/>
@@ -3483,15 +3587,18 @@ well as menu structures (for main menu and popup menus).
         
    <cmd id="showGpuDiagnostics"
         menuLabel="Show _GPU Diagnostics"
-        rebindable="false"/>
+        rebindable="false"
+        context="diagnostics"/>
         
    <cmd id="toggleEditorTokenInfo"
         menuLabel="_Toggle Editor Token Information"
-        rebindable="false"/>
+        rebindable="false"
+        context="diagnostics"/>
         
    <cmd id="showDomElements"
         menuLabel="_Show DOM Elements"
-        rebindable="false"/>
+        rebindable="false"
+        context="diagnostics"/>
         
    <cmd id="newConnection"
         menuLabel="New Connection..."
@@ -3511,11 +3618,13 @@ well as menu structures (for main menu and popup menus).
          windowMode="main"/>
        
     <cmd id="refreshConnection"
+         label="Refresh Connection Data"
          menuLabel="Refresh"
          desc="Refresh data"
          windowMode="main"/>
          
     <cmd id="sparkLog"
+         label="View Spark Log"
          menuLabel="Spark Log"
          buttonLabel="Log"
          desc="View the log for the Spark connection"
@@ -3631,16 +3740,19 @@ well as menu structures (for main menu and popup menus).
    <cmd id="editUserPrefs"
         menuLabel="_Edit User Prefs File"
         windowMode="main"
+        context="diagnostics"
         rebindable="false"/>
 
    <cmd id="clearUserPrefs"
         menuLabel="_Clear User Prefs"
         windowMode="main"
+        context="diagnostics"
         rebindable="false"/>
 
    <cmd id="viewAllPrefs"
         menuLabel="_View All Prefs"
         windowMode="main"
+        context="diagnostics"
         rebindable="false"/>
 
    <cmd id="toggleScreenReaderSupport"

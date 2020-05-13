@@ -18,6 +18,7 @@ import java.util.List;
 
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.AppCommand;
+import org.rstudio.core.client.command.AppCommand.Context;
 import org.rstudio.core.client.command.KeySequence;
 
 /**
@@ -61,18 +62,18 @@ public class AppCommandPaletteEntry extends CommandPaletteEntry
    public String getContext()
    {
       // Get the context of this command (e.g. "Workbench", "VCS", "Help")
-      String name = command_.getContext().name();
+      Context context = command_.getContext();
 
       // Most commands are "Workbench" commands (they aren't scoped to a
       // particular feature and can be executed at any time.) To reduce visual
       // clutter and repetitions, we don't show this context tag; all commands
       // are implicitly global unless they have a more specific tag.
-      if (StringUtil.equals(name, "Workbench"))
+      if (context == Context.Workbench)
       {
          return "";
       }
 
-      return name;
+      return context.toString();
    }
 
    private String label_;
