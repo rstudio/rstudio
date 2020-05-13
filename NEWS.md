@@ -21,6 +21,7 @@
 * RStudio now infers document type from shebang (e.g. #!/usr/bin/env sh) for R, Python and shell scripts (#5643)
 * New option to configure soft wrapping for R Markdown files, and command to change the soft wrap mode of the editor on the fly (#2341)
 * Add option `www-url-path-prefix` to force a path on auth cookies (Pro #1608)
+* New Command Palette for searching and running build-in commands and add-ins (#5168)
 
 ### RStudio Server Pro
 
