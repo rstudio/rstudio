@@ -50,7 +50,7 @@ const extension = (
     marks: [
       {
         name: 'xref',
-        excludedInCode: true,
+        noInputRules: true,
         spec: {
           inclusive: false,
           excludes: '_',

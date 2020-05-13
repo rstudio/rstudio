@@ -49,7 +49,6 @@ const extension = (
       {
         name: 'shortcode',
         noInputRules: true,
-        excludedInCode: true,
         spec: {
           inclusive: false,
           excludes: '_',
