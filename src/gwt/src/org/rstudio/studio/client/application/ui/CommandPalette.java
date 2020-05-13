@@ -130,6 +130,8 @@ public class CommandPalette extends Composite
    {
       super.onAttach();
 
+      attached_ = true;
+
       // If we have already populated, compute the page size. Do this deferred
       // so that a render pass occurs (otherwise the page size computations will
       // take place with unrendered elements)
@@ -312,6 +314,19 @@ public class CommandPalette extends Composite
                   entry.getOffsetHeight());
             break;
          }
+      }
+      
+      if (pageSize_ > 1)
+      {
+         // We want the virtual page to be very slightly smaller than the
+         // physical page
+         pageSize_--;
+      }
+      else
+      {
+         // Something went wrong and we got a tiny or meaningless page size. Use
+         // 10 items as a default.
+         pageSize_ = 10;
       }
    }
    

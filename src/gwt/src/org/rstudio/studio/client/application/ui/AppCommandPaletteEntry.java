@@ -60,7 +60,19 @@ public class AppCommandPaletteEntry extends CommandPaletteEntry
    @Override
    public String getContext()
    {
-      return command_.getContext().name();
+      // Get the context of this command (e.g. "Workbench", "VCS", "Help")
+      String name = command_.getContext().name();
+
+      // Most commands are "Workbench" commands (they aren't scoped to a
+      // particular feature and can be executed at any time.) To reduce visual
+      // clutter and repetitions, we don't show this context tag; all commands
+      // are implicitly global unless they have a more specific tag.
+      if (StringUtil.equals(name, "Workbench"))
+      {
+         return "";
+      }
+
+      return name;
    }
 
    private String label_;
