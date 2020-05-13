@@ -14,6 +14,11 @@
  */
 
 import { Mark, Schema, Fragment } from 'prosemirror-model';
+import { InputRule } from 'prosemirror-inputrules';
+import { toggleMark } from 'prosemirror-commands';
+import { EditorState } from 'prosemirror-state';
+
+import { setTextSelection } from 'prosemirror-utils';
 
 import { PandocExtensions, PandocTokenType, PandocToken, ProsemirrorWriter, PandocOutput } from '../../api/pandoc';
 import { Extension } from '../../api/extension';
@@ -21,11 +26,11 @@ import { isRawHTMLFormat, kHTMLFormat } from '../../api/raw';
 import { EditorUI } from '../../api/ui';
 import { EditorCommandId } from '../../api/command';
 import { PandocCapabilities } from '../../api/pandoc_capabilities';
+import { MarkInputRuleFilter } from '../../api/input_rule';
 
 import { kRawInlineFormat, kRawInlineContent, RawInlineCommand } from './raw_inline';
 
 import { InsertHTMLCommentCommand } from './raw_html_comment';
-
 const extension = (pandocExtensions: PandocExtensions, pandocCapabilities: PandocCapabilities): Extension | null => {
   return {
     marks: [
@@ -86,7 +91,207 @@ const extension = (pandocExtensions: PandocExtensions, pandocCapabilities: Pando
       }
       return commands;
     },
+
+    // input rules
+    inputRules: (schema: Schema, filter: MarkInputRuleFilter) => {
+      if (pandocExtensions.raw_html) {
+        return [rawHtmlInputRule(schema, filter)];
+      } else {
+        return [];
+      }
+    }
   };
 };
+
+// TODO: match other junk before the > (use backward scanner)
+
+export function rawHtmlInputRule(schema: Schema, filter: MarkInputRuleFilter) {
+  return new InputRule(/<(\/?)(\w+)>$/, (state: EditorState, match: string[], start: number, end: number) => {
+
+    const rawhtmlMark = state.schema.marks.raw_html;
+
+    // ensure we pass all conditions for html input
+    if (state.selection.empty && toggleMark(rawhtmlMark)(state) && filter(state, start, end)) {
+        
+        // if it's a valid html5 tag then add the mark to it
+        if (isHTMLTag(match[2])) {
+          const tr = state.tr;
+          tr.insertText('>');
+          tr.addMark(start, end + 1, rawhtmlMark.create());
+          tr.removeStoredMark(rawhtmlMark);
+
+        // if it wasn't an end tag and it isn't a void tag then also
+        // insert an end tag (and leave the cursor in the middle)
+        if (match[1].length === 0 && !isVoidTag(match[2])) {
+          const endTag = schema.text(`</${match[2]}>`);
+          tr.replaceSelectionWith(endTag);
+          setTextSelection(tr.selection.from - endTag.textContent.length)(tr);
+          tr.addMark(tr.selection.from, tr.selection.from + endTag.textContent.length, rawhtmlMark.create());
+          tr.removeStoredMark(rawhtmlMark);
+        }
+
+        return tr;
+      } 
+
+       
+    }
+
+    return null;
+  });
+}
+
+function isHTMLTag(tag: string) {
+  return [
+    // structural
+    'a',
+    'article',
+    'aside',
+    'body',
+    'br',
+    'details',
+    'div',
+    'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
+    'head',
+    'header',
+    'hgroup',
+    'hr',
+    'html',
+    'footer',
+    'nav',
+    'p',
+    'section',
+    'span',
+    'summary',
+
+    // metadata
+    'base',
+    'basefont',
+    'link',
+    'meta',
+    'style',
+    'title',
+
+    // form
+    'button',
+    'datalist',
+    'fieldset',
+    'form',
+    'input',
+    'keygen',
+    'label',
+    'legend',
+    'meter',
+    'optgroup',
+    'option',
+    'select',
+    'textarea',
+
+    // formatting
+    'abbr',
+    'acronym',
+    'address',
+    'b',
+    'bdi',
+    'bdo',
+    'big',
+    'blockquote',
+    'center',
+    'cite',
+    'code',
+    'del',
+    'dfn',
+    'em',
+    'font',
+    'i',
+    'ins',
+    'kbd',
+    'mark',
+    'output',
+    'pre',
+    'progress',
+    'q',
+    'rp',
+    'rt',
+    'ruby',
+    's',
+    'samp',
+    'small',
+    'strike',
+    'strong',
+    'sub',
+    'sup',
+    'tt',
+    'u',
+    'var',
+    'wbr',
+
+    // list
+    'dd',
+    'dir',
+    'dl',
+    'dt',
+    'li',
+    'ol',
+    'menu',
+    'ul',
+
+    // table
+    'caption',
+    'col',
+    'colgroup',
+    'table',
+    'tbody',
+    'td',
+    'tfoot',
+    'thead',
+    'th',
+    'tr',
+
+    // scripting
+    'script',
+    'noscript',
+
+    // embedded content
+    'applet',
+    'area',
+    'audio',
+    'canvas',
+    'embed',
+    'figcaption',
+    'figure',
+    'frame',
+    'frameset',
+    'iframe',
+    'img',
+    'map',
+    'noframes',
+    'object',
+    'param',
+    'source',
+    'time',
+    'video'
+  ].includes(tag.toLowerCase());
+}
+
+function isVoidTag(tag: string) {
+  return [
+    'area', 
+    'base', 
+    'br', 
+    'col', 
+    'command', 
+    'embed', 
+    'hr', 
+    'img', 
+    'input', 
+    'keygen', 
+    'link', 
+    'meta', 
+    'param', 
+    'source', 
+    'track', 
+    'wbr'
+  ].includes(tag.toLowerCase());
+}
 
 export default extension;
