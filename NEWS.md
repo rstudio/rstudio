@@ -25,7 +25,6 @@
 ### RStudio Server Pro
 
 * SAML is now supported as an authentication mechanism (Pro #1194)
-* New option `server-project-sharing-root-dir` allows project sharing outside user home directories (Pro #1340)
 * New `X-RStudio-Request` header for specifying originating URL behind path-rewriting proxies (Pro #1579)
 * New user profile option `session-limit` allow limiting the maximum number of sessions a user can have (Pro #540)
 * Project sharing is automatically disabled and a warning is issued when `server-multiple-sessions=0`. (Pro #1263)
