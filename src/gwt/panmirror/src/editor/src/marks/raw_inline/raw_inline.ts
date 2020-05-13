@@ -43,6 +43,7 @@ const extension = (pandocExtensions: PandocExtensions, pandocCapabilities: Pando
       {
         name: 'raw_inline',
         noInputRules: true,
+        excludedInCode: true,
         spec: {
           inclusive: false,
           excludes: '_',

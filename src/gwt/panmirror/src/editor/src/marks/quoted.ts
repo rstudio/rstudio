@@ -116,12 +116,12 @@ const extension: Extension = {
           removeInvalidatedMarks(markTr, node, pos, /(“[^”]*”|‘[^’]*’)/g, schema.marks.quoted);
 
           // find quoted text that doesn't have a quoted mark (add the mark)
-          detectAndApplyMarks(markTr, tr.doc.nodeAt(pos)!, pos, /“[^”]*”/g, schema.marks.quoted, {
+          detectAndApplyMarks(markTr, tr.doc.nodeAt(pos)!, pos, /“[^”]*”/g, schema.marks.quoted, () => ({
             type: QuoteType.DoubleQuote,
-          });
-          detectAndApplyMarks(markTr, tr.doc.nodeAt(pos)!, pos, /‘[^’]*’/g, schema.marks.quoted, {
+          }));
+          detectAndApplyMarks(markTr, tr.doc.nodeAt(pos)!, pos, /‘[^’]*’/g, schema.marks.quoted, () => ({
             type: QuoteType.SingleQuote,
-          });
+          }));
         });
 
         return tr;

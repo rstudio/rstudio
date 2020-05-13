@@ -25,6 +25,7 @@ export interface PandocMark {
   readonly name: string;
   readonly spec: MarkSpec;
   readonly noInputRules?: boolean;
+  readonly excludedInCode?: boolean;
   readonly pandoc: {
     readonly readers: readonly PandocTokenReader[];
     readonly inlineHTMLReader?: PandocInlineHTMLReaderFn;
@@ -114,6 +115,7 @@ export function removeInvalidatedMarks(
   re: RegExp,
   markType: MarkType,
 ) {
+  re.lastIndex = 0;
   const markedNodes = findChildrenByMark(node, markType, true);
   markedNodes.forEach(markedNode => {
     const from = pos + 1 + markedNode.pos;
@@ -159,7 +161,8 @@ export function detectAndApplyMarks(
   pos: number,
   re: RegExp,
   markType: MarkType,
-  attrs: {} | ((match: RegExpMatchArray) => {}) = {},
+  attrs: (match: RegExpMatchArray) => {},
+  text?: (match: RegExpMatchArray) => string,
 ) {
   re.lastIndex = 0;
   const textNodes = mergedTextNodes(node, (_node: ProsemirrorNode, parentNode: ProsemirrorNode) =>
@@ -169,8 +172,9 @@ export function detectAndApplyMarks(
     re.lastIndex = 0;
     let match = re.exec(textNode.text);
     while (match !== null) {
-      const from = pos + 1 + textNode.pos + match.index;
-      const to = from + match[0].length;
+      const refText = text ? text(match) : match[0];
+      const from = pos + 1 + textNode.pos + match.index + (match[0].length - refText.length);
+      const to = from + refText.length;
       const range = getMarkRange(tr.doc.resolve(to), markType);
       if (
         (!range || range.from !== from || range.to !== to) &&

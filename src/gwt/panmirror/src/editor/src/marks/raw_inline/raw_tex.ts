@@ -46,6 +46,7 @@ const extension = (pandocExtensions: PandocExtensions): Extension | null => {
       {
         name: 'raw_tex',
         noInputRules: true,
+        excludedInCode: true,
         spec: {
           inclusive: true,
           excludes: '_',

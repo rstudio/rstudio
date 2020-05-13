@@ -15,7 +15,7 @@
 
 import { inputRules } from 'prosemirror-inputrules';
 import { keydownHandler } from 'prosemirror-keymap';
-import { MarkSpec, Node as ProsemirrorNode, NodeSpec, Schema, DOMParser, ParseOptions } from 'prosemirror-model';
+import { Node as ProsemirrorNode, Schema, DOMParser, ParseOptions } from 'prosemirror-model';
 import { EditorState, Plugin, PluginKey, Transaction } from 'prosemirror-state';
 import { EditorView } from 'prosemirror-view';
 import 'prosemirror-view/style/prosemirror.css';
@@ -24,8 +24,7 @@ import { setTextSelection, findChildrenByType } from 'prosemirror-utils';
 
 import { EditorOptions } from '../api/options';
 import { ProsemirrorCommand, CommandFn, EditorCommand } from '../api/command';
-import { PandocMark, markIsActive } from '../api/mark';
-import { PandocNode, findTopLevelBodyNodes } from '../api/node';
+import { findTopLevelBodyNodes } from '../api/node';
 import { EditorUI, attrPropsToInput, attrInputToProps, AttrProps, AttrEditInput } from '../api/ui';
 import { Extension } from '../api/extension';
 import { ExtensionManager, initExtensions } from './editor-extensions';
@@ -78,6 +77,7 @@ import { PandocConverter, PandocWriterOptions } from '../pandoc/pandoc_converter
 import { defaultTheme, EditorTheme, applyTheme, applyPadding } from './editor-theme';
 import { defaultEditorUIImages } from './editor-images';
 import { editorMenus, EditorMenus } from './editor-menus';
+import { editorSchema } from './editor-schema';
 
 // import styles
 import './styles/frame.css';
@@ -312,7 +312,7 @@ export class Editor {
     this.extensions = this.initExtensions();
 
     // create schema
-    this.schema = this.initSchema();
+    this.schema = editorSchema(this.extensions);
 
     // create state
     this.state = EditorState.create({
@@ -635,85 +635,6 @@ export class Editor {
       this.pandocFormat.extensions,
       this.pandocCapabilities,
     );
-  }
-
-  private initSchema(): Schema {
-    // build in doc node + nodes from extensions
-    const nodes: { [name: string]: NodeSpec } = {
-      doc: {
-        attrs: {
-          initial: { default: false },
-        },
-        content: 'body notes',
-      },
-
-      body: {
-        content: 'block+',
-        isolating: true,
-        parseDOM: [{ tag: 'div[class*="body"]' }],
-        toDOM() {
-          return [
-            'div',
-            { class: 'body pm-cursor-color pm-text-color pm-background-color pm-editing-root-node' },
-            ['div', { class: 'pm-content' }, 0],
-          ];
-        },
-      },
-
-      notes: {
-        content: 'note*',
-        parseDOM: [{ tag: 'div[class*="notes"]' }],
-        toDOM() {
-          return [
-            'div',
-            { class: 'notes pm-cursor-color pm-text-color pm-background-color pm-editing-root-node' },
-            ['div', { class: 'pm-content' }, 0],
-          ];
-        },
-      },
-
-      note: {
-        content: 'block+',
-        attrs: {
-          ref: {},
-          number: { default: 1 },
-        },
-        isolating: true,
-        parseDOM: [
-          {
-            tag: 'div[class*="note"]',
-            getAttrs(dom: Node | string) {
-              const el = dom as Element;
-              return {
-                ref: el.getAttribute('data-ref'),
-              };
-            },
-          },
-        ],
-        toDOM(node: ProsemirrorNode) {
-          return [
-            'div',
-            { 'data-ref': node.attrs.ref, class: 'note pm-footnote-body', 'data-number': node.attrs.number },
-            0,
-          ];
-        },
-      },
-    };
-    this.extensions.pandocNodes().forEach((node: PandocNode) => {
-      nodes[node.name] = node.spec;
-    });
-
-    // marks from extensions
-    const marks: { [name: string]: MarkSpec } = {};
-    this.extensions.pandocMarks().forEach((mark: PandocMark) => {
-      marks[mark.name] = mark.spec;
-    });
-
-    // return schema
-    return new Schema({
-      nodes,
-      marks,
-    });
   }
 
   private createPlugins(): Plugin[] {
