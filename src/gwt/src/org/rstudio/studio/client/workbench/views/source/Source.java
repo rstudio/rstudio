@@ -444,15 +444,6 @@ public class Source implements InsertSourceHandler,
          }
       });
       
-      events_.addHandler(NewDocumentWithCodeEvent.TYPE,
-                         new NewDocumentWithCodeEvent.Handler() {
-         @Override
-         public void onNewDocumentWithCode(NewDocumentWithCodeEvent event)
-         {
-            onNewDocumentWithCode(event);
-         }
-      });
-
       events_.addHandler(SourceOnSaveChangedEvent.TYPE, 
                         new SourceOnSaveChangedHandler() {
          @Override
@@ -2784,8 +2775,6 @@ public class Source implements InsertSourceHandler,
                }
             });
    }
-   
-   
    
    public void onNewDocumentWithCode(final NewDocumentWithCodeEvent event)
    {
