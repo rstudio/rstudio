@@ -14,6 +14,7 @@
  */
 package org.rstudio.studio.client.workbench.views.source;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayString;
@@ -212,16 +213,14 @@ public class Source implements InsertSourceHandler,
    }
 
    public interface Display extends IsWidget,
-                                    HasTabClosingHandlers,
-                                    HasTabCloseHandlers,
-                                    HasTabClosedHandlers,
-                                    HasTabReorderHandlers,
                                     HasBeforeSelectionHandlers<Integer>,
-                                    HasSelectionHandlers<Integer>
+                                    HasSelectionHandlers<Integer>,
+                                    HasTabClosingHandlers
    {
       void setSource(Source source);
       void generateName(boolean first);
       void addEditor(EditingTarget target);
+      void addEditor(Integer position, EditingTarget target);
       void addTab(Widget widget,
                   FileIcon icon,
                   String docId,
@@ -242,6 +241,7 @@ public class Source implements InsertSourceHandler,
                      FileIcon icon,
                      String value,
                      String tooltip);
+      ArrayList<EditingTarget> syncTabOrder();
 
       void setDirty(Widget widget, boolean dirty);
       void setActiveEditor(EditingTarget target);
@@ -798,10 +798,9 @@ public class Source implements InsertSourceHandler,
             if (value >= 0 && views_.getActiveDisplay().getTabCount() > value)
                views_.getActiveDisplay().selectTab(value);
 
-            if (views_.getActiveDisplay().getTabCount() > 0 && views_.getActiveDisplay().getActiveTabIndex() >= 0)
-            {
+            if (views_.getActiveDisplay().getTabCount() > 0 &&
+                views_.getActiveDisplay().getActiveTabIndex() >= 0)
                editors_.get(views_.getActiveDisplay().getActiveTabIndex()).onInitiallyLoaded();
-            }
 
             // clear the history manager
             sourceNavigationHistory_.clear();
@@ -1008,6 +1007,7 @@ public class Source implements InsertSourceHandler,
                   public void execute(EditingTarget editingTarget,
                                       Command continuation)
                   {
+                     editors_.remove(editingTarget);
                      views_.closeTabs(editingTarget, false, continuation);
                   }
                });
@@ -2294,7 +2294,6 @@ public class Source implements InsertSourceHandler,
          @Override
          public void execute()
          {
-            Debug.logToConsole("onPopoutDoc display: " + views_.getDisplayByDocument(e.getDocId()).getName() + " disowning " + e.getDocId());
             disownDoc(e.getDocId(), views_.getDisplayByDocument(e.getDocId()));
          }
       });
@@ -2346,9 +2345,6 @@ public class Source implements InsertSourceHandler,
             oldDisplay = e.getOldWindowId() == e.getNewWindowId() ? 
                          views_.getDisplayByDocument(e.getDocId()) :
                          views_.getActiveDisplay();
-            Debug.logToConsole("newDisplay: " + newDisplay.getName());
-            Debug.logToConsole("oldDisplay: " + oldDisplay.getName());
-            Debug.logToConsole("initial docId: " + e.getDocId());
          }
 
          // if we're the adopting window, add the doc
@@ -2358,11 +2354,8 @@ public class Source implements InsertSourceHandler,
             @Override
             public void onResponseReceived(final SourceDocument doc)
             {
-               Debug.logToConsole("newDisplay: " + newDisplay.getName() + " onResponseReceived docId: " + doc.getId());
-               Debug.logToConsole("doc.getSourceWindowId(): " + doc.getSourceWindowId());
                final EditingTarget target = addTab(doc, e.getPos(), newDisplay);
                
-               Debug.logToConsole("doc.getSourceWindowId(): >" + doc.getSourceWindowId() + "<");
                Scheduler.get().scheduleDeferred(new Scheduler.ScheduledCommand()
                {
                   @Override
@@ -2398,7 +2391,6 @@ public class Source implements InsertSourceHandler,
          // cancel tab drag if it was occurring
          oldDisplay.cancelTabDrag();
          
-         Debug.logToConsole("oldDisplay: " + oldDisplay.getName() + " disowning doc: " + e.getDocId());
          // disown this doc if it was our own
          disownDoc(e.getDocId(), oldDisplay);
       }
@@ -2428,9 +2420,7 @@ public class Source implements InsertSourceHandler,
          @Override
          public void execute(EditingTarget editor)
          {
-            Debug.logToConsole("onDocTabDragInitiated----");
             DocTabDragParams params = event.getDragParams();
-            Debug.logToConsole("docId: " + params.getDocId());
             params.setSourcePosition(editor.currentPosition());
             params.setDisplayName(views_.getDisplayByDocument(editor.getId()).getName());
             events_.fireEvent(new DocTabDragStartedEvent(params));
@@ -2451,7 +2441,6 @@ public class Source implements InsertSourceHandler,
             if (editor instanceof TextEditingTarget)
             {
                final TextEditingTarget textEditor = (TextEditingTarget)editor;
-      Debug.logToConsole("initiating popout doc: " + event.getDocId() + " from display: " + views_.getDisplayByDocument(textEditor.getId()).getName());
                textEditor.withSavedDoc(new Command()
                {
                   @Override
@@ -2465,7 +2454,6 @@ public class Source implements InsertSourceHandler,
             }
             else
             {
-      Debug.logToConsole("initiating non text editor popout doc: " + event.getDocId() + " from display: " + editor.getId());
                events_.fireEvent(new PopoutDocEvent(event, 
                      editor.currentPosition(), views_.getDisplayByDocument(editor.getId())));
             }
@@ -3810,6 +3798,7 @@ public class Source implements InsertSourceHandler,
          public void onClose(CloseEvent<Void> voidCloseEvent)
          {
             targetView.closeTab(widget, false);
+            //editors_.remove(target);
          }
       });
       
@@ -3885,6 +3874,20 @@ public class Source implements InsertSourceHandler,
       }
    }
 
+   public void syncClosedTab(EditingTarget target)
+   {
+      Integer index = editors_.indexOf(target);
+      editors_.remove(index);
+      tabOrder_.remove(index);
+      for (int i = 0; i < tabOrder_.size(); i++)
+      {
+         if (tabOrder_.get(i) > index)
+         {
+            tabOrder_.set(i, tabOrder_.get(i) - 1);
+         }
+      }
+   }
+
    public void closeEditorIfActive(EditingTarget target)
    {
       if (activeEditor_ == target)
@@ -3894,8 +3897,15 @@ public class Source implements InsertSourceHandler,
       }
    }
 
-   private void syncTabOrder()
+   public void syncTabOrder()
    {
+      editors_.clear();
+      // sync tabOrder/editors for each display, then sync the master lists
+      for (Display view : views_)
+      {
+         editors_.addAll(view.syncTabOrder());
+      }
+
       // ensure the tab order is synced to the list of editors
       for (int i = tabOrder_.size(); i < editors_.size(); i++)
       {
@@ -3907,7 +3917,7 @@ public class Source implements InsertSourceHandler,
       }
    }
 
-   private void fireDocTabsChanged()
+   public void fireDocTabsChanged()
    {
       if (!initialized_)
          return;
