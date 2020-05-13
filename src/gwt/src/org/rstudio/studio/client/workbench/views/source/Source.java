@@ -732,9 +732,15 @@ public class Source implements InsertSourceHandler,
       
       // add vim commands
       initVimCommands();
-      ensureVisible(false);
    }
    
+   /**
+    * Process the save_files_before_build user preference.
+    * If false, ask the user how to handle unsaved changes and act accordingly.
+    * @param command The command to run after the files are handled.
+    * @param cancelCommand The command to run if the user cancels the request.
+    * @param commandSource The title to be used by the dialog asking how to handle files.
+    */
    public void withSaveFilesBeforeCommand(final Command command,
                                           final Command cancelCommand,
                                           String commandSource)
