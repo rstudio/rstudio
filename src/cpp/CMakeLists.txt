@@ -74,7 +74,7 @@ if(UNIX)
    include(CheckSymbolExists REQUIRED)
 
    # compiler flags
-   add_definitions(-Wall -pthread)
+   add_definitions(-Wall -pthread -Werror=return-type)
 
    if(RSTUDIO_ASAN)
       message(STATUS "Compiling with Address Sanitizer (ASAN) support")
