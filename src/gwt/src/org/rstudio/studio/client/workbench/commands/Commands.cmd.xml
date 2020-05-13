@@ -2491,12 +2491,6 @@ well as menu structures (for main menu and popup menus).
         desc="Send the selected commands to the R console (Enter)"
         rebindable="false"/>
         
-   <cmd id="searchHistory"
-        menuLabel="Search History"
-        buttonLabel=""
-        desc="Search history for commands matching a pattern"
-        rebindable="false"/>
-        
    <cmd id="loadHistory"
         menuLabel="_Load History..."
         buttonLabel=""
