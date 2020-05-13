@@ -18,6 +18,7 @@
 // required to avoid Win64 winsock order of include
 // compilation problem
 #include <boost/asio/io_service.hpp>
+#include <boost/scope_exit.hpp>
 
 #ifndef _WIN32
 #include <sys/types.h>
@@ -1663,12 +1664,17 @@ bool ensureUtf8Charset()
 }
 
 // io_service for performing monitor work on the thread
-boost::asio::io_service s_ioService;
+boost::asio::io_service s_monitorIoService;
 
 void monitorWorkerThreadFunc()
 {
-   boost::asio::io_service::work work(s_ioService);
-   s_ioService.run();
+   boost::asio::io_service::work work(s_monitorIoService);
+   s_monitorIoService.run();
+}
+
+void stopMonitorWorkerThread()
+{
+   s_monitorIoService.stop();
 }
 
 void initMonitorClient()
@@ -1677,11 +1683,11 @@ void initMonitorClient()
    {
       monitor::initializeMonitorClient(core::system::getenv(kMonitorSocketPathEnvVar),
                                        options().monitorSharedSecret(),
-                                       s_ioService);
+                                       s_monitorIoService);
    }
    else
    {
-      modules::overlay::initMonitorClient(s_ioService);
+      modules::overlay::initMonitorClient(s_monitorIoService);
    }
 
    // start the monitor work thread
@@ -1779,8 +1785,13 @@ int main (int argc, char * const argv[])
          log::addLogDestination(
             std::shared_ptr<log::ILogDestination>(new log::StderrLogDestination(log::LogLevel::WARN)));
 
-      // initialize monitor
+      // initialize monitor but stop its thread on exit
       initMonitorClient();
+      BOOST_SCOPE_EXIT(void)
+      {
+         stopMonitorWorkerThread();
+      }
+      BOOST_SCOPE_EXIT_END
 
       // register monitor log writer (but not in standalone mode)
       if (!options.standalone())
