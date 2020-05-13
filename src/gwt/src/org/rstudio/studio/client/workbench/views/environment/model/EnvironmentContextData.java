@@ -21,8 +21,8 @@ public class EnvironmentContextData extends JavaScriptObject
 {
    protected EnvironmentContextData() { }
 
-   public final native int language() /*-{
-      return this.language || "r";
+   public final native String language() /*-{
+      return this.language || "R";
    }-*/;
    
    public final native int contextDepth() /*-{

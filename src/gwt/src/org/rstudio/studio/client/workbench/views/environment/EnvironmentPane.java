@@ -100,11 +100,10 @@ public class EnvironmentPane extends WorkbenchPane
       scrollPosition_ = 0;
       isClientStateDirty_ = false;
       environments_ = null;
-      EnvironmentContextData environmentState = 
-            session.getSessionInfo().getEnvironmentState();
+      
+      EnvironmentContextData environmentState = session.getSessionInfo().getEnvironmentState();
       environmentName_ = environmentState.environmentName();
       environmentIsLocal_ = environmentState.environmentIsLocal();
-      
       environmentMonitoring_ = new Value<Boolean>(environmentState.environmentMonitoring());
 
       EnvironmentPaneResources.INSTANCE.environmentPaneStyle().ensureInjected();
@@ -245,6 +244,11 @@ public class EnvironmentPane extends WorkbenchPane
    protected Widget createMainWidget()
    {
       objects_ = new EnvironmentObjects(this);
+      
+      EnvironmentContextData data = session_.getSessionInfo().getEnvironmentState();
+      if (StringUtil.equals(data.language(), "Python"))
+         setPythonEnabled(true, false);
+      
       return objects_;
    }
 
@@ -771,8 +775,8 @@ public class EnvironmentPane extends WorkbenchPane
       languageButton_.setVisible(enabled);
       secondaryToolbar_.manageSeparators();
       
-      if (!enabled)
-         setActiveLanguage("R", syncWithSession);
+      String language = enabled ? "Python" : "R";
+      setActiveLanguage(language, syncWithSession);
    }
    
    // NOTE: 'syncWithSession = false' should only be used

@@ -1174,12 +1174,17 @@ SEXP rs_jumpToFunction(SEXP file, SEXP line, SEXP col)
 
 json::Value environmentStateAsJson()
 {
+   if (s_environmentLanguage == "Python")
+      return pythonEnvironmentStateData(s_monitoredPythonModule);
+   
    int contextDepth = 0;
    r::context::getFunctionContext(BROWSER_FUNCTION, &contextDepth);
+   
    // If there's no browser on the stack, stay at the top level even if
    // there are functions on the stack--this is not a user debug session.
    if (!r::context::inBrowseContext())
       contextDepth = 0;
+   
    return commonEnvironmentStateData(contextDepth, 
          s_monitoring, // include contents if actively monitoring
          nullptr);

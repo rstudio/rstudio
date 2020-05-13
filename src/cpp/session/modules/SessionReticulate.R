@@ -894,10 +894,16 @@ options(reticulate.repl.teardown   = .rs.reticulate.replTeardown)
    if (inherits(candidates, "error"))
       return(.rs.python.emptyCompletions())
    
+   # split string into source (module or sub-module providing object)
+   # and token
+   token <- tail(pieces, n = 1L)
+   source <- paste(head(pieces, n = -1L), collapse = ".")
+   
+   # build completions object
    completions <- .rs.python.completions(
-      token      = tail(pieces, n = 1L),
+      token      = token,
       candidates = candidates,
-      source     = head(pieces, n = -1L),
+      source     = source,
       type       = .rs.python.inferObjectTypes(object, candidates)
    )
    
@@ -1472,10 +1478,10 @@ html.heading = _heading
       reticulate::py_get_attr(parent, name)
    
    # is this object 'data'? consider non-callable, non-module objects as data
-   is_data <- !any(
-      reticulate:::py_is_callable(object),
-      reticulate:::py_is_module(object),
-      grepl("^__.*__$", name)
+   isData <- !(
+      grepl("^__.*__$", name) ||
+      reticulate:::py_is_callable(object) ||
+      reticulate:::py_is_module(object)
    )
    
    # TODO: there isn't really a distinction between an objects "type"
@@ -1499,7 +1505,7 @@ html.heading = _heading
       name              = .rs.scalar(name),
       type              = .rs.scalar(type),
       clazz             = type,
-      is_data           = .rs.scalar(is_data),
+      is_data           = .rs.scalar(isData),
       value             = .rs.scalar(value),
       description       = .rs.scalar(value),
       size              = .rs.scalar(size),
@@ -1592,6 +1598,7 @@ html.heading = _heading
    )
    
    list(
+      language               = .rs.scalar("Python"),
       environment_monitoring = .rs.scalar(TRUE),
       environment_list       = descriptions,
       
@@ -1668,7 +1675,6 @@ html.heading = _heading
    module <- .rs.reticulate.resolveModule(moduleName)
    
    # list objects within this module
-   builtins <- reticulate::import_builtins(convert = TRUE)
    newObjects <- reticulate::py_get_attr(module, "__dict__")
    
    # retrieve previously-cached objects in this module
