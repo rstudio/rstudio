@@ -432,8 +432,12 @@ Error runPreflightScript()
    return Success();
 }
 
+// implemented below
+void stopMonitorWorkerThread();
+
 void exitEarly(int status)
 {
+   stopMonitorWorkerThread();
    FileLock::cleanUp();
    ::exit(status);
 }
