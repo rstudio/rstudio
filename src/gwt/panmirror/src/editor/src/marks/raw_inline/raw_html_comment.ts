@@ -48,7 +48,6 @@ const extension = (
       {
         name: 'raw_html_comment',
         noInputRules: true,
-        excludedInCode: true,
         spec: {
           attrs: {
             editing: { default: false },

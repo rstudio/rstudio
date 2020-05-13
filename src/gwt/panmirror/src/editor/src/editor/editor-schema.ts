@@ -91,9 +91,11 @@ export function editorSchema(extensions: ExtensionManager): Schema {
     marks[mark.name] = mark.spec;
   });
 
-  // find marks which should be excluded in code, then exclude them
+  // allow code to exclude marks that don't support input rules
+  // (e.g. marks that denote a special escape sequences from markdown, 
+  // like raw_tex, raw_html, shortcodes, xrefs, math, etc.)
   const excludeInCode = extensions.pandocMarks()
-    .filter(mark => mark.excludedInCode)
+    .filter(mark => mark.noInputRules && mark.name !== 'code')
     .map(mark => mark.name)
     .join(' ');
   marks.code.excludes = excludeInCode;
