@@ -46,9 +46,9 @@ import {
   kAddToHistoryTransaction,
   kSetMarkdownTransaction,
 } from '../api/transaction';
-import { EditorOutline } from '../api/outline';
+import { EditorOutline, outlineNodes } from '../api/outline';
 import { EditingLocation, getEditingLocation, EditingOutlineLocation, setEditingLocation } from '../api/location';
-import { navigateTo } from '../api/navigation';
+import { navigateTo, navigateToPosition } from '../api/navigation';
 import { FixupContext } from '../api/fixup';
 import { unitToPixels, pixelsToUnit, roundUnit, kValidUnits } from '../api/image';
 import { kPercentUnit } from '../api/css';
@@ -116,6 +116,7 @@ export interface EditorKeybindings {
 export interface EditorSelection {
   from: number;
   to: number;
+  navigation_id: string | null;
 }
 
 export interface EditorFindReplace {
@@ -476,7 +477,11 @@ export class Editor {
 
   public getSelection(): EditorSelection {
     const { from, to } = this.state.selection;
-    return { from, to };
+    return { 
+      from, 
+      to,
+      navigation_id: navigationIdForSelection(this.state)
+     };
   }
 
   public getEditingLocation(): EditingLocation {
@@ -775,6 +780,16 @@ export class Editor {
 
     // get code
     return this.pandocConverter.fromProsemirror(doc, this.pandocFormat, options);
+  }
+}
+
+function navigationIdForSelection(state: EditorState) : string | null {
+  const outline = outlineNodes(state.doc);
+  const outlineNode = outline.reverse().find(node => node.pos < state.selection.from);
+  if (outlineNode) {
+    return outlineNode.node.attrs.navigation_id;
+  } else {
+    return null;
   }
 }
 

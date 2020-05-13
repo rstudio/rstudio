@@ -247,12 +247,7 @@ public class PanmirrorWidget extends DockLayoutPanel implements
          @Override
          protected void execute()
          {
-            if (editor_ != null) // would be null during teardown of tab
-            {
-               PanmirrorOutlineItem[] outline = editor_.getOutline();
-               outline_.updateOutline(outline);
-               outline_.updateSelection(editor_.getSelection());
-            }
+            updateOutline();
          }
       };
       
@@ -262,8 +257,8 @@ public class PanmirrorWidget extends DockLayoutPanel implements
          if (toolbar_ != null)
             toolbar_.sync(false);
          
-         // sync outline
-         updateOutineOnIdle.nudge();
+         // sync outline selection
+         outline_.updateSelection(editor_.getSelection());
          
          // fire to clients
          fireEvent(new PanmirrorSelectionChangedEvent());
@@ -304,6 +299,7 @@ public class PanmirrorWidget extends DockLayoutPanel implements
          })
       );   
    }
+   
    
    @Override
    public void onDetach()
@@ -382,6 +378,10 @@ public class PanmirrorWidget extends DockLayoutPanel implements
    
    public void showOutline(boolean show, double width, boolean animate)
    {
+      // update outline if we are showing
+      if (show)
+         updateOutline();
+      
       boolean visible = getWidgetSize(outline_) > 0;
       if (show != visible)
       {
@@ -538,6 +538,16 @@ public class PanmirrorWidget extends DockLayoutPanel implements
       }
       if (editor_ != null) {
          resizeEditor();
+      }
+   }
+   
+   private void updateOutline()
+   {
+      if (editor_ != null) // would be null during teardown of tab
+      {
+         PanmirrorOutlineItem[] outline = editor_.getOutline();
+         outline_.updateOutline(outline);
+         outline_.updateSelection(editor_.getSelection());
       }
    }
    

@@ -21,7 +21,7 @@ import { Extension } from '../api/extension';
 import { transactionsHaveChange, kSetMarkdownTransaction } from '../api/transaction';
 import { findTopLevelBodyNodes } from '../api/node';
 import { uuidv4 } from '../api/util';
-import { EditorOutlineItem, EditorOutlineItemType, EditorOutline } from '../api/outline';
+import { EditorOutlineItem, EditorOutlineItemType, EditorOutline, isOutlineNode } from '../api/outline';
 
 const kOutlineIdsTransaction = 'OutlineIds';
 
@@ -77,7 +77,7 @@ const extension: Extension = {
             if (transactionsAffectOutline([tr], oldState, newState)) {
               return editorOutline(newState);
             } else {
-              return value;
+              return value; // don't need to map b/c there are no positions in the data structure
             }
           },
         },
@@ -100,7 +100,6 @@ function editorOutline(state: EditorState): EditorOutline {
     type: nodeWithPos.node.type.name as EditorOutlineItemType,
     level: nodeWithPos.node.attrs.level || defaultLevel,
     title: nodeWithPos.node.type.spec.code ? nodeWithPos.node.type.name : nodeWithPos.node.textContent,
-    pos: nodeWithPos.pos,
     children: [],
   });
 
@@ -110,7 +109,6 @@ function editorOutline(state: EditorState): EditorOutline {
     type: '' as EditorOutlineItemType,
     level: 0,
     title: '',
-    pos: 0,
     children: [],
   };
   const containers: EditorOutlineItem[] = [];
@@ -142,13 +140,6 @@ function hasOutlineIdsTransaction(transactions: Transaction[]) {
   return transactions.some(tr => tr.getMeta(kOutlineIdsTransaction));
 }
 
-function isOutlineNode(node: ProsemirrorNode) {
-  if (node.type.spec.attrs) {
-    return node.type.spec.attrs.hasOwnProperty('navigation_id');
-  } else {
-    return false;
-  }
-}
 
 function transactionsAffectOutline(transactions: Transaction[], oldState: EditorState, newState: EditorState) {
   return (

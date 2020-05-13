@@ -23,4 +23,5 @@ public class PanmirrorSelection
 {    
    public int from;
    public int to;
+   public String navigation_id;
 }
