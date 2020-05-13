@@ -15,3 +15,7 @@
 - Add option `www-url-path-prefix` to force a path on auth cookies (Pro #1608)
 - Fix Terminal to work with both Git-Bash and RTools4 MSYS2 installed on Windows (#6696, #6809)
 - Add additional keyboard shortcut (Ctrl+`) for Focus Console Output accessibility command (#6850)
+
+### RStudio Server Pro
+
+- New option `server-project-sharing-root-dir` allows project sharing outside user home directories (Pro #1340)
