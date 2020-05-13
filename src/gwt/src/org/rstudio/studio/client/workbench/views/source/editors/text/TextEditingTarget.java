@@ -5580,13 +5580,7 @@ public class TextEditingTarget implements
                prefs_.shinyBackgroundJobs().getValue() ?
                   ShinyApplication.BACKGROUND_APP :
                   ShinyApplication.FOREGROUND_APP, getExtendedFileType()));
-      },
-      new Command() {
-         public void execute()
-         {
-         }
-      },
-      "Run Shiny Application");
+      }, () -> {}, "Run Shiny Application");
    }
    
    private void runPlumberAPI()
@@ -5597,13 +5591,7 @@ public class TextEditingTarget implements
          {
             events_.fireEvent(new LaunchPlumberAPIEvent(getPath()));
          }
-      },
-      new Command() {
-         public void execute()
-         {
-         }
-      },
-      "Run Plumber API");
+      }, () -> {}, "Run Plumber API");
    }
    
    private void sourcePython()

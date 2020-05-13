@@ -207,18 +207,15 @@ public class Application implements ApplicationEventHandlers
             MathJaxLoader.ensureMathJaxLoaded();
 
             // initialize workbench
-            // refresh prefs incase they were loaded without sessionInfo
-            userState_.get().writeState(
-                  new CommandWithArg<Boolean>() {
-                     public void execute(Boolean arg) {
-                        userPrefs_.get().writeUserPrefs(
-                              new CommandWithArg<Boolean>() {
-                                 public void execute(Boolean arg) {
-                                    initializeWorkbench();
-                                 }
-                              });
-                        }
-                  });
+            // refresh prefs incase they were loaded without sessionInfo (this happens exclusively
+            // in desktop mode, though unsure why)
+            userState_.get().writeState(boolArg ->
+            {
+               userPrefs_.get().writeUserPrefs(boolArg1 ->
+               {
+                  initializeWorkbench();
+               });
+            });
          }
 
          public void onError(ServerError error)

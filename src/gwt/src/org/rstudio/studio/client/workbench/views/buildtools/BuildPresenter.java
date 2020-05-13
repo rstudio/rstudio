@@ -1,7 +1,7 @@
 /*
  * BuildPresenter.java
  *
- * Copyright (C) 2009-17 by RStudio, PBC
+ * Copyright (C) 2009-20 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -309,26 +309,13 @@ public class BuildPresenter extends BasePresenter
    
    void onDevtoolsLoadAll()
    {
-      source_.withSaveFilesBeforeCommand(new Command() {
-         @Override
-         public void execute()
+      source_.withSaveFilesBeforeCommand(() ->
+      {
+         withDevtoolsLoadAllPath(loadAllPath ->
          {
-            withDevtoolsLoadAllPath(new CommandWithArg<String>() {
-               @Override
-               public void execute(String loadAllPath)
-               {
-                  sendLoadCommandToConsole(
-                              "devtools::load_all(\"" + loadAllPath + "\")");
-               } 
-            }); 
-         }
-      },
-      new Command() {
-         public void execute()
-         {
-         }
-      },
-      "Build");
+            sendLoadCommandToConsole("devtools::load_all(\"" + loadAllPath + "\")");
+         });
+      }, () -> {}, "Build");
    }
      
    void onBuildSourcePackage()
@@ -427,34 +414,23 @@ public class BuildPresenter extends BasePresenter
       // attempt to start a build (this will be a silent no-op if there
       // is already a build running)
       workbenchContext_.setBuildInProgress(true);
-      source_.withSaveFilesBeforeCommand(new Command() {
-         @Override
-         public void execute()
-         {
-            server_.startBuild(type, subType, 
-                  new SimpleRequestCallback<Boolean>() {
-               @Override
-               public void onResponseReceived(Boolean response)
-               {
+      source_.withSaveFilesBeforeCommand(() ->
+      {
+         server_.startBuild(type, subType, new SimpleRequestCallback<Boolean>() {
+            @Override
+            public void onResponseReceived(Boolean response)
+            {
+            }
 
-               }
+            @Override
+            public void onError(ServerError error)
+            {
+               super.onError(error);
+               workbenchContext_.setBuildInProgress(false);
+            }
 
-               @Override
-               public void onError(ServerError error)
-               {
-                  super.onError(error);
-                  workbenchContext_.setBuildInProgress(false);
-               }
-
-            });
-         }
-      },
-      new Command() {
-         public void execute()
-         {
-         }
-      },
-      "Build");
+         });
+      }, () -> {}, "Build");
    }
 
    void onStopBuild()

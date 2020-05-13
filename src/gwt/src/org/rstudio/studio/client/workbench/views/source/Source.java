@@ -14,7 +14,6 @@
  */
 package org.rstudio.studio.client.workbench.views.source;
 
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayString;
@@ -483,7 +482,7 @@ public class Source implements InsertSourceHandler,
             pMruList_.get().add(event.getPath());
          }
       });
-         
+
       events_.addHandler(SourcePathChangedEvent.TYPE, 
             new SourcePathChangedEvent.Handler()
       {
@@ -531,7 +530,7 @@ public class Source implements InsertSourceHandler,
       });
       
       events_.addHandler(SourceExtendedTypeDetectedEvent.TYPE, this);
-         
+
       sourceNavigationHistory_.addChangeHandler(new ChangeHandler()
       {
 
@@ -757,22 +756,19 @@ public class Source implements InsertSourceHandler,
                   commandSource,
                   alwaysSaveOption,
                   unsavedSourceDocs,
-                  new OperationWithInput<UnsavedChangesDialog.Result>() {
-                     public void execute(UnsavedChangesDialog.Result result)
+                  dialogResult ->
+                  {
+                     if (dialogResult.getAlwaysSave())
                      {
-                        if (result.getAlwaysSave())
-                        {
-                           userPrefs_.saveFilesBeforeBuild().setGlobalValue(true);
-                           userPrefs_.writeUserPrefs();
-                        }
-
-                        handleUnsavedChangesBeforeExit(
-                                              result.getSaveTargets(),
-                                              command);
-
+                        userPrefs_.saveFilesBeforeBuild().setGlobalValue(true);
+                        userPrefs_.writeUserPrefs();
                      }
-                   },
-                   cancelCommand
+                     handleUnsavedChangesBeforeExit(
+                                           dialogResult.getSaveTargets(),
+                                           command);
+
+                  },
+                  cancelCommand
             ).showModal();
          }
          else
@@ -2665,17 +2661,8 @@ public class Source implements InsertSourceHandler,
    public Command revertUnsavedChangesBeforeExitCommand(
                                                final Command onCompleted)
    {
-      return new Command()
-      {
-         @Override
-         public void execute()
-         {
-            handleUnsavedChangesBeforeExit(
-                                 new ArrayList<UnsavedChangesTarget>(),
-                                 onCompleted);
-         }
-
-      };
+      return () -> handleUnsavedChangesBeforeExit(new ArrayList<UnsavedChangesTarget>(),
+                                                  onCompleted);
    }
    public void handleUnsavedChangesBeforeExit(
                         final ArrayList<UnsavedChangesTarget> saveTargets,

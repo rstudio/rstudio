@@ -279,7 +279,6 @@ public class PaneManager
       left_ = createSplitWindow(panes_.get(0), panes_.get(1), LEFT_COLUMN, 0.4, splitterSize);
       right_ = createSplitWindow(panes_.get(2), panes_.get(3), RIGHT_COLUMN, 0.6, splitterSize);
 
-
       panel_ = pSplitPanel.get();
       panel_.initialize(left_, right_);
       
