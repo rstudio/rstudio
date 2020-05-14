@@ -101,6 +101,7 @@ public class InfoBar extends Composite
       Scheduler.get().scheduleDeferred(() -> {
          live_.setText(text);
       });
+      labelRight_.clear();
    }
 
    public int getHeight()
@@ -133,8 +134,6 @@ public class InfoBar extends Composite
       }
       
       setText(message);
-      
-      labelRight_.clear();
 
       labelRight_.add(label("Install", () -> {
          onInstall.execute();
@@ -158,7 +157,6 @@ public class InfoBar extends Composite
                                                  Command onInstall)
    {
       setText(message);
-      labelRight_.clear();
       labelRight_.add(label("Install TinyTeX", () -> { onInstall.execute(); }));
    }
    
