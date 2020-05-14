@@ -1157,6 +1157,23 @@ public class PaneManager
       userPrefs_.writeUserPrefs();
    }
 
+   public void closeSourceWindow(String name)
+   {
+      // hide the original source window
+      if (StringUtil.equals(name, Source.COLUMN_PREFIX))
+         getSourceLogicalWindow().onWindowStateChange(
+               new WindowStateChangeEvent(WindowState.HIDE));
+      else
+      {
+         Source.Display display = source_.getViewByName(name);
+         if (display.getTabCount() == 0)
+         {
+            panel_.removeLeftWidget(display.asWidget());
+            source_.closeView(name);
+         }
+      }
+   }
+
    private DualWindowLayoutPanel createSplitWindow(LogicalWindow top,
                                                    LogicalWindow bottom,
                                                    String name,

@@ -218,11 +218,15 @@ public class MainSplitPanel extends NotifyingSplitLayoutPanel
 
    public void addLeftWidget(Widget widget)
    {
-      remove(center_);
-      remove(right_);
-      for (Widget w : leftList_)
-         remove(w);
+      clearForRefresh();
       leftList_.add(widget);
+      initialize(leftList_, center_, right_);
+   }
+
+   public void removeLeftWidget(Widget widget)
+   {
+      clearForRefresh();
+      leftList_.remove(widget);
       initialize(leftList_, center_, right_);
    }
 
@@ -237,6 +241,14 @@ public class MainSplitPanel extends NotifyingSplitLayoutPanel
       Element splitter = getAssociatedSplitterElement(right_);
       if (splitter != null)
          splitter.focus();
+   }
+
+   private void clearForRefresh()
+   {
+      remove(center_);
+      remove(right_);
+      for (Widget w : leftList_)
+         remove(w);
    }
 
    private void enforceBoundaries()

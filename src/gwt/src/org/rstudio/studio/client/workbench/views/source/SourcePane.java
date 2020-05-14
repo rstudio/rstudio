@@ -179,9 +179,8 @@ public class SourcePane extends LazyPanel implements Display,
    {
       if (StringUtil.isNullOrEmpty(name_))
       {
-         if (first)
-            name_ = "Source";
-         else
+         name_ = Source.COLUMN_PREFIX;
+         if (!first)
             name_ = Source.COLUMN_PREFIX + StringUtil.makeRandomId(12);
       }
    }
@@ -664,11 +663,10 @@ public class SourcePane extends LazyPanel implements Display,
       //manageCommands(); !!! need to handle this
       source_.fireDocTabsChanged();
 
-      // !!! JAVASCRIPT EXCEPTION - "Cannot read property getTabCount of null"
       if (getTabCount() == 0)
       {
          sourceNavigationHistory_.clear();
-         events_.fireEvent(new LastSourceDocClosedEvent());
+         events_.fireEvent(new LastSourceDocClosedEvent(getName()));
       }
    }
 

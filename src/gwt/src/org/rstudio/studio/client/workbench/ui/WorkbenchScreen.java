@@ -147,8 +147,7 @@ public class WorkbenchScreen extends Composite
       {
          public void onLastSourceDocClosed(LastSourceDocClosedEvent event)
          {
-            paneManager_.getSourceLogicalWindow().onWindowStateChange(
-                  new WindowStateChangeEvent(WindowState.HIDE));
+            paneManager_.closeSourceWindow(event.getName());
          }
       });
 

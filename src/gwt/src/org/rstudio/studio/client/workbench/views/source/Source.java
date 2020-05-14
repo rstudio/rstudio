@@ -323,6 +323,16 @@ public class Source implements InsertSourceHandler,
          return null;
       }
 
+      public Display getDisplayByName(String name)
+      {
+         for (Display display : this)
+         {
+            if (StringUtil.equals(name, display.getName()))
+               return display;
+         }
+         return null;
+      }
+
       public Display getDisplayByPosition(int x)
       {
          for (Display display : this)
@@ -354,6 +364,17 @@ public class Source implements InsertSourceHandler,
                                                       editingTarget.asWidget(),
                                                       interactive,
                                                       continuation);
+      }
+
+      public void closeDisplay(String name)
+      {
+         Display display = getDisplayByName(name);
+         if (display.getTabCount() > 0)
+            return;
+
+         if (display == activeDisplay_)
+            activeDisplay_ = null;
+         this.remove(display);
       }
 
       public void manageChevronVisibility()
@@ -2857,19 +2878,14 @@ public class Source implements InsertSourceHandler,
       return display;
    }
 
-   public Display getActiveView()
-   {
-      return views_.getActiveDisplay();
-   }
-
-   public Display getViewByIndex(int index)
-   {
-      return views_.get(index);
-   }
-
    public ArrayList<Display> getViews()
    {
       return views_;
+   }
+
+   public Display getActiveView()
+   {
+      return views_.getActiveDisplay();
    }
 
    private Display getViewByDocId(String docId)
@@ -2878,6 +2894,17 @@ public class Source implements InsertSourceHandler,
       return views_.getDisplayByDocument(target.getId());
 
    }
+
+   public Display getViewByName(String name)
+   {
+      return views_.getDisplayByName(name);
+   }
+
+   public Display getViewByIndex(int index)
+   {
+      return views_.get(index);
+   }
+
    public ArrayList<Widget> getViewsAsWidgets()
    {
       ArrayList<Widget> result = new ArrayList<Widget>();
@@ -2889,6 +2916,11 @@ public class Source implements InsertSourceHandler,
    public void activateView(Display display)
    {
       //display.focus();
+   }
+
+   public void closeView(String name)
+   {
+      views_.closeDisplay(name);
    }
 
    private void revertActiveDocument()
