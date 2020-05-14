@@ -512,7 +512,8 @@ public class EnvironmentPane extends WorkbenchPane
    {
       String editCode =
               function + "(" + StringUtil.toRSymbolName(objectName) + ")";
-      SendToConsoleEvent event = new SendToConsoleEvent(editCode, true);
+      
+      SendToConsoleEvent event = new SendToConsoleEvent(editCode, activeLanguage_, true);
       events_.fireEvent(event);
    }
 
