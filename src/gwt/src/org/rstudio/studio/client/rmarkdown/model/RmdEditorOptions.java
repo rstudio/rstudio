@@ -44,7 +44,8 @@ public class RmdEditorOptions
    public static String getMarkdownOption(String yaml, String option)
    {
       YamlTree yamlTree = new YamlTree(yaml);
-      return yamlTree.getGrandchildValue(EDITOR_OPTION_KEY, MARKDOWN_OPTION_KEY, option);
+      return yamlTree.getGrandchildValue(EDITOR_OPTION_KEY, MARKDOWN_OPTION_KEY, option)
+                      .trim().toLowerCase();
    }
    
    public static String set(String yaml, String option, String value)
