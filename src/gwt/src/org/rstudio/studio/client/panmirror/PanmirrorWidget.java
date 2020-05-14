@@ -366,7 +366,7 @@ public class PanmirrorWidget extends DockLayoutPanel implements
       new PromiseWithProgress<String>(
          editor_.getCanonical(code, options),
          null,
-         kSerializationProgressDelayMs,
+         kCreationProgressDelayMs,
          completed   
       );
    }
