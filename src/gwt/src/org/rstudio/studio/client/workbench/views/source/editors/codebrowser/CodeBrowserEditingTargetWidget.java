@@ -333,6 +333,12 @@ public class CodeBrowserEditingTargetWidget extends ResizeComposite
    }
    
    @Override
+   public void showPanmirrorFormatChanged(Command onReload)
+   {
+      // no-op for code browser targets
+   }
+   
+   @Override
    public void showWarningBar(final String warning)
    {
       showWarningImpl(() -> warningBar_.setText(warning));
@@ -492,4 +498,5 @@ public class CodeBrowserEditingTargetWidget extends ResizeComposite
    private final TextEditingTargetFindReplace findReplace_;
    private String currentFunctionNamespace_ = null;
    private InfoBar warningBar_;
+  
 }

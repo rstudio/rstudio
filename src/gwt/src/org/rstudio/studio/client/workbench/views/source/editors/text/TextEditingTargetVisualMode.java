@@ -257,6 +257,14 @@ public class TextEditingTargetVisualMode
                   // apply them 
                   getSourceEditor().applyChanges(changes, activatingEditor); 
                   
+                  // if the format comment has changed then show the warning
+                  if (panmirrorFormatComment_.hasChanged()) {
+                     view_.showPanmirrorFormatChanged(() -> {
+                        syncFromEditorIfActivated();
+                        view_.hideWarningBar();
+                     });
+                  }
+                  
                   // callback
                   if (ready != null) {
                      ready.execute();
@@ -300,7 +308,8 @@ public class TextEditingTargetVisualMode
             // bail on error
             if (result == null)
             {
-               done.execute(false);
+               if (done != null)
+                  done.execute(false);
                return;
             }
             
@@ -361,6 +370,10 @@ public class TextEditingTargetVisualMode
    {
       if (isActivated()) 
       {
+         // set flag indicating we aren't activating from source (will get reset
+         // during the activation)
+         switchedFromSource_ = false;
+      
          // get reference to the editing container 
          TextEditorContainer editorContainer = view_.editorContainer();
          
@@ -1055,10 +1068,6 @@ public class TextEditingTargetVisualMode
       
       // enable chunk execution for R and Python
       options.rmdChunkExecution = kRmdChunkExecutionLangs;
-      
-      // hide the format comment so that users must go into
-      // source mode to change formats
-      options.hideFormatComment = true;
       
       // add focus-visible class to prevent interaction with focus-visible.js
       // (it ends up attempting to apply the "focus-visible" class b/c ProseMirror

@@ -16,6 +16,7 @@ package org.rstudio.studio.client.workbench.views.source.editors.text;
 
 import java.util.List;
 
+import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.IsWidget;
 
 public interface WarningBarDisplay extends IsWidget
@@ -23,6 +24,7 @@ public interface WarningBarDisplay extends IsWidget
    void showReadOnlyWarning(List<String> alternatives);
    void showRequiredPackagesMissingWarning(List<String> packages);
    void showTexInstallationMissingWarning(String message);
+   void showPanmirrorFormatChanged(Command onReload);
    void showWarningBar(String message);
    void hideWarningBar();
 }

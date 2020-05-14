@@ -145,6 +145,15 @@ public class InfoBar extends Composite
       }));
    }
    
+   public void showPanmirrorFormatChanged(Command onReload)
+   {
+      setText("Markdown format changes require a reload of the visual editor.");
+      labelRight_.clear();
+      labelRight_.add(label("Reload Now", () -> {
+         onReload.execute();
+      }));
+   }
+   
    public void showTexInstallationMissingWarning(String message,
                                                  Command onInstall)
    {

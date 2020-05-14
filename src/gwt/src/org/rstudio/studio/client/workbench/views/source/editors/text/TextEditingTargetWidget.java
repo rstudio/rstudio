@@ -1039,6 +1039,15 @@ public class TextEditingTargetWidget
       });
    }
    
+
+   @Override
+   public void showPanmirrorFormatChanged(Command onReload)
+   {
+      showWarningImpl(() -> {
+         warningBar_.showPanmirrorFormatChanged(onReload);
+      });
+   }
+   
    @Override
    public void showWarningBar(final String warning)
    {
@@ -1797,4 +1806,5 @@ public class TextEditingTargetWidget
    private String sourceCommandText_ = "Source";
    private String knitCommandText_ = "Knit";
    private String previewCommandText_ = "Preview";
+
 }
