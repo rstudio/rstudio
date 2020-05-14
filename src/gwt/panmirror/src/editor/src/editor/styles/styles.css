@@ -75,12 +75,11 @@ h4.pm-heading {
 
 .pm-code, 
 .pm-span {
-  padding: 0 3px;
+  padding: 0 1px;
 }
 
 .pm-code {
   border: 1px solid;
-  border-radius: 4px;
 }
 
 .pm-div {
