@@ -2787,21 +2787,27 @@ public class TextEditingTarget implements
    
    private void fixupCodeBeforeSaving(Command ready)
    { 
-      // sync edits from visual mode if it's active
-      visualMode_.syncToEditor(false, () -> {
-         
-         int lineCount = docDisplay_.getRowCount();
-         if (lineCount < 1)
-            return;
-         
-         if (docDisplay_.hasActiveCollabSession())
-         {
-            // mutating the code (especially as below where the entire document 
-            // contents are changed) during a save operation inside a collaborative
-            // editing session would require some nuanced orchestration so for now
-            // these preferences don't apply to shared editing sessions
-            return;
-         }
+      int lineCount = docDisplay_.getRowCount();
+      if (lineCount < 1)
+      {
+         ready.execute();
+         return;
+      }
+      
+      if (docDisplay_.hasActiveCollabSession())
+      {
+         // mutating the code (especially as below where the entire document 
+         // contents are changed) during a save operation inside a collaborative
+         // editing session would require some nuanced orchestration so for now
+         // these preferences don't apply to shared editing sessions
+         // note that visual editing is currently disabled for collab sessions
+         // so none of the visual editing code below would apply
+         ready.execute();
+         return;
+      }
+      
+      // fixup runnable
+      Command fixup = () -> { 
          
          boolean stripTrailingWhitespace = (projConfig_ == null)
                ? prefs_.stripTrailingWhitespace().getValue()
@@ -2850,9 +2856,35 @@ public class TextEditingTarget implements
             if (lastLine.length() != 0)
                docDisplay_.insertCode(docDisplay_.getEnd().getEnd(), "\n");
          }
-         
+      
+         // callback
          ready.execute();
-      });
+      };
+      
+      // force cannnonical to false for now
+      // TODO: also consult setting
+      // boolean cannoncial = fileType_.isMarkdown();
+      boolean cannonical = false;
+      
+      // if visual mode is active then we need to grab it's edits before proceeding
+      if (visualMode_.isActivated()) 
+      {
+         visualMode_.syncToEditor(false, fixup);
+      }
+      
+      // if visual mode is not active and we are doing cannonical saves
+      // then we need to round-trip before saving
+      else if (cannonical) 
+      {
+         visualMode_.syncFromEditor(fixup);
+      }
+      
+      // otherwise just run the fixup code
+      else 
+      {
+         fixup.execute();
+      }
+      
    }
    
    private FileSystemItem getSaveFileDefaultDir()

@@ -260,8 +260,11 @@ public class TextEditingTargetVisualMode
                   // if the format comment has changed then show the warning
                   if (panmirrorFormatConfig_.hasChanged()) {
                      view_.showPanmirrorFormatChanged(() -> {
-                        syncFromEditorIfActivated();
+                        // dismiss the warning bar
                         view_.hideWarningBar();
+                        // this will trigger the refresh b/c the format changed
+                        syncFromEditorIfActivated();
+                       
                      });
                   }
                   
@@ -283,6 +286,52 @@ public class TextEditingTargetVisualMode
       }
    }
 
+   
+  
+   
+   public void syncFromEditor(Command onDone)
+   {
+      if (isActivated()) 
+      {
+         // set flag indicating we aren't activating from source (will get reset
+         // during the activation)
+         switchedFromSource_ = false;
+      
+         // get reference to the editing container 
+         TextEditorContainer editorContainer = view_.editorContainer();
+         
+         // show progress
+         progress_.beginProgressOperation(400);
+         editorContainer.activateWidget(progress_);
+         
+         syncFromEditor((success) -> {
+            // clear progress
+            progress_.endProgressOperation();
+            
+            // re-activate panmirror widget
+            editorContainer.activateWidget(panmirror_, false);
+            
+            // call done if provided
+            if (onDone != null)
+               onDone.execute();
+            
+         }, false);
+      }
+      else
+      {
+         // sync w/o activating
+         syncFromEditor((success) -> { 
+            if (onDone != null)
+               onDone.execute(); 
+         }, false);
+      }
+   }
+   
+   public void syncFromEditorIfActivated()
+   {
+      if (isActivated()) 
+         syncFromEditor(null);
+   }
    
    private void syncFromEditor(CommandWithArg<Boolean> done, boolean focus)
    {      
@@ -313,10 +362,6 @@ public class TextEditingTargetVisualMode
                return;
             }
             
-            // activate editor
-            if (done != null)
-               done.execute(true);
-            
             // update flags
             isDirty_ = false;
             loadingFromSource_ = false;
@@ -326,9 +371,16 @@ public class TextEditingTargetVisualMode
             // so that diffs are efficient)
             if (result.cannonical != editorCode)
             {
-               getSourceEditor().setCode(result.cannonical);
+               // determine changes
+               PanmirrorCode code = new PanmirrorCode(result.cannonical);
+               TextEditorContainer.Changes changes = toEditorChanges(code);
+               getSourceEditor().applyChanges(changes, false); 
                markDirty();
             }
+            
+            // completed
+            if (done != null)
+               done.execute(true);
             
             Scheduler.get().scheduleDeferred(() -> {
                
@@ -364,32 +416,6 @@ public class TextEditingTargetVisualMode
             });          
          });
       });
-   }
-   
-   public void syncFromEditorIfActivated()
-   {
-      if (isActivated()) 
-      {
-         // set flag indicating we aren't activating from source (will get reset
-         // during the activation)
-         switchedFromSource_ = false;
-      
-         // get reference to the editing container 
-         TextEditorContainer editorContainer = view_.editorContainer();
-         
-         // show progress
-         progress_.beginProgressOperation(400);
-         editorContainer.activateWidget(progress_);
-         
-         syncFromEditor((success) -> {
-            // clear progress
-            progress_.endProgressOperation();
-            
-            // re-activate panmirror widget
-            editorContainer.activateWidget(panmirror_, false);
-            
-         }, false);
-      }
    }
  
    public void manageCommands()

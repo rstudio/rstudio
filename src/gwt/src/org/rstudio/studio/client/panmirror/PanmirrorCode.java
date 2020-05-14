@@ -21,6 +21,11 @@ import jsinterop.annotations.JsType;
 @JsType
 public class PanmirrorCode
 {    
+   public PanmirrorCode(String code)
+   {
+      this.code = code;
+   }
+   
    public String code;
    public PanmirrorCursor cursor;
 }
