@@ -58,7 +58,7 @@ import org.rstudio.studio.client.panmirror.pandoc.PanmirrorPandocFormat;
 import org.rstudio.studio.client.panmirror.ui.PanmirrorUIContext;
 import org.rstudio.studio.client.panmirror.ui.PanmirrorUIDisplay;
 import org.rstudio.studio.client.panmirror.ui.PanmirrorUIExecute;
-import org.rstudio.studio.client.panmirror.uitools.PanmirrorFormatComment;
+import org.rstudio.studio.client.panmirror.uitools.PanmirrorFormatConfig;
 import org.rstudio.studio.client.panmirror.uitools.PanmirrorUITools;
 import org.rstudio.studio.client.panmirror.uitools.PanmirrorUIToolsFormat;
 import org.rstudio.studio.client.panmirror.uitools.PanmirrorUIToolsSource;
@@ -258,7 +258,7 @@ public class TextEditingTargetVisualMode
                   getSourceEditor().applyChanges(changes, activatingEditor); 
                   
                   // if the format comment has changed then show the warning
-                  if (panmirrorFormatComment_.hasChanged()) {
+                  if (panmirrorFormatConfig_.hasChanged()) {
                      view_.showPanmirrorFormatChanged(() -> {
                         syncFromEditorIfActivated();
                         view_.hideWarningBar();
@@ -292,9 +292,9 @@ public class TextEditingTargetVisualMode
       
       // if there is a previous format comment and it's changed then
       // we need to tear down the editor instance and create a new one
-      if (panmirrorFormatComment_ != null && panmirrorFormatComment_.hasChanged()) 
+      if (panmirrorFormatConfig_ != null && panmirrorFormatConfig_.hasChanged()) 
       {
-         panmirrorFormatComment_ = null;
+         panmirrorFormatConfig_ = null;
          view_.editorContainer().removeWidget(panmirror_);
          panmirror_ = null;
       }
@@ -644,7 +644,7 @@ public class TextEditingTargetVisualMode
             panmirror_ = panmirror;
             
             // track format comment (used to detect when we need to reload for a new format)
-            panmirrorFormatComment_ = new FormatComment(new PanmirrorUITools().format);
+            panmirrorFormatConfig_ = new FormatConfig(new PanmirrorUITools().format);
             
             // remove some keybindings that conflict with the ide
             disableKeys(
@@ -1089,7 +1089,7 @@ public class TextEditingTargetVisualMode
             PanmirrorFormat format = new PanmirrorFormat();
             
             // see if we have a format comment
-            PanmirrorFormatComment formatComment = formatTools.parseFormatComment(getEditorCode());
+            PanmirrorFormatConfig formatComment = formatTools.parseFormatConfig(getEditorCode());
             
             // doctypes
             List<String> docTypes = new ArrayList<String>();
@@ -1356,22 +1356,22 @@ public class TextEditingTargetVisualMode
       }
    }
    
-   private class FormatComment
+   private class FormatConfig
    {
-      public FormatComment(PanmirrorUIToolsFormat formatTools)
+      public FormatConfig(PanmirrorUIToolsFormat formatTools)
       {
          formatTools_ = formatTools;
-         comment_ = formatTools_.parseFormatComment(getEditorCode());
+         config_ = formatTools_.parseFormatConfig(getEditorCode());
       }
       
       public boolean hasChanged()
       {
-         PanmirrorFormatComment comment = formatTools_.parseFormatComment(getEditorCode());
-         return !PanmirrorFormatComment.areEqual(comment,  comment_);   
+         PanmirrorFormatConfig config = formatTools_.parseFormatConfig(getEditorCode());
+         return !PanmirrorFormatConfig.areEqual(config,  config_);   
       }
       
       private final PanmirrorUIToolsFormat formatTools_;
-      private final PanmirrorFormatComment comment_;
+      private final PanmirrorFormatConfig config_;
    }
    
    
@@ -1424,7 +1424,7 @@ public class TextEditingTargetVisualMode
    private boolean switchedFromSource_ = false;
    
    private PanmirrorWidget panmirror_;
-   private FormatComment panmirrorFormatComment_;
+   private FormatConfig panmirrorFormatConfig_;
    
    private ArrayList<AppCommand> disabledForVisualMode_ = new ArrayList<AppCommand>();
    

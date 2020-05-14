@@ -36,7 +36,7 @@ export interface PandocFormatWarnings {
   invalidOptions: string[];
 }
 
-export interface PandocFormatComment {
+export interface PandocFormatConfig {
   mode?: string;
   extensions?: string;
   fillColumn?: number;
@@ -48,7 +48,11 @@ export function matchPandocFormatComment(code: string) {
   return code.match(magicCommentRegEx);
 }
 
-export function pandocFormatCommentFromCode(code: string): PandocFormatComment {
+export function pandocFormatConfigFromCode(code: string) : PandocFormatConfig {
+  return pandocFormatConfigFromComment(code);
+}
+
+export function pandocFormatConfigFromComment(code: string): PandocFormatConfig {
   const keyValueRegEx = /^([^:]+):\s*(.*)$/;
   const match = matchPandocFormatComment(code);
   if (match) {
@@ -62,20 +66,20 @@ export function pandocFormatCommentFromCode(code: string): PandocFormatComment {
         variables[keyValueMatch[1].trim()] = keyValueMatch[2].trim();
       }
     });
-    const formatComment: PandocFormatComment = {};
+    const formatConfig: PandocFormatConfig = {};
     if (variables.mode) {
-      formatComment.mode = variables.mode;
+      formatConfig.mode = variables.mode;
     }
     if (variables.extensions) {
-      formatComment.extensions = variables.extensions;
+      formatConfig.extensions = variables.extensions;
     }
     if (variables['fill-column']) {
-      formatComment.fillColumn = parseInt(variables['fill-column'], 10) || undefined;
+      formatConfig.fillColumn = parseInt(variables['fill-column'], 10) || undefined;
     }
     if (variables.doctype) {
-      formatComment.doctypes = variables.doctype.split(',').map(str => str.trim());
+      formatConfig.doctypes = variables.doctype.split(',').map(str => str.trim());
     }
-    return formatComment;
+    return formatConfig;
   } else {
     return {};
   }

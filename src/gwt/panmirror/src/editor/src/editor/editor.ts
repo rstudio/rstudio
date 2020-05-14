@@ -35,8 +35,8 @@ import { EditorEvent } from '../api/events';
 import {
   PandocFormat,
   resolvePandocFormat,
-  PandocFormatComment,
-  pandocFormatCommentFromCode,
+  PandocFormatConfig,
+  pandocFormatConfigFromCode,
 } from '../api/pandoc_format';
 import { baseKeysPlugin } from '../api/basekeys';
 import {
@@ -147,7 +147,7 @@ export interface UIToolsImage {
 }
 
 export interface UIToolsFormat {
-  parseFormatComment(markdown: string): PandocFormatComment;
+  parseFormatConfig(markdown: string): PandocFormatConfig;
 }
 
 export interface UIToolsSource {
@@ -175,7 +175,7 @@ export class UITools {
     };
 
     this.format = {
-      parseFormatComment: pandocFormatCommentFromCode,
+      parseFormatConfig: pandocFormatConfigFromCode,
     };
 
     this.source = {

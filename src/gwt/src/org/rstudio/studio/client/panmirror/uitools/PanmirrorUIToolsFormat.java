@@ -21,6 +21,6 @@ import jsinterop.annotations.JsType;
 @JsType
 public class PanmirrorUIToolsFormat
 {
-   public native PanmirrorFormatComment parseFormatComment(String markdown);
+   public native PanmirrorFormatConfig parseFormatConfig(String markdown);
 }
 
