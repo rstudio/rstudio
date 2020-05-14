@@ -49,6 +49,8 @@ public abstract class CommandPaletteEntry extends Composite
       String keyboard();
       String searchMatch();
       String selected();
+      String name();
+      String disabled();
    }
 
    public CommandPaletteEntry(List<KeySequence> keys)
@@ -81,7 +83,15 @@ public abstract class CommandPaletteEntry extends Composite
                ElementIds.idSafeString(id));
       }
 
+      // Apply command label
       name_.setText(getLabel());
+      
+      // If the command is not enabled, style it as disabled.
+      if (!enabled())
+      {
+         addStyleName(styles_.disabled());
+      }
+
       SafeHtmlBuilder b = new SafeHtmlBuilder();
       for (KeySequence k: keys_)
       {
@@ -166,6 +176,7 @@ public abstract class CommandPaletteEntry extends Composite
    abstract public void invoke();
    abstract public String getId();
    abstract public String getContext();
+   abstract public boolean enabled();
    
    private final List<KeySequence> keys_;
    private boolean selected_;

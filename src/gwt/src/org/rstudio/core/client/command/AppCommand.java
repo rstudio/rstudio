@@ -181,6 +181,18 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
       return enabled_ && isVisible(); // jcheng 06/30/2010: Hmmmm, smells weird.
    }
 
+   /**
+    * Determines whether there are any handlers established that will execute
+    * when this command runs. This is useful for determining if the command
+    * will do anything when executed.
+    * 
+    * @return Whether this command has handlers.
+    */
+   public boolean hasCommandHandlers()
+   {
+      return handlers_.getHandlerCount(CommandEvent.TYPE) > 0;
+   }
+
    public void setEnabled(boolean enabled)
    {
       if (enabled != enabled_)

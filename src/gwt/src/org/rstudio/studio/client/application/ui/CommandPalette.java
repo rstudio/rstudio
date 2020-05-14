@@ -161,12 +161,12 @@ public class CommandPalette extends Composite
             continue;
          }
          
-         // Ensure the command can be used. It'd be nice to show all commands in
+         // Ensure the command is visible. It'd be nice to show all commands in
          // the palette for the purposes of examining key bindings, discovery,
-         // etc., but there's no good user experience if a user attempts to
-         // invoke one of those commands.
+         // etc., but invisible commands are generally meaningless in the 
+         // current context.
          AppCommand appCommand = allCommands.get(command);
-         if (!appCommand.isEnabled() || !appCommand.isVisible())
+         if (!appCommand.isVisible())
          {
             continue;
          }
