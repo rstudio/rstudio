@@ -139,6 +139,17 @@
 
 .rs.addFunction("explorer.hasRelevantAttributes", function(object)
 {
+   if (inherits(object, "python.builtin.object"))
+   {
+      # NOTE: we exclude attributes from module objects here since
+      # those _are_ the things of interest, as opposed to an optional
+      # entry for other classes of objects (e.g. strings)
+      if (inherits(object, "python.builtin.module"))
+         return(FALSE)
+      
+      return(reticulate::py_has_attr(object, "__dict__"))
+   }
+   
    attrib <- attributes(object)
    
    boring <-
@@ -408,20 +419,9 @@
    }
    
    # extract attributes when relevant
-   attributes <- NULL
-   if (context$recursive && .rs.explorer.hasRelevantAttributes(.$object))
-   {
-      childName <- "(attributes)"
-      childAccess <- "attributes(#)"
-      childTags <- c(.rs.explorer.tags$ATTRIBUTES, .rs.explorer.tags$VIRTUAL)
-      childContext <- .rs.explorer.createChildContext(context,
-                                                      childName,
-                                                      childAccess,
-                                                      childTags)
-      childResult <- .rs.explorer.inspectObject(attributes(.$object), childContext)
-      attributes <- childResult
-   }
-   
+   attributes <- if (context$recursive && .rs.explorer.hasRelevantAttributes(.$object))
+      .rs.explorer.inspectObjectAttributes(.$object, context)
+    
    # elements dictating how this should be displayed in UI
    display <- list(
       name = .rs.scalar(name),
@@ -529,6 +529,31 @@
       .rs.explorer.inspectFunction(object, context)
    else
       .rs.explorer.inspectDefault(object, context)
+})
+
+.rs.addFunction("explorer.inspectObjectAttributes", function(object,
+                                                             context = .rs.explorer.createContext())
+{
+   . <- environment()
+   
+   if (inherits(object, "python.builtin.object"))
+   {
+      attributes <- reticulate::py_get_attr(object, "__dict__", silent = TRUE)
+      name <- "(attributes)"
+      access <- "#"
+      tags <- c(.rs.explorer.tags$ATTRIBUTES, .rs.explorer.tags$VIRTUAL)
+      childContext <- .rs.explorer.createChildContext(context, name, access, tags)
+      .rs.explorer.inspectObject(attributes, childContext)
+   }
+   else
+   {
+      attributes <- attributes(.$object)
+      name <- "(attributes)"
+      access <- "attributes(#)"
+      tags <- c(.rs.explorer.tags$ATTRIBUTES, .rs.explorer.tags$VIRTUAL)
+      childContext <- .rs.explorer.createChildContext(context, name, access, tags)
+      .rs.explorer.inspectObject(attributes, childContext)
+   }
 })
 
 .rs.addFunction("explorer.inspectPythonObject", function(object,
