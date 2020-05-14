@@ -109,7 +109,12 @@ public class TextEditingTargetVisualMode
       // if visual mode isn't enabled then reflect that (if it is enabled we'll
       // defer initialization work until after the tab is actually activated)
       if (!isActivated())
+      {
          manageUI(false, false);
+         
+         // any subsequent activation is a switch from source
+         switchedFromSource_ = true;
+      }
       
       // track changes over time
       releaseOnDismiss.add(onDocPropChanged(TextEditingTarget.RMD_VISUAL_MODE, (value) -> {
@@ -318,8 +323,16 @@ public class TextEditingTargetVisualMode
             
             Scheduler.get().scheduleDeferred(() -> {
                
+               // if we switched from source, then get the current source outline location. otherwise,
+               // set the flag indicating that future activations must be from source. we do this so
+               // that our previous doc position / scroll location override whatever is in source
+               // mode if the last time we edited was visual not source.
+               PanmirrorEditingOutlineLocation outlineLocation = switchedFromSource_ 
+                     ? getSourceOutlneLocation() : null;
+               switchedFromSource_ = true;
+               
                // set editing location
-               panmirror_.setEditingLocation(getOutlineLocation(), savedEditingLocation()); 
+               panmirror_.setEditingLocation(outlineLocation, savedEditingLocation()); 
                
                // set focus
                if (focus)
@@ -808,7 +821,7 @@ public class TextEditingTargetVisualMode
       
    }
    
-   private PanmirrorEditingOutlineLocation getOutlineLocation()
+   private PanmirrorEditingOutlineLocation getSourceOutlneLocation()
    {
       // if we are at the very top of the file then this is a not a good 'hint'
       // for where to navigate to, in that case return null
@@ -1399,6 +1412,7 @@ public class TextEditingTargetVisualMode
    private boolean isDirty_ = false;
    private boolean loadingFromSource_ = false;
    private boolean haveEditedInVisualMode_ = false; 
+   private boolean switchedFromSource_ = false;
    
    private PanmirrorWidget panmirror_;
    private FormatComment panmirrorFormatComment_;
