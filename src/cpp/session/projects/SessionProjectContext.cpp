@@ -444,6 +444,9 @@ Error ProjectContext::initialize()
       // compute project ID
       projectId = projectToProjectId(module_context::userScratchPath(), FilePath(),
                                      directory().getAbsolutePath()).id();
+
+      // add default open docs if we have them
+      addDefaultOpenDocs();
    }
    else
    {
@@ -721,7 +724,7 @@ json::Object ProjectContext::uiPrefs() const
 json::Array ProjectContext::openDocs() const
 {
    json::Array openDocsJson;
-   std::vector<std::string> docs = projects::collectFirstRunDocs(file());
+   std::vector<std::string> docs = projects::collectFirstRunDocs(scratchPath());
    for (const std::string& doc : docs)
    {
       FilePath docPath = directory().completeChildPath(doc);
@@ -913,6 +916,27 @@ bool ProjectContext::parentBrowseable()
    }
    return browse;
 #endif
+}
+
+void ProjectContext::addDefaultOpenDocs()
+{
+   std::string defaultOpenDocs = config().defaultOpenDocs;
+   if (!defaultOpenDocs.empty() && isNewProject())
+   {
+      std::vector<std::string> docs;
+      boost::algorithm::split(docs, defaultOpenDocs, boost::is_any_of(":"));
+
+      for (std::string& doc : docs)
+      {
+         boost::algorithm::trim(doc);
+
+         FilePath docPath = directory().completePath(doc);
+         if (docPath.exists())
+         {
+            addFirstRunDoc(scratchPath(), doc);
+         }
+      }
+   }
 }
 
 } // namespace projects

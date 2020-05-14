@@ -1913,10 +1913,10 @@ int main (int argc, char * const argv[])
       FilePath userScratchPath = options.userScratchPath();
       if (userScratchPath.exists())
       {
-         std::vector<FilePath> scratchChildren;
-         userScratchPath.getChildren(scratchChildren);
-
-         if (scratchChildren.size() == 0)
+         // if the lists directory has not yet been created,
+         // this is a new user
+         FilePath listsPath = userScratchPath.completeChildPath("monitored/lists");
+         if (!listsPath.exists())
             newUser = true;
       }
       else
