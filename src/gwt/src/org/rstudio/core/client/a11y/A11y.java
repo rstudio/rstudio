@@ -146,4 +146,14 @@ public class A11y
          el.removeAttribute("inert");
       }
    }
+   
+   public static void setARIAAutocomplete(Element el, String val)
+   {
+      el.setAttribute("aria-autocomplete", val);
+   }
+   
+   public static void setARIAAutocomplete(Widget widget, String val)
+   {
+      setARIAAutocomplete(widget.getElement(), val);
+   }
 }

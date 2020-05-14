@@ -38,6 +38,7 @@ import com.google.inject.Singleton;
 
 import org.rstudio.core.client.Barrier;
 import org.rstudio.core.client.BrowseCap;
+import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.Barrier.Token;
@@ -206,7 +207,15 @@ public class Application implements ApplicationEventHandlers
             MathJaxLoader.ensureMathJaxLoaded();
 
             // initialize workbench
-            initializeWorkbench();
+            // refresh prefs incase they were loaded without sessionInfo (this happens exclusively
+            // in desktop mode, though unsure why)
+            userState_.get().writeState(boolArg ->
+            {
+               userPrefs_.get().writeUserPrefs(boolArg1 ->
+               {
+                  initializeWorkbench();
+               });
+            });
          }
 
          public void onError(ServerError error)

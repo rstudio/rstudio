@@ -50,7 +50,8 @@ public class ApplicationWindow extends Composite
                             EventBus events,
                             Provider<WarningBar> pWarningBar,
                             AriaLiveService ariaLive,
-                            CodeSearchLauncher launcher)
+                            CodeSearchLauncher launcher,
+                            CommandPaletteLauncher paletteLauncher)
    {
       globalDisplay_ = globalDisplay;
       events_ = events;

@@ -99,7 +99,7 @@ public class KeyCombination
       }
    }
 
-   private String getKeyName(boolean pretty)
+   public String getKeyName(boolean pretty)
    {
       boolean macStyle = BrowseCap.hasMetaKey() && pretty;
 

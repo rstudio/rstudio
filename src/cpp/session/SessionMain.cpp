@@ -432,8 +432,12 @@ Error runPreflightScript()
    return Success();
 }
 
+// implemented below
+void stopMonitorWorkerThread();
+
 void exitEarly(int status)
 {
+   stopMonitorWorkerThread();
    FileLock::cleanUp();
    ::exit(status);
 }
@@ -1214,6 +1218,9 @@ void rCleanup(bool terminatedNormally)
       // https://github.com/rstudio/rstudio/issues/5222
       system::file_monitor::stop();
 
+      // stop the monitor thread
+      stopMonitorWorkerThread();
+
       // cause graceful exit of clientEventService (ensures delivery
       // of any pending events prior to process termination). wait a
       // very brief interval first to allow the quit or other termination
@@ -1909,10 +1916,10 @@ int main (int argc, char * const argv[])
       FilePath userScratchPath = options.userScratchPath();
       if (userScratchPath.exists())
       {
-         std::vector<FilePath> scratchChildren;
-         userScratchPath.getChildren(scratchChildren);
-
-         if (scratchChildren.size() == 0)
+         // if the lists directory has not yet been created,
+         // this is a new user
+         FilePath listsPath = userScratchPath.completeChildPath("monitored/lists");
+         if (!listsPath.exists())
             newUser = true;
       }
       else
