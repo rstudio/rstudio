@@ -1218,6 +1218,9 @@ void rCleanup(bool terminatedNormally)
       // https://github.com/rstudio/rstudio/issues/5222
       system::file_monitor::stop();
 
+      // stop the monitor thread
+      stopMonitorWorkerThread();
+
       // cause graceful exit of clientEventService (ensures delivery
       // of any pending events prior to process termination). wait a
       // very brief interval first to allow the quit or other termination
