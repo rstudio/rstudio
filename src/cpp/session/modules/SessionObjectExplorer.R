@@ -314,10 +314,7 @@
    }
    
    # infer appropriate language based on REPL status
-   language <- if (.rs.reticulate.replIsActive())
-      "Python"
-   else
-      "R"
+   language <- if (.rs.reticulate.replIsActive()) "Python" else "R"
    
    # provide an appropriate name for the root node
    name <- .rs.explorer.objectName(object, title)
@@ -388,9 +385,12 @@
    n <- length(.$object)
    expandable <- if (inherits(object, "python.builtin.object"))
    {
-      inherits(object, "python.builtin.module") ||
-      inherits(object, "python.builtin.dict") ||
-      length(reticulate::py_list_attributes(object)) > 0
+      inherits(object, c(
+         "python.builtin.module",
+         "python.builtin.dict",
+         "python.builtin.tuple",
+         "python.builtin.list"
+      ))
    }
    else
    {
@@ -584,6 +584,30 @@
                .rs.explorer.inspectObject(item, childContext)
             
          })
+      }
+      else if (inherits(object, c("python.builtin.tuple", "python.builtin.list")))
+      {
+         # NOTE: convert from 1-based to 0-based indexing
+         for (i in seq_along(object) - 1L)
+         {
+            # force integer indexing in R mode
+            if (.rs.reticulate.replIsActive())
+            {
+               name <- sprintf("[%i]", i)
+               access <- sprintf("#[%i]", i)
+               tags <- c(.rs.explorer.tags$VIRTUAL)
+            }
+            else
+            {
+               name <- sprintf("[%i]", i)
+               access <- sprintf("#[%iL]", i)
+               tags <- c(.rs.explorer.tags$VIRTUAL)
+            }
+            
+            childContext <- .rs.explorer.createChildContext(context, name, access, tags)
+            children[[length(children) + 1]] <-
+               .rs.explorer.inspectObject(object[[i]], childContext)
+         }
       }
       else
       {

@@ -201,25 +201,7 @@ options(reticulate.initialized = function() {
    
    # define View hook (for data viewer, object explorer)
    main <- reticulate::import_main(convert = FALSE)
-   reticulate::py_set_attr(main, "View", function(object) {
-      
-      # TODO: assign complex expressions to temporary variable before view
-      reticulate:::disable_conversion_scope(object)
-      
-      # extract variable name passed to Python object
-      sys <- reticulate::import("sys", convert = TRUE)
-      frame <- sys$`_getframe`(1L)
-      names <- frame$f_code$co_names
-      
-      # convert Pandas DataFrames to R data.frames for now
-      # (consider adapting data viewer to arbitrary tabular data in future?)
-      if (inherits(object, "pandas.core.frame.DataFrame"))
-         object <- reticulate::py_to_r(object)
-      
-      # view it
-      View(object, title = names[[2L]])
-      
-   })
+   reticulate::py_set_attr(main, "View", .rs.reticulate.viewHook)
    
    # signal a switch to Python context
    .rs.reticulate.enqueueClientEvent(
@@ -1798,4 +1780,37 @@ html.heading = _heading
       "python.builtin.function",
       "python.builtin.instancemethod"
    ))
+})
+
+.rs.addFunction("reticulate.viewHook", function(object)
+{
+   # TODO: assign complex expressions to temporary variable before view
+   reticulate:::disable_conversion_scope(object)
+   
+   # extract variable name passed to Python object
+   sys <- reticulate::import("sys", convert = TRUE)
+   frame <- sys$`_getframe`(1L)
+   names <- frame$f_code$co_names
+   
+   # create dummy environment for this object
+   name <- names[[2L]]
+   envir <- new.env(parent = emptyenv())
+   assign(name, object, envir = envir)
+   
+   # convert Pandas DataFrames to R data.frames for now
+   # (consider adapting data viewer to arbitrary tabular data in future?)
+   if (inherits(object, "pandas.core.frame.DataFrame"))
+   {
+      object <- reticulate::py_to_r(object)
+      View(object)
+   }
+   else
+   {
+      .rs.explorer.viewObject(
+         object = object,
+         title  = names[[2L]],
+         envir  = envir
+      )
+   }
+   
 })
