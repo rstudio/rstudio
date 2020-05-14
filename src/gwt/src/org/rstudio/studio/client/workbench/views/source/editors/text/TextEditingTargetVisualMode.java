@@ -1207,8 +1207,8 @@ public class TextEditingTargetVisualMode
             // enough that it's vanishingly unlikely to affect non-blogdown docs
             format.hugoExtensions.shortcodes = true;
             
-            // fillColumn
-            format.wrapColumn = formatComment.fillColumn;
+            // wrapColumn
+            format.wrapColumn = formatComment.wrapColumn;
             
             // return format
             return format;

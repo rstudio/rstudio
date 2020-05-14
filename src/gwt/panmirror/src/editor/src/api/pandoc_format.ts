@@ -15,6 +15,7 @@
 
 import { PandocEngine, PandocExtensions } from './pandoc';
 import { EditorFormat } from './format';
+import { firstYamlBlock } from './yaml';
 
 export const kMarkdownFormat = 'markdown';
 export const kMarkdownPhpextraFormat = 'markdown_phpextra';
@@ -39,8 +40,9 @@ export interface PandocFormatWarnings {
 export interface PandocFormatConfig {
   mode?: string;
   extensions?: string;
-  fillColumn?: number;
+  wrapColumn?: number;
   doctypes?: string[];
+  cannonical?: boolean;
 }
 
 export function matchPandocFormatComment(code: string) {
@@ -49,10 +51,20 @@ export function matchPandocFormatComment(code: string) {
 }
 
 export function pandocFormatConfigFromCode(code: string) : PandocFormatConfig {
-  return pandocFormatConfigFromComment(code);
+  return pandocFormatConfigFromYAML(code) || pandocFormatConfigFromComment(code) || {};
 }
 
-export function pandocFormatConfigFromComment(code: string): PandocFormatConfig {
+function pandocFormatConfigFromYAML(code: string): PandocFormatConfig | null {
+  const yaml = firstYamlBlock(code);
+  const yamlMarkdownOptions = yaml?.editor_options?.markdown;
+  if (yamlMarkdownOptions instanceof Object) {
+    return readPandocFormatConfig(yamlMarkdownOptions);
+  } else {
+    return null;
+  }
+}
+
+function pandocFormatConfigFromComment(code: string): PandocFormatConfig | null {
   const keyValueRegEx = /^([^:]+):\s*(.*)$/;
   const match = matchPandocFormatComment(code);
   if (match) {
@@ -66,23 +78,57 @@ export function pandocFormatConfigFromComment(code: string): PandocFormatConfig 
         variables[keyValueMatch[1].trim()] = keyValueMatch[2].trim();
       }
     });
-    const formatConfig: PandocFormatConfig = {};
-    if (variables.mode) {
-      formatConfig.mode = variables.mode;
-    }
-    if (variables.extensions) {
-      formatConfig.extensions = variables.extensions;
-    }
-    if (variables['fill-column']) {
-      formatConfig.fillColumn = parseInt(variables['fill-column'], 10) || undefined;
-    }
-    if (variables.doctype) {
-      formatConfig.doctypes = variables.doctype.split(',').map(str => str.trim());
-    }
-    return formatConfig;
+    return readPandocFormatConfig(variables);
   } else {
-    return {};
+    return null;
   }
+}
+
+function readPandocFormatConfig(source: { [key: string]: any }) {
+  
+  const asString = (obj: any) : string => {
+    if (typeof obj === "string") {
+      return obj;
+    } else if (obj) {
+      return obj.toString();
+    } else {
+      return '';
+    }
+  };
+
+  const asBoolean = (obj: any) => {
+    if (typeof obj === "boolean") {
+      return obj;
+    } else {
+      const str = asString(obj).toLowerCase();
+      return (str === 'true' || str === '1');
+    } 
+  };
+
+  const readWrapColumn = () => {
+    const wrapColumn = source.wrap_column || source['fill-column'];
+    if (wrapColumn) {
+      return parseInt(asString(wrapColumn), 10) || undefined;
+    } else {
+      return undefined;
+    }
+  };
+
+  const formatConfig: PandocFormatConfig = {};
+  if (source.mode) {
+    formatConfig.mode = asString(source.mode);
+  }
+  if (source.extensions) {
+    formatConfig.extensions = asString(source.extensions);
+  }
+  formatConfig.wrapColumn = readWrapColumn();
+  if (source.doctype) {
+    formatConfig.doctypes = asString(source.doctype).split(',').map(str => str.trim());
+  }
+  if (source.cannonical) {
+    formatConfig.cannonical = asBoolean(source.cannonical);
+  }
+  return formatConfig;
 }
 
 export async function resolvePandocFormat(pandoc: PandocEngine, format: EditorFormat) {

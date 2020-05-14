@@ -27,6 +27,7 @@ import { canInsertNode } from '../../api/node';
 import { codeNodeSpec } from '../../api/code';
 import { selectionIsBodyTopLevel } from '../../api/selection';
 import { uuidv4 } from '../../api/util';
+import { kYamlBlocksRegex } from '../../api/yaml';
 
 import { yamlMetadataTitlePlugin } from './yaml_metadata-title';
 
@@ -123,7 +124,7 @@ function yamlMetadataBlockCapsuleFilter() {
 
     type: kYamlMetadataCapsuleType,
     
-    match: /^([\t >]*)(---[ \t]*\n(?![ \t]*\n)[\W\w]*?\n[\t >]*(?:---|\.\.\.))([ \t]*)$/gm,
+    match: kYamlBlocksRegex,
     
     // add a newline to ensure that if the metadata block has text right
     // below it we still end up in our own pandoc paragarph block
