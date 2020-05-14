@@ -28,7 +28,7 @@ import { findTopLevelBodyNodes } from '../api/node';
 import { EditorUI, attrPropsToInput, attrInputToProps, AttrProps, AttrEditInput } from '../api/ui';
 import { Extension } from '../api/extension';
 import { ExtensionManager, initExtensions } from './editor-extensions';
-import { PandocEngine } from '../api/pandoc';
+import { PandocEngine, PandocWriterOptions } from '../api/pandoc';
 import { PandocCapabilities, getPandocCapabilities } from '../api/pandoc_capabilities';
 import { fragmentToHTML } from '../api/html';
 import { EditorEvent } from '../api/events';
@@ -72,7 +72,7 @@ import {
   selectCurrent,
 } from '../behaviors/find';
 
-import { PandocConverter, PandocWriterOptions } from '../pandoc/pandoc_converter';
+import { PandocConverter } from '../pandoc/pandoc_converter';
 
 import { defaultTheme, EditorTheme, applyTheme, applyPadding } from './editor-theme';
 import { defaultEditorUIImages } from './editor-images';

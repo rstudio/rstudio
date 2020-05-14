@@ -25,6 +25,13 @@ export interface PandocEngine {
   listExtensions(format: string): Promise<string>;
 }
 
+export interface PandocWriterOptions {
+  atxHeaders?: boolean;
+  references?: string; // block | section | document
+  wrapColumn?: boolean | number;
+  dpi?: number;
+}
+
 export interface PandocExtensions {
   abbreviations: boolean;
   all_symbols_escapable: boolean;

@@ -26,6 +26,7 @@ import {
   PandocBlockReaderFn,
   PandocPostprocessorFn,
   PandocInlineHTMLReaderFn,
+  PandocWriterOptions,
 } from '../api/pandoc';
 
 import { pandocFormatWith, PandocFormat, kGfmFormat, kCommonmarkFormat } from '../api/pandoc_format';
@@ -36,13 +37,6 @@ import { ExtensionManager } from '../editor/editor-extensions';
 
 import { pandocToProsemirror } from './pandoc_to_prosemirror';
 import { pandocFromProsemirror } from './pandoc_from_prosemirror';
-
-export interface PandocWriterOptions {
-  atxHeaders?: boolean;
-  references?: string; // block | section | document
-  wrapColumn?: boolean | number;
-  dpi?: number;
-}
 
 export interface PandocToProsemirrorResult {
   doc: ProsemirrorNode;
