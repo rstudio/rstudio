@@ -675,7 +675,9 @@ export class Editor {
 
     // override to disable input rules as requested
     // https://github.com/ProseMirror/prosemirror-inputrules/commit/b4bf67623aa4c4c1e096c20aa649c0e63751f337
-    plugin.props.handleTextInput = (view: EditorView<any>, from: number, to: number, text: string) => {
+    // (use any as type for view to workaround incompatibility of View typescript declarations
+    // between @types/prosemirror-view and prosemirror-inputrules
+    plugin.props.handleTextInput = (view: any, from: number, to: number, text: string) => {
       if (!markFilter(view.state)) {
         return false;
       }
