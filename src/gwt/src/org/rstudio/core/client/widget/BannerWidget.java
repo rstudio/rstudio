@@ -14,18 +14,18 @@
  */
 package org.rstudio.core.client.widget;
 
-import com.google.gwt.aria.client.Roles;
+import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 
 /**
- * A widget with role=banner wrapping another widget
+ * A widget with html5 header (aka role="banner") element wrapping another widget
  */
 public class BannerWidget extends SimplePanel
 {
    public BannerWidget(Widget child)
    {
+      super(DOM.createElement("header"));
       setWidget(child);
-      Roles.getBannerRole().set(getElement());
    }
 }
