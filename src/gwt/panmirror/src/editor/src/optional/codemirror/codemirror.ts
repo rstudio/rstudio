@@ -53,7 +53,7 @@ import './codemirror.css';
 
 const plugin = new PluginKey('codemirror');
 
-export function codeMirrorPlugins(codeViews: { [key: string]: CodeViewOptions }, ui: EditorUI, options: EditorOptions) {
+export function codeMirrorPlugins(codeViews: { [key: string]: CodeViewOptions }, ui: EditorUI, options: EditorOptions) : Plugin[] {
   // build nodeViews
   const nodeTypes = Object.keys(codeViews);
   const nodeViews: {
