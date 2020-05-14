@@ -390,7 +390,7 @@ public class CommandPalette extends Composite
       resultsCount_.reportStatus(matches + " " +
             "commands found, press up and down to navigate",
             RStudioGinjector.INSTANCE.getUserPrefs().typingStatusDelayMs().getValue(),
-            Severity.ALERT);
+            Severity.STATUS);
    }
    
    /**
