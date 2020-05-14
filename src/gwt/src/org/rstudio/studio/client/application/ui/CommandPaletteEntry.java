@@ -90,6 +90,7 @@ public abstract class CommandPaletteEntry extends Composite
       if (!enabled())
       {
          addStyleName(styles_.disabled());
+         Roles.getOptionRole().setAriaDisabledState(getElement(), true);
       }
 
       SafeHtmlBuilder b = new SafeHtmlBuilder();
