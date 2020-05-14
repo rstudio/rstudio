@@ -20,7 +20,6 @@
     "@types/prosemirror-state": "^1.2.4",
     "@types/prosemirror-tables": "^0.9.1",
     "@types/prosemirror-transform": "^1.1.1",
-    "@types/prosemirror-view": "^1.11.4",
     "@types/react": "^16.9.32",
     "@types/react-dom": "^16.9.6",
     "@types/zenscroll": "^4.0.0",
