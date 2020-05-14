@@ -510,6 +510,30 @@ export class Editor {
     };
   }
 
+  // get a cannonical version of the passed markdown. this method doesn't mutate the
+  // visual editor's state/view (it's provided as a performance optimiation for when
+  // source mode is configured to save a cannonical version of markdown)
+  public async getCannonical(markdown: string, options: PandocWriterOptions) : Promise<string> {
+    
+    // convert to prosemirror doc
+    const result = await this.pandocConverter.toProsemirror(markdown, this.pandocFormat.fullName);
+
+    // create a state for this doc
+    const state = EditorState.create({
+      schema: this.schema,
+      doc: result.doc,
+      plugins: this.state.plugins
+    });
+
+    // apply load fixups (eumlating what a full round trip will do)
+    const tr = state.tr;
+    this.extensionFixups(tr, FixupContext.Load);
+  
+    // return markdown (will apply save fixups)
+    return this.getMarkdownCode(tr.doc, options);
+  }
+
+
   public focus() {
     this.view.focus();
   }

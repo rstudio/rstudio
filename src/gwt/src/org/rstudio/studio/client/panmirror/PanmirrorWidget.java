@@ -361,6 +361,16 @@ public class PanmirrorWidget extends DockLayoutPanel implements
       );
    }
    
+   public void getCannonical(String code, PanmirrorWriterOptions options, CommandWithArg<String> completed)
+   {
+      new PromiseWithProgress<String>(
+         editor_.getCannonical(code, options),
+         null,
+         kSerializationProgressDelayMs,
+         completed   
+      );
+   }
+   
    public boolean isInitialDoc()
    {
       return editor_.isInitialDoc();

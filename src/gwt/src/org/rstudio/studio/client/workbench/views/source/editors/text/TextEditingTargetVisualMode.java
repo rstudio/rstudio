@@ -523,6 +523,24 @@ public class TextEditingTargetVisualMode
       }  
    }
    
+   public void getCannonicalChanges(String code, CommandWithArg<TextChange[]> completed)
+   {
+      withPanmirror(() -> {
+         panmirror_.getCannonical(code, panmirrorWriterOptions(), (markdown) -> {
+            if  (markdown != null) 
+            {
+               PanmirrorUIToolsSource sourceTools = new PanmirrorUITools().source;
+               TextChange[] changes = sourceTools.diffChars(code, markdown, 1);
+               completed.execute(changes);
+            }
+            else
+            {
+               completed.execute(null);
+            }
+         });
+      });
+   }
+   
    public void activateDevTools()
    {
       withPanmirror(() -> {

@@ -2873,10 +2873,21 @@ public class TextEditingTarget implements
       }
       
       // if visual mode is not active and we are doing cannonical saves
-      // then we need to round-trip before saving
+      // then we need to apply any changes implied by cannonical transformation
+      // of our source
       else if (cannonical) 
       {
-         visualMode_.syncFromEditor(fixup);
+         Position cursorPos = docDisplay_.getCursorPosition();
+         String code = docDisplay_.getCode();
+         visualMode_.getCannonicalChanges(code, (changes) -> {
+            if (changes != null) 
+            {
+               docDisplay_.applyChanges(changes);
+            }
+            fixup.execute();
+            docDisplay_.setCursorPosition(cursorPos);
+            docDisplay_.scrollCursorIntoViewIfNecessary();
+         });
       }
       
       // otherwise just run the fixup code

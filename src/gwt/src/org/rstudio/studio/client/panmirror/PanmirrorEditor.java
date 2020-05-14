@@ -55,7 +55,9 @@ public class PanmirrorEditor
    }
    public native Promise<SetMarkdownResult> setMarkdown(String code, PanmirrorWriterOptions options, boolean emitUpdate);
    
-   public native Promise<PanmirrorCode> getMarkdown(PanmirrorWriterOptions option);
+   public native Promise<PanmirrorCode> getMarkdown(PanmirrorWriterOptions options);
+   
+   public native Promise<String> getCannonical(String code, PanmirrorWriterOptions options);
    
    public native boolean isInitialDoc();
    
