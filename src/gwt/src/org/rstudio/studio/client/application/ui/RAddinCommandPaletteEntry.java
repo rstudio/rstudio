@@ -68,6 +68,13 @@ public class RAddinCommandPaletteEntry extends CommandPaletteEntry
       return "&#9865; " + addin_.getPackage();
    }
 
+   @Override
+   public boolean enabled()
+   {
+      // R Addins are always enabled.
+      return true;
+   }
+
    private String label_;
    private final RAddin addin_;
    private final AddinExecutor executor_;
