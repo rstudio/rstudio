@@ -26,8 +26,7 @@ public class RmdEditorOptions
       if (!value.isEmpty())
       {
          // there are lots of ways to say "true" in YAML...
-         return value == "y"    || value == "yes" || 
-                value == "true" || value == "on";
+         return YamlTree.isTrue(value);
       }
       return defaultValue;
    }
@@ -40,6 +39,12 @@ public class RmdEditorOptions
       if (value.isEmpty())
          return defaultValue;
       return value;
+   }
+   
+   public static String getMarkdownOption(String yaml, String option)
+   {
+      YamlTree yamlTree = new YamlTree(yaml);
+      return yamlTree.getGrandchildValue(EDITOR_OPTION_KEY, MARKDOWN_OPTION_KEY, option);
    }
    
    public static String set(String yaml, String option, String value)
@@ -57,6 +62,7 @@ public class RmdEditorOptions
    }
    
    private static String EDITOR_OPTION_KEY = "editor_options";
+   private static String MARKDOWN_OPTION_KEY = "markdown";
    
    public static String PREVIEW_IN        = "preview";
    public static String PREVIEW_IN_WINDOW = "window";

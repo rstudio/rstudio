@@ -26,7 +26,7 @@ public class PanmirrorFormatConfig
    public String extensions;
    public double wrapColumn;
    public String[] doctypes;
-   public boolean cannonical;
+   public boolean canonical;
    
    public static boolean areEqual(PanmirrorFormatConfig a, PanmirrorFormatConfig b)
    {
@@ -37,7 +37,7 @@ public class PanmirrorFormatConfig
              StringUtil.equals(a.extensions, b.extensions) &&
              a.wrapColumn == b.wrapColumn &&
              aDoctypes == bDoctypes &&
-             a.cannonical == b.cannonical;         
+             a.canonical == b.canonical;         
    }
 }
 

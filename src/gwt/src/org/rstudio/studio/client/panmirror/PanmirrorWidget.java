@@ -361,10 +361,10 @@ public class PanmirrorWidget extends DockLayoutPanel implements
       );
    }
    
-   public void getCannonical(String code, PanmirrorWriterOptions options, CommandWithArg<String> completed)
+   public void getCanonical(String code, PanmirrorWriterOptions options, CommandWithArg<String> completed)
    {
       new PromiseWithProgress<String>(
-         editor_.getCannonical(code, options),
+         editor_.getCanonical(code, options),
          null,
          kSerializationProgressDelayMs,
          completed   

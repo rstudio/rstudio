@@ -107,6 +107,7 @@ import org.rstudio.studio.client.rmarkdown.model.RmdOutputFormat;
 import org.rstudio.studio.client.rmarkdown.model.RmdTemplateFormat;
 import org.rstudio.studio.client.rmarkdown.model.RmdYamlData;
 import org.rstudio.studio.client.rmarkdown.model.YamlFrontMatter;
+import org.rstudio.studio.client.rmarkdown.model.YamlTree;
 import org.rstudio.studio.client.rmarkdown.ui.RmdTemplateOptionsDialog;
 import org.rstudio.studio.client.rsconnect.events.RSConnectActionEvent;
 import org.rstudio.studio.client.rsconnect.events.RSConnectDeployInitiatedEvent;
@@ -2806,8 +2807,9 @@ public class TextEditingTarget implements
          return;
       }
       
-      // fixup runnable
-      Command fixup = () -> { 
+
+      // apply visual mode fixups then continue w/ standard fixups
+      applyVisualModeFixups(() -> { 
          
          boolean stripTrailingWhitespace = (projConfig_ == null)
                ? prefs_.stripTrailingWhitespace().getValue()
@@ -2859,44 +2861,46 @@ public class TextEditingTarget implements
       
          // callback
          ready.execute();
-      };
-      
-      // force cannnonical to false for now
-      // TODO: also consult setting
-      // boolean cannoncial = fileType_.isMarkdown();
-      boolean cannonical = false;
-      
+      });
+   }
+   
+   private void applyVisualModeFixups(Command onComplete)
+   {
+      // are we writing cannonical?
+      String yaml = YamlFrontMatter.getFrontMatter(docDisplay_);
+      boolean canonical = YamlTree.isTrue(RmdEditorOptions.getMarkdownOption(yaml,  "canonical"));
+    
       // if visual mode is active then we need to grab it's edits before proceeding
       if (visualMode_.isActivated()) 
       {
-         visualMode_.syncToEditor(false, fixup);
+         visualMode_.syncToEditor(false, onComplete);
       }
       
-      // if visual mode is not active and we are doing cannonical saves
-      // then we need to apply any changes implied by cannonical transformation
+      // if visual mode is not active and we are doing canonical saves
+      // then we need to apply any changes implied by canonical transformation
       // of our source
-      else if (cannonical) 
+      else if (canonical) 
       {
          Position cursorPos = docDisplay_.getCursorPosition();
          String code = docDisplay_.getCode();
-         visualMode_.getCannonicalChanges(code, (changes) -> {
+         visualMode_.getCanonicalChanges(code, (changes) -> {
             if (changes != null) 
             {
                docDisplay_.applyChanges(changes);
             }
-            fixup.execute();
+            onComplete.execute();
             docDisplay_.setCursorPosition(cursorPos);
             docDisplay_.scrollCursorIntoViewIfNecessary();
          });
       }
       
-      // otherwise just run the fixup code
+      // otherwise nothing to do
       else 
       {
-         fixup.execute();
+         onComplete.execute();
       }
-      
    }
+   
    
    private FileSystemItem getSaveFileDefaultDir()
    {

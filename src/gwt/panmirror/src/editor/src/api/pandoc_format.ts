@@ -42,7 +42,7 @@ export interface PandocFormatConfig {
   extensions?: string;
   wrapColumn?: number;
   doctypes?: string[];
-  cannonical?: boolean;
+  canonical?: boolean;
 }
 
 export function matchPandocFormatComment(code: string) {
@@ -125,8 +125,8 @@ function readPandocFormatConfig(source: { [key: string]: any }) {
   if (source.doctype) {
     formatConfig.doctypes = asString(source.doctype).split(',').map(str => str.trim());
   }
-  if (source.cannonical) {
-    formatConfig.cannonical = asBoolean(source.cannonical);
+  if (source.canonical) {
+    formatConfig.canonical = asBoolean(source.canonical);
   }
   return formatConfig;
 }

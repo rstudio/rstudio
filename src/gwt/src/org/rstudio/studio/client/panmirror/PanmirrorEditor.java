@@ -50,14 +50,14 @@ public class PanmirrorEditor
    @JsType
    public class SetMarkdownResult
    {
-      public String cannonical;
+      public String canonical;
       public String[] unrecognized;
    }
    public native Promise<SetMarkdownResult> setMarkdown(String code, PanmirrorWriterOptions options, boolean emitUpdate);
    
    public native Promise<PanmirrorCode> getMarkdown(PanmirrorWriterOptions options);
    
-   public native Promise<String> getCannonical(String code, PanmirrorWriterOptions options);
+   public native Promise<String> getCanonical(String code, PanmirrorWriterOptions options);
    
    public native boolean isInitialDoc();
    

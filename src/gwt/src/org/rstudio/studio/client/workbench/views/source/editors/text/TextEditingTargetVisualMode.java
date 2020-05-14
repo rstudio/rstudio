@@ -369,10 +369,10 @@ public class TextEditingTargetVisualMode
             // if pandoc's view of the document doesn't match the editor's we 
             // need to reset the editor's code (for both dirty state and 
             // so that diffs are efficient)
-            if (result.cannonical != editorCode)
+            if (result.canonical != editorCode)
             {
                // determine changes
-               PanmirrorCode code = new PanmirrorCode(result.cannonical);
+               PanmirrorCode code = new PanmirrorCode(result.canonical);
                TextEditorContainer.Changes changes = toEditorChanges(code);
                getSourceEditor().applyChanges(changes, false); 
                markDirty();
@@ -523,10 +523,10 @@ public class TextEditingTargetVisualMode
       }  
    }
    
-   public void getCannonicalChanges(String code, CommandWithArg<TextChange[]> completed)
+   public void getCanonicalChanges(String code, CommandWithArg<TextChange[]> completed)
    {
       withPanmirror(() -> {
-         panmirror_.getCannonical(code, panmirrorWriterOptions(), (markdown) -> {
+         panmirror_.getCanonical(code, panmirrorWriterOptions(), (markdown) -> {
             if  (markdown != null) 
             {
                PanmirrorUIToolsSource sourceTools = new PanmirrorUITools().source;

@@ -91,7 +91,7 @@ export interface EditorCode {
 export interface EditorSetMarkdownResult {
   
   // editor view of markdown (as it will be persisted)
-  cannonical: string;
+  canonical: string;
 
   // unrecoginized pandoc tokens
   unrecognized: string[];
@@ -437,11 +437,11 @@ export class Editor {
     // return our current markdown representation (so the caller know what our
     // current 'view' of the doc as markdown looks like
     // return this.pandocConverter.fromProsemirror(this.state.doc)
-    const cannonical = await this.getMarkdownCode(this.state.doc, options);
+    const canonical = await this.getMarkdownCode(this.state.doc, options);
 
     // return 
     return {
-      cannonical, 
+      canonical, 
       unrecognized
     };
   }
@@ -510,10 +510,10 @@ export class Editor {
     };
   }
 
-  // get a cannonical version of the passed markdown. this method doesn't mutate the
+  // get a canonical version of the passed markdown. this method doesn't mutate the
   // visual editor's state/view (it's provided as a performance optimiation for when
-  // source mode is configured to save a cannonical version of markdown)
-  public async getCannonical(markdown: string, options: PandocWriterOptions) : Promise<string> {
+  // source mode is configured to save a canonical version of markdown)
+  public async getCanonical(markdown: string, options: PandocWriterOptions) : Promise<string> {
     
     // convert to prosemirror doc
     const result = await this.pandocConverter.toProsemirror(markdown, this.pandocFormat.fullName);

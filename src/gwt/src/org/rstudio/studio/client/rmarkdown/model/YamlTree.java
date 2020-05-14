@@ -257,6 +257,30 @@ public class YamlTree
       return "";
    }
    
+   public String getGrandchildValue(String grandparentKey, String parentKey, String childKey)
+   {
+      for (YamlTreeNode grandparent: root_.children)
+      {
+         if (grandparent.key == grandparentKey)
+         {
+            for (YamlTreeNode parent: grandparent.children)
+            {
+               if (parent.key == parentKey)
+               {
+                  for (YamlTreeNode child: parent.children)
+                  {
+                     if (child.key == childKey)
+                     {
+                        return child.getValue();
+                     }
+                  }
+               }
+            }
+         }
+      }
+      return "";
+   }
+   
    public boolean containsKey(String key)
    {
       return keyMap_.containsKey(key);
@@ -288,6 +312,12 @@ public class YamlTree
          keyMap_.clear();
          createKeyMap(root_, keyMap_);
       }
+   }
+   
+   public static boolean isTrue(String value)
+   {
+      return value == "y"    || value == "yes" || 
+             value == "true" || value == "on";
    }
    
    private YamlTreeNode createYamlTree(String yaml)
