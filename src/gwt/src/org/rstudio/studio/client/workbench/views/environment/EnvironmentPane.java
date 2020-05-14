@@ -193,6 +193,9 @@ public class EnvironmentPane extends WorkbenchPane
             (ImageResource) null,
             languageMenu_);
       
+      // don't show the language button at first; instead,
+      // toggle its visibility after the widget is created
+      // depending on whether Python has been initialized
       languageButton_.setVisible(false);
       languageButton_.setEnabled(false);
       

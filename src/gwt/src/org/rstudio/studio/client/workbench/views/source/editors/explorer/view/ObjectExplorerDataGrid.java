@@ -305,8 +305,8 @@ public class ObjectExplorerDataGrid
       }
    }
    
-   public static String generateExtractingRCode(Data data,
-                                                String finalReplacement)
+   public static String generateExtractingCode(Data data,
+                                               String finalReplacement)
    {
       if (data == null || data.isMorePlaceholder())
          return null;
@@ -327,17 +327,17 @@ public class ObjectExplorerDataGrid
       // substituting in accessors
       String code = accessors.get(0);
       for (int i = 1; i < n; i++)
-         code = code.replaceAll("#", accessors.get(i));
+         code = code.replace("#", accessors.get(i));
       
       // finally, substitute in the original object
-      code = code.replaceAll("#", finalReplacement);
+      code = code.replace("#", finalReplacement);
       
       return code;
    }
    
-   private String generateExtractingRCode(Data data)
+   private String generateExtractingCode(Data data)
    {
-      return generateExtractingRCode(data, handle_.getTitle());
+      return generateExtractingCode(data, handle_.getTitle());
    }
    
    private class NameCell extends AbstractCell<Data>
@@ -1070,16 +1070,18 @@ public class ObjectExplorerDataGrid
    private void extractCode(int row)
    {
       Data data = getData().get(row);
-      String code = generateExtractingRCode(data);
-      events_.fireEvent(new SendToConsoleEvent(code, false));
+      String code = generateExtractingCode(data);
+      String language = handle_.getLanguage();
+      events_.fireEvent(new SendToConsoleEvent(code, language, false));
    }
    
    private void viewRow(int row)
    {
       Data data = getData().get(row);
-      String code = generateExtractingRCode(data);
+      String code = generateExtractingCode(data);
+      String language = handle_.getLanguage();
       code = "View(" + code + ")";
-      events_.fireEvent(new SendToConsoleEvent(code, true));
+      events_.fireEvent(new SendToConsoleEvent(code, language, true));
    }
    
    private void retrieveMore(int row)
@@ -1119,7 +1121,7 @@ public class ObjectExplorerDataGrid
       }
       
       // no children; make a server RPC request and then call back
-      String extractingCode = generateExtractingRCode(data, "`__OBJECT__`");
+      String extractingCode = generateExtractingCode(data, "`__OBJECT__`");
       server_.explorerInspectObject(
             handle_.getId(),
             extractingCode,

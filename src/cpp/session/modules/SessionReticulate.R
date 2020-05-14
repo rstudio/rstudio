@@ -199,6 +199,28 @@ options(reticulate.initialized = function() {
       plt$show <- .rs.reticulate.matplotlib.showHook
    }
    
+   # define View hook (for data viewer, object explorer)
+   main <- reticulate::import_main(convert = FALSE)
+   reticulate::py_set_attr(main, "View", function(object) {
+      
+      # TODO: assign complex expressions to temporary variable before view
+      reticulate:::disable_conversion_scope(object)
+      
+      # extract variable name passed to Python object
+      sys <- reticulate::import("sys", convert = TRUE)
+      frame <- sys$`_getframe`(1L)
+      names <- frame$f_code$co_names
+      
+      # convert Pandas DataFrames to R data.frames for now
+      # (consider adapting data viewer to arbitrary tabular data in future?)
+      if (inherits(object, "pandas.core.frame.DataFrame"))
+         object <- reticulate::py_to_r(object)
+      
+      # view it
+      View(object, title = names[[2L]])
+      
+   })
+   
    # signal a switch to Python context
    .rs.reticulate.enqueueClientEvent(
       .rs.reticulateEvents$REPL_INITIALIZED,
@@ -1490,7 +1512,7 @@ html.heading = _heading
    type <- if (.rs.reticulate.isFunction(object))
       "function"
    else
-      builtins$str(builtins$type(object))
+      .rs.reticulate.describeObjectType(object)
    
    value <- .rs.reticulate.describeObjectValue(object)
    
@@ -1514,6 +1536,12 @@ html.heading = _heading
       contents_deferred = .rs.scalar(FALSE)
    )
 
+})
+
+.rs.addFunction("reticulate.describeObjectType", function(object)
+{
+   builtins <- reticulate::import_builtins(convert = TRUE)
+   builtins$str(builtins$type(object))
 })
 
 .rs.addFunction("reticulate.describeObjectValue", function(object)

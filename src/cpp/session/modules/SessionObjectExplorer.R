@@ -313,11 +313,17 @@
       title <- paste(deparse(call$object, width.cutoff = 500), collapse = " ")
    }
    
+   # infer appropriate language based on REPL status
+   language <- if (.rs.reticulate.replIsActive())
+      "Python"
+   else
+      "R"
+   
    # provide an appropriate name for the root node
    name <- .rs.explorer.objectName(object, title)
    
    # generate a handle for this object
-   handle <- .rs.explorer.createHandle(object, name, title, envir)
+   handle <- .rs.explorer.createHandle(object, name, title, language, envir)
    
    # fire event to client
    .rs.explorer.fireEvent(.rs.explorer.types$NEW, handle)
@@ -326,17 +332,27 @@
 .rs.addFunction("explorer.createHandle", function(object,
                                                   name,
                                                   title,
+                                                  language,
                                                   envir)
 {
-   # save in cached data environment
-   entry <- list(object = object, name = name, title = title, envir = envir)
+   # create cache entry
+   entry <- list(
+      object   = object,
+      name     = name,
+      title    = title,
+      language = language,
+      envir    = envir
+   )
+   
+   # put it in cache and retrieve handle
    id <- .rs.explorer.setCachedObject(entry)
    
    # return a handle object
    list(
-      id    = .rs.scalar(id),
-      name  = .rs.scalar(name),
-      title = .rs.scalar(title)
+      id       = .rs.scalar(id),
+      name     = .rs.scalar(name),
+      title    = .rs.scalar(title),
+      language = .rs.scalar(language)
    )
 })
 
@@ -370,9 +386,14 @@
    # (note that the client will still need to refine behavior
    # depending on whether attributes are being shown)
    n <- length(.$object)
-   expandable <-
-      
-      
+   expandable <- if (inherits(object, "python.builtin.object"))
+   {
+      inherits(object, "python.builtin.module") ||
+      inherits(object, "python.builtin.dict") ||
+      length(reticulate::py_list_attributes(object)) > 0
+   }
+   else
+   {
       # is this an R list / environment with children?
       (is.recursive(.$object) && !is.primitive(.$object) && n > 0) ||
       
@@ -384,6 +405,7 @@
 
       # do we have relevant attributes?
       (.rs.explorer.hasRelevantAttributes(.$object) && n > 0)
+   }
    
    # extract attributes when relevant
    attributes <- NULL
@@ -495,6 +517,8 @@
    # default to internal inspectors
    if (inherits(object, "xml_node") && "xml2" %in% loadedNamespaces())
       .rs.explorer.inspectXmlNode(object, context)
+   else if (inherits(object, "python.builtin.object"))
+      .rs.explorer.inspectPythonObject(object, context)
    else if (is.list(object) || is.call(object) || is.expression(object))
       .rs.explorer.inspectList(object, context)
    else if (is.environment(object))
@@ -505,6 +529,94 @@
       .rs.explorer.inspectFunction(object, context)
    else
       .rs.explorer.inspectDefault(object, context)
+})
+
+.rs.addFunction("explorer.inspectPythonObject", function(object,
+                                                         context = .rs.explorer.createContext())
+{
+   children <- NULL
+   
+   if (context$recursive)
+   {
+      if (inherits(object, "python.builtin.module"))
+      {
+         dict <- reticulate::py_get_attr(object, "__dict__", silent = TRUE)
+         reticulate::iterate(dict, function(key) {
+            
+            item <- reticulate::py_get_item(dict, key, silent = TRUE)
+            if (is.null(item))
+               return()
+            
+            if (.rs.reticulate.replIsActive())
+            {
+               name <- as.character(key)
+               access <- paste("#", name, sep = ".")
+               tags <- character()
+            }
+            else
+            {
+               name <- as.character(key)
+               access <- paste("#", deparse(as.name(name), backtick = TRUE), sep = "$")
+               tags <- character()
+            }
+            
+            childContext <- .rs.explorer.createChildContext(context, name, access, tags)
+            
+            children[[length(children) + 1]] <<-
+               .rs.explorer.inspectObject(item, childContext)
+            
+         })
+      }
+      else if (inherits(object, "python.builtin.dict"))
+      {
+         reticulate::iterate(object, function(key) {
+            
+            item <- reticulate::py_get_item(object, key, silent = TRUE)
+            if (is.null(item))
+               return()
+            
+            name <- as.character(key)
+            access <- sprintf("#[\"%s\"]", name)
+            tags <- character()
+            childContext <- .rs.explorer.createChildContext(context, name, access, tags)
+            
+            children[[length(children) + 1]] <<-
+               .rs.explorer.inspectObject(item, childContext)
+            
+         })
+      }
+      else
+      {
+         attrs <- reticulate::py_list_attributes(object)
+         lapply(attrs, function(attr) {
+            
+            item <- reticulate::py_get_attr(object, attr, silent = TRUE)
+            if (is.null(item))
+               next
+            
+            if (.rs.reticulate.replIsActive())
+            {
+               name <- as.character(attr)
+               access <- paste("#", name, sep = ".")
+               tags <- character()
+            }
+            else
+            {
+               name <- as.character(attr)
+               access <- paste("#", deparse(as.name(name), backtick = TRUE), sep = "$")
+               tags <- character()
+            }
+            
+            childContext <- .rs.explorer.createChildContext(context, name, access, tags)
+            
+            children[[length(children) + 1]] <<-
+               .rs.explorer.inspectObject(item, childContext)
+            
+         })
+      }
+   }
+   
+   .rs.explorer.createInspectionResult(object, context, children)
 })
 
 .rs.addFunction("explorer.inspectXmlNode", function(object,
@@ -621,7 +733,7 @@
       slots <- .rs.slotNames(object)
       children <- lapply(slots, function(slot) {
          name <- slot
-         access <- sprintf("#@%s", name)
+         access <- paste("#", deparse(as.name(name), backtick = TRUE), sep = "@")
          tags <- character()
          
          childContext <- .rs.explorer.createChildContext(context, name, access, tags)
@@ -704,15 +816,23 @@
 .rs.addFunction("explorer.objectName", function(object, default)
 {
    if (inherits(object, "xml_node"))
-      return(sprintf("<%s>", xml2::xml_name(object)))
-   
-   default
+   {
+      sprintf("<%s>", xml2::xml_name(object))
+   }
+   else
+   {
+      default
+   }
 })
 
 .rs.addFunction("explorer.objectType", function(object)
 {
    # some specialized behavior for certain objects
-   if (inherits(object, "factor"))
+   if (inherits(object, "python.builtin.object"))
+   {
+      return(.rs.reticulate.describeObjectType(object))
+   }
+   else if (inherits(object, "factor"))
    {
       type <- "factor"
       classes <- setdiff(class(object), "factor")
@@ -772,7 +892,12 @@
    trailing <- " ..."
    n <- 6L
    
-   if (is.primitive(object))
+   if (inherits(object, "python.builtin.object"))
+   {
+      output <- .rs.reticulate.describeObjectValue(object)
+      more <- FALSE
+   }
+   else if (is.primitive(object))
    {
       output <- paste(capture.output(print(object)), collapse = " ")
       output <- sub("function ", "function", output)
