@@ -13,13 +13,15 @@
  *
  */
 
+import { PandocWriterOptions } from "../pandoc/pandoc_converter";
+
 export interface EditorFormat {
   readonly pandocMode: string;
   readonly pandocExtensions: string;
   readonly rmdExtensions: EditorRmdExtensions;
   readonly hugoExtensions: EditorHugoExtensions;
-  readonly wrapColumn: number;
   readonly docTypes: EditorExtendedDocType[];
+  readonly writerOptions: PandocWriterOptions;
 }
 
 export interface EditorRmdExtensions {

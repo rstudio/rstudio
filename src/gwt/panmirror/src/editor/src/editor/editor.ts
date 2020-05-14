@@ -259,8 +259,10 @@ export class Editor {
         shortcodes: false,
         ...format.hugoExtensions,
       },
-      wrapColumn: 0,
       docTypes: [],
+      writerOptions: {
+        wrapColumn: 0
+      },
       ...format,
     };
 
@@ -436,7 +438,6 @@ export class Editor {
 
     // return our current markdown representation (so the caller know what our
     // current 'view' of the doc as markdown looks like
-    // return this.pandocConverter.fromProsemirror(this.state.doc)
     const canonical = await this.getMarkdownCode(this.state.doc, options);
 
     // return 
@@ -528,9 +529,17 @@ export class Editor {
     // apply load fixups (eumlating what a full round trip will do)
     const tr = state.tr;
     this.extensionFixups(tr, FixupContext.Load);
+
+    // get format overrides from provided code
+    const formatConfig = pandocFormatConfigFromCode(markdown);
+    const format = {
+      ...this.format,
+      wrapColumn: formatConfig.wrapColumn || this.format.writerOptions.wrapColumn,
+      references: formatConfig.references || this.format.writerOptions.references
+    };
   
     // return markdown (will apply save fixups)
-    return this.getMarkdownCode(tr.doc, options);
+    return this.getMarkdownCode(tr.doc, options, format);
   }
 
 
@@ -795,9 +804,14 @@ export class Editor {
     });
   }
 
-  private async getMarkdownCode(doc: ProsemirrorNode, options: PandocWriterOptions) {
-    // override wrapColumn option if it was specified
-    options.wrapColumn = this.format.wrapColumn || options.wrapColumn;
+  private async getMarkdownCode(doc: ProsemirrorNode, options: PandocWriterOptions, format?: EditorFormat) {
+    
+    // provide format if not explicit
+    format = format || this.format;
+    
+    // override options if they are specified
+    options.wrapColumn = format.writerOptions.wrapColumn || options.wrapColumn;
+    options.references = format.writerOptions.references || options.references;
 
     // apply layout fixups
     this.applyFixups(FixupContext.Save);

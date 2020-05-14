@@ -42,6 +42,7 @@ export interface PandocFormatConfig {
   extensions?: string;
   wrapColumn?: number;
   doctypes?: string[];
+  references?: string;
   canonical?: boolean;
 }
 
@@ -124,6 +125,9 @@ function readPandocFormatConfig(source: { [key: string]: any }) {
   formatConfig.wrapColumn = readWrapColumn();
   if (source.doctype) {
     formatConfig.doctypes = asString(source.doctype).split(',').map(str => str.trim());
+  }
+  if (source.references) {
+    formatConfig.references = asString(source.references);
   }
   if (source.canonical) {
     formatConfig.canonical = asBoolean(source.canonical);

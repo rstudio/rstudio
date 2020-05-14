@@ -804,10 +804,20 @@ public class TextEditingTargetVisualMode
    
    private PanmirrorWriterOptions panmirrorWriterOptions()
    {
+      // optoins
       PanmirrorWriterOptions options = new PanmirrorWriterOptions();
+      
+      // always write atx headers (e.g. ##)
       options.atxHeaders = true;
+      
+      // use user pref for wrapColumn (un
       if (prefs_.visualMarkdownEditingWrapAuto().getValue())
          options.wrapColumn = prefs_.visualMarkdownEditingWrapColumn().getValue();
+      
+      // TODO: consult global pref for references default
+      options.references = "block";   
+       
+      
       return options;
    }
    
@@ -1207,8 +1217,10 @@ public class TextEditingTargetVisualMode
             // enough that it's vanishingly unlikely to affect non-blogdown docs
             format.hugoExtensions.shortcodes = true;
             
-            // wrapColumn
-            format.wrapColumn = formatComment.wrapColumn;
+            // writer options
+            format.writerOptions = new PanmirrorWriterOptions();
+            format.writerOptions.references = formatComment.references;
+            format.writerOptions.wrapColumn = formatComment.wrapColumn;
             
             // return format
             return format;
@@ -1413,6 +1425,8 @@ public class TextEditingTargetVisualMode
          PanmirrorFormatConfig config = formatTools_.parseFormatConfig(getEditorCode());
          return !PanmirrorFormatConfig.areEqual(config,  config_);   
       }
+      
+      public PanmirrorFormatConfig getConfig() { return config_; }
       
       private final PanmirrorUIToolsFormat formatTools_;
       private final PanmirrorFormatConfig config_;

@@ -39,7 +39,7 @@ import { pandocFromProsemirror } from './pandoc_from_prosemirror';
 
 export interface PandocWriterOptions {
   atxHeaders?: boolean;
-  referenceLocation?: 'block' | 'section' | 'document';
+  references?: string; // block | section | document
   wrapColumn?: boolean | number;
   dpi?: number;
 }
@@ -150,8 +150,14 @@ export class PandocConverter {
     if (options.dpi) {
       pandocOptions.push('--dpi');
     }
-    // default to block level references
-    pandocOptions.push(`--reference-location=${options.referenceLocation || 'block'}`);
+    // default to block level references (validate known types)
+    const references = ['block', 'section', 'document'].includes(options.references || '') 
+      ? options.references 
+      : 'block'
+    ;
+    pandocOptions.push(`--reference-location=${references}`);
+    
+    // provide wrapColumn options
     pandocOptions = pandocOptions.concat(wrapColumnOptions(options));
 
     // render to markdown
