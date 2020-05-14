@@ -418,6 +418,7 @@ public abstract class
    public abstract AppCommand macPreferences();
    public abstract AppCommand showOptions();
    public abstract AppCommand modifyKeyboardShortcuts();
+   public abstract AppCommand showCommandPalette();
    
    // Terminal
    public abstract AppCommand newTerminal();

@@ -65,7 +65,8 @@ import org.rstudio.studio.client.workbench.prefs.views.PaneLayoutPreferencesPane
 import org.rstudio.studio.client.workbench.views.console.ConsolePane;
 import org.rstudio.studio.client.workbench.views.output.find.FindOutputTab;
 import org.rstudio.studio.client.workbench.views.output.markers.MarkersOutputTab;
-import org.rstudio.studio.client.workbench.views.source.SourceShim;
+import org.rstudio.studio.client.workbench.views.source.Source;
+import org.rstudio.studio.client.workbench.views.source.SourcePane;
 import org.rstudio.studio.client.workbench.views.source.SourceWindowManager;
 import org.rstudio.studio.client.workbench.views.source.model.SourceDocument;
 
@@ -81,7 +82,7 @@ import java.util.List;
 public class PaneManager
 {
    public interface Binder extends CommandBinder<Commands, PaneManager> {}
-   
+
    public enum Tab {
       History, Files, Plots, Packages, Help, VCS, Tutorial, Build, Connections,
       Presentation, Environment, Viewer, Source, Console
@@ -209,7 +210,7 @@ public class PaneManager
                       Commands commands,
                       UserPrefs userPrefs,
                       @Named("Console") final Widget consolePane,
-                      SourceShim source,
+                      Source source,
                       @Named("History") final WorkbenchTab historyTab,
                       @Named("Files") final WorkbenchTab filesTab,
                       @Named("Plots") final WorkbenchTab plotsTab,
@@ -267,6 +268,7 @@ public class PaneManager
       tutorialTab_ = tutorialTab;
       
       binder.bind(commands, this);
+      source_.load();
       
       PaneConfig config = validateConfig(userPrefs.panes().getValue().cast());
       initPanes(config);
@@ -1393,7 +1395,7 @@ public class PaneManager
    private final WorkbenchTab compilePdfTab_;
    private final WorkbenchTab sourceCppTab_;
    private final ConsolePane consolePane_;
-   private final SourceShim source_;
+   private final Source source_;
    private final WorkbenchTab historyTab_;
    private final WorkbenchTab filesTab_;
    private final WorkbenchTab plotsTab_;

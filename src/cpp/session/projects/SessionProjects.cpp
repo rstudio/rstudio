@@ -893,26 +893,6 @@ void startup(const std::string& firstProjectPath)
          module_context::events().onClientInit.connect(boost::bind(onClientInit, openProjectError));
       }
    }
-
-   // add default open docs if specified in the project
-   // and the project has never been opened before
-   std::string defaultOpenDocs = projectContext().config().defaultOpenDocs;
-   if (!defaultOpenDocs.empty() && projects::projectContext().isNewProject())
-   {
-      std::vector<std::string> docs;
-      boost::algorithm::split(docs, defaultOpenDocs, boost::is_any_of(":"));
-
-      for (std::string& doc : docs)
-      {
-         boost::algorithm::trim(doc);
-
-         FilePath docPath = projectContext().directory().completePath(doc);
-         if (docPath.exists())
-         {
-            addFirstRunDoc(projectFilePath, doc);
-         }
-      }
-   }
 }
 
 SEXP rs_writeProjectFile(SEXP projectFilePathSEXP)

@@ -370,7 +370,7 @@ public abstract class Prefs
    }
    
    // Meant to be called when the satellite window receives the sessionInfo.
-   protected void UpdatePrefs(JsArray<PrefLayer> layers)
+   protected void updatePrefs(JsArray<PrefLayer> layers)
    {
       layers_ = layers;
    }

@@ -287,7 +287,7 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
    {
       Workbench, Editor, R, Cpp, PackageDevelopment, RMarkdown,
       Markdown, Sweave, Help, VCS, Packrat, Renv, RPresentation,
-      Addin;
+      Addin, Viewer, History, Tutorial, Diagnostics, Import, Files;
       
       @Override
       public String toString()
@@ -333,6 +333,18 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
          context_ = Context.Renv;
       else if (lower.equals("presentation"))
          context_ = Context.RPresentation;
+      else if (lower.equals("viewer"))
+         context_ = Context.Viewer;
+      else if (lower.equals("tutorial"))
+         context_ = Context.Tutorial;
+      else if (lower.equals("diagnostics"))
+         context_ = Context.Diagnostics;
+      else if (lower.equals("history"))
+         context_ = Context.History;
+      else if (lower.equals("import"))
+         context_ = Context.Import;
+      else if (lower.equals("files"))
+         context_ = Context.Files;
       else
          throw new Error("Invalid AppCommand context '" + context + "'");
    }
