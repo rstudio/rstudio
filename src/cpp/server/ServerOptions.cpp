@@ -281,7 +281,7 @@ ProgramStatus Options::read(int argc,
          value<std::string>(&rsessionWhichR_)->default_value(""),
          "path to main R program (e.g. /usr/bin/R)")
       ("rsession-path", 
-         value<std::string>(&rsessionPath_)->default_value("rsessio"),
+         value<std::string>(&rsessionPath_)->default_value("rsession"),
          "path to rsession executable")
       ("rldpath-path",
          value<std::string>(&rldpathPath_)->default_value("r-ldpath"),
