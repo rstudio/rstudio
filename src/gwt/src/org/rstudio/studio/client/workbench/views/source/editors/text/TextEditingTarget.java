@@ -2881,16 +2881,13 @@ public class TextEditingTarget implements
       // of our source
       else if (canonical) 
       {
-         Position cursorPos = docDisplay_.getCursorPosition();
          String code = docDisplay_.getCode();
          visualMode_.getCanonicalChanges(code, (changes) -> {
             if (changes.changes != null) 
-               docDisplay_.applyChanges(changes.changes);
+               docDisplay_.applyChanges(changes.changes, true);
             else if (changes.code != null)
                docDisplay_.setCode(changes.code, true);
             onComplete.execute();
-            docDisplay_.setCursorPosition(cursorPos);
-            docDisplay_.scrollCursorIntoViewIfNecessary();
          });
       }
       
