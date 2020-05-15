@@ -22,23 +22,34 @@ import jsinterop.annotations.JsType;
 @JsType
 public class PanmirrorPandocFormatConfig
 {
+   // editor behavior
    public String mode;
    public String extensions;
-   public int wrapColumn;
    public String[] doctypes;
+   
+   // markdown writing
+   public int wrapColumn;
    public String references;
    public boolean canonical;
    
    public static boolean areEqual(PanmirrorPandocFormatConfig a, PanmirrorPandocFormatConfig b)
    {
+      return editorBehaviorConfigEqual(a, b) && markdownWritingConfigEqual(a, b);
+   }
+   
+   public static boolean editorBehaviorConfigEqual(PanmirrorPandocFormatConfig a, PanmirrorPandocFormatConfig b)
+   {
       String aDoctypes = a.doctypes != null ? String.join(",", a.doctypes) : "";
       String bDoctypes = b.doctypes != null ? String.join(",", b.doctypes) : "";
-      
       return StringUtil.equals(a.mode, b.mode) &&
              StringUtil.equals(a.extensions, b.extensions) &&
-             a.wrapColumn == b.wrapColumn &&
+             aDoctypes == bDoctypes;       
+   }
+   
+   public static boolean markdownWritingConfigEqual(PanmirrorPandocFormatConfig a, PanmirrorPandocFormatConfig b)
+   {
+      return a.wrapColumn == b.wrapColumn &&
              a.references == b.references &&
-             aDoctypes == bDoctypes &&
              a.canonical == b.canonical;         
    }
 }

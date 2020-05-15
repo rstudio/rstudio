@@ -257,8 +257,8 @@ public class TextEditingTargetVisualMode
                   // apply them 
                   getSourceEditor().applyChanges(changes, activatingEditor); 
                   
-                  // if the format comment has changed then show the warning
-                  if (panmirrorFormatConfig_.hasChanged()) {
+                  // if the format comment has changed then show the reload prompt
+                  if (panmirrorFormatConfig_.requiresReload()) {
                      view_.showPanmirrorFormatChanged(() -> {
                         // dismiss the warning bar
                         view_.hideWarningBar();
@@ -341,7 +341,7 @@ public class TextEditingTargetVisualMode
       
       // if there is a previous format comment and it's changed then
       // we need to tear down the editor instance and create a new one
-      if (panmirrorFormatConfig_ != null && panmirrorFormatConfig_.hasChanged()) 
+      if (panmirrorFormatConfig_ != null && panmirrorFormatConfig_.requiresReload()) 
       {
          panmirrorFormatConfig_ = null;
          view_.editorContainer().removeWidget(panmirror_);
@@ -1439,13 +1439,19 @@ public class TextEditingTargetVisualMode
          config_ = formatTools_.parseFormatConfig(getEditorCode());
       }
       
+      @SuppressWarnings("unused")
       public boolean hasChanged()
       {
          PanmirrorPandocFormatConfig config = formatTools_.parseFormatConfig(getEditorCode());
          return !PanmirrorPandocFormatConfig.areEqual(config,  config_);   
       }
       
-      public PanmirrorPandocFormatConfig getConfig() { return config_; }
+      public boolean requiresReload()
+      {
+         PanmirrorPandocFormatConfig config = formatTools_.parseFormatConfig(getEditorCode());
+         return !PanmirrorPandocFormatConfig.editorBehaviorConfigEqual(config,  config_);  
+      }
+      
       
       private final PanmirrorUIToolsFormat formatTools_;
       private final PanmirrorPandocFormatConfig config_;
