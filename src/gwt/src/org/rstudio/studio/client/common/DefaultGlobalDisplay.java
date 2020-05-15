@@ -1,7 +1,7 @@
 /*
  * DefaultGlobalDisplay.java
  *
- * Copyright (C) 2009-18 by RStudio, PBC
+ * Copyright (C) 2009-20 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -48,12 +48,10 @@ public class DefaultGlobalDisplay extends GlobalDisplay
       session_ = session;
       server_ = server;
 
-      commands.showWarningBar().addHandler(new CommandHandler()
+      // This command is useful for testing warning bars (e.g. for accessibility) so please leave in.
+      commands.showWarningBar().addHandler(appCommand ->
       {
-         public void onCommand(AppCommand command)
-         {
-            view_.get().showWarning(false, "This is a warning!");
-         }
+         view_.get().showWarning(false, "This is a warning!");
       });
    }
 
