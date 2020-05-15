@@ -46,6 +46,7 @@ import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.application.ui.CommandPaletteEntry;
 import org.rstudio.studio.client.common.FileDialogs;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.ReadOnlyValue;
@@ -81,6 +82,7 @@ import org.rstudio.studio.client.workbench.views.source.model.SourceServerOperat
 
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 
 public class ProfilerEditingTarget implements EditingTarget,
                                               HasSelectionCommitHandlers<CodeNavigationTarget>
@@ -380,6 +382,12 @@ public class ProfilerEditingTarget implements EditingTarget,
    {
    }
 
+   @Override
+   public List<CommandPaletteEntry> getCommandPaletteEntries()
+   {
+      return null;
+   }
+   
    @Override
    public void recordCurrentNavigationPosition()
    {

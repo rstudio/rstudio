@@ -13,12 +13,14 @@
  *
  */
 
-import { Plugin, PluginKey } from 'prosemirror-state';
-import { Slice } from 'prosemirror-model';
+import { Plugin, PluginKey, Transaction, EditorState } from 'prosemirror-state';
+import { Slice, Node as ProsemirrorNode } from 'prosemirror-model';
 import { EditorView } from 'prosemirror-view';
 
 import { sliceHasNode } from '../../api/slice';
+
 import { fixupTableWidths } from './table-columns';
+import { forChangedNodes, trTransform } from '../../api/transaction';
 
 export function tablePaste() {
   return new Plugin({
@@ -33,7 +35,8 @@ export function tablePaste() {
             tr
               .scrollIntoView()
               .setMeta('paste', true)
-              .setMeta('uiEvent', 'paste'),
+              .setMeta('tablePaste', true)
+              .setMeta('uiEvent', 'paste')
           );
           view.dispatch(fixupTableWidths(view)(view.state.tr));
           return true;
@@ -42,5 +45,31 @@ export function tablePaste() {
         }
       },
     },
+    appendTransaction: (transactions: Transaction[], oldState: EditorState, newState: EditorState) => {
+
+      // only process table paste transactions
+      if (!transactions.some(transaction => transaction.getMeta('tablePaste'))) {
+        return null;
+      }
+
+      const schema = newState.schema;
+
+      const tr = newState.tr;
+      forChangedNodes(oldState, newState, node => node.type === node.type.schema.nodes.table, (node, pos) => {
+        let firstRow: ProsemirrorNode;
+        node.descendants((childNode, childPos, parent) => {
+          if (!firstRow) {
+            firstRow = childNode;
+          } else if (parent === firstRow) {
+            const headerPos = pos + 1 + childPos;
+            tr.setNodeMarkup(headerPos, schema.nodes.table_header, childNode.attrs);
+          }
+        });
+      });
+
+      if (tr.docChanged) {
+        return tr;
+      }
+    }
   });
 }

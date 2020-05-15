@@ -24,6 +24,7 @@ import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.events.HasEnsureHeightHandlers;
 import org.rstudio.core.client.events.HasEnsureVisibleHandlers;
 import org.rstudio.core.client.files.FileSystemContext;
+import org.rstudio.studio.client.application.ui.CommandPaletteEntrySource;
 import org.rstudio.studio.client.common.ReadOnlyValue;
 import org.rstudio.studio.client.common.filetypes.FileIcon;
 import org.rstudio.studio.client.common.filetypes.FileType;
@@ -40,7 +41,8 @@ public interface EditingTarget extends IsWidget,
                                        HasEnsureVisibleHandlers,
                                        HasEnsureHeightHandlers,
                                        HasCloseHandlers<Void>,
-                                       UnsavedChangesTarget
+                                       UnsavedChangesTarget,
+                                       CommandPaletteEntrySource
 {
    String getId();
    

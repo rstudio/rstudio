@@ -29,6 +29,7 @@ export const kGfmFormat = 'gfm';
 export const kCommonmarkFormat = 'commonmark';
 
 export interface PandocFormat {
+  mode: string;
   baseName: string;
   fullName: string;
   extensions: PandocExtensions;
@@ -173,7 +174,7 @@ function readPandocFormatConfig(source: { [key: string]: any }) {
   return formatConfig;
 }
 
-export async function resolvePandocFormat(pandoc: PandocEngine, format: EditorFormat) {
+export async function resolvePandocFormat(pandoc: PandocEngine, format: EditorFormat) : Promise<PandocFormat> {
   // additional markdown variants we support
   const kMarkdownVariants: { [key: string]: string[] } = {
     [kCommonmarkFormat]: commonmarkExtensions(),
@@ -256,6 +257,7 @@ export async function resolvePandocFormat(pandoc: PandocEngine, format: EditorFo
 
   // return format name, enabled extensiosn, and warnings
   return {
+    mode: format.pandocMode,
     baseName,
     fullName,
     extensions: (pandocExtensions as unknown) as PandocExtensions,

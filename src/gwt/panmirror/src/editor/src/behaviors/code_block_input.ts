@@ -42,7 +42,7 @@ const extension = (
   return {
     baseKeys: () => {
       return [
-        { key: BaseKey.Enter, command: codeBlockInputRuleEnter(fencedAttributes, format)},
+        { key: BaseKey.Enter, command: codeBlockInputRuleEnter(pandocExtensions, fencedAttributes, format)},
       ];
     },
 
@@ -68,7 +68,11 @@ const extension = (
 
 };
 
-function codeBlockInputRuleEnter(fencedAttributes: boolean, format: EditorFormat) {
+function codeBlockInputRuleEnter(
+  pandocExtensions: PandocExtensions, 
+  fencedAttributes: boolean, 
+  format: EditorFormat
+) {
   return (state: EditorState, dispatch?: (tr: Transaction) => void) => {
 
     // see if the parent consist of a pending code block input rule
@@ -81,7 +85,7 @@ function codeBlockInputRuleEnter(fencedAttributes: boolean, format: EditorFormat
     }
 
     // full text of parent must meet the pattern
-    const match = $head.parent.textContent.match(/^```(?:(\w+)|\{(\.?[^\}]+)\})?$/);
+    const match = $head.parent.textContent.match(/^```(?:(\w+)|\{([\.=]?[^\}]+)\})?$/);
     if (!match) {
       return false;
     }
@@ -102,8 +106,9 @@ function codeBlockInputRuleEnter(fencedAttributes: boolean, format: EditorFormat
       // determine nature of insert
       const fenced = fencedAttributes && !!match[2];
       const langAttrib = fenced ? match[2] : (match[1] || '');
-      const rmdChunk = fenced && !!format.rmdExtensions.codeChunks && !langAttrib.startsWith('.');
-      const lang = langAttrib.replace(/^\./, '');
+      const rawBlock = fenced && pandocExtensions.raw_attribute && langAttrib.match(/^=\w.*$/);
+      const rmdChunk = fenced && !!format.rmdExtensions.codeChunks && langAttrib.match(/^\w.*$/); 
+      const lang = langAttrib.replace(/^[\.=]/, '');
       
       // create transaction and clear input
       const tr = state.tr;
@@ -112,9 +117,9 @@ function codeBlockInputRuleEnter(fencedAttributes: boolean, format: EditorFormat
       tr.deleteRange(start, end);
 
       // determine type and attrs
-      const type = rmdChunk ? schema.nodes.rmd_chunk : schema.nodes.code_block; 
+      const type = rawBlock ? schema.nodes.raw_block : rmdChunk ? schema.nodes.rmd_chunk : schema.nodes.code_block; 
       const content = rmdChunk ? schema.text(`{${fancyQuotesToSimple(match[2])}}\n`) : Fragment.empty;
-      const attrs = !rmdChunk && lang.length ? pandocAttrFrom({ classes: [lang] }) : {};
+      const attrs = rawBlock ? { format: lang } : !rmdChunk && lang.length ? pandocAttrFrom({ classes: [lang] }) : {};
 
       // see if this should go into a preceding list item
       const prevListItemPos = precedingListItemInsertPos(state.doc, state.selection);

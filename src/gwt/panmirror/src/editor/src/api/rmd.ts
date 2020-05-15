@@ -14,8 +14,12 @@
  *
  */
 
+import { Node as ProsemirrorNode } from 'prosemirror-model';
 import { EditorState } from "prosemirror-state";
-import { findParentNodeOfType, findChildrenByType } from "prosemirror-utils";
+
+import { findParentNodeOfType, findChildrenByType, findChildren, findChildrenByMark } from "prosemirror-utils";
+
+import { getMarkRange } from './mark';
 
 export interface EditorRmdChunk {
   lang: string;
@@ -95,4 +99,28 @@ export function mergeRmdChunks(chunks: EditorRmdChunk[]) {
   } else {
     return null;
   }
+}
+
+export function haveTableCellsWithInlineRcode(doc: ProsemirrorNode) {
+  const schema = doc.type.schema;
+  const haveRCode = !!doc.type.schema.nodes.rmd_chunk;
+  if (haveRCode) {
+    const isTableCell = (node: ProsemirrorNode) => node.type === schema.nodes.table_cell || node.type === schema.nodes.table_header;
+    return findChildren(doc, isTableCell).some(cell => { 
+      if (doc.rangeHasMark(cell.pos, cell.pos + cell.node.nodeSize, schema.marks.code)) {
+        const markedNodes = findChildrenByMark(cell.node, schema.marks.code, true);
+        return markedNodes.some(markedNode => {
+          const from = cell.pos + 1 + markedNode.pos;
+          const markedRange = getMarkRange(doc.resolve(from), schema.marks.code);
+          if (markedRange) {
+            const text = doc.textBetween(markedRange.from, markedRange.to);
+            return /^r[ #].+$/.test(text);
+          }
+        });
+      }
+    });
+  } else {
+    return false;
+  }
+  
 }

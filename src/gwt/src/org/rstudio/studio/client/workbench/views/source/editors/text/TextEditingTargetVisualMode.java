@@ -35,6 +35,8 @@ import org.rstudio.core.client.widget.ProgressPanel;
 import org.rstudio.core.client.widget.images.ProgressImages;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.application.ui.CommandPaletteEntry;
+import org.rstudio.studio.client.application.ui.CommandPaletteEntrySource;
 import org.rstudio.studio.client.panmirror.PanmirrorChanges;
 import org.rstudio.studio.client.panmirror.PanmirrorCode;
 import org.rstudio.studio.client.panmirror.PanmirrorContext;
@@ -86,7 +88,7 @@ import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
 
 
-public class TextEditingTargetVisualMode
+public class TextEditingTargetVisualMode implements CommandPaletteEntrySource
 {
    public TextEditingTargetVisualMode(TextEditingTarget target,
                                       TextEditingTarget.Display view,
@@ -483,6 +485,12 @@ public class TextEditingTargetVisualMode
    public void unmanageCommands()
    {
       restoreDisabledForVisualMode();
+   }
+   
+   @Override
+   public List<CommandPaletteEntry> getCommandPaletteEntries()
+   {
+      return panmirror_.getCommandPaletteEntries();
    }
    
    public void executeChunk()
