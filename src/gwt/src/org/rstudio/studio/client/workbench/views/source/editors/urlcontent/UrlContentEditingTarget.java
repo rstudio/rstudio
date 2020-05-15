@@ -33,6 +33,7 @@ import org.rstudio.core.client.events.EnsureHeightHandler;
 import org.rstudio.core.client.events.EnsureVisibleHandler;
 import org.rstudio.core.client.files.FileSystemContext;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.application.ui.CommandPaletteEntry;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.ReadOnlyValue;
 import org.rstudio.studio.client.common.Value;
@@ -56,6 +57,7 @@ import org.rstudio.studio.client.workbench.views.source.model.SourcePosition;
 import org.rstudio.studio.client.workbench.views.source.model.SourceServerOperations;
 
 import java.util.HashSet;
+import java.util.List;
 
 public class UrlContentEditingTarget implements EditingTarget
 {
@@ -259,6 +261,12 @@ public class UrlContentEditingTarget implements EditingTarget
    @Override
    public void onInitiallyLoaded()
    {
+   }
+   
+   @Override
+   public List<CommandPaletteEntry> getCommandPaletteEntries()
+   {
+      return null;
    }
    
    @Override

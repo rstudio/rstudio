@@ -17,6 +17,7 @@ package org.rstudio.studio.client.panmirror;
 
 
 import java.util.ArrayList;
+import java.util.List;
 
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.DebouncedCommand;
@@ -32,6 +33,8 @@ import org.rstudio.core.client.widget.IsHideableWidget;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.ChangeFontSizeEvent;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.application.ui.CommandPaletteEntry;
+import org.rstudio.studio.client.application.ui.CommandPaletteEntrySource;
 import org.rstudio.studio.client.panmirror.command.PanmirrorMenuItem;
 import org.rstudio.studio.client.panmirror.command.PanmirrorToolbar;
 import org.rstudio.studio.client.panmirror.command.PanmirrorToolbarCommands;
@@ -81,6 +84,7 @@ import jsinterop.annotations.JsType;
 public class PanmirrorWidget extends DockLayoutPanel implements 
    IsHideableWidget,
    RequiresResize, 
+   CommandPaletteEntrySource,
    PanmirrorUpdatedEvent.HasPanmirrorUpdatedHandlers,
    PanmirrorSelectionChangedEvent.HasPanmirrorSelectionChangedHandlers,
    PanmirrorOutlineVisibleEvent.HasPanmirrorOutlineVisibleHandlers,
@@ -430,6 +434,12 @@ public class PanmirrorWidget extends DockLayoutPanel implements
    public boolean execCommand(String id)
    {
       return commands_.exec(id);
+   }
+   
+   @Override
+   public List<CommandPaletteEntry> getCommandPaletteEntries()
+   {
+      return commands_.getCommandPaletteEntries();
    }
    
    

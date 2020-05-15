@@ -70,6 +70,8 @@ import org.rstudio.studio.client.application.AriaLiveService;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.AriaLiveStatusEvent.Severity;
 import org.rstudio.studio.client.application.events.AriaLiveStatusEvent.Timing;
+import org.rstudio.studio.client.application.ui.CommandPaletteEntry;
+import org.rstudio.studio.client.application.ui.CommandPaletteEntrySource;
 import org.rstudio.studio.client.application.events.CrossWindowEvent;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.FileDialogs;
@@ -174,6 +176,7 @@ import org.rstudio.studio.client.workbench.views.source.model.SourceServerOperat
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Queue;
 import java.util.Set;
 
@@ -182,6 +185,7 @@ public class Source implements InsertSourceHandler,
                                IsWidget,
                                OpenSourceFileHandler,
                                OpenPresentationSourceFileHandler,
+                               CommandPaletteEntrySource,
                                TabClosingHandler,
                                TabCloseHandler,
                                TabReorderHandler,
@@ -772,6 +776,16 @@ public class Source implements InsertSourceHandler,
             command.execute();
          }
       }
+   }
+   
+   // see if there are additional command pallette entries made available
+   // the by the active editor
+   public List<CommandPaletteEntry> getCommandPaletteEntries()
+   {
+      if (activeEditor_ != null) 
+         return activeEditor_.getCommandPaletteEntries();
+      else
+         return null;
    }
 
    private boolean consoleEditorHadFocusLast()

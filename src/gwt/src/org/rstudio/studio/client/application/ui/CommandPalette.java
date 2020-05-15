@@ -85,7 +85,11 @@ public class CommandPalette extends Composite
       String commandPanel();
    }
 
-   public CommandPalette(Commands commands, RAddins addins, ShortcutManager shortcuts, Host host)
+   public CommandPalette(Commands commands, 
+                         RAddins addins, 
+                         List<CommandPaletteEntrySource> extraSources,
+                         ShortcutManager shortcuts, 
+                         Host host)
    {
       initWidget(uiBinder.createAndBindUi(this));
 
@@ -95,6 +99,7 @@ public class CommandPalette extends Composite
       selected_ = -1;
       addins_ = addins;
       commands_ = commands;
+      extraEntriesSource_ = CommandPaletteEntrySource.join(extraSources);
       attached_ = false;
       pageSize_ = 0;
       styles_.ensureInjected();
@@ -201,6 +206,11 @@ public class CommandPalette extends Composite
          }
          entries_.add(entry);
       }
+      
+      // add commands from additional sources
+      List<CommandPaletteEntry> extraEntries = extraEntriesSource_.getCommandPaletteEntries();
+      if (extraEntries != null)
+         entries_.addAll(extraEntries);
       
       // Invoke commands when they're clicked on
       for (CommandPaletteEntry entry: entries_)
@@ -507,6 +517,7 @@ public class CommandPalette extends Composite
    private final ShortcutManager shortcuts_;
    private final Commands commands_;
    private final RAddins addins_;
+   private final CommandPaletteEntrySource extraEntriesSource_;
    private int selected_;
    private List<CommandPaletteEntry> entries_;
    private String searchText_;

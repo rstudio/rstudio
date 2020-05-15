@@ -64,6 +64,7 @@ import org.rstudio.studio.client.application.events.ChangeFontSizeEvent;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.events.ResetEditorCommandsEvent;
 import org.rstudio.studio.client.application.events.SetEditorCommandBindingsEvent;
+import org.rstudio.studio.client.application.ui.CommandPaletteEntry;
 import org.rstudio.studio.client.common.*;
 import org.rstudio.studio.client.common.console.ConsoleProcess;
 import org.rstudio.studio.client.common.console.ProcessExitEvent;
@@ -2248,6 +2249,15 @@ public class TextEditingTarget implements
       
       if (fileType_.isMarkdown())
          visualMode_.manageCommands();
+   }
+   
+   @Override
+   public List<CommandPaletteEntry> getCommandPaletteEntries()
+   {
+      if (visualMode_.isActivated())
+         return visualMode_.getCommandPaletteEntries();
+      else
+         return null;
    }
    
    @Override
