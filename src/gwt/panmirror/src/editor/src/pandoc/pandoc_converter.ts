@@ -15,8 +15,6 @@
 
 import { Schema, Node as ProsemirrorNode } from 'prosemirror-model';
 
-import { findChildren } from 'prosemirror-utils';
-
 import {
   PandocEngine,
   PandocTokenReader,
@@ -28,6 +26,8 @@ import {
   PandocInlineHTMLReaderFn,
   PandocWriterOptions,
 } from '../api/pandoc';
+
+import { haveTableCellsWithInlineRcode } from '../api/rmd';
 
 import { pandocFormatWith, PandocFormat, kGfmFormat, kCommonmarkFormat } from '../api/pandoc_format';
 import { PandocCapabilities } from '../api/pandoc_capabilities';
@@ -185,11 +185,9 @@ function disabledFormatOptions(format: string, doc: ProsemirrorNode) {
   // support pipe tables so this seems unlikely to ever be required.
   let disabledTableTypes = '-simple_tables-multiline_tables';
 
-  // if there aren't any tables with multiple blocks in a cell then also disable grid
-  // tables. This is because grid tables are more finicky about column alignment, and 
-  // if there is dynamic text in the table (e.g. an inline `r` expression) it will 
-  // actually throw off the table columns and mess up the table
-  if (!haveMultiBlockTableCells(doc)) {
+  // if there are tables with inline R code then disable grid tables (as the inline
+  // R code will mess up the column boundaries)
+  if (haveTableCellsWithInlineRcode(doc)) {
     disabledTableTypes += '-grid_tables';
   }
 
@@ -202,12 +200,6 @@ function disabledFormatOptions(format: string, doc: ProsemirrorNode) {
 
   // return 
   return disabledTableTypes;
-}
-
-function haveMultiBlockTableCells(doc: ProsemirrorNode) {
-  const schema = doc.type.schema;
-  const isTableCell = (node: ProsemirrorNode) => node.type === schema.nodes.table_cell || node.type === schema.nodes.table_header;
-  return findChildren(doc, isTableCell).some(cell => cell.node.childCount > 1);
 }
 
 function wrapColumnOptions(options: PandocWriterOptions) {
