@@ -62,12 +62,16 @@
 		.editor_dark .context {
 			background-color: rgba(255, 255, 255, 0.1);
 		}
+		
+		.disabled .name {
+			opacity: 0.5;
+		}
 	</ui:style>
 	<g:HorizontalPanel styleName="{styles_.entry}">
 		<g:cell horizontalAlignment="ALIGN_LEFT">
 			<g:HorizontalPanel>
 				<g:Label visible="false" styleName="{styles_.context}" ui:field="context_"></g:Label>
-				<g:Label ui:field="name_"></g:Label>
+				<g:Label styleName="{styles_.name}" ui:field="name_"></g:Label>
 			</g:HorizontalPanel>
 		</g:cell>
 		<g:cell horizontalAlignment="ALIGN_RIGHT">

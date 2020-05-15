@@ -1,5 +1,7 @@
 FROM centos:8
 
+ENV OPERATING_SYSTEM=centos_8
+
 RUN set -x \
       && yum install epel-release -y \
       && yum install dnf-plugins-core -y \ 
