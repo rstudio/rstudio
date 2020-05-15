@@ -28,6 +28,8 @@ import {
 } from './table-pandoc';
 import { tableColumnWidths } from './table-columns';
 
+const kDefaultCellClasses = 'pm-table-cell pm-block-border-color';
+
 const nodes = tableNodes({
   tableGroup: 'block',
   cellContent: 'block+',
@@ -44,14 +46,12 @@ const nodes = tableNodes({
       },
     },
     className: {
-      default: 'pm-table-cell pm-block-border-color',
+      default: kDefaultCellClasses,
       getFromDOM(dom: Element) {
         return (dom as HTMLElement).className;
       },
-      setDOMAttr(value, attrs) {
-        if (value) {
-          attrs.class = value;
-        }
+      setDOMAttr(_value, attrs) {
+        attrs.class = kDefaultCellClasses;
       },
     },
   },
