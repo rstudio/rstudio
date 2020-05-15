@@ -29,6 +29,7 @@ import org.rstudio.core.client.widget.SelectWidget;
 import org.rstudio.studio.client.common.HelpLink;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefsAccessor;
 
 public class RMarkdownPreferencesPane extends PreferencesPane
 {
@@ -170,6 +171,7 @@ public class RMarkdownPreferencesPane extends PreferencesPane
       VerticalPanel visualModeOptions = new VerticalPanel();
       mediumSpaced(visualModeOptions);
       
+      // show outline
       CheckBox visualEditorShowOutline = checkboxPref(
             "Show document outline by default",
             prefs_.visualMarkdownEditingShowDocOutline(),
@@ -177,6 +179,7 @@ public class RMarkdownPreferencesPane extends PreferencesPane
       spaced(visualEditorShowOutline);
       visualModeOptions.add(visualEditorShowOutline);
       
+      // content width
       visualModeContentWidth_ = numericPref(
             "Editor content width (pixels):", 
             100,
@@ -189,6 +192,7 @@ public class RMarkdownPreferencesPane extends PreferencesPane
       spaced(visualModeContentWidth_);
       visualModeOptions.add(nudgeRightPlus(visualModeContentWidth_));
       
+      // font size
       final String kDefault = "(Default)";
       String[] labels = {kDefault, "7", "8", "9", "10", "11", "12", "13", "14", "16", "18", "24", "36"};
       String[] values = new String[labels.length];
@@ -202,10 +206,10 @@ public class RMarkdownPreferencesPane extends PreferencesPane
       visualModeFontSize_ = new SelectWidget("Editor font size:", labels, values, false, true, false);
       if (!visualModeFontSize_.setValue(prefs_.visualMarkdownEditingFontSizePoints().getGlobalValue() + ""))
          visualModeFontSize_.getListBox().setSelectedIndex(0);
-      mediumSpaced(visualModeFontSize_);
       visualModeOptions.add(visualModeFontSize_);
       
       
+      // auto wrap
       CheckBox checkBoxAutoWrap = checkboxPref(
          "Auto-wrap text (break lines at specified column)", 
          prefs.visualMarkdownEditingWrapAuto(),
@@ -221,6 +225,20 @@ public class RMarkdownPreferencesPane extends PreferencesPane
       checkBoxAutoWrap.addValueChangeHandler((value) -> {
          visualModeWrapColumn_.setEnabled(checkBoxAutoWrap.getValue());
       });
+      mediumSpaced(visualModeWrapColumn_);
+      
+      // references
+      String[] referencesValues = {
+         UserPrefsAccessor.VISUAL_MARKDOWN_EDITING_REFERENCES_LOCATION_BLOCK,
+         UserPrefsAccessor.VISUAL_MARKDOWN_EDITING_REFERENCES_LOCATION_SECTION,
+         UserPrefsAccessor.VISUAL_MARKDOWN_EDITING_REFERENCES_LOCATION_DOCUMENT
+      };
+      visualModeReferences_ = new SelectWidget("Write references at end of: ", referencesValues, referencesValues, false, true, false);
+      if (!visualModeReferences_.setValue(prefs_.visualMarkdownEditingReferencesLocation().getGlobalValue()))
+         visualModeReferences_.getListBox().setSelectedIndex(0);
+      visualModeOptions.add(visualModeReferences_);
+      
+      
       advanced.add(visualModeOptions);
       Runnable manageVisualModeUI = () -> {
          visualModeOptions.setVisible(enableVisualMarkdownEditor.getValue());
@@ -294,6 +312,9 @@ public class RMarkdownPreferencesPane extends PreferencesPane
       prefs_.visualMarkdownEditingFontSizePoints().setGlobalValue(
             Integer.parseInt(visualModeFontSize_.getValue())); 
       
+      prefs_.visualMarkdownEditingReferencesLocation().setGlobalValue(
+            visualModeReferences_.getValue());
+      
       if (knitWorkingDir_ != null)
       {
          prefs_.knitWorkingDir().setGlobalValue(
@@ -315,6 +336,7 @@ public class RMarkdownPreferencesPane extends PreferencesPane
    private final SelectWidget visualModeFontSize_;
    private final NumericValueWidget visualModeContentWidth_;
    private final NumericValueWidget visualModeWrapColumn_;
+   private final SelectWidget visualModeReferences_;
   
    
    

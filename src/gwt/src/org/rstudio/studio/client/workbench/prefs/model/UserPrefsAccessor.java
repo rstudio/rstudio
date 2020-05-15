@@ -1736,6 +1736,18 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
+    * Placement of footnotes within markdown output.
+    */
+   public PrefValue<String> visualMarkdownEditingReferencesLocation()
+   {
+      return string("visual_markdown_editing_references_location", "block");
+   }
+
+   public final static String VISUAL_MARKDOWN_EDITING_REFERENCES_LOCATION_BLOCK = "block";
+   public final static String VISUAL_MARKDOWN_EDITING_REFERENCES_LOCATION_SECTION = "section";
+   public final static String VISUAL_MARKDOWN_EDITING_REFERENCES_LOCATION_DOCUMENT = "document";
+
+   /**
     * Maximum content width for visual editing mode, in pixels
     */
    public PrefValue<Integer> visualMarkdownEditingMaxContentWidth()
@@ -2201,6 +2213,8 @@ public class UserPrefsAccessor extends Prefs
          visualMarkdownEditingWrapAuto().setValue(layer, source.getBool("visual_markdown_editing_wrap_auto"));
       if (source.hasKey("visual_markdown_editing_wrap_column"))
          visualMarkdownEditingWrapColumn().setValue(layer, source.getInteger("visual_markdown_editing_wrap_column"));
+      if (source.hasKey("visual_markdown_editing_references_location"))
+         visualMarkdownEditingReferencesLocation().setValue(layer, source.getString("visual_markdown_editing_references_location"));
       if (source.hasKey("visual_markdown_editing_max_content_width"))
          visualMarkdownEditingMaxContentWidth().setValue(layer, source.getInteger("visual_markdown_editing_max_content_width"));
       if (source.hasKey("visual_markdown_editing_show_doc_outline"))

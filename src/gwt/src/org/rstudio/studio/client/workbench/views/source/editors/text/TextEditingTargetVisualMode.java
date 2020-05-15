@@ -835,8 +835,8 @@ public class TextEditingTargetVisualMode
       else
          options.wrapColumn = 0;
       
-      // TODO: consult global pref for references default
-      options.references = "block";   
+      // use user pref for references location
+      options.references = prefs_.visualMarkdownEditingReferencesLocation().getValue();
       
       // layer in format config
       if (formatConfig.wrapColumn > 0)

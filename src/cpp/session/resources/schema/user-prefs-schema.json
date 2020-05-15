@@ -1059,6 +1059,12 @@
             "default": 80,
             "description": "The column to wrap text at when writing markdown"
         },
+        "visual_markdown_editing_references_location": {
+            "type": "string",
+            "enum": ["block", "section", "document"],
+            "default": "block",
+            "description": "Placement of footnotes within markdown output."
+        },
         "visual_markdown_editing_max_content_width": {
             "type": "integer",
             "default": 700,

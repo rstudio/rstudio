@@ -2442,6 +2442,19 @@ core::Error UserPrefValues::setVisualMarkdownEditingWrapColumn(int val)
 }
 
 /**
+ * Placement of footnotes within markdown output.
+ */
+std::string UserPrefValues::visualMarkdownEditingReferencesLocation()
+{
+   return readPref<std::string>("visual_markdown_editing_references_location");
+}
+
+core::Error UserPrefValues::setVisualMarkdownEditingReferencesLocation(std::string val)
+{
+   return writePref("visual_markdown_editing_references_location", val);
+}
+
+/**
  * Maximum content width for visual editing mode, in pixels
  */
 int UserPrefValues::visualMarkdownEditingMaxContentWidth()
@@ -2760,6 +2773,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kEnableVisualMarkdownEditingMode,
       kVisualMarkdownEditingWrapAuto,
       kVisualMarkdownEditingWrapColumn,
+      kVisualMarkdownEditingReferencesLocation,
       kVisualMarkdownEditingMaxContentWidth,
       kVisualMarkdownEditingShowDocOutline,
       kVisualMarkdownEditingFontSizePoints,

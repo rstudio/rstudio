@@ -324,6 +324,10 @@ namespace prefs {
 #define kEnableVisualMarkdownEditingMode "enable_visual_markdown_editing_mode"
 #define kVisualMarkdownEditingWrapAuto "visual_markdown_editing_wrap_auto"
 #define kVisualMarkdownEditingWrapColumn "visual_markdown_editing_wrap_column"
+#define kVisualMarkdownEditingReferencesLocation "visual_markdown_editing_references_location"
+#define kVisualMarkdownEditingReferencesLocationBlock "block"
+#define kVisualMarkdownEditingReferencesLocationSection "section"
+#define kVisualMarkdownEditingReferencesLocationDocument "document"
 #define kVisualMarkdownEditingMaxContentWidth "visual_markdown_editing_max_content_width"
 #define kVisualMarkdownEditingShowDocOutline "visual_markdown_editing_show_doc_outline"
 #define kVisualMarkdownEditingFontSizePoints "visual_markdown_editing_font_size_points"
@@ -1464,6 +1468,12 @@ public:
     */
    int visualMarkdownEditingWrapColumn();
    core::Error setVisualMarkdownEditingWrapColumn(int val);
+
+   /**
+    * Placement of footnotes within markdown output.
+    */
+   std::string visualMarkdownEditingReferencesLocation();
+   core::Error setVisualMarkdownEditingReferencesLocation(std::string val);
 
    /**
     * Maximum content width for visual editing mode, in pixels
