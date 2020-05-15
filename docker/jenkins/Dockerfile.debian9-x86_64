@@ -1,6 +1,6 @@
 FROM debian:stretch
 
-ARG OPERATING_SYSTEM=debian_9
+ENV OPERATING_SYSTEM=debian_9
 
 # update apt repository to cloudfront's mirror
 RUN set -x \

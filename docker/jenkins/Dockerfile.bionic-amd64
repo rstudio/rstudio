@@ -1,6 +1,6 @@
 FROM ubuntu:bionic
 
-ARG OPERATING_SYSTEM=ubuntu_bionic
+ENV OPERATING_SYSTEM=ubuntu_bionic
 
 ARG AWS_REGION=us-east-1
 

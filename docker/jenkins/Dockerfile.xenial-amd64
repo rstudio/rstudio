@@ -1,6 +1,6 @@
 FROM ubuntu:xenial
 
-ARG OPERATING_SYSTEM=ubuntu_xenial
+ENV OPERATING_SYSTEM=ubuntu_xenial
 
 ARG AWS_REGION=us-east-1
 

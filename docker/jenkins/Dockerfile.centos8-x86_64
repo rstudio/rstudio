@@ -1,6 +1,6 @@
 FROM centos:8
 
-ARG OPERATING_SYSTEM=centos_8
+ENV OPERATING_SYSTEM=centos_8
 
 RUN set -x \
       && yum install epel-release -y \
