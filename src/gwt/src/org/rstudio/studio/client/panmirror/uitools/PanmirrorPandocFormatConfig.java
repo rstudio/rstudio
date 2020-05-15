@@ -1,5 +1,5 @@
 /*
- * PanmirrorFormatConfig.java
+ * PanmirrorPandocFormatConfig.java
  *
  * Copyright (C) 2009-20 by RStudio, PBC
  *
@@ -20,7 +20,7 @@ import org.rstudio.core.client.StringUtil;
 import jsinterop.annotations.JsType;
 
 @JsType
-public class PanmirrorFormatConfig
+public class PanmirrorPandocFormatConfig
 {
    public String mode;
    public String extensions;
@@ -29,7 +29,7 @@ public class PanmirrorFormatConfig
    public String references;
    public boolean canonical;
    
-   public static boolean areEqual(PanmirrorFormatConfig a, PanmirrorFormatConfig b)
+   public static boolean areEqual(PanmirrorPandocFormatConfig a, PanmirrorPandocFormatConfig b)
    {
       String aDoctypes = a.doctypes != null ? String.join(",", a.doctypes) : "";
       String bDoctypes = b.doctypes != null ? String.join(",", b.doctypes) : "";

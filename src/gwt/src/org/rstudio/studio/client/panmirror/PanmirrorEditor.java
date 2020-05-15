@@ -27,6 +27,7 @@ import org.rstudio.studio.client.panmirror.location.PanmirrorEditingOutlineLocat
 import org.rstudio.studio.client.panmirror.outline.PanmirrorOutlineItem;
 import org.rstudio.studio.client.panmirror.pandoc.PanmirrorPandocFormat;
 import org.rstudio.studio.client.panmirror.theme.PanmirrorTheme;
+import org.rstudio.studio.client.panmirror.uitools.PanmirrorPandocFormatConfig;
 
 import com.google.gwt.dom.client.Element;
 
@@ -96,6 +97,7 @@ public class PanmirrorEditor
    public native void setKeybindings(PanmirrorKeybindings keybindings);
    
    public native PanmirrorPandocFormat getPandocFormat();
+   public native PanmirrorPandocFormatConfig getPandocFormatConfig();
    
    public native void enableDevTools(JsObject initFn);
  

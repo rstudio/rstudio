@@ -21,7 +21,6 @@ export interface EditorFormat {
   readonly rmdExtensions: EditorRmdExtensions;
   readonly hugoExtensions: EditorHugoExtensions;
   readonly docTypes: EditorExtendedDocType[];
-  readonly writerOptions: PandocWriterOptions;
 }
 
 export interface EditorRmdExtensions {

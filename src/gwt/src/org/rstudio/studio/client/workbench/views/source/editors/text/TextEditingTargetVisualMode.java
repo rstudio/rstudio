@@ -58,7 +58,7 @@ import org.rstudio.studio.client.panmirror.pandoc.PanmirrorPandocFormat;
 import org.rstudio.studio.client.panmirror.ui.PanmirrorUIContext;
 import org.rstudio.studio.client.panmirror.ui.PanmirrorUIDisplay;
 import org.rstudio.studio.client.panmirror.ui.PanmirrorUIExecute;
-import org.rstudio.studio.client.panmirror.uitools.PanmirrorFormatConfig;
+import org.rstudio.studio.client.panmirror.uitools.PanmirrorPandocFormatConfig;
 import org.rstudio.studio.client.panmirror.uitools.PanmirrorUITools;
 import org.rstudio.studio.client.panmirror.uitools.PanmirrorUIToolsFormat;
 import org.rstudio.studio.client.panmirror.uitools.PanmirrorUIToolsSource;
@@ -352,7 +352,9 @@ public class TextEditingTargetVisualMode
          
          String editorCode = getEditorCode();
          
-         panmirror_.setMarkdown(editorCode, this.panmirrorWriterOptions(), true, (result) -> {  
+         PanmirrorWriterOptions writerOptions = writerOptionsFromCode(editorCode);
+         
+         panmirror_.setMarkdown(editorCode, writerOptions, true, (result) -> {  
                
             // bail on error
             if (result == null)
@@ -524,9 +526,10 @@ public class TextEditingTargetVisualMode
    }
    
    public void getCanonicalChanges(String code, CommandWithArg<TextChange[]> completed)
-   {
+   {   
       withPanmirror(() -> {
-         panmirror_.getCanonical(code, panmirrorWriterOptions(), (markdown) -> {
+         PanmirrorWriterOptions writerOptions = writerOptionsFromCode(code);
+         panmirror_.getCanonical(code, writerOptions, (markdown) -> {
             if  (markdown != null) 
             {
                PanmirrorUIToolsSource sourceTools = new PanmirrorUITools().source;
@@ -799,24 +802,45 @@ public class TextEditingTargetVisualMode
    
    private void getMarkdown(CommandWithArg<PanmirrorCode> completed)
    {
-      panmirror_.getMarkdown(panmirrorWriterOptions(), completed);
+      panmirror_.getMarkdown(writerOptionsFromVisual(), completed);
    }
    
-   private PanmirrorWriterOptions panmirrorWriterOptions()
+   
+   private PanmirrorWriterOptions writerOptionsFromCode(String code)
    {
-      // optoins
+      PanmirrorUIToolsFormat format = new PanmirrorUITools().format;
+      PanmirrorPandocFormatConfig formatConfig = format.parseFormatConfig(code);
+      return writerOptions(formatConfig); 
+   }
+   
+   private PanmirrorWriterOptions writerOptionsFromVisual()
+   {
+      PanmirrorPandocFormatConfig formatConfig = panmirror_.getPandocFormatConfig();
+      return writerOptions(formatConfig);
+   }
+   
+   private PanmirrorWriterOptions writerOptions(PanmirrorPandocFormatConfig formatConfig)
+   {
+      // options defaults from preferences
       PanmirrorWriterOptions options = new PanmirrorWriterOptions();
       
       // always write atx headers (e.g. ##)
       options.atxHeaders = true;
       
-      // use user pref for wrapColumn (un
+      // use user pref for wrapColumn
       if (prefs_.visualMarkdownEditingWrapAuto().getValue())
          options.wrapColumn = prefs_.visualMarkdownEditingWrapColumn().getValue();
+      else
+         options.wrapColumn = 0;
       
       // TODO: consult global pref for references default
       options.references = "block";   
-       
+      
+      // layer in format config
+      if (formatConfig.wrapColumn > 0)
+         options.wrapColumn = formatConfig.wrapColumn;
+      if (formatConfig.references != null)
+         options.references = formatConfig.references;
       
       return options;
    }
@@ -1143,7 +1167,7 @@ public class TextEditingTargetVisualMode
             PanmirrorFormat format = new PanmirrorFormat();
             
             // see if we have a format comment
-            PanmirrorFormatConfig formatComment = formatTools.parseFormatConfig(getEditorCode());
+            PanmirrorPandocFormatConfig formatComment = formatTools.parseFormatConfig(getEditorCode());
             
             // doctypes
             List<String> docTypes = new ArrayList<String>();
@@ -1216,12 +1240,7 @@ public class TextEditingTargetVisualMode
             // blogdown files be opened within projects). this idiom is obscure 
             // enough that it's vanishingly unlikely to affect non-blogdown docs
             format.hugoExtensions.shortcodes = true;
-            
-            // writer options
-            format.writerOptions = new PanmirrorWriterOptions();
-            format.writerOptions.references = formatComment.references;
-            format.writerOptions.wrapColumn = formatComment.wrapColumn;
-            
+                 
             // return format
             return format;
          }
@@ -1422,14 +1441,14 @@ public class TextEditingTargetVisualMode
       
       public boolean hasChanged()
       {
-         PanmirrorFormatConfig config = formatTools_.parseFormatConfig(getEditorCode());
-         return !PanmirrorFormatConfig.areEqual(config,  config_);   
+         PanmirrorPandocFormatConfig config = formatTools_.parseFormatConfig(getEditorCode());
+         return !PanmirrorPandocFormatConfig.areEqual(config,  config_);   
       }
       
-      public PanmirrorFormatConfig getConfig() { return config_; }
+      public PanmirrorPandocFormatConfig getConfig() { return config_; }
       
       private final PanmirrorUIToolsFormat formatTools_;
-      private final PanmirrorFormatConfig config_;
+      private final PanmirrorPandocFormatConfig config_;
    }
    
    

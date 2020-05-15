@@ -13,9 +13,12 @@
  *
  */
 
+import { Node as ProsemirrorNode } from 'prosemirror-model';
+
 import { PandocEngine, PandocExtensions } from './pandoc';
 import { EditorFormat } from './format';
-import { firstYamlBlock } from './yaml';
+import { firstYamlBlock, yamlMetadataNodes } from './yaml';
+import { findTopLevelBodyNodes } from './node';
 
 export const kMarkdownFormat = 'markdown';
 export const kMarkdownPhpextraFormat = 'markdown_phpextra';
@@ -51,11 +54,15 @@ export function matchPandocFormatComment(code: string) {
   return code.match(magicCommentRegEx);
 }
 
-export function pandocFormatConfigFromCode(code: string) : PandocFormatConfig {
-  return pandocFormatConfigFromYAML(code) || pandocFormatConfigFromComment(code) || {};
+export function pandocFormatConfigFromDoc(doc: ProsemirrorNode) {
+  return pandocFormatConfigFromYamlInDoc(doc) || pandocFormatConfigFromCommentInDoc(doc) || {};
 }
 
-function pandocFormatConfigFromYAML(code: string): PandocFormatConfig | null {
+export function pandocFormatConfigFromCode(code: string) : PandocFormatConfig {
+  return pandocFormatConfigFromYamlInCode(code) || pandocFormatConfigFromCommentInCode(code) || {};
+}
+
+function pandocFormatConfigFromYamlInCode(code: string): PandocFormatConfig | null {
   const yaml = firstYamlBlock(code);
   const yamlMarkdownOptions = yaml?.editor_options?.markdown;
   if (yamlMarkdownOptions instanceof Object) {
@@ -65,7 +72,16 @@ function pandocFormatConfigFromYAML(code: string): PandocFormatConfig | null {
   }
 }
 
-function pandocFormatConfigFromComment(code: string): PandocFormatConfig | null {
+function pandocFormatConfigFromYamlInDoc(doc: ProsemirrorNode) : PandocFormatConfig | null {
+   const yamlNodes = yamlMetadataNodes(doc);
+   if (yamlNodes.length > 0) {
+     return pandocFormatConfigFromYamlInCode(yamlNodes[0].node.textContent);
+   } else {
+     return null;
+   }
+}
+
+function pandocFormatConfigFromCommentInCode(code: string): PandocFormatConfig | null {
   const keyValueRegEx = /^([^:]+):\s*(.*)$/;
   const match = matchPandocFormatComment(code);
   if (match) {
@@ -83,6 +99,28 @@ function pandocFormatConfigFromComment(code: string): PandocFormatConfig | null 
   } else {
     return null;
   }
+}
+
+function pandocFormatConfigFromCommentInDoc(doc: ProsemirrorNode): PandocFormatConfig | null {
+  let config: PandocFormatConfig | null = null;
+  let foundFirstRawInline = false;
+  doc.descendants((node, pos) => {
+    // don't search once we've found our target
+    if (foundFirstRawInline) {
+      return false;
+    }
+
+    // if it's a text node with a raw-html then scan it for the format comment 
+    const schema = doc.type.schema;
+    if (node.isText && schema.marks.raw_html_comment.isInSet(node.marks) && node.attrs.format) {   
+      foundFirstRawInline = true;
+      config = pandocFormatConfigFromCode(node.textContent);
+      return false;
+    } else {
+      return true;
+    }
+  });
+  return config;
 }
 
 function readPandocFormatConfig(source: { [key: string]: any }) {

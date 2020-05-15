@@ -51,6 +51,7 @@ import org.rstudio.studio.client.panmirror.outline.PanmirrorOutlineWidget;
 import org.rstudio.studio.client.panmirror.pandoc.PanmirrorPandocFormat;
 import org.rstudio.studio.client.panmirror.theme.PanmirrorTheme;
 import org.rstudio.studio.client.panmirror.theme.PanmirrorThemeCreator;
+import org.rstudio.studio.client.panmirror.uitools.PanmirrorPandocFormatConfig;
 import org.rstudio.studio.client.panmirror.uitools.PanmirrorUITools;
 import org.rstudio.studio.client.panmirror.uitools.PanmirrorUIToolsFormat;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
@@ -452,6 +453,11 @@ public class PanmirrorWidget extends DockLayoutPanel implements
    public PanmirrorPandocFormat getPandocFormat()
    {
       return editor_.getPandocFormat();
+   }
+   
+   public PanmirrorPandocFormatConfig getPandocFormatConfig()
+   {
+      return editor_.getPandocFormatConfig();
    }
    
    public PanmirrorSelection getSelection()

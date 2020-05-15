@@ -37,6 +37,7 @@ import {
   resolvePandocFormat,
   PandocFormatConfig,
   pandocFormatConfigFromCode,
+  pandocFormatConfigFromDoc,
 } from '../api/pandoc_format';
 import { baseKeysPlugin } from '../api/basekeys';
 import {
@@ -260,9 +261,6 @@ export class Editor {
         ...format.hugoExtensions,
       },
       docTypes: [],
-      writerOptions: {
-        wrapColumn: 0
-      },
       ...format,
     };
 
@@ -529,17 +527,9 @@ export class Editor {
     // apply load fixups (eumlating what a full round trip will do)
     const tr = state.tr;
     this.extensionFixups(tr, FixupContext.Load);
-
-    // get format overrides from provided code
-    const formatConfig = pandocFormatConfigFromCode(markdown);
-    const format = {
-      ...this.format,
-      wrapColumn: formatConfig.wrapColumn || this.format.writerOptions.wrapColumn,
-      references: formatConfig.references || this.format.writerOptions.references
-    };
   
     // return markdown (will apply save fixups)
-    return this.getMarkdownCode(tr.doc, options, format);
+    return this.getMarkdownCode(tr.doc, options);
   }
 
 
@@ -615,6 +605,10 @@ export class Editor {
 
   public getPandocFormat() {
     return this.pandocFormat;
+  }
+
+  public getPandocFormatConfig() : PandocFormatConfig {
+    return pandocFormatConfigFromDoc(this.state.doc);
   }
 
   private dispatchTransaction(tr: Transaction) {
@@ -804,14 +798,7 @@ export class Editor {
     });
   }
 
-  private async getMarkdownCode(doc: ProsemirrorNode, options: PandocWriterOptions, format?: EditorFormat) {
-    
-    // provide format if not explicit
-    format = format || this.format;
-    
-    // override options if they are specified
-    options.wrapColumn = format.writerOptions.wrapColumn || options.wrapColumn;
-    options.references = format.writerOptions.references || options.references;
+  private async getMarkdownCode(doc: ProsemirrorNode, options: PandocWriterOptions) {
 
     // apply layout fixups
     this.applyFixups(FixupContext.Save);

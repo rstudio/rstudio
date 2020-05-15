@@ -16,8 +16,6 @@
 package org.rstudio.studio.client.panmirror.format;
 
 
-import org.rstudio.studio.client.panmirror.PanmirrorWriterOptions;
-
 import jsinterop.annotations.JsType;
 
 @JsType
@@ -28,6 +26,5 @@ public class PanmirrorFormat
    public PanmirrorRmdExtensions rmdExtensions;
    public PanmirrorHugoExtensions hugoExtensions;
    public String[] docTypes;
-   public PanmirrorWriterOptions writerOptions;
 }
 

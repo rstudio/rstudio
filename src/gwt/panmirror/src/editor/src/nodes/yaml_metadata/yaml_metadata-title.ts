@@ -13,11 +13,10 @@
  *
  */
 
-import { Node as ProsemirrorNode } from 'prosemirror-model';
 import { Plugin, PluginKey, Transaction, EditorState } from 'prosemirror-state';
 
-import { findTopLevelBodyNodes } from '../../api/node';
 import { transactionsAreTypingChange, transactionsHaveChange } from '../../api/transaction';
+import { isYamlMetadataNode, yamlMetadataNodes } from '../../api/yaml';
 
 const plugin = new PluginKey<string>('yaml-metadata-title');
 
@@ -116,10 +115,3 @@ function titleFromState(state: EditorState) {
   return '';
 }
 
-function yamlMetadataNodes(doc: ProsemirrorNode) {
-  return findTopLevelBodyNodes(doc, isYamlMetadataNode);
-}
-
-function isYamlMetadataNode(node: ProsemirrorNode) {
-  return node.type === node.type.schema.nodes.yaml_metadata;
-}

@@ -13,7 +13,21 @@
  *
  */
 
+import { Node as ProsemirrorNode } from 'prosemirror-model';
+
+import { findTopLevelBodyNodes } from './node';
+
 import yaml from 'js-yaml';
+
+
+export function yamlMetadataNodes(doc: ProsemirrorNode) {
+  return findTopLevelBodyNodes(doc, isYamlMetadataNode);
+}
+
+export function isYamlMetadataNode(node: ProsemirrorNode) {
+  return node.type === node.type.schema.nodes.yaml_metadata;
+}
+
 
 export const kYamlBlocksRegex = /^([\t >]*)(---[ \t]*\n(?![ \t]*\n)[\W\w]*?\n[\t >]*(?:---|\.\.\.))([ \t]*)$/gm;
 
