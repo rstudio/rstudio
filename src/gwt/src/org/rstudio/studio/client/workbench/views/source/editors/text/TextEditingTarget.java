@@ -2884,10 +2884,10 @@ public class TextEditingTarget implements
          Position cursorPos = docDisplay_.getCursorPosition();
          String code = docDisplay_.getCode();
          visualMode_.getCanonicalChanges(code, (changes) -> {
-            if (changes != null) 
-            {
-               docDisplay_.applyChanges(changes);
-            }
+            if (changes.changes != null) 
+               docDisplay_.applyChanges(changes.changes);
+            else if (changes.code != null)
+               docDisplay_.setCode(changes.code, true);
             onComplete.execute();
             docDisplay_.setCursorPosition(cursorPos);
             docDisplay_.scrollCursorIntoViewIfNecessary();

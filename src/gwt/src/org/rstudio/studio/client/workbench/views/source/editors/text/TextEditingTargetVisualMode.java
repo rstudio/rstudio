@@ -35,6 +35,7 @@ import org.rstudio.core.client.widget.ProgressPanel;
 import org.rstudio.core.client.widget.images.ProgressImages;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.panmirror.PanmirrorChanges;
 import org.rstudio.studio.client.panmirror.PanmirrorCode;
 import org.rstudio.studio.client.panmirror.PanmirrorContext;
 import org.rstudio.studio.client.panmirror.PanmirrorKeybindings;
@@ -244,19 +245,27 @@ public class TextEditingTargetVisualMode
          isDirty_ = false;
          
          withPanmirror(() -> {
-            getMarkdown(markdown -> {
+            
+            WriterOptionsContext writerOptions = writerOptionsFromVisual();
+            
+            panmirror_.getMarkdown(writerOptions.options, (markdown) -> {
                rv.arrive(() -> {
                   if (markdown == null) {
                      // note that ready.execute() is never called in the error case
                      return;
                   }
-              
-                  // determine changes
-                  TextEditorContainer.Changes changes = toEditorChanges(markdown);
                   
-                  // apply them 
-                  getSourceEditor().applyChanges(changes, activatingEditor); 
-                  
+                  // apply diffs unless the wrap column changed (too expensive)
+                  if (!writerOptions.wrapColumnChanged) 
+                  {
+                     TextEditorContainer.Changes changes = toEditorChanges(markdown);
+                     getSourceEditor().applyChanges(changes, activatingEditor); 
+                  }
+                  else
+                  {
+                     getSourceEditor().setCode(markdown.code);
+                  }
+                 
                   // if the format comment has changed then show the reload prompt
                   if (panmirrorFormatConfig_.requiresReload()) {
                      view_.showPanmirrorFormatChanged(() -> {
@@ -286,10 +295,8 @@ public class TextEditingTargetVisualMode
       }
    }
 
-   
-  
-   
-   public void syncFromEditor(Command onDone)
+
+   public void syncFromEditorIfActivated()
    {
       if (isActivated()) 
       {
@@ -311,27 +318,10 @@ public class TextEditingTargetVisualMode
             // re-activate panmirror widget
             editorContainer.activateWidget(panmirror_, false);
             
-            // call done if provided
-            if (onDone != null)
-               onDone.execute();
-            
-         }, false);
-      }
-      else
-      {
-         // sync w/o activating
-         syncFromEditor((success) -> { 
-            if (onDone != null)
-               onDone.execute(); 
          }, false);
       }
    }
    
-   public void syncFromEditorIfActivated()
-   {
-      if (isActivated()) 
-         syncFromEditor(null);
-   }
    
    private void syncFromEditor(CommandWithArg<Boolean> done, boolean focus)
    {      
@@ -352,9 +342,9 @@ public class TextEditingTargetVisualMode
          
          String editorCode = getEditorCode();
          
-         PanmirrorWriterOptions writerOptions = writerOptionsFromCode(editorCode);
+         WriterOptionsContext writerOptions = writerOptionsFromCode(editorCode);
          
-         panmirror_.setMarkdown(editorCode, writerOptions, true, (result) -> {  
+         panmirror_.setMarkdown(editorCode, writerOptions.options, true, (result) -> {  
                
             // bail on error
             if (result == null)
@@ -373,10 +363,7 @@ public class TextEditingTargetVisualMode
             // so that diffs are efficient)
             if (result.canonical != editorCode)
             {
-               // determine changes
-               PanmirrorCode code = new PanmirrorCode(result.canonical);
-               TextEditorContainer.Changes changes = toEditorChanges(code);
-               getSourceEditor().applyChanges(changes, false); 
+               getSourceEditor().setCode(result.canonical);
                markDirty();
             }
             
@@ -525,16 +512,23 @@ public class TextEditingTargetVisualMode
       }  
    }
    
-   public void getCanonicalChanges(String code, CommandWithArg<TextChange[]> completed)
+   public void getCanonicalChanges(String code, CommandWithArg<PanmirrorChanges> completed)
    {   
       withPanmirror(() -> {
-         PanmirrorWriterOptions writerOptions = writerOptionsFromCode(code);
-         panmirror_.getCanonical(code, writerOptions, (markdown) -> {
+         WriterOptionsContext writerOptions = writerOptionsFromCode(code);
+         panmirror_.getCanonical(code, writerOptions.options, (markdown) -> {
             if  (markdown != null) 
             {
-               PanmirrorUIToolsSource sourceTools = new PanmirrorUITools().source;
-               TextChange[] changes = sourceTools.diffChars(code, markdown, 1);
-               completed.execute(changes);
+               if (!writerOptions.wrapColumnChanged)
+               {
+                  PanmirrorUIToolsSource sourceTools = new PanmirrorUITools().source;
+                  TextChange[] changes = sourceTools.diffChars(code, markdown, 1);
+                  completed.execute(new PanmirrorChanges(null, changes));
+               }
+               else
+               {
+                  completed.execute(new PanmirrorChanges(markdown, null));
+               }
             }
             else
             {
@@ -800,26 +794,34 @@ public class TextEditingTargetVisualMode
       */
    }
    
-   private void getMarkdown(CommandWithArg<PanmirrorCode> completed)
+   
+   private class WriterOptionsContext
    {
-      panmirror_.getMarkdown(writerOptionsFromVisual(), completed);
+      public WriterOptionsContext(PanmirrorWriterOptions options, boolean wrapColumnChanged)
+      {
+         this.options = options;
+         this.wrapColumnChanged = wrapColumnChanged;
+      }
+      
+      public final PanmirrorWriterOptions options;
+      public final boolean wrapColumnChanged;
    }
+   private PanmirrorWriterOptions lastUsedWriterOptions_ = null;
    
-   
-   private PanmirrorWriterOptions writerOptionsFromCode(String code)
+   private WriterOptionsContext writerOptionsFromCode(String code)
    {
       PanmirrorUIToolsFormat format = new PanmirrorUITools().format;
       PanmirrorPandocFormatConfig formatConfig = format.parseFormatConfig(code);
       return writerOptions(formatConfig); 
    }
    
-   private PanmirrorWriterOptions writerOptionsFromVisual()
+   private WriterOptionsContext writerOptionsFromVisual()
    {
       PanmirrorPandocFormatConfig formatConfig = panmirror_.getPandocFormatConfig();
       return writerOptions(formatConfig);
    }
    
-   private PanmirrorWriterOptions writerOptions(PanmirrorPandocFormatConfig formatConfig)
+   private WriterOptionsContext writerOptions(PanmirrorPandocFormatConfig formatConfig)
    {
       // options defaults from preferences
       PanmirrorWriterOptions options = new PanmirrorWriterOptions();
@@ -842,7 +844,15 @@ public class TextEditingTargetVisualMode
       if (formatConfig.references != null)
          options.references = formatConfig.references;
       
-      return options;
+      // check if this represents a line wrapping change
+      boolean wrapColumnChanged = lastUsedWriterOptions_ != null &&
+                                  lastUsedWriterOptions_.wrapColumn != options.wrapColumn;
+      
+      // set last used
+      lastUsedWriterOptions_ = options;
+      
+      // return context
+      return new WriterOptionsContext(options, wrapColumnChanged);
    }
    
    
