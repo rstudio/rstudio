@@ -35,9 +35,9 @@ runWatchdogProcess()
 {
    if [[ "$OSTYPE" == "darwin"* ]]; then
       # requires brew install coreutils
-      TIMEOUT=gtimeout
+      TIMEOUT_CMD=gtimeout
    else
-      TIMEOUT=timeout
+      TIMEOUT_CMD=timeout
    fi
    timeout=$1
    privileged=$2
@@ -57,9 +57,9 @@ runWatchdogProcess()
       fi
    else
       if [ "$privileged" = true ]; then
-         sudo $TIMEOUT --foreground $timeout /bin/bash -c "LD_PRELOAD=$RSESSION_DIAGNOSTICS_LIBSEGFAULT $VALGRIND $command $arg1 $arg2 $arg3 $arg4 $arg5;exit"
+         sudo $TIMEOUT_CMD --foreground $timeout /bin/bash -c "LD_PRELOAD=$RSESSION_DIAGNOSTICS_LIBSEGFAULT $VALGRIND $command $arg1 $arg2 $arg3 $arg4 $arg5;exit"
       else
-         $TIMEOUT --foreground $timeout /bin/bash -c "LD_PRELOAD=$RSESSION_DIAGNOSTICS_LIBSEGFAULT $VALGRIND $command $arg1 $arg2 $arg3 $arg4 $arg5;exit"
+         $TIMEOUT_CMD --foreground $timeout /bin/bash -c "LD_PRELOAD=$RSESSION_DIAGNOSTICS_LIBSEGFAULT $VALGRIND $command $arg1 $arg2 $arg3 $arg4 $arg5;exit"
       fi
    fi
 
