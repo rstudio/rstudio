@@ -1,5 +1,7 @@
 FROM centos:7
 
+ARG OPERATING_SYSTEM=centos_7
+
 RUN set -x \
     && yum install epel-release -y
 
