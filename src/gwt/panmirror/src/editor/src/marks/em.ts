@@ -57,8 +57,8 @@ const extension: Extension = {
 
   inputRules: (schema: Schema, filter: MarkInputRuleFilter) => {
     return [
-      delimiterMarkInputRule('\\*', schema.marks.em, filter, '\\*-'),
-      delimiterMarkInputRule('_', schema.marks.em, filter, '_-')
+      delimiterMarkInputRule('\\*', schema.marks.em, filter, '\\*-', true),
+      delimiterMarkInputRule('_', schema.marks.em, filter, '_-', true)
     ];
   },
 };

@@ -46,10 +46,22 @@ export function markInputRule(regexp: RegExp, markType: MarkType, filter: MarkIn
   });
 }
 
-export function delimiterMarkInputRule(delim: string, markType: MarkType, filter: MarkInputRuleFilter, prefixMask?: string) {
+export function delimiterMarkInputRule(
+  delim: string, 
+  markType: MarkType, 
+  filter: MarkInputRuleFilter, 
+  prefixMask?: string, 
+  noEnclosingWhitespace?: boolean
+) {
+  
+  // create distinct patterns depending on whether we allow enclosing whitespace
+  const contentPattern = noEnclosingWhitespace
+      ? `[^\\s${delim}][^${delim}]+[^\\s${delim}]|[^\\s${delim}]{1,2}`
+      : `[^${delim}]+`;
+  
   // if there is no prefix mask then this is simple regex we can pass to markInputRule
   if (!prefixMask) {
-    const regexp = `(?:${delim})([^${delim}]+)(?:${delim})$`;
+    const regexp = `(?:${delim})(${contentPattern})(?:${delim})$`;
     return markInputRule(new RegExp(regexp), markType, filter);
 
     // otherwise we need custom logic to get mark placement/eliding right
@@ -72,7 +84,7 @@ export function delimiterMarkInputRule(delim: string, markType: MarkType, filter
     validateParam('delim', delim);
 
     // build regex (this regex assumes that mask is one character)
-    const regexp = `(?:^|[^${prefixMask}])(?:${delim})([^${delim}]+)(?:${delim})$`;
+    const regexp = `(?:^|[^${prefixMask}])(?:${delim})(${contentPattern})(?:${delim})$`;
 
     // return rule
     return new InputRule(new RegExp(regexp), (state: EditorState, match: string[], start: number, end: number) => {
