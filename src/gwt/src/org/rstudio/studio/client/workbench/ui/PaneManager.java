@@ -66,7 +66,6 @@ import org.rstudio.studio.client.workbench.views.console.ConsolePane;
 import org.rstudio.studio.client.workbench.views.output.find.FindOutputTab;
 import org.rstudio.studio.client.workbench.views.output.markers.MarkersOutputTab;
 import org.rstudio.studio.client.workbench.views.source.Source;
-import org.rstudio.studio.client.workbench.views.source.SourcePane;
 import org.rstudio.studio.client.workbench.views.source.SourceWindowManager;
 import org.rstudio.studio.client.workbench.views.source.model.SourceDocument;
 
