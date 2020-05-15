@@ -47,9 +47,9 @@
 {
    # retrieve object from cache
    object <- .rs.explorer.getCachedObject(
-      id = id,
+      id             = id,
       extractingCode = extractingCode,
-      refresh = FALSE
+      refresh        = FALSE
    )
    
    # construct context
@@ -71,9 +71,9 @@
 {
    # retrieve object from cache
    object <- .rs.explorer.getCachedObject(
-      id = id,
+      id             = id,
       extractingCode = NULL,
-      refresh = TRUE
+      refresh        = TRUE
    )
    
    # construct context
@@ -93,7 +93,7 @@
 
 .rs.addJsonRpcHandler("explorer_end_inspect", function(id)
 {
-   .rs.explorer.removeCachedObject(id)
+   .rs.explorer.removeCacheEntry(id)
 })
 
 .rs.addFunction("objectAddress", function(object)
@@ -147,7 +147,7 @@
       if (inherits(object, "python.builtin.module"))
          return(FALSE)
       
-      return(reticulate::py_has_attr(object, "__dict__"))
+      TRUE
    }
    
    attrib <- attributes(object)
@@ -230,28 +230,67 @@
       return(object)
    
    # otherwise, evaluate expression to retrieve sub-object
-   envir <- new.env(parent = globalenv())
-   envir[["__OBJECT__"]] <- object
-   
-   tryCatch(
-      eval(parse(text = extractingCode), envir = envir),
-      error = warning
-   )
+   if (.rs.reticulate.replIsActive())
+   {
+      pyid <- paste("_rstudio_viewer", id, sep = "_")
+      code <- sub("`__OBJECT__`", pyid, extractingCode, fixed = TRUE)
+      
+      tryCatch(
+         reticulate::py_eval(code, convert = FALSE),
+         error = warning
+      )
+   }
+   else
+   {
+      envir <- new.env(parent = globalenv())
+      envir[["__OBJECT__"]] <- object
+      
+      tryCatch(
+         eval(parse(text = extractingCode), envir = envir),
+         error = warning
+      )
+   }
 })
 
-.rs.addFunction("explorer.setCachedObject", function(object,
-                                                     id = .rs.createUUID())
+.rs.addFunction("explorer.setCacheEntry", function(entry,
+                                                   id = .rs.createUUID())
 {
+   # place entry in cache
    cache <- .rs.explorer.getCache()
-   cache[[id]] <- object
+   cache[[id]] <- entry
+   
+   # for Python objects, store a reference in main module
+   if (inherits(entry$object, "python.builtin.object"))
+   {
+      main <- reticulate::import_main(convert = FALSE)
+      pyid <- paste("_rstudio_viewer", id, sep = "_")
+      reticulate::py_set_attr(main, pyid, entry$object)
+   }
+
+   # return generated id
    id
 })
 
-.rs.addFunction("explorer.removeCachedObject", function(id)
+.rs.addFunction("explorer.removeCacheEntry", function(id)
 {
+   # retrieve entry from cache
    cache <- .rs.explorer.getCache()
+   entry <- cache[[id]]
+   
+   # remove old reference
    if (exists(id, envir = cache))
       rm(list = id, envir = cache)
+   
+   # if this is a Python object, remove it from the main module
+   if (inherits(entry$object, "python.builtin.object"))
+   {
+      main <- reticulate::import_main(convert = FALSE)
+      pyid <- paste("_rstudio_viewer", id, sep = "_")
+      reticulate::py_set_attr(main, pyid, NULL)
+   }
+   
+   # return id of deleted object
+   id
 })
 
 #' @param name The display name, as should be used in UI.
@@ -353,7 +392,7 @@
    )
    
    # put it in cache and retrieve handle
-   id <- .rs.explorer.setCachedObject(entry)
+   id <- .rs.explorer.setCacheEntry(entry)
    
    # return a handle object
    list(
@@ -396,12 +435,7 @@
    n <- length(.$object)
    expandable <- if (inherits(object, "python.builtin.object"))
    {
-      inherits(object, c(
-         "python.builtin.module",
-         "python.builtin.dict",
-         "python.builtin.tuple",
-         "python.builtin.list"
-      ))
+      TRUE
    }
    else
    {
@@ -518,7 +552,7 @@
    if (inherits(object, "xml_node") && "xml2" %in% loadedNamespaces())
       .rs.explorer.inspectXmlNode(object, context)
    else if (inherits(object, "python.builtin.object"))
-      .rs.explorer.inspectPythonObject(object, context)
+      .rs.explorer.inspectPythonValue(object, context)
    else if (is.list(object) || is.call(object) || is.expression(object))
       .rs.explorer.inspectList(object, context)
    else if (is.environment(object))
@@ -538,7 +572,17 @@
    
    if (inherits(object, "python.builtin.object"))
    {
-      attributes <- reticulate::py_get_attr(object, "__dict__", silent = TRUE)
+      attributes <- reticulate::dict()
+      
+      builtins <- reticulate::import_builtins(convert = TRUE)
+      keys <- builtins$dir(object)
+      
+      for (key in keys)
+      {
+         attr <- reticulate::py_get_attr(object, key, silent = TRUE)
+         reticulate::py_set_item(attributes, key, attr)
+      }
+      
       name <- "(attributes)"
       access <- "#"
       tags <- c(.rs.explorer.tags$ATTRIBUTES, .rs.explorer.tags$VIRTUAL)
@@ -556,116 +600,111 @@
    }
 })
 
-.rs.addFunction("explorer.inspectPythonObject", function(object,
+.rs.addFunction("explorer.inspectPythonValue", function(object,
                                                          context = .rs.explorer.createContext())
 {
    children <- NULL
    
    if (context$recursive)
    {
-      if (inherits(object, "python.builtin.module"))
-      {
-         dict <- reticulate::py_get_attr(object, "__dict__", silent = TRUE)
-         reticulate::iterate(dict, function(key) {
-            
-            item <- reticulate::py_get_item(dict, key, silent = TRUE)
-            if (is.null(item))
-               return()
-            
-            if (.rs.reticulate.replIsActive())
-            {
-               name <- as.character(key)
-               access <- paste("#", name, sep = ".")
-               tags <- character()
-            }
-            else
-            {
-               name <- as.character(key)
-               access <- paste("#", deparse(as.name(name), backtick = TRUE), sep = "$")
-               tags <- character()
-            }
-            
-            childContext <- .rs.explorer.createChildContext(context, name, access, tags)
-            
-            children[[length(children) + 1]] <<-
-               .rs.explorer.inspectObject(item, childContext)
-            
-         })
-      }
-      else if (inherits(object, "python.builtin.dict"))
-      {
-         reticulate::iterate(object, function(key) {
-            
-            item <- reticulate::py_get_item(object, key, silent = TRUE)
-            if (is.null(item))
-               return()
-            
-            name <- as.character(key)
-            access <- sprintf("#[\"%s\"]", name)
-            tags <- character()
-            childContext <- .rs.explorer.createChildContext(context, name, access, tags)
-            
-            children[[length(children) + 1]] <<-
-               .rs.explorer.inspectObject(item, childContext)
-            
-         })
-      }
+      children <- if (inherits(object, "python.builtin.dict"))
+         .rs.explorer.inspectPythonDict(object, context)
+      else if (.rs.reticulate.isStructSeq(object))
+         .rs.explorer.inspectPythonObject(object, context)
       else if (inherits(object, c("python.builtin.tuple", "python.builtin.list")))
-      {
-         # NOTE: convert from 1-based to 0-based indexing
-         for (i in seq_along(object) - 1L)
-         {
-            # force integer indexing in R mode
-            if (.rs.reticulate.replIsActive())
-            {
-               name <- sprintf("[%i]", i)
-               access <- sprintf("#[%i]", i)
-               tags <- c(.rs.explorer.tags$VIRTUAL)
-            }
-            else
-            {
-               name <- sprintf("[%i]", i)
-               access <- sprintf("#[%iL]", i)
-               tags <- c(.rs.explorer.tags$VIRTUAL)
-            }
-            
-            childContext <- .rs.explorer.createChildContext(context, name, access, tags)
-            children[[length(children) + 1]] <-
-               .rs.explorer.inspectObject(object[[i]], childContext)
-         }
-      }
+         .rs.explorer.inspectPythonList(object, context)
       else
-      {
-         attrs <- reticulate::py_list_attributes(object)
-         lapply(attrs, function(attr) {
-            
-            item <- reticulate::py_get_attr(object, attr, silent = TRUE)
-            if (is.null(item))
-               next
-            
-            if (.rs.reticulate.replIsActive())
-            {
-               name <- as.character(attr)
-               access <- paste("#", name, sep = ".")
-               tags <- character()
-            }
-            else
-            {
-               name <- as.character(attr)
-               access <- paste("#", deparse(as.name(name), backtick = TRUE), sep = "$")
-               tags <- character()
-            }
-            
-            childContext <- .rs.explorer.createChildContext(context, name, access, tags)
-            
-            children[[length(children) + 1]] <<-
-               .rs.explorer.inspectObject(item, childContext)
-            
-         })
-      }
+         .rs.explorer.inspectPythonObject(object, context)
    }
    
    .rs.explorer.createInspectionResult(object, context, children)
+   
+})
+
+.rs.addFunction("explorer.inspectPythonDict", function(object,
+                                                       context = .rs.explorer.createContext())
+{
+   
+   children <- vector("list", 0L)
+   
+   reticulate::iterate(object, function(key) {
+      
+      # skip non-string, non-integer keys as they aren't handled well
+      if (!inherits(key, c("python.builtin.str", "python.builtin.int")))
+         return()
+      
+      item <- reticulate::py_get_item(object, key, silent = TRUE)
+      if (is.null(item))
+         return()
+      
+      name <- as.character(key)
+      access <- sprintf("#[\"%s\"]", name)
+      tags <- character()
+      childContext <- .rs.explorer.createChildContext(context, name, access, tags)
+      
+      children[[length(children) + 1]] <<-
+         .rs.explorer.inspectObject(item, childContext)
+      
+   })
+   
+   children
+   
+})
+
+.rs.addFunction("explorer.inspectPythonList", function(object,
+                                                       context = .rs.explorer.createContext())
+{
+   # NOTE: convert from 1-based to 0-based indexing
+   lapply(seq_along(object) - 1L, function(i) {
+      
+      # force integer indexing in R mode
+      if (.rs.reticulate.replIsActive())
+      {
+         name <- sprintf("[%i]", i)
+         access <- sprintf("#[%i]", i)
+         tags <- c(.rs.explorer.tags$VIRTUAL)
+      }
+      else
+      {
+         name <- sprintf("[%i]", i)
+         access <- sprintf("#[%iL]", i)
+         tags <- c(.rs.explorer.tags$VIRTUAL)
+      }
+      
+      childContext <- .rs.explorer.createChildContext(context, name, access, tags)
+      .rs.explorer.inspectObject(object[[i]], childContext)
+   })
+   
+})
+
+
+.rs.addFunction("explorer.inspectPythonObject", function(object,
+                                                         context = .rs.explorer.createContext())
+{
+   attributes <- .rs.reticulate.listAttributes(object, includeDunderMethods = TRUE)
+   lapply(attributes, function(attribute) {
+      
+      item <- reticulate::py_get_attr(object, attribute, silent = TRUE)
+      if (is.null(item))
+         next
+      
+      if (.rs.reticulate.replIsActive())
+      {
+         name <- as.character(attribute)
+         access <- paste("#", name, sep = ".")
+         tags <- character()
+      }
+      else
+      {
+         name <- as.character(attribute)
+         access <- paste("#", deparse(as.name(name), backtick = TRUE), sep = "$")
+         tags <- character()
+      }
+      
+      childContext <- .rs.explorer.createChildContext(context, name, access, tags)
+      .rs.explorer.inspectObject(item, childContext)
+      
+   })
 })
 
 .rs.addFunction("explorer.inspectXmlNode", function(object,

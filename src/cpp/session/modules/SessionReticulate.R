@@ -1814,3 +1814,31 @@ html.heading = _heading
    }
    
 })
+
+.rs.addFunction("reticulate.isStructSeq", function(object)
+{
+   all(
+      reticulate::py_has_attr(object, "n_sequence_fields"),
+      reticulate::py_has_attr(object, "n_fields"),
+      reticulate::py_has_attr(object, "n_unnamed_fields")
+   )
+})
+
+.rs.addFunction("reticulate.listAttributes", function(object, includeDunderMethods = TRUE)
+{
+   attributes <- reticulate::py_list_attributes(object)
+   
+   # remove dunder methods if requested
+   if (!includeDunderMethods)
+      attributes <- grep("^__", attributes, value = TRUE, invert = TRUE)
+   
+   # sort so that dunder methods are shown last
+   indices <- order(
+      .rs.startsWith(attributes, "__"),
+      .rs.startsWith(attributes, "_")
+   )
+
+   # return sorted attributes
+   attributes[indices]
+   
+})
