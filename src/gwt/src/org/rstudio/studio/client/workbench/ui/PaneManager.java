@@ -793,10 +793,6 @@ public class PaneManager
       ArrayList<LogicalWindow> results = new ArrayList<>();
 
       JsArrayString panes = config.getQuadrants();
-      for (int i = 0; i < source_.getViews().size()-1; i++)
-      {
-         panes.push("Source " + Integer.toString(i));
-      }
       for (int i = 0; i < panes.length(); i++)
       {
          results.add(panesByName_.get(panes.get(i)));
@@ -1141,7 +1137,7 @@ public class PaneManager
       PaneConfig.addSourcePane();
       source_.addView();
       Source.Display display = source_.getViewByIndex(id);
-      String frameName = "Source " + Integer.toString(id);
+      String frameName = display.getName();
       panesByName_.put(frameName, createSource(frameName, display));
       panel_.addLeftWidget(display.asWidget());
 
@@ -1170,6 +1166,18 @@ public class PaneManager
          {
             panel_.removeLeftWidget(display.asWidget());
             source_.closeView(name);
+            panesByName_.remove(name);
+
+            PaneConfig paneConfig = getCurrentConfig();
+            userPrefs_.panes().setGlobalValue(PaneConfig.create(
+               JsArrayUtil.copy(paneConfig.getQuadrants()),
+               paneConfig.getTabSet1(),
+               paneConfig.getTabSet2(),
+               paneConfig.getHiddenTabSet(),
+               paneConfig.getConsoleLeftOnTop(),
+               paneConfig.getConsoleRightOnTop(),
+               source_.getViews().size() - 1).cast());
+            userPrefs_.writeUserPrefs();
          }
       }
    }
