@@ -28,7 +28,7 @@ import {
 } from './table-pandoc';
 import { tableColumnWidths } from './table-columns';
 
-const kDefaultCellClasses = 'pm-table-cell pm-block-border-color';
+export const kDefaultCellClasses = 'pm-table-cell pm-block-border-color';
 
 const nodes = tableNodes({
   tableGroup: 'block',
@@ -50,8 +50,10 @@ const nodes = tableNodes({
       getFromDOM(dom: Element) {
         return (dom as HTMLElement).className;
       },
-      setDOMAttr(_value, attrs) {
-        attrs.class = kDefaultCellClasses;
+      setDOMAttr(value, attrs) {
+        if (value) {
+          attrs.class = value;
+        }
       },
     },
   },

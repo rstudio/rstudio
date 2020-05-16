@@ -22,6 +22,8 @@ import { sliceHasNode } from '../../api/slice';
 import { fixupTableWidths } from './table-columns';
 import { forChangedNodes, trTransform } from '../../api/transaction';
 
+import { kDefaultCellClasses } from './table-nodes';
+
 export function tablePaste() {
   return new Plugin({
     key: new PluginKey('table-paste'),
@@ -47,13 +49,19 @@ export function tablePaste() {
     },
     appendTransaction: (transactions: Transaction[], oldState: EditorState, newState: EditorState) => {
 
+      // alias schema
+      const schema = newState.schema;
+
       // only process table paste transactions
       if (!transactions.some(transaction => transaction.getMeta('tablePaste'))) {
         return null;
       }
 
-      const schema = newState.schema;
-
+      // default to 'empty' attributes for cells
+      const defaultCellAttrs = { colwidth: null, align: null, className: kDefaultCellClasses };
+     
+      // cleanup table by converting the first row to header cells and clearing any align styles
+      // or other classes that may have come in
       const tr = newState.tr;
       forChangedNodes(oldState, newState, node => node.type === node.type.schema.nodes.table, (node, pos) => {
         let firstRow: ProsemirrorNode;
@@ -62,7 +70,10 @@ export function tablePaste() {
             firstRow = childNode;
           } else if (parent === firstRow) {
             const headerPos = pos + 1 + childPos;
-            tr.setNodeMarkup(headerPos, schema.nodes.table_header, childNode.attrs);
+            tr.setNodeMarkup(headerPos, schema.nodes.table_header, { ...childNode.attrs, ...defaultCellAttrs });
+          } else if (childNode.type === schema.nodes.table_cell) {
+            const cellPos = pos + 1 + childPos;
+            tr.setNodeMarkup(cellPos, schema.nodes.table_cell, { ...childNode.attrs, ...defaultCellAttrs });
           }
         });
       });
