@@ -27,6 +27,7 @@ import {
   writePandocTableHeaderNodes,
 } from './table-pandoc';
 import { tableColumnWidths } from './table-columns';
+import { tableBlockCapsuleFilter } from './table-capsule';
 
 export const kDefaultCellClasses = 'pm-table-cell pm-block-border-color';
 
@@ -77,6 +78,7 @@ export const tableContainerNode = {
       },
     ],
     writer: writePandocTableContainer,
+    blockCapsuleFilter: tableBlockCapsuleFilter()
   },
 };
 

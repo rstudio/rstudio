@@ -154,6 +154,53 @@ export function decodeBlockCapsuleText(text: string, tok: PandocToken, filters: 
   return text;
 }
 
+export function blockCapsuleTextHandler(type: string, pattern: RegExp, textFilter?: (text: string) => string) {
+
+  return (text: string, tok: PandocToken) : string => {
+
+    // if this is a code block or raw block then we need to strip the prefix
+    // (b/c it could in a blockquote or indented in a list)
+    const stripPrefix = tok.t === PandocTokenType.CodeBlock || tok.t === PandocTokenType.RawBlock;
+
+    // replace text
+    return text.replace(pattern, (match) => {
+      const capsuleText = textFilter ? textFilter(match) : match;
+      const capsule = parsePandocBlockCapsule(capsuleText);
+      if (capsule.type === type) {
+        if (stripPrefix) {
+          return blockCapsuleSourceWithoutPrefix(capsule.source, capsule.prefix);
+        } else {
+          return capsule.source;
+        }
+      } else {
+        return match;
+      }
+    });
+  };
+
+}
+
+// token handler that looks for a paragraph token consisting entirely of a block capsule of our type.
+// if we find that then return the block capsule text
+export function blockCapsuleParagraphTokenHandler(type: string) {
+  const tokenRegex = encodedBlockCapsuleRegex('^', '$');
+  return (tok: PandocToken) => {
+    if (tok.t === PandocTokenType.Para) {
+      if (tok.c.length === 1 && tok.c[0].t === PandocTokenType.Str) {
+        const text = tok.c[0].c as string;
+        const match = text.match(tokenRegex);
+        if (match) {
+          const capsuleRecord = parsePandocBlockCapsule(match[0]);
+          if (capsuleRecord.type === type) {
+            return match[0];
+          }
+        }
+      }
+    }
+    return null;
+  };
+}
+
 
 // create a regex that can be used to match a block capsule
 export function encodedBlockCapsuleRegex(prefix?: string, suffix?: string, flags?: string) {

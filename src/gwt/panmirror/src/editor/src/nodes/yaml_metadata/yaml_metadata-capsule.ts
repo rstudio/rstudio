@@ -17,16 +17,13 @@
 import { Schema } from "prosemirror-model";
 
 import { kYamlBlocksRegex } from "../../api/yaml";
-import { PandocToken, PandocTokenType, ProsemirrorWriter } from "../../api/pandoc";
+import { ProsemirrorWriter } from "../../api/pandoc";
 import { uuidv4 } from "../../api/util";
-import { encodedBlockCapsuleRegex, parsePandocBlockCapsule, blockCapsuleSourceWithoutPrefix, PandocBlockCapsule } from "../../api/pandoc_capsule";
+import { encodedBlockCapsuleRegex, blockCapsuleSourceWithoutPrefix, PandocBlockCapsule, blockCapsuleParagraphTokenHandler, blockCapsuleTextHandler } from "../../api/pandoc_capsule";
 
 export function yamlMetadataBlockCapsuleFilter() {
 
   const kYamlMetadataCapsuleType = 'E1819605-0ACD-4FAE-8B99-9C1B7BD7C0F1'.toLowerCase();
-
-  const textRegex = encodedBlockCapsuleRegex(undefined, '\\n', 'gm');
-  const tokenRegex = encodedBlockCapsuleRegex('^', '$');
 
   return {
 
@@ -41,45 +38,16 @@ export function yamlMetadataBlockCapsuleFilter() {
     ,
 
     // globally replace any instances of our block capsule found in text
-    handleText: (text: string, tok: PandocToken) : string => {
-
-      // if this is a code block then we need to strip the prefix
-      const stripPrefix = tok.t === PandocTokenType.CodeBlock;
-
-      // replace text
-      return text.replace(textRegex, (match) => {
-        const capsuleText = match.substring(0, match.length - 1); // trim off newline
-        const capsule = parsePandocBlockCapsule(capsuleText);
-        if (capsule.type === kYamlMetadataCapsuleType) {
-          if (stripPrefix) {
-            return blockCapsuleSourceWithoutPrefix(capsule.source, capsule.prefix);
-          } else {
-            return capsule.source;
-          }
-        } else {
-          return match;
-        }
-      });
-    },
+    handleText: blockCapsuleTextHandler(
+      kYamlMetadataCapsuleType, 
+      encodedBlockCapsuleRegex(undefined, '\\n', 'gm'), 
+      (text: string) => text.substring(0, text.length - 1) // trim off newline
+    ),
 
     // we are looking for a paragraph token consisting entirely of a
     // block capsule of our type. if find that then return the block
     // capsule text
-    handleToken: (tok: PandocToken) => {
-      if (tok.t === PandocTokenType.Para) {
-        if (tok.c.length === 1 && tok.c[0].t === PandocTokenType.Str) {
-          const text = tok.c[0].c as string;
-          const match = text.match(tokenRegex);
-          if (match) {
-            const capsuleRecord = parsePandocBlockCapsule(match[0]);
-            if (capsuleRecord.type === kYamlMetadataCapsuleType) {
-              return match[0];
-            }
-          }
-        }
-      }
-      return null;
-    },
+    handleToken: blockCapsuleParagraphTokenHandler(kYamlMetadataCapsuleType),
 
     // write as yaml_metadata
     writeNode: (schema: Schema, writer: ProsemirrorWriter, capsule: PandocBlockCapsule) => {
