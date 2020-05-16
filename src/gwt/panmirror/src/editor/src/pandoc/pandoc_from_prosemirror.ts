@@ -126,7 +126,7 @@ class PandocWriter implements PandocOutput {
     this.write(token);
   }
 
-  public writeMark(type: PandocTokenType, parent: Fragment, expelEnclosingWhitespace = false) {
+  public writeMark(type: PandocTokenType, parent: Fragment, expelEnclosingWhitespace = true) {
     // expel enclosing whitepsace if requested and if the fragment isn't 100% spaces
     if (expelEnclosingWhitespace) {
       // build output spec
