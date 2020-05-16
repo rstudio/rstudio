@@ -53,7 +53,7 @@ export function tableBlockCapsuleFilter() : PandocBlockCapsuleFilter {
     writeNode: (schema: Schema, writer: ProsemirrorWriter, capsule: PandocBlockCapsule) => {
 
       // remove the source prefix
-      const source = blockCapsuleSourceWithoutPrefix(capsule.source, capsule.prefix)
+      const source = blockCapsuleSourceWithoutPrefix(capsule.source, capsule.prefix);
 
       // fallback to write as raw html
       const writeAsRawHTML = () => {
