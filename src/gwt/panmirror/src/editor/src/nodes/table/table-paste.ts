@@ -57,24 +57,58 @@ export function tablePaste() {
         return null;
       }
 
-      // default to 'empty' attributes for cells
-      const defaultCellAttrs = { colwidth: null, align: null, className: kDefaultCellClasses };
-     
-      // cleanup table by converting the first row to header cells and clearing any align styles
-      // or other classes that may have come in
-      const tr = newState.tr;
+      // cleanup table by converting the first row to header cells, ensuring that column alignments
+      // are derived from the alignment of the first row, and applying the standard cell class names
+      const tr = newState.tr;     
       forChangedNodes(oldState, newState, node => node.type === node.type.schema.nodes.table, (node, pos) => {
+        
         let firstRow: ProsemirrorNode;
+        let currentColumn = 0;
+        const columnAlignments: string[] = [];
+
         node.descendants((childNode, childPos, parent) => {
-          if (!firstRow) {
-            firstRow = childNode;
-          } else if (parent === firstRow) {
-            const headerPos = pos + 1 + childPos;
-            tr.setNodeMarkup(headerPos, schema.nodes.table_header, { ...childNode.attrs, ...defaultCellAttrs });
-          } else if (childNode.type === schema.nodes.table_cell) {
-            const cellPos = pos + 1 + childPos;
-            tr.setNodeMarkup(cellPos, schema.nodes.table_cell, { ...childNode.attrs, ...defaultCellAttrs });
+          
+          // if this is a row then reset the current column to 0
+          if (childNode.type === schema.nodes.table_row) {
+            currentColumn = 0;
           }
+
+          // first thing we will encounter in traveral is the first row, note that and move along to cells
+          if (!firstRow) {
+
+            // note first row
+            firstRow = childNode;
+
+          // children of the first row are the headers
+          } else if (parent === firstRow) {
+
+            // collect alignment (will be applied below to cells in this column)
+            columnAlignments.push(childNode.attrs.align);
+
+            // convert to a table header w/ default class
+            const headerPos = pos + 1 + childPos;
+            tr.setNodeMarkup(headerPos, schema.nodes.table_header, { ...childNode.attrs, className: kDefaultCellClasses });
+
+          // normal cell - apply the requisite alignment and give it the default class
+          } else if (childNode.type === schema.nodes.table_cell) {
+
+            // determine alignment
+            const align = columnAlignments[currentColumn] || null;
+
+            // apply markup
+            const cellPos = pos + 1 + childPos;
+            tr.setNodeMarkup(cellPos, schema.nodes.table_cell, { 
+              ...childNode.attrs, 
+              align,
+              className: kDefaultCellClasses
+             });
+          }
+
+          // if this is a cell then advance the current column
+          if (childNode.type === schema.nodes.table_header || childNode.type === schema.nodes.table_cell) {
+            currentColumn++;
+          }
+
         });
       });
 
