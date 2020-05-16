@@ -79,16 +79,20 @@ const extension = (pandocExtensions: PandocExtensions): Extension => {
           writer: {
             priority: 20,
             write: (output: PandocOutput, mark: Mark, parent: Fragment) => {
-              output.writeToken(PandocTokenType.Code, () => {
-                if (codeAttrs) {
-                  output.writeAttr(mark.attrs.id, mark.attrs.classes, mark.attrs.keyvalue);
-                } else {
-                  output.writeAttr();
-                }
-                let code = '';
-                parent.forEach((node: ProsemirrorNode) => (code = code + node.textContent));
-                output.write(code);
-              });
+              // collect code and trim it (pandoc will do this on parse anyway)
+              let code = '';
+              parent.forEach((node: ProsemirrorNode) => (code = code + node.textContent));
+              code = code.trim();
+              if (code.length > 0) {
+                output.writeToken(PandocTokenType.Code, () => {
+                  if (codeAttrs) {
+                    output.writeAttr(mark.attrs.id, mark.attrs.classes, mark.attrs.keyvalue);
+                  } else {
+                    output.writeAttr();
+                  }
+                  output.write(code);
+                });
+              } 
             },
           },
         },
