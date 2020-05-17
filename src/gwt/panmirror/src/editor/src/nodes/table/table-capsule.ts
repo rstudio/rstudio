@@ -17,13 +17,15 @@
 import { Schema, DOMParser } from "prosemirror-model";
 
 
-import { PandocBlockCapsuleFilter, PandocBlockCapsule, blockCapsuleParagraphTokenHandler, encodedBlockCapsuleRegex, blockCapsuleTextHandler, blockCapsuleSourceWithoutPrefix } from "../../api/pandoc_capsule";
-import { ProsemirrorWriter } from "../../api/pandoc";
+import { PandocBlockCapsuleFilter, PandocBlockCapsule, blockCapsuleParagraphTokenHandler, encodedBlockCapsuleRegex, blockCapsuleTextHandler, blockCapsuleSourceWithoutPrefix, parsePandocBlockCapsule } from "../../api/pandoc_capsule";
+import { ProsemirrorWriter, PandocToken, PandocTokenType, tokensCollectText } from "../../api/pandoc";
 import { kHTMLFormat } from "../../api/raw";
 
 export function tableBlockCapsuleFilter() : PandocBlockCapsuleFilter {
 
   const kTableBlockCapsuleType = '8EF5A772-DD63-4622-84BF-AF1995A1B2B9'.toLowerCase();
+  const pagraphTokenCapsuleHandler = blockCapsuleParagraphTokenHandler(kTableBlockCapsuleType);
+  const tokenRegex = encodedBlockCapsuleRegex('^', '$');
 
   return {
 
@@ -47,7 +49,34 @@ export function tableBlockCapsuleFilter() : PandocBlockCapsuleFilter {
   
     // we are looking for a paragraph token consisting entirely of a block capsule of our type. 
     // if find that then return the block capsule text
-    handleToken: blockCapsuleParagraphTokenHandler(kTableBlockCapsuleType),
+    handleToken: (tok: PandocToken) => {
+
+      // first check for a paragraph
+      const capsuleText = pagraphTokenCapsuleHandler(tok);
+      if (capsuleText) {
+        return capsuleText;
+      }
+
+      // now look for a definition list (which is what a table with a caption parses as)
+      if (tok.t === PandocTokenType.DefinitionList) {
+        if (tok.c.length === 1) {
+          const definition = tok.c[0];
+          if (definition[0][0].t === PandocTokenType.Str) {
+            const term = definition[0][0].c as string;
+            const match = term.match(tokenRegex);
+            if (match) {
+              const capsuleRecord = parsePandocBlockCapsule(term);
+              if (capsuleRecord.type === kTableBlockCapsuleType) {
+                return term;
+              }
+            }
+          }
+        }
+      }
+
+      return null;
+
+    },
 
     // write the node as a table (parse the html)
     writeNode: (schema: Schema, writer: ProsemirrorWriter, capsule: PandocBlockCapsule) => {
@@ -67,12 +96,31 @@ export function tableBlockCapsuleFilter() : PandocBlockCapsuleFilter {
       const doc = parser.parseFromString(capsule.source, 'text/html');
       if (doc.body && doc.body.firstChild instanceof HTMLTableElement) {
 
-        // parse the prosemirror table element
+        // get prosemirror dom parser
         const prosemirrorDomParser = DOMParser.fromSchema(schema);
+
+        // extract caption element
+        let captionElement: HTMLTableCaptionElement | null = null;
+        const unparsedTable = doc.body.firstChild;
+        const captionCollection = unparsedTable.getElementsByTagName('caption');
+        if (captionCollection.length) {
+          captionElement = captionCollection.item(0);
+          if (captionElement) {
+            captionElement.remove();
+          }
+        } 
+
+        // determine caption (either empty or parsed from element)
+        let caption = schema.nodes.table_caption.create( { inactive: true });
+        if (captionElement) {
+          const captionSlice = prosemirrorDomParser.parseSlice(captionElement);
+          caption = schema.nodes.table_caption.createAndFill({ inactive: false }, captionSlice.content)!;
+        }
+
+        // parse the prosemirror table element
         const slice = prosemirrorDomParser.parseSlice(doc.body);
         if (slice.content.firstChild && slice.content.firstChild.type === schema.nodes.table) {
           const table = slice.content.firstChild;
-          const caption = schema.nodes.table_caption.create( { inactive: true });
           writer.addNode(schema.nodes.table_container, {}, [table, caption]);
         } else {
           writeAsRawHTML();
@@ -85,3 +133,5 @@ export function tableBlockCapsuleFilter() : PandocBlockCapsuleFilter {
     }
   };
 }
+
+
