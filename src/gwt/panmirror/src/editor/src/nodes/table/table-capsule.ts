@@ -31,7 +31,7 @@ export function tableBlockCapsuleFilter() : PandocBlockCapsuleFilter {
 
     type: kTableBlockCapsuleType,
     
-    match: /^([\t >]*)(<table.*?<\/table>)([ \t]*)$/gm,
+    match: /^([\t >]*)(<table[\W\w]*?<\/table>)([ \t]*)$/gm,
     
     // textually enclose the capsule so that pandoc parses it as the type of block we want it to
     // (in this case we don't do anything because pandoc would have written this table as a 
