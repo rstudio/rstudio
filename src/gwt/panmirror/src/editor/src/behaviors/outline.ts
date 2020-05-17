@@ -150,7 +150,7 @@ function transactionsAffectOutline(transactions: Transaction[], oldState: Editor
 }
 
 export function getOutline(state: EditorState): EditorOutline {
-  return plugin.getState(state);
+  return plugin.getState(state)!;
 }
 
 export default extension;

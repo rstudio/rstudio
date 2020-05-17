@@ -73,12 +73,12 @@ class FindPlugin extends Plugin<DecorationSet> {
   }
 
   public matchCount(state: EditorState) {
-    return key.getState(state).find().length;
+    return key.getState(state)!.find().length;
   }
 
   public selectFirst() {
     return (state: EditorState<any>, dispatch?: (tr: Transaction<any>) => void) => {
-      const decorations: Decoration[] = key.getState(state).find(0);
+      const decorations: Decoration[] = key.getState(state)!.find(0);
       if (decorations.length === 0) {
         return false;
       }
@@ -108,7 +108,7 @@ class FindPlugin extends Plugin<DecorationSet> {
           : state.selection.to
         : state.selection.from;
 
-      const decorationSet = key.getState(state);
+      const decorationSet = key.getState(state)!;
       let decorations: Decoration[] = decorationSet.find(searchFrom);
       if (decorations.length === 0) {
         // check for wrapping
@@ -142,7 +142,7 @@ class FindPlugin extends Plugin<DecorationSet> {
       const searchTo = this.matchesTerm(selectedText) ? state.selection.from - 1 : state.selection.from;
 
       // get all decorations up to the current selection
-      const decorationSet = key.getState(state);
+      const decorationSet = key.getState(state)!;
       let decorations: Decoration[] = decorationSet.find(0, searchTo);
       if (decorations.length === 0) {
         // handle wrapping
@@ -206,7 +206,7 @@ class FindPlugin extends Plugin<DecorationSet> {
       if (dispatch) {
         const tr = state.tr;
 
-        const decorationSet = key.getState(state);
+        const decorationSet = key.getState(state)!;
 
         const decorations: Decoration[] = decorationSet.find(0);
         decorations.forEach(decoration => {
