@@ -18,7 +18,7 @@ import { Schema, DOMParser } from "prosemirror-model";
 
 
 import { PandocBlockCapsuleFilter, PandocBlockCapsule, blockCapsuleParagraphTokenHandler, encodedBlockCapsuleRegex, blockCapsuleTextHandler, blockCapsuleSourceWithoutPrefix, parsePandocBlockCapsule } from "../../api/pandoc_capsule";
-import { ProsemirrorWriter, PandocToken, PandocTokenType, tokensCollectText } from "../../api/pandoc";
+import { ProsemirrorWriter, PandocToken, PandocTokenType } from "../../api/pandoc";
 import { kHTMLFormat } from "../../api/raw";
 
 export function tableBlockCapsuleFilter() : PandocBlockCapsuleFilter {
