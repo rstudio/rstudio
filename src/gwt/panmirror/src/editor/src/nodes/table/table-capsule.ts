@@ -31,7 +31,7 @@ export function tableBlockCapsuleFilter() : PandocBlockCapsuleFilter {
 
     type: kTableBlockCapsuleType,
     
-    match: /^([\t >]*)(<table>.*?<\/table>)([ \t]*)$/gm,
+    match: /^([\t >]*)(<table.*?<\/table>)([ \t]*)$/gm,
     
     // textually enclose the capsule so that pandoc parses it as the type of block we want it to
     // (in this case we don't do anything because pandoc would have written this table as a 
@@ -99,9 +99,24 @@ export function tableBlockCapsuleFilter() : PandocBlockCapsuleFilter {
         // get prosemirror dom parser
         const prosemirrorDomParser = DOMParser.fromSchema(schema);
 
+        // get unparsed (by prosemirror) table
+        const unparsedTable = doc.body.firstChild;
+
+        // ensure that table cells all have content
+        const ensureCellContent = (tag: string) => {
+          const cells = unparsedTable.getElementsByTagName(tag);
+          for (let i=0; i<cells.length; i++) {
+            const cell = cells.item(i)!;
+            if (cell.children.length === 0) {
+              cell.append(window.document.createElement('p'));
+            }
+          }
+        };
+        ensureCellContent('td');
+        ensureCellContent('th');
+
         // extract caption element
         let captionElement: HTMLTableCaptionElement | null = null;
-        const unparsedTable = doc.body.firstChild;
         const captionCollection = unparsedTable.getElementsByTagName('caption');
         if (captionCollection.length) {
           captionElement = captionCollection.item(0);
