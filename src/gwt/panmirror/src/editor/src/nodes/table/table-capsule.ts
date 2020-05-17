@@ -71,11 +71,9 @@ export function tableBlockCapsuleFilter() : PandocBlockCapsuleFilter {
         const prosemirrorDomParser = DOMParser.fromSchema(schema);
         const slice = prosemirrorDomParser.parseSlice(doc.body);
         if (slice.content.firstChild && slice.content.firstChild.type === schema.nodes.table) {
-
-          // TODO: test yaml metadata to make sure it still works as expected
-          // TODO: fixup all of the cells / alignment / colpercents (this is just like a paste)
-
-          writer.addNode(schema.nodes.table_container, {}, [slice.content.firstChild]);
+          const table = slice.content.firstChild;
+          const caption = schema.nodes.table_caption.create( { inactive: true });
+          writer.addNode(schema.nodes.table_container, {}, [table, caption]);
         } else {
           writeAsRawHTML();
         }
