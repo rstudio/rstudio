@@ -179,15 +179,25 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
 
       add(new Label("Choose the layout of the panes in RStudio by selecting from the controls in each quadrant.", true));
 
-      extraSourceCount_ = userPrefs.panes().getGlobalValue().getExtraSources();
-      addSource_ = new ImageButton("Add source", res_.iconAddSourcePane2x());
-      addSource_.setVisible(true);
-      add(addSource_);
-      addSource_.addClickHandler(clickEvent ->
+      // temporary check for enabling additional columns feature
+      if (userPrefs.enableAdditionalColumns().getGlobalValue())
       {
-         extraSourceCount_++;
-         paneManager_.addSourceWindow();
-      });
+         additionalColumnCount_ = userPrefs.panes().getGlobalValue().getAdditionalSourceColumns();
+         addSource_ = new ImageButton("Add source", res_.iconAddSourcePane2x());
+         addSource_.setVisible(true);
+         add(addSource_);
+         addSource_.addClickHandler(event ->
+         {
+            additionalColumnCount_ = paneManager_.addSourceWindow();
+         });
+      }
+      else
+      {
+         if (additionalColumnCount_ > 0)
+            additionalColumnCount_ = paneManager_.closeAllAdditionalColumns();
+         addSource_ = null;
+      }
+
       String[] visiblePanes = PaneConfig.getVisiblePanes();
 
       leftTop_ = new ListBox();
@@ -383,10 +393,9 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
          else if (panes.get(3) == kConsole)
             consoleRightOnTop = false;
          
-         // !!! extraSourceCount needs to be updated
          userPrefs_.panes().setGlobalValue(PaneConfig.create(
                panes, tabSet1, tabSet2, hiddenTabSet,
-               consoleLeftOnTop, consoleRightOnTop, extraSourceCount_));
+               consoleLeftOnTop, consoleRightOnTop, additionalColumnCount_));
 
          dirty_ = false;
       }
@@ -457,5 +466,5 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
    private boolean dirty_ = false;
 
    private PaneManager paneManager_;
-   private int extraSourceCount_;
+   private int additionalColumnCount_;
 }

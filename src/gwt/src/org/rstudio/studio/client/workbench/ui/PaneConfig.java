@@ -31,7 +31,7 @@ public class PaneConfig extends UserPrefsAccessor.Panes
                                           JsArrayString hiddenTabSet,
                                           boolean consoleLeftOnTop,
                                           boolean consoleRightOnTop,
-                                          int extraSources) /*-{
+                                          int additionalSources) /*-{
       return { 
          quadrants: panes, 
          tabSet1: tabSet1, 
@@ -39,14 +39,14 @@ public class PaneConfig extends UserPrefsAccessor.Panes
          hiddenTabSet: hiddenTabSet,
          console_left_on_top: consoleLeftOnTop,
          console_right_on_top: consoleRightOnTop,
-         extra_sources: extraSources
+         additional_source_columns: additionalSources
       };
    }-*/;
 
    public native static void addSourcePane() /*-{
-      if (this.extra_source == null)
-         this.extra_source = 0;
-      this.extra_sources++;
+      if (this.additional_source_columns == null)
+         this.additional_source_columns = 0;
+      this.additional_source_columns++;
    }-*/;
 
    public static PaneConfig createDefault()
@@ -230,7 +230,7 @@ public class PaneConfig extends UserPrefsAccessor.Panes
                     copy(getHiddenTabSet()),
                     getConsoleLeftOnTop(),
                     getConsoleRightOnTop(),
-                    getExtraSources());
+                    getAdditionalSourceColumns());
    }
    
    public final native boolean isEqualTo(PaneConfig other)  /*-{

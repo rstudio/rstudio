@@ -287,10 +287,18 @@ public class UserPrefsAccessor extends Prefs
          return this.console_right_on_top;
       }-*/;
 
-      public final native int getExtraSources() /*-{
-         return this.extra_sources;
+      public final native int getAdditionalSourceColumns() /*-{
+         return this.additional_source_columns;
       }-*/;
 
+   }
+
+   /**
+    * Temporary flag to enable additional source columns.
+    */
+   public PrefValue<Boolean> enableAdditionalColumns()
+   {
+      return bool("enable_additional_columns", false);
    }
 
    /**
@@ -1873,6 +1881,8 @@ public class UserPrefsAccessor extends Prefs
          highlightSelectedLine().setValue(layer, source.getBool("highlight_selected_line"));
       if (source.hasKey("panes"))
          panes().setValue(layer, source.getObject("panes"));
+      if (source.hasKey("enable_additional_columns"))
+         enableAdditionalColumns().setValue(layer, source.getBool("enable_additional_columns"));
       if (source.hasKey("use_spaces_for_tab"))
          useSpacesForTab().setValue(layer, source.getBool("use_spaces_for_tab"));
       if (source.hasKey("num_spaces_for_tab"))

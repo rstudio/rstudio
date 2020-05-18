@@ -284,6 +284,19 @@ core::Error UserPrefValues::setPanes(core::json::Object val)
 }
 
 /**
+ * Temporary flag to enable additional source columns.
+ */
+bool UserPrefValues::enableAdditionalColumns()
+{
+   return readPref<bool>("enable_additional_columns");
+}
+
+core::Error UserPrefValues::setEnableAdditionalColumns(bool val)
+{
+   return writePref("enable_additional_columns", val);
+}
+
+/**
  * Whether to insert spaces when pressing the Tab key.
  */
 bool UserPrefValues::useSpacesForTab()
@@ -2594,6 +2607,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kHighlightSelectedWord,
       kHighlightSelectedLine,
       kPanes,
+      kEnableAdditionalColumns,
       kUseSpacesForTab,
       kNumSpacesForTab,
       kAutoDetectIndentation,

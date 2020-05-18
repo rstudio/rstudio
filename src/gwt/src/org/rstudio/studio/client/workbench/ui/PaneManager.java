@@ -61,6 +61,8 @@ import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.WorkbenchServerOperations;
 import org.rstudio.studio.client.workbench.model.helper.IntStateValue;
 import org.rstudio.studio.client.workbench.model.helper.JSObjectStateValue;
+import org.rstudio.studio.client.workbench.prefs.events.UserPrefsChangedEvent;
+import org.rstudio.studio.client.workbench.prefs.events.UserPrefsChangedHandler;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.prefs.views.PaneLayoutPreferencesPane;
 import org.rstudio.studio.client.workbench.views.console.ConsolePane;
@@ -271,7 +273,7 @@ public class PaneManager
       binder.bind(commands, this);
 
       source_.load();
-      loadExtraSourceColumns();
+      loadAdditionalSourceColumns();
       
       PaneConfig config = validateConfig(userPrefs.panes().getValue().cast());
       initPanes(config);
@@ -399,6 +401,17 @@ public class PaneManager
          activateTab(Enum.valueOf(Tab.class, event.getActiveTab()));
       });
       
+      eventBus.addHandler(UserPrefsChangedEvent.TYPE, new UserPrefsChangedHandler()
+      {
+         @Override
+         public void onUserPrefsChanged(UserPrefsChangedEvent e)
+         {
+            if (sourceColumnCount_ != userPrefs_.panes().getGlobalValue().getAdditionalSourceColumns())
+            {
+               syncAdditionalColumnCount(userPrefs_.panes().getGlobalValue().getAdditionalSourceColumns());
+            }
+         }
+      });
       manageLayoutCommands();
       new ZoomedTabStateValue();
    }
@@ -800,9 +813,9 @@ public class PaneManager
       return results;
    }
 
-   private void loadExtraSourceColumns()
+   private void loadAdditionalSourceColumns()
    {
-      sourceColumnCount_ = userPrefs_.panes().getGlobalValue().getExtraSources();
+      sourceColumnCount_ = userPrefs_.panes().getGlobalValue().getAdditionalSourceColumns();
 
       // determine the number of source columns (add one for the main source)
       // and add any missing to source_
@@ -1131,7 +1144,28 @@ public class PaneManager
       return panesByName_.get("Console");
    }
 
-   public void addSourceWindow()
+   public int syncAdditionalColumnCount(int count)
+   {
+      // make sure sourceColumnCount_ is up to date
+      sourceColumnCount_ = source_.getViews().size() - 1;
+      if (count > sourceColumnCount_)
+      {
+         int difference = count - sourceColumnCount_;
+         for (int i = 0; i < difference; i++)
+         {
+            addSourceWindow();
+         }
+      }
+      else
+      {
+         int difference = sourceColumnCount_ - count;
+      }
+
+      // we return sourceColumnCount because we might not have been able to close all source windows
+      return sourceColumnCount_;
+   }
+
+   public int addSourceWindow()
    {
       int id = source_.getViews().size();
       PaneConfig.addSourcePane();
@@ -1140,6 +1174,7 @@ public class PaneManager
       String frameName = display.getName();
       panesByName_.put(frameName, createSource(frameName, display));
       panel_.addLeftWidget(display.asWidget());
+      sourceColumnCount_ = id;
 
       PaneConfig paneConfig = getCurrentConfig();
       userPrefs_.panes().setGlobalValue(PaneConfig.create(
@@ -1151,6 +1186,24 @@ public class PaneManager
          paneConfig.getConsoleRightOnTop(),
          id).cast());
       userPrefs_.writeUserPrefs();
+      return id;
+   }
+
+   public int closeAllAdditionalColumns()
+   {
+      while (source_.getViews().size() > 1)
+      {
+         // the main source window should always be in the 0th slot, but just in case we check the
+         // displays name before closing it
+         String name = source_.getViewByIndex(1).getName();
+         if (!StringUtil.equals(name, Source.COLUMN_PREFIX))
+            closeSourceWindow(name);
+         else
+            closeSourceWindow(source_.getViewByIndex(0).getName());
+      }
+      if (sourceColumnCount_ > 0)
+         Debug.logWarning("Could not close all additional columns. Columns may contain open tabs.");
+      return sourceColumnCount_;
    }
 
    public void closeSourceWindow(String name)
@@ -1168,6 +1221,7 @@ public class PaneManager
             source_.closeView(name);
             panesByName_.remove(name);
 
+            sourceColumnCount_ = source_.getViews().size() - 1;
             PaneConfig paneConfig = getCurrentConfig();
             userPrefs_.panes().setGlobalValue(PaneConfig.create(
                JsArrayUtil.copy(paneConfig.getQuadrants()),
@@ -1176,7 +1230,7 @@ public class PaneManager
                paneConfig.getHiddenTabSet(),
                paneConfig.getConsoleLeftOnTop(),
                paneConfig.getConsoleRightOnTop(),
-               source_.getViews().size() - 1).cast());
+               sourceColumnCount_).cast());
             userPrefs_.writeUserPrefs();
          }
       }
