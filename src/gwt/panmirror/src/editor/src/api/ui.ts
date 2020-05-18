@@ -74,8 +74,7 @@ export interface EditorUIExecute {
 
 export interface EditorDisplay {
   openURL: (url: string) => void;
-  showContextMenu?: (items: EditorMenuItem[], clientX: number, clientY: number) => void;
-  
+  showContextMenu?: (items: EditorMenuItem[], clientX: number, clientY: number) => Promise<boolean>;
 }
 
 export enum AlertType {

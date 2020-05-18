@@ -13,69 +13,93 @@
  *
  */
 
-import { Plugin, PluginKey } from 'prosemirror-state';
+import { Plugin, PluginKey, Transaction, EditorState } from 'prosemirror-state';
 import { EditorView } from 'prosemirror-view';
+import { Schema } from 'prosemirror-model';
+import { isInTable } from 'prosemirror-tables';
 
 import { EditorUI } from '../../api/ui';
 import { EditorCommandId } from '../../api/command';
-import { findParentNodeOfType } from 'prosemirror-utils';
-import { Schema } from 'prosemirror-model';
 
-export function tableContextMenu(schema: Schema, ui: EditorUI) {
-  return new Plugin({
-    key: new PluginKey('table-contextmenu'),
-    props: {
+export class TableContextMenuPlugin extends Plugin {
+
+  private menuVisible = false;
+
+  constructor(_schema: Schema, ui: EditorUI) {
+    super({
       
-      handleDOMEvents: {
-        contextmenu: (view: EditorView, event: Event) => {
-          
-          // only trigger when in table
-          if (!findParentNodeOfType(schema.nodes.table)(view.state.selection)) {
-            return false;
-          }
+      key: new PluginKey('table-contextmenu'),
 
-          if (ui.display.showContextMenu) {
+      props: {
+        handleDOMEvents: {
+          contextmenu: (view: EditorView, event: Event) => {
 
-            const menu = [
-              { command: EditorCommandId.TableAddRowBefore },
-              { command: EditorCommandId.TableAddRowAfter },
-              { separator: true },
-              { command: EditorCommandId.TableAddColumnBefore },
-              { command: EditorCommandId.TableAddColumnAfter },
-              { separator: true },
-              { command: EditorCommandId.TableDeleteRow },
-              { command: EditorCommandId.TableDeleteColumn },
-              { separator: true },
-              { command: EditorCommandId.TableDeleteTable },
-              { separator: true },
-              { subMenu: {
-                text: ui.context.translateText('Align Column'),
-                items: [
-                  { command: EditorCommandId.TableAlignColumnLeft },
-                  { command: EditorCommandId.TableAlignColumnCenter },
-                  { command: EditorCommandId.TableAlignColumnRight },
-                  { separator: true },
-                  { command: EditorCommandId.TableAlignColumnDefault }
-                ]
-              }},
-              { separator: true },
-              { command: EditorCommandId.TableToggleHeader },
-              { command: EditorCommandId.TableToggleCaption },
-            ];
+             // only trigger when in table
+            if (!isInTable(view.state)) {
+              return false;
+            }
 
-            const { clientX, clientY } = event as MouseEvent;
-            ui.display.showContextMenu(menu, clientX, clientY);
+            const asyncShowTableContextMenu = async () => {
+              const menu = [
+                { command: EditorCommandId.TableAddRowBefore },
+                { command: EditorCommandId.TableAddRowAfter },
+                { separator: true },
+                { command: EditorCommandId.TableAddColumnBefore },
+                { command: EditorCommandId.TableAddColumnAfter },
+                { separator: true },
+                { command: EditorCommandId.TableDeleteRow },
+                { command: EditorCommandId.TableDeleteColumn },
+                { separator: true },
+                { command: EditorCommandId.TableDeleteTable },
+                { separator: true },
+                { subMenu: {
+                  text: ui.context.translateText('Align Column'),
+                  items: [
+                    { command: EditorCommandId.TableAlignColumnLeft },
+                    { command: EditorCommandId.TableAlignColumnCenter },
+                    { command: EditorCommandId.TableAlignColumnRight },
+                    { separator: true },
+                    { command: EditorCommandId.TableAlignColumnDefault }
+                  ]
+                }},
+                { separator: true },
+                { command: EditorCommandId.TableToggleHeader },
+                { command: EditorCommandId.TableToggleCaption },
+              ];
+  
+              const { clientX, clientY } = event as MouseEvent;
+              await ui.display.showContextMenu!(menu, clientX, clientY);
+              this.menuVisible = false;
+            };
 
-            event.stopPropagation();
-            event.preventDefault();
-            return true;
-          } else {
-            return false;
+            if (ui.display.showContextMenu) {
+              this.menuVisible = true;
+              asyncShowTableContextMenu();
+              event.stopPropagation();
+              event.preventDefault();
+              return true;
+            } else {
+              return false;
+            }
           }
         }
       },
-    },
-  });
+
+      // prevent selection while the context menu is visible (the right-click
+      // that invokes the context menu ends up resetting the selection, which
+      // makes the selection-based commands behave incorrectly when multiple
+      // rows or columns are selected)
+      filterTransaction: (tr: Transaction, state: EditorState) => {
+        if (this.menuVisible && isInTable(state)) {
+          return ! (tr.selectionSet && !tr.docChanged && !tr.storedMarksSet);
+        } else {
+          return true;
+        }
+      },
+      
+    });
+  }
 }
+
 
 

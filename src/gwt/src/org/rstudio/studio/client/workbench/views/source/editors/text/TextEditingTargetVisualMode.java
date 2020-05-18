@@ -1133,7 +1133,7 @@ public class TextEditingTargetVisualMode implements CommandPaletteEntrySource
       PanmirrorUIDisplay uiDisplay = new PanmirrorUIDisplay();
       
       uiDisplay.showContextMenu = (commands, clientX, clientY) -> {
-         panmirror_.showContextMenu(commands, clientX, clientY);
+         return panmirror_.showContextMenu(commands, clientX, clientY);
       };
        
       return uiDisplay;

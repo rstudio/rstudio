@@ -26,6 +26,9 @@ import { Extension } from '../../api/extension';
 import { PandocExtensions } from '../../api/pandoc';
 import { BaseKey } from '../../api/basekeys';
 import { ProsemirrorCommand, EditorCommandId, exitNode } from '../../api/command';
+import { TableCapabilities } from '../../api/table';
+import { trTransform } from '../../api/transaction';
+import { PandocCapabilities } from '../../api/pandoc_capabilities';
 
 import {
   insertTable,
@@ -56,11 +59,8 @@ import { tablePaste } from './table-paste';
 
 import 'prosemirror-tables/style/tables.css';
 import './table-styles.css';
-import { TableCapabilities } from '../../api/table';
-import { trTransform } from '../../api/transaction';
-import { tableContextMenu } from './table-contextmenu';
-import { PandocCapabilities } from '../../api/pandoc_capabilities';
 
+import { TableContextMenuPlugin } from './table-contextmenu';
 const extension = (
   pandocExtensions: PandocExtensions, 
   _caps: PandocCapabilities, 
@@ -127,7 +127,7 @@ const extension = (
         }),
         tableEditing(),
         tablePaste(),
-        tableContextMenu(schema, ui)
+        new TableContextMenuPlugin(schema, ui)
       ];
     },
 

@@ -22,6 +22,7 @@ import org.rstudio.studio.client.panmirror.command.PanmirrorMenuItem;
 
 import com.google.inject.Inject;
 
+import elemental2.promise.Promise;
 import jsinterop.annotations.JsFunction;
 import jsinterop.annotations.JsType;
 
@@ -49,7 +50,7 @@ public class PanmirrorUIDisplay {
    @JsFunction
    public interface ShowContextMenu
    {
-      void show(PanmirrorMenuItem[] items, int clientX, int clientY);
+      Promise<Boolean> show(PanmirrorMenuItem[] items, int clientX, int clientY);
    }
    
    private GlobalDisplay globalDisplay_;

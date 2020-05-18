@@ -76,6 +76,9 @@ import com.google.gwt.user.client.ui.PopupPanel.PositionCallback;
 import com.google.inject.Inject;
 
 import elemental2.core.JsObject;
+import elemental2.promise.Promise;
+import elemental2.promise.Promise.PromiseExecutorCallbackFn.RejectCallbackFn;
+import elemental2.promise.Promise.PromiseExecutorCallbackFn.ResolveCallbackFn;
 import jsinterop.annotations.JsOverlay;
 import jsinterop.annotations.JsPackage;
 import jsinterop.annotations.JsType;
@@ -497,16 +500,22 @@ public class PanmirrorWidget extends DockLayoutPanel implements
       editor_.blur();
    }
    
-   public void showContextMenu(PanmirrorMenuItem[] items, int clientX, int clientY)
+   public Promise<Boolean> showContextMenu(PanmirrorMenuItem[] items, int clientX, int clientY)
    {
-      final PanmirrorToolbarMenu menu = new PanmirrorToolbarMenu(commands_);
-      menu.addItems(items);
-      menu.setPopupPositionAndShow(new PositionCallback() {
-         @Override
-         public void setPosition(int offsetWidth, int offsetHeight)
-         {
-            menu.setPopupPosition(clientX, clientY);
-         }
+      return new Promise<Boolean>((ResolveCallbackFn<Boolean> resolve, RejectCallbackFn reject) -> {
+         
+         final PanmirrorToolbarMenu menu = new PanmirrorToolbarMenu(commands_);
+         menu.addCloseHandler((event) -> {
+            resolve.onInvoke(true);
+         });
+         menu.addItems(items);
+         menu.setPopupPositionAndShow(new PositionCallback() {
+            @Override
+            public void setPosition(int offsetWidth, int offsetHeight)
+            {
+               menu.setPopupPosition(clientX, clientY);
+            }
+         });
       });
    }
    
