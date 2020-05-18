@@ -38,6 +38,7 @@ import org.rstudio.studio.client.application.ui.RStudioThemes;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.ImageMenuItem;
 import org.rstudio.studio.client.common.Value;
+import org.rstudio.studio.client.common.dependencies.DependencyManager;
 import org.rstudio.studio.client.common.icons.StandardIcons;
 import org.rstudio.studio.client.events.ReticulateEvent;
 import org.rstudio.studio.client.server.ServerError;
@@ -86,7 +87,8 @@ public class EnvironmentPane extends WorkbenchPane
                           GlobalDisplay globalDisplay,
                           EnvironmentServerOperations serverOperations,
                           Session session,
-                          UserPrefs prefs)
+                          UserPrefs prefs,
+                          DependencyManager dependencyManager)
    {
       super("Environment", events);
       
@@ -95,6 +97,7 @@ public class EnvironmentPane extends WorkbenchPane
       globalDisplay_ = globalDisplay;
       session_ = session;
       prefs_ = prefs;
+      dependencyManager_ = dependencyManager;
 
       expandedObjects_ = new ArrayList<String>();
       scrollPosition_ = 0;
@@ -184,7 +187,13 @@ public class EnvironmentPane extends WorkbenchPane
       MenuItem rMenuItem = new MenuItem("R", () -> setActiveLanguage("R", true));
       languageMenu_.addItem(rMenuItem);
       
-      MenuItem pyMenuItem = new MenuItem("Python", () -> setActiveLanguage("Python", true));
+      MenuItem pyMenuItem = new MenuItem("Python", () ->
+      {
+         dependencyManager_.withReticulate(
+               "Viewing Python Objects",
+               "Viewing Python objects",
+               () -> setActiveLanguage("Python", true));
+      });
       languageMenu_.addItem(pyMenuItem);
       
       languageButton_ = new ToolbarMenuButton(
@@ -192,12 +201,6 @@ public class EnvironmentPane extends WorkbenchPane
             ToolbarButton.NoTitle,
             (ImageResource) null,
             languageMenu_);
-      
-      // don't show the language button at first; instead,
-      // toggle its visibility after the widget is created
-      // depending on whether Python has been initialized
-      languageButton_.setVisible(false);
-      languageButton_.setEnabled(false);
       
       toolbar.addLeftWidget(languageButton_);
       toolbar.addLeftSeparator();
@@ -847,6 +850,7 @@ public class EnvironmentPane extends WorkbenchPane
    private final EnvironmentServerOperations server_;
    private final Session session_;
    private final UserPrefs prefs_;
+   private final DependencyManager dependencyManager_;
    private final Value<Boolean> environmentMonitoring_;
    private final Timer refreshTimer_;
 
