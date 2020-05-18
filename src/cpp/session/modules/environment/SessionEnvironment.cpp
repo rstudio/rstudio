@@ -511,6 +511,10 @@ Error setEnvironment(boost::shared_ptr<int> pContextDepth,
          module_context::enqueClientEvent(event);
       }
    }
+   else
+   {
+      LOG_WARNING_MESSAGE("Unexpected language '" + s_environmentLanguage + "'");
+   }
    
    if (error)
       return error;
