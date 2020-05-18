@@ -631,6 +631,7 @@ json::Object pythonEnvironmentStateData(const std::string& environment)
       return json::Object();
    }
    
+   jsonState["environment_monitoring"] = s_monitoring;
    return jsonState;
 }
 
