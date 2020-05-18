@@ -812,7 +812,11 @@ void onDetectChanges(module_context::ChangeSource /* source */)
    // Prevent recursive calls to this function
    DROP_RECURSIVE_CALLS;
 
-   // Check for Python changes.
+   // Ignore if not monitoring
+   if (!s_monitoring)
+      return;
+
+   // Check for Python changes
    if (s_environmentLanguage == kEnvironmentLanguagePython &&
        !s_monitoredPythonModule.empty())
    {
@@ -825,10 +829,6 @@ void onDetectChanges(module_context::ChangeSource /* source */)
          LOG_ERROR(error);
    }
    
-   // Ignore if not monitoring
-   if (!s_monitoring)
-      return;
-
    s_pEnvironmentMonitor->checkForChanges();
    
 }
