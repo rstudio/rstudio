@@ -115,7 +115,7 @@ function pandocFormatConfigFromCommentInDoc(doc: ProsemirrorNode): PandocFormatC
     const schema = doc.type.schema;
     if (node.isText && schema.marks.raw_html_comment.isInSet(node.marks) && node.attrs.format) {   
       foundFirstRawInline = true;
-      config = pandocFormatConfigFromCode(node.textContent);
+      config = pandocFormatConfigFromCommentInCode(node.textContent);
       return false;
     } else {
       return true;
