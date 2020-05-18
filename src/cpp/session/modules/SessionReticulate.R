@@ -21,6 +21,7 @@
    REPL_TEARDOWN      = "repl_teardown"
 ))
 
+# hook to be invoked when the Python session has been initialized by reticulate
 options(reticulate.initialized = function() {
    
    .rs.reticulate.enqueueClientEvent(
@@ -1841,4 +1842,12 @@ html.heading = _heading
    # return sorted attributes
    attributes[indices]
    
+})
+
+.rs.addFunction("reticulate.explorerCache", function()
+{
+   key <- "reticulate.explorerCacheDictionary"
+   if (!.rs.hasVar(key))
+      .rs.setVar(key, reticulate::dict())
+   .rs.getVar(key)
 })

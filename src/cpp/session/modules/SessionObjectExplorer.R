@@ -235,8 +235,11 @@
       pyid <- paste("_rstudio_viewer", id, sep = "_")
       code <- sub("`__OBJECT__`", pyid, extractingCode, fixed = TRUE)
       
+      builtins <- reticulate::import_builtins(convert = FALSE)
+      cache <- .rs.reticulate.explorerCache()
+      
       tryCatch(
-         reticulate::py_eval(code, convert = FALSE),
+         builtins$eval(code, cache, cache),
          error = warning
       )
    }
@@ -262,9 +265,9 @@
    # for Python objects, store a reference in main module
    if (inherits(entry$object, "python.builtin.object"))
    {
-      main <- reticulate::import_main(convert = FALSE)
       pyid <- paste("_rstudio_viewer", id, sep = "_")
-      reticulate::py_set_attr(main, pyid, entry$object)
+      cache <- .rs.reticulate.explorerCache()
+      reticulate::py_set_item(cache, pyid, entry$object)
    }
 
    # return generated id
@@ -282,11 +285,13 @@
       rm(list = id, envir = cache)
    
    # if this is a Python object, remove it from the main module
-   if (inherits(entry$object, "python.builtin.object"))
+   if (.rs.reticulate.isPythonInitialized())
    {
-      main <- reticulate::import_main(convert = FALSE)
       pyid <- paste("_rstudio_viewer", id, sep = "_")
-      reticulate::py_set_attr(main, pyid, NULL)
+      cache <- .rs.reticulate.explorerCache()
+      item <- reticulate::py_get_item(cache, pyid, silent = TRUE)
+      if (!is.null(item))
+         reticulate::py_del_item(cache, pyid)
    }
    
    # return id of deleted object
@@ -435,7 +440,7 @@
    n <- length(.$object)
    expandable <- if (inherits(object, "python.builtin.object"))
    {
-      TRUE
+      .rs.explorer.isPythonObjectExpandable(object)
    }
    else
    {
@@ -681,7 +686,11 @@
 .rs.addFunction("explorer.inspectPythonObject", function(object,
                                                          context = .rs.explorer.createContext())
 {
-   attributes <- .rs.reticulate.listAttributes(object, includeDunderMethods = TRUE)
+   attributes <- .rs.reticulate.listAttributes(
+      object               = object,
+      includeDunderMethods = FALSE
+   )
+   
    lapply(attributes, function(attribute) {
       
       item <- reticulate::py_get_attr(object, attribute, silent = TRUE)
@@ -1165,21 +1174,25 @@
    format(object.size(object), units = "auto")
 })
 
-# Utility Functions ----
-
-.rs.addFunction("getRefCount", function(object)
+.rs.addFunction("explorer.isPythonObjectExpandable", function(object)
 {
-   .Call("rs_getRefCount",
-         as.name("object"),
-         environment(),
-         PACKAGE = "(embedding)")
-})
-
-.rs.addFunction("setRefCount", function(object, count)
-{
-   .Call("rs_setRefCount",
-         as.name("object"),
-         environment(),
-         as.integer(count),
-         PACKAGE = "(embedding)")
+   # NOTE: technically, these objects are expandable (they have attributes
+   # and may even have methods of interest) but since they're usually less
+   # interesting than the object's actual value we ignore those byd default.
+   ignored <- c(
+      "python.builtin.bool",
+      "python.builtin.int",
+      "python.builtin.float",
+      "python.builtin.str",
+      "python.builtin.bytes",
+      "python.builtin.method",
+      "python.builtin.function",
+      "python.builtin.builtin_function_or_method",
+      "python.builtin.NoneType"
+   )
+   
+   if (inherits(object, ignored))
+      return(FALSE)
+   
+   TRUE
 })
