@@ -262,7 +262,7 @@
    cache <- .rs.explorer.getCache()
    cache[[id]] <- entry
    
-   # for Python objects, store a reference in main module
+   # for Python objects, store a reference in our cache
    if (inherits(entry$object, "python.builtin.object"))
    {
       pyid <- paste("_rstudio_viewer", id, sep = "_")
@@ -284,7 +284,7 @@
    if (exists(id, envir = cache))
       rm(list = id, envir = cache)
    
-   # if this is a Python object, remove it from the main module
+   # for Python objects, remove cache reference
    if (.rs.reticulate.isPythonInitialized())
    {
       pyid <- paste("_rstudio_viewer", id, sep = "_")
@@ -1180,7 +1180,7 @@
 {
    # NOTE: technically, these objects are expandable (they have attributes
    # and may even have methods of interest) but since they're usually less
-   # interesting than the object's actual value we ignore those byd default.
+   # interesting than the object's actual value we ignore those by default.
    ignored <- c(
       "python.builtin.bool",
       "python.builtin.int",

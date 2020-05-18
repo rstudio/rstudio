@@ -193,7 +193,10 @@ public class EnvironmentObjectGrid extends EnvironmentObjectDisplay
                   @Override
                   public String getValue(RObjectEntry object)
                   {
-                     return (new Integer(object.rObject.getLength())).toString();
+                     int length = object.rObject.getLength();
+                     if (length < 0)
+                        return "<NA>";
+                     return Integer.toString(length);
                   }
               });
       columns_.add(new ObjectGridColumn(

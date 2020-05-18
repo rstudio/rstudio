@@ -1504,7 +1504,7 @@ html.heading = _heading
    size <- sys$getsizeof(object)
    
    # get object length (note: not all objects in Python have a length)
-   length <- tryCatch(builtins$len(object), error = function(e) 0)
+   length <- .rs.reticulate.describeObjectLength(object)
    
    list(
       name              = .rs.scalar(name),
@@ -1524,7 +1524,7 @@ html.heading = _heading
 .rs.addFunction("reticulate.describeObjectType", function(object)
 {
    builtins <- reticulate::import_builtins(convert = TRUE)
-   builtins$str(builtins$type(object))
+   builtins$type(object)$`__name__`
 })
 
 .rs.addFunction("reticulate.describeObjectValue", function(object)
@@ -1557,6 +1557,16 @@ html.heading = _heading
    }
    
 })
+
+.rs.addFunction("reticulate.describeObjectLength", function(object)
+{
+   builtins <- reticulate::import_builtins(convert = TRUE)
+   tryCatch(
+      builtins$len(object),
+      error = function(e) -1L
+   )
+})
+
 .rs.addFunction("reticulate.resolveModule", function(module)
 {
    # return module objects as-is
