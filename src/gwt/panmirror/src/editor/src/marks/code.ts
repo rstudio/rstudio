@@ -14,15 +14,12 @@
  */
 
 import { Fragment, Mark, Node as ProsemirrorNode, Schema } from 'prosemirror-model';
-import { Step, AddMarkStep } from 'prosemirror-transform';
-import { Transaction } from 'prosemirror-state';
 
 import { MarkCommand, EditorCommandId } from '../api/command';
 import { Extension } from '../api/extension';
 import { pandocAttrSpec, pandocAttrParseDom, pandocAttrToDomAttr, pandocAttrReadAST } from '../api/pandoc_attr';
 import { PandocToken, PandocOutput, PandocTokenType, PandocExtensions } from '../api/pandoc';
 
-import { fancyQuotesToSimple } from '../api/quote';
 import { kCodeText, kCodeAttr } from '../api/code';
 import { delimiterMarkInputRule, MarkInputRuleFilter } from '../api/input_rule';
 
@@ -105,37 +102,6 @@ const extension = (pandocExtensions: PandocExtensions): Extension => {
 
     inputRules: (schema: Schema, filter: MarkInputRuleFilter) => {
       return [delimiterMarkInputRule('`', schema.marks.code, filter)];
-    },
-
-    appendTransaction: (schema: Schema) => {
-  
-       // detect add code steps
-      const isAddCodeMarkStep = (step: Step) => {
-        return step instanceof AddMarkStep && (step as any).mark.type === schema.marks.code;
-      };
-
-      return [
-        {
-          name: 'code_remove_quotes',
-          filter: (transactions: Transaction[]) => transactions.some(transaction => transaction.steps.some(isAddCodeMarkStep)),
-          append: (tr: Transaction, transactions: Transaction[]) => {
-            transactions.forEach(transaction => {
-              transaction.steps.filter(isAddCodeMarkStep).forEach(step => {
-                const { from, to } = step as any;
-                const code = tr.doc.textBetween(from, to);
-                const newCode = fancyQuotesToSimple(code);
-                if (newCode !== code) {
-                  tr.insertText(newCode, from, to);
-                  tr.addMark(from, to, schema.marks.code.create());
-                  if (tr.selection.empty && tr.selection.from === to) {
-                    tr.removeStoredMark(schema.marks.code);
-                  }
-                }
-              });
-            });
-          },
-        },
-      ];
     },
   };
 };

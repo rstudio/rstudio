@@ -13,11 +13,14 @@
  *
  */
 
-import { smartQuotes, ellipsis, InputRule } from 'prosemirror-inputrules';
-import { Plugin, PluginKey, EditorState } from 'prosemirror-state';
+import { ellipsis, InputRule } from 'prosemirror-inputrules';
+import { Plugin, PluginKey, EditorState, Transaction } from 'prosemirror-state';
 import { Schema } from 'prosemirror-model';
 
 import { Extension, extensionIfEnabled } from '../api/extension';
+import { PandocMark } from '../api/mark';
+import { Step, AddMarkStep } from 'prosemirror-transform';
+import { fancyQuotesToSimple } from '../api/quote';
 
 const plugin = new PluginKey('smartypaste');
 
@@ -87,5 +90,46 @@ const extension: Extension = {
     ];
   },
 };
+
+export function reverseSmartQuotesExtension(marks: readonly PandocMark[]) {
+  
+  return {
+
+    appendTransaction: (schema: Schema) => {
+  
+      const noInputRuleMarks = marks.filter(mark => mark.noInputRules).map(mark => schema.marks[mark.name]);
+
+      // detect add code steps
+      const isAddMarkWithNoInputRules = (step: Step) => {
+        return step instanceof AddMarkStep && noInputRuleMarks.includes((step as any).mark.type);
+      };
+
+      return [
+        {
+          name: 'reverse-smarty',
+          filter: (transactions: Transaction[]) => transactions.some(transaction => transaction.steps.some(isAddMarkWithNoInputRules)),
+          append: (tr: Transaction, transactions: Transaction[]) => {
+            transactions.forEach(transaction => {
+              transaction.steps.filter(isAddMarkWithNoInputRules).forEach(step => {
+                const { from, to, mark } = step as any;
+                const code = tr.doc.textBetween(from, to);
+                const newCode = fancyQuotesToSimple(code);
+                if (newCode !== code) {
+                  tr.insertText(newCode, from, to);
+                  tr.addMark(from, to, mark);
+                  if (tr.selection.empty) {
+                    tr.removeStoredMark(mark);
+                  }
+                }
+              });
+            });
+          },
+        },
+      ];
+    },
+
+  };
+
+}
 
 export default extensionIfEnabled(extension, 'smart');

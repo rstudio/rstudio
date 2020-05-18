@@ -151,21 +151,7 @@ function detectAndCreateShortcodes(schema: Schema, tr: MarkTransaction, pos: num
     () => ({}),
     match => match[1]
   );
-
-  // remove quotes as necessary
-  const markType = schema.marks.shortcode;
-  const markedNodes = findChildrenByMark(tr.doc.nodeAt(pos)!, markType, true);
-  markedNodes.forEach(markedNode => {
-    const from = pos + 1 + markedNode.pos;
-    const markedRange = getMarkRange(tr.doc.resolve(from), markType);
-    if (markedRange) {
-      const text = tr.doc.textBetween(markedRange.from, markedRange.to);
-      const replaceText = fancyQuotesToSimple(text);
-      if (replaceText !== text) {
-        tr.insertText(replaceText, markedRange.from);
-      }
-    }
-  });
+  
 }
 
 export default extension;

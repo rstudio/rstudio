@@ -66,7 +66,7 @@ import behaviorFind from '../behaviors/find';
 import behaviorClearFormatting from '../behaviors/clear_formatting';
 
 // behaviors
-import behaviorSmarty from '../behaviors/smarty';
+import behaviorSmarty, { reverseSmartQuotesExtension } from '../behaviors/smarty';
 import behaviorAttrDuplicateId from '../behaviors/attr_duplicate_id';
 import behaviorTrailingP from '../behaviors/trailing_p';
 import behaviorEmptyMark from '../behaviors/empty_mark';
@@ -183,7 +183,10 @@ export function initExtensions(
 
   // additional extensions dervied from other extensions
   // (e.g. extensions that have registered attr editors)
-  manager.register([attrEditExtension(pandocExtensions, manager.attrEditors())]);
+  manager.register([
+    attrEditExtension(pandocExtensions, manager.attrEditors()),
+    reverseSmartQuotesExtension(manager.pandocMarks())
+  ]);
 
   // additional plugins derived from extensions
   const plugins: Plugin[] = [];
