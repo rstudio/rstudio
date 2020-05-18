@@ -14,6 +14,8 @@
  */
 package org.rstudio.studio.client.workbench.ui;
 
+import org.rstudio.core.client.Debug;
+
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
@@ -43,14 +45,14 @@ public class MainSplitPanel extends NotifyingSplitLayoutPanel
       protected State() {}
 
       public native final boolean hasSplitterPos() /*-{
-         return typeof(this.splitterpos) != 'undefined';
+         return this.splitterpos == 0;
       }-*/;
 
-      public native final int getSplitterPos() /*-{
+      public native final int[] getSplitterPos() /*-{
          return this.splitterpos;
       }-*/;
 
-      public native final void setSplitterPos(int pos) /*-{
+      public native final void setSplitterPos(int[] pos) /*-{
          this.splitterpos = pos;
       }-*/;
 
@@ -132,11 +134,7 @@ public class MainSplitPanel extends NotifyingSplitLayoutPanel
          @Override
          protected void onInit(JsObject value)
          {
-            double multiplier = 0.90;
-            int widgets = 2 + leftList_.size();
-            multiplier = multiplier / (double)widgets;
-            // !!! need to update this properly
-            /*
+            // If we already have a set state, use that
             State state = value == null ? null : (State)value.cast();
             if (state != null && state.hasSplitterPos())
             {
@@ -145,30 +143,32 @@ public class MainSplitPanel extends NotifyingSplitLayoutPanel
                {
                   int delta = state.getWindowWidth() - state.getPanelWidth();
                   int offsetWidth = Window.getClientWidth() - delta;
-                  double pct = (double)state.getSplitterPos()
+                  double pct = (double)state.getSplitterPos()[0]
                                / state.getPanelWidth();
+
                   addEast(right_, pct * offsetWidth);
                }
                else
                {
-                  addEast(right_, state.getSplitterPos() * multiplier);
+                  addEast(right_, state.getSplitterPos()[0]);
+                  for (int i = 1; i < leftList_.size() + 1; i++)
+                  {
+                     addWest(leftList_.get(i), state.getSplitterPos()[i]);
+                  }
                }
             }
             else
             {
-               addEast(right_, Window.getClientWidth() * multiplier);
-            }
-            */
-            double startValue = Window.getClientWidth() * multiplier;
-            addEast(right_, startValue);
-            if (!leftList_.isEmpty())
-            {
-               startValue += multiplier;
+               // When there are only two panels, make the left side slightly larger than the right,
+               // otherwise divide the space equally.
+               double splitWidth = (leftList_.isEmpty()) ?
+                                   Window.getClientWidth() * 0.45 :
+                                   Window.getClientWidth() / (2 + leftList_.size());
+
+               addEast(right_, splitWidth);
+
                for (Widget w : leftList_)
-               {
-                  addWest(w, startValue);
-                  startValue += multiplier;
-               }
+                  addWest(w, splitWidth);
             }
 
             Scheduler.get().scheduleDeferred(new ScheduledCommand()
@@ -186,7 +186,14 @@ public class MainSplitPanel extends NotifyingSplitLayoutPanel
             State state = JavaScriptObject.createObject().cast();
             state.setPanelWidth(getOffsetWidth());
             state.setWindowWidth(Window.getClientWidth());
-            state.setSplitterPos(right_.getOffsetWidth());
+
+            int[] splitterArray = new int[leftList_.size() + 1];
+            splitterArray[0] = right_.getOffsetWidth();
+            for (int i = 1; i < leftList_.size(); i++)
+            {
+               splitterArray[i] = leftList_.get(i).getOffsetWidth();
+            }
+            state.setSplitterPos(splitterArray);
             return state.cast();
          }
 

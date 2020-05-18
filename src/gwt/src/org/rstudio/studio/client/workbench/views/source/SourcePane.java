@@ -191,10 +191,7 @@ public class SourcePane extends LazyPanel implements Display,
       if (editors_.contains(target))
          Debug.logToConsole("Trying to add editor we already have");
       else
-      {
          editors_.add(target);
-         Debug.logToConsole("Editor added to target");
-      }
    }
 
    @Override
@@ -203,10 +200,7 @@ public class SourcePane extends LazyPanel implements Display,
       if (editors_.contains(target))
          Debug.logToConsole("Trying to add editor we already have");
       else
-      {
          editors_.add(position, target);
-         Debug.logToConsole("Editor added to target");
-      }
    }
 
    @Override

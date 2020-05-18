@@ -288,10 +288,11 @@ public class Source implements InsertSourceHandler,
       public void setActive(EditingTarget target)
       {
          activeDisplay_ = getDisplayByDocument(target.getId());
+            // !!! Debug code to be removed
          if (activeDisplay_ != null)
             activeDisplay_.setActiveEditor(target);
          else
-            Debug.logToConsole("ERROR: WE HAVE AN EDITOR WITHOUT A DISPLAY");
+            Debug.logToConsole("Error: We have an editor without a display");
       }
 
       public Display getActiveDisplay()
@@ -306,7 +307,7 @@ public class Source implements InsertSourceHandler,
             if (activeDisplay_ != null)
                return activeDisplay_;
             else
-               Debug.logToConsole("ERROR: WE HAVE AN EDITOR WITHOUT A DISPLAY");
+               Debug.logToConsole("Error: We have an editor without a display.");
          }
          else
             activeDisplay_ = this.get(0);
