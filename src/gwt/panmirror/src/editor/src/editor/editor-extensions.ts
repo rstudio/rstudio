@@ -72,6 +72,7 @@ import behaviorTrailingP from '../behaviors/trailing_p';
 import behaviorEmptyMark from '../behaviors/empty_mark';
 import behaviorOutline from '../behaviors/outline';
 import beahviorCodeBlockInput from '../behaviors/code_block_input';
+import behaviorInsertSymbol from '../behaviors/insert_symbol';
 
 // marks
 import markStrikeout from '../marks/strikeout';
@@ -148,6 +149,7 @@ export function initExtensions(
     behaviorEmptyMark,
     behaviorOutline,
     beahviorCodeBlockInput,
+    behaviorInsertSymbol,
 
     // nodes
     nodeDiv,
