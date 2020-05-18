@@ -47,7 +47,7 @@ namespace environment {
 // which language is currently active on the front-end? this state is
 // synchronized between client and server so that we can tell when to
 // active environment monitors for different languages
-std::string s_environmentLanguage = "R";
+std::string s_environmentLanguage = kEnvironmentLanguageR;
 
 // allocate on the heap so we control timing of destruction (if we leave it
 // to the destructor we might release the underlying environment SEXP after
@@ -495,13 +495,13 @@ Error setEnvironment(boost::shared_ptr<int> pContextDepth,
 
    s_monitoredPythonModule = std::string();
    
-   if (s_environmentLanguage == "R")
+   if (s_environmentLanguage == kEnvironmentLanguageR)
    {
       error = setEnvironmentName(*pContextDepth,
                                  *pCurrentContext,
                                  environmentName);
    }
-   else if (s_environmentLanguage == "Python")
+   else if (s_environmentLanguage == kEnvironmentLanguagePython)
    {
       if (environmentName != s_monitoredPythonModule)
       {
@@ -775,7 +775,7 @@ Error getEnvironmentState(boost::shared_ptr<int> pContextDepth,
                           const json::JsonRpcRequest& request,
                           json::JsonRpcResponse* pResponse)
 {
-   std::string language = "R";
+   std::string language = kEnvironmentLanguageR;
    std::string environment = "R_GlobalEnv";
    Error error = json::readParams(request.params, &language, &environment);
    if (error)
@@ -783,16 +783,20 @@ Error getEnvironmentState(boost::shared_ptr<int> pContextDepth,
    
    json::Object jsonState;
    
-   if (language == "Python")
-   {
-      jsonState = pythonEnvironmentStateData(environment);
-   }
-   else
+   if (language == kEnvironmentLanguageR)
    {
       jsonState = commonEnvironmentStateData(
                *pContextDepth,
                true,
                pLineDebugState.get());
+   }
+   else if (language == kEnvironmentLanguagePython)
+   {
+      jsonState = pythonEnvironmentStateData(environment);
+   }
+   else
+   {
+      LOG_WARNING_MESSAGE("Unexpected language '" + language + "'");
    }
    
    pResponse->setResult(jsonState);
@@ -805,7 +809,8 @@ void onDetectChanges(module_context::ChangeSource /* source */)
    DROP_RECURSIVE_CALLS;
 
    // Check for Python changes.
-   if (s_environmentLanguage == "Python" && !s_monitoredPythonModule.empty())
+   if (s_environmentLanguage == kEnvironmentLanguagePython &&
+       !s_monitoredPythonModule.empty())
    {
       Error error =
             r::exec::RFunction(".rs.reticulate.detectChanges")
@@ -945,7 +950,7 @@ Error getEnvironmentNames(boost::shared_ptr<int> pContextDepth,
       return Success();
    }
    
-   if (language == "Python")
+   if (language == kEnvironmentLanguagePython)
    {
       Error error;
       
@@ -971,13 +976,20 @@ Error getEnvironmentNames(boost::shared_ptr<int> pContextDepth,
       pResponse->setResult(environmentsJson);
       return Success();
    }
+   else if (language == kEnvironmentLanguageR)
+   {
+      // If looking at a non-toplevel context, start from there; otherwise, start
+      // from the global environment.
+      SEXP env = *pContextDepth > 0 ?
+               pCurrentContext->cloenv() :
+               R_GlobalEnv;
+      pResponse->setResult(environmentNames(env));
+   }
+   else
+   {
+      LOG_WARNING_MESSAGE("Unexpected language '" + language + "'");
+   }
    
-   // If looking at a non-toplevel context, start from there; otherwise, start
-   // from the global environment.
-   SEXP env = *pContextDepth > 0 ?
-                  pCurrentContext->cloenv() :
-                  R_GlobalEnv;
-   pResponse->setResult(environmentNames(env));
    return Success();
 }
 
@@ -1116,14 +1128,15 @@ Error requeryContext(boost::shared_ptr<int> pContextDepth,
 Error environmentSetLanguage(const json::JsonRpcRequest& request,
                              json::JsonRpcResponse*)
 {
-   std::string language = "R";
+   std::string language = kEnvironmentLanguageR;
    Error error = json::readParams(request.params, &language);
    if (error)
       LOG_ERROR(error);
    
    s_environmentLanguage = language;
-   
-   if (language == "Python")
+  
+   // reset Python module to 'main' after changing language
+   if (language == kEnvironmentLanguagePython)
    {
       s_monitoredPythonModule = "__main__";
    }
@@ -1174,7 +1187,7 @@ SEXP rs_jumpToFunction(SEXP file, SEXP line, SEXP col)
 
 json::Value environmentStateAsJson()
 {
-   if (s_environmentLanguage == "Python")
+   if (s_environmentLanguage == kEnvironmentLanguagePython)
       return pythonEnvironmentStateData(s_monitoredPythonModule);
    
    int contextDepth = 0;
