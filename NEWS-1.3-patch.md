@@ -20,6 +20,7 @@
 - Fixed issue where users could not save files in home directory if specified by UNC path (#6598)
 - Fix failure to use the first project template and default open files (#6865)
 - Fix keybinding failure when global keybindings exists but user keybindings don't (#6870)
+- Fix failure to open source files when debugging some functions in R 4.0.0 (work around R bug in `deparse()`) (#6854)
 
 ### RStudio Server Pro
 
