@@ -606,13 +606,15 @@
 })
 
 .rs.addFunction("explorer.inspectPythonValue", function(object,
-                                                         context = .rs.explorer.createContext())
+                                                        context = .rs.explorer.createContext())
 {
    children <- NULL
    
    if (context$recursive)
    {
-      children <- if (inherits(object, "python.builtin.dict"))
+      children <- if (.rs.explorer.tags$ATTRIBUTES %in% context$tags)
+         .rs.explorer.inspectPythonObject(object, context)
+      else if (inherits(object, "python.builtin.dict"))
          .rs.explorer.inspectPythonDict(object, context)
       else if (.rs.reticulate.isStructSeq(object))
          .rs.explorer.inspectPythonObject(object, context)
