@@ -24,6 +24,7 @@
 # hook to be invoked when the Python session has been initialized by reticulate
 options(reticulate.initialized = function() {
    
+   # notify client that Python is being initialized
    .rs.reticulate.enqueueClientEvent(
       .rs.reticulateEvents$PYTHON_INITIALIZED,
       list()

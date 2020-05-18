@@ -36,8 +36,14 @@ namespace reticulate {
 
 namespace {
 
+// has the Python session been initialized by reticulate yet?
+bool s_pythonInitialized = false;
+
 SEXP rs_reticulateInitialized()
 {
+   // set initialized flag
+   s_pythonInitialized = true;
+   
    // Python will register its own console control handler,
    // which also blocks signals from reaching any previously
    // defined handlers (including RStudio's own). re-initialize
@@ -59,22 +65,7 @@ void onDeferredInit(bool)
 
 bool isPythonInitialized()
 {
-   // NOTE: once initialized Python cannot be un-initialized
-   // so we disable this check as soon as we know the answer
-   static bool s_initialized = false;
-   
-   if (!s_initialized)
-   {
-      Error error = 
-            r::exec::RFunction(".rs.reticulate.isPythonInitialized")
-            .call(&s_initialized);
-      
-      if (error)
-         LOG_ERROR(error);
-   }
-   
-   return s_initialized;
-   
+   return s_pythonInitialized;
 }
 
 bool isReplActive()
