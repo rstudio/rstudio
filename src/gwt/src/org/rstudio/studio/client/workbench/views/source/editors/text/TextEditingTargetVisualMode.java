@@ -1188,21 +1188,31 @@ public class TextEditingTargetVisualMode implements CommandPaletteEntrySource
             PanmirrorPandocFormatConfig formatComment = formatTools.parseFormatConfig(getEditorCode());
             
             // doctypes
-            List<String> docTypes = new ArrayList<String>();
             if (formatComment.doctypes == null || formatComment.doctypes.length == 0)
             {
+               List<String> configDocTypes = new ArrayList<String>();
                if (isXRefDocument())
-                  docTypes.add(PanmirrorExtendedDocType.xref);
+                  configDocTypes.add(PanmirrorExtendedDocType.xref);
                if (isBookdownDocument())
-                  docTypes.add(PanmirrorExtendedDocType.bookdown);
+                  configDocTypes.add(PanmirrorExtendedDocType.bookdown);
                if (isBlogdownDocument()) 
-                  docTypes.add(PanmirrorExtendedDocType.blogdown);
+                  configDocTypes.add(PanmirrorExtendedDocType.blogdown);
                if (isHugoDocument())
-                  docTypes.add(PanmirrorExtendedDocType.hugo);
-               format.docTypes = docTypes.toArray(new String[] {});
+                  configDocTypes.add(PanmirrorExtendedDocType.hugo);
+               format.docTypes = configDocTypes.toArray(new String[] {});
             }
-            docTypes = Arrays.asList(format.docTypes);
+            else if (formatComment.doctypes != null)
+            {
+               format.docTypes = formatComment.doctypes;
+            }
+            else
+            {
+               format.docTypes = new String[] {};
+            }
             
+            // version of docTypes we can inspect below 
+            List<String> docTypes = Arrays.asList(format.docTypes);
+           
             // mode and extensions         
             // non-standard mode and extension either come from a format comment,
             // a detection of an alternate engine (likely due to blogdown/hugo)
