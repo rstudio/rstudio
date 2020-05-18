@@ -56,3 +56,16 @@ test_that("all objects are removed when requested", {
    contents <- .rs.invokeRpc("list_environment")
    expect_equal(length(contents), 0)
 })
+
+test_that("functions with backslashes deparse correctly", {
+   # character vector with code for a simple function
+   code <- "function() { \"first line\\nsecond line\" }"
+
+   # parse and evaluate the expression (yielding a function f)
+   eval(parse(text = paste0("f <- ", code)))
+
+   # immediately deparse f back into a string
+   output <- .rs.deparseFunction(f, TRUE, TRUE)
+
+   expect_equal(output, code)
+})
