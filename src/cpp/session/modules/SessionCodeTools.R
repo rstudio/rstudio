@@ -176,6 +176,23 @@
 #             (otherwise a character vector of lines is returned)
 .rs.addFunction("deparseFunction", function(func, useSource, asString)
 {
+   # If we're being asked to return the source references as-is, read the source
+   # references directly instead of going through deparse (which has a known
+   # issue that corrupts output with backslashes in R 4.0.0 and perhaps other
+   # versions; see R bug 17800).
+   if (useSource)
+   {
+      srcref <- attr(func, "srcref", exact = TRUE)
+      if (!is.null(srcref))
+      {
+         code <- as.character(srcref, useSource = TRUE)
+         if (asString)
+           return(paste(code, collapse = "\n"))
+         else
+           return(code)
+      }
+   }
+
    control <- c("keepInteger", "keepNA")
    if (useSource)
      control <- append(control, "useSource")
