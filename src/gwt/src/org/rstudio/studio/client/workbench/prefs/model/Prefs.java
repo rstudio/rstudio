@@ -23,6 +23,7 @@ import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HandlerManager;
 import com.google.gwt.event.shared.HandlerRegistration;
 import org.rstudio.core.client.CommandWithArg;
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.js.JsObject;
 import org.rstudio.core.client.js.JsUtil;
 
@@ -291,6 +292,11 @@ public abstract class Prefs
    public JsObject getUserLayer()
    {
       return layers_.get(userLayer()).getValues();
+   }
+   
+   public PrefValue<?> getPrefValue(String name)
+   {
+      return values_.get(name);
    }
    
    public abstract int userLayer();
