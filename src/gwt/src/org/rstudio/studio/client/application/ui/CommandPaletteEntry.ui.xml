@@ -75,7 +75,8 @@
 			</g:HorizontalPanel>
 		</g:cell>
 		<g:cell horizontalAlignment="ALIGN_RIGHT">
-			<g:Label styleName="{styles_.shortcut} rstudio-fixed-width-font" ui:field="shortcut_"></g:Label>
+			<g:HTMLPanel ui:field="invoker_">
+			</g:HTMLPanel>
 		</g:cell>
 	</g:HorizontalPanel>
 </ui:UiBinder> 

@@ -25,7 +25,7 @@ import org.rstudio.studio.client.workbench.addins.Addins.RAddin;
  * RAddinCommandPaletteEntry is a widget that represents a command furnished by
  * an RStudio Addin in RStudio's command palette.
  */
-public class RAddinCommandPaletteEntry extends CommandPaletteEntry
+public class RAddinCommandPaletteEntry extends CommandPaletteCommand
 {
    public RAddinCommandPaletteEntry(RAddin addin, AddinExecutor executor, 
                                     List<KeySequence> keys)

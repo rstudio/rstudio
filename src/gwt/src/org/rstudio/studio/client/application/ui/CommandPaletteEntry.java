@@ -14,14 +14,9 @@
  */
 package org.rstudio.studio.client.application.ui;
 
-import java.util.List;
-
-import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.SafeHtmlUtil;
 import org.rstudio.core.client.StringUtil;
-import org.rstudio.core.client.command.KeyCombination;
-import org.rstudio.core.client.command.KeySequence;
 
 import com.google.gwt.aria.client.Roles;
 import com.google.gwt.aria.client.SelectedValue;
@@ -31,6 +26,7 @@ import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.Composite;
+import com.google.gwt.user.client.ui.HTMLPanel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
 
@@ -53,22 +49,13 @@ public abstract class CommandPaletteEntry extends Composite
       String disabled();
    }
 
-   public CommandPaletteEntry(List<KeySequence> keys)
+   public CommandPaletteEntry()
    {
       initWidget(uiBinder.createAndBindUi(this));
-      keys_ = keys;
       selected_ = false;
       
       Roles.getOptionRole().set(getElement());
       Roles.getOptionRole().setAriaSelectedState(getElement(), SelectedValue.FALSE);
-   }
-
-   private void appendKey(SafeHtmlBuilder b, String key)
-   {
-      b.appendHtmlConstant("<span class=\"" + 
-             styles_.keyboard() + "\">");
-      b.appendHtmlConstant(key);
-      b.appendHtmlConstant("</span>");
    }
 
    public void initialize()
@@ -93,33 +80,7 @@ public abstract class CommandPaletteEntry extends Composite
          Roles.getOptionRole().setAriaDisabledState(getElement(), true);
       }
 
-      SafeHtmlBuilder b = new SafeHtmlBuilder();
-      for (KeySequence k: keys_)
-      {
-         List<KeyCombination> combos = k.getData();
-         for (int i = 0; i < combos.size(); i++)
-         {
-            KeyCombination combo = combos.get(i);
-            if (combo.isCtrlPressed())
-               appendKey(b, "Ctrl");
-            if (combo.isAltPressed())
-               appendKey(b, "Alt");
-            if (combo.isShiftPressed())
-               appendKey(b, "Shift");
-            if (combo.isMetaPressed())
-               appendKey(b, BrowseCap.hasMetaKey() ? "&#8984;" : "Cmd");
-            appendKey(b, combo.key());
-            
-            // Is this a multi-key sequence?
-            if (i < (combos.size() - 1))
-            {
-               b.appendEscaped(",");
-            }
-         }
-         break;
-      }
-      shortcut_.getElement().setInnerSafeHtml(b.toSafeHtml());
-      
+      // Apply context
       String context = getContext();
       if (StringUtil.isNullOrEmpty(context))
       {
@@ -130,6 +91,9 @@ public abstract class CommandPaletteEntry extends Composite
          context_.getElement().setInnerHTML(context);
          context_.setVisible(true);
       }
+      
+      // Insert invoker
+      invoker_.add(getInvoker());
    }
    
    /*
@@ -178,12 +142,12 @@ public abstract class CommandPaletteEntry extends Composite
    abstract public String getId();
    abstract public String getContext();
    abstract public boolean enabled();
+   abstract public Widget getInvoker();
    
-   private final List<KeySequence> keys_;
    private boolean selected_;
 
    @UiField public Label context_;
    @UiField public Label name_;
-   @UiField public Label shortcut_;
+   @UiField public HTMLPanel invoker_;
    @UiField public Styles styles_;
 }

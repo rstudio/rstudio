@@ -19,9 +19,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.rstudio.core.client.command.KeySequence;
-import org.rstudio.studio.client.application.ui.CommandPaletteEntry;
+import org.rstudio.studio.client.application.ui.CommandPaletteCommand;
 
-public class PanmirrorCommandPaletteEntry extends CommandPaletteEntry
+public class PanmirrorCommandPaletteEntry extends CommandPaletteCommand
 {
 
    public PanmirrorCommandPaletteEntry(PanmirrorCommandUI command)

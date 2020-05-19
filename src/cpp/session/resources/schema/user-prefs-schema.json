@@ -21,7 +21,7 @@
             "type": "boolean",
             "default": true,
             "title": "Load workspace on start",
-            "description": "Whether to load the workspace from an .Rdata file when the R session begins."
+            "description": "Whether to load the workspace when the R session begins."
         },
         "initial_working_directory": {
             "type": "string",
@@ -80,27 +80,32 @@
         "always_save_history": {
             "type": "boolean",
             "default": true,
+            "title": "Save R console history",
             "description": "Whether to always save the R console history."
         },
         "remove_history_duplicates": {
             "type": "boolean",
             "default": false,
+            "title": "Remove duplicates from console history",
             "description": "Whether to remove duplicate entries from the R console history."
         },
         "show_last_dot_value": {
             "type": "boolean",
             "default": false,
+            "title": "Show .Last.value in Environment pane",
             "description": "Show the result of the last expression (.Last.value) in the Environment pane."
         },
         "line_ending_conversion": {
             "type": "string",
             "enum": ["default", "windows", "posix", "native", "passthrough"],
             "default": "native",
+            "title": "Line ending format",
             "description": "The line ending format to use when saving files."
         },
         "use_newlines_in_makefiles": {
             "type": "boolean",
             "default": true,
+            "title": "Use newlines in Makefiles",
             "description": "Whether to use newlines when saving Makefiles."
         },
         "windows_terminal_shell": {
@@ -128,16 +133,19 @@
         "show_line_numbers": {
             "type": "boolean",
             "default": true,
+            "title": "Show line numbers in editor",
             "description": "Show line numbers in RStudio's code editor."  
         },
         "highlight_selected_word": {
             "type": "boolean",
             "default": true,
+            "title": "Highlight selected word in editor",
             "description": "Highlight the selected word in RStudio's code editor."  
         },
         "highlight_selected_line": {
             "type": "boolean",
             "default": false,
+            "title": "Highlight selected line in editor",
             "description": "Highlight the selected line in RStudio's code editor."  
         },
         "panes": {
@@ -199,251 +207,300 @@
         "use_spaces_for_tab": {
             "type": "boolean",
             "default": true,
+            "title": "Insert spaces for Tab",
             "description": "Whether to insert spaces when pressing the Tab key."
         },
         "num_spaces_for_tab": {
             "type": "integer",
             "default": 2,
+            "title": "Number of spaces for Tab",
             "description": "The number of spaces to insert when pressing the Tab key."
         },
         "auto_detect_indentation": {
             "type": "boolean",
             "default": true,
+            "title": "Autodetect indentation in files",
             "description": "Whether to automatically detect indentation settings from file contents."
         },
         "show_margin": {
             "type": "boolean",
             "default": true,
+            "title": "Show margin in editor",
             "description": "Whether to show the margin guide in the RStudio code editor."
         },
         "blinking_cursor": {
             "type": "boolean",
             "default": true,
+            "title": "Use a blinking cursor",
             "description": "Whether to flash the cursor off and on."
         },
         "margin_column": {
             "type": "integer",
             "default": 80,
+            "title": "Margin column",
             "description": "The number of columns of text after which the margin is shown."
         },
         "show_invisibles": {
             "type": "boolean",
             "default": false,
+            "title": "Show invisible characters in editor",
             "description": "Whether to show invisible characters, such as spaces and tabs, in the RStudio code editor."
         },
         "show_indent_guides": {
             "type": "boolean",
             "default": false,
+            "title": "Show invisible characters in editor",
             "description": "Whether to show indentation guides in the RStudio code editor."
         },
         "continue_comments_on_newline": {
             "type": "boolean",
             "default": false,
+            "title": "Continue comments after adding new line",
             "description": "Whether continue comments (by inserting the comment character) after adding a new line."
         },
         "editor_keybindings": {
             "type": "string",
             "enum": ["default", "vim", "emacs", "sublime"],
             "default": "default",
+            "title": "Keybinding set for editor",
             "description": "The keybindings to use in the RStudio code editor."
         },
         "insert_matching": {
             "type": "boolean",
             "default": true,
+            "title": "Auto-insert matching parentheses and brackets",
             "description": "Whether to insert matching pairs, such as () and [], when the first is typed."
         },
         "insert_spaces_around_equals": {
             "type": "boolean",
             "default": true,
+            "title": "Insert spaces around = in R code",
             "description": "Whether to insert spaces around the equals sign in R code."
         },
         "insert_parens_after_function_completion": {
             "type": "boolean",
             "default": true,
+            "title": "Insert parentheses after functions",
             "description": "Whether to insert parentheses after function completions."
         },
         "tab_multiline_completion": {
             "type": "boolean",
             "default": false,
+            "title": "Complete multi-line statements with Tab",
             "description": "Whether to attempt completion of multiple-line statements when pressing Tab."
         },
         "tab_completion": {
             "type": "boolean",
             "default": true,
+            "title": "Use Tab to trigger autocompletion",
             "description": "Whether to attempt completion of statements when pressing Tab."
         },
         "show_help_tooltip_on_idle": {
             "type": "boolean",
             "default": false,
+            "title": "Show function help tooltips on idle",
             "description": "Whether to show help tooltips for functions when the cursor has not been recently moved."
         },
         "surround_selection": {
             "type": "string",
             "enum": ["never", "quotes", "quotes_and_brackets"],
             "default": "quotes_and_brackets",
+            "title": "Surround selections with",
             "description": "Which kinds of delimiters can be used to surround the current selection."
         },
         "enable_snippets": {
             "type": "boolean",
             "default": true,
+            "title": "Enable code snippets",
             "description": "Whether to enable code snippets in the RStudio code editor."
         },
         "code_completion": {
             "type": "string",
             "enum": ["always", "never", "triggered", "manual"],
             "default": "always",
+            "title": "Use code completion for R",
             "description": "When to use auto-completion for R code in the RStudio code editor."
         },
         "code_completion_other": {
             "type": "string",
             "enum": ["always", "triggered", "manual"],
             "default": "always",
+            "title": "Use code completion for other languages",
             "description": "When to use auto-completion for other languages (such as JavaScript and SQL) in the RStudio code editor."
         },
         "console_code_completion": {
             "type": "boolean",
             "default": true,
+            "title": "Use code completion in the R console",
             "description": "Whether to always use code completion in the R console."
         },
         "code_completion_delay": {
             "type": "integer",
             "default": 250,
+            "title": "Delay before completing code (ms)",
             "description": "The number of milliseconds to wait before offering code suggestions."
         },
         "code_completion_characters": {
             "type": "integer",
             "default": 3,
+            "title": "Number of characters for code completion",
             "description": "The number of characters in a symbol that can be entered before completions are offered."
         },
         "show_function_signature_tooltips": {
             "type": "boolean",
             "default": true,
+            "title": "Show function signature tooltips",
             "description": "Whether to show function signature tooltips during autocompletion."
         },
         "show_diagnostics_r": {
             "type": "boolean",
             "default": true,
+            "title": "Show diagnostics in R code",
             "description": "Whether to show diagnostic messages (such as syntax and usage errors) for R code as you type."
         },
         "show_diagnostics_cpp": {
             "type": "boolean",
             "default": true,
+            "title": "Show diagnostics in C++ code",
             "description": "Whether to show diagnostic messages for C++ code as you type."
         },
         "show_diagnostics_other": {
             "type": "boolean",
             "default": true,
+            "title": "Show diagnostics in other languages",
             "description": "Whether to show diagnostic messages for other types of code (not R or C++)."
         },
         "style_diagnostics": {
             "type": "boolean",
             "default": false,
+            "title": "Show style diagnostics for R code",
             "description": "Whether to show style diagnostics (suggestions for improving R code style)"
         },
         "diagnostics_on_save": {
             "type": "boolean",
             "default": true,
+            "title": "Check code for problems when saving",
             "description": "Whether to check code for problems after saving it."
         },
         "background_diagnostics": {
             "type": "boolean",
             "default": true,
+            "title": "Run R code diagnostics in the background",
             "description": "Whether to run code diagnostics in the background, as you type."
         },
         "background_diagnostics_delay_ms": {
             "type": "integer",
             "default": 2000,
+            "title": "Run R code diagnostics after (ms)",
             "description": "The number of milliseconds to delay before running code diagnostics in the background."
         },
         "diagnostics_in_r_function_calls": {
             "type": "boolean",
             "default": true,
+            "title": "Run diagnostics on R function calls",
             "description": "Whether to run diagnostics in R function calls."
         },
         "check_arguments_to_r_function_calls": {
             "type": "boolean",
             "default": false,
+            "title": "Check arguments to R function calls",
             "description": "Whether to check arguments to R function calls."
         },
         "check_unexpected_assignment_in_function_call": {
             "type": "boolean",
             "default": false,
+            "title": "Check for unexpected assignments",
             "description": "Whether to check for unexpected variable assignments inside R function calls."
         },
         "warn_if_no_such_variable_in_scope": {
             "type": "boolean",
             "default": false,
+            "title": "Warn when R variable used but not defined",
             "description": "Whether to generate a warning if a variable is used without being defined in the current scope."
         },
         "warn_variable_defined_but_not_used": {
             "type": "boolean",
             "default": false,
+            "title": "Warn when R variable defined but not used",
             "description": "Whether to generate a warning if a variable is defined without being used in the current scope"
         },
         "auto_discover_package_dependencies": {
             "type": "boolean",
             "default": true,
+            "title": "Detect missing R packages in the editor",
             "description": "Whether to automatically discover and offer to install missing R package dependencies."
         },
         "auto_append_newline": {
             "type": "boolean",
             "default": false,
+            "title": "Ensure files end with a newline when saving",
             "description": "Whether to ensure that source files end with a newline character."
         },
         "strip_trailing_whitespace": {
             "type": "boolean",
             "default": false,
+            "title": "Strip trailing whitespace when saving",
             "description": "Whether to strip trailing whitespace from each line when saving."
         },
         "restore_source_document_cursor_position": {
             "type": "boolean",
             "default": true,
-            "description": "Whether to save the position of the cursor when a fille is closed, restore it when the file is opened."
+            "title": "Restore cursor position when reopening files",
+            "description": "Whether to save the position of the cursor when a file is closed, restore it when the file is opened."
         },
         "reindent_on_paste": {
             "type": "boolean",
             "default": true,
+            "title": "Re-indent code when pasting",
             "description": "Whether to automatically re-indent code when it's pasted into RStudio."
         },
         "vertically_align_arguments_indent": {
             "type": "boolean",
             "default": true,
+            "title": "Vertically align function arguments",
             "description": "Whether to vertically align arguments to R function calls during automatic indentation."
         },
         "soft_wrap_r_files": {
             "type": "boolean",
             "default": false,
+            "title": "Soft-wrap R source files",
             "description": "Whether to soft-wrap R source files, wrapping the text for display without inserting newline characters."
         },
         "soft_wrap_rmd_files": {
             "type": "boolean",
             "default": true,
+            "title": "Soft-wrap R Markdown files",
             "description": "Whether to soft-wrap R Markdown files (and similar types such as R HTML and R Notebooks)"
         },
         "focus_console_after_exec": {
             "type": "boolean",
             "default": false,
+            "title": "Focus console after executing R code",
             "description": "Whether to focus the R console after executing an R command from a script."
         },
         "fold_style": {
             "type": "string",
             "enum": ["begin-only", "begin-and-end"],
             "default": "begin-and-end",
+            "title": "Fold style in editor",
             "description": "The style of folding to use."
         },
         "save_before_sourcing": {
             "type": "boolean",
             "default": true,
+            "title": "Save R scripts before sourcing",
             "description": "Whether to automatically save scripts before executing them."
         },
         "syntax_color_console": {
             "type": "boolean",
             "default": false,
+            "title": "Syntax highlighting in R console",
             "description": "Whether to use syntax highlighting in the R console."
         },
         "scroll_past_end_of_document": {
             "type": "boolean",
             "default": false,
+            "title": "Scroll past end of file",
             "description": "Whether to allow scrolling past the end of a file."
         },
         "highlight_r_function_calls": {

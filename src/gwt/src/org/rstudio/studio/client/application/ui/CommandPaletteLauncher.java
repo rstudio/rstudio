@@ -32,7 +32,6 @@ import org.rstudio.studio.client.workbench.prefs.model.UserPrefDefinitions;
 import org.rstudio.studio.client.workbench.views.source.Source;
 
 import com.google.gwt.aria.client.Roles;
-import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.inject.Inject;
@@ -97,6 +96,7 @@ public class CommandPaletteLauncher implements CommandPalette.Host
             {
                // Save the preference definitions and create the UI
                prefs_ = defs;
+               state_ = State.Hidden;
                createPanel();
             }
             
@@ -110,14 +110,10 @@ public class CommandPaletteLauncher implements CommandPalette.Host
                // preferences won't show in the Command Palette, but that
                // shouldn't stop us for using the palette for other tasks.
                prefs_ = UserPrefDefinitions.createEmpty();
+               state_ = State.Hidden;
                createPanel();
             }
          });
-         {
-
-            state_ = State.Hidden;
-            createPanel();
-         }
       }
    }
    
@@ -154,7 +150,7 @@ public class CommandPaletteLauncher implements CommandPalette.Host
       // Assign the appropriate ARIA role to this panel
       Element ele = panel_.getElement();
       Roles.getDialogRole().set(ele);
-      Roles.getDialogRole().setAriaLabelProperty(ele, "Search for commands");
+      Roles.getDialogRole().setAriaLabelProperty(ele, "Search commands and settings");
 
       panel_.add(palette_);
       panel_.show();
@@ -164,6 +160,7 @@ public class CommandPaletteLauncher implements CommandPalette.Host
       panel_.getElement().getStyle().setZIndex(250);
 
       palette_.focus();
+      state_ = State.Showing;
       
       // Free our reference to the panel when it closes
       panel_.addCloseHandler((evt) -> 
@@ -186,6 +183,7 @@ public class CommandPaletteLauncher implements CommandPalette.Host
    {
       palette_ = null;
       panel_ = null;
+      state_ = State.Hidden;
    }
    
    private ModalPopupPanel panel_;

@@ -28,7 +28,7 @@ import org.rstudio.core.client.command.KeySequence;
  * AppCommandPaletteEntry is a widget that represents an AppCommand in RStudio's
  * command palette.
  */
-public class AppCommandPaletteEntry extends CommandPaletteEntry
+public class AppCommandPaletteEntry extends CommandPaletteCommand
 {
    public AppCommandPaletteEntry(AppCommand command, List<KeySequence> keys)
    {

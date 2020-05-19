@@ -16,13 +16,17 @@ package org.rstudio.studio.client.application.ui;
 
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefDefinition;
 
+import com.google.gwt.user.client.ui.Label;
+import com.google.gwt.user.client.ui.Widget;
+
 public class UserPrefPaletteEntry extends CommandPaletteEntry
 {
    public UserPrefPaletteEntry(String id, UserPrefDefinition pref)
    {
-      super(null);
+      super();
       pref_ = pref;
       id_ = id;
+      initialize();
    }
 
    @Override
@@ -46,13 +50,21 @@ public class UserPrefPaletteEntry extends CommandPaletteEntry
    @Override
    public String getContext()
    {
-      return "Settings";
+      return new String("Settings");
    }
 
    @Override
    public boolean enabled()
    {
       return true;
+   }
+
+   @Override
+   public Widget getInvoker()
+   {
+      Label label = new Label();
+      label.setText("NYI");
+      return label;
    }
 
    private final UserPrefDefinition pref_;
