@@ -32,4 +32,6 @@ public interface PrefsServerOperations
    void clearPreferences(ServerRequestCallback<String> requestCallback);
    
    void viewPreferences(ServerRequestCallback<Void> requestCallback);
+
+   void getAllPreferences(ServerRequestCallback<UserPrefDefinitions> requestCallback);
 }

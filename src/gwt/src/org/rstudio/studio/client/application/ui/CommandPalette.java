@@ -35,6 +35,8 @@ import org.rstudio.studio.client.workbench.addins.Addins.AddinExecutor;
 import org.rstudio.studio.client.workbench.addins.Addins.RAddin;
 import org.rstudio.studio.client.workbench.addins.Addins.RAddins;
 import org.rstudio.studio.client.workbench.commands.Commands;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefDefinition;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefDefinitions;
 
 import com.google.gwt.aria.client.ExpandedValue;
 import com.google.gwt.aria.client.Id;
@@ -87,6 +89,7 @@ public class CommandPalette extends Composite
 
    public CommandPalette(Commands commands, 
                          RAddins addins, 
+                         UserPrefDefinitions prefs,
                          List<CommandPaletteEntrySource> extraSources,
                          ShortcutManager shortcuts, 
                          Host host)
@@ -99,6 +102,7 @@ public class CommandPalette extends Composite
       selected_ = -1;
       addins_ = addins;
       commands_ = commands;
+      prefs_ = prefs;
       extraEntriesSource_ = CommandPaletteEntrySource.join(extraSources);
       attached_ = false;
       pageSize_ = 0;
@@ -207,6 +211,21 @@ public class CommandPalette extends Composite
          entries_.add(entry);
       }
       
+      // Add all of the preferences
+      for (String pref: JsUtil.asIterable(prefs_.getPrefNames()))
+      {
+         UserPrefDefinition def = prefs_.getDefinition(pref);
+         if (StringUtil.isNullOrEmpty(def.getTitle()))
+         {
+            // Ignore preferences with no title (the title is the only
+            // reasonable thing we can display)
+            continue;
+         }
+         
+         CommandPaletteEntry entry = new UserPrefPaletteEntry(pref, def);
+         entries_.add(entry);
+      }
+      
       // add commands from additional sources
       List<CommandPaletteEntry> extraEntries = extraEntriesSource_.getCommandPaletteEntries();
       if (extraEntries != null)
@@ -222,7 +241,6 @@ public class CommandPalette extends Composite
          }, ClickEvent.getType());
          commandList_.add(entry);
       }
-
       
       // Handle most keystrokes on KeyUp so that the contents of the text box
       // have already been changed
@@ -518,6 +536,7 @@ public class CommandPalette extends Composite
    private final Commands commands_;
    private final RAddins addins_;
    private final CommandPaletteEntrySource extraEntriesSource_;
+   private final UserPrefDefinitions prefs_;
    private int selected_;
    private List<CommandPaletteEntry> entries_;
    private String searchText_;

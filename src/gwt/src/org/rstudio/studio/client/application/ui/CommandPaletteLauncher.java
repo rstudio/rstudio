@@ -18,12 +18,17 @@ package org.rstudio.studio.client.application.ui;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.command.ShortcutManager;
 import org.rstudio.core.client.widget.ModalPopupPanel;
+import org.rstudio.studio.client.server.ServerError;
+import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.addins.AddinsCommandManager;
 import org.rstudio.studio.client.workbench.commands.Commands;
+import org.rstudio.studio.client.workbench.prefs.model.PrefsServerOperations;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefDefinitions;
 import org.rstudio.studio.client.workbench.views.source.Source;
 
 import com.google.gwt.aria.client.Roles;
@@ -44,11 +49,13 @@ public class CommandPaletteLauncher implements CommandPalette.Host
    {
       Uninitialized,  // The panel has never been shown
       Initializing,   // The panel is getting ready to show for the first time
-      Initialized     // The panel has been shown at least once and is fully initialized
+      Showing,        // The panel is currently showing
+      Hidden          // The panel is ready, but currently hidden
    }
    
    @Inject 
    public CommandPaletteLauncher(Commands commands,
+         PrefsServerOperations prefsServer,
          AddinsCommandManager addins,
          Provider<Source> pSource,
          Binder binder)
@@ -57,7 +64,7 @@ public class CommandPaletteLauncher implements CommandPalette.Host
       addins_ = addins;
       commands_ = commands;
       pSource_ = pSource;
-      showing_ = false;
+      prefsServer_ = prefsServer;
       state_ = State.Uninitialized;
    }
    
@@ -65,21 +72,13 @@ public class CommandPaletteLauncher implements CommandPalette.Host
    public void onShowCommandPalette()
    {
       // If the palette is already showing, treat this as a hide.
-      if (showing_)
+      if (state_ == State.Showing)
       {
          dismiss();
          return;
       }
 
-      // extra sources (currently only the source tab)
-      List<CommandPaletteEntrySource> extraSources = new ArrayList<CommandPaletteEntrySource>();
-      extraSources.add(pSource_.get());
-      
-      // Create the command palette widget
-      palette_ = new CommandPalette(commands_, addins_.getRAddins(), extraSources,
-            ShortcutManager.INSTANCE, this);
-      
-      if (state_ == State.Initialized)
+      if (state_ == State.Hidden)
       {
          // Already initialized; just show the panel
          createPanel();
@@ -87,15 +86,38 @@ public class CommandPaletteLauncher implements CommandPalette.Host
       else if (state_ == State.Uninitialized)
       {
          // Not yet initialized. The first load happens behind the browser event
-         // loop so that the CSS resources can be injected. We could fix this by
-         // eagerly injecting these when RStudio starts, but this way we don't
-         // pay any boot time penalty.
+         // loop (and after an RPC) so that the CSS resources can be injected.
+         // We could fix this by eagerly injecting these when RStudio starts,
+         // but this way we don't pay any boot time penalty.
          state_ = State.Initializing;
-         Scheduler.get().scheduleDeferred(() ->
+         prefsServer_.getAllPreferences(new ServerRequestCallback<UserPrefDefinitions>()
          {
-            state_ = State.Initialized;
-            createPanel();
+            @Override
+            public void onResponseReceived(UserPrefDefinitions defs)
+            {
+               // Save the preference definitions and create the UI
+               prefs_ = defs;
+               createPanel();
+            }
+            
+            @Override
+            public void onError(ServerError error)
+            {
+               // Log the error to the console for diagnostics
+               Debug.logError(error);
+               
+               // Create an empty set of preferences. This means that user
+               // preferences won't show in the Command Palette, but that
+               // shouldn't stop us for using the palette for other tasks.
+               prefs_ = UserPrefDefinitions.createEmpty();
+               createPanel();
+            }
          });
+         {
+
+            state_ = State.Hidden;
+            createPanel();
+         }
       }
    }
    
@@ -106,7 +128,14 @@ public class CommandPaletteLauncher implements CommandPalette.Host
     */
    private void createPanel()
    {
-      showing_ = true;
+      // extra sources (currently only the source tab)
+      List<CommandPaletteEntrySource> extraSources = new ArrayList<CommandPaletteEntrySource>();
+      extraSources.add(pSource_.get());
+      
+      // Create the command palette widget
+      palette_ = new CommandPalette(commands_, addins_.getRAddins(), prefs_, extraSources,
+            ShortcutManager.INSTANCE, this);
+      
       panel_ = new ModalPopupPanel(
             true,  // Auto hide
             true,  // Modal
@@ -157,14 +186,14 @@ public class CommandPaletteLauncher implements CommandPalette.Host
    {
       palette_ = null;
       panel_ = null;
-      showing_ = false;
    }
    
    private ModalPopupPanel panel_;
    private CommandPalette palette_;
-   private boolean showing_;
    private State state_;
+   private UserPrefDefinitions prefs_;
 
+   private final PrefsServerOperations prefsServer_;
    private final Commands commands_;
    private final AddinsCommandManager addins_;
    private final Provider<Source> pSource_;

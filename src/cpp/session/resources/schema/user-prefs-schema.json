@@ -7,22 +7,26 @@
         "run_rprofile_on_resume": {
             "type": "boolean",
             "default": false,
+            "title": "Run .Rprofile on resume",
             "description": "Whether to run .Rprofile again after resuming a suspended R session."
         },
         "save_workspace": {
             "type": "string",
             "enum": ["always", "never", "ask"],
             "default": "ask",
-            "description": "Whether to save the workspace after the R session ends."
+            "title": "Save workspace on quit",
+            "description": "Whether to save the workspace to an .Rdata file after the R session ends."
         },
         "load_workspace": {
             "type": "boolean",
             "default": true,
-            "description": "Whether to load the workspace when the R session begins."
+            "title": "Load workspace on start",
+            "description": "Whether to load the workspace from an .Rdata file when the R session begins."
         },
         "initial_working_directory": {
             "type": "string",
             "default": "",
+            "title": "Initial working directory",
             "description": "The initial working directory for new R sessions."
         },
         "cran_mirror": {
