@@ -737,6 +737,22 @@ public class Source implements InsertSourceHandler,
    public void loadDisplay()
    {
       restoreDocuments(session_);
+
+      // As tabs were added before, manageCommands() was suppressed due to
+      // initialized_ being false, so we need to run it explicitly
+      manageCommands();
+      // Same with this event
+      fireDocTabsChanged();
+      
+      // open project or edit_published docs (only for main source window)
+      if (SourceWindowManager.isMainSourceWindow())
+      {
+         openProjectDocs(session_);
+         openEditPublishedDocs();
+      }
+      
+      // add vim commands
+      initVimCommands();
    }
 
    private void loadFullSource()
@@ -840,21 +856,6 @@ public class Source implements InsertSourceHandler,
       
       AceEditorNative.syncUiPrefs(userPrefs_);
       
-      // As tabs were added before, manageCommands() was suppressed due to
-      // initialized_ being false, so we need to run it explicitly
-      manageCommands();
-      // Same with this event
-      fireDocTabsChanged();
-      
-      // open project or edit_published docs (only for main source window)
-      if (SourceWindowManager.isMainSourceWindow())
-      {
-         openProjectDocs(session_);
-         openEditPublishedDocs();
-      }
-      
-      // add vim commands
-      initVimCommands();
    }
    
    /**
