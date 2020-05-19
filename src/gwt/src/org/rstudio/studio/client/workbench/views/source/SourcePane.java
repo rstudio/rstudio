@@ -790,7 +790,7 @@ public class SourcePane extends LazyPanel implements Display,
          }
       });
 
-      events_.fireEvent(new SourceDocAddedEvent(doc, mode));
+      events_.fireEvent(new SourceDocAddedEvent(doc, mode, getName()));
 
       if (target instanceof TextEditingTarget && doc.isReadOnly())
       {

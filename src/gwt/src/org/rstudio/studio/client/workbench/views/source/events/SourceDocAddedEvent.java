@@ -34,10 +34,11 @@ public class SourceDocAddedEvent
    {
    }
    
-   public SourceDocAddedEvent(SourceDocument doc, int mode)
+   public SourceDocAddedEvent(SourceDocument doc, int mode, String displayName)
    {
       doc_ = doc;
       mode_ = mode;
+      displayName_ = displayName;
       windowId_ = SourceWindowManager.getSourceWindowId();
    }
 
@@ -46,6 +47,11 @@ public class SourceDocAddedEvent
       return doc_;
    }
    
+   public String getDisplayName()
+   {
+      return displayName_;
+   }
+
    public String getWindowId()
    {
       return windowId_;
@@ -69,6 +75,7 @@ public class SourceDocAddedEvent
    }
 
    private SourceDocument doc_;
+   private String displayName_;
    private String windowId_;
    private int mode_;
    

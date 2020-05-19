@@ -597,6 +597,32 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
          fireEventToSourceWindow(id, event, false);
    }
 
+   public HashMap<String,String> assignSourceDocDisplay(String docId, String name)
+   {
+      return assignSourceDocDisplay(docId, name, false);
+   }
+
+   public HashMap<String,String> assignSourceDocDisplay(String docId, String name, boolean write)
+   {
+      JsArray<SourceDocument> docs = getSourceDocs();
+      for (int i = 0; i < docs.length(); i++)
+      {
+         SourceDocument doc = docs.get(i);
+         if (doc.getId() == docId)
+         {
+            doc.assignSourceDisplayName(name);
+            break;
+         }
+      }
+      HashMap<String,String> props = new HashMap<String,String>();
+      props.put(Source.COLUMN_PREFIX, name);
+
+      if (write)
+         modifyDocumentProperties(docId, props, null);
+      
+      return props;
+   }
+
    // Event handlers ----------------------------------------------------------
    
    @Override
@@ -629,7 +655,7 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
    {
       // assign a new window ID to the source document 
       final String windowId = createSourceWindowId();
-      assignSourceDocWindowId(evt.getDocId(), windowId, 
+      modifyDocumentProperties(evt.getDocId(), assignSourceDocWindowId(evt.getDocId(), windowId),
             new Command()
             {
                @Override
@@ -650,10 +676,13 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
       {
          // assign on the doc itself
          e.getDoc().assignSourceWindowId(e.getWindowId());
+         e.getDoc().assignSourceDisplayName(e.getDisplayName());
          
          // assign on the server
-         assignSourceDocWindowId(e.getDoc().getId(), 
-               e.getWindowId(), null);
+         HashMap<String,String> props = assignSourceDocWindowId(e.getDoc().getId(), e.getWindowId());
+         props.putAll(assignSourceDocDisplay(e.getDoc().getId(), e.getDisplayName()));
+
+         modifyDocumentProperties(e.getDoc().getId(), props, null);
       }
 
       // ensure the doc isn't already in our index
@@ -733,8 +762,9 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
       {
          // if the doc is moving to this window, assign the ID before firing
          // events
-         assignSourceDocWindowId(event.getDocId(), 
-               event.getNewWindowId(), new Command()
+         modifyDocumentProperties(event.getDocId(),
+               assignSourceDocWindowId(event.getDocId(), event.getNewWindowId()),
+               new Command()
                {
                   @Override
                   public void execute()
@@ -1112,8 +1142,8 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
             SourceSatellite.NAME_PREFIX + windowId);
    }
    
-   private void assignSourceDocWindowId(String docId, 
-         String windowId, final Command onComplete)
+   private HashMap<String,String> assignSourceDocWindowId(String docId, 
+         String windowId)
    {
       // assign locally
       JsArray<SourceDocument> docs = getSourceDocs();
@@ -1125,7 +1155,7 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
             // no point in writing a value to the server if we're not changing
             // it 
             if (doc.getSourceWindowId() == windowId)
-               return;
+               return null;
             doc.assignSourceWindowId(windowId);
             break;
          }
@@ -1135,6 +1165,15 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
       HashMap<String,String> props = new HashMap<String,String>();
       props.put(SOURCE_WINDOW_ID, windowId);
       
+      return props;
+   }
+
+   private void modifyDocumentProperties(String docId, HashMap<String,String> props,
+         final Command onComplete)
+   {
+      if (props == null || props.isEmpty())
+         return;
+
       // update the doc window ID on the server
       server_.modifyDocumentProperties(docId,
              props, new ServerRequestCallback<Void>()
@@ -1167,14 +1206,16 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
          if (doc.getSourceWindowId() == windowId)
          {
             // change the window ID of the doc back to the main window
-            assignSourceDocWindowId(doc.getId(), "", new Command()
-            {
-               @Override
-               public void execute()
-               {
-                  // close the document when finished
-                  server_.closeDocument(doc.getId(), 
-                        new VoidServerRequestCallback());
+            modifyDocumentProperties(doc.getId(),
+                  assignSourceDocWindowId(doc.getId(), ""),
+                  new Command()
+                  {
+                     @Override
+                     public void execute()
+                     {
+                        // close the document when finished
+                        server_.closeDocument(doc.getId(), 
+                              new VoidServerRequestCallback());
                }
             });
          }
@@ -1243,8 +1284,9 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
                {
                   if (sourceDocs.get(i).getPath() == path)
                   {
-                     assignSourceDocWindowId(sourceDocs.get(i).getId(), 
-                           getSourceWindowId(), null);
+                     modifyDocumentProperties(sourceDocs.get(i).getId(),
+                           assignSourceDocWindowId(sourceDocs.get(i).getId(), getSourceWindowId()),
+                           null);
                      fireEventToSourceWindow(sourceWindowId, 
                            new DocWindowChangedEvent(
                                  sourceDocs.get(i).getId(), sourceWindowId, 
@@ -1283,8 +1325,10 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
                if (sourceDocs.get(i).getPath() == path)
                {
                   // take ownership of the doc immediately 
-                  assignSourceDocWindowId(sourceDocs.get(i).getId(), 
-                        getSourceWindowId(), null);
+                  modifyDocumentProperties(sourceDocs.get(i).getId(),
+                                           assignSourceDocWindowId(sourceDocs.get(i).getId(),
+                                                                   getSourceWindowId()),
+                                           null);
                   events_.fireEventToMainWindow(new DocWindowChangedEvent(
                               sourceDocs.get(i).getId(), sourceWindowId, null, 
                               sourceDocs.get(i).getCollabParams(), 0, -1));

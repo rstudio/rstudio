@@ -734,6 +734,11 @@ public class Source implements InsertSourceHandler,
       });
    }
 
+   public void loadDisplay()
+   {
+      restoreDocuments(session_);
+   }
+
    private void loadFullSource()
    {
       // sync UI prefs with shortcut manager
@@ -799,8 +804,6 @@ public class Source implements InsertSourceHandler,
          });
       }
          
-      restoreDocuments(session_);
-      
       // get the key to use for active tab persistence; use ordinal-based key
       // for source windows rather than their ID to avoid unbounded accumulation
       String activeTabKey = KEY_ACTIVETAB;
@@ -1117,13 +1120,20 @@ public class Source implements InsertSourceHandler,
              (SourceWindowManager.isMainSourceWindow() && 
               !pWindowManager_.get().isSourceWindowOpen(docWindowId)))
          {
+
             // attempt to add a tab for the current doc; try/catch this since
             // we don't want to allow one failure to prevent all docs from
             // opening
             EditingTarget sourceEditor = null;
             try
             {
-               sourceEditor = addTab(doc, true, OPEN_REPLAY, null);
+               // if we are the main source window we need to select a display
+               if (currentSourceWindowId == docWindowId &&
+                   SourceWindowManager.isMainSourceWindow())
+                  sourceEditor = addTab(doc, true, OPEN_REPLAY,
+                                        views_.getDisplayByName(doc.getSourceDisplayName()));
+               else
+                  sourceEditor = addTab(doc, true, OPEN_REPLAY, null);
             }
             catch (Exception e)
             {
@@ -2367,6 +2377,8 @@ public class Source implements InsertSourceHandler,
             oldDisplay = e.getOldWindowId() == e.getNewWindowId() ? 
                          views_.getDisplayByDocument(e.getDocId()) :
                          views_.getActiveDisplay();
+            // the event doesn't contain the display info, so we add it now
+            pWindowManager_.get().assignSourceDocDisplay(e.getDocId(), newDisplay.getName(), true);
          }
 
          // if we're the adopting window, add the doc
@@ -2873,7 +2885,6 @@ public class Source implements InsertSourceHandler,
       display.generateName(false);
       views_.add(display);
       views_.setActive(display);
-      display.onNewSourceDoc();
       ensureVisible(false);
 
       return display;
@@ -3835,7 +3846,7 @@ public class Source implements InsertSourceHandler,
          }
       });
       
-      events_.fireEvent(new SourceDocAddedEvent(doc, mode));
+      events_.fireEvent(new SourceDocAddedEvent(doc, mode, targetView.getName()));
       
       if (target instanceof TextEditingTarget && doc.isReadOnly())
       {

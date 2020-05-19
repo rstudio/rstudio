@@ -322,6 +322,7 @@ public class PaneManager
          }
       }
 
+      source_.loadDisplay();
       userPrefs.panes().addValueChangeHandler(evt ->
       {
          ArrayList<LogicalWindow> newPanes = createPanes(
