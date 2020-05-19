@@ -16,29 +16,19 @@ package org.rstudio.studio.client.application.ui;
 
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefDefinition;
 
-import com.google.gwt.user.client.ui.Label;
-import com.google.gwt.user.client.ui.Widget;
-
-public class UserPrefPaletteEntry extends CommandPaletteEntry
+public abstract class UserPrefPaletteEntry extends CommandPaletteEntry
 {
    public UserPrefPaletteEntry(String id, UserPrefDefinition pref)
    {
       super();
       pref_ = pref;
       id_ = id;
-      initialize();
    }
 
    @Override
    public String getLabel()
    {
       return pref_.getTitle();
-   }
-
-   @Override
-   public void invoke()
-   {
-      
    }
 
    @Override
@@ -50,21 +40,26 @@ public class UserPrefPaletteEntry extends CommandPaletteEntry
    @Override
    public String getContext()
    {
-      return new String("Settings");
+      return new String("Setting");
+   }
+   
+   @Override
+   public String getScope()
+   {
+      return "userpref";
    }
 
    @Override
    public boolean enabled()
    {
+      // User preferences are always enabled
       return true;
    }
-
+   
    @Override
-   public Widget getInvoker()
+   public boolean dismissOnInvoke()
    {
-      Label label = new Label();
-      label.setText("NYI");
-      return label;
+      return false;
    }
 
    private final UserPrefDefinition pref_;

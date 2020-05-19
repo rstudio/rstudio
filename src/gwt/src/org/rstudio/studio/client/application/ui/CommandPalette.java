@@ -221,9 +221,11 @@ public class CommandPalette extends Composite
             // reasonable thing we can display)
             continue;
          }
-         
-         CommandPaletteEntry entry = new UserPrefPaletteEntry(pref, def);
-         entries_.add(entry);
+         if (StringUtil.equals(def.getType(), "boolean"))
+         {
+            CommandPaletteEntry entry = new UserPrefBooleanPaletteEntry(pref, def);
+            entries_.add(entry);
+         }
       }
       
       // add commands from additional sources
@@ -498,7 +500,10 @@ public class CommandPalette extends Composite
    {
       if (selected_ >= 0)
       {
-         host_.dismiss();
+         if (entries_.get(selected_).dismissOnInvoke())
+         {
+            host_.dismiss();
+         }
          entries_.get(selected_).invoke();
       }
    }

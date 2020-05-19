@@ -67,6 +67,7 @@ public abstract class CommandPaletteEntry extends Composite
          // to do this if there's no ID as we'll ultimately discard widgets
          // which don't have an addressable ID.
          ElementIds.assignElementId(getElement(), ElementIds.COMMAND_ENTRY_PREFIX + 
+               "_" + getScope() + "_" +
                ElementIds.idSafeString(id));
       }
 
@@ -137,13 +138,63 @@ public abstract class CommandPaletteEntry extends Composite
       }
    }
    
+   /**
+    * Get the label for the entry.
+    * 
+    * @return The entry's label.
+    */
    abstract public String getLabel();
+
+   /**
+    * Invoke the entry (execute the command, etc.)
+    */
    abstract public void invoke();
+
+   /**
+    * Get the entry's ID.
+    * 
+    * @return A unique ID referring to the entry.
+    */
    abstract public String getId();
+   
+   /**
+    * Get the entry's scope. This is not displayed to users; it is a short
+    * alphanumeric string used to ensure IDs are unique across different kinds
+    * of entries which may have their own ID systems.
+    * 
+    * @return The entry's scope.
+    */
+   abstract public String getScope();
+
+   /**
+    * Get the entry's context. This is displayed to the user to help
+    * disambiguate similar-looking entries.
+    * 
+    * @return The entry's context.
+    */
    abstract public String getContext();
+
+   /**
+    * Is the entry currently enabled?
+    * 
+    * @return Whether the entry is enabled.
+    */
    abstract public boolean enabled();
+
+   /**
+    * Get a widget that can be used to invoke the entry.
+    * 
+    * @return A widget to invoke the entry.
+    */
    abstract public Widget getInvoker();
    
+   /**
+    * Dismiss after invoke?
+    * 
+    * @return Whether to dismiss the palette after invoking the entry.
+    */
+   abstract public boolean dismissOnInvoke();
+
    private boolean selected_;
 
    @UiField public Label context_;

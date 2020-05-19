@@ -67,6 +67,20 @@ public abstract class CommandPaletteCommand extends CommandPaletteEntry
       return shortcut_;
    }
    
+   @Override
+   public String getScope()
+   {
+      return "command";
+   }
+   
+   @Override
+   public boolean dismissOnInvoke()
+   {
+      // Dismiss the palette prior to invoking commands so that they don't act
+      // on the palette itself.
+      return true;
+   }
+   
    private void appendKey(SafeHtmlBuilder b, String key)
    {
       b.appendHtmlConstant("<span class=\"" + 
