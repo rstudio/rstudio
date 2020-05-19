@@ -44,7 +44,7 @@ class InsertSymbolPlugin extends Plugin<boolean> {
       view: () => ({
         update: (view: EditorView, prevState: EditorState) => {
           if (this.popup) {
-            ReactDOM.render(this.insertSymbolPopup(view), this.popup);
+            this.closePopup();
           }
         },
       }),
@@ -57,14 +57,17 @@ class InsertSymbolPlugin extends Plugin<boolean> {
   public showPopup(view: EditorView) {
     if (!this.popup) {
       this.popup = window.document.createElement("div");             
-      reactRenderForEditorView(this.insertSymbolPopup(view), this.popup, view);
-      view.dom.parentNode?.appendChild(this.popup);
+      ReactDOM.render(this.insertSymbolPopup(view), this.popup);
+      window.document.body.appendChild(this.popup);
     }
   }
 
   private closePopup() {
-    this.popup?.remove();
-    this.popup = null;
+    if (this.popup) {
+      ReactDOM.unmountComponentAtNode(this.popup);
+      this.popup.remove();
+      this.popup = null;
+    }
   }
 
   private insertSymbolPopup(view: EditorView) {
@@ -83,13 +86,15 @@ class InsertSymbolPlugin extends Plugin<boolean> {
   }
 }
 
-const extension: Extension = {
-  commands: () => {
-    return [new ProsemirrorCommand(EditorCommandId.InsertSymbol, ['Ctrl-Shift-/'], insertSymbol)];
-  },
-  plugins: (_schema: Schema, ui: EditorUI) => {
-    return [new InsertSymbolPlugin(ui)];
-  }
+const extension = () : Extension => {
+  return {
+    commands: () => {
+      return [new ProsemirrorCommand(EditorCommandId.InsertSymbol, ['Ctrl-Shift-/'], insertSymbol)];
+    },
+    plugins: (_schema: Schema, ui: EditorUI) => {
+      return [new InsertSymbolPlugin(ui)];
+    }
+  };
 };    
 
 function isEnabled(state: EditorState) {
