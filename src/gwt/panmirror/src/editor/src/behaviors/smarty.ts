@@ -14,7 +14,7 @@
  */
 
 import { ellipsis, InputRule } from 'prosemirror-inputrules';
-import { Plugin, PluginKey, EditorState, Transaction } from 'prosemirror-state';
+import { Plugin, PluginKey, EditorState, Transaction, TextSelection } from 'prosemirror-state';
 import { Schema } from 'prosemirror-model';
 
 import { Extension, extensionIfEnabled } from '../api/extension';
@@ -115,10 +115,27 @@ export function reverseSmartQuotesExtension(marks: readonly PandocMark[]) {
                 const code = tr.doc.textBetween(from, to);
                 const newCode = fancyQuotesToSimple(code);
                 if (newCode !== code) {
-                  tr.insertText(newCode, from, to);
-                  tr.addMark(from, to, mark);
+                  // track selection for restore
+                  const prevSelection = tr.selection;
+
+                  // determine  marks to apply
+                  const $from = tr.doc.resolve(from);
+                  const rangeMarks = $from.marksAcross(tr.doc.resolve(to)) || [];
+                  if (!rangeMarks.find(rangeMark => rangeMark.type)) {
+                    rangeMarks.push(mark);
+                  }
+                  
+                  // replace 
+                  tr.replaceRangeWith(from, to, schema.text(newCode, rangeMarks));
+                  
+                  // restore selection
+                  if (prevSelection.empty) {
+                    tr.setSelection(new TextSelection(tr.doc.resolve(prevSelection.anchor)));
+                  }
+
+                  // clear stored marks
                   if (tr.selection.empty) {
-                    tr.removeStoredMark(mark);
+                    tr.setStoredMarks([]);
                   }
                 }
               });
