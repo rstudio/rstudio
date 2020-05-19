@@ -49,6 +49,8 @@ import { hasPercentWidth, imageDimensionsFromImg } from './image-util';
 const kDataWidth = 'data-width';
 const kDataHeight = 'data-height';
 
+const kDefaultContainerDisplay = 'inline-block';
+
 export function initResizeContainer(container: HTMLElement) {
   // add standard parent class
   container.classList.add('pm-image-resize-container', 'pm-selected-node-outline-color');
@@ -57,7 +59,7 @@ export function initResizeContainer(container: HTMLElement) {
   container.style.position = 'relative';
 
   // so that the container matches the size of the contained image
-  container.style.display = 'inline-block';
+  container.style.display = kDefaultContainerDisplay;
 
   // so that the handles and shelf can be visible outside the boundaries of the image
   container.style.overflow = 'visible';
@@ -611,6 +613,7 @@ export function updateImageViewSize(
     figure.style.paddingBottom = '';
     figure.style.paddingRight = '';
     figure.style.paddingLeft = '';
+    figure.style.display = kDefaultContainerDisplay;
   }
 
   // apply keyvalue attribute to image
@@ -630,8 +633,8 @@ export function updateImageViewSize(
           const liftStyle = (attrib: string, val: string) => figure.style.setProperty(attrib, val);
           value = removeStyleAttrib(value, 'float', liftStyle);
           value = removeStyleAttrib(value, 'vertical-align', liftStyle);
-          value = removeStyleAttrib(value, 'margin(?:[\\w\\-])*', liftStyle);
           value = removeStyleAttrib(value, 'padding(?:[\\w\\-])*', liftStyle);
+          removeStyleAttrib(value, 'display', liftStyle); // leave display for lifting by image
         }
 
         // apply selected other styles to the image view (we don't just forward the entire
@@ -639,7 +642,9 @@ export function updateImageViewSize(
         // width and height cases below). here we should whitelist in all styles we think
         // users might want to see in the editor
         const liftImgStyle = (attrib: string, val: string) => img.style.setProperty(attrib, val);
-        removeStyleAttrib(value, 'border(?:[\\w\\-])*', liftImgStyle);
+        value = removeStyleAttrib(value, 'border(?:[\\w\\-])*', liftImgStyle);
+        value = removeStyleAttrib(value, 'margin(?:[\\w\\-])*', liftImgStyle);
+        value = removeStyleAttrib(value, 'display', liftImgStyle);
       } else if (key === kWidthAttrib) {
         // see if this is a unit we can edit
         const widthProp = imageSizePropWithUnit(value);
