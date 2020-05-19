@@ -17,7 +17,9 @@ export enum EditorEvent {
   Update = 'panmirrorUpdate',
   OutlineChange = 'panmirrorOutlineChange',
   SelectionChange = 'panmirrorSelectionChange',
-  Resize = 'panmirrorResize'
+  Resize = 'panmirrorResize',
+  Layout = 'panmirrorLayout',
+  Scroll = 'panmirrorScroll',
 }
 
 export interface EditorEvents {

@@ -15,6 +15,8 @@
 
 import { Schema } from "prosemirror-model";
 
+import { base64Encode, base64Decode } from "./base64";
+
 import { PandocToken, ProsemirrorWriter, mapTokens, PandocTokenType } from "./pandoc";
 
 // constants used for creating/consuming capsules
@@ -94,7 +96,7 @@ export function pandocMarkdownWithBlockCapsules(markdown: string, capsuleFilter:
     };
 
     // constuct a field
-    const field = (name: string, value: string) => `${name}${kValueDelimiter}${btoa(value)}`;
+    const field = (name: string, value: string) => `${name}${kValueDelimiter}${base64Encode(value)}`;
 
     // construct a record 
     const record =
@@ -104,7 +106,7 @@ export function pandocMarkdownWithBlockCapsules(markdown: string, capsuleFilter:
        field(kSuffixField, capsule.suffix);
    
     // now base64 encode the entire record (so it can masquerade as a paragraph)
-    const encodedRecord = btoa(record);
+    const encodedRecord = base64Encode(record);
 
     // return capsule, which is:
     //   - a base64 encoded record surrounded with a sentinel value
@@ -220,9 +222,9 @@ export function encodedBlockCapsuleRegex(prefix?: string, suffix?: string, flags
 export function parsePandocBlockCapsule(text: string) : PandocBlockCapsule {
   const envelopeLen = kBlockCapsuleSentinel.length + kFieldDelimiter.length;
   const record = text.substring(envelopeLen, text.length - envelopeLen);
-  const decodedRecord = atob(record);
+  const decodedRecord = base64Decode(record);
   const fields = decodedRecord.split(kFieldDelimiter);
-  const fieldValue = (i: number) => atob(fields[i].split(kValueDelimiter)[1]);
+  const fieldValue = (i: number) => base64Decode(fields[i].split(kValueDelimiter)[1]);
   return {
     [kTypeField]: fieldValue(0),
     [kPrefixField]: fieldValue(1),

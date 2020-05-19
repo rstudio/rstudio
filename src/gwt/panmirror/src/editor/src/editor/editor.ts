@@ -366,6 +366,21 @@ export class Editor {
     if (!this.options.spellCheck) {
       this.parent.setAttribute('spellcheck', 'false');
     }
+
+    {
+      // scroll event optimization, as recommended by
+      // https://developer.mozilla.org/en-US/docs/Web/API/Document/scroll_event
+      let ticking = false;
+      this.parent.addEventListener("scroll", () => {
+        if (!ticking) {
+          window.requestAnimationFrame(() => {
+            this.emitEvent(EditorEvent.Scroll);
+            ticking = false;
+          });
+          ticking = true;
+        }
+      }, {capture: true});
+    }
   }
 
   public destroy() {
@@ -638,6 +653,8 @@ export class Editor {
         this.emitEvent(EditorEvent.OutlineChange);
       }
     }
+
+    this.emitEvent(EditorEvent.Layout);
   }
 
   private emitEvent(name: string) {
@@ -653,6 +670,8 @@ export class Editor {
     events.set(EditorEvent.OutlineChange, new Event(EditorEvent.OutlineChange));
     events.set(EditorEvent.SelectionChange, new Event(EditorEvent.SelectionChange));
     events.set(EditorEvent.Resize, new Event(EditorEvent.Resize));
+    events.set(EditorEvent.Layout, new Event(EditorEvent.Layout));
+    events.set(EditorEvent.Scroll, new Event(EditorEvent.Scroll));
     return events;
   }
 
@@ -765,7 +784,12 @@ export class Editor {
   }
 
   private applyFixupsOnResize() {
-    this.applyFixups(FixupContext.Resize);
+    const docChanged = this.applyFixups(FixupContext.Resize);
+    if (!docChanged) {
+      // If applyFixupsOnResize returns true, then layout has already
+      // been fired; if it hasn't, we must do so now
+      this.emitEvent(EditorEvent.Layout);
+    }
   }
 
   private applyFixups(context: FixupContext) {
@@ -775,7 +799,9 @@ export class Editor {
       tr.setMeta(kAddToHistoryTransaction, false);
       tr.setMeta(kFixupTransaction, true);
       this.view.dispatch(tr);
+      return true;
     }
+    return false;
   }
 
   private extensionFixups(tr: Transaction, context: FixupContext) {

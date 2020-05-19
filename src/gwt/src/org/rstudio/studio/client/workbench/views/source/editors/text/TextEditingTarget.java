@@ -1442,17 +1442,14 @@ public class TextEditingTarget implements
       name_.setValue(getNameFromDocument(document, defaultNameProvider), true);
       String contents = document.getContents();
       
-      // Set document contents, but disable autosave during this
-      // interval (avoid spurious saves immediately after opening a document)
-      try
+      // disable change detection when setting code (since we're just doing
+      // this to ensure the document's state reflects the server state and so
+      // these aren't changes that diverge the document's client state from
+      // the server state)
+      docUpdateSentinel_.withChangeDetectionSuspended(() ->
       {
-         docUpdateSentinel_.suspendAutosave(true);
          docDisplay_.setCode(contents, false);
-      }
-      finally
-      {
-         docUpdateSentinel_.suspendAutosave(false);
-      }
+      });
       
       // Discover dependencies on file first open.
       packageDependencyHelper_.discoverPackageDependencies();
@@ -1464,8 +1461,15 @@ public class TextEditingTarget implements
          @Override
          public void execute()
          {
-            for (Fold fold : folds)
-               docDisplay_.addFold(fold.getRange());
+            // disable change detection when adding folds (since we're just doing
+            // this to ensure the document's state reflects the server state and so
+            // these aren't changes that diverge the document's client state from
+            // the server state)
+            docUpdateSentinel_.withChangeDetectionSuspended(() ->
+            {
+               for (Fold fold : folds)
+                  docDisplay_.addFold(fold.getRange());
+            });
          }
       });
       

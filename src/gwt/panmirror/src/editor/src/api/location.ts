@@ -1,6 +1,7 @@
 import { Node as ProsemirrorNode } from 'prosemirror-model';
 import { EditorView } from 'prosemirror-view';
 import { setTextSelection, NodeWithPos, findChildrenByType } from 'prosemirror-utils';
+import { EditorState } from 'prosemirror-state';
 
 import { bodyElement } from './dom';
 import { kAddToHistoryTransaction, kRestoreLocationTransaction } from './transaction';
@@ -10,8 +11,8 @@ import {
   kHeadingOutlineItemType,
   kRmdchunkOutlineItemType,
 } from './outline';
-import { EditorState } from 'prosemirror-state';
 import { findTopLevelBodyNodes } from './node';
+import { navigateToPosition } from './navigation';
 
 export interface EditingLocation {
   pos: number;
@@ -44,7 +45,6 @@ export function setEditingLocation(
 ) {
   // restore position and scrollTop
   let restorePos: number | null = null;
-  let restoreScrollTop = -1;
 
   // see we if we can match an outline location
   if (outlineLocation) {
@@ -87,7 +87,7 @@ export function setEditingLocation(
       }
     }
 
-    // if we got a location then navigate to it and return
+    // if we got a location then set it as the restorePos
     if (docOutlineLocationNode) {
       restorePos = docOutlineLocationNode.pos;
     }
@@ -97,7 +97,6 @@ export function setEditingLocation(
   if (restorePos === null) {
     if (previousLocation && previousLocation.pos < view.state.doc.nodeSize) {
       restorePos = previousLocation.pos;
-      restoreScrollTop = previousLocation.scrollTop;
     }
   }
 
@@ -114,11 +113,7 @@ export function setEditingLocation(
 
   // scroll to selection
   if (scrollIntoView) {
-    // if the scrollTop is -1 then get it from the selection
-    if (restoreScrollTop === -1) {
-      restoreScrollTop = Math.max(view.coordsAtPos(restorePos).top - 250, 0);
-    }
-    bodyElement(view).scrollTop = restoreScrollTop;
+    navigateToPosition(view, restorePos, false);
   }
 }
 
