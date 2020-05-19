@@ -46,6 +46,7 @@
     "prosemirror-view": "^1.14.9",
     "react": "^16.13.1",
     "react-dom": "^16.13.1",
+    "react-window": "^1.8.5",
     "tlite": "^0.1.9",
     "typescript": "^3.8.3",
     "zenscroll": "^4.0.2"
@@ -56,6 +57,7 @@
     "watch": "tsc --watch --noEmit --project './tsconfig.json'"
   },
   "devDependencies": {
+    "@types/react-window": "^1.8.2",
     "fuse-box": "^3.7.1",
     "prettier": "^1.18.2",
     "terser": "^4.6.2",
