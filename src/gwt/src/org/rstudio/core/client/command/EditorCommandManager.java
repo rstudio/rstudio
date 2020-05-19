@@ -30,6 +30,7 @@ import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.events.ResetEditorCommandsEvent;
 import org.rstudio.studio.client.application.events.SetEditorCommandBindingsEvent;
 import org.rstudio.studio.client.workbench.views.files.model.FilesServerOperations;
+import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceCommand;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceCommandManager;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.EditorLoadedEvent;
@@ -101,6 +102,11 @@ public class EditorCommandManager
    }
    
    public EditorCommandManager()
+   {
+      AceEditor.load(() -> finishInit());
+   }
+   
+   private void finishInit()
    {
       RStudioGinjector.INSTANCE.injectMembers(this);
       
@@ -245,7 +251,7 @@ public class EditorCommandManager
       return manager_.getRelevantCommands();
    }
    
-   private final ConfigFileBacked<EditorKeyBindings> bindings_;
+   private ConfigFileBacked<EditorKeyBindings> bindings_;
    private AceCommandManager manager_;
    
    private boolean isBindingsLoaded_ = false;
