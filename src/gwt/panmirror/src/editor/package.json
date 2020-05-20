@@ -23,6 +23,7 @@
     "@types/prosemirror-transform": "^1.1.1",
     "@types/react": "^16.9.32",
     "@types/react-dom": "^16.9.6",
+    "@types/react-window": "^1.8.2",
     "@types/zenscroll": "^4.0.0",
     "clipboard": "^2.0.6",
     "codemirror": "^5.48.4",
