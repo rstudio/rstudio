@@ -62,7 +62,8 @@ export function footnoteAppendTransaction() {
 
 function footnoteFixupTransform(activeNote: ContentNodeWithPos | undefined) {
   return (tr: Transform) => {
-    // query for notes and footnotes
+    // query for notes and footnotes. note that since these are computed at the beginning
+    // before any steps are applied, we always need to map their positions before using them
     const schema = tr.doc.type.schema;
     const footnotes = findAllFootnotes(tr.doc);
     const allNotes = findAllNotes(tr.doc);
@@ -70,6 +71,10 @@ function footnoteFixupTransform(activeNote: ContentNodeWithPos | undefined) {
     // iterate through footnotes in the newState
     const refs = new Set<string>();
     footnotes.forEach((footnote, index) => {
+
+      // map position
+      footnote.pos = tr.mapping.map(footnote.pos);
+
       // footnote number
       const number = index + 1;
 
@@ -84,7 +89,9 @@ function footnoteFixupTransform(activeNote: ContentNodeWithPos | undefined) {
 
       // matching note found
       if (note) {
-        // map position since we scanned for all of the notes at the top
+        // map position since we scanned for all of the notes at the top and we may
+        // have called tr.insert for a new note below which would have invalidated
+        // the positions
         note.pos = tr.mapping.map(note.pos);
 
         // update content if this is a note edit (used to propagate user edits back to data-content)
@@ -103,6 +110,7 @@ function footnoteFixupTransform(activeNote: ContentNodeWithPos | undefined) {
           // otherwise update the note with the correct number (if necessary)
         } else {
           if (note.node.attrs.number !== number) {
+            console.log('setting note markup');
             tr.setNodeMarkup(note.pos, schema.nodes.note, {
               ...note.node.attrs,
               number,
@@ -119,6 +127,7 @@ function footnoteFixupTransform(activeNote: ContentNodeWithPos | undefined) {
       // insert newNote if necessary
       if (newNote) {
         const notesContainer = findNotesContainer(tr.doc);
+        console.log('inserting new note');
         tr.insert(notesContainer.pos + 1, newNote as ProsemirrorNode);
       }
 
@@ -128,6 +137,7 @@ function footnoteFixupTransform(activeNote: ContentNodeWithPos | undefined) {
       // set new footnote markup if necessary
       const attrs = footnote.node.attrs;
       if (ref !== attrs.ref || content !== attrs.content || number !== attrs.number) {
+        console.log('setting footnote markup');
         tr.setNodeMarkup(footnote.pos, schema.nodes.footnote, {
           ...footnote.node.attrs,
           ref,
@@ -137,11 +147,13 @@ function footnoteFixupTransform(activeNote: ContentNodeWithPos | undefined) {
       }
     });
 
-    // remove ophraned notes (backwards so the positions stay valid)
+    // remove ophraned notes
     for (let i = allNotes.length - 1; i >= 0; i--) {
       const note = allNotes[i];
+      note.pos = tr.mapping.map(note.pos);
       const footnote = footnotes.find(fn => fn.node.attrs.ref === note.node.attrs.ref);
       if (!footnote) {
+        console.log('deleting orphaned note');
         tr.delete(note.pos, note.pos + note.node.nodeSize);
       }
     }
