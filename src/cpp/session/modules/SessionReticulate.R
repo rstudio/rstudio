@@ -1496,11 +1496,7 @@ html.heading = _heading
    # on what form of OOP is used for dispatch
    
    # get object type, value
-   type <- if (.rs.reticulate.isFunction(object))
-      "function"
-   else
-      .rs.reticulate.describeObjectType(object)
-   
+   type  <- .rs.reticulate.describeObjectType(object)
    value <- .rs.reticulate.describeObjectValue(object)
    
    # get object size
@@ -1527,6 +1523,21 @@ html.heading = _heading
 
 .rs.addFunction("reticulate.describeObjectType", function(object)
 {
+   # NOTE: Python functions (or callables) will often have different
+   # class names; e.g.
+   #
+   #    >>> type(repr).__name__
+   #    'builtin_function_or_method'
+   #
+   #    >>> def foo(): pass
+   #    >>> type(foo).__name__
+   #    'function'
+   #
+   # we normalize that into just a plain 'function' name
+   if (.rs.reticulate.isFunction(object))
+      return("function")
+   
+   # otherwise, just use the declared type name
    builtins <- reticulate::import_builtins(convert = TRUE)
    builtins$type(object)$`__name__`
 })
