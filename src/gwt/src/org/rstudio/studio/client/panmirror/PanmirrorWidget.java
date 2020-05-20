@@ -357,9 +357,9 @@ public class PanmirrorWidget extends DockLayoutPanel implements
    public void setMarkdown(String code, 
                            PanmirrorWriterOptions options, 
                            boolean emitUpdate, 
-                           CommandWithArg<PanmirrorEditor.SetMarkdownResult> completed) 
+                           CommandWithArg<JsObject> completed) 
    {
-      new PromiseWithProgress<PanmirrorEditor.SetMarkdownResult>(
+      new PromiseWithProgress<JsObject>(
          editor_.setMarkdown(code, options, emitUpdate),
          null,
          kSerializationProgressDelayMs,

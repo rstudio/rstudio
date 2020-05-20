@@ -41,9 +41,11 @@ import org.rstudio.studio.client.application.ui.CommandPaletteEntrySource;
 import org.rstudio.studio.client.panmirror.PanmirrorChanges;
 import org.rstudio.studio.client.panmirror.PanmirrorCode;
 import org.rstudio.studio.client.panmirror.PanmirrorContext;
+import org.rstudio.studio.client.panmirror.PanmirrorEditor;
 import org.rstudio.studio.client.panmirror.PanmirrorKeybindings;
 import org.rstudio.studio.client.panmirror.PanmirrorOptions;
 import org.rstudio.studio.client.panmirror.PanmirrorRmdChunk;
+import org.rstudio.studio.client.panmirror.PanmirrorSetMarkdownResult;
 import org.rstudio.studio.client.panmirror.PanmirrorWidget;
 import org.rstudio.studio.client.panmirror.PanmirrorWidget.FormatSource;
 import org.rstudio.studio.client.panmirror.PanmirrorWriterOptions;
@@ -88,6 +90,9 @@ import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
+
+import elemental2.core.JsObject;
+import jsinterop.base.Js;
 
 
 public class TextEditingTargetVisualMode implements CommandPaletteEntrySource
@@ -364,65 +369,72 @@ public class TextEditingTargetVisualMode implements CommandPaletteEntrySource
          
          WriterOptionsContext writerOptions = writerOptionsFromCode(editorCode);
          
-         panmirror_.setMarkdown(editorCode, writerOptions.options, true, (result) -> {  
-               
-            // bail on error
-            if (result == null)
+         panmirror_.setMarkdown(editorCode, writerOptions.options, true, new CommandWithArg<JsObject>() {
+            @Override
+            public void execute(JsObject obj)
             {
+               // get result
+               PanmirrorSetMarkdownResult result = Js.uncheckedCast(obj);
+               
+               // bail on error
+               if (result == null)
+               {
+                  if (done != null)
+                     done.execute(false);
+                  return;
+               }
+               
+               // update flags
+               isDirty_ = false;
+               loadingFromSource_ = false;
+               
+               // if pandoc's view of the document doesn't match the editor's we 
+               // need to reset the editor's code (for both dirty state and 
+               // so that diffs are efficient)
+               if (result.canonical != editorCode)
+               {
+                  getSourceEditor().setCode(result.canonical);
+                  markDirty();
+               }
+               
+               // completed
                if (done != null)
-                  done.execute(false);
-               return;
+                  done.execute(true);
+               
+               Scheduler.get().scheduleDeferred(() -> {
+                  
+                  // if we switched from source, then get the current source outline location. otherwise,
+                  // set the flag indicating that future activations must be from source. we do this so
+                  // that our previous doc position / scroll location override whatever is in source
+                  // mode if the last time we edited was visual not source.
+                  PanmirrorEditingOutlineLocation outlineLocation = switchedFromSource_ 
+                        ? getSourceOutlneLocation() : null;
+                  switchedFromSource_ = true;
+                  
+                  // set editing location
+                  panmirror_.setEditingLocation(outlineLocation, savedEditingLocation()); 
+                  
+                  // set focus
+                  if (focus)
+                     panmirror_.focus();
+                  
+                  // show any warnings
+                  PanmirrorPandocFormat format = panmirror_.getPandocFormat();
+                  if (result.unrecognized.length > 0) 
+                  {
+                     view_.showWarningBar("Unrecognized Pandoc token(s); " + String.join(", ", result.unrecognized));
+                  } 
+                  else if (format.warnings.invalidFormat.length() > 0)
+                  {
+                     view_.showWarningBar("Invalid Pandoc format: " + format.warnings.invalidFormat);
+                  }
+                  else if (format.warnings.invalidOptions.length > 0)
+                  {
+                     view_.showWarningBar("Unsupported extensions for markdown mode: " + String.join(", ", format.warnings.invalidOptions));;
+                  }
+                  
+               });          
             }
-            
-            // update flags
-            isDirty_ = false;
-            loadingFromSource_ = false;
-            
-            // if pandoc's view of the document doesn't match the editor's we 
-            // need to reset the editor's code (for both dirty state and 
-            // so that diffs are efficient)
-            if (result.canonical != editorCode)
-            {
-               getSourceEditor().setCode(result.canonical);
-               markDirty();
-            }
-            
-            // completed
-            if (done != null)
-               done.execute(true);
-            
-            Scheduler.get().scheduleDeferred(() -> {
-               
-               // if we switched from source, then get the current source outline location. otherwise,
-               // set the flag indicating that future activations must be from source. we do this so
-               // that our previous doc position / scroll location override whatever is in source
-               // mode if the last time we edited was visual not source.
-               PanmirrorEditingOutlineLocation outlineLocation = switchedFromSource_ 
-                     ? getSourceOutlneLocation() : null;
-               switchedFromSource_ = true;
-               
-               // set editing location
-               panmirror_.setEditingLocation(outlineLocation, savedEditingLocation()); 
-               
-               // set focus
-               if (focus)
-                  panmirror_.focus();
-               
-               // show any warnings
-               PanmirrorPandocFormat format = panmirror_.getPandocFormat();
-               if (result.unrecognized.length > 0) 
-               {
-                  view_.showWarningBar("Unrecognized Pandoc token(s); " + String.join(", ", result.unrecognized));
-               } 
-               else if (format.warnings.invalidFormat.length() > 0)
-               {
-                  view_.showWarningBar("Invalid Pandoc format: " + format.warnings.invalidFormat);
-               }
-               else if (format.warnings.invalidOptions.length > 0)
-               {
-                  view_.showWarningBar("Unsupported extensions for markdown mode: " + String.join(", ", format.warnings.invalidOptions));;
-               }
-            });          
          });
       });
    }
