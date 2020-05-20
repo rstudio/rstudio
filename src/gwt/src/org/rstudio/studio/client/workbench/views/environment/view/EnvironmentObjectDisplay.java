@@ -93,8 +93,11 @@ public abstract class EnvironmentObjectDisplay
                    object.getCategory() != RObjectEntry.Categories.Value);
             
             if (isClickable)
-               observer_.viewObject(object.isPromise() ?
-                  "force" : "View", object.rObject.getName());
+            {
+               String action = object.isPromise() ? "force" : "View";
+               String name = object.rObject.getName();
+               observer_.viewObject(action, name);
+            }
          }
       });
    }

@@ -1683,7 +1683,13 @@ html.heading = _heading
       if (!includeBuiltins && name %in% c("builtins", "__builtins__"))
          return(FALSE)
       
-      stack$append(name)
+      # add name + alias
+      data <- list(
+         name  = as.character(name),
+         alias = as.character(variable)
+      )
+      
+      stack$append(data)
       TRUE
       
    })
@@ -1691,13 +1697,21 @@ html.heading = _heading
    # retrieve modules
    modules <- stack$data()
    
-   # ensure main module is always included first
-   modules <- c("__main__", setdiff(modules, "__main__"))
+   # build data.frame
+   data <- .rs.rbindList(modules)
+   
+   # prefer entries which have names matching their aliases
+   data <- data[order(data$name == data$alias, decreasing = TRUE), ]
+   
+   # drop duplicated modules
+   data <- data[!duplicated(data$name), ]
    
    # return in format suitable for environment pane
-   lapply(modules, function(module) {
+   lapply(seq_len(nrow(data)), function(i) {
+      row <- data[i, ]
       list(
-         name  = .rs.scalar(module),
+         name  = .rs.scalar(row$name),
+         alias = .rs.scalar(row$alias),
          frame = .rs.scalar(0L),
          local = .rs.scalar(FALSE)
       )
@@ -1810,16 +1824,15 @@ html.heading = _heading
 
 .rs.addFunction("reticulate.viewHook", function(object)
 {
-   # TODO: assign complex expressions to temporary variable before view
    reticulate:::disable_conversion_scope(object)
    
-   # extract variable name passed to Python object
+   # attempt to infer object name from frame
    sys <- reticulate::import("sys", convert = TRUE)
    frame <- sys$`_getframe`(1L)
    names <- frame$f_code$co_names
+   name <- paste(tail(names, n = -1L), collapse = ".")
    
    # create dummy environment for this object
-   name <- names[[2L]]
    envir <- new.env(parent = emptyenv())
    assign(name, object, envir = envir)
    
@@ -1834,7 +1847,7 @@ html.heading = _heading
    {
       .rs.explorer.viewObject(
          object = object,
-         title  = names[[2L]],
+         title  = name,
          envir  = envir
       )
    }

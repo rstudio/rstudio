@@ -23,6 +23,7 @@ import org.rstudio.core.client.DebugFilePosition;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.AppCommand;
+import org.rstudio.core.client.js.JsUtil;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.core.client.widget.MonitoringMenuItem;
@@ -473,7 +474,54 @@ public class EnvironmentPane extends WorkbenchPane
 
    public void viewObject(String action, String objectName)
    {
-      executeFunctionForObject(action, objectName);
+      executeFunctionForObject(
+            action,
+            environmentPrefix(),
+            objectName);
+   }
+   
+   private String getEnvironmentAlias(String name)
+   {
+      for (EnvironmentFrame frame : JsUtil.asIterable(environments_))
+      {
+         if (StringUtil.equals(frame.getName(), name))
+         {
+            String alias = frame.getAlias();
+            if (!StringUtil.isNullOrEmpty(alias))
+               return alias;
+         }
+      }
+      
+      return name;
+   }
+   
+   private String environmentPrefix()
+   {
+      String alias = getEnvironmentAlias(environmentName_);
+      
+      if (isPythonActiveLanguage())
+      {
+         boolean isMainModule =
+               StringUtil.equals(alias, "main") ||
+               StringUtil.equals(alias, "__main__");
+         
+         if (!isMainModule)
+            return alias;
+      }
+      else
+      {
+         boolean isPackageEnvironment =
+               alias.startsWith("package:") ||
+               alias.startsWith("namespace:");
+         
+         if (isPackageEnvironment)
+         {
+            int colonIndex = alias.indexOf(':');
+            return alias.substring(colonIndex + 1);
+         }
+      }
+      
+      return "";
    }
    
    @Override
@@ -511,12 +559,40 @@ public class EnvironmentPane extends WorkbenchPane
    
    // Private methods ---------------------------------------------------------
 
-   private void executeFunctionForObject(String function, String objectName)
+   private void executeFunctionForObject(String function, 
+                                         String objectPrefix,
+                                         String objectName)
    {
-      String editCode =
-              function + "(" + StringUtil.toRSymbolName(objectName) + ")";
+      StringBuilder builder = new StringBuilder();
       
-      SendToConsoleEvent event = new SendToConsoleEvent(editCode, activeLanguage_, true);
+      builder.append(function);
+      builder.append("(");
+      
+      if (isPythonActiveLanguage())
+      {
+         if (!StringUtil.isNullOrEmpty(objectPrefix))
+         {
+            builder.append(objectPrefix);
+            builder.append(".");
+         }
+         
+         builder.append(objectName);
+      }
+      else
+      {
+         if (!StringUtil.isNullOrEmpty(objectPrefix))
+         {
+            builder.append(objectPrefix);
+            builder.append("::");
+         }
+         
+         builder.append(StringUtil.toRSymbolName(objectName));
+      }
+      
+      builder.append(")");
+      
+      String code = builder.toString();
+      SendToConsoleEvent event = new SendToConsoleEvent(code, activeLanguage_, true);
       events_.fireEvent(event);
    }
 
@@ -836,6 +912,11 @@ public class EnvironmentPane extends WorkbenchPane
    public String getActiveLanguage()
    {
       return activeLanguage_;
+   }
+   
+   public boolean isPythonActiveLanguage()
+   {
+      return StringUtil.equals(activeLanguage_, "Python");
    }
    
    public String getMonitoredEnvironment()

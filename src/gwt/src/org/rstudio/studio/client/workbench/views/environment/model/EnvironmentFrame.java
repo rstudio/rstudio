@@ -24,6 +24,10 @@ public class EnvironmentFrame extends JavaScriptObject
    public final native String getName() /*-{
       return this.name;
    }-*/;
+   
+   public final native String getAlias() /*-{
+      return this.alias;
+   }-*/;
 
    public final native int getFrame() /*-{
       return this.frame;
