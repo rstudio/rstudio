@@ -50,7 +50,7 @@ public class PanmirrorEditor
    
    public native Promise<JsObject> setMarkdown(String code, PanmirrorWriterOptions options, boolean emitUpdate);
    
-   public native Promise<PanmirrorCode> getMarkdown(PanmirrorWriterOptions options);
+   public native Promise<JsObject> getMarkdown(PanmirrorWriterOptions options);
    
    public native Promise<String> getCanonical(String code, PanmirrorWriterOptions options);
    

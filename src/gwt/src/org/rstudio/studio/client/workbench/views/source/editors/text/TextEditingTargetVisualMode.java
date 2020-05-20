@@ -272,40 +272,45 @@ public class TextEditingTargetVisualMode implements CommandPaletteEntrySource
             
             WriterOptionsContext writerOptions = writerOptionsFromVisual();
             
-            panmirror_.getMarkdown(writerOptions.options, (markdown) -> {
-               rv.arrive(() -> {
-                  if (markdown == null) {
-                     // note that ready.execute() is never called in the error case
-                     return;
-                  }
-                  
-                  // apply diffs unless the wrap column changed (too expensive)
-                  if (!writerOptions.wrapColumnChanged) 
-                  {
-                     TextEditorContainer.Changes changes = toEditorChanges(markdown);
-                     getSourceEditor().applyChanges(changes, activatingEditor); 
-                  }
-                  else
-                  {
-                     getSourceEditor().setCode(markdown.code);
-                  }
-                 
-                  // if the format comment has changed then show the reload prompt
-                  if (panmirrorFormatConfig_.requiresReload()) {
-                     view_.showPanmirrorFormatChanged(() -> {
-                        // dismiss the warning bar
-                        view_.hideWarningBar();
-                        // this will trigger the refresh b/c the format changed
-                        syncFromEditorIfActivated();
-                       
-                     });
-                  }
-                  
-                  // callback
-                  if (ready != null) {
-                     ready.execute();
-                  }
-               }, true);
+            panmirror_.getMarkdown(writerOptions.options, new CommandWithArg<JsObject>() {
+               @Override
+               public void execute(JsObject obj)
+               {
+                  PanmirrorCode markdown = Js.uncheckedCast(obj);
+                  rv.arrive(() -> {
+                     if (markdown == null) {
+                        // note that ready.execute() is never called in the error case
+                        return;
+                     }
+                     
+                     // apply diffs unless the wrap column changed (too expensive)
+                     if (!writerOptions.wrapColumnChanged) 
+                     {
+                        TextEditorContainer.Changes changes = toEditorChanges(markdown);
+                        getSourceEditor().applyChanges(changes, activatingEditor); 
+                     }
+                     else
+                     {
+                        getSourceEditor().setCode(markdown.code);
+                     }
+                    
+                     // if the format comment has changed then show the reload prompt
+                     if (panmirrorFormatConfig_.requiresReload()) {
+                        view_.showPanmirrorFormatChanged(() -> {
+                           // dismiss the warning bar
+                           view_.hideWarningBar();
+                           // this will trigger the refresh b/c the format changed
+                           syncFromEditorIfActivated();
+                          
+                        });
+                     }
+                     
+                     // callback
+                     if (ready != null) {
+                        ready.execute();
+                     }
+                  }, true);  
+               } 
             });
          });
       } else {
