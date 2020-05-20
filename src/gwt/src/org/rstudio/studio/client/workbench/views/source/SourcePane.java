@@ -265,6 +265,16 @@ public class SourcePane extends LazyPanel implements Display,
          editors_.add(position, target);
    }
 
+
+   @Override
+   public EditingTarget addTab(SourceDocument doc, boolean atEnd,
+         int mode)
+   {
+      // by default, add at the tab immediately after the current tab
+      return addTab(doc, atEnd ? null : getPhysicalTabIndex() + 1,
+            mode);
+   }
+
    @Override
    public void addTab(Widget widget,
                       FileIcon icon,
@@ -551,6 +561,7 @@ public class SourcePane extends LazyPanel implements Display,
 
       final String activeEditorId = activeEditor_.getId();
 
+      // !!! THIS NEEDS TO BE DONE IN SOURCE.JAVA
       if (editors_.get(event.getTabIndex()).getId() == activeEditorId)
       {
          // scan the source navigation history for an entry that can
@@ -812,7 +823,8 @@ public class SourcePane extends LazyPanel implements Display,
       }
    }
 
-   private EditingTarget addTab(SourceDocument doc, int mode)
+   @Override
+   public EditingTarget addTab(SourceDocument doc, int mode)
    {
       final String defaultNamePrefix = source_.getEditingTargetSource().getDefaultNamePrefix(doc);
       final EditingTarget target = source_.getEditingTargetSource().getEditingTarget(

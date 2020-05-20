@@ -217,6 +217,8 @@ public class Source implements InsertSourceHandler,
       void generateName(boolean first);
       void addEditor(EditingTarget target);
       void addEditor(Integer position, EditingTarget target);
+      EditingTarget addTab(SourceDocument doc, int mode);
+      EditingTarget addTab(SourceDocument doc, boolean atEnd, int mode);
       void addTab(Widget widget,
                   FileIcon icon,
                   String docId,
@@ -1147,13 +1149,16 @@ public class Source implements InsertSourceHandler,
             EditingTarget sourceEditor = null;
             try
             {
-               // if we are the main source window we need to select a display
+               // determine the correct display if the doc belongs to this window,
+               // otherwise use the active one
                if (currentSourceWindowId == docWindowId &&
                    SourceWindowManager.isMainSourceWindow())
-                  sourceEditor = addTab(doc, true, OPEN_REPLAY,
-                                        views_.getDisplayByName(doc.getSourceDisplayName()));
+               {
+                  String name = doc.getSourceDisplayName();
+                  sourceEditor = views_.getDisplayByName(name).addTab(doc, true, OPEN_REPLAY);
+               }
                else
-                  sourceEditor = addTab(doc, true, OPEN_REPLAY, null);
+                  sourceEditor = views_.getActiveDisplay().addTab(doc, true, OPEN_REPLAY);
             }
             catch (Exception e)
             {
@@ -1260,6 +1265,7 @@ public class Source implements InsertSourceHandler,
       
       ensureVisible(true);
       ContentItem content = event.getContent();
+      Display display = views_.getDisplayByDocument(content.getTitle());
       server_.newDocument(
             FileTypeRegistry.URLCONTENT.getTypeId(),
             null,
@@ -1269,7 +1275,7 @@ public class Source implements InsertSourceHandler,
                @Override
                public void onResponseReceived(SourceDocument response)
                {
-                  addTab(response, OPEN_INTERACTIVE, null);
+                  display.addTab(response, OPEN_INTERACTIVE);
                }
             });
    }
@@ -3768,6 +3774,7 @@ public class Source implements InsertSourceHandler,
       return target.asWidget();
    }
    
+   /*
    private EditingTarget addTab(SourceDocument doc, int mode, Display display)
    {
       return addTab(doc, false, mode, display);
@@ -3861,8 +3868,7 @@ public class Source implements InsertSourceHandler,
       {
          public void onClose(CloseEvent<Void> voidCloseEvent)
          {
-            targetView.closeTab(widget, false);
-            //editors_.remove(target);
+            editors_.remove(target);
          }
       });
       
@@ -3885,6 +3891,7 @@ public class Source implements InsertSourceHandler,
 
       return target;
    }
+*/
 
    public void addEditor(EditingTarget target)
    {
@@ -4022,6 +4029,8 @@ public class Source implements InsertSourceHandler,
    {
       boolean hasDocs = editors_.size() > 0;
 
+      String name = "Go to to the definition of the currently selected function";
+
       commands_.newSourceDoc().setEnabled(true);
       commands_.closeSourceDoc().setEnabled(hasDocs);
       commands_.closeAllSourceDocs().setEnabled(hasDocs);
@@ -4040,12 +4049,16 @@ public class Source implements InsertSourceHandler,
       {
          for (AppCommand command : activeCommands_)
          {
+            if (StringUtil.equals(command.getDesc(), name))
+               Debug.logToConsole("disable command");
             command.setEnabled(false);
             command.setVisible(false);
          }
          
          for (AppCommand command : newCommands)
          {
+            if (StringUtil.equals(command.getDesc(), name))
+               Debug.logToConsole("enable command");
             command.setEnabled(true);
             command.setVisible(true);
          }
@@ -4060,12 +4073,16 @@ public class Source implements InsertSourceHandler,
 
          for (AppCommand command : commandsToEnable)
          {
+            if (StringUtil.equals(command.getDesc(), name))
+               Debug.logToConsole("enable command");
             command.setEnabled(true);
             command.setVisible(true);
          }
 
          for (AppCommand command : commandsToDisable)
          {
+            if (StringUtil.equals(command.getDesc(), name))
+               Debug.logToConsole("disable command");
             command.setEnabled(false);
             command.setVisible(false);
          }
