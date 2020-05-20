@@ -13,6 +13,9 @@
  *
  */
 
+#ifndef SESSION_MODULES_ENVIRONMENT_UTILS_HPP
+#define SESSION_MODULES_ENVIRONMENT_UTILS_HPP
+
 #include <shared_core/json/Json.hpp>
 #include <r/RSexp.hpp>
 
@@ -33,3 +36,5 @@ bool hasAltrep(SEXP var);
 } // namespace modules
 } // namespace session
 } // namespace rstudio
+
+#endif /* SESSION_MODULES_ENVIRONMENT_UTILS_HPP */

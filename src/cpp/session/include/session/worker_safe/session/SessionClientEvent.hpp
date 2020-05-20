@@ -202,6 +202,8 @@ extern const int kReplaceResult;
 extern const int kReplaceUpdated;
 extern const int kTutorialCommand;
 extern const int kTutorialLaunch;
+extern const int kReticulateEvent;
+extern const int kEnvironmentChanged;
 }
    
 class ClientEvent

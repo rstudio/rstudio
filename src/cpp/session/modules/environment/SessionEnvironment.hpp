@@ -18,6 +18,8 @@
 
 #include <shared_core/json/Json.hpp>
 
+#include "EnvironmentConstants.hpp"
+
 namespace rstudio {
 namespace core {
    class Error;

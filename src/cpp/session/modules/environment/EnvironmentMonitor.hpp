@@ -16,6 +16,9 @@
 #include <r/RSexp.hpp>
 #include <r/RInterface.hpp>
 
+#ifndef SESSION_MODULES_ENVIRONMENT_MONITOR_HPP
+#define SESSION_MODULES_ENVIRONMENT_MONITOR_HPP
+
 namespace rstudio {
 namespace session {
 namespace modules {
@@ -47,3 +50,5 @@ private:
 } // namespace modules
 } // namespace session
 } // namespace rstudio
+
+#endif /* SESSION_MODULES_ENVIRONMENT_MONITOR_HPP */

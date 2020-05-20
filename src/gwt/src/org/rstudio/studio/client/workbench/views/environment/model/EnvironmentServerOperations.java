@@ -58,9 +58,12 @@ public interface EnvironmentServerOperations
                             ServerRequestCallback<Void> requestCallback);
 
    void getEnvironmentNames(
+              String language,
               ServerRequestCallback<JsArray<EnvironmentFrame>> requestCallback);
    
    void getEnvironmentState(
+              String language,
+              String environment,
               ServerRequestCallback<EnvironmentContextData> requestCallback);
    
    void setEnvironmentMonitoring(boolean monitoring,
@@ -71,4 +74,7 @@ public interface EnvironmentServerOperations
               ServerRequestCallback<ObjectContents> requestCallback);
    
    void requeryContext(ServerRequestCallback<Void> requestCallback);
+   
+   void environmentSetLanguage(String language,
+                               ServerRequestCallback<Void> requestCallback);
 }

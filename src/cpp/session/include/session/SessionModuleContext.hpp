@@ -859,6 +859,8 @@ void onBackgroundProcessing(bool isIdle);
 
 void initializeConsoleCtrlHandler();
 
+bool isPythonReplActive();
+
 } // namespace module_context
 } // namespace session
 } // namespace rstudio

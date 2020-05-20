@@ -20,6 +20,10 @@ import com.google.gwt.core.client.JsArray;
 public class EnvironmentContextData extends JavaScriptObject
 {
    protected EnvironmentContextData() { }
+
+   public final native String language() /*-{
+      return this.language || "R";
+   }-*/;
    
    public final native int contextDepth() /*-{
       return this.context_depth;

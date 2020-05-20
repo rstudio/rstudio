@@ -66,7 +66,7 @@ public class ObjectExplorerEditingTargetStatusBar extends Composite
                return;
             }
             
-            String accessor = ObjectExplorerDataGrid.generateExtractingRCode(
+            String accessor = ObjectExplorerDataGrid.generateExtractingCode(
                   data,
                   widget_.getHandle().getTitle());
             

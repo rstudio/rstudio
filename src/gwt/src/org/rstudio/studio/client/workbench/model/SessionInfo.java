@@ -635,8 +635,12 @@ public class SessionInfo extends JavaScriptObject
       return this.project_id;
    }-*/;
    
-   public final native JsArrayString getGraphicsBackends()
-   /*-{
+   public final native JsArrayString getGraphicsBackends() /*-{
      return this.graphics_backends;
    }-*/;
+   
+   public final native boolean getPythonInitialized() /*-{
+      return this.python_initialized;
+   }-*/;
+   
 }

@@ -55,6 +55,7 @@ import org.rstudio.studio.client.common.synctex.events.SynctexEditFileEvent;
 import org.rstudio.studio.client.common.synctex.model.SourceLocation;
 import org.rstudio.studio.client.events.EditorCommandDispatchEvent;
 import org.rstudio.studio.client.events.EditorCommandEvent;
+import org.rstudio.studio.client.events.ReticulateEvent;
 import org.rstudio.studio.client.htmlpreview.events.HTMLPreviewCompletedEvent;
 import org.rstudio.studio.client.htmlpreview.events.HTMLPreviewOutputEvent;
 import org.rstudio.studio.client.htmlpreview.events.HTMLPreviewStartedEvent;
@@ -591,6 +592,11 @@ public class ClientEventDispatcher
             String objectName = event.getData();
             eventBus_.dispatchEvent(new EnvironmentObjectRemovedEvent(objectName));
          }
+         else if (type == ClientEvent.EnvironmentChanged)
+         {
+            EnvironmentChangedEvent.Data data = event.getData();
+            eventBus_.dispatchEvent(new EnvironmentChangedEvent(data));
+         }
          else if (type == ClientEvent.BrowserLineChanged)
          {
             LineData lineData = event.getData();
@@ -1060,6 +1066,11 @@ public class ClientEventDispatcher
          {
             TutorialLaunchEvent.Data data = event.getData();
             eventBus_.dispatchEvent(new TutorialLaunchEvent(data));
+         }
+         else if (type == ClientEvent.ReticulateEvent)
+         {
+            ReticulateEvent.Data data = event.getData();
+            eventBus_.dispatchEvent(new ReticulateEvent(data));
          }
          else
          {

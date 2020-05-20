@@ -29,6 +29,7 @@ namespace session {
 namespace modules {
 namespace reticulate {
 
+bool isPythonInitialized();
 bool isReplActive();
 
 core::Error initialize();

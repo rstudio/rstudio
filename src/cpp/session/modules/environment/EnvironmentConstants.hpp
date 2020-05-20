@@ -1,7 +1,7 @@
 /*
- * IsHideableWidget.java
+ * EnvironmentConstants.hpp
  *
- * Copyright (C) 2009-12 by RStudio, PBC
+ * Copyright (C) 2009-20 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -13,14 +13,10 @@
  *
  */
 
-package org.rstudio.core.client.widget;
+#ifndef SESSION_MODULES_ENVIRONMENT_CONSTANTS_HPP
+#define SESSION_MODULES_ENVIRONMENT_CONSTANTS_HPP
 
-import com.google.gwt.user.client.ui.HasVisibility;
-import com.google.gwt.user.client.ui.IsWidget;
+#define kEnvironmentLanguageR      "R"
+#define kEnvironmentLanguagePython "Python"
 
-
-public interface IsHideableWidget extends IsWidget, CanFocus, HasVisibility
-{ 
-}
-
-
+#endif /* SESSION_MODULES_ENVIRONMENT_CONSTANTS_HPP */
