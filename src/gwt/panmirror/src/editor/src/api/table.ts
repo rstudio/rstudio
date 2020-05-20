@@ -1,4 +1,3 @@
-
 /*
  * table.ts
  *
@@ -14,8 +13,8 @@
  *
  */
 
-import { EditorCommandId } from "./command";
-import { EditorUI } from "./ui";
+import { EditorCommandId } from './command';
+import { EditorUI } from './ui';
 
 export interface TableCapabilities {
   captions: boolean;
@@ -37,16 +36,18 @@ export function tableMenu(insert: boolean, ui: EditorUI) {
     { separator: true },
     { command: EditorCommandId.TableDeleteTable },
     { separator: true },
-    { subMenu: {
-      text: ui.context.translateText('Align Column'),
-      items: [
-        { command: EditorCommandId.TableAlignColumnLeft },
-        { command: EditorCommandId.TableAlignColumnCenter },
-        { command: EditorCommandId.TableAlignColumnRight },
-        { separator: true },
-        { command: EditorCommandId.TableAlignColumnDefault }
-      ]
-    }},
+    {
+      subMenu: {
+        text: ui.context.translateText('Align Column'),
+        items: [
+          { command: EditorCommandId.TableAlignColumnLeft },
+          { command: EditorCommandId.TableAlignColumnCenter },
+          { command: EditorCommandId.TableAlignColumnRight },
+          { separator: true },
+          { command: EditorCommandId.TableAlignColumnDefault },
+        ],
+      },
+    },
     { separator: true },
     { command: EditorCommandId.TableToggleHeader },
     { command: EditorCommandId.TableToggleCaption },

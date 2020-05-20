@@ -89,7 +89,7 @@ const extension = (pandocExtensions: PandocExtensions): Extension => {
                   }
                   output.write(code);
                 });
-              } 
+              }
             },
           },
         },

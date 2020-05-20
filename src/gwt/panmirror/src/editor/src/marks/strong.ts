@@ -28,7 +28,10 @@ const extension: Extension = {
         parseDOM: [
           // This works around a Google Docs misbehavior where pasted content will be inexplicably wrapped in `<b>`
           // tags with a font-weight normal.
-          { tag: "b", getAttrs: (value: string | Node) => (value as HTMLElement).style.fontWeight !== "normal" && null },
+          {
+            tag: 'b',
+            getAttrs: (value: string | Node) => (value as HTMLElement).style.fontWeight !== 'normal' && null,
+          },
           { tag: 'strong' },
           {
             style: 'font-weight',
@@ -63,7 +66,7 @@ const extension: Extension = {
   inputRules: (schema: Schema, filter: MarkInputRuleFilter) => {
     return [
       delimiterMarkInputRule('\\*\\*', schema.marks.strong, filter, undefined, true),
-      delimiterMarkInputRule('__', schema.marks.strong, filter, undefined, true)
+      delimiterMarkInputRule('__', schema.marks.strong, filter, undefined, true),
     ];
   },
 };

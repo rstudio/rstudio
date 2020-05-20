@@ -144,7 +144,7 @@ const extension = (
           schema.nodes.heading,
           match => ({
             level: match[1].length,
-            navigation_id: uuidv4()
+            navigation_id: uuidv4(),
           }),
         ),
       ];

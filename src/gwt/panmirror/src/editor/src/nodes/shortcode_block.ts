@@ -1,4 +1,3 @@
-
 /*
  * shortcode_block.ts
  *
@@ -19,7 +18,14 @@ import { EditorState, Transaction } from 'prosemirror-state';
 
 import { setTextSelection } from 'prosemirror-utils';
 
-import { PandocExtensions, PandocOutput, PandocTokenType, PandocToken, tokensCollectText, ProsemirrorWriter } from '../api/pandoc';
+import {
+  PandocExtensions,
+  PandocOutput,
+  PandocTokenType,
+  PandocToken,
+  tokensCollectText,
+  ProsemirrorWriter,
+} from '../api/pandoc';
 import { PandocCapabilities } from '../api/pandoc_capabilities';
 import { EditorFormat, kHugoDocType } from '../api/format';
 
@@ -29,15 +35,22 @@ import { codeNodeSpec } from '../api/code';
 import { ProsemirrorCommand, EditorCommandId } from '../api/command';
 import { canInsertNode } from '../api/node';
 import { kShortcodeRegEx } from '../api/shortcode';
-import { PandocBlockCapsuleFilter, blockCapsuleParagraphTokenHandler, encodedBlockCapsuleRegex, PandocBlockCapsule, blockCapsuleTextHandler, parsePandocBlockCapsule, blockCapsuleSourceWithoutPrefix } from '../api/pandoc_capsule';
+import {
+  PandocBlockCapsuleFilter,
+  blockCapsuleParagraphTokenHandler,
+  encodedBlockCapsuleRegex,
+  PandocBlockCapsule,
+  blockCapsuleTextHandler,
+  parsePandocBlockCapsule,
+  blockCapsuleSourceWithoutPrefix,
+} from '../api/pandoc_capsule';
 
 const extension = (
-  _exts: PandocExtensions, 
-  _caps: PandocCapabilities, 
+  _exts: PandocExtensions,
+  _caps: PandocCapabilities,
   _ui: EditorUI,
-  format: EditorFormat)
-: Extension | null => {
-
+  format: EditorFormat,
+): Extension | null => {
   // return null if no shortcodes
   if (!format.hugoExtensions.shortcodes) {
     return null;
@@ -47,7 +60,7 @@ const extension = (
     nodes: [
       {
         name: 'shortcode_block',
-  
+
         spec: {
           ...codeNodeSpec(),
           attrs: {},
@@ -61,7 +74,7 @@ const extension = (
             return ['div', { class: 'shortcode-block pm-fixedwidth-font pm-code-block pm-markup-text-color' }, 0];
           },
         },
-  
+
         code_view: {
           lang: () => 'text',
           borderColorClass: 'pm-raw-block-border',
@@ -72,11 +85,10 @@ const extension = (
           tags: () => ['shortcode'],
           editFn: () => () => false,
         }),
-  
+
         pandoc: {
-         
           // unroll shortcode from paragraph with single shortcode
-          blockReader: (schema: Schema, tok: PandocToken, writer: ProsemirrorWriter) => { 
+          blockReader: (schema: Schema, tok: PandocToken, writer: ProsemirrorWriter) => {
             if (isParaWrappingShortcode(tok)) {
               const text = tokensCollectText(tok.c);
               writer.addNode(schema.nodes.shortcode_block, {}, [schema.text(text)]);
@@ -97,14 +109,13 @@ const extension = (
         },
       },
     ],
-  
+
     commands: (schema: Schema) => {
-  
       // only create command for hugo doc types
       if (!format.docTypes.includes(kHugoDocType)) {
         return [];
       }
-  
+
       return [
         new ProsemirrorCommand(
           EditorCommandId.Shortcode,
@@ -119,7 +130,7 @@ const extension = (
               const shortcode = '{{<  >}}';
               const shortcodeNode = schema.nodes.shortcode_block.create({}, schema.text(shortcode));
               tr.replaceSelectionWith(shortcodeNode);
-              setTextSelection(tr.mapping.map(state.selection.from) - (shortcode.length/2) - 1)(tr);
+              setTextSelection(tr.mapping.map(state.selection.from) - shortcode.length / 2 - 1)(tr);
               dispatch(tr);
             }
             return true;
@@ -136,38 +147,35 @@ function isParaWrappingShortcode(tok: PandocToken) {
     // we don't end up scanning every token of every paragraph )
     const children: PandocToken[] = tok.c;
     if (tok.c.length > 1) {
-      const [ first, second ] = tok.c;
+      const [first, second] = tok.c;
       const firstText = first.t === PandocTokenType.Str ? first.c : second.c;
       if (typeof firstText === 'string' && firstText.startsWith('{{<')) {
         const text = tokensCollectText(children);
         return !!text.match(kShortcodeRegEx);
       }
     }
-  } 
+  }
   return false;
 }
 
-
-export function shortcodeBlockCapsuleFilter() : PandocBlockCapsuleFilter {
-
+export function shortcodeBlockCapsuleFilter(): PandocBlockCapsuleFilter {
   const kShortcodeBlockCapsuleType = 'B65B58FD-D707-4C30-8C97-3D99ACF9A157'.toLowerCase();
 
   return {
-
     type: kShortcodeBlockCapsuleType,
-    
+
     match: /^([\t >]*)(\{\{<\s+([^\/][^\t ]+).*?>\}\}[ \t]*\n(?![ \t]*\n)[\W\w]*?\n[\t >]*\{\{<\s+\/\3\s+>\}\})([ \t]*)$/gm,
 
     extract: (_match: string, p1: string, p2: string, _p3: string, p4: string) => {
       return {
         prefix: p1,
         source: p2,
-        suffix: p4
+        suffix: p4,
       };
     },
-    
+
     // textually enclose the capsule so that pandoc parses it as the type of block we want it to
-    // (in this case we don't do anything because pandoc would have written this table as a 
+    // (in this case we don't do anything because pandoc would have written this table as a
     // semantically standalone block)
     enclose: (capsuleText: string, capsule: PandocBlockCapsule) => {
       return capsuleText;
@@ -176,31 +184,23 @@ export function shortcodeBlockCapsuleFilter() : PandocBlockCapsuleFilter {
     // look for one of our block capsules within pandoc ast text (e.g. a code or raw block)
     // and if we find it, parse and return the original source code
     handleText: blockCapsuleTextHandler(
-      kShortcodeBlockCapsuleType, 
+      kShortcodeBlockCapsuleType,
       encodedBlockCapsuleRegex(undefined, undefined, 'gm'),
     ),
-  
-    // we are looking for a paragraph token consisting entirely of a block capsule of our type. 
+
+    // we are looking for a paragraph token consisting entirely of a block capsule of our type.
     // if find that then return the block capsule text
     handleToken: blockCapsuleParagraphTokenHandler(kShortcodeBlockCapsuleType),
 
-    // write the node 
+    // write the node
     writeNode: (schema: Schema, writer: ProsemirrorWriter, capsule: PandocBlockCapsule) => {
-
       // remove the source prefix
       const source = blockCapsuleSourceWithoutPrefix(capsule.source, capsule.prefix);
 
       // write the node
       writer.addNode(schema.nodes.shortcode_block, {}, [schema.text(source)]);
-     
-    }
+    },
   };
 }
 
-
 export default extension;
-
-
-
-
-

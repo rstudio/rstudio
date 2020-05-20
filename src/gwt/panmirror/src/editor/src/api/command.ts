@@ -113,7 +113,7 @@ export enum EditorCommandId {
   // chunk
   RmdChunk = 'EBFD21FF-4A6E-4D88-A2E0-B38470B00BB9',
   ExecuteCurentRmdChunk = '31C799F3-EF18-4F3A-92E6-51F7A3193A1B',
-  ExecuteCurrentPreviousRmdChunks = 'D3FDE96-0264-4364-ADFF-E87A75405B0B'
+  ExecuteCurrentPreviousRmdChunks = 'D3FDE96-0264-4364-ADFF-E87A75405B0B',
 }
 
 export interface EditorCommand {

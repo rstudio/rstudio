@@ -71,7 +71,6 @@ function footnoteFixupTransform(activeNote: ContentNodeWithPos | undefined) {
     // iterate through footnotes in the newState
     const refs = new Set<string>();
     footnotes.forEach((footnote, index) => {
-
       // map position
       footnote.pos = tr.mapping.map(footnote.pos);
 

@@ -13,7 +13,7 @@
  *
  */
 
-import { PandocWriterOptions } from "./pandoc";
+import { PandocWriterOptions } from './pandoc';
 
 export interface EditorFormat {
   readonly pandocMode: string;

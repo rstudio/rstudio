@@ -114,4 +114,3 @@ function titleFromState(state: EditorState) {
   }
   return '';
 }
-

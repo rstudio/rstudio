@@ -1,5 +1,3 @@
-
-
 /*
  * editor-menus.ts
  *
@@ -15,9 +13,9 @@
  *
  */
 
-import { EditorMenuItem, EditorUI } from "../api/ui";
-import { tableMenu } from "../api/table";
-import { EditorCommandId, EditorCommand } from "../api/command";
+import { EditorMenuItem, EditorUI } from '../api/ui';
+import { tableMenu } from '../api/table';
+import { EditorCommandId, EditorCommand } from '../api/command';
 
 export interface EditorMenus {
   format: EditorMenuItem[];
@@ -29,7 +27,7 @@ export function editorMenus(ui: EditorUI, commands: EditorCommand[]) {
   return {
     format: formatMenu(ui, commands),
     insert: insertMenu(ui, commands),
-    table: tableMenu(true, ui)
+    table: tableMenu(true, ui),
   };
 }
 
@@ -38,34 +36,38 @@ function formatMenu(ui: EditorUI, commands: EditorCommand[]) {
     { command: EditorCommandId.Strong },
     { command: EditorCommandId.Em },
     { command: EditorCommandId.Code },
-    { subMenu: {
-      text: ui.context.translateText('Text'),
-      items: [
-        { command: EditorCommandId.Strikeout },
-        { command: EditorCommandId.Superscript },
-        { command: EditorCommandId.Subscript },
-        { command: EditorCommandId.Smallcaps },
-        { separator: true },
-        { command: EditorCommandId.Span }
-      ]
-    }},
+    {
+      subMenu: {
+        text: ui.context.translateText('Text'),
+        items: [
+          { command: EditorCommandId.Strikeout },
+          { command: EditorCommandId.Superscript },
+          { command: EditorCommandId.Subscript },
+          { command: EditorCommandId.Smallcaps },
+          { separator: true },
+          { command: EditorCommandId.Span },
+        ],
+      },
+    },
     { separator: true },
-    { subMenu: {
-      text: ui.context.translateText('Bullets & Numbering'),
-      items: [
-        { command: EditorCommandId.BulletList },
-        { command: EditorCommandId.OrderedList },
-        { command: EditorCommandId.TightList },
-        { separator: true },
-        { command: EditorCommandId.ListItemCheck },
-        { command: EditorCommandId.ListItemCheckToggle },
-        { separator: true },
-        { command: EditorCommandId.ListItemSink },
-        { command: EditorCommandId.ListItemLift },
-        { separator: true },
-        { command: EditorCommandId.OrderedListEdit },
-      ]
-    }},
+    {
+      subMenu: {
+        text: ui.context.translateText('Bullets & Numbering'),
+        items: [
+          { command: EditorCommandId.BulletList },
+          { command: EditorCommandId.OrderedList },
+          { command: EditorCommandId.TightList },
+          { separator: true },
+          { command: EditorCommandId.ListItemCheck },
+          { command: EditorCommandId.ListItemCheckToggle },
+          { separator: true },
+          { command: EditorCommandId.ListItemSink },
+          { command: EditorCommandId.ListItemLift },
+          { separator: true },
+          { command: EditorCommandId.OrderedListEdit },
+        ],
+      },
+    },
     { separator: true },
     { command: EditorCommandId.Blockquote },
     { command: EditorCommandId.LineBlock },
@@ -73,19 +75,21 @@ function formatMenu(ui: EditorUI, commands: EditorCommand[]) {
     { command: codeBlockCommand(commands) },
     { command: EditorCommandId.Div },
     { separator: true },
-    { subMenu: {
-      text: ui.context.translateText('Raw'),
-      items: [
-        { command: EditorCommandId.HTMLInline },
-        { command: EditorCommandId.HTMLBlock },
-        { separator: true },
-        { command: EditorCommandId.TexInline },
-        { command: EditorCommandId.TexBlock },
-        { separator: true },
-        { command: EditorCommandId.RawInline },
-        { command: EditorCommandId.RawBlock },
-      ]
-    }},
+    {
+      subMenu: {
+        text: ui.context.translateText('Raw'),
+        items: [
+          { command: EditorCommandId.HTMLInline },
+          { command: EditorCommandId.HTMLBlock },
+          { separator: true },
+          { command: EditorCommandId.TexInline },
+          { command: EditorCommandId.TexBlock },
+          { separator: true },
+          { command: EditorCommandId.RawInline },
+          { command: EditorCommandId.RawBlock },
+        ],
+      },
+    },
     { separator: true },
     { command: EditorCommandId.ClearFormatting },
     { separator: true },
@@ -101,15 +105,17 @@ function insertMenu(ui: EditorUI, commands: EditorCommand[]) {
     { command: EditorCommandId.Link },
     { command: EditorCommandId.HorizontalRule },
     { separator: true },
-    { subMenu: {
-      text: ui.context.translateText('Definition'),
-      items: [
-        { command: EditorCommandId.DefinitionList },
-        { separator: true },
-        { command: EditorCommandId.DefinitionTerm },
-        { command: EditorCommandId.DefinitionDescription },
-      ]
-    }},
+    {
+      subMenu: {
+        text: ui.context.translateText('Definition'),
+        items: [
+          { command: EditorCommandId.DefinitionList },
+          { separator: true },
+          { command: EditorCommandId.DefinitionTerm },
+          { command: EditorCommandId.DefinitionDescription },
+        ],
+      },
+    },
     { separator: true },
     { command: EditorCommandId.InlineMath },
     { command: EditorCommandId.DisplayMath },
@@ -134,13 +140,13 @@ function haveAnyOf(commands: EditorCommand[], ...ids: EditorCommandId[]) {
   for (const command of commands) {
     if (ids.includes(command.id)) {
       return true;
-    } 
+    }
   }
   return false;
 }
 
 function codeBlockCommand(commands: EditorCommand[]) {
-  return haveAnyOf(commands, EditorCommandId.CodeBlockFormat) 
+  return haveAnyOf(commands, EditorCommandId.CodeBlockFormat)
     ? EditorCommandId.CodeBlockFormat
     : EditorCommandId.CodeBlock;
 }

@@ -1,4 +1,3 @@
-
 /*
  * code_block_input.ts
  *
@@ -14,36 +13,33 @@
  *
  */
 
-import { EditorState, Transaction } from "prosemirror-state";
-import { Schema, ResolvedPos, Fragment } from "prosemirror-model";
-import { InputRule } from "prosemirror-inputrules";
-import { setTextSelection } from "prosemirror-utils";
+import { EditorState, Transaction } from 'prosemirror-state';
+import { Schema, ResolvedPos, Fragment } from 'prosemirror-model';
+import { InputRule } from 'prosemirror-inputrules';
+import { setTextSelection } from 'prosemirror-utils';
 
-import { PandocExtensions } from "../api/pandoc";
-import { PandocCapabilities } from "../api/pandoc_capabilities";
-import { EditorUI } from "../api/ui";
-import { EditorFormat } from "../api/format";
-import { Extension } from "../api/extension";
-import { precedingListItemInsertPos, precedingListItemInsert } from "../api/list";
-import { pandocAttrFrom } from "../api/pandoc_attr";
-import { BaseKey } from "../api/basekeys";
-import { fancyQuotesToSimple } from "../api/quote";
-import { markIsActive } from "../api/mark";
+import { PandocExtensions } from '../api/pandoc';
+import { PandocCapabilities } from '../api/pandoc_capabilities';
+import { EditorUI } from '../api/ui';
+import { EditorFormat } from '../api/format';
+import { Extension } from '../api/extension';
+import { precedingListItemInsertPos, precedingListItemInsert } from '../api/list';
+import { pandocAttrFrom } from '../api/pandoc_attr';
+import { BaseKey } from '../api/basekeys';
+import { fancyQuotesToSimple } from '../api/quote';
+import { markIsActive } from '../api/mark';
 
 const extension = (
   pandocExtensions: PandocExtensions,
   _caps: PandocCapabilities,
   _ui: EditorUI,
-  format: EditorFormat
+  format: EditorFormat,
 ): Extension | null => {
-
   const fencedAttributes = pandocExtensions.fenced_code_attributes || !!format.rmdExtensions.codeChunks;
 
   return {
     baseKeys: () => {
-      return [
-        { key: BaseKey.Enter, command: codeBlockInputRuleEnter(pandocExtensions, fencedAttributes, format)},
-      ];
+      return [{ key: BaseKey.Enter, command: codeBlockInputRuleEnter(pandocExtensions, fencedAttributes, format) }];
     },
 
     inputRules: () => {
@@ -62,19 +58,12 @@ const extension = (
       } else {
         return [];
       }
-    }
+    },
   };
-
-
 };
 
-function codeBlockInputRuleEnter(
-  pandocExtensions: PandocExtensions, 
-  fencedAttributes: boolean, 
-  format: EditorFormat
-) {
+function codeBlockInputRuleEnter(pandocExtensions: PandocExtensions, fencedAttributes: boolean, format: EditorFormat) {
   return (state: EditorState, dispatch?: (tr: Transaction) => void) => {
-
     // see if the parent consist of a pending code block input rule
     const schema = state.schema;
     const { $head } = state.selection;
@@ -102,14 +91,13 @@ function codeBlockInputRuleEnter(
 
     // execute
     if (dispatch) {
-
       // determine nature of insert
       const fenced = fencedAttributes && !!match[2];
-      const langAttrib = fenced ? match[2] : (match[1] || '');
+      const langAttrib = fenced ? match[2] : match[1] || '';
       const rawBlock = fenced && pandocExtensions.raw_attribute && langAttrib.match(/^=\w.*$/);
-      const rmdChunk = fenced && !!format.rmdExtensions.codeChunks && langAttrib.match(/^\w.*$/); 
+      const rmdChunk = fenced && !!format.rmdExtensions.codeChunks && langAttrib.match(/^\w.*$/);
       const lang = langAttrib.replace(/^[\.=]/, '');
-      
+
       // create transaction and clear input
       const tr = state.tr;
       const start = $head.start();
@@ -117,20 +105,20 @@ function codeBlockInputRuleEnter(
       tr.deleteRange(start, end);
 
       // determine type and attrs
-      const type = rawBlock ? schema.nodes.raw_block : rmdChunk ? schema.nodes.rmd_chunk : schema.nodes.code_block; 
+      const type = rawBlock ? schema.nodes.raw_block : rmdChunk ? schema.nodes.rmd_chunk : schema.nodes.code_block;
       const content = rmdChunk ? schema.text(`{${fancyQuotesToSimple(match[2])}}\n`) : Fragment.empty;
       const attrs = rawBlock ? { format: lang } : !rmdChunk && lang.length ? pandocAttrFrom({ classes: [lang] }) : {};
 
       // see if this should go into a preceding list item
       const prevListItemPos = precedingListItemInsertPos(state.doc, state.selection);
       if (prevListItemPos) {
-        const block = type.createAndFill (attrs, content);
+        const block = type.createAndFill(attrs, content);
         precedingListItemInsert(tr, prevListItemPos, block);
       } else {
         tr.insert(start, content);
         tr.setBlockType(start, start, type, attrs);
       }
-     
+
       dispatch(tr);
     }
 
@@ -147,6 +135,5 @@ function canApplyCodeBlockInputRule(state: EditorState) {
   const { $head } = state.selection;
   return canReplaceNodeWithCodeBlock(schema, $head) || precedingListItemInsertPos(state.doc, state.selection);
 }
-
 
 export default extension;

@@ -65,8 +65,8 @@ export function footnoteEditorActivationPlugin() {
             scrollIntoView(view, footnote.pos, false, 0, 30);
           }
         }
-      }
-    })
+      },
+    }),
   });
 }
 

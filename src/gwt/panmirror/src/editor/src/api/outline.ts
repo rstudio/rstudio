@@ -33,7 +33,6 @@ export type EditorOutlineItemType = 'heading' | 'rmd_chunk' | 'yaml_metadata';
 
 export type EditorOutline = EditorOutlineItem[];
 
-
 export function outlineNodes(doc: ProsemirrorNode) {
   return findTopLevelBodyNodes(doc, isOutlineNode);
 }

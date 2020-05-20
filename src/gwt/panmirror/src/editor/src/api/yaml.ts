@@ -19,7 +19,6 @@ import { findTopLevelBodyNodes } from './node';
 
 import yaml from 'js-yaml';
 
-
 export function yamlMetadataNodes(doc: ProsemirrorNode) {
   return findTopLevelBodyNodes(doc, isYamlMetadataNode);
 }
@@ -28,10 +27,9 @@ export function isYamlMetadataNode(node: ProsemirrorNode) {
   return node.type === node.type.schema.nodes.yaml_metadata;
 }
 
-
 export const kYamlBlocksRegex = /^([\t >]*)(---[ \t]*\n(?![ \t]*\n)[\W\w]*?\n[\t >]*(?:---|\.\.\.))([ \t]*)$/gm;
 
-export function firstYamlBlock(code: string) : { [key: string]: any} | null {
+export function firstYamlBlock(code: string): { [key: string]: any } | null {
   kYamlBlocksRegex.lastIndex = 0;
   const match = kYamlBlocksRegex.exec(code);
   kYamlBlocksRegex.lastIndex = 0;
@@ -40,24 +38,23 @@ export function firstYamlBlock(code: string) : { [key: string]: any} | null {
     const yamlCode = match[2].replace(/[\t >]*(?:---|\.\.\.)$/, '');
     try {
       const yamlParsed = yaml.safeLoad(yamlCode, {
-        onWarning: logException
+        onWarning: logException,
       });
       if (typeof yamlParsed === 'object') {
         return yamlParsed;
       } else {
         return null;
       }
-    } catch(e) {
+    } catch (e) {
       logException(e);
       return null;
     }
-  
   } else {
     return null;
   }
 }
 
 function logException(e: Error) {
-  // TODO: log exceptions (we don't want to use console.log in production code, so this would 
+  // TODO: log exceptions (we don't want to use console.log in production code, so this would
   // utilize some sort of external logging facility)
 }

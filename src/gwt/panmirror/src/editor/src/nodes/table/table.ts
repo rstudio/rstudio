@@ -61,12 +61,7 @@ import 'prosemirror-tables/style/tables.css';
 import './table-styles.css';
 
 import { TableContextMenuPlugin } from './table-contextmenu';
-const extension = (
-  pandocExtensions: PandocExtensions, 
-  _caps: PandocCapabilities, 
-  ui: EditorUI)
-: Extension | null => {
-
+const extension = (pandocExtensions: PandocExtensions, _caps: PandocCapabilities, ui: EditorUI): Extension | null => {
   // not enabled if there are no tables enabled
   if (
     !pandocExtensions.grid_tables &&
@@ -127,7 +122,7 @@ const extension = (
         }),
         tableEditing(),
         tablePaste(),
-        new TableContextMenuPlugin(schema, ui)
+        new TableContextMenuPlugin(schema, ui),
       ];
     },
 

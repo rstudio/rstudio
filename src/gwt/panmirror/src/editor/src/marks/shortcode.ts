@@ -105,18 +105,16 @@ const extension = (
 };
 
 function detectAndCreateShortcodes(schema: Schema, tr: MarkTransaction, pos: number) {
- 
   // apply marks wherever they belong
   detectAndApplyMarks(
-    tr, 
-    tr.doc.nodeAt(pos)!, 
-    pos, 
-    kShortcodeRegEx, 
+    tr,
+    tr.doc.nodeAt(pos)!,
+    pos,
+    kShortcodeRegEx,
     schema.marks.shortcode,
     () => ({}),
-    match => match[1]
+    match => match[1],
   );
-  
 }
 
 export default extension;

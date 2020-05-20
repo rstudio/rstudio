@@ -20,4 +20,3 @@ export interface EditorUIImages {
   runchunk?: string;
   runprevchunks?: string;
 }
-

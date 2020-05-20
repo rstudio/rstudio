@@ -96,8 +96,6 @@ export function baseKeysPlugin(keys: readonly BaseKeyBinding[]) {
   return keymap(bindings);
 }
 
-
 function ignoreKey(state: EditorState, dispatch?: (tr: Transaction) => void) {
   return true;
 }
-

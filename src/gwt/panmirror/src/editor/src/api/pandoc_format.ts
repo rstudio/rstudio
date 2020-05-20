@@ -59,7 +59,7 @@ export function pandocFormatConfigFromDoc(doc: ProsemirrorNode) {
   return pandocFormatConfigFromYamlInDoc(doc) || pandocFormatConfigFromCommentInDoc(doc) || {};
 }
 
-export function pandocFormatConfigFromCode(code: string) : PandocFormatConfig {
+export function pandocFormatConfigFromCode(code: string): PandocFormatConfig {
   return pandocFormatConfigFromYamlInCode(code) || pandocFormatConfigFromCommentInCode(code) || {};
 }
 
@@ -73,13 +73,13 @@ function pandocFormatConfigFromYamlInCode(code: string): PandocFormatConfig | nu
   }
 }
 
-function pandocFormatConfigFromYamlInDoc(doc: ProsemirrorNode) : PandocFormatConfig | null {
-   const yamlNodes = yamlMetadataNodes(doc);
-   if (yamlNodes.length > 0) {
-     return pandocFormatConfigFromYamlInCode(yamlNodes[0].node.textContent);
-   } else {
-     return null;
-   }
+function pandocFormatConfigFromYamlInDoc(doc: ProsemirrorNode): PandocFormatConfig | null {
+  const yamlNodes = yamlMetadataNodes(doc);
+  if (yamlNodes.length > 0) {
+    return pandocFormatConfigFromYamlInCode(yamlNodes[0].node.textContent);
+  } else {
+    return null;
+  }
 }
 
 function pandocFormatConfigFromCommentInCode(code: string): PandocFormatConfig | null {
@@ -111,9 +111,9 @@ function pandocFormatConfigFromCommentInDoc(doc: ProsemirrorNode): PandocFormatC
       return false;
     }
 
-    // if it's a text node with a raw-html then scan it for the format comment 
+    // if it's a text node with a raw-html then scan it for the format comment
     const schema = doc.type.schema;
-    if (node.isText && schema.marks.raw_html_comment.isInSet(node.marks) && node.attrs.format) {   
+    if (node.isText && schema.marks.raw_html_comment.isInSet(node.marks) && node.attrs.format) {
       foundFirstRawInline = true;
       config = pandocFormatConfigFromCommentInCode(node.textContent);
       return false;
@@ -125,9 +125,8 @@ function pandocFormatConfigFromCommentInDoc(doc: ProsemirrorNode): PandocFormatC
 }
 
 function readPandocFormatConfig(source: { [key: string]: any }) {
-  
-  const asString = (obj: any) : string => {
-    if (typeof obj === "string") {
+  const asString = (obj: any): string => {
+    if (typeof obj === 'string') {
       return obj;
     } else if (obj) {
       return obj.toString();
@@ -137,12 +136,12 @@ function readPandocFormatConfig(source: { [key: string]: any }) {
   };
 
   const asBoolean = (obj: any) => {
-    if (typeof obj === "boolean") {
+    if (typeof obj === 'boolean') {
       return obj;
     } else {
       const str = asString(obj).toLowerCase();
-      return (str === 'true' || str === '1');
-    } 
+      return str === 'true' || str === '1';
+    }
   };
 
   const readWrapColumn = () => {
@@ -163,7 +162,9 @@ function readPandocFormatConfig(source: { [key: string]: any }) {
   }
   formatConfig.wrapColumn = readWrapColumn();
   if (source.doctype) {
-    formatConfig.doctypes = asString(source.doctype).split(',').map(str => str.trim());
+    formatConfig.doctypes = asString(source.doctype)
+      .split(',')
+      .map(str => str.trim());
   }
   if (source.references) {
     formatConfig.references = asString(source.references);
@@ -174,7 +175,7 @@ function readPandocFormatConfig(source: { [key: string]: any }) {
   return formatConfig;
 }
 
-export async function resolvePandocFormat(pandoc: PandocEngine, format: EditorFormat) : Promise<PandocFormat> {
+export async function resolvePandocFormat(pandoc: PandocEngine, format: EditorFormat): Promise<PandocFormat> {
   // additional markdown variants we support
   const kMarkdownVariants: { [key: string]: string[] } = {
     [kCommonmarkFormat]: commonmarkExtensions(),

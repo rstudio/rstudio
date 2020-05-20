@@ -50,9 +50,7 @@ const extension: Extension = {
   ],
 
   commands: (schema: Schema) => {
-    return [
-      new ProsemirrorCommand(EditorCommandId.HorizontalRule, [], insertNode(schema.nodes.horizontal_rule)),
-    ];
+    return [new ProsemirrorCommand(EditorCommandId.HorizontalRule, [], insertNode(schema.nodes.horizontal_rule))];
   },
 
   inputRules: (_schema: Schema) => {

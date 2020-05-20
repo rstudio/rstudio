@@ -148,8 +148,7 @@ function texInputRule(schema: Schema, filter: MarkInputRuleFilter) {
     const rawTexMark = schema.marks.raw_tex;
 
     if (state.selection.empty && toggleMark(rawTexMark)(state)) {
-
-      // if there is no tex ahead of us or we don't pass the fitler (b/c marks that don't allow 
+      // if there is no tex ahead of us or we don't pass the fitler (b/c marks that don't allow
       // input rules are active) then bail
       const $head = state.selection.$head;
       const texText = '\\' + $head.parent.textContent.slice($head.parentOffset);

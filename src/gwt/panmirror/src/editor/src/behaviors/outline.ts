@@ -140,7 +140,6 @@ function hasOutlineIdsTransaction(transactions: Transaction[]) {
   return transactions.some(tr => tr.getMeta(kOutlineIdsTransaction));
 }
 
-
 function transactionsAffectOutline(transactions: Transaction[], oldState: EditorState, newState: EditorState) {
   return (
     transactions.some(tr => tr.getMeta(kSetMarkdownTransaction)) ||

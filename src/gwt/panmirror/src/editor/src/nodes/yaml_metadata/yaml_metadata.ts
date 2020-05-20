@@ -55,9 +55,8 @@ const extension: Extension = {
       },
 
       pandoc: {
-       
         blockCapsuleFilter: yamlMetadataBlockCapsuleFilter(),
-        
+
         writer: (output: PandocOutput, node: ProsemirrorNode) => {
           output.writeToken(PandocTokenType.Para, () => {
             output.writeRawMarkdown(node.content);

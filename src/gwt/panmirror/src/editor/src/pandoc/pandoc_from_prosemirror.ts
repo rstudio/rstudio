@@ -150,12 +150,12 @@ class PandocWriter implements PandocOutput {
           }
 
           // check for trailing space in last node
-          if ((index === parent.childCount - 1) && node.textContent.match(/\s+$/)) {
+          if (index === parent.childCount - 1 && node.textContent.match(/\s+$/)) {
             output.spaceAfter = true;
             outputText = outputText.trimRight();
           }
 
-          // check for an entirely blank node 
+          // check for an entirely blank node
           if (outputText.match(/^\s*$/)) {
             outputText = '';
           }
@@ -167,8 +167,8 @@ class PandocWriter implements PandocOutput {
               output.nodes.push(node.type.schema.text(outputText, node.marks));
             } else {
               output.nodes.push(node);
-            } 
-          } 
+            }
+          }
         } else {
           output.nodes.push(node);
         }
@@ -257,7 +257,6 @@ class PandocWriter implements PandocOutput {
   }
 
   public writeNote(note: ProsemirrorNode) {
-
     // get corresponding note body
     const noteBody = this.notes[note.attrs.ref];
 
@@ -267,7 +266,6 @@ class PandocWriter implements PandocOutput {
         this.writeNodes(noteBody);
       });
     }
-
   }
 
   public writeNode(node: ProsemirrorNode) {

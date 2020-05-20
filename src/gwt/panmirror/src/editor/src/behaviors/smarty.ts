@@ -45,10 +45,10 @@ const emDash = new InputRule(/–-$/, (state: EditorState, match: string[], star
 
 // from: https://github.com/ProseMirror/prosemirror-inputrules/blob/master/src/rules.js
 // (forked so we could customize/override default behavior behavior)
-const openDoubleQuote = new InputRule(/(?:^|[\s`\*_=\{\[\(\<'"\u2018\u201C])(")$/, "“");
-const closeDoubleQuote = new InputRule(/"$/, "”");
-const openSingleQuote = new InputRule(/(?:^|[\s`\*_=\{\[\(\<'"\u2018\u201C])(')$/, "‘");
-const closeSingleQuote = new InputRule(/'$/, "’");
+const openDoubleQuote = new InputRule(/(?:^|[\s`\*_=\{\[\(\<'"\u2018\u201C])(")$/, '“');
+const closeDoubleQuote = new InputRule(/"$/, '”');
+const openSingleQuote = new InputRule(/(?:^|[\s`\*_=\{\[\(\<'"\u2018\u201C])(')$/, '‘');
+const closeSingleQuote = new InputRule(/'$/, '’');
 
 const extension: Extension = {
   inputRules: () => {
@@ -92,11 +92,8 @@ const extension: Extension = {
 };
 
 export function reverseSmartQuotesExtension(marks: readonly PandocMark[]) {
-  
   return {
-
     appendTransaction: (schema: Schema) => {
-  
       const noInputRuleMarks = marks.filter(mark => mark.noInputRules).map(mark => schema.marks[mark.name]);
 
       // detect add code steps
@@ -107,7 +104,8 @@ export function reverseSmartQuotesExtension(marks: readonly PandocMark[]) {
       return [
         {
           name: 'reverse-smarty',
-          filter: (transactions: Transaction[]) => transactions.some(transaction => transaction.steps.some(isAddMarkWithNoInputRules)),
+          filter: (transactions: Transaction[]) =>
+            transactions.some(transaction => transaction.steps.some(isAddMarkWithNoInputRules)),
           append: (tr: Transaction, transactions: Transaction[]) => {
             transactions.forEach(transaction => {
               transaction.steps.filter(isAddMarkWithNoInputRules).forEach(step => {
@@ -124,10 +122,10 @@ export function reverseSmartQuotesExtension(marks: readonly PandocMark[]) {
                   if (!rangeMarks.find(rangeMark => rangeMark.type)) {
                     rangeMarks.push(mark);
                   }
-                  
-                  // replace 
+
+                  // replace
                   tr.replaceRangeWith(from, to, schema.text(newCode, rangeMarks));
-                  
+
                   // restore selection
                   if (prevSelection.empty) {
                     tr.setSelection(new TextSelection(tr.doc.resolve(prevSelection.anchor)));
@@ -144,9 +142,7 @@ export function reverseSmartQuotesExtension(marks: readonly PandocMark[]) {
         },
       ];
     },
-
   };
-
 }
 
 export default extensionIfEnabled(extension, 'smart');

@@ -95,7 +95,11 @@ const extension: Extension = {
   ],
 
   commands: (schema: Schema, ui: EditorUI) => {
-    return [new InsertDefinitionList(ui), new InsertDefinitionTerm(schema, ui), new InsertDefinitionDescription(schema)];
+    return [
+      new InsertDefinitionList(ui),
+      new InsertDefinitionTerm(schema, ui),
+      new InsertDefinitionDescription(schema),
+    ];
   },
 
   baseKeys: (_schema: Schema) => {

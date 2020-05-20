@@ -1,4 +1,3 @@
-
 /*
  * shortcode.ts
  *
@@ -16,4 +15,3 @@
 
 export const kShortcodePattern = '(?:^|[^`])({{([%<])\\s+.*?[%>]}})';
 export const kShortcodeRegEx = new RegExp(kShortcodePattern, 'g');
-

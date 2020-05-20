@@ -1,4 +1,3 @@
-
 /*
  * table-capsule.ts
  *
@@ -14,27 +13,32 @@
  *
  */
 
-import { Schema, DOMParser } from "prosemirror-model";
+import { Schema, DOMParser } from 'prosemirror-model';
 
+import {
+  PandocBlockCapsuleFilter,
+  PandocBlockCapsule,
+  blockCapsuleParagraphTokenHandler,
+  encodedBlockCapsuleRegex,
+  blockCapsuleTextHandler,
+  blockCapsuleSourceWithoutPrefix,
+  parsePandocBlockCapsule,
+} from '../../api/pandoc_capsule';
+import { ProsemirrorWriter, PandocToken, PandocTokenType } from '../../api/pandoc';
+import { kHTMLFormat } from '../../api/raw';
 
-import { PandocBlockCapsuleFilter, PandocBlockCapsule, blockCapsuleParagraphTokenHandler, encodedBlockCapsuleRegex, blockCapsuleTextHandler, blockCapsuleSourceWithoutPrefix, parsePandocBlockCapsule } from "../../api/pandoc_capsule";
-import { ProsemirrorWriter, PandocToken, PandocTokenType } from "../../api/pandoc";
-import { kHTMLFormat } from "../../api/raw";
-
-export function tableBlockCapsuleFilter() : PandocBlockCapsuleFilter {
-
+export function tableBlockCapsuleFilter(): PandocBlockCapsuleFilter {
   const kTableBlockCapsuleType = '8EF5A772-DD63-4622-84BF-AF1995A1B2B9'.toLowerCase();
   const pagraphTokenCapsuleHandler = blockCapsuleParagraphTokenHandler(kTableBlockCapsuleType);
   const tokenRegex = encodedBlockCapsuleRegex('^', '$');
 
   return {
-
     type: kTableBlockCapsuleType,
-    
+
     match: /^([\t >]*)(<table[\W\w]*?<\/table>)([ \t]*)$/gm,
-    
+
     // textually enclose the capsule so that pandoc parses it as the type of block we want it to
-    // (in this case we don't do anything because pandoc would have written this table as a 
+    // (in this case we don't do anything because pandoc would have written this table as a
     // semantically standalone block)
     enclose: (capsuleText: string, capsule: PandocBlockCapsule) => {
       return capsuleText;
@@ -42,15 +46,11 @@ export function tableBlockCapsuleFilter() : PandocBlockCapsuleFilter {
 
     // look for one of our block capsules within pandoc ast text (e.g. a code or raw block)
     // and if we find it, parse and return the original source code
-    handleText: blockCapsuleTextHandler(
-      kTableBlockCapsuleType, 
-      encodedBlockCapsuleRegex(undefined, undefined, 'gm'),
-    ),
-  
-    // we are looking for a paragraph token consisting entirely of a block capsule of our type. 
+    handleText: blockCapsuleTextHandler(kTableBlockCapsuleType, encodedBlockCapsuleRegex(undefined, undefined, 'gm')),
+
+    // we are looking for a paragraph token consisting entirely of a block capsule of our type.
     // if find that then return the block capsule text
     handleToken: (tok: PandocToken) => {
-
       // first check for a paragraph
       const capsuleText = pagraphTokenCapsuleHandler(tok);
       if (capsuleText) {
@@ -75,18 +75,16 @@ export function tableBlockCapsuleFilter() : PandocBlockCapsuleFilter {
       }
 
       return null;
-
     },
 
     // write the node as a table (parse the html)
     writeNode: (schema: Schema, writer: ProsemirrorWriter, capsule: PandocBlockCapsule) => {
-
       // remove the source prefix
       const source = blockCapsuleSourceWithoutPrefix(capsule.source, capsule.prefix);
 
       // fallback to write as raw html
       const writeAsRawHTML = () => {
-        writer.openNode(schema.nodes.raw_block, {format: kHTMLFormat });
+        writer.openNode(schema.nodes.raw_block, { format: kHTMLFormat });
         writer.writeText(source);
         writer.closeNode();
       };
@@ -95,7 +93,6 @@ export function tableBlockCapsuleFilter() : PandocBlockCapsuleFilter {
       const parser = new window.DOMParser();
       const doc = parser.parseFromString(capsule.source, 'text/html');
       if (doc.body && doc.body.firstChild instanceof HTMLTableElement) {
-
         // get prosemirror dom parser
         const prosemirrorDomParser = DOMParser.fromSchema(schema);
 
@@ -105,7 +102,7 @@ export function tableBlockCapsuleFilter() : PandocBlockCapsuleFilter {
         // ensure that table cells all have content
         const ensureCellContent = (tag: string) => {
           const cells = unparsedTable.getElementsByTagName(tag);
-          for (let i=0; i<cells.length; i++) {
+          for (let i = 0; i < cells.length; i++) {
             const cell = cells.item(i)!;
             if (cell.children.length === 0) {
               cell.append(window.document.createElement('p'));
@@ -123,10 +120,10 @@ export function tableBlockCapsuleFilter() : PandocBlockCapsuleFilter {
           if (captionElement) {
             captionElement.remove();
           }
-        } 
+        }
 
         // determine caption (either empty or parsed from element)
-        let caption = schema.nodes.table_caption.create( { inactive: true });
+        let caption = schema.nodes.table_caption.create({ inactive: true });
         if (captionElement) {
           const captionSlice = prosemirrorDomParser.parseSlice(captionElement);
           caption = schema.nodes.table_caption.createAndFill({ inactive: false }, captionSlice.content)!;
@@ -140,13 +137,11 @@ export function tableBlockCapsuleFilter() : PandocBlockCapsuleFilter {
         } else {
           writeAsRawHTML();
         }
-      
-      // fallback to writing as raw_html (round-trip unmodified)
+
+        // fallback to writing as raw_html (round-trip unmodified)
       } else {
         writeAsRawHTML();
       }
-    }
+    },
   };
 }
-
-

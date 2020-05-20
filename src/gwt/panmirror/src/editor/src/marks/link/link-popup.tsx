@@ -131,7 +131,7 @@ export class LinkPopupPlugin extends Plugin<DecorationSet> {
           const keyPressed = kPlatformMac && event.metaKey;
           if (keyPressed) {
             const schema = view.state.schema;
-            const linkAttrs = getMarkAttrs(view.state.doc, { from: pos, to: pos}, schema.marks.link);
+            const linkAttrs = getMarkAttrs(view.state.doc, { from: pos, to: pos }, schema.marks.link);
             if (linkAttrs) {
               event.stopPropagation();
               event.preventDefault();
@@ -140,7 +140,7 @@ export class LinkPopupPlugin extends Plugin<DecorationSet> {
             }
           }
           return false;
-        }
+        },
       },
     });
   }
@@ -204,7 +204,7 @@ const LinkPopup: React.FC<LinkPopupProps> = props => {
 
   return (
     <Popup classes={['pm-popup-link']} style={props.style}>
-      <LinkButton text={linkText} onClick={onLinkClicked} maxWidth={props.maxLinkWidth}/>
+      <LinkButton text={linkText} onClick={onLinkClicked} maxWidth={props.maxLinkWidth} />
       {showCopyButton ? (
         <ImageButton
           image={props.ui.images.copy!}

@@ -22,19 +22,16 @@ import { EditorUI } from '../../api/ui';
 import { EditorCommandId } from '../../api/command';
 
 export class TableContextMenuPlugin extends Plugin {
-
   private menuVisible = false;
 
   constructor(_schema: Schema, ui: EditorUI) {
     super({
-      
       key: new PluginKey('table-contextmenu'),
 
       props: {
         handleDOMEvents: {
           contextmenu: (view: EditorView, event: Event) => {
-
-             // only trigger when in table
+            // only trigger when in table
             if (!isInTable(view.state)) {
               return false;
             }
@@ -52,21 +49,23 @@ export class TableContextMenuPlugin extends Plugin {
                 { separator: true },
                 { command: EditorCommandId.TableDeleteTable },
                 { separator: true },
-                { subMenu: {
-                  text: ui.context.translateText('Align Column'),
-                  items: [
-                    { command: EditorCommandId.TableAlignColumnLeft },
-                    { command: EditorCommandId.TableAlignColumnCenter },
-                    { command: EditorCommandId.TableAlignColumnRight },
-                    { separator: true },
-                    { command: EditorCommandId.TableAlignColumnDefault }
-                  ]
-                }},
+                {
+                  subMenu: {
+                    text: ui.context.translateText('Align Column'),
+                    items: [
+                      { command: EditorCommandId.TableAlignColumnLeft },
+                      { command: EditorCommandId.TableAlignColumnCenter },
+                      { command: EditorCommandId.TableAlignColumnRight },
+                      { separator: true },
+                      { command: EditorCommandId.TableAlignColumnDefault },
+                    ],
+                  },
+                },
                 { separator: true },
                 { command: EditorCommandId.TableToggleHeader },
                 { command: EditorCommandId.TableToggleCaption },
               ];
-  
+
               const { clientX, clientY } = event as MouseEvent;
               await ui.display.showContextMenu!(menu, clientX, clientY);
               this.menuVisible = false;
@@ -81,8 +80,8 @@ export class TableContextMenuPlugin extends Plugin {
             } else {
               return false;
             }
-          }
-        }
+          },
+        },
       },
 
       // prevent selection while the context menu is visible (the right-click
@@ -91,15 +90,11 @@ export class TableContextMenuPlugin extends Plugin {
       // rows or columns are selected)
       filterTransaction: (tr: Transaction, state: EditorState) => {
         if (this.menuVisible && isInTable(state)) {
-          return ! (tr.selectionSet && !tr.docChanged && !tr.storedMarksSet);
+          return !(tr.selectionSet && !tr.docChanged && !tr.storedMarksSet);
         } else {
           return true;
         }
       },
-      
     });
   }
 }
-
-
-

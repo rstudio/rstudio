@@ -13,15 +13,19 @@
  *
  */
 
-import { EditorState } from "prosemirror-state";
-import { Schema, MarkType } from "prosemirror-model";
-import { InputRule } from "prosemirror-inputrules";
+import { EditorState } from 'prosemirror-state';
+import { Schema, MarkType } from 'prosemirror-model';
+import { InputRule } from 'prosemirror-inputrules';
 
-import { PandocMark, markIsActive } from "./mark";
+import { PandocMark, markIsActive } from './mark';
 
-export function markInputRule(regexp: RegExp, markType: MarkType, filter: MarkInputRuleFilter,  getAttrs?: ((match: string[]) => object) | object) {
+export function markInputRule(
+  regexp: RegExp,
+  markType: MarkType,
+  filter: MarkInputRuleFilter,
+  getAttrs?: ((match: string[]) => object) | object,
+) {
   return new InputRule(regexp, (state: EditorState, match: string[], start: number, end: number) => {
-
     if (!filter(state, start, end)) {
       return null;
     }
@@ -47,18 +51,17 @@ export function markInputRule(regexp: RegExp, markType: MarkType, filter: MarkIn
 }
 
 export function delimiterMarkInputRule(
-  delim: string, 
-  markType: MarkType, 
-  filter: MarkInputRuleFilter, 
-  prefixMask?: string, 
-  noEnclosingWhitespace?: boolean
+  delim: string,
+  markType: MarkType,
+  filter: MarkInputRuleFilter,
+  prefixMask?: string,
+  noEnclosingWhitespace?: boolean,
 ) {
-  
   // create distinct patterns depending on whether we allow enclosing whitespace
   const contentPattern = noEnclosingWhitespace
-      ? `[^\\s${delim}][^${delim}]+[^\\s${delim}]|[^\\s${delim}]{1,2}`
-      : `[^${delim}]+`;
-  
+    ? `[^\\s${delim}][^${delim}]+[^\\s${delim}]|[^\\s${delim}]{1,2}`
+    : `[^${delim}]+`;
+
   // if there is no prefix mask then this is simple regex we can pass to markInputRule
   if (!prefixMask) {
     const regexp = `(?:${delim})(${contentPattern})(?:${delim})$`;
@@ -88,7 +91,6 @@ export function delimiterMarkInputRule(
 
     // return rule
     return new InputRule(new RegExp(regexp), (state: EditorState, match: string[], start: number, end: number) => {
-
       if (!filter(state, start, end)) {
         return null;
       }
@@ -129,13 +131,11 @@ export function delimiterMarkInputRule(
   }
 }
 
-
 export type MarkInputRuleFilter = (state: EditorState, from?: number, to?: number) => boolean;
 
-export function markInputRuleFilter(schema: Schema, marks: readonly PandocMark[]) : MarkInputRuleFilter {
-  
+export function markInputRuleFilter(schema: Schema, marks: readonly PandocMark[]): MarkInputRuleFilter {
   const maskedMarkTypes = marksWithNoInputRules(schema, marks);
-  
+
   return (state: EditorState, from?: number, to?: number) => {
     if (from !== undefined && to !== undefined && from !== to) {
       const marksInRange: MarkType[] = [];
@@ -155,8 +155,7 @@ export function markInputRuleFilter(schema: Schema, marks: readonly PandocMark[]
   };
 }
 
-
-function marksWithNoInputRules(schema: Schema, marks: readonly PandocMark[]) : MarkType[] {
+function marksWithNoInputRules(schema: Schema, marks: readonly PandocMark[]): MarkType[] {
   const disabledMarks: MarkType[] = [];
   marks.forEach((mark: PandocMark) => {
     if (mark.noInputRules) {
@@ -165,4 +164,3 @@ function marksWithNoInputRules(schema: Schema, marks: readonly PandocMark[]) : M
   });
   return disabledMarks;
 }
-

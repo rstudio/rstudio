@@ -106,13 +106,13 @@ const extension = (
             findChildren(tr.doc, predicate).forEach(nodeWithPos => {
               const { pos } = nodeWithPos;
               detectAndApplyMarks(
-                markTr, 
-                tr.doc.nodeAt(pos)!, 
-                pos, 
-                kRefRegExDetectAndApply, 
+                markTr,
+                tr.doc.nodeAt(pos)!,
+                pos,
+                kRefRegExDetectAndApply,
                 markType,
                 () => ({}),
-                match => match[1]
+                match => match[1],
               );
             });
 
@@ -133,13 +133,14 @@ const extension = (
           append: (tr: MarkTransaction, node: ProsemirrorNode, pos: number) => {
             removeInvalidatedMarks(tr, node, pos, kRefRegExDetectAndApply, node.type.schema.marks.xref);
             detectAndApplyMarks(
-              tr, 
-              tr.doc.nodeAt(pos)!, 
-              pos, 
-              kRefRegExDetectAndApply, 
+              tr,
+              tr.doc.nodeAt(pos)!,
+              pos,
+              kRefRegExDetectAndApply,
               node.type.schema.marks.xref,
               () => ({}),
-              match => match[1]);
+              match => match[1],
+            );
           },
         },
       ];

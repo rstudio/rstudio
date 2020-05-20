@@ -13,11 +13,11 @@
  *
  */
 
-import { Schema } from "prosemirror-model";
+import { Schema } from 'prosemirror-model';
 
-import { base64Encode, base64Decode } from "./base64";
+import { base64Encode, base64Decode } from './base64';
 
-import { PandocToken, ProsemirrorWriter, mapTokens, PandocTokenType } from "./pandoc";
+import { PandocToken, ProsemirrorWriter, mapTokens, PandocTokenType } from './pandoc';
 
 // constants used for creating/consuming capsules
 const kFieldDelimiter = '\n';
@@ -39,24 +39,29 @@ export interface PandocBlockCapsule {
 // preserve block source code through markdown parsing (e.g. for yaml metadata or rmd chunks).
 // block capsules remove markdown from the document before pandoc parses it (placing it into
 // a base64 encoded 'capsule'), then unwraps the capsule from the AST. All of this is done
-// by the function in this interface. 
+// by the function in this interface.
 export interface PandocBlockCapsuleFilter {
-
   // unique type id for this capsule
   type: string;
 
   // regex that matches a prefix (match[1]), the source to preserve (match[2]), and a suffix (match[3])
-  // we need the prefix/suffix for the cases where the preserved source needs to be put back exactly 
-  // where it came from (e.g. in a multi-line html comment). we also need it to fixup indentation in 
-  // cases where capsules are unwrapped within a code block or raw block. the prefix and suffix 
+  // we need the prefix/suffix for the cases where the preserved source needs to be put back exactly
+  // where it came from (e.g. in a multi-line html comment). we also need it to fixup indentation in
+  // cases where capsules are unwrapped within a code block or raw block. the prefix and suffix
   // must begin and end (respectively) with newlines, and consist entirely of whitespace (e.g. leading
   // space for indented block or incidental whitespace after block delimiter)
   match: RegExp;
 
   // custom function for pulling out the 3 parts from a match (defaults to p1,p2,p3)
-  extract?: (match: string, p1: string, p2: string, p3: string, p4: string) => { prefix: string, source: string, suffix: string };
+  extract?: (
+    match: string,
+    p1: string,
+    p2: string,
+    p3: string,
+    p4: string,
+  ) => { prefix: string; source: string; suffix: string };
 
-  // provide a (text) envelope around the capsule, e.g. 
+  // provide a (text) envelope around the capsule, e.g.
   //  - newlines to ensure that yaml is parsed as a standalone paragraph;
   //  - backticks to ensure an Rmd is structurally parsed by pandoc as a codeblock
   enclose: (capsuleText: string, capsule: PandocBlockCapsule) => string;
@@ -67,7 +72,7 @@ export interface PandocBlockCapsuleFilter {
   // with, then upon finding a capsule, will unpack it with parsePandocBlockCapsule, compare
   // the type against our own type, and in the case they match do the substitution.
   handleText: (text: string, tok: PandocToken) => string;
-  
+
   // do you want to handle this token as a capsule object? if so return the capsule text
   // (only the filter will know how to extract it from a pandoc token b/c it knows
   // where it was parsed from and what happened in the 'enclose' method)
@@ -77,82 +82,85 @@ export interface PandocBlockCapsuleFilter {
   writeNode: (schema: Schema, writer: ProsemirrorWriter, capsule: PandocBlockCapsule) => void;
 }
 
-
-
 // transform the passed markdown to include base64 encoded block capsules as specified by the
 // provided capsule filter. capsules are used to hoist block types that we don't want pandoc
 // to see (e.g. yaml metadata or Rmd chunks) out of the markdown, only to be re-inserted
-// after pandoc has yielded an ast. block capsules are a single base64 encoded pieced of 
-// text that include the original content, the matched prefix and suffix, and a type 
+// after pandoc has yielded an ast. block capsules are a single base64 encoded pieced of
+// text that include the original content, the matched prefix and suffix, and a type
 // identifier for orchestrating the unpacking.
 export function pandocMarkdownWithBlockCapsules(markdown: string, capsuleFilter: PandocBlockCapsuleFilter) {
-
   // default extractor
   const defaultExtractor = (match: string, p1: string, p2: string, p3: string) => {
     return {
       prefix: p1,
       source: p2,
-      suffix: p3
+      suffix: p3,
     };
   };
 
   // replace all w/ source preservation capsules
   return markdown.replace(capsuleFilter.match, (_match: string, p1: string, p2: string, p3: string, p4: string) => {
-
     // extract matches
     const extract = capsuleFilter.extract || defaultExtractor;
     const { prefix, source, suffix } = extract(_match, p1, p2, p3, p4);
 
     // make the capsule
-    const capsule : PandocBlockCapsule = {
+    const capsule: PandocBlockCapsule = {
       [kTypeField]: capsuleFilter.type,
       [kPrefixField]: prefix,
       [kSourceField]: source,
-      [kSuffixField]: suffix
+      [kSuffixField]: suffix,
     };
 
     // constuct a field
     const field = (name: string, value: string) => `${name}${kValueDelimiter}${base64Encode(value)}`;
 
-    // construct a record 
+    // construct a record
     const record =
-       field(kTypeField, capsule.type) + kFieldDelimiter +
-       field(kPrefixField, capsule.prefix) + kFieldDelimiter +
-       field(kSourceField, capsule.source) + kFieldDelimiter +
-       field(kSuffixField, capsule.suffix);
-   
+      field(kTypeField, capsule.type) +
+      kFieldDelimiter +
+      field(kPrefixField, capsule.prefix) +
+      kFieldDelimiter +
+      field(kSourceField, capsule.source) +
+      kFieldDelimiter +
+      field(kSuffixField, capsule.suffix);
+
     // now base64 encode the entire record (so it can masquerade as a paragraph)
     const encodedRecord = base64Encode(record);
 
     // return capsule, which is:
     //   - a base64 encoded record surrounded with a sentinel value
-    //   - enclosed in a filter specific envelope (used to influence pandoc parsing), 
+    //   - enclosed in a filter specific envelope (used to influence pandoc parsing),
     //   - surrounded by the original prefix and suffix
-    return prefix +  
-           capsuleFilter.enclose(`${kBlockCapsuleSentinel}${kValueDelimiter}${encodedRecord}${kValueDelimiter}${kBlockCapsuleSentinel}`, capsule) + 
-           suffix;
+    return (
+      prefix +
+      capsuleFilter.enclose(
+        `${kBlockCapsuleSentinel}${kValueDelimiter}${encodedRecord}${kValueDelimiter}${kBlockCapsuleSentinel}`,
+        capsule,
+      ) +
+      suffix
+    );
   });
-  
 }
-
 
 // block capsules can also end up not as block tokens, but rather as text within another
 // token (e.g. within a backtick code block or raw_block). this function takes a set
 // of pandoc tokens and recursively converts block capsules that aren't of type
 // PandocTokenType.Str (which is what we'd see in a paragraph) into their original form
-export function resolvePandocBlockCapsuleText(tokens: PandocToken[], filters: readonly PandocBlockCapsuleFilter[]) : PandocToken[] {
- 
+export function resolvePandocBlockCapsuleText(
+  tokens: PandocToken[],
+  filters: readonly PandocBlockCapsuleFilter[],
+): PandocToken[] {
   // process all tokens
   return mapTokens(tokens, token => {
-
     // look for non-string pandoc tokens
-    if ((token.t !== PandocTokenType.Str) && token.c) {
-      if (typeof token.c === "string") {
+    if (token.t !== PandocTokenType.Str && token.c) {
+      if (typeof token.c === 'string') {
         token.c = decodeBlockCapsuleText(token.c, token, filters);
       } else if (Array.isArray(token.c)) {
         const children = token.c.length;
-        for (let i=0; i<children; i++) {
-          if (typeof token.c[i] === "string") {
+        for (let i = 0; i < children; i++) {
+          if (typeof token.c[i] === 'string') {
             token.c[i] = decodeBlockCapsuleText(token.c[i], token, filters);
           }
         }
@@ -161,7 +169,6 @@ export function resolvePandocBlockCapsuleText(tokens: PandocToken[], filters: re
 
     return token;
   });
-
 }
 
 // decode the text capsule by running all of the filters (as there could be nesting)
@@ -173,15 +180,13 @@ export function decodeBlockCapsuleText(text: string, tok: PandocToken, filters: 
 }
 
 export function blockCapsuleTextHandler(type: string, pattern: RegExp, textFilter?: (text: string) => string) {
-
-  return (text: string, tok: PandocToken) : string => {
-
+  return (text: string, tok: PandocToken): string => {
     // if this is a code block or raw block then we need to strip the prefix
     // (b/c it could in a blockquote or indented in a list)
     const stripPrefix = tok.t === PandocTokenType.CodeBlock || tok.t === PandocTokenType.RawBlock;
 
     // replace text
-    return text.replace(pattern, (match) => {
+    return text.replace(pattern, match => {
       const capsuleText = textFilter ? textFilter(match) : match;
       const capsule = parsePandocBlockCapsule(capsuleText);
       if (capsule.type === type) {
@@ -195,7 +200,6 @@ export function blockCapsuleTextHandler(type: string, pattern: RegExp, textFilte
       }
     });
   };
-
 }
 
 // token handler that looks for a paragraph token consisting entirely of a block capsule of our type.
@@ -219,23 +223,22 @@ export function blockCapsuleParagraphTokenHandler(type: string) {
   };
 }
 
-
 // create a regex that can be used to match a block capsule
 export function encodedBlockCapsuleRegex(prefix?: string, suffix?: string, flags?: string) {
   return new RegExp(
     (prefix || '') +
-    kBlockCapsuleSentinel + 
-    kValueDelimiter + 
-    '((?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?)' + 
-    kValueDelimiter + 
-    kBlockCapsuleSentinel +
-    (suffix || '')
-  , flags);
+      kBlockCapsuleSentinel +
+      kValueDelimiter +
+      '((?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?)' +
+      kValueDelimiter +
+      kBlockCapsuleSentinel +
+      (suffix || ''),
+    flags,
+  );
 }
 
-
-// remove encoding envelope then parse the remaining text into a block capsule 
-export function parsePandocBlockCapsule(text: string) : PandocBlockCapsule {
+// remove encoding envelope then parse the remaining text into a block capsule
+export function parsePandocBlockCapsule(text: string): PandocBlockCapsule {
   const envelopeLen = kBlockCapsuleSentinel.length + kFieldDelimiter.length;
   const record = text.substring(envelopeLen, text.length - envelopeLen);
   const decodedRecord = base64Decode(record);
@@ -262,4 +265,3 @@ export function blockCapsuleSourceWithoutPrefix(source: string, prefix: string) 
   });
   return lines.join('\n');
 }
-

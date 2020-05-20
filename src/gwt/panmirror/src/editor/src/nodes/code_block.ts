@@ -127,7 +127,6 @@ const extension = (
         { key: BaseKey.ShiftEnter, command: exitCode },
       ];
     },
-
   };
 };
 
@@ -220,7 +219,7 @@ function propsWithLangClass(props: CodeBlockProps) {
   return newProps;
 }
 
-// determine the code block language. if it's an Rmd example (i.e. with `r ''`) and 
+// determine the code block language. if it's an Rmd example (i.e. with `r ''`) and
 // we have rmdExampleHighlight enabled then use the Rmd chunk language for highlighting
 function codeBlockLang(node: ProsemirrorNode, options: EditorOptions) {
   if (node.attrs.classes && node.attrs.classes.length) {
@@ -264,7 +263,5 @@ function codeBlockAttrEdit(pandocExtensions: PandocExtensions, pandocCapabilitie
     }
   };
 }
-
-
 
 export default extension;

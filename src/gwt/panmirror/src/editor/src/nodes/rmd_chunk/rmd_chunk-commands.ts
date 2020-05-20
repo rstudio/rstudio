@@ -13,36 +13,30 @@
  *
  */
 
-import { ProsemirrorCommand, EditorCommandId } from "../../api/command";
-import { EditorUI } from "../../api/ui";
-import { EditorState, Transaction } from "prosemirror-state";
-import { EditorView } from "prosemirror-view";
-import { activeRmdChunk, mergeRmdChunks, previousExecutableRmdChunks } from "../../api/rmd";
-
+import { ProsemirrorCommand, EditorCommandId } from '../../api/command';
+import { EditorUI } from '../../api/ui';
+import { EditorState, Transaction } from 'prosemirror-state';
+import { EditorView } from 'prosemirror-view';
+import { activeRmdChunk, mergeRmdChunks, previousExecutableRmdChunks } from '../../api/rmd';
 
 export class ExecuteCurrentRmdChunkCommand extends ProsemirrorCommand {
   constructor(ui: EditorUI) {
-    super(
-      EditorCommandId.ExecuteCurentRmdChunk,
-      [],
-      (state: EditorState, dispatch?: (tr: Transaction) => void) => {
-      
-        if (!ui.execute.executeRmdChunk) {
-          return false;
-        }
+    super(EditorCommandId.ExecuteCurentRmdChunk, [], (state: EditorState, dispatch?: (tr: Transaction) => void) => {
+      if (!ui.execute.executeRmdChunk) {
+        return false;
+      }
 
-        const chunk = activeRmdChunk(state);
-        if (!chunk) {
-          return false;
-        }
+      const chunk = activeRmdChunk(state);
+      if (!chunk) {
+        return false;
+      }
 
-        if (dispatch) {
-          ui.execute.executeRmdChunk(chunk);
-        }
+      if (dispatch) {
+        ui.execute.executeRmdChunk(chunk);
+      }
 
-        return true;
-      },
-    );
+      return true;
+    });
   }
 }
 
@@ -52,7 +46,6 @@ export class ExecutePreviousRmdChunksCommand extends ProsemirrorCommand {
       EditorCommandId.ExecuteCurrentPreviousRmdChunks,
       [],
       (state: EditorState, dispatch?: (tr: Transaction) => void, view?: EditorView) => {
-      
         if (!ui.execute.executeRmdChunk) {
           return false;
         }
@@ -69,4 +62,3 @@ export class ExecutePreviousRmdChunksCommand extends ProsemirrorCommand {
     );
   }
 }
-

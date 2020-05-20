@@ -106,7 +106,6 @@ export function getSelectionMarkRange(selection: Selection, markType: MarkType):
   return range;
 }
 
-
 export function removeInvalidatedMarks(
   tr: MarkTransaction,
   node: ProsemirrorNode,

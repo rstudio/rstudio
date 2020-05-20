@@ -164,7 +164,7 @@ async function createDiv(ui: EditorUI, state: EditorState, dispatch: (tr: Transa
       const div = findParentNodeOfType(state.schema.nodes.div)(tr.selection)!;
       tr.setNodeMarkup(div.pos, div.node.type, result.attr);
       dispatch(tr);
-    }); 
+    });
   }
 }
 
