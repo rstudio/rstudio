@@ -129,6 +129,11 @@ public:
       if (chunkHandler)
          chunkHandler_ = chunkHandler;
 
+      // if the host header is not already set, make sure we stamp a default one
+      // this is required by the http standard
+      if (request_.host().empty())
+         request_.setHost(getDefaultHostHeader());
+
       // connect and write request (implmented in a protocol
       // specific manner by subclassees)
       connectAndWriteRequest();
@@ -313,7 +318,7 @@ protected:
 private:
 
    virtual void connectAndWriteRequest() = 0;
-
+   virtual std::string getDefaultHostHeader() = 0;
 
    bool retryConnectionIfRequired(const Error& connectionError,
                                   Error* pOtherError)
