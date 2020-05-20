@@ -990,6 +990,10 @@ public class TextEditingTargetVisualMode implements CommandPaletteEntrySource
       if (cursorPosition.getRow() == 0 && cursorPosition.getColumn() == 0)
          return null;
       
+      // if we don't have an outline then return null
+      if (docDisplay_.getScopeTree().length() == 0)
+         return null;
+      
       // build the outline
       ArrayList<Pair<PanmirrorEditingOutlineLocationItem, Scope>> outlineItems = 
          new ArrayList<Pair<PanmirrorEditingOutlineLocationItem, Scope>>();
