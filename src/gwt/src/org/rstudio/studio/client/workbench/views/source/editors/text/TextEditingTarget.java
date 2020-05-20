@@ -3591,12 +3591,10 @@ public class TextEditingTarget implements
    @Handler
    void onPopoutDoc()
    {
-      Debug.logToConsole("popping out doc: " + getId());
       if (docUpdateSentinel_ != null)
       {
          // ensure doc is synchronized with source database before popping it
          // out
-         Debug.logToConsole("popping out doc: " + getId());
          docUpdateSentinel_.withSavedDoc(new Command()
          {
             @Override
@@ -3605,8 +3603,6 @@ public class TextEditingTarget implements
                // push the new doc state into the local source database
                syncLocalSourceDb();
 
-               Debug.logToConsole("popping out doc: " + getId());
-               // !!! Display cannot be null here
                // fire popout event (this triggers a close in the current window
                // and the creation of a new window with the doc)
                events_.fireEvent(new PopoutDocEvent(getId(), 

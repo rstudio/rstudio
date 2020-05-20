@@ -265,7 +265,6 @@ public class Source implements InsertSourceHandler,
       void onNewSourceDoc();
       HandlerRegistration addBeforeShowHandler(BeforeShowHandler handler);
 
-
       // !!! maybe moved
       void setPendingDebugSelection();
    }
@@ -290,7 +289,7 @@ public class Source implements InsertSourceHandler,
       public void setActive(EditingTarget target)
       {
          activeDisplay_ = getDisplayByDocument(target.getId());
-            // !!! Debug code to be removed
+         // !!! Debug code to be removed
          if (activeDisplay_ != null)
             activeDisplay_.setActiveEditor(target);
          else
