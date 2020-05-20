@@ -127,7 +127,7 @@ const extension = (
               const tr = state.tr;
               const selection = tr.selection;
               const shortcode = '{{<  >}}';
-              tr.replaceSelectionWith(schema.text(shortcode));
+              tr.replaceSelectionWith(schema.text(shortcode), false);
               setTextSelection(tr.mapping.map(selection.head) - shortcode.length / 2)(tr);
               dispatch(tr);
             }

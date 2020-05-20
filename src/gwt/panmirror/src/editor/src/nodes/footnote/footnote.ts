@@ -182,7 +182,7 @@ function insertFootnote(
 
   // insert footnote linked to note
   const footnote = schema.nodes.footnote.create({ ref });
-  tr.replaceSelectionWith(footnote);
+  tr.replaceSelectionWith(footnote, false);
 
   // open note editor
   if (edit) {

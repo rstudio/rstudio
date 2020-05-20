@@ -188,7 +188,7 @@ function insertRef(tr: Transaction) {
   const schema = tr.doc.type.schema;
   const selection = tr.selection;
   const refText = '@ref()';
-  tr.replaceSelectionWith(schema.text(refText));
+  tr.replaceSelectionWith(schema.text(refText), false);
   setTextSelection(tr.mapping.map(selection.head) - 1)(tr);
 }
 
