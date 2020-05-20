@@ -282,6 +282,14 @@ public class Toolbar extends Composite
       return widget;
    }
    
+   public <TWidget extends Widget> TWidget insertWidget(TWidget widget, TWidget beforeWidget)
+   {
+      int beforeIndex = leftToolbarPanel_.getWidgetIndex(beforeWidget);
+      leftToolbarPanel_.insert(widget, beforeIndex);
+      invalidateSeparators();
+      return widget;
+   }
+   
    /**
     * Manually size the given widget in the left toolbar. Gives the cell contain
     * the widget the given size, then tells the widget to fill its cell.

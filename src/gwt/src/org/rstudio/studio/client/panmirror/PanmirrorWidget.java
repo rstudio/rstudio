@@ -41,6 +41,8 @@ import org.rstudio.studio.client.panmirror.command.PanmirrorToolbarCommands;
 import org.rstudio.studio.client.panmirror.command.PanmirrorToolbarMenu;
 import org.rstudio.studio.client.panmirror.events.PanmirrorOutlineNavigationEvent;
 import org.rstudio.studio.client.panmirror.events.PanmirrorOutlineVisibleEvent;
+import org.rstudio.studio.client.panmirror.events.PanmirrorFindReplaceVisibleEvent;
+import org.rstudio.studio.client.panmirror.events.PanmirrorFindReplaceVisibleEvent.Handler;
 import org.rstudio.studio.client.panmirror.events.PanmirrorOutlineWidthEvent;
 import org.rstudio.studio.client.panmirror.events.PanmirrorSelectionChangedEvent;
 import org.rstudio.studio.client.panmirror.events.PanmirrorUpdatedEvent;
@@ -91,7 +93,8 @@ public class PanmirrorWidget extends DockLayoutPanel implements
    PanmirrorUpdatedEvent.HasPanmirrorUpdatedHandlers,
    PanmirrorSelectionChangedEvent.HasPanmirrorSelectionChangedHandlers,
    PanmirrorOutlineVisibleEvent.HasPanmirrorOutlineVisibleHandlers,
-   PanmirrorOutlineWidthEvent.HasPanmirrorOutlineWidthHandlers
+   PanmirrorOutlineWidthEvent.HasPanmirrorOutlineWidthHandlers,
+   PanmirrorFindReplaceVisibleEvent.HasPanmirrorFindReplaceVisibleHandlers
    
 {
    
@@ -162,7 +165,11 @@ public class PanmirrorWidget extends DockLayoutPanel implements
          {
             findReplaceShowing_ = show;
             setWidgetHidden(findReplace_, !findReplaceShowing_);
+            
             toolbar_.setFindReplaceLatched(findReplaceShowing_);
+            
+            PanmirrorFindReplaceVisibleEvent.fire(PanmirrorWidget.this, findReplaceShowing_);
+            
             if (findReplaceShowing_)
                findReplace_.performFind();
             else
@@ -234,7 +241,7 @@ public class PanmirrorWidget extends DockLayoutPanel implements
          
       commands_ = new PanmirrorToolbarCommands(editor.commands());
       
-      toolbar_.init(commands_, editor_.getMenus(), findReplace_);
+      toolbar_.init(commands_, editor_.getMenus(), null);
       
       outline_.addPanmirrorOutlineNavigationHandler(new PanmirrorOutlineNavigationEvent.Handler() {
          @Override
@@ -455,7 +462,7 @@ public class PanmirrorWidget extends DockLayoutPanel implements
    {
       editor_.setKeybindings(keybindings);
       commands_ = new PanmirrorToolbarCommands(editor_.commands());
-      toolbar_.init(commands_, editor_.getMenus(), findReplace_);
+      toolbar_.init(commands_, editor_.getMenus(), null);
    }
    
    public String getHTML()
@@ -556,6 +563,12 @@ public class PanmirrorWidget extends DockLayoutPanel implements
    }
    
    @Override
+   public HandlerRegistration addPanmirrorFindReplaceVisibleHandler(Handler handler)
+   {
+      return handlers_.addHandler(PanmirrorFindReplaceVisibleEvent.getType(), handler);
+   }
+   
+   @Override
    public void fireEvent(GwtEvent<?> event)
    {
       handlers_.fireEvent(event);
@@ -628,6 +641,7 @@ public class PanmirrorWidget extends DockLayoutPanel implements
    
    private static final int kCreationProgressDelayMs = 2000;
    private static final int kSerializationProgressDelayMs = 5000;
+   
 }
 
 

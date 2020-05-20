@@ -1506,6 +1506,12 @@ public class TextEditingTargetWidget
       sourceButton_.setTitle(sourceCommandDesc);
       sourceButton_.setText(sourceCommandText_);
    }
+   
+   @Override
+   public void addVisualModeFindReplaceButton(ToolbarButton findReplaceButton)
+   {
+      toolbar_.insertWidget(findReplaceButton, findReplaceButton_);
+   }
 
    public HandlerRegistration addEnsureVisibleHandler(EnsureVisibleHandler handler)
    {

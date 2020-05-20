@@ -32,6 +32,7 @@ import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.patch.TextChange;
 import org.rstudio.core.client.widget.HasFindReplace;
 import org.rstudio.core.client.widget.ProgressPanel;
+import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.core.client.widget.images.ProgressImages;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
@@ -75,6 +76,7 @@ import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
+import org.rstudio.studio.client.workbench.views.source.editors.text.findreplace.FindReplaceBar;
 import org.rstudio.studio.client.workbench.views.source.model.DirtyState;
 import org.rstudio.studio.client.workbench.views.source.model.DocUpdateSentinel;
 import org.rstudio.studio.client.workbench.views.source.model.SourceServerOperations;
@@ -108,6 +110,9 @@ public class TextEditingTargetVisualMode implements CommandPaletteEntrySource
       dirtyState_ = dirtyState;
       docUpdateSentinel_ = docUpdateSentinel;
       progress_ = new ProgressPanel(ProgressImages.createSmall(), 200);
+      
+      // create widgets that the rest of startup (e.g. manageUI) may rely on
+      initWidgets();
       
       // if visual mode isn't enabled then reflect that (if it is enabled we'll
       // defer initialization work until after the tab is actually activated)
@@ -144,6 +149,19 @@ public class TextEditingTargetVisualMode implements CommandPaletteEntrySource
          isDirty_ = true;
       }));
    } 
+   
+   private void initWidgets()
+   {
+      findReplaceButton_ = new ToolbarButton(
+         ToolbarButton.NoText,
+         "Find/Replace",
+         FindReplaceBar.getFindIcon(),
+         (event) -> {
+            HasFindReplace findReplace = getFindReplace();
+            findReplace.showFindReplace(!findReplace.isFindReplaceShowing());
+         }
+      );
+   }
    
    @Inject
    public void initialize(Commands commands, 
@@ -520,6 +538,11 @@ public class TextEditingTargetVisualMode implements CommandPaletteEntrySource
       }  
    }
    
+   public ToolbarButton getFindReplaceButton()
+   {
+      return findReplaceButton_;
+   }
+   
    public void getCanonicalChanges(String code, CommandWithArg<PanmirrorChanges> completed)
    {   
       withPanmirror(() -> {
@@ -609,6 +632,9 @@ public class TextEditingTargetVisualMode implements CommandPaletteEntrySource
                // sync to editor outline prefs
                panmirror_.showOutline(getOutlineVisible(), getOutlineWidth());
                
+               // show find replace button
+               findReplaceButton_.setVisible(true);
+               
                // activate widget
                editorContainer.activateWidget(panmirror_, focus);
                
@@ -650,6 +676,9 @@ public class TextEditingTargetVisualMode implements CommandPaletteEntrySource
          syncToEditor(true, () -> {
             
             unmanageCommands();
+            
+            // hide find replace button
+            findReplaceButton_.setVisible(false);
             
             editorContainer.activateEditor(focus); 
             
@@ -758,6 +787,13 @@ public class TextEditingTargetVisualMode implements CommandPaletteEntrySource
             });
             panmirror_.addPanmirrorOutlineWidthHandler((event) -> {
                setOutlineWidth(event.getWidth());
+            });
+            
+            // manage latch state of findreplace button
+            panmirror_.addPanmirrorFindReplaceVisibleHandler((event) -> {
+               findReplaceButton_.setLeftImage(event.getVisible() 
+                     ? FindReplaceBar.getFindLatchedIcon()
+                     : FindReplaceBar.getFindIcon());
             });
             
             // good to go!
@@ -1536,6 +1572,7 @@ public class TextEditingTargetVisualMode implements CommandPaletteEntrySource
    
    private PanmirrorWidget panmirror_;
    private FormatConfig panmirrorFormatConfig_;
+   private ToolbarButton findReplaceButton_;
    
    private ArrayList<AppCommand> disabledForVisualMode_ = new ArrayList<AppCommand>();
    
