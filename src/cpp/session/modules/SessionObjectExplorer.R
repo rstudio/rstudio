@@ -690,7 +690,7 @@
 {
    attributes <- .rs.reticulate.listAttributes(
       object               = object,
-      includeDunderMethods = FALSE
+      includeDunderMethods = .rs.explorer.tags$ATTRIBUTES %in% context$tags
    )
    
    lapply(attributes, function(attribute) {
