@@ -1,0 +1,1044 @@
+{
+  "symbols": [
+    {
+      "name": "first number",
+      "value": "1",
+      "category": "numbers"
+    },
+    {
+      "name": "second number",
+      "value": "2",
+      "category": "numbers"
+    },
+    {
+      "name": "first letter",
+      "value": "a",
+      "category": "letters"
+    },
+    {
+      "name": "second letter",
+      "value": "b",
+      "category": "letters"
+    },
+    {
+      "name": "star",
+      "value": "★",
+      "category": "stars"
+    },
+    {
+      "name": "peace",
+      "value": "✌",
+      "category": "emoji"
+    },
+    {
+      "name": "dagger",
+      "value": "†",
+      "category": "symbols"
+    },
+    {
+      "name": "double dagger",
+      "value": "‡",
+      "category": "symbols"
+    },
+    {
+      "name": "flower",
+      "value": "⚙",
+      "category": "symbols"
+    },
+    {
+      "name": "circle with right half black",
+      "value": "◑",
+      "category": "symbols"
+    },
+    {
+      "name": "sailboat",
+      "value": "⛵",
+      "category": "symbols"
+    },
+    {
+      "name": "tent",
+      "value": "⛺",
+      "category": "symbols"
+    },
+    {
+      "name": "do not enter",
+      "value": "⛔",
+      "category": "symbols"
+    },
+    {
+      "name": "first number",
+      "value": "1",
+      "category": "numbers"
+    },
+    {
+      "name": "second number",
+      "value": "2",
+      "category": "numbers"
+    },
+    {
+      "name": "first letter",
+      "value": "a",
+      "category": "letters"
+    },
+    {
+      "name": "second letter",
+      "value": "b",
+      "category": "letters"
+    },
+    {
+      "name": "star",
+      "value": "★",
+      "category": "stars"
+    },
+    {
+      "name": "peace",
+      "value": "✌",
+      "category": "emoji"
+    },
+    {
+      "name": "dagger",
+      "value": "†",
+      "category": "symbols"
+    },
+    {
+      "name": "double dagger",
+      "value": "‡",
+      "category": "symbols"
+    },
+    {
+      "name": "flower",
+      "value": "⚙",
+      "category": "symbols"
+    },
+    {
+      "name": "circle with right half black",
+      "value": "◑",
+      "category": "symbols"
+    },
+    {
+      "name": "sailboat",
+      "value": "⛵",
+      "category": "symbols"
+    },
+    {
+      "name": "tent",
+      "value": "⛺",
+      "category": "symbols"
+    },
+    {
+      "name": "do not enter",
+      "value": "⛔",
+      "category": "symbols"
+    },
+    {
+      "name": "first number",
+      "value": "1",
+      "category": "numbers"
+    },
+    {
+      "name": "second number",
+      "value": "2",
+      "category": "numbers"
+    },
+    {
+      "name": "first letter",
+      "value": "a",
+      "category": "letters"
+    },
+    {
+      "name": "second letter",
+      "value": "b",
+      "category": "letters"
+    },
+    {
+      "name": "star",
+      "value": "★",
+      "category": "stars"
+    },
+    {
+      "name": "peace",
+      "value": "✌",
+      "category": "emoji"
+    },
+    {
+      "name": "dagger",
+      "value": "†",
+      "category": "symbols"
+    },
+    {
+      "name": "double dagger",
+      "value": "‡",
+      "category": "symbols"
+    },
+    {
+      "name": "flower",
+      "value": "⚙",
+      "category": "symbols"
+    },
+    {
+      "name": "circle with right half black",
+      "value": "◑",
+      "category": "symbols"
+    },
+    {
+      "name": "sailboat",
+      "value": "⛵",
+      "category": "symbols"
+    },
+    {
+      "name": "tent",
+      "value": "⛺",
+      "category": "symbols"
+    },
+    {
+      "name": "do not enter",
+      "value": "⛔",
+      "category": "symbols"
+    },
+    {
+      "name": "first number",
+      "value": "1",
+      "category": "numbers"
+    },
+    {
+      "name": "second number",
+      "value": "2",
+      "category": "numbers"
+    },
+    {
+      "name": "first letter",
+      "value": "a",
+      "category": "letters"
+    },
+    {
+      "name": "second letter",
+      "value": "b",
+      "category": "letters"
+    },
+    {
+      "name": "star",
+      "value": "★",
+      "category": "stars"
+    },
+    {
+      "name": "peace",
+      "value": "✌",
+      "category": "emoji"
+    },
+    {
+      "name": "dagger",
+      "value": "†",
+      "category": "symbols"
+    },
+    {
+      "name": "double dagger",
+      "value": "‡",
+      "category": "symbols"
+    },
+    {
+      "name": "flower",
+      "value": "⚙",
+      "category": "symbols"
+    },
+    {
+      "name": "circle with right half black",
+      "value": "◑",
+      "category": "symbols"
+    },
+    {
+      "name": "sailboat",
+      "value": "⛵",
+      "category": "symbols"
+    },
+    {
+      "name": "tent",
+      "value": "⛺",
+      "category": "symbols"
+    },
+    {
+      "name": "do not enter",
+      "value": "⛔",
+      "category": "symbols"
+    },
+    {
+      "name": "first number",
+      "value": "1",
+      "category": "numbers"
+    },
+    {
+      "name": "second number",
+      "value": "2",
+      "category": "numbers"
+    },
+    {
+      "name": "first letter",
+      "value": "a",
+      "category": "letters"
+    },
+    {
+      "name": "second letter",
+      "value": "b",
+      "category": "letters"
+    },
+    {
+      "name": "star",
+      "value": "★",
+      "category": "stars"
+    },
+    {
+      "name": "peace",
+      "value": "✌",
+      "category": "emoji"
+    },
+    {
+      "name": "dagger",
+      "value": "†",
+      "category": "symbols"
+    },
+    {
+      "name": "double dagger",
+      "value": "‡",
+      "category": "symbols"
+    },
+    {
+      "name": "flower",
+      "value": "⚙",
+      "category": "symbols"
+    },
+    {
+      "name": "circle with right half black",
+      "value": "◑",
+      "category": "symbols"
+    },
+    {
+      "name": "sailboat",
+      "value": "⛵",
+      "category": "symbols"
+    },
+    {
+      "name": "tent",
+      "value": "⛺",
+      "category": "symbols"
+    },
+    {
+      "name": "do not enter",
+      "value": "⛔",
+      "category": "symbols"
+    },
+    {
+      "name": "first number",
+      "value": "1",
+      "category": "numbers"
+    },
+    {
+      "name": "second number",
+      "value": "2",
+      "category": "numbers"
+    },
+    {
+      "name": "first letter",
+      "value": "a",
+      "category": "letters"
+    },
+    {
+      "name": "second letter",
+      "value": "b",
+      "category": "letters"
+    },
+    {
+      "name": "star",
+      "value": "★",
+      "category": "stars"
+    },
+    {
+      "name": "peace",
+      "value": "✌",
+      "category": "emoji"
+    },
+    {
+      "name": "dagger",
+      "value": "†",
+      "category": "symbols"
+    },
+    {
+      "name": "double dagger",
+      "value": "‡",
+      "category": "symbols"
+    },
+    {
+      "name": "flower",
+      "value": "⚙",
+      "category": "symbols"
+    },
+    {
+      "name": "circle with right half black",
+      "value": "◑",
+      "category": "symbols"
+    },
+    {
+      "name": "sailboat",
+      "value": "⛵",
+      "category": "symbols"
+    },
+    {
+      "name": "tent",
+      "value": "⛺",
+      "category": "symbols"
+    },
+    {
+      "name": "do not enter",
+      "value": "⛔",
+      "category": "symbols"
+    },
+    {
+      "name": "first number",
+      "value": "1",
+      "category": "numbers"
+    },
+    {
+      "name": "second number",
+      "value": "2",
+      "category": "numbers"
+    },
+    {
+      "name": "first letter",
+      "value": "a",
+      "category": "letters"
+    },
+    {
+      "name": "second letter",
+      "value": "b",
+      "category": "letters"
+    },
+    {
+      "name": "star",
+      "value": "★",
+      "category": "stars"
+    },
+    {
+      "name": "peace",
+      "value": "✌",
+      "category": "emoji"
+    },
+    {
+      "name": "dagger",
+      "value": "†",
+      "category": "symbols"
+    },
+    {
+      "name": "double dagger",
+      "value": "‡",
+      "category": "symbols"
+    },
+    {
+      "name": "flower",
+      "value": "⚙",
+      "category": "symbols"
+    },
+    {
+      "name": "circle with right half black",
+      "value": "◑",
+      "category": "symbols"
+    },
+    {
+      "name": "sailboat",
+      "value": "⛵",
+      "category": "symbols"
+    },
+    {
+      "name": "tent",
+      "value": "⛺",
+      "category": "symbols"
+    },
+    {
+      "name": "do not enter",
+      "value": "⛔",
+      "category": "symbols"
+    },
+    {
+      "name": "first number",
+      "value": "1",
+      "category": "numbers"
+    },
+    {
+      "name": "second number",
+      "value": "2",
+      "category": "numbers"
+    },
+    {
+      "name": "first letter",
+      "value": "a",
+      "category": "letters"
+    },
+    {
+      "name": "second letter",
+      "value": "b",
+      "category": "letters"
+    },
+    {
+      "name": "star",
+      "value": "★",
+      "category": "stars"
+    },
+    {
+      "name": "peace",
+      "value": "✌",
+      "category": "emoji"
+    },
+    {
+      "name": "dagger",
+      "value": "†",
+      "category": "symbols"
+    },
+    {
+      "name": "double dagger",
+      "value": "‡",
+      "category": "symbols"
+    },
+    {
+      "name": "flower",
+      "value": "⚙",
+      "category": "symbols"
+    },
+    {
+      "name": "circle with right half black",
+      "value": "◑",
+      "category": "symbols"
+    },
+    {
+      "name": "sailboat",
+      "value": "⛵",
+      "category": "symbols"
+    },
+    {
+      "name": "tent",
+      "value": "⛺",
+      "category": "symbols"
+    },
+    {
+      "name": "do not enter",
+      "value": "⛔",
+      "category": "symbols"
+    },
+    {
+      "name": "first number",
+      "value": "1",
+      "category": "numbers"
+    },
+    {
+      "name": "second number",
+      "value": "2",
+      "category": "numbers"
+    },
+    {
+      "name": "first letter",
+      "value": "a",
+      "category": "letters"
+    },
+    {
+      "name": "second letter",
+      "value": "b",
+      "category": "letters"
+    },
+    {
+      "name": "star",
+      "value": "★",
+      "category": "stars"
+    },
+    {
+      "name": "peace",
+      "value": "✌",
+      "category": "emoji"
+    },
+    {
+      "name": "dagger",
+      "value": "†",
+      "category": "symbols"
+    },
+    {
+      "name": "double dagger",
+      "value": "‡",
+      "category": "symbols"
+    },
+    {
+      "name": "flower",
+      "value": "⚙",
+      "category": "symbols"
+    },
+    {
+      "name": "circle with right half black",
+      "value": "◑",
+      "category": "symbols"
+    },
+    {
+      "name": "sailboat",
+      "value": "⛵",
+      "category": "symbols"
+    },
+    {
+      "name": "tent",
+      "value": "⛺",
+      "category": "symbols"
+    },
+    {
+      "name": "do not enter",
+      "value": "⛔",
+      "category": "symbols"
+    },
+    {
+      "name": "first number",
+      "value": "1",
+      "category": "numbers"
+    },
+    {
+      "name": "second number",
+      "value": "2",
+      "category": "numbers"
+    },
+    {
+      "name": "first letter",
+      "value": "a",
+      "category": "letters"
+    },
+    {
+      "name": "second letter",
+      "value": "b",
+      "category": "letters"
+    },
+    {
+      "name": "star",
+      "value": "★",
+      "category": "stars"
+    },
+    {
+      "name": "peace",
+      "value": "✌",
+      "category": "emoji"
+    },
+    {
+      "name": "dagger",
+      "value": "†",
+      "category": "symbols"
+    },
+    {
+      "name": "double dagger",
+      "value": "‡",
+      "category": "symbols"
+    },
+    {
+      "name": "flower",
+      "value": "⚙",
+      "category": "symbols"
+    },
+    {
+      "name": "circle with right half black",
+      "value": "◑",
+      "category": "symbols"
+    },
+    {
+      "name": "sailboat",
+      "value": "⛵",
+      "category": "symbols"
+    },
+    {
+      "name": "tent",
+      "value": "⛺",
+      "category": "symbols"
+    },
+    {
+      "name": "do not enter",
+      "value": "⛔",
+      "category": "symbols"
+    },
+    {
+      "name": "first number",
+      "value": "1",
+      "category": "numbers"
+    },
+    {
+      "name": "second number",
+      "value": "2",
+      "category": "numbers"
+    },
+    {
+      "name": "first letter",
+      "value": "a",
+      "category": "letters"
+    },
+    {
+      "name": "second letter",
+      "value": "b",
+      "category": "letters"
+    },
+    {
+      "name": "star",
+      "value": "★",
+      "category": "stars"
+    },
+    {
+      "name": "peace",
+      "value": "✌",
+      "category": "emoji"
+    },
+    {
+      "name": "dagger",
+      "value": "†",
+      "category": "symbols"
+    },
+    {
+      "name": "double dagger",
+      "value": "‡",
+      "category": "symbols"
+    },
+    {
+      "name": "flower",
+      "value": "⚙",
+      "category": "symbols"
+    },
+    {
+      "name": "circle with right half black",
+      "value": "◑",
+      "category": "symbols"
+    },
+    {
+      "name": "sailboat",
+      "value": "⛵",
+      "category": "symbols"
+    },
+    {
+      "name": "tent",
+      "value": "⛺",
+      "category": "symbols"
+    },
+    {
+      "name": "do not enter",
+      "value": "⛔",
+      "category": "symbols"
+    },
+    {
+      "name": "first number",
+      "value": "1",
+      "category": "numbers"
+    },
+    {
+      "name": "second number",
+      "value": "2",
+      "category": "numbers"
+    },
+    {
+      "name": "first letter",
+      "value": "a",
+      "category": "letters"
+    },
+    {
+      "name": "second letter",
+      "value": "b",
+      "category": "letters"
+    },
+    {
+      "name": "star",
+      "value": "★",
+      "category": "stars"
+    },
+    {
+      "name": "peace",
+      "value": "✌",
+      "category": "emoji"
+    },
+    {
+      "name": "dagger",
+      "value": "†",
+      "category": "symbols"
+    },
+    {
+      "name": "double dagger",
+      "value": "‡",
+      "category": "symbols"
+    },
+    {
+      "name": "flower",
+      "value": "⚙",
+      "category": "symbols"
+    },
+    {
+      "name": "circle with right half black",
+      "value": "◑",
+      "category": "symbols"
+    },
+    {
+      "name": "sailboat",
+      "value": "⛵",
+      "category": "symbols"
+    },
+    {
+      "name": "tent",
+      "value": "⛺",
+      "category": "symbols"
+    },
+    {
+      "name": "do not enter",
+      "value": "⛔",
+      "category": "symbols"
+    },
+    {
+      "name": "first number",
+      "value": "1",
+      "category": "numbers"
+    },
+    {
+      "name": "second number",
+      "value": "2",
+      "category": "numbers"
+    },
+    {
+      "name": "first letter",
+      "value": "a",
+      "category": "letters"
+    },
+    {
+      "name": "second letter",
+      "value": "b",
+      "category": "letters"
+    },
+    {
+      "name": "star",
+      "value": "★",
+      "category": "stars"
+    },
+    {
+      "name": "peace",
+      "value": "✌",
+      "category": "emoji"
+    },
+    {
+      "name": "dagger",
+      "value": "†",
+      "category": "symbols"
+    },
+    {
+      "name": "double dagger",
+      "value": "‡",
+      "category": "symbols"
+    },
+    {
+      "name": "flower",
+      "value": "⚙",
+      "category": "symbols"
+    },
+    {
+      "name": "circle with right half black",
+      "value": "◑",
+      "category": "symbols"
+    },
+    {
+      "name": "sailboat",
+      "value": "⛵",
+      "category": "symbols"
+    },
+    {
+      "name": "tent",
+      "value": "⛺",
+      "category": "symbols"
+    },
+    {
+      "name": "do not enter",
+      "value": "⛔",
+      "category": "symbols"
+    },
+    {
+      "name": "first number",
+      "value": "1",
+      "category": "numbers"
+    },
+    {
+      "name": "second number",
+      "value": "2",
+      "category": "numbers"
+    },
+    {
+      "name": "first letter",
+      "value": "a",
+      "category": "letters"
+    },
+    {
+      "name": "second letter",
+      "value": "b",
+      "category": "letters"
+    },
+    {
+      "name": "star",
+      "value": "★",
+      "category": "stars"
+    },
+    {
+      "name": "peace",
+      "value": "✌",
+      "category": "emoji"
+    },
+    {
+      "name": "dagger",
+      "value": "†",
+      "category": "symbols"
+    },
+    {
+      "name": "double dagger",
+      "value": "‡",
+      "category": "symbols"
+    },
+    {
+      "name": "flower",
+      "value": "⚙",
+      "category": "symbols"
+    },
+    {
+      "name": "circle with right half black",
+      "value": "◑",
+      "category": "symbols"
+    },
+    {
+      "name": "sailboat",
+      "value": "⛵",
+      "category": "symbols"
+    },
+    {
+      "name": "tent",
+      "value": "⛺",
+      "category": "symbols"
+    },
+    {
+      "name": "do not enter",
+      "value": "⛔",
+      "category": "symbols"
+    },
+    {
+      "name": "first number",
+      "value": "1",
+      "category": "numbers"
+    },
+    {
+      "name": "second number",
+      "value": "2",
+      "category": "numbers"
+    },
+    {
+      "name": "first letter",
+      "value": "a",
+      "category": "letters"
+    },
+    {
+      "name": "second letter",
+      "value": "b",
+      "category": "letters"
+    },
+    {
+      "name": "star",
+      "value": "★",
+      "category": "stars"
+    },
+    {
+      "name": "peace",
+      "value": "✌",
+      "category": "emoji"
+    },
+    {
+      "name": "dagger",
+      "value": "†",
+      "category": "symbols"
+    },
+    {
+      "name": "double dagger",
+      "value": "‡",
+      "category": "symbols"
+    },
+    {
+      "name": "flower",
+      "value": "⚙",
+      "category": "symbols"
+    },
+    {
+      "name": "circle with right half black",
+      "value": "◑",
+      "category": "symbols"
+    },
+    {
+      "name": "sailboat",
+      "value": "⛵",
+      "category": "symbols"
+    },
+    {
+      "name": "tent",
+      "value": "⛺",
+      "category": "symbols"
+    },
+    {
+      "name": "do not enter",
+      "value": "⛔",
+      "category": "symbols"
+    },
+    {
+      "name": "first number",
+      "value": "1",
+      "category": "numbers"
+    },
+    {
+      "name": "second number",
+      "value": "2",
+      "category": "numbers"
+    },
+    {
+      "name": "first letter",
+      "value": "a",
+      "category": "letters"
+    },
+    {
+      "name": "second letter",
+      "value": "b",
+      "category": "letters"
+    },
+    {
+      "name": "star",
+      "value": "★",
+      "category": "stars"
+    },
+    {
+      "name": "peace",
+      "value": "✌",
+      "category": "emoji"
+    },
+    {
+      "name": "dagger",
+      "value": "†",
+      "category": "symbols"
+    },
+    {
+      "name": "double dagger",
+      "value": "‡",
+      "category": "symbols"
+    },
+    {
+      "name": "flower",
+      "value": "⚙",
+      "category": "symbols"
+    },
+    {
+      "name": "circle with right half black",
+      "value": "◑",
+      "category": "symbols"
+    },
+    {
+      "name": "sailboat",
+      "value": "⛵",
+      "category": "symbols"
+    },
+    {
+      "name": "tent",
+      "value": "⛺",
+      "category": "symbols"
+    },
+    {
+      "name": "do not enter",
+      "value": "⛔",
+      "category": "symbols"
+    }
+  ]
+}

@@ -1,0 +1,10 @@
+.pm-symbol-grid-cell {
+  font-size: larger;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.pm-symbol-grid {
+  overflow: hidden;
+}
