@@ -66,6 +66,7 @@ public class SourceSatelliteWindow extends SatelliteWindow
    protected void onInitialize(LayoutPanel mainPanel, JavaScriptObject params)
    {
       pSource_.get().load();
+      pSource_.get().loadDisplay();
       // read the params and set up window ordinal / title
       SourceWindowParams windowParams = params.cast();
       String title = null;

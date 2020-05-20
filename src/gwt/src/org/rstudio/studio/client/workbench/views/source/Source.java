@@ -244,7 +244,9 @@ public class Source implements InsertSourceHandler,
       ArrayList<EditingTarget> syncTabOrder();
 
       void setDirty(Widget widget, boolean dirty);
+      void setActiveEditor(int index);
       void setActiveEditor(EditingTarget target);
+      EditingTarget getActiveEditor();
 
       void closeTabByDocId(String docId, boolean interactive);
       void closeTabByPath(String path, boolean interactive);
@@ -540,12 +542,6 @@ public class Source implements InsertSourceHandler,
       
       vimCommands_ = new SourceVimCommands();
 
-      for (Display v : views_)
-      {
-         v.addSelectionHandler(this);
-         v.addBeforeShowHandler(this);
-      }
-
       events_.addHandler(EditPresentationSourceEvent.TYPE, this);
       events_.addHandler(FileEditEvent.TYPE, this);
       events_.addHandler(InsertSourceEvent.TYPE, this);
@@ -737,6 +733,12 @@ public class Source implements InsertSourceHandler,
    public void loadDisplay()
    {
       restoreDocuments(session_);
+      for (Display v : views_)
+      {
+         v.addSelectionHandler(this);
+         v.addBeforeShowHandler(this);
+      }
+
 
       // As tabs were added before, manageCommands() was suppressed due to
       // initialized_ being false, so we need to run it explicitly
@@ -4004,8 +4006,6 @@ public class Source implements InsertSourceHandler,
       {
          activeEditor_ = editors_.get(event.getSelectedItem());
          activeEditor_.onActivate();
-         views_.setActive(activeEditor_);
-         
          // let any listeners know this tab was activated
          events_.fireEvent(new DocTabActivatedEvent(
                activeEditor_.getPath(), 
@@ -4146,7 +4146,8 @@ public class Source implements InsertSourceHandler,
             : "Unsupported commands detected (please add to Source.dynamicCommands_)";
    }
    
-   private void manageMultiTabCommands()
+   // !! should be private
+   public void manageMultiTabCommands()
    {
       boolean hasMultipleDocs = editors_.size() > 1;
 
@@ -4278,7 +4279,8 @@ public class Source implements InsertSourceHandler,
       commands_.editRmdFormatOptions().setEnabled(rmdCommandsAvailable);
    }
    
-   private void manageSaveCommands()
+   // !!! should be private
+   public void manageSaveCommands()
    {
       boolean saveEnabled = (activeEditor_ != null) &&
             activeEditor_.isSaveCommandActive();

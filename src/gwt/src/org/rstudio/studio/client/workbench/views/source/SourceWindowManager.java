@@ -1155,7 +1155,7 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
             // no point in writing a value to the server if we're not changing
             // it 
             if (doc.getSourceWindowId() == windowId)
-               return null;
+               return new HashMap<String,String>();
             doc.assignSourceWindowId(windowId);
             break;
          }

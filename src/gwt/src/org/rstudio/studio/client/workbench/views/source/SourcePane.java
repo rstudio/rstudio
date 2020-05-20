@@ -302,6 +302,12 @@ public class SourcePane extends LazyPanel implements Display,
    }
 
    @Override
+   public void setActiveEditor(int index)
+   {
+      setActiveEditor(editors_.get(index));
+   }
+
+   @Override
    public void setActiveEditor(EditingTarget target)
    {
       activeEditor_ = target;
@@ -310,6 +316,12 @@ public class SourcePane extends LazyPanel implements Display,
          addEditor(activeEditor_);
          Debug.logWarning("activeEditor_ set to unknown editor, editor added to list");
       }
+   }
+
+   @Override
+   public EditingTarget getActiveEditor()
+   {
+      return activeEditor_;
    }
 
    @Override
@@ -691,7 +703,7 @@ public class SourcePane extends LazyPanel implements Display,
                   if (contents != null)
                   {
                      target.forceSaveCommandActive();
-                     //manageSaveCommands(); !!! how will this work?
+                     source_.manageSaveCommands();
                   }
    
                   if (resultCallback != null)
@@ -800,8 +812,8 @@ public class SourcePane extends LazyPanel implements Display,
 
       // adding a tab may enable commands that are only available when
       // multiple documents are open; if this is the second document, go check
-      //if (editors_.size() == 2)
-      //   manageMultiTabCommands(); !!! fix this
+      if (editors_.size() == 2)
+         source_.manageMultiTabCommands();
 
       // if the target had an editing session active, attempt to resume it
       if (doc.getCollabParams() != null)
