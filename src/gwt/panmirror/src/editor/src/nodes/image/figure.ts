@@ -205,12 +205,12 @@ function imagesToFiguresTransform(tr: Transform) {
   const images = findChildrenByType(tr.doc, schema.nodes.image);
   images.forEach(image => {
     // position reflecting steps already taken in this handler
-    const mappedPos = tr.mapping.mapResult(image.pos);
+    const mappedImagePos = tr.mapping.mapResult(image.pos);
 
     // process image so long as it wasn't deleted by a previous step
-    if (!mappedPos.deleted) {
+    if (!mappedImagePos.deleted) {
       // resolve image pos
-      const imagePos = tr.doc.resolve(mappedPos.pos);
+      const imagePos = tr.doc.resolve(mappedImagePos.pos);
 
       // if it's an image in a standalone paragraph, convert it to a figure
       if (imagePos.parent.type === schema.nodes.paragraph && imagePos.parent.childCount === 1) {
@@ -221,7 +221,7 @@ function imagesToFiguresTransform(tr: Transform) {
         if (schema.marks.link.isInSet(image.node.marks)) {
           const linkAttrs = getMarkAttrs(
             tr.doc,
-            { from: image.pos, to: image.pos + image.node.nodeSize },
+            { from: mappedImagePos.pos, to: mappedImagePos.pos + image.node.nodeSize },
             schema.marks.link,
           );
           if (linkAttrs && linkAttrs.href) {
@@ -235,7 +235,7 @@ function imagesToFiguresTransform(tr: Transform) {
         // replace image with figure
         const figure = schema.nodes.figure.createAndFill(attrs, content);
         if (figure) {
-          tr.replaceRangeWith(mappedPos.pos, mappedPos.pos + image.node.nodeSize, figure);
+          tr.replaceRangeWith(mappedImagePos.pos, mappedImagePos.pos + image.node.nodeSize, figure);
         }
       }
     }
