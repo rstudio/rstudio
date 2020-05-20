@@ -110,7 +110,6 @@ function footnoteFixupTransform(activeNote: ContentNodeWithPos | undefined) {
           // otherwise update the note with the correct number (if necessary)
         } else {
           if (note.node.attrs.number !== number) {
-            console.log('setting note markup');
             tr.setNodeMarkup(note.pos, schema.nodes.note, {
               ...note.node.attrs,
               number,
@@ -127,7 +126,6 @@ function footnoteFixupTransform(activeNote: ContentNodeWithPos | undefined) {
       // insert newNote if necessary
       if (newNote) {
         const notesContainer = findNotesContainer(tr.doc);
-        console.log('inserting new note');
         tr.insert(notesContainer.pos + 1, newNote as ProsemirrorNode);
       }
 
@@ -137,7 +135,6 @@ function footnoteFixupTransform(activeNote: ContentNodeWithPos | undefined) {
       // set new footnote markup if necessary
       const attrs = footnote.node.attrs;
       if (ref !== attrs.ref || content !== attrs.content || number !== attrs.number) {
-        console.log('setting footnote markup');
         tr.setNodeMarkup(footnote.pos, schema.nodes.footnote, {
           ...footnote.node.attrs,
           ref,
@@ -153,7 +150,6 @@ function footnoteFixupTransform(activeNote: ContentNodeWithPos | undefined) {
       note.pos = tr.mapping.map(note.pos);
       const footnote = footnotes.find(fn => fn.node.attrs.ref === note.node.attrs.ref);
       if (!footnote) {
-        console.log('deleting orphaned note');
         tr.delete(note.pos, note.pos + note.node.nodeSize);
       }
     }
