@@ -32,6 +32,7 @@ import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.patch.TextChange;
 import org.rstudio.core.client.widget.HasFindReplace;
 import org.rstudio.core.client.widget.ProgressPanel;
+import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.core.client.widget.images.ProgressImages;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
@@ -43,6 +44,7 @@ import org.rstudio.studio.client.panmirror.PanmirrorContext;
 import org.rstudio.studio.client.panmirror.PanmirrorKeybindings;
 import org.rstudio.studio.client.panmirror.PanmirrorOptions;
 import org.rstudio.studio.client.panmirror.PanmirrorRmdChunk;
+import org.rstudio.studio.client.panmirror.PanmirrorSetMarkdownResult;
 import org.rstudio.studio.client.panmirror.PanmirrorWidget;
 import org.rstudio.studio.client.panmirror.PanmirrorWidget.FormatSource;
 import org.rstudio.studio.client.panmirror.PanmirrorWriterOptions;
@@ -75,6 +77,7 @@ import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
+import org.rstudio.studio.client.workbench.views.source.editors.text.findreplace.FindReplaceBar;
 import org.rstudio.studio.client.workbench.views.source.model.DirtyState;
 import org.rstudio.studio.client.workbench.views.source.model.DocUpdateSentinel;
 import org.rstudio.studio.client.workbench.views.source.model.SourceServerOperations;
@@ -86,6 +89,9 @@ import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
+
+import elemental2.core.JsObject;
+import jsinterop.base.Js;
 
 
 public class TextEditingTargetVisualMode implements CommandPaletteEntrySource
@@ -108,6 +114,9 @@ public class TextEditingTargetVisualMode implements CommandPaletteEntrySource
       dirtyState_ = dirtyState;
       docUpdateSentinel_ = docUpdateSentinel;
       progress_ = new ProgressPanel(ProgressImages.createSmall(), 200);
+      
+      // create widgets that the rest of startup (e.g. manageUI) may rely on
+      initWidgets();
       
       // if visual mode isn't enabled then reflect that (if it is enabled we'll
       // defer initialization work until after the tab is actually activated)
@@ -144,6 +153,19 @@ public class TextEditingTargetVisualMode implements CommandPaletteEntrySource
          isDirty_ = true;
       }));
    } 
+   
+   private void initWidgets()
+   {
+      findReplaceButton_ = new ToolbarButton(
+         ToolbarButton.NoText,
+         "Find/Replace",
+         FindReplaceBar.getFindIcon(),
+         (event) -> {
+            HasFindReplace findReplace = getFindReplace();
+            findReplace.showFindReplace(!findReplace.isFindReplaceShowing());
+         }
+      );
+   }
    
    @Inject
    public void initialize(Commands commands, 
@@ -250,40 +272,45 @@ public class TextEditingTargetVisualMode implements CommandPaletteEntrySource
             
             WriterOptionsContext writerOptions = writerOptionsFromVisual();
             
-            panmirror_.getMarkdown(writerOptions.options, (markdown) -> {
-               rv.arrive(() -> {
-                  if (markdown == null) {
-                     // note that ready.execute() is never called in the error case
-                     return;
-                  }
-                  
-                  // apply diffs unless the wrap column changed (too expensive)
-                  if (!writerOptions.wrapColumnChanged) 
-                  {
-                     TextEditorContainer.Changes changes = toEditorChanges(markdown);
-                     getSourceEditor().applyChanges(changes, activatingEditor); 
-                  }
-                  else
-                  {
-                     getSourceEditor().setCode(markdown.code);
-                  }
-                 
-                  // if the format comment has changed then show the reload prompt
-                  if (panmirrorFormatConfig_.requiresReload()) {
-                     view_.showPanmirrorFormatChanged(() -> {
-                        // dismiss the warning bar
-                        view_.hideWarningBar();
-                        // this will trigger the refresh b/c the format changed
-                        syncFromEditorIfActivated();
-                       
-                     });
-                  }
-                  
-                  // callback
-                  if (ready != null) {
-                     ready.execute();
-                  }
-               }, true);
+            panmirror_.getMarkdown(writerOptions.options, new CommandWithArg<JsObject>() {
+               @Override
+               public void execute(JsObject obj)
+               {
+                  PanmirrorCode markdown = Js.uncheckedCast(obj);
+                  rv.arrive(() -> {
+                     if (markdown == null) {
+                        // note that ready.execute() is never called in the error case
+                        return;
+                     }
+                     
+                     // apply diffs unless the wrap column changed (too expensive)
+                     if (!writerOptions.wrapColumnChanged) 
+                     {
+                        TextEditorContainer.Changes changes = toEditorChanges(markdown);
+                        getSourceEditor().applyChanges(changes, activatingEditor); 
+                     }
+                     else
+                     {
+                        getSourceEditor().setCode(markdown.code);
+                     }
+                    
+                     // if the format comment has changed then show the reload prompt
+                     if (panmirrorFormatConfig_.requiresReload()) {
+                        view_.showPanmirrorFormatChanged(() -> {
+                           // dismiss the warning bar
+                           view_.hideWarningBar();
+                           // this will trigger the refresh b/c the format changed
+                           syncFromEditorIfActivated();
+                          
+                        });
+                     }
+                     
+                     // callback
+                     if (ready != null) {
+                        ready.execute();
+                     }
+                  }, true);  
+               } 
             });
          });
       } else {
@@ -346,65 +373,72 @@ public class TextEditingTargetVisualMode implements CommandPaletteEntrySource
          
          WriterOptionsContext writerOptions = writerOptionsFromCode(editorCode);
          
-         panmirror_.setMarkdown(editorCode, writerOptions.options, true, (result) -> {  
-               
-            // bail on error
-            if (result == null)
+         panmirror_.setMarkdown(editorCode, writerOptions.options, true, new CommandWithArg<JsObject>() {
+            @Override
+            public void execute(JsObject obj)
             {
+               // get result
+               PanmirrorSetMarkdownResult result = Js.uncheckedCast(obj);
+               
+               // bail on error
+               if (result == null)
+               {
+                  if (done != null)
+                     done.execute(false);
+                  return;
+               }
+               
+               // update flags
+               isDirty_ = false;
+               loadingFromSource_ = false;
+               
+               // if pandoc's view of the document doesn't match the editor's we 
+               // need to reset the editor's code (for both dirty state and 
+               // so that diffs are efficient)
+               if (result.canonical != editorCode)
+               {
+                  getSourceEditor().setCode(result.canonical);
+                  markDirty();
+               }
+               
+               // completed
                if (done != null)
-                  done.execute(false);
-               return;
+                  done.execute(true);
+               
+               Scheduler.get().scheduleDeferred(() -> {
+                  
+                  // if we switched from source, then get the current source outline location. otherwise,
+                  // set the flag indicating that future activations must be from source. we do this so
+                  // that our previous doc position / scroll location override whatever is in source
+                  // mode if the last time we edited was visual not source.
+                  PanmirrorEditingOutlineLocation outlineLocation = switchedFromSource_ 
+                        ? getSourceOutlneLocation() : null;
+                  switchedFromSource_ = true;
+                  
+                  // set editing location
+                  panmirror_.setEditingLocation(outlineLocation, savedEditingLocation()); 
+                  
+                  // set focus
+                  if (focus)
+                     panmirror_.focus();
+                  
+                  // show any warnings
+                  PanmirrorPandocFormat format = panmirror_.getPandocFormat();
+                  if (result.unrecognized.length > 0) 
+                  {
+                     view_.showWarningBar("Unrecognized Pandoc token(s); " + String.join(", ", result.unrecognized));
+                  } 
+                  else if (format.warnings.invalidFormat.length() > 0)
+                  {
+                     view_.showWarningBar("Invalid Pandoc format: " + format.warnings.invalidFormat);
+                  }
+                  else if (format.warnings.invalidOptions.length > 0)
+                  {
+                     view_.showWarningBar("Unsupported extensions for markdown mode: " + String.join(", ", format.warnings.invalidOptions));;
+                  }
+                  
+               });          
             }
-            
-            // update flags
-            isDirty_ = false;
-            loadingFromSource_ = false;
-            
-            // if pandoc's view of the document doesn't match the editor's we 
-            // need to reset the editor's code (for both dirty state and 
-            // so that diffs are efficient)
-            if (result.canonical != editorCode)
-            {
-               getSourceEditor().setCode(result.canonical);
-               markDirty();
-            }
-            
-            // completed
-            if (done != null)
-               done.execute(true);
-            
-            Scheduler.get().scheduleDeferred(() -> {
-               
-               // if we switched from source, then get the current source outline location. otherwise,
-               // set the flag indicating that future activations must be from source. we do this so
-               // that our previous doc position / scroll location override whatever is in source
-               // mode if the last time we edited was visual not source.
-               PanmirrorEditingOutlineLocation outlineLocation = switchedFromSource_ 
-                     ? getSourceOutlneLocation() : null;
-               switchedFromSource_ = true;
-               
-               // set editing location
-               panmirror_.setEditingLocation(outlineLocation, savedEditingLocation()); 
-               
-               // set focus
-               if (focus)
-                  panmirror_.focus();
-               
-               // show any warnings
-               PanmirrorPandocFormat format = panmirror_.getPandocFormat();
-               if (result.unrecognized.length > 0) 
-               {
-                  view_.showWarningBar("Unrecognized Pandoc token(s); " + String.join(", ", result.unrecognized));
-               } 
-               else if (format.warnings.invalidFormat.length() > 0)
-               {
-                  view_.showWarningBar("Invalid Pandoc format: " + format.warnings.invalidFormat);
-               }
-               else if (format.warnings.invalidOptions.length > 0)
-               {
-                  view_.showWarningBar("Unsupported extensions for markdown mode: " + String.join(", ", format.warnings.invalidOptions));;
-               }
-            });          
          });
       });
    }
@@ -520,6 +554,11 @@ public class TextEditingTargetVisualMode implements CommandPaletteEntrySource
       }  
    }
    
+   public ToolbarButton getFindReplaceButton()
+   {
+      return findReplaceButton_;
+   }
+   
    public void getCanonicalChanges(String code, CommandWithArg<PanmirrorChanges> completed)
    {   
       withPanmirror(() -> {
@@ -609,6 +648,9 @@ public class TextEditingTargetVisualMode implements CommandPaletteEntrySource
                // sync to editor outline prefs
                panmirror_.showOutline(getOutlineVisible(), getOutlineWidth());
                
+               // show find replace button
+               findReplaceButton_.setVisible(true);
+               
                // activate widget
                editorContainer.activateWidget(panmirror_, focus);
                
@@ -650,6 +692,9 @@ public class TextEditingTargetVisualMode implements CommandPaletteEntrySource
          syncToEditor(true, () -> {
             
             unmanageCommands();
+            
+            // hide find replace button
+            findReplaceButton_.setVisible(false);
             
             editorContainer.activateEditor(focus); 
             
@@ -758,6 +803,13 @@ public class TextEditingTargetVisualMode implements CommandPaletteEntrySource
             });
             panmirror_.addPanmirrorOutlineWidthHandler((event) -> {
                setOutlineWidth(event.getWidth());
+            });
+            
+            // manage latch state of findreplace button
+            panmirror_.addPanmirrorFindReplaceVisibleHandler((event) -> {
+               findReplaceButton_.setLeftImage(event.getVisible() 
+                     ? FindReplaceBar.getFindLatchedIcon()
+                     : FindReplaceBar.getFindIcon());
             });
             
             // good to go!
@@ -1536,6 +1588,7 @@ public class TextEditingTargetVisualMode implements CommandPaletteEntrySource
    
    private PanmirrorWidget panmirror_;
    private FormatConfig panmirrorFormatConfig_;
+   private ToolbarButton findReplaceButton_;
    
    private ArrayList<AppCommand> disabledForVisualMode_ = new ArrayList<AppCommand>();
    

@@ -42,6 +42,7 @@ import com.google.gwt.aria.client.Roles;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.Element;
+import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.uibinder.client.UiBinder;
@@ -53,8 +54,6 @@ import com.google.gwt.user.client.ui.HTMLPanel;
 import com.google.gwt.user.client.ui.ScrollPanel;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
-
-import elemental.events.KeyboardEvent.KeyCode;
 
 /**
  * CommandPalette is a widget that displays all available RStudio commands in a
@@ -228,12 +227,12 @@ public class CommandPalette extends Composite
       // have already been changed
       searchBox_.addKeyUpHandler((evt) ->
       {
-         if (evt.getNativeKeyCode() == KeyCode.ESC)
+         if (evt.getNativeKeyCode() == KeyCodes.KEY_ESCAPE)
          {
             // Pressing ESC dismisses the host (removing the palette popup)
             host_.dismiss();
          }
-         else if (evt.getNativeKeyCode() == KeyCode.ENTER)
+         else if (evt.getNativeKeyCode() == KeyCodes.KEY_ENTER)
          {
             // Enter runs the selected command
             invokeSelection();
@@ -258,7 +257,7 @@ public class CommandPalette extends Composite
          // Ignore the Tab key so we don't lose focus accidentally (there is
          // only one focusable element in the palette and we don't want Tab to
          // dismiss it)
-         if (evt.getNativeKeyCode() == KeyCode.TAB)
+         if (evt.getNativeKeyCode() == KeyCodes.KEY_TAB)
          {
             evt.stopPropagation();
             evt.preventDefault();
@@ -270,7 +269,7 @@ public class CommandPalette extends Composite
          if (evt.isAnyModifierKeyDown())
             return;
          
-         if (evt.getNativeKeyCode() == KeyCode.UP)
+         if (evt.getNativeKeyCode() == KeyCodes.KEY_UP)
          {
             // Directional keys often trigger behavior in textboxes (e.g. moving
             // the cursor to the beginning/end of text) but we're hijacking them
@@ -279,19 +278,19 @@ public class CommandPalette extends Composite
             evt.preventDefault();
             moveSelection(-1);
          }
-         else if (evt.getNativeKeyCode() == KeyCode.DOWN)
+         else if (evt.getNativeKeyCode() == KeyCodes.KEY_DOWN)
          {
             evt.stopPropagation();
             evt.preventDefault();
             moveSelection(1);
          }
-         else if (evt.getNativeKeyCode() == KeyCode.PAGE_UP)
+         else if (evt.getNativeKeyCode() == KeyCodes.KEY_PAGEUP)
          {
             // Page Up moves up by the page size (computed based on the size of
             // entries in the DOM)
             moveSelection(-1 * pageSize_);
          }
-         else if (evt.getNativeKeyCode() == KeyCode.PAGE_DOWN)
+         else if (evt.getNativeKeyCode() == KeyCodes.KEY_PAGEDOWN)
          {
             moveSelection(pageSize_);
          }

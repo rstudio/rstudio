@@ -100,7 +100,7 @@ const extension = (pandocExtensions: PandocExtensions, _caps: PandocCapabilities
               'a',
               {
                 href: mark.attrs.href,
-                title: linkTitle(mark, ui),
+                title: mark.attrs.title,
                 'data-heading': mark.attrs.heading,
                 ...extraAttr,
               },
@@ -187,18 +187,5 @@ const extension = (pandocExtensions: PandocExtensions, _caps: PandocCapabilities
     },
   };
 };
-
-function linkTitle(mark: Mark, ui: EditorUI) {
-  let title = mark.attrs.title;
-  const cmdClick = kPlatformMac ? '⌘+' + ui.context.translateText('Click to follow link') : '';
-  if (cmdClick) {
-    if (title) {
-      title += ` (${cmdClick})`;
-    } else {
-      title = cmdClick;
-    }
-  }
-  return title;
-}
 
 export default extension;

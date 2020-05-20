@@ -106,7 +106,7 @@
 <!--                VVV Deferred binding elements VVV              -->
 
 <!-- All possible predicates -->
-<!ENTITY % predicates "when-property-is | when-type-assignable | when-type-is | all | any | none">
+<!ENTITY % predicates "when-property-is | when-type-assignable | when-type-is | when-linker-added | all | any | none">
 <!-- Define a property and allowable values (comma-separated identifiers) -->
 <!ELEMENT define-property EMPTY>
 <!ATTLIST define-property
@@ -197,6 +197,11 @@
 <!ELEMENT when-type-is EMPTY>
 <!ATTLIST when-type-is
 	class CDATA #REQUIRED
+>
+<!-- Deferred binding predicate that is true when there are linker with such name -->
+<!ELEMENT when-linker-added EMPTY>
+<!ATTLIST when-linker-added
+	name CDATA #REQUIRED
 >
 <!-- Predicate that ANDs all child conditions -->
 <!ELEMENT all (%predicates;)*>

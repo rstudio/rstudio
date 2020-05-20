@@ -195,17 +195,16 @@ core::json::Object blogdownConfig()
                std::string matchedEngine = handlerMatch[1];
                if (matchedEngine == kMarkdownEngineBlackfriday || matchedEngine == kMarkdownEngineGoldmark)
                   markdownEngine = matchedEngine;
+            }
 
-               // if we are goldmark check to see if unsafe is enabled. in that case
-               // add the raw_html extension
-               if (markdownEngine == kMarkdownEngineGoldmark)
-               {
-                  boost::regex unsafeRegex("unsafe\\:true");
-                  boost::smatch unsafeMatch;
-                  if (regex_utils::search(markup, unsafeMatch, unsafeRegex))
-                     markdownExtensions += "+raw_html";
-               }
-
+            // if we are goldmark check to see if unsafe is enabled. in that case
+            // add the raw_html extension
+            if (markdownEngine == kMarkdownEngineGoldmark)
+            {
+               boost::regex unsafeRegex("unsafe\\:true");
+               boost::smatch unsafeMatch;
+               if (regex_utils::search(markup, unsafeMatch, unsafeRegex))
+                  markdownExtensions += "+raw_html";
             }
          }
 

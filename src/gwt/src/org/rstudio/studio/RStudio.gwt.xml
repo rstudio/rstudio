@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE module PUBLIC "-//Google Inc.//DTD Google Web Toolkit 2.8.2//EN" "http://www.gwtproject.org/doctype/2.8.2/gwt-module.dtd">
+<!DOCTYPE module PUBLIC "-//Google Inc.//DTD Google Web Toolkit 2.8.2//EN" "http://www.gwtproject.org/doctype/2.9.0/gwt-module.dtd">
 <module rename-to='rstudio'>
 
    <!-- GWT module dependencies                                    -->
@@ -13,8 +13,8 @@
    <inherits name="com.google.gwt.inject.Inject"/>
 
    <!-- Elemental module dependencies                              -->
-   <inherits name="elemental.Elemental"/>
    <inherits name="elemental2.core.Core" />
+   <inherits name="elemental2.dom.Dom" />
    <inherits name="elemental2.promise.Promise" />
 
    <!-- Use default GWT style sheet                                -->

@@ -41,7 +41,7 @@ import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 
-import elemental.client.Browser;
+import elemental2.dom.DomGlobal;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.Point;
@@ -231,7 +231,7 @@ public abstract class ModalDialogBase extends DialogBox
       Element child = e.getFirstChildElement();
       if (child != null)
       {
-         int windowInnerHeight = Browser.getWindow().getInnerHeight();
+         int windowInnerHeight = DomGlobal.window.innerHeight;
          if (windowInnerHeight <= 10) return; // degenerate property case
 
          // snap the top of the modal to the top bounds of the window

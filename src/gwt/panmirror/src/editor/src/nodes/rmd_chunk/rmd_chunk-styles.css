@@ -17,3 +17,9 @@
   padding-top: 0;
 }
 
+.pm-image-preview img.pm-image-centered {
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+}
+

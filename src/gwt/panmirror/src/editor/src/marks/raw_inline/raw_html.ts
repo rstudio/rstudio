@@ -135,7 +135,7 @@ export function rawHtmlInputRule(schema: Schema, filter: MarkInputRuleFilter) {
           // insert an end tag (and leave the cursor in the middle)
           if (!tag.close && !tag.void) {
             const endTag = schema.text(`</${tag.name}>`);
-            tr.replaceSelectionWith(endTag);
+            tr.replaceSelectionWith(endTag, false);
             setTextSelection(tr.selection.from - endTag.textContent.length)(tr);
             tr.addMark(tr.selection.from, tr.selection.from + endTag.textContent.length, rawhtmlMark.create());
             tr.removeStoredMark(rawhtmlMark);
