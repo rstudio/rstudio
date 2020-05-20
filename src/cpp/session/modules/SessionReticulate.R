@@ -1490,8 +1490,11 @@ html.heading = _heading
       reticulate:::py_is_module(object)
    )
    
-   # TODO: there isn't really a distinction between an objects "type"
-   # and an objects "class" in Python 3
+   # NOTE: there isn't really a distinction between an objects "type"
+   # and an objects "class" in Python 3; whereas R objects might have
+   # some internal type and multiple (S3, S4, R6) classes, depending
+   # on what form of OOP is used for dispatch
+   
    # get object type, value
    type <- if (.rs.reticulate.isFunction(object))
       "function"
