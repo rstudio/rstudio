@@ -132,9 +132,17 @@ const extension = (
 
 function isParaWrappingShortcode(tok: PandocToken) {
   if (tok.t === PandocTokenType.Para) {
+    // qualify that this paragraph has text that begins with {{< (so that
+    // we don't end up scanning every token of every paragraph )
     const children: PandocToken[] = tok.c;
-    const text = tokensCollectText(children);
-    return !!text.match(kShortcodeRegEx);
+    if (tok.c.length > 1) {
+      const [ first, second ] = tok.c;
+      const firstText = first.t === PandocTokenType.Str ? first.c : second.c;
+      if (typeof firstText === 'string' && firstText.startsWith('{{<')) {
+        const text = tokensCollectText(children);
+        return !!text.match(kShortcodeRegEx);
+      }
+    }
   } 
   return false;
 }
