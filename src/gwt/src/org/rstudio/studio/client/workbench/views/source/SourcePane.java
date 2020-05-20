@@ -16,16 +16,21 @@ package org.rstudio.studio.client.workbench.views.source;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
+import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.Style.Cursor;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.logical.shared.BeforeSelectionHandler;
 import com.google.gwt.event.logical.shared.CloseEvent;
 import com.google.gwt.event.logical.shared.CloseHandler;
+import com.google.gwt.event.logical.shared.HasBeforeSelectionHandlers;
+import com.google.gwt.event.logical.shared.HasSelectionHandlers;
+import com.google.gwt.event.logical.shared.SelectionEvent;
 import com.google.gwt.event.logical.shared.SelectionHandler;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.Command;
+import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.ui.*;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
@@ -40,6 +45,7 @@ import org.rstudio.core.client.js.JsUtil;
 import org.rstudio.core.client.layout.RequiresVisibilityChanged;
 import org.rstudio.core.client.resources.ImageResource2x;
 import org.rstudio.core.client.theme.DocTabLayoutPanel;
+import org.rstudio.core.client.theme.DocTabSelectionEvent;
 import org.rstudio.core.client.theme.res.ThemeResources;
 import org.rstudio.core.client.theme.res.ThemeStyles;
 import org.rstudio.core.client.widget.BeforeShowCallback;
@@ -91,9 +97,9 @@ public class SourcePane extends LazyPanel implements Display,
    @Inject
    public SourcePane()
    {   
-      Commands commands = RStudioGinjector.INSTANCE.getCommands();
+      Commands commands_ = RStudioGinjector.INSTANCE.getCommands();
       Binder binder = GWT.<Binder>create(Binder.class);
-      binder.bind(commands, this);
+      binder.bind(commands_, this);
       events_ = RStudioGinjector.INSTANCE.getEventBus();
       events_.addHandler(MaximizeSourceWindowEvent.TYPE, this);
       events_.addHandler(EnsureVisibleSourceWindowEvent.TYPE, this);
@@ -164,6 +170,62 @@ public class SourcePane extends LazyPanel implements Display,
    {
       super.onLoad();
       Scheduler.get().scheduleDeferred(() -> onResize());
+
+      addSelectionHandler(new SelectionHandler<Integer>()
+      {
+         public void onSelection(SelectionEvent<Integer> event)
+         {
+            if (activeEditor_ != null)
+               activeEditor_.onDeactivate();
+      
+            activeEditor_ = null;
+      
+            if (event.getSelectedItem() >= 0)
+            {
+               activeEditor_ = editors_.get(event.getSelectedItem());
+               activeEditor_.onActivate();
+               // let any listeners know this tab was activated
+               events_.fireEvent(new DocTabActivatedEvent(
+                     activeEditor_.getPath(),
+                     activeEditor_.getId()));
+      
+               // don't send focus to the tab if we're expecting a debug selection
+               // event
+               if (source_.getInitialized() && !isDebugSelectionPending())
+               {
+                  Scheduler.get().scheduleDeferred(new ScheduledCommand()
+                  {
+                     public void execute()
+                     {
+                        // presume that we will give focus to the tab
+                        boolean focus = true;
+      
+                        if (event instanceof DocTabSelectionEvent)
+                        {
+                           // however, if this event was generated from a doc tab
+                           // selection that did not have focus, don't steal focus
+                           DocTabSelectionEvent tabEvent = (DocTabSelectionEvent) event;
+                           focus = tabEvent.getFocus();
+                        }
+      
+                        if (focus && activeEditor_ != null)
+                           activeEditor_.focus();
+                     }
+                  });
+               }
+               else if (isDebugSelectionPending())
+               {
+                  // we're debugging, so send focus to the console instead of the
+                  // editor
+                  commands_.activateConsole().execute();
+                  clearPendingDebugSelection();
+               }
+            }
+      
+            if (source_.getInitialized())
+               source_.manageCommands(false);
+         }
+      });
    }
 
    // overridden Display methods
@@ -666,7 +728,7 @@ public class SourcePane extends LazyPanel implements Display,
                                new VoidServerRequestCallback());
       }
 
-      //manageCommands(); !!! need to handle this
+      source_.manageCommands(false);
       source_.fireDocTabsChanged();
 
       if (getTabCount() == 0)
@@ -717,6 +779,37 @@ public class SourcePane extends LazyPanel implements Display,
                      resultCallback.onFailure(error);
                }
             });
+   }
+
+   public boolean isDebugSelectionPending()
+   {
+      return debugSelectionTimer_ != null;
+   }
+
+   private void clearPendingDebugSelection()
+   {
+      if (debugSelectionTimer_ != null)
+      {
+         debugSelectionTimer_.cancel();
+         debugSelectionTimer_ = null;
+      }
+   }
+
+   // !!! shouldn't be public or override
+   @Override
+   public void setPendingDebugSelection()
+   {
+      if (!isDebugSelectionPending())
+      {
+         debugSelectionTimer_ = new Timer()
+         {
+            public void run()
+            {
+               debugSelectionTimer_ = null;
+            }
+         };
+         debugSelectionTimer_.schedule(250);
+      }
    }
 
    private EditingTarget addTab(SourceDocument doc, int mode)
@@ -782,7 +875,7 @@ public class SourcePane extends LazyPanel implements Display,
          public void onValueChange(ValueChangeEvent<Boolean> event)
          {
             setDirty(widget, event.getValue());
-            //manageCommands();
+            source_.manageCommands(false);
          }
       });
 
@@ -831,17 +924,21 @@ public class SourcePane extends LazyPanel implements Display,
 
    private String name_;
    private Source source_;
+
    private DocTabLayoutPanel tabPanel_;
    private HTML utilPanel_;
    private Image chevron_;
    private LayoutPanel panel_;
    private PopupPanel tabOverflowPopup_;
+
    private EventBus events_;
+   private Commands commands_;
 
    EditingTarget activeEditor_;
    ArrayList<EditingTarget> editors_ = new ArrayList<EditingTarget>();
    ArrayList<Integer> tabOrder_ = new ArrayList<Integer>();
 
+   private Timer debugSelectionTimer_ = null;
    private final SourceNavigationHistory sourceNavigationHistory_ =
                                               new SourceNavigationHistory(30);
    public final static int OPEN_INTERACTIVE = 0;

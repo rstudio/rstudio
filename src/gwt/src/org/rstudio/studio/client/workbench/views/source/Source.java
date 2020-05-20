@@ -27,8 +27,6 @@ import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.logical.shared.CloseEvent;
 import com.google.gwt.event.logical.shared.CloseHandler;
 import com.google.gwt.event.logical.shared.HasBeforeSelectionHandlers;
-import com.google.gwt.event.logical.shared.HasSelectionHandlers;
-import com.google.gwt.event.logical.shared.SelectionEvent;
 import com.google.gwt.event.logical.shared.SelectionHandler;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
@@ -183,7 +181,6 @@ public class Source implements InsertSourceHandler,
                                IsWidget,
                                OpenSourceFileHandler,
                                OpenPresentationSourceFileHandler,
-                               SelectionHandler<Integer>,
                                FileEditHandler,
                                ShowContentHandler,
                                ShowDataHandler,
@@ -214,7 +211,6 @@ public class Source implements InsertSourceHandler,
 
    public interface Display extends IsWidget,
                                     HasBeforeSelectionHandlers<Integer>,
-                                    HasSelectionHandlers<Integer>,
                                     HasTabClosingHandlers
    {
       void setSource(Source source);
@@ -268,6 +264,10 @@ public class Source implements InsertSourceHandler,
 
       void onNewSourceDoc();
       HandlerRegistration addBeforeShowHandler(BeforeShowHandler handler);
+
+
+      // !!! maybe moved
+      void setPendingDebugSelection();
    }
 
    public interface CPSEditingTargetCommand
@@ -573,6 +573,25 @@ public class Source implements InsertSourceHandler,
          }
       });
 
+     // !!! we may get to remove this
+      events_.addHandler(DocTabActivatedEvent.TYPE, new DocTabActivatedEvent.Handler()
+      {
+         public void onDocTabActivated(DocTabActivatedEvent event)
+         {
+
+            for (EditingTarget target : editors_)
+            {
+               if (target.getId() == event.getId())
+               {
+                  activeEditor_ = target;
+                  views_.setActive(activeEditor_);
+                  return;
+               }
+            }
+            Debug.logWarning("Could not set activeEditor_, unknown ID.");
+         }
+      });
+
       events_.addHandler(SwitchToDocEvent.TYPE, new SwitchToDocHandler()
       {
          public void onSwitchToDoc(SwitchToDocEvent event)
@@ -719,8 +738,6 @@ public class Source implements InsertSourceHandler,
       events_.addHandler(OpenProfileEvent.TYPE, this);
       events_.addHandler(RequestDocumentSaveEvent.TYPE, this);
       events_.addHandler(RequestDocumentCloseEvent.TYPE, this);
-
-      initialized_ = true;
    }
 
    public void load()
@@ -735,7 +752,6 @@ public class Source implements InsertSourceHandler,
       restoreDocuments(session_);
       for (Display v : views_)
       {
-         v.addSelectionHandler(this);
          v.addBeforeShowHandler(this);
       }
 
@@ -770,7 +786,9 @@ public class Source implements InsertSourceHandler,
          ShortcutManager.INSTANCE.setEditorMode(KeyboardShortcut.MODE_SUBLIME);
       else
          ShortcutManager.INSTANCE.setEditorMode(KeyboardShortcut.MODE_DEFAULT);
-   
+
+      initialized_ = true;
+
       // !!! comment why this is needed
       events_.fireEvent(new DocTabsChangedEvent(null,
                                                 new String[0],
@@ -3319,7 +3337,7 @@ public class Source implements InsertSourceHandler,
       // highlight in place.
       if (isDebugNavigation)
       {
-         setPendingDebugSelection();
+         views_.getActiveDisplay().setPendingDebugSelection();
          
          for (int i = 0; i < editors_.size(); i++)
          {
@@ -3995,65 +4013,13 @@ public class Source implements InsertSourceHandler,
       views_.manageChevronVisibility();
    }
 
-   public void onSelection(SelectionEvent<Integer> event)
-   {
-      if (activeEditor_ != null)
-         activeEditor_.onDeactivate();
-
-      activeEditor_ = null;
-
-      if (event.getSelectedItem() >= 0)
-      {
-         activeEditor_ = editors_.get(event.getSelectedItem());
-         activeEditor_.onActivate();
-         // let any listeners know this tab was activated
-         events_.fireEvent(new DocTabActivatedEvent(
-               activeEditor_.getPath(), 
-               activeEditor_.getId()));
-
-         // don't send focus to the tab if we're expecting a debug selection
-         // event
-         if (initialized_ && !isDebugSelectionPending())
-         {
-            Scheduler.get().scheduleDeferred(new ScheduledCommand()
-            {
-               public void execute()
-               {
-                  // presume that we will give focus to the tab
-                  boolean focus = true;
-                  
-                  if (event instanceof DocTabSelectionEvent)
-                  {
-                     // however, if this event was generated from a doc tab
-                     // selection that did not have focus, don't steal focus
-                     DocTabSelectionEvent tabEvent = (DocTabSelectionEvent) event;
-                     focus = tabEvent.getFocus();
-                  }
-
-                  if (focus && activeEditor_ != null)
-                     activeEditor_.focus();
-               }
-            });
-         }
-         else if (isDebugSelectionPending())
-         {
-            // we're debugging, so send focus to the console instead of the 
-            // editor
-            commands_.activateConsole().execute();
-            clearPendingDebugSelection();
-         }
-      }
-      
-      if (initialized_)
-         manageCommands();
-   }
-
    private void manageCommands()
    {
       manageCommands(false);
    }
    
-   private void manageCommands(boolean forceSync)
+   // !!! shouldn't be public
+   public void manageCommands(boolean forceSync)
    {
       boolean hasDocs = editors_.size() > 0;
 
@@ -4672,7 +4638,7 @@ public class Source implements InsertSourceHandler,
          {
             if (event.getDebugPosition() != null)
             {
-               setPendingDebugSelection();
+               views_.getActiveDisplay().setPendingDebugSelection();
             }
             
             activateCodeBrowser(
@@ -4725,7 +4691,7 @@ public class Source implements InsertSourceHandler,
          @Override
          public void execute()
          {
-            setPendingDebugSelection();
+            views_.getActiveDisplay().setPendingDebugSelection();
             activateCodeBrowser(
                CodeBrowserEditingTarget.getCodeBrowserPath(event.getFunction()),
                false,
@@ -4833,6 +4799,7 @@ public class Source implements InsertSourceHandler,
             });
    }
    
+   /*
    private boolean isDebugSelectionPending()
    {
       return debugSelectionTimer_ != null;
@@ -4861,6 +4828,7 @@ public class Source implements InsertSourceHandler,
          debugSelectionTimer_.schedule(250);
       }
    }
+   */
       
    private class SourceNavigationResultCallback<T extends EditingTarget> 
                         extends ResultCallback<T,ServerError>
@@ -4973,6 +4941,11 @@ public class Source implements InsertSourceHandler,
    public RemoteFileSystemContext getFileContext()
    {
       return fileContext_;
+   }
+
+   public boolean getInitialized()
+   {
+      return initialized_;
    }
 
    public void onOpenProfileEvent(OpenProfileEvent event)
@@ -5308,7 +5281,6 @@ public class Source implements InsertSourceHandler,
    private static final String MODULE_SOURCE = "source-pane";
    private static final String KEY_ACTIVETAB = "activeTab";
    private boolean initialized_;
-   private Timer debugSelectionTimer_ = null;
    private boolean openingForSourceNavigation_ = false;
    
    private final Provider<SourceWindowManager> pWindowManager_;
