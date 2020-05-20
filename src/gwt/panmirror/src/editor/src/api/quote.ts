@@ -13,6 +13,9 @@
  *
  */
 
+export const kQuoteType = 0;
+export const kQuoteChildren = 1;
+
 export enum QuoteType {
   SingleQuote = 'SingleQuote',
   DoubleQuote = 'DoubleQuote',

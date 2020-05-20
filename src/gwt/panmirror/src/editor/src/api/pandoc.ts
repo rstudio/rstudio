@@ -17,6 +17,7 @@ import { Fragment, Mark, Node as ProsemirrorNode, Schema, NodeType } from 'prose
 
 import { PandocAttr } from './pandoc_attr';
 import { PandocCapabilitiesResult } from './pandoc_capabilities';
+import { kQuoteType, kQuoteChildren, QuoteType } from './quote';
 
 export interface PandocEngine {
   getCapabilities(): Promise<PandocCapabilitiesResult>;
@@ -294,10 +295,14 @@ export interface PandocOutput {
 export function tokensCollectText(c: PandocToken[]): string {
   return c
     .map(elem => {
-      if (elem.t === 'Str') {
+      if (elem.t === PandocTokenType.Str) {
         return elem.c;
-      } else if (elem.t === 'Space') {
+      } else if (elem.t === PandocTokenType.Space || elem.t === PandocTokenType.SoftBreak) {
         return ' ';
+      } else if (elem.t === PandocTokenType.Quoted) {
+        const type = elem.c[kQuoteType].t;
+        const quote = type === QuoteType.SingleQuote ? "'" : '"';
+        return quote + tokensCollectText(elem.c[kQuoteChildren]) + quote;
       } else if (elem.c) {
         return tokensCollectText(elem.c);
       } else {

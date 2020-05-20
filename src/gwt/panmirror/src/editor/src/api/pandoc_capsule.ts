@@ -53,6 +53,9 @@ export interface PandocBlockCapsuleFilter {
   // space for indented block or incidental whitespace after block delimiter)
   match: RegExp;
 
+  // custom function for pulling out the 3 parts from a match (defaults to p1,p2,p3)
+  extract?: (match: string, p1: string, p2: string, p3: string, p4: string) => { prefix: string, source: string, suffix: string };
+
   // provide a (text) envelope around the capsule, e.g. 
   //  - newlines to ensure that yaml is parsed as a standalone paragraph;
   //  - backticks to ensure an Rmd is structurally parsed by pandoc as a codeblock
@@ -84,15 +87,28 @@ export interface PandocBlockCapsuleFilter {
 // identifier for orchestrating the unpacking.
 export function pandocMarkdownWithBlockCapsules(markdown: string, capsuleFilter: PandocBlockCapsuleFilter) {
 
+  // default extractor
+  const defaultExtractor = (match: string, p1: string, p2: string, p3: string) => {
+    return {
+      prefix: p1,
+      source: p2,
+      suffix: p3
+    };
+  };
+
   // replace all w/ source preservation capsules
-  return markdown.replace(capsuleFilter.match, (_match: string, p1: string, p2: string, p3: string) => {
+  return markdown.replace(capsuleFilter.match, (_match: string, p1: string, p2: string, p3: string, p4: string) => {
+
+    // extract matches
+    const extract = capsuleFilter.extract || defaultExtractor;
+    const { prefix, source, suffix } = extract(_match, p1, p2, p3, p4);
 
     // make the capsule
     const capsule : PandocBlockCapsule = {
       [kTypeField]: capsuleFilter.type,
-      [kPrefixField]: p1,
-      [kSourceField]: p2,
-      [kSuffixField]: p3
+      [kPrefixField]: prefix,
+      [kSourceField]: source,
+      [kSuffixField]: suffix
     };
 
     // constuct a field
@@ -112,9 +128,9 @@ export function pandocMarkdownWithBlockCapsules(markdown: string, capsuleFilter:
     //   - a base64 encoded record surrounded with a sentinel value
     //   - enclosed in a filter specific envelope (used to influence pandoc parsing), 
     //   - surrounded by the original prefix and suffix
-    return p1 +  
+    return prefix +  
            capsuleFilter.enclose(`${kBlockCapsuleSentinel}${kValueDelimiter}${encodedRecord}${kValueDelimiter}${kBlockCapsuleSentinel}`, capsule) + 
-           p3;
+           suffix;
   });
   
 }

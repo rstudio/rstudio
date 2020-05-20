@@ -98,6 +98,7 @@ import nodeDiv from '../nodes/div';
 import nodeLineBlock from '../nodes/line_block';
 import nodeTable from '../nodes/table/table';
 import nodeDefinitionList from '../nodes/definition_list/definition_list';
+import nodeShortcodeBlock from '../nodes/shortcode_block';
 
 // extension/plugin factories
 import { codeMirrorPlugins } from '../optional/codemirror/codemirror';
@@ -158,6 +159,7 @@ export function initExtensions(
     nodeDefinitionList,
     nodeLineBlock,
     nodeRawBlock,
+    nodeShortcodeBlock,
 
     // marks
     markStrikeout,
