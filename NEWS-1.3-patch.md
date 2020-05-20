@@ -11,6 +11,7 @@
 - Adds class attributed to RMarkdown chunks, their control buttons, and their output based on their given labels. (#6787)
 - Add option `www-url-path-prefix` to force a path on auth cookies (Pro #1608)
 - Add additional keyboard shortcut (Ctrl+`) for Focus Console Output accessibility command (#6850)
+- Always set application role for screen readers and removed related accessibility preference checkbox (#6863)
 
 ### Bugfixes
 
