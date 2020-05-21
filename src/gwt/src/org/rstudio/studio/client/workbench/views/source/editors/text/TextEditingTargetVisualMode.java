@@ -118,10 +118,7 @@ public class TextEditingTargetVisualMode implements CommandPaletteEntrySource
       
       // create widgets that the rest of startup (e.g. manageUI) may rely on
       initWidgets();
-            
-      // if we aren't activated at startup then any subsequent activation is a switch from source
-      switchedFromSource_ = !isActivated();
-      
+             
       // manage UI (then track changes over time)
       manageUI(isActivated(), false);
       releaseOnDismiss.add(onDocPropChanged(TextEditingTarget.RMD_VISUAL_MODE, (value) -> {
@@ -324,10 +321,6 @@ public class TextEditingTargetVisualMode implements CommandPaletteEntrySource
    {
       if (isActivated()) 
       {
-         // set flag indicating we aren't activating from source (will get reset
-         // during the activation)
-         switchedFromSource_ = false;
-      
          // get reference to the editing container 
          TextEditorContainer editorContainer = view_.editorContainer();
          
@@ -401,21 +394,14 @@ public class TextEditingTargetVisualMode implements CommandPaletteEntrySource
                   done.execute(true);
                
                Scheduler.get().scheduleDeferred(() -> {
-                  
-                  // if we switched from source, then get the current source outline location. otherwise,
-                  // set the flag indicating that future activations must be from source. we do this so
-                  // that our previous doc position / scroll location override whatever is in source
-                  // mode if the last time we edited was visual not source.
-                  PanmirrorEditingOutlineLocation outlineLocation = switchedFromSource_ 
-                        ? getSourceOutlneLocation() : null;
-                  switchedFromSource_ = true;
-                  
-                  // set editing location
-                  panmirror_.setEditingLocation(outlineLocation, savedEditingLocation()); 
-                  
-                  // set focus
+                      
+                  // if we are being focused it means we are switching from source mode, in that
+                  // case sync our editing location to what it is in source 
                   if (focus)
+                  { 
                      panmirror_.focus();
+                     panmirror_.setEditingLocation(getSourceOutlneLocation(), savedEditingLocation()); 
+                  }
                   
                   // show any warnings
                   PanmirrorPandocFormat format = panmirror_.getPandocFormat();
@@ -1572,7 +1558,6 @@ public class TextEditingTargetVisualMode implements CommandPaletteEntrySource
    
    private boolean isDirty_ = false;
    private boolean loadingFromSource_ = false;
-   private boolean switchedFromSource_ = false;
    
    private PanmirrorWidget panmirror_;
    private FormatConfig panmirrorFormatConfig_;

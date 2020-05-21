@@ -12,7 +12,8 @@ import {
   kRmdchunkOutlineItemType,
 } from './outline';
 import { findTopLevelBodyNodes } from './node';
-import { navigateToPosition } from './navigation';
+import { navigateToPosition, navigateTo } from './navigation';
+import { scrollIntoView } from './scroll';
 
 export interface EditingLocation {
   pos: number;
@@ -40,39 +41,40 @@ export function getEditingLocation(view: EditorView): EditingLocation {
 export function setEditingLocation(
   view: EditorView,
   outlineLocation?: EditingOutlineLocation,
-  previousLocation?: EditingLocation,
-  scrollIntoView = true,
+  previousLocation?: EditingLocation
 ) {
-  // restore position and scrollTop
-  let restorePos: number | null = null;
 
-  // see we if we can match an outline location
+   // default restorePos to the previous location
+  let restorePos = previousLocation ? previousLocation.pos : -1;
+  
+  // get the current document outline
+  const documentOutline = getDocumentOutline(view.state);
+
+  // if all of the types and levels match up to the active outline item,
+  // then we have a candidate match
+  let docOutlineLocationNode: NodeWithPos | undefined;
+
   if (outlineLocation) {
-    // get the current document outline
-    const documentOutline = getDocumentOutline(view.state);
-
-    // if all of the types and levels match up to the active outline item,
-    // then we have a candidate match
-    let docOutlineLocationNode: NodeWithPos | undefined;
-
     for (let i = 0; i < outlineLocation.items.length && i < documentOutline.length; i++) {
       // get the item and it's peer
       const item = outlineLocation.items[i];
       const docOutlineNode = documentOutline[i];
-
+  
       // if they don't match then bail (can't resolve different interpretations of the outline)
       if (!outlineItemSimillarToNode(item, docOutlineNode.node)) {
         break;
       }
-
+  
       // if this is the active item
       if (item.active) {
-        // see if the previous location is actually a better target (because it's
-        // between this location and the next outline node)
+
+        // see if the previous location is actually a better target (because it's between this location and
+        // the next outline node). in that case we don't set the target node and we leave the restorePos
+        // at the previous location
         if (!locationIsBetweenDocOutlineNodes(docOutlineNode, documentOutline[i + 1], previousLocation)) {
           // set the target
           docOutlineLocationNode = docOutlineNode;
-
+  
           // if this is an rmd chunk then advance to the second line
           if (docOutlineNode.node.type === view.state.schema.nodes.rmd_chunk) {
             const chunkText = docOutlineNode.node.textContent;
@@ -83,38 +85,30 @@ export function setEditingLocation(
           }
         }
 
+        if (docOutlineLocationNode) {
+          restorePos = docOutlineLocationNode.pos;
+        }
+  
         break;
       }
     }
+  }
+  
+  // if we have a restorePos set the selection
+  if (restorePos !== -1) {
+    // set selection
+    const tr = view.state.tr;
+    setTextSelection(restorePos)(tr)
+      .setMeta(kRestoreLocationTransaction, true)
+      .setMeta(kAddToHistoryTransaction, false);
+    view.dispatch(tr);
+  } 
 
-    // if we got a location then set it as the restorePos
-    if (docOutlineLocationNode) {
-      restorePos = docOutlineLocationNode.pos;
-    }
+  // if we have a target node then scroll to it
+  if (docOutlineLocationNode) {
+    navigateToPosition(view, docOutlineLocationNode.pos, false);
   }
 
-  // if we don't have a restorePos then see if there is a previous location
-  if (restorePos === null) {
-    if (previousLocation && previousLocation.pos < view.state.doc.nodeSize) {
-      restorePos = previousLocation.pos;
-    }
-  }
-
-  // bail if we don't have a restorePos
-  if (restorePos === null) {
-    return;
-  }
-  // restore selection
-  const tr = view.state.tr;
-  setTextSelection(restorePos)(tr)
-    .setMeta(kRestoreLocationTransaction, true)
-    .setMeta(kAddToHistoryTransaction, false);
-  view.dispatch(tr);
-
-  // scroll to selection
-  if (scrollIntoView) {
-    navigateToPosition(view, restorePos, false);
-  }
 }
 
 // get a document outline that matches the scheme provided in EditingOutlineLocation:
