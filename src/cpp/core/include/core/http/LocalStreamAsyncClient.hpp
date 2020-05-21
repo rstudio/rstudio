@@ -105,6 +105,11 @@ private:
                      boost::asio::placeholders::error));
    }
 
+   virtual std::string getDefaultHostHeader()
+   {
+      return "localhost";
+   }
+
    void handleConnect(const boost::system::error_code& ec)
    {
       try
