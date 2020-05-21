@@ -1,7 +1,7 @@
 /*
  * SessionInfo.java
  *
- * Copyright (C) 2009-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -635,8 +635,12 @@ public class SessionInfo extends JavaScriptObject
       return this.project_id;
    }-*/;
    
-   public final native JsArrayString getGraphicsBackends()
-   /*-{
+   public final native JsArrayString getGraphicsBackends() /*-{
      return this.graphics_backends;
    }-*/;
+   
+   public final native boolean getPythonInitialized() /*-{
+      return this.python_initialized;
+   }-*/;
+   
 }

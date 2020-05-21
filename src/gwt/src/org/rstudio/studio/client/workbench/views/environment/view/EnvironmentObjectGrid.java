@@ -1,7 +1,7 @@
 /*
  * EnvironmentObjectGrid.java
  *
- * Copyright (C) 2009-19 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -193,7 +193,10 @@ public class EnvironmentObjectGrid extends EnvironmentObjectDisplay
                   @Override
                   public String getValue(RObjectEntry object)
                   {
-                     return (new Integer(object.rObject.getLength())).toString();
+                     int length = object.rObject.getLength();
+                     if (length < 0)
+                        return "<NA>";
+                     return Integer.toString(length);
                   }
               });
       columns_.add(new ObjectGridColumn(
