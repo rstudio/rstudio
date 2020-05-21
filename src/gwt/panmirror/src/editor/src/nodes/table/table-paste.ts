@@ -20,7 +20,7 @@ import { EditorView } from 'prosemirror-view';
 import { sliceHasNode } from '../../api/slice';
 
 import { fixupTableWidths } from './table-columns';
-import { forChangedNodes, trTransform } from '../../api/transaction';
+import { forChangedNodes } from '../../api/transaction';
 
 import { kDefaultCellClasses } from './table-nodes';
 

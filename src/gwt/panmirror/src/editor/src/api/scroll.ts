@@ -19,7 +19,6 @@ import { findParentNodeOfTypeClosestToPos } from 'prosemirror-utils';
 import zenscroll from 'zenscroll';
 
 import { editingRootNodeClosestToPos } from './node';
-import { off } from 'codemirror';
 
 export function scrollIntoView(
   view: EditorView,

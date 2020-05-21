@@ -33,7 +33,6 @@ import { canInsertNode } from '../api/node';
 import { fragmentText } from '../api/fragment';
 import { EditorFormat, kXRefDocType } from '../api/format';
 
-const kRefRegEx = /\\?@ref\([A-Za-z0-9:-]*\)/;
 const kRefRegExDetectAndApply = /(?:^|[^`])(\\?@ref\([A-Za-z0-9:-]*\))/;
 
 const extension = (

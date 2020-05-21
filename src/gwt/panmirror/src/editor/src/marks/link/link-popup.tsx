@@ -13,7 +13,6 @@
  *
  */
 
-import { Node as ProsemirrorNode } from 'prosemirror-model';
 import { DecorationSet, Decoration, EditorView } from 'prosemirror-view';
 import { Plugin, PluginKey, EditorState, Transaction } from 'prosemirror-state';
 
@@ -21,7 +20,7 @@ import * as React from 'react';
 
 import ClipboardJS from 'clipboard';
 
-import { getMarkRange, getMarkAttrs, markIsActive } from '../../api/mark';
+import { getMarkRange, getMarkAttrs } from '../../api/mark';
 import { LinkProps, EditorUI } from '../../api/ui';
 import { CommandFn } from '../../api/command';
 import { kRestoreLocationTransaction } from '../../api/transaction';

@@ -41,7 +41,6 @@ import {
   encodedBlockCapsuleRegex,
   PandocBlockCapsule,
   blockCapsuleTextHandler,
-  parsePandocBlockCapsule,
   blockCapsuleSourceWithoutPrefix,
 } from '../api/pandoc_capsule';
 
@@ -164,6 +163,7 @@ export function shortcodeBlockCapsuleFilter(): PandocBlockCapsuleFilter {
   return {
     type: kShortcodeBlockCapsuleType,
 
+    // eslint-disable-next-line no-useless-escape
     match: /^([\t >]*)(\{\{<\s+([^\/][^\t ]+).*?>\}\}[ \t]*\n(?![ \t]*\n)[\W\w]*?\n[\t >]*\{\{<\s+\/\3\s+>\}\})([ \t]*)$/gm,
 
     extract: (_match: string, p1: string, p2: string, _p3: string, p4: string) => {

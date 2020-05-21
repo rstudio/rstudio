@@ -27,7 +27,6 @@ import {
 } from '../../api/pandoc_attr';
 import { EditorUI } from '../../api/ui';
 import { Extension } from '../../api/extension';
-import { kPlatformMac } from '../../api/platform';
 import { PandocCapabilities } from '../../api/pandoc_capabilities';
 
 import { linkCommand, removeLinkCommand } from './link-command';

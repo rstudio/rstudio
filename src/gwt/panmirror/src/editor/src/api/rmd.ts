@@ -115,8 +115,12 @@ export function haveTableCellsWithInlineRcode(doc: ProsemirrorNode) {
           if (markedRange) {
             const text = doc.textBetween(markedRange.from, markedRange.to);
             return /^r[ #].+$/.test(text);
+          } else {
+            return false;
           }
         });
+      } else {
+        return false;
       }
     });
   } else {

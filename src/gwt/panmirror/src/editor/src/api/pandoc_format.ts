@@ -18,7 +18,6 @@ import { Node as ProsemirrorNode } from 'prosemirror-model';
 import { PandocEngine, PandocExtensions } from './pandoc';
 import { EditorFormat } from './format';
 import { firstYamlBlock, yamlMetadataNodes } from './yaml';
-import { findTopLevelBodyNodes } from './node';
 
 export const kMarkdownFormat = 'markdown';
 export const kMarkdownPhpextraFormat = 'markdown_phpextra';
