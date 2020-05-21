@@ -49,6 +49,7 @@ import org.rstudio.studio.client.panmirror.PanmirrorWidget;
 import org.rstudio.studio.client.panmirror.PanmirrorWidget.FormatSource;
 import org.rstudio.studio.client.panmirror.PanmirrorWriterOptions;
 import org.rstudio.studio.client.panmirror.command.PanmirrorCommands;
+import org.rstudio.studio.client.panmirror.events.PanmirrorFocusEvent;
 import org.rstudio.studio.client.panmirror.events.PanmirrorSelectionChangedEvent;
 import org.rstudio.studio.client.panmirror.events.PanmirrorUpdatedEvent;
 import org.rstudio.studio.client.panmirror.format.PanmirrorExtendedDocType;
@@ -117,18 +118,12 @@ public class TextEditingTargetVisualMode implements CommandPaletteEntrySource
       
       // create widgets that the rest of startup (e.g. manageUI) may rely on
       initWidgets();
+            
+      // if we aren't activated at startup then any subsequent activation is a switch from source
+      switchedFromSource_ = !isActivated();
       
-      // if visual mode isn't enabled then reflect that (if it is enabled we'll
-      // defer initialization work until after the tab is actually activated)
-      if (!isActivated())
-      {
-         manageUI(false, false);
-         
-         // any subsequent activation is a switch from source
-         switchedFromSource_ = true;
-      }
-      
-      // track changes over time
+      // manage UI (then track changes over time)
+      manageUI(isActivated(), false);
       releaseOnDismiss.add(onDocPropChanged(TextEditingTarget.RMD_VISUAL_MODE, (value) -> {
          manageUI(isActivated(), true);
       }));
@@ -442,24 +437,13 @@ public class TextEditingTargetVisualMode implements CommandPaletteEntrySource
          });
       });
    }
- 
+
    public void manageCommands()
    {
-      if (isActivated())
-      {
-         // if this is the first time we've switched to the doc
-         // while in visual mode then complete initialization
-         if (!haveEditedInVisualMode_)
-         {
-            haveEditedInVisualMode_ = true;
-            manageUI(true, true);
-         }
-         else
-         {
-            onActivating();
-         }
-      }
+      // hookup devtools
+      syncDevTools();
       
+      // disable commands
       disableForVisualMode(
         commands_.insertChunk(),
         commands_.jumpTo(),
@@ -658,9 +642,6 @@ public class TextEditingTargetVisualMode implements CommandPaletteEntrySource
                syncOnIdle_.resume();
                saveLocationOnIdle_.resume();
                
-               // run activating logic
-               onActivating();
-                  
                // execute completed hook
                Scheduler.get().scheduleDeferred(completed);  
             }
@@ -709,13 +690,7 @@ public class TextEditingTargetVisualMode implements CommandPaletteEntrySource
          });  
       }
    }
-   
-   private void onActivating()
-   {
-      syncDevTools();
-      target_.checkForExternalEdit(500);
-   }
-  
+
    
    private void syncDevTools()
    {
@@ -794,6 +769,16 @@ public class TextEditingTargetVisualMode implements CommandPaletteEntrySource
                public void onPanmirrorSelectionChanged(PanmirrorSelectionChangedEvent event)
                {
                   saveLocationOnIdle_.nudge();
+               }
+            });
+            
+            // check for external edit on focus
+            panmirror_.addPanmirrorFocusHandler(new PanmirrorFocusEvent.Handler()
+            {  
+               @Override
+               public void onPanmirrorFocus(PanmirrorFocusEvent event)
+               {
+                  target_.checkForExternalEdit(100);
                }
             });
              
@@ -1587,7 +1572,6 @@ public class TextEditingTargetVisualMode implements CommandPaletteEntrySource
    
    private boolean isDirty_ = false;
    private boolean loadingFromSource_ = false;
-   private boolean haveEditedInVisualMode_ = false; 
    private boolean switchedFromSource_ = false;
    
    private PanmirrorWidget panmirror_;

@@ -46,6 +46,7 @@ import org.rstudio.studio.client.panmirror.events.PanmirrorFindReplaceVisibleEve
 import org.rstudio.studio.client.panmirror.events.PanmirrorOutlineWidthEvent;
 import org.rstudio.studio.client.panmirror.events.PanmirrorSelectionChangedEvent;
 import org.rstudio.studio.client.panmirror.events.PanmirrorUpdatedEvent;
+import org.rstudio.studio.client.panmirror.events.PanmirrorFocusEvent;
 import org.rstudio.studio.client.panmirror.findreplace.PanmirrorFindReplace;
 import org.rstudio.studio.client.panmirror.findreplace.PanmirrorFindReplaceWidget;
 import org.rstudio.studio.client.panmirror.format.PanmirrorFormat;
@@ -94,7 +95,8 @@ public class PanmirrorWidget extends DockLayoutPanel implements
    PanmirrorSelectionChangedEvent.HasPanmirrorSelectionChangedHandlers,
    PanmirrorOutlineVisibleEvent.HasPanmirrorOutlineVisibleHandlers,
    PanmirrorOutlineWidthEvent.HasPanmirrorOutlineWidthHandlers,
-   PanmirrorFindReplaceVisibleEvent.HasPanmirrorFindReplaceVisibleHandlers
+   PanmirrorFindReplaceVisibleEvent.HasPanmirrorFindReplaceVisibleHandlers,
+   PanmirrorFocusEvent.HasPanmirrorFocusHandlers
    
 {
    
@@ -284,6 +286,10 @@ public class PanmirrorWidget extends DockLayoutPanel implements
          // sync outline
          updateOutineOnIdle.nudge();
          
+      }));
+      
+      editorEventUnsubscribe_.add(editor_.subscribe(PanmirrorEvent.Focus, () -> {
+         fireEvent(new PanmirrorFocusEvent());
       }));
       
       registrations_.add(events_.addHandler(EditorThemeChangedEvent.TYPE, 
@@ -567,6 +573,13 @@ public class PanmirrorWidget extends DockLayoutPanel implements
    {
       return handlers_.addHandler(PanmirrorFindReplaceVisibleEvent.getType(), handler);
    }
+   
+   @Override
+   public HandlerRegistration addPanmirrorFocusHandler(org.rstudio.studio.client.panmirror.events.PanmirrorFocusEvent.Handler handler)
+   {
+      return handlers_.addHandler(PanmirrorFocusEvent.getType(), handler);
+   }
+   
    
    @Override
    public void fireEvent(GwtEvent<?> event)

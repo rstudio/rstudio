@@ -673,6 +673,7 @@ export class Editor {
     events.set(EditorEvent.Resize, new Event(EditorEvent.Resize));
     events.set(EditorEvent.Layout, new Event(EditorEvent.Layout));
     events.set(EditorEvent.Scroll, new Event(EditorEvent.Scroll));
+    events.set(EditorEvent.Focus, new Event(EditorEvent.Focus));
     return events;
   }
 
@@ -697,6 +698,7 @@ export class Editor {
       ...this.extensions.plugins(this.schema, this.context.ui),
       this.inputRulesPlugin(),
       this.editablePlugin(),
+      this.domEventsPlugin()
     ];
   }
 
@@ -727,6 +729,20 @@ export class Editor {
       return handleTextInput(view, from, to, text);
     };
     return plugin;
+  }
+
+  private domEventsPlugin(): Plugin {
+    return new Plugin({
+      key: new PluginKey('domevents'),
+      props: {
+        handleDOMEvents: {
+          focus: (view: EditorView, event: Event) => {
+            this.emitEvent(EditorEvent.Focus);
+            return false;
+          }
+        }
+      }
+    });
   }
 
   private keybindingsPlugin(): Plugin {
