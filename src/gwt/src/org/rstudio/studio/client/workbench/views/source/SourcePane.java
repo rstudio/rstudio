@@ -236,15 +236,13 @@ public class SourcePane extends LazyPanel implements Display,
       source_ = source;
    }
 
-   @Override
-   public void generateName(boolean first)
+   public String setName(String name)
    {
       if (StringUtil.isNullOrEmpty(name_))
-      {
-         name_ = Source.COLUMN_PREFIX;
-         if (!first)
-            name_ = Source.COLUMN_PREFIX + StringUtil.makeRandomId(12);
-      }
+         name_ = name;
+
+      // return the name in case name_ was not empty
+      return name_;
    }
 
    @Override
@@ -307,6 +305,11 @@ public class SourcePane extends LazyPanel implements Display,
       return tabPanel_.getSelectedIndex();
    }
 
+   public ArrayList<EditingTarget> getEditors()
+   {
+      return editors_;
+   }
+
    @Override
    public boolean hasDoc(String docId)
    {
@@ -316,6 +319,24 @@ public class SourcePane extends LazyPanel implements Display,
             return true;
       }
       return false;
+   }
+
+   public EditingTarget getEditorWithPath(String path)
+   {
+      for (EditingTarget target : editors_)
+      {
+         if (StringUtil.equals(path, target.getPath()))
+            return target;
+      }
+      return null;
+   }
+
+   public void initialSelect(int index)
+   {
+      if (index >= 0 && getTabCount() > index)
+         selectTab(index);
+      if (getTabCount() > 0 && tabPanel_.getActiveIndex() >= 0)
+         editors_.get(index).onInitiallyLoaded();
    }
 
    @Override
@@ -469,32 +490,6 @@ public class SourcePane extends LazyPanel implements Display,
    }
 
    @Override
-   public void onNewSourceDoc()
-   {
-      EditableFileType fileType = FileTypeRegistry.R;
-
-      TextFileType textType = (TextFileType)fileType;
-      source_.getServer().getSourceTemplate("",
-            "default" + textType.getDefaultExtension(),
-            new ServerRequestCallback<String>()
-            {
-               @Override
-               public void onResponseReceived(String template)
-               {
-                  // Create a new document with the supplied template
-                  newDoc(fileType, template, null);
-               }
-
-               @Override
-               public void onError(ServerError error)
-               {
-                  // Ignore errors; there's just not a template for this type
-                  newDoc(fileType, null, null);
-               }
-            });
-   }
-
-   @Override
    public HandlerRegistration addTabClosingHandler(TabClosingHandler handler)
    {
       return tabPanel_.addTabClosingHandler(handler);
@@ -619,18 +614,6 @@ public class SourcePane extends LazyPanel implements Display,
          event.cancel();
    }
 
-   public void closeTabByPath(String path, boolean interactive)
-   {
-      for (int i = 0; i < editors_.size(); i++)
-      {
-         if (editors_.get(i).getPath() == path)
-         {
-            closeTab(i, interactive, null);
-            break;
-         }
-      }
-   }
-
    @Override
    public void onTabClosed(TabClosedEvent event)
    {
@@ -701,6 +684,7 @@ public class SourcePane extends LazyPanel implements Display,
       }
       else
       {
+         editors_.remove(index);
          tabPanel_.closeTab(index, onClosed);
       }
    }
@@ -753,43 +737,6 @@ public class SourcePane extends LazyPanel implements Display,
    {
       utilPanel_.setVisible(visible);
       chevron_.setVisible(visible);
-   }
-
-   private void newDoc(EditableFileType fileType,
-                       final String contents,
-                       final ResultCallback<EditingTarget, ServerError> resultCallback)
-   {
-      ensureVisible();
-      source_.getServer().newDocument(
-            fileType.getTypeId(),
-            contents,
-            JsObject.createJsObject(),
-            new SimpleRequestCallback<SourceDocument>(
-               "Error Creating New Document")
-            {
-               @Override
-               public void onResponseReceived(SourceDocument newDoc)
-               {
-                  EditingTarget target = addTab(newDoc, OPEN_INTERACTIVE);
-                  activeEditor_ = target;
-
-                  if (contents != null)
-                  {
-                     target.forceSaveCommandActive();
-                     source_.manageSaveCommands();
-                  }
-   
-                  if (resultCallback != null)
-                     resultCallback.onSuccess(target);
-               }
-
-               @Override
-               public void onError(ServerError error)
-               {
-                  if (resultCallback != null)
-                     resultCallback.onFailure(error);
-               }
-            });
    }
 
    public boolean isDebugSelectionPending()
