@@ -60,7 +60,7 @@ public class PanmirrorToolbarCommands implements CommandPaletteEntrySource
       
       add(PanmirrorCommands.Blockquote, "Blockquote", Roles.getMenuitemcheckboxRole(), icons.BLOCKQUOTE);
       add(PanmirrorCommands.LineBlock, "Line Block", Roles.getMenuitemcheckboxRole());
-      add(PanmirrorCommands.Div, "Div Block...");
+      add(PanmirrorCommands.Div, "Div...");
       add(PanmirrorCommands.AttrEdit, "Edit Attributes...");
       add(PanmirrorCommands.ClearFormatting, "Clear Formatting", icons.CLEAR_FORMATTING);
       
@@ -115,7 +115,7 @@ public class PanmirrorToolbarCommands implements CommandPaletteEntrySource
       add(PanmirrorCommands.HTMLComment, "Comment", icons.COMMENT);
       add(PanmirrorCommands.YamlMetadata, "YAML Block");
       add(PanmirrorCommands.Shortcode, "Shortcode");
-      add(PanmirrorCommands.InsertDiv, "Div Block...");
+      add(PanmirrorCommands.InsertDiv, "Div...");
       add(PanmirrorCommands.InlineMath, "Inline Math");
       add(PanmirrorCommands.DisplayMath, "Display Math");
       add(PanmirrorCommands.DefinitionList, "Definition List");

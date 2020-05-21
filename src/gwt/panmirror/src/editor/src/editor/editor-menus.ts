@@ -48,8 +48,6 @@ function formatMenu(ui: EditorUI, commands: EditorCommand[]) {
       },
     },
     { separator: true },
-    { command: EditorCommandId.Span },
-    { separator: true },
     {
       subMenu: {
         text: ui.context.translateText('Bullets & Numbering'),
@@ -69,11 +67,12 @@ function formatMenu(ui: EditorUI, commands: EditorCommand[]) {
       },
     },
     { separator: true },
+    { command: codeBlockCommand(commands) },
     { command: EditorCommandId.Blockquote },
     { command: EditorCommandId.LineBlock },
-    { separator: haveAnyOf(commands, EditorCommandId.Div) },
-    { command: codeBlockCommand(commands) },
+    { separator: haveAnyOf(commands, EditorCommandId.Div, EditorCommandId.Span) },
     { command: EditorCommandId.Div },
+    { command: EditorCommandId.Span },
     { separator: true },
     {
       subMenu: {
