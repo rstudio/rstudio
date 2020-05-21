@@ -141,6 +141,11 @@ protected:
             connectionTimeout_);
    }
 
+   virtual std::string getDefaultHostHeader()
+   {
+      return address_ + ":" + port_;
+   }
+
 
 private:
 
