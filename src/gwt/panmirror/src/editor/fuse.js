@@ -52,6 +52,15 @@ const bundle = (fuse) => {
     .instructions("> index.ts")
 } 
 
+const copyDevTools = (outputDir) => {
+  // copy prosemirror-devtools
+  const devtools = 'prosemirror-dev-tools.min.js';
+  fs.copyFileSync(
+    path.join('./node_modules/prosemirror-dev-tools/dist/umd', devtools),
+    path.join(outputDir, devtools)
+  );
+}
+
 const watch = (fuse, hmrReload) => {
   return fuse
     .hmr({ reload: hmrReload })
@@ -67,11 +76,7 @@ const dev = (context, webIndex, watchChanges, hmrReload, outputDir) => {
     watch(bdl, hmrReload)
   
   // copy prosemirror-devtools
-  const devtools = 'prosemirror-dev-tools.min.js';
-  fs.copyFileSync(
-    path.join('./node_modules/prosemirror-dev-tools/dist/umd', devtools),
-    path.join(outputDir, devtools)
-  );
+  copyDevTools(outputDir)
 
   return fuse;
 }
@@ -80,6 +85,7 @@ const dist = (context, outputDir) => {
   context.isProduction = true;
   const fuse = context.getConfig(outputDir);
   bundle(fuse);
+  copyDevTools(outputDir)
   return fuse;
 }
 
