@@ -1223,6 +1223,8 @@ public class TextEditingTargetVisualMode implements CommandPaletteEntrySource
                   configDocTypes.add(PanmirrorExtendedDocType.blogdown);
                if (isHugoDocument())
                   configDocTypes.add(PanmirrorExtendedDocType.hugo);
+               if (isHugodownDocument())
+                  configDocTypes.add(PanmirrorExtendedDocType.hugodown);
                format.docTypes = configDocTypes.toArray(new String[] {});
             }
             else if (formatComment.doctypes != null)
@@ -1327,13 +1329,19 @@ public class TextEditingTargetVisualMode implements CommandPaletteEntrySource
    
    private boolean isBlogdownDocument() 
    {
-      return getBlogdownConfig().is_blogdown_project && isDocInProject();
+      return getBlogdownConfig().is_blogdown_project && isDocInProject() && !isHugodownDocument();
    }
    
    private boolean isHugoDocument()
    {
       return getBlogdownConfig().is_hugo_project && isDocInProject();
    }
+   
+   private boolean isHugodownDocument()
+   {
+      return isHugoDocument() && getOutputFormats().contains("hugodown::hugo_document");
+   }
+   
    
    private String pathToHugoAsset(String path)
    {
