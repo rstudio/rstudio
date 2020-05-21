@@ -14,6 +14,7 @@
 
 ### Bugfixes
 
+- Fix 'truncating string with embedded nuls' warning being emitted when saving R Notebook (#6932)
 - Fix dependency installation for untitled buffers (#6762)
 - Fix Terminal to work with both Git-Bash and RTools4 MSYS2 installed on Windows (#6696, #6809)
 - Fixed install issue where service scripts would not be created if there was no /lib/systemd path (Pro #6710)
