@@ -1210,13 +1210,11 @@ public class TextEditingTargetVisualMode implements CommandPaletteEntrySource
             
             // see if we have a format comment
             PanmirrorPandocFormatConfig formatComment = formatTools.parseFormatConfig(getEditorCode());
-            
+              
             // doctypes
             if (formatComment.doctypes == null || formatComment.doctypes.length == 0)
             {
                List<String> configDocTypes = new ArrayList<String>();
-               if (isXRefDocument())
-                  configDocTypes.add(PanmirrorExtendedDocType.xref);
                if (isBookdownDocument())
                   configDocTypes.add(PanmirrorExtendedDocType.bookdown);
                if (isBlogdownDocument()) 
@@ -1235,10 +1233,7 @@ public class TextEditingTargetVisualMode implements CommandPaletteEntrySource
             {
                format.docTypes = new String[] {};
             }
-            
-            // version of docTypes we can inspect below 
-            List<String> docTypes = Arrays.asList(format.docTypes);
-           
+               
             // mode and extensions         
             // non-standard mode and extension either come from a format comment,
             // a detection of an alternate engine (likely due to blogdown/hugo)
@@ -1265,7 +1260,14 @@ public class TextEditingTargetVisualMode implements CommandPaletteEntrySource
             }
               
             // rmdExtensions
+            
+            // get any rmd extensions declared by the user in the format comment
+            PanmirrorRmdExtensions rmdExtensions = rmdExtensionsFromFormatConfig(formatComment);
+          
+            // create extensions
             format.rmdExtensions = new PanmirrorRmdExtensions();
+            
+            // chunk execution enabled if the target can execute
             format.rmdExtensions.codeChunks = target_.canExecuteChunks();
             
             // support for bookdown cross-references is always enabled b/c they would not 
@@ -1273,6 +1275,7 @@ public class TextEditingTargetVisualMode implements CommandPaletteEntrySource
             // and the odds that someone wants to literally write @ref(foo) w/o the leading
             // \ are vanishingly small)
             format.rmdExtensions.bookdownXRef = true;
+            format.rmdExtensions.bookdownXRefUI = isXRefDocument() || rmdExtensions.bookdownXRefUI;
             
             // support for bookdown part headers is always enabled b/c typing 
             // (PART\*) in the visual editor would result in an escaped \, which
@@ -1280,11 +1283,9 @@ public class TextEditingTargetVisualMode implements CommandPaletteEntrySource
             // in an H1 are also vanishingly small
             format.rmdExtensions.bookdownPart = true;
             
-            // enable blogdown math in code (e.g. `$math$`) if we have a blogdown
-            // doctype along with a custom markdown engine
-            format.rmdExtensions.blogdownMathInCode = 
-               docTypes.contains(PanmirrorExtendedDocType.blogdown) && 
-               (getBlogdownConfig().markdown_engine != null);
+            // enable blogdown math in code (e.g. `$math$`) if requested explicitly by the user
+            // (this requires manual configuration in hugo in any case)
+            format.rmdExtensions.blogdownMathInCode = rmdExtensions.blogdownMathInCode;
             
             // hugoExtensions
             format.hugoExtensions = new PanmirrorHugoExtensions();
@@ -1391,6 +1392,17 @@ public class TextEditingTargetVisualMode implements CommandPaletteEntrySource
    private BlogdownConfig getBlogdownConfig()
    {
       return sessionInfo_.getBlogdownConfig();
+   }
+   
+   private PanmirrorRmdExtensions rmdExtensionsFromFormatConfig(PanmirrorPandocFormatConfig config)
+   {
+      PanmirrorRmdExtensions rmdExtensions = new PanmirrorRmdExtensions();
+      if (config.rmdExtensions != null)
+      {
+         rmdExtensions.bookdownXRefUI = config.rmdExtensions.contains("+bookdown_cross_references");
+         rmdExtensions.blogdownMathInCode = config.rmdExtensions.contains("+tex_math_dollars_in_code");
+      }
+      return rmdExtensions;
    }
    
    private boolean isDistillDocument()

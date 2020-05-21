@@ -43,6 +43,7 @@ export interface PandocFormatWarnings {
 export interface PandocFormatConfig {
   mode?: string;
   extensions?: string;
+  rmdExtensions?: string;
   wrapColumn?: number;
   doctypes?: string[];
   references?: string;
@@ -158,6 +159,9 @@ function readPandocFormatConfig(source: { [key: string]: any }) {
   }
   if (source.extensions) {
     formatConfig.extensions = asString(source.extensions);
+  }
+  if (source.rmd_extensions) {
+    formatConfig.rmdExtensions = asString(source.rmd_extensions);
   }
   formatConfig.wrapColumn = readWrapColumn();
   if (source.doctype) {

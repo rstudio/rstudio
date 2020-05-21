@@ -18,7 +18,6 @@ package org.rstudio.studio.client.panmirror.format;
 
 public class PanmirrorExtendedDocType
 {    
-   public static String xref = "xref";
    public static String bookdown = "bookdown";
    public static String blogdown = "blogdown";
    public static String hugodown = "hugodown";

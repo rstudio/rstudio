@@ -250,6 +250,7 @@ export class Editor {
       rmdExtensions: {
         codeChunks: false,
         bookdownXRef: false,
+        bookdownXRefUI: false,
         bookdownPart: false,
         blogdownMathInCode: false,
         ...format.rmdExtensions,

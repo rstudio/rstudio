@@ -23,6 +23,7 @@ public class PanmirrorRmdExtensions
 {    
    public boolean codeChunks;
    public boolean bookdownXRef;
+   public boolean bookdownXRefUI;
    public boolean bookdownPart;
    public boolean blogdownMathInCode;
 }

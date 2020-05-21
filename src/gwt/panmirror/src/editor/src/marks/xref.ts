@@ -31,7 +31,7 @@ import { FixupContext } from '../api/fixup';
 import { ProsemirrorCommand, EditorCommandId } from '../api/command';
 import { canInsertNode } from '../api/node';
 import { fragmentText } from '../api/fragment';
-import { EditorFormat, kXRefDocType } from '../api/format';
+import { EditorFormat } from '../api/format';
 
 const kRefRegExDetectAndApply = /(?:^|[^`])(\\?@ref\([A-Za-z0-9:-]*\))/;
 
@@ -158,7 +158,7 @@ const extension = (
     },
 
     commands: (schema: Schema) => {
-      if (format.docTypes.includes(kXRefDocType)) {
+      if (format.rmdExtensions.bookdownXRefUI) {
         return [
           new ProsemirrorCommand(
             EditorCommandId.CrossReference,

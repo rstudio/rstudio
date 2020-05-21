@@ -24,6 +24,7 @@ export interface EditorFormat {
 export interface EditorRmdExtensions {
   readonly codeChunks?: boolean;
   readonly bookdownXRef?: boolean;
+  readonly bookdownXRefUI?: boolean;
   readonly bookdownPart?: boolean;
   readonly blogdownMathInCode?: boolean;
 }
@@ -32,7 +33,6 @@ export interface EditorHugoExtensions {
   readonly shortcodes?: boolean;
 }
 
-export const kXRefDocType = 'xref';
 export const kBookdownDocType = 'bookdown';
 export const kBlogdownDocType = 'blogdown';
 export const kHugodownDocType = 'hugodown';
