@@ -703,9 +703,6 @@ public class TextEditingTargetVisualMode implements CommandPaletteEntrySource
             
             // remove some keybindings that conflict with the ide
             disableKeys(
-               PanmirrorCommands.Paragraph, 
-               PanmirrorCommands.Heading1, PanmirrorCommands.Heading2, PanmirrorCommands.Heading3,
-               PanmirrorCommands.Heading4, PanmirrorCommands.Heading5, PanmirrorCommands.Heading6,
                PanmirrorCommands.TightList
             );
            

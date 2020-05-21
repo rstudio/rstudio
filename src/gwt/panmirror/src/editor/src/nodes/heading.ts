@@ -157,7 +157,7 @@ class HeadingCommand extends BlockCommand {
   public readonly level: number;
 
   constructor(schema: Schema, id: EditorCommandId, level: number) {
-    super(id, ['Shift-Ctrl-' + level], schema.nodes.heading, schema.nodes.paragraph, { level });
+    super(id, ['Mod-Alt-' + level], schema.nodes.heading, schema.nodes.paragraph, { level });
     this.nodeType = schema.nodes.heading;
     this.level = level;
   }
