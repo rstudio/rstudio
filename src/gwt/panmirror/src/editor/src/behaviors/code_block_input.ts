@@ -97,6 +97,7 @@ function codeBlockInputRuleEnter(pandocExtensions: PandocExtensions, fencedAttri
       const langAttrib = fenced ? match[2] : match[1] || '';
       const rawBlock = fenced && pandocExtensions.raw_attribute && langAttrib.match(/^=\w.*$/);
       const rmdChunk = fenced && !!format.rmdExtensions.codeChunks && langAttrib.match(/^\w.*$/);
+       // eslint-disable-next-line no-useless-escape
       const lang = langAttrib.replace(/^[\.=]/, '');
 
       // create transaction and clear input
