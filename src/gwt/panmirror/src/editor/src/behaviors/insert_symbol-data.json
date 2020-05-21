@@ -1,1044 +1,7371 @@
 {
+  "blocks": [
+    {
+      "name": "Latin-1 Supplement",
+      "codepointFirst": 128,
+      "codepointLast": 255
+    },
+    {
+      "name": "Currency Symbols",
+      "codepointFirst": 8352,
+      "codepointLast": 8399
+    },
+    {
+      "name": "Mathematical Operators",
+      "codepointFirst": 8704,
+      "codepointLast": 8959
+    },
+    {
+      "name": "Miscellaneous Technical",
+      "codepointFirst": 8960,
+      "codepointLast": 9215
+    },
+    {
+      "name": "Control Pictures",
+      "codepointFirst": 9216,
+      "codepointLast": 9279
+    },
+    {
+      "name": "Enclosed Alphanumerics",
+      "codepointFirst": 9312,
+      "codepointLast": 9471
+    },
+    {
+      "name": "Box Drawing",
+      "codepointFirst": 9472,
+      "codepointLast": 9599
+    },
+    {
+      "name": "Block Elements",
+      "codepointFirst": 9600,
+      "codepointLast": 9631
+    },
+    {
+      "name": "Geometric Shapes",
+      "codepointFirst": 9632,
+      "codepointLast": 9727
+    },
+    {
+      "name": "Miscellaneous Symbols",
+      "codepointFirst": 9728,
+      "codepointLast": 9983
+    },
+    {
+      "name": "Dingbats",
+      "codepointFirst": 9984,
+      "codepointLast": 10175
+    },
+    {
+      "name": "Braille Patterns",
+      "codepointFirst": 10240,
+      "codepointLast": 10495
+    },
+    {
+      "name": "Ideographic Description Characters",
+      "codepointFirst": 12272,
+      "codepointLast": 12287
+    }
+  ],
   "symbols": [
     {
-      "name": "first number",
-      "value": "1",
-      "category": "numbers"
+      "name": "NO-BREAK SPACE",
+      "value": " ",
+      "codepoint": 160
     },
     {
-      "name": "second number",
-      "value": "2",
-      "category": "numbers"
+      "name": "INVERTED EXCLAMATION MARK",
+      "value": "¡",
+      "codepoint": 161
     },
     {
-      "name": "first letter",
-      "value": "a",
-      "category": "letters"
+      "name": "CENT SIGN",
+      "value": "¢",
+      "codepoint": 162
     },
     {
-      "name": "second letter",
-      "value": "b",
-      "category": "letters"
+      "name": "POUND SIGN",
+      "value": "£",
+      "codepoint": 163
     },
     {
-      "name": "star",
-      "value": "★",
-      "category": "stars"
+      "name": "CURRENCY SIGN",
+      "value": "¤",
+      "codepoint": 164
     },
     {
-      "name": "peace",
-      "value": "✌",
-      "category": "emoji"
+      "name": "YEN SIGN",
+      "value": "¥",
+      "codepoint": 165
     },
     {
-      "name": "dagger",
-      "value": "†",
-      "category": "symbols"
+      "name": "BROKEN BAR",
+      "value": "¦",
+      "codepoint": 166
     },
     {
-      "name": "double dagger",
-      "value": "‡",
-      "category": "symbols"
+      "name": "SECTION SIGN",
+      "value": "§",
+      "codepoint": 167
     },
     {
-      "name": "flower",
-      "value": "⚙",
-      "category": "symbols"
+      "name": "DIAERESIS",
+      "value": "¨",
+      "codepoint": 168
     },
     {
-      "name": "circle with right half black",
+      "name": "COPYRIGHT SIGN",
+      "value": "©",
+      "codepoint": 169
+    },
+    {
+      "name": "FEMININE ORDINAL INDICATOR",
+      "value": "ª",
+      "codepoint": 170
+    },
+    {
+      "name": "LEFT-POINTING DOUBLE ANGLE QUOTATION MARK",
+      "value": "«",
+      "codepoint": 171
+    },
+    {
+      "name": "NOT SIGN",
+      "value": "¬",
+      "codepoint": 172
+    },
+    {
+      "name": "REGISTERED SIGN",
+      "value": "®",
+      "codepoint": 174
+    },
+    {
+      "name": "MACRON",
+      "value": "¯",
+      "codepoint": 175
+    },
+    {
+      "name": "DEGREE SIGN",
+      "value": "°",
+      "codepoint": 176
+    },
+    {
+      "name": "PLUS-MINUS SIGN",
+      "value": "±",
+      "codepoint": 177
+    },
+    {
+      "name": "SUPERSCRIPT TWO",
+      "value": "²",
+      "codepoint": 178
+    },
+    {
+      "name": "SUPERSCRIPT THREE",
+      "value": "³",
+      "codepoint": 179
+    },
+    {
+      "name": "ACUTE ACCENT",
+      "value": "´",
+      "codepoint": 180
+    },
+    {
+      "name": "MICRO SIGN",
+      "value": "µ",
+      "codepoint": 181
+    },
+    {
+      "name": "PILCROW SIGN",
+      "value": "¶",
+      "codepoint": 182
+    },
+    {
+      "name": "MIDDLE DOT",
+      "value": "·",
+      "codepoint": 183
+    },
+    {
+      "name": "CEDILLA",
+      "value": "¸",
+      "codepoint": 184
+    },
+    {
+      "name": "SUPERSCRIPT ONE",
+      "value": "¹",
+      "codepoint": 185
+    },
+    {
+      "name": "MASCULINE ORDINAL INDICATOR",
+      "value": "º",
+      "codepoint": 186
+    },
+    {
+      "name": "RIGHT-POINTING DOUBLE ANGLE QUOTATION MARK",
+      "value": "»",
+      "codepoint": 187
+    },
+    {
+      "name": "VULGAR FRACTION ONE QUARTER",
+      "value": "¼",
+      "codepoint": 188
+    },
+    {
+      "name": "VULGAR FRACTION ONE HALF",
+      "value": "½",
+      "codepoint": 189
+    },
+    {
+      "name": "VULGAR FRACTION THREE QUARTERS",
+      "value": "¾",
+      "codepoint": 190
+    },
+    {
+      "name": "INVERTED QUESTION MARK",
+      "value": "¿",
+      "codepoint": 191
+    },
+    {
+      "name": "LATIN CAPITAL LETTER A WITH GRAVE",
+      "value": "À",
+      "codepoint": 192
+    },
+    {
+      "name": "LATIN CAPITAL LETTER A WITH ACUTE",
+      "value": "Á",
+      "codepoint": 193
+    },
+    {
+      "name": "LATIN CAPITAL LETTER A WITH CIRCUMFLEX",
+      "value": "Â",
+      "codepoint": 194
+    },
+    {
+      "name": "LATIN CAPITAL LETTER A WITH TILDE",
+      "value": "Ã",
+      "codepoint": 195
+    },
+    {
+      "name": "LATIN CAPITAL LETTER A WITH DIAERESIS",
+      "value": "Ä",
+      "codepoint": 196
+    },
+    {
+      "name": "LATIN CAPITAL LETTER A WITH RING ABOVE",
+      "value": "Å",
+      "codepoint": 197
+    },
+    {
+      "name": "LATIN CAPITAL LETTER AE",
+      "value": "Æ",
+      "codepoint": 198
+    },
+    {
+      "name": "LATIN CAPITAL LETTER C WITH CEDILLA",
+      "value": "Ç",
+      "codepoint": 199
+    },
+    {
+      "name": "LATIN CAPITAL LETTER E WITH GRAVE",
+      "value": "È",
+      "codepoint": 200
+    },
+    {
+      "name": "LATIN CAPITAL LETTER E WITH ACUTE",
+      "value": "É",
+      "codepoint": 201
+    },
+    {
+      "name": "LATIN CAPITAL LETTER E WITH CIRCUMFLEX",
+      "value": "Ê",
+      "codepoint": 202
+    },
+    {
+      "name": "LATIN CAPITAL LETTER E WITH DIAERESIS",
+      "value": "Ë",
+      "codepoint": 203
+    },
+    {
+      "name": "LATIN CAPITAL LETTER I WITH GRAVE",
+      "value": "Ì",
+      "codepoint": 204
+    },
+    {
+      "name": "LATIN CAPITAL LETTER I WITH ACUTE",
+      "value": "Í",
+      "codepoint": 205
+    },
+    {
+      "name": "LATIN CAPITAL LETTER I WITH CIRCUMFLEX",
+      "value": "Î",
+      "codepoint": 206
+    },
+    {
+      "name": "LATIN CAPITAL LETTER I WITH DIAERESIS",
+      "value": "Ï",
+      "codepoint": 207
+    },
+    {
+      "name": "LATIN CAPITAL LETTER ETH",
+      "value": "Ð",
+      "codepoint": 208
+    },
+    {
+      "name": "LATIN CAPITAL LETTER N WITH TILDE",
+      "value": "Ñ",
+      "codepoint": 209
+    },
+    {
+      "name": "LATIN CAPITAL LETTER O WITH GRAVE",
+      "value": "Ò",
+      "codepoint": 210
+    },
+    {
+      "name": "LATIN CAPITAL LETTER O WITH ACUTE",
+      "value": "Ó",
+      "codepoint": 211
+    },
+    {
+      "name": "LATIN CAPITAL LETTER O WITH CIRCUMFLEX",
+      "value": "Ô",
+      "codepoint": 212
+    },
+    {
+      "name": "LATIN CAPITAL LETTER O WITH TILDE",
+      "value": "Õ",
+      "codepoint": 213
+    },
+    {
+      "name": "LATIN CAPITAL LETTER O WITH DIAERESIS",
+      "value": "Ö",
+      "codepoint": 214
+    },
+    {
+      "name": "MULTIPLICATION SIGN",
+      "value": "×",
+      "codepoint": 215
+    },
+    {
+      "name": "LATIN CAPITAL LETTER O WITH STROKE",
+      "value": "Ø",
+      "codepoint": 216
+    },
+    {
+      "name": "LATIN CAPITAL LETTER U WITH GRAVE",
+      "value": "Ù",
+      "codepoint": 217
+    },
+    {
+      "name": "LATIN CAPITAL LETTER U WITH ACUTE",
+      "value": "Ú",
+      "codepoint": 218
+    },
+    {
+      "name": "LATIN CAPITAL LETTER U WITH CIRCUMFLEX",
+      "value": "Û",
+      "codepoint": 219
+    },
+    {
+      "name": "LATIN CAPITAL LETTER U WITH DIAERESIS",
+      "value": "Ü",
+      "codepoint": 220
+    },
+    {
+      "name": "LATIN CAPITAL LETTER Y WITH ACUTE",
+      "value": "Ý",
+      "codepoint": 221
+    },
+    {
+      "name": "LATIN CAPITAL LETTER THORN",
+      "value": "Þ",
+      "codepoint": 222
+    },
+    {
+      "name": "LATIN SMALL LETTER SHARP S",
+      "value": "ß",
+      "codepoint": 223
+    },
+    {
+      "name": "LATIN SMALL LETTER A WITH GRAVE",
+      "value": "à",
+      "codepoint": 224
+    },
+    {
+      "name": "LATIN SMALL LETTER A WITH ACUTE",
+      "value": "á",
+      "codepoint": 225
+    },
+    {
+      "name": "LATIN SMALL LETTER A WITH CIRCUMFLEX",
+      "value": "â",
+      "codepoint": 226
+    },
+    {
+      "name": "LATIN SMALL LETTER A WITH TILDE",
+      "value": "ã",
+      "codepoint": 227
+    },
+    {
+      "name": "LATIN SMALL LETTER A WITH DIAERESIS",
+      "value": "ä",
+      "codepoint": 228
+    },
+    {
+      "name": "LATIN SMALL LETTER A WITH RING ABOVE",
+      "value": "å",
+      "codepoint": 229
+    },
+    {
+      "name": "LATIN SMALL LETTER AE",
+      "value": "æ",
+      "codepoint": 230
+    },
+    {
+      "name": "LATIN SMALL LETTER C WITH CEDILLA",
+      "value": "ç",
+      "codepoint": 231
+    },
+    {
+      "name": "LATIN SMALL LETTER E WITH GRAVE",
+      "value": "è",
+      "codepoint": 232
+    },
+    {
+      "name": "LATIN SMALL LETTER E WITH ACUTE",
+      "value": "é",
+      "codepoint": 233
+    },
+    {
+      "name": "LATIN SMALL LETTER E WITH CIRCUMFLEX",
+      "value": "ê",
+      "codepoint": 234
+    },
+    {
+      "name": "LATIN SMALL LETTER E WITH DIAERESIS",
+      "value": "ë",
+      "codepoint": 235
+    },
+    {
+      "name": "LATIN SMALL LETTER I WITH GRAVE",
+      "value": "ì",
+      "codepoint": 236
+    },
+    {
+      "name": "LATIN SMALL LETTER I WITH ACUTE",
+      "value": "í",
+      "codepoint": 237
+    },
+    {
+      "name": "LATIN SMALL LETTER I WITH CIRCUMFLEX",
+      "value": "î",
+      "codepoint": 238
+    },
+    {
+      "name": "LATIN SMALL LETTER I WITH DIAERESIS",
+      "value": "ï",
+      "codepoint": 239
+    },
+    {
+      "name": "LATIN SMALL LETTER ETH",
+      "value": "ð",
+      "codepoint": 240
+    },
+    {
+      "name": "LATIN SMALL LETTER N WITH TILDE",
+      "value": "ñ",
+      "codepoint": 241
+    },
+    {
+      "name": "LATIN SMALL LETTER O WITH GRAVE",
+      "value": "ò",
+      "codepoint": 242
+    },
+    {
+      "name": "LATIN SMALL LETTER O WITH ACUTE",
+      "value": "ó",
+      "codepoint": 243
+    },
+    {
+      "name": "LATIN SMALL LETTER O WITH CIRCUMFLEX",
+      "value": "ô",
+      "codepoint": 244
+    },
+    {
+      "name": "LATIN SMALL LETTER O WITH TILDE",
+      "value": "õ",
+      "codepoint": 245
+    },
+    {
+      "name": "LATIN SMALL LETTER O WITH DIAERESIS",
+      "value": "ö",
+      "codepoint": 246
+    },
+    {
+      "name": "DIVISION SIGN",
+      "value": "÷",
+      "codepoint": 247
+    },
+    {
+      "name": "LATIN SMALL LETTER O WITH STROKE",
+      "value": "ø",
+      "codepoint": 248
+    },
+    {
+      "name": "LATIN SMALL LETTER U WITH GRAVE",
+      "value": "ù",
+      "codepoint": 249
+    },
+    {
+      "name": "LATIN SMALL LETTER U WITH ACUTE",
+      "value": "ú",
+      "codepoint": 250
+    },
+    {
+      "name": "LATIN SMALL LETTER U WITH CIRCUMFLEX",
+      "value": "û",
+      "codepoint": 251
+    },
+    {
+      "name": "LATIN SMALL LETTER U WITH DIAERESIS",
+      "value": "ü",
+      "codepoint": 252
+    },
+    {
+      "name": "LATIN SMALL LETTER Y WITH ACUTE",
+      "value": "ý",
+      "codepoint": 253
+    },
+    {
+      "name": "LATIN SMALL LETTER THORN",
+      "value": "þ",
+      "codepoint": 254
+    },
+    {
+      "name": "LATIN SMALL LETTER Y WITH DIAERESIS",
+      "value": "ÿ",
+      "codepoint": 255
+    },
+    {
+      "name": "EURO-CURRENCY SIGN",
+      "value": "₠",
+      "codepoint": 8352
+    },
+    {
+      "name": "COLON SIGN",
+      "value": "₡",
+      "codepoint": 8353
+    },
+    {
+      "name": "CRUZEIRO SIGN",
+      "value": "₢",
+      "codepoint": 8354
+    },
+    {
+      "name": "FRENCH FRANC SIGN",
+      "value": "₣",
+      "codepoint": 8355
+    },
+    {
+      "name": "LIRA SIGN",
+      "value": "₤",
+      "codepoint": 8356
+    },
+    {
+      "name": "MILL SIGN",
+      "value": "₥",
+      "codepoint": 8357
+    },
+    {
+      "name": "NAIRA SIGN",
+      "value": "₦",
+      "codepoint": 8358
+    },
+    {
+      "name": "PESETA SIGN",
+      "value": "₧",
+      "codepoint": 8359
+    },
+    {
+      "name": "RUPEE SIGN",
+      "value": "₨",
+      "codepoint": 8360
+    },
+    {
+      "name": "WON SIGN",
+      "value": "₩",
+      "codepoint": 8361
+    },
+    {
+      "name": "NEW SHEQEL SIGN",
+      "value": "₪",
+      "codepoint": 8362
+    },
+    {
+      "name": "DONG SIGN",
+      "value": "₫",
+      "codepoint": 8363
+    },
+    {
+      "name": "EURO SIGN",
+      "value": "€",
+      "codepoint": 8364
+    },
+    {
+      "name": "KIP SIGN",
+      "value": "₭",
+      "codepoint": 8365
+    },
+    {
+      "name": "TUGRIK SIGN",
+      "value": "₮",
+      "codepoint": 8366
+    },
+    {
+      "name": "DRACHMA SIGN",
+      "value": "₯",
+      "codepoint": 8367
+    },
+    {
+      "name": "FOR ALL",
+      "value": "∀",
+      "codepoint": 8704
+    },
+    {
+      "name": "COMPLEMENT",
+      "value": "∁",
+      "codepoint": 8705
+    },
+    {
+      "name": "PARTIAL DIFFERENTIAL",
+      "value": "∂",
+      "codepoint": 8706
+    },
+    {
+      "name": "THERE EXISTS",
+      "value": "∃",
+      "codepoint": 8707
+    },
+    {
+      "name": "THERE DOES NOT EXIST",
+      "value": "∄",
+      "codepoint": 8708
+    },
+    {
+      "name": "EMPTY SET",
+      "value": "∅",
+      "codepoint": 8709
+    },
+    {
+      "name": "INCREMENT",
+      "value": "∆",
+      "codepoint": 8710
+    },
+    {
+      "name": "NABLA",
+      "value": "∇",
+      "codepoint": 8711
+    },
+    {
+      "name": "ELEMENT OF",
+      "value": "∈",
+      "codepoint": 8712
+    },
+    {
+      "name": "NOT AN ELEMENT OF",
+      "value": "∉",
+      "codepoint": 8713
+    },
+    {
+      "name": "SMALL ELEMENT OF",
+      "value": "∊",
+      "codepoint": 8714
+    },
+    {
+      "name": "CONTAINS AS MEMBER",
+      "value": "∋",
+      "codepoint": 8715
+    },
+    {
+      "name": "DOES NOT CONTAIN AS MEMBER",
+      "value": "∌",
+      "codepoint": 8716
+    },
+    {
+      "name": "SMALL CONTAINS AS MEMBER",
+      "value": "∍",
+      "codepoint": 8717
+    },
+    {
+      "name": "END OF PROOF",
+      "value": "∎",
+      "codepoint": 8718
+    },
+    {
+      "name": "N-ARY PRODUCT",
+      "value": "∏",
+      "codepoint": 8719
+    },
+    {
+      "name": "N-ARY COPRODUCT",
+      "value": "∐",
+      "codepoint": 8720
+    },
+    {
+      "name": "N-ARY SUMMATION",
+      "value": "∑",
+      "codepoint": 8721
+    },
+    {
+      "name": "MINUS SIGN",
+      "value": "−",
+      "codepoint": 8722
+    },
+    {
+      "name": "MINUS-OR-PLUS SIGN",
+      "value": "∓",
+      "codepoint": 8723
+    },
+    {
+      "name": "DOT PLUS",
+      "value": "∔",
+      "codepoint": 8724
+    },
+    {
+      "name": "DIVISION SLASH",
+      "value": "∕",
+      "codepoint": 8725
+    },
+    {
+      "name": "SET MINUS",
+      "value": "∖",
+      "codepoint": 8726
+    },
+    {
+      "name": "ASTERISK OPERATOR",
+      "value": "∗",
+      "codepoint": 8727
+    },
+    {
+      "name": "RING OPERATOR",
+      "value": "∘",
+      "codepoint": 8728
+    },
+    {
+      "name": "BULLET OPERATOR",
+      "value": "∙",
+      "codepoint": 8729
+    },
+    {
+      "name": "SQUARE ROOT",
+      "value": "√",
+      "codepoint": 8730
+    },
+    {
+      "name": "CUBE ROOT",
+      "value": "∛",
+      "codepoint": 8731
+    },
+    {
+      "name": "FOURTH ROOT",
+      "value": "∜",
+      "codepoint": 8732
+    },
+    {
+      "name": "PROPORTIONAL TO",
+      "value": "∝",
+      "codepoint": 8733
+    },
+    {
+      "name": "INFINITY",
+      "value": "∞",
+      "codepoint": 8734
+    },
+    {
+      "name": "RIGHT ANGLE",
+      "value": "∟",
+      "codepoint": 8735
+    },
+    {
+      "name": "ANGLE",
+      "value": "∠",
+      "codepoint": 8736
+    },
+    {
+      "name": "MEASURED ANGLE",
+      "value": "∡",
+      "codepoint": 8737
+    },
+    {
+      "name": "SPHERICAL ANGLE",
+      "value": "∢",
+      "codepoint": 8738
+    },
+    {
+      "name": "DIVIDES",
+      "value": "∣",
+      "codepoint": 8739
+    },
+    {
+      "name": "DOES NOT DIVIDE",
+      "value": "∤",
+      "codepoint": 8740
+    },
+    {
+      "name": "PARALLEL TO",
+      "value": "∥",
+      "codepoint": 8741
+    },
+    {
+      "name": "NOT PARALLEL TO",
+      "value": "∦",
+      "codepoint": 8742
+    },
+    {
+      "name": "LOGICAL AND",
+      "value": "∧",
+      "codepoint": 8743
+    },
+    {
+      "name": "LOGICAL OR",
+      "value": "∨",
+      "codepoint": 8744
+    },
+    {
+      "name": "INTERSECTION",
+      "value": "∩",
+      "codepoint": 8745
+    },
+    {
+      "name": "UNION",
+      "value": "∪",
+      "codepoint": 8746
+    },
+    {
+      "name": "INTEGRAL",
+      "value": "∫",
+      "codepoint": 8747
+    },
+    {
+      "name": "DOUBLE INTEGRAL",
+      "value": "∬",
+      "codepoint": 8748
+    },
+    {
+      "name": "TRIPLE INTEGRAL",
+      "value": "∭",
+      "codepoint": 8749
+    },
+    {
+      "name": "CONTOUR INTEGRAL",
+      "value": "∮",
+      "codepoint": 8750
+    },
+    {
+      "name": "SURFACE INTEGRAL",
+      "value": "∯",
+      "codepoint": 8751
+    },
+    {
+      "name": "VOLUME INTEGRAL",
+      "value": "∰",
+      "codepoint": 8752
+    },
+    {
+      "name": "CLOCKWISE INTEGRAL",
+      "value": "∱",
+      "codepoint": 8753
+    },
+    {
+      "name": "CLOCKWISE CONTOUR INTEGRAL",
+      "value": "∲",
+      "codepoint": 8754
+    },
+    {
+      "name": "ANTICLOCKWISE CONTOUR INTEGRAL",
+      "value": "∳",
+      "codepoint": 8755
+    },
+    {
+      "name": "THEREFORE",
+      "value": "∴",
+      "codepoint": 8756
+    },
+    {
+      "name": "BECAUSE",
+      "value": "∵",
+      "codepoint": 8757
+    },
+    {
+      "name": "RATIO",
+      "value": "∶",
+      "codepoint": 8758
+    },
+    {
+      "name": "PROPORTION",
+      "value": "∷",
+      "codepoint": 8759
+    },
+    {
+      "name": "DOT MINUS",
+      "value": "∸",
+      "codepoint": 8760
+    },
+    {
+      "name": "EXCESS",
+      "value": "∹",
+      "codepoint": 8761
+    },
+    {
+      "name": "GEOMETRIC PROPORTION",
+      "value": "∺",
+      "codepoint": 8762
+    },
+    {
+      "name": "HOMOTHETIC",
+      "value": "∻",
+      "codepoint": 8763
+    },
+    {
+      "name": "TILDE OPERATOR",
+      "value": "∼",
+      "codepoint": 8764
+    },
+    {
+      "name": "REVERSED TILDE",
+      "value": "∽",
+      "codepoint": 8765
+    },
+    {
+      "name": "INVERTED LAZY S",
+      "value": "∾",
+      "codepoint": 8766
+    },
+    {
+      "name": "SINE WAVE",
+      "value": "∿",
+      "codepoint": 8767
+    },
+    {
+      "name": "WREATH PRODUCT",
+      "value": "≀",
+      "codepoint": 8768
+    },
+    {
+      "name": "NOT TILDE",
+      "value": "≁",
+      "codepoint": 8769
+    },
+    {
+      "name": "MINUS TILDE",
+      "value": "≂",
+      "codepoint": 8770
+    },
+    {
+      "name": "ASYMPTOTICALLY EQUAL TO",
+      "value": "≃",
+      "codepoint": 8771
+    },
+    {
+      "name": "NOT ASYMPTOTICALLY EQUAL TO",
+      "value": "≄",
+      "codepoint": 8772
+    },
+    {
+      "name": "APPROXIMATELY EQUAL TO",
+      "value": "≅",
+      "codepoint": 8773
+    },
+    {
+      "name": "APPROXIMATELY BUT NOT ACTUALLY EQUAL TO",
+      "value": "≆",
+      "codepoint": 8774
+    },
+    {
+      "name": "NEITHER APPROXIMATELY NOR ACTUALLY EQUAL TO",
+      "value": "≇",
+      "codepoint": 8775
+    },
+    {
+      "name": "ALMOST EQUAL TO",
+      "value": "≈",
+      "codepoint": 8776
+    },
+    {
+      "name": "NOT ALMOST EQUAL TO",
+      "value": "≉",
+      "codepoint": 8777
+    },
+    {
+      "name": "ALMOST EQUAL OR EQUAL TO",
+      "value": "≊",
+      "codepoint": 8778
+    },
+    {
+      "name": "TRIPLE TILDE",
+      "value": "≋",
+      "codepoint": 8779
+    },
+    {
+      "name": "ALL EQUAL TO",
+      "value": "≌",
+      "codepoint": 8780
+    },
+    {
+      "name": "EQUIVALENT TO",
+      "value": "≍",
+      "codepoint": 8781
+    },
+    {
+      "name": "GEOMETRICALLY EQUIVALENT TO",
+      "value": "≎",
+      "codepoint": 8782
+    },
+    {
+      "name": "DIFFERENCE BETWEEN",
+      "value": "≏",
+      "codepoint": 8783
+    },
+    {
+      "name": "APPROACHES THE LIMIT",
+      "value": "≐",
+      "codepoint": 8784
+    },
+    {
+      "name": "GEOMETRICALLY EQUAL TO",
+      "value": "≑",
+      "codepoint": 8785
+    },
+    {
+      "name": "APPROXIMATELY EQUAL TO OR THE IMAGE OF",
+      "value": "≒",
+      "codepoint": 8786
+    },
+    {
+      "name": "IMAGE OF OR APPROXIMATELY EQUAL TO",
+      "value": "≓",
+      "codepoint": 8787
+    },
+    {
+      "name": "COLON EQUALS",
+      "value": "≔",
+      "codepoint": 8788
+    },
+    {
+      "name": "EQUALS COLON",
+      "value": "≕",
+      "codepoint": 8789
+    },
+    {
+      "name": "RING IN EQUAL TO",
+      "value": "≖",
+      "codepoint": 8790
+    },
+    {
+      "name": "RING EQUAL TO",
+      "value": "≗",
+      "codepoint": 8791
+    },
+    {
+      "name": "CORRESPONDS TO",
+      "value": "≘",
+      "codepoint": 8792
+    },
+    {
+      "name": "ESTIMATES",
+      "value": "≙",
+      "codepoint": 8793
+    },
+    {
+      "name": "EQUIANGULAR TO",
+      "value": "≚",
+      "codepoint": 8794
+    },
+    {
+      "name": "STAR EQUALS",
+      "value": "≛",
+      "codepoint": 8795
+    },
+    {
+      "name": "DELTA EQUAL TO",
+      "value": "≜",
+      "codepoint": 8796
+    },
+    {
+      "name": "EQUAL TO BY DEFINITION",
+      "value": "≝",
+      "codepoint": 8797
+    },
+    {
+      "name": "MEASURED BY",
+      "value": "≞",
+      "codepoint": 8798
+    },
+    {
+      "name": "QUESTIONED EQUAL TO",
+      "value": "≟",
+      "codepoint": 8799
+    },
+    {
+      "name": "NOT EQUAL TO",
+      "value": "≠",
+      "codepoint": 8800
+    },
+    {
+      "name": "IDENTICAL TO",
+      "value": "≡",
+      "codepoint": 8801
+    },
+    {
+      "name": "NOT IDENTICAL TO",
+      "value": "≢",
+      "codepoint": 8802
+    },
+    {
+      "name": "STRICTLY EQUIVALENT TO",
+      "value": "≣",
+      "codepoint": 8803
+    },
+    {
+      "name": "LESS-THAN OR EQUAL TO",
+      "value": "≤",
+      "codepoint": 8804
+    },
+    {
+      "name": "GREATER-THAN OR EQUAL TO",
+      "value": "≥",
+      "codepoint": 8805
+    },
+    {
+      "name": "LESS-THAN OVER EQUAL TO",
+      "value": "≦",
+      "codepoint": 8806
+    },
+    {
+      "name": "GREATER-THAN OVER EQUAL TO",
+      "value": "≧",
+      "codepoint": 8807
+    },
+    {
+      "name": "LESS-THAN BUT NOT EQUAL TO",
+      "value": "≨",
+      "codepoint": 8808
+    },
+    {
+      "name": "GREATER-THAN BUT NOT EQUAL TO",
+      "value": "≩",
+      "codepoint": 8809
+    },
+    {
+      "name": "MUCH LESS-THAN",
+      "value": "≪",
+      "codepoint": 8810
+    },
+    {
+      "name": "MUCH GREATER-THAN",
+      "value": "≫",
+      "codepoint": 8811
+    },
+    {
+      "name": "BETWEEN",
+      "value": "≬",
+      "codepoint": 8812
+    },
+    {
+      "name": "NOT EQUIVALENT TO",
+      "value": "≭",
+      "codepoint": 8813
+    },
+    {
+      "name": "NOT LESS-THAN",
+      "value": "≮",
+      "codepoint": 8814
+    },
+    {
+      "name": "NOT GREATER-THAN",
+      "value": "≯",
+      "codepoint": 8815
+    },
+    {
+      "name": "NEITHER LESS-THAN NOR EQUAL TO",
+      "value": "≰",
+      "codepoint": 8816
+    },
+    {
+      "name": "NEITHER GREATER-THAN NOR EQUAL TO",
+      "value": "≱",
+      "codepoint": 8817
+    },
+    {
+      "name": "LESS-THAN OR EQUIVALENT TO",
+      "value": "≲",
+      "codepoint": 8818
+    },
+    {
+      "name": "GREATER-THAN OR EQUIVALENT TO",
+      "value": "≳",
+      "codepoint": 8819
+    },
+    {
+      "name": "NEITHER LESS-THAN NOR EQUIVALENT TO",
+      "value": "≴",
+      "codepoint": 8820
+    },
+    {
+      "name": "NEITHER GREATER-THAN NOR EQUIVALENT TO",
+      "value": "≵",
+      "codepoint": 8821
+    },
+    {
+      "name": "LESS-THAN OR GREATER-THAN",
+      "value": "≶",
+      "codepoint": 8822
+    },
+    {
+      "name": "GREATER-THAN OR LESS-THAN",
+      "value": "≷",
+      "codepoint": 8823
+    },
+    {
+      "name": "NEITHER LESS-THAN NOR GREATER-THAN",
+      "value": "≸",
+      "codepoint": 8824
+    },
+    {
+      "name": "NEITHER GREATER-THAN NOR LESS-THAN",
+      "value": "≹",
+      "codepoint": 8825
+    },
+    {
+      "name": "PRECEDES",
+      "value": "≺",
+      "codepoint": 8826
+    },
+    {
+      "name": "SUCCEEDS",
+      "value": "≻",
+      "codepoint": 8827
+    },
+    {
+      "name": "PRECEDES OR EQUAL TO",
+      "value": "≼",
+      "codepoint": 8828
+    },
+    {
+      "name": "SUCCEEDS OR EQUAL TO",
+      "value": "≽",
+      "codepoint": 8829
+    },
+    {
+      "name": "PRECEDES OR EQUIVALENT TO",
+      "value": "≾",
+      "codepoint": 8830
+    },
+    {
+      "name": "SUCCEEDS OR EQUIVALENT TO",
+      "value": "≿",
+      "codepoint": 8831
+    },
+    {
+      "name": "DOES NOT PRECEDE",
+      "value": "⊀",
+      "codepoint": 8832
+    },
+    {
+      "name": "DOES NOT SUCCEED",
+      "value": "⊁",
+      "codepoint": 8833
+    },
+    {
+      "name": "SUBSET OF",
+      "value": "⊂",
+      "codepoint": 8834
+    },
+    {
+      "name": "SUPERSET OF",
+      "value": "⊃",
+      "codepoint": 8835
+    },
+    {
+      "name": "NOT A SUBSET OF",
+      "value": "⊄",
+      "codepoint": 8836
+    },
+    {
+      "name": "NOT A SUPERSET OF",
+      "value": "⊅",
+      "codepoint": 8837
+    },
+    {
+      "name": "SUBSET OF OR EQUAL TO",
+      "value": "⊆",
+      "codepoint": 8838
+    },
+    {
+      "name": "SUPERSET OF OR EQUAL TO",
+      "value": "⊇",
+      "codepoint": 8839
+    },
+    {
+      "name": "NEITHER A SUBSET OF NOR EQUAL TO",
+      "value": "⊈",
+      "codepoint": 8840
+    },
+    {
+      "name": "NEITHER A SUPERSET OF NOR EQUAL TO",
+      "value": "⊉",
+      "codepoint": 8841
+    },
+    {
+      "name": "SUBSET OF WITH NOT EQUAL TO",
+      "value": "⊊",
+      "codepoint": 8842
+    },
+    {
+      "name": "SUPERSET OF WITH NOT EQUAL TO",
+      "value": "⊋",
+      "codepoint": 8843
+    },
+    {
+      "name": "MULTISET",
+      "value": "⊌",
+      "codepoint": 8844
+    },
+    {
+      "name": "MULTISET MULTIPLICATION",
+      "value": "⊍",
+      "codepoint": 8845
+    },
+    {
+      "name": "MULTISET UNION",
+      "value": "⊎",
+      "codepoint": 8846
+    },
+    {
+      "name": "SQUARE IMAGE OF",
+      "value": "⊏",
+      "codepoint": 8847
+    },
+    {
+      "name": "SQUARE ORIGINAL OF",
+      "value": "⊐",
+      "codepoint": 8848
+    },
+    {
+      "name": "SQUARE IMAGE OF OR EQUAL TO",
+      "value": "⊑",
+      "codepoint": 8849
+    },
+    {
+      "name": "SQUARE ORIGINAL OF OR EQUAL TO",
+      "value": "⊒",
+      "codepoint": 8850
+    },
+    {
+      "name": "SQUARE CAP",
+      "value": "⊓",
+      "codepoint": 8851
+    },
+    {
+      "name": "SQUARE CUP",
+      "value": "⊔",
+      "codepoint": 8852
+    },
+    {
+      "name": "CIRCLED PLUS",
+      "value": "⊕",
+      "codepoint": 8853
+    },
+    {
+      "name": "CIRCLED MINUS",
+      "value": "⊖",
+      "codepoint": 8854
+    },
+    {
+      "name": "CIRCLED TIMES",
+      "value": "⊗",
+      "codepoint": 8855
+    },
+    {
+      "name": "CIRCLED DIVISION SLASH",
+      "value": "⊘",
+      "codepoint": 8856
+    },
+    {
+      "name": "CIRCLED DOT OPERATOR",
+      "value": "⊙",
+      "codepoint": 8857
+    },
+    {
+      "name": "CIRCLED RING OPERATOR",
+      "value": "⊚",
+      "codepoint": 8858
+    },
+    {
+      "name": "CIRCLED ASTERISK OPERATOR",
+      "value": "⊛",
+      "codepoint": 8859
+    },
+    {
+      "name": "CIRCLED EQUALS",
+      "value": "⊜",
+      "codepoint": 8860
+    },
+    {
+      "name": "CIRCLED DASH",
+      "value": "⊝",
+      "codepoint": 8861
+    },
+    {
+      "name": "SQUARED PLUS",
+      "value": "⊞",
+      "codepoint": 8862
+    },
+    {
+      "name": "SQUARED MINUS",
+      "value": "⊟",
+      "codepoint": 8863
+    },
+    {
+      "name": "SQUARED TIMES",
+      "value": "⊠",
+      "codepoint": 8864
+    },
+    {
+      "name": "SQUARED DOT OPERATOR",
+      "value": "⊡",
+      "codepoint": 8865
+    },
+    {
+      "name": "RIGHT TACK",
+      "value": "⊢",
+      "codepoint": 8866
+    },
+    {
+      "name": "LEFT TACK",
+      "value": "⊣",
+      "codepoint": 8867
+    },
+    {
+      "name": "DOWN TACK",
+      "value": "⊤",
+      "codepoint": 8868
+    },
+    {
+      "name": "UP TACK",
+      "value": "⊥",
+      "codepoint": 8869
+    },
+    {
+      "name": "ASSERTION",
+      "value": "⊦",
+      "codepoint": 8870
+    },
+    {
+      "name": "MODELS",
+      "value": "⊧",
+      "codepoint": 8871
+    },
+    {
+      "name": "TRUE",
+      "value": "⊨",
+      "codepoint": 8872
+    },
+    {
+      "name": "FORCES",
+      "value": "⊩",
+      "codepoint": 8873
+    },
+    {
+      "name": "TRIPLE VERTICAL BAR RIGHT TURNSTILE",
+      "value": "⊪",
+      "codepoint": 8874
+    },
+    {
+      "name": "DOUBLE VERTICAL BAR DOUBLE RIGHT TURNSTILE",
+      "value": "⊫",
+      "codepoint": 8875
+    },
+    {
+      "name": "DOES NOT PROVE",
+      "value": "⊬",
+      "codepoint": 8876
+    },
+    {
+      "name": "NOT TRUE",
+      "value": "⊭",
+      "codepoint": 8877
+    },
+    {
+      "name": "DOES NOT FORCE",
+      "value": "⊮",
+      "codepoint": 8878
+    },
+    {
+      "name": "NEGATED DOUBLE VERTICAL BAR DOUBLE RIGHT TURNSTILE",
+      "value": "⊯",
+      "codepoint": 8879
+    },
+    {
+      "name": "PRECEDES UNDER RELATION",
+      "value": "⊰",
+      "codepoint": 8880
+    },
+    {
+      "name": "SUCCEEDS UNDER RELATION",
+      "value": "⊱",
+      "codepoint": 8881
+    },
+    {
+      "name": "NORMAL SUBGROUP OF",
+      "value": "⊲",
+      "codepoint": 8882
+    },
+    {
+      "name": "CONTAINS AS NORMAL SUBGROUP",
+      "value": "⊳",
+      "codepoint": 8883
+    },
+    {
+      "name": "NORMAL SUBGROUP OF OR EQUAL TO",
+      "value": "⊴",
+      "codepoint": 8884
+    },
+    {
+      "name": "CONTAINS AS NORMAL SUBGROUP OR EQUAL TO",
+      "value": "⊵",
+      "codepoint": 8885
+    },
+    {
+      "name": "ORIGINAL OF",
+      "value": "⊶",
+      "codepoint": 8886
+    },
+    {
+      "name": "IMAGE OF",
+      "value": "⊷",
+      "codepoint": 8887
+    },
+    {
+      "name": "MULTIMAP",
+      "value": "⊸",
+      "codepoint": 8888
+    },
+    {
+      "name": "HERMITIAN CONJUGATE MATRIX",
+      "value": "⊹",
+      "codepoint": 8889
+    },
+    {
+      "name": "INTERCALATE",
+      "value": "⊺",
+      "codepoint": 8890
+    },
+    {
+      "name": "XOR",
+      "value": "⊻",
+      "codepoint": 8891
+    },
+    {
+      "name": "NAND",
+      "value": "⊼",
+      "codepoint": 8892
+    },
+    {
+      "name": "NOR",
+      "value": "⊽",
+      "codepoint": 8893
+    },
+    {
+      "name": "RIGHT ANGLE WITH ARC",
+      "value": "⊾",
+      "codepoint": 8894
+    },
+    {
+      "name": "RIGHT TRIANGLE",
+      "value": "⊿",
+      "codepoint": 8895
+    },
+    {
+      "name": "N-ARY LOGICAL AND",
+      "value": "⋀",
+      "codepoint": 8896
+    },
+    {
+      "name": "N-ARY LOGICAL OR",
+      "value": "⋁",
+      "codepoint": 8897
+    },
+    {
+      "name": "N-ARY INTERSECTION",
+      "value": "⋂",
+      "codepoint": 8898
+    },
+    {
+      "name": "N-ARY UNION",
+      "value": "⋃",
+      "codepoint": 8899
+    },
+    {
+      "name": "DIAMOND OPERATOR",
+      "value": "⋄",
+      "codepoint": 8900
+    },
+    {
+      "name": "DOT OPERATOR",
+      "value": "⋅",
+      "codepoint": 8901
+    },
+    {
+      "name": "STAR OPERATOR",
+      "value": "⋆",
+      "codepoint": 8902
+    },
+    {
+      "name": "DIVISION TIMES",
+      "value": "⋇",
+      "codepoint": 8903
+    },
+    {
+      "name": "BOWTIE",
+      "value": "⋈",
+      "codepoint": 8904
+    },
+    {
+      "name": "LEFT NORMAL FACTOR SEMIDIRECT PRODUCT",
+      "value": "⋉",
+      "codepoint": 8905
+    },
+    {
+      "name": "RIGHT NORMAL FACTOR SEMIDIRECT PRODUCT",
+      "value": "⋊",
+      "codepoint": 8906
+    },
+    {
+      "name": "LEFT SEMIDIRECT PRODUCT",
+      "value": "⋋",
+      "codepoint": 8907
+    },
+    {
+      "name": "RIGHT SEMIDIRECT PRODUCT",
+      "value": "⋌",
+      "codepoint": 8908
+    },
+    {
+      "name": "REVERSED TILDE EQUALS",
+      "value": "⋍",
+      "codepoint": 8909
+    },
+    {
+      "name": "CURLY LOGICAL OR",
+      "value": "⋎",
+      "codepoint": 8910
+    },
+    {
+      "name": "CURLY LOGICAL AND",
+      "value": "⋏",
+      "codepoint": 8911
+    },
+    {
+      "name": "DOUBLE SUBSET",
+      "value": "⋐",
+      "codepoint": 8912
+    },
+    {
+      "name": "DOUBLE SUPERSET",
+      "value": "⋑",
+      "codepoint": 8913
+    },
+    {
+      "name": "DOUBLE INTERSECTION",
+      "value": "⋒",
+      "codepoint": 8914
+    },
+    {
+      "name": "DOUBLE UNION",
+      "value": "⋓",
+      "codepoint": 8915
+    },
+    {
+      "name": "PITCHFORK",
+      "value": "⋔",
+      "codepoint": 8916
+    },
+    {
+      "name": "EQUAL AND PARALLEL TO",
+      "value": "⋕",
+      "codepoint": 8917
+    },
+    {
+      "name": "LESS-THAN WITH DOT",
+      "value": "⋖",
+      "codepoint": 8918
+    },
+    {
+      "name": "GREATER-THAN WITH DOT",
+      "value": "⋗",
+      "codepoint": 8919
+    },
+    {
+      "name": "VERY MUCH LESS-THAN",
+      "value": "⋘",
+      "codepoint": 8920
+    },
+    {
+      "name": "VERY MUCH GREATER-THAN",
+      "value": "⋙",
+      "codepoint": 8921
+    },
+    {
+      "name": "LESS-THAN EQUAL TO OR GREATER-THAN",
+      "value": "⋚",
+      "codepoint": 8922
+    },
+    {
+      "name": "GREATER-THAN EQUAL TO OR LESS-THAN",
+      "value": "⋛",
+      "codepoint": 8923
+    },
+    {
+      "name": "EQUAL TO OR LESS-THAN",
+      "value": "⋜",
+      "codepoint": 8924
+    },
+    {
+      "name": "EQUAL TO OR GREATER-THAN",
+      "value": "⋝",
+      "codepoint": 8925
+    },
+    {
+      "name": "EQUAL TO OR PRECEDES",
+      "value": "⋞",
+      "codepoint": 8926
+    },
+    {
+      "name": "EQUAL TO OR SUCCEEDS",
+      "value": "⋟",
+      "codepoint": 8927
+    },
+    {
+      "name": "DOES NOT PRECEDE OR EQUAL",
+      "value": "⋠",
+      "codepoint": 8928
+    },
+    {
+      "name": "DOES NOT SUCCEED OR EQUAL",
+      "value": "⋡",
+      "codepoint": 8929
+    },
+    {
+      "name": "NOT SQUARE IMAGE OF OR EQUAL TO",
+      "value": "⋢",
+      "codepoint": 8930
+    },
+    {
+      "name": "NOT SQUARE ORIGINAL OF OR EQUAL TO",
+      "value": "⋣",
+      "codepoint": 8931
+    },
+    {
+      "name": "SQUARE IMAGE OF OR NOT EQUAL TO",
+      "value": "⋤",
+      "codepoint": 8932
+    },
+    {
+      "name": "SQUARE ORIGINAL OF OR NOT EQUAL TO",
+      "value": "⋥",
+      "codepoint": 8933
+    },
+    {
+      "name": "LESS-THAN BUT NOT EQUIVALENT TO",
+      "value": "⋦",
+      "codepoint": 8934
+    },
+    {
+      "name": "GREATER-THAN BUT NOT EQUIVALENT TO",
+      "value": "⋧",
+      "codepoint": 8935
+    },
+    {
+      "name": "PRECEDES BUT NOT EQUIVALENT TO",
+      "value": "⋨",
+      "codepoint": 8936
+    },
+    {
+      "name": "SUCCEEDS BUT NOT EQUIVALENT TO",
+      "value": "⋩",
+      "codepoint": 8937
+    },
+    {
+      "name": "NOT NORMAL SUBGROUP OF",
+      "value": "⋪",
+      "codepoint": 8938
+    },
+    {
+      "name": "DOES NOT CONTAIN AS NORMAL SUBGROUP",
+      "value": "⋫",
+      "codepoint": 8939
+    },
+    {
+      "name": "NOT NORMAL SUBGROUP OF OR EQUAL TO",
+      "value": "⋬",
+      "codepoint": 8940
+    },
+    {
+      "name": "DOES NOT CONTAIN AS NORMAL SUBGROUP OR EQUAL",
+      "value": "⋭",
+      "codepoint": 8941
+    },
+    {
+      "name": "VERTICAL ELLIPSIS",
+      "value": "⋮",
+      "codepoint": 8942
+    },
+    {
+      "name": "MIDLINE HORIZONTAL ELLIPSIS",
+      "value": "⋯",
+      "codepoint": 8943
+    },
+    {
+      "name": "UP RIGHT DIAGONAL ELLIPSIS",
+      "value": "⋰",
+      "codepoint": 8944
+    },
+    {
+      "name": "DOWN RIGHT DIAGONAL ELLIPSIS",
+      "value": "⋱",
+      "codepoint": 8945
+    },
+    {
+      "name": "DIAMETER SIGN",
+      "value": "⌀",
+      "codepoint": 8960
+    },
+    {
+      "name": "ELECTRIC ARROW",
+      "value": "⌁",
+      "codepoint": 8961
+    },
+    {
+      "name": "HOUSE",
+      "value": "⌂",
+      "codepoint": 8962
+    },
+    {
+      "name": "UP ARROWHEAD",
+      "value": "⌃",
+      "codepoint": 8963
+    },
+    {
+      "name": "DOWN ARROWHEAD",
+      "value": "⌄",
+      "codepoint": 8964
+    },
+    {
+      "name": "PROJECTIVE",
+      "value": "⌅",
+      "codepoint": 8965
+    },
+    {
+      "name": "PERSPECTIVE",
+      "value": "⌆",
+      "codepoint": 8966
+    },
+    {
+      "name": "WAVY LINE",
+      "value": "⌇",
+      "codepoint": 8967
+    },
+    {
+      "name": "LEFT CEILING",
+      "value": "⌈",
+      "codepoint": 8968
+    },
+    {
+      "name": "RIGHT CEILING",
+      "value": "⌉",
+      "codepoint": 8969
+    },
+    {
+      "name": "LEFT FLOOR",
+      "value": "⌊",
+      "codepoint": 8970
+    },
+    {
+      "name": "RIGHT FLOOR",
+      "value": "⌋",
+      "codepoint": 8971
+    },
+    {
+      "name": "BOTTOM RIGHT CROP",
+      "value": "⌌",
+      "codepoint": 8972
+    },
+    {
+      "name": "BOTTOM LEFT CROP",
+      "value": "⌍",
+      "codepoint": 8973
+    },
+    {
+      "name": "TOP RIGHT CROP",
+      "value": "⌎",
+      "codepoint": 8974
+    },
+    {
+      "name": "TOP LEFT CROP",
+      "value": "⌏",
+      "codepoint": 8975
+    },
+    {
+      "name": "REVERSED NOT SIGN",
+      "value": "⌐",
+      "codepoint": 8976
+    },
+    {
+      "name": "SQUARE LOZENGE",
+      "value": "⌑",
+      "codepoint": 8977
+    },
+    {
+      "name": "ARC",
+      "value": "⌒",
+      "codepoint": 8978
+    },
+    {
+      "name": "SEGMENT",
+      "value": "⌓",
+      "codepoint": 8979
+    },
+    {
+      "name": "SECTOR",
+      "value": "⌔",
+      "codepoint": 8980
+    },
+    {
+      "name": "TELEPHONE RECORDER",
+      "value": "⌕",
+      "codepoint": 8981
+    },
+    {
+      "name": "POSITION INDICATOR",
+      "value": "⌖",
+      "codepoint": 8982
+    },
+    {
+      "name": "VIEWDATA SQUARE",
+      "value": "⌗",
+      "codepoint": 8983
+    },
+    {
+      "name": "PLACE OF INTEREST SIGN",
+      "value": "⌘",
+      "codepoint": 8984
+    },
+    {
+      "name": "TURNED NOT SIGN",
+      "value": "⌙",
+      "codepoint": 8985
+    },
+    {
+      "name": "WATCH",
+      "value": "⌚",
+      "codepoint": 8986
+    },
+    {
+      "name": "HOURGLASS",
+      "value": "⌛",
+      "codepoint": 8987
+    },
+    {
+      "name": "TOP LEFT CORNER",
+      "value": "⌜",
+      "codepoint": 8988
+    },
+    {
+      "name": "TOP RIGHT CORNER",
+      "value": "⌝",
+      "codepoint": 8989
+    },
+    {
+      "name": "BOTTOM LEFT CORNER",
+      "value": "⌞",
+      "codepoint": 8990
+    },
+    {
+      "name": "BOTTOM RIGHT CORNER",
+      "value": "⌟",
+      "codepoint": 8991
+    },
+    {
+      "name": "TOP HALF INTEGRAL",
+      "value": "⌠",
+      "codepoint": 8992
+    },
+    {
+      "name": "BOTTOM HALF INTEGRAL",
+      "value": "⌡",
+      "codepoint": 8993
+    },
+    {
+      "name": "FROWN",
+      "value": "⌢",
+      "codepoint": 8994
+    },
+    {
+      "name": "SMILE",
+      "value": "⌣",
+      "codepoint": 8995
+    },
+    {
+      "name": "UP ARROWHEAD BETWEEN TWO HORIZONTAL BARS",
+      "value": "⌤",
+      "codepoint": 8996
+    },
+    {
+      "name": "OPTION KEY",
+      "value": "⌥",
+      "codepoint": 8997
+    },
+    {
+      "name": "ERASE TO THE RIGHT",
+      "value": "⌦",
+      "codepoint": 8998
+    },
+    {
+      "name": "X IN A RECTANGLE BOX",
+      "value": "⌧",
+      "codepoint": 8999
+    },
+    {
+      "name": "KEYBOARD",
+      "value": "⌨",
+      "codepoint": 9000
+    },
+    {
+      "name": "LEFT-POINTING ANGLE BRACKET",
+      "value": "〈",
+      "codepoint": 9001
+    },
+    {
+      "name": "RIGHT-POINTING ANGLE BRACKET",
+      "value": "〉",
+      "codepoint": 9002
+    },
+    {
+      "name": "ERASE TO THE LEFT",
+      "value": "⌫",
+      "codepoint": 9003
+    },
+    {
+      "name": "BENZENE RING",
+      "value": "⌬",
+      "codepoint": 9004
+    },
+    {
+      "name": "CYLINDRICITY",
+      "value": "⌭",
+      "codepoint": 9005
+    },
+    {
+      "name": "ALL AROUND-PROFILE",
+      "value": "⌮",
+      "codepoint": 9006
+    },
+    {
+      "name": "SYMMETRY",
+      "value": "⌯",
+      "codepoint": 9007
+    },
+    {
+      "name": "TOTAL RUNOUT",
+      "value": "⌰",
+      "codepoint": 9008
+    },
+    {
+      "name": "DIMENSION ORIGIN",
+      "value": "⌱",
+      "codepoint": 9009
+    },
+    {
+      "name": "CONICAL TAPER",
+      "value": "⌲",
+      "codepoint": 9010
+    },
+    {
+      "name": "SLOPE",
+      "value": "⌳",
+      "codepoint": 9011
+    },
+    {
+      "name": "COUNTERBORE",
+      "value": "⌴",
+      "codepoint": 9012
+    },
+    {
+      "name": "COUNTERSINK",
+      "value": "⌵",
+      "codepoint": 9013
+    },
+    {
+      "name": "APL FUNCTIONAL SYMBOL I-BEAM",
+      "value": "⌶",
+      "codepoint": 9014
+    },
+    {
+      "name": "APL FUNCTIONAL SYMBOL SQUISH QUAD",
+      "value": "⌷",
+      "codepoint": 9015
+    },
+    {
+      "name": "APL FUNCTIONAL SYMBOL QUAD EQUAL",
+      "value": "⌸",
+      "codepoint": 9016
+    },
+    {
+      "name": "APL FUNCTIONAL SYMBOL QUAD DIVIDE",
+      "value": "⌹",
+      "codepoint": 9017
+    },
+    {
+      "name": "APL FUNCTIONAL SYMBOL QUAD DIAMOND",
+      "value": "⌺",
+      "codepoint": 9018
+    },
+    {
+      "name": "APL FUNCTIONAL SYMBOL QUAD JOT",
+      "value": "⌻",
+      "codepoint": 9019
+    },
+    {
+      "name": "APL FUNCTIONAL SYMBOL QUAD CIRCLE",
+      "value": "⌼",
+      "codepoint": 9020
+    },
+    {
+      "name": "APL FUNCTIONAL SYMBOL CIRCLE STILE",
+      "value": "⌽",
+      "codepoint": 9021
+    },
+    {
+      "name": "APL FUNCTIONAL SYMBOL CIRCLE JOT",
+      "value": "⌾",
+      "codepoint": 9022
+    },
+    {
+      "name": "APL FUNCTIONAL SYMBOL SLASH BAR",
+      "value": "⌿",
+      "codepoint": 9023
+    },
+    {
+      "name": "APL FUNCTIONAL SYMBOL BACKSLASH BAR",
+      "value": "⍀",
+      "codepoint": 9024
+    },
+    {
+      "name": "APL FUNCTIONAL SYMBOL QUAD SLASH",
+      "value": "⍁",
+      "codepoint": 9025
+    },
+    {
+      "name": "APL FUNCTIONAL SYMBOL QUAD BACKSLASH",
+      "value": "⍂",
+      "codepoint": 9026
+    },
+    {
+      "name": "APL FUNCTIONAL SYMBOL QUAD LESS-THAN",
+      "value": "⍃",
+      "codepoint": 9027
+    },
+    {
+      "name": "APL FUNCTIONAL SYMBOL QUAD GREATER-THAN",
+      "value": "⍄",
+      "codepoint": 9028
+    },
+    {
+      "name": "APL FUNCTIONAL SYMBOL LEFTWARDS VANE",
+      "value": "⍅",
+      "codepoint": 9029
+    },
+    {
+      "name": "APL FUNCTIONAL SYMBOL RIGHTWARDS VANE",
+      "value": "⍆",
+      "codepoint": 9030
+    },
+    {
+      "name": "APL FUNCTIONAL SYMBOL QUAD LEFTWARDS ARROW",
+      "value": "⍇",
+      "codepoint": 9031
+    },
+    {
+      "name": "APL FUNCTIONAL SYMBOL QUAD RIGHTWARDS ARROW",
+      "value": "⍈",
+      "codepoint": 9032
+    },
+    {
+      "name": "APL FUNCTIONAL SYMBOL CIRCLE BACKSLASH",
+      "value": "⍉",
+      "codepoint": 9033
+    },
+    {
+      "name": "APL FUNCTIONAL SYMBOL DOWN TACK UNDERBAR",
+      "value": "⍊",
+      "codepoint": 9034
+    },
+    {
+      "name": "APL FUNCTIONAL SYMBOL DELTA STILE",
+      "value": "⍋",
+      "codepoint": 9035
+    },
+    {
+      "name": "APL FUNCTIONAL SYMBOL QUAD DOWN CARET",
+      "value": "⍌",
+      "codepoint": 9036
+    },
+    {
+      "name": "APL FUNCTIONAL SYMBOL QUAD DELTA",
+      "value": "⍍",
+      "codepoint": 9037
+    },
+    {
+      "name": "APL FUNCTIONAL SYMBOL DOWN TACK JOT",
+      "value": "⍎",
+      "codepoint": 9038
+    },
+    {
+      "name": "APL FUNCTIONAL SYMBOL UPWARDS VANE",
+      "value": "⍏",
+      "codepoint": 9039
+    },
+    {
+      "name": "APL FUNCTIONAL SYMBOL QUAD UPWARDS ARROW",
+      "value": "⍐",
+      "codepoint": 9040
+    },
+    {
+      "name": "APL FUNCTIONAL SYMBOL UP TACK OVERBAR",
+      "value": "⍑",
+      "codepoint": 9041
+    },
+    {
+      "name": "APL FUNCTIONAL SYMBOL DEL STILE",
+      "value": "⍒",
+      "codepoint": 9042
+    },
+    {
+      "name": "APL FUNCTIONAL SYMBOL QUAD UP CARET",
+      "value": "⍓",
+      "codepoint": 9043
+    },
+    {
+      "name": "APL FUNCTIONAL SYMBOL QUAD DEL",
+      "value": "⍔",
+      "codepoint": 9044
+    },
+    {
+      "name": "APL FUNCTIONAL SYMBOL UP TACK JOT",
+      "value": "⍕",
+      "codepoint": 9045
+    },
+    {
+      "name": "APL FUNCTIONAL SYMBOL DOWNWARDS VANE",
+      "value": "⍖",
+      "codepoint": 9046
+    },
+    {
+      "name": "APL FUNCTIONAL SYMBOL QUAD DOWNWARDS ARROW",
+      "value": "⍗",
+      "codepoint": 9047
+    },
+    {
+      "name": "APL FUNCTIONAL SYMBOL QUOTE UNDERBAR",
+      "value": "⍘",
+      "codepoint": 9048
+    },
+    {
+      "name": "APL FUNCTIONAL SYMBOL DELTA UNDERBAR",
+      "value": "⍙",
+      "codepoint": 9049
+    },
+    {
+      "name": "APL FUNCTIONAL SYMBOL DIAMOND UNDERBAR",
+      "value": "⍚",
+      "codepoint": 9050
+    },
+    {
+      "name": "APL FUNCTIONAL SYMBOL JOT UNDERBAR",
+      "value": "⍛",
+      "codepoint": 9051
+    },
+    {
+      "name": "APL FUNCTIONAL SYMBOL CIRCLE UNDERBAR",
+      "value": "⍜",
+      "codepoint": 9052
+    },
+    {
+      "name": "APL FUNCTIONAL SYMBOL UP SHOE JOT",
+      "value": "⍝",
+      "codepoint": 9053
+    },
+    {
+      "name": "APL FUNCTIONAL SYMBOL QUOTE QUAD",
+      "value": "⍞",
+      "codepoint": 9054
+    },
+    {
+      "name": "APL FUNCTIONAL SYMBOL CIRCLE STAR",
+      "value": "⍟",
+      "codepoint": 9055
+    },
+    {
+      "name": "APL FUNCTIONAL SYMBOL QUAD COLON",
+      "value": "⍠",
+      "codepoint": 9056
+    },
+    {
+      "name": "APL FUNCTIONAL SYMBOL UP TACK DIAERESIS",
+      "value": "⍡",
+      "codepoint": 9057
+    },
+    {
+      "name": "APL FUNCTIONAL SYMBOL DEL DIAERESIS",
+      "value": "⍢",
+      "codepoint": 9058
+    },
+    {
+      "name": "APL FUNCTIONAL SYMBOL STAR DIAERESIS",
+      "value": "⍣",
+      "codepoint": 9059
+    },
+    {
+      "name": "APL FUNCTIONAL SYMBOL JOT DIAERESIS",
+      "value": "⍤",
+      "codepoint": 9060
+    },
+    {
+      "name": "APL FUNCTIONAL SYMBOL CIRCLE DIAERESIS",
+      "value": "⍥",
+      "codepoint": 9061
+    },
+    {
+      "name": "APL FUNCTIONAL SYMBOL DOWN SHOE STILE",
+      "value": "⍦",
+      "codepoint": 9062
+    },
+    {
+      "name": "APL FUNCTIONAL SYMBOL LEFT SHOE STILE",
+      "value": "⍧",
+      "codepoint": 9063
+    },
+    {
+      "name": "APL FUNCTIONAL SYMBOL TILDE DIAERESIS",
+      "value": "⍨",
+      "codepoint": 9064
+    },
+    {
+      "name": "APL FUNCTIONAL SYMBOL GREATER-THAN DIAERESIS",
+      "value": "⍩",
+      "codepoint": 9065
+    },
+    {
+      "name": "APL FUNCTIONAL SYMBOL COMMA BAR",
+      "value": "⍪",
+      "codepoint": 9066
+    },
+    {
+      "name": "APL FUNCTIONAL SYMBOL DEL TILDE",
+      "value": "⍫",
+      "codepoint": 9067
+    },
+    {
+      "name": "APL FUNCTIONAL SYMBOL ZILDE",
+      "value": "⍬",
+      "codepoint": 9068
+    },
+    {
+      "name": "APL FUNCTIONAL SYMBOL STILE TILDE",
+      "value": "⍭",
+      "codepoint": 9069
+    },
+    {
+      "name": "APL FUNCTIONAL SYMBOL SEMICOLON UNDERBAR",
+      "value": "⍮",
+      "codepoint": 9070
+    },
+    {
+      "name": "APL FUNCTIONAL SYMBOL QUAD NOT EQUAL",
+      "value": "⍯",
+      "codepoint": 9071
+    },
+    {
+      "name": "APL FUNCTIONAL SYMBOL QUAD QUESTION",
+      "value": "⍰",
+      "codepoint": 9072
+    },
+    {
+      "name": "APL FUNCTIONAL SYMBOL DOWN CARET TILDE",
+      "value": "⍱",
+      "codepoint": 9073
+    },
+    {
+      "name": "APL FUNCTIONAL SYMBOL UP CARET TILDE",
+      "value": "⍲",
+      "codepoint": 9074
+    },
+    {
+      "name": "APL FUNCTIONAL SYMBOL IOTA",
+      "value": "⍳",
+      "codepoint": 9075
+    },
+    {
+      "name": "APL FUNCTIONAL SYMBOL RHO",
+      "value": "⍴",
+      "codepoint": 9076
+    },
+    {
+      "name": "APL FUNCTIONAL SYMBOL OMEGA",
+      "value": "⍵",
+      "codepoint": 9077
+    },
+    {
+      "name": "APL FUNCTIONAL SYMBOL ALPHA UNDERBAR",
+      "value": "⍶",
+      "codepoint": 9078
+    },
+    {
+      "name": "APL FUNCTIONAL SYMBOL EPSILON UNDERBAR",
+      "value": "⍷",
+      "codepoint": 9079
+    },
+    {
+      "name": "APL FUNCTIONAL SYMBOL IOTA UNDERBAR",
+      "value": "⍸",
+      "codepoint": 9080
+    },
+    {
+      "name": "APL FUNCTIONAL SYMBOL OMEGA UNDERBAR",
+      "value": "⍹",
+      "codepoint": 9081
+    },
+    {
+      "name": "APL FUNCTIONAL SYMBOL ALPHA",
+      "value": "⍺",
+      "codepoint": 9082
+    },
+    {
+      "name": "NOT CHECK MARK",
+      "value": "⍻",
+      "codepoint": 9083
+    },
+    {
+      "name": "SHOULDERED OPEN BOX",
+      "value": "⍽",
+      "codepoint": 9085
+    },
+    {
+      "name": "BELL SYMBOL",
+      "value": "⍾",
+      "codepoint": 9086
+    },
+    {
+      "name": "VERTICAL LINE WITH MIDDLE DOT",
+      "value": "⍿",
+      "codepoint": 9087
+    },
+    {
+      "name": "INSERTION SYMBOL",
+      "value": "⎀",
+      "codepoint": 9088
+    },
+    {
+      "name": "CONTINUOUS UNDERLINE SYMBOL",
+      "value": "⎁",
+      "codepoint": 9089
+    },
+    {
+      "name": "DISCONTINUOUS UNDERLINE SYMBOL",
+      "value": "⎂",
+      "codepoint": 9090
+    },
+    {
+      "name": "EMPHASIS SYMBOL",
+      "value": "⎃",
+      "codepoint": 9091
+    },
+    {
+      "name": "COMPOSITION SYMBOL",
+      "value": "⎄",
+      "codepoint": 9092
+    },
+    {
+      "name": "WHITE SQUARE WITH CENTRE VERTICAL LINE",
+      "value": "⎅",
+      "codepoint": 9093
+    },
+    {
+      "name": "ENTER SYMBOL",
+      "value": "⎆",
+      "codepoint": 9094
+    },
+    {
+      "name": "ALTERNATIVE KEY SYMBOL",
+      "value": "⎇",
+      "codepoint": 9095
+    },
+    {
+      "name": "HELM SYMBOL",
+      "value": "⎈",
+      "codepoint": 9096
+    },
+    {
+      "name": "CIRCLED HORIZONTAL BAR WITH NOTCH",
+      "value": "⎉",
+      "codepoint": 9097
+    },
+    {
+      "name": "CIRCLED TRIANGLE DOWN",
+      "value": "⎊",
+      "codepoint": 9098
+    },
+    {
+      "name": "BROKEN CIRCLE WITH NORTHWEST ARROW",
+      "value": "⎋",
+      "codepoint": 9099
+    },
+    {
+      "name": "UNDO SYMBOL",
+      "value": "⎌",
+      "codepoint": 9100
+    },
+    {
+      "name": "MONOSTABLE SYMBOL",
+      "value": "⎍",
+      "codepoint": 9101
+    },
+    {
+      "name": "HYSTERESIS SYMBOL",
+      "value": "⎎",
+      "codepoint": 9102
+    },
+    {
+      "name": "OPEN-CIRCUIT-OUTPUT H-TYPE SYMBOL",
+      "value": "⎏",
+      "codepoint": 9103
+    },
+    {
+      "name": "OPEN-CIRCUIT-OUTPUT L-TYPE SYMBOL",
+      "value": "⎐",
+      "codepoint": 9104
+    },
+    {
+      "name": "PASSIVE-PULL-DOWN-OUTPUT SYMBOL",
+      "value": "⎑",
+      "codepoint": 9105
+    },
+    {
+      "name": "PASSIVE-PULL-UP-OUTPUT SYMBOL",
+      "value": "⎒",
+      "codepoint": 9106
+    },
+    {
+      "name": "DIRECT CURRENT SYMBOL FORM TWO",
+      "value": "⎓",
+      "codepoint": 9107
+    },
+    {
+      "name": "SOFTWARE-FUNCTION SYMBOL",
+      "value": "⎔",
+      "codepoint": 9108
+    },
+    {
+      "name": "APL FUNCTIONAL SYMBOL QUAD",
+      "value": "⎕",
+      "codepoint": 9109
+    },
+    {
+      "name": "DECIMAL SEPARATOR KEY SYMBOL",
+      "value": "⎖",
+      "codepoint": 9110
+    },
+    {
+      "name": "PREVIOUS PAGE",
+      "value": "⎗",
+      "codepoint": 9111
+    },
+    {
+      "name": "NEXT PAGE",
+      "value": "⎘",
+      "codepoint": 9112
+    },
+    {
+      "name": "PRINT SCREEN SYMBOL",
+      "value": "⎙",
+      "codepoint": 9113
+    },
+    {
+      "name": "CLEAR SCREEN SYMBOL",
+      "value": "⎚",
+      "codepoint": 9114
+    },
+    {
+      "name": "SYMBOL FOR NULL",
+      "value": "␀",
+      "codepoint": 9216
+    },
+    {
+      "name": "SYMBOL FOR START OF HEADING",
+      "value": "␁",
+      "codepoint": 9217
+    },
+    {
+      "name": "SYMBOL FOR START OF TEXT",
+      "value": "␂",
+      "codepoint": 9218
+    },
+    {
+      "name": "SYMBOL FOR END OF TEXT",
+      "value": "␃",
+      "codepoint": 9219
+    },
+    {
+      "name": "SYMBOL FOR END OF TRANSMISSION",
+      "value": "␄",
+      "codepoint": 9220
+    },
+    {
+      "name": "SYMBOL FOR ENQUIRY",
+      "value": "␅",
+      "codepoint": 9221
+    },
+    {
+      "name": "SYMBOL FOR ACKNOWLEDGE",
+      "value": "␆",
+      "codepoint": 9222
+    },
+    {
+      "name": "SYMBOL FOR BELL",
+      "value": "␇",
+      "codepoint": 9223
+    },
+    {
+      "name": "SYMBOL FOR BACKSPACE",
+      "value": "␈",
+      "codepoint": 9224
+    },
+    {
+      "name": "SYMBOL FOR HORIZONTAL TABULATION",
+      "value": "␉",
+      "codepoint": 9225
+    },
+    {
+      "name": "SYMBOL FOR LINE FEED",
+      "value": "␊",
+      "codepoint": 9226
+    },
+    {
+      "name": "SYMBOL FOR VERTICAL TABULATION",
+      "value": "␋",
+      "codepoint": 9227
+    },
+    {
+      "name": "SYMBOL FOR FORM FEED",
+      "value": "␌",
+      "codepoint": 9228
+    },
+    {
+      "name": "SYMBOL FOR CARRIAGE RETURN",
+      "value": "␍",
+      "codepoint": 9229
+    },
+    {
+      "name": "SYMBOL FOR SHIFT OUT",
+      "value": "␎",
+      "codepoint": 9230
+    },
+    {
+      "name": "SYMBOL FOR SHIFT IN",
+      "value": "␏",
+      "codepoint": 9231
+    },
+    {
+      "name": "SYMBOL FOR DATA LINK ESCAPE",
+      "value": "␐",
+      "codepoint": 9232
+    },
+    {
+      "name": "SYMBOL FOR DEVICE CONTROL ONE",
+      "value": "␑",
+      "codepoint": 9233
+    },
+    {
+      "name": "SYMBOL FOR DEVICE CONTROL TWO",
+      "value": "␒",
+      "codepoint": 9234
+    },
+    {
+      "name": "SYMBOL FOR DEVICE CONTROL THREE",
+      "value": "␓",
+      "codepoint": 9235
+    },
+    {
+      "name": "SYMBOL FOR DEVICE CONTROL FOUR",
+      "value": "␔",
+      "codepoint": 9236
+    },
+    {
+      "name": "SYMBOL FOR NEGATIVE ACKNOWLEDGE",
+      "value": "␕",
+      "codepoint": 9237
+    },
+    {
+      "name": "SYMBOL FOR SYNCHRONOUS IDLE",
+      "value": "␖",
+      "codepoint": 9238
+    },
+    {
+      "name": "SYMBOL FOR END OF TRANSMISSION BLOCK",
+      "value": "␗",
+      "codepoint": 9239
+    },
+    {
+      "name": "SYMBOL FOR CANCEL",
+      "value": "␘",
+      "codepoint": 9240
+    },
+    {
+      "name": "SYMBOL FOR END OF MEDIUM",
+      "value": "␙",
+      "codepoint": 9241
+    },
+    {
+      "name": "SYMBOL FOR SUBSTITUTE",
+      "value": "␚",
+      "codepoint": 9242
+    },
+    {
+      "name": "SYMBOL FOR ESCAPE",
+      "value": "␛",
+      "codepoint": 9243
+    },
+    {
+      "name": "SYMBOL FOR FILE SEPARATOR",
+      "value": "␜",
+      "codepoint": 9244
+    },
+    {
+      "name": "SYMBOL FOR GROUP SEPARATOR",
+      "value": "␝",
+      "codepoint": 9245
+    },
+    {
+      "name": "SYMBOL FOR RECORD SEPARATOR",
+      "value": "␞",
+      "codepoint": 9246
+    },
+    {
+      "name": "SYMBOL FOR UNIT SEPARATOR",
+      "value": "␟",
+      "codepoint": 9247
+    },
+    {
+      "name": "SYMBOL FOR SPACE",
+      "value": "␠",
+      "codepoint": 9248
+    },
+    {
+      "name": "SYMBOL FOR DELETE",
+      "value": "␡",
+      "codepoint": 9249
+    },
+    {
+      "name": "BLANK SYMBOL",
+      "value": "␢",
+      "codepoint": 9250
+    },
+    {
+      "name": "OPEN BOX",
+      "value": "␣",
+      "codepoint": 9251
+    },
+    {
+      "name": "SYMBOL FOR NEWLINE",
+      "value": "␤",
+      "codepoint": 9252
+    },
+    {
+      "name": "SYMBOL FOR DELETE FORM TWO",
+      "value": "␥",
+      "codepoint": 9253
+    },
+    {
+      "name": "SYMBOL FOR SUBSTITUTE FORM TWO",
+      "value": "␦",
+      "codepoint": 9254
+    },
+    {
+      "name": "CIRCLED DIGIT ONE",
+      "value": "①",
+      "codepoint": 9312
+    },
+    {
+      "name": "CIRCLED DIGIT TWO",
+      "value": "②",
+      "codepoint": 9313
+    },
+    {
+      "name": "CIRCLED DIGIT THREE",
+      "value": "③",
+      "codepoint": 9314
+    },
+    {
+      "name": "CIRCLED DIGIT FOUR",
+      "value": "④",
+      "codepoint": 9315
+    },
+    {
+      "name": "CIRCLED DIGIT FIVE",
+      "value": "⑤",
+      "codepoint": 9316
+    },
+    {
+      "name": "CIRCLED DIGIT SIX",
+      "value": "⑥",
+      "codepoint": 9317
+    },
+    {
+      "name": "CIRCLED DIGIT SEVEN",
+      "value": "⑦",
+      "codepoint": 9318
+    },
+    {
+      "name": "CIRCLED DIGIT EIGHT",
+      "value": "⑧",
+      "codepoint": 9319
+    },
+    {
+      "name": "CIRCLED DIGIT NINE",
+      "value": "⑨",
+      "codepoint": 9320
+    },
+    {
+      "name": "CIRCLED NUMBER TEN",
+      "value": "⑩",
+      "codepoint": 9321
+    },
+    {
+      "name": "CIRCLED NUMBER ELEVEN",
+      "value": "⑪",
+      "codepoint": 9322
+    },
+    {
+      "name": "CIRCLED NUMBER TWELVE",
+      "value": "⑫",
+      "codepoint": 9323
+    },
+    {
+      "name": "CIRCLED NUMBER THIRTEEN",
+      "value": "⑬",
+      "codepoint": 9324
+    },
+    {
+      "name": "CIRCLED NUMBER FOURTEEN",
+      "value": "⑭",
+      "codepoint": 9325
+    },
+    {
+      "name": "CIRCLED NUMBER FIFTEEN",
+      "value": "⑮",
+      "codepoint": 9326
+    },
+    {
+      "name": "CIRCLED NUMBER SIXTEEN",
+      "value": "⑯",
+      "codepoint": 9327
+    },
+    {
+      "name": "CIRCLED NUMBER SEVENTEEN",
+      "value": "⑰",
+      "codepoint": 9328
+    },
+    {
+      "name": "CIRCLED NUMBER EIGHTEEN",
+      "value": "⑱",
+      "codepoint": 9329
+    },
+    {
+      "name": "CIRCLED NUMBER NINETEEN",
+      "value": "⑲",
+      "codepoint": 9330
+    },
+    {
+      "name": "CIRCLED NUMBER TWENTY",
+      "value": "⑳",
+      "codepoint": 9331
+    },
+    {
+      "name": "PARENTHESIZED DIGIT ONE",
+      "value": "⑴",
+      "codepoint": 9332
+    },
+    {
+      "name": "PARENTHESIZED DIGIT TWO",
+      "value": "⑵",
+      "codepoint": 9333
+    },
+    {
+      "name": "PARENTHESIZED DIGIT THREE",
+      "value": "⑶",
+      "codepoint": 9334
+    },
+    {
+      "name": "PARENTHESIZED DIGIT FOUR",
+      "value": "⑷",
+      "codepoint": 9335
+    },
+    {
+      "name": "PARENTHESIZED DIGIT FIVE",
+      "value": "⑸",
+      "codepoint": 9336
+    },
+    {
+      "name": "PARENTHESIZED DIGIT SIX",
+      "value": "⑹",
+      "codepoint": 9337
+    },
+    {
+      "name": "PARENTHESIZED DIGIT SEVEN",
+      "value": "⑺",
+      "codepoint": 9338
+    },
+    {
+      "name": "PARENTHESIZED DIGIT EIGHT",
+      "value": "⑻",
+      "codepoint": 9339
+    },
+    {
+      "name": "PARENTHESIZED DIGIT NINE",
+      "value": "⑼",
+      "codepoint": 9340
+    },
+    {
+      "name": "PARENTHESIZED NUMBER TEN",
+      "value": "⑽",
+      "codepoint": 9341
+    },
+    {
+      "name": "PARENTHESIZED NUMBER ELEVEN",
+      "value": "⑾",
+      "codepoint": 9342
+    },
+    {
+      "name": "PARENTHESIZED NUMBER TWELVE",
+      "value": "⑿",
+      "codepoint": 9343
+    },
+    {
+      "name": "PARENTHESIZED NUMBER THIRTEEN",
+      "value": "⒀",
+      "codepoint": 9344
+    },
+    {
+      "name": "PARENTHESIZED NUMBER FOURTEEN",
+      "value": "⒁",
+      "codepoint": 9345
+    },
+    {
+      "name": "PARENTHESIZED NUMBER FIFTEEN",
+      "value": "⒂",
+      "codepoint": 9346
+    },
+    {
+      "name": "PARENTHESIZED NUMBER SIXTEEN",
+      "value": "⒃",
+      "codepoint": 9347
+    },
+    {
+      "name": "PARENTHESIZED NUMBER SEVENTEEN",
+      "value": "⒄",
+      "codepoint": 9348
+    },
+    {
+      "name": "PARENTHESIZED NUMBER EIGHTEEN",
+      "value": "⒅",
+      "codepoint": 9349
+    },
+    {
+      "name": "PARENTHESIZED NUMBER NINETEEN",
+      "value": "⒆",
+      "codepoint": 9350
+    },
+    {
+      "name": "PARENTHESIZED NUMBER TWENTY",
+      "value": "⒇",
+      "codepoint": 9351
+    },
+    {
+      "name": "DIGIT ONE FULL STOP",
+      "value": "⒈",
+      "codepoint": 9352
+    },
+    {
+      "name": "DIGIT TWO FULL STOP",
+      "value": "⒉",
+      "codepoint": 9353
+    },
+    {
+      "name": "DIGIT THREE FULL STOP",
+      "value": "⒊",
+      "codepoint": 9354
+    },
+    {
+      "name": "DIGIT FOUR FULL STOP",
+      "value": "⒋",
+      "codepoint": 9355
+    },
+    {
+      "name": "DIGIT FIVE FULL STOP",
+      "value": "⒌",
+      "codepoint": 9356
+    },
+    {
+      "name": "DIGIT SIX FULL STOP",
+      "value": "⒍",
+      "codepoint": 9357
+    },
+    {
+      "name": "DIGIT SEVEN FULL STOP",
+      "value": "⒎",
+      "codepoint": 9358
+    },
+    {
+      "name": "DIGIT EIGHT FULL STOP",
+      "value": "⒏",
+      "codepoint": 9359
+    },
+    {
+      "name": "DIGIT NINE FULL STOP",
+      "value": "⒐",
+      "codepoint": 9360
+    },
+    {
+      "name": "NUMBER TEN FULL STOP",
+      "value": "⒑",
+      "codepoint": 9361
+    },
+    {
+      "name": "NUMBER ELEVEN FULL STOP",
+      "value": "⒒",
+      "codepoint": 9362
+    },
+    {
+      "name": "NUMBER TWELVE FULL STOP",
+      "value": "⒓",
+      "codepoint": 9363
+    },
+    {
+      "name": "NUMBER THIRTEEN FULL STOP",
+      "value": "⒔",
+      "codepoint": 9364
+    },
+    {
+      "name": "NUMBER FOURTEEN FULL STOP",
+      "value": "⒕",
+      "codepoint": 9365
+    },
+    {
+      "name": "NUMBER FIFTEEN FULL STOP",
+      "value": "⒖",
+      "codepoint": 9366
+    },
+    {
+      "name": "NUMBER SIXTEEN FULL STOP",
+      "value": "⒗",
+      "codepoint": 9367
+    },
+    {
+      "name": "NUMBER SEVENTEEN FULL STOP",
+      "value": "⒘",
+      "codepoint": 9368
+    },
+    {
+      "name": "NUMBER EIGHTEEN FULL STOP",
+      "value": "⒙",
+      "codepoint": 9369
+    },
+    {
+      "name": "NUMBER NINETEEN FULL STOP",
+      "value": "⒚",
+      "codepoint": 9370
+    },
+    {
+      "name": "NUMBER TWENTY FULL STOP",
+      "value": "⒛",
+      "codepoint": 9371
+    },
+    {
+      "name": "PARENTHESIZED LATIN SMALL LETTER A",
+      "value": "⒜",
+      "codepoint": 9372
+    },
+    {
+      "name": "PARENTHESIZED LATIN SMALL LETTER B",
+      "value": "⒝",
+      "codepoint": 9373
+    },
+    {
+      "name": "PARENTHESIZED LATIN SMALL LETTER C",
+      "value": "⒞",
+      "codepoint": 9374
+    },
+    {
+      "name": "PARENTHESIZED LATIN SMALL LETTER D",
+      "value": "⒟",
+      "codepoint": 9375
+    },
+    {
+      "name": "PARENTHESIZED LATIN SMALL LETTER E",
+      "value": "⒠",
+      "codepoint": 9376
+    },
+    {
+      "name": "PARENTHESIZED LATIN SMALL LETTER F",
+      "value": "⒡",
+      "codepoint": 9377
+    },
+    {
+      "name": "PARENTHESIZED LATIN SMALL LETTER G",
+      "value": "⒢",
+      "codepoint": 9378
+    },
+    {
+      "name": "PARENTHESIZED LATIN SMALL LETTER H",
+      "value": "⒣",
+      "codepoint": 9379
+    },
+    {
+      "name": "PARENTHESIZED LATIN SMALL LETTER I",
+      "value": "⒤",
+      "codepoint": 9380
+    },
+    {
+      "name": "PARENTHESIZED LATIN SMALL LETTER J",
+      "value": "⒥",
+      "codepoint": 9381
+    },
+    {
+      "name": "PARENTHESIZED LATIN SMALL LETTER K",
+      "value": "⒦",
+      "codepoint": 9382
+    },
+    {
+      "name": "PARENTHESIZED LATIN SMALL LETTER L",
+      "value": "⒧",
+      "codepoint": 9383
+    },
+    {
+      "name": "PARENTHESIZED LATIN SMALL LETTER M",
+      "value": "⒨",
+      "codepoint": 9384
+    },
+    {
+      "name": "PARENTHESIZED LATIN SMALL LETTER N",
+      "value": "⒩",
+      "codepoint": 9385
+    },
+    {
+      "name": "PARENTHESIZED LATIN SMALL LETTER O",
+      "value": "⒪",
+      "codepoint": 9386
+    },
+    {
+      "name": "PARENTHESIZED LATIN SMALL LETTER P",
+      "value": "⒫",
+      "codepoint": 9387
+    },
+    {
+      "name": "PARENTHESIZED LATIN SMALL LETTER Q",
+      "value": "⒬",
+      "codepoint": 9388
+    },
+    {
+      "name": "PARENTHESIZED LATIN SMALL LETTER R",
+      "value": "⒭",
+      "codepoint": 9389
+    },
+    {
+      "name": "PARENTHESIZED LATIN SMALL LETTER S",
+      "value": "⒮",
+      "codepoint": 9390
+    },
+    {
+      "name": "PARENTHESIZED LATIN SMALL LETTER T",
+      "value": "⒯",
+      "codepoint": 9391
+    },
+    {
+      "name": "PARENTHESIZED LATIN SMALL LETTER U",
+      "value": "⒰",
+      "codepoint": 9392
+    },
+    {
+      "name": "PARENTHESIZED LATIN SMALL LETTER V",
+      "value": "⒱",
+      "codepoint": 9393
+    },
+    {
+      "name": "PARENTHESIZED LATIN SMALL LETTER W",
+      "value": "⒲",
+      "codepoint": 9394
+    },
+    {
+      "name": "PARENTHESIZED LATIN SMALL LETTER X",
+      "value": "⒳",
+      "codepoint": 9395
+    },
+    {
+      "name": "PARENTHESIZED LATIN SMALL LETTER Y",
+      "value": "⒴",
+      "codepoint": 9396
+    },
+    {
+      "name": "PARENTHESIZED LATIN SMALL LETTER Z",
+      "value": "⒵",
+      "codepoint": 9397
+    },
+    {
+      "name": "CIRCLED LATIN CAPITAL LETTER A",
+      "value": "Ⓐ",
+      "codepoint": 9398
+    },
+    {
+      "name": "CIRCLED LATIN CAPITAL LETTER B",
+      "value": "Ⓑ",
+      "codepoint": 9399
+    },
+    {
+      "name": "CIRCLED LATIN CAPITAL LETTER C",
+      "value": "Ⓒ",
+      "codepoint": 9400
+    },
+    {
+      "name": "CIRCLED LATIN CAPITAL LETTER D",
+      "value": "Ⓓ",
+      "codepoint": 9401
+    },
+    {
+      "name": "CIRCLED LATIN CAPITAL LETTER E",
+      "value": "Ⓔ",
+      "codepoint": 9402
+    },
+    {
+      "name": "CIRCLED LATIN CAPITAL LETTER F",
+      "value": "Ⓕ",
+      "codepoint": 9403
+    },
+    {
+      "name": "CIRCLED LATIN CAPITAL LETTER G",
+      "value": "Ⓖ",
+      "codepoint": 9404
+    },
+    {
+      "name": "CIRCLED LATIN CAPITAL LETTER H",
+      "value": "Ⓗ",
+      "codepoint": 9405
+    },
+    {
+      "name": "CIRCLED LATIN CAPITAL LETTER I",
+      "value": "Ⓘ",
+      "codepoint": 9406
+    },
+    {
+      "name": "CIRCLED LATIN CAPITAL LETTER J",
+      "value": "Ⓙ",
+      "codepoint": 9407
+    },
+    {
+      "name": "CIRCLED LATIN CAPITAL LETTER K",
+      "value": "Ⓚ",
+      "codepoint": 9408
+    },
+    {
+      "name": "CIRCLED LATIN CAPITAL LETTER L",
+      "value": "Ⓛ",
+      "codepoint": 9409
+    },
+    {
+      "name": "CIRCLED LATIN CAPITAL LETTER M",
+      "value": "Ⓜ",
+      "codepoint": 9410
+    },
+    {
+      "name": "CIRCLED LATIN CAPITAL LETTER N",
+      "value": "Ⓝ",
+      "codepoint": 9411
+    },
+    {
+      "name": "CIRCLED LATIN CAPITAL LETTER O",
+      "value": "Ⓞ",
+      "codepoint": 9412
+    },
+    {
+      "name": "CIRCLED LATIN CAPITAL LETTER P",
+      "value": "Ⓟ",
+      "codepoint": 9413
+    },
+    {
+      "name": "CIRCLED LATIN CAPITAL LETTER Q",
+      "value": "Ⓠ",
+      "codepoint": 9414
+    },
+    {
+      "name": "CIRCLED LATIN CAPITAL LETTER R",
+      "value": "Ⓡ",
+      "codepoint": 9415
+    },
+    {
+      "name": "CIRCLED LATIN CAPITAL LETTER S",
+      "value": "Ⓢ",
+      "codepoint": 9416
+    },
+    {
+      "name": "CIRCLED LATIN CAPITAL LETTER T",
+      "value": "Ⓣ",
+      "codepoint": 9417
+    },
+    {
+      "name": "CIRCLED LATIN CAPITAL LETTER U",
+      "value": "Ⓤ",
+      "codepoint": 9418
+    },
+    {
+      "name": "CIRCLED LATIN CAPITAL LETTER V",
+      "value": "Ⓥ",
+      "codepoint": 9419
+    },
+    {
+      "name": "CIRCLED LATIN CAPITAL LETTER W",
+      "value": "Ⓦ",
+      "codepoint": 9420
+    },
+    {
+      "name": "CIRCLED LATIN CAPITAL LETTER X",
+      "value": "Ⓧ",
+      "codepoint": 9421
+    },
+    {
+      "name": "CIRCLED LATIN CAPITAL LETTER Y",
+      "value": "Ⓨ",
+      "codepoint": 9422
+    },
+    {
+      "name": "CIRCLED LATIN CAPITAL LETTER Z",
+      "value": "Ⓩ",
+      "codepoint": 9423
+    },
+    {
+      "name": "CIRCLED LATIN SMALL LETTER A",
+      "value": "ⓐ",
+      "codepoint": 9424
+    },
+    {
+      "name": "CIRCLED LATIN SMALL LETTER B",
+      "value": "ⓑ",
+      "codepoint": 9425
+    },
+    {
+      "name": "CIRCLED LATIN SMALL LETTER C",
+      "value": "ⓒ",
+      "codepoint": 9426
+    },
+    {
+      "name": "CIRCLED LATIN SMALL LETTER D",
+      "value": "ⓓ",
+      "codepoint": 9427
+    },
+    {
+      "name": "CIRCLED LATIN SMALL LETTER E",
+      "value": "ⓔ",
+      "codepoint": 9428
+    },
+    {
+      "name": "CIRCLED LATIN SMALL LETTER F",
+      "value": "ⓕ",
+      "codepoint": 9429
+    },
+    {
+      "name": "CIRCLED LATIN SMALL LETTER G",
+      "value": "ⓖ",
+      "codepoint": 9430
+    },
+    {
+      "name": "CIRCLED LATIN SMALL LETTER H",
+      "value": "ⓗ",
+      "codepoint": 9431
+    },
+    {
+      "name": "CIRCLED LATIN SMALL LETTER I",
+      "value": "ⓘ",
+      "codepoint": 9432
+    },
+    {
+      "name": "CIRCLED LATIN SMALL LETTER J",
+      "value": "ⓙ",
+      "codepoint": 9433
+    },
+    {
+      "name": "CIRCLED LATIN SMALL LETTER K",
+      "value": "ⓚ",
+      "codepoint": 9434
+    },
+    {
+      "name": "CIRCLED LATIN SMALL LETTER L",
+      "value": "ⓛ",
+      "codepoint": 9435
+    },
+    {
+      "name": "CIRCLED LATIN SMALL LETTER M",
+      "value": "ⓜ",
+      "codepoint": 9436
+    },
+    {
+      "name": "CIRCLED LATIN SMALL LETTER N",
+      "value": "ⓝ",
+      "codepoint": 9437
+    },
+    {
+      "name": "CIRCLED LATIN SMALL LETTER O",
+      "value": "ⓞ",
+      "codepoint": 9438
+    },
+    {
+      "name": "CIRCLED LATIN SMALL LETTER P",
+      "value": "ⓟ",
+      "codepoint": 9439
+    },
+    {
+      "name": "CIRCLED LATIN SMALL LETTER Q",
+      "value": "ⓠ",
+      "codepoint": 9440
+    },
+    {
+      "name": "CIRCLED LATIN SMALL LETTER R",
+      "value": "ⓡ",
+      "codepoint": 9441
+    },
+    {
+      "name": "CIRCLED LATIN SMALL LETTER S",
+      "value": "ⓢ",
+      "codepoint": 9442
+    },
+    {
+      "name": "CIRCLED LATIN SMALL LETTER T",
+      "value": "ⓣ",
+      "codepoint": 9443
+    },
+    {
+      "name": "CIRCLED LATIN SMALL LETTER U",
+      "value": "ⓤ",
+      "codepoint": 9444
+    },
+    {
+      "name": "CIRCLED LATIN SMALL LETTER V",
+      "value": "ⓥ",
+      "codepoint": 9445
+    },
+    {
+      "name": "CIRCLED LATIN SMALL LETTER W",
+      "value": "ⓦ",
+      "codepoint": 9446
+    },
+    {
+      "name": "CIRCLED LATIN SMALL LETTER X",
+      "value": "ⓧ",
+      "codepoint": 9447
+    },
+    {
+      "name": "CIRCLED LATIN SMALL LETTER Y",
+      "value": "ⓨ",
+      "codepoint": 9448
+    },
+    {
+      "name": "CIRCLED LATIN SMALL LETTER Z",
+      "value": "ⓩ",
+      "codepoint": 9449
+    },
+    {
+      "name": "CIRCLED DIGIT ZERO",
+      "value": "⓪",
+      "codepoint": 9450
+    },
+    {
+      "name": "BOX DRAWINGS LIGHT HORIZONTAL",
+      "value": "─",
+      "codepoint": 9472
+    },
+    {
+      "name": "BOX DRAWINGS HEAVY HORIZONTAL",
+      "value": "━",
+      "codepoint": 9473
+    },
+    {
+      "name": "BOX DRAWINGS LIGHT VERTICAL",
+      "value": "│",
+      "codepoint": 9474
+    },
+    {
+      "name": "BOX DRAWINGS HEAVY VERTICAL",
+      "value": "┃",
+      "codepoint": 9475
+    },
+    {
+      "name": "BOX DRAWINGS LIGHT TRIPLE DASH HORIZONTAL",
+      "value": "┄",
+      "codepoint": 9476
+    },
+    {
+      "name": "BOX DRAWINGS HEAVY TRIPLE DASH HORIZONTAL",
+      "value": "┅",
+      "codepoint": 9477
+    },
+    {
+      "name": "BOX DRAWINGS LIGHT TRIPLE DASH VERTICAL",
+      "value": "┆",
+      "codepoint": 9478
+    },
+    {
+      "name": "BOX DRAWINGS HEAVY TRIPLE DASH VERTICAL",
+      "value": "┇",
+      "codepoint": 9479
+    },
+    {
+      "name": "BOX DRAWINGS LIGHT QUADRUPLE DASH HORIZONTAL",
+      "value": "┈",
+      "codepoint": 9480
+    },
+    {
+      "name": "BOX DRAWINGS HEAVY QUADRUPLE DASH HORIZONTAL",
+      "value": "┉",
+      "codepoint": 9481
+    },
+    {
+      "name": "BOX DRAWINGS LIGHT QUADRUPLE DASH VERTICAL",
+      "value": "┊",
+      "codepoint": 9482
+    },
+    {
+      "name": "BOX DRAWINGS HEAVY QUADRUPLE DASH VERTICAL",
+      "value": "┋",
+      "codepoint": 9483
+    },
+    {
+      "name": "BOX DRAWINGS LIGHT DOWN AND RIGHT",
+      "value": "┌",
+      "codepoint": 9484
+    },
+    {
+      "name": "BOX DRAWINGS DOWN LIGHT AND RIGHT HEAVY",
+      "value": "┍",
+      "codepoint": 9485
+    },
+    {
+      "name": "BOX DRAWINGS DOWN HEAVY AND RIGHT LIGHT",
+      "value": "┎",
+      "codepoint": 9486
+    },
+    {
+      "name": "BOX DRAWINGS HEAVY DOWN AND RIGHT",
+      "value": "┏",
+      "codepoint": 9487
+    },
+    {
+      "name": "BOX DRAWINGS LIGHT DOWN AND LEFT",
+      "value": "┐",
+      "codepoint": 9488
+    },
+    {
+      "name": "BOX DRAWINGS DOWN LIGHT AND LEFT HEAVY",
+      "value": "┑",
+      "codepoint": 9489
+    },
+    {
+      "name": "BOX DRAWINGS DOWN HEAVY AND LEFT LIGHT",
+      "value": "┒",
+      "codepoint": 9490
+    },
+    {
+      "name": "BOX DRAWINGS HEAVY DOWN AND LEFT",
+      "value": "┓",
+      "codepoint": 9491
+    },
+    {
+      "name": "BOX DRAWINGS LIGHT UP AND RIGHT",
+      "value": "└",
+      "codepoint": 9492
+    },
+    {
+      "name": "BOX DRAWINGS UP LIGHT AND RIGHT HEAVY",
+      "value": "┕",
+      "codepoint": 9493
+    },
+    {
+      "name": "BOX DRAWINGS UP HEAVY AND RIGHT LIGHT",
+      "value": "┖",
+      "codepoint": 9494
+    },
+    {
+      "name": "BOX DRAWINGS HEAVY UP AND RIGHT",
+      "value": "┗",
+      "codepoint": 9495
+    },
+    {
+      "name": "BOX DRAWINGS LIGHT UP AND LEFT",
+      "value": "┘",
+      "codepoint": 9496
+    },
+    {
+      "name": "BOX DRAWINGS UP LIGHT AND LEFT HEAVY",
+      "value": "┙",
+      "codepoint": 9497
+    },
+    {
+      "name": "BOX DRAWINGS UP HEAVY AND LEFT LIGHT",
+      "value": "┚",
+      "codepoint": 9498
+    },
+    {
+      "name": "BOX DRAWINGS HEAVY UP AND LEFT",
+      "value": "┛",
+      "codepoint": 9499
+    },
+    {
+      "name": "BOX DRAWINGS LIGHT VERTICAL AND RIGHT",
+      "value": "├",
+      "codepoint": 9500
+    },
+    {
+      "name": "BOX DRAWINGS VERTICAL LIGHT AND RIGHT HEAVY",
+      "value": "┝",
+      "codepoint": 9501
+    },
+    {
+      "name": "BOX DRAWINGS UP HEAVY AND RIGHT DOWN LIGHT",
+      "value": "┞",
+      "codepoint": 9502
+    },
+    {
+      "name": "BOX DRAWINGS DOWN HEAVY AND RIGHT UP LIGHT",
+      "value": "┟",
+      "codepoint": 9503
+    },
+    {
+      "name": "BOX DRAWINGS VERTICAL HEAVY AND RIGHT LIGHT",
+      "value": "┠",
+      "codepoint": 9504
+    },
+    {
+      "name": "BOX DRAWINGS DOWN LIGHT AND RIGHT UP HEAVY",
+      "value": "┡",
+      "codepoint": 9505
+    },
+    {
+      "name": "BOX DRAWINGS UP LIGHT AND RIGHT DOWN HEAVY",
+      "value": "┢",
+      "codepoint": 9506
+    },
+    {
+      "name": "BOX DRAWINGS HEAVY VERTICAL AND RIGHT",
+      "value": "┣",
+      "codepoint": 9507
+    },
+    {
+      "name": "BOX DRAWINGS LIGHT VERTICAL AND LEFT",
+      "value": "┤",
+      "codepoint": 9508
+    },
+    {
+      "name": "BOX DRAWINGS VERTICAL LIGHT AND LEFT HEAVY",
+      "value": "┥",
+      "codepoint": 9509
+    },
+    {
+      "name": "BOX DRAWINGS UP HEAVY AND LEFT DOWN LIGHT",
+      "value": "┦",
+      "codepoint": 9510
+    },
+    {
+      "name": "BOX DRAWINGS DOWN HEAVY AND LEFT UP LIGHT",
+      "value": "┧",
+      "codepoint": 9511
+    },
+    {
+      "name": "BOX DRAWINGS VERTICAL HEAVY AND LEFT LIGHT",
+      "value": "┨",
+      "codepoint": 9512
+    },
+    {
+      "name": "BOX DRAWINGS DOWN LIGHT AND LEFT UP HEAVY",
+      "value": "┩",
+      "codepoint": 9513
+    },
+    {
+      "name": "BOX DRAWINGS UP LIGHT AND LEFT DOWN HEAVY",
+      "value": "┪",
+      "codepoint": 9514
+    },
+    {
+      "name": "BOX DRAWINGS HEAVY VERTICAL AND LEFT",
+      "value": "┫",
+      "codepoint": 9515
+    },
+    {
+      "name": "BOX DRAWINGS LIGHT DOWN AND HORIZONTAL",
+      "value": "┬",
+      "codepoint": 9516
+    },
+    {
+      "name": "BOX DRAWINGS LEFT HEAVY AND RIGHT DOWN LIGHT",
+      "value": "┭",
+      "codepoint": 9517
+    },
+    {
+      "name": "BOX DRAWINGS RIGHT HEAVY AND LEFT DOWN LIGHT",
+      "value": "┮",
+      "codepoint": 9518
+    },
+    {
+      "name": "BOX DRAWINGS DOWN LIGHT AND HORIZONTAL HEAVY",
+      "value": "┯",
+      "codepoint": 9519
+    },
+    {
+      "name": "BOX DRAWINGS DOWN HEAVY AND HORIZONTAL LIGHT",
+      "value": "┰",
+      "codepoint": 9520
+    },
+    {
+      "name": "BOX DRAWINGS RIGHT LIGHT AND LEFT DOWN HEAVY",
+      "value": "┱",
+      "codepoint": 9521
+    },
+    {
+      "name": "BOX DRAWINGS LEFT LIGHT AND RIGHT DOWN HEAVY",
+      "value": "┲",
+      "codepoint": 9522
+    },
+    {
+      "name": "BOX DRAWINGS HEAVY DOWN AND HORIZONTAL",
+      "value": "┳",
+      "codepoint": 9523
+    },
+    {
+      "name": "BOX DRAWINGS LIGHT UP AND HORIZONTAL",
+      "value": "┴",
+      "codepoint": 9524
+    },
+    {
+      "name": "BOX DRAWINGS LEFT HEAVY AND RIGHT UP LIGHT",
+      "value": "┵",
+      "codepoint": 9525
+    },
+    {
+      "name": "BOX DRAWINGS RIGHT HEAVY AND LEFT UP LIGHT",
+      "value": "┶",
+      "codepoint": 9526
+    },
+    {
+      "name": "BOX DRAWINGS UP LIGHT AND HORIZONTAL HEAVY",
+      "value": "┷",
+      "codepoint": 9527
+    },
+    {
+      "name": "BOX DRAWINGS UP HEAVY AND HORIZONTAL LIGHT",
+      "value": "┸",
+      "codepoint": 9528
+    },
+    {
+      "name": "BOX DRAWINGS RIGHT LIGHT AND LEFT UP HEAVY",
+      "value": "┹",
+      "codepoint": 9529
+    },
+    {
+      "name": "BOX DRAWINGS LEFT LIGHT AND RIGHT UP HEAVY",
+      "value": "┺",
+      "codepoint": 9530
+    },
+    {
+      "name": "BOX DRAWINGS HEAVY UP AND HORIZONTAL",
+      "value": "┻",
+      "codepoint": 9531
+    },
+    {
+      "name": "BOX DRAWINGS LIGHT VERTICAL AND HORIZONTAL",
+      "value": "┼",
+      "codepoint": 9532
+    },
+    {
+      "name": "BOX DRAWINGS LEFT HEAVY AND RIGHT VERTICAL LIGHT",
+      "value": "┽",
+      "codepoint": 9533
+    },
+    {
+      "name": "BOX DRAWINGS RIGHT HEAVY AND LEFT VERTICAL LIGHT",
+      "value": "┾",
+      "codepoint": 9534
+    },
+    {
+      "name": "BOX DRAWINGS VERTICAL LIGHT AND HORIZONTAL HEAVY",
+      "value": "┿",
+      "codepoint": 9535
+    },
+    {
+      "name": "BOX DRAWINGS UP HEAVY AND DOWN HORIZONTAL LIGHT",
+      "value": "╀",
+      "codepoint": 9536
+    },
+    {
+      "name": "BOX DRAWINGS DOWN HEAVY AND UP HORIZONTAL LIGHT",
+      "value": "╁",
+      "codepoint": 9537
+    },
+    {
+      "name": "BOX DRAWINGS VERTICAL HEAVY AND HORIZONTAL LIGHT",
+      "value": "╂",
+      "codepoint": 9538
+    },
+    {
+      "name": "BOX DRAWINGS LEFT UP HEAVY AND RIGHT DOWN LIGHT",
+      "value": "╃",
+      "codepoint": 9539
+    },
+    {
+      "name": "BOX DRAWINGS RIGHT UP HEAVY AND LEFT DOWN LIGHT",
+      "value": "╄",
+      "codepoint": 9540
+    },
+    {
+      "name": "BOX DRAWINGS LEFT DOWN HEAVY AND RIGHT UP LIGHT",
+      "value": "╅",
+      "codepoint": 9541
+    },
+    {
+      "name": "BOX DRAWINGS RIGHT DOWN HEAVY AND LEFT UP LIGHT",
+      "value": "╆",
+      "codepoint": 9542
+    },
+    {
+      "name": "BOX DRAWINGS DOWN LIGHT AND UP HORIZONTAL HEAVY",
+      "value": "╇",
+      "codepoint": 9543
+    },
+    {
+      "name": "BOX DRAWINGS UP LIGHT AND DOWN HORIZONTAL HEAVY",
+      "value": "╈",
+      "codepoint": 9544
+    },
+    {
+      "name": "BOX DRAWINGS RIGHT LIGHT AND LEFT VERTICAL HEAVY",
+      "value": "╉",
+      "codepoint": 9545
+    },
+    {
+      "name": "BOX DRAWINGS LEFT LIGHT AND RIGHT VERTICAL HEAVY",
+      "value": "╊",
+      "codepoint": 9546
+    },
+    {
+      "name": "BOX DRAWINGS HEAVY VERTICAL AND HORIZONTAL",
+      "value": "╋",
+      "codepoint": 9547
+    },
+    {
+      "name": "BOX DRAWINGS LIGHT DOUBLE DASH HORIZONTAL",
+      "value": "╌",
+      "codepoint": 9548
+    },
+    {
+      "name": "BOX DRAWINGS HEAVY DOUBLE DASH HORIZONTAL",
+      "value": "╍",
+      "codepoint": 9549
+    },
+    {
+      "name": "BOX DRAWINGS LIGHT DOUBLE DASH VERTICAL",
+      "value": "╎",
+      "codepoint": 9550
+    },
+    {
+      "name": "BOX DRAWINGS HEAVY DOUBLE DASH VERTICAL",
+      "value": "╏",
+      "codepoint": 9551
+    },
+    {
+      "name": "BOX DRAWINGS DOUBLE HORIZONTAL",
+      "value": "═",
+      "codepoint": 9552
+    },
+    {
+      "name": "BOX DRAWINGS DOUBLE VERTICAL",
+      "value": "║",
+      "codepoint": 9553
+    },
+    {
+      "name": "BOX DRAWINGS DOWN SINGLE AND RIGHT DOUBLE",
+      "value": "╒",
+      "codepoint": 9554
+    },
+    {
+      "name": "BOX DRAWINGS DOWN DOUBLE AND RIGHT SINGLE",
+      "value": "╓",
+      "codepoint": 9555
+    },
+    {
+      "name": "BOX DRAWINGS DOUBLE DOWN AND RIGHT",
+      "value": "╔",
+      "codepoint": 9556
+    },
+    {
+      "name": "BOX DRAWINGS DOWN SINGLE AND LEFT DOUBLE",
+      "value": "╕",
+      "codepoint": 9557
+    },
+    {
+      "name": "BOX DRAWINGS DOWN DOUBLE AND LEFT SINGLE",
+      "value": "╖",
+      "codepoint": 9558
+    },
+    {
+      "name": "BOX DRAWINGS DOUBLE DOWN AND LEFT",
+      "value": "╗",
+      "codepoint": 9559
+    },
+    {
+      "name": "BOX DRAWINGS UP SINGLE AND RIGHT DOUBLE",
+      "value": "╘",
+      "codepoint": 9560
+    },
+    {
+      "name": "BOX DRAWINGS UP DOUBLE AND RIGHT SINGLE",
+      "value": "╙",
+      "codepoint": 9561
+    },
+    {
+      "name": "BOX DRAWINGS DOUBLE UP AND RIGHT",
+      "value": "╚",
+      "codepoint": 9562
+    },
+    {
+      "name": "BOX DRAWINGS UP SINGLE AND LEFT DOUBLE",
+      "value": "╛",
+      "codepoint": 9563
+    },
+    {
+      "name": "BOX DRAWINGS UP DOUBLE AND LEFT SINGLE",
+      "value": "╜",
+      "codepoint": 9564
+    },
+    {
+      "name": "BOX DRAWINGS DOUBLE UP AND LEFT",
+      "value": "╝",
+      "codepoint": 9565
+    },
+    {
+      "name": "BOX DRAWINGS VERTICAL SINGLE AND RIGHT DOUBLE",
+      "value": "╞",
+      "codepoint": 9566
+    },
+    {
+      "name": "BOX DRAWINGS VERTICAL DOUBLE AND RIGHT SINGLE",
+      "value": "╟",
+      "codepoint": 9567
+    },
+    {
+      "name": "BOX DRAWINGS DOUBLE VERTICAL AND RIGHT",
+      "value": "╠",
+      "codepoint": 9568
+    },
+    {
+      "name": "BOX DRAWINGS VERTICAL SINGLE AND LEFT DOUBLE",
+      "value": "╡",
+      "codepoint": 9569
+    },
+    {
+      "name": "BOX DRAWINGS VERTICAL DOUBLE AND LEFT SINGLE",
+      "value": "╢",
+      "codepoint": 9570
+    },
+    {
+      "name": "BOX DRAWINGS DOUBLE VERTICAL AND LEFT",
+      "value": "╣",
+      "codepoint": 9571
+    },
+    {
+      "name": "BOX DRAWINGS DOWN SINGLE AND HORIZONTAL DOUBLE",
+      "value": "╤",
+      "codepoint": 9572
+    },
+    {
+      "name": "BOX DRAWINGS DOWN DOUBLE AND HORIZONTAL SINGLE",
+      "value": "╥",
+      "codepoint": 9573
+    },
+    {
+      "name": "BOX DRAWINGS DOUBLE DOWN AND HORIZONTAL",
+      "value": "╦",
+      "codepoint": 9574
+    },
+    {
+      "name": "BOX DRAWINGS UP SINGLE AND HORIZONTAL DOUBLE",
+      "value": "╧",
+      "codepoint": 9575
+    },
+    {
+      "name": "BOX DRAWINGS UP DOUBLE AND HORIZONTAL SINGLE",
+      "value": "╨",
+      "codepoint": 9576
+    },
+    {
+      "name": "BOX DRAWINGS DOUBLE UP AND HORIZONTAL",
+      "value": "╩",
+      "codepoint": 9577
+    },
+    {
+      "name": "BOX DRAWINGS VERTICAL SINGLE AND HORIZONTAL DOUBLE",
+      "value": "╪",
+      "codepoint": 9578
+    },
+    {
+      "name": "BOX DRAWINGS VERTICAL DOUBLE AND HORIZONTAL SINGLE",
+      "value": "╫",
+      "codepoint": 9579
+    },
+    {
+      "name": "BOX DRAWINGS DOUBLE VERTICAL AND HORIZONTAL",
+      "value": "╬",
+      "codepoint": 9580
+    },
+    {
+      "name": "BOX DRAWINGS LIGHT ARC DOWN AND RIGHT",
+      "value": "╭",
+      "codepoint": 9581
+    },
+    {
+      "name": "BOX DRAWINGS LIGHT ARC DOWN AND LEFT",
+      "value": "╮",
+      "codepoint": 9582
+    },
+    {
+      "name": "BOX DRAWINGS LIGHT ARC UP AND LEFT",
+      "value": "╯",
+      "codepoint": 9583
+    },
+    {
+      "name": "BOX DRAWINGS LIGHT ARC UP AND RIGHT",
+      "value": "╰",
+      "codepoint": 9584
+    },
+    {
+      "name": "BOX DRAWINGS LIGHT DIAGONAL UPPER RIGHT TO LOWER LEFT",
+      "value": "╱",
+      "codepoint": 9585
+    },
+    {
+      "name": "BOX DRAWINGS LIGHT DIAGONAL UPPER LEFT TO LOWER RIGHT",
+      "value": "╲",
+      "codepoint": 9586
+    },
+    {
+      "name": "BOX DRAWINGS LIGHT DIAGONAL CROSS",
+      "value": "╳",
+      "codepoint": 9587
+    },
+    {
+      "name": "BOX DRAWINGS LIGHT LEFT",
+      "value": "╴",
+      "codepoint": 9588
+    },
+    {
+      "name": "BOX DRAWINGS LIGHT UP",
+      "value": "╵",
+      "codepoint": 9589
+    },
+    {
+      "name": "BOX DRAWINGS LIGHT RIGHT",
+      "value": "╶",
+      "codepoint": 9590
+    },
+    {
+      "name": "BOX DRAWINGS LIGHT DOWN",
+      "value": "╷",
+      "codepoint": 9591
+    },
+    {
+      "name": "BOX DRAWINGS HEAVY LEFT",
+      "value": "╸",
+      "codepoint": 9592
+    },
+    {
+      "name": "BOX DRAWINGS HEAVY UP",
+      "value": "╹",
+      "codepoint": 9593
+    },
+    {
+      "name": "BOX DRAWINGS HEAVY RIGHT",
+      "value": "╺",
+      "codepoint": 9594
+    },
+    {
+      "name": "BOX DRAWINGS HEAVY DOWN",
+      "value": "╻",
+      "codepoint": 9595
+    },
+    {
+      "name": "BOX DRAWINGS LIGHT LEFT AND HEAVY RIGHT",
+      "value": "╼",
+      "codepoint": 9596
+    },
+    {
+      "name": "BOX DRAWINGS LIGHT UP AND HEAVY DOWN",
+      "value": "╽",
+      "codepoint": 9597
+    },
+    {
+      "name": "BOX DRAWINGS HEAVY LEFT AND LIGHT RIGHT",
+      "value": "╾",
+      "codepoint": 9598
+    },
+    {
+      "name": "BOX DRAWINGS HEAVY UP AND LIGHT DOWN",
+      "value": "╿",
+      "codepoint": 9599
+    },
+    {
+      "name": "UPPER HALF BLOCK",
+      "value": "▀",
+      "codepoint": 9600
+    },
+    {
+      "name": "LOWER ONE EIGHTH BLOCK",
+      "value": "▁",
+      "codepoint": 9601
+    },
+    {
+      "name": "LOWER ONE QUARTER BLOCK",
+      "value": "▂",
+      "codepoint": 9602
+    },
+    {
+      "name": "LOWER THREE EIGHTHS BLOCK",
+      "value": "▃",
+      "codepoint": 9603
+    },
+    {
+      "name": "LOWER HALF BLOCK",
+      "value": "▄",
+      "codepoint": 9604
+    },
+    {
+      "name": "LOWER FIVE EIGHTHS BLOCK",
+      "value": "▅",
+      "codepoint": 9605
+    },
+    {
+      "name": "LOWER THREE QUARTERS BLOCK",
+      "value": "▆",
+      "codepoint": 9606
+    },
+    {
+      "name": "LOWER SEVEN EIGHTHS BLOCK",
+      "value": "▇",
+      "codepoint": 9607
+    },
+    {
+      "name": "FULL BLOCK",
+      "value": "█",
+      "codepoint": 9608
+    },
+    {
+      "name": "LEFT SEVEN EIGHTHS BLOCK",
+      "value": "▉",
+      "codepoint": 9609
+    },
+    {
+      "name": "LEFT THREE QUARTERS BLOCK",
+      "value": "▊",
+      "codepoint": 9610
+    },
+    {
+      "name": "LEFT FIVE EIGHTHS BLOCK",
+      "value": "▋",
+      "codepoint": 9611
+    },
+    {
+      "name": "LEFT HALF BLOCK",
+      "value": "▌",
+      "codepoint": 9612
+    },
+    {
+      "name": "LEFT THREE EIGHTHS BLOCK",
+      "value": "▍",
+      "codepoint": 9613
+    },
+    {
+      "name": "LEFT ONE QUARTER BLOCK",
+      "value": "▎",
+      "codepoint": 9614
+    },
+    {
+      "name": "LEFT ONE EIGHTH BLOCK",
+      "value": "▏",
+      "codepoint": 9615
+    },
+    {
+      "name": "RIGHT HALF BLOCK",
+      "value": "▐",
+      "codepoint": 9616
+    },
+    {
+      "name": "LIGHT SHADE",
+      "value": "░",
+      "codepoint": 9617
+    },
+    {
+      "name": "MEDIUM SHADE",
+      "value": "▒",
+      "codepoint": 9618
+    },
+    {
+      "name": "DARK SHADE",
+      "value": "▓",
+      "codepoint": 9619
+    },
+    {
+      "name": "UPPER ONE EIGHTH BLOCK",
+      "value": "▔",
+      "codepoint": 9620
+    },
+    {
+      "name": "RIGHT ONE EIGHTH BLOCK",
+      "value": "▕",
+      "codepoint": 9621
+    },
+    {
+      "name": "BLACK SQUARE",
+      "value": "■",
+      "codepoint": 9632
+    },
+    {
+      "name": "WHITE SQUARE",
+      "value": "□",
+      "codepoint": 9633
+    },
+    {
+      "name": "WHITE SQUARE WITH ROUNDED CORNERS",
+      "value": "▢",
+      "codepoint": 9634
+    },
+    {
+      "name": "WHITE SQUARE CONTAINING BLACK SMALL SQUARE",
+      "value": "▣",
+      "codepoint": 9635
+    },
+    {
+      "name": "SQUARE WITH HORIZONTAL FILL",
+      "value": "▤",
+      "codepoint": 9636
+    },
+    {
+      "name": "SQUARE WITH VERTICAL FILL",
+      "value": "▥",
+      "codepoint": 9637
+    },
+    {
+      "name": "SQUARE WITH ORTHOGONAL CROSSHATCH FILL",
+      "value": "▦",
+      "codepoint": 9638
+    },
+    {
+      "name": "SQUARE WITH UPPER LEFT TO LOWER RIGHT FILL",
+      "value": "▧",
+      "codepoint": 9639
+    },
+    {
+      "name": "SQUARE WITH UPPER RIGHT TO LOWER LEFT FILL",
+      "value": "▨",
+      "codepoint": 9640
+    },
+    {
+      "name": "SQUARE WITH DIAGONAL CROSSHATCH FILL",
+      "value": "▩",
+      "codepoint": 9641
+    },
+    {
+      "name": "BLACK SMALL SQUARE",
+      "value": "▪",
+      "codepoint": 9642
+    },
+    {
+      "name": "WHITE SMALL SQUARE",
+      "value": "▫",
+      "codepoint": 9643
+    },
+    {
+      "name": "BLACK RECTANGLE",
+      "value": "▬",
+      "codepoint": 9644
+    },
+    {
+      "name": "WHITE RECTANGLE",
+      "value": "▭",
+      "codepoint": 9645
+    },
+    {
+      "name": "BLACK VERTICAL RECTANGLE",
+      "value": "▮",
+      "codepoint": 9646
+    },
+    {
+      "name": "WHITE VERTICAL RECTANGLE",
+      "value": "▯",
+      "codepoint": 9647
+    },
+    {
+      "name": "BLACK PARALLELOGRAM",
+      "value": "▰",
+      "codepoint": 9648
+    },
+    {
+      "name": "WHITE PARALLELOGRAM",
+      "value": "▱",
+      "codepoint": 9649
+    },
+    {
+      "name": "BLACK UP-POINTING TRIANGLE",
+      "value": "▲",
+      "codepoint": 9650
+    },
+    {
+      "name": "WHITE UP-POINTING TRIANGLE",
+      "value": "△",
+      "codepoint": 9651
+    },
+    {
+      "name": "BLACK UP-POINTING SMALL TRIANGLE",
+      "value": "▴",
+      "codepoint": 9652
+    },
+    {
+      "name": "WHITE UP-POINTING SMALL TRIANGLE",
+      "value": "▵",
+      "codepoint": 9653
+    },
+    {
+      "name": "BLACK RIGHT-POINTING TRIANGLE",
+      "value": "▶",
+      "codepoint": 9654
+    },
+    {
+      "name": "WHITE RIGHT-POINTING TRIANGLE",
+      "value": "▷",
+      "codepoint": 9655
+    },
+    {
+      "name": "BLACK RIGHT-POINTING SMALL TRIANGLE",
+      "value": "▸",
+      "codepoint": 9656
+    },
+    {
+      "name": "WHITE RIGHT-POINTING SMALL TRIANGLE",
+      "value": "▹",
+      "codepoint": 9657
+    },
+    {
+      "name": "BLACK RIGHT-POINTING POINTER",
+      "value": "►",
+      "codepoint": 9658
+    },
+    {
+      "name": "WHITE RIGHT-POINTING POINTER",
+      "value": "▻",
+      "codepoint": 9659
+    },
+    {
+      "name": "BLACK DOWN-POINTING TRIANGLE",
+      "value": "▼",
+      "codepoint": 9660
+    },
+    {
+      "name": "WHITE DOWN-POINTING TRIANGLE",
+      "value": "▽",
+      "codepoint": 9661
+    },
+    {
+      "name": "BLACK DOWN-POINTING SMALL TRIANGLE",
+      "value": "▾",
+      "codepoint": 9662
+    },
+    {
+      "name": "WHITE DOWN-POINTING SMALL TRIANGLE",
+      "value": "▿",
+      "codepoint": 9663
+    },
+    {
+      "name": "BLACK LEFT-POINTING TRIANGLE",
+      "value": "◀",
+      "codepoint": 9664
+    },
+    {
+      "name": "WHITE LEFT-POINTING TRIANGLE",
+      "value": "◁",
+      "codepoint": 9665
+    },
+    {
+      "name": "BLACK LEFT-POINTING SMALL TRIANGLE",
+      "value": "◂",
+      "codepoint": 9666
+    },
+    {
+      "name": "WHITE LEFT-POINTING SMALL TRIANGLE",
+      "value": "◃",
+      "codepoint": 9667
+    },
+    {
+      "name": "BLACK LEFT-POINTING POINTER",
+      "value": "◄",
+      "codepoint": 9668
+    },
+    {
+      "name": "WHITE LEFT-POINTING POINTER",
+      "value": "◅",
+      "codepoint": 9669
+    },
+    {
+      "name": "BLACK DIAMOND",
+      "value": "◆",
+      "codepoint": 9670
+    },
+    {
+      "name": "WHITE DIAMOND",
+      "value": "◇",
+      "codepoint": 9671
+    },
+    {
+      "name": "WHITE DIAMOND CONTAINING BLACK SMALL DIAMOND",
+      "value": "◈",
+      "codepoint": 9672
+    },
+    {
+      "name": "FISHEYE",
+      "value": "◉",
+      "codepoint": 9673
+    },
+    {
+      "name": "LOZENGE",
+      "value": "◊",
+      "codepoint": 9674
+    },
+    {
+      "name": "WHITE CIRCLE",
+      "value": "○",
+      "codepoint": 9675
+    },
+    {
+      "name": "DOTTED CIRCLE",
+      "value": "◌",
+      "codepoint": 9676
+    },
+    {
+      "name": "CIRCLE WITH VERTICAL FILL",
+      "value": "◍",
+      "codepoint": 9677
+    },
+    {
+      "name": "BULLSEYE",
+      "value": "◎",
+      "codepoint": 9678
+    },
+    {
+      "name": "BLACK CIRCLE",
+      "value": "●",
+      "codepoint": 9679
+    },
+    {
+      "name": "CIRCLE WITH LEFT HALF BLACK",
+      "value": "◐",
+      "codepoint": 9680
+    },
+    {
+      "name": "CIRCLE WITH RIGHT HALF BLACK",
       "value": "◑",
-      "category": "symbols"
+      "codepoint": 9681
     },
     {
-      "name": "sailboat",
-      "value": "⛵",
-      "category": "symbols"
+      "name": "CIRCLE WITH LOWER HALF BLACK",
+      "value": "◒",
+      "codepoint": 9682
     },
     {
-      "name": "tent",
-      "value": "⛺",
-      "category": "symbols"
+      "name": "CIRCLE WITH UPPER HALF BLACK",
+      "value": "◓",
+      "codepoint": 9683
     },
     {
-      "name": "do not enter",
-      "value": "⛔",
-      "category": "symbols"
+      "name": "CIRCLE WITH UPPER RIGHT QUADRANT BLACK",
+      "value": "◔",
+      "codepoint": 9684
     },
     {
-      "name": "first number",
-      "value": "1",
-      "category": "numbers"
+      "name": "CIRCLE WITH ALL BUT UPPER LEFT QUADRANT BLACK",
+      "value": "◕",
+      "codepoint": 9685
     },
     {
-      "name": "second number",
-      "value": "2",
-      "category": "numbers"
+      "name": "LEFT HALF BLACK CIRCLE",
+      "value": "◖",
+      "codepoint": 9686
     },
     {
-      "name": "first letter",
-      "value": "a",
-      "category": "letters"
+      "name": "RIGHT HALF BLACK CIRCLE",
+      "value": "◗",
+      "codepoint": 9687
     },
     {
-      "name": "second letter",
-      "value": "b",
-      "category": "letters"
+      "name": "INVERSE BULLET",
+      "value": "◘",
+      "codepoint": 9688
     },
     {
-      "name": "star",
+      "name": "INVERSE WHITE CIRCLE",
+      "value": "◙",
+      "codepoint": 9689
+    },
+    {
+      "name": "UPPER HALF INVERSE WHITE CIRCLE",
+      "value": "◚",
+      "codepoint": 9690
+    },
+    {
+      "name": "LOWER HALF INVERSE WHITE CIRCLE",
+      "value": "◛",
+      "codepoint": 9691
+    },
+    {
+      "name": "UPPER LEFT QUADRANT CIRCULAR ARC",
+      "value": "◜",
+      "codepoint": 9692
+    },
+    {
+      "name": "UPPER RIGHT QUADRANT CIRCULAR ARC",
+      "value": "◝",
+      "codepoint": 9693
+    },
+    {
+      "name": "LOWER RIGHT QUADRANT CIRCULAR ARC",
+      "value": "◞",
+      "codepoint": 9694
+    },
+    {
+      "name": "LOWER LEFT QUADRANT CIRCULAR ARC",
+      "value": "◟",
+      "codepoint": 9695
+    },
+    {
+      "name": "UPPER HALF CIRCLE",
+      "value": "◠",
+      "codepoint": 9696
+    },
+    {
+      "name": "LOWER HALF CIRCLE",
+      "value": "◡",
+      "codepoint": 9697
+    },
+    {
+      "name": "BLACK LOWER RIGHT TRIANGLE",
+      "value": "◢",
+      "codepoint": 9698
+    },
+    {
+      "name": "BLACK LOWER LEFT TRIANGLE",
+      "value": "◣",
+      "codepoint": 9699
+    },
+    {
+      "name": "BLACK UPPER LEFT TRIANGLE",
+      "value": "◤",
+      "codepoint": 9700
+    },
+    {
+      "name": "BLACK UPPER RIGHT TRIANGLE",
+      "value": "◥",
+      "codepoint": 9701
+    },
+    {
+      "name": "WHITE BULLET",
+      "value": "◦",
+      "codepoint": 9702
+    },
+    {
+      "name": "SQUARE WITH LEFT HALF BLACK",
+      "value": "◧",
+      "codepoint": 9703
+    },
+    {
+      "name": "SQUARE WITH RIGHT HALF BLACK",
+      "value": "◨",
+      "codepoint": 9704
+    },
+    {
+      "name": "SQUARE WITH UPPER LEFT DIAGONAL HALF BLACK",
+      "value": "◩",
+      "codepoint": 9705
+    },
+    {
+      "name": "SQUARE WITH LOWER RIGHT DIAGONAL HALF BLACK",
+      "value": "◪",
+      "codepoint": 9706
+    },
+    {
+      "name": "WHITE SQUARE WITH VERTICAL BISECTING LINE",
+      "value": "◫",
+      "codepoint": 9707
+    },
+    {
+      "name": "WHITE UP-POINTING TRIANGLE WITH DOT",
+      "value": "◬",
+      "codepoint": 9708
+    },
+    {
+      "name": "UP-POINTING TRIANGLE WITH LEFT HALF BLACK",
+      "value": "◭",
+      "codepoint": 9709
+    },
+    {
+      "name": "UP-POINTING TRIANGLE WITH RIGHT HALF BLACK",
+      "value": "◮",
+      "codepoint": 9710
+    },
+    {
+      "name": "LARGE CIRCLE",
+      "value": "◯",
+      "codepoint": 9711
+    },
+    {
+      "name": "WHITE SQUARE WITH UPPER LEFT QUADRANT",
+      "value": "◰",
+      "codepoint": 9712
+    },
+    {
+      "name": "WHITE SQUARE WITH LOWER LEFT QUADRANT",
+      "value": "◱",
+      "codepoint": 9713
+    },
+    {
+      "name": "WHITE SQUARE WITH LOWER RIGHT QUADRANT",
+      "value": "◲",
+      "codepoint": 9714
+    },
+    {
+      "name": "WHITE SQUARE WITH UPPER RIGHT QUADRANT",
+      "value": "◳",
+      "codepoint": 9715
+    },
+    {
+      "name": "WHITE CIRCLE WITH UPPER LEFT QUADRANT",
+      "value": "◴",
+      "codepoint": 9716
+    },
+    {
+      "name": "WHITE CIRCLE WITH LOWER LEFT QUADRANT",
+      "value": "◵",
+      "codepoint": 9717
+    },
+    {
+      "name": "WHITE CIRCLE WITH LOWER RIGHT QUADRANT",
+      "value": "◶",
+      "codepoint": 9718
+    },
+    {
+      "name": "WHITE CIRCLE WITH UPPER RIGHT QUADRANT",
+      "value": "◷",
+      "codepoint": 9719
+    },
+    {
+      "name": "BLACK SUN WITH RAYS",
+      "value": "☀",
+      "codepoint": 9728
+    },
+    {
+      "name": "CLOUD",
+      "value": "☁",
+      "codepoint": 9729
+    },
+    {
+      "name": "UMBRELLA",
+      "value": "☂",
+      "codepoint": 9730
+    },
+    {
+      "name": "SNOWMAN",
+      "value": "☃",
+      "codepoint": 9731
+    },
+    {
+      "name": "COMET",
+      "value": "☄",
+      "codepoint": 9732
+    },
+    {
+      "name": "BLACK STAR",
       "value": "★",
-      "category": "stars"
+      "codepoint": 9733
     },
     {
-      "name": "peace",
+      "name": "WHITE STAR",
+      "value": "☆",
+      "codepoint": 9734
+    },
+    {
+      "name": "LIGHTNING",
+      "value": "☇",
+      "codepoint": 9735
+    },
+    {
+      "name": "THUNDERSTORM",
+      "value": "☈",
+      "codepoint": 9736
+    },
+    {
+      "name": "SUN",
+      "value": "☉",
+      "codepoint": 9737
+    },
+    {
+      "name": "ASCENDING NODE",
+      "value": "☊",
+      "codepoint": 9738
+    },
+    {
+      "name": "DESCENDING NODE",
+      "value": "☋",
+      "codepoint": 9739
+    },
+    {
+      "name": "CONJUNCTION",
+      "value": "☌",
+      "codepoint": 9740
+    },
+    {
+      "name": "OPPOSITION",
+      "value": "☍",
+      "codepoint": 9741
+    },
+    {
+      "name": "BLACK TELEPHONE",
+      "value": "☎",
+      "codepoint": 9742
+    },
+    {
+      "name": "WHITE TELEPHONE",
+      "value": "☏",
+      "codepoint": 9743
+    },
+    {
+      "name": "BALLOT BOX",
+      "value": "☐",
+      "codepoint": 9744
+    },
+    {
+      "name": "BALLOT BOX WITH CHECK",
+      "value": "☑",
+      "codepoint": 9745
+    },
+    {
+      "name": "BALLOT BOX WITH X",
+      "value": "☒",
+      "codepoint": 9746
+    },
+    {
+      "name": "SALTIRE",
+      "value": "☓",
+      "codepoint": 9747
+    },
+    {
+      "name": "REVERSED ROTATED FLORAL HEART BULLET",
+      "value": "☙",
+      "codepoint": 9753
+    },
+    {
+      "name": "BLACK LEFT POINTING INDEX",
+      "value": "☚",
+      "codepoint": 9754
+    },
+    {
+      "name": "BLACK RIGHT POINTING INDEX",
+      "value": "☛",
+      "codepoint": 9755
+    },
+    {
+      "name": "WHITE LEFT POINTING INDEX",
+      "value": "☜",
+      "codepoint": 9756
+    },
+    {
+      "name": "WHITE UP POINTING INDEX",
+      "value": "☝",
+      "codepoint": 9757
+    },
+    {
+      "name": "WHITE RIGHT POINTING INDEX",
+      "value": "☞",
+      "codepoint": 9758
+    },
+    {
+      "name": "WHITE DOWN POINTING INDEX",
+      "value": "☟",
+      "codepoint": 9759
+    },
+    {
+      "name": "SKULL AND CROSSBONES",
+      "value": "☠",
+      "codepoint": 9760
+    },
+    {
+      "name": "CAUTION SIGN",
+      "value": "☡",
+      "codepoint": 9761
+    },
+    {
+      "name": "RADIOACTIVE SIGN",
+      "value": "☢",
+      "codepoint": 9762
+    },
+    {
+      "name": "BIOHAZARD SIGN",
+      "value": "☣",
+      "codepoint": 9763
+    },
+    {
+      "name": "CADUCEUS",
+      "value": "☤",
+      "codepoint": 9764
+    },
+    {
+      "name": "ANKH",
+      "value": "☥",
+      "codepoint": 9765
+    },
+    {
+      "name": "ORTHODOX CROSS",
+      "value": "☦",
+      "codepoint": 9766
+    },
+    {
+      "name": "CHI RHO",
+      "value": "☧",
+      "codepoint": 9767
+    },
+    {
+      "name": "CROSS OF LORRAINE",
+      "value": "☨",
+      "codepoint": 9768
+    },
+    {
+      "name": "CROSS OF JERUSALEM",
+      "value": "☩",
+      "codepoint": 9769
+    },
+    {
+      "name": "STAR AND CRESCENT",
+      "value": "☪",
+      "codepoint": 9770
+    },
+    {
+      "name": "FARSI SYMBOL",
+      "value": "☫",
+      "codepoint": 9771
+    },
+    {
+      "name": "ADI SHAKTI",
+      "value": "☬",
+      "codepoint": 9772
+    },
+    {
+      "name": "HAMMER AND SICKLE",
+      "value": "☭",
+      "codepoint": 9773
+    },
+    {
+      "name": "PEACE SYMBOL",
+      "value": "☮",
+      "codepoint": 9774
+    },
+    {
+      "name": "YIN YANG",
+      "value": "☯",
+      "codepoint": 9775
+    },
+    {
+      "name": "TRIGRAM FOR HEAVEN",
+      "value": "☰",
+      "codepoint": 9776
+    },
+    {
+      "name": "TRIGRAM FOR LAKE",
+      "value": "☱",
+      "codepoint": 9777
+    },
+    {
+      "name": "TRIGRAM FOR FIRE",
+      "value": "☲",
+      "codepoint": 9778
+    },
+    {
+      "name": "TRIGRAM FOR THUNDER",
+      "value": "☳",
+      "codepoint": 9779
+    },
+    {
+      "name": "TRIGRAM FOR WIND",
+      "value": "☴",
+      "codepoint": 9780
+    },
+    {
+      "name": "TRIGRAM FOR WATER",
+      "value": "☵",
+      "codepoint": 9781
+    },
+    {
+      "name": "TRIGRAM FOR MOUNTAIN",
+      "value": "☶",
+      "codepoint": 9782
+    },
+    {
+      "name": "TRIGRAM FOR EARTH",
+      "value": "☷",
+      "codepoint": 9783
+    },
+    {
+      "name": "WHEEL OF DHARMA",
+      "value": "☸",
+      "codepoint": 9784
+    },
+    {
+      "name": "WHITE FROWNING FACE",
+      "value": "☹",
+      "codepoint": 9785
+    },
+    {
+      "name": "WHITE SMILING FACE",
+      "value": "☺",
+      "codepoint": 9786
+    },
+    {
+      "name": "BLACK SMILING FACE",
+      "value": "☻",
+      "codepoint": 9787
+    },
+    {
+      "name": "WHITE SUN WITH RAYS",
+      "value": "☼",
+      "codepoint": 9788
+    },
+    {
+      "name": "FIRST QUARTER MOON",
+      "value": "☽",
+      "codepoint": 9789
+    },
+    {
+      "name": "LAST QUARTER MOON",
+      "value": "☾",
+      "codepoint": 9790
+    },
+    {
+      "name": "MERCURY",
+      "value": "☿",
+      "codepoint": 9791
+    },
+    {
+      "name": "FEMALE SIGN",
+      "value": "♀",
+      "codepoint": 9792
+    },
+    {
+      "name": "EARTH",
+      "value": "♁",
+      "codepoint": 9793
+    },
+    {
+      "name": "MALE SIGN",
+      "value": "♂",
+      "codepoint": 9794
+    },
+    {
+      "name": "JUPITER",
+      "value": "♃",
+      "codepoint": 9795
+    },
+    {
+      "name": "SATURN",
+      "value": "♄",
+      "codepoint": 9796
+    },
+    {
+      "name": "URANUS",
+      "value": "♅",
+      "codepoint": 9797
+    },
+    {
+      "name": "NEPTUNE",
+      "value": "♆",
+      "codepoint": 9798
+    },
+    {
+      "name": "PLUTO",
+      "value": "♇",
+      "codepoint": 9799
+    },
+    {
+      "name": "ARIES",
+      "value": "♈",
+      "codepoint": 9800
+    },
+    {
+      "name": "TAURUS",
+      "value": "♉",
+      "codepoint": 9801
+    },
+    {
+      "name": "GEMINI",
+      "value": "♊",
+      "codepoint": 9802
+    },
+    {
+      "name": "CANCER",
+      "value": "♋",
+      "codepoint": 9803
+    },
+    {
+      "name": "LEO",
+      "value": "♌",
+      "codepoint": 9804
+    },
+    {
+      "name": "VIRGO",
+      "value": "♍",
+      "codepoint": 9805
+    },
+    {
+      "name": "LIBRA",
+      "value": "♎",
+      "codepoint": 9806
+    },
+    {
+      "name": "SCORPIUS",
+      "value": "♏",
+      "codepoint": 9807
+    },
+    {
+      "name": "SAGITTARIUS",
+      "value": "♐",
+      "codepoint": 9808
+    },
+    {
+      "name": "CAPRICORN",
+      "value": "♑",
+      "codepoint": 9809
+    },
+    {
+      "name": "AQUARIUS",
+      "value": "♒",
+      "codepoint": 9810
+    },
+    {
+      "name": "PISCES",
+      "value": "♓",
+      "codepoint": 9811
+    },
+    {
+      "name": "WHITE CHESS KING",
+      "value": "♔",
+      "codepoint": 9812
+    },
+    {
+      "name": "WHITE CHESS QUEEN",
+      "value": "♕",
+      "codepoint": 9813
+    },
+    {
+      "name": "WHITE CHESS ROOK",
+      "value": "♖",
+      "codepoint": 9814
+    },
+    {
+      "name": "WHITE CHESS BISHOP",
+      "value": "♗",
+      "codepoint": 9815
+    },
+    {
+      "name": "WHITE CHESS KNIGHT",
+      "value": "♘",
+      "codepoint": 9816
+    },
+    {
+      "name": "WHITE CHESS PAWN",
+      "value": "♙",
+      "codepoint": 9817
+    },
+    {
+      "name": "BLACK CHESS KING",
+      "value": "♚",
+      "codepoint": 9818
+    },
+    {
+      "name": "BLACK CHESS QUEEN",
+      "value": "♛",
+      "codepoint": 9819
+    },
+    {
+      "name": "BLACK CHESS ROOK",
+      "value": "♜",
+      "codepoint": 9820
+    },
+    {
+      "name": "BLACK CHESS BISHOP",
+      "value": "♝",
+      "codepoint": 9821
+    },
+    {
+      "name": "BLACK CHESS KNIGHT",
+      "value": "♞",
+      "codepoint": 9822
+    },
+    {
+      "name": "BLACK CHESS PAWN",
+      "value": "♟",
+      "codepoint": 9823
+    },
+    {
+      "name": "BLACK SPADE SUIT",
+      "value": "♠",
+      "codepoint": 9824
+    },
+    {
+      "name": "WHITE HEART SUIT",
+      "value": "♡",
+      "codepoint": 9825
+    },
+    {
+      "name": "WHITE DIAMOND SUIT",
+      "value": "♢",
+      "codepoint": 9826
+    },
+    {
+      "name": "BLACK CLUB SUIT",
+      "value": "♣",
+      "codepoint": 9827
+    },
+    {
+      "name": "WHITE SPADE SUIT",
+      "value": "♤",
+      "codepoint": 9828
+    },
+    {
+      "name": "BLACK HEART SUIT",
+      "value": "♥",
+      "codepoint": 9829
+    },
+    {
+      "name": "BLACK DIAMOND SUIT",
+      "value": "♦",
+      "codepoint": 9830
+    },
+    {
+      "name": "WHITE CLUB SUIT",
+      "value": "♧",
+      "codepoint": 9831
+    },
+    {
+      "name": "HOT SPRINGS",
+      "value": "♨",
+      "codepoint": 9832
+    },
+    {
+      "name": "QUARTER NOTE",
+      "value": "♩",
+      "codepoint": 9833
+    },
+    {
+      "name": "EIGHTH NOTE",
+      "value": "♪",
+      "codepoint": 9834
+    },
+    {
+      "name": "BEAMED EIGHTH NOTES",
+      "value": "♫",
+      "codepoint": 9835
+    },
+    {
+      "name": "BEAMED SIXTEENTH NOTES",
+      "value": "♬",
+      "codepoint": 9836
+    },
+    {
+      "name": "MUSIC FLAT SIGN",
+      "value": "♭",
+      "codepoint": 9837
+    },
+    {
+      "name": "MUSIC NATURAL SIGN",
+      "value": "♮",
+      "codepoint": 9838
+    },
+    {
+      "name": "MUSIC SHARP SIGN",
+      "value": "♯",
+      "codepoint": 9839
+    },
+    {
+      "name": "WEST SYRIAC CROSS",
+      "value": "♰",
+      "codepoint": 9840
+    },
+    {
+      "name": "EAST SYRIAC CROSS",
+      "value": "♱",
+      "codepoint": 9841
+    },
+    {
+      "name": "UPPER BLADE SCISSORS",
+      "value": "✁",
+      "codepoint": 9985
+    },
+    {
+      "name": "BLACK SCISSORS",
+      "value": "✂",
+      "codepoint": 9986
+    },
+    {
+      "name": "LOWER BLADE SCISSORS",
+      "value": "✃",
+      "codepoint": 9987
+    },
+    {
+      "name": "WHITE SCISSORS",
+      "value": "✄",
+      "codepoint": 9988
+    },
+    {
+      "name": "TELEPHONE LOCATION SIGN",
+      "value": "✆",
+      "codepoint": 9990
+    },
+    {
+      "name": "TAPE DRIVE",
+      "value": "✇",
+      "codepoint": 9991
+    },
+    {
+      "name": "AIRPLANE",
+      "value": "✈",
+      "codepoint": 9992
+    },
+    {
+      "name": "ENVELOPE",
+      "value": "✉",
+      "codepoint": 9993
+    },
+    {
+      "name": "VICTORY HAND",
       "value": "✌",
-      "category": "emoji"
+      "codepoint": 9996
     },
     {
-      "name": "dagger",
-      "value": "†",
-      "category": "symbols"
+      "name": "WRITING HAND",
+      "value": "✍",
+      "codepoint": 9997
     },
     {
-      "name": "double dagger",
-      "value": "‡",
-      "category": "symbols"
+      "name": "LOWER RIGHT PENCIL",
+      "value": "✎",
+      "codepoint": 9998
     },
     {
-      "name": "flower",
-      "value": "⚙",
-      "category": "symbols"
+      "name": "PENCIL",
+      "value": "✏",
+      "codepoint": 9999
     },
     {
-      "name": "circle with right half black",
-      "value": "◑",
-      "category": "symbols"
+      "name": "UPPER RIGHT PENCIL",
+      "value": "✐",
+      "codepoint": 10000
     },
     {
-      "name": "sailboat",
-      "value": "⛵",
-      "category": "symbols"
+      "name": "WHITE NIB",
+      "value": "✑",
+      "codepoint": 10001
     },
     {
-      "name": "tent",
-      "value": "⛺",
-      "category": "symbols"
+      "name": "BLACK NIB",
+      "value": "✒",
+      "codepoint": 10002
     },
     {
-      "name": "do not enter",
-      "value": "⛔",
-      "category": "symbols"
+      "name": "CHECK MARK",
+      "value": "✓",
+      "codepoint": 10003
     },
     {
-      "name": "first number",
-      "value": "1",
-      "category": "numbers"
+      "name": "HEAVY CHECK MARK",
+      "value": "✔",
+      "codepoint": 10004
     },
     {
-      "name": "second number",
-      "value": "2",
-      "category": "numbers"
+      "name": "MULTIPLICATION X",
+      "value": "✕",
+      "codepoint": 10005
     },
     {
-      "name": "first letter",
-      "value": "a",
-      "category": "letters"
+      "name": "HEAVY MULTIPLICATION X",
+      "value": "✖",
+      "codepoint": 10006
     },
     {
-      "name": "second letter",
-      "value": "b",
-      "category": "letters"
+      "name": "BALLOT X",
+      "value": "✗",
+      "codepoint": 10007
     },
     {
-      "name": "star",
-      "value": "★",
-      "category": "stars"
+      "name": "HEAVY BALLOT X",
+      "value": "✘",
+      "codepoint": 10008
     },
     {
-      "name": "peace",
-      "value": "✌",
-      "category": "emoji"
+      "name": "OUTLINED GREEK CROSS",
+      "value": "✙",
+      "codepoint": 10009
     },
     {
-      "name": "dagger",
-      "value": "†",
-      "category": "symbols"
+      "name": "HEAVY GREEK CROSS",
+      "value": "✚",
+      "codepoint": 10010
     },
     {
-      "name": "double dagger",
-      "value": "‡",
-      "category": "symbols"
+      "name": "OPEN CENTRE CROSS",
+      "value": "✛",
+      "codepoint": 10011
     },
     {
-      "name": "flower",
-      "value": "⚙",
-      "category": "symbols"
+      "name": "HEAVY OPEN CENTRE CROSS",
+      "value": "✜",
+      "codepoint": 10012
     },
     {
-      "name": "circle with right half black",
-      "value": "◑",
-      "category": "symbols"
+      "name": "LATIN CROSS",
+      "value": "✝",
+      "codepoint": 10013
     },
     {
-      "name": "sailboat",
-      "value": "⛵",
-      "category": "symbols"
+      "name": "SHADOWED WHITE LATIN CROSS",
+      "value": "✞",
+      "codepoint": 10014
     },
     {
-      "name": "tent",
-      "value": "⛺",
-      "category": "symbols"
+      "name": "OUTLINED LATIN CROSS",
+      "value": "✟",
+      "codepoint": 10015
     },
     {
-      "name": "do not enter",
-      "value": "⛔",
-      "category": "symbols"
+      "name": "MALTESE CROSS",
+      "value": "✠",
+      "codepoint": 10016
     },
     {
-      "name": "first number",
-      "value": "1",
-      "category": "numbers"
+      "name": "STAR OF DAVID",
+      "value": "✡",
+      "codepoint": 10017
     },
     {
-      "name": "second number",
-      "value": "2",
-      "category": "numbers"
+      "name": "FOUR TEARDROP-SPOKED ASTERISK",
+      "value": "✢",
+      "codepoint": 10018
     },
     {
-      "name": "first letter",
-      "value": "a",
-      "category": "letters"
+      "name": "FOUR BALLOON-SPOKED ASTERISK",
+      "value": "✣",
+      "codepoint": 10019
     },
     {
-      "name": "second letter",
-      "value": "b",
-      "category": "letters"
+      "name": "HEAVY FOUR BALLOON-SPOKED ASTERISK",
+      "value": "✤",
+      "codepoint": 10020
     },
     {
-      "name": "star",
-      "value": "★",
-      "category": "stars"
+      "name": "FOUR CLUB-SPOKED ASTERISK",
+      "value": "✥",
+      "codepoint": 10021
     },
     {
-      "name": "peace",
-      "value": "✌",
-      "category": "emoji"
+      "name": "BLACK FOUR POINTED STAR",
+      "value": "✦",
+      "codepoint": 10022
     },
     {
-      "name": "dagger",
-      "value": "†",
-      "category": "symbols"
+      "name": "WHITE FOUR POINTED STAR",
+      "value": "✧",
+      "codepoint": 10023
     },
     {
-      "name": "double dagger",
-      "value": "‡",
-      "category": "symbols"
+      "name": "STRESS OUTLINED WHITE STAR",
+      "value": "✩",
+      "codepoint": 10025
     },
     {
-      "name": "flower",
-      "value": "⚙",
-      "category": "symbols"
+      "name": "CIRCLED WHITE STAR",
+      "value": "✪",
+      "codepoint": 10026
     },
     {
-      "name": "circle with right half black",
-      "value": "◑",
-      "category": "symbols"
+      "name": "OPEN CENTRE BLACK STAR",
+      "value": "✫",
+      "codepoint": 10027
     },
     {
-      "name": "sailboat",
-      "value": "⛵",
-      "category": "symbols"
+      "name": "BLACK CENTRE WHITE STAR",
+      "value": "✬",
+      "codepoint": 10028
     },
     {
-      "name": "tent",
-      "value": "⛺",
-      "category": "symbols"
+      "name": "OUTLINED BLACK STAR",
+      "value": "✭",
+      "codepoint": 10029
     },
     {
-      "name": "do not enter",
-      "value": "⛔",
-      "category": "symbols"
+      "name": "HEAVY OUTLINED BLACK STAR",
+      "value": "✮",
+      "codepoint": 10030
     },
     {
-      "name": "first number",
-      "value": "1",
-      "category": "numbers"
+      "name": "PINWHEEL STAR",
+      "value": "✯",
+      "codepoint": 10031
     },
     {
-      "name": "second number",
-      "value": "2",
-      "category": "numbers"
+      "name": "SHADOWED WHITE STAR",
+      "value": "✰",
+      "codepoint": 10032
     },
     {
-      "name": "first letter",
-      "value": "a",
-      "category": "letters"
+      "name": "HEAVY ASTERISK",
+      "value": "✱",
+      "codepoint": 10033
     },
     {
-      "name": "second letter",
-      "value": "b",
-      "category": "letters"
+      "name": "OPEN CENTRE ASTERISK",
+      "value": "✲",
+      "codepoint": 10034
     },
     {
-      "name": "star",
-      "value": "★",
-      "category": "stars"
+      "name": "EIGHT SPOKED ASTERISK",
+      "value": "✳",
+      "codepoint": 10035
     },
     {
-      "name": "peace",
-      "value": "✌",
-      "category": "emoji"
+      "name": "EIGHT POINTED BLACK STAR",
+      "value": "✴",
+      "codepoint": 10036
     },
     {
-      "name": "dagger",
-      "value": "†",
-      "category": "symbols"
+      "name": "EIGHT POINTED PINWHEEL STAR",
+      "value": "✵",
+      "codepoint": 10037
     },
     {
-      "name": "double dagger",
-      "value": "‡",
-      "category": "symbols"
+      "name": "SIX POINTED BLACK STAR",
+      "value": "✶",
+      "codepoint": 10038
     },
     {
-      "name": "flower",
-      "value": "⚙",
-      "category": "symbols"
+      "name": "EIGHT POINTED RECTILINEAR BLACK STAR",
+      "value": "✷",
+      "codepoint": 10039
     },
     {
-      "name": "circle with right half black",
-      "value": "◑",
-      "category": "symbols"
+      "name": "HEAVY EIGHT POINTED RECTILINEAR BLACK STAR",
+      "value": "✸",
+      "codepoint": 10040
     },
     {
-      "name": "sailboat",
-      "value": "⛵",
-      "category": "symbols"
+      "name": "TWELVE POINTED BLACK STAR",
+      "value": "✹",
+      "codepoint": 10041
     },
     {
-      "name": "tent",
-      "value": "⛺",
-      "category": "symbols"
+      "name": "SIXTEEN POINTED ASTERISK",
+      "value": "✺",
+      "codepoint": 10042
     },
     {
-      "name": "do not enter",
-      "value": "⛔",
-      "category": "symbols"
+      "name": "TEARDROP-SPOKED ASTERISK",
+      "value": "✻",
+      "codepoint": 10043
     },
     {
-      "name": "first number",
-      "value": "1",
-      "category": "numbers"
+      "name": "OPEN CENTRE TEARDROP-SPOKED ASTERISK",
+      "value": "✼",
+      "codepoint": 10044
     },
     {
-      "name": "second number",
-      "value": "2",
-      "category": "numbers"
+      "name": "HEAVY TEARDROP-SPOKED ASTERISK",
+      "value": "✽",
+      "codepoint": 10045
     },
     {
-      "name": "first letter",
-      "value": "a",
-      "category": "letters"
+      "name": "SIX PETALLED BLACK AND WHITE FLORETTE",
+      "value": "✾",
+      "codepoint": 10046
     },
     {
-      "name": "second letter",
-      "value": "b",
-      "category": "letters"
+      "name": "BLACK FLORETTE",
+      "value": "✿",
+      "codepoint": 10047
     },
     {
-      "name": "star",
-      "value": "★",
-      "category": "stars"
+      "name": "WHITE FLORETTE",
+      "value": "❀",
+      "codepoint": 10048
     },
     {
-      "name": "peace",
-      "value": "✌",
-      "category": "emoji"
+      "name": "EIGHT PETALLED OUTLINED BLACK FLORETTE",
+      "value": "❁",
+      "codepoint": 10049
     },
     {
-      "name": "dagger",
-      "value": "†",
-      "category": "symbols"
+      "name": "CIRCLED OPEN CENTRE EIGHT POINTED STAR",
+      "value": "❂",
+      "codepoint": 10050
     },
     {
-      "name": "double dagger",
-      "value": "‡",
-      "category": "symbols"
+      "name": "HEAVY TEARDROP-SPOKED PINWHEEL ASTERISK",
+      "value": "❃",
+      "codepoint": 10051
     },
     {
-      "name": "flower",
-      "value": "⚙",
-      "category": "symbols"
+      "name": "SNOWFLAKE",
+      "value": "❄",
+      "codepoint": 10052
     },
     {
-      "name": "circle with right half black",
-      "value": "◑",
-      "category": "symbols"
+      "name": "TIGHT TRIFOLIATE SNOWFLAKE",
+      "value": "❅",
+      "codepoint": 10053
     },
     {
-      "name": "sailboat",
-      "value": "⛵",
-      "category": "symbols"
+      "name": "HEAVY CHEVRON SNOWFLAKE",
+      "value": "❆",
+      "codepoint": 10054
     },
     {
-      "name": "tent",
-      "value": "⛺",
-      "category": "symbols"
+      "name": "SPARKLE",
+      "value": "❇",
+      "codepoint": 10055
     },
     {
-      "name": "do not enter",
-      "value": "⛔",
-      "category": "symbols"
+      "name": "HEAVY SPARKLE",
+      "value": "❈",
+      "codepoint": 10056
     },
     {
-      "name": "first number",
-      "value": "1",
-      "category": "numbers"
+      "name": "BALLOON-SPOKED ASTERISK",
+      "value": "❉",
+      "codepoint": 10057
     },
     {
-      "name": "second number",
-      "value": "2",
-      "category": "numbers"
+      "name": "EIGHT TEARDROP-SPOKED PROPELLER ASTERISK",
+      "value": "❊",
+      "codepoint": 10058
     },
     {
-      "name": "first letter",
-      "value": "a",
-      "category": "letters"
+      "name": "HEAVY EIGHT TEARDROP-SPOKED PROPELLER ASTERISK",
+      "value": "❋",
+      "codepoint": 10059
     },
     {
-      "name": "second letter",
-      "value": "b",
-      "category": "letters"
+      "name": "SHADOWED WHITE CIRCLE",
+      "value": "❍",
+      "codepoint": 10061
     },
     {
-      "name": "star",
-      "value": "★",
-      "category": "stars"
+      "name": "LOWER RIGHT DROP-SHADOWED WHITE SQUARE",
+      "value": "❏",
+      "codepoint": 10063
     },
     {
-      "name": "peace",
-      "value": "✌",
-      "category": "emoji"
+      "name": "UPPER RIGHT DROP-SHADOWED WHITE SQUARE",
+      "value": "❐",
+      "codepoint": 10064
     },
     {
-      "name": "dagger",
-      "value": "†",
-      "category": "symbols"
+      "name": "LOWER RIGHT SHADOWED WHITE SQUARE",
+      "value": "❑",
+      "codepoint": 10065
     },
     {
-      "name": "double dagger",
-      "value": "‡",
-      "category": "symbols"
+      "name": "UPPER RIGHT SHADOWED WHITE SQUARE",
+      "value": "❒",
+      "codepoint": 10066
     },
     {
-      "name": "flower",
-      "value": "⚙",
-      "category": "symbols"
+      "name": "BLACK DIAMOND MINUS WHITE X",
+      "value": "❖",
+      "codepoint": 10070
     },
     {
-      "name": "circle with right half black",
-      "value": "◑",
-      "category": "symbols"
+      "name": "LIGHT VERTICAL BAR",
+      "value": "❘",
+      "codepoint": 10072
     },
     {
-      "name": "sailboat",
-      "value": "⛵",
-      "category": "symbols"
+      "name": "MEDIUM VERTICAL BAR",
+      "value": "❙",
+      "codepoint": 10073
     },
     {
-      "name": "tent",
-      "value": "⛺",
-      "category": "symbols"
+      "name": "HEAVY VERTICAL BAR",
+      "value": "❚",
+      "codepoint": 10074
     },
     {
-      "name": "do not enter",
-      "value": "⛔",
-      "category": "symbols"
+      "name": "HEAVY SINGLE TURNED COMMA QUOTATION MARK ORNAMENT",
+      "value": "❛",
+      "codepoint": 10075
     },
     {
-      "name": "first number",
-      "value": "1",
-      "category": "numbers"
+      "name": "HEAVY SINGLE COMMA QUOTATION MARK ORNAMENT",
+      "value": "❜",
+      "codepoint": 10076
     },
     {
-      "name": "second number",
-      "value": "2",
-      "category": "numbers"
+      "name": "HEAVY DOUBLE TURNED COMMA QUOTATION MARK ORNAMENT",
+      "value": "❝",
+      "codepoint": 10077
     },
     {
-      "name": "first letter",
-      "value": "a",
-      "category": "letters"
+      "name": "HEAVY DOUBLE COMMA QUOTATION MARK ORNAMENT",
+      "value": "❞",
+      "codepoint": 10078
     },
     {
-      "name": "second letter",
-      "value": "b",
-      "category": "letters"
+      "name": "CURVED STEM PARAGRAPH SIGN ORNAMENT",
+      "value": "❡",
+      "codepoint": 10081
     },
     {
-      "name": "star",
-      "value": "★",
-      "category": "stars"
+      "name": "HEAVY EXCLAMATION MARK ORNAMENT",
+      "value": "❢",
+      "codepoint": 10082
     },
     {
-      "name": "peace",
-      "value": "✌",
-      "category": "emoji"
+      "name": "HEAVY HEART EXCLAMATION MARK ORNAMENT",
+      "value": "❣",
+      "codepoint": 10083
     },
     {
-      "name": "dagger",
-      "value": "†",
-      "category": "symbols"
+      "name": "HEAVY BLACK HEART",
+      "value": "❤",
+      "codepoint": 10084
     },
     {
-      "name": "double dagger",
-      "value": "‡",
-      "category": "symbols"
+      "name": "ROTATED HEAVY BLACK HEART BULLET",
+      "value": "❥",
+      "codepoint": 10085
     },
     {
-      "name": "flower",
-      "value": "⚙",
-      "category": "symbols"
+      "name": "FLORAL HEART",
+      "value": "❦",
+      "codepoint": 10086
     },
     {
-      "name": "circle with right half black",
-      "value": "◑",
-      "category": "symbols"
+      "name": "ROTATED FLORAL HEART BULLET",
+      "value": "❧",
+      "codepoint": 10087
     },
     {
-      "name": "sailboat",
-      "value": "⛵",
-      "category": "symbols"
+      "name": "DINGBAT NEGATIVE CIRCLED DIGIT ONE",
+      "value": "❶",
+      "codepoint": 10102
     },
     {
-      "name": "tent",
-      "value": "⛺",
-      "category": "symbols"
+      "name": "DINGBAT NEGATIVE CIRCLED DIGIT TWO",
+      "value": "❷",
+      "codepoint": 10103
     },
     {
-      "name": "do not enter",
-      "value": "⛔",
-      "category": "symbols"
+      "name": "DINGBAT NEGATIVE CIRCLED DIGIT THREE",
+      "value": "❸",
+      "codepoint": 10104
     },
     {
-      "name": "first number",
-      "value": "1",
-      "category": "numbers"
+      "name": "DINGBAT NEGATIVE CIRCLED DIGIT FOUR",
+      "value": "❹",
+      "codepoint": 10105
     },
     {
-      "name": "second number",
-      "value": "2",
-      "category": "numbers"
+      "name": "DINGBAT NEGATIVE CIRCLED DIGIT FIVE",
+      "value": "❺",
+      "codepoint": 10106
     },
     {
-      "name": "first letter",
-      "value": "a",
-      "category": "letters"
+      "name": "DINGBAT NEGATIVE CIRCLED DIGIT SIX",
+      "value": "❻",
+      "codepoint": 10107
     },
     {
-      "name": "second letter",
-      "value": "b",
-      "category": "letters"
+      "name": "DINGBAT NEGATIVE CIRCLED DIGIT SEVEN",
+      "value": "❼",
+      "codepoint": 10108
     },
     {
-      "name": "star",
-      "value": "★",
-      "category": "stars"
+      "name": "DINGBAT NEGATIVE CIRCLED DIGIT EIGHT",
+      "value": "❽",
+      "codepoint": 10109
     },
     {
-      "name": "peace",
-      "value": "✌",
-      "category": "emoji"
+      "name": "DINGBAT NEGATIVE CIRCLED DIGIT NINE",
+      "value": "❾",
+      "codepoint": 10110
     },
     {
-      "name": "dagger",
-      "value": "†",
-      "category": "symbols"
+      "name": "DINGBAT NEGATIVE CIRCLED NUMBER TEN",
+      "value": "❿",
+      "codepoint": 10111
     },
     {
-      "name": "double dagger",
-      "value": "‡",
-      "category": "symbols"
+      "name": "DINGBAT CIRCLED SANS-SERIF DIGIT ONE",
+      "value": "➀",
+      "codepoint": 10112
     },
     {
-      "name": "flower",
-      "value": "⚙",
-      "category": "symbols"
+      "name": "DINGBAT CIRCLED SANS-SERIF DIGIT TWO",
+      "value": "➁",
+      "codepoint": 10113
     },
     {
-      "name": "circle with right half black",
-      "value": "◑",
-      "category": "symbols"
+      "name": "DINGBAT CIRCLED SANS-SERIF DIGIT THREE",
+      "value": "➂",
+      "codepoint": 10114
     },
     {
-      "name": "sailboat",
-      "value": "⛵",
-      "category": "symbols"
+      "name": "DINGBAT CIRCLED SANS-SERIF DIGIT FOUR",
+      "value": "➃",
+      "codepoint": 10115
     },
     {
-      "name": "tent",
-      "value": "⛺",
-      "category": "symbols"
+      "name": "DINGBAT CIRCLED SANS-SERIF DIGIT FIVE",
+      "value": "➄",
+      "codepoint": 10116
     },
     {
-      "name": "do not enter",
-      "value": "⛔",
-      "category": "symbols"
+      "name": "DINGBAT CIRCLED SANS-SERIF DIGIT SIX",
+      "value": "➅",
+      "codepoint": 10117
     },
     {
-      "name": "first number",
-      "value": "1",
-      "category": "numbers"
+      "name": "DINGBAT CIRCLED SANS-SERIF DIGIT SEVEN",
+      "value": "➆",
+      "codepoint": 10118
     },
     {
-      "name": "second number",
-      "value": "2",
-      "category": "numbers"
+      "name": "DINGBAT CIRCLED SANS-SERIF DIGIT EIGHT",
+      "value": "➇",
+      "codepoint": 10119
     },
     {
-      "name": "first letter",
-      "value": "a",
-      "category": "letters"
+      "name": "DINGBAT CIRCLED SANS-SERIF DIGIT NINE",
+      "value": "➈",
+      "codepoint": 10120
     },
     {
-      "name": "second letter",
-      "value": "b",
-      "category": "letters"
+      "name": "DINGBAT CIRCLED SANS-SERIF NUMBER TEN",
+      "value": "➉",
+      "codepoint": 10121
     },
     {
-      "name": "star",
-      "value": "★",
-      "category": "stars"
+      "name": "DINGBAT NEGATIVE CIRCLED SANS-SERIF DIGIT ONE",
+      "value": "➊",
+      "codepoint": 10122
     },
     {
-      "name": "peace",
-      "value": "✌",
-      "category": "emoji"
+      "name": "DINGBAT NEGATIVE CIRCLED SANS-SERIF DIGIT TWO",
+      "value": "➋",
+      "codepoint": 10123
     },
     {
-      "name": "dagger",
-      "value": "†",
-      "category": "symbols"
+      "name": "DINGBAT NEGATIVE CIRCLED SANS-SERIF DIGIT THREE",
+      "value": "➌",
+      "codepoint": 10124
     },
     {
-      "name": "double dagger",
-      "value": "‡",
-      "category": "symbols"
+      "name": "DINGBAT NEGATIVE CIRCLED SANS-SERIF DIGIT FOUR",
+      "value": "➍",
+      "codepoint": 10125
     },
     {
-      "name": "flower",
-      "value": "⚙",
-      "category": "symbols"
+      "name": "DINGBAT NEGATIVE CIRCLED SANS-SERIF DIGIT FIVE",
+      "value": "➎",
+      "codepoint": 10126
     },
     {
-      "name": "circle with right half black",
-      "value": "◑",
-      "category": "symbols"
+      "name": "DINGBAT NEGATIVE CIRCLED SANS-SERIF DIGIT SIX",
+      "value": "➏",
+      "codepoint": 10127
     },
     {
-      "name": "sailboat",
-      "value": "⛵",
-      "category": "symbols"
+      "name": "DINGBAT NEGATIVE CIRCLED SANS-SERIF DIGIT SEVEN",
+      "value": "➐",
+      "codepoint": 10128
     },
     {
-      "name": "tent",
-      "value": "⛺",
-      "category": "symbols"
+      "name": "DINGBAT NEGATIVE CIRCLED SANS-SERIF DIGIT EIGHT",
+      "value": "➑",
+      "codepoint": 10129
     },
     {
-      "name": "do not enter",
-      "value": "⛔",
-      "category": "symbols"
+      "name": "DINGBAT NEGATIVE CIRCLED SANS-SERIF DIGIT NINE",
+      "value": "➒",
+      "codepoint": 10130
     },
     {
-      "name": "first number",
-      "value": "1",
-      "category": "numbers"
+      "name": "DINGBAT NEGATIVE CIRCLED SANS-SERIF NUMBER TEN",
+      "value": "➓",
+      "codepoint": 10131
     },
     {
-      "name": "second number",
-      "value": "2",
-      "category": "numbers"
+      "name": "HEAVY WIDE-HEADED RIGHTWARDS ARROW",
+      "value": "➔",
+      "codepoint": 10132
     },
     {
-      "name": "first letter",
-      "value": "a",
-      "category": "letters"
+      "name": "HEAVY SOUTH EAST ARROW",
+      "value": "➘",
+      "codepoint": 10136
     },
     {
-      "name": "second letter",
-      "value": "b",
-      "category": "letters"
+      "name": "HEAVY RIGHTWARDS ARROW",
+      "value": "➙",
+      "codepoint": 10137
     },
     {
-      "name": "star",
-      "value": "★",
-      "category": "stars"
+      "name": "HEAVY NORTH EAST ARROW",
+      "value": "➚",
+      "codepoint": 10138
     },
     {
-      "name": "peace",
-      "value": "✌",
-      "category": "emoji"
+      "name": "DRAFTING POINT RIGHTWARDS ARROW",
+      "value": "➛",
+      "codepoint": 10139
     },
     {
-      "name": "dagger",
-      "value": "†",
-      "category": "symbols"
+      "name": "HEAVY ROUND-TIPPED RIGHTWARDS ARROW",
+      "value": "➜",
+      "codepoint": 10140
     },
     {
-      "name": "double dagger",
-      "value": "‡",
-      "category": "symbols"
+      "name": "TRIANGLE-HEADED RIGHTWARDS ARROW",
+      "value": "➝",
+      "codepoint": 10141
     },
     {
-      "name": "flower",
-      "value": "⚙",
-      "category": "symbols"
+      "name": "HEAVY TRIANGLE-HEADED RIGHTWARDS ARROW",
+      "value": "➞",
+      "codepoint": 10142
     },
     {
-      "name": "circle with right half black",
-      "value": "◑",
-      "category": "symbols"
+      "name": "DASHED TRIANGLE-HEADED RIGHTWARDS ARROW",
+      "value": "➟",
+      "codepoint": 10143
     },
     {
-      "name": "sailboat",
-      "value": "⛵",
-      "category": "symbols"
+      "name": "HEAVY DASHED TRIANGLE-HEADED RIGHTWARDS ARROW",
+      "value": "➠",
+      "codepoint": 10144
     },
     {
-      "name": "tent",
-      "value": "⛺",
-      "category": "symbols"
+      "name": "BLACK RIGHTWARDS ARROW",
+      "value": "➡",
+      "codepoint": 10145
     },
     {
-      "name": "do not enter",
-      "value": "⛔",
-      "category": "symbols"
+      "name": "THREE-D TOP-LIGHTED RIGHTWARDS ARROWHEAD",
+      "value": "➢",
+      "codepoint": 10146
     },
     {
-      "name": "first number",
-      "value": "1",
-      "category": "numbers"
+      "name": "THREE-D BOTTOM-LIGHTED RIGHTWARDS ARROWHEAD",
+      "value": "➣",
+      "codepoint": 10147
     },
     {
-      "name": "second number",
-      "value": "2",
-      "category": "numbers"
+      "name": "BLACK RIGHTWARDS ARROWHEAD",
+      "value": "➤",
+      "codepoint": 10148
     },
     {
-      "name": "first letter",
-      "value": "a",
-      "category": "letters"
+      "name": "HEAVY BLACK CURVED DOWNWARDS AND RIGHTWARDS ARROW",
+      "value": "➥",
+      "codepoint": 10149
     },
     {
-      "name": "second letter",
-      "value": "b",
-      "category": "letters"
+      "name": "HEAVY BLACK CURVED UPWARDS AND RIGHTWARDS ARROW",
+      "value": "➦",
+      "codepoint": 10150
     },
     {
-      "name": "star",
-      "value": "★",
-      "category": "stars"
+      "name": "SQUAT BLACK RIGHTWARDS ARROW",
+      "value": "➧",
+      "codepoint": 10151
     },
     {
-      "name": "peace",
-      "value": "✌",
-      "category": "emoji"
+      "name": "HEAVY CONCAVE-POINTED BLACK RIGHTWARDS ARROW",
+      "value": "➨",
+      "codepoint": 10152
     },
     {
-      "name": "dagger",
-      "value": "†",
-      "category": "symbols"
+      "name": "RIGHT-SHADED WHITE RIGHTWARDS ARROW",
+      "value": "➩",
+      "codepoint": 10153
     },
     {
-      "name": "double dagger",
-      "value": "‡",
-      "category": "symbols"
+      "name": "LEFT-SHADED WHITE RIGHTWARDS ARROW",
+      "value": "➪",
+      "codepoint": 10154
     },
     {
-      "name": "flower",
-      "value": "⚙",
-      "category": "symbols"
+      "name": "BACK-TILTED SHADOWED WHITE RIGHTWARDS ARROW",
+      "value": "➫",
+      "codepoint": 10155
     },
     {
-      "name": "circle with right half black",
-      "value": "◑",
-      "category": "symbols"
+      "name": "FRONT-TILTED SHADOWED WHITE RIGHTWARDS ARROW",
+      "value": "➬",
+      "codepoint": 10156
     },
     {
-      "name": "sailboat",
-      "value": "⛵",
-      "category": "symbols"
+      "name": "HEAVY LOWER RIGHT-SHADOWED WHITE RIGHTWARDS ARROW",
+      "value": "➭",
+      "codepoint": 10157
     },
     {
-      "name": "tent",
-      "value": "⛺",
-      "category": "symbols"
+      "name": "HEAVY UPPER RIGHT-SHADOWED WHITE RIGHTWARDS ARROW",
+      "value": "➮",
+      "codepoint": 10158
     },
     {
-      "name": "do not enter",
-      "value": "⛔",
-      "category": "symbols"
+      "name": "NOTCHED LOWER RIGHT-SHADOWED WHITE RIGHTWARDS ARROW",
+      "value": "➯",
+      "codepoint": 10159
     },
     {
-      "name": "first number",
-      "value": "1",
-      "category": "numbers"
+      "name": "NOTCHED UPPER RIGHT-SHADOWED WHITE RIGHTWARDS ARROW",
+      "value": "➱",
+      "codepoint": 10161
     },
     {
-      "name": "second number",
-      "value": "2",
-      "category": "numbers"
+      "name": "CIRCLED HEAVY WHITE RIGHTWARDS ARROW",
+      "value": "➲",
+      "codepoint": 10162
     },
     {
-      "name": "first letter",
-      "value": "a",
-      "category": "letters"
+      "name": "WHITE-FEATHERED RIGHTWARDS ARROW",
+      "value": "➳",
+      "codepoint": 10163
     },
     {
-      "name": "second letter",
-      "value": "b",
-      "category": "letters"
+      "name": "BLACK-FEATHERED SOUTH EAST ARROW",
+      "value": "➴",
+      "codepoint": 10164
     },
     {
-      "name": "star",
-      "value": "★",
-      "category": "stars"
+      "name": "BLACK-FEATHERED RIGHTWARDS ARROW",
+      "value": "➵",
+      "codepoint": 10165
     },
     {
-      "name": "peace",
-      "value": "✌",
-      "category": "emoji"
+      "name": "BLACK-FEATHERED NORTH EAST ARROW",
+      "value": "➶",
+      "codepoint": 10166
     },
     {
-      "name": "dagger",
-      "value": "†",
-      "category": "symbols"
+      "name": "HEAVY BLACK-FEATHERED SOUTH EAST ARROW",
+      "value": "➷",
+      "codepoint": 10167
     },
     {
-      "name": "double dagger",
-      "value": "‡",
-      "category": "symbols"
+      "name": "HEAVY BLACK-FEATHERED RIGHTWARDS ARROW",
+      "value": "➸",
+      "codepoint": 10168
     },
     {
-      "name": "flower",
-      "value": "⚙",
-      "category": "symbols"
+      "name": "HEAVY BLACK-FEATHERED NORTH EAST ARROW",
+      "value": "➹",
+      "codepoint": 10169
     },
     {
-      "name": "circle with right half black",
-      "value": "◑",
-      "category": "symbols"
+      "name": "TEARDROP-BARBED RIGHTWARDS ARROW",
+      "value": "➺",
+      "codepoint": 10170
     },
     {
-      "name": "sailboat",
-      "value": "⛵",
-      "category": "symbols"
+      "name": "HEAVY TEARDROP-SHANKED RIGHTWARDS ARROW",
+      "value": "➻",
+      "codepoint": 10171
     },
     {
-      "name": "tent",
-      "value": "⛺",
-      "category": "symbols"
+      "name": "WEDGE-TAILED RIGHTWARDS ARROW",
+      "value": "➼",
+      "codepoint": 10172
     },
     {
-      "name": "do not enter",
-      "value": "⛔",
-      "category": "symbols"
+      "name": "HEAVY WEDGE-TAILED RIGHTWARDS ARROW",
+      "value": "➽",
+      "codepoint": 10173
     },
     {
-      "name": "first number",
-      "value": "1",
-      "category": "numbers"
+      "name": "OPEN-OUTLINED RIGHTWARDS ARROW",
+      "value": "➾",
+      "codepoint": 10174
     },
     {
-      "name": "second number",
-      "value": "2",
-      "category": "numbers"
+      "name": "BRAILLE PATTERN BLANK",
+      "value": "⠀",
+      "codepoint": 10240
     },
     {
-      "name": "first letter",
-      "value": "a",
-      "category": "letters"
+      "name": "BRAILLE PATTERN DOTS-1",
+      "value": "⠁",
+      "codepoint": 10241
     },
     {
-      "name": "second letter",
-      "value": "b",
-      "category": "letters"
+      "name": "BRAILLE PATTERN DOTS-2",
+      "value": "⠂",
+      "codepoint": 10242
     },
     {
-      "name": "star",
-      "value": "★",
-      "category": "stars"
+      "name": "BRAILLE PATTERN DOTS-12",
+      "value": "⠃",
+      "codepoint": 10243
     },
     {
-      "name": "peace",
-      "value": "✌",
-      "category": "emoji"
+      "name": "BRAILLE PATTERN DOTS-3",
+      "value": "⠄",
+      "codepoint": 10244
     },
     {
-      "name": "dagger",
-      "value": "†",
-      "category": "symbols"
+      "name": "BRAILLE PATTERN DOTS-13",
+      "value": "⠅",
+      "codepoint": 10245
     },
     {
-      "name": "double dagger",
-      "value": "‡",
-      "category": "symbols"
+      "name": "BRAILLE PATTERN DOTS-23",
+      "value": "⠆",
+      "codepoint": 10246
     },
     {
-      "name": "flower",
-      "value": "⚙",
-      "category": "symbols"
+      "name": "BRAILLE PATTERN DOTS-123",
+      "value": "⠇",
+      "codepoint": 10247
     },
     {
-      "name": "circle with right half black",
-      "value": "◑",
-      "category": "symbols"
+      "name": "BRAILLE PATTERN DOTS-4",
+      "value": "⠈",
+      "codepoint": 10248
     },
     {
-      "name": "sailboat",
-      "value": "⛵",
-      "category": "symbols"
+      "name": "BRAILLE PATTERN DOTS-14",
+      "value": "⠉",
+      "codepoint": 10249
     },
     {
-      "name": "tent",
-      "value": "⛺",
-      "category": "symbols"
+      "name": "BRAILLE PATTERN DOTS-24",
+      "value": "⠊",
+      "codepoint": 10250
     },
     {
-      "name": "do not enter",
-      "value": "⛔",
-      "category": "symbols"
+      "name": "BRAILLE PATTERN DOTS-124",
+      "value": "⠋",
+      "codepoint": 10251
     },
     {
-      "name": "first number",
-      "value": "1",
-      "category": "numbers"
+      "name": "BRAILLE PATTERN DOTS-34",
+      "value": "⠌",
+      "codepoint": 10252
     },
     {
-      "name": "second number",
-      "value": "2",
-      "category": "numbers"
+      "name": "BRAILLE PATTERN DOTS-134",
+      "value": "⠍",
+      "codepoint": 10253
     },
     {
-      "name": "first letter",
-      "value": "a",
-      "category": "letters"
+      "name": "BRAILLE PATTERN DOTS-234",
+      "value": "⠎",
+      "codepoint": 10254
     },
     {
-      "name": "second letter",
-      "value": "b",
-      "category": "letters"
+      "name": "BRAILLE PATTERN DOTS-1234",
+      "value": "⠏",
+      "codepoint": 10255
     },
     {
-      "name": "star",
-      "value": "★",
-      "category": "stars"
+      "name": "BRAILLE PATTERN DOTS-5",
+      "value": "⠐",
+      "codepoint": 10256
     },
     {
-      "name": "peace",
-      "value": "✌",
-      "category": "emoji"
+      "name": "BRAILLE PATTERN DOTS-15",
+      "value": "⠑",
+      "codepoint": 10257
     },
     {
-      "name": "dagger",
-      "value": "†",
-      "category": "symbols"
+      "name": "BRAILLE PATTERN DOTS-25",
+      "value": "⠒",
+      "codepoint": 10258
     },
     {
-      "name": "double dagger",
-      "value": "‡",
-      "category": "symbols"
+      "name": "BRAILLE PATTERN DOTS-125",
+      "value": "⠓",
+      "codepoint": 10259
     },
     {
-      "name": "flower",
-      "value": "⚙",
-      "category": "symbols"
+      "name": "BRAILLE PATTERN DOTS-35",
+      "value": "⠔",
+      "codepoint": 10260
     },
     {
-      "name": "circle with right half black",
-      "value": "◑",
-      "category": "symbols"
+      "name": "BRAILLE PATTERN DOTS-135",
+      "value": "⠕",
+      "codepoint": 10261
     },
     {
-      "name": "sailboat",
-      "value": "⛵",
-      "category": "symbols"
+      "name": "BRAILLE PATTERN DOTS-235",
+      "value": "⠖",
+      "codepoint": 10262
     },
     {
-      "name": "tent",
-      "value": "⛺",
-      "category": "symbols"
+      "name": "BRAILLE PATTERN DOTS-1235",
+      "value": "⠗",
+      "codepoint": 10263
     },
     {
-      "name": "do not enter",
-      "value": "⛔",
-      "category": "symbols"
+      "name": "BRAILLE PATTERN DOTS-45",
+      "value": "⠘",
+      "codepoint": 10264
     },
     {
-      "name": "first number",
-      "value": "1",
-      "category": "numbers"
+      "name": "BRAILLE PATTERN DOTS-145",
+      "value": "⠙",
+      "codepoint": 10265
     },
     {
-      "name": "second number",
-      "value": "2",
-      "category": "numbers"
+      "name": "BRAILLE PATTERN DOTS-245",
+      "value": "⠚",
+      "codepoint": 10266
     },
     {
-      "name": "first letter",
-      "value": "a",
-      "category": "letters"
+      "name": "BRAILLE PATTERN DOTS-1245",
+      "value": "⠛",
+      "codepoint": 10267
     },
     {
-      "name": "second letter",
-      "value": "b",
-      "category": "letters"
+      "name": "BRAILLE PATTERN DOTS-345",
+      "value": "⠜",
+      "codepoint": 10268
     },
     {
-      "name": "star",
-      "value": "★",
-      "category": "stars"
+      "name": "BRAILLE PATTERN DOTS-1345",
+      "value": "⠝",
+      "codepoint": 10269
     },
     {
-      "name": "peace",
-      "value": "✌",
-      "category": "emoji"
+      "name": "BRAILLE PATTERN DOTS-2345",
+      "value": "⠞",
+      "codepoint": 10270
     },
     {
-      "name": "dagger",
-      "value": "†",
-      "category": "symbols"
+      "name": "BRAILLE PATTERN DOTS-12345",
+      "value": "⠟",
+      "codepoint": 10271
     },
     {
-      "name": "double dagger",
-      "value": "‡",
-      "category": "symbols"
+      "name": "BRAILLE PATTERN DOTS-6",
+      "value": "⠠",
+      "codepoint": 10272
     },
     {
-      "name": "flower",
-      "value": "⚙",
-      "category": "symbols"
+      "name": "BRAILLE PATTERN DOTS-16",
+      "value": "⠡",
+      "codepoint": 10273
     },
     {
-      "name": "circle with right half black",
-      "value": "◑",
-      "category": "symbols"
+      "name": "BRAILLE PATTERN DOTS-26",
+      "value": "⠢",
+      "codepoint": 10274
     },
     {
-      "name": "sailboat",
-      "value": "⛵",
-      "category": "symbols"
+      "name": "BRAILLE PATTERN DOTS-126",
+      "value": "⠣",
+      "codepoint": 10275
     },
     {
-      "name": "tent",
-      "value": "⛺",
-      "category": "symbols"
+      "name": "BRAILLE PATTERN DOTS-36",
+      "value": "⠤",
+      "codepoint": 10276
     },
     {
-      "name": "do not enter",
-      "value": "⛔",
-      "category": "symbols"
+      "name": "BRAILLE PATTERN DOTS-136",
+      "value": "⠥",
+      "codepoint": 10277
+    },
+    {
+      "name": "BRAILLE PATTERN DOTS-236",
+      "value": "⠦",
+      "codepoint": 10278
+    },
+    {
+      "name": "BRAILLE PATTERN DOTS-1236",
+      "value": "⠧",
+      "codepoint": 10279
+    },
+    {
+      "name": "BRAILLE PATTERN DOTS-46",
+      "value": "⠨",
+      "codepoint": 10280
+    },
+    {
+      "name": "BRAILLE PATTERN DOTS-146",
+      "value": "⠩",
+      "codepoint": 10281
+    },
+    {
+      "name": "BRAILLE PATTERN DOTS-246",
+      "value": "⠪",
+      "codepoint": 10282
+    },
+    {
+      "name": "BRAILLE PATTERN DOTS-1246",
+      "value": "⠫",
+      "codepoint": 10283
+    },
+    {
+      "name": "BRAILLE PATTERN DOTS-346",
+      "value": "⠬",
+      "codepoint": 10284
+    },
+    {
+      "name": "BRAILLE PATTERN DOTS-1346",
+      "value": "⠭",
+      "codepoint": 10285
+    },
+    {
+      "name": "BRAILLE PATTERN DOTS-2346",
+      "value": "⠮",
+      "codepoint": 10286
+    },
+    {
+      "name": "BRAILLE PATTERN DOTS-12346",
+      "value": "⠯",
+      "codepoint": 10287
+    },
+    {
+      "name": "BRAILLE PATTERN DOTS-56",
+      "value": "⠰",
+      "codepoint": 10288
+    },
+    {
+      "name": "BRAILLE PATTERN DOTS-156",
+      "value": "⠱",
+      "codepoint": 10289
+    },
+    {
+      "name": "BRAILLE PATTERN DOTS-256",
+      "value": "⠲",
+      "codepoint": 10290
+    },
+    {
+      "name": "BRAILLE PATTERN DOTS-1256",
+      "value": "⠳",
+      "codepoint": 10291
+    },
+    {
+      "name": "BRAILLE PATTERN DOTS-356",
+      "value": "⠴",
+      "codepoint": 10292
+    },
+    {
+      "name": "BRAILLE PATTERN DOTS-1356",
+      "value": "⠵",
+      "codepoint": 10293
+    },
+    {
+      "name": "BRAILLE PATTERN DOTS-2356",
+      "value": "⠶",
+      "codepoint": 10294
+    },
+    {
+      "name": "BRAILLE PATTERN DOTS-12356",
+      "value": "⠷",
+      "codepoint": 10295
+    },
+    {
+      "name": "BRAILLE PATTERN DOTS-456",
+      "value": "⠸",
+      "codepoint": 10296
+    },
+    {
+      "name": "BRAILLE PATTERN DOTS-1456",
+      "value": "⠹",
+      "codepoint": 10297
+    },
+    {
+      "name": "BRAILLE PATTERN DOTS-2456",
+      "value": "⠺",
+      "codepoint": 10298
+    },
+    {
+      "name": "BRAILLE PATTERN DOTS-12456",
+      "value": "⠻",
+      "codepoint": 10299
+    },
+    {
+      "name": "BRAILLE PATTERN DOTS-3456",
+      "value": "⠼",
+      "codepoint": 10300
+    },
+    {
+      "name": "BRAILLE PATTERN DOTS-13456",
+      "value": "⠽",
+      "codepoint": 10301
+    },
+    {
+      "name": "BRAILLE PATTERN DOTS-23456",
+      "value": "⠾",
+      "codepoint": 10302
+    },
+    {
+      "name": "BRAILLE PATTERN DOTS-123456",
+      "value": "⠿",
+      "codepoint": 10303
+    },
+    {
+      "name": "BRAILLE PATTERN DOTS-7",
+      "value": "⡀",
+      "codepoint": 10304
+    },
+    {
+      "name": "BRAILLE PATTERN DOTS-17",
+      "value": "⡁",
+      "codepoint": 10305
+    },
+    {
+      "name": "BRAILLE PATTERN DOTS-27",
+      "value": "⡂",
+      "codepoint": 10306
+    },
+    {
+      "name": "BRAILLE PATTERN DOTS-127",
+      "value": "⡃",
+      "codepoint": 10307
+    },
+    {
+      "name": "BRAILLE PATTERN DOTS-37",
+      "value": "⡄",
+      "codepoint": 10308
+    },
+    {
+      "name": "BRAILLE PATTERN DOTS-137",
+      "value": "⡅",
+      "codepoint": 10309
+    },
+    {
+      "name": "BRAILLE PATTERN DOTS-237",
+      "value": "⡆",
+      "codepoint": 10310
+    },
+    {
+      "name": "BRAILLE PATTERN DOTS-1237",
+      "value": "⡇",
+      "codepoint": 10311
+    },
+    {
+      "name": "BRAILLE PATTERN DOTS-47",
+      "value": "⡈",
+      "codepoint": 10312
+    },
+    {
+      "name": "BRAILLE PATTERN DOTS-147",
+      "value": "⡉",
+      "codepoint": 10313
+    },
+    {
+      "name": "BRAILLE PATTERN DOTS-247",
+      "value": "⡊",
+      "codepoint": 10314
+    },
+    {
+      "name": "BRAILLE PATTERN DOTS-1247",
+      "value": "⡋",
+      "codepoint": 10315
+    },
+    {
+      "name": "BRAILLE PATTERN DOTS-347",
+      "value": "⡌",
+      "codepoint": 10316
+    },
+    {
+      "name": "BRAILLE PATTERN DOTS-1347",
+      "value": "⡍",
+      "codepoint": 10317
+    },
+    {
+      "name": "BRAILLE PATTERN DOTS-2347",
+      "value": "⡎",
+      "codepoint": 10318
+    },
+    {
+      "name": "BRAILLE PATTERN DOTS-12347",
+      "value": "⡏",
+      "codepoint": 10319
+    },
+    {
+      "name": "BRAILLE PATTERN DOTS-57",
+      "value": "⡐",
+      "codepoint": 10320
+    },
+    {
+      "name": "BRAILLE PATTERN DOTS-157",
+      "value": "⡑",
+      "codepoint": 10321
+    },
+    {
+      "name": "BRAILLE PATTERN DOTS-257",
+      "value": "⡒",
+      "codepoint": 10322
+    },
+    {
+      "name": "BRAILLE PATTERN DOTS-1257",
+      "value": "⡓",
+      "codepoint": 10323
+    },
+    {
+      "name": "BRAILLE PATTERN DOTS-357",
+      "value": "⡔",
+      "codepoint": 10324
+    },
+    {
+      "name": "BRAILLE PATTERN DOTS-1357",
+      "value": "⡕",
+      "codepoint": 10325
+    },
+    {
+      "name": "BRAILLE PATTERN DOTS-2357",
+      "value": "⡖",
+      "codepoint": 10326
+    },
+    {
+      "name": "BRAILLE PATTERN DOTS-12357",
+      "value": "⡗",
+      "codepoint": 10327
+    },
+    {
+      "name": "BRAILLE PATTERN DOTS-457",
+      "value": "⡘",
+      "codepoint": 10328
+    },
+    {
+      "name": "BRAILLE PATTERN DOTS-1457",
+      "value": "⡙",
+      "codepoint": 10329
+    },
+    {
+      "name": "BRAILLE PATTERN DOTS-2457",
+      "value": "⡚",
+      "codepoint": 10330
+    },
+    {
+      "name": "BRAILLE PATTERN DOTS-12457",
+      "value": "⡛",
+      "codepoint": 10331
+    },
+    {
+      "name": "BRAILLE PATTERN DOTS-3457",
+      "value": "⡜",
+      "codepoint": 10332
+    },
+    {
+      "name": "BRAILLE PATTERN DOTS-13457",
+      "value": "⡝",
+      "codepoint": 10333
+    },
+    {
+      "name": "BRAILLE PATTERN DOTS-23457",
+      "value": "⡞",
+      "codepoint": 10334
+    },
+    {
+      "name": "BRAILLE PATTERN DOTS-123457",
+      "value": "⡟",
+      "codepoint": 10335
+    },
+    {
+      "name": "BRAILLE PATTERN DOTS-67",
+      "value": "⡠",
+      "codepoint": 10336
+    },
+    {
+      "name": "BRAILLE PATTERN DOTS-167",
+      "value": "⡡",
+      "codepoint": 10337
+    },
+    {
+      "name": "BRAILLE PATTERN DOTS-267",
+      "value": "⡢",
+      "codepoint": 10338
+    },
+    {
+      "name": "BRAILLE PATTERN DOTS-1267",
+      "value": "⡣",
+      "codepoint": 10339
+    },
+    {
+      "name": "BRAILLE PATTERN DOTS-367",
+      "value": "⡤",
+      "codepoint": 10340
+    },
+    {
+      "name": "BRAILLE PATTERN DOTS-1367",
+      "value": "⡥",
+      "codepoint": 10341
+    },
+    {
+      "name": "BRAILLE PATTERN DOTS-2367",
+      "value": "⡦",
+      "codepoint": 10342
+    },
+    {
+      "name": "BRAILLE PATTERN DOTS-12367",
+      "value": "⡧",
+      "codepoint": 10343
+    },
+    {
+      "name": "BRAILLE PATTERN DOTS-467",
+      "value": "⡨",
+      "codepoint": 10344
+    },
+    {
+      "name": "BRAILLE PATTERN DOTS-1467",
+      "value": "⡩",
+      "codepoint": 10345
+    },
+    {
+      "name": "BRAILLE PATTERN DOTS-2467",
+      "value": "⡪",
+      "codepoint": 10346
+    },
+    {
+      "name": "BRAILLE PATTERN DOTS-12467",
+      "value": "⡫",
+      "codepoint": 10347
+    },
+    {
+      "name": "BRAILLE PATTERN DOTS-3467",
+      "value": "⡬",
+      "codepoint": 10348
+    },
+    {
+      "name": "BRAILLE PATTERN DOTS-13467",
+      "value": "⡭",
+      "codepoint": 10349
+    },
+    {
+      "name": "BRAILLE PATTERN DOTS-23467",
+      "value": "⡮",
+      "codepoint": 10350
+    },
+    {
+      "name": "BRAILLE PATTERN DOTS-123467",
+      "value": "⡯",
+      "codepoint": 10351
+    },
+    {
+      "name": "BRAILLE PATTERN DOTS-567",
+      "value": "⡰",
+      "codepoint": 10352
+    },
+    {
+      "name": "BRAILLE PATTERN DOTS-1567",
+      "value": "⡱",
+      "codepoint": 10353
+    },
+    {
+      "name": "BRAILLE PATTERN DOTS-2567",
+      "value": "⡲",
+      "codepoint": 10354
+    },
+    {
+      "name": "BRAILLE PATTERN DOTS-12567",
+      "value": "⡳",
+      "codepoint": 10355
+    },
+    {
+      "name": "BRAILLE PATTERN DOTS-3567",
+      "value": "⡴",
+      "codepoint": 10356
+    },
+    {
+      "name": "BRAILLE PATTERN DOTS-13567",
+      "value": "⡵",
+      "codepoint": 10357
+    },
+    {
+      "name": "BRAILLE PATTERN DOTS-23567",
+      "value": "⡶",
+      "codepoint": 10358
+    },
+    {
+      "name": "BRAILLE PATTERN DOTS-123567",
+      "value": "⡷",
+      "codepoint": 10359
+    },
+    {
+      "name": "BRAILLE PATTERN DOTS-4567",
+      "value": "⡸",
+      "codepoint": 10360
+    },
+    {
+      "name": "BRAILLE PATTERN DOTS-14567",
+      "value": "⡹",
+      "codepoint": 10361
+    },
+    {
+      "name": "BRAILLE PATTERN DOTS-24567",
+      "value": "⡺",
+      "codepoint": 10362
+    },
+    {
+      "name": "BRAILLE PATTERN DOTS-124567",
+      "value": "⡻",
+      "codepoint": 10363
+    },
+    {
+      "name": "BRAILLE PATTERN DOTS-34567",
+      "value": "⡼",
+      "codepoint": 10364
+    },
+    {
+      "name": "BRAILLE PATTERN DOTS-134567",
+      "value": "⡽",
+      "codepoint": 10365
+    },
+    {
+      "name": "BRAILLE PATTERN DOTS-234567",
+      "value": "⡾",
+      "codepoint": 10366
+    },
+    {
+      "name": "BRAILLE PATTERN DOTS-1234567",
+      "value": "⡿",
+      "codepoint": 10367
+    },
+    {
+      "name": "BRAILLE PATTERN DOTS-8",
+      "value": "⢀",
+      "codepoint": 10368
+    },
+    {
+      "name": "BRAILLE PATTERN DOTS-18",
+      "value": "⢁",
+      "codepoint": 10369
+    },
+    {
+      "name": "BRAILLE PATTERN DOTS-28",
+      "value": "⢂",
+      "codepoint": 10370
+    },
+    {
+      "name": "BRAILLE PATTERN DOTS-128",
+      "value": "⢃",
+      "codepoint": 10371
+    },
+    {
+      "name": "BRAILLE PATTERN DOTS-38",
+      "value": "⢄",
+      "codepoint": 10372
+    },
+    {
+      "name": "BRAILLE PATTERN DOTS-138",
+      "value": "⢅",
+      "codepoint": 10373
+    },
+    {
+      "name": "BRAILLE PATTERN DOTS-238",
+      "value": "⢆",
+      "codepoint": 10374
+    },
+    {
+      "name": "BRAILLE PATTERN DOTS-1238",
+      "value": "⢇",
+      "codepoint": 10375
+    },
+    {
+      "name": "BRAILLE PATTERN DOTS-48",
+      "value": "⢈",
+      "codepoint": 10376
+    },
+    {
+      "name": "BRAILLE PATTERN DOTS-148",
+      "value": "⢉",
+      "codepoint": 10377
+    },
+    {
+      "name": "BRAILLE PATTERN DOTS-248",
+      "value": "⢊",
+      "codepoint": 10378
+    },
+    {
+      "name": "BRAILLE PATTERN DOTS-1248",
+      "value": "⢋",
+      "codepoint": 10379
+    },
+    {
+      "name": "BRAILLE PATTERN DOTS-348",
+      "value": "⢌",
+      "codepoint": 10380
+    },
+    {
+      "name": "BRAILLE PATTERN DOTS-1348",
+      "value": "⢍",
+      "codepoint": 10381
+    },
+    {
+      "name": "BRAILLE PATTERN DOTS-2348",
+      "value": "⢎",
+      "codepoint": 10382
+    },
+    {
+      "name": "BRAILLE PATTERN DOTS-12348",
+      "value": "⢏",
+      "codepoint": 10383
+    },
+    {
+      "name": "BRAILLE PATTERN DOTS-58",
+      "value": "⢐",
+      "codepoint": 10384
+    },
+    {
+      "name": "BRAILLE PATTERN DOTS-158",
+      "value": "⢑",
+      "codepoint": 10385
+    },
+    {
+      "name": "BRAILLE PATTERN DOTS-258",
+      "value": "⢒",
+      "codepoint": 10386
+    },
+    {
+      "name": "BRAILLE PATTERN DOTS-1258",
+      "value": "⢓",
+      "codepoint": 10387
+    },
+    {
+      "name": "BRAILLE PATTERN DOTS-358",
+      "value": "⢔",
+      "codepoint": 10388
+    },
+    {
+      "name": "BRAILLE PATTERN DOTS-1358",
+      "value": "⢕",
+      "codepoint": 10389
+    },
+    {
+      "name": "BRAILLE PATTERN DOTS-2358",
+      "value": "⢖",
+      "codepoint": 10390
+    },
+    {
+      "name": "BRAILLE PATTERN DOTS-12358",
+      "value": "⢗",
+      "codepoint": 10391
+    },
+    {
+      "name": "BRAILLE PATTERN DOTS-458",
+      "value": "⢘",
+      "codepoint": 10392
+    },
+    {
+      "name": "BRAILLE PATTERN DOTS-1458",
+      "value": "⢙",
+      "codepoint": 10393
+    },
+    {
+      "name": "BRAILLE PATTERN DOTS-2458",
+      "value": "⢚",
+      "codepoint": 10394
+    },
+    {
+      "name": "BRAILLE PATTERN DOTS-12458",
+      "value": "⢛",
+      "codepoint": 10395
+    },
+    {
+      "name": "BRAILLE PATTERN DOTS-3458",
+      "value": "⢜",
+      "codepoint": 10396
+    },
+    {
+      "name": "BRAILLE PATTERN DOTS-13458",
+      "value": "⢝",
+      "codepoint": 10397
+    },
+    {
+      "name": "BRAILLE PATTERN DOTS-23458",
+      "value": "⢞",
+      "codepoint": 10398
+    },
+    {
+      "name": "BRAILLE PATTERN DOTS-123458",
+      "value": "⢟",
+      "codepoint": 10399
+    },
+    {
+      "name": "BRAILLE PATTERN DOTS-68",
+      "value": "⢠",
+      "codepoint": 10400
+    },
+    {
+      "name": "BRAILLE PATTERN DOTS-168",
+      "value": "⢡",
+      "codepoint": 10401
+    },
+    {
+      "name": "BRAILLE PATTERN DOTS-268",
+      "value": "⢢",
+      "codepoint": 10402
+    },
+    {
+      "name": "BRAILLE PATTERN DOTS-1268",
+      "value": "⢣",
+      "codepoint": 10403
+    },
+    {
+      "name": "BRAILLE PATTERN DOTS-368",
+      "value": "⢤",
+      "codepoint": 10404
+    },
+    {
+      "name": "BRAILLE PATTERN DOTS-1368",
+      "value": "⢥",
+      "codepoint": 10405
+    },
+    {
+      "name": "BRAILLE PATTERN DOTS-2368",
+      "value": "⢦",
+      "codepoint": 10406
+    },
+    {
+      "name": "BRAILLE PATTERN DOTS-12368",
+      "value": "⢧",
+      "codepoint": 10407
+    },
+    {
+      "name": "BRAILLE PATTERN DOTS-468",
+      "value": "⢨",
+      "codepoint": 10408
+    },
+    {
+      "name": "BRAILLE PATTERN DOTS-1468",
+      "value": "⢩",
+      "codepoint": 10409
+    },
+    {
+      "name": "BRAILLE PATTERN DOTS-2468",
+      "value": "⢪",
+      "codepoint": 10410
+    },
+    {
+      "name": "BRAILLE PATTERN DOTS-12468",
+      "value": "⢫",
+      "codepoint": 10411
+    },
+    {
+      "name": "BRAILLE PATTERN DOTS-3468",
+      "value": "⢬",
+      "codepoint": 10412
+    },
+    {
+      "name": "BRAILLE PATTERN DOTS-13468",
+      "value": "⢭",
+      "codepoint": 10413
+    },
+    {
+      "name": "BRAILLE PATTERN DOTS-23468",
+      "value": "⢮",
+      "codepoint": 10414
+    },
+    {
+      "name": "BRAILLE PATTERN DOTS-123468",
+      "value": "⢯",
+      "codepoint": 10415
+    },
+    {
+      "name": "BRAILLE PATTERN DOTS-568",
+      "value": "⢰",
+      "codepoint": 10416
+    },
+    {
+      "name": "BRAILLE PATTERN DOTS-1568",
+      "value": "⢱",
+      "codepoint": 10417
+    },
+    {
+      "name": "BRAILLE PATTERN DOTS-2568",
+      "value": "⢲",
+      "codepoint": 10418
+    },
+    {
+      "name": "BRAILLE PATTERN DOTS-12568",
+      "value": "⢳",
+      "codepoint": 10419
+    },
+    {
+      "name": "BRAILLE PATTERN DOTS-3568",
+      "value": "⢴",
+      "codepoint": 10420
+    },
+    {
+      "name": "BRAILLE PATTERN DOTS-13568",
+      "value": "⢵",
+      "codepoint": 10421
+    },
+    {
+      "name": "BRAILLE PATTERN DOTS-23568",
+      "value": "⢶",
+      "codepoint": 10422
+    },
+    {
+      "name": "BRAILLE PATTERN DOTS-123568",
+      "value": "⢷",
+      "codepoint": 10423
+    },
+    {
+      "name": "BRAILLE PATTERN DOTS-4568",
+      "value": "⢸",
+      "codepoint": 10424
+    },
+    {
+      "name": "BRAILLE PATTERN DOTS-14568",
+      "value": "⢹",
+      "codepoint": 10425
+    },
+    {
+      "name": "BRAILLE PATTERN DOTS-24568",
+      "value": "⢺",
+      "codepoint": 10426
+    },
+    {
+      "name": "BRAILLE PATTERN DOTS-124568",
+      "value": "⢻",
+      "codepoint": 10427
+    },
+    {
+      "name": "BRAILLE PATTERN DOTS-34568",
+      "value": "⢼",
+      "codepoint": 10428
+    },
+    {
+      "name": "BRAILLE PATTERN DOTS-134568",
+      "value": "⢽",
+      "codepoint": 10429
+    },
+    {
+      "name": "BRAILLE PATTERN DOTS-234568",
+      "value": "⢾",
+      "codepoint": 10430
+    },
+    {
+      "name": "BRAILLE PATTERN DOTS-1234568",
+      "value": "⢿",
+      "codepoint": 10431
+    },
+    {
+      "name": "BRAILLE PATTERN DOTS-78",
+      "value": "⣀",
+      "codepoint": 10432
+    },
+    {
+      "name": "BRAILLE PATTERN DOTS-178",
+      "value": "⣁",
+      "codepoint": 10433
+    },
+    {
+      "name": "BRAILLE PATTERN DOTS-278",
+      "value": "⣂",
+      "codepoint": 10434
+    },
+    {
+      "name": "BRAILLE PATTERN DOTS-1278",
+      "value": "⣃",
+      "codepoint": 10435
+    },
+    {
+      "name": "BRAILLE PATTERN DOTS-378",
+      "value": "⣄",
+      "codepoint": 10436
+    },
+    {
+      "name": "BRAILLE PATTERN DOTS-1378",
+      "value": "⣅",
+      "codepoint": 10437
+    },
+    {
+      "name": "BRAILLE PATTERN DOTS-2378",
+      "value": "⣆",
+      "codepoint": 10438
+    },
+    {
+      "name": "BRAILLE PATTERN DOTS-12378",
+      "value": "⣇",
+      "codepoint": 10439
+    },
+    {
+      "name": "BRAILLE PATTERN DOTS-478",
+      "value": "⣈",
+      "codepoint": 10440
+    },
+    {
+      "name": "BRAILLE PATTERN DOTS-1478",
+      "value": "⣉",
+      "codepoint": 10441
+    },
+    {
+      "name": "BRAILLE PATTERN DOTS-2478",
+      "value": "⣊",
+      "codepoint": 10442
+    },
+    {
+      "name": "BRAILLE PATTERN DOTS-12478",
+      "value": "⣋",
+      "codepoint": 10443
+    },
+    {
+      "name": "BRAILLE PATTERN DOTS-3478",
+      "value": "⣌",
+      "codepoint": 10444
+    },
+    {
+      "name": "BRAILLE PATTERN DOTS-13478",
+      "value": "⣍",
+      "codepoint": 10445
+    },
+    {
+      "name": "BRAILLE PATTERN DOTS-23478",
+      "value": "⣎",
+      "codepoint": 10446
+    },
+    {
+      "name": "BRAILLE PATTERN DOTS-123478",
+      "value": "⣏",
+      "codepoint": 10447
+    },
+    {
+      "name": "BRAILLE PATTERN DOTS-578",
+      "value": "⣐",
+      "codepoint": 10448
+    },
+    {
+      "name": "BRAILLE PATTERN DOTS-1578",
+      "value": "⣑",
+      "codepoint": 10449
+    },
+    {
+      "name": "BRAILLE PATTERN DOTS-2578",
+      "value": "⣒",
+      "codepoint": 10450
+    },
+    {
+      "name": "BRAILLE PATTERN DOTS-12578",
+      "value": "⣓",
+      "codepoint": 10451
+    },
+    {
+      "name": "BRAILLE PATTERN DOTS-3578",
+      "value": "⣔",
+      "codepoint": 10452
+    },
+    {
+      "name": "BRAILLE PATTERN DOTS-13578",
+      "value": "⣕",
+      "codepoint": 10453
+    },
+    {
+      "name": "BRAILLE PATTERN DOTS-23578",
+      "value": "⣖",
+      "codepoint": 10454
+    },
+    {
+      "name": "BRAILLE PATTERN DOTS-123578",
+      "value": "⣗",
+      "codepoint": 10455
+    },
+    {
+      "name": "BRAILLE PATTERN DOTS-4578",
+      "value": "⣘",
+      "codepoint": 10456
+    },
+    {
+      "name": "BRAILLE PATTERN DOTS-14578",
+      "value": "⣙",
+      "codepoint": 10457
+    },
+    {
+      "name": "BRAILLE PATTERN DOTS-24578",
+      "value": "⣚",
+      "codepoint": 10458
+    },
+    {
+      "name": "BRAILLE PATTERN DOTS-124578",
+      "value": "⣛",
+      "codepoint": 10459
+    },
+    {
+      "name": "BRAILLE PATTERN DOTS-34578",
+      "value": "⣜",
+      "codepoint": 10460
+    },
+    {
+      "name": "BRAILLE PATTERN DOTS-134578",
+      "value": "⣝",
+      "codepoint": 10461
+    },
+    {
+      "name": "BRAILLE PATTERN DOTS-234578",
+      "value": "⣞",
+      "codepoint": 10462
+    },
+    {
+      "name": "BRAILLE PATTERN DOTS-1234578",
+      "value": "⣟",
+      "codepoint": 10463
+    },
+    {
+      "name": "BRAILLE PATTERN DOTS-678",
+      "value": "⣠",
+      "codepoint": 10464
+    },
+    {
+      "name": "BRAILLE PATTERN DOTS-1678",
+      "value": "⣡",
+      "codepoint": 10465
+    },
+    {
+      "name": "BRAILLE PATTERN DOTS-2678",
+      "value": "⣢",
+      "codepoint": 10466
+    },
+    {
+      "name": "BRAILLE PATTERN DOTS-12678",
+      "value": "⣣",
+      "codepoint": 10467
+    },
+    {
+      "name": "BRAILLE PATTERN DOTS-3678",
+      "value": "⣤",
+      "codepoint": 10468
+    },
+    {
+      "name": "BRAILLE PATTERN DOTS-13678",
+      "value": "⣥",
+      "codepoint": 10469
+    },
+    {
+      "name": "BRAILLE PATTERN DOTS-23678",
+      "value": "⣦",
+      "codepoint": 10470
+    },
+    {
+      "name": "BRAILLE PATTERN DOTS-123678",
+      "value": "⣧",
+      "codepoint": 10471
+    },
+    {
+      "name": "BRAILLE PATTERN DOTS-4678",
+      "value": "⣨",
+      "codepoint": 10472
+    },
+    {
+      "name": "BRAILLE PATTERN DOTS-14678",
+      "value": "⣩",
+      "codepoint": 10473
+    },
+    {
+      "name": "BRAILLE PATTERN DOTS-24678",
+      "value": "⣪",
+      "codepoint": 10474
+    },
+    {
+      "name": "BRAILLE PATTERN DOTS-124678",
+      "value": "⣫",
+      "codepoint": 10475
+    },
+    {
+      "name": "BRAILLE PATTERN DOTS-34678",
+      "value": "⣬",
+      "codepoint": 10476
+    },
+    {
+      "name": "BRAILLE PATTERN DOTS-134678",
+      "value": "⣭",
+      "codepoint": 10477
+    },
+    {
+      "name": "BRAILLE PATTERN DOTS-234678",
+      "value": "⣮",
+      "codepoint": 10478
+    },
+    {
+      "name": "BRAILLE PATTERN DOTS-1234678",
+      "value": "⣯",
+      "codepoint": 10479
+    },
+    {
+      "name": "BRAILLE PATTERN DOTS-5678",
+      "value": "⣰",
+      "codepoint": 10480
+    },
+    {
+      "name": "BRAILLE PATTERN DOTS-15678",
+      "value": "⣱",
+      "codepoint": 10481
+    },
+    {
+      "name": "BRAILLE PATTERN DOTS-25678",
+      "value": "⣲",
+      "codepoint": 10482
+    },
+    {
+      "name": "BRAILLE PATTERN DOTS-125678",
+      "value": "⣳",
+      "codepoint": 10483
+    },
+    {
+      "name": "BRAILLE PATTERN DOTS-35678",
+      "value": "⣴",
+      "codepoint": 10484
+    },
+    {
+      "name": "BRAILLE PATTERN DOTS-135678",
+      "value": "⣵",
+      "codepoint": 10485
+    },
+    {
+      "name": "BRAILLE PATTERN DOTS-235678",
+      "value": "⣶",
+      "codepoint": 10486
+    },
+    {
+      "name": "BRAILLE PATTERN DOTS-1235678",
+      "value": "⣷",
+      "codepoint": 10487
+    },
+    {
+      "name": "BRAILLE PATTERN DOTS-45678",
+      "value": "⣸",
+      "codepoint": 10488
+    },
+    {
+      "name": "BRAILLE PATTERN DOTS-145678",
+      "value": "⣹",
+      "codepoint": 10489
+    },
+    {
+      "name": "BRAILLE PATTERN DOTS-245678",
+      "value": "⣺",
+      "codepoint": 10490
+    },
+    {
+      "name": "BRAILLE PATTERN DOTS-1245678",
+      "value": "⣻",
+      "codepoint": 10491
+    },
+    {
+      "name": "BRAILLE PATTERN DOTS-345678",
+      "value": "⣼",
+      "codepoint": 10492
+    },
+    {
+      "name": "BRAILLE PATTERN DOTS-1345678",
+      "value": "⣽",
+      "codepoint": 10493
+    },
+    {
+      "name": "BRAILLE PATTERN DOTS-2345678",
+      "value": "⣾",
+      "codepoint": 10494
+    },
+    {
+      "name": "BRAILLE PATTERN DOTS-12345678",
+      "value": "⣿",
+      "codepoint": 10495
+    },
+    {
+      "name": "IDEOGRAPHIC DESCRIPTION CHARACTER LEFT TO RIGHT",
+      "value": "⿰",
+      "codepoint": 12272
+    },
+    {
+      "name": "IDEOGRAPHIC DESCRIPTION CHARACTER ABOVE TO BELOW",
+      "value": "⿱",
+      "codepoint": 12273
+    },
+    {
+      "name": "IDEOGRAPHIC DESCRIPTION CHARACTER LEFT TO MIDDLE AND RIGHT",
+      "value": "⿲",
+      "codepoint": 12274
+    },
+    {
+      "name": "IDEOGRAPHIC DESCRIPTION CHARACTER ABOVE TO MIDDLE AND BELOW",
+      "value": "⿳",
+      "codepoint": 12275
+    },
+    {
+      "name": "IDEOGRAPHIC DESCRIPTION CHARACTER FULL SURROUND",
+      "value": "⿴",
+      "codepoint": 12276
+    },
+    {
+      "name": "IDEOGRAPHIC DESCRIPTION CHARACTER SURROUND FROM ABOVE",
+      "value": "⿵",
+      "codepoint": 12277
+    },
+    {
+      "name": "IDEOGRAPHIC DESCRIPTION CHARACTER SURROUND FROM BELOW",
+      "value": "⿶",
+      "codepoint": 12278
+    },
+    {
+      "name": "IDEOGRAPHIC DESCRIPTION CHARACTER SURROUND FROM LEFT",
+      "value": "⿷",
+      "codepoint": 12279
+    },
+    {
+      "name": "IDEOGRAPHIC DESCRIPTION CHARACTER SURROUND FROM UPPER LEFT",
+      "value": "⿸",
+      "codepoint": 12280
+    },
+    {
+      "name": "IDEOGRAPHIC DESCRIPTION CHARACTER SURROUND FROM UPPER RIGHT",
+      "value": "⿹",
+      "codepoint": 12281
+    },
+    {
+      "name": "IDEOGRAPHIC DESCRIPTION CHARACTER SURROUND FROM LOWER LEFT",
+      "value": "⿺",
+      "codepoint": 12282
+    },
+    {
+      "name": "IDEOGRAPHIC DESCRIPTION CHARACTER OVERLAID",
+      "value": "⿻",
+      "codepoint": 12283
     }
   ]
 }

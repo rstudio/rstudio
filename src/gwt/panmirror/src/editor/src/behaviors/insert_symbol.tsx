@@ -35,7 +35,7 @@ import { EditorOptions } from '../api/options';
 import { EditorEvents, EditorEvent } from '../api/events';
 
 import CharacterGrid from './insert_symbol-grid';
-import SymbolDataManager, { SymbolCategory, SymbolCharacter } from './insert_symbol-data';
+import SymbolDataManager, { SymbolCategory, SymbolCharacter, CATEGORY_ALL } from './insert_symbol-data';
 
 const key = new PluginKey<boolean>('insert_symbol');
 const symbolDataManager = new SymbolDataManager();
@@ -192,7 +192,7 @@ const InsertSymbolPopup: React.FC<InsertSymbolPopupProps> = props => {
   const rowHeight = columnWidth;
 
   const [filterText, setFilterText] = React.useState<string>('');
-  const [selectedCategory, setSelectedCategory] = React.useState(SymbolCategory.All);
+  const [selectedCategory, setSelectedCategory] = React.useState(CATEGORY_ALL);
   const [symbols, setSymbols] = React.useState<Array<SymbolCharacter>>([]);
   const [filteredSymbols, setFilteredSymbols] = React.useState<Array<SymbolCharacter>>(symbols);
 
@@ -202,12 +202,12 @@ const InsertSymbolPopup: React.FC<InsertSymbolPopupProps> = props => {
   }, [selectedCategory]);
 
   React.useEffect(() => {
-    setFilteredSymbols(symbols.filter(symbol => symbol.name.includes(filterText)));
+    setFilteredSymbols(symbols.filter(symbol => symbol.name.includes(filterText.toUpperCase())));
   }, [filterText, symbols]);
 
   let options = symbolDataManager.getCategories().map(category => (
-    <option key={category} value={category}>
-      {category}
+    <option key={category.name} value={category.name}>
+      {category.name}
     </option>
   ));
 
@@ -223,7 +223,7 @@ const InsertSymbolPopup: React.FC<InsertSymbolPopupProps> = props => {
         name="select-category"
         onChange={event => {
           const value: string = (event.target as HTMLSelectElement).selectedOptions[0].value;
-          const selectedCategory: SymbolCategory | undefined = Object.values(SymbolCategory).find(x => x === value);
+          const selectedCategory: SymbolCategory | undefined = symbolDataManager.getCategories().find(category => category.name === value);
           if (selectedCategory) {
             setSelectedCategory(selectedCategory);
           }
