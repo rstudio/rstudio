@@ -44,11 +44,11 @@ function formatMenu(ui: EditorUI, commands: EditorCommand[]) {
           { command: EditorCommandId.Superscript },
           { command: EditorCommandId.Subscript },
           { command: EditorCommandId.Smallcaps },
-          { separator: true },
-          { command: EditorCommandId.Span },
         ],
       },
     },
+    { separator: true },
+    { command: EditorCommandId.Span },
     { separator: true },
     {
       subMenu: {
