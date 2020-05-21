@@ -16,7 +16,7 @@
 import { Node as ProsemirrorNode } from 'prosemirror-model';
 
 import { PandocEngine, PandocExtensions } from './pandoc';
-import { EditorFormat } from './format';
+import { EditorFormat, kHugoDocType } from './format';
 import { firstYamlBlock, yamlMetadataNodes } from './yaml';
 
 export const kMarkdownFormat = 'markdown';
@@ -356,10 +356,8 @@ function goldmarkExtensions(format: EditorFormat) {
     // hugo preprocessor supports yaml metadata
     '+yaml_metadata_block',
   ];
-  if (format.rmdExtensions.blogdownMathInCode) {
-    extensions.push('+tex_math_dollars');
-  }
-  return extensions;
+
+  return extensionsWithExtras(extensions, format);
 }
 
 // https://github.com/russross/blackfriday/tree/v2#extensions
@@ -375,8 +373,19 @@ function blackfridayExtensions(format: EditorFormat) {
     '+smart',
     '+yaml_metadata_block',
   ];
-  if (format.rmdExtensions.blogdownMathInCode) {
-    extensions.push('+tex_math_dollars');
+  return extensionsWithExtras(extensions, format);
+}
+
+
+function extensionsWithExtras(extensions: string[], format: EditorFormat) {
+  // when running under hugo we might have enabled math in various ways which 
+  // we can't readily detect, so enable it w/o requiring user config (worst case
+  // is that the UI allows you to insert math and the markdown engine doesn't 
+  // render it properly, but then you hopefully knew you didn't have math
+  // enabled in the first place
+  if (format.docTypes.includes(kHugoDocType) || format.rmdExtensions.blogdownMathInCode) {
+    return extensions.concat('+tex_math_dollars');
+  } else {
+    return extensions;
   }
-  return extensions;
 }
