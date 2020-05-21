@@ -74,6 +74,11 @@ private:
 
    }
 
+   virtual std::string getDefaultHostHeader()
+   {
+      return address_ + ":" + port_;
+   }
+
    const boost::shared_ptr<TcpIpAsyncClient> sharedFromThis()
    {
       boost::shared_ptr<AsyncClient<boost::asio::ip::tcp::socket> > ptrShared

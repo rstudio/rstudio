@@ -28,3 +28,4 @@
 ### RStudio Server Pro
 
 - New option `server-project-sharing-root-dir` allows project sharing outside user home directories (Pro #1340)
+- Fix issue where Launcher address could not be set to an external load balancer due to missing Host header (Pro #1681)
