@@ -125,6 +125,7 @@ import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefsAccessor;
 import org.rstudio.studio.client.workbench.prefs.model.UserState;
 import org.rstudio.studio.client.workbench.ui.FontSizeManager;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
@@ -7014,6 +7015,11 @@ public class TextEditingTarget implements
             new CommandWithArg<Boolean>() {
                public void execute(Boolean arg) {
                   docDisplay.setShowInvisibles(arg);
+               }}));
+      releaseOnDismiss.add(prefs.highlightWebLink().bind(
+            new CommandWithArg<Boolean>() {
+               public void execute(Boolean arg) {
+                  docDisplay.setHighlightWebLink(arg);
                }}));
       releaseOnDismiss.add(prefs.showIndentGuides().bind(
             new CommandWithArg<Boolean>() {

@@ -237,6 +237,11 @@
             "default": false,
             "description": "Whether continue comments (by inserting the comment character) after adding a new line."
         },
+        "highlight_web_link": {
+            "type": "boolean",
+            "default": true,
+            "description": "Whether web links in comments are clickable."
+        },
         "editor_keybindings": {
             "type": "string",
             "enum": ["default", "vim", "emacs", "sublime"],

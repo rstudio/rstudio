@@ -88,6 +88,7 @@ namespace prefs {
 #define kShowInvisibles "show_invisibles"
 #define kShowIndentGuides "show_indent_guides"
 #define kContinueCommentsOnNewline "continue_comments_on_newline"
+#define kHighlightWebLink "highlight_web_link"
 #define kEditorKeybindings "editor_keybindings"
 #define kEditorKeybindingsDefault "default"
 #define kEditorKeybindingsVim "vim"
@@ -520,6 +521,12 @@ public:
     */
    bool continueCommentsOnNewline();
    core::Error setContinueCommentsOnNewline(bool val);
+
+   /**
+    * Whether web links in comments are clickable.
+    */
+   bool highlightWebLink();
+   core::Error setHighlightWebLink(bool val);
 
    /**
     * The keybindings to use in the RStudio code editor.
