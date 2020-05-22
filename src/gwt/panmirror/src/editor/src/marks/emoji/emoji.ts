@@ -23,18 +23,18 @@ import { PandocOutput, PandocToken, PandocTokenType, ProsemirrorWriter, PandocEx
 import { pandocAttrReadAST } from '../../api/pandoc_attr';
 import { fragmentText } from '../../api/fragment';
 
+import { FixupContext } from '../../api/fixup';
+import { MarkTransaction } from '../../api/transaction';
+import { mergedTextNodes } from '../../api/text';
+
 // https://github.com/jgm/emojis/blob/master/emoji.json
+import * as kEmojis from './emojis.json';
+
 interface Emoji {
   emoji: string;
   aliases: string[];
 }
-import * as kEmojis from './emojis.json';
 const kEmojiKeys = Object.keys(kEmojis).filter(key => key !== "default");
-const kEmojiChars = kEmojiKeys.map(key => kEmojis[key].emoji);
-
-import { FixupContext } from '../../api/fixup';
-import { MarkTransaction } from '../../api/transaction';
-import { mergedTextNodes } from '../../api/text';
 
 const kEmojiAttr = 0;
 const kEmojiContent = 1;
@@ -155,13 +155,16 @@ const extension = (pandocExtensions: PandocExtensions) : Extension | null => {
           );
 
           textNodes.forEach(textNode => {
-            kEmojiChars.forEach(emojiChar => {
-              const charLoc = textNode.text.indexOf(emojiChar);
+            kEmojiKeys.forEach(emojiKey => {
+              const emoji = kEmojis[emojiKey];
+              const charLoc = textNode.text.indexOf(emoji.emoji);
               if (charLoc !== -1) {
-                const start = textNode.pos + charLoc;
-                const emoji = emojiFromChar(emojiChar)!;
-                const mark = schema.marks.emoji.create( { emojihint: emoji.aliases[0]} );
-                markTr.addMark(start, start + emojiChar.length, mark);
+                const from = textNode.pos + charLoc;
+                const to = from + emoji.emoji.length;
+                if (!markTr.doc.rangeHasMark(from, to, schema.marks.emoji)) {
+                  const mark = schema.marks.emoji.create( { emojihint: emoji.aliases[0]} );
+                  markTr.addMark(from, to, mark);
+                }
               }
             });            
           });
@@ -173,8 +176,6 @@ const extension = (pandocExtensions: PandocExtensions) : Extension | null => {
   };
 };
 
-
-
 function emojiFromChar(emojiChar: string) : Emoji | null {
   const emojiKey = kEmojiKeys.find(key => kEmojis[key].emoji === emojiChar);
   if (emojiKey) {
@@ -185,20 +186,13 @@ function emojiFromChar(emojiChar: string) : Emoji | null {
 }
 
 function emojiFromAlias(emojiAlias: string) : Emoji | null {
-  const emojiKey = kEmojiKeys.find(key => {
+  for (const key of kEmojiKeys) {
     const emoji = kEmojis[key];
-    if (emoji) {
-      return (emoji as Emoji).aliases.some(alias => alias === emojiAlias);
-    } else {
-      return false;
+    if (emoji && emoji.aliases.includes(emojiAlias)) {
+      return emoji;
     }
-   
-  });
-  if (emojiKey) {
-    return kEmojis[emojiKey];
-  } else {
-    return null;
   }
+  return null;
 }
 
 export default extension;
