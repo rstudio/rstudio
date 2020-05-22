@@ -182,6 +182,12 @@ core::json::Object blogdownConfig()
             it++;
          }
 
+         // see if there is an enableEmoji variable
+         const std::string enableEmoji = variables["enableemoji"];
+         if (enableEmoji == "true") {
+            markdownExtensions += "+emoji";
+         }
+
          // see if there is a markup variable
          const std::string markup = variables["markup"];
          if (markup.size() > 0)
