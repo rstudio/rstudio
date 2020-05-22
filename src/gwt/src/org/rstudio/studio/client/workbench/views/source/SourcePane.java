@@ -299,23 +299,26 @@ public class SourcePane extends LazyPanel implements Display,
       return tabPanel_.getWidgetCount();
    }
 
-   @Override
-   public int getActiveTabIndex()
+   private int getActiveTabIndex()
    {
       return tabPanel_.getSelectedIndex();
    }
 
-   public ArrayList<EditingTarget> getEditors()
-   {
-      return editors_;
-   }
-
-   @Override
    public boolean hasDoc(String docId)
    {
       for (EditingTarget target : editors_)
       {
          if (StringUtil.equals(docId, target.getId()))
+            return true;
+      }
+      return false;
+   }
+
+   public boolean hasDocWithPath(String path)
+   {
+      for (EditingTarget target : editors_)
+      {
+         if (StringUtil.equals(path, target.getPath()))
             return true;
       }
       return false;
@@ -335,7 +338,7 @@ public class SourcePane extends LazyPanel implements Display,
    {
       if (index >= 0 && getTabCount() > index)
          selectTab(index);
-      if (getTabCount() > 0 && tabPanel_.getActiveIndex() >= 0)
+      if (getTabCount() > 0 && getActiveTabIndex() >= 0)
          editors_.get(index).onInitiallyLoaded();
    }
 
@@ -370,21 +373,6 @@ public class SourcePane extends LazyPanel implements Display,
    }
 
    @Override
-   public ArrayList<EditingTarget> syncTabOrder()
-   {
-      // ensure the tab order is synced to the list of editors
-      for (int i = tabOrder_.size(); i < editors_.size(); i++)
-      {
-         tabOrder_.add(i);
-      }
-      for (int i = editors_.size(); i < tabOrder_.size(); i++)
-      {
-         tabOrder_.remove(i);
-      }
-      return editors_;
-   }
-
-   @Override
    public void setDirty(Widget widget, boolean dirty)
    {
       Widget tab = tabPanel_.getTabWidget(widget);
@@ -411,13 +399,6 @@ public class SourcePane extends LazyPanel implements Display,
       }
    }
 
-   @Override
-   public EditingTarget getActiveEditor()
-   {
-      return activeEditor_;
-   }
-
-   @Override
    public void closeTabByDocId(String docId, boolean interactive)
    {
       suspendDocumentClose_ = true;
@@ -470,7 +451,6 @@ public class SourcePane extends LazyPanel implements Display,
       setOverflowVisible(tabsWidth > getOffsetWidth() - 50);
    }
 
-   @Override
    public void showOverflowPopup()
    {
       setOverflowVisible(true);
@@ -483,7 +463,6 @@ public class SourcePane extends LazyPanel implements Display,
       tabPanel_.cancelTabDrag();
    }
 
-   @Override
    public void ensureVisible()
    {
       events_.fireEvent(new EnsureVisibleEvent(true));
@@ -687,15 +666,6 @@ public class SourcePane extends LazyPanel implements Display,
          editors_.remove(index);
          tabPanel_.closeTab(index, onClosed);
       }
-   }
-
-   private void setPhysicalTabIndex(int idx)
-   {
-      if (idx < tabOrder_.size())
-      {
-         idx = tabOrder_.get(idx);
-      }
-      selectTab(idx);
    }
 
    private void closeTabIndex(int idx, boolean closeDocument)

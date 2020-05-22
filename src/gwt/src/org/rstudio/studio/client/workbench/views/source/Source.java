@@ -133,6 +133,7 @@ import org.rstudio.studio.client.workbench.views.files.model.DirectoryListing;
 import org.rstudio.studio.client.workbench.views.output.find.events.FindInFilesEvent;
 import org.rstudio.studio.client.workbench.views.source.NewShinyWebApplication.Result;
 import org.rstudio.studio.client.workbench.views.source.SourceColumnManager;
+import org.rstudio.studio.client.workbench.views.source.SourceColumnManager.Column;
 import org.rstudio.studio.client.workbench.views.source.SourceWindowManager.NavigationResult;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTarget;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTargetSource;
@@ -214,7 +215,6 @@ public class Source implements InsertSourceHandler,
                                     HasTabClosingHandlers
    {
       void setSource(Source source);
-      void generateName(boolean first);
       void addEditor(EditingTarget target);
       void addEditor(Integer position, EditingTarget target);
       EditingTarget addTab(SourceDocument doc, int mode);
@@ -229,9 +229,10 @@ public class Source implements InsertSourceHandler,
 
       String getName();
       int getTabCount();
-      int getActiveTabIndex();
       boolean hasDoc(String string);
+      boolean hasDocWithPath(String string);
 
+      void initialSelect(int index);
       void selectTab(int tabIndex);
       void selectTab(Widget widget);
       void moveTab(int index, int delta);
@@ -239,12 +240,11 @@ public class Source implements InsertSourceHandler,
                      FileIcon icon,
                      String value,
                      String tooltip);
-      ArrayList<EditingTarget> syncTabOrder();
 
       void setDirty(Widget widget, boolean dirty);
       void setActiveEditor(int index);
       void setActiveEditor(EditingTarget target);
-      EditingTarget getActiveEditor();
+      EditingTarget getEditorWithPath(String path);
 
       void closeTabByDocId(String docId, boolean interactive);
       void closeTab(boolean interactive);
@@ -261,10 +261,9 @@ public class Source implements InsertSourceHandler,
       void showOverflowPopup();
       void cancelTabDrag();
       
-      void ensureVisible();
-
       // !!! maybe moved
       void setPendingDebugSelection();
+      void ensureVisible();
 
       HandlerRegistration addBeforeShowHandler(BeforeShowHandler handler);
    }
@@ -299,20 +298,18 @@ public class Source implements InsertSourceHandler,
    {
       commands_ = commands;
       binder.bind(commands, this);
-      columnManager_ = new SourceColumnManager(view);
+      columnManager_ = new SourceColumnManager(view, globalDisplay, editingTargetSource, events, pMruList);
       server_ = server;
       editingTargetSource_ = editingTargetSource;
       fileTypeRegistry_ = fileTypeRegistry;
       globalDisplay_ = globalDisplay;
       fileDialogs_ = fileDialogs;
       fileContext_ = fileContext;
-      rmarkdown_ = new TextEditingTargetRMarkdownHelper();
       events_ = events;
       ariaLive_ = ariaLive;
       session_ = session;
       synctex_ = synctex;
       workbenchContext_ = workbenchContext;
-      pMruList_ = pMruList;
       userState_ = userState;
       consoleEditorProvider_ = consoleEditorProvider;
       rnwWeaveRegistry_ = rnwWeaveRegistry;
@@ -478,8 +475,7 @@ public class Source implements InsertSourceHandler,
       {
          public void onSwitchToDoc(SwitchToDocEvent event)
          {
-            ensureVisible(false);
-            setPhysicalTabIndex(event.getSelectedIndex());
+            columnManager_.ensureVisible(false);
             
             // Fire an activation event just to ensure the activated
             // tab gets focus
@@ -605,7 +601,7 @@ public class Source implements InsertSourceHandler,
          @Override
          public void onNewWorkingCopy(NewWorkingCopyEvent event)
          {
-            newDoc(event.getType(), event.getContents(), null);
+           columnManager_.newDoc(event.getType(), event.getContents(), null);
          }
       });
       
@@ -637,7 +633,7 @@ public class Source implements InsertSourceHandler,
       // initialized_ being false, so we need to run it explicitly
       manageCommands();
       // Same with this event
-      fireDocTabsChanged();
+      columnManager_.fireDocTabsChanged();
       
       // open project or edit_published docs (only for main source window)
       if (SourceWindowManager.isMainSourceWindow())
@@ -743,12 +739,11 @@ public class Source implements InsertSourceHandler,
          @Override
          protected Integer getValue()
          {
-            return getPhysicalTabIndex(null);
+            return columnManager_.getPhysicalTabIndex();
          }
       };
       
       AceEditorNative.syncUiPrefs(userPrefs_);
-      
    }
    
    /**
@@ -911,7 +906,7 @@ public class Source implements InsertSourceHandler,
             public void execute()
             {
                // documents have been reverted; we can close
-               columnManager_.closeAllTabs(false);
+               columnManager_.closeAllTabs(false, false);
             }
          });
       }
@@ -942,17 +937,6 @@ public class Source implements InsertSourceHandler,
       }
    }
    
-   /**
-    * @param isNewTabPending True if a new tab is about to be created. (If
-    *    false and there are no tabs already, then a new source doc might
-    *    be created to make sure we don't end up with a source pane showing
-    *    with no tabs in it.)
-    */
-   private void ensureVisible(boolean isNewTabPending)
-   {
-      columnManager_.ensureVisible(isNewTabPending);
-   }
-
    public Widget asWidget()
    {
       columnManager_.getActive().asWidget();
@@ -998,10 +982,11 @@ public class Source implements InsertSourceHandler,
                    SourceWindowManager.isMainSourceWindow())
                {
                   String name = doc.getSourceDisplayName();
-                  sourceEditor = columnManager_.findByName(name).addTab(doc, true, OPEN_REPLAY);
+                  sourceEditor = columnManager_.addTab(doc, true, OPEN_REPLAY,
+                                                       columnManager_.findByName(name));
                }
                else
-                  sourceEditor = columnManager_.getActive().addTab(doc, true, OPEN_REPLAY);
+                  sourceEditor = columnManager_.addTab(doc, true, OPEN_REPLAY, null);
             }
             catch (Exception e)
             {
@@ -1069,7 +1054,7 @@ public class Source implements InsertSourceHandler,
                @Override
                public void onExecute(final Command continuation)
                {
-                  openFile(fsi, 
+                  columnManager_.openFile(fsi, 
                            fileTypeRegistry_.getTextTypeForFile(fsi), 
                            new CommandWithArg<EditingTarget>() {
                               @Override
@@ -1089,7 +1074,7 @@ public class Source implements InsertSourceHandler,
             public void onExecute(Command continuation)
             {
                newTabPending_--;
-               onFirstTab();
+               columnManager_.onFirstTab();
                continuation.execute();
             }
             
@@ -1106,7 +1091,7 @@ public class Source implements InsertSourceHandler,
       if (!SourceWindowManager.isMainSourceWindow())
          return;
       
-      ensureVisible(true);
+      columnManager_.ensureVisible(true);
       ContentItem content = event.getContent();
       server_.newDocument(
             FileTypeRegistry.URLCONTENT.getTypeId(),
@@ -1117,8 +1102,9 @@ public class Source implements InsertSourceHandler,
                @Override
                public void onResponseReceived(SourceDocument response)
                {
-                  columnManager_.findByDocument(
-                    content.getTitle()).addTab(response, OPEN_INTERACTIVE);
+                  columnManager_.addTab(response,
+                                        OPEN_INTERACTIVE,
+                                        columnManager_.findByDocument(content.getTitle()));
                }
             });
    }
@@ -1155,14 +1141,14 @@ public class Source implements InsertSourceHandler,
          String path = editors_.get(idx).getPath();
          if (path != null && path == profilePath)
          {
-            ensureVisible(false);
-            columnManager_.getActive().selectTab(idx);
+            columnManager_.ensureVisible(false);
+            columnManager_.selectTab(editors_.get(idx));
             return;
          }
       }
       
       // create new profiler 
-      ensureVisible(true);
+      columnManager_.ensureVisible(true);
 
       if (event.getDocId() != null)
       {
@@ -1213,14 +1199,13 @@ public class Source implements InsertSourceHandler,
    @Handler
    public void onNewSourceDoc()
    {
-      columnManager_.getActive().onNewSourceDoc();
-      //newDoc(FileTypeRegistry.R, null);
+      columnManager_.newDoc(FileTypeRegistry.R, null);
    }
 
    @Handler
    public void onNewTextDoc()
    {
-      newDoc(FileTypeRegistry.TEXT, null);
+      columnManager_.newDoc(FileTypeRegistry.TEXT, null);
    }
    
    @Handler
@@ -1240,8 +1225,8 @@ public class Source implements InsertSourceHandler,
                   return;
                }
 
-               newSourceDocWithTemplate(
-                     FileTypeRegistry.RMARKDOWN,
+               columnManager_.newSourceDocWithTemplate(
+                     (TextFileType)FileTypeRegistry.RMARKDOWN,
                      "",
                      "notebook.Rmd",
                      Position.create(3, 0));
@@ -1252,7 +1237,7 @@ public class Source implements InsertSourceHandler,
    @Handler
    public void onNewCDoc()
    {
-      newDoc(FileTypeRegistry.C, new ResultCallback<EditingTarget, ServerError>()
+      columnManager_.newDoc(FileTypeRegistry.C, new ResultCallback<EditingTarget, ServerError>()
       {
          @Override
          public void onSuccess(EditingTarget target)
@@ -1266,7 +1251,7 @@ public class Source implements InsertSourceHandler,
    @Handler
    public void onNewCppDoc()
    {
-      newSourceDocWithTemplate(
+      columnManager_.newSourceDocWithTemplate(
           FileTypeRegistry.CPP, 
           "", 
           userPrefs_.useRcppTemplate().getValue() ? "rcpp.cpp" : "default.cpp",
@@ -1284,7 +1269,7 @@ public class Source implements InsertSourceHandler,
    @Handler
    public void onNewHeaderDoc()
    {
-      newDoc(FileTypeRegistry.H, new ResultCallback<EditingTarget, ServerError>()
+      columnManager_.newDoc(FileTypeRegistry.H, new ResultCallback<EditingTarget, ServerError>()
       {
          @Override
          public void onSuccess(EditingTarget target)
@@ -1297,14 +1282,14 @@ public class Source implements InsertSourceHandler,
    @Handler
    public void onNewMarkdownDoc()
    {
-      newDoc(FileTypeRegistry.MARKDOWN, null);
+      columnManager_.newDoc(FileTypeRegistry.MARKDOWN, null);
    }
    
    
    @Handler
    public void onNewPythonDoc()
    {
-      newDoc(FileTypeRegistry.PYTHON, new ResultCallback<EditingTarget, ServerError>()
+      columnManager_.newDoc(FileTypeRegistry.PYTHON, new ResultCallback<EditingTarget, ServerError>()
       {
          @Override
          public void onSuccess(EditingTarget target)
@@ -1317,32 +1302,32 @@ public class Source implements InsertSourceHandler,
    @Handler
    public void onNewShellDoc()
    {
-      newDoc(FileTypeRegistry.SH, null);
+      columnManager_.newDoc(FileTypeRegistry.SH, null);
    }
    
    @Handler
    public void onNewHtmlDoc()
    {
-      newDoc(FileTypeRegistry.HTML, null);
+      columnManager_.newDoc(FileTypeRegistry.HTML, null);
    }
    
    @Handler
    public void onNewJavaScriptDoc()
    {
-      newDoc(FileTypeRegistry.JS, null);
+      columnManager_.newDoc(FileTypeRegistry.JS, null);
    }
    
    @Handler
    public void onNewCssDoc()
    {
-      newDoc(FileTypeRegistry.CSS, null);
+      columnManager_.newDoc(FileTypeRegistry.CSS, null);
    }
    
    @Handler
    public void onNewStanDoc()
    {
       final Command onStanInstalled = () -> {
-         newSourceDocWithTemplate(
+         columnManager_.newSourceDocWithTemplate(
                FileTypeRegistry.STAN,
                "",
                "stan.stan",
@@ -1363,7 +1348,7 @@ public class Source implements InsertSourceHandler,
    @Handler
    public void onNewD3Doc()
    {
-      newSourceDocWithTemplate(
+      columnManager_.newSourceDocWithTemplate(
          FileTypeRegistry.JS, 
          "", 
          "d3.js",
@@ -1444,9 +1429,9 @@ public class Source implements InsertSourceHandler,
       boolean useRMarkdownV2 = sessionInfo.getRMarkdownPackageAvailable();
       
       if (useRMarkdownV2)
-         newRMarkdownV2Doc();
+         columnManager_.newRMarkdownV2Doc();
       else
-         newRMarkdownV1Doc();
+         columnManager_.newRMarkdownV1Doc();
    }
    
    private void doNewRShinyApp(NewShinyWebApplication.Result result)
@@ -1469,7 +1454,7 @@ public class Source implements InsertSourceHandler,
    @Handler
    public void onNewSqlDoc()
    {
-      newSourceDocWithTemplate(
+      columnManager_.newSourceDocWithTemplate(
          FileTypeRegistry.SQL, 
          "", 
          "query.sql",
@@ -1515,7 +1500,8 @@ public class Source implements InsertSourceHandler,
                public void onExecute(final Command continuation)
                {
                   FileSystemItem path = FileSystemItem.createFile(filePath);
-                  openFile(path, FileTypeRegistry.R, new CommandWithArg<EditingTarget>()
+                  columnManager_.openFile(path, FileTypeRegistry.R,
+                        new CommandWithArg<EditingTarget>()
                   {
                      @Override
                      public void execute(EditingTarget target)
@@ -1538,7 +1524,7 @@ public class Source implements InsertSourceHandler,
             {
                if (firstTarget_ != null)
                {
-                  columnManager_.getActive().selectTab(firstTarget_.asWidget());
+                  columnManager_.selectTab(firstTarget_);
                   firstTarget_.setCursorPosition(Position.create(0, 0));
                }
                
@@ -1578,9 +1564,9 @@ public class Source implements InsertSourceHandler,
    @Handler
    public void onNewRHTMLDoc()
    {
-      newSourceDocWithTemplate(FileTypeRegistry.RHTML, 
-                               "", 
-                               "default.Rhtml");
+      columnManager_.newSourceDocWithTemplate(FileTypeRegistry.RHTML, 
+                                              "", 
+                                              "default.Rhtml");
    }
    
    @Handler
@@ -1596,7 +1582,8 @@ public class Source implements InsertSourceHandler,
                   @Override
                   public void execute()
                   {
-                     newSourceDocWithTemplate(FileTypeRegistry.RD, 
+                     columnManager_.newSourceDocWithTemplate(
+                           (TextFileType)FileTypeRegistry.RD, 
                            result.name, 
                            "default.Rd",
                            Position.create(3, 7));
@@ -1674,7 +1661,7 @@ public class Source implements InsertSourceHandler,
                              @Override
                              public void onSuccess()
                              { 
-                                openFile(input, 
+                                columnManager_.openFile(input, 
                                    FileTypeRegistry.RPRESENTATION,
                                    new CommandWithArg<EditingTarget>() {
 
@@ -1695,217 +1682,6 @@ public class Source implements InsertSourceHandler,
                
             }
       });
-   }
-   
-   private void newRMarkdownV1Doc()
-   {
-      newSourceDocWithTemplate(FileTypeRegistry.RMARKDOWN, 
-            "", 
-            "v1.Rmd",
-            Position.create(3, 0));
-   }
-   
-   private void newRMarkdownV2Doc()
-   {
-      rmarkdown_.showNewRMarkdownDialog(
-         new OperationWithInput<NewRMarkdownDialog.Result>()
-         {
-            @Override
-            public void execute(final NewRMarkdownDialog.Result result)
-            {
-               if (result == null)
-               {
-                  // No document chosen, just create an empty one
-                  newSourceDocWithTemplate(FileTypeRegistry.RMARKDOWN, "", "default.Rmd");
-               }
-               else if (result.isNewDocument())
-               {
-                  NewRMarkdownDialog.RmdNewDocument doc = 
-                        result.getNewDocument();
-                  String author = doc.getAuthor();
-                  if (author.length() > 0)
-                  {
-                     userPrefs_.documentAuthor().setGlobalValue(author);
-                     userPrefs_.writeUserPrefs();
-                  }
-                  newRMarkdownV2Doc(doc);
-               }
-               else
-               {
-                  newDocFromRmdTemplate(result);
-               }
-            }
-         });
-   }
-   
-   private void newDocFromRmdTemplate(final NewRMarkdownDialog.Result result)
-   {
-      final RmdChosenTemplate template = result.getFromTemplate();
-      if (template.createDir())
-      {
-         rmarkdown_.createDraftFromTemplate(template);
-         return;
-      }
-
-      rmarkdown_.getTemplateContent(template, 
-         new OperationWithInput<String>() {
-            @Override
-            public void execute(final String content)
-            {
-               if (content.length() == 0)
-                  globalDisplay_.showErrorMessage("Template Content Missing", 
-                        "The template at " + template.getTemplatePath() + 
-                        " is missing.");
-               newDoc(FileTypeRegistry.RMARKDOWN, content, null);
-            }
-      });
-   }
-   
-   private void newRMarkdownV2Doc(
-         final NewRMarkdownDialog.RmdNewDocument doc)
-   {
-      rmarkdown_.frontMatterToYAML((RmdFrontMatter)doc.getJSOResult().cast(), 
-            null,
-            new CommandWithArg<String>()
-      {
-         @Override
-         public void execute(final String yaml)
-         {
-            String template = "";
-            // select a template appropriate to the document type we're creating
-            if (doc.getTemplate().equals(RmdTemplateData.PRESENTATION_TEMPLATE))
-               template = "presentation.Rmd";
-            else if (doc.isShiny())
-            {
-               if (doc.getFormat().endsWith(
-                     RmdOutputFormat.OUTPUT_PRESENTATION_SUFFIX))
-                  template = "shiny_presentation.Rmd";
-               else
-                  template = "shiny.Rmd";
-            }
-            else
-               template = "document.Rmd";
-            newSourceDocWithTemplate(FileTypeRegistry.RMARKDOWN, 
-                  "", 
-                  template,
-                  Position.create(1, 0),
-                  null,
-                  new TransformerCommand<String>()
-                  {
-                     @Override
-                     public String transform(String input)
-                     {
-                        return RmdFrontMatter.FRONTMATTER_SEPARATOR + 
-                               yaml + 
-                               RmdFrontMatter.FRONTMATTER_SEPARATOR + "\n" + 
-                               input;
-                     }
-                  });
-         }
-      });
-   }
-   
-   private void newSourceDocWithTemplate(final TextFileType fileType, 
-                                         String name,
-                                         String template)
-   {
-      newSourceDocWithTemplate(fileType, name, template, null);
-   }
-
-   private void newSourceDocWithTemplate(final TextFileType fileType, 
-                                         String name,
-                                         String template,
-                                         final Position cursorPosition)
-   {
-      newSourceDocWithTemplate(fileType, name, template, cursorPosition, null);
-   }
-   
-   private void newSourceDocWithTemplate(
-                       final TextFileType fileType, 
-                       String name,
-                       String template,
-                       final Position cursorPosition,
-                       final CommandWithArg<EditingTarget> onSuccess)
-   {
-      newSourceDocWithTemplate(fileType, name, template, cursorPosition, onSuccess, null);
-   }
-
-   private void newSourceDocWithTemplate(
-                       final TextFileType fileType, 
-                       String name,
-                       String template,
-                       final Position cursorPosition,
-                       final CommandWithArg<EditingTarget> onSuccess,
-                       final TransformerCommand<String> contentTransformer)
-   {
-      final ProgressIndicator indicator = new GlobalProgressDelayer(
-            globalDisplay_, 500, "Creating new document...").getIndicator();
-
-      server_.getSourceTemplate(name, 
-                                template, 
-                                new ServerRequestCallback<String>() {
-         @Override
-         public void onResponseReceived(String templateContents)
-         {
-            indicator.onCompleted();
-
-            if (contentTransformer != null)
-               templateContents = contentTransformer.transform(templateContents);
-
-            newDoc(fileType, 
-                  templateContents, 
-                  new ResultCallback<EditingTarget, ServerError> () {
-               @Override
-               public void onSuccess(EditingTarget target)
-               {
-                  if (cursorPosition != null)
-                     target.setCursorPosition(cursorPosition);
-                  
-                  if (onSuccess != null)
-                     onSuccess.execute(target);
-               }
-            });
-         }
-
-         @Override
-         public void onError(ServerError error)
-         {
-            indicator.onError(error.getUserMessage());
-         }
-      });
-   }
-
-   
-   private void newDoc(EditableFileType fileType,
-                       ResultCallback<EditingTarget, ServerError> callback)
-   {
-      if (fileType instanceof TextFileType)
-      {
-         // This is a text file, so see if the user has defined a template for it.
-         TextFileType textType = (TextFileType)fileType;
-         server_.getSourceTemplate("", 
-               "default" + textType.getDefaultExtension(),
-               new ServerRequestCallback<String>()
-               {
-                  @Override
-                  public void onResponseReceived(String template)
-                  {
-                     // Create a new document with the supplied template.
-                     newDoc(fileType, template, callback);
-                  }
-
-                  @Override
-                  public void onError(ServerError error)
-                  {
-                     // Ignore errors; there's just not a template for this type.
-                     newDoc(fileType, null, callback);
-                  }
-               });
-      }
-      else
-      {
-         newDoc(fileType, null, callback);
-      }
    }
    
    @Handler
@@ -1952,109 +1728,6 @@ public class Source implements InsertSourceHandler,
       });
    }
    
-   @Handler
-   public void onSwitchToTab()
-   {
-      if (columnManager_.getActive().getTabCount() == 0)
-         return;
-
-      columnManager_.showOverflowPopout();
-   }
-
-   @Handler
-   public void onFirstTab()
-   {
-      if (columnManager_.getActive().getTabCount() == 0)
-         return;
-
-      ensureVisible(false);
-      if (columnManager_.getActive().getTabCount() > 0)
-         setPhysicalTabIndex(0);
-   }
-
-   @Handler
-   public void onPreviousTab()
-   {
-      switchToTab(-1, userPrefs_.wrapTabNavigation().getValue());
-   }
-
-   @Handler
-   public void onNextTab()
-   {
-      switchToTab(1, userPrefs_.wrapTabNavigation().getValue());
-   }
-
-   @Handler
-   public void onLastTab()
-   {
-      if (columnManager_.getActive().getTabCount() == 0)
-         return;
-
-      ensureVisible(false);
-      if (columnManager_.getActive().getTabCount() > 0)
-         setPhysicalTabIndex(columnManager_.getActive().getTabCount() - 1);
-   }
-   
-   public void nextTabWithWrap()
-   {
-      switchToTab(1, true);
-   }
-
-   public void prevTabWithWrap()
-   {
-      switchToTab(-1, true);
-   }
-   
-   private void switchToTab(int delta, boolean wrap)
-   {
-      if (columnManager_.getActive().getTabCount() == 0)
-         return;
-      
-      ensureVisible(false);
-
-      int targetIndex = getPhysicalTabIndex(null) + delta;
-      if (targetIndex > (columnManager_.getActive().getTabCount() - 1))
-      {
-         if (wrap)
-            targetIndex = 0;
-         else
-            return;
-      }
-      else if (targetIndex < 0)
-      {
-         if (wrap)
-            targetIndex = columnManager_.getActive().getTabCount() - 1;
-         else
-            return;
-      }
-      setPhysicalTabIndex(targetIndex);
-   }
-   
-   @Handler
-   public void onMoveTabRight()
-   {
-      columnManager_.getActive().moveTab(getPhysicalTabIndex(null), 1);
-   }
-
-   @Handler
-   public void onMoveTabLeft()
-   {
-      columnManager_.getActive().moveTab(getPhysicalTabIndex(null), -1);
-   }
-   
-   @Handler
-   public void onMoveTabToFirst()
-   {
-      columnManager_.getActive().moveTab(getPhysicalTabIndex(null), getPhysicalTabIndex(null) * -1);
-   }
-
-   @Handler
-   public void onMoveTabToLast()
-   {
-      columnManager_.getActive().moveTab(getPhysicalTabIndex(null), (columnManager_.getActive().getTabCount() - 
-            getPhysicalTabIndex(null)) - 1);
-   }
-
    @Override
    public void onPopoutDoc(final PopoutDocEvent e)
    {
@@ -2065,7 +1738,7 @@ public class Source implements InsertSourceHandler,
          @Override
          public void execute()
          {
-            disownDoc(e.getDocId(), columnManager_.findByDocument(e.getDocId()));
+            columnManager_.disownDoc(e.getDocId());
          }
       });
    }
@@ -2083,10 +1756,10 @@ public class Source implements InsertSourceHandler,
    @Override
    public void onDocWindowChanged(final DocWindowChangedEvent e)
    {
-      Display oldDisplay = null;
+      Column oldDisplay = null;
       if (e.getNewWindowId() == SourceWindowManager.getSourceWindowId())
       {
-         ensureVisible(true);
+         columnManager_.ensureVisible(true);
          
          // look for a collaborative editing session currently running inside 
          // the document being transferred between windows--if we didn't know
@@ -2101,9 +1774,9 @@ public class Source implements InsertSourceHandler,
          // from. If we can not determine these, cancel the tab change to prevent the tab from
          // moving to the wrong tab or having duplicate instances of the same tab. newDisplay must
          // be final to be used in the onResponseReceived function below.
-         final Display newDisplay = SourceWindowManager.isMainSourceWindow() ?
-                                    columnManager_.findByPosition(e.getXPos()) :
-                                    null;
+         final Column newDisplay = SourceWindowManager.isMainSourceWindow() ?
+                                   columnManager_.findByPosition(e.getXPos()) :
+                                   null;
          if (SourceWindowManager.isMainSourceWindow())
          {
             if (newDisplay == null)
@@ -2127,7 +1800,7 @@ public class Source implements InsertSourceHandler,
             @Override
             public void onResponseReceived(final SourceDocument doc)
             {
-               final EditingTarget target = addTab(doc, e.getPos(), newDisplay);
+               final EditingTarget target = columnManager_.addTab(doc, e.getPos(), newDisplay);
                
                Scheduler.get().scheduleDeferred(new Scheduler.ScheduledCommand()
                {
@@ -2162,28 +1835,13 @@ public class Source implements InsertSourceHandler,
                          columnManager_.getActive();
          }
          // cancel tab drag if it was occurring
-         oldDisplay.cancelTabDrag();
+         oldDisplay.asDisplay().cancelTabDrag();
          
          // disown this doc if it was our own
-         disownDoc(e.getDocId(), oldDisplay);
+         columnManager_.disownDoc(e.getDocId());
       }
    }
    
-   private void disownDoc(String docId, Display display)
-   {
-      if (display == null)
-         display = columnManager_.getActive();
-
-      for (int i = 0; i < editors_.size(); i++)
-      {
-         if (editors_.get(i).getId() == docId)
-         {
-            display.closeTabByDocId(docId, false);
-            break;
-         }
-      }
-   }
-
    @Override
    public void onDocTabDragInitiated(final DocTabDragInitiatedEvent event)
    {
@@ -2222,7 +1880,7 @@ public class Source implements InsertSourceHandler,
                      textEditor.syncLocalSourceDb();
                      events_.fireEvent(new PopoutDocEvent(event, 
                         textEditor.currentPosition(),
-                        columnManager_.findByDocument(textEditor.getId())));
+                        columnManager_.findByDocument(textEditor.getId()).asDisplay()));
                   }
                });
             }
@@ -2230,7 +1888,7 @@ public class Source implements InsertSourceHandler,
             {
                events_.fireEvent(new PopoutDocEvent(event, 
                      editor.currentPosition(),
-                     columnManager_.findByDocument(editor.getId())));
+                     columnManager_.findByDocument(editor.getId()).asDisplay()));
             }
          }
       });
@@ -2244,10 +1902,10 @@ public class Source implements InsertSourceHandler,
    
    void closeSourceDoc(boolean interactive)
    {
-      if (columnManager_.getActive().getTabCount() == 0)
+      if (columnManager_.getActive().asDisplay().getTabCount() == 0)
          return;
       
-      columnManager_.getActive().closeTab(interactive);
+      columnManager_.getActive().asDisplay().closeTab(interactive);
    }
    
    /**
@@ -2347,7 +2005,7 @@ public class Source implements InsertSourceHandler,
          unsavedTargets.addAll(editingTargets);
          
          // show dialog
-         columnManager_.getActive().showUnsavedChangesDialog(
+         columnManager_.getActive().asDisplay().showUnsavedChangesDialog(
             title,
             unsavedTargets, 
             new OperationWithInput<UnsavedChangesDialog.Result>() 
@@ -2465,7 +2123,7 @@ public class Source implements InsertSourceHandler,
          @Override
          public void execute()
          {
-            columnManager_.closeAllTabs();
+            columnManager_.closeAllTabs(excludeActive, false);
          }     
       };
       
@@ -2602,33 +2260,14 @@ public class Source implements InsertSourceHandler,
       }
    }
    
-   public Display addView()
-   {
-      Source.Display display = GWT.create(SourcePane.class);
-      columnManager_.add(display, true);
-
-      return display;
-   }
-
-
    public Display getActiveView()
    {
-      return columnManager_.getActive();
+      return columnManager_.getActive().asDisplay();
    }
 
-   public ArrayList<Widget> getViewsAsWidgets()
-   {
-      return columnManager_.getWidgets();
-   }
-   
    public void activateView(Display display)
    {
       //display.focus();
-   }
-
-   public void closeView(String name)
-   {
-      columnManager_.closeColumn(name);
    }
 
    private void revertActiveDocument()
@@ -2672,8 +2311,7 @@ public class Source implements InsertSourceHandler,
                else
                {
                   // untitled document -- just close the tab non-interactively
-                  columnManager_.findByDocument(saveTarget.getId()).closeTab(
-                     saveTarget.asWidget(), false, continuation);
+                  columnManager_.closeTab(saveTarget, false, continuation);
                }
             }
          },
@@ -2730,7 +2368,7 @@ public class Source implements InsertSourceHandler,
          @Override
          public void execute()
          {
-            newDoc(docType,
+            columnManager_.newDoc(docType,
                    event.getCode(),
                    new ResultCallback<EditingTarget, ServerError>() {
                public void onSuccess(EditingTarget arg)
@@ -2828,7 +2466,7 @@ public class Source implements InsertSourceHandler,
    
    public void onEditPresentationSource(final EditPresentationSourceEvent event)
    { 
-      openFile(
+      columnManager_.openFile(
             event.getSourceFile(), 
             FileTypeRegistry.RPRESENTATION,
             new CommandWithArg<EditingTarget>() {
@@ -2861,6 +2499,11 @@ public class Source implements InsertSourceHandler,
       return getActiveEditor().getPath();
    }
    
+   public SourceColumnManager getColumnManager()
+   {
+      return columnManager_;
+   }
+
    private void doOpenSourceFile(final FileSystemItem file,
                                  final TextFileType fileType,
                                  final FilePosition position,
@@ -2976,7 +2619,7 @@ public class Source implements InsertSourceHandler,
             @Override
             public void onResponseReceived(final SourceDocument doc)
             {
-               editingTargetAction.execute(addTab(doc, OPEN_REPLAY, null));
+               editingTargetAction.execute(columnManager_.addTab(doc, OPEN_REPLAY, null));
             }
 
             @Override
@@ -2998,7 +2641,7 @@ public class Source implements InsertSourceHandler,
             // set flag indicating we are opening for a source navigation
             openingForSourceNavigation_ = position != null || pattern != null;
             
-            openFile(file,
+            columnManager_.openFile(file,
                      fileType,
                      (target) -> {
                         openingForSourceNavigation_ = false;
@@ -3012,7 +2655,7 @@ public class Source implements InsertSourceHandler,
       // highlight in place.
       if (isDebugNavigation)
       {
-         columnManager_.getActive().setPendingDebugSelection();
+         columnManager_.getActive().asDisplay().setPendingDebugSelection();
          
          for (int i = 0; i < editors_.size(); i++)
          {
@@ -3027,7 +2670,7 @@ public class Source implements InsertSourceHandler,
                }
                else
                {
-                  columnManager_.findByDocument(target.getId()).selectTab(i);
+                  columnManager_.selectTab(target);
                   editingTargetAction.execute(target);
                }
                return;
@@ -3090,374 +2733,12 @@ public class Source implements InsertSourceHandler,
         });
    }
 
-   private void openFile(FileSystemItem file)
-   {
-      openFile(file, fileTypeRegistry_.getTextTypeForFile(file));
-   }
-   
-   private void openFile(FileSystemItem file,  TextFileType fileType)
-   {
-      openFile(file, 
-               fileType, 
-               new CommandWithArg<EditingTarget>() {
-                  @Override
-                  public void execute(EditingTarget arg)
-                  {
-                     
-                  }
-               });
-   }
-   
-   private void openFile(final FileSystemItem file,
-                         final TextFileType fileType,
-                         final CommandWithArg<EditingTarget> executeOnSuccess)
-   {
-      // add this work to the queue
-      openFileQueue_.add(new OpenFileEntry(file, fileType, executeOnSuccess));
-      
-      // begin queue processing if it's the only work in the queue
-      if (openFileQueue_.size() == 1)
-         processOpenFileQueue();
-   }
-   
-   private void processOpenFileQueue()
-   {
-      // no work to do
-      if (openFileQueue_.isEmpty())
-         return;
-      
-      // find the first work unit
-      final OpenFileEntry entry = openFileQueue_.peek();
-      
-      // define command to advance queue
-      final Command processNextEntry = new Command()
-            {
-               @Override
-               public void execute()
-               {
-                  openFileQueue_.remove();
-                  if (!openFileQueue_.isEmpty())
-                     processOpenFileQueue();
-                  
-               }
-            };
-      
-      openFile(entry.file,
-            entry.fileType,
-            new ResultCallback<EditingTarget, ServerError>() {
-               @Override
-               public void onSuccess(EditingTarget target)
-               {
-                  processNextEntry.execute();
-                  if (entry.executeOnSuccess != null)
-                     entry.executeOnSuccess.execute(target);
-               }
-
-               @Override
-               public void onCancelled()
-               {
-                  super.onCancelled();
-                  processNextEntry.execute();
-               }
-
-               @Override
-               public void onFailure(ServerError error)
-               {
-                  String message = error.getUserMessage();
-                  
-                  // see if a special message was provided
-                  JSONValue errValue = error.getClientInfo();
-                  if (errValue != null)
-                  {
-                     JSONString errMsg = errValue.isString();
-                     if (errMsg != null)
-                        message = errMsg.stringValue();
-                  }
-                  
-                  globalDisplay_.showMessage(GlobalDisplay.MSG_ERROR,
-                                             "Error while opening file",
-                                             message);
-
-                  processNextEntry.execute();
-               }
-            });  
-   }
-   
-   private void openNotebook(
-         final FileSystemItem rmdFile, 
-         final SourceDocumentResult doc,
-         final ResultCallback<EditingTarget, ServerError> resultCallback)
-   {
-      if (!StringUtil.isNullOrEmpty(doc.getDocPath()))
-      {
-         // this happens if we created the R Markdown file, or if the R Markdown
-         // file on disk matched the one inside the notebook
-         openFileFromServer(rmdFile, 
-               FileTypeRegistry.RMARKDOWN, resultCallback);
-      }
-      else if (!StringUtil.isNullOrEmpty(doc.getDocId()))
-      {
-         // this happens when we have to open an untitled buffer for the the
-         // notebook (usually because the of a conflict between the Rmd on disk
-         // and the one in the .nb.html file)
-         server_.getSourceDocument(doc.getDocId(), 
-               new ServerRequestCallback<SourceDocument>()
-         {
-            @Override
-            public void onResponseReceived(SourceDocument doc)
-            {
-               // create the editor
-               EditingTarget target = 
-                     addTab(doc, OPEN_INTERACTIVE, null);
-               
-               // show a warning bar 
-               if (target instanceof TextEditingTarget)
-               {
-                  ((TextEditingTarget) target).showWarningMessage(
-                        "This notebook has the same name as an R Markdown " +
-                        "file, but doesn't match it.");
-               }
-               resultCallback.onSuccess(target);
-            }
-
-            @Override
-            public void onError(ServerError error)
-            {
-               
-               globalDisplay_.showErrorMessage(
-                  "Notebook Open Failed", 
-                  "This notebook could not be opened. " +
-                  "If the error persists, try removing the " +
-                  "accompanying R Markdown file. \n\n" +
-                  error.getMessage());
-               resultCallback.onFailure(error);
-            }
-         });
-      }
-   }
-   
-   private void openNotebook(final FileSystemItem rnbFile,
-                             final TextFileType fileType,
-                             final ResultCallback<EditingTarget, ServerError> resultCallback)
-   {
-      // construct path to .Rmd
-      final String rnbPath = rnbFile.getPath();
-      final String rmdPath = FilePathUtils.filePathSansExtension(rnbPath) + ".Rmd";
-      final FileSystemItem rmdFile = FileSystemItem.createFile(rmdPath);
-      
-      // if we already have associated .Rmd file open, then just edit it
-      // TODO: should we perform conflict resolution here as well?
-      if (openFileAlreadyOpen(rmdFile, resultCallback))
-         return;
-      
-      // ask the server to extract the .Rmd, then open that
-      Command extractRmdCommand = new Command()
-      {
-         @Override
-         public void execute()
-         {
-            server_.extractRmdFromNotebook(
-                  rnbPath,
-                  new ServerRequestCallback<SourceDocumentResult>()
-                  {
-                     @Override
-                     public void onResponseReceived(SourceDocumentResult doc)
-                     {
-                        openNotebook(rmdFile, doc, resultCallback);
-                     }
-
-                     @Override
-                     public void onError(ServerError error)
-                     {
-                        globalDisplay_.showErrorMessage("Notebook Open Failed", 
-                              "This notebook could not be opened. \n\n" +
-                              error.getMessage());
-                        resultCallback.onFailure(error);
-                     }
-                  });
-         }
-      };
-      
-      dependencyManager_.withRMarkdown("R Notebook", "Using R Notebooks", extractRmdCommand);
-   }
-   
-   private boolean openFileAlreadyOpen(final FileSystemItem file,
-                                       final ResultCallback<EditingTarget, ServerError> resultCallback)
-   {
-      // check to see if any local editors have the file open
-      for (int i = 0; i < editors_.size(); i++)
-      {
-         EditingTarget target = editors_.get(i);
-         String thisPath = target.getPath();
-         if (thisPath != null
-             && thisPath.equalsIgnoreCase(file.getPath()))
-         {
-            columnManager_.findByDocument(target.getId()).selectTab(i);
-            pMruList_.get().add(thisPath);
-            if (resultCallback != null)
-               resultCallback.onSuccess(target);
-            return true;
-         }
-      }
-      return false;
-   }
-
-   // top-level wrapper for opening files. takes care of:
-   //  - making sure the view is visible
-   //  - checking whether it is already open and re-selecting its tab
-   //  - prohibit opening very large files (>500KB)
-   //  - confirmation of opening large files (>100KB)
-   //  - finally, actually opening the file from the server
-   //    via the call to the lower level openFile method
-   private void openFile(final FileSystemItem file,
-                         final TextFileType fileType,
-                         final ResultCallback<EditingTarget, ServerError> resultCallback)
-   {
-      ensureVisible(true);
-      
-      if (fileType.isRNotebook())
-      {
-         openNotebook(file, fileType, resultCallback);
-         return;
-      }
-
-      if (file == null)
-      {
-         newDoc(fileType, resultCallback);
-         return;
-      }
-
-      if (openFileAlreadyOpen(file, resultCallback))
-         return;
-      
-      EditingTarget target = editingTargetSource_.getEditingTarget(fileType);
-
-      if (file.getLength() > target.getFileSizeLimit())
-      {
-         if (resultCallback != null)
-            resultCallback.onCancelled();
-         showFileTooLargeWarning(file, target.getFileSizeLimit());
-      }
-      else if (file.getLength() > target.getLargeFileSize())
-      {
-         confirmOpenLargeFile(file, new Operation() {
-            public void execute()
-            {
-               openFileFromServer(file, fileType, resultCallback);
-            }
-         }, new Operation() {
-            public void execute()
-            {
-               // user (wisely) cancelled
-               if (resultCallback != null)
-                  resultCallback.onCancelled();
-            }
-         });
-      }
-      else
-      {
-         openFileFromServer(file, fileType, resultCallback);
-      }
-   }
-  
-   private void showFileTooLargeWarning(FileSystemItem file,
-                                        long sizeLimit)
-   {
-      StringBuilder msg = new StringBuilder();
-      msg.append("The file '" + file.getName() + "' is too ");
-      msg.append("large to open in the source editor (the file is ");
-      msg.append(StringUtil.formatFileSize(file.getLength()) + " and the ");
-      msg.append("maximum file size is ");
-      msg.append(StringUtil.formatFileSize(sizeLimit) + ")");
-
-      globalDisplay_.showMessage(GlobalDisplay.MSG_WARNING,
-                                 "Selected File Too Large",
-                                 msg.toString());
-   }
-
-   private void confirmOpenLargeFile(FileSystemItem file,
-                                     Operation openOperation,
-                                     Operation noOperation)
-   {
-      StringBuilder msg = new StringBuilder();
-      msg.append("The source file '" + file.getName() + "' is large (");
-      msg.append(StringUtil.formatFileSize(file.getLength()) + ") ");
-      msg.append("and may take some time to open. ");
-      msg.append("Are you sure you want to continue opening it?");
-      globalDisplay_.showYesNoMessage(GlobalDisplay.MSG_WARNING,
-                                      "Confirm Open",
-                                      msg.toString(),
-                                      false, // Don't include cancel
-                                      openOperation,
-                                      noOperation,
-                                      false);   // 'No' is default
-   }
-
-   private void openFileFromServer(
-         final FileSystemItem file,
-         final TextFileType fileType,
-         final ResultCallback<EditingTarget, ServerError> resultCallback)
-   {
-      final Command dismissProgress = globalDisplay_.showProgress(
-                                                         "Opening file...");
-
-      server_.openDocument(
-            file.getPath(),
-            fileType.getTypeId(),
-            userPrefs_.defaultEncoding().getValue(),
-            new ServerRequestCallback<SourceDocument>()
-            {
-               @Override
-               public void onError(ServerError error)
-               {
-                  dismissProgress.execute();
-                  pMruList_.get().remove(file.getPath());
-                  Debug.logError(error);
-                  if (resultCallback != null)
-                     resultCallback.onFailure(error);
-               }
-
-               @Override
-               public void onResponseReceived(SourceDocument document)
-               {
-                  // if we are opening for a source navigation then we 
-                  // need to force Rmds into source mode
-                  if (openingForSourceNavigation_) 
-                  {
-                     document.getProperties()._setBoolean(
-                        TextEditingTarget.RMD_VISUAL_MODE, 
-                        false
-                     );
-                  }
-                  
-                  dismissProgress.execute();
-                  pMruList_.get().add(document.getPath());
-                  EditingTarget target = addTab(document, OPEN_INTERACTIVE, null);
-                  if (resultCallback != null)
-                     resultCallback.onSuccess(target);
-               }
-            });
-   }
-   
    Widget createWidget(EditingTarget target)
    {
       return target.asWidget();
    }
    
    /*
-   private EditingTarget addTab(SourceDocument doc, int mode, Display display)
-   {
-      return addTab(doc, false, mode, display);
-   }
-   
-   private EditingTarget addTab(SourceDocument doc, boolean atEnd, 
-         int mode, Display display)
-   {
-      // by default, add at the tab immediately after the current tab
-      return addTab(doc, atEnd ? null : getPhysicalTabIndex(display) + 1,
-            mode, display);
-   }
-
    private EditingTarget addTab(SourceDocument doc, Integer position, 
          int mode, Display display)
    {
@@ -3470,7 +2751,7 @@ public class Source implements InsertSourceHandler,
                   return getNextDefaultName(defaultNamePrefix);
                }
             });
-      final Display targetView = display != null ? display : columnManager_.getActive();
+      final Display targetView = display != null ? display : columnManager_.getActive().asDisplay();
       
       final Widget widget = createWidget(target);
 
@@ -3603,8 +2884,8 @@ public class Source implements InsertSourceHandler,
       }
       else
       {
-         newDoc(FileTypeRegistry.R,
-                new ResultCallback<EditingTarget, ServerError>()
+         columnManager_.newDoc(FileTypeRegistry.R,
+                        new ResultCallback<EditingTarget, ServerError>()
          {
             public void onSuccess(EditingTarget arg)
             {
@@ -3636,59 +2917,6 @@ public class Source implements InsertSourceHandler,
          activeEditor_.onDeactivate();
          activeEditor_ = null;
       }
-   }
-
-   public void syncTabOrder()
-   {
-      /*
-      editors_.clear();
-      // sync tabOrder/editors for each display, then sync the master lists
-      for (Display view : views_)
-      {
-         editors_.addAll(view.syncTabOrder());
-      }
-
-      // ensure the tab order is synced to the list of editors
-      for (int i = tabOrder_.size(); i < editors_.size(); i++)
-      {
-         tabOrder_.add(i);
-      }
-      for (int i = editors_.size(); i < tabOrder_.size(); i++)
-      {
-         tabOrder_.remove(i);
-      }
-      */
-   }
-
-   public void fireDocTabsChanged()
-   {
-      if (!initialized_)
-         return;
-      
-      // ensure we have a tab order (we want the popup list to match the order
-      // of the tabs)
-      syncTabOrder();
-
-      String[] ids = new String[editors_.size()];
-      FileIcon[] icons = new FileIcon[editors_.size()];
-      String[] names = new String[editors_.size()];
-      String[] paths = new String[editors_.size()];
-      for (int i = 0; i < ids.length; i++)
-      {
-         EditingTarget target = editors_.get(tabOrder_.get(i));
-         ids[i] = target.getId();
-         icons[i] = target.getIcon();
-         names[i] = target.getName().getValue();
-         paths[i] = target.getPath();
-      }
-
-      String activeId = (activeEditor_ != null)
-            ? activeEditor_.getId()
-            : null;
-            
-      events_.fireEvent(new DocTabsChangedEvent(activeId, ids, icons, names, paths));
-
-      columnManager_.manageChevronVisibility();
    }
 
    private void manageCommands()
@@ -4054,7 +3282,7 @@ public class Source implements InsertSourceHandler,
                   if (success)
                   {
                      FileSystemItem file = FileSystemItem.createFile(path);
-                     openFile(file);
+                     columnManager_.openFile(file);
                   }
                }
 
@@ -4207,7 +3435,7 @@ public class Source implements InsertSourceHandler,
                   
                   // extract the file and attempt to open
                   FileSystemItem targetItem = files.get(target);
-                  openFile(targetItem);
+                  columnManager_.openFile(targetItem);
                }
 
                @Override
@@ -4254,7 +3482,7 @@ public class Source implements InsertSourceHandler,
       else if ((navigation.getPath() != null) &&
                navigation.getPath().startsWith(CodeBrowserEditingTarget.PATH))
       {
-         activateCodeBrowser(
+         columnManager_.activateCodeBrowser(
             navigation.getPath(),
             false,
             new SourceNavigationResultCallback<CodeBrowserEditingTarget>(
@@ -4271,11 +3499,11 @@ public class Source implements InsertSourceHandler,
          TextFileType fileType = fileTypeRegistry_.getTextTypeForFile(file);
          
          // open the file and restore the position
-         openFile(file,
-                  fileType,
-                  new SourceNavigationResultCallback<EditingTarget>(
-                                                   navigation.getPosition(),
-                                                   retryCommand));
+         columnManager_.openFile(file,
+                                 fileType,
+                                 new SourceNavigationResultCallback<EditingTarget>(
+                                                                  navigation.getPosition(),
+                                                                  retryCommand));
       } 
       else
       {
@@ -4312,10 +3540,10 @@ public class Source implements InsertSourceHandler,
          {
             if (event.getDebugPosition() != null)
             {
-               columnManager_.getActive().setPendingDebugSelection();
+               columnManager_.getActive().asDisplay().setPendingDebugSelection();
             }
             
-            activateCodeBrowser(
+            columnManager_.activateCodeBrowser(
                CodeBrowserEditingTarget.getCodeBrowserPath(event.getFunction()),
                !event.serverDispatched(),
                new ResultCallback<CodeBrowserEditingTarget,ServerError>() {
@@ -4349,6 +3577,7 @@ public class Source implements InsertSourceHandler,
             {
                if (editors_.get(i).getPath() == path)
                {
+                  EditingTarget target = editors_.get(i);
                   columnManager_.closeTab(target, false);
                   return;
                }
@@ -4365,8 +3594,8 @@ public class Source implements InsertSourceHandler,
          @Override
          public void execute()
          {
-            columnManager_.getActive().setPendingDebugSelection();
-            activateCodeBrowser(
+            columnManager_.getActive().asDisplay().setPendingDebugSelection();
+            columnManager_.activateCodeBrowser(
                CodeBrowserEditingTarget.getCodeBrowserPath(event.getFunction()),
                false,
                new ResultCallback<CodeBrowserEditingTarget,ServerError>() {
@@ -4511,30 +3740,6 @@ public class Source implements InsertSourceHandler,
       SnippetHelper.onSnippetsChanged(event);
    }
    
-   // when tabs have been reordered in the session, the physical layout of the
-   // tabs doesn't match the logical order of editors_. it's occasionally
-   // necessary to get or set the tabs by their physical order.
-   public int getPhysicalTabIndex(Display display)
-   {
-      if (display == null)
-         display = columnManager_.getActive();
-
-      int idx = display.getActiveTabIndex();
-      if (idx < tabOrder_.size())
-      {
-         idx = tabOrder_.indexOf(idx);
-      }
-      return idx;
-   }
-   
-   public void setPhysicalTabIndex(int idx)
-   {
-      if (idx < tabOrder_.size())
-         idx = tabOrder_.get(idx);
-      
-      columnManager_.findByDocument(editors_.get(idx).getId()).selectTab(idx);
-   }
-   
    public EditingTarget getActiveEditor()
    {
       return activeEditor_;
@@ -4634,7 +3839,7 @@ public class Source implements InsertSourceHandler,
             {
               if (JsArrayUtil.jsArrayStringContains(ids, target.getId()))
               {
-                 columnManager_.closeTab(target.asWidget(), false /* non interactive */);
+                 columnManager_.closeTab(target, false /* non interactive */);
               }
             }
          }
@@ -4831,20 +4036,6 @@ public class Source implements InsertSourceHandler,
       docDisplay.focus();
    }
    
-   private class OpenFileEntry
-   {
-      public OpenFileEntry(FileSystemItem fileIn, TextFileType fileTypeIn,
-            CommandWithArg<EditingTarget> executeIn)
-      {
-         file = fileIn;
-         fileType = fileTypeIn;
-         executeOnSuccess = executeIn;
-      }
-      public final FileSystemItem file;
-      public final TextFileType fileType;
-      public final CommandWithArg<EditingTarget> executeOnSuccess;
-   }
-   
    private class StatFileEntry
    {
       public StatFileEntry(FileSystemItem fileIn, 
@@ -4858,7 +4049,6 @@ public class Source implements InsertSourceHandler,
    }
    
    final Queue<StatFileEntry> statQueue_ = new LinkedList<StatFileEntry>();
-   final Queue<OpenFileEntry> openFileQueue_ = new LinkedList<OpenFileEntry>();
    ArrayList<EditingTarget> editors_ = new ArrayList<EditingTarget>();
    ArrayList<Integer> tabOrder_ = new ArrayList<Integer>();
    SourceColumnManager columnManager_;
@@ -4871,12 +4061,11 @@ public class Source implements InsertSourceHandler,
    private final WorkbenchContext workbenchContext_;
    private final FileDialogs fileDialogs_;
    private final RemoteFileSystemContext fileContext_;
-   private final TextEditingTargetRMarkdownHelper rmarkdown_;
    private final EventBus events_;
    private final AriaLiveService ariaLive_;
    private final Session session_;
    private final Synctex synctex_;
-   private final Provider<FileMRUList> pMruList_;
+   private Provider<FileMRUList> pMruList_;
    private UserPrefs userPrefs_;
    private final UserState userState_;
    private final ConsoleEditorProvider consoleEditorProvider_;
