@@ -1287,8 +1287,7 @@ public class TextEditingTargetVisualMode implements CommandPaletteEntrySource
             format.rmdExtensions.bookdownXRefUI = 
                hasBookdownCrossReferences() || rmdExtensions.bookdownXRefUI;
             
-            // enable blogdown math in code (e.g. `$math$`) if requested explicitly by the user
-            // (this requires manual configuration in hugo in any case). however don't enable
+            // enable blogdown math in code (e.g. `$math$`) however don't enable
             // it if the user has expressely added +tex_math_dollars to the format (as this
             // means that they've arranged for an alternate means of rendering math e.g. a 
             // goldmark extension)
