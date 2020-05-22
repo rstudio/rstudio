@@ -1215,14 +1215,10 @@ public class TextEditingTargetVisualMode implements CommandPaletteEntrySource
             if (formatComment.doctypes == null || formatComment.doctypes.length == 0)
             {
                List<String> configDocTypes = new ArrayList<String>();
-               if (isBookdownDocument())
+               if (isBookdownProjectDocument())
                   configDocTypes.add(PanmirrorExtendedDocType.bookdown);
-               if (isBlogdownDocument()) 
-                  configDocTypes.add(PanmirrorExtendedDocType.blogdown);
-               if (isHugoDocument())
+               if (isHugoProjectDocument() || isHugodownDocument())
                   configDocTypes.add(PanmirrorExtendedDocType.hugo);
-               if (isHugodownDocument())
-                  configDocTypes.add(PanmirrorExtendedDocType.hugodown);
                format.docTypes = configDocTypes.toArray(new String[] {});
             }
             else if (formatComment.doctypes != null)
@@ -1233,10 +1229,7 @@ public class TextEditingTargetVisualMode implements CommandPaletteEntrySource
             {
                format.docTypes = new String[] {};
             }
-            
-            // version of docTypes we can use for feature detection below 
-            List<String> docTypes = Arrays.asList(format.docTypes);
-               
+                  
             // mode and extensions         
             // non-standard mode and extension either come from a format comment,
             // a detection of an alternate engine (likely due to blogdown/hugo)
@@ -1295,7 +1288,7 @@ public class TextEditingTargetVisualMode implements CommandPaletteEntrySource
             if (!texMathDollarsEnabled)
             {
                format.rmdExtensions.blogdownMathInCode = 
-                  hasBlogdownMathInCode(docTypes) || rmdExtensions.blogdownMathInCode;
+                  hasBlogdownMathInCode() || rmdExtensions.blogdownMathInCode;
             }
             
             // hugoExtensions
@@ -1328,45 +1321,60 @@ public class TextEditingTargetVisualMode implements CommandPaletteEntrySource
          return null;
       }
    }
+
    
-   private boolean hasBookdownCrossReferences()
-   {
-      return isBookdownDocument() || isBlogdownDocument() || isDistillDocument();
-   }
-   
-   private boolean hasBlogdownMathInCode(List<String> docTypes)
-   {
-      boolean blogdownWithNonPandocMarkdown = 
-         docTypes.contains(PanmirrorExtendedDocType.blogdown) && 
-         (alternateMarkdownEngine() != null);
-      
-      return blogdownWithNonPandocMarkdown || isHugodownDocument();
-   }
-   
-   private boolean isBookdownDocument() 
+   private boolean isBookdownProjectDocument() 
    {
       return sessionInfo_.getBuildToolsBookdownWebsite() && isDocInProject();
    }
    
-   private boolean isBlogdownDocument() 
+   private boolean isBlogdownProjectDocument() 
    {
       return getBlogdownConfig().is_blogdown_project && isDocInProject() && !isHugodownDocument();
    }
    
-   private boolean isHugoDocument()
+   private boolean isHugoProjectDocument()
    {
-      return getBlogdownConfig().is_hugo_project && isDocInProject();
+      return (getBlogdownConfig().is_hugo_project && isDocInProject());
    }
    
    private boolean isHugodownDocument()
    {
-      return isHugoDocument() && getOutputFormats().contains("hugodown::hugo_document");
+      return getOutputFormats().contains("hugodown::hugo_document");
+   }
+   
+   private boolean isDistillDocument()
+   {
+      return (sessionInfo_.getIsDistillProject() && isDocInProject()) ||
+             getOutputFormats().contains("distill::distill_article");
+   }
+   
+   private boolean isXaringanDocument()
+   {
+      List<String> formats = getOutputFormats();
+      for (String format : formats)
+      {
+         if (format.startsWith("xaringan"))
+            return true;
+      }
+      return false;
+   }
+   
+   private boolean hasBookdownCrossReferences()
+   {
+      return isBookdownProjectDocument() || isBlogdownProjectDocument() || isDistillDocument();
+   }
+   
+   private boolean hasBlogdownMathInCode()
+   {
+      boolean blogdownWithNonPandocMarkdown = isBlogdownProjectDocument() && (alternateMarkdownEngine() != null);
+      return blogdownWithNonPandocMarkdown || isHugodownDocument();
    }
    
    
    private String pathToHugoAsset(String path)
    {
-      if (isHugoDocument())
+      if (isHugoProjectDocument())
       {
          FileSystemItem file = FileSystemItem.createFile(path);
          for (FileSystemItem dir : hugoStaticDirs())
@@ -1389,7 +1397,7 @@ public class TextEditingTargetVisualMode implements CommandPaletteEntrySource
    // a union view of the various static dirs, much as hugo does internally)
    private String hugoAssetPath(String asset)
    {
-      if (isHugoDocument() && asset.startsWith("/"))
+      if (isHugoProjectDocument() && asset.startsWith("/"))
       {
          return hugoStaticDirs().get(0).completePath(asset.substring(1));
       }
@@ -1425,23 +1433,6 @@ public class TextEditingTargetVisualMode implements CommandPaletteEntrySource
       return rmdExtensions;
    }
    
-   private boolean isDistillDocument()
-   {
-      return (sessionInfo_.getIsDistillProject() && isDocInProject()) ||
-             getOutputFormats().contains("distill::distill_article");
-   }
-   
-   private boolean isXaringanDocument()
-   {
-      List<String> formats = getOutputFormats();
-      for (String format : formats)
-      {
-         if (format.startsWith("xaringan"))
-            return true;
-      }
-      return false;
-   }
-   
    // see if there's an alternate markdown engine in play
    private Pair<String,String> alternateMarkdownEngine()
    {
@@ -1457,7 +1448,7 @@ public class TextEditingTargetVisualMode implements CommandPaletteEntrySource
          );
          
          // if it's a blogdown document
-         if (isBlogdownDocument())
+         if (isBlogdownProjectDocument())
          {
             // if it has an extension indicating hugo will render markdown
             String extension = FileSystemItem.getExtensionFromPath(docPath);
@@ -1468,9 +1459,14 @@ public class TextEditingTargetVisualMode implements CommandPaletteEntrySource
             }
          }
          // if it's a hugo document (that is not a blogdown document)
-         else if (isHugoDocument())
+         else if (isHugoProjectDocument())
          {
             return alternateMode;
+         }
+         // hugodown document that lives outside of a project
+         else if (isHugodownDocument())
+         {
+            return new Pair<String,String>("goldmark", "");
          }
          
       }
