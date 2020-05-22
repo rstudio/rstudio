@@ -1,7 +1,7 @@
 /*
  * ObjectExplorerHandle.java
  *
- * Copyright (C) 2009-17 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -24,9 +24,10 @@ public class ObjectExplorerHandle extends JavaScriptObject
    {
    }
    
-   public final native String getId()    /*-{ return this["id"];    }-*/;
-   public final native String getName()  /*-{ return this["name"];  }-*/;
-   public final native String getTitle() /*-{ return this["title"]; }-*/;
+   public final native String getId()       /*-{ return this["id"];    }-*/;
+   public final native String getName()     /*-{ return this["name"];  }-*/;
+   public final native String getTitle()    /*-{ return this["title"]; }-*/;
+   public final native String getLanguage() /*-{ return this["language"]; }-*/;
    
    public final String getPath()
    {

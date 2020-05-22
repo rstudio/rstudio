@@ -1,7 +1,7 @@
 /*
  * pandoc_converter.ts
  *
- * Copyright (C) 2019-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -78,7 +78,6 @@ export class PandocConverter {
   }
 
   public async toProsemirror(markdown: string, format: string): Promise<PandocToProsemirrorResult> {
-
     // adjust format. we always need to *read* raw_html, raw_attribute, and backtick_code_blocks b/c
     // that's how preprocessors hoist content through pandoc into our prosemirror token parser.
     format = adjustedFormat(format, ['raw_html', 'raw_attribute', 'backtick_code_blocks']);
@@ -100,7 +99,7 @@ export class PandocConverter {
       this.readers,
       this.blockReaders,
       this.inlineHTMLReaders,
-      this.blockCapsuleFilters
+      this.blockCapsuleFilters,
     );
 
     // run post-processors
@@ -117,7 +116,6 @@ export class PandocConverter {
     pandocFormat: PandocFormat,
     options: PandocWriterOptions,
   ): Promise<string> {
-
     // generate pandoc ast
     const output = pandocFromProsemirror(
       doc,
@@ -135,7 +133,7 @@ export class PandocConverter {
 
     // disable selected format options
     format = pandocFormatWith(format, disabledFormatOptions(format, doc), '');
-  
+
     // prepare pandoc options
     let pandocOptions: string[] = [];
     if (options.atxHeaders) {
@@ -145,12 +143,11 @@ export class PandocConverter {
       pandocOptions.push('--dpi');
     }
     // default to block level references (validate known types)
-    const references = ['block', 'section', 'document'].includes(options.references || '') 
-      ? options.references 
-      : 'block'
-    ;
+    const references = ['block', 'section', 'document'].includes(options.references || '')
+      ? options.references
+      : 'block';
     pandocOptions.push(`--reference-location=${references}`);
-    
+
     // provide wrapColumn options
     pandocOptions = pandocOptions.concat(wrapColumnOptions(options));
 
@@ -161,7 +158,6 @@ export class PandocConverter {
     return markdown.replace(/\r\n|\n\r|\r/g, '\n');
   }
 }
-
 
 // adjust the specified format (remove options that are never applicable
 // to editing scenarios)
@@ -177,9 +173,7 @@ function adjustedFormat(format: string, extensions: string[]) {
   return newFormat;
 }
 
-
 function disabledFormatOptions(format: string, doc: ProsemirrorNode) {
-
   // (prefer pipe and grid tables). users can still force the availability of these by
   // adding those format flags but all known markdown variants that support tables also
   // support pipe tables so this seems unlikely to ever be required.
@@ -192,13 +186,13 @@ function disabledFormatOptions(format: string, doc: ProsemirrorNode) {
   }
 
   // gfm and commonmark variants don't allow simple/multiline/grid tables (just pipe tables)
-  // and it's an error to even include these in the markdown format specifier -- so for 
+  // and it's an error to even include these in the markdown format specifier -- so for
   // these modes we just nix the disabling
   if (format.startsWith(kGfmFormat) || format.startsWith(kCommonmarkFormat)) {
     disabledTableTypes = '';
   }
 
-  // return 
+  // return
   return disabledTableTypes;
 }
 

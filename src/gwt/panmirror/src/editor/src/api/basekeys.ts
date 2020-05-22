@@ -1,7 +1,7 @@
 /*
  * basekeys.ts
  *
- * Copyright (C) 2019-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -96,8 +96,6 @@ export function baseKeysPlugin(keys: readonly BaseKeyBinding[]) {
   return keymap(bindings);
 }
 
-
 function ignoreKey(state: EditorState, dispatch?: (tr: Transaction) => void) {
   return true;
 }
-

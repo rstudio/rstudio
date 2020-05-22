@@ -1,7 +1,7 @@
 /*
  * DefaultGlobalDisplay.java
  *
- * Copyright (C) 2009-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -23,8 +23,6 @@ import com.google.inject.Provider;
 
 import org.rstudio.core.client.MessageDisplay;
 import org.rstudio.core.client.StringUtil;
-import org.rstudio.core.client.command.AppCommand;
-import org.rstudio.core.client.command.CommandHandler;
 import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.widget.*;

@@ -1,7 +1,7 @@
 /*
  * LocalStreamAsyncClient.hpp
  *
- * Copyright (C) 2009-12 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -103,6 +103,11 @@ private:
          boost::bind(&LocalStreamAsyncClient::handleConnect,
                      sharedFromThis(),
                      boost::asio::placeholders::error));
+   }
+
+   virtual std::string getDefaultHostHeader()
+   {
+      return "localhost";
    }
 
    void handleConnect(const boost::system::error_code& ec)

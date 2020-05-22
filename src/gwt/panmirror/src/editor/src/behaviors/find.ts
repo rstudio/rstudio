@@ -1,7 +1,7 @@
 /*
  * find.ts
  *
- * Copyright (C) 2019-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -17,12 +17,9 @@ import { Extension } from '../api/extension';
 import { Plugin, PluginKey, EditorState, Transaction, TextSelection } from 'prosemirror-state';
 import { DecorationSet, Decoration, EditorView } from 'prosemirror-view';
 
-import zenscroll from 'zenscroll';
-
 import { mergedTextNodes } from '../api/text';
-import { editingRootNode } from '../api/node';
 import { kAddToHistoryTransaction } from '../api/transaction';
-import { findParentNodeOfType } from 'prosemirror-utils';
+import { scrollIntoView } from '../api/scroll';
 
 const key = new PluginKey<DecorationSet>('find-plugin');
 
@@ -304,19 +301,7 @@ class FindPlugin extends Plugin<DecorationSet> {
   }
 
   private scrollToSelectedResult(view: EditorView) {
-    const schema = view.state.schema;
-    const selection = view.state.selection;
-    const editingRoot = editingRootNode(selection);
-    if (editingRoot) {
-      const container = view.nodeDOM(editingRoot.pos) as HTMLElement;
-      const parentList = findParentNodeOfType([schema.nodes.ordered_list,schema.nodes.bullet_list])(selection);
-      const resultPos = parentList ? parentList.pos : selection.$head.before();
-      const resultNode = view.nodeDOM(resultPos) as HTMLElement;
-      if (container && resultNode) {
-        const scroller = zenscroll.createScroller(container);
-        scroller.center(resultNode, 350, 100);
-      }
-    }
+    scrollIntoView(view, view.state.selection.from, true, 350, 100);
   }
 
   private hasTerm() {

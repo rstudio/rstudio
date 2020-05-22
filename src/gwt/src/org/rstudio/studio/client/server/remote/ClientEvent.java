@@ -1,7 +1,7 @@
 /*
  * ClientEvent.java
  *
- * Copyright (C) 2009-19 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -90,6 +90,7 @@ class ClientEvent extends JavaScriptObject
    public static final String ContextDepthChanged = "context_depth_changed";
    public static final String EnvironmentAssigned = "environment_assigned";
    public static final String EnvironmentRemoved = "environment_removed";
+   public static final String EnvironmentChanged = "environment_changed";
    public static final String BrowserLineChanged = "browser_line_changed";
    public static final String PackageLoaded = "package_loaded";
    public static final String PackageUnloaded = "package_unloaded";
@@ -191,6 +192,7 @@ class ClientEvent extends JavaScriptObject
    public static final String HighlightUi = "highlight_ui";
    public static final String TutorialCommand = "tutorial_command";
    public static final String TutorialLaunch = "tutorial_launch";
+   public static final String ReticulateEvent = "reticulate_event";
 
    protected ClientEvent()
    {

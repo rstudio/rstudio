@@ -1,7 +1,7 @@
 /*
  * ModalDialogBase.java
  *
- * Copyright (C) 2009-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -41,7 +41,7 @@ import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 
-import elemental.client.Browser;
+import elemental2.dom.DomGlobal;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.Point;
@@ -231,7 +231,7 @@ public abstract class ModalDialogBase extends DialogBox
       Element child = e.getFirstChildElement();
       if (child != null)
       {
-         int windowInnerHeight = Browser.getWindow().getInnerHeight();
+         int windowInnerHeight = DomGlobal.window.innerHeight;
          if (windowInnerHeight <= 10) return; // degenerate property case
 
          // snap the top of the modal to the top bounds of the window
@@ -564,7 +564,7 @@ public abstract class ModalDialogBase extends DialogBox
             Element e = DomUtils.getActiveElement();
             if (e.hasTagName("TEXTAREA") || e.hasTagName("A") || 
                   e.hasClassName(allowEnterKeyClass) ||
-                  (e.hasAttribute("role") && e.getAttribute("role") == "link"))
+                  (e.hasAttribute("role") && StringUtil.equals(e.getAttribute("role"), "link")))
                return;
 
             ThemedButton defaultButton = defaultOverrideButton_ == null
@@ -841,7 +841,7 @@ public abstract class ModalDialogBase extends DialogBox
       ariaLiveStatusWidget_.reportStatus(status, delayMs, severity);
    }
 
-   private static Resources RES = GWT.create(Resources.class);
+   private static final Resources RES = GWT.create(Resources.class);
    static
    {
       RES.styles().ensureInjected();
@@ -852,18 +852,18 @@ public abstract class ModalDialogBase extends DialogBox
 
    private boolean escapeDisabled_ = false;
    private boolean enterDisabled_ = false;
-   private SimplePanel containerPanel_;
-   private VerticalPanel mainPanel_;
-   private HorizontalPanel bottomPanel_;
-   private HorizontalPanel buttonPanel_;
-   private HorizontalPanel leftButtonPanel_;
+   private final SimplePanel containerPanel_;
+   private final VerticalPanel mainPanel_;
+   private final HorizontalPanel bottomPanel_;
+   private final HorizontalPanel buttonPanel_;
+   private final HorizontalPanel leftButtonPanel_;
    private ThemedButton okButton_;
    private ThemedButton cancelButton_;
    private ThemedButton defaultOverrideButton_;
-   private ArrayList<ThemedButton> allButtons_ = new ArrayList<>();
+   private final ArrayList<ThemedButton> allButtons_ = new ArrayList<>();
    private Widget mainWidget_;
    private com.google.gwt.dom.client.Element originallyActiveElement_;
    private Animation currentAnimation_ = null;
-   private DialogRole role_;
+   private final DialogRole role_;
    private final AriaLiveStatusWidget ariaLiveStatusWidget_;
 }

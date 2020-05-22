@@ -1,7 +1,7 @@
 /*
  * pandoc_attr.ts
  *
- * Copyright (C) 2019-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -35,7 +35,7 @@ export const kCodeBlockText = 1;
 export interface PandocAttr {
   id: string;
   classes: string[];
-  keyvalue: string[];
+  keyvalue: [[string,string]];
 }
 
 export const pandocAttrSpec = {

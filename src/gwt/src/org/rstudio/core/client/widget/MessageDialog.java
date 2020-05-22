@@ -1,7 +1,7 @@
 /*
  * MessageDialog.java
  *
- * Copyright (C) 2009-19 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -154,7 +154,7 @@ public class MessageDialog extends ModalDialogBase
       focusOkButton();
    }
 
-   private int type_;
-   private Widget messageWidget_;
+   private final int type_;
+   private final Widget messageWidget_;
    private ProgressIndicator progress_;
 }

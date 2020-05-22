@@ -1,7 +1,7 @@
 /*
  * figure.ts
  *
- * Copyright (C) 2019-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -13,12 +13,12 @@
  *
  */
 
-import { Node as ProsemirrorNode, Schema, Fragment } from 'prosemirror-model';
+import { Node as ProsemirrorNode, Schema, Fragment, ResolvedPos } from 'prosemirror-model';
 import { Plugin, PluginKey, EditorState, Transaction, NodeSelection } from 'prosemirror-state';
 import { EditorView } from 'prosemirror-view';
 import { Transform } from 'prosemirror-transform';
 
-import { findChildrenByType } from 'prosemirror-utils';
+import { findChildrenByType, findParentNodeClosestToPos } from 'prosemirror-utils';
 
 import { Extension } from '../../api/extension';
 import { EditorUI } from '../../api/ui';
@@ -115,7 +115,7 @@ const extension = (
             };
 
             // unroll figure from paragraph with single image
-            if (isParaWrappingFigure(tok)) {
+            if (isParaWrappingFigure(tok) && !writerHasProhibitedFigureParent(schema, writer)) {
               const handler = pandocImageHandler(true, imageAttr)(schema);
               handler(writer, tok.c[0]);
               return true;
@@ -196,6 +196,24 @@ export function deleteCaption() {
   };
 }
 
+export function posHasProhibitedFigureParent(schema: Schema, $pos: ResolvedPos) {
+  return prohibitedFigureParents(schema).some(type => {
+    return !!findParentNodeClosestToPos($pos, node => node.type === type);
+  });
+}
+
+export function writerHasProhibitedFigureParent(schema: Schema, writer: ProsemirrorWriter) {
+  return prohibitedFigureParents(schema).some(writer.isNodeOpen);
+}
+
+function prohibitedFigureParents(schema: Schema) {
+  return [
+    schema.nodes.table_cell,
+    schema.nodes.list_item,
+    schema.nodes.definition_list
+  ];
+}
+
 function convertImagesToFigure(tr: Transaction) {
   return trTransform(tr, imagesToFiguresTransform);
 }
@@ -205,15 +223,17 @@ function imagesToFiguresTransform(tr: Transform) {
   const images = findChildrenByType(tr.doc, schema.nodes.image);
   images.forEach(image => {
     // position reflecting steps already taken in this handler
-    const mappedPos = tr.mapping.mapResult(image.pos);
+    const mappedImagePos = tr.mapping.mapResult(image.pos);
 
     // process image so long as it wasn't deleted by a previous step
-    if (!mappedPos.deleted) {
+    if (!mappedImagePos.deleted) {
       // resolve image pos
-      const imagePos = tr.doc.resolve(mappedPos.pos);
+      const imagePos = tr.doc.resolve(mappedImagePos.pos);
 
       // if it's an image in a standalone paragraph, convert it to a figure
-      if (imagePos.parent.type === schema.nodes.paragraph && imagePos.parent.childCount === 1) {
+      if (imagePos.parent.type === schema.nodes.paragraph && 
+          imagePos.parent.childCount === 1 &&
+          !posHasProhibitedFigureParent(schema, imagePos)) {
         // figure attributes
         const attrs = image.node.attrs;
 
@@ -221,7 +241,7 @@ function imagesToFiguresTransform(tr: Transform) {
         if (schema.marks.link.isInSet(image.node.marks)) {
           const linkAttrs = getMarkAttrs(
             tr.doc,
-            { from: image.pos, to: image.pos + image.node.nodeSize },
+            { from: mappedImagePos.pos, to: mappedImagePos.pos + image.node.nodeSize },
             schema.marks.link,
           );
           if (linkAttrs && linkAttrs.href) {
@@ -235,7 +255,7 @@ function imagesToFiguresTransform(tr: Transform) {
         // replace image with figure
         const figure = schema.nodes.figure.createAndFill(attrs, content);
         if (figure) {
-          tr.replaceRangeWith(mappedPos.pos, mappedPos.pos + image.node.nodeSize, figure);
+          tr.replaceRangeWith(mappedImagePos.pos, mappedImagePos.pos + image.node.nodeSize, figure);
         }
       }
     }

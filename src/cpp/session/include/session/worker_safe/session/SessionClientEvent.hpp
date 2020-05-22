@@ -1,7 +1,7 @@
 /*
  * SessionClientEvent.hpp
  *
- * Copyright (C) 2009-19 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -202,6 +202,8 @@ extern const int kReplaceResult;
 extern const int kReplaceUpdated;
 extern const int kTutorialCommand;
 extern const int kTutorialLaunch;
+extern const int kReticulateEvent;
+extern const int kEnvironmentChanged;
 }
    
 class ClientEvent

@@ -1,7 +1,7 @@
 /*
  * table-nodes.ts
  *
- * Copyright (C) 2019-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -76,7 +76,7 @@ export const tableContainerNode = {
       },
     ],
     writer: writePandocTableContainer,
-    blockCapsuleFilter: tableBlockCapsuleFilter()
+    blockCapsuleFilter: tableBlockCapsuleFilter(),
   },
 };
 
@@ -100,11 +100,11 @@ export const tableNode = {
 
           // if we have a colgroup w/ widths then read percents from there
           // <colgroup><col style="width: 44%" /><col style="width: 11%" /></colgroup>
-          const colgroup  = el.getElementsByTagName('colgroup');
+          const colgroup = el.getElementsByTagName('colgroup');
           if (colgroup.length) {
             const cols = colgroup[0].childElementCount;
             colpercents = new Array<number>(cols).fill(0);
-            for (let i = 0; i<cols; i++) {
+            for (let i = 0; i < cols; i++) {
               const col = colgroup[0].children.item(i) as HTMLElement;
               if (col.style.width) {
                 colpercents[i] = (parseInt(col.style.width, 10) || 0) / 100;
@@ -112,11 +112,11 @@ export const tableNode = {
             }
             if (colpercents.every(value => !!value)) {
               return {
-                colpercents
+                colpercents,
               };
             }
           }
-        
+
           // otherwise read from data-colwidth
           let width: number | null = null;
           const rows = el.getElementsByTagName('tr');

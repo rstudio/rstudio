@@ -1,7 +1,7 @@
 /*
  * SessionModuleContext.hpp
  *
- * Copyright (C) 2009-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  *
  * Unless you have received this program directly from RStudio pursuant
@@ -858,6 +858,8 @@ bool isPathViewAllowed(const core::FilePath& path);
 void onBackgroundProcessing(bool isIdle);
 
 void initializeConsoleCtrlHandler();
+
+bool isPythonReplActive();
 
 } // namespace module_context
 } // namespace session

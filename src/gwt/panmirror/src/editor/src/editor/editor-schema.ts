@@ -1,7 +1,7 @@
 /*
  * editor-schema.ts
  *
- * Copyright (C) 2019-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -13,11 +13,11 @@
  *
  */
 
-import { Schema, NodeSpec, MarkSpec, Node as ProsemirrorNode } from "prosemirror-model";
+import { Schema, NodeSpec, MarkSpec, Node as ProsemirrorNode } from 'prosemirror-model';
 
-import { ExtensionManager } from "./editor-extensions";
-import { PandocNode } from "../api/node";
-import { PandocMark } from "../api/mark";
+import { ExtensionManager } from './editor-extensions';
+import { PandocNode } from '../api/node';
+import { PandocMark } from '../api/mark';
 
 export function editorSchema(extensions: ExtensionManager): Schema {
   // build in doc node + nodes from extensions
@@ -92,18 +92,18 @@ export function editorSchema(extensions: ExtensionManager): Schema {
   });
 
   // allow code to exclude marks that don't support input rules
-  // (e.g. marks that denote a special escape sequences from markdown, 
+  // (e.g. marks that denote a special escape sequences from markdown,
   // like raw_tex, raw_html, shortcodes, xrefs, math, etc.)
-  const excludeInCode = extensions.pandocMarks()
+  const excludeInCode = extensions
+    .pandocMarks()
     .filter(mark => mark.noInputRules && mark.name !== 'code')
     .map(mark => mark.name)
     .join(' ');
   marks.code.excludes = excludeInCode;
-  
+
   // return schema
   return new Schema({
     nodes,
     marks,
   });
-
 }

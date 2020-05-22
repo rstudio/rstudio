@@ -103,19 +103,22 @@ public class PanmirrorToolbar extends SecondaryToolbar implements RequiresResize
          addLeftButton(PanmirrorCommands.HTMLComment);
       }
      
-      addLeftSeparator();
-      findReplaceButton_ = new ToolbarButton(
-         ToolbarButton.NoText,
-         "Find/Replace",
-         FindReplaceBar.getFindIcon(),
-         new ClickHandler() {
-            public void onClick(ClickEvent event)
-            {
-               boolean show = !findReplace.isFindReplaceShowing();
-               findReplace.showFindReplace(show);
-            }
-         });
-      addLeftWidget(findReplaceButton_);
+      if (findReplace != null)
+      {
+         addLeftSeparator();
+         findReplaceButton_ = new ToolbarButton(
+            ToolbarButton.NoText,
+            "Find/Replace",
+            FindReplaceBar.getFindIcon(),
+            new ClickHandler() {
+               public void onClick(ClickEvent event)
+               {
+                  boolean show = !findReplace.isFindReplaceShowing();
+                  findReplace.showFindReplace(show);
+               }
+            });
+         addLeftWidget(findReplaceButton_);
+      }
    }
   
    
@@ -128,10 +131,13 @@ public class PanmirrorToolbar extends SecondaryToolbar implements RequiresResize
    
    public void setFindReplaceLatched(boolean latched)
    {
-      findReplaceButton_.setLeftImage(latched ? 
-         FindReplaceBar.getFindLatchedIcon() : 
-         FindReplaceBar.getFindIcon()
-     );
+      if (findReplaceButton_ != null)
+      {
+         findReplaceButton_.setLeftImage(latched ? 
+            FindReplaceBar.getFindLatchedIcon() : 
+            FindReplaceBar.getFindIcon()
+         );
+      }
    }
    
    @Override 

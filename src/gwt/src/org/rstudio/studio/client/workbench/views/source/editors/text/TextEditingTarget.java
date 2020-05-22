@@ -1,7 +1,7 @@
 /*
  * TextEditingTarget.java
  *
- * Copyright (C) 2009-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -267,6 +267,8 @@ public class TextEditingTarget implements
       TextEditorContainer editorContainer();
  
       void manageCommandUI();
+      
+      void addVisualModeFindReplaceButton(ToolbarButton findReplaceButton);
    }
 
    private class SaveProgressIndicator implements ProgressIndicator
@@ -1770,6 +1772,9 @@ public class TextEditingTarget implements
          events_,
          releaseOnDismiss_
       );
+      
+      // provide find replace button to view
+      view_.addVisualModeFindReplaceButton(visualMode_.getFindReplaceButton());
       
       // update status bar when visual mode status changes
       releaseOnDismiss_.add(

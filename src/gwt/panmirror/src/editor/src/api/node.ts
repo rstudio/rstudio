@@ -1,7 +1,7 @@
 /*
  * node.ts
  *
- * Copyright (C) 2019-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -147,10 +147,14 @@ export function insertAndSelectNode(view: EditorView, node: ProsemirrorNode) {
   tr.ensureMarks(node.marks);
   tr.replaceSelectionWith(node);
 
-  // set selection to inserted node
+  // set selection to inserted node (or don't if our selection calculate was off,
+  // as can happen when we insert into a list bullet)
   const selectionPos = tr.doc.resolve(tr.mapping.map(view.state.selection.from, -1));
-  tr.setSelection(new NodeSelection(selectionPos));
-
+  const selectionNode = tr.doc.nodeAt(selectionPos.pos);
+  if (selectionNode && selectionNode.type === node.type) {
+    tr.setSelection(new NodeSelection(selectionPos));
+  }
+ 
   // dispatch transaction
   view.dispatch(tr);
 }
