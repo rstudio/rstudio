@@ -1233,7 +1233,10 @@ public class TextEditingTargetVisualMode implements CommandPaletteEntrySource
             {
                format.docTypes = new String[] {};
             }
-  
+            
+            // version of docTypes we can use for feature detection below 
+            List<String> docTypes = Arrays.asList(format.docTypes);
+               
             // mode and extensions         
             // non-standard mode and extension either come from a format comment,
             // a detection of an alternate engine (likely due to blogdown/hugo)
@@ -1285,9 +1288,17 @@ public class TextEditingTargetVisualMode implements CommandPaletteEntrySource
                hasBookdownCrossReferences() || rmdExtensions.bookdownXRefUI;
             
             // enable blogdown math in code (e.g. `$math$`) if requested explicitly by the user
-            // (this requires manual configuration in hugo in any case).
-            format.rmdExtensions.blogdownMathInCode = rmdExtensions.blogdownMathInCode;
-           
+            // (this requires manual configuration in hugo in any case). however don't enable
+            // it if the user has expressely added +tex_math_dollars to the format (as this
+            // means that they've arranged for an alternate means of rendering math e.g. a 
+            // goldmark extension)
+            boolean texMathDollarsEnabled = format.pandocExtensions.contains("+tex_math_dollars");
+            if (!texMathDollarsEnabled)
+            {
+               format.rmdExtensions.blogdownMathInCode = 
+                  hasBlogdownMathInCode(docTypes) || rmdExtensions.blogdownMathInCode;
+            }
+            
             // hugoExtensions
             format.hugoExtensions = new PanmirrorHugoExtensions();
             
@@ -1322,6 +1333,15 @@ public class TextEditingTargetVisualMode implements CommandPaletteEntrySource
    private boolean hasBookdownCrossReferences()
    {
       return isBookdownDocument() || isBlogdownDocument() || isDistillDocument();
+   }
+   
+   private boolean hasBlogdownMathInCode(List<String> docTypes)
+   {
+      boolean blogdownWithNonPandocMarkdown = 
+         docTypes.contains(PanmirrorExtendedDocType.blogdown) && 
+         (alternateMarkdownEngine() != null);
+      
+      return blogdownWithNonPandocMarkdown || isHugodownDocument();
    }
    
    private boolean isBookdownDocument() 
