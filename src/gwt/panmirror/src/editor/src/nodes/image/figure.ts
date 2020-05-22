@@ -72,7 +72,7 @@ const extension = (
         spec: {
           attrs: imageNodeAttrsSpec(true, imageAttr),
           content: 'inline*',
-          group: 'block',
+          group: 'block list_item_block',
           draggable: true,
           selectable: true,
           defining: true,
