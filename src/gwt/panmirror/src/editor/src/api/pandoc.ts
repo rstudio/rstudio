@@ -240,6 +240,10 @@ export interface ProsemirrorWriter {
 
   // log an unrecoginzed token type
   logUnrecognized(token: string): void;
+
+  // query whether a given node type is open
+  // (useful for e.g. conditional behavior when in a list or table)
+  isNodeOpen(type: NodeType): boolean;
 }
 
 export interface PandocNodeWriter {

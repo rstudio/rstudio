@@ -87,6 +87,7 @@ class Parser {
       logUnrecognized(type: string) {
         state.logUnrecognized(type);
       },
+      isNodeOpen: state.isNodeOpen.bind(state)
     };
 
     // process raw text capsules
@@ -358,6 +359,10 @@ class ParserState {
     if (!this.unrecognizedTokens.includes(type)) {
       this.unrecognizedTokens.push(type);
     }
+  }
+
+  public isNodeOpen(type: NodeType) {
+    return this.stack.some(value => value.type === type);
   }
 
   private top(): ParserStackElement {
