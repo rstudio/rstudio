@@ -281,7 +281,7 @@ export interface PandocOutput {
   writeToken(type: PandocTokenType, content?: (() => void) | any): void;
   writeMark(type: PandocTokenType, parent: Fragment, expelEnclosingWhitespace?: boolean): void;
   writeArray(content: () => void): void;
-  writeAttr(id?: string, classes?: string[], keyvalue?: string[]): void;
+  writeAttr(id?: string, classes?: string[], keyvalue?: [[string,string]]): void;
   writeText(text: string | null): void;
   writeLink(href: string, title: string, attr: PandocAttr | null, f: () => void): void;
   writeNode(node: ProsemirrorNode): void;

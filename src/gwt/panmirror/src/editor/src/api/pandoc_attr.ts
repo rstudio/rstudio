@@ -35,7 +35,7 @@ export const kCodeBlockText = 1;
 export interface PandocAttr {
   id: string;
   classes: string[];
-  keyvalue: string[];
+  keyvalue: [[string,string]];
 }
 
 export const pandocAttrSpec = {
