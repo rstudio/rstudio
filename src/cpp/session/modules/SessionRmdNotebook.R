@@ -111,6 +111,13 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
 
       # extract the contents from each regular file
       contents <- lapply(files, function(file) {
+         
+         # ignore '.snapshot' files as they are not used here
+         ext <- tools::file_ext(file)
+         if (identical(ext, "snapshot"))
+            return(NULL)
+         
+         # read other files
          .rs.readFile(
             file,
             encoding = "UTF-8",
@@ -118,6 +125,7 @@ assign(".rs.notebookVersion", envir = .rs.toolsEnv(), "1.0")
                      .rs.endsWith(file, "jpg")  ||
                      .rs.endsWith(file, "jpeg") ||
                      .rs.endsWith(file, "rdf")
+            
          )
       })
       names(contents) <- basename(files)
