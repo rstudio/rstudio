@@ -984,12 +984,19 @@
          name <- "write.table"
       }
    }
-      
-   if (identical(src, ""))
-      src <- .GlobalEnv
    
-   result <- .rs.getSignature(.rs.getAnywhere(name, src))
-   result <- sub("function ", "", result)
+   onError <- .rs.scalar("(...)")
+   
+   envir <- .rs.tryCatch(.rs.resolveEnvironment(src))
+   if (!is.environment(envir))
+      return(onError)
+   
+   method <- .rs.tryCatch(get(name, envir = envir, mode = "function"))
+   if (!is.function(method))
+      return(onError)
+   
+   signature <- .rs.getSignature(method)
+   result <- sub("function ", "", signature)
    .rs.scalar(result)
 })
 
@@ -2428,5 +2435,37 @@
    # paste and truncate once more for safety
    text <- paste(items, collapse = sep)
    .rs.truncate(text, n = max * 2L)
+   
+})
+
+.rs.addFunction("resolveEnvironment", function(envir)
+{
+   # if this is already an environment, just return it
+   if (is.environment(envir))
+      return(envir)
+   
+   # if this is a numeric, then assume we want an
+   # environment by position on the search path
+   if (is.numeric(envir))
+      return(as.environment(envir))
+   
+   # treat empty strings as request for globalenv
+   if (is.null(envir) || identical(envir, ""))
+      return(globalenv())
+   
+   # if this is the name of something on the search path,
+   # then as.environment should suffice
+   index <- match(envir, search())
+   if (!is.na(index))
+      return(as.environment(index))
+   
+   # if this is the name of a namespace, retrieve that namespace
+   if (substring(envir, 1L, 10L) == "namespace:") {
+      package <- substring(envir, 11L)
+      return(getNamespace(package))
+   }
+   
+   # otherwise, treat 'envir' directly as the name of a namespace
+   getNamespace(envir)
    
 })
