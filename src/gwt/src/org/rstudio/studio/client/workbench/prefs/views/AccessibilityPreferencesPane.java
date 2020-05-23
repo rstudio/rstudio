@@ -110,7 +110,7 @@ public class AccessibilityPreferencesPane extends PreferencesPane
    @Override
    protected void initialize(UserPrefs prefs)
    {
-      initialScreenReaderEnabled_ = prefs.getScreenReaderEnabled();
+      initialScreenReaderEnabled_ = prefs.enableScreenReader().getValue();
       chkScreenReaderEnabled_.setValue(initialScreenReaderEnabled_);
       chkTabMovesFocus_.setValue(prefs.tabKeyMoveFocus().getValue());
       populateAnnouncementList();
