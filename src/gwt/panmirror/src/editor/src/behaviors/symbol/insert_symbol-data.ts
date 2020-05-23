@@ -15,12 +15,16 @@ export interface SymbolCharacter {
 export const CATEGORY_ALL = {name: "All", codepointFirst: 0, codepointLast: Number.MAX_VALUE};
 
 class SymbolDataManager {
-  private symbolData: Array<SymbolCharacter> = untypedSymbolData.symbols;
-  private blockData: Array<SymbolCategory> = untypedSymbolData.blocks;
+
+  constructor() {
+    this.symbolData = untypedSymbolData.symbols;
+    this.blockData = (untypedSymbolData.blocks as Array<SymbolCategory>).sort((a, b) => a.name.localeCompare(b.name));
+  }
+  private symbolData: Array<SymbolCharacter>;
+  private blockData: Array<SymbolCategory>;
 
   public getCategories(): Array<SymbolCategory> {
     return [CATEGORY_ALL, ...this.blockData];
-    
   }
 
   // TODO: move categories into a separate object with start and end index for getting items

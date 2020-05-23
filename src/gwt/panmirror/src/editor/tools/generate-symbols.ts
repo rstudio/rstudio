@@ -9,10 +9,8 @@ import * as parser from 'fast-xml-parser';
 const maxUnicodeAge = 3.0;
 
 // The file that should be generated holding the symbol data
-const outputFile = './src/behaviors/insert_symbol-data.json';
+const outputFile = './src/behaviors/symbol/insert_symbol-data.json';
 
-
-// TODO: Whats up with musical symbols - lots of boxes. Is there a char i can filter?
 
 // The names of blocks of unicode characters to be scan for characters to include.
 // Blocks will only be included if characters from that block are selected (e.g. characters)
@@ -58,6 +56,10 @@ const includedBlockNames = [
   'Chess Symbols',
   'Symbols and Pictographs Extended-A',
   'Emoticons',
+];
+
+const excludedChars = [
+  160 // no-break space
 ];
 
 // Basic file paths to use when downloading and generating the file. These files will be cleaned up
@@ -131,8 +133,8 @@ function readXmlFileAndGenerateJsonFile(targetXmlFile: string, outputFile: strin
   message('Generating Blocks'); 
   eligibleBlocks.forEach(block => {
     const name = block['@_name'];
-    const firstcp = parseInt(block['@_first-cp'], 16);
-    const lastcp = parseInt(block['@_last-cp'], 16);
+    const firstcp = Number.parseInt(block['@_first-cp'], 16);
+    const lastcp = Number.parseInt(block['@_last-cp'], 16);
     if (includedBlockNames.includes(name)) {
       blocksToWrite.push({ name: name, codepointFirst: firstcp, codepointLast: lastcp });
     }
@@ -164,6 +166,13 @@ function readXmlFileAndGenerateJsonFile(targetXmlFile: string, outputFile: strin
     }
 
     const codepoint = Number.parseInt(symbol['@_cp'], 16);
+
+    // no exluded characters
+    if (excludedChars.includes(codepoint))
+    {
+      return;
+    }
+    
     var block: Block = undefined;
     if (codepoint) {
       block = blocksToWrite.find(block => {

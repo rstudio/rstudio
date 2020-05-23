@@ -14,7 +14,7 @@
  */
 
 const { task, context } = require("fuse-box/sparky");
-const { FuseBox, CSSPlugin, CSSResourcePlugin, ImageBase64Plugin, WebIndexPlugin, QuantumPlugin, JSONPlugin } = require("fuse-box");
+const { FuseBox, JSONPlugin, CSSPlugin, CSSResourcePlugin, ImageBase64Plugin, WebIndexPlugin, QuantumPlugin } = require("fuse-box");
 
 const path = require('path');
 const fs = require('fs');

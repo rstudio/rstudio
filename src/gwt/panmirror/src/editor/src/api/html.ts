@@ -14,6 +14,7 @@
  */
 
 import { Node as ProsemirrorNode, Schema, DOMSerializer, Fragment } from 'prosemirror-model';
+import { Type } from 'js-yaml';
 
 export function isSingleLineHTML(html: string) {
   return html.trimRight().split('\n').length === 1;
@@ -54,4 +55,39 @@ function generateHTML(generator: () => Node | DocumentFragment) {
   const output = generator();
   div.appendChild(output);
   return div.innerHTML;
+}
+
+export function findNextInputElement(startingElement: HTMLElement) : HTMLInputElement | undefined {
+  return findInputElement(startingElement, (currentElement)=>currentElement.nextElementSibling);
+}
+
+export function findPreviousInputElement(startingElement: HTMLElement) : HTMLInputElement | undefined {
+  return findInputElement(startingElement, (currentElement)=>currentElement.previousElementSibling);
+}
+
+function findInputElement(startingElement: HTMLElement, nextElement: (currentElement: HTMLElement)=>Element | null) : HTMLInputElement | undefined {
+  var searchElement = startingElement as HTMLElement;;
+  while (searchElement !== null) {
+   
+    console.log(typeof searchElement.focus);
+    if (isTypeInstanceOf(HTMLInputElement, searchElement)) {
+      return searchElement as HTMLInputElement;
+    }
+    const childElement = searchElement.firstChild;
+    if (childElement != null) {
+      const focusableElement = findInputElement(childElement as HTMLElement, nextElement);
+      if (focusableElement != null) {
+        return focusableElement;
+      }
+    }    
+    searchElement = nextElement(searchElement) as HTMLElement;
+  }
+  return undefined;
+}
+
+
+// Way to use generic in testing a type
+// See https://github.com/Microsoft/TypeScript/wiki/FAQ#why-cant-i-write-typeof-t-new-t-or-instanceof-t-in-my-generic-function
+function isTypeInstanceOf<T>(ctor: { new(...args: any[]): T }, obj: T) {
+  return obj instanceof ctor;
 }

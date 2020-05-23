@@ -16,26 +16,29 @@
 import { EditorState, Transaction, Plugin, PluginKey } from 'prosemirror-state';
 import { EditorView } from 'prosemirror-view';
 
-import React from 'react';
+import React, { ChangeEvent, ReactHTML } from 'react';
 
-import { Extension } from '../api/extension';
-import { ProsemirrorCommand, EditorCommandId } from '../api/command';
-import { canInsertNode } from '../api/node';
-import { Popup } from '../api/widgets/popup';
-import { WidgetProps } from '../api/widgets/react';
+import { Extension } from '../../api/extension';
+import { ProsemirrorCommand, EditorCommandId } from '../../api/command';
+import { canInsertNode } from '../../api/node';
+import { Popup } from '../../api/widgets/popup';
+import { WidgetProps } from '../../api/widgets/react';
 
 import './insert_symbol-styles.css';
 import ReactDOM from 'react-dom';
-import { EditorUI } from '../api/ui';
+import { EditorUI } from '../../api/ui';
 import { Schema } from 'prosemirror-model';
-import { PandocExtensions } from '../api/pandoc';
-import { PandocCapabilities } from '../api/pandoc_capabilities';
-import { EditorFormat } from '../api/format';
-import { EditorOptions } from '../api/options';
-import { EditorEvents, EditorEvent } from '../api/events';
+import { PandocExtensions } from '../../api/pandoc';
+import { PandocCapabilities } from '../../api/pandoc_capabilities';
+import { EditorFormat } from '../../api/format';
+import { EditorOptions } from '../../api/options';
+import { EditorEvents, EditorEvent } from '../../api/events';
+import * as unicode from '../../api/unicode';
 
-import CharacterGrid from './insert_symbol-grid';
+import SymbolCharacterGrid from './insert_symbol-grid';
 import SymbolDataManager, { SymbolCategory, SymbolCharacter, CATEGORY_ALL } from './insert_symbol-data';
+import { TextInput } from '../../api/widgets/textInput';
+import { SelectInput } from '../../api/widgets/selectInput';
 
 const key = new PluginKey<boolean>('insert_symbol');
 const symbolDataManager = new SymbolDataManager();
@@ -129,7 +132,13 @@ class InsertSymbolPlugin extends Plugin<boolean> {
     };
 
     return (
-      <InsertSymbolPopup onClose={closePopup} onInsertText={insertText} enabled={isEnabled(view.state)} size={size} />
+      <InsertSymbolPopup
+        onClose={closePopup}
+        onInsertText={insertText}
+        enabled={isEnabled(view.state)}
+        size={size}
+        searchImage={this.ui.images.search}
+      />
     );
   }
 }
@@ -173,6 +182,7 @@ interface InsertSymbolPopupProps extends WidgetProps {
   onInsertText: (text: string) => void;
   onClose: VoidFunction;
   size: [number, number];
+  searchImage?: string;
 }
 
 const InsertSymbolPopup: React.FC<InsertSymbolPopupProps> = props => {
@@ -185,11 +195,8 @@ const InsertSymbolPopup: React.FC<InsertSymbolPopupProps> = props => {
     width: popupWidth + 'px',
   };
 
-  const gridHeight = popupHeight - 20;
+  const gridHeight = popupHeight - 40;
   const gridWidth = popupWidth - 10;
-  const numberOfColumns = 12;
-  const columnWidth = gridWidth / numberOfColumns;
-  const rowHeight = columnWidth;
 
   const [filterText, setFilterText] = React.useState<string>('');
   const [selectedCategory, setSelectedCategory] = React.useState(CATEGORY_ALL);
@@ -202,8 +209,49 @@ const InsertSymbolPopup: React.FC<InsertSymbolPopupProps> = props => {
   }, [selectedCategory]);
 
   React.useEffect(() => {
-    setFilteredSymbols(symbols.filter(symbol => symbol.name.includes(filterText.toUpperCase())));
+    const codepoint = unicode.parseCodepoint(filterText);
+    var filteredSymbols = symbols.filter(symbol => {
+      // Search by name
+      if (symbol.name.includes(filterText.toUpperCase())) {
+        return true;
+      }
+
+      // Search by codepoint
+      if (codepoint && symbol.codepoint === codepoint) {
+        return true;
+      }
+
+      return false;
+    });
+
+    if (filteredSymbols.length === 0 && codepoint) {
+      // If the filter doesn't match and this could be a code point, just
+      // emit a matching character
+      setFilteredSymbols([
+        {
+          name: codepoint.toString(16),
+          value: String.fromCodePoint(codepoint),
+          codepoint: codepoint,
+        },
+      ]);
+    } else {
+      // Show filtered results
+      setFilteredSymbols(filteredSymbols);
+    }
   }, [filterText, symbols]);
+
+  const textRef = React.useRef(null);
+  const selectRef = React.useRef(null);
+  const gridRef = React.useRef(null);
+
+  // Focus the first text box
+  React.useEffect(() => {
+    focusElement(textRef);
+  }, []);
+
+  function focusElement(element: React.RefObject<HTMLInputElement>) {
+    element!.current!.focus();
+  }
 
   let options = symbolDataManager.getCategories().map(category => (
     <option key={category.name} value={category.name}>
@@ -213,34 +261,58 @@ const InsertSymbolPopup: React.FC<InsertSymbolPopupProps> = props => {
 
   return (
     <Popup classes={['pm-popup-insert-symbol']} style={style}>
-      <input
-        type="text"
-        onChange={event => {
-          setFilterText(event.target.value);
-        }}
-      />
-      <select
-        name="select-category"
-        onChange={event => {
-          const value: string = (event.target as HTMLSelectElement).selectedOptions[0].value;
-          const selectedCategory: SymbolCategory | undefined = symbolDataManager.getCategories().find(category => category.name === value);
-          if (selectedCategory) {
-            setSelectedCategory(selectedCategory);
-          }
-        }}
-      >
-        {options}
-      </select>
+      <div className="pm-popup-insert-symbol-search-container" style={{width: gridWidth}}>
+        <TextInput
+          widthChars={20}
+          iconAdornment={props.searchImage}
+          tabIndex={0}
+          className='pm-popup-insert-symbol-search-textbox'
+          placeholder="keyword or codepoint"
+          onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
+            setFilterText(event.currentTarget.value);
+          }}
+          onKeyDown={(event: React.KeyboardEvent<HTMLInputElement>) => {
+            if (event.keyCode == 9 && event.shiftKey) {
+              focusElement(gridRef);
+            }
+          }}
+          onKeyUp={(event: React.KeyboardEvent<HTMLInputElement>) => {
+            if (event.keyCode === 13) {
+              if (filteredSymbols.length === 1) {
+                props.onInsertText(filteredSymbols[0].value);
+              }
+            }
+          }}
+          ref={textRef}
+        />
+        <SelectInput
+          tabIndex={0}
+          ref={selectRef}
+          className='pm-popup-insert-symbol-select-category'
+          onChange={(event: React.ChangeEvent<HTMLSelectElement>) => {
+            const value: string = (event.target as HTMLSelectElement).selectedOptions[0].value;
+            const selectedCategory: SymbolCategory | undefined = symbolDataManager
+              .getCategories()
+              .find(category => category.name === value);
+            if (selectedCategory) {
+              setSelectedCategory(selectedCategory);
+            }
+          }}
+        >
+          {options}
+        </SelectInput>
+      </div>
 
-      <CharacterGrid
+      <SymbolCharacterGrid
         symbolCharacters={filteredSymbols}
-        onCharacterSelected={(character: string) => {
+        onSymbolCharacterSelected={(character: string) => {
           props.onInsertText(character);
         }}
+        onChangeFocus={(previous: boolean) => focusElement(previous ? selectRef : textRef)}
         height={gridHeight}
         width={gridWidth}
-        rowHeight={rowHeight}
-        columnWidth={columnWidth}
+        numberOfColumns={12}
+        ref={gridRef}
       />
     </Popup>
   );

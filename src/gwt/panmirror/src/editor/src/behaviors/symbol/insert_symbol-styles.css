@@ -1,0 +1,16 @@
+.pm-popup-insert-symbol {
+}
+
+
+.pm-popup-insert-symbol-search-container {
+  display: flex;
+}
+
+.pm-popup-insert-symbol-search-textbox {
+  margin-right: 10px;
+}
+
+.pm-popup-insert-symbol-select-category {
+  width: 100%;
+}
+

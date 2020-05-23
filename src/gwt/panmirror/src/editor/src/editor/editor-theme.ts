@@ -168,10 +168,12 @@ export function applyTheme(theme: EditorTheme) {
     .pm-markup-text-color {
       color: ${theme.markupTextColor} !important;
     }
-    .pm-find-text {
+    .pm-find-text,
+    .pm-grid-item:hover {
       background-color: ${theme.findTextBackgroundColor} !important;
       outline: 1px solid ${theme.findTextBorderColor} !important;
     }
+
     .pm-find-text-selected {
       background-color: ${theme.selectionColor} !important;
     }
