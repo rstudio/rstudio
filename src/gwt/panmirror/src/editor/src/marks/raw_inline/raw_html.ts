@@ -119,12 +119,11 @@ export function rawHtmlInputRule(schema: Schema, filter: MarkInputRuleFilter) {
         // create transaction
         const tr = state.tr;
 
-        // replace fancy quotes in existing text
-        const tagText = fancyQuotesToSimple(text.substring(tag.start, tag.end)) + '>';
-        start = tr.selection.from - (tag.end + tag.start);
-        tr.insertText(tagText, start, tr.selection.from);
-
+        // insert >
+        tr.insertText('>');
+       
         // add mark
+        start = tr.selection.from - (tag.end - tag.start);
         tr.addMark(start, end + 1, rawhtmlMark.create());
         tr.removeStoredMark(rawhtmlMark);
 
