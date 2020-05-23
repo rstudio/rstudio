@@ -17,7 +17,7 @@ package org.rstudio.studio.client.workbench.views.source.events;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.js.JavaScriptSerializable;
 import org.rstudio.studio.client.application.events.CrossWindowEvent;
-import org.rstudio.studio.client.workbench.views.source.Source;
+import org.rstudio.studio.client.workbench.views.source.SourceColumn;
 import org.rstudio.studio.client.workbench.views.source.model.SourcePosition;
 
 import com.google.gwt.event.shared.EventHandler;
@@ -34,17 +34,17 @@ public class PopoutDocEvent extends CrossWindowEvent<PopoutDocEvent.Handler>
    {
    }
    
-   public PopoutDocEvent(String docId, SourcePosition sourcePosition, Source.Display display)
+   public PopoutDocEvent(String docId, SourcePosition sourcePosition, SourceColumn column)
    {
-      this(new PopoutDocInitiatedEvent(docId, null), sourcePosition, display);
+      this(new PopoutDocInitiatedEvent(docId, null), sourcePosition, column);
    }
    
    public PopoutDocEvent(PopoutDocInitiatedEvent originator,
-         SourcePosition sourcePosition, Source.Display display)
+         SourcePosition sourcePosition, SourceColumn column)
    {
       originator_ = originator;
       sourcePosition_ = sourcePosition;
-      display_ = display;
+      column_ = column;
       Debug.logToConsole("new PopoutDocEvent for: " + originator_.getDocId());
    }
    
@@ -58,9 +58,9 @@ public class PopoutDocEvent extends CrossWindowEvent<PopoutDocEvent.Handler>
       return sourcePosition_;
    }
    
-   public Source.Display getDisplay()
+   public SourceColumn getColumn()
    {
-      return display_;
+      return column_;
    }
    
    public String getDocId()
@@ -87,7 +87,7 @@ public class PopoutDocEvent extends CrossWindowEvent<PopoutDocEvent.Handler>
    }
 
    private SourcePosition sourcePosition_;
-   private Source.Display display_;
+   private SourceColumn column_;
    private PopoutDocInitiatedEvent originator_;
    
    public static final Type<Handler> TYPE = new Type<Handler>();

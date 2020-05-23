@@ -26,7 +26,6 @@ import com.google.gwt.event.dom.client.FocusEvent;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.logical.shared.CloseEvent;
 import com.google.gwt.event.logical.shared.CloseHandler;
-import com.google.gwt.event.logical.shared.HasBeforeSelectionHandlers;
 import com.google.gwt.event.logical.shared.SelectionHandler;
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
@@ -44,6 +43,7 @@ import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.inject.Singleton;
 
+import org.apache.commons.lang3.StringUtils;
 import org.rstudio.core.client.*;
 import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.command.CommandBinder;
@@ -177,134 +177,48 @@ import java.util.Map;
 import java.util.Queue;
 import java.util.Set;
 
-public class SourceColumnManager implements BeforeShowHandler
+public class SourceColumnManager
 {
-   public class Column 
+
+   public interface CPSEditingTargetCommand
    {
-      Column (Source.Display display, String name)
-      {
-         display_ = display;
-         name_ = name;
-      }
-
-      public String getName()
-      {
-         return name_;
-      }
-
-      public int getTabCount()
-      {
-         display_.getTabCount();
-      }
-
-      public ArrayList<EditingTarget> getEditors()
-      {
-         return editors_;
-      }
-
-      public ArrayList<Integer> getTabOrder()
-      {
-         return tabOrder_;
-      }
-
-      public Source.Display asDisplay()
-      {
-         return display_;
-      }
-
-      public Widget asWidget()
-      {
-         return display_.asWidget();
-      }
-
-      /**
-       * @param isNewTabPending True if a new tab is about to be created. (If
-       *    false and there are no tabs already, then a new source doc might
-       *    be created to make sure we don't end up with a source pane showing
-       *    with no tabs in it.)
-       */
-      public void ensureVisible(boolean isNewTabPending)
-      {
-         newTabPending_++;
-         try
-         {
-            display_.ensureVisible();
-         }
-         finally
-         {
-            newTabPending_--;
-         }
-      }
-
-      // when tabs have been reordered in the session, the physical layout of the
-      // tabs doesn't match the logical order of editors_. it's occasionally
-      // necessary to get or set the tabs by their physical order.
-      public int getPhysicalTabIndex()
-      {
-         int idx = getActiveTabIndex();
-         if (idx < tabOrder_.size())
-         {
-            idx = tabOrder_.indexOf(idx);
-         }
-         return idx;
-      }
-   
-      public void setPhysicalTabIndex(int idx)
-      {
-         if (idx < tabOrder_.size())
-         {
-            idx = tabOrder_.get(idx);
-         }
-         display_.selectTab(idx);
-      }
-
-      public void syncTabOrder()
-      {
-         editors_.clear();
-         // sync tabOrder/editors for each display, then sync the master lists
-         for (Display view : views_)
-         {
-            editors_.addAll(view.syncTabOrder());
-         }
-   
-         // ensure the tab order is synced to the list of editors
-         for (int i = tabOrder_.size(); i < editors_.size(); i++)
-         {
-            tabOrder_.add(i);
-         }
-         for (int i = editors_.size(); i < tabOrder_.size(); i++)
-         {
-            tabOrder_.remove(i);
-         }
-      }
-
-      // If positive, a new tab is about to be created
-      private int newTabPending_;
-
-      private final String name_;
-      private final Source.Display display_;
-      private ArrayList<EditingTarget> editors_;
-      private ArrayList<Integer> tabOrder_;
+      void execute(EditingTarget editingTarget, Command continuation);
    }
-
+   
+   @Inject
    public SourceColumnManager(Source.Display display,
+                              SourceServerOperations server,
                               GlobalDisplay globalDisplay,
                               EditingTargetSource editingTargetSource,
+                              FileTypeRegistry fileTypeRegistry,
                               EventBus events,
+                              DependencyManager dependencyManager,
+                              UserPrefs userPrefs,
                               Provider<FileMRUList> pMruList)
    {
-      Column column = new Column(display, Source.COLUMN_PREFIX);
+      // create the first column in this pane
+      SourceColumn column = new SourceColumn(display, Source.COLUMN_PREFIX, this);
       columnMap_.put(column.getName(), column);
       activeColumn_ = column;
 
-      column.asDisplay().addBeforeShowHandler(this);
-
-      rmarkdown_ = new TextEditingTargetRMarkdownHelper();
+      server_ = server;
       globalDisplay_ = globalDisplay;
       editingTargetSource_ = editingTargetSource;
+      fileTypeRegistry_ = fileTypeRegistry;
       events_ = events;
+      dependencyManager_ = dependencyManager;
+      userPrefs_ = userPrefs;
       pMruList_ = pMruList;
-      userPrefs_ = RStudioGinjector.INSTANCE.getUserPrefs();;
+
+      rmarkdown_ = new TextEditingTargetRMarkdownHelper();
+
+      events_.addHandler(SourceFileSavedEvent.TYPE, new SourceFileSavedHandler()
+      {
+         public void onSourceFileSaved(SourceFileSavedEvent event)
+         {
+            pMruList_.get().add(event.getPath());
+         }
+      });
    }
 
    public String add()
@@ -320,7 +234,9 @@ public class SourceColumnManager implements BeforeShowHandler
    
    public String add(Source.Display display, boolean activate)
    {
-      Column column = new Column(display, Source.COLUMN_PREFIX + StringUtil.makeRandomId(12));
+      SourceColumn column = new SourceColumn(display, 
+                                             Source.COLUMN_PREFIX + StringUtil.makeRandomId(12),
+                                             this);
       columnMap_.put(column.getName(), column);
       column.ensureVisible(false);
 
@@ -333,7 +249,7 @@ public class SourceColumnManager implements BeforeShowHandler
 
    public void initialSelect(int index)
    {
-      activeColumn_.asDisplay().initialSelect(index);
+      activeColumn_.initialSelect(index);
    }
 
    public void setActive(String name)
@@ -345,7 +261,7 @@ public class SourceColumnManager implements BeforeShowHandler
    {
       activeEditor_ = target;
       activeColumn_ = findByDocument(target.getId());
-      activeColumn_.asDisplay().setActiveEditor(target);
+      activeColumn_.setActiveEditor(target);
    }
 
    public void activateColumns(final Command afterActivation)
@@ -370,7 +286,7 @@ public class SourceColumnManager implements BeforeShowHandler
       }
    }
 
-   public Column getActive()
+   public SourceColumn getActive()
    {
       if (activeColumn_ != null)
          return activeColumn_;
@@ -385,6 +301,11 @@ public class SourceColumnManager implements BeforeShowHandler
       return activeColumn_;
    }
 
+   public int getTabCount()
+   {
+      return activeColumn_.getTabCount();
+   }
+   
    public int getPhysicalTabIndex()
    {
       return activeColumn_.getPhysicalTabIndex();
@@ -400,7 +321,7 @@ public class SourceColumnManager implements BeforeShowHandler
       return result;
    }
 
-   public HashMap<String,Column> getMap()
+   public HashMap<String,SourceColumn> getMap()
    {
       return columnMap_;
    }
@@ -412,41 +333,65 @@ public class SourceColumnManager implements BeforeShowHandler
 
    public int getSize()
    {
-      columnMap_.size();
+      return columnMap_.size();
    }
 
-   public Column findByDocument(String docId)
+   // !!! HOW TO HANDLE THESE?
+   public EditingTarget addTab(SourceDocument doc, int mode, SourceColumn column)
    {
-      for (Map.Entry entry : columnMap_.entrySet())
+      if (column == null)
+         column = activeColumn_;
+      return column.addTab(doc, mode);
+   }
+   
+   public EditingTarget addTab(SourceDocument doc, boolean atEnd, 
+         int mode, SourceColumn column)
+   {
+      if (column == null)
+         column = activeColumn_;
+      return column.addTab(doc, atEnd, mode);
+   }
+
+   public EditingTarget addTab(SourceDocument doc, Integer position, 
+         int mode, SourceColumn column)
+   {
+      if (column == null)
+         column = activeColumn_;
+      return column.addTab(doc, position, mode);
+   }
+   
+   public SourceColumn findByDocument(String docId)
+   {
+      for (Map.Entry<String,SourceColumn> entry : columnMap_.entrySet())
       {
-         Column column = (Column)entry.getValue();
-         if (column.asDisplay().hasDoc(docId))
+         SourceColumn column = (SourceColumn)entry.getValue();
+         if (column.hasDoc(docId))
             return column;
       }
       return null;
    }
 
-   public Column findByPath(String path)
+   public SourceColumn findByPath(String path)
    {
-      for (Map.Entry entry : columnMap_.entrySet())
+      for (Map.Entry<String,SourceColumn> entry : columnMap_.entrySet())
       {
-         Column column = (Column)entry.getValue();
-         if (column.asDisplay().hasDocWithPath(path))
+         SourceColumn column = (SourceColumn)entry.getValue();
+         if (column.hasDocWithPath(path))
             return column;
       }
       return null;
    }
 
-   public Column findByName(String name)
+   public SourceColumn findByName(String name)
    {
       return columnMap_.get(name);
    }
 
-   public Column findByPosition(int x)
+   public SourceColumn findByPosition(int x)
    {
-      for (Map.Entry entry : columnMap_.entrySet())
+      for (Map.Entry<String,SourceColumn> entry : columnMap_.entrySet())
       {
-         Column column = (Column)entry.getValue();
+         SourceColumn column = (SourceColumn)entry.getValue();
 
          Widget w = column.asWidget();
          int left = w.getAbsoluteLeft();
@@ -460,7 +405,7 @@ public class SourceColumnManager implements BeforeShowHandler
 
    public boolean isEmpty(String name)
    {
-      return columnMap_.get(name).asDisplay().getTabCount() == 0;
+      return columnMap_.get(name).getTabCount() == 0;
    }
 
    public void activateCodeBrowser(
@@ -531,7 +476,7 @@ public class SourceColumnManager implements BeforeShowHandler
             {
                ((ObjectExplorerEditingTarget) target).update(handle);
                ensureVisible(false);
-               column.asDisplay().selectTab(target.asWidget());
+               column.selectTab(target.asWidget());
                return;
             }
          }
@@ -547,7 +492,7 @@ public class SourceColumnManager implements BeforeShowHandler
                @Override
                public void onResponseReceived(SourceDocument response)
                {
-                  activeColumn_.asDisplay().addTab(response, Source.OPEN_INTERACTIVE);
+                  activeColumn_.addTab(response, Source.OPEN_INTERACTIVE);
                }
             });
    }
@@ -569,7 +514,7 @@ public class SourceColumnManager implements BeforeShowHandler
                ((DataEditingTarget)target).updateData(data);
    
                ensureVisible(false);
-               column.asDisplay().selectTab(target.asWidget());
+               column.selectTab(target.asWidget());
                return;
             }
          }
@@ -585,11 +530,20 @@ public class SourceColumnManager implements BeforeShowHandler
                @Override
                public void onResponseReceived(SourceDocument response)
                {
-                  activeColumn_.asDisplay().addTab(response, Source.OPEN_INTERACTIVE);
+                  activeColumn_.addTab(response, Source.OPEN_INTERACTIVE);
                }
             });
    }
 
+   public void showUnsavedChangesDialog(
+         String title,
+         ArrayList<UnsavedChangesTarget> dirtyTargets,
+         OperationWithInput<UnsavedChangesDialog.Result> saveOperation,
+         Command onCancelled)
+   {
+      activeColumn_.showUnsavedChangesDialog(title, dirtyTargets, saveOperation, onCancelled);
+   }
+   
    @Handler
    public void onMoveTabRight()
    {
@@ -676,7 +630,7 @@ public class SourceColumnManager implements BeforeShowHandler
 
       activeColumn_.ensureVisible(false);
 
-      int targetIndex = activeColumn_.getPhysicalTabIndex(null) + delta;
+      int targetIndex = activeColumn_.getPhysicalTabIndex() + delta;
       if (targetIndex > (activeColumn_.getTabCount() - 1))
       {
          if (wrap)
@@ -773,6 +727,7 @@ public class SourceColumnManager implements BeforeShowHandler
       });
    }
 
+ 
    private void newRMarkdownV2Doc(
          final NewRMarkdownDialog.RmdNewDocument doc)
    {
@@ -842,32 +797,20 @@ public class SourceColumnManager implements BeforeShowHandler
       newSourceDocWithTemplate(fileType, name, template, cursorPosition, onSuccess, null);
    }
 
-   /*
-   private EditingTarget selectTabWithDoc(String id)
+   public void startDebug()
    {
-      for (Map.Entry entry : columnMap_.entrySet())
-      {
-         Column column = (Column)entry.getValue();
-         Editor editor = column.asDisplay().getEditorWithPath(path);
-         if (editor != null)
-         {
-            column.asDisplay().selectTab(editor.asWidget());
-            return editor;
-         }
-      }
-      return null;
+      activeColumn_.setPendingDebugSelection();
    }
-   */
 
    private EditingTarget selectTabWithDocPath(String path)
    {
-      for (Map.Entry entry : columnMap_.entrySet())
+      for (Map.Entry<String,SourceColumn> entry : columnMap_.entrySet())
       {
-         Column column = (Column)entry.getValue();
-         EditingTarget editor = column.asDisplay().getEditorWithPath(path);
+         SourceColumn column = (SourceColumn)entry.getValue();
+         EditingTarget editor = column.getEditorWithPath(path);
          if (editor != null)
          {
-            column.asDisplay().selectTab(editor.asWidget());
+            column.selectTab(editor.asWidget());
             return editor;
          }
       }
@@ -919,21 +862,6 @@ public class SourceColumnManager implements BeforeShowHandler
       });
    }
 
-   public EditingTarget addTab(SourceDocument doc, int mode, Column column)
-   {
-      if (column == null)
-         column = activeColumn_;
-      return addTab(doc, false, mode, column);
-   }
-
-   public EditingTarget addTab(SourceDocument doc, boolean atEnd,
-         int mode, Column column)
-   {
-      // by default, add at the tab immediately after the current tab
-      return addTab(doc, atEnd ? null : activeColumn_.getPhysicalTabIndex() + 1,
-            mode, column);
-   }
-
    public void newDoc(EditableFileType fileType,
                       ResultCallback<EditingTarget, ServerError> callback)
    {
@@ -982,12 +910,12 @@ public class SourceColumnManager implements BeforeShowHandler
                public void onResponseReceived(SourceDocument newDoc)
                {
                   EditingTarget target =
-                     activeColumn_.asDisplay().addTab(newDoc, Source.OPEN_INTERACTIVE);
+                     activeColumn_.addTab(newDoc, Source.OPEN_INTERACTIVE);
 
                   if (contents != null)
                   {
                      target.forceSaveCommandActive();
-                     manageSaveCommands();
+                     activeColumn_.manageSaveCommands();
                   }
 
                   if (resultCallback != null)
@@ -1005,22 +933,27 @@ public class SourceColumnManager implements BeforeShowHandler
 
    public void disownDoc(String docId)
    {
-      findByDocument(docId).asDisplay().closeTabByDocId(docId);
+      findByDocument(docId).closeTab(docId);
    }
 
    public void selectTab(EditingTarget target)
    {
-      findByDocument(target.getId()).asDisplay().selectTab(target.asWidget());
+      findByDocument(target.getId()).selectTab(target.asWidget());
    }
 
+   public void closeTab(boolean interactive)
+   {
+      closeTab(activeEditor_, interactive);
+   }
+   
    public void closeTab(EditingTarget target, boolean interactive)
    {
-      findByDocument(target.getId()).asDisplay().closeTab(target.asWidget(), interactive, null);
+      findByDocument(target.getId()).closeTab(target.asWidget(), interactive, null);
    }
 
    public void closeTab(EditingTarget target, boolean interactive, Command onClosed)
    {
-      findByDocument(target.getId()).asDisplay().closeTab(
+      findByDocument(target.getId()).closeTab(
          target.asWidget(), interactive, onClosed);
    }
 
@@ -1030,10 +963,10 @@ public class SourceColumnManager implements BeforeShowHandler
          if (!excludeMain || name != Source.COLUMN_PREFIX)
          {
             cpsExecuteForEachEditor(column.getEditors(),
-                  new SPCEditingTargetCommand()
+                  new CPSEditingTargetCommand()
              {
                 @Override
-                public void execute(EditingTarget editingTarget, Command continuation)
+                public void execute(EditingTarget target, Command continuation)
                 {
                    if (excludeActive && target == activeEditor_)
                    {
@@ -1042,7 +975,7 @@ public class SourceColumnManager implements BeforeShowHandler
                    }
                    else
                    {
-                      column.asDisplay().closeTab(editingTarget, false, continuation);
+                      column.closeTab(target.asWidget(), false, continuation);
                    }
                 }
              });
@@ -1052,8 +985,8 @@ public class SourceColumnManager implements BeforeShowHandler
 
    public void closeColumn(String name)
    {
-      Column column = findByName(name);
-      if (column.asDisplay().getTabCount() > 0)
+      SourceColumn column = findByName(name);
+      if (column.getTabCount() > 0)
          return;
       if (column == activeColumn_)
          activeColumn_ = null;
@@ -1069,66 +1002,20 @@ public class SourceColumnManager implements BeforeShowHandler
    public void manageChevronVisibility()
    {
       columnMap_.forEach((name, column) -> {
-         column.asDisplay().manageChevronVisibility();
+         column.manageChevronVisibility();
       });
    }
 
-   public void onBeforeShow(BeforeShowEvent event)
+   public static boolean isMainColumn(SourceColumn column)
    {
-      columnMap_.forEach((name, column) -> {
-         if (column.getTabCount() == 0 && column.asDisplay().getNewTabPending() == 0)
-         {
-            // Avoid scenarios where the Source tab comes up but no tabs are
-            // in it. (But also avoid creating an extra source tab when there
-            // were already new tabs about to be created!)
-            onNewSourceDoc();
-         }
-      });
-   }
-   
-   private void vimSetTabIndex(int index)
-   {
-      int tabCount = activeColumn_.getTabCount();
-      if (index >= tabCount)
-         return;
-      activeColumn_.setPhysicalTabIndex(index);
-   }
-
-   public void fireDocTabsChanged()
-   {
-      if (activeColumn_==null)
-         return;
-
-      // ensure we have a tab order (we want the popup list to match the order
-      // of the tabs)
-      activeColumn_.syncTabOrder();
-
-      ArrayList<EditingTarget> editors = activeColumn_.getEditors();
-      String[] ids = new String[editors.size()];
-      FileIcon[] icons = new FileIcon[editors.size()];
-      String[] names = new String[editors.size()];
-      String[] paths = new String[editors.size()];
-      for (int i = 0; i < ids.length; i++)
-      {
-         EditingTarget target = editors.get(activeColumn_.getTabOrder().get(i));
-         ids[i] = target.getId();
-         icons[i] = target.getIcon();
-         names[i] = target.getName().getValue();
-         paths[i] = target.getPath();
-      }
-
-      String activeId = (activeEditor_ != null)
-            ? activeEditor_.getId()
-            : null;
-
-      events_.fireEvent(new DocTabsChangedEvent(activeId, ids, icons, names, paths));
-
-      manageChevronVisibility();
+      if (StringUtils.equals(column.getName(), Source.COLUMN_PREFIX))
+         return true;
+      return false;
    }
 
    public void openFile(FileSystemItem file)
    {
-      openFile(pMruList_.get(), file, fileTypeRegistry_.getTextTypeForFile(file));
+      openFile(file, fileTypeRegistry_.getTextTypeForFile(file));
    }
 
    public void openFile(FileSystemItem file,  TextFileType fileType)
@@ -1154,6 +1041,19 @@ public class SourceColumnManager implements BeforeShowHandler
       // begin queue processing if it's the only work in the queue
       if (openFileQueue_.size() == 1)
          processOpenFileQueue();
+   }
+
+   public void fireDocTabsChanged()
+   {
+      activeColumn_.fireDocTabsChanged();
+   }
+   
+   private void vimSetTabIndex(int index)
+   {
+      int tabCount = activeColumn_.getTabCount();
+      if (index >= tabCount)
+         return;
+      activeColumn_.setPhysicalTabIndex(index);
    }
 
    private void processOpenFileQueue()
@@ -1244,7 +1144,7 @@ public class SourceColumnManager implements BeforeShowHandler
          return;
       }
 
-      if (openFileAlreadyOpen(pMruList_.get(), file, resultCallback, null))
+      if (openFileAlreadyOpen(file, resultCallback))
          return;
 
       EditingTarget target = editingTargetSource_.getEditingTarget(fileType);
@@ -1301,7 +1201,7 @@ public class SourceColumnManager implements BeforeShowHandler
             public void onResponseReceived(SourceDocument doc)
             {
                // create the editor
-               EditingTarget target = addTab(doc, Source.OPEN_INTERACTIVE, null);
+               EditingTarget target = activeColumn_.addTab(doc, Source.OPEN_INTERACTIVE);
 
                // show a warning bar
                if (target instanceof TextEditingTarget)
@@ -1412,7 +1312,7 @@ public class SourceColumnManager implements BeforeShowHandler
 
                   dismissProgress.execute();
                   pMruList_.get().add(document.getPath());
-                  EditingTarget target = addTab(document, Source.OPEN_INTERACTIVE, null);
+                  EditingTarget target = activeColumn_.addTab(document, Source.OPEN_INTERACTIVE);
                   if (resultCallback != null)
                      resultCallback.onSuccess(target);
                }
@@ -1422,7 +1322,9 @@ public class SourceColumnManager implements BeforeShowHandler
    private boolean openFileAlreadyOpen(final FileSystemItem file,
                                        final ResultCallback<EditingTarget, ServerError> resultCallback)
    {
-      columnMap_.forEach((name, column) -> {
+      for (Map.Entry<String,SourceColumn> entry : columnMap_.entrySet())
+      {
+         SourceColumn column = (SourceColumn)entry.getValue();
          // check to see if any local editors have the file open
          for (int i = 0; i < column.getEditors().size(); i++)
          {
@@ -1431,14 +1333,14 @@ public class SourceColumnManager implements BeforeShowHandler
             if (thisPath != null
                 && thisPath.equalsIgnoreCase(file.getPath()))
             {
-               column.asDisplay().selectTab(target.asWidget());
+               column.selectTab(target.asWidget());
                pMruList_.get().add(thisPath);
                if (resultCallback != null)
                   resultCallback.onSuccess(target);
                return true;
             }
          }
-      });
+      };
       return false;
    }
 
@@ -1474,6 +1376,51 @@ public class SourceColumnManager implements BeforeShowHandler
                                       noOperation,
                                       false);   // 'No' is default
    }
+   /**
+    * Execute the given command for each editor, using continuation-passing
+    * style. When executed, the CPSEditingTargetCommand needs to execute its
+    * own Command parameter to continue the iteration.
+    * @param command The command to run on each EditingTarget
+    */
+   private void cpsExecuteForEachEditor(ArrayList<EditingTarget> editors,
+                                        final CPSEditingTargetCommand command,
+                                        final Command completedCommand)
+   {
+      SerializedCommandQueue queue = new SerializedCommandQueue();
+
+      // Clone editors_, since the original may be mutated during iteration
+      for (final EditingTarget editor : new ArrayList<EditingTarget>(editors))
+      {
+         queue.addCommand(new SerializedCommand()
+         {
+            @Override
+            public void onExecute(Command continuation)
+            {
+               command.execute(editor, continuation);
+            }
+         });
+      }
+      
+      if (completedCommand != null)
+      {
+         queue.addCommand(new SerializedCommand() {
+   
+            public void onExecute(Command continuation)
+            {
+               completedCommand.execute();
+               continuation.execute();
+            }  
+         });
+      }
+   }
+   
+   private void cpsExecuteForEachEditor(ArrayList<EditingTarget> editors,
+                                       final CPSEditingTargetCommand command)
+   {
+      cpsExecuteForEachEditor(editors, command, null);
+   }
+   
+   
 
    private class OpenFileEntry
    {
@@ -1489,7 +1436,7 @@ public class SourceColumnManager implements BeforeShowHandler
       public final CommandWithArg<EditingTarget> executeOnSuccess;
    }
 
-   private Column activeColumn_;
+   private SourceColumn activeColumn_;
    private EditingTarget activeEditor_;
 
    private boolean openingForSourceNavigation_ = false;
@@ -1502,8 +1449,10 @@ public class SourceColumnManager implements BeforeShowHandler
    private final GlobalDisplay globalDisplay_;
    private final TextEditingTargetRMarkdownHelper rmarkdown_;
    private final EditingTargetSource editingTargetSource_;
+   private final FileTypeRegistry fileTypeRegistry_;
 
-   private HashMap<String,Column> columnMap_ = new HashMap<String,Column>();
+   private HashMap<String,SourceColumn> columnMap_ = new HashMap<String,SourceColumn>();
 
    private final SourceServerOperations server_;
+   private DependencyManager dependencyManager_;
 }

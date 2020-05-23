@@ -14,8 +14,6 @@
  */
 package org.rstudio.studio.client.workbench.ui;
 
-import org.rstudio.core.client.Debug;
-
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;

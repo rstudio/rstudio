@@ -15,7 +15,6 @@
 package org.rstudio.studio.client.workbench.ui;
 
 import com.google.gwt.animation.client.Animation;
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.dom.client.Element;
@@ -69,6 +68,7 @@ import org.rstudio.studio.client.workbench.views.console.ConsolePane;
 import org.rstudio.studio.client.workbench.views.output.find.FindOutputTab;
 import org.rstudio.studio.client.workbench.views.output.markers.MarkersOutputTab;
 import org.rstudio.studio.client.workbench.views.source.Source;
+import org.rstudio.studio.client.workbench.views.source.SourceColumn;
 import org.rstudio.studio.client.workbench.views.source.SourceColumnManager;
 import org.rstudio.studio.client.workbench.views.source.SourceWindowManager;
 import org.rstudio.studio.client.workbench.views.source.model.SourceDocument;
@@ -830,7 +830,7 @@ public class PaneManager
       panesByName_ = new HashMap<>();
       panesByName_.put("Console", createConsole());
 
-      HashMap<String,SourceColumnManager.Column> columns = sourceColumnManager_.getMap();
+      HashMap<String,SourceColumn> columns = sourceColumnManager_.getMap();
       columns.forEach((name, column) -> {
             panesByName_.put(name, createSource(name, column.asWidget()));
       });
@@ -1144,6 +1144,10 @@ public class PaneManager
    {
       // make sure additionalSourceCount_ is up to date
       additionalSourceCount_ = sourceColumnManager_.getSize() - 1;
+      
+      if (count == additionalSourceCount_)
+    	  return additionalSourceCount_;
+      
       if (count > additionalSourceCount_)
       {
          int difference = count - additionalSourceCount_;
@@ -1155,6 +1159,8 @@ public class PaneManager
       else
       {
          int difference = additionalSourceCount_ - count;
+         // !!! we need to determine which windows to close
+         //closeSourceWindow();
       }
 
       // we return sourceColumnCount because we might not have been able to close all source windows
@@ -1202,7 +1208,7 @@ public class PaneManager
                new WindowStateChangeEvent(WindowState.HIDE));
       else
       {
-         SourceColumnManager.Column column = sourceColumnManager_.findByName(name);
+         SourceColumn column = sourceColumnManager_.findByName(name);
 
          if (column.getTabCount() == 0)
          {
