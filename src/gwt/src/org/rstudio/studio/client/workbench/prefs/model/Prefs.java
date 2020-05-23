@@ -23,7 +23,6 @@ import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HandlerManager;
 import com.google.gwt.event.shared.HandlerRegistration;
 import org.rstudio.core.client.CommandWithArg;
-import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.js.JsObject;
 import org.rstudio.core.client.js.JsUtil;
 
@@ -61,7 +60,7 @@ public abstract class Prefs
 
    private abstract class JsonValue<T> implements PrefValue<T>
    {
-      public JsonValue(String name, T defaultValue)
+      public JsonValue(String name, String title, String description, T defaultValue)
       {
          name_ = name;
          defaultValue_ = defaultValue;
@@ -181,9 +180,9 @@ public abstract class Prefs
 
    private class BooleanValue extends JsonValue<Boolean>
    {
-      private BooleanValue(String name, Boolean defaultValue)
+      private BooleanValue(String name, String title, String description, Boolean defaultValue)
       {
-         super(name, defaultValue);
+         super(name, title, description, defaultValue);
       }
 
       @Override
@@ -201,9 +200,9 @@ public abstract class Prefs
 
    private class IntValue extends JsonValue<Integer>
    {
-      private IntValue(String name, Integer defaultValue)
+      private IntValue(String name, String title, String description, Integer defaultValue)
       {
-         super(name, defaultValue);
+         super(name, title, description, defaultValue);
       }
 
       @Override
@@ -221,9 +220,9 @@ public abstract class Prefs
 
    private class DoubleValue extends JsonValue<Double>
    {
-      private DoubleValue(String name, Double defaultValue)
+      private DoubleValue(String name, String title, String description, Double defaultValue)
       {
-         super(name, defaultValue);
+         super(name, title, description, defaultValue);
       }
 
       @Override
@@ -241,9 +240,9 @@ public abstract class Prefs
 
    private class StringValue extends JsonValue<String>
    {
-      private StringValue(String name, String defaultValue)
+      private StringValue(String name, String title, String description, String defaultValue)
       {
-         super(name, defaultValue);
+         super(name, title, description, defaultValue);
       }
 
       @Override
@@ -261,14 +260,14 @@ public abstract class Prefs
 
    private class ObjectValue<T extends JavaScriptObject> extends JsonValue<T>
    {
-      private ObjectValue(String name)
+      private ObjectValue(String name, String title, String description)
       {
-         super(name, null);
+         super(name, title, description, null);
       }
       
-      private ObjectValue(String name, T defaultValue)
+      private ObjectValue(String name, String title, String description, T defaultValue)
       {
-         super(name, defaultValue);
+         super(name, title, description, defaultValue);
       }
 
       @Override
@@ -303,60 +302,64 @@ public abstract class Prefs
    public abstract int projectLayer();
 
    @SuppressWarnings("unchecked")
-   protected PrefValue<Boolean> bool(String name, boolean defaultValue)
+   protected PrefValue<Boolean> bool(
+      String name, String title, String description, boolean defaultValue)
    {
       PrefValue<Boolean> val = (PrefValue<Boolean>) values_.get(name);
       if (val == null)
       {
-         val = new BooleanValue(name, defaultValue);
+         val = new BooleanValue(name, title, description, defaultValue);
          values_.put(name, val);
       }
       return val;
    }
 
    @SuppressWarnings("unchecked")
-   protected PrefValue<Integer> integer(String name, Integer defaultValue)
+   protected PrefValue<Integer> integer(
+      String name, String title, String description, Integer defaultValue)
    {
       PrefValue<Integer> val = (PrefValue<Integer>) values_.get(name);
       if (val == null)
       {
-         val = new IntValue(name, defaultValue);
+         val = new IntValue(name, title, description, defaultValue);
          values_.put(name, val);
       }
       return val;
    }
 
    @SuppressWarnings("unchecked")
-   protected PrefValue<Double> dbl(String name, Double defaultValue)
+   protected PrefValue<Double> dbl(
+      String name, String title, String description, Double defaultValue)
    {
       PrefValue<Double> val = (PrefValue<Double>) values_.get(name);
       if (val == null)
       {
-         val = new DoubleValue(name, defaultValue);
+         val = new DoubleValue(name, title, description, defaultValue);
          values_.put(name, val);
       }
       return val;
    }
 
    @SuppressWarnings("unchecked")
-   protected PrefValue<String> string(String name, String defaultValue)
+   protected PrefValue<String> string(
+      String name, String title, String description, String defaultValue)
    {
       PrefValue<String> val = (PrefValue<String>) values_.get(name);
       if (val == null)
       {
-         val = new StringValue(name, defaultValue);
+         val = new StringValue(name, title, description, defaultValue);
          values_.put(name, val);
       }
       return val;
    }
 
    @SuppressWarnings({ "unchecked", "rawtypes" })
-   protected <T> PrefValue<T> object(String name)
+   protected <T> PrefValue<T> object(String name, String title, String description)
    {
       PrefValue<T> val = (PrefValue<T>) values_.get(name);
       if (val == null)
       {
-         val = new ObjectValue(name);
+         val = new ObjectValue(name, title, description);
          values_.put(name, val);
       }
       return val;
@@ -364,12 +367,12 @@ public abstract class Prefs
    
    @SuppressWarnings({ "unchecked" })
    protected <T extends JavaScriptObject> PrefValue<T> object(String name, 
-                                                              T defaultValue)
+           String title, String description, T defaultValue)
    {
       PrefValue<T> val = (PrefValue<T>) values_.get(name);
       if (val == null)
       {
-         val = new ObjectValue<T>(name, defaultValue);
+         val = new ObjectValue<T>(name, title, description, defaultValue);
          values_.put(name, val);
       }
       return val;

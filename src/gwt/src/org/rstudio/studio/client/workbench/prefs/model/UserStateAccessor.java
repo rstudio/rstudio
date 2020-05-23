@@ -41,7 +41,11 @@ public class UserStateAccessor extends Prefs
     */
    public PrefValue<String> contextId()
    {
-      return string("context_id", "");
+      return string(
+         "context_id",
+         "", 
+         "A unique identifier representing the user and machine.", 
+         "");
    }
 
    /**
@@ -49,7 +53,11 @@ public class UserStateAccessor extends Prefs
     */
    public PrefValue<Boolean> autoCreatedProfile()
    {
-      return bool("auto_created_profile", false);
+      return bool(
+         "auto_created_profile",
+         "", 
+         "Whether we have automatically created an .Rprofile for this user.", 
+         false);
    }
 
    /**
@@ -57,7 +65,11 @@ public class UserStateAccessor extends Prefs
     */
    public PrefValue<Theme> theme()
    {
-      return object("theme", null);
+      return object(
+         "theme",
+         "", 
+         "The color theme to apply.", 
+         null);
    }
 
    public static class Theme extends JavaScriptObject
@@ -83,7 +95,11 @@ public class UserStateAccessor extends Prefs
     */
    public PrefValue<String> defaultProjectLocation()
    {
-      return string("default_project_location", "");
+      return string(
+         "default_project_location",
+         "", 
+         "The directory path under which to place new projects by default. Shadows a uipref.", 
+         "");
    }
 
    /**
@@ -91,7 +107,11 @@ public class UserStateAccessor extends Prefs
     */
    public PrefValue<Boolean> clearHidden()
    {
-      return bool("clear_hidden", true);
+      return bool(
+         "clear_hidden",
+         "", 
+         "Whether to clear hidden objects along with visible objects when clearing the workspace. Set automatically to remember last action.", 
+         true);
    }
 
    /**
@@ -99,7 +119,11 @@ public class UserStateAccessor extends Prefs
     */
    public PrefValue<ExportPlotOptions> exportPlotOptions()
    {
-      return object("export_plot_options", null);
+      return object(
+         "export_plot_options",
+         "", 
+         "The most recently used plot export options.", 
+         null);
    }
 
    public static class ExportPlotOptions extends JavaScriptObject
@@ -137,7 +161,11 @@ public class UserStateAccessor extends Prefs
     */
    public PrefValue<ExportViewerOptions> exportViewerOptions()
    {
-      return object("export_viewer_options", null);
+      return object(
+         "export_viewer_options",
+         "", 
+         "The most recently used viewer export options.", 
+         null);
    }
 
    public static class ExportViewerOptions extends JavaScriptObject
@@ -175,7 +203,11 @@ public class UserStateAccessor extends Prefs
     */
    public PrefValue<SavePlotAsPdfOptions> savePlotAsPdfOptions()
    {
-      return object("save_plot_as_pdf_options", null);
+      return object(
+         "save_plot_as_pdf_options",
+         "", 
+         "The most recently used options for saving a plot as a PDF.", 
+         null);
    }
 
    public static class SavePlotAsPdfOptions extends JavaScriptObject
@@ -209,7 +241,11 @@ public class UserStateAccessor extends Prefs
     */
    public PrefValue<CompileRNotebookPrefs> compileRNotebookPrefs()
    {
-      return object("compile_r_notebook_prefs", null);
+      return object(
+         "compile_r_notebook_prefs",
+         "", 
+         "Most recently used settings for compiling a notebook from an R script.", 
+         null);
    }
 
    public static class CompileRNotebookPrefs extends JavaScriptObject
@@ -231,7 +267,11 @@ public class UserStateAccessor extends Prefs
     */
    public PrefValue<CompileRMarkdownNotebookPrefs> compileRMarkdownNotebookPrefs()
    {
-      return object("compile_r_markdown_notebook_prefs", null);
+      return object(
+         "compile_r_markdown_notebook_prefs",
+         "", 
+         "Most recently used settings for compiling a notebook using R Markdown.", 
+         null);
    }
 
    public static class CompileRMarkdownNotebookPrefs extends JavaScriptObject
@@ -249,7 +289,11 @@ public class UserStateAccessor extends Prefs
     */
    public PrefValue<Boolean> showPublishUi()
    {
-      return bool("show_publish_ui", true);
+      return bool(
+         "show_publish_ui",
+         "", 
+         "Whether to show UI for publishing content.", 
+         true);
    }
 
    /**
@@ -257,7 +301,11 @@ public class UserStateAccessor extends Prefs
     */
    public PrefValue<Boolean> enableRsconnectPublishUi()
    {
-      return bool("enable_rsconnect_publish_ui", true);
+      return bool(
+         "enable_rsconnect_publish_ui",
+         "", 
+         "Whether to show UI for publishing content to RStudio Connect.", 
+         true);
    }
 
    /**
@@ -265,7 +313,11 @@ public class UserStateAccessor extends Prefs
     */
    public PrefValue<PublishAccount> publishAccount()
    {
-      return object("publish_account", null);
+      return object(
+         "publish_account",
+         "", 
+         "The default (last) account used for publishing", 
+         null);
    }
 
    public static class PublishAccount extends JavaScriptObject
@@ -287,7 +339,11 @@ public class UserStateAccessor extends Prefs
     */
    public PrefValue<Integer> documentOutlineWidth()
    {
-      return integer("document_outline_width", 110);
+      return integer(
+         "document_outline_width",
+         "", 
+         "The preferred width, in pixels, of the document outline pane.", 
+         110);
    }
 
    /**
@@ -295,7 +351,11 @@ public class UserStateAccessor extends Prefs
     */
    public PrefValue<String> connectVia()
    {
-      return string("connect_via", "connect-r-console");
+      return string(
+         "connect_via",
+         "", 
+         "How to create new connections to data sources.", 
+         "connect-r-console");
    }
 
    public final static String CONNECT_VIA_CONNECT_R_CONSOLE = "connect-r-console";
@@ -308,7 +368,11 @@ public class UserStateAccessor extends Prefs
     */
    public PrefValue<String> errorHandlerType()
    {
-      return string("error_handler_type", "traceback");
+      return string(
+         "error_handler_type",
+         "", 
+         "The kind of handler to invoke when errors occur.", 
+         "traceback");
    }
 
    public final static String ERROR_HANDLER_TYPE_MESSAGE = "message";
@@ -322,7 +386,11 @@ public class UserStateAccessor extends Prefs
     */
    public PrefValue<Boolean> usingMingwGcc49()
    {
-      return bool("using_mingw_gcc49", false);
+      return bool(
+         "using_mingw_gcc49",
+         "", 
+         "Whether or not the MinGW compiler with GCC 4.9 is used.", 
+         false);
    }
 
    public void syncPrefs(String layer, JsObject source)

@@ -173,15 +173,20 @@ generate <- function (schemaPath, className) {
          "    */\n")
       
       # Add a Java accessor for the preference, and an entry for syncing it with another copy
+      prefTitle <- if (is.null(def[["title"]])) "" else def[["title"]]
       java <- paste0(java,
          comment,
          "   public PrefValue<", type, "> ", camel, "()\n",
          "   {\n",
-         "      return ", preftype, "(\"", pref, "\", ", defaultval, ");\n",
+         "      return ", preftype, "(\n         \"", pref, "\",\n",
+                       "         \"", prefTitle, "\", \n", 
+                       "         \"", def[["description"]], "\", \n", 
+                       "         ", defaultval, ");\n",
          "   }\n\n")
       javasync <- paste0(javasync,
          "      if (source.hasKey(\"", pref, "\"))\n",
-         "         ", camel, "().setValue(layer, source.get", capitalize(preftype), "(\"", pref, "\"));\n")
+         "         ", camel, "().setValue(layer, source.get", capitalize(preftype), "(\"", 
+                pref, "\"));\n")
       
       # Add C++ header and implementation accessors for the preferences
       hpp <- paste0(hpp, comment,
