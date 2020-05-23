@@ -6,7 +6,7 @@ import * as parser from 'fast-xml-parser';
 
 // This will check the 'age' of the unicode characters and only allow characters
 // with an age less than or equal to this age.
-const maxUnicodeAge = 3.0;
+const maxUnicodeAge = 6.0;
 
 // The file that should be generated holding the symbol data
 const outputFile = './src/behaviors/symbol/insert_symbol-data.json';
@@ -29,6 +29,7 @@ const includedBlockNames = [
   'Control Pictures',
   'Geometric Shapes',
   'Miscellaneous Symbols',
+  'Misc_Pictographs',
   'Dingbats',
   'Miscellaneous Mathematical Symbols-A',
   'Supplemental Arrows-A',
@@ -38,7 +39,6 @@ const includedBlockNames = [
   'Miscellaneous Symbols and Arrows',
   'Supplemental Punctuation',
   'Ideographic Description Characters',
-  'Variation Selectors',
   'Vertical Forms',
   'Ancient Greek Numbers',
   'Ancient Symbols',

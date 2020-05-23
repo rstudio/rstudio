@@ -195,8 +195,8 @@ const InsertSymbolPopup: React.FC<InsertSymbolPopupProps> = props => {
     width: popupWidth + 'px',
   };
 
-  const gridHeight = popupHeight - 40;
-  const gridWidth = popupWidth - 10;
+  const gridHeight = popupHeight - 45;
+  const gridWidth = popupWidth;
 
   const [filterText, setFilterText] = React.useState<string>('');
   const [selectedCategory, setSelectedCategory] = React.useState(CATEGORY_ALL);
@@ -303,6 +303,7 @@ const InsertSymbolPopup: React.FC<InsertSymbolPopupProps> = props => {
         </SelectInput>
       </div>
 
+      <hr className="pm-popup-insert-symbol-separator pm-border-background-color"/>
       <SymbolCharacterGrid
         symbolCharacters={filteredSymbols}
         onSymbolCharacterSelected={(character: string) => {

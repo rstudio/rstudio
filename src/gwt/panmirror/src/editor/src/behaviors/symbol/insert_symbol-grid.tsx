@@ -30,7 +30,6 @@ const SymbolCharacterGrid = React.forwardRef<any, CharacterGridProps>((props, re
     numberOfColumns: props.numberOfColumns,
   };
 
-  // TODO: Do we need pm-symbol-grid style?
   return (
     <Grid
       columnCount={props.numberOfColumns}

@@ -31,7 +31,7 @@ export const SelectInput = React.forwardRef<any, SelectInputProps>((props, ref) 
 
   return (
     <select
-          className={`pm-input-select ${props.className}`}
+          className={`pm-input-select pm-background-color pm-pane-border-color ${props.className}`}
           style={style}
           tabIndex={props.tabIndex}
           ref={ref}

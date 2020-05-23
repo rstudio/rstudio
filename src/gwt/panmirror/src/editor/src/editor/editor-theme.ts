@@ -229,6 +229,12 @@ export function applyTheme(theme: EditorTheme) {
       font-family: ${theme.proportionalFont} !important;
       font-size: ${theme.proportionalFontSizePt}pt !important;
     }
+    .pm-input-text {
+      border: 1px;
+      border-color: ${theme.paneBorderColor};
+      border-style: solid;
+      border-radius: 3px;
+    }
     .CodeMirror,
     .CodeMirror pre.CodeMirror-line, .CodeMirror pre.CodeMirror-line-like {
       font-family: ${theme.fixedWidthFont};

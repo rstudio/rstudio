@@ -4,7 +4,7 @@
 // 2054
 // 
 // Or in base 10 notation a number between
-// 0 and 1114111
+// 0 and 1114112
 export function parseCodepoint(codepointText: string): number | undefined {
   var hexOnlyText = codepointText;
   if (codepointText.startsWith('U+')) {
@@ -12,7 +12,7 @@ export function parseCodepoint(codepointText: string): number | undefined {
   }
 
   // Hex representations of codepoints are always 4 characters long
-  if (hexOnlyText.length < 4) {
+  if (hexOnlyText.length <= 6) {
     const hexValue = parseInt(hexOnlyText, 16);
     if (isValidCodepoint(hexValue)) {
       return hexValue;
@@ -31,5 +31,5 @@ export function parseCodepoint(codepointText: string): number | undefined {
 }
 
 function isValidCodepoint(codepoint: number) {
-  return codepoint < 1114111 && codepoint > 0;
+  return codepoint < 1114112 && codepoint > 0;
 }

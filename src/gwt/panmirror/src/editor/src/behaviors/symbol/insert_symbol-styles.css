@@ -1,9 +1,12 @@
 .pm-popup-insert-symbol {
+  padding: 0px !important; 
 }
 
 
 .pm-popup-insert-symbol-search-container {
+  box-sizing: border-box;
   display: flex;
+  padding: 10px;
 }
 
 .pm-popup-insert-symbol-search-textbox {
@@ -14,3 +17,10 @@
   width: 100%;
 }
 
+.pm-popup-insert-symbol-separator {
+  padding: 0px;
+  margin-top: 0px;
+  margin-bottom: 1px;
+  border: none;
+  height: 1px;
+}

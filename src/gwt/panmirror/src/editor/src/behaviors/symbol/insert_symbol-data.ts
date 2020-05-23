@@ -27,8 +27,6 @@ class SymbolDataManager {
     return [CATEGORY_ALL, ...this.blockData];
   }
 
-  // TODO: move categories into a separate object with start and end index for getting items
-  // TODO: Keep codepoint offsets into array so we can return a subset of array?
   public getSymbols(symbolCategory: SymbolCategory) {
     if (symbolCategory.name === CATEGORY_ALL.name) {
       return this.symbolData;
