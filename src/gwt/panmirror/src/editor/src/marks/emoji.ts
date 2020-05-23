@@ -18,23 +18,15 @@ import { InputRule } from 'prosemirror-inputrules';
 import { EditorState, Transaction } from 'prosemirror-state';
 
 
-import { Extension } from '../../api/extension';
-import { PandocOutput, PandocToken, PandocTokenType, ProsemirrorWriter, PandocExtensions } from '../../api/pandoc';
-import { pandocAttrReadAST } from '../../api/pandoc_attr';
-import { fragmentText } from '../../api/fragment';
+import { Extension } from '../api/extension';
+import { PandocOutput, PandocToken, PandocTokenType, ProsemirrorWriter, PandocExtensions } from '../api/pandoc';
+import { pandocAttrReadAST } from '../api/pandoc_attr';
+import { fragmentText } from '../api/fragment';
 
-import { FixupContext } from '../../api/fixup';
-import { MarkTransaction } from '../../api/transaction';
-import { mergedTextNodes } from '../../api/text';
-
-// https://github.com/jgm/emojis/blob/master/emoji.json
-import * as kEmojis from './emojis.json';
-
-interface Emoji {
-  emoji: string;
-  aliases: string[];
-}
-const kEmojiKeys = Object.keys(kEmojis).filter(key => key !== "default");
+import { FixupContext } from '../api/fixup';
+import { MarkTransaction } from '../api/transaction';
+import { mergedTextNodes } from '../api/text';
+import { emojies, emojiFromAlias, emojiFromChar } from '../api/emoji';
 
 const kEmojiAttr = 0;
 const kEmojiContent = 1;
@@ -127,9 +119,12 @@ const extension = (pandocExtensions: PandocExtensions) : Extension | null => {
         new InputRule(/:(\w+):$/, (state: EditorState, match: string[], start: number, end: number) => {
           const emoji = emojiFromAlias(match[1]);
           if (emoji) {
+            const schema = state.schema;
             const tr = state.tr;
             tr.delete(start, end);
-            tr.insertText(emoji.emoji);
+            const mark = schema.marks.emoji.create({ emojihint: match[1] });
+            const text = schema.text(emoji.emoji, mark);
+            tr.replaceSelectionWith(text);
             return tr;
           } else {
             return null;
@@ -155,8 +150,7 @@ const extension = (pandocExtensions: PandocExtensions) : Extension | null => {
           );
 
           textNodes.forEach(textNode => {
-            kEmojiKeys.forEach(emojiKey => {
-              const emoji = kEmojis[emojiKey];
+            for (const emoji of emojies()) {
               const charLoc = textNode.text.indexOf(emoji.emoji);
               if (charLoc !== -1) {
                 const from = textNode.pos + charLoc;
@@ -166,7 +160,7 @@ const extension = (pandocExtensions: PandocExtensions) : Extension | null => {
                   markTr.addMark(from, to, mark);
                 }
               }
-            });            
+            }       
           });
 
           return tr;
@@ -175,24 +169,5 @@ const extension = (pandocExtensions: PandocExtensions) : Extension | null => {
     },
   };
 };
-
-function emojiFromChar(emojiChar: string) : Emoji | null {
-  const emojiKey = kEmojiKeys.find(key => kEmojis[key].emoji === emojiChar);
-  if (emojiKey) {
-    return kEmojis[emojiKey] as Emoji;
-  } else {
-    return null;
-  }
-}
-
-function emojiFromAlias(emojiAlias: string) : Emoji | null {
-  for (const key of kEmojiKeys) {
-    const emoji = kEmojis[key];
-    if (emoji && emoji.aliases.includes(emojiAlias)) {
-      return emoji;
-    }
-  }
-  return null;
-}
 
 export default extension;

@@ -88,7 +88,7 @@ import markSpan from '../marks/span';
 import markXRef from '../marks/xref';
 import markHTMLComment from '../marks/raw_inline/raw_html_comment';
 import markShortcode from '../marks/shortcode';
-import markEmoji from '../marks/emoji/emoji';
+import markEmoji from '../marks/emoji';
 
 // nodes
 import nodeFootnote from '../nodes/footnote/footnote';
