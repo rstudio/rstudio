@@ -260,6 +260,7 @@ public class UserPrefs extends UserPrefsComputed
                   Timing.IMMEDIATE, Severity.ALERT);
          });
       }
+      setScreenReaderMenuState(enableScreenReader().getValue());
    }
 
    public void setScreenReaderEnabled(boolean enabled)
