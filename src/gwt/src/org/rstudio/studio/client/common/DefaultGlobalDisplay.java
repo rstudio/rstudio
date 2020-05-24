@@ -360,37 +360,7 @@ public class DefaultGlobalDisplay extends GlobalDisplay
    {
       windowOpener_.openSatelliteWindow(this, name, width, height, options);
    }
-   
 
-   @Override
-   public void openEmailComposeWindow(String to, String subject)
-   {
-      // determine gmail url
-      String gmailURL = "https://mail.google.com/";
-      String user = session_.getSessionInfo().getUserIdentity();  
-      if (user == null) // for desktop mode
-         user = "foo@gmail.com"; 
-      String[] userComponents = user.split("@");
-      if ( (userComponents.length == 2) &&
-           ("gmail.com").equalsIgnoreCase(userComponents[1]))
-      {
-         gmailURL += "mail/";
-      }
-      else
-      {
-         gmailURL += "a/" + userComponents[1] + "/";
-      }
-      
-      // calculate URL
-      String url = gmailURL + "?fs=1&view=cm";
-      url += "&to=" + URL.encodeQueryString(to);
-      if (subject != null)
-         url += "&subject=" + URL.encodeQueryString(subject);
-      
-      // open window
-      openWindow(url);
-   }
-   
    @Override
    public void bringWindowToFront(String name)
    {
