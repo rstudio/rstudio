@@ -73,7 +73,7 @@ public class VirtualConsole
       @Override
       public boolean screenReaderEnabled()
       {
-         return getUserPrefs().getScreenReaderEnabled();
+         return getUserPrefs().enableScreenReader().getValue();
       }
    }
 

@@ -16,7 +16,6 @@ package org.rstudio.studio.client.workbench.prefs.model;
 
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.Scheduler;
-import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
@@ -43,7 +42,6 @@ import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.Session;
-import org.rstudio.studio.client.workbench.prefs.events.ScreenReaderStateReadyEvent;
 import org.rstudio.studio.client.workbench.prefs.events.UserPrefsChangedEvent;
 import org.rstudio.studio.client.workbench.prefs.events.UserPrefsChangedHandler;
 import org.rstudio.studio.client.common.GlobalDisplay;
@@ -88,7 +86,7 @@ public class UserPrefs extends UserPrefsComputed
       Scheduler.get().scheduleDeferred(() ->
       {
          origScreenReaderLabel_ = commands_.toggleScreenReaderSupport().getMenuLabel(false);
-         loadScreenReaderEnabledSetting();
+         announceScreenReaderState();
          syncToggleTabKeyMovesFocusState();
       });
    }
@@ -248,64 +246,27 @@ public class UserPrefs extends UserPrefsComputed
             origScreenReaderLabel_ + " (disabled)");
    }
 
-   /**
-    * Screen-reader enabled setting is stored differently on desktop vs server.
-    * On desktop it must be available earlier in startup so the RStudio.app/exe native
-    * code can configure Chromium. Fetching that is async and we want interested parties
-    * to be able to check it synchronously. So we cache it. Changing this setting
-    * requires a reload of the UI to fully take effect.
-    */
-   private void loadScreenReaderEnabledSetting()
+   private void announceScreenReaderState()
    {
-      if (screenReaderEnabled_ != null)
-         return;
-
-      Command onCompleted = () ->
+      // announce if screen reader is not enabled; most things work without enabling it, but for
+      // best experience user should turn it on
+      if (!enableScreenReader().getValue())
       {
-         setScreenReaderMenuState(screenReaderEnabled_);
-         eventBus_.fireEvent(new ScreenReaderStateReadyEvent());
-      };
-
-      if (Desktop.hasDesktopFrame())
-         Desktop.getFrame().getEnableAccessibility(enabled ->
+         Timers.singleShot(AriaLiveService.STARTUP_ANNOUNCEMENT_DELAY, () ->
          {
-            screenReaderEnabled_ = enabled;
-            onCompleted.execute();
+            String shortcut = commands_.toggleScreenReaderSupport().getShortcutRaw();
+            ariaLive_.announce(AriaLiveService.SCREEN_READER_NOT_ENABLED,
+                  "Warning: screen reader mode not enabled. Turn on using shortcut " + shortcut + ".",
+                  Timing.IMMEDIATE, Severity.ALERT);
          });
-      else
-      {
-         screenReaderEnabled_ = RStudioGinjector.INSTANCE.getUserPrefs().enableScreenReader().getValue();
-         
-         // on Server, we can announce if screen reader is not enabled; most things work without
-         // enabling it, but for best experience user should turn it on
-         if (!screenReaderEnabled_)
-         {
-            Timers.singleShot(AriaLiveService.STARTUP_ANNOUNCEMENT_DELAY, () ->
-            {
-               String shortcut = commands_.toggleScreenReaderSupport().getShortcutRaw();
-               ariaLive_.announce(AriaLiveService.SCREEN_READER_NOT_ENABLED,
-                     "Warning: screen reader mode not enabled. Turn on using shortcut " + shortcut + ".",
-                     Timing.IMMEDIATE, Severity.ALERT);
-            });
-         }
-         onCompleted.execute();
       }
-   }
-
-   public boolean getScreenReaderEnabled()
-   {
-      assert screenReaderEnabled_ != null: "Attempt to check screen reader flag before it was set";
-      return screenReaderEnabled_;
    }
 
    public void setScreenReaderEnabled(boolean enabled)
    {
       if (Desktop.hasDesktopFrame())
          Desktop.getFrame().setEnableAccessibility(enabled);
-      else
-         RStudioGinjector.INSTANCE.getUserPrefs().enableScreenReader().setGlobalValue(enabled);
-
-      screenReaderEnabled_ = enabled;
+      enableScreenReader().setGlobalValue(enabled);
 
       // When screen-reader is enabled, reduce UI animations as they serve no purpose 
       // other than to potentially confuse the screen reader; turn animations back
@@ -319,12 +280,12 @@ public class UserPrefs extends UserPrefsComputed
    {
       display_.showYesNoMessage(GlobalDisplay.MSG_QUESTION,
             "Confirm Toggle Screen Reader Support",
-            "Are you sure you want to " + (getScreenReaderEnabled() ? "disable" : "enable") + " " +
+            "Are you sure you want to " + (enableScreenReader().getValue() ? "disable" : "enable") + " " +
             "screen reader support? The application will reload to apply the change.",
             false,
             () ->
             {
-               setScreenReaderEnabled(!getScreenReaderEnabled());
+               setScreenReaderEnabled(!enableScreenReader().getValue());
                writeUserPrefs(succeeded -> {
                   if (succeeded)
                   {
@@ -341,7 +302,7 @@ public class UserPrefs extends UserPrefsComputed
                });
             },
             () -> {
-               setScreenReaderMenuState(getScreenReaderEnabled());
+               setScreenReaderMenuState(enableScreenReader().getValue());
             },
             false);
    }
@@ -399,6 +360,5 @@ public class UserPrefs extends UserPrefsComputed
    private final ApplicationQuit quit_;
 
    private boolean reloadAfterInit_;
-   private Boolean screenReaderEnabled_ = null;
    private String origScreenReaderLabel_;
 }
