@@ -245,6 +245,7 @@ public class RMarkdownPreferencesPane extends PreferencesPane
       visualModeReferences_ = new SelectWidget("Write references at end of: ", referencesValues, referencesValues, false, true, false);
       if (!visualModeReferences_.setValue(prefs_.visualMarkdownEditingReferencesLocation().getGlobalValue()))
          visualModeReferences_.getListBox().setSelectedIndex(0);
+      mediumSpaced(visualModeReferences_);
       visualModeOptions.add(visualModeReferences_);
       
       // help on per-file markdown options
