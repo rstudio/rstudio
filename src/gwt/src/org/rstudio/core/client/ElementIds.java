@@ -162,6 +162,7 @@ public class ElementIds
    
    public final static String RMARKDOWN_BASIC_PREFS = "rmarkdown_basic_prefs";
    public final static String RMARKDOWN_ADVANCED_PREFS = "markdown_advanced_prefs";
+   public final static String RMARKDOWN_VISUAL_MODE_PREFS = "markdown_visual_mode_prefs";
 
    public final static String PACKAGE_MANAGEMENT_PREFS = "package_management_prefs";
    public final static String PACKAGE_DEVELOPMENT_PREFS = "package_development_prefs";

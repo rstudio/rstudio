@@ -16,7 +16,6 @@
 package org.rstudio.studio.client.workbench.views.source.editors.text;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 import org.rstudio.core.client.CommandWithArg;
