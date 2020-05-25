@@ -68,6 +68,7 @@ public class WebDialogBuilderFactory implements DialogBuilderFactory
       private final Widget message_;
    }
 
+   @Override
    public DialogBuilder create(int type, String caption, String message)
    {
       return new Builder(type, caption, MessageDialog.labelForMessage(message));
