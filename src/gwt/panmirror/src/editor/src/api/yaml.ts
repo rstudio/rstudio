@@ -29,13 +29,12 @@ export function isYamlMetadataNode(node: ProsemirrorNode) {
 
 export const kYamlBlocksRegex = /^([\t >]*)(---[ \t]*\n(?![ \t]*\n)[\W\w]*?\n[\t >]*(?:---|\.\.\.))([ \t]*)$/gm;
 
+const kFirstYamlBlockRegex = /\s*---[ \t]*\n(?![ \t]*\n)([\W\w]*?)\n[\t >]*(?:---|\.\.\.)[ \t]*/m;
+
 export function firstYamlBlock(code: string): { [key: string]: any } | null {
-  kYamlBlocksRegex.lastIndex = 0;
-  const match = kYamlBlocksRegex.exec(code);
-  kYamlBlocksRegex.lastIndex = 0;
-  if (match) {
-    // strip trailing marker (--- or ...)
-    const yamlCode = match[2].replace(/[\t >]*(?:---|\.\.\.)$/, '');
+  const match = code.match(kFirstYamlBlockRegex);
+  if (match && match.index === 0) {
+    const yamlCode = match[1];
     try {
       const yamlParsed = yaml.safeLoad(yamlCode, {
         onWarning: logException,
