@@ -87,7 +87,7 @@ class Parser {
       logUnrecognized(type: string) {
         state.logUnrecognized(type);
       },
-      isNodeOpen: state.isNodeOpen.bind(state)
+      isNodeOpen: state.isNodeOpen.bind(state),
     };
 
     // process raw text capsules

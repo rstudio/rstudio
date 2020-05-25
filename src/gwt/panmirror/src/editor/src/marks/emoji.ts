@@ -17,7 +17,6 @@ import { Schema, Mark, Fragment, Node as ProsemirrorNode } from 'prosemirror-mod
 import { InputRule } from 'prosemirror-inputrules';
 import { EditorState, Transaction } from 'prosemirror-state';
 
-
 import { Extension } from '../api/extension';
 import { PandocOutput, PandocToken, PandocTokenType, ProsemirrorWriter, PandocExtensions } from '../api/pandoc';
 import { pandocAttrReadAST } from '../api/pandoc_attr';
@@ -31,8 +30,7 @@ import { emojies, emojiFromAlias, emojiFromChar } from '../api/emoji';
 const kEmojiAttr = 0;
 const kEmojiContent = 1;
 
-const extension = (pandocExtensions: PandocExtensions) : Extension | null => {
-
+const extension = (pandocExtensions: PandocExtensions): Extension | null => {
   if (!pandocExtensions.emoji) {
     return null;
   }
@@ -45,7 +43,7 @@ const extension = (pandocExtensions: PandocExtensions) : Extension | null => {
           inclusive: false,
           noInputRules: true,
           attrs: {
-            emojihint: {}
+            emojihint: {},
           },
           parseDOM: [
             {
@@ -59,11 +57,14 @@ const extension = (pandocExtensions: PandocExtensions) : Extension | null => {
             },
           ],
           toDOM(mark: Mark) {
-            return ['span', { 
-              class: 'emoji', 
-              title: ':' + mark.attrs.emojihint + ':', 
-              'data-emojihint': mark.attrs.emojihint 
-            }];
+            return [
+              'span',
+              {
+                class: 'emoji',
+                title: ':' + mark.attrs.emojihint + ':',
+                'data-emojihint': mark.attrs.emojihint,
+              },
+            ];
           },
         },
         pandoc: {
@@ -94,12 +95,12 @@ const extension = (pandocExtensions: PandocExtensions) : Extension | null => {
               if (emoji) {
                 output.writeToken(PandocTokenType.Span, () => {
                   // resolve which alias to use
-                  let alias =  emoji.aliases[0];
+                  let alias = emoji.aliases[0];
                   if (emoji.aliases.length > 1) {
                     if (emoji.aliases.includes(mark.attrs.emojihint)) {
                       alias = mark.attrs.emojihint;
                     }
-                  } 
+                  }
                   output.writeAttr('', ['emoji'], [['data-emoji', alias]]);
                   output.writeArray(() => {
                     output.writeInlines(parent);
@@ -129,22 +130,21 @@ const extension = (pandocExtensions: PandocExtensions) : Extension | null => {
           } else {
             return null;
           }
-        })
+        }),
       ];
     },
 
     fixups: (schema: Schema) => {
       return [
         (tr: Transaction, context: FixupContext) => {
-          
           // only apply on save
           if (context !== FixupContext.Save) {
             return tr;
           }
-  
+
           // create mark transation wrapper
           const markTr = new MarkTransaction(tr);
-  
+
           const textNodes = mergedTextNodes(markTr.doc, (_node: ProsemirrorNode, parentNode: ProsemirrorNode) =>
             parentNode.type.allowsMarkType(schema.marks.emoji),
           );
@@ -156,11 +156,11 @@ const extension = (pandocExtensions: PandocExtensions) : Extension | null => {
                 const from = textNode.pos + charLoc;
                 const to = from + emoji.emoji.length;
                 if (!markTr.doc.rangeHasMark(from, to, schema.marks.emoji)) {
-                  const mark = schema.marks.emoji.create( { emojihint: emoji.aliases[0]} );
+                  const mark = schema.marks.emoji.create({ emojihint: emoji.aliases[0] });
                   markTr.addMark(from, to, mark);
                 }
               }
-            }       
+            }
           });
 
           return tr;

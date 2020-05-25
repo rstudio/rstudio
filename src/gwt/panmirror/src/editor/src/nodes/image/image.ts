@@ -321,8 +321,10 @@ function imageCommand(editorUI: EditorUI, imageAttributes: boolean) {
       }
 
       // see if we are in an empty paragraph (in that case insert a figure)
-      if (selectionIsEmptyParagraph(schema, state.selection) && 
-          !posHasProhibitedFigureParent(schema, state.selection.$head)) {
+      if (
+        selectionIsEmptyParagraph(schema, state.selection) &&
+        !posHasProhibitedFigureParent(schema, state.selection.$head)
+      ) {
         nodeType = schema.nodes.figure;
       }
 

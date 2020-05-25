@@ -179,7 +179,7 @@ export function initExtensions(
     markXRef,
     markHTMLComment,
     markShortcode,
-    markEmoji
+    markEmoji,
   ]);
 
   // register external extensions

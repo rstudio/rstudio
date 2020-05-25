@@ -13,24 +13,21 @@
  *
  */
 
-
-
 import { ResolvedPos, Schema, Fragment, Slice } from 'prosemirror-model';
 import { Plugin, PluginKey } from 'prosemirror-state';
 
 import { Extension } from '../api/extension';
 
 const extension: Extension = {
-  plugins: (schema: Schema) => [pasteTextPlugin(schema)]
+  plugins: (schema: Schema) => [pasteTextPlugin(schema)],
 };
 
 function pasteTextPlugin(schema: Schema) {
-
   return new Plugin({
     key: new PluginKey('paste-text'),
-    
+
     props: {
-      clipboardTextParser: (text: string, $context: ResolvedPos): any  => {
+      clipboardTextParser: (text: string, $context: ResolvedPos): any => {
         // if it's a single line then create a slice w/ marks from the context active
         if (text.indexOf('\n') === -1) {
           const marks = $context.marks();
@@ -39,11 +36,9 @@ function pasteTextPlugin(schema: Schema) {
         } else {
           return null;
         }
-      }
-    }
+      },
+    },
   });
 }
 
 export default extension;
-
-

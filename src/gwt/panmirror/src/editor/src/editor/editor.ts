@@ -699,7 +699,7 @@ export class Editor {
       ...this.extensions.plugins(this.schema, this.context.ui),
       this.inputRulesPlugin(),
       this.editablePlugin(),
-      this.domEventsPlugin()
+      this.domEventsPlugin(),
     ];
   }
 
@@ -740,9 +740,9 @@ export class Editor {
           focus: (view: EditorView, event: Event) => {
             this.emitEvent(EditorEvent.Focus);
             return false;
-          }
-        }
-      }
+          },
+        },
+      },
     });
   }
 

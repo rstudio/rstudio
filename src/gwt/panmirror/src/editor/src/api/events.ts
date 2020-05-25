@@ -20,7 +20,7 @@ export enum EditorEvent {
   Resize = 'panmirrorResize',
   Layout = 'panmirrorLayout',
   Scroll = 'panmirrorScroll',
-  Focus = 'panmirrorFocus'
+  Focus = 'panmirrorFocus',
 }
 
 export interface EditorEvents {

@@ -207,11 +207,7 @@ export function writerHasProhibitedFigureParent(schema: Schema, writer: Prosemir
 }
 
 function prohibitedFigureParents(schema: Schema) {
-  return [
-    schema.nodes.table_cell,
-    schema.nodes.list_item,
-    schema.nodes.definition_list
-  ];
+  return [schema.nodes.table_cell, schema.nodes.list_item, schema.nodes.definition_list];
 }
 
 function convertImagesToFigure(tr: Transaction) {
@@ -231,9 +227,11 @@ function imagesToFiguresTransform(tr: Transform) {
       const imagePos = tr.doc.resolve(mappedImagePos.pos);
 
       // if it's an image in a standalone paragraph, convert it to a figure
-      if (imagePos.parent.type === schema.nodes.paragraph && 
-          imagePos.parent.childCount === 1 &&
-          !posHasProhibitedFigureParent(schema, imagePos)) {
+      if (
+        imagePos.parent.type === schema.nodes.paragraph &&
+        imagePos.parent.childCount === 1 &&
+        !posHasProhibitedFigureParent(schema, imagePos)
+      ) {
         // figure attributes
         const attrs = image.node.attrs;
 

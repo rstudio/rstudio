@@ -164,7 +164,6 @@ export function addRows(after: boolean) {
       return false;
     }
     if (dispatch) {
-      
       // add the rows
       let tr = state.tr;
       const rect = selectedRect(state);
@@ -186,13 +185,13 @@ export function addRows(after: boolean) {
             } else {
               tr.setNodeMarkup(cellPos, cellNode.type, {
                 ...cellNode.attrs,
-                align: alignments[colIndex] || null
+                align: alignments[colIndex] || null,
               });
             }
           });
         });
       }
-      
+
       dispatch(tr);
     }
     return true;

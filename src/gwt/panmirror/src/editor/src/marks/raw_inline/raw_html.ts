@@ -121,7 +121,7 @@ export function rawHtmlInputRule(schema: Schema, filter: MarkInputRuleFilter) {
 
         // insert >
         tr.insertText('>');
-       
+
         // add mark
         start = tr.selection.from - (tag.end - tag.start);
         tr.addMark(start, end + 1, rawhtmlMark.create());

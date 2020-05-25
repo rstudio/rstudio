@@ -154,7 +154,7 @@ export function insertAndSelectNode(view: EditorView, node: ProsemirrorNode) {
   if (selectionNode && selectionNode.type === node.type) {
     tr.setSelection(new NodeSelection(selectionPos));
   }
- 
+
   // dispatch transaction
   view.dispatch(tr);
 }

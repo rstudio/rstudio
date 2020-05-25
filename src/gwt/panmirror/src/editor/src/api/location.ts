@@ -41,12 +41,11 @@ export function getEditingLocation(view: EditorView): EditingLocation {
 export function setEditingLocation(
   view: EditorView,
   outlineLocation?: EditingOutlineLocation,
-  previousLocation?: EditingLocation
+  previousLocation?: EditingLocation,
 ) {
-
-   // default restorePos to the previous location
+  // default restorePos to the previous location
   let restorePos = previousLocation ? previousLocation.pos : -1;
-  
+
   // get the current document outline
   const documentOutline = getDocumentOutline(view.state);
 
@@ -59,22 +58,21 @@ export function setEditingLocation(
       // get the item and it's peer
       const item = outlineLocation.items[i];
       const docOutlineNode = documentOutline[i];
-  
+
       // if they don't match then bail (can't resolve different interpretations of the outline)
       if (!outlineItemSimillarToNode(item, docOutlineNode.node)) {
         break;
       }
-  
+
       // if this is the active item
       if (item.active) {
-
         // see if the previous location is actually a better target (because it's between this location and
         // the next outline node). in that case we don't set the target node and we leave the restorePos
         // at the previous location
         if (!locationIsBetweenDocOutlineNodes(docOutlineNode, documentOutline[i + 1], previousLocation)) {
           // set the target
           docOutlineLocationNode = docOutlineNode;
-  
+
           // if this is an rmd chunk then advance to the second line
           if (docOutlineNode.node.type === view.state.schema.nodes.rmd_chunk) {
             const chunkText = docOutlineNode.node.textContent;
@@ -88,12 +86,12 @@ export function setEditingLocation(
         if (docOutlineLocationNode) {
           restorePos = docOutlineLocationNode.pos;
         }
-  
+
         break;
       }
     }
   }
-  
+
   // if we have a restorePos set the selection
   if (restorePos !== -1) {
     // set selection
@@ -102,13 +100,12 @@ export function setEditingLocation(
       .setMeta(kRestoreLocationTransaction, true)
       .setMeta(kAddToHistoryTransaction, false);
     view.dispatch(tr);
-  } 
+  }
 
   // if we have a target node then scroll to it
   if (docOutlineLocationNode) {
     navigateToPosition(view, docOutlineLocationNode.pos, false);
   }
-
 }
 
 // get a document outline that matches the scheme provided in EditingOutlineLocation:

@@ -13,14 +13,12 @@
  *
  */
 
-
 // read emojies from json (https://github.com/jgm/emojis/blob/master/emoji.json)
 import * as kEmojisJson from './emoji.json';
-const kEmojiKeys = Object.keys(kEmojisJson).filter(key => key !== "default");
+const kEmojiKeys = Object.keys(kEmojisJson).filter(key => key !== 'default');
 const kEmojis = kEmojiKeys.reduce((allEmojies: Emoji[], key: string) => {
   return allEmojies.concat(kEmojisJson[key]);
 }, new Array<Emoji>());
-
 
 export interface Emoji {
   emoji: string;
@@ -31,11 +29,11 @@ export function emojies() {
   return kEmojis;
 }
 
-export function emojiFromChar(emojiChar: string) : Emoji | undefined {
+export function emojiFromChar(emojiChar: string): Emoji | undefined {
   return kEmojis.find(emoji => emoji.emoji === emojiChar);
 }
 
-export function emojiFromAlias(emojiAlias: string) : Emoji | undefined {
+export function emojiFromAlias(emojiAlias: string): Emoji | undefined {
   for (const emoji of kEmojis) {
     if (emoji.aliases.includes(emojiAlias)) {
       return emoji;
