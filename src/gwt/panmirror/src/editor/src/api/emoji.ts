@@ -14,11 +14,8 @@
  */
 
 // read emojies from json (https://github.com/jgm/emojis/blob/master/emoji.json)
-import * as kEmojisJson from './emoji.json';
-const kEmojiKeys = Object.keys(kEmojisJson).filter(key => key !== 'default');
-const kEmojis = kEmojiKeys.reduce((allEmojies: Emoji[], key: string) => {
-  return allEmojies.concat(kEmojisJson[key]);
-}, new Array<Emoji>());
+import kEmojisJson from './emoji.json';
+const kEmojis = kEmojisJson as Emoji[];
 
 export interface Emoji {
   emoji: string;

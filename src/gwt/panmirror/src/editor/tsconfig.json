@@ -14,8 +14,9 @@
     "allowSyntheticDefaultImports": true,
     "strict": true,
     "forceConsistentCasingInFileNames": true,
-    "module": "umd",
+    "module": "commonjs",
     "moduleResolution": "node",
+    "resolveJsonModule": true,
     "noImplicitAny": true,
     "jsx": "react",
     "plugins": [
