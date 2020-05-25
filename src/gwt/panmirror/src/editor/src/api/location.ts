@@ -12,8 +12,7 @@ import {
   kRmdchunkOutlineItemType,
 } from './outline';
 import { findTopLevelBodyNodes } from './node';
-import { navigateToPosition, navigateTo } from './navigation';
-import { scrollIntoView } from './scroll';
+import { navigateToPosition } from './navigation';
 
 export interface EditingLocation {
   pos: number;
