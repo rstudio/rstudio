@@ -191,6 +191,9 @@ export class ImageNodeView implements NodeView {
       this.dom.draggable = true;
     }
 
+    // manage figcaption
+    this.manageFigcaption();
+
     // attach resize UI
     this.attachResizeUI();
   }
