@@ -15,7 +15,7 @@
 
 import { Node as ProsemirrorNode } from 'prosemirror-model';
 import { NodeView, EditorView } from 'prosemirror-view';
-import { NodeSelection } from 'prosemirror-state';
+import { NodeSelection, PluginKey, Plugin } from 'prosemirror-state';
 
 import { EditorUI, ImageType } from '../../api/ui';
 import { PandocExtensions, imageAttributesAvailable } from '../../api/pandoc';
@@ -34,7 +34,20 @@ import { imageDimensionsFromImg, imageContainerWidth } from './image-util';
 
 import './image-styles.css';
 
-export class ImageNodeView implements NodeView {
+export function imageNodeViewPlugin(type: string, ui: EditorUI, events: EditorEvents, pandocExtensions: PandocExtensions) {
+  return new Plugin({
+    key: new PluginKey(`${type}-node-view`),
+    props: {
+      nodeViews: {
+        [type]: (node: ProsemirrorNode, view: EditorView, getPos: boolean | (() => number)) => {
+          return new ImageNodeView(node, view, getPos as () => number, ui, events, pandocExtensions);
+        },
+      },
+    },
+  });
+}
+
+class ImageNodeView implements NodeView {
   // ProseMirror context
   private readonly type: ImageType;
   private node: ProsemirrorNode;

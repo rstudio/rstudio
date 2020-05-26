@@ -50,8 +50,8 @@ import {
   pandocImageHandler,
   imageAttrsFromHTML,
 } from './image';
-import { ImageNodeView } from './image-view';
 import { inlineHTMLIsImage } from './image-util';
+import { imageNodeViewPlugin } from './image-view';
 
 const plugin = new PluginKey('figure');
 
@@ -162,16 +162,7 @@ const extension = (
 
     plugins: (_schema: Schema) => {
       return [
-        new Plugin({
-          key: plugin,
-          props: {
-            nodeViews: {
-              figure(node: ProsemirrorNode, view: EditorView, getPos: boolean | (() => number)) {
-                return new ImageNodeView(node, view, getPos as () => number, ui, events, pandocExtensions);
-              },
-            },
-          },
-        }),
+        imageNodeViewPlugin('figure', ui, events, pandocExtensions)
       ];
     },
   };

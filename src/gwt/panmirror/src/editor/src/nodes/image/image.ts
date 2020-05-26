@@ -14,9 +14,10 @@
  */
 
 import { Node as ProsemirrorNode, Schema, DOMOutputSpec } from 'prosemirror-model';
-import { EditorState, NodeSelection, Transaction, Plugin, PluginKey } from 'prosemirror-state';
-import { EditorView, DecorationSet } from 'prosemirror-view';
+import { EditorState, NodeSelection, Transaction } from 'prosemirror-state';
+import { EditorView } from 'prosemirror-view';
 
+import { PandocCapabilities } from '../../api/pandoc_capabilities';
 import { ProsemirrorCommand, EditorCommandId } from '../../api/command';
 import { Extension } from '../../api/extension';
 import { canInsertNode } from '../../api/node';
@@ -45,12 +46,10 @@ import { EditorEvents } from '../../api/events';
 import { EditorFormat } from '../../api/format';
 
 import { imageDialog } from './image-dialog';
-import { imageDrop } from './image-events';
-import { ImageNodeView } from './image-view';
-import { imageDimensionsFromImg, imageContainerWidth, inlineHTMLIsImage } from './image-util';
-import { PandocCapabilities } from '../../api/pandoc_capabilities';
-import { imageTextSelectionInit, imageTextSelectionApply } from './image-textsel';
+import { imageDimensionsFromImg, imageContainerWidth, inlineHTMLIsImage } from './image-util';import { imageTextSelectionPlugin } from './image-textsel';
 import { posHasProhibitedFigureParent } from './figure';
+import { imageEventsPlugin } from './image-events';
+import { imageNodeViewPlugin } from './image-view';
 
 const TARGET_URL = 0;
 const TARGET_TITLE = 1;
@@ -58,8 +57,6 @@ const TARGET_TITLE = 1;
 const IMAGE_ATTR = 0;
 const IMAGE_ALT = 1;
 const IMAGE_TARGET = 2;
-
-const pluginKey = new PluginKey<DecorationSet>('image');
 
 const extension = (
   pandocExtensions: PandocExtensions,
@@ -111,30 +108,9 @@ const extension = (
 
     plugins: (schema: Schema) => {
       return [
-        new Plugin<DecorationSet>({
-          key: pluginKey,
-          state: {
-            init(_config: { [key: string]: any }, instance: EditorState) {
-              return imageTextSelectionInit(instance);
-            },
-            apply(tr: Transaction, set: DecorationSet, oldState: EditorState, newState: EditorState) {
-              return imageTextSelectionApply(tr, set, oldState, newState);
-            },
-          },
-          props: {
-            nodeViews: {
-              image(node: ProsemirrorNode, view: EditorView, getPos: boolean | (() => number)) {
-                return new ImageNodeView(node, view, getPos as () => number, ui, events, pandocExtensions);
-              },
-            },
-            handleDOMEvents: {
-              drop: imageDrop(),
-            },
-            decorations(state: EditorState) {
-              return pluginKey.getState(state);
-            },
-          },
-        }),
+        imageTextSelectionPlugin(),
+        imageEventsPlugin(),
+        imageNodeViewPlugin('image', ui, events, pandocExtensions)
       ];
     },
   };
