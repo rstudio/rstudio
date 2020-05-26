@@ -59,8 +59,18 @@ public class DefaultGlobalDisplay extends GlobalDisplay
                              String initialValue,
                              final OperationWithInput<String> operation)
    {
+      promptForText(title, label, initialValue, false, operation);
+   }
+
+   @Override
+   public void promptForText(String title,
+                             String label,
+                             String initialValue,
+                             boolean optional,
+                             final OperationWithInput<String> operation)
+   {
       ((TextInput)GWT.create(TextInput.class)).promptForText(
-            title, label, initialValue, MessageDisplay.INPUT_REQUIRED_TEXT,
+            title, label, initialValue, optional ? MessageDisplay.INPUT_OPTIONAL_TEXT : MessageDisplay.INPUT_REQUIRED_TEXT,
             -1, -1, null,
             new ProgressOperationWithInput<String>()
             {

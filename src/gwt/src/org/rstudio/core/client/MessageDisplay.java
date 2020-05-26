@@ -56,6 +56,12 @@ public abstract class MessageDisplay
 
    public abstract void promptForText(String title,
                                       String label,
+                                      String initialValue,
+                                      boolean optional,
+                                      OperationWithInput<String> operation);
+
+   public abstract void promptForText(String title,
+                                      String label,
                                       int type,
                                       OperationWithInput<String> operation);
 

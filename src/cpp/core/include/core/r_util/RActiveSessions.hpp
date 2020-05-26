@@ -122,28 +122,12 @@ public:
 
    double lastUsed() const
    {
-      if (!empty())
-      {
-         std::string value = readProperty("last-used");
-         if (!value.empty())
-            return safe_convert::stringTo<double>(value, 0);
-         else
-            return 0;
-      }
-      else
-      {
-         return 0;
-      }
+      return timestampProperty("last-used");
    }
 
    void setLastUsed()
    {
-      if (!empty())
-      {
-         double now = date_time::millisecondsSinceEpoch();
-         std::string value = safe_convert::numberToString(now);
-         writeProperty("last-used", value);
-      }
+      setTimestampProperty("last-used");
    }
 
    bool executing() const
@@ -243,6 +227,7 @@ public:
       }
    }
 
+   // historical note: this will be displayed as the session name
    std::string label()
    {
       if (!empty())
@@ -251,6 +236,7 @@ public:
          return std::string();
    }
 
+   // historical note: this will be displayed as the session name
    void setLabel(const std::string& label)
    {
       if (!empty())
@@ -328,6 +314,33 @@ public:
 
 private:
 
+   void setTimestampProperty(const std::string& property)
+   {
+      if (!empty())
+      {
+         double now = date_time::millisecondsSinceEpoch();
+         std::string value = safe_convert::numberToString(now);
+         writeProperty(property, value);
+      }
+   }
+
+   double timestampProperty(const std::string& property) const
+   {
+      if (!empty())
+      {
+         std::string value = readProperty(property);
+         if (!value.empty())
+            return safe_convert::stringTo<double>(value, 0);
+         else
+            return 0;
+      }
+      else
+      {
+         return 0;
+      }
+   }
+
+
    void setRunning(bool running)
    {
       if (!empty())
@@ -363,6 +376,14 @@ public:
                       std::string* pId) const
    {
       return create(project, working, true, pId);
+   }
+
+   core::Error create(const std::string& project,
+                      const std::string& working,
+                      bool initial,
+                      std::string* pId) const
+   {
+      return create(project, working, initial, pId);
    }
 
    core::Error create(const std::string& project,
