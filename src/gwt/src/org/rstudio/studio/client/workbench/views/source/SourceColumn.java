@@ -166,12 +166,14 @@ public class SourceColumn implements BeforeShowHandler,
                                      TabClosedHandler,
                                      TabReorderHandler
 {
-   public interface Binder extends CommandBinder<Commands, SourceColumn> {}
+   interface Binder extends CommandBinder<Commands, SourceColumn>
+   {
+   }
    
    SourceColumn(Source.Display display, String name, SourceColumnManager manager)
    {
       Commands commands_ = RStudioGinjector.INSTANCE.getCommands();
-      Binder binder = GWT.<Binder>create(Binder.class);
+      Binder binder = GWT.create(Binder.class);
       binder.bind(commands_, this);
       events_ = RStudioGinjector.INSTANCE.getEventBus();
       
