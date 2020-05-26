@@ -210,6 +210,11 @@ public:
       return authLoginPageHtml_;
    }
 
+   std::string authRdpLoginPageHtml()
+   {
+      return authRdpLoginPageHtml_;
+   }
+
    std::string authRequiredUserGroup()
    {
       return std::string(authRequiredUserGroup_.c_str());
@@ -368,6 +373,7 @@ private:
    int authTimeoutMinutes_;
    bool authEncryptPassword_;
    std::string authLoginPageHtml_;
+   std::string authRdpLoginPageHtml_;
    std::string authRequiredUserGroup_;
    unsigned int authMinimumUserId_;
    std::string authPamHelperPath_;

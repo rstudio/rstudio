@@ -53,7 +53,16 @@ bool validateOptionsProvided(const variables_map& vm,
 }
 
 }
-  
+
+void reportError(const Error& error, const ErrorLocation& location)
+{
+   std::string description = error.getProperty("description");
+   if (core::system::stderrIsTerminal() && !description.empty())
+      std::cerr << description << std::endl;
+
+   core::log::logError(error, location);
+}
+
 void reportError(const std::string& errorMessage, const ErrorLocation& location)
 {
    if (core::system::stderrIsTerminal())
@@ -108,8 +117,8 @@ bool parseConfigFile(variables_map& vm,
       Error error = FilePath(configFile).openForRead(pIfs);
       if (error)
       {
-         reportError("Unable to open config file: " + configFile,
-                     ERROR_LOCATION);
+         error.addProperty("description", "Unable to open config file: " + configFile);
+         reportError(error, ERROR_LOCATION);
 
          return false;
       }

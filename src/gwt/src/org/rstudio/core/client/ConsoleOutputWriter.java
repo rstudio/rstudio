@@ -41,12 +41,12 @@ public class ConsoleOutputWriter
          Roles.getDocumentRole().set(output_.getElement());
       }
    }
-   
+
    public PreWidget getWidget()
    {
       return output_;
    }
-   
+
    public Element getElement()
    {
       return output_.getElement();
@@ -63,13 +63,13 @@ public class ConsoleOutputWriter
    {
       return maxLines_;
    }
-   
+
    public void setMaxOutputLines(int maxLines)
    {
       maxLines_ = maxLines;
       trimExcess();
    }
-   
+
    /**
     * Send text to the console
     * @param text Text to output
@@ -89,7 +89,7 @@ public class ConsoleOutputWriter
          clearConsoleOutput();
 
       Element outEl = output_.getElement();
-      
+
       // create trailing output console if it doesn't already exist 
       if (virtualConsole_ == null)
       {
@@ -147,7 +147,7 @@ public class ConsoleOutputWriter
          virtualConsole_ = null;
       } 
    }
-   
+
    public int getCurrentLines()
    {
       return lines_;

@@ -15,6 +15,8 @@
 
 #include "ServerLoginPages.hpp"
 
+#include <boost/format.hpp>
+
 #include <shared_core/SafeConvert.hpp>
 #include <shared_core/FilePath.hpp>
 
@@ -29,6 +31,8 @@
 const char * const kStaySignedInDisplay = "staySignedInDisplay";
 const char * const kAuthTimeoutMinutes = "authTimeoutMinutes";
 const char * const kAuthTimeoutMinutesDisplay = "authTimeoutMinutesDisplay";
+const char * const kIsRStudioProDesktop = "isRdp";
+const char * const kLogoHtml = "logoHtml";
 
 namespace rstudio {
 namespace server {
@@ -76,7 +80,25 @@ void fillLoginFields(const core::http::Request& request,
    variables[kAppUri] = request.queryParamValue(kAppUri);
 
    // include custom login page html
-   variables[kLoginPageHtml] = server::options().authLoginPageHtml();
+   bool isRdp = request.queryParamValue(kIsRStudioProDesktop) == "1";
+   boost::format logoImgHtmlFormat(R"DELIM(<img src="images/rstudio.png" width="78" height="27" alt="%1%"/>)DELIM");
+   if (!isRdp)
+   {
+      variables[kLoginPageHtml] = server::options().authLoginPageHtml();
+
+      // render logo with links
+      std::string logoImgHtml = boost::str(logoImgHtmlFormat % "RStudio Logo (goes to external site)");
+      variables[kLogoHtml] = R"DELIM(<a href="https://www.rstudio.com/">)DELIM" + logoImgHtml + "</a>";
+   }
+   else
+   {
+      variables[kLoginPageHtml] = server::options().authRdpLoginPageHtml();
+
+      // render logo without links - user should not be able
+      // to freely navigate in RDP
+      std::string logoImgHtml = boost::str(logoImgHtmlFormat % "RStudio Logo");
+      variables[kLogoHtml] = logoImgHtml;
+   }
 }
 
 void loadLoginPage(const core::http::Request& request,

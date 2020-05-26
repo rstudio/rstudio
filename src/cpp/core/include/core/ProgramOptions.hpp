@@ -93,6 +93,9 @@ inline ProgramStatus read(const OptionsDescription& optionsDescription,
                allowUnregisteredConfigOptions, configFileHasPrecedence);
 }
 
+void reportError(const Error& error,
+                 const ErrorLocation& location);
+
 void reportError(const std::string& errorMessage,
                  const ErrorLocation& location);
 
