@@ -15,6 +15,7 @@
 package org.rstudio.studio.client.workbench.views.source;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.event.logical.shared.CloseEvent;
@@ -160,7 +161,8 @@ import java.util.Map;
 import java.util.Queue;
 import java.util.Set;
 
-public class SourceColumn implements BeforeShowHandler,
+public class SourceColumn implements //BeforeShowHandler,
+                                     SelectionHandler<Integer>,
                                      TabClosingHandler,
                                      TabCloseHandler,
                                      TabClosedHandler,
@@ -170,32 +172,47 @@ public class SourceColumn implements BeforeShowHandler,
    {
    }
    
-   SourceColumn(Source.Display display, String name, SourceColumnManager manager)
+   SourceColumn()
    {
-      Commands commands_ = RStudioGinjector.INSTANCE.getCommands();
-      Binder binder = GWT.create(Binder.class);
-      binder.bind(commands_, this);
-      events_ = RStudioGinjector.INSTANCE.getEventBus();
-      
-      // !!! fix these
-      editingTargetSource_ = null;
-      server_ = null;
-      fileContext_ = null;
-
-      display_ = display;
-      name_ = name;
-      manager_ = manager;
-
-      display_.addBeforeShowHandler(this);
-
-      display_.addTabClosingHandler(this);
-      display_.addTabClosingHandler(this);
-      display_.addTabClosingHandler(this);
-      display_.addTabReorderHandler(this);
-
-      initialized_ = true;
+      RStudioGinjector.INSTANCE.injectMembers(this);
    }
 
+   @Inject
+   public void initialize(Commands commands,
+                          EventBus events,
+                          EditingTargetSource editingTargetSource,
+                          SourceServerOperations sourceServerOperations,
+                          RemoteFileSystemContext fileContext)
+   {
+      Commands commands_ = commands;
+      Binder binder = GWT.create(Binder.class);
+      binder.bind(commands_, this);
+
+      events_ = events;
+      editingTargetSource_ = editingTargetSource;
+      server_ = sourceServerOperations;
+      fileContext_ = fileContext;
+   }
+
+   public void loadDisplay(String name,
+                           Source.Display display,
+                           SourceColumnManager manager)
+   {
+      name_ = name;
+      display_ = display;
+      manager_ = manager;
+
+      //display_.addBeforeShowHandler(this);
+      display_.addSelectionHandler(this);
+      display_.addTabClosingHandler(this);
+      display_.addTabCloseHandler(this);
+      display_.addTabClosedHandler(this);
+      display_.addTabReorderHandler(this);
+
+      ensureVisible(false);
+      initialized_ = true;
+   }
+                    
    public String getName()
    {
       return name_;
@@ -325,6 +342,19 @@ public class SourceColumn implements BeforeShowHandler,
       display_.selectTab(idx);
    }
 
+   public EditingTarget setActiveEditor(String docId)
+   {
+      for (EditingTarget target : editors_)
+      {
+         if (target.getId() == docId)
+         {
+            activeEditor_ = target;
+            return target;
+         }
+      }
+      return null;
+   }
+
    public void setActiveEditor(EditingTarget target)
    {
       // This should never happen
@@ -389,6 +419,16 @@ public class SourceColumn implements BeforeShowHandler,
             return true;
       }
       return false;
+   }
+
+   public EditingTarget getDoc(String docId)
+   {
+      for (EditingTarget target : editors_)
+      {
+         if (StringUtil.equals(docId, target.getId()))
+            return target;
+      }
+      return null;
    }
 
    public boolean hasDocWithPath(String path)
@@ -543,6 +583,17 @@ public class SourceColumn implements BeforeShowHandler,
       suspendDocumentClose_ = false;
    }
 
+   public void closeTabs(JsArrayString ids)
+   {
+      for (EditingTarget target : editors_)
+      {
+         if (JsArrayUtil.jsArrayStringContains(ids, target.getId()))
+         {
+            closeTab(target.asWidget(), false /* non interactive */);
+         }
+      }
+   }
+
    public void setPendingDebugSelection()
    {
       if (!isDebugSelectionPending())
@@ -615,17 +666,84 @@ public class SourceColumn implements BeforeShowHandler,
    {   
    }
    
+   public void newDoc(EditableFileType fileType,
+                      ResultCallback<EditingTarget, ServerError> callback)
+   {
+      if (fileType instanceof TextFileType)
+      {
+         // This is a text file, so see if the user has defined a template for it.
+         TextFileType textType = (TextFileType)fileType;
+         server_.getSourceTemplate("",
+               "default" + textType.getDefaultExtension(),
+               new ServerRequestCallback<String>()
+               {
+                  @Override
+                  public void onResponseReceived(String template)
+                  {
+                     // Create a new document with the supplied template.
+                     newDoc(fileType, template, callback);
+                  }
+
+                  @Override
+                  public void onError(ServerError error)
+                  {
+                     // Ignore errors; there's just not a template for this type.
+                     newDoc(fileType, null, callback);
+                  }
+               });
+      }
+      else
+      {
+         newDoc(fileType, null, callback);
+      }
+   }
+
+   public void newDoc(EditableFileType fileType,
+                      final String contents,
+                      final ResultCallback<EditingTarget, ServerError> resultCallback)
+   {
+      ensureVisible(true);
+      server_.newDocument(
+            fileType.getTypeId(),
+            contents,
+            JsObject.createJsObject(),
+            new SimpleRequestCallback<SourceDocument>(
+                  "Error Creating New Document")
+            {
+               @Override
+               public void onResponseReceived(SourceDocument newDoc)
+               {
+                  EditingTarget target =
+                     addTab(newDoc, Source.OPEN_INTERACTIVE);
+
+                  if (contents != null)
+                  {
+                     target.forceSaveCommandActive();
+                     manageSaveCommands();
+                  }
+
+                  if (resultCallback != null)
+                     resultCallback.onSuccess(target);
+               }
+
+               @Override
+               public void onError(ServerError error)
+               {
+                  if (resultCallback != null)
+                     resultCallback.onFailure(error);
+               }
+            });
+   }
    // event handlers
 
-   public void onBeforeShow(BeforeShowEvent event)
+   public void onBeforeShow()
    {
       if (getTabCount() == 0 && newTabPending_ == 0)
       {
          // Avoid scenarios where the Source tab comes up but no tabs are
          // in it. (But also avoid creating an extra source tab when there
          // were already new tabs about to be created!)
-         manager_.newDoc(FileTypeRegistry.R, null);
-
+         newDoc(FileTypeRegistry.R, null);
       }
    }
 
@@ -640,6 +758,7 @@ public class SourceColumn implements BeforeShowHandler,
       {
          activeEditor_ = editors_.get(event.getSelectedItem());
          activeEditor_.onActivate();
+         manager_.setActive(getName());
 
          // let any listeners know this tab was activated
          events_.fireEvent(new DocTabActivatedEvent(
@@ -674,7 +793,7 @@ public class SourceColumn implements BeforeShowHandler,
          {
             // we're debugging, so send focus to the console instead of the
             // editor
-            commands_.activateConsole().execute();
+            //commands_.activateConsole().execute();
             clearPendingDebugSelection();
          }
       }
@@ -822,7 +941,7 @@ public class SourceColumn implements BeforeShowHandler,
       }
    }
 
-   private Commands commands_;
+   //private Commands commands_;
 
    private boolean initialized_;
    private boolean suspendDocumentClose_ = false;
@@ -830,22 +949,21 @@ public class SourceColumn implements BeforeShowHandler,
    // If positive, a new tab is about to be created
    private int newTabPending_;
 
-   private final String name_;
-   private final Source.Display display_;
+   private String name_;
+   private Source.Display display_;
    private EditingTarget activeEditor_;
-   private ArrayList<EditingTarget> editors_;
-   private ArrayList<Integer> tabOrder_;
+   private ArrayList<EditingTarget> editors_ = new ArrayList<EditingTarget>();
+   private ArrayList<Integer> tabOrder_ = new ArrayList<Integer>();
 
    private final SourceNavigationHistory sourceNavigationHistory_ =
          new SourceNavigationHistory(30);
    
-   // !!! need to initialize
-   private final RemoteFileSystemContext fileContext_;
-   private final SourceServerOperations server_;
+   private RemoteFileSystemContext fileContext_;
+   private SourceServerOperations server_;
    private Timer debugSelectionTimer_ = null;
-   private final EventBus events_;
-   private final EditingTargetSource editingTargetSource_;
+   private EventBus events_;
+   private EditingTargetSource editingTargetSource_;
    
-   private final SourceColumnManager manager_;
+   private SourceColumnManager manager_;
 
 }

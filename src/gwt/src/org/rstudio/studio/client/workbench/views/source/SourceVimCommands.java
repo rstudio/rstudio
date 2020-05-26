@@ -32,13 +32,13 @@ public class SourceVimCommands
       for (var i = 1; i <= 100; i++) {
          (function(i) {
             Vim.defineEx("b" + i, "b" + i, $entry(function(cm, params) {
-               source.@org.rstudio.studio.client.workbench.views.source.Source::vimSetTabIndex(I)(i - 1);
+               source.@org.rstudio.studio.client.workbench.views.source.SourceColumnManager::vimSetTabIndex(I)(i - 1);
             }));
          })(i);
       }
       
       var nextTab = $entry(function(cm, args, vim) {
-         source.@org.rstudio.studio.client.workbench.views.source.Source::nextTabWithWrap()();
+         source.@org.rstudio.studio.client.workbench.views.source.SourceColumnManager::nextTabWithWrap()();
       });
      
       Vim.defineAction("selectNextTab", nextTab);
@@ -51,7 +51,7 @@ public class SourceVimCommands
       });
 
       var prevTab = $entry(function(cm, args, vim) {
-         source.@org.rstudio.studio.client.workbench.views.source.Source::prevTabWithWrap()();
+         source.@org.rstudio.studio.client.workbench.views.source.SourceColumnManager::prevTabWithWrap()();
       });
      
       Vim.defineAction("selectPreviousTab", prevTab);
@@ -67,7 +67,7 @@ public class SourceVimCommands
    public native final void selectNextTab(Source source) /*-{
       $wnd.require("ace/keyboard/vim").CodeMirror.Vim.defineEx("bnext", "bn",
          $entry(function(cm, params) {
-            source.@org.rstudio.studio.client.workbench.views.source.Source::onNextTab()();
+            source.@org.rstudio.studio.client.workbench.views.source.SourceColumnManager::onNextTab()();
          })
       );
    }-*/;
@@ -75,7 +75,7 @@ public class SourceVimCommands
    public native final void selectPreviousTab(Source source) /*-{
       $wnd.require("ace/keyboard/vim").CodeMirror.Vim.defineEx("bprev", "bp",
          $entry(function(cm, params) {
-            source.@org.rstudio.studio.client.workbench.views.source.Source::onPreviousTab()();
+            source.@org.rstudio.studio.client.workbench.views.source.SourceColumnManager::onPreviousTab()();
          })
       );
    }-*/;
@@ -101,7 +101,7 @@ public class SourceVimCommands
          if (params.argString && params.argString === "!")
             interactive = false;
          
-         source.@org.rstudio.studio.client.workbench.views.source.Source::closeAllTabs(Z)(interactive);
+         source.@org.rstudio.studio.client.workbench.views.source.SourceColumnManager::closeAllTabs(ZZ)(interactive, false);
       });
        
       $wnd.require("ace/keyboard/vim").CodeMirror.Vim.defineEx("qall", "qa", callback);

@@ -167,7 +167,6 @@ public class Source implements InsertSourceHandler,
                                CodeBrowserNavigationHandler,
                                CodeBrowserFinishedHandler,
                                CodeBrowserHighlightEvent.Handler,
-                               SourceExtendedTypeDetectedEvent.Handler,
                                SnippetsChangedEvent.Handler,
                                PopoutDocEvent.Handler,
                                DocWindowChangedEvent.Handler,
@@ -234,14 +233,10 @@ public class Source implements InsertSourceHandler,
       void showOverflowPopup();
       void cancelTabDrag();
       
+      void onBeforeShow();
       void ensureVisible();
 
       HandlerRegistration addBeforeShowHandler(BeforeShowHandler handler);
-   }
-
-   public interface CPSEditingTargetCommand
-   {
-      void execute(EditingTarget editingTarget, Command continuation);
    }
 
    @Inject
@@ -423,22 +418,13 @@ public class Source implements InsertSourceHandler,
          }
       });
 
-     // !!! we may get to remove this
+      // !!! move to column manager
       events_.addHandler(DocTabActivatedEvent.TYPE, new DocTabActivatedEvent.Handler()
       {
          public void onDocTabActivated(DocTabActivatedEvent event)
          {
 
-            for (EditingTarget target : editors_)
-            {
-               if (target.getId() == event.getId())
-               {
-                  activeEditor_ = target;
-                  columnManager_.setActive(activeEditor_);
-                  return;
-               }
-            }
-            Debug.logWarning("Could not set activeEditor_, unknown ID.");
+            columnManager_.setActiveDocId(event.getId());
          }
       });
 
@@ -462,7 +448,7 @@ public class Source implements InsertSourceHandler,
          public void onSourcePathChanged(final SourcePathChangedEvent event)
          {
             
-            inEditorForPath(event.getFrom(), 
+            columnManager_.inEditorForPath(event.getFrom(), 
                             new OperationWithInput<EditingTarget>()
             {
                @Override
@@ -500,8 +486,6 @@ public class Source implements InsertSourceHandler,
          }
       });
       
-      events_.addHandler(SourceExtendedTypeDetectedEvent.TYPE, this);
-
       sourceNavigationHistory_.addChangeHandler(new ChangeHandler()
       {
 
@@ -528,7 +512,7 @@ public class Source implements InsertSourceHandler,
          @Override
          public void onCollabEditStarted(final CollabEditStartedEvent collab) 
          {
-            inEditorForPath(collab.getStartParams().getPath(),
+            columnManager_.inEditorForPath(collab.getStartParams().getPath(),
                new OperationWithInput<EditingTarget>()
                {
                   @Override
@@ -546,7 +530,7 @@ public class Source implements InsertSourceHandler,
          @Override
          public void onCollabEditEnded(final CollabEditEndedEvent collab) 
          {
-            inEditorForPath(collab.getPath(), 
+            columnManager_.inEditorForPath(collab.getPath(), 
                new OperationWithInput<EditingTarget>()
                {
                   @Override
@@ -614,6 +598,7 @@ public class Source implements InsertSourceHandler,
    public void loadDisplay()
    {
       restoreDocuments(session_);
+      columnManager_.beforeShow();
 
       // As tabs were added before, manageCommands() was suppressed due to
       // initialized_ being false, so we need to run it explicitly
@@ -794,7 +779,7 @@ public class Source implements InsertSourceHandler,
    {
       EditingTarget target = StringUtil.isNullOrEmpty(id)
             ? activeEditor_
-            : getEditingTargetForId(id);
+            : columnManager_.findEditor(id);
       
       if (target == null)
       {
@@ -1070,6 +1055,8 @@ public class Source implements InsertSourceHandler,
    
    public void onShowProfiler(OpenProfileEvent event)
    {
+      Debug.logToConsole("onShowProfiler not coded");
+      /*
       String profilePath = event.getFilePath();
       String htmlPath = event.getHtmlPath();
       String htmlLocalPath = event.getHtmlLocalPath();
@@ -1133,6 +1120,7 @@ public class Source implements InsertSourceHandler,
                }
             });
       }
+      */
    }
    
    @Handler
@@ -1785,7 +1773,7 @@ public class Source implements InsertSourceHandler,
    @Override
    public void onDocTabDragInitiated(final DocTabDragInitiatedEvent event)
    {
-      inEditorForId(event.getDragParams().getDocId(), 
+      columnManager_.inEditorForId(event.getDragParams().getDocId(), 
             new OperationWithInput<EditingTarget>()
       {
          @Override
@@ -1802,7 +1790,7 @@ public class Source implements InsertSourceHandler,
    @Override
    public void onPopoutDocInitiated(final PopoutDocInitiatedEvent event)
    {
-      inEditorForId(event.getDocId(), new OperationWithInput<EditingTarget>()
+      columnManager_.inEditorForId(event.getDocId(), new OperationWithInput<EditingTarget>()
       {
          @Override
          public void execute(EditingTarget editor)
@@ -1848,56 +1836,12 @@ public class Source implements InsertSourceHandler,
       columnManager_.closeTab(interactive);
    }
    
-   /**
-    * Execute the given command for each editor, using continuation-passing
-    * style. When executed, the CPSEditingTargetCommand needs to execute its
-    * own Command parameter to continue the iteration.
-    * @param command The command to run on each EditingTarget
-    */
-   private void cpsExecuteForEachEditor(ArrayList<EditingTarget> editors,
-                                        final CPSEditingTargetCommand command,
-                                        final Command completedCommand)
-   {
-      SerializedCommandQueue queue = new SerializedCommandQueue();
-
-      // Clone editors_, since the original may be mutated during iteration
-      for (final EditingTarget editor : new ArrayList<EditingTarget>(editors))
-      {
-         queue.addCommand(new SerializedCommand()
-         {
-            @Override
-            public void onExecute(Command continuation)
-            {
-               command.execute(editor, continuation);
-            }
-         });
-      }
-      
-      if (completedCommand != null)
-      {
-         queue.addCommand(new SerializedCommand() {
-   
-            public void onExecute(Command continuation)
-            {
-               completedCommand.execute();
-               continuation.execute();
-            }  
-         });
-      }
-   }
-   
-   private void cpsExecuteForEachEditor(ArrayList<EditingTarget> editors,
-                                       final CPSEditingTargetCommand command)
-   {
-      cpsExecuteForEachEditor(editors, command, null);
-   }
-   
-   
    @Handler
    public void onSaveAllSourceDocs()
    {
+      /*
       // Save all documents in the main window
-      cpsExecuteForEachEditor(editors_, new CPSEditingTargetCommand()
+      columnManager_.cpsExecuteForEachEditor(editors_, new CPSEditingTargetCommand()
       {
          @Override
          public void execute(EditingTarget target, Command continuation)
@@ -1915,6 +1859,8 @@ public class Source implements InsertSourceHandler,
 
       // Save all documents in satellite windows
       pWindowManager_.get().saveUnsavedDocuments(null, null);
+      */
+      Debug.logToConsole("onSaveAllSourceDocs not coded");
    }
    
    
@@ -1969,41 +1915,34 @@ public class Source implements InsertSourceHandler,
       for (UnsavedChangesTarget target: targets)
       {
          EditingTarget saveTarget = 
-                           getEditingTargetForId(target.getId());
+                           columnManager_.findEditor(target.getId());
          if (saveTarget != null)
             saveTargets.add(saveTarget);
       }
         
+      SourceColumnManager.CPSEditingTargetCommand saveCommand =
+         new SourceColumnManager.CPSEditingTargetCommand()
+      {
+         @Override
+         public void execute(EditingTarget saveTarget, 
+                             Command continuation)
+         {         
+            saveTarget.save(continuation); 
+         }
+      };
+         
       // execute the save
-      cpsExecuteForEachEditor(
+      columnManager_.cpsExecuteForEachEditor(
          
          // targets the user chose to save
          saveTargets, 
          
          // save each editor
-         new CPSEditingTargetCommand()
-         {
-            @Override
-            public void execute(EditingTarget saveTarget, 
-                                Command continuation)
-            {         
-               saveTarget.save(continuation); 
-            }
-         },
-         
+         saveCommand,
+
          // onCompleted at the end
          onCompleted
       );          
-   }
-          
-   
-   private EditingTarget getEditingTargetForId(String id)
-   {
-      for (EditingTarget target : editors_)
-         if (id == target.getId())
-            return target;
-
-      return null;
    }
    
    @Handler
@@ -2044,6 +1983,7 @@ public class Source implements InsertSourceHandler,
   private void closeAllLocalSourceDocs(String caption, Command onCompleted,
            final boolean excludeActive)
   {
+     /*
       // save active editor for exclusion (it changes as we close tabs)
       final EditingTarget activeEditor = activeEditor_;
       
@@ -2074,6 +2014,8 @@ public class Source implements InsertSourceHandler,
                                                     onCompleted),
                                    null);
       
+                                   */
+     Debug.logToConsole("close AllLocalSourceDocs not coded");
    }
   
    private boolean isUnsavedTarget(EditingTarget target, int type)
@@ -2093,6 +2035,7 @@ public class Source implements InsertSourceHandler,
    {
       ArrayList<UnsavedChangesTarget> targets = 
                                        new ArrayList<UnsavedChangesTarget>();
+      /*
 
       // if this is the main window, collect all unsaved changes from 
       // the satellite windows as well
@@ -2115,6 +2058,8 @@ public class Source implements InsertSourceHandler,
          targets.add(target);
       }
       
+      */
+      Debug.logToConsole("UnsavedChanges not coded");
       return targets;
    }
    
@@ -2155,7 +2100,7 @@ public class Source implements InsertSourceHandler,
                onCompleted);
          return;
       }
-      EditingTarget editingTarget = getEditingTargetForId(target.getId());
+      EditingTarget editingTarget = columnManager_.findEditor(target.getId());
       if (editingTarget != null)
          editingTarget.saveWithPrompt(onCompleted, onCancelled);
    }
@@ -2212,6 +2157,8 @@ public class Source implements InsertSourceHandler,
 
    private void revertUnsavedTargets(Command onCompleted)
    {
+      Debug.logToConsole("UnsavedChanges not coded");
+      /*
       // collect up unsaved targets
       ArrayList<EditingTarget> unsavedTargets =  new ArrayList<EditingTarget>();
       for (EditingTarget target : editors_)
@@ -2219,7 +2166,7 @@ public class Source implements InsertSourceHandler,
             unsavedTargets.add(target);
       
       // revert all of them
-      cpsExecuteForEachEditor(
+      columnManager_.cpsExecuteForEachEditor(
          
          // targets the user chose not to save
          unsavedTargets, 
@@ -2248,6 +2195,7 @@ public class Source implements InsertSourceHandler,
          onCompleted
       );          
             
+      */
    }
    
    @Handler
@@ -2585,24 +2533,20 @@ public class Source implements InsertSourceHandler,
       {
          columnManager_.startDebug();
          
-         for (int i = 0; i < editors_.size(); i++)
+         EditingTarget target = columnManager_.findEditorByPath(file.getPath());
+         if (target != null)
          {
-            EditingTarget target = editors_.get(i);
-            String path = target.getPath();
-            if (path != null && path.equalsIgnoreCase(file.getPath()))
+            // the file's open; just update its highlighting 
+            if (navMethod == NavigationMethods.DEBUG_END)
             {
-               // the file's open; just update its highlighting 
-               if (navMethod == NavigationMethods.DEBUG_END)
-               {
-                  target.endDebugHighlighting();
-               }
-               else
-               {
-                  columnManager_.selectTab(target);
-                  editingTargetAction.execute(target);
-               }
-               return;
+               target.endDebugHighlighting();
             }
+            else
+            {
+               columnManager_.selectTab(target);
+               editingTargetAction.execute(target);
+            }
+            return;
          }
          
          // If we're here, the target file wasn't open in an editor. Don't
@@ -2795,20 +2739,6 @@ public class Source implements InsertSourceHandler,
       }
    }
 
-   public void syncClosedTab(EditingTarget target)
-   {
-      Integer index = editors_.indexOf(target);
-      editors_.remove(index);
-      tabOrder_.remove(index);
-      for (int i = 0; i < tabOrder_.size(); i++)
-      {
-         if (tabOrder_.get(i) > index)
-         {
-            tabOrder_.set(i, tabOrder_.get(i) - 1);
-         }
-      }
-   }
-
    public void closeEditorIfActive(EditingTarget target)
    {
       if (activeEditor_ == target)
@@ -2826,6 +2756,8 @@ public class Source implements InsertSourceHandler,
    // !!! shouldn't be public
    public void manageCommands(boolean forceSync)
    {
+     Debug.logToConsole("manageCommands not coded");
+      /*
       boolean hasDocs = editors_.size() > 0;
 
       String name = "Go to to the definition of the currently selected function";
@@ -2925,11 +2857,14 @@ public class Source implements InsertSourceHandler,
 
       assert verifyNoUnsupportedCommands(newCommands)
             : "Unsupported commands detected (please add to Source.dynamicCommands_)";
+               */
    }
    
    // !! should be private
    public void manageMultiTabCommands()
    {
+      Debug.logToConsole("manageMultiTabCommands not coded");
+      /*
       boolean hasMultipleDocs = editors_.size() > 1;
 
       // special case--these editing targets always support popout, but it's
@@ -2945,6 +2880,7 @@ public class Source implements InsertSourceHandler,
       }
       
       commands_.closeOtherSourceDocs().setEnabled(hasMultipleDocs);
+      */
    }
    
    private void manageSynctexCommands()
@@ -3072,6 +3008,8 @@ public class Source implements InsertSourceHandler,
    
    private void manageSaveAllCommand()
    {
+      Debug.logToConsole("manageSaveAllCommands not coded");
+      /*
       // if source windows are open, managing state of the command becomes
       // complicated, so leave it enabled
       if (pWindowManager_.get().areSourceWindowsOpen())
@@ -3092,6 +3030,7 @@ public class Source implements InsertSourceHandler,
       
       // not one was dirty, disabled
       commands_.saveAllSourceDocs().setEnabled(false);
+      */
    }
    
    private void manageTerminalCommands()
@@ -3256,7 +3195,7 @@ public class Source implements InsertSourceHandler,
    {
       // see if we can navigate by id
       String docId = navigation.getDocumentId();
-      final EditingTarget target = getEditingTargetForId(docId);
+      final EditingTarget target = columnManager_.findEditor(docId);
       if (target != null)
       {
          // check for navigation to the current position -- in this
@@ -3377,15 +3316,7 @@ public class Source implements InsertSourceHandler,
          {
             final String path = CodeBrowserEditingTarget.getCodeBrowserPath(
                   event.getFunction());
-            for (int i = 0; i < editors_.size(); i++)
-            {
-               if (editors_.get(i).getPath() == path)
-               {
-                  EditingTarget target = editors_.get(i);
-                  columnManager_.closeTab(target, false);
-                  return;
-               }
-            }
+            columnManager_.closeTabWithPath(path, false);
          }
       });
    }
@@ -3494,20 +3425,6 @@ public class Source implements InsertSourceHandler,
    }
    
    @Override
-   public void onSourceExtendedTypeDetected(SourceExtendedTypeDetectedEvent e)
-   {
-      // set the extended type of the specified source file
-      for (EditingTarget editor : editors_)
-      {
-         if (editor.getId() == e.getDocId())
-         {
-            editor.adaptToExtendedFileType(e.getExtendedType());
-            break;
-         }
-      }
-   }
-   
-   @Override
    public void onSnippetsChanged(SnippetsChangedEvent event)
    {
       SnippetHelper.onSnippetsChanged(event);
@@ -3601,16 +3518,7 @@ public class Source implements InsertSourceHandler,
       Command closeEditors = () ->
       {
          // Close each of the requested tabs
-         if (ids != null)
-         {
-            for (EditingTarget target: editors_)
-            {
-              if (JsArrayUtil.jsArrayStringContains(ids, target.getId()))
-              {
-                 columnManager_.closeTab(target, false /* non interactive */);
-              }
-            }
-         }
+         columnManager_.closeTabs(ids);
          
          // Let the server know we've completed the task
          if (SourceWindowManager.isMainSourceWindow())
@@ -3645,34 +3553,6 @@ public class Source implements InsertSourceHandler,
       {
          // If not saving, just close the windows immediately
          closeEditors.execute();
-      }
-   }
-   
-   private void inEditorForPath(String path, 
-         OperationWithInput<EditingTarget> onEditorLocated)
-   {
-      for (int i = 0; i < editors_.size(); i++)
-      {
-         String editorPath = editors_.get(i).getPath();
-         if (editorPath != null && editorPath.equals(path))
-         {
-            onEditorLocated.execute(editors_.get(i));
-            break;
-         }
-      }
-   }
-
-   private void inEditorForId(String id, 
-         OperationWithInput<EditingTarget> onEditorLocated)
-   {
-      for (int i = 0; i < editors_.size(); i++)
-      {
-         String editorId = editors_.get(i).getId();
-         if (editorId != null && editorId.equals(id))
-         {
-            onEditorLocated.execute(editors_.get(i));
-            break;
-         }
       }
    }
    
@@ -3784,6 +3664,144 @@ public class Source implements InsertSourceHandler,
       });
    }
    
+   private void pasteFileContentsAtCursor(final String path, final String encoding)
+   {
+      if (activeEditor_ != null && activeEditor_ instanceof TextEditingTarget)
+      {
+         final TextEditingTarget target = (TextEditingTarget) activeEditor_;
+         server_.getFileContents(path, encoding, new ServerRequestCallback<String>()
+         {
+            @Override
+            public void onResponseReceived(String content)
+            {
+               target.insertCode(content, false);
+            }
+
+            @Override
+            public void onError(ServerError error)
+            {
+               Debug.logError(error);
+            }
+         });
+      }
+   }
+
+   private void pasteRCodeExecutionResult(final String code)
+   {
+      server_.executeRCode(code, new ServerRequestCallback<String>()
+      {
+         @Override
+         public void onResponseReceived(String output)
+         {
+            if (activeEditor_ != null && activeEditor_ instanceof TextEditingTarget)
+            {
+               TextEditingTarget editor = (TextEditingTarget) activeEditor_;
+               editor.insertCode(output, false);
+            }
+         }
+
+         @Override
+         public void onError(ServerError error)
+         {
+            Debug.logError(error);
+         }
+      });
+   }
+
+   private void reflowText()
+   {
+      if (activeEditor_ != null && activeEditor_ instanceof TextEditingTarget)
+      {
+         TextEditingTarget editor = (TextEditingTarget) activeEditor_;
+         editor.reflowText();
+      }
+   }
+
+   private void reindent()
+   {
+      if (activeEditor_ != null && activeEditor_ instanceof TextEditingTarget)
+      {
+         TextEditingTarget editor = (TextEditingTarget) activeEditor_;
+         editor.getDocDisplay().reindent();
+      }
+   }
+
+   // !!! fix this
+   private void saveActiveSourceDoc()
+   {
+      if (activeEditor_ != null && activeEditor_ instanceof TextEditingTarget)
+      {
+         TextEditingTarget target = (TextEditingTarget) activeEditor_;
+         target.save();
+      }
+   }
+
+   // !!! fix this
+   private void saveAndCloseActiveSourceDoc()
+   {
+      if (activeEditor_ != null && activeEditor_ instanceof TextEditingTarget)
+      {
+         TextEditingTarget target = (TextEditingTarget) activeEditor_;
+         target.save(new Command()
+         {
+            @Override
+            public void execute()
+            {
+               onCloseSourceDoc();
+            }
+         });
+      }
+   }
+
+   // !!! fix this
+   private void revertActiveDocument()
+   {
+      if (activeEditor_ == null)
+         return;
+
+      if (activeEditor_.getPath() != null)
+         activeEditor_.revertChanges(null);
+
+      // Ensure that the document is in view
+      activeEditor_.ensureCursorVisible();
+   }
+
+   // !!! fix this
+   private void editFile(final String path)
+   {
+      /*
+      server_.ensureFileExists(
+            path,
+            new ServerRequestCallback<Boolean>()
+            {
+               @Override
+               public void onResponseReceived(Boolean success)
+               {
+                  if (success)
+                  {
+                     FileSystemItem file = FileSystemItem.createFile(path);
+                     openFile(file);
+                  }
+               }
+
+               @Override
+               public void onError(ServerError error)
+               {
+                  Debug.logError(error);
+               }
+            });
+            */
+   }
+
+   private void showHelpAtCursor()
+   {
+      if (activeEditor_ != null && activeEditor_ instanceof TextEditingTarget)
+      {
+         TextEditingTarget editor = (TextEditingTarget) activeEditor_;
+         editor.showHelpAtCursor();
+      }
+   }
+
    private void doReplaceRanges(ReplaceRangesEvent event, DocDisplay docDisplay)
    {
       JsArray<ReplacementData> data = event.getData().getReplacementData();
@@ -3817,7 +3835,6 @@ public class Source implements InsertSourceHandler,
    }
    
    final Queue<StatFileEntry> statQueue_ = new LinkedList<StatFileEntry>();
-   ArrayList<EditingTarget> editors_ = new ArrayList<EditingTarget>();
    ArrayList<Integer> tabOrder_ = new ArrayList<Integer>();
    SourceColumnManager columnManager_;
    private EditingTarget activeEditor_;

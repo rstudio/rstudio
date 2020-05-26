@@ -672,7 +672,8 @@ public class SourceWindowManager implements PopoutDocEvent.Handler,
    {
       // if the window that fired the event is not already the owner of the
       // document, make it the owner
-      if (e.getDoc().getSourceWindowId() != e.getWindowId())
+      if (e.getDoc().getSourceWindowId() != e.getWindowId() ||
+          e.getDoc().getSourceDisplayName() != e.getDisplayName())
       {
          // assign on the doc itself
          e.getDoc().assignSourceWindowId(e.getWindowId());

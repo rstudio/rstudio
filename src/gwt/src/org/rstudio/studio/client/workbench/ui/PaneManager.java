@@ -289,8 +289,7 @@ public class PaneManager
       // get the widgets for the extra source columns to be displayed
       ArrayList<Widget> sourceColumns;
       if (sourceColumnManager_.getSize() > 1 && additionalSourceCount_ > 0)
-         sourceColumns = new ArrayList<Widget>(
-               sourceColumnManager_.getWidgets().subList(1, additionalSourceCount_ + 1));
+         sourceColumns = new ArrayList<Widget>(sourceColumnManager_.getWidgets(true));
       else
          sourceColumns =  new ArrayList<Widget>();
       panel_.initialize(sourceColumns, left_, right_);
