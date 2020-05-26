@@ -97,8 +97,11 @@ Error ActiveSessions::create(const std::string& project,
    activeSession.setLastUsed();
    activeSession.setRunning(false);
 
-   // return the id
-   *pId = id;
+   // return the id if requested
+   if (pId != nullptr)
+   {
+      *pId = id;
+   }
    return Success();
 }
 
