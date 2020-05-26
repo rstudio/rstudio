@@ -33,10 +33,9 @@ import { PandocCapabilities } from '../../api/pandoc_capabilities';
 import { EditorFormat } from '../../api/format';
 import { EditorOptions } from '../../api/options';
 import { EditorEvents, EditorEvent } from '../../api/events';
-import { parseCodepoint } from '../../api/unicode';
 
 import SymbolCharacterGrid from './insert_symbol-grid';
-import SymbolDataManager, { SymbolCategory, SymbolCharacter, CATEGORY_ALL, SymbolGroup } from './insert_symbol-data';
+import SymbolDataManager, { SymbolCharacter, SymbolGroup, CATEGORY_ALL } from './insert_symbol-data';
 import { TextInput } from '../../api/widgets/text';
 import { SelectInput } from '../../api/widgets/select';
 
@@ -209,35 +208,7 @@ const InsertSymbolPopup: React.FC<InsertSymbolPopupProps> = props => {
   }, [selectedSymbolGroup]);
 
   React.useEffect(() => {
-    const codepoint = parseCodepoint(filterText);
-    var filteredSymbols = symbols.filter(symbol => {
-      // Search by name
-      if (symbol.name.includes(filterText.toUpperCase())) {
-        return true;
-      }
-
-      // Search by codepoint
-      if (codepoint && symbol.codepoint === codepoint) {
-        return true;
-      }
-
-      return false;
-    });
-
-    if (filteredSymbols.length === 0 && codepoint) {
-      // If the filter doesn't match and this could be a code point, just
-      // emit a matching character
-      setFilteredSymbols([
-        {
-          name: codepoint.toString(16),
-          value: String.fromCodePoint(codepoint),
-          codepoint: codepoint,
-        },
-      ]);
-    } else {
-      // Show filtered results
-      setFilteredSymbols(filteredSymbols);
-    }
+    setFilteredSymbols(symbolDataManager.filterSymbols(filterText, symbols));
   }, [filterText, symbols]);
 
   const textRef = React.useRef(null);

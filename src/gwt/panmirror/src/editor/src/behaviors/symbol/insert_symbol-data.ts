@@ -1,4 +1,5 @@
 import * as untypedSymbolData from './insert_symbol-data.json';
+import { parseCodepoint } from '../../api/unicode';
 
 export interface SymbolGroup {
   alias: string;
@@ -43,6 +44,32 @@ class SymbolDataManager {
         return symbol.codepoint >= block.codepointFirst && symbol.codepoint <= block.codepointLast;
       });
     });
+  }
+
+  public filterSymbols(filterText: string, symbols: SymbolCharacter[]): SymbolCharacter[]  {
+    const codepoint = parseCodepoint(filterText);
+    const filteredSymbols = symbols.filter(symbol => {
+      // Search by name
+      if (symbol.name.includes(filterText.toUpperCase())) {
+        return true;
+      }
+
+      // Search by codepoint
+      if (codepoint && symbol.codepoint === codepoint) {
+        return true;
+      }
+
+      return false;
+    });
+
+    if (filteredSymbols.length === 0 && codepoint) {
+      return         [{
+        name: codepoint.toString(16),
+        value: String.fromCodePoint(codepoint),
+        codepoint: codepoint,
+      }];
+    }
+    return filteredSymbols;
   }
 }
 
