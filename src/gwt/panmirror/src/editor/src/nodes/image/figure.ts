@@ -155,7 +155,8 @@ const extension = (
     baseKeys: (schema: Schema) => {
       return [
         { key: BaseKey.Enter, command: exitNode(schema.nodes.figure, -1, false) },
-        { key: BaseKey.Backspace, command: deleteCaption() },
+        { key: BaseKey.Backspace, command: backspaceEmptyCaption() },
+        { key: BaseKey.Backspace, command: backspaceAfterFigure() }
       ];
     },
 
@@ -176,9 +177,9 @@ const extension = (
   };
 };
 
-export function deleteCaption() {
+export function backspaceEmptyCaption() {
   return (state: EditorState, dispatch?: (tr: Transaction) => void) => {
-    // must be a selection within an empty figure
+    // must be a selection within an empty caption
     const schema = state.schema;
     const { $head } = state.selection;
     if ($head.parent.type !== schema.nodes.figure || $head.parent.childCount !== 0) {
@@ -193,6 +194,44 @@ export function deleteCaption() {
     }
 
     return true;
+  };
+}
+
+export function backspaceAfterFigure() {
+  return (state: EditorState, dispatch?: (tr: Transaction) => void) => {
+
+    // must be an empty selection
+    const selection = state.selection;
+    if (!selection.empty) {
+      return false;
+    }
+
+    // must be a selection at the beginning of it's parent
+    const schema = state.schema;
+    const { $head } = state.selection;
+    const { parentOffset } = $head;
+    if (parentOffset !== 0) {
+      return false;
+    }
+
+    // check if the previous node is a figure
+    const parent = $head.node($head.depth - 1);
+    const parentIndex = $head.index($head.depth - 1);
+    if (parentIndex > 0) {
+      const previousNode = parent.child(parentIndex - 1);
+      if (previousNode.type === schema.nodes.figure) {
+        if (dispatch) {
+          const tr = state.tr;
+          const nodePos = selection.head - previousNode.nodeSize - 1;
+          const figureSelection = NodeSelection.create(state.doc, nodePos);
+          tr.setSelection(figureSelection);
+          dispatch(tr);
+        }
+        return true;
+      }
+    }
+  
+    return false;
   };
 }
 
