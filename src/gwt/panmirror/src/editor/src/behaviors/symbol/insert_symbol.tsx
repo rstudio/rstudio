@@ -33,12 +33,12 @@ import { PandocCapabilities } from '../../api/pandoc_capabilities';
 import { EditorFormat } from '../../api/format';
 import { EditorOptions } from '../../api/options';
 import { EditorEvents, EditorEvent } from '../../api/events';
-import * as unicode from '../../api/unicode';
+import { parseCodepoint } from '../../api/unicode';
 
 import SymbolCharacterGrid from './insert_symbol-grid';
-import SymbolDataManager, { SymbolCategory, SymbolCharacter, CATEGORY_ALL } from './insert_symbol-data';
-import { TextInput } from '../../api/widgets/textInput';
-import { SelectInput } from '../../api/widgets/selectInput';
+import SymbolDataManager, { SymbolCategory, SymbolCharacter, CATEGORY_ALL, SymbolGroup } from './insert_symbol-data';
+import { TextInput } from '../../api/widgets/text';
+import { SelectInput } from '../../api/widgets/select';
 
 const key = new PluginKey<boolean>('insert_symbol');
 const symbolDataManager = new SymbolDataManager();
@@ -199,17 +199,17 @@ const InsertSymbolPopup: React.FC<InsertSymbolPopupProps> = props => {
   const gridWidth = popupWidth;
 
   const [filterText, setFilterText] = React.useState<string>('');
-  const [selectedCategory, setSelectedCategory] = React.useState(CATEGORY_ALL);
+  const [selectedSymbolGroup, setSelectedSymbolGroup] = React.useState(CATEGORY_ALL);
   const [symbols, setSymbols] = React.useState<Array<SymbolCharacter>>([]);
   const [filteredSymbols, setFilteredSymbols] = React.useState<Array<SymbolCharacter>>(symbols);
 
   React.useEffect(() => {
-    const symbols: Array<SymbolCharacter> = symbolDataManager.getSymbols(selectedCategory);
+    const symbols: Array<SymbolCharacter> = symbolDataManager.getSymbols(selectedSymbolGroup);
     setSymbols(symbols);
-  }, [selectedCategory]);
+  }, [selectedSymbolGroup]);
 
   React.useEffect(() => {
-    const codepoint = unicode.parseCodepoint(filterText);
+    const codepoint = parseCodepoint(filterText);
     var filteredSymbols = symbols.filter(symbol => {
       // Search by name
       if (symbol.name.includes(filterText.toUpperCase())) {
@@ -253,9 +253,9 @@ const InsertSymbolPopup: React.FC<InsertSymbolPopupProps> = props => {
     element!.current!.focus();
   }
 
-  let options = symbolDataManager.getCategories().map(category => (
-    <option key={category.name} value={category.name}>
-      {category.name}
+  const options = symbolDataManager.getSymbolGroups().map(category => (
+    <option key={category.alias} value={category.alias}>
+      {category.alias}
     </option>
   ));
 
@@ -291,11 +291,11 @@ const InsertSymbolPopup: React.FC<InsertSymbolPopupProps> = props => {
           className='pm-popup-insert-symbol-select-category'
           onChange={(event: React.ChangeEvent<HTMLSelectElement>) => {
             const value: string = (event.target as HTMLSelectElement).selectedOptions[0].value;
-            const selectedCategory: SymbolCategory | undefined = symbolDataManager
-              .getCategories()
-              .find(category => category.name === value);
-            if (selectedCategory) {
-              setSelectedCategory(selectedCategory);
+            const selectedGroup: SymbolGroup | undefined = symbolDataManager
+              .getSymbolGroups()
+              .find(group => group.alias === value);
+            if (selectedGroup) {
+              setSelectedSymbolGroup(selectedGroup);
             }
           }}
         >

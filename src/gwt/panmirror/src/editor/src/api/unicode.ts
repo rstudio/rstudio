@@ -1,35 +1,36 @@
 // Tries to parse a unicode codepoint string that a user might enter
 // For example:
-// U+2054
-// 2054
-// 
-// Or in base 10 notation a number between
-// 0 and 1114112
+// U+2A1F
+// 2A1F
+// 10783
+const kMinValidCodepoint = 0
+const kMaxValidCodepoint = 1114112
+
+const kHexCodepointPrefix = 'U+'
+
 export function parseCodepoint(codepointText: string): number | undefined {
-  var hexOnlyText = codepointText;
-  if (codepointText.startsWith('U+')) {
-    hexOnlyText = codepointText.substr(2, codepointText.length - 2);
+
+  // Try parsing it as a base 10 int first
+  const base10Value = parseInt(codepointText, 10);
+  if (isValidCodepoint(base10Value)) {
+    return base10Value;
   }
 
-  // Hex representations of codepoints are always 4 characters long
-  if (hexOnlyText.length <= 6) {
-    const hexValue = parseInt(hexOnlyText, 16);
-    if (isValidCodepoint(hexValue)) {
-      return hexValue;
-    }
-  } 
+  // It might have a user prefix for unicode character, remove
+  var hexOnlyText = codepointText;
+  if (codepointText.startsWith(kHexCodepointPrefix)) {
+    hexOnlyText = codepointText.substr(kHexCodepointPrefix.length, codepointText.length - kHexCodepointPrefix.length);
+  }
 
-  // base 10 representations can be up to 7 characters long
-  if (hexOnlyText.length <= 7) {
-    const base10Value = parseInt(hexOnlyText, 10);
-    if (isValidCodepoint(base10Value)) {
-      return base10Value;
-    }
+  // try parsing it as a hex string
+  const hexValue = parseInt(hexOnlyText, 16);
+  if (isValidCodepoint(hexValue)) {
+    return hexValue;
   }
 
   return undefined;  
 }
 
 function isValidCodepoint(codepoint: number) {
-  return codepoint < 1114112 && codepoint > 0;
+  return codepoint < kMinValidCodepoint && codepoint > kMaxValidCodepoint;
 }

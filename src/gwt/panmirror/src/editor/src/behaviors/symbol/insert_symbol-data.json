@@ -1,164 +1,229 @@
 {
   "blocks": [
     {
-      "name": "Latin-1 Supplement",
-      "codepointFirst": 128,
-      "codepointLast": 255
+      "alias": "Miscellaneous",
+      "blocks": [
+        {
+          "name": "Latin-1 Supplement",
+          "codepointFirst": 128,
+          "codepointLast": 255
+        },
+        {
+          "name": "Enclosed Alphanumerics",
+          "codepointFirst": 9312,
+          "codepointLast": 9471
+        },
+        {
+          "name": "Dingbats",
+          "codepointFirst": 9984,
+          "codepointLast": 10175
+        },
+        {
+          "name": "Miscellaneous Symbols",
+          "codepointFirst": 9728,
+          "codepointLast": 9983
+        }
+      ]
     },
     {
-      "name": "Currency Symbols",
-      "codepointFirst": 8352,
-      "codepointLast": 8399
+      "alias": "Mathematical",
+      "blocks": [
+        {
+          "name": "Mathematical Operators",
+          "codepointFirst": 8704,
+          "codepointLast": 8959
+        },
+        {
+          "name": "Miscellaneous Mathematical Symbols-A",
+          "codepointFirst": 10176,
+          "codepointLast": 10223
+        },
+        {
+          "name": "Miscellaneous Mathematical Symbols-B",
+          "codepointFirst": 10624,
+          "codepointLast": 10751
+        },
+        {
+          "name": "Supplemental Mathematical Operators",
+          "codepointFirst": 10752,
+          "codepointLast": 11007
+        },
+        {
+          "name": "Mathematical Alphanumeric Symbols",
+          "codepointFirst": 119808,
+          "codepointLast": 120831
+        }
+      ]
     },
     {
-      "name": "Mathematical Operators",
-      "codepointFirst": 8704,
-      "codepointLast": 8959
+      "alias": "Punctuation",
+      "blocks": [
+        {
+          "name": "Supplemental Punctuation",
+          "codepointFirst": 11776,
+          "codepointLast": 11903
+        }
+      ]
     },
     {
-      "name": "Miscellaneous Technical",
-      "codepointFirst": 8960,
-      "codepointLast": 9215
+      "alias": "Technical",
+      "blocks": [
+        {
+          "name": "Miscellaneous Technical",
+          "codepointFirst": 8960,
+          "codepointLast": 9215
+        }
+      ]
     },
     {
-      "name": "Control Pictures",
-      "codepointFirst": 9216,
-      "codepointLast": 9279
+      "alias": "Arrows",
+      "blocks": [
+        {
+          "name": "Miscellaneous Symbols and Arrows",
+          "codepointFirst": 11008,
+          "codepointLast": 11263
+        },
+        {
+          "name": "Supplemental Arrows-A",
+          "codepointFirst": 10224,
+          "codepointLast": 10239
+        },
+        {
+          "name": "Supplemental Arrows-B",
+          "codepointFirst": 10496,
+          "codepointLast": 10623
+        }
+      ]
     },
     {
-      "name": "Enclosed Alphanumerics",
-      "codepointFirst": 9312,
-      "codepointLast": 9471
+      "alias": "Ancient",
+      "blocks": [
+        {
+          "name": "Ancient Symbols",
+          "codepointFirst": 65936,
+          "codepointLast": 65999
+        },
+        {
+          "name": "Ancient Greek Numbers",
+          "codepointFirst": 65856,
+          "codepointLast": 65935
+        }
+      ]
     },
     {
-      "name": "Box Drawing",
-      "codepointFirst": 9472,
-      "codepointLast": 9599
+      "alias": "Braille",
+      "blocks": [
+        {
+          "name": "Braille Patterns",
+          "codepointFirst": 10240,
+          "codepointLast": 10495
+        }
+      ]
     },
     {
-      "name": "Block Elements",
-      "codepointFirst": 9600,
-      "codepointLast": 9631
+      "alias": "Currency",
+      "blocks": [
+        {
+          "name": "Currency Symbols",
+          "codepointFirst": 8352,
+          "codepointLast": 8399
+        }
+      ]
     },
     {
-      "name": "Geometric Shapes",
-      "codepointFirst": 9632,
-      "codepointLast": 9727
+      "alias": "Game Symbols",
+      "blocks": [
+        {
+          "name": "Mahjong Tiles",
+          "codepointFirst": 126976,
+          "codepointLast": 127023
+        },
+        {
+          "name": "Domino Tiles",
+          "codepointFirst": 127024,
+          "codepointLast": 127135
+        },
+        {
+          "name": "Playing Cards",
+          "codepointFirst": 127136,
+          "codepointLast": 127231
+        },
+        {
+          "name": "Chess Symbols",
+          "codepointFirst": 129536,
+          "codepointLast": 129647
+        }
+      ]
     },
     {
-      "name": "Miscellaneous Symbols",
-      "codepointFirst": 9728,
-      "codepointLast": 9983
+      "alias": "Emoji",
+      "blocks": [
+        {
+          "name": "Emoticons",
+          "codepointFirst": 128512,
+          "codepointLast": 128591
+        },
+        {
+          "name": "Miscellaneous Symbols and Pictographs",
+          "codepointFirst": 127744,
+          "codepointLast": 128511
+        },
+        {
+          "name": "Symbols and Pictographs Extended-A",
+          "codepointFirst": 129648,
+          "codepointLast": 129791
+        },
+        {
+          "name": "Transport and Map Symbols",
+          "codepointFirst": 128640,
+          "codepointLast": 128767
+        },
+        {
+          "name": "Supplemental Symbols and Pictographs",
+          "codepointFirst": 129280,
+          "codepointLast": 129535
+        }
+      ]
     },
     {
-      "name": "Dingbats",
-      "codepointFirst": 9984,
-      "codepointLast": 10175
+      "alias": "Music",
+      "blocks": [
+        {
+          "name": "Musical Symbols",
+          "codepointFirst": 119040,
+          "codepointLast": 119295
+        }
+      ]
     },
     {
-      "name": "Miscellaneous Mathematical Symbols-A",
-      "codepointFirst": 10176,
-      "codepointLast": 10223
+      "alias": "Geometric Shapes",
+      "blocks": [
+        {
+          "name": "Geometric Shapes",
+          "codepointFirst": 9632,
+          "codepointLast": 9727
+        },
+        {
+          "name": "Geometric Shapes Extended",
+          "codepointFirst": 128896,
+          "codepointLast": 129023
+        }
+      ]
     },
     {
-      "name": "Supplemental Arrows-A",
-      "codepointFirst": 10224,
-      "codepointLast": 10239
-    },
-    {
-      "name": "Braille Patterns",
-      "codepointFirst": 10240,
-      "codepointLast": 10495
-    },
-    {
-      "name": "Supplemental Arrows-B",
-      "codepointFirst": 10496,
-      "codepointLast": 10623
-    },
-    {
-      "name": "Miscellaneous Mathematical Symbols-B",
-      "codepointFirst": 10624,
-      "codepointLast": 10751
-    },
-    {
-      "name": "Supplemental Mathematical Operators",
-      "codepointFirst": 10752,
-      "codepointLast": 11007
-    },
-    {
-      "name": "Miscellaneous Symbols and Arrows",
-      "codepointFirst": 11008,
-      "codepointLast": 11263
-    },
-    {
-      "name": "Supplemental Punctuation",
-      "codepointFirst": 11776,
-      "codepointLast": 11903
-    },
-    {
-      "name": "Ideographic Description Characters",
-      "codepointFirst": 12272,
-      "codepointLast": 12287
-    },
-    {
-      "name": "Vertical Forms",
-      "codepointFirst": 65040,
-      "codepointLast": 65055
-    },
-    {
-      "name": "Ancient Greek Numbers",
-      "codepointFirst": 65856,
-      "codepointLast": 65935
-    },
-    {
-      "name": "Ancient Symbols",
-      "codepointFirst": 65936,
-      "codepointLast": 65999
-    },
-    {
-      "name": "Musical Symbols",
-      "codepointFirst": 119040,
-      "codepointLast": 119295
-    },
-    {
-      "name": "Mathematical Alphanumeric Symbols",
-      "codepointFirst": 119808,
-      "codepointLast": 120831
-    },
-    {
-      "name": "Mahjong Tiles",
-      "codepointFirst": 126976,
-      "codepointLast": 127023
-    },
-    {
-      "name": "Domino Tiles",
-      "codepointFirst": 127024,
-      "codepointLast": 127135
-    },
-    {
-      "name": "Playing Cards",
-      "codepointFirst": 127136,
-      "codepointLast": 127231
-    },
-    {
-      "name": "Miscellaneous Symbols and Pictographs",
-      "codepointFirst": 127744,
-      "codepointLast": 128511
-    },
-    {
-      "name": "Emoticons",
-      "codepointFirst": 128512,
-      "codepointLast": 128591
-    },
-    {
-      "name": "Transport and Map Symbols",
-      "codepointFirst": 128640,
-      "codepointLast": 128767
-    },
-    {
-      "name": "Alchemical Symbols",
-      "codepointFirst": 128768,
-      "codepointLast": 128895
+      "alias": "Ideographic",
+      "blocks": [
+        {
+          "name": "Ideographic Description Characters",
+          "codepointFirst": 12272,
+          "codepointLast": 12287
+        },
+        {
+          "name": "Ideographic Symbols and Punctuation",
+          "codepointFirst": 94176,
+          "codepointLast": 94207
+        }
+      ]
     }
   ],
   "symbols": [
@@ -3263,201 +3328,6 @@
       "codepoint": 9203
     },
     {
-      "name": "SYMBOL FOR NULL",
-      "value": "␀",
-      "codepoint": 9216
-    },
-    {
-      "name": "SYMBOL FOR START OF HEADING",
-      "value": "␁",
-      "codepoint": 9217
-    },
-    {
-      "name": "SYMBOL FOR START OF TEXT",
-      "value": "␂",
-      "codepoint": 9218
-    },
-    {
-      "name": "SYMBOL FOR END OF TEXT",
-      "value": "␃",
-      "codepoint": 9219
-    },
-    {
-      "name": "SYMBOL FOR END OF TRANSMISSION",
-      "value": "␄",
-      "codepoint": 9220
-    },
-    {
-      "name": "SYMBOL FOR ENQUIRY",
-      "value": "␅",
-      "codepoint": 9221
-    },
-    {
-      "name": "SYMBOL FOR ACKNOWLEDGE",
-      "value": "␆",
-      "codepoint": 9222
-    },
-    {
-      "name": "SYMBOL FOR BELL",
-      "value": "␇",
-      "codepoint": 9223
-    },
-    {
-      "name": "SYMBOL FOR BACKSPACE",
-      "value": "␈",
-      "codepoint": 9224
-    },
-    {
-      "name": "SYMBOL FOR HORIZONTAL TABULATION",
-      "value": "␉",
-      "codepoint": 9225
-    },
-    {
-      "name": "SYMBOL FOR LINE FEED",
-      "value": "␊",
-      "codepoint": 9226
-    },
-    {
-      "name": "SYMBOL FOR VERTICAL TABULATION",
-      "value": "␋",
-      "codepoint": 9227
-    },
-    {
-      "name": "SYMBOL FOR FORM FEED",
-      "value": "␌",
-      "codepoint": 9228
-    },
-    {
-      "name": "SYMBOL FOR CARRIAGE RETURN",
-      "value": "␍",
-      "codepoint": 9229
-    },
-    {
-      "name": "SYMBOL FOR SHIFT OUT",
-      "value": "␎",
-      "codepoint": 9230
-    },
-    {
-      "name": "SYMBOL FOR SHIFT IN",
-      "value": "␏",
-      "codepoint": 9231
-    },
-    {
-      "name": "SYMBOL FOR DATA LINK ESCAPE",
-      "value": "␐",
-      "codepoint": 9232
-    },
-    {
-      "name": "SYMBOL FOR DEVICE CONTROL ONE",
-      "value": "␑",
-      "codepoint": 9233
-    },
-    {
-      "name": "SYMBOL FOR DEVICE CONTROL TWO",
-      "value": "␒",
-      "codepoint": 9234
-    },
-    {
-      "name": "SYMBOL FOR DEVICE CONTROL THREE",
-      "value": "␓",
-      "codepoint": 9235
-    },
-    {
-      "name": "SYMBOL FOR DEVICE CONTROL FOUR",
-      "value": "␔",
-      "codepoint": 9236
-    },
-    {
-      "name": "SYMBOL FOR NEGATIVE ACKNOWLEDGE",
-      "value": "␕",
-      "codepoint": 9237
-    },
-    {
-      "name": "SYMBOL FOR SYNCHRONOUS IDLE",
-      "value": "␖",
-      "codepoint": 9238
-    },
-    {
-      "name": "SYMBOL FOR END OF TRANSMISSION BLOCK",
-      "value": "␗",
-      "codepoint": 9239
-    },
-    {
-      "name": "SYMBOL FOR CANCEL",
-      "value": "␘",
-      "codepoint": 9240
-    },
-    {
-      "name": "SYMBOL FOR END OF MEDIUM",
-      "value": "␙",
-      "codepoint": 9241
-    },
-    {
-      "name": "SYMBOL FOR SUBSTITUTE",
-      "value": "␚",
-      "codepoint": 9242
-    },
-    {
-      "name": "SYMBOL FOR ESCAPE",
-      "value": "␛",
-      "codepoint": 9243
-    },
-    {
-      "name": "SYMBOL FOR FILE SEPARATOR",
-      "value": "␜",
-      "codepoint": 9244
-    },
-    {
-      "name": "SYMBOL FOR GROUP SEPARATOR",
-      "value": "␝",
-      "codepoint": 9245
-    },
-    {
-      "name": "SYMBOL FOR RECORD SEPARATOR",
-      "value": "␞",
-      "codepoint": 9246
-    },
-    {
-      "name": "SYMBOL FOR UNIT SEPARATOR",
-      "value": "␟",
-      "codepoint": 9247
-    },
-    {
-      "name": "SYMBOL FOR SPACE",
-      "value": "␠",
-      "codepoint": 9248
-    },
-    {
-      "name": "SYMBOL FOR DELETE",
-      "value": "␡",
-      "codepoint": 9249
-    },
-    {
-      "name": "BLANK SYMBOL",
-      "value": "␢",
-      "codepoint": 9250
-    },
-    {
-      "name": "OPEN BOX",
-      "value": "␣",
-      "codepoint": 9251
-    },
-    {
-      "name": "SYMBOL FOR NEWLINE",
-      "value": "␤",
-      "codepoint": 9252
-    },
-    {
-      "name": "SYMBOL FOR DELETE FORM TWO",
-      "value": "␥",
-      "codepoint": 9253
-    },
-    {
-      "name": "SYMBOL FOR SUBSTITUTE FORM TWO",
-      "value": "␦",
-      "codepoint": 9254
-    },
-    {
       "name": "CIRCLED DIGIT ONE",
       "value": "①",
       "codepoint": 9312
@@ -4256,806 +4126,6 @@
       "name": "NEGATIVE CIRCLED DIGIT ZERO",
       "value": "⓿",
       "codepoint": 9471
-    },
-    {
-      "name": "BOX DRAWINGS LIGHT HORIZONTAL",
-      "value": "─",
-      "codepoint": 9472
-    },
-    {
-      "name": "BOX DRAWINGS HEAVY HORIZONTAL",
-      "value": "━",
-      "codepoint": 9473
-    },
-    {
-      "name": "BOX DRAWINGS LIGHT VERTICAL",
-      "value": "│",
-      "codepoint": 9474
-    },
-    {
-      "name": "BOX DRAWINGS HEAVY VERTICAL",
-      "value": "┃",
-      "codepoint": 9475
-    },
-    {
-      "name": "BOX DRAWINGS LIGHT TRIPLE DASH HORIZONTAL",
-      "value": "┄",
-      "codepoint": 9476
-    },
-    {
-      "name": "BOX DRAWINGS HEAVY TRIPLE DASH HORIZONTAL",
-      "value": "┅",
-      "codepoint": 9477
-    },
-    {
-      "name": "BOX DRAWINGS LIGHT TRIPLE DASH VERTICAL",
-      "value": "┆",
-      "codepoint": 9478
-    },
-    {
-      "name": "BOX DRAWINGS HEAVY TRIPLE DASH VERTICAL",
-      "value": "┇",
-      "codepoint": 9479
-    },
-    {
-      "name": "BOX DRAWINGS LIGHT QUADRUPLE DASH HORIZONTAL",
-      "value": "┈",
-      "codepoint": 9480
-    },
-    {
-      "name": "BOX DRAWINGS HEAVY QUADRUPLE DASH HORIZONTAL",
-      "value": "┉",
-      "codepoint": 9481
-    },
-    {
-      "name": "BOX DRAWINGS LIGHT QUADRUPLE DASH VERTICAL",
-      "value": "┊",
-      "codepoint": 9482
-    },
-    {
-      "name": "BOX DRAWINGS HEAVY QUADRUPLE DASH VERTICAL",
-      "value": "┋",
-      "codepoint": 9483
-    },
-    {
-      "name": "BOX DRAWINGS LIGHT DOWN AND RIGHT",
-      "value": "┌",
-      "codepoint": 9484
-    },
-    {
-      "name": "BOX DRAWINGS DOWN LIGHT AND RIGHT HEAVY",
-      "value": "┍",
-      "codepoint": 9485
-    },
-    {
-      "name": "BOX DRAWINGS DOWN HEAVY AND RIGHT LIGHT",
-      "value": "┎",
-      "codepoint": 9486
-    },
-    {
-      "name": "BOX DRAWINGS HEAVY DOWN AND RIGHT",
-      "value": "┏",
-      "codepoint": 9487
-    },
-    {
-      "name": "BOX DRAWINGS LIGHT DOWN AND LEFT",
-      "value": "┐",
-      "codepoint": 9488
-    },
-    {
-      "name": "BOX DRAWINGS DOWN LIGHT AND LEFT HEAVY",
-      "value": "┑",
-      "codepoint": 9489
-    },
-    {
-      "name": "BOX DRAWINGS DOWN HEAVY AND LEFT LIGHT",
-      "value": "┒",
-      "codepoint": 9490
-    },
-    {
-      "name": "BOX DRAWINGS HEAVY DOWN AND LEFT",
-      "value": "┓",
-      "codepoint": 9491
-    },
-    {
-      "name": "BOX DRAWINGS LIGHT UP AND RIGHT",
-      "value": "└",
-      "codepoint": 9492
-    },
-    {
-      "name": "BOX DRAWINGS UP LIGHT AND RIGHT HEAVY",
-      "value": "┕",
-      "codepoint": 9493
-    },
-    {
-      "name": "BOX DRAWINGS UP HEAVY AND RIGHT LIGHT",
-      "value": "┖",
-      "codepoint": 9494
-    },
-    {
-      "name": "BOX DRAWINGS HEAVY UP AND RIGHT",
-      "value": "┗",
-      "codepoint": 9495
-    },
-    {
-      "name": "BOX DRAWINGS LIGHT UP AND LEFT",
-      "value": "┘",
-      "codepoint": 9496
-    },
-    {
-      "name": "BOX DRAWINGS UP LIGHT AND LEFT HEAVY",
-      "value": "┙",
-      "codepoint": 9497
-    },
-    {
-      "name": "BOX DRAWINGS UP HEAVY AND LEFT LIGHT",
-      "value": "┚",
-      "codepoint": 9498
-    },
-    {
-      "name": "BOX DRAWINGS HEAVY UP AND LEFT",
-      "value": "┛",
-      "codepoint": 9499
-    },
-    {
-      "name": "BOX DRAWINGS LIGHT VERTICAL AND RIGHT",
-      "value": "├",
-      "codepoint": 9500
-    },
-    {
-      "name": "BOX DRAWINGS VERTICAL LIGHT AND RIGHT HEAVY",
-      "value": "┝",
-      "codepoint": 9501
-    },
-    {
-      "name": "BOX DRAWINGS UP HEAVY AND RIGHT DOWN LIGHT",
-      "value": "┞",
-      "codepoint": 9502
-    },
-    {
-      "name": "BOX DRAWINGS DOWN HEAVY AND RIGHT UP LIGHT",
-      "value": "┟",
-      "codepoint": 9503
-    },
-    {
-      "name": "BOX DRAWINGS VERTICAL HEAVY AND RIGHT LIGHT",
-      "value": "┠",
-      "codepoint": 9504
-    },
-    {
-      "name": "BOX DRAWINGS DOWN LIGHT AND RIGHT UP HEAVY",
-      "value": "┡",
-      "codepoint": 9505
-    },
-    {
-      "name": "BOX DRAWINGS UP LIGHT AND RIGHT DOWN HEAVY",
-      "value": "┢",
-      "codepoint": 9506
-    },
-    {
-      "name": "BOX DRAWINGS HEAVY VERTICAL AND RIGHT",
-      "value": "┣",
-      "codepoint": 9507
-    },
-    {
-      "name": "BOX DRAWINGS LIGHT VERTICAL AND LEFT",
-      "value": "┤",
-      "codepoint": 9508
-    },
-    {
-      "name": "BOX DRAWINGS VERTICAL LIGHT AND LEFT HEAVY",
-      "value": "┥",
-      "codepoint": 9509
-    },
-    {
-      "name": "BOX DRAWINGS UP HEAVY AND LEFT DOWN LIGHT",
-      "value": "┦",
-      "codepoint": 9510
-    },
-    {
-      "name": "BOX DRAWINGS DOWN HEAVY AND LEFT UP LIGHT",
-      "value": "┧",
-      "codepoint": 9511
-    },
-    {
-      "name": "BOX DRAWINGS VERTICAL HEAVY AND LEFT LIGHT",
-      "value": "┨",
-      "codepoint": 9512
-    },
-    {
-      "name": "BOX DRAWINGS DOWN LIGHT AND LEFT UP HEAVY",
-      "value": "┩",
-      "codepoint": 9513
-    },
-    {
-      "name": "BOX DRAWINGS UP LIGHT AND LEFT DOWN HEAVY",
-      "value": "┪",
-      "codepoint": 9514
-    },
-    {
-      "name": "BOX DRAWINGS HEAVY VERTICAL AND LEFT",
-      "value": "┫",
-      "codepoint": 9515
-    },
-    {
-      "name": "BOX DRAWINGS LIGHT DOWN AND HORIZONTAL",
-      "value": "┬",
-      "codepoint": 9516
-    },
-    {
-      "name": "BOX DRAWINGS LEFT HEAVY AND RIGHT DOWN LIGHT",
-      "value": "┭",
-      "codepoint": 9517
-    },
-    {
-      "name": "BOX DRAWINGS RIGHT HEAVY AND LEFT DOWN LIGHT",
-      "value": "┮",
-      "codepoint": 9518
-    },
-    {
-      "name": "BOX DRAWINGS DOWN LIGHT AND HORIZONTAL HEAVY",
-      "value": "┯",
-      "codepoint": 9519
-    },
-    {
-      "name": "BOX DRAWINGS DOWN HEAVY AND HORIZONTAL LIGHT",
-      "value": "┰",
-      "codepoint": 9520
-    },
-    {
-      "name": "BOX DRAWINGS RIGHT LIGHT AND LEFT DOWN HEAVY",
-      "value": "┱",
-      "codepoint": 9521
-    },
-    {
-      "name": "BOX DRAWINGS LEFT LIGHT AND RIGHT DOWN HEAVY",
-      "value": "┲",
-      "codepoint": 9522
-    },
-    {
-      "name": "BOX DRAWINGS HEAVY DOWN AND HORIZONTAL",
-      "value": "┳",
-      "codepoint": 9523
-    },
-    {
-      "name": "BOX DRAWINGS LIGHT UP AND HORIZONTAL",
-      "value": "┴",
-      "codepoint": 9524
-    },
-    {
-      "name": "BOX DRAWINGS LEFT HEAVY AND RIGHT UP LIGHT",
-      "value": "┵",
-      "codepoint": 9525
-    },
-    {
-      "name": "BOX DRAWINGS RIGHT HEAVY AND LEFT UP LIGHT",
-      "value": "┶",
-      "codepoint": 9526
-    },
-    {
-      "name": "BOX DRAWINGS UP LIGHT AND HORIZONTAL HEAVY",
-      "value": "┷",
-      "codepoint": 9527
-    },
-    {
-      "name": "BOX DRAWINGS UP HEAVY AND HORIZONTAL LIGHT",
-      "value": "┸",
-      "codepoint": 9528
-    },
-    {
-      "name": "BOX DRAWINGS RIGHT LIGHT AND LEFT UP HEAVY",
-      "value": "┹",
-      "codepoint": 9529
-    },
-    {
-      "name": "BOX DRAWINGS LEFT LIGHT AND RIGHT UP HEAVY",
-      "value": "┺",
-      "codepoint": 9530
-    },
-    {
-      "name": "BOX DRAWINGS HEAVY UP AND HORIZONTAL",
-      "value": "┻",
-      "codepoint": 9531
-    },
-    {
-      "name": "BOX DRAWINGS LIGHT VERTICAL AND HORIZONTAL",
-      "value": "┼",
-      "codepoint": 9532
-    },
-    {
-      "name": "BOX DRAWINGS LEFT HEAVY AND RIGHT VERTICAL LIGHT",
-      "value": "┽",
-      "codepoint": 9533
-    },
-    {
-      "name": "BOX DRAWINGS RIGHT HEAVY AND LEFT VERTICAL LIGHT",
-      "value": "┾",
-      "codepoint": 9534
-    },
-    {
-      "name": "BOX DRAWINGS VERTICAL LIGHT AND HORIZONTAL HEAVY",
-      "value": "┿",
-      "codepoint": 9535
-    },
-    {
-      "name": "BOX DRAWINGS UP HEAVY AND DOWN HORIZONTAL LIGHT",
-      "value": "╀",
-      "codepoint": 9536
-    },
-    {
-      "name": "BOX DRAWINGS DOWN HEAVY AND UP HORIZONTAL LIGHT",
-      "value": "╁",
-      "codepoint": 9537
-    },
-    {
-      "name": "BOX DRAWINGS VERTICAL HEAVY AND HORIZONTAL LIGHT",
-      "value": "╂",
-      "codepoint": 9538
-    },
-    {
-      "name": "BOX DRAWINGS LEFT UP HEAVY AND RIGHT DOWN LIGHT",
-      "value": "╃",
-      "codepoint": 9539
-    },
-    {
-      "name": "BOX DRAWINGS RIGHT UP HEAVY AND LEFT DOWN LIGHT",
-      "value": "╄",
-      "codepoint": 9540
-    },
-    {
-      "name": "BOX DRAWINGS LEFT DOWN HEAVY AND RIGHT UP LIGHT",
-      "value": "╅",
-      "codepoint": 9541
-    },
-    {
-      "name": "BOX DRAWINGS RIGHT DOWN HEAVY AND LEFT UP LIGHT",
-      "value": "╆",
-      "codepoint": 9542
-    },
-    {
-      "name": "BOX DRAWINGS DOWN LIGHT AND UP HORIZONTAL HEAVY",
-      "value": "╇",
-      "codepoint": 9543
-    },
-    {
-      "name": "BOX DRAWINGS UP LIGHT AND DOWN HORIZONTAL HEAVY",
-      "value": "╈",
-      "codepoint": 9544
-    },
-    {
-      "name": "BOX DRAWINGS RIGHT LIGHT AND LEFT VERTICAL HEAVY",
-      "value": "╉",
-      "codepoint": 9545
-    },
-    {
-      "name": "BOX DRAWINGS LEFT LIGHT AND RIGHT VERTICAL HEAVY",
-      "value": "╊",
-      "codepoint": 9546
-    },
-    {
-      "name": "BOX DRAWINGS HEAVY VERTICAL AND HORIZONTAL",
-      "value": "╋",
-      "codepoint": 9547
-    },
-    {
-      "name": "BOX DRAWINGS LIGHT DOUBLE DASH HORIZONTAL",
-      "value": "╌",
-      "codepoint": 9548
-    },
-    {
-      "name": "BOX DRAWINGS HEAVY DOUBLE DASH HORIZONTAL",
-      "value": "╍",
-      "codepoint": 9549
-    },
-    {
-      "name": "BOX DRAWINGS LIGHT DOUBLE DASH VERTICAL",
-      "value": "╎",
-      "codepoint": 9550
-    },
-    {
-      "name": "BOX DRAWINGS HEAVY DOUBLE DASH VERTICAL",
-      "value": "╏",
-      "codepoint": 9551
-    },
-    {
-      "name": "BOX DRAWINGS DOUBLE HORIZONTAL",
-      "value": "═",
-      "codepoint": 9552
-    },
-    {
-      "name": "BOX DRAWINGS DOUBLE VERTICAL",
-      "value": "║",
-      "codepoint": 9553
-    },
-    {
-      "name": "BOX DRAWINGS DOWN SINGLE AND RIGHT DOUBLE",
-      "value": "╒",
-      "codepoint": 9554
-    },
-    {
-      "name": "BOX DRAWINGS DOWN DOUBLE AND RIGHT SINGLE",
-      "value": "╓",
-      "codepoint": 9555
-    },
-    {
-      "name": "BOX DRAWINGS DOUBLE DOWN AND RIGHT",
-      "value": "╔",
-      "codepoint": 9556
-    },
-    {
-      "name": "BOX DRAWINGS DOWN SINGLE AND LEFT DOUBLE",
-      "value": "╕",
-      "codepoint": 9557
-    },
-    {
-      "name": "BOX DRAWINGS DOWN DOUBLE AND LEFT SINGLE",
-      "value": "╖",
-      "codepoint": 9558
-    },
-    {
-      "name": "BOX DRAWINGS DOUBLE DOWN AND LEFT",
-      "value": "╗",
-      "codepoint": 9559
-    },
-    {
-      "name": "BOX DRAWINGS UP SINGLE AND RIGHT DOUBLE",
-      "value": "╘",
-      "codepoint": 9560
-    },
-    {
-      "name": "BOX DRAWINGS UP DOUBLE AND RIGHT SINGLE",
-      "value": "╙",
-      "codepoint": 9561
-    },
-    {
-      "name": "BOX DRAWINGS DOUBLE UP AND RIGHT",
-      "value": "╚",
-      "codepoint": 9562
-    },
-    {
-      "name": "BOX DRAWINGS UP SINGLE AND LEFT DOUBLE",
-      "value": "╛",
-      "codepoint": 9563
-    },
-    {
-      "name": "BOX DRAWINGS UP DOUBLE AND LEFT SINGLE",
-      "value": "╜",
-      "codepoint": 9564
-    },
-    {
-      "name": "BOX DRAWINGS DOUBLE UP AND LEFT",
-      "value": "╝",
-      "codepoint": 9565
-    },
-    {
-      "name": "BOX DRAWINGS VERTICAL SINGLE AND RIGHT DOUBLE",
-      "value": "╞",
-      "codepoint": 9566
-    },
-    {
-      "name": "BOX DRAWINGS VERTICAL DOUBLE AND RIGHT SINGLE",
-      "value": "╟",
-      "codepoint": 9567
-    },
-    {
-      "name": "BOX DRAWINGS DOUBLE VERTICAL AND RIGHT",
-      "value": "╠",
-      "codepoint": 9568
-    },
-    {
-      "name": "BOX DRAWINGS VERTICAL SINGLE AND LEFT DOUBLE",
-      "value": "╡",
-      "codepoint": 9569
-    },
-    {
-      "name": "BOX DRAWINGS VERTICAL DOUBLE AND LEFT SINGLE",
-      "value": "╢",
-      "codepoint": 9570
-    },
-    {
-      "name": "BOX DRAWINGS DOUBLE VERTICAL AND LEFT",
-      "value": "╣",
-      "codepoint": 9571
-    },
-    {
-      "name": "BOX DRAWINGS DOWN SINGLE AND HORIZONTAL DOUBLE",
-      "value": "╤",
-      "codepoint": 9572
-    },
-    {
-      "name": "BOX DRAWINGS DOWN DOUBLE AND HORIZONTAL SINGLE",
-      "value": "╥",
-      "codepoint": 9573
-    },
-    {
-      "name": "BOX DRAWINGS DOUBLE DOWN AND HORIZONTAL",
-      "value": "╦",
-      "codepoint": 9574
-    },
-    {
-      "name": "BOX DRAWINGS UP SINGLE AND HORIZONTAL DOUBLE",
-      "value": "╧",
-      "codepoint": 9575
-    },
-    {
-      "name": "BOX DRAWINGS UP DOUBLE AND HORIZONTAL SINGLE",
-      "value": "╨",
-      "codepoint": 9576
-    },
-    {
-      "name": "BOX DRAWINGS DOUBLE UP AND HORIZONTAL",
-      "value": "╩",
-      "codepoint": 9577
-    },
-    {
-      "name": "BOX DRAWINGS VERTICAL SINGLE AND HORIZONTAL DOUBLE",
-      "value": "╪",
-      "codepoint": 9578
-    },
-    {
-      "name": "BOX DRAWINGS VERTICAL DOUBLE AND HORIZONTAL SINGLE",
-      "value": "╫",
-      "codepoint": 9579
-    },
-    {
-      "name": "BOX DRAWINGS DOUBLE VERTICAL AND HORIZONTAL",
-      "value": "╬",
-      "codepoint": 9580
-    },
-    {
-      "name": "BOX DRAWINGS LIGHT ARC DOWN AND RIGHT",
-      "value": "╭",
-      "codepoint": 9581
-    },
-    {
-      "name": "BOX DRAWINGS LIGHT ARC DOWN AND LEFT",
-      "value": "╮",
-      "codepoint": 9582
-    },
-    {
-      "name": "BOX DRAWINGS LIGHT ARC UP AND LEFT",
-      "value": "╯",
-      "codepoint": 9583
-    },
-    {
-      "name": "BOX DRAWINGS LIGHT ARC UP AND RIGHT",
-      "value": "╰",
-      "codepoint": 9584
-    },
-    {
-      "name": "BOX DRAWINGS LIGHT DIAGONAL UPPER RIGHT TO LOWER LEFT",
-      "value": "╱",
-      "codepoint": 9585
-    },
-    {
-      "name": "BOX DRAWINGS LIGHT DIAGONAL UPPER LEFT TO LOWER RIGHT",
-      "value": "╲",
-      "codepoint": 9586
-    },
-    {
-      "name": "BOX DRAWINGS LIGHT DIAGONAL CROSS",
-      "value": "╳",
-      "codepoint": 9587
-    },
-    {
-      "name": "BOX DRAWINGS LIGHT LEFT",
-      "value": "╴",
-      "codepoint": 9588
-    },
-    {
-      "name": "BOX DRAWINGS LIGHT UP",
-      "value": "╵",
-      "codepoint": 9589
-    },
-    {
-      "name": "BOX DRAWINGS LIGHT RIGHT",
-      "value": "╶",
-      "codepoint": 9590
-    },
-    {
-      "name": "BOX DRAWINGS LIGHT DOWN",
-      "value": "╷",
-      "codepoint": 9591
-    },
-    {
-      "name": "BOX DRAWINGS HEAVY LEFT",
-      "value": "╸",
-      "codepoint": 9592
-    },
-    {
-      "name": "BOX DRAWINGS HEAVY UP",
-      "value": "╹",
-      "codepoint": 9593
-    },
-    {
-      "name": "BOX DRAWINGS HEAVY RIGHT",
-      "value": "╺",
-      "codepoint": 9594
-    },
-    {
-      "name": "BOX DRAWINGS HEAVY DOWN",
-      "value": "╻",
-      "codepoint": 9595
-    },
-    {
-      "name": "BOX DRAWINGS LIGHT LEFT AND HEAVY RIGHT",
-      "value": "╼",
-      "codepoint": 9596
-    },
-    {
-      "name": "BOX DRAWINGS LIGHT UP AND HEAVY DOWN",
-      "value": "╽",
-      "codepoint": 9597
-    },
-    {
-      "name": "BOX DRAWINGS HEAVY LEFT AND LIGHT RIGHT",
-      "value": "╾",
-      "codepoint": 9598
-    },
-    {
-      "name": "BOX DRAWINGS HEAVY UP AND LIGHT DOWN",
-      "value": "╿",
-      "codepoint": 9599
-    },
-    {
-      "name": "UPPER HALF BLOCK",
-      "value": "▀",
-      "codepoint": 9600
-    },
-    {
-      "name": "LOWER ONE EIGHTH BLOCK",
-      "value": "▁",
-      "codepoint": 9601
-    },
-    {
-      "name": "LOWER ONE QUARTER BLOCK",
-      "value": "▂",
-      "codepoint": 9602
-    },
-    {
-      "name": "LOWER THREE EIGHTHS BLOCK",
-      "value": "▃",
-      "codepoint": 9603
-    },
-    {
-      "name": "LOWER HALF BLOCK",
-      "value": "▄",
-      "codepoint": 9604
-    },
-    {
-      "name": "LOWER FIVE EIGHTHS BLOCK",
-      "value": "▅",
-      "codepoint": 9605
-    },
-    {
-      "name": "LOWER THREE QUARTERS BLOCK",
-      "value": "▆",
-      "codepoint": 9606
-    },
-    {
-      "name": "LOWER SEVEN EIGHTHS BLOCK",
-      "value": "▇",
-      "codepoint": 9607
-    },
-    {
-      "name": "FULL BLOCK",
-      "value": "█",
-      "codepoint": 9608
-    },
-    {
-      "name": "LEFT SEVEN EIGHTHS BLOCK",
-      "value": "▉",
-      "codepoint": 9609
-    },
-    {
-      "name": "LEFT THREE QUARTERS BLOCK",
-      "value": "▊",
-      "codepoint": 9610
-    },
-    {
-      "name": "LEFT FIVE EIGHTHS BLOCK",
-      "value": "▋",
-      "codepoint": 9611
-    },
-    {
-      "name": "LEFT HALF BLOCK",
-      "value": "▌",
-      "codepoint": 9612
-    },
-    {
-      "name": "LEFT THREE EIGHTHS BLOCK",
-      "value": "▍",
-      "codepoint": 9613
-    },
-    {
-      "name": "LEFT ONE QUARTER BLOCK",
-      "value": "▎",
-      "codepoint": 9614
-    },
-    {
-      "name": "LEFT ONE EIGHTH BLOCK",
-      "value": "▏",
-      "codepoint": 9615
-    },
-    {
-      "name": "RIGHT HALF BLOCK",
-      "value": "▐",
-      "codepoint": 9616
-    },
-    {
-      "name": "LIGHT SHADE",
-      "value": "░",
-      "codepoint": 9617
-    },
-    {
-      "name": "MEDIUM SHADE",
-      "value": "▒",
-      "codepoint": 9618
-    },
-    {
-      "name": "DARK SHADE",
-      "value": "▓",
-      "codepoint": 9619
-    },
-    {
-      "name": "UPPER ONE EIGHTH BLOCK",
-      "value": "▔",
-      "codepoint": 9620
-    },
-    {
-      "name": "RIGHT ONE EIGHTH BLOCK",
-      "value": "▕",
-      "codepoint": 9621
-    },
-    {
-      "name": "QUADRANT LOWER LEFT",
-      "value": "▖",
-      "codepoint": 9622
-    },
-    {
-      "name": "QUADRANT LOWER RIGHT",
-      "value": "▗",
-      "codepoint": 9623
-    },
-    {
-      "name": "QUADRANT UPPER LEFT",
-      "value": "▘",
-      "codepoint": 9624
-    },
-    {
-      "name": "QUADRANT UPPER LEFT AND LOWER LEFT AND LOWER RIGHT",
-      "value": "▙",
-      "codepoint": 9625
-    },
-    {
-      "name": "QUADRANT UPPER LEFT AND LOWER RIGHT",
-      "value": "▚",
-      "codepoint": 9626
-    },
-    {
-      "name": "QUADRANT UPPER LEFT AND UPPER RIGHT AND LOWER LEFT",
-      "value": "▛",
-      "codepoint": 9627
-    },
-    {
-      "name": "QUADRANT UPPER LEFT AND UPPER RIGHT AND LOWER RIGHT",
-      "value": "▜",
-      "codepoint": 9628
-    },
-    {
-      "name": "QUADRANT UPPER RIGHT",
-      "value": "▝",
-      "codepoint": 9629
-    },
-    {
-      "name": "QUADRANT UPPER RIGHT AND LOWER LEFT",
-      "value": "▞",
-      "codepoint": 9630
-    },
-    {
-      "name": "QUADRANT UPPER RIGHT AND LOWER LEFT AND LOWER RIGHT",
-      "value": "▟",
-      "codepoint": 9631
     },
     {
       "name": "BLACK SQUARE",
@@ -12666,56 +11736,6 @@
       "name": "IDEOGRAPHIC DESCRIPTION CHARACTER OVERLAID",
       "value": "⿻",
       "codepoint": 12283
-    },
-    {
-      "name": "PRESENTATION FORM FOR VERTICAL COMMA",
-      "value": "︐",
-      "codepoint": 65040
-    },
-    {
-      "name": "PRESENTATION FORM FOR VERTICAL IDEOGRAPHIC COMMA",
-      "value": "︑",
-      "codepoint": 65041
-    },
-    {
-      "name": "PRESENTATION FORM FOR VERTICAL IDEOGRAPHIC FULL STOP",
-      "value": "︒",
-      "codepoint": 65042
-    },
-    {
-      "name": "PRESENTATION FORM FOR VERTICAL COLON",
-      "value": "︓",
-      "codepoint": 65043
-    },
-    {
-      "name": "PRESENTATION FORM FOR VERTICAL SEMICOLON",
-      "value": "︔",
-      "codepoint": 65044
-    },
-    {
-      "name": "PRESENTATION FORM FOR VERTICAL EXCLAMATION MARK",
-      "value": "︕",
-      "codepoint": 65045
-    },
-    {
-      "name": "PRESENTATION FORM FOR VERTICAL QUESTION MARK",
-      "value": "︖",
-      "codepoint": 65046
-    },
-    {
-      "name": "PRESENTATION FORM FOR VERTICAL LEFT WHITE LENTICULAR BRACKET",
-      "value": "︗",
-      "codepoint": 65047
-    },
-    {
-      "name": "PRESENTATION FORM FOR VERTICAL RIGHT WHITE LENTICULAR BRAKCET",
-      "value": "︘",
-      "codepoint": 65048
-    },
-    {
-      "name": "PRESENTATION FORM FOR VERTICAL HORIZONTAL ELLIPSIS",
-      "value": "︙",
-      "codepoint": 65049
     },
     {
       "name": "GREEK ACROPHONIC ATTIC ONE QUARTER",
@@ -23516,586 +22536,6 @@
       "name": "LEFT LUGGAGE",
       "value": "🛅",
       "codepoint": 128709
-    },
-    {
-      "name": "ALCHEMICAL SYMBOL FOR QUINTESSENCE",
-      "value": "🜀",
-      "codepoint": 128768
-    },
-    {
-      "name": "ALCHEMICAL SYMBOL FOR AIR",
-      "value": "🜁",
-      "codepoint": 128769
-    },
-    {
-      "name": "ALCHEMICAL SYMBOL FOR FIRE",
-      "value": "🜂",
-      "codepoint": 128770
-    },
-    {
-      "name": "ALCHEMICAL SYMBOL FOR EARTH",
-      "value": "🜃",
-      "codepoint": 128771
-    },
-    {
-      "name": "ALCHEMICAL SYMBOL FOR WATER",
-      "value": "🜄",
-      "codepoint": 128772
-    },
-    {
-      "name": "ALCHEMICAL SYMBOL FOR AQUAFORTIS",
-      "value": "🜅",
-      "codepoint": 128773
-    },
-    {
-      "name": "ALCHEMICAL SYMBOL FOR AQUA REGIA",
-      "value": "🜆",
-      "codepoint": 128774
-    },
-    {
-      "name": "ALCHEMICAL SYMBOL FOR AQUA REGIA-2",
-      "value": "🜇",
-      "codepoint": 128775
-    },
-    {
-      "name": "ALCHEMICAL SYMBOL FOR AQUA VITAE",
-      "value": "🜈",
-      "codepoint": 128776
-    },
-    {
-      "name": "ALCHEMICAL SYMBOL FOR AQUA VITAE-2",
-      "value": "🜉",
-      "codepoint": 128777
-    },
-    {
-      "name": "ALCHEMICAL SYMBOL FOR VINEGAR",
-      "value": "🜊",
-      "codepoint": 128778
-    },
-    {
-      "name": "ALCHEMICAL SYMBOL FOR VINEGAR-2",
-      "value": "🜋",
-      "codepoint": 128779
-    },
-    {
-      "name": "ALCHEMICAL SYMBOL FOR VINEGAR-3",
-      "value": "🜌",
-      "codepoint": 128780
-    },
-    {
-      "name": "ALCHEMICAL SYMBOL FOR SULFUR",
-      "value": "🜍",
-      "codepoint": 128781
-    },
-    {
-      "name": "ALCHEMICAL SYMBOL FOR PHILOSOPHERS SULFUR",
-      "value": "🜎",
-      "codepoint": 128782
-    },
-    {
-      "name": "ALCHEMICAL SYMBOL FOR BLACK SULFUR",
-      "value": "🜏",
-      "codepoint": 128783
-    },
-    {
-      "name": "ALCHEMICAL SYMBOL FOR MERCURY SUBLIMATE",
-      "value": "🜐",
-      "codepoint": 128784
-    },
-    {
-      "name": "ALCHEMICAL SYMBOL FOR MERCURY SUBLIMATE-2",
-      "value": "🜑",
-      "codepoint": 128785
-    },
-    {
-      "name": "ALCHEMICAL SYMBOL FOR MERCURY SUBLIMATE-3",
-      "value": "🜒",
-      "codepoint": 128786
-    },
-    {
-      "name": "ALCHEMICAL SYMBOL FOR CINNABAR",
-      "value": "🜓",
-      "codepoint": 128787
-    },
-    {
-      "name": "ALCHEMICAL SYMBOL FOR SALT",
-      "value": "🜔",
-      "codepoint": 128788
-    },
-    {
-      "name": "ALCHEMICAL SYMBOL FOR NITRE",
-      "value": "🜕",
-      "codepoint": 128789
-    },
-    {
-      "name": "ALCHEMICAL SYMBOL FOR VITRIOL",
-      "value": "🜖",
-      "codepoint": 128790
-    },
-    {
-      "name": "ALCHEMICAL SYMBOL FOR VITRIOL-2",
-      "value": "🜗",
-      "codepoint": 128791
-    },
-    {
-      "name": "ALCHEMICAL SYMBOL FOR ROCK SALT",
-      "value": "🜘",
-      "codepoint": 128792
-    },
-    {
-      "name": "ALCHEMICAL SYMBOL FOR ROCK SALT-2",
-      "value": "🜙",
-      "codepoint": 128793
-    },
-    {
-      "name": "ALCHEMICAL SYMBOL FOR GOLD",
-      "value": "🜚",
-      "codepoint": 128794
-    },
-    {
-      "name": "ALCHEMICAL SYMBOL FOR SILVER",
-      "value": "🜛",
-      "codepoint": 128795
-    },
-    {
-      "name": "ALCHEMICAL SYMBOL FOR IRON ORE",
-      "value": "🜜",
-      "codepoint": 128796
-    },
-    {
-      "name": "ALCHEMICAL SYMBOL FOR IRON ORE-2",
-      "value": "🜝",
-      "codepoint": 128797
-    },
-    {
-      "name": "ALCHEMICAL SYMBOL FOR CROCUS OF IRON",
-      "value": "🜞",
-      "codepoint": 128798
-    },
-    {
-      "name": "ALCHEMICAL SYMBOL FOR REGULUS OF IRON",
-      "value": "🜟",
-      "codepoint": 128799
-    },
-    {
-      "name": "ALCHEMICAL SYMBOL FOR COPPER ORE",
-      "value": "🜠",
-      "codepoint": 128800
-    },
-    {
-      "name": "ALCHEMICAL SYMBOL FOR IRON-COPPER ORE",
-      "value": "🜡",
-      "codepoint": 128801
-    },
-    {
-      "name": "ALCHEMICAL SYMBOL FOR SUBLIMATE OF COPPER",
-      "value": "🜢",
-      "codepoint": 128802
-    },
-    {
-      "name": "ALCHEMICAL SYMBOL FOR CROCUS OF COPPER",
-      "value": "🜣",
-      "codepoint": 128803
-    },
-    {
-      "name": "ALCHEMICAL SYMBOL FOR CROCUS OF COPPER-2",
-      "value": "🜤",
-      "codepoint": 128804
-    },
-    {
-      "name": "ALCHEMICAL SYMBOL FOR COPPER ANTIMONIATE",
-      "value": "🜥",
-      "codepoint": 128805
-    },
-    {
-      "name": "ALCHEMICAL SYMBOL FOR SALT OF COPPER ANTIMONIATE",
-      "value": "🜦",
-      "codepoint": 128806
-    },
-    {
-      "name": "ALCHEMICAL SYMBOL FOR SUBLIMATE OF SALT OF COPPER",
-      "value": "🜧",
-      "codepoint": 128807
-    },
-    {
-      "name": "ALCHEMICAL SYMBOL FOR VERDIGRIS",
-      "value": "🜨",
-      "codepoint": 128808
-    },
-    {
-      "name": "ALCHEMICAL SYMBOL FOR TIN ORE",
-      "value": "🜩",
-      "codepoint": 128809
-    },
-    {
-      "name": "ALCHEMICAL SYMBOL FOR LEAD ORE",
-      "value": "🜪",
-      "codepoint": 128810
-    },
-    {
-      "name": "ALCHEMICAL SYMBOL FOR ANTIMONY ORE",
-      "value": "🜫",
-      "codepoint": 128811
-    },
-    {
-      "name": "ALCHEMICAL SYMBOL FOR SUBLIMATE OF ANTIMONY",
-      "value": "🜬",
-      "codepoint": 128812
-    },
-    {
-      "name": "ALCHEMICAL SYMBOL FOR SALT OF ANTIMONY",
-      "value": "🜭",
-      "codepoint": 128813
-    },
-    {
-      "name": "ALCHEMICAL SYMBOL FOR SUBLIMATE OF SALT OF ANTIMONY",
-      "value": "🜮",
-      "codepoint": 128814
-    },
-    {
-      "name": "ALCHEMICAL SYMBOL FOR VINEGAR OF ANTIMONY",
-      "value": "🜯",
-      "codepoint": 128815
-    },
-    {
-      "name": "ALCHEMICAL SYMBOL FOR REGULUS OF ANTIMONY",
-      "value": "🜰",
-      "codepoint": 128816
-    },
-    {
-      "name": "ALCHEMICAL SYMBOL FOR REGULUS OF ANTIMONY-2",
-      "value": "🜱",
-      "codepoint": 128817
-    },
-    {
-      "name": "ALCHEMICAL SYMBOL FOR REGULUS",
-      "value": "🜲",
-      "codepoint": 128818
-    },
-    {
-      "name": "ALCHEMICAL SYMBOL FOR REGULUS-2",
-      "value": "🜳",
-      "codepoint": 128819
-    },
-    {
-      "name": "ALCHEMICAL SYMBOL FOR REGULUS-3",
-      "value": "🜴",
-      "codepoint": 128820
-    },
-    {
-      "name": "ALCHEMICAL SYMBOL FOR REGULUS-4",
-      "value": "🜵",
-      "codepoint": 128821
-    },
-    {
-      "name": "ALCHEMICAL SYMBOL FOR ALKALI",
-      "value": "🜶",
-      "codepoint": 128822
-    },
-    {
-      "name": "ALCHEMICAL SYMBOL FOR ALKALI-2",
-      "value": "🜷",
-      "codepoint": 128823
-    },
-    {
-      "name": "ALCHEMICAL SYMBOL FOR MARCASITE",
-      "value": "🜸",
-      "codepoint": 128824
-    },
-    {
-      "name": "ALCHEMICAL SYMBOL FOR SAL-AMMONIAC",
-      "value": "🜹",
-      "codepoint": 128825
-    },
-    {
-      "name": "ALCHEMICAL SYMBOL FOR ARSENIC",
-      "value": "🜺",
-      "codepoint": 128826
-    },
-    {
-      "name": "ALCHEMICAL SYMBOL FOR REALGAR",
-      "value": "🜻",
-      "codepoint": 128827
-    },
-    {
-      "name": "ALCHEMICAL SYMBOL FOR REALGAR-2",
-      "value": "🜼",
-      "codepoint": 128828
-    },
-    {
-      "name": "ALCHEMICAL SYMBOL FOR AURIPIGMENT",
-      "value": "🜽",
-      "codepoint": 128829
-    },
-    {
-      "name": "ALCHEMICAL SYMBOL FOR BISMUTH ORE",
-      "value": "🜾",
-      "codepoint": 128830
-    },
-    {
-      "name": "ALCHEMICAL SYMBOL FOR TARTAR",
-      "value": "🜿",
-      "codepoint": 128831
-    },
-    {
-      "name": "ALCHEMICAL SYMBOL FOR TARTAR-2",
-      "value": "🝀",
-      "codepoint": 128832
-    },
-    {
-      "name": "ALCHEMICAL SYMBOL FOR QUICK LIME",
-      "value": "🝁",
-      "codepoint": 128833
-    },
-    {
-      "name": "ALCHEMICAL SYMBOL FOR BORAX",
-      "value": "🝂",
-      "codepoint": 128834
-    },
-    {
-      "name": "ALCHEMICAL SYMBOL FOR BORAX-2",
-      "value": "🝃",
-      "codepoint": 128835
-    },
-    {
-      "name": "ALCHEMICAL SYMBOL FOR BORAX-3",
-      "value": "🝄",
-      "codepoint": 128836
-    },
-    {
-      "name": "ALCHEMICAL SYMBOL FOR ALUM",
-      "value": "🝅",
-      "codepoint": 128837
-    },
-    {
-      "name": "ALCHEMICAL SYMBOL FOR OIL",
-      "value": "🝆",
-      "codepoint": 128838
-    },
-    {
-      "name": "ALCHEMICAL SYMBOL FOR SPIRIT",
-      "value": "🝇",
-      "codepoint": 128839
-    },
-    {
-      "name": "ALCHEMICAL SYMBOL FOR TINCTURE",
-      "value": "🝈",
-      "codepoint": 128840
-    },
-    {
-      "name": "ALCHEMICAL SYMBOL FOR GUM",
-      "value": "🝉",
-      "codepoint": 128841
-    },
-    {
-      "name": "ALCHEMICAL SYMBOL FOR WAX",
-      "value": "🝊",
-      "codepoint": 128842
-    },
-    {
-      "name": "ALCHEMICAL SYMBOL FOR POWDER",
-      "value": "🝋",
-      "codepoint": 128843
-    },
-    {
-      "name": "ALCHEMICAL SYMBOL FOR CALX",
-      "value": "🝌",
-      "codepoint": 128844
-    },
-    {
-      "name": "ALCHEMICAL SYMBOL FOR TUTTY",
-      "value": "🝍",
-      "codepoint": 128845
-    },
-    {
-      "name": "ALCHEMICAL SYMBOL FOR CAPUT MORTUUM",
-      "value": "🝎",
-      "codepoint": 128846
-    },
-    {
-      "name": "ALCHEMICAL SYMBOL FOR SCEPTER OF JOVE",
-      "value": "🝏",
-      "codepoint": 128847
-    },
-    {
-      "name": "ALCHEMICAL SYMBOL FOR CADUCEUS",
-      "value": "🝐",
-      "codepoint": 128848
-    },
-    {
-      "name": "ALCHEMICAL SYMBOL FOR TRIDENT",
-      "value": "🝑",
-      "codepoint": 128849
-    },
-    {
-      "name": "ALCHEMICAL SYMBOL FOR STARRED TRIDENT",
-      "value": "🝒",
-      "codepoint": 128850
-    },
-    {
-      "name": "ALCHEMICAL SYMBOL FOR LODESTONE",
-      "value": "🝓",
-      "codepoint": 128851
-    },
-    {
-      "name": "ALCHEMICAL SYMBOL FOR SOAP",
-      "value": "🝔",
-      "codepoint": 128852
-    },
-    {
-      "name": "ALCHEMICAL SYMBOL FOR URINE",
-      "value": "🝕",
-      "codepoint": 128853
-    },
-    {
-      "name": "ALCHEMICAL SYMBOL FOR HORSE DUNG",
-      "value": "🝖",
-      "codepoint": 128854
-    },
-    {
-      "name": "ALCHEMICAL SYMBOL FOR ASHES",
-      "value": "🝗",
-      "codepoint": 128855
-    },
-    {
-      "name": "ALCHEMICAL SYMBOL FOR POT ASHES",
-      "value": "🝘",
-      "codepoint": 128856
-    },
-    {
-      "name": "ALCHEMICAL SYMBOL FOR BRICK",
-      "value": "🝙",
-      "codepoint": 128857
-    },
-    {
-      "name": "ALCHEMICAL SYMBOL FOR POWDERED BRICK",
-      "value": "🝚",
-      "codepoint": 128858
-    },
-    {
-      "name": "ALCHEMICAL SYMBOL FOR AMALGAM",
-      "value": "🝛",
-      "codepoint": 128859
-    },
-    {
-      "name": "ALCHEMICAL SYMBOL FOR STRATUM SUPER STRATUM",
-      "value": "🝜",
-      "codepoint": 128860
-    },
-    {
-      "name": "ALCHEMICAL SYMBOL FOR STRATUM SUPER STRATUM-2",
-      "value": "🝝",
-      "codepoint": 128861
-    },
-    {
-      "name": "ALCHEMICAL SYMBOL FOR SUBLIMATION",
-      "value": "🝞",
-      "codepoint": 128862
-    },
-    {
-      "name": "ALCHEMICAL SYMBOL FOR PRECIPITATE",
-      "value": "🝟",
-      "codepoint": 128863
-    },
-    {
-      "name": "ALCHEMICAL SYMBOL FOR DISTILL",
-      "value": "🝠",
-      "codepoint": 128864
-    },
-    {
-      "name": "ALCHEMICAL SYMBOL FOR DISSOLVE",
-      "value": "🝡",
-      "codepoint": 128865
-    },
-    {
-      "name": "ALCHEMICAL SYMBOL FOR DISSOLVE-2",
-      "value": "🝢",
-      "codepoint": 128866
-    },
-    {
-      "name": "ALCHEMICAL SYMBOL FOR PURIFY",
-      "value": "🝣",
-      "codepoint": 128867
-    },
-    {
-      "name": "ALCHEMICAL SYMBOL FOR PUTREFACTION",
-      "value": "🝤",
-      "codepoint": 128868
-    },
-    {
-      "name": "ALCHEMICAL SYMBOL FOR CRUCIBLE",
-      "value": "🝥",
-      "codepoint": 128869
-    },
-    {
-      "name": "ALCHEMICAL SYMBOL FOR CRUCIBLE-2",
-      "value": "🝦",
-      "codepoint": 128870
-    },
-    {
-      "name": "ALCHEMICAL SYMBOL FOR CRUCIBLE-3",
-      "value": "🝧",
-      "codepoint": 128871
-    },
-    {
-      "name": "ALCHEMICAL SYMBOL FOR CRUCIBLE-4",
-      "value": "🝨",
-      "codepoint": 128872
-    },
-    {
-      "name": "ALCHEMICAL SYMBOL FOR CRUCIBLE-5",
-      "value": "🝩",
-      "codepoint": 128873
-    },
-    {
-      "name": "ALCHEMICAL SYMBOL FOR ALEMBIC",
-      "value": "🝪",
-      "codepoint": 128874
-    },
-    {
-      "name": "ALCHEMICAL SYMBOL FOR BATH OF MARY",
-      "value": "🝫",
-      "codepoint": 128875
-    },
-    {
-      "name": "ALCHEMICAL SYMBOL FOR BATH OF VAPOURS",
-      "value": "🝬",
-      "codepoint": 128876
-    },
-    {
-      "name": "ALCHEMICAL SYMBOL FOR RETORT",
-      "value": "🝭",
-      "codepoint": 128877
-    },
-    {
-      "name": "ALCHEMICAL SYMBOL FOR HOUR",
-      "value": "🝮",
-      "codepoint": 128878
-    },
-    {
-      "name": "ALCHEMICAL SYMBOL FOR NIGHT",
-      "value": "🝯",
-      "codepoint": 128879
-    },
-    {
-      "name": "ALCHEMICAL SYMBOL FOR DAY-NIGHT",
-      "value": "🝰",
-      "codepoint": 128880
-    },
-    {
-      "name": "ALCHEMICAL SYMBOL FOR MONTH",
-      "value": "🝱",
-      "codepoint": 128881
-    },
-    {
-      "name": "ALCHEMICAL SYMBOL FOR HALF DRAM",
-      "value": "🝲",
-      "codepoint": 128882
-    },
-    {
-      "name": "ALCHEMICAL SYMBOL FOR HALF OUNCE",
-      "value": "🝳",
-      "codepoint": 128883
     }
   ]
 }

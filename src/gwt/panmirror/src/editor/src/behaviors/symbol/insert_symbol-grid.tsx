@@ -47,7 +47,9 @@ const SymbolCharacterGrid = React.forwardRef<any, CharacterGridProps>((props, re
   );
 });
 
+
 // TODO: page up / down and focus issues
+// TODO: If remove key handling from grid, events will bubble here
 function createKeyDownHandler(
   numberOfColumns: number,
   onChangeFocus: (previous: boolean) => void,

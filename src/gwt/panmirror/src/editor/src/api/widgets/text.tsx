@@ -17,7 +17,7 @@ import React, { ChangeEventHandler, KeyboardEventHandler } from 'react';
 
 import { WidgetProps } from './react';
 
-import './textInput.css';
+import './text.css';
 
 export interface TextInputProps extends WidgetProps {
   widthChars: number;
