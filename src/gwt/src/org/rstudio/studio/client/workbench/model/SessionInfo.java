@@ -71,6 +71,10 @@ public class SessionInfo extends JavaScriptObject
       return this.session_id;
    }-*/;
 
+   public final native String getSessionLabel() /*-{
+      return this.session_label;
+   }-*/;
+
    public final native JsArray<RnwWeave> getRnwWeaveTypes() /*-{
       return this.rnw_weave_types;
    }-*/;

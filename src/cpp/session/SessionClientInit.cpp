@@ -498,6 +498,7 @@ void handleClientInit(const boost::function<void()>& initFunction,
    sessionInfo["active_connections"] = modules::connections::activeConnectionsAsJson();
 
    sessionInfo["session_id"] = module_context::activeSession().id();
+   sessionInfo["session_label"] = module_context::activeSession().label();
 
    sessionInfo["drivers_support_licensing"] = options.supportsDriversLicensing();
 
