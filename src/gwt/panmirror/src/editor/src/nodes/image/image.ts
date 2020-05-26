@@ -49,7 +49,7 @@ import { imageDialog } from './image-dialog';
 import { imageDimensionsFromImg, imageContainerWidth, inlineHTMLIsImage } from './image-util';import { imageTextSelectionPlugin } from './image-textsel';
 import { posHasProhibitedFigureParent } from './figure';
 import { imageEventsPlugin } from './image-events';
-import { imageNodeViewPlugin } from './image-view';
+import { imageNodeViewPlugins } from './image-view';
 
 const TARGET_URL = 0;
 const TARGET_TITLE = 1;
@@ -110,7 +110,7 @@ const extension = (
       return [
         imageTextSelectionPlugin(),
         imageEventsPlugin(),
-        imageNodeViewPlugin('image', ui, events, pandocExtensions)
+        ...imageNodeViewPlugins('image', false, ui, events, pandocExtensions)
       ];
     },
   };

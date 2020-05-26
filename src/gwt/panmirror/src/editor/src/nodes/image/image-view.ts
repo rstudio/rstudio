@@ -15,7 +15,10 @@
 
 import { Node as ProsemirrorNode } from 'prosemirror-model';
 import { NodeView, EditorView } from 'prosemirror-view';
-import { NodeSelection, PluginKey, Plugin } from 'prosemirror-state';
+import { NodeSelection, PluginKey, Plugin, EditorState, Transaction, Selection } from 'prosemirror-state';
+import { keymap } from 'prosemirror-keymap';
+
+import { findParentNodeOfTypeClosestToPos } from 'prosemirror-utils';
 
 import { EditorUI, ImageType } from '../../api/ui';
 import { PandocExtensions, imageAttributesAvailable } from '../../api/pandoc';
@@ -34,17 +37,28 @@ import { imageDimensionsFromImg, imageContainerWidth } from './image-util';
 
 import './image-styles.css';
 
-export function imageNodeViewPlugin(type: string, ui: EditorUI, events: EditorEvents, pandocExtensions: PandocExtensions) {
-  return new Plugin({
-    key: new PluginKey(`${type}-node-view`),
-    props: {
-      nodeViews: {
-        [type]: (node: ProsemirrorNode, view: EditorView, getPos: boolean | (() => number)) => {
-          return new ImageNodeView(node, view, getPos as () => number, ui, events, pandocExtensions);
+
+export function imageNodeViewPlugins(type: string, arrowKeys: boolean, ui: EditorUI, events: EditorEvents, pandocExtensions: PandocExtensions) : Plugin[] {
+  return [
+    new Plugin({
+      key: new PluginKey(`${type}-node-view`),
+      props: {
+        nodeViews: {
+          [type]: (node: ProsemirrorNode, view: EditorView, getPos: boolean | (() => number)) => {
+            return new ImageNodeView(node, view, getPos as () => number, ui, events, pandocExtensions);
+          },
         },
       },
-    },
-  });
+    }),
+    ...(arrowKeys ? [
+      keymap({
+        ArrowLeft: arrowHandler(type, 'left'),
+        ArrowRight: arrowHandler(type, 'right'),
+        ArrowUp: arrowHandler(type, 'up'),
+        ArrowDown: arrowHandler(type, 'down'),
+      }),
+    ] : [])
+  ];
 }
 
 class ImageNodeView implements NodeView {
@@ -346,4 +360,35 @@ class ImageNodeView implements NodeView {
       }
     }
   }
+}
+
+function arrowHandler(type: string, dir: 'up' | 'down' | 'left' | 'right' | 'forward' | 'backward') {
+  return (state: EditorState, dispatch?: (tr: Transaction) => void, view?: EditorView) => {
+
+    if (state.selection.empty && view && view.endOfTextblock(dir)) {
+      
+      // compute side offset
+      const side = dir === 'left' || dir === 'up' ? -1 : 1;
+
+      // get selection head
+      const selection = state.selection;
+      const { $head } = selection;
+
+      // see if this would traverse our type
+      const nextPos = Selection.near(state.doc.resolve(side > 0 ? $head.after() : $head.before()), side);
+      if (nextPos.$head && nextPos.$head.parent.type.name === type) {
+        const figure = findParentNodeOfTypeClosestToPos(nextPos.$head, state.schema.nodes[type]);
+        if (figure && figure.node.textContent.length === 0) {
+          if (dispatch) {
+            const tr = state.tr;
+            const figureSelection = NodeSelection.create(state.doc, figure.pos);
+            tr.setSelection(figureSelection);
+            dispatch(tr);
+          }
+          return true;
+        }
+      }
+    }
+    return false;
+  };
 }

@@ -51,7 +51,7 @@ import {
   imageAttrsFromHTML,
 } from './image';
 import { inlineHTMLIsImage } from './image-util';
-import { imageNodeViewPlugin } from './image-view';
+import { imageNodeViewPlugins } from './image-view';
 
 const plugin = new PluginKey('figure');
 
@@ -160,11 +160,7 @@ const extension = (
       ];
     },
 
-    plugins: (_schema: Schema) => {
-      return [
-        imageNodeViewPlugin('figure', ui, events, pandocExtensions)
-      ];
-    },
+    plugins: (_schema: Schema) => imageNodeViewPlugins('figure', true, ui, events, pandocExtensions)
   };
 };
 
