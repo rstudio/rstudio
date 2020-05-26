@@ -263,7 +263,8 @@ public class TextEditingTargetVisualMode implements CommandPaletteEntrySource
             
             WriterOptionsContext writerOptions = writerOptionsFromVisual();
             
-            panmirror_.getMarkdown(writerOptions.options, new CommandWithArg<JsObject>() {
+            panmirror_.getMarkdown(writerOptions.options, kSerializationProgressDelayMs, 
+                                   new CommandWithArg<JsObject>() {
                @Override
                public void execute(JsObject obj)
                {
@@ -360,7 +361,8 @@ public class TextEditingTargetVisualMode implements CommandPaletteEntrySource
          
          WriterOptionsContext writerOptions = writerOptionsFromCode(editorCode);
          
-         panmirror_.setMarkdown(editorCode, writerOptions.options, true, new CommandWithArg<JsObject>() {
+         panmirror_.setMarkdown(editorCode, writerOptions.options, true, kCreationProgressDelayMs, 
+                                new CommandWithArg<JsObject>() {
             @Override
             public void execute(JsObject obj)
             {
@@ -532,7 +534,8 @@ public class TextEditingTargetVisualMode implements CommandPaletteEntrySource
    {   
       withPanmirror(() -> {
          WriterOptionsContext writerOptions = writerOptionsFromCode(code);
-         panmirror_.getCanonical(code, writerOptions.options, (markdown) -> {
+         panmirror_.getCanonical(code, writerOptions.options, kSerializationProgressDelayMs, 
+                                 (markdown) -> {
             if  (markdown != null) 
             {
                if (!writerOptions.wrapColumnChanged)
@@ -688,11 +691,12 @@ public class TextEditingTargetVisualMode implements CommandPaletteEntrySource
    {
       if (panmirror_ == null)
       {
-         // create panmirror
+         // create panmirror (no progress b/c we alread have pane progress)
          PanmirrorContext context = new PanmirrorContext(uiContext(), uiDisplay(), uiExecute());
          PanmirrorOptions options = panmirrorOptions();   
          PanmirrorWidget.Options widgetOptions = new PanmirrorWidget.Options();
-         PanmirrorWidget.create(context, panmirrorFormat(), options, widgetOptions, (panmirror) -> {
+         PanmirrorWidget.create(context, panmirrorFormat(), options, widgetOptions, kCreationProgressDelayMs, 
+                                (panmirror) -> {
          
             // save reference to panmirror
             panmirror_ = panmirror;
@@ -1600,6 +1604,10 @@ public class TextEditingTargetVisualMode implements CommandPaletteEntrySource
    private final ProgressPanel progress_;
    
    private SerializedCommandQueue syncToEditorQueue_ = new SerializedCommandQueue();
+   
+   private static final int kCreationProgressDelayMs = 0;
+   private static final int kSerializationProgressDelayMs = 5000;
+  
    
    private static final String RMD_VISUAL_MODE_LOCATION = "rmdVisualModeLocation";   
    private final static String[] kRmdChunkExecutionLangs = new String[] { "R", "Python" }; 
