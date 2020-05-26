@@ -1,5 +1,6 @@
 .pm-popup-insert-symbol {
   padding: 0px !important; 
+  text-align: center;
 }
 
 
@@ -23,4 +24,18 @@
   margin-bottom: 1px;
   border: none;
   height: 1px;
+}
+
+.pm-popup-insert-symbol-grid-container {
+  position: relative;
+}
+
+.pm-popup-insert-symbol-no-matching {
+  font-style: italic;
+  display: none;
+  margin: auto;
+  position: absolute;
+  top: 45px; 
+  left: 0; 
+  right: 0;
 }

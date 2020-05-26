@@ -93,9 +93,6 @@ class InsertSymbolPlugin extends Plugin<boolean> {
       this.popup.style.zIndex = '1000';
       const selectionCoords = view.coordsAtPos(selection.from);
 
-      // TODO: Should we actually show a pointer that denotes where the character will be inserted?
-      // ^ Question for overall editor design- not sure there are other cases like this that aren't
-      // dialogs
       const maximumTopPosition = Math.min(selectionCoords.bottom, window.innerHeight - height);
       const minimumTopPosition = editorRect.y;
       const popupTopPosition = Math.max(minimumTopPosition, maximumTopPosition);
@@ -275,17 +272,22 @@ const InsertSymbolPopup: React.FC<InsertSymbolPopupProps> = props => {
       </div>
 
       <hr className="pm-popup-insert-symbol-separator pm-border-background-color"/>
-      <SymbolCharacterGrid
-        symbolCharacters={filteredSymbols}
-        onSymbolCharacterSelected={(character: string) => {
-          props.onInsertText(character);
-        }}
-        onChangeFocus={(previous: boolean) => focusElement(previous ? selectRef : textRef)}
-        height={gridHeight}
-        width={gridWidth}
-        numberOfColumns={12}
-        ref={gridRef}
-      />
+      <div className="pm-popup-insert-symbol-grid-container">
+        <SymbolCharacterGrid
+          symbolCharacters={filteredSymbols}
+          onSymbolCharacterSelected={(character: string) => {
+            props.onInsertText(character);
+          }}
+          onChangeFocus={(previous: boolean) => focusElement(previous ? selectRef : textRef)}
+          height={gridHeight}
+          width={gridWidth}
+          numberOfColumns={12}
+          ref={gridRef}
+        />
+        <div className="pm-popup-insert-symbol-no-matching pm-light-text-color" style={{display: filteredSymbols.length > 0 ? 'none' : 'block'}}>
+          No matching symbols
+        </div>
+      </div>
     </Popup>
   );
 };
