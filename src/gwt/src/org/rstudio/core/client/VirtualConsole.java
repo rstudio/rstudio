@@ -1,7 +1,7 @@
 /*
  * VirtualConsole.java
  *
- * Copyright (C) 2009-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -73,7 +73,7 @@ public class VirtualConsole
       @Override
       public boolean screenReaderEnabled()
       {
-         return getUserPrefs().getScreenReaderEnabled();
+         return getUserPrefs().enableScreenReader().getValue();
       }
    }
 

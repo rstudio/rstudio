@@ -1,7 +1,7 @@
 /*
  * pandoc.ts
  *
- * Copyright (C) 2019-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -17,12 +17,20 @@ import { Fragment, Mark, Node as ProsemirrorNode, Schema, NodeType } from 'prose
 
 import { PandocAttr } from './pandoc_attr';
 import { PandocCapabilitiesResult } from './pandoc_capabilities';
+import { kQuoteType, kQuoteChildren, QuoteType } from './quote';
 
 export interface PandocEngine {
   getCapabilities(): Promise<PandocCapabilitiesResult>;
   markdownToAst(markdown: string, format: string, options: string[]): Promise<PandocAst>;
   astToMarkdown(ast: PandocAst, format: string, options: string[]): Promise<string>;
   listExtensions(format: string): Promise<string>;
+}
+
+export interface PandocWriterOptions {
+  atxHeaders?: boolean;
+  references?: string; // block | section | document
+  wrapColumn?: boolean | number;
+  dpi?: number;
 }
 
 export interface PandocExtensions {
@@ -232,6 +240,10 @@ export interface ProsemirrorWriter {
 
   // log an unrecoginzed token type
   logUnrecognized(token: string): void;
+
+  // query whether a given node type is open
+  // (useful for e.g. conditional behavior when in a list or table)
+  isNodeOpen(type: NodeType): boolean;
 }
 
 export interface PandocNodeWriter {
@@ -269,7 +281,7 @@ export interface PandocOutput {
   writeToken(type: PandocTokenType, content?: (() => void) | any): void;
   writeMark(type: PandocTokenType, parent: Fragment, expelEnclosingWhitespace?: boolean): void;
   writeArray(content: () => void): void;
-  writeAttr(id?: string, classes?: string[], keyvalue?: string[]): void;
+  writeAttr(id?: string, classes?: string[], keyvalue?: [[string, string]]): void;
   writeText(text: string | null): void;
   writeLink(href: string, title: string, attr: PandocAttr | null, f: () => void): void;
   writeNode(node: ProsemirrorNode): void;
@@ -287,10 +299,14 @@ export interface PandocOutput {
 export function tokensCollectText(c: PandocToken[]): string {
   return c
     .map(elem => {
-      if (elem.t === 'Str') {
+      if (elem.t === PandocTokenType.Str) {
         return elem.c;
-      } else if (elem.t === 'Space') {
+      } else if (elem.t === PandocTokenType.Space || elem.t === PandocTokenType.SoftBreak) {
         return ' ';
+      } else if (elem.t === PandocTokenType.Quoted) {
+        const type = elem.c[kQuoteType].t;
+        const quote = type === QuoteType.SingleQuote ? "'" : '"';
+        return quote + tokensCollectText(elem.c[kQuoteChildren]) + quote;
       } else if (elem.c) {
         return tokensCollectText(elem.c);
       } else {

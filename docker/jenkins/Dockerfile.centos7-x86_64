@@ -1,5 +1,7 @@
 FROM centos:7
 
+ENV OPERATING_SYSTEM=centos_7
+
 RUN set -x \
     && yum install epel-release -y
 
@@ -14,6 +16,7 @@ RUN yum install -y \
     gcc \
     gcc-c++ \
     git \
+    gdb \
     gpg \
     gtk3 \
     java-1.8.0-openjdk \

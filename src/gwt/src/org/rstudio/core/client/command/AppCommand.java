@@ -1,7 +1,7 @@
 /*
  * AppCommand.java
  *
- * Copyright (C) 2009-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -181,6 +181,18 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
       return enabled_ && isVisible(); // jcheng 06/30/2010: Hmmmm, smells weird.
    }
 
+   /**
+    * Determines whether there are any handlers established that will execute
+    * when this command runs. This is useful for determining if the command
+    * will do anything when executed.
+    * 
+    * @return Whether this command has handlers.
+    */
+   public boolean hasCommandHandlers()
+   {
+      return handlers_.getHandlerCount(CommandEvent.TYPE) > 0;
+   }
+
    public void setEnabled(boolean enabled)
    {
       if (enabled != enabled_)
@@ -287,7 +299,7 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
    {
       Workbench, Editor, R, Cpp, PackageDevelopment, RMarkdown,
       Markdown, Sweave, Help, VCS, Packrat, Renv, RPresentation,
-      Addin;
+      Addin, Viewer, History, Tutorial, Diagnostics, Import, Files;
       
       @Override
       public String toString()
@@ -333,6 +345,18 @@ public class AppCommand implements Command, ClickHandler, ImageResourceProvider
          context_ = Context.Renv;
       else if (lower.equals("presentation"))
          context_ = Context.RPresentation;
+      else if (lower.equals("viewer"))
+         context_ = Context.Viewer;
+      else if (lower.equals("tutorial"))
+         context_ = Context.Tutorial;
+      else if (lower.equals("diagnostics"))
+         context_ = Context.Diagnostics;
+      else if (lower.equals("history"))
+         context_ = Context.History;
+      else if (lower.equals("import"))
+         context_ = Context.Import;
+      else if (lower.equals("files"))
+         context_ = Context.Files;
       else
          throw new Error("Invalid AppCommand context '" + context + "'");
    }

@@ -1,7 +1,7 @@
 /*
  * DesktopHooks.java
  *
- * Copyright (C) 2009-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -44,7 +44,7 @@ import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
-import org.rstudio.studio.client.workbench.views.source.SourceShim;
+import org.rstudio.studio.client.workbench.views.source.Source;
 
 /**
  * Any methods on this class are automatically made available to the
@@ -66,7 +66,7 @@ public class DesktopHooks
                        Server server,
                        FileTypeRegistry fileTypeRegistry,
                        WorkbenchContext workbenchContext,
-                       SourceShim sourceShim,
+                       Source source,
                        ProductEditionInfo editionInfo)
    {
       commands_ = commands;
@@ -77,7 +77,7 @@ public class DesktopHooks
       server_ = server;
       fileTypeRegistry_ = fileTypeRegistry;
       workbenchContext_ = workbenchContext;
-      sourceShim_ = sourceShim;
+      source_ = source;
       editionInfo_ = editionInfo;
       
       events_.addHandler(SaveActionChangedEvent.TYPE, saveActionChangedEvent ->
@@ -262,7 +262,7 @@ public class DesktopHooks
    private final Server server_;
    private final FileTypeRegistry fileTypeRegistry_;
    private final WorkbenchContext workbenchContext_;
-   private final SourceShim sourceShim_;
+   private final Source source_;
    private final SerializedCommandQueue commandQueue_ = 
                                          new SerializedCommandQueue();
    private final ProductEditionInfo editionInfo_;

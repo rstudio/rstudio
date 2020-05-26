@@ -1,7 +1,7 @@
 /*
  * Commands.java
  *
- * Copyright (C) 2009-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -418,6 +418,7 @@ public abstract class
    public abstract AppCommand macPreferences();
    public abstract AppCommand showOptions();
    public abstract AppCommand modifyKeyboardShortcuts();
+   public abstract AppCommand showCommandPalette();
    
    // Terminal
    public abstract AppCommand newTerminal();

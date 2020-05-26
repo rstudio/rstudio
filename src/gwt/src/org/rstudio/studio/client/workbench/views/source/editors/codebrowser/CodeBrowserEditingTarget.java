@@ -1,7 +1,7 @@
 /*
  * CodeBrowserEditingTarget.java
  *
- * Copyright (C) 2009-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -39,6 +39,7 @@ import org.rstudio.core.client.events.EnsureHeightHandler;
 import org.rstudio.core.client.events.EnsureVisibleHandler;
 import org.rstudio.core.client.files.FileSystemContext;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.application.ui.CommandPaletteEntry;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.ReadOnlyValue;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
@@ -74,6 +75,7 @@ import org.rstudio.studio.client.workbench.views.source.model.SourceServerOperat
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 
 public class CodeBrowserEditingTarget implements EditingTarget
 {
@@ -776,6 +778,12 @@ public class CodeBrowserEditingTarget implements EditingTarget
    public String getCurrentStatus()
    {
       return "Code Browser displayed";
+   }
+   
+   @Override
+   public List<CommandPaletteEntry> getCommandPaletteEntries()
+   {
+      return null;
    }
 
    // Private methods --------------------------------------------------------

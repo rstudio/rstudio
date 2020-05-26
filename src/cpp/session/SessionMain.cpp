@@ -1,7 +1,7 @@
 /*
  * SessionMain.cpp
  *
- * Copyright (C) 2009-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -18,6 +18,7 @@
 // required to avoid Win64 winsock order of include
 // compilation problem
 #include <boost/asio/io_service.hpp>
+#include <boost/scope_exit.hpp>
 
 #ifndef _WIN32
 #include <sys/types.h>
@@ -431,8 +432,12 @@ Error runPreflightScript()
    return Success();
 }
 
+// implemented below
+void stopMonitorWorkerThread();
+
 void exitEarly(int status)
 {
+   stopMonitorWorkerThread();
    FileLock::cleanUp();
    ::exit(status);
 }
@@ -1213,6 +1218,9 @@ void rCleanup(bool terminatedNormally)
       // https://github.com/rstudio/rstudio/issues/5222
       system::file_monitor::stop();
 
+      // stop the monitor thread
+      stopMonitorWorkerThread();
+
       // cause graceful exit of clientEventService (ensures delivery
       // of any pending events prior to process termination). wait a
       // very brief interval first to allow the quit or other termination
@@ -1663,12 +1671,17 @@ bool ensureUtf8Charset()
 }
 
 // io_service for performing monitor work on the thread
-boost::asio::io_service s_ioService;
+boost::asio::io_service s_monitorIoService;
 
 void monitorWorkerThreadFunc()
 {
-   boost::asio::io_service::work work(s_ioService);
-   s_ioService.run();
+   boost::asio::io_service::work work(s_monitorIoService);
+   s_monitorIoService.run();
+}
+
+void stopMonitorWorkerThread()
+{
+   s_monitorIoService.stop();
 }
 
 void initMonitorClient()
@@ -1677,11 +1690,11 @@ void initMonitorClient()
    {
       monitor::initializeMonitorClient(core::system::getenv(kMonitorSocketPathEnvVar),
                                        options().monitorSharedSecret(),
-                                       s_ioService);
+                                       s_monitorIoService);
    }
    else
    {
-      modules::overlay::initMonitorClient(s_ioService);
+      modules::overlay::initMonitorClient(s_monitorIoService);
    }
 
    // start the monitor work thread
@@ -1779,8 +1792,13 @@ int main (int argc, char * const argv[])
          log::addLogDestination(
             std::shared_ptr<log::ILogDestination>(new log::StderrLogDestination(log::LogLevel::WARN)));
 
-      // initialize monitor
+      // initialize monitor but stop its thread on exit
       initMonitorClient();
+      BOOST_SCOPE_EXIT(void)
+      {
+         stopMonitorWorkerThread();
+      }
+      BOOST_SCOPE_EXIT_END
 
       // register monitor log writer (but not in standalone mode)
       if (!options.standalone())
@@ -1898,10 +1916,10 @@ int main (int argc, char * const argv[])
       FilePath userScratchPath = options.userScratchPath();
       if (userScratchPath.exists())
       {
-         std::vector<FilePath> scratchChildren;
-         userScratchPath.getChildren(scratchChildren);
-
-         if (scratchChildren.size() == 0)
+         // if the lists directory has not yet been created,
+         // this is a new user
+         FilePath listsPath = userScratchPath.completeChildPath("monitored/lists");
+         if (!listsPath.exists())
             newUser = true;
       }
       else

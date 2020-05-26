@@ -3,6 +3,8 @@
 # LTSC (Long Term Service Channel) release of Server Core 2019
 FROM mcr.microsoft.com/windows/servercore:ltsc2019
 
+ENV OPERATING_SYSTEM=windows_10
+
 # set RUN commands to use powershell
 SHELL ["powershell"]
 

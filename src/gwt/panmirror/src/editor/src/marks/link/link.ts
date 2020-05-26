@@ -1,7 +1,7 @@
 /*
  * link.ts
  *
- * Copyright (C) 2019-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -27,6 +27,7 @@ import {
 } from '../../api/pandoc_attr';
 import { EditorUI } from '../../api/ui';
 import { Extension } from '../../api/extension';
+import { PandocCapabilities } from '../../api/pandoc_capabilities';
 
 import { linkCommand, removeLinkCommand } from './link-command';
 import { linkInputRules, linkPasteHandler } from './link-auto';
@@ -42,7 +43,7 @@ const LINK_ATTR = 0;
 const LINK_CHILDREN = 1;
 const LINK_TARGET = 2;
 
-const extension = (pandocExtensions: PandocExtensions): Extension | null => {
+const extension = (pandocExtensions: PandocExtensions, _caps: PandocCapabilities, ui: EditorUI): Extension | null => {
   const capabilities = {
     headings: pandocExtensions.implicit_header_references,
     attributes: pandocExtensions.link_attributes,
@@ -147,7 +148,7 @@ const extension = (pandocExtensions: PandocExtensions): Extension | null => {
       },
     ],
 
-    commands: (schema: Schema, ui: EditorUI) => {
+    commands: (schema: Schema) => {
       return [
         new ProsemirrorCommand(
           EditorCommandId.Link,
@@ -163,7 +164,7 @@ const extension = (pandocExtensions: PandocExtensions): Extension | null => {
     appendTransaction: (schema: Schema) =>
       pandocExtensions.implicit_header_references ? [syncHeadingLinksAppendTransaction()] : [],
 
-    plugins: (schema: Schema, ui: EditorUI) => {
+    plugins: (schema: Schema) => {
       const plugins = [
         new LinkPopupPlugin(
           ui,

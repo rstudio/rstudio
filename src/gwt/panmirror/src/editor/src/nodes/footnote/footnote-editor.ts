@@ -1,7 +1,7 @@
 /*
  * footnote-editor.ts
  *
- * Copyright (C) 2019-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -21,6 +21,7 @@ import { EditorState, TextSelection, Plugin, PluginKey, Transaction } from 'pros
 import { nodeDecoration } from '../../api/decoration';
 import { firstNode, lastNode } from '../../api/node';
 import { selectionIsWithin } from '../../api/selection';
+import { scrollIntoView } from '../../api/scroll';
 
 import { findFootnoteNode, selectedFootnote, selectedNote } from './footnote';
 
@@ -53,6 +54,19 @@ export function footnoteEditorActivationPlugin() {
         return key.getState(state);
       },
     },
+
+    view: () => ({
+      // scroll footnote into view (if necessary) when note editor is active
+      update: (view: EditorView) => {
+        const note = selectedNote(view.state.selection);
+        if (note) {
+          const footnote = findFootnoteNode(view.state.doc, note.node.attrs.ref);
+          if (footnote) {
+            scrollIntoView(view, footnote.pos, false, 0, 30);
+          }
+        }
+      },
+    }),
   });
 }
 

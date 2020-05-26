@@ -1,7 +1,7 @@
 /*
  * ElementIds.java
  *
- * Copyright (C) 2009-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -162,6 +162,7 @@ public class ElementIds
    
    public final static String RMARKDOWN_BASIC_PREFS = "rmarkdown_basic_prefs";
    public final static String RMARKDOWN_ADVANCED_PREFS = "markdown_advanced_prefs";
+   public final static String RMARKDOWN_VISUAL_MODE_PREFS = "markdown_visual_mode_prefs";
 
    public final static String PACKAGE_MANAGEMENT_PREFS = "package_management_prefs";
    public final static String PACKAGE_DEVELOPMENT_PREFS = "package_development_prefs";
@@ -507,4 +508,9 @@ public class ElementIds
    
    // SatelliteWindow
    public final static String SATELLITE_PANEL = "satellite_panel";
+   
+   // CommandPalette
+   public final static String COMMAND_PALETTE_LIST = "command_palette_list";
+   public final static String COMMAND_PALETTE_SEARCH = "command_palette_search";
+   public final static String COMMAND_ENTRY_PREFIX = "command_entry_";
 }

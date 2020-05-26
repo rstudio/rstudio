@@ -1,7 +1,7 @@
 /*
  * BuildPresenter.java
  *
- * Copyright (C) 2009-17 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -64,7 +64,7 @@ import org.rstudio.studio.client.workbench.views.console.events.WorkingDirChange
 import org.rstudio.studio.client.workbench.views.console.events.WorkingDirChangedHandler;
 import org.rstudio.studio.client.workbench.views.files.model.FilesServerOperations;
 import org.rstudio.studio.client.workbench.views.jobs.model.JobManager;
-import org.rstudio.studio.client.workbench.views.source.SourceBuildHelper;
+import org.rstudio.studio.client.workbench.views.source.Source;
 import org.rstudio.studio.client.workbench.views.terminal.TerminalHelper;
 
 public class BuildPresenter extends BasePresenter 
@@ -104,7 +104,7 @@ public class BuildPresenter extends BasePresenter
                          FileTypeRegistry fileTypeRegistry,
                          Session session,
                          DependencyManager dependencyManager,
-                         SourceBuildHelper sourceBuildHelper,
+                         Source source,
                          TerminalHelper terminalHelper,
                          Provider<JobManager> pJobManager,
                          FilesServerOperations fileServer)
@@ -118,7 +118,7 @@ public class BuildPresenter extends BasePresenter
       eventBus_ = eventBus;
       commands_ = commands;
       fileTypeRegistry_ = fileTypeRegistry;
-      sourceBuildHelper_ = sourceBuildHelper;
+      source_ = source;
       terminalHelper_ = terminalHelper;
       pJobManager_ = pJobManager;
       session_ = session;
@@ -309,20 +309,13 @@ public class BuildPresenter extends BasePresenter
    
    void onDevtoolsLoadAll()
    {
-      sourceBuildHelper_.withSaveFilesBeforeCommand(new Command() {
-         @Override
-         public void execute()
+      source_.withSaveFilesBeforeCommand(() ->
+      {
+         withDevtoolsLoadAllPath(loadAllPath ->
          {
-            withDevtoolsLoadAllPath(new CommandWithArg<String>() {
-               @Override
-               public void execute(String loadAllPath)
-               {
-                  sendLoadCommandToConsole(
-                              "devtools::load_all(\"" + loadAllPath + "\")");
-               } 
-            }); 
-         }
-      }, "Build");
+            sendLoadCommandToConsole("devtools::load_all(\"" + loadAllPath + "\")");
+         });
+      }, () -> {}, "Build");
    }
      
    void onBuildSourcePackage()
@@ -421,28 +414,23 @@ public class BuildPresenter extends BasePresenter
       // attempt to start a build (this will be a silent no-op if there
       // is already a build running)
       workbenchContext_.setBuildInProgress(true);
-      sourceBuildHelper_.withSaveFilesBeforeCommand(new Command() {
-         @Override
-         public void execute()
-         {
-            server_.startBuild(type, subType, 
-                  new SimpleRequestCallback<Boolean>() {
-               @Override
-               public void onResponseReceived(Boolean response)
-               {
+      source_.withSaveFilesBeforeCommand(() ->
+      {
+         server_.startBuild(type, subType, new SimpleRequestCallback<Boolean>() {
+            @Override
+            public void onResponseReceived(Boolean response)
+            {
+            }
 
-               }
+            @Override
+            public void onError(ServerError error)
+            {
+               super.onError(error);
+               workbenchContext_.setBuildInProgress(false);
+            }
 
-               @Override
-               public void onError(ServerError error)
-               {
-                  super.onError(error);
-                  workbenchContext_.setBuildInProgress(false);
-               }
-
-            });
-         }
-      }, "Build");
+         });
+      }, () -> {}, "Build");
    }
 
    void onStopBuild()
@@ -509,7 +497,7 @@ public class BuildPresenter extends BasePresenter
    private final DependencyManager dependencyManager_;
    private final Commands commands_;
    private final FileTypeRegistry fileTypeRegistry_;
-   private final SourceBuildHelper sourceBuildHelper_;
+   private final Source source_;
    private final WorkbenchContext workbenchContext_;
    private final TerminalHelper terminalHelper_;
    private final Provider<JobManager> pJobManager_;

@@ -1,7 +1,7 @@
 /*
  * code.ts
  *
- * Copyright (C) 2019-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,18 +14,14 @@
  */
 
 import { Fragment, Mark, Node as ProsemirrorNode, Schema } from 'prosemirror-model';
-import { Step, AddMarkStep } from 'prosemirror-transform';
-import { Transaction } from 'prosemirror-state';
 
 import { MarkCommand, EditorCommandId } from '../api/command';
 import { Extension } from '../api/extension';
 import { pandocAttrSpec, pandocAttrParseDom, pandocAttrToDomAttr, pandocAttrReadAST } from '../api/pandoc_attr';
 import { PandocToken, PandocOutput, PandocTokenType, PandocExtensions } from '../api/pandoc';
 
-import { fancyQuotesToSimple } from '../api/quote';
 import { kCodeText, kCodeAttr } from '../api/code';
 import { delimiterMarkInputRule, MarkInputRuleFilter } from '../api/input_rule';
-
 
 const extension = (pandocExtensions: PandocExtensions): Extension => {
   const codeAttrs = pandocExtensions.inline_code_attributes;
@@ -80,16 +76,20 @@ const extension = (pandocExtensions: PandocExtensions): Extension => {
           writer: {
             priority: 20,
             write: (output: PandocOutput, mark: Mark, parent: Fragment) => {
-              output.writeToken(PandocTokenType.Code, () => {
-                if (codeAttrs) {
-                  output.writeAttr(mark.attrs.id, mark.attrs.classes, mark.attrs.keyvalue);
-                } else {
-                  output.writeAttr();
-                }
-                let code = '';
-                parent.forEach((node: ProsemirrorNode) => (code = code + node.textContent));
-                output.write(code);
-              });
+              // collect code and trim it (pandoc will do this on parse anyway)
+              let code = '';
+              parent.forEach((node: ProsemirrorNode) => (code = code + node.textContent));
+              code = code.trim();
+              if (code.length > 0) {
+                output.writeToken(PandocTokenType.Code, () => {
+                  if (codeAttrs) {
+                    output.writeAttr(mark.attrs.id, mark.attrs.classes, mark.attrs.keyvalue);
+                  } else {
+                    output.writeAttr();
+                  }
+                  output.write(code);
+                });
+              }
             },
           },
         },
@@ -102,33 +102,6 @@ const extension = (pandocExtensions: PandocExtensions): Extension => {
 
     inputRules: (schema: Schema, filter: MarkInputRuleFilter) => {
       return [delimiterMarkInputRule('`', schema.marks.code, filter)];
-    },
-
-    appendTransaction: (schema: Schema) => {
-  
-       // detect add code steps
-      const isAddCodeMarkStep = (step: Step) => {
-        return step instanceof AddMarkStep && (step as any).mark.type === schema.marks.code;
-      };
-
-      return [
-        {
-          name: 'code_remove_quotes',
-          filter: (transactions: Transaction[]) => transactions.some(transaction => transaction.steps.some(isAddCodeMarkStep)),
-          append: (tr: Transaction, transactions: Transaction[]) => {
-            transactions.forEach(transaction => {
-              transaction.steps.filter(isAddCodeMarkStep).forEach(step => {
-                const { from, to } = step as any;
-                const code = tr.doc.textBetween(from, to);
-                const newCode = fancyQuotesToSimple(code);
-                if (newCode !== code) {
-                  tr.insertText(newCode, from, to);
-                }
-              });
-            });
-          },
-        },
-      ];
     },
   };
 };

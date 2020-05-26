@@ -1,7 +1,7 @@
 /*
  * InfoBar.java
  *
- * Copyright (C) 2009-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -101,6 +101,7 @@ public class InfoBar extends Composite
       Scheduler.get().scheduleDeferred(() -> {
          live_.setText(text);
       });
+      labelRight_.clear();
    }
 
    public int getHeight()
@@ -133,8 +134,6 @@ public class InfoBar extends Composite
       }
       
       setText(message);
-      
-      labelRight_.clear();
 
       labelRight_.add(label("Install", () -> {
          onInstall.execute();
@@ -145,11 +144,19 @@ public class InfoBar extends Composite
       }));
    }
    
+   public void showPanmirrorFormatChanged(Command onReload)
+   {
+      setText("Markdown format changes require a reload of the visual editor.");
+      labelRight_.clear();
+      labelRight_.add(label("Reload Now", () -> {
+         onReload.execute();
+      }));
+   }
+   
    public void showTexInstallationMissingWarning(String message,
                                                  Command onInstall)
    {
       setText(message);
-      labelRight_.clear();
       labelRight_.add(label("Install TinyTeX", () -> { onInstall.execute(); }));
    }
    

@@ -1,7 +1,7 @@
 /*
  * ApplicationQuit.java
  *
- * Copyright (C) 2009-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -60,7 +60,6 @@ import org.rstudio.studio.client.workbench.ui.unsaved.UnsavedChangesDialog;
 import org.rstudio.studio.client.workbench.ui.unsaved.UnsavedChangesDialog.Result;
 import org.rstudio.studio.client.workbench.views.jobs.model.JobManager;
 import org.rstudio.studio.client.workbench.views.source.Source;
-import org.rstudio.studio.client.workbench.views.source.SourceShim;
 import org.rstudio.studio.client.workbench.views.terminal.TerminalHelper;
 
 import com.google.gwt.core.client.GWT;
@@ -81,7 +80,7 @@ public class ApplicationQuit implements SaveActionChangedEvent.Handler,
                           GlobalDisplay globalDisplay,
                           EventBus eventBus,
                           WorkbenchContext workbenchContext,
-                          SourceShim sourceShim,
+                          Provider<Source> pSource,
                           Provider<UserPrefs> pUiPrefs,
                           Commands commands,
                           Binder binder,
@@ -94,7 +93,7 @@ public class ApplicationQuit implements SaveActionChangedEvent.Handler,
       globalDisplay_ = globalDisplay;
       eventBus_ = eventBus;
       workbenchContext_ = workbenchContext;
-      sourceShim_ = sourceShim;
+      pSource_ = pSource;
       pUserPrefs_ = pUiPrefs;
       terminalHelper_ = terminalHelper;
       pJobManager_ = pJobManager;
@@ -162,10 +161,11 @@ public class ApplicationQuit implements SaveActionChangedEvent.Handler,
       else
       {
          // if we aren't restoring source documents then close them all now
-         if (!pUserPrefs_.get().restoreSourceDocuments().getValue())
+         if (pSource_.get() != null && !pUserPrefs_.get().restoreSourceDocuments().getValue())
          {
-            sourceShim_.closeAllSourceDocs(caption,
-                  () -> handleUnfinishedWork(caption, allowCancel, forceSaveAll, quitContext));
+            pSource_.get().closeAllSourceDocs(caption,
+                  () -> handleUnfinishedWork(caption, allowCancel, forceSaveAll, quitContext),
+                  false);
          }
          else
          {
@@ -182,7 +182,7 @@ public class ApplicationQuit implements SaveActionChangedEvent.Handler,
       Command handleUnsaved = () -> {
          // handle unsaved editor changes
          handleUnsavedChanges(saveAction_.getAction(), caption, allowCancel, forceSaveAll,
-               sourceShim_, workbenchContext_, globalEnvTarget_, quitContext);
+               pSource_.get(), workbenchContext_, globalEnvTarget_, quitContext);
       };
 
       if (allowCancel)
@@ -213,20 +213,20 @@ public class ApplicationQuit implements SaveActionChangedEvent.Handler,
                                      String caption,
                                      boolean allowCancel,
                                      boolean forceSaveAll,
-                                     final SourceShim sourceShim,
+                                     final Source source,
                                      final WorkbenchContext workbenchContext,
                                      final UnsavedChangesTarget globalEnvTarget,
                                      final QuitContext quitContext)
    {   
       // see what the unsaved changes situation is and prompt accordingly
       ArrayList<UnsavedChangesTarget> unsavedSourceDocs = 
-                        sourceShim.getUnsavedChanges(Source.TYPE_FILE_BACKED);
+                        source.getUnsavedChanges(Source.TYPE_FILE_BACKED);
       
       // force save all
       if (forceSaveAll)
       {
          // save all unsaved documents and then quit
-         sourceShim.handleUnsavedChangesBeforeExit(
+         source.handleUnsavedChangesBeforeExit(
                unsavedSourceDocs,
                new Command() {
                   @Override
@@ -292,9 +292,9 @@ public class ApplicationQuit implements SaveActionChangedEvent.Handler,
                (Desktop.hasDesktopFrame() ||
                 !(unsavedSourceDocs.get(0) instanceof UnsavedChangesItem)))
       {
-         sourceShim.saveWithPrompt(
+         source.saveWithPrompt(
            unsavedSourceDocs.get(0), 
-           sourceShim.revertUnsavedChangesBeforeExitCommand(new Command() {
+           source.revertUnsavedChangesBeforeExitCommand(new Command() {
                @Override
                public void execute()
                {
@@ -331,7 +331,7 @@ public class ApplicationQuit implements SaveActionChangedEvent.Handler,
                   final boolean saveChanges = saveGlobalEnv;
                   
                   // save specified documents and then quit
-                  sourceShim.handleUnsavedChangesBeforeExit(
+                  source.handleUnsavedChangesBeforeExit(
                         saveTargets,
                         new Command() {
                            @Override
@@ -448,14 +448,14 @@ public class ApplicationQuit implements SaveActionChangedEvent.Handler,
       
       // get unsaved source docs
       ArrayList<UnsavedChangesTarget> unsavedSourceDocs = 
-                        sourceShim_.getUnsavedChanges(Source.TYPE_FILE_BACKED);
+                        pSource_.get().getUnsavedChanges(Source.TYPE_FILE_BACKED);
       
       if (unsavedSourceDocs.size() == 1)
       {
-         sourceShim_.saveWithPrompt(
+         pSource_.get().saveWithPrompt(
                unsavedSourceDocs.get(0), 
-               sourceShim_.revertUnsavedChangesBeforeExitCommand(
-                                             new HandleUnsavedCommand(true)),
+               pSource_.get().revertUnsavedChangesBeforeExitCommand(
+                  new HandleUnsavedCommand(true)),
                new HandleUnsavedCommand(false));
       }
       else if (unsavedSourceDocs.size() > 1)
@@ -468,7 +468,7 @@ public class ApplicationQuit implements SaveActionChangedEvent.Handler,
                   public void execute(Result result)
                   {
                      // save specified documents and then quit
-                     sourceShim_.handleUnsavedChangesBeforeExit(
+                     pSource_.get().handleUnsavedChangesBeforeExit(
                            result.getSaveTargets(),
                            new HandleUnsavedCommand(true));
                   }
@@ -757,7 +757,7 @@ public class ApplicationQuit implements SaveActionChangedEvent.Handler,
    private final Provider<UserPrefs> pUserPrefs_;
    private final EventBus eventBus_;
    private final WorkbenchContext workbenchContext_;
-   private final SourceShim sourceShim_;
+   private final Provider<Source> pSource_;
    private final TerminalHelper terminalHelper_;
    private final Provider<JobManager> pJobManager_;
    private final Provider<SessionOpener> pSessionOpener_;

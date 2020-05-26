@@ -1,7 +1,7 @@
 /*
  * auto_brace_insert.js
  *
- * Copyright (C) 2009-12 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * The Initial Developer of the Original Code is
  * Ajax.org B.V.

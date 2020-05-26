@@ -1,7 +1,7 @@
 /*
  * PanmirrorToolbarCommands.java
  *
- * Copyright (C) 2009-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -15,13 +15,18 @@
 
 package org.rstudio.studio.client.panmirror.command;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
+
+import org.rstudio.studio.client.application.ui.CommandPaletteEntry;
+import org.rstudio.studio.client.application.ui.CommandPaletteEntrySource;
 
 import com.google.gwt.aria.client.MenuitemRole;
 import com.google.gwt.aria.client.Roles;
 
-public class PanmirrorToolbarCommands
-{
+public class PanmirrorToolbarCommands implements CommandPaletteEntrySource
+{ 
    public PanmirrorToolbarCommands(PanmirrorCommand[] commands)
    {
       PanmirrorCommandIcons icons = PanmirrorCommandIcons.INSTANCE;
@@ -55,7 +60,7 @@ public class PanmirrorToolbarCommands
       
       add(PanmirrorCommands.Blockquote, "Blockquote", Roles.getMenuitemcheckboxRole(), icons.BLOCKQUOTE);
       add(PanmirrorCommands.LineBlock, "Line Block", Roles.getMenuitemcheckboxRole());
-      add(PanmirrorCommands.Div, "Div Block...");
+      add(PanmirrorCommands.Div, "Div...");
       add(PanmirrorCommands.AttrEdit, "Edit Attributes...");
       add(PanmirrorCommands.ClearFormatting, "Clear Formatting", icons.CLEAR_FORMATTING);
       
@@ -86,19 +91,19 @@ public class PanmirrorToolbarCommands
       add(PanmirrorCommands.TableInsertTable, "Insert Table...", icons.TABLE);
       add(PanmirrorCommands.TableToggleHeader, "Table Header", Roles.getMenuitemcheckboxRole());
       add(PanmirrorCommands.TableToggleCaption, "Table Caption", Roles.getMenuitemcheckboxRole());
-      add(PanmirrorCommands.TableAddColumnAfter, "Insert Column Right", "Insert %d Columns Right", null);
-      add(PanmirrorCommands.TableAddColumnBefore, "Insert Column Left", "Insert %d Columns Left", null);
-      add(PanmirrorCommands.TableDeleteColumn, "Delete Column", "Delete %d Columns", null);
-      add(PanmirrorCommands.TableAddRowAfter, "Insert Row Below", "Insert %d Rows Below", null);
-      add(PanmirrorCommands.TableAddRowBefore, "Insert Row Above", "Insert %d Rows Above", null);
-      add(PanmirrorCommands.TableDeleteRow, "Delete Row", "Delete %d Rows", null);
+      add(PanmirrorCommands.TableAddColumnAfter, "Table:::Insert Column Right", "Insert %d Columns Right", null);
+      add(PanmirrorCommands.TableAddColumnBefore, "Table:::Insert Column Left", "Insert %d Columns Left", null);
+      add(PanmirrorCommands.TableDeleteColumn, "Table:::Delete Column", "Table:::Delete %d Columns", null);
+      add(PanmirrorCommands.TableAddRowAfter, "Table:::Insert Row Below", "Table:::Insert %d Rows Below", null);
+      add(PanmirrorCommands.TableAddRowBefore, "Table:::Insert Row Above", "Table:::Insert %d Rows Above", null);
+      add(PanmirrorCommands.TableDeleteRow, "Table:::Delete Row", "Delete %d Rows", null);
       add(PanmirrorCommands.TableDeleteTable, "Delete Table");
-      add(PanmirrorCommands.TableNextCell, "Next Cell");
-      add(PanmirrorCommands.TablePreviousCell, "Previous Cell");
-      add(PanmirrorCommands.TableAlignColumnLeft, "Left");
-      add(PanmirrorCommands.TableAlignColumnRight, "Right");
-      add(PanmirrorCommands.TableAlignColumnCenter, "Center");
-      add(PanmirrorCommands.TableAlignColumnDefault, "Default");
+      add(PanmirrorCommands.TableNextCell, "Table:::Next Cell");
+      add(PanmirrorCommands.TablePreviousCell, "Table:::Previous Cell");
+      add(PanmirrorCommands.TableAlignColumnLeft, "Table Align Column:::Left");
+      add(PanmirrorCommands.TableAlignColumnRight, "Table Align Column:::Right");
+      add(PanmirrorCommands.TableAlignColumnCenter, "Table Align Column:::Center");
+      add(PanmirrorCommands.TableAlignColumnDefault, "Table Align Column:::Default");
      
       // insert
       add(PanmirrorCommands.Link, "Link...", icons.LINK);
@@ -110,7 +115,7 @@ public class PanmirrorToolbarCommands
       add(PanmirrorCommands.HTMLComment, "Comment", icons.COMMENT);
       add(PanmirrorCommands.YamlMetadata, "YAML Block");
       add(PanmirrorCommands.Shortcode, "Shortcode");
-      add(PanmirrorCommands.InsertDiv, "Div Block...");
+      add(PanmirrorCommands.InsertDiv, "Div...");
       add(PanmirrorCommands.InlineMath, "Inline Math");
       add(PanmirrorCommands.DisplayMath, "Display Math");
       add(PanmirrorCommands.DefinitionList, "Definition List");
@@ -142,6 +147,16 @@ public class PanmirrorToolbarCommands
       }
    }
    
+   public List<CommandPaletteEntry> getCommandPaletteEntries()
+   {
+      List<CommandPaletteEntry> entries = new ArrayList<CommandPaletteEntry>();
+      for (PanmirrorCommandUI cmd : commandsUI_.values()) 
+      {
+         if (cmd.isVisible())
+            entries.add(new PanmirrorCommandPaletteEntry(cmd));
+      }
+      return entries;
+   }
    
    private void add(String id, String menuText)
    {
@@ -183,10 +198,6 @@ public class PanmirrorToolbarCommands
       commandsUI_.put(id, new PanmirrorCommandUI(command, menuText, pluralMenuText, role, image));
    }
    
-   
-   
-   
    private PanmirrorCommand[] commands_ = null;
    private final HashMap<String,PanmirrorCommandUI> commandsUI_ = new HashMap<String,PanmirrorCommandUI>();
-
 }

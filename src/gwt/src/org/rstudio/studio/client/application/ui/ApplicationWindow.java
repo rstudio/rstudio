@@ -1,7 +1,7 @@
 /*
  * ApplicationWindow.java
  *
- * Copyright (C) 2009-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -50,7 +50,8 @@ public class ApplicationWindow extends Composite
                             EventBus events,
                             Provider<WarningBar> pWarningBar,
                             AriaLiveService ariaLive,
-                            CodeSearchLauncher launcher)
+                            CodeSearchLauncher launcher,
+                            CommandPaletteLauncher paletteLauncher)
    {
       globalDisplay_ = globalDisplay;
       events_ = events;

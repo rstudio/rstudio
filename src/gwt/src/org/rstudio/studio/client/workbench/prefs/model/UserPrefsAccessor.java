@@ -1,6 +1,6 @@
 /* UserPrefsAccessor.java
  *
- * Copyright (C) 2009-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -1640,14 +1640,6 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
-    * Whether to tell screen readers that the entire page is an application.
-    */
-   public PrefValue<Boolean> ariaApplicationRole()
-   {
-      return bool("aria_application_role", false);
-   }
-
-   /**
     * Reduce use of animations in the user interface.
     */
    public PrefValue<Boolean> reducedMotion()
@@ -1734,6 +1726,18 @@ public class UserPrefsAccessor extends Prefs
    {
       return integer("visual_markdown_editing_wrap_column", 80);
    }
+
+   /**
+    * Placement of footnotes within markdown output.
+    */
+   public PrefValue<String> visualMarkdownEditingReferencesLocation()
+   {
+      return string("visual_markdown_editing_references_location", "block");
+   }
+
+   public final static String VISUAL_MARKDOWN_EDITING_REFERENCES_LOCATION_BLOCK = "block";
+   public final static String VISUAL_MARKDOWN_EDITING_REFERENCES_LOCATION_SECTION = "section";
+   public final static String VISUAL_MARKDOWN_EDITING_REFERENCES_LOCATION_DOCUMENT = "document";
 
    /**
     * Maximum content width for visual editing mode, in pixels
@@ -2179,8 +2183,6 @@ public class UserPrefsAccessor extends Prefs
          enableScreenReader().setValue(layer, source.getBool("enable_screen_reader"));
       if (source.hasKey("typing_status_delay_ms"))
          typingStatusDelayMs().setValue(layer, source.getInteger("typing_status_delay_ms"));
-      if (source.hasKey("aria_application_role"))
-         ariaApplicationRole().setValue(layer, source.getBool("aria_application_role"));
       if (source.hasKey("reduced_motion"))
          reducedMotion().setValue(layer, source.getBool("reduced_motion"));
       if (source.hasKey("tab_key_move_focus"))
@@ -2201,6 +2203,8 @@ public class UserPrefsAccessor extends Prefs
          visualMarkdownEditingWrapAuto().setValue(layer, source.getBool("visual_markdown_editing_wrap_auto"));
       if (source.hasKey("visual_markdown_editing_wrap_column"))
          visualMarkdownEditingWrapColumn().setValue(layer, source.getInteger("visual_markdown_editing_wrap_column"));
+      if (source.hasKey("visual_markdown_editing_references_location"))
+         visualMarkdownEditingReferencesLocation().setValue(layer, source.getString("visual_markdown_editing_references_location"));
       if (source.hasKey("visual_markdown_editing_max_content_width"))
          visualMarkdownEditingMaxContentWidth().setValue(layer, source.getInteger("visual_markdown_editing_max_content_width"));
       if (source.hasKey("visual_markdown_editing_show_doc_outline"))

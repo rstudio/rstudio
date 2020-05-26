@@ -1,7 +1,7 @@
 /*
  * quoted.ts
  *
- * Copyright (C) 2019-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -22,10 +22,7 @@ import { PandocOutput, PandocToken, PandocTokenType } from '../api/pandoc';
 import { removeInvalidatedMarks, detectAndApplyMarks } from '../api/mark';
 import { FixupContext } from '../api/fixup';
 import { MarkTransaction } from '../api/transaction';
-import { QuoteType, quotesForType } from '../api/quote';
-
-const QUOTE_TYPE = 0;
-const QUOTED_CHILDREN = 1;
+import { QuoteType, quotesForType, kQuoteType, kQuoteChildren } from '../api/quote';
 
 const extension: Extension = {
   marks: [
@@ -33,6 +30,7 @@ const extension: Extension = {
       name: 'quoted',
       spec: {
         inclusive: false,
+        excludes: '',
         attrs: {
           type: {},
         },
@@ -58,18 +56,18 @@ const extension: Extension = {
             mark: 'quoted',
             getAttrs: (tok: PandocToken) => {
               return {
-                type: tok.c[QUOTE_TYPE].t,
+                type: tok.c[kQuoteType].t,
               };
             },
             getChildren: (tok: PandocToken) => {
-              const type = tok.c[QUOTE_TYPE].t;
+              const type = tok.c[kQuoteType].t;
               const quotes = quotesForType(type);
               return [
                 {
                   t: 'Str',
                   c: quotes.begin,
                 },
-                ...tok.c[QUOTED_CHILDREN],
+                ...tok.c[kQuoteChildren],
                 {
                   t: 'Str',
                   c: quotes.end,
@@ -115,12 +113,12 @@ const extension: Extension = {
           removeInvalidatedMarks(markTr, node, pos, /(“[^”]*”|‘[^’]*’)/g, schema.marks.quoted);
 
           // find quoted text that doesn't have a quoted mark (add the mark)
-          detectAndApplyMarks(markTr, tr.doc.nodeAt(pos)!, pos, /“[^”]*”/g, schema.marks.quoted, {
+          detectAndApplyMarks(markTr, tr.doc.nodeAt(pos)!, pos, /“[^”]*”/g, schema.marks.quoted, () => ({
             type: QuoteType.DoubleQuote,
-          });
-          detectAndApplyMarks(markTr, tr.doc.nodeAt(pos)!, pos, /‘[^’]*’/g, schema.marks.quoted, {
+          }));
+          detectAndApplyMarks(markTr, tr.doc.nodeAt(pos)!, pos, /‘[^’]*’/g, schema.marks.quoted, () => ({
             type: QuoteType.SingleQuote,
-          });
+          }));
         });
 
         return tr;

@@ -1,7 +1,7 @@
 /*
  * pandoc_format.ts
  *
- * Copyright (C) 2019-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -13,8 +13,11 @@
  *
  */
 
+import { Node as ProsemirrorNode } from 'prosemirror-model';
+
 import { PandocEngine, PandocExtensions } from './pandoc';
 import { EditorFormat } from './format';
+import { firstYamlBlock, yamlMetadataNodes } from './yaml';
 
 export const kMarkdownFormat = 'markdown';
 export const kMarkdownPhpextraFormat = 'markdown_phpextra';
@@ -25,6 +28,7 @@ export const kGfmFormat = 'gfm';
 export const kCommonmarkFormat = 'commonmark';
 
 export interface PandocFormat {
+  mode: string;
   baseName: string;
   fullName: string;
   extensions: PandocExtensions;
@@ -36,11 +40,14 @@ export interface PandocFormatWarnings {
   invalidOptions: string[];
 }
 
-export interface PandocFormatComment {
+export interface PandocFormatConfig {
   mode?: string;
   extensions?: string;
-  fillColumn?: number;
+  rmdExtensions?: string;
+  wrapColumn?: number;
   doctypes?: string[];
+  references?: string;
+  canonical?: boolean;
 }
 
 export function matchPandocFormatComment(code: string) {
@@ -48,7 +55,34 @@ export function matchPandocFormatComment(code: string) {
   return code.match(magicCommentRegEx);
 }
 
-export function pandocFormatCommentFromCode(code: string): PandocFormatComment {
+export function pandocFormatConfigFromDoc(doc: ProsemirrorNode) {
+  return pandocFormatConfigFromYamlInDoc(doc) || pandocFormatConfigFromCommentInDoc(doc) || {};
+}
+
+export function pandocFormatConfigFromCode(code: string): PandocFormatConfig {
+  return pandocFormatConfigFromYamlInCode(code) || pandocFormatConfigFromCommentInCode(code) || {};
+}
+
+function pandocFormatConfigFromYamlInCode(code: string): PandocFormatConfig | null {
+  const yaml = firstYamlBlock(code);
+  const yamlMarkdownOptions = yaml?.editor_options?.markdown;
+  if (yamlMarkdownOptions instanceof Object) {
+    return readPandocFormatConfig(yamlMarkdownOptions);
+  } else {
+    return null;
+  }
+}
+
+function pandocFormatConfigFromYamlInDoc(doc: ProsemirrorNode): PandocFormatConfig | null {
+  const yamlNodes = yamlMetadataNodes(doc);
+  if (yamlNodes.length > 0) {
+    return pandocFormatConfigFromYamlInCode(yamlNodes[0].node.textContent);
+  } else {
+    return null;
+  }
+}
+
+function pandocFormatConfigFromCommentInCode(code: string): PandocFormatConfig | null {
   const keyValueRegEx = /^([^:]+):\s*(.*)$/;
   const match = matchPandocFormatComment(code);
   if (match) {
@@ -62,26 +96,89 @@ export function pandocFormatCommentFromCode(code: string): PandocFormatComment {
         variables[keyValueMatch[1].trim()] = keyValueMatch[2].trim();
       }
     });
-    const formatComment: PandocFormatComment = {};
-    if (variables.mode) {
-      formatComment.mode = variables.mode;
-    }
-    if (variables.extensions) {
-      formatComment.extensions = variables.extensions;
-    }
-    if (variables['fill-column']) {
-      formatComment.fillColumn = parseInt(variables['fill-column'], 10) || undefined;
-    }
-    if (variables.doctype) {
-      formatComment.doctypes = variables.doctype.split(',').map(str => str.trim());
-    }
-    return formatComment;
+    return readPandocFormatConfig(variables);
   } else {
-    return {};
+    return null;
   }
 }
 
-export async function resolvePandocFormat(pandoc: PandocEngine, format: EditorFormat) {
+function pandocFormatConfigFromCommentInDoc(doc: ProsemirrorNode): PandocFormatConfig | null {
+  let config: PandocFormatConfig | null = null;
+  let foundFirstRawInline = false;
+  doc.descendants((node, pos) => {
+    // don't search once we've found our target
+    if (foundFirstRawInline) {
+      return false;
+    }
+
+    // if it's a text node with a raw-html then scan it for the format comment
+    const schema = doc.type.schema;
+    if (node.isText && schema.marks.raw_html_comment.isInSet(node.marks) && node.attrs.format) {
+      foundFirstRawInline = true;
+      config = pandocFormatConfigFromCommentInCode(node.textContent);
+      return false;
+    } else {
+      return true;
+    }
+  });
+  return config;
+}
+
+function readPandocFormatConfig(source: { [key: string]: any }) {
+  const asString = (obj: any): string => {
+    if (typeof obj === 'string') {
+      return obj;
+    } else if (obj) {
+      return obj.toString();
+    } else {
+      return '';
+    }
+  };
+
+  const asBoolean = (obj: any) => {
+    if (typeof obj === 'boolean') {
+      return obj;
+    } else {
+      const str = asString(obj).toLowerCase();
+      return str === 'true' || str === '1';
+    }
+  };
+
+  const readWrapColumn = () => {
+    const wrapColumn = source.wrap_column || source['fill-column'];
+    if (wrapColumn) {
+      return parseInt(asString(wrapColumn), 10) || undefined;
+    } else {
+      return undefined;
+    }
+  };
+
+  const formatConfig: PandocFormatConfig = {};
+  if (source.mode) {
+    formatConfig.mode = asString(source.mode);
+  }
+  if (source.extensions) {
+    formatConfig.extensions = asString(source.extensions);
+  }
+  if (source.rmd_extensions) {
+    formatConfig.rmdExtensions = asString(source.rmd_extensions);
+  }
+  formatConfig.wrapColumn = readWrapColumn();
+  if (source.doctype) {
+    formatConfig.doctypes = asString(source.doctype)
+      .split(',')
+      .map(str => str.trim());
+  }
+  if (source.references) {
+    formatConfig.references = asString(source.references);
+  }
+  if (source.canonical) {
+    formatConfig.canonical = asBoolean(source.canonical);
+  }
+  return formatConfig;
+}
+
+export async function resolvePandocFormat(pandoc: PandocEngine, format: EditorFormat): Promise<PandocFormat> {
   // additional markdown variants we support
   const kMarkdownVariants: { [key: string]: string[] } = {
     [kCommonmarkFormat]: commonmarkExtensions(),
@@ -164,6 +261,7 @@ export async function resolvePandocFormat(pandoc: PandocEngine, format: EditorFo
 
   // return format name, enabled extensiosn, and warnings
   return {
+    mode: format.pandocMode,
     baseName,
     fullName,
     extensions: (pandocExtensions as unknown) as PandocExtensions,

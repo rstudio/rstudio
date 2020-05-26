@@ -1,7 +1,7 @@
 /*
  * UserState.java
  *
- * Copyright (C) 2009-19 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -18,6 +18,7 @@ import com.google.gwt.core.client.JsArray;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
+import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.Debug;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
@@ -52,6 +53,12 @@ public class UserState extends UserStateAccessor implements UserStateChangedEven
    
    public void writeState()
    {
+      writeState(null);
+   }
+
+   public void writeState(CommandWithArg<Boolean> onCompleted)
+   {
+      updatePrefs(session_.getSessionInfo().getUserState());
       server_.setUserState(
          session_.getSessionInfo().getUserStateLayer().getValues(),
          new ServerRequestCallback<Void>() 
@@ -71,6 +78,10 @@ public class UserState extends UserStateAccessor implements UserStateChangedEven
                {
                   // let satellites know prefs have changed
                   satelliteManager_.dispatchCrossWindowEvent(event);
+               }
+               if (onCompleted != null)
+               {
+                  onCompleted.execute(true);
                }
             }
             @Override

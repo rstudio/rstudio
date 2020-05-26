@@ -1,7 +1,7 @@
 /*
  * definition_list.ts
  *
- * Copyright (C) 2019-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -18,6 +18,7 @@ import { Schema } from 'prosemirror-model';
 import { PandocTokenType } from '../../api/pandoc';
 import { Extension, extensionIfEnabled } from '../../api/extension';
 import { BaseKey } from '../../api/basekeys';
+import { EditorUI } from '../../api/ui';
 
 import { InsertDefinitionList, InsertDefinitionDescription, InsertDefinitionTerm } from './definition_list-commands';
 
@@ -49,7 +50,7 @@ const extension: Extension = {
         isolating: true,
         parseDOM: [{ tag: 'dt' }],
         toDOM(node) {
-          return ['dt', { class: 'pm-definition-term pm-show-text-focus' }, 0];
+          return ['dt', { class: 'pm-definition-term' }, 0];
         },
       },
       pandoc: {
@@ -93,8 +94,12 @@ const extension: Extension = {
     },
   ],
 
-  commands: (schema: Schema) => {
-    return [new InsertDefinitionList(), new InsertDefinitionTerm(schema), new InsertDefinitionDescription(schema)];
+  commands: (schema: Schema, ui: EditorUI) => {
+    return [
+      new InsertDefinitionList(ui),
+      new InsertDefinitionTerm(schema, ui),
+      new InsertDefinitionDescription(schema),
+    ];
   },
 
   baseKeys: (_schema: Schema) => {

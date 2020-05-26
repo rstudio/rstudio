@@ -1,7 +1,7 @@
 /*
  * div.ts
  *
- * Copyright (C) 2019-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -31,7 +31,6 @@ import {
 import { PandocOutput, PandocTokenType, PandocToken } from '../api/pandoc';
 import { ProsemirrorCommand, EditorCommandId, toggleWrap } from '../api/command';
 import { EditorUI } from '../api/ui';
-import { precedingListItemInsertPos, precedingListItemInsert } from '../api/list';
 
 import './div-styles.css';
 
@@ -165,7 +164,7 @@ async function createDiv(ui: EditorUI, state: EditorState, dispatch: (tr: Transa
       const div = findParentNodeOfType(state.schema.nodes.div)(tr.selection)!;
       tr.setNodeMarkup(div.pos, div.node.type, result.attr);
       dispatch(tr);
-    }); 
+    });
   }
 }
 

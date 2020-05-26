@@ -1,7 +1,7 @@
 /*
  * yaml_metadata-title.ts
  *
- * Copyright (C) 2019-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -13,11 +13,10 @@
  *
  */
 
-import { Node as ProsemirrorNode } from 'prosemirror-model';
 import { Plugin, PluginKey, Transaction, EditorState } from 'prosemirror-state';
 
-import { findTopLevelBodyNodes } from '../../api/node';
 import { transactionsAreTypingChange, transactionsHaveChange } from '../../api/transaction';
+import { isYamlMetadataNode, yamlMetadataNodes } from '../../api/yaml';
 
 const plugin = new PluginKey<string>('yaml-metadata-title');
 
@@ -114,12 +113,4 @@ function titleFromState(state: EditorState) {
     }
   }
   return '';
-}
-
-function yamlMetadataNodes(doc: ProsemirrorNode) {
-  return findTopLevelBodyNodes(doc, isYamlMetadataNode);
-}
-
-function isYamlMetadataNode(node: ProsemirrorNode) {
-  return node.type === node.type.schema.nodes.yaml_metadata;
 }

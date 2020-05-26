@@ -1,7 +1,7 @@
 /*
  * raw_block.ts
  *
- * Copyright (C) 2019-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -45,6 +45,8 @@ const extension = (
   pandocCapabilities: PandocCapabilities,
   ui: EditorUI,
 ): Extension | null => {
+  const rawAttribute = pandocExtensions.raw_attribute;
+
   return {
     nodes: [
       {
@@ -87,14 +89,16 @@ const extension = (
           lang: (node: ProsemirrorNode) => {
             return node.attrs.format;
           },
-          attrEditFn: editRawBlockCommand(ui, pandocCapabilities.output_formats),
+          attrEditFn: rawAttribute ? editRawBlockCommand(ui, pandocCapabilities.output_formats) : undefined,
           borderColorClass: 'pm-raw-block-border',
         },
 
         attr_edit: () => ({
           type: (schema: Schema) => schema.nodes.raw_block,
           tags: (node: ProsemirrorNode) => [node.attrs.format],
-          editFn: () => editRawBlockCommand(ui, pandocCapabilities.output_formats),
+          editFn: rawAttribute
+            ? () => editRawBlockCommand(ui, pandocCapabilities.output_formats)
+            : () => (state: EditorState) => false,
         }),
 
         pandoc: {
@@ -119,7 +123,6 @@ const extension = (
               output.writeToken(PandocTokenType.Para, () => {
                 output.writeRawMarkdown(node.textContent);
               });
-           
             } else {
               output.writeToken(PandocTokenType.RawBlock, () => {
                 output.write(node.attrs.format);
@@ -134,9 +137,13 @@ const extension = (
     commands: (schema: Schema) => {
       const commands: ProsemirrorCommand[] = [];
 
-      if (pandocExtensions.raw_attribute) {
-        commands.push(new FormatRawBlockCommand(EditorCommandId.HTMLBlock, kHTMLFormat, schema.nodes.raw_block));
+      commands.push(new FormatRawBlockCommand(EditorCommandId.HTMLBlock, kHTMLFormat, schema.nodes.raw_block));
+
+      if (pandocExtensions.raw_tex) {
         commands.push(new FormatRawBlockCommand(EditorCommandId.TexBlock, kTexFormat, schema.nodes.raw_block));
+      }
+
+      if (rawAttribute) {
         commands.push(new RawBlockCommand(ui, pandocCapabilities.output_formats));
       }
 

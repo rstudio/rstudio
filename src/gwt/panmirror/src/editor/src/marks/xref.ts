@@ -1,7 +1,7 @@
 /*
  * xref.ts
  *
- * Copyright (C) 2019-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -31,9 +31,9 @@ import { FixupContext } from '../api/fixup';
 import { ProsemirrorCommand, EditorCommandId } from '../api/command';
 import { canInsertNode } from '../api/node';
 import { fragmentText } from '../api/fragment';
-import { EditorFormat, kXRefDocType } from '../api/format';
+import { EditorFormat } from '../api/format';
 
-const kRefRegEx = /\\?@ref\([A-Za-z0-9:-]*\)/;
+const kRefRegExDetectAndApply = /(?:^|[^`])(\\?@ref\([A-Za-z0-9:-]*\))/;
 
 const extension = (
   pandocExtensions: PandocExtensions,
@@ -49,6 +49,7 @@ const extension = (
     marks: [
       {
         name: 'xref',
+        noInputRules: true,
         spec: {
           inclusive: false,
           excludes: '_',
@@ -92,7 +93,6 @@ const extension = (
     ],
 
     fixups: (schema: Schema) => {
-      const kRefRegExGlobal = new RegExp(kRefRegEx.source, 'g');
       return [
         (tr: Transaction, context: FixupContext) => {
           if (context === FixupContext.Load) {
@@ -104,7 +104,15 @@ const extension = (
             const markTr = new MarkTransaction(tr);
             findChildren(tr.doc, predicate).forEach(nodeWithPos => {
               const { pos } = nodeWithPos;
-              detectAndApplyMarks(markTr, tr.doc.nodeAt(pos)!, pos, kRefRegExGlobal, markType);
+              detectAndApplyMarks(
+                markTr,
+                tr.doc.nodeAt(pos)!,
+                pos,
+                kRefRegExDetectAndApply,
+                markType,
+                () => ({}),
+                match => match[1],
+              );
             });
 
             // remove leading \ as necessary (this would occur if the underlying format includes
@@ -117,14 +125,21 @@ const extension = (
     },
 
     appendMarkTransaction: (schema: Schema) => {
-      const kRefRegExGlobal = new RegExp(kRefRegEx.source, 'g');
       return [
         {
           name: 'xref-marks',
           filter: (node: ProsemirrorNode) => node.isTextblock && node.type.allowsMarkType(node.type.schema.marks.xref),
           append: (tr: MarkTransaction, node: ProsemirrorNode, pos: number) => {
-            removeInvalidatedMarks(tr, node, pos, kRefRegExGlobal, node.type.schema.marks.xref);
-            detectAndApplyMarks(tr, tr.doc.nodeAt(pos)!, pos, kRefRegExGlobal, node.type.schema.marks.xref);
+            removeInvalidatedMarks(tr, node, pos, kRefRegExDetectAndApply, node.type.schema.marks.xref);
+            detectAndApplyMarks(
+              tr,
+              tr.doc.nodeAt(pos)!,
+              pos,
+              kRefRegExDetectAndApply,
+              node.type.schema.marks.xref,
+              () => ({}),
+              match => match[1],
+            );
           },
         },
       ];
@@ -133,9 +148,9 @@ const extension = (
     inputRules: (_schema: Schema) => {
       return [
         // recoginize new ref
-        new InputRule(/\\?@ref\($/, (state: EditorState, match: string[], start: number, end: number) => {
+        new InputRule(/(^|[^`])(\\?@ref\()$/, (state: EditorState, match: string[], start: number, end: number) => {
           const tr = state.tr;
-          tr.delete(start, end);
+          tr.delete(start + match[1].length, end);
           insertRef(tr);
           return tr;
         }),
@@ -143,7 +158,7 @@ const extension = (
     },
 
     commands: (schema: Schema) => {
-      if (format.docTypes.includes(kXRefDocType)) {
+      if (format.rmdExtensions.bookdownXRefUI) {
         return [
           new ProsemirrorCommand(
             EditorCommandId.CrossReference,
@@ -173,7 +188,7 @@ function insertRef(tr: Transaction) {
   const schema = tr.doc.type.schema;
   const selection = tr.selection;
   const refText = '@ref()';
-  tr.replaceSelectionWith(schema.text(refText));
+  tr.replaceSelectionWith(schema.text(refText), false);
   setTextSelection(tr.mapping.map(selection.head) - 1)(tr);
 }
 

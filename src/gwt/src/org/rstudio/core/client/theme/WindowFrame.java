@@ -1,7 +1,7 @@
 /*
  * WindowFrame.java
  *
- * Copyright (C) 2009-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -24,7 +24,7 @@ import com.google.inject.Inject;
 
 import java.util.HashMap;
 
-import org.rstudio.core.client.ElementIds;
+import org.rstudio.core.client.ClassIds;
 import org.rstudio.core.client.events.*;
 import org.rstudio.core.client.layout.RequiresVisibilityChanged;
 import org.rstudio.core.client.layout.WindowState;
@@ -61,12 +61,12 @@ public class WindowFrame extends Composite
       borderPositioner_.add(border_);
 
       maximizeButton_ = new WindowFrameButton(name, WindowState.MAXIMIZE);
-      maximizeButton_.setElementId(ElementIds.FRAME_MAX_BTN + "_" + ElementIds.idSafeString(name));
+      maximizeButton_.setClassId(ClassIds.PANEL_MAX_BTN, name);
       maximizeButton_.setStylePrimaryName(styles.maximize());
       maximizeButton_.setClickHandler(() -> maximize());
 
       minimizeButton_ = new WindowFrameButton(name, WindowState.MINIMIZE);
-      minimizeButton_.setElementId(ElementIds.FRAME_MIN_BTN + "_" + ElementIds.idSafeString(name));
+      minimizeButton_.setClassId(ClassIds.PANEL_MIN_BTN, name);
       minimizeButton_.setStylePrimaryName(styles.minimize());
       minimizeButton_.setClickHandler(() -> minimize());
 

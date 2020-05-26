@@ -1,7 +1,7 @@
 /*
  * TextEditingTarget.java
  *
- * Copyright (C) 2009-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -64,6 +64,7 @@ import org.rstudio.studio.client.application.events.ChangeFontSizeEvent;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.events.ResetEditorCommandsEvent;
 import org.rstudio.studio.client.application.events.SetEditorCommandBindingsEvent;
+import org.rstudio.studio.client.application.ui.CommandPaletteEntry;
 import org.rstudio.studio.client.common.*;
 import org.rstudio.studio.client.common.console.ConsoleProcess;
 import org.rstudio.studio.client.common.console.ProcessExitEvent;
@@ -107,6 +108,7 @@ import org.rstudio.studio.client.rmarkdown.model.RmdOutputFormat;
 import org.rstudio.studio.client.rmarkdown.model.RmdTemplateFormat;
 import org.rstudio.studio.client.rmarkdown.model.RmdYamlData;
 import org.rstudio.studio.client.rmarkdown.model.YamlFrontMatter;
+import org.rstudio.studio.client.rmarkdown.model.YamlTree;
 import org.rstudio.studio.client.rmarkdown.ui.RmdTemplateOptionsDialog;
 import org.rstudio.studio.client.rsconnect.events.RSConnectActionEvent;
 import org.rstudio.studio.client.rsconnect.events.RSConnectDeployInitiatedEvent;
@@ -140,7 +142,7 @@ import org.rstudio.studio.client.workbench.views.output.compilepdf.events.Compil
 import org.rstudio.studio.client.workbench.views.output.lint.LintManager;
 import org.rstudio.studio.client.workbench.views.presentation.events.SourceFileSaveCompletedEvent;
 import org.rstudio.studio.client.workbench.views.presentation.model.PresentationState;
-import org.rstudio.studio.client.workbench.views.source.SourceBuildHelper;
+import org.rstudio.studio.client.workbench.views.source.Source;
 import org.rstudio.studio.client.workbench.views.source.SourceWindowManager;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTarget;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTargetCodeExecution;
@@ -265,6 +267,8 @@ public class TextEditingTarget implements
       TextEditorContainer editorContainer();
  
       void manageCommandUI();
+      
+      void addVisualModeFindReplaceButton(ToolbarButton findReplaceButton);
    }
 
    private class SaveProgressIndicator implements ProgressIndicator
@@ -442,7 +446,7 @@ public class TextEditingTarget implements
                             UserPrefs prefs, 
                             UserState state, 
                             BreakpointManager breakpointManager,
-                            SourceBuildHelper sourceBuildHelper,
+                            Source source,
                             DependencyManager dependencyManager)
    {
       commands_ = commands;
@@ -458,7 +462,7 @@ public class TextEditingTarget implements
       synctex_ = synctex;
       fontSizeManager_ = fontSizeManager;
       breakpointManager_ = breakpointManager;
-      sourceBuildHelper_ = sourceBuildHelper;
+      source_ = source;
       dependencyManager_ = dependencyManager;
 
       docDisplay_ = docDisplay;
@@ -1440,17 +1444,14 @@ public class TextEditingTarget implements
       name_.setValue(getNameFromDocument(document, defaultNameProvider), true);
       String contents = document.getContents();
       
-      // Set document contents, but disable autosave during this
-      // interval (avoid spurious saves immediately after opening a document)
-      try
+      // disable change detection when setting code (since we're just doing
+      // this to ensure the document's state reflects the server state and so
+      // these aren't changes that diverge the document's client state from
+      // the server state)
+      docUpdateSentinel_.withChangeDetectionSuspended(() ->
       {
-         docUpdateSentinel_.suspendAutosave(true);
          docDisplay_.setCode(contents, false);
-      }
-      finally
-      {
-         docUpdateSentinel_.suspendAutosave(false);
-      }
+      });
       
       // Discover dependencies on file first open.
       packageDependencyHelper_.discoverPackageDependencies();
@@ -1462,8 +1463,15 @@ public class TextEditingTarget implements
          @Override
          public void execute()
          {
-            for (Fold fold : folds)
-               docDisplay_.addFold(fold.getRange());
+            // disable change detection when adding folds (since we're just doing
+            // this to ensure the document's state reflects the server state and so
+            // these aren't changes that diverge the document's client state from
+            // the server state)
+            docUpdateSentinel_.withChangeDetectionSuspended(() ->
+            {
+               for (Fold fold : folds)
+                  docDisplay_.addFold(fold.getRange());
+            });
          }
       });
       
@@ -1764,6 +1772,9 @@ public class TextEditingTarget implements
          events_,
          releaseOnDismiss_
       );
+      
+      // provide find replace button to view
+      view_.addVisualModeFindReplaceButton(visualMode_.getFindReplaceButton());
       
       // update status bar when visual mode status changes
       releaseOnDismiss_.add(
@@ -2247,6 +2258,15 @@ public class TextEditingTarget implements
       
       if (fileType_.isMarkdown())
          visualMode_.manageCommands();
+   }
+   
+   @Override
+   public List<CommandPaletteEntry> getCommandPaletteEntries()
+   {
+      if (visualMode_.isActivated())
+         return visualMode_.getCommandPaletteEntries();
+      else
+         return null;
    }
    
    @Override
@@ -2787,21 +2807,28 @@ public class TextEditingTarget implements
    
    private void fixupCodeBeforeSaving(Command ready)
    { 
-      // sync edits from visual mode if it's active
-      visualMode_.syncToEditor(false, () -> {
-         
-         int lineCount = docDisplay_.getRowCount();
-         if (lineCount < 1)
-            return;
-         
-         if (docDisplay_.hasActiveCollabSession())
-         {
-            // mutating the code (especially as below where the entire document 
-            // contents are changed) during a save operation inside a collaborative
-            // editing session would require some nuanced orchestration so for now
-            // these preferences don't apply to shared editing sessions
-            return;
-         }
+      int lineCount = docDisplay_.getRowCount();
+      if (lineCount < 1)
+      {
+         ready.execute();
+         return;
+      }
+      
+      if (docDisplay_.hasActiveCollabSession())
+      {
+         // mutating the code (especially as below where the entire document 
+         // contents are changed) during a save operation inside a collaborative
+         // editing session would require some nuanced orchestration so for now
+         // these preferences don't apply to shared editing sessions
+         // note that visual editing is currently disabled for collab sessions
+         // so none of the visual editing code below would apply
+         ready.execute();
+         return;
+      }
+      
+
+      // apply visual mode fixups then continue w/ standard fixups
+      applyVisualModeFixups(() -> { 
          
          boolean stripTrailingWhitespace = (projConfig_ == null)
                ? prefs_.stripTrailingWhitespace().getValue()
@@ -2850,10 +2877,46 @@ public class TextEditingTarget implements
             if (lastLine.length() != 0)
                docDisplay_.insertCode(docDisplay_.getEnd().getEnd(), "\n");
          }
-         
+      
+         // callback
          ready.execute();
       });
    }
+   
+   private void applyVisualModeFixups(Command onComplete)
+   {
+      // are we writing cannonical?
+      String yaml = YamlFrontMatter.getFrontMatter(docDisplay_);
+      boolean canonical = YamlTree.isTrue(RmdEditorOptions.getMarkdownOption(yaml,  "canonical"));
+    
+      // if visual mode is active then we need to grab it's edits before proceeding
+      if (visualMode_.isActivated()) 
+      {
+         visualMode_.syncToEditor(false, onComplete);
+      }
+      
+      // if visual mode is not active and we are doing canonical saves
+      // then we need to apply any changes implied by canonical transformation
+      // of our source
+      else if (canonical) 
+      {
+         String code = docDisplay_.getCode();
+         visualMode_.getCanonicalChanges(code, (changes) -> {
+            if (changes.changes != null) 
+               docDisplay_.applyChanges(changes.changes, true);
+            else if (changes.code != null)
+               docDisplay_.setCode(changes.code, true);
+            onComplete.execute();
+         });
+      }
+      
+      // otherwise nothing to do
+      else 
+      {
+         onComplete.execute();
+      }
+   }
+   
    
    private FileSystemItem getSaveFileDefaultDir()
    {
@@ -5574,24 +5637,24 @@ public class TextEditingTarget implements
    
    private void runShinyApp()
    {
-      sourceBuildHelper_.withSaveFilesBeforeCommand(() ->
+      source_.withSaveFilesBeforeCommand(() ->
       {
          events_.fireEvent(new LaunchShinyApplicationEvent(getPath(),
                prefs_.shinyBackgroundJobs().getValue() ?
                   ShinyApplication.BACKGROUND_APP :
                   ShinyApplication.FOREGROUND_APP, getExtendedFileType()));
-      }, "Run Shiny Application");
+      }, () -> {}, "Run Shiny Application");
    }
    
    private void runPlumberAPI()
    {
-      sourceBuildHelper_.withSaveFilesBeforeCommand(new Command() {
+      source_.withSaveFilesBeforeCommand(new Command() {
          @Override
          public void execute()
          {
             events_.fireEvent(new LaunchPlumberAPIEvent(getPath()));
          }
-      }, "Run Plumber API");
+      }, () -> {}, "Run Plumber API");
    }
    
    private void sourcePython()
@@ -7646,7 +7709,7 @@ public class TextEditingTarget implements
    private final Session session_;
    private final Synctex synctex_;
    private final FontSizeManager fontSizeManager_;
-   private final SourceBuildHelper sourceBuildHelper_;
+   private final Source source_;
    private final DependencyManager dependencyManager_;
    private DocUpdateSentinel docUpdateSentinel_;
    private Value<String> name_ = new Value<String>(null);

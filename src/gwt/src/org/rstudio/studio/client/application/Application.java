@@ -1,7 +1,7 @@
 /*
  * Application.java
  *
- * Copyright (C) 2009-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -206,7 +206,15 @@ public class Application implements ApplicationEventHandlers
             MathJaxLoader.ensureMathJaxLoaded();
 
             // initialize workbench
-            initializeWorkbench();
+            // refresh prefs incase they were loaded without sessionInfo (this happens exclusively
+            // in desktop mode, though unsure why)
+            userState_.get().writeState(boolArg ->
+            {
+               userPrefs_.get().writeUserPrefs(boolArg1 ->
+               {
+                  initializeWorkbench();
+               });
+            });
          }
 
          public void onError(ServerError error)
@@ -948,19 +956,16 @@ public class Application implements ApplicationEventHandlers
          commands_.importDatasetFromXLS().remove();
       }
 
-      if (userPrefs_.get().ariaApplicationRole().getValue())
+      Element el = Document.get().getElementById("rstudio_container");
+      if (el == null)
       {
-         Element el = Document.get().getElementById("rstudio_container");
-         if (el == null)
-         {
-            // some satellite windows don't have "rstudio_container"
-            el = view_.getWidget().getElement();
-         }
+         // some satellite windows don't have "rstudio_container"
+         el = view_.getWidget().getElement();
+      }
 
-         // "application" role prioritizes application keyboard handling
-         // over screen-reader shortcuts
-         el.setAttribute("role", "application");
-      } 
+      // "application" role prioritizes application keyboard handling
+      // over screen-reader shortcuts
+      el.setAttribute("role", "application");
 
       // If no project, ensure we show the product-edition title; if there is a project
       // open this was already done

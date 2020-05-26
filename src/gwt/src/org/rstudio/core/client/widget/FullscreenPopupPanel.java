@@ -1,7 +1,7 @@
 /*
  * FullscreenPopupPanel.java
  *
- * Copyright (C) 2009-19 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -43,7 +43,7 @@ public class FullscreenPopupPanel extends ModalPopupPanel
                                int margin,
                                boolean closeOnEscape)
    {
-      super(false, false, closeOnEscape);
+      super(false, false, true /* glass */, closeOnEscape);
       
       NineUpBorder border = new NineUpBorder(RES, 32, 20, 17, 20);
       if (titleWidget != null)

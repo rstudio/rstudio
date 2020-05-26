@@ -1,7 +1,7 @@
 /*
  * History.java
  *
- * Copyright (C) 2009-12 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -446,12 +446,7 @@ public class History extends BasePresenter implements SelectionCommitHandler<Voi
       if (commandString.length() > 0)
          events_.fireEvent(new InsertSourceEvent(commandString, true));
    }
-   
-   void onSearchHistory()
-   {
-      globalDisplay_.showErrorMessage("Message", "onSearchHistory");
-   }
-   
+
    void onLoadHistory()
    {
       view_.bringToFront();

@@ -1,7 +1,7 @@
 /*
  * AccessibilityPreferencesPane.java
  *
- * Copyright (C) 2009-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -55,10 +55,6 @@ public class AccessibilityPreferencesPane extends PreferencesPane
       generalPanel.add(headerLabel("Assistive Tools"));
       chkScreenReaderEnabled_ = new CheckBox("Screen reader support (requires restart)");
       generalPanel.add(chkScreenReaderEnabled_);
-
-      initialAriaApplicationRole_ = prefs.ariaApplicationRole().getValue();
-      generalPanel.add(chkApplicationRole_ = checkboxPref(
-            "Entire page has application role (requires restart)", prefs.ariaApplicationRole())); 
 
       typingStatusDelay_ = numericPref("Milliseconds after typing before speaking results",
             1, 9999, prefs.typingStatusDelayMs());
@@ -114,7 +110,7 @@ public class AccessibilityPreferencesPane extends PreferencesPane
    @Override
    protected void initialize(UserPrefs prefs)
    {
-      initialScreenReaderEnabled_ = prefs.getScreenReaderEnabled();
+      initialScreenReaderEnabled_ = prefs.enableScreenReader().getValue();
       chkScreenReaderEnabled_.setValue(initialScreenReaderEnabled_);
       chkTabMovesFocus_.setValue(prefs.tabKeyMoveFocus().getValue());
       populateAnnouncementList();
@@ -134,13 +130,6 @@ public class AccessibilityPreferencesPane extends PreferencesPane
             restartRequirement.setDesktopRestartRequired(true);
          else
             restartRequirement.setUiReloadRequired(true);
-      }
-
-      boolean applicationRoleSetting = chkApplicationRole_.getValue();
-      if (applicationRoleSetting != initialAriaApplicationRole_)
-      {
-         initialAriaApplicationRole_ = applicationRoleSetting;
-         restartRequirement.setUiReloadRequired(true);
       }
 
       prefs.tabKeyMoveFocus().setGlobalValue(chkTabMovesFocus_.getValue());
@@ -209,13 +198,11 @@ public class AccessibilityPreferencesPane extends PreferencesPane
    private final CheckBox chkScreenReaderEnabled_;
    private final NumericValueWidget typingStatusDelay_;
    private final NumericValueWidget maxOutput_;
-   private final CheckBox chkApplicationRole_;
    private final CheckBox chkTabMovesFocus_;
    private final CheckBoxList announcements_;
 
    // initial values of prefs that can trigger reloads (to avoid unnecessary reloads)
    private boolean initialScreenReaderEnabled_;
-   private boolean initialAriaApplicationRole_;
 
    private final PreferencesDialogResources res_;
    private final AriaLiveService ariaLive_;

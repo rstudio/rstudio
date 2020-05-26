@@ -1,7 +1,7 @@
 /*
  * ConfigProfile.hpp
  *
- * Copyright (C) 2018 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then

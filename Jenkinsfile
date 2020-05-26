@@ -250,7 +250,7 @@ try {
                           def image_tag = "${current_container.os}-${current_container.arch}-${params.RSTUDIO_VERSION_MAJOR}.${params.RSTUDIO_VERSION_MINOR}"
                           current_image = docker.image("jenkins/ide:" + image_tag)
                         }
-                        current_image.inside() {
+                        current_image.inside("--privileged") {
                             stage('compile package') {
                                 compile_package(current_container.package_os, get_type_from_os(current_container.os), current_container.flavor, current_container.variant)
                             }

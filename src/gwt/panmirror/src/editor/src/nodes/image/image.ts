@@ -1,7 +1,7 @@
 /*
  * image.ts
  *
- * Copyright (C) 2019-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -50,6 +50,7 @@ import { ImageNodeView } from './image-view';
 import { imageDimensionsFromImg, imageContainerWidth, inlineHTMLIsImage } from './image-util';
 import { PandocCapabilities } from '../../api/pandoc_capabilities';
 import { imageTextSelectionInit, imageTextSelectionApply } from './image-textsel';
+import { posHasProhibitedFigureParent } from './figure';
 
 const TARGET_URL = 0;
 const TARGET_TITLE = 1;
@@ -320,7 +321,10 @@ function imageCommand(editorUI: EditorUI, imageAttributes: boolean) {
       }
 
       // see if we are in an empty paragraph (in that case insert a figure)
-      if (selectionIsEmptyParagraph(schema, state.selection)) {
+      if (
+        selectionIsEmptyParagraph(schema, state.selection) &&
+        !posHasProhibitedFigureParent(schema, state.selection.$head)
+      ) {
         nodeType = schema.nodes.figure;
       }
 

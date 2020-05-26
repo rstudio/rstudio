@@ -1,7 +1,7 @@
 /*
  * ServerOptions.cpp
  *
- * Copyright (C) 2009-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -288,7 +288,7 @@ ProgramStatus Options::read(int argc,
          value<std::string>(&rsessionWhichR_)->default_value(""),
          "path to main R program (e.g. /usr/bin/R)")
       ("rsession-path", 
-         value<std::string>(&rsessionPath_)->default_value("rsessio"),
+         value<std::string>(&rsessionPath_)->default_value("rsession"),
          "path to rsession executable")
       ("rldpath-path",
          value<std::string>(&rldpathPath_)->default_value("r-ldpath"),

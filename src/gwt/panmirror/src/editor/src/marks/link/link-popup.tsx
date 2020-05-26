@@ -1,7 +1,7 @@
 /*
  * LinkPopup.tsx
  *
- * Copyright (C) 2019-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -34,6 +34,7 @@ import { reactRenderForEditorView, WidgetProps } from '../../api/widgets/react';
 import { LinkButton, ImageButton } from '../../api/widgets/button';
 import { textRangePopupDecorationPosition } from '../../api/widgets/decoration';
 import { Popup } from '../../api/widgets/popup';
+import { kPlatformMac } from '../../api/platform';
 
 const key = new PluginKey<DecorationSet>('link-popup');
 
@@ -125,6 +126,20 @@ export class LinkPopupPlugin extends Plugin<DecorationSet> {
         decorations: (state: EditorState) => {
           return key.getState(state);
         },
+        handleClick: (view: EditorView, pos: number, event: MouseEvent) => {
+          const keyPressed = kPlatformMac && event.metaKey;
+          if (keyPressed) {
+            const schema = view.state.schema;
+            const linkAttrs = getMarkAttrs(view.state.doc, { from: pos, to: pos }, schema.marks.link);
+            if (linkAttrs) {
+              event.stopPropagation();
+              event.preventDefault();
+              ui.display.openURL(linkAttrs.href);
+              return true;
+            }
+          }
+          return false;
+        },
       },
     });
   }
@@ -188,7 +203,7 @@ const LinkPopup: React.FC<LinkPopupProps> = props => {
 
   return (
     <Popup classes={['pm-popup-link']} style={props.style}>
-      <LinkButton text={linkText} onClick={onLinkClicked} maxWidth={props.maxLinkWidth}/>
+      <LinkButton text={linkText} onClick={onLinkClicked} maxWidth={props.maxLinkWidth} />
       {showCopyButton ? (
         <ImageButton
           image={props.ui.images.copy!}

@@ -1,7 +1,7 @@
 /*
  * GlobalDisplay.java
  *
- * Copyright (C) 2009-18 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -144,8 +144,6 @@ public abstract class GlobalDisplay extends MessageDisplay
    public abstract void openSatelliteWindow(String name, int width, int height,
                                    NewWindowOptions options);
 
-   public abstract void openEmailComposeWindow(String to, String subject);
-   
    public abstract void bringWindowToFront(String name);
    
    public abstract void showHtmlFile(String path);

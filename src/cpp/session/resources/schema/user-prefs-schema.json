@@ -1002,11 +1002,6 @@
             "default": 2000,
             "description": "Number of milliseconds to wait after last keystroke before updating live region."
         },
-        "aria_application_role": {
-            "type": "boolean",
-            "default": false,
-            "description": "Whether to tell screen readers that the entire page is an application."
-        },
         "reduced_motion": {
             "type": "boolean",
             "default": false,
@@ -1058,6 +1053,12 @@
             "type": "integer",
             "default": 80,
             "description": "The column to wrap text at when writing markdown"
+        },
+        "visual_markdown_editing_references_location": {
+            "type": "string",
+            "enum": ["block", "section", "document"],
+            "default": "block",
+            "description": "Placement of footnotes within markdown output."
         },
         "visual_markdown_editing_max_content_width": {
             "type": "integer",

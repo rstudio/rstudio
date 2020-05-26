@@ -1,7 +1,7 @@
 /*
  * pandoc_from_prosemirror.ts
  *
- * Copyright (C) 2019-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -126,9 +126,9 @@ class PandocWriter implements PandocOutput {
     this.write(token);
   }
 
-  public writeMark(type: PandocTokenType, parent: Fragment, expelEnclosingWhitespace = false) {
+  public writeMark(type: PandocTokenType, parent: Fragment, expelEnclosingWhitespace = true) {
     // expel enclosing whitepsace if requested and if the fragment isn't 100% spaces
-    if (expelEnclosingWhitespace && fragmentText(parent).trim().length > 0) {
+    if (expelEnclosingWhitespace) {
       // build output spec
       const output = {
         spaceBefore: false,
@@ -144,7 +144,7 @@ class PandocWriter implements PandocOutput {
           let outputText = node.textContent;
 
           // checking for leading space in first node
-          if (index === 0 && node.textContent.match(/^\s+/)) {
+          if (output.nodes.length === 0 && node.textContent.match(/^\s+/)) {
             output.spaceBefore = true;
             outputText = outputText.trimLeft();
           }
@@ -155,11 +155,19 @@ class PandocWriter implements PandocOutput {
             outputText = outputText.trimRight();
           }
 
-          // if we modified the node's text then create a new node
-          if (outputText !== node.textContent) {
-            output.nodes.push(node.type.schema.text(outputText, node.marks));
-          } else {
-            output.nodes.push(node);
+          // check for an entirely blank node
+          if (outputText.match(/^\s*$/)) {
+            outputText = '';
+          }
+
+          // skip the node if it has nothing in it
+          if (outputText.length > 0) {
+            // if we modified the node's text then create a new node
+            if (outputText !== node.textContent) {
+              output.nodes.push(node.type.schema.text(outputText, node.marks));
+            } else {
+              output.nodes.push(node);
+            }
           }
         } else {
           output.nodes.push(node);
@@ -167,14 +175,16 @@ class PandocWriter implements PandocOutput {
       });
 
       // output space tokens before/after mark as necessary
-      if (output.spaceBefore) {
-        this.writeToken(PandocTokenType.Space);
-      }
-      this.writeToken(type, () => {
-        this.writeInlines(Fragment.from(output.nodes));
-      });
-      if (output.spaceAfter) {
-        this.writeToken(PandocTokenType.Space);
+      if (output.nodes.length > 0) {
+        if (output.spaceBefore) {
+          this.writeToken(PandocTokenType.Space);
+        }
+        this.writeToken(type, () => {
+          this.writeInlines(Fragment.from(output.nodes));
+        });
+        if (output.spaceAfter) {
+          this.writeToken(PandocTokenType.Space);
+        }
       }
 
       // normal codepath (not expelling existing whitespace)
@@ -191,7 +201,7 @@ class PandocWriter implements PandocOutput {
     this.write(arr);
   }
 
-  public writeAttr(id?: string, classes?: string[], keyvalue?: string[]) {
+  public writeAttr(id?: string, classes?: string[], keyvalue?: [[string, string]]) {
     this.write([id || '', classes || [], keyvalue || []]);
   }
 
@@ -247,10 +257,15 @@ class PandocWriter implements PandocOutput {
   }
 
   public writeNote(note: ProsemirrorNode) {
+    // get corresponding note body
     const noteBody = this.notes[note.attrs.ref];
-    this.writeToken(PandocTokenType.Note, () => {
-      this.writeNodes(noteBody);
-    });
+
+    // don't write empty footnotes (otherwise in block or section mode they gobble up the section below them)
+    if (noteBody.textContent.trim().length > 0) {
+      this.writeToken(PandocTokenType.Note, () => {
+        this.writeNodes(noteBody);
+      });
+    }
   }
 
   public writeNode(node: ProsemirrorNode) {
@@ -379,9 +394,10 @@ class PandocWriter implements PandocOutput {
   private initEscapeCharacters() {
     // gfm disallows [] escaping so that MediaWiki style page links (e.g. [[MyPage]]) work as expected
     // tex_math_single_backslash does not allow escaping of [] or () (as that conflicts with the math syntax)
-    if (this.format.baseName === kGfmFormat || this.format.extensions.tex_math_single_backslash) {
+    if (this.format.mode === kGfmFormat || this.format.extensions.tex_math_single_backslash) {
       this.preventEscapeCharacters.push('[', ']');
     }
+
     // tex_math_single_backslash does not allow escaping of [] or () (as that conflicts with the math syntax)
     if (this.format.extensions.tex_math_single_backslash) {
       this.preventEscapeCharacters.push('(', ')');

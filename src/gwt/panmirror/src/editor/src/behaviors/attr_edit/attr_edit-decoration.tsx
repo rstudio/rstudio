@@ -1,7 +1,7 @@
 /*
  * attr_edit-decoration.tsx
  *
- * Copyright (C) 2019-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -61,13 +61,15 @@ const AttrEditDecoration: React.FC<AttrEditDecorationProps> = props => {
             );
           })
         : null}
-      <span
-        className="attr-edit-button attr-edit-widget pm-block-border-color pm-border-background-color"
-        title={buttonTitle}
-        onClick={onClick}
-      >
-        <span className="attr-edit-button-ellipsis">&#x2022;&#x2022;&#x2022;</span>
-      </span>
+      {props.editFn(props.view.state) ? (
+        <span
+          className="attr-edit-button attr-edit-widget pm-block-border-color pm-border-background-color"
+          title={buttonTitle}
+          onClick={onClick}
+        >
+          <span className="attr-edit-button-ellipsis">&#x2022;&#x2022;&#x2022;</span>
+        </span>
+      ) : null}
     </div>
   );
 };

@@ -1,5 +1,10 @@
 ## v1.4 - Release Notes
 
+### Python
+
+* Python objects are now shown in the Environment Pane when `reticulate` REPL is active. (#6862)
+* Python objects can now be viewed using the Data Viewer and Object Explorer. (#6862)
+
 ### Plots
 
 * The default renderer used for the RStudio graphics device can now be customized. (#2142)
@@ -21,11 +26,11 @@
 * RStudio now infers document type from shebang (e.g. #!/usr/bin/env sh) for R, Python and shell scripts (#5643)
 * New option to configure soft wrapping for R Markdown files, and command to change the soft wrap mode of the editor on the fly (#2341)
 * Add option `www-url-path-prefix` to force a path on auth cookies (Pro #1608)
+* New Command Palette for searching and running build-in commands and add-ins (#5168)
 
 ### RStudio Server Pro
 
 * SAML is now supported as an authentication mechanism (Pro #1194)
-* New option `server-project-sharing-root-dir` allows project sharing outside user home directories (Pro #1340)
 * New `X-RStudio-Request` header for specifying originating URL behind path-rewriting proxies (Pro #1579)
 * New user profile option `session-limit` allow limiting the maximum number of sessions a user can have (Pro #540)
 * Project sharing is automatically disabled and a warning is issued when `server-multiple-sessions=0`. (Pro #1263)
@@ -37,6 +42,7 @@
 
 * Fixed an issue where hovering mouse cursor over C++ completion popup would steal focus. (#5941)
 * Git integration now works properly for project names containing the '!' character. (#6160)
+* Fixed issue where loading the Rfast package could lead to session hangs. (#6645)
 * Fixed header resizing in Data Viewer (#1665)
 * Fixed resizing last column in Data Viewer (#2642)
 * Fixed inconsistencies in the resizing between a column and its header (#4361)
@@ -47,3 +53,4 @@
 * Fixed issue where attempts to plot could fail if R tempdir was deleted (#2214)
 * Fixed issue that caused sessions to freeze due to slow I/O for monitor logs (Pro #1259)
 * Added CSRF protection to sign-in pages (Pro #1469)
+* Fixed issue that allowed multiple concurrent sign-in requests (#6502)

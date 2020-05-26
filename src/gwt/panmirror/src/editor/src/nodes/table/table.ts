@@ -1,7 +1,7 @@
 /*
  * table.ts
  *
- * Copyright (C) 2019-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -26,6 +26,9 @@ import { Extension } from '../../api/extension';
 import { PandocExtensions } from '../../api/pandoc';
 import { BaseKey } from '../../api/basekeys';
 import { ProsemirrorCommand, EditorCommandId, exitNode } from '../../api/command';
+import { TableCapabilities } from '../../api/table';
+import { trTransform } from '../../api/transaction';
+import { PandocCapabilities } from '../../api/pandoc_capabilities';
 
 import {
   insertTable,
@@ -56,17 +59,9 @@ import { tablePaste } from './table-paste';
 
 import 'prosemirror-tables/style/tables.css';
 import './table-styles.css';
-import { TableCapabilities } from '../../api/table';
-import { trTransform } from '../../api/transaction';
-import { tableContextMenu } from './table-contextmenu';
-import { PandocCapabilities } from '../../api/pandoc_capabilities';
 
-const extension = (
-  pandocExtensions: PandocExtensions, 
-  _caps: PandocCapabilities, 
-  ui: EditorUI)
-: Extension | null => {
-
+import { TableContextMenuPlugin } from './table-contextmenu';
+const extension = (pandocExtensions: PandocExtensions, _caps: PandocCapabilities, ui: EditorUI): Extension | null => {
   // not enabled if there are no tables enabled
   if (
     !pandocExtensions.grid_tables &&
@@ -127,7 +122,7 @@ const extension = (
         }),
         tableEditing(),
         tablePaste(),
-        tableContextMenu(schema, ui)
+        new TableContextMenuPlugin(schema, ui),
       ];
     },
 
