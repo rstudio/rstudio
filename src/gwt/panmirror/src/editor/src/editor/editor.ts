@@ -146,7 +146,7 @@ export interface UIToolsImage {
 }
 
 export interface UIToolsFormat {
-  parseFormatConfig(markdown: string): PandocFormatConfig;
+  parseFormatConfig(markdown: string, isRmd: boolean): PandocFormatConfig;
 }
 
 export interface UIToolsSource {
@@ -625,8 +625,8 @@ export class Editor {
     return this.pandocFormat;
   }
 
-  public getPandocFormatConfig(): PandocFormatConfig {
-    return pandocFormatConfigFromDoc(this.state.doc);
+  public getPandocFormatConfig(isRmd: boolean): PandocFormatConfig {
+    return pandocFormatConfigFromDoc(this.state.doc, isRmd);
   }
 
   private dispatchTransaction(tr: Transaction) {

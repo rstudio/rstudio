@@ -26,7 +26,7 @@ import {
 } from 'prosemirror-commands';
 import { undoInputRule } from 'prosemirror-inputrules';
 import { keymap } from 'prosemirror-keymap';
-import { EditorState, Transaction } from 'prosemirror-state';
+import { EditorState, Transaction, Plugin } from 'prosemirror-state';
 
 import { CommandFn } from './command';
 
@@ -45,7 +45,7 @@ export interface BaseKeyBinding {
   command: CommandFn;
 }
 
-export function baseKeysPlugin(keys: readonly BaseKeyBinding[]) {
+export function baseKeysPlugin(keys: readonly BaseKeyBinding[]) : Plugin {
   // collect all keys
   const pluginKeys = [
     // base enter key behaviors

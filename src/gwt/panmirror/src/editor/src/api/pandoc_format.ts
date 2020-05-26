@@ -18,6 +18,7 @@ import { Node as ProsemirrorNode } from 'prosemirror-model';
 import { PandocEngine, PandocExtensions } from './pandoc';
 import { EditorFormat } from './format';
 import { firstYamlBlock, yamlMetadataNodes } from './yaml';
+import { findValue } from './object';
 
 export const kMarkdownFormat = 'markdown';
 export const kMarkdownPhpextraFormat = 'markdown_phpextra';
@@ -55,28 +56,54 @@ export function matchPandocFormatComment(code: string) {
   return code.match(magicCommentRegEx);
 }
 
-export function pandocFormatConfigFromDoc(doc: ProsemirrorNode) {
-  return pandocFormatConfigFromYamlInDoc(doc) || pandocFormatConfigFromCommentInDoc(doc) || {};
+export function pandocFormatConfigFromDoc(doc: ProsemirrorNode, isRmd: boolean) {
+  return pandocFormatConfigFromYamlInDoc(doc, isRmd) || 
+         pandocFormatConfigFromCommentInDoc(doc) || {};
 }
 
-export function pandocFormatConfigFromCode(code: string): PandocFormatConfig {
-  return pandocFormatConfigFromYamlInCode(code) || pandocFormatConfigFromCommentInCode(code) || {};
+export function pandocFormatConfigFromCode(code: string, isRmd: boolean): PandocFormatConfig {
+  return pandocFormatConfigFromYamlInCode(code, isRmd) || 
+         pandocFormatConfigFromCommentInCode(code) || {};
 }
 
-function pandocFormatConfigFromYamlInCode(code: string): PandocFormatConfig | null {
+function pandocFormatConfigFromYamlInCode(code: string, isRmd: boolean): PandocFormatConfig | null {
+  
+  // get the first yaml block in the file
   const yaml = firstYamlBlock(code);
-  const yamlMarkdownOptions = yaml?.editor_options?.markdown;
-  if (yamlMarkdownOptions instanceof Object) {
-    return readPandocFormatConfig(yamlMarkdownOptions);
+
+  // did we find yaml?
+  if (yaml) {
+
+    // see if we have any md_extensions defined
+    const mdExtensions = isRmd ? findValue('md_extensions', yaml?.output) : undefined;
+
+    // see if we have any markdown options defined
+    let yamlFormatConfig: PandocFormatConfig | undefined;
+    const yamlMarkdownOptions = yaml?.editor_options?.markdown;
+    if (yamlMarkdownOptions instanceof Object) {
+      yamlFormatConfig = readPandocFormatConfig(yamlMarkdownOptions);
+    }
+
+    // combine and return 
+    if (mdExtensions || yamlFormatConfig) {
+      const formatConfig: PandocFormatConfig = yamlFormatConfig ? yamlFormatConfig : {};
+      if (mdExtensions) {
+        formatConfig.extensions = mdExtensions + (formatConfig.extensions || '');
+      }
+      return formatConfig;
+    } else {
+      return null;
+    }
   } else {
     return null;
   }
+  
 }
 
-function pandocFormatConfigFromYamlInDoc(doc: ProsemirrorNode): PandocFormatConfig | null {
+function pandocFormatConfigFromYamlInDoc(doc: ProsemirrorNode, isRmd: boolean): PandocFormatConfig | null {
   const yamlNodes = yamlMetadataNodes(doc);
   if (yamlNodes.length > 0) {
-    return pandocFormatConfigFromYamlInCode(yamlNodes[0].node.textContent);
+    return pandocFormatConfigFromYamlInCode(yamlNodes[0].node.textContent, isRmd);
   } else {
     return null;
   }
@@ -177,6 +204,7 @@ function readPandocFormatConfig(source: { [key: string]: any }) {
   }
   return formatConfig;
 }
+
 
 export async function resolvePandocFormat(pandoc: PandocEngine, format: EditorFormat): Promise<PandocFormat> {
   // additional markdown variants we support

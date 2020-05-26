@@ -33,7 +33,7 @@ import { canInsertNode } from '../api/node';
 import { fragmentText } from '../api/fragment';
 import { EditorFormat } from '../api/format';
 
-const kRefRegExDetectAndApply = /(?:^|[^`])(\\?@ref\([A-Za-z0-9:-]*\))/;
+const kRefRegExDetectAndApply = /(?:^|[^`])(\\?@ref\([A-Za-z0-9:-]*\))/g;
 
 const extension = (
   pandocExtensions: PandocExtensions,

@@ -1,5 +1,6 @@
+
 /*
- * PanmirrorUIToolsFormat.java
+ * object.ts
  *
  * Copyright (C) 2020 by RStudio, PBC
  *
@@ -14,13 +15,24 @@
  */
 
 
-package org.rstudio.studio.client.panmirror.uitools;
+export function findValue(key: string, object?: { [key: string]: any }) {
+  
+  if (!object) {
+    return undefined;
+  }
 
-import jsinterop.annotations.JsType;
+  let value;
 
-@JsType
-public class PanmirrorUIToolsFormat
-{
-   public native PanmirrorPandocFormatConfig parseFormatConfig(String markdown, boolean isRmd);
+  Object.keys(object).some(k => {
+    if (k === key) {
+      value = object[k];
+      return true;
+    }
+    if (object[k] && typeof object[k] === 'object') {
+      value = findValue(key, object[k]);
+      return value !== undefined;
+    }
+  });
+
+  return value;
 }
-

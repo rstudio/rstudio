@@ -198,7 +198,7 @@ h4.pm-heading {
   margin-block-end: 1em;
 }
 .pm-popup {
-  border-radius: 8px;
+  border-radius: 3px;
   border-style: solid;
   border-width: 1px;
   padding: 10px;
