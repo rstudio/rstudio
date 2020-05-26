@@ -381,14 +381,6 @@ public:
    core::Error create(const std::string& project,
                       const std::string& working,
                       bool initial,
-                      std::string* pId) const
-   {
-      return create(project, working, initial, pId);
-   }
-
-   core::Error create(const std::string& project,
-                      const std::string& working,
-                      bool initial,
                       std::string* pId) const;
 
    std::vector<boost::shared_ptr<ActiveSession> > list(
