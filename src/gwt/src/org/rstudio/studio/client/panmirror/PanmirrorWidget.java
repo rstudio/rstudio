@@ -481,9 +481,9 @@ public class PanmirrorWidget extends DockLayoutPanel implements
       return editor_.getPandocFormat();
    }
    
-   public PanmirrorPandocFormatConfig getPandocFormatConfig()
+   public PanmirrorPandocFormatConfig getPandocFormatConfig(boolean isRmd)
    {
-      return editor_.getPandocFormatConfig();
+      return editor_.getPandocFormatConfig(isRmd);
    }
    
    public PanmirrorSelection getSelection()

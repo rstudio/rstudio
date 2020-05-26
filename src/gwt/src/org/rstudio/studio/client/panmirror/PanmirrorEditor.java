@@ -91,7 +91,7 @@ public class PanmirrorEditor
    public native void setKeybindings(PanmirrorKeybindings keybindings);
    
    public native PanmirrorPandocFormat getPandocFormat();
-   public native PanmirrorPandocFormatConfig getPandocFormatConfig();
+   public native PanmirrorPandocFormatConfig getPandocFormatConfig(boolean isRmd);
    
    public native void enableDevTools(JsObject initFn);
  

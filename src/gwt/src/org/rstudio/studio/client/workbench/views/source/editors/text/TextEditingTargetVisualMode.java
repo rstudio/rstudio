@@ -838,13 +838,13 @@ public class TextEditingTargetVisualMode implements CommandPaletteEntrySource
    private WriterOptionsContext writerOptionsFromCode(String code)
    {
       PanmirrorUIToolsFormat format = new PanmirrorUITools().format;
-      PanmirrorPandocFormatConfig formatConfig = format.parseFormatConfig(code);
+      PanmirrorPandocFormatConfig formatConfig = format.parseFormatConfig(code, true);
       return writerOptions(formatConfig); 
    }
    
    private WriterOptionsContext writerOptionsFromVisual()
    {
-      PanmirrorPandocFormatConfig formatConfig = panmirror_.getPandocFormatConfig();
+      PanmirrorPandocFormatConfig formatConfig = panmirror_.getPandocFormatConfig(true);
       return writerOptions(formatConfig);
    }
    
@@ -1208,7 +1208,7 @@ public class TextEditingTargetVisualMode implements CommandPaletteEntrySource
             PanmirrorFormat format = new PanmirrorFormat();
             
             // see if we have a format comment
-            PanmirrorPandocFormatConfig formatComment = formatTools.parseFormatConfig(getEditorCode());
+            PanmirrorPandocFormatConfig formatComment = formatTools.parseFormatConfig(getEditorCode(), true);
               
             // doctypes
             if (formatComment.doctypes == null || formatComment.doctypes.length == 0)
@@ -1523,19 +1523,19 @@ public class TextEditingTargetVisualMode implements CommandPaletteEntrySource
       public FormatConfig(PanmirrorUIToolsFormat formatTools)
       {
          formatTools_ = formatTools;
-         config_ = formatTools_.parseFormatConfig(getEditorCode());
+         config_ = formatTools_.parseFormatConfig(getEditorCode(), true);
       }
       
       @SuppressWarnings("unused")
       public boolean hasChanged()
       {
-         PanmirrorPandocFormatConfig config = formatTools_.parseFormatConfig(getEditorCode());
+         PanmirrorPandocFormatConfig config = formatTools_.parseFormatConfig(getEditorCode(), true);
          return !PanmirrorPandocFormatConfig.areEqual(config,  config_);   
       }
       
       public boolean requiresReload()
       {
-         PanmirrorPandocFormatConfig config = formatTools_.parseFormatConfig(getEditorCode());
+         PanmirrorPandocFormatConfig config = formatTools_.parseFormatConfig(getEditorCode(), true);
          return !PanmirrorPandocFormatConfig.editorBehaviorConfigEqual(config,  config_);  
       }
       
