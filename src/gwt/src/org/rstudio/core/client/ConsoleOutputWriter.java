@@ -95,6 +95,7 @@ public class ConsoleOutputWriter
       {
          SpanElement trailing = Document.get().createSpanElement();
          trailing.setTabIndex(-1);
+         Roles.getDocumentRole().set(trailing); // https://github.com/rstudio/rstudio/issues/6884
          outEl.appendChild(trailing);
          virtualConsole_ = vcFactory_.create(trailing);
       }
