@@ -16,15 +16,13 @@
 import { EditorState, Transaction, Plugin, PluginKey } from 'prosemirror-state';
 import { EditorView } from 'prosemirror-view';
 
-import React, { ChangeEvent, ReactHTML } from 'react';
+import React, {  } from 'react';
 
 import { Extension } from '../../api/extension';
 import { ProsemirrorCommand, EditorCommandId } from '../../api/command';
 import { canInsertNode } from '../../api/node';
-import { Popup } from '../../api/widgets/popup';
-import { WidgetProps } from '../../api/widgets/react';
 
-import './insert_symbol-styles.css';
+
 import ReactDOM from 'react-dom';
 import { EditorUI } from '../../api/ui';
 import { Schema } from 'prosemirror-model';
@@ -34,13 +32,11 @@ import { EditorFormat } from '../../api/format';
 import { EditorOptions } from '../../api/options';
 import { EditorEvents, EditorEvent } from '../../api/events';
 
-import SymbolCharacterGrid from './insert_symbol-grid';
-import SymbolDataManager, { SymbolCharacter, SymbolGroup, CATEGORY_ALL } from './insert_symbol-data';
-import { TextInput } from '../../api/widgets/text';
-import { SelectInput } from '../../api/widgets/select';
+import { InsertSymbolPopup } from './insert_symbol-popup'
+
 
 const key = new PluginKey<boolean>('insert_symbol');
-const symbolDataManager = new SymbolDataManager();
+
 
 class InsertSymbolPlugin extends Plugin<boolean> {
   private popup: HTMLElement | null = null;
@@ -52,7 +48,7 @@ class InsertSymbolPlugin extends Plugin<boolean> {
     super({
       key,
       view: () => ({
-        update: (view: EditorView, prevState: EditorState) => {
+        update: () => {
           this.closePopup();
         },
         destroy: () => {
@@ -64,7 +60,7 @@ class InsertSymbolPlugin extends Plugin<boolean> {
         handleDOMEvents: {
           // TODO: am i going to receive blur event when items in popup are focused?
           // TODO: does this need to be converted to dealing with popup blurring not editorview blurring?
-          blur: (view: EditorView, event: Event) => {
+          blur: () => {
             if (this.popup && window.document.activeElement !== this.popup) {
               //this.closePopup();
             }
@@ -173,123 +169,5 @@ export function insertSymbol(state: EditorState, dispatch?: (tr: Transaction) =>
   return true;
 }
 
-interface InsertSymbolPopupProps extends WidgetProps {
-  enabled: boolean;
-  onInsertText: (text: string) => void;
-  onClose: VoidFunction;
-  size: [number, number];
-  searchImage?: string;
-}
-
-const InsertSymbolPopup: React.FC<InsertSymbolPopupProps> = props => {
-  const kPopupChromeHeight = 25;
-  const popupHeight = props.size[0] - kPopupChromeHeight;
-  const popupWidth = props.size[1];
-  const style: React.CSSProperties = {
-    ...props.style,
-    height: popupHeight + 'px',
-    width: popupWidth + 'px',
-  };
-
-  const gridHeight = popupHeight - 45;
-  const gridWidth = popupWidth;
-
-  const [filterText, setFilterText] = React.useState<string>('');
-  const [selectedSymbolGroup, setSelectedSymbolGroup] = React.useState(CATEGORY_ALL);
-  const [symbols, setSymbols] = React.useState<Array<SymbolCharacter>>([]);
-  const [filteredSymbols, setFilteredSymbols] = React.useState<Array<SymbolCharacter>>(symbols);
-
-  React.useEffect(() => {
-    const symbols: Array<SymbolCharacter> = symbolDataManager.getSymbols(selectedSymbolGroup);
-    setSymbols(symbols);
-  }, [selectedSymbolGroup]);
-
-  React.useEffect(() => {
-    setFilteredSymbols(symbolDataManager.filterSymbols(filterText, symbols));
-  }, [filterText, symbols]);
-
-  const textRef = React.useRef(null);
-  const selectRef = React.useRef(null);
-  const gridRef = React.useRef(null);
-
-  // Focus the first text box
-  React.useEffect(() => {
-    focusElement(textRef);
-  }, []);
-
-  function focusElement(element: React.RefObject<HTMLInputElement>) {
-    element!.current!.focus();
-  }
-
-  const options = symbolDataManager.getSymbolGroups().map(category => (
-    <option key={category.alias} value={category.alias}>
-      {category.alias}
-    </option>
-  ));
-
-  return (
-    <Popup classes={['pm-popup-insert-symbol']} style={style}>
-      <div className="pm-popup-insert-symbol-search-container" style={{width: gridWidth}}>
-        <TextInput
-          widthChars={20}
-          iconAdornment={props.searchImage}
-          tabIndex={0}
-          className='pm-popup-insert-symbol-search-textbox'
-          placeholder="keyword or codepoint"
-          onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
-            setFilterText(event.currentTarget.value);
-          }}
-          onKeyDown={(event: React.KeyboardEvent<HTMLInputElement>) => {
-            if (event.keyCode == 9 && event.shiftKey) {
-              focusElement(gridRef);
-            }
-          }}
-          onKeyUp={(event: React.KeyboardEvent<HTMLInputElement>) => {
-            if (event.keyCode === 13) {
-              if (filteredSymbols.length === 1) {
-                props.onInsertText(filteredSymbols[0].value);
-              }
-            }
-          }}
-          ref={textRef}
-        />
-        <SelectInput
-          tabIndex={0}
-          ref={selectRef}
-          className='pm-popup-insert-symbol-select-category'
-          onChange={(event: React.ChangeEvent<HTMLSelectElement>) => {
-            const value: string = (event.target as HTMLSelectElement).selectedOptions[0].value;
-            const selectedGroup: SymbolGroup | undefined = symbolDataManager
-              .getSymbolGroups()
-              .find(group => group.alias === value);
-            if (selectedGroup) {
-              setSelectedSymbolGroup(selectedGroup);
-            }
-          }}
-        >
-          {options}
-        </SelectInput>
-      </div>
-
-      <hr className="pm-popup-insert-symbol-separator pm-border-background-color"/>
-      <div className="pm-popup-insert-symbol-grid-container">
-        <SymbolCharacterGrid
-          symbolCharacters={filteredSymbols}
-          onSymbolCharacterSelected={(character: string) => {
-            props.onInsertText(character);
-          }}
-          onChangeFocus={(previous: boolean) => focusElement(previous ? selectRef : textRef)}
-          height={gridHeight}
-          width={gridWidth}
-          numberOfColumns={12}
-          ref={gridRef}
-        />
-        <div className="pm-popup-insert-symbol-no-matching pm-light-text-color" style={{display: filteredSymbols.length > 0 ? 'none' : 'block'}}>
-          No matching symbols
-        </div>
-      </div>
-    </Popup>
-  );
-};
 
 export default extension;

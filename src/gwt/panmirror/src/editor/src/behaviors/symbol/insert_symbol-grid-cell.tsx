@@ -24,7 +24,7 @@ export const SymbolCharacterCell = ({ columnIndex, rowIndex, style, data }: any)
     <div
       tabIndex={0}
       style={style}
-      title={`+U+${character?.codepoint.toString(16)} - ${character?.name.toLowerCase()}`}
+      title={`U+${character?.codepoint.toString(16)} - ${character?.name.toLowerCase()}`}
       className="pm-symbol-grid-container"
       onClick={event => {
         event.preventDefault();
@@ -34,18 +34,6 @@ export const SymbolCharacterCell = ({ columnIndex, rowIndex, style, data }: any)
       onMouseDown={event => {
         event.preventDefault();
         event.stopPropagation();
-      }}
-      onKeyDown={event => {
-        if (event.keyCode == 13) {
-          characterGridCellItemData.onSymbolCharacterSelected(character?.value as string);
-          event.preventDefault();
-          event.stopPropagation();            
-        }
-
-        if (characterGridCellItemData.onKeyDown(event)) {
-          event.preventDefault();
-          event.stopPropagation();  
-        };
       }}
     >
       <div className="pm-symbol-grid-cell pm-grid-item">

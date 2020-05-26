@@ -8,7 +8,6 @@ import { SymbolCharacter } from './insert_symbol-data';
 import { findNextInputElement, findPreviousInputElement } from '../../api/html';
 import { CharacterGridCellItemData, SymbolCharacterCell } from './insert_symbol-grid-cell';
 
-// TODO: Empty state where no matching symbols
 // TODO: Selection vs focus - should focus follow hover?
 // TODO: If only one item is selected, we should focus that so that enter key will obviously work
 interface CharacterGridProps extends WidgetProps {
@@ -30,6 +29,8 @@ const SymbolCharacterGrid = React.forwardRef<any, CharacterGridProps>((props, re
     numberOfColumns: props.numberOfColumns,
   };
 
+
+
   return (
     <Grid
       columnCount={props.numberOfColumns}
@@ -46,6 +47,16 @@ const SymbolCharacterGrid = React.forwardRef<any, CharacterGridProps>((props, re
     </Grid>
   );
 });
+
+
+// Selected Cell
+// selelect(index)
+// next() : boolean
+// previous() : boolean
+// nextRow() : boolean
+// previousRow() : boolean
+
+
 
 
 // TODO: page up / down and focus issues
