@@ -57,6 +57,9 @@ public class AriaLiveService
    // Milliseconds to wait before making an announcement at session load
    public static final int STARTUP_ANNOUNCEMENT_DELAY = 3000;
 
+   // Milliseconds to wait before making an announcement after significant UI change
+   public static final int UI_ANNOUNCEMENT_DELAY = 1000;
+
    @Inject
    public AriaLiveService(EventBus eventBus, Provider<UserPrefs> pUserPrefs)
    {
