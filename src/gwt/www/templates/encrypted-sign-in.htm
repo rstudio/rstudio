@@ -173,6 +173,7 @@ function prepare() {
       showError("Error: " + exception);
    }
 }
+
 function submitRealForm() {
    if (prepare())
       document.realform.submit();
@@ -184,7 +185,7 @@ function submitRealForm() {
 <div id="skipnav"><a href="#username">Skip navigation</a></div>
 <header role="banner" id="banner">
   <div id="logo">
-    <a href="https://www.rstudio.com/"><img src="images/rstudio.png" width="78" height="27" alt="RStudio Logo (goes to external site)"/></a>
+    #!logoHtml#
   </div>
 </header>
 <main role="main">
