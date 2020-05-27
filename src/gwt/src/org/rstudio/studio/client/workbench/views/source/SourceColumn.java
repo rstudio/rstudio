@@ -257,12 +257,28 @@ public class SourceColumn implements //BeforeShowHandler,
       display_.selectTab(idx);
    }
 
+   private void onActivate(EditingTarget target)
+   {
+       // return if we're already set properly
+       if (activeEditor_ != null && activeEditor_ == target)
+          return;
+
+       // deactivate prior active editor
+       if (activeEditor_ != null)
+          activeEditor_.onDeactivate();
+
+       // set and active editor
+       activeEditor_ = target;
+       if (activeEditor_ != null)
+          activeEditor_.onActivate();
+       manageCommands();
+   }
 
    void setActiveEditor()
    {
        if (activeEditor_ == null &&
            editors_.size() > display_.getActiveTabIndex())
-          activeEditor_ = editors_.get(display_.getActiveTabIndex());
+          onActivate(editors_.get(display_.getActiveTabIndex()));
    }
 
    EditingTarget setActiveEditor(String docId)
@@ -279,7 +295,7 @@ public class SourceColumn implements //BeforeShowHandler,
       {
          if (target.getId().equals(docId))
          {
-            activeEditor_ = target;
+             onActivate(target);
             return target;
          }
       }
@@ -294,7 +310,7 @@ public class SourceColumn implements //BeforeShowHandler,
          Debug.logWarning("Attempting to set active editor to an unknown target.");
          return;
       }
-      activeEditor_ = target;
+      onActivate(target);
    }
 
    private void syncTabOrder()
