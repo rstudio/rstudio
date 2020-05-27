@@ -1,6 +1,6 @@
 import { WidgetProps } from '../../api/widgets/react';
-import React, { ChangeEvent, ReactHTML } from 'react';
-import SymbolDataManager, { CATEGORY_ALL, SymbolCharacter, SymbolGroup } from './insert_symbol-data';
+import React, { ChangeEvent } from 'react';
+import SymbolDataManager, { CATEGORY_ALL, Symbol, SymbolGroup } from './insert_symbol-data';
 import { Popup } from '../../api/widgets/popup';
 import { TextInput } from '../../api/widgets/text';
 import { SelectInput } from '../../api/widgets/select';
@@ -33,13 +33,13 @@ export const InsertSymbolPopup: React.FC<InsertSymbolPopupProps> = props => {
   const numberOfColumns = 12;
 
   const [filterText, setFilterText] = React.useState<string>('');
-  const [selectedSymbolGroup, setSelectedSymbolGroup] = React.useState<SymbolGroup>(CATEGORY_ALL);
+  const [selectedSymbolGroup, setSelectedSymbolGroup] = React.useState<string>(CATEGORY_ALL);
   const [selectedSymbolIndex, setSelectedSymbolIndex] = React.useState<number>(0);
-  const [symbols, setSymbols] = React.useState<Array<SymbolCharacter>>([]);
-  const [filteredSymbols, setFilteredSymbols] = React.useState<Array<SymbolCharacter>>(symbols);
+  const [symbols, setSymbols] = React.useState<Array<Symbol>>([]);
+  const [filteredSymbols, setFilteredSymbols] = React.useState<Array<Symbol>>(symbols);
 
   React.useEffect(() => {
-    const symbols: Array<SymbolCharacter> = symbolDataManager.getSymbols(selectedSymbolGroup);
+    const symbols: Array<Symbol> = symbolDataManager.getSymbols(selectedSymbolGroup);
     setSymbols(symbols);
   }, [selectedSymbolGroup]);
 
@@ -60,19 +60,19 @@ export const InsertSymbolPopup: React.FC<InsertSymbolPopupProps> = props => {
     element!.current!.focus();
   }
 
-  const options = symbolDataManager.getSymbolGroups().map(category => (
-    <option key={category.alias} value={category.alias}>
-      {category.alias}
+  const options = symbolDataManager.getSymbolGroupNames().map(name => (
+    <option key={name} value={name}>
+      {name}
     </option>
   ));
 
   function handleSelectChanged(event: ChangeEvent<Element>) {
     const value: string = (event.target as HTMLSelectElement).selectedOptions[0].value;
-    const selectedGroup: SymbolGroup | undefined = symbolDataManager
-      .getSymbolGroups()
-      .find(group => group.alias === value);
-    if (selectedGroup) {
-      setSelectedSymbolGroup(selectedGroup);
+    const selectedGroupName: string | undefined = symbolDataManager
+      .getSymbolGroupNames()
+      .find(name => name === value);
+    if (selectedGroupName) {
+      setSelectedSymbolGroup(selectedGroupName);
     }
   }
 

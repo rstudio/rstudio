@@ -4,14 +4,14 @@ import React from 'react';
 import { WidgetProps } from '../../api/widgets/react';
 
 import './insert_symbol-grid-styles.css';
-import { SymbolCharacter } from './insert_symbol-data';
+import { Symbol } from './insert_symbol-data';
 import { CharacterGridCellItemData, SymbolCharacterCell } from './insert_symbol-grid-cell';
 
 interface CharacterGridProps extends WidgetProps {
   height: number;
   width: number;
   numberOfColumns: number;
-  symbolCharacters: Array<SymbolCharacter>;
+  symbolCharacters: Array<Symbol>;
   selectedIndex: number;
   onSelectionChanged: (selectedIndex: number) => void;
   onSelectionCommitted: VoidFunction;

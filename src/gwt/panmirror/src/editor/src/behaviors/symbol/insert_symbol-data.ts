@@ -1,52 +1,37 @@
-import * as untypedSymbolData from './insert_symbol-data.json';
+import untypedSymbolData from './insert_symbol-data.json';
 import { parseCodepoint } from '../../api/unicode';
 
 export interface SymbolGroup {
-  alias: string;
-  blocks: SymbolBlock[];
-}
-
-export interface SymbolBlock {
   name: string;
-  codepointFirst: number;
-  codepointLast: number;
+  symbols: Symbol[];
 }
 
-export interface SymbolCharacter {
+export interface Symbol {
   name: string;
   value: string;
   codepoint: number;
 }
 
-export const CATEGORY_ALL = {
-  alias: 'All',
-  blocks: [{ name: 'All', codepointFirst: 0, codepointLast: Number.MAX_VALUE }],
-};
+export const CATEGORY_ALL = 'All';
 
 class SymbolDataManager {
   constructor() {
-    this.symbols = untypedSymbolData.symbols;
-    this.symbolGroups = (untypedSymbolData.blocks as Array<SymbolGroup>).sort((a, b) => a.alias.localeCompare(b.alias));
+    this.symbolGroups = (untypedSymbolData as Array<SymbolGroup>).sort((a, b) => a.name.localeCompare(b.name));
   }
-  private symbols: Array<SymbolCharacter>;
   private symbolGroups: Array<SymbolGroup>;
 
-  public getSymbolGroups(): Array<SymbolGroup> {
-    return [CATEGORY_ALL, ...this.symbolGroups];
+  public getSymbolGroupNames(): Array<string> {
+    return [CATEGORY_ALL, ...this.symbolGroups.map(symbolGroup => symbolGroup.name)];
   }
 
-  public getSymbols(symbolGroup: SymbolGroup) {
-    if (symbolGroup.alias === CATEGORY_ALL.alias) {
-      return this.symbols;
+  public getSymbols(groupName: string) {
+    if (groupName === CATEGORY_ALL) {
+      return this.symbolGroups.map((symbolGroup) => symbolGroup.symbols).flat();
     }
-    return this.symbols.filter(symbol => {
-      return symbolGroup.blocks.find(block => {
-        return symbol.codepoint >= block.codepointFirst && symbol.codepoint <= block.codepointLast;
-      });
-    });
+    return this.symbolGroups.filter((symbolGroup) => groupName === symbolGroup.name).map((symbolGroup) => symbolGroup.symbols).flat();
   }
 
-  public filterSymbols(filterText: string, symbols: SymbolCharacter[]): SymbolCharacter[] {
+  public filterSymbols(filterText: string, symbols: Symbol[]): Symbol[] {
     const codepoint = parseCodepoint(filterText);
     const filteredSymbols = symbols.filter(symbol => {
       // Search by name
@@ -62,7 +47,7 @@ class SymbolDataManager {
       return false;
     });
 
-    if (filteredSymbols.length === 0 && codepoint) {
+    if (filteredSymbols.length === 0 && codepoint !== undefined) {
       return [
         {
           name: codepoint.toString(16),

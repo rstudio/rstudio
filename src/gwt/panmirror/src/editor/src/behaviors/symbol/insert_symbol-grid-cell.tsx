@@ -1,9 +1,9 @@
-import { SymbolCharacter } from "./insert_symbol-data";
+import { Symbol } from "./insert_symbol-data";
 
 import React from 'react';
 
 export interface CharacterGridCellItemData {
-  symbolCharacters: Array<SymbolCharacter>;
+  symbolCharacters: Array<Symbol>;
   numberOfColumns: number;
   selectedIndex: number;
   onSelectionChanged : (selectedIndex: number) => void;
