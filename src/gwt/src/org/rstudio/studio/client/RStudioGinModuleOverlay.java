@@ -20,7 +20,5 @@ public class RStudioGinModuleOverlay extends RStudioGinModule
    protected void configure()
    {
       super.configure();
-
-      
    }
 }
