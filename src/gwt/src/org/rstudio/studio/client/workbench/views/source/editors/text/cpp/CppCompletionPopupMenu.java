@@ -106,7 +106,7 @@ public class CppCompletionPopupMenu extends ScrollableToolbarPopupMenu
       }
    }
    
-   public void acceptSelected()
+   public boolean acceptSelected()
    {
       int index = getSelectedIndex();
       if (index != -1)
@@ -114,7 +114,9 @@ public class CppCompletionPopupMenu extends ScrollableToolbarPopupMenu
          if (isSelectable())
             onSelected_.execute(completions_.get(index));
       }
+      
       hide();
+      return true;
    }
    
    private void showMenu()

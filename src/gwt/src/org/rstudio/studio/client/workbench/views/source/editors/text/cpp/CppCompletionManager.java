@@ -210,19 +210,25 @@ public class CppCompletionManager implements CompletionManager
             case KeyCodes.KEY_N: return popup.selectNext();
             }
          }
-             
+         
+         // allow navigation with arrow keys
+         // (needs to be handled here as the popup will not be explicitly focused)
+         if (modifier == KeyboardShortcut.NONE)
+         {
+            switch (keyCode)
+            {
+            case KeyCodes.KEY_UP:    return popup.selectPrev();
+            case KeyCodes.KEY_DOWN:  return popup.selectNext();
+            case KeyCodes.KEY_ENTER: return popup.acceptSelected();
+            case KeyCodes.KEY_TAB:   return popup.acceptSelected();
+            }
+         }
+         
          // backspace triggers completion if the popup is visible
          if (keyCode == KeyCodes.KEY_BACKSPACE)
          {
             deferredSuggestCompletions(false, false);
             return false;
-         }
-         
-         // tab accepts the current selection (popup handles Enter)
-         else if (keyCode == KeyCodes.KEY_TAB)
-         {
-            popup.acceptSelected();
-            return true;
          }
          
          // allow '.' when showing file completions
