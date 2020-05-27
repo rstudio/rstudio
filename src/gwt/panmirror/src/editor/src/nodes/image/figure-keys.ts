@@ -14,10 +14,10 @@
  */
 
 import { Schema } from "prosemirror-model";
-import { EditorState, Transaction, NodeSelection, Selection } from "prosemirror-state";
+import { EditorState, Transaction, NodeSelection, Selection, TextSelection } from "prosemirror-state";
 import { EditorView } from "prosemirror-view";
 
-import { findParentNodeOfTypeClosestToPos, findSelectedNodeOfType, setTextSelection, ContentNodeWithPos } from "prosemirror-utils";
+import { findParentNodeOfTypeClosestToPos, findSelectedNodeOfType, setTextSelection, ContentNodeWithPos, findParentNodeOfType } from "prosemirror-utils";
 
 import { BaseKey } from "../../api/basekeys";
 import { exitNode } from "../../api/command";
@@ -100,10 +100,10 @@ function arrowHandler(dir: 'up' | 'down' | 'left' | 'right') {
     };
 
     // select figure caption
-    const selectFigureCaption = (figure: ContentNodeWithPos) => {
+    const selectFigureCaption = (figure: ContentNodeWithPos, atEnd = false) => {
       if (dispatch) {
         const tr = state.tr;
-        setTextSelection(figure.pos, 1)(tr);
+        setTextSelection(figure.pos + (atEnd ? figure.node.textContent.length + 1 : 0), 1)(tr);
         dispatch(tr);
       }
     };
@@ -112,7 +112,7 @@ function arrowHandler(dir: 'up' | 'down' | 'left' | 'right') {
     // alias schema and selection
     const { schema, selection } = state;
 
-    // right arrow for node selection w/ caption drives cursor into caption
+    // down/right arrow for node selection w/ caption drives cursor into caption
     if ((dir === 'down' || dir === 'right') && 
          selection instanceof NodeSelection && 
          selection.node.type === schema.nodes.figure) {
@@ -124,8 +124,21 @@ function arrowHandler(dir: 'up' | 'down' | 'left' | 'right') {
       }
     }
 
-    // normal node traversal
-    else if (state.selection.empty && view && view.endOfTextblock(dir)) {
+    // up/left arrow for selection in caption takes us back to the node selection
+    if ((dir === 'up' || dir === 'left') &&
+        selection instanceof TextSelection &&
+        !!findParentNodeOfType(schema.nodes.figure)(selection)) {
+
+      if ((dir === 'up' || dir === 'left' && selection.$head.parentOffset === 0)) {
+        const figure = findParentNodeOfType(schema.nodes.figure)(selection);
+        if (figure) {
+          selectFigure(figure);
+          return true;
+        }
+      }
+
+    // normal node traversal      
+    } else if (selection.empty && view && view.endOfTextblock(dir)) {
       
       // compute side offset
       const side = dir === 'left' || dir === 'up' ? -1 : 1;
@@ -138,7 +151,13 @@ function arrowHandler(dir: 'up' | 'down' | 'left' | 'right') {
       if (nextPos.$head) {
         const figure = findParentNodeOfTypeClosestToPos(nextPos.$head, schema.nodes.figure);
         if (figure) {
-          selectFigure(figure);
+          // arrowing back into a figure with a caption selects the caption
+          if (side === -1 && figure.node.childCount > 0) {
+            selectFigureCaption(figure, dir === 'left');
+          // otherwise select the figure
+          } else {
+            selectFigure(figure);
+          }
           return true;
         }
       }
