@@ -1,3 +1,18 @@
+/*
+ * generate-symbols.ts
+ *
+ * Copyright (C) 2019-20 by RStudio, PBC
+ *
+ * Unless you have received this program directly from RStudio pursuant
+ * to the terms of a commercial license agreement with RStudio, then
+ * this program is licensed to you under the terms of version 3 of the
+ * GNU Affero General Public License. This program is distributed WITHOUT
+ * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
+ * MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE. Please refer to the
+ * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
+ *
+ */
+
 import * as https from 'https';
 import * as fs from 'fs';
 import * as os from 'os';
@@ -144,16 +159,17 @@ function readXmlFileAndGenerateJsonFile(targetXmlFile: string, outputFile: strin
   const jsonResult = parser.convertToJson(tObj, options);
 
   // Read the block from the XML file and filter it into the typed blocks
-  const allIncludedBlocks: Array<Block> = jsonResult.ucd.blocks.block.map(block => {
-    return {
-      name: block['@_name'],
-      codepointFirst: parseInt(block['@_first-cp'], 16),
-      codepointLast: parseInt(block['@_last-cp'], 16),
-    };
-  })
-  .filter(block => {
-    return groupToBlockMapping.find(blockGroup => blockGroup.blocks.includes(block.name));
-  });
+  const allIncludedBlocks: Array<Block> = jsonResult.ucd.blocks.block
+    .map(block => {
+      return {
+        name: block['@_name'],
+        codepointFirst: parseInt(block['@_first-cp'], 16),
+        codepointLast: parseInt(block['@_last-cp'], 16),
+      };
+    })
+    .filter(block => {
+      return groupToBlockMapping.find(blockGroup => blockGroup.blocks.includes(block.name));
+    });
 
   // Read the symbols from the XML file and filter it into the typed blocks
   const allValidSymbols: Array<Symbol> = jsonResult.ucd.repertoire.char
@@ -165,7 +181,7 @@ function readXmlFileAndGenerateJsonFile(targetXmlFile: string, outputFile: strin
         value: String.fromCodePoint(charpoint),
         codepoint: charpoint,
         isEmoji: rawChar['@_Emoji'] === 'Y',
-        allowModifier: rawChar['@_EBase'] === 'Y'
+        allowModifier: rawChar['@_EBase'] === 'Y',
       };
     });
   message(allIncludedBlocks.length + ' Blocks read', allValidSymbols.length + ' Symbols read', '');
@@ -175,13 +191,23 @@ function readXmlFileAndGenerateJsonFile(targetXmlFile: string, outputFile: strin
   groupToBlockMapping.forEach(groupToBlockMapping => {
     const groupName = groupToBlockMapping.alias;
     const groupSymbols = allValidSymbols.filter(symbol => {
-      const matchingBlockName = groupToBlockMapping.blocks.find(blockName => {
-        const matchingBlock = allIncludedBlocks.find(block => block.name === blockName);
-        return symbol.codepoint >= matchingBlock.codepointFirst && symbol.codepoint <= matchingBlock.codepointLast;
-      });
 
-      if (matchingBlockName != null) {
-        return symbol;
+      if (symbol.isEmoji && groupName === 'Emoji') {
+        // All Emoji go into the emoji group regardless of their unicode category
+        return true;
+      } else if (!symbol.isEmoji) {
+        // Find the child blocks for this Group and use the codepoint to determine
+        // whether this symbol should be included in this group
+        const matchingBlockName = groupToBlockMapping.blocks.find(blockName => {
+          const matchingBlock = allIncludedBlocks.find(block => block.name === blockName);
+          return symbol.codepoint >= matchingBlock.codepointFirst && symbol.codepoint <= matchingBlock.codepointLast;
+        });
+
+        if (matchingBlockName != null) {
+          return symbol;
+        }
+      } else {
+        return false;
       }
     });
 

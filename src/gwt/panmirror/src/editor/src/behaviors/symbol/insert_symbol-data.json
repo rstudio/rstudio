@@ -59,13 +59,6 @@
         "allowModifier": false
       },
       {
-        "name": "COPYRIGHT SIGN",
-        "value": "©",
-        "codepoint": 169,
-        "isEmoji": true,
-        "allowModifier": false
-      },
-      {
         "name": "FEMININE ORDINAL INDICATOR",
         "value": "ª",
         "codepoint": 170,
@@ -84,13 +77,6 @@
         "value": "¬",
         "codepoint": 172,
         "isEmoji": false,
-        "allowModifier": false
-      },
-      {
-        "name": "REGISTERED SIGN",
-        "value": "®",
-        "codepoint": 174,
-        "isEmoji": true,
         "allowModifier": false
       },
       {
@@ -1347,13 +1333,6 @@
         "allowModifier": false
       },
       {
-        "name": "CIRCLED LATIN CAPITAL LETTER M",
-        "value": "Ⓜ",
-        "codepoint": 9410,
-        "isEmoji": true,
-        "allowModifier": false
-      },
-      {
         "name": "CIRCLED LATIN CAPITAL LETTER N",
         "value": "Ⓝ",
         "codepoint": 9411,
@@ -1781,41 +1760,6 @@
         "allowModifier": false
       },
       {
-        "name": "BLACK SUN WITH RAYS",
-        "value": "☀",
-        "codepoint": 9728,
-        "isEmoji": true,
-        "allowModifier": false
-      },
-      {
-        "name": "CLOUD",
-        "value": "☁",
-        "codepoint": 9729,
-        "isEmoji": true,
-        "allowModifier": false
-      },
-      {
-        "name": "UMBRELLA",
-        "value": "☂",
-        "codepoint": 9730,
-        "isEmoji": true,
-        "allowModifier": false
-      },
-      {
-        "name": "SNOWMAN",
-        "value": "☃",
-        "codepoint": 9731,
-        "isEmoji": true,
-        "allowModifier": false
-      },
-      {
-        "name": "COMET",
-        "value": "☄",
-        "codepoint": 9732,
-        "isEmoji": true,
-        "allowModifier": false
-      },
-      {
         "name": "BLACK STAR",
         "value": "★",
         "codepoint": 9733,
@@ -1879,13 +1823,6 @@
         "allowModifier": false
       },
       {
-        "name": "BLACK TELEPHONE",
-        "value": "☎",
-        "codepoint": 9742,
-        "isEmoji": true,
-        "allowModifier": false
-      },
-      {
         "name": "WHITE TELEPHONE",
         "value": "☏",
         "codepoint": 9743,
@@ -1897,13 +1834,6 @@
         "value": "☐",
         "codepoint": 9744,
         "isEmoji": false,
-        "allowModifier": false
-      },
-      {
-        "name": "BALLOT BOX WITH CHECK",
-        "value": "☑",
-        "codepoint": 9745,
-        "isEmoji": true,
         "allowModifier": false
       },
       {
@@ -1921,20 +1851,6 @@
         "allowModifier": false
       },
       {
-        "name": "UMBRELLA WITH RAIN DROPS",
-        "value": "☔",
-        "codepoint": 9748,
-        "isEmoji": true,
-        "allowModifier": false
-      },
-      {
-        "name": "HOT BEVERAGE",
-        "value": "☕",
-        "codepoint": 9749,
-        "isEmoji": true,
-        "allowModifier": false
-      },
-      {
         "name": "WHITE SHOGI PIECE",
         "value": "☖",
         "codepoint": 9750,
@@ -1946,13 +1862,6 @@
         "value": "☗",
         "codepoint": 9751,
         "isEmoji": false,
-        "allowModifier": false
-      },
-      {
-        "name": "SHAMROCK",
-        "value": "☘",
-        "codepoint": 9752,
-        "isEmoji": true,
         "allowModifier": false
       },
       {
@@ -1984,13 +1893,6 @@
         "allowModifier": false
       },
       {
-        "name": "WHITE UP POINTING INDEX",
-        "value": "☝",
-        "codepoint": 9757,
-        "isEmoji": true,
-        "allowModifier": true
-      },
-      {
         "name": "WHITE RIGHT POINTING INDEX",
         "value": "☞",
         "codepoint": 9758,
@@ -2005,31 +1907,10 @@
         "allowModifier": false
       },
       {
-        "name": "SKULL AND CROSSBONES",
-        "value": "☠",
-        "codepoint": 9760,
-        "isEmoji": true,
-        "allowModifier": false
-      },
-      {
         "name": "CAUTION SIGN",
         "value": "☡",
         "codepoint": 9761,
         "isEmoji": false,
-        "allowModifier": false
-      },
-      {
-        "name": "RADIOACTIVE SIGN",
-        "value": "☢",
-        "codepoint": 9762,
-        "isEmoji": true,
-        "allowModifier": false
-      },
-      {
-        "name": "BIOHAZARD SIGN",
-        "value": "☣",
-        "codepoint": 9763,
-        "isEmoji": true,
         "allowModifier": false
       },
       {
@@ -2044,13 +1925,6 @@
         "value": "☥",
         "codepoint": 9765,
         "isEmoji": false,
-        "allowModifier": false
-      },
-      {
-        "name": "ORTHODOX CROSS",
-        "value": "☦",
-        "codepoint": 9766,
-        "isEmoji": true,
         "allowModifier": false
       },
       {
@@ -2075,13 +1949,6 @@
         "allowModifier": false
       },
       {
-        "name": "STAR AND CRESCENT",
-        "value": "☪",
-        "codepoint": 9770,
-        "isEmoji": true,
-        "allowModifier": false
-      },
-      {
         "name": "FARSI SYMBOL",
         "value": "☫",
         "codepoint": 9771,
@@ -2100,20 +1967,6 @@
         "value": "☭",
         "codepoint": 9773,
         "isEmoji": false,
-        "allowModifier": false
-      },
-      {
-        "name": "PEACE SYMBOL",
-        "value": "☮",
-        "codepoint": 9774,
-        "isEmoji": true,
-        "allowModifier": false
-      },
-      {
-        "name": "YIN YANG",
-        "value": "☯",
-        "codepoint": 9775,
-        "isEmoji": true,
         "allowModifier": false
       },
       {
@@ -2173,27 +2026,6 @@
         "allowModifier": false
       },
       {
-        "name": "WHEEL OF DHARMA",
-        "value": "☸",
-        "codepoint": 9784,
-        "isEmoji": true,
-        "allowModifier": false
-      },
-      {
-        "name": "WHITE FROWNING FACE",
-        "value": "☹",
-        "codepoint": 9785,
-        "isEmoji": true,
-        "allowModifier": false
-      },
-      {
-        "name": "WHITE SMILING FACE",
-        "value": "☺",
-        "codepoint": 9786,
-        "isEmoji": true,
-        "allowModifier": false
-      },
-      {
         "name": "BLACK SMILING FACE",
         "value": "☻",
         "codepoint": 9787,
@@ -2229,24 +2061,10 @@
         "allowModifier": false
       },
       {
-        "name": "FEMALE SIGN",
-        "value": "♀",
-        "codepoint": 9792,
-        "isEmoji": true,
-        "allowModifier": false
-      },
-      {
         "name": "EARTH",
         "value": "♁",
         "codepoint": 9793,
         "isEmoji": false,
-        "allowModifier": false
-      },
-      {
-        "name": "MALE SIGN",
-        "value": "♂",
-        "codepoint": 9794,
-        "isEmoji": true,
         "allowModifier": false
       },
       {
@@ -2282,90 +2100,6 @@
         "value": "♇",
         "codepoint": 9799,
         "isEmoji": false,
-        "allowModifier": false
-      },
-      {
-        "name": "ARIES",
-        "value": "♈",
-        "codepoint": 9800,
-        "isEmoji": true,
-        "allowModifier": false
-      },
-      {
-        "name": "TAURUS",
-        "value": "♉",
-        "codepoint": 9801,
-        "isEmoji": true,
-        "allowModifier": false
-      },
-      {
-        "name": "GEMINI",
-        "value": "♊",
-        "codepoint": 9802,
-        "isEmoji": true,
-        "allowModifier": false
-      },
-      {
-        "name": "CANCER",
-        "value": "♋",
-        "codepoint": 9803,
-        "isEmoji": true,
-        "allowModifier": false
-      },
-      {
-        "name": "LEO",
-        "value": "♌",
-        "codepoint": 9804,
-        "isEmoji": true,
-        "allowModifier": false
-      },
-      {
-        "name": "VIRGO",
-        "value": "♍",
-        "codepoint": 9805,
-        "isEmoji": true,
-        "allowModifier": false
-      },
-      {
-        "name": "LIBRA",
-        "value": "♎",
-        "codepoint": 9806,
-        "isEmoji": true,
-        "allowModifier": false
-      },
-      {
-        "name": "SCORPIUS",
-        "value": "♏",
-        "codepoint": 9807,
-        "isEmoji": true,
-        "allowModifier": false
-      },
-      {
-        "name": "SAGITTARIUS",
-        "value": "♐",
-        "codepoint": 9808,
-        "isEmoji": true,
-        "allowModifier": false
-      },
-      {
-        "name": "CAPRICORN",
-        "value": "♑",
-        "codepoint": 9809,
-        "isEmoji": true,
-        "allowModifier": false
-      },
-      {
-        "name": "AQUARIUS",
-        "value": "♒",
-        "codepoint": 9810,
-        "isEmoji": true,
-        "allowModifier": false
-      },
-      {
-        "name": "PISCES",
-        "value": "♓",
-        "codepoint": 9811,
-        "isEmoji": true,
         "allowModifier": false
       },
       {
@@ -2446,20 +2180,6 @@
         "allowModifier": false
       },
       {
-        "name": "BLACK CHESS PAWN",
-        "value": "♟",
-        "codepoint": 9823,
-        "isEmoji": true,
-        "allowModifier": false
-      },
-      {
-        "name": "BLACK SPADE SUIT",
-        "value": "♠",
-        "codepoint": 9824,
-        "isEmoji": true,
-        "allowModifier": false
-      },
-      {
         "name": "WHITE HEART SUIT",
         "value": "♡",
         "codepoint": 9825,
@@ -2474,13 +2194,6 @@
         "allowModifier": false
       },
       {
-        "name": "BLACK CLUB SUIT",
-        "value": "♣",
-        "codepoint": 9827,
-        "isEmoji": true,
-        "allowModifier": false
-      },
-      {
         "name": "WHITE SPADE SUIT",
         "value": "♤",
         "codepoint": 9828,
@@ -2488,31 +2201,10 @@
         "allowModifier": false
       },
       {
-        "name": "BLACK HEART SUIT",
-        "value": "♥",
-        "codepoint": 9829,
-        "isEmoji": true,
-        "allowModifier": false
-      },
-      {
-        "name": "BLACK DIAMOND SUIT",
-        "value": "♦",
-        "codepoint": 9830,
-        "isEmoji": true,
-        "allowModifier": false
-      },
-      {
         "name": "WHITE CLUB SUIT",
         "value": "♧",
         "codepoint": 9831,
         "isEmoji": false,
-        "allowModifier": false
-      },
-      {
-        "name": "HOT SPRINGS",
-        "value": "♨",
-        "codepoint": 9832,
-        "isEmoji": true,
         "allowModifier": false
       },
       {
@@ -2642,13 +2334,6 @@
         "allowModifier": false
       },
       {
-        "name": "BLACK UNIVERSAL RECYCLING SYMBOL",
-        "value": "♻",
-        "codepoint": 9851,
-        "isEmoji": true,
-        "allowModifier": false
-      },
-      {
         "name": "RECYCLED PAPER SYMBOL",
         "value": "♼",
         "codepoint": 9852,
@@ -2660,20 +2345,6 @@
         "value": "♽",
         "codepoint": 9853,
         "isEmoji": false,
-        "allowModifier": false
-      },
-      {
-        "name": "PERMANENT PAPER SIGN",
-        "value": "♾",
-        "codepoint": 9854,
-        "isEmoji": true,
-        "allowModifier": false
-      },
-      {
-        "name": "WHEELCHAIR SYMBOL",
-        "value": "♿",
-        "codepoint": 9855,
-        "isEmoji": true,
         "allowModifier": false
       },
       {
@@ -2803,48 +2474,6 @@
         "allowModifier": false
       },
       {
-        "name": "HAMMER AND PICK",
-        "value": "⚒",
-        "codepoint": 9874,
-        "isEmoji": true,
-        "allowModifier": false
-      },
-      {
-        "name": "ANCHOR",
-        "value": "⚓",
-        "codepoint": 9875,
-        "isEmoji": true,
-        "allowModifier": false
-      },
-      {
-        "name": "CROSSED SWORDS",
-        "value": "⚔",
-        "codepoint": 9876,
-        "isEmoji": true,
-        "allowModifier": false
-      },
-      {
-        "name": "STAFF OF AESCULAPIUS",
-        "value": "⚕",
-        "codepoint": 9877,
-        "isEmoji": true,
-        "allowModifier": false
-      },
-      {
-        "name": "SCALES",
-        "value": "⚖",
-        "codepoint": 9878,
-        "isEmoji": true,
-        "allowModifier": false
-      },
-      {
-        "name": "ALEMBIC",
-        "value": "⚗",
-        "codepoint": 9879,
-        "isEmoji": true,
-        "allowModifier": false
-      },
-      {
         "name": "FLOWER",
         "value": "⚘",
         "codepoint": 9880,
@@ -2852,31 +2481,10 @@
         "allowModifier": false
       },
       {
-        "name": "GEAR",
-        "value": "⚙",
-        "codepoint": 9881,
-        "isEmoji": true,
-        "allowModifier": false
-      },
-      {
         "name": "STAFF OF HERMES",
         "value": "⚚",
         "codepoint": 9882,
         "isEmoji": false,
-        "allowModifier": false
-      },
-      {
-        "name": "ATOM SYMBOL",
-        "value": "⚛",
-        "codepoint": 9883,
-        "isEmoji": true,
-        "allowModifier": false
-      },
-      {
-        "name": "FLEUR-DE-LIS",
-        "value": "⚜",
-        "codepoint": 9884,
-        "isEmoji": true,
         "allowModifier": false
       },
       {
@@ -2898,20 +2506,6 @@
         "value": "⚟",
         "codepoint": 9887,
         "isEmoji": false,
-        "allowModifier": false
-      },
-      {
-        "name": "WARNING SIGN",
-        "value": "⚠",
-        "codepoint": 9888,
-        "isEmoji": true,
-        "allowModifier": false
-      },
-      {
-        "name": "HIGH VOLTAGE SIGN",
-        "value": "⚡",
-        "codepoint": 9889,
-        "isEmoji": true,
         "allowModifier": false
       },
       {
@@ -2950,13 +2544,6 @@
         "allowModifier": false
       },
       {
-        "name": "MALE WITH STROKE AND MALE AND FEMALE SIGN",
-        "value": "⚧",
-        "codepoint": 9895,
-        "isEmoji": true,
-        "allowModifier": false
-      },
-      {
         "name": "VERTICAL MALE WITH STROKE SIGN",
         "value": "⚨",
         "codepoint": 9896,
@@ -2968,20 +2555,6 @@
         "value": "⚩",
         "codepoint": 9897,
         "isEmoji": false,
-        "allowModifier": false
-      },
-      {
-        "name": "MEDIUM WHITE CIRCLE",
-        "value": "⚪",
-        "codepoint": 9898,
-        "isEmoji": true,
-        "allowModifier": false
-      },
-      {
-        "name": "MEDIUM BLACK CIRCLE",
-        "value": "⚫",
-        "codepoint": 9899,
-        "isEmoji": true,
         "allowModifier": false
       },
       {
@@ -3010,20 +2583,6 @@
         "value": "⚯",
         "codepoint": 9903,
         "isEmoji": false,
-        "allowModifier": false
-      },
-      {
-        "name": "COFFIN",
-        "value": "⚰",
-        "codepoint": 9904,
-        "isEmoji": true,
-        "allowModifier": false
-      },
-      {
-        "name": "FUNERAL URN",
-        "value": "⚱",
-        "codepoint": 9905,
-        "isEmoji": true,
         "allowModifier": false
       },
       {
@@ -3104,20 +2663,6 @@
         "allowModifier": false
       },
       {
-        "name": "SOCCER BALL",
-        "value": "⚽",
-        "codepoint": 9917,
-        "isEmoji": true,
-        "allowModifier": false
-      },
-      {
-        "name": "BASEBALL",
-        "value": "⚾",
-        "codepoint": 9918,
-        "isEmoji": true,
-        "allowModifier": false
-      },
-      {
         "name": "SQUARED KEY",
         "value": "⚿",
         "codepoint": 9919,
@@ -3153,20 +2698,6 @@
         "allowModifier": false
       },
       {
-        "name": "SNOWMAN WITHOUT SNOW",
-        "value": "⛄",
-        "codepoint": 9924,
-        "isEmoji": true,
-        "allowModifier": false
-      },
-      {
-        "name": "SUN BEHIND CLOUD",
-        "value": "⛅",
-        "codepoint": 9925,
-        "isEmoji": true,
-        "allowModifier": false
-      },
-      {
         "name": "RAIN",
         "value": "⛆",
         "codepoint": 9926,
@@ -3178,13 +2709,6 @@
         "value": "⛇",
         "codepoint": 9927,
         "isEmoji": false,
-        "allowModifier": false
-      },
-      {
-        "name": "THUNDER CLOUD AND RAIN",
-        "value": "⛈",
-        "codepoint": 9928,
-        "isEmoji": true,
         "allowModifier": false
       },
       {
@@ -3223,20 +2747,6 @@
         "allowModifier": false
       },
       {
-        "name": "OPHIUCHUS",
-        "value": "⛎",
-        "codepoint": 9934,
-        "isEmoji": true,
-        "allowModifier": false
-      },
-      {
-        "name": "PICK",
-        "value": "⛏",
-        "codepoint": 9935,
-        "isEmoji": true,
-        "allowModifier": false
-      },
-      {
         "name": "CAR SLIDING",
         "value": "⛐",
         "codepoint": 9936,
@@ -3244,31 +2754,10 @@
         "allowModifier": false
       },
       {
-        "name": "HELMET WITH WHITE CROSS",
-        "value": "⛑",
-        "codepoint": 9937,
-        "isEmoji": true,
-        "allowModifier": false
-      },
-      {
         "name": "CIRCLED CROSSING LANES",
         "value": "⛒",
         "codepoint": 9938,
         "isEmoji": false,
-        "allowModifier": false
-      },
-      {
-        "name": "CHAINS",
-        "value": "⛓",
-        "codepoint": 9939,
-        "isEmoji": true,
-        "allowModifier": false
-      },
-      {
-        "name": "NO ENTRY",
-        "value": "⛔",
-        "codepoint": 9940,
-        "isEmoji": true,
         "allowModifier": false
       },
       {
@@ -3412,20 +2901,6 @@
         "allowModifier": false
       },
       {
-        "name": "SHINTO SHRINE",
-        "value": "⛩",
-        "codepoint": 9961,
-        "isEmoji": true,
-        "allowModifier": false
-      },
-      {
-        "name": "CHURCH",
-        "value": "⛪",
-        "codepoint": 9962,
-        "isEmoji": true,
-        "allowModifier": false
-      },
-      {
         "name": "CASTLE",
         "value": "⛫",
         "codepoint": 9963,
@@ -3461,80 +2936,10 @@
         "allowModifier": false
       },
       {
-        "name": "MOUNTAIN",
-        "value": "⛰",
-        "codepoint": 9968,
-        "isEmoji": true,
-        "allowModifier": false
-      },
-      {
-        "name": "UMBRELLA ON GROUND",
-        "value": "⛱",
-        "codepoint": 9969,
-        "isEmoji": true,
-        "allowModifier": false
-      },
-      {
-        "name": "FOUNTAIN",
-        "value": "⛲",
-        "codepoint": 9970,
-        "isEmoji": true,
-        "allowModifier": false
-      },
-      {
-        "name": "FLAG IN HOLE",
-        "value": "⛳",
-        "codepoint": 9971,
-        "isEmoji": true,
-        "allowModifier": false
-      },
-      {
-        "name": "FERRY",
-        "value": "⛴",
-        "codepoint": 9972,
-        "isEmoji": true,
-        "allowModifier": false
-      },
-      {
-        "name": "SAILBOAT",
-        "value": "⛵",
-        "codepoint": 9973,
-        "isEmoji": true,
-        "allowModifier": false
-      },
-      {
         "name": "SQUARE FOUR CORNERS",
         "value": "⛶",
         "codepoint": 9974,
         "isEmoji": false,
-        "allowModifier": false
-      },
-      {
-        "name": "SKIER",
-        "value": "⛷",
-        "codepoint": 9975,
-        "isEmoji": true,
-        "allowModifier": false
-      },
-      {
-        "name": "ICE SKATE",
-        "value": "⛸",
-        "codepoint": 9976,
-        "isEmoji": true,
-        "allowModifier": false
-      },
-      {
-        "name": "PERSON WITH BALL",
-        "value": "⛹",
-        "codepoint": 9977,
-        "isEmoji": true,
-        "allowModifier": true
-      },
-      {
-        "name": "TENT",
-        "value": "⛺",
-        "codepoint": 9978,
-        "isEmoji": true,
         "allowModifier": false
       },
       {
@@ -3549,13 +2954,6 @@
         "value": "⛼",
         "codepoint": 9980,
         "isEmoji": false,
-        "allowModifier": false
-      },
-      {
-        "name": "FUEL PUMP",
-        "value": "⛽",
-        "codepoint": 9981,
-        "isEmoji": true,
         "allowModifier": false
       },
       {
@@ -3587,13 +2985,6 @@
         "allowModifier": false
       },
       {
-        "name": "BLACK SCISSORS",
-        "value": "✂",
-        "codepoint": 9986,
-        "isEmoji": true,
-        "allowModifier": false
-      },
-      {
         "name": "LOWER BLADE SCISSORS",
         "value": "✃",
         "codepoint": 9987,
@@ -3605,13 +2996,6 @@
         "value": "✄",
         "codepoint": 9988,
         "isEmoji": false,
-        "allowModifier": false
-      },
-      {
-        "name": "WHITE HEAVY CHECK MARK",
-        "value": "✅",
-        "codepoint": 9989,
-        "isEmoji": true,
         "allowModifier": false
       },
       {
@@ -3629,59 +3013,10 @@
         "allowModifier": false
       },
       {
-        "name": "AIRPLANE",
-        "value": "✈",
-        "codepoint": 9992,
-        "isEmoji": true,
-        "allowModifier": false
-      },
-      {
-        "name": "ENVELOPE",
-        "value": "✉",
-        "codepoint": 9993,
-        "isEmoji": true,
-        "allowModifier": false
-      },
-      {
-        "name": "RAISED FIST",
-        "value": "✊",
-        "codepoint": 9994,
-        "isEmoji": true,
-        "allowModifier": true
-      },
-      {
-        "name": "RAISED HAND",
-        "value": "✋",
-        "codepoint": 9995,
-        "isEmoji": true,
-        "allowModifier": true
-      },
-      {
-        "name": "VICTORY HAND",
-        "value": "✌",
-        "codepoint": 9996,
-        "isEmoji": true,
-        "allowModifier": true
-      },
-      {
-        "name": "WRITING HAND",
-        "value": "✍",
-        "codepoint": 9997,
-        "isEmoji": true,
-        "allowModifier": true
-      },
-      {
         "name": "LOWER RIGHT PENCIL",
         "value": "✎",
         "codepoint": 9998,
         "isEmoji": false,
-        "allowModifier": false
-      },
-      {
-        "name": "PENCIL",
-        "value": "✏",
-        "codepoint": 9999,
-        "isEmoji": true,
         "allowModifier": false
       },
       {
@@ -3699,13 +3034,6 @@
         "allowModifier": false
       },
       {
-        "name": "BLACK NIB",
-        "value": "✒",
-        "codepoint": 10002,
-        "isEmoji": true,
-        "allowModifier": false
-      },
-      {
         "name": "CHECK MARK",
         "value": "✓",
         "codepoint": 10003,
@@ -3713,24 +3041,10 @@
         "allowModifier": false
       },
       {
-        "name": "HEAVY CHECK MARK",
-        "value": "✔",
-        "codepoint": 10004,
-        "isEmoji": true,
-        "allowModifier": false
-      },
-      {
         "name": "MULTIPLICATION X",
         "value": "✕",
         "codepoint": 10005,
         "isEmoji": false,
-        "allowModifier": false
-      },
-      {
-        "name": "HEAVY MULTIPLICATION X",
-        "value": "✖",
-        "codepoint": 10006,
-        "isEmoji": true,
         "allowModifier": false
       },
       {
@@ -3776,13 +3090,6 @@
         "allowModifier": false
       },
       {
-        "name": "LATIN CROSS",
-        "value": "✝",
-        "codepoint": 10013,
-        "isEmoji": true,
-        "allowModifier": false
-      },
-      {
         "name": "SHADOWED WHITE LATIN CROSS",
         "value": "✞",
         "codepoint": 10014,
@@ -3801,13 +3108,6 @@
         "value": "✠",
         "codepoint": 10016,
         "isEmoji": false,
-        "allowModifier": false
-      },
-      {
-        "name": "STAR OF DAVID",
-        "value": "✡",
-        "codepoint": 10017,
-        "isEmoji": true,
         "allowModifier": false
       },
       {
@@ -3850,13 +3150,6 @@
         "value": "✧",
         "codepoint": 10023,
         "isEmoji": false,
-        "allowModifier": false
-      },
-      {
-        "name": "SPARKLES",
-        "value": "✨",
-        "codepoint": 10024,
-        "isEmoji": true,
         "allowModifier": false
       },
       {
@@ -3927,20 +3220,6 @@
         "value": "✲",
         "codepoint": 10034,
         "isEmoji": false,
-        "allowModifier": false
-      },
-      {
-        "name": "EIGHT SPOKED ASTERISK",
-        "value": "✳",
-        "codepoint": 10035,
-        "isEmoji": true,
-        "allowModifier": false
-      },
-      {
-        "name": "EIGHT POINTED BLACK STAR",
-        "value": "✴",
-        "codepoint": 10036,
-        "isEmoji": true,
         "allowModifier": false
       },
       {
@@ -4049,13 +3328,6 @@
         "allowModifier": false
       },
       {
-        "name": "SNOWFLAKE",
-        "value": "❄",
-        "codepoint": 10052,
-        "isEmoji": true,
-        "allowModifier": false
-      },
-      {
         "name": "TIGHT TRIFOLIATE SNOWFLAKE",
         "value": "❅",
         "codepoint": 10053,
@@ -4067,13 +3339,6 @@
         "value": "❆",
         "codepoint": 10054,
         "isEmoji": false,
-        "allowModifier": false
-      },
-      {
-        "name": "SPARKLE",
-        "value": "❇",
-        "codepoint": 10055,
-        "isEmoji": true,
         "allowModifier": false
       },
       {
@@ -4105,24 +3370,10 @@
         "allowModifier": false
       },
       {
-        "name": "CROSS MARK",
-        "value": "❌",
-        "codepoint": 10060,
-        "isEmoji": true,
-        "allowModifier": false
-      },
-      {
         "name": "SHADOWED WHITE CIRCLE",
         "value": "❍",
         "codepoint": 10061,
         "isEmoji": false,
-        "allowModifier": false
-      },
-      {
-        "name": "NEGATIVE SQUARED CROSS MARK",
-        "value": "❎",
-        "codepoint": 10062,
-        "isEmoji": true,
         "allowModifier": false
       },
       {
@@ -4154,38 +3405,10 @@
         "allowModifier": false
       },
       {
-        "name": "BLACK QUESTION MARK ORNAMENT",
-        "value": "❓",
-        "codepoint": 10067,
-        "isEmoji": true,
-        "allowModifier": false
-      },
-      {
-        "name": "WHITE QUESTION MARK ORNAMENT",
-        "value": "❔",
-        "codepoint": 10068,
-        "isEmoji": true,
-        "allowModifier": false
-      },
-      {
-        "name": "WHITE EXCLAMATION MARK ORNAMENT",
-        "value": "❕",
-        "codepoint": 10069,
-        "isEmoji": true,
-        "allowModifier": false
-      },
-      {
         "name": "BLACK DIAMOND MINUS WHITE X",
         "value": "❖",
         "codepoint": 10070,
         "isEmoji": false,
-        "allowModifier": false
-      },
-      {
-        "name": "HEAVY EXCLAMATION MARK SYMBOL",
-        "value": "❗",
-        "codepoint": 10071,
-        "isEmoji": true,
         "allowModifier": false
       },
       {
@@ -4263,20 +3486,6 @@
         "value": "❢",
         "codepoint": 10082,
         "isEmoji": false,
-        "allowModifier": false
-      },
-      {
-        "name": "HEAVY HEART EXCLAMATION MARK ORNAMENT",
-        "value": "❣",
-        "codepoint": 10083,
-        "isEmoji": true,
-        "allowModifier": false
-      },
-      {
-        "name": "HEAVY BLACK HEART",
-        "value": "❤",
-        "codepoint": 10084,
-        "isEmoji": true,
         "allowModifier": false
       },
       {
@@ -4616,27 +3825,6 @@
         "allowModifier": false
       },
       {
-        "name": "HEAVY PLUS SIGN",
-        "value": "➕",
-        "codepoint": 10133,
-        "isEmoji": true,
-        "allowModifier": false
-      },
-      {
-        "name": "HEAVY MINUS SIGN",
-        "value": "➖",
-        "codepoint": 10134,
-        "isEmoji": true,
-        "allowModifier": false
-      },
-      {
-        "name": "HEAVY DIVISION SIGN",
-        "value": "➗",
-        "codepoint": 10135,
-        "isEmoji": true,
-        "allowModifier": false
-      },
-      {
         "name": "HEAVY SOUTH EAST ARROW",
         "value": "➘",
         "codepoint": 10136,
@@ -4697,13 +3885,6 @@
         "value": "➠",
         "codepoint": 10144,
         "isEmoji": false,
-        "allowModifier": false
-      },
-      {
-        "name": "BLACK RIGHTWARDS ARROW",
-        "value": "➡",
-        "codepoint": 10145,
-        "isEmoji": true,
         "allowModifier": false
       },
       {
@@ -4805,13 +3986,6 @@
         "allowModifier": false
       },
       {
-        "name": "CURLY LOOP",
-        "value": "➰",
-        "codepoint": 10160,
-        "isEmoji": true,
-        "allowModifier": false
-      },
-      {
         "name": "NOTCHED UPPER RIGHT-SHADOWED WHITE RIGHTWARDS ARROW",
         "value": "➱",
         "codepoint": 10161,
@@ -4907,13 +4081,6 @@
         "value": "➾",
         "codepoint": 10174,
         "isEmoji": false,
-        "allowModifier": false
-      },
-      {
-        "name": "DOUBLE CURLY LOOP",
-        "value": "➿",
-        "codepoint": 10175,
-        "isEmoji": true,
         "allowModifier": false
       }
     ]
@@ -17455,20 +16622,6 @@
         "allowModifier": false
       },
       {
-        "name": "WATCH",
-        "value": "⌚",
-        "codepoint": 8986,
-        "isEmoji": true,
-        "allowModifier": false
-      },
-      {
-        "name": "HOURGLASS",
-        "value": "⌛",
-        "codepoint": 8987,
-        "isEmoji": true,
-        "allowModifier": false
-      },
-      {
         "name": "TOP LEFT CORNER",
         "value": "⌜",
         "codepoint": 8988,
@@ -17550,13 +16703,6 @@
         "value": "⌧",
         "codepoint": 8999,
         "isEmoji": false,
-        "allowModifier": false
-      },
-      {
-        "name": "KEYBOARD",
-        "value": "⌨",
-        "codepoint": 9000,
-        "isEmoji": true,
         "allowModifier": false
       },
       {
@@ -18722,13 +17868,6 @@
         "allowModifier": false
       },
       {
-        "name": "EJECT SYMBOL",
-        "value": "⏏",
-        "codepoint": 9167,
-        "isEmoji": true,
-        "allowModifier": false
-      },
-      {
         "name": "VERTICAL LINE EXTENSION",
         "value": "⏐",
         "codepoint": 9168,
@@ -18904,83 +18043,6 @@
         "allowModifier": false
       },
       {
-        "name": "BLACK RIGHT-POINTING DOUBLE TRIANGLE",
-        "value": "⏩",
-        "codepoint": 9193,
-        "isEmoji": true,
-        "allowModifier": false
-      },
-      {
-        "name": "BLACK LEFT-POINTING DOUBLE TRIANGLE",
-        "value": "⏪",
-        "codepoint": 9194,
-        "isEmoji": true,
-        "allowModifier": false
-      },
-      {
-        "name": "BLACK UP-POINTING DOUBLE TRIANGLE",
-        "value": "⏫",
-        "codepoint": 9195,
-        "isEmoji": true,
-        "allowModifier": false
-      },
-      {
-        "name": "BLACK DOWN-POINTING DOUBLE TRIANGLE",
-        "value": "⏬",
-        "codepoint": 9196,
-        "isEmoji": true,
-        "allowModifier": false
-      },
-      {
-        "name": "BLACK RIGHT-POINTING DOUBLE TRIANGLE WITH VERTICAL BAR",
-        "value": "⏭",
-        "codepoint": 9197,
-        "isEmoji": true,
-        "allowModifier": false
-      },
-      {
-        "name": "BLACK LEFT-POINTING DOUBLE TRIANGLE WITH VERTICAL BAR",
-        "value": "⏮",
-        "codepoint": 9198,
-        "isEmoji": true,
-        "allowModifier": false
-      },
-      {
-        "name": "BLACK RIGHT-POINTING TRIANGLE WITH DOUBLE VERTICAL BAR",
-        "value": "⏯",
-        "codepoint": 9199,
-        "isEmoji": true,
-        "allowModifier": false
-      },
-      {
-        "name": "ALARM CLOCK",
-        "value": "⏰",
-        "codepoint": 9200,
-        "isEmoji": true,
-        "allowModifier": false
-      },
-      {
-        "name": "STOPWATCH",
-        "value": "⏱",
-        "codepoint": 9201,
-        "isEmoji": true,
-        "allowModifier": false
-      },
-      {
-        "name": "TIMER CLOCK",
-        "value": "⏲",
-        "codepoint": 9202,
-        "isEmoji": true,
-        "allowModifier": false
-      },
-      {
-        "name": "HOURGLASS WITH FLOWING SAND",
-        "value": "⏳",
-        "codepoint": 9203,
-        "isEmoji": true,
-        "allowModifier": false
-      },
-      {
         "name": "BLACK MEDIUM LEFT-POINTING TRIANGLE",
         "value": "⏴",
         "codepoint": 9204,
@@ -19006,27 +18068,6 @@
         "value": "⏷",
         "codepoint": 9207,
         "isEmoji": false,
-        "allowModifier": false
-      },
-      {
-        "name": "DOUBLE VERTICAL BAR",
-        "value": "⏸",
-        "codepoint": 9208,
-        "isEmoji": true,
-        "allowModifier": false
-      },
-      {
-        "name": "BLACK SQUARE FOR STOP",
-        "value": "⏹",
-        "codepoint": 9209,
-        "isEmoji": true,
-        "allowModifier": false
-      },
-      {
-        "name": "BLACK CIRCLE FOR RECORD",
-        "value": "⏺",
-        "codepoint": 9210,
-        "isEmoji": true,
         "allowModifier": false
       },
       {
@@ -19543,20 +18584,6 @@
         "value": "⤳",
         "codepoint": 10547,
         "isEmoji": false,
-        "allowModifier": false
-      },
-      {
-        "name": "ARROW POINTING RIGHTWARDS THEN CURVING UPWARDS",
-        "value": "⤴",
-        "codepoint": 10548,
-        "isEmoji": true,
-        "allowModifier": false
-      },
-      {
-        "name": "ARROW POINTING RIGHTWARDS THEN CURVING DOWNWARDS",
-        "value": "⤵",
-        "codepoint": 10549,
-        "isEmoji": true,
         "allowModifier": false
       },
       {
@@ -20113,27 +19140,6 @@
         "allowModifier": false
       },
       {
-        "name": "LEFTWARDS BLACK ARROW",
-        "value": "⬅",
-        "codepoint": 11013,
-        "isEmoji": true,
-        "allowModifier": false
-      },
-      {
-        "name": "UPWARDS BLACK ARROW",
-        "value": "⬆",
-        "codepoint": 11014,
-        "isEmoji": true,
-        "allowModifier": false
-      },
-      {
-        "name": "DOWNWARDS BLACK ARROW",
-        "value": "⬇",
-        "codepoint": 11015,
-        "isEmoji": true,
-        "allowModifier": false
-      },
-      {
         "name": "NORTH EAST BLACK ARROW",
         "value": "⬈",
         "codepoint": 11016,
@@ -20264,20 +19270,6 @@
         "value": "⬚",
         "codepoint": 11034,
         "isEmoji": false,
-        "allowModifier": false
-      },
-      {
-        "name": "BLACK LARGE SQUARE",
-        "value": "⬛",
-        "codepoint": 11035,
-        "isEmoji": true,
-        "allowModifier": false
-      },
-      {
-        "name": "WHITE LARGE SQUARE",
-        "value": "⬜",
-        "codepoint": 11036,
-        "isEmoji": true,
         "allowModifier": false
       },
       {
@@ -20638,13 +19630,6 @@
         "allowModifier": false
       },
       {
-        "name": "WHITE MEDIUM STAR",
-        "value": "⭐",
-        "codepoint": 11088,
-        "isEmoji": true,
-        "allowModifier": false
-      },
-      {
         "name": "BLACK SMALL STAR",
         "value": "⭑",
         "codepoint": 11089,
@@ -20670,13 +19655,6 @@
         "value": "⭔",
         "codepoint": 11092,
         "isEmoji": false,
-        "allowModifier": false
-      },
-      {
-        "name": "HEAVY LARGE CIRCLE",
-        "value": "⭕",
-        "codepoint": 11093,
-        "isEmoji": true,
         "allowModifier": false
       },
       {
@@ -24536,13 +23514,6 @@
         "allowModifier": false
       },
       {
-        "name": "MAHJONG TILE RED DRAGON",
-        "value": "🀄",
-        "codepoint": 126980,
-        "isEmoji": true,
-        "allowModifier": false
-      },
-      {
         "name": "MAHJONG TILE GREEN DRAGON",
         "value": "🀅",
         "codepoint": 126981,
@@ -25824,13 +24795,6 @@
         "allowModifier": false
       },
       {
-        "name": "PLAYING CARD BLACK JOKER",
-        "value": "🃏",
-        "codepoint": 127183,
-        "isEmoji": true,
-        "allowModifier": false
-      },
-      {
         "name": "PLAYING CARD ACE OF CLUBS",
         "value": "🃑",
         "codepoint": 127185,
@@ -26192,6 +25156,1420 @@
   {
     "name": "Emoji",
     "symbols": [
+      {
+        "name": "COPYRIGHT SIGN",
+        "value": "©",
+        "codepoint": 169,
+        "isEmoji": true,
+        "allowModifier": false
+      },
+      {
+        "name": "REGISTERED SIGN",
+        "value": "®",
+        "codepoint": 174,
+        "isEmoji": true,
+        "allowModifier": false
+      },
+      {
+        "name": "DOUBLE EXCLAMATION MARK",
+        "value": "‼",
+        "codepoint": 8252,
+        "isEmoji": true,
+        "allowModifier": false
+      },
+      {
+        "name": "EXCLAMATION QUESTION MARK",
+        "value": "⁉",
+        "codepoint": 8265,
+        "isEmoji": true,
+        "allowModifier": false
+      },
+      {
+        "name": "TRADE MARK SIGN",
+        "value": "™",
+        "codepoint": 8482,
+        "isEmoji": true,
+        "allowModifier": false
+      },
+      {
+        "name": "INFORMATION SOURCE",
+        "value": "ℹ",
+        "codepoint": 8505,
+        "isEmoji": true,
+        "allowModifier": false
+      },
+      {
+        "name": "LEFT RIGHT ARROW",
+        "value": "↔",
+        "codepoint": 8596,
+        "isEmoji": true,
+        "allowModifier": false
+      },
+      {
+        "name": "UP DOWN ARROW",
+        "value": "↕",
+        "codepoint": 8597,
+        "isEmoji": true,
+        "allowModifier": false
+      },
+      {
+        "name": "NORTH WEST ARROW",
+        "value": "↖",
+        "codepoint": 8598,
+        "isEmoji": true,
+        "allowModifier": false
+      },
+      {
+        "name": "NORTH EAST ARROW",
+        "value": "↗",
+        "codepoint": 8599,
+        "isEmoji": true,
+        "allowModifier": false
+      },
+      {
+        "name": "SOUTH EAST ARROW",
+        "value": "↘",
+        "codepoint": 8600,
+        "isEmoji": true,
+        "allowModifier": false
+      },
+      {
+        "name": "SOUTH WEST ARROW",
+        "value": "↙",
+        "codepoint": 8601,
+        "isEmoji": true,
+        "allowModifier": false
+      },
+      {
+        "name": "LEFTWARDS ARROW WITH HOOK",
+        "value": "↩",
+        "codepoint": 8617,
+        "isEmoji": true,
+        "allowModifier": false
+      },
+      {
+        "name": "RIGHTWARDS ARROW WITH HOOK",
+        "value": "↪",
+        "codepoint": 8618,
+        "isEmoji": true,
+        "allowModifier": false
+      },
+      {
+        "name": "WATCH",
+        "value": "⌚",
+        "codepoint": 8986,
+        "isEmoji": true,
+        "allowModifier": false
+      },
+      {
+        "name": "HOURGLASS",
+        "value": "⌛",
+        "codepoint": 8987,
+        "isEmoji": true,
+        "allowModifier": false
+      },
+      {
+        "name": "KEYBOARD",
+        "value": "⌨",
+        "codepoint": 9000,
+        "isEmoji": true,
+        "allowModifier": false
+      },
+      {
+        "name": "EJECT SYMBOL",
+        "value": "⏏",
+        "codepoint": 9167,
+        "isEmoji": true,
+        "allowModifier": false
+      },
+      {
+        "name": "BLACK RIGHT-POINTING DOUBLE TRIANGLE",
+        "value": "⏩",
+        "codepoint": 9193,
+        "isEmoji": true,
+        "allowModifier": false
+      },
+      {
+        "name": "BLACK LEFT-POINTING DOUBLE TRIANGLE",
+        "value": "⏪",
+        "codepoint": 9194,
+        "isEmoji": true,
+        "allowModifier": false
+      },
+      {
+        "name": "BLACK UP-POINTING DOUBLE TRIANGLE",
+        "value": "⏫",
+        "codepoint": 9195,
+        "isEmoji": true,
+        "allowModifier": false
+      },
+      {
+        "name": "BLACK DOWN-POINTING DOUBLE TRIANGLE",
+        "value": "⏬",
+        "codepoint": 9196,
+        "isEmoji": true,
+        "allowModifier": false
+      },
+      {
+        "name": "BLACK RIGHT-POINTING DOUBLE TRIANGLE WITH VERTICAL BAR",
+        "value": "⏭",
+        "codepoint": 9197,
+        "isEmoji": true,
+        "allowModifier": false
+      },
+      {
+        "name": "BLACK LEFT-POINTING DOUBLE TRIANGLE WITH VERTICAL BAR",
+        "value": "⏮",
+        "codepoint": 9198,
+        "isEmoji": true,
+        "allowModifier": false
+      },
+      {
+        "name": "BLACK RIGHT-POINTING TRIANGLE WITH DOUBLE VERTICAL BAR",
+        "value": "⏯",
+        "codepoint": 9199,
+        "isEmoji": true,
+        "allowModifier": false
+      },
+      {
+        "name": "ALARM CLOCK",
+        "value": "⏰",
+        "codepoint": 9200,
+        "isEmoji": true,
+        "allowModifier": false
+      },
+      {
+        "name": "STOPWATCH",
+        "value": "⏱",
+        "codepoint": 9201,
+        "isEmoji": true,
+        "allowModifier": false
+      },
+      {
+        "name": "TIMER CLOCK",
+        "value": "⏲",
+        "codepoint": 9202,
+        "isEmoji": true,
+        "allowModifier": false
+      },
+      {
+        "name": "HOURGLASS WITH FLOWING SAND",
+        "value": "⏳",
+        "codepoint": 9203,
+        "isEmoji": true,
+        "allowModifier": false
+      },
+      {
+        "name": "DOUBLE VERTICAL BAR",
+        "value": "⏸",
+        "codepoint": 9208,
+        "isEmoji": true,
+        "allowModifier": false
+      },
+      {
+        "name": "BLACK SQUARE FOR STOP",
+        "value": "⏹",
+        "codepoint": 9209,
+        "isEmoji": true,
+        "allowModifier": false
+      },
+      {
+        "name": "BLACK CIRCLE FOR RECORD",
+        "value": "⏺",
+        "codepoint": 9210,
+        "isEmoji": true,
+        "allowModifier": false
+      },
+      {
+        "name": "CIRCLED LATIN CAPITAL LETTER M",
+        "value": "Ⓜ",
+        "codepoint": 9410,
+        "isEmoji": true,
+        "allowModifier": false
+      },
+      {
+        "name": "BLACK SMALL SQUARE",
+        "value": "▪",
+        "codepoint": 9642,
+        "isEmoji": true,
+        "allowModifier": false
+      },
+      {
+        "name": "WHITE SMALL SQUARE",
+        "value": "▫",
+        "codepoint": 9643,
+        "isEmoji": true,
+        "allowModifier": false
+      },
+      {
+        "name": "BLACK RIGHT-POINTING TRIANGLE",
+        "value": "▶",
+        "codepoint": 9654,
+        "isEmoji": true,
+        "allowModifier": false
+      },
+      {
+        "name": "BLACK LEFT-POINTING TRIANGLE",
+        "value": "◀",
+        "codepoint": 9664,
+        "isEmoji": true,
+        "allowModifier": false
+      },
+      {
+        "name": "WHITE MEDIUM SQUARE",
+        "value": "◻",
+        "codepoint": 9723,
+        "isEmoji": true,
+        "allowModifier": false
+      },
+      {
+        "name": "BLACK MEDIUM SQUARE",
+        "value": "◼",
+        "codepoint": 9724,
+        "isEmoji": true,
+        "allowModifier": false
+      },
+      {
+        "name": "WHITE MEDIUM SMALL SQUARE",
+        "value": "◽",
+        "codepoint": 9725,
+        "isEmoji": true,
+        "allowModifier": false
+      },
+      {
+        "name": "BLACK MEDIUM SMALL SQUARE",
+        "value": "◾",
+        "codepoint": 9726,
+        "isEmoji": true,
+        "allowModifier": false
+      },
+      {
+        "name": "BLACK SUN WITH RAYS",
+        "value": "☀",
+        "codepoint": 9728,
+        "isEmoji": true,
+        "allowModifier": false
+      },
+      {
+        "name": "CLOUD",
+        "value": "☁",
+        "codepoint": 9729,
+        "isEmoji": true,
+        "allowModifier": false
+      },
+      {
+        "name": "UMBRELLA",
+        "value": "☂",
+        "codepoint": 9730,
+        "isEmoji": true,
+        "allowModifier": false
+      },
+      {
+        "name": "SNOWMAN",
+        "value": "☃",
+        "codepoint": 9731,
+        "isEmoji": true,
+        "allowModifier": false
+      },
+      {
+        "name": "COMET",
+        "value": "☄",
+        "codepoint": 9732,
+        "isEmoji": true,
+        "allowModifier": false
+      },
+      {
+        "name": "BLACK TELEPHONE",
+        "value": "☎",
+        "codepoint": 9742,
+        "isEmoji": true,
+        "allowModifier": false
+      },
+      {
+        "name": "BALLOT BOX WITH CHECK",
+        "value": "☑",
+        "codepoint": 9745,
+        "isEmoji": true,
+        "allowModifier": false
+      },
+      {
+        "name": "UMBRELLA WITH RAIN DROPS",
+        "value": "☔",
+        "codepoint": 9748,
+        "isEmoji": true,
+        "allowModifier": false
+      },
+      {
+        "name": "HOT BEVERAGE",
+        "value": "☕",
+        "codepoint": 9749,
+        "isEmoji": true,
+        "allowModifier": false
+      },
+      {
+        "name": "SHAMROCK",
+        "value": "☘",
+        "codepoint": 9752,
+        "isEmoji": true,
+        "allowModifier": false
+      },
+      {
+        "name": "WHITE UP POINTING INDEX",
+        "value": "☝",
+        "codepoint": 9757,
+        "isEmoji": true,
+        "allowModifier": true
+      },
+      {
+        "name": "SKULL AND CROSSBONES",
+        "value": "☠",
+        "codepoint": 9760,
+        "isEmoji": true,
+        "allowModifier": false
+      },
+      {
+        "name": "RADIOACTIVE SIGN",
+        "value": "☢",
+        "codepoint": 9762,
+        "isEmoji": true,
+        "allowModifier": false
+      },
+      {
+        "name": "BIOHAZARD SIGN",
+        "value": "☣",
+        "codepoint": 9763,
+        "isEmoji": true,
+        "allowModifier": false
+      },
+      {
+        "name": "ORTHODOX CROSS",
+        "value": "☦",
+        "codepoint": 9766,
+        "isEmoji": true,
+        "allowModifier": false
+      },
+      {
+        "name": "STAR AND CRESCENT",
+        "value": "☪",
+        "codepoint": 9770,
+        "isEmoji": true,
+        "allowModifier": false
+      },
+      {
+        "name": "PEACE SYMBOL",
+        "value": "☮",
+        "codepoint": 9774,
+        "isEmoji": true,
+        "allowModifier": false
+      },
+      {
+        "name": "YIN YANG",
+        "value": "☯",
+        "codepoint": 9775,
+        "isEmoji": true,
+        "allowModifier": false
+      },
+      {
+        "name": "WHEEL OF DHARMA",
+        "value": "☸",
+        "codepoint": 9784,
+        "isEmoji": true,
+        "allowModifier": false
+      },
+      {
+        "name": "WHITE FROWNING FACE",
+        "value": "☹",
+        "codepoint": 9785,
+        "isEmoji": true,
+        "allowModifier": false
+      },
+      {
+        "name": "WHITE SMILING FACE",
+        "value": "☺",
+        "codepoint": 9786,
+        "isEmoji": true,
+        "allowModifier": false
+      },
+      {
+        "name": "FEMALE SIGN",
+        "value": "♀",
+        "codepoint": 9792,
+        "isEmoji": true,
+        "allowModifier": false
+      },
+      {
+        "name": "MALE SIGN",
+        "value": "♂",
+        "codepoint": 9794,
+        "isEmoji": true,
+        "allowModifier": false
+      },
+      {
+        "name": "ARIES",
+        "value": "♈",
+        "codepoint": 9800,
+        "isEmoji": true,
+        "allowModifier": false
+      },
+      {
+        "name": "TAURUS",
+        "value": "♉",
+        "codepoint": 9801,
+        "isEmoji": true,
+        "allowModifier": false
+      },
+      {
+        "name": "GEMINI",
+        "value": "♊",
+        "codepoint": 9802,
+        "isEmoji": true,
+        "allowModifier": false
+      },
+      {
+        "name": "CANCER",
+        "value": "♋",
+        "codepoint": 9803,
+        "isEmoji": true,
+        "allowModifier": false
+      },
+      {
+        "name": "LEO",
+        "value": "♌",
+        "codepoint": 9804,
+        "isEmoji": true,
+        "allowModifier": false
+      },
+      {
+        "name": "VIRGO",
+        "value": "♍",
+        "codepoint": 9805,
+        "isEmoji": true,
+        "allowModifier": false
+      },
+      {
+        "name": "LIBRA",
+        "value": "♎",
+        "codepoint": 9806,
+        "isEmoji": true,
+        "allowModifier": false
+      },
+      {
+        "name": "SCORPIUS",
+        "value": "♏",
+        "codepoint": 9807,
+        "isEmoji": true,
+        "allowModifier": false
+      },
+      {
+        "name": "SAGITTARIUS",
+        "value": "♐",
+        "codepoint": 9808,
+        "isEmoji": true,
+        "allowModifier": false
+      },
+      {
+        "name": "CAPRICORN",
+        "value": "♑",
+        "codepoint": 9809,
+        "isEmoji": true,
+        "allowModifier": false
+      },
+      {
+        "name": "AQUARIUS",
+        "value": "♒",
+        "codepoint": 9810,
+        "isEmoji": true,
+        "allowModifier": false
+      },
+      {
+        "name": "PISCES",
+        "value": "♓",
+        "codepoint": 9811,
+        "isEmoji": true,
+        "allowModifier": false
+      },
+      {
+        "name": "BLACK CHESS PAWN",
+        "value": "♟",
+        "codepoint": 9823,
+        "isEmoji": true,
+        "allowModifier": false
+      },
+      {
+        "name": "BLACK SPADE SUIT",
+        "value": "♠",
+        "codepoint": 9824,
+        "isEmoji": true,
+        "allowModifier": false
+      },
+      {
+        "name": "BLACK CLUB SUIT",
+        "value": "♣",
+        "codepoint": 9827,
+        "isEmoji": true,
+        "allowModifier": false
+      },
+      {
+        "name": "BLACK HEART SUIT",
+        "value": "♥",
+        "codepoint": 9829,
+        "isEmoji": true,
+        "allowModifier": false
+      },
+      {
+        "name": "BLACK DIAMOND SUIT",
+        "value": "♦",
+        "codepoint": 9830,
+        "isEmoji": true,
+        "allowModifier": false
+      },
+      {
+        "name": "HOT SPRINGS",
+        "value": "♨",
+        "codepoint": 9832,
+        "isEmoji": true,
+        "allowModifier": false
+      },
+      {
+        "name": "BLACK UNIVERSAL RECYCLING SYMBOL",
+        "value": "♻",
+        "codepoint": 9851,
+        "isEmoji": true,
+        "allowModifier": false
+      },
+      {
+        "name": "PERMANENT PAPER SIGN",
+        "value": "♾",
+        "codepoint": 9854,
+        "isEmoji": true,
+        "allowModifier": false
+      },
+      {
+        "name": "WHEELCHAIR SYMBOL",
+        "value": "♿",
+        "codepoint": 9855,
+        "isEmoji": true,
+        "allowModifier": false
+      },
+      {
+        "name": "HAMMER AND PICK",
+        "value": "⚒",
+        "codepoint": 9874,
+        "isEmoji": true,
+        "allowModifier": false
+      },
+      {
+        "name": "ANCHOR",
+        "value": "⚓",
+        "codepoint": 9875,
+        "isEmoji": true,
+        "allowModifier": false
+      },
+      {
+        "name": "CROSSED SWORDS",
+        "value": "⚔",
+        "codepoint": 9876,
+        "isEmoji": true,
+        "allowModifier": false
+      },
+      {
+        "name": "STAFF OF AESCULAPIUS",
+        "value": "⚕",
+        "codepoint": 9877,
+        "isEmoji": true,
+        "allowModifier": false
+      },
+      {
+        "name": "SCALES",
+        "value": "⚖",
+        "codepoint": 9878,
+        "isEmoji": true,
+        "allowModifier": false
+      },
+      {
+        "name": "ALEMBIC",
+        "value": "⚗",
+        "codepoint": 9879,
+        "isEmoji": true,
+        "allowModifier": false
+      },
+      {
+        "name": "GEAR",
+        "value": "⚙",
+        "codepoint": 9881,
+        "isEmoji": true,
+        "allowModifier": false
+      },
+      {
+        "name": "ATOM SYMBOL",
+        "value": "⚛",
+        "codepoint": 9883,
+        "isEmoji": true,
+        "allowModifier": false
+      },
+      {
+        "name": "FLEUR-DE-LIS",
+        "value": "⚜",
+        "codepoint": 9884,
+        "isEmoji": true,
+        "allowModifier": false
+      },
+      {
+        "name": "WARNING SIGN",
+        "value": "⚠",
+        "codepoint": 9888,
+        "isEmoji": true,
+        "allowModifier": false
+      },
+      {
+        "name": "HIGH VOLTAGE SIGN",
+        "value": "⚡",
+        "codepoint": 9889,
+        "isEmoji": true,
+        "allowModifier": false
+      },
+      {
+        "name": "MALE WITH STROKE AND MALE AND FEMALE SIGN",
+        "value": "⚧",
+        "codepoint": 9895,
+        "isEmoji": true,
+        "allowModifier": false
+      },
+      {
+        "name": "MEDIUM WHITE CIRCLE",
+        "value": "⚪",
+        "codepoint": 9898,
+        "isEmoji": true,
+        "allowModifier": false
+      },
+      {
+        "name": "MEDIUM BLACK CIRCLE",
+        "value": "⚫",
+        "codepoint": 9899,
+        "isEmoji": true,
+        "allowModifier": false
+      },
+      {
+        "name": "COFFIN",
+        "value": "⚰",
+        "codepoint": 9904,
+        "isEmoji": true,
+        "allowModifier": false
+      },
+      {
+        "name": "FUNERAL URN",
+        "value": "⚱",
+        "codepoint": 9905,
+        "isEmoji": true,
+        "allowModifier": false
+      },
+      {
+        "name": "SOCCER BALL",
+        "value": "⚽",
+        "codepoint": 9917,
+        "isEmoji": true,
+        "allowModifier": false
+      },
+      {
+        "name": "BASEBALL",
+        "value": "⚾",
+        "codepoint": 9918,
+        "isEmoji": true,
+        "allowModifier": false
+      },
+      {
+        "name": "SNOWMAN WITHOUT SNOW",
+        "value": "⛄",
+        "codepoint": 9924,
+        "isEmoji": true,
+        "allowModifier": false
+      },
+      {
+        "name": "SUN BEHIND CLOUD",
+        "value": "⛅",
+        "codepoint": 9925,
+        "isEmoji": true,
+        "allowModifier": false
+      },
+      {
+        "name": "THUNDER CLOUD AND RAIN",
+        "value": "⛈",
+        "codepoint": 9928,
+        "isEmoji": true,
+        "allowModifier": false
+      },
+      {
+        "name": "OPHIUCHUS",
+        "value": "⛎",
+        "codepoint": 9934,
+        "isEmoji": true,
+        "allowModifier": false
+      },
+      {
+        "name": "PICK",
+        "value": "⛏",
+        "codepoint": 9935,
+        "isEmoji": true,
+        "allowModifier": false
+      },
+      {
+        "name": "HELMET WITH WHITE CROSS",
+        "value": "⛑",
+        "codepoint": 9937,
+        "isEmoji": true,
+        "allowModifier": false
+      },
+      {
+        "name": "CHAINS",
+        "value": "⛓",
+        "codepoint": 9939,
+        "isEmoji": true,
+        "allowModifier": false
+      },
+      {
+        "name": "NO ENTRY",
+        "value": "⛔",
+        "codepoint": 9940,
+        "isEmoji": true,
+        "allowModifier": false
+      },
+      {
+        "name": "SHINTO SHRINE",
+        "value": "⛩",
+        "codepoint": 9961,
+        "isEmoji": true,
+        "allowModifier": false
+      },
+      {
+        "name": "CHURCH",
+        "value": "⛪",
+        "codepoint": 9962,
+        "isEmoji": true,
+        "allowModifier": false
+      },
+      {
+        "name": "MOUNTAIN",
+        "value": "⛰",
+        "codepoint": 9968,
+        "isEmoji": true,
+        "allowModifier": false
+      },
+      {
+        "name": "UMBRELLA ON GROUND",
+        "value": "⛱",
+        "codepoint": 9969,
+        "isEmoji": true,
+        "allowModifier": false
+      },
+      {
+        "name": "FOUNTAIN",
+        "value": "⛲",
+        "codepoint": 9970,
+        "isEmoji": true,
+        "allowModifier": false
+      },
+      {
+        "name": "FLAG IN HOLE",
+        "value": "⛳",
+        "codepoint": 9971,
+        "isEmoji": true,
+        "allowModifier": false
+      },
+      {
+        "name": "FERRY",
+        "value": "⛴",
+        "codepoint": 9972,
+        "isEmoji": true,
+        "allowModifier": false
+      },
+      {
+        "name": "SAILBOAT",
+        "value": "⛵",
+        "codepoint": 9973,
+        "isEmoji": true,
+        "allowModifier": false
+      },
+      {
+        "name": "SKIER",
+        "value": "⛷",
+        "codepoint": 9975,
+        "isEmoji": true,
+        "allowModifier": false
+      },
+      {
+        "name": "ICE SKATE",
+        "value": "⛸",
+        "codepoint": 9976,
+        "isEmoji": true,
+        "allowModifier": false
+      },
+      {
+        "name": "PERSON WITH BALL",
+        "value": "⛹",
+        "codepoint": 9977,
+        "isEmoji": true,
+        "allowModifier": true
+      },
+      {
+        "name": "TENT",
+        "value": "⛺",
+        "codepoint": 9978,
+        "isEmoji": true,
+        "allowModifier": false
+      },
+      {
+        "name": "FUEL PUMP",
+        "value": "⛽",
+        "codepoint": 9981,
+        "isEmoji": true,
+        "allowModifier": false
+      },
+      {
+        "name": "BLACK SCISSORS",
+        "value": "✂",
+        "codepoint": 9986,
+        "isEmoji": true,
+        "allowModifier": false
+      },
+      {
+        "name": "WHITE HEAVY CHECK MARK",
+        "value": "✅",
+        "codepoint": 9989,
+        "isEmoji": true,
+        "allowModifier": false
+      },
+      {
+        "name": "AIRPLANE",
+        "value": "✈",
+        "codepoint": 9992,
+        "isEmoji": true,
+        "allowModifier": false
+      },
+      {
+        "name": "ENVELOPE",
+        "value": "✉",
+        "codepoint": 9993,
+        "isEmoji": true,
+        "allowModifier": false
+      },
+      {
+        "name": "RAISED FIST",
+        "value": "✊",
+        "codepoint": 9994,
+        "isEmoji": true,
+        "allowModifier": true
+      },
+      {
+        "name": "RAISED HAND",
+        "value": "✋",
+        "codepoint": 9995,
+        "isEmoji": true,
+        "allowModifier": true
+      },
+      {
+        "name": "VICTORY HAND",
+        "value": "✌",
+        "codepoint": 9996,
+        "isEmoji": true,
+        "allowModifier": true
+      },
+      {
+        "name": "WRITING HAND",
+        "value": "✍",
+        "codepoint": 9997,
+        "isEmoji": true,
+        "allowModifier": true
+      },
+      {
+        "name": "PENCIL",
+        "value": "✏",
+        "codepoint": 9999,
+        "isEmoji": true,
+        "allowModifier": false
+      },
+      {
+        "name": "BLACK NIB",
+        "value": "✒",
+        "codepoint": 10002,
+        "isEmoji": true,
+        "allowModifier": false
+      },
+      {
+        "name": "HEAVY CHECK MARK",
+        "value": "✔",
+        "codepoint": 10004,
+        "isEmoji": true,
+        "allowModifier": false
+      },
+      {
+        "name": "HEAVY MULTIPLICATION X",
+        "value": "✖",
+        "codepoint": 10006,
+        "isEmoji": true,
+        "allowModifier": false
+      },
+      {
+        "name": "LATIN CROSS",
+        "value": "✝",
+        "codepoint": 10013,
+        "isEmoji": true,
+        "allowModifier": false
+      },
+      {
+        "name": "STAR OF DAVID",
+        "value": "✡",
+        "codepoint": 10017,
+        "isEmoji": true,
+        "allowModifier": false
+      },
+      {
+        "name": "SPARKLES",
+        "value": "✨",
+        "codepoint": 10024,
+        "isEmoji": true,
+        "allowModifier": false
+      },
+      {
+        "name": "EIGHT SPOKED ASTERISK",
+        "value": "✳",
+        "codepoint": 10035,
+        "isEmoji": true,
+        "allowModifier": false
+      },
+      {
+        "name": "EIGHT POINTED BLACK STAR",
+        "value": "✴",
+        "codepoint": 10036,
+        "isEmoji": true,
+        "allowModifier": false
+      },
+      {
+        "name": "SNOWFLAKE",
+        "value": "❄",
+        "codepoint": 10052,
+        "isEmoji": true,
+        "allowModifier": false
+      },
+      {
+        "name": "SPARKLE",
+        "value": "❇",
+        "codepoint": 10055,
+        "isEmoji": true,
+        "allowModifier": false
+      },
+      {
+        "name": "CROSS MARK",
+        "value": "❌",
+        "codepoint": 10060,
+        "isEmoji": true,
+        "allowModifier": false
+      },
+      {
+        "name": "NEGATIVE SQUARED CROSS MARK",
+        "value": "❎",
+        "codepoint": 10062,
+        "isEmoji": true,
+        "allowModifier": false
+      },
+      {
+        "name": "BLACK QUESTION MARK ORNAMENT",
+        "value": "❓",
+        "codepoint": 10067,
+        "isEmoji": true,
+        "allowModifier": false
+      },
+      {
+        "name": "WHITE QUESTION MARK ORNAMENT",
+        "value": "❔",
+        "codepoint": 10068,
+        "isEmoji": true,
+        "allowModifier": false
+      },
+      {
+        "name": "WHITE EXCLAMATION MARK ORNAMENT",
+        "value": "❕",
+        "codepoint": 10069,
+        "isEmoji": true,
+        "allowModifier": false
+      },
+      {
+        "name": "HEAVY EXCLAMATION MARK SYMBOL",
+        "value": "❗",
+        "codepoint": 10071,
+        "isEmoji": true,
+        "allowModifier": false
+      },
+      {
+        "name": "HEAVY HEART EXCLAMATION MARK ORNAMENT",
+        "value": "❣",
+        "codepoint": 10083,
+        "isEmoji": true,
+        "allowModifier": false
+      },
+      {
+        "name": "HEAVY BLACK HEART",
+        "value": "❤",
+        "codepoint": 10084,
+        "isEmoji": true,
+        "allowModifier": false
+      },
+      {
+        "name": "HEAVY PLUS SIGN",
+        "value": "➕",
+        "codepoint": 10133,
+        "isEmoji": true,
+        "allowModifier": false
+      },
+      {
+        "name": "HEAVY MINUS SIGN",
+        "value": "➖",
+        "codepoint": 10134,
+        "isEmoji": true,
+        "allowModifier": false
+      },
+      {
+        "name": "HEAVY DIVISION SIGN",
+        "value": "➗",
+        "codepoint": 10135,
+        "isEmoji": true,
+        "allowModifier": false
+      },
+      {
+        "name": "BLACK RIGHTWARDS ARROW",
+        "value": "➡",
+        "codepoint": 10145,
+        "isEmoji": true,
+        "allowModifier": false
+      },
+      {
+        "name": "CURLY LOOP",
+        "value": "➰",
+        "codepoint": 10160,
+        "isEmoji": true,
+        "allowModifier": false
+      },
+      {
+        "name": "DOUBLE CURLY LOOP",
+        "value": "➿",
+        "codepoint": 10175,
+        "isEmoji": true,
+        "allowModifier": false
+      },
+      {
+        "name": "ARROW POINTING RIGHTWARDS THEN CURVING UPWARDS",
+        "value": "⤴",
+        "codepoint": 10548,
+        "isEmoji": true,
+        "allowModifier": false
+      },
+      {
+        "name": "ARROW POINTING RIGHTWARDS THEN CURVING DOWNWARDS",
+        "value": "⤵",
+        "codepoint": 10549,
+        "isEmoji": true,
+        "allowModifier": false
+      },
+      {
+        "name": "LEFTWARDS BLACK ARROW",
+        "value": "⬅",
+        "codepoint": 11013,
+        "isEmoji": true,
+        "allowModifier": false
+      },
+      {
+        "name": "UPWARDS BLACK ARROW",
+        "value": "⬆",
+        "codepoint": 11014,
+        "isEmoji": true,
+        "allowModifier": false
+      },
+      {
+        "name": "DOWNWARDS BLACK ARROW",
+        "value": "⬇",
+        "codepoint": 11015,
+        "isEmoji": true,
+        "allowModifier": false
+      },
+      {
+        "name": "BLACK LARGE SQUARE",
+        "value": "⬛",
+        "codepoint": 11035,
+        "isEmoji": true,
+        "allowModifier": false
+      },
+      {
+        "name": "WHITE LARGE SQUARE",
+        "value": "⬜",
+        "codepoint": 11036,
+        "isEmoji": true,
+        "allowModifier": false
+      },
+      {
+        "name": "WHITE MEDIUM STAR",
+        "value": "⭐",
+        "codepoint": 11088,
+        "isEmoji": true,
+        "allowModifier": false
+      },
+      {
+        "name": "HEAVY LARGE CIRCLE",
+        "value": "⭕",
+        "codepoint": 11093,
+        "isEmoji": true,
+        "allowModifier": false
+      },
+      {
+        "name": "WAVY DASH",
+        "value": "〰",
+        "codepoint": 12336,
+        "isEmoji": true,
+        "allowModifier": false
+      },
+      {
+        "name": "PART ALTERNATION MARK",
+        "value": "〽",
+        "codepoint": 12349,
+        "isEmoji": true,
+        "allowModifier": false
+      },
+      {
+        "name": "CIRCLED IDEOGRAPH CONGRATULATION",
+        "value": "㊗",
+        "codepoint": 12951,
+        "isEmoji": true,
+        "allowModifier": false
+      },
+      {
+        "name": "CIRCLED IDEOGRAPH SECRET",
+        "value": "㊙",
+        "codepoint": 12953,
+        "isEmoji": true,
+        "allowModifier": false
+      },
+      {
+        "name": "MAHJONG TILE RED DRAGON",
+        "value": "🀄",
+        "codepoint": 126980,
+        "isEmoji": true,
+        "allowModifier": false
+      },
+      {
+        "name": "PLAYING CARD BLACK JOKER",
+        "value": "🃏",
+        "codepoint": 127183,
+        "isEmoji": true,
+        "allowModifier": false
+      },
+      {
+        "name": "NEGATIVE SQUARED LATIN CAPITAL LETTER A",
+        "value": "🅰",
+        "codepoint": 127344,
+        "isEmoji": true,
+        "allowModifier": false
+      },
+      {
+        "name": "NEGATIVE SQUARED LATIN CAPITAL LETTER B",
+        "value": "🅱",
+        "codepoint": 127345,
+        "isEmoji": true,
+        "allowModifier": false
+      },
+      {
+        "name": "NEGATIVE SQUARED LATIN CAPITAL LETTER O",
+        "value": "🅾",
+        "codepoint": 127358,
+        "isEmoji": true,
+        "allowModifier": false
+      },
+      {
+        "name": "NEGATIVE SQUARED LATIN CAPITAL LETTER P",
+        "value": "🅿",
+        "codepoint": 127359,
+        "isEmoji": true,
+        "allowModifier": false
+      },
+      {
+        "name": "NEGATIVE SQUARED AB",
+        "value": "🆎",
+        "codepoint": 127374,
+        "isEmoji": true,
+        "allowModifier": false
+      },
+      {
+        "name": "SQUARED CL",
+        "value": "🆑",
+        "codepoint": 127377,
+        "isEmoji": true,
+        "allowModifier": false
+      },
+      {
+        "name": "SQUARED COOL",
+        "value": "🆒",
+        "codepoint": 127378,
+        "isEmoji": true,
+        "allowModifier": false
+      },
+      {
+        "name": "SQUARED FREE",
+        "value": "🆓",
+        "codepoint": 127379,
+        "isEmoji": true,
+        "allowModifier": false
+      },
+      {
+        "name": "SQUARED ID",
+        "value": "🆔",
+        "codepoint": 127380,
+        "isEmoji": true,
+        "allowModifier": false
+      },
+      {
+        "name": "SQUARED NEW",
+        "value": "🆕",
+        "codepoint": 127381,
+        "isEmoji": true,
+        "allowModifier": false
+      },
+      {
+        "name": "SQUARED NG",
+        "value": "🆖",
+        "codepoint": 127382,
+        "isEmoji": true,
+        "allowModifier": false
+      },
+      {
+        "name": "SQUARED OK",
+        "value": "🆗",
+        "codepoint": 127383,
+        "isEmoji": true,
+        "allowModifier": false
+      },
+      {
+        "name": "SQUARED SOS",
+        "value": "🆘",
+        "codepoint": 127384,
+        "isEmoji": true,
+        "allowModifier": false
+      },
+      {
+        "name": "SQUARED UP WITH EXCLAMATION MARK",
+        "value": "🆙",
+        "codepoint": 127385,
+        "isEmoji": true,
+        "allowModifier": false
+      },
+      {
+        "name": "SQUARED VS",
+        "value": "🆚",
+        "codepoint": 127386,
+        "isEmoji": true,
+        "allowModifier": false
+      },
+      {
+        "name": "SQUARED KATAKANA KOKO",
+        "value": "🈁",
+        "codepoint": 127489,
+        "isEmoji": true,
+        "allowModifier": false
+      },
+      {
+        "name": "SQUARED KATAKANA SA",
+        "value": "🈂",
+        "codepoint": 127490,
+        "isEmoji": true,
+        "allowModifier": false
+      },
+      {
+        "name": "SQUARED CJK UNIFIED IDEOGRAPH-7121",
+        "value": "🈚",
+        "codepoint": 127514,
+        "isEmoji": true,
+        "allowModifier": false
+      },
+      {
+        "name": "SQUARED CJK UNIFIED IDEOGRAPH-6307",
+        "value": "🈯",
+        "codepoint": 127535,
+        "isEmoji": true,
+        "allowModifier": false
+      },
+      {
+        "name": "SQUARED CJK UNIFIED IDEOGRAPH-7981",
+        "value": "🈲",
+        "codepoint": 127538,
+        "isEmoji": true,
+        "allowModifier": false
+      },
+      {
+        "name": "SQUARED CJK UNIFIED IDEOGRAPH-7A7A",
+        "value": "🈳",
+        "codepoint": 127539,
+        "isEmoji": true,
+        "allowModifier": false
+      },
+      {
+        "name": "SQUARED CJK UNIFIED IDEOGRAPH-5408",
+        "value": "🈴",
+        "codepoint": 127540,
+        "isEmoji": true,
+        "allowModifier": false
+      },
+      {
+        "name": "SQUARED CJK UNIFIED IDEOGRAPH-6E80",
+        "value": "🈵",
+        "codepoint": 127541,
+        "isEmoji": true,
+        "allowModifier": false
+      },
+      {
+        "name": "SQUARED CJK UNIFIED IDEOGRAPH-6709",
+        "value": "🈶",
+        "codepoint": 127542,
+        "isEmoji": true,
+        "allowModifier": false
+      },
+      {
+        "name": "SQUARED CJK UNIFIED IDEOGRAPH-6708",
+        "value": "🈷",
+        "codepoint": 127543,
+        "isEmoji": true,
+        "allowModifier": false
+      },
+      {
+        "name": "SQUARED CJK UNIFIED IDEOGRAPH-7533",
+        "value": "🈸",
+        "codepoint": 127544,
+        "isEmoji": true,
+        "allowModifier": false
+      },
+      {
+        "name": "SQUARED CJK UNIFIED IDEOGRAPH-5272",
+        "value": "🈹",
+        "codepoint": 127545,
+        "isEmoji": true,
+        "allowModifier": false
+      },
+      {
+        "name": "SQUARED CJK UNIFIED IDEOGRAPH-55B6",
+        "value": "🈺",
+        "codepoint": 127546,
+        "isEmoji": true,
+        "allowModifier": false
+      },
+      {
+        "name": "CIRCLED IDEOGRAPH ADVANTAGE",
+        "value": "🉐",
+        "codepoint": 127568,
+        "isEmoji": true,
+        "allowModifier": false
+      },
+      {
+        "name": "CIRCLED IDEOGRAPH ACCEPT",
+        "value": "🉑",
+        "codepoint": 127569,
+        "isEmoji": true,
+        "allowModifier": false
+      },
       {
         "name": "CYCLONE",
         "value": "🌀",
@@ -35954,20 +36332,6 @@
         "allowModifier": false
       },
       {
-        "name": "BLACK SMALL SQUARE",
-        "value": "▪",
-        "codepoint": 9642,
-        "isEmoji": true,
-        "allowModifier": false
-      },
-      {
-        "name": "WHITE SMALL SQUARE",
-        "value": "▫",
-        "codepoint": 9643,
-        "isEmoji": true,
-        "allowModifier": false
-      },
-      {
         "name": "BLACK RECTANGLE",
         "value": "▬",
         "codepoint": 9644,
@@ -36038,13 +36402,6 @@
         "allowModifier": false
       },
       {
-        "name": "BLACK RIGHT-POINTING TRIANGLE",
-        "value": "▶",
-        "codepoint": 9654,
-        "isEmoji": true,
-        "allowModifier": false
-      },
-      {
         "name": "WHITE RIGHT-POINTING TRIANGLE",
         "value": "▷",
         "codepoint": 9655,
@@ -36105,13 +36462,6 @@
         "value": "▿",
         "codepoint": 9663,
         "isEmoji": false,
-        "allowModifier": false
-      },
-      {
-        "name": "BLACK LEFT-POINTING TRIANGLE",
-        "value": "◀",
-        "codepoint": 9664,
-        "isEmoji": true,
         "allowModifier": false
       },
       {
@@ -36518,34 +36868,6 @@
         "value": "◺",
         "codepoint": 9722,
         "isEmoji": false,
-        "allowModifier": false
-      },
-      {
-        "name": "WHITE MEDIUM SQUARE",
-        "value": "◻",
-        "codepoint": 9723,
-        "isEmoji": true,
-        "allowModifier": false
-      },
-      {
-        "name": "BLACK MEDIUM SQUARE",
-        "value": "◼",
-        "codepoint": 9724,
-        "isEmoji": true,
-        "allowModifier": false
-      },
-      {
-        "name": "WHITE MEDIUM SMALL SQUARE",
-        "value": "◽",
-        "codepoint": 9725,
-        "isEmoji": true,
-        "allowModifier": false
-      },
-      {
-        "name": "BLACK MEDIUM SMALL SQUARE",
-        "value": "◾",
-        "codepoint": 9726,
-        "isEmoji": true,
         "allowModifier": false
       },
       {
