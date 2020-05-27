@@ -14,17 +14,23 @@
  */
 
 import { Schema } from "prosemirror-model";
-import { EditorState, Transaction, NodeSelection } from "prosemirror-state";
+import { EditorState, Transaction, NodeSelection, Selection } from "prosemirror-state";
 
 import { BaseKey } from "../../api/basekeys";
 import { exitNode } from "../../api/command";
+import { EditorView } from "prosemirror-view";
+import { findParentNodeOfTypeClosestToPos } from "prosemirror-utils";
 
 
 export function figureKeys(schema: Schema) {
   return [
     { key: BaseKey.Enter, command: exitNode(schema.nodes.figure, -1, false) },
     { key: BaseKey.Backspace, command: backspaceEmptyCaption() },
-    { key: BaseKey.Backspace, command: backspaceAfterFigure() }
+    { key: BaseKey.Backspace, command: backspaceAfterFigure() },
+    { key: BaseKey.ArrowLeft, command: arrowHandler('left') },
+    { key: BaseKey.ArrowRight, command: arrowHandler('right') },
+    { key: BaseKey.ArrowUp, command: arrowHandler('up') },
+    { key: BaseKey.ArrowDown, command: arrowHandler('down') },
   ];
 }
 
@@ -87,5 +93,37 @@ function backspaceAfterFigure() {
 }
 
 
+function arrowHandler(dir: 'up' | 'down' | 'left' | 'right' | 'forward' | 'backward') {
+  return (state: EditorState, dispatch?: (tr: Transaction) => void, view?: EditorView) => {
+
+    const schema = state.schema;
+
+    if (state.selection.empty && view && view.endOfTextblock(dir)) {
+      
+      // compute side offset
+      const side = dir === 'left' || dir === 'up' ? -1 : 1;
+
+      // get selection head
+      const selection = state.selection;
+      const { $head } = selection;
+
+      // see if this would traverse our type
+      const nextPos = Selection.near(state.doc.resolve(side > 0 ? $head.after() : $head.before()), side);
+      if (nextPos.$head) {
+        const figure = findParentNodeOfTypeClosestToPos(nextPos.$head, schema.nodes.figure);
+        if (figure && figure.node.textContent.length === 0) {
+          if (dispatch) {
+            const tr = state.tr;
+            const figureSelection = NodeSelection.create(state.doc, figure.pos);
+            tr.setSelection(figureSelection);
+            dispatch(tr);
+          }
+          return true;
+        }
+      }
+    }
+    return false;
+  };
+}
 
  

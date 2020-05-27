@@ -38,6 +38,10 @@ export enum BaseKey {
   Delete = 'Delete|Mod-Delete', // Use pipes to register multiple commands
   Tab = 'Tab',
   ShiftTab = 'Shift-Tab',
+  ArrowUp = 'Up|ArrowUp',
+  ArrowDown = 'Down|ArrowDown',
+  ArrowLeft = 'Left|ArrowLeft',
+  ArrowRight = 'Right|ArrowRight',
 }
 
 export interface BaseKeyBinding {

@@ -110,7 +110,7 @@ const extension = (
       return [
         imageTextSelectionPlugin(),
         imageEventsPlugin(),
-        ...imageNodeViewPlugins('image', false, ui, events, pandocExtensions)
+        ...imageNodeViewPlugins('image', ui, events, pandocExtensions)
       ];
     },
   };
