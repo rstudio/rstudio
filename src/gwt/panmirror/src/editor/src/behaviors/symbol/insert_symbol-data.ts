@@ -41,7 +41,7 @@ class SymbolDataManager {
 
   public getSymbols(groupName: string) {
     if (groupName === CATEGORY_ALL) {
-      return this.symbolGroups.map((symbolGroup) => symbolGroup.symbols).flat();
+      return this.symbolGroups.map((symbolGroup) => symbolGroup.symbols).flat().sort((a,b) => a.codepoint - b.codepoint);
     }
     return this.symbolGroups.filter((symbolGroup) => groupName === symbolGroup.name).map((symbolGroup) => symbolGroup.symbols).flat();
   }
