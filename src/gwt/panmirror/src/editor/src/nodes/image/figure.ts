@@ -46,6 +46,7 @@ import {
   imagePandocOutputWriter,
   pandocImageHandler,
   imageAttrsFromHTML,
+  imageCommand,
 } from './image';
 import { inlineHTMLIsImage } from './image-util';
 import { imageNodeViewPlugins } from './image-view';
@@ -123,6 +124,11 @@ const extension = (
             }
           },
         },
+
+        attr_edit: () => ({
+          type: (schema: Schema) => schema.nodes.figure,
+          editFn: () => imageCommand(ui, imageAttr)
+        }),
       },
     ],
 

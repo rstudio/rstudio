@@ -99,6 +99,11 @@ const extension = (
           inlineHTMLReader: pandocExtensions.raw_html ? imageInlineHTMLReader : undefined,
           writer: imagePandocOutputWriter(false, ui),
         },
+
+        attr_edit: () => ({
+          type: (schema: Schema) => schema.nodes.image,
+          editFn: () => imageCommand(ui, imageAttr)
+        }),
       },
     ],
 
@@ -266,7 +271,7 @@ export function imageAttrsFromHTML(html: string) {
   }
 }
 
-function imageCommand(editorUI: EditorUI, imageAttributes: boolean) {
+export function imageCommand(editorUI: EditorUI, imageAttributes: boolean) {
   return (state: EditorState, dispatch?: (tr: Transaction<any>) => void, view?: EditorView) => {
     const schema = state.schema;
 
