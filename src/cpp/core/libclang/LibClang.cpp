@@ -60,31 +60,6 @@ std::vector<std::string> defaultCompileArgs(LibraryVersion version)
    if (FilePath(includePath).exists())
      compileArgs.push_back(std::string("-I") + includePath);
 
-#ifdef __APPLE__
-   // newer versions of macOS (e.g. Mojave) no longer install system
-   // headers into /usr/include by default. attempt to find the headers
-   // made available as part of the default toolchain instead
-   if (!FilePath("/usr/include").exists())
-   {
-      // try multiple locations for path to appropriate system headers
-      std::vector<std::string> usrIncludePaths = {
-         "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include",
-         "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include"
-         "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include",
-      };
-
-      for (auto&& path : usrIncludePaths)
-      {
-         if (FilePath(path).exists())
-         {
-            compileArgs.insert(compileArgs.begin(), path);
-            compileArgs.insert(compileArgs.begin(), "-isystem");
-            break;
-         }
-      }
-   }
-#endif
-
    return compileArgs;
 }
 
@@ -151,8 +126,8 @@ LibClang::~LibClang()
 }
 
 bool LibClang::load(EmbeddedLibrary embedded,
-                         LibraryVersion requiredVersion,
-                         std::string* pDiagnostics)
+                    LibraryVersion requiredVersion,
+                    std::string* pDiagnostics)
 {
    // diagnostics stream
    std::ostringstream ostr;

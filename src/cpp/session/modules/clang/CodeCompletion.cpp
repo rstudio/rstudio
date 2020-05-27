@@ -192,6 +192,38 @@ void discoverTranslationUnitIncludePaths(const FilePath& filePath,
    }
 }
 
+void prependSystemIncludePaths(std::vector<std::string>* pCompileArgs)
+{
+#ifdef __APPLE__
+   // newer versions of macOS (e.g. Mojave) no longer install system
+   // headers into /usr/include by default. attempt to find the headers
+   // made available as part of the default toolchain instead.
+   //
+   // this should only be necessary when using a custom version of
+   // LLVM / clang (as was done with R < 4.0.0); when using the default
+   // version of clang (Apple Clang) this is unnecessary.
+   if (!FilePath("/usr/include").exists())
+   {
+      // try multiple locations for path to appropriate system headers
+      std::vector<std::string> usrIncludePaths = {
+         "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include",
+         "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include"
+         "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include",
+      };
+
+      for (auto&& path : usrIncludePaths)
+      {
+         if (FilePath(path).exists())
+         {
+            pCompileArgs->insert(pCompileArgs->begin(), path);
+            pCompileArgs->insert(pCompileArgs->begin(), "-isystem");
+            break;
+         }
+      }
+   }
+#endif
+}
+
 } // end anonymous namespace
 
 void discoverSystemIncludePaths(std::vector<std::string>* pIncludePaths)
@@ -309,8 +341,12 @@ void discoverSystemIncludePaths(std::vector<std::string>* pIncludePaths)
       else
          includePathOutput = string_utils::trimWhitespace(result.stdOut);
    }
+   
    if (includePathOutput.empty())
       return;
+   
+   // check for Apple clang
+   bool isAppleClang = includePathOutput.find("Apple clang") != std::string::npos;
    
    // strip out the include paths from the output
    std::string startString = "#include <...> search starts here:";
@@ -339,6 +375,12 @@ void discoverSystemIncludePaths(std::vector<std::string>* pIncludePaths)
    for (std::size_t i = 0, n = includePaths.size(); i < n; ++i)
       includePaths[i] = string_utils::trimWhitespace(includePaths[i]);
    
+#ifdef __APPLE__
+   // prepend system include paths for non-Apple clang
+   if (!isAppleClang)
+      prependSystemIncludePaths(&includePaths);
+#endif
+   
    // update cache
    s_systemIncludePaths = includePaths;
    
@@ -350,6 +392,7 @@ void discoverSystemIncludePaths(std::vector<std::string>* pIncludePaths)
 }
 
 namespace {
+
 
 void discoverRelativeIncludePaths(const FilePath& filePath,
                                   const std::string& parentDir,
