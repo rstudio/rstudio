@@ -169,7 +169,7 @@ export function applyTheme(theme: EditorTheme) {
       color: ${theme.markupTextColor} !important;
     }
     .pm-find-text,
-    .pm-grid-item:hover {
+    .pm-grid-item-selected {
       background-color: ${theme.findTextBackgroundColor} !important;
       outline: 1px solid ${theme.findTextBorderColor} !important;
     }

@@ -4,7 +4,7 @@ import SymbolDataManager, { CATEGORY_ALL, SymbolCharacter, SymbolGroup } from '.
 import { Popup } from '../../api/widgets/popup';
 import { TextInput } from '../../api/widgets/text';
 import { SelectInput } from '../../api/widgets/select';
-import SymbolCharacterGrid from './insert_symbol-grid';
+import SymbolCharacterGrid, { newIndexForKeyboardEvent } from './insert_symbol-grid';
 
 import './insert_symbol-styles.css';
 
@@ -14,6 +14,7 @@ interface InsertSymbolPopupProps extends WidgetProps {
   enabled: boolean;
   onInsertText: (text: string) => void;
   onClose: VoidFunction;
+  onBlur: VoidFunction;
   size: [number, number];
   searchImage?: string;
 }
@@ -30,9 +31,11 @@ export const InsertSymbolPopup: React.FC<InsertSymbolPopupProps> = props => {
 
   const gridHeight = popupHeight - 45;
   const gridWidth = popupWidth;
+  const numberOfColumns = 12;
 
   const [filterText, setFilterText] = React.useState<string>('');
-  const [selectedSymbolGroup, setSelectedSymbolGroup] = React.useState(CATEGORY_ALL);
+  const [selectedSymbolGroup, setSelectedSymbolGroup] = React.useState<SymbolGroup>(CATEGORY_ALL);
+  const [selectedSymbolIndex, setSelectedSymbolIndex] = React.useState<number>(0);
   const [symbols, setSymbols] = React.useState<Array<SymbolCharacter>>([]);
   const [filteredSymbols, setFilteredSymbols] = React.useState<Array<SymbolCharacter>>(symbols);
 
@@ -66,38 +69,65 @@ export const InsertSymbolPopup: React.FC<InsertSymbolPopupProps> = props => {
 
   function handleSelectChanged(event: ChangeEvent<Element>) {
     const value: string = (event.target as HTMLSelectElement).selectedOptions[0].value;
-    const selectedGroup: SymbolGroup | undefined = symbolDataManager.getSymbolGroups().find(group => group.alias === value);
+    const selectedGroup: SymbolGroup | undefined = symbolDataManager
+      .getSymbolGroups()
+      .find(group => group.alias === value);
     if (selectedGroup) {
       setSelectedSymbolGroup(selectedGroup);
     }
   }
 
   function handleKeyboardEvent(event: React.KeyboardEvent<HTMLElement>) {
-    if (event.keyCode == 27) {
-      // Esc key - close popup
-      props.onClose();
-      event.preventDefault();
-    } else if (event.keyCode === 13) {
-      // Enter key - insert symbol
-      if (filteredSymbols.length === 1) {
-        props.onInsertText(filteredSymbols[0].value); //
+    // Global Key Handling
+    switch (event.key) {
+      case 'Escape':
+        // Esc key - close popup
+        props.onClose();
+        event.preventDefault();
+        break;
+
+      case 'Tab':
+        if (event.shiftKey && window.document.activeElement === textRef.current) {
+          gridRef.current?.focus();
+          event.preventDefault();
+        } else if (!event.shiftKey && window.document.activeElement === gridRef.current) {
+          textRef.current?.focus();
+          event.preventDefault();
+        }
+        break;
+
+      case 'Enter':
+        handleSelectedSymbolCommitted();
+        event.preventDefault();
+        break;
+
+      default: 
+        break;
+    }
+
+    // Process grid keyboard event if the textbox is focused and has no value
+    if (window.document.activeElement === textRef.current && textRef.current?.value.length == 0) {
+      const newIndex = newIndexForKeyboardEvent(event, selectedSymbolIndex, numberOfColumns, symbols.length);
+      if (newIndex) {
+        setSelectedSymbolIndex(newIndex);
         event.preventDefault();
       }
-    } else if (event.keyCode == 9) {
-      // Tab key, handle tab out of panel
-      if (event.shiftKey && window.document.activeElement === textRef.current) {
-        // Shift tab should loop if we're on the first element of the panel
-        selectRef.current?.focus();
-        event.preventDefault();
-      }
-      // TODO: Tab
-    } 
-    // TODO arrows keys, page up / down for grid.
+    }
+  }
+
+  function handleSelectedSymbolChanged(selectedSymbolIndex: number) {
+    setSelectedSymbolIndex(selectedSymbolIndex);
+  }
+
+  function handleSelectedSymbolCommitted() {
+    if (filteredSymbols.length > selectedSymbolIndex) {
+      props.onInsertText(filteredSymbols[selectedSymbolIndex].value);
+    }
   }
 
   return (
     <Popup classes={['pm-popup-insert-symbol']} style={style}>
-      <div onKeyDown={event => handleKeyboardEvent(event)}>
+      <div onKeyDown={event => handleKeyboardEvent(event)} onBlur={event => props.onBlur()}>
         <div className="pm-popup-insert-symbol-search-container" style={{ width: gridWidth }}>
           <TextInput
             widthChars={20}
@@ -106,14 +136,13 @@ export const InsertSymbolPopup: React.FC<InsertSymbolPopupProps> = props => {
             className="pm-popup-insert-symbol-search-textbox"
             placeholder="keyword or codepoint"
             onChange={(event: React.ChangeEvent<HTMLInputElement>) => setFilterText(event.target.value)}
-            onKeyDown={(event: React.KeyboardEvent<HTMLInputElement>) => handleKeyboardEvent}
             ref={textRef}
           />
           <SelectInput
             tabIndex={0}
             ref={selectRef}
             className="pm-popup-insert-symbol-select-category"
-            onChange={event => handleSelectChanged}
+            onChange={event => handleSelectChanged(event)}
           >
             {options}
           </SelectInput>
@@ -123,13 +152,12 @@ export const InsertSymbolPopup: React.FC<InsertSymbolPopupProps> = props => {
         <div className="pm-popup-insert-symbol-grid-container">
           <SymbolCharacterGrid
             symbolCharacters={filteredSymbols}
-            onSymbolCharacterSelected={(character: string) => {
-              props.onInsertText(character);
-            }}
-            onChangeFocus={(previous: boolean) => focusElement(previous ? selectRef : textRef)}
+            selectedIndex={selectedSymbolIndex}
+            onSelectionChanged={handleSelectedSymbolChanged}
+            onSelectionCommitted={handleSelectedSymbolCommitted}
             height={gridHeight}
             width={gridWidth}
-            numberOfColumns={12}
+            numberOfColumns={numberOfColumns}
             ref={gridRef}
           />
           <div

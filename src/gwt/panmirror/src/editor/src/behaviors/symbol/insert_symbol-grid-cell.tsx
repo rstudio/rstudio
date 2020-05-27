@@ -1,13 +1,13 @@
 import { SymbolCharacter } from "./insert_symbol-data";
-import { findPreviousInputElement, findNextInputElement } from "../../api/html";
 
 import React from 'react';
 
 export interface CharacterGridCellItemData {
   symbolCharacters: Array<SymbolCharacter>;
-  onKeyDown: (event: React.KeyboardEvent) => boolean;
-  onSymbolCharacterSelected: (char: string) => void;
   numberOfColumns: number;
+  selectedIndex: number;
+  onSelectionChanged : (selectedIndex: number) => void;
+  onSelectionCommitted: VoidFunction;
 }
 
 export const SymbolCharacterCell = ({ columnIndex, rowIndex, style, data }: any) => {
@@ -22,22 +22,25 @@ export const SymbolCharacterCell = ({ columnIndex, rowIndex, style, data }: any)
 
   return (
     <div
-      tabIndex={0}
+      tabIndex={-1}
       style={style}
       title={`U+${character?.codepoint.toString(16)} - ${character?.name.toLowerCase()}`}
       className="pm-symbol-grid-container"
       onClick={event => {
         event.preventDefault();
         event.stopPropagation();
-        characterGridCellItemData.onSymbolCharacterSelected(character?.value as string);
+        characterGridCellItemData.onSelectionCommitted();
       }}
       onMouseDown={event => {
         event.preventDefault();
         event.stopPropagation();
       }}
+      onMouseOver={event => {
+        characterGridCellItemData.onSelectionChanged(itemIndex);
+      }}
     >
-      <div className="pm-symbol-grid-cell pm-grid-item">
-      {character === undefined ? '' : character.value}
+      <div className={`pm-symbol-grid-cell pm-grid-item ${characterGridCellItemData.selectedIndex == itemIndex ? 'pm-grid-item-selected' : ''}`}>
+      {character === undefined ? '' : character.value} 
       </div>
     </div>
   );

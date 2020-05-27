@@ -110,6 +110,7 @@ class InsertSymbolPlugin extends Plugin<boolean> {
     }
   }
 
+
   private insertSymbolPopup(view: EditorView, size: [number, number]) {
     const insertText = (text: string) => {
       const tr = view.state.tr;
@@ -123,10 +124,14 @@ class InsertSymbolPlugin extends Plugin<boolean> {
       view.focus();
     };
 
+    const onBlur = () => {
+    }
+
     return (
       <InsertSymbolPopup
         onClose={closePopup}
         onInsertText={insertText}
+        onBlur={onBlur}
         enabled={isEnabled(view.state)}
         size={size}
         searchImage={this.ui.images.search}
