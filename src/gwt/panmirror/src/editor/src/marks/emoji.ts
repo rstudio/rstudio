@@ -25,7 +25,7 @@ import { fragmentText } from '../api/fragment';
 import { FixupContext } from '../api/fixup';
 import { MarkTransaction } from '../api/transaction';
 import { mergedTextNodes } from '../api/text';
-import { emojies, emojiFromAlias, emojiFromChar } from '../api/emoji';
+import { emojis, emojiFromAlias, emojiFromChar } from '../api/emoji';
 
 const kEmojiAttr = 0;
 const kEmojiContent = 1;
@@ -150,7 +150,7 @@ const extension = (pandocExtensions: PandocExtensions): Extension | null => {
           );
 
           textNodes.forEach(textNode => {
-            for (const emoji of emojies()) {
+            for (const emoji of emojis()) {
               const charLoc = textNode.text.indexOf(emoji.emoji);
               if (charLoc !== -1) {
                 const from = textNode.pos + charLoc;

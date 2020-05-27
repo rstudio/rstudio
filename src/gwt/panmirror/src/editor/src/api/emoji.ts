@@ -22,7 +22,7 @@ export interface Emoji {
   aliases: string[];
 }
 
-export function emojies() {
+export function emojis() {
   return kEmojis;
 }
 
