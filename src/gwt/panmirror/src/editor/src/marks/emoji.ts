@@ -114,13 +114,14 @@ const extension = (): Extension | null => {
 
     inputRules: () => {
       return [
-        new InputRule(/:(\w+):$/, (state: EditorState, match: string[], start: number, end: number) => {
-          const emoji = emojiFromAlias(match[1]);
+        new InputRule(/(^|[^`]):(\w+):$/, (state: EditorState, match: string[], start: number, end: number) => {
+          const emjoiName = match[2];
+          const emoji = emojiFromAlias(emjoiName);
           if (emoji) {
             const schema = state.schema;
             const tr = state.tr;
-            tr.delete(start, end);
-            const mark = schema.marks.emoji.create({ emojihint: match[1] });
+            tr.delete(start + match[1].length, end);
+            const mark = schema.marks.emoji.create({ emojihint: emjoiName });
             const text = schema.text(emoji.emoji, mark);
             tr.replaceSelectionWith(text);
             return tr;
