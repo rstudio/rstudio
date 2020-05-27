@@ -444,7 +444,7 @@ function computeChange(oldVal: string, newVal: string) {
   };
 }
 
-function arrowHandler(dir: 'up' | 'down' | 'left' | 'right' | 'forward' | 'backward', nodeTypes: string[]) {
+function arrowHandler(dir: 'up' | 'down' | 'left' | 'right', nodeTypes: string[]) {
   return (state: EditorState, dispatch?: (tr: Transaction<any>) => void, view?: EditorView) => {
     if (state.selection.empty && view && view.endOfTextblock(dir)) {
       const side = dir === 'left' || dir === 'up' ? -1 : 1;
