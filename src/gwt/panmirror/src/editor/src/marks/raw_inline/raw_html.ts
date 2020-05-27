@@ -149,6 +149,11 @@ export function rawHtmlInputRule(schema: Schema, filter: MarkInputRuleFilter) {
 function tagInfo(text: string, endLoc: number) {
   const startLoc = tagStartLoc(text, endLoc);
   if (startLoc !== -1) {
+    // don't match if preceding character is a backtick 
+    // (user is attempting to write an html tag in code)
+    if (text.charAt(startLoc-1) === '`') {
+      return null;
+    }
     const tagText = text.substring(startLoc, endLoc + 1);
     const match = tagText.match(/<(\/?)(\w+)/);
     if (match) {
