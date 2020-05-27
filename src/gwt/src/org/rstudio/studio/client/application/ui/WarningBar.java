@@ -16,7 +16,6 @@ package org.rstudio.studio.client.application.ui;
 
 import com.google.gwt.aria.client.Roles;
 import com.google.gwt.dom.client.DivElement;
-import com.google.gwt.user.client.Timer;
 import com.google.inject.Inject;
 import org.rstudio.core.client.a11y.A11y;
 import org.rstudio.core.client.theme.res.ThemeResources;
@@ -42,6 +41,7 @@ import org.rstudio.studio.client.application.AriaLiveService;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.events.WarningBarClosedEvent;
+import org.rstudio.studio.client.common.Timers;
 
 public class WarningBar extends Composite
       implements HasCloseHandlers<WarningBar>
@@ -97,15 +97,7 @@ public class WarningBar extends Composite
       label_.setInnerText(value);
 
       // Give screen reader time to process page to improve chance it will notice the live region
-      Timer liveTimer = new Timer()
-      {
-         @Override
-         public void run()
-         {
-            live_.setInnerText(value);
-         }
-      };
-      liveTimer.schedule(1500);
+      Timers.singleShot(AriaLiveService.UI_ANNOUNCEMENT_DELAY, () -> live_.setInnerText(value));
    }
 
    public void showLicenseButton(boolean show)
