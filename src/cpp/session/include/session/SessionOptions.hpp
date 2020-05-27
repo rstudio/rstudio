@@ -28,7 +28,6 @@
 
 #include <core/r_util/RSessionContext.hpp>
 
-#include <R_ext/RStartup.h>
 
 #include <session/SessionConstants.hpp>
 

@@ -88,6 +88,15 @@ namespace session {
 namespace client_init {
 namespace {
 
+std::string userIdentityDisplay(const http::Request& request)
+{
+   std::string userIdentity = request.headerValue(kRStudioUserIdentityDisplay);
+   if (!userIdentity.empty())
+      return userIdentity;
+   else
+      return session::options().userIdentity();
+}
+
 #ifdef RSTUDIO_SERVER
 Error makePortTokenCookie(boost::shared_ptr<HttpConnection> ptrConnection, 
       http::Response& response)
@@ -170,11 +179,16 @@ void handleClientInit(const boost::function<void()>& initFunction,
    // the InvalidClientId error.
    clientEventService().setClientId(clientId, clearEvents);
 
-   // set RSTUDIO_HTTP_REFERER environment variable based on Referer
    if (options.programMode() == kSessionProgramModeServer)
    {
+      // set RSTUDIO_HTTP_REFERER environment variable based on Referer
       std::string referer = ptrConnection->request().headerValue("referer");
       core::system::setenv("RSTUDIO_HTTP_REFERER", referer);
+
+      // set RSTUDIO_USER_IDENTITY_DISPLAY environment variable based on
+      // header value (complements RSTUDIO_USER_IDENTITY)
+      core::system::setenv("RSTUDIO_USER_IDENTITY_DISPLAY", 
+            userIdentityDisplay(ptrConnection->request()));
    }
 
    // prepare session info 
@@ -188,7 +202,7 @@ void handleClientInit(const boost::function<void()>& initFunction,
    initOptions["run_rprofile"] = options.rRunRprofile();
    sessionInfo["init_options"] = initOptions;
    
-   sessionInfo["userIdentity"] = options.userIdentity();
+   sessionInfo["userIdentity"] = userIdentityDisplay(ptrConnection->request());
    sessionInfo["systemUsername"] = core::system::username();
 
    // only send log_dir and scratch_dir if we are in desktop mode

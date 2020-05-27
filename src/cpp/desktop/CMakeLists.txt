@@ -34,7 +34,7 @@ if(NOT WIN32)
            set(QT_COMPILER "gcc")
          endif()
       endif()
-         
+
       set(QT_CANDIDATES 5.12.8)
 
       # find the newest installed Qt version among the versions we build
@@ -548,7 +548,7 @@ if(RSTUDIO_BUNDLE_QT)
          "${CMAKE_CURRENT_BINARY_DIR}/install/LinuxInstallQt.sh")
 
    endif()
-          
+
 endif(RSTUDIO_BUNDLE_QT)
 
 # install HTML templates

@@ -280,7 +280,7 @@ inline Error typeMismatch(const Value& value,
    std::string description = std::string("expected ") +
          "'" + typeAsString(expectedType) + "'" +
          "; got " +
-         "'" + typeAsString(value.getType()) + "'";
+         "'" + typeAsString(value) + "'";
    error.addProperty("description", description);
    return error;
 }

@@ -28,6 +28,9 @@
 #define kProjectEntryOwner      "project_owner"
 #define kProjectEntryUpdatedBy  "updated_by"
 #define kProjectEntrySharedWith "shared_with"
+#define kProjectEntryShareTimes "share_times"
+#define kProjectEntryShareUser  "user"
+#define kProjectEntryShareTime  "time"
 
 namespace rstudio {
 namespace session {
