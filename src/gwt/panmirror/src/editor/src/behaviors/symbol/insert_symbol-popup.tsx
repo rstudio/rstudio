@@ -14,7 +14,6 @@ interface InsertSymbolPopupProps extends WidgetProps {
   enabled: boolean;
   onInsertText: (text: string) => void;
   onClose: VoidFunction;
-  onBlur: VoidFunction;
   size: [number, number];
   searchImage?: string;
 }
@@ -29,7 +28,7 @@ export const InsertSymbolPopup: React.FC<InsertSymbolPopupProps> = props => {
     width: popupWidth + 'px',
   };
 
-  const gridHeight = popupHeight - 45;
+  const gridHeight = popupHeight - 48;
   const gridWidth = popupWidth;
   const numberOfColumns = 12;
 
@@ -127,7 +126,7 @@ export const InsertSymbolPopup: React.FC<InsertSymbolPopupProps> = props => {
 
   return (
     <Popup classes={['pm-popup-insert-symbol']} style={style}>
-      <div onKeyDown={event => handleKeyboardEvent(event)} onBlur={event => props.onBlur()}>
+      <div onKeyDown={event => handleKeyboardEvent(event)}>
         <div className="pm-popup-insert-symbol-search-container" style={{ width: gridWidth }}>
           <TextInput
             widthChars={20}

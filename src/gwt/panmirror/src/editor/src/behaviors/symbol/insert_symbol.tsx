@@ -16,12 +16,11 @@
 import { EditorState, Transaction, Plugin, PluginKey } from 'prosemirror-state';
 import { EditorView } from 'prosemirror-view';
 
-import React, {  } from 'react';
+import React from 'react';
 
 import { Extension } from '../../api/extension';
 import { ProsemirrorCommand, EditorCommandId } from '../../api/command';
 import { canInsertNode } from '../../api/node';
-
 
 import ReactDOM from 'react-dom';
 import { EditorUI } from '../../api/ui';
@@ -32,11 +31,9 @@ import { EditorFormat } from '../../api/format';
 import { EditorOptions } from '../../api/options';
 import { EditorEvents, EditorEvent } from '../../api/events';
 
-import { InsertSymbolPopup } from './insert_symbol-popup'
-
+import { InsertSymbolPopup } from './insert_symbol-popup';
 
 const key = new PluginKey<boolean>('insert_symbol');
-
 
 class InsertSymbolPlugin extends Plugin<boolean> {
   private popup: HTMLElement | null = null;
@@ -54,25 +51,17 @@ class InsertSymbolPlugin extends Plugin<boolean> {
         destroy: () => {
           this.closePopup();
           this.scrollUnsubscribe();
+          window.document.removeEventListener('focusin', this.focusChanged);
         },
       }),
-      props: {
-        handleDOMEvents: {
-          // TODO: am i going to receive blur event when items in popup are focused?
-          // TODO: does this need to be converted to dealing with popup blurring not editorview blurring?
-          blur: () => {
-            if (this.popup && window.document.activeElement !== this.popup) {
-              //this.closePopup();
-            }
-            return false;
-          },
-        },
-      },
     });
 
     this.ui = ui;
     this.closePopup = this.closePopup.bind(this);
     this.scrollUnsubscribe = events.subscribe(EditorEvent.Scroll, this.closePopup);
+
+    this.focusChanged = this.focusChanged.bind(this);
+    window.document.addEventListener('focusin', this.focusChanged);
   }
 
   public showPopup(view: EditorView) {
@@ -102,6 +91,12 @@ class InsertSymbolPlugin extends Plugin<boolean> {
     }
   }
 
+  private focusChanged() {
+      if (window.document.activeElement !== this.popup && !this.popup?.contains(window.document.activeElement)) {
+        this.closePopup();
+    }
+  }
+
   private closePopup() {
     if (this.popup) {
       ReactDOM.unmountComponentAtNode(this.popup);
@@ -109,7 +104,6 @@ class InsertSymbolPlugin extends Plugin<boolean> {
       this.popup = null;
     }
   }
-
 
   private insertSymbolPopup(view: EditorView, size: [number, number]) {
     const insertText = (text: string) => {
@@ -124,14 +118,10 @@ class InsertSymbolPlugin extends Plugin<boolean> {
       view.focus();
     };
 
-    const onBlur = () => {
-    }
-
     return (
       <InsertSymbolPopup
         onClose={closePopup}
         onInsertText={insertText}
-        onBlur={onBlur}
         enabled={isEnabled(view.state)}
         size={size}
         searchImage={this.ui.images.search}
@@ -173,6 +163,5 @@ export function insertSymbol(state: EditorState, dispatch?: (tr: Transaction) =>
   }
   return true;
 }
-
 
 export default extension;
