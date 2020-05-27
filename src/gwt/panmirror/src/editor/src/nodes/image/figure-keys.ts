@@ -25,8 +25,7 @@ import { findParentNodeOfTypeClosestToPos } from "prosemirror-utils";
 export function figureKeys(schema: Schema) {
   return [
     { key: BaseKey.Enter, command: exitNode(schema.nodes.figure, -1, false) },
-    { key: BaseKey.Backspace, command: backspaceEmptyCaption() },
-    { key: BaseKey.Backspace, command: backspaceAfterFigure() },
+    { key: BaseKey.Backspace, command: backspaceHandler() },
     { key: BaseKey.ArrowLeft, command: arrowHandler('left') },
     { key: BaseKey.ArrowRight, command: arrowHandler('right') },
     { key: BaseKey.ArrowUp, command: arrowHandler('up') },
@@ -34,27 +33,8 @@ export function figureKeys(schema: Schema) {
   ];
 }
 
-function backspaceEmptyCaption() {
-  return (state: EditorState, dispatch?: (tr: Transaction) => void) => {
-    // must be a selection within an empty caption
-    const schema = state.schema;
-    const { $head } = state.selection;
-    if ($head.parent.type !== schema.nodes.figure || $head.parent.childCount !== 0) {
-      return false;
-    }
 
-    if (dispatch) {
-      // set a node selection for the figure
-      const tr = state.tr;
-      tr.setSelection(NodeSelection.create(tr.doc, $head.pos - 1));
-      dispatch(tr);
-    }
-
-    return true;
-  };
-}
-
-function backspaceAfterFigure() {
+function backspaceHandler() {
   return (state: EditorState, dispatch?: (tr: Transaction) => void) => {
 
     // must be an empty selection
@@ -71,23 +51,36 @@ function backspaceAfterFigure() {
       return false;
     }
 
-    // check if the previous node is a figure
-    const parent = $head.node($head.depth - 1);
-    const parentIndex = $head.index($head.depth - 1);
-    if (parentIndex > 0) {
-      const previousNode = parent.child(parentIndex - 1);
-      if (previousNode.type === schema.nodes.figure) {
-        if (dispatch) {
-          const tr = state.tr;
-          const nodePos = selection.head - previousNode.nodeSize - 1;
-          const figureSelection = NodeSelection.create(state.doc, nodePos);
-          tr.setSelection(figureSelection);
-          dispatch(tr);
+    // two scenarios: backspace within empty caption or backspace right after figure
+    const isWithinEmptyCaption = $head.parent.type === schema.nodes.figure && 
+                                 $head.parent.childCount === 0;
+    if (isWithinEmptyCaption) {
+      if (dispatch) {
+        // set a node selection for the figure
+        const tr = state.tr;
+        tr.setSelection(NodeSelection.create(tr.doc, $head.pos - 1));
+        dispatch(tr);
+      }
+      return true;
+    } else {
+       // check if the previous node is a figure
+      const parent = $head.node($head.depth - 1);
+      const parentIndex = $head.index($head.depth - 1);
+      if (parentIndex > 0) {
+        const previousNode = parent.child(parentIndex - 1);
+        if (previousNode.type === schema.nodes.figure) {
+          if (dispatch) {
+            const tr = state.tr;
+            const nodePos = selection.head - previousNode.nodeSize - 1;
+            const figureSelection = NodeSelection.create(state.doc, nodePos);
+            tr.setSelection(figureSelection);
+            dispatch(tr);
+          }
+          return true;
         }
-        return true;
       }
     }
-  
+
     return false;
   };
 }
