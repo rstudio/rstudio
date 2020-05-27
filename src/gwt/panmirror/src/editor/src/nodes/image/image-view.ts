@@ -15,10 +15,7 @@
 
 import { Node as ProsemirrorNode } from 'prosemirror-model';
 import { NodeView, EditorView } from 'prosemirror-view';
-import { NodeSelection, PluginKey, Plugin, EditorState, Transaction, Selection } from 'prosemirror-state';
-import { keymap } from 'prosemirror-keymap';
-
-import { findParentNodeOfTypeClosestToPos } from 'prosemirror-utils';
+import { NodeSelection, PluginKey, Plugin } from 'prosemirror-state';
 
 import { EditorUI, ImageType } from '../../api/ui';
 import { PandocExtensions, imageAttributesAvailable } from '../../api/pandoc';
