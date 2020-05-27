@@ -68,11 +68,6 @@ def s3_upload(type, flavor, os, arch) {
     returnStdout: true
   ).trim()
 
-  def tarballFile = sh (
-    script: "basename `ls ${buildFolder}/_CPack_Packages/Linux/${type}/*.tar.gz`",
-    returnStdout: true
-  ).trim()
-
   // rename package to not include the build type
   def renamedFile = sh (
     script: "echo ${packageFile} | sed 's/-relwithdebinfo//'",
@@ -82,20 +77,25 @@ def s3_upload(type, flavor, os, arch) {
   sh "mv ${buildFolder}/${packageFile} ${buildFolder}/${renamedFile}"
   packageFile = renamedFile
 
-  def renamedTarballFile = sh (
-    script: "echo ${tarballFile} | sed 's/-relwithdebinfo//'",
-    returnStdout: true
-  ).trim()
-
-  sh "mv ${buildFolder}/_CPack_Packages/Linux/${type}/${tarballFile} ${buildFolder}/_CPack_Packages/Linux/${type}/${renamedTarballFile}"
-  tarballFile = renamedTarballFile
-
   // copy installer to s3
   sh "aws s3 cp ${buildFolder}/${packageFile} s3://rstudio-ide-build/${flavor}/${os}/${arch}/"
 
   // add installer-less tarball if desktop
   if (flavor == "desktop") {
-      sh "aws s3 cp ${buildFolder}/_CPack_Packages/Linux/${type}/${tarballFile} s3://rstudio-ide-build/${flavor}/${os}/${arch}/"
+    def tarballFile = sh (
+      script: "basename `ls ${buildFolder}/_CPack_Packages/Linux/${type}/*.tar.gz`",
+      returnStdout: true
+    ).trim()
+    
+    def renamedTarballFile = sh (
+      script: "echo ${tarballFile} | sed 's/-relwithdebinfo//'",
+      returnStdout: true
+    ).trim()
+
+    sh "mv ${buildFolder}/_CPack_Packages/Linux/${type}/${tarballFile} ${buildFolder}/_CPack_Packages/Linux/${type}/${renamedTarballFile}"
+    tarballFile = renamedTarballFile
+    
+    sh "aws s3 cp ${buildFolder}/_CPack_Packages/Linux/${type}/${tarballFile} s3://rstudio-ide-build/${flavor}/${os}/${arch}/"
   }
 
   // update daily build redirect; currently disabled for 1.3
