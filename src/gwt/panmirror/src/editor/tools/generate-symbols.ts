@@ -164,6 +164,8 @@ function readXmlFileAndGenerateJsonFile(targetXmlFile: string, outputFile: strin
         name: rawChar['@_na'],
         value: String.fromCodePoint(charpoint),
         codepoint: charpoint,
+        isEmoji: rawChar['@_Emoji'] === 'Y',
+        allowModifier: rawChar['@_EBase'] === 'Y'
       };
     });
   message(allIncludedBlocks.length + ' Blocks read', allValidSymbols.length + ' Symbols read', '');
@@ -266,6 +268,8 @@ interface Symbol {
   name: string;
   value: string;
   codepoint: number;
+  isEmoji: boolean;
+  allowModifier: boolean;
 }
 
 function message(...message: any[]) {
