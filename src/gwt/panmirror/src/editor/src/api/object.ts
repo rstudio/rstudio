@@ -1,4 +1,3 @@
-
 /*
  * object.ts
  *
@@ -14,9 +13,7 @@
  *
  */
 
-
 export function findValue(key: string, object?: { [key: string]: any }) {
-  
   if (!object) {
     return undefined;
   }

@@ -20,7 +20,6 @@ import { Plugin, PluginKey } from 'prosemirror-state';
 const pluginKey = new PluginKey('image-events');
 
 export function imageEventsPlugin() {
-
   return new Plugin({
     key: pluginKey,
     props: {
@@ -29,7 +28,6 @@ export function imageEventsPlugin() {
       },
     },
   });
-
 }
 
 function imageDrop() {

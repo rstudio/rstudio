@@ -46,7 +46,8 @@ import { EditorEvents } from '../../api/events';
 import { EditorFormat } from '../../api/format';
 
 import { imageDialog } from './image-dialog';
-import { imageDimensionsFromImg, imageContainerWidth, inlineHTMLIsImage } from './image-util';import { imageTextSelectionPlugin } from './image-textsel';
+import { imageDimensionsFromImg, imageContainerWidth, inlineHTMLIsImage } from './image-util';
+import { imageTextSelectionPlugin } from './image-textsel';
 import { posHasProhibitedFigureParent } from './figure';
 import { imageEventsPlugin } from './image-events';
 import { imageNodeViewPlugins } from './image-view';
@@ -102,7 +103,7 @@ const extension = (
 
         attr_edit: () => ({
           type: (schema: Schema) => schema.nodes.image,
-          editFn: () => imageCommand(ui, imageAttr)
+          editFn: () => imageCommand(ui, imageAttr),
         }),
       },
     ],
@@ -115,7 +116,7 @@ const extension = (
       return [
         imageTextSelectionPlugin(),
         imageEventsPlugin(),
-        ...imageNodeViewPlugins('image', ui, events, pandocExtensions)
+        ...imageNodeViewPlugins('image', ui, events, pandocExtensions),
       ];
     },
   };

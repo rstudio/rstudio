@@ -57,23 +57,19 @@ export function matchPandocFormatComment(code: string) {
 }
 
 export function pandocFormatConfigFromDoc(doc: ProsemirrorNode, isRmd: boolean) {
-  return pandocFormatConfigFromYamlInDoc(doc, isRmd) || 
-         pandocFormatConfigFromCommentInDoc(doc) || {};
+  return pandocFormatConfigFromYamlInDoc(doc, isRmd) || pandocFormatConfigFromCommentInDoc(doc) || {};
 }
 
 export function pandocFormatConfigFromCode(code: string, isRmd: boolean): PandocFormatConfig {
-  return pandocFormatConfigFromYamlInCode(code, isRmd) || 
-         pandocFormatConfigFromCommentInCode(code) || {};
+  return pandocFormatConfigFromYamlInCode(code, isRmd) || pandocFormatConfigFromCommentInCode(code) || {};
 }
 
 function pandocFormatConfigFromYamlInCode(code: string, isRmd: boolean): PandocFormatConfig | null {
-  
   // get the first yaml block in the file
   const yaml = firstYamlBlock(code);
 
   // did we find yaml?
   if (yaml) {
-
     // see if we have any md_extensions defined
     const mdExtensions = isRmd ? findValue('md_extensions', yaml?.output) : undefined;
 
@@ -84,7 +80,7 @@ function pandocFormatConfigFromYamlInCode(code: string, isRmd: boolean): PandocF
       yamlFormatConfig = readPandocFormatConfig(yamlMarkdownOptions);
     }
 
-    // combine and return 
+    // combine and return
     if (mdExtensions || yamlFormatConfig) {
       const formatConfig: PandocFormatConfig = yamlFormatConfig ? yamlFormatConfig : {};
       if (mdExtensions) {
@@ -97,7 +93,6 @@ function pandocFormatConfigFromYamlInCode(code: string, isRmd: boolean): PandocF
   } else {
     return null;
   }
-  
 }
 
 function pandocFormatConfigFromYamlInDoc(doc: ProsemirrorNode, isRmd: boolean): PandocFormatConfig | null {
@@ -204,7 +199,6 @@ function readPandocFormatConfig(source: { [key: string]: any }) {
   }
   return formatConfig;
 }
-
 
 export async function resolvePandocFormat(pandoc: PandocEngine, format: EditorFormat): Promise<PandocFormat> {
   // additional markdown variants we support

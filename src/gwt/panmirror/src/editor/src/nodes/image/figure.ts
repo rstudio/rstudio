@@ -127,7 +127,7 @@ const extension = (
 
         attr_edit: () => ({
           type: (schema: Schema) => schema.nodes.figure,
-          editFn: () => imageCommand(ui, imageAttr)
+          editFn: () => imageCommand(ui, imageAttr),
         }),
       },
     ],
@@ -156,7 +156,7 @@ const extension = (
 
     baseKeys: figureKeys,
 
-    plugins: (_schema: Schema) => imageNodeViewPlugins('figure', ui, events, pandocExtensions)
+    plugins: (_schema: Schema) => imageNodeViewPlugins('figure', ui, events, pandocExtensions),
   };
 };
 

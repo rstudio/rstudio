@@ -13,14 +13,20 @@
  *
  */
 
-import { Schema } from "prosemirror-model";
-import { EditorState, Transaction, NodeSelection, Selection, TextSelection } from "prosemirror-state";
-import { EditorView } from "prosemirror-view";
+import { Schema } from 'prosemirror-model';
+import { EditorState, Transaction, NodeSelection, Selection, TextSelection } from 'prosemirror-state';
+import { EditorView } from 'prosemirror-view';
 
-import { findParentNodeOfTypeClosestToPos, findSelectedNodeOfType, setTextSelection, ContentNodeWithPos, findParentNodeOfType } from "prosemirror-utils";
+import {
+  findParentNodeOfTypeClosestToPos,
+  findSelectedNodeOfType,
+  setTextSelection,
+  ContentNodeWithPos,
+  findParentNodeOfType,
+} from 'prosemirror-utils';
 
-import { BaseKey } from "../../api/basekeys";
-import { exitNode } from "../../api/command";
+import { BaseKey } from '../../api/basekeys';
+import { exitNode } from '../../api/command';
 
 export function figureKeys(schema: Schema) {
   return [
@@ -33,10 +39,8 @@ export function figureKeys(schema: Schema) {
   ];
 }
 
-
 function backspaceHandler() {
   return (state: EditorState, dispatch?: (tr: Transaction) => void) => {
-
     // must be an empty selection
     const selection = state.selection;
     if (!selection.empty) {
@@ -52,8 +56,7 @@ function backspaceHandler() {
     }
 
     // two scenarios: backspace within empty caption or backspace right after figure
-    const isWithinEmptyCaption = $head.parent.type === schema.nodes.figure && 
-                                 $head.parent.childCount === 0;
+    const isWithinEmptyCaption = $head.parent.type === schema.nodes.figure && $head.parent.childCount === 0;
     if (isWithinEmptyCaption) {
       if (dispatch) {
         // set a node selection for the figure
@@ -63,7 +66,7 @@ function backspaceHandler() {
       }
       return true;
     } else {
-       // check if the previous node is a figure
+      // check if the previous node is a figure
       const parent = $head.node($head.depth - 1);
       const parentIndex = $head.index($head.depth - 1);
       if (parentIndex > 0) {
@@ -85,10 +88,8 @@ function backspaceHandler() {
   };
 }
 
-
 function arrowHandler(dir: 'up' | 'down' | 'left' | 'right') {
   return (state: EditorState, dispatch?: (tr: Transaction) => void, view?: EditorView) => {
-
     // select figure
     const selectFigure = (figure: ContentNodeWithPos) => {
       if (dispatch) {
@@ -108,28 +109,29 @@ function arrowHandler(dir: 'up' | 'down' | 'left' | 'right') {
       }
     };
 
-
     // alias schema and selection
     const { schema, selection } = state;
 
     // down/right arrow for node selection w/ caption drives cursor into caption
-    if ((dir === 'down' || dir === 'right') && 
-         selection instanceof NodeSelection && 
-         selection.node.type === schema.nodes.figure) {
-     
+    if (
+      (dir === 'down' || dir === 'right') &&
+      selection instanceof NodeSelection &&
+      selection.node.type === schema.nodes.figure
+    ) {
       const figure = findSelectedNodeOfType(schema.nodes.figure)(selection);
-      if (figure && figure.node.childCount > 0) { 
+      if (figure && figure.node.childCount > 0) {
         selectFigureCaption(figure);
         return true;
       }
     }
 
     // up/left arrow for selection in caption takes us back to the node selection
-    if ((dir === 'up' || dir === 'left') &&
-        selection instanceof TextSelection &&
-        !!findParentNodeOfType(schema.nodes.figure)(selection)) {
-
-      if ((dir === 'up' || dir === 'left' && selection.$head.parentOffset === 0)) {
+    if (
+      (dir === 'up' || dir === 'left') &&
+      selection instanceof TextSelection &&
+      !!findParentNodeOfType(schema.nodes.figure)(selection)
+    ) {
+      if (dir === 'up' || (dir === 'left' && selection.$head.parentOffset === 0)) {
         const figure = findParentNodeOfType(schema.nodes.figure)(selection);
         if (figure) {
           selectFigure(figure);
@@ -137,9 +139,8 @@ function arrowHandler(dir: 'up' | 'down' | 'left' | 'right') {
         }
       }
 
-    // normal node traversal      
+      // normal node traversal
     } else if (selection.empty && view && view.endOfTextblock(dir)) {
-      
       // compute side offset
       const side = dir === 'left' || dir === 'up' ? -1 : 1;
 
@@ -154,7 +155,7 @@ function arrowHandler(dir: 'up' | 'down' | 'left' | 'right') {
           // arrowing back into a figure with a caption selects the caption
           if (side === -1 && figure.node.childCount > 0) {
             selectFigureCaption(figure, dir === 'left');
-          // otherwise select the figure
+            // otherwise select the figure
           } else {
             selectFigure(figure);
           }
@@ -167,5 +168,3 @@ function arrowHandler(dir: 'up' | 'down' | 'left' | 'right') {
     return false;
   };
 }
-
- 

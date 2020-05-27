@@ -34,8 +34,12 @@ import { imageDimensionsFromImg, imageContainerWidth } from './image-util';
 
 import './image-styles.css';
 
-
-export function imageNodeViewPlugins(type: string, ui: EditorUI, events: EditorEvents, pandocExtensions: PandocExtensions) : Plugin[] {
+export function imageNodeViewPlugins(
+  type: string,
+  ui: EditorUI,
+  events: EditorEvents,
+  pandocExtensions: PandocExtensions,
+): Plugin[] {
   return [
     new Plugin({
       key: new PluginKey(`${type}-node-view`),
@@ -350,5 +354,3 @@ class ImageNodeView implements NodeView {
     }
   }
 }
-
-
