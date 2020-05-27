@@ -47,6 +47,7 @@ enum EventScope
 #define kSessionAdminSuspend     2006
 #define kSessionAdminTerminate   2007
 
+// after username max size
 #define kMaxEventDataSize     32
 
 struct Event
