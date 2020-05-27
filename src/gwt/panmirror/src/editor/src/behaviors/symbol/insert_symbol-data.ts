@@ -46,7 +46,7 @@ class SymbolDataManager {
     });
   }
 
-  public filterSymbols(filterText: string, symbols: SymbolCharacter[]): SymbolCharacter[]  {
+  public filterSymbols(filterText: string, symbols: SymbolCharacter[]): SymbolCharacter[] {
     const codepoint = parseCodepoint(filterText);
     const filteredSymbols = symbols.filter(symbol => {
       // Search by name
@@ -63,11 +63,13 @@ class SymbolDataManager {
     });
 
     if (filteredSymbols.length === 0 && codepoint) {
-      return         [{
-        name: codepoint.toString(16),
-        value: String.fromCodePoint(codepoint),
-        codepoint: codepoint,
-      }];
+      return [
+        {
+          name: codepoint.toString(16),
+          value: String.fromCodePoint(codepoint),
+          codepoint: codepoint,
+        },
+      ];
     }
     return filteredSymbols;
   }

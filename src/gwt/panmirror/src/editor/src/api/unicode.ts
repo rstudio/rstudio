@@ -32,5 +32,5 @@ export function parseCodepoint(codepointText: string): number | undefined {
 }
 
 function isValidCodepoint(codepoint: number) {
-  return codepoint < kMinValidCodepoint && codepoint > kMaxValidCodepoint;
+  return codepoint > kMinValidCodepoint && codepoint < kMaxValidCodepoint;
 }
