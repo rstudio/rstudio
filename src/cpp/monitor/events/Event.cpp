@@ -24,6 +24,24 @@
 namespace rstudio {
 namespace monitor {
 
+Event::Event(int scope,
+             int id,
+             const std::string& data,
+             const std::string& username,
+             PidType pid,
+             boost::posix_time::ptime timestamp)
+   : empty_(false),
+     scope_(scope),
+     id_(id),
+     pid_(pid),
+     timestamp_(core::date_time::millisecondsSinceEpoch(timestamp))
+{
+   ::memset(&username_, 0, kMaxEventDataSize+1);
+   username.copy(username_, kMaxEventDataSize);
+   ::memset(&data_, 0, kMaxEventDataSize+1);
+   data.copy(data_, kMaxEventDataSize);
+}
+
 std::string eventScopeAndIdAsString(const Event& event)
 {
    std::string scope;
@@ -39,7 +57,7 @@ std::string eventScopeAndIdAsString(const Event& event)
          scope = "<unknown>";
          break;
    }
-
+   
    std::string id;
    switch(event.id())
    {
@@ -86,7 +104,7 @@ std::string eventScopeAndIdAsString(const Event& event)
          id = "<unknown>";
          break;
    }
-
+   
    return scope + "_" + id;
 }
 

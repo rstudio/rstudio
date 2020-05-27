@@ -340,6 +340,7 @@ private:
       setOverlayOption(name, core::safe_convert::numberToString(value));
    }
 
+   std::string rsessionExecutable() const;
 
 private:
    core::FilePath installPath_;

@@ -50,5 +50,10 @@ void sessionProcessConfigOverlay(core::system::Options* pArgs,
 {
 }
 
+std::string Options::rsessionExecutable() const
+{
+   return "rsession";
+}
+
 } // namespace server
 } // namespace rstudio

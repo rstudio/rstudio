@@ -288,7 +288,7 @@ ProgramStatus Options::read(int argc,
          value<std::string>(&rsessionWhichR_)->default_value(""),
          "path to main R program (e.g. /usr/bin/R)")
       ("rsession-path", 
-         value<std::string>(&rsessionPath_)->default_value("rsession"),
+         value<std::string>(&rsessionPath_)->default_value(rsessionExecutable()),
          "path to rsession executable")
       ("rldpath-path",
          value<std::string>(&rldpathPath_)->default_value("r-ldpath"),
@@ -377,7 +377,7 @@ ProgramStatus Options::read(int argc,
    options_description monitor("monitor");
    monitor.add_options()
       (kMonitorIntervalSeconds,
-       value<int>(&monitorIntervalSeconds_)->default_value(300),
+       value<int>(&monitorIntervalSeconds_)->default_value(60),
        "monitoring interval");
 
    // define program options
@@ -454,6 +454,7 @@ ProgramStatus Options::read(int argc,
                // administrator hasn't created an rserver system account yet
                // so we'll end up running as root
                serverUser_ = "";
+               LOG_WARNING_MESSAGE("Running as root user is not recommended!");
             }
             else
             {
