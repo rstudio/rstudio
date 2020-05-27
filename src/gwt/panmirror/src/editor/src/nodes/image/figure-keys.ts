@@ -15,12 +15,12 @@
 
 import { Schema } from "prosemirror-model";
 import { EditorState, Transaction, NodeSelection, Selection } from "prosemirror-state";
+import { EditorView } from "prosemirror-view";
+
+import { findParentNodeOfTypeClosestToPos, findSelectedNodeOfType, setTextSelection } from "prosemirror-utils";
 
 import { BaseKey } from "../../api/basekeys";
 import { exitNode } from "../../api/command";
-import { EditorView } from "prosemirror-view";
-import { findParentNodeOfTypeClosestToPos } from "prosemirror-utils";
-
 
 export function figureKeys(schema: Schema) {
   return [
@@ -86,25 +86,42 @@ function backspaceHandler() {
 }
 
 
-function arrowHandler(dir: 'up' | 'down' | 'left' | 'right' | 'forward' | 'backward') {
+function arrowHandler(dir: 'up' | 'down' | 'left' | 'right') {
   return (state: EditorState, dispatch?: (tr: Transaction) => void, view?: EditorView) => {
 
-    const schema = state.schema;
+    const { schema, selection } = state;
+    
 
-    if (state.selection.empty && view && view.endOfTextblock(dir)) {
+    // right arrow for node selection w/ caption drives cursor into caption
+    if ((dir === 'down' || dir === 'right') && 
+         selection instanceof NodeSelection && 
+         selection.node.type === schema.nodes.figure) {
+      if (dispatch) {
+        const figure = findSelectedNodeOfType(schema.nodes.figure)(selection);
+        if (figure && figure.node.childCount > 0) {
+          const tr = state.tr;
+          setTextSelection(figure.pos, 1)(tr);
+          dispatch(tr);
+        }
+      }
+
+      return true;
+    }
+
+    // normal node traversal
+    else if (state.selection.empty && view && view.endOfTextblock(dir)) {
       
       // compute side offset
       const side = dir === 'left' || dir === 'up' ? -1 : 1;
 
       // get selection head
-      const selection = state.selection;
       const { $head } = selection;
 
       // see if this would traverse our type
       const nextPos = Selection.near(state.doc.resolve(side > 0 ? $head.after() : $head.before()), side);
       if (nextPos.$head) {
         const figure = findParentNodeOfTypeClosestToPos(nextPos.$head, schema.nodes.figure);
-        if (figure && figure.node.textContent.length === 0) {
+        if (figure) {
           if (dispatch) {
             const tr = state.tr;
             const figureSelection = NodeSelection.create(state.doc, figure.pos);
