@@ -15,172 +15,67 @@
 package org.rstudio.studio.client.workbench.views.source;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.core.client.JavaScriptObject;
-import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayString;
-import com.google.gwt.core.client.Scheduler;
-import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.event.dom.client.ChangeEvent;
 import com.google.gwt.event.dom.client.ChangeHandler;
-import com.google.gwt.event.dom.client.FocusEvent;
-import com.google.gwt.event.dom.client.KeyCodes;
-import com.google.gwt.event.logical.shared.CloseEvent;
-import com.google.gwt.event.logical.shared.CloseHandler;
-import com.google.gwt.event.logical.shared.SelectionHandler;
-import com.google.gwt.event.logical.shared.ValueChangeEvent;
-import com.google.gwt.event.logical.shared.ValueChangeHandler;
-import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.json.client.JSONString;
 import com.google.gwt.json.client.JSONValue;
 import com.google.gwt.user.client.Command;
-import com.google.gwt.user.client.Event;
-import com.google.gwt.user.client.Event.NativePreviewEvent;
-import com.google.gwt.user.client.Event.NativePreviewHandler;
-import com.google.gwt.user.client.Timer;
-import com.google.gwt.user.client.Window;
-import com.google.gwt.user.client.ui.*;
+import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.inject.Singleton;
-
-import org.apache.commons.lang3.StringUtils;
 import org.rstudio.core.client.*;
 import org.rstudio.core.client.command.AppCommand;
-import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
-import org.rstudio.core.client.command.KeyCombination;
-import org.rstudio.core.client.command.KeyboardShortcut;
-import org.rstudio.core.client.command.KeySequence;
-import org.rstudio.core.client.command.ShortcutManager;
-import org.rstudio.core.client.dom.WindowEx;
-import org.rstudio.core.client.events.*;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.js.JsObject;
-import org.rstudio.core.client.js.JsUtil;
-import org.rstudio.core.client.theme.DocTabSelectionEvent;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ProgressIndicator;
-import org.rstudio.core.client.widget.ProgressOperationWithInput;
-import org.rstudio.studio.client.RStudioGinjector;
-import org.rstudio.studio.client.application.ApplicationAction;
-import org.rstudio.studio.client.application.ApplicationUtils;
-import org.rstudio.studio.client.application.AriaLiveService;
-import org.rstudio.studio.client.application.Desktop;
-import org.rstudio.studio.client.application.events.AriaLiveStatusEvent.Severity;
-import org.rstudio.studio.client.application.events.AriaLiveStatusEvent.Timing;
-import org.rstudio.studio.client.application.events.CrossWindowEvent;
 import org.rstudio.studio.client.application.events.EventBus;
-import org.rstudio.studio.client.common.FileDialogs;
 import org.rstudio.studio.client.common.FilePathUtils;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.GlobalProgressDelayer;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
 import org.rstudio.studio.client.common.dependencies.DependencyManager;
-import org.rstudio.studio.client.common.filetypes.EditableFileType;
-import org.rstudio.studio.client.common.filetypes.FileIcon;
-import org.rstudio.studio.client.common.filetypes.FileType;
-import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
-import org.rstudio.studio.client.common.filetypes.ObjectExplorerFileType;
-import org.rstudio.studio.client.common.filetypes.TextFileType;
-import org.rstudio.studio.client.common.filetypes.events.OpenPresentationSourceFileEvent;
-import org.rstudio.studio.client.common.filetypes.events.OpenPresentationSourceFileHandler;
-import org.rstudio.studio.client.common.filetypes.events.OpenSourceFileEvent;
-import org.rstudio.studio.client.common.filetypes.events.OpenSourceFileHandler;
-import org.rstudio.studio.client.common.filetypes.model.NavigationMethods;
-import org.rstudio.studio.client.common.rnw.RnwWeave;
-import org.rstudio.studio.client.common.rnw.RnwWeaveRegistry;
-import org.rstudio.studio.client.common.satellite.Satellite;
+import org.rstudio.studio.client.common.filetypes.*;
 import org.rstudio.studio.client.common.synctex.Synctex;
-import org.rstudio.studio.client.common.synctex.events.SynctexStatusChangedEvent;
-import org.rstudio.studio.client.events.GetEditorContextEvent;
-import org.rstudio.studio.client.events.GetEditorContextEvent.DocumentSelection;
-import org.rstudio.studio.client.events.ReplaceRangesEvent;
-import org.rstudio.studio.client.events.ReplaceRangesEvent.ReplacementData;
-import org.rstudio.studio.client.events.SetSelectionRangesEvent;
 import org.rstudio.studio.client.rmarkdown.model.RmdChosenTemplate;
 import org.rstudio.studio.client.rmarkdown.model.RmdFrontMatter;
 import org.rstudio.studio.client.rmarkdown.model.RmdOutputFormat;
 import org.rstudio.studio.client.rmarkdown.model.RmdTemplateData;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
-import org.rstudio.studio.client.server.VoidServerRequestCallback;
-import org.rstudio.studio.client.server.model.RequestDocumentCloseEvent;
-import org.rstudio.studio.client.server.model.RequestDocumentSaveEvent;
-import org.rstudio.studio.client.workbench.ConsoleEditorProvider;
-import org.rstudio.studio.client.workbench.MainWindowObject;
 import org.rstudio.studio.client.workbench.FileMRUList;
-import org.rstudio.studio.client.workbench.WorkbenchContext;
-import org.rstudio.studio.client.workbench.codesearch.model.SearchPathFunctionDefinition;
 import org.rstudio.studio.client.workbench.commands.Commands;
-import org.rstudio.studio.client.workbench.events.ZoomPaneEvent;
-import org.rstudio.studio.client.workbench.model.ClientState;
-import org.rstudio.studio.client.workbench.model.RemoteFileSystemContext;
 import org.rstudio.studio.client.workbench.model.Session;
-import org.rstudio.studio.client.workbench.model.SessionInfo;
-import org.rstudio.studio.client.workbench.model.SessionUtils;
-import org.rstudio.studio.client.workbench.model.UnsavedChangesItem;
 import org.rstudio.studio.client.workbench.model.UnsavedChangesTarget;
-import org.rstudio.studio.client.workbench.model.helper.IntStateValue;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UserState;
-import org.rstudio.studio.client.workbench.snippets.SnippetHelper;
-import org.rstudio.studio.client.workbench.snippets.model.SnippetsChangedEvent;
 import org.rstudio.studio.client.workbench.ui.unsaved.UnsavedChangesDialog;
-import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorDisplay;
-import org.rstudio.studio.client.workbench.views.environment.events.DebugModeChangedEvent;
-import org.rstudio.studio.client.workbench.views.files.model.DirectoryListing;
-import org.rstudio.studio.client.workbench.views.output.find.events.FindInFilesEvent;
-import org.rstudio.studio.client.workbench.views.source.NewShinyWebApplication.Result;
-import org.rstudio.studio.client.workbench.views.source.SourceWindowManager.NavigationResult;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTarget;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTargetSource;
 import org.rstudio.studio.client.workbench.views.source.editors.codebrowser.CodeBrowserEditingTarget;
 import org.rstudio.studio.client.workbench.views.source.editors.data.DataEditingTarget;
 import org.rstudio.studio.client.workbench.views.source.editors.explorer.ObjectExplorerEditingTarget;
-import org.rstudio.studio.client.workbench.views.source.editors.explorer.events.OpenObjectExplorerEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.explorer.model.ObjectExplorerHandle;
-import org.rstudio.studio.client.workbench.views.source.editors.profiler.OpenProfileEvent;
-import org.rstudio.studio.client.workbench.views.source.editors.profiler.model.ProfilerContents;
-import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
-import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTarget;
-import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetPresentationHelper;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetRMarkdownHelper;
-import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceEditorNative;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
-import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
-import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Selection;
-import org.rstudio.studio.client.workbench.views.source.editors.text.events.FileTypeChangedEvent;
-import org.rstudio.studio.client.workbench.views.source.editors.text.events.FileTypeChangedHandler;
-import org.rstudio.studio.client.workbench.views.source.editors.text.events.NewWorkingCopyEvent;
-import org.rstudio.studio.client.workbench.views.source.editors.text.events.SourceOnSaveChangedEvent;
-import org.rstudio.studio.client.workbench.views.source.editors.text.events.SourceOnSaveChangedHandler;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ui.NewRMarkdownDialog;
-import org.rstudio.studio.client.workbench.views.source.editors.text.ui.NewRdDialog;
-import org.rstudio.studio.client.workbench.views.source.events.*;
-import org.rstudio.studio.client.workbench.views.source.model.ContentItem;
-import org.rstudio.studio.client.workbench.views.source.model.DataItem;
-import org.rstudio.studio.client.workbench.views.source.model.DocTabDragParams;
-import org.rstudio.studio.client.workbench.views.source.model.RdShellResult;
-import org.rstudio.studio.client.workbench.views.source.model.SourceDocument;
-import org.rstudio.studio.client.workbench.views.source.model.SourceDocumentResult;
-import org.rstudio.studio.client.workbench.views.source.model.SourceNavigation;
-import org.rstudio.studio.client.workbench.views.source.model.SourceNavigationHistory;
-import org.rstudio.studio.client.workbench.views.source.model.SourcePosition;
-import org.rstudio.studio.client.workbench.views.source.model.SourceServerOperations;
+import org.rstudio.studio.client.workbench.views.source.events.CodeBrowserCreatedEvent;
+import org.rstudio.studio.client.workbench.views.source.events.SourceExtendedTypeDetectedEvent;
+import org.rstudio.studio.client.workbench.views.source.events.SourceFileSavedEvent;
+import org.rstudio.studio.client.workbench.views.source.events.SourceFileSavedHandler;
+import org.rstudio.studio.client.workbench.views.source.model.*;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.Map;
-import java.util.Queue;
-import java.util.Set;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
 @Singleton
 public class SourceColumnManager implements SourceExtendedTypeDetectedEvent.Handler
 {
-
    public interface CPSEditingTargetCommand
    {
       void execute(EditingTarget editingTarget, Command continuation);
@@ -190,28 +85,39 @@ public class SourceColumnManager implements SourceExtendedTypeDetectedEvent.Hand
    public SourceColumnManager(Source.Display display,
                               SourceServerOperations server,
                               GlobalDisplay globalDisplay,
+                              Commands commands,
                               EditingTargetSource editingTargetSource,
                               FileTypeRegistry fileTypeRegistry,
                               EventBus events,
                               DependencyManager dependencyManager,
+                              Session session,
+                              Synctex synctex,
                               UserPrefs userPrefs,
-                              Provider<FileMRUList> pMruList)
+                              UserState userState,
+                              Provider<FileMRUList> pMruList,
+                              Provider<SourceWindowManager> pWindowManager)
    {
       SourceColumn column = GWT.create(SourceColumn.class);
       column.loadDisplay(Source.COLUMN_PREFIX, display, this);
       columnMap_.put(column.getName(), column);
-      activeColumn_ = column;
+      setActive(column.getName());
 
       server_ = server;
+      commands_ = commands;
       globalDisplay_ = globalDisplay;
       editingTargetSource_ = editingTargetSource;
       fileTypeRegistry_ = fileTypeRegistry;
       events_ = events;
       dependencyManager_ = dependencyManager;
+      session_ = session;
+      synctex_ = synctex;
       userPrefs_ = userPrefs;
+      userState_ = userState;
       pMruList_ = pMruList;
+      pWindowManager_ = pWindowManager;
 
       rmarkdown_ = new TextEditingTargetRMarkdownHelper();
+      initializeDynamicCommands();
 
       events_.addHandler(SourceExtendedTypeDetectedEvent.TYPE, this);
       events_.addHandler(SourceFileSavedEvent.TYPE, new SourceFileSavedHandler()
@@ -219,6 +125,21 @@ public class SourceColumnManager implements SourceExtendedTypeDetectedEvent.Hand
          public void onSourceFileSaved(SourceFileSavedEvent event)
          {
             pMruList_.get().add(event.getPath());
+         }
+      });
+
+
+
+      sourceNavigationHistory_.addChangeHandler(new ChangeHandler()
+      {
+
+         @Override
+         public void onChange(ChangeEvent event)
+         {
+            columnMap_.forEach((name, column) ->
+            {
+               column.manageSourceNavigationCommands();
+            });
          }
       });
    }
@@ -255,12 +176,31 @@ public class SourceColumnManager implements SourceExtendedTypeDetectedEvent.Hand
 
    public void setActive(String name)
    {
+      if (StringUtil.isNullOrEmpty(name))
+      {
+         activeColumn_ = null;
+         activeColumn_.setActiveEditor(new String());
+         return;
+      }
+
+      String prevColumn = activeColumn_ == null ? "" : activeColumn_.getName();
       activeColumn_ = columnMap_.get(name);
+
+      // If the active column changed, we need to update the active editor
+      if (!StringUtil.isNullOrEmpty(prevColumn) && !StringUtil.equals(name, prevColumn))
+      {
+         SourceColumn column = columnMap_.get(prevColumn);
+         column.setActiveEditor("");
+         if (activeColumn_.getActiveEditor() == null)
+         {
+            Debug.logWarning("Setting to random editor.");
+            column.setActiveEditor();
+         }
+      }
    }
 
    public void setActive(EditingTarget target)
    {
-      activeEditor_ = target;
       activeColumn_ = findByDocument(target.getId());
       activeColumn_.setActiveEditor(target);
    }
@@ -273,8 +213,7 @@ public class SourceColumnManager implements SourceExtendedTypeDetectedEvent.Hand
          EditingTarget target = column.setActiveEditor(docId);
          if (target != null)
          {
-            activeEditor_ = target;
-            activeColumn_ = column;
+            setActive(target);
             return;
          }
       }
@@ -283,10 +222,10 @@ public class SourceColumnManager implements SourceExtendedTypeDetectedEvent.Hand
 
    public void activateColumns(final Command afterActivation)
    {
-      if (activeEditor_ == null)
+      if (activeColumn_.getActiveEditor() == null)
       {
          if (activeColumn_ == null)
-            activeColumn_ = columnMap_.get(Source.COLUMN_PREFIX);
+             setActive(Source.COLUMN_PREFIX);
          newDoc(FileTypeRegistry.R, new ResultCallback<EditingTarget, ServerError>()
          {
             @Override
@@ -308,13 +247,13 @@ public class SourceColumnManager implements SourceExtendedTypeDetectedEvent.Hand
       if (activeColumn_ != null)
          return activeColumn_;
 
-      if (activeEditor_ != null)
+      if (activeColumn_.getActiveEditor() != null)
       {
-         activeColumn_ = findByDocument(activeEditor_.getId());
+         setActive(findByDocument(activeColumn_.getActiveEditor().getId()).getName());
          return activeColumn_;
       }
       else
-         activeColumn_ = columnMap_.get(Source.COLUMN_PREFIX);
+          setActive(Source.COLUMN_PREFIX);
       return activeColumn_;
    }
 
@@ -349,11 +288,59 @@ public class SourceColumnManager implements SourceExtendedTypeDetectedEvent.Hand
       return columnMap_.get(name).asWidget();
    }
 
+   public Session getSession()
+   {
+      return session_;
+   }
+
+   public SourceNavigationHistory getSourceNavigationHistory()
+   {
+      return sourceNavigationHistory_;
+   }
+
+   public Synctex getSynctex()
+   {
+      return synctex_;
+   }
+
+   public UserState getUserState()
+   {
+       return userState_;
+   }
+
    public int getSize()
    {
       return columnMap_.size();
    }
 
+   public int getUntitledNum(String prefix)
+   {
+      AtomicInteger max = new AtomicInteger();
+      columnMap_.forEach((name, column) -> {
+          max.set(Math.max(max.get(), column.getUntitledNum(prefix)));
+      });
+      return max.intValue();
+   }
+
+   public native final int getUntitledNum(String name, String prefix) /*-{
+      var match = (new RegExp("^" + prefix + "([0-9]{1,5})$")).exec(name);
+      if (!match)
+         return 0;
+      return parseInt(match[1]);
+   }-*/;
+
+   public void clearSourceNavigationHistory()
+   {
+      if (!hasDoc())
+         sourceNavigationHistory_.clear();
+   }
+
+   public void manageCommands(boolean forceSync)
+   {
+      columnMap_.forEach((name, column) -> {
+         column.manageCommands(forceSync);
+      });
+   }
    // !!! HOW TO HANDLE THESE?
    public EditingTarget addTab(SourceDocument doc, int mode, SourceColumn column)
    {
@@ -450,6 +437,11 @@ public class SourceColumnManager implements SourceExtendedTypeDetectedEvent.Hand
       return columnMap_.get(name).getTabCount() == 0;
    }
 
+   public boolean areSourceWindowsOpen()
+   {
+      return pWindowManager_.get().areSourceWindowsOpen();
+   }
+
    public void activateCodeBrowser(
          final String codeBrowserPath,
          boolean replaceIfActive,
@@ -467,12 +459,12 @@ public class SourceColumnManager implements SourceExtendedTypeDetectedEvent.Hand
       // then check to see if the active editor is a code browser -- if it is,
       // we'll use it as is, replacing its contents
       if (replaceIfActive &&
-          activeEditor_ != null &&
-          activeEditor_ instanceof CodeBrowserEditingTarget)
+          activeColumn_.getActiveEditor() != null &&
+          activeColumn_.getActiveEditor() instanceof CodeBrowserEditingTarget)
       {
-         events_.fireEvent(new CodeBrowserCreatedEvent(activeEditor_.getId(),
+         events_.fireEvent(new CodeBrowserCreatedEvent(activeColumn_.getActiveEditor().getId(),
                codeBrowserPath));
-         callback.onSuccess((CodeBrowserEditingTarget) activeEditor_);
+         callback.onSuccess((CodeBrowserEditingTarget) activeColumn_.getActiveEditor());
          return;
       }
 
@@ -703,10 +695,10 @@ public class SourceColumnManager implements SourceExtendedTypeDetectedEvent.Hand
    private void doActivateSource(final Command afterActivation)
    {
       activeColumn_.ensureVisible(false);
-      if (activeEditor_ != null)
+      if (activeColumn_.getActiveEditor() != null)
       {
-         activeEditor_.focus();
-         activeEditor_.ensureCursorVisible();
+         activeColumn_.getActiveEditor().focus();
+         activeColumn_.getActiveEditor().ensureCursorVisible();
       }
 
       if (afterActivation != null)
@@ -955,7 +947,7 @@ public class SourceColumnManager implements SourceExtendedTypeDetectedEvent.Hand
 
    public void closeTab(boolean interactive)
    {
-      closeTab(activeEditor_, interactive);
+      closeTab(activeColumn_.getActiveEditor(), interactive);
    }
    
    public void closeTab(EditingTarget target, boolean interactive)
@@ -980,7 +972,7 @@ public class SourceColumnManager implements SourceExtendedTypeDetectedEvent.Hand
                 @Override
                 public void execute(EditingTarget target, Command continuation)
                 {
-                   if (excludeActive && target == activeEditor_)
+                   if (excludeActive && target == activeColumn_.getActiveEditor())
                    {
                       continuation.execute();
                       return;
@@ -1001,7 +993,7 @@ public class SourceColumnManager implements SourceExtendedTypeDetectedEvent.Hand
       if (column.getTabCount() > 0)
          return;
       if (column == activeColumn_)
-         activeColumn_ = null;
+         setActive(new String());
 
       columnMap_.remove(name);
    }
@@ -1060,6 +1052,16 @@ public class SourceColumnManager implements SourceExtendedTypeDetectedEvent.Hand
       activeColumn_.fireDocTabsChanged();
    }
    
+   private boolean hasDoc()
+   {
+      for (Map.Entry<String,SourceColumn> column : columnMap_.entrySet())
+      {
+         if (column.getValue().hasDoc())
+            return true;
+      }
+      return false;
+   }
+
    private void vimSetTabIndex(int index)
    {
       int tabCount = activeColumn_.getTabCount();
@@ -1247,6 +1249,16 @@ public class SourceColumnManager implements SourceExtendedTypeDetectedEvent.Hand
       });
    }
 
+   public void beforeShow(String name)
+   {
+      SourceColumn column = findByName(name);
+      if (column == null) {
+         Debug.logWarning("WARNING: Unknown column " + name);
+         return;
+      }
+      column.onBeforeShow();
+   }
+
    public void inEditorForId(String id, OperationWithInput<EditingTarget> onEditorLocated)
    {
       EditingTarget editor = findEditor(id);
@@ -1259,6 +1271,115 @@ public class SourceColumnManager implements SourceExtendedTypeDetectedEvent.Hand
       EditingTarget editor = findEditorByPath(path);
       if (editor != null)
          onEditorLocated.execute(editor);
+   }
+
+   public HashSet<AppCommand> getDynamicCommands()
+   {
+      return dynamicCommands_;
+   }
+
+   private void initializeDynamicCommands()
+   {
+      dynamicCommands_ = new HashSet<AppCommand>();
+      dynamicCommands_.add(commands_.saveSourceDoc());
+      dynamicCommands_.add(commands_.reopenSourceDocWithEncoding());
+      dynamicCommands_.add(commands_.saveSourceDocAs());
+      dynamicCommands_.add(commands_.saveSourceDocWithEncoding());
+      dynamicCommands_.add(commands_.printSourceDoc());
+      dynamicCommands_.add(commands_.vcsFileLog());
+      dynamicCommands_.add(commands_.vcsFileDiff());
+      dynamicCommands_.add(commands_.vcsFileRevert());
+      dynamicCommands_.add(commands_.executeCode());
+      dynamicCommands_.add(commands_.executeCodeWithoutFocus());
+      dynamicCommands_.add(commands_.executeAllCode());
+      dynamicCommands_.add(commands_.executeToCurrentLine());
+      dynamicCommands_.add(commands_.executeFromCurrentLine());
+      dynamicCommands_.add(commands_.executeCurrentFunction());
+      dynamicCommands_.add(commands_.executeCurrentSection());
+      dynamicCommands_.add(commands_.executeLastCode());
+      dynamicCommands_.add(commands_.insertChunk());
+      dynamicCommands_.add(commands_.insertSection());
+      dynamicCommands_.add(commands_.executeSetupChunk());
+      dynamicCommands_.add(commands_.executePreviousChunks());
+      dynamicCommands_.add(commands_.executeSubsequentChunks());
+      dynamicCommands_.add(commands_.executeCurrentChunk());
+      dynamicCommands_.add(commands_.executeNextChunk());
+      dynamicCommands_.add(commands_.previewJS());
+      dynamicCommands_.add(commands_.previewSql());
+      dynamicCommands_.add(commands_.sourceActiveDocument());
+      dynamicCommands_.add(commands_.sourceActiveDocumentWithEcho());
+      dynamicCommands_.add(commands_.knitDocument());
+      dynamicCommands_.add(commands_.toggleRmdVisualMode());
+      dynamicCommands_.add(commands_.enableProsemirrorDevTools());
+      dynamicCommands_.add(commands_.previewHTML());
+      dynamicCommands_.add(commands_.compilePDF());
+      dynamicCommands_.add(commands_.compileNotebook());
+      dynamicCommands_.add(commands_.synctexSearch());
+      dynamicCommands_.add(commands_.popoutDoc());
+      dynamicCommands_.add(commands_.returnDocToMain());
+      dynamicCommands_.add(commands_.findReplace());
+      dynamicCommands_.add(commands_.findNext());
+      dynamicCommands_.add(commands_.findPrevious());
+      dynamicCommands_.add(commands_.findFromSelection());
+      dynamicCommands_.add(commands_.replaceAndFind());
+      dynamicCommands_.add(commands_.extractFunction());
+      dynamicCommands_.add(commands_.extractLocalVariable());
+      dynamicCommands_.add(commands_.commentUncomment());
+      dynamicCommands_.add(commands_.reindent());
+      dynamicCommands_.add(commands_.reflowComment());
+      dynamicCommands_.add(commands_.jumpTo());
+      dynamicCommands_.add(commands_.jumpToMatching());
+      dynamicCommands_.add(commands_.goToHelp());
+      dynamicCommands_.add(commands_.goToDefinition());
+      dynamicCommands_.add(commands_.setWorkingDirToActiveDoc());
+      dynamicCommands_.add(commands_.debugDumpContents());
+      dynamicCommands_.add(commands_.debugImportDump());
+      dynamicCommands_.add(commands_.goToLine());
+      dynamicCommands_.add(commands_.checkSpelling());
+      dynamicCommands_.add(commands_.wordCount());
+      dynamicCommands_.add(commands_.codeCompletion());
+      dynamicCommands_.add(commands_.findUsages());
+      dynamicCommands_.add(commands_.debugBreakpoint());
+      dynamicCommands_.add(commands_.vcsViewOnGitHub());
+      dynamicCommands_.add(commands_.vcsBlameOnGitHub());
+      dynamicCommands_.add(commands_.editRmdFormatOptions());
+      dynamicCommands_.add(commands_.reformatCode());
+      dynamicCommands_.add(commands_.showDiagnosticsActiveDocument());
+      dynamicCommands_.add(commands_.renameInScope());
+      dynamicCommands_.add(commands_.insertRoxygenSkeleton());
+      dynamicCommands_.add(commands_.expandSelection());
+      dynamicCommands_.add(commands_.shrinkSelection());
+      dynamicCommands_.add(commands_.toggleDocumentOutline());
+      dynamicCommands_.add(commands_.knitWithParameters());
+      dynamicCommands_.add(commands_.clearKnitrCache());
+      dynamicCommands_.add(commands_.goToNextSection());
+      dynamicCommands_.add(commands_.goToPrevSection());
+      dynamicCommands_.add(commands_.goToNextChunk());
+      dynamicCommands_.add(commands_.goToPrevChunk());
+      dynamicCommands_.add(commands_.profileCode());
+      dynamicCommands_.add(commands_.profileCodeWithoutFocus());
+      dynamicCommands_.add(commands_.saveProfileAs());
+      dynamicCommands_.add(commands_.restartRClearOutput());
+      dynamicCommands_.add(commands_.restartRRunAllChunks());
+      dynamicCommands_.add(commands_.notebookCollapseAllOutput());
+      dynamicCommands_.add(commands_.notebookExpandAllOutput());
+      dynamicCommands_.add(commands_.notebookClearOutput());
+      dynamicCommands_.add(commands_.notebookClearAllOutput());
+      dynamicCommands_.add(commands_.notebookToggleExpansion());
+      dynamicCommands_.add(commands_.sendToTerminal());
+      dynamicCommands_.add(commands_.openNewTerminalAtEditorLocation());
+      dynamicCommands_.add(commands_.sendFilenameToTerminal());
+      dynamicCommands_.add(commands_.renameSourceDoc());
+      dynamicCommands_.add(commands_.sourceAsLauncherJob());
+      dynamicCommands_.add(commands_.sourceAsJob());
+      dynamicCommands_.add(commands_.runSelectionAsJob());
+      dynamicCommands_.add(commands_.runSelectionAsLauncherJob());
+      dynamicCommands_.add(commands_.toggleSoftWrapMode());
+      for (AppCommand command : dynamicCommands_)
+      {
+         command.setVisible(false);
+         command.setEnabled(false);
+      }
    }
 
    private void openNotebook(final FileSystemItem rnbFile,
@@ -1467,22 +1588,29 @@ public class SourceColumnManager implements SourceExtendedTypeDetectedEvent.Hand
       public final CommandWithArg<EditingTarget> executeOnSuccess;
    }
 
+   private Commands commands_;
    private SourceColumn activeColumn_;
-   private EditingTarget activeEditor_;
 
    private boolean openingForSourceNavigation_ = false;
 
-   final Queue<OpenFileEntry> openFileQueue_ = new LinkedList<OpenFileEntry>();
+   private final Queue<OpenFileEntry> openFileQueue_ = new LinkedList<OpenFileEntry>();
+   private HashMap<String,SourceColumn> columnMap_ = new HashMap<String,SourceColumn>();
+   private HashSet<AppCommand> dynamicCommands_ = new HashSet<AppCommand>();
+
+   private final SourceNavigationHistory sourceNavigationHistory_ =
+      new SourceNavigationHistory(30);
 
    private final EventBus events_;
    private final Provider<FileMRUList> pMruList_;
+   private final Provider<SourceWindowManager> pWindowManager_;
+   private final Session session_;
+   private final Synctex synctex_;
    private final UserPrefs userPrefs_;
+   private final UserState userState_;
    private final GlobalDisplay globalDisplay_;
    private final TextEditingTargetRMarkdownHelper rmarkdown_;
    private final EditingTargetSource editingTargetSource_;
    private final FileTypeRegistry fileTypeRegistry_;
-
-   private HashMap<String,SourceColumn> columnMap_ = new HashMap<String,SourceColumn>();
 
    private final SourceServerOperations server_;
    private DependencyManager dependencyManager_;

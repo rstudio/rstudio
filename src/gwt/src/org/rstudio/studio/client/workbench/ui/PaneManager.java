@@ -1176,6 +1176,7 @@ public class PaneManager
                                     sourceColumnManager_.getWidget(columnName)));
       panel_.addLeftWidget(sourceColumnManager_.getWidget(columnName));
       additionalSourceCount_ = id;
+      sourceColumnManager_.beforeShow(columnName);
 
       PaneConfig paneConfig = getCurrentConfig();
       userPrefs_.panes().setGlobalValue(PaneConfig.create(

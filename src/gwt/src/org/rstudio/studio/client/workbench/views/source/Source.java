@@ -19,8 +19,6 @@ import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
-import com.google.gwt.event.dom.client.ChangeEvent;
-import com.google.gwt.event.dom.client.ChangeHandler;
 import com.google.gwt.event.dom.client.FocusEvent;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.logical.shared.HasBeforeSelectionHandlers;
@@ -32,19 +30,13 @@ import com.google.gwt.user.client.Event.NativePreviewEvent;
 import com.google.gwt.user.client.Event.NativePreviewHandler;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.Window;
-import com.google.gwt.user.client.ui.*;
+import com.google.gwt.user.client.ui.IsWidget;
+import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.inject.Singleton;
-
 import org.rstudio.core.client.*;
-import org.rstudio.core.client.command.AppCommand;
-import org.rstudio.core.client.command.CommandBinder;
-import org.rstudio.core.client.command.Handler;
-import org.rstudio.core.client.command.KeyCombination;
-import org.rstudio.core.client.command.KeyboardShortcut;
-import org.rstudio.core.client.command.KeySequence;
-import org.rstudio.core.client.command.ShortcutManager;
+import org.rstudio.core.client.command.*;
 import org.rstudio.core.client.dom.WindowEx;
 import org.rstudio.core.client.events.*;
 import org.rstudio.core.client.files.FileSystemItem;
@@ -80,7 +72,6 @@ import org.rstudio.studio.client.common.rnw.RnwWeave;
 import org.rstudio.studio.client.common.rnw.RnwWeaveRegistry;
 import org.rstudio.studio.client.common.satellite.Satellite;
 import org.rstudio.studio.client.common.synctex.Synctex;
-import org.rstudio.studio.client.common.synctex.events.SynctexStatusChangedEvent;
 import org.rstudio.studio.client.events.GetEditorContextEvent;
 import org.rstudio.studio.client.events.GetEditorContextEvent.DocumentSelection;
 import org.rstudio.studio.client.events.ReplaceRangesEvent;
@@ -97,16 +88,9 @@ import org.rstudio.studio.client.workbench.WorkbenchContext;
 import org.rstudio.studio.client.workbench.codesearch.model.SearchPathFunctionDefinition;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.events.ZoomPaneEvent;
-import org.rstudio.studio.client.workbench.model.ClientState;
-import org.rstudio.studio.client.workbench.model.RemoteFileSystemContext;
-import org.rstudio.studio.client.workbench.model.Session;
-import org.rstudio.studio.client.workbench.model.SessionInfo;
-import org.rstudio.studio.client.workbench.model.SessionUtils;
-import org.rstudio.studio.client.workbench.model.UnsavedChangesItem;
-import org.rstudio.studio.client.workbench.model.UnsavedChangesTarget;
+import org.rstudio.studio.client.workbench.model.*;
 import org.rstudio.studio.client.workbench.model.helper.IntStateValue;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
-import org.rstudio.studio.client.workbench.prefs.model.UserState;
 import org.rstudio.studio.client.workbench.snippets.SnippetHelper;
 import org.rstudio.studio.client.workbench.snippets.model.SnippetsChangedEvent;
 import org.rstudio.studio.client.workbench.ui.unsaved.UnsavedChangesDialog;
@@ -115,8 +99,6 @@ import org.rstudio.studio.client.workbench.views.environment.events.DebugModeCha
 import org.rstudio.studio.client.workbench.views.files.model.DirectoryListing;
 import org.rstudio.studio.client.workbench.views.output.find.events.FindInFilesEvent;
 import org.rstudio.studio.client.workbench.views.source.NewShinyWebApplication.Result;
-import org.rstudio.studio.client.workbench.views.source.SourceColumnManager;
-import org.rstudio.studio.client.workbench.views.source.SourceColumn;
 import org.rstudio.studio.client.workbench.views.source.SourceWindowManager.NavigationResult;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTarget;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTargetSource;
@@ -124,7 +106,6 @@ import org.rstudio.studio.client.workbench.views.source.editors.codebrowser.Code
 import org.rstudio.studio.client.workbench.views.source.editors.explorer.events.OpenObjectExplorerEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.explorer.model.ObjectExplorerHandle;
 import org.rstudio.studio.client.workbench.views.source.editors.profiler.OpenProfileEvent;
-import org.rstudio.studio.client.workbench.views.source.editors.profiler.model.ProfilerContents;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTarget;
@@ -133,28 +114,12 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceEdit
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Selection;
-import org.rstudio.studio.client.workbench.views.source.editors.text.events.FileTypeChangedEvent;
-import org.rstudio.studio.client.workbench.views.source.editors.text.events.FileTypeChangedHandler;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.NewWorkingCopyEvent;
-import org.rstudio.studio.client.workbench.views.source.editors.text.events.SourceOnSaveChangedEvent;
-import org.rstudio.studio.client.workbench.views.source.editors.text.events.SourceOnSaveChangedHandler;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ui.NewRdDialog;
 import org.rstudio.studio.client.workbench.views.source.events.*;
-import org.rstudio.studio.client.workbench.views.source.model.ContentItem;
-import org.rstudio.studio.client.workbench.views.source.model.DataItem;
-import org.rstudio.studio.client.workbench.views.source.model.DocTabDragParams;
-import org.rstudio.studio.client.workbench.views.source.model.RdShellResult;
-import org.rstudio.studio.client.workbench.views.source.model.SourceDocument;
-import org.rstudio.studio.client.workbench.views.source.model.SourceNavigation;
-import org.rstudio.studio.client.workbench.views.source.model.SourceNavigationHistory;
-import org.rstudio.studio.client.workbench.views.source.model.SourcePosition;
-import org.rstudio.studio.client.workbench.views.source.model.SourceServerOperations;
+import org.rstudio.studio.client.workbench.views.source.model.*;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.Queue;
-import java.util.Set;
+import java.util.*;
 
 @Singleton
 public class Source implements InsertSourceHandler,
@@ -255,7 +220,6 @@ public class Source implements InsertSourceHandler,
                  final Session session,
                  Synctex synctex,
                  WorkbenchContext workbenchContext,
-                 UserState userState,
                  Satellite satellite,
                  ConsoleEditorProvider consoleEditorProvider,
                  RnwWeaveRegistry rnwWeaveRegistry,
@@ -276,7 +240,6 @@ public class Source implements InsertSourceHandler,
       session_ = session;
       synctex_ = synctex;
       workbenchContext_ = workbenchContext;
-      userState_ = userState;
       consoleEditorProvider_ = consoleEditorProvider;
       rnwWeaveRegistry_ = rnwWeaveRegistry;
       dependencyManager_ = dependencyManager;
@@ -284,107 +247,6 @@ public class Source implements InsertSourceHandler,
 
       commands_.newSourceDoc().setEnabled(true);
 
-      dynamicCommands_ = new HashSet<AppCommand>();
-      dynamicCommands_.add(commands.saveSourceDoc());
-      dynamicCommands_.add(commands.reopenSourceDocWithEncoding());
-      dynamicCommands_.add(commands.saveSourceDocAs());
-      dynamicCommands_.add(commands.saveSourceDocWithEncoding());
-      dynamicCommands_.add(commands.printSourceDoc());
-      dynamicCommands_.add(commands.vcsFileLog());
-      dynamicCommands_.add(commands.vcsFileDiff());
-      dynamicCommands_.add(commands.vcsFileRevert());
-      dynamicCommands_.add(commands.executeCode());
-      dynamicCommands_.add(commands.executeCodeWithoutFocus());
-      dynamicCommands_.add(commands.executeAllCode());
-      dynamicCommands_.add(commands.executeToCurrentLine());
-      dynamicCommands_.add(commands.executeFromCurrentLine());
-      dynamicCommands_.add(commands.executeCurrentFunction());
-      dynamicCommands_.add(commands.executeCurrentSection());
-      dynamicCommands_.add(commands.executeLastCode());
-      dynamicCommands_.add(commands.insertChunk());
-      dynamicCommands_.add(commands.insertSection());
-      dynamicCommands_.add(commands.executeSetupChunk());
-      dynamicCommands_.add(commands.executePreviousChunks());
-      dynamicCommands_.add(commands.executeSubsequentChunks());
-      dynamicCommands_.add(commands.executeCurrentChunk());
-      dynamicCommands_.add(commands.executeNextChunk());
-      dynamicCommands_.add(commands.previewJS());
-      dynamicCommands_.add(commands.previewSql());
-      dynamicCommands_.add(commands.sourceActiveDocument());
-      dynamicCommands_.add(commands.sourceActiveDocumentWithEcho());
-      dynamicCommands_.add(commands.knitDocument());
-      dynamicCommands_.add(commands.toggleRmdVisualMode());
-      dynamicCommands_.add(commands.enableProsemirrorDevTools());
-      dynamicCommands_.add(commands.previewHTML());
-      dynamicCommands_.add(commands.compilePDF());
-      dynamicCommands_.add(commands.compileNotebook());
-      dynamicCommands_.add(commands.synctexSearch());
-      dynamicCommands_.add(commands.popoutDoc());
-      dynamicCommands_.add(commands.returnDocToMain());
-      dynamicCommands_.add(commands.findReplace());
-      dynamicCommands_.add(commands.findNext());
-      dynamicCommands_.add(commands.findPrevious());
-      dynamicCommands_.add(commands.findFromSelection());
-      dynamicCommands_.add(commands.replaceAndFind());
-      dynamicCommands_.add(commands.extractFunction());
-      dynamicCommands_.add(commands.extractLocalVariable());
-      dynamicCommands_.add(commands.commentUncomment());
-      dynamicCommands_.add(commands.reindent());
-      dynamicCommands_.add(commands.reflowComment());
-      dynamicCommands_.add(commands.jumpTo());
-      dynamicCommands_.add(commands.jumpToMatching());
-      dynamicCommands_.add(commands.goToHelp());
-      dynamicCommands_.add(commands.goToDefinition());
-      dynamicCommands_.add(commands.setWorkingDirToActiveDoc());
-      dynamicCommands_.add(commands.debugDumpContents());
-      dynamicCommands_.add(commands.debugImportDump());
-      dynamicCommands_.add(commands.goToLine());
-      dynamicCommands_.add(commands.checkSpelling());
-      dynamicCommands_.add(commands.wordCount());
-      dynamicCommands_.add(commands.codeCompletion());
-      dynamicCommands_.add(commands.findUsages());
-      dynamicCommands_.add(commands.debugBreakpoint());
-      dynamicCommands_.add(commands.vcsViewOnGitHub());
-      dynamicCommands_.add(commands.vcsBlameOnGitHub());
-      dynamicCommands_.add(commands.editRmdFormatOptions());
-      dynamicCommands_.add(commands.reformatCode());
-      dynamicCommands_.add(commands.showDiagnosticsActiveDocument());
-      dynamicCommands_.add(commands.renameInScope());
-      dynamicCommands_.add(commands.insertRoxygenSkeleton());
-      dynamicCommands_.add(commands.expandSelection());
-      dynamicCommands_.add(commands.shrinkSelection());
-      dynamicCommands_.add(commands.toggleDocumentOutline());
-      dynamicCommands_.add(commands.knitWithParameters());
-      dynamicCommands_.add(commands.clearKnitrCache());
-      dynamicCommands_.add(commands.goToNextSection());
-      dynamicCommands_.add(commands.goToPrevSection());
-      dynamicCommands_.add(commands.goToNextChunk());
-      dynamicCommands_.add(commands.goToPrevChunk());
-      dynamicCommands_.add(commands.profileCode());
-      dynamicCommands_.add(commands.profileCodeWithoutFocus());
-      dynamicCommands_.add(commands.saveProfileAs());
-      dynamicCommands_.add(commands.restartRClearOutput());
-      dynamicCommands_.add(commands.restartRRunAllChunks());
-      dynamicCommands_.add(commands.notebookCollapseAllOutput());
-      dynamicCommands_.add(commands.notebookExpandAllOutput());
-      dynamicCommands_.add(commands.notebookClearOutput());
-      dynamicCommands_.add(commands.notebookClearAllOutput());
-      dynamicCommands_.add(commands.notebookToggleExpansion());
-      dynamicCommands_.add(commands.sendToTerminal());
-      dynamicCommands_.add(commands.openNewTerminalAtEditorLocation());
-      dynamicCommands_.add(commands.sendFilenameToTerminal());
-      dynamicCommands_.add(commands.renameSourceDoc());
-      dynamicCommands_.add(commands.sourceAsLauncherJob());
-      dynamicCommands_.add(commands.sourceAsJob());
-      dynamicCommands_.add(commands.runSelectionAsJob());
-      dynamicCommands_.add(commands.runSelectionAsLauncherJob());
-      dynamicCommands_.add(commands.toggleSoftWrapMode());
-      for (AppCommand command : dynamicCommands_)
-      {
-         command.setVisible(false);
-         command.setEnabled(false);
-      }
-      
       vimCommands_ = new SourceVimCommands();
 
       events_.addHandler(EditPresentationSourceEvent.TYPE, this);
@@ -400,23 +262,6 @@ public class Source implements InsertSourceHandler,
       events_.addHandler(CodeBrowserHighlightEvent.TYPE, this);
       events_.addHandler(SnippetsChangedEvent.TYPE, this);
       events_.addHandler(NewDocumentWithCodeEvent.TYPE, this);
-
-      events_.addHandler(FileTypeChangedEvent.TYPE, new FileTypeChangedHandler()
-      {
-         public void onFileTypeChanged(FileTypeChangedEvent event)
-         {
-            manageCommands();
-         }
-      });
-      
-      events_.addHandler(SourceOnSaveChangedEvent.TYPE, 
-                        new SourceOnSaveChangedHandler() {
-         @Override
-         public void onSourceOnSaveChanged(SourceOnSaveChangedEvent event)
-         {
-            manageSaveCommands();
-         }
-      });
 
       // !!! move to column manager
       events_.addHandler(DocTabActivatedEvent.TYPE, new DocTabActivatedEvent.Handler()
@@ -483,26 +328,6 @@ public class Source implements InsertSourceHandler,
             {
                sourceNavigationHistory_.add(event.getNavigation());
             }
-         }
-      });
-      
-      sourceNavigationHistory_.addChangeHandler(new ChangeHandler()
-      {
-
-         @Override
-         public void onChange(ChangeEvent event)
-         {
-            manageSourceNavigationCommands();
-         }
-      });
-      
-      events_.addHandler(SynctexStatusChangedEvent.TYPE, 
-                        new SynctexStatusChangedEvent.Handler()
-      {
-         @Override
-         public void onSynctexStatusChanged(SynctexStatusChangedEvent event)
-         {
-            manageSynctexCommands();
          }
       });
       
@@ -602,7 +427,7 @@ public class Source implements InsertSourceHandler,
 
       // As tabs were added before, manageCommands() was suppressed due to
       // initialized_ being false, so we need to run it explicitly
-      manageCommands();
+      columnManager_.manageCommands(false);
       // Same with this event
       columnManager_.fireDocTabsChanged();
       
@@ -680,7 +505,7 @@ public class Source implements InsertSourceHandler,
       if (BrowseCap.isMacintoshDesktop())
       {
          WindowEx.addFocusHandler((FocusEvent event) -> {
-            manageCommands(true);
+           columnManager_.manageCommands(true);
          });
       }
          
@@ -2610,112 +2435,6 @@ public class Source implements InsertSourceHandler,
       return target.asWidget();
    }
    
-   /*
-   private EditingTarget addTab(SourceDocument doc, Integer position, 
-         int mode, Display display)
-   {
-      final String defaultNamePrefix = editingTargetSource_.getDefaultNamePrefix(doc);
-      final EditingTarget target = editingTargetSource_.getEditingTarget(
-            doc, fileContext_, new Provider<String>()
-            {
-               public String get()
-               {
-                  return getNextDefaultName(defaultNamePrefix);
-               }
-            });
-      final Display targetView = display != null ? display : columnManager_.getActive();
-      
-      final Widget widget = createWidget(target);
-
-      if (position == null)
-      {
-         editors_.add(target);
-      }
-      else
-      {
-         // we're inserting into an existing permuted tabset -- push aside
-         // any tabs physically to the right of this tab
-         editors_.add(position, target);
-         for (int i = 0; i < tabOrder_.size(); i++)
-         {
-            int pos = tabOrder_.get(i);
-            if (pos >= position)
-               tabOrder_.set(i, pos + 1);
-         }
-
-         // add this tab in its "natural" position
-         tabOrder_.add(position, position);
-      }
-
-      targetView.addEditor(target);
-      targetView.addTab(widget,
-                        target.getIcon(),
-                        target.getId(),
-                        target.getName().getValue(),
-                        target.getTabTooltip(), // used as tooltip, if non-null
-                        position,
-                        true);
-      fireDocTabsChanged();
-
-      target.getName().addValueChangeHandler(new ValueChangeHandler<String>()
-      {
-         public void onValueChange(ValueChangeEvent<String> event)
-         {
-            targetView.renameTab(widget,
-                                 target.getIcon(),
-                                 event.getValue(),
-                                 target.getPath());
-            fireDocTabsChanged();
-         }
-      });
-
-      targetView.setDirty(widget, target.dirtyState().getValue());
-      target.dirtyState().addValueChangeHandler(new ValueChangeHandler<Boolean>()
-      {
-         public void onValueChange(ValueChangeEvent<Boolean> event)
-         {
-            targetView.setDirty(widget, event.getValue());
-            manageCommands();
-         }
-      });
-
-      target.addEnsureVisibleHandler(new EnsureVisibleHandler()
-      {
-         public void onEnsureVisible(EnsureVisibleEvent event)
-         {
-            targetView.selectTab(widget);
-         }
-      });
-
-      target.addCloseHandler(new CloseHandler<Void>()
-      {
-         public void onClose(CloseEvent<Void> voidCloseEvent)
-         {
-            editors_.remove(target);
-         }
-      });
-      
-      events_.fireEvent(new SourceDocAddedEvent(doc, mode, targetView.getName()));
-      
-      if (target instanceof TextEditingTarget && doc.isReadOnly())
-      {
-         ((TextEditingTarget) target).setIntendedAsReadOnly(
-               JsUtil.toList(doc.getReadOnlyAlternatives()));
-      }
-      
-      // adding a tab may enable commands that are only available when 
-      // multiple documents are open; if this is the second document, go check
-      if (editors_.size() == 2)
-         manageMultiTabCommands();
-
-      // if the target had an editing session active, attempt to resume it
-      if (doc.getCollabParams() != null)
-         target.beginCollabSession(doc.getCollabParams());
-
-      return target;
-   }
-*/
-
    public void onInsertSource(final InsertSourceEvent event)
    {
       if (activeEditor_ != null
@@ -2746,304 +2465,6 @@ public class Source implements InsertSourceHandler,
          activeEditor_.onDeactivate();
          activeEditor_ = null;
       }
-   }
-
-   private void manageCommands()
-   {
-      manageCommands(false);
-   }
-   
-   // !!! shouldn't be public
-   public void manageCommands(boolean forceSync)
-   {
-     Debug.logToConsole("manageCommands not coded");
-      /*
-      boolean hasDocs = editors_.size() > 0;
-
-      String name = "Go to to the definition of the currently selected function";
-
-      commands_.newSourceDoc().setEnabled(true);
-      commands_.closeSourceDoc().setEnabled(hasDocs);
-      commands_.closeAllSourceDocs().setEnabled(hasDocs);
-      commands_.nextTab().setEnabled(hasDocs);
-      commands_.previousTab().setEnabled(hasDocs);
-      commands_.firstTab().setEnabled(hasDocs);
-      commands_.lastTab().setEnabled(hasDocs);
-      commands_.switchToTab().setEnabled(hasDocs);
-      commands_.setWorkingDirToActiveDoc().setEnabled(hasDocs);
-
-      HashSet<AppCommand> newCommands = activeEditor_ != null
-            ? activeEditor_.getSupportedCommands()
-            : new HashSet<AppCommand>();
-      
-      if (forceSync)
-      {
-         for (AppCommand command : activeCommands_)
-         {
-            if (StringUtil.equals(command.getDesc(), name))
-               Debug.logToConsole("disable command");
-            command.setEnabled(false);
-            command.setVisible(false);
-         }
-         
-         for (AppCommand command : newCommands)
-         {
-            if (StringUtil.equals(command.getDesc(), name))
-               Debug.logToConsole("enable command");
-            command.setEnabled(true);
-            command.setVisible(true);
-         }
-      }
-      else
-      {
-         HashSet<AppCommand> commandsToEnable = new HashSet<AppCommand>(newCommands);
-         commandsToEnable.removeAll(activeCommands_);
-
-         HashSet<AppCommand> commandsToDisable = new HashSet<AppCommand>(activeCommands_);
-         commandsToDisable.removeAll(newCommands);
-
-         for (AppCommand command : commandsToEnable)
-         {
-            if (StringUtil.equals(command.getDesc(), name))
-               Debug.logToConsole("enable command");
-            command.setEnabled(true);
-            command.setVisible(true);
-         }
-
-         for (AppCommand command : commandsToDisable)
-         {
-            if (StringUtil.equals(command.getDesc(), name))
-               Debug.logToConsole("disable command");
-            command.setEnabled(false);
-            command.setVisible(false);
-         }
-      }
-      
-      // commands which should always be visible even when disabled
-      commands_.saveSourceDoc().setVisible(true);
-      commands_.saveSourceDocAs().setVisible(true);
-      commands_.printSourceDoc().setVisible(true);
-      commands_.setWorkingDirToActiveDoc().setVisible(true);
-      commands_.debugBreakpoint().setVisible(true);
-      
-      // manage synctex commands
-      manageSynctexCommands();
-      
-      // manage vcs commands
-      manageVcsCommands();
-      
-      // manage save and save all
-      manageSaveCommands();
-      
-      // manage source navigation
-      manageSourceNavigationCommands();
-      
-      // manage RSConnect commands
-      manageRSConnectCommands();
-      
-      // manage R Markdown commands
-      manageRMarkdownCommands();
-      
-      // manage multi-tab commands
-      manageMultiTabCommands();
-      
-      manageTerminalCommands();
-      
-      activeCommands_ = newCommands;
-      
-      // give the active editor a chance to manage commands
-      if (activeEditor_ != null)
-         activeEditor_.manageCommands();
-
-      assert verifyNoUnsupportedCommands(newCommands)
-            : "Unsupported commands detected (please add to Source.dynamicCommands_)";
-               */
-   }
-   
-   // !! should be private
-   public void manageMultiTabCommands()
-   {
-      Debug.logToConsole("manageMultiTabCommands not coded");
-      /*
-      boolean hasMultipleDocs = editors_.size() > 1;
-
-      // special case--these editing targets always support popout, but it's
-      // nonsensical to show it if it's the only tab in a satellite; hide it in
-      // this case
-      if (commands_.popoutDoc().isEnabled() &&
-          activeEditor_ != null &&
-          (activeEditor_ instanceof TextEditingTarget ||
-           activeEditor_ instanceof CodeBrowserEditingTarget) &&
-          !SourceWindowManager.isMainSourceWindow())
-      {
-         commands_.popoutDoc().setVisible(hasMultipleDocs);
-      }
-      
-      commands_.closeOtherSourceDocs().setEnabled(hasMultipleDocs);
-      */
-   }
-   
-   private void manageSynctexCommands()
-   {
-      // synctex commands are enabled if we have synctex for the active editor
-      boolean synctexAvailable = synctex_.isSynctexAvailable();
-      if (synctexAvailable)
-      {
-         if ((activeEditor_ != null) && 
-             (activeEditor_.getPath() != null) &&
-             activeEditor_.canCompilePdf())
-         {
-            synctexAvailable = synctex_.isSynctexAvailable();
-         }
-         else
-         {
-            synctexAvailable = false;
-         }
-      }
-     
-      synctex_.enableCommands(synctexAvailable);
-   }
-   
-   private void manageVcsCommands()
-   {
-      // manage availablity of vcs commands
-      boolean vcsCommandsEnabled = 
-            session_.getSessionInfo().isVcsEnabled() &&
-            (activeEditor_ != null) &&
-            (activeEditor_.getPath() != null) &&
-            activeEditor_.getPath().startsWith(
-                  session_.getSessionInfo().getActiveProjectDir().getPath());
-      
-      commands_.vcsFileLog().setVisible(vcsCommandsEnabled);
-      commands_.vcsFileLog().setEnabled(vcsCommandsEnabled);
-      commands_.vcsFileDiff().setVisible(vcsCommandsEnabled);
-      commands_.vcsFileDiff().setEnabled(vcsCommandsEnabled);
-      commands_.vcsFileRevert().setVisible(vcsCommandsEnabled);
-      commands_.vcsFileRevert().setEnabled(vcsCommandsEnabled);
-          
-      if (vcsCommandsEnabled)
-      {
-         String name = FileSystemItem.getNameFromPath(activeEditor_.getPath());
-         commands_.vcsFileDiff().setMenuLabel("_Diff \"" + name + "\"");
-         commands_.vcsFileLog().setMenuLabel("_Log of \"" + name +"\"");
-         commands_.vcsFileRevert().setMenuLabel("_Revert \"" + name + "\"...");
-      }
-      
-      boolean isGithubRepo = session_.getSessionInfo().isGithubRepository();
-      if (vcsCommandsEnabled && isGithubRepo)
-      {
-         String name = FileSystemItem.getNameFromPath(activeEditor_.getPath());
-         
-         commands_.vcsViewOnGitHub().setVisible(true);
-         commands_.vcsViewOnGitHub().setEnabled(true);
-         commands_.vcsViewOnGitHub().setMenuLabel(
-                                  "_View \"" + name + "\" on GitHub");
-         
-         commands_.vcsBlameOnGitHub().setVisible(true);
-         commands_.vcsBlameOnGitHub().setEnabled(true);
-         commands_.vcsBlameOnGitHub().setMenuLabel(
-                                  "_Blame \"" + name + "\" on GitHub");
-      }
-      else
-      {
-         commands_.vcsViewOnGitHub().setVisible(false);
-         commands_.vcsViewOnGitHub().setEnabled(false);
-         commands_.vcsBlameOnGitHub().setVisible(false);
-         commands_.vcsBlameOnGitHub().setEnabled(false);
-      }
-   }
-   
-   private void manageRSConnectCommands()
-   {
-      boolean rsCommandsAvailable = 
-            SessionUtils.showPublishUi(session_, userState_) &&
-            (activeEditor_ != null) &&
-            (activeEditor_.getPath() != null) &&
-            ((activeEditor_.getExtendedFileType() != null &&
-              activeEditor_.getExtendedFileType() .startsWith(SourceDocument.XT_SHINY_PREFIX)) ||
-              activeEditor_.getExtendedFileType() == SourceDocument.XT_RMARKDOWN ||
-              activeEditor_.getExtendedFileType() == SourceDocument.XT_PLUMBER_API);
-      commands_.rsconnectDeploy().setVisible(rsCommandsAvailable);
-      if (activeEditor_ != null)
-      {
-         String deployLabel = null;
-         if (activeEditor_.getExtendedFileType() != null)
-         {
-            if (activeEditor_.getExtendedFileType().startsWith(SourceDocument.XT_SHINY_PREFIX))
-            {
-               deployLabel = "Publish Application...";
-            }
-            else if (activeEditor_.getExtendedFileType() == SourceDocument.XT_PLUMBER_API)
-            {
-               deployLabel = "Publish Plumber API..."; 
-            }
-         }
-         if (deployLabel == null)
-            deployLabel = "Publish Document...";
-   
-         commands_.rsconnectDeploy().setLabel(deployLabel);
-      }
-      commands_.rsconnectConfigure().setVisible(rsCommandsAvailable);
-   }
-   
-   private void manageRMarkdownCommands()
-   {
-      boolean rmdCommandsAvailable = 
-            session_.getSessionInfo().getRMarkdownPackageAvailable() &&
-            (activeEditor_ != null) &&
-            activeEditor_.getExtendedFileType() == SourceDocument.XT_RMARKDOWN;
-      commands_.editRmdFormatOptions().setVisible(rmdCommandsAvailable);
-      commands_.editRmdFormatOptions().setEnabled(rmdCommandsAvailable);
-   }
-   
-   // !!! should be private
-   public void manageSaveCommands()
-   {
-      boolean saveEnabled = (activeEditor_ != null) &&
-            activeEditor_.isSaveCommandActive();
-      commands_.saveSourceDoc().setEnabled(saveEnabled);
-      manageSaveAllCommand();
-   }
-   
-   
-   private void manageSaveAllCommand()
-   {
-      Debug.logToConsole("manageSaveAllCommands not coded");
-      /*
-      // if source windows are open, managing state of the command becomes
-      // complicated, so leave it enabled
-      if (pWindowManager_.get().areSourceWindowsOpen())
-      {
-         commands_.saveAllSourceDocs().setEnabled(true);
-         return;
-      }
-
-      // if one document is dirty then we are enabled
-      for (EditingTarget target : editors_)
-      {
-         if (target.isSaveCommandActive())
-         {
-            commands_.saveAllSourceDocs().setEnabled(true);
-            return;
-         }
-      }
-      
-      // not one was dirty, disabled
-      commands_.saveAllSourceDocs().setEnabled(false);
-      */
-   }
-   
-   private void manageTerminalCommands()
-   {
-      if (!session_.getSessionInfo().getAllowShell())
-         commands_.sendToTerminal().setVisible(false);
-   }
-   
-   private boolean verifyNoUnsupportedCommands(HashSet<AppCommand> commands)
-   {
-      HashSet<AppCommand> temp = new HashSet<AppCommand>(commands);
-      temp.removeAll(dynamicCommands_);
-      return temp.size() == 0;
    }
 
    public void onFileEdit(FileEditEvent event)
@@ -3256,16 +2677,6 @@ public class Source implements InsertSourceHandler,
       }
    }
    
-   private void manageSourceNavigationCommands()
-   {   
-      commands_.sourceNavigateBack().setEnabled(
-            sourceNavigationHistory_.isBackEnabled());
-
-      commands_.sourceNavigateForward().setEnabled(
-            sourceNavigationHistory_.isForwardEnabled());  
-   }
-   
-    
    @Override
    public void onCodeBrowserNavigation(final CodeBrowserNavigationEvent event)
    {
@@ -3851,11 +3262,8 @@ public class Source implements InsertSourceHandler,
    private final Session session_;
    private final Synctex synctex_;
    private UserPrefs userPrefs_;
-   private final UserState userState_;
    private final ConsoleEditorProvider consoleEditorProvider_;
    private final RnwWeaveRegistry rnwWeaveRegistry_;
-   private HashSet<AppCommand> activeCommands_ = new HashSet<AppCommand>();
-   private HashSet<AppCommand> dynamicCommands_;
    private final SourceNavigationHistory sourceNavigationHistory_ = 
                                               new SourceNavigationHistory(30);
    private SourceVimCommands vimCommands_;
