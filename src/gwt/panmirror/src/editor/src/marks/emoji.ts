@@ -30,10 +30,7 @@ import { emojis, emojiFromAlias, emojiFromChar } from '../api/emoji';
 const kEmojiAttr = 0;
 const kEmojiContent = 1;
 
-const extension = (pandocExtensions: PandocExtensions): Extension | null => {
-  if (!pandocExtensions.emoji) {
-    return null;
-  }
+const extension = (): Extension | null => {
 
   return {
     marks: [
