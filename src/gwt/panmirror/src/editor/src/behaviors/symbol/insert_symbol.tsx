@@ -66,7 +66,7 @@ class InsertSymbolPlugin extends Plugin<boolean> {
 
   public showPopup(view: EditorView) {
     if (!this.popup) {
-      const height = 300;
+      const height = 316;
       const width = 370;
 
       const selection = view.state.selection;
