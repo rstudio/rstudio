@@ -15,6 +15,7 @@
 
 ### Bugfixes
 
+- Fix 'truncating string with embedded nuls' warning being emitted when saving R Notebook (#6932)
 - Fix dependency installation for untitled buffers (#6762)
 - Fix Terminal to work with both Git-Bash and RTools4 MSYS2 installed on Windows (#6696, #6809)
 - Fixed install issue where service scripts would not be created if there was no /lib/systemd path (Pro #6710)
@@ -24,6 +25,8 @@
 - Fix keybinding failure when global keybindings exists but user keybindings don't (#6870)
 - Fix failure to open source files when debugging some functions in R 4.0.0 (work around R bug in `deparse()`) (#6854)
 - Fixed issue where an attempt to create more sessions than the license limit would fail with a generic error (Pro #1680)
+- Fix auto-activation of JAWS screen reader virtual cursor in Console Output region (#6884)
+- Announce text of warnings bar via screen reader (#6963)
 
 ### RStudio Server Pro
 
