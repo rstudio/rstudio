@@ -14,16 +14,13 @@
  */
 
 import { Node as ProsemirrorNode, Schema, Fragment, ResolvedPos } from 'prosemirror-model';
-import { Plugin, PluginKey, EditorState, Transaction, NodeSelection } from 'prosemirror-state';
-import { EditorView } from 'prosemirror-view';
+import { PluginKey, Transaction } from 'prosemirror-state';
 import { Transform } from 'prosemirror-transform';
 
 import { findChildrenByType, findParentNodeClosestToPos } from 'prosemirror-utils';
 
 import { Extension } from '../../api/extension';
 import { EditorUI } from '../../api/ui';
-import { BaseKey } from '../../api/basekeys';
-import { exitNode } from '../../api/command';
 import { EditorOptions } from '../../api/options';
 import { EditorEvents } from '../../api/events';
 import { FixupContext } from '../../api/fixup';
@@ -52,8 +49,7 @@ import {
 } from './image';
 import { inlineHTMLIsImage } from './image-util';
 import { imageNodeViewPlugins } from './image-view';
-
-const plugin = new PluginKey('figure');
+import { figureKeys } from './figure-keys';
 
 const extension = (
   pandocExtensions: PandocExtensions,
@@ -152,75 +148,11 @@ const extension = (
       ];
     },
 
-    baseKeys: (schema: Schema) => {
-      return [
-        { key: BaseKey.Enter, command: exitNode(schema.nodes.figure, -1, false) },
-        { key: BaseKey.Backspace, command: backspaceEmptyCaption() },
-        { key: BaseKey.Backspace, command: backspaceAfterFigure() }
-      ];
-    },
+    baseKeys: figureKeys,
 
     plugins: (_schema: Schema) => imageNodeViewPlugins('figure', true, ui, events, pandocExtensions)
   };
 };
-
-export function backspaceEmptyCaption() {
-  return (state: EditorState, dispatch?: (tr: Transaction) => void) => {
-    // must be a selection within an empty caption
-    const schema = state.schema;
-    const { $head } = state.selection;
-    if ($head.parent.type !== schema.nodes.figure || $head.parent.childCount !== 0) {
-      return false;
-    }
-
-    if (dispatch) {
-      // set a node selection for the figure
-      const tr = state.tr;
-      tr.setSelection(NodeSelection.create(tr.doc, $head.pos - 1));
-      dispatch(tr);
-    }
-
-    return true;
-  };
-}
-
-export function backspaceAfterFigure() {
-  return (state: EditorState, dispatch?: (tr: Transaction) => void) => {
-
-    // must be an empty selection
-    const selection = state.selection;
-    if (!selection.empty) {
-      return false;
-    }
-
-    // must be a selection at the beginning of it's parent
-    const schema = state.schema;
-    const { $head } = state.selection;
-    const { parentOffset } = $head;
-    if (parentOffset !== 0) {
-      return false;
-    }
-
-    // check if the previous node is a figure
-    const parent = $head.node($head.depth - 1);
-    const parentIndex = $head.index($head.depth - 1);
-    if (parentIndex > 0) {
-      const previousNode = parent.child(parentIndex - 1);
-      if (previousNode.type === schema.nodes.figure) {
-        if (dispatch) {
-          const tr = state.tr;
-          const nodePos = selection.head - previousNode.nodeSize - 1;
-          const figureSelection = NodeSelection.create(state.doc, nodePos);
-          tr.setSelection(figureSelection);
-          dispatch(tr);
-        }
-        return true;
-      }
-    }
-  
-    return false;
-  };
-}
 
 export function posHasProhibitedFigureParent(schema: Schema, $pos: ResolvedPos) {
   return prohibitedFigureParents(schema).some(type => {
