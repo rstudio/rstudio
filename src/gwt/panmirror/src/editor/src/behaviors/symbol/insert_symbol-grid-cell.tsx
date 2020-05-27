@@ -15,33 +15,36 @@ export const SymbolCharacterCell = ({ columnIndex, rowIndex, style, data }: any)
   const symbolCharacters = characterGridCellItemData.symbolCharacters;
   const itemIndex = rowIndex * characterGridCellItemData.numberOfColumns + columnIndex;
 
-  var character: SymbolCharacter | undefined = undefined;
   if (itemIndex < symbolCharacters.length) {
-    character = symbolCharacters[itemIndex];
+      const character = symbolCharacters[itemIndex];
+      return (
+        <div
+          tabIndex={-1}
+          style={style}
+          title={`U+${character?.codepoint.toString(16)} - ${character?.name.toLowerCase()}`}
+          className="pm-symbol-grid-container"
+          onClick={event => {
+            event.preventDefault();
+            event.stopPropagation();
+            characterGridCellItemData.onSelectionCommitted();
+          }}
+          onMouseDown={event => {
+            event.preventDefault();
+            event.stopPropagation();
+          }}
+          onMouseOver={event => {
+            characterGridCellItemData.onSelectionChanged(itemIndex);
+          }}
+        >
+          <div className={`pm-symbol-grid-cell pm-grid-item ${characterGridCellItemData.selectedIndex == itemIndex ? 'pm-grid-item-selected' : ''}`}>
+          {character === undefined ? '' : character.value} 
+          </div>
+        </div>
+      );
+    
+  } else {
+    return null;
   }
+  
 
-  return (
-    <div
-      tabIndex={-1}
-      style={style}
-      title={`U+${character?.codepoint.toString(16)} - ${character?.name.toLowerCase()}`}
-      className="pm-symbol-grid-container"
-      onClick={event => {
-        event.preventDefault();
-        event.stopPropagation();
-        characterGridCellItemData.onSelectionCommitted();
-      }}
-      onMouseDown={event => {
-        event.preventDefault();
-        event.stopPropagation();
-      }}
-      onMouseOver={event => {
-        characterGridCellItemData.onSelectionChanged(itemIndex);
-      }}
-    >
-      <div className={`pm-symbol-grid-cell pm-grid-item ${characterGridCellItemData.selectedIndex == itemIndex ? 'pm-grid-item-selected' : ''}`}>
-      {character === undefined ? '' : character.value} 
-      </div>
-    </div>
-  );
 };
