@@ -1,7 +1,7 @@
 /*
  * AceEditor.java
  *
- * Copyright (C) 2009-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -1050,39 +1050,48 @@ public class AceEditor implements DocDisplay,
       code = code.replaceAll("\u001B", "");
       
       // Normalize newlines -- convert all of '\r', '\r\n', '\n\r' to '\n'.
-      code = StringUtil.normalizeNewLines(code);
-
+      final String normalizedCode = StringUtil.normalizeNewLines(code);
+      
       final AceEditorNative ed = widget_.getEditor();
 
       if (preserveCursorPosition)
       {
-         final Position cursorPos;
-         final int scrollTop, scrollLeft;
-
-         cursorPos = ed.getSession().getSelection().getCursor();
-         scrollTop = ed.getRenderer().getScrollTop();
-         scrollLeft = ed.getRenderer().getScrollLeft();
-
-         // Setting the value directly on the document prevents undo/redo
-         // stack from being blown away
-         widget_.getEditor().getSession().getDocument().setValue(code);
-
-         ed.getSession().getSelection().moveCursorTo(cursorPos.getRow(),
-                                                     cursorPos.getColumn(),
-                                                     false);
-         scrollToY(scrollTop, 0);
-         scrollToX(scrollLeft);
-         Scheduler.get().scheduleDeferred(() ->
-         {
-            scrollToY(scrollTop, 0);
-            scrollToX(scrollLeft);
+         withPreservedCursorPosition(() -> {
+            // Setting the value directly on the document prevents undo/redo
+            // stack from being blown away
+            widget_.getEditor().getSession().getDocument().setValue(normalizedCode);
          });
       }
       else
       {
-         ed.getSession().setValue(code);
+         ed.getSession().setValue(normalizedCode);
          ed.getSession().getSelection().moveCursorTo(0, 0, false);
       }
+   }
+   
+   private void withPreservedCursorPosition(Runnable runnable)
+   {
+      final AceEditorNative ed = widget_.getEditor();
+      
+      final Position cursorPos;
+      final int scrollTop, scrollLeft;
+
+      cursorPos = ed.getSession().getSelection().getCursor();
+      scrollTop = ed.getRenderer().getScrollTop();
+      scrollLeft = ed.getRenderer().getScrollLeft();
+
+      runnable.run();
+
+      ed.getSession().getSelection().moveCursorTo(cursorPos.getRow(),
+                                                  cursorPos.getColumn(),
+                                                  false);
+      scrollToY(scrollTop, 0);
+      scrollToX(scrollLeft);
+      Scheduler.get().scheduleDeferred(() ->
+      {
+         scrollToY(scrollTop, 0);
+         scrollToX(scrollLeft);
+      });
    }
 
    public int getScrollLeft()
@@ -1126,6 +1135,11 @@ public class AceEditor implements DocDisplay,
    
    public void applyChanges(TextChange[] changes)
    {
+      applyChanges(changes, false);
+   }
+   
+   public void applyChanges(TextChange[] changes, boolean preserveCursorPosition)
+   {
       // special case for a single change that neither adds nor removes
       // (identity operation). we don't feed this through the code below
       // because a single non-mutating change will result in a selection
@@ -1133,56 +1147,65 @@ public class AceEditor implements DocDisplay,
       if (changes.length == 1 && changes[0].type == TextChange.Type.Equal)
          return;
       
-      // alias apis
-      AceEditorNative editor = widget_.getEditor();
-      EditSession session = editor.getSession();
-      Selection selection = session.getSelection();
-      AceCommandManager commandManager = editor.getCommandManager();
-      
-      // function to advance the selection
-      Consumer<Integer> advanceSelection = (Integer charsLeft) -> {
-         Position startPos = selection.getCursor();
-         Position newPos = advancePosition(session, startPos, charsLeft);
-         selection.moveCursorTo(newPos.getRow(), newPos.getColumn(), false);
+      // application of changes (will run this below either with or w/o 
+      // preserving the cursor position)
+      Runnable applyChanges = () -> {
+         // alias apis
+         AceEditorNative editor = widget_.getEditor();
+         EditSession session = editor.getSession();
+         Selection selection = session.getSelection();
+         AceCommandManager commandManager = editor.getCommandManager();
+         
+         // function to advance the selection
+         Consumer<Integer> advanceSelection = (Integer charsLeft) -> {
+            Position startPos = selection.getCursor();
+            Position newPos = advancePosition(session, startPos, charsLeft);
+            selection.moveCursorTo(newPos.getRow(), newPos.getColumn(), false);
+         };
+         
+         // if we have at least 1 change then set the cursor location 
+         // to the beginning of the file
+         if (changes.length > 0)
+            selection.moveCursorTo(0, 0, false);      
+         
+         // process changes
+         for (int i = 0; i<changes.length; i++) 
+         {
+            // get change and length
+            TextChange change = changes[i];
+            int length = change.value.length();
+            
+            // insert text (selection will be advanced to the end of the string)
+            if (change.type == TextChange.Type.Insert)
+            {
+               if (change.value.length() > 0)
+                  commandManager.exec("insertstring", editor, change.value);
+            }
+            
+            // remove text -- we advance past it and then use the "backspace"
+            // command b/c ace gives nicer undo behavior for this action (compared
+            // to executing the "del" command)
+            else if (change.type == TextChange.Type.Delete)
+            {
+               Range newRange = selection.getRange();
+               newRange.setEnd(advancePosition(session, selection.getCursor(), length));
+               selection.setSelectionRange(newRange);
+               commandManager.exec("backspace", editor);
+            }
+            
+            // advance selection (unless this is the last change, in which 
+            // case it just represents advancing to the end of the file)
+            else if (i != (changes.length-1))
+            {
+               advanceSelection.accept(length);
+            } 
+         }  
       };
       
-      // if we have at least 1 change then set the cursor location 
-      // to the beginning of the file
-      if (changes.length > 0)
-         selection.moveCursorTo(0, 0, false);      
-      
-      // process changes
-      for (int i = 0; i<changes.length; i++) 
-      {
-         // get change and length
-         TextChange change = changes[i];
-         int length = change.value.length();
-         
-         // insert text (selection will be advanced to the end of the string)
-         if (change.type == TextChange.Type.Insert)
-         {
-            if (change.value.length() > 0)
-               commandManager.exec("insertstring", editor, change.value);
-         }
-         
-         // remove text -- we advance past it and then use the "backspace"
-         // command b/c ace gives nicer undo behavior for this action (compared
-         // to executing the "del" command)
-         else if (change.type == TextChange.Type.Delete)
-         {
-            Range newRange = selection.getRange();
-            newRange.setEnd(advancePosition(session, selection.getCursor(), length));
-            selection.setSelectionRange(newRange);
-            commandManager.exec("backspace", editor);
-         }
-         
-         // advance selection (unless this is the last change, in which 
-         // case it just represents advancing to the end of the file)
-         else if (i != (changes.length-1))
-         {
-            advanceSelection.accept(length);
-         } 
-      }  
+      if (preserveCursorPosition)
+         withPreservedCursorPosition(applyChanges);
+      else
+         applyChanges.run();
    }
    
    private static Position advancePosition(EditSession session, Position startPos, Integer chars)

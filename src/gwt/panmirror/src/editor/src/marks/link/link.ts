@@ -1,7 +1,7 @@
 /*
  * link.ts
  *
- * Copyright (C) 2019-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -27,7 +27,6 @@ import {
 } from '../../api/pandoc_attr';
 import { EditorUI } from '../../api/ui';
 import { Extension } from '../../api/extension';
-import { kPlatformMac } from '../../api/platform';
 import { PandocCapabilities } from '../../api/pandoc_capabilities';
 
 import { linkCommand, removeLinkCommand } from './link-command';
@@ -100,7 +99,7 @@ const extension = (pandocExtensions: PandocExtensions, _caps: PandocCapabilities
               'a',
               {
                 href: mark.attrs.href,
-                title: linkTitle(mark, ui),
+                title: mark.attrs.title,
                 'data-heading': mark.attrs.heading,
                 ...extraAttr,
               },
@@ -187,18 +186,5 @@ const extension = (pandocExtensions: PandocExtensions, _caps: PandocCapabilities
     },
   };
 };
-
-function linkTitle(mark: Mark, ui: EditorUI) {
-  let title = mark.attrs.title;
-  const cmdClick = kPlatformMac ? '⌘+' + ui.context.translateText('Click to follow link') : '';
-  if (cmdClick) {
-    if (title) {
-      title += ` (${cmdClick})`;
-    } else {
-      title = cmdClick;
-    }
-  }
-  return title;
-}
 
 export default extension;

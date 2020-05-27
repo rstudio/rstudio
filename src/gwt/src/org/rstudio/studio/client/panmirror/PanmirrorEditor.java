@@ -1,7 +1,7 @@
 /*
  * PanmirrorEditor.java
  *
- * Copyright (C) 2009-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -27,6 +27,7 @@ import org.rstudio.studio.client.panmirror.location.PanmirrorEditingOutlineLocat
 import org.rstudio.studio.client.panmirror.outline.PanmirrorOutlineItem;
 import org.rstudio.studio.client.panmirror.pandoc.PanmirrorPandocFormat;
 import org.rstudio.studio.client.panmirror.theme.PanmirrorTheme;
+import org.rstudio.studio.client.panmirror.uitools.PanmirrorPandocFormatConfig;
 
 import com.google.gwt.dom.client.Element;
 
@@ -47,15 +48,11 @@ public class PanmirrorEditor
    public native void setTitle(String title);
    public native String getTitle();
    
-   @JsType
-   public class SetMarkdownResult
-   {
-      public String cannonical;
-      public String[] unrecognized;
-   }
-   public native Promise<SetMarkdownResult> setMarkdown(String code, PanmirrorWriterOptions options, boolean emitUpdate);
+   public native Promise<JsObject> setMarkdown(String code, PanmirrorWriterOptions options, boolean emitUpdate);
    
-   public native Promise<PanmirrorCode> getMarkdown(PanmirrorWriterOptions option);
+   public native Promise<JsObject> getMarkdown(PanmirrorWriterOptions options);
+   
+   public native Promise<String> getCanonical(String code, PanmirrorWriterOptions options);
    
    public native boolean isInitialDoc();
    
@@ -94,6 +91,7 @@ public class PanmirrorEditor
    public native void setKeybindings(PanmirrorKeybindings keybindings);
    
    public native PanmirrorPandocFormat getPandocFormat();
+   public native PanmirrorPandocFormatConfig getPandocFormatConfig(boolean isRmd);
    
    public native void enableDevTools(JsObject initFn);
  

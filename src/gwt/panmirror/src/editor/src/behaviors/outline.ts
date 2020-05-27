@@ -1,7 +1,7 @@
 /*
  * oultine.ts
  *
- * Copyright (C) 2019-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -140,7 +140,6 @@ function hasOutlineIdsTransaction(transactions: Transaction[]) {
   return transactions.some(tr => tr.getMeta(kOutlineIdsTransaction));
 }
 
-
 function transactionsAffectOutline(transactions: Transaction[], oldState: EditorState, newState: EditorState) {
   return (
     transactions.some(tr => tr.getMeta(kSetMarkdownTransaction)) ||
@@ -150,7 +149,7 @@ function transactionsAffectOutline(transactions: Transaction[], oldState: Editor
 }
 
 export function getOutline(state: EditorState): EditorOutline {
-  return plugin.getState(state);
+  return plugin.getState(state)!;
 }
 
 export default extension;

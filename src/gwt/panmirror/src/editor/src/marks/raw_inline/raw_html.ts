@@ -1,7 +1,7 @@
 /*
  * raw_html.ts
  *
- * Copyright (C) 2019-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -100,50 +100,46 @@ const extension = (pandocExtensions: PandocExtensions, pandocCapabilities: Pando
       } else {
         return [];
       }
-    }
+    },
   };
 };
 
 export function rawHtmlInputRule(schema: Schema, filter: MarkInputRuleFilter) {
   return new InputRule(/>$/, (state: EditorState, match: string[], start: number, end: number) => {
-
     const rawhtmlMark = state.schema.marks.raw_html;
 
     // ensure we pass all conditions for html input
     if (state.selection.empty && toggleMark(rawhtmlMark)(state) && filter(state, start, end)) {
-        
-        // get tag info
-        const { parent, parentOffset } = state.selection.$head;
-        const text = parent.textContent;
-        const endLoc = parentOffset - 1;
-        const tag = tagInfo(text, endLoc);
-        if (tag) {
+      // get tag info
+      const { parent, parentOffset } = state.selection.$head;
+      const text = parent.textContent;
+      const endLoc = parentOffset - 1;
+      const tag = tagInfo(text, endLoc);
+      if (tag) {
+        // create transaction
+        const tr = state.tr;
 
-          // create transaction
-          const tr = state.tr;
-          
-          // replace fancy quotes in existing text
-          const tagText = fancyQuotesToSimple(text.substring(tag.start, tag.end)) + '>';
-          start = tr.selection.from - (tag.end + tag.start);
-          tr.insertText(tagText, start, tr.selection.from);
-          
-          // add mark
-          tr.addMark(start, end + 1, rawhtmlMark.create());
+        // insert >
+        tr.insertText('>');
+
+        // add mark
+        start = tr.selection.from - (tag.end - tag.start + 1);
+        tr.addMark(start, end + 1, rawhtmlMark.create());
+        tr.removeStoredMark(rawhtmlMark);
+
+        // if it wasn't an end tag and it isn't a void tag then also
+        // insert an end tag (and leave the cursor in the middle)
+        if (!tag.close && !tag.void) {
+          const endTag = schema.text(`</${tag.name}>`);
+          tr.replaceSelectionWith(endTag, false);
+          setTextSelection(tr.selection.from - endTag.textContent.length)(tr);
+          tr.addMark(tr.selection.from, tr.selection.from + endTag.textContent.length, rawhtmlMark.create());
           tr.removeStoredMark(rawhtmlMark);
-          
-          // if it wasn't an end tag and it isn't a void tag then also
-          // insert an end tag (and leave the cursor in the middle)
-          if (!tag.close && !tag.void) {
-            const endTag = schema.text(`</${tag.name}>`);
-            tr.replaceSelectionWith(endTag);
-            setTextSelection(tr.selection.from - endTag.textContent.length)(tr);
-            tr.addMark(tr.selection.from, tr.selection.from + endTag.textContent.length, rawhtmlMark.create());
-            tr.removeStoredMark(rawhtmlMark);
-          }
-
-          // return transaction
-          return tr;
         }
+
+        // return transaction
+        return tr;
+      }
     }
 
     return null;
@@ -153,6 +149,11 @@ export function rawHtmlInputRule(schema: Schema, filter: MarkInputRuleFilter) {
 function tagInfo(text: string, endLoc: number) {
   const startLoc = tagStartLoc(text, endLoc);
   if (startLoc !== -1) {
+    // don't match if preceding character is a backtick 
+    // (user is attempting to write an html tag in code)
+    if (text.charAt(startLoc-1) === '`') {
+      return null;
+    }
     const tagText = text.substring(startLoc, endLoc + 1);
     const match = tagText.match(/<(\/?)(\w+)/);
     if (match) {
@@ -160,7 +161,7 @@ function tagInfo(text: string, endLoc: number) {
       if (isHTMLTag(name)) {
         return {
           name: match[2],
-          close: match[1].length > 0, 
+          close: match[1].length > 0,
           void: isVoidTag(name),
           start: startLoc,
           end: endLoc + 1,
@@ -171,9 +172,7 @@ function tagInfo(text: string, endLoc: number) {
   return null;
 }
 
-
 function tagStartLoc(text: string, endLoc: number) {
-
   // might be smart quotes
   text = fancyQuotesToSimple(text);
 
@@ -215,7 +214,6 @@ function tagStartLoc(text: string, endLoc: number) {
   return -1;
 }
 
-
 function isHTMLTag(tag: string) {
   return [
     // structural
@@ -226,7 +224,12 @@ function isHTMLTag(tag: string) {
     'br',
     'details',
     'div',
-    'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
+    'h1',
+    'h2',
+    'h3',
+    'h4',
+    'h5',
+    'h6',
     'head',
     'header',
     'hgroup',
@@ -345,28 +348,28 @@ function isHTMLTag(tag: string) {
     'param',
     'source',
     'time',
-    'video'
+    'video',
   ].includes(tag.toLowerCase());
 }
 
 function isVoidTag(tag: string) {
   return [
-    'area', 
-    'base', 
-    'br', 
-    'col', 
-    'command', 
-    'embed', 
-    'hr', 
-    'img', 
-    'input', 
-    'keygen', 
-    'link', 
-    'meta', 
-    'param', 
-    'source', 
-    'track', 
-    'wbr'
+    'area',
+    'base',
+    'br',
+    'col',
+    'command',
+    'embed',
+    'hr',
+    'img',
+    'input',
+    'keygen',
+    'link',
+    'meta',
+    'param',
+    'source',
+    'track',
+    'wbr',
   ].includes(tag.toLowerCase());
 }
 

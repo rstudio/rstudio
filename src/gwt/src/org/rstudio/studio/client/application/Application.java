@@ -1,7 +1,7 @@
 /*
  * Application.java
  *
- * Copyright (C) 2009-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -38,7 +38,6 @@ import com.google.inject.Singleton;
 
 import org.rstudio.core.client.Barrier;
 import org.rstudio.core.client.BrowseCap;
-import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.Barrier.Token;
@@ -223,8 +222,19 @@ public class Application implements ApplicationEventHandlers
             Debug.logError(error);
             dismissLoadingProgress.execute();
 
-            globalDisplay_.showErrorMessage("RStudio Initialization Error",
-                                            error.getUserMessage());
+            if (!StringUtil.isNullOrEmpty(error.getRedirectUrl()))
+            {
+               // error is informing us that we should redirect
+               // redirect to the specified URL (as a sub URL of the site's root)
+               String redirectUrl = ApplicationUtils.getHostPageBaseURLWithoutContext(false) + 
+            		   error.getRedirectUrl();
+               navigateWindowWithDelay(redirectUrl);
+            }
+            else
+            {
+               globalDisplay_.showErrorMessage("RStudio Initialization Error",
+                                               error.getUserMessage());
+            }
          }
       };
       
@@ -957,19 +967,16 @@ public class Application implements ApplicationEventHandlers
          commands_.importDatasetFromXLS().remove();
       }
 
-      if (userPrefs_.get().ariaApplicationRole().getValue())
+      Element el = Document.get().getElementById("rstudio_container");
+      if (el == null)
       {
-         Element el = Document.get().getElementById("rstudio_container");
-         if (el == null)
-         {
-            // some satellite windows don't have "rstudio_container"
-            el = view_.getWidget().getElement();
-         }
+         // some satellite windows don't have "rstudio_container"
+         el = view_.getWidget().getElement();
+      }
 
-         // "application" role prioritizes application keyboard handling
-         // over screen-reader shortcuts
-         el.setAttribute("role", "application");
-      } 
+      // "application" role prioritizes application keyboard handling
+      // over screen-reader shortcuts
+      el.setAttribute("role", "application");
 
       // If no project, ensure we show the product-edition title; if there is a project
       // open this was already done

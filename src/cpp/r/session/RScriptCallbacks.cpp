@@ -1,7 +1,7 @@
 /*
  * RScriptCallbacks.cpp
  *
- * Copyright (C) 2009-18 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -17,6 +17,7 @@
 #include <shared_core/SafeConvert.hpp>
 
 #include <r/RExec.hpp>
+#include <r/session/RSession.hpp>
 
 #include "REmbedded.hpp"
 #include "RInit.hpp"
@@ -101,6 +102,9 @@ void RWriteStdout (const char *buf, int buflen, int otype)
 
 void RScriptCleanUp(SA_TYPE saveact, int status, int runLast)
 {
+   rCallbacks().quit();
+   rCallbacks().cleanup(saveact != SA_SUICIDE);
+
    // override save action for script runs
    stdInternalCallbacks()->cleanUp(SA_NOSAVE, status, runLast);
 }

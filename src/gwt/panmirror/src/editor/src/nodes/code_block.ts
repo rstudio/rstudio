@@ -1,7 +1,7 @@
 /*
  * code_block.ts
  *
- * Copyright (C) 2019-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -127,7 +127,6 @@ const extension = (
         { key: BaseKey.ShiftEnter, command: exitCode },
       ];
     },
-
   };
 };
 
@@ -220,7 +219,7 @@ function propsWithLangClass(props: CodeBlockProps) {
   return newProps;
 }
 
-// determine the code block language. if it's an Rmd example (i.e. with `r ''`) and 
+// determine the code block language. if it's an Rmd example (i.e. with `r ''`) and
 // we have rmdExampleHighlight enabled then use the Rmd chunk language for highlighting
 function codeBlockLang(node: ProsemirrorNode, options: EditorOptions) {
   if (node.attrs.classes && node.attrs.classes.length) {
@@ -249,7 +248,7 @@ function codeBlockAttrEdit(pandocExtensions: PandocExtensions, pandocCapabilitie
           }
           if (node.attrs.classes && node.attrs.classes.length) {
             const lang = node.attrs.classes[0];
-            if (pandocCapabilities.highlight_languages.includes(lang)) {
+            if (pandocCapabilities.highlight_languages.includes(lang) || lang === 'tex') {
               tags.push(lang);
             } else {
               tags.push(`.${lang}`);
@@ -264,7 +263,5 @@ function codeBlockAttrEdit(pandocExtensions: PandocExtensions, pandocCapabilitie
     }
   };
 }
-
-
 
 export default extension;

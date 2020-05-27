@@ -1,7 +1,7 @@
 /*
  * RemoteServerEventListener.java
  *
- * Copyright (C) 2009-12 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -60,6 +60,14 @@ class RemoteServerEventListener
       listenErrorCount_ = 0;
       isListening_ = false;
       sessionWasQuit_ = false;
+
+      listenTimer_ = new Timer() {
+         @Override
+         public void run()
+         {
+            doListen();
+         }
+      };
       
       // we take the liberty of stopping ourselves if the window is on 
       // the verge of being closed. this allows us to prevent the scenario:
@@ -127,7 +135,8 @@ class RemoteServerEventListener
    }
      
    public void stop()
-   {        
+   {
+      listenTimer_.cancel();
       isListening_ = false;
       listenCount_ = 0;
       if (activeRequestCallback_ != null)
@@ -230,15 +239,8 @@ class RemoteServerEventListener
       int bounceMs = 1;
       if (++listenCount_ == 2)
          bounceMs = kSecondListenBounceMs;
-      
-      Timer listenTimer = new Timer() {
-         @Override
-         public void run()
-         {
-            doListen();
-         }
-      };
-      listenTimer.schedule(bounceMs);
+
+      listenTimer_.schedule(bounceMs);
    }
    
    private void doListen()
@@ -255,6 +257,11 @@ class RemoteServerEventListener
          {
             // keep watchdog appraised of successful receipt of events
             watchdog_.cancel();
+
+            // if we were cancelled (such as if we called stop), do not attempt to process the events
+            // and do not attempt to start listening again (until an explicit call to start is made)
+            if (cancelled())
+               return;
             
             try
             {
@@ -461,6 +468,7 @@ class RemoteServerEventListener
    // unnecessarily during a listen delay
    private final int kWatchdogIntervalMs = 1000;
    private final int kSecondListenBounceMs = 250;
+   private Timer listenTimer_;
        
    private boolean isListening_;
    private int lastEventId_;

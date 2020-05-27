@@ -1,7 +1,7 @@
 /*
  * empty_mark.ts
  *
- * Copyright (C) 2019-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -21,35 +21,33 @@ import { Extension } from '../api/extension';
 import { getMarkRange } from '../api/mark';
 
 const extension: Extension = {
-
   appendTransaction: (schema: Schema) => {
-
-   return [
-     {
-       name: 'clear_empty_mark',
-       append: (tr: Transaction, transactions: Transaction[], _oldState: EditorState, newState: EditorState) => {
-        
-          // if we have an empty selection 
+    return [
+      {
+        name: 'clear_empty_mark',
+        append: (tr: Transaction, transactions: Transaction[], _oldState: EditorState, newState: EditorState) => {
+          // if we have an empty selection
           if (newState.selection.empty) {
             // if the last change removed text
-            const removedText = transactions.some(transaction => transaction.steps.some(step => {
-              return step instanceof ReplaceStep && (step as any).slice.content.size === 0;
-            }));
+            const removedText = transactions.some(transaction =>
+              transaction.steps.some(step => {
+                return step instanceof ReplaceStep && (step as any).slice.content.size === 0;
+              }),
+            );
             if (removedText) {
               // if there is a stored mark w/ 0 range then remove it
               newState.storedMarks?.forEach(mark => {
                 const markRange = getMarkRange(tr.doc.resolve(tr.selection.from), mark.type);
                 if (!markRange || markRange.from === markRange.to) {
                   tr.removeStoredMark(mark);
-                } 
+                }
               });
             }
           }
-       },
-     },
-   ];
- },
-
+        },
+      },
+    ];
+  },
 };
 
 export default extension;

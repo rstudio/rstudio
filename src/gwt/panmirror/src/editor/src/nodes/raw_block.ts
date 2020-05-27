@@ -1,7 +1,7 @@
 /*
  * raw_block.ts
  *
- * Copyright (C) 2019-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -45,7 +45,6 @@ const extension = (
   pandocCapabilities: PandocCapabilities,
   ui: EditorUI,
 ): Extension | null => {
-
   const rawAttribute = pandocExtensions.raw_attribute;
 
   return {
@@ -97,8 +96,8 @@ const extension = (
         attr_edit: () => ({
           type: (schema: Schema) => schema.nodes.raw_block,
           tags: (node: ProsemirrorNode) => [node.attrs.format],
-          editFn: rawAttribute 
-            ? (() => editRawBlockCommand(ui, pandocCapabilities.output_formats)) 
+          editFn: rawAttribute
+            ? () => editRawBlockCommand(ui, pandocCapabilities.output_formats)
             : () => (state: EditorState) => false,
         }),
 
@@ -124,7 +123,6 @@ const extension = (
               output.writeToken(PandocTokenType.Para, () => {
                 output.writeRawMarkdown(node.textContent);
               });
-           
             } else {
               output.writeToken(PandocTokenType.RawBlock, () => {
                 output.write(node.attrs.format);
@@ -144,7 +142,7 @@ const extension = (
       if (pandocExtensions.raw_tex) {
         commands.push(new FormatRawBlockCommand(EditorCommandId.TexBlock, kTexFormat, schema.nodes.raw_block));
       }
-    
+
       if (rawAttribute) {
         commands.push(new RawBlockCommand(ui, pandocCapabilities.output_formats));
       }

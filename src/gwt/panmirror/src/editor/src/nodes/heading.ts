@@ -1,7 +1,7 @@
 /*
  * heading.ts
  *
- * Copyright (C) 2019-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -144,7 +144,7 @@ const extension = (
           schema.nodes.heading,
           match => ({
             level: match[1].length,
-            navigation_id: uuidv4()
+            navigation_id: uuidv4(),
           }),
         ),
       ];
@@ -157,7 +157,7 @@ class HeadingCommand extends BlockCommand {
   public readonly level: number;
 
   constructor(schema: Schema, id: EditorCommandId, level: number) {
-    super(id, ['Shift-Ctrl-' + level], schema.nodes.heading, schema.nodes.paragraph, { level });
+    super(id, ['Mod-Alt-' + level], schema.nodes.heading, schema.nodes.paragraph, { level });
     this.nodeType = schema.nodes.heading;
     this.level = level;
   }

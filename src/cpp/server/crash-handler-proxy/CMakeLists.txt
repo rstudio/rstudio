@@ -1,7 +1,7 @@
 #
 # CMakeLists.txt
 #
-# Copyright (C) 2019 by RStudio, PBC
+# Copyright (C) 2020 by RStudio, PBC
 #
 
 project (CRASH_HANDLER_PROXY)

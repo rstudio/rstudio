@@ -1,7 +1,7 @@
 /*
  * shortcode.ts
  *
- * Copyright (C) 2019-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,25 +14,19 @@
  */
 
 import { Schema, Node as ProsemirrorNode, Mark, Fragment } from 'prosemirror-model';
-import { Transaction, EditorState } from 'prosemirror-state';
-import { toggleMark } from 'prosemirror-commands';
+import { Transaction } from 'prosemirror-state';
 
-import { setTextSelection, findChildren, findChildrenByMark } from 'prosemirror-utils';
+import { findChildren } from 'prosemirror-utils';
 
 import { Extension } from '../api/extension';
 import { PandocExtensions, PandocOutput } from '../api/pandoc';
 import { PandocCapabilities } from '../api/pandoc_capabilities';
 import { EditorUI } from '../api/ui';
-import { detectAndApplyMarks, removeInvalidatedMarks, getMarkRange } from '../api/mark';
+import { detectAndApplyMarks, removeInvalidatedMarks } from '../api/mark';
 import { MarkTransaction } from '../api/transaction';
-import { EditorFormat, kBlogdownDocType } from '../api/format';
-import { ProsemirrorCommand, EditorCommandId } from '../api/command';
-import { canInsertNode } from '../api/node';
+import { EditorFormat } from '../api/format';
 import { FixupContext } from '../api/fixup';
-import { fancyQuotesToSimple } from '../api/quote';
-
-const kShortcodePattern = '(?:^|[^`])({{([%<])\\s+.*?[%>]}})';
-const kShortcodeRegEx = new RegExp(kShortcodePattern, 'g');
+import { kShortcodeRegEx } from '../api/shortcode';
 
 const extension = (
   _exts: PandocExtensions,
@@ -107,65 +101,20 @@ const extension = (
         },
       ];
     },
-
-    commands: (schema: Schema) => {
-      // only create command for blogdown docs
-      if (!format.docTypes.includes(kBlogdownDocType)) {
-        return [];
-      }
-
-      return [
-        new ProsemirrorCommand(
-          EditorCommandId.Shortcode,
-          [],
-          (state: EditorState, dispatch?: (tr: Transaction<any>) => void) => {
-            // enable/disable command
-            if (!canInsertNode(state, schema.nodes.text) || !toggleMark(schema.marks.shortcode)(state)) {
-              return false;
-            }
-            if (dispatch) {
-              const tr = state.tr;
-              const selection = tr.selection;
-              const shortcode = '{{<  >}}';
-              tr.replaceSelectionWith(schema.text(shortcode));
-              setTextSelection(tr.mapping.map(selection.head) - shortcode.length / 2)(tr);
-              dispatch(tr);
-            }
-            return true;
-          },
-        ),
-      ];
-    },
   };
 };
 
 function detectAndCreateShortcodes(schema: Schema, tr: MarkTransaction, pos: number) {
- 
   // apply marks wherever they belong
   detectAndApplyMarks(
-    tr, 
-    tr.doc.nodeAt(pos)!, 
-    pos, 
-    kShortcodeRegEx, 
+    tr,
+    tr.doc.nodeAt(pos)!,
+    pos,
+    kShortcodeRegEx,
     schema.marks.shortcode,
     () => ({}),
-    match => match[1]
+    match => match[1],
   );
-
-  // remove quotes as necessary
-  const markType = schema.marks.shortcode;
-  const markedNodes = findChildrenByMark(tr.doc.nodeAt(pos)!, markType, true);
-  markedNodes.forEach(markedNode => {
-    const from = pos + 1 + markedNode.pos;
-    const markedRange = getMarkRange(tr.doc.resolve(from), markType);
-    if (markedRange) {
-      const text = tr.doc.textBetween(markedRange.from, markedRange.to);
-      const replaceText = fancyQuotesToSimple(text);
-      if (replaceText !== text) {
-        tr.insertText(replaceText, markedRange.from);
-      }
-    }
-  });
 }
 
 export default extension;

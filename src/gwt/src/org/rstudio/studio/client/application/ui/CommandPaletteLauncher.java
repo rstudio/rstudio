@@ -15,18 +15,23 @@
 
 package org.rstudio.studio.client.application.ui;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.command.ShortcutManager;
 import org.rstudio.core.client.widget.ModalPopupPanel;
 import org.rstudio.studio.client.workbench.addins.AddinsCommandManager;
 import org.rstudio.studio.client.workbench.commands.Commands;
+import org.rstudio.studio.client.workbench.views.source.Source;
 
 import com.google.gwt.aria.client.Roles;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 import com.google.inject.Singleton;
 
 @Singleton
@@ -45,11 +50,13 @@ public class CommandPaletteLauncher implements CommandPalette.Host
    @Inject 
    public CommandPaletteLauncher(Commands commands,
          AddinsCommandManager addins,
+         Provider<Source> pSource,
          Binder binder)
    {
       binder.bind(commands, this);
       addins_ = addins;
       commands_ = commands;
+      pSource_ = pSource;
       showing_ = false;
       state_ = State.Uninitialized;
    }
@@ -64,8 +71,12 @@ public class CommandPaletteLauncher implements CommandPalette.Host
          return;
       }
 
+      // extra sources (currently only the source tab)
+      List<CommandPaletteEntrySource> extraSources = new ArrayList<CommandPaletteEntrySource>();
+      extraSources.add(pSource_.get());
+      
       // Create the command palette widget
-      palette_ = new CommandPalette(commands_, addins_.getRAddins(), 
+      palette_ = new CommandPalette(commands_, addins_.getRAddins(), extraSources,
             ShortcutManager.INSTANCE, this);
       
       if (state_ == State.Initialized)
@@ -156,4 +167,5 @@ public class CommandPaletteLauncher implements CommandPalette.Host
 
    private final Commands commands_;
    private final AddinsCommandManager addins_;
+   private final Provider<Source> pSource_;
 }

@@ -1,7 +1,7 @@
 /*
  * styles.css
  *
- * Copyright (C) 2019-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -15,6 +15,10 @@
 
 .pm-editing-root-node {
   padding: 0 10px;
+}
+
+.body > .pm-content {
+  padding-bottom: 100px;
 }
 
 .pm-content {
@@ -75,12 +79,11 @@ h4.pm-heading {
 
 .pm-code, 
 .pm-span {
-  padding: 0 3px;
+  padding: 0 1px;
 }
 
 .pm-code {
   border: 1px solid;
-  border-radius: 4px;
 }
 
 .pm-div {
@@ -199,7 +202,7 @@ h4.pm-heading {
   margin-block-end: 1em;
 }
 .pm-popup {
-  border-radius: 8px;
+  border-radius: 3px;
   border-style: solid;
   border-width: 1px;
   padding: 10px;

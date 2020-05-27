@@ -1,7 +1,7 @@
 /*
  * pandoc_from_prosemirror.ts
  *
- * Copyright (C) 2019-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -126,7 +126,7 @@ class PandocWriter implements PandocOutput {
     this.write(token);
   }
 
-  public writeMark(type: PandocTokenType, parent: Fragment, expelEnclosingWhitespace = false) {
+  public writeMark(type: PandocTokenType, parent: Fragment, expelEnclosingWhitespace = true) {
     // expel enclosing whitepsace if requested and if the fragment isn't 100% spaces
     if (expelEnclosingWhitespace) {
       // build output spec
@@ -150,12 +150,12 @@ class PandocWriter implements PandocOutput {
           }
 
           // check for trailing space in last node
-          if ((index === parent.childCount - 1) && node.textContent.match(/\s+$/)) {
+          if (index === parent.childCount - 1 && node.textContent.match(/\s+$/)) {
             output.spaceAfter = true;
             outputText = outputText.trimRight();
           }
 
-          // check for an entirely blank node 
+          // check for an entirely blank node
           if (outputText.match(/^\s*$/)) {
             outputText = '';
           }
@@ -167,8 +167,8 @@ class PandocWriter implements PandocOutput {
               output.nodes.push(node.type.schema.text(outputText, node.marks));
             } else {
               output.nodes.push(node);
-            } 
-          } 
+            }
+          }
         } else {
           output.nodes.push(node);
         }
@@ -201,7 +201,7 @@ class PandocWriter implements PandocOutput {
     this.write(arr);
   }
 
-  public writeAttr(id?: string, classes?: string[], keyvalue?: string[]) {
+  public writeAttr(id?: string, classes?: string[], keyvalue?: [[string, string]]) {
     this.write([id || '', classes || [], keyvalue || []]);
   }
 
@@ -257,7 +257,6 @@ class PandocWriter implements PandocOutput {
   }
 
   public writeNote(note: ProsemirrorNode) {
-
     // get corresponding note body
     const noteBody = this.notes[note.attrs.ref];
 
@@ -267,7 +266,6 @@ class PandocWriter implements PandocOutput {
         this.writeNodes(noteBody);
       });
     }
-
   }
 
   public writeNode(node: ProsemirrorNode) {
@@ -396,9 +394,10 @@ class PandocWriter implements PandocOutput {
   private initEscapeCharacters() {
     // gfm disallows [] escaping so that MediaWiki style page links (e.g. [[MyPage]]) work as expected
     // tex_math_single_backslash does not allow escaping of [] or () (as that conflicts with the math syntax)
-    if (this.format.baseName === kGfmFormat || this.format.extensions.tex_math_single_backslash) {
+    if (this.format.mode === kGfmFormat || this.format.extensions.tex_math_single_backslash) {
       this.preventEscapeCharacters.push('[', ']');
     }
+
     // tex_math_single_backslash does not allow escaping of [] or () (as that conflicts with the math syntax)
     if (this.format.extensions.tex_math_single_backslash) {
       this.preventEscapeCharacters.push('(', ')');

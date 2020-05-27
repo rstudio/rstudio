@@ -33,6 +33,12 @@ findLibSegFault()
 
 runWatchdogProcess()
 {
+   if [[ "$OSTYPE" == "darwin"* ]]; then
+      # requires brew install coreutils
+      TIMEOUT_CMD=gtimeout
+   else
+      TIMEOUT_CMD=timeout
+   fi
    timeout=$1
    privileged=$2
    command=$3
@@ -42,10 +48,19 @@ runWatchdogProcess()
    arg4=$7
    arg5=$8
 
-   if [ "$privileged" = true ]; then
-      sudo timeout --foreground $timeout /bin/bash -c "LD_PRELOAD=$RSESSION_DIAGNOSTICS_LIBSEGFAULT $VALGRIND $command $arg1 $arg2 $arg3 $arg4 $arg5;exit"
+   # centos6 doesn't support the --foreground option for timeout
+   if [ "$OPERATING_SYSTEM" = "centos_6" ]; then
+      if [ "$privileged" = true ]; then
+         sudo /bin/bash -c "LD_PRELOAD=$RSESSION_DIAGNOSTICS_LIBSEGFAULT $VALGRIND $command $arg1 $arg2 $arg3 $arg4 $arg5;exit"
+      else
+         /bin/bash -c "LD_PRELOAD=$RSESSION_DIAGNOSTICS_LIBSEGFAULT $VALGRIND $command $arg1 $arg2 $arg3 $arg4 $arg5;exit"
+      fi
    else
-      timeout --foreground $timeout /bin/bash -c "LD_PRELOAD=$RSESSION_DIAGNOSTICS_LIBSEGFAULT $VALGRIND $command $arg1 $arg2 $arg3 $arg4 $arg5;exit"
+      if [ "$privileged" = true ]; then
+         sudo $TIMEOUT_CMD --foreground $timeout /bin/bash -c "LD_PRELOAD=$RSESSION_DIAGNOSTICS_LIBSEGFAULT $VALGRIND $command $arg1 $arg2 $arg3 $arg4 $arg5;exit"
+      else
+         $TIMEOUT_CMD --foreground $timeout /bin/bash -c "LD_PRELOAD=$RSESSION_DIAGNOSTICS_LIBSEGFAULT $VALGRIND $command $arg1 $arg2 $arg3 $arg4 $arg5;exit"
+      fi
    fi
 
    RETCODE=$?

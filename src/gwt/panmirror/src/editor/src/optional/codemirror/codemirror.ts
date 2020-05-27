@@ -1,7 +1,7 @@
 /*
  * codemirror.ts
  *
- * Copyright (C) 2019-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -53,7 +53,11 @@ import './codemirror.css';
 
 const plugin = new PluginKey('codemirror');
 
-export function codeMirrorPlugins(codeViews: { [key: string]: CodeViewOptions }, ui: EditorUI, options: EditorOptions) {
+export function codeMirrorPlugins(
+  codeViews: { [key: string]: CodeViewOptions },
+  ui: EditorUI,
+  options: EditorOptions,
+): Plugin[] {
   // build nodeViews
   const nodeTypes = Object.keys(codeViews);
   const nodeViews: {
@@ -97,7 +101,14 @@ class CodeBlockNodeView implements NodeView {
   private incomingChanges: boolean;
   private updating: boolean;
 
-  constructor(node: ProsemirrorNode, view: EditorView, getPos: () => number, ui: EditorUI, editorOptions: EditorOptions, options: CodeViewOptions) {
+  constructor(
+    node: ProsemirrorNode,
+    view: EditorView,
+    getPos: () => number,
+    ui: EditorUI,
+    editorOptions: EditorOptions,
+    options: CodeViewOptions,
+  ) {
     // Store for later
     this.node = node;
     this.view = view;
@@ -136,7 +147,7 @@ class CodeBlockNodeView implements NodeView {
     // add a chunk execution button if execution is supported
     this.runChunkToolbar = this.initRunChunkToolbar(ui);
     this.dom.append(this.runChunkToolbar);
-  
+
     // update mode
     this.updateMode();
 
@@ -259,7 +270,6 @@ class CodeBlockNodeView implements NodeView {
   }
 
   private updateMode() {
-
     // get lang
     const lang = this.options.lang(this.node, this.cm.getValue());
 
@@ -309,7 +319,7 @@ class CodeBlockNodeView implements NodeView {
       'Ctrl-Enter': exitBlock,
       'Shift-Enter': exitBlock,
       [`${mod}-Enter`]: exitBlock,
-      [`${mod}-\\`]: () => insertParagraph(view.state, view.dispatch ),
+      [`${mod}-\\`]: () => insertParagraph(view.state, view.dispatch),
       F4: () => {
         return this.options.attrEditFn ? this.options.attrEditFn(view.state, view.dispatch, view) : CodeMirror.Pass;
       },
@@ -354,11 +364,9 @@ class CodeBlockNodeView implements NodeView {
   }
 
   private initRunChunkToolbar(ui: EditorUI) {
-
     const toolbar = window.document.createElement('div');
     toolbar.classList.add('pm-codemirror-toolbar');
     if (this.options.executeRmdChunkFn) {
-
       // run previous chunks button
       const runPreivousChunkShortcut = kPlatformMac ? '⌥⌘P' : 'Ctrl+Alt+P';
       const runPreviousChunksButton = createImageButton(
@@ -436,7 +444,7 @@ function computeChange(oldVal: string, newVal: string) {
   };
 }
 
-function arrowHandler(dir: 'up' | 'down' | 'left' | 'right' | 'forward' | 'backward', nodeTypes: string[]) {
+function arrowHandler(dir: 'up' | 'down' | 'left' | 'right', nodeTypes: string[]) {
   return (state: EditorState, dispatch?: (tr: Transaction<any>) => void, view?: EditorView) => {
     if (state.selection.empty && view && view.endOfTextblock(dir)) {
       const side = dir === 'left' || dir === 'up' ? -1 : 1;

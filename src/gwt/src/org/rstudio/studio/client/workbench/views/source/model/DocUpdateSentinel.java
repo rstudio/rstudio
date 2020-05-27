@@ -1,7 +1,7 @@
 /*
  * DocUpdateSentinel.java
  *
- * Copyright (C) 2009-19 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -722,23 +722,37 @@ public class DocUpdateSentinel
       }
    }
    
-   public void suspendAutosave(boolean value)
+   public void withChangeDetectionSuspended(Command command)
    {
-      suspendAutosave_ = value;
+      try
+      {
+         suspendDetectChanges_ += 1;
+         command.execute();
+      }
+      finally
+      {
+         suspendDetectChanges_ -= 1;
+      }
    }
    
    public void onValueChange(ValueChangeEvent<Void> voidValueChangeEvent)
    {
+      if (suspendDetectChanges_ > 0)
+         return;
+      
       changesPending_ = true;
-      if (autosaver_ != null && !suspendAutosave_)
+      if (autosaver_ != null)
          autosaver_.nudge();
    }
 
    @Override
    public void onFoldChange(FoldChangeEvent event)
    {
+      if (suspendDetectChanges_ > 0)
+         return;
+      
       changesPending_ = true;
-      if (autosaver_ != null && !suspendAutosave_)
+      if (autosaver_ != null)
          autosaver_.nudge();
    }
    
@@ -838,7 +852,7 @@ public class DocUpdateSentinel
       }
    }
    
-   private boolean suspendAutosave_ = false;
+   private int suspendDetectChanges_ = 0;
    private boolean changesPending_ = false;
    private final ChangeTracker changeTracker_;
    private final SourceServerOperations server_;

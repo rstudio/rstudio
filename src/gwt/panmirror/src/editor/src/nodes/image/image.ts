@@ -1,7 +1,7 @@
 /*
  * image.ts
  *
- * Copyright (C) 2019-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,9 +14,10 @@
  */
 
 import { Node as ProsemirrorNode, Schema, DOMOutputSpec } from 'prosemirror-model';
-import { EditorState, NodeSelection, Transaction, Plugin, PluginKey } from 'prosemirror-state';
-import { EditorView, DecorationSet } from 'prosemirror-view';
+import { EditorState, NodeSelection, Transaction } from 'prosemirror-state';
+import { EditorView } from 'prosemirror-view';
 
+import { PandocCapabilities } from '../../api/pandoc_capabilities';
 import { ProsemirrorCommand, EditorCommandId } from '../../api/command';
 import { Extension } from '../../api/extension';
 import { canInsertNode } from '../../api/node';
@@ -45,11 +46,11 @@ import { EditorEvents } from '../../api/events';
 import { EditorFormat } from '../../api/format';
 
 import { imageDialog } from './image-dialog';
-import { imageDrop } from './image-events';
-import { ImageNodeView } from './image-view';
 import { imageDimensionsFromImg, imageContainerWidth, inlineHTMLIsImage } from './image-util';
-import { PandocCapabilities } from '../../api/pandoc_capabilities';
-import { imageTextSelectionInit, imageTextSelectionApply } from './image-textsel';
+import { imageTextSelectionPlugin } from './image-textsel';
+import { posHasProhibitedFigureParent } from './figure';
+import { imageEventsPlugin } from './image-events';
+import { imageNodeViewPlugins } from './image-view';
 
 const TARGET_URL = 0;
 const TARGET_TITLE = 1;
@@ -57,8 +58,6 @@ const TARGET_TITLE = 1;
 const IMAGE_ATTR = 0;
 const IMAGE_ALT = 1;
 const IMAGE_TARGET = 2;
-
-const pluginKey = new PluginKey<DecorationSet>('image');
 
 const extension = (
   pandocExtensions: PandocExtensions,
@@ -101,6 +100,11 @@ const extension = (
           inlineHTMLReader: pandocExtensions.raw_html ? imageInlineHTMLReader : undefined,
           writer: imagePandocOutputWriter(false, ui),
         },
+
+        attr_edit: () => ({
+          type: (schema: Schema) => schema.nodes.image,
+          editFn: () => imageCommand(ui, imageAttr),
+        }),
       },
     ],
 
@@ -110,30 +114,9 @@ const extension = (
 
     plugins: (schema: Schema) => {
       return [
-        new Plugin<DecorationSet>({
-          key: pluginKey,
-          state: {
-            init(_config: { [key: string]: any }, instance: EditorState) {
-              return imageTextSelectionInit(instance);
-            },
-            apply(tr: Transaction, set: DecorationSet, oldState: EditorState, newState: EditorState) {
-              return imageTextSelectionApply(tr, set, oldState, newState);
-            },
-          },
-          props: {
-            nodeViews: {
-              image(node: ProsemirrorNode, view: EditorView, getPos: boolean | (() => number)) {
-                return new ImageNodeView(node, view, getPos as () => number, ui, events, pandocExtensions);
-              },
-            },
-            handleDOMEvents: {
-              drop: imageDrop(),
-            },
-            decorations(state: EditorState) {
-              return pluginKey.getState(state);
-            },
-          },
-        }),
+        imageTextSelectionPlugin(),
+        imageEventsPlugin(),
+        ...imageNodeViewPlugins('image', ui, events, pandocExtensions),
       ];
     },
   };
@@ -289,7 +272,7 @@ export function imageAttrsFromHTML(html: string) {
   }
 }
 
-function imageCommand(editorUI: EditorUI, imageAttributes: boolean) {
+export function imageCommand(editorUI: EditorUI, imageAttributes: boolean) {
   return (state: EditorState, dispatch?: (tr: Transaction<any>) => void, view?: EditorView) => {
     const schema = state.schema;
 
@@ -320,7 +303,10 @@ function imageCommand(editorUI: EditorUI, imageAttributes: boolean) {
       }
 
       // see if we are in an empty paragraph (in that case insert a figure)
-      if (selectionIsEmptyParagraph(schema, state.selection)) {
+      if (
+        selectionIsEmptyParagraph(schema, state.selection) &&
+        !posHasProhibitedFigureParent(schema, state.selection.$head)
+      ) {
         nodeType = schema.nodes.figure;
       }
 

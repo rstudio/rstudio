@@ -117,6 +117,11 @@
   resolved "https://registry.yarnpkg.com/@types/estree/-/estree-0.0.42.tgz#8d0c1f480339efedb3e46070e22dd63e0430dd11"
   integrity sha512-K1DPVvnBCPxzD+G51/cxVIoc2X8uUVl1zpJeE6iKcgHMj4+tbat5Xu4TjV7v2QSDbIeAfLi2hIk+u2+s0MlpUQ==
 
+"@types/js-yaml@^3.12.3":
+  version "3.12.3"
+  resolved "https://registry.yarnpkg.com/@types/js-yaml/-/js-yaml-3.12.3.tgz#abf383c5b639d0aa8b8c4a420d6a85f703357d6c"
+  integrity sha512-otRe77JNNWzoVGLKw8TCspKswRoQToys4tuL6XYVBFxjgeM0RUrx7m3jkaTdxILxeGry3zM8mGYkGXMeQ02guA==
+
 "@types/orderedmap@*", "@types/orderedmap@^1.0.0":
   version "1.0.0"
   resolved "https://registry.yarnpkg.com/@types/orderedmap/-/orderedmap-1.0.0.tgz#807455a192bba52cbbb4517044bc82bdbfa8c596"
@@ -239,15 +244,6 @@
   version "1.11.2"
   resolved "https://registry.yarnpkg.com/@types/prosemirror-view/-/prosemirror-view-1.11.2.tgz#58af5dcb7de20b7de874de99147552d5627209a1"
   integrity sha512-EKcQmR4KdkFZU13wS5pWrkSojRCPGqz/l/uzpZFfW5cgdr7fQsftf2/ttvIjpk1a94ISifEY4UZwflVJ+uL4Rg==
-  dependencies:
-    "@types/prosemirror-model" "*"
-    "@types/prosemirror-state" "*"
-    "@types/prosemirror-transform" "*"
-
-"@types/prosemirror-view@^1.11.4":
-  version "1.11.4"
-  resolved "https://registry.yarnpkg.com/@types/prosemirror-view/-/prosemirror-view-1.11.4.tgz#580f5044fc600c79e199dfb56bf988028422c4e4"
-  integrity sha512-Hh8v2tpCEMaIesQuw7Y7Pz6imoC1T/bR5OlNGVtp944PZvctXiBvFRkQIb0YvZpt7vVkFzeq2kmR+7mnUfvWiw==
   dependencies:
     "@types/prosemirror-model" "*"
     "@types/prosemirror-state" "*"

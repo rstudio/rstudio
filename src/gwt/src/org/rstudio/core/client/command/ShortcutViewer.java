@@ -1,7 +1,7 @@
 /*
  * ShortcutViewer.java
  *
- * Copyright (C) 2009-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -76,7 +76,7 @@ public class ShortcutViewer implements NativePreviewHandler
             openApplicationURL("docs/keyboard.htm");
       };
 
-      if (pPrefs_.get().getScreenReaderEnabled())
+      if (pPrefs_.get().enableScreenReader().getValue())
          showAllShortcutsPage.execute();
       else
          showShortcutInfoPanel(new ShortcutInfoPanel(showAllShortcutsPage));
@@ -89,7 +89,7 @@ public class ShortcutViewer implements NativePreviewHandler
       {
          return;
       }
-      if (pPrefs_.get().getScreenReaderEnabled())
+      if (pPrefs_.get().enableScreenReader().getValue())
       {
          pAriaLive_.get().announce(AriaLiveService.INACCESSIBLE_FEATURE,
                "Vim keyboard shortcut help not screen reader accessible. Press any key to close.",

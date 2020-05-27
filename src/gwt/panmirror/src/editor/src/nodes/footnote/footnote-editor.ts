@@ -1,7 +1,7 @@
 /*
  * footnote-editor.ts
  *
- * Copyright (C) 2019-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -18,12 +18,10 @@ import { EditorView, DecorationSet, NodeView } from 'prosemirror-view';
 import { findParentNodeOfType, NodeWithPos, findChildrenByType, findChildren } from 'prosemirror-utils';
 import { EditorState, TextSelection, Plugin, PluginKey, Transaction } from 'prosemirror-state';
 
-import zenscroll from 'zenscroll';
-
 import { nodeDecoration } from '../../api/decoration';
-import { firstNode, lastNode, editingRootScrollContainerElement } from '../../api/node';
+import { firstNode, lastNode } from '../../api/node';
 import { selectionIsWithin } from '../../api/selection';
-import { bodyElement } from '../../api/dom';
+import { scrollIntoView } from '../../api/scroll';
 
 import { findFootnoteNode, selectedFootnote, selectedNote } from './footnote';
 
@@ -64,16 +62,11 @@ export function footnoteEditorActivationPlugin() {
         if (note) {
           const footnote = findFootnoteNode(view.state.doc, note.node.attrs.ref);
           if (footnote) {
-            const footnoteEl = view.nodeDOM(footnote.pos);
-            if (footnoteEl) {
-              const body = bodyElement(view);
-              const scroller = zenscroll.createScroller(body, 0, 30);
-              scroller.intoView(footnoteEl as HTMLElement);
-            }
+            scrollIntoView(view, footnote.pos, false, 0, 30);
           }
         }
-      }
-    })
+      },
+    }),
   });
 }
 

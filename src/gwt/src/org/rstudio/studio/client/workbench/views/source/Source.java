@@ -1,7 +1,7 @@
 /*
  * Source.java
  *
- * Copyright (C) 2009-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -52,6 +52,8 @@ import org.rstudio.studio.client.application.AriaLiveService;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.AriaLiveStatusEvent.Severity;
 import org.rstudio.studio.client.application.events.AriaLiveStatusEvent.Timing;
+import org.rstudio.studio.client.application.ui.CommandPaletteEntry;
+import org.rstudio.studio.client.application.ui.CommandPaletteEntrySource;
 import org.rstudio.studio.client.application.events.CrossWindowEvent;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.FileDialogs;
@@ -119,13 +121,19 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.ui.NewRdDia
 import org.rstudio.studio.client.workbench.views.source.events.*;
 import org.rstudio.studio.client.workbench.views.source.model.*;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Queue;
+import java.util.Set;
 
 @Singleton
 public class Source implements InsertSourceHandler,
                                IsWidget,
                                OpenSourceFileHandler,
                                OpenPresentationSourceFileHandler,
+                               CommandPaletteEntrySource,
                                FileEditHandler,
                                ShowContentHandler,
                                ShowDataHandler,
@@ -159,7 +167,6 @@ public class Source implements InsertSourceHandler,
                                     HasTabReorderHandlers,
                                     HasBeforeSelectionHandlers<Integer>,
                                     HasSelectionHandlers<Integer>
-                                    
    {
       void addTab(Widget widget,
                   FileIcon icon,
@@ -197,7 +204,7 @@ public class Source implements InsertSourceHandler,
       void manageChevronVisibility();
       void showOverflowPopup();
       void cancelTabDrag();
-      
+
       void onBeforeShow();
       void ensureVisible();
 
@@ -293,7 +300,7 @@ public class Source implements InsertSourceHandler,
          public void onSourcePathChanged(final SourcePathChangedEvent event)
          {
             
-            columnManager_.inEditorForPath(event.getFrom(), 
+            columnManager_.inEditorForPath(event.getFrom(),
                             new OperationWithInput<EditingTarget>()
             {
                @Override
@@ -318,7 +325,7 @@ public class Source implements InsertSourceHandler,
             });
          }
       });
-           
+
       events_.addHandler(SourceNavigationEvent.TYPE, 
                         new SourceNavigationHandler() {
          @Override
@@ -330,7 +337,7 @@ public class Source implements InsertSourceHandler,
             }
          }
       });
-      
+
       events_.addHandler(CollabEditStartedEvent.TYPE, 
             new CollabEditStartedEvent.Handler() 
       {
@@ -355,7 +362,7 @@ public class Source implements InsertSourceHandler,
          @Override
          public void onCollabEditEnded(final CollabEditEndedEvent collab) 
          {
-            columnManager_.inEditorForPath(collab.getPath(), 
+            columnManager_.inEditorForPath(collab.getPath(),
                new OperationWithInput<EditingTarget>()
                {
                   @Override
@@ -386,7 +393,7 @@ public class Source implements InsertSourceHandler,
             events_.fireEvent(new EnsureHeightEvent(EnsureHeightEvent.MAXIMIZED));
          }
       });
-      
+
       events_.addHandler(EnsureVisibleSourceWindowEvent.TYPE, new EnsureVisibleSourceWindowEvent.Handler()
       {
          @Override
@@ -430,14 +437,14 @@ public class Source implements InsertSourceHandler,
       columnManager_.manageCommands(false);
       // Same with this event
       columnManager_.fireDocTabsChanged();
-      
+
       // open project or edit_published docs (only for main source window)
       if (SourceWindowManager.isMainSourceWindow())
       {
          openProjectDocs(session_);
          openEditPublishedDocs();
       }
-      
+
       // add vim commands
       initVimCommands();
    }
@@ -508,7 +515,7 @@ public class Source implements InsertSourceHandler,
            columnManager_.manageCommands(true);
          });
       }
-         
+
       // get the key to use for active tab persistence; use ordinal-based key
       // for source windows rather than their ID to avoid unbounded accumulation
       String activeTabKey = KEY_ACTIVETAB;
@@ -590,6 +597,16 @@ public class Source implements InsertSourceHandler,
             command.execute();
          }
       }
+   }
+
+   // see if there are additional command pallette entries made available
+   // the by the active editor
+   public List<CommandPaletteEntry> getCommandPaletteEntries()
+   {
+      if (activeEditor_ != null)
+         return activeEditor_.getCommandPaletteEntries();
+      else
+         return null;
    }
 
    private boolean consoleEditorHadFocusLast()
@@ -685,7 +702,7 @@ public class Source implements InsertSourceHandler,
       vimCommands_.openPreviousFile(this);
       vimCommands_.addStarRegister();
    }
-   
+
    public Widget asWidget()
    {
      return columnManager_.getActive().asWidget();
@@ -803,7 +820,7 @@ public class Source implements InsertSourceHandler,
                @Override
                public void onExecute(final Command continuation)
                {
-                  columnManager_.openFile(fsi, 
+                  columnManager_.openFile(fsi,
                            fileTypeRegistry_.getTextTypeForFile(fsi), 
                            new CommandWithArg<EditingTarget>() {
                               @Override
@@ -1154,7 +1171,7 @@ public class Source implements InsertSourceHandler,
                      beginDoc + concordanceValue);
             }
             
-            columnManager_.newDoc(FileTypeRegistry.SWEAVE, 
+            columnManager_.newDoc(FileTypeRegistry.SWEAVE,
                   templateContents, 
                   new ResultCallback<EditingTarget, ServerError> () {
                @Override
@@ -1316,8 +1333,8 @@ public class Source implements InsertSourceHandler,
    @Handler
    public void onNewRHTMLDoc()
    {
-      columnManager_.newSourceDocWithTemplate(FileTypeRegistry.RHTML, 
-                                              "", 
+      columnManager_.newSourceDocWithTemplate(FileTypeRegistry.RHTML,
+                                              "",
                                               "default.Rhtml");
    }
    
@@ -1335,7 +1352,7 @@ public class Source implements InsertSourceHandler,
                   public void execute()
                   {
                      columnManager_.newSourceDocWithTemplate(
-                           (TextFileType)FileTypeRegistry.RD, 
+                           (TextFileType)FileTypeRegistry.RD,
                            result.name, 
                            "default.Rd",
                            Position.create(3, 7));
@@ -1358,7 +1375,7 @@ public class Source implements InsertSourceHandler,
                            }
                            else if (result.getContents() != null)
                            {
-                              columnManager_.newDoc(FileTypeRegistry.RD, 
+                              columnManager_.newDoc(FileTypeRegistry.RD,
                                      result.getContents(),
                                      null);
                            }
@@ -1413,7 +1430,7 @@ public class Source implements InsertSourceHandler,
                              @Override
                              public void onSuccess()
                              { 
-                                columnManager_.openFile(input, 
+                                columnManager_.openFile(input,
                                    FileTypeRegistry.RPRESENTATION,
                                    new CommandWithArg<EditingTarget>() {
 
@@ -1435,7 +1452,7 @@ public class Source implements InsertSourceHandler,
             }
       });
    }
-   
+
    @Handler
    public void onFindInFiles()
    {
@@ -1479,7 +1496,7 @@ public class Source implements InsertSourceHandler,
          }
       });
    }
-   
+
    @Override
    public void onPopoutDoc(final PopoutDocEvent e)
    {
@@ -1534,12 +1551,12 @@ public class Source implements InsertSourceHandler,
          {
             if (newDisplay == null)
             {
-               Debug.logWarning("Could not determine new source column."); 
+               Debug.logWarning("Could not determine new source column.");
                return;
             }
             // when we're moving between columns in the main source window
             // we need to set the oldDisplay before we add the new one
-            oldDisplay = e.getOldWindowId() == e.getNewWindowId() ? 
+            oldDisplay = e.getOldWindowId() == e.getNewWindowId() ?
                          columnManager_.findByDocument(e.getDocId()) :
                          columnManager_.getActive();
             // the event doesn't contain the display info, so we add it now
@@ -1594,11 +1611,11 @@ public class Source implements InsertSourceHandler,
          columnManager_.disownDoc(e.getDocId());
       }
    }
-   
+
    @Override
    public void onDocTabDragInitiated(final DocTabDragInitiatedEvent event)
    {
-      columnManager_.inEditorForId(event.getDragParams().getDocId(), 
+      columnManager_.inEditorForId(event.getDragParams().getDocId(),
             new OperationWithInput<EditingTarget>()
       {
          @Override
@@ -1611,7 +1628,7 @@ public class Source implements InsertSourceHandler,
           }
        });
    }
-      
+
    @Override
    public void onPopoutDocInitiated(final PopoutDocInitiatedEvent event)
    {
@@ -1749,13 +1766,13 @@ public class Source implements InsertSourceHandler,
          new SourceColumnManager.CPSEditingTargetCommand()
       {
          @Override
-         public void execute(EditingTarget saveTarget, 
+         public void execute(EditingTarget saveTarget,
                              Command continuation)
-         {         
-            saveTarget.save(continuation); 
+         {
+            saveTarget.save(continuation);
          }
       };
-         
+
       // execute the save
       columnManager_.cpsExecuteForEachEditor(
          
@@ -1769,7 +1786,7 @@ public class Source implements InsertSourceHandler,
          onCompleted
       );          
    }
-   
+
    @Handler
    public void onCloseAllSourceDocs()
    {
@@ -2173,7 +2190,7 @@ public class Source implements InsertSourceHandler,
             new CommandWithArg<EditingTarget>() {
                @Override
                public void execute(final EditingTarget editor)
-               {   
+               {
                   TextEditingTargetPresentationHelper.navigateToSlide(
                                                          editor, 
                                                          event.getSlideIndex());
@@ -2361,7 +2378,7 @@ public class Source implements InsertSourceHandler,
          EditingTarget target = columnManager_.findEditorByPath(file.getPath());
          if (target != null)
          {
-            // the file's open; just update its highlighting 
+            // the file's open; just update its highlighting
             if (navMethod == NavigationMethods.DEBUG_END)
             {
                target.endDebugHighlighting();
@@ -2434,7 +2451,7 @@ public class Source implements InsertSourceHandler,
    {
       return target.asWidget();
    }
-   
+
    public void onInsertSource(final InsertSourceEvent event)
    {
       if (activeEditor_ != null
@@ -2676,7 +2693,7 @@ public class Source implements InsertSourceHandler,
             retryCommand.execute();
       }
    }
-   
+
    @Override
    public void onCodeBrowserNavigation(final CodeBrowserNavigationEvent event)
    {
@@ -2834,17 +2851,17 @@ public class Source implements InsertSourceHandler,
       private final SourcePosition restorePosition_;
       private final AppCommand retryCommand_;
    }
-   
+
    @Override
    public void onSnippetsChanged(SnippetsChangedEvent event)
    {
       SnippetHelper.onSnippetsChanged(event);
    }
-   
+
    public EditingTarget getActiveEditor()
    {
       return activeEditor_;
-   } 
+   }
 
    public SourceServerOperations getServer()
    {
@@ -2966,7 +2983,7 @@ public class Source implements InsertSourceHandler,
          closeEditors.execute();
       }
    }
-   
+
    private void dispatchEditorEvent(final String id,
                                     final CommandWithArg<DocDisplay> command)
    {
@@ -3232,7 +3249,7 @@ public class Source implements InsertSourceHandler,
       }
       docDisplay.focus();
    }
-   
+
    private class StatFileEntry
    {
       public StatFileEntry(FileSystemItem fileIn, 

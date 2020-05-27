@@ -1,7 +1,7 @@
 /*
  * PaneManager.java
  *
- * Copyright (C) 2009-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -275,7 +275,7 @@ public class PaneManager
 
       source_.load();
       loadAdditionalSourceColumns();
-      
+
       PaneConfig config = validateConfig(userPrefs.panes().getValue().cast());
       initPanes(config);
 
@@ -1143,10 +1143,10 @@ public class PaneManager
    {
       // make sure additionalSourceCount_ is up to date
       additionalSourceCount_ = sourceColumnManager_.getSize() - 1;
-      
+
       if (count == additionalSourceCount_)
     	  return additionalSourceCount_;
-      
+
       if (count > additionalSourceCount_)
       {
          int difference = count - additionalSourceCount_;

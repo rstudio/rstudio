@@ -82,7 +82,20 @@ def s3_upload(type, flavor, os, arch) {
 
   // add installer-less tarball if desktop
   if (flavor == "desktop") {
-      sh "aws s3 cp ${buildFolder}/_CPack_Packages/Linux/${type}/*.tar.gz s3://rstudio-ide-build/${flavor}/${os}/${arch}/"
+    def tarballFile = sh (
+      script: "basename `ls ${buildFolder}/_CPack_Packages/Linux/${type}/*.tar.gz`",
+      returnStdout: true
+    ).trim()
+    
+    def renamedTarballFile = sh (
+      script: "echo ${tarballFile} | sed 's/-relwithdebinfo//'",
+      returnStdout: true
+    ).trim()
+
+    sh "mv ${buildFolder}/_CPack_Packages/Linux/${type}/${tarballFile} ${buildFolder}/_CPack_Packages/Linux/${type}/${renamedTarballFile}"
+    tarballFile = renamedTarballFile
+    
+    sh "aws s3 cp ${buildFolder}/_CPack_Packages/Linux/${type}/${tarballFile} s3://rstudio-ide-build/${flavor}/${os}/${arch}/"
   }
 
   // update daily build redirect; currently disabled for 1.3

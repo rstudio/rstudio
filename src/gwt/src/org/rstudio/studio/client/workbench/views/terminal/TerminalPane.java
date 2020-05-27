@@ -1,7 +1,7 @@
 /*
  * TerminalPane.java
  *
- * Copyright (C) 2009-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -1131,7 +1131,7 @@ public class TerminalPane extends WorkbenchPane
       return XTermOptions.create(
             UserPrefsAccessor.TERMINAL_BELL_STYLE_NONE,
             uiPrefs_.blinkingCursor().getValue(),
-            uiPrefs_.getScreenReaderEnabled(),
+            uiPrefs_.enableScreenReader().getValue(),
             uiPrefs_.terminalRenderer().getValue(),
             BrowseCap.isWindowsDesktop(),
             XTermTheme.terminalThemeFromEditorTheme(),

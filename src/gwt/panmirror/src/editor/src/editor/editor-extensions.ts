@@ -1,7 +1,7 @@
 /*
  * editor-extensions.ts
  *
- * Copyright (C) 2019-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -66,12 +66,14 @@ import behaviorFind from '../behaviors/find';
 import behaviorClearFormatting from '../behaviors/clear_formatting';
 
 // behaviors
-import behaviorSmarty from '../behaviors/smarty';
+import behaviorSmarty, { reverseSmartQuotesExtension } from '../behaviors/smarty';
 import behaviorAttrDuplicateId from '../behaviors/attr_duplicate_id';
 import behaviorTrailingP from '../behaviors/trailing_p';
 import behaviorEmptyMark from '../behaviors/empty_mark';
 import behaviorOutline from '../behaviors/outline';
 import beahviorCodeBlockInput from '../behaviors/code_block_input';
+import behaviorPasteText from '../behaviors/paste_text';
+import behaviorBottomPadding from '../behaviors/bottom_padding';
 
 // marks
 import markStrikeout from '../marks/strikeout';
@@ -88,6 +90,7 @@ import markSpan from '../marks/span';
 import markXRef from '../marks/xref';
 import markHTMLComment from '../marks/raw_inline/raw_html_comment';
 import markShortcode from '../marks/shortcode';
+import markEmoji from '../marks/emoji';
 
 // nodes
 import nodeFootnote from '../nodes/footnote/footnote';
@@ -98,6 +101,7 @@ import nodeDiv from '../nodes/div';
 import nodeLineBlock from '../nodes/line_block';
 import nodeTable from '../nodes/table/table';
 import nodeDefinitionList from '../nodes/definition_list/definition_list';
+import nodeShortcodeBlock from '../nodes/shortcode_block';
 
 // extension/plugin factories
 import { codeMirrorPlugins } from '../optional/codemirror/codemirror';
@@ -148,6 +152,8 @@ export function initExtensions(
     behaviorEmptyMark,
     behaviorOutline,
     beahviorCodeBlockInput,
+    behaviorPasteText,
+    behaviorBottomPadding,
 
     // nodes
     nodeDiv,
@@ -158,6 +164,7 @@ export function initExtensions(
     nodeDefinitionList,
     nodeLineBlock,
     nodeRawBlock,
+    nodeShortcodeBlock,
 
     // marks
     markStrikeout,
@@ -174,6 +181,7 @@ export function initExtensions(
     markXRef,
     markHTMLComment,
     markShortcode,
+    markEmoji,
   ]);
 
   // register external extensions
@@ -183,7 +191,10 @@ export function initExtensions(
 
   // additional extensions dervied from other extensions
   // (e.g. extensions that have registered attr editors)
-  manager.register([attrEditExtension(pandocExtensions, manager.attrEditors())]);
+  manager.register([
+    attrEditExtension(pandocExtensions, manager.attrEditors()),
+    reverseSmartQuotesExtension(manager.pandocMarks()),
+  ]);
 
   // additional plugins derived from extensions
   const plugins: Plugin[] = [];
@@ -258,62 +269,56 @@ export class ExtensionManager {
 
   public pandocPreprocessors(): readonly PandocPreprocessorFn[] {
     return this.collectFrom({
-      node: node => [node.pandoc.preprocessor]
+      node: node => [node.pandoc.preprocessor],
     });
   }
 
   public pandocPostprocessors(): readonly PandocPostprocessorFn[] {
-    return this.pandocReaders().flatMap(
-      reader => reader.postprocessor ? [reader.postprocessor] : []
-    );
+    return this.pandocReaders().flatMap(reader => (reader.postprocessor ? [reader.postprocessor] : []));
   }
 
   public pandocBlockReaders(): readonly PandocBlockReaderFn[] {
     return this.collectFrom({
-      node: node => [node.pandoc.blockReader]
+      node: node => [node.pandoc.blockReader],
     });
   }
 
   public pandocInlineHTMLReaders(): readonly PandocInlineHTMLReaderFn[] {
     return this.collectFrom({
       mark: mark => [mark.pandoc.inlineHTMLReader],
-      node: node => [node.pandoc.inlineHTMLReader]
+      node: node => [node.pandoc.inlineHTMLReader],
     });
   }
 
   public pandocBlockCapsuleFilters(): readonly PandocBlockCapsuleFilter[] {
     return this.collectFrom({
-      node: node => [node.pandoc.blockCapsuleFilter]
+      node: node => [node.pandoc.blockCapsuleFilter],
     });
   }
 
   public pandocReaders(): readonly PandocTokenReader[] {
     return this.collectFrom({
       mark: mark => mark.pandoc.readers,
-      node: node => node.pandoc.readers ?? []
+      node: node => node.pandoc.readers ?? [],
     });
   }
 
   public pandocMarkWriters(): readonly PandocMarkWriter[] {
     return this.collectFrom({
-      mark: mark => [{name: mark.name, ...mark.pandoc.writer}]
+      mark: mark => [{ name: mark.name, ...mark.pandoc.writer }],
     });
   }
 
   public pandocNodeWriters(): readonly PandocNodeWriter[] {
     return this.collectFrom({
       node: node => {
-        return node.pandoc.writer
-          ? [{name: node.name, write: node.pandoc.writer!}]
-          : [];
-      }
+        return node.pandoc.writer ? [{ name: node.name, write: node.pandoc.writer! }] : [];
+      },
     });
   }
 
   public commands(schema: Schema, ui: EditorUI): readonly ProsemirrorCommand[] {
-    return this.collect<ProsemirrorCommand>(
-      extension => extension.commands?.(schema, ui)
-    );
+    return this.collect<ProsemirrorCommand>(extension => extension.commands?.(schema, ui));
   }
 
   public codeViews() {
@@ -328,7 +333,7 @@ export class ExtensionManager {
 
   public attrEditors() {
     return this.collectFrom({
-      node: node => [node.attr_edit?.()]
+      node: node => [node.attr_edit?.()],
     });
   }
 
@@ -361,7 +366,7 @@ export class ExtensionManager {
 
   private collect<T>(collector: (extension: Extension) => readonly T[] | undefined) {
     return this.collectFrom({
-      extension: extension => collector(extension) ?? []
+      extension: extension => collector(extension) ?? [],
     });
   }
 
@@ -375,11 +380,10 @@ export class ExtensionManager {
    * extension parts.
    */
   private collectFrom<T>(visitor: {
-    extension?: (extension: Extension) => ReadonlyArray<T | undefined | null>,
-    mark?: (mark: PandocMark) => ReadonlyArray<T | undefined | null>,
-    node?: (node: PandocNode) => ReadonlyArray<T | undefined | null>
-  }) : T[] {
-
+    extension?: (extension: Extension) => ReadonlyArray<T | undefined | null>;
+    mark?: (mark: PandocMark) => ReadonlyArray<T | undefined | null>;
+    node?: (node: PandocNode) => ReadonlyArray<T | undefined | null>;
+  }): T[] {
     const results: Array<T | undefined | null> = [];
 
     this.extensions.forEach(extension => {
@@ -394,8 +398,6 @@ export class ExtensionManager {
       }
     });
 
-    return results.filter(
-      value => typeof(value) !== "undefined" && value !== null
-    ) as T[];
+    return results.filter(value => typeof value !== 'undefined' && value !== null) as T[];
   }
 }

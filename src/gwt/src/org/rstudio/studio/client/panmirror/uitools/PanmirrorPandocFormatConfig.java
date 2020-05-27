@@ -1,7 +1,7 @@
 /*
- * PanmirrorFormatComment.java
+ * PanmirrorPandocFormatConfig.java
  *
- * Copyright (C) 2009-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -20,22 +20,39 @@ import org.rstudio.core.client.StringUtil;
 import jsinterop.annotations.JsType;
 
 @JsType
-public class PanmirrorFormatComment
+public class PanmirrorPandocFormatConfig
 {
+   // editor behavior
    public String mode;
    public String extensions;
-   public double fillColumn;
+   public String rmdExtensions;
    public String[] doctypes;
    
-   public static boolean areEqual(PanmirrorFormatComment a, PanmirrorFormatComment b)
+   // markdown writing
+   public int wrapColumn;
+   public String references;
+   public boolean canonical;
+   
+   public static boolean areEqual(PanmirrorPandocFormatConfig a, PanmirrorPandocFormatConfig b)
+   {
+      return editorBehaviorConfigEqual(a, b) && markdownWritingConfigEqual(a, b);
+   }
+   
+   public static boolean editorBehaviorConfigEqual(PanmirrorPandocFormatConfig a, PanmirrorPandocFormatConfig b)
    {
       String aDoctypes = a.doctypes != null ? String.join(",", a.doctypes) : "";
       String bDoctypes = b.doctypes != null ? String.join(",", b.doctypes) : "";
-      
       return StringUtil.equals(a.mode, b.mode) &&
              StringUtil.equals(a.extensions, b.extensions) &&
-             a.fillColumn == b.fillColumn &&
-             aDoctypes == bDoctypes;         
+             StringUtil.equals(a.rmdExtensions, b.rmdExtensions) &&
+             aDoctypes == bDoctypes;       
+   }
+   
+   public static boolean markdownWritingConfigEqual(PanmirrorPandocFormatConfig a, PanmirrorPandocFormatConfig b)
+   {
+      return a.wrapColumn == b.wrapColumn &&
+             a.references == b.references &&
+             a.canonical == b.canonical;         
    }
 }
 

@@ -1,6 +1,6 @@
 /* UserPrefValues.hpp
  *
- * Copyright (C) 2009-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -309,7 +309,6 @@ namespace prefs {
 #define kDataViewerMaxColumns "data_viewer_max_columns"
 #define kEnableScreenReader "enable_screen_reader"
 #define kTypingStatusDelayMs "typing_status_delay_ms"
-#define kAriaApplicationRole "aria_application_role"
 #define kReducedMotion "reduced_motion"
 #define kTabKeyMoveFocus "tab_key_move_focus"
 #define kAutoSaveOnIdle "auto_save_on_idle"
@@ -326,6 +325,10 @@ namespace prefs {
 #define kEnableVisualMarkdownEditingMode "enable_visual_markdown_editing_mode"
 #define kVisualMarkdownEditingWrapAuto "visual_markdown_editing_wrap_auto"
 #define kVisualMarkdownEditingWrapColumn "visual_markdown_editing_wrap_column"
+#define kVisualMarkdownEditingReferencesLocation "visual_markdown_editing_references_location"
+#define kVisualMarkdownEditingReferencesLocationBlock "block"
+#define kVisualMarkdownEditingReferencesLocationSection "section"
+#define kVisualMarkdownEditingReferencesLocationDocument "document"
 #define kVisualMarkdownEditingMaxContentWidth "visual_markdown_editing_max_content_width"
 #define kVisualMarkdownEditingShowDocOutline "visual_markdown_editing_show_doc_outline"
 #define kVisualMarkdownEditingFontSizePoints "visual_markdown_editing_font_size_points"
@@ -1408,12 +1411,6 @@ public:
    core::Error setTypingStatusDelayMs(int val);
 
    /**
-    * Whether to tell screen readers that the entire page is an application.
-    */
-   bool ariaApplicationRole();
-   core::Error setAriaApplicationRole(bool val);
-
-   /**
     * Reduce use of animations in the user interface.
     */
    bool reducedMotion();
@@ -1472,6 +1469,12 @@ public:
     */
    int visualMarkdownEditingWrapColumn();
    core::Error setVisualMarkdownEditingWrapColumn(int val);
+
+   /**
+    * Placement of footnotes within markdown output.
+    */
+   std::string visualMarkdownEditingReferencesLocation();
+   core::Error setVisualMarkdownEditingReferencesLocation(std::string val);
 
    /**
     * Maximum content width for visual editing mode, in pixels

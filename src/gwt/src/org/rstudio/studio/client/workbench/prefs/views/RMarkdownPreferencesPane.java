@@ -1,7 +1,7 @@
 /*
  * RMarkdownPreferencesPane.java
  *
- * Copyright (C) 2009-16 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -29,6 +29,7 @@ import org.rstudio.core.client.widget.SelectWidget;
 import org.rstudio.studio.client.common.HelpLink;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefsAccessor;
 
 public class RMarkdownPreferencesPane extends PreferencesPane
 {
@@ -148,28 +149,36 @@ public class RMarkdownPreferencesPane extends PreferencesPane
       basic.add(spacedBefore(new HelpLink("Using R Notebooks", "using_notebooks")));
       
       VerticalTabPanel advanced = new VerticalTabPanel(ElementIds.RMARKDOWN_ADVANCED_PREFS);
-      
-     
-      advanced.add(headerLabel("R Markdown"));
-
+      advanced.add(headerLabel("Display"));
       advanced.add(checkboxPref("Enable chunk background highlight", prefs_.highlightCodeChunks()));
       advanced.add(checkboxPref("Show inline toolbar for R code chunks", prefs_.showInlineToolbarForRCodeChunks()));
       final CheckBox showRmdRenderCommand = checkboxPref( "Display render command in R Markdown tab",
             prefs_.showRmdRenderCommand());
       advanced.add(showRmdRenderCommand);
       
-      advanced.add(spacedBefore(headerLabel("Visual Markdown Editing")));
-          
       
+      VerticalTabPanel visualMode = new VerticalTabPanel(ElementIds.RMARKDOWN_ADVANCED_PREFS);   
       CheckBox enableVisualMarkdownEditor = checkboxPref(
             "Enable visual markdown editing",
             prefs_.enableVisualMarkdownEditingMode());
       mediumSpaced(enableVisualMarkdownEditor);
-      advanced.add(enableVisualMarkdownEditor);
+      visualMode.add(enableVisualMarkdownEditor);
+      
+      HelpLink visualModeHelpLink = new HelpLink(
+            "Learn more about visual markdown editing",
+            "visual_markdown_editing",
+            false // no version info
+      );
+      nudgeRight(visualModeHelpLink); 
+      mediumSpaced(visualModeHelpLink);
+      visualMode.add(visualModeHelpLink);
       
       VerticalPanel visualModeOptions = new VerticalPanel();
       mediumSpaced(visualModeOptions);
       
+      visualModeOptions.add(headerLabel("Display"));
+      
+      // show outline
       CheckBox visualEditorShowOutline = checkboxPref(
             "Show document outline by default",
             prefs_.visualMarkdownEditingShowDocOutline(),
@@ -177,6 +186,7 @@ public class RMarkdownPreferencesPane extends PreferencesPane
       spaced(visualEditorShowOutline);
       visualModeOptions.add(visualEditorShowOutline);
       
+      // content width
       visualModeContentWidth_ = numericPref(
             "Editor content width (pixels):", 
             100,
@@ -189,6 +199,7 @@ public class RMarkdownPreferencesPane extends PreferencesPane
       spaced(visualModeContentWidth_);
       visualModeOptions.add(nudgeRightPlus(visualModeContentWidth_));
       
+      // font size
       final String kDefault = "(Default)";
       String[] labels = {kDefault, "7", "8", "9", "10", "11", "12", "13", "14", "16", "18", "24", "36"};
       String[] values = new String[labels.length];
@@ -202,18 +213,20 @@ public class RMarkdownPreferencesPane extends PreferencesPane
       visualModeFontSize_ = new SelectWidget("Editor font size:", labels, values, false, true, false);
       if (!visualModeFontSize_.setValue(prefs_.visualMarkdownEditingFontSizePoints().getGlobalValue() + ""))
          visualModeFontSize_.getListBox().setSelectedIndex(0);
-      mediumSpaced(visualModeFontSize_);
       visualModeOptions.add(visualModeFontSize_);
       
       
+      visualModeOptions.add(headerLabel("Markdown"));
+      
+      // auto wrap
       CheckBox checkBoxAutoWrap = checkboxPref(
-         "Auto-wrap text (break lines at specified fill column)", 
+         "Auto-wrap text (break lines at specified column)", 
          prefs.visualMarkdownEditingWrapAuto(),
          false
       );
       visualModeOptions.add(checkBoxAutoWrap);
       visualModeOptions.add(indent(visualModeWrapColumn_ = numericPref(
-          "Fill column:", 1, UserPrefs.MAX_WRAP_COLUMN,
+          "Wrap column:", 1, UserPrefs.MAX_WRAP_COLUMN,
           prefs.visualMarkdownEditingWrapColumn()
       )));
       visualModeWrapColumn_.setWidth("36px");
@@ -221,7 +234,32 @@ public class RMarkdownPreferencesPane extends PreferencesPane
       checkBoxAutoWrap.addValueChangeHandler((value) -> {
          visualModeWrapColumn_.setEnabled(checkBoxAutoWrap.getValue());
       });
-      advanced.add(visualModeOptions);
+      mediumSpaced(visualModeWrapColumn_);
+      
+      // references
+      String[] referencesValues = {
+         UserPrefsAccessor.VISUAL_MARKDOWN_EDITING_REFERENCES_LOCATION_BLOCK,
+         UserPrefsAccessor.VISUAL_MARKDOWN_EDITING_REFERENCES_LOCATION_SECTION,
+         UserPrefsAccessor.VISUAL_MARKDOWN_EDITING_REFERENCES_LOCATION_DOCUMENT
+      };
+      visualModeReferences_ = new SelectWidget("Write references at end of: ", referencesValues, referencesValues, false, true, false);
+      if (!visualModeReferences_.setValue(prefs_.visualMarkdownEditingReferencesLocation().getGlobalValue()))
+         visualModeReferences_.getListBox().setSelectedIndex(0);
+      mediumSpaced(visualModeReferences_);
+      visualModeOptions.add(visualModeReferences_);
+      
+      // help on per-file markdown options
+      HelpLink markdownPerFileOptions = new HelpLink(
+            "Setting markdown options on a per-file basis",
+            "visual_markdown_editing-file-options",
+            false // no version info
+      );
+      nudgeRight(markdownPerFileOptions); 
+      mediumSpaced(markdownPerFileOptions);
+      visualModeOptions.add(markdownPerFileOptions);
+      
+      
+      visualMode.add(visualModeOptions);
       Runnable manageVisualModeUI = () -> {
          visualModeOptions.setVisible(enableVisualMarkdownEditor.getValue());
       };
@@ -229,21 +267,13 @@ public class RMarkdownPreferencesPane extends PreferencesPane
       enableVisualMarkdownEditor.addValueChangeHandler((value) -> {
          manageVisualModeUI.run();
       });
-      
-      HelpLink visualModeHelpLink = new HelpLink(
-            "Learn more about visual markdown editing",
-            "visual_markdown_editing",
-            false // no version info
-      );
-      nudgeRight(visualModeHelpLink); 
-      mediumSpaced(visualModeHelpLink);
-      advanced.add(visualModeHelpLink);
-      
+       
       
       DialogTabLayoutPanel tabPanel = new DialogTabLayoutPanel("R Markdown");
       tabPanel.setSize("435px", "498px");
       tabPanel.add(basic, "Basic", basic.getBasePanelId());
       tabPanel.add(advanced, "Advanced", advanced.getBasePanelId());
+      tabPanel.add(visualMode, "Visual", visualMode.getBasePanelId());
       tabPanel.selectTab(0);
       add(tabPanel);
    }
@@ -294,6 +324,9 @@ public class RMarkdownPreferencesPane extends PreferencesPane
       prefs_.visualMarkdownEditingFontSizePoints().setGlobalValue(
             Integer.parseInt(visualModeFontSize_.getValue())); 
       
+      prefs_.visualMarkdownEditingReferencesLocation().setGlobalValue(
+            visualModeReferences_.getValue());
+      
       if (knitWorkingDir_ != null)
       {
          prefs_.knitWorkingDir().setGlobalValue(
@@ -315,6 +348,7 @@ public class RMarkdownPreferencesPane extends PreferencesPane
    private final SelectWidget visualModeFontSize_;
    private final NumericValueWidget visualModeContentWidth_;
    private final NumericValueWidget visualModeWrapColumn_;
+   private final SelectWidget visualModeReferences_;
   
    
    

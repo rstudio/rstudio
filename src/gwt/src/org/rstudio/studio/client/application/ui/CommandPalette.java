@@ -42,6 +42,7 @@ import com.google.gwt.aria.client.Roles;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.Element;
+import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.uibinder.client.UiBinder;
@@ -53,8 +54,6 @@ import com.google.gwt.user.client.ui.HTMLPanel;
 import com.google.gwt.user.client.ui.ScrollPanel;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
-
-import elemental.events.KeyboardEvent.KeyCode;
 
 /**
  * CommandPalette is a widget that displays all available RStudio commands in a
@@ -85,7 +84,11 @@ public class CommandPalette extends Composite
       String commandPanel();
    }
 
-   public CommandPalette(Commands commands, RAddins addins, ShortcutManager shortcuts, Host host)
+   public CommandPalette(Commands commands, 
+                         RAddins addins, 
+                         List<CommandPaletteEntrySource> extraSources,
+                         ShortcutManager shortcuts, 
+                         Host host)
    {
       initWidget(uiBinder.createAndBindUi(this));
 
@@ -95,6 +98,7 @@ public class CommandPalette extends Composite
       selected_ = -1;
       addins_ = addins;
       commands_ = commands;
+      extraEntriesSource_ = CommandPaletteEntrySource.join(extraSources);
       attached_ = false;
       pageSize_ = 0;
       styles_.ensureInjected();
@@ -161,12 +165,12 @@ public class CommandPalette extends Composite
             continue;
          }
          
-         // Ensure the command can be used. It'd be nice to show all commands in
+         // Ensure the command is visible. It'd be nice to show all commands in
          // the palette for the purposes of examining key bindings, discovery,
-         // etc., but there's no good user experience if a user attempts to
-         // invoke one of those commands.
+         // etc., but invisible commands are generally meaningless in the 
+         // current context.
          AppCommand appCommand = allCommands.get(command);
-         if (!appCommand.isEnabled() || !appCommand.isVisible())
+         if (!appCommand.isVisible())
          {
             continue;
          }
@@ -202,6 +206,11 @@ public class CommandPalette extends Composite
          entries_.add(entry);
       }
       
+      // add commands from additional sources
+      List<CommandPaletteEntry> extraEntries = extraEntriesSource_.getCommandPaletteEntries();
+      if (extraEntries != null)
+         entries_.addAll(extraEntries);
+      
       // Invoke commands when they're clicked on
       for (CommandPaletteEntry entry: entries_)
       {
@@ -218,12 +227,12 @@ public class CommandPalette extends Composite
       // have already been changed
       searchBox_.addKeyUpHandler((evt) ->
       {
-         if (evt.getNativeKeyCode() == KeyCode.ESC)
+         if (evt.getNativeKeyCode() == KeyCodes.KEY_ESCAPE)
          {
             // Pressing ESC dismisses the host (removing the palette popup)
             host_.dismiss();
          }
-         else if (evt.getNativeKeyCode() == KeyCode.ENTER)
+         else if (evt.getNativeKeyCode() == KeyCodes.KEY_ENTER)
          {
             // Enter runs the selected command
             invokeSelection();
@@ -248,7 +257,7 @@ public class CommandPalette extends Composite
          // Ignore the Tab key so we don't lose focus accidentally (there is
          // only one focusable element in the palette and we don't want Tab to
          // dismiss it)
-         if (evt.getNativeKeyCode() == KeyCode.TAB)
+         if (evt.getNativeKeyCode() == KeyCodes.KEY_TAB)
          {
             evt.stopPropagation();
             evt.preventDefault();
@@ -260,7 +269,7 @@ public class CommandPalette extends Composite
          if (evt.isAnyModifierKeyDown())
             return;
          
-         if (evt.getNativeKeyCode() == KeyCode.UP)
+         if (evt.getNativeKeyCode() == KeyCodes.KEY_UP)
          {
             // Directional keys often trigger behavior in textboxes (e.g. moving
             // the cursor to the beginning/end of text) but we're hijacking them
@@ -269,19 +278,19 @@ public class CommandPalette extends Composite
             evt.preventDefault();
             moveSelection(-1);
          }
-         else if (evt.getNativeKeyCode() == KeyCode.DOWN)
+         else if (evt.getNativeKeyCode() == KeyCodes.KEY_DOWN)
          {
             evt.stopPropagation();
             evt.preventDefault();
             moveSelection(1);
          }
-         else if (evt.getNativeKeyCode() == KeyCode.PAGE_UP)
+         else if (evt.getNativeKeyCode() == KeyCodes.KEY_PAGEUP)
          {
             // Page Up moves up by the page size (computed based on the size of
             // entries in the DOM)
             moveSelection(-1 * pageSize_);
          }
-         else if (evt.getNativeKeyCode() == KeyCode.PAGE_DOWN)
+         else if (evt.getNativeKeyCode() == KeyCodes.KEY_PAGEDOWN)
          {
             moveSelection(pageSize_);
          }
@@ -390,7 +399,7 @@ public class CommandPalette extends Composite
       resultsCount_.reportStatus(matches + " " +
             "commands found, press up and down to navigate",
             RStudioGinjector.INSTANCE.getUserPrefs().typingStatusDelayMs().getValue(),
-            Severity.ALERT);
+            Severity.STATUS);
    }
    
    /**
@@ -507,6 +516,7 @@ public class CommandPalette extends Composite
    private final ShortcutManager shortcuts_;
    private final Commands commands_;
    private final RAddins addins_;
+   private final CommandPaletteEntrySource extraEntriesSource_;
    private int selected_;
    private List<CommandPaletteEntry> entries_;
    private String searchText_;

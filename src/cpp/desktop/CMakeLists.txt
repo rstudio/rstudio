@@ -1,7 +1,7 @@
 #
 # CMakeLists.txt
 #
-# Copyright (C) 2009-20 by RStudio, PBC
+# Copyright (C) 2020 by RStudio, PBC
 #
 # Unless you have received this program directly from RStudio pursuant
 # to the terms of a commercial license agreement with RStudio, then
@@ -34,7 +34,7 @@ if(NOT WIN32)
            set(QT_COMPILER "gcc")
          endif()
       endif()
-         
+
       set(QT_CANDIDATES 5.12.8)
 
       # find the newest installed Qt version among the versions we build
@@ -548,7 +548,7 @@ if(RSTUDIO_BUNDLE_QT)
          "${CMAKE_CURRENT_BINARY_DIR}/install/LinuxInstallQt.sh")
 
    endif()
-          
+
 endif(RSTUDIO_BUNDLE_QT)
 
 # install HTML templates

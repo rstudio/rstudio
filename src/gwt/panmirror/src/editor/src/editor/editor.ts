@@ -1,7 +1,7 @@
 /*
  * editor.ts
  *
- * Copyright (C) 2019-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -28,15 +28,16 @@ import { findTopLevelBodyNodes } from '../api/node';
 import { EditorUI, attrPropsToInput, attrInputToProps, AttrProps, AttrEditInput } from '../api/ui';
 import { Extension } from '../api/extension';
 import { ExtensionManager, initExtensions } from './editor-extensions';
-import { PandocEngine } from '../api/pandoc';
+import { PandocEngine, PandocWriterOptions } from '../api/pandoc';
 import { PandocCapabilities, getPandocCapabilities } from '../api/pandoc_capabilities';
 import { fragmentToHTML } from '../api/html';
 import { EditorEvent } from '../api/events';
 import {
   PandocFormat,
   resolvePandocFormat,
-  PandocFormatComment,
-  pandocFormatCommentFromCode,
+  PandocFormatConfig,
+  pandocFormatConfigFromCode,
+  pandocFormatConfigFromDoc,
 } from '../api/pandoc_format';
 import { baseKeysPlugin } from '../api/basekeys';
 import {
@@ -48,7 +49,7 @@ import {
 } from '../api/transaction';
 import { EditorOutline, outlineNodes } from '../api/outline';
 import { EditingLocation, getEditingLocation, EditingOutlineLocation, setEditingLocation } from '../api/location';
-import { navigateTo, navigateToPosition } from '../api/navigation';
+import { navigateTo } from '../api/navigation';
 import { FixupContext } from '../api/fixup';
 import { unitToPixels, pixelsToUnit, roundUnit, kValidUnits } from '../api/image';
 import { kPercentUnit } from '../api/css';
@@ -72,7 +73,7 @@ import {
   selectCurrent,
 } from '../behaviors/find';
 
-import { PandocConverter, PandocWriterOptions } from '../pandoc/pandoc_converter';
+import { PandocConverter } from '../pandoc/pandoc_converter';
 
 import { defaultTheme, EditorTheme, applyTheme, applyPadding } from './editor-theme';
 import { defaultEditorUIImages } from './editor-images';
@@ -89,13 +90,11 @@ export interface EditorCode {
 }
 
 export interface EditorSetMarkdownResult {
-  
   // editor view of markdown (as it will be persisted)
-  cannonical: string;
+  canonical: string;
 
   // unrecoginized pandoc tokens
   unrecognized: string[];
-
 }
 
 export interface EditorContext {
@@ -147,7 +146,7 @@ export interface UIToolsImage {
 }
 
 export interface UIToolsFormat {
-  parseFormatComment(markdown: string): PandocFormatComment;
+  parseFormatConfig(markdown: string, isRmd: boolean): PandocFormatConfig;
 }
 
 export interface UIToolsSource {
@@ -175,7 +174,7 @@ export class UITools {
     };
 
     this.format = {
-      parseFormatComment: pandocFormatCommentFromCode,
+      parseFormatConfig: pandocFormatConfigFromCode,
     };
 
     this.source = {
@@ -251,6 +250,7 @@ export class Editor {
       rmdExtensions: {
         codeChunks: false,
         bookdownXRef: false,
+        bookdownXRefUI: false,
         bookdownPart: false,
         blogdownMathInCode: false,
         ...format.rmdExtensions,
@@ -259,7 +259,6 @@ export class Editor {
         shortcodes: false,
         ...format.hugoExtensions,
       },
-      wrapColumn: 0,
       docTypes: [],
       ...format,
     };
@@ -366,6 +365,25 @@ export class Editor {
     if (!this.options.spellCheck) {
       this.parent.setAttribute('spellcheck', 'false');
     }
+
+    {
+      // scroll event optimization, as recommended by
+      // https://developer.mozilla.org/en-US/docs/Web/API/Document/scroll_event
+      let ticking = false;
+      this.parent.addEventListener(
+        'scroll',
+        () => {
+          if (!ticking) {
+            window.requestAnimationFrame(() => {
+              this.emitEvent(EditorEvent.Scroll);
+              ticking = false;
+            });
+            ticking = true;
+          }
+        },
+        { capture: true },
+      );
+    }
   }
 
   public destroy() {
@@ -390,13 +408,15 @@ export class Editor {
     }
   }
 
-  public async setMarkdown(markdown: string, options: PandocWriterOptions, emitUpdate: boolean)
-    : Promise<EditorSetMarkdownResult> {
-    
+  public async setMarkdown(
+    markdown: string,
+    options: PandocWriterOptions,
+    emitUpdate: boolean,
+  ): Promise<EditorSetMarkdownResult> {
     // get the result
     const result = await this.pandocConverter.toProsemirror(markdown, this.pandocFormat.fullName);
     const { doc, unrecognized } = result;
-    
+
     // if we are preserving history but the existing doc is empty then create a new state
     // (resets the undo stack so that the intial setting of the document can't be undone)
     if (this.isInitialDoc()) {
@@ -436,13 +456,12 @@ export class Editor {
 
     // return our current markdown representation (so the caller know what our
     // current 'view' of the doc as markdown looks like
-    // return this.pandocConverter.fromProsemirror(this.state.doc)
-    const cannonical = await this.getMarkdownCode(this.state.doc, options);
+    const canonical = await this.getMarkdownCode(this.state.doc, options);
 
-    // return 
+    // return
     return {
-      cannonical, 
-      unrecognized
+      canonical,
+      unrecognized,
     };
   }
 
@@ -477,11 +496,11 @@ export class Editor {
 
   public getSelection(): EditorSelection {
     const { from, to } = this.state.selection;
-    return { 
-      from, 
+    return {
+      from,
       to,
-      navigation_id: navigationIdForSelection(this.state)
-     };
+      navigation_id: navigationIdForSelection(this.state),
+    };
   }
 
   public getEditingLocation(): EditingLocation {
@@ -508,6 +527,28 @@ export class Editor {
       replaceAll: (text: string) => replaceAll(this.view, text),
       clear: () => clear(this.view),
     };
+  }
+
+  // get a canonical version of the passed markdown. this method doesn't mutate the
+  // visual editor's state/view (it's provided as a performance optimiation for when
+  // source mode is configured to save a canonical version of markdown)
+  public async getCanonical(markdown: string, options: PandocWriterOptions): Promise<string> {
+    // convert to prosemirror doc
+    const result = await this.pandocConverter.toProsemirror(markdown, this.pandocFormat.fullName);
+
+    // create a state for this doc
+    const state = EditorState.create({
+      schema: this.schema,
+      doc: result.doc,
+      plugins: this.state.plugins,
+    });
+
+    // apply load fixups (eumlating what a full round trip will do)
+    const tr = state.tr;
+    this.extensionFixups(tr, FixupContext.Load);
+
+    // return markdown (will apply save fixups)
+    return this.getMarkdownCode(tr.doc, options);
   }
 
   public focus() {
@@ -584,6 +625,10 @@ export class Editor {
     return this.pandocFormat;
   }
 
+  public getPandocFormatConfig(isRmd: boolean): PandocFormatConfig {
+    return pandocFormatConfigFromDoc(this.state.doc, isRmd);
+  }
+
   private dispatchTransaction(tr: Transaction) {
     // track previous outline
     const previousOutline = getOutline(this.state);
@@ -600,7 +645,6 @@ export class Editor {
 
     // notify listeners of updates
     if (tr.docChanged || tr.storedMarksSet) {
-
       // fire updated (unless this was a fixup)
       if (!tr.getMeta(kFixupTransaction)) {
         this.emitEvent(EditorEvent.Update);
@@ -611,6 +655,8 @@ export class Editor {
         this.emitEvent(EditorEvent.OutlineChange);
       }
     }
+
+    this.emitEvent(EditorEvent.Layout);
   }
 
   private emitEvent(name: string) {
@@ -626,6 +672,9 @@ export class Editor {
     events.set(EditorEvent.OutlineChange, new Event(EditorEvent.OutlineChange));
     events.set(EditorEvent.SelectionChange, new Event(EditorEvent.SelectionChange));
     events.set(EditorEvent.Resize, new Event(EditorEvent.Resize));
+    events.set(EditorEvent.Layout, new Event(EditorEvent.Layout));
+    events.set(EditorEvent.Scroll, new Event(EditorEvent.Scroll));
+    events.set(EditorEvent.Focus, new Event(EditorEvent.Focus));
     return events;
   }
 
@@ -634,8 +683,7 @@ export class Editor {
       this.format,
       this.options,
       this.context.ui,
-      { subscribe: this.subscribe.bind(this),
-        emit: this.emitEvent.bind(this) },
+      { subscribe: this.subscribe.bind(this), emit: this.emitEvent.bind(this) },
       this.context.extensions,
       this.pandocFormat.extensions,
       this.pandocCapabilities,
@@ -651,6 +699,7 @@ export class Editor {
       ...this.extensions.plugins(this.schema, this.context.ui),
       this.inputRulesPlugin(),
       this.editablePlugin(),
+      this.domEventsPlugin(),
     ];
   }
 
@@ -665,7 +714,6 @@ export class Editor {
   }
 
   private inputRulesPlugin() {
-
     // filter for disabling input rules for selected marks
     const markFilter = markInputRuleFilter(this.schema, this.extensions.pandocMarks());
 
@@ -675,13 +723,27 @@ export class Editor {
 
     // override to disable input rules as requested
     // https://github.com/ProseMirror/prosemirror-inputrules/commit/b4bf67623aa4c4c1e096c20aa649c0e63751f337
-    plugin.props.handleTextInput = (view: EditorView<any>, from: number, to: number, text: string) => {
+    plugin.props.handleTextInput = (view: EditorView, from: number, to: number, text: string) => {
       if (!markFilter(view.state)) {
         return false;
       }
       return handleTextInput(view, from, to, text);
     };
     return plugin;
+  }
+
+  private domEventsPlugin(): Plugin {
+    return new Plugin({
+      key: new PluginKey('domevents'),
+      props: {
+        handleDOMEvents: {
+          focus: (view: EditorView, event: Event) => {
+            this.emitEvent(EditorEvent.Focus);
+            return false;
+          },
+        },
+      },
+    });
   }
 
   private keybindingsPlugin(): Plugin {
@@ -738,7 +800,12 @@ export class Editor {
   }
 
   private applyFixupsOnResize() {
-    this.applyFixups(FixupContext.Resize);
+    const docChanged = this.applyFixups(FixupContext.Resize);
+    if (!docChanged) {
+      // If applyFixupsOnResize returns true, then layout has already
+      // been fired; if it hasn't, we must do so now
+      this.emitEvent(EditorEvent.Layout);
+    }
   }
 
   private applyFixups(context: FixupContext) {
@@ -748,7 +815,9 @@ export class Editor {
       tr.setMeta(kAddToHistoryTransaction, false);
       tr.setMeta(kFixupTransaction, true);
       this.view.dispatch(tr);
+      return true;
     }
+    return false;
   }
 
   private extensionFixups(tr: Transaction, context: FixupContext) {
@@ -772,9 +841,6 @@ export class Editor {
   }
 
   private async getMarkdownCode(doc: ProsemirrorNode, options: PandocWriterOptions) {
-    // override wrapColumn option if it was specified
-    options.wrapColumn = this.format.wrapColumn || options.wrapColumn;
-
     // apply layout fixups
     this.applyFixups(FixupContext.Save);
 
@@ -783,7 +849,7 @@ export class Editor {
   }
 }
 
-function navigationIdForSelection(state: EditorState) : string | null {
+function navigationIdForSelection(state: EditorState): string | null {
   const outline = outlineNodes(state.doc);
   const outlineNode = outline.reverse().find(node => node.pos < state.selection.from);
   if (outlineNode) {

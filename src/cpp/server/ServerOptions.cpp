@@ -1,7 +1,7 @@
 /*
  * ServerOptions.cpp
  *
- * Copyright (C) 2009-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -288,7 +288,7 @@ ProgramStatus Options::read(int argc,
          value<std::string>(&rsessionWhichR_)->default_value(""),
          "path to main R program (e.g. /usr/bin/R)")
       ("rsession-path", 
-         value<std::string>(&rsessionPath_)->default_value("rsessio"),
+         value<std::string>(&rsessionPath_)->default_value(rsessionExecutable()),
          "path to rsession executable")
       ("rldpath-path",
          value<std::string>(&rldpathPath_)->default_value("r-ldpath"),
@@ -320,7 +320,7 @@ ProgramStatus Options::read(int argc,
          "path to database.conf configuration file");
    
    // still read depracated options (so we don't break config files)
-   std::string authMinimumUserId, authLoginPageHtml;
+   std::string authMinimumUserId, authLoginPageHtml, authRdpLoginPageHtml;
    options_description auth("auth");
    auth.add_options()
       ("auth-none",
@@ -344,6 +344,10 @@ ProgramStatus Options::read(int argc,
         value<std::string>(&authLoginPageHtml)->default_value(
            core::system::xdg::systemConfigFile("login.html").getAbsolutePath()),
         "path to file containing additional html for login page")
+      ("auth-rdp-login-page-html",
+        value<std::string>(&authRdpLoginPageHtml)->default_value(
+           core::system::xdg::systemConfigFile("rdplogin.html").getAbsolutePath()),
+        "path to file containing additional html for RDP login page")
       ("auth-required-user-group",
         value<std::string>(&authRequiredUserGroup_)->default_value(""),
         "limit to users belonging to the specified group")
@@ -373,7 +377,7 @@ ProgramStatus Options::read(int argc,
    options_description monitor("monitor");
    monitor.add_options()
       (kMonitorIntervalSeconds,
-       value<int>(&monitorIntervalSeconds_)->default_value(300),
+       value<int>(&monitorIntervalSeconds_)->default_value(60),
        "monitoring interval");
 
    // define program options
@@ -450,6 +454,7 @@ ProgramStatus Options::read(int argc,
                // administrator hasn't created an rserver system account yet
                // so we'll end up running as root
                serverUser_ = "";
+               LOG_WARNING_MESSAGE("Running as root user is not recommended!");
             }
             else
             {
@@ -478,6 +483,15 @@ ProgramStatus Options::read(int argc,
    if (loginPageHtmlPath.exists())
    {
       Error error = core::readStringFromFile(loginPageHtmlPath, &authLoginPageHtml_);
+      if (error)
+         LOG_ERROR(error);
+   }
+
+   // read rdp auth login html
+   FilePath rdpLoginPageHtmlPath(authRdpLoginPageHtml);
+   if (rdpLoginPageHtmlPath.exists())
+   {
+      Error error = core::readStringFromFile(rdpLoginPageHtmlPath, &authRdpLoginPageHtml_);
       if (error)
          LOG_ERROR(error);
    }

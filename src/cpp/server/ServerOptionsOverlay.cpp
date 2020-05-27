@@ -1,7 +1,7 @@
 /*
  * ServerOptionsOverlay.cpp
  *
- * Copyright (C) 2009-17 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -48,6 +48,11 @@ std::string Options::gwtPrefix() const
 void sessionProcessConfigOverlay(core::system::Options* pArgs,
                                  core::system::Options* pEnvironment)
 {
+}
+
+std::string Options::rsessionExecutable() const
+{
+   return "rsession";
 }
 
 } // namespace server

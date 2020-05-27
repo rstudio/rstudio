@@ -1,7 +1,7 @@
 /*
  * ButtonClickManager.java
  *
- * Copyright (C) 2009-19 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -26,7 +26,7 @@ import com.google.gwt.event.shared.HasHandlers;
 import com.google.gwt.user.client.ui.Widget;
 
 /**
- * Helper for extending UI elements that activate via click to also 
+ * Helper for extending UI elements that activate via click to also
  * activate via spacebar.
  */
 public class ButtonClickManager extends HandlerManager implements HasHandlers
@@ -43,9 +43,9 @@ public class ButtonClickManager extends HandlerManager implements HasHandlers
                event.preventDefault();
                click();
             }
-         }, KeyDownEvent.getType()); 
+         }, KeyDownEvent.getType());
    }
-   
+
    private void click()
    {
       NativeEvent clickEvent = Document.get().createClickEvent(

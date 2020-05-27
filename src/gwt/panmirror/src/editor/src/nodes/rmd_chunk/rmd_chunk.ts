@@ -1,7 +1,7 @@
 /*
  * rmd_chunk.ts
  *
- * Copyright (C) 2019-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -20,14 +20,11 @@ import { setTextSelection, findParentNodeOfType } from 'prosemirror-utils';
 
 import { Extension } from '../../api/extension';
 import { EditorOptions } from '../../api/options';
-import { PandocOutput, PandocTokenType, PandocExtensions, ProsemirrorWriter, PandocToken } from '../../api/pandoc';
-import { pandocAttrReadAST, PandocAttr, kCodeBlockAttr, kCodeBlockText } from '../../api/pandoc_attr';
-import { PandocBlockCapsule, parsePandocBlockCapsule, blockCapsuleSourceWithoutPrefix } from '../../api/pandoc_capsule';
+import { PandocOutput, PandocTokenType, PandocExtensions } from '../../api/pandoc';
 
 import { codeNodeSpec } from '../../api/code';
 import { ProsemirrorCommand, EditorCommandId, toggleBlockType } from '../../api/command';
 import { selectionIsBodyTopLevel } from '../../api/selection';
-import { uuidv4 } from '../../api/util';
 import { precedingListItemInsertPos, precedingListItemInsert } from '../../api/list';
 
 import { EditorUI } from '../../api/ui';
@@ -37,6 +34,7 @@ import { rmdChunk, EditorRmdChunk } from '../../api/rmd';
 
 import { RmdChunkImagePreviewPlugin } from './rmd_chunk-image';
 import { ExecuteCurrentRmdChunkCommand, ExecutePreviousRmdChunksCommand } from './rmd_chunk-commands';
+import { rmdChunkBlockCapsuleFilter } from './rmd_chunk-capsule';
 
 import './rmd_chunk-styles.css';
 
@@ -45,7 +43,7 @@ const extension = (
   _pandocCapabilities: PandocCapabilities,
   ui: EditorUI,
   format: EditorFormat,
-  options: EditorOptions
+  options: EditorOptions,
 ): Extension | null => {
   if (!format.rmdExtensions.codeChunks) {
     return null;
@@ -91,13 +89,12 @@ const extension = (
               return null;
             }
           },
-          executeRmdChunkFn: ui.execute.executeRmdChunk 
+          executeRmdChunkFn: ui.execute.executeRmdChunk
             ? (chunk: EditorRmdChunk) => ui.execute.executeRmdChunk!(chunk)
-            : undefined
+            : undefined,
         },
 
         pandoc: {
-
           blockCapsuleFilter: rmdChunkBlockCapsuleFilter(),
 
           writer: (output: PandocOutput, node: ProsemirrorNode) => {
@@ -116,10 +113,7 @@ const extension = (
     commands: (_schema: Schema) => {
       const commands = [new RmdChunkCommand()];
       if (ui.execute.executeRmdChunk) {
-        commands.push(
-          new ExecuteCurrentRmdChunkCommand(ui),
-          new ExecutePreviousRmdChunksCommand(ui)
-        );
+        commands.push(new ExecuteCurrentRmdChunkCommand(ui), new ExecutePreviousRmdChunksCommand(ui));
       }
       return commands;
     },
@@ -183,76 +177,6 @@ class RmdChunkCommand extends ProsemirrorCommand {
       },
     );
   }
-}
-
-function rmdChunkBlockCapsuleFilter() {
-
-  const kBlockCapsuleType = 'F3175F2A-E8A0-4436-BE12-B33925B6D220'.toLowerCase();
-  const kBlockCapsuleTextRegEx = new RegExp('```' + kBlockCapsuleType + '\\n[ \\t>]*([^`]+)\\n[ \\t>]*```', 'g');
-
-  return {
-
-    type: kBlockCapsuleType,
-    
-    match: /^([\t >]*)(```+\s*\{[a-zA-Z0-9_]+(?: *[ ,].*?)?\}[ \t]*\n(?:[\t >]*```+|[\W\w]*?\n[\t >]*```+))([ \t]*)$/gm,
-    
-    // textually enclose the capsule so that pandoc parses it as the type of block we want it to
-    // (in this case a code block). we use the capsule prefix here to make sure that the code block's
-    // content and end backticks match the indentation level of the first line correctly
-    enclose: (capsuleText: string, capsule: PandocBlockCapsule) => 
-      '```' + kBlockCapsuleType + '\n' + 
-      capsule.prefix + capsuleText + '\n' +
-      capsule.prefix + '```'
-    ,
-
-    // look for one of our block capsules within pandoc ast text (e.g. a code or raw block)
-    // and if we find it, parse and return the original source code
-    handleText: (text: string, tok: PandocToken) => {
-      
-      // if this is a code block then we need to strip the prefix
-      const stripPrefix = tok.t === PandocTokenType.CodeBlock;
-
-      return text.replace(kBlockCapsuleTextRegEx, (_match, p1) => {
-        const capsuleText = p1;
-        const capsule = parsePandocBlockCapsule(capsuleText);
-        if (stripPrefix) {
-          return blockCapsuleSourceWithoutPrefix(capsule.source, capsule.prefix);
-        } else {
-          return capsule.source;
-        }
-      });
-    },
-    
-    // look for a block capsule of our type within a code block (indicated by the 
-    // presence of a special css class)
-    handleToken: (tok: PandocToken) => {
-      if (tok.t === PandocTokenType.CodeBlock) {
-        const attr = pandocAttrReadAST(tok, kCodeBlockAttr) as PandocAttr;
-        if (attr.classes.includes(kBlockCapsuleType)) {
-          return tok.c[kCodeBlockText];
-        }
-      }
-      return null;
-    },
-
-    // write the node as an rmd_chunk, being careful to remove the backticks 
-    // preserved as part of the source, and striping out the base indentation
-    // level implied by the prefix
-    writeNode: (schema: Schema, writer: ProsemirrorWriter, capsule: PandocBlockCapsule) => {
-
-      // open node
-      writer.openNode(schema.nodes.rmd_chunk, { navigation_id: uuidv4() });
-
-      // source still has leading and trailing backticks, remove them
-      const source = capsule.source.replace(/^```+/, '').replace(/\n[\t >]*```+$/, '');
-
-      // write the lines w/o the source-level prefix
-      writer.writeText(blockCapsuleSourceWithoutPrefix(source, capsule.prefix));
-
-      // all done
-      writer.closeNode();
-    }
-  };
 }
 
 export default extension;

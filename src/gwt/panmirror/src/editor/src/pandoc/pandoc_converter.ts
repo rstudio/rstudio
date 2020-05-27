@@ -1,7 +1,7 @@
 /*
  * pandoc_converter.ts
  *
- * Copyright (C) 2019-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -15,8 +15,6 @@
 
 import { Schema, Node as ProsemirrorNode } from 'prosemirror-model';
 
-import { findChildren } from 'prosemirror-utils';
-
 import {
   PandocEngine,
   PandocTokenReader,
@@ -26,7 +24,10 @@ import {
   PandocBlockReaderFn,
   PandocPostprocessorFn,
   PandocInlineHTMLReaderFn,
+  PandocWriterOptions,
 } from '../api/pandoc';
+
+import { haveTableCellsWithInlineRcode } from '../api/rmd';
 
 import { pandocFormatWith, PandocFormat, kGfmFormat, kCommonmarkFormat } from '../api/pandoc_format';
 import { PandocCapabilities } from '../api/pandoc_capabilities';
@@ -36,13 +37,6 @@ import { ExtensionManager } from '../editor/editor-extensions';
 
 import { pandocToProsemirror } from './pandoc_to_prosemirror';
 import { pandocFromProsemirror } from './pandoc_from_prosemirror';
-
-export interface PandocWriterOptions {
-  atxHeaders?: boolean;
-  referenceLocation?: 'block' | 'section' | 'document';
-  wrapColumn?: boolean | number;
-  dpi?: number;
-}
 
 export interface PandocToProsemirrorResult {
   doc: ProsemirrorNode;
@@ -84,7 +78,6 @@ export class PandocConverter {
   }
 
   public async toProsemirror(markdown: string, format: string): Promise<PandocToProsemirrorResult> {
-
     // adjust format. we always need to *read* raw_html, raw_attribute, and backtick_code_blocks b/c
     // that's how preprocessors hoist content through pandoc into our prosemirror token parser.
     format = adjustedFormat(format, ['raw_html', 'raw_attribute', 'backtick_code_blocks']);
@@ -106,7 +99,7 @@ export class PandocConverter {
       this.readers,
       this.blockReaders,
       this.inlineHTMLReaders,
-      this.blockCapsuleFilters
+      this.blockCapsuleFilters,
     );
 
     // run post-processors
@@ -123,7 +116,6 @@ export class PandocConverter {
     pandocFormat: PandocFormat,
     options: PandocWriterOptions,
   ): Promise<string> {
-
     // generate pandoc ast
     const output = pandocFromProsemirror(
       doc,
@@ -141,7 +133,7 @@ export class PandocConverter {
 
     // disable selected format options
     format = pandocFormatWith(format, disabledFormatOptions(format, doc), '');
-  
+
     // prepare pandoc options
     let pandocOptions: string[] = [];
     if (options.atxHeaders) {
@@ -150,8 +142,13 @@ export class PandocConverter {
     if (options.dpi) {
       pandocOptions.push('--dpi');
     }
-    // default to block level references
-    pandocOptions.push(`--reference-location=${options.referenceLocation || 'block'}`);
+    // default to block level references (validate known types)
+    const references = ['block', 'section', 'document'].includes(options.references || '')
+      ? options.references
+      : 'block';
+    pandocOptions.push(`--reference-location=${references}`);
+
+    // provide wrapColumn options
     pandocOptions = pandocOptions.concat(wrapColumnOptions(options));
 
     // render to markdown
@@ -161,7 +158,6 @@ export class PandocConverter {
     return markdown.replace(/\r\n|\n\r|\r/g, '\n');
   }
 }
-
 
 // adjust the specified format (remove options that are never applicable
 // to editing scenarios)
@@ -177,37 +173,27 @@ function adjustedFormat(format: string, extensions: string[]) {
   return newFormat;
 }
 
-
 function disabledFormatOptions(format: string, doc: ProsemirrorNode) {
-
   // (prefer pipe and grid tables). users can still force the availability of these by
   // adding those format flags but all known markdown variants that support tables also
   // support pipe tables so this seems unlikely to ever be required.
   let disabledTableTypes = '-simple_tables-multiline_tables';
 
-  // if there aren't any tables with multiple blocks in a cell then also disable grid
-  // tables. This is because grid tables are more finicky about column alignment, and 
-  // if there is dynamic text in the table (e.g. an inline `r` expression) it will 
-  // actually throw off the table columns and mess up the table
-  if (!haveMultiBlockTableCells(doc)) {
+  // if there are tables with inline R code then disable grid tables (as the inline
+  // R code will mess up the column boundaries)
+  if (haveTableCellsWithInlineRcode(doc)) {
     disabledTableTypes += '-grid_tables';
   }
 
   // gfm and commonmark variants don't allow simple/multiline/grid tables (just pipe tables)
-  // and it's an error to even include these in the markdown format specifier -- so for 
+  // and it's an error to even include these in the markdown format specifier -- so for
   // these modes we just nix the disabling
   if (format.startsWith(kGfmFormat) || format.startsWith(kCommonmarkFormat)) {
     disabledTableTypes = '';
   }
 
-  // return 
+  // return
   return disabledTableTypes;
-}
-
-function haveMultiBlockTableCells(doc: ProsemirrorNode) {
-  const schema = doc.type.schema;
-  const isTableCell = (node: ProsemirrorNode) => node.type === schema.nodes.table_cell || node.type === schema.nodes.table_header;
-  return findChildren(doc, isTableCell).some(cell => cell.node.childCount > 1);
 }
 
 function wrapColumnOptions(options: PandocWriterOptions) {

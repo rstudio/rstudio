@@ -1,7 +1,7 @@
 /*
  * RequestParser.hpp
  *
- * Copyright (C) 2009-11 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  * Copyright (c) 2003-2008 Christopher M. Kohlhoff (chris at kohlhoff dot com)
  *
  * Unless you have received this program directly from RStudio pursuant
