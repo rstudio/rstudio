@@ -88,7 +88,7 @@ public class WarningBar extends Composite
       moreButton_.setText("Manage License...");
       moreButton_.addClickHandler(event -> Desktop.getFrame().showLicenseDialog());
       A11y.setARIAHidden(label_);
-      if (ariaLive.isDisabled(AriaLiveService.WARNING_BAR))
+      if (!ariaLive.isDisabled(AriaLiveService.WARNING_BAR))
          Roles.getAlertRole().set(live_);
    }
 
