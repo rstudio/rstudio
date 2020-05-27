@@ -17,7 +17,7 @@ import { Schema } from "prosemirror-model";
 import { EditorState, Transaction, NodeSelection, Selection } from "prosemirror-state";
 import { EditorView } from "prosemirror-view";
 
-import { findParentNodeOfTypeClosestToPos, findSelectedNodeOfType, setTextSelection } from "prosemirror-utils";
+import { findParentNodeOfTypeClosestToPos, findSelectedNodeOfType, setTextSelection, ContentNodeWithPos } from "prosemirror-utils";
 
 import { BaseKey } from "../../api/basekeys";
 import { exitNode } from "../../api/command";
@@ -89,23 +89,39 @@ function backspaceHandler() {
 function arrowHandler(dir: 'up' | 'down' | 'left' | 'right') {
   return (state: EditorState, dispatch?: (tr: Transaction) => void, view?: EditorView) => {
 
+    // select figure
+    const selectFigure = (figure: ContentNodeWithPos) => {
+      if (dispatch) {
+        const tr = state.tr;
+        const figureSelection = NodeSelection.create(state.doc, figure.pos);
+        tr.setSelection(figureSelection).scrollIntoView();
+        dispatch(tr);
+      }
+    };
+
+    // select figure caption
+    const selectFigureCaption = (figure: ContentNodeWithPos) => {
+      if (dispatch) {
+        const tr = state.tr;
+        setTextSelection(figure.pos, 1)(tr);
+        dispatch(tr);
+      }
+    };
+
+
+    // alias schema and selection
     const { schema, selection } = state;
-    
 
     // right arrow for node selection w/ caption drives cursor into caption
     if ((dir === 'down' || dir === 'right') && 
          selection instanceof NodeSelection && 
          selection.node.type === schema.nodes.figure) {
-      if (dispatch) {
-        const figure = findSelectedNodeOfType(schema.nodes.figure)(selection);
-        if (figure && figure.node.childCount > 0) {
-          const tr = state.tr;
-          setTextSelection(figure.pos, 1)(tr);
-          dispatch(tr);
-        }
+     
+      const figure = findSelectedNodeOfType(schema.nodes.figure)(selection);
+      if (figure && figure.node.childCount > 0) { 
+        selectFigureCaption(figure);
+        return true;
       }
-
-      return true;
     }
 
     // normal node traversal
@@ -122,16 +138,13 @@ function arrowHandler(dir: 'up' | 'down' | 'left' | 'right') {
       if (nextPos.$head) {
         const figure = findParentNodeOfTypeClosestToPos(nextPos.$head, schema.nodes.figure);
         if (figure) {
-          if (dispatch) {
-            const tr = state.tr;
-            const figureSelection = NodeSelection.create(state.doc, figure.pos);
-            tr.setSelection(figureSelection);
-            dispatch(tr);
-          }
+          selectFigure(figure);
           return true;
         }
       }
     }
+
+    // not handled
     return false;
   };
 }
