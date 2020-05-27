@@ -445,37 +445,45 @@ environment(.rs.Env[[".rs.addFunction"]]) <- .rs.Env
 
 
 # hook an internal R function
-.rs.addFunction( "registerHook", function(name, package, hookFactory, namespace = FALSE)
+.rs.addFunction("registerHook", function(name,
+                                         package,
+                                         hookFactory,
+                                         namespace = FALSE)
 {
-   # get the original function  
-   packageName = paste("package:", package, sep="")
-   original <- base::get(name, packageName, mode="function")
+   # ensure the package is loaded and attached (since we need to modify
+   # the version of the function normally placed on the search path)
+   library(package, character.only = TRUE, quietly = TRUE)
    
-   # install the hook
-   if (!is.null(original))
-   {
-      # new function definition
-      new <- hookFactory(original)
-      
-      # re-map function 
-      packageEnv = as.environment(packageName)
-      unlockBinding(name, packageEnv)
-      assign(name, new, packageName)
-      lockBinding(name, packageEnv)
-
-      if (namespace && package %in% loadedNamespaces()) {
-         ns <- asNamespace(package)
-         if (exists(name, envir = ns, mode="function")) {
-            unlockBinding(name, ns)
-            assign(name, new, envir = ns)
-            lockBinding(name, ns)
-         }
+   # construct search path environment name for package
+   packageName <- paste("package", package, sep = ":")
+   
+   # get original version of function (bail if it doesn't exist)
+   original <- base::get(name, packageName, mode = "function")
+   if (is.null(original)) {
+      fmt <- "internal error: function %s not found"
+      msg <- sprintf(fmt, shQuote(name))
+      stop(msg, call. = FALSE)
+   }
+   
+   # new function definition
+   new <- hookFactory(original)
+   
+   # re-map function 
+   packageEnv <- as.environment(packageName)
+   unlockBinding(name, packageEnv)
+   assign(name, new, packageName)
+   lockBinding(name, packageEnv)
+   
+   # remap in function namespace if requested as well
+   if (namespace) {
+      ns <- asNamespace(package)
+      if (exists(name, envir = ns, mode = "function")) {
+         unlockBinding(name, ns)
+         assign(name, new, envir = ns)
+         lockBinding(name, ns)
       }
    }
-   else
-   {
-      stop(cat("function", name, "not found\n"))
-   }
+   
 })
 
 .rs.addFunction( "callAs", function(name, f, ...)
