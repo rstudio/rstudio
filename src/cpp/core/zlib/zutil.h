@@ -22,7 +22,7 @@
 #include "zlib.h"
 
 #if defined(STDC) && !defined(Z_SOLO)
-#  if (!defined(_WIN32_WCE) && defined(_MSC_VER))
+#  if !(defined(_WIN32_WCE) && defined(_MSC_VER))
 #    include <stddef.h>
 #  endif
 #  include <string.h>
