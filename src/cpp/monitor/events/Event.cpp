@@ -17,6 +17,7 @@
 
 #include <iostream>
 
+#include <core/Log.hpp>
 #include <core/StringUtils.hpp>
 
 #include <core/http/Util.hpp>
@@ -38,8 +39,16 @@ Event::Event(int scope,
 {
    ::memset(&username_, 0, kMaxEventDataSize+1);
    username.copy(username_, kMaxEventDataSize);
+   if (username.length() > kMaxEventDataSize)
+   {
+      LOG_WARNING_MESSAGE("Event " + eventScopeAndIdAsString(*this) + " username was truncated");
+   }
    ::memset(&data_, 0, kMaxEventDataSize+1);
    data.copy(data_, kMaxEventDataSize);
+   if (data.length() > kMaxEventDataSize)
+   {
+      LOG_WARNING_MESSAGE("Event " + eventScopeAndIdAsString(*this) + " data was truncated");
+   }
 }
 
 std::string eventScopeAndIdAsString(const Event& event)
