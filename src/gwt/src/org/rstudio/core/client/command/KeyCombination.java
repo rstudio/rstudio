@@ -15,6 +15,8 @@
 package org.rstudio.core.client.command;
 
 import org.rstudio.core.client.BrowseCap;
+import org.rstudio.core.client.Cached;
+import org.rstudio.core.client.Version;
 import org.rstudio.core.client.dom.EventProperty;
 
 import com.google.gwt.dom.client.NativeEvent;
@@ -24,9 +26,32 @@ public class KeyCombination
 {
    public KeyCombination(NativeEvent event)
    {
-      key_ = EventProperty.key(event);
-      keyCode_ = event.getKeyCode();
-      modifiers_ = KeyboardShortcut.getModifierValue(event);
+      String key = EventProperty.key(event);
+      int keyCode = event.getKeyCode();
+      int modifiers = KeyboardShortcut.getModifierValue(event);
+      
+      // Unfortunately, the 'key' event property is corrupt with
+      // certain versions of Qt. We need to check that we've received
+      // a valid 'key' entry; if it's not valid, then we infer the correct
+      // key based on the keycode. Note that this inference may be incorrect
+      // for alternate keyboard layouts.
+      //
+      // https://github.com/rstudio/rstudio/issues/6129
+      // https://bugreports.qt.io/browse/QTBUG-81783
+      if (requiresQtWebEngineWorkaround_ == null)
+      {
+         requiresQtWebEngineWorkaround_ = requiresQtWebEngineWorkaround();
+      }
+      
+      if (requiresQtWebEngineWorkaround_)
+      {
+         key = KeyboardHelper.keyNameFromKeyCode(keyCode);
+      }
+      
+      key_ = key;
+      keyCode_ = keyCode;
+      modifiers_ = modifiers;
+      
    }
 
    public KeyCombination(String key,
@@ -146,8 +171,19 @@ public class KeyCombination
       return keyCode_ == other.keyCode_ &&
             modifiers_ == other.modifiers_;
    }
-
+   
+   private boolean requiresQtWebEngineWorkaround()
+   {
+      if (!BrowseCap.isQtWebEngine())
+         return false;
+      
+      String version = BrowseCap.qtWebEngineVersion();
+      return Version.compare(version, "5.15.0") < 0;
+   }
+   
    private final String key_;
    private final int keyCode_;
    private final int modifiers_;
+   
+   private Boolean requiresQtWebEngineWorkaround_ = null;
 }
