@@ -18,28 +18,15 @@ import java.util.ArrayList;
 import java.util.List;
 
 // A helper class for parsing numeric versions.
-public class Version
+public class Version implements Comparable<Version>
 {
    public static final int compare(String lhs, String rhs)
    {
       Version lhsVersion = new Version(lhs);
       Version rhsVersion = new Version(rhs);
-      
-      int n = Math.max(lhsVersion.size(), rhsVersion.size());
-      for (int i = 0; i < n; i++)
-      {
-         int lhsComponent = lhsVersion.component(i);
-         int rhsComponent = rhsVersion.component(i);
-         
-         if (lhsComponent < rhsComponent)
-            return -1;
-         else if (lhsComponent > rhsComponent)
-            return 1;
-      }
-      
-      return 0;
+      return lhsVersion.compareTo(rhsVersion);
    }
-   
+      
    private Version(String version)
    {
       components_ = new ArrayList<>();
@@ -60,6 +47,24 @@ public class Version
          
          components_.add(value);
       }
+   }
+   
+   @Override
+   public int compareTo(Version other)
+   {
+      int n = Math.max(size(), other.size());
+      for (int i = 0; i < n; i++)
+      {
+         int lhs = component(i);
+         int rhs = other.component(i);
+         
+         if (lhs < rhs)
+            return -1;
+         else if (lhs > rhs)
+            return 1;
+      }
+      
+      return 0;
    }
    
    private int component(int index)
