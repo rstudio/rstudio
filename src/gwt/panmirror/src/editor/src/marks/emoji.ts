@@ -18,7 +18,7 @@ import { InputRule } from 'prosemirror-inputrules';
 import { EditorState, Transaction } from 'prosemirror-state';
 
 import { Extension } from '../api/extension';
-import { PandocOutput, PandocToken, PandocTokenType, ProsemirrorWriter, PandocExtensions } from '../api/pandoc';
+import { PandocOutput, PandocToken, PandocTokenType, ProsemirrorWriter } from '../api/pandoc';
 import { pandocAttrReadAST } from '../api/pandoc_attr';
 import { fragmentText } from '../api/fragment';
 

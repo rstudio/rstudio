@@ -38,7 +38,6 @@ import { ExtensionManager } from '../editor/editor-extensions';
 
 import { pandocToProsemirror } from './pandoc_to_prosemirror';
 import { pandocFromProsemirror } from './pandoc_from_prosemirror';
-import extension from '../nodes/text';
 
 export interface PandocToProsemirrorResult {
   doc: ProsemirrorNode;

@@ -13,7 +13,7 @@
  *
  */
 
-import { Node as ProsemirrorNode, Schema, Fragment, ResolvedPos, NodeSpec } from 'prosemirror-model';
+import { Node as ProsemirrorNode, Schema, Fragment, ResolvedPos } from 'prosemirror-model';
 import { Transaction, PluginKey, Plugin } from 'prosemirror-state';
 import { Transform } from 'prosemirror-transform';
 import { EditorView } from 'prosemirror-view';
