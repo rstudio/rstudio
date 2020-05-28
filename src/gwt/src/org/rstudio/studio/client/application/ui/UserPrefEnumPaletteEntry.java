@@ -22,6 +22,7 @@ import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.widget.SelectWidget;
 import org.rstudio.studio.client.workbench.prefs.model.Prefs.EnumValue;
 
+import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.user.client.ui.Widget;
 
 public class UserPrefEnumPaletteEntry extends UserPrefPaletteEntry
@@ -29,6 +30,7 @@ public class UserPrefEnumPaletteEntry extends UserPrefPaletteEntry
    public UserPrefEnumPaletteEntry(EnumValue val)
    {
       super(val);
+      val_ = val;
       
       // Create marginally more user friendly names for option values by
       // removing common separators and adding some casing
@@ -46,6 +48,18 @@ public class UserPrefEnumPaletteEntry extends UserPrefPaletteEntry
             
       // Show the currently selected value
       selector_.setValue(val.getGlobalValue());
+      
+      // Adjust style for display
+      selector_.getElement().getStyle().setMarginBottom(0, Unit.PX);
+      
+      selector_.addChangeHandler((evt) ->
+      {
+         // Change the preference to the new value
+         val_.setGlobalValue(selector_.getValue());
+
+         // This counts as an invocation (so we trigger pref saves)
+         super.invoke();
+      });
 
       initialize();
    }
@@ -63,4 +77,5 @@ public class UserPrefEnumPaletteEntry extends UserPrefPaletteEntry
    }
    
    private SelectWidget selector_;
+   private EnumValue val_;
 }

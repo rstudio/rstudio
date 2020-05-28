@@ -243,7 +243,6 @@ public class CommandPalette extends Composite
       {
          entry.sinkEvents(Event.ONCLICK);
          entry.addHandler((evt) -> {
-            host_.dismiss();
             entry.invoke();
          }, ClickEvent.getType());
          commandList_.add(entry);
