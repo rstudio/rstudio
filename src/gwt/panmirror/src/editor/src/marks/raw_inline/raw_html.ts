@@ -64,14 +64,32 @@ const extension = (pandocExtensions: PandocExtensions, pandocCapabilities: Pando
                 const format = tok.c[kRawInlineFormat];
                 return isRawHTMLFormat(format);
               },
-              handler: (_schema: Schema) => {
+              handler: (schema: Schema) => {
                 return (writer: ProsemirrorWriter, tok: PandocToken) => {
-                  const text = tok.c[kRawInlineContent];
-                  writer.writeInlineHTML(text);
+                  const html = tok.c[kRawInlineContent];
+                  if (writer.hasInlineHTMLWriter(html)) {
+                    writer.writeInlineHTML(html);
+                  } else {
+                    writeInlneHTML(schema, html, writer);
+                  }
                 };
               },
             },
           ],
+          
+          inlineHTMLReader: (schema: Schema, html: string, writer?: ProsemirrorWriter) => {
+            // if it's a single tag keep it inline. this ensures that single-line composite 
+            // constructs like twitter embeds stay inside blocks (if they are allowed
+            // outside of blocks pandoc will try to parse them and maul the embed)
+            const keepInline = html.endsWith('>') && 
+                               html.length >= 3 &&
+                               tagStartLoc(html, html.length - 2) === 0;
+            if (keepInline && writer) {
+              writeInlneHTML(schema, html, writer);
+            } 
+            return keepInline;
+          },
+
           writer: {
             priority: 20,
             write: (output: PandocOutput, _mark: Mark, parent: Fragment) => {
@@ -103,6 +121,13 @@ const extension = (pandocExtensions: PandocExtensions, pandocCapabilities: Pando
     },
   };
 };
+
+function writeInlneHTML(schema: Schema, html: string, writer: ProsemirrorWriter) {
+  const mark = schema.marks.raw_html.create();
+  writer.openMark(mark);
+  writer.writeText(html);
+  writer.closeMark(mark);
+}
 
 export function rawHtmlInputRule(schema: Schema, filter: MarkInputRuleFilter) {
   return new InputRule(/>$/, (state: EditorState, match: string[], start: number, end: number) => {

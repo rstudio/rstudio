@@ -15,6 +15,12 @@
 
 import { Node as ProsemirrorNode, Schema, DOMSerializer, Fragment } from 'prosemirror-model';
 
+export const kHTMLCommentRegEx = /(?:^|[^`])(<!--([\s\S]*?)-->)/;
+
+export function isHTMLComment(html: string) {
+  return !!html.match(kHTMLCommentRegEx);
+}
+
 export function isSingleLineHTML(html: string) {
   return html.trimRight().split('\n').length === 1;
 }

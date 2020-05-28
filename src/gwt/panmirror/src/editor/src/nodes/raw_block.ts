@@ -108,6 +108,12 @@ const extension = (
               block: 'raw_block',
             },
           ],
+
+          // filter used to combine adjacent single-line html blocks (that's sometimes
+          // how pandoc will parse a single line of HTML w/ a begin/end tag that can
+          // have children, e.g. iframe)
+          tokensFilter: rawHTMLTokensFilter,
+
           // we define a custom blockReader here so that we can convert html and tex blocks with
           // a single line of code into paragraph with a raw inline
           blockReader: (schema: Schema, tok: PandocToken, writer: ProsemirrorWriter) => {
@@ -119,16 +125,10 @@ const extension = (
             }
           },
           writer: (output: PandocOutput, node: ProsemirrorNode) => {
-            if ([kHTMLFormat, kTexFormat].includes(node.attrs.format)) {
-              output.writeToken(PandocTokenType.Para, () => {
-                output.writeRawMarkdown(node.textContent);
-              });
-            } else {
-              output.writeToken(PandocTokenType.RawBlock, () => {
-                output.write(node.attrs.format);
-                output.write(node.textContent);
-              });
-            }
+            output.writeToken(PandocTokenType.RawBlock, () => {
+              output.write(node.attrs.format);
+              output.write(node.textContent);
+            });
           },
         },
       },
@@ -152,22 +152,76 @@ const extension = (
   };
 };
 
+function rawHTMLTokensFilter(tokens: PandocToken[], writer: ProsemirrorWriter) : PandocToken[] {
+  
+  // short circuit for no raw blocks
+  if (!tokens.some(token => token.t === PandocTokenType.RawBlock)) {
+    return tokens;
+  }
+
+  const shouldReduce = (html: string) => {
+    return html.split(/\r?\n/).length === 1 && !writer.hasInlineHTMLWriter(html);
+  };
+
+  const reduceTokens = (active: PandocToken | undefined, current: PandocToken) => {
+    if (active && 
+        active.t === PandocTokenType.RawBlock && 
+        current.t === PandocTokenType.RawBlock && 
+        active.c[kRawBlockFormat] === kHTMLFormat && 
+        current.c[kRawBlockFormat] === kHTMLFormat &&
+        shouldReduce(active.c[kRawBlockContent]) &&
+        shouldReduce(current.c[kRawBlockContent])
+        ) {
+      return {
+        t: PandocTokenType.RawBlock,
+        c: [
+          kHTMLFormat,
+          active.c[kRawBlockContent] += '\n' + current.c[kRawBlockContent]
+        ]
+      };
+    }
+    return null;
+  };
+
+  // combine adjacent raw blocks of the same type
+  const targetTokens: PandocToken[] = [];
+  let activeToken: PandocToken | undefined;
+  for (const token of tokens) {
+    const reducedToken = reduceTokens(activeToken, token);
+    if (reducedToken) {
+      activeToken = reducedToken;
+    } else {
+      if (activeToken) {
+        targetTokens.push(activeToken);
+      }
+      activeToken = token;
+    }
+    
+  }
+  if (activeToken) {
+    targetTokens.push(activeToken);
+  }
+
+  return targetTokens;
+}
+
 function readPandocRawBlock(schema: Schema, tok: PandocToken, writer: ProsemirrorWriter) {
   // single lines of html should be read as inline html (allows for
   // highlighting and more seamless editing experience)
   const format = tok.c[kRawBlockFormat];
   const text = tok.c[kRawBlockContent] as string;
-  if (isRawHTMLFormat(format) && isSingleLineHTML(text.trimRight())) {
+  const textTrimmed = text.trimRight();
+  if (isRawHTMLFormat(format) && isSingleLineHTML(textTrimmed) && writer.hasInlineHTMLWriter(textTrimmed)) {
     writer.openNode(schema.nodes.paragraph, {});
-    writer.writeInlineHTML(text.trimRight());
+    writer.writeInlineHTML(textTrimmed);
     writer.closeNode();
 
     // similarly, single lines of tex should be read as inline tex
-  } else if (format === kTexFormat && isSingleLineTex(text.trimRight())) {
+  } else if (format === kTexFormat && isSingleLineTex(textTrimmed)) {
     writer.openNode(schema.nodes.paragraph, {});
     const rawTexMark = schema.marks.raw_tex.create();
     writer.openMark(rawTexMark);
-    writer.writeText(text.trimRight());
+    writer.writeText(textTrimmed);
     writer.closeMark(rawTexMark);
     writer.closeNode();
   } else {

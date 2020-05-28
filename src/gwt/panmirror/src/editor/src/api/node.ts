@@ -34,6 +34,7 @@ import {
   PandocPreprocessorFn,
   PandocBlockReaderFn,
   PandocInlineHTMLReaderFn,
+  PandocTokensFilterFn,
 } from './pandoc';
 import { PandocBlockCapsuleFilter } from './pandoc_capsule';
 
@@ -50,6 +51,7 @@ export interface PandocNode {
     readonly readers?: readonly PandocTokenReader[];
     readonly writer?: PandocNodeWriterFn;
     readonly preprocessor?: PandocPreprocessorFn;
+    readonly tokensFilter?: PandocTokensFilterFn;
     readonly blockReader?: PandocBlockReaderFn;
     readonly inlineHTMLReader?: PandocInlineHTMLReaderFn;
     readonly blockCapsuleFilter?: PandocBlockCapsuleFilter;

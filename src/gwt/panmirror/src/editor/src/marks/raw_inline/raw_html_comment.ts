@@ -30,10 +30,10 @@ import { matchPandocFormatComment } from '../../api/pandoc_format';
 import { PandocCapabilities } from '../../api/pandoc_capabilities';
 import { EditorFormat } from '../../api/format';
 import { EditorOptions } from '../../api/options';
+import { kHTMLCommentRegEx, isHTMLComment } from '../../api/html';
 
 import './raw_html_comment-styles.css';
 
-const kHTMLCommentRegEx = /(?:^|[^`])(<!--([\s\S]*?)-->)/;
 const kHTMLEditingCommentRegEx = /^<!--# ([\s\S]*?)-->$/;
 
 const extension = (
@@ -81,16 +81,15 @@ const extension = (
         },
         pandoc: {
           readers: [],
-          inlineHTMLReader: (schema: Schema, html: string, writer: ProsemirrorWriter) => {
-            if (html.match(kHTMLCommentRegEx)) {
+          inlineHTMLReader: (schema: Schema, html: string, writer?: ProsemirrorWriter) => {
+            const isComment = isHTMLComment(html);
+            if (isComment && writer) {
               const mark = schema.marks.raw_html_comment.create(commentMarkAttribs(html));
               writer.openMark(mark);
               writer.writeText(html);
               writer.closeMark(mark);
-              return true;
-            } else {
-              return false;
             }
+            return isComment;
           },
           writer: {
             priority: 20,
