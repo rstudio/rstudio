@@ -42,6 +42,7 @@
 ### Bugfixes
 
 * Fixed an issue where hovering mouse cursor over C++ completion popup would steal focus. (#5941)
+* Fixed issue where autocompletion could fail for functions masked by objects in global environments. (#6942)
 * Git integration now works properly for project names containing the '!' character. (#6160)
 * Fixed issue where loading the Rfast package could lead to session hangs. (#6645)
 * Fixed header resizing in Data Viewer (#1665)
