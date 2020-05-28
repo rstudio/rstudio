@@ -308,6 +308,12 @@ public class Application implements ApplicationEventHandlers
    }
 
    @Handler
+   void onLoadServerHome()
+   {
+      loadUserHomePage();
+   }
+
+   @Handler
    void onShowAboutDialog()
    {
       server_.getProductInfo(new ServerRequestCallback<ProductInfo>()
@@ -890,6 +896,14 @@ public class Application implements ApplicationEventHandlers
          commands_.signOut().remove();
       else if (!sessionInfo.getShowIdentity() || !sessionInfo.getAllowFullUI())
          commands_.signOut().remove();
+
+      if (Desktop.isDesktop() ||
+         !sessionInfo.getAllowFullUI() ||
+         !sessionInfo.getShowUserHomePage() ||
+         StringUtil.isNullOrEmpty(sessionInfo.getUserHomePageUrl()))
+      {
+         commands_.loadServerHome().remove();
+      }
 
       if (!sessionInfo.getLauncherJobsEnabled())
       {
