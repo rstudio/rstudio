@@ -360,34 +360,51 @@ class CodeBlockNodeView implements NodeView {
     // ensure we are focused
     this.view.focus();
 
-    // if we are going backwards and the previous node can take node selections then select it
+    // get the current position
     const $pos = this.view.state.doc.resolve(this.getPos());
-    if (dir < 0 && $pos.nodeBefore && $pos.nodeBefore.type.spec.selectable) {
-      const tr = this.view.state.tr;
+
+    // helpers to figure out if the previous or next nodes are selectable
+    const prevNodeSelectable = () => {
+      return $pos.nodeBefore && $pos.nodeBefore.type.spec.selectable;
+    };
+    const nextNodeSelectable = () => {
+      const nextNode = this.view.state.doc.nodeAt(this.getPos() + this.node.nodeSize);
+      return nextNode?.type.spec.selectable;
+    };
+
+    // see if we can get a new selection
+    const tr = this.view.state.tr;
+    let selection: Selection | undefined;
+
+    // if we are going backwards and the previous node can take node selections then select it
+    if (dir < 0 && prevNodeSelectable()) {
+
       const prevNodePos = this.getPos() - $pos.nodeBefore!.nodeSize;
-      const selection = NodeSelection.create(tr.doc, prevNodePos);
-      tr.setSelection(selection).scrollIntoView();
-      this.view.dispatch(tr);
-    
-    // otherwise use default handling (handles forward/backward text selections as well
-    // as forward node selections) 
+      selection = NodeSelection.create(tr.doc, prevNodePos);
+     
+    // if we are going forwards and the next node can take node selections then select it
+    } else if (dir >= 0 && nextNodeSelectable()) {
+      
+      const nextNodePos = this.getPos() + this.node.nodeSize;
+      selection = NodeSelection.create(tr.doc, nextNodePos);
+
+    // otherwise use text selection handling (handles forward/backward text selections)
     } else {
+
       const targetPos = this.getPos() + (dir < 0 ? 0 : this.node.nodeSize);
       const targetNode = this.view.state.doc.nodeAt(targetPos);
       if (targetNode) {
-        const tr = this.view.state.tr;
-        if (targetNode.type.spec.selectable) {
-          const selection = NodeSelection.create(tr.doc, targetPos);
-          tr.setSelection(selection).scrollIntoView();
-        } else {
-          const selection = Selection.near(this.view.state.doc.resolve(targetPos), dir);
-          tr.setSelection(selection).scrollIntoView();
-        }
-        this.view.dispatch(tr);
+        selection = Selection.near(this.view.state.doc.resolve(targetPos), dir);
       }
     }
    
-    // ensure focus again
+    // set selection if we've got it
+    if (selection) {
+      tr.setSelection(selection).scrollIntoView();
+      this.view.dispatch(tr);
+    }
+
+    // set focus
     this.view.focus();
   }
 
