@@ -451,7 +451,7 @@ export class Editor {
     if (emitUpdate) {
       this.emitEvent(EditorEvent.Update);
       this.emitEvent(EditorEvent.OutlineChange);
-      this.emitEvent(EditorEvent.SelectionChange);
+      this.emitEvent(EditorEvent.StateChange);
     }
 
     // return our current markdown representation (so the caller know what our
@@ -640,8 +640,8 @@ export class Editor {
     this.state = this.state.apply(tr);
     this.view.updateState(this.state);
 
-    // notify listeners of selection change
-    this.emitEvent(EditorEvent.SelectionChange);
+    // notify listeners of state change
+    this.emitEvent(EditorEvent.StateChange);
 
     // notify listeners of updates
     if (tr.docChanged || tr.storedMarksSet) {
@@ -670,7 +670,7 @@ export class Editor {
     const events = new Map<string, Event>();
     events.set(EditorEvent.Update, new Event(EditorEvent.Update));
     events.set(EditorEvent.OutlineChange, new Event(EditorEvent.OutlineChange));
-    events.set(EditorEvent.SelectionChange, new Event(EditorEvent.SelectionChange));
+    events.set(EditorEvent.StateChange, new Event(EditorEvent.StateChange));
     events.set(EditorEvent.Resize, new Event(EditorEvent.Resize));
     events.set(EditorEvent.Layout, new Event(EditorEvent.Layout));
     events.set(EditorEvent.Scroll, new Event(EditorEvent.Scroll));

@@ -1,5 +1,5 @@
 /*
- * PanmirrorSelectionChangedEvent.java
+ * PanmirrorStateChangedEvent.java
  *
  * Copyright (C) 2020 by RStudio, PBC
  *
@@ -20,46 +20,46 @@ import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.event.shared.HasHandlers;
 
-public class PanmirrorSelectionChangedEvent extends
-    GwtEvent<PanmirrorSelectionChangedEvent.Handler> {
+public class PanmirrorStateChangeEvent extends
+    GwtEvent<PanmirrorStateChangeEvent.Handler> {
 
   public static interface Handler extends EventHandler {
-    void onPanmirrorSelectionChanged(PanmirrorSelectionChangedEvent event);
+    void onPanmirrorStateChange(PanmirrorStateChangeEvent event);
   }
 
-  public interface HasPanmirrorSelectionChangedHandlers extends HasHandlers {
-    HandlerRegistration addPanmirrorSelectionChangedHandler(Handler handler);
+  public interface HasPanmirrorStateChangeHandlers extends HasHandlers {
+    HandlerRegistration addPanmirrorStateChangeHandler(Handler handler);
   }
 
 
-  private static Type<PanmirrorSelectionChangedEvent.Handler> TYPE;
+  private static Type<PanmirrorStateChangeEvent.Handler> TYPE;
 
 
-  public static void fire(HasPanmirrorSelectionChangedHandlers source) {
+  public static void fire(HasPanmirrorStateChangeHandlers source) {
     if (TYPE != null) {
-      PanmirrorSelectionChangedEvent event = new PanmirrorSelectionChangedEvent();
+      PanmirrorStateChangeEvent event = new PanmirrorStateChangeEvent();
       source.fireEvent(event);
     }
   }
 
-  public static Type<PanmirrorSelectionChangedEvent.Handler> getType() {
+  public static Type<PanmirrorStateChangeEvent.Handler> getType() {
     if (TYPE == null) {
-      TYPE = new Type<PanmirrorSelectionChangedEvent.Handler>();
+      TYPE = new Type<PanmirrorStateChangeEvent.Handler>();
     }
     return TYPE;
   }
 
   
-  public PanmirrorSelectionChangedEvent() {}
+  public PanmirrorStateChangeEvent() {}
   
   @Override
-  public final Type<PanmirrorSelectionChangedEvent.Handler> getAssociatedType() {
+  public final Type<PanmirrorStateChangeEvent.Handler> getAssociatedType() {
     return TYPE;
   }
 
   @Override
-  protected void dispatch(PanmirrorSelectionChangedEvent.Handler handler) {
-    handler.onPanmirrorSelectionChanged(new PanmirrorSelectionChangedEvent());
+  protected void dispatch(PanmirrorStateChangeEvent.Handler handler) {
+    handler.onPanmirrorStateChange(new PanmirrorStateChangeEvent());
   }
   
 }
