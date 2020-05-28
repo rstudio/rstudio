@@ -63,6 +63,7 @@
     "@types/unzip": "^0.1.1",
     "fast-xml-parser": "^3.17.1",
     "fuse-box": "^3.7.1",
+    "node-fetch": "^2.6.0",
     "prettier": "^1.18.2",
     "terser": "^4.6.2",
     "tslint": "^5.20.0",
