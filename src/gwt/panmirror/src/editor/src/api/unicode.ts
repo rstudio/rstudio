@@ -22,7 +22,7 @@ export function parseCodepoint(codepointText: string): number | undefined {
 
   // It might have a user prefix for unicode character, remove
   var hexOnlyText = codepointText.toUpperCase();
-  if (codepointText.startsWith(kHexCodepointPrefix.toUpperCase())) {
+  if (hexOnlyText.startsWith(kHexCodepointPrefix.toUpperCase())) {
     hexOnlyText = codepointText.substr(kHexCodepointPrefix.length, codepointText.length - kHexCodepointPrefix.length);
   }
 
