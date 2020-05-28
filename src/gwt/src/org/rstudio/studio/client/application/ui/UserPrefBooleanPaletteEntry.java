@@ -39,6 +39,7 @@ public class UserPrefBooleanPaletteEntry extends UserPrefPaletteEntry
    @Override
    public void invoke()
    {
+      super.invoke();
       boolean newValue = toggle_.getState() != Toggle.State.ON;
       BooleanValue pref = (BooleanValue)pref_;
       pref.setGlobalValue(newValue);
