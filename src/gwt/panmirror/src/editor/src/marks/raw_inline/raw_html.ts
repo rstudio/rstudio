@@ -76,17 +76,15 @@ const extension = (pandocExtensions: PandocExtensions, pandocCapabilities: Pando
               },
             },
           ],
-          
+
           inlineHTMLReader: (schema: Schema, html: string, writer?: ProsemirrorWriter) => {
-            // if it's a single tag keep it inline. this ensures that single-line composite 
+            // if it's a single tag keep it inline. this ensures that single-line composite
             // constructs like twitter embeds stay inside blocks (if they are allowed
             // outside of blocks pandoc will try to parse them and maul the embed)
-            const keepInline = html.endsWith('>') && 
-                               html.length >= 3 &&
-                               tagStartLoc(html, html.length - 2) === 0;
+            const keepInline = html.endsWith('>') && html.length >= 3 && tagStartLoc(html, html.length - 2) === 0;
             if (keepInline && writer) {
               writeInlneHTML(schema, html, writer);
-            } 
+            }
             return keepInline;
           },
 
@@ -174,9 +172,9 @@ export function rawHtmlInputRule(schema: Schema, filter: MarkInputRuleFilter) {
 function tagInfo(text: string, endLoc: number) {
   const startLoc = tagStartLoc(text, endLoc);
   if (startLoc !== -1) {
-    // don't match if preceding character is a backtick 
+    // don't match if preceding character is a backtick
     // (user is attempting to write an html tag in code)
-    if (text.charAt(startLoc-1) === '`') {
+    if (text.charAt(startLoc - 1) === '`') {
       return null;
     }
     const tagText = text.substring(startLoc, endLoc + 1);

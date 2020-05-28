@@ -152,8 +152,7 @@ const extension = (
   };
 };
 
-function rawHTMLTokensFilter(tokens: PandocToken[], writer: ProsemirrorWriter) : PandocToken[] {
-  
+function rawHTMLTokensFilter(tokens: PandocToken[], writer: ProsemirrorWriter): PandocToken[] {
   // short circuit for no raw blocks
   if (!tokens.some(token => token.t === PandocTokenType.RawBlock)) {
     return tokens;
@@ -164,20 +163,18 @@ function rawHTMLTokensFilter(tokens: PandocToken[], writer: ProsemirrorWriter) :
   };
 
   const reduceTokens = (active: PandocToken | undefined, current: PandocToken) => {
-    if (active && 
-        active.t === PandocTokenType.RawBlock && 
-        current.t === PandocTokenType.RawBlock && 
-        active.c[kRawBlockFormat] === kHTMLFormat && 
-        current.c[kRawBlockFormat] === kHTMLFormat &&
-        shouldReduce(active.c[kRawBlockContent]) &&
-        shouldReduce(current.c[kRawBlockContent])
-        ) {
+    if (
+      active &&
+      active.t === PandocTokenType.RawBlock &&
+      current.t === PandocTokenType.RawBlock &&
+      active.c[kRawBlockFormat] === kHTMLFormat &&
+      current.c[kRawBlockFormat] === kHTMLFormat &&
+      shouldReduce(active.c[kRawBlockContent]) &&
+      shouldReduce(current.c[kRawBlockContent])
+    ) {
       return {
         t: PandocTokenType.RawBlock,
-        c: [
-          kHTMLFormat,
-          active.c[kRawBlockContent] += '\n' + current.c[kRawBlockContent]
-        ]
+        c: [kHTMLFormat, (active.c[kRawBlockContent] += '\n' + current.c[kRawBlockContent])],
       };
     }
     return null;
@@ -196,7 +193,6 @@ function rawHTMLTokensFilter(tokens: PandocToken[], writer: ProsemirrorWriter) :
       }
       activeToken = token;
     }
-    
   }
   if (activeToken) {
     targetTokens.push(activeToken);

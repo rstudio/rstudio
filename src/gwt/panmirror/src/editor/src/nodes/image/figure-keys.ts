@@ -81,9 +81,9 @@ function backspaceHandler() {
               const parentTextBlock = findParentNodeClosestToPos($head, node => node.isTextblock);
               if (parentTextBlock) {
                 tr.deleteRange(parentTextBlock.pos, parentTextBlock.pos + parentTextBlock.node.nodeSize);
-              }            
-            } 
-          
+              }
+            }
+
             const nodePos = $head.pos - previousNode.nodeSize - 1;
             const figureSelection = NodeSelection.create(tr.doc, nodePos);
             tr.setSelection(figureSelection);

@@ -239,7 +239,7 @@ export interface ProsemirrorWriter {
   writeTokens(tokens: PandocToken[]): void;
 
   // see if any inline HTML readers want to handle this html
-  hasInlineHTMLWriter(html: string) : boolean;
+  hasInlineHTMLWriter(html: string): boolean;
   writeInlineHTML(html: string): void;
 
   // log an unrecoginzed token type

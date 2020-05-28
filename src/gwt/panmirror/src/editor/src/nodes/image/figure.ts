@@ -159,11 +159,8 @@ const extension = (
     baseKeys: figureKeys,
 
     plugins: (schema: Schema) => {
-      return [
-        figureGapCursorPlugin(schema),
-        ...imageNodeViewPlugins('figure', ui, events, pandocExtensions),
-      ];
-    }
+      return [figureGapCursorPlugin(schema), ...imageNodeViewPlugins('figure', ui, events, pandocExtensions)];
+    },
   };
 };
 
@@ -182,15 +179,14 @@ function figureGapCursorPlugin(schema: Schema) {
   return new Plugin({
     key: new PluginKey(`figure-gap-cursor`),
     props: {
-      createSelectionBetween: (view: EditorView, $anchor: ResolvedPos, $head: ResolvedPos) => {  
-        if ($anchor.node().type === schema.nodes.figure && 
-            $anchor.pos === $head.pos) {
-            const $pos = view.state.doc.resolve($anchor.pos - 1);
+      createSelectionBetween: (view: EditorView, $anchor: ResolvedPos, $head: ResolvedPos) => {
+        if ($anchor.node().type === schema.nodes.figure && $anchor.pos === $head.pos) {
+          const $pos = view.state.doc.resolve($anchor.pos - 1);
           return new GapCursor($pos, $pos);
         }
         return undefined;
-      }
-    }
+      },
+    },
   });
 }
 

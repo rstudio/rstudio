@@ -31,7 +31,6 @@ const kEmojiAttr = 0;
 const kEmojiContent = 1;
 
 const extension = (): Extension | null => {
-
   return {
     marks: [
       {

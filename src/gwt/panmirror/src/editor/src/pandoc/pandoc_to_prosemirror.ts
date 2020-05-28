@@ -115,12 +115,10 @@ class Parser {
     this.tokensFilters.forEach(filter => {
       targetTokens = filter(targetTokens, writer);
     });
-    
+
     // process tokens
     targetTokens.forEach(tok => this.writeToken(writer, tok));
   }
-
-  
 
   private writeToken(writer: ProsemirrorWriter, tok: PandocToken) {
     // process block-level capsules
