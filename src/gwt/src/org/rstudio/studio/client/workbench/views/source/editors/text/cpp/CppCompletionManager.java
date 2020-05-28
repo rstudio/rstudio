@@ -217,10 +217,14 @@ public class CppCompletionManager implements CompletionManager
          {
             switch (keyCode)
             {
-            case KeyCodes.KEY_UP:    return popup.selectPrev();
-            case KeyCodes.KEY_DOWN:  return popup.selectNext();
-            case KeyCodes.KEY_ENTER: return popup.acceptSelected();
-            case KeyCodes.KEY_TAB:   return popup.acceptSelected();
+            case KeyCodes.KEY_UP:       popup.selectPrev();        return true;
+            case KeyCodes.KEY_DOWN:     popup.selectNext();        return true;
+            case KeyCodes.KEY_PAGEUP:   popup.moveSelectionBwd(5); return true;
+            case KeyCodes.KEY_PAGEDOWN: popup.moveSelectionFwd(5); return true;
+            case KeyCodes.KEY_HOME:     popup.selectFirst();       return true;
+            case KeyCodes.KEY_END:      popup.selectLast();        return true;
+            case KeyCodes.KEY_ENTER:    popup.acceptSelected();    return true;
+            case KeyCodes.KEY_TAB:      popup.acceptSelected();    return true;
             }
          }
          
