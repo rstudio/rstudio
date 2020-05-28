@@ -152,6 +152,7 @@ well as menu structures (for main menu and popup menus).
          <separator/>
          <cmd refid="closeProject"/>
          <separator/>
+         <cmd refid="loadServerHome"/>
          <cmd refid="signOut"/>
          <cmd refid="quitSession"/>
       </menu>
@@ -3780,6 +3781,11 @@ well as menu structures (for main menu and popup menus).
         buttonLabel=""
         menuLabel="Sign Ou_t"
         desc="Sign out from RStudio"
+        windowMode="main"/>
+
+   <cmd id="loadServerHome"
+        buttonLabel=""
+        menuLabel="RStudio Server _Home"
         windowMode="main"/>
 
    <cmd id="speakEditorLocation"
