@@ -78,11 +78,16 @@ const extension = (pandocExtensions: PandocExtensions, pandocCapabilities: Pando
           ],
 
           inlineHTMLReader: (schema: Schema, html: string, writer?: ProsemirrorWriter) => {
+            
             // if it's a single tag keep it inline. this ensures that single-line composite
             // constructs like twitter embeds stay inside blocks (if they are allowed
             // outside of blocks pandoc will try to parse them and maul the embed)
             const keepInline = html.endsWith('>') && html.length >= 3 && tagStartLoc(html, html.length - 2) === 0;
-            if (keepInline && writer) {
+            if (!keepInline) {
+              return false;
+            }
+
+            if (writer) {
               writeInlneHTML(schema, html, writer);
             }
             return keepInline;

@@ -201,8 +201,11 @@ export function imagePandocOutputWriter(figure: boolean, ui: EditorUI) {
 // parse inline html with <img> as image node
 function imageInlineHTMLReader(schema: Schema, html: string, writer?: ProsemirrorWriter) {
   const isImage = inlineHTMLIsImage(html);
+  if (!isImage) {
+    return false;
+  }
 
-  if (isImage && writer) {
+  if (writer) {
     const attrs = imageAttrsFromHTML(html);
     if (attrs) {
       writer.addNode(schema.nodes.image, attrs, []);

@@ -82,13 +82,19 @@ const extension = (
         pandoc: {
           readers: [],
           inlineHTMLReader: (schema: Schema, html: string, writer?: ProsemirrorWriter) => {
+            
             const isComment = isHTMLComment(html);
-            if (isComment && writer) {
+            if (!isComment) {
+              return false;
+            }
+
+            if (writer) {
               const mark = schema.marks.raw_html_comment.create(commentMarkAttribs(html));
               writer.openMark(mark);
               writer.writeText(html);
               writer.closeMark(mark);
             }
+            
             return isComment;
           },
           writer: {
