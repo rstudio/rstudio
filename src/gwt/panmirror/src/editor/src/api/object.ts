@@ -1,5 +1,5 @@
 /*
- * events.ts
+ * object.ts
  *
  * Copyright (C) 2020 by RStudio, PBC
  *
@@ -13,17 +13,24 @@
  *
  */
 
-export enum EditorEvent {
-  Update = 'panmirrorUpdate',
-  OutlineChange = 'panmirrorOutlineChange',
-  StateChange = 'panmirrorStateChange',
-  Resize = 'panmirrorResize',
-  Layout = 'panmirrorLayout',
-  Scroll = 'panmirrorScroll',
-  Focus = 'panmirrorFocus',
-}
+export function findValue(key: string, object?: { [key: string]: any }) {
+  if (!object) {
+    return undefined;
+  }
 
-export interface EditorEvents {
-  subscribe: (event: EditorEvent, handler: VoidFunction) => VoidFunction;
-  emit: (event: EditorEvent) => void;
+  let value;
+
+  Object.keys(object).some(k => {
+    if (k === key) {
+      value = object[k];
+      return true;
+    }
+    if (object[k] && typeof object[k] === 'object') {
+      value = findValue(key, object[k]);
+      return value !== undefined;
+    }
+    return false;
+  });
+
+  return value;
 }

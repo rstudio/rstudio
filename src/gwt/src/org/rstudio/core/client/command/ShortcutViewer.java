@@ -76,7 +76,7 @@ public class ShortcutViewer implements NativePreviewHandler
             openApplicationURL("docs/keyboard.htm");
       };
 
-      if (pPrefs_.get().getScreenReaderEnabled())
+      if (pPrefs_.get().enableScreenReader().getValue())
          showAllShortcutsPage.execute();
       else
          showShortcutInfoPanel(new ShortcutInfoPanel(showAllShortcutsPage));
@@ -89,7 +89,7 @@ public class ShortcutViewer implements NativePreviewHandler
       {
          return;
       }
-      if (pPrefs_.get().getScreenReaderEnabled())
+      if (pPrefs_.get().enableScreenReader().getValue())
       {
          pAriaLive_.get().announce(AriaLiveService.INACCESSIBLE_FEATURE,
                "Vim keyboard shortcut help not screen reader accessible. Press any key to close.",

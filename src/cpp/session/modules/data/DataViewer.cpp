@@ -805,7 +805,7 @@ Error getGridData(const http::Request& request,
       json::Object err;
       err["error"] = e.message();
       result = err;
-      status = http::status::InternalServerError;
+      status = http::status::BadRequest;
    }
    CATCH_UNEXPECTED_EXCEPTION
 

@@ -54,7 +54,6 @@ import org.rstudio.studio.client.workbench.model.ConsoleAction;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.model.helper.StringStateValue;
-import org.rstudio.studio.client.workbench.prefs.events.ScreenReaderStateReadyEvent;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UserState;
 import org.rstudio.studio.client.workbench.views.console.events.*;
@@ -86,8 +85,7 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
                               SendToConsoleHandler,
                               DebugModeChangedEvent.Handler,
                               RunCommandWithDebugEvent.Handler,
-                              UnhandledErrorEvent.Handler,
-                              ScreenReaderStateReadyEvent.Handler
+                              UnhandledErrorEvent.Handler
 {
    static interface Binder extends CommandBinder<Commands, Shell>
    {
@@ -132,7 +130,7 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
       
       editorProvider.setConsoleEditor(input_);
       
-      eventBus_.addHandler(ScreenReaderStateReadyEvent.TYPE, this);
+      configureLiveAnnouncements();
      
       prefs_.surroundSelection().bind(new CommandWithArg<String>()
       {
@@ -763,10 +761,9 @@ public class Shell implements ConsoleHistoryAddedEvent.Handler,
       view_.onSelected();
    }
    
-   @Override
-   public void onScreenReaderStateReady(ScreenReaderStateReadyEvent e)
+   private void configureLiveAnnouncements()
    {
-      if (prefs_.getScreenReaderEnabled() &&
+      if (prefs_.enableScreenReader().getValue() &&
             (!ariaLive_.isDisabled(AriaLiveService.CONSOLE_LOG) ||
              !ariaLive_.isDisabled(AriaLiveService.CONSOLE_COMMAND)))
       {

@@ -44,7 +44,7 @@ import org.rstudio.studio.client.panmirror.events.PanmirrorOutlineVisibleEvent;
 import org.rstudio.studio.client.panmirror.events.PanmirrorFindReplaceVisibleEvent;
 import org.rstudio.studio.client.panmirror.events.PanmirrorFindReplaceVisibleEvent.Handler;
 import org.rstudio.studio.client.panmirror.events.PanmirrorOutlineWidthEvent;
-import org.rstudio.studio.client.panmirror.events.PanmirrorSelectionChangedEvent;
+import org.rstudio.studio.client.panmirror.events.PanmirrorStateChangeEvent;
 import org.rstudio.studio.client.panmirror.events.PanmirrorUpdatedEvent;
 import org.rstudio.studio.client.panmirror.events.PanmirrorFocusEvent;
 import org.rstudio.studio.client.panmirror.findreplace.PanmirrorFindReplace;
@@ -92,7 +92,7 @@ public class PanmirrorWidget extends DockLayoutPanel implements
    RequiresResize, 
    CommandPaletteEntrySource,
    PanmirrorUpdatedEvent.HasPanmirrorUpdatedHandlers,
-   PanmirrorSelectionChangedEvent.HasPanmirrorSelectionChangedHandlers,
+   PanmirrorStateChangeEvent.HasPanmirrorStateChangeHandlers,
    PanmirrorOutlineVisibleEvent.HasPanmirrorOutlineVisibleHandlers,
    PanmirrorOutlineWidthEvent.HasPanmirrorOutlineWidthHandlers,
    PanmirrorFindReplaceVisibleEvent.HasPanmirrorFindReplaceVisibleHandlers,
@@ -117,6 +117,7 @@ public class PanmirrorWidget extends DockLayoutPanel implements
                              FormatSource formatSource,
                              PanmirrorOptions options,
                              Options widgetOptions,
+                             int progressDelay,
                              CommandWithArg<PanmirrorWidget> completed) {
       
       PanmirrorWidget editorWidget = new PanmirrorWidget(widgetOptions);
@@ -130,7 +131,7 @@ public class PanmirrorWidget extends DockLayoutPanel implements
          new PromiseWithProgress<PanmirrorEditor>(
             PanmirrorEditor.create(editorWidget.editorParent_.getElement(), context, format, options),
             null,
-            kCreationProgressDelayMs,
+            progressDelay,
             editor -> {
                editorWidget.attachEditor(editor);
                completed.execute(editorWidget);
@@ -268,7 +269,7 @@ public class PanmirrorWidget extends DockLayoutPanel implements
          }
       };
       
-      editorEventUnsubscribe_.add(editor_.subscribe(PanmirrorEvent.SelectionChange, () -> {
+      editorEventUnsubscribe_.add(editor_.subscribe(PanmirrorEvent.StateChange, () -> {
          
          // sync toolbar commands
          if (toolbar_ != null)
@@ -278,7 +279,7 @@ public class PanmirrorWidget extends DockLayoutPanel implements
          outline_.updateSelection(editor_.getSelection());
          
          // fire to clients
-         fireEvent(new PanmirrorSelectionChangedEvent());
+         fireEvent(new PanmirrorStateChangeEvent());
       }));
       
       editorEventUnsubscribe_.add(editor_.subscribe(PanmirrorEvent.OutlineChange, () -> {
@@ -363,31 +364,32 @@ public class PanmirrorWidget extends DockLayoutPanel implements
    public void setMarkdown(String code, 
                            PanmirrorWriterOptions options, 
                            boolean emitUpdate, 
+                           int progressDelay,
                            CommandWithArg<JsObject> completed) 
    {
       new PromiseWithProgress<JsObject>(
          editor_.setMarkdown(code, options, emitUpdate),
          null,
-         kSerializationProgressDelayMs,
+         progressDelay,
          completed
       );
    }
    
-   public void getMarkdown(PanmirrorWriterOptions options, CommandWithArg<JsObject> completed) {
+   public void getMarkdown(PanmirrorWriterOptions options, int progressDelay, CommandWithArg<JsObject> completed) {
       new PromiseWithProgress<JsObject>(
          editor_.getMarkdown(options),
          null,
-         kSerializationProgressDelayMs,
+         progressDelay,
          completed   
       );
    }
    
-   public void getCanonical(String code, PanmirrorWriterOptions options, CommandWithArg<String> completed)
+   public void getCanonical(String code, PanmirrorWriterOptions options, int progressDelay, CommandWithArg<String> completed)
    {
       new PromiseWithProgress<String>(
          editor_.getCanonical(code, options),
          null,
-         kCreationProgressDelayMs,
+         progressDelay,
          completed   
       );
    }
@@ -481,9 +483,9 @@ public class PanmirrorWidget extends DockLayoutPanel implements
       return editor_.getPandocFormat();
    }
    
-   public PanmirrorPandocFormatConfig getPandocFormatConfig()
+   public PanmirrorPandocFormatConfig getPandocFormatConfig(boolean isRmd)
    {
-      return editor_.getPandocFormatConfig();
+      return editor_.getPandocFormatConfig(isRmd);
    }
    
    public PanmirrorSelection getSelection()
@@ -551,9 +553,9 @@ public class PanmirrorWidget extends DockLayoutPanel implements
    }
    
    @Override
-   public HandlerRegistration addPanmirrorSelectionChangedHandler(PanmirrorSelectionChangedEvent.Handler handler)
+   public HandlerRegistration addPanmirrorStateChangeHandler(PanmirrorStateChangeEvent.Handler handler)
    {
-      return handlers_.addHandler(PanmirrorSelectionChangedEvent.getType(), handler);
+      return handlers_.addHandler(PanmirrorStateChangeEvent.getType(), handler);
    }
    
    @Override
@@ -650,11 +652,7 @@ public class PanmirrorWidget extends DockLayoutPanel implements
    
    private final HandlerManager handlers_ = new HandlerManager(this);
    private final HandlerRegistrations registrations_ = new HandlerRegistrations();
-   private final ArrayList<JsVoidFunction> editorEventUnsubscribe_ = new ArrayList<JsVoidFunction>();
-   
-   private static final int kCreationProgressDelayMs = 2000;
-   private static final int kSerializationProgressDelayMs = 5000;
-   
+   private final ArrayList<JsVoidFunction> editorEventUnsubscribe_ = new ArrayList<JsVoidFunction>(); 
 }
 
 

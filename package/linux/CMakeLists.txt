@@ -100,6 +100,7 @@ endif()
 set(RSTUDIO_PACKAGE_SUFFIX "-")
 
 if(RSTUDIO_SERVER)
+   # add rhel to package name for redhat enterprise linux builds
    if(IS_RHEL) 
       set(RSTUDIO_PACKAGE_SUFFIX "${RSTUDIO_PACKAGE_SUFFIX}rhel-")
    endif()

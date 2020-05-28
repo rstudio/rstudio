@@ -38,10 +38,15 @@
   height: 18px;
 }
 
-
-.pm-dark-mode .pm-input-text {
+.pm-input-text,
+.pm-input-select {
   border-width: 1px;
   border-style: solid;
+  border-radius: 3px;
+}
+
+.pm-input-select {
+  height: 20px;
 }
 
 

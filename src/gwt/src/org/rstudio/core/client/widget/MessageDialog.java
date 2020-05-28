@@ -34,7 +34,7 @@ public class MessageDialog extends ModalDialogBase
    {
       this(type, caption, labelForMessage(message));
    }
-   
+
    public MessageDialog(int type, String caption, Widget message)
    {
       super(Roles.getAlertdialogRole());
@@ -42,7 +42,7 @@ public class MessageDialog extends ModalDialogBase
       setText(caption);
       messageWidget_ = message;
       setButtonAlignment(HasHorizontalAlignment.ALIGN_CENTER);
-      
+
       // read the message when dialog is shown
       setARIADescribedBy(messageWidget_.getElement());
    }
@@ -53,7 +53,8 @@ public class MessageDialog extends ModalDialogBase
                                  boolean isDefault,
                                  boolean isCancel)
    {
-      ThemedButton button = new ThemedButton(label, event -> {
+      ThemedButton button = new ThemedButton(label, clickEvent ->
+      {
          if (operation != null)
             operation.execute();
          closeDialog();
@@ -73,7 +74,8 @@ public class MessageDialog extends ModalDialogBase
       if (operation != null && progress_ == null)
          progress_ = addProgressIndicator();
 
-      ThemedButton button = new ThemedButton(label, event -> {
+      ThemedButton button = new ThemedButton(label, clickEvent ->
+      {
          if (operation != null)
             operation.execute(progress_);
          else
@@ -137,10 +139,10 @@ public class MessageDialog extends ModalDialogBase
 
       // add message widget
       horizontalPanel.add(messageWidget_);
-      
+
       return horizontalPanel;
    }
-   
+
    public static Label labelForMessage(String message)
    {
       Label label = new MultiLineLabel(StringUtil.notNull(message));

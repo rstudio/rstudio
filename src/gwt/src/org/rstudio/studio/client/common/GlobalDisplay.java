@@ -144,8 +144,6 @@ public abstract class GlobalDisplay extends MessageDisplay
    public abstract void openSatelliteWindow(String name, int width, int height,
                                    NewWindowOptions options);
 
-   public abstract void openEmailComposeWindow(String to, String subject);
-   
    public abstract void bringWindowToFront(String name);
    
    public abstract void showHtmlFile(String path);

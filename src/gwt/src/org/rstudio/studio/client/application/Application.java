@@ -222,8 +222,19 @@ public class Application implements ApplicationEventHandlers
             Debug.logError(error);
             dismissLoadingProgress.execute();
 
-            globalDisplay_.showErrorMessage("RStudio Initialization Error",
-                                            error.getUserMessage());
+            if (!StringUtil.isNullOrEmpty(error.getRedirectUrl()))
+            {
+               // error is informing us that we should redirect
+               // redirect to the specified URL (as a sub URL of the site's root)
+               String redirectUrl = ApplicationUtils.getHostPageBaseURLWithoutContext(false) + 
+            		   error.getRedirectUrl();
+               navigateWindowWithDelay(redirectUrl);
+            }
+            else
+            {
+               globalDisplay_.showErrorMessage("RStudio Initialization Error",
+                                               error.getUserMessage());
+            }
          }
       };
       

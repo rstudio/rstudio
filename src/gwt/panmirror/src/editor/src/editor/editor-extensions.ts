@@ -36,6 +36,7 @@ import {
   PandocBlockReaderFn,
   PandocExtensions,
   PandocInlineHTMLReaderFn,
+  PandocTokensFilterFn,
 } from '../api/pandoc';
 import { PandocBlockCapsuleFilter } from '../api/pandoc_capsule';
 import { EditorEvents } from '../api/events';
@@ -72,6 +73,8 @@ import behaviorTrailingP from '../behaviors/trailing_p';
 import behaviorEmptyMark from '../behaviors/empty_mark';
 import behaviorOutline from '../behaviors/outline';
 import beahviorCodeBlockInput from '../behaviors/code_block_input';
+import behaviorPasteText from '../behaviors/paste_text';
+import behaviorBottomPadding from '../behaviors/bottom_padding';
 
 // marks
 import markStrikeout from '../marks/strikeout';
@@ -88,7 +91,7 @@ import markSpan from '../marks/span';
 import markXRef from '../marks/xref';
 import markHTMLComment from '../marks/raw_inline/raw_html_comment';
 import markShortcode from '../marks/shortcode';
-import markEmoji from '../marks/emoji/emoji';
+import markEmoji from '../marks/emoji';
 
 // nodes
 import nodeFootnote from '../nodes/footnote/footnote';
@@ -150,6 +153,8 @@ export function initExtensions(
     behaviorEmptyMark,
     behaviorOutline,
     beahviorCodeBlockInput,
+    behaviorPasteText,
+    behaviorBottomPadding,
 
     // nodes
     nodeDiv,
@@ -168,6 +173,7 @@ export function initExtensions(
     markSubscript,
     markSmallcaps,
     markQuoted,
+    markHTMLComment,
     markRawTex,
     markRawHTML,
     markRawInline,
@@ -175,9 +181,8 @@ export function initExtensions(
     markCite,
     markSpan,
     markXRef,
-    markHTMLComment,
     markShortcode,
-    markEmoji
+    markEmoji,
   ]);
 
   // register external extensions
@@ -271,6 +276,12 @@ export class ExtensionManager {
 
   public pandocPostprocessors(): readonly PandocPostprocessorFn[] {
     return this.pandocReaders().flatMap(reader => (reader.postprocessor ? [reader.postprocessor] : []));
+  }
+
+  public pandocTokensFilters(): readonly PandocTokensFilterFn[] {
+    return this.collectFrom({
+      node: node => [node.pandoc.tokensFilter],
+    });
   }
 
   public pandocBlockReaders(): readonly PandocBlockReaderFn[] {

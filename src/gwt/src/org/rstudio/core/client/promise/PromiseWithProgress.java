@@ -37,14 +37,17 @@ public class PromiseWithProgress<V>
    {
       // setup progress
       GlobalDisplay globalDisplay = RStudioGinjector.INSTANCE.getGlobalDisplay();
-      GlobalProgressDelayer progressDelayer = new GlobalProgressDelayer(globalDisplay, delayMs, progress);
+      GlobalProgressDelayer progressDelayer = delayMs > 0
+         ? new GlobalProgressDelayer(globalDisplay, delayMs, progress)
+         : null;
       
       // execute the promise
       promise.then(new ThenOnFulfilledCallbackFn<V,V>() {
          @Override
          public IThenable<V> onInvoke(V v)
          {
-            progressDelayer.dismiss();
+            if (progressDelayer != null)
+               progressDelayer.dismiss();
             completed.execute(v);
             return null;
            
@@ -54,7 +57,8 @@ public class PromiseWithProgress<V>
          @Override
          public IThenable<V> onInvoke(Object error)
          {
-            progressDelayer.dismiss();
+            if (progressDelayer != null)
+               progressDelayer.dismiss();
             globalDisplay.showErrorMessage("Error", error.toString());
             completed.execute(errorVal);
             return null;

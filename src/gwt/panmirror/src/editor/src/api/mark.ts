@@ -126,6 +126,7 @@ export function removeInvalidatedMarks(
       }
     }
   });
+  re.lastIndex = 0;
 }
 
 export function splitInvalidatedMarks(

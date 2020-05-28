@@ -747,6 +747,11 @@ public class ClientEventDispatcher
             SessionCountChangedEvent.Data data = event.getData();
             eventBus_.dispatchEvent(new SessionCountChangedEvent(data));
          }
+         else if (type == ClientEvent.SessionLabelChanged)
+         {
+            SessionLabelChangedEvent.Data data = event.getData();
+            eventBus_.dispatchEvent(new SessionLabelChangedEvent(data));
+         }
          else if (type == ClientEvent.CollabEditEnded)
          {
             CollabEditEndedEvent.Data data = event.getData();

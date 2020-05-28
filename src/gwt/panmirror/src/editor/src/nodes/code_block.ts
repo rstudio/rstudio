@@ -248,7 +248,7 @@ function codeBlockAttrEdit(pandocExtensions: PandocExtensions, pandocCapabilitie
           }
           if (node.attrs.classes && node.attrs.classes.length) {
             const lang = node.attrs.classes[0];
-            if (pandocCapabilities.highlight_languages.includes(lang)) {
+            if (pandocCapabilities.highlight_languages.includes(lang) || lang === 'tex') {
               tags.push(lang);
             } else {
               tags.push(`.${lang}`);

@@ -15,7 +15,22 @@
 
 import { EditorView } from 'prosemirror-view';
 
-export function imageDrop() {
+import { Plugin, PluginKey } from 'prosemirror-state';
+
+const pluginKey = new PluginKey('image-events');
+
+export function imageEventsPlugin() {
+  return new Plugin({
+    key: pluginKey,
+    props: {
+      handleDOMEvents: {
+        drop: imageDrop(),
+      },
+    },
+  });
+}
+
+function imageDrop() {
   return (view: EditorView, event: Event) => {
     // alias to drag event so typescript knows about event.dataTransfer
     const dragEvent = event as DragEvent;

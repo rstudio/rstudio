@@ -741,7 +741,8 @@ void handleRdPreviewRequest(const http::Request& request,
    }
    else if (result.exitStatus != EXIT_SUCCESS)
    {
-      pResponse->setError(http::status::InternalServerError, result.stdErr);
+      LOG_ERROR_MESSAGE("Rd preview error: " + result.stdErr);
+      pResponse->setError(http::status::InternalServerError, "Internal Server Error");
    }
    else
    {
@@ -839,8 +840,9 @@ void handleHttpdRequest(const std::string& location,
    // error returned explicitly by httpd
    else if (TYPEOF(httpdSEXP) == STRSXP && LENGTH(httpdSEXP) > 0)
    {
+      LOG_ERROR_MESSAGE("Handle httpd request error: " + r::sexp::asString(httpdSEXP));
       pResponse->setError(http::status::InternalServerError, 
-                          r::sexp::asString(httpdSEXP));
+                          "Internal Server Error");
    }
    
    // content returned from httpd

@@ -14,16 +14,13 @@
  */
 
 import { Node as ProsemirrorNode, Schema, Fragment, ResolvedPos } from 'prosemirror-model';
-import { Plugin, PluginKey, EditorState, Transaction, NodeSelection } from 'prosemirror-state';
-import { EditorView } from 'prosemirror-view';
+import { Transaction} from 'prosemirror-state';
 import { Transform } from 'prosemirror-transform';
 
 import { findChildrenByType, findParentNodeClosestToPos } from 'prosemirror-utils';
 
 import { Extension } from '../../api/extension';
 import { EditorUI } from '../../api/ui';
-import { BaseKey } from '../../api/basekeys';
-import { exitNode } from '../../api/command';
 import { EditorOptions } from '../../api/options';
 import { EditorEvents } from '../../api/events';
 import { FixupContext } from '../../api/fixup';
@@ -49,11 +46,11 @@ import {
   imagePandocOutputWriter,
   pandocImageHandler,
   imageAttrsFromHTML,
+  imageCommand,
 } from './image';
-import { ImageNodeView } from './image-view';
 import { inlineHTMLIsImage } from './image-util';
-
-const plugin = new PluginKey('figure');
+import { imageNodeViewPlugins } from './image-view';
+import { figureKeys } from './figure-keys';
 
 const extension = (
   pandocExtensions: PandocExtensions,
@@ -127,6 +124,11 @@ const extension = (
             }
           },
         },
+
+        attr_edit: () => ({
+          type: (schema: Schema) => schema.nodes.figure,
+          editFn: () => imageCommand(ui, imageAttr),
+        }),
       },
     ],
 
@@ -152,49 +154,13 @@ const extension = (
       ];
     },
 
-    baseKeys: (schema: Schema) => {
-      return [
-        { key: BaseKey.Enter, command: exitNode(schema.nodes.figure, -1, false) },
-        { key: BaseKey.Backspace, command: deleteCaption() },
-      ];
-    },
+    baseKeys: figureKeys,
 
-    plugins: (_schema: Schema) => {
-      return [
-        new Plugin({
-          key: plugin,
-          props: {
-            nodeViews: {
-              figure(node: ProsemirrorNode, view: EditorView, getPos: boolean | (() => number)) {
-                return new ImageNodeView(node, view, getPos as () => number, ui, events, pandocExtensions);
-              },
-            },
-          },
-        }),
-      ];
+    plugins: (schema: Schema) => {
+      return [...imageNodeViewPlugins('figure', ui, events, pandocExtensions)];
     },
   };
 };
-
-export function deleteCaption() {
-  return (state: EditorState, dispatch?: (tr: Transaction) => void) => {
-    // must be a selection within an empty figure
-    const schema = state.schema;
-    const { $head } = state.selection;
-    if ($head.parent.type !== schema.nodes.figure || $head.parent.childCount !== 0) {
-      return false;
-    }
-
-    if (dispatch) {
-      // set a node selection for the figure
-      const tr = state.tr;
-      tr.setSelection(NodeSelection.create(tr.doc, $head.pos - 1));
-      dispatch(tr);
-    }
-
-    return true;
-  };
-}
 
 export function posHasProhibitedFigureParent(schema: Schema, $pos: ResolvedPos) {
   return prohibitedFigureParents(schema).some(type => {
@@ -207,11 +173,7 @@ export function writerHasProhibitedFigureParent(schema: Schema, writer: Prosemir
 }
 
 function prohibitedFigureParents(schema: Schema) {
-  return [
-    schema.nodes.table_cell,
-    schema.nodes.list_item,
-    schema.nodes.definition_list
-  ];
+  return [schema.nodes.table_cell, schema.nodes.list_item, schema.nodes.definition_list];
 }
 
 function convertImagesToFigure(tr: Transaction) {
@@ -231,9 +193,11 @@ function imagesToFiguresTransform(tr: Transform) {
       const imagePos = tr.doc.resolve(mappedImagePos.pos);
 
       // if it's an image in a standalone paragraph, convert it to a figure
-      if (imagePos.parent.type === schema.nodes.paragraph && 
-          imagePos.parent.childCount === 1 &&
-          !posHasProhibitedFigureParent(schema, imagePos)) {
+      if (
+        imagePos.parent.type === schema.nodes.paragraph &&
+        imagePos.parent.childCount === 1 &&
+        !posHasProhibitedFigureParent(schema, imagePos)
+      ) {
         // figure attributes
         const attrs = image.node.attrs;
 

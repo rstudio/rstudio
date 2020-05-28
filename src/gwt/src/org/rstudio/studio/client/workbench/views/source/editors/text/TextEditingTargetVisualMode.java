@@ -16,7 +16,6 @@
 package org.rstudio.studio.client.workbench.views.source.editors.text;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 import org.rstudio.core.client.CommandWithArg;
@@ -50,7 +49,7 @@ import org.rstudio.studio.client.panmirror.PanmirrorWidget.FormatSource;
 import org.rstudio.studio.client.panmirror.PanmirrorWriterOptions;
 import org.rstudio.studio.client.panmirror.command.PanmirrorCommands;
 import org.rstudio.studio.client.panmirror.events.PanmirrorFocusEvent;
-import org.rstudio.studio.client.panmirror.events.PanmirrorSelectionChangedEvent;
+import org.rstudio.studio.client.panmirror.events.PanmirrorStateChangeEvent;
 import org.rstudio.studio.client.panmirror.events.PanmirrorUpdatedEvent;
 import org.rstudio.studio.client.panmirror.format.PanmirrorExtendedDocType;
 import org.rstudio.studio.client.panmirror.format.PanmirrorFormat;
@@ -264,7 +263,8 @@ public class TextEditingTargetVisualMode implements CommandPaletteEntrySource
             
             WriterOptionsContext writerOptions = writerOptionsFromVisual();
             
-            panmirror_.getMarkdown(writerOptions.options, new CommandWithArg<JsObject>() {
+            panmirror_.getMarkdown(writerOptions.options, kSerializationProgressDelayMs, 
+                                   new CommandWithArg<JsObject>() {
                @Override
                public void execute(JsObject obj)
                {
@@ -361,7 +361,8 @@ public class TextEditingTargetVisualMode implements CommandPaletteEntrySource
          
          WriterOptionsContext writerOptions = writerOptionsFromCode(editorCode);
          
-         panmirror_.setMarkdown(editorCode, writerOptions.options, true, new CommandWithArg<JsObject>() {
+         panmirror_.setMarkdown(editorCode, writerOptions.options, true, kCreationProgressDelayMs, 
+                                new CommandWithArg<JsObject>() {
             @Override
             public void execute(JsObject obj)
             {
@@ -533,7 +534,8 @@ public class TextEditingTargetVisualMode implements CommandPaletteEntrySource
    {   
       withPanmirror(() -> {
          WriterOptionsContext writerOptions = writerOptionsFromCode(code);
-         panmirror_.getCanonical(code, writerOptions.options, (markdown) -> {
+         panmirror_.getCanonical(code, writerOptions.options, kSerializationProgressDelayMs, 
+                                 (markdown) -> {
             if  (markdown != null) 
             {
                if (!writerOptions.wrapColumnChanged)
@@ -616,7 +618,7 @@ public class TextEditingTargetVisualMode implements CommandPaletteEntrySource
             if (success)
             {
                // sync to editor outline prefs
-               panmirror_.showOutline(getOutlineVisible(), getOutlineWidth());
+               panmirror_.showOutline(establishOutlineVisible(), getOutlineWidth());
                
                // show find replace button
                findReplaceButton_.setVisible(true);
@@ -689,11 +691,12 @@ public class TextEditingTargetVisualMode implements CommandPaletteEntrySource
    {
       if (panmirror_ == null)
       {
-         // create panmirror
+         // create panmirror (no progress b/c we alread have pane progress)
          PanmirrorContext context = new PanmirrorContext(uiContext(), uiDisplay(), uiExecute());
          PanmirrorOptions options = panmirrorOptions();   
          PanmirrorWidget.Options widgetOptions = new PanmirrorWidget.Options();
-         PanmirrorWidget.create(context, panmirrorFormat(), options, widgetOptions, (panmirror) -> {
+         PanmirrorWidget.create(context, panmirrorFormat(), options, widgetOptions, kCreationProgressDelayMs, 
+                                (panmirror) -> {
          
             // save reference to panmirror
             panmirror_ = panmirror;
@@ -746,10 +749,10 @@ public class TextEditingTargetVisualMode implements CommandPaletteEntrySource
             });
             
             // save selection
-            panmirror_.addPanmirrorSelectionChangedHandler(new PanmirrorSelectionChangedEvent.Handler()
+            panmirror_.addPanmirrorStateChangeHandler(new PanmirrorStateChangeEvent.Handler()
             {
                @Override
-               public void onPanmirrorSelectionChanged(PanmirrorSelectionChangedEvent event)
+               public void onPanmirrorStateChange(PanmirrorStateChangeEvent event)
                {
                   saveLocationOnIdle_.nudge();
                }
@@ -839,13 +842,13 @@ public class TextEditingTargetVisualMode implements CommandPaletteEntrySource
    private WriterOptionsContext writerOptionsFromCode(String code)
    {
       PanmirrorUIToolsFormat format = new PanmirrorUITools().format;
-      PanmirrorPandocFormatConfig formatConfig = format.parseFormatConfig(code);
+      PanmirrorPandocFormatConfig formatConfig = format.parseFormatConfig(code, true);
       return writerOptions(formatConfig); 
    }
    
    private WriterOptionsContext writerOptionsFromVisual()
    {
-      PanmirrorPandocFormatConfig formatConfig = panmirror_.getPandocFormatConfig();
+      PanmirrorPandocFormatConfig formatConfig = panmirror_.getPandocFormatConfig(true);
       return writerOptions(formatConfig);
    }
    
@@ -902,6 +905,13 @@ public class TextEditingTargetVisualMode implements CommandPaletteEntrySource
       return view_.editorContainer().getEditor();
    }
   
+   private boolean establishOutlineVisible()
+   {
+      return target_.establishPreferredOutlineWidgetVisibility(
+         prefs_.visualMarkdownEditingShowDocOutline().getValue()
+      );  
+   }
+   
    private boolean getOutlineVisible()
    {
       return target_.getPreferredOutlineWidgetVisibility(
@@ -1209,7 +1219,7 @@ public class TextEditingTargetVisualMode implements CommandPaletteEntrySource
             PanmirrorFormat format = new PanmirrorFormat();
             
             // see if we have a format comment
-            PanmirrorPandocFormatConfig formatComment = formatTools.parseFormatConfig(getEditorCode());
+            PanmirrorPandocFormatConfig formatComment = formatTools.parseFormatConfig(getEditorCode(), true);
               
             // doctypes
             if (formatComment.doctypes == null || formatComment.doctypes.length == 0)
@@ -1524,19 +1534,19 @@ public class TextEditingTargetVisualMode implements CommandPaletteEntrySource
       public FormatConfig(PanmirrorUIToolsFormat formatTools)
       {
          formatTools_ = formatTools;
-         config_ = formatTools_.parseFormatConfig(getEditorCode());
+         config_ = formatTools_.parseFormatConfig(getEditorCode(), true);
       }
       
       @SuppressWarnings("unused")
       public boolean hasChanged()
       {
-         PanmirrorPandocFormatConfig config = formatTools_.parseFormatConfig(getEditorCode());
+         PanmirrorPandocFormatConfig config = formatTools_.parseFormatConfig(getEditorCode(), true);
          return !PanmirrorPandocFormatConfig.areEqual(config,  config_);   
       }
       
       public boolean requiresReload()
       {
-         PanmirrorPandocFormatConfig config = formatTools_.parseFormatConfig(getEditorCode());
+         PanmirrorPandocFormatConfig config = formatTools_.parseFormatConfig(getEditorCode(), true);
          return !PanmirrorPandocFormatConfig.editorBehaviorConfigEqual(config,  config_);  
       }
       
@@ -1601,6 +1611,10 @@ public class TextEditingTargetVisualMode implements CommandPaletteEntrySource
    private final ProgressPanel progress_;
    
    private SerializedCommandQueue syncToEditorQueue_ = new SerializedCommandQueue();
+   
+   private static final int kCreationProgressDelayMs = 0;
+   private static final int kSerializationProgressDelayMs = 5000;
+  
    
    private static final String RMD_VISUAL_MODE_LOCATION = "rmdVisualModeLocation";   
    private final static String[] kRmdChunkExecutionLangs = new String[] { "R", "Python" }; 

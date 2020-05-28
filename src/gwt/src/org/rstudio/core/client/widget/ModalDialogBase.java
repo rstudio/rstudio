@@ -60,11 +60,10 @@ import java.util.ArrayList;
 
 public abstract class ModalDialogBase extends DialogBox
                                       implements AriaLiveStatusReporter
-   
 {
    private static final String firstFocusClass = "__rstudio_modal_first_focus";
    private static final String lastFocusClass = "__rstudio_modal_last_focus";
-   
+
    protected static final String allowEnterKeyClass = "__rstudio_modal_allow_enter_key";
 
    protected ModalDialogBase(DialogRole role)
@@ -98,7 +97,7 @@ public abstract class ModalDialogBase extends DialogBox
 
       ariaLiveStatusWidget_ = new AriaLiveStatusWidget();
       bottomPanel_.add(ariaLiveStatusWidget_);
-      
+
       setButtonAlignment(HasHorizontalAlignment.ALIGN_RIGHT);
       mainPanel_.add(bottomPanel_);
 
@@ -184,7 +183,7 @@ public abstract class ModalDialogBase extends DialogBox
    {
       enterDisabled_ = enterDisabled;
    }
-   
+
    public void showModal()
    {
       showModal(true);
@@ -201,7 +200,7 @@ public abstract class ModalDialogBase extends DialogBox
          mainPanel_.insert(mainWidget_, 0);
       }
 
-      if (restoreFocus) 
+      if (restoreFocus)
       {
          originallyActiveElement_ = DomUtils.getActiveElement();
          if (originallyActiveElement_ != null)
@@ -216,7 +215,6 @@ public abstract class ModalDialogBase extends DialogBox
          Timers.singleShot(100, () -> onDialogShown());
       });
    }
-   
 
    protected abstract Widget createMainWidget();
 
@@ -281,7 +279,7 @@ public abstract class ModalDialogBase extends DialogBox
    {
       okButton_.setText(caption);
    }
-   
+
    protected void setOkButtonId(String id)
    {
       okButton_.getElement().setId(id);
@@ -439,14 +437,14 @@ public abstract class ModalDialogBase extends DialogBox
       labelStyle.setRight(0, Style.Unit.PX);
       labelStyle.setTop(-12, Style.Unit.PX);
       mainPanel_.add(label);
-      
+
       return new ProgressIndicator()
       {
          public void onProgress(String message)
          {
             onProgress(message, null);
          }
-         
+
          public void onProgress(String message, Operation onCancel)
          {
             if (message == null)
@@ -465,7 +463,7 @@ public abstract class ModalDialogBase extends DialogBox
                   showing_ = true;
                }
             }
-            
+
             label.onCancel(onCancel);
          }
 
@@ -492,9 +490,9 @@ public abstract class ModalDialogBase extends DialogBox
                label.hide();
                showing_ = false;
             }
-            
+
          }
-         
+
          private boolean showing_;
       };
    }
@@ -560,9 +558,10 @@ public abstract class ModalDialogBase extends DialogBox
             if (enterDisabled_)
                break;
 
-            // allow Enter on textareas or anchors (including custom links)
+            // allow Enter on textareas, buttons, or anchors (including custom links)
             Element e = DomUtils.getActiveElement();
-            if (e.hasTagName("TEXTAREA") || e.hasTagName("A") || 
+            if (e.hasTagName("TEXTAREA") || e.hasTagName("A") ||
+                  e.hasTagName("BUTTON") ||
                   e.hasClassName(allowEnterKeyClass) ||
                   (e.hasAttribute("role") && StringUtil.equals(e.getAttribute("role"), "link")))
                return;
@@ -677,7 +676,7 @@ public abstract class ModalDialogBase extends DialogBox
    }
 
    /**
-    * Optional description of dialog for accessibility tools 
+    * Optional description of dialog for accessibility tools
     * @param element element containing the description
     */
    protected void setARIADescribedBy(Element element)
@@ -692,7 +691,7 @@ public abstract class ModalDialogBase extends DialogBox
    }
 
    /**
-    * Set focus on first keyboard focusable element in dialog, as set by 
+    * Set focus on first keyboard focusable element in dialog, as set by
     * <code>refreshFocusableElements</code> or <code>setFirstFocusableElement</code>.
     */
    protected void focusFirstControl()
@@ -703,7 +702,7 @@ public abstract class ModalDialogBase extends DialogBox
    }
 
     /**
-    * Set focus on last keyboard focusable element in dialog, as set by 
+    * Set focus on last keyboard focusable element in dialog, as set by
     * <code>refreshFocusableElements</code> or <code>setLastFocusableElement</code>.
     */
    protected void focusLastControl()
@@ -714,7 +713,7 @@ public abstract class ModalDialogBase extends DialogBox
    }
 
    /**
-    * Invoked when dialog first loads to set initial focus. By default sets focus on the 
+    * Invoked when dialog first loads to set initial focus. By default sets focus on the
     * first control in the dialog; override to set initial focus elsewhere.
     */
    protected void focusInitialControl()
@@ -746,7 +745,7 @@ public abstract class ModalDialogBase extends DialogBox
    public ArrayList<Element> getFocusableElements()
    {
       // css selector from https://github.com/scottaohara/accessible_modal_window
-      String focusableElements = 
+      String focusableElements =
             "button:not([hidden]):not([disabled]), [href]:not([hidden]), " +
             "input:not([hidden]):not([type=\"hidden\"]):not([disabled]), " +
             "select:not([hidden]):not([disabled]), textarea:not([hidden]):not([disabled]), " +
@@ -759,7 +758,7 @@ public abstract class ModalDialogBase extends DialogBox
       for (int i = 0; i < potentiallyFocusable.getLength(); i++)
       {
          // only include items taking up space
-         if (potentiallyFocusable.getItem(i).getOffsetWidth() > 0 && 
+         if (potentiallyFocusable.getItem(i).getOffsetWidth() > 0 &&
                potentiallyFocusable.getItem(i).getOffsetHeight() > 0)
          {
             focusable.add(potentiallyFocusable.getItem(i));
@@ -772,14 +771,14 @@ public abstract class ModalDialogBase extends DialogBox
     * Gets a list of keyboard focusable elements in the dialog, and tracks which ones are
     * first and last. This is used to keep keyboard focus in the dialog when Tabbing and
     * Shift+Tabbing off end or beginning of dialog.
-    * 
+    *
     * If the dialog is dynamic, and the first and/or last focusable elements change over time,
     * call this function again to update the information; or, if the auto-detection
     * is not suitable, override focusFirstControl and/or focusLastControl.
     */
    public void refreshFocusableElements()
    {
-      ArrayList<Element> focusable = getFocusableElements(); 
+      ArrayList<Element> focusable = getFocusableElements();
       if (focusable.size() == 0)
       {
          Debug.logWarning("No potentially focusable controls found in modal dialog");
@@ -822,8 +821,7 @@ public abstract class ModalDialogBase extends DialogBox
       }
       return null;
    }
-   
-   
+
    public interface Styles extends CssResource
    {
       String modalDialog();
@@ -846,7 +844,6 @@ public abstract class ModalDialogBase extends DialogBox
    {
       RES.styles().ensureInjected();
    }
-
 
    private Handle shortcutDisableHandle_;
 

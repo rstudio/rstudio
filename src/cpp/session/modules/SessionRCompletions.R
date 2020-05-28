@@ -589,12 +589,15 @@ assign(x = ".rs.acCompletionTypes",
 .rs.addFunction("resolveObjectFromFunctionCall", function(functionCall,
                                                           envir)
 {
-   string <- capture.output(base::print(functionCall[[1]]))[[1]]
+   string <- base::format.default(functionCall[[1]])[[1]]
    splat <- strsplit(string, ":{2,3}", perl = TRUE)[[1]]
    object <- NULL
+   
    if (length(splat) == 1)
    {
-      object <- .rs.getAnywhere(.rs.stripSurrounding(string), envir = envir)
+      stripped <- .rs.stripSurrounding(string)
+      envir <- .rs.resolveEnvironment(envir)
+      object <- .rs.tryCatch(get(stripped, envir = envir, mode = "function"))
    }
    else if (length(splat) == 2)
    {
@@ -603,10 +606,11 @@ assign(x = ".rs.acCompletionTypes",
       
       if (namespaceString %in% loadedNamespaces())
       {
-         object <- tryCatch(
-            eval(parse(text = functionString),
-                 envir = asNamespace(namespaceString)),
-            error = function(e) NULL
+         object <- .rs.tryCatch(
+            eval(
+               expr = parse(text = functionString),
+               envir = asNamespace(namespaceString)
+            )
          )
       }
    }
@@ -634,6 +638,9 @@ assign(x = ".rs.acCompletionTypes",
       if (any(sapply(writers, identical, object)))
          object <- utils::write.table
    }
+   
+   if (inherits(object, "error"))
+      return(NULL)
    
    object
    

@@ -56,8 +56,9 @@ const bundle = (fuse) => {
 const copyDevTools = (outputDir) => {
   // copy prosemirror-devtools
   const devtools = 'prosemirror-dev-tools.min.js';
+  const nodeModules = fs.existsSync(kGlobalNodeModulesPath) ? kGlobalNodeModulesPath : './node_modules';
   fs.copyFileSync(
-    path.join('./node_modules/prosemirror-dev-tools/dist/umd', devtools),
+    path.join(nodeModules + '/prosemirror-dev-tools/dist/umd', devtools),
     path.join(outputDir, devtools)
   );
 }
