@@ -14,10 +14,8 @@
  */
 
 import { Node as ProsemirrorNode, Schema, Fragment, ResolvedPos } from 'prosemirror-model';
-import { Transaction, PluginKey, Plugin } from 'prosemirror-state';
+import { Transaction} from 'prosemirror-state';
 import { Transform } from 'prosemirror-transform';
-import { EditorView } from 'prosemirror-view';
-import { GapCursor } from 'prosemirror-gapcursor';
 
 import { findChildrenByType, findParentNodeClosestToPos } from 'prosemirror-utils';
 
