@@ -82,7 +82,6 @@ const extension = (
         pandoc: {
           readers: [],
           inlineHTMLReader: (schema: Schema, html: string, writer?: ProsemirrorWriter) => {
-            
             const isComment = isHTMLComment(html);
             if (!isComment) {
               return false;
@@ -94,7 +93,7 @@ const extension = (
               writer.writeText(html);
               writer.closeMark(mark);
             }
-            
+
             return isComment;
           },
           writer: {

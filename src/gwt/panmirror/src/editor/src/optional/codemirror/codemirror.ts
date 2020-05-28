@@ -13,7 +13,15 @@
  *
  */
 
-import { Plugin, PluginKey, TextSelection, EditorState, Transaction, Selection, NodeSelection } from 'prosemirror-state';
+import {
+  Plugin,
+  PluginKey,
+  TextSelection,
+  EditorState,
+  Transaction,
+  Selection,
+  NodeSelection,
+} from 'prosemirror-state';
 import { Node as ProsemirrorNode } from 'prosemirror-model';
 import { EditorView, NodeView, Decoration } from 'prosemirror-view';
 import { undo, redo } from 'prosemirror-history';
@@ -378,26 +386,23 @@ class CodeBlockNodeView implements NodeView {
 
     // if we are going backwards and the previous node can take node selections then select it
     if (dir < 0 && prevNodeSelectable()) {
-
       const prevNodePos = this.getPos() - $pos.nodeBefore!.nodeSize;
       selection = NodeSelection.create(tr.doc, prevNodePos);
-     
-    // if we are going forwards and the next node can take node selections then select it
+
+      // if we are going forwards and the next node can take node selections then select it
     } else if (dir >= 0 && nextNodeSelectable()) {
-      
       const nextNodePos = this.getPos() + this.node.nodeSize;
       selection = NodeSelection.create(tr.doc, nextNodePos);
 
-    // otherwise use text selection handling (handles forward/backward text selections)
+      // otherwise use text selection handling (handles forward/backward text selections)
     } else {
-
       const targetPos = this.getPos() + (dir < 0 ? 0 : this.node.nodeSize);
       const targetNode = this.view.state.doc.nodeAt(targetPos);
       if (targetNode) {
         selection = Selection.near(this.view.state.doc.resolve(targetPos), dir);
       }
     }
-   
+
     // set selection if we've got it
     if (selection) {
       tr.setSelection(selection).scrollIntoView();

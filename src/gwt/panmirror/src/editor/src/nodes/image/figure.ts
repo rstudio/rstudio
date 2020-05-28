@@ -174,7 +174,6 @@ export function writerHasProhibitedFigureParent(schema: Schema, writer: Prosemir
   return prohibitedFigureParents(schema).some(writer.isNodeOpen);
 }
 
-
 function prohibitedFigureParents(schema: Schema) {
   return [schema.nodes.table_cell, schema.nodes.list_item, schema.nodes.definition_list];
 }
