@@ -29,9 +29,11 @@ import org.rstudio.studio.client.workbench.addins.AddinsCommandManager;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.prefs.model.PrefsServerOperations;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefDefinitions;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.views.source.Source;
 
 import com.google.gwt.aria.client.Roles;
+import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.inject.Inject;
@@ -54,16 +56,16 @@ public class CommandPaletteLauncher implements CommandPalette.Host
    
    @Inject 
    public CommandPaletteLauncher(Commands commands,
-         PrefsServerOperations prefsServer,
          AddinsCommandManager addins,
          Provider<Source> pSource,
+         Provider<UserPrefs> pPrefs,
          Binder binder)
    {
       binder.bind(commands, this);
       addins_ = addins;
       commands_ = commands;
       pSource_ = pSource;
-      prefsServer_ = prefsServer;
+      pPrefs_ = pPrefs;
       state_ = State.Uninitialized;
    }
    
@@ -89,30 +91,10 @@ public class CommandPaletteLauncher implements CommandPalette.Host
          // We could fix this by eagerly injecting these when RStudio starts,
          // but this way we don't pay any boot time penalty.
          state_ = State.Initializing;
-         prefsServer_.getAllPreferences(new ServerRequestCallback<UserPrefDefinitions>()
+         Scheduler.get().scheduleDeferred(() ->
          {
-            @Override
-            public void onResponseReceived(UserPrefDefinitions defs)
-            {
-               // Save the preference definitions and create the UI
-               prefs_ = defs;
-               state_ = State.Hidden;
-               createPanel();
-            }
-            
-            @Override
-            public void onError(ServerError error)
-            {
-               // Log the error to the console for diagnostics
-               Debug.logError(error);
-               
-               // Create an empty set of preferences. This means that user
-               // preferences won't show in the Command Palette, but that
-               // shouldn't stop us for using the palette for other tasks.
-               prefs_ = UserPrefDefinitions.createEmpty();
-               state_ = State.Hidden;
-               createPanel();
-            }
+            state_ = State.Hidden;
+            createPanel();
          });
       }
    }
@@ -129,8 +111,8 @@ public class CommandPaletteLauncher implements CommandPalette.Host
       extraSources.add(pSource_.get());
       
       // Create the command palette widget
-      palette_ = new CommandPalette(commands_, addins_.getRAddins(), prefs_, extraSources,
-            ShortcutManager.INSTANCE, this);
+      palette_ = new CommandPalette(commands_, addins_.getRAddins(), pPrefs_.get(), 
+            extraSources, ShortcutManager.INSTANCE, this);
       
       panel_ = new ModalPopupPanel(
             true,  // Auto hide
@@ -189,10 +171,9 @@ public class CommandPaletteLauncher implements CommandPalette.Host
    private ModalPopupPanel panel_;
    private CommandPalette palette_;
    private State state_;
-   private UserPrefDefinitions prefs_;
 
-   private final PrefsServerOperations prefsServer_;
    private final Commands commands_;
    private final AddinsCommandManager addins_;
    private final Provider<Source> pSource_;
+   private final Provider<UserPrefs> pPrefs_;
 }

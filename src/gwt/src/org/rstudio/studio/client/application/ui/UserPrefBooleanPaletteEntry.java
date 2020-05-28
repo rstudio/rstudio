@@ -14,34 +14,20 @@
  */
 package org.rstudio.studio.client.application.ui;
 
-import org.rstudio.core.client.js.JsObject;
 import org.rstudio.core.client.widget.Toggle;
 import org.rstudio.studio.client.RStudioGinjector;
-import org.rstudio.studio.client.workbench.prefs.model.Prefs.PrefValue;
-import org.rstudio.studio.client.workbench.prefs.model.UserPrefDefinition;
-import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
+import org.rstudio.studio.client.workbench.prefs.model.Prefs.BooleanValue;
 
 import com.google.gwt.user.client.ui.Widget;
 
 public class UserPrefBooleanPaletteEntry extends UserPrefPaletteEntry
 {
-   @SuppressWarnings("unchecked")
-   public UserPrefBooleanPaletteEntry(String id, UserPrefDefinition pref)
+   public UserPrefBooleanPaletteEntry(BooleanValue val)
    {
-      super(id, pref);
-      UserPrefs prefs = RStudioGinjector.INSTANCE.getUserPrefs();
+      super(val);
       boolean initial = false;
 
-      value_ = (PrefValue<Boolean>)prefs.getPrefValue(id);
-      if (value_ == null)
-      {
-         JsObject userPrefs = prefs.getUserLayer();
-         initial = userPrefs.getBool(id);
-      }
-      else
-      {
-         initial = value_.getGlobalValue();
-      }
+      initial = val.getGlobalValue();
 
       toggle_ = new Toggle("", false);
       toggle_.setState(initial ? 
@@ -54,10 +40,8 @@ public class UserPrefBooleanPaletteEntry extends UserPrefPaletteEntry
    public void invoke()
    {
       boolean newValue = toggle_.getState() != Toggle.State.ON;
-      if (value_ != null)
-      {
-         value_.setGlobalValue(newValue);
-      }
+      BooleanValue pref = (BooleanValue)pref_;
+      pref.setGlobalValue(newValue);
 
       toggle_.setState(newValue ? Toggle.State.ON : Toggle.State.OFF,
          !RStudioGinjector.INSTANCE.getUserPrefs().reducedMotion().getValue());
@@ -70,5 +54,4 @@ public class UserPrefBooleanPaletteEntry extends UserPrefPaletteEntry
    }
    
    private final Toggle toggle_;
-   private final PrefValue<Boolean> value_;
 }

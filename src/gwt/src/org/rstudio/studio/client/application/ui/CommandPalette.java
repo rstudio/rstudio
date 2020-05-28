@@ -35,8 +35,9 @@ import org.rstudio.studio.client.workbench.addins.Addins.AddinExecutor;
 import org.rstudio.studio.client.workbench.addins.Addins.RAddin;
 import org.rstudio.studio.client.workbench.addins.Addins.RAddins;
 import org.rstudio.studio.client.workbench.commands.Commands;
-import org.rstudio.studio.client.workbench.prefs.model.UserPrefDefinition;
-import org.rstudio.studio.client.workbench.prefs.model.UserPrefDefinitions;
+import org.rstudio.studio.client.workbench.prefs.model.Prefs.BooleanValue;
+import org.rstudio.studio.client.workbench.prefs.model.Prefs.PrefValue;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 
 import com.google.gwt.aria.client.ExpandedValue;
 import com.google.gwt.aria.client.Id;
@@ -88,7 +89,7 @@ public class CommandPalette extends Composite
 
    public CommandPalette(Commands commands, 
                          RAddins addins, 
-                         UserPrefDefinitions prefs,
+                         UserPrefs prefs,
                          List<CommandPaletteEntrySource> extraSources,
                          ShortcutManager shortcuts, 
                          Host host)
@@ -211,18 +212,17 @@ public class CommandPalette extends Composite
       }
       
       // Add all of the preferences
-      for (String pref: JsUtil.asIterable(prefs_.getPrefNames()))
+      for (PrefValue<?> val: prefs_.allPrefs())
       {
-         UserPrefDefinition def = prefs_.getDefinition(pref);
-         if (StringUtil.isNullOrEmpty(def.getTitle()))
+         if (StringUtil.isNullOrEmpty(val.getTitle()))
          {
             // Ignore preferences with no title (the title is the only
             // reasonable thing we can display)
             continue;
          }
-         if (StringUtil.equals(def.getType(), "boolean"))
+         if (val instanceof BooleanValue)
          {
-            CommandPaletteEntry entry = new UserPrefBooleanPaletteEntry(pref, def);
+            CommandPaletteEntry entry = new UserPrefBooleanPaletteEntry((BooleanValue)val);
             entries_.add(entry);
          }
       }
@@ -540,7 +540,7 @@ public class CommandPalette extends Composite
    private final Commands commands_;
    private final RAddins addins_;
    private final CommandPaletteEntrySource extraEntriesSource_;
-   private final UserPrefDefinitions prefs_;
+   private final UserPrefs prefs_;
    private int selected_;
    private List<CommandPaletteEntry> entries_;
    private String searchText_;

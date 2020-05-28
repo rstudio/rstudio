@@ -55,15 +55,44 @@ public abstract class Prefs
       // generic set for any layer
       void setValue(String layer, T value);
       
+      /**
+       * Gets the title of the preference (a short description in the imperative
+       * mood)
+       * 
+       * @return The preference's title
+       */
+      String getTitle();
+      
+      /**
+       * Gets the description of the preference
+       * 
+       * @return The preference's description
+       */
+      String getDescription();
+      
+      /**
+       * Gets the identifier of the preference
+       * 
+       * @return The preference ID
+       */
+      String getId();
+      
       HandlerRegistration bind(CommandWithArg<T> handler);
    }
 
-   private abstract class JsonValue<T> implements PrefValue<T>
+   public abstract class JsonValue<T> implements PrefValue<T>
    {
       public JsonValue(String name, String title, String description, T defaultValue)
       {
          name_ = name;
+         title_ = title;
+         description_ = description;
          defaultValue_ = defaultValue;
+      }
+      
+      public String getId()
+      {
+         return name_;
       }
 
       public HandlerRegistration bind(final CommandWithArg<T> handler)
@@ -172,13 +201,24 @@ public abstract class Prefs
             ValueChangeEvent.fire(this, getValue());
          
       }
-
+      
+      public String getTitle()
+      {
+         return title_;
+      }
+      
+      public String getDescription()
+      {
+         return description_;
+      }
       protected final String name_;
+      private final String title_;
+      private final String description_;
       private final T defaultValue_;
       private final HandlerManager handlerManager_ = new HandlerManager(this);
    }
 
-   private class BooleanValue extends JsonValue<Boolean>
+   public class BooleanValue extends JsonValue<Boolean>
    {
       private BooleanValue(String name, String title, String description, Boolean defaultValue)
       {
@@ -198,7 +238,7 @@ public abstract class Prefs
       }
    }
 
-   private class IntValue extends JsonValue<Integer>
+   public class IntValue extends JsonValue<Integer>
    {
       private IntValue(String name, String title, String description, Integer defaultValue)
       {
@@ -218,7 +258,7 @@ public abstract class Prefs
       }
    }
 
-   private class DoubleValue extends JsonValue<Double>
+   public class DoubleValue extends JsonValue<Double>
    {
       private DoubleValue(String name, String title, String description, Double defaultValue)
       {
@@ -238,7 +278,7 @@ public abstract class Prefs
       }
    }
 
-   private class StringValue extends JsonValue<String>
+   public class StringValue extends JsonValue<String>
    {
       private StringValue(String name, String title, String description, String defaultValue)
       {
@@ -258,7 +298,7 @@ public abstract class Prefs
       }
    }
 
-   private class ObjectValue<T extends JavaScriptObject> extends JsonValue<T>
+   public class ObjectValue<T extends JavaScriptObject> extends JsonValue<T>
    {
       private ObjectValue(String name, String title, String description)
       {

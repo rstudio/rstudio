@@ -25,6 +25,9 @@ import org.rstudio.studio.client.workbench.model.SessionInfo;
 import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * Accessor class for user state.
  */ 
@@ -429,6 +432,28 @@ public class UserStateAccessor extends Prefs
          errorHandlerType().setValue(layer, source.getString("error_handler_type"));
       if (source.hasKey("using_mingw_gcc49"))
          usingMingwGcc49().setValue(layer, source.getBool("using_mingw_gcc49"));
+   }
+   public List<PrefValue<?>> allPrefs()
+   {
+      ArrayList<PrefValue<?>> prefs = new ArrayList<PrefValue<?>>();
+      prefs.add(contextId());
+      prefs.add(autoCreatedProfile());
+      prefs.add(theme());
+      prefs.add(defaultProjectLocation());
+      prefs.add(clearHidden());
+      prefs.add(exportPlotOptions());
+      prefs.add(exportViewerOptions());
+      prefs.add(savePlotAsPdfOptions());
+      prefs.add(compileRNotebookPrefs());
+      prefs.add(compileRMarkdownNotebookPrefs());
+      prefs.add(showPublishUi());
+      prefs.add(enableRsconnectPublishUi());
+      prefs.add(publishAccount());
+      prefs.add(documentOutlineWidth());
+      prefs.add(connectVia());
+      prefs.add(errorHandlerType());
+      prefs.add(usingMingwGcc49());
+      return prefs;
    }
    
 

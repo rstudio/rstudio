@@ -87,6 +87,10 @@ generate <- function (schemaPath, className) {
 
    # A Java function that syncs every pref
    javasync <- "   public void syncPrefs(String layer, JsObject source)\n   {\n"
+
+   # A Java function that lists every pref
+   javalist <- paste0("   public List<PrefValue<?>> allPrefs()\n   {\n",
+               "      ArrayList<PrefValue<?>> prefs = new ArrayList<PrefValue<?>>();\n");
    
    # C++ string constants for preference names
    cppstrings <- ""
@@ -187,6 +191,9 @@ generate <- function (schemaPath, className) {
          "      if (source.hasKey(\"", pref, "\"))\n",
          "         ", camel, "().setValue(layer, source.get", capitalize(preftype), "(\"", 
                 pref, "\"));\n")
+      javalist <- paste0(javalist,
+         "      prefs.add(", camel, "());\n")
+
       
       # Add C++ header and implementation accessors for the preferences
       hpp <- paste0(hpp, comment,
@@ -255,6 +262,8 @@ generate <- function (schemaPath, className) {
                  "};\n")
    javasync <- paste0(javasync, "   }\n")
    java <- paste0(java, javasync)
+   javalist <- paste0(javalist, "      return prefs;\n   }\n")
+   java <- paste0(java, javalist)
    
    # Return computed Java and C++ code
    list(

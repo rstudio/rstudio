@@ -14,15 +14,14 @@
  */
 package org.rstudio.studio.client.application.ui;
 
-import org.rstudio.studio.client.workbench.prefs.model.UserPrefDefinition;
+import org.rstudio.studio.client.workbench.prefs.model.Prefs.PrefValue;
 
 public abstract class UserPrefPaletteEntry extends CommandPaletteEntry
 {
-   public UserPrefPaletteEntry(String id, UserPrefDefinition pref)
+   public UserPrefPaletteEntry(PrefValue<?> val)
    {
       super();
-      pref_ = pref;
-      id_ = id;
+      pref_ = val;
    }
 
    @Override
@@ -34,7 +33,7 @@ public abstract class UserPrefPaletteEntry extends CommandPaletteEntry
    @Override
    public String getId()
    {
-      return id_;
+      return pref_.getId();
    }
 
    @Override
@@ -62,6 +61,5 @@ public abstract class UserPrefPaletteEntry extends CommandPaletteEntry
       return false;
    }
 
-   private final UserPrefDefinition pref_;
-   private final String id_;
+   protected final PrefValue<?> pref_;
 }
