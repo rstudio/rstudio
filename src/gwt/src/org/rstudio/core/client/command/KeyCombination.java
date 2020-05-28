@@ -15,7 +15,6 @@
 package org.rstudio.core.client.command;
 
 import org.rstudio.core.client.BrowseCap;
-import org.rstudio.core.client.Cached;
 import org.rstudio.core.client.Version;
 import org.rstudio.core.client.dom.EventProperty;
 
