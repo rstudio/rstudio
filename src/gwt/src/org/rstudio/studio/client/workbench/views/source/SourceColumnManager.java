@@ -64,10 +64,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditing
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTargetRMarkdownHelper;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ui.NewRMarkdownDialog;
-import org.rstudio.studio.client.workbench.views.source.events.CodeBrowserCreatedEvent;
-import org.rstudio.studio.client.workbench.views.source.events.SourceExtendedTypeDetectedEvent;
-import org.rstudio.studio.client.workbench.views.source.events.SourceFileSavedEvent;
-import org.rstudio.studio.client.workbench.views.source.events.SourceFileSavedHandler;
+import org.rstudio.studio.client.workbench.views.source.events.*;
 import org.rstudio.studio.client.workbench.views.source.model.*;
 
 import java.util.*;
@@ -80,7 +77,7 @@ public class SourceColumnManager implements SourceExtendedTypeDetectedEvent.Hand
    {
       void execute(EditingTarget editingTarget, Command continuation);
    }
-   
+
    @Inject
    public SourceColumnManager(Source.Display display,
                               SourceServerOperations server,
@@ -120,6 +117,7 @@ public class SourceColumnManager implements SourceExtendedTypeDetectedEvent.Hand
       initializeDynamicCommands();
 
       events_.addHandler(SourceExtendedTypeDetectedEvent.TYPE, this);
+
       events_.addHandler(SourceFileSavedEvent.TYPE, new SourceFileSavedHandler()
       {
          public void onSourceFileSaved(SourceFileSavedEvent event)
@@ -128,7 +126,13 @@ public class SourceColumnManager implements SourceExtendedTypeDetectedEvent.Hand
          }
       });
 
-
+      events_.addHandler(DocTabActivatedEvent.TYPE, new DocTabActivatedEvent.Handler()
+      {
+         public void onDocTabActivated(DocTabActivatedEvent event)
+         {
+            setActiveDocId(event.getId());
+         }
+      });
 
       sourceNavigationHistory_.addChangeHandler(new ChangeHandler()
       {
@@ -154,13 +158,13 @@ public class SourceColumnManager implements SourceExtendedTypeDetectedEvent.Hand
    {
       return add(display, false);
    }
-   
+
    public String add(Source.Display display, boolean activate)
    {
       SourceColumn column = GWT.create(SourceColumn.class);
       column.loadDisplay(Source.COLUMN_PREFIX + StringUtil.makeRandomId(12),
-                        display, 
-                        this);
+              display,
+              this);
       columnMap_.put(column.getName(), column);
 
       if (activate || activeColumn_ == null)
@@ -207,7 +211,7 @@ public class SourceColumnManager implements SourceExtendedTypeDetectedEvent.Hand
 
    public void setActiveDocId(String docId)
    {
-      for (Map.Entry<String,SourceColumn> entry : columnMap_.entrySet())
+      for (Map.Entry<String, SourceColumn> entry : columnMap_.entrySet())
       {
          SourceColumn column = entry.getValue();
          EditingTarget target = column.setActiveEditor(docId);
@@ -220,12 +224,17 @@ public class SourceColumnManager implements SourceExtendedTypeDetectedEvent.Hand
       Debug.logWarning("Attempted to set unknown doc to active " + docId);
    }
 
+   public void setOpeningForSourceNavigation(boolean value)
+   {
+      openingForSourceNavigation_ = value;
+   }
+
    public void activateColumns(final Command afterActivation)
    {
       if (activeColumn_.getActiveEditor() == null)
       {
          if (activeColumn_ == null)
-             setActive(Source.COLUMN_PREFIX);
+            setActive(Source.COLUMN_PREFIX);
          newDoc(FileTypeRegistry.R, new ResultCallback<EditingTarget, ServerError>()
          {
             @Override
@@ -235,8 +244,7 @@ public class SourceColumnManager implements SourceExtendedTypeDetectedEvent.Hand
                doActivateSource(afterActivation);
             }
          });
-      }
-      else
+      } else
       {
          doActivateSource(afterActivation);
       }
@@ -251,9 +259,8 @@ public class SourceColumnManager implements SourceExtendedTypeDetectedEvent.Hand
       {
          setActive(findByDocument(activeColumn_.getActiveEditor().getId()).getName());
          return activeColumn_;
-      }
-      else
-          setActive(Source.COLUMN_PREFIX);
+      } else
+         setActive(Source.COLUMN_PREFIX);
       return activeColumn_;
    }
 
@@ -261,7 +268,7 @@ public class SourceColumnManager implements SourceExtendedTypeDetectedEvent.Hand
    {
       return activeColumn_.getTabCount();
    }
-   
+
    public int getPhysicalTabIndex()
    {
       return activeColumn_.getPhysicalTabIndex();
@@ -278,7 +285,7 @@ public class SourceColumnManager implements SourceExtendedTypeDetectedEvent.Hand
       return result;
    }
 
-   public HashMap<String,SourceColumn> getMap()
+   public HashMap<String, SourceColumn> getMap()
    {
       return columnMap_;
    }
@@ -305,7 +312,7 @@ public class SourceColumnManager implements SourceExtendedTypeDetectedEvent.Hand
 
    public UserState getUserState()
    {
-       return userState_;
+      return userState_;
    }
 
    public int getSize()
@@ -317,7 +324,7 @@ public class SourceColumnManager implements SourceExtendedTypeDetectedEvent.Hand
    {
       AtomicInteger max = new AtomicInteger();
       columnMap_.forEach((name, column) -> {
-          max.set(Math.max(max.get(), column.getUntitledNum(prefix)));
+         max.set(Math.max(max.get(), column.getUntitledNum(prefix)));
       });
       return max.intValue();
    }
@@ -341,6 +348,7 @@ public class SourceColumnManager implements SourceExtendedTypeDetectedEvent.Hand
          column.manageCommands(forceSync);
       });
    }
+
    // !!! HOW TO HANDLE THESE?
    public EditingTarget addTab(SourceDocument doc, int mode, SourceColumn column)
    {
@@ -348,28 +356,28 @@ public class SourceColumnManager implements SourceExtendedTypeDetectedEvent.Hand
          column = activeColumn_;
       return column.addTab(doc, mode);
    }
-   
-   public EditingTarget addTab(SourceDocument doc, boolean atEnd, 
-         int mode, SourceColumn column)
+
+   public EditingTarget addTab(SourceDocument doc, boolean atEnd,
+                               int mode, SourceColumn column)
    {
       if (column == null)
          column = activeColumn_;
       return column.addTab(doc, atEnd, mode);
    }
 
-   public EditingTarget addTab(SourceDocument doc, Integer position, 
-         int mode, SourceColumn column)
+   public EditingTarget addTab(SourceDocument doc, Integer position,
+                               int mode, SourceColumn column)
    {
       if (column == null)
          column = activeColumn_;
       return column.addTab(doc, position, mode);
    }
-   
+
    public EditingTarget findEditor(String docId)
    {
-      for (Map.Entry<String,SourceColumn> entry : columnMap_.entrySet())
+      for (Map.Entry<String, SourceColumn> entry : columnMap_.entrySet())
       {
-         SourceColumn column = (SourceColumn)entry.getValue();
+         SourceColumn column = (SourceColumn) entry.getValue();
          EditingTarget target = column.getDoc(docId);
          if (target != null)
             return target;
@@ -379,9 +387,9 @@ public class SourceColumnManager implements SourceExtendedTypeDetectedEvent.Hand
 
    public EditingTarget findEditorByPath(String path)
    {
-      for (Map.Entry<String,SourceColumn> entry : columnMap_.entrySet())
+      for (Map.Entry<String, SourceColumn> entry : columnMap_.entrySet())
       {
-         SourceColumn column = (SourceColumn)entry.getValue();
+         SourceColumn column = (SourceColumn) entry.getValue();
          EditingTarget target = column.getEditorWithPath(path);
          if (target != null)
             return target;
@@ -391,9 +399,9 @@ public class SourceColumnManager implements SourceExtendedTypeDetectedEvent.Hand
 
    public SourceColumn findByDocument(String docId)
    {
-      for (Map.Entry<String,SourceColumn> entry : columnMap_.entrySet())
+      for (Map.Entry<String, SourceColumn> entry : columnMap_.entrySet())
       {
-         SourceColumn column = (SourceColumn)entry.getValue();
+         SourceColumn column = (SourceColumn) entry.getValue();
          if (column.hasDoc(docId))
             return column;
       }
@@ -402,9 +410,9 @@ public class SourceColumnManager implements SourceExtendedTypeDetectedEvent.Hand
 
    public SourceColumn findByPath(String path)
    {
-      for (Map.Entry<String,SourceColumn> entry : columnMap_.entrySet())
+      for (Map.Entry<String, SourceColumn> entry : columnMap_.entrySet())
       {
-         SourceColumn column = (SourceColumn)entry.getValue();
+         SourceColumn column = (SourceColumn) entry.getValue();
          if (column.hasDocWithPath(path))
             return column;
       }
@@ -418,9 +426,9 @@ public class SourceColumnManager implements SourceExtendedTypeDetectedEvent.Hand
 
    public SourceColumn findByPosition(int x)
    {
-      for (Map.Entry<String,SourceColumn> entry : columnMap_.entrySet())
+      for (Map.Entry<String, SourceColumn> entry : columnMap_.entrySet())
       {
-         SourceColumn column = (SourceColumn)entry.getValue();
+         SourceColumn column = (SourceColumn) entry.getValue();
 
          Widget w = column.asWidget();
          int left = w.getAbsoluteLeft();
@@ -443,9 +451,9 @@ public class SourceColumnManager implements SourceExtendedTypeDetectedEvent.Hand
    }
 
    public void activateCodeBrowser(
-         final String codeBrowserPath,
-         boolean replaceIfActive,
-         final ResultCallback<CodeBrowserEditingTarget,ServerError> callback)
+           final String codeBrowserPath,
+           boolean replaceIfActive,
+           final ResultCallback<CodeBrowserEditingTarget, ServerError> callback)
    {
       // first check to see if this request can be fulfilled with an existing
       // code browser tab
@@ -459,40 +467,40 @@ public class SourceColumnManager implements SourceExtendedTypeDetectedEvent.Hand
       // then check to see if the active editor is a code browser -- if it is,
       // we'll use it as is, replacing its contents
       if (replaceIfActive &&
-          activeColumn_.getActiveEditor() != null &&
-          activeColumn_.getActiveEditor() instanceof CodeBrowserEditingTarget)
+              activeColumn_.getActiveEditor() != null &&
+              activeColumn_.getActiveEditor() instanceof CodeBrowserEditingTarget)
       {
          events_.fireEvent(new CodeBrowserCreatedEvent(activeColumn_.getActiveEditor().getId(),
-               codeBrowserPath));
+                 codeBrowserPath));
          callback.onSuccess((CodeBrowserEditingTarget) activeColumn_.getActiveEditor());
          return;
       }
 
       // create a new one
       newDoc(FileTypeRegistry.CODEBROWSER,
-             new ResultCallback<EditingTarget, ServerError>()
-             {
-               @Override
-               public void onSuccess(EditingTarget arg)
-               {
-                  events_.fireEvent(new CodeBrowserCreatedEvent(
-                        arg.getId(), codeBrowserPath));
-                  callback.onSuccess( (CodeBrowserEditingTarget)arg);
-               }
+              new ResultCallback<EditingTarget, ServerError>()
+              {
+                 @Override
+                 public void onSuccess(EditingTarget arg)
+                 {
+                    events_.fireEvent(new CodeBrowserCreatedEvent(
+                            arg.getId(), codeBrowserPath));
+                    callback.onSuccess((CodeBrowserEditingTarget) arg);
+                 }
 
-               @Override
-               public void onFailure(ServerError error)
-               {
-                  callback.onFailure(error);
-               }
+                 @Override
+                 public void onFailure(ServerError error)
+                 {
+                    callback.onFailure(error);
+                 }
 
-               @Override
-               public void onCancelled()
-               {
-                  callback.onCancelled();
-               }
+                 @Override
+                 public void onCancelled()
+                 {
+                    callback.onCancelled();
+                 }
 
-            });
+              });
    }
 
    public void activateObjectExplorer(ObjectExplorerHandle handle)
@@ -504,7 +512,7 @@ public class SourceColumnManager implements SourceExtendedTypeDetectedEvent.Hand
             FileType fileType = target.getFileType();
             if (!(fileType instanceof ObjectExplorerFileType))
                continue;
-   
+
             // check for identical titles
             if (handle.getTitle() == target.getTitle())
             {
@@ -518,17 +526,17 @@ public class SourceColumnManager implements SourceExtendedTypeDetectedEvent.Hand
 
       ensureVisible(true);
       server_.newDocument(
-            FileTypeRegistry.OBJECT_EXPLORER.getTypeId(),
-            null,
-            (JsObject) handle.cast(),
-            new SimpleRequestCallback<SourceDocument>("Show Object Explorer")
-            {
-               @Override
-               public void onResponseReceived(SourceDocument response)
-               {
-                  activeColumn_.addTab(response, Source.OPEN_INTERACTIVE);
-               }
-            });
+              FileTypeRegistry.OBJECT_EXPLORER.getTypeId(),
+              null,
+              (JsObject) handle.cast(),
+              new SimpleRequestCallback<SourceDocument>("Show Object Explorer")
+              {
+                 @Override
+                 public void onResponseReceived(SourceDocument response)
+                 {
+                    activeColumn_.addTab(response, Source.OPEN_INTERACTIVE);
+                 }
+              });
    }
 
    public void showOverflowPopout()
@@ -545,8 +553,8 @@ public class SourceColumnManager implements SourceExtendedTypeDetectedEvent.Hand
             String path = target.getPath();
             if (path != null && path.equals(data.getURI()))
             {
-               ((DataEditingTarget)target).updateData(data);
-   
+               ((DataEditingTarget) target).updateData(data);
+
                ensureVisible(false);
                column.selectTab(target.asWidget());
                return;
@@ -556,28 +564,28 @@ public class SourceColumnManager implements SourceExtendedTypeDetectedEvent.Hand
 
       ensureVisible(true);
       server_.newDocument(
-            FileTypeRegistry.DATAFRAME.getTypeId(),
-            null,
-            (JsObject) data.cast(),
-            new SimpleRequestCallback<SourceDocument>("Show Data Frame")
-            {
-               @Override
-               public void onResponseReceived(SourceDocument response)
-               {
-                  activeColumn_.addTab(response, Source.OPEN_INTERACTIVE);
-               }
-            });
+              FileTypeRegistry.DATAFRAME.getTypeId(),
+              null,
+              (JsObject) data.cast(),
+              new SimpleRequestCallback<SourceDocument>("Show Data Frame")
+              {
+                 @Override
+                 public void onResponseReceived(SourceDocument response)
+                 {
+                    activeColumn_.addTab(response, Source.OPEN_INTERACTIVE);
+                 }
+              });
    }
 
    public void showUnsavedChangesDialog(
-         String title,
-         ArrayList<UnsavedChangesTarget> dirtyTargets,
-         OperationWithInput<UnsavedChangesDialog.Result> saveOperation,
-         Command onCancelled)
+           String title,
+           ArrayList<UnsavedChangesTarget> dirtyTargets,
+           OperationWithInput<UnsavedChangesDialog.Result> saveOperation,
+           Command onCancelled)
    {
       activeColumn_.showUnsavedChangesDialog(title, dirtyTargets, saveOperation, onCancelled);
    }
-   
+
    @Handler
    public void onMoveTabRight()
    {
@@ -594,7 +602,7 @@ public class SourceColumnManager implements SourceExtendedTypeDetectedEvent.Hand
    public void onMoveTabToFirst()
    {
       activeColumn_.moveTab(activeColumn_.getPhysicalTabIndex(),
-                            activeColumn_.getPhysicalTabIndex() * -1);
+              activeColumn_.getPhysicalTabIndex() * -1);
    }
 
    @Handler
@@ -602,7 +610,7 @@ public class SourceColumnManager implements SourceExtendedTypeDetectedEvent.Hand
    {
       activeColumn_.moveTab(activeColumn_.getPhysicalTabIndex(),
               (activeColumn_.getTabCount() -
-               activeColumn_.getPhysicalTabIndex()) - 1);
+                      activeColumn_.getPhysicalTabIndex()) - 1);
    }
 
    @Handler
@@ -681,8 +689,7 @@ public class SourceColumnManager implements SourceExtendedTypeDetectedEvent.Hand
             targetIndex = 0;
          else
             return;
-      }
-      else if (targetIndex < 0)
+      } else if (targetIndex < 0)
       {
          if (wrap)
             targetIndex = activeColumn_.getTabCount() - 1;
@@ -710,42 +717,40 @@ public class SourceColumnManager implements SourceExtendedTypeDetectedEvent.Hand
    public void newRMarkdownV1Doc()
    {
       newSourceDocWithTemplate(FileTypeRegistry.RMARKDOWN,
-            "",
-            "v1.Rmd",
-            Position.create(3, 0));
+              "",
+              "v1.Rmd",
+              Position.create(3, 0));
    }
 
    public void newRMarkdownV2Doc()
    {
       rmarkdown_.showNewRMarkdownDialog(
-         new OperationWithInput<NewRMarkdownDialog.Result>()
-         {
-            @Override
-            public void execute(final NewRMarkdownDialog.Result result)
-            {
-               if (result == null)
-               {
-                  // No document chosen, just create an empty one
-                  newSourceDocWithTemplate(FileTypeRegistry.RMARKDOWN, "", "default.Rmd");
-               }
-               else if (result.isNewDocument())
-               {
-                  NewRMarkdownDialog.RmdNewDocument doc =
-                        result.getNewDocument();
-                  String author = doc.getAuthor();
-                  if (author.length() > 0)
-                  {
-                     userPrefs_.documentAuthor().setGlobalValue(author);
-                     userPrefs_.writeUserPrefs();
-                  }
-                  newRMarkdownV2Doc(doc);
-               }
-               else
-               {
-                  newDocFromRmdTemplate(result);
-               }
-            }
-         });
+              new OperationWithInput<NewRMarkdownDialog.Result>()
+              {
+                 @Override
+                 public void execute(final NewRMarkdownDialog.Result result)
+                 {
+                    if (result == null)
+                    {
+                       // No document chosen, just create an empty one
+                       newSourceDocWithTemplate(FileTypeRegistry.RMARKDOWN, "", "default.Rmd");
+                    } else if (result.isNewDocument())
+                    {
+                       NewRMarkdownDialog.RmdNewDocument doc =
+                               result.getNewDocument();
+                       String author = doc.getAuthor();
+                       if (author.length() > 0)
+                       {
+                          userPrefs_.documentAuthor().setGlobalValue(author);
+                          userPrefs_.writeUserPrefs();
+                       }
+                       newRMarkdownV2Doc(doc);
+                    } else
+                    {
+                       newDocFromRmdTemplate(result);
+                    }
+                 }
+              });
    }
 
    private void newDocFromRmdTemplate(final NewRMarkdownDialog.Result result)
@@ -758,67 +763,67 @@ public class SourceColumnManager implements SourceExtendedTypeDetectedEvent.Hand
       }
 
       rmarkdown_.getTemplateContent(template,
-         new OperationWithInput<String>() {
-            @Override
-            public void execute(final String content)
-            {
-               if (content.length() == 0)
-                  globalDisplay_.showErrorMessage("Template Content Missing",
-                        "The template at " + template.getTemplatePath() +
-                        " is missing.");
-               newDoc(FileTypeRegistry.RMARKDOWN, content, null);
-            }
-      });
+              new OperationWithInput<String>()
+              {
+                 @Override
+                 public void execute(final String content)
+                 {
+                    if (content.length() == 0)
+                       globalDisplay_.showErrorMessage("Template Content Missing",
+                               "The template at " + template.getTemplatePath() +
+                                       " is missing.");
+                    newDoc(FileTypeRegistry.RMARKDOWN, content, null);
+                 }
+              });
    }
 
- 
+
    private void newRMarkdownV2Doc(
-         final NewRMarkdownDialog.RmdNewDocument doc)
+           final NewRMarkdownDialog.RmdNewDocument doc)
    {
-      rmarkdown_.frontMatterToYAML((RmdFrontMatter)doc.getJSOResult().cast(),
-            null,
-            new CommandWithArg<String>()
-      {
-         @Override
-         public void execute(final String yaml)
-         {
-            String template = "";
-            // select a template appropriate to the document type we're creating
-            if (doc.getTemplate().equals(RmdTemplateData.PRESENTATION_TEMPLATE))
-               template = "presentation.Rmd";
-            else if (doc.isShiny())
-            {
-               if (doc.getFormat().endsWith(
-                     RmdOutputFormat.OUTPUT_PRESENTATION_SUFFIX))
-                  template = "shiny_presentation.Rmd";
-               else
-                  template = "shiny.Rmd";
-            }
-            else
-               template = "document.Rmd";
-            newSourceDocWithTemplate(FileTypeRegistry.RMARKDOWN,
-                  "",
-                  template,
-                  Position.create(1, 0),
-                  null,
-                  new TransformerCommand<String>()
-                  {
-                     @Override
-                     public String transform(String input)
-                     {
-                        return RmdFrontMatter.FRONTMATTER_SEPARATOR +
-                               yaml +
-                               RmdFrontMatter.FRONTMATTER_SEPARATOR + "\n" +
-                               input;
-                     }
-                  });
-         }
-      });
+      rmarkdown_.frontMatterToYAML((RmdFrontMatter) doc.getJSOResult().cast(),
+              null,
+              new CommandWithArg<String>()
+              {
+                 @Override
+                 public void execute(final String yaml)
+                 {
+                    String template = "";
+                    // select a template appropriate to the document type we're creating
+                    if (doc.getTemplate().equals(RmdTemplateData.PRESENTATION_TEMPLATE))
+                       template = "presentation.Rmd";
+                    else if (doc.isShiny())
+                    {
+                       if (doc.getFormat().endsWith(
+                               RmdOutputFormat.OUTPUT_PRESENTATION_SUFFIX))
+                          template = "shiny_presentation.Rmd";
+                       else
+                          template = "shiny.Rmd";
+                    } else
+                       template = "document.Rmd";
+                    newSourceDocWithTemplate(FileTypeRegistry.RMARKDOWN,
+                            "",
+                            template,
+                            Position.create(1, 0),
+                            null,
+                            new TransformerCommand<String>()
+                            {
+                               @Override
+                               public String transform(String input)
+                               {
+                                  return RmdFrontMatter.FRONTMATTER_SEPARATOR +
+                                          yaml +
+                                          RmdFrontMatter.FRONTMATTER_SEPARATOR + "\n" +
+                                          input;
+                               }
+                            });
+                 }
+              });
    }
 
    public void newSourceDocWithTemplate(final TextFileType fileType,
-                                         String name,
-                                         String template)
+                                        String name,
+                                        String template)
    {
       newSourceDocWithTemplate(fileType, name, template, null);
    }
@@ -832,11 +837,11 @@ public class SourceColumnManager implements SourceExtendedTypeDetectedEvent.Hand
    }
 
    public void newSourceDocWithTemplate(
-                       final TextFileType fileType,
-                       String name,
-                       String template,
-                       final Position cursorPosition,
-                       final CommandWithArg<EditingTarget> onSuccess)
+           final TextFileType fileType,
+           String name,
+           String template,
+           final Position cursorPosition,
+           final CommandWithArg<EditingTarget> onSuccess)
    {
       newSourceDocWithTemplate(fileType, name, template, cursorPosition, onSuccess, null);
    }
@@ -848,9 +853,9 @@ public class SourceColumnManager implements SourceExtendedTypeDetectedEvent.Hand
 
    private EditingTarget selectTabWithDocPath(String path)
    {
-      for (Map.Entry<String,SourceColumn> entry : columnMap_.entrySet())
+      for (Map.Entry<String, SourceColumn> entry : columnMap_.entrySet())
       {
-         SourceColumn column = (SourceColumn)entry.getValue();
+         SourceColumn column = (SourceColumn) entry.getValue();
          EditingTarget editor = column.getEditorWithPath(path);
          if (editor != null)
          {
@@ -862,48 +867,50 @@ public class SourceColumnManager implements SourceExtendedTypeDetectedEvent.Hand
    }
 
    private void newSourceDocWithTemplate(
-                       final TextFileType fileType,
-                       String name,
-                       String template,
-                       final Position cursorPosition,
-                       final CommandWithArg<EditingTarget> onSuccess,
-                       final TransformerCommand<String> contentTransformer)
+           final TextFileType fileType,
+           String name,
+           String template,
+           final Position cursorPosition,
+           final CommandWithArg<EditingTarget> onSuccess,
+           final TransformerCommand<String> contentTransformer)
    {
       final ProgressIndicator indicator = new GlobalProgressDelayer(
-            globalDisplay_, 500, "Creating new document...").getIndicator();
+              globalDisplay_, 500, "Creating new document...").getIndicator();
 
       server_.getSourceTemplate(name,
-                                template,
-                                new ServerRequestCallback<String>() {
-         @Override
-         public void onResponseReceived(String templateContents)
-         {
-            indicator.onCompleted();
+              template,
+              new ServerRequestCallback<String>()
+              {
+                 @Override
+                 public void onResponseReceived(String templateContents)
+                 {
+                    indicator.onCompleted();
 
-            if (contentTransformer != null)
-               templateContents = contentTransformer.transform(templateContents);
+                    if (contentTransformer != null)
+                       templateContents = contentTransformer.transform(templateContents);
 
-            newDoc(fileType,
-                  templateContents,
-                  new ResultCallback<EditingTarget, ServerError> () {
-               @Override
-               public void onSuccess(EditingTarget target)
-               {
-                  if (cursorPosition != null)
-                     target.setCursorPosition(cursorPosition);
+                    newDoc(fileType,
+                            templateContents,
+                            new ResultCallback<EditingTarget, ServerError>()
+                            {
+                               @Override
+                               public void onSuccess(EditingTarget target)
+                               {
+                                  if (cursorPosition != null)
+                                     target.setCursorPosition(cursorPosition);
 
-                  if (onSuccess != null)
-                     onSuccess.execute(target);
-               }
-            });
-         }
+                                  if (onSuccess != null)
+                                     onSuccess.execute(target);
+                               }
+                            });
+                 }
 
-         @Override
-         public void onError(ServerError error)
-         {
-            indicator.onError(error.getUserMessage());
-         }
-      });
+                 @Override
+                 public void onError(ServerError error)
+                 {
+                    indicator.onError(error.getUserMessage());
+                 }
+              });
    }
 
    public void newDoc(EditableFileType fileType,
@@ -949,7 +956,7 @@ public class SourceColumnManager implements SourceExtendedTypeDetectedEvent.Hand
    {
       closeTab(activeColumn_.getActiveEditor(), interactive);
    }
-   
+
    public void closeTab(EditingTarget target, boolean interactive)
    {
       findByDocument(target.getId()).closeTab(target.asWidget(), interactive, null);
@@ -958,7 +965,7 @@ public class SourceColumnManager implements SourceExtendedTypeDetectedEvent.Hand
    public void closeTab(EditingTarget target, boolean interactive, Command onClosed)
    {
       findByDocument(target.getId()).closeTab(
-         target.asWidget(), interactive, onClosed);
+              target.asWidget(), interactive, onClosed);
    }
 
    public void closeAllTabs(boolean excludeActive, boolean excludeMain)
@@ -967,24 +974,76 @@ public class SourceColumnManager implements SourceExtendedTypeDetectedEvent.Hand
          if (!excludeMain || name != Source.COLUMN_PREFIX)
          {
             cpsExecuteForEachEditor(column.getEditors(),
-                  new CPSEditingTargetCommand()
-             {
-                @Override
-                public void execute(EditingTarget target, Command continuation)
-                {
-                   if (excludeActive && target == activeColumn_.getActiveEditor())
-                   {
-                      continuation.execute();
-                      return;
-                   }
-                   else
-                   {
-                      column.closeTab(target.asWidget(), false, continuation);
-                   }
-                }
-             });
+                    new CPSEditingTargetCommand()
+                    {
+                       @Override
+                       public void execute(EditingTarget target, Command continuation)
+                       {
+                          if (excludeActive && target == activeColumn_.getActiveEditor())
+                          {
+                             continuation.execute();
+                             return;
+                          } else
+                          {
+                             column.closeTab(target.asWidget(), false, continuation);
+                          }
+                       }
+                    });
          }
       });
+   }
+
+   public ArrayList<Widget> consolidateColumns(int num)
+   {
+      // We are only removing the column from the column manager's knowledge.
+      // Its widget still needs to be removed from the display so we return the widgets to be removed.
+      ArrayList<Widget> result = new ArrayList<>();
+      if (num >= columnMap_.size() || num < 1)
+         return result;
+
+      for (Map.Entry<String, SourceColumn> entry : columnMap_.entrySet())
+      {
+         SourceColumn column = entry.getValue();
+         if (!column.hasDoc())
+         {
+            if (column == activeColumn_)
+               setActive("");
+            result.add(column.asWidget());
+            columnMap_.remove(column.getName());
+            if (num >= columnMap_.size())
+               break;
+         }
+      }
+
+      ArrayList<EditingTarget> moveEditors = new ArrayList<>();
+      // if we could not remove empty columns to get to the desired amount, consolidate editors
+      for (Map.Entry<String, SourceColumn> entry : columnMap_.entrySet())
+      {
+         SourceColumn column = entry.getValue();
+         if (!StringUtil.equals(column.getName(), Source.COLUMN_PREFIX))
+         {
+            moveEditors.addAll(column.getEditors());
+            column.closeAllLocalSourceDocs();
+            closeColumn(column.getName());
+            if (columnMap_.size() >= num)
+               break;
+         }
+      }
+
+      SourceColumn column = columnMap_.get(Source.COLUMN_PREFIX);
+      for (EditingTarget target : moveEditors)
+      {
+         column.addTab(
+                 target.asWidget(),
+                 target.getIcon(),
+                 target.getId(),
+                 target.getName().getValue(),
+                 target.getTabTooltip(), // used as tooltip, if non-null
+                 null,
+                 true);
+      }
+
+      return result;
    }
 
    public void closeColumn(String name)
@@ -993,7 +1052,7 @@ public class SourceColumnManager implements SourceExtendedTypeDetectedEvent.Hand
       if (column.getTabCount() > 0)
          return;
       if (column == activeColumn_)
-         setActive(new String());
+         setActive("");
 
       columnMap_.remove(name);
    }
@@ -1022,17 +1081,18 @@ public class SourceColumnManager implements SourceExtendedTypeDetectedEvent.Hand
       openFile(file, fileTypeRegistry_.getTextTypeForFile(file));
    }
 
-   public void openFile(FileSystemItem file,  TextFileType fileType)
+   public void openFile(FileSystemItem file, TextFileType fileType)
    {
       openFile(file,
-               fileType,
-               new CommandWithArg<EditingTarget>() {
-                  @Override
-                  public void execute(EditingTarget arg)
-                  {
+              fileType,
+              new CommandWithArg<EditingTarget>()
+              {
+                 @Override
+                 public void execute(EditingTarget arg)
+                 {
 
-                  }
-               });
+                 }
+              });
    }
 
    public void openFile(final FileSystemItem file,
@@ -1045,6 +1105,84 @@ public class SourceColumnManager implements SourceExtendedTypeDetectedEvent.Hand
       // begin queue processing if it's the only work in the queue
       if (openFileQueue_.size() == 1)
          processOpenFileQueue();
+   }
+
+   private void editFile(final String path)
+   {
+      server_.ensureFileExists(
+              path,
+              new ServerRequestCallback<Boolean>()
+              {
+                 @Override
+                 public void onResponseReceived(Boolean success)
+                 {
+                    if (success)
+                    {
+                       FileSystemItem file = FileSystemItem.createFile(path);
+                       openFile(file);
+                    }
+                 }
+
+                 @Override
+                 public void onError(ServerError error)
+                 {
+                    Debug.logError(error);
+                 }
+              });
+   }
+
+   public void openProjectDocs(final Session session, boolean mainColumn)
+   {
+      if (mainColumn && activeColumn_ != columnMap_.get(Source.COLUMN_PREFIX))
+         setActive(Source.COLUMN_PREFIX);
+
+      JsArrayString openDocs = session.getSessionInfo().getProjectOpenDocs();
+      if (openDocs.length() > 0)
+      {
+         // set new tab pending for the duration of the continuation
+          activeColumn_.incrementNewTabPending();
+
+         // create a continuation for opening the source docs
+         SerializedCommandQueue openCommands = new SerializedCommandQueue();
+
+         for (int i=0; i<openDocs.length(); i++)
+         {
+            String doc = openDocs.get(i);
+            final FileSystemItem fsi = FileSystemItem.createFile(doc);
+
+            openCommands.addCommand(new SerializedCommand() {
+
+               @Override
+               public void onExecute(final Command continuation)
+               {
+                  openFile(fsi,
+                           fileTypeRegistry_.getTextTypeForFile(fsi),
+                           new CommandWithArg<EditingTarget>() {
+                              @Override
+                              public void execute(EditingTarget arg)
+                              {
+                                 continuation.execute();
+                              }
+                           });
+               }
+            });
+         }
+
+         // decrement newTabPending and select first tab when done
+         openCommands.addCommand(new SerializedCommand() {
+
+            @Override
+            public void onExecute(Command continuation)
+            {
+               activeColumn_.decrementNewTabPending();
+               onFirstTab();
+               continuation.execute();
+            }
+         });
+
+         // execute the continuation
+         openCommands.run();
+      }
    }
 
    public void fireDocTabsChanged()

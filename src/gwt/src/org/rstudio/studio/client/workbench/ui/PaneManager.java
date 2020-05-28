@@ -1139,13 +1139,13 @@ public class PaneManager
       return panesByName_.get("Console");
    }
 
-   public int syncAdditionalColumnCount(int count)
+   public void syncAdditionalColumnCount(int count)
    {
       // make sure additionalSourceCount_ is up to date
       additionalSourceCount_ = sourceColumnManager_.getSize() - 1;
 
       if (count == additionalSourceCount_)
-    	  return additionalSourceCount_;
+    	  return;
 
       if (count > additionalSourceCount_)
       {
@@ -1158,12 +1158,9 @@ public class PaneManager
       else
       {
          int difference = additionalSourceCount_ - count;
-         // !!! we need to determine which windows to close
-         //closeSourceWindow();
+         sourceColumnManager_.consolidateColumns(difference);
+         additionalSourceCount_ = sourceColumnManager_.getSize();
       }
-
-      // we return sourceColumnCount because we might not have been able to close all source windows
-      return additionalSourceCount_;
    }
 
    public int addSourceWindow()

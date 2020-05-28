@@ -270,16 +270,6 @@ public class Source implements InsertSourceHandler,
       events_.addHandler(SnippetsChangedEvent.TYPE, this);
       events_.addHandler(NewDocumentWithCodeEvent.TYPE, this);
 
-      // !!! move to column manager
-      events_.addHandler(DocTabActivatedEvent.TYPE, new DocTabActivatedEvent.Handler()
-      {
-         public void onDocTabActivated(DocTabActivatedEvent event)
-         {
-
-            columnManager_.setActiveDocId(event.getId());
-         }
-      });
-
       events_.addHandler(SwitchToDocEvent.TYPE, new SwitchToDocHandler()
       {
          public void onSwitchToDoc(SwitchToDocEvent event)
@@ -441,7 +431,7 @@ public class Source implements InsertSourceHandler,
       // open project or edit_published docs (only for main source window)
       if (SourceWindowManager.isMainSourceWindow())
       {
-         openProjectDocs(session_);
+         columnManager_.openProjectDocs(session_, true);
          openEditPublishedDocs();
       }
 
@@ -607,6 +597,11 @@ public class Source implements InsertSourceHandler,
          return activeEditor_.getCommandPaletteEntries();
       else
          return null;
+   }
+
+   public SourceColumnManager getColumnManager()
+   {
+      return columnManager_;
    }
 
    private boolean consoleEditorHadFocusLast()
@@ -799,57 +794,7 @@ public class Source implements InsertSourceHandler,
       }
    }
    
-   private void openProjectDocs(final Session session)
-   {
-      JsArrayString openDocs = session.getSessionInfo().getProjectOpenDocs();
-      if (openDocs.length() > 0)
-      {
-         // set new tab pending for the duration of the continuation
-         // !!! UNCOMMENT ON MOVE newTabPending_++;
-                 
-         // create a continuation for opening the source docs
-         SerializedCommandQueue openCommands = new SerializedCommandQueue();
-         
-         for (int i=0; i<openDocs.length(); i++)
-         {
-            String doc = openDocs.get(i);
-            final FileSystemItem fsi = FileSystemItem.createFile(doc);
-              
-            openCommands.addCommand(new SerializedCommand() {
 
-               @Override
-               public void onExecute(final Command continuation)
-               {
-                  columnManager_.openFile(fsi,
-                           fileTypeRegistry_.getTextTypeForFile(fsi), 
-                           new CommandWithArg<EditingTarget>() {
-                              @Override
-                              public void execute(EditingTarget arg)
-                              {  
-                                 continuation.execute();
-                              }
-                           });
-               }
-            });
-         }
-         
-         // decrement newTabPending and select first tab when done
-         openCommands.addCommand(new SerializedCommand() {
-
-            @Override
-            public void onExecute(Command continuation)
-            {
-               // !!! UNCOMMENT ON MOVE newTabPending_--;
-               columnManager_.onFirstTab();
-               continuation.execute();
-            }
-            
-         });
-         
-         // execute the continuation
-         openCommands.run();
-      }
-   }
    
    public void onShowContent(ShowContentEvent event)
    {
@@ -2217,11 +2162,6 @@ public class Source implements InsertSourceHandler,
       return getActiveEditor().getPath();
    }
    
-   public SourceColumnManager getColumnManager()
-   {
-      return columnManager_;
-   }
-
    private void doOpenSourceFile(final FileSystemItem file,
                                  final TextFileType fileType,
                                  final FilePosition position,
@@ -2357,12 +2297,12 @@ public class Source implements InsertSourceHandler,
          public void execute(FileSystemItem file)
          {
             // set flag indicating we are opening for a source navigation
-            // !!! uncomment on move openingForSourceNavigation_ = position != null || pattern != null;
+            columnManager_.setOpeningForSourceNavigation(position != null || pattern != null);
             
             columnManager_.openFile(file,
                      fileType,
                      (target) -> {
-                        // !!! uncomment on move openingForSourceNavigation_ = false;
+                        columnManager_.setOpeningForSourceNavigation(false);
                         editingTargetAction.execute(target);
                      });      
          }
@@ -3192,33 +3132,6 @@ public class Source implements InsertSourceHandler,
 
       // Ensure that the document is in view
       activeEditor_.ensureCursorVisible();
-   }
-
-   // !!! fix this
-   private void editFile(final String path)
-   {
-      /*
-      server_.ensureFileExists(
-            path,
-            new ServerRequestCallback<Boolean>()
-            {
-               @Override
-               public void onResponseReceived(Boolean success)
-               {
-                  if (success)
-                  {
-                     FileSystemItem file = FileSystemItem.createFile(path);
-                     openFile(file);
-                  }
-               }
-
-               @Override
-               public void onError(ServerError error)
-               {
-                  Debug.logError(error);
-               }
-            });
-            */
    }
 
    private void showHelpAtCursor()

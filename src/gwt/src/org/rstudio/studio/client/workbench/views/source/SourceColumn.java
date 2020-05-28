@@ -173,7 +173,11 @@ public class SourceColumn implements //BeforeShowHandler,
    {
 	   display_.closeTab(index, interactive, onClosed);
    }
-   
+
+   public void closeAllLocalSourceDocs()
+   {
+   }
+
    public int getTabCount()
    {
       return display_.getTabCount();
@@ -505,6 +509,17 @@ public class SourceColumn implements //BeforeShowHandler,
       return target;
    }
 
+   public void addTab(Widget widget,
+                      FileIcon icon,
+                      String id,
+                      String value,
+                      String tabTooltip,
+                      Integer position,
+                      boolean switchToTab)
+   {
+      display_.addTab(widget, icon, id, value, tabTooltip, position, switchToTab);
+   }
+
    public void closeTab(String docId)
    {
       suspendDocumentClose_ = true;
@@ -543,6 +558,16 @@ public class SourceColumn implements //BeforeShowHandler,
          };
          debugSelectionTimer_.schedule(250);
       }
+   }
+
+   public void incrementNewTabPending()
+   {
+       newTabPending_++;
+   }
+
+   public void decrementNewTabPending()
+   {
+      newTabPending_--;
    }
 
    public int getUntitledNum(String prefix)
