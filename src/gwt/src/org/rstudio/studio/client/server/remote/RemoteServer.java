@@ -523,15 +523,6 @@ public class RemoteServer implements Server
                   requestCallback);
    }
 
-   @Override
-   public void getAllPreferences(ServerRequestCallback<UserPrefDefinitions> requestCallback)
-   {
-      sendRequest(RPC_SCOPE,
-                  "get_all_prefs",
-                  requestCallback);
-      
-   }
-
    public void updateClientState(JavaScriptObject temporary,
                                  JavaScriptObject persistent,
                                  JavaScriptObject projectPersistent,

@@ -20,7 +20,6 @@
 #include <boost/bind/bind.hpp>
 
 #include <core/Exec.hpp>
-#include <core/FileSerializer.hpp>
 
 #include <core/system/Xdg.hpp>
 
@@ -170,47 +169,6 @@ bool writePref(Preferences& prefs, SEXP prefName, SEXP value)
    module_context::events().onPreferencesSaved();
    
    return true;
-}
-
-Error getAllPreferences(const json::JsonRpcRequest&,
-                        json::JsonRpcResponse* pResponse)
-{
-   // read the user prefs schema file
-   core::FilePath schema = 
-      options().rResourcesPath().completePath("schema").completePath(kUserPrefsSchemaFile);
-   std::string contents;
-   Error error = readStringFromFile(schema, &contents);
-   if (error)
-      return error;
-
-   // parse it to extract the preference schema as a JSON object
-   json::Value prefSchema;
-   error = prefSchema.parse(contents);
-   if (error)
-      return error;
-
-   // ensure we got an object with a "properties" key; this is virtually a guarantee since this file
-   // ships in the box but we still need to do something reasonable if we find something unexpected.
-   if (!prefSchema.isObject())
-   {
-      LOG_WARNING_MESSAGE("Invalid JSON (non-object) found in " + 
-            schema.getAbsolutePath());
-      return Error(json::errc::ParseError, ERROR_LOCATION);
-   }
-
-   json::Object prefObj = prefSchema.getObject();
-   auto it = prefObj.find("properties");
-   if (it == prefObj.end())
-   {
-      LOG_WARNING_MESSAGE("Expected but did not find 'properties' key in " + 
-            schema.getAbsolutePath());
-      return Error(json::errc::ParseError, ERROR_LOCATION);
-   }
-
-   // return the JSON object in the "properties" key, which is an object containing all the prefs.
-   pResponse->setResult((*it).getValue());
-
-   return Success();
 }
 
 SEXP rs_removePref(SEXP prefName)
@@ -441,8 +399,7 @@ core::Error initialize()
       (bind(registerRpcMethod, "set_user_state", setState))
       (bind(registerRpcMethod, "edit_user_prefs", editPreferences))
       (bind(registerRpcMethod, "clear_user_prefs", clearPreferences))
-      (bind(registerRpcMethod, "view_all_prefs", viewPreferences))
-      (bind(registerRpcMethod, "get_all_prefs", getAllPreferences));
+      (bind(registerRpcMethod, "view_all_prefs", viewPreferences));
    return initBlock.execute();
 }
 
