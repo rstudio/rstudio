@@ -38,12 +38,7 @@ public class KeyCombination
       //
       // https://github.com/rstudio/rstudio/issues/6129
       // https://bugreports.qt.io/browse/QTBUG-81783
-      if (requiresQtWebEngineWorkaround_ == null)
-      {
-         requiresQtWebEngineWorkaround_ = requiresQtWebEngineWorkaround();
-      }
-      
-      if (requiresQtWebEngineWorkaround_)
+      if (requiresQtWebEngineWorkaround())
       {
          key = KeyboardHelper.keyNameFromKeyCode(keyCode);
       }
@@ -172,7 +167,17 @@ public class KeyCombination
             modifiers_ == other.modifiers_;
    }
    
-   private boolean requiresQtWebEngineWorkaround()
+   private static boolean requiresQtWebEngineWorkaround()
+   {
+      if (REQUIRES_QT_WEBENGINE_WORKAROUND == null)
+      {
+         REQUIRES_QT_WEBENGINE_WORKAROUND = requiresQtWebEngineWorkaroundImpl();
+      }
+      
+      return REQUIRES_QT_WEBENGINE_WORKAROUND;
+   }
+   
+   private static boolean requiresQtWebEngineWorkaroundImpl()
    {
       if (!BrowseCap.isQtWebEngine())
          return false;
@@ -185,5 +190,5 @@ public class KeyCombination
    private final int keyCode_;
    private final int modifiers_;
    
-   private Boolean requiresQtWebEngineWorkaround_ = null;
+   private static Boolean REQUIRES_QT_WEBENGINE_WORKAROUND = null;
 }
