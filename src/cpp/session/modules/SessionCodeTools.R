@@ -141,33 +141,37 @@
    }
 })
 
-.rs.addFunction("getFunction", function(name, namespaceName)
+.rs.addFunction("getFunction", function(name, envir = globalenv())
 {
-   # resolve "namespace:" environments
-   envir <- if (identical(substring(namespaceName, 1, nchar("namespace:")), 
-                          "namespace:"))
-   {
-     asNamespace(substring(namespaceName, nchar("namespace:") + 1))
-   }
-   else if (identical(namespaceName, ".GlobalEnv"))
-   {
-      .GlobalEnv
-   }
-   else
-   {
-     asNamespace(namespaceName)
-   }
+   tryCatch(
+      .rs.getFunctionImpl(name, envir),
+      error = function(e) NULL
+   )
+})
 
-   tryCatch(eval(parse(text = name),
-                 envir = envir,
-                 enclos = NULL),
-            error = function(e) NULL)
+.rs.addFunction("getFunctionImpl", function(name, envir = globalenv())
+{
+   envir <- .rs.resolveEnvironment(envir)
+   parsed <- parse(text = name)[[1L]]
+   
+   # for plain symbols, we can attempt lookup of a function object
+   # directly; for more complex calls, we try to evaluate it in
+   # the requested environment and hope we got a function
+   fn <- if (is.symbol(parsed))
+      get(name, envir = envir, mode = "function")
+   else
+      eval(parsed, envir = envir)
+   
+   if (!is.function(fn))
+      return(NULL)
+   
+   fn
 })
 
 
 .rs.addFunction("functionHasSrcRef", function(func)
 {
-   return (!is.null(attr(func, "srcref")))
+   !is.null(attr(func, "srcref"))
 })
 
 # Returns a function's code as a string. Arguments:
