@@ -132,7 +132,7 @@ generate <- function (schemaPath, className) {
          preftype <- "integer"
          cpptype <- "int"
       } else if (identical(preftype, "string")) {
-         preftype <- "string"
+         preftype <- if (!is.null(def[["enum"]])) "enumeration" else "string"
          cpptype <- "std::string"
       } else if (identical(preftype, "object")) {
          preftype <- "object"
@@ -184,12 +184,25 @@ generate <- function (schemaPath, className) {
          "   {\n",
          "      return ", preftype, "(\n         \"", pref, "\",\n",
                        "         \"", prefTitle, "\", \n", 
-                       "         \"", def[["description"]], "\", \n", 
+                       "         \"", def[["description"]], "\", \n")
+      if (!is.null(def[["enum"]]))
+      {
+          java <- paste0(java, "         new String[] {\n",
+             paste(lapply(def[["enum"]], function(enumval) {
+                    toupper(paste0("            ",
+                                   pref, 
+                                   "_", 
+                                   gsub("[^A-Za-z0-9_]", "_", enumval)))
+                   }), collapse = ",\n"),
+             "\n         },\n")
+      }
+      java <- paste0(java, 
                        "         ", defaultval, ");\n",
-         "   }\n\n")
+                       "   }\n\n")
+      synctype <- if (identical(preftype, "enumeration")) "String" else capitalize(preftype)
       javasync <- paste0(javasync,
          "      if (source.hasKey(\"", pref, "\"))\n",
-         "         ", camel, "().setValue(layer, source.get", capitalize(preftype), "(\"", 
+         "         ", camel, "().setValue(layer, source.get", synctype, "(\"", 
                 pref, "\"));\n")
       javalist <- paste0(javalist,
          "      prefs.add(", camel, "());\n")

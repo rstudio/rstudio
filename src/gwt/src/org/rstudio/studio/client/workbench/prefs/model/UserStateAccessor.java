@@ -354,10 +354,16 @@ public class UserStateAccessor extends Prefs
     */
    public PrefValue<String> connectVia()
    {
-      return string(
+      return enumeration(
          "connect_via",
          "", 
          "How to create new connections to data sources.", 
+         new String[] {
+            CONNECT_VIA_CONNECT_R_CONSOLE,
+            CONNECT_VIA_CONNECT_NEW_R_SCRIPT,
+            CONNECT_VIA_CONNECT_NEW_R_NOTEBOOK,
+            CONNECT_VIA_CONNECT_COPY_TO_CLIPBOARD
+         },
          "connect-r-console");
    }
 
@@ -371,10 +377,17 @@ public class UserStateAccessor extends Prefs
     */
    public PrefValue<String> errorHandlerType()
    {
-      return string(
+      return enumeration(
          "error_handler_type",
          "", 
          "The kind of handler to invoke when errors occur.", 
+         new String[] {
+            ERROR_HANDLER_TYPE_MESSAGE,
+            ERROR_HANDLER_TYPE_TRACEBACK,
+            ERROR_HANDLER_TYPE_BREAK,
+            ERROR_HANDLER_TYPE_NOTEBOOK,
+            ERROR_HANDLER_TYPE_CUSTOM
+         },
          "traceback");
    }
 

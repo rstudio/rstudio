@@ -59,10 +59,15 @@ public class UserPrefsAccessor extends Prefs
     */
    public PrefValue<String> saveWorkspace()
    {
-      return string(
+      return enumeration(
          "save_workspace",
          "Save workspace on quit", 
          "Whether to save the workspace to an .Rdata file after the R session ends.", 
+         new String[] {
+            SAVE_WORKSPACE_ALWAYS,
+            SAVE_WORKSPACE_NEVER,
+            SAVE_WORKSPACE_ASK
+         },
          "ask");
    }
 
@@ -201,10 +206,17 @@ public class UserPrefsAccessor extends Prefs
     */
    public PrefValue<String> lineEndingConversion()
    {
-      return string(
+      return enumeration(
          "line_ending_conversion",
          "Line ending format", 
          "The line ending format to use when saving files.", 
+         new String[] {
+            LINE_ENDING_CONVERSION_DEFAULT,
+            LINE_ENDING_CONVERSION_WINDOWS,
+            LINE_ENDING_CONVERSION_POSIX,
+            LINE_ENDING_CONVERSION_NATIVE,
+            LINE_ENDING_CONVERSION_PASSTHROUGH
+         },
          "native");
    }
 
@@ -231,10 +243,20 @@ public class UserPrefsAccessor extends Prefs
     */
    public PrefValue<String> windowsTerminalShell()
    {
-      return string(
+      return enumeration(
          "windows_terminal_shell",
          "", 
          "The terminal shell to use on Windows.", 
+         new String[] {
+            WINDOWS_TERMINAL_SHELL_DEFAULT,
+            WINDOWS_TERMINAL_SHELL_WIN_GIT_BASH,
+            WINDOWS_TERMINAL_SHELL_WIN_WSL_BASH,
+            WINDOWS_TERMINAL_SHELL_WIN_CMD,
+            WINDOWS_TERMINAL_SHELL_WIN_PS,
+            WINDOWS_TERMINAL_SHELL_PS_CORE,
+            WINDOWS_TERMINAL_SHELL_CUSTOM,
+            WINDOWS_TERMINAL_SHELL_NONE
+         },
          "default");
    }
 
@@ -252,10 +274,17 @@ public class UserPrefsAccessor extends Prefs
     */
    public PrefValue<String> posixTerminalShell()
    {
-      return string(
+      return enumeration(
          "posix_terminal_shell",
          "", 
          "The terminal shell to use on POSIX operating systems (MacOS and Linux).", 
+         new String[] {
+            POSIX_TERMINAL_SHELL_DEFAULT,
+            POSIX_TERMINAL_SHELL_BASH,
+            POSIX_TERMINAL_SHELL_ZSH,
+            POSIX_TERMINAL_SHELL_CUSTOM,
+            POSIX_TERMINAL_SHELL_NONE
+         },
          "default");
    }
 
@@ -486,10 +515,16 @@ public class UserPrefsAccessor extends Prefs
     */
    public PrefValue<String> editorKeybindings()
    {
-      return string(
+      return enumeration(
          "editor_keybindings",
          "Keybinding set for editor", 
          "The keybindings to use in the RStudio code editor.", 
+         new String[] {
+            EDITOR_KEYBINDINGS_DEFAULT,
+            EDITOR_KEYBINDINGS_VIM,
+            EDITOR_KEYBINDINGS_EMACS,
+            EDITOR_KEYBINDINGS_SUBLIME
+         },
          "default");
    }
 
@@ -575,10 +610,15 @@ public class UserPrefsAccessor extends Prefs
     */
    public PrefValue<String> surroundSelection()
    {
-      return string(
+      return enumeration(
          "surround_selection",
          "Surround selections with", 
          "Which kinds of delimiters can be used to surround the current selection.", 
+         new String[] {
+            SURROUND_SELECTION_NEVER,
+            SURROUND_SELECTION_QUOTES,
+            SURROUND_SELECTION_QUOTES_AND_BRACKETS
+         },
          "quotes_and_brackets");
    }
 
@@ -603,10 +643,16 @@ public class UserPrefsAccessor extends Prefs
     */
    public PrefValue<String> codeCompletion()
    {
-      return string(
+      return enumeration(
          "code_completion",
          "Use code completion for R", 
          "When to use auto-completion for R code in the RStudio code editor.", 
+         new String[] {
+            CODE_COMPLETION_ALWAYS,
+            CODE_COMPLETION_NEVER,
+            CODE_COMPLETION_TRIGGERED,
+            CODE_COMPLETION_MANUAL
+         },
          "always");
    }
 
@@ -620,10 +666,15 @@ public class UserPrefsAccessor extends Prefs
     */
    public PrefValue<String> codeCompletionOther()
    {
-      return string(
+      return enumeration(
          "code_completion_other",
          "Use code completion for other languages", 
          "When to use auto-completion for other languages (such as JavaScript and SQL) in the RStudio code editor.", 
+         new String[] {
+            CODE_COMPLETION_OTHER_ALWAYS,
+            CODE_COMPLETION_OTHER_TRIGGERED,
+            CODE_COMPLETION_OTHER_MANUAL
+         },
          "always");
    }
 
@@ -936,10 +987,14 @@ public class UserPrefsAccessor extends Prefs
     */
    public PrefValue<String> foldStyle()
    {
-      return string(
+      return enumeration(
          "fold_style",
          "Fold style in editor", 
          "The style of folding to use.", 
+         new String[] {
+            FOLD_STYLE_BEGIN_ONLY,
+            FOLD_STYLE_BEGIN_AND_END
+         },
          "begin-and-end");
    }
 
@@ -989,7 +1044,7 @@ public class UserPrefsAccessor extends Prefs
    {
       return bool(
          "highlight_r_function_calls",
-         "", 
+         "Highlight R function calls", 
          "Whether to highlight R function calls in the code editor.", 
          false);
    }
@@ -1001,7 +1056,7 @@ public class UserPrefsAccessor extends Prefs
    {
       return integer(
          "console_line_length_limit",
-         "", 
+         "Maximum characters per line in R console", 
          "The maximum number of characters to display in a single line in the R console.", 
          1000);
    }
@@ -1013,7 +1068,7 @@ public class UserPrefsAccessor extends Prefs
    {
       return integer(
          "console_max_lines",
-         "", 
+         "Maximum lines in R console", 
          "The maximum number of console actions to store and display in the console scrollback buffer.", 
          1000);
    }
@@ -1023,10 +1078,15 @@ public class UserPrefsAccessor extends Prefs
     */
    public PrefValue<String> ansiConsoleMode()
    {
-      return string(
+      return enumeration(
          "ansi_console_mode",
-         "", 
+         "ANSI escape codes in R console", 
          "How to treat ANSI escape codes in the console.", 
+         new String[] {
+            ANSI_CONSOLE_MODE_OFF,
+            ANSI_CONSOLE_MODE_ON,
+            ANSI_CONSOLE_MODE_STRIP
+         },
          "on");
    }
 
@@ -1041,7 +1101,7 @@ public class UserPrefsAccessor extends Prefs
    {
       return bool(
          "show_inline_toolbar_for_r_code_chunks",
-         "", 
+         "Show toolbar on R Markdown chunks", 
          "Whether to show a toolbar on code chunks in R Markdown documents.", 
          true);
    }
@@ -1053,7 +1113,7 @@ public class UserPrefsAccessor extends Prefs
    {
       return bool(
          "highlight_code_chunks",
-         "", 
+         "Highlight code chunks in R Markdown files", 
          "Whether to highlight code chunks in R Markdown documents with a different background color.", 
          true);
    }
@@ -1065,7 +1125,7 @@ public class UserPrefsAccessor extends Prefs
    {
       return bool(
          "save_files_before_build",
-         "", 
+         "Save files before building", 
          "Whether to save all open, unsaved files before building the project.", 
          false);
    }
@@ -1077,7 +1137,7 @@ public class UserPrefsAccessor extends Prefs
    {
       return dbl(
          "font_size_points",
-         "", 
+         "Editor font size (points)", 
          "The default editor font size, in points.", 
          10.0);
    }
@@ -1089,7 +1149,7 @@ public class UserPrefsAccessor extends Prefs
    {
       return dbl(
          "help_font_size_points",
-         "", 
+         "Help panel font size (points)", 
          "The help panel font size, in points.", 
          10.0);
    }
@@ -1101,7 +1161,7 @@ public class UserPrefsAccessor extends Prefs
    {
       return string(
          "editor_theme",
-         "", 
+         "Theme", 
          "The name of the color theme to apply to the text editor in RStudio.", 
          "Textmate (default)");
    }
@@ -1113,7 +1173,7 @@ public class UserPrefsAccessor extends Prefs
    {
       return bool(
          "server_editor_font_enabled",
-         "", 
+         "Enable editor fonts on RStudio Server", 
          "Whether to use a custom editor font in RStudio Server.", 
          false);
    }
@@ -1125,7 +1185,7 @@ public class UserPrefsAccessor extends Prefs
    {
       return string(
          "server_editor_font",
-         "", 
+         "Editor font", 
          "The name of the fixed-width editor font to use with RStudio Server.", 
          "");
    }
@@ -1137,7 +1197,7 @@ public class UserPrefsAccessor extends Prefs
    {
       return string(
          "default_encoding",
-         "", 
+         "Default character encoding", 
          "The default character encoding to use when saving files.", 
          "");
    }
@@ -1149,7 +1209,7 @@ public class UserPrefsAccessor extends Prefs
    {
       return bool(
          "toolbar_visible",
-         "", 
+         "Show top toolbar", 
          "Whether to show the toolbar at the top of the RStudio workbench.", 
          true);
    }
@@ -1161,7 +1221,7 @@ public class UserPrefsAccessor extends Prefs
    {
       return string(
          "default_project_location",
-         "", 
+         "Default new project location", 
          "The directory path under which to place new projects by default.", 
          "");
    }
@@ -1173,7 +1233,7 @@ public class UserPrefsAccessor extends Prefs
    {
       return bool(
          "source_with_echo",
-         "", 
+         "Source with echo by default", 
          "Whether to echo R code when sourcing it.", 
          false);
    }
@@ -1185,7 +1245,7 @@ public class UserPrefsAccessor extends Prefs
    {
       return bool(
          "new_project_git_init",
-         "", 
+         "Initialize new projects with Git", 
          "Whether to initialize new projects with a Git repo by default.", 
          false);
    }
@@ -1197,7 +1257,7 @@ public class UserPrefsAccessor extends Prefs
    {
       return string(
          "default_sweave_engine",
-         "", 
+         "Default Sweave engine", 
          "The default engine to use when processing Sweave documents.", 
          "Sweave");
    }
@@ -1209,7 +1269,7 @@ public class UserPrefsAccessor extends Prefs
    {
       return string(
          "default_latex_program",
-         "", 
+         "Default LaTeX program", 
          "The default program to use when processing LaTeX documents.", 
          "pdfLaTeX");
    }
@@ -1243,10 +1303,17 @@ public class UserPrefsAccessor extends Prefs
     */
    public PrefValue<String> pdfPreviewer()
    {
-      return string(
+      return enumeration(
          "pdf_previewer",
          "", 
          "The program to use to preview PDF files after generation.", 
+         new String[] {
+            PDF_PREVIEWER_NONE,
+            PDF_PREVIEWER_DEFAULT,
+            PDF_PREVIEWER_RSTUDIO,
+            PDF_PREVIEWER_DESKTOP_SYNCTEX,
+            PDF_PREVIEWER_SYSTEM
+         },
          "default");
    }
 
@@ -1477,10 +1544,17 @@ public class UserPrefsAccessor extends Prefs
     */
    public PrefValue<String> shinyViewerType()
    {
-      return string(
+      return enumeration(
          "shiny_viewer_type",
          "", 
          "Where to display Shiny applications when they are run.", 
+         new String[] {
+            SHINY_VIEWER_TYPE_USER,
+            SHINY_VIEWER_TYPE_NONE,
+            SHINY_VIEWER_TYPE_PANE,
+            SHINY_VIEWER_TYPE_WINDOW,
+            SHINY_VIEWER_TYPE_BROWSER
+         },
          "window");
    }
 
@@ -1507,10 +1581,17 @@ public class UserPrefsAccessor extends Prefs
     */
    public PrefValue<String> plumberViewerType()
    {
-      return string(
+      return enumeration(
          "plumber_viewer_type",
          "", 
          "Where to display Shiny applications when they are run.", 
+         new String[] {
+            PLUMBER_VIEWER_TYPE_USER,
+            PLUMBER_VIEWER_TYPE_NONE,
+            PLUMBER_VIEWER_TYPE_PANE,
+            PLUMBER_VIEWER_TYPE_WINDOW,
+            PLUMBER_VIEWER_TYPE_BROWSER
+         },
          "window");
    }
 
@@ -1549,10 +1630,15 @@ public class UserPrefsAccessor extends Prefs
     */
    public PrefValue<String> rmdViewerType()
    {
-      return string(
+      return enumeration(
          "rmd_viewer_type",
          "", 
          "Where to display R Markdown documents when they have completed rendering.", 
+         new String[] {
+            RMD_VIEWER_TYPE_WINDOW,
+            RMD_VIEWER_TYPE_PANE,
+            RMD_VIEWER_TYPE_NONE
+         },
          "window");
    }
 
@@ -1661,10 +1747,15 @@ public class UserPrefsAccessor extends Prefs
     */
    public PrefValue<String> executionBehavior()
    {
-      return string(
+      return enumeration(
          "execution_behavior",
          "", 
          "The unit of R code to execute when the Execute command is invoked.", 
+         new String[] {
+            EXECUTION_BEHAVIOR_LINE,
+            EXECUTION_BEHAVIOR_STATEMENT,
+            EXECUTION_BEHAVIOR_PARAGRAPH
+         },
          "statement");
    }
 
@@ -1713,10 +1804,15 @@ public class UserPrefsAccessor extends Prefs
     */
    public PrefValue<String> terminalCloseBehavior()
    {
-      return string(
+      return enumeration(
          "terminal_close_behavior",
          "", 
          "Whether to close the terminal pane after the shell exits.", 
+         new String[] {
+            TERMINAL_CLOSE_BEHAVIOR_ALWAYS,
+            TERMINAL_CLOSE_BEHAVIOR_CLEAN,
+            TERMINAL_CLOSE_BEHAVIOR_NEVER
+         },
          "always");
    }
 
@@ -1741,10 +1837,14 @@ public class UserPrefsAccessor extends Prefs
     */
    public PrefValue<String> terminalBellStyle()
    {
-      return string(
+      return enumeration(
          "terminal_bell_style",
          "", 
          "Terminal bell style", 
+         new String[] {
+            TERMINAL_BELL_STYLE_NONE,
+            TERMINAL_BELL_STYLE_SOUND
+         },
          "sound");
    }
 
@@ -1756,10 +1856,14 @@ public class UserPrefsAccessor extends Prefs
     */
    public PrefValue<String> terminalRenderer()
    {
-      return string(
+      return enumeration(
          "terminal_renderer",
          "", 
          "Terminal rendering engine: canvas is faster, dom may be needed for some browsers or graphics cards", 
+         new String[] {
+            TERMINAL_RENDERER_CANVAS,
+            TERMINAL_RENDERER_DOM
+         },
          "canvas");
    }
 
@@ -1819,10 +1923,15 @@ public class UserPrefsAccessor extends Prefs
     */
    public PrefValue<String> jobsTabVisibility()
    {
-      return string(
+      return enumeration(
          "jobs_tab_visibility",
          "", 
          "The visibility of the Jobs tab.", 
+         new String[] {
+            JOBS_TAB_VISIBILITY_CLOSED,
+            JOBS_TAB_VISIBILITY_SHOWN,
+            JOBS_TAB_VISIBILITY_DEFAULT
+         },
          "default");
    }
 
@@ -1847,10 +1956,14 @@ public class UserPrefsAccessor extends Prefs
     */
    public PrefValue<String> launcherJobsSort()
    {
-      return string(
+      return enumeration(
          "launcher_jobs_sort",
          "", 
          "How to sort jobs in the Launcher tab in RStudio Pro.", 
+         new String[] {
+            LAUNCHER_JOBS_SORT_RECORDED,
+            LAUNCHER_JOBS_SORT_STATE
+         },
          "recorded");
    }
 
@@ -1862,10 +1975,15 @@ public class UserPrefsAccessor extends Prefs
     */
    public PrefValue<String> busyDetection()
    {
-      return string(
+      return enumeration(
          "busy_detection",
          "", 
          "How to detect busy status in the Terminal.", 
+         new String[] {
+            BUSY_DETECTION_ALWAYS,
+            BUSY_DETECTION_NEVER,
+            BUSY_DETECTION_WHITELIST
+         },
          "always");
    }
 
@@ -1890,10 +2008,15 @@ public class UserPrefsAccessor extends Prefs
     */
    public PrefValue<String> knitWorkingDir()
    {
-      return string(
+      return enumeration(
          "knit_working_dir",
          "", 
          "The working directory to use when knitting R Markdown documents.", 
+         new String[] {
+            KNIT_WORKING_DIR_DEFAULT,
+            KNIT_WORKING_DIR_CURRENT,
+            KNIT_WORKING_DIR_PROJECT
+         },
          "default");
    }
 
@@ -1906,10 +2029,15 @@ public class UserPrefsAccessor extends Prefs
     */
    public PrefValue<String> docOutlineShow()
    {
-      return string(
+      return enumeration(
          "doc_outline_show",
          "", 
          "Which objects to show in the document outline pane.", 
+         new String[] {
+            DOC_OUTLINE_SHOW_SECTIONS_ONLY,
+            DOC_OUTLINE_SHOW_SECTIONS_AND_CHUNKS,
+            DOC_OUTLINE_SHOW_ALL
+         },
          "sections_only");
    }
 
@@ -1922,10 +2050,15 @@ public class UserPrefsAccessor extends Prefs
     */
    public PrefValue<String> latexPreviewOnCursorIdle()
    {
-      return string(
+      return enumeration(
          "latex_preview_on_cursor_idle",
          "", 
          "When to preview LaTeX mathematical equations when cursor has not moved recently.", 
+         new String[] {
+            LATEX_PREVIEW_ON_CURSOR_IDLE_NEVER,
+            LATEX_PREVIEW_ON_CURSOR_IDLE_INLINE_ONLY,
+            LATEX_PREVIEW_ON_CURSOR_IDLE_ALWAYS
+         },
          "always");
    }
 
@@ -1950,10 +2083,15 @@ public class UserPrefsAccessor extends Prefs
     */
    public PrefValue<String> globalTheme()
    {
-      return string(
+      return enumeration(
          "global_theme",
          "", 
          "The theme to use for the main RStudio user interface.", 
+         new String[] {
+            GLOBAL_THEME_CLASSIC,
+            GLOBAL_THEME_DEFAULT,
+            GLOBAL_THEME_ALTERNATE
+         },
          "default");
    }
 
@@ -2014,10 +2152,15 @@ public class UserPrefsAccessor extends Prefs
     */
    public PrefValue<String> showUserHomePage()
    {
-      return string(
+      return enumeration(
          "show_user_home_page",
          "", 
          "When to show the server home page in RStudio Server Pro.", 
+         new String[] {
+            SHOW_USER_HOME_PAGE_ALWAYS,
+            SHOW_USER_HOME_PAGE_NEVER,
+            SHOW_USER_HOME_PAGE_SESSIONS
+         },
          "sessions");
    }
 
@@ -2372,10 +2515,15 @@ public class UserPrefsAccessor extends Prefs
     */
    public PrefValue<String> autoSaveOnIdle()
    {
-      return string(
+      return enumeration(
          "auto_save_on_idle",
          "", 
          "How to deal with changes to documents on idle.", 
+         new String[] {
+            AUTO_SAVE_ON_IDLE_COMMIT,
+            AUTO_SAVE_ON_IDLE_BACKUP,
+            AUTO_SAVE_ON_IDLE_NONE
+         },
          "backup");
    }
 
@@ -2412,10 +2560,15 @@ public class UserPrefsAccessor extends Prefs
     */
    public PrefValue<String> terminalInitialDirectory()
    {
-      return string(
+      return enumeration(
          "terminal_initial_directory",
          "", 
          "Initial directory for new terminals.", 
+         new String[] {
+            TERMINAL_INITIAL_DIRECTORY_PROJECT,
+            TERMINAL_INITIAL_DIRECTORY_CURRENT,
+            TERMINAL_INITIAL_DIRECTORY_HOME
+         },
          "project");
    }
 
@@ -2476,10 +2629,15 @@ public class UserPrefsAccessor extends Prefs
     */
    public PrefValue<String> visualMarkdownEditingReferencesLocation()
    {
-      return string(
+      return enumeration(
          "visual_markdown_editing_references_location",
          "", 
          "Placement of footnotes within markdown output.", 
+         new String[] {
+            VISUAL_MARKDOWN_EDITING_REFERENCES_LOCATION_BLOCK,
+            VISUAL_MARKDOWN_EDITING_REFERENCES_LOCATION_SECTION,
+            VISUAL_MARKDOWN_EDITING_REFERENCES_LOCATION_DOCUMENT
+         },
          "block");
    }
 
@@ -2576,10 +2734,18 @@ public class UserPrefsAccessor extends Prefs
     */
    public PrefValue<String> graphicsBackend()
    {
-      return string(
+      return enumeration(
          "graphics_backend",
          "", 
          "R graphics backend.", 
+         new String[] {
+            GRAPHICS_BACKEND_DEFAULT,
+            GRAPHICS_BACKEND_CAIRO,
+            GRAPHICS_BACKEND_CAIRO_PNG,
+            GRAPHICS_BACKEND_QUARTZ,
+            GRAPHICS_BACKEND_WINDOWS,
+            GRAPHICS_BACKEND_RAGG
+         },
          "default");
    }
 
@@ -2595,10 +2761,16 @@ public class UserPrefsAccessor extends Prefs
     */
    public PrefValue<String> graphicsAntialiasing()
    {
-      return string(
+      return enumeration(
          "graphics_antialiasing",
          "", 
          "Type of anti-aliasing to be used for generated R plots.", 
+         new String[] {
+            GRAPHICS_ANTIALIASING_DEFAULT,
+            GRAPHICS_ANTIALIASING_NONE,
+            GRAPHICS_ANTIALIASING_GRAY,
+            GRAPHICS_ANTIALIASING_SUBPIXEL
+         },
          "default");
    }
 

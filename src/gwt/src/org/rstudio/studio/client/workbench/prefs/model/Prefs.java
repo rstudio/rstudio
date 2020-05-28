@@ -297,6 +297,35 @@ public abstract class Prefs
          root.setString(name, value);
       }
    }
+   
+   public class EnumValue extends JsonValue<String>
+   {
+      private EnumValue(String name, String title, String description, 
+                        String[] values, String defaultValue)
+      {
+         super(name, title, description, defaultValue);
+         allowedValues_ = values;
+      }
+
+      @Override
+      public String doGetValue(JsObject root)
+      {
+         return root.getString(name_);
+      }
+
+      @Override
+      protected void doSetValue(JsObject root, String name, String value)
+      {
+         root.setString(name, value);
+      }
+      
+      public String[] getAllowedValues()
+      {
+         return allowedValues_;
+      }
+      
+      private final String[] allowedValues_;
+   }
 
    public class ObjectValue<T extends JavaScriptObject> extends JsonValue<T>
    {
@@ -388,6 +417,19 @@ public abstract class Prefs
       if (val == null)
       {
          val = new StringValue(name, title, description, defaultValue);
+         values_.put(name, val);
+      }
+      return val;
+   }
+
+   @SuppressWarnings("unchecked")
+   protected PrefValue<String> enumeration(
+      String name, String title, String description, String[] values, String defaultValue)
+   {
+      PrefValue<String> val = (PrefValue<String>) values_.get(name);
+      if (val == null)
+      {
+         val = new EnumValue(name, title, description, values, defaultValue);
          values_.put(name, val);
       }
       return val;

@@ -506,97 +506,116 @@
         "highlight_r_function_calls": {
             "type": "boolean",
             "default": false,
+            "title": "Highlight R function calls",
             "description": "Whether to highlight R function calls in the code editor."
         },
         "console_line_length_limit": {
             "type": "integer",
             "default": 1000,
+            "title": "Maximum characters per line in R console",
             "description": "The maximum number of characters to display in a single line in the R console."
         },
         "console_max_lines": {
             "type": "integer",
             "default": 1000,
+            "title": "Maximum lines in R console",
             "description": "The maximum number of console actions to store and display in the console scrollback buffer."
         },
         "ansi_console_mode": {
             "type": "string",
             "enum": ["off", "on", "strip"],
             "default": "on",
+            "title": "ANSI escape codes in R console",
             "description": "How to treat ANSI escape codes in the console."
         },
         "show_inline_toolbar_for_r_code_chunks": {
             "type": "boolean",
             "default": true,
+            "title": "Show toolbar on R Markdown chunks",
             "description": "Whether to show a toolbar on code chunks in R Markdown documents."
         },
         "highlight_code_chunks": {
             "type": "boolean",
             "default": true,
+            "title": "Highlight code chunks in R Markdown files",
             "description": "Whether to highlight code chunks in R Markdown documents with a different background color."
         },
         "save_files_before_build": {
             "type": "boolean",
             "default": false,
+            "title": "Save files before building",
             "description": "Whether to save all open, unsaved files before building the project."
         },
         "font_size_points": {
             "type": "number",
             "default": 10.0,
+            "title": "Editor font size (points)",
             "description": "The default editor font size, in points."
         },
         "help_font_size_points": {
             "type": "number",
             "default": 10.0,
+            "title": "Help panel font size (points)",
             "description": "The help panel font size, in points."
         },
         "editor_theme": {
             "type": "string",
             "default": "Textmate (default)",
+            "title": "Theme",
             "description": "The name of the color theme to apply to the text editor in RStudio."
         },
         "server_editor_font_enabled": {
             "type": "boolean",
             "default": false,
+            "title": "Enable editor fonts on RStudio Server",
             "description": "Whether to use a custom editor font in RStudio Server."
         },
         "server_editor_font": {
             "type": "string",
             "default": "",
+            "title": "Editor font",
             "description": "The name of the fixed-width editor font to use with RStudio Server."
         },
         "default_encoding": {
             "type": "string",
             "default": "",
+            "title": "Default character encoding",
             "description": "The default character encoding to use when saving files."
         },
         "toolbar_visible": {
             "type": "boolean",
             "default": true,
+            "title": "Show top toolbar",
             "description": "Whether to show the toolbar at the top of the RStudio workbench."
         },
         "default_project_location": {
             "type": "string",
             "default": "",
+            "title": "Default new project location",
             "description": "The directory path under which to place new projects by default."
         },
         "source_with_echo": {
             "type": "boolean",
             "default": false,
+            "title": "Source with echo by default",
             "description": "Whether to echo R code when sourcing it."
         },
         "new_project_git_init": {
             "type": "boolean",
             "default": false,
+            "title": "Initialize new projects with Git",
             "description": "Whether to initialize new projects with a Git repo by default."
         },
         "default_sweave_engine": {
             "type": "string",
             "default": "Sweave",
+            "title": "Default Sweave engine",
             "description": "The default engine to use when processing Sweave documents."
         },
         "default_latex_program": {
             "type": "string",
             "default": "pdfLaTeX",
+            "title": "Default LaTeX program",
             "description": "The default program to use when processing LaTeX documents."
         },
         "use_roxygen": {

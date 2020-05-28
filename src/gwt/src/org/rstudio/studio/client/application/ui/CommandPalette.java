@@ -36,6 +36,7 @@ import org.rstudio.studio.client.workbench.addins.Addins.RAddin;
 import org.rstudio.studio.client.workbench.addins.Addins.RAddins;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.prefs.model.Prefs.BooleanValue;
+import org.rstudio.studio.client.workbench.prefs.model.Prefs.EnumValue;
 import org.rstudio.studio.client.workbench.prefs.model.Prefs.PrefValue;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 
@@ -223,6 +224,11 @@ public class CommandPalette extends Composite
          if (val instanceof BooleanValue)
          {
             CommandPaletteEntry entry = new UserPrefBooleanPaletteEntry((BooleanValue)val);
+            entries_.add(entry);
+         }
+         else if (val instanceof EnumValue)
+         {
+            CommandPaletteEntry entry = new UserPrefEnumPaletteEntry((EnumValue)val);
             entries_.add(entry);
          }
       }
