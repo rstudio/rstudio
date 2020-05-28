@@ -13,7 +13,7 @@
  *
  */
 
-import { Plugin, PluginKey, TextSelection, EditorState, Transaction, Selection } from 'prosemirror-state';
+import { Plugin, PluginKey, TextSelection, EditorState, Transaction, Selection, NodeSelection } from 'prosemirror-state';
 import { Node as ProsemirrorNode } from 'prosemirror-model';
 import { EditorView, NodeView, Decoration } from 'prosemirror-view';
 import { undo, redo } from 'prosemirror-history';
@@ -356,10 +356,38 @@ class CodeBlockNodeView implements NodeView {
     ) {
       return CodeMirror.Pass;
     }
+
+    // ensure we are focused
     this.view.focus();
-    const targetPos = this.getPos() + (dir < 0 ? 0 : this.node.nodeSize);
-    const selection = Selection.near(this.view.state.doc.resolve(targetPos), dir);
-    this.view.dispatch(this.view.state.tr.setSelection(selection).scrollIntoView());
+
+    // if we are going backwards and the previous node can take node selections then select it
+    const $pos = this.view.state.doc.resolve(this.getPos());
+    if (dir < 0 && $pos.nodeBefore && $pos.nodeBefore.type.spec.selectable) {
+      const tr = this.view.state.tr;
+      const prevNodePos = this.getPos() - $pos.nodeBefore!.nodeSize;
+      const selection = NodeSelection.create(tr.doc, prevNodePos);
+      tr.setSelection(selection).scrollIntoView();
+      this.view.dispatch(tr);
+    
+    // otherwise use default handling (handles forward/backward text selections as well
+    // as forward node selections) 
+    } else {
+      const targetPos = this.getPos() + (dir < 0 ? 0 : this.node.nodeSize);
+      const targetNode = this.view.state.doc.nodeAt(targetPos);
+      if (targetNode) {
+        const tr = this.view.state.tr;
+        if (targetNode.type.spec.selectable) {
+          const selection = NodeSelection.create(tr.doc, targetPos);
+          tr.setSelection(selection).scrollIntoView();
+        } else {
+          const selection = Selection.near(this.view.state.doc.resolve(targetPos), dir);
+          tr.setSelection(selection).scrollIntoView();
+        }
+        this.view.dispatch(tr);
+      }
+    }
+   
+    // ensure focus again
     this.view.focus();
   }
 
