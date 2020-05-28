@@ -159,7 +159,7 @@ const extension = (
     baseKeys: figureKeys,
 
     plugins: (schema: Schema) => {
-      return [figureGapCursorPlugin(schema), ...imageNodeViewPlugins('figure', ui, events, pandocExtensions)];
+      return [...imageNodeViewPlugins('figure', ui, events, pandocExtensions)];
     },
   };
 };
@@ -174,21 +174,6 @@ export function writerHasProhibitedFigureParent(schema: Schema, writer: Prosemir
   return prohibitedFigureParents(schema).some(writer.isNodeOpen);
 }
 
-// gap cursor for selections before block level images
-function figureGapCursorPlugin(schema: Schema) {
-  return new Plugin({
-    key: new PluginKey(`figure-gap-cursor`),
-    props: {
-      createSelectionBetween: (view: EditorView, $anchor: ResolvedPos, $head: ResolvedPos) => {
-        if ($anchor.node().type === schema.nodes.figure && $anchor.pos === $head.pos) {
-          const $pos = view.state.doc.resolve($anchor.pos - 1);
-          return new GapCursor($pos, $pos);
-        }
-        return undefined;
-      },
-    },
-  });
-}
 
 function prohibitedFigureParents(schema: Schema) {
   return [schema.nodes.table_cell, schema.nodes.list_item, schema.nodes.definition_list];
