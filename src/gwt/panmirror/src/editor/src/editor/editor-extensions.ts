@@ -36,6 +36,7 @@ import {
   PandocBlockReaderFn,
   PandocExtensions,
   PandocInlineHTMLReaderFn,
+  PandocTokensFilterFn,
 } from '../api/pandoc';
 import { PandocBlockCapsuleFilter } from '../api/pandoc_capsule';
 import { EditorEvents } from '../api/events';
@@ -172,6 +173,7 @@ export function initExtensions(
     markSubscript,
     markSmallcaps,
     markQuoted,
+    markHTMLComment,
     markRawTex,
     markRawHTML,
     markRawInline,
@@ -179,7 +181,6 @@ export function initExtensions(
     markCite,
     markSpan,
     markXRef,
-    markHTMLComment,
     markShortcode,
     markEmoji,
   ]);
@@ -275,6 +276,12 @@ export class ExtensionManager {
 
   public pandocPostprocessors(): readonly PandocPostprocessorFn[] {
     return this.pandocReaders().flatMap(reader => (reader.postprocessor ? [reader.postprocessor] : []));
+  }
+
+  public pandocTokensFilters(): readonly PandocTokensFilterFn[] {
+    return this.collectFrom({
+      node: node => [node.pandoc.tokensFilter],
+    });
   }
 
   public pandocBlockReaders(): readonly PandocBlockReaderFn[] {

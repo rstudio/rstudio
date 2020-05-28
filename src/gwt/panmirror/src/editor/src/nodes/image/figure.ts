@@ -14,7 +14,7 @@
  */
 
 import { Node as ProsemirrorNode, Schema, Fragment, ResolvedPos } from 'prosemirror-model';
-import { Transaction } from 'prosemirror-state';
+import { Transaction} from 'prosemirror-state';
 import { Transform } from 'prosemirror-transform';
 
 import { findChildrenByType, findParentNodeClosestToPos } from 'prosemirror-utils';
@@ -156,7 +156,9 @@ const extension = (
 
     baseKeys: figureKeys,
 
-    plugins: (_schema: Schema) => imageNodeViewPlugins('figure', ui, events, pandocExtensions),
+    plugins: (schema: Schema) => {
+      return [...imageNodeViewPlugins('figure', ui, events, pandocExtensions)];
+    },
   };
 };
 

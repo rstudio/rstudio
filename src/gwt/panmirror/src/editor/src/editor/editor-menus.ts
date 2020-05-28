@@ -103,20 +103,22 @@ function insertMenu(ui: EditorUI, commands: EditorCommand[]) {
     { command: EditorCommandId.Image },
     { command: EditorCommandId.Link },
     { command: EditorCommandId.HorizontalRule },
-    ...(haveAnyOf(commands, EditorCommandId.DefinitionList) ? [
-      { separator: true },
-      {
-        subMenu: {
-          text: ui.context.translateText('Definition'),
-          items: [
-            { command: EditorCommandId.DefinitionList },
-            { separator: true },
-            { command: EditorCommandId.DefinitionTerm },
-            { command: EditorCommandId.DefinitionDescription },
-          ],
-        },
-      },
-    ] : []),
+    ...(haveAnyOf(commands, EditorCommandId.DefinitionList)
+      ? [
+          { separator: true },
+          {
+            subMenu: {
+              text: ui.context.translateText('Definition'),
+              items: [
+                { command: EditorCommandId.DefinitionList },
+                { separator: true },
+                { command: EditorCommandId.DefinitionTerm },
+                { command: EditorCommandId.DefinitionDescription },
+              ],
+            },
+          },
+        ]
+      : []),
     { separator: true },
     { command: EditorCommandId.InlineMath },
     { command: EditorCommandId.DisplayMath },

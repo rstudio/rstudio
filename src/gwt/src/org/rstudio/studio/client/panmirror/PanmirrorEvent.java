@@ -19,7 +19,7 @@ public class PanmirrorEvent
 {
    public static String Update = "panmirrorUpdate";
    public static String OutlineChange = "panmirrorOutlineChange";
-   public static String SelectionChange = "panmirrorSelectionChange";
+   public static String StateChange = "panmirrorStateChange";
    public static String Resize = "panmirrorResize";
    public static String Layout = "panmirrorLayout";
    public static String Scroll = "panmirrorScroll";

@@ -199,18 +199,22 @@ export function imagePandocOutputWriter(figure: boolean, ui: EditorUI) {
 }
 
 // parse inline html with <img> as image node
-function imageInlineHTMLReader(schema: Schema, html: string, writer: ProsemirrorWriter) {
-  if (inlineHTMLIsImage(html)) {
+function imageInlineHTMLReader(schema: Schema, html: string, writer?: ProsemirrorWriter) {
+  const isImage = inlineHTMLIsImage(html);
+  if (!isImage) {
+    return false;
+  }
+
+  if (writer) {
     const attrs = imageAttrsFromHTML(html);
     if (attrs) {
       writer.addNode(schema.nodes.image, attrs, []);
-      return true;
     } else {
       return false;
     }
-  } else {
-    return false;
   }
+
+  return isImage;
 }
 
 export function imageDOMOutputSpec(node: ProsemirrorNode, imageAttributes: boolean): DOMOutputSpec {

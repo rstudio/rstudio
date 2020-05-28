@@ -50,22 +50,20 @@ const extension: Extension = {
                 }
               }
             }
-          }
+          },
         }),
-      })
+      }),
     ];
-  }
+  },
 };
 
 function selectionWithinLastBodyParagraph(selection: Selection) {
-  
   if (selectionIsBodyTopLevel(selection)) {
     const editingRoot = editingRootNode(selection);
     if (editingRoot) {
       const node = selection.$head.node();
-      return node === editingRoot.node.lastChild &&
-             node.type === node.type.schema.nodes.paragraph;
-    } 
+      return node === editingRoot.node.lastChild && node.type === node.type.schema.nodes.paragraph;
+    }
   }
   return false;
 }
