@@ -13,7 +13,7 @@
  *
  */
 
-import * as https from 'https';
+import * as fetch from 'node-fetch'
 import * as fs from 'fs';
 import * as os from 'os';
 import * as unzip from 'unzip';
@@ -73,16 +73,6 @@ const groupToBlockMapping = [
     blocks: ['Mahjong Tiles', 'Domino Tiles', 'Playing Cards', 'Chess Symbols'],
   },
   {
-    alias: 'Emoji',
-    blocks: [
-      'Emoticons',
-      'Miscellaneous Symbols and Pictographs',
-      'Symbols and Pictographs Extended-A',
-      'Transport and Map Symbols',
-      'Supplemental Symbols and Pictographs',
-    ],
-  },
-  {
     alias: 'Music',
     blocks: ['Musical Symbols'],
   },
@@ -102,10 +92,10 @@ const excludedChars = [
 
 // Basic file paths to use when downloading and generating the file. These files will be cleaned up
 // upon completion.
-const targetPath = os.tmpdir();
+const workingDirectory = os.tmpdir();
 const targetFileName = 'ucd.nounihan.flat';
-const targetZipFile = `${targetPath}/${targetFileName}.zip`;
-const targetXmlFile = `${targetPath}/${targetFileName}.xml`;
+const targetZipFile = `${workingDirectory}/${targetFileName}.zip`;
+const targetXmlFile = `${workingDirectory}/${targetFileName}.xml`;
 
 // The path that will be used to download the unicode file. This is currently
 // set to always downlod the latest. The maxUnicodeVersion attribute of each
@@ -116,86 +106,57 @@ const unicodeDownloadPath = `https://www.unicode.org/Public/UCD/latest/ucdxml/${
 // Remove any orphaned intermediary files
 cleanupFiles([targetXmlFile, targetZipFile], true);
 
-// Download the file
-message('Downloading data', unicodeDownloadPath);
-https.get(unicodeDownloadPath, function(response) {
-  if (response.statusCode !== 200) {
-    error(`Error ${response.statusCode} downloading data.`);
-    return;
-  }
-  message('');
-
-  message('Writing', targetZipFile);
-  const file = fs.createWriteStream(targetZipFile);
-
-  // Write the response data to a file
-  response.pipe(file);
-  message('');
-
-  file.on('finish', () => {
+fetch(unicodeDownloadPath, {method: 'GET'})
+.then((res) => {
+  //Download the file
+  return new Promise<string>((resolve, reject) => {
+    const file = fs.createWriteStream(targetZipFile);
+    res.body.on('finish', () => resolve(targetZipFile));
+    res.body.pipe(file);
+    file.on('error', reject);
+  })
+})
+.then(() => {
+  // Unzip the file
+  return new Promise((resolve, reject) => {
     message('Unzipping File', targetZipFile);
-
-    // When finished, unzip the file
     const readStream = fs.createReadStream(targetZipFile);
-    readStream.pipe(unzip.Extract({ path: targetPath })).on('close', () => {
-      message('');
-
-      // Read the file and emit the JSON
-      readXmlFileAndGenerateJsonFile(targetXmlFile, outputFile);
-      cleanupFiles([targetZipFile, targetXmlFile]);
+    const writeStream = unzip.Extract({ path: workingDirectory });
+    writeStream.on('error', reject);
+    writeStream.on('close', () => {
+      message('Done unzipping', '');
+      resolve(outputFile);     
     });
-  });
-});
-
-function readXmlFileAndGenerateJsonFile(targetXmlFile: string, outputFile: string) {
-  const fileContents = fs.readFileSync(targetXmlFile, 'utf8');
-
+    readStream.pipe(writeStream);
+  });    
+})
+.then(() => {
+  // Parse XML -> Json
   message('Parsing', targetXmlFile);
+  const fileContents = fs.readFileSync(targetXmlFile, 'utf8');
   var options = {
     ignoreAttributes: false,
     arrayMode: false,
   };
   const tObj = parser.getTraversalObj(fileContents, options);
   const jsonResult = parser.convertToJson(tObj, options);
+  message('Done Parsing', '');
+  return jsonResult;
+})
+.then((jsonResult) => {
+  // Read the block from the XML file and generate typed data
+  message('Reading Raw Data'); 
+  const allIncludedBlocks: Array<Block> = parseBlocks(jsonResult.ucd.blocks.block);
+  const allValidSymbols: Array<Symbol> = parseSymbols(jsonResult.ucd.repertoire.char);
+  message(' Blocks ' + allIncludedBlocks.length);
+  message(' Chars ' + allValidSymbols.length);
+  message('');
 
-  // Read the block from the XML file and filter it into the typed blocks
-  const allIncludedBlocks: Array<Block> = jsonResult.ucd.blocks.block
-    .map(block => {
-      return {
-        name: block['@_name'],
-        codepointFirst: parseInt(block['@_first-cp'], 16),
-        codepointLast: parseInt(block['@_last-cp'], 16),
-      };
-    })
-    .filter(block => {
-      return groupToBlockMapping.find(blockGroup => blockGroup.blocks.includes(block.name));
-    });
-
-  // Read the symbols from the XML file and filter it into the typed blocks
-  const allValidSymbols: Array<Symbol> = jsonResult.ucd.repertoire.char
-    .filter(rawChar => isValidSymbol(rawChar))
-    .map(rawChar => {
-      const charpoint = parseInt(rawChar['@_cp'], 16);
-      return {
-        name: rawChar['@_na'],
-        value: String.fromCodePoint(charpoint),
-        codepoint: charpoint,
-        isEmoji: rawChar['@_Emoji'] === 'Y',
-        allowModifier: rawChar['@_EBase'] === 'Y',
-      };
-    });
-  message(allIncludedBlocks.length + ' Blocks read', allValidSymbols.length + ' Symbols read', '');
-
-  message('Generating definitions');
+  message('Generating Output Data');
   var blockGroups: SymbolGroup[] = new Array<SymbolGroup>();
   groupToBlockMapping.forEach(groupToBlockMapping => {
     const groupName = groupToBlockMapping.alias;
     const groupSymbols = allValidSymbols.filter(symbol => {
-
-      if (symbol.isEmoji && groupName === 'Emoji') {
-        // All Emoji go into the emoji group regardless of their unicode category
-        return true;
-      } else if (!symbol.isEmoji) {
         // Find the child blocks for this Group and use the codepoint to determine
         // whether this symbol should be included in this group
         const matchingBlockName = groupToBlockMapping.blocks.find(blockName => {
@@ -203,29 +164,57 @@ function readXmlFileAndGenerateJsonFile(targetXmlFile: string, outputFile: strin
           return symbol.codepoint >= matchingBlock.codepointFirst && symbol.codepoint <= matchingBlock.codepointLast;
         });
 
-        if (matchingBlockName != null) {
-          return symbol;
-        }
-      } else {
-        return false;
-      }
+        return matchingBlockName != null;
     });
-
-    message('Group ' + groupName + ' -> ' + groupSymbols.length + ' symbols');
+    message('Group ' + groupName + ' -> ' + groupSymbols.length + ' symbols');   
     blockGroups.push({ name: groupName, symbols: groupSymbols });
   });
   message('');
-
-  // Filter out blocks so we only include eligible blocks that include at least one character
-  blockGroups = blockGroups.filter(blockGroup => blockGroup.symbols.length > 0);
-
-  message('Writing json', outputFile);
-  const finalJson = JSON.stringify(blockGroups, null, 2);
+  return blockGroups;
+})
+.then((blockGroups) => {
+  // Filter out any groups with no valid characters
+  return blockGroups.filter(blockGroup => blockGroup.symbols.length > 0)
+})
+.then((blockGroups) => {
+  // Write the output file
+  message('Writing output'), outputFile;
   cleanupFiles([outputFile], false);
+  const finalJson = JSON.stringify(blockGroups, null, 2);
   fs.writeFileSync(outputFile, finalJson);
+  message('Done');
+})
+.catch((message) => {
+  error(message);
+})
+.finally(() => {
+  // Final cleanup
+  cleanupFiles([targetZipFile, targetXmlFile]);
+});
 
-  message('');
-  message('DONE');
+function parseBlocks(blockJson) : Block[] {
+  return blockJson.map(block => {
+    return {
+      name: block['@_name'],
+      codepointFirst: parseInt(block['@_first-cp'], 16),
+      codepointLast: parseInt(block['@_last-cp'], 16),
+    };
+  })
+  .filter(block => {
+    return groupToBlockMapping.find(blockGroup => blockGroup.blocks.includes(block.name));
+  });
+}
+
+function parseSymbols(symbolsJson) : Symbol[] {
+  return symbolsJson.filter(rawChar => isValidSymbol(rawChar))
+  .map(rawChar => {
+    const charpoint = parseInt(rawChar['@_cp'], 16);
+    return {
+      name: rawChar['@_na'],
+      value: String.fromCodePoint(charpoint),
+      codepoint: charpoint,
+    };
+  });
 }
 
 function isValidSymbol(rawChar): boolean {
@@ -252,10 +241,11 @@ function isValidSymbol(rawChar): boolean {
     return false;
   }
 
-  // No emoji components or modifiers
+  // No emoji, components, or modifiers
+  const isEmoji = rawChar['@_Emoji'] === 'Y';
   const isEmojiComponent = rawChar['@_EComp'] === 'Y';
   const isEmojiModifier = rawChar['@_EMod'] === 'Y';
-  if (isEmojiComponent || isEmojiModifier) {
+  if (isEmoji || isEmojiComponent || isEmojiModifier) {
     return false;
   }
 
@@ -294,8 +284,6 @@ interface Symbol {
   name: string;
   value: string;
   codepoint: number;
-  isEmoji: boolean;
-  allowModifier: boolean;
 }
 
 function message(...message: any[]) {
