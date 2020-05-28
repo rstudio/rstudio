@@ -618,7 +618,7 @@ public class TextEditingTargetVisualMode implements CommandPaletteEntrySource
             if (success)
             {
                // sync to editor outline prefs
-               panmirror_.showOutline(getOutlineVisible(), getOutlineWidth());
+               panmirror_.showOutline(establishOutlineVisible(), getOutlineWidth());
                
                // show find replace button
                findReplaceButton_.setVisible(true);
@@ -905,6 +905,13 @@ public class TextEditingTargetVisualMode implements CommandPaletteEntrySource
       return view_.editorContainer().getEditor();
    }
   
+   private boolean establishOutlineVisible()
+   {
+      return target_.establishPreferredOutlineWidgetVisibility(
+         prefs_.visualMarkdownEditingShowDocOutline().getValue()
+      );  
+   }
+   
    private boolean getOutlineVisible()
    {
       return target_.getPreferredOutlineWidgetVisibility(
