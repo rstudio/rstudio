@@ -345,9 +345,6 @@ void discoverSystemIncludePaths(std::vector<std::string>* pIncludePaths)
    if (includePathOutput.empty())
       return;
    
-   // check for Apple clang
-   bool isAppleClang = includePathOutput.find("Apple clang") != std::string::npos;
-   
    // strip out the include paths from the output
    std::string startString = "#include <...> search starts here:";
    std::string endString   = "End of search list.";
@@ -376,7 +373,9 @@ void discoverSystemIncludePaths(std::vector<std::string>* pIncludePaths)
       includePaths[i] = string_utils::trimWhitespace(includePaths[i]);
    
 #ifdef __APPLE__
-   // prepend system include paths for non-Apple clang
+   // check for Apple clang and prepend system include paths
+   // if we appear to be using a non-Apple clang
+   bool isAppleClang = includePathOutput.find("Apple clang") != std::string::npos;
    if (!isAppleClang)
       prependSystemIncludePaths(&includePaths);
 #endif
