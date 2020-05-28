@@ -27,6 +27,7 @@
 - Fixed issue where an attempt to create more sessions than the license limit would fail with a generic error (Pro #1680)
 - Fix auto-activation of JAWS screen reader virtual cursor in Console Output region (#6884)
 - Announce text of warnings bar via screen reader (#6963)
+- Fix issue where R_LIBS_SITE could be forcibly set empty, overriding the value in /etc/R/REnviron (#6982)
 
 ### RStudio Server Pro
 
