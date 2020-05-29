@@ -210,6 +210,8 @@ public:
    RToken nextToken();
 
 private:
+   Error matchRawStringLiteral(RToken* pToken);
+   
    RToken matchWhitespace();
    RToken matchStringLiteral();
    RToken matchNumber();
