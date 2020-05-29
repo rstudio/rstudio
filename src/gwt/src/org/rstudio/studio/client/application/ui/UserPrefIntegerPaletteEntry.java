@@ -19,6 +19,8 @@ import org.rstudio.studio.client.workbench.prefs.model.Prefs.IntValue;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.TextAlign;
 import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.user.client.ui.Label;
+import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 
@@ -29,8 +31,14 @@ public class UserPrefIntegerPaletteEntry extends UserPrefPaletteEntry
       super(val);
       val_ = val;
       
+      panel_ = new SimplePanel();
+
+      label_ = new Label();
+      label_.setText(val.getGlobalValue().toString());
+      panel_.add(label_);
+      
       text_ = new TextBox();
-      text_.setValue(val_.getValue().toString());
+      text_.setValue(val_.getGlobalValue().toString());
       text_.getElement().addClassName("rstudio-fixed-width-font");
 
       Style style = text_.getElement().getStyle();
@@ -44,9 +52,11 @@ public class UserPrefIntegerPaletteEntry extends UserPrefPaletteEntry
    @Override
    public Widget getInvoker()
    {
-      return text_;
+      return panel_;
    }
    
+   private final SimplePanel panel_;
    private final TextBox text_;
+   private final Label label_;
    private final IntValue val_;
 }

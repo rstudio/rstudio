@@ -1097,26 +1097,31 @@
         "clean_texi2dvi_output": {
             "type": "boolean",
             "default": true,
+            "title": "Clean output after running Texi2Dvi",
             "description": "Whether to clean output after running Texi2Dvi."
         },
         "latex_shell_escape": {
             "type": "boolean",
             "default": false,
+            "title": "Shell escape LaTeX documents",
             "description": "Whether to enable shell escaping with LaTeX documents."
         },
         "restore_project_r_version": {
             "type": "boolean",
             "default": true,
+            "title": "Restore project R version in RStudio Pro",
             "description": "Whether to restore the last version of R used by the project in RStudio Pro."
         },
         "clang_verbose": {
             "type": "integer",
             "default": 0,
+            "title": "Clang verbosity level (0 - 2)",
             "description": "The verbosity level to use with Clang (0 - 2)"
         },
         "submit_crash_reports": {
             "type": "boolean",
             "default": true,
+            "title": "Submit crash reports to RStudio",
             "description": "Whether to automatically submit crash reports to RStudio."
         },
         "default_r_version": {
@@ -1140,90 +1145,107 @@
         "data_viewer_max_columns": {
             "type": "integer",
             "default": 50,
+            "title": "Maximum number of columns in data viewer",
             "description": "The maximum number of columns to show at once in the data viewer."
         },
         "enable_screen_reader": {
             "type": "boolean",
             "default": false,
+            "title": "Enable support for screen readers in RStudio Server",
             "description": "Support accessibility aids such as screen readers (RStudio Server)."
         },
         "typing_status_delay_ms": {
             "type": "integer",
             "default": 2000,
+            "title": "Seconds to wait before updating ARIA live region",
             "description": "Number of milliseconds to wait after last keystroke before updating live region."
         },
         "reduced_motion": {
             "type": "boolean",
             "default": false,
+            "title": "Reduced animation/motion mode",
             "description": "Reduce use of animations in the user interface."
         },
         "tab_key_move_focus": {
             "type": "boolean",
             "default": false,
+            "title": "Tab key always moves focus",
             "description": "Tab key moves focus out of text editing controls instead of inserting tabs."
         },
         "auto_save_on_idle": {
             "type": "string",
             "enum": ["commit", "backup", "none"],
             "default": "backup",
+            "title": "Autosave mode on idle",
             "description": "How to deal with changes to documents on idle."
         },
         "auto_save_idle_ms": {
             "type": "integer",
             "default": 1000,
+            "title": "Idle period for document autosave (ms)",
             "description": "The idle period, in milliseconds, after which documents should be auto-saved."
         },
         "auto_save_on_blur": {
             "type": "boolean",
             "default": false,
+            "title": "Save documents when editor loses input focus",
             "description": "Whether to automatically save when the editor loses focus."
         },
         "terminal_initial_directory": {
             "type": "string",
             "enum": ["project", "current", "home"],
             "default": "project",
+            "title": "Initial working directory for new terminals",
             "description": "Initial directory for new terminals."
         },
         "full_project_path_in_window_title": {
             "type": "boolean",
             "default": false,
+            "title": "Show full path to project in RStudio Desktop windows",
             "description": "Whether to show the full path to project in desktop window title."
         },
         "enable_visual_markdown_editing_mode": {
             "type": "boolean",
             "default": false,
+            "title": "Enable visual markdown editing (experimental)",
             "description": "Whether to enable experimental visual markdown editing"
         },
         "visual_markdown_editing_wrap_auto": {
             "type": "boolean",
             "default": false,
+            "title": "Wrap text in visual markdown editing mode",
             "description": "Whether to automatically wrap text when writing markdown"
         },
         "visual_markdown_editing_wrap_column": {
             "type": "integer",
             "default": 80,
+            "title": "Wrap column for visual markdown editing mode",
             "description": "The column to wrap text at when writing markdown"
         },
         "visual_markdown_editing_references_location": {
             "type": "string",
             "enum": ["block", "section", "document"],
             "default": "block",
+            "title": "Place visual markdown footnotes in",
             "description": "Placement of footnotes within markdown output."
         },
         "visual_markdown_editing_max_content_width": {
             "type": "integer",
             "default": 700,
+            "title": "Max content width for visual markdown editor (px)",
             "description": "Maximum content width for visual editing mode, in pixels"
         },
         "visual_markdown_editing_show_doc_outline": {
             "type": "boolean",
             "default": true,
+            "title": "Show document outline in visual markdown editing mode",
             "description": "Whether to show the document outline by default when opening R Markdown documents in visual mode."
         },
         "visual_markdown_editing_font_size_points": {
-          "type": "integer",
-          "default": 0,
-          "description": "The default visual editing mode font size, in points"
+            "type": "integer",
+            "default": 0,
+            "title": "Font size for visual editing mode",
+            "description": "The default visual editing mode font size, in points"
         },
         "disabled_aria_live_announcements": {
             "type": "array",
@@ -1231,11 +1253,13 @@
                 "type": "string"
             },
             "default": [],
+            "title": "Disabled aria-live announcements",
             "description": "List of aria-live announcements to disable."
         },
         "screenreader_console_announce_limit": {
             "type": "integer",
             "default": 25,
+            "title": "Maximum number of console lines to announce",
             "description": "Maximum number of lines of console output announced after a command."
         },
         "file_monitor_ignored_components": {
@@ -1244,28 +1268,33 @@
                 "type": "string"
             },
             "default": [],
+            "title": "List of path components ignored by file monitor",
             "description": "List of path components; file monitor will ignore paths containing one or more of these components."
         },
         "install_pkg_deps_individually": {
             "type": "boolean",
             "default": true,
+            "title": "Install R package dependencies one at a time",
             "description": "Whether to install R package dependencies one at a time."
         },
         "graphics_backend": {
             "type": "string",
             "enum": ["default", "cairo", "cairo-png", "quartz", "windows", "ragg"],
             "default": "default",
+            "title": "R graphics backend",
             "description": "R graphics backend."
         },
         "graphics_antialiasing": {
             "type": "string",
             "enum": ["default", "none", "gray", "subpixel"],
             "default": "default",
+            "title": "R graphics antialiasing method",
             "description": "Type of anti-aliasing to be used for generated R plots."
         },
         "browser_fixed_width_fonts": {
             "type": "array",
             "description": "List of fixed-width fonts to check for browser support.",
+            "title": "Fixed-width font list for RStudio Server",
             "items": {
                 "type": "string"
             },

@@ -2367,7 +2367,7 @@ public class UserPrefsAccessor extends Prefs
    {
       return bool(
          "clean_texi2dvi_output",
-         "", 
+         "Clean output after running Texi2Dvi", 
          "Whether to clean output after running Texi2Dvi.", 
          true);
    }
@@ -2379,7 +2379,7 @@ public class UserPrefsAccessor extends Prefs
    {
       return bool(
          "latex_shell_escape",
-         "", 
+         "Shell escape LaTeX documents", 
          "Whether to enable shell escaping with LaTeX documents.", 
          false);
    }
@@ -2391,7 +2391,7 @@ public class UserPrefsAccessor extends Prefs
    {
       return bool(
          "restore_project_r_version",
-         "", 
+         "Restore project R version in RStudio Pro", 
          "Whether to restore the last version of R used by the project in RStudio Pro.", 
          true);
    }
@@ -2403,7 +2403,7 @@ public class UserPrefsAccessor extends Prefs
    {
       return integer(
          "clang_verbose",
-         "", 
+         "Clang verbosity level (0 - 2)", 
          "The verbosity level to use with Clang (0 - 2)", 
          0);
    }
@@ -2415,7 +2415,7 @@ public class UserPrefsAccessor extends Prefs
    {
       return bool(
          "submit_crash_reports",
-         "", 
+         "Submit crash reports to RStudio", 
          "Whether to automatically submit crash reports to RStudio.", 
          true);
    }
@@ -2457,7 +2457,7 @@ public class UserPrefsAccessor extends Prefs
    {
       return integer(
          "data_viewer_max_columns",
-         "", 
+         "Maximum number of columns in data viewer", 
          "The maximum number of columns to show at once in the data viewer.", 
          50);
    }
@@ -2469,7 +2469,7 @@ public class UserPrefsAccessor extends Prefs
    {
       return bool(
          "enable_screen_reader",
-         "", 
+         "Enable support for screen readers in RStudio Server", 
          "Support accessibility aids such as screen readers (RStudio Server).", 
          false);
    }
@@ -2481,7 +2481,7 @@ public class UserPrefsAccessor extends Prefs
    {
       return integer(
          "typing_status_delay_ms",
-         "", 
+         "Seconds to wait before updating ARIA live region", 
          "Number of milliseconds to wait after last keystroke before updating live region.", 
          2000);
    }
@@ -2493,7 +2493,7 @@ public class UserPrefsAccessor extends Prefs
    {
       return bool(
          "reduced_motion",
-         "", 
+         "Reduced animation/motion mode", 
          "Reduce use of animations in the user interface.", 
          false);
    }
@@ -2505,7 +2505,7 @@ public class UserPrefsAccessor extends Prefs
    {
       return bool(
          "tab_key_move_focus",
-         "", 
+         "Tab key always moves focus", 
          "Tab key moves focus out of text editing controls instead of inserting tabs.", 
          false);
    }
@@ -2517,7 +2517,7 @@ public class UserPrefsAccessor extends Prefs
    {
       return enumeration(
          "auto_save_on_idle",
-         "", 
+         "Autosave mode on idle", 
          "How to deal with changes to documents on idle.", 
          new String[] {
             AUTO_SAVE_ON_IDLE_COMMIT,
@@ -2538,7 +2538,7 @@ public class UserPrefsAccessor extends Prefs
    {
       return integer(
          "auto_save_idle_ms",
-         "", 
+         "Idle period for document autosave (ms)", 
          "The idle period, in milliseconds, after which documents should be auto-saved.", 
          1000);
    }
@@ -2550,7 +2550,7 @@ public class UserPrefsAccessor extends Prefs
    {
       return bool(
          "auto_save_on_blur",
-         "", 
+         "Save documents when editor loses input focus", 
          "Whether to automatically save when the editor loses focus.", 
          false);
    }
@@ -2562,7 +2562,7 @@ public class UserPrefsAccessor extends Prefs
    {
       return enumeration(
          "terminal_initial_directory",
-         "", 
+         "Initial working directory for new terminals", 
          "Initial directory for new terminals.", 
          new String[] {
             TERMINAL_INITIAL_DIRECTORY_PROJECT,
@@ -2583,7 +2583,7 @@ public class UserPrefsAccessor extends Prefs
    {
       return bool(
          "full_project_path_in_window_title",
-         "", 
+         "Show full path to project in RStudio Desktop windows", 
          "Whether to show the full path to project in desktop window title.", 
          false);
    }
@@ -2595,7 +2595,7 @@ public class UserPrefsAccessor extends Prefs
    {
       return bool(
          "enable_visual_markdown_editing_mode",
-         "", 
+         "Enable visual markdown editing (experimental)", 
          "Whether to enable experimental visual markdown editing", 
          false);
    }
@@ -2607,7 +2607,7 @@ public class UserPrefsAccessor extends Prefs
    {
       return bool(
          "visual_markdown_editing_wrap_auto",
-         "", 
+         "Wrap text in visual markdown editing mode", 
          "Whether to automatically wrap text when writing markdown", 
          false);
    }
@@ -2619,7 +2619,7 @@ public class UserPrefsAccessor extends Prefs
    {
       return integer(
          "visual_markdown_editing_wrap_column",
-         "", 
+         "Wrap column for visual markdown editing mode", 
          "The column to wrap text at when writing markdown", 
          80);
    }
@@ -2631,7 +2631,7 @@ public class UserPrefsAccessor extends Prefs
    {
       return enumeration(
          "visual_markdown_editing_references_location",
-         "", 
+         "Place visual markdown footnotes in", 
          "Placement of footnotes within markdown output.", 
          new String[] {
             VISUAL_MARKDOWN_EDITING_REFERENCES_LOCATION_BLOCK,
@@ -2652,7 +2652,7 @@ public class UserPrefsAccessor extends Prefs
    {
       return integer(
          "visual_markdown_editing_max_content_width",
-         "", 
+         "Max content width for visual markdown editor (px)", 
          "Maximum content width for visual editing mode, in pixels", 
          700);
    }
@@ -2664,7 +2664,7 @@ public class UserPrefsAccessor extends Prefs
    {
       return bool(
          "visual_markdown_editing_show_doc_outline",
-         "", 
+         "Show document outline in visual markdown editing mode", 
          "Whether to show the document outline by default when opening R Markdown documents in visual mode.", 
          true);
    }
@@ -2676,7 +2676,7 @@ public class UserPrefsAccessor extends Prefs
    {
       return integer(
          "visual_markdown_editing_font_size_points",
-         "", 
+         "Font size for visual editing mode", 
          "The default visual editing mode font size, in points", 
          0);
    }
@@ -2688,7 +2688,7 @@ public class UserPrefsAccessor extends Prefs
    {
       return object(
          "disabled_aria_live_announcements",
-         "", 
+         "Disabled aria-live announcements", 
          "List of aria-live announcements to disable.", 
          JsArrayUtil.createStringArray());
    }
@@ -2700,7 +2700,7 @@ public class UserPrefsAccessor extends Prefs
    {
       return integer(
          "screenreader_console_announce_limit",
-         "", 
+         "Maximum number of console lines to announce", 
          "Maximum number of lines of console output announced after a command.", 
          25);
    }
@@ -2712,7 +2712,7 @@ public class UserPrefsAccessor extends Prefs
    {
       return object(
          "file_monitor_ignored_components",
-         "", 
+         "List of path components ignored by file monitor", 
          "List of path components; file monitor will ignore paths containing one or more of these components.", 
          JsArrayUtil.createStringArray());
    }
@@ -2724,7 +2724,7 @@ public class UserPrefsAccessor extends Prefs
    {
       return bool(
          "install_pkg_deps_individually",
-         "", 
+         "Install R package dependencies one at a time", 
          "Whether to install R package dependencies one at a time.", 
          true);
    }
@@ -2736,7 +2736,7 @@ public class UserPrefsAccessor extends Prefs
    {
       return enumeration(
          "graphics_backend",
-         "", 
+         "R graphics backend", 
          "R graphics backend.", 
          new String[] {
             GRAPHICS_BACKEND_DEFAULT,
@@ -2763,7 +2763,7 @@ public class UserPrefsAccessor extends Prefs
    {
       return enumeration(
          "graphics_antialiasing",
-         "", 
+         "R graphics antialiasing method", 
          "Type of anti-aliasing to be used for generated R plots.", 
          new String[] {
             GRAPHICS_ANTIALIASING_DEFAULT,
@@ -2786,7 +2786,7 @@ public class UserPrefsAccessor extends Prefs
    {
       return object(
          "browser_fixed_width_fonts",
-         "", 
+         "Fixed-width font list for RStudio Server", 
          "List of fixed-width fonts to check for browser support.", 
          JsArrayUtil.createStringArray("Andale Mono", "Bitstream Vera Sans Mono", "Cascadia Code", "Consolas", "Courier New", "Courier", "DejaVu Sans Mono", "Droid Sans Mono", "Fira Code", "Hack", "IBM Plex Mono", "Inconsolata", "JetBrains Mono", "Lucida Console", "Lucida Sans Typewriter", "Menlo", "Monaco", "Monoid", "Operator Mono", "Pragmata", "SF Mono", "Source Code Pro", "Vera Sans Mono", "Victor Mono", "Ubuntu Mono"));
    }
