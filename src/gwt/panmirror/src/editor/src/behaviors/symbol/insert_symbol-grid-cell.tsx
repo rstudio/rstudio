@@ -21,6 +21,7 @@ export interface CharacterGridCellItemData {
   symbolCharacters: Array<Symbol>;
   numberOfColumns: number;
   selectedIndex: number;
+  selectedItemClassName: string;
   onSelectionChanged : (selectedIndex: number) => void;
   onSelectionCommitted: VoidFunction;
 }
@@ -36,7 +37,6 @@ export const SymbolCharacterCell = ({ columnIndex, rowIndex, style, data }: any)
         <div
           tabIndex={-1}
           style={style}
-          title={`U+${character?.codepoint.toString(16)} - ${character?.name.toLowerCase()}`}
           className="pm-symbol-grid-container"
           onClick={event => {
             event.preventDefault();
@@ -51,7 +51,7 @@ export const SymbolCharacterCell = ({ columnIndex, rowIndex, style, data }: any)
             characterGridCellItemData.onSelectionChanged(itemIndex);
           }}
         >
-          <div className={`pm-symbol-grid-cell pm-grid-item ${characterGridCellItemData.selectedIndex == itemIndex ? 'pm-grid-item-selected' : ''}`}>
+          <div className={`pm-symbol-grid-cell pm-grid-item ${characterGridCellItemData.selectedIndex == itemIndex ? characterGridCellItemData.selectedItemClassName : ''}`}>
           {character === undefined ? '' : character.value} 
           </div>
         </div>

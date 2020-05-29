@@ -13,7 +13,7 @@
  *
  */
 
- import { FixedSizeGrid } from 'react-window';
+import { FixedSizeGrid } from 'react-window';
 
 import React from 'react';
 import { WidgetProps } from '../../api/widgets/react';
@@ -21,6 +21,7 @@ import { WidgetProps } from '../../api/widgets/react';
 import './insert_symbol-grid-styles.css';
 import { Symbol } from './insert_symbol-data';
 import { CharacterGridCellItemData, SymbolCharacterCell } from './insert_symbol-grid-cell';
+import { SymbolPreview } from './insert_symbol-grid-preview';
 
 interface CharacterGridProps extends WidgetProps {
   height: number;
@@ -31,6 +32,9 @@ interface CharacterGridProps extends WidgetProps {
   onSelectionChanged: (selectedIndex: number) => void;
   onSelectionCommitted: VoidFunction;
 }
+const previewHeight = 120;
+const previewWidth = 140;
+const selectedItemClassName = 'pm-grid-item-selected';
 
 const SymbolCharacterGrid = React.forwardRef<any, CharacterGridProps>((props, ref) => {
   const columnWidth = Math.floor(props.width / props.numberOfColumns);
@@ -41,24 +45,88 @@ const SymbolCharacterGrid = React.forwardRef<any, CharacterGridProps>((props, re
     selectedIndex: props.selectedIndex,
     onSelectionChanged: props.onSelectionChanged,
     onSelectionCommitted: props.onSelectionCommitted,
+    selectedItemClassName: selectedItemClassName,
   };
 
   // Improve scroll performance per
   // https://developer.mozilla.org/en-US/docs/Web/API/Document/scroll_event
-  let ticking = false;
+  let scrolling = false;
+  const scrollWait = 5;
   const gridRef = React.useRef<FixedSizeGrid>(null);
   React.useEffect(() => {
-    if (!ticking) {
+    if (!scrolling) {
       window.setTimeout(() => {
         gridRef.current?.scrollToItem({ rowIndex: Math.floor(props.selectedIndex / props.numberOfColumns) });
-        ticking = false;
-      }, 5);
-      ticking = true;
+        scrolling = false;
+      }, scrollWait);
+      scrolling = true;
     }
   }, [props.selectedIndex]);
 
+  let previewing = false;
+  const mouseMoveWait = 25;
+  function handleMouseMove(event: React.MouseEvent) {
+    if (!previewing) {
+      window.setTimeout(() => {
+        maybeShowPreview();
+        previewing = false;
+      }, mouseMoveWait);
+      previewing = true;
+    }
+  }
+
+  const [previewPosition, setPreviewPosition] = React.useState<[number, number]>([0, 0]);
+  const [showPreview, setShowPreview] = React.useState<boolean>(false);
+  const timerRef = React.useRef<NodeJS.Timeout>();
+
+  React.useEffect(() => {
+    updatePreviewPosition();
+  }, [props.selectedIndex]);
+
+  const waitToShowPreviewMs = 1500;
+  function maybeShowPreview() {
+    if (timerRef.current) {
+      clearTimeout(timerRef.current);
+    }
+    timerRef.current = setTimeout(() => {
+      updatePreviewPosition();
+      setShowPreview(true);
+    }, waitToShowPreviewMs);
+  }
+
+  function hidePreview() {
+    if (timerRef.current) {
+      clearTimeout(timerRef.current);
+    }
+    setShowPreview(false);
+  }
+
+  function updatePreviewPosition() {
+    const selectedCells = window.document.getElementsByClassName(selectedItemClassName);
+    if (selectedCells.length === 1) {
+      const cellRect = selectedCells.item(0)?.getBoundingClientRect();
+      if (cellRect) {
+        let top = cellRect.bottom + 1;
+        if (top + previewHeight > window.innerHeight) {
+          top = cellRect.top - previewHeight - 1;
+        }
+        let left = cellRect.left + (cellRect.right - cellRect.left) / 2;
+        if (left + previewWidth > window.innerWidth) {
+          left = left - previewWidth;
+        }
+        setPreviewPosition([left, top]);
+      }
+    }
+  }
+
   return (
-    <div onKeyDown={event => handleKeyDown(event, props)} tabIndex={0} ref={ref}>
+    <div
+      onKeyDown={event => handleKeyDown(event, props)}
+      onMouseLeave={event => hidePreview()}
+      onMouseMove={event => handleMouseMove(event)}
+      tabIndex={0}
+      ref={ref}
+    >
       <FixedSizeGrid
         columnCount={props.numberOfColumns}
         rowCount={Math.ceil(props.symbolCharacters.length / props.numberOfColumns)}
@@ -72,14 +140,27 @@ const SymbolCharacterGrid = React.forwardRef<any, CharacterGridProps>((props, re
       >
         {SymbolCharacterCell}
       </FixedSizeGrid>
+      {showPreview && (
+        <SymbolPreview
+          left={previewPosition[0]}
+          top={previewPosition[1]}
+          height={previewHeight}
+          width={previewWidth}
+          symbol={props.symbolCharacters[props.selectedIndex]}
+        />
+      )}
     </div>
   );
 });
 
-
 const handleKeyDown = (event: React.KeyboardEvent, props: CharacterGridProps) => {
-  const newIndex = newIndexForKeyboardEvent(event, props.selectedIndex, props.numberOfColumns, props.symbolCharacters.length);
-  if (newIndex) {
+  const newIndex = newIndexForKeyboardEvent(
+    event,
+    props.selectedIndex,
+    props.numberOfColumns,
+    props.symbolCharacters.length,
+  );
+  if (newIndex != undefined) {
     props.onSelectionChanged(newIndex);
     event.preventDefault();
   }
@@ -145,6 +226,5 @@ export const newIndexForKeyboardEvent = (
       return undefined;
   }
 };
-
 
 export default SymbolCharacterGrid;

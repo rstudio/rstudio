@@ -22,3 +22,24 @@
   justify-content: space-evenly;
 }
 
+.pm-symbol-grid-symbol-preview {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  border: solid 2px;
+}
+
+.pm-symbol-grid-symbol-preview-symbol {
+  font-size: xx-large;
+}
+
+.pm-symbol-grid-symbol-preview-name {
+  font-size: xx-small; 
+  margin: 4px;
+}
+
+.pm-symbol-grid-symbol-preview-codepoint {
+  font-size: xx-small; 
+}
