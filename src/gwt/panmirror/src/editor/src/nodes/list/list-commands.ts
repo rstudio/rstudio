@@ -16,12 +16,11 @@
 import { NodeType, Node as ProsemirrorNode } from 'prosemirror-model';
 import { EditorState, Transaction } from 'prosemirror-state';
 import { EditorView } from 'prosemirror-view';
-import { findParentNodeOfType, NodeWithPos, findParentNode } from 'prosemirror-utils';
+import { NodeWithPos, findParentNode } from 'prosemirror-utils';
 
 import { NodeCommand, toggleList, ProsemirrorCommand, EditorCommandId } from '../../api/command';
 import { EditorUI, ListProps, ListType } from '../../api/ui';
 import { ListCapabilities, isList } from '../../api/list';
-import { defaultEditorUIImages } from '../../editor/editor-images';
 
 export class ListCommand extends NodeCommand {
   constructor(id: EditorCommandId, keymap: string[], listType: NodeType, listItemType: NodeType) {
@@ -33,9 +32,9 @@ export class TightListCommand extends ProsemirrorCommand {
   constructor() {
     super(
       EditorCommandId.TightList,
-      ['Shift-Ctrl-9'],
+      ['Mod-Alt-9'],
       (state: EditorState, dispatch?: (tr: Transaction) => void, view?: EditorView) => {
-        const schema = state.schema;
+      
         const parentList = findParentNode(isList)(state.selection);
         if (!parentList) {
           return false;
@@ -69,7 +68,6 @@ export class TightListCommand extends ProsemirrorCommand {
 export function editListPropertiesCommandFn(ui: EditorUI, capabilities: ListCapabilities) {
   return (state: EditorState, dispatch?: (tr: Transaction) => void, view?: EditorView) => {
     // see if a parent node is a list
-    const schema = state.schema;
     let node: ProsemirrorNode | null = null;
     let pos: number = 0;
     const nodeWithPos = findParentNode(isList)(state.selection);

@@ -54,6 +54,7 @@ function formatMenu(ui: EditorUI, commands: EditorCommand[]) {
         items: [
           { command: EditorCommandId.BulletList },
           { command: EditorCommandId.OrderedList },
+          { separator: true },
           { command: EditorCommandId.TightList },
           { separator: true },
           { command: EditorCommandId.ListItemCheck },

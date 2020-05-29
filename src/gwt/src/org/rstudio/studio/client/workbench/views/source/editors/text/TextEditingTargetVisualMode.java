@@ -705,9 +705,8 @@ public class TextEditingTargetVisualMode implements CommandPaletteEntrySource
             panmirrorFormatConfig_ = new FormatConfig(new PanmirrorUITools().format);
             
             // remove some keybindings that conflict with the ide
-            disableKeys(
-               PanmirrorCommands.TightList
-            );
+            // (currently no known conflicts)
+            disableKeys();
            
             // periodically sync edits back to main editor
             syncOnIdle_ = new DebouncedCommand(1000)
