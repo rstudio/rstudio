@@ -21,6 +21,7 @@ export function texLength(text: string) {
   let braceLevel = 0;
   let bracketLevel = 0;
 
+  
   let i;
   for (i = 0; i < text.length; i++) {
     // next character
@@ -34,10 +35,10 @@ export function texLength(text: string) {
       return 0;
     }
 
-    // only letters and open brace/bracket allowed (unless we are in braces or brackets)
+    // only letters, backslashes, and open brace/bracket allowed (unless we are in braces or brackets)
     const inBraces = braceLevel >= 1;
     const inBrackets = bracketLevel >= 1;
-    if (i > 0 && !isLetter(ch) && ch !== '{' && ch !== '[' && !inBraces && !inBrackets) {
+    if (i > 0 && !isLetter(ch) && ch !== '\\' && ch !== '{' && ch !== '[' && !inBraces && !inBrackets) {
       return i;
     }
 
