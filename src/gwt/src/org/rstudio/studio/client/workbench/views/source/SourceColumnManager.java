@@ -1013,14 +1013,14 @@ public class SourceColumnManager implements SourceExtendedTypeDetectedEvent.Hand
    public void newDoc(EditableFileType fileType,
                       ResultCallback<EditingTarget, ServerError> callback)
    {
-      activeColumn_.newDoc(fileType, callback);
+      getActive().newDoc(fileType, callback);
    }
 
    public void newDoc(EditableFileType fileType,
                       final String contents,
                       final ResultCallback<EditingTarget, ServerError> resultCallback)
    {
-      activeColumn_.newDoc(fileType, contents, resultCallback);
+      getActive().newDoc(fileType, contents, resultCallback);
    }
 
    public void disownDoc(String docId)

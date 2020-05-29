@@ -1174,14 +1174,6 @@ public class SourceColumn implements //BeforeShowHandler,
                                new VoidServerRequestCallback());
       }
 
-
-      if (closeDocument)
-      {
-         events_.fireEvent(new DocTabClosedEvent(target.getId()));
-         server_.closeDocument(target.getId(),
-                               new VoidServerRequestCallback());
-      }
-
       manageCommands(false);
       fireDocTabsChanged();
 
