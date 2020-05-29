@@ -21,6 +21,7 @@
 - Fix failure to use the first project template and default open files (#6865)
 - Fix keybinding failure when global keybindings exists but user keybindings don't (#6870)
 - Fix failure to open source files when debugging some functions in R 4.0.0 (work around R bug in `deparse()`) (#6854)
+- Fix Compare Results and other incompatibility with newer versions of the `shinytest` package (#6960)
 
 ### RStudio Server Pro
 
