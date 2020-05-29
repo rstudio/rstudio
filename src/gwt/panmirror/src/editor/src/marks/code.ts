@@ -14,6 +14,8 @@
  */
 
 import { Fragment, Mark, Node as ProsemirrorNode, Schema } from 'prosemirror-model';
+import { InputRule, inputRules } from 'prosemirror-inputrules';
+import { EditorState } from 'prosemirror-state';
 
 import { MarkCommand, EditorCommandId } from '../api/command';
 import { Extension } from '../api/extension';
@@ -22,6 +24,8 @@ import { PandocToken, PandocOutput, PandocTokenType, PandocExtensions } from '..
 
 import { kCodeText, kCodeAttr } from '../api/code';
 import { delimiterMarkInputRule, MarkInputRuleFilter } from '../api/input_rule';
+
+import { getMarkRange, markIsActive } from '../api/mark';
 
 const extension = (pandocExtensions: PandocExtensions): Extension => {
   const codeAttrs = pandocExtensions.inline_code_attributes;
@@ -101,9 +105,32 @@ const extension = (pandocExtensions: PandocExtensions): Extension => {
     },
 
     inputRules: (schema: Schema, filter: MarkInputRuleFilter) => {
-      return [delimiterMarkInputRule('`', schema.marks.code, filter)];
+      return [
+        delimiterMarkInputRule('`', schema.marks.code, filter)
+      ];
     },
+
+    // register a lower level input rule plugin to avoid our noInputRules filter
+    plugins: () => {
+      return [
+        inputRules( { rules: [terminateCodeWithSpace] })
+      ];
+    }
   };
 };
+
+const terminateCodeWithSpace = new InputRule(/[ ]$/, (state: EditorState, match: string[], start: number, end: number) => {
+  // if a code mark is active but doesn't extend past the head of the selection then space terminates it
+  const markType = state.schema.marks.code;
+  if (markIsActive(state, markType) && !getMarkRange(state.selection.$head, markType)) {
+    const tr = state.tr;
+    tr.removeMark(start, end, markType);
+    tr.removeStoredMark(markType);
+    tr.insertText(' ');
+    return tr;
+  }
+   
+  return null;
+});
 
 export default extension;
