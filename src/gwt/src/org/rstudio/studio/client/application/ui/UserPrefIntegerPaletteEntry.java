@@ -14,11 +14,13 @@
  */
 package org.rstudio.studio.client.application.ui;
 
+import org.rstudio.core.client.StringUtil;
+import org.rstudio.core.client.widget.NumericTextBox;
 import org.rstudio.studio.client.workbench.prefs.model.Prefs.IntValue;
 
 import com.google.gwt.dom.client.Style;
-import com.google.gwt.dom.client.Style.TextAlign;
 import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.TextBox;
@@ -35,16 +37,39 @@ public class UserPrefIntegerPaletteEntry extends UserPrefPaletteEntry
 
       label_ = new Label();
       label_.setText(val.getGlobalValue().toString());
+      label_.addStyleName("rstudio-fixed-width-font");
+      label_.getElement().getStyle().setFontSize(8, Unit.PT);
+      label_.getElement().getStyle().setMarginRight(8, Unit.PX);
       panel_.add(label_);
       
-      text_ = new TextBox();
-      text_.setValue(val_.getGlobalValue().toString());
+      text_ = new NumericTextBox();
       text_.getElement().addClassName("rstudio-fixed-width-font");
+      
+      text_.addBlurHandler((evt) ->
+      {
+         // End editing mode when the textbox loses focus
+         endEdit();
+      });
+      
+      text_.addKeyDownHandler((evt) ->
+      {
+         switch (evt.getNativeKeyCode())
+         {
+         case KeyCodes.KEY_ENTER:
+            commit();
+            break;
+         case KeyCodes.KEY_ESCAPE:
+            endEdit();
+            break;
+         }
+      });
 
       Style style = text_.getElement().getStyle();
       style.setFontSize(8, Unit.PT);
-      style.setTextAlign(TextAlign.RIGHT);
       style.setWidth(50, Unit.PX);
+      style.setMarginRight(8, Unit.PX);
+      
+      editing_ = false;
 
       initialize();
    }
@@ -55,8 +80,56 @@ public class UserPrefIntegerPaletteEntry extends UserPrefPaletteEntry
       return panel_;
    }
    
+   public void invoke()
+   {
+      if (editing_)
+      {
+         commit();
+      }
+      else
+      {
+         beginEdit();
+      }
+   }
+   
+   private void commit()
+   {
+      // If already editing the value, invoking performs a commit.
+      String val = text_.getValue();
+      if (!val.isEmpty())
+      {
+         int newVal = StringUtil.parseInt(val, -1);
+         if (newVal >= 0)
+         {
+            val_.setGlobalValue(newVal);
+            label_.setText(val);
+         }
+      }
+      
+      endEdit();
+   }
+   
+   private void beginEdit()
+   {
+      panel_.remove(label_);
+      text_.setValue(val_.getGlobalValue().toString());
+      panel_.add(text_);
+      text_.setFocus(true);
+      
+      editing_ = true;
+   }
+   
+   private void endEdit()
+   {
+      panel_.remove(text_);
+      panel_.add(label_);
+
+      editing_ = false;
+   }
+   
    private final SimplePanel panel_;
    private final TextBox text_;
    private final Label label_;
    private final IntValue val_;
+   private boolean editing_;
 }

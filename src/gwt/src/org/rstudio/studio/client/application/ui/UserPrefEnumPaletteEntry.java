@@ -51,6 +51,7 @@ public class UserPrefEnumPaletteEntry extends UserPrefPaletteEntry
       
       // Adjust style for display
       selector_.getElement().getStyle().setMarginBottom(0, Unit.PX);
+      selector_.getElement().getStyle().setMarginRight(5, Unit.PX);
       
       selector_.addChangeHandler((evt) ->
       {
