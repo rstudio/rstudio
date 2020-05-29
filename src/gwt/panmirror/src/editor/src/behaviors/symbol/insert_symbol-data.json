@@ -463,6 +463,396 @@
         "codepoint": 255
       },
       {
+        "name": "ACCOUNT OF",
+        "value": "℀",
+        "codepoint": 8448
+      },
+      {
+        "name": "ADDRESSED TO THE SUBJECT",
+        "value": "℁",
+        "codepoint": 8449
+      },
+      {
+        "name": "DOUBLE-STRUCK CAPITAL C",
+        "value": "ℂ",
+        "codepoint": 8450
+      },
+      {
+        "name": "DEGREE CELSIUS",
+        "value": "℃",
+        "codepoint": 8451
+      },
+      {
+        "name": "CENTRE LINE SYMBOL",
+        "value": "℄",
+        "codepoint": 8452
+      },
+      {
+        "name": "CARE OF",
+        "value": "℅",
+        "codepoint": 8453
+      },
+      {
+        "name": "CADA UNA",
+        "value": "℆",
+        "codepoint": 8454
+      },
+      {
+        "name": "EULER CONSTANT",
+        "value": "ℇ",
+        "codepoint": 8455
+      },
+      {
+        "name": "SCRUPLE",
+        "value": "℈",
+        "codepoint": 8456
+      },
+      {
+        "name": "DEGREE FAHRENHEIT",
+        "value": "℉",
+        "codepoint": 8457
+      },
+      {
+        "name": "SCRIPT SMALL G",
+        "value": "ℊ",
+        "codepoint": 8458
+      },
+      {
+        "name": "SCRIPT CAPITAL H",
+        "value": "ℋ",
+        "codepoint": 8459
+      },
+      {
+        "name": "BLACK-LETTER CAPITAL H",
+        "value": "ℌ",
+        "codepoint": 8460
+      },
+      {
+        "name": "DOUBLE-STRUCK CAPITAL H",
+        "value": "ℍ",
+        "codepoint": 8461
+      },
+      {
+        "name": "PLANCK CONSTANT",
+        "value": "ℎ",
+        "codepoint": 8462
+      },
+      {
+        "name": "PLANCK CONSTANT OVER TWO PI",
+        "value": "ℏ",
+        "codepoint": 8463
+      },
+      {
+        "name": "SCRIPT CAPITAL I",
+        "value": "ℐ",
+        "codepoint": 8464
+      },
+      {
+        "name": "BLACK-LETTER CAPITAL I",
+        "value": "ℑ",
+        "codepoint": 8465
+      },
+      {
+        "name": "SCRIPT CAPITAL L",
+        "value": "ℒ",
+        "codepoint": 8466
+      },
+      {
+        "name": "SCRIPT SMALL L",
+        "value": "ℓ",
+        "codepoint": 8467
+      },
+      {
+        "name": "L B BAR SYMBOL",
+        "value": "℔",
+        "codepoint": 8468
+      },
+      {
+        "name": "DOUBLE-STRUCK CAPITAL N",
+        "value": "ℕ",
+        "codepoint": 8469
+      },
+      {
+        "name": "NUMERO SIGN",
+        "value": "№",
+        "codepoint": 8470
+      },
+      {
+        "name": "SOUND RECORDING COPYRIGHT",
+        "value": "℗",
+        "codepoint": 8471
+      },
+      {
+        "name": "SCRIPT CAPITAL P",
+        "value": "℘",
+        "codepoint": 8472
+      },
+      {
+        "name": "DOUBLE-STRUCK CAPITAL P",
+        "value": "ℙ",
+        "codepoint": 8473
+      },
+      {
+        "name": "DOUBLE-STRUCK CAPITAL Q",
+        "value": "ℚ",
+        "codepoint": 8474
+      },
+      {
+        "name": "SCRIPT CAPITAL R",
+        "value": "ℛ",
+        "codepoint": 8475
+      },
+      {
+        "name": "BLACK-LETTER CAPITAL R",
+        "value": "ℜ",
+        "codepoint": 8476
+      },
+      {
+        "name": "DOUBLE-STRUCK CAPITAL R",
+        "value": "ℝ",
+        "codepoint": 8477
+      },
+      {
+        "name": "PRESCRIPTION TAKE",
+        "value": "℞",
+        "codepoint": 8478
+      },
+      {
+        "name": "RESPONSE",
+        "value": "℟",
+        "codepoint": 8479
+      },
+      {
+        "name": "SERVICE MARK",
+        "value": "℠",
+        "codepoint": 8480
+      },
+      {
+        "name": "TELEPHONE SIGN",
+        "value": "℡",
+        "codepoint": 8481
+      },
+      {
+        "name": "VERSICLE",
+        "value": "℣",
+        "codepoint": 8483
+      },
+      {
+        "name": "DOUBLE-STRUCK CAPITAL Z",
+        "value": "ℤ",
+        "codepoint": 8484
+      },
+      {
+        "name": "OUNCE SIGN",
+        "value": "℥",
+        "codepoint": 8485
+      },
+      {
+        "name": "OHM SIGN",
+        "value": "Ω",
+        "codepoint": 8486
+      },
+      {
+        "name": "INVERTED OHM SIGN",
+        "value": "℧",
+        "codepoint": 8487
+      },
+      {
+        "name": "BLACK-LETTER CAPITAL Z",
+        "value": "ℨ",
+        "codepoint": 8488
+      },
+      {
+        "name": "TURNED GREEK SMALL LETTER IOTA",
+        "value": "℩",
+        "codepoint": 8489
+      },
+      {
+        "name": "KELVIN SIGN",
+        "value": "K",
+        "codepoint": 8490
+      },
+      {
+        "name": "ANGSTROM SIGN",
+        "value": "Å",
+        "codepoint": 8491
+      },
+      {
+        "name": "SCRIPT CAPITAL B",
+        "value": "ℬ",
+        "codepoint": 8492
+      },
+      {
+        "name": "BLACK-LETTER CAPITAL C",
+        "value": "ℭ",
+        "codepoint": 8493
+      },
+      {
+        "name": "ESTIMATED SYMBOL",
+        "value": "℮",
+        "codepoint": 8494
+      },
+      {
+        "name": "SCRIPT SMALL E",
+        "value": "ℯ",
+        "codepoint": 8495
+      },
+      {
+        "name": "SCRIPT CAPITAL E",
+        "value": "ℰ",
+        "codepoint": 8496
+      },
+      {
+        "name": "SCRIPT CAPITAL F",
+        "value": "ℱ",
+        "codepoint": 8497
+      },
+      {
+        "name": "TURNED CAPITAL F",
+        "value": "Ⅎ",
+        "codepoint": 8498
+      },
+      {
+        "name": "SCRIPT CAPITAL M",
+        "value": "ℳ",
+        "codepoint": 8499
+      },
+      {
+        "name": "SCRIPT SMALL O",
+        "value": "ℴ",
+        "codepoint": 8500
+      },
+      {
+        "name": "ALEF SYMBOL",
+        "value": "ℵ",
+        "codepoint": 8501
+      },
+      {
+        "name": "BET SYMBOL",
+        "value": "ℶ",
+        "codepoint": 8502
+      },
+      {
+        "name": "GIMEL SYMBOL",
+        "value": "ℷ",
+        "codepoint": 8503
+      },
+      {
+        "name": "DALET SYMBOL",
+        "value": "ℸ",
+        "codepoint": 8504
+      },
+      {
+        "name": "ROTATED CAPITAL Q",
+        "value": "℺",
+        "codepoint": 8506
+      },
+      {
+        "name": "FACSIMILE SIGN",
+        "value": "℻",
+        "codepoint": 8507
+      },
+      {
+        "name": "DOUBLE-STRUCK SMALL PI",
+        "value": "ℼ",
+        "codepoint": 8508
+      },
+      {
+        "name": "DOUBLE-STRUCK SMALL GAMMA",
+        "value": "ℽ",
+        "codepoint": 8509
+      },
+      {
+        "name": "DOUBLE-STRUCK CAPITAL GAMMA",
+        "value": "ℾ",
+        "codepoint": 8510
+      },
+      {
+        "name": "DOUBLE-STRUCK CAPITAL PI",
+        "value": "ℿ",
+        "codepoint": 8511
+      },
+      {
+        "name": "DOUBLE-STRUCK N-ARY SUMMATION",
+        "value": "⅀",
+        "codepoint": 8512
+      },
+      {
+        "name": "TURNED SANS-SERIF CAPITAL G",
+        "value": "⅁",
+        "codepoint": 8513
+      },
+      {
+        "name": "TURNED SANS-SERIF CAPITAL L",
+        "value": "⅂",
+        "codepoint": 8514
+      },
+      {
+        "name": "REVERSED SANS-SERIF CAPITAL L",
+        "value": "⅃",
+        "codepoint": 8515
+      },
+      {
+        "name": "TURNED SANS-SERIF CAPITAL Y",
+        "value": "⅄",
+        "codepoint": 8516
+      },
+      {
+        "name": "DOUBLE-STRUCK ITALIC CAPITAL D",
+        "value": "ⅅ",
+        "codepoint": 8517
+      },
+      {
+        "name": "DOUBLE-STRUCK ITALIC SMALL D",
+        "value": "ⅆ",
+        "codepoint": 8518
+      },
+      {
+        "name": "DOUBLE-STRUCK ITALIC SMALL E",
+        "value": "ⅇ",
+        "codepoint": 8519
+      },
+      {
+        "name": "DOUBLE-STRUCK ITALIC SMALL I",
+        "value": "ⅈ",
+        "codepoint": 8520
+      },
+      {
+        "name": "DOUBLE-STRUCK ITALIC SMALL J",
+        "value": "ⅉ",
+        "codepoint": 8521
+      },
+      {
+        "name": "PROPERTY LINE",
+        "value": "⅊",
+        "codepoint": 8522
+      },
+      {
+        "name": "TURNED AMPERSAND",
+        "value": "⅋",
+        "codepoint": 8523
+      },
+      {
+        "name": "PER SIGN",
+        "value": "⅌",
+        "codepoint": 8524
+      },
+      {
+        "name": "AKTIESELSKAB",
+        "value": "⅍",
+        "codepoint": 8525
+      },
+      {
+        "name": "TURNED SMALL F",
+        "value": "ⅎ",
+        "codepoint": 8526
+      },
+      {
+        "name": "SYMBOL FOR SAMARITAN SOURCE",
+        "value": "⅏",
+        "codepoint": 8527
+      },
+      {
         "name": "CIRCLED DIGIT ONE",
         "value": "①",
         "codepoint": 9312
@@ -1778,21 +2168,6 @@
         "codepoint": 9882
       },
       {
-        "name": "OUTLINED WHITE STAR",
-        "value": "⚝",
-        "codepoint": 9885
-      },
-      {
-        "name": "THREE LINES CONVERGING RIGHT",
-        "value": "⚞",
-        "codepoint": 9886
-      },
-      {
-        "name": "THREE LINES CONVERGING LEFT",
-        "value": "⚟",
-        "codepoint": 9887
-      },
-      {
         "name": "DOUBLED FEMALE SIGN",
         "value": "⚢",
         "codepoint": 9890
@@ -1853,279 +2228,14 @@
         "codepoint": 9906
       },
       {
-        "name": "CERES",
-        "value": "⚳",
-        "codepoint": 9907
-      },
-      {
-        "name": "PALLAS",
-        "value": "⚴",
-        "codepoint": 9908
-      },
-      {
-        "name": "JUNO",
-        "value": "⚵",
-        "codepoint": 9909
-      },
-      {
-        "name": "VESTA",
-        "value": "⚶",
-        "codepoint": 9910
-      },
-      {
-        "name": "CHIRON",
-        "value": "⚷",
-        "codepoint": 9911
-      },
-      {
-        "name": "BLACK MOON LILITH",
-        "value": "⚸",
-        "codepoint": 9912
-      },
-      {
-        "name": "SEXTILE",
-        "value": "⚹",
-        "codepoint": 9913
-      },
-      {
-        "name": "SEMISEXTILE",
-        "value": "⚺",
-        "codepoint": 9914
-      },
-      {
-        "name": "QUINCUNX",
-        "value": "⚻",
-        "codepoint": 9915
-      },
-      {
-        "name": "SESQUIQUADRATE",
-        "value": "⚼",
-        "codepoint": 9916
-      },
-      {
-        "name": "SQUARED KEY",
-        "value": "⚿",
-        "codepoint": 9919
-      },
-      {
-        "name": "WHITE DRAUGHTS MAN",
-        "value": "⛀",
-        "codepoint": 9920
-      },
-      {
-        "name": "WHITE DRAUGHTS KING",
-        "value": "⛁",
-        "codepoint": 9921
-      },
-      {
-        "name": "BLACK DRAUGHTS MAN",
-        "value": "⛂",
-        "codepoint": 9922
-      },
-      {
-        "name": "BLACK DRAUGHTS KING",
-        "value": "⛃",
-        "codepoint": 9923
-      },
-      {
-        "name": "RAIN",
-        "value": "⛆",
-        "codepoint": 9926
-      },
-      {
-        "name": "BLACK SNOWMAN",
-        "value": "⛇",
-        "codepoint": 9927
-      },
-      {
-        "name": "TURNED WHITE SHOGI PIECE",
-        "value": "⛉",
-        "codepoint": 9929
-      },
-      {
-        "name": "TURNED BLACK SHOGI PIECE",
-        "value": "⛊",
-        "codepoint": 9930
-      },
-      {
         "name": "WHITE DIAMOND IN SQUARE",
         "value": "⛋",
         "codepoint": 9931
       },
       {
-        "name": "CROSSING LANES",
-        "value": "⛌",
-        "codepoint": 9932
-      },
-      {
-        "name": "DISABLED CAR",
-        "value": "⛍",
-        "codepoint": 9933
-      },
-      {
-        "name": "CAR SLIDING",
-        "value": "⛐",
-        "codepoint": 9936
-      },
-      {
-        "name": "CIRCLED CROSSING LANES",
-        "value": "⛒",
-        "codepoint": 9938
-      },
-      {
-        "name": "ALTERNATE ONE-WAY LEFT WAY TRAFFIC",
-        "value": "⛕",
-        "codepoint": 9941
-      },
-      {
-        "name": "BLACK TWO-WAY LEFT WAY TRAFFIC",
-        "value": "⛖",
-        "codepoint": 9942
-      },
-      {
-        "name": "WHITE TWO-WAY LEFT WAY TRAFFIC",
-        "value": "⛗",
-        "codepoint": 9943
-      },
-      {
-        "name": "BLACK LEFT LANE MERGE",
-        "value": "⛘",
-        "codepoint": 9944
-      },
-      {
-        "name": "WHITE LEFT LANE MERGE",
-        "value": "⛙",
-        "codepoint": 9945
-      },
-      {
-        "name": "DRIVE SLOW SIGN",
-        "value": "⛚",
-        "codepoint": 9946
-      },
-      {
-        "name": "HEAVY WHITE DOWN-POINTING TRIANGLE",
-        "value": "⛛",
-        "codepoint": 9947
-      },
-      {
-        "name": "LEFT CLOSED ENTRY",
-        "value": "⛜",
-        "codepoint": 9948
-      },
-      {
-        "name": "SQUARED SALTIRE",
-        "value": "⛝",
-        "codepoint": 9949
-      },
-      {
-        "name": "FALLING DIAGONAL IN WHITE CIRCLE IN BLACK SQUARE",
-        "value": "⛞",
-        "codepoint": 9950
-      },
-      {
-        "name": "BLACK TRUCK",
-        "value": "⛟",
-        "codepoint": 9951
-      },
-      {
-        "name": "RESTRICTED LEFT ENTRY-1",
-        "value": "⛠",
-        "codepoint": 9952
-      },
-      {
-        "name": "RESTRICTED LEFT ENTRY-2",
-        "value": "⛡",
-        "codepoint": 9953
-      },
-      {
         "name": "ASTRONOMICAL SYMBOL FOR URANUS",
         "value": "⛢",
         "codepoint": 9954
-      },
-      {
-        "name": "HEAVY CIRCLE WITH STROKE AND TWO DOTS ABOVE",
-        "value": "⛣",
-        "codepoint": 9955
-      },
-      {
-        "name": "PENTAGRAM",
-        "value": "⛤",
-        "codepoint": 9956
-      },
-      {
-        "name": "RIGHT-HANDED INTERLACED PENTAGRAM",
-        "value": "⛥",
-        "codepoint": 9957
-      },
-      {
-        "name": "LEFT-HANDED INTERLACED PENTAGRAM",
-        "value": "⛦",
-        "codepoint": 9958
-      },
-      {
-        "name": "INVERTED PENTAGRAM",
-        "value": "⛧",
-        "codepoint": 9959
-      },
-      {
-        "name": "BLACK CROSS ON SHIELD",
-        "value": "⛨",
-        "codepoint": 9960
-      },
-      {
-        "name": "CASTLE",
-        "value": "⛫",
-        "codepoint": 9963
-      },
-      {
-        "name": "HISTORIC SITE",
-        "value": "⛬",
-        "codepoint": 9964
-      },
-      {
-        "name": "GEAR WITHOUT HUB",
-        "value": "⛭",
-        "codepoint": 9965
-      },
-      {
-        "name": "GEAR WITH HANDLES",
-        "value": "⛮",
-        "codepoint": 9966
-      },
-      {
-        "name": "MAP SYMBOL FOR LIGHTHOUSE",
-        "value": "⛯",
-        "codepoint": 9967
-      },
-      {
-        "name": "SQUARE FOUR CORNERS",
-        "value": "⛶",
-        "codepoint": 9974
-      },
-      {
-        "name": "JAPANESE BANK SYMBOL",
-        "value": "⛻",
-        "codepoint": 9979
-      },
-      {
-        "name": "HEADSTONE GRAVEYARD SYMBOL",
-        "value": "⛼",
-        "codepoint": 9980
-      },
-      {
-        "name": "CUP ON BLACK SQUARE",
-        "value": "⛾",
-        "codepoint": 9982
-      },
-      {
-        "name": "WHITE FLAG WITH HORIZONTAL MIDDLE BLACK STRIPE",
-        "value": "⛿",
-        "codepoint": 9983
-      },
-      {
-        "name": "BLACK SAFETY SCISSORS",
-        "value": "✀",
-        "codepoint": 9984
       },
       {
         "name": "UPPER BLADE SCISSORS",
@@ -2471,16 +2581,6 @@
         "name": "HEAVY DOUBLE COMMA QUOTATION MARK ORNAMENT",
         "value": "❞",
         "codepoint": 10078
-      },
-      {
-        "name": "HEAVY LOW SINGLE COMMA QUOTATION MARK ORNAMENT",
-        "value": "❟",
-        "codepoint": 10079
-      },
-      {
-        "name": "HEAVY LOW DOUBLE COMMA QUOTATION MARK ORNAMENT",
-        "value": "❠",
-        "codepoint": 10080
       },
       {
         "name": "CURVED STEM PARAGRAPH SIGN ORNAMENT",
@@ -4258,29 +4358,9 @@
         "codepoint": 10186
       },
       {
-        "name": "MATHEMATICAL RISING DIAGONAL",
-        "value": "⟋",
-        "codepoint": 10187
-      },
-      {
         "name": "LONG DIVISION",
         "value": "⟌",
         "codepoint": 10188
-      },
-      {
-        "name": "MATHEMATICAL FALLING DIAGONAL",
-        "value": "⟍",
-        "codepoint": 10189
-      },
-      {
-        "name": "SQUARED LOGICAL AND",
-        "value": "⟎",
-        "codepoint": 10190
-      },
-      {
-        "name": "SQUARED LOGICAL OR",
-        "value": "⟏",
-        "codepoint": 10191
       },
       {
         "name": "WHITE DIAMOND WITH CENTRED DOT",
@@ -11083,16 +11163,6 @@
         "codepoint": 120777
       },
       {
-        "name": "MATHEMATICAL BOLD CAPITAL DIGAMMA",
-        "value": "𝟊",
-        "codepoint": 120778
-      },
-      {
-        "name": "MATHEMATICAL BOLD SMALL DIGAMMA",
-        "value": "𝟋",
-        "codepoint": 120779
-      },
-      {
         "name": "MATHEMATICAL BOLD DIGIT ZERO",
         "value": "𝟎",
         "codepoint": 120782
@@ -11473,11 +11543,6 @@
         "codepoint": 11800
       },
       {
-        "name": "PALM BRANCH",
-        "value": "⸙",
-        "codepoint": 11801
-      },
-      {
         "name": "HYPHEN WITH DIAERESIS",
         "value": "⸚",
         "codepoint": 11802
@@ -11596,151 +11661,6 @@
         "name": "WORD SEPARATOR MIDDLE DOT",
         "value": "⸱",
         "codepoint": 11825
-      },
-      {
-        "name": "TURNED COMMA",
-        "value": "⸲",
-        "codepoint": 11826
-      },
-      {
-        "name": "RAISED DOT",
-        "value": "⸳",
-        "codepoint": 11827
-      },
-      {
-        "name": "RAISED COMMA",
-        "value": "⸴",
-        "codepoint": 11828
-      },
-      {
-        "name": "TURNED SEMICOLON",
-        "value": "⸵",
-        "codepoint": 11829
-      },
-      {
-        "name": "DAGGER WITH LEFT GUARD",
-        "value": "⸶",
-        "codepoint": 11830
-      },
-      {
-        "name": "DAGGER WITH RIGHT GUARD",
-        "value": "⸷",
-        "codepoint": 11831
-      },
-      {
-        "name": "TURNED DAGGER",
-        "value": "⸸",
-        "codepoint": 11832
-      },
-      {
-        "name": "TOP HALF SECTION SIGN",
-        "value": "⸹",
-        "codepoint": 11833
-      },
-      {
-        "name": "TWO-EM DASH",
-        "value": "⸺",
-        "codepoint": 11834
-      },
-      {
-        "name": "THREE-EM DASH",
-        "value": "⸻",
-        "codepoint": 11835
-      },
-      {
-        "name": "STENOGRAPHIC FULL STOP",
-        "value": "⸼",
-        "codepoint": 11836
-      },
-      {
-        "name": "VERTICAL SIX DOTS",
-        "value": "⸽",
-        "codepoint": 11837
-      },
-      {
-        "name": "WIGGLY VERTICAL LINE",
-        "value": "⸾",
-        "codepoint": 11838
-      },
-      {
-        "name": "CAPITULUM",
-        "value": "⸿",
-        "codepoint": 11839
-      },
-      {
-        "name": "DOUBLE HYPHEN",
-        "value": "⹀",
-        "codepoint": 11840
-      },
-      {
-        "name": "REVERSED COMMA",
-        "value": "⹁",
-        "codepoint": 11841
-      },
-      {
-        "name": "DOUBLE LOW-REVERSED-9 QUOTATION MARK",
-        "value": "⹂",
-        "codepoint": 11842
-      },
-      {
-        "name": "DASH WITH LEFT UPTURN",
-        "value": "⹃",
-        "codepoint": 11843
-      },
-      {
-        "name": "DOUBLE SUSPENSION MARK",
-        "value": "⹄",
-        "codepoint": 11844
-      },
-      {
-        "name": "INVERTED LOW KAVYKA",
-        "value": "⹅",
-        "codepoint": 11845
-      },
-      {
-        "name": "INVERTED LOW KAVYKA WITH KAVYKA ABOVE",
-        "value": "⹆",
-        "codepoint": 11846
-      },
-      {
-        "name": "LOW KAVYKA",
-        "value": "⹇",
-        "codepoint": 11847
-      },
-      {
-        "name": "LOW KAVYKA WITH DOT",
-        "value": "⹈",
-        "codepoint": 11848
-      },
-      {
-        "name": "DOUBLE STACKED COMMA",
-        "value": "⹉",
-        "codepoint": 11849
-      },
-      {
-        "name": "DOTTED SOLIDUS",
-        "value": "⹊",
-        "codepoint": 11850
-      },
-      {
-        "name": "TRIPLE DAGGER",
-        "value": "⹋",
-        "codepoint": 11851
-      },
-      {
-        "name": "MEDIEVAL COMMA",
-        "value": "⹌",
-        "codepoint": 11852
-      },
-      {
-        "name": "PARAGRAPHUS MARK",
-        "value": "⹍",
-        "codepoint": 11853
-      },
-      {
-        "name": "PUNCTUS ELEVATUS MARK",
-        "value": "⹎",
-        "codepoint": 11854
       }
     ]
   },
@@ -12886,56 +12806,6 @@
         "name": "ELECTRICAL INTERSECTION",
         "value": "⏧",
         "codepoint": 9191
-      },
-      {
-        "name": "DECIMAL EXPONENT SYMBOL",
-        "value": "⏨",
-        "codepoint": 9192
-      },
-      {
-        "name": "BLACK MEDIUM LEFT-POINTING TRIANGLE",
-        "value": "⏴",
-        "codepoint": 9204
-      },
-      {
-        "name": "BLACK MEDIUM RIGHT-POINTING TRIANGLE",
-        "value": "⏵",
-        "codepoint": 9205
-      },
-      {
-        "name": "BLACK MEDIUM UP-POINTING TRIANGLE",
-        "value": "⏶",
-        "codepoint": 9206
-      },
-      {
-        "name": "BLACK MEDIUM DOWN-POINTING TRIANGLE",
-        "value": "⏷",
-        "codepoint": 9207
-      },
-      {
-        "name": "POWER SYMBOL",
-        "value": "⏻",
-        "codepoint": 9211
-      },
-      {
-        "name": "POWER ON-OFF SYMBOL",
-        "value": "⏼",
-        "codepoint": 9212
-      },
-      {
-        "name": "POWER ON SYMBOL",
-        "value": "⏽",
-        "codepoint": 9213
-      },
-      {
-        "name": "POWER SLEEP SYMBOL",
-        "value": "⏾",
-        "codepoint": 9214
-      },
-      {
-        "name": "OBSERVER EYE SYMBOL",
-        "value": "⏿",
-        "codepoint": 9215
       }
     ]
   },
@@ -14013,21 +13883,6 @@
         "codepoint": 11084
       },
       {
-        "name": "DOWNWARDS TRIANGLE-HEADED ZIGZAG ARROW",
-        "value": "⭍",
-        "codepoint": 11085
-      },
-      {
-        "name": "SHORT SLANTED NORTH ARROW",
-        "value": "⭎",
-        "codepoint": 11086
-      },
-      {
-        "name": "SHORT BACKSLANTED SOUTH ARROW",
-        "value": "⭏",
-        "codepoint": 11087
-      },
-      {
         "name": "BLACK SMALL STAR",
         "value": "⭑",
         "codepoint": 11089
@@ -14046,826 +13901,6 @@
         "name": "WHITE RIGHT-POINTING PENTAGON",
         "value": "⭔",
         "codepoint": 11092
-      },
-      {
-        "name": "HEAVY OVAL WITH OVAL INSIDE",
-        "value": "⭖",
-        "codepoint": 11094
-      },
-      {
-        "name": "HEAVY CIRCLE WITH CIRCLE INSIDE",
-        "value": "⭗",
-        "codepoint": 11095
-      },
-      {
-        "name": "HEAVY CIRCLE",
-        "value": "⭘",
-        "codepoint": 11096
-      },
-      {
-        "name": "HEAVY CIRCLED SALTIRE",
-        "value": "⭙",
-        "codepoint": 11097
-      },
-      {
-        "name": "SLANTED NORTH ARROW WITH HOOKED HEAD",
-        "value": "⭚",
-        "codepoint": 11098
-      },
-      {
-        "name": "BACKSLANTED SOUTH ARROW WITH HOOKED TAIL",
-        "value": "⭛",
-        "codepoint": 11099
-      },
-      {
-        "name": "SLANTED NORTH ARROW WITH HORIZONTAL TAIL",
-        "value": "⭜",
-        "codepoint": 11100
-      },
-      {
-        "name": "BACKSLANTED SOUTH ARROW WITH HORIZONTAL TAIL",
-        "value": "⭝",
-        "codepoint": 11101
-      },
-      {
-        "name": "BENT ARROW POINTING DOWNWARDS THEN NORTH EAST",
-        "value": "⭞",
-        "codepoint": 11102
-      },
-      {
-        "name": "SHORT BENT ARROW POINTING DOWNWARDS THEN NORTH EAST",
-        "value": "⭟",
-        "codepoint": 11103
-      },
-      {
-        "name": "LEFTWARDS TRIANGLE-HEADED ARROW",
-        "value": "⭠",
-        "codepoint": 11104
-      },
-      {
-        "name": "UPWARDS TRIANGLE-HEADED ARROW",
-        "value": "⭡",
-        "codepoint": 11105
-      },
-      {
-        "name": "RIGHTWARDS TRIANGLE-HEADED ARROW",
-        "value": "⭢",
-        "codepoint": 11106
-      },
-      {
-        "name": "DOWNWARDS TRIANGLE-HEADED ARROW",
-        "value": "⭣",
-        "codepoint": 11107
-      },
-      {
-        "name": "LEFT RIGHT TRIANGLE-HEADED ARROW",
-        "value": "⭤",
-        "codepoint": 11108
-      },
-      {
-        "name": "UP DOWN TRIANGLE-HEADED ARROW",
-        "value": "⭥",
-        "codepoint": 11109
-      },
-      {
-        "name": "NORTH WEST TRIANGLE-HEADED ARROW",
-        "value": "⭦",
-        "codepoint": 11110
-      },
-      {
-        "name": "NORTH EAST TRIANGLE-HEADED ARROW",
-        "value": "⭧",
-        "codepoint": 11111
-      },
-      {
-        "name": "SOUTH EAST TRIANGLE-HEADED ARROW",
-        "value": "⭨",
-        "codepoint": 11112
-      },
-      {
-        "name": "SOUTH WEST TRIANGLE-HEADED ARROW",
-        "value": "⭩",
-        "codepoint": 11113
-      },
-      {
-        "name": "LEFTWARDS TRIANGLE-HEADED DASHED ARROW",
-        "value": "⭪",
-        "codepoint": 11114
-      },
-      {
-        "name": "UPWARDS TRIANGLE-HEADED DASHED ARROW",
-        "value": "⭫",
-        "codepoint": 11115
-      },
-      {
-        "name": "RIGHTWARDS TRIANGLE-HEADED DASHED ARROW",
-        "value": "⭬",
-        "codepoint": 11116
-      },
-      {
-        "name": "DOWNWARDS TRIANGLE-HEADED DASHED ARROW",
-        "value": "⭭",
-        "codepoint": 11117
-      },
-      {
-        "name": "CLOCKWISE TRIANGLE-HEADED OPEN CIRCLE ARROW",
-        "value": "⭮",
-        "codepoint": 11118
-      },
-      {
-        "name": "ANTICLOCKWISE TRIANGLE-HEADED OPEN CIRCLE ARROW",
-        "value": "⭯",
-        "codepoint": 11119
-      },
-      {
-        "name": "LEFTWARDS TRIANGLE-HEADED ARROW TO BAR",
-        "value": "⭰",
-        "codepoint": 11120
-      },
-      {
-        "name": "UPWARDS TRIANGLE-HEADED ARROW TO BAR",
-        "value": "⭱",
-        "codepoint": 11121
-      },
-      {
-        "name": "RIGHTWARDS TRIANGLE-HEADED ARROW TO BAR",
-        "value": "⭲",
-        "codepoint": 11122
-      },
-      {
-        "name": "DOWNWARDS TRIANGLE-HEADED ARROW TO BAR",
-        "value": "⭳",
-        "codepoint": 11123
-      },
-      {
-        "name": "NORTH WEST TRIANGLE-HEADED ARROW TO BAR",
-        "value": "⭶",
-        "codepoint": 11126
-      },
-      {
-        "name": "NORTH EAST TRIANGLE-HEADED ARROW TO BAR",
-        "value": "⭷",
-        "codepoint": 11127
-      },
-      {
-        "name": "SOUTH EAST TRIANGLE-HEADED ARROW TO BAR",
-        "value": "⭸",
-        "codepoint": 11128
-      },
-      {
-        "name": "SOUTH WEST TRIANGLE-HEADED ARROW TO BAR",
-        "value": "⭹",
-        "codepoint": 11129
-      },
-      {
-        "name": "LEFTWARDS TRIANGLE-HEADED ARROW WITH DOUBLE HORIZONTAL STROKE",
-        "value": "⭺",
-        "codepoint": 11130
-      },
-      {
-        "name": "UPWARDS TRIANGLE-HEADED ARROW WITH DOUBLE HORIZONTAL STROKE",
-        "value": "⭻",
-        "codepoint": 11131
-      },
-      {
-        "name": "RIGHTWARDS TRIANGLE-HEADED ARROW WITH DOUBLE HORIZONTAL STROKE",
-        "value": "⭼",
-        "codepoint": 11132
-      },
-      {
-        "name": "DOWNWARDS TRIANGLE-HEADED ARROW WITH DOUBLE HORIZONTAL STROKE",
-        "value": "⭽",
-        "codepoint": 11133
-      },
-      {
-        "name": "HORIZONTAL TAB KEY",
-        "value": "⭾",
-        "codepoint": 11134
-      },
-      {
-        "name": "VERTICAL TAB KEY",
-        "value": "⭿",
-        "codepoint": 11135
-      },
-      {
-        "name": "LEFTWARDS TRIANGLE-HEADED ARROW OVER RIGHTWARDS TRIANGLE-HEADED ARROW",
-        "value": "⮀",
-        "codepoint": 11136
-      },
-      {
-        "name": "UPWARDS TRIANGLE-HEADED ARROW LEFTWARDS OF DOWNWARDS TRIANGLE-HEADED ARROW",
-        "value": "⮁",
-        "codepoint": 11137
-      },
-      {
-        "name": "RIGHTWARDS TRIANGLE-HEADED ARROW OVER LEFTWARDS TRIANGLE-HEADED ARROW",
-        "value": "⮂",
-        "codepoint": 11138
-      },
-      {
-        "name": "DOWNWARDS TRIANGLE-HEADED ARROW LEFTWARDS OF UPWARDS TRIANGLE-HEADED ARROW",
-        "value": "⮃",
-        "codepoint": 11139
-      },
-      {
-        "name": "LEFTWARDS TRIANGLE-HEADED PAIRED ARROWS",
-        "value": "⮄",
-        "codepoint": 11140
-      },
-      {
-        "name": "UPWARDS TRIANGLE-HEADED PAIRED ARROWS",
-        "value": "⮅",
-        "codepoint": 11141
-      },
-      {
-        "name": "RIGHTWARDS TRIANGLE-HEADED PAIRED ARROWS",
-        "value": "⮆",
-        "codepoint": 11142
-      },
-      {
-        "name": "DOWNWARDS TRIANGLE-HEADED PAIRED ARROWS",
-        "value": "⮇",
-        "codepoint": 11143
-      },
-      {
-        "name": "LEFTWARDS BLACK CIRCLED WHITE ARROW",
-        "value": "⮈",
-        "codepoint": 11144
-      },
-      {
-        "name": "UPWARDS BLACK CIRCLED WHITE ARROW",
-        "value": "⮉",
-        "codepoint": 11145
-      },
-      {
-        "name": "RIGHTWARDS BLACK CIRCLED WHITE ARROW",
-        "value": "⮊",
-        "codepoint": 11146
-      },
-      {
-        "name": "DOWNWARDS BLACK CIRCLED WHITE ARROW",
-        "value": "⮋",
-        "codepoint": 11147
-      },
-      {
-        "name": "ANTICLOCKWISE TRIANGLE-HEADED RIGHT U-SHAPED ARROW",
-        "value": "⮌",
-        "codepoint": 11148
-      },
-      {
-        "name": "ANTICLOCKWISE TRIANGLE-HEADED BOTTOM U-SHAPED ARROW",
-        "value": "⮍",
-        "codepoint": 11149
-      },
-      {
-        "name": "ANTICLOCKWISE TRIANGLE-HEADED LEFT U-SHAPED ARROW",
-        "value": "⮎",
-        "codepoint": 11150
-      },
-      {
-        "name": "ANTICLOCKWISE TRIANGLE-HEADED TOP U-SHAPED ARROW",
-        "value": "⮏",
-        "codepoint": 11151
-      },
-      {
-        "name": "RETURN LEFT",
-        "value": "⮐",
-        "codepoint": 11152
-      },
-      {
-        "name": "RETURN RIGHT",
-        "value": "⮑",
-        "codepoint": 11153
-      },
-      {
-        "name": "NEWLINE LEFT",
-        "value": "⮒",
-        "codepoint": 11154
-      },
-      {
-        "name": "NEWLINE RIGHT",
-        "value": "⮓",
-        "codepoint": 11155
-      },
-      {
-        "name": "FOUR CORNER ARROWS CIRCLING ANTICLOCKWISE",
-        "value": "⮔",
-        "codepoint": 11156
-      },
-      {
-        "name": "RIGHTWARDS BLACK ARROW",
-        "value": "⮕",
-        "codepoint": 11157
-      },
-      {
-        "name": "THREE-D TOP-LIGHTED LEFTWARDS EQUILATERAL ARROWHEAD",
-        "value": "⮘",
-        "codepoint": 11160
-      },
-      {
-        "name": "THREE-D RIGHT-LIGHTED UPWARDS EQUILATERAL ARROWHEAD",
-        "value": "⮙",
-        "codepoint": 11161
-      },
-      {
-        "name": "THREE-D TOP-LIGHTED RIGHTWARDS EQUILATERAL ARROWHEAD",
-        "value": "⮚",
-        "codepoint": 11162
-      },
-      {
-        "name": "THREE-D LEFT-LIGHTED DOWNWARDS EQUILATERAL ARROWHEAD",
-        "value": "⮛",
-        "codepoint": 11163
-      },
-      {
-        "name": "BLACK LEFTWARDS EQUILATERAL ARROWHEAD",
-        "value": "⮜",
-        "codepoint": 11164
-      },
-      {
-        "name": "BLACK UPWARDS EQUILATERAL ARROWHEAD",
-        "value": "⮝",
-        "codepoint": 11165
-      },
-      {
-        "name": "BLACK RIGHTWARDS EQUILATERAL ARROWHEAD",
-        "value": "⮞",
-        "codepoint": 11166
-      },
-      {
-        "name": "BLACK DOWNWARDS EQUILATERAL ARROWHEAD",
-        "value": "⮟",
-        "codepoint": 11167
-      },
-      {
-        "name": "DOWNWARDS TRIANGLE-HEADED ARROW WITH LONG TIP LEFTWARDS",
-        "value": "⮠",
-        "codepoint": 11168
-      },
-      {
-        "name": "DOWNWARDS TRIANGLE-HEADED ARROW WITH LONG TIP RIGHTWARDS",
-        "value": "⮡",
-        "codepoint": 11169
-      },
-      {
-        "name": "UPWARDS TRIANGLE-HEADED ARROW WITH LONG TIP LEFTWARDS",
-        "value": "⮢",
-        "codepoint": 11170
-      },
-      {
-        "name": "UPWARDS TRIANGLE-HEADED ARROW WITH LONG TIP RIGHTWARDS",
-        "value": "⮣",
-        "codepoint": 11171
-      },
-      {
-        "name": "LEFTWARDS TRIANGLE-HEADED ARROW WITH LONG TIP UPWARDS",
-        "value": "⮤",
-        "codepoint": 11172
-      },
-      {
-        "name": "RIGHTWARDS TRIANGLE-HEADED ARROW WITH LONG TIP UPWARDS",
-        "value": "⮥",
-        "codepoint": 11173
-      },
-      {
-        "name": "LEFTWARDS TRIANGLE-HEADED ARROW WITH LONG TIP DOWNWARDS",
-        "value": "⮦",
-        "codepoint": 11174
-      },
-      {
-        "name": "RIGHTWARDS TRIANGLE-HEADED ARROW WITH LONG TIP DOWNWARDS",
-        "value": "⮧",
-        "codepoint": 11175
-      },
-      {
-        "name": "BLACK CURVED DOWNWARDS AND LEFTWARDS ARROW",
-        "value": "⮨",
-        "codepoint": 11176
-      },
-      {
-        "name": "BLACK CURVED DOWNWARDS AND RIGHTWARDS ARROW",
-        "value": "⮩",
-        "codepoint": 11177
-      },
-      {
-        "name": "BLACK CURVED UPWARDS AND LEFTWARDS ARROW",
-        "value": "⮪",
-        "codepoint": 11178
-      },
-      {
-        "name": "BLACK CURVED UPWARDS AND RIGHTWARDS ARROW",
-        "value": "⮫",
-        "codepoint": 11179
-      },
-      {
-        "name": "BLACK CURVED LEFTWARDS AND UPWARDS ARROW",
-        "value": "⮬",
-        "codepoint": 11180
-      },
-      {
-        "name": "BLACK CURVED RIGHTWARDS AND UPWARDS ARROW",
-        "value": "⮭",
-        "codepoint": 11181
-      },
-      {
-        "name": "BLACK CURVED LEFTWARDS AND DOWNWARDS ARROW",
-        "value": "⮮",
-        "codepoint": 11182
-      },
-      {
-        "name": "BLACK CURVED RIGHTWARDS AND DOWNWARDS ARROW",
-        "value": "⮯",
-        "codepoint": 11183
-      },
-      {
-        "name": "RIBBON ARROW DOWN LEFT",
-        "value": "⮰",
-        "codepoint": 11184
-      },
-      {
-        "name": "RIBBON ARROW DOWN RIGHT",
-        "value": "⮱",
-        "codepoint": 11185
-      },
-      {
-        "name": "RIBBON ARROW UP LEFT",
-        "value": "⮲",
-        "codepoint": 11186
-      },
-      {
-        "name": "RIBBON ARROW UP RIGHT",
-        "value": "⮳",
-        "codepoint": 11187
-      },
-      {
-        "name": "RIBBON ARROW LEFT UP",
-        "value": "⮴",
-        "codepoint": 11188
-      },
-      {
-        "name": "RIBBON ARROW RIGHT UP",
-        "value": "⮵",
-        "codepoint": 11189
-      },
-      {
-        "name": "RIBBON ARROW LEFT DOWN",
-        "value": "⮶",
-        "codepoint": 11190
-      },
-      {
-        "name": "RIBBON ARROW RIGHT DOWN",
-        "value": "⮷",
-        "codepoint": 11191
-      },
-      {
-        "name": "UPWARDS WHITE ARROW FROM BAR WITH HORIZONTAL BAR",
-        "value": "⮸",
-        "codepoint": 11192
-      },
-      {
-        "name": "UP ARROWHEAD IN A RECTANGLE BOX",
-        "value": "⮹",
-        "codepoint": 11193
-      },
-      {
-        "name": "OVERLAPPING WHITE SQUARES",
-        "value": "⮺",
-        "codepoint": 11194
-      },
-      {
-        "name": "OVERLAPPING WHITE AND BLACK SQUARES",
-        "value": "⮻",
-        "codepoint": 11195
-      },
-      {
-        "name": "OVERLAPPING BLACK SQUARES",
-        "value": "⮼",
-        "codepoint": 11196
-      },
-      {
-        "name": "BALLOT BOX WITH LIGHT X",
-        "value": "⮽",
-        "codepoint": 11197
-      },
-      {
-        "name": "CIRCLED X",
-        "value": "⮾",
-        "codepoint": 11198
-      },
-      {
-        "name": "CIRCLED BOLD X",
-        "value": "⮿",
-        "codepoint": 11199
-      },
-      {
-        "name": "BLACK SQUARE CENTRED",
-        "value": "⯀",
-        "codepoint": 11200
-      },
-      {
-        "name": "BLACK DIAMOND CENTRED",
-        "value": "⯁",
-        "codepoint": 11201
-      },
-      {
-        "name": "TURNED BLACK PENTAGON",
-        "value": "⯂",
-        "codepoint": 11202
-      },
-      {
-        "name": "HORIZONTAL BLACK OCTAGON",
-        "value": "⯃",
-        "codepoint": 11203
-      },
-      {
-        "name": "BLACK OCTAGON",
-        "value": "⯄",
-        "codepoint": 11204
-      },
-      {
-        "name": "BLACK MEDIUM UP-POINTING TRIANGLE CENTRED",
-        "value": "⯅",
-        "codepoint": 11205
-      },
-      {
-        "name": "BLACK MEDIUM DOWN-POINTING TRIANGLE CENTRED",
-        "value": "⯆",
-        "codepoint": 11206
-      },
-      {
-        "name": "BLACK MEDIUM LEFT-POINTING TRIANGLE CENTRED",
-        "value": "⯇",
-        "codepoint": 11207
-      },
-      {
-        "name": "BLACK MEDIUM RIGHT-POINTING TRIANGLE CENTRED",
-        "value": "⯈",
-        "codepoint": 11208
-      },
-      {
-        "name": "TOP HALF BLACK CIRCLE",
-        "value": "⯊",
-        "codepoint": 11210
-      },
-      {
-        "name": "BOTTOM HALF BLACK CIRCLE",
-        "value": "⯋",
-        "codepoint": 11211
-      },
-      {
-        "name": "LIGHT FOUR POINTED BLACK CUSP",
-        "value": "⯌",
-        "codepoint": 11212
-      },
-      {
-        "name": "ROTATED LIGHT FOUR POINTED BLACK CUSP",
-        "value": "⯍",
-        "codepoint": 11213
-      },
-      {
-        "name": "WHITE FOUR POINTED CUSP",
-        "value": "⯎",
-        "codepoint": 11214
-      },
-      {
-        "name": "ROTATED WHITE FOUR POINTED CUSP",
-        "value": "⯏",
-        "codepoint": 11215
-      },
-      {
-        "name": "SQUARE POSITION INDICATOR",
-        "value": "⯐",
-        "codepoint": 11216
-      },
-      {
-        "name": "UNCERTAINTY SIGN",
-        "value": "⯑",
-        "codepoint": 11217
-      },
-      {
-        "name": "GROUP MARK",
-        "value": "⯒",
-        "codepoint": 11218
-      },
-      {
-        "name": "PLUTO FORM TWO",
-        "value": "⯓",
-        "codepoint": 11219
-      },
-      {
-        "name": "PLUTO FORM THREE",
-        "value": "⯔",
-        "codepoint": 11220
-      },
-      {
-        "name": "PLUTO FORM FOUR",
-        "value": "⯕",
-        "codepoint": 11221
-      },
-      {
-        "name": "PLUTO FORM FIVE",
-        "value": "⯖",
-        "codepoint": 11222
-      },
-      {
-        "name": "TRANSPLUTO",
-        "value": "⯗",
-        "codepoint": 11223
-      },
-      {
-        "name": "PROSERPINA",
-        "value": "⯘",
-        "codepoint": 11224
-      },
-      {
-        "name": "ASTRAEA",
-        "value": "⯙",
-        "codepoint": 11225
-      },
-      {
-        "name": "HYGIEA",
-        "value": "⯚",
-        "codepoint": 11226
-      },
-      {
-        "name": "PHOLUS",
-        "value": "⯛",
-        "codepoint": 11227
-      },
-      {
-        "name": "NESSUS",
-        "value": "⯜",
-        "codepoint": 11228
-      },
-      {
-        "name": "WHITE MOON SELENA",
-        "value": "⯝",
-        "codepoint": 11229
-      },
-      {
-        "name": "BLACK DIAMOND ON CROSS",
-        "value": "⯞",
-        "codepoint": 11230
-      },
-      {
-        "name": "TRUE LIGHT MOON ARTA",
-        "value": "⯟",
-        "codepoint": 11231
-      },
-      {
-        "name": "CUPIDO",
-        "value": "⯠",
-        "codepoint": 11232
-      },
-      {
-        "name": "HADES",
-        "value": "⯡",
-        "codepoint": 11233
-      },
-      {
-        "name": "ZEUS",
-        "value": "⯢",
-        "codepoint": 11234
-      },
-      {
-        "name": "KRONOS",
-        "value": "⯣",
-        "codepoint": 11235
-      },
-      {
-        "name": "APOLLON",
-        "value": "⯤",
-        "codepoint": 11236
-      },
-      {
-        "name": "ADMETOS",
-        "value": "⯥",
-        "codepoint": 11237
-      },
-      {
-        "name": "VULCANUS",
-        "value": "⯦",
-        "codepoint": 11238
-      },
-      {
-        "name": "POSEIDON",
-        "value": "⯧",
-        "codepoint": 11239
-      },
-      {
-        "name": "LEFT HALF BLACK STAR",
-        "value": "⯨",
-        "codepoint": 11240
-      },
-      {
-        "name": "RIGHT HALF BLACK STAR",
-        "value": "⯩",
-        "codepoint": 11241
-      },
-      {
-        "name": "STAR WITH LEFT HALF BLACK",
-        "value": "⯪",
-        "codepoint": 11242
-      },
-      {
-        "name": "STAR WITH RIGHT HALF BLACK",
-        "value": "⯫",
-        "codepoint": 11243
-      },
-      {
-        "name": "LEFTWARDS TWO-HEADED ARROW WITH TRIANGLE ARROWHEADS",
-        "value": "⯬",
-        "codepoint": 11244
-      },
-      {
-        "name": "UPWARDS TWO-HEADED ARROW WITH TRIANGLE ARROWHEADS",
-        "value": "⯭",
-        "codepoint": 11245
-      },
-      {
-        "name": "RIGHTWARDS TWO-HEADED ARROW WITH TRIANGLE ARROWHEADS",
-        "value": "⯮",
-        "codepoint": 11246
-      },
-      {
-        "name": "DOWNWARDS TWO-HEADED ARROW WITH TRIANGLE ARROWHEADS",
-        "value": "⯯",
-        "codepoint": 11247
-      },
-      {
-        "name": "ERIS FORM ONE",
-        "value": "⯰",
-        "codepoint": 11248
-      },
-      {
-        "name": "ERIS FORM TWO",
-        "value": "⯱",
-        "codepoint": 11249
-      },
-      {
-        "name": "SEDNA",
-        "value": "⯲",
-        "codepoint": 11250
-      },
-      {
-        "name": "RUSSIAN ASTROLOGICAL SYMBOL VIGINTILE",
-        "value": "⯳",
-        "codepoint": 11251
-      },
-      {
-        "name": "RUSSIAN ASTROLOGICAL SYMBOL NOVILE",
-        "value": "⯴",
-        "codepoint": 11252
-      },
-      {
-        "name": "RUSSIAN ASTROLOGICAL SYMBOL QUINTILE",
-        "value": "⯵",
-        "codepoint": 11253
-      },
-      {
-        "name": "RUSSIAN ASTROLOGICAL SYMBOL BINOVILE",
-        "value": "⯶",
-        "codepoint": 11254
-      },
-      {
-        "name": "RUSSIAN ASTROLOGICAL SYMBOL SENTAGON",
-        "value": "⯷",
-        "codepoint": 11255
-      },
-      {
-        "name": "RUSSIAN ASTROLOGICAL SYMBOL TREDECILE",
-        "value": "⯸",
-        "codepoint": 11256
-      },
-      {
-        "name": "EQUALS SIGN WITH INFINITY BELOW",
-        "value": "⯹",
-        "codepoint": 11257
-      },
-      {
-        "name": "UNITED SYMBOL",
-        "value": "⯺",
-        "codepoint": 11258
-      },
-      {
-        "name": "SEPARATED SYMBOL",
-        "value": "⯻",
-        "codepoint": 11259
-      },
-      {
-        "name": "DOUBLED SYMBOL",
-        "value": "⯼",
-        "codepoint": 11260
-      },
-      {
-        "name": "PASSED SYMBOL",
-        "value": "⯽",
-        "codepoint": 11261
-      },
-      {
-        "name": "REVERSED RIGHT ANGLE",
-        "value": "⯾",
-        "codepoint": 11262
       }
     ]
   },
@@ -14891,16 +13926,6 @@
         "name": "GREEK ACROPHONIC ATTIC FIVE",
         "value": "𐅃",
         "codepoint": 65859
-      },
-      {
-        "name": "GREEK ACROPHONIC ATTIC FIFTY",
-        "value": "𐅄",
-        "codepoint": 65860
-      },
-      {
-        "name": "GREEK ACROPHONIC ATTIC FIVE HUNDRED",
-        "value": "𐅅",
-        "codepoint": 65861
       },
       {
         "name": "GREEK ACROPHONIC ATTIC FIVE THOUSAND",
@@ -15143,21 +14168,6 @@
         "codepoint": 65909
       },
       {
-        "name": "GREEK ONE HALF SIGN ALTERNATE FORM",
-        "value": "𐅶",
-        "codepoint": 65910
-      },
-      {
-        "name": "GREEK TWO THIRDS SIGN",
-        "value": "𐅷",
-        "codepoint": 65911
-      },
-      {
-        "name": "GREEK THREE QUARTERS SIGN",
-        "value": "𐅸",
-        "codepoint": 65912
-      },
-      {
         "name": "GREEK YEAR SIGN",
         "value": "𐅹",
         "codepoint": 65913
@@ -15208,11 +14218,6 @@
         "codepoint": 65922
       },
       {
-        "name": "GREEK LITRA SIGN",
-        "value": "𐆃",
-        "codepoint": 65923
-      },
-      {
         "name": "GREEK OUNKIA SIGN",
         "value": "𐆄",
         "codepoint": 65924
@@ -15228,44 +14233,9 @@
         "codepoint": 65926
       },
       {
-        "name": "GREEK AROURA SIGN",
-        "value": "𐆇",
-        "codepoint": 65927
-      },
-      {
-        "name": "GREEK GRAMMA SIGN",
-        "value": "𐆈",
-        "codepoint": 65928
-      },
-      {
-        "name": "GREEK TRYBLION BASE SIGN",
-        "value": "𐆉",
-        "codepoint": 65929
-      },
-      {
         "name": "GREEK ZERO SIGN",
         "value": "𐆊",
         "codepoint": 65930
-      },
-      {
-        "name": "GREEK ONE QUARTER SIGN",
-        "value": "𐆋",
-        "codepoint": 65931
-      },
-      {
-        "name": "GREEK SINUSOID SIGN",
-        "value": "𐆌",
-        "codepoint": 65932
-      },
-      {
-        "name": "GREEK INDICTION SIGN",
-        "value": "𐆍",
-        "codepoint": 65933
-      },
-      {
-        "name": "NOMISMA SIGN",
-        "value": "𐆎",
-        "codepoint": 65934
       },
       {
         "name": "ROMAN SEXTANS SIGN",
@@ -15326,11 +14296,6 @@
         "name": "ROMAN CENTURIAL SIGN",
         "value": "𐆛",
         "codepoint": 65947
-      },
-      {
-        "name": "GREEK SYMBOL TAU RHO",
-        "value": "𐆠",
-        "codepoint": 65952
       }
     ]
   },
@@ -16751,36 +15716,6 @@
         "name": "INDIAN RUPEE SIGN",
         "value": "₹",
         "codepoint": 8377
-      },
-      {
-        "name": "TURKISH LIRA SIGN",
-        "value": "₺",
-        "codepoint": 8378
-      },
-      {
-        "name": "NORDIC MARK SIGN",
-        "value": "₻",
-        "codepoint": 8379
-      },
-      {
-        "name": "MANAT SIGN",
-        "value": "₼",
-        "codepoint": 8380
-      },
-      {
-        "name": "RUBLE SIGN",
-        "value": "₽",
-        "codepoint": 8381
-      },
-      {
-        "name": "LARI SIGN",
-        "value": "₾",
-        "codepoint": 8382
-      },
-      {
-        "name": "BITCOIN SIGN",
-        "value": "₿",
-        "codepoint": 8383
       }
     ]
   },
@@ -17648,11 +16583,6 @@
         "codepoint": 127166
       },
       {
-        "name": "PLAYING CARD RED JOKER",
-        "value": "🂿",
-        "codepoint": 127167
-      },
-      {
         "name": "PLAYING CARD ACE OF DIAMONDS",
         "value": "🃁",
         "codepoint": 127169
@@ -17796,186 +16726,6 @@
         "name": "PLAYING CARD WHITE JOKER",
         "value": "🃟",
         "codepoint": 127199
-      },
-      {
-        "name": "PLAYING CARD FOOL",
-        "value": "🃠",
-        "codepoint": 127200
-      },
-      {
-        "name": "PLAYING CARD TRUMP-1",
-        "value": "🃡",
-        "codepoint": 127201
-      },
-      {
-        "name": "PLAYING CARD TRUMP-2",
-        "value": "🃢",
-        "codepoint": 127202
-      },
-      {
-        "name": "PLAYING CARD TRUMP-3",
-        "value": "🃣",
-        "codepoint": 127203
-      },
-      {
-        "name": "PLAYING CARD TRUMP-4",
-        "value": "🃤",
-        "codepoint": 127204
-      },
-      {
-        "name": "PLAYING CARD TRUMP-5",
-        "value": "🃥",
-        "codepoint": 127205
-      },
-      {
-        "name": "PLAYING CARD TRUMP-6",
-        "value": "🃦",
-        "codepoint": 127206
-      },
-      {
-        "name": "PLAYING CARD TRUMP-7",
-        "value": "🃧",
-        "codepoint": 127207
-      },
-      {
-        "name": "PLAYING CARD TRUMP-8",
-        "value": "🃨",
-        "codepoint": 127208
-      },
-      {
-        "name": "PLAYING CARD TRUMP-9",
-        "value": "🃩",
-        "codepoint": 127209
-      },
-      {
-        "name": "PLAYING CARD TRUMP-10",
-        "value": "🃪",
-        "codepoint": 127210
-      },
-      {
-        "name": "PLAYING CARD TRUMP-11",
-        "value": "🃫",
-        "codepoint": 127211
-      },
-      {
-        "name": "PLAYING CARD TRUMP-12",
-        "value": "🃬",
-        "codepoint": 127212
-      },
-      {
-        "name": "PLAYING CARD TRUMP-13",
-        "value": "🃭",
-        "codepoint": 127213
-      },
-      {
-        "name": "PLAYING CARD TRUMP-14",
-        "value": "🃮",
-        "codepoint": 127214
-      },
-      {
-        "name": "PLAYING CARD TRUMP-15",
-        "value": "🃯",
-        "codepoint": 127215
-      },
-      {
-        "name": "PLAYING CARD TRUMP-16",
-        "value": "🃰",
-        "codepoint": 127216
-      },
-      {
-        "name": "PLAYING CARD TRUMP-17",
-        "value": "🃱",
-        "codepoint": 127217
-      },
-      {
-        "name": "PLAYING CARD TRUMP-18",
-        "value": "🃲",
-        "codepoint": 127218
-      },
-      {
-        "name": "PLAYING CARD TRUMP-19",
-        "value": "🃳",
-        "codepoint": 127219
-      },
-      {
-        "name": "PLAYING CARD TRUMP-20",
-        "value": "🃴",
-        "codepoint": 127220
-      },
-      {
-        "name": "PLAYING CARD TRUMP-21",
-        "value": "🃵",
-        "codepoint": 127221
-      },
-      {
-        "name": "XIANGQI RED GENERAL",
-        "value": "🩠",
-        "codepoint": 129632
-      },
-      {
-        "name": "XIANGQI RED MANDARIN",
-        "value": "🩡",
-        "codepoint": 129633
-      },
-      {
-        "name": "XIANGQI RED ELEPHANT",
-        "value": "🩢",
-        "codepoint": 129634
-      },
-      {
-        "name": "XIANGQI RED HORSE",
-        "value": "🩣",
-        "codepoint": 129635
-      },
-      {
-        "name": "XIANGQI RED CHARIOT",
-        "value": "🩤",
-        "codepoint": 129636
-      },
-      {
-        "name": "XIANGQI RED CANNON",
-        "value": "🩥",
-        "codepoint": 129637
-      },
-      {
-        "name": "XIANGQI RED SOLDIER",
-        "value": "🩦",
-        "codepoint": 129638
-      },
-      {
-        "name": "XIANGQI BLACK GENERAL",
-        "value": "🩧",
-        "codepoint": 129639
-      },
-      {
-        "name": "XIANGQI BLACK MANDARIN",
-        "value": "🩨",
-        "codepoint": 129640
-      },
-      {
-        "name": "XIANGQI BLACK ELEPHANT",
-        "value": "🩩",
-        "codepoint": 129641
-      },
-      {
-        "name": "XIANGQI BLACK HORSE",
-        "value": "🩪",
-        "codepoint": 129642
-      },
-      {
-        "name": "XIANGQI BLACK CHARIOT",
-        "value": "🩫",
-        "codepoint": 129643
-      },
-      {
-        "name": "XIANGQI BLACK CANNON",
-        "value": "🩬",
-        "codepoint": 129644
-      },
-      {
-        "name": "XIANGQI BLACK SOLDIER",
-        "value": "🩭",
-        "codepoint": 129645
       }
     ]
   },
@@ -18028,41 +16778,6 @@
         "codepoint": 119048
       },
       {
-        "name": "MUSICAL SYMBOL DAL SEGNO",
-        "value": "𝄉",
-        "codepoint": 119049
-      },
-      {
-        "name": "MUSICAL SYMBOL DA CAPO",
-        "value": "𝄊",
-        "codepoint": 119050
-      },
-      {
-        "name": "MUSICAL SYMBOL SEGNO",
-        "value": "𝄋",
-        "codepoint": 119051
-      },
-      {
-        "name": "MUSICAL SYMBOL CODA",
-        "value": "𝄌",
-        "codepoint": 119052
-      },
-      {
-        "name": "MUSICAL SYMBOL REPEATED FIGURE-1",
-        "value": "𝄍",
-        "codepoint": 119053
-      },
-      {
-        "name": "MUSICAL SYMBOL REPEATED FIGURE-2",
-        "value": "𝄎",
-        "codepoint": 119054
-      },
-      {
-        "name": "MUSICAL SYMBOL REPEATED FIGURE-3",
-        "value": "𝄏",
-        "codepoint": 119055
-      },
-      {
         "name": "MUSICAL SYMBOL FERMATA",
         "value": "𝄐",
         "codepoint": 119056
@@ -18078,74 +16793,9 @@
         "codepoint": 119058
       },
       {
-        "name": "MUSICAL SYMBOL CAESURA",
-        "value": "𝄓",
-        "codepoint": 119059
-      },
-      {
-        "name": "MUSICAL SYMBOL BRACE",
-        "value": "𝄔",
-        "codepoint": 119060
-      },
-      {
-        "name": "MUSICAL SYMBOL BRACKET",
-        "value": "𝄕",
-        "codepoint": 119061
-      },
-      {
-        "name": "MUSICAL SYMBOL ONE-LINE STAFF",
-        "value": "𝄖",
-        "codepoint": 119062
-      },
-      {
-        "name": "MUSICAL SYMBOL TWO-LINE STAFF",
-        "value": "𝄗",
-        "codepoint": 119063
-      },
-      {
-        "name": "MUSICAL SYMBOL THREE-LINE STAFF",
-        "value": "𝄘",
-        "codepoint": 119064
-      },
-      {
-        "name": "MUSICAL SYMBOL FOUR-LINE STAFF",
-        "value": "𝄙",
-        "codepoint": 119065
-      },
-      {
-        "name": "MUSICAL SYMBOL FIVE-LINE STAFF",
-        "value": "𝄚",
-        "codepoint": 119066
-      },
-      {
-        "name": "MUSICAL SYMBOL SIX-LINE STAFF",
-        "value": "𝄛",
-        "codepoint": 119067
-      },
-      {
-        "name": "MUSICAL SYMBOL SIX-STRING FRETBOARD",
-        "value": "𝄜",
-        "codepoint": 119068
-      },
-      {
-        "name": "MUSICAL SYMBOL FOUR-STRING FRETBOARD",
-        "value": "𝄝",
-        "codepoint": 119069
-      },
-      {
         "name": "MUSICAL SYMBOL G CLEF",
         "value": "𝄞",
         "codepoint": 119070
-      },
-      {
-        "name": "MUSICAL SYMBOL G CLEF OTTAVA ALTA",
-        "value": "𝄟",
-        "codepoint": 119071
-      },
-      {
-        "name": "MUSICAL SYMBOL G CLEF OTTAVA BASSA",
-        "value": "𝄠",
-        "codepoint": 119072
       },
       {
         "name": "MUSICAL SYMBOL C CLEF",
@@ -18158,31 +16808,6 @@
         "codepoint": 119074
       },
       {
-        "name": "MUSICAL SYMBOL F CLEF OTTAVA ALTA",
-        "value": "𝄣",
-        "codepoint": 119075
-      },
-      {
-        "name": "MUSICAL SYMBOL F CLEF OTTAVA BASSA",
-        "value": "𝄤",
-        "codepoint": 119076
-      },
-      {
-        "name": "MUSICAL SYMBOL DRUM CLEF-1",
-        "value": "𝄥",
-        "codepoint": 119077
-      },
-      {
-        "name": "MUSICAL SYMBOL DRUM CLEF-2",
-        "value": "𝄦",
-        "codepoint": 119078
-      },
-      {
-        "name": "MUSICAL SYMBOL MULTIPLE MEASURE REST",
-        "value": "𝄩",
-        "codepoint": 119081
-      },
-      {
         "name": "MUSICAL SYMBOL DOUBLE SHARP",
         "value": "𝄪",
         "codepoint": 119082
@@ -18193,476 +16818,6 @@
         "codepoint": 119083
       },
       {
-        "name": "MUSICAL SYMBOL FLAT UP",
-        "value": "𝄬",
-        "codepoint": 119084
-      },
-      {
-        "name": "MUSICAL SYMBOL FLAT DOWN",
-        "value": "𝄭",
-        "codepoint": 119085
-      },
-      {
-        "name": "MUSICAL SYMBOL NATURAL UP",
-        "value": "𝄮",
-        "codepoint": 119086
-      },
-      {
-        "name": "MUSICAL SYMBOL NATURAL DOWN",
-        "value": "𝄯",
-        "codepoint": 119087
-      },
-      {
-        "name": "MUSICAL SYMBOL SHARP UP",
-        "value": "𝄰",
-        "codepoint": 119088
-      },
-      {
-        "name": "MUSICAL SYMBOL SHARP DOWN",
-        "value": "𝄱",
-        "codepoint": 119089
-      },
-      {
-        "name": "MUSICAL SYMBOL QUARTER TONE SHARP",
-        "value": "𝄲",
-        "codepoint": 119090
-      },
-      {
-        "name": "MUSICAL SYMBOL QUARTER TONE FLAT",
-        "value": "𝄳",
-        "codepoint": 119091
-      },
-      {
-        "name": "MUSICAL SYMBOL COMMON TIME",
-        "value": "𝄴",
-        "codepoint": 119092
-      },
-      {
-        "name": "MUSICAL SYMBOL CUT TIME",
-        "value": "𝄵",
-        "codepoint": 119093
-      },
-      {
-        "name": "MUSICAL SYMBOL OTTAVA ALTA",
-        "value": "𝄶",
-        "codepoint": 119094
-      },
-      {
-        "name": "MUSICAL SYMBOL OTTAVA BASSA",
-        "value": "𝄷",
-        "codepoint": 119095
-      },
-      {
-        "name": "MUSICAL SYMBOL QUINDICESIMA ALTA",
-        "value": "𝄸",
-        "codepoint": 119096
-      },
-      {
-        "name": "MUSICAL SYMBOL QUINDICESIMA BASSA",
-        "value": "𝄹",
-        "codepoint": 119097
-      },
-      {
-        "name": "MUSICAL SYMBOL MULTI REST",
-        "value": "𝄺",
-        "codepoint": 119098
-      },
-      {
-        "name": "MUSICAL SYMBOL WHOLE REST",
-        "value": "𝄻",
-        "codepoint": 119099
-      },
-      {
-        "name": "MUSICAL SYMBOL HALF REST",
-        "value": "𝄼",
-        "codepoint": 119100
-      },
-      {
-        "name": "MUSICAL SYMBOL QUARTER REST",
-        "value": "𝄽",
-        "codepoint": 119101
-      },
-      {
-        "name": "MUSICAL SYMBOL EIGHTH REST",
-        "value": "𝄾",
-        "codepoint": 119102
-      },
-      {
-        "name": "MUSICAL SYMBOL SIXTEENTH REST",
-        "value": "𝄿",
-        "codepoint": 119103
-      },
-      {
-        "name": "MUSICAL SYMBOL THIRTY-SECOND REST",
-        "value": "𝅀",
-        "codepoint": 119104
-      },
-      {
-        "name": "MUSICAL SYMBOL SIXTY-FOURTH REST",
-        "value": "𝅁",
-        "codepoint": 119105
-      },
-      {
-        "name": "MUSICAL SYMBOL ONE HUNDRED TWENTY-EIGHTH REST",
-        "value": "𝅂",
-        "codepoint": 119106
-      },
-      {
-        "name": "MUSICAL SYMBOL X NOTEHEAD",
-        "value": "𝅃",
-        "codepoint": 119107
-      },
-      {
-        "name": "MUSICAL SYMBOL PLUS NOTEHEAD",
-        "value": "𝅄",
-        "codepoint": 119108
-      },
-      {
-        "name": "MUSICAL SYMBOL CIRCLE X NOTEHEAD",
-        "value": "𝅅",
-        "codepoint": 119109
-      },
-      {
-        "name": "MUSICAL SYMBOL SQUARE NOTEHEAD WHITE",
-        "value": "𝅆",
-        "codepoint": 119110
-      },
-      {
-        "name": "MUSICAL SYMBOL SQUARE NOTEHEAD BLACK",
-        "value": "𝅇",
-        "codepoint": 119111
-      },
-      {
-        "name": "MUSICAL SYMBOL TRIANGLE NOTEHEAD UP WHITE",
-        "value": "𝅈",
-        "codepoint": 119112
-      },
-      {
-        "name": "MUSICAL SYMBOL TRIANGLE NOTEHEAD UP BLACK",
-        "value": "𝅉",
-        "codepoint": 119113
-      },
-      {
-        "name": "MUSICAL SYMBOL TRIANGLE NOTEHEAD LEFT WHITE",
-        "value": "𝅊",
-        "codepoint": 119114
-      },
-      {
-        "name": "MUSICAL SYMBOL TRIANGLE NOTEHEAD LEFT BLACK",
-        "value": "𝅋",
-        "codepoint": 119115
-      },
-      {
-        "name": "MUSICAL SYMBOL TRIANGLE NOTEHEAD RIGHT WHITE",
-        "value": "𝅌",
-        "codepoint": 119116
-      },
-      {
-        "name": "MUSICAL SYMBOL TRIANGLE NOTEHEAD RIGHT BLACK",
-        "value": "𝅍",
-        "codepoint": 119117
-      },
-      {
-        "name": "MUSICAL SYMBOL TRIANGLE NOTEHEAD DOWN WHITE",
-        "value": "𝅎",
-        "codepoint": 119118
-      },
-      {
-        "name": "MUSICAL SYMBOL TRIANGLE NOTEHEAD DOWN BLACK",
-        "value": "𝅏",
-        "codepoint": 119119
-      },
-      {
-        "name": "MUSICAL SYMBOL TRIANGLE NOTEHEAD UP RIGHT WHITE",
-        "value": "𝅐",
-        "codepoint": 119120
-      },
-      {
-        "name": "MUSICAL SYMBOL TRIANGLE NOTEHEAD UP RIGHT BLACK",
-        "value": "𝅑",
-        "codepoint": 119121
-      },
-      {
-        "name": "MUSICAL SYMBOL MOON NOTEHEAD WHITE",
-        "value": "𝅒",
-        "codepoint": 119122
-      },
-      {
-        "name": "MUSICAL SYMBOL MOON NOTEHEAD BLACK",
-        "value": "𝅓",
-        "codepoint": 119123
-      },
-      {
-        "name": "MUSICAL SYMBOL TRIANGLE-ROUND NOTEHEAD DOWN WHITE",
-        "value": "𝅔",
-        "codepoint": 119124
-      },
-      {
-        "name": "MUSICAL SYMBOL TRIANGLE-ROUND NOTEHEAD DOWN BLACK",
-        "value": "𝅕",
-        "codepoint": 119125
-      },
-      {
-        "name": "MUSICAL SYMBOL PARENTHESIS NOTEHEAD",
-        "value": "𝅖",
-        "codepoint": 119126
-      },
-      {
-        "name": "MUSICAL SYMBOL VOID NOTEHEAD",
-        "value": "𝅗",
-        "codepoint": 119127
-      },
-      {
-        "name": "MUSICAL SYMBOL NOTEHEAD BLACK",
-        "value": "𝅘",
-        "codepoint": 119128
-      },
-      {
-        "name": "MUSICAL SYMBOL NULL NOTEHEAD",
-        "value": "𝅙",
-        "codepoint": 119129
-      },
-      {
-        "name": "MUSICAL SYMBOL CLUSTER NOTEHEAD WHITE",
-        "value": "𝅚",
-        "codepoint": 119130
-      },
-      {
-        "name": "MUSICAL SYMBOL CLUSTER NOTEHEAD BLACK",
-        "value": "𝅛",
-        "codepoint": 119131
-      },
-      {
-        "name": "MUSICAL SYMBOL BREVE",
-        "value": "𝅜",
-        "codepoint": 119132
-      },
-      {
-        "name": "MUSICAL SYMBOL WHOLE NOTE",
-        "value": "𝅝",
-        "codepoint": 119133
-      },
-      {
-        "name": "MUSICAL SYMBOL HALF NOTE",
-        "value": "𝅗𝅥",
-        "codepoint": 119134
-      },
-      {
-        "name": "MUSICAL SYMBOL QUARTER NOTE",
-        "value": "𝅘𝅥",
-        "codepoint": 119135
-      },
-      {
-        "name": "MUSICAL SYMBOL EIGHTH NOTE",
-        "value": "𝅘𝅥𝅮",
-        "codepoint": 119136
-      },
-      {
-        "name": "MUSICAL SYMBOL SIXTEENTH NOTE",
-        "value": "𝅘𝅥𝅯",
-        "codepoint": 119137
-      },
-      {
-        "name": "MUSICAL SYMBOL THIRTY-SECOND NOTE",
-        "value": "𝅘𝅥𝅰",
-        "codepoint": 119138
-      },
-      {
-        "name": "MUSICAL SYMBOL SIXTY-FOURTH NOTE",
-        "value": "𝅘𝅥𝅱",
-        "codepoint": 119139
-      },
-      {
-        "name": "MUSICAL SYMBOL ONE HUNDRED TWENTY-EIGHTH NOTE",
-        "value": "𝅘𝅥𝅲",
-        "codepoint": 119140
-      },
-      {
-        "name": "MUSICAL SYMBOL COMBINING STEM",
-        "value": "𝅥",
-        "codepoint": 119141
-      },
-      {
-        "name": "MUSICAL SYMBOL COMBINING SPRECHGESANG STEM",
-        "value": "𝅦",
-        "codepoint": 119142
-      },
-      {
-        "name": "MUSICAL SYMBOL COMBINING TREMOLO-1",
-        "value": "𝅧",
-        "codepoint": 119143
-      },
-      {
-        "name": "MUSICAL SYMBOL COMBINING TREMOLO-2",
-        "value": "𝅨",
-        "codepoint": 119144
-      },
-      {
-        "name": "MUSICAL SYMBOL COMBINING TREMOLO-3",
-        "value": "𝅩",
-        "codepoint": 119145
-      },
-      {
-        "name": "MUSICAL SYMBOL FINGERED TREMOLO-1",
-        "value": "𝅪",
-        "codepoint": 119146
-      },
-      {
-        "name": "MUSICAL SYMBOL FINGERED TREMOLO-2",
-        "value": "𝅫",
-        "codepoint": 119147
-      },
-      {
-        "name": "MUSICAL SYMBOL FINGERED TREMOLO-3",
-        "value": "𝅬",
-        "codepoint": 119148
-      },
-      {
-        "name": "MUSICAL SYMBOL COMBINING AUGMENTATION DOT",
-        "value": "𝅭",
-        "codepoint": 119149
-      },
-      {
-        "name": "MUSICAL SYMBOL COMBINING FLAG-1",
-        "value": "𝅮",
-        "codepoint": 119150
-      },
-      {
-        "name": "MUSICAL SYMBOL COMBINING FLAG-2",
-        "value": "𝅯",
-        "codepoint": 119151
-      },
-      {
-        "name": "MUSICAL SYMBOL COMBINING FLAG-3",
-        "value": "𝅰",
-        "codepoint": 119152
-      },
-      {
-        "name": "MUSICAL SYMBOL COMBINING FLAG-4",
-        "value": "𝅱",
-        "codepoint": 119153
-      },
-      {
-        "name": "MUSICAL SYMBOL COMBINING FLAG-5",
-        "value": "𝅲",
-        "codepoint": 119154
-      },
-      {
-        "name": "MUSICAL SYMBOL COMBINING ACCENT",
-        "value": "𝅻",
-        "codepoint": 119163
-      },
-      {
-        "name": "MUSICAL SYMBOL COMBINING STACCATO",
-        "value": "𝅼",
-        "codepoint": 119164
-      },
-      {
-        "name": "MUSICAL SYMBOL COMBINING TENUTO",
-        "value": "𝅽",
-        "codepoint": 119165
-      },
-      {
-        "name": "MUSICAL SYMBOL COMBINING STACCATISSIMO",
-        "value": "𝅾",
-        "codepoint": 119166
-      },
-      {
-        "name": "MUSICAL SYMBOL COMBINING MARCATO",
-        "value": "𝅿",
-        "codepoint": 119167
-      },
-      {
-        "name": "MUSICAL SYMBOL COMBINING MARCATO-STACCATO",
-        "value": "𝆀",
-        "codepoint": 119168
-      },
-      {
-        "name": "MUSICAL SYMBOL COMBINING ACCENT-STACCATO",
-        "value": "𝆁",
-        "codepoint": 119169
-      },
-      {
-        "name": "MUSICAL SYMBOL COMBINING LOURE",
-        "value": "𝆂",
-        "codepoint": 119170
-      },
-      {
-        "name": "MUSICAL SYMBOL ARPEGGIATO UP",
-        "value": "𝆃",
-        "codepoint": 119171
-      },
-      {
-        "name": "MUSICAL SYMBOL ARPEGGIATO DOWN",
-        "value": "𝆄",
-        "codepoint": 119172
-      },
-      {
-        "name": "MUSICAL SYMBOL COMBINING DOIT",
-        "value": "𝆅",
-        "codepoint": 119173
-      },
-      {
-        "name": "MUSICAL SYMBOL COMBINING RIP",
-        "value": "𝆆",
-        "codepoint": 119174
-      },
-      {
-        "name": "MUSICAL SYMBOL COMBINING FLIP",
-        "value": "𝆇",
-        "codepoint": 119175
-      },
-      {
-        "name": "MUSICAL SYMBOL COMBINING SMEAR",
-        "value": "𝆈",
-        "codepoint": 119176
-      },
-      {
-        "name": "MUSICAL SYMBOL COMBINING BEND",
-        "value": "𝆉",
-        "codepoint": 119177
-      },
-      {
-        "name": "MUSICAL SYMBOL COMBINING DOUBLE TONGUE",
-        "value": "𝆊",
-        "codepoint": 119178
-      },
-      {
-        "name": "MUSICAL SYMBOL COMBINING TRIPLE TONGUE",
-        "value": "𝆋",
-        "codepoint": 119179
-      },
-      {
-        "name": "MUSICAL SYMBOL RINFORZANDO",
-        "value": "𝆌",
-        "codepoint": 119180
-      },
-      {
-        "name": "MUSICAL SYMBOL SUBITO",
-        "value": "𝆍",
-        "codepoint": 119181
-      },
-      {
-        "name": "MUSICAL SYMBOL Z",
-        "value": "𝆎",
-        "codepoint": 119182
-      },
-      {
-        "name": "MUSICAL SYMBOL PIANO",
-        "value": "𝆏",
-        "codepoint": 119183
-      },
-      {
-        "name": "MUSICAL SYMBOL MEZZO",
-        "value": "𝆐",
-        "codepoint": 119184
-      },
-      {
-        "name": "MUSICAL SYMBOL FORTE",
-        "value": "𝆑",
-        "codepoint": 119185
-      },
-      {
         "name": "MUSICAL SYMBOL CRESCENDO",
         "value": "𝆒",
         "codepoint": 119186
@@ -18671,96 +16826,6 @@
         "name": "MUSICAL SYMBOL DECRESCENDO",
         "value": "𝆓",
         "codepoint": 119187
-      },
-      {
-        "name": "MUSICAL SYMBOL GRACE NOTE SLASH",
-        "value": "𝆔",
-        "codepoint": 119188
-      },
-      {
-        "name": "MUSICAL SYMBOL GRACE NOTE NO SLASH",
-        "value": "𝆕",
-        "codepoint": 119189
-      },
-      {
-        "name": "MUSICAL SYMBOL TR",
-        "value": "𝆖",
-        "codepoint": 119190
-      },
-      {
-        "name": "MUSICAL SYMBOL TURN",
-        "value": "𝆗",
-        "codepoint": 119191
-      },
-      {
-        "name": "MUSICAL SYMBOL INVERTED TURN",
-        "value": "𝆘",
-        "codepoint": 119192
-      },
-      {
-        "name": "MUSICAL SYMBOL TURN SLASH",
-        "value": "𝆙",
-        "codepoint": 119193
-      },
-      {
-        "name": "MUSICAL SYMBOL TURN UP",
-        "value": "𝆚",
-        "codepoint": 119194
-      },
-      {
-        "name": "MUSICAL SYMBOL ORNAMENT STROKE-1",
-        "value": "𝆛",
-        "codepoint": 119195
-      },
-      {
-        "name": "MUSICAL SYMBOL ORNAMENT STROKE-2",
-        "value": "𝆜",
-        "codepoint": 119196
-      },
-      {
-        "name": "MUSICAL SYMBOL ORNAMENT STROKE-3",
-        "value": "𝆝",
-        "codepoint": 119197
-      },
-      {
-        "name": "MUSICAL SYMBOL ORNAMENT STROKE-4",
-        "value": "𝆞",
-        "codepoint": 119198
-      },
-      {
-        "name": "MUSICAL SYMBOL ORNAMENT STROKE-5",
-        "value": "𝆟",
-        "codepoint": 119199
-      },
-      {
-        "name": "MUSICAL SYMBOL ORNAMENT STROKE-6",
-        "value": "𝆠",
-        "codepoint": 119200
-      },
-      {
-        "name": "MUSICAL SYMBOL ORNAMENT STROKE-7",
-        "value": "𝆡",
-        "codepoint": 119201
-      },
-      {
-        "name": "MUSICAL SYMBOL ORNAMENT STROKE-8",
-        "value": "𝆢",
-        "codepoint": 119202
-      },
-      {
-        "name": "MUSICAL SYMBOL ORNAMENT STROKE-9",
-        "value": "𝆣",
-        "codepoint": 119203
-      },
-      {
-        "name": "MUSICAL SYMBOL ORNAMENT STROKE-10",
-        "value": "𝆤",
-        "codepoint": 119204
-      },
-      {
-        "name": "MUSICAL SYMBOL ORNAMENT STROKE-11",
-        "value": "𝆥",
-        "codepoint": 119205
       },
       {
         "name": "MUSICAL SYMBOL HAUPTSTIMME",
@@ -18776,156 +16841,6 @@
         "name": "MUSICAL SYMBOL END OF STIMME",
         "value": "𝆨",
         "codepoint": 119208
-      },
-      {
-        "name": "MUSICAL SYMBOL DEGREE SLASH",
-        "value": "𝆩",
-        "codepoint": 119209
-      },
-      {
-        "name": "MUSICAL SYMBOL COMBINING DOWN BOW",
-        "value": "𝆪",
-        "codepoint": 119210
-      },
-      {
-        "name": "MUSICAL SYMBOL COMBINING UP BOW",
-        "value": "𝆫",
-        "codepoint": 119211
-      },
-      {
-        "name": "MUSICAL SYMBOL COMBINING HARMONIC",
-        "value": "𝆬",
-        "codepoint": 119212
-      },
-      {
-        "name": "MUSICAL SYMBOL COMBINING SNAP PIZZICATO",
-        "value": "𝆭",
-        "codepoint": 119213
-      },
-      {
-        "name": "MUSICAL SYMBOL PEDAL MARK",
-        "value": "𝆮",
-        "codepoint": 119214
-      },
-      {
-        "name": "MUSICAL SYMBOL PEDAL UP MARK",
-        "value": "𝆯",
-        "codepoint": 119215
-      },
-      {
-        "name": "MUSICAL SYMBOL HALF PEDAL MARK",
-        "value": "𝆰",
-        "codepoint": 119216
-      },
-      {
-        "name": "MUSICAL SYMBOL GLISSANDO UP",
-        "value": "𝆱",
-        "codepoint": 119217
-      },
-      {
-        "name": "MUSICAL SYMBOL GLISSANDO DOWN",
-        "value": "𝆲",
-        "codepoint": 119218
-      },
-      {
-        "name": "MUSICAL SYMBOL WITH FINGERNAILS",
-        "value": "𝆳",
-        "codepoint": 119219
-      },
-      {
-        "name": "MUSICAL SYMBOL DAMP",
-        "value": "𝆴",
-        "codepoint": 119220
-      },
-      {
-        "name": "MUSICAL SYMBOL DAMP ALL",
-        "value": "𝆵",
-        "codepoint": 119221
-      },
-      {
-        "name": "MUSICAL SYMBOL MAXIMA",
-        "value": "𝆶",
-        "codepoint": 119222
-      },
-      {
-        "name": "MUSICAL SYMBOL LONGA",
-        "value": "𝆷",
-        "codepoint": 119223
-      },
-      {
-        "name": "MUSICAL SYMBOL BREVIS",
-        "value": "𝆸",
-        "codepoint": 119224
-      },
-      {
-        "name": "MUSICAL SYMBOL SEMIBREVIS WHITE",
-        "value": "𝆹",
-        "codepoint": 119225
-      },
-      {
-        "name": "MUSICAL SYMBOL SEMIBREVIS BLACK",
-        "value": "𝆺",
-        "codepoint": 119226
-      },
-      {
-        "name": "MUSICAL SYMBOL MINIMA",
-        "value": "𝆹𝅥",
-        "codepoint": 119227
-      },
-      {
-        "name": "MUSICAL SYMBOL MINIMA BLACK",
-        "value": "𝆺𝅥",
-        "codepoint": 119228
-      },
-      {
-        "name": "MUSICAL SYMBOL SEMIMINIMA WHITE",
-        "value": "𝆹𝅥𝅮",
-        "codepoint": 119229
-      },
-      {
-        "name": "MUSICAL SYMBOL SEMIMINIMA BLACK",
-        "value": "𝆺𝅥𝅮",
-        "codepoint": 119230
-      },
-      {
-        "name": "MUSICAL SYMBOL FUSA WHITE",
-        "value": "𝆹𝅥𝅯",
-        "codepoint": 119231
-      },
-      {
-        "name": "MUSICAL SYMBOL FUSA BLACK",
-        "value": "𝆺𝅥𝅯",
-        "codepoint": 119232
-      },
-      {
-        "name": "MUSICAL SYMBOL LONGA PERFECTA REST",
-        "value": "𝇁",
-        "codepoint": 119233
-      },
-      {
-        "name": "MUSICAL SYMBOL LONGA IMPERFECTA REST",
-        "value": "𝇂",
-        "codepoint": 119234
-      },
-      {
-        "name": "MUSICAL SYMBOL BREVIS REST",
-        "value": "𝇃",
-        "codepoint": 119235
-      },
-      {
-        "name": "MUSICAL SYMBOL SEMIBREVIS REST",
-        "value": "𝇄",
-        "codepoint": 119236
-      },
-      {
-        "name": "MUSICAL SYMBOL MINIMA REST",
-        "value": "𝇅",
-        "codepoint": 119237
-      },
-      {
-        "name": "MUSICAL SYMBOL SEMIMINIMA REST",
-        "value": "𝇆",
-        "codepoint": 119238
       },
       {
         "name": "MUSICAL SYMBOL TEMPUS PERFECTUM CUM PROLATIONE PERFECTA",
@@ -18966,136 +16881,6 @@
         "name": "MUSICAL SYMBOL TEMPUS IMPERFECTUM CUM PROLATIONE IMPERFECTA DIMINUTION-3",
         "value": "𝇎",
         "codepoint": 119246
-      },
-      {
-        "name": "MUSICAL SYMBOL CROIX",
-        "value": "𝇏",
-        "codepoint": 119247
-      },
-      {
-        "name": "MUSICAL SYMBOL GREGORIAN C CLEF",
-        "value": "𝇐",
-        "codepoint": 119248
-      },
-      {
-        "name": "MUSICAL SYMBOL GREGORIAN F CLEF",
-        "value": "𝇑",
-        "codepoint": 119249
-      },
-      {
-        "name": "MUSICAL SYMBOL SQUARE B",
-        "value": "𝇒",
-        "codepoint": 119250
-      },
-      {
-        "name": "MUSICAL SYMBOL VIRGA",
-        "value": "𝇓",
-        "codepoint": 119251
-      },
-      {
-        "name": "MUSICAL SYMBOL PODATUS",
-        "value": "𝇔",
-        "codepoint": 119252
-      },
-      {
-        "name": "MUSICAL SYMBOL CLIVIS",
-        "value": "𝇕",
-        "codepoint": 119253
-      },
-      {
-        "name": "MUSICAL SYMBOL SCANDICUS",
-        "value": "𝇖",
-        "codepoint": 119254
-      },
-      {
-        "name": "MUSICAL SYMBOL CLIMACUS",
-        "value": "𝇗",
-        "codepoint": 119255
-      },
-      {
-        "name": "MUSICAL SYMBOL TORCULUS",
-        "value": "𝇘",
-        "codepoint": 119256
-      },
-      {
-        "name": "MUSICAL SYMBOL PORRECTUS",
-        "value": "𝇙",
-        "codepoint": 119257
-      },
-      {
-        "name": "MUSICAL SYMBOL PORRECTUS FLEXUS",
-        "value": "𝇚",
-        "codepoint": 119258
-      },
-      {
-        "name": "MUSICAL SYMBOL SCANDICUS FLEXUS",
-        "value": "𝇛",
-        "codepoint": 119259
-      },
-      {
-        "name": "MUSICAL SYMBOL TORCULUS RESUPINUS",
-        "value": "𝇜",
-        "codepoint": 119260
-      },
-      {
-        "name": "MUSICAL SYMBOL PES SUBPUNCTIS",
-        "value": "𝇝",
-        "codepoint": 119261
-      },
-      {
-        "name": "MUSICAL SYMBOL KIEVAN C CLEF",
-        "value": "𝇞",
-        "codepoint": 119262
-      },
-      {
-        "name": "MUSICAL SYMBOL KIEVAN END OF PIECE",
-        "value": "𝇟",
-        "codepoint": 119263
-      },
-      {
-        "name": "MUSICAL SYMBOL KIEVAN FINAL NOTE",
-        "value": "𝇠",
-        "codepoint": 119264
-      },
-      {
-        "name": "MUSICAL SYMBOL KIEVAN RECITATIVE MARK",
-        "value": "𝇡",
-        "codepoint": 119265
-      },
-      {
-        "name": "MUSICAL SYMBOL KIEVAN WHOLE NOTE",
-        "value": "𝇢",
-        "codepoint": 119266
-      },
-      {
-        "name": "MUSICAL SYMBOL KIEVAN HALF NOTE",
-        "value": "𝇣",
-        "codepoint": 119267
-      },
-      {
-        "name": "MUSICAL SYMBOL KIEVAN QUARTER NOTE STEM DOWN",
-        "value": "𝇤",
-        "codepoint": 119268
-      },
-      {
-        "name": "MUSICAL SYMBOL KIEVAN QUARTER NOTE STEM UP",
-        "value": "𝇥",
-        "codepoint": 119269
-      },
-      {
-        "name": "MUSICAL SYMBOL KIEVAN EIGHTH NOTE STEM DOWN",
-        "value": "𝇦",
-        "codepoint": 119270
-      },
-      {
-        "name": "MUSICAL SYMBOL KIEVAN EIGHTH NOTE STEM UP",
-        "value": "𝇧",
-        "codepoint": 119271
-      },
-      {
-        "name": "MUSICAL SYMBOL KIEVAN FLAT SIGN",
-        "value": "𝇨",
-        "codepoint": 119272
       }
     ]
   },
@@ -19541,451 +17326,6 @@
         "name": "LOWER RIGHT TRIANGLE",
         "value": "◿",
         "codepoint": 9727
-      },
-      {
-        "name": "BLACK LEFT-POINTING ISOSCELES RIGHT TRIANGLE",
-        "value": "🞀",
-        "codepoint": 128896
-      },
-      {
-        "name": "BLACK UP-POINTING ISOSCELES RIGHT TRIANGLE",
-        "value": "🞁",
-        "codepoint": 128897
-      },
-      {
-        "name": "BLACK RIGHT-POINTING ISOSCELES RIGHT TRIANGLE",
-        "value": "🞂",
-        "codepoint": 128898
-      },
-      {
-        "name": "BLACK DOWN-POINTING ISOSCELES RIGHT TRIANGLE",
-        "value": "🞃",
-        "codepoint": 128899
-      },
-      {
-        "name": "BLACK SLIGHTLY SMALL CIRCLE",
-        "value": "🞄",
-        "codepoint": 128900
-      },
-      {
-        "name": "MEDIUM BOLD WHITE CIRCLE",
-        "value": "🞅",
-        "codepoint": 128901
-      },
-      {
-        "name": "BOLD WHITE CIRCLE",
-        "value": "🞆",
-        "codepoint": 128902
-      },
-      {
-        "name": "HEAVY WHITE CIRCLE",
-        "value": "🞇",
-        "codepoint": 128903
-      },
-      {
-        "name": "VERY HEAVY WHITE CIRCLE",
-        "value": "🞈",
-        "codepoint": 128904
-      },
-      {
-        "name": "EXTREMELY HEAVY WHITE CIRCLE",
-        "value": "🞉",
-        "codepoint": 128905
-      },
-      {
-        "name": "WHITE CIRCLE CONTAINING BLACK SMALL CIRCLE",
-        "value": "🞊",
-        "codepoint": 128906
-      },
-      {
-        "name": "ROUND TARGET",
-        "value": "🞋",
-        "codepoint": 128907
-      },
-      {
-        "name": "BLACK TINY SQUARE",
-        "value": "🞌",
-        "codepoint": 128908
-      },
-      {
-        "name": "BLACK SLIGHTLY SMALL SQUARE",
-        "value": "🞍",
-        "codepoint": 128909
-      },
-      {
-        "name": "LIGHT WHITE SQUARE",
-        "value": "🞎",
-        "codepoint": 128910
-      },
-      {
-        "name": "MEDIUM WHITE SQUARE",
-        "value": "🞏",
-        "codepoint": 128911
-      },
-      {
-        "name": "BOLD WHITE SQUARE",
-        "value": "🞐",
-        "codepoint": 128912
-      },
-      {
-        "name": "HEAVY WHITE SQUARE",
-        "value": "🞑",
-        "codepoint": 128913
-      },
-      {
-        "name": "VERY HEAVY WHITE SQUARE",
-        "value": "🞒",
-        "codepoint": 128914
-      },
-      {
-        "name": "EXTREMELY HEAVY WHITE SQUARE",
-        "value": "🞓",
-        "codepoint": 128915
-      },
-      {
-        "name": "WHITE SQUARE CONTAINING BLACK VERY SMALL SQUARE",
-        "value": "🞔",
-        "codepoint": 128916
-      },
-      {
-        "name": "WHITE SQUARE CONTAINING BLACK MEDIUM SQUARE",
-        "value": "🞕",
-        "codepoint": 128917
-      },
-      {
-        "name": "SQUARE TARGET",
-        "value": "🞖",
-        "codepoint": 128918
-      },
-      {
-        "name": "BLACK TINY DIAMOND",
-        "value": "🞗",
-        "codepoint": 128919
-      },
-      {
-        "name": "BLACK VERY SMALL DIAMOND",
-        "value": "🞘",
-        "codepoint": 128920
-      },
-      {
-        "name": "BLACK MEDIUM SMALL DIAMOND",
-        "value": "🞙",
-        "codepoint": 128921
-      },
-      {
-        "name": "WHITE DIAMOND CONTAINING BLACK VERY SMALL DIAMOND",
-        "value": "🞚",
-        "codepoint": 128922
-      },
-      {
-        "name": "WHITE DIAMOND CONTAINING BLACK MEDIUM DIAMOND",
-        "value": "🞛",
-        "codepoint": 128923
-      },
-      {
-        "name": "DIAMOND TARGET",
-        "value": "🞜",
-        "codepoint": 128924
-      },
-      {
-        "name": "BLACK TINY LOZENGE",
-        "value": "🞝",
-        "codepoint": 128925
-      },
-      {
-        "name": "BLACK VERY SMALL LOZENGE",
-        "value": "🞞",
-        "codepoint": 128926
-      },
-      {
-        "name": "BLACK MEDIUM SMALL LOZENGE",
-        "value": "🞟",
-        "codepoint": 128927
-      },
-      {
-        "name": "WHITE LOZENGE CONTAINING BLACK SMALL LOZENGE",
-        "value": "🞠",
-        "codepoint": 128928
-      },
-      {
-        "name": "THIN GREEK CROSS",
-        "value": "🞡",
-        "codepoint": 128929
-      },
-      {
-        "name": "LIGHT GREEK CROSS",
-        "value": "🞢",
-        "codepoint": 128930
-      },
-      {
-        "name": "MEDIUM GREEK CROSS",
-        "value": "🞣",
-        "codepoint": 128931
-      },
-      {
-        "name": "BOLD GREEK CROSS",
-        "value": "🞤",
-        "codepoint": 128932
-      },
-      {
-        "name": "VERY BOLD GREEK CROSS",
-        "value": "🞥",
-        "codepoint": 128933
-      },
-      {
-        "name": "VERY HEAVY GREEK CROSS",
-        "value": "🞦",
-        "codepoint": 128934
-      },
-      {
-        "name": "EXTREMELY HEAVY GREEK CROSS",
-        "value": "🞧",
-        "codepoint": 128935
-      },
-      {
-        "name": "THIN SALTIRE",
-        "value": "🞨",
-        "codepoint": 128936
-      },
-      {
-        "name": "LIGHT SALTIRE",
-        "value": "🞩",
-        "codepoint": 128937
-      },
-      {
-        "name": "MEDIUM SALTIRE",
-        "value": "🞪",
-        "codepoint": 128938
-      },
-      {
-        "name": "BOLD SALTIRE",
-        "value": "🞫",
-        "codepoint": 128939
-      },
-      {
-        "name": "HEAVY SALTIRE",
-        "value": "🞬",
-        "codepoint": 128940
-      },
-      {
-        "name": "VERY HEAVY SALTIRE",
-        "value": "🞭",
-        "codepoint": 128941
-      },
-      {
-        "name": "EXTREMELY HEAVY SALTIRE",
-        "value": "🞮",
-        "codepoint": 128942
-      },
-      {
-        "name": "LIGHT FIVE SPOKED ASTERISK",
-        "value": "🞯",
-        "codepoint": 128943
-      },
-      {
-        "name": "MEDIUM FIVE SPOKED ASTERISK",
-        "value": "🞰",
-        "codepoint": 128944
-      },
-      {
-        "name": "BOLD FIVE SPOKED ASTERISK",
-        "value": "🞱",
-        "codepoint": 128945
-      },
-      {
-        "name": "HEAVY FIVE SPOKED ASTERISK",
-        "value": "🞲",
-        "codepoint": 128946
-      },
-      {
-        "name": "VERY HEAVY FIVE SPOKED ASTERISK",
-        "value": "🞳",
-        "codepoint": 128947
-      },
-      {
-        "name": "EXTREMELY HEAVY FIVE SPOKED ASTERISK",
-        "value": "🞴",
-        "codepoint": 128948
-      },
-      {
-        "name": "LIGHT SIX SPOKED ASTERISK",
-        "value": "🞵",
-        "codepoint": 128949
-      },
-      {
-        "name": "MEDIUM SIX SPOKED ASTERISK",
-        "value": "🞶",
-        "codepoint": 128950
-      },
-      {
-        "name": "BOLD SIX SPOKED ASTERISK",
-        "value": "🞷",
-        "codepoint": 128951
-      },
-      {
-        "name": "HEAVY SIX SPOKED ASTERISK",
-        "value": "🞸",
-        "codepoint": 128952
-      },
-      {
-        "name": "VERY HEAVY SIX SPOKED ASTERISK",
-        "value": "🞹",
-        "codepoint": 128953
-      },
-      {
-        "name": "EXTREMELY HEAVY SIX SPOKED ASTERISK",
-        "value": "🞺",
-        "codepoint": 128954
-      },
-      {
-        "name": "LIGHT EIGHT SPOKED ASTERISK",
-        "value": "🞻",
-        "codepoint": 128955
-      },
-      {
-        "name": "MEDIUM EIGHT SPOKED ASTERISK",
-        "value": "🞼",
-        "codepoint": 128956
-      },
-      {
-        "name": "BOLD EIGHT SPOKED ASTERISK",
-        "value": "🞽",
-        "codepoint": 128957
-      },
-      {
-        "name": "HEAVY EIGHT SPOKED ASTERISK",
-        "value": "🞾",
-        "codepoint": 128958
-      },
-      {
-        "name": "VERY HEAVY EIGHT SPOKED ASTERISK",
-        "value": "🞿",
-        "codepoint": 128959
-      },
-      {
-        "name": "LIGHT THREE POINTED BLACK STAR",
-        "value": "🟀",
-        "codepoint": 128960
-      },
-      {
-        "name": "MEDIUM THREE POINTED BLACK STAR",
-        "value": "🟁",
-        "codepoint": 128961
-      },
-      {
-        "name": "THREE POINTED BLACK STAR",
-        "value": "🟂",
-        "codepoint": 128962
-      },
-      {
-        "name": "MEDIUM THREE POINTED PINWHEEL STAR",
-        "value": "🟃",
-        "codepoint": 128963
-      },
-      {
-        "name": "LIGHT FOUR POINTED BLACK STAR",
-        "value": "🟄",
-        "codepoint": 128964
-      },
-      {
-        "name": "MEDIUM FOUR POINTED BLACK STAR",
-        "value": "🟅",
-        "codepoint": 128965
-      },
-      {
-        "name": "FOUR POINTED BLACK STAR",
-        "value": "🟆",
-        "codepoint": 128966
-      },
-      {
-        "name": "MEDIUM FOUR POINTED PINWHEEL STAR",
-        "value": "🟇",
-        "codepoint": 128967
-      },
-      {
-        "name": "REVERSE LIGHT FOUR POINTED PINWHEEL STAR",
-        "value": "🟈",
-        "codepoint": 128968
-      },
-      {
-        "name": "LIGHT FIVE POINTED BLACK STAR",
-        "value": "🟉",
-        "codepoint": 128969
-      },
-      {
-        "name": "HEAVY FIVE POINTED BLACK STAR",
-        "value": "🟊",
-        "codepoint": 128970
-      },
-      {
-        "name": "MEDIUM SIX POINTED BLACK STAR",
-        "value": "🟋",
-        "codepoint": 128971
-      },
-      {
-        "name": "HEAVY SIX POINTED BLACK STAR",
-        "value": "🟌",
-        "codepoint": 128972
-      },
-      {
-        "name": "SIX POINTED PINWHEEL STAR",
-        "value": "🟍",
-        "codepoint": 128973
-      },
-      {
-        "name": "MEDIUM EIGHT POINTED BLACK STAR",
-        "value": "🟎",
-        "codepoint": 128974
-      },
-      {
-        "name": "HEAVY EIGHT POINTED BLACK STAR",
-        "value": "🟏",
-        "codepoint": 128975
-      },
-      {
-        "name": "VERY HEAVY EIGHT POINTED BLACK STAR",
-        "value": "🟐",
-        "codepoint": 128976
-      },
-      {
-        "name": "HEAVY EIGHT POINTED PINWHEEL STAR",
-        "value": "🟑",
-        "codepoint": 128977
-      },
-      {
-        "name": "LIGHT TWELVE POINTED BLACK STAR",
-        "value": "🟒",
-        "codepoint": 128978
-      },
-      {
-        "name": "HEAVY TWELVE POINTED BLACK STAR",
-        "value": "🟓",
-        "codepoint": 128979
-      },
-      {
-        "name": "HEAVY TWELVE POINTED PINWHEEL STAR",
-        "value": "🟔",
-        "codepoint": 128980
-      },
-      {
-        "name": "CIRCLED TRIANGLE",
-        "value": "🟕",
-        "codepoint": 128981
-      },
-      {
-        "name": "NEGATIVE CIRCLED TRIANGLE",
-        "value": "🟖",
-        "codepoint": 128982
-      },
-      {
-        "name": "CIRCLED SQUARE",
-        "value": "🟗",
-        "codepoint": 128983
-      },
-      {
-        "name": "NEGATIVE CIRCLED SQUARE",
-        "value": "🟘",
-        "codepoint": 128984
       }
     ]
   },
@@ -20051,16 +17391,6 @@
         "name": "IDEOGRAPHIC DESCRIPTION CHARACTER OVERLAID",
         "value": "⿻",
         "codepoint": 12283
-      },
-      {
-        "name": "TANGUT ITERATION MARK",
-        "value": "𖿠",
-        "codepoint": 94176
-      },
-      {
-        "name": "NUSHU ITERATION MARK",
-        "value": "𖿡",
-        "codepoint": 94177
       }
     ]
   }

@@ -19,9 +19,9 @@ import * as os from 'os';
 import * as unzip from 'unzip';
 import * as parser from 'fast-xml-parser';
 
-// This will check the 'age' of the unicode characters and only allow characters
+// This will enforce the 'age' of the unicode characters and only allow characters
 // with an age less than or equal to this age.
-const maxUnicodeAge = 11.0;
+const maxUnicodeAge = 6.0;
 
 // The file that should be generated holding the symbol data
 const outputFile = './src/behaviors/symbol/insert_symbol-data.json';
@@ -32,7 +32,7 @@ const outputFile = './src/behaviors/symbol/insert_symbol-data.json';
 const groupToBlockMapping = [
   {
     alias: 'Miscellaneous',
-    blocks: ['Latin-1 Supplement', 'Enclosed Alphanumerics', 'Dingbats', 'Miscellaneous Symbols'],
+    blocks: ['Latin-1 Supplement', 'Enclosed Alphanumerics', 'Dingbats', 'Miscellaneous Symbols', 'Letterlike Symbols'],
   },
   {
     alias: 'Mathematical',
@@ -83,11 +83,40 @@ const groupToBlockMapping = [
   {
     alias: 'Ideographic',
     blocks: ['Ideographic Description Characters', 'Ideographic Symbols and Punctuation'],
-  },
+  }
 ];
 
+// These characters are excluded because they don't render properly in the default font. 
+// Consider re-enabling them as address font issues with unicode.
 const excludedChars = [
   160, // no-break space
+  65860,65861,65910,65911,65912,65923,65927,65928,65929,65931,65932,65933,65934, // Ancient Characters
+  11094,11095,11096,11097, // Arrows
+  10190,10191,120778,120779, // Mathematical
+  9885,9886,9887,9907,9908,9909,9910,9911,9912,9913,9914,9915,9916,9919,9920,9921,
+  9922,9923,9926,9927,9929,9930,9932,9933,9936,9938,9941,9942,9943,9944,9945,9946,
+  9947,9948,9949,9950,9951,9952,9953,9955,9956,9957,9958,9959,9960,9963,9964,9965,
+  9966,9967,9974,9979,9980,9982,9983,10079,10080, // Miscellaneous
+  9192, // technical
+  11801, // punctuation
+  119049,119050,119051,119052,119053,119054,119055,119059,119060,119061,119062,119063,
+  119064,119065,119066,119067,119068,119069,119071,119072,119075,119076,119077,119078,
+  119081,119084,119085,119086,119087,119088,119089,119090,119091,119092,119093,119094,
+  119095,119096,119097,119098,119099,119100,119101,119102,119103,119104,119105,119106,
+  119107,119108,119109,119110,119111,119112,119113,119114,119115,119116,119117,119118,
+  119119,119120,119121,119122,119123,119124,119125,119126,119127,119128,119129,119130,
+  119131,119132,119133,119134,119135,119136,119137,119138,119139,119140,119141,119142,
+  119143,119144,119145,119146,119147,119148,119149,119150,119151,119152,119153,119154,
+  119163,119164,119165,119166,119167,119168,119169,119170,119171,119172,119173,119174,
+  119175,119176,119177,119178,119179,119180,119181,119182,119183,119184,119185,119188,
+  119189,119190,119191,119192,119193,119194,119195,119196,119197,119198,119199,119200,
+  119201,119202,119203,119204,119205,119209,119210,119211,119212,119213,119214,
+  119215,119216,119217,119218,119219,119220,119221,119222,119223,119224,119225,119226,
+  119227,119228,119229,119230,119231,119232,119233,119234,119235,119236,119237,119238,
+  119247,119248,119249,119250,119251,119252,119253,119254,119255,119256,119257,119258,
+  119259,119260,119261, // musical symbols
+
+
 ];
 
 // Basic file paths to use when downloading and generating the file. These files will be cleaned up
@@ -153,7 +182,7 @@ fetch(unicodeDownloadPath, {method: 'GET'})
   message('');
 
   message('Generating Output Data');
-  var blockGroups: SymbolGroup[] = new Array<SymbolGroup>();
+  var symbolGroups: SymbolGroup[] = new Array<SymbolGroup>();
   groupToBlockMapping.forEach(groupToBlockMapping => {
     const groupName = groupToBlockMapping.alias;
     const groupSymbols = allValidSymbols.filter(symbol => {
@@ -167,24 +196,30 @@ fetch(unicodeDownloadPath, {method: 'GET'})
         return matchingBlockName != null;
     });
     message('Group ' + groupName + ' -> ' + groupSymbols.length + ' symbols');   
-    blockGroups.push({ name: groupName, symbols: groupSymbols });
+    symbolGroups.push({ name: groupName, symbols: groupSymbols });
   });
   message('');
-  return blockGroups;
+  return symbolGroups;
 })
-.then((blockGroups) => {
+.then((symbolGroups) => {
   // Filter out any groups with no valid characters
-  return blockGroups.filter(blockGroup => blockGroup.symbols.length > 0)
+  return symbolGroups.filter(blockGroup => blockGroup.symbols.length > 0)
 })
-.then((blockGroups) => {
+.then((symbolGroups) => {
   // Write the output file
   message('Writing output'), outputFile;
   cleanupFiles([outputFile], false);
-  const finalJson = JSON.stringify(blockGroups, null, 2);
+  const finalJson = JSON.stringify(symbolGroups, null, 2);
   fs.writeFileSync(outputFile, finalJson);
-  message('Done');
+
+
+  const countSymbols = symbolGroups.reduce((count, symbolGroup) => {
+    return count + symbolGroup.symbols.length;
+  }, 0);
+  message(countSymbols + " total symbols generated");
+  message('Done', '');
 })
-.catch((message) => {
+.catch((message: any) => {
   error(message);
 })
 .finally(() => {
@@ -192,22 +227,22 @@ fetch(unicodeDownloadPath, {method: 'GET'})
   cleanupFiles([targetZipFile, targetXmlFile]);
 });
 
-function parseBlocks(blockJson) : Block[] {
-  return blockJson.map(block => {
+function parseBlocks(blockJson: any[]) : Block[] {
+  return blockJson.map((block: { [x: string]: string; }) => {
     return {
       name: block['@_name'],
       codepointFirst: parseInt(block['@_first-cp'], 16),
       codepointLast: parseInt(block['@_last-cp'], 16),
     };
   })
-  .filter(block => {
+  .filter((block: { name: string; }) => {
     return groupToBlockMapping.find(blockGroup => blockGroup.blocks.includes(block.name));
   });
 }
 
-function parseSymbols(symbolsJson) : Symbol[] {
-  return symbolsJson.filter(rawChar => isValidSymbol(rawChar))
-  .map(rawChar => {
+function parseSymbols(symbolsJson: any[]) : Symbol[] {
+  return symbolsJson.filter((rawChar: any) => isValidSymbol(rawChar))
+  .map((rawChar: { [x: string]: any; }) => {
     const charpoint = parseInt(rawChar['@_cp'], 16);
     return {
       name: rawChar['@_na'],
@@ -217,7 +252,7 @@ function parseSymbols(symbolsJson) : Symbol[] {
   });
 }
 
-function isValidSymbol(rawChar): boolean {
+function isValidSymbol(rawChar: { [x: string]: any; }): boolean {
   const deprecated: string = rawChar['@_dep'];
   if (deprecated === 'Y') {
     return false;
