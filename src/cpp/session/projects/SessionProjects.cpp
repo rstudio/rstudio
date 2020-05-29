@@ -1,7 +1,7 @@
 /*
  * SessionProjects.cpp
  *
- * Copyright (C) 2009-19 by RStudio, PBC
+ * Copyright (C) 2009-20 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -706,11 +706,26 @@ Error writeProjectVcsOptions(const json::JsonRpcRequest& request,
    return Success();
 }
 
-
-void onQuit()
+void saveLastProjectPath()
 {
    projects::ProjectsSettings(options().userScratchPath()).
                         setLastProjectPath(s_projectContext.file());
+}
+
+void onQuit()
+{
+   saveLastProjectPath();
+}
+
+void afterSessionInitHook(bool newSession)
+{
+   // After fully successful startup, wait 30 seconds (default) and then write the last project
+   // path. This project path will get restored at startup, so we want to be very confident it
+   // doesn't crash or misbehave on load.
+   module_context::scheduleDelayedWork(
+         boost::posix_time::seconds(
+            prefs::userPrefs().projectSafeStartupSeconds()),
+         saveLastProjectPath, true);
 }
 
 void onFilesChanged(const std::vector<core::system::FileChangeEvent>& events)
@@ -878,26 +893,6 @@ void startup(const std::string& firstProjectPath)
          module_context::events().onClientInit.connect(boost::bind(onClientInit, openProjectError));
       }
    }
-
-   // add default open docs if specified in the project
-   // and the project has never been opened before
-   std::string defaultOpenDocs = projectContext().config().defaultOpenDocs;
-   if (!defaultOpenDocs.empty() && projects::projectContext().isNewProject())
-   {
-      std::vector<std::string> docs;
-      boost::algorithm::split(docs, defaultOpenDocs, boost::is_any_of(":"));
-
-      for (std::string& doc : docs)
-      {
-         boost::algorithm::trim(doc);
-
-         FilePath docPath = projectContext().directory().completePath(doc);
-         if (docPath.exists())
-         {
-            addFirstRunDoc(projectFilePath, doc);
-         }
-      }
-   }
 }
 
 SEXP rs_writeProjectFile(SEXP projectFilePathSEXP)
@@ -980,8 +975,9 @@ Error initialize()
    cb.onMonitoringDisabled = onMonitoringDisabled;
    s_projectContext.subscribeToFileMonitor("", cb);
 
-   // subscribe to quit for setting last project path
+   // subscribe to quit/deferred init for setting last project path
    module_context::events().onQuit.connect(onQuit);
+   module_context::events().afterSessionInitHook.connect(afterSessionInitHook);
 
    // reset switch to project path so it's a one shot deal; we only do this after successful init so
    // that we can retry a project switch if it doesn't get off the ground the first time

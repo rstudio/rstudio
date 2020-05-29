@@ -24,6 +24,7 @@ NEWS.html
 CONTRIBUTING.html
 CMakeLists.txt.user
 .idea/
+.vscode/
 **/\.tern-port
 .#*
 *.autosave

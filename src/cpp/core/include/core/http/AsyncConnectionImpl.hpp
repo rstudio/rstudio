@@ -104,7 +104,7 @@ public:
          http::Request*)> Handler;
 
     typedef boost::function<void(
-         boost::shared_ptr<AsyncConnectionImpl<SocketType>>)> ClosedHandler;
+         boost::weak_ptr<AsyncConnectionImpl<SocketType>>)> ClosedHandler;
 
    typedef boost::function<bool(
          boost::shared_ptr<AsyncConnectionImpl<SocketType> >,
@@ -147,7 +147,13 @@ public:
 
    virtual ~AsyncConnectionImpl()
    {
-      close();
+      try
+      {
+         close();
+      }
+      catch(...)
+      {
+      }
    }
 
    SocketType& socket()
@@ -290,6 +296,7 @@ public:
    {
       // ensure the socket is only closed once - boost considers
       // multiple closes an error, and this can lead to a segfault
+      ClosedHandler closedHandler;
       RECURSIVE_LOCK_MUTEX(mutex_)
       {
          if (!closed_)
@@ -299,15 +306,18 @@ public:
                LOG_ERROR(error);
 
             closed_ = true;
+            closedHandler = onClosed_;
 
             // cleanup any associated data with the connection
             connectionData_.clear();
-
-            // notify that we have closed the connection
-            onClosed_(AsyncConnectionImpl<SocketType>::shared_from_this());
          }
       }
       END_LOCK_MUTEX;
+
+      // notify that we have closed the connection
+      // we do this after giving up the mutex to prevent potential deadlock
+      if (closedHandler)
+         closedHandler(AsyncConnectionImpl<SocketType>::weak_from_this());
    }
 
    void setUploadHandler(const AsyncUriUploadHandlerFunction& handler)

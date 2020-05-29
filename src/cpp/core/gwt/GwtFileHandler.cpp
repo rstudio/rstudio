@@ -144,16 +144,8 @@ void handleFileRequest(const FileRequestOptions& options,
       vars["viewport_tag"] = std::string();
 #endif
 
-      // read existing CSRF token 
-      //secure = secure || boost::algorithm::starts_with(request.absoluteUri(), "https");
+      // read existing CSRF token
       std::string csrfToken = request.cookieValue("csrf-token");
-      if (csrfToken.empty())
-      {
-         // no CSRF token set up yet; we usually set this at login but it's normal for it to not be
-         // set when using proxied authentication. generate and apply a new token.
-         csrfToken = core::system::generateUuid();
-         core::http::setCSRFTokenCookie(request, boost::optional<boost::gregorian::days>(), csrfToken, true, pResponse);
-      }
       vars["csrf_token"] = string_utils::htmlEscape(csrfToken, true /* isAttribute */);
 
       // don't allow main page to be framed by other domains (clickjacking

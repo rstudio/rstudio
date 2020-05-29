@@ -288,6 +288,7 @@ namespace prefs {
 #define kViewDirAfterRCmdCheck "view_dir_after_r_cmd_check"
 #define kHideObjectFiles "hide_object_files"
 #define kRestoreLastProject "restore_last_project"
+#define kProjectSafeStartupSeconds "project_safe_startup_seconds"
 #define kUseTinytex "use_tinytex"
 #define kCleanTexi2dviOutput "clean_texi2dvi_output"
 #define kLatexShellEscape "latex_shell_escape"
@@ -1283,6 +1284,12 @@ public:
     */
    bool restoreLastProject();
    core::Error setRestoreLastProject(bool val);
+
+   /**
+    * The number of seconds after which a project is deemed to have successfully started.
+    */
+   int projectSafeStartupSeconds();
+   core::Error setProjectSafeStartupSeconds(int val);
 
    /**
     * Use tinytex to compile .tex files.
