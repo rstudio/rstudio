@@ -120,7 +120,7 @@ const extension = (
             }
           },
           writer: (output: PandocOutput, node: ProsemirrorNode) => {
-            if ([kHTMLFormat, kTexFormat].includes(node.attrs.format) || !pandocExtensions.raw_attribute) {
+            if (!pandocExtensions.raw_attribute) {
               output.writeToken(PandocTokenType.Para, () => {
                 output.writeRawMarkdown(node.textContent);
               });
