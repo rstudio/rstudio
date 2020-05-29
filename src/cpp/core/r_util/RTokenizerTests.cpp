@@ -267,6 +267,42 @@ test_context("RTokenizer")
       expect_true(rTokens.at(2).isType(RToken::OPER));
       expect_true(rTokens.at(2).contentEquals(L"**"));
    }
+   
+   test_that("plain raw strings are tokenized properly")
+   {
+      auto lines = {
+         L"r\"(abc)\"",
+         L"R\"(abc)\"",
+         L"r\"{abc}\"",
+         L"r'[abc]'",
+         L"R'{abc}'"
+      };
+      
+      for (auto line : lines)
+      {
+         RTokens rTokens(line);
+         expect_true(rTokens.size() == 1);
+         expect_true(rTokens.at(0).isType(RToken::STRING));
+      }
+   }
+   
+   test_that("unclosed raw strings are tokenized as errors")
+   {
+      RTokens rTokens(L"r'(abc");
+      expect_true(rTokens.size() == 1);
+      expect_true(rTokens.at(0).isType(RToken::ERR));
+   }
+   
+   test_that("the raw string tokenizer restores iterator state if no raw string consumed")
+   {
+      RTokens rTokens(L"rep('.')");
+      expect_true(rTokens.size() == 4);
+      expect_true(rTokens.at(0).isType(RToken::ID));
+      expect_true(rTokens.at(1).isType(RToken::LPAREN));
+      expect_true(rTokens.at(2).isType(RToken::STRING));
+      expect_true(rTokens.at(3).isType(RToken::RPAREN));
+   }
+   
 }
 
 } // namespace r_util
