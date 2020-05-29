@@ -18,6 +18,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
+import org.rstudio.core.client.ClassIds;
 import org.rstudio.core.client.ColorUtil;
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.Size;
@@ -41,7 +42,6 @@ import org.rstudio.studio.client.workbench.views.console.events.ConsoleWriteErro
 import org.rstudio.studio.client.workbench.views.console.events.ConsoleWriteErrorHandler;
 import org.rstudio.studio.client.workbench.views.console.events.ConsoleWriteOutputEvent;
 import org.rstudio.studio.client.workbench.views.console.events.ConsoleWriteOutputHandler;
-import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkContextToolbar;
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkOutputHost;
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkOutputUi;
 
@@ -244,23 +244,21 @@ public class ChunkOutputWidget extends Composite
       return state_;
    }
 
-   public void setLabelClass(String value)
+   public void setClassId(String value)
    {
-      // ensure value has the correct prefix
-      if (!value.startsWith(ChunkContextToolbar.CHUNK_CLASS_PREFIX + CHUNK_OUTPUT_PREFIX))
-         value = new String(ChunkContextToolbar.CHUNK_CLASS_PREFIX +
-                            CHUNK_OUTPUT_PREFIX +
-                            value);
-      value = StringUtil.getCssIdentifier(value);
+      if (StringUtil.isNullOrEmpty(value))
+         value = ClassIds.CHUNK;
+      else if (!value.startsWith(ClassIds.CHUNK_OUTPUT))
+         value = new String(ClassIds.CHUNK_OUTPUT + "_" + ClassIds.idSafeString(value));
 
-      if (!StringUtil.equals(value, label_))
+      // The class ID will change if the Chunk's name changes so we need to clear any previous
+      // class ids set here.
+      if (!StringUtil.equals(ClassIds.idSafeString(value), classId_))
       {
-         // if we've already added a label style, remove it
-         if (!StringUtil.isNullOrEmpty(label_))
-            this.removeStyleName(label_);
-
-         label_ = value;
-         this.addStyleName(label_);
+         if (!StringUtil.isNullOrEmpty(classId_))
+            ClassIds.removeClassId(this, classId_);
+         classId_ = value;
+         ClassIds.assignClassId(this, classId_);
       }
    }
 
@@ -954,7 +952,7 @@ public class ChunkOutputWidget extends Composite
    private int lastOutputType_ = RmdChunkOutputUnit.TYPE_NONE;
    private boolean hasErrors_ = false;
    private boolean hideSatellitePopup_ = false;
-   private String label_;
+   private String classId_;
    
    private Timer collapseTimer_ = null;
    private final String documentId_;
@@ -972,7 +970,4 @@ public class ChunkOutputWidget extends Composite
    public final static int CHUNK_READY       = 2;
    public final static int CHUNK_PRE_OUTPUT  = 3;
    public final static int CHUNK_POST_OUTPUT = 4;
-
-   // this may be relied on by API code and should not change
-   public final static String CHUNK_OUTPUT_PREFIX = "output-";
 }
