@@ -111,10 +111,23 @@ Error tokenizeError(const std::string& reason, const ErrorLocation& location)
 RToken RTokenizer::nextToken()
 {
   if (eol())
-     return RToken() ;
+     return RToken();
 
-  wchar_t c = peek() ;
+  wchar_t c = peek();
 
+  // check for raw string literals
+  if (c == L'r' || c == L'R')
+  {
+     wchar_t next = peek(1);
+     if (next == L'"' || next == L'\'')
+     {
+        RToken token;
+        Error error = matchRawStringLiteral(&token);
+        if (!error)
+           return token;
+     }
+  }
+  
   switch (c)
   {
   case L'(':
@@ -171,19 +184,6 @@ RToken RTokenizer::nextToken()
         
         braceStack_.pop_back();
         return token;
-     }
-  }
-     
-  case L'r':
-  case L'R':
-  {
-     wchar_t next = peek(1);
-     if (next == L'"' || next == L'\'')
-     {
-        RToken token;
-        Error error = matchRawStringLiteral(&token);
-        if (!error)
-           return token;
      }
   }
      
@@ -246,6 +246,7 @@ Error RTokenizer::matchRawStringLiteral(RToken* pToken)
    wchar_t firstChar = eat();
    if (!(firstChar == L'r' || firstChar == L'R'))
    {
+      pos_ = start;
       return tokenizeError(
                "expected 'r' or 'R' at start of raw string literal",
                ERROR_LOCATION);
@@ -255,6 +256,7 @@ Error RTokenizer::matchRawStringLiteral(RToken* pToken)
    wchar_t quoteChar = eat();
    if (!(quoteChar == L'"' || quoteChar == L'\''))
    {
+      pos_ = start;
       return tokenizeError(
                "expected quote character at start of raw string literal",
                ERROR_LOCATION);
@@ -289,6 +291,7 @@ Error RTokenizer::matchRawStringLiteral(RToken* pToken)
    }
    else
    {
+      pos_ = start;
       return tokenizeError(
                "expected opening bracket at start of raw string literal",
                ERROR_LOCATION);
