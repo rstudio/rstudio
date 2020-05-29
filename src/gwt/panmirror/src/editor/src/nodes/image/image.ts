@@ -103,6 +103,7 @@ const extension = (
 
         attr_edit: () => ({
           type: (schema: Schema) => schema.nodes.image,
+          noDecorator: true,
           editFn: () => imageCommand(ui, imageAttr),
         }),
       },

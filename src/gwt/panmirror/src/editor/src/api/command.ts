@@ -23,6 +23,7 @@ import { EditorView } from 'prosemirror-view';
 import { markIsActive } from './mark';
 import { canInsertNode, nodeIsActive } from './node';
 import { pandocAttrInSpec, pandocAttrAvailable, pandocAttrFrom } from './pandoc_attr';
+import { isList } from './list';
 
 export enum EditorCommandId {
   // text editing
@@ -64,7 +65,7 @@ export enum EditorCommandId {
   ListItemSplit = '19BBD87F-96D6-4276-B7B8-470652CF4106',
   ListItemCheck = '2F6DA9D8-EE57-418C-9459-50B6FD84137F',
   ListItemCheckToggle = '34D30F3D-8441-44AD-B75A-415DA8AC740B',
-  OrderedListEdit = 'E006A68C-EA39-4954-91B9-DDB07D1CBDA2',
+  EditListProperties = 'E006A68C-EA39-4954-91B9-DDB07D1CBDA2',
 
   // tables
   TableInsertTable = 'FBE39613-2DAA-445D-9E92-E1EABFB33E2C',
@@ -202,11 +203,7 @@ export class WrapCommand extends NodeCommand {
 export type CommandFn = (state: EditorState, dispatch?: (tr: Transaction<any>) => void, view?: EditorView) => boolean;
 
 export function toggleList(listType: NodeType, itemType: NodeType): CommandFn {
-  function isList(node: ProsemirrorNode) {
-    const schema = node.type.schema;
-    return node.type === schema.nodes.bullet_list || node.type === schema.nodes.ordered_list;
-  }
-
+  
   return (state: EditorState, dispatch?: (tr: Transaction<any>) => void, view?: EditorView) => {
     const { selection } = state;
     const { $from, $to } = selection;
@@ -216,7 +213,7 @@ export function toggleList(listType: NodeType, itemType: NodeType): CommandFn {
       return false;
     }
 
-    const parentList = findParentNode(node => isList(node))(selection);
+    const parentList = findParentNode(isList)(selection);
 
     if (range.depth >= 1 && parentList && range.depth - parentList.depth <= 1) {
       if (isList(parentList.node) && listType.validContent(parentList.node.content)) {

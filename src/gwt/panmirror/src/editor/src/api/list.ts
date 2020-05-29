@@ -25,6 +25,11 @@ export interface ListCapabilities {
   order: boolean;
 }
 
+export function isList(node: ProsemirrorNode) {
+  const schema = node.type.schema;
+  return node.type === schema.nodes.bullet_list || node.type === schema.nodes.ordered_list;
+}
+
 export function precedingListItemInsertPos(doc: ProsemirrorNode, selection: Selection) {
   // selection just be empty
   if (!selection.empty) {

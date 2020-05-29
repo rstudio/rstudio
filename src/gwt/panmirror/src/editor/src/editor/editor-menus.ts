@@ -62,7 +62,7 @@ function formatMenu(ui: EditorUI, commands: EditorCommand[]) {
           { command: EditorCommandId.ListItemSink },
           { command: EditorCommandId.ListItemLift },
           { separator: true },
-          { command: EditorCommandId.OrderedListEdit },
+          { command: EditorCommandId.EditListProperties },
         ],
       },
     },

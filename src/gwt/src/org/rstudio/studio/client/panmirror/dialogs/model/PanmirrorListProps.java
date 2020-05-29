@@ -1,5 +1,5 @@
 /*
- * node_attr.tsx
+ * PanmirrorListProps.java
  *
  * Copyright (C) 2020 by RStudio, PBC
  *
@@ -13,18 +13,18 @@
  *
  */
 
-import { Node as ProsemirrorNode, NodeType, Schema } from 'prosemirror-model';
 
-import { CommandFn } from './command';
-import { EditorUI } from './ui';
+package org.rstudio.studio.client.panmirror.dialogs.model;
 
-export interface AttrEditOptions {
-  type: (schema: Schema) => NodeType;
-  tags?: (node: ProsemirrorNode) => string[];
-  editFn?: (ui: EditorUI) => CommandFn;
-  noDecorator?: boolean;
-  offset?: {
-    top: number;
-    right: number;
-  };
+import jsinterop.annotations.JsType;
+
+@JsType
+public class PanmirrorListProps
+{
+   public String type;
+   public boolean tight;
+   public int order;
+   public String number_style;
+   public String number_delim;
 }
+

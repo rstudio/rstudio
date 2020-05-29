@@ -31,7 +31,7 @@ import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorLinkEditResult
 import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorLinkProps;
 import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorLinkTargets;
 import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorListCapabilities;
-import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorOrderedListProps;
+import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorListProps;
 import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorRawFormatProps;
 import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorRawFormatResult;
 import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorTableCapabilities;
@@ -130,12 +130,12 @@ public class PanmirrorDialogs {
       );   
    }
    
-   public Promise<PanmirrorOrderedListProps> editOrderedList(PanmirrorOrderedListProps props, 
-                                                             PanmirrorListCapabilities capabilities)
+   public Promise<PanmirrorListProps> editList(PanmirrorListProps props, 
+                                               PanmirrorListCapabilities capabilities)
    {
-      return new Promise<PanmirrorOrderedListProps>(
-         (ResolveCallbackFn<PanmirrorOrderedListProps> resolve, RejectCallbackFn reject) -> {  
-            PanmirrorEditOrderedListDialog dialog = new PanmirrorEditOrderedListDialog(props, capabilities,
+      return new Promise<PanmirrorListProps>(
+         (ResolveCallbackFn<PanmirrorListProps> resolve, RejectCallbackFn reject) -> {  
+            PanmirrorEditListDialog dialog = new PanmirrorEditListDialog(props, capabilities,
                (result) -> { resolve.onInvoke(result); }
             );
             dialog.showModal(false);
