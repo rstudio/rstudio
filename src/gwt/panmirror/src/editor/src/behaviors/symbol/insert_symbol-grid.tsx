@@ -83,14 +83,22 @@ const SymbolCharacterGrid = React.forwardRef<any, CharacterGridProps>((props, re
     updatePreviewPosition();
   }, [props.selectedIndex]);
 
+  React.useEffect(() => {
+    if (props.symbolCharacters.length < 1) {
+      setShowPreview(false);
+    }
+  }, [props.symbolCharacters]);
+
   const waitToShowPreviewMs = 1500;
   function maybeShowPreview() {
     if (timerRef.current) {
       clearTimeout(timerRef.current);
     }
     timerRef.current = setTimeout(() => {
-      updatePreviewPosition();
-      setShowPreview(true);
+      if (props.symbolCharacters.length > 0) {
+        updatePreviewPosition();
+        setShowPreview(true);
+      }
     }, waitToShowPreviewMs);
   }
 
@@ -176,11 +184,11 @@ function next(currentIndex: number, numberOfColumns: number, numberOfCells: numb
 }
 function prevRow(currentIndex: number, numberOfColumns: number, numberOfCells: number): number {
   const newIndex = currentIndex - numberOfColumns;
-  return Math.max(0, newIndex);
+  return newIndex >= 0 ? newIndex : currentIndex;
 }
 function nextRow(currentIndex: number, numberOfColumns: number, numberOfCells: number): number {
   const newIndex = currentIndex + numberOfColumns;
-  return Math.min(numberOfCells - 1, newIndex);
+  return newIndex < numberOfCells ? newIndex : currentIndex;
 }
 function nextPage(currentIndex: number, numberOfColumns: number, numberOfCells: number): number {
   const newIndex = currentIndex + 6 * numberOfColumns;
