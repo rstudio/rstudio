@@ -1281,7 +1281,7 @@ public class UserPrefsAccessor extends Prefs
    {
       return bool(
          "use_roxygen",
-         "", 
+         "Use Roxygen for documentation", 
          "Whether to use Roxygen for documentation.", 
          false);
    }
@@ -1293,7 +1293,7 @@ public class UserPrefsAccessor extends Prefs
    {
       return bool(
          "use_dataimport",
-         "", 
+         "Enable data import", 
          "Whether to use RStudio's data import feature.", 
          true);
    }
@@ -1305,7 +1305,7 @@ public class UserPrefsAccessor extends Prefs
    {
       return enumeration(
          "pdf_previewer",
-         "", 
+         "PDF previewer", 
          "The program to use to preview PDF files after generation.", 
          new String[] {
             PDF_PREVIEWER_NONE,
@@ -1330,7 +1330,7 @@ public class UserPrefsAccessor extends Prefs
    {
       return bool(
          "always_enable_rnw_concordance",
-         "", 
+         "Enable Rnw concordance", 
          "Whether to always enable the concordance for RNW files.", 
          true);
    }
@@ -1342,7 +1342,7 @@ public class UserPrefsAccessor extends Prefs
    {
       return bool(
          "insert_numbered_latex_sections",
-         "", 
+         "Insert numbered LaTeX sections", 
          "Whether to insert numbered sections in LaTeX.", 
          false);
    }
@@ -1354,7 +1354,7 @@ public class UserPrefsAccessor extends Prefs
    {
       return string(
          "spelling_dictionary_language",
-         "", 
+         "Spelling dictionary language", 
          "The language of the spelling dictionary to use for spell checking.", 
          "en_US");
    }
@@ -1366,7 +1366,7 @@ public class UserPrefsAccessor extends Prefs
    {
       return object(
          "spelling_custom_dictionaries",
-         "", 
+         "Custom spelling dictionaries", 
          "The list of custom dictionaries to use when spell checking.", 
          JsArrayUtil.createStringArray());
    }
@@ -1378,7 +1378,7 @@ public class UserPrefsAccessor extends Prefs
    {
       return integer(
          "document_load_lint_delay",
-         "", 
+         "Lint document after load (ms)", 
          "The number of milliseconds to wait before linting a document after it is loaded.", 
          5000);
    }
@@ -1390,7 +1390,7 @@ public class UserPrefsAccessor extends Prefs
    {
       return bool(
          "ignore_uppercase_words",
-         "", 
+         "Ignore uppercase words in spell check", 
          "Whether to ignore words in uppercase when spell checking.", 
          true);
    }
@@ -1402,7 +1402,7 @@ public class UserPrefsAccessor extends Prefs
    {
       return bool(
          "ignore_words_with_numbers",
-         "", 
+         "Ignore words with numbers in spell check", 
          "Whether to ignore words with numbers in them when spell checking.", 
          true);
    }
@@ -1414,7 +1414,7 @@ public class UserPrefsAccessor extends Prefs
    {
       return integer(
          "max_spellcheck_words",
-         "", 
+         "Maximum number of words to spell check", 
          "The maximum number of spelling words to check at once.", 
          500);
    }
@@ -1426,7 +1426,7 @@ public class UserPrefsAccessor extends Prefs
    {
       return integer(
          "max_spellcheck_prefetch",
-         "", 
+         "Number of words to prefetch for spell check", 
          "The maximum number of spelling correction suggestions to prefetch.", 
          20);
    }
@@ -1438,7 +1438,7 @@ public class UserPrefsAccessor extends Prefs
    {
       return bool(
          "real_time_spellchecking",
-         "", 
+         "Use real-time spellchecking", 
          "Whether to enable real-time spellchecking by default.", 
          true);
    }
@@ -1450,7 +1450,7 @@ public class UserPrefsAccessor extends Prefs
    {
       return bool(
          "navigate_to_build_error",
-         "", 
+         "Navigate to build errors", 
          "Whether to navigate to build errors.", 
          true);
    }
@@ -1462,7 +1462,7 @@ public class UserPrefsAccessor extends Prefs
    {
       return bool(
          "packages_pane_enabled",
-         "", 
+         "Enable the Packages pane", 
          "Whether to enable RStudio's Packages pane.", 
          true);
    }
@@ -1474,7 +1474,7 @@ public class UserPrefsAccessor extends Prefs
    {
       return bool(
          "use_rcpp_template",
-         "", 
+         "Use RCpp file templates", 
          "Whether to use RCPP templates.", 
          true);
    }
@@ -1486,7 +1486,7 @@ public class UserPrefsAccessor extends Prefs
    {
       return bool(
          "restore_source_documents",
-         "", 
+         "Restore last opened documents on startup", 
          "Whether to restore the last opened source documents when RStudio starts up.", 
          true);
    }
@@ -1498,7 +1498,7 @@ public class UserPrefsAccessor extends Prefs
    {
       return bool(
          "handle_errors_in_user_code_only",
-         "", 
+         "Handle errors only when user code present", 
          "Whether to handle errors only when user code is on the stack.", 
          true);
    }
@@ -1510,7 +1510,7 @@ public class UserPrefsAccessor extends Prefs
    {
       return bool(
          "auto_expand_error_tracebacks",
-         "", 
+         "Auto-expand error tracebacks", 
          "Whether to automatically expand tracebacks when an error occurs.", 
          false);
    }
@@ -1522,7 +1522,7 @@ public class UserPrefsAccessor extends Prefs
    {
       return bool(
          "check_for_updates",
-         "", 
+         "Check for new version at startup", 
          "Whether to check for new versions of RStudio when RStudio starts.", 
          true);
    }
@@ -1534,7 +1534,7 @@ public class UserPrefsAccessor extends Prefs
    {
       return bool(
          "show_internal_functions",
-         "", 
+         "Show internal functions when debugging", 
          "Whether to show functions without source references in the Traceback pane while debugging.", 
          false);
    }
@@ -1546,7 +1546,7 @@ public class UserPrefsAccessor extends Prefs
    {
       return enumeration(
          "shiny_viewer_type",
-         "", 
+         "Run Shiny applications in", 
          "Where to display Shiny applications when they are run.", 
          new String[] {
             SHINY_VIEWER_TYPE_USER,
@@ -1571,7 +1571,7 @@ public class UserPrefsAccessor extends Prefs
    {
       return bool(
          "shiny_background_jobs",
-         "", 
+         "Run Shiny applications in the background", 
          "Whether to run Shiny applications as background jobs.", 
          false);
    }
@@ -1583,7 +1583,7 @@ public class UserPrefsAccessor extends Prefs
    {
       return enumeration(
          "plumber_viewer_type",
-         "", 
+         "Run Plumber APIs in", 
          "Where to display Shiny applications when they are run.", 
          new String[] {
             PLUMBER_VIEWER_TYPE_USER,
@@ -1608,7 +1608,7 @@ public class UserPrefsAccessor extends Prefs
    {
       return string(
          "document_author",
-         "", 
+         "Document author", 
          "The default name to use as the document author when creating new documents.", 
          "");
    }
@@ -1620,7 +1620,7 @@ public class UserPrefsAccessor extends Prefs
    {
       return string(
          "rmd_preferred_template_path",
-         "", 
+         "Path to preferred R Markdown template", 
          "The path to the preferred R Markdown template.", 
          "");
    }
@@ -1632,7 +1632,7 @@ public class UserPrefsAccessor extends Prefs
    {
       return enumeration(
          "rmd_viewer_type",
-         "", 
+         "Display R Markdown documents in", 
          "Where to display R Markdown documents when they have completed rendering.", 
          new String[] {
             RMD_VIEWER_TYPE_WINDOW,
@@ -1653,7 +1653,7 @@ public class UserPrefsAccessor extends Prefs
    {
       return bool(
          "show_publish_diagnostics",
-         "", 
+         "Show diagnostic info when publishing", 
          "Whether to show verbose diagnostic information when publishing content.", 
          false);
    }
@@ -1665,7 +1665,7 @@ public class UserPrefsAccessor extends Prefs
    {
       return bool(
          "publish_check_certificates",
-         "", 
+         "Check SSL certificates when publishing", 
          "Whether to check remote server SSL certificates when publishing content.", 
          true);
    }
@@ -1677,7 +1677,7 @@ public class UserPrefsAccessor extends Prefs
    {
       return bool(
          "use_publish_ca_bundle",
-         "", 
+         "Use custom CA bundle when publishing", 
          "Whether to use a custom certificate authority (CA) bundle when publishing content.", 
          false);
    }
@@ -1689,7 +1689,7 @@ public class UserPrefsAccessor extends Prefs
    {
       return string(
          "publish_ca_bundle",
-         "", 
+         "Path to custom CA bundle for publishing", 
          "The path to the custom certificate authority (CA) bundle to use when publishing content.", 
          "");
    }
@@ -1701,7 +1701,7 @@ public class UserPrefsAccessor extends Prefs
    {
       return bool(
          "rmd_chunk_output_inline",
-         "", 
+         "Show chunk output inline in all documents", 
          "Whether to show chunk output inline for ordinary R Markdown documents.", 
          true);
    }
@@ -1713,7 +1713,7 @@ public class UserPrefsAccessor extends Prefs
    {
       return bool(
          "show_doc_outline_rmd",
-         "", 
+         "Open document outline by default", 
          "Whether to show the document outline by default when opening R Markdown documents.", 
          false);
    }
@@ -1725,7 +1725,7 @@ public class UserPrefsAccessor extends Prefs
    {
       return bool(
          "auto_run_setup_chunk",
-         "", 
+         "Automatically run Setup chunk when needed", 
          "Whether to automatically run an R Markdown document's Setup chunk before running other chunks.", 
          true);
    }
@@ -1737,7 +1737,7 @@ public class UserPrefsAccessor extends Prefs
    {
       return bool(
          "hide_console_on_chunk_execute",
-         "", 
+         "Hide console when running R Markdown chunks", 
          "Whether to hide the R console when executing inline R Markdown chunks.", 
          true);
    }
@@ -1749,7 +1749,7 @@ public class UserPrefsAccessor extends Prefs
    {
       return enumeration(
          "execution_behavior",
-         "", 
+         "Unit of R code execution", 
          "The unit of R code to execute when the Execute command is invoked.", 
          new String[] {
             EXECUTION_BEHAVIOR_LINE,
@@ -1770,7 +1770,7 @@ public class UserPrefsAccessor extends Prefs
    {
       return bool(
          "show_terminal_tab",
-         "", 
+         "Show the Terminal tab", 
          "Whether to show the Terminal tab.", 
          true);
    }
@@ -1782,7 +1782,7 @@ public class UserPrefsAccessor extends Prefs
    {
       return bool(
          "terminal_local_echo",
-         "", 
+         "Use local echo in the Terminal", 
          "Whether to use local echo in the Terminal.", 
          true);
    }
@@ -1794,7 +1794,7 @@ public class UserPrefsAccessor extends Prefs
    {
       return bool(
          "terminal_websockets",
-         "", 
+         "Use websockets in the Terminal", 
          "Whether to use websockets to communicate with the shell in the Terminal tab.", 
          true);
    }
@@ -1806,7 +1806,7 @@ public class UserPrefsAccessor extends Prefs
    {
       return enumeration(
          "terminal_close_behavior",
-         "", 
+         "Close Terminal pane after shell exit", 
          "Whether to close the terminal pane after the shell exits.", 
          new String[] {
             TERMINAL_CLOSE_BEHAVIOR_ALWAYS,
@@ -1827,7 +1827,7 @@ public class UserPrefsAccessor extends Prefs
    {
       return bool(
          "terminal_track_environment",
-         "", 
+         "Save and restore system environment in Terminal tab", 
          "Whether to track and save changes to system environment variables in the Terminal.", 
          true);
    }
@@ -1839,7 +1839,7 @@ public class UserPrefsAccessor extends Prefs
    {
       return enumeration(
          "terminal_bell_style",
-         "", 
+         "Terminal bell style", 
          "Terminal bell style", 
          new String[] {
             TERMINAL_BELL_STYLE_NONE,
@@ -1858,7 +1858,7 @@ public class UserPrefsAccessor extends Prefs
    {
       return enumeration(
          "terminal_renderer",
-         "", 
+         "Terminal tab rendering engine", 
          "Terminal rendering engine: canvas is faster, dom may be needed for some browsers or graphics cards", 
          new String[] {
             TERMINAL_RENDERER_CANVAS,
@@ -1877,7 +1877,7 @@ public class UserPrefsAccessor extends Prefs
    {
       return bool(
          "show_rmd_render_command",
-         "", 
+         "Show R Markdown render command", 
          "Whether to print the render command use to knit R Markdown documents in the R Markdown tab.", 
          false);
    }
@@ -1889,7 +1889,7 @@ public class UserPrefsAccessor extends Prefs
    {
       return bool(
          "enable_text_drag",
-         "", 
+         "Enable dragging text in code editor", 
          "Whether to enable moving text on the editing surface by clicking and dragging it.", 
          true);
    }
@@ -1901,7 +1901,7 @@ public class UserPrefsAccessor extends Prefs
    {
       return bool(
          "show_hidden_files",
-         "", 
+         "Show hidden files in Files pane", 
          "Whether to show hidden files in the Files pane.", 
          false);
    }
@@ -1913,7 +1913,7 @@ public class UserPrefsAccessor extends Prefs
    {
       return bool(
          "sort_file_names_naturally",
-         "", 
+         "Sort file names naturally in Files pane", 
          "Whether to sort file names naturally, so that e.g., file10.R comes after file9.R", 
          true);
    }
@@ -1925,7 +1925,7 @@ public class UserPrefsAccessor extends Prefs
    {
       return enumeration(
          "jobs_tab_visibility",
-         "", 
+         "Jobs tab visibility", 
          "The visibility of the Jobs tab.", 
          new String[] {
             JOBS_TAB_VISIBILITY_CLOSED,
@@ -2010,7 +2010,7 @@ public class UserPrefsAccessor extends Prefs
    {
       return enumeration(
          "knit_working_dir",
-         "", 
+         "Working directory for knitting", 
          "The working directory to use when knitting R Markdown documents.", 
          new String[] {
             KNIT_WORKING_DIR_DEFAULT,
@@ -2031,7 +2031,7 @@ public class UserPrefsAccessor extends Prefs
    {
       return enumeration(
          "doc_outline_show",
-         "", 
+         "Show in Document Outline", 
          "Which objects to show in the document outline pane.", 
          new String[] {
             DOC_OUTLINE_SHOW_SECTIONS_ONLY,
@@ -2052,7 +2052,7 @@ public class UserPrefsAccessor extends Prefs
    {
       return enumeration(
          "latex_preview_on_cursor_idle",
-         "", 
+         "Preview LaTeX equations on idle", 
          "When to preview LaTeX mathematical equations when cursor has not moved recently.", 
          new String[] {
             LATEX_PREVIEW_ON_CURSOR_IDLE_NEVER,
@@ -2073,7 +2073,7 @@ public class UserPrefsAccessor extends Prefs
    {
       return bool(
          "wrap_tab_navigation",
-         "", 
+         "Wrap around when going to previous/next tab", 
          "Whether to wrap around when going to the previous or next editor tab.", 
          true);
    }
@@ -2085,7 +2085,7 @@ public class UserPrefsAccessor extends Prefs
    {
       return enumeration(
          "global_theme",
-         "", 
+         "Global theme", 
          "The theme to use for the main RStudio user interface.", 
          new String[] {
             GLOBAL_THEME_CLASSIC,
@@ -2106,7 +2106,7 @@ public class UserPrefsAccessor extends Prefs
    {
       return bool(
          "git_diff_ignore_whitespace",
-         "", 
+         "Ignore whitespace in VCS diffs", 
          "Whether to ignore whitespace when generating diffs of version controlled files.", 
          false);
    }
@@ -2118,7 +2118,7 @@ public class UserPrefsAccessor extends Prefs
    {
       return bool(
          "console_double_click_select",
-         "", 
+         "Double click to select in the Console", 
          "Whether double-clicking should select a word in the Console pane.", 
          false);
    }
@@ -2130,7 +2130,7 @@ public class UserPrefsAccessor extends Prefs
    {
       return bool(
          "new_proj_git_init",
-         "", 
+         "Create a Git repo in new projects", 
          "Whether a git repo should be initialized inside new projects by default.", 
          false);
    }
@@ -2142,7 +2142,7 @@ public class UserPrefsAccessor extends Prefs
    {
       return string(
          "root_document",
-         "", 
+         "Root document for PDF compilation", 
          "The root document to use when compiling PDF documents.", 
          "");
    }
@@ -2154,7 +2154,7 @@ public class UserPrefsAccessor extends Prefs
    {
       return enumeration(
          "show_user_home_page",
-         "", 
+         "Show user home page in RStudio Pro", 
          "When to show the server home page in RStudio Server Pro.", 
          new String[] {
             SHOW_USER_HOME_PAGE_ALWAYS,
@@ -2187,7 +2187,7 @@ public class UserPrefsAccessor extends Prefs
    {
       return bool(
          "vcs_enabled",
-         "", 
+         "Enable version control if available", 
          "Whether to enable RStudio's version control system interface.", 
          true);
    }
@@ -2199,7 +2199,7 @@ public class UserPrefsAccessor extends Prefs
    {
       return bool(
          "vcs_autorefresh",
-         "", 
+         "Auto-refresh state from version control", 
          "Automatically refresh VCS status?", 
          true);
    }
@@ -2211,7 +2211,7 @@ public class UserPrefsAccessor extends Prefs
    {
       return string(
          "git_exe_path",
-         "", 
+         "Path to Git executable", 
          "The path to the Git executable to use.", 
          "");
    }
@@ -2223,7 +2223,7 @@ public class UserPrefsAccessor extends Prefs
    {
       return string(
          "svn_exe_path",
-         "", 
+         "Path to Subversion executable", 
          "The path to the Subversion executable to use.", 
          "");
    }
@@ -2259,7 +2259,7 @@ public class UserPrefsAccessor extends Prefs
    {
       return bool(
          "use_devtools",
-         "", 
+         "Use the devtools R package if available", 
          "Whether to use the devtools R package.", 
          true);
    }
@@ -2283,7 +2283,7 @@ public class UserPrefsAccessor extends Prefs
    {
       return bool(
          "use_secure_download",
-         "", 
+         "Download R packages securely", 
          "Whether to use secure downloads when fetching R packages.", 
          true);
    }
@@ -2295,7 +2295,7 @@ public class UserPrefsAccessor extends Prefs
    {
       return bool(
          "cleanup_after_r_cmd_check",
-         "", 
+         "Clean up temporary files after R CMD CHECK", 
          "Whether to clean up temporary files after running R CMD CHECK.", 
          true);
    }
@@ -2307,7 +2307,7 @@ public class UserPrefsAccessor extends Prefs
    {
       return bool(
          "view_dir_after_r_cmd_check",
-         "", 
+         "View directory after R CMD CHECK", 
          "Whether to view the directory after running R CMD CHECK.", 
          false);
    }
@@ -2319,7 +2319,7 @@ public class UserPrefsAccessor extends Prefs
    {
       return bool(
          "hide_object_files",
-         "", 
+         "Hide object files in the Files pane", 
          "Whether to hide object files in the Files pane.", 
          true);
    }
@@ -2331,7 +2331,7 @@ public class UserPrefsAccessor extends Prefs
    {
       return bool(
          "restore_last_project",
-         "", 
+         "Restore last project when starting RStudio", 
          "Whether to restore the last project when starting RStudio.", 
          true);
    }
@@ -2343,7 +2343,7 @@ public class UserPrefsAccessor extends Prefs
    {
       return integer(
          "project_safe_startup_seconds",
-         "", 
+         "Number of seconds for safe project startup", 
          "The number of seconds after which a project is deemed to have successfully started.", 
          30);
    }
@@ -2355,7 +2355,7 @@ public class UserPrefsAccessor extends Prefs
    {
       return bool(
          "use_tinytex",
-         "", 
+         "Use tinytex to compile .tex files", 
          "Use tinytex to compile .tex files.", 
          false);
    }
