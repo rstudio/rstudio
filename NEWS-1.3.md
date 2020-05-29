@@ -3,6 +3,7 @@
 
 ### Misc
 
+- R 4.0.0's raw string literals are now handled properly by the diagnostics engine. (#6788)
 - Allow projects to reopen after a crash (#3220)
 - Added spellcheck blacklist item for preview Latvian dictionary (#6594)
 - Allow multiple space-separated domains in `www-frame-origin` for Tutorial API (Pro)
