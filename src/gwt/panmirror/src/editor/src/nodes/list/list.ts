@@ -120,7 +120,7 @@ const extension = (pandocExtensions: PandocExtensions): Extension => {
           content: 'list_item+',
           group: 'block',
           attrs: {
-            tight: { default: true },
+            tight: { default: false },
           },
           parseDOM: [
             {
@@ -160,7 +160,7 @@ const extension = (pandocExtensions: PandocExtensions): Extension => {
           content: 'list_item+',
           group: 'block',
           attrs: {
-            tight: { default: true },
+            tight: { default: false },
             order: { default: 1 },
             number_style: { default: ListNumberStyle.DefaultStyle },
             number_delim: { default: ListNumberDelim.DefaultDelim },
