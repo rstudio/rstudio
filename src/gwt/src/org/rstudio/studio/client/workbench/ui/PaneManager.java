@@ -1200,7 +1200,7 @@ public class PaneManager
    public void closeSourceWindow(String name)
    {
       // hide the original source window
-      if (StringUtil.equals(name, Source.COLUMN_PREFIX))
+      if (StringUtil.equals(name, SourceColumnManager.MAIN_SOURCE_NAME))
          getSourceLogicalWindow().onWindowStateChange(
                new WindowStateChangeEvent(WindowState.HIDE));
       else

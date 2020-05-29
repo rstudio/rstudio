@@ -55,7 +55,6 @@ import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.FileMRUList;
-import org.rstudio.studio.client.workbench.MainWindowObject;
 import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.UnsavedChangesTarget;
@@ -111,7 +110,7 @@ public class SourceColumnManager implements SourceExtendedTypeDetectedEvent.Hand
                               Provider<SourceWindowManager> pWindowManager)
    {
       SourceColumn column = GWT.create(SourceColumn.class);
-      column.loadDisplay(Source.COLUMN_PREFIX, display, this);
+      column.loadDisplay(MAIN_SOURCE_NAME, display, this);
       columnMap_.put(column.getName(), column);
       setActive(column.getName());
 
@@ -178,7 +177,7 @@ public class SourceColumnManager implements SourceExtendedTypeDetectedEvent.Hand
    public String add(Source.Display display, boolean activate)
    {
       SourceColumn column = GWT.create(SourceColumn.class);
-      column.loadDisplay(Source.COLUMN_PREFIX + StringUtil.makeRandomId(12),
+      column.loadDisplay(COLUMN_PREFIX + StringUtil.makeRandomId(12),
          display,
          this);
       columnMap_.put(column.getName(), column);
@@ -250,7 +249,7 @@ public class SourceColumnManager implements SourceExtendedTypeDetectedEvent.Hand
       if (!hasActiveEditor())
       {
          if (activeColumn_ == null)
-            setActive(Source.COLUMN_PREFIX);
+            setActive(MAIN_SOURCE_NAME);
          newDoc(FileTypeRegistry.R, new ResultCallback<EditingTarget, ServerError>()
          {
             @Override
@@ -272,7 +271,7 @@ public class SourceColumnManager implements SourceExtendedTypeDetectedEvent.Hand
    {
       if (activeColumn_ != null)
          return activeColumn_;
-      setActive(Source.COLUMN_PREFIX);
+      setActive(MAIN_SOURCE_NAME);
 
       return activeColumn_;
    }
@@ -298,9 +297,7 @@ public class SourceColumnManager implements SourceExtendedTypeDetectedEvent.Hand
 
    public boolean isActiveEditor(EditingTarget editingTarget)
    {
-      if (hasActiveEditor() && activeColumn_.getActiveEditor() == editingTarget)
-         return true;
-      return false;
+      return hasActiveEditor() && activeColumn_.getActiveEditor() == editingTarget;
    }
 
    // see if there are additional command pallette entries made available
@@ -328,7 +325,7 @@ public class SourceColumnManager implements SourceExtendedTypeDetectedEvent.Hand
 
       ArrayList<Widget> result = new ArrayList<Widget>();
       columnMap_.forEach((name, column) -> {
-         if (!excludeMain || !StringUtil.equals(name, Source.COLUMN_PREFIX))
+         if (!excludeMain || !StringUtil.equals(name, MAIN_SOURCE_NAME))
             result.add(column.asWidget());
       });
       return result;
@@ -385,9 +382,8 @@ public class SourceColumnManager implements SourceExtendedTypeDetectedEvent.Hand
    public int getUntitledNum(String prefix)
    {
       AtomicInteger max = new AtomicInteger();
-      columnMap_.forEach((name, column) -> {
-         max.set(Math.max(max.get(), column.getUntitledNum(prefix)));
-      });
+      columnMap_.forEach((name, column) ->
+          max.set(Math.max(max.get(), column.getUntitledNum(prefix))));
       return max.intValue();
    }
 
@@ -406,9 +402,7 @@ public class SourceColumnManager implements SourceExtendedTypeDetectedEvent.Hand
 
    public void manageCommands(boolean forceSync)
    {
-      columnMap_.forEach((name, column) -> {
-         column.manageCommands(forceSync);
-      });
+      columnMap_.forEach((name, column) -> column.manageCommands(forceSync));
    }
 
    public EditingTarget addTab(SourceDocument doc, int mode, SourceColumn column)
@@ -426,19 +420,11 @@ public class SourceColumnManager implements SourceExtendedTypeDetectedEvent.Hand
       return column.addTab(doc, atEnd, mode);
    }
 
-   public EditingTarget addTab(SourceDocument doc, Integer position,
-                               int mode, SourceColumn column)
-   {
-      if (column == null)
-         column = getActive();
-      return column.addTab(doc, position, mode);
-   }
-
    public EditingTarget findEditor(String docId)
    {
       for (Map.Entry<String, SourceColumn> entry : columnMap_.entrySet())
       {
-         SourceColumn column = (SourceColumn) entry.getValue();
+         SourceColumn column = entry.getValue();
          EditingTarget target = column.getDoc(docId);
          if (target != null)
             return target;
@@ -453,7 +439,7 @@ public class SourceColumnManager implements SourceExtendedTypeDetectedEvent.Hand
 
       for (Map.Entry<String, SourceColumn> entry : columnMap_.entrySet())
       {
-         SourceColumn column = (SourceColumn) entry.getValue();
+         SourceColumn column = entry.getValue();
          EditingTarget target = column.getEditorWithPath(path);
          if (target != null)
             return target;
@@ -465,19 +451,8 @@ public class SourceColumnManager implements SourceExtendedTypeDetectedEvent.Hand
    {
       for (Map.Entry<String, SourceColumn> entry : columnMap_.entrySet())
       {
-         SourceColumn column = (SourceColumn) entry.getValue();
+         SourceColumn column = entry.getValue();
          if (column.hasDoc(docId))
-            return column;
-      }
-      return null;
-   }
-
-   public SourceColumn findByPath(String path)
-   {
-      for (Map.Entry<String, SourceColumn> entry : columnMap_.entrySet())
-      {
-         SourceColumn column = (SourceColumn) entry.getValue();
-         if (column.hasDocWithPath(path))
             return column;
       }
       return null;
@@ -492,7 +467,7 @@ public class SourceColumnManager implements SourceExtendedTypeDetectedEvent.Hand
    {
       for (Map.Entry<String, SourceColumn> entry : columnMap_.entrySet())
       {
-         SourceColumn column = (SourceColumn) entry.getValue();
+         SourceColumn column = entry.getValue();
 
          Widget w = column.asWidget();
          int left = w.getAbsoluteLeft();
@@ -977,7 +952,7 @@ public class SourceColumnManager implements SourceExtendedTypeDetectedEvent.Hand
    {
       for (Map.Entry<String, SourceColumn> entry : columnMap_.entrySet())
       {
-         SourceColumn column = (SourceColumn) entry.getValue();
+         SourceColumn column = entry.getValue();
          EditingTarget editor = column.getEditorWithPath(path);
          if (editor != null)
          {
@@ -1072,11 +1047,7 @@ public class SourceColumnManager implements SourceExtendedTypeDetectedEvent.Hand
    public void closeTabs(JsArrayString ids)
    {
       if (ids != null)
-      {
-         columnMap_.forEach((name, column) -> {
-            column.closeTabs(ids);
-         });
-      }
+         columnMap_.forEach((name, column) -> column.closeTabs(ids));
    }
 
    public void closeTabWithPath(String path, boolean interactive)
@@ -1104,7 +1075,7 @@ public class SourceColumnManager implements SourceExtendedTypeDetectedEvent.Hand
    public void closeAllTabs(boolean excludeActive, boolean excludeMain)
    {
       columnMap_.forEach((name, column) -> {
-         if (!excludeMain || name != Source.COLUMN_PREFIX)
+         if (!excludeMain || !StringUtil.equals(name, MAIN_SOURCE_NAME))
          {
             cpsExecuteForEachEditor(column.getEditors(),
                new CPSEditingTargetCommand()
@@ -1229,7 +1200,7 @@ public class SourceColumnManager implements SourceExtendedTypeDetectedEvent.Hand
       for (Map.Entry<String, SourceColumn> entry : columnMap_.entrySet())
       {
          SourceColumn column = entry.getValue();
-         if (!StringUtil.equals(column.getName(), Source.COLUMN_PREFIX))
+         if (!StringUtil.equals(column.getName(), MAIN_SOURCE_NAME))
          {
             moveEditors.addAll(column.getEditors());
             column.closeAllLocalSourceDocs();
@@ -1239,7 +1210,7 @@ public class SourceColumnManager implements SourceExtendedTypeDetectedEvent.Hand
          }
       }
 
-      SourceColumn column = columnMap_.get(Source.COLUMN_PREFIX);
+      SourceColumn column = columnMap_.get(MAIN_SOURCE_NAME);
       for (EditingTarget target : moveEditors)
       {
          column.addTab(
@@ -1269,20 +1240,6 @@ public class SourceColumnManager implements SourceExtendedTypeDetectedEvent.Hand
    public void ensureVisible(boolean newTabPending)
    {
       activeColumn_.ensureVisible(newTabPending);
-   }
-
-   public void manageChevronVisibility()
-   {
-      columnMap_.forEach((name, column) -> {
-         column.manageChevronVisibility();
-      });
-   }
-
-   public static boolean isMainColumn(SourceColumn column)
-   {
-      if (StringUtil.equals(column.getName(), Source.COLUMN_PREFIX))
-         return true;
-      return false;
    }
 
    public void openFile(FileSystemItem file)
@@ -1342,8 +1299,8 @@ public class SourceColumnManager implements SourceExtendedTypeDetectedEvent.Hand
 
    public void openProjectDocs(final Session session, boolean mainColumn)
    {
-      if (mainColumn && activeColumn_ != columnMap_.get(Source.COLUMN_PREFIX))
-         setActive(Source.COLUMN_PREFIX);
+      if (mainColumn && activeColumn_ != columnMap_.get(MAIN_SOURCE_NAME))
+         setActive(MAIN_SOURCE_NAME);
 
       JsArrayString openDocs = session.getSessionInfo().getProjectOpenDocs();
       if (openDocs.length() > 0)
@@ -1594,9 +1551,7 @@ public class SourceColumnManager implements SourceExtendedTypeDetectedEvent.Hand
 
    public void beforeShow()
    {
-      columnMap_.forEach((name, column) -> {
-         column.onBeforeShow();
-      });
+      columnMap_.forEach((name, column) -> column.onBeforeShow());
    }
 
    public void beforeShow(String name)
@@ -1698,12 +1653,6 @@ public class SourceColumnManager implements SourceExtendedTypeDetectedEvent.Hand
          GetEditorContextEvent.SelectionData.create(id, path, editor.getCode(), docSelections);
 
       server.getEditorContextCompleted(data, new VoidServerRequestCallback());
-   }
-
-   private boolean consoleEditorHadFocusLast()
-   {
-      String id = MainWindowObject.lastFocusedEditorId().get();
-      return "rstudio_console_input".equals(id);
    }
 
    private void initDynamicCommands()
@@ -1929,7 +1878,7 @@ public class SourceColumnManager implements SourceExtendedTypeDetectedEvent.Hand
    {
       for (Map.Entry<String,SourceColumn> entry : columnMap_.entrySet())
       {
-         SourceColumn column = (SourceColumn)entry.getValue();
+         SourceColumn column = entry.getValue();
          // check to see if any local editors have the file open
          for (int i = 0; i < column.getEditors().size(); i++)
          {
@@ -1945,7 +1894,7 @@ public class SourceColumnManager implements SourceExtendedTypeDetectedEvent.Hand
                return true;
             }
          }
-      };
+      }
       return false;
    }
 
@@ -2027,9 +1976,7 @@ public class SourceColumnManager implements SourceExtendedTypeDetectedEvent.Hand
    public ArrayList<UnsavedChangesTarget> getUnsavedChanges(int type, Set<String> ids)
    {
       ArrayList<UnsavedChangesTarget> targets = new ArrayList<>();
-      columnMap_.forEach((name, column) -> {
-         targets.addAll(column.getUnsavedEditors(type, ids));
-      });
+      columnMap_.forEach((name, column) -> targets.addAll(column.getUnsavedEditors(type, ids)));
       return targets;
    }
 
@@ -2037,8 +1984,7 @@ public class SourceColumnManager implements SourceExtendedTypeDetectedEvent.Hand
                             Command onCompleted)
    {
       // convert back to editing targets
-      ArrayList<EditingTarget> saveTargets =
-         new ArrayList<EditingTarget>();
+      ArrayList<EditingTarget> saveTargets = new ArrayList<>();
       for (UnsavedChangesTarget target: targets)
       {
          EditingTarget saveTarget =
@@ -2203,7 +2149,7 @@ public class SourceColumnManager implements SourceExtendedTypeDetectedEvent.Hand
       SerializedCommandQueue queue = new SerializedCommandQueue();
 
       // Clone editors_, since the original may be mutated during iteration
-      for (final EditingTarget editor : new ArrayList<EditingTarget>(editors))
+      for (final EditingTarget editor : new ArrayList<>(editors))
       {
          queue.addCommand(new SerializedCommand()
          {
@@ -2248,15 +2194,15 @@ public class SourceColumnManager implements SourceExtendedTypeDetectedEvent.Hand
       public final CommandWithArg<EditingTarget> executeOnSuccess;
    }
 
-   private Commands commands_;
+   private final Commands commands_;
    private SourceColumn activeColumn_;
 
    private boolean openingForSourceNavigation_ = false;
 
    private final Queue<OpenFileEntry> openFileQueue_ = new LinkedList<OpenFileEntry>();
-   private HashMap<String,SourceColumn> columnMap_ = new HashMap<String,SourceColumn>();
+   private final HashMap<String,SourceColumn> columnMap_ = new HashMap<>();
    private HashSet<AppCommand> dynamicCommands_ = new HashSet<AppCommand>();
-   private SourceVimCommands vimCommands_;
+   private final SourceVimCommands vimCommands_;
 
    private final SourceNavigationHistory sourceNavigationHistory_ =
       new SourceNavigationHistory(30);
@@ -2274,5 +2220,8 @@ public class SourceColumnManager implements SourceExtendedTypeDetectedEvent.Hand
    private final FileTypeRegistry fileTypeRegistry_;
 
    private final SourceServerOperations server_;
-   private DependencyManager dependencyManager_;
+   private final DependencyManager dependencyManager_;
+
+   public final static String COLUMN_PREFIX = "Source";
+   public final static String MAIN_SOURCE_NAME = COLUMN_PREFIX;
 }

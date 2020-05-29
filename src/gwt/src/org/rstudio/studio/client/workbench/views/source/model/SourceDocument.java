@@ -19,7 +19,7 @@ import com.google.gwt.core.client.JsArrayString;
 
 import org.rstudio.core.client.js.JsObject;
 import org.rstudio.studio.client.rmarkdown.model.NotebookDoc;
-import org.rstudio.studio.client.workbench.views.source.Source;
+import org.rstudio.studio.client.workbench.views.source.SourceColumnManager;
 import org.rstudio.studio.client.workbench.views.source.SourceWindowManager;
 import org.rstudio.studio.client.workbench.views.source.events.CollabEditStartParams;
 
@@ -152,10 +152,9 @@ public class SourceDocument extends JavaScriptObject
    
    public final String getSourceDisplayName()
    {
-      if (getProperties().hasKey(Source.COLUMN_PREFIX))
+      if (getProperties().hasKey(SourceColumnManager.COLUMN_PREFIX))
       {
-         String displayName = getProperties().getAsString(
-               Source.COLUMN_PREFIX);
+         String displayName = getProperties().getAsString(SourceColumnManager.COLUMN_PREFIX);
          if (displayName == null)
             return "";
          return displayName;
@@ -170,7 +169,7 @@ public class SourceDocument extends JavaScriptObject
    
    public final void assignSourceDisplayName(String name)
    {
-      getProperties().setString(Source.COLUMN_PREFIX, name);
+      getProperties().setString(SourceColumnManager.COLUMN_PREFIX, name);
    }
 
    // get the collaborative editing session associated with this document 

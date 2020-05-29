@@ -22,7 +22,6 @@ import com.google.gwt.event.dom.client.FocusEvent;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.logical.shared.HasBeforeSelectionHandlers;
 import com.google.gwt.event.logical.shared.HasSelectionHandlers;
-import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.Event.NativePreviewEvent;
@@ -72,7 +71,6 @@ import org.rstudio.studio.client.common.filetypes.model.NavigationMethods;
 import org.rstudio.studio.client.common.rnw.RnwWeave;
 import org.rstudio.studio.client.common.rnw.RnwWeaveRegistry;
 import org.rstudio.studio.client.common.satellite.Satellite;
-import org.rstudio.studio.client.common.synctex.Synctex;
 import org.rstudio.studio.client.events.GetEditorContextEvent;
 import org.rstudio.studio.client.events.ReplaceRangesEvent;
 import org.rstudio.studio.client.events.ReplaceRangesEvent.ReplacementData;
@@ -99,7 +97,6 @@ import org.rstudio.studio.client.workbench.views.files.model.DirectoryListing;
 import org.rstudio.studio.client.workbench.views.source.NewShinyWebApplication.Result;
 import org.rstudio.studio.client.workbench.views.source.SourceWindowManager.NavigationResult;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTarget;
-import org.rstudio.studio.client.workbench.views.source.editors.EditingTargetSource;
 import org.rstudio.studio.client.workbench.views.source.editors.codebrowser.CodeBrowserEditingTarget;
 import org.rstudio.studio.client.workbench.views.source.editors.explorer.events.OpenObjectExplorerEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.explorer.model.ObjectExplorerHandle;
@@ -184,7 +181,6 @@ public class Source implements InsertSourceHandler,
 
       void setDirty(Widget widget, boolean dirty);
 
-      void closeTab(boolean interactive);
       void closeTab(Widget widget, boolean interactive);
       void closeTab(Widget widget, boolean interactive, Command onClosed);
       void closeTab(int index, boolean interactive);
@@ -200,19 +196,14 @@ public class Source implements InsertSourceHandler,
       void showOverflowPopup();
       void cancelTabDrag();
 
-      void onBeforeShow();
       void ensureVisible();
-
-      HandlerRegistration addBeforeShowHandler(BeforeShowHandler handler);
    }
 
    @Inject
    public Source(Commands commands,
                  Binder binder,
-                 Display view,
                  SourceColumnManager sourceColumnManager,
                  SourceServerOperations server,
-                 EditingTargetSource editingTargetSource,
                  FileTypeRegistry fileTypeRegistry,
                  GlobalDisplay globalDisplay,
                  FileDialogs fileDialogs,
@@ -220,7 +211,6 @@ public class Source implements InsertSourceHandler,
                  EventBus events,
                  AriaLiveService ariaLive,
                  final Session session,
-                 Synctex synctex,
                  WorkbenchContext workbenchContext,
                  Satellite satellite,
                  ConsoleEditorProvider consoleEditorProvider,
@@ -239,7 +229,6 @@ public class Source implements InsertSourceHandler,
       events_ = events;
       ariaLive_ = ariaLive;
       session_ = session;
-      synctex_ = synctex;
       workbenchContext_ = workbenchContext;
       consoleEditorProvider_ = consoleEditorProvider;
       rnwWeaveRegistry_ = rnwWeaveRegistry;
@@ -492,9 +481,8 @@ public class Source implements InsertSourceHandler,
       // window and satellites)
       if (BrowseCap.isMacintoshDesktop())
       {
-         WindowEx.addFocusHandler((FocusEvent event) -> {
-           columnManager_.manageCommands(true);
-         });
+         WindowEx.addFocusHandler(
+             (FocusEvent event) -> columnManager_.manageCommands(true));
       }
 
       // get the key to use for active tab persistence; use ordinal-based key
@@ -831,7 +819,7 @@ public class Source implements InsertSourceHandler,
                }
 
                columnManager_.newSourceDocWithTemplate(
-                     (TextFileType)FileTypeRegistry.RMARKDOWN,
+                     FileTypeRegistry.RMARKDOWN,
                      "",
                      "notebook.Rmd",
                      Position.create(3, 0));
@@ -2657,7 +2645,6 @@ public class Source implements InsertSourceHandler,
    private final EventBus events_;
    private final AriaLiveService ariaLive_;
    private final Session session_;
-   private final Synctex synctex_;
    private UserPrefs userPrefs_;
    private final ConsoleEditorProvider consoleEditorProvider_;
    private final RnwWeaveRegistry rnwWeaveRegistry_;
@@ -2670,12 +2657,10 @@ public class Source implements InsertSourceHandler,
    
    private final Provider<SourceWindowManager> pWindowManager_;
    
-   private DependencyManager dependencyManager_;
+   private final DependencyManager dependencyManager_;
 
-   // !!! consider moving these
    public final static int TYPE_FILE_BACKED = 0;
    public final static int TYPE_UNTITLED    = 1;
    public final static int OPEN_INTERACTIVE = 0;
    public final static int OPEN_REPLAY      = 1;
-   public final static String COLUMN_PREFIX = "Source";
 }
