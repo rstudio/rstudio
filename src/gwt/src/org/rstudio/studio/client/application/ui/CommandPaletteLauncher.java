@@ -18,17 +18,12 @@ package org.rstudio.studio.client.application.ui;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.command.ShortcutManager;
 import org.rstudio.core.client.widget.ModalPopupPanel;
-import org.rstudio.studio.client.server.ServerError;
-import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.addins.AddinsCommandManager;
 import org.rstudio.studio.client.workbench.commands.Commands;
-import org.rstudio.studio.client.workbench.prefs.model.PrefsServerOperations;
-import org.rstudio.studio.client.workbench.prefs.model.UserPrefDefinitions;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.views.source.Source;
 
