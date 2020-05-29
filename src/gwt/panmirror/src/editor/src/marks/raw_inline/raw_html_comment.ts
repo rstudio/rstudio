@@ -121,7 +121,7 @@ const extension = (
               pos,
               kHTMLCommentMarkRegEx,
               markType,
-              match => commentMarkAttribs(match[0]),
+              match => commentMarkAttribs(match[1]),
               match => match[1],
             );
           },
