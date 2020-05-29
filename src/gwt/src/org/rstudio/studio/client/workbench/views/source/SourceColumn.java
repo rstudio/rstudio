@@ -14,7 +14,6 @@
  */
 package org.rstudio.studio.client.workbench.views.source;
 
-import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.event.logical.shared.SelectionEvent;
@@ -64,6 +63,7 @@ import org.rstudio.studio.client.workbench.views.source.model.SourceServerOperat
 
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.Set;
 
 public class SourceColumn implements //BeforeShowHandler,
                                      SelectionHandler<Integer>,
@@ -82,14 +82,14 @@ public class SourceColumn implements //BeforeShowHandler,
    }
 
    @Inject
-   public void initialize(Commands commands,
+   public void initialize(Binder binder,
+                          Commands commands,
                           EventBus events,
                           EditingTargetSource editingTargetSource,
                           RemoteFileSystemContext fileContext,
                           SourceServerOperations sourceServerOperations)
    {
       commands_ = commands;
-      Binder binder = GWT.create(Binder.class);
       binder.bind(commands_, this);
 
       events_ = events;
@@ -138,6 +138,33 @@ public class SourceColumn implements //BeforeShowHandler,
       return editors_;
    }
 
+   public ArrayList<EditingTarget> getDirtyEditors(final EditingTarget excludeEditor)
+   {
+      ArrayList<EditingTarget> dirtyEditors = new ArrayList<>();
+      for (EditingTarget target : editors_)
+      {
+         if (excludeEditor != null && target == excludeEditor)
+            continue;
+         if (target.dirtyState().getValue())
+            dirtyEditors.add(target);
+      }
+      return dirtyEditors;
+   }
+
+   public ArrayList<EditingTarget> getUnsavedEditors(int type, Set<String> ids)
+   {
+      ArrayList<EditingTarget> unsavedEditors = new ArrayList<>();
+      for (EditingTarget target : editors_)
+      {
+         if (!isUnsavedTarget(target, type))
+            continue;
+         if (ids != null && !ids.contains(target.getId()))
+            continue;
+         unsavedEditors.add(target);
+      }
+      return unsavedEditors;
+   }
+
    public ArrayList<Integer> getTabOrder()
    {
       return tabOrder_;
@@ -176,6 +203,7 @@ public class SourceColumn implements //BeforeShowHandler,
 
    public void closeAllLocalSourceDocs()
    {
+      // !!! implement this
    }
 
    public int getTabCount()
@@ -520,7 +548,7 @@ public class SourceColumn implements //BeforeShowHandler,
       display_.addTab(widget, icon, id, value, tabTooltip, position, switchToTab);
    }
 
-   public void closeTab(String docId)
+   public void closeDoc(String docId)
    {
       suspendDocumentClose_ = true;
       for (int i = 0; i < editors_.size(); i++)
@@ -560,6 +588,19 @@ public class SourceColumn implements //BeforeShowHandler,
       }
    }
 
+   public boolean insertCode(String code, boolean isBlock)
+   {
+      if (activeEditor_ != null &&
+          activeEditor_ instanceof TextEditingTarget &&
+          commands_.executeCode().isEnabled())
+      {
+         TextEditingTarget textEditor = (TextEditingTarget) activeEditor_;
+         textEditor.insertCode(code, isBlock);
+         return true;
+      }
+      return false;
+   }
+
    public void incrementNewTabPending()
    {
        newTabPending_++;
@@ -593,6 +634,14 @@ public class SourceColumn implements //BeforeShowHandler,
    private boolean isDebugSelectionPending()
    {
       return debugSelectionTimer_ != null;
+   }
+
+   private boolean isUnsavedTarget(EditingTarget target, int type)
+   {
+      boolean fileBacked = target.getPath() != null;
+      return target.dirtyState().getValue() &&
+         ((type == Source.TYPE_FILE_BACKED &&  fileBacked) ||
+            (type == Source.TYPE_UNTITLED    && !fileBacked));
    }
 
    private void clearPendingDebugSelection()

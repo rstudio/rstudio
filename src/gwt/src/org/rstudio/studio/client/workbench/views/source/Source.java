@@ -14,7 +14,6 @@
  */
 package org.rstudio.studio.client.workbench.views.source;
 
-import com.google.gwt.core.client.JavaScriptObject;
 import com.google.gwt.core.client.JsArray;
 import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.core.client.Scheduler;
@@ -52,10 +51,10 @@ import org.rstudio.studio.client.application.AriaLiveService;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.AriaLiveStatusEvent.Severity;
 import org.rstudio.studio.client.application.events.AriaLiveStatusEvent.Timing;
-import org.rstudio.studio.client.application.ui.CommandPaletteEntry;
-import org.rstudio.studio.client.application.ui.CommandPaletteEntrySource;
 import org.rstudio.studio.client.application.events.CrossWindowEvent;
 import org.rstudio.studio.client.application.events.EventBus;
+import org.rstudio.studio.client.application.ui.CommandPaletteEntry;
+import org.rstudio.studio.client.application.ui.CommandPaletteEntrySource;
 import org.rstudio.studio.client.common.FileDialogs;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.GlobalProgressDelayer;
@@ -75,7 +74,6 @@ import org.rstudio.studio.client.common.rnw.RnwWeaveRegistry;
 import org.rstudio.studio.client.common.satellite.Satellite;
 import org.rstudio.studio.client.common.synctex.Synctex;
 import org.rstudio.studio.client.events.GetEditorContextEvent;
-import org.rstudio.studio.client.events.GetEditorContextEvent.DocumentSelection;
 import org.rstudio.studio.client.events.ReplaceRangesEvent;
 import org.rstudio.studio.client.events.ReplaceRangesEvent.ReplacementData;
 import org.rstudio.studio.client.events.SetSelectionRangesEvent;
@@ -97,9 +95,7 @@ import org.rstudio.studio.client.workbench.snippets.SnippetHelper;
 import org.rstudio.studio.client.workbench.snippets.model.SnippetsChangedEvent;
 import org.rstudio.studio.client.workbench.ui.unsaved.UnsavedChangesDialog;
 import org.rstudio.studio.client.workbench.views.console.shell.editor.InputEditorDisplay;
-import org.rstudio.studio.client.workbench.views.environment.events.DebugModeChangedEvent;
 import org.rstudio.studio.client.workbench.views.files.model.DirectoryListing;
-import org.rstudio.studio.client.workbench.views.output.find.events.FindInFilesEvent;
 import org.rstudio.studio.client.workbench.views.source.NewShinyWebApplication.Result;
 import org.rstudio.studio.client.workbench.views.source.SourceWindowManager.NavigationResult;
 import org.rstudio.studio.client.workbench.views.source.editors.EditingTarget;
@@ -108,6 +104,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.codebrowser.Code
 import org.rstudio.studio.client.workbench.views.source.editors.explorer.events.OpenObjectExplorerEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.explorer.model.ObjectExplorerHandle;
 import org.rstudio.studio.client.workbench.views.source.editors.profiler.OpenProfileEvent;
+import org.rstudio.studio.client.workbench.views.source.editors.profiler.model.ProfilerContents;
 import org.rstudio.studio.client.workbench.views.source.editors.text.AceEditor;
 import org.rstudio.studio.client.workbench.views.source.editors.text.DocDisplay;
 import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditingTarget;
@@ -115,7 +112,6 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditing
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.AceEditorNative;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
-import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Selection;
 import org.rstudio.studio.client.workbench.views.source.editors.text.events.NewWorkingCopyEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ui.NewRdDialog;
 import org.rstudio.studio.client.workbench.views.source.events.*;
@@ -145,7 +141,6 @@ public class Source implements InsertSourceHandler,
                                DocWindowChangedEvent.Handler,
                                DocTabDragInitiatedEvent.Handler,
                                PopoutDocInitiatedEvent.Handler,
-                               DebugModeChangedEvent.Handler,
                                OpenProfileEvent.Handler,
                                OpenObjectExplorerEvent.Handler,
                                ReplaceRangesEvent.Handler,
@@ -237,7 +232,6 @@ public class Source implements InsertSourceHandler,
       binder.bind(commands, this);
       columnManager_ = sourceColumnManager;
       server_ = server;
-      editingTargetSource_ = editingTargetSource;
       fileTypeRegistry_ = fileTypeRegistry;
       globalDisplay_ = globalDisplay;
       fileDialogs_ = fileDialogs;
@@ -253,8 +247,6 @@ public class Source implements InsertSourceHandler,
       pWindowManager_ = pWindowManager;
 
       commands_.newSourceDoc().setEnabled(true);
-
-      vimCommands_ = new SourceVimCommands();
 
       events_.addHandler(EditPresentationSourceEvent.TYPE, this);
       events_.addHandler(FileEditEvent.TYPE, this);
@@ -323,7 +315,7 @@ public class Source implements InsertSourceHandler,
          {
             if (!suspendSourceNavigationAdding_)
             {
-               sourceNavigationHistory_.add(event.getNavigation());
+               columnManager_.getSourceNavigationHistory().add(event.getNavigation());
             }
          }
       });
@@ -401,7 +393,6 @@ public class Source implements InsertSourceHandler,
       events_.addHandler(DocWindowChangedEvent.TYPE, this);
       events_.addHandler(DocTabDragInitiatedEvent.TYPE, this);
       events_.addHandler(PopoutDocInitiatedEvent.TYPE, this);
-      events_.addHandler(DebugModeChangedEvent.TYPE, this);
       events_.addHandler(ReplaceRangesEvent.TYPE, this);
       events_.addHandler(GetEditorContextEvent.TYPE, this);
       events_.addHandler(SetSelectionRangesEvent.TYPE, this);
@@ -436,7 +427,7 @@ public class Source implements InsertSourceHandler,
       }
 
       // add vim commands
-      initVimCommands();
+      columnManager_.initVimCommands();
    }
 
    private void loadFullSource()
@@ -526,7 +517,7 @@ public class Source implements InsertSourceHandler,
             columnManager_.initialSelect(value);
 
             // clear the history manager
-            sourceNavigationHistory_.clear();
+            columnManager_.clearSourceNavigationHistory();
          }
 
          @Override
@@ -589,14 +580,9 @@ public class Source implements InsertSourceHandler,
       }
    }
 
-   // see if there are additional command pallette entries made available
-   // the by the active editor
    public List<CommandPaletteEntry> getCommandPaletteEntries()
    {
-      if (activeEditor_ != null)
-         return activeEditor_.getCommandPaletteEntries();
-      else
-         return null;
+      return columnManager_.getCommandPaletteEntries();
    }
 
    public SourceColumnManager getColumnManager()
@@ -608,94 +594,6 @@ public class Source implements InsertSourceHandler,
    {
       String id = MainWindowObject.lastFocusedEditorId().get();
       return "rstudio_console_input".equals(id);
-   }
-   
-   private void withTarget(String id,
-                           CommandWithArg<TextEditingTarget> command,
-                           Command onFailure)
-   {
-      EditingTarget target = StringUtil.isNullOrEmpty(id)
-            ? activeEditor_
-            : columnManager_.findEditor(id);
-      
-      if (target == null)
-      {
-         if (onFailure != null)
-            onFailure.execute();
-         return;
-      }
-      
-      if (!(target instanceof TextEditingTarget))
-      {
-         if (onFailure != null)
-            onFailure.execute();
-         return;
-      }
-      
-      command.execute((TextEditingTarget) target);
-   }
-   
-   private void getEditorContext(String id, String path, DocDisplay docDisplay)
-   {
-      AceEditor editor = (AceEditor) docDisplay;
-      Selection selection = editor.getNativeSelection();
-      Range[] ranges = selection.getAllRanges();
-      
-      // clamp ranges to document boundaries
-      for (Range range : ranges)
-      {
-         Position start = range.getStart();
-         start.setRow(MathUtil.clamp(start.getRow(), 0, editor.getRowCount()));
-         start.setColumn(MathUtil.clamp(start.getColumn(), 0, editor.getLine(start.getRow()).length()));
-         
-         Position end = range.getEnd();
-         end.setRow(MathUtil.clamp(end.getRow(), 0, editor.getRowCount()));
-         end.setColumn(MathUtil.clamp(end.getColumn(), 0, editor.getLine(end.getRow()).length()));
-      }
-
-      JsArray<DocumentSelection> docSelections = JavaScriptObject.createArray().cast();
-      for (int i = 0; i < ranges.length; i++)
-      {
-         docSelections.push(DocumentSelection.create(
-               ranges[i],
-               editor.getTextForRange(ranges[i])));
-      }
-
-      id = StringUtil.notNull(id);
-      path = StringUtil.notNull(path);
-      
-      GetEditorContextEvent.SelectionData data =
-            GetEditorContextEvent.SelectionData.create(id, path, editor.getCode(), docSelections);
-      
-      server_.getEditorContextCompleted(data, new VoidServerRequestCallback());
-   }
-   
-   private void withTarget(String id, CommandWithArg<TextEditingTarget> command)
-   {
-      withTarget(id, command, null);
-   }
-   
-   private void initVimCommands()
-   {
-      vimCommands_.save(this);
-      vimCommands_.selectTabIndex(this);
-      vimCommands_.selectNextTab(this);
-      vimCommands_.selectPreviousTab(this);
-      vimCommands_.closeActiveTab(this);
-      vimCommands_.closeAllTabs(this);
-      vimCommands_.createNewDocument(this);
-      vimCommands_.saveAndCloseActiveTab(this);
-      vimCommands_.readFile(this, userPrefs_.defaultEncoding().getValue());
-      vimCommands_.runRScript(this);
-      vimCommands_.reflowText(this);
-      vimCommands_.showVimHelp(
-            RStudioGinjector.INSTANCE.getShortcutViewer());
-      vimCommands_.showHelpAtCursor(this);
-      vimCommands_.reindent(this);
-      vimCommands_.expandShrinkSelection(this);
-      vimCommands_.openNextFile(this);
-      vimCommands_.openPreviousFile(this);
-      vimCommands_.addStarRegister();
    }
 
    public Widget asWidget()
@@ -842,24 +740,18 @@ public class Source implements InsertSourceHandler,
    
    public void onShowProfiler(OpenProfileEvent event)
    {
-      Debug.logToConsole("onShowProfiler not coded");
-      /*
       String profilePath = event.getFilePath();
       String htmlPath = event.getHtmlPath();
       String htmlLocalPath = event.getHtmlLocalPath();
-      
+
       // first try to activate existing
-      for (int idx = 0; idx < editors_.size(); idx++)
+      EditingTarget target = columnManager_.findEditorByPath(profilePath);
+      if (target != null)
       {
-         String path = editors_.get(idx).getPath();
-         if (path != null && path == profilePath)
-         {
-            columnManager_.ensureVisible(false);
-            columnManager_.selectTab(editors_.get(idx));
-            return;
-         }
+         columnManager_.selectTab(target);
+         return;
       }
-      
+
       // create new profiler 
       columnManager_.ensureVisible(true);
 
@@ -907,7 +799,6 @@ public class Source implements InsertSourceHandler,
                }
             });
       }
-      */
    }
    
    @Handler
@@ -1399,23 +1290,6 @@ public class Source implements InsertSourceHandler,
    }
 
    @Handler
-   public void onFindInFiles()
-   {
-      String searchPattern = "";
-      if (activeEditor_ != null && activeEditor_ instanceof TextEditingTarget)
-      {  
-         TextEditingTarget textEditor = (TextEditingTarget) activeEditor_;
-         String selection = textEditor.getSelectedText();
-         boolean multiLineSelection = selection.indexOf('\n') != -1;
-         
-         if ((selection.length() != 0) && !multiLineSelection)
-            searchPattern = selection; 
-      }
-      
-      events_.fireEvent(new FindInFilesEvent(searchPattern));
-   }
-
-   @Handler
    public void onActivateSource()
    {
       onActivateSource(null);
@@ -1458,102 +1332,72 @@ public class Source implements InsertSourceHandler,
    }
    
    @Override
-   public void onDebugModeChanged(DebugModeChangedEvent evt)
-   {
-      // when debugging ends, always disengage any active debug highlights
-      if (!evt.debugging() && activeEditor_ != null)
-      {
-         activeEditor_.endDebugHighlighting();
-      }
-   }
-   
-   @Override
    public void onDocWindowChanged(final DocWindowChangedEvent e)
    {
-      SourceColumn oldDisplay = null;
-      if (e.getNewWindowId() == SourceWindowManager.getSourceWindowId())
+      // Determine the old column before making any changes
+      final SourceColumn oldDisplay = columnManager_.findByDocument(e.getDocId());
+
+      if (e.getNewWindowId().equals(SourceWindowManager.getSourceWindowId()))
       {
          columnManager_.ensureVisible(true);
-         
-         // look for a collaborative editing session currently running inside 
+
+         // look for a collaborative editing session currently running inside
          // the document being transferred between windows--if we didn't know
          // about one with the event, try to look it up in the local cache of
          // source documents
-         final CollabEditStartParams collabParams = 
-               e.getCollabParams() == null ? 
-                     pWindowManager_.get().getDocCollabParams(e.getDocId()) :
-                     e.getCollabParams();
-         
-         // !!! THIS SHOULD GO IN SOURCECOLUMNMANAGER
-         // If we are the main window we need to determine the display columns we are moving to and
-         // from. If we can not determine these, cancel the tab change to prevent the tab from
-         // moving to the wrong tab or having duplicate instances of the same tab. newDisplay must
-         // be final to be used in the onResponseReceived function below.
-         final SourceColumn newDisplay = SourceWindowManager.isMainSourceWindow() ?
-                                   columnManager_.findByPosition(e.getXPos()) :
-                                   null;
-         if (SourceWindowManager.isMainSourceWindow())
-         {
-            if (newDisplay == null)
-            {
-               Debug.logWarning("Could not determine new source column.");
-               return;
-            }
-            // when we're moving between columns in the main source window
-            // we need to set the oldDisplay before we add the new one
-            oldDisplay = e.getOldWindowId() == e.getNewWindowId() ?
-                         columnManager_.findByDocument(e.getDocId()) :
-                         columnManager_.getActive();
-            // the event doesn't contain the display info, so we add it now
-            pWindowManager_.get().assignSourceDocDisplay(e.getDocId(), newDisplay.getName(), true);
-         }
+         final CollabEditStartParams collabParams =
+             e.getCollabParams() == null ?
+                 pWindowManager_.get().getDocCollabParams(e.getDocId()) :
+                 e.getCollabParams();
+
+         // If we can not determine the new column and the window has more than one column,
+         // log a warning but continue to prevent the tab from being lost.
+         final SourceColumn newDisplay = columnManager_.findByPosition(e.getXPos());
+         if (newDisplay == null && columnManager_.getSize() > 1)
+            Debug.logWarning("Couldn't determine new window column for dragged document.");
+
+         // the event doesn't contain the display info, so we add it now
+         pWindowManager_.get().assignSourceDocDisplay(
+             e.getDocId(),
+             (newDisplay == null) ?
+                 columnManager_.getActive().getName() :
+                 (newDisplay).getName(),
+             true);
 
          // if we're the adopting window, add the doc
          server_.getSourceDocument(e.getDocId(),
-               new ServerRequestCallback<SourceDocument>()
-         {
-            @Override
-            public void onResponseReceived(final SourceDocument doc)
-            {
-               final EditingTarget target = columnManager_.addTab(doc, e.getPos(), newDisplay);
-               
-               Scheduler.get().scheduleDeferred(new Scheduler.ScheduledCommand()
-               {
-                  @Override
-                  public void execute()
-                  {
-                     // if there was a collab session, resume it
-                     if (collabParams != null)
-                        target.beginCollabSession(e.getCollabParams());
-                  }
-               });
-            }
+             new ServerRequestCallback<SourceDocument>()
+             {
+                @Override
+                public void onResponseReceived(final SourceDocument doc)
+                {
+                   final EditingTarget target = columnManager_.addTab(doc, e.getPos(),
+                       newDisplay);
 
-            @Override
-            public void onError(ServerError error)
-            {
-               globalDisplay_.showErrorMessage("Document Tab Move Failed", 
-                     "Couldn't move the tab to this window: \n" + 
-                      error.getMessage());
-            }
-         });
+                   Scheduler.get().scheduleDeferred(new Scheduler.ScheduledCommand()
+                   {
+                      @Override
+                      public void execute()
+                      {
+                         // if there was a collab session, resume it
+                         if (collabParams != null)
+                            target.beginCollabSession(e.getCollabParams());
+                      }
+                   });
+                }
+
+                @Override
+                public void onError(ServerError error)
+                {
+                   globalDisplay_.showErrorMessage("Document Tab Move Failed",
+                       "Couldn't move the tab to this window: \n" +
+                           error.getMessage());
+                }
+             });
       }
-
-      // the new and old window Ids will be the same when moving documents between columns
-      // in the main source window
-      if (e.getOldWindowId() == SourceWindowManager.getSourceWindowId())
+      if (e.getOldWindowId().equals(SourceWindowManager.getSourceWindowId()))
       {
-         if (oldDisplay == null)
-         {
-            oldDisplay = SourceWindowManager.isMainSourceWindow() ?
-                         columnManager_.findByDocument(e.getDocId()) :
-                         columnManager_.getActive();
-         }
-         // cancel tab drag if it was occurring
-         oldDisplay.cancelTabDrag();
-         
-         // disown this doc if it was our own
-         columnManager_.disownDoc(e.getDocId());
+         columnManager_.disownDocOnDrag(e.getDocId(), oldDisplay);
       }
    }
 
@@ -1610,126 +1454,13 @@ public class Source implements InsertSourceHandler,
    }
 
    @Handler
-   public void onCloseSourceDoc()
-   {
-      closeSourceDoc(true);
-   }
-   
-   void closeSourceDoc(boolean interactive)
-   {
-      if (columnManager_.getActive().getTabCount() == 0)
-         return;
-      
-      columnManager_.closeTab(interactive);
-   }
-   
-   @Handler
    public void onSaveAllSourceDocs()
    {
-      /*
       // Save all documents in the main window
-      columnManager_.cpsExecuteForEachEditor(editors_, new CPSEditingTargetCommand()
-      {
-         @Override
-         public void execute(EditingTarget target, Command continuation)
-         {
-            if (target.dirtyState().getValue())
-            {
-               target.save(continuation);
-            }
-            else
-            {
-               continuation.execute();
-            }
-         }
-      });
+       columnManager_.saveAllSourceDocs();
 
       // Save all documents in satellite windows
       pWindowManager_.get().saveUnsavedDocuments(null, null);
-      */
-      Debug.logToConsole("onSaveAllSourceDocs not coded");
-   }
-   
-   
-   private void saveEditingTargetsWithPrompt(
-                                       String title,
-                                       ArrayList<EditingTarget> editingTargets,
-                                       final Command onCompleted,
-                                       final Command onCancelled)
-   {
-      // execute on completed right away if the list is empty
-      if (editingTargets.size() ==  0)
-      {
-         onCompleted.execute();
-      }
-      
-      // if there is just one thing dirty then go straight to the save dialog
-      else if (editingTargets.size() == 1)
-      {
-         editingTargets.get(0).saveWithPrompt(onCompleted, onCancelled);
-      }
-      
-      // otherwise use the multi save changes dialog
-      else
-      {
-         // convert to UnsavedChangesTarget collection
-         ArrayList<UnsavedChangesTarget> unsavedTargets = 
-                                    new ArrayList<UnsavedChangesTarget>();
-         unsavedTargets.addAll(editingTargets);
-         
-         // show dialog
-         columnManager_.showUnsavedChangesDialog(
-            title,
-            unsavedTargets, 
-            new OperationWithInput<UnsavedChangesDialog.Result>() 
-            {
-               @Override
-               public void execute(UnsavedChangesDialog.Result result)
-               {
-                  saveChanges(result.getSaveTargets(), onCompleted);
-               }
-            },
-            onCancelled); 
-      }
-   }
-   
-   private void saveChanges(ArrayList<UnsavedChangesTarget> targets,
-                                 Command onCompleted)
-   {
-      // convert back to editing targets
-      ArrayList<EditingTarget> saveTargets = 
-                                    new ArrayList<EditingTarget>();
-      for (UnsavedChangesTarget target: targets)
-      {
-         EditingTarget saveTarget = 
-                           columnManager_.findEditor(target.getId());
-         if (saveTarget != null)
-            saveTargets.add(saveTarget);
-      }
-        
-      SourceColumnManager.CPSEditingTargetCommand saveCommand =
-         new SourceColumnManager.CPSEditingTargetCommand()
-      {
-         @Override
-         public void execute(EditingTarget saveTarget,
-                             Command continuation)
-         {
-            saveTarget.save(continuation);
-         }
-      };
-
-      // execute the save
-      columnManager_.cpsExecuteForEachEditor(
-         
-         // targets the user chose to save
-         saveTargets, 
-         
-         // save each editor
-         saveCommand,
-
-         // onCompleted at the end
-         onCompleted
-      );          
    }
 
    @Handler
@@ -1755,7 +1486,7 @@ public class Source implements InsertSourceHandler,
             @Override
             public void execute()
             {
-               closeAllLocalSourceDocs(caption, onCompleted, excludeActive);
+               columnManager_.closeAllLocalSourceDocs(caption, onCompleted, excludeActive);
             }
          });
       }
@@ -1763,93 +1494,31 @@ public class Source implements InsertSourceHandler,
       {
          // this is a satellite (or we don't need to query satellites)--just
          // close our own tabs
-         closeAllLocalSourceDocs(caption, onCompleted, excludeActive);
+         columnManager_.closeAllLocalSourceDocs(caption, onCompleted, excludeActive);
       }
-  }
+   }
 
-  private void closeAllLocalSourceDocs(String caption, Command onCompleted,
-           final boolean excludeActive)
-  {
-     /*
-      // save active editor for exclusion (it changes as we close tabs)
-      final EditingTarget activeEditor = activeEditor_;
-      
-      // collect up a list of dirty documents
-      ArrayList<EditingTarget> dirtyTargets = new ArrayList<EditingTarget>();
-      for (EditingTarget target : editors_)
-      {
-         if (excludeActive && target == activeEditor)
-            continue;
-         if (target.dirtyState().getValue())
-            dirtyTargets.add(target);
-      }
-      
-      // create a command used to close all tabs 
-      final Command closeAllTabsCommand = new Command()
-      {
-         @Override
-         public void execute()
-         {
-            columnManager_.closeAllTabs(excludeActive, false);
-         }     
-      };
-      
-      // save targets
-      saveEditingTargetsWithPrompt(caption,
-                                   dirtyTargets, 
-                                   CommandUtil.join(closeAllTabsCommand,
-                                                    onCompleted),
-                                   null);
-      
-                                   */
-     Debug.logToConsole("close AllLocalSourceDocs not coded");
-   }
-  
-   private boolean isUnsavedTarget(EditingTarget target, int type)
-   {
-      boolean fileBacked = target.getPath() != null;
-      return target.dirtyState().getValue() && 
-              ((type == TYPE_FILE_BACKED &&  fileBacked) ||
-               (type == TYPE_UNTITLED    && !fileBacked));
-   }
-   
    public ArrayList<UnsavedChangesTarget> getUnsavedChanges(int type)
    {
       return getUnsavedChanges(type,  null);
    }
-   
+
    public ArrayList<UnsavedChangesTarget> getUnsavedChanges(int type, Set<String> ids)
    {
-      ArrayList<UnsavedChangesTarget> targets = 
-                                       new ArrayList<UnsavedChangesTarget>();
-      /*
+      ArrayList<UnsavedChangesTarget> targets =
+          new ArrayList<UnsavedChangesTarget>();
 
-      // if this is the main window, collect all unsaved changes from 
+      // if this is the main window, collect all unsaved changes from
       // the satellite windows as well
       if (SourceWindowManager.isMainSourceWindow())
       {
          targets.addAll(pWindowManager_.get().getAllSatelliteUnsavedChanges(type));
       }
+      targets.addAll(columnManager_.getUnsavedChanges(type, ids));
 
-      for (EditingTarget target : editors_)
-      {
-         // no need to save targets which are up-to-date
-         if (!isUnsavedTarget(target, type))
-            continue;
-         
-         // if we've requested the save of specific documents, screen
-         // out documents not within the requested id set
-         if (ids != null && !ids.contains(target.getId()))
-            continue;
-         
-         targets.add(target);
-      }
-      
-      */
-      Debug.logToConsole("UnsavedChanges not coded");
       return targets;
    }
-   
+
    public void saveUnsavedDocuments(final Command onCompleted)
    {
       saveUnsavedDocuments(null, onCompleted);
@@ -1863,7 +1532,7 @@ public class Source implements InsertSourceHandler,
          @Override
          public void execute()
          {
-            saveChanges(getUnsavedChanges(TYPE_FILE_BACKED, ids), onCompleted);
+            columnManager_.saveChanges(getUnsavedChanges(TYPE_FILE_BACKED, ids), onCompleted);
          }
       };
       
@@ -1873,7 +1542,7 @@ public class Source implements InsertSourceHandler,
       else
          saveAllLocal.execute();
    }
-   
+
    public void saveWithPrompt(UnsavedChangesTarget target, 
                               Command onCompleted,
                               Command onCancelled)
@@ -1898,6 +1567,7 @@ public class Source implements InsertSourceHandler,
       return () -> handleUnsavedChangesBeforeExit(new ArrayList<UnsavedChangesTarget>(),
                                                   onCompleted);
    }
+
    public void handleUnsavedChangesBeforeExit(
                         final ArrayList<UnsavedChangesTarget> saveTargets,
                         final Command onCompleted)
@@ -1908,7 +1578,7 @@ public class Source implements InsertSourceHandler,
          public void execute()
          {
             // revert unsaved
-            revertUnsavedTargets(onCompleted);
+            columnManager_.revertUnsavedTargets(onCompleted);
          }
       };   
 
@@ -1922,69 +1592,21 @@ public class Source implements InsertSourceHandler,
             @Override
             public void execute()
             {
-               saveChanges(saveTargets, completed);
+               columnManager_.saveChanges(saveTargets, completed);
             }
          });
       }
       else
       {
-         saveChanges(saveTargets, completed);
+         columnManager_.saveChanges(saveTargets, completed);
       }
    }
    
-   public SourceColumn getActiveView()
+   public Display getActiveView()
    {
-      return columnManager_.getActive();
+      return (Display)columnManager_.getActive();
    }
 
-   public void activateView(Display display)
-   {
-      //display.focus();
-   }
-
-   private void revertUnsavedTargets(Command onCompleted)
-   {
-      Debug.logToConsole("UnsavedChanges not coded");
-      /*
-      // collect up unsaved targets
-      ArrayList<EditingTarget> unsavedTargets =  new ArrayList<EditingTarget>();
-      for (EditingTarget target : editors_)
-         if (isUnsavedTarget(target, TYPE_FILE_BACKED))
-            unsavedTargets.add(target);
-      
-      // revert all of them
-      columnManager_.cpsExecuteForEachEditor(
-         
-         // targets the user chose not to save
-         unsavedTargets, 
-         
-         // save each editor
-         new CPSEditingTargetCommand()
-         {
-            @Override
-            public void execute(EditingTarget saveTarget, 
-                                Command continuation)
-            {
-               if (saveTarget.getPath() != null)
-               {
-                  // file backed document -- revert it
-                  saveTarget.revertChanges(continuation);
-               }
-               else
-               {
-                  // untitled document -- just close the tab non-interactively
-                  columnManager_.closeTab(saveTarget, false, continuation);
-               }
-            }
-         },
-         
-         // onCompleted at the end
-         onCompleted
-      );          
-            
-      */
-   }
-   
    @Handler
    public void onOpenSourceDoc()
    {
@@ -2150,16 +1772,12 @@ public class Source implements InsertSourceHandler,
 
    public String getCurrentDocId()
    {
-      if (getActiveEditor() == null)
-         return null;
-      return getActiveEditor().getId();
+      return columnManager_.getActiveDocId();
    }
 
    public String getCurrentDocPath()
    {
-      if (getActiveEditor() == null)
-         return null;
-      return getActiveEditor().getPath();
+      return columnManager_.getActiveDocPath();
    }
    
    private void doOpenSourceFile(final FileSystemItem file,
@@ -2394,14 +2012,8 @@ public class Source implements InsertSourceHandler,
 
    public void onInsertSource(final InsertSourceEvent event)
    {
-      if (activeEditor_ != null
-          && activeEditor_ instanceof TextEditingTarget
-          && commands_.executeCode().isEnabled())
-      {
-         TextEditingTarget textEditor = (TextEditingTarget) activeEditor_;
-         textEditor.insertCode(event.getCode(), event.isBlock());
-      }
-      else
+
+      if (!columnManager_.insertSource(event.getCode(), event.isBlock()))
       {
          columnManager_.newDoc(FileTypeRegistry.R,
                         new ResultCallback<EditingTarget, ServerError>()
@@ -2412,15 +2024,6 @@ public class Source implements InsertSourceHandler,
                                                    event.isBlock());
             }
          });
-      }
-   }
-
-   public void closeEditorIfActive(EditingTarget target)
-   {
-      if (activeEditor_ == target)
-      {
-         activeEditor_.onDeactivate();
-         activeEditor_ = null;
       }
    }
 
@@ -2435,13 +2038,10 @@ public class Source implements InsertSourceHandler,
    @Handler
    public void onSourceNavigateBack()
    {
-      if (!sourceNavigationHistory_.isForwardEnabled())
-      {
-         if (activeEditor_ != null)
-            activeEditor_.recordCurrentNavigationPosition();
-      }
+      if (!columnManager_.getSourceNavigationHistory().isForwardEnabled())
+         columnManager_.recordCurrentNavigationHistoryPosition();
 
-      SourceNavigation navigation = sourceNavigationHistory_.goBack();
+      SourceNavigation navigation = columnManager_.getSourceNavigationHistory().goBack();
       if (navigation != null)
          attemptSourceNavigation(navigation, commands_.sourceNavigateBack());
    }
@@ -2449,7 +2049,7 @@ public class Source implements InsertSourceHandler,
    @Handler
    public void onSourceNavigateForward()
    {
-      SourceNavigation navigation = sourceNavigationHistory_.goForward();
+      SourceNavigation navigation = columnManager_.getSourceNavigationHistory().goForward();
       if (navigation != null)
          attemptSourceNavigation(navigation, commands_.sourceNavigateForward());
    }
@@ -2469,14 +2069,10 @@ public class Source implements InsertSourceHandler,
    @Handler
    public void onSpeakEditorLocation()
    {
-      String announcement;
-      if (activeEditor_ == null)
-         announcement = "No document tabs open";
-      else
-      {
-         announcement = activeEditor_.getCurrentStatus();
-      }
-      ariaLive_.announce(AriaLiveService.ON_DEMAND, announcement, Timing.IMMEDIATE, Severity.STATUS);
+      ariaLive_.announce(AriaLiveService.ON_DEMAND,
+          columnManager_.getEditorPositionString(),
+          Timing.IMMEDIATE,
+          Severity.STATUS);
    }
    
    @Handler
@@ -2509,11 +2105,12 @@ public class Source implements InsertSourceHandler,
    private void openAdjacentFile(final boolean forward)
    {
       // ensure we have an editor and a titled document is open
-      if (activeEditor_ == null || StringUtil.isNullOrEmpty(activeEditor_.getPath()))
+      if (!columnManager_.hasActiveEditor() ||
+          StringUtil.isNullOrEmpty(columnManager_.getActiveDocPath()))
          return;
       
       final FileSystemItem activePath =
-            FileSystemItem.createFile(activeEditor_.getPath());
+            FileSystemItem.createFile(columnManager_.getActiveDocPath());
       final FileSystemItem activeDir = activePath.getParentPath();
       
       server_.listFiles(
@@ -2578,8 +2175,8 @@ public class Source implements InsertSourceHandler,
       {
          // check for navigation to the current position -- in this
          // case execute the retry command
-         if ( (target == activeEditor_) && 
-               target.isAtSourceRow(navigation.getPosition()))
+         if (columnManager_.isActiveEditor(target) &&
+             target.isAtSourceRow(navigation.getPosition()))
          {
             if (retryCommand.isEnabled())
                retryCommand.execute();
@@ -2798,11 +2395,6 @@ public class Source implements InsertSourceHandler,
       SnippetHelper.onSnippetsChanged(event);
    }
 
-   public EditingTarget getActiveEditor()
-   {
-      return activeEditor_;
-   }
-
    public SourceServerOperations getServer()
    {
       return server_;
@@ -2942,7 +2534,7 @@ public class Source implements InsertSourceHandler,
       }
       else
       {
-         withTarget(id, new CommandWithArg<TextEditingTarget>()
+         columnManager_.withTarget(id, new CommandWithArg<TextEditingTarget>()
          {
             @Override
             public void execute(TextEditingTarget target)
@@ -2980,7 +2572,7 @@ public class Source implements InsertSourceHandler,
 
       if (type == GetEditorContextEvent.TYPE_ACTIVE_EDITOR)
       {
-         if (consoleEditorHadFocusLast() || activeEditor_ == null)
+         if (consoleEditorHadFocusLast() || columnManager_.hasActiveEditor())
             type = GetEditorContextEvent.TYPE_CONSOLE_EDITOR;
          else
             type = GetEditorContextEvent.TYPE_SOURCE_EDITOR;
@@ -2991,25 +2583,14 @@ public class Source implements InsertSourceHandler,
          InputEditorDisplay editor = consoleEditorProvider_.getConsoleEditor();
          if (editor != null && editor instanceof DocDisplay)
          {
-            getEditorContext("#console", "", (DocDisplay) editor);
+            columnManager_.getEditorContext("#console", "", (DocDisplay) editor, server_);
             return;
          }
       }
       else if (type == GetEditorContextEvent.TYPE_SOURCE_EDITOR)
       {
-         EditingTarget target = activeEditor_;
-         if (target != null && target instanceof TextEditingTarget)
-         {
-            TextEditingTarget editingTarget = (TextEditingTarget)target;
-            editingTarget.ensureTextEditorActive(() -> {
-               getEditorContext(
-                  editingTarget.getId(),
-                  editingTarget.getPath(),
-                  editingTarget.getDocDisplay()
-               );
-            });
+         if (columnManager_.attemptTextEditorActivate())
             return;
-         }
       }
 
       // We need to ensure a 'getEditorContext' event is always
@@ -3030,117 +2611,6 @@ public class Source implements InsertSourceHandler,
             doReplaceRanges(event, docDisplay);
          }
       });
-   }
-   
-   private void pasteFileContentsAtCursor(final String path, final String encoding)
-   {
-      if (activeEditor_ != null && activeEditor_ instanceof TextEditingTarget)
-      {
-         final TextEditingTarget target = (TextEditingTarget) activeEditor_;
-         server_.getFileContents(path, encoding, new ServerRequestCallback<String>()
-         {
-            @Override
-            public void onResponseReceived(String content)
-            {
-               target.insertCode(content, false);
-            }
-
-            @Override
-            public void onError(ServerError error)
-            {
-               Debug.logError(error);
-            }
-         });
-      }
-   }
-
-   private void pasteRCodeExecutionResult(final String code)
-   {
-      server_.executeRCode(code, new ServerRequestCallback<String>()
-      {
-         @Override
-         public void onResponseReceived(String output)
-         {
-            if (activeEditor_ != null && activeEditor_ instanceof TextEditingTarget)
-            {
-               TextEditingTarget editor = (TextEditingTarget) activeEditor_;
-               editor.insertCode(output, false);
-            }
-         }
-
-         @Override
-         public void onError(ServerError error)
-         {
-            Debug.logError(error);
-         }
-      });
-   }
-
-   private void reflowText()
-   {
-      if (activeEditor_ != null && activeEditor_ instanceof TextEditingTarget)
-      {
-         TextEditingTarget editor = (TextEditingTarget) activeEditor_;
-         editor.reflowText();
-      }
-   }
-
-   private void reindent()
-   {
-      if (activeEditor_ != null && activeEditor_ instanceof TextEditingTarget)
-      {
-         TextEditingTarget editor = (TextEditingTarget) activeEditor_;
-         editor.getDocDisplay().reindent();
-      }
-   }
-
-   // !!! fix this
-   private void saveActiveSourceDoc()
-   {
-      if (activeEditor_ != null && activeEditor_ instanceof TextEditingTarget)
-      {
-         TextEditingTarget target = (TextEditingTarget) activeEditor_;
-         target.save();
-      }
-   }
-
-   // !!! fix this
-   private void saveAndCloseActiveSourceDoc()
-   {
-      if (activeEditor_ != null && activeEditor_ instanceof TextEditingTarget)
-      {
-         TextEditingTarget target = (TextEditingTarget) activeEditor_;
-         target.save(new Command()
-         {
-            @Override
-            public void execute()
-            {
-               onCloseSourceDoc();
-            }
-         });
-      }
-   }
-
-   // !!! fix this
-   private void revertActiveDocument()
-   {
-      if (activeEditor_ == null)
-         return;
-
-      if (activeEditor_.getPath() != null)
-         activeEditor_.revertChanges(null);
-
-      // Ensure that the document is in view
-      activeEditor_.ensureCursorVisible();
-   }
-
-   private void showHelpAtCursor()
-   {
-      if (activeEditor_ != null && activeEditor_ instanceof TextEditingTarget)
-      {
-         TextEditingTarget editor = (TextEditingTarget) activeEditor_;
-         editor.showHelpAtCursor();
-      }
    }
 
    private void doReplaceRanges(ReplaceRangesEvent event, DocDisplay docDisplay)
@@ -3174,14 +2644,11 @@ public class Source implements InsertSourceHandler,
       public final FileSystemItem file;
       public final CommandWithArg<FileSystemItem> action;
    }
-   
-   final Queue<StatFileEntry> statQueue_ = new LinkedList<StatFileEntry>();
-   ArrayList<Integer> tabOrder_ = new ArrayList<Integer>();
-   SourceColumnManager columnManager_;
-   private EditingTarget activeEditor_;
+
    private final Commands commands_;
+   final Queue<StatFileEntry> statQueue_ = new LinkedList<StatFileEntry>();
+   SourceColumnManager columnManager_;
    private final SourceServerOperations server_;
-   private final EditingTargetSource editingTargetSource_;
    private final FileTypeRegistry fileTypeRegistry_;
    private final GlobalDisplay globalDisplay_;
    private final WorkbenchContext workbenchContext_;
@@ -3194,9 +2661,6 @@ public class Source implements InsertSourceHandler,
    private UserPrefs userPrefs_;
    private final ConsoleEditorProvider consoleEditorProvider_;
    private final RnwWeaveRegistry rnwWeaveRegistry_;
-   private final SourceNavigationHistory sourceNavigationHistory_ = 
-                                              new SourceNavigationHistory(30);
-   private SourceVimCommands vimCommands_;
 
    private boolean suspendSourceNavigationAdding_;
   
@@ -3207,7 +2671,8 @@ public class Source implements InsertSourceHandler,
    private final Provider<SourceWindowManager> pWindowManager_;
    
    private DependencyManager dependencyManager_;
- 
+
+   // !!! consider moving these
    public final static int TYPE_FILE_BACKED = 0;
    public final static int TYPE_UNTITLED    = 1;
    public final static int OPEN_INTERACTIVE = 0;
