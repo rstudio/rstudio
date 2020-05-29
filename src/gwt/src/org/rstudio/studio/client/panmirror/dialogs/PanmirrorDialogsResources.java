@@ -53,11 +53,5 @@ public interface PanmirrorDialogsResources extends ClientBundle
    @Source("edit_link_2x.png")
    ImageResource edit_link();
    
-   public static PanmirrorDialogsResources INSTANCE = (PanmirrorDialogsResources)GWT.create(PanmirrorDialogsResources.class);
-   
-
-   public static void ensureStylesInjected()
-   {
-      INSTANCE.styles().ensureInjected();
-   }
+   public static PanmirrorDialogsResources INSTANCE = GWT.create(PanmirrorDialogsResources.class);
 }
