@@ -113,18 +113,19 @@ public class CommandPalette extends Composite
       Element searchBox = searchBox_.getElement();
       searchBox.setAttribute("placeholder", "Search and run commands");
       searchBox.setAttribute("spellcheck", "false");
+      searchBox.setAttribute("autocomplete", "off");
 
       // Accessibility attributes: list box
       Element commandList = commandList_.getElement();
       ElementIds.assignElementId(commandList, ElementIds.COMMAND_PALETTE_LIST);
       Roles.getListboxRole().set(commandList);
-      Roles.getListboxRole().setAriaLabelProperty(commandList, "Matching commands");
+      Roles.getListboxRole().setAriaLabelProperty(commandList, "Matching commands and settings");
 
       // Accessibility attributes: search box
       ElementIds.assignElementId(searchBox_, ElementIds.COMMAND_PALETTE_SEARCH);
       Roles.getComboboxRole().setAriaOwnsProperty(searchBox, Id.of(commandList_.getElement()));
       Roles.getComboboxRole().set(searchBox);
-      Roles.getComboboxRole().setAriaLabelProperty(searchBox, "Search for and run a command");
+      Roles.getComboboxRole().setAriaLabelProperty(searchBox, "Search for commands and settings");
       Roles.getComboboxRole().setAriaExpandedState(searchBox, ExpandedValue.TRUE);
       A11y.setARIAAutocomplete(searchBox_, "list");
       

@@ -28,9 +28,9 @@ import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.views.source.Source;
 
 import com.google.gwt.aria.client.Roles;
-import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
+import com.google.gwt.user.client.Window;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.inject.Singleton;
@@ -43,8 +43,6 @@ public class CommandPaletteLauncher implements CommandPalette.Host
    
    private enum State
    {
-      Uninitialized,  // The panel has never been shown
-      Initializing,   // The panel is getting ready to show for the first time
       Showing,        // The panel is currently showing
       Hidden          // The panel is ready, but currently hidden
    }
@@ -61,7 +59,7 @@ public class CommandPaletteLauncher implements CommandPalette.Host
       commands_ = commands;
       pSource_ = pSource;
       pPrefs_ = pPrefs;
-      state_ = State.Uninitialized;
+      state_ = State.Hidden;
    }
    
    @Handler
@@ -73,24 +71,9 @@ public class CommandPaletteLauncher implements CommandPalette.Host
          dismiss();
          return;
       }
-
       if (state_ == State.Hidden)
       {
-         // Already initialized; just show the panel
          createPanel();
-      }
-      else if (state_ == State.Uninitialized)
-      {
-         // Not yet initialized. The first load happens behind the browser event
-         // loop (and after an RPC) so that the CSS resources can be injected.
-         // We could fix this by eagerly injecting these when RStudio starts,
-         // but this way we don't pay any boot time penalty.
-         state_ = State.Initializing;
-         Scheduler.get().scheduleDeferred(() ->
-         {
-            state_ = State.Hidden;
-            createPanel();
-         });
       }
    }
    
@@ -116,6 +99,9 @@ public class CommandPaletteLauncher implements CommandPalette.Host
             true   // Close on Esc
       );
       
+      // Required for accessibility (see #6962)
+      panel_.getElement().setTabIndex(-1);
+      
       // Copy classes from the root RStudio container onto this panel. This is
       // necessary so that we can properly inherit theme colors.
       Element root = Document.get().getElementById("rstudio_container");
@@ -129,14 +115,17 @@ public class CommandPaletteLauncher implements CommandPalette.Host
       Roles.getDialogRole().set(ele);
       Roles.getDialogRole().setAriaLabelProperty(ele, "Search commands and settings");
 
+      // Find the center of the screen
       panel_.add(palette_);
-      panel_.show();
-      panel_.center();
+      panel_.setPopupPositionAndShow((int x, int y) -> 
+      {
+         panel_.setPopupPosition(Window.getClientWidth() / 2 - 300, 50);
+      });
       
       // Set z-index above panel splitters (otherwise they overlap the popup)
       panel_.getElement().getStyle().setZIndex(250);
-
       palette_.focus();
+
       state_ = State.Showing;
       
       // Free our reference to the panel when it closes
