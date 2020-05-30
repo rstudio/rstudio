@@ -13,7 +13,7 @@
  *
  */
 
-package org.rstudio.studio.client.application.ui;
+package org.rstudio.studio.client.palette.ui;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -31,6 +31,7 @@ import org.rstudio.core.client.js.JsUtil;
 import org.rstudio.core.client.widget.AriaLiveStatusWidget;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.AriaLiveStatusEvent.Severity;
+import org.rstudio.studio.client.palette.CommandPaletteEntrySource;
 import org.rstudio.studio.client.workbench.addins.Addins.AddinExecutor;
 import org.rstudio.studio.client.workbench.addins.Addins.RAddin;
 import org.rstudio.studio.client.workbench.addins.Addins.RAddins;

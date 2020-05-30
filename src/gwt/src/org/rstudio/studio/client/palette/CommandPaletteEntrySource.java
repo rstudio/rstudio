@@ -12,10 +12,12 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-package org.rstudio.studio.client.application.ui;
+package org.rstudio.studio.client.palette;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import org.rstudio.studio.client.palette.ui.CommandPaletteEntry;
 
 public interface CommandPaletteEntrySource
 { 

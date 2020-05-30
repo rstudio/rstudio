@@ -2,7 +2,7 @@
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
 	xmlns:g="urn:import:com.google.gwt.user.client.ui"
 	xmlns:rw="urn:import:org.rstudio.core.client.widget">
-	<ui:style field="styles_" type="org.rstudio.studio.client.application.ui.CommandPalette.Styles">
+	<ui:style field="styles_" type="org.rstudio.studio.client.palette.ui.CommandPalette.Styles">
 		@eval proportionalFont org.rstudio.core.client.theme.ThemeFonts.getProportionalFont();
 		@external editor_dark, .gwt-Label;
 
