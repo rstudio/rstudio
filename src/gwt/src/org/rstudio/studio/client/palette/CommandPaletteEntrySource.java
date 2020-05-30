@@ -14,32 +14,25 @@
  */
 package org.rstudio.studio.client.palette;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import org.rstudio.studio.client.palette.ui.CommandPaletteEntry;
 
-public interface CommandPaletteEntrySource
+public interface CommandPaletteEntrySource<T>
 { 
-   // get the list of entries
-   List<CommandPaletteEntry> getCommandPaletteEntries();
+   /**
+    * A list of all of the elements to be rendered as entries in the palette.
+    * 
+    * @return A list of elements. 
+    */
+   List<T> getElements();
    
-   // join multiple sources into one
-   public static CommandPaletteEntrySource join(List<CommandPaletteEntrySource> sources)
-   {
-      return new CommandPaletteEntrySource() 
-      {
-         @Override
-         public List<CommandPaletteEntry> getCommandPaletteEntries()
-         {
-            List<CommandPaletteEntry> entries = new ArrayList<CommandPaletteEntry>();
-            sources.forEach((CommandPaletteEntrySource source) -> {
-               List<CommandPaletteEntry> sourceEntries = source.getCommandPaletteEntries();
-               if (sourceEntries != null)
-                  entries.addAll(sourceEntries);
-            });
-            return entries;
-         } 
-      };
-   }
+   /**
+    * Render a specific element as a command palette entry.
+    * 
+    * @param element The element to render
+    * 
+    * @return A CommandPaletteEntry representing the element.
+    */
+   CommandPaletteEntry renderElementEntry(T element);
 }
