@@ -23,6 +23,7 @@
 
 #include <boost/algorithm/string.hpp>
 #include <boost/range/as_array.hpp>
+#include <boost/bind.hpp>
 
 #include <signal.h>
 #include <fcntl.h>
