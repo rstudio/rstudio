@@ -1,7 +1,7 @@
 #
 # CMakeLists.txt
 #
-# Copyright (C) 2009-19 by RStudio, PBC
+# Copyright (C) 2020 by RStudio, PBC
 #
 # Unless you have received this program directly from RStudio pursuant
 # to the terms of a commercial license agreement with RStudio, then
@@ -151,6 +151,7 @@ include_directories(
    ${SERVER_SYSTEM_INCLUDE_DIRS}
    ${CORE_INCLUDE_DIRS}
    ${MONITOR_SOURCE_DIR}/include
+   ${EXT_SOURCE_DIR}
    ${SESSION_SOURCE_DIR}/include
    ${SHARED_CORE_SOURCE_DIR}/include
 )
@@ -199,7 +200,6 @@ install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/${RSERVER_DATABASE_CONF_FILE}
         DESTINATION ${RSERVER_CONF_DIR})
 
 if (UNIX AND NOT APPLE)
-
    # install configured admin script
    set(RSERVER_ADMIN_SCRIPT "extras/admin/rstudio-server")
    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/${RSERVER_ADMIN_SCRIPT}.in

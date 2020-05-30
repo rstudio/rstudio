@@ -1,7 +1,7 @@
 /*
  * EnvironmentPresenter.java
  *
- * Copyright (C) 2009-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -24,6 +24,7 @@ import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.js.JsObject;
+import org.rstudio.core.client.js.JsUtil;
 import org.rstudio.core.client.regex.Pattern;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ProgressIndicator;
@@ -72,6 +73,7 @@ import org.rstudio.studio.client.workbench.views.environment.dataimport.ImportFi
 import org.rstudio.studio.client.workbench.views.environment.dataimport.ImportFileSettingsDialogResult;
 import org.rstudio.studio.client.workbench.views.environment.events.BrowserLineChangedEvent;
 import org.rstudio.studio.client.workbench.views.environment.events.ContextDepthChangedEvent;
+import org.rstudio.studio.client.workbench.views.environment.events.EnvironmentChangedEvent;
 import org.rstudio.studio.client.workbench.views.environment.events.EnvironmentObjectAssignedEvent;
 import org.rstudio.studio.client.workbench.views.environment.events.EnvironmentObjectRemovedEvent;
 import org.rstudio.studio.client.workbench.views.environment.events.EnvironmentRefreshEvent;
@@ -100,6 +102,9 @@ public class EnvironmentPresenter extends BasePresenter
    
    public interface Display extends WorkbenchView
    {
+      void setActiveLanguage(String language, boolean syncWithSession);
+      String getActiveLanguage();
+      String getMonitoredEnvironment();
       void addObject(RObject object);
       void addObjects(JsArray<RObject> objects);
       void clearObjects();
@@ -240,6 +245,21 @@ public class EnvironmentPresenter extends BasePresenter
          public void onEnvironmentObjectRemoved(EnvironmentObjectRemovedEvent event)
          {
             view_.removeObject(event.getObjectName());
+         }
+      });
+      
+      eventBus.addHandler(EnvironmentChangedEvent.TYPE, (EnvironmentChangedEvent event) ->
+      {
+         EnvironmentChangedEvent.Data data = event.getData();
+         
+         for (RObject object : JsUtil.asIterable(data.getChangedObjects()))
+         {
+            view_.addObject(object);
+         }
+         
+         for (String object : JsUtil.asIterable(data.getRemovedObjects()))
+         {
+            view_.removeObject(object);
          }
       });
 
@@ -853,10 +873,13 @@ public class EnvironmentPresenter extends BasePresenter
       {
          return;
       }
+      
       // start showing the progress spinner and initiate the request
       view_.setProgress(true);
       refreshingView_ = true;
       server_.getEnvironmentState(
+            view_.getActiveLanguage(),
+            view_.getMonitoredEnvironment(),
             new ServerRequestCallback<EnvironmentContextData>()
       {
 

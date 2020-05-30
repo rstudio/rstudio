@@ -1,7 +1,7 @@
 /*
  * widgets.css
  *
- * Copyright (C) 2019-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -38,10 +38,15 @@
   height: 18px;
 }
 
-
-.pm-dark-mode .pm-input-text {
+.pm-input-text,
+.pm-input-select {
   border-width: 1px;
   border-style: solid;
+  border-radius: 3px;
+}
+
+.pm-input-select {
+  height: 20px;
 }
 
 

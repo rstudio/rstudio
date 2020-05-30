@@ -1,7 +1,7 @@
 /*
  * Application.java
  *
- * Copyright (C) 2009-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -222,8 +222,19 @@ public class Application implements ApplicationEventHandlers
             Debug.logError(error);
             dismissLoadingProgress.execute();
 
-            globalDisplay_.showErrorMessage("RStudio Initialization Error",
-                                            error.getUserMessage());
+            if (!StringUtil.isNullOrEmpty(error.getRedirectUrl()))
+            {
+               // error is informing us that we should redirect
+               // redirect to the specified URL (as a sub URL of the site's root)
+               String redirectUrl = ApplicationUtils.getHostPageBaseURLWithoutContext(false) + 
+            		   error.getRedirectUrl();
+               navigateWindowWithDelay(redirectUrl);
+            }
+            else
+            {
+               globalDisplay_.showErrorMessage("RStudio Initialization Error",
+                                               error.getUserMessage());
+            }
          }
       };
       
@@ -294,6 +305,12 @@ public class Application implements ApplicationEventHandlers
    void onSignOut()
    {
       events_.fireEvent(new LogoutRequestedEvent());
+   }
+
+   @Handler
+   void onLoadServerHome()
+   {
+      loadUserHomePage();
    }
 
    @Handler
@@ -879,6 +896,14 @@ public class Application implements ApplicationEventHandlers
          commands_.signOut().remove();
       else if (!sessionInfo.getShowIdentity() || !sessionInfo.getAllowFullUI())
          commands_.signOut().remove();
+
+      if (Desktop.isDesktop() ||
+         !sessionInfo.getAllowFullUI() ||
+         !sessionInfo.getShowUserHomePage() ||
+         StringUtil.isNullOrEmpty(sessionInfo.getUserHomePageUrl()))
+      {
+         commands_.loadServerHome().remove();
+      }
 
       if (!sessionInfo.getLauncherJobsEnabled())
       {

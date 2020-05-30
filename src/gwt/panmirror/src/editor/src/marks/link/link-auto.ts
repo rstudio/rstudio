@@ -1,7 +1,7 @@
 /*
  * link-auto.ts
  *
- * Copyright (C) 2019-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -25,7 +25,9 @@ export function linkInputRules(autoLink: boolean, headingLink: boolean) {
   return (schema: Schema, filter: MarkInputRuleFilter) => {
     const rules = [
       // <link> style link
-      markInputRule(/(?:<)([a-z]+:\/\/[^>]+)(?:>)$/, schema.marks.link, filter, (match: string[]) => ({ href: match[1] })),
+      markInputRule(/(?:<)([a-z]+:\/\/[^>]+)(?:>)$/, schema.marks.link, filter, (match: string[]) => ({
+        href: match[1],
+      })),
       // full markdown link
       markInputRule(/(?:\[)([^\]]+)(?:\]\()([^)]+)(?:\))$/, schema.marks.link, filter, (match: string[]) => ({
         href: match[2],

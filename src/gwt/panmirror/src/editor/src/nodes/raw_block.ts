@@ -1,7 +1,7 @@
 /*
  * raw_block.ts
  *
- * Copyright (C) 2019-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -45,7 +45,6 @@ const extension = (
   pandocCapabilities: PandocCapabilities,
   ui: EditorUI,
 ): Extension | null => {
-
   const rawAttribute = pandocExtensions.raw_attribute;
 
   return {
@@ -97,8 +96,8 @@ const extension = (
         attr_edit: () => ({
           type: (schema: Schema) => schema.nodes.raw_block,
           tags: (node: ProsemirrorNode) => [node.attrs.format],
-          editFn: rawAttribute 
-            ? (() => editRawBlockCommand(ui, pandocCapabilities.output_formats)) 
+          editFn: rawAttribute
+            ? () => editRawBlockCommand(ui, pandocCapabilities.output_formats)
             : () => (state: EditorState) => false,
         }),
 
@@ -109,6 +108,7 @@ const extension = (
               block: 'raw_block',
             },
           ],
+
           // we define a custom blockReader here so that we can convert html and tex blocks with
           // a single line of code into paragraph with a raw inline
           blockReader: (schema: Schema, tok: PandocToken, writer: ProsemirrorWriter) => {
@@ -120,11 +120,10 @@ const extension = (
             }
           },
           writer: (output: PandocOutput, node: ProsemirrorNode) => {
-            if ([kHTMLFormat, kTexFormat].includes(node.attrs.format)) {
+            if (!pandocExtensions.raw_attribute) {
               output.writeToken(PandocTokenType.Para, () => {
                 output.writeRawMarkdown(node.textContent);
               });
-           
             } else {
               output.writeToken(PandocTokenType.RawBlock, () => {
                 output.write(node.attrs.format);
@@ -144,7 +143,7 @@ const extension = (
       if (pandocExtensions.raw_tex) {
         commands.push(new FormatRawBlockCommand(EditorCommandId.TexBlock, kTexFormat, schema.nodes.raw_block));
       }
-    
+
       if (rawAttribute) {
         commands.push(new RawBlockCommand(ui, pandocCapabilities.output_formats));
       }
@@ -159,17 +158,18 @@ function readPandocRawBlock(schema: Schema, tok: PandocToken, writer: Prosemirro
   // highlighting and more seamless editing experience)
   const format = tok.c[kRawBlockFormat];
   const text = tok.c[kRawBlockContent] as string;
-  if (isRawHTMLFormat(format) && isSingleLineHTML(text.trimRight())) {
+  const textTrimmed = text.trimRight();
+  if (isRawHTMLFormat(format) && isSingleLineHTML(textTrimmed) && writer.hasInlineHTMLWriter(textTrimmed)) {
     writer.openNode(schema.nodes.paragraph, {});
-    writer.writeInlineHTML(text.trimRight());
+    writer.writeInlineHTML(textTrimmed);
     writer.closeNode();
 
     // similarly, single lines of tex should be read as inline tex
-  } else if (format === kTexFormat && isSingleLineTex(text.trimRight())) {
+  } else if (format === kTexFormat && isSingleLineTex(textTrimmed)) {
     writer.openNode(schema.nodes.paragraph, {});
     const rawTexMark = schema.marks.raw_tex.create();
     writer.openMark(rawTexMark);
-    writer.writeText(text.trimRight());
+    writer.writeText(textTrimmed);
     writer.closeMark(rawTexMark);
     writer.closeNode();
   } else {

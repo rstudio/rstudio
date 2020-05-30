@@ -1,7 +1,7 @@
 /*
  * ElementIds.java
  *
- * Copyright (C) 2009-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -162,6 +162,7 @@ public class ElementIds
    
    public final static String RMARKDOWN_BASIC_PREFS = "rmarkdown_basic_prefs";
    public final static String RMARKDOWN_ADVANCED_PREFS = "markdown_advanced_prefs";
+   public final static String RMARKDOWN_VISUAL_MODE_PREFS = "markdown_visual_mode_prefs";
 
    public final static String PACKAGE_MANAGEMENT_PREFS = "package_management_prefs";
    public final static String PACKAGE_DEVELOPMENT_PREFS = "package_development_prefs";
@@ -470,10 +471,11 @@ public class ElementIds
    public final static String VISUAL_MD_ATTR_KEYVALUE = "visual_md_attr_keyvalue";
    public final static String VISUAL_MD_CITATION_ID = "visual_md_citation_id";
    public final static String VISUAL_MD_CITATION_LOCATOR = "visual_md_citation_locator";
-   public final static String VISUAL_MD_ORDERED_LIST_ORDER = "visual_md_ordered_list_order";
-   public final static String VISUAL_MD_ORDERED_LIST_NUMBER_STYLE = "visual_md_ordered_list_number_style";
-   public final static String VISUAL_MD_ORDERED_LIST_NUMBER_DELIM = "visual_md_ordered_list_number_delim";
-   public final static String VISUAL_MD_ORDERED_LIST_TIGHT = "visual_md_ordered_list_tight";
+   public final static String VISUAL_MD_LIST_TYPE = "visual_md_list_type";
+   public final static String VISUAL_MD_LIST_ORDER = "visual_md_list_order";
+   public final static String VISUAL_MD_LIST_NUMBER_STYLE = "visual_md_list_number_style";
+   public final static String VISUAL_MD_LIST_NUMBER_DELIM = "visual_md_list_number_delim";
+   public final static String VISUAL_MD_LIST_TIGHT = "visual_md_ordered_list_tight";
    public final static String VISUAL_MD_IMAGE_TAB_IMAGE = "visual_md_image_tab_image";
    public final static String VISUAL_MD_IMAGE_SRC = "visual_md_image_src";
    public final static String VISUAL_MD_IMAGE_WIDTH = "visual_md_image_width";

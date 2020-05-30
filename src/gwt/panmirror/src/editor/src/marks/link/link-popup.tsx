@@ -1,7 +1,7 @@
 /*
  * LinkPopup.tsx
  *
- * Copyright (C) 2019-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -13,7 +13,6 @@
  *
  */
 
-import { Node as ProsemirrorNode } from 'prosemirror-model';
 import { DecorationSet, Decoration, EditorView } from 'prosemirror-view';
 import { Plugin, PluginKey, EditorState, Transaction } from 'prosemirror-state';
 
@@ -21,7 +20,7 @@ import * as React from 'react';
 
 import ClipboardJS from 'clipboard';
 
-import { getMarkRange, getMarkAttrs, markIsActive } from '../../api/mark';
+import { getMarkRange, getMarkAttrs } from '../../api/mark';
 import { LinkProps, EditorUI } from '../../api/ui';
 import { CommandFn } from '../../api/command';
 import { kRestoreLocationTransaction } from '../../api/transaction';
@@ -131,7 +130,7 @@ export class LinkPopupPlugin extends Plugin<DecorationSet> {
           const keyPressed = kPlatformMac && event.metaKey;
           if (keyPressed) {
             const schema = view.state.schema;
-            const linkAttrs = getMarkAttrs(view.state.doc, { from: pos, to: pos}, schema.marks.link);
+            const linkAttrs = getMarkAttrs(view.state.doc, { from: pos, to: pos }, schema.marks.link);
             if (linkAttrs) {
               event.stopPropagation();
               event.preventDefault();
@@ -140,7 +139,7 @@ export class LinkPopupPlugin extends Plugin<DecorationSet> {
             }
           }
           return false;
-        }
+        },
       },
     });
   }
@@ -204,7 +203,7 @@ const LinkPopup: React.FC<LinkPopupProps> = props => {
 
   return (
     <Popup classes={['pm-popup-link']} style={props.style}>
-      <LinkButton text={linkText} onClick={onLinkClicked} maxWidth={props.maxLinkWidth}/>
+      <LinkButton text={linkText} onClick={onLinkClicked} maxWidth={props.maxLinkWidth} />
       {showCopyButton ? (
         <ImageButton
           image={props.ui.images.copy!}

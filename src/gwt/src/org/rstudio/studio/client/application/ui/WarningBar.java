@@ -1,7 +1,7 @@
 /*
  * WarningBar.java
  *
- * Copyright (C) 2009-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -16,7 +16,6 @@ package org.rstudio.studio.client.application.ui;
 
 import com.google.gwt.aria.client.Roles;
 import com.google.gwt.dom.client.DivElement;
-import com.google.gwt.user.client.Timer;
 import com.google.inject.Inject;
 import org.rstudio.core.client.a11y.A11y;
 import org.rstudio.core.client.theme.res.ThemeResources;
@@ -42,6 +41,7 @@ import org.rstudio.studio.client.application.AriaLiveService;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.events.WarningBarClosedEvent;
+import org.rstudio.studio.client.common.Timers;
 
 public class WarningBar extends Composite
       implements HasCloseHandlers<WarningBar>
@@ -88,7 +88,7 @@ public class WarningBar extends Composite
       moreButton_.setText("Manage License...");
       moreButton_.addClickHandler(event -> Desktop.getFrame().showLicenseDialog());
       A11y.setARIAHidden(label_);
-      if (ariaLive.isDisabled(AriaLiveService.WARNING_BAR))
+      if (!ariaLive.isDisabled(AriaLiveService.WARNING_BAR))
          Roles.getAlertRole().set(live_);
    }
 
@@ -97,15 +97,7 @@ public class WarningBar extends Composite
       label_.setInnerText(value);
 
       // Give screen reader time to process page to improve chance it will notice the live region
-      Timer liveTimer = new Timer()
-      {
-         @Override
-         public void run()
-         {
-            live_.setInnerText(value);
-         }
-      };
-      liveTimer.schedule(1500);
+      Timers.singleShot(AriaLiveService.UI_ANNOUNCEMENT_DELAY, () -> live_.setInnerText(value));
    }
 
    public void showLicenseButton(boolean show)

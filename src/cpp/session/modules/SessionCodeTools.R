@@ -1,7 +1,7 @@
 #
 # SessionCodeTools.R
 #
-# Copyright (C) 2009-20 by RStudio, PBC
+# Copyright (C) 2020 by RStudio, PBC
 #
 # Unless you have received this program directly from RStudio pursuant
 # to the terms of a commercial license agreement with RStudio, then
@@ -141,33 +141,37 @@
    }
 })
 
-.rs.addFunction("getFunction", function(name, namespaceName)
+.rs.addFunction("getFunction", function(name, envir = globalenv())
 {
-   # resolve "namespace:" environments
-   envir <- if (identical(substring(namespaceName, 1, nchar("namespace:")), 
-                          "namespace:"))
-   {
-     asNamespace(substring(namespaceName, nchar("namespace:") + 1))
-   }
-   else if (identical(namespaceName, ".GlobalEnv"))
-   {
-      .GlobalEnv
-   }
-   else
-   {
-     asNamespace(namespaceName)
-   }
+   tryCatch(
+      .rs.getFunctionImpl(name, envir),
+      error = function(e) NULL
+   )
+})
 
-   tryCatch(eval(parse(text = name),
-                 envir = envir,
-                 enclos = NULL),
-            error = function(e) NULL)
+.rs.addFunction("getFunctionImpl", function(name, envir = globalenv())
+{
+   envir <- .rs.resolveEnvironment(envir)
+   parsed <- parse(text = name)[[1L]]
+   
+   # for plain symbols, we can attempt lookup of a function object
+   # directly; for more complex calls, we try to evaluate it in
+   # the requested environment and hope we got a function
+   fn <- if (is.symbol(parsed))
+      get(name, envir = envir, mode = "function")
+   else
+      eval(parsed, envir = envir)
+   
+   if (!is.function(fn))
+      return(NULL)
+   
+   fn
 })
 
 
 .rs.addFunction("functionHasSrcRef", function(func)
 {
-   return (!is.null(attr(func, "srcref")))
+   !is.null(attr(func, "srcref"))
 })
 
 # Returns a function's code as a string. Arguments:
@@ -984,12 +988,19 @@
          name <- "write.table"
       }
    }
-      
-   if (identical(src, ""))
-      src <- .GlobalEnv
    
-   result <- .rs.getSignature(.rs.getAnywhere(name, src))
-   result <- sub("function ", "", result)
+   onError <- .rs.scalar("(...)")
+   
+   envir <- .rs.tryCatch(.rs.resolveEnvironment(src))
+   if (!is.environment(envir))
+      return(onError)
+   
+   method <- .rs.tryCatch(get(name, envir = envir, mode = "function"))
+   if (!is.function(method))
+      return(onError)
+   
+   signature <- .rs.getSignature(method)
+   result <- sub("function ", "", signature)
    .rs.scalar(result)
 })
 
@@ -2428,5 +2439,37 @@
    # paste and truncate once more for safety
    text <- paste(items, collapse = sep)
    .rs.truncate(text, n = max * 2L)
+   
+})
+
+.rs.addFunction("resolveEnvironment", function(envir)
+{
+   # if this is already an environment, just return it
+   if (is.environment(envir))
+      return(envir)
+   
+   # if this is a numeric, then assume we want an
+   # environment by position on the search path
+   if (is.numeric(envir))
+      return(as.environment(envir))
+   
+   # treat empty strings as request for globalenv
+   if (is.null(envir) || identical(envir, ""))
+      return(globalenv())
+   
+   # if this is the name of something on the search path,
+   # then as.environment should suffice
+   index <- match(envir, search())
+   if (!is.na(index))
+      return(as.environment(index))
+   
+   # if this is the name of a namespace, retrieve that namespace
+   if (substring(envir, 1L, 10L) == "namespace:") {
+      package <- substring(envir, 11L)
+      return(getNamespace(package))
+   }
+   
+   # otherwise, treat 'envir' directly as the name of a namespace
+   getNamespace(envir)
    
 })

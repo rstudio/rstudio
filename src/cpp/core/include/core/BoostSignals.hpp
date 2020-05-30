@@ -1,7 +1,7 @@
 /*
  * BoostSignals.hpp
  *
- * Copyright (C) 2009-18 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -13,8 +13,16 @@
  *
  */
 
+#ifdef RSTUDIO_BOOST_SIGNALS_VERSION_USED
+# if RSTUDIO_BOOST_SIGNALS_VERSION_USED != RSTUDIO_BOOST_SIGNALS_VERSION
+#  error "Mismatch in Boost.Signals versions used in this translation unit"
+# endif
+#endif
+
 #ifndef CORE_RSTUDIO_BOOST_SIGNALS_HPP
 #define CORE_RSTUDIO_BOOST_SIGNALS_HPP
+
+#define RSTUDIO_BOOST_SIGNALS_VERSION_USED RSTUDIO_BOOST_SIGNALS_VERSION
 
 #if RSTUDIO_BOOST_SIGNALS_VERSION == 1
 

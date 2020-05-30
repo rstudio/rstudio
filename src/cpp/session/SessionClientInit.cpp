@@ -1,7 +1,7 @@
 /*
  * SessionClientInit.hpp
  *
- * Copyright (C) 2009-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -88,6 +88,15 @@ namespace session {
 namespace client_init {
 namespace {
 
+std::string userIdentityDisplay(const http::Request& request)
+{
+   std::string userIdentity = request.headerValue(kRStudioUserIdentityDisplay);
+   if (!userIdentity.empty())
+      return userIdentity;
+   else
+      return session::options().userIdentity();
+}
+
 #ifdef RSTUDIO_SERVER
 Error makePortTokenCookie(boost::shared_ptr<HttpConnection> ptrConnection, 
       http::Response& response)
@@ -170,11 +179,16 @@ void handleClientInit(const boost::function<void()>& initFunction,
    // the InvalidClientId error.
    clientEventService().setClientId(clientId, clearEvents);
 
-   // set RSTUDIO_HTTP_REFERER environment variable based on Referer
    if (options.programMode() == kSessionProgramModeServer)
    {
+      // set RSTUDIO_HTTP_REFERER environment variable based on Referer
       std::string referer = ptrConnection->request().headerValue("referer");
       core::system::setenv("RSTUDIO_HTTP_REFERER", referer);
+
+      // set RSTUDIO_USER_IDENTITY_DISPLAY environment variable based on
+      // header value (complements RSTUDIO_USER_IDENTITY)
+      core::system::setenv("RSTUDIO_USER_IDENTITY_DISPLAY", 
+            userIdentityDisplay(ptrConnection->request()));
    }
 
    // prepare session info 
@@ -188,7 +202,7 @@ void handleClientInit(const boost::function<void()>& initFunction,
    initOptions["run_rprofile"] = options.rRunRprofile();
    sessionInfo["init_options"] = initOptions;
    
-   sessionInfo["userIdentity"] = options.userIdentity();
+   sessionInfo["userIdentity"] = userIdentityDisplay(ptrConnection->request());
    sessionInfo["systemUsername"] = core::system::username();
 
    // only send log_dir and scratch_dir if we are in desktop mode
@@ -235,6 +249,9 @@ void handleClientInit(const boost::function<void()>& initFunction,
    // get alias to console_actions and get limit
    rstudio::r::session::ConsoleActions& consoleActions = rstudio::r::session::consoleActions();
    sessionInfo["console_actions_limit"] = consoleActions.capacity();
+ 
+   // check if reticulate's Python session has been initialized
+   sessionInfo["python_initialized"] = modules::reticulate::isPythonInitialized();
    
    // get current console language
    sessionInfo["console_language"] = modules::reticulate::isReplActive() ? "Python" : "R";
@@ -495,6 +512,7 @@ void handleClientInit(const boost::function<void()>& initFunction,
    sessionInfo["active_connections"] = modules::connections::activeConnectionsAsJson();
 
    sessionInfo["session_id"] = module_context::activeSession().id();
+   sessionInfo["session_label"] = module_context::activeSession().label();
 
    sessionInfo["drivers_support_licensing"] = options.supportsDriversLicensing();
 

@@ -1,7 +1,7 @@
 /*
  * PanmirrorToolbarCommands.java
  *
- * Copyright (C) 2009-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -60,7 +60,7 @@ public class PanmirrorToolbarCommands implements CommandPaletteEntrySource
       
       add(PanmirrorCommands.Blockquote, "Blockquote", Roles.getMenuitemcheckboxRole(), icons.BLOCKQUOTE);
       add(PanmirrorCommands.LineBlock, "Line Block", Roles.getMenuitemcheckboxRole());
-      add(PanmirrorCommands.Div, "Div Block...");
+      add(PanmirrorCommands.Div, "Div...");
       add(PanmirrorCommands.AttrEdit, "Edit Attributes...");
       add(PanmirrorCommands.ClearFormatting, "Clear Formatting", icons.CLEAR_FORMATTING);
       
@@ -85,7 +85,7 @@ public class PanmirrorToolbarCommands implements CommandPaletteEntrySource
       add(PanmirrorCommands.ListItemLift, "Lift Item");
       add(PanmirrorCommands.ListItemCheck, "Item Checkbox");
       add(PanmirrorCommands.ListItemCheckToggle, "Item Checked", Roles.getMenuitemcheckboxRole());
-      add(PanmirrorCommands.OrderedListEdit, "List Attributes...");
+      add(PanmirrorCommands.EditListProperties, "List Attributes...");
       
       // tables
       add(PanmirrorCommands.TableInsertTable, "Insert Table...", icons.TABLE);
@@ -115,7 +115,7 @@ public class PanmirrorToolbarCommands implements CommandPaletteEntrySource
       add(PanmirrorCommands.HTMLComment, "Comment", icons.COMMENT);
       add(PanmirrorCommands.YamlMetadata, "YAML Block");
       add(PanmirrorCommands.Shortcode, "Shortcode");
-      add(PanmirrorCommands.InsertDiv, "Div Block...");
+      add(PanmirrorCommands.InsertDiv, "Div...");
       add(PanmirrorCommands.InlineMath, "Inline Math");
       add(PanmirrorCommands.DisplayMath, "Display Math");
       add(PanmirrorCommands.DefinitionList, "Definition List");

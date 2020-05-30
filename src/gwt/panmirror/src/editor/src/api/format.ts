@@ -1,7 +1,7 @@
 /*
  * format.ts
  *
- * Copyright (C) 2019-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -12,8 +12,6 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-
-import { PandocWriterOptions } from "./pandoc";
 
 export interface EditorFormat {
   readonly pandocMode: string;
@@ -26,6 +24,7 @@ export interface EditorFormat {
 export interface EditorRmdExtensions {
   readonly codeChunks?: boolean;
   readonly bookdownXRef?: boolean;
+  readonly bookdownXRefUI?: boolean;
   readonly bookdownPart?: boolean;
   readonly blogdownMathInCode?: boolean;
 }
@@ -34,9 +33,7 @@ export interface EditorHugoExtensions {
   readonly shortcodes?: boolean;
 }
 
-export const kXRefDocType = 'xref';
 export const kBookdownDocType = 'bookdown';
-export const kBlogdownDocType = 'blogdown';
 export const kHugoDocType = 'hugo';
 
-export type EditorExtendedDocType = 'xref' | 'bookdown' | 'blogdown' | 'hugo';
+export type EditorExtendedDocType = 'bookdown' | 'hugo';

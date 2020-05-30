@@ -1,7 +1,7 @@
 /*
  * PanmirrorThemeResources.java
  *
- * Copyright (C) 2009-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -29,11 +29,5 @@ public interface PanmirrorResources extends ClientBundle
    @Source("PanmirrorStyles.css")
    Styles styles();
    
-   public static PanmirrorResources INSTANCE = (PanmirrorResources)GWT.create(PanmirrorResources.class);
-   
-
-   public static void ensureStylesInjected()
-   {
-      INSTANCE.styles().ensureInjected();
-   }
+   public static PanmirrorResources INSTANCE = GWT.create(PanmirrorResources.class);
 }

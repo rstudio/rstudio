@@ -1,7 +1,7 @@
 /*
  * fuse.js
  *
- * Copyright (C) 2019-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -53,6 +53,16 @@ const bundle = (fuse) => {
     .instructions("> index.ts")
 } 
 
+const copyDevTools = (outputDir) => {
+  // copy prosemirror-devtools
+  const devtools = 'prosemirror-dev-tools.min.js';
+  const nodeModules = fs.existsSync(kGlobalNodeModulesPath) ? kGlobalNodeModulesPath : './node_modules';
+  fs.copyFileSync(
+    path.join(nodeModules + '/prosemirror-dev-tools/dist/umd', devtools),
+    path.join(outputDir, devtools)
+  );
+}
+
 const watch = (fuse, hmrReload) => {
   return fuse
     .hmr({ reload: hmrReload })
@@ -68,11 +78,7 @@ const dev = (context, webIndex, watchChanges, hmrReload, outputDir) => {
     watch(bdl, hmrReload)
   
   // copy prosemirror-devtools
-  const devtools = 'prosemirror-dev-tools.min.js';
-  fs.copyFileSync(
-    path.join('./node_modules/prosemirror-dev-tools/dist/umd', devtools),
-    path.join(outputDir, devtools)
-  );
+  copyDevTools(outputDir)
 
   return fuse;
 }
@@ -81,6 +87,7 @@ const dist = (context, outputDir) => {
   context.isProduction = true;
   const fuse = context.getConfig(outputDir);
   bundle(fuse);
+  copyDevTools(outputDir)
   return fuse;
 }
 

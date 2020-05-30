@@ -1,7 +1,7 @@
 /*
  * widgets.ts
  *
- * Copyright (C) 2019-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -89,6 +89,7 @@ export function createSelectInput(options: string[], classes?: string[], style?:
   const select = window.document.createElement('select');
   appendOptions(select, options);
   select.classList.add('pm-input-select');
+  select.classList.add('pm-pane-border-color');
   applyStyles(select, classes, style);
   return select;
 }
@@ -114,6 +115,7 @@ export function createTextInput(widthChars: number, classes?: string[], style?: 
   const input = document.createElement('input');
   input.type = 'text';
   input.classList.add('pm-input-text');
+  input.classList.add('pm-pane-border-color');
   applyStyles(input, classes, style);
   input.style.width = widthChars + 'ch';
   return input;

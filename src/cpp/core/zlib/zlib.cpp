@@ -1,7 +1,7 @@
 /*
 * zlib.cpp
 *
-* Copyright (C) 2019 by RStudio, PBC
+* Copyright (C) 2020 by RStudio, PBC
 *
 * Unless you have received this program directly from RStudio pursuant
 * to the terms of a commercial license agreement with RStudio, then
@@ -203,7 +203,7 @@ Error compressString(const std::string& toCompress, std::vector<unsigned char>* 
       if (res == Z_STREAM_ERROR)
       {
          deflateEnd(&zStream);
-         LOG_ERROR_MESSAGE("Could not compress string \"" +
+         LOG_DEBUG_MESSAGE("Could not compress string \"" +
                            toCompress + "\"");
          return systemError(res, "ZLib deflation error", ERROR_LOCATION);
       }
@@ -250,7 +250,7 @@ Error decompressString(const std::vector<unsigned char>& compressedData,
       if ((res == Z_DATA_ERROR) || (res == Z_NEED_DICT) || (res == Z_MEM_ERROR))
       {
          inflateEnd(&zStream);
-         LOG_ERROR_MESSAGE("Could not decompress data\"" +
+         LOG_DEBUG_MESSAGE("Could not decompress data\"" +
                            std::string(reinterpret_cast<const char*>(compressedData.data()), dataLen) +
                            "\"");
          return systemError(res, "ZLib inflation error", ERROR_LOCATION);

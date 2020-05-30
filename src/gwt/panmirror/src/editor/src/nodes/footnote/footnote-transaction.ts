@@ -1,7 +1,7 @@
 /*
  * footnote-transaction.ts
  *
- * Copyright (C) 2019-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -71,7 +71,6 @@ function footnoteFixupTransform(activeNote: ContentNodeWithPos | undefined) {
     // iterate through footnotes in the newState
     const refs = new Set<string>();
     footnotes.forEach((footnote, index) => {
-
       // map position
       footnote.pos = tr.mapping.map(footnote.pos);
 

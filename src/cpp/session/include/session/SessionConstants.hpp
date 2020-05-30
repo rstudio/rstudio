@@ -2,7 +2,7 @@
 /*
  * SessionConstants.hpp
  *
- * Copyright (C) 2009-19 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -85,7 +85,7 @@
 
 #define kUseSecureCookiesSessionOption    "session-use-secure-cookies"
 #define kIFrameEmbeddingSessionOption     "session-iframe-embedding"
-#define kLegacyCookiesSessionOption       "legacy-cookies"
+#define kLegacyCookiesSessionOption       "session-legacy-cookies"
 
 // NOTE: literal versions of these are depended upon by the desktop/rsinverse
 // project so they should be updated there as well if they are changed

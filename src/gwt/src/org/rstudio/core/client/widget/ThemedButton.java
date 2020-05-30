@@ -1,7 +1,7 @@
 /*
  * ThemedButton.java
  *
- * Copyright (C) 2009-19 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -32,13 +32,13 @@ import com.google.gwt.user.client.ui.FocusWidget;
 
 public class ThemedButton extends FocusWidget implements HasClickHandlers
 {
-   static Resources RESOURCES = (Resources)GWT.create(Resources.class);
+   static final Resources RESOURCES = GWT.create(Resources.class);
    public static void ensureStylesInjected()
    {
       RESOURCES.styles().ensureInjected();
    }
 
-   static interface Resources extends ClientBundle
+   interface Resources extends ClientBundle
    {
       @Source("ThemedButton.css")
       Styles styles();
@@ -87,7 +87,7 @@ public class ThemedButton extends FocusWidget implements HasClickHandlers
       DataResource buttonTilePressed();
    }
 
-   static interface Styles extends CssResource
+   interface Styles extends CssResource
    {
       String themedButton();
       String left();
@@ -98,10 +98,9 @@ public class ThemedButton extends FocusWidget implements HasClickHandlers
       String tight();
    }
 
-
    interface MyUiBinder extends UiBinder<ButtonElement, ThemedButton>{}
-   private static MyUiBinder uiBinder = GWT.create(MyUiBinder.class);
-   
+   private static final MyUiBinder uiBinder = GWT.create(MyUiBinder.class);
+
    public ThemedButton()
    {
       this("");
@@ -111,7 +110,7 @@ public class ThemedButton extends FocusWidget implements HasClickHandlers
    {
       this(title, null);
    }
-   
+
    public ThemedButton(String title, ClickHandler clickHandler)
    {
       button_ = uiBinder.createAndBindUi(this);
@@ -139,12 +138,10 @@ public class ThemedButton extends FocusWidget implements HasClickHandlers
    public HandlerRegistration addClickHandler(final ClickHandler clickHandler)
    {
       // Suppress click event if button is disabled
-      return addDomHandler(new ClickHandler() {
-         public void onClick(ClickEvent event)
-         {
-            if (isEnabled())
-               clickHandler.onClick(event);
-         }
+      return addDomHandler(clickEvent ->
+      {
+         if (isEnabled())
+            clickHandler.onClick(clickEvent);
       }, ClickEvent.getType());
    }
 
@@ -157,7 +154,7 @@ public class ThemedButton extends FocusWidget implements HasClickHandlers
    {
       button_.setDisabled(!isEnabled);
    }
-   
+
    public void setDefault(boolean isDefault)
    {
       if (isDefault != isDefault_)
@@ -177,12 +174,12 @@ public class ThemedButton extends FocusWidget implements HasClickHandlers
       else
          removeStyleName(RESOURCES.styles().tight());
    }
-   
+
    public boolean isDefault()
    {
       return isDefault_;
    }
-   
+
    public void setText(String text)
    {
       content_.setInnerText(text);
@@ -192,13 +189,13 @@ public class ThemedButton extends FocusWidget implements HasClickHandlers
    {
       button_.click();
    }
-   
+
    public void setWrapperWidth(String width)
    {
       wrapper_.setWidth(width);
    }
 
-   ButtonElement button_;
+   final ButtonElement button_;
    boolean isDefault_ = false;
 
    @UiField

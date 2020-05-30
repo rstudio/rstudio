@@ -1,7 +1,7 @@
 /*
  * xref.ts
  *
- * Copyright (C) 2019-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -31,10 +31,9 @@ import { FixupContext } from '../api/fixup';
 import { ProsemirrorCommand, EditorCommandId } from '../api/command';
 import { canInsertNode } from '../api/node';
 import { fragmentText } from '../api/fragment';
-import { EditorFormat, kXRefDocType } from '../api/format';
+import { EditorFormat } from '../api/format';
 
-const kRefRegEx = /\\?@ref\([A-Za-z0-9:-]*\)/;
-const kRefRegExDetectAndApply = /(?:^|[^`])(\\?@ref\([A-Za-z0-9:-]*\))/;
+const kRefRegExDetectAndApply = /(?:^|[^`])(\\?@ref\([A-Za-z0-9:-]*\))/g;
 
 const extension = (
   pandocExtensions: PandocExtensions,
@@ -106,13 +105,13 @@ const extension = (
             findChildren(tr.doc, predicate).forEach(nodeWithPos => {
               const { pos } = nodeWithPos;
               detectAndApplyMarks(
-                markTr, 
-                tr.doc.nodeAt(pos)!, 
-                pos, 
-                kRefRegExDetectAndApply, 
+                markTr,
+                tr.doc.nodeAt(pos)!,
+                pos,
+                kRefRegExDetectAndApply,
                 markType,
                 () => ({}),
-                match => match[1]
+                match => match[1],
               );
             });
 
@@ -133,13 +132,14 @@ const extension = (
           append: (tr: MarkTransaction, node: ProsemirrorNode, pos: number) => {
             removeInvalidatedMarks(tr, node, pos, kRefRegExDetectAndApply, node.type.schema.marks.xref);
             detectAndApplyMarks(
-              tr, 
-              tr.doc.nodeAt(pos)!, 
-              pos, 
-              kRefRegExDetectAndApply, 
+              tr,
+              tr.doc.nodeAt(pos)!,
+              pos,
+              kRefRegExDetectAndApply,
               node.type.schema.marks.xref,
               () => ({}),
-              match => match[1]);
+              match => match[1],
+            );
           },
         },
       ];
@@ -158,7 +158,7 @@ const extension = (
     },
 
     commands: (schema: Schema) => {
-      if (format.docTypes.includes(kXRefDocType)) {
+      if (format.rmdExtensions.bookdownXRefUI) {
         return [
           new ProsemirrorCommand(
             EditorCommandId.CrossReference,

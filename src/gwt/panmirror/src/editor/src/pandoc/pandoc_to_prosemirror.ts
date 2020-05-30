@@ -1,7 +1,7 @@
 /*
  * pandoc_to_prosemirror.ts
  *
- * Copyright (C) 2019-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -22,9 +22,15 @@ import {
   ProsemirrorWriter,
   PandocBlockReaderFn,
   PandocInlineHTMLReaderFn,
+  PandocTokensFilterFn,
 } from '../api/pandoc';
 import { pandocAttrReadAST, kCodeBlockAttr, kCodeBlockText } from '../api/pandoc_attr';
-import { PandocBlockCapsuleFilter, parsePandocBlockCapsule, resolvePandocBlockCapsuleText, decodeBlockCapsuleText } from '../api/pandoc_capsule';
+import {
+  PandocBlockCapsuleFilter,
+  parsePandocBlockCapsule,
+  resolvePandocBlockCapsuleText,
+  decodeBlockCapsuleText,
+} from '../api/pandoc_capsule';
 
 import { PandocToProsemirrorResult } from './pandoc_converter';
 
@@ -32,16 +38,18 @@ export function pandocToProsemirror(
   ast: PandocAst,
   schema: Schema,
   readers: readonly PandocTokenReader[],
+  tokensFilters: readonly PandocTokensFilterFn[],
   blockReaders: readonly PandocBlockReaderFn[],
   inlineHTMLReaders: readonly PandocInlineHTMLReaderFn[],
   blockCapsuleFilters: readonly PandocBlockCapsuleFilter[],
-) : PandocToProsemirrorResult {
-  const parser = new Parser(schema, readers, blockReaders, inlineHTMLReaders, blockCapsuleFilters);
+): PandocToProsemirrorResult {
+  const parser = new Parser(schema, readers, tokensFilters, blockReaders, inlineHTMLReaders, blockCapsuleFilters);
   return parser.parse(ast);
 }
 
 class Parser {
   private readonly schema: Schema;
+  private readonly tokensFilters: readonly PandocTokensFilterFn[];
   private readonly inlineHTMLReaders: readonly PandocInlineHTMLReaderFn[];
   private readonly blockCapsuleFilters: readonly PandocBlockCapsuleFilter[];
   private readonly handlers: { [token: string]: ParserTokenHandlerCandidate[] };
@@ -49,13 +57,15 @@ class Parser {
   constructor(
     schema: Schema,
     readers: readonly PandocTokenReader[],
+    tokensFilters: readonly PandocTokensFilterFn[],
     blockReaders: readonly PandocBlockReaderFn[],
     inlineHTMLReaders: readonly PandocInlineHTMLReaderFn[],
-    blockCapsuleFilters : readonly PandocBlockCapsuleFilter[]
+    blockCapsuleFilters: readonly PandocBlockCapsuleFilter[],
   ) {
     this.schema = schema;
+    this.tokensFilters = tokensFilters;
     this.inlineHTMLReaders = inlineHTMLReaders;
-    // apply filters in reverse order
+    // apply block capsule filters in reverse order
     this.blockCapsuleFilters = blockCapsuleFilters.slice().reverse();
     this.handlers = this.createHandlers(readers, blockReaders);
   }
@@ -73,36 +83,44 @@ class Parser {
       openMark: state.openMark.bind(state),
       closeMark: state.closeMark.bind(state),
       writeText: state.writeText.bind(state),
+      hasInlineHTMLWriter(html: string) {
+        return parser.hasInlineHTMLWriter(html);
+      },
       writeInlineHTML(html: string) {
-        parser.writeInlineHTML(this, html);
+        return parser.writeInlineHTML(this, html);
       },
       writeTokens(tokens: PandocToken[]) {
         parser.writeTokens(this, tokens);
       },
-      logUnrecognized(type: string) {
-        state.logUnrecognized(type);
-      }
+      logUnrecognized: state.logUnrecognized.bind(state),
+      isNodeOpen: state.isNodeOpen.bind(state),
     };
 
     // process raw text capsules
     const astBlocks = resolvePandocBlockCapsuleText(ast.blocks, this.blockCapsuleFilters);
-  
+
     // write all tokens
     writer.writeTokens(astBlocks);
 
-    // return 
+    // return
     return {
       doc: state.doc(),
-      unrecognized: state.unrecognized()
+      unrecognized: state.unrecognized(),
     };
   }
 
   private writeTokens(writer: ProsemirrorWriter, tokens: PandocToken[]) {
-    tokens.forEach(tok => this.writeToken(writer, tok));
+    // pass through tokens filters
+    let targetTokens = tokens;
+    this.tokensFilters.forEach(filter => {
+      targetTokens = filter(targetTokens, writer);
+    });
+
+    // process tokens
+    targetTokens.forEach(tok => this.writeToken(writer, tok));
   }
 
   private writeToken(writer: ProsemirrorWriter, tok: PandocToken) {
-
     // process block-level capsules
     for (const filter of this.blockCapsuleFilters) {
       const capsuleText = filter.handleToken?.(tok);
@@ -139,26 +157,25 @@ class Parser {
     writer.logUnrecognized(tok.t);
   }
 
+  private hasInlineHTMLWriter(html: string) {
+    for (const reader of this.inlineHTMLReaders) {
+      if (reader(this.schema, html)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   private writeInlineHTML(writer: ProsemirrorWriter, html: string) {
-    // see if any of our readers want to take it
     for (const reader of this.inlineHTMLReaders) {
       if (reader(this.schema, html, writer)) {
         return;
       }
     }
-
-    // otherwise just write it
-    const mark = this.schema.marks.raw_html.create();
-    writer.openMark(mark);
-    writer.writeText(html);
-    writer.closeMark(mark);
   }
 
   // create parser token handler functions based on the passed readers
-  private createHandlers(
-    readers: readonly PandocTokenReader[],
-    blockReaders: readonly PandocBlockReaderFn[]
-  ) {
+  private createHandlers(readers: readonly PandocTokenReader[], blockReaders: readonly PandocBlockReaderFn[]) {
     const handlers: { [token: string]: ParserTokenHandlerCandidate[] } = {};
 
     for (const reader of readers) {
@@ -243,7 +260,7 @@ class Parser {
           const nodeType = this.schema.nodes.code_block;
           const attr: {} = pandocAttrReadAST(tok, kCodeBlockAttr);
           const text = tok.c[kCodeBlockText] as string;
-          
+
           // write node
           writer.openNode(nodeType, attr);
           writer.writeText(text);
@@ -359,6 +376,10 @@ class ParserState {
     }
   }
 
+  public isNodeOpen(type: NodeType) {
+    return this.stack.some(value => value.type === type);
+  }
+
   private top(): ParserStackElement {
     return this.stack[this.stack.length - 1];
   }
@@ -384,5 +405,3 @@ interface ParserTokenHandlerCandidate {
   match?: (tok: PandocToken) => boolean;
   handler: ParserTokenHandler;
 }
-
-

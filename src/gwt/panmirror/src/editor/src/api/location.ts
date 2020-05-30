@@ -41,20 +41,18 @@ export function setEditingLocation(
   view: EditorView,
   outlineLocation?: EditingOutlineLocation,
   previousLocation?: EditingLocation,
-  scrollIntoView = true,
 ) {
-  // restore position and scrollTop
-  let restorePos: number | null = null;
+  // default restorePos to the previous location
+  let restorePos = previousLocation ? previousLocation.pos : -1;
 
-  // see we if we can match an outline location
+  // get the current document outline
+  const documentOutline = getDocumentOutline(view.state);
+
+  // if all of the types and levels match up to the active outline item,
+  // then we have a candidate match
+  let docOutlineLocationNode: NodeWithPos | undefined;
+
   if (outlineLocation) {
-    // get the current document outline
-    const documentOutline = getDocumentOutline(view.state);
-
-    // if all of the types and levels match up to the active outline item,
-    // then we have a candidate match
-    let docOutlineLocationNode: NodeWithPos | undefined;
-
     for (let i = 0; i < outlineLocation.items.length && i < documentOutline.length; i++) {
       // get the item and it's peer
       const item = outlineLocation.items[i];
@@ -67,8 +65,9 @@ export function setEditingLocation(
 
       // if this is the active item
       if (item.active) {
-        // see if the previous location is actually a better target (because it's
-        // between this location and the next outline node)
+        // see if the previous location is actually a better target (because it's between this location and
+        // the next outline node). in that case we don't set the target node and we leave the restorePos
+        // at the previous location
         if (!locationIsBetweenDocOutlineNodes(docOutlineNode, documentOutline[i + 1], previousLocation)) {
           // set the target
           docOutlineLocationNode = docOutlineNode;
@@ -83,37 +82,28 @@ export function setEditingLocation(
           }
         }
 
+        if (docOutlineLocationNode) {
+          restorePos = docOutlineLocationNode.pos;
+        }
+
         break;
       }
     }
-
-    // if we got a location then set it as the restorePos
-    if (docOutlineLocationNode) {
-      restorePos = docOutlineLocationNode.pos;
-    }
   }
 
-  // if we don't have a restorePos then see if there is a previous location
-  if (restorePos === null) {
-    if (previousLocation && previousLocation.pos < view.state.doc.nodeSize) {
-      restorePos = previousLocation.pos;
-    }
+  // if we have a restorePos set the selection
+  if (restorePos !== -1) {
+    // set selection
+    const tr = view.state.tr;
+    setTextSelection(restorePos)(tr)
+      .setMeta(kRestoreLocationTransaction, true)
+      .setMeta(kAddToHistoryTransaction, false);
+    view.dispatch(tr);
   }
 
-  // bail if we don't have a restorePos
-  if (restorePos === null) {
-    return;
-  }
-  // restore selection
-  const tr = view.state.tr;
-  setTextSelection(restorePos)(tr)
-    .setMeta(kRestoreLocationTransaction, true)
-    .setMeta(kAddToHistoryTransaction, false);
-  view.dispatch(tr);
-
-  // scroll to selection
-  if (scrollIntoView) {
-    navigateToPosition(view, restorePos, false);
+  // if we have a target node then scroll to it
+  if (docOutlineLocationNode) {
+    navigateToPosition(view, docOutlineLocationNode.pos, false);
   }
 }
 

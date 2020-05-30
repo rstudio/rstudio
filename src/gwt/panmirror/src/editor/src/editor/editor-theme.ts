@@ -1,7 +1,7 @@
 /*
  * editor-theme.ts
  *
- * Copyright (C) 2019-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -196,7 +196,7 @@ export function applyTheme(theme: EditorTheme) {
       border-color: ${theme.markupTextColor} !important;
     }
     .pm-popup {
-      box-shadow: 0 2px 10px ${theme.paneBorderColor} !important;
+      box-shadow: 0 1px 3px ${theme.paneBorderColor} !important;
     }
     .pm-selected-node-outline-color,
     .ProseMirror-selectednode {

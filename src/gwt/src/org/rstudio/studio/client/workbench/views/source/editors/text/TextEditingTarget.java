@@ -1,7 +1,7 @@
 /*
  * TextEditingTarget.java
  *
- * Copyright (C) 2009-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -7347,6 +7347,22 @@ public class TextEditingTarget implements
       return StringUtil.isNullOrEmpty(property)
             ? (getTextFileType().isRmd() && defaultValue)
             : Integer.parseInt(property) > 0;
+   }
+   
+   // similar to get but will write the default value if it's used
+   public boolean establishPreferredOutlineWidgetVisibility(boolean defaultValue)
+   {
+      String property = docUpdateSentinel_.getProperty(DOC_OUTLINE_VISIBLE);
+      if (!StringUtil.isNullOrEmpty(property)) 
+      {
+         return Integer.parseInt(property) > 0;
+      }
+      else
+      {
+         boolean visible = getTextFileType().isRmd() && defaultValue;
+         setPreferredOutlineWidgetVisibility(visible);
+         return visible;
+      }
    }
    
    public boolean isActiveDocument()

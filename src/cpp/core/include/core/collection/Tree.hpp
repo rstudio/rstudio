@@ -1,7 +1,7 @@
 /*
  * Tree.hpp
  *
- * Copyright (C) 2009-12 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  * Copyright (C) 2001-2011 Kasper Peeters <kasper@phi-sci.com>
  *
  * Unless you have received this program directly from RStudio pursuant

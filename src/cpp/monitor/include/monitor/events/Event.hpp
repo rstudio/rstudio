@@ -1,7 +1,7 @@
 /*
  * Event.hpp
  *
- * Copyright (C) 2009-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -17,9 +17,10 @@
 #define MONITOR_EVENTS_EVENT_HPP
 
 #include <iosfwd>
+#include <gsl/gsl>
 
 #include <boost/date_time/posix_time/posix_time.hpp>
-
+#include <core/DateTime.hpp>
 #include <core/system/System.hpp>
 
 namespace rstudio {
@@ -46,7 +47,10 @@ enum EventScope
 #define kSessionAdminSuspend     2006
 #define kSessionAdminTerminate   2007
 
-class Event
+// after username max size
+#define kMaxEventDataSize     32
+
+struct Event
 {
 public:
    Event()
@@ -54,40 +58,36 @@ public:
    {
    }
 
-   Event(EventScope scope,
+   Event(int scope,
          int id,
          const std::string& data = std::string(),
          const std::string& username = core::system::username(),
          PidType pid = core::system::currentProcessId(),
          boost::posix_time::ptime timestamp =
-                        boost::posix_time::microsec_clock::universal_time())
-      : empty_(false),
-        scope_(scope),
-        id_(id),
-        username_(username),
-        pid_(pid),
-        timestamp_(timestamp),
-        data_(data)
-   {
-   }
+                        boost::posix_time::microsec_clock::universal_time());
+
 
 public:
    bool empty() const { return empty_; }
-   EventScope scope() const { return scope_; }
+   int scope() const { return scope_; }
    int id() const { return id_; }
-   const std::string& username() const { return username_; }
+   std::string username() const { return username_; }
    PidType pid() const { return pid_; }
-   boost::posix_time::ptime timestamp() const { return timestamp_; }
-   const std::string& data() const { return data_; }
+   boost::posix_time::ptime timestamp() const
+   {
+      return core::date_time::timeFromMillisecondsSinceEpoch(gsl::narrow_cast<int64_t>(timestamp_));
+   }
+   std::string data() const { return data_; }
+
 
 private:
    bool empty_;
-   EventScope scope_;
+   int scope_;
    int id_;
-   std::string username_;
+   char username_[kMaxEventDataSize+1];
    PidType pid_;
-   boost::posix_time::ptime timestamp_;
-   std::string data_;
+   double timestamp_;
+   char data_[kMaxEventDataSize+1];
 };
 
 std::string eventScopeAndIdAsString(const Event& event);

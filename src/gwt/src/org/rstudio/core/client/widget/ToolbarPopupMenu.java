@@ -1,7 +1,7 @@
 /*
  * ToolbarPopupMenu.java
  *
- * Copyright (C) 2009-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -98,6 +98,21 @@ public class ToolbarPopupMenu extends ThemedPopupPanel
    public void selectFirst()
    {
       menuBar_.selectFirst();
+   }
+   
+   public void selectLast()
+   {
+      menuBar_.selectLast();
+   }
+   
+   public void moveSelectionFwd(int numElements)
+   {
+      menuBar_.moveSelectionFwd(numElements);
+   }
+   
+   public void moveSelectionBwd(int numElements)
+   {
+      menuBar_.moveSelectionBwd(numElements);
    }
 
    public void selectItem(MenuItem menuItem)
@@ -301,6 +316,11 @@ public class ToolbarPopupMenu extends ThemedPopupPanel
       private void selectFirst()
       {
          selectItem(0);
+      }
+      
+      private void selectLast()
+      {
+         selectItem(getItemCount() - 1);
       }
 
       private HandlerRegistration nativePreviewReg_;
