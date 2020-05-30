@@ -1,5 +1,5 @@
 /*
- * selectInput.tsx
+ * select.tsx
  *
  * Copyright (C) 2019-20 by RStudio, PBC
  *
@@ -12,6 +12,10 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
+
+// JJA TODO review: select.tsx, text.tsx, text.css
+
+// JJA: remove unused imports
 
 import React, { ChangeEventHandler, ChangeEvent, ReactNode } from 'react';
 

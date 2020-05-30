@@ -1,3 +1,9 @@
+
+// JJA: add copyright comment at top
+// JJA: end lines with semicolons
+// JJA: use let rather than var
+// JJA: forbidden constructor warning on new Number
+
 // Tries to parse a unicode codepoint string that a user might enter
 // For example:
 // U+2A1F

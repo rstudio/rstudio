@@ -13,6 +13,8 @@
  *
  */
 
+// JJA: pm-input-text should only get a color here, other styles should go into editor/styles/styles.css
+
 export interface EditorTheme {
   darkMode: boolean;
   cursorColor: string;
