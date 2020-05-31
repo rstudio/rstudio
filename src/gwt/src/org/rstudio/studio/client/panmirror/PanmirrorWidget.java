@@ -515,12 +515,6 @@ public class PanmirrorWidget extends DockLayoutPanel implements
       editor_.blur();
    }
    
-   @Override
-   public void onActivated(boolean focused)
-   {
-   } 
-
-   
    public Promise<Boolean> showContextMenu(PanmirrorMenuItem[] items, int clientX, int clientY)
    {
       return new Promise<Boolean>((ResolveCallbackFn<Boolean> resolve, RejectCallbackFn reject) -> {

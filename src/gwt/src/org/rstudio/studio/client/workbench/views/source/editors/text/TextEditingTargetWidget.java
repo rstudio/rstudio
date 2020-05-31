@@ -1691,11 +1691,6 @@ public class TextEditingTargetWidget
       }
       
       @Override
-      public void onActivated(boolean focused)
-      {
-      }
-      
-      @Override
       public Widget asWidget()
       {
         return editorPanel_;

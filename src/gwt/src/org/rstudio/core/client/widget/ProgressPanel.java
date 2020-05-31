@@ -119,12 +119,6 @@ public class ProgressPanel extends Composite implements IsHideableWidget
    {
       // implement to satisfy IsHideableWidget, don't actually take focus when called
    }
-   
-   @Override
-   public void onActivated(boolean focused)
-   {
-      // implement to satisfy IsHideableWidget 
-   }
 
    private int getSpinnerColor()
    {
