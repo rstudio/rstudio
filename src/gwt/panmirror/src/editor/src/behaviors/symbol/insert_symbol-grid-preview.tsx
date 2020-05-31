@@ -1,3 +1,6 @@
+
+// JJA: add header comment (check for all files in directory)
+
 import { WidgetProps } from '../../api/widgets/react';
 import React from 'react';
 import { Symbol } from './insert_symbol-data';
@@ -9,6 +12,9 @@ interface SymbolPreviewProps extends WidgetProps {
   width: number;
   symbol: Symbol;
 }
+
+// JJA: why do we need the ? on accesses of props.symbol? (seems like esp. for the 'U+' 
+// case that if it were null/undefined that we'd have busted output)
 
 export const SymbolPreview = React.forwardRef<any, SymbolPreviewProps>((props, ref) => {
   return (

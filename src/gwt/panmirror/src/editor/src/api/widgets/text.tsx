@@ -1,5 +1,5 @@
 /*
- * textInput.tsx
+ * text.tsx
  *
  * Copyright (C) 2019-20 by RStudio, PBC
  *

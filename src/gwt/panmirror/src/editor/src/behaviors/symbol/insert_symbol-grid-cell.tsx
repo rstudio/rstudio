@@ -27,22 +27,29 @@ export interface CharacterGridCellItemData {
 }
 
 export const SymbolCharacterCell = ({ columnIndex, rowIndex, style, data }: any) => {
+  // JJA: could you define an interface type for the argument here (and then make 'data' typed
+  // within that interface). My worry here is that w/ the cast types are not checked
+  // at all by the compiler.
   const characterGridCellItemData = data as CharacterGridCellItemData;
   const symbolCharacters = characterGridCellItemData.symbolCharacters;
   const itemIndex = rowIndex * characterGridCellItemData.numberOfColumns + columnIndex;
 
   if (itemIndex < symbolCharacters.length) {
+      // JJA maybe shorted to 'ch'?
       const character = symbolCharacters[itemIndex];
       return (
         <div
           tabIndex={-1}
           style={style}
           className="pm-symbol-grid-container"
+          // JJA: I get tslint warning here that lambdas are forbidden in JSX attributes
+          // (for performance reasons). Let's a move these out. 
           onClick={event => {
             event.preventDefault();
             event.stopPropagation();
             characterGridCellItemData.onSelectionCommitted();
           }}
+          // JJA: maybe add a brief comment as to why we are masking this event
           onMouseDown={event => {
             event.preventDefault();
             event.stopPropagation();
@@ -51,10 +58,12 @@ export const SymbolCharacterCell = ({ columnIndex, rowIndex, style, data }: any)
             characterGridCellItemData.onSelectionChanged(itemIndex);
           }}
         >
-          <div className={`pm-symbol-grid-cell pm-grid-item ${characterGridCellItemData.selectedIndex == itemIndex ? characterGridCellItemData.selectedItemClassName : ''}`}>
+          <div className={`pm-symbol-grid-cell pm-grid-item ${characterGridCellItemData.selectedIndex === itemIndex ? characterGridCellItemData.selectedItemClassName : ''}`}>
           {character === undefined ? '' : character.value} 
           </div>
         </div>
+        // JJA: I think you can equivilantly write the above as:
+        //   character.value || ''
       );
     
   } else {

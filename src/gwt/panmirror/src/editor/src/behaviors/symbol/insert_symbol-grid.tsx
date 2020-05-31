@@ -13,11 +13,13 @@
  *
  */
 
+// JJA: react libraries after react
 import { FixedSizeGrid } from 'react-window';
 
 import React from 'react';
 import { WidgetProps } from '../../api/widgets/react';
 
+// JJA: css style imports after all other imports
 import './insert_symbol-grid-styles.css';
 import { Symbol } from './insert_symbol-data';
 import { CharacterGridCellItemData, SymbolCharacterCell } from './insert_symbol-grid-cell';
@@ -32,6 +34,8 @@ interface CharacterGridProps extends WidgetProps {
   onSelectionChanged: (selectedIndex: number) => void;
   onSelectionCommitted: VoidFunction;
 }
+
+// JJA: use e.g. kPreviewHeight
 const previewHeight = 120;
 const previewWidth = 140;
 const selectedItemClassName = 'pm-grid-item-selected';
@@ -63,6 +67,8 @@ const SymbolCharacterGrid = React.forwardRef<any, CharacterGridProps>((props, re
     }
   }, [props.selectedIndex]);
 
+  // JJA: it seems like both of these uses of setTimeout have the same form, perhaps break
+  // out a helper that takes function into an 'api' module?
   let previewing = false;
   const mouseMoveWait = 25;
   function handleMouseMove(event: React.MouseEvent) {
@@ -77,6 +83,8 @@ const SymbolCharacterGrid = React.forwardRef<any, CharacterGridProps>((props, re
 
   const [previewPosition, setPreviewPosition] = React.useState<[number, number]>([0, 0]);
   const [showPreview, setShowPreview] = React.useState<boolean>(false);
+
+  // JJA: I don't think we want an NodeJS types in our codebase?
   const timerRef = React.useRef<NodeJS.Timeout>();
 
   React.useEffect(() => {
@@ -89,6 +97,7 @@ const SymbolCharacterGrid = React.forwardRef<any, CharacterGridProps>((props, re
     }
   }, [props.symbolCharacters]);
 
+  // JJA: kWaitToShowPreviewMs
   const waitToShowPreviewMs = 1500;
   function maybeShowPreview() {
     if (timerRef.current) {
@@ -110,6 +119,8 @@ const SymbolCharacterGrid = React.forwardRef<any, CharacterGridProps>((props, re
   }
 
   function updatePreviewPosition() {
+    // JJA: it seems like we scope this search more narrowly? Do we have access
+    // to the root element of the symbol popup or the symbol grid?
     const selectedCells = window.document.getElementsByClassName(selectedItemClassName);
     if (selectedCells.length === 1) {
       const cellRect = selectedCells.item(0)?.getBoundingClientRect();
@@ -127,6 +138,7 @@ const SymbolCharacterGrid = React.forwardRef<any, CharacterGridProps>((props, re
     }
   }
 
+  // JJA: tslint no lambdas in JSX attributes
   return (
     <div
       onKeyDown={event => handleKeyDown(event, props)}
@@ -168,8 +180,9 @@ const handleKeyDown = (event: React.KeyboardEvent, props: CharacterGridProps) =>
     props.numberOfColumns,
     props.symbolCharacters.length,
   );
-  if (newIndex != undefined) {
+  if (newIndex !== undefined) {
     props.onSelectionChanged(newIndex);
+    // JJA: does this also need to stopPropagation? (I have no idea, just raising the question)
     event.preventDefault();
   }
 };
@@ -212,7 +225,7 @@ export const newIndexForKeyboardEvent = (
     case 'ArrowUp': // up
       return prevRow(selectedIndex, numberOfColumns, numberOfCells);
 
-    case 'ArrowRight': //right
+    case 'ArrowRight': // right
       return next(selectedIndex, numberOfColumns, numberOfCells);
 
     case 'ArrowDown': // down

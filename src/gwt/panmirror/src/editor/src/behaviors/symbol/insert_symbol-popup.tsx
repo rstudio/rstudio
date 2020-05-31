@@ -26,6 +26,7 @@ import './insert_symbol-styles.css';
 const symbolDataManager = new SymbolDataManager();
 
 interface InsertSymbolPopupProps extends WidgetProps {
+  // JJA: perhaps order attributes data then events?
   enabled: boolean;
   onInsertText: (text: string) => void;
   onClose: VoidFunction;
@@ -45,6 +46,7 @@ export const InsertSymbolPopup: React.FC<InsertSymbolPopupProps> = props => {
 
   const gridHeight = popupHeight - 48;
   const gridWidth = popupWidth;
+  // JJA kNumberOfcolumns
   const numberOfColumns = 12;
 
   const [filterText, setFilterText] = React.useState<string>('');
@@ -101,6 +103,8 @@ export const InsertSymbolPopup: React.FC<InsertSymbolPopupProps> = props => {
         break;
 
       case 'Tab':
+        // JJA: maybe an isFocused helper function in api/focus.ts here? (it can check for the null
+        // so you can pass .current w/o a null check)
         if (event.shiftKey && window.document.activeElement === textRef.current) {
           gridRef.current?.focus();
           event.preventDefault();
@@ -120,7 +124,8 @@ export const InsertSymbolPopup: React.FC<InsertSymbolPopupProps> = props => {
     }
 
     // Process grid keyboard event if the textbox is focused and has no value
-    if (window.document.activeElement === textRef.current && textRef.current?.value.length == 0) {
+    // JJA use isFocused helper here as well
+    if (window.document.activeElement === textRef.current && textRef.current?.value.length === 0) {
       const newIndex = newIndexForKeyboardEvent(event, selectedSymbolIndex, numberOfColumns, symbols.length);
       if (newIndex) {
         setSelectedSymbolIndex(newIndex);
@@ -129,6 +134,7 @@ export const InsertSymbolPopup: React.FC<InsertSymbolPopupProps> = props => {
     }
   }
 
+  // JJA: tslint shadowed name
   function handleSelectedSymbolChanged(selectedSymbolIndex: number) {
     setSelectedSymbolIndex(selectedSymbolIndex);
   }
@@ -139,6 +145,7 @@ export const InsertSymbolPopup: React.FC<InsertSymbolPopupProps> = props => {
     }
   }
 
+  // JJA: tslient lambdas in JSX
   return (
     <Popup classes={['pm-popup-insert-symbol']} style={style}>
       <div onKeyDown={event => handleKeyboardEvent(event)}>

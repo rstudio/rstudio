@@ -13,7 +13,6 @@
  *
  */
 
-// JJA TODO review: select.tsx, text.tsx, text.css
 
 // JJA: remove unused imports
 
@@ -32,6 +31,9 @@ export const SelectInput = React.forwardRef<any, SelectInputProps>((props, ref) 
   const style: React.CSSProperties = {
     ...props.style,
   };
+
+  // JJA: usually indent attributes just 2 spaces, then put the end bracket on it's own line
+  // so that the it's easy to distinguish the children from the attributes
 
   return (
     <select

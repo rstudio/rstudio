@@ -13,6 +13,13 @@
  *
  */
 
+// JJA: directory should be named insert_symbol
+
+// JJA: order imports prosemirror, then react, then api, then 'local'
+// (check this for all files in dir)
+
+// JJA: let's rename 'insert_symbol-data.json' to just 'symbols.json'
+
 import { EditorState, Transaction, Plugin, PluginKey } from 'prosemirror-state';
 import { EditorView } from 'prosemirror-view';
 
@@ -36,6 +43,10 @@ import { InsertSymbolPopup } from './insert_symbol-popup';
 const key = new PluginKey<boolean>('insert_symbol');
 
 class InsertSymbolPlugin extends Plugin<boolean> {
+
+// JJA any fields initialized in the constructor and then not mutated
+// again shoudl be declared as readonly
+
   private popup: HTMLElement | null = null;
   private scrollUnsubscribe: VoidFunction;
 
@@ -66,9 +77,15 @@ class InsertSymbolPlugin extends Plugin<boolean> {
 
   public showPopup(view: EditorView) {
     if (!this.popup) {
+
+      // JJA kHeight/kWidth by convention
       const height = 316;
       const width = 370;
 
+      // JJA let's break the position calculation logic into it's own function
+      // (perhaps in the api module under something like widgets/utils.ts)
+      // as I think we'll need that for completion popups as well
+      
       const selection = view.state.selection;
       const editorRect = view.dom.getBoundingClientRect();
 
@@ -130,8 +147,10 @@ class InsertSymbolPlugin extends Plugin<boolean> {
   }
 }
 
+// JJA: by convention I ususally put the extension at the very top of the file
+// and the various implementation helers below it
 const extension = (
-  pandocExtensions: PandocExtensions,
+  _pandocExtensions: PandocExtensions,
   _pandocCapabilities: PandocCapabilities,
   ui: EditorUI,
   _format: EditorFormat,
