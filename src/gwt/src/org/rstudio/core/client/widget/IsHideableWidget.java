@@ -21,6 +21,7 @@ import com.google.gwt.user.client.ui.IsWidget;
 
 public interface IsHideableWidget extends IsWidget, CanFocus, HasVisibility
 { 
+   void onActivated(boolean focused);
 }
 
 

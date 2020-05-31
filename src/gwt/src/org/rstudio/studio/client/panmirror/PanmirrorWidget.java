@@ -515,6 +515,12 @@ public class PanmirrorWidget extends DockLayoutPanel implements
       editor_.blur();
    }
    
+   @Override
+   public void onActivated(boolean focused)
+   {
+   } 
+
+   
    public Promise<Boolean> showContextMenu(PanmirrorMenuItem[] items, int clientX, int clientY)
    {
       return new Promise<Boolean>((ResolveCallbackFn<Boolean> resolve, RejectCallbackFn reject) -> {
@@ -652,7 +658,8 @@ public class PanmirrorWidget extends DockLayoutPanel implements
    
    private final HandlerManager handlers_ = new HandlerManager(this);
    private final HandlerRegistrations registrations_ = new HandlerRegistrations();
-   private final ArrayList<JsVoidFunction> editorEventUnsubscribe_ = new ArrayList<JsVoidFunction>(); 
+   private final ArrayList<JsVoidFunction> editorEventUnsubscribe_ = new ArrayList<JsVoidFunction>();
+
 }
 
 

@@ -143,6 +143,9 @@ public class TextEditorContainer extends LayoutPanel implements CanFocus
       // focus if requested
       if (focus)
          widget.focus();
+      
+      // call onActivated
+      widget.onActivated(focus);
    }
    
    // remove a widget

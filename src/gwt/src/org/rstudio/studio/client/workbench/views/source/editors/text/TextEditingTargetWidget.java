@@ -1691,6 +1691,11 @@ public class TextEditingTargetWidget
       }
       
       @Override
+      public void onActivated(boolean focused)
+      {
+      }
+      
+      @Override
       public Widget asWidget()
       {
         return editorPanel_;
@@ -1727,6 +1732,7 @@ public class TextEditingTargetWidget
       } 
       
       private boolean activationPending_ = false;
+
    };
    
    private void syncWrapMode()
