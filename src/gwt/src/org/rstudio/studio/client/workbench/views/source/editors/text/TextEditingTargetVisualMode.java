@@ -403,11 +403,6 @@ public class TextEditingTargetVisualMode implements CommandPaletteEntrySource
                      panmirror_.focus();
                      panmirror_.setEditingLocation(getSourceOutlneLocation(), savedEditingLocation()); 
                   }
-                  // otherwise just restore our last location w/o reference to source mode
-                  else
-                  {
-                     panmirror_.setEditingLocation(null,  savedEditingLocation());
-                  }
                   
                   // show any warnings
                   PanmirrorPandocFormat format = panmirror_.getPandocFormat();
