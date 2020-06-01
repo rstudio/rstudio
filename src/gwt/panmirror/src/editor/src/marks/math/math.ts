@@ -27,14 +27,15 @@ import { EditorFormat } from '../../api/format';
 import { EditorUI } from '../../api/ui';
 import { kCodeText } from '../../api/code';
 import { MarkInputRuleFilter } from '../../api/input_rule';
+import { EditorEvents } from '../../api/events';
 
 import { InsertInlineMathCommand, InsertDisplayMathCommand, insertMath } from './math-commands';
 import { mathAppendMarkTransaction } from './math-transaction';
 import { mathHighlightPlugin } from './math-highlight';
-import { mathPreviewPlugin } from './math-preview';
+import { MathPreviewPlugin } from './math-preview';
 
 import './math-styles.css';
-
+import { EditorOptions } from '../../api/options';
 
 const kInlineMathPattern = '\\$[^ ].*?[^\\ ]\\$';
 const kInlineMathRegex = new RegExp(kInlineMathPattern);
@@ -55,6 +56,8 @@ const extension = (
   _caps: PandocCapabilities,
   ui: EditorUI,
   format: EditorFormat,
+  _options: EditorOptions,
+  events: EditorEvents
 ): Extension | null => {
   if (!pandocExtensions.tex_math_dollars) {
     return null;
@@ -254,7 +257,7 @@ const extension = (
         mathHighlightPlugin(schema),
       ];
       if (ui.math) {
-        plugins.push(mathPreviewPlugin(ui.math));
+        plugins.push(new MathPreviewPlugin(ui.math, events));
       }
       return plugins;
     },

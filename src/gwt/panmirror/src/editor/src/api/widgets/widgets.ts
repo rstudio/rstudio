@@ -45,7 +45,7 @@ export function createPopup(
     'pm-background-color',
   );
   popup.style.position = 'absolute';
-  popup.style.zIndex = '10';
+  popup.style.zIndex = '1000';
   applyStyles(popup, classes, style);
 
   // create mutation observer that watches for destruction

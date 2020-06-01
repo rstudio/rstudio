@@ -17,32 +17,89 @@ import { Plugin, PluginKey, Transaction, EditorState } from "prosemirror-state";
 import { DecorationSet, EditorView } from "prosemirror-view";
 
 import { EditorUIMath } from "../../api/ui";
+import { getMarkRange, getMarkAttrs } from "../../api/mark";
+import { createPopup } from "../../api/widgets/widgets";
+import { popupPositionStylesForTextRange, elementHasPosition } from "../../api/widgets/position";
+import { EditorEvents, EditorEvent } from "../../api/events";
 
-export function mathPreviewPlugin(uiMath: EditorUIMath) {
-  return new MathPreviewPlugin(uiMath);
-}
+import { MathType } from "./math";
 
 const key = new PluginKey<DecorationSet>('math-preview');
 
-class MathPreviewPlugin extends Plugin<DecorationSet> {
-  constructor(uiMath: EditorUIMath) {
-    let editorView: EditorView;
+export class MathPreviewPlugin extends Plugin<DecorationSet> {
+
+  private inlinePopup: HTMLElement | null = null;
+  private lastRenderedInlineMath: string | null = null;
+  private scrollUnsubscribe: VoidFunction;
+
+  constructor(uiMath: EditorUIMath, events: EditorEvents) {
+  
     super({
       key,
-      view(view: EditorView) {
-        editorView = view;
-        return {};
+      view: () => {
+        return {
+          update: (view: EditorView, prevState: EditorState) => {
+
+            // capture state, etc.
+            const state = view.state;
+            const schema = state.schema;
+            const selection = state.selection;
+            
+            // are we in a math mark? if not bail
+            const range = getMarkRange(selection.$from, schema.marks.math);
+            if (!range) {
+              this.closeInlinePopup();
+              return;
+            }
+            // is this inline math? if not bail
+            const attrs = getMarkAttrs(state.doc, range, schema.marks.math);
+            if (attrs.type !== MathType.Inline) {
+              this.closeInlinePopup();
+              return;
+            }
+
+            // get the math text. bail if it's empty
+            const inlineMath = state.doc.textBetween(range.from, range.to);
+            if (inlineMath.match(/^\$\s*\$$/)) {
+              this.closeInlinePopup();
+              return;
+            }    
+
+            // get the position for the range
+            const styles = popupPositionStylesForTextRange(view, range);
+
+            // if we don't have a poupup for this position then close the popup
+            if (this.inlinePopup && !elementHasPosition(this.inlinePopup, styles)) {
+              this.closeInlinePopup();
+            }
+
+            // create the popup if we need to
+            if (!this.inlinePopup) {
+              this.inlinePopup = createPopup(view, ['pm-math-preview'], undefined, styles);
+              window.document.body.appendChild(this.inlinePopup); 
+            }
+
+            // typeset the math if we haven't already
+            if (inlineMath !== this.lastRenderedInlineMath) {
+              uiMath.typeset!(this.inlinePopup!, inlineMath).then(error => {
+                if (!error) {
+                  this.lastRenderedInlineMath = inlineMath;
+                }
+              });
+            }
+          },
+          destroy: () => {
+            this.closeInlinePopup();
+            this.scrollUnsubscribe();
+          }
+        };
       },
       state: {
         init: (_config: { [key: string]: any }) => {
           return DecorationSet.empty;
         },
         apply: (tr: Transaction, old: DecorationSet, oldState: EditorState, newState: EditorState) => {
-          
-
-          
-          return DecorationSet.empty;
-         
+          return DecorationSet.empty;         
         },
       },
       props: {
@@ -51,5 +108,17 @@ class MathPreviewPlugin extends Plugin<DecorationSet> {
         },
       },
     });
+
+    // subscribe to scroll events (and close popup)
+    this.closeInlinePopup = this.closeInlinePopup.bind(this);
+    this.scrollUnsubscribe = events.subscribe(EditorEvent.Scroll, this.closeInlinePopup);
+  }
+
+  private closeInlinePopup() {
+    this.lastRenderedInlineMath = null;
+    if (this.inlinePopup) {
+      this.inlinePopup.remove();
+      this.inlinePopup = null;
+    }
   }
 }
