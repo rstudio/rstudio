@@ -48,7 +48,7 @@ const extension = (
 ): Extension => {
   return {
     commands: () => {
-      return [new ProsemirrorCommand(EditorCommandId.InsertSymbol, ['Ctrl-Shift-/'], insertSymbol)];
+      return [new ProsemirrorCommand(EditorCommandId.Symbol, [], insertSymbol)];
     },
     plugins: (_schema: Schema) => {
       return [new InsertSymbolPlugin(ui, events)];
