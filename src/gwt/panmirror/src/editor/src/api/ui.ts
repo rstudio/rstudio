@@ -26,6 +26,7 @@ export interface EditorUI {
   dialogs: EditorDialogs;
   display: EditorDisplay;
   execute: EditorUIExecute;
+  math: EditorUIMath;
   context: EditorUIContext;
   images: EditorUIImages;
 }
@@ -70,6 +71,10 @@ export interface EditorMenuItem {
 
 export interface EditorUIExecute {
   executeRmdChunk?: (chunk: EditorRmdChunk) => void;
+}
+
+export interface EditorUIMath {
+  typeset?: (el: HTMLElement, text: string) => Promise<boolean>;
 }
 
 export interface EditorDisplay {
