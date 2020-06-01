@@ -15,6 +15,8 @@
 
 import { EditorView } from 'prosemirror-view';
 
+import { applyStyles } from '../css';
+
 import './widgets.css';
 
 export function createHorizontalPanel() {
@@ -121,15 +123,3 @@ export function createTextInput(widthChars: number, classes?: string[], style?: 
   return input;
 }
 
-function applyStyles(el: HTMLElement, classes?: string[], style?: { [key: string]: string }) {
-  if (classes) {
-    if (classes) {
-      classes.forEach(clz => el.classList.add(clz));
-    }
-  }
-  if (style) {
-    Object.keys(style).forEach(name => {
-      el.style.setProperty(name, style[name]);
-    });
-  }
-}
