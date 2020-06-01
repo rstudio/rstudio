@@ -421,11 +421,6 @@ public class Application implements ApplicationEventHandlers
          globalDisplay_.openRStudioLink("docs");
    }
    
-   private void showAgreement()
-   {
-      globalDisplay_.openWindow(server_.getApplicationURL("agreement"));
-   }
-   
    @Handler
    public void onRstudioCommunityForum()
    {
