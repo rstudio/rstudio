@@ -200,7 +200,8 @@ public abstract class
    public abstract AppCommand openNextFileOnFilesystem();
    public abstract AppCommand openPreviousFileOnFilesystem();
    public abstract AppCommand toggleSoftWrapMode();
- 
+   public abstract AppCommand toggleRainbowParens();
+
    // Projects
    public abstract AppCommand newProject();
    public abstract AppCommand newProjectFromTemplate();

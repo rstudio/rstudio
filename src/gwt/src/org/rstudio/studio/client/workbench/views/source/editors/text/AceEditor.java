@@ -2189,7 +2189,18 @@ public class AceEditor implements DocDisplay,
       _setHighlightRFunctionCallsImpl(highlight);
       widget_.getEditor().retokenizeDocument();
    }
-   
+
+   public void setRainbowParentheses(boolean rainbow)
+   {
+      _setRainbowParenthesesImpl(rainbow);
+      widget_.getEditor().retokenizeDocument();
+   }
+
+   public boolean getRainbowParentheses()
+   {
+      return _getRainbowParenthesesImpl();
+   }
+
    public void setScrollLeft(int x)
    {
       getSession().setScrollLeft(x);
@@ -2211,7 +2222,19 @@ public class AceEditor implements DocDisplay,
       var Mode = $wnd.require("mode/r_highlight_rules");
       Mode.setHighlightRFunctionCalls(highlight);
    }-*/;
-   
+
+   private native final void _setRainbowParenthesesImpl(boolean rainbow)
+   /*-{
+      var Mode = $wnd.require("mode/rainbow_paren_highlight_rules");
+      Mode.setRainbowParentheses(rainbow);
+   }-*/;
+
+   private native final boolean _getRainbowParenthesesImpl()
+   /*-{
+     var Mode = $wnd.require("mode/rainbow_paren_highlight_rules");
+     return Mode.getRainbowParentheses();
+   }-*/;
+
    public void enableSearchHighlight()
    {
       widget_.getEditor().enableSearchHighlight();
@@ -2229,7 +2252,7 @@ public class AceEditor implements DocDisplay,
    {
       getSession().setUseWrapMode(useWrapMode);
    }
-   
+
    /**
     * Gets whether or not the editor is using soft wrapping
     */

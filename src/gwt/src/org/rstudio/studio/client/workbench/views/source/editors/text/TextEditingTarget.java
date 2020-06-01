@@ -208,6 +208,7 @@ public class TextEditingTarget implements
    public static final String RMD_VISUAL_MODE = "rmdVisualMode";
    
    public static final String SOFT_WRAP_LINES = "softWrapLines";
+   public static final String USE_RAINBOW_PARENS = "useRainbowParens";
   
    private static final MyCommandBinder commandBinder =
          GWT.create(MyCommandBinder.class);
@@ -259,6 +260,7 @@ public class TextEditingTarget implements
       void toggleDocumentOutline();
       void toggleRmdVisualMode();
       void toggleSoftWrapMode();
+      void toggleRainbowParens();
       
       void setNotebookUIVisible(boolean visible);
 
@@ -3090,7 +3092,13 @@ public class TextEditingTarget implements
    {
       view_.toggleSoftWrapMode();
    }
-   
+
+   @Handler
+   void onToggleRainbowParens()
+   {
+      view_.toggleRainbowParens();
+   }
+
    @Handler
    void onEnableProsemirrorDevTools()
    {
@@ -7127,6 +7135,11 @@ public class TextEditingTarget implements
                public void execute(Boolean arg) {
                   docDisplay.setHighlightRFunctionCalls(arg);
                }}));
+      releaseOnDismiss.add(prefs.rainbowParentheses().bind(
+          new CommandWithArg<Boolean>() {
+             public void execute(Boolean arg) {
+                docDisplay.setRainbowParentheses(arg);
+             }}));
       releaseOnDismiss.add(prefs.editorKeybindings().bind(
             new CommandWithArg<String>() {
                public void execute(String arg) {

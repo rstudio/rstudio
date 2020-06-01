@@ -934,6 +934,19 @@ core::Error UserPrefValues::setHighlightRFunctionCalls(bool val)
 }
 
 /**
+ * Whether to highlight parantheses (and other bracketed characters) in various colors
+ */
+bool UserPrefValues::rainbowParentheses()
+{
+    return readPref<bool>("rainbow_parentheses");
+}
+
+core::Error UserPrefValues::setRainbowParentheses(bool val)
+{
+    return writePref("rainbow_parentheses", val);
+}
+
+/**
  * The maximum number of characters to display in a single line in the R console.
  */
 int UserPrefValues::consoleLineLengthLimit()

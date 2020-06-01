@@ -711,6 +711,14 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
+    * Whether to highlight parentheses in different colors
+    */
+   public PrefValue<Boolean> rainbowParentheses()
+   {
+      return bool("rainbow_parentheses", false);
+   }
+
+   /**
     * The maximum number of characters to display in a single line in the R console.
     */
    public PrefValue<Integer> consoleLineLengthLimit()

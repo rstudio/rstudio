@@ -79,7 +79,7 @@ public class EditSession extends JavaScriptObject
    public native final boolean getUseWrapMode() /*-{
       return this.getUseWrapMode();
    }-*/;
-   
+
    public native final void setWrapLimitRange(int min, int max) /*-{
       this.setWrapLimitRange(min, max);
    }-*/;

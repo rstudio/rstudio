@@ -57,6 +57,7 @@ define("mode/python_highlight_rules", ["require", "exports", "module"], function
 var oop = require("ace/lib/oop");
 var Utils = require("mode/utils");
 var TextHighlightRules = require("ace/mode/text_highlight_rules").TextHighlightRules;
+var RainbowParenHighlightRules = require("mode/rainbow_paren_highlight_rules").RainbowParenHighlightRules;
 
 var PythonHighlightRules = function() {
 
@@ -146,15 +147,9 @@ var PythonHighlightRules = function() {
             token : "keyword.operator",
             regex : "//=|\\*\\*=|>>=|<<=|//|\\*\\*|==|!=|>=|<=|>>|<<|\\+=|-=|\\*=|/=|&=|%=|\\|=|\\^=|\\+|-|\\*|/|%|>|<|\\^|~|\\||&|=|:|\\.|;|,",
             merge : false
-        }, {
-            token : "paren.lparen.keyword.operator",
-            regex : "[\\[\\(\\{]",
-            merge : false
-        }, {
-            token : "paren.rparen.keyword.operator",
-            regex : "[\\]\\)\\}]",
-            merge : false
-        }, {
+        },
+        RainbowParenHighlightRules.getParenRule(),
+        {
             token : "text",
             regex : "\\s+"
         } ],

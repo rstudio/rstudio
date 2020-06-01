@@ -209,6 +209,15 @@ public class TextEditingTargetWidget
                editor_.setUseWrapMode(wrap);
             });
 
+      docUpdateSentinel_.addPropertyValueChangeHandler(
+         TextEditingTarget.USE_RAINBOW_PARENS, (newval) ->
+         {
+            boolean rainbowParens = StringUtil.equals(newval.getValue(),
+               DocUpdateSentinel.PROPERTY_TRUE);
+            commands_.toggleRainbowParens().setChecked(rainbowParens);
+            editor_.setRainbowParentheses(rainbowParens);
+         });
+
       userPrefs_.autoSaveOnBlur().addValueChangeHandler((evt) ->
       {
          // Re-adapt to file type when this preference changes; it may bring
@@ -244,6 +253,12 @@ public class TextEditingTargetWidget
    {
       docUpdateSentinel_.setBoolProperty(
             TextEditingTarget.SOFT_WRAP_LINES, !editor_.getUseWrapMode());
+   }
+
+   public void toggleRainbowParens()
+   {
+      docUpdateSentinel_.setBoolProperty(
+         TextEditingTarget.USE_RAINBOW_PARENS, !editor_.getRainbowParentheses());
    }
 
    public void toggleDocumentOutline()
@@ -863,8 +878,9 @@ public class TextEditingTargetWidget
       
       toggleVisualModeOutlineButton_.setVisible(visualRmdMode);
       
-      // update wrap mode for filetype
+      // update modes for filetype
       syncWrapMode();
+      syncRainbowParenMode();
       
       toolbar_.invalidateSeparators();
    }
@@ -1113,6 +1129,7 @@ public class TextEditingTargetWidget
       
       // sync the state of the command marking word wrap mode for this document
       syncWrapMode();
+      syncRainbowParenMode();
       
       Scheduler.get().scheduleDeferred(() -> manageToolbarSizes());
    }
@@ -1735,6 +1752,17 @@ public class TextEditingTargetWidget
       }
       editor_.setUseWrapMode(wrapMode);
       commands_.toggleSoftWrapMode().setChecked(wrapMode);
+   }
+
+   private void syncRainbowParenMode()
+   {
+//      boolean rainbowMode = editor_.getFileType().getRainbowParens();
+//      if (docUpdateSentinel_.hasProperty(TextEditingTarget.USE_RAINBOW_PARENS))
+//      {
+//         rainbowMode = docUpdateSentinel_.getBoolProperty(TextEditingTarget.USE_RAINBOW_PARENS, rainbowMode);
+//      }
+//      editor_.setUseWrapMode(rainbowMode);
+//      commands_.toggleSoftWrapMode().setChecked(rainbowMode);
    }
 
    private final TextEditingTarget target_;
