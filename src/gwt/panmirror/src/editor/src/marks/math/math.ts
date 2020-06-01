@@ -31,8 +31,10 @@ import { MarkInputRuleFilter } from '../../api/input_rule';
 import { InsertInlineMathCommand, InsertDisplayMathCommand, insertMath } from './math-commands';
 import { mathAppendMarkTransaction } from './math-transaction';
 import { mathHighlightPlugin } from './math-highlight';
+import { mathPreviewPlugin } from './math-preview';
 
 import './math-styles.css';
+
 
 const kInlineMathPattern = '\\$[^ ].*?[^\\ ]\\$';
 const kInlineMathRegex = new RegExp(kInlineMathPattern);
@@ -51,7 +53,7 @@ const MATH_CONTENT = 1;
 const extension = (
   pandocExtensions: PandocExtensions,
   _caps: PandocCapabilities,
-  _ui: EditorUI,
+  ui: EditorUI,
   format: EditorFormat,
 ): Extension | null => {
   if (!pandocExtensions.tex_math_dollars) {
@@ -241,7 +243,7 @@ const extension = (
     },
 
     plugins: (schema: Schema) => {
-      return [
+      const plugins = [
         new Plugin({
           key: new PluginKey('math'),
           props: {
@@ -251,6 +253,10 @@ const extension = (
         }),
         mathHighlightPlugin(schema),
       ];
+      if (ui.math) {
+        plugins.push(mathPreviewPlugin(ui.math));
+      }
+      return plugins;
     },
   };
 };
