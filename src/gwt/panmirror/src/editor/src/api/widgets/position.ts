@@ -20,6 +20,9 @@ export function popupPositionStylesForTextRange(
   view: EditorView, 
   range: { from: number, to: number }
 ) {
+
+  // get coordinates for editor view (use to offset)
+  const editorBox = (view.dom.parentNode! as HTMLElement).getBoundingClientRect();
  
   // +1 to ensure beginning of line doesn't resolve as line before
   // (will subtract it back out below)
@@ -35,8 +38,8 @@ export function popupPositionStylesForTextRange(
   };
 
   // set them
-  styles.top = Math.round(rangeEndCoords.bottom) + 10 + 'px';
-  styles.left = 'calc(' + Math.round(rangeStartCoords.left) + 'px - 1ch)';
+  styles.top = Math.round(rangeEndCoords.bottom - editorBox.top) + 10 + 'px';
+  styles.left = 'calc(' + Math.round(rangeStartCoords.left - editorBox.left) + 'px - 1ch)';
  
   // return the styles
   return styles;

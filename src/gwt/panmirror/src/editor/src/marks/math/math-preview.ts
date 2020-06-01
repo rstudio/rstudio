@@ -21,9 +21,7 @@ import { getMarkRange } from "../../api/mark";
 import { createPopup } from "../../api/widgets/widgets";
 import { popupPositionStylesForTextRange } from "../../api/widgets/position";
 import { EditorEvents, EditorEvent } from "../../api/events";
-
 import { applyStyles } from "../../api/css";
-
 
 const key = new PluginKey<DecorationSet>('math-preview');
 
@@ -115,7 +113,7 @@ export class MathPreviewPlugin extends Plugin<DecorationSet> {
         ...styles,
         visibility: 'hidden'
       });
-      window.document.body.appendChild(this.inlinePopup); 
+      this.view.dom.parentNode?.appendChild(this.inlinePopup);
     }
 
     // typeset the math if we haven't already
