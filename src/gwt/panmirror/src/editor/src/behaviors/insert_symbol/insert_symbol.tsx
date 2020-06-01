@@ -37,6 +37,8 @@ const key = new PluginKey<boolean>('insert_symbol');
 
 // TODO: End of a line, show dialog and watch position issues
 
+// TODO: When keyboard in textbox with no text, arrow keys not working
+
 const extension = (
   _pandocExtensions: PandocExtensions,
   _pandocCapabilities: PandocCapabilities,
