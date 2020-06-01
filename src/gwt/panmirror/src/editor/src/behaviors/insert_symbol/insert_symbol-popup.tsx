@@ -16,6 +16,7 @@
 import { WidgetProps } from '../../api/widgets/react';
 import React, { ChangeEvent } from 'react';
 import SymbolDataManager, { kCategoryAll, SymbolCharacter, SymbolCharacterGroup } from './insert_symbol-data';
+import { isElementFocused, focusElement } from '../../api/focus';
 import { Popup } from '../../api/widgets/popup';
 import { TextInput } from '../../api/widgets/text';
 import { SelectInput } from '../../api/widgets/select';
@@ -68,12 +69,8 @@ export const InsertSymbolPopup: React.FC<InsertSymbolPopupProps> = props => {
 
   // Focus the first text box
   React.useEffect(() => {
-    focusElement(textRef);
+    focusElement(textRef.current);
   }, []);
-
-  function focusElement(element: React.RefObject<HTMLInputElement>) {
-    element!.current!.focus();
-  }
 
   const options = symbolDataManager.symbolGroupNames().map(name => (
     <option key={name} value={name}>
@@ -101,11 +98,11 @@ export const InsertSymbolPopup: React.FC<InsertSymbolPopupProps> = props => {
         break;
 
       case 'Tab':
-        if (event.shiftKey && isFocused(textRef.current)) {
-          focus(gridRef.current);
+        if (event.shiftKey && isElementFocused(textRef.current)) {
+          focusElement(gridRef.current);
           event.preventDefault();
-        } else if (!event.shiftKey && isFocused(gridRef.current)) {
-          focus(textRef.current);
+        } else if (!event.shiftKey && isElementFocused(gridRef.current)) {
+          focusElement(textRef.current);
           event.preventDefault();
         }
         break;
@@ -120,7 +117,7 @@ export const InsertSymbolPopup: React.FC<InsertSymbolPopupProps> = props => {
     }
 
     // Process grid keyboard event if the textbox is focused and has no value
-    if (isFocused(textRef.current) && textRef.current?.value.length === 0) {
+    if (isElementFocused(textRef.current) && textRef.current?.value.length === 0) {
       const newIndex = newIndexForKeyboardEvent(event, selectedSymbolIndex, kNumberOfcolumns, symbols.length);
       if (newIndex) {
         setSelectedSymbolIndex(newIndex);

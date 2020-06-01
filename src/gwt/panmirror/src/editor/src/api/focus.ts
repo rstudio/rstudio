@@ -13,14 +13,14 @@
  *
  */
 
-function isFocused(element: HTMLElement | null) : boolean {
+export function isElementFocused(element: HTMLElement | null) : boolean {
   if (element) {
     return window.document.activeElement === element;
   }
   return false;
 }
 
-function focus(element: HTMLElement | null ) {
+export function focusElement(element: HTMLElement | null ) {
   if (element) {
     element.focus();
   }
