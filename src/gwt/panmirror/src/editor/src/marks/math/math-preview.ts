@@ -17,13 +17,13 @@ import { Plugin, PluginKey, Transaction, EditorState } from "prosemirror-state";
 import { DecorationSet, EditorView } from "prosemirror-view";
 
 import { EditorUIMath } from "../../api/ui";
-import { getMarkRange, getMarkAttrs } from "../../api/mark";
+import { getMarkRange } from "../../api/mark";
 import { createPopup } from "../../api/widgets/widgets";
 import { popupPositionStylesForTextRange } from "../../api/widgets/position";
 import { EditorEvents, EditorEvent } from "../../api/events";
 
-import { MathType } from "./math";
 import { applyStyles } from "../../api/css";
+
 
 const key = new PluginKey<DecorationSet>('math-preview');
 
@@ -97,13 +97,6 @@ export class MathPreviewPlugin extends Plugin<DecorationSet> {
       return;
     }
 
-    // is this inline math (or display math inline a paragraph)? if not bail
-    const attrs = getMarkAttrs(state.doc, range, schema.marks.math);
-    if (attrs.type === MathType.Display && selection.$head.parent.childCount === 1) {
-      this.closeInlinePopup();
-      return;
-    }
-
     // get the math text. bail if it's empty
     const inlineMath = state.doc.textBetween(range.from, range.to);
     if (inlineMath.match(/^\${1,2}\s*\${1,2}$/)) {
@@ -118,7 +111,10 @@ export class MathPreviewPlugin extends Plugin<DecorationSet> {
     if (this.inlinePopup) {
       applyStyles(this.inlinePopup, [], styles);
     } else {
-      this.inlinePopup = createPopup(this.view, ['pm-math-preview'], undefined, styles);
+      this.inlinePopup = createPopup(this.view, ['pm-math-preview'], undefined, { 
+        ...styles,
+        visibility: 'hidden'
+      });
       window.document.body.appendChild(this.inlinePopup); 
     }
 
@@ -126,7 +122,8 @@ export class MathPreviewPlugin extends Plugin<DecorationSet> {
     if (inlineMath !== this.lastRenderedInlineMath) {
       this.uiMath.typeset!(this.inlinePopup!, inlineMath).then(error => {
         if (!error) {
-          this.lastRenderedInlineMath = inlineMath;
+          this.inlinePopup!.style.visibility = 'visible';
+          this.lastRenderedInlineMath = inlineMath; 
         }
       });
     }
