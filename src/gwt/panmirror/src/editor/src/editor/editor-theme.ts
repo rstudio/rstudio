@@ -13,8 +13,6 @@
  *
  */
 
-// JJA: pm-input-text should only get a color here, other styles should go into editor/styles/styles.css
-
 export interface EditorTheme {
   darkMode: boolean;
   cursorColor: string;
@@ -232,10 +230,7 @@ export function applyTheme(theme: EditorTheme) {
       font-size: ${theme.proportionalFontSizePt}pt !important;
     }
     .pm-input-text {
-      border: 1px;
       border-color: ${theme.paneBorderColor};
-      border-style: solid;
-      border-radius: 3px;
     }
     .CodeMirror,
     .CodeMirror pre.CodeMirror-line, .CodeMirror pre.CodeMirror-line-like {

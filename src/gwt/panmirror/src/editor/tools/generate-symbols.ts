@@ -24,7 +24,7 @@ import * as parser from 'fast-xml-parser';
 const maxUnicodeAge = 6.0;
 
 // The file that should be generated holding the symbol data
-const outputFile = './src/behaviors/symbol/insert_symbol-data.json';
+const outputFile = './src/behaviors/insert_symbol/symbols.json';
 
 // The names of blocks of unicode characters to be scan for characters to include.
 // Blocks will only be included if characters from that block are selected (e.g. characters)

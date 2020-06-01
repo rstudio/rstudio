@@ -1,5 +1,5 @@
 /*
- * widgets.css
+ * focus.ts
  *
  * Copyright (C) 2020 by RStudio, PBC
  *
@@ -13,40 +13,15 @@
  *
  */
 
-.pm-popup {
-  font-weight: normal;
+function isFocused(element: HTMLElement | null) : boolean {
+  if (element) {
+    return window.document.activeElement === element;
+  }
+  return false;
 }
 
-.pm-horizontal-panel {
-  display: table;
+function focus(element: HTMLElement | null ) {
+  if (element) {
+    element.focus();
+  }
 }
-
-.pm-horizontal-panel-cell {
-  display: table-cell;
-  vertical-align: middle;
-}
-
-.pm-image-button {
-  border: none;
-  padding: 0;
-  vertical-align: middle;
-  background-color: transparent;
-}
-
-.pm-image-button img {
-  width: 20px;
-  height: 18px;
-}
-
-.pm-input-text,
-.pm-input-select {
-  border-width: 1px;
-  border-style: solid;
-  border-radius: 3px;
-}
-
-.pm-input-select {
-  height: 27px;
-}
-
-

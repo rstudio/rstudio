@@ -1,20 +1,29 @@
-
-// JJA: add header comment (check for all files in directory)
+/*
+ * insert_symbol-grid-preview.tsx
+ *
+ * Copyright (C) 2019-20 by RStudio, PBC
+ *
+ * Unless you have received this program directly from RStudio pursuant
+ * to the terms of a commercial license agreement with RStudio, then
+ * this program is licensed to you under the terms of version 3 of the
+ * GNU Affero General Public License. This program is distributed WITHOUT
+ * ANY EXPRESS OR IMPLIED WARRANTY, INCLUDING THOSE OF NON-INFRINGEMENT,
+ * MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE. Please refer to the
+ * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
+ *
+ */
 
 import { WidgetProps } from '../../api/widgets/react';
 import React from 'react';
-import { Symbol } from './insert_symbol-data';
+import { SymbolCharacter } from './insert_symbol-data';
 
 interface SymbolPreviewProps extends WidgetProps {
   top: number;
   left: number;
   height: number;
   width: number;
-  symbol: Symbol;
+  symbolCharacter: SymbolCharacter;
 }
-
-// JJA: why do we need the ? on accesses of props.symbol? (seems like esp. for the 'U+' 
-// case that if it were null/undefined that we'd have busted output)
 
 export const SymbolPreview = React.forwardRef<any, SymbolPreviewProps>((props, ref) => {
   return (
@@ -31,13 +40,13 @@ export const SymbolPreview = React.forwardRef<any, SymbolPreviewProps>((props, r
         ref={ref}
       >
         <div className="pm-symbol-grid-symbol-preview-symbol">
-          {props.symbol?.value}
+          {props.symbolCharacter.value}
         </div>
         <div className="pm-symbol-grid-symbol-preview-name">
-          {props.symbol?.name}
+          {props.symbolCharacter.name}
         </div>
         <div className="pm-symbol-grid-symbol-preview-codepoint">
-          {'U+' + props.symbol?.codepoint.toString(16)}
+          {'U+' + props.symbolCharacter.codepoint.toString(16)}
         </div>
       </div>
     )

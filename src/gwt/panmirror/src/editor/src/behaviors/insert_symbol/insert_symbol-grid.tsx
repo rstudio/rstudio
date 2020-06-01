@@ -13,31 +13,29 @@
  *
  */
 
-// JJA: react libraries after react
+import React from 'react';
 import { FixedSizeGrid } from 'react-window';
 
-import React from 'react';
+import { CharacterGridCellItemData, SymbolCharacterCell } from './insert_symbol-grid-cell';
+import { SymbolCharacter } from './insert_symbol-data';
+import { SymbolPreview } from './insert_symbol-grid-preview';
 import { WidgetProps } from '../../api/widgets/react';
 
-// JJA: css style imports after all other imports
 import './insert_symbol-grid-styles.css';
-import { Symbol } from './insert_symbol-data';
-import { CharacterGridCellItemData, SymbolCharacterCell } from './insert_symbol-grid-cell';
-import { SymbolPreview } from './insert_symbol-grid-preview';
+import { debounce } from '../../api/function';
 
 interface CharacterGridProps extends WidgetProps {
   height: number;
   width: number;
   numberOfColumns: number;
-  symbolCharacters: Array<Symbol>;
+  symbolCharacters: SymbolCharacter[];
   selectedIndex: number;
   onSelectionChanged: (selectedIndex: number) => void;
   onSelectionCommitted: VoidFunction;
 }
 
-// JJA: use e.g. kPreviewHeight
-const previewHeight = 120;
-const previewWidth = 140;
+const kPreviewHeight = 120;
+const kPreviewWidth = 140;
 const selectedItemClassName = 'pm-grid-item-selected';
 
 const SymbolCharacterGrid = React.forwardRef<any, CharacterGridProps>((props, ref) => {
@@ -49,43 +47,37 @@ const SymbolCharacterGrid = React.forwardRef<any, CharacterGridProps>((props, re
     selectedIndex: props.selectedIndex,
     onSelectionChanged: props.onSelectionChanged,
     onSelectionCommitted: props.onSelectionCommitted,
-    selectedItemClassName: selectedItemClassName,
+    selectedItemClassName,
   };
 
-  // Improve scroll performance per
-  // https://developer.mozilla.org/en-US/docs/Web/API/Document/scroll_event
-  let scrolling = false;
-  const scrollWait = 5;
   const gridRef = React.useRef<FixedSizeGrid>(null);
-  React.useEffect(() => {
-    if (!scrolling) {
-      window.setTimeout(() => {
-        gridRef.current?.scrollToItem({ rowIndex: Math.floor(props.selectedIndex / props.numberOfColumns) });
-        scrolling = false;
-      }, scrollWait);
-      scrolling = true;
-    }
-  }, [props.selectedIndex]);
+  const handleScroll = debounce(() => {
+    gridRef.current?.scrollToItem({ rowIndex: Math.floor(props.selectedIndex / props.numberOfColumns) });
+  }, 5);
 
-  // JJA: it seems like both of these uses of setTimeout have the same form, perhaps break
-  // out a helper that takes function into an 'api' module?
-  let previewing = false;
-  const mouseMoveWait = 25;
-  function handleMouseMove(event: React.MouseEvent) {
-    if (!previewing) {
-      window.setTimeout(() => {
-        maybeShowPreview();
-        previewing = false;
-      }, mouseMoveWait);
-      previewing = true;
-    }
-  }
+  React.useEffect(
+    handleScroll,
+    [props.selectedIndex],
+  );
+
+  const handleMouseMove = debounce((event: React.MouseEvent) => {
+    maybeShowPreview();
+  }, 25);
+
+  const handleKeyDown = (event: React.KeyboardEvent) => {    const newIndex = newIndexForKeyboardEvent(
+      event,
+      props.selectedIndex,
+      props.numberOfColumns,
+      props.symbolCharacters.length,
+    );
+    if (newIndex !== undefined) {
+      props.onSelectionChanged(newIndex);
+      event.preventDefault();
+    }    
+  };
 
   const [previewPosition, setPreviewPosition] = React.useState<[number, number]>([0, 0]);
   const [showPreview, setShowPreview] = React.useState<boolean>(false);
-
-  // JJA: I don't think we want an NodeJS types in our codebase?
-  const timerRef = React.useRef<NodeJS.Timeout>();
 
   React.useEffect(() => {
     updatePreviewPosition();
@@ -97,56 +89,52 @@ const SymbolCharacterGrid = React.forwardRef<any, CharacterGridProps>((props, re
     }
   }, [props.symbolCharacters]);
 
-  // JJA: kWaitToShowPreviewMs
-  const waitToShowPreviewMs = 1500;
+  const kWaitToShowPreviewMs = 1500;
+  let previewTimer: number;
   function maybeShowPreview() {
-    if (timerRef.current) {
-      clearTimeout(timerRef.current);
-    }
-    timerRef.current = setTimeout(() => {
+    cancelMaybeShowPreview();
+    previewTimer = window.setTimeout(() => {
       if (props.symbolCharacters.length > 0) {
         updatePreviewPosition();
         setShowPreview(true);
       }
-    }, waitToShowPreviewMs);
+    }, kWaitToShowPreviewMs);
   }
 
-  function hidePreview() {
-    if (timerRef.current) {
-      clearTimeout(timerRef.current);
+  function cancelMaybeShowPreview() {
+    if (previewTimer) {
+      window.clearTimeout(previewTimer);
+    }   
+  }
+
+  const hidePreview = () => {
+    if (previewTimer) {
+      window.clearTimeout(previewTimer);
     }
     setShowPreview(false);
-  }
+  };
 
+  const gridInnerRef = React.useRef<HTMLElement>();
   function updatePreviewPosition() {
-    // JJA: it seems like we scope this search more narrowly? Do we have access
-    // to the root element of the symbol popup or the symbol grid?
-    const selectedCells = window.document.getElementsByClassName(selectedItemClassName);
-    if (selectedCells.length === 1) {
+    const selectedCells = gridInnerRef.current?.getElementsByClassName(selectedItemClassName);
+    if (selectedCells?.length === 1) {
       const cellRect = selectedCells.item(0)?.getBoundingClientRect();
       if (cellRect) {
         let top = cellRect.bottom + 1;
-        if (top + previewHeight > window.innerHeight) {
-          top = cellRect.top - previewHeight - 1;
+        if (top + kPreviewHeight > window.innerHeight) {
+          top = cellRect.top - kPreviewHeight - 1;
         }
         let left = cellRect.left + (cellRect.right - cellRect.left) / 2;
-        if (left + previewWidth > window.innerWidth) {
-          left = left - previewWidth;
+        if (left + kPreviewWidth > window.innerWidth) {
+          left = left - kPreviewWidth;
         }
         setPreviewPosition([left, top]);
       }
     }
   }
 
-  // JJA: tslint no lambdas in JSX attributes
   return (
-    <div
-      onKeyDown={event => handleKeyDown(event, props)}
-      onMouseLeave={event => hidePreview()}
-      onMouseMove={event => handleMouseMove(event)}
-      tabIndex={0}
-      ref={ref}
-    >
+    <div onKeyDown={handleKeyDown} onMouseLeave={hidePreview} onMouseMove={handleMouseMove} tabIndex={0} ref={ref}>
       <FixedSizeGrid
         columnCount={props.numberOfColumns}
         rowCount={Math.ceil(props.symbolCharacters.length / props.numberOfColumns)}
@@ -157,6 +145,7 @@ const SymbolCharacterGrid = React.forwardRef<any, CharacterGridProps>((props, re
         itemData={characterCellData}
         className="pm-symbol-grid"
         ref={gridRef}
+        innerRef={gridInnerRef}
       >
         {SymbolCharacterCell}
       </FixedSizeGrid>
@@ -164,28 +153,14 @@ const SymbolCharacterGrid = React.forwardRef<any, CharacterGridProps>((props, re
         <SymbolPreview
           left={previewPosition[0]}
           top={previewPosition[1]}
-          height={previewHeight}
-          width={previewWidth}
-          symbol={props.symbolCharacters[props.selectedIndex]}
+          height={kPreviewHeight}
+          width={kPreviewWidth}
+          symbolCharacter={props.symbolCharacters[props.selectedIndex]}
         />
       )}
     </div>
   );
 });
-
-const handleKeyDown = (event: React.KeyboardEvent, props: CharacterGridProps) => {
-  const newIndex = newIndexForKeyboardEvent(
-    event,
-    props.selectedIndex,
-    props.numberOfColumns,
-    props.symbolCharacters.length,
-  );
-  if (newIndex !== undefined) {
-    props.onSelectionChanged(newIndex);
-    // JJA: does this also need to stopPropagation? (I have no idea, just raising the question)
-    event.preventDefault();
-  }
-};
 
 function previous(currentIndex: number, numberOfColumns: number, numberOfCells: number): number {
   const newIndex = currentIndex - 1;

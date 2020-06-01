@@ -211,3 +211,9 @@ h4.pm-heading {
 p.ProseMirror-selectednode {
   outline: none;
 }
+
+.pm-input-text {
+  border: 1px;
+  border-style: solid;
+  border-radius: 3px;
+}

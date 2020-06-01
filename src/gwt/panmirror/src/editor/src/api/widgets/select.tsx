@@ -13,10 +13,7 @@
  *
  */
 
-
-// JJA: remove unused imports
-
-import React, { ChangeEventHandler, ChangeEvent, ReactNode } from 'react';
+import React, { ChangeEventHandler, ReactNode } from 'react';
 
 import { WidgetProps } from './react';
 
@@ -32,17 +29,15 @@ export const SelectInput = React.forwardRef<any, SelectInputProps>((props, ref) 
     ...props.style,
   };
 
-  // JJA: usually indent attributes just 2 spaces, then put the end bracket on it's own line
-  // so that the it's easy to distinguish the children from the attributes
-
   return (
     <select
-          className={`pm-input-select pm-background-color pm-pane-border-color ${props.className}`}
-          style={style}
-          tabIndex={props.tabIndex}
-          ref={ref}
-          onChange={props.onChange}>
-          {props.children}
+      className={`pm-input-select pm-background-color pm-pane-border-color ${props.className}`}
+      style={style}
+      tabIndex={props.tabIndex}
+      ref={ref}
+      onChange={props.onChange}
+    >
+      {props.children}
     </select>
   );
 });

@@ -15,9 +15,6 @@
 
 import { Node as ProsemirrorNode, Schema, DOMSerializer, Fragment } from 'prosemirror-model';
 
-// JJA: unused import
-import { Type } from 'js-yaml';
-
 export const kHTMLCommentRegEx = /(?:^|[^`])(<!--([\s\S]*?)-->)/;
 
 export function isHTMLComment(html: string) {
