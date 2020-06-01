@@ -15,6 +15,7 @@
 package org.rstudio.studio.client.workbench.views.source.editors.urlcontent;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.event.logical.shared.CloseHandler;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HandlerRegistration;
@@ -264,12 +265,6 @@ public class UrlContentEditingTarget implements EditingTarget
    }
    
    @Override
-   public List<CommandPaletteEntry> getCommandPaletteEntries()
-   {
-      return null;
-   }
-   
-   @Override
    public void recordCurrentNavigationPosition()
    {
       events_.fireEvent(new SourceNavigationEvent(
@@ -469,6 +464,19 @@ public class UrlContentEditingTarget implements EditingTarget
    }
 
    public String getDefaultNamePrefix()
+   {
+      return null;
+   }
+
+
+   @Override
+   public List<ScheduledCommand> getPaletteCommands()
+   {
+      return null;
+   }
+
+   @Override
+   public CommandPaletteEntry renderPaletteCommand(ScheduledCommand cmd)
    {
       return null;
    }

@@ -17,30 +17,14 @@ package org.rstudio.studio.client.palette.ui;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.a11y.A11y;
-import org.rstudio.core.client.command.AppCommand;
-import org.rstudio.core.client.command.KeyMap;
-import org.rstudio.core.client.command.KeySequence;
-import org.rstudio.core.client.command.ShortcutManager;
-import org.rstudio.core.client.command.KeyMap.KeyMapType;
-import org.rstudio.core.client.js.JsUtil;
 import org.rstudio.core.client.widget.AriaLiveStatusWidget;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.AriaLiveStatusEvent.Severity;
 import org.rstudio.studio.client.palette.CommandPaletteEntrySource;
-import org.rstudio.studio.client.workbench.addins.Addins.AddinExecutor;
-import org.rstudio.studio.client.workbench.addins.Addins.RAddin;
-import org.rstudio.studio.client.workbench.addins.Addins.RAddins;
-import org.rstudio.studio.client.workbench.commands.Commands;
-import org.rstudio.studio.client.workbench.prefs.model.Prefs.BooleanValue;
-import org.rstudio.studio.client.workbench.prefs.model.Prefs.EnumValue;
-import org.rstudio.studio.client.workbench.prefs.model.Prefs.IntValue;
-import org.rstudio.studio.client.workbench.prefs.model.Prefs.PrefValue;
-import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 
 import com.google.gwt.aria.client.ExpandedValue;
 import com.google.gwt.aria.client.Id;
@@ -90,25 +74,16 @@ public class CommandPalette extends Composite
       String commandPanel();
    }
 
-   public CommandPalette(Commands commands, 
-                         RAddins addins, 
-                         UserPrefs prefs,
-                         List<CommandPaletteEntrySource> extraSources,
-                         ShortcutManager shortcuts, 
-                         Host host)
+   public CommandPalette(List<CommandPaletteEntrySource<?>> sources, Host host)
    {
       initWidget(uiBinder.createAndBindUi(this));
 
       entries_ = new ArrayList<>();
       host_ = host;
-      shortcuts_ = shortcuts;
       selected_ = -1;
-      addins_ = addins;
-      commands_ = commands;
-      prefs_ = prefs;
-      extraEntriesSource_ = CommandPaletteEntrySource.join(extraSources);
       attached_ = false;
       pageSize_ = 0;
+      sources_ = sources;
       styles_.ensureInjected();
       
       Element searchBox = searchBox_.getElement();
@@ -157,94 +132,29 @@ public class CommandPalette extends Composite
       }
    }
 
+   private <T> void renderAll(CommandPaletteEntrySource<T> source)
+   {
+      List<T> items = source.getPaletteCommands();
+      for (T item: items)
+      {
+         CommandPaletteEntry entry = source.renderPaletteCommand(item);
+         if (entry != null)
+         {
+            entries_.add(entry);
+            commandList_.add(entry);
+         }
+      }
+   }
+
    /**
     * Performs a one-time population of the palette with all available commands.
     */
    private void populate()
    {
-      // Add all of the application commands
-      KeyMap map = shortcuts_.getKeyMap(KeyMapType.APPLICATION);
-      Map<String, AppCommand> allCommands = commands_.getCommands();
-      for (String command: allCommands.keySet())
+      for (CommandPaletteEntrySource<?> source: sources_)
       {
-         if (command.contains("Mru") || command.startsWith("mru") || 
-               command.contains("Dummy"))
-         {
-            // MRU entries and dummy commands should not appear in the palette
-            continue;
-         }
-         
-         // Ensure the command is visible. It'd be nice to show all commands in
-         // the palette for the purposes of examining key bindings, discovery,
-         // etc., but invisible commands are generally meaningless in the 
-         // current context.
-         AppCommand appCommand = allCommands.get(command);
-         if (!appCommand.isVisible())
-         {
-            continue;
-         }
-
-         // Look up the key binding for this command
-         List<KeySequence> keys = map.getBindings(command);
-         
-         // Create an application command entry
-         CommandPaletteEntry entry = new AppCommandPaletteEntry(appCommand, keys);
-         if (StringUtil.isNullOrEmpty(entry.getLabel()))
-         {
-            // Ignore app commands which have no label
-            continue;
-         }
-         entries_.add(entry);
+         renderAll(source);
       }
-      
-      // Add all of the R addin commands
-      map = shortcuts_.getKeyMap(KeyMapType.ADDIN);
-      AddinExecutor executor = new AddinExecutor();
-      for (String addin: JsUtil.asIterable(addins_.keys()))
-      {
-         RAddin rAddin = addins_.get(addin);
-         
-         // Look up the key binding for this addin
-         List<KeySequence> keys = map.getBindings(rAddin.getId());
-         CommandPaletteEntry entry = new RAddinCommandPaletteEntry(rAddin, executor, keys);
-         if (StringUtil.isNullOrEmpty(entry.getLabel()))
-         {
-            // Ignore addin commands which have no label
-            continue;
-         }
-         entries_.add(entry);
-      }
-      
-      // Add all of the preferences
-      for (PrefValue<?> val: prefs_.allPrefs())
-      {
-         if (StringUtil.isNullOrEmpty(val.getTitle()))
-         {
-            // Ignore preferences with no title (the title is the only
-            // reasonable thing we can display)
-            continue;
-         }
-         if (val instanceof BooleanValue)
-         {
-            CommandPaletteEntry entry = new UserPrefBooleanPaletteEntry((BooleanValue)val);
-            entries_.add(entry);
-         }
-         else if (val instanceof EnumValue)
-         {
-            CommandPaletteEntry entry = new UserPrefEnumPaletteEntry((EnumValue)val);
-            entries_.add(entry);
-         }
-         else if (val instanceof IntValue)
-         {
-            CommandPaletteEntry entry = new UserPrefIntegerPaletteEntry((IntValue)val);
-            entries_.add(entry);
-         }
-      }
-      
-      // add commands from additional sources
-      List<CommandPaletteEntry> extraEntries = extraEntriesSource_.getCommandPaletteEntries();
-      if (extraEntries != null)
-         entries_.addAll(extraEntries);
       
       // Invoke commands when they're clicked on
       for (CommandPaletteEntry entry: entries_)
@@ -253,7 +163,6 @@ public class CommandPalette extends Composite
          entry.addHandler((evt) -> {
             entry.invoke();
          }, ClickEvent.getType());
-         commandList_.add(entry);
       }
       
       // Handle most keystrokes on KeyUp so that the contents of the text box
@@ -549,11 +458,7 @@ public class CommandPalette extends Composite
    }
    
    private final Host host_;
-   private final ShortcutManager shortcuts_;
-   private final Commands commands_;
-   private final RAddins addins_;
-   private final CommandPaletteEntrySource extraEntriesSource_;
-   private final UserPrefs prefs_;
+   private final List<CommandPaletteEntrySource<?>> sources_;
    private int selected_;
    private List<CommandPaletteEntry> entries_;
    private String searchText_;

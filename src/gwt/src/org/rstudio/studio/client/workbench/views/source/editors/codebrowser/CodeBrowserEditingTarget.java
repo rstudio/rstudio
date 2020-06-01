@@ -15,6 +15,7 @@
 package org.rstudio.studio.client.workbench.views.source.editors.codebrowser;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.event.dom.client.KeyDownHandler;
@@ -780,12 +781,6 @@ public class CodeBrowserEditingTarget implements EditingTarget
       return "Code Browser displayed";
    }
    
-   @Override
-   public List<CommandPaletteEntry> getCommandPaletteEntries()
-   {
-      return null;
-   }
-
    // Private methods --------------------------------------------------------
    
    private CodeBrowserContents getContents()
@@ -825,6 +820,18 @@ public class CodeBrowserEditingTarget implements EditingTarget
       {
          onRestored.execute();
       }
+   }
+
+   @Override
+   public List<ScheduledCommand> getPaletteCommands()
+   {
+      return null;
+   }
+
+   @Override
+   public CommandPaletteEntry renderPaletteCommand(ScheduledCommand cmd)
+   {
+      return null;
    }
 
    private SourceDocument doc_;

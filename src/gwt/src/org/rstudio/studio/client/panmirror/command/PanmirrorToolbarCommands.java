@@ -25,7 +25,7 @@ import org.rstudio.studio.client.palette.ui.CommandPaletteEntry;
 import com.google.gwt.aria.client.MenuitemRole;
 import com.google.gwt.aria.client.Roles;
 
-public class PanmirrorToolbarCommands implements CommandPaletteEntrySource
+public class PanmirrorToolbarCommands implements CommandPaletteEntrySource<PanmirrorCommandUI>
 { 
    public PanmirrorToolbarCommands(PanmirrorCommand[] commands)
    {
@@ -147,17 +147,22 @@ public class PanmirrorToolbarCommands implements CommandPaletteEntrySource
       }
    }
    
-   public List<CommandPaletteEntry> getCommandPaletteEntries()
+   @Override
+   public List<PanmirrorCommandUI> getPaletteCommands()
    {
-      List<CommandPaletteEntry> entries = new ArrayList<CommandPaletteEntry>();
-      for (PanmirrorCommandUI cmd : commandsUI_.values()) 
-      {
-         if (cmd.isVisible())
-            entries.add(new PanmirrorCommandPaletteEntry(cmd));
-      }
-      return entries;
+      List<PanmirrorCommandUI> commands = new ArrayList<PanmirrorCommandUI>();
+      commands.addAll(commandsUI_.values());
+      return commands;
    }
-   
+
+   @Override
+   public CommandPaletteEntry renderPaletteCommand(PanmirrorCommandUI cmd)
+   {
+      if (cmd.isActive())
+         return new PanmirrorCommandPaletteEntry(cmd);
+      return null;
+   }
+
    private void add(String id, String menuText)
    {
       add(id, menuText, Roles.getMenuitemRole());

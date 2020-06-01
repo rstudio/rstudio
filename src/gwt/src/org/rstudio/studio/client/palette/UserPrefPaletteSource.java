@@ -28,6 +28,10 @@ import org.rstudio.studio.client.workbench.prefs.model.Prefs.IntValue;
 import org.rstudio.studio.client.workbench.prefs.model.Prefs.PrefValue;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 
+/**
+ * A command palette entry source which serves as a factory for user preference
+ * values.
+ */
 public class UserPrefPaletteSource implements CommandPaletteEntrySource<PrefValue<?>>
 {
    public UserPrefPaletteSource(UserPrefs prefs)
@@ -36,13 +40,13 @@ public class UserPrefPaletteSource implements CommandPaletteEntrySource<PrefValu
    }
 
    @Override
-   public List<PrefValue<?>> getElements()
+   public List<PrefValue<?>> getPaletteCommands()
    {
       return prefs_.allPrefs();
    }
 
    @Override
-   public CommandPaletteEntry renderElementEntry(PrefValue<?> val)
+   public CommandPaletteEntry renderPaletteCommand(PrefValue<?> val)
    {
       if (StringUtil.isNullOrEmpty(val.getTitle()))
       {

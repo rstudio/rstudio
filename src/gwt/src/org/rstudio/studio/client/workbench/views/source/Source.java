@@ -185,7 +185,7 @@ public class Source implements InsertSourceHandler,
                                IsWidget,
                                OpenSourceFileHandler,
                                OpenPresentationSourceFileHandler,
-                               CommandPaletteEntrySource,
+                               CommandPaletteEntrySource<ScheduledCommand>,
                                TabClosingHandler,
                                TabCloseHandler,
                                TabReorderHandler,
@@ -778,12 +778,20 @@ public class Source implements InsertSourceHandler,
       }
    }
    
-   // see if there are additional command pallette entries made available
-   // the by the active editor
-   public List<CommandPaletteEntry> getCommandPaletteEntries()
+   @Override
+   public List<ScheduledCommand> getPaletteCommands()
    {
       if (activeEditor_ != null) 
-         return activeEditor_.getCommandPaletteEntries();
+         return activeEditor_.getPaletteCommands();
+      else
+         return null;
+   }
+
+   @Override
+   public CommandPaletteEntry renderPaletteCommand(ScheduledCommand cmd)
+   {
+      if (activeEditor_ != null) 
+         return activeEditor_.renderPaletteCommand(cmd);
       else
          return null;
    }

@@ -383,12 +383,6 @@ public class ProfilerEditingTarget implements EditingTarget,
    }
 
    @Override
-   public List<CommandPaletteEntry> getCommandPaletteEntries()
-   {
-      return null;
-   }
-   
-   @Override
    public void recordCurrentNavigationPosition()
    {
       events_.fireEvent(new SourceNavigationEvent(
@@ -769,6 +763,18 @@ public class ProfilerEditingTarget implements EditingTarget,
       };
    }
    
+   @Override
+   public List<ScheduledCommand> getPaletteCommands()
+   {
+      return null;
+   }
+
+   @Override
+   public CommandPaletteEntry renderPaletteCommand(ScheduledCommand cmd)
+   {
+      return null;
+   }
+
    private void onMessage(final String message,
                           final String file,
                           final String normPath,

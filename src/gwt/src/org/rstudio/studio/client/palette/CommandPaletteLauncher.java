@@ -85,13 +85,17 @@ public class CommandPaletteLauncher implements CommandPalette.Host
     */
    private void createPanel()
    {
-      // extra sources (currently only the source tab)
-      List<CommandPaletteEntrySource> extraSources = new ArrayList<CommandPaletteEntrySource>();
-      extraSources.add(pSource_.get());
+      // Extra sources (currently only the source tab)
+      List<CommandPaletteEntrySource<?>> sources = new ArrayList<CommandPaletteEntrySource<?>>();
+      sources.add(pSource_.get());
       
+      // Create sources
+      sources.add(new AppCommandPaletteSource(ShortcutManager.INSTANCE, commands_));
+      sources.add(new RAddinPaletteSource(addins_.getRAddins(), ShortcutManager.INSTANCE));
+      sources.add(new UserPrefPaletteSource(pPrefs_.get()));
+
       // Create the command palette widget
-      palette_ = new CommandPalette(commands_, addins_.getRAddins(), pPrefs_.get(), 
-            extraSources, ShortcutManager.INSTANCE, this);
+      palette_ = new CommandPalette(sources, this);
       
       panel_ = new ModalPopupPanel(
             true,  // Auto hide

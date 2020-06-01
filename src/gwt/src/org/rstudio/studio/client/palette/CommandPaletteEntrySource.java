@@ -25,7 +25,7 @@ public interface CommandPaletteEntrySource<T>
     * 
     * @return A list of elements. 
     */
-   List<T> getElements();
+   List<T> getPaletteCommands();
    
    /**
     * Render a specific element as a command palette entry.
@@ -34,5 +34,5 @@ public interface CommandPaletteEntrySource<T>
     * 
     * @return A CommandPaletteEntry representing the element.
     */
-   CommandPaletteEntry renderElementEntry(T element);
+   CommandPaletteEntry renderPaletteCommand(T cmd);
 }

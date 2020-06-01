@@ -36,7 +36,7 @@ public class AppCommandPaletteSource implements CommandPaletteEntrySource<AppCom
    }
 
    @Override
-   public List<AppCommand> getElements()
+   public List<AppCommand> getPaletteCommands()
    {
       ArrayList<AppCommand> commands = new ArrayList<AppCommand>();
       commands.addAll(commands_.getCommands().values());
@@ -44,7 +44,7 @@ public class AppCommandPaletteSource implements CommandPaletteEntrySource<AppCom
    }
 
    @Override
-   public CommandPaletteEntry renderElementEntry(AppCommand command)
+   public CommandPaletteEntry renderPaletteCommand(AppCommand command)
    {
       String id = command.getId();
       if (id.contains("Mru") || id.startsWith("mru") || id.contains("Dummy"))

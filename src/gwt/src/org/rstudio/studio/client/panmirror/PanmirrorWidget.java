@@ -35,6 +35,7 @@ import org.rstudio.studio.client.application.events.ChangeFontSizeEvent;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.palette.CommandPaletteEntrySource;
 import org.rstudio.studio.client.palette.ui.CommandPaletteEntry;
+import org.rstudio.studio.client.panmirror.command.PanmirrorCommandUI;
 import org.rstudio.studio.client.panmirror.command.PanmirrorMenuItem;
 import org.rstudio.studio.client.panmirror.command.PanmirrorToolbar;
 import org.rstudio.studio.client.panmirror.command.PanmirrorToolbarCommands;
@@ -90,7 +91,7 @@ import jsinterop.annotations.JsType;
 public class PanmirrorWidget extends DockLayoutPanel implements 
    IsHideableWidget,
    RequiresResize, 
-   CommandPaletteEntrySource,
+   CommandPaletteEntrySource<PanmirrorCommandUI>,
    PanmirrorUpdatedEvent.HasPanmirrorUpdatedHandlers,
    PanmirrorStateChangeEvent.HasPanmirrorStateChangeHandlers,
    PanmirrorOutlineVisibleEvent.HasPanmirrorOutlineVisibleHandlers,
@@ -455,11 +456,16 @@ public class PanmirrorWidget extends DockLayoutPanel implements
    }
    
    @Override
-   public List<CommandPaletteEntry> getCommandPaletteEntries()
+   public List<PanmirrorCommandUI> getPaletteCommands()
    {
-      return commands_.getCommandPaletteEntries();
+      return commands_.getPaletteCommands();
    }
    
+   @Override
+   public CommandPaletteEntry renderPaletteCommand(PanmirrorCommandUI cmd)
+   {
+      return commands_.renderPaletteCommand(cmd);
+   }
    
    public void navigate(String id)
    {

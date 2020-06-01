@@ -17,18 +17,25 @@ package org.rstudio.studio.client.palette;
 
 import java.util.List;
 
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.KeyMap;
 import org.rstudio.core.client.command.KeyMap.KeyMapType;
+import org.rstudio.core.client.command.KeySequence;
 import org.rstudio.core.client.command.ShortcutManager;
 import org.rstudio.core.client.js.JsUtil;
 import org.rstudio.studio.client.palette.ui.CommandPaletteEntry;
+import org.rstudio.studio.client.palette.ui.RAddinCommandPaletteEntry;
 import org.rstudio.studio.client.workbench.addins.Addins.AddinExecutor;
 import org.rstudio.studio.client.workbench.addins.Addins.RAddin;
 import org.rstudio.studio.client.workbench.addins.Addins.RAddins;
 
+/**
+ * A command palette entry source which serves as a factory for R addin
+ * commands.
+ */
 public class RAddinPaletteSource implements CommandPaletteEntrySource<String>
 {
-   public public RAddinPaletteSource(RAddins addins, ShortcutManager shortcuts)
+   public RAddinPaletteSource(RAddins addins, ShortcutManager shortcuts)
    {
       addins_ = addins;
       executor_ = new AddinExecutor();
@@ -36,24 +43,26 @@ public class RAddinPaletteSource implements CommandPaletteEntrySource<String>
    }
    
    @Override
-   public List<String> getElements()
+   public List<String> getPaletteCommands()
    {
       return JsUtil.toList(addins_.keys());
    }
 
    @Override
-   public CommandPaletteEntry renderElementEntry(String id)
+   public CommandPaletteEntry renderPaletteCommand(String id)
    {
       RAddin addin = addins_.get(id);
 
       // Look up the key binding for this addin
-      List<KeySequence> keys = map.getBindings(rAddin.getId());
-      CommandPaletteEntry entry = new RAddinCommandPaletteEntry(rAddin, executor, keys);
+      List<KeySequence> keys = map_.getBindings(addin.getId());
+      CommandPaletteEntry entry = new RAddinCommandPaletteEntry(addin, executor_, keys);
       if (StringUtil.isNullOrEmpty(entry.getLabel()))
       {
          // Ignore addin commands which have no label
-         continue;
+         return null;
       }
+      
+      return entry;
    }
 
    private final RAddins addins_;
