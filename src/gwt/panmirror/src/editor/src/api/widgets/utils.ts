@@ -15,19 +15,17 @@
 
 import { EditorView } from "prosemirror-view";
 
-interface Point {
-  x: number;
-  y: number;
-}
 
+// TODO: Return styles and then apply styles
+// popupPositionStylesForSelection
+// TODO: Sould be in insert symbol, non generalized
 const kMinimumElementPadding = 5;
-
-export function safePointForSelection(height: number, width: number, editorView: EditorView) : Point
+export function safePointForSelection(view: EditorView, height: number, width: number) : Point
 {
-  const selection = editorView.state.selection;
-  const editorRect = editorView.dom.getBoundingClientRect();
+  const selection = view.state.selection;
+  const editorRect = view.dom.getBoundingClientRect();
 
-  const selectionCoords = editorView.coordsAtPos(selection.from);
+  const selectionCoords = view.coordsAtPos(selection.from);
 
   const maximumTopPosition = Math.min(selectionCoords.bottom, window.innerHeight - height - kMinimumElementPadding);
   const minimumTopPosition = editorRect.y;
@@ -39,3 +37,7 @@ export function safePointForSelection(height: number, width: number, editorView:
   return {x: popupLeftPosition, y: popupTopPosition};
 }
 
+interface Point {
+  x: number;
+  y: number;
+}

@@ -61,9 +61,3 @@ function generateHTML(generator: () => Node | DocumentFragment) {
   div.appendChild(output);
   return div.innerHTML;
 }
-
-// Way to use generic in testing a type
-// See https://github.com/Microsoft/TypeScript/wiki/FAQ#why-cant-i-write-typeof-t-new-t-or-instanceof-t-in-my-generic-function
-function isTypeInstanceOf<T>(ctor: { new(...args: any[]): T }, obj: T) {
-  return obj instanceof ctor;
-}

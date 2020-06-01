@@ -35,9 +35,8 @@ import { safePointForSelection } from '../../api/widgets/utils';
 
 const key = new PluginKey<boolean>('insert_symbol');
 
-// TODO: End of a line, show dialog and watch position issues
-
 // TODO: When keyboard in textbox with no text, arrow keys not working
+// TODO: Preview should be delay when scrolls / selection changes if it isn't already showing
 
 const extension = (
   _pandocExtensions: PandocExtensions,
@@ -111,7 +110,7 @@ class InsertSymbolPlugin extends Plugin<boolean> {
       this.popup.style.position = 'absolute';
       this.popup.style.zIndex = '1000';
 
-      const point = safePointForSelection(kHeight, kWidth, view);
+      const point = safePointForSelection(view, kHeight, kWidth);
 
       this.popup.style.top = point.y + 'px';
       this.popup.style.left = point.x+ 'px';
