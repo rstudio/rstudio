@@ -32,6 +32,7 @@ import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.files.FileSystemItem;
 import org.rstudio.core.client.js.JsObject;
+import org.rstudio.core.client.js.JsUtil;
 import org.rstudio.core.client.widget.Operation;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ProgressIndicator;
@@ -56,8 +57,10 @@ import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.FileMRUList;
 import org.rstudio.studio.client.workbench.commands.Commands;
+import org.rstudio.studio.client.workbench.model.ClientState;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.UnsavedChangesTarget;
+import org.rstudio.studio.client.workbench.model.helper.JSObjectStateValue;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UserState;
 import org.rstudio.studio.client.workbench.ui.unsaved.UnsavedChangesDialog;
@@ -91,6 +94,27 @@ public class SourceColumnManager implements SourceExtendedTypeDetectedEvent.Hand
    public interface CPSEditingTargetCommand
    {
       void execute(EditingTarget editingTarget, Command continuation);
+   }
+
+   public static class State extends JavaScriptObject
+   {
+      public static native State createState(JsArrayString names) /*-{
+         return {
+            names: names
+         }
+      }-*/;
+
+      protected State()
+      {}
+
+      public final String[] getNames()
+      {
+         return JsUtil.toStringArray(getNamesNative());
+      }
+
+      private native JsArrayString getNamesNative() /*-{
+          return this.names;
+      }-*/;
    }
 
    @Inject
@@ -158,9 +182,40 @@ public class SourceColumnManager implements SourceExtendedTypeDetectedEvent.Hand
          public void onChange(ChangeEvent event)
          {
             columnMap_.forEach((name, column) ->
-                column.manageSourceNavigationCommands());
+               column.manageSourceNavigationCommands());
          }
       });
+
+      new JSObjectStateValue("source-column-manager",
+                        "column-info",
+                              ClientState.PERSISTENT,
+                              session_.getSessionInfo().getClientState(),
+                     false)
+      {
+         @Override
+         protected void onInit(JsObject value)
+         {
+            if (value == null)
+            {
+               state_ = State.createState(JsUtil.toJsArrayString(getNames(false)));
+               return;
+            }
+            state_ = value.cast();
+            for (int i = 0; i < state_.getNames().length; i++)
+            {
+               String name = state_.getNames()[i];
+               if (!StringUtil.equals(name, MAIN_SOURCE_NAME))
+                  add(name, false);
+            }
+         }
+
+         @Override
+         protected JsObject getValue()
+         {
+            JsObject object = state_.<JsObject>cast().clone();
+            return state_.cast();
+         }
+      };
    }
 
    public String add()
@@ -174,17 +229,44 @@ public class SourceColumnManager implements SourceExtendedTypeDetectedEvent.Hand
       return add(display, false);
    }
 
+   public String add(String name, boolean updateState)
+   {
+      return add(name, false, false);
+   }
+
+   public String add (String name, boolean activate, boolean updateState)
+   {
+      Source.Display display = GWT.create(SourcePane.class);
+      return add(name, display, activate, updateState);
+   }
+
    public String add(Source.Display display, boolean activate)
    {
+      return add(display, activate, true);
+   }
+
+   public String add(Source.Display display, boolean activate, boolean updateState)
+   {
+      return add(COLUMN_PREFIX + StringUtil.makeRandomId(12),
+                  display,
+                  activate,
+                  updateState);
+   }
+
+   public String add(String name, Source.Display display, boolean activate, boolean updateState)
+   {
+      if (columnMap_.containsKey(name))
+         return "";
+
       SourceColumn column = GWT.create(SourceColumn.class);
-      column.loadDisplay(COLUMN_PREFIX + StringUtil.makeRandomId(12),
-         display,
-         this);
+      column.loadDisplay(name, display, this);
       columnMap_.put(column.getName(), column);
 
       if (activate || activeColumn_ == null)
          activeColumn_ = column;
 
+      if (updateState)
+         state_ = State.createState(JsUtil.toJsArrayString(getNames(false)));
       return column.getName();
    }
 
@@ -318,6 +400,16 @@ public class SourceColumnManager implements SourceExtendedTypeDetectedEvent.Hand
    public int getPhysicalTabIndex()
    {
       return activeColumn_.getPhysicalTabIndex();
+   }
+
+   public ArrayList<String> getNames(boolean excludeMain)
+   {
+      ArrayList<String> result = new ArrayList<>();
+      columnMap_.forEach((name, column) ->{
+         if (!excludeMain || !StringUtil.equals(name, MAIN_SOURCE_NAME))
+            result.add(name);
+      });
+      return result;
    }
 
    public ArrayList<Widget> getWidgets(boolean excludeMain)
@@ -2194,7 +2286,7 @@ public class SourceColumnManager implements SourceExtendedTypeDetectedEvent.Hand
       public final CommandWithArg<EditingTarget> executeOnSuccess;
    }
 
-   private final Commands commands_;
+   private State state_;
    private SourceColumn activeColumn_;
 
    private boolean openingForSourceNavigation_ = false;
@@ -2204,9 +2296,7 @@ public class SourceColumnManager implements SourceExtendedTypeDetectedEvent.Hand
    private HashSet<AppCommand> dynamicCommands_ = new HashSet<AppCommand>();
    private final SourceVimCommands vimCommands_;
 
-   private final SourceNavigationHistory sourceNavigationHistory_ =
-      new SourceNavigationHistory(30);
-
+   private final Commands commands_;
    private final EventBus events_;
    private final Provider<FileMRUList> pMruList_;
    private final Provider<SourceWindowManager> pWindowManager_;
@@ -2221,6 +2311,9 @@ public class SourceColumnManager implements SourceExtendedTypeDetectedEvent.Hand
 
    private final SourceServerOperations server_;
    private final DependencyManager dependencyManager_;
+
+   private final SourceNavigationHistory sourceNavigationHistory_ =
+       new SourceNavigationHistory(30);
 
    public final static String COLUMN_PREFIX = "Source";
    public final static String MAIN_SOURCE_NAME = COLUMN_PREFIX;
