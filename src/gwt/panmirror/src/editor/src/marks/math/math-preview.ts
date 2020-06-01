@@ -23,9 +23,9 @@ import { popupPositionStylesForTextRange } from "../../api/widgets/position";
 import { EditorEvents, EditorEvent } from "../../api/events";
 import { applyStyles } from "../../api/css";
 
-const key = new PluginKey<DecorationSet>('math-preview');
+const key = new PluginKey('math-preview');
 
-export class MathPreviewPlugin extends Plugin<DecorationSet> {
+export class MathPreviewPlugin extends Plugin {
 
   private readonly uiMath: EditorUIMath;
 
@@ -49,22 +49,8 @@ export class MathPreviewPlugin extends Plugin<DecorationSet> {
           destroy: () => {
             this.scrollUnsubscribe();
             this.closeInlinePopup();
-         
           }
         };
-      },
-      state: {
-        init: (_config: { [key: string]: any }) => {
-          return DecorationSet.empty;
-        },
-        apply: (tr: Transaction, old: DecorationSet, oldState: EditorState, newState: EditorState) => {
-          return DecorationSet.empty;         
-        },
-      },
-      props: {
-        decorations: (state: EditorState) => {
-          return key.getState(state);
-        },
       },
     });
 
