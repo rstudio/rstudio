@@ -108,7 +108,7 @@ import nodeShortcodeBlock from '../nodes/shortcode_block';
 // extension/plugin factories
 import { codeMirrorPlugins } from '../optional/codemirror/codemirror';
 import { attrEditExtension } from '../behaviors/attr_edit/attr_edit';
-import { completionExtension } from '../behaviors/completion';
+import { completionExtension } from '../behaviors/completion/completion';
 
 export function initExtensions(
   format: EditorFormat,

@@ -16,7 +16,7 @@
 
 
 
-import { CompletionHandler } from "../api/completion";
+import { CompletionHandler } from "../../api/completion";
 
 
 export function completionExtension(handlers: readonly CompletionHandler[]) {
