@@ -20,7 +20,7 @@ import { ResolvedPos } from "prosemirror-model";
 import debounce from 'lodash.debounce';
 import zenscroll from 'zenscroll';
 
-import { EditorUIMath } from "../../api/ui";
+import { EditorUI } from "../../api/ui";
 import { getMarkRange } from "../../api/mark";
 import { EditorEvents, EditorEvent } from "../../api/events";
 import { applyStyles } from "../../api/css";
@@ -33,7 +33,7 @@ const key = new PluginKey('math-preview');
 
 export class MathPreviewPlugin extends Plugin {
 
-  private readonly uiMath: EditorUIMath;
+  private readonly ui: EditorUI;
 
   private view: EditorView | null = null;
 
@@ -43,7 +43,7 @@ export class MathPreviewPlugin extends Plugin {
   private scrollUnsubscribe: VoidFunction;
   private resizeUnsubscribe: VoidFunction;
 
-  constructor(uiMath: EditorUIMath, events: EditorEvents) {
+  constructor(ui: EditorUI, events: EditorEvents) {
   
     super({
       key,
@@ -74,8 +74,8 @@ export class MathPreviewPlugin extends Plugin {
       },
     });
 
-    // save reference to uiMath
-    this.uiMath = uiMath;
+    // save reference to ui
+    this.ui = ui;
 
     // update position on scroll
     this.updatePopup = this.updatePopup.bind(this);
@@ -113,6 +113,12 @@ export class MathPreviewPlugin extends Plugin {
       return;
     }
 
+    // bail if the user has this disabled
+    if (!this.ui.prefs.equationPreview()) {
+      this.closePopup();
+      return;
+    }
+
     // get the math text. bail if it's empty
     const inlineMath = state.doc.textBetween(range.from, range.to);
     if (inlineMath.match(/^\${1,2}\s*\${1,2}$/)) {
@@ -136,7 +142,7 @@ export class MathPreviewPlugin extends Plugin {
 
     // typeset the math if we haven't already
     if (inlineMath !== this.lastRenderedMath) {
-      this.uiMath.typeset!(this.popup!, inlineMath).then(error => {
+      this.ui.math.typeset!(this.popup!, inlineMath).then(error => {
         if (!error) {
           this.popup!.style.visibility = 'visible';
           this.lastRenderedMath = inlineMath; 
