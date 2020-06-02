@@ -27,3 +27,4 @@
 ### RStudio Server Pro
 
 - New option `server-project-sharing-root-dir` allows project sharing outside user home directories (Pro #1340)
+- Update embedded nginx to 1.17.10
