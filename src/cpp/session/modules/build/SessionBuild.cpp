@@ -1200,10 +1200,11 @@ private:
       if (type == kTestShinyFile) {
         shinyTestName = shinyPath.getFilename();
         shinyPath = shinyPath.getParent();
-        if (shinyPath.getFilename() == "shinytests")
+        if (shinyPath.getFilename() == "shinytests" ||
+            shinyPath.getFilename() == "shinytest")
         {
-           // In newer versions of shinytest, tests are stored in a "shinytests" folder under the
-           // "tests" folder.
+           // In newer versions of shinytest, tests are stored in a "shinytest" or "shinytests"
+           // folder under the "tests" folder.
            shinyPath = shinyPath.getParent();
         }
         if (shinyPath.getFilename() == "tests")

@@ -852,6 +852,7 @@ public class EnvironmentPane extends WorkbenchPane
    private final UserPrefs prefs_;
    private final DependencyManager dependencyManager_;
    private final Value<Boolean> environmentMonitoring_;
+   @SuppressWarnings("unused")
    private final Timer refreshTimer_;
 
    private SecondaryToolbar secondaryToolbar_;

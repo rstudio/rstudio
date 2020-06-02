@@ -99,6 +99,21 @@ public class ToolbarPopupMenu extends ThemedPopupPanel
    {
       menuBar_.selectFirst();
    }
+   
+   public void selectLast()
+   {
+      menuBar_.selectLast();
+   }
+   
+   public void moveSelectionFwd(int numElements)
+   {
+      menuBar_.moveSelectionFwd(numElements);
+   }
+   
+   public void moveSelectionBwd(int numElements)
+   {
+      menuBar_.moveSelectionBwd(numElements);
+   }
 
    public void selectItem(MenuItem menuItem)
    {
@@ -301,6 +316,11 @@ public class ToolbarPopupMenu extends ThemedPopupPanel
       private void selectFirst()
       {
          selectItem(0);
+      }
+      
+      private void selectLast()
+      {
+         selectItem(getItemCount() - 1);
       }
 
       private HandlerRegistration nativePreviewReg_;

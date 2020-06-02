@@ -200,7 +200,7 @@ export const tableCellNode = (blocks: boolean) => ({
   name: 'table_cell',
   spec: {
     ...nodes.table_cell,
-    content: blocks ? 'block+' : 'block',
+    content: blocks ? 'block+' : 'paragraph',
   },
   pandoc: {
     writer: writePandocTableNodes,

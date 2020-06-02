@@ -85,7 +85,7 @@ public class PanmirrorToolbarCommands implements CommandPaletteEntrySource
       add(PanmirrorCommands.ListItemLift, "Lift Item");
       add(PanmirrorCommands.ListItemCheck, "Item Checkbox");
       add(PanmirrorCommands.ListItemCheckToggle, "Item Checked", Roles.getMenuitemcheckboxRole());
-      add(PanmirrorCommands.OrderedListEdit, "List Attributes...");
+      add(PanmirrorCommands.EditListProperties, "List Attributes...");
       
       // tables
       add(PanmirrorCommands.TableInsertTable, "Insert Table...", icons.TABLE);

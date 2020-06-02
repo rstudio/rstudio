@@ -1,5 +1,5 @@
 /*
- * PanmirrorOrderedListProps.java
+ * PanmirrorListType.java
  *
  * Copyright (C) 2020 by RStudio, PBC
  *
@@ -14,16 +14,11 @@
  */
 
 
+
 package org.rstudio.studio.client.panmirror.dialogs.model;
 
-import jsinterop.annotations.JsType;
-
-@JsType
-public class PanmirrorOrderedListProps
+public class PanmirrorListType
 {
-   public boolean tight;
-   public int order;
-   public String number_style;
-   public String number_delim;
+   public static String Ordered = "OrderedList";
+   public static String Bullet = "BulletList";
 }
-

@@ -512,7 +512,8 @@ public abstract class
    public abstract AppCommand showSessionServerOptionsDialog();
    public abstract AppCommand showWarningBar();
    public abstract AppCommand signOut();
- 
+   public abstract AppCommand loadServerHome();
+
    // Build
    public abstract AppCommand buildAll();
    public abstract AppCommand devtoolsLoadAll();

@@ -464,8 +464,8 @@ public class RStudio implements EntryPoint
       NewConnectionShinyHost.ensureStylesInjected();
       NewConnectionSnippetHost.ensureStylesInjected();
       NewConnectionSnippetDialog.ensureStylesInjected();
-      PanmirrorResources.ensureStylesInjected();
-      PanmirrorDialogsResources.ensureStylesInjected();
+      PanmirrorResources.INSTANCE.styles().ensureInjected();
+      PanmirrorDialogsResources.INSTANCE.styles().ensureInjected();
       NewConnectionWizard.ensureStylesInjected();
       SecondaryReposWidget.ensureStylesInjected();
       SecondaryReposDialog.ensureStylesInjected();

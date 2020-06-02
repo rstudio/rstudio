@@ -1,5 +1,5 @@
 /*
- * PanmirrorEditOrderedListDialog.java
+ * PanmirrorEditListDialog.java
  *
  * Copyright (C) 2020 by RStudio, PBC
  *
@@ -16,6 +16,9 @@
 
 package org.rstudio.studio.client.panmirror.dialogs;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.widget.ModalDialog;
@@ -23,23 +26,25 @@ import org.rstudio.core.client.widget.NumericTextBox;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.SelectWidget;
 import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorListCapabilities;
-import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorOrderedListProps;
+import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorListProps;
+import org.rstudio.studio.client.panmirror.dialogs.model.PanmirrorListType;
 
 import com.google.gwt.aria.client.Roles;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.CheckBox;
+import com.google.gwt.user.client.ui.VerticalPanel;
 import com.google.gwt.user.client.ui.Widget;
 
 
-public class PanmirrorEditOrderedListDialog extends ModalDialog<PanmirrorOrderedListProps>
+public class PanmirrorEditListDialog extends ModalDialog<PanmirrorListProps>
 {
-   public PanmirrorEditOrderedListDialog(PanmirrorOrderedListProps props,
-                                         PanmirrorListCapabilities capabilities,
-                                         OperationWithInput<PanmirrorOrderedListProps> operation)
+   public PanmirrorEditListDialog(PanmirrorListProps props,
+                                  PanmirrorListCapabilities capabilities,
+                                  OperationWithInput<PanmirrorListProps> operation)
    {
-      super("Ordered List", Roles.getDialogRole(), operation, () -> {
+      super("List", Roles.getDialogRole(), operation, () -> {
          // cancel returns null
          operation.execute(null);
       });
@@ -48,23 +53,40 @@ public class PanmirrorEditOrderedListDialog extends ModalDialog<PanmirrorOrdered
       
       mainWidget_ = GWT.<Binder>create(Binder.class).createAndBindUi(this);
       
+      listType_.getListBox().getElement().setId(ElementIds.VISUAL_MD_LIST_TYPE);
+      listType_.setChoices(new String[] {
+         PanmirrorListType.Ordered,
+         PanmirrorListType.Bullet
+      });
+      orderedOptionsPanel_.setVisible(props.type.equals(PanmirrorListType.Ordered));
+      listType_.addChangeHandler((event) -> {
+         orderedOptionsPanel_.setVisible(listType_.getValue().equals(PanmirrorListType.Ordered));
+      });
+      
+      
+      tight_.getElement().setId(ElementIds.VISUAL_MD_LIST_TIGHT);
+   
+      
+      
       startingNumber_.setMin(1);
-      startingNumber_.getElement().setId(ElementIds.VISUAL_MD_ORDERED_LIST_ORDER);
+      startingNumber_.getElement().setId(ElementIds.VISUAL_MD_LIST_ORDER);
       
       startingNumber_.setVisible(capabilities.order);
       numberStyle_.setVisible(capabilities.fancy);
       numberDelimiter_.setVisible(capabilities.fancy);
       
-      numberStyle_.getListBox().getElement().setId(ElementIds.VISUAL_MD_ORDERED_LIST_NUMBER_STYLE);
-      numberStyle_.addChoice("DefaultStyle");
-      numberStyle_.addChoice("Decimal");
-      numberStyle_.addChoice("LowerRoman");
-      numberStyle_.addChoice("UpperRoman");
-      numberStyle_.addChoice("LowerAlpha");
-      numberStyle_.addChoice("UpperAlpha");
+      numberStyle_.getListBox().getElement().setId(ElementIds.VISUAL_MD_LIST_NUMBER_STYLE);
+      List<String> numberStyleChoices = new ArrayList<String>();
+      numberStyleChoices.add("DefaultStyle");
+      numberStyleChoices.add("Decimal");
+      numberStyleChoices.add("LowerRoman");
+      numberStyleChoices.add("UpperRoman");
+      numberStyleChoices.add("LowerAlpha");
+      numberStyleChoices.add("UpperAlpha");
       if (capabilities.example) {
-         numberStyle_.addChoice("Example");
+         numberStyleChoices.add("Example");
       }
+      numberStyle_.setChoices(numberStyleChoices.toArray(new String[] {}));
       
       numberDelimiter_.setChoices(new String[] {
          "DefaultDelim",
@@ -72,14 +94,15 @@ public class PanmirrorEditOrderedListDialog extends ModalDialog<PanmirrorOrdered
          "OneParen",
          "TwoParens",   
       });
-      numberDelimiter_.getListBox().getElement().setId(ElementIds.VISUAL_MD_ORDERED_LIST_NUMBER_DELIM);
+      numberDelimiter_.getListBox().getElement().setId(ElementIds.VISUAL_MD_LIST_NUMBER_DELIM);
 
-      tight_.getElement().setId(ElementIds.VISUAL_MD_ORDERED_LIST_TIGHT);
       
+      listType_.setValue(props.type);
+      tight_.setValue(props.tight);
       startingNumber_.setValue(props.order + "");
       numberStyle_.setValue(props.number_style);
       numberDelimiter_.setValue(props.number_delim);
-      tight_.setValue(props.tight);
+     
       
    }
    
@@ -90,33 +113,36 @@ public class PanmirrorEditOrderedListDialog extends ModalDialog<PanmirrorOrdered
    }
    
    @Override
-   protected PanmirrorOrderedListProps collectInput()
+   protected PanmirrorListProps collectInput()
    {
-      PanmirrorOrderedListProps result = new PanmirrorOrderedListProps();
+      PanmirrorListProps result = new PanmirrorListProps();
+      result.type = listType_.getValue();
+      result.tight = tight_.getValue();
       result.order = StringUtil.parseInt(startingNumber_.getValue(), 1);
       result.number_style = capabilities_.fancy ? numberStyle_.getValue() : "DefaultStyle";
       result.number_delim = capabilities_.fancy ? numberDelimiter_.getValue() : "DefaultDelim";
-      result.tight = tight_.getValue();
+      
       return result;
    }
    
    @Override
-   protected boolean validate(PanmirrorOrderedListProps result)
+   protected boolean validate(PanmirrorListProps result)
    {
       return true;
    }
    
    
-   interface Binder extends UiBinder<Widget, PanmirrorEditOrderedListDialog> {}
+   interface Binder extends UiBinder<Widget, PanmirrorEditListDialog> {}
    
    private final PanmirrorListCapabilities capabilities_;
    
    private Widget mainWidget_;
 
+   @UiField SelectWidget listType_;
+   @UiField CheckBox tight_;
+   @UiField VerticalPanel orderedOptionsPanel_;
    @UiField NumericTextBox startingNumber_;
    @UiField SelectWidget numberStyle_;
    @UiField SelectWidget numberDelimiter_;
-   @UiField CheckBox tight_;
-   
    
 }

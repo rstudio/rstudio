@@ -27,7 +27,7 @@ import { ProsemirrorCommand, EditorCommandId } from '../../api/command';
 import { PandocTokenType, PandocExtensions } from '../../api/pandoc';
 import { kPlatformMac } from '../../api/platform';
 
-import { ListCommand, TightListCommand, OrderedListEditCommand } from './list-commands';
+import { ListCommand, TightListCommand, EditListPropertiesCommand, editListPropertiesCommandFn } from './list-commands';
 
 import {
   CheckedListItemNodeView,
@@ -120,7 +120,7 @@ const extension = (pandocExtensions: PandocExtensions): Extension => {
           content: 'list_item+',
           group: 'block',
           attrs: {
-            tight: { default: true },
+            tight: { default: false },
           },
           parseDOM: [
             {
@@ -153,6 +153,8 @@ const extension = (pandocExtensions: PandocExtensions): Extension => {
           ],
           writer: writePandocBulletList(capabilities),
         },
+
+        attr_edit: listAttrEdit('bullet_list', capabilities)
       },
       {
         name: 'ordered_list',
@@ -160,7 +162,7 @@ const extension = (pandocExtensions: PandocExtensions): Extension => {
           content: 'list_item+',
           group: 'block',
           attrs: {
-            tight: { default: true },
+            tight: { default: false },
             order: { default: 1 },
             number_style: { default: ListNumberStyle.DefaultStyle },
             number_delim: { default: ListNumberDelim.DefaultDelim },
@@ -232,6 +234,8 @@ const extension = (pandocExtensions: PandocExtensions): Extension => {
           ],
           writer: writePandocOrderedList(capabilities),
         },
+
+        attr_edit: listAttrEdit('ordered_list', capabilities)
       },
     ],
 
@@ -274,7 +278,7 @@ const extension = (pandocExtensions: PandocExtensions): Extension => {
         new TightListCommand(),
       ];
       if (capabilities.fancy) {
-        commands.push(new OrderedListEditCommand(ui, capabilities));
+        commands.push(new EditListPropertiesCommand(ui, capabilities));
       }
       if (capabilities.tasks) {
         commands.push(
@@ -310,6 +314,16 @@ const extension = (pandocExtensions: PandocExtensions): Extension => {
     },
   };
 };
+
+function listAttrEdit(type: string, capabilities: ListCapabilities) {
+  return () => {
+    return {
+      type: (schema: Schema) => schema.nodes[type],
+      noDecorator: true,
+      editFn: (ui: EditorUI) => editListPropertiesCommandFn(ui, capabilities)
+    };
+  };
+}
 
 function numberStyleToType(style: ListNumberStyle): string | null {
   switch (style) {

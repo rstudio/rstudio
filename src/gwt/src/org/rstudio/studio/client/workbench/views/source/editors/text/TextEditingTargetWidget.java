@@ -1727,6 +1727,7 @@ public class TextEditingTargetWidget
       } 
       
       private boolean activationPending_ = false;
+
    };
    
    private void syncWrapMode()
