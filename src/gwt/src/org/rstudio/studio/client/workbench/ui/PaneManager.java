@@ -1286,7 +1286,7 @@ public class PaneManager
    {
       WindowFrame sourceFrame = new WindowFrame(frameName);
       sourceFrame.setFillWidget(display);
-      source_.forceLoad();
+      //source_.forceLoad();
       LogicalWindow sourceWindow = new LogicalWindow(
             sourceFrame,
             new MinimizedWindowFrame(frameName, frameName));

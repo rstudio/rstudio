@@ -126,7 +126,7 @@ public class SourceColumnManager implements SourceExtendedTypeDetectedEvent.Hand
                               FileTypeRegistry fileTypeRegistry,
                               EventBus events,
                               DependencyManager dependencyManager,
-                              Session session,
+                              final Session session,
                               Synctex synctex,
                               UserPrefs userPrefs,
                               UserState userState,
@@ -187,10 +187,10 @@ public class SourceColumnManager implements SourceExtendedTypeDetectedEvent.Hand
       });
 
       new JSObjectStateValue("source-column-manager",
-                        "column-info",
+                             "column-info",
                               ClientState.PERSISTENT,
                               session_.getSessionInfo().getClientState(),
-                     false)
+                              false)
       {
          @Override
          protected void onInit(JsObject value)
@@ -1903,7 +1903,7 @@ public class SourceColumnManager implements SourceExtendedTypeDetectedEvent.Hand
                      {
                         openNotebook(rmdFile, doc, resultCallback);
                      }
-   
+
                      @Override
                      public void onError(ServerError error)
                      {
@@ -2252,20 +2252,20 @@ public class SourceColumnManager implements SourceExtendedTypeDetectedEvent.Hand
             }
          });
       }
-      
+
       if (completedCommand != null)
       {
          queue.addCommand(new SerializedCommand() {
-   
+
             public void onExecute(Command continuation)
             {
                completedCommand.execute();
                continuation.execute();
-            }  
+            }
          });
       }
    }
-   
+
    private void cpsExecuteForEachEditor(ArrayList<EditingTarget> editors,
                                        final CPSEditingTargetCommand command)
    {
@@ -2300,7 +2300,7 @@ public class SourceColumnManager implements SourceExtendedTypeDetectedEvent.Hand
    private final EventBus events_;
    private final Provider<FileMRUList> pMruList_;
    private final Provider<SourceWindowManager> pWindowManager_;
-   private final Session session_;
+   private Session session_;
    private final Synctex synctex_;
    private final UserPrefs userPrefs_;
    private final UserState userState_;
