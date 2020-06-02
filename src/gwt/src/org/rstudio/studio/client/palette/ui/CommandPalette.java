@@ -24,7 +24,8 @@ import org.rstudio.core.client.a11y.A11y;
 import org.rstudio.core.client.widget.AriaLiveStatusWidget;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.AriaLiveStatusEvent.Severity;
-import org.rstudio.studio.client.palette.CommandPaletteEntrySource;
+import org.rstudio.studio.client.palette.model.CommandPaletteEntrySource;
+import org.rstudio.studio.client.palette.model.CommandPaletteItem;
 
 import com.google.gwt.aria.client.ExpandedValue;
 import com.google.gwt.aria.client.Id;
@@ -74,11 +75,11 @@ public class CommandPalette extends Composite
       String commandPanel();
    }
 
-   public CommandPalette(List<CommandPaletteEntrySource<?>> sources, Host host)
+   public CommandPalette(List<CommandPaletteEntrySource> sources, Host host)
    {
       initWidget(uiBinder.createAndBindUi(this));
 
-      entries_ = new ArrayList<>();
+      items_ = new ArrayList<>();
       host_ = host;
       selected_ = -1;
       attached_ = false;
@@ -123,7 +124,7 @@ public class CommandPalette extends Composite
       // If we have already populated, compute the page size. Do this deferred
       // so that a render pass occurs (otherwise the page size computations will
       // take place with unrendered elements)
-      if (entries_.size() > 0)
+      if (items_.size() > 0)
       {
          Scheduler.get().scheduleDeferred(() ->
          {
@@ -132,16 +133,16 @@ public class CommandPalette extends Composite
       }
    }
 
-   private <T> void renderAll(CommandPaletteEntrySource<T> source)
+   private void renderAll(CommandPaletteEntrySource source)
    {
-      List<T> items = source.getPaletteCommands();
-      for (T item: items)
+      List<CommandPaletteItem> items = source.getCommandPaletteItems();
+      for (CommandPaletteItem item: items)
       {
-         CommandPaletteEntry entry = source.renderPaletteCommand(item);
-         if (entry != null)
+         Widget w = item.asWidget();
+         if (w != null)
          {
-            entries_.add(entry);
-            commandList_.add(entry);
+            items_.add(item);
+            commandList_.add(w);
          }
       }
    }
@@ -151,17 +152,18 @@ public class CommandPalette extends Composite
     */
    private void populate()
    {
-      for (CommandPaletteEntrySource<?> source: sources_)
+      for (CommandPaletteEntrySource source: sources_)
       {
          renderAll(source);
       }
       
       // Invoke commands when they're clicked on
-      for (CommandPaletteEntry entry: entries_)
+      for (CommandPaletteItem item: items_)
       {
-         entry.sinkEvents(Event.ONCLICK);
-         entry.addHandler((evt) -> {
-            entry.invoke();
+         Widget w = item.asWidget();
+         w.sinkEvents(Event.ONCLICK);
+         w.addHandler((evt) -> {
+            item.invoke();
          }, ClickEvent.getType());
       }
       
@@ -255,7 +257,7 @@ public class CommandPalette extends Composite
    private void computePageSize()
    {
       // Find the first visible entry (we can't measure an invisible one)
-      for (CommandPaletteEntry entry: entries_)
+      for (CommandPaletteEntry entry: items_)
       {
          if (entry.isVisible())
          {
@@ -293,7 +295,7 @@ public class CommandPalette extends Composite
       // "Create a new Python script".
       String[] needles = searchBox_.getText().toLowerCase().split("\\s+");
       
-      for (CommandPaletteEntry entry: entries_)
+      for (CommandPaletteEntry item: items_)
       {
          String hay = entry.getLabel().toLowerCase();
          boolean matched = true;
@@ -320,7 +322,7 @@ public class CommandPalette extends Composite
       // If not searching for anything, then searching for everything.
       if (needles.length == 0)
       {
-         matches = entries_.size();
+         matches = items_.size();
       }
       
       updateSelection();
@@ -349,9 +351,9 @@ public class CommandPalette extends Composite
     */
    public void updateSelection()
    {
-      for (int i = 0; i < entries_.size(); i++)
+      for (int i = 0; i < items_.size(); i++)
       {
-         if (!entries_.get(i).isVisible())
+         if (!items_.get(i).isVisible())
          {
             continue;
          }
@@ -380,12 +382,12 @@ public class CommandPalette extends Composite
       do
       {
          target = selected_ + (direction * pass++);
-         if (target < 0 || target >= entries_.size())
+         if (target < 0 || target >= items_.size())
          {
             // Request to navigate outside the boundaries of the palette
             break;
          }
-         candidate = entries_.get(target);
+         candidate = items_.get(target);
 
          if (candidate.isVisible())
          {
@@ -421,11 +423,11 @@ public class CommandPalette extends Composite
    {
       if (selected_ >= 0)
       {
-         if (entries_.get(selected_).dismissOnInvoke())
+         if (items_.get(selected_).dismissOnInvoke())
          {
             host_.dismiss();
          }
-         entries_.get(selected_).invoke();
+         items_.get(selected_).invoke();
       }
    }
    
@@ -443,12 +445,12 @@ public class CommandPalette extends Composite
       // Clear previous selection, if any
       if (selected_ >= 0)
       {
-         entries_.get(selected_).setSelected(false);
+         items_.get(selected_).setSelected(false);
       }
       
       // Set new selection
       selected_ = target;
-      CommandPaletteEntry selected = entries_.get(selected_);
+      CommandPaletteEntry selected = items_.get(selected_);
       selected.setSelected(true);
       selected.getElement().scrollIntoView();
 
@@ -458,9 +460,9 @@ public class CommandPalette extends Composite
    }
    
    private final Host host_;
-   private final List<CommandPaletteEntrySource<?>> sources_;
+   private final List<CommandPaletteEntrySource> sources_;
    private int selected_;
-   private List<CommandPaletteEntry> entries_;
+   private List<CommandPaletteItem> items_;
    private String searchText_;
    private boolean attached_;
    private int pageSize_;

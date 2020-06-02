@@ -23,6 +23,7 @@ import org.rstudio.core.client.command.KeyMap.KeyMapType;
 import org.rstudio.core.client.command.KeySequence;
 import org.rstudio.core.client.command.ShortcutManager;
 import org.rstudio.core.client.js.JsUtil;
+import org.rstudio.studio.client.palette.model.CommandPaletteEntrySource;
 import org.rstudio.studio.client.palette.ui.CommandPaletteEntry;
 import org.rstudio.studio.client.palette.ui.RAddinCommandPaletteEntry;
 import org.rstudio.studio.client.workbench.addins.Addins.AddinExecutor;

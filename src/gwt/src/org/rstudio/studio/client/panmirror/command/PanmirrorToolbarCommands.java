@@ -19,7 +19,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
-import org.rstudio.studio.client.palette.CommandPaletteEntrySource;
+import org.rstudio.studio.client.palette.model.CommandPaletteEntrySource;
 import org.rstudio.studio.client.palette.ui.CommandPaletteEntry;
 
 import com.google.gwt.aria.client.MenuitemRole;

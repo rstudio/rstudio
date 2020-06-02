@@ -18,6 +18,7 @@ package org.rstudio.studio.client.palette;
 import java.util.List;
 
 import org.rstudio.core.client.StringUtil;
+import org.rstudio.studio.client.palette.model.CommandPaletteEntrySource;
 import org.rstudio.studio.client.palette.ui.CommandPaletteEntry;
 import org.rstudio.studio.client.palette.ui.UserPrefBooleanPaletteEntry;
 import org.rstudio.studio.client.palette.ui.UserPrefEnumPaletteEntry;

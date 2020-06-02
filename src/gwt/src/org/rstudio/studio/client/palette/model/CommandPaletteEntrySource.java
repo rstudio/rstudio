@@ -12,27 +12,18 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-package org.rstudio.studio.client.palette;
+package org.rstudio.studio.client.palette.model;
 
 import java.util.List;
 
 import org.rstudio.studio.client.palette.ui.CommandPaletteEntry;
 
-public interface CommandPaletteEntrySource<T>
+public interface CommandPaletteEntrySource
 { 
    /**
     * A list of all of the elements to be rendered as entries in the palette.
     * 
     * @return A list of elements. 
     */
-   List<T> getPaletteCommands();
-   
-   /**
-    * Render a specific element as a command palette entry.
-    * 
-    * @param element The element to render
-    * 
-    * @return A CommandPaletteEntry representing the element.
-    */
-   CommandPaletteEntry renderPaletteCommand(T cmd);
+   List<CommandPaletteItem> getCommandPaletteItems();
 }
