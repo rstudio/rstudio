@@ -136,6 +136,9 @@ public class CommandPalette extends Composite
    private void renderAll(CommandPaletteEntrySource source)
    {
       List<CommandPaletteItem> items = source.getCommandPaletteItems();
+      if (items == null)
+         return;
+      
       for (CommandPaletteItem item: items)
       {
          Widget w = item.asWidget();
@@ -257,8 +260,9 @@ public class CommandPalette extends Composite
    private void computePageSize()
    {
       // Find the first visible entry (we can't measure an invisible one)
-      for (CommandPaletteEntry entry: items_)
+      for (CommandPaletteItem item: items_)
       {
+         Widget entry = item.asWidget();
          if (entry.isVisible())
          {
             // Compute the page size: the total size of the scrolling area
@@ -295,27 +299,17 @@ public class CommandPalette extends Composite
       // "Create a new Python script".
       String[] needles = searchBox_.getText().toLowerCase().split("\\s+");
       
-      for (CommandPaletteEntry item: items_)
+      for (CommandPaletteItem item: items_)
       {
-         String hay = entry.getLabel().toLowerCase();
-         boolean matched = true;
-         for (String needle: needles)
+         if (item.matchesSearch(needles))
          {
-            // The haystack doesn't have this needle, so this entry does not match.
-            if (!hay.contains(needle))
-            {
-               entry.setVisible(false);
-               matched = false;
-               break;
-            }
-         }
-
-         // We matched all needles, so highlight and show the entry.
-         if (matched)
-         {
-            entry.setSearchHighlight(needles);
-            entry.setVisible(true);
+            item.setSearchHighlight(needles);
+            item.asWidget().setVisible(true);
             matches++;
+         }
+         else
+         {
+            item.asWidget().setVisible(false);
          }
       }
       
@@ -353,7 +347,7 @@ public class CommandPalette extends Composite
    {
       for (int i = 0; i < items_.size(); i++)
       {
-         if (!items_.get(i).isVisible())
+         if (!items_.get(i).asWidget().isVisible())
          {
             continue;
          }
@@ -372,7 +366,7 @@ public class CommandPalette extends Composite
    private void moveSelection(int units)
    {
       // Select the first visible command in the given direction
-      CommandPaletteEntry candidate = null;
+      CommandPaletteItem candidate = null;
 
       int direction = units / Math.abs(units);  // -1 (backwards) or 1 (forwards)
       int consumed = 0; // Number of units consumed to goal
@@ -389,7 +383,7 @@ public class CommandPalette extends Composite
          }
          candidate = items_.get(target);
 
-         if (candidate.isVisible())
+         if (candidate.asWidget().isVisible())
          {
             // This entry is visible, so it counts against our goal.
             consumed += direction;
@@ -450,13 +444,13 @@ public class CommandPalette extends Composite
       
       // Set new selection
       selected_ = target;
-      CommandPaletteEntry selected = items_.get(selected_);
+      CommandPaletteItem selected = items_.get(selected_);
       selected.setSelected(true);
-      selected.getElement().scrollIntoView();
+      selected.asWidget().getElement().scrollIntoView();
 
       // Update active descendant for accessibility
       Roles.getComboboxRole().setAriaActivedescendantProperty(
-            searchBox_.getElement(), Id.of(selected.getElement()));
+            searchBox_.getElement(), Id.of(selected.asWidget().getElement()));
    }
    
    private final Host host_;

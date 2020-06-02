@@ -146,11 +146,6 @@ public abstract class CommandPaletteEntry extends Composite
    abstract public String getLabel();
 
    /**
-    * Invoke the entry (execute the command, etc.)
-    */
-   abstract public void invoke();
-
-   /**
     * Get the entry's ID.
     * 
     * @return A unique ID referring to the entry.

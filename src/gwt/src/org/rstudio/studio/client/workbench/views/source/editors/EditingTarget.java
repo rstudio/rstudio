@@ -14,7 +14,6 @@
  */
 package org.rstudio.studio.client.workbench.views.source.editors;
 
-import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.event.logical.shared.HasCloseHandlers;
 import com.google.gwt.user.client.Command;
 import com.google.gwt.user.client.ui.HasValue;
@@ -43,7 +42,7 @@ public interface EditingTarget extends IsWidget,
                                        HasEnsureHeightHandlers,
                                        HasCloseHandlers<Void>,
                                        UnsavedChangesTarget,
-                                       CommandPaletteEntrySource<ScheduledCommand>
+                                       CommandPaletteEntrySource
 {
    String getId();
    

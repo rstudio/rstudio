@@ -89,6 +89,32 @@ public class AppCommandPaletteItem implements CommandPaletteItem
       return true;
    }
    
+   @Override
+   public boolean matchesSearch(String[] keywords)
+   {
+      String hay = widget_.getLabel();
+      for (String needle: keywords)
+      {
+         if (hay.contains(needle))
+         {
+            return true;
+         }
+      }
+      return false;
+   }
+
+   @Override
+   public void setSearchHighlight(String[] keywords)
+   {
+      widget_.setSearchHighlight(keywords);
+   }
+
+   @Override
+   public void setSelected(boolean selected)
+   {
+      widget_.setSelected(selected);
+   }
+
    List<KeySequence> keys_;
    AppCommand command_;
    AppCommandPaletteEntry widget_;

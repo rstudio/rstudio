@@ -15,17 +15,12 @@
 
 package org.rstudio.studio.client.palette;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.studio.client.palette.model.CommandPaletteEntrySource;
-import org.rstudio.studio.client.palette.ui.CommandPaletteEntry;
-import org.rstudio.studio.client.palette.ui.UserPrefBooleanPaletteEntry;
-import org.rstudio.studio.client.palette.ui.UserPrefEnumPaletteEntry;
-import org.rstudio.studio.client.palette.ui.UserPrefIntegerPaletteEntry;
-import org.rstudio.studio.client.workbench.prefs.model.Prefs.BooleanValue;
-import org.rstudio.studio.client.workbench.prefs.model.Prefs.EnumValue;
-import org.rstudio.studio.client.workbench.prefs.model.Prefs.IntValue;
+import org.rstudio.studio.client.palette.model.CommandPaletteItem;
 import org.rstudio.studio.client.workbench.prefs.model.Prefs.PrefValue;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 
@@ -33,7 +28,7 @@ import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
  * A command palette entry source which serves as a factory for user preference
  * values.
  */
-public class UserPrefPaletteSource implements CommandPaletteEntrySource<PrefValue<?>>
+public class UserPrefPaletteSource implements CommandPaletteEntrySource
 {
    public UserPrefPaletteSource(UserPrefs prefs)
    {
@@ -41,34 +36,21 @@ public class UserPrefPaletteSource implements CommandPaletteEntrySource<PrefValu
    }
 
    @Override
-   public List<PrefValue<?>> getPaletteCommands()
+   public List<CommandPaletteItem> getCommandPaletteItems()
    {
-      return prefs_.allPrefs();
-   }
-
-   @Override
-   public CommandPaletteEntry renderPaletteCommand(PrefValue<?> val)
-   {
-      if (StringUtil.isNullOrEmpty(val.getTitle()))
+      List<CommandPaletteItem> items = new ArrayList<CommandPaletteItem>();
+      for (PrefValue<?> val: prefs_.allPrefs())
       {
-         // Ignore preferences with no title (the title is the only
-         // reasonable thing we can display)
-         return null;
+         if (StringUtil.isNullOrEmpty(val.getTitle()))
+         {
+            // Ignore preferences with no title (the title is the only
+            // reasonable thing we can display)
+            continue;
+         }
+         items.add(new UserPrefPaletteItem(val));
       }
-
-      if (val instanceof BooleanValue)
-      {
-         return new UserPrefBooleanPaletteEntry((BooleanValue)val);
-      }
-      else if (val instanceof EnumValue)
-      {
-         return new UserPrefEnumPaletteEntry((EnumValue)val);
-      }
-      else if (val instanceof IntValue)
-      {
-         return  new UserPrefIntegerPaletteEntry((IntValue)val);
-      }
-      return null;
+      
+      return items;
    }
 
    private final UserPrefs prefs_;

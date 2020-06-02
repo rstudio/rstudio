@@ -20,6 +20,7 @@ import java.util.List;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.core.client.widget.SelectWidget;
+import org.rstudio.studio.client.palette.UserPrefPaletteItem;
 import org.rstudio.studio.client.workbench.prefs.model.Prefs.EnumValue;
 
 import com.google.gwt.dom.client.Style.Unit;
@@ -27,9 +28,9 @@ import com.google.gwt.user.client.ui.Widget;
 
 public class UserPrefEnumPaletteEntry extends UserPrefPaletteEntry
 {
-   public UserPrefEnumPaletteEntry(EnumValue val)
+   public UserPrefEnumPaletteEntry(EnumValue val, UserPrefPaletteItem item)
    {
-      super(val);
+      super(val, item);
       val_ = val;
       
       // Create marginally more user friendly names for option values by
@@ -58,8 +59,8 @@ public class UserPrefEnumPaletteEntry extends UserPrefPaletteEntry
          // Change the preference to the new value
          val_.setGlobalValue(selector_.getValue());
 
-         // This counts as an invocation (so we trigger pref saves)
-         super.invoke();
+         // Save new state
+         item_.nudgeWriter();
       });
 
       initialize();

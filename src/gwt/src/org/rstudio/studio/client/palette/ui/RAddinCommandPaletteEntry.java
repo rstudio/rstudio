@@ -18,7 +18,6 @@ import java.util.List;
 
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.KeySequence;
-import org.rstudio.studio.client.workbench.addins.Addins.AddinExecutor;
 import org.rstudio.studio.client.workbench.addins.Addins.RAddin;
 
 /**
@@ -27,12 +26,10 @@ import org.rstudio.studio.client.workbench.addins.Addins.RAddin;
  */
 public class RAddinCommandPaletteEntry extends CommandPaletteCommand
 {
-   public RAddinCommandPaletteEntry(RAddin addin, AddinExecutor executor, 
-                                    List<KeySequence> keys)
+   public RAddinCommandPaletteEntry(RAddin addin, List<KeySequence> keys)
    {
       super(keys);
       addin_ = addin;
-      executor_ = executor;
       label_ = addin_.getName();
       if (StringUtil.isNullOrEmpty(label_))
          label_ = addin_.getTitle();
@@ -48,12 +45,6 @@ public class RAddinCommandPaletteEntry extends CommandPaletteCommand
    public String getLabel()
    {
       return label_;
-   }
-
-   @Override
-   public void invoke()
-   {
-      executor_.execute(addin_);
    }
 
    @Override
@@ -77,5 +68,4 @@ public class RAddinCommandPaletteEntry extends CommandPaletteCommand
 
    private String label_;
    private final RAddin addin_;
-   private final AddinExecutor executor_;
 }

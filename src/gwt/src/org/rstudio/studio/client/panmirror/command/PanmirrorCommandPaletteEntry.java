@@ -23,7 +23,6 @@ import org.rstudio.studio.client.palette.ui.CommandPaletteCommand;
 
 public class PanmirrorCommandPaletteEntry extends CommandPaletteCommand
 {
-
    public PanmirrorCommandPaletteEntry(PanmirrorCommandUI command)
    {
       super(keySequence(command));
@@ -35,12 +34,6 @@ public class PanmirrorCommandPaletteEntry extends CommandPaletteCommand
    public String getLabel()
    {
       return command_.getFullMenuText();
-   }
-
-   @Override
-   public void invoke()
-   {
-      command_.execute();
    }
 
    @Override

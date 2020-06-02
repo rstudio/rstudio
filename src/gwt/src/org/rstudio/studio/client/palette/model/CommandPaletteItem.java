@@ -16,6 +16,12 @@ package org.rstudio.studio.client.palette.model;
 
 import com.google.gwt.user.client.ui.IsWidget;
 
+/**
+ * Represents a single command palette item. Implements IsWidget so that
+ * rendering the HTML for the command palette item can be deferred until it's
+ * displayed; classes implementing this interface should create the widget on
+ * demand in IsWidget rather than up front in their constructors.
+ */
 public interface CommandPaletteItem extends IsWidget
 {
    /**
@@ -33,7 +39,7 @@ public interface CommandPaletteItem extends IsWidget
    boolean matchesSearch(String[] keywords);
 
    /**
-    * Turns on search highlighting for the command.
+    * Turns on search highlighting for the item.
     * 
     * @param keywords The search keywords to highlight.
     */
@@ -45,4 +51,11 @@ public interface CommandPaletteItem extends IsWidget
     * @return Whether to dismiss the palette after invoking the entry.
     */
    public boolean dismissOnInvoke();
+   
+   /**
+    * Draw the entry as selected (or not)
+    * 
+    * @param selected Whether to draw the entry as selected
+    */
+   public void setSelected(boolean selected);
 }

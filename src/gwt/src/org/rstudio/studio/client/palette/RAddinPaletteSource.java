@@ -15,6 +15,7 @@
 
 package org.rstudio.studio.client.palette;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.rstudio.core.client.StringUtil;
@@ -24,8 +25,7 @@ import org.rstudio.core.client.command.KeySequence;
 import org.rstudio.core.client.command.ShortcutManager;
 import org.rstudio.core.client.js.JsUtil;
 import org.rstudio.studio.client.palette.model.CommandPaletteEntrySource;
-import org.rstudio.studio.client.palette.ui.CommandPaletteEntry;
-import org.rstudio.studio.client.palette.ui.RAddinCommandPaletteEntry;
+import org.rstudio.studio.client.palette.model.CommandPaletteItem;
 import org.rstudio.studio.client.workbench.addins.Addins.AddinExecutor;
 import org.rstudio.studio.client.workbench.addins.Addins.RAddin;
 import org.rstudio.studio.client.workbench.addins.Addins.RAddins;
@@ -34,7 +34,7 @@ import org.rstudio.studio.client.workbench.addins.Addins.RAddins;
  * A command palette entry source which serves as a factory for R addin
  * commands.
  */
-public class RAddinPaletteSource implements CommandPaletteEntrySource<String>
+public class RAddinPaletteSource implements CommandPaletteEntrySource
 {
    public RAddinPaletteSource(RAddins addins, ShortcutManager shortcuts)
    {
@@ -44,26 +44,21 @@ public class RAddinPaletteSource implements CommandPaletteEntrySource<String>
    }
    
    @Override
-   public List<String> getPaletteCommands()
+   public List<CommandPaletteItem> getCommandPaletteItems()
    {
-      return JsUtil.toList(addins_.keys());
-   }
-
-   @Override
-   public CommandPaletteEntry renderPaletteCommand(String id)
-   {
-      RAddin addin = addins_.get(id);
-
-      // Look up the key binding for this addin
-      List<KeySequence> keys = map_.getBindings(addin.getId());
-      CommandPaletteEntry entry = new RAddinCommandPaletteEntry(addin, executor_, keys);
-      if (StringUtil.isNullOrEmpty(entry.getLabel()))
+      List<CommandPaletteItem> items = new ArrayList<CommandPaletteItem>();
+      for (String id: JsUtil.asIterable(addins_.keys()))
       {
-         // Ignore addin commands which have no label
-         return null;
+         RAddin addin = addins_.get(id);
+         List<KeySequence> keys = map_.getBindings(addin.getId());
+         if (StringUtil.isNullOrEmpty(addin.getName()))
+            continue;
+         
+         CommandPaletteItem item = new RAddinPaletteItem(addin, executor_, keys);
+         items.add(item);
       }
       
-      return entry;
+      return items;
    }
 
    private final RAddins addins_;

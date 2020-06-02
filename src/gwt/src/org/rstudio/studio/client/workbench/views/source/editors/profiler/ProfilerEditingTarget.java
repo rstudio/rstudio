@@ -56,7 +56,7 @@ import org.rstudio.studio.client.common.filetypes.FileType;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.filetypes.ProfilerType;
 import org.rstudio.studio.client.common.filetypes.TextFileType;
-import org.rstudio.studio.client.palette.ui.CommandPaletteEntry;
+import org.rstudio.studio.client.palette.model.CommandPaletteItem;
 import org.rstudio.studio.client.rsconnect.model.PublishHtmlSource;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
@@ -762,15 +762,9 @@ public class ProfilerEditingTarget implements EditingTarget,
          }
       };
    }
-   
-   @Override
-   public List<ScheduledCommand> getPaletteCommands()
-   {
-      return null;
-   }
 
    @Override
-   public CommandPaletteEntry renderPaletteCommand(ScheduledCommand cmd)
+   public List<CommandPaletteItem> getCommandPaletteItems()
    {
       return null;
    }

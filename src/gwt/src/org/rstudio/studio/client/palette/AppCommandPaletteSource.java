@@ -24,11 +24,10 @@ import org.rstudio.core.client.command.KeyMap.KeyMapType;
 import org.rstudio.core.client.command.KeySequence;
 import org.rstudio.core.client.command.ShortcutManager;
 import org.rstudio.studio.client.palette.model.CommandPaletteEntrySource;
-import org.rstudio.studio.client.palette.ui.AppCommandPaletteEntry;
-import org.rstudio.studio.client.palette.ui.CommandPaletteEntry;
+import org.rstudio.studio.client.palette.model.CommandPaletteItem;
 import org.rstudio.studio.client.workbench.commands.Commands;
 
-public class AppCommandPaletteSource implements CommandPaletteEntrySource<AppCommand>
+public class AppCommandPaletteSource implements CommandPaletteEntrySource
 {
    public AppCommandPaletteSource(ShortcutManager shortcuts, Commands commands)
    {
@@ -37,44 +36,42 @@ public class AppCommandPaletteSource implements CommandPaletteEntrySource<AppCom
    }
 
    @Override
-   public List<AppCommand> getPaletteCommands()
+   public List<CommandPaletteItem> getCommandPaletteItems()
    {
-      ArrayList<AppCommand> commands = new ArrayList<AppCommand>();
-      commands.addAll(commands_.getCommands().values());
-      return commands;
-   }
-
-   @Override
-   public CommandPaletteEntry renderPaletteCommand(AppCommand command)
-   {
-      String id = command.getId();
-      if (id.contains("Mru") || id.startsWith("mru") || id.contains("Dummy"))
+      List<CommandPaletteItem> items = new ArrayList<CommandPaletteItem>();
+      for (AppCommand command: commands_.getCommands().values())
       {
-         // MRU entries and dummy commands should not appear in the palette
-         return null;
+         String id = command.getId();
+
+         if (StringUtil.isNullOrEmpty(id))
+         {
+            // Only commands with IDs should be displayed in the palette
+            continue;
+         }
+
+         if (id.contains("Mru") || id.startsWith("mru") || id.contains("Dummy"))
+         {
+            // MRU entries and dummy commands should not appear in the palette
+            continue;
+         }
+         
+         // Ensure the command is visible. It'd be nice to show all commands in
+         // the palette for the purposes of examining key bindings, discovery,
+         // etc., but invisible commands are generally meaningless in the 
+         // current context.
+         if (!command.isVisible())
+         {
+            continue;
+         }
+
+         // Look up the key binding for this command
+         List<KeySequence> keys = map_.getBindings(command.getId());
+         
+         // Create an application command entry
+         items.add(new AppCommandPaletteItem(command, keys));
       }
       
-      // Ensure the command is visible. It'd be nice to show all commands in
-      // the palette for the purposes of examining key bindings, discovery,
-      // etc., but invisible commands are generally meaningless in the 
-      // current context.
-      if (!command.isVisible())
-      {
-         return null;
-      }
-
-      // Look up the key binding for this command
-      List<KeySequence> keys = map_.getBindings(command.getId());
-      
-      // Create an application command entry
-      CommandPaletteEntry entry = new AppCommandPaletteEntry(command, keys);
-      if (StringUtil.isNullOrEmpty(entry.getLabel()))
-      {
-         // Ignore app commands which have no label
-         return null;
-      }
-
-      return entry;
+      return items;
    }
 
    private final KeyMap map_;

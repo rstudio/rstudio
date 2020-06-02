@@ -16,15 +16,16 @@ package org.rstudio.studio.client.palette.ui;
 
 import org.rstudio.core.client.widget.Toggle;
 import org.rstudio.studio.client.RStudioGinjector;
+import org.rstudio.studio.client.palette.UserPrefPaletteItem;
 import org.rstudio.studio.client.workbench.prefs.model.Prefs.BooleanValue;
 
 import com.google.gwt.user.client.ui.Widget;
 
 public class UserPrefBooleanPaletteEntry extends UserPrefPaletteEntry
 {
-   public UserPrefBooleanPaletteEntry(BooleanValue val)
+   public UserPrefBooleanPaletteEntry(BooleanValue val, UserPrefPaletteItem item)
    {
-      super(val);
+      super(val, item);
       boolean initial = false;
 
       initial = val.getGlobalValue();
@@ -39,13 +40,15 @@ public class UserPrefBooleanPaletteEntry extends UserPrefPaletteEntry
    @Override
    public void invoke()
    {
-      super.invoke();
       boolean newValue = toggle_.getState() != Toggle.State.ON;
       BooleanValue pref = (BooleanValue)pref_;
       pref.setGlobalValue(newValue);
 
       toggle_.setState(newValue ? Toggle.State.ON : Toggle.State.OFF,
          !RStudioGinjector.INSTANCE.getUserPrefs().reducedMotion().getValue());
+      
+      // Save new value
+      item_.nudgeWriter();
    }
 
    @Override

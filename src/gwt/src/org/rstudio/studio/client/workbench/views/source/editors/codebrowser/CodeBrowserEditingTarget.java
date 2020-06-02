@@ -15,7 +15,6 @@
 package org.rstudio.studio.client.workbench.views.source.editors.codebrowser;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.event.dom.client.KeyDownHandler;
@@ -48,7 +47,7 @@ import org.rstudio.studio.client.common.filetypes.FileIcon;
 import org.rstudio.studio.client.common.filetypes.FileType;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.filetypes.TextFileType;
-import org.rstudio.studio.client.palette.ui.CommandPaletteEntry;
+import org.rstudio.studio.client.palette.model.CommandPaletteItem;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.codesearch.model.SearchPathFunctionDefinition;
 import org.rstudio.studio.client.workbench.commands.Commands;
@@ -781,6 +780,12 @@ public class CodeBrowserEditingTarget implements EditingTarget
       return "Code Browser displayed";
    }
    
+   @Override
+   public List<CommandPaletteItem> getCommandPaletteItems()
+   {
+      return null;
+   }
+
    // Private methods --------------------------------------------------------
    
    private CodeBrowserContents getContents()
@@ -820,18 +825,6 @@ public class CodeBrowserEditingTarget implements EditingTarget
       {
          onRestored.execute();
       }
-   }
-
-   @Override
-   public List<ScheduledCommand> getPaletteCommands()
-   {
-      return null;
-   }
-
-   @Override
-   public CommandPaletteEntry renderPaletteCommand(ScheduledCommand cmd)
-   {
-      return null;
    }
 
    private SourceDocument doc_;

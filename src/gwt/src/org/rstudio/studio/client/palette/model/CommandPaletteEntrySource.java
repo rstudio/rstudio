@@ -16,8 +16,6 @@ package org.rstudio.studio.client.palette.model;
 
 import java.util.List;
 
-import org.rstudio.studio.client.palette.ui.CommandPaletteEntry;
-
 public interface CommandPaletteEntrySource
 { 
    /**

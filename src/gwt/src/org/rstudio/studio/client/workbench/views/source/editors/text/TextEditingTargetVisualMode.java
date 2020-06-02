@@ -36,6 +36,7 @@ import org.rstudio.core.client.widget.images.ProgressImages;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.palette.model.CommandPaletteEntrySource;
+import org.rstudio.studio.client.palette.model.CommandPaletteItem;
 import org.rstudio.studio.client.palette.ui.CommandPaletteEntry;
 import org.rstudio.studio.client.panmirror.PanmirrorChanges;
 import org.rstudio.studio.client.panmirror.PanmirrorCode;
@@ -95,7 +96,7 @@ import elemental2.core.JsObject;
 import jsinterop.base.Js;
 
 
-public class TextEditingTargetVisualMode implements CommandPaletteEntrySource<PanmirrorCommandUI>
+public class TextEditingTargetVisualMode implements CommandPaletteEntrySource
 {
    public TextEditingTargetVisualMode(TextEditingTarget target,
                                       TextEditingTarget.Display view,
@@ -493,18 +494,6 @@ public class TextEditingTargetVisualMode implements CommandPaletteEntrySource<Pa
       restoreDisabledForVisualMode();
    }
    
-   @Override
-   public List<PanmirrorCommandUI> getPaletteCommands()
-   {
-      return panmirror_.getPaletteCommands();
-   }
-
-   @Override
-   public CommandPaletteEntry renderPaletteCommand(PanmirrorCommandUI cmd)
-   {
-      return panmirror_.renderPaletteCommand(cmd);
-   } 
-
    public void executeChunk()
    {
       panmirror_.execCommand(PanmirrorCommands.ExecuteCurrentRmdChunk);
@@ -579,6 +568,13 @@ public class TextEditingTargetVisualMode implements CommandPaletteEntrySource<Pa
          saveLocationOnIdle_.suspend();
    }
   
+
+   @Override
+   public List<CommandPaletteItem> getCommandPaletteItems()
+   {
+      return panmirror_.getCommandPaletteItems();
+   }
+
    private void manageUI(boolean activate, boolean focus)
    {
       manageUI(activate, focus, () -> {});

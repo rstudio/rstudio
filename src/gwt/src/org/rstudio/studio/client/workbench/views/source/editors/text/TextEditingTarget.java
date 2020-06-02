@@ -91,8 +91,7 @@ import org.rstudio.studio.client.notebook.CompileNotebookOptions;
 import org.rstudio.studio.client.notebook.CompileNotebookOptionsDialog;
 import org.rstudio.studio.client.notebook.CompileNotebookPrefs;
 import org.rstudio.studio.client.notebook.CompileNotebookResult;
-import org.rstudio.studio.client.palette.ui.CommandPaletteEntry;
-import org.rstudio.studio.client.panmirror.command.PanmirrorCommandUI;
+import org.rstudio.studio.client.palette.model.CommandPaletteItem;
 import org.rstudio.studio.client.plumber.events.LaunchPlumberAPIEvent;
 import org.rstudio.studio.client.plumber.events.PlumberAPIStatusEvent;
 import org.rstudio.studio.client.plumber.model.PlumberAPIParams;
@@ -2262,27 +2261,16 @@ public class TextEditingTarget implements
    }
    
    @Override
-   public List<ScheduledCommand> getPaletteCommands()
+   public List<CommandPaletteItem> getCommandPaletteItems()
    {
       if (visualMode_.isActivated())
       {
-         List<ScheduledCommand> commands = new ArrayList<ScheduledCommand>();
-         commands.addAll(visualMode_.getPaletteCommands());
-         return commands;
+         return visualMode_.getCommandPaletteItems();
       }
       else
          return null;
    }
 
-   @Override
-   public CommandPaletteEntry renderPaletteCommand(ScheduledCommand cmd)
-   {
-      if (visualMode_.isActivated() && cmd instanceof PanmirrorCommandUI)
-         return visualMode_.renderPaletteCommand((PanmirrorCommandUI)cmd);
-      else
-         return null;
-   }
-   
    @Override
    public boolean canCompilePdf()
    {

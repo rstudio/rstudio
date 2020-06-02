@@ -33,32 +33,35 @@ public abstract class CommandPaletteCommand extends CommandPaletteEntry
       shortcut_ = new Label();
       
       SafeHtmlBuilder b = new SafeHtmlBuilder();
-      for (KeySequence k: keys_)
+      if (keys != null)
       {
-         List<KeyCombination> combos = k.getData();
-         for (int i = 0; i < combos.size(); i++)
+         for (KeySequence k: keys_)
          {
-            KeyCombination combo = combos.get(i);
-            if (combo.isCtrlPressed())
-               appendKey(b, "Ctrl");
-            if (combo.isAltPressed())
-               appendKey(b, "Alt");
-            if (combo.isShiftPressed())
-               appendKey(b, "Shift");
-            if (combo.isMetaPressed())
-               appendKey(b, BrowseCap.hasMetaKey() ? "&#8984;" : "Cmd");
-            appendKey(b, combo.key());
-            
-            // Is this a multi-key sequence?
-            if (i < (combos.size() - 1))
+            List<KeyCombination> combos = k.getData();
+            for (int i = 0; i < combos.size(); i++)
             {
-               b.appendEscaped(",");
+               KeyCombination combo = combos.get(i);
+               if (combo.isCtrlPressed())
+                  appendKey(b, "Ctrl");
+               if (combo.isAltPressed())
+                  appendKey(b, "Alt");
+               if (combo.isShiftPressed())
+                  appendKey(b, "Shift");
+               if (combo.isMetaPressed())
+                  appendKey(b, BrowseCap.hasMetaKey() ? "&#8984;" : "Cmd");
+               appendKey(b, combo.key());
+               
+               // Is this a multi-key sequence?
+               if (i < (combos.size() - 1))
+               {
+                  b.appendEscaped(",");
+               }
             }
+            break;
          }
-         break;
+         shortcut_.getElement().setInnerSafeHtml(b.toSafeHtml());
+         shortcut_.addStyleName("rstudio-fixed-width-font");
       }
-      shortcut_.getElement().setInnerSafeHtml(b.toSafeHtml());
-      shortcut_.addStyleName("rstudio-fixed-width-font");
    }
    
    @Override

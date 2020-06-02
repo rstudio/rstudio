@@ -99,7 +99,7 @@ import org.rstudio.studio.client.events.GetEditorContextEvent.DocumentSelection;
 import org.rstudio.studio.client.events.ReplaceRangesEvent;
 import org.rstudio.studio.client.events.ReplaceRangesEvent.ReplacementData;
 import org.rstudio.studio.client.palette.model.CommandPaletteEntrySource;
-import org.rstudio.studio.client.palette.ui.CommandPaletteEntry;
+import org.rstudio.studio.client.palette.model.CommandPaletteItem;
 import org.rstudio.studio.client.events.SetSelectionRangesEvent;
 import org.rstudio.studio.client.rmarkdown.model.RmdChosenTemplate;
 import org.rstudio.studio.client.rmarkdown.model.RmdFrontMatter;
@@ -185,7 +185,7 @@ public class Source implements InsertSourceHandler,
                                IsWidget,
                                OpenSourceFileHandler,
                                OpenPresentationSourceFileHandler,
-                               CommandPaletteEntrySource<ScheduledCommand>,
+                               CommandPaletteEntrySource,
                                TabClosingHandler,
                                TabCloseHandler,
                                TabReorderHandler,
@@ -779,19 +779,10 @@ public class Source implements InsertSourceHandler,
    }
    
    @Override
-   public List<ScheduledCommand> getPaletteCommands()
+   public List<CommandPaletteItem> getCommandPaletteItems()
    {
       if (activeEditor_ != null) 
-         return activeEditor_.getPaletteCommands();
-      else
-         return null;
-   }
-
-   @Override
-   public CommandPaletteEntry renderPaletteCommand(ScheduledCommand cmd)
-   {
-      if (activeEditor_ != null) 
-         return activeEditor_.renderPaletteCommand(cmd);
+         return activeEditor_.getCommandPaletteItems();
       else
          return null;
    }

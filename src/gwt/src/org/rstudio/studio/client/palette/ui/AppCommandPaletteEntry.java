@@ -16,12 +16,9 @@ package org.rstudio.studio.client.palette.ui;
 
 import java.util.List;
 
-import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.command.AppCommand.Context;
-import org.rstudio.studio.client.RStudioGinjector;
-import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.core.client.command.KeySequence;
 
 /**
@@ -49,44 +46,6 @@ public class AppCommandPaletteEntry extends CommandPaletteCommand
    public String getLabel()
    {
       return label_;
-   }
-   
-   public void invoke()
-   {
-      GlobalDisplay display = RStudioGinjector.INSTANCE.getGlobalDisplay();
-      if (!command_.isVisible())
-      {
-         // This isn't currently likely since we hide commands that aren't
-         // visible.
-         display.showErrorMessage("Command Not Available", 
-               "The command '" + getLabel() + "' is not currently available.");
-      }
-      else if (!command_.isEnabled() || !command_.hasCommandHandlers())
-      {
-         // Don't attempt to execute disabled commands. Treat command with no
-         // handlers as disabled (nothing will happen if we run them except a
-         // runtime exception)
-         display.showErrorMessage("Command Disabled", 
-               "The command '" + getLabel() + "' cannot be used right now. " +
-               "It may be unavailable in this project, file, or view.");
-      }
-      else
-      {
-         // Regular command execution attempt; we still wrap this in a try/catch
-         // so that if anything goes haywire during execution we can tell the user
-         // about it.
-         try
-         {
-            command_.execute();
-         }
-         catch(Exception e)
-         {
-            display.showErrorMessage("Command Execution Failed", 
-                  "The command '" + getLabel() + "' could not be executed.\n\n" +
-                  StringUtil.notNull(e.getMessage()));
-            Debug.logException(e);
-         }
-      }
    }
    
    @Override

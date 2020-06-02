@@ -34,6 +34,7 @@ import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.ChangeFontSizeEvent;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.palette.model.CommandPaletteEntrySource;
+import org.rstudio.studio.client.palette.model.CommandPaletteItem;
 import org.rstudio.studio.client.palette.ui.CommandPaletteEntry;
 import org.rstudio.studio.client.panmirror.command.PanmirrorCommandUI;
 import org.rstudio.studio.client.panmirror.command.PanmirrorMenuItem;
@@ -91,7 +92,7 @@ import jsinterop.annotations.JsType;
 public class PanmirrorWidget extends DockLayoutPanel implements 
    IsHideableWidget,
    RequiresResize, 
-   CommandPaletteEntrySource<PanmirrorCommandUI>,
+   CommandPaletteEntrySource,
    PanmirrorUpdatedEvent.HasPanmirrorUpdatedHandlers,
    PanmirrorStateChangeEvent.HasPanmirrorStateChangeHandlers,
    PanmirrorOutlineVisibleEvent.HasPanmirrorOutlineVisibleHandlers,
@@ -455,18 +456,6 @@ public class PanmirrorWidget extends DockLayoutPanel implements
       return commands_.exec(id);
    }
    
-   @Override
-   public List<PanmirrorCommandUI> getPaletteCommands()
-   {
-      return commands_.getPaletteCommands();
-   }
-   
-   @Override
-   public CommandPaletteEntry renderPaletteCommand(PanmirrorCommandUI cmd)
-   {
-      return commands_.renderPaletteCommand(cmd);
-   }
-   
    public void navigate(String id)
    {
       editor_.navigate(id);
@@ -609,6 +598,12 @@ public class PanmirrorWidget extends DockLayoutPanel implements
          resizeEditor();
       }
    }
+
+   @Override
+   public List<CommandPaletteItem> getCommandPaletteItems()
+   {
+      return commands_.getCommandPaletteItems();
+   } 
    
    private void updateOutline()
    {
@@ -658,7 +653,7 @@ public class PanmirrorWidget extends DockLayoutPanel implements
    
    private final HandlerManager handlers_ = new HandlerManager(this);
    private final HandlerRegistrations registrations_ = new HandlerRegistrations();
-   private final ArrayList<JsVoidFunction> editorEventUnsubscribe_ = new ArrayList<JsVoidFunction>(); 
+   private final ArrayList<JsVoidFunction> editorEventUnsubscribe_ = new ArrayList<JsVoidFunction>();
 }
 
 

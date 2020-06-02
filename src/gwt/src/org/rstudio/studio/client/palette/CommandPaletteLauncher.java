@@ -87,7 +87,7 @@ public class CommandPaletteLauncher implements CommandPalette.Host
    private void createPanel()
    {
       // Extra sources (currently only the source tab)
-      List<CommandPaletteEntrySource<?>> sources = new ArrayList<CommandPaletteEntrySource<?>>();
+      List<CommandPaletteEntrySource> sources = new ArrayList<CommandPaletteEntrySource>();
       sources.add(pSource_.get());
       
       // Create sources

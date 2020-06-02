@@ -16,6 +16,7 @@ package org.rstudio.studio.client.palette.ui;
 
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.widget.NumericTextBox;
+import org.rstudio.studio.client.palette.UserPrefPaletteItem;
 import org.rstudio.studio.client.workbench.prefs.model.Prefs.IntValue;
 
 import com.google.gwt.dom.client.Style;
@@ -28,9 +29,9 @@ import com.google.gwt.user.client.ui.Widget;
 
 public class UserPrefIntegerPaletteEntry extends UserPrefPaletteEntry
 {
-   public UserPrefIntegerPaletteEntry(IntValue val)
+   public UserPrefIntegerPaletteEntry(IntValue val, UserPrefPaletteItem item)
    {
-      super(val);
+      super(val, item);
       val_ = val;
       
       panel_ = new SimplePanel();

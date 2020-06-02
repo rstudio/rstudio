@@ -15,7 +15,6 @@
 package org.rstudio.studio.client.workbench.views.source.editors.urlcontent;
 
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.event.logical.shared.CloseHandler;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HandlerRegistration;
@@ -40,7 +39,7 @@ import org.rstudio.studio.client.common.Value;
 import org.rstudio.studio.client.common.filetypes.FileIcon;
 import org.rstudio.studio.client.common.filetypes.FileType;
 import org.rstudio.studio.client.common.filetypes.TextFileType;
-import org.rstudio.studio.client.palette.ui.CommandPaletteEntry;
+import org.rstudio.studio.client.palette.model.CommandPaletteItem;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.workbench.commands.Commands;
@@ -468,15 +467,8 @@ public class UrlContentEditingTarget implements EditingTarget
       return null;
    }
 
-
    @Override
-   public List<ScheduledCommand> getPaletteCommands()
-   {
-      return null;
-   }
-
-   @Override
-   public CommandPaletteEntry renderPaletteCommand(ScheduledCommand cmd)
+   public List<CommandPaletteItem> getCommandPaletteItems()
    {
       return null;
    }
