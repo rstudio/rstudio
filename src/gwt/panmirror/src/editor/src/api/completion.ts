@@ -26,13 +26,13 @@ export interface CompletionHandler {
   canCompleteAt(state: EditorState): number | null;
 
   // return a set of completions for the given context
-  completions(state: EditorState, limit: number): Promise<Array<{}>>;
+  completions(state: EditorState, limit: number): Promise<any[]>;
   
   // provide a react compontent type for viewing the item
-  completionView: React.FC | React.ComponentClass;
+  completionView: React.FC<any> | React.ComponentClass<any>;
 
   // provide a completion replacement as a string or node
-  replacement(completion: {}) : string | ProsemirrorNode;
+  replacement(completion: any) : string | ProsemirrorNode;
 
 }
 

@@ -78,8 +78,7 @@ function matchEmojiCompletion(state: EditorState) {
   return textBefore.match(kEmojiCompletionRegEx);
 }
 
-const EmojiView: React.FC = props => {
-  const emoji = props as Emoji;
+const EmojiView: React.FC<Emoji> = emoji => {
   return (
     <div>{emoji.emoji}</div>
   );
