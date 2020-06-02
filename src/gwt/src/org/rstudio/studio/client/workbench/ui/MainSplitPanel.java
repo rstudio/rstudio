@@ -149,7 +149,7 @@ public class MainSplitPanel extends NotifyingSplitLayoutPanel
                else
                {
                   addEast(right_, state.getSplitterPos()[0]);
-                  for (int i = 1; i < leftList_.size() + 1; i++)
+                  for (int i = 0; i < leftList_.size(); i++)
                   {
                      addWest(leftList_.get(i), state.getSplitterPos()[i]);
                   }

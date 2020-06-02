@@ -214,6 +214,7 @@ public class PaneManager
                       UserPrefs userPrefs,
                       @Named("Console") final Widget consolePane,
                       Source source,
+                      SourceColumnManager sourceColumnManager,
                       @Named("History") final WorkbenchTab historyTab,
                       @Named("Files") final WorkbenchTab filesTab,
                       @Named("Plots") final WorkbenchTab plotsTab,
@@ -245,7 +246,7 @@ public class PaneManager
       userPrefs_ = userPrefs;
       consolePane_ = (ConsolePane)consolePane;
       source_ = source;
-      sourceColumnManager_ = source.getColumnManager();
+      sourceColumnManager_ = sourceColumnManager;
       historyTab_ = historyTab;
       filesTab_ = filesTab;
       plotsTab_ = plotsTab;
