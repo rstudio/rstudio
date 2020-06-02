@@ -124,7 +124,7 @@ public class CommandPalette extends Composite
       // If we have already populated, compute the page size. Do this deferred
       // so that a render pass occurs (otherwise the page size computations will
       // take place with unrendered elements)
-      if (items_.size() > 0)
+      if (commandList_.getWidgetCount() > 0)
       {
          Scheduler.get().scheduleDeferred(() ->
          {
@@ -133,43 +133,11 @@ public class CommandPalette extends Composite
       }
    }
 
-   private void renderAll(CommandPaletteEntrySource source)
-   {
-      List<CommandPaletteItem> items = source.getCommandPaletteItems();
-      if (items == null)
-         return;
-      
-      for (CommandPaletteItem item: items)
-      {
-         Widget w = item.asWidget();
-         if (w != null)
-         {
-            items_.add(item);
-            commandList_.add(w);
-         }
-      }
-   }
-
    /**
     * Performs a one-time population of the palette with all available commands.
     */
    private void populate()
    {
-      for (CommandPaletteEntrySource source: sources_)
-      {
-         renderAll(source);
-      }
-      
-      // Invoke commands when they're clicked on
-      for (CommandPaletteItem item: items_)
-      {
-         Widget w = item.asWidget();
-         w.sinkEvents(Event.ONCLICK);
-         w.addHandler((evt) -> {
-            item.invoke();
-         }, ClickEvent.getType());
-      }
-      
       // Handle most keystrokes on KeyUp so that the contents of the text box
       // have already been changed
       searchBox_.addKeyUpHandler((evt) ->
@@ -242,6 +210,10 @@ public class CommandPalette extends Composite
             moveSelection(pageSize_);
          }
       });
+      
+      // Render the first page of elements
+      renderNextPage();
+      updateSelection();
       
       // If we are already attached to the DOM at this point, compute the page
       // size for scrolling by pages. 
@@ -453,13 +425,71 @@ public class CommandPalette extends Composite
             searchBox_.getElement(), Id.of(selected.asWidget().getElement()));
    }
    
+   private void renderNextPage()
+   {
+      // If we haven't already pulled items from all our sources and we have
+      // less than a page of data left, pull in data from the next source.
+      if (renderedSource_ < sources_.size() &&
+          items_.size() - renderedItem_ < RENDER_PAGE_SIZE)
+      {
+         // Read the next non-null data source
+         List<CommandPaletteItem> items = null;
+         do
+         {
+            items = sources_.get(renderedSource_).getCommandPaletteItems();
+            renderedSource_++;
+         } while (items == null);
+            
+         items_.addAll(items);
+      }
+      
+      // Render the next page of data
+      int first = renderedItem_;
+      int last = Math.min(renderedItem_ + RENDER_PAGE_SIZE, items_.size());
+      
+      for (int idx = first; idx < last; idx++)
+      {
+         CommandPaletteItem item = items_.get(idx);
+         Widget w = item.asWidget();
+         if (w != null)
+         {
+            commandList_.add(w);
+            w.sinkEvents(Event.ONCLICK);
+            w.addHandler((evt) -> {
+               item.invoke();
+            }, ClickEvent.getType());
+         }
+      }
+      
+      // Save our place so we'll start rendering at the next page
+      renderedItem_ = last;
+      
+      // If we didn't render everything, schedule another pass
+      if (renderedItem_ < items_.size() || renderedSource_ < sources_.size())
+      {
+         Scheduler.get().scheduleDeferred(() ->
+         {
+            renderNextPage();
+         });
+      }
+      else
+      {
+         rendered_ = true;
+      }
+   }
+   
    private final Host host_;
    private final List<CommandPaletteEntrySource> sources_;
+   private final List<CommandPaletteItem> items_;
    private int selected_;
-   private List<CommandPaletteItem> items_;
    private String searchText_;
    private boolean attached_;
    private int pageSize_;
+   
+   private int renderedItem_;
+   private int renderedSource_ = 0;
+   private final int RENDER_PAGE_SIZE = 50;
+   private boolean rendered_ = false;
 
    @UiField public TextBox searchBox_;
    @UiField public FlowPanel commandList_;
