@@ -18,13 +18,16 @@ import { EditorView } from "prosemirror-view";
 import { ResolvedPos } from "prosemirror-model";
 
 import debounce from 'lodash.debounce';
+import zenscroll from 'zenscroll';
 
 import { EditorUIMath } from "../../api/ui";
 import { getMarkRange } from "../../api/mark";
 import { EditorEvents, EditorEvent } from "../../api/events";
 import { applyStyles } from "../../api/css";
-import { editingRootNodeClosestToPos } from "../../api/node";
+import { editingRootNodeClosestToPos, editingRootNode } from "../../api/node";
 import { createPopup } from "../../api/widgets/widgets";
+
+const kMathPopupVerticalOffset = 10;
 
 const key = new PluginKey('math-preview');
 
@@ -80,7 +83,7 @@ export class MathPreviewPlugin extends Plugin {
     this.resizeUnsubscribe = events.subscribe(EditorEvent.Resize,  () => this.updatePopup());
   }
 
-  private updatePopup($pos?: ResolvedPos) {
+  private updatePopup($mousePos?: ResolvedPos) {
 
     // bail if we don't have a view
     if (!this.view) {
@@ -95,8 +98,8 @@ export class MathPreviewPlugin extends Plugin {
     let range: false | { from: number, to: number } = false;
 
     // if a $pos was passed (e.g. for a mouse hover) then check that first
-    if ($pos) {
-      range = getMarkRange($pos, schema.marks.math);
+    if ($mousePos) {
+      range = getMarkRange($mousePos, schema.marks.math);
     }
 
     // if that didn't work try the selection
@@ -137,6 +140,10 @@ export class MathPreviewPlugin extends Plugin {
         if (!error) {
           this.popup!.style.visibility = 'visible';
           this.lastRenderedMath = inlineMath; 
+          // autoscroll for non-mouse triggers
+          if (!$mousePos && range) {
+            this.autoscollPopup(range);
+          }
         }
       });
     }
@@ -150,6 +157,22 @@ export class MathPreviewPlugin extends Plugin {
     }
   }
 
+  private autoscollPopup(mathRange: { from: number, to: number} ) {
+    const editingRoot = editingRootNode(this.view!.state.selection);
+    if (editingRoot) {
+      const editorEl = this.view!.nodeDOM(editingRoot.pos) as HTMLElement;
+      const editorBox = editorEl.getBoundingClientRect();
+      const popupBox = this.popup!.getBoundingClientRect();
+      if (popupBox.top + popupBox.height + kMathPopupVerticalOffset > editorBox.bottom) {
+        const mathBottom = this.view!.coordsAtPos(mathRange.to);
+        const mathScrollBottom = editorEl.scrollTop + mathBottom.bottom;
+        const mathPopupScrollBottom = mathScrollBottom + kMathPopupVerticalOffset + popupBox.height;
+        const scrollTop = mathPopupScrollBottom + kMathPopupVerticalOffset - editorBox.top - editorBox.height;
+        const scroller = zenscroll.createScroller(editorEl);
+        scroller.toY(scrollTop, 100);
+      }
+    }
+  }
 }
 
 
@@ -167,7 +190,7 @@ function popupPositionStyles(
   const rangeEndCoords = view.coordsAtPos(range.to);
 
   // default positions
-  const top = Math.round(rangeEndCoords.bottom - editorBox.top) + 10 + 'px';
+  const top = Math.round(rangeEndCoords.bottom - editorBox.top) + kMathPopupVerticalOffset + 'px';
   let left = `calc(${Math.round(rangeStartCoords.left - editorBox.left)}px - 1ch)`;
 
   // if it flow across two lines then position at far left of editing root
