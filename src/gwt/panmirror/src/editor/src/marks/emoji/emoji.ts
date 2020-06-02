@@ -17,15 +17,15 @@ import { Schema, Mark, Fragment, Node as ProsemirrorNode } from 'prosemirror-mod
 import { InputRule } from 'prosemirror-inputrules';
 import { EditorState, Transaction } from 'prosemirror-state';
 
-import { Extension } from '../api/extension';
-import { PandocOutput, PandocToken, PandocTokenType, ProsemirrorWriter } from '../api/pandoc';
-import { pandocAttrReadAST } from '../api/pandoc_attr';
-import { fragmentText } from '../api/fragment';
+import { Extension } from '../../api/extension';
+import { PandocOutput, PandocToken, PandocTokenType, ProsemirrorWriter } from '../../api/pandoc';
+import { pandocAttrReadAST } from '../../api/pandoc_attr';
+import { fragmentText } from '../../api/fragment';
 
-import { FixupContext } from '../api/fixup';
-import { MarkTransaction } from '../api/transaction';
-import { mergedTextNodes } from '../api/text';
-import { emojis, emojiFromAlias, emojiFromChar } from '../api/emoji';
+import { FixupContext } from '../../api/fixup';
+import { MarkTransaction } from '../../api/transaction';
+import { mergedTextNodes } from '../../api/text';
+import { emojis, emojiFromAlias, emojiFromChar } from '../../api/emoji';
 
 const kEmojiAttr = 0;
 const kEmojiContent = 1;

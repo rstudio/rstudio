@@ -38,3 +38,9 @@ export function emojiFromAlias(emojiAlias: string): Emoji | undefined {
   }
   return undefined;
 }
+
+export function emojisFromPrefx(prefix: string): Emoji[] {
+  const prefixLower = prefix.toLowerCase();
+  return kEmojis.filter(emoji => emoji.aliases.some(alias => alias.startsWith(prefixLower)));
+}
+
