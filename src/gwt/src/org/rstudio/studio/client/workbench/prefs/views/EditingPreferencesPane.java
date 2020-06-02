@@ -204,7 +204,7 @@ public class EditingPreferencesPane extends PreferencesPane
       displayPanel.add(checkboxPref("Show indent guides", prefs_.showIndentGuides()));
       displayPanel.add(checkboxPref("Blinking cursor", prefs_.blinkingCursor()));
       displayPanel.add(checkboxPref("Show syntax highlighting in console input", prefs_.syntaxColorConsole()));
-      displayPanel.add(checkboxPref("Different color for Console stderr output (requires restart)",
+      displayPanel.add(checkboxPref("Different color for console stderr output (requires restart)",
          prefs_.highlightConsoleErrors()));
       displayPanel.add(checkboxPref("Allow scroll past end of document", prefs_.scrollPastEndOfDocument()));
       displayPanel.add(checkboxPref("Allow drag and drop of text", prefs_.enableTextDrag()));
