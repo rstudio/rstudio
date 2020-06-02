@@ -57,6 +57,8 @@ import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
 import org.rstudio.studio.client.workbench.FileMRUList;
 import org.rstudio.studio.client.workbench.commands.Commands;
+import org.rstudio.studio.client.workbench.events.SessionInitEvent;
+import org.rstudio.studio.client.workbench.events.SessionInitHandler;
 import org.rstudio.studio.client.workbench.model.ClientState;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.UnsavedChangesTarget;
@@ -159,6 +161,43 @@ public class SourceColumnManager implements SourceExtendedTypeDetectedEvent.Hand
       events_.addHandler(SourceExtendedTypeDetectedEvent.TYPE, this);
       events_.addHandler(DebugModeChangedEvent.TYPE, this);
 
+      events_.addHandler(SessionInitEvent.TYPE, new SessionInitHandler()
+      {
+         public void onSessionInit(SessionInitEvent sie)
+         {
+            new JSObjectStateValue("source-column-manager",
+               "column-info",
+               ClientState.PERSISTENT,
+               session_.getSessionInfo().getClientState(),
+               false)
+            {
+               @Override
+               protected void onInit(JsObject value)
+               {
+                  if (value == null)
+                  {
+                     state_ = State.createState(JsUtil.toJsArrayString(getNames(false)));
+                     return;
+                  }
+                  state_ = value.cast();
+                  for (int i = 0; i < state_.getNames().length; i++)
+                  {
+                     String name = state_.getNames()[i];
+                     if (!StringUtil.equals(name, MAIN_SOURCE_NAME))
+                        add(name, false);
+                  }
+               }
+
+               @Override
+               protected JsObject getValue()
+               {
+                  JsObject object = state_.<JsObject>cast().clone();
+                  return object;
+               }
+            };
+         }
+      });
+
       events_.addHandler(SourceFileSavedEvent.TYPE, new SourceFileSavedHandler()
       {
          public void onSourceFileSaved(SourceFileSavedEvent event)
@@ -185,37 +224,6 @@ public class SourceColumnManager implements SourceExtendedTypeDetectedEvent.Hand
                column.manageSourceNavigationCommands());
          }
       });
-
-      new JSObjectStateValue("source-column-manager",
-                             "column-info",
-                              ClientState.PERSISTENT,
-                              session_.getSessionInfo().getClientState(),
-                              false)
-      {
-         @Override
-         protected void onInit(JsObject value)
-         {
-            if (value == null)
-            {
-               state_ = State.createState(JsUtil.toJsArrayString(getNames(false)));
-               return;
-            }
-            state_ = value.cast();
-            for (int i = 0; i < state_.getNames().length; i++)
-            {
-               String name = state_.getNames()[i];
-               if (!StringUtil.equals(name, MAIN_SOURCE_NAME))
-                  add(name, false);
-            }
-         }
-
-         @Override
-         protected JsObject getValue()
-         {
-            JsObject object = state_.<JsObject>cast().clone();
-            return state_.cast();
-         }
-      };
    }
 
    public String add()
