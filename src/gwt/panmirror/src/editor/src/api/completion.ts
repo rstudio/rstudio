@@ -19,14 +19,15 @@ import { Node as ProsemirrorNode  } from "prosemirror-model";
 
 // TODO: some sort of invalidation token for requests (b/c they are async)
 
+export interface CompletionResult<T = any> {
+  pos: number;
+  items: T[] | Promise<T[]>;
+}
+
 export interface CompletionHandler<T = any> {
 
-  // can this handler produce completions for theh given context? (lower level handler)
-  // if so return the position from which replacements will occur
-  canCompleteAt(state: EditorState): number | null;
-
   // return a set of completions for the given context
-  completions(state: EditorState, limit: number): Promise<T[]>;
+  completions(state: EditorState, limit: number): CompletionResult | null;
   
   // provide a react compontent type for viewing the item
   completionView: React.FC<T> | React.ComponentClass<T>;

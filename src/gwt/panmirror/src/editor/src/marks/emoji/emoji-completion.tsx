@@ -18,37 +18,24 @@ import { Node as ProsemirrorNode } from 'prosemirror-model';
 
 import React from 'react';
 
-import { CompletionHandler } from "../../api/completion";
+import { CompletionHandler, CompletionResult } from "../../api/completion";
 import { Emoji, emojisFromPrefx } from "../../api/emoji";
 
 export function emojiCompletionHandler() : CompletionHandler<Emoji> {
 
   return {
     
-    canCompleteAt(state: EditorState): number | null {
+    completions: (state: EditorState, limit: number): CompletionResult<Emoji> | null  => {
+
       const match = matchEmojiCompletion(state); 
       if (match) {
-        return state.selection.head - match[2].length - 1;
+        return {
+          pos: state.selection.head - match[2].length - 1,
+          items: emojisFromPrefx(match[2])
+        };
       } else {
         return null;
       }
-    },
-
-
-    completions: (state: EditorState, limit: number): Promise<Emoji[]> => {
-
-      let results = new Array<Emoji>();
-
-      const match = matchEmojiCompletion(state);
-      if (match) {
-
-        // TODO: implement support for limit
-        // TODO: ensure that multi-alias emojis prefer the matching one
-
-        results = emojisFromPrefx(match[2]);
-      }
-
-      return Promise.resolve(results);
     },
 
     completionView: EmojiView,

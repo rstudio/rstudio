@@ -19,7 +19,7 @@ import { EditorView } from 'prosemirror-view';
 import React from 'react';
 import ReactDOM from 'react-dom';
 
-import { CompletionHandler } from '../../api/completion';
+import { CompletionHandler, CompletionResult } from '../../api/completion';
 import { EditorEvents, EditorEvent } from '../../api/events';
 import { applyStyles } from '../../api/css';
 
@@ -45,9 +45,9 @@ class CompletionPlugin extends Plugin {
       view: () => ({
         update: (view: EditorView) => {
           for (const handler of handlers) {
-            const pos = handler.canCompleteAt(view.state);
-            if (pos !== null) {
-              this.showCompletions(view, pos, handler);
+            const result = handler.completions(view.state, 20);
+            if (result) {
+              this.showCompletions(view, handler, result);
               return;
             }
           }
@@ -76,9 +76,12 @@ class CompletionPlugin extends Plugin {
     this.hideCompletions();
   }
 
-  private showCompletions(view: EditorView, pos: number, handler: CompletionHandler) {
-    handler.completions(view.state, 20).then(completions => {
-      const positionStyles = panelPositionStylesForPosition(view, pos, 200, 200);
+  private showCompletions(view: EditorView, handler: CompletionHandler, result: CompletionResult) {
+
+    // helper function to show the popup at the specified position
+    const showPopup = (completions: any[]) => {
+      
+      const positionStyles = panelPositionStylesForPosition(view, result.pos, 200, 200);
       applyStyles(this.completionPopup, [], positionStyles);
       
       this.completionPopup.style.display = '';     
@@ -88,7 +91,14 @@ class CompletionPlugin extends Plugin {
         completionView={handler.completionView} />,
         this.completionPopup,
       );
-    });
+    };
+    
+    // show completions (resolve promise if necessary)
+    if (result.items instanceof Promise) {
+      result.items.then(showPopup);
+    } else {
+      showPopup(result.items);
+    }
   }
 
   private hideCompletions() {
