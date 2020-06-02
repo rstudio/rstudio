@@ -21,6 +21,7 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 
 import { ProsemirrorCommand, EditorCommandId } from '../../api/command';
+import { applyStyles } from '../../api/css';
 import { EditorEvents, EditorEvent } from '../../api/events';
 import { Extension } from '../../api/extension';
 import { EditorFormat } from '../../api/format';
@@ -31,12 +32,9 @@ import { PandocCapabilities } from '../../api/pandoc_capabilities';
 import { EditorUI } from '../../api/ui';
 
 import { InsertSymbolPopup } from './insert_symbol-popup';
-import { safePointForSelection } from '../../api/widgets/utils';
 
 const key = new PluginKey<boolean>('insert_symbol');
-
-// TODO: When keyboard in textbox with no text, arrow keys not working
-// TODO: Preview should be delay when scrolls / selection changes if it isn't already showing
+const kMinimumPanelPaddingToEdgeOfView = 5;
 
 const extension = (
   _pandocExtensions: PandocExtensions,
@@ -110,14 +108,33 @@ class InsertSymbolPlugin extends Plugin<boolean> {
       this.popup.style.position = 'absolute';
       this.popup.style.zIndex = '1000';
 
-      const point = safePointForSelection(view, kHeight, kWidth);
-
-      this.popup.style.top = point.y + 'px';
-      this.popup.style.left = point.x+ 'px';
-
+      applyStyles(this.popup, [], this.panelPositionStylesForCurrentSelection(view, kHeight, kWidth));
       ReactDOM.render(this.insertSymbolPopup(view, [kHeight, kWidth]), this.popup);
       window.document.body.appendChild(this.popup);
     }
+  }
+  
+  private panelPositionStylesForCurrentSelection(view: EditorView, height: number, width: number) {
+    const selection = view.state.selection;
+    const editorRect = view.dom.getBoundingClientRect();
+  
+    const selectionCoords = view.coordsAtPos(selection.from);
+  
+    const maximumTopPosition = Math.min(selectionCoords.bottom, window.innerHeight - height - kMinimumPanelPaddingToEdgeOfView);
+    const minimumTopPosition = editorRect.y;
+    const popupTopPosition = Math.max(minimumTopPosition, maximumTopPosition);
+  
+    const maximumLeftPosition = Math.min(selectionCoords.right, window.innerWidth - width - kMinimumPanelPaddingToEdgeOfView);
+    const minimumLeftPosition = editorRect.x;
+    const popupLeftPosition = Math.max(minimumLeftPosition, maximumLeftPosition);
+
+    // styles we'll return
+    const styles = { 
+      top: popupTopPosition + 'px',
+      left: popupLeftPosition + 'px',
+    };
+  
+    return styles;
   }
 
   private focusChanged() {
