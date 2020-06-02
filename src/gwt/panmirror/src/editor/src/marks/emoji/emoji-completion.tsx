@@ -42,6 +42,10 @@ export function emojiCompletionHandler() : CompletionHandler<Emoji> {
 
       const match = matchEmojiCompletion(state);
       if (match) {
+
+        // TODO: implement support for limit
+        // TODO: ensure that multi-alias emojis prefer the matching one
+
         results = emojisFromPrefx(match[2]);
       }
 
