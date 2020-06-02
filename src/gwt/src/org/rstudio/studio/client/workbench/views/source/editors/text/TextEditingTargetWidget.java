@@ -1756,13 +1756,13 @@ public class TextEditingTargetWidget
 
    private void syncRainbowParenMode()
    {
-//      boolean rainbowMode = editor_.getFileType().getRainbowParens();
-//      if (docUpdateSentinel_.hasProperty(TextEditingTarget.USE_RAINBOW_PARENS))
-//      {
-//         rainbowMode = docUpdateSentinel_.getBoolProperty(TextEditingTarget.USE_RAINBOW_PARENS, rainbowMode);
-//      }
-//      editor_.setUseWrapMode(rainbowMode);
-//      commands_.toggleSoftWrapMode().setChecked(rainbowMode);
+      boolean rainbowMode = editor_.getRainbowParentheses();
+      if (docUpdateSentinel_.hasProperty(TextEditingTarget.USE_RAINBOW_PARENS))
+      {
+         rainbowMode = docUpdateSentinel_.getBoolProperty(TextEditingTarget.USE_RAINBOW_PARENS, rainbowMode);
+      }
+      editor_.setRainbowParentheses(rainbowMode);
+      commands_.toggleRainbowParens().setChecked(rainbowMode);
    }
 
    private final TextEditingTarget target_;
