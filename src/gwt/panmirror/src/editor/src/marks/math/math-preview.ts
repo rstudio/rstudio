@@ -16,11 +16,14 @@
 import { Plugin, PluginKey } from "prosemirror-state";
 import { EditorView } from "prosemirror-view";
 
+import debounce from 'lodash.debounce';
+
 import { EditorUIMath } from "../../api/ui";
 import { getMarkRange } from "../../api/mark";
 import { createPopup } from "../../api/widgets/widgets";
 import { EditorEvents, EditorEvent } from "../../api/events";
 import { applyStyles } from "../../api/css";
+import { ResolvedPos } from "prosemirror-model";
 
 const key = new PluginKey('math-preview');
 
@@ -51,6 +54,18 @@ export class MathPreviewPlugin extends Plugin {
           }
         };
       },
+      props: {
+        handleDOMEvents: {
+          mousemove: debounce((view: EditorView, event: Event) => {
+            const ev = event as MouseEvent;
+            const pos = view.posAtCoords({ top: ev.clientY, left: ev.clientX });
+            if (pos && pos.inside !== -1) {
+              this.updateInlinePopup(view.state.doc.resolve(pos.pos));
+            }
+            return false;
+          }, 250),
+        },
+      },
     });
 
     // save reference to uiMath
@@ -58,10 +73,10 @@ export class MathPreviewPlugin extends Plugin {
 
     // update position on scroll
     this.updateInlinePopup = this.updateInlinePopup.bind(this);
-    this.scrollUnsubscribe = events.subscribe(EditorEvent.Scroll, this.updateInlinePopup);
+    this.scrollUnsubscribe = events.subscribe(EditorEvent.Scroll, () => this.updateInlinePopup());
   }
 
-  private updateInlinePopup() {
+  private updateInlinePopup($pos?: ResolvedPos) {
 
     // bail if we don't have a view
     if (!this.view) {
@@ -71,10 +86,21 @@ export class MathPreviewPlugin extends Plugin {
     // capture state, etc.
     const state = this.view.state;
     const schema = state.schema;
-    const selection = state.selection;
-     
-    // are we in a math mark? if not bail
-    const range = getMarkRange(selection.$from, schema.marks.math);
+
+    // determine math range
+    let range: false | { from: number, to: number } = false;
+
+    // if a $pos was passed (e.g. for a mouse hover) then check that first
+    if ($pos) {
+      range = getMarkRange($pos, schema.marks.math);
+    }
+
+    // if that didn't work try the selection
+    if (!range) {
+      range = getMarkRange(state.selection.$from, schema.marks.math)
+    }
+
+    // bail if we don't have a target
     if (!range) {
       this.closeInlinePopup();
       return;
