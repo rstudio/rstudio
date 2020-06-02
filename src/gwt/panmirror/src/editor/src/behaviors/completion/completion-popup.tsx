@@ -15,14 +15,14 @@
 
 import React from 'react';
 
+import { FixedSizeList, ListChildComponentProps } from "react-window";
+
 import { WidgetProps } from "../../api/widgets/react";
 import { Popup } from '../../api/widgets/popup';
 
-import { FixedSizeList, ListChildComponentProps } from "react-window";
-
 interface CompletionPopupProps extends WidgetProps {
   completions: any[];
-  listItemComponent: React.FC<ListChildComponentProps>;
+  completionView: React.FC | React.ComponentClass;
   rowHeight?: number;
   height?: number;
 }
@@ -42,8 +42,20 @@ export const CompletionPopup: React.FC<CompletionPopupProps> = props => {
         height={height}
         width={kCompletionPopupWidth}
         itemData={props.completions}>
-        {props.listItemComponent}
+        {listChildComponent(props.completionView)}
       </FixedSizeList>   
     </Popup>
   );
 };
+
+const listChildComponent = (completionView: React.FC | React.ComponentClass) => {
+  return (props: ListChildComponentProps) => {
+    const item = React.createElement(completionView, props.data[props.index]);
+    return (
+      <div>
+        {item}
+      </div>
+    );
+  };
+};
+

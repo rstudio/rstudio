@@ -13,21 +13,18 @@
  *
  */
 
+import { EditorState } from 'prosemirror-state';
 import { Node as ProsemirrorNode } from 'prosemirror-model';
 
 import React from 'react';
 
 import { CompletionHandler } from "../../api/completion";
 import { Emoji, emojisFromPrefx } from "../../api/emoji";
-import { EditorState } from 'prosemirror-state';
-import { ListChildComponentProps } from 'react-window';
-
-
 
 export function emojiCompletionHandler() : CompletionHandler {
 
   return {
-    canComplete(state: EditorState): number | null {
+    canCompleteAt(state: EditorState): number | null {
       const match = matchEmojiCompletion(state); 
       if (match) {
         return state.selection.head - match[2].length - 1;
@@ -81,8 +78,9 @@ function matchEmojiCompletion(state: EditorState) {
   return textBefore.match(kEmojiCompletionRegEx);
 }
 
-const EmojiView: React.FC<ListChildComponentProps> = props => {
+const EmojiView: React.FC = props => {
+  const emoji = props as Emoji;
   return (
-    <div>{props.data[props.index].emoji}</div>
+    <div>{emoji.emoji}</div>
   );
 };

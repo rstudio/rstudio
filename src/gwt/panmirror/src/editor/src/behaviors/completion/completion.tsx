@@ -14,15 +14,16 @@
  */
 
 import { Plugin, PluginKey } from 'prosemirror-state';
+import { EditorView } from 'prosemirror-view';
 
 import React from 'react';
 import ReactDOM from 'react-dom';
 
 import { CompletionHandler } from '../../api/completion';
 import { EditorEvents, EditorEvent } from '../../api/events';
-import { EditorView } from 'prosemirror-view';
-import { CompletionPopup } from './completion-popup';
 import { applyStyles } from '../../api/css';
+
+import { CompletionPopup } from './completion-popup';
 
 export function completionExtension(handlers: readonly CompletionHandler[], events: EditorEvents) {
   return {
@@ -44,7 +45,7 @@ class CompletionPlugin extends Plugin {
       view: () => ({
         update: (view: EditorView) => {
           for (const handler of handlers) {
-            const pos = handler.canComplete(view.state);
+            const pos = handler.canCompleteAt(view.state);
             if (pos !== null) {
               this.showCompletions(view, pos, handler);
               return;
@@ -84,7 +85,7 @@ class CompletionPlugin extends Plugin {
       ReactDOM.render(
         <CompletionPopup 
         completions={completions} 
-        listItemComponent={handler.completionView} />,
+        completionView={handler.completionView} />,
         this.completionPopup,
       );
     });
