@@ -16,7 +16,6 @@ package org.rstudio.studio.client.palette.ui;
 
 import java.util.List;
 
-import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.KeySequence;
 import org.rstudio.studio.client.workbench.addins.Addins.RAddin;
 
@@ -26,27 +25,15 @@ import org.rstudio.studio.client.workbench.addins.Addins.RAddin;
  */
 public class RAddinCommandPaletteEntry extends CommandPaletteCommand
 {
-   public RAddinCommandPaletteEntry(RAddin addin, List<KeySequence> keys)
+   public RAddinCommandPaletteEntry(RAddin addin, String label, List<KeySequence> keys)
    {
       super(keys);
       addin_ = addin;
-      label_ = addin_.getName();
-      if (StringUtil.isNullOrEmpty(label_))
-         label_ = addin_.getTitle();
-      if (StringUtil.isNullOrEmpty(label_))
-         label_ = addin_.getDescription();
-      if (StringUtil.isNullOrEmpty(label_))
-         label_ = "";
+      label_ = label;
 
       initialize();
    }
    
-   @Override
-   public String getLabel()
-   {
-      return label_;
-   }
-
    @Override
    public String getId()
    {
@@ -66,6 +53,13 @@ public class RAddinCommandPaletteEntry extends CommandPaletteCommand
       return true;
    }
 
-   private String label_;
+
+   @Override
+   public String getLabel()
+   {
+      return label_;
+   }
+
    private final RAddin addin_;
+   private final String label_;
 }

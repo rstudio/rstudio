@@ -16,7 +16,6 @@ package org.rstudio.studio.client.palette.ui;
 
 import java.util.List;
 
-import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.command.AppCommand.Context;
 import org.rstudio.core.client.command.KeySequence;
@@ -27,25 +26,12 @@ import org.rstudio.core.client.command.KeySequence;
  */
 public class AppCommandPaletteEntry extends CommandPaletteCommand
 {
-   public AppCommandPaletteEntry(AppCommand command, List<KeySequence> keys)
+   public AppCommandPaletteEntry(AppCommand command, String label, List<KeySequence> keys)
    {
       super(keys);
-      label_ = command.getLabel();
-      if (StringUtil.isNullOrEmpty(label_))
-         label_ = command.getButtonLabel();
-      if (StringUtil.isNullOrEmpty(label_))
-         label_ = command.getDesc();
-      if (StringUtil.isNullOrEmpty(label_))
-         label_ = command.getMenuLabel(false);
-      if (StringUtil.isNullOrEmpty(label_))
-         label_ = "";
       command_ = command;
+      label_ = label;
       initialize();
-   }
-   
-   public String getLabel()
-   {
-      return label_;
    }
    
    @Override
@@ -79,6 +65,12 @@ public class AppCommandPaletteEntry extends CommandPaletteCommand
       // should become invisible or disabled when unavailable, but they also
       // become unavailable when they have no listeners.
       return command_.isEnabled() && command_.hasCommandHandlers();
+   }
+
+   @Override
+   public String getLabel()
+   {
+      return label_;
    }
 
    private String label_;

@@ -67,7 +67,7 @@
 			</g:TextBox>
 		</g:HTMLPanel>
 		<g:ScrollPanel ui:field="scroller_" styleName="ace_editor {styles_.commandPanel}">
-			<g:FlowPanel styleName="{styles_.commandList}" ui:field="commandList_"></g:FlowPanel>
+			<g:HTMLPanel styleName="{styles_.commandList}" ui:field="commandList_"></g:HTMLPanel>
 		</g:ScrollPanel>
 		<g:HTMLPanel styleName="ace_editor {styles_.noResults}" ui:field="noResults_" visible="false">
 			<g:Label text="No matching commands found."></g:Label>

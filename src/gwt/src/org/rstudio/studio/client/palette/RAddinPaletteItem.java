@@ -17,6 +17,7 @@ package org.rstudio.studio.client.palette;
 
 import java.util.List;
 
+import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.KeySequence;
 import org.rstudio.studio.client.palette.model.CommandPaletteItem;
 import org.rstudio.studio.client.palette.ui.RAddinCommandPaletteEntry;
@@ -32,6 +33,13 @@ public class RAddinPaletteItem implements CommandPaletteItem
       addin_ = addin;
       executor_ = executor;
       keys_ = keys;
+      label_ = addin_.getName();
+      if (StringUtil.isNullOrEmpty(label_))
+         label_ = addin_.getTitle();
+      if (StringUtil.isNullOrEmpty(label_))
+         label_ = addin_.getDescription();
+      if (StringUtil.isNullOrEmpty(label_))
+         label_ = "";
    }
 
    @Override
@@ -39,7 +47,7 @@ public class RAddinPaletteItem implements CommandPaletteItem
    {
       if (widget_ == null)
       {
-         widget_ = new RAddinCommandPaletteEntry(addin_, keys_);
+         widget_ = new RAddinCommandPaletteEntry(addin_, label_, keys_);
       }
       
       return widget_;
@@ -54,17 +62,16 @@ public class RAddinPaletteItem implements CommandPaletteItem
    @Override
    public boolean matchesSearch(String[] keywords)
    {
-      String hay = widget_.getLabel();
+      String hay = label_.toLowerCase();
       for (String needle: keywords)
       {
-         if (hay.contains(needle))
+         if (!hay.contains(needle))
          {
-            return true;
+            return false;
          }
       }
-      return false;
+      return true;
    }
-
 
    @Override
    public void setSearchHighlight(String[] keywords)
@@ -85,6 +92,8 @@ public class RAddinPaletteItem implements CommandPaletteItem
    }
    
    private RAddinCommandPaletteEntry widget_;
+   private String label_;
+   
    private final RAddin addin_;
    private final AddinExecutor executor_;
    private final List<KeySequence> keys_;

@@ -18,6 +18,7 @@ package org.rstudio.studio.client.palette.ui;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.rstudio.core.client.DebouncedCommand;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.a11y.A11y;
@@ -34,13 +35,10 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.event.dom.client.KeyCodes;
-import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.ui.Composite;
-import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.HTMLPanel;
 import com.google.gwt.user.client.ui.ScrollPanel;
 import com.google.gwt.user.client.ui.TextBox;
@@ -85,6 +83,7 @@ public class CommandPalette extends Composite
       attached_ = false;
       pageSize_ = 0;
       sources_ = sources;
+      needles_ = new String[0];
       styles_.ensureInjected();
       
       Element searchBox = searchBox_.getElement();
@@ -159,7 +158,8 @@ public class CommandPalette extends Composite
             if (!StringUtil.equals(searchText_, searchText))
             {
                searchText_ = searchText;
-               applyFilter();
+               needles_ = searchBox_.getText().toLowerCase().split("\\s+");
+               applyFilter_.nudge();
             }
          }
       });
@@ -213,7 +213,6 @@ public class CommandPalette extends Composite
       
       // Render the first page of elements
       renderNextPage();
-      updateSelection();
       
       // If we are already attached to the DOM at this point, compute the page
       // size for scrolling by pages. 
@@ -264,34 +263,14 @@ public class CommandPalette extends Composite
     */
    private void applyFilter()
    {
-      int matches = 0;
-
-      // Split the search text into a series of lowercase words. This provides a
-      // kind of partial fuzzy matching, so that e.g., "new py" matches the command
-      // "Create a new Python script".
-      String[] needles = searchBox_.getText().toLowerCase().split("\\s+");
-      
-      for (CommandPaletteItem item: items_)
-      {
-         if (item.matchesSearch(needles))
-         {
-            item.setSearchHighlight(needles);
-            item.asWidget().setVisible(true);
-            matches++;
-         }
-         else
-         {
-            item.asWidget().setVisible(false);
-         }
-      }
-      
-      // If not searching for anything, then searching for everything.
-      if (needles.length == 0)
-      {
-         matches = items_.size();
-      }
-      
-      updateSelection();
+      commandList_.clear();
+      renderedItem_ = 0;
+      renderNextPage();
+   }
+   
+   private void completeRender()
+   {
+      int matches = commandList_.getWidgetCount();
       
       // Show "no results" message if appropriate
       if (matches == 0 && !noResults_.isVisible())
@@ -310,23 +289,6 @@ public class CommandPalette extends Composite
             "commands found, press up and down to navigate",
             RStudioGinjector.INSTANCE.getUserPrefs().typingStatusDelayMs().getValue(),
             Severity.STATUS);
-   }
-   
-   /**
-    * Selects the topmost search result in the palette
-    */
-   public void updateSelection()
-   {
-      for (int i = 0; i < items_.size(); i++)
-      {
-         if (!items_.get(i).asWidget().isVisible())
-         {
-            continue;
-         }
-         
-         selectNewCommand(i);
-         break;
-      }
    }
    
    /**
@@ -379,7 +341,6 @@ public class CommandPalette extends Composite
    public void focus()
    {
       searchBox_.setFocus(true);
-      updateSelection();
    }
    
    /**
@@ -443,38 +404,58 @@ public class CommandPalette extends Composite
          items_.addAll(items);
       }
       
-      // Render the next page of data
-      int first = renderedItem_;
-      int last = Math.min(renderedItem_ + RENDER_PAGE_SIZE, items_.size());
-      
-      for (int idx = first; idx < last; idx++)
+      int rendered = 0;
+      int idx = renderedItem_;
+      while (idx < items_.size() && rendered < RENDER_PAGE_SIZE)
       {
          CommandPaletteItem item = items_.get(idx);
-         Widget w = item.asWidget();
-         if (w != null)
+         if (item != null && (needles_.length == 0 || item.matchesSearch(needles_)))
          {
-            commandList_.add(w);
+            Widget widget = item.asWidget();
+            if (widget != null)
+            {
+               commandList_.add(item.asWidget());
+               item.setSearchHighlight(needles_);
+               
+               // If we just added the first widget to the box, select it
+               if (commandList_.getWidgetCount() == 1)
+               {
+                  selectNewCommand(idx);
+               }
+               rendered++;
+            }
+         }
+         
+         // Advance to next command palette item
+         idx++;
+
+            /* 
+             * TODO
             w.sinkEvents(Event.ONCLICK);
             w.addHandler((evt) -> {
                item.invoke();
             }, ClickEvent.getType());
-         }
+            */
       }
       
       // Save our place so we'll start rendering at the next page
-      renderedItem_ = last;
+      renderedItem_ = idx;
       
       // If we didn't render everything, schedule another pass
       if (renderedItem_ < items_.size() || renderedSource_ < sources_.size())
       {
-         Scheduler.get().scheduleDeferred(() ->
+         // Don't populate while user is typing
+         if (!applyFilter_.isRunning())
          {
-            renderNextPage();
-         });
+            Scheduler.get().scheduleDeferred(() ->
+            {
+               renderNextPage();
+            });
+         }
       }
       else
       {
-         rendered_ = true;
+         completeRender();
       }
    }
    
@@ -483,16 +464,25 @@ public class CommandPalette extends Composite
    private final List<CommandPaletteItem> items_;
    private int selected_;
    private String searchText_;
+   private String[] needles_;
    private boolean attached_;
    private int pageSize_;
    
    private int renderedItem_;
    private int renderedSource_ = 0;
    private final int RENDER_PAGE_SIZE = 50;
-   private boolean rendered_ = false;
+
+   DebouncedCommand applyFilter_ = new DebouncedCommand(100)
+   {
+      @Override
+      protected void execute()
+      {
+         applyFilter();
+      }
+   };
 
    @UiField public TextBox searchBox_;
-   @UiField public FlowPanel commandList_;
+   @UiField public HTMLPanel commandList_;
    @UiField AriaLiveStatusWidget resultsCount_;
    @UiField HTMLPanel noResults_;
    @UiField ScrollPanel scroller_;

@@ -32,6 +32,16 @@ public class AppCommandPaletteItem implements CommandPaletteItem
    public AppCommandPaletteItem(AppCommand command, List<KeySequence> keys)
    {
       command_ = command;
+      keys_ = keys;
+      label_ = command.getLabel();
+      if (StringUtil.isNullOrEmpty(label_))
+         label_ = command.getButtonLabel();
+      if (StringUtil.isNullOrEmpty(label_))
+         label_ = command.getDesc();
+      if (StringUtil.isNullOrEmpty(label_))
+         label_ = command.getMenuLabel(false);
+      if (StringUtil.isNullOrEmpty(label_))
+         label_ = "";
    }
 
    @Override
@@ -39,7 +49,7 @@ public class AppCommandPaletteItem implements CommandPaletteItem
    {
       if (widget_ == null)
       {
-         widget_ = new AppCommandPaletteEntry(command_, keys_);
+         widget_ = new AppCommandPaletteEntry(command_, label_, keys_);
       }
       return widget_;
    }
@@ -53,7 +63,7 @@ public class AppCommandPaletteItem implements CommandPaletteItem
          // This isn't currently likely since we hide commands that aren't
          // visible.
          display.showErrorMessage("Command Not Available", 
-               "The command '" + widget_.getLabel() + "' is not currently available.");
+               "The command '" + label_ + "' is not currently available.");
       }
       else if (!command_.isEnabled() || !command_.hasCommandHandlers())
       {
@@ -61,7 +71,7 @@ public class AppCommandPaletteItem implements CommandPaletteItem
          // handlers as disabled (nothing will happen if we run them except a
          // runtime exception)
          display.showErrorMessage("Command Disabled", 
-               "The command '" + widget_.getLabel() + "' cannot be used right now. " +
+               "The command '" + label_ + "' cannot be used right now. " +
                "It may be unavailable in this project, file, or view.");
       }
       else
@@ -76,7 +86,7 @@ public class AppCommandPaletteItem implements CommandPaletteItem
          catch(Exception e)
          {
             display.showErrorMessage("Command Execution Failed", 
-                  "The command '" + widget_.getLabel() + "' could not be executed.\n\n" +
+                  "The command '" + label_ + "' could not be executed.\n\n" +
                   StringUtil.notNull(e.getMessage()));
             Debug.logException(e);
          }
@@ -92,15 +102,15 @@ public class AppCommandPaletteItem implements CommandPaletteItem
    @Override
    public boolean matchesSearch(String[] keywords)
    {
-      String hay = widget_.getLabel();
+      String hay = label_.toLowerCase();
       for (String needle: keywords)
       {
-         if (hay.contains(needle))
+         if (!hay.contains(needle))
          {
-            return true;
+            return false;
          }
       }
-      return false;
+      return true;
    }
 
    @Override
@@ -115,7 +125,9 @@ public class AppCommandPaletteItem implements CommandPaletteItem
       widget_.setSelected(selected);
    }
 
-   List<KeySequence> keys_;
-   AppCommand command_;
-   AppCommandPaletteEntry widget_;
+   private final List<KeySequence> keys_;
+   private final AppCommand command_;
+
+   private String label_;
+   private AppCommandPaletteEntry widget_;
 }

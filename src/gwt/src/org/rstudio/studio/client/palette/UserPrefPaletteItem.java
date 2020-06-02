@@ -67,15 +67,15 @@ public class UserPrefPaletteItem implements CommandPaletteItem
    @Override
    public boolean matchesSearch(String[] keywords)
    {
-      String hay = val_.getTitle();
+      String hay = val_.getTitle().toLowerCase();
       for (String needle: keywords)
       {
-         if (hay.contains(needle))
+         if (!hay.contains(needle))
          {
-            return true;
+            return false;
          }
       }
-      return false;
+      return true;
    }
 
    @Override
