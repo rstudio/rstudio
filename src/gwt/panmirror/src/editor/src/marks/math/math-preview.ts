@@ -101,7 +101,7 @@ export class MathPreviewPlugin extends Plugin {
 
     // if that didn't work try the selection
     if (!range) {
-      range = getMarkRange(state.selection.$from, schema.marks.math)
+      range = getMarkRange(state.selection.$from, schema.marks.math);
     }
 
     // bail if we don't have a target
