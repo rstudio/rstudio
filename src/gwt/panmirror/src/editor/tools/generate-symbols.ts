@@ -13,7 +13,7 @@
  *
  */
 
-import * as fetch from 'node-fetch'
+import * as fetch from 'node-fetch';
 import * as fs from 'fs';
 import * as os from 'os';
 import * as unzip from 'unzip';
@@ -137,23 +137,23 @@ cleanupFiles([targetXmlFile, targetZipFile], true);
 
 fetch(unicodeDownloadPath, {method: 'GET'})
 .then((res) => {
-  //Download the file
+  // Download the file
   return new Promise<string>((resolve, reject) => {
     const file = fs.createWriteStream(targetZipFile);
     res.body.on('finish', () => resolve(targetZipFile));
     res.body.pipe(file);
     file.on('error', reject);
-  })
+  });
 })
 .then(() => {
   // Unzip the file
   return new Promise((resolve, reject) => {
-    message('Unzipping File', targetZipFile);
+    info('Unzipping File', targetZipFile);
     const readStream = fs.createReadStream(targetZipFile);
     const writeStream = unzip.Extract({ path: workingDirectory });
     writeStream.on('error', reject);
     writeStream.on('close', () => {
-      message('Done unzipping', '');
+      info('Done unzipping', '');
       resolve(outputFile);     
     });
     readStream.pipe(writeStream);
@@ -161,53 +161,53 @@ fetch(unicodeDownloadPath, {method: 'GET'})
 })
 .then(() => {
   // Parse XML -> Json
-  message('Parsing', targetXmlFile);
+  info('Parsing', targetXmlFile);
   const fileContents = fs.readFileSync(targetXmlFile, 'utf8');
-  var options = {
+  const options = {
     ignoreAttributes: false,
     arrayMode: false,
   };
   const tObj = parser.getTraversalObj(fileContents, options);
   const jsonResult = parser.convertToJson(tObj, options);
-  message('Done Parsing', '');
+  info('Done Parsing', '');
   return jsonResult;
 })
 .then((jsonResult) => {
   // Read the block from the XML file and generate typed data
-  message('Reading Raw Data'); 
-  const allIncludedBlocks: Array<Block> = parseBlocks(jsonResult.ucd.blocks.block);
-  const allValidSymbols: Array<Symbol> = parseSymbols(jsonResult.ucd.repertoire.char);
-  message(' Blocks ' + allIncludedBlocks.length);
-  message(' Chars ' + allValidSymbols.length);
-  message('');
+  info('Reading Raw Data'); 
+  const allIncludedBlocks: Block[] = parseBlocks(jsonResult.ucd.blocks.block);
+  const allValidSymbols: Character[] = parseSymbols(jsonResult.ucd.repertoire.char);
+  info(' Blocks ' + allIncludedBlocks.length);
+  info(' Chars ' + allValidSymbols.length);
+  info('');
 
-  message('Generating Output Data');
-  var symbolGroups: SymbolGroup[] = new Array<SymbolGroup>();
-  groupToBlockMapping.forEach(groupToBlockMapping => {
-    const groupName = groupToBlockMapping.alias;
+  info('Generating Output Data');
+  const symbolGroups: Group[] = new Array<Group>();
+  groupToBlockMapping.forEach(mapping => {
+    const groupName = mapping.alias;
     const groupSymbols = allValidSymbols.filter(symbol => {
         // Find the child blocks for this Group and use the codepoint to determine
         // whether this symbol should be included in this group
-        const matchingBlockName = groupToBlockMapping.blocks.find(blockName => {
+        const matchingBlockName = mapping.blocks.find(blockName => {
           const matchingBlock = allIncludedBlocks.find(block => block.name === blockName);
           return symbol.codepoint >= matchingBlock.codepointFirst && symbol.codepoint <= matchingBlock.codepointLast;
         });
 
         return matchingBlockName != null;
     });
-    message('Group ' + groupName + ' -> ' + groupSymbols.length + ' symbols');   
+    info('Group ' + groupName + ' -> ' + groupSymbols.length + ' symbols');   
     symbolGroups.push({ name: groupName, symbols: groupSymbols });
   });
-  message('');
+  info('');
   return symbolGroups;
 })
 .then((symbolGroups) => {
   // Filter out any groups with no valid characters
-  return symbolGroups.filter(blockGroup => blockGroup.symbols.length > 0)
+  return symbolGroups.filter(blockGroup => blockGroup.symbols.length > 0);
 })
 .then((symbolGroups) => {
   // Write the output file
-  message('Writing output'), outputFile;
+  info('Writing output', outputFile);
   cleanupFiles([outputFile], false);
   const finalJson = JSON.stringify(symbolGroups, null, 2);
   fs.writeFileSync(outputFile, finalJson);
@@ -216,8 +216,8 @@ fetch(unicodeDownloadPath, {method: 'GET'})
   const countSymbols = symbolGroups.reduce((count, symbolGroup) => {
     return count + symbolGroup.symbols.length;
   }, 0);
-  message(countSymbols + " total symbols generated");
-  message('Done', '');
+  info(countSymbols + " total symbols generated");
+  info('Done', '');
 })
 .catch((message: any) => {
   error(message);
@@ -240,7 +240,7 @@ function parseBlocks(blockJson: any[]) : Block[] {
   });
 }
 
-function parseSymbols(symbolsJson: any[]) : Symbol[] {
+function parseSymbols(symbolsJson: any[]) : Character[] {
   return symbolsJson.filter((rawChar: any) => isValidSymbol(rawChar))
   .map((rawChar: { [x: string]: any; }) => {
     const charpoint = parseInt(rawChar['@_cp'], 16);
@@ -293,7 +293,7 @@ function isValidSymbol(rawChar: { [x: string]: any; }): boolean {
   return true;
 }
 
-function cleanupFiles(files: Array<string>, warn?: boolean) {
+function cleanupFiles(files: string[], warn?: boolean) {
   files.forEach(file => {
     if (fs.existsSync(file)) {
       fs.unlinkSync(file);
@@ -304,9 +304,9 @@ function cleanupFiles(files: Array<string>, warn?: boolean) {
   });
 }
 
-interface SymbolGroup {
+interface Group {
   name: string;
-  symbols: Symbol[];
+  symbols: Character[];
 }
 
 interface Block {
@@ -315,20 +315,23 @@ interface Block {
   codepointLast: number;
 }
 
-interface Symbol {
+interface Character {
   name: string;
   value: string;
   codepoint: number;
 }
 
-function message(...message: any[]) {
+function info(...message: any[]) {
+  // tslint:disable-next-line: no-console
   message.forEach(msg => console.log(msg));
 }
 
 function warning(...message: any[]) {
+  // tslint:disable-next-line: no-console
   message.forEach(msg => console.warn('WARN:', msg));
 }
 
 function error(...message: any[]) {
+  // tslint:disable-next-line: no-console
   message.forEach(msg => console.warn('ERROR:', msg));
 }
