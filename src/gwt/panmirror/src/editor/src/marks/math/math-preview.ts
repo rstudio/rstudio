@@ -24,6 +24,7 @@ import { createPopup } from "../../api/widgets/widgets";
 import { EditorEvents, EditorEvent } from "../../api/events";
 import { applyStyles } from "../../api/css";
 import { ResolvedPos } from "prosemirror-model";
+import { editingRootNodeClosestToPos } from "../../api/node";
 
 const key = new PluginKey('math-preview');
 
@@ -37,6 +38,7 @@ export class MathPreviewPlugin extends Plugin {
   private lastRenderedInlineMath: string | null = null;
   
   private scrollUnsubscribe: VoidFunction;
+  private resizeUnsubscribe: VoidFunction;
 
   constructor(uiMath: EditorUIMath, events: EditorEvents) {
   
@@ -50,6 +52,7 @@ export class MathPreviewPlugin extends Plugin {
           },
           destroy: () => {
             this.scrollUnsubscribe();
+            this.resizeUnsubscribe();
             this.closeInlinePopup();
           }
         };
@@ -74,6 +77,7 @@ export class MathPreviewPlugin extends Plugin {
     // update position on scroll
     this.updateInlinePopup = this.updateInlinePopup.bind(this);
     this.scrollUnsubscribe = events.subscribe(EditorEvent.Scroll, () => this.updateInlinePopup());
+    this.resizeUnsubscribe = events.subscribe(EditorEvent.Resize,  () => this.updateInlinePopup());
   }
 
   private updateInlinePopup($pos?: ResolvedPos) {
@@ -162,11 +166,24 @@ function mathjaxPopupPositionStyles(
   const rangeStartCoords = view.coordsAtPos(range.from + 1); 
   const rangeEndCoords = view.coordsAtPos(range.to);
 
-  // styles we'll return
-  return { 
-    top: Math.round(rangeEndCoords.bottom - editorBox.top) + 10 + 'px',
-    left: 'calc(' + Math.round(rangeStartCoords.left - editorBox.left) + 'px - 1ch)',
-  };
+  // default positions
+  const top = Math.round(rangeEndCoords.bottom - editorBox.top) + 10 + 'px';
+  let left = `calc(${Math.round(rangeStartCoords.left - editorBox.left)}px - 1ch)`;
+
+  // if it flow across two lines then position at far left of editing root
+  if (rangeStartCoords.bottom !== rangeEndCoords.bottom) {
+    const editingRoot = editingRootNodeClosestToPos(view.state.doc.resolve(range.from));
+    if (editingRoot) {
+      const editingEl = view.nodeDOM(editingRoot.pos) as HTMLElement;
+      if (editingEl) {
+        const editingElStyle = window.getComputedStyle(editingEl);
+        left = `calc(${editingEl.getBoundingClientRect().left}px + ${editingElStyle.paddingLeft} - 1ch - 2px)`;
+      }
+    }
+  }
+
+  // return position
+  return { top, left };
 }
 
 
