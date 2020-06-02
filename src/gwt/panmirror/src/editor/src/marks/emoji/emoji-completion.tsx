@@ -21,9 +21,10 @@ import React from 'react';
 import { CompletionHandler } from "../../api/completion";
 import { Emoji, emojisFromPrefx } from "../../api/emoji";
 
-export function emojiCompletionHandler() : CompletionHandler {
+export function emojiCompletionHandler() : CompletionHandler<Emoji> {
 
   return {
+    
     canCompleteAt(state: EditorState): number | null {
       const match = matchEmojiCompletion(state); 
       if (match) {

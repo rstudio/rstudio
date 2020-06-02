@@ -13,26 +13,26 @@
  *
  */
 
-import { EditorState} from "prosemirror-state";
+import { EditorState } from "prosemirror-state";
 import { Node as ProsemirrorNode  } from "prosemirror-model";
 
 
 // TODO: some sort of invalidation token for requests (b/c they are async)
 
-export interface CompletionHandler {
+export interface CompletionHandler<T = any> {
 
   // can this handler produce completions for theh given context? (lower level handler)
   // if so return the position from which replacements will occur
   canCompleteAt(state: EditorState): number | null;
 
   // return a set of completions for the given context
-  completions(state: EditorState, limit: number): Promise<any[]>;
+  completions(state: EditorState, limit: number): Promise<T[]>;
   
   // provide a react compontent type for viewing the item
-  completionView: React.FC<any> | React.ComponentClass<any>;
+  completionView: React.FC<T> | React.ComponentClass<T>;
 
   // provide a completion replacement as a string or node
-  replacement(completion: any) : string | ProsemirrorNode;
+  replacement(completion: T) : string | ProsemirrorNode;
 
 }
 
