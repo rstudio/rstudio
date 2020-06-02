@@ -22,7 +22,8 @@ import zenscroll from 'zenscroll';
 
 import { EditorUI } from "../../api/ui";
 import { getMarkRange } from "../../api/mark";
-import { EditorEvents, EditorEvent } from "../../api/events";
+import { EditorEvents } from "../../api/events";
+import { ScrollEvent, ResizeEvent } from "../../api/event-types";
 import { applyStyles } from "../../api/css";
 import { editingRootNodeClosestToPos, editingRootNode } from "../../api/node";
 import { createPopup } from "../../api/widgets/widgets";
@@ -80,8 +81,8 @@ export class MathPreviewPlugin extends Plugin {
 
     // update position on scroll
     this.updatePopup = this.updatePopup.bind(this);
-    this.scrollUnsubscribe = events.subscribe(EditorEvent.Scroll, () => this.updatePopup());
-    this.resizeUnsubscribe = events.subscribe(EditorEvent.Resize,  () => this.updatePopup());
+    this.scrollUnsubscribe = events.subscribe(ScrollEvent, () => this.updatePopup());
+    this.resizeUnsubscribe = events.subscribe(ResizeEvent, () => this.updatePopup());
   }
 
   private updatePopup($mousePos?: ResolvedPos) {

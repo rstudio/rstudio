@@ -13,17 +13,50 @@
  *
  */
 
-export enum EditorEvent {
-  Update = 'panmirrorUpdate',
-  OutlineChange = 'panmirrorOutlineChange',
-  StateChange = 'panmirrorStateChange',
-  Resize = 'panmirrorResize',
-  Layout = 'panmirrorLayout',
-  Scroll = 'panmirrorScroll',
-  Focus = 'panmirrorFocus',
+export interface EventType<TDetail> {
+  readonly eventName: string;
+  // This field is needed only to prevent TDetail from being ignored by the type
+  // checker; if TDetail isn't used, tsc acts as if EventType isn't generic.
+  readonly dummy?: TDetail;
 }
 
+export type EventHandler<TDetail> = (detail?: TDetail) => void;
+
 export interface EditorEvents {
-  subscribe: (event: EditorEvent, handler: VoidFunction) => VoidFunction;
-  emit: (event: EditorEvent) => void;
+  subscribe<TDetail>(event: EventType<TDetail>, handler: EventHandler<TDetail>): VoidFunction;
+  emit<TDetail>(event: EventType<TDetail>, detail?: TDetail): void;
 }
+
+// Creates a new type of event. Use the TDetail type parameter to indicate the
+// type of data, if any, that event handlers can expect.
+export function makeEventType<TDetail = void>(eventName: string) {
+  return {eventName: `panmirror${eventName}`} as EventType<TDetail>;
+}
+
+/**
+ * An implementation of EditorEvents, using the DOM event system.
+ */
+export class DOMEditorEvents implements EditorEvents {
+  private readonly el: HTMLElement;
+
+  constructor(el: HTMLElement) {
+    this.el = el;
+  }
+
+  public emit<TDetail>(eventType: EventType<TDetail>, detail?: TDetail) {
+    const event = new CustomEvent(eventType.eventName, {detail});
+    return this.el.dispatchEvent(event);
+  }
+
+  public subscribe<TDetail>(eventType: EventType<TDetail>, handler: EventHandler<TDetail>) {
+    const listener = function(this: any, evt: Event) {
+      const detail: TDetail | undefined = (evt as CustomEvent).detail;
+      handler.call(this, detail);
+    };
+    this.el.addEventListener(eventType.eventName, listener);
+    return () => {
+      this.el.removeEventListener(eventType.eventName, listener);
+    };
+  }
+}
+
