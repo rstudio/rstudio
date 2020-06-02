@@ -20,10 +20,11 @@ import React from 'react';
 import { CompletionHandler } from "../../api/completion";
 import { Emoji, emojisFromPrefx } from "../../api/emoji";
 import { EditorState } from 'prosemirror-state';
+import { ListChildComponentProps } from 'react-window';
 
 
 
-export function emojiCompletionHandler() : CompletionHandler<Emoji> {
+export function emojiCompletionHandler() : CompletionHandler {
 
   return {
     canComplete(state: EditorState): number | null {
@@ -80,9 +81,8 @@ function matchEmojiCompletion(state: EditorState) {
   return textBefore.match(kEmojiCompletionRegEx);
 }
 
-
-const EmojiView: React.FC<Emoji> = props => {
+const EmojiView: React.FC<ListChildComponentProps> = props => {
   return (
-    <div>{props.emoji}</div>
+    <div>{props.data[props.index].emoji}</div>
   );
 };

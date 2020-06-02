@@ -15,24 +15,25 @@
 
 import { EditorState} from "prosemirror-state";
 import { Node as ProsemirrorNode  } from "prosemirror-model";
+import { ListChildComponentProps } from "react-window";
 
 
 // TODO: some sort of invalidation token for requests (b/c they are async)
 
-export interface CompletionHandler<T extends object = { [key: string]: any }> {
+export interface CompletionHandler {
 
   // can this handler produce completions for theh given context? (lower level handler)
   // if so return the position from which replacements will occur
   canComplete(state: EditorState): number | null;
 
   // return a set of completions for the given context
-  completions(state: EditorState, limit: number): Promise<T[]>;
+  completions(state: EditorState, limit: number): Promise<any[]>;
   
   // provide a react compontent type for viewing the item
-  completionView: React.FC<T>;
+  completionView: React.FC<ListChildComponentProps>;
 
   // provide a completion replacement as a string or node
-  replacement(completion: T) : string | ProsemirrorNode;
+  replacement(completion: any) : string | ProsemirrorNode;
 
 }
 

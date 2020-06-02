@@ -26,6 +26,7 @@ import { FixupContext } from '../../api/fixup';
 import { MarkTransaction } from '../../api/transaction';
 import { mergedTextNodes } from '../../api/text';
 import { emojis, emojiFromAlias, emojiFromChar } from '../../api/emoji';
+import { emojiCompletionHandler } from './emoji-completion';
 
 const kEmojiAttr = 0;
 const kEmojiContent = 1;
@@ -130,6 +131,8 @@ const extension = (): Extension | null => {
         }),
       ];
     },
+
+    completionHandlers: () => [emojiCompletionHandler()],
 
     fixups: (schema: Schema) => {
       return [

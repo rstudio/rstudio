@@ -197,7 +197,7 @@ export function initExtensions(
   manager.register([
     attrEditExtension(pandocExtensions, manager.attrEditors()),
     reverseSmartQuotesExtension(manager.pandocMarks()),
-    completionExtension(manager.completionHandlers())
+    completionExtension(manager.completionHandlers(), events)
   ]);
 
   // additional plugins derived from extensions
