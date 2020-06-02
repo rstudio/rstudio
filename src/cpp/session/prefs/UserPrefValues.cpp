@@ -908,6 +908,19 @@ core::Error UserPrefValues::setSyntaxColorConsole(bool val)
 }
 
 /**
+ * Whether to display error, warning, and message output in a different color.
+ */
+bool UserPrefValues::highlightConsoleErrors()
+{
+   return readPref<bool>("highlight_console_errors");
+}
+
+core::Error UserPrefValues::setHighlightConsoleErrors(bool val)
+{
+   return writePref("highlight_console_errors", val);
+}
+
+/**
  * Whether to allow scrolling past the end of a file.
  */
 bool UserPrefValues::scrollPastEndOfDocument()
@@ -2642,6 +2655,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kFoldStyle,
       kSaveBeforeSourcing,
       kSyntaxColorConsole,
+      kHighlightConsoleErrors,
       kScrollPastEndOfDocument,
       kHighlightRFunctionCalls,
       kConsoleLineLengthLimit,
