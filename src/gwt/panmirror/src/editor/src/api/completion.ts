@@ -14,8 +14,10 @@
  */
 
 import { EditorState} from "prosemirror-state";
-import { Mark, Node as ProsemirrorNode, MarkType  } from "prosemirror-model";
+import { Node as ProsemirrorNode  } from "prosemirror-model";
 
+
+// TODO: some sort of invalidation token for requests (b/c they are async)
 
 export interface CompletionHandler<T extends object = { [key: string]: any }> {
 
