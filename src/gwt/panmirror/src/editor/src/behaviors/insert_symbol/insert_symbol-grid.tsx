@@ -39,9 +39,11 @@ const kPreviewHeight = 120;
 const kPreviewWidth = 140;
 const selectedItemClassName = 'pm-grid-item-selected';
 
-const SymbolCharacterGrid = React.forwardRef<any, CharacterGridProps>((props, ref) => {
-  const columnWidth = Math.floor(props.width / props.numberOfColumns);
 
+
+const SymbolCharacterGrid = React.forwardRef<any, CharacterGridProps>((props, ref) => {
+
+  const columnWidth = Math.floor(props.width / props.numberOfColumns);
   const characterCellData: CharacterGridCellItemData = {
     symbolCharacters: props.symbolCharacters,
     numberOfColumns: props.numberOfColumns,
@@ -56,16 +58,19 @@ const SymbolCharacterGrid = React.forwardRef<any, CharacterGridProps>((props, re
     gridRef.current?.scrollToItem({ rowIndex: Math.floor(props.selectedIndex / props.numberOfColumns) });
   }, 5);
 
-  React.useEffect(
-    handleScroll,
-    [props.selectedIndex],
-  );
+  React.useEffect(handleScroll, [props.selectedIndex]);
 
-  const handleMouseMove = debounce((event: React.MouseEvent) => {
-    maybeShowPreview();
-  }, 25);
+  const handleMouseLeave = (event: React.MouseEvent) => {
+    setMayShowPreview(false);
+    setShowPreview(false);
+  };
 
-  const handleKeyDown = (event: React.KeyboardEvent) => {    const newIndex = newIndexForKeyboardEvent(
+  const handleMouseEnter = (event: React.MouseEvent) => {
+    setMayShowPreview(true);
+  };
+
+  const handleKeyDown = (event: React.KeyboardEvent) => {
+    const newIndex = newIndexForKeyboardEvent(
       event,
       props.selectedIndex,
       props.numberOfColumns,
@@ -74,46 +79,45 @@ const SymbolCharacterGrid = React.forwardRef<any, CharacterGridProps>((props, re
     if (newIndex !== undefined) {
       props.onSelectionChanged(newIndex);
       event.preventDefault();
-    }    
+      setMayShowPreview(true);
+    }
   };
 
   const [previewPosition, setPreviewPosition] = React.useState<[number, number]>([0, 0]);
   const [showPreview, setShowPreview] = React.useState<boolean>(false);
+  const [mayShowPreview, setMayShowPreview] = React.useState<boolean>(false);
 
   React.useEffect(() => {
-    updatePreviewPosition();
-  }, [props.selectedIndex]);
+    if (mayShowPreview) {
+      updatePreviewPosition();
+      maybeShowPreview();
+    }
+  }, [props.selectedIndex, mayShowPreview]);
 
   React.useEffect(() => {
     if (props.symbolCharacters.length < 1) {
       setShowPreview(false);
     }
   }, [props.symbolCharacters]);
+  
+  React.useEffect(() => {
+    maybeShowPreview();
+  }, [mayShowPreview]);
 
-  const kWaitToShowPreviewMs = 1500;
-  let previewTimer: number;
+  // Show the preview window after a short delay
   function maybeShowPreview() {
-    cancelMaybeShowPreview();
-    previewTimer = window.setTimeout(() => {
-      if (props.symbolCharacters.length > 0) {
-        updatePreviewPosition();
-        setShowPreview(true);
-      }
-    }, kWaitToShowPreviewMs);
-  }
-
-  function cancelMaybeShowPreview() {
-    if (previewTimer) {
-      window.clearTimeout(previewTimer);
-    }   
-  }
-
-  const hidePreview = () => {
-    if (previewTimer) {
-      window.clearTimeout(previewTimer);
+    if (previewTimer.current) {
+      window.clearTimeout(previewTimer.current);
+      previewTimer.current = undefined;
     }
-    setShowPreview(false);
-  };
+    if (mayShowPreview && !showPreview) {
+      previewTimer.current = window.setTimeout(() => {
+        setShowPreview(true);
+      }, kWaitToShowPreviewMs);
+    }
+  }  
+  const kWaitToShowPreviewMs = 1500;
+  const previewTimer = React.useRef<number>();
 
   const gridInnerRef = React.useRef<HTMLElement>();
   function updatePreviewPosition() {
@@ -135,7 +139,13 @@ const SymbolCharacterGrid = React.forwardRef<any, CharacterGridProps>((props, re
   }
 
   return (
-    <div onKeyDown={handleKeyDown} onMouseLeave={hidePreview} onMouseMove={handleMouseMove} tabIndex={0} ref={ref}>
+    <div
+      onKeyDown={handleKeyDown}
+      onMouseLeave={handleMouseLeave}
+      onMouseEnter={handleMouseEnter}
+      tabIndex={0}
+      ref={ref}
+    >
       <FixedSizeGrid
         columnCount={props.numberOfColumns}
         rowCount={Math.ceil(props.symbolCharacters.length / props.numberOfColumns)}
