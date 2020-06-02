@@ -13,10 +13,10 @@
  *
  */
 
-import { Fragment, Node as ProsemirrorNode } from 'prosemirror-model';
+import { Fragment } from 'prosemirror-model';
 
 export function fragmentText(fragment: Fragment) {
   let text = '';
-  fragment.forEach((node: ProsemirrorNode) => (text = text + node.textContent));
+  fragment.forEach(node => (text = text + node.textContent));
   return text;
 }
