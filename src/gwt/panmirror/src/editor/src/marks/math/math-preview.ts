@@ -28,6 +28,7 @@ import { editingRootNodeClosestToPos, editingRootNode } from "../../api/node";
 import { createPopup } from "../../api/widgets/widgets";
 
 const kMathPopupVerticalOffset = 10;
+const kMathPopupInputDebuounceMs = 250;
 
 const key = new PluginKey('math-preview');
 
@@ -49,10 +50,10 @@ export class MathPreviewPlugin extends Plugin {
       key,
       view: () => {
         return {
-          update: (view: EditorView) => {
+          update: debounce((view: EditorView) => {
             this.view = view;
             this.updatePopup();
-          },
+          }, kMathPopupInputDebuounceMs, { leading: true, trailing: true }),
           destroy: () => {
             this.scrollUnsubscribe();
             this.resizeUnsubscribe();
@@ -69,7 +70,7 @@ export class MathPreviewPlugin extends Plugin {
               this.updatePopup(view.state.doc.resolve(pos.pos));
             }
             return false;
-          }, 250),
+          }, kMathPopupInputDebuounceMs),
         },
       },
     });
