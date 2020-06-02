@@ -1,9 +1,12 @@
 # Updating xterm.js for RStudio
 
+## RStudio 1.4
+RStudio 1.4 uses xterm.js 4.x
+
 ## RStudio 1.3
 RStudio 1.3 uses xterm.js 3.14.5.
 
-### Getting the Code (1.3)
+### Getting the Code (1.3+)
 Xterm.js and its addins are distribued via npm. Run the build-xterm script from this folder to 
 pull down the release and minify it into the source tree.
 

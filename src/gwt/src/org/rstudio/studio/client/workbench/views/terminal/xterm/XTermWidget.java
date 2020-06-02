@@ -183,7 +183,7 @@ public class XTermWidget extends Widget
    {
    }
 
-   private Timer resizeTerminalLocal_ = new Timer()
+   private final Timer resizeTerminalLocal_ = new Timer()
    {
       @Override
       public void run()
@@ -192,6 +192,14 @@ public class XTermWidget extends Widget
          if (!terminalEmulatorLoaded())
          {
             resizeTerminalLocal_.schedule(RESIZE_DELAY);
+            return;
+         }
+
+         // if emulator became invisible since resize was issued, resizing may cause exceptions
+         if (!isVisible())
+         {
+            if (resizeTerminalRemote_.isRunning())
+               resizeTerminalRemote_.cancel();
             return;
          }
 
@@ -206,7 +214,7 @@ public class XTermWidget extends Widget
       }
    };
 
-   private Timer resizeTerminalRemote_ = new Timer()
+   private final Timer resizeTerminalRemote_ = new Timer()
    {
       @Override
       public void run()
