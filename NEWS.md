@@ -22,6 +22,7 @@
 * New option to configure soft wrapping for R Markdown files, and command to change the soft wrap mode of the editor on the fly (#2341)
 * Add option `www-url-path-prefix` to force a path on auth cookies (Pro #1608)
 * New Command Palette for searching and running build-in commands and add-ins (#5168)
+* Colorize parentheses, braces, and brackets in assorted colors (#7027)
 
 ### RStudio Server Pro
 
