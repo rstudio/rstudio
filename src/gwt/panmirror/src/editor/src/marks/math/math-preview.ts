@@ -13,13 +13,12 @@
  *
  */
 
-import { Plugin, PluginKey, Transaction, EditorState } from "prosemirror-state";
-import { DecorationSet, EditorView } from "prosemirror-view";
+import { Plugin, PluginKey } from "prosemirror-state";
+import { EditorView } from "prosemirror-view";
 
 import { EditorUIMath } from "../../api/ui";
 import { getMarkRange } from "../../api/mark";
 import { createPopup } from "../../api/widgets/widgets";
-import { popupPositionStylesForTextRange } from "../../api/widgets/position";
 import { EditorEvents, EditorEvent } from "../../api/events";
 import { applyStyles } from "../../api/css";
 
@@ -89,7 +88,7 @@ export class MathPreviewPlugin extends Plugin {
     }    
 
     // get the position for the range
-    const styles = popupPositionStylesForTextRange(this.view, range);
+    const styles = mathjaxPopupPositionStyles(this.view, range);
 
     // if the popup already exists just move it
     if (this.inlinePopup) {
@@ -121,3 +120,27 @@ export class MathPreviewPlugin extends Plugin {
     }
   }
 }
+
+
+
+function mathjaxPopupPositionStyles(
+  view: EditorView, 
+  range: { from: number, to: number }
+) {
+
+  // get coordinates for editor view (use to offset)
+  const editorBox = (view.dom.parentNode! as HTMLElement).getBoundingClientRect();
+ 
+  // +1 to ensure beginning of line doesn't resolve as line before
+  // (will subtract it back out below)
+  const rangeStartCoords = view.coordsAtPos(range.from + 1); 
+  const rangeEndCoords = view.coordsAtPos(range.to);
+
+  // styles we'll return
+  return { 
+    top: Math.round(rangeEndCoords.bottom - editorBox.top) + 10 + 'px',
+    left: 'calc(' + Math.round(rangeStartCoords.left - editorBox.left) + 'px - 1ch)',
+  };
+}
+
+
