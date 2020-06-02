@@ -16,14 +16,10 @@
 import { Plugin, PluginKey } from 'prosemirror-state';
 import { EditorView } from 'prosemirror-view';
 
-import React from 'react';
-import ReactDOM from 'react-dom';
-
-import { CompletionHandler, CompletionResult } from '../../api/completion';
+import { CompletionHandler } from '../../api/completion';
 import { EditorEvents, EditorEvent } from '../../api/events';
-import { applyStyles } from '../../api/css';
 
-import { CompletionPopup } from './completion-popup';
+import { renderCompletionPopup, createCompletionPopup, destroyCompletionPopup } from './completion-popup';
 
 export function completionExtension(handlers: readonly CompletionHandler[], events: EditorEvents) {
   return {
@@ -33,9 +29,8 @@ export function completionExtension(handlers: readonly CompletionHandler[], even
 
 const key = new PluginKey('completion');
 
-// TODO: Consolidate scroll / dismiss handling with insert symbol? (e.g. dismissable popup)
-
 class CompletionPlugin extends Plugin {
+  
   private readonly scrollUnsubscribe: VoidFunction;
   private readonly completionPopup: HTMLElement;
 
@@ -44,67 +39,48 @@ class CompletionPlugin extends Plugin {
       key,
       view: () => ({
         update: (view: EditorView) => {
+          // ask each handler if it has completions. if one does then render 
+          // them and show the completion popup
           for (const handler of handlers) {
             const result = handler.completions(view.state, 20);
             if (result) {
-              this.showCompletions(view, handler, result);
+              renderCompletionPopup(view, handler, result, this.completionPopup).then(() => {
+                this.showCompletions();
+              });
               return;
             }
           }
+
+          // if we get this far there were no completions, so hide the popup
           this.hideCompletions();
         },
+
         destroy: () => {
+          // unsubscribe from events
           this.scrollUnsubscribe();
           window.document.removeEventListener('focusin', this.focusChanged);
 
-          ReactDOM.unmountComponentAtNode(this.completionPopup);
-          this.completionPopup.remove();
+          // tear down the popup
+          destroyCompletionPopup(this.completionPopup);
         },
       }),
     });
+
+    // hide completions when we scroll
     this.hideCompletions = this.hideCompletions.bind(this);
     this.scrollUnsubscribe = events.subscribe(EditorEvent.Scroll, this.hideCompletions);
 
+    // check for focus changes (e.g. dismiss when user clicks a menu)
     this.focusChanged = this.focusChanged.bind(this);
     window.document.addEventListener('focusin', this.focusChanged);
 
-    this.completionPopup = window.document.createElement('div');
-    this.completionPopup.tabIndex = 0;
-    this.completionPopup.style.position = 'absolute';
-    this.completionPopup.style.zIndex = '1000';
+    // create the popup, add it, and make it initially hidden
+    this.completionPopup = createCompletionPopup();
     window.document.body.appendChild(this.completionPopup);
     this.hideCompletions();
   }
 
-  private showCompletions(view: EditorView, handler: CompletionHandler, result: CompletionResult) {
-
-    // helper function to show the popup at the specified position
-    const showPopup = (completions: any[]) => {
-      
-      const positionStyles = panelPositionStylesForPosition(view, result.pos, 200, 200);
-      applyStyles(this.completionPopup, [], positionStyles);
-      
-      this.completionPopup.style.display = '';     
-      ReactDOM.render(
-        <CompletionPopup 
-        completions={completions} 
-        completionView={handler.completionView} />,
-        this.completionPopup,
-      );
-    };
-    
-    // show completions (resolve promise if necessary)
-    if (result.items instanceof Promise) {
-      result.items.then(showPopup);
-    } else {
-      showPopup(result.items);
-    }
-  }
-
-  private hideCompletions() {
-    this.completionPopup.style.display = 'none';
-  }
-
+  // when a focus change occurs hide the popup if the popup itself isn't focused
   private focusChanged() {
     if (
       window.document.activeElement !== this.completionPopup &&
@@ -113,32 +89,12 @@ class CompletionPlugin extends Plugin {
       this.hideCompletions();
     }
   }
-}
-const kMinimumPanelPaddingToEdgeOfView = 5;
-function panelPositionStylesForPosition(view: EditorView, pos: number, height: number, width: number) {
-  const editorRect = view.dom.getBoundingClientRect();
 
-  const selectionCoords = view.coordsAtPos(pos);
+  private showCompletions() {
+    this.completionPopup.style.display = '';
+  }
 
-  const maximumTopPosition = Math.min(
-    selectionCoords.bottom,
-    window.innerHeight - height - kMinimumPanelPaddingToEdgeOfView,
-  );
-  const minimumTopPosition = editorRect.y;
-  const popupTopPosition = Math.max(minimumTopPosition, maximumTopPosition);
-
-  const maximumLeftPosition = Math.min(
-    selectionCoords.right,
-    window.innerWidth - width - kMinimumPanelPaddingToEdgeOfView,
-  );
-  const minimumLeftPosition = editorRect.x;
-  const popupLeftPosition = Math.max(minimumLeftPosition, maximumLeftPosition);
-
-  // styles we'll return
-  const styles = {
-    top: popupTopPosition + 'px',
-    left: popupLeftPosition + 'px',
-  };
-
-  return styles;
+  private hideCompletions() {
+    this.completionPopup.style.display = 'none';
+  }
 }
