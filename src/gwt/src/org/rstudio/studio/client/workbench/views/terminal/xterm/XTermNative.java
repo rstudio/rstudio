@@ -45,7 +45,7 @@ public class XTermNative extends JavaScriptObject
     * Fit the terminal to available space.
     */
    public final native void fit() /*-{
-      this.fit();
+      this.rstudioFitAddon_.fit();
    }-*/;
 
    /**
@@ -69,7 +69,7 @@ public class XTermNative extends JavaScriptObject
     * @return Visible number of columns and rows
     */
    public final native XTermDimensions proposeGeometry() /*-{
-      return this.proposeGeometry();
+      return this.rstudioFitAddon_.proposeDimensions();
    }-*/;
 
    public final native void focus() /*-{
@@ -189,7 +189,7 @@ public class XTermNative extends JavaScriptObject
    }-*/;
 
    public final native void refresh() /*-{
-      this.refresh();
+      this.refresh(0, this.rows - 1);
    }-*/;
 
    public final native void setTabMovesFocus(boolean movesFocus) /*-{
@@ -207,8 +207,9 @@ public class XTermNative extends JavaScriptObject
    public static native XTermNative createTerminal(Element container,
                                                    XTermOptions options,
                                                    boolean tabMovesFocus) /*-{
-      $wnd.Terminal.applyAddon($wnd.fit);
       var nativeTerm_ = new $wnd.Terminal(options);
+      nativeTerm_.rstudioFitAddon_ = new $wnd.FitAddon.FitAddon();
+      nativeTerm_.loadAddon(nativeTerm_.rstudioFitAddon_);
       nativeTerm_.open(container);
       nativeTerm_.focus();
       nativeTerm_.tabMovesFocus = tabMovesFocus;

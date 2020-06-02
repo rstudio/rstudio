@@ -13,30 +13,37 @@
  *
  */
 
-import { Plugin, PluginKey, Transaction, EditorState } from "prosemirror-state";
-import { DecorationSet, EditorView } from "prosemirror-view";
+import { Plugin, PluginKey } from "prosemirror-state";
+import { EditorView } from "prosemirror-view";
+import { ResolvedPos } from "prosemirror-model";
 
-import { EditorUIMath } from "../../api/ui";
+import debounce from 'lodash.debounce';
+import zenscroll from 'zenscroll';
+
+import { EditorUI } from "../../api/ui";
 import { getMarkRange } from "../../api/mark";
-import { createPopup } from "../../api/widgets/widgets";
-import { popupPositionStylesForTextRange } from "../../api/widgets/position";
 import { EditorEvents, EditorEvent } from "../../api/events";
 import { applyStyles } from "../../api/css";
+import { editingRootNodeClosestToPos, editingRootNode } from "../../api/node";
+import { createPopup } from "../../api/widgets/widgets";
+
+const kMathPopupVerticalOffset = 10;
 
 const key = new PluginKey('math-preview');
 
 export class MathPreviewPlugin extends Plugin {
 
-  private readonly uiMath: EditorUIMath;
+  private readonly ui: EditorUI;
 
   private view: EditorView | null = null;
 
-  private inlinePopup: HTMLElement | null = null;
-  private lastRenderedInlineMath: string | null = null;
+  private popup: HTMLElement | null = null;
+  private lastRenderedMath: string | null = null;
   
   private scrollUnsubscribe: VoidFunction;
+  private resizeUnsubscribe: VoidFunction;
 
-  constructor(uiMath: EditorUIMath, events: EditorEvents) {
+  constructor(ui: EditorUI, events: EditorEvents) {
   
     super({
       key,
@@ -44,25 +51,39 @@ export class MathPreviewPlugin extends Plugin {
         return {
           update: (view: EditorView) => {
             this.view = view;
-            this.updateInlinePopup();
+            this.updatePopup();
           },
           destroy: () => {
             this.scrollUnsubscribe();
-            this.closeInlinePopup();
+            this.resizeUnsubscribe();
+            this.closePopup();
           }
         };
       },
+      props: {
+        handleDOMEvents: {
+          mousemove: debounce((view: EditorView, event: Event) => {
+            const ev = event as MouseEvent;
+            const pos = view.posAtCoords({ top: ev.clientY, left: ev.clientX });
+            if (pos && pos.inside !== -1) {
+              this.updatePopup(view.state.doc.resolve(pos.pos));
+            }
+            return false;
+          }, 250),
+        },
+      },
     });
 
-    // save reference to uiMath
-    this.uiMath = uiMath;
+    // save reference to ui
+    this.ui = ui;
 
     // update position on scroll
-    this.updateInlinePopup = this.updateInlinePopup.bind(this);
-    this.scrollUnsubscribe = events.subscribe(EditorEvent.Scroll, this.updateInlinePopup);
+    this.updatePopup = this.updatePopup.bind(this);
+    this.scrollUnsubscribe = events.subscribe(EditorEvent.Scroll, () => this.updatePopup());
+    this.resizeUnsubscribe = events.subscribe(EditorEvent.Resize,  () => this.updatePopup());
   }
 
-  private updateInlinePopup() {
+  private updatePopup($mousePos?: ResolvedPos) {
 
     // bail if we don't have a view
     if (!this.view) {
@@ -72,52 +93,126 @@ export class MathPreviewPlugin extends Plugin {
     // capture state, etc.
     const state = this.view.state;
     const schema = state.schema;
-    const selection = state.selection;
-     
-    // are we in a math mark? if not bail
-    const range = getMarkRange(selection.$from, schema.marks.math);
+
+    // determine math range
+    let range: false | { from: number, to: number } = false;
+
+    // if a $pos was passed (e.g. for a mouse hover) then check that first
+    if ($mousePos) {
+      range = getMarkRange($mousePos, schema.marks.math);
+    }
+
+    // if that didn't work try the selection
     if (!range) {
-      this.closeInlinePopup();
+      range = getMarkRange(state.selection.$from, schema.marks.math);
+    }
+
+    // bail if we don't have a target
+    if (!range) {
+      this.closePopup();
+      return;
+    }
+
+    // bail if the user has this disabled
+    if (!this.ui.prefs.equationPreview()) {
+      this.closePopup();
       return;
     }
 
     // get the math text. bail if it's empty
     const inlineMath = state.doc.textBetween(range.from, range.to);
     if (inlineMath.match(/^\${1,2}\s*\${1,2}$/)) {
-      this.closeInlinePopup();
+      this.closePopup();
       return;
     }    
 
     // get the position for the range
-    const styles = popupPositionStylesForTextRange(this.view, range);
+    const styles = popupPositionStyles(this.view, range);
 
     // if the popup already exists just move it
-    if (this.inlinePopup) {
-      applyStyles(this.inlinePopup, [], styles);
+    if (this.popup) {
+      applyStyles(this.popup, [], styles);
     } else {
-      this.inlinePopup = createPopup(this.view, ['pm-math-preview'], undefined, { 
+      this.popup = createPopup(this.view, ['pm-math-preview'], undefined, { 
         ...styles,
         visibility: 'hidden'
       });
-      this.view.dom.parentNode?.appendChild(this.inlinePopup);
+      this.view.dom.parentNode?.appendChild(this.popup);
     }
 
     // typeset the math if we haven't already
-    if (inlineMath !== this.lastRenderedInlineMath) {
-      this.uiMath.typeset!(this.inlinePopup!, inlineMath).then(error => {
+    if (inlineMath !== this.lastRenderedMath) {
+      this.ui.math.typeset!(this.popup!, inlineMath).then(error => {
         if (!error) {
-          this.inlinePopup!.style.visibility = 'visible';
-          this.lastRenderedInlineMath = inlineMath; 
+          this.popup!.style.visibility = 'visible';
+          this.lastRenderedMath = inlineMath; 
+          // autoscroll for non-mouse triggers
+          if (!$mousePos && range) {
+            this.autoscollPopup(range);
+          }
         }
       });
     }
   }
 
-  private closeInlinePopup() {
-    this.lastRenderedInlineMath = null;
-    if (this.inlinePopup) {
-      this.inlinePopup.remove();
-      this.inlinePopup = null;
+  private closePopup() {
+    this.lastRenderedMath = null;
+    if (this.popup) {
+      this.popup.remove();
+      this.popup = null;
+    }
+  }
+
+  private autoscollPopup(mathRange: { from: number, to: number} ) {
+    const editingRoot = editingRootNode(this.view!.state.selection);
+    if (editingRoot) {
+      const editorEl = this.view!.nodeDOM(editingRoot.pos) as HTMLElement;
+      const editorBox = editorEl.getBoundingClientRect();
+      const popupBox = this.popup!.getBoundingClientRect();
+      if (popupBox.top + popupBox.height + kMathPopupVerticalOffset > editorBox.bottom) {
+        const mathBottom = this.view!.coordsAtPos(mathRange.to);
+        const mathScrollBottom = editorEl.scrollTop + mathBottom.bottom;
+        const mathPopupScrollBottom = mathScrollBottom + kMathPopupVerticalOffset + popupBox.height;
+        const scrollTop = mathPopupScrollBottom + kMathPopupVerticalOffset - editorBox.top - editorBox.height;
+        const scroller = zenscroll.createScroller(editorEl);
+        scroller.toY(scrollTop, 100);
+      }
     }
   }
 }
+
+
+function popupPositionStyles(
+  view: EditorView, 
+  range: { from: number, to: number }
+) {
+
+  // get coordinates for editor view (use to offset)
+  const editorBox = (view.dom.parentNode! as HTMLElement).getBoundingClientRect();
+ 
+  // +1 to ensure beginning of line doesn't resolve as line before
+  // (will subtract it back out below)
+  const rangeStartCoords = view.coordsAtPos(range.from + 1); 
+  const rangeEndCoords = view.coordsAtPos(range.to);
+
+  // default positions
+  const top = Math.round(rangeEndCoords.bottom - editorBox.top) + kMathPopupVerticalOffset + 'px';
+  let left = `calc(${Math.round(rangeStartCoords.left - editorBox.left)}px - 1ch)`;
+
+  // if it flow across two lines then position at far left of editing root
+  if (rangeStartCoords.bottom !== rangeEndCoords.bottom) {
+    const editingRoot = editingRootNodeClosestToPos(view.state.doc.resolve(range.from));
+    if (editingRoot) {
+      const editingEl = view.nodeDOM(editingRoot.pos) as HTMLElement;
+      if (editingEl) {
+        const editingElStyle = window.getComputedStyle(editingEl);
+        left = `calc(${editingEl.getBoundingClientRect().left}px + ${editingElStyle.paddingLeft} - 1ch - 2px)`;
+      }
+    }
+  }
+
+  // return position
+  return { top, left };
+}
+
+

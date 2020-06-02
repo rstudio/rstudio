@@ -257,7 +257,7 @@ const extension = (
         mathHighlightPlugin(schema),
       ];
       if (ui.math) {
-        plugins.push(new MathPreviewPlugin(ui.math, events));
+        plugins.push(new MathPreviewPlugin(ui, events));
       }
       return plugins;
     },
