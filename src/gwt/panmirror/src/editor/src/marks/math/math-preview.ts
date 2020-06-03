@@ -142,8 +142,8 @@ export class MathPreviewPlugin extends Plugin {
     }
 
     // typeset the math if we haven't already
-    if (inlineMath !== this.lastRenderedMath) {
-      this.ui.math.typeset!(this.popup!, inlineMath).then(error => {
+    if (inlineMath !== this.lastRenderedMath && this.popup) {
+      this.ui.math.typeset!(this.popup, inlineMath).then(error => {
         if (!error) {
           this.popup!.style.visibility = 'visible';
           this.lastRenderedMath = inlineMath; 
