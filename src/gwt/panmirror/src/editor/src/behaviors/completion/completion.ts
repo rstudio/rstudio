@@ -35,14 +35,13 @@ interface CompletionState {
 
 
 // TODO: popup positioning
-
 // TODO: positioning needs to use same calculatoins as popup
-
-// TODO: invalidation token for multiple concurrent requests 
-// (including cancel existing)
 
 // TODO: keyboard and mouse navigation/selection
 // TODO: insertion (may need to return arbitrary transactions for /command)
+
+// TODO: invalidation token for multiple concurrent requests 
+// (including cancel existing)
 
 
 const key = new PluginKey<CompletionState>('completion');

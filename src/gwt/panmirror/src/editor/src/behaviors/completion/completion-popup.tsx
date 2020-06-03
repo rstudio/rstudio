@@ -99,19 +99,14 @@ const CompletionList: React.FC<CompletionWidgetProps> = props => {
               kVerticalListPadding + 'px'
     }}>
       {props.completions.map(completion => {
-
         // need to provide key for both wrapper and item
         // https://stackoverflow.com/questions/28329382/understanding-unique-keys-for-array-children-in-react-js#answer-28329550
         const key = props.handler.view.key(completion);
         const item = React.createElement(component, { ...completion, key });
-        return React.createElement(
-          "div", 
-          { 
-            className: 'pm-completion-item', 
-            style: { height: itemHeight },
-            key
-          }, 
-          [item]
+        return (
+          <div className={'pm-completion-item'} style = {{ height: itemHeight }} key={key}>
+            {item}
+          </div>
         );
       })}
     </div>
