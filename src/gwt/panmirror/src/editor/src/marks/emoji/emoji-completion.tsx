@@ -26,7 +26,6 @@ export function emojiCompletionHandler() : CompletionHandler<Emoji> {
   return {
     
     completions: (selection: Selection): CompletionResult<Emoji> | null  => {
-
       const match = matchEmojiCompletion(selection); 
       if (match) {
         return {
@@ -38,11 +37,13 @@ export function emojiCompletionHandler() : CompletionHandler<Emoji> {
       }
     },
 
-    itemView: EmojiView,
-
     replacement(emoji: Emoji) : string | ProsemirrorNode {
       return emoji.emoji;
-    }
+    },
+
+    view: {
+      component: EmojiView
+    },
 
   };
 }

@@ -76,7 +76,7 @@ interface CompletionPopupProps extends WidgetProps {
 
 const CompletionPopup: React.FC<CompletionPopupProps> = props => {
   
-  const { itemView, itemHeight = 25, maxVisible = 10, width = 180 } = props.handler;
+  const { component, itemHeight = 25, maxVisible = 10, width = 180 } = props.handler.view;
 
   return (
     <Popup 
@@ -90,15 +90,15 @@ const CompletionPopup: React.FC<CompletionPopupProps> = props => {
         width={width}
         itemData={props.completions}
       >
-        {listChildComponent(itemView)}
+        {listChildComponent(component)}
       </FixedSizeList>   
     </Popup>
   );
 };
 
-const listChildComponent = (completionView: React.FC | React.ComponentClass) => {
+const listChildComponent = (itemViewComponent: React.FC | React.ComponentClass) => {
   return (props: ListChildComponentProps) => {
-    const item = React.createElement(completionView, props.data[props.index]);
+    const item = React.createElement(itemViewComponent, props.data[props.index]);
     return (
       <div>
         {item}

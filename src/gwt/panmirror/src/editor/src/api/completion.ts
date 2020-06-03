@@ -30,17 +30,20 @@ export interface CompletionHandler<T = any> {
   // provide a completion replacement as a string or node
   replacement(completion: T) : string | ProsemirrorNode;
 
-  // provide a react compontent type for viewing the item
-  itemView: React.FC<T> | React.ComponentClass<T>;
+  // completion view
+  view: {
+    // react compontent type for viewing the item
+    component: React.FC<T> | React.ComponentClass<T>;
 
-  // height for completion items (defaults to 20px)
-  itemHeight?: number;
+    // width of completion popup (defaults to 180)
+    width?: number;
+
+    // height for completion items (defaults to 20px)
+    itemHeight?: number;
  
-  // maximum number of visible items (defaults to 10)
-  maxVisible?: number;
-
-  // width of completion popup (defaults to 180)
-  width?: number;
+    // maximum number of visible items (defaults to 10)
+    maxVisible?: number;
+  };
 }
 
 
