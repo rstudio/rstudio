@@ -20,6 +20,7 @@ import { CompletionHandler, CompletionResult } from '../../api/completion';
 import { EditorEvents, EditorEvent } from '../../api/events';
 
 import { renderCompletionPopup, createCompletionPopup, destroyCompletionPopup } from './completion-popup';
+import { canInsertNode } from '../../api/node';
 
 export function completionExtension(handlers: readonly CompletionHandler[], events: EditorEvents) {
   return {
@@ -43,7 +44,6 @@ interface CompletionState {
 // TODO: keyboard and mouse navigation/selection
 // TODO: insertion (may need to return arbitrary transactions for /command)
 
-// TODO: noCompletions setting
 
 const key = new PluginKey<CompletionState>('completion');
 
@@ -68,6 +68,18 @@ class CompletionPlugin extends Plugin<CompletionState> {
           if (!tr.selection.empty) {
             return {};
           }
+
+          // must be able to insert text
+          const schema = tr.doc.type.schema;
+          if (!canInsertNode(tr.selection, schema.nodes.text)) {
+            return {};
+          }
+
+          // must not be in a code mark
+          if (!!schema.marks.code.isInSet(tr.storedMarks || tr.selection.$from.marks())) {
+            return {};
+          }
+          
           
           // calcluate text before cursor
           const textBefore = completionTextBeforeCursor(tr.selection);

@@ -69,57 +69,48 @@ export function destroyCompletionPopup(popup: HTMLElement) {
   popup.remove();
 }
 
-interface CompletionPopupProps extends WidgetProps {
+interface CompletionWidgetProps extends WidgetProps {
   handler: CompletionHandler;
   completions: any[];
 }
 
-
-const CompletionPopup: React.FC<CompletionPopupProps> = props => {
-  
-  const { component, itemHeight = 20, maxVisible = 10, width = 180 } = props.handler.view;
-
+const CompletionPopup: React.FC<CompletionWidgetProps> = props => {
   return (
     <Popup 
       style={props.style}
       classes={['pm-completion-popup'].concat(props.classes || [])}
     >
-      <CompletionList
-        completions={props.completions}
-        itemComponent={component}
-        width={width}
-        itemHeight={itemHeight}
-        maxVisible={maxVisible}
-      /> 
+      <CompletionList {...props}/> 
     </Popup>
   );
 };
 
-interface CompletionListProps {
-  completions: any[];
-  itemComponent: React.FC | React.ComponentClass;
-  width: number;
-  itemHeight: number;
-  maxVisible: number;
-}
+const CompletionList: React.FC<CompletionWidgetProps> = props => {
 
-
-const CompletionList: React.FC<CompletionListProps> = props => {
+  const { component, itemHeight = 20, maxVisible = 10, width = 180 } = props.handler.view;
 
   // some extra padding to tweak whitespace around list/items 
   const kVerticalListPadding = 6;
 
   return (
     <div className={'pm-completion-list'} style={{
-      width: props.width + 'px',
-      height: (props.itemHeight * Math.min(props.maxVisible, props.completions.length)) +
+      width: width + 'px',
+      height: (itemHeight * Math.min(maxVisible, props.completions.length)) +
               kVerticalListPadding + 'px'
     }}>
       {props.completions.map(completion => {
-        const item = React.createElement(props.itemComponent, completion);
+
+        // need to provide key for both wrapper and item
+        // https://stackoverflow.com/questions/28329382/understanding-unique-keys-for-array-children-in-react-js#answer-28329550
+        const key = props.handler.view.key(completion);
+        const item = React.createElement(component, { ...completion, key });
         return React.createElement(
           "div", 
-          { className: 'pm-completion-item', style: { height: props.itemHeight } }, 
+          { 
+            className: 'pm-completion-item', 
+            style: { height: itemHeight },
+            key
+          }, 
           [item]
         );
       })}

@@ -33,6 +33,7 @@ export function emojiCompletionHandler() : CompletionHandler<Emoji> {
 
     view: {
       component: EmojiView,
+      key: emoji => emoji.emoji,
       width: 200
     },
 

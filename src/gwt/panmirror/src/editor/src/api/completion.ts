@@ -36,6 +36,8 @@ export interface CompletionHandler<T = any> {
     // react compontent type for viewing the item
     component: React.FC<T> | React.ComponentClass<T>;
 
+    key: (completion: T) => any;
+
     // width of completion popup (defaults to 180)
     width?: number;
 
