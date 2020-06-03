@@ -122,7 +122,7 @@ const extension = (): Extension | null => {
             const tr = state.tr;
             tr.delete(start + match[1].length, end);
             const mark = schema.marks.emoji.create({ emojihint: emjoiName });
-            const text = schema.text(emoji.emoji, mark);
+            const text = schema.text(emoji.emoji, [mark]);
             tr.replaceSelectionWith(text);
             return tr;
           } else {
