@@ -21,12 +21,14 @@ import React from 'react';
 import { CompletionHandler, CompletionResult } from "../../api/completion";
 import { Emoji, emojisFromPrefx } from "../../api/emoji";
 
+const kEmojiCompletionRegEx = /(^|[^`]):(\w{2,})$/;
+
 export function emojiCompletionHandler() : CompletionHandler<Emoji> {
 
   return {
     
-    completions: (selection: Selection): CompletionResult<Emoji> | null  => {
-      const match = matchEmojiCompletion(selection); 
+    completions: (text: string, selection: Selection): CompletionResult<Emoji> | null  => {
+      const match = text.match(kEmojiCompletionRegEx);
       if (match) {
         return {
           pos: selection.head - match[2].length - 1,
@@ -48,28 +50,6 @@ export function emojiCompletionHandler() : CompletionHandler<Emoji> {
   };
 }
 
-
-
-
-
-const kMaxEmojiLength = 50;
-const kEmojiCompletionRegEx = /(^|[^`]):(\w{2,})$/;
-
-function matchEmojiCompletion(selection: Selection) {
-
-  // inspect the text of the parent up to 50 characters back
-  const { $head } = selection;
-  
-  const textBefore = $head.parent.textBetween(
-    Math.max(0, $head.parentOffset - kMaxEmojiLength),  // start
-    $head.parentOffset,                                 // end
-    undefined,                                          // block separator
-    "\ufffc"                                            // leaf char
-  );   
-  
-  // run the regex
-  return textBefore.match(kEmojiCompletionRegEx);
-}
 
 const EmojiView: React.FC<Emoji> = emoji => {
   return (

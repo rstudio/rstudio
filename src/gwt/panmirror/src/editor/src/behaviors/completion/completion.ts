@@ -13,7 +13,7 @@
  *
  */
 
-import { Plugin, PluginKey, Transaction } from 'prosemirror-state';
+import { Plugin, PluginKey, Transaction, Selection } from 'prosemirror-state';
 import { EditorView } from 'prosemirror-view';
 
 import { CompletionHandler, CompletionResult } from '../../api/completion';
@@ -34,6 +34,7 @@ interface CompletionState {
 
 // TODO: more spacing below
 // TODO: popup positioning
+// TODO: helper function for extracting completeable text from selection (or do it once and pass)
 // TODO: invalidation token for multiple concurrent requests 
 // (including cancel existing)
 // TODO: currently we show a popup for no completions!
@@ -58,10 +59,18 @@ class CompletionPlugin extends Plugin<CompletionState> {
           if (!tr.docChanged && tr.selectionSet) {
             return {};
           }
+
+          // non empty selections don't have completions
+          if (!tr.selection.empty) {
+            return {};
+          }
           
+          // calcluate text before cursor
+          const textBefore = completionTextBeforeCursor(tr.selection);
+
           // check for a handler that can provide completions at the current selection
           for (const handler of handlers) {
-            const result = handler.completions(tr.selection);
+            const result = handler.completions(textBefore, tr.selection);
             if (result) {
               return { handler, result };
             }
@@ -133,4 +142,17 @@ class CompletionPlugin extends Plugin<CompletionState> {
   private hideCompletions() {
     this.completionPopup.style.display = 'none';
   }
+}
+
+
+// extract the text before the cursor, dealing with block separators and
+// non-text leaf chracters (this is based on code in prosemirror-inputrules)
+function completionTextBeforeCursor(selection: Selection, maxLength = 500) {
+  const { $head } = selection;
+  return $head.parent.textBetween(
+    Math.max(0, $head.parentOffset - maxLength),  // start
+    $head.parentOffset,                           // end
+    undefined,                                    // block separator
+    "\ufffc"                                      // leaf char
+  );   
 }

@@ -24,8 +24,9 @@ export interface CompletionResult<T = any> {
 
 export interface CompletionHandler<T = any> {
 
-  // return a set of completions for the given context
-  completions(selection: Selection): CompletionResult | null;
+  // return a set of completions for the given context. text is the text before
+  // before the cursor in the current node (but no more than 500 characters)
+  completions(text: string, selection: Selection): CompletionResult | null;
   
   // provide a completion replacement as a string or node
   replacement(completion: T) : string | ProsemirrorNode;
