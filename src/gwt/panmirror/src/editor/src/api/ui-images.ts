@@ -19,4 +19,5 @@ export interface EditorUIImages {
   removelink?: string;
   runchunk?: string;
   runprevchunks?: string;
+  search?: string;
 }

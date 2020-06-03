@@ -168,10 +168,12 @@ export function applyTheme(theme: EditorTheme) {
     .pm-markup-text-color {
       color: ${theme.markupTextColor} !important;
     }
-    .pm-find-text {
+    .pm-find-text,
+    .pm-grid-item-selected {
       background-color: ${theme.findTextBackgroundColor} !important;
       outline: 1px solid ${theme.findTextBorderColor} !important;
     }
+
     .pm-find-text-selected {
       background-color: ${theme.selectionColor} !important;
     }
@@ -231,6 +233,9 @@ export function applyTheme(theme: EditorTheme) {
     .pm-proportional-font {
       font-family: ${theme.proportionalFont} !important;
       font-size: ${theme.proportionalFontSizePt}pt !important;
+    }
+    .pm-input-text {
+      border-color: ${theme.paneBorderColor};
     }
     .CodeMirror,
     .CodeMirror pre.CodeMirror-line, .CodeMirror pre.CodeMirror-line-like {

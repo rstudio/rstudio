@@ -1,0 +1,18 @@
+.pm-textinput-container {
+  position:relative;
+  padding:0;
+  margin:0;
+}
+
+.pm-textinput-icon {
+  position:absolute;
+  top:6px;
+  left:4px;
+  width:12px;
+  height:12px;
+}
+
+.pm-textinput-input {
+  padding: 4px;
+  text-indent: 16px;
+}
