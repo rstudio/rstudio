@@ -14,6 +14,10 @@
  *
  */
 
+.pm-completion-list {
+  overflow-y: auto;
+}
+
 .pm-completion-item-text {
   white-space: nowrap;
   overflow: hidden;

@@ -18,8 +18,6 @@ import { EditorView } from 'prosemirror-view';
 import React from 'react';
 import ReactDOM from 'react-dom';
 
-import { FixedSizeList, ListChildComponentProps } from "react-window";
-
 import { WidgetProps } from "../../api/widgets/react";
 import { Popup } from '../../api/widgets/popup';
 
@@ -86,29 +84,36 @@ const CompletionPopup: React.FC<CompletionPopupProps> = props => {
       style={props.style}
       classes={['pm-completion-popup'].concat(props.classes || [])}
     >
-      <FixedSizeList
-        itemCount={props.completions.length}
-        itemSize={itemHeight}
-        height={itemHeight * Math.min(maxVisible, props.completions.length)}
+      <CompletionList
+        completions={props.completions}
+        itemComponent={component}
         width={width}
-        itemData={props.completions}
-      >
-        {listChildComponent(component)}
-      </FixedSizeList>   
+        itemHeight={itemHeight}
+        maxVisible={maxVisible}
+      /> 
     </Popup>
   );
 };
 
-const listChildComponent = (itemViewComponent: React.FC | React.ComponentClass) => {
-  return (props: ListChildComponentProps) => {
-    const item = React.createElement(itemViewComponent, props.data[props.index]);
-    return (
-      <div>
-        {item}
-      </div>
-    );
-  };
+interface CompletionListProps {
+  completions: any[];
+  itemComponent: React.FC | React.ComponentClass;
+  width: number;
+  itemHeight: number;
+  maxVisible: number;
+}
+
+const CompletionList: React.FC<CompletionListProps> = props => {
+  return (
+    <div className={'pm-completion-list'} style={{
+      width: props.width + 'px',
+      height: props.itemHeight * Math.min(props.maxVisible, props.completions.length) + 'px'
+    }}>
+      {props.completions.map(completion => React.createElement(props.itemComponent, completion))}
+    </div>
+  );
 };
+
 
 const kVerticalPadding = 8;
 const kMinimumPanelPaddingToEdgeOfView = 5;
