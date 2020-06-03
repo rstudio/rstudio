@@ -43,6 +43,7 @@ export const InsertSymbolPopup: React.FC<InsertSymbolPopupProps> = props => {
     height: popupHeight + 'px',
     width: popupWidth + 'px',
   };
+  const classNames = ['pm-popup-insert-symbol'].concat(props.classes || []);
 
   const gridHeight = popupHeight - 48;
   const gridWidth = popupWidth;
@@ -51,20 +52,18 @@ export const InsertSymbolPopup: React.FC<InsertSymbolPopupProps> = props => {
   const [filterText, setFilterText] = React.useState<string>('');
   const [selectedSymbolGroup, setSelectedSymbolGroup] = React.useState<string>(kCategoryAll);
   const [selectedSymbolIndex, setSelectedSymbolIndex] = React.useState<number>(0);
-  const [symbols, setSymbols] = React.useState<SymbolCharacter[]>([]);
-  const [filteredSymbols, setFilteredSymbols] = React.useState<SymbolCharacter[]>(symbols);
 
-  React.useEffect(() => {
-    const symbolsForGroup: SymbolCharacter[] = symbolDataManager.getSymbols(selectedSymbolGroup);
-    setSymbols(symbolsForGroup);
-  }, [selectedSymbolGroup]);
-
-  React.useEffect(() => {
-    setFilteredSymbols(symbolDataManager.filterSymbols(filterText, symbols));
-  }, [filterText, symbols]);
+  const symbols = React.useMemo(
+    () => symbolDataManager.getSymbols(selectedSymbolGroup),
+    [selectedSymbolGroup]
+  ); 
+  const filteredSymbols = React.useMemo(
+    () => symbolDataManager.filterSymbols(filterText, symbols),
+    [filterText, symbols]
+  );
 
   const textRef = React.useRef<HTMLInputElement>(null);
-  const selectRef = React.useRef<HTMLInputElement>(null);
+  const selectRef = React.useRef<HTMLSelectElement>(null);
   const gridRef = React.useRef<HTMLDivElement>(null);
 
   // Focus the first text box
@@ -141,7 +140,7 @@ export const InsertSymbolPopup: React.FC<InsertSymbolPopupProps> = props => {
   };
 
   return (
-    <Popup classes={['pm-popup-insert-symbol']} style={style}>
+    <Popup classes={classNames} style={style}>
       <div onKeyDown={handleKeyboardEvent}>
         <div className="pm-popup-insert-symbol-search-container" style={{ width: gridWidth }}>
           <TextInput

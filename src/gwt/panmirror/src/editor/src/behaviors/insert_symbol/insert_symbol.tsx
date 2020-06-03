@@ -33,7 +33,7 @@ import { EditorUI } from '../../api/ui';
 
 import { InsertSymbolPopup } from './insert_symbol-popup';
 
-const key = new PluginKey<boolean>('insert_symbol');
+const key = new PluginKey<boolean>('insert-symbol');
 const kMinimumPanelPaddingToEdgeOfView = 5;
 
 const extension = (

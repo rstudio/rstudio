@@ -40,7 +40,6 @@ const kPreviewWidth = 140;
 const selectedItemClassName = 'pm-grid-item-selected';
 
 
-
 const SymbolCharacterGrid = React.forwardRef<any, CharacterGridProps>((props, ref) => {
 
   const columnWidth = Math.floor(props.width / props.numberOfColumns);
@@ -100,10 +99,6 @@ const SymbolCharacterGrid = React.forwardRef<any, CharacterGridProps>((props, re
     }
   }, [props.symbolCharacters]);
   
-  React.useEffect(() => {
-    maybeShowPreview();
-  }, [mayShowPreview]);
-
   // Show the preview window after a short delay
   function maybeShowPreview() {
     if (previewTimer.current) {
@@ -116,7 +111,7 @@ const SymbolCharacterGrid = React.forwardRef<any, CharacterGridProps>((props, re
       }, kWaitToShowPreviewMs);
     }
   }  
-  const kWaitToShowPreviewMs = 1500;
+  const kWaitToShowPreviewMs = 750;
   const previewTimer = React.useRef<number>();
 
   const gridInnerRef = React.useRef<HTMLElement>();

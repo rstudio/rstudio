@@ -30,7 +30,7 @@ export interface TextInputProps extends WidgetProps {
   onKeyUp?: KeyboardEventHandler<HTMLInputElement>;
 }
 
-export const TextInput = React.forwardRef<any, TextInputProps>((props, ref) => {
+export const TextInput = React.forwardRef<HTMLInputElement, TextInputProps>((props, ref) => {
   const style: React.CSSProperties = {
     ...props.style,
     width: props.widthChars + 'ch',

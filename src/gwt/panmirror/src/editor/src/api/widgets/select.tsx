@@ -24,7 +24,7 @@ export interface SelectInputProps extends WidgetProps {
   children: ReactNode;
 }
 
-export const SelectInput = React.forwardRef<any, SelectInputProps>((props, ref) => {
+export const SelectInput = React.forwardRef<HTMLSelectElement, SelectInputProps>((props, ref) => {
   const style: React.CSSProperties = {
     ...props.style,
   };
