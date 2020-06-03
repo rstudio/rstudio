@@ -43,13 +43,16 @@ export function renderCompletionPopup(
 
   // helper function to show the popup at the specified position
   const renderPopup = (completions: any[]) => {
-    
-    // width and height can be derived here based on handler + completions
+    // create props
+    const props = { handler, completions };
 
-    const positionStyles = panelPositionStylesForPosition(view, result.pos, 200, 200);
+    // size popup
+    const size = completionPopupSize(props);
+    const positionStyles = panelPositionStylesForPosition(view, result.pos, size.width, size.height);
     applyStyles(popup, [], positionStyles);
     
-    ReactDOM.render(<CompletionPopup handler={handler} completions={completions} />, popup);
+    // render popup
+    ReactDOM.render(<CompletionPopup {...props} />, popup);
   };
   
   // show completions (resolve promise if necessary)
@@ -85,19 +88,18 @@ const CompletionPopup: React.FC<CompletionWidgetProps> = props => {
   );
 };
 
+const kDefaultItemHeight = 20;
+const kDefaultMaxVisible = 10;
+const kDefaultWidth = 180;
+
 const CompletionList: React.FC<CompletionWidgetProps> = props => {
 
-  const { component, itemHeight = 20, maxVisible = 10, width = 180 } = props.handler.view;
+  const { component, itemHeight = kDefaultItemHeight } = props.handler.view;
 
-  // some extra padding to tweak whitespace around list/items 
-  const kVerticalListPadding = 6;
+  const size = completionPopupSize(props);
 
   return (
-    <div className={'pm-completion-list'} style={{
-      width: width + 'px',
-      height: (itemHeight * Math.min(maxVisible, props.completions.length)) +
-              kVerticalListPadding + 'px'
-    }}>
+    <div className={'pm-completion-list'} style={{ width: size.width + 'px', height: size.height + 'px'}}>
       {props.completions.map(completion => {
         // need to provide key for both wrapper and item
         // https://stackoverflow.com/questions/28329382/understanding-unique-keys-for-array-children-in-react-js#answer-28329550
@@ -112,6 +114,25 @@ const CompletionList: React.FC<CompletionWidgetProps> = props => {
     </div>
   );
 };
+
+function completionPopupSize(props: CompletionWidgetProps) {
+
+  // some extra padding to tweak whitespace around list/items 
+  const kVerticalListPadding = 6;
+
+  // get view props (apply defaults)
+  const { 
+    itemHeight = kDefaultItemHeight, 
+    maxVisible = kDefaultMaxVisible, 
+    width = kDefaultWidth 
+  } = props.handler.view;
+
+  return {
+    width,
+    height: (itemHeight * Math.min(maxVisible, props.completions.length)) +
+            kVerticalListPadding
+  };
+}
 
 
 const kVerticalPadding = 8;

@@ -35,7 +35,6 @@ interface CompletionState {
 
 
 // TODO: popup positioning
-// TODO: positioning needs to use same calculatoins as popup
 
 // TODO: keyboard and mouse navigation/selection
 // TODO: insertion (may need to return arbitrary transactions for /command)
