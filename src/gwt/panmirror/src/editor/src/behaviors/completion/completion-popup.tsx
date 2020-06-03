@@ -18,11 +18,10 @@ import { EditorView } from 'prosemirror-view';
 import React from 'react';
 import ReactDOM from 'react-dom';
 
+import { applyStyles } from '../../api/css';
+import { CompletionHandler, CompletionResult } from '../../api/completion';
 import { WidgetProps } from "../../api/widgets/react";
 import { Popup } from '../../api/widgets/popup';
-
-import { CompletionHandler, CompletionResult } from '../../api/completion';
-import { applyStyles } from '../../api/css';
 
 import './completion-popup.css';
 
@@ -46,9 +45,9 @@ export function renderCompletionPopup(
     // create props
     const props = { handler, completions };
 
-    // size popup
+    // position popup
     const size = completionPopupSize(props);
-    const positionStyles = panelPositionStylesForPosition(view, result.pos, size.width, size.height);
+    const positionStyles = completionPopupPositionStyles(view, result.pos, size.width, size.height);
     applyStyles(popup, [], positionStyles);
     
     // render popup
@@ -115,10 +114,10 @@ const CompletionList: React.FC<CompletionWidgetProps> = props => {
   );
 };
 
-function completionPopupSize(props: CompletionWidgetProps) {
+// some extra padding to tweak whitespace around popup & list
+const kCompletionsVerticalPadding = 6;
 
-  // some extra padding to tweak whitespace around list/items 
-  const kVerticalListPadding = 6;
+function completionPopupSize(props: CompletionWidgetProps) {
 
   // get view props (apply defaults)
   const { 
@@ -130,37 +129,34 @@ function completionPopupSize(props: CompletionWidgetProps) {
   return {
     width,
     height: (itemHeight * Math.min(maxVisible, props.completions.length)) +
-            kVerticalListPadding
+            kCompletionsVerticalPadding
   };
 }
 
+function completionPopupPositionStyles(view: EditorView, pos: number, width: number, height: number) {
 
-const kVerticalPadding = 8;
-const kMinimumPanelPaddingToEdgeOfView = 5;
-function panelPositionStylesForPosition(view: EditorView, pos: number, height: number, width: number) {
-  const editorRect = view.dom.getBoundingClientRect();
+  // some constraints
+  const kMinimumPaddingToEdge = 5;
 
+  // default position
   const selectionCoords = view.coordsAtPos(pos);
+ 
+  let top = selectionCoords.bottom + kCompletionsVerticalPadding;
+  let left = selectionCoords.left;
 
-  const maximumTopPosition = Math.min(
-    selectionCoords.bottom + kVerticalPadding,
-    window.innerHeight - height - kMinimumPanelPaddingToEdgeOfView,
-  );
-  const minimumTopPosition = editorRect.y;
-  const popupTopPosition = Math.max(minimumTopPosition, maximumTopPosition);
+  // see if we need to be above
+  if ((top + height + kMinimumPaddingToEdge) >= window.innerHeight) {
+    top = selectionCoords.top - height - kCompletionsVerticalPadding;
+  }
 
-  const maximumLeftPosition = Math.min(
-    selectionCoords.right,
-    window.innerWidth - width - kMinimumPanelPaddingToEdgeOfView,
-  );
-  const minimumLeftPosition = editorRect.x;
-  const popupLeftPosition = Math.max(minimumLeftPosition, maximumLeftPosition);
+  // see if we need to be to the left (use cursor as pos in this case)
+  if ((left + width + kMinimumPaddingToEdge) >= window.innerWidth) {
+    const cursorCoords = view.coordsAtPos(view.state.selection.head);
+    left = cursorCoords.right - width;
+  }
 
-  // styles we'll return
-  const styles = {
-    top: popupTopPosition + 'px',
-    left: popupLeftPosition + 'px',
+  return {
+    left: left + 'px',
+    top: top + 'px',
   };
-
-  return styles;
 }

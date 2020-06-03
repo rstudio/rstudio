@@ -33,9 +33,6 @@ interface CompletionState {
   result?: CompletionResult;
 }
 
-
-// TODO: popup positioning
-
 // TODO: keyboard and mouse navigation/selection
 // TODO: insertion (may need to return arbitrary transactions for /command)
 
@@ -77,7 +74,6 @@ class CompletionPlugin extends Plugin<CompletionState> {
           if (!!schema.marks.code.isInSet(tr.storedMarks || tr.selection.$from.marks())) {
             return {};
           }
-          
           
           // calcluate text before cursor
           const textBefore = completionTextBeforeCursor(tr.selection);
