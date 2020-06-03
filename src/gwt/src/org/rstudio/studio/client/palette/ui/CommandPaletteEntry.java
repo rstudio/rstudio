@@ -17,14 +17,17 @@ package org.rstudio.studio.client.palette.ui;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.SafeHtmlUtil;
 import org.rstudio.core.client.StringUtil;
+import org.rstudio.studio.client.palette.model.CommandPaletteItem;
 
 import com.google.gwt.aria.client.Roles;
 import com.google.gwt.aria.client.SelectedValue;
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
+import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.HTMLPanel;
 import com.google.gwt.user.client.ui.Label;
@@ -49,11 +52,11 @@ public abstract class CommandPaletteEntry extends Composite
       String disabled();
    }
 
-   public CommandPaletteEntry()
+   public CommandPaletteEntry(CommandPaletteItem item)
    {
       initWidget(uiBinder.createAndBindUi(this));
       selected_ = false;
-      
+      item_ = item;
       Roles.getOptionRole().set(getElement());
       Roles.getOptionRole().setAriaSelectedState(getElement(), SelectedValue.FALSE);
    }
@@ -95,6 +98,12 @@ public abstract class CommandPaletteEntry extends Composite
       
       // Insert invoker
       invoker_.add(getInvoker());
+
+      // Invoke parent item on click
+      sinkEvents(Event.ONCLICK);
+      addHandler((evt) -> {
+         item_.invoke();
+      }, ClickEvent.getType());
    }
    
    /*
@@ -191,6 +200,7 @@ public abstract class CommandPaletteEntry extends Composite
    abstract public boolean dismissOnInvoke();
 
    private boolean selected_;
+   protected final CommandPaletteItem item_;
 
    @UiField public Label context_;
    @UiField public Label name_;

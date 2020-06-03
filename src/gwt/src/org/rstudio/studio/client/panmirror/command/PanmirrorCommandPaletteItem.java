@@ -31,7 +31,7 @@ public class PanmirrorCommandPaletteItem implements CommandPaletteItem
    {
       if (widget_ == null)
       {
-         widget_ = new PanmirrorCommandPaletteEntry(cmd_);
+         widget_ = new PanmirrorCommandPaletteEntry(cmd_, this);
       }
 
       return widget_;
@@ -42,7 +42,6 @@ public class PanmirrorCommandPaletteItem implements CommandPaletteItem
    {
       cmd_.execute();
    }
-
 
    @Override
    public boolean matchesSearch(String[] keywords)

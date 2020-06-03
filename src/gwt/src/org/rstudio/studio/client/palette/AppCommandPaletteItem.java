@@ -49,7 +49,7 @@ public class AppCommandPaletteItem implements CommandPaletteItem
    {
       if (widget_ == null)
       {
-         widget_ = new AppCommandPaletteEntry(command_, label_, keys_);
+         widget_ = new AppCommandPaletteEntry(command_, label_, keys_, this);
       }
       return widget_;
    }

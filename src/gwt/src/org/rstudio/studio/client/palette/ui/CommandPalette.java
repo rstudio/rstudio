@@ -78,6 +78,7 @@ public class CommandPalette extends Composite
       initWidget(uiBinder.createAndBindUi(this));
 
       items_ = new ArrayList<>();
+      visible_ = new ArrayList<>();
       host_ = host;
       selected_ = -1;
       attached_ = false;
@@ -263,11 +264,19 @@ public class CommandPalette extends Composite
     */
    private void applyFilter()
    {
+      // Clear the command list and render marker in preparation for a re-render
       commandList_.clear();
       renderedItem_ = 0;
+      visible_.clear();
+      selected_ = -1;
+      
+      // Render the next page of command entries
       renderNextPage();
    }
    
+   /**
+    * Runs when the render pass is completed.
+    */
    private void completeRender()
    {
       int matches = commandList_.getWidgetCount();
@@ -299,39 +308,23 @@ public class CommandPalette extends Composite
     */
    private void moveSelection(int units)
    {
-      // Select the first visible command in the given direction
-      CommandPaletteItem candidate = null;
+      // Identify target element
+      int target = selected_ + units;
 
-      int direction = units / Math.abs(units);  // -1 (backwards) or 1 (forwards)
-      int consumed = 0; // Number of units consumed to goal
-      int target = 0;   // Target element to select
-      int pass = 1;     // Number of entries passed so far
-      int viable = -1;  // The last visited viable (selectable) entry
-      do
+      // Clip to boundaries of display
+      if (target < 0)
       {
-         target = selected_ + (direction * pass++);
-         if (target < 0 || target >= items_.size())
-         {
-            // Request to navigate outside the boundaries of the palette
-            break;
-         }
-         candidate = items_.get(target);
-
-         if (candidate.asWidget().isVisible())
-         {
-            // This entry is visible, so it counts against our goal.
-            consumed += direction;
-            viable = target;
-         }
+         target = 0;
       }
-      while (consumed != units);
-      
-      // Select a viable entry if we found one; this may not be the desired
-      // element but will be as far as we could move (e.g. requested to move
-      // 20 units but had to stop at 15).
-      if (viable >= 0)
+      else if (target >= visible_.size())
       {
-         selectNewCommand(viable);
+         target = visible_.size() - 1;
+      }
+
+      // Select new command if we moved
+      if (target != selected_)
+      {
+         selectNewCommand(target);
       }
    }
    
@@ -350,11 +343,11 @@ public class CommandPalette extends Composite
    {
       if (selected_ >= 0)
       {
-         if (items_.get(selected_).dismissOnInvoke())
+         if (visible_.get(selected_).dismissOnInvoke())
          {
             host_.dismiss();
          }
-         items_.get(selected_).invoke();
+         visible_.get(selected_).invoke();
       }
    }
    
@@ -372,12 +365,12 @@ public class CommandPalette extends Composite
       // Clear previous selection, if any
       if (selected_ >= 0)
       {
-         items_.get(selected_).setSelected(false);
+         visible_.get(selected_).setSelected(false);
       }
       
       // Set new selection
       selected_ = target;
-      CommandPaletteItem selected = items_.get(selected_);
+      CommandPaletteItem selected = visible_.get(selected_);
       selected.setSelected(true);
       selected.asWidget().getElement().scrollIntoView();
 
@@ -386,6 +379,15 @@ public class CommandPalette extends Composite
             searchBox_.getElement(), Id.of(selected.asWidget().getElement()));
    }
    
+   /**
+    * Renders the next page of search results from the command palette.
+    * 
+    * By far the slowest part of the command palette is the rendering of
+    * individual items into GWT widgets, so doing this all at once would cause
+    * the palette to take several seconds to appear. To make it performant, we
+    * render just a few widgets at a time, letting the browser do a render
+    * pass after each batch. 
+    */
    private void renderNextPage()
    {
       // If we haven't already pulled items from all our sources and we have
@@ -404,23 +406,32 @@ public class CommandPalette extends Composite
          items_.addAll(items);
       }
       
+      // Set initial conditions for render loop
       int rendered = 0;
       int idx = renderedItem_;
+
+      // Main render loop; render items until we have rendered a full page
       while (idx < items_.size() && rendered < RENDER_PAGE_SIZE)
       {
          CommandPaletteItem item = items_.get(idx);
+
+         // Render this item if non-null and matches the search keywords, if we
+         // have them
          if (item != null && (needles_.length == 0 || item.matchesSearch(needles_)))
          {
+            // Render the item to a widget (this is the expensive step)
             Widget widget = item.asWidget();
             if (widget != null)
             {
+               // Add and highlight the item
                commandList_.add(item.asWidget());
+               visible_.add(item);
                item.setSearchHighlight(needles_);
                
                // If we just added the first widget to the box, select it
-               if (commandList_.getWidgetCount() == 1)
+               if (visible_.size() == 1)
                {
-                  selectNewCommand(idx);
+                  selectNewCommand(0);
                }
                rendered++;
             }
@@ -428,14 +439,6 @@ public class CommandPalette extends Composite
          
          // Advance to next command palette item
          idx++;
-
-            /* 
-             * TODO
-            w.sinkEvents(Event.ONCLICK);
-            w.addHandler((evt) -> {
-               item.invoke();
-            }, ClickEvent.getType());
-            */
       }
       
       // Save our place so we'll start rendering at the next page
@@ -444,7 +447,9 @@ public class CommandPalette extends Composite
       // If we didn't render everything, schedule another pass
       if (renderedItem_ < items_.size() || renderedSource_ < sources_.size())
       {
-         // Don't populate while user is typing
+         // Don't populate while user is typing as dumping more elements into
+         // the DOM is distracting (plus the additional elements will be
+         // discarded once the timer finishes running)
          if (!applyFilter_.isRunning())
          {
             Scheduler.get().scheduleDeferred(() ->
@@ -462,6 +467,7 @@ public class CommandPalette extends Composite
    private final Host host_;
    private final List<CommandPaletteEntrySource> sources_;
    private final List<CommandPaletteItem> items_;
+   private final List<CommandPaletteItem> visible_;
    private int selected_;
    private String searchText_;
    private String[] needles_;

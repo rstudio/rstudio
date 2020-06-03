@@ -21,9 +21,8 @@ public abstract class UserPrefPaletteEntry extends CommandPaletteEntry
 {
    public UserPrefPaletteEntry(PrefValue<?> val, UserPrefPaletteItem item)
    {
-      super();
+      super(item);
       pref_ = val;
-      item_ = item;
    }
 
    @Override
@@ -66,5 +65,4 @@ public abstract class UserPrefPaletteEntry extends CommandPaletteEntry
    abstract public void invoke();
 
    protected final PrefValue<?> pref_;
-   protected final UserPrefPaletteItem item_;
 }

@@ -32,6 +32,7 @@ public class UserPrefEnumPaletteEntry extends UserPrefPaletteEntry
    {
       super(val, item);
       val_ = val;
+      prefItem_ = item;
       
       // Create marginally more user friendly names for option values by
       // removing common separators and adding some casing
@@ -60,7 +61,7 @@ public class UserPrefEnumPaletteEntry extends UserPrefPaletteEntry
          val_.setGlobalValue(selector_.getValue());
 
          // Save new state
-         item_.nudgeWriter();
+         prefItem_.nudgeWriter();
       });
 
       initialize();
@@ -80,4 +81,5 @@ public class UserPrefEnumPaletteEntry extends UserPrefPaletteEntry
    
    private SelectWidget selector_;
    private EnumValue val_;
+   private final UserPrefPaletteItem prefItem_;
 }

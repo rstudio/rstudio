@@ -19,6 +19,7 @@ import java.util.List;
 import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.command.KeyCombination;
 import org.rstudio.core.client.command.KeySequence;
+import org.rstudio.studio.client.palette.model.CommandPaletteItem;
 
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.user.client.ui.Label;
@@ -26,9 +27,9 @@ import com.google.gwt.user.client.ui.Widget;
 
 public abstract class CommandPaletteCommand extends CommandPaletteEntry
 {
-   public CommandPaletteCommand(List<KeySequence> keys)
+   public CommandPaletteCommand(List<KeySequence> keys, CommandPaletteItem item)
    {
-      super();
+      super(item);
       keys_ = keys;
       shortcut_ = new Label();
       

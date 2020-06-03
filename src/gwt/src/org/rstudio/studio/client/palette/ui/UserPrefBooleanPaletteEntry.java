@@ -26,6 +26,7 @@ public class UserPrefBooleanPaletteEntry extends UserPrefPaletteEntry
    public UserPrefBooleanPaletteEntry(BooleanValue val, UserPrefPaletteItem item)
    {
       super(val, item);
+      prefItem_ = item;
       boolean initial = false;
 
       initial = val.getGlobalValue();
@@ -48,7 +49,7 @@ public class UserPrefBooleanPaletteEntry extends UserPrefPaletteEntry
          !RStudioGinjector.INSTANCE.getUserPrefs().reducedMotion().getValue());
       
       // Save new value
-      item_.nudgeWriter();
+      prefItem_.nudgeWriter();
    }
 
    @Override
@@ -58,4 +59,5 @@ public class UserPrefBooleanPaletteEntry extends UserPrefPaletteEntry
    }
    
    private final Toggle toggle_;
+   private final UserPrefPaletteItem prefItem_;
 }

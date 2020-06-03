@@ -47,7 +47,7 @@ public class RAddinPaletteItem implements CommandPaletteItem
    {
       if (widget_ == null)
       {
-         widget_ = new RAddinCommandPaletteEntry(addin_, label_, keys_);
+         widget_ = new RAddinCommandPaletteEntry(addin_, label_, keys_, this);
       }
       
       return widget_;

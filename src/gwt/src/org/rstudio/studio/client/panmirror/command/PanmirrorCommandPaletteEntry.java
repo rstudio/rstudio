@@ -23,9 +23,10 @@ import org.rstudio.studio.client.palette.ui.CommandPaletteCommand;
 
 public class PanmirrorCommandPaletteEntry extends CommandPaletteCommand
 {
-   public PanmirrorCommandPaletteEntry(PanmirrorCommandUI command)
+   public PanmirrorCommandPaletteEntry(PanmirrorCommandUI command, 
+                                       PanmirrorCommandPaletteItem item)
    {
-      super(keySequence(command));
+      super(keySequence(command), item);
       command_ = command;
       initialize();
    }

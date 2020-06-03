@@ -19,6 +19,7 @@ import java.util.List;
 import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.command.AppCommand.Context;
 import org.rstudio.core.client.command.KeySequence;
+import org.rstudio.studio.client.palette.model.CommandPaletteItem;
 
 /**
  * AppCommandPaletteEntry is a widget that represents an AppCommand in RStudio's
@@ -26,9 +27,10 @@ import org.rstudio.core.client.command.KeySequence;
  */
 public class AppCommandPaletteEntry extends CommandPaletteCommand
 {
-   public AppCommandPaletteEntry(AppCommand command, String label, List<KeySequence> keys)
+   public AppCommandPaletteEntry(AppCommand command, String label, List<KeySequence> keys,
+                                 CommandPaletteItem item)
    {
-      super(keys);
+      super(keys, item);
       command_ = command;
       label_ = label;
       initialize();
