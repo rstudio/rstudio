@@ -16,6 +16,7 @@
 import { Node as ProsemirrorNode } from 'prosemirror-model';
 import { Plugin, PluginKey, Transaction, Selection, TextSelection,} from 'prosemirror-state';
 import { EditorView } from 'prosemirror-view';
+
 import { setTextSelection } from 'prosemirror-utils';
 
 import { CompletionHandler, CompletionResult } from '../../api/completion';
@@ -50,9 +51,9 @@ class CompletionPlugin extends Plugin<CompletionState> {
   // have required fulfilling an external promise). also use a version counter
   // used to invalidate async completion requests that are fulfilled after
   // an update has occurred
-  private selectedIndex: number;
-  private completions: any[];
   private version = 0;
+  private completions: any[] = [];
+  private selectedIndex = 0;
 
   constructor(handlers: readonly CompletionHandler[], events: EditorEvents) {
     super({
@@ -102,11 +103,15 @@ class CompletionPlugin extends Plugin<CompletionState> {
       view: () => ({
         update: (view: EditorView) => {
           
+          // clear completion state
+          this.completions = [];
+          this.selectedIndex = 0;
+
           // increment version
           this.version++;
 
           // render and show completions if we have them
-          this.renderCompletions(view).then(this.showCompletions);
+          this.updateCompletions(view).then(this.showCompletions);
         
         },
 
@@ -166,10 +171,6 @@ class CompletionPlugin extends Plugin<CompletionState> {
       }
     });
 
-    // initialize transient state
-    this.selectedIndex = 0;
-    this.completions = [];
-
     // bind callback methods
     this.showCompletions = this.showCompletions.bind(this);
     this.hideCompletions = this.hideCompletions.bind(this);
@@ -184,14 +185,17 @@ class CompletionPlugin extends Plugin<CompletionState> {
     this.hideCompletions();
   }
 
-  private renderCompletions(view: EditorView) : Promise<boolean> {
+  private updateCompletions(view: EditorView) : Promise<boolean> {
 
     const state = key.getState(view.state);
     
     if (state?.handler) {
   
+      // track the request version to invalidate the result if an
+      // update happens after it goes into flight
       const requestVersion = this.version;
 
+      // request completions
       return state.result!.completions.then(completions => {
 
         // if the version has incremented since the request then return false
@@ -199,34 +203,42 @@ class CompletionPlugin extends Plugin<CompletionState> {
           return false;
         }
          
-        // save completions as a side effect
+        // save completions 
         this.completions = completions;
 
-        // render the popup if have completions
-        if (completions.length > 0) {
-          const props = {
-            handler: state.handler!,
-            pos: state.result!.pos,
-            completions,
-            selectedIndex: this.selectedIndex,
-            onClick: (index: number) => {
-              this.insertCompletion(view, index);
-              this.hideCompletions();
-            },
-            onHover: (index: number) => {
-              this.selectedIndex = index;
-              this.renderCompletions(view);
-            }
-          };
-          renderCompletionPopup(view, props, this.completionPopup);
-          return true;
-        } else {
-          return false;
-        }
+        // render them
+        return this.renderCompletions(view);
+
       });
      
     } else {
       return Promise.resolve(false);
+    }
+  }
+
+  private renderCompletions(view: EditorView) {
+
+    const state = key.getState(view.state);
+
+    if (state?.handler && this.completions.length > 0) {
+      const props = {
+        handler: state.handler!,
+        pos: state.result!.pos,
+        completions: this.completions,
+        selectedIndex: this.selectedIndex,
+        onClick: (index: number) => {
+          this.insertCompletion(view, index);
+          this.hideCompletions();
+        },
+        onHover: (index: number) => {
+          this.selectedIndex = index;
+          this.renderCompletions(view);
+        }
+      };
+      renderCompletionPopup(view, props, this.completionPopup);
+      return true;
+    } else {
+      return false;
     }
   }
 
@@ -263,8 +275,6 @@ class CompletionPlugin extends Plugin<CompletionState> {
   }
 
   private hideCompletions() {
-    this.selectedIndex = 0;
-    this.completions = [];
     this.showCompletions(false);
   }
 
