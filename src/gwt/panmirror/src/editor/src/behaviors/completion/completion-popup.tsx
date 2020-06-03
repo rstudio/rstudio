@@ -27,7 +27,6 @@ import './completion-popup.css';
 
 export function createCompletionPopup() : HTMLElement {
   const popup = window.document.createElement('div');
-  popup.tabIndex = 0;
   popup.style.position = 'absolute';
   popup.style.zIndex = '1000';
   return popup;

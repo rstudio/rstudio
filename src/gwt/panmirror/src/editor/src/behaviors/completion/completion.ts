@@ -39,6 +39,8 @@ interface CompletionState {
 // TODO: invalidation token for multiple concurrent requests 
 // (including cancel existing)
 
+// TODO: built in caching and re-filtering?
+
 
 const key = new PluginKey<CompletionState>('completion');
 
@@ -112,7 +114,7 @@ class CompletionPlugin extends Plugin<CompletionState> {
 
           // unsubscribe from events
           this.scrollUnsubscribe();
-          window.document.removeEventListener('focusin', this.focusChanged);
+          window.document.removeEventListener('focusin', this.hideCompletions);
 
           // tear down the popup
           destroyCompletionPopup(this.completionPopup);
@@ -124,28 +126,15 @@ class CompletionPlugin extends Plugin<CompletionState> {
     // bind callback methods
     this.showCompletions = this.showCompletions.bind(this);
     this.hideCompletions = this.hideCompletions.bind(this);
-    this.focusChanged = this.focusChanged.bind(this);
-
-    // hide completions when we scroll
+   
+    // hide completions when we scroll or the focus changes
     this.scrollUnsubscribe = events.subscribe(EditorEvent.Scroll, this.hideCompletions);
-
-    // check for focus changes (e.g. dismiss when user clicks a menu)
-    window.document.addEventListener('focusin', this.focusChanged);
+    window.document.addEventListener('focusin', this.hideCompletions);
 
     // create the popup, add it, and make it initially hidden
     this.completionPopup = createCompletionPopup();
     window.document.body.appendChild(this.completionPopup);
     this.hideCompletions();
-  }
-
-  // when a focus change occurs hide the popup if the popup itself isn't focused
-  private focusChanged() {
-    if (
-      window.document.activeElement !== this.completionPopup &&
-      !this.completionPopup.contains(window.document.activeElement)
-    ) {
-      this.hideCompletions();
-    }
   }
 
   private showCompletions(show: boolean) {
