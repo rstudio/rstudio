@@ -175,6 +175,11 @@ export function applyTheme(theme: EditorTheme) {
     .pm-find-text-selected {
       background-color: ${theme.selectionColor} !important;
     }
+    .pm-selected-list-item {
+      background-color: ${theme.findTextBackgroundColor} !important;
+      border: 1px solid ${theme.findTextBorderColor} !important;
+      border-radius: 2px;
+    }
     .pm-border-background-color {
       background-color: ${theme.borderBackgroundColor}!important;
     }

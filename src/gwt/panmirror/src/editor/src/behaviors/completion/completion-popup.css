@@ -22,12 +22,20 @@
   overflow-y: auto;
 }
 
-.pm-completion-item {
-  padding: 0 8px;
+.pm-completion-list > table {
+  table-layout: fixed;
+  border-spacing: 0;
+  width: 100%;
+  padding: 4px;
 }
 
-.pm-completion-item:last-child {
-  padding-bottom: 4px;
+.pm-completion-list > table td {
+  padding: 0 4px;
+}
+
+.pm-completion-item {
+  vertical-align: middle;
+  border: 1px solid transparent;
 }
 
 .pm-completion-item-text {

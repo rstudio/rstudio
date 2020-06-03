@@ -41,7 +41,7 @@ export interface CompletionHandler<T = any> {
     // width of completion popup (defaults to 180)
     width?: number;
 
-    // height for completion items (defaults to 20px)
+    // height for completion items (defaults to 22px)
     itemHeight?: number;
  
     // maximum number of visible items (defaults to 10)

@@ -42,7 +42,7 @@ export function renderCompletionPopup(
   // helper function to show the popup at the specified position
   const renderPopup = (completions: any[]) => {
     // create props
-    const props = { handler, completions };
+    const props = { handler, completions, selectedIndex: 0 };
 
     // position popup
     const size = completionPopupSize(props);
@@ -73,6 +73,7 @@ export function destroyCompletionPopup(popup: HTMLElement) {
 interface CompletionWidgetProps extends WidgetProps {
   handler: CompletionHandler;
   completions: any[];
+  selectedIndex: number;
 }
 
 const CompletionPopup: React.FC<CompletionWidgetProps> = props => {
@@ -86,7 +87,7 @@ const CompletionPopup: React.FC<CompletionWidgetProps> = props => {
   );
 };
 
-const kDefaultItemHeight = 20;
+const kDefaultItemHeight = 22;
 const kDefaultMaxVisible = 10;
 const kDefaultWidth = 180;
 
@@ -98,32 +99,42 @@ const CompletionList: React.FC<CompletionWidgetProps> = props => {
 
   return (
     <div className={'pm-completion-list'} style={{ width: size.width + 'px', height: size.height + 'px'}}>
-      {props.completions.map(completion => {
-        // need to provide key for both wrapper and item
-        // https://stackoverflow.com/questions/28329382/understanding-unique-keys-for-array-children-in-react-js#answer-28329550
-        const key = props.handler.view.key(completion);
-        const item = React.createElement(component, { ...completion, key });
-        return (
-          <div className={'pm-completion-item'} style = {{ height: itemHeight }} key={key}>
-            {item}
-          </div>
-        );
-      })}
+      <table>
+      <tbody>
+        {props.completions.map((completion, index) => {
+          // need to provide key for both wrapper and item
+          // https://stackoverflow.com/questions/28329382/understanding-unique-keys-for-array-children-in-react-js#answer-28329550
+          const key = props.handler.view.key(completion);
+          const item = React.createElement(component, { ...completion, key });
+          const className = 'pm-completion-item' + (index === props.selectedIndex ? ' pm-selected-list-item' : '');
+          return (
+            <tr key={key} style={ {lineHeight: itemHeight + 'px' }} >
+              <td 
+                className={className} 
+                key={key}
+              >
+                {item}
+              </td>
+            </tr>
+          );
+        })}
+      </tbody>
+      </table>
     </div>
   );
 };
 
 // some extra padding to tweak whitespace around popup & list
-const kCompletionsVerticalPadding = 6;
+const kCompletionsVerticalPadding = 8;
 
 function completionPopupSize(props: CompletionWidgetProps) {
 
   // get view props (apply defaults)
-  const { 
-    itemHeight = kDefaultItemHeight, 
-    maxVisible = kDefaultMaxVisible, 
-    width = kDefaultWidth 
-  } = props.handler.view;
+  let { itemHeight = kDefaultItemHeight } = props.handler.view;
+  const { maxVisible = kDefaultMaxVisible, width = kDefaultWidth } = props.handler.view;
+
+  // add 2px for the border to item heights
+  itemHeight += 2;
 
   return {
     width,
