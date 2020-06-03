@@ -19,25 +19,13 @@ import { Node as ProsemirrorNode } from 'prosemirror-model';
 import React from 'react';
 
 import { CompletionHandler, CompletionResult } from "../../api/completion";
-import { Emoji, emojisFromPrefx } from "../../api/emoji";
-
-const kEmojiCompletionRegEx = /(^|[^`]):(\w{2,})$/;
+import { Emoji, emojis } from "../../api/emoji";
 
 export function emojiCompletionHandler() : CompletionHandler<Emoji> {
 
   return {
     
-    completions: (text: string, selection: Selection): CompletionResult<Emoji> | null  => {
-      const match = text.match(kEmojiCompletionRegEx);
-      if (match) {
-        return {
-          pos: selection.head - match[2].length - 1,
-          completions: emojisFromPrefx(match[2])
-        };
-      } else {
-        return null;
-      }
-    },
+    completions: emojiCompletions,
 
     replacement(emoji: Emoji) : string | ProsemirrorNode {
       return emoji.emoji;
@@ -49,6 +37,43 @@ export function emojiCompletionHandler() : CompletionHandler<Emoji> {
     },
 
   };
+}
+
+const kMaxEmojiCompletions = 20;
+const kEmojiCompletionRegEx = /(^|[^`]):(\w{2,})$/;
+
+function emojiCompletions(text: string, selection: Selection): CompletionResult<Emoji> | null {
+  
+  // look for requisite text sequence
+  const match = text.match(kEmojiCompletionRegEx);
+  if (match) {
+
+    // determine insert position and prefix to search for
+    const prefix = match[2].toLowerCase();
+    const pos = selection.head - prefix.length - 1; // -1 for the leading :
+
+    // scan for completions that match the prefix (truncate as necessary)
+    const completions: Emoji[] = [];
+    for (const emoji of emojis()) {
+      const alias = emoji.aliases.find(a => a.startsWith(prefix));
+      if (alias) {
+        completions.push({
+          emoji: emoji.emoji,
+          aliases: [alias]
+        });
+      }
+      if (completions.length >= kMaxEmojiCompletions) {
+        break;
+      }
+    }
+
+    // return result
+    return { pos, completions };
+
+  // no match
+  } else {
+    return null;
+  }
 }
 
 

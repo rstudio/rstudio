@@ -35,8 +35,7 @@ interface CompletionState {
 // TODO: popup positioning
 // TODO: invalidation token for multiple concurrent requests 
 // (including cancel existing)
-// TODO: currently we show a popup for no completions!
-// TODO: eliminate padding
+
 // TODO: positioning needs to use same calculatoins as popup
 
 // TODO: janky scrolling behavior
