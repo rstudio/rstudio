@@ -14,9 +14,11 @@
  */
 
 import polyfillIsConnected from './isconnected';
+import polyfillCustomEvent from './custom-event';
 
 function polyfill() {
   polyfillIsConnected();
+  polyfillCustomEvent();
 }
 
 export default polyfill;
