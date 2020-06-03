@@ -13,7 +13,7 @@
  *
  */
 
-import { EditorState } from 'prosemirror-state';
+import { EditorState, Selection } from 'prosemirror-state';
 import { Node as ProsemirrorNode } from 'prosemirror-model';
 
 import React from 'react';
@@ -25,12 +25,12 @@ export function emojiCompletionHandler() : CompletionHandler<Emoji> {
 
   return {
     
-    completions: (state: EditorState, limit: number): CompletionResult<Emoji> | null  => {
+    completions: (selection: Selection, limit: number): CompletionResult<Emoji> | null  => {
 
-      const match = matchEmojiCompletion(state); 
+      const match = matchEmojiCompletion(selection); 
       if (match) {
         return {
-          pos: state.selection.head - match[2].length - 1,
+          pos: selection.head - match[2].length - 1,
           items: emojisFromPrefx(match[2])
         };
       } else {
@@ -47,13 +47,17 @@ export function emojiCompletionHandler() : CompletionHandler<Emoji> {
   };
 }
 
+
+
+
+
 const kMaxEmojiLength = 50;
 const kEmojiCompletionRegEx = /(^|[^`]):(\w{2,})$/;
 
-function matchEmojiCompletion(state: EditorState) {
+function matchEmojiCompletion(selection: Selection) {
 
   // inspect the text of the parent up to 50 characters back
-  const { $head } = state.selection;
+  const { $head } = selection;
   
   const textBefore = $head.parent.textBetween(
     Math.max(0, $head.parentOffset - kMaxEmojiLength),  // start

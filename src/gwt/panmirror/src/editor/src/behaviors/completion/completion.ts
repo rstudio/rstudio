@@ -13,10 +13,10 @@
  *
  */
 
-import { Plugin, PluginKey } from 'prosemirror-state';
+import { Plugin, PluginKey, Transaction } from 'prosemirror-state';
 import { EditorView } from 'prosemirror-view';
 
-import { CompletionHandler } from '../../api/completion';
+import { CompletionHandler, CompletionResult } from '../../api/completion';
 import { EditorEvents, EditorEvent } from '../../api/events';
 
 import { renderCompletionPopup, createCompletionPopup, destroyCompletionPopup } from './completion-popup';
@@ -27,9 +27,14 @@ export function completionExtension(handlers: readonly CompletionHandler[], even
   };
 }
 
-const key = new PluginKey('completion');
+interface CompletionState {
+  handler?: CompletionHandler;
+  result?: CompletionResult;
+}
 
-class CompletionPlugin extends Plugin {
+const key = new PluginKey<CompletionState>('completion');
+
+class CompletionPlugin extends Plugin<CompletionState> {
   
   private readonly scrollUnsubscribe: VoidFunction;
   private readonly completionPopup: HTMLElement;
@@ -37,31 +42,54 @@ class CompletionPlugin extends Plugin {
   constructor(handlers: readonly CompletionHandler[], events: EditorEvents) {
     super({
       key,
-      view: () => ({
-        update: (view: EditorView) => {
-          // ask each handler if it has completions. if one does then render 
-          // them and show the completion popup
+      state: {
+        init: () => ({}),
+        apply: (tr: Transaction)  => {
+
+          // selection only changes dismiss any active completion
+          if (!tr.docChanged && tr.selectionSet) {
+            return {};
+          }
+          
+          // check for a handler that can provide completions at the current selection
           for (const handler of handlers) {
-            const result = handler.completions(view.state, 20);
+            const result = handler.completions(tr.selection, 20);
             if (result) {
-              renderCompletionPopup(view, handler, result, this.completionPopup).then(() => {
-                this.showCompletions();
-              });
-              return;
+              return { handler, result };
             }
           }
 
-          // if we get this far there were no completions, so hide the popup
-          this.hideCompletions();
+          // no handler found
+          return {};
+        }
+      },
+      
+      view: () => ({
+        update: (view: EditorView) => {
+          
+          // if we have completions then show them
+          const state = key.getState(view.state);
+          if (state?.handler) {
+            renderCompletionPopup(view, state.handler, state.result!, this.completionPopup).then(() => {
+              this.showCompletions();
+            });
+
+          // otherwise hide any visible popup
+          } else {
+            this.hideCompletions();
+          }
+          
         },
 
         destroy: () => {
+
           // unsubscribe from events
           this.scrollUnsubscribe();
           window.document.removeEventListener('focusin', this.focusChanged);
 
           // tear down the popup
           destroyCompletionPopup(this.completionPopup);
+
         },
       }),
     });

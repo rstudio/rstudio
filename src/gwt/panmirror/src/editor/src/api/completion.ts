@@ -13,7 +13,7 @@
  *
  */
 
-import { EditorState } from "prosemirror-state";
+import { Selection } from "prosemirror-state";
 import { Node as ProsemirrorNode  } from "prosemirror-model";
 
 
@@ -27,7 +27,7 @@ export interface CompletionResult<T = any> {
 export interface CompletionHandler<T = any> {
 
   // return a set of completions for the given context
-  completions(state: EditorState, limit: number): CompletionResult | null;
+  completions(selection: Selection, limit: number): CompletionResult | null;
   
   // provide a react compontent type for viewing the item
   completionView: React.FC<T> | React.ComponentClass<T>;
