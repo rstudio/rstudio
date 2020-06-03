@@ -45,9 +45,9 @@ namespace system {
 
 class User;
 
-}
-}
-}
+} // namespace system
+} // namespace core
+} // namespace rstudio
 
 namespace rstudio {
 namespace core {

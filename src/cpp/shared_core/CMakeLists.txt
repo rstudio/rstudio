@@ -37,6 +37,7 @@ set (SHARED_CORE_SOURCE_FILES
    ReaderWriterMutex.cpp
    StderrLogDestination.cpp
    json/Json.cpp
+   system/Crypto.cpp
 )
 
 set (SHARED_INCLUDE_DIRS

@@ -91,7 +91,7 @@ Error hashWithSecureKey(const std::string& message, std::string* pHMAC)
       return error;
 
    // base 64 encode it
-   return core::system::crypto::base64Encode(hmac, pHMAC);
+   return core::system::crypto::base64Encode(hmac, *pHMAC);
 }
 
 http::Cookie createSecureCookie(const std::string& name,

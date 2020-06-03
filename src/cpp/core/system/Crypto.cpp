@@ -58,62 +58,6 @@ namespace rstudio {
 namespace core {
 namespace system {
 namespace crypto {
-
-namespace {
-
-// NOTE: we've never see the error codepath in spite of trying to get it to
-// return an error by tweaking params -- NULL params caused a crash rather
-// than returning an error). this is presumably because we are calling
-// such low level functions. we may want to look at the src code to see
-// if there is a way to test/engineer an error (or remove the error
-// checking if there is no way to get one)
-
-Error lastCryptoError(const ErrorLocation& location)
-{
-   // get the error code
-   unsigned long ec = ::ERR_get_error();
-   if (ec == 0)
-   {
-      LOG_WARNING_MESSAGE("lastCrytpoError called with no pending error");
-      return systemError(boost::system::errc::not_supported,
-                         "lastCrytpoError called with no pending error",
-                         location);
-   }
-   
-   // get the error message (docs say max len is 120)
-   const int ERR_BUFF_SIZE = 250; 
-   char errorBuffer[ERR_BUFF_SIZE];
-   ::ERR_error_string_n(ec, errorBuffer, ERR_BUFF_SIZE);
-   
-   // return the error
-   return systemError(boost::system::errc::bad_message,
-                      errorBuffer,
-                      location);
-} 
-   
-class BIOFreeAllScope : boost::noncopyable
-{
-public:
-   BIOFreeAllScope(BIO* pMem)
-      : pMem_(pMem)
-   {
-   }
-   
-   ~BIOFreeAllScope()
-   {
-      try
-      {
-         ::BIO_free_all(pMem_);
-      }
-      catch(...)
-      {
-      }
-   }
-private:
-   BIO* pMem_;
-};
-   
-} // anonymous namespace
    
 void initialize()
 {
@@ -160,7 +104,7 @@ Error HMAC_SHA2(const std::string& data,
    }
    else
    {
-      return lastCryptoError(ERROR_LOCATION);
+      return getLastCryptoError(ERROR_LOCATION);
    }
 }
 
@@ -170,117 +114,19 @@ Error sha256(const std::string& message,
    SHA256_CTX shaCtx;
    int ret = SHA256_Init(&shaCtx);
    if (ret != 1)
-      return lastCryptoError(ERROR_LOCATION);
+      return getLastCryptoError(ERROR_LOCATION);
 
    ret = SHA256_Update(&shaCtx, message.c_str(), message.size());
    if (ret != 1)
-      return lastCryptoError(ERROR_LOCATION);
+      return getLastCryptoError(ERROR_LOCATION);
 
    unsigned char hash[SHA256_DIGEST_LENGTH];
    ret = SHA256_Final(hash, &shaCtx);
    if (ret != 1)
-      return lastCryptoError(ERROR_LOCATION);
+      return getLastCryptoError(ERROR_LOCATION);
 
    *pHash = std::string((const char*)hash, SHA256_DIGEST_LENGTH);
    return Success();
-}
-
-Error base64Encode(const std::vector<unsigned char>& data, 
-                   std::string* pEncoded)
-{
-   return base64Encode(&(data[0]), gsl::narrow_cast<int>(data.size()), pEncoded);
-}
-   
-Error base64Encode(const unsigned char* pData, 
-                   int len, 
-                   std::string* pEncoded)
-{
-   // allocate BIO
-   BIO* pB64 = ::BIO_new(BIO_f_base64());
-   if (pB64 == nullptr)
-      return lastCryptoError(ERROR_LOCATION);
-      
-   // no newlines
-   BIO_set_flags(pB64, BIO_FLAGS_BASE64_NO_NL);
-   
-   // make sure it is freed prior to exit from the function
-   BIOFreeAllScope freeB64Scope(pB64);
-   
-   // allocate memory stream 
-   BIO* pMem = ::BIO_new(BIO_s_mem());
-   if (pMem == nullptr)
-      return lastCryptoError(ERROR_LOCATION);
-   
-   // tie the stream to the b64 stream
-   pB64 = ::BIO_push(pB64, pMem);
-   
-   // perform the encoding
-   int written = ::BIO_write(pB64, pData, len); 
-   if (written != len)
-      return lastCryptoError(ERROR_LOCATION);
-      
-   // flush all writes
-   int result = BIO_flush(pB64);
-   if (result <= 0)
-      return lastCryptoError(ERROR_LOCATION);
-   
-   // seek to beginning of memory stream
-   result = BIO_seek(pMem, 0);
-   if (result == -1)
-      return lastCryptoError(ERROR_LOCATION);
-
-   // read the memory stream
-   std::vector<char> buffer(len *2); // plenty more than len * 1.37 + padding
-   int bytesRead = ::BIO_read(pMem, &(buffer[0]), gsl::narrow_cast<int>(buffer.capacity()));
-   if (bytesRead < 0 && ::ERR_get_error() != 0)
-      return lastCryptoError(ERROR_LOCATION);
-
-   // copy to out param
-   buffer.resize(bytesRead);
-   pEncoded->assign(buffer.begin(), buffer.end());
-
-   // return success
-   return Success();
-}
-   
-   
-Error base64Decode(const std::string& data, 
-                   std::vector<unsigned char>* pDecoded)
-{
-   // allocate b64 BIO
-   BIO* pB64 = ::BIO_new(BIO_f_base64());
-   if (pB64 == nullptr)
-      return lastCryptoError(ERROR_LOCATION);
-   
-   // no newlines
-   BIO_set_flags(pB64, BIO_FLAGS_BASE64_NO_NL);
-   
-   // make sure it is freed prior to exit from the function
-   BIOFreeAllScope freeB64Scope(pB64);
-   
-   // allocate buffer 
-   BIO* pMem = BIO_new_mem_buf((void*)data.data(), gsl::narrow_cast<int>(data.length()));
-   if (pMem == nullptr)
-      return lastCryptoError(ERROR_LOCATION);
-   
-   // tie the stream to the b64 stream
-   pB64 = ::BIO_push(pB64, pMem);
-   
-   // reserve adequate memory in the decoded buffer and read into it
-   pDecoded->clear();
-   pDecoded->resize(data.length());
-   int bytesRead = ::BIO_read(pB64, 
-                              &(pDecoded->operator[](0)), 
-                              gsl::narrow_cast<int>(pDecoded->size()));
-   if (bytesRead < 0)
-      return lastCryptoError(ERROR_LOCATION);
-   
-   // resize the out buffer to the number of bytes actually read
-   pDecoded->resize(bytesRead);
-   
-   // return success
-   return Success();
-     
 }
 
 Error aesEncrypt(const std::vector<unsigned char>& data,
@@ -301,7 +147,7 @@ Error aesEncrypt(const std::vector<unsigned char>& data,
    if(!EVP_CipherUpdate(ctx, &(pEncrypted->operator[](0)), &outlen, &data[0], gsl::narrow_cast<int>(data.size())))
    {
       EVP_CIPHER_CTX_free(ctx);
-      return lastCryptoError(ERROR_LOCATION);
+      return getLastCryptoError(ERROR_LOCATION);
    }
    bytesEncrypted += outlen;
 
@@ -309,7 +155,7 @@ Error aesEncrypt(const std::vector<unsigned char>& data,
    if(!EVP_CipherFinal_ex(ctx, &(pEncrypted->operator[](outlen)), &outlen))
    {
       EVP_CIPHER_CTX_free(ctx);
-      return lastCryptoError(ERROR_LOCATION);
+      return getLastCryptoError(ERROR_LOCATION);
    }
    bytesEncrypted += outlen;
 
@@ -338,7 +184,7 @@ Error aesDecrypt(const std::vector<unsigned char>& data,
    if(!EVP_CipherUpdate(ctx, &(pDecrypted->operator[](0)), &outlen, &data[0], gsl::narrow_cast<int>(data.size())))
    {
       EVP_CIPHER_CTX_free(ctx);
-      return lastCryptoError(ERROR_LOCATION);
+      return getLastCryptoError(ERROR_LOCATION);
    }
    bytesDecrypted += outlen;
 
@@ -346,7 +192,7 @@ Error aesDecrypt(const std::vector<unsigned char>& data,
    if(!EVP_CipherFinal_ex(ctx, &(pDecrypted->operator[](outlen)), &outlen))
    {
       EVP_CIPHER_CTX_free(ctx);
-      return lastCryptoError(ERROR_LOCATION);
+      return getLastCryptoError(ERROR_LOCATION);
    }
    bytesDecrypted += outlen;
 
@@ -354,19 +200,6 @@ Error aesDecrypt(const std::vector<unsigned char>& data,
 
    // resize the container to the amount of actual bytes decrypted (padding is removed)
    pDecrypted->resize(bytesDecrypted);
-
-   return Success();
-}
-
-Error random(uint32_t numBytes,
-             std::vector<unsigned char>* pOut)
-{
-   pOut->resize(numBytes);
-
-   if (!RAND_bytes(&(pOut->operator[](0)), numBytes))
-   {
-      return lastCryptoError(ERROR_LOCATION);
-   }
 
    return Success();
 }
@@ -406,7 +239,7 @@ Error rsaSign(const std::string& message,
    int ret = RSA_sign(NID_sha256, (const unsigned char*)hash.c_str(),
                       static_cast<unsigned int>(hash.size()), pSignature.get(), &sigLen, pRsa.get());
    if (ret != 1)
-      return lastCryptoError(ERROR_LOCATION);
+      return getLastCryptoError(ERROR_LOCATION);
 
    // store signature in output param
    *pOutSignature = std::string((const char*)pSignature.get(), sigLen);
@@ -442,7 +275,7 @@ Error rsaVerify(const std::string& message,
    int ret = RSA_verify(NID_sha256, (const unsigned char*)hash.c_str(), static_cast<unsigned int>(hash.size()),
                        (const unsigned char*)signature.c_str(), static_cast<unsigned int>(signature.size()), pRsa.get());
    if (ret != 1)
-      return lastCryptoError(ERROR_LOCATION);
+      return getLastCryptoError(ERROR_LOCATION);
 
    return Success();
 }
@@ -462,11 +295,11 @@ Error generateRsa(const std::unique_ptr<BIO, decltype(&BIO_free)>& pBioPub,
 
    int ret = BN_set_word(pBigNum.get(), RSA_F4);
    if (ret != 1)
-      return lastCryptoError(ERROR_LOCATION);
+      return getLastCryptoError(ERROR_LOCATION);
 
    ret = RSA_generate_key_ex(pRsa.get(), 2048, pBigNum.get(), nullptr);
    if (ret != 1)
-      return lastCryptoError(ERROR_LOCATION);
+      return getLastCryptoError(ERROR_LOCATION);
 
    // Convert RSA to PKEY
    std::unique_ptr<EVP_PKEY, decltype(&EVP_PKEY_free)> pKey(EVP_PKEY_new(), EVP_PKEY_free);
@@ -475,17 +308,17 @@ Error generateRsa(const std::unique_ptr<BIO, decltype(&BIO_free)>& pBioPub,
 
    ret = EVP_PKEY_set1_RSA(pKey.get(), pRsa.get());
    if (ret != 1)
-      return lastCryptoError(ERROR_LOCATION);
+      return getLastCryptoError(ERROR_LOCATION);
 
    // Write public key in PEM format
    ret = PEM_write_bio_PUBKEY(pBioPub.get(), pKey.get());
    if (ret != 1)
-      return lastCryptoError(ERROR_LOCATION);
+      return getLastCryptoError(ERROR_LOCATION);
 
    // Write private key in PEM format
    ret = PEM_write_bio_PrivateKey(pBioPem.get(), pKey.get(), nullptr, nullptr, 0, nullptr, nullptr);
    if (ret != 1)
-      return lastCryptoError(ERROR_LOCATION);
+      return getLastCryptoError(ERROR_LOCATION);
 
    return Success();
 }
@@ -498,12 +331,12 @@ Error generateRsaKeyFiles(const FilePath& publicKeyPath,
    std::unique_ptr<BIO, decltype(&BIO_free)> pBioPub(BIO_new_file(publicKeyPath.getAbsolutePath().c_str(), "w"),
                                                      BIO_free);
    if (!pBioPub)
-      return lastCryptoError(ERROR_LOCATION);
+      return getLastCryptoError(ERROR_LOCATION);
 
    std::unique_ptr<BIO, decltype(&BIO_free)> pBioPem(BIO_new_file(privateKeyPath.getAbsolutePath().c_str(), "w"),
                                                      BIO_free);
    if (!pBioPem)
-      return lastCryptoError(ERROR_LOCATION);
+      return getLastCryptoError(ERROR_LOCATION);
 
    return generateRsa(pBioPub, pBioPem);
 }
@@ -570,7 +403,7 @@ core::Error rsaInit()
    #if OPENSSL_VERSION_NUMBER < 0x10100000L
       s_pRSA = ::RSA_generate_key(KEY_SIZE, 0x10001, nullptr, nullptr);
       if (!s_pRSA)
-         return lastCryptoError(ERROR_LOCATION);
+         return getLastCryptoError(ERROR_LOCATION);
 
       bn_n = s_pRSA->n;
       bn_e = s_pRSA->e;
@@ -583,7 +416,7 @@ core::Error rsaInit()
       BN_clear_free(bn);
       if (rc != 1) {
         RSA_free(s_pRSA);
-        return lastCryptoError(ERROR_LOCATION);
+        return getLastCryptoError(ERROR_LOCATION);
       }
    
       RSA_get0_key(s_pRSA, &bn_n, &bn_e, nullptr);
@@ -608,7 +441,7 @@ void rsaPublicKey(std::string* pExponent, std::string* pModulo)
 core::Error rsaPrivateDecrypt(const std::string& cipherText, std::string* pPlainText)
 {
    std::vector<unsigned char> cipherTextBytes;
-   Error error = base64Decode(cipherText, &cipherTextBytes);
+   Error error = base64Decode(cipherText, cipherTextBytes);
    if (error)
       return error;
 
@@ -620,7 +453,7 @@ core::Error rsaPrivateDecrypt(const std::string& cipherText, std::string* pPlain
                                        s_pRSA,
                                        RSA_PKCS1_PADDING);
    if (bytesRead == -1)
-      return lastCryptoError(ERROR_LOCATION);
+      return getLastCryptoError(ERROR_LOCATION);
 
    plainTextBytes.resize(bytesRead);
    pPlainText->assign(plainTextBytes.begin(), plainTextBytes.end());
@@ -643,7 +476,7 @@ Error encryptDataAsBase64EncodedString(const std::string& input,
 
    // create a random initialization vector for a little added security
    std::vector<unsigned char> iv;
-   Error error = core::system::crypto::random(256, &iv);
+   Error error = core::system::crypto::random(256, iv);
    if (error)
       return error;
 
@@ -654,12 +487,12 @@ Error encryptDataAsBase64EncodedString(const std::string& input,
       return error;
 
    // base 64 encode the IV used for encryption
-   error = core::system::crypto::base64Encode(iv, pIv);
+   error = core::system::crypto::base64Encode(iv, *pIv);
    if (error)
       return error;
 
    // base 64 encode encrypted result
-   return core::system::crypto::base64Encode(encrypted, pEncrypted);
+   return core::system::crypto::base64Encode(encrypted, *pEncrypted);
 }
 
 Error decryptBase64EncodedString(const std::string& input,
@@ -673,13 +506,13 @@ Error decryptBase64EncodedString(const std::string& input,
 
    // decode initialization vector
    std::vector<unsigned char> iv;
-   Error error = core::system::crypto::base64Decode(ivStr, &iv);
+   Error error = core::system::crypto::base64Decode(ivStr, iv);
    if (error)
       return error;
 
    // decode encrypted input
    std::vector<unsigned char> decoded;
-   error = core::system::crypto::base64Decode(input, &decoded);
+   error = core::system::crypto::base64Decode(input, decoded);
    if (error)
       return error;
 

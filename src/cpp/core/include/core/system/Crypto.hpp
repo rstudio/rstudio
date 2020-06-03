@@ -21,6 +21,7 @@
 
 #include <shared_core/Error.hpp>
 #include <shared_core/FilePath.hpp>
+#include <shared_core/system/Crypto.hpp>
 
 namespace rstudio {
 namespace core {
@@ -39,16 +40,6 @@ core::Error HMAC_SHA2(const std::string& data,
 
 core::Error sha256(const std::string& message,
                    std::string* pHash);
-
-core::Error base64Encode(const std::vector<unsigned char>& data, 
-                         std::string* pEncoded);   
-   
-core::Error base64Encode(const unsigned char* pData, 
-                         int len, 
-                         std::string* pEncoded);
-   
-core::Error base64Decode(const std::string& data, 
-                         std::vector<unsigned char>* pDecoded);
 
 core::Error rsaInit();
 
@@ -69,8 +60,6 @@ core::Error generateRsaKeyFiles(const FilePath& publicKeyPath,
 void rsaPublicKey(std::string* pExponent, std::string* pModulo);
 
 core::Error rsaPrivateDecrypt(const std::string& pCipherText, std::string* pPlainText);
-
-Error random(uint32_t numBytes, std::vector<unsigned char>* pOut);
 
 Error aesEncrypt(const std::vector<unsigned char>& data,
                  const std::vector<unsigned char>& key,
