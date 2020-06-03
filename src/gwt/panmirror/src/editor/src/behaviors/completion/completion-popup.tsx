@@ -15,12 +15,13 @@
 
 import { EditorView } from 'prosemirror-view';
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import ReactDOM from 'react-dom';
 
+import zenscroll from 'zenscroll';
+
 import { applyStyles } from '../../api/css';
-import { CompletionHandler, CompletionResult } from '../../api/completion';
-import { WidgetProps } from "../../api/widgets/react";
+import { CompletionHandler } from '../../api/completion';
 import { Popup } from '../../api/widgets/popup';
 
 import './completion-popup.css';
@@ -38,7 +39,6 @@ export interface CompletionListProps {
   completions: any[];
   selectedIndex: number;
 }
-
 
 export function renderCompletionPopup(view: EditorView, props: CompletionListProps, popup: HTMLElement) {
 
@@ -75,8 +75,22 @@ const CompletionList: React.FC<CompletionListProps> = props => {
 
   const size = completionPopupSize(props);
 
+  // keep selected index in view
+  const containerRef = React.useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const containerEl = containerRef.current;
+    if (containerEl) {
+      const rows = containerEl.getElementsByTagName('td');
+      const selectedRow = rows.item(props.selectedIndex);
+      if (selectedRow) {
+        const scroller = zenscroll.createScroller(containerEl);
+        scroller.intoView(selectedRow);
+      }
+    }
+  }, [props.selectedIndex]);
+
   return (
-    <div className={'pm-completion-list'} style={{ width: size.width + 'px', height: size.height + 'px'}}>
+    <div ref={containerRef} className={'pm-completion-list'} style={{ width: size.width + 'px', height: size.height + 'px'}}>
       <table>
       <tbody>
         {props.completions.map((completion, index) => {
@@ -102,10 +116,10 @@ const CompletionList: React.FC<CompletionListProps> = props => {
   );
 };
 
-// some extra padding to tweak whitespace around popup & list
-const kCompletionsVerticalPadding = 8;
-
 function completionPopupSize(props: CompletionListProps) {
+
+  // kicker for list margins/border/etc
+  const kCompletionsChrome = 8;
 
   // get view props (apply defaults)
   let { itemHeight = kDefaultItemHeight } = props.handler.view;
@@ -116,15 +130,15 @@ function completionPopupSize(props: CompletionListProps) {
 
   return {
     width,
-    height: (itemHeight * Math.min(maxVisible, props.completions.length)) +
-            kCompletionsVerticalPadding
+    height: (itemHeight * Math.min(maxVisible, props.completions.length)) + kCompletionsChrome
   };
 }
 
 function completionPopupPositionStyles(view: EditorView, pos: number, width: number, height: number) {
 
-  // some constraints
+  // some constants
   const kMinimumPaddingToEdge = 5;
+  const kCompletionsVerticalPadding = 8;
 
   // default position
   const selectionCoords = view.coordsAtPos(pos);

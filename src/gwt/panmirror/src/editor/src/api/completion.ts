@@ -14,7 +14,7 @@
  */
 
 import { Selection } from "prosemirror-state";
-import { Node as ProsemirrorNode  } from "prosemirror-model";
+import { Node as ProsemirrorNode, Schema  } from "prosemirror-model";
 
 
 export interface CompletionResult<T = any> {
@@ -29,7 +29,7 @@ export interface CompletionHandler<T = any> {
   completions(text: string, selection: Selection): CompletionResult | null;
   
   // provide a completion replacement as a string or node
-  replacement(completion: T) : string | ProsemirrorNode;
+  replacement(schema: Schema, completion: T) : string | ProsemirrorNode;
 
   // completion view
   view: {

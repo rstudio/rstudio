@@ -14,7 +14,7 @@
  */
 
 import { Selection } from 'prosemirror-state';
-import { Node as ProsemirrorNode } from 'prosemirror-model';
+import { Node as ProsemirrorNode, Schema } from 'prosemirror-model';
 
 import React from 'react';
 
@@ -27,8 +27,9 @@ export function emojiCompletionHandler() : CompletionHandler<Emoji> {
     
     completions: emojiCompletions,
 
-    replacement(emoji: Emoji) : string | ProsemirrorNode {
-      return emoji.emoji;
+    replacement(schema: Schema, emoji: Emoji) : string | ProsemirrorNode {
+      const mark = schema.marks.emoji.create({ emojihint: emoji.aliases[0] });
+      return schema.text(emoji.emoji, [mark]);
     },
 
     view: {

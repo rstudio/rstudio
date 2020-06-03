@@ -35,23 +35,6 @@ interface CompletionState {
   result?: CompletionResult;
 }
 
-
-// TODO: keyboard and mouse navigation/selection
-// TODO: insertion (may need to return arbitrary transactions for /command)
-
-// TODO: invalidation token for multiple concurrent requests 
-// (including cancel existing)
-
-// TODO: built in caching and re-filtering?
-
-
-// TODO: consider either getting rid of item height (instead just a max height for the flip)
-// TODO: consider using em as the unit for height
-
-// TODO: other solution is to use a fixed font size in pixels for completions
-// TODO: do we need a fixed font size for the shelf
-
-
 const key = new PluginKey<CompletionState>('completion');
 
 class CompletionPlugin extends Plugin<CompletionState> {
@@ -149,12 +132,12 @@ class CompletionPlugin extends Plugin<CompletionState> {
                   handled = true;
                   break;
                 case 'ArrowUp':
-                  this.selectedIndex--;
+                  this.selectedIndex = Math.max(this.selectedIndex - 1, 0);
                   this.renderCompletions(view);
                   handled = true;
                   break;
                 case 'ArrowDown':
-                  this.selectedIndex++;
+                  this.selectedIndex = Math.min(this.selectedIndex + 1, this.completions.length - 1);
                   this.renderCompletions(view);
                   handled = true;
                   break;
@@ -231,7 +214,7 @@ class CompletionPlugin extends Plugin<CompletionState> {
   }
 
   private insertSelectedCompletion(view: EditorView) {
-    
+
     const state = key.getState(view.state);
     if (state?.handler) {
 
@@ -240,7 +223,7 @@ class CompletionPlugin extends Plugin<CompletionState> {
         
       // get replacement (provide marks if it's a text node)
       const result = state.result!;
-      const replacement = state.handler.replacement(this.completions[this.selectedIndex]);
+      const replacement = state.handler.replacement(view.state.schema, this.completions[this.selectedIndex]);
       const node = replacement instanceof ProsemirrorNode ? replacement : view.state.schema.text(replacement);
 
       // perform replacement
