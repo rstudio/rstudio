@@ -41,10 +41,10 @@ export function renderCompletionPopup(
   handler: CompletionHandler, 
   result: CompletionResult,
   popup: HTMLElement
-) : Promise<void> {
+) : Promise<boolean> {
 
   // helper function to show the popup at the specified position
-  const showPopup = (completions: any[]) => {
+  const renderPopup = (completions: any[]) => {
     
     // width and height can be derived here based on handler + completions
 
@@ -55,13 +55,14 @@ export function renderCompletionPopup(
   };
   
   // show completions (resolve promise if necessary)
-  if (result.items instanceof Promise) {
-    return result.items.then(completions => {
-      showPopup(completions);
+  if (result.completions instanceof Promise) {
+    return result.completions.then(completions => {
+      renderPopup(completions);
+      return completions.length > 0;
     });
   } else {
-    showPopup(result.items);
-    return Promise.resolve();
+    renderPopup(result.completions);
+    return Promise.resolve(result.completions.length > 0);
   }
 }
 

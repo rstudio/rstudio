@@ -32,7 +32,7 @@ export function emojiCompletionHandler() : CompletionHandler<Emoji> {
       if (match) {
         return {
           pos: selection.head - match[2].length - 1,
-          items: emojisFromPrefx(match[2])
+          completions: emojisFromPrefx(match[2])
         };
       } else {
         return null;

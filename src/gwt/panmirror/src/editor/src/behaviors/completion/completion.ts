@@ -32,7 +32,6 @@ interface CompletionState {
   result?: CompletionResult;
 }
 
-// TODO: more spacing below
 // TODO: popup positioning
 // TODO: invalidation token for multiple concurrent requests 
 // (including cancel existing)
@@ -48,6 +47,8 @@ interface CompletionState {
 // TODO: insertion (may need to return arbitrary transactions for /command)
 
 // TODO: ensure that match is based on user typing (prefer prefix)
+
+// TODO: noCompletions setting
 
 const key = new PluginKey<CompletionState>('completion');
 
@@ -95,9 +96,9 @@ class CompletionPlugin extends Plugin<CompletionState> {
           // if we have completions then show them
           const state = key.getState(view.state);
           if (state?.handler) {
-            renderCompletionPopup(view, state.handler, state.result!, this.completionPopup).then(() => {
-              this.showCompletions();
-            });
+
+            renderCompletionPopup(view, state.handler, state.result!, this.completionPopup)
+              .then(this.showCompletions);
 
           // otherwise hide any visible popup
           } else {
@@ -119,12 +120,15 @@ class CompletionPlugin extends Plugin<CompletionState> {
       }),
     });
 
-    // hide completions when we scroll
+    // bind callback methods
+    this.showCompletions = this.showCompletions.bind(this);
     this.hideCompletions = this.hideCompletions.bind(this);
+    this.focusChanged = this.focusChanged.bind(this);
+
+    // hide completions when we scroll
     this.scrollUnsubscribe = events.subscribe(EditorEvent.Scroll, this.hideCompletions);
 
     // check for focus changes (e.g. dismiss when user clicks a menu)
-    this.focusChanged = this.focusChanged.bind(this);
     window.document.addEventListener('focusin', this.focusChanged);
 
     // create the popup, add it, and make it initially hidden
@@ -143,12 +147,12 @@ class CompletionPlugin extends Plugin<CompletionState> {
     }
   }
 
-  private showCompletions() {
-    this.completionPopup.style.display = '';
+  private showCompletions(show: boolean) {
+    this.completionPopup.style.display =  show ? '' : 'none';
   }
 
   private hideCompletions() {
-    this.completionPopup.style.display = 'none';
+    this.showCompletions(false);
   }
 }
 
