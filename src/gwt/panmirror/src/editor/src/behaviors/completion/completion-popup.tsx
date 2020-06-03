@@ -26,6 +26,8 @@ import { Popup } from '../../api/widgets/popup';
 import { CompletionHandler, CompletionResult } from '../../api/completion';
 import { applyStyles } from '../../api/css';
 
+import './completion-popup.css';
+
 export function createCompletionPopup() : HTMLElement {
   const popup = window.document.createElement('div');
   popup.tabIndex = 0;
@@ -81,7 +83,7 @@ const CompletionPopup: React.FC<CompletionPopupProps> = props => {
   return (
     <Popup 
       style={props.style}
-      classes={props.classes}
+      classes={['pm-completion-popup'].concat(props.classes || [])}
     >
       <FixedSizeList
         itemCount={props.completions.length}
@@ -107,6 +109,7 @@ const listChildComponent = (itemViewComponent: React.FC | React.ComponentClass) 
   };
 };
 
+const kVerticalPadding = 8;
 const kMinimumPanelPaddingToEdgeOfView = 5;
 function panelPositionStylesForPosition(view: EditorView, pos: number, height: number, width: number) {
   const editorRect = view.dom.getBoundingClientRect();
@@ -114,7 +117,7 @@ function panelPositionStylesForPosition(view: EditorView, pos: number, height: n
   const selectionCoords = view.coordsAtPos(pos);
 
   const maximumTopPosition = Math.min(
-    selectionCoords.bottom,
+    selectionCoords.bottom + kVerticalPadding,
     window.innerHeight - height - kMinimumPanelPaddingToEdgeOfView,
   );
   const minimumTopPosition = editorRect.y;

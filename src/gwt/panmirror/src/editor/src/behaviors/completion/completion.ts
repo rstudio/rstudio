@@ -34,12 +34,20 @@ interface CompletionState {
 
 // TODO: more spacing below
 // TODO: popup positioning
-// TODO: helper function for extracting completeable text from selection (or do it once and pass)
 // TODO: invalidation token for multiple concurrent requests 
 // (including cancel existing)
 // TODO: currently we show a popup for no completions!
 // TODO: eliminate padding
 // TODO: positioning needs to use same calculatoins as popup
+
+// TODO: janky scrolling behavior
+
+// TODO: ellipses treatment for completion items
+
+// TODO: keyboard and mouse navigation/selection
+// TODO: insertion (may need to return arbitrary transactions for /command)
+
+// TODO: ensure that match is based on user typing (prefer prefix)
 
 const key = new PluginKey<CompletionState>('completion');
 

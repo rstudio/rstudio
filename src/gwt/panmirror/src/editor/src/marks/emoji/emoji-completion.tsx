@@ -44,7 +44,8 @@ export function emojiCompletionHandler() : CompletionHandler<Emoji> {
     },
 
     view: {
-      component: EmojiView
+      component: EmojiView,
+      width: 200
     },
 
   };
@@ -53,6 +54,6 @@ export function emojiCompletionHandler() : CompletionHandler<Emoji> {
 
 const EmojiView: React.FC<Emoji> = emoji => {
   return (
-    <div>{emoji.emoji}</div>
+    <div>{emoji.emoji}&nbsp;:{emoji.aliases[0]}:</div>
   );
 };
