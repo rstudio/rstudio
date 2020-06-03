@@ -58,16 +58,16 @@
     "format": "prettier --write \"src/**/*.ts\" \"src/**/*.tsx\"",
     "lint": "tslint -c tslint.json 'src/**/*.{ts,tsx}'",
     "watch": "tsc --watch --noEmit --project './tsconfig.json'",
-    "generate-symbols": "tsc --types node --lib es2015,dom \"tools/generate-symbols.ts\";node \"tools/generate-symbols.js\"; rm -rf \"tools/generate-symbols.js\""
+    "generate-symbols": "ts-node tools/generate-symbols.ts"
   },
   "devDependencies": {
     "@types/node": "^14.0.4",
     "@types/unzip": "^0.1.1",
     "fast-xml-parser": "^3.17.1",
     "fuse-box": "^3.7.1",
-    "node-fetch": "^2.6.0",
     "prettier": "^1.18.2",
     "terser": "^4.6.2",
+    "ts-node": "^8.10.2",
     "tslint": "^5.20.0",
     "tslint-config-prettier": "^1.18.0",
     "tslint-react": "^5.0.0",

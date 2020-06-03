@@ -13,11 +13,11 @@
  *
  */
 
-import * as fetch from 'node-fetch';
 import * as fs from 'fs';
 import * as os from 'os';
 import * as unzip from 'unzip';
 import * as parser from 'fast-xml-parser';
+import * as https from 'https';
 
 // This will enforce the 'age' of the unicode characters and only allow characters
 // with an age less than or equal to this age.
@@ -83,7 +83,7 @@ const groupToBlockMapping = [
   {
     alias: 'Ideographic',
     blocks: ['Ideographic Description Characters', 'Ideographic Symbols and Punctuation'],
-  }
+  },
 ];
 
 // These characters are excluded because they don't render properly in the default font. 
@@ -115,144 +115,66 @@ const excludedChars = [
   119227,119228,119229,119230,119231,119232,119233,119234,119235,119236,119237,119238,
   119247,119248,119249,119250,119251,119252,119253,119254,119255,119256,119257,119258,
   119259,119260,119261, // musical symbols
-
-
 ];
 
 // Basic file paths to use when downloading and generating the file. These files will be cleaned up
 // upon completion.
 const workingDirectory = os.tmpdir();
 const targetFileName = 'ucd.nounihan.flat';
+const targetXmlFileName = `${targetFileName}.xml`;
 const targetZipFile = `${workingDirectory}/${targetFileName}.zip`;
-const targetXmlFile = `${workingDirectory}/${targetFileName}.xml`;
+const targetXmlFile = `${workingDirectory}/${targetXmlFileName}`;
 
 // The path that will be used to download the unicode file. This is currently
 // set to always downlod the latest. The maxUnicodeVersion attribute of each
 // character is used to decide which characters to include rather than the unicode database
 // version
-const unicodeDownloadPath = `https://www.unicode.org/Public/UCD/latest/ucdxml/${targetFileName}.zip`;
+const unicodeDownloadUrl = `https://www.unicode.org/Public/UCD/latest/ucdxml/${targetFileName}.zip`;
 
 // Remove any orphaned intermediary files
 cleanupFiles([targetXmlFile, targetZipFile], true);
 
-fetch(unicodeDownloadPath, {method: 'GET'})
-.then((res) => {
-  // Download the file
-  return new Promise<string>((resolve, reject) => {
-    const file = fs.createWriteStream(targetZipFile);
-    res.body.on('finish', () => resolve(targetZipFile));
-    res.body.pipe(file);
-    file.on('error', reject);
-  });
-})
-.then(() => {
-  // Unzip the file
-  return new Promise((resolve, reject) => {
-    info('Unzipping File', targetZipFile);
-    const readStream = fs.createReadStream(targetZipFile);
-    const writeStream = unzip.Extract({ path: workingDirectory });
-    writeStream.on('error', reject);
-    writeStream.on('close', () => {
-      info('Done unzipping', '');
-      resolve(outputFile);     
-    });
-    readStream.pipe(writeStream);
-  });    
-})
-.then(() => {
-  // Parse XML -> Json
-  info('Parsing', targetXmlFile);
-  const fileContents = fs.readFileSync(targetXmlFile, 'utf8');
-  const options = {
-    ignoreAttributes: false,
-    arrayMode: false,
-  };
-  const tObj = parser.getTraversalObj(fileContents, options);
-  const jsonResult = parser.convertToJson(tObj, options);
-  info('Done Parsing', '');
-  return jsonResult;
-})
-.then((jsonResult) => {
-  // Read the block from the XML file and generate typed data
-  info('Reading Raw Data'); 
-  const allIncludedBlocks: Block[] = parseBlocks(jsonResult.ucd.blocks.block);
-  const allValidSymbols: Character[] = parseSymbols(jsonResult.ucd.repertoire.char);
-  info(' Blocks ' + allIncludedBlocks.length);
-  info(' Chars ' + allValidSymbols.length);
-  info('');
-
-  info('Generating Output Data');
-  const symbolGroups: Group[] = new Array<Group>();
-  groupToBlockMapping.forEach(mapping => {
-    const groupName = mapping.alias;
-    const groupSymbols = allValidSymbols.filter(symbol => {
-        // Find the child blocks for this Group and use the codepoint to determine
-        // whether this symbol should be included in this group
-        const matchingBlockName = mapping.blocks.find(blockName => {
-          const matchingBlock = allIncludedBlocks.find(block => block.name === blockName);
-          return symbol.codepoint >= matchingBlock.codepointFirst && symbol.codepoint <= matchingBlock.codepointLast;
-        });
-
-        return matchingBlockName != null;
-    });
-    info('Group ' + groupName + ' -> ' + groupSymbols.length + ' symbols');   
-    symbolGroups.push({ name: groupName, symbols: groupSymbols });
-  });
-  info('');
-  return symbolGroups;
-})
-.then((symbolGroups) => {
-  // Filter out any groups with no valid characters
-  return symbolGroups.filter(blockGroup => blockGroup.symbols.length > 0);
-})
-.then((symbolGroups) => {
-  // Write the output file
-  info('Writing output', outputFile);
-  cleanupFiles([outputFile], false);
-  const finalJson = JSON.stringify(symbolGroups, null, 2);
-  fs.writeFileSync(outputFile, finalJson);
-
-
-  const countSymbols = symbolGroups.reduce((count, symbolGroup) => {
-    return count + symbolGroup.symbols.length;
-  }, 0);
-  info(countSymbols + " total symbols generated");
-  info('Done', '');
-})
-.catch((message: any) => {
-  error(message);
-})
-.finally(() => {
-  // Final cleanup
-  cleanupFiles([targetZipFile, targetXmlFile]);
-});
-
-function parseBlocks(blockJson: any[]) : Block[] {
-  return blockJson.map((block: { [x: string]: string; }) => {
-    return {
-      name: block['@_name'],
-      codepointFirst: parseInt(block['@_first-cp'], 16),
-      codepointLast: parseInt(block['@_last-cp'], 16),
-    };
+// The core sequence of steps for generating the symbols file
+downloadFile(unicodeDownloadUrl, targetZipFile)
+  .then((zipFile: string) => unzipSingleZipFile(zipFile, targetXmlFileName, workingDirectory))
+  .then((unzippedfile: string) => xmlToJson(unzippedfile))
+  .then(jsonResult => jsonToSymbolGroups(jsonResult))
+  .then(symbolGroups => symbolGroups.filter(blockGroup => blockGroup.symbols.length > 0))
+  .then(symbolGroups => writeSymbolsFile(symbolGroups))
+  .catch((message: any) => {
+    error(message);
+    process.exit(1);
   })
-  .filter((block: { name: string; }) => {
-    return groupToBlockMapping.find(blockGroup => blockGroup.blocks.includes(block.name));
-  });
+  .finally(() => cleanupFiles([targetZipFile, targetXmlFile]));
+
+function parseBlocks(blockJson: any[]): Block[] {
+  return blockJson
+    .map((block: { [x: string]: string }) => {
+      return {
+        name: block['@_name'],
+        codepointFirst: parseInt(block['@_first-cp'], 16),
+        codepointLast: parseInt(block['@_last-cp'], 16),
+      };
+    })
+    .filter((block: { name: string }) => {
+      return groupToBlockMapping.find(blockGroup => blockGroup.blocks.includes(block.name));
+    });
 }
 
-function parseSymbols(symbolsJson: any[]) : Character[] {
-  return symbolsJson.filter((rawChar: any) => isValidSymbol(rawChar))
-  .map((rawChar: { [x: string]: any; }) => {
-    const charpoint = parseInt(rawChar['@_cp'], 16);
-    return {
-      name: rawChar['@_na'],
-      value: String.fromCodePoint(charpoint),
-      codepoint: charpoint,
-    };
-  });
+function parseSymbols(symbolsJson: any[]): Character[] {
+  return symbolsJson
+    .filter((rawChar: any) => isValidSymbol(rawChar))
+    .map((rawChar: { [x: string]: any }) => {
+      const charpoint = parseInt(rawChar['@_cp'], 16);
+      return {
+        name: rawChar['@_na'],
+        value: String.fromCodePoint(charpoint),
+        codepoint: charpoint,
+      };
+    });
 }
 
-function isValidSymbol(rawChar: { [x: string]: any; }): boolean {
+function isValidSymbol(rawChar: { [x: string]: any }): boolean {
   const deprecated: string = rawChar['@_dep'];
   if (deprecated === 'Y') {
     return false;
@@ -302,6 +224,112 @@ function cleanupFiles(files: string[], warn?: boolean) {
       }
     }
   });
+}
+
+function downloadFile(url: string, targetFile: string): Promise<string> {
+  info('', 'Downloading file', unicodeDownloadUrl);
+  const targetStream = fs.createWriteStream(targetFile);
+  return new Promise((resolve, reject) => {
+    https
+      .get(url, response => {
+        response.pipe(targetStream);
+        targetStream.on('finish', () => {
+          targetStream.close();
+          info('done', '');
+          resolve(targetFile);
+        });
+      })
+      .on('error', err => {
+        reject(err);
+      });
+  });
+}
+
+function unzipSingleZipFile(zipFile: string, fileToExtract: string, outputDirectory: string): Promise<string> {
+  // Unzip the file
+  return new Promise((resolve, reject) => {
+    info('Unzipping File', zipFile);
+
+    const readStream = fs.createReadStream(zipFile);
+    readStream.pipe(unzip.Parse()).on('entry', (entry: unzip.Entry) => {
+      const fileName = entry.path;
+      if (fileName === fileToExtract && entry.type === 'File') {
+        const outputFilePath = `${outputDirectory}/${fileToExtract}`;
+        const outputStream = fs.createWriteStream(outputFilePath);
+        outputStream.on('error', reject);
+        outputStream.on('close', () => {
+          info('done', '');
+          resolve(outputFilePath);
+        });
+
+        entry.pipe(outputStream);
+      } else {
+        entry.autodrain();
+      }
+    });
+  });
+}
+
+function xmlToJson(unzippedFile: string): any {
+  // Parse XML -> Json
+  info('Parsing', unzippedFile);
+  const fileContents = fs.readFileSync(unzippedFile, 'utf8');
+  const options = {
+    ignoreAttributes: false,
+    arrayMode: false,
+  };
+  const tObj = parser.getTraversalObj(fileContents, options);
+  const jsonResult = parser.convertToJson(tObj, options);
+  info('done', '');
+  return jsonResult;
+}
+
+function jsonToSymbolGroups(jsonResult: any) {
+  // Read the block from the XML file and generate typed data
+  info('Reading Raw Data');
+  const allIncludedBlocks: Block[] = parseBlocks(jsonResult.ucd.blocks.block);
+  const allValidSymbols: Character[] = parseSymbols(jsonResult.ucd.repertoire.char);
+  info(' Blocks ' + allIncludedBlocks.length);
+  info(' Chars ' + allValidSymbols.length);
+  info('');
+
+  info('Generating Output Data');
+  const symbolGroups: Group[] = new Array<Group>();
+  groupToBlockMapping.forEach(mapping => {
+    const groupName = mapping.alias;
+    const groupSymbols = allValidSymbols.filter(symbol => {
+      // Find the child blocks for this Group and use the codepoint to determine
+      // whether this symbol should be included in this group
+      const matchingBlockName = mapping.blocks.find(blockName => {
+        const matchingBlock = allIncludedBlocks.find(block => block.name === blockName);
+        if (matchingBlock !== undefined) {
+          return symbol.codepoint >= matchingBlock.codepointFirst && symbol.codepoint <= matchingBlock.codepointLast;
+        } else {
+          return null;
+        }
+      });
+
+      return matchingBlockName != null;
+    });
+    info('Group ' + groupName + ' -> ' + groupSymbols.length + ' symbols');
+    symbolGroups.push({ name: groupName, symbols: groupSymbols });
+  });
+  info('done', '');
+  return symbolGroups;
+}
+
+function writeSymbolsFile(symbolGroups: Group[]) {
+    // Write the output file
+    info('Writing output', outputFile);
+    cleanupFiles([outputFile], false);
+    const finalJson = JSON.stringify(symbolGroups, null, 2);
+    fs.writeFileSync(outputFile, finalJson);
+
+    const countSymbols = symbolGroups.reduce((count, symbolGroup) => {
+      return count + symbolGroup.symbols.length;
+    }, 0);
+    info(countSymbols + ' total symbols generated');
+    info('done', '');
 }
 
 interface Group {
