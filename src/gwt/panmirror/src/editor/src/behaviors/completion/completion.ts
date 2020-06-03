@@ -16,13 +16,15 @@
 import { Node as ProsemirrorNode } from 'prosemirror-model';
 import { Plugin, PluginKey, Transaction, Selection, TextSelection,} from 'prosemirror-state';
 import { EditorView } from 'prosemirror-view';
+import { setTextSelection } from 'prosemirror-utils';
 
 import { CompletionHandler, CompletionResult } from '../../api/completion';
-import { EditorEvents, EditorEvent } from '../../api/events';
+import { EditorEvents } from '../../api/events';
+import { ScrollEvent } from '../../api/event-types';
 
 import { renderCompletionPopup, createCompletionPopup, destroyCompletionPopup } from './completion-popup';
 import { canInsertNode } from '../../api/node';
-import { setTextSelection } from 'prosemirror-utils';
+
 
 export function completionExtension(handlers: readonly CompletionHandler[], events: EditorEvents) {
   return {
@@ -166,7 +168,7 @@ class CompletionPlugin extends Plugin<CompletionState> {
     this.hideCompletions = this.hideCompletions.bind(this);
    
     // hide completions when we scroll or the focus changes
-    this.scrollUnsubscribe = events.subscribe(EditorEvent.Scroll, this.hideCompletions);
+    this.scrollUnsubscribe = events.subscribe(ScrollEvent, this.hideCompletions);
     window.document.addEventListener('focusin', this.hideCompletions);
 
     // create the popup, add it, and make it initially hidden

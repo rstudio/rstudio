@@ -30,7 +30,7 @@ import { Extension } from '../api/extension';
 import { PandocEngine, PandocWriterOptions } from '../api/pandoc';
 import { PandocCapabilities, getPandocCapabilities } from '../api/pandoc_capabilities';
 import { fragmentToHTML } from '../api/html';
-import { EventHandler, EventType, DOMEditorEvents, EditorEvents } from '../api/events';
+import { DOMEditorEvents, EventType, EventHandler } from '../api/events';
 import { ScrollEvent, UpdateEvent, OutlineChangeEvent, StateChangeEvent, ResizeEvent, LayoutEvent, FocusEvent, DispatchEvent } from '../api/event-types';
 import {
   PandocFormat,
@@ -84,6 +84,7 @@ import { editorSchema } from './editor-schema';
 import './styles/frame.css';
 import './styles/styles.css';
 import { ExtensionManager, initExtensions } from './editor-extensions';
+import { EditorEvents } from '../api/events';
 
 
 export interface EditorCode {

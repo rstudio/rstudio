@@ -22,7 +22,7 @@ import ReactDOM from 'react-dom';
 
 import { ProsemirrorCommand, EditorCommandId } from '../../api/command';
 import { applyStyles } from '../../api/css';
-import { EditorEvents, EditorEvent } from '../../api/events';
+import { EditorEvents } from '../../api/events';
 import { Extension } from '../../api/extension';
 import { EditorFormat } from '../../api/format';
 import { canInsertNode } from '../../api/node';
@@ -32,6 +32,7 @@ import { PandocCapabilities } from '../../api/pandoc_capabilities';
 import { EditorUI } from '../../api/ui';
 
 import { InsertSymbolPopup } from './insert_symbol-popup';
+import { ScrollEvent } from '../../api/event-types';
 
 const key = new PluginKey<boolean>('insert-symbol');
 const kMinimumPanelPaddingToEdgeOfView = 5;
@@ -92,7 +93,7 @@ class InsertSymbolPlugin extends Plugin<boolean> {
 
     this.ui = ui;
     this.closePopup = this.closePopup.bind(this);
-    this.scrollUnsubscribe = events.subscribe(EditorEvent.Scroll, this.closePopup);
+    this.scrollUnsubscribe = events.subscribe(ScrollEvent, this.closePopup);
 
     this.focusChanged = this.focusChanged.bind(this);
     window.document.addEventListener('focusin', this.focusChanged);
