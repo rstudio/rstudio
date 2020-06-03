@@ -389,8 +389,12 @@ export class Editor {
     this.view.destroy();
   }
 
-  public subscribe<TDetail>(event: EventType<TDetail>, handler: EventHandler<TDetail>): VoidFunction {
-    return this.events.subscribe(event, handler);
+  public subscribe<TDetail>(event: EventType<TDetail> | string, handler: EventHandler<TDetail>): VoidFunction {
+    if (typeof event === "string") {
+      return this.events.subscribe({eventName: event}, handler);
+    } else {
+      return this.events.subscribe(event, handler);
+    }
   }
 
   public setTitle(title: string) {
