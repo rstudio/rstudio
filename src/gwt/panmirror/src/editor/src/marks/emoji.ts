@@ -146,6 +146,8 @@ const extension = (): Extension | null => {
             parentNode.type.allowsMarkType(schema.marks.emoji),
           );
 
+          // TODO: This is mauling emoji that is inserted - why?
+
           textNodes.forEach(textNode => {
             for (const emoji of emojis()) {
               const charLoc = textNode.text.indexOf(emoji.emoji);

@@ -15,7 +15,7 @@
 
 import { WidgetProps } from '../../api/widgets/react';
 import React from 'react';
-import { SymbolCharacter } from './insert_symbol-data';
+import { SymbolCharacter } from './insert_symbol-dataprovider';
 
 interface SymbolPreviewProps extends WidgetProps {
   top: number;
@@ -46,7 +46,7 @@ export const SymbolPreview = React.forwardRef<any, SymbolPreviewProps>((props, r
           {props.symbolCharacter.name}
         </div>
         <div className="pm-symbol-grid-symbol-preview-codepoint">
-          {'U+' + props.symbolCharacter.codepoint.toString(16)}
+          {props.symbolCharacter.codepoint ? 'U+' + props.symbolCharacter.codepoint.toString(16) : ''}
         </div>
       </div>
     )

@@ -1,5 +1,5 @@
 /*
- * insert_symbol-data.ts
+ * insert_symbol.tsx
  *
  * Copyright (C) 2019-20 by RStudio, PBC
  *
@@ -13,38 +13,64 @@
  *
  */
 
-import untypedSymbolData from './symbols.json';
+import { Schema } from 'prosemirror-model';
+import { PluginKey } from 'prosemirror-state';
+
+import { ProsemirrorCommand, EditorCommandId } from '../../api/command';
+import { EditorEvents } from '../../api/events';
+import { Extension } from '../../api/extension';
+import { EditorFormat } from '../../api/format';
+import { EditorOptions } from '../../api/options';
+import { PandocExtensions } from '../../api/pandoc';
+import { PandocCapabilities } from '../../api/pandoc_capabilities';
+import { EditorUI } from '../../api/ui';
 import { parseCodepoint } from '../../api/unicode';
 
-export interface SymbolCharacterGroup {
-  name: string;
-  symbols: SymbolCharacter[];
-}
+import { performInsertSymbol, InsertSymbolPlugin } from './insert_symbol-plugin';
+import { SymbolDataProvider, SymbolCharacterGroup, SymbolCharacter } from './insert_symbol-dataprovider';
 
-export interface SymbolCharacter {
-  name: string;
-  value: string;
-  codepoint: number;
-}
+import untypedSymbolData from './symbols.json';
+
+const key = new PluginKey<boolean>('insert-symbol');
+
+const extension = (
+  _pandocExtensions: PandocExtensions,
+  _pandocCapabilities: PandocCapabilities,
+  ui: EditorUI,
+  _format: EditorFormat,
+  _options: EditorOptions,
+  events: EditorEvents,
+): Extension => {
+  return {
+    commands: () => {
+      return [new ProsemirrorCommand(EditorCommandId.Symbol, [], performInsertSymbol(key))];
+    },
+    plugins: (_schema: Schema) => {
+      return [new InsertSymbolPlugin(key, new UnicodeSymbolDataProvider(), ui, events)];
+    },
+  };
+};
 
 export const kCategoryAll = 'All';
 
-class SymbolDataManager {
+class UnicodeSymbolDataProvider implements SymbolDataProvider {
   constructor() {
     this.symbolGroups = (untypedSymbolData as SymbolCharacterGroup[]).sort((a, b) => a.name.localeCompare(b.name));
   }
   private readonly symbolGroups: SymbolCharacterGroup[];
 
+  public readonly filterPlaceholderHint = 'keyword or codepoint';
+
   public symbolGroupNames(): string[] {
     return [kCategoryAll, ...this.symbolGroups.map(symbolGroup => symbolGroup.name)];
   }
 
-  public getSymbols(groupName: string) {
-    if (groupName === kCategoryAll) {
+  public getSymbols(groupName: string | undefined) {
+    if (groupName === undefined || groupName === kCategoryAll) {
       return this.symbolGroups
         .map(symbolGroup => symbolGroup.symbols)
         .flat()
-        .sort((a, b) => a.codepoint - b.codepoint);
+        .sort((a, b) => a.codepoint! - b.codepoint!);
     }
     return this.symbolGroups
       .filter(symbolGroup => groupName === symbolGroup.name)
@@ -81,4 +107,4 @@ class SymbolDataManager {
   }
 }
 
-export default SymbolDataManager;
+export default extension;

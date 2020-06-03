@@ -123,8 +123,20 @@ function insertMenu(ui: EditorUI, commands: EditorCommand[]) {
     { separator: true },
     { command: EditorCommandId.InlineMath },
     { command: EditorCommandId.DisplayMath },
-    { separator: true },
-    { command: EditorCommandId.Symbol },
+    ...(haveAnyOf(commands, EditorCommandId.Symbol, EditorCommandId.Emoji)
+      ? [
+          { separator: true },
+          {
+            subMenu: {
+              text: ui.context.translateText('Emoji & Symbol'),
+              items: [
+                { command: EditorCommandId.Emoji },
+                { command: EditorCommandId.Symbol }, 
+              ],
+            },
+          },
+        ]
+      : []),
     { separator: true },
     { command: EditorCommandId.Footnote },
     { command: EditorCommandId.Citation },

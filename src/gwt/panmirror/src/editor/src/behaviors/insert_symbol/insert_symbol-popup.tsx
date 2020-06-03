@@ -15,7 +15,7 @@
 
 import { WidgetProps } from '../../api/widgets/react';
 import React, { ChangeEvent } from 'react';
-import SymbolDataManager, { kCategoryAll, SymbolCharacter, SymbolCharacterGroup } from './insert_symbol-data';
+import { SymbolDataProvider } from './insert_symbol-dataprovider';
 import { isElementFocused, focusElement } from '../../api/focus';
 import { Popup } from '../../api/widgets/popup';
 import { TextInput } from '../../api/widgets/text';
@@ -24,14 +24,15 @@ import SymbolCharacterGrid, { newIndexForKeyboardEvent } from './insert_symbol-g
 
 import './insert_symbol-styles.css';
 
-const symbolDataManager = new SymbolDataManager();
 
 interface InsertSymbolPopupProps extends WidgetProps {
+  symbolDataProvider: SymbolDataProvider;
   enabled: boolean;
   size: [number, number];
-  searchImage?: string;
   onInsertText: (text: string) => void;
   onClose: VoidFunction;
+  searchImage?: string;
+  searchPlaceholder? : string;
 }
 
 export const InsertSymbolPopup: React.FC<InsertSymbolPopupProps> = props => {
@@ -50,15 +51,15 @@ export const InsertSymbolPopup: React.FC<InsertSymbolPopupProps> = props => {
   const kNumberOfcolumns = 12;
 
   const [filterText, setFilterText] = React.useState<string>('');
-  const [selectedSymbolGroup, setSelectedSymbolGroup] = React.useState<string>(kCategoryAll);
+  const [selectedSymbolGroup, setSelectedSymbolGroup] = React.useState<string>();
   const [selectedSymbolIndex, setSelectedSymbolIndex] = React.useState<number>(0);
 
   const symbols = React.useMemo(
-    () => symbolDataManager.getSymbols(selectedSymbolGroup),
+    () => props.symbolDataProvider.getSymbols(selectedSymbolGroup),
     [selectedSymbolGroup]
   ); 
   const filteredSymbols = React.useMemo(
-    () => symbolDataManager.filterSymbols(filterText, symbols),
+    () => props.symbolDataProvider.filterSymbols(filterText, symbols),
     [filterText, symbols]
   );
 
@@ -79,7 +80,7 @@ export const InsertSymbolPopup: React.FC<InsertSymbolPopupProps> = props => {
     focusElement(textRef.current);
   }, []);
 
-  const options = symbolDataManager.symbolGroupNames().map(name => (
+  const options = props.symbolDataProvider.symbolGroupNames().map(name => (
     <option key={name} value={name}>
       {name}
     </option>
@@ -87,7 +88,7 @@ export const InsertSymbolPopup: React.FC<InsertSymbolPopupProps> = props => {
 
   const handleSelectChanged = (event: ChangeEvent<Element>) => {
     const value: string = (event.target as HTMLSelectElement).selectedOptions[0].value;
-    const selectedGroupName: string | undefined = symbolDataManager
+    const selectedGroupName: string | undefined = props.symbolDataProvider
       .symbolGroupNames()
       .find(name => name === value);
     if (selectedGroupName) {
@@ -156,7 +157,7 @@ export const InsertSymbolPopup: React.FC<InsertSymbolPopupProps> = props => {
             iconAdornment={props.searchImage}
             tabIndex={0}
             className="pm-popup-insert-symbol-search-textbox"
-            placeholder="keyword or codepoint"
+            placeholder={props.searchPlaceholder}
             onChange={handleTextChange}
             ref={textRef}
           />

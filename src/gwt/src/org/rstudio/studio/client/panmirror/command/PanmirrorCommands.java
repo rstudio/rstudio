@@ -46,6 +46,7 @@ public class PanmirrorCommands {
 	public static final String Div = "15EDB8F1-6015-4DA9-AE50-5987B24C1D96";
 	public static final String InsertDiv = "ACA1521B-8875-4113-9D43-B47F0038B19F";
 	public static final String InsertSymbol = "1419765F-6E4A-4A4C-8670-D9E8578EA996";
+	public static final String InsertEmoji = "F73896A2-02CC-4E5D-A596-78444A1D2A37";
 
 	// lists
 	public static final String BulletList = "D897FD2B-D6A4-44A7-A404-57B5251FBF64";

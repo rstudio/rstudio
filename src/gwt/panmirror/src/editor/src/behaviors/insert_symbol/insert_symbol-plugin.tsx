@@ -1,5 +1,5 @@
 /*
- * insert_symbol.tsx
+ * insert_symbol-plugin.tsx
  *
  * Copyright (C) 2019-20 by RStudio, PBC
  *
@@ -13,71 +13,54 @@
  *
  */
 
-import { Schema } from 'prosemirror-model';
-import { EditorState, Transaction, Plugin, PluginKey } from 'prosemirror-state';
+ import { EditorState, Transaction, Plugin, PluginKey } from 'prosemirror-state';
 import { EditorView } from 'prosemirror-view';
 
 import React from 'react';
 import ReactDOM from 'react-dom';
 
-import { ProsemirrorCommand, EditorCommandId } from '../../api/command';
 import { applyStyles } from '../../api/css';
 import { EditorEvents, EditorEvent } from '../../api/events';
-import { Extension } from '../../api/extension';
-import { EditorFormat } from '../../api/format';
 import { canInsertNode } from '../../api/node';
-import { EditorOptions } from '../../api/options';
-import { PandocExtensions } from '../../api/pandoc';
-import { PandocCapabilities } from '../../api/pandoc_capabilities';
 import { EditorUI } from '../../api/ui';
 
 import { InsertSymbolPopup } from './insert_symbol-popup';
+import {SymbolDataProvider} from './insert_symbol-dataprovider';
 
-const key = new PluginKey<boolean>('insert-symbol');
+
 const kMinimumPanelPaddingToEdgeOfView = 5;
 
-const extension = (
-  _pandocExtensions: PandocExtensions,
-  _pandocCapabilities: PandocCapabilities,
-  ui: EditorUI,
-  _format: EditorFormat,
-  _options: EditorOptions,
-  events: EditorEvents,
-): Extension => {
-  return {
-    commands: () => {
-      return [new ProsemirrorCommand(EditorCommandId.Symbol, [], insertSymbol)];
-    },
-    plugins: (_schema: Schema) => {
-      return [new InsertSymbolPlugin(ui, events)];
-    },
+
+export const performInsertSymbol = (pluginKey: PluginKey<boolean>) => {
+  return (state: EditorState, dispatch?: (tr: Transaction) => void, view?: EditorView) => {
+    if (!isEnabled(state)) {
+      return false;
+    }
+  
+    if (dispatch && view) {
+      const plugin = pluginKey.get(state) as InsertSymbolPlugin;
+      plugin.showPopup(view);
+    }
+    return true;
   };
 };
-
-export function insertSymbol(state: EditorState, dispatch?: (tr: Transaction) => void, view?: EditorView) {
-  if (!isEnabled(state)) {
-    return false;
-  }
-
-  if (dispatch && view) {
-    const plugin = key.get(state) as InsertSymbolPlugin;
-    plugin.showPopup(view);
-  }
-  return true;
-}
 
 function isEnabled(state: EditorState) {
   return canInsertNode(state, state.schema.nodes.text);
 }
 
-class InsertSymbolPlugin extends Plugin<boolean> {
+export class InsertSymbolPlugin extends Plugin<boolean> {
   private readonly scrollUnsubscribe: VoidFunction;
   private readonly ui: EditorUI;
   private popup: HTMLElement | null = null;
+  private dataProvider: SymbolDataProvider;
 
-  constructor(ui: EditorUI, events: EditorEvents) {
+  constructor(pluginKey: PluginKey<boolean>, 
+              dataProvider: SymbolDataProvider, 
+              ui: EditorUI, 
+              events: EditorEvents) {
     super({
-      key,
+      key: pluginKey,
       view: () => ({
         update: () => {
           this.closePopup();
@@ -90,6 +73,7 @@ class InsertSymbolPlugin extends Plugin<boolean> {
       }),
     });
 
+    this.dataProvider = dataProvider;
     this.ui = ui;
     this.closePopup = this.closePopup.bind(this);
     this.scrollUnsubscribe = events.subscribe(EditorEvent.Scroll, this.closePopup);
@@ -100,8 +84,8 @@ class InsertSymbolPlugin extends Plugin<boolean> {
 
   public showPopup(view: EditorView) {
     if (!this.popup) {
-      const kHeight = 316;
-      const kWidth = 370;
+      const kHeight = 320;
+      const kWidth = 430;
 
       this.popup = window.document.createElement('div');
       this.popup.tabIndex = 0;
@@ -166,14 +150,14 @@ class InsertSymbolPlugin extends Plugin<boolean> {
 
     return (
       <InsertSymbolPopup
+        symbolDataProvider={this.dataProvider}
         onClose={closePopup}
         onInsertText={insertText}
         enabled={isEnabled(view.state)}
         size={size}
         searchImage={this.ui.images.search}
+        searchPlaceholder={this.ui.context.translateText(this.dataProvider.filterPlaceholderHint)}
       />
     );
   }
 }
-
-export default extension;
