@@ -127,7 +127,7 @@ class CompletionPlugin extends Plugin<CompletionState> {
                   handled = true;
                   break;
                 case 'Enter':
-                  this.insertSelectedCompletion(view);
+                  this.insertCompletion(view, this.selectedIndex);
                   this.hideCompletions();
                   handled = true;
                   break;
@@ -191,7 +191,15 @@ class CompletionPlugin extends Plugin<CompletionState> {
             handler: state.handler!,
             pos: state.result!.pos,
             completions,
-            selectedIndex: this.selectedIndex
+            selectedIndex: this.selectedIndex,
+            onClick: (index: number) => {
+              this.insertCompletion(view, index);
+              this.hideCompletions();
+            },
+            onHover: (index: number) => {
+              this.selectedIndex = index;
+              this.renderCompletions(view);
+            }
           };
           renderCompletionPopup(view, props, this.completionPopup);
           return true;
@@ -213,7 +221,10 @@ class CompletionPlugin extends Plugin<CompletionState> {
     }
   }
 
-  private insertSelectedCompletion(view: EditorView) {
+  private insertCompletion(view: EditorView, index: number) {
+
+    // default index if not specified
+    index = index || this.selectedIndex;
 
     const state = key.getState(view.state);
     if (state?.handler) {
@@ -223,7 +234,7 @@ class CompletionPlugin extends Plugin<CompletionState> {
         
       // get replacement (provide marks if it's a text node)
       const result = state.result!;
-      const replacement = state.handler.replacement(view.state.schema, this.completions[this.selectedIndex]);
+      const replacement = state.handler.replacement(view.state.schema, this.completions[index]);
       const node = replacement instanceof ProsemirrorNode ? replacement : view.state.schema.text(replacement);
 
       // perform replacement
@@ -233,6 +244,7 @@ class CompletionPlugin extends Plugin<CompletionState> {
      
       // dispach
       view.dispatch(tr);
+      view.focus();
 
     }
   }

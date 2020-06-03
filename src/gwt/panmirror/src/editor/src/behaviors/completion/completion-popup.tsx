@@ -38,6 +38,8 @@ export interface CompletionListProps {
   pos: number;
   completions: any[];
   selectedIndex: number;
+  onHover: (index: number) => void;
+  onClick: (index: number) => void;
 }
 
 export function renderCompletionPopup(view: EditorView, props: CompletionListProps, popup: HTMLElement) {
@@ -89,6 +91,15 @@ const CompletionList: React.FC<CompletionListProps> = props => {
     }
   }, [props.selectedIndex]);
 
+  // row event handler
+  const rowEventHandler = (index: number, handler: (index: number) => void) => {
+    return (event: React.MouseEvent) => {
+      event.preventDefault();
+      event.stopPropagation();
+      handler(index);
+    };
+  };
+
   return (
     <div ref={containerRef} className={'pm-completion-list'} style={{ width: size.width + 'px', height: size.height + 'px'}}>
       <table>
@@ -100,7 +111,12 @@ const CompletionList: React.FC<CompletionListProps> = props => {
           const item = React.createElement(component, { ...completion, key });
           const className = 'pm-completion-item' + (index === props.selectedIndex ? ' pm-selected-list-item' : '');
           return (
-            <tr key={key} style={ {lineHeight: itemHeight + 'px' }} >
+            <tr 
+              key={key} 
+              style={ {lineHeight: itemHeight + 'px' }} 
+              onClick={rowEventHandler(index, props.onClick)}
+              onMouseEnter={rowEventHandler(index,props.onHover)}
+             >
               <td 
                 className={className} 
                 key={key}
