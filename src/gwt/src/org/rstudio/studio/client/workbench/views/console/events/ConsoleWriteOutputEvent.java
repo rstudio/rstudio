@@ -14,15 +14,20 @@
  */
 package org.rstudio.studio.client.workbench.views.console.events;
 
+import com.google.gwt.event.shared.EventHandler;
 import org.rstudio.studio.client.workbench.views.console.model.ConsoleText;
 
 import com.google.gwt.event.shared.GwtEvent;
 
-public class ConsoleWriteOutputEvent extends GwtEvent<ConsoleWriteOutputHandler>
+public class ConsoleWriteOutputEvent extends GwtEvent<ConsoleWriteOutputEvent.Handler>
 {
-   public static final GwtEvent.Type<ConsoleWriteOutputHandler> TYPE =
-      new GwtEvent.Type<ConsoleWriteOutputHandler>();
-   
+   public static final Type<Handler> TYPE = new Type<>();
+
+   public interface Handler extends EventHandler
+   {
+      void onConsoleWriteOutput(ConsoleWriteOutputEvent event);
+   }
+
    public ConsoleWriteOutputEvent(ConsoleText output)
    {
       output_ = output;
@@ -39,13 +44,13 @@ public class ConsoleWriteOutputEvent extends GwtEvent<ConsoleWriteOutputHandler>
    }
    
    @Override
-   protected void dispatch(ConsoleWriteOutputHandler handler)
+   protected void dispatch(Handler handler)
    {
       handler.onConsoleWriteOutput(this);
    }
 
    @Override
-   public GwtEvent.Type<ConsoleWriteOutputHandler> getAssociatedType()
+   public Type<Handler> getAssociatedType()
    {
       return TYPE;
    }

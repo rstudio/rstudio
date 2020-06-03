@@ -17,11 +17,9 @@ package org.rstudio.studio.client.workbench.views.console.events;
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 
-public class ConsoleBusyEvent 
-   extends GwtEvent<ConsoleBusyEvent.Handler>
+public class ConsoleBusyEvent extends GwtEvent<ConsoleBusyEvent.Handler>
 {
-   public static final GwtEvent.Type<ConsoleBusyEvent.Handler> TYPE =
-      new GwtEvent.Type<ConsoleBusyEvent.Handler>();
+   public static final GwtEvent.Type<Handler> TYPE = new GwtEvent.Type<>();
   
    public interface Handler extends EventHandler
    {
@@ -39,7 +37,7 @@ public class ConsoleBusyEvent
    }
          
    @Override
-   public Type<ConsoleBusyEvent.Handler> getAssociatedType()
+   public Type<Handler> getAssociatedType()
    {
       return TYPE;
    }

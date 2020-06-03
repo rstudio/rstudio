@@ -54,7 +54,6 @@ import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.prefs.model.UserState;
 import org.rstudio.studio.client.workbench.views.BasePresenter;
 import org.rstudio.studio.client.workbench.views.console.events.ConsolePromptEvent;
-import org.rstudio.studio.client.workbench.views.console.events.ConsolePromptHandler;
 import org.rstudio.studio.client.workbench.views.plots.events.LocatorEvent;
 import org.rstudio.studio.client.workbench.views.plots.events.LocatorHandler;
 import org.rstudio.studio.client.workbench.views.plots.events.PlotsChangedEvent;
@@ -69,7 +68,7 @@ import org.rstudio.studio.client.workbench.views.plots.ui.manipulator.Manipulato
 
 public class Plots extends BasePresenter implements PlotsChangedHandler,
                                                     LocatorHandler,
-                                                    ConsolePromptHandler,
+                                                    ConsolePromptEvent.Handler,
                                                     DeferredInitCompletedEvent.Handler,
                                                     PlotsZoomSizeChangedEvent.Handler
 {

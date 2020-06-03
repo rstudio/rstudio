@@ -17,11 +17,9 @@ package org.rstudio.studio.client.workbench.views.console.events;
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 
-public class ConsoleActivateEvent 
-   extends GwtEvent<ConsoleActivateEvent.Handler>
+public class ConsoleActivateEvent extends GwtEvent<ConsoleActivateEvent.Handler>
 {
-   public static final GwtEvent.Type<ConsoleActivateEvent.Handler> TYPE =
-      new GwtEvent.Type<ConsoleActivateEvent.Handler>();
+   public static final Type<Handler> TYPE = new Type<>();
   
    public interface Handler extends EventHandler
    {
@@ -37,9 +35,9 @@ public class ConsoleActivateEvent
    {
       return focusWindow_;
    }
-         
+
    @Override
-   public Type<ConsoleActivateEvent.Handler> getAssociatedType()
+   public Type<Handler> getAssociatedType()
    {
       return TYPE;
    }
