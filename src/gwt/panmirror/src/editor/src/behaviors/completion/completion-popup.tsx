@@ -32,37 +32,23 @@ export function createCompletionPopup() : HTMLElement {
   return popup;
 }
 
-export function renderCompletionPopup(
-  view: EditorView, 
-  handler: CompletionHandler, 
-  result: CompletionResult,
-  popup: HTMLElement
-) : Promise<boolean> {
+export interface CompletionListProps {
+  handler: CompletionHandler;
+  pos: number;
+  completions: any[];
+  selectedIndex: number;
+}
 
-  // helper function to show the popup at the specified position
-  const renderPopup = (completions: any[]) => {
-    // create props
-    const props = { handler, completions, selectedIndex: 0 };
 
-    // position popup
-    const size = completionPopupSize(props);
-    const positionStyles = completionPopupPositionStyles(view, result.pos, size.width, size.height);
-    applyStyles(popup, [], positionStyles);
-    
-    // render popup
-    ReactDOM.render(<CompletionPopup {...props} />, popup);
-  };
-  
-  // show completions (resolve promise if necessary)
-  if (result.completions instanceof Promise) {
-    return result.completions.then(completions => {
-      renderPopup(completions);
-      return completions.length > 0;
-    });
-  } else {
-    renderPopup(result.completions);
-    return Promise.resolve(result.completions.length > 0);
-  }
+export function renderCompletionPopup(view: EditorView, props: CompletionListProps, popup: HTMLElement) {
+
+   // position popup
+   const size = completionPopupSize(props);
+   const positionStyles = completionPopupPositionStyles(view, props.pos, size.width, size.height);
+   applyStyles(popup, [], positionStyles);
+   
+   // render popup
+   ReactDOM.render(<CompletionPopup {...props} />, popup);
 }
 
 export function destroyCompletionPopup(popup: HTMLElement) {
@@ -70,18 +56,9 @@ export function destroyCompletionPopup(popup: HTMLElement) {
   popup.remove();
 }
 
-interface CompletionWidgetProps extends WidgetProps {
-  handler: CompletionHandler;
-  completions: any[];
-  selectedIndex: number;
-}
-
-const CompletionPopup: React.FC<CompletionWidgetProps> = props => {
+const CompletionPopup: React.FC<CompletionListProps> = props => {
   return (
-    <Popup 
-      style={props.style}
-      classes={['pm-completion-popup'].concat(props.classes || [])}
-    >
+    <Popup classes={['pm-completion-popup']}>
       <CompletionList {...props}/> 
     </Popup>
   );
@@ -91,7 +68,8 @@ const kDefaultItemHeight = 22;
 const kDefaultMaxVisible = 10;
 const kDefaultWidth = 180;
 
-const CompletionList: React.FC<CompletionWidgetProps> = props => {
+
+const CompletionList: React.FC<CompletionListProps> = props => {
 
   const { component, itemHeight = kDefaultItemHeight } = props.handler.view;
 
@@ -127,7 +105,7 @@ const CompletionList: React.FC<CompletionWidgetProps> = props => {
 // some extra padding to tweak whitespace around popup & list
 const kCompletionsVerticalPadding = 8;
 
-function completionPopupSize(props: CompletionWidgetProps) {
+function completionPopupSize(props: CompletionListProps) {
 
   // get view props (apply defaults)
   let { itemHeight = kDefaultItemHeight } = props.handler.view;
