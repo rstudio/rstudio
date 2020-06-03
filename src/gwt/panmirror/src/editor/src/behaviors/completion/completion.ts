@@ -13,7 +13,7 @@
  *
  */
 
-import { Node as ProsemirrorNode, Slice, Fragment } from 'prosemirror-model';
+import { Node as ProsemirrorNode } from 'prosemirror-model';
 import { Plugin, PluginKey, Transaction, Selection, TextSelection,} from 'prosemirror-state';
 import { EditorView } from 'prosemirror-view';
 
@@ -232,7 +232,7 @@ class CompletionPlugin extends Plugin<CompletionState> {
       // create transaction
       const tr = view.state.tr;
         
-      // get replacement (provide marks if it's a text node)
+      // get replacement 
       const result = state.result!;
       const replacement = state.handler.replacement(view.state.schema, this.completions[index]);
       const node = replacement instanceof ProsemirrorNode ? replacement : view.state.schema.text(replacement);

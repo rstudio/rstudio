@@ -16,7 +16,6 @@
 import { Selection } from "prosemirror-state";
 import { Node as ProsemirrorNode, Schema  } from "prosemirror-model";
 
-
 export interface CompletionResult<T = any> {
   pos: number;
   completions: T[] | Promise<T[]>;

@@ -70,7 +70,6 @@ const kDefaultItemHeight = 22;
 const kDefaultMaxVisible = 10;
 const kDefaultWidth = 180;
 
-
 const CompletionList: React.FC<CompletionListProps> = props => {
 
   const { component, itemHeight = kDefaultItemHeight } = props.handler.view;
@@ -117,10 +116,7 @@ const CompletionList: React.FC<CompletionListProps> = props => {
               onClick={rowEventHandler(index, props.onClick)}
               onMouseEnter={rowEventHandler(index,props.onHover)}
              >
-              <td 
-                className={className} 
-                key={key}
-              >
+              <td className={className} key={key}>
                 {item}
               </td>
             </tr>
