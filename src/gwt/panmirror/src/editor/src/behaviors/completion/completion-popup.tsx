@@ -44,15 +44,12 @@ export function renderCompletionPopup(
   // helper function to show the popup at the specified position
   const showPopup = (completions: any[]) => {
     
+    // width and height can be derived here based on handler + completions
+
     const positionStyles = panelPositionStylesForPosition(view, result.pos, 200, 200);
     applyStyles(popup, [], positionStyles);
     
-    ReactDOM.render(
-      <CompletionPopup 
-      completions={completions} 
-      completionView={handler.completionView} />,
-      popup,
-    );
+    ReactDOM.render(<CompletionPopup handler={handler} completions={completions} />, popup);
   };
   
   // show completions (resolve promise if necessary)
@@ -72,17 +69,14 @@ export function destroyCompletionPopup(popup: HTMLElement) {
 }
 
 interface CompletionPopupProps extends WidgetProps {
+  handler: CompletionHandler;
   completions: any[];
-  completionView: React.FC | React.ComponentClass;
-  rowHeight?: number;
-  height?: number;
 }
 
-const kCompletionPopupWidth = 200;
 
 const CompletionPopup: React.FC<CompletionPopupProps> = props => {
   
-  const { rowHeight = 25, height = 200 } = props;
+  const { itemView, itemHeight = 25, maxVisible = 10, width = 180 } = props.handler;
 
   return (
     <Popup 
@@ -91,12 +85,12 @@ const CompletionPopup: React.FC<CompletionPopupProps> = props => {
     >
       <FixedSizeList
         itemCount={props.completions.length}
-        itemSize={rowHeight}
-        height={height}
-        width={kCompletionPopupWidth}
+        itemSize={itemHeight}
+        height={itemHeight * Math.min(maxVisible, props.completions.length)}
+        width={width}
         itemData={props.completions}
       >
-        {listChildComponent(props.completionView)}
+        {listChildComponent(itemView)}
       </FixedSizeList>   
     </Popup>
   );

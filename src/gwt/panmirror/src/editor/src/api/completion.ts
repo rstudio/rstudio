@@ -17,8 +17,6 @@ import { Selection } from "prosemirror-state";
 import { Node as ProsemirrorNode  } from "prosemirror-model";
 
 
-// TODO: some sort of invalidation token for requests (b/c they are async)
-
 export interface CompletionResult<T = any> {
   pos: number;
   items: T[] | Promise<T[]>;
@@ -27,14 +25,22 @@ export interface CompletionResult<T = any> {
 export interface CompletionHandler<T = any> {
 
   // return a set of completions for the given context
-  completions(selection: Selection, limit: number): CompletionResult | null;
+  completions(selection: Selection): CompletionResult | null;
   
-  // provide a react compontent type for viewing the item
-  completionView: React.FC<T> | React.ComponentClass<T>;
-
   // provide a completion replacement as a string or node
   replacement(completion: T) : string | ProsemirrorNode;
 
+  // provide a react compontent type for viewing the item
+  itemView: React.FC<T> | React.ComponentClass<T>;
+
+  // height for completion items (defaults to 20px)
+  itemHeight?: number;
+ 
+  // maximum number of visible items (defaults to 10)
+  maxVisible?: number;
+
+  // width of completion popup (defaults to 180)
+  width?: number;
 }
 
 

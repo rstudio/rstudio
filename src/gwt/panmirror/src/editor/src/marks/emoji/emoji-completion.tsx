@@ -13,7 +13,7 @@
  *
  */
 
-import { EditorState, Selection } from 'prosemirror-state';
+import { Selection } from 'prosemirror-state';
 import { Node as ProsemirrorNode } from 'prosemirror-model';
 
 import React from 'react';
@@ -25,7 +25,7 @@ export function emojiCompletionHandler() : CompletionHandler<Emoji> {
 
   return {
     
-    completions: (selection: Selection, limit: number): CompletionResult<Emoji> | null  => {
+    completions: (selection: Selection): CompletionResult<Emoji> | null  => {
 
       const match = matchEmojiCompletion(selection); 
       if (match) {
@@ -38,7 +38,7 @@ export function emojiCompletionHandler() : CompletionHandler<Emoji> {
       }
     },
 
-    completionView: EmojiView,
+    itemView: EmojiView,
 
     replacement(emoji: Emoji) : string | ProsemirrorNode {
       return emoji.emoji;

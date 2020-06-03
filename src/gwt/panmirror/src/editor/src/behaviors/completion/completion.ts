@@ -32,6 +32,14 @@ interface CompletionState {
   result?: CompletionResult;
 }
 
+// TODO: more spacing below
+// TODO: popup positioning
+// TODO: invalidation token for multiple concurrent requests 
+// (including cancel existing)
+// TODO: currently we show a popup for no completions!
+// TODO: eliminate padding
+// TODO: positioning needs to use same calculatoins as popup
+
 const key = new PluginKey<CompletionState>('completion');
 
 class CompletionPlugin extends Plugin<CompletionState> {
@@ -53,7 +61,7 @@ class CompletionPlugin extends Plugin<CompletionState> {
           
           // check for a handler that can provide completions at the current selection
           for (const handler of handlers) {
-            const result = handler.completions(tr.selection, 20);
+            const result = handler.completions(tr.selection);
             if (result) {
               return { handler, result };
             }
