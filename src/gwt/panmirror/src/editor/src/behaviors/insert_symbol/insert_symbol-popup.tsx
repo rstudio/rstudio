@@ -62,6 +62,14 @@ export const InsertSymbolPopup: React.FC<InsertSymbolPopupProps> = props => {
     [filterText, symbols]
   );
 
+  // If the symbol list gets shorter than the selected index, move
+  // selected cell into range
+  React.useEffect(() => {
+    if (selectedSymbolIndex > filteredSymbols.length) {
+      setSelectedSymbolIndex(Math.max(filteredSymbols.length - 1, 0));
+    }
+  }, [filteredSymbols]);
+
   const textRef = React.useRef<HTMLInputElement>(null);
   const selectRef = React.useRef<HTMLSelectElement>(null);
   const gridRef = React.useRef<HTMLDivElement>(null);
@@ -118,7 +126,7 @@ export const InsertSymbolPopup: React.FC<InsertSymbolPopupProps> = props => {
     // Process grid keyboard event if the textbox is focused and has no value
     if (isElementFocused(textRef.current) && textRef.current?.value.length === 0) {
       const newIndex = newIndexForKeyboardEvent(event, selectedSymbolIndex, kNumberOfcolumns, symbols.length);
-      if (newIndex) {
+      if (newIndex !== undefined && newIndex >= 0) {
         setSelectedSymbolIndex(newIndex);
         event.preventDefault();
       }

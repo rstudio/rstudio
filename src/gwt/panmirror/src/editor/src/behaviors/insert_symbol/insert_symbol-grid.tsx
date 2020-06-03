@@ -86,6 +86,13 @@ const SymbolCharacterGrid = React.forwardRef<any, CharacterGridProps>((props, re
   const [showPreview, setShowPreview] = React.useState<boolean>(false);
   const [mayShowPreview, setMayShowPreview] = React.useState<boolean>(false);
 
+  const selectedCharacter = React.useMemo(() => {
+    if (props.selectedIndex < props.symbolCharacters.length) {
+      return props.symbolCharacters[props.selectedIndex];
+    }
+    return null;
+  }, [props.selectedIndex, props.symbolCharacters]);
+
   React.useEffect(() => {
     if (mayShowPreview) {
       updatePreviewPosition();
@@ -97,7 +104,7 @@ const SymbolCharacterGrid = React.forwardRef<any, CharacterGridProps>((props, re
     if (props.symbolCharacters.length < 1) {
       setShowPreview(false);
     }
-  }, [props.symbolCharacters]);
+  }, [props.symbolCharacters, props.selectedIndex]);
   
   // Show the preview window after a short delay
   function maybeShowPreview() {
@@ -155,18 +162,19 @@ const SymbolCharacterGrid = React.forwardRef<any, CharacterGridProps>((props, re
       >
         {SymbolCharacterCell}
       </FixedSizeGrid>
-      {showPreview && (
+      {showPreview && selectedCharacter && (
         <SymbolPreview
           left={previewPosition[0]}
           top={previewPosition[1]}
           height={kPreviewHeight}
           width={kPreviewWidth}
-          symbolCharacter={props.symbolCharacters[props.selectedIndex]}
+          symbolCharacter={selectedCharacter}
         />
       )}
     </div>
   );
 });
+
 
 function previous(currentIndex: number, numberOfColumns: number, numberOfCells: number): number {
   const newIndex = currentIndex - 1;
