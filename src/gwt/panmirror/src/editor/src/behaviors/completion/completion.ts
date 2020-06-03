@@ -47,9 +47,12 @@ class CompletionPlugin extends Plugin<CompletionState> {
   // currently selected index and last set of completions are held as transient
   // state because they can't be derived from the document state (selectedIndex 
   // is derived from out of band user keyboard gestures and completions may 
-  // have required fulfilling an external promise)
+  // have required fulfilling an external promise). also use a version counter
+  // used to invalidate async completion requests that are fulfilled after
+  // an update has occurred
   private selectedIndex: number;
   private completions: any[];
+  private version = 0;
 
   constructor(handlers: readonly CompletionHandler[], events: EditorEvents) {
     super({
@@ -99,6 +102,10 @@ class CompletionPlugin extends Plugin<CompletionState> {
       view: () => ({
         update: (view: EditorView) => {
           
+          // increment version
+          this.version++;
+
+          // render and show completions if we have them
           this.renderCompletions(view).then(this.showCompletions);
         
         },
@@ -178,12 +185,20 @@ class CompletionPlugin extends Plugin<CompletionState> {
   }
 
   private renderCompletions(view: EditorView) : Promise<boolean> {
+
     const state = key.getState(view.state);
+    
     if (state?.handler) {
+  
+      const requestVersion = this.version;
 
-      // render using a helper so we can call the code from both sync and aysnc codepaths
-      const render = (completions: any[]) : boolean => {
+      return state.result!.completions.then(completions => {
 
+        // if the version has incremented since the request then return false
+        if (this.version !== requestVersion) {
+          return false;
+        }
+         
         // save completions as a side effect
         this.completions = completions;
 
@@ -208,16 +223,8 @@ class CompletionPlugin extends Plugin<CompletionState> {
         } else {
           return false;
         }
-      };
-
-      // resolve promise if needed
-      if (state.result?.completions instanceof Promise) {
-        return state.result?.completions.then(completions => {
-          return render(completions);
-        });
-      } else {
-        return Promise.resolve(render(state.result!.completions));
-      }
+      });
+     
     } else {
       return Promise.resolve(false);
     }

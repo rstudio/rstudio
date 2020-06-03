@@ -18,7 +18,7 @@ import { Node as ProsemirrorNode, Schema  } from "prosemirror-model";
 
 export interface CompletionResult<T = any> {
   pos: number;
-  completions: T[] | Promise<T[]>;
+  completions: Promise<T[]>;
 }
 
 export interface CompletionHandler<T = any> {
