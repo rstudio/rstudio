@@ -14,8 +14,20 @@
  *
  */
 
+.pm-completion-popup {
+  padding: 0;
+}
+
 .pm-completion-list {
   overflow-y: auto;
+}
+
+.pm-completion-item {
+  padding: 0 8px;
+}
+
+.pm-completion-item:last-child {
+  padding-bottom: 4px;
 }
 
 .pm-completion-item-text {

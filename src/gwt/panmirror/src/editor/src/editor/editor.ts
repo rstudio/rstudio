@@ -27,7 +27,6 @@ import { ProsemirrorCommand, CommandFn, EditorCommand } from '../api/command';
 import { findTopLevelBodyNodes } from '../api/node';
 import { EditorUI, attrPropsToInput, attrInputToProps, AttrProps, AttrEditInput } from '../api/ui';
 import { Extension } from '../api/extension';
-import { ExtensionManager, initExtensions } from './editor-extensions';
 import { PandocEngine, PandocWriterOptions } from '../api/pandoc';
 import { PandocCapabilities, getPandocCapabilities } from '../api/pandoc_capabilities';
 import { fragmentToHTML } from '../api/html';
@@ -80,9 +79,11 @@ import { defaultEditorUIImages } from './editor-images';
 import { editorMenus, EditorMenus } from './editor-menus';
 import { editorSchema } from './editor-schema';
 
-// import styles
+// import styles before extensions so they can be overriden by extensions
 import './styles/frame.css';
 import './styles/styles.css';
+import { ExtensionManager, initExtensions } from './editor-extensions';
+
 
 export interface EditorCode {
   code: string;

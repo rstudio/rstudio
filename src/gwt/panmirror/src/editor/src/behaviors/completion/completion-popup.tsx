@@ -77,7 +77,7 @@ interface CompletionPopupProps extends WidgetProps {
 
 const CompletionPopup: React.FC<CompletionPopupProps> = props => {
   
-  const { component, itemHeight = 25, maxVisible = 10, width = 180 } = props.handler.view;
+  const { component, itemHeight = 20, maxVisible = 10, width = 180 } = props.handler.view;
 
   return (
     <Popup 
@@ -103,13 +103,26 @@ interface CompletionListProps {
   maxVisible: number;
 }
 
+
 const CompletionList: React.FC<CompletionListProps> = props => {
+
+  // some extra padding to tweak whitespace around list/items 
+  const kVerticalListPadding = 6;
+
   return (
     <div className={'pm-completion-list'} style={{
       width: props.width + 'px',
-      height: props.itemHeight * Math.min(props.maxVisible, props.completions.length) + 'px'
+      height: (props.itemHeight * Math.min(props.maxVisible, props.completions.length)) +
+              kVerticalListPadding + 'px'
     }}>
-      {props.completions.map(completion => React.createElement(props.itemComponent, completion))}
+      {props.completions.map(completion => {
+        const item = React.createElement(props.itemComponent, completion);
+        return React.createElement(
+          "div", 
+          { className: 'pm-completion-item', style: { height: props.itemHeight } }, 
+          [item]
+        );
+      })}
     </div>
   );
 };

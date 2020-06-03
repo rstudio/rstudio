@@ -32,10 +32,6 @@ interface CompletionState {
   result?: CompletionResult;
 }
 
-// TODO: sometimes "empty" items @ bottom
-
-// TODO: janky scrolling behavior
-// TODO: investigate different list control? (don't need window here)
 
 // TODO: popup positioning
 
