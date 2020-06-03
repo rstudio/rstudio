@@ -79,6 +79,8 @@ function emojiCompletions(text: string, selection: Selection): CompletionResult<
 
 const EmojiView: React.FC<Emoji> = emoji => {
   return (
-    <div>{emoji.emoji}&nbsp;:{emoji.aliases[0]}:</div>
+    <div className={'pm-completion-item-text'}>
+      {emoji.emoji}&nbsp;:{emoji.aliases[0]}:
+    </div>
   );
 };

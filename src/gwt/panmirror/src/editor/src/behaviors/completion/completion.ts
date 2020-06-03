@@ -32,20 +32,20 @@ interface CompletionState {
   result?: CompletionResult;
 }
 
+// TODO: sometimes "empty" items @ bottom
+
+// TODO: janky scrolling behavior
+// TODO: investigate different list control? (don't need window here)
+
 // TODO: popup positioning
-// TODO: invalidation token for multiple concurrent requests 
-// (including cancel existing)
 
 // TODO: positioning needs to use same calculatoins as popup
 
-// TODO: janky scrolling behavior
-
-// TODO: ellipses treatment for completion items
+// TODO: invalidation token for multiple concurrent requests 
+// (including cancel existing)
 
 // TODO: keyboard and mouse navigation/selection
 // TODO: insertion (may need to return arbitrary transactions for /command)
-
-// TODO: ensure that match is based on user typing (prefer prefix)
 
 // TODO: noCompletions setting
 
