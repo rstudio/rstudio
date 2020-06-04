@@ -137,7 +137,7 @@ public class SourceColumnManager implements SourceExtendedTypeDetectedEvent.Hand
    {
       SourceColumn column = GWT.create(SourceColumn.class);
       column.loadDisplay(MAIN_SOURCE_NAME, display, this);
-      columnMap_.put(column.getName(), column);
+      columnList_.add(column);
       setActive(column.getName());
 
       server_ = server;
@@ -220,7 +220,7 @@ public class SourceColumnManager implements SourceExtendedTypeDetectedEvent.Hand
          @Override
          public void onChange(ChangeEvent event)
          {
-            columnMap_.forEach((name, column) ->
+            columnList_.forEach((column) ->
                column.manageSourceNavigationCommands());
          }
       });
@@ -239,7 +239,7 @@ public class SourceColumnManager implements SourceExtendedTypeDetectedEvent.Hand
 
    public String add(String name, boolean updateState)
    {
-      return add(name, false, false);
+      return add(name, false, updateState);
    }
 
    public String add (String name, boolean activate, boolean updateState)
@@ -263,12 +263,12 @@ public class SourceColumnManager implements SourceExtendedTypeDetectedEvent.Hand
 
    public String add(String name, Source.Display display, boolean activate, boolean updateState)
    {
-      if (columnMap_.containsKey(name))
+      if (contains(name))
          return "";
 
       SourceColumn column = GWT.create(SourceColumn.class);
       column.loadDisplay(name, display, this);
-      columnMap_.put(column.getName(), column);
+      columnList_.add(column);
 
       if (activate || activeColumn_ == null)
          activeColumn_ = column;
@@ -293,12 +293,14 @@ public class SourceColumnManager implements SourceExtendedTypeDetectedEvent.Hand
       }
 
       String prevColumn = activeColumn_ == null ? "" : activeColumn_.getName();
-      activeColumn_ = columnMap_.get(name);
+      activeColumn_ = getByName(name);
 
       // If the active column changed, we need to update the active editor
       if (!StringUtil.isNullOrEmpty(prevColumn) && !StringUtil.equals(name, prevColumn))
       {
-         SourceColumn column = columnMap_.get(prevColumn);
+         SourceColumn column = getByName(prevColumn);
+         if (column == null)
+            return;
          column.setActiveEditor("");
          if (!hasActiveEditor())
          {
@@ -316,9 +318,8 @@ public class SourceColumnManager implements SourceExtendedTypeDetectedEvent.Hand
 
    public void setActiveDocId(String docId)
    {
-      for (Map.Entry<String, SourceColumn> entry : columnMap_.entrySet())
+      for (SourceColumn column : columnList_)
       {
-         SourceColumn column = entry.getValue();
          EditingTarget target = column.setActiveEditor(docId);
          if (target != null)
          {
@@ -413,9 +414,9 @@ public class SourceColumnManager implements SourceExtendedTypeDetectedEvent.Hand
    public ArrayList<String> getNames(boolean excludeMain)
    {
       ArrayList<String> result = new ArrayList<>();
-      columnMap_.forEach((name, column) ->{
-         if (!excludeMain || !StringUtil.equals(name, MAIN_SOURCE_NAME))
-            result.add(name);
+      columnList_.forEach((column) ->{
+         if (!excludeMain || !StringUtil.equals(column.getName(), MAIN_SOURCE_NAME))
+            result.add(column.getName());
       });
       return result;
    }
@@ -431,14 +432,14 @@ public class SourceColumnManager implements SourceExtendedTypeDetectedEvent.Hand
       return result;
    }
 
-   public HashMap<String, SourceColumn> getMap()
+   public ArrayList<SourceColumn> getColumnList()
    {
-      return columnMap_;
+      return columnList_;
    }
 
    public Widget getWidget(String name)
    {
-      return columnMap_.get(name).asWidget();
+      return getByName(name) == null ? null : getByName(name).asWidget();
    }
 
    public Session getSession()
@@ -476,13 +477,13 @@ public class SourceColumnManager implements SourceExtendedTypeDetectedEvent.Hand
 
    public int getSize()
    {
-      return columnMap_.size();
+      return columnList_.size();
    }
 
    public int getUntitledNum(String prefix)
    {
       AtomicInteger max = new AtomicInteger();
-      columnMap_.forEach((name, column) ->
+      columnList_.forEach((column) ->
           max.set(Math.max(max.get(), column.getUntitledNum(prefix))));
       return max.intValue();
    }
@@ -502,7 +503,7 @@ public class SourceColumnManager implements SourceExtendedTypeDetectedEvent.Hand
 
    public void manageCommands(boolean forceSync)
    {
-      columnMap_.forEach((name, column) -> column.manageCommands(forceSync));
+      columnList_.forEach((column) -> column.manageCommands(forceSync));
    }
 
    public EditingTarget addTab(SourceDocument doc, int mode, SourceColumn column)
@@ -522,9 +523,8 @@ public class SourceColumnManager implements SourceExtendedTypeDetectedEvent.Hand
 
    public EditingTarget findEditor(String docId)
    {
-      for (Map.Entry<String, SourceColumn> entry : columnMap_.entrySet())
+      for (SourceColumn column : columnList_)
       {
-         SourceColumn column = entry.getValue();
          EditingTarget target = column.getDoc(docId);
          if (target != null)
             return target;
@@ -537,9 +537,8 @@ public class SourceColumnManager implements SourceExtendedTypeDetectedEvent.Hand
       if (StringUtil.isNullOrEmpty(path))
          return null;
 
-      for (Map.Entry<String, SourceColumn> entry : columnMap_.entrySet())
+      for (SourceColumn column : columnList_)
       {
-         SourceColumn column = entry.getValue();
          EditingTarget target = column.getEditorWithPath(path);
          if (target != null)
             return target;
@@ -549,9 +548,8 @@ public class SourceColumnManager implements SourceExtendedTypeDetectedEvent.Hand
 
    public SourceColumn findByDocument(String docId)
    {
-      for (Map.Entry<String, SourceColumn> entry : columnMap_.entrySet())
+      for (SourceColumn column : columnList_)
       {
-         SourceColumn column = entry.getValue();
          if (column.hasDoc(docId))
             return column;
       }
@@ -560,14 +558,13 @@ public class SourceColumnManager implements SourceExtendedTypeDetectedEvent.Hand
 
    public SourceColumn findByName(String name)
    {
-      return columnMap_.get(name);
+      return getByName(name);
    }
 
    public SourceColumn findByPosition(int x)
    {
-      for (Map.Entry<String, SourceColumn> entry : columnMap_.entrySet())
+      for (SourceColumn column : columnList_)
       {
-         SourceColumn column = entry.getValue();
 
          Widget w = column.asWidget();
          int left = w.getAbsoluteLeft();
@@ -581,7 +578,7 @@ public class SourceColumnManager implements SourceExtendedTypeDetectedEvent.Hand
 
    public boolean isEmpty(String name)
    {
-      return columnMap_.get(name).getTabCount() == 0;
+      return getByName(name) == null || getByName(name).getTabCount() == 0;
    }
 
    public boolean areSourceWindowsOpen()
@@ -662,7 +659,7 @@ public class SourceColumnManager implements SourceExtendedTypeDetectedEvent.Hand
 
    public void activateObjectExplorer(ObjectExplorerHandle handle)
    {
-      columnMap_.forEach((name, column) -> {
+      columnList_.forEach((column) -> {
          for (EditingTarget target : column.getEditors())
          {
             // bail if this isn't an object explorer filetype
@@ -704,7 +701,7 @@ public class SourceColumnManager implements SourceExtendedTypeDetectedEvent.Hand
 
    public void showDataItem(DataItem data)
    {
-      columnMap_.forEach((name, column) -> {
+      columnList_.forEach((column) -> {
          for (EditingTarget target : column.getEditors())
          {
             String path = target.getPath();
@@ -1050,9 +1047,8 @@ public class SourceColumnManager implements SourceExtendedTypeDetectedEvent.Hand
 
    private EditingTarget selectTabWithDocPath(String path)
    {
-      for (Map.Entry<String, SourceColumn> entry : columnMap_.entrySet())
+      for (SourceColumn column : columnList_)
       {
-         SourceColumn column = entry.getValue();
          EditingTarget editor = column.getEditorWithPath(path);
          if (editor != null)
          {
@@ -1147,7 +1143,7 @@ public class SourceColumnManager implements SourceExtendedTypeDetectedEvent.Hand
    public void closeTabs(JsArrayString ids)
    {
       if (ids != null)
-         columnMap_.forEach((name, column) -> column.closeTabs(ids));
+         columnList_.forEach((column) -> column.closeTabs(ids));
    }
 
    public void closeTabWithPath(String path, boolean interactive)
@@ -1174,8 +1170,8 @@ public class SourceColumnManager implements SourceExtendedTypeDetectedEvent.Hand
 
    public void closeAllTabs(boolean excludeActive, boolean excludeMain)
    {
-      columnMap_.forEach((name, column) -> {
-         if (!excludeMain || !StringUtil.equals(name, MAIN_SOURCE_NAME))
+      columnList_.forEach((column) -> {
+         if (!excludeMain || !StringUtil.equals(column.getName(), MAIN_SOURCE_NAME))
          {
             cpsExecuteForEachEditor(column.getEditors(),
                new CPSEditingTargetCommand()
@@ -1207,7 +1203,7 @@ public class SourceColumnManager implements SourceExtendedTypeDetectedEvent.Hand
 
    public void saveAllSourceDocs()
    {
-      columnMap_.forEach((name, column) -> cpsExecuteForEachEditor(
+      columnList_.forEach((column) -> cpsExecuteForEachEditor(
           column.getEditors(),
           (editingTarget, continuation) -> {
              if (editingTarget.dirtyState().getValue())
@@ -1223,7 +1219,7 @@ public class SourceColumnManager implements SourceExtendedTypeDetectedEvent.Hand
    public void revertUnsavedTargets(Command onCompleted)
    {
       ArrayList<EditingTarget> unsavedTargets = new ArrayList<>();
-      columnMap_.forEach((name, column) -> unsavedTargets.addAll(
+      columnList_.forEach((column) -> unsavedTargets.addAll(
           column.getUnsavedEditors(Source.TYPE_FILE_BACKED, null)));
 
       // revert all of them
@@ -1260,7 +1256,7 @@ public class SourceColumnManager implements SourceExtendedTypeDetectedEvent.Hand
 
       // collect up a list of dirty documents
       ArrayList<EditingTarget> dirtyTargets = new ArrayList<>();
-      columnMap_.forEach((name, column) ->
+      columnList_.forEach((column) ->
           dirtyTargets.addAll(column.getDirtyEditors(excludeEditor)));
 
       // create a command used to close all tabs
@@ -1278,39 +1274,38 @@ public class SourceColumnManager implements SourceExtendedTypeDetectedEvent.Hand
       // We are only removing the column from the column manager's knowledge.
       // Its widget still needs to be removed from the display so we return the widgets to be removed.
       ArrayList<Widget> result = new ArrayList<>();
-      if (num >= columnMap_.size() || num < 1)
+      if (num >= columnList_.size() || num < 1)
          return result;
 
-      for (Map.Entry<String, SourceColumn> entry : columnMap_.entrySet())
+      for (SourceColumn column : columnList_)
       {
-         SourceColumn column = entry.getValue();
          if (!column.hasDoc())
          {
             if (column == activeColumn_)
                setActive("");
             result.add(column.asWidget());
-            columnMap_.remove(column.getName());
-            if (num >= columnMap_.size())
+            columnList_.remove(column);
+            if (num >= columnList_.size() || num == 1)
                break;
          }
       }
 
       ArrayList<EditingTarget> moveEditors = new ArrayList<>();
       // if we could not remove empty columns to get to the desired amount, consolidate editors
-      for (Map.Entry<String, SourceColumn> entry : columnMap_.entrySet())
+      for (SourceColumn column : columnList_)
       {
-         SourceColumn column = entry.getValue();
          if (!StringUtil.equals(column.getName(), MAIN_SOURCE_NAME))
          {
             moveEditors.addAll(column.getEditors());
             column.closeAllLocalSourceDocs();
             closeColumn(column.getName());
-            if (columnMap_.size() >= num)
+            if (columnList_.size() >= num || num == 1)
                break;
          }
       }
 
-      SourceColumn column = columnMap_.get(MAIN_SOURCE_NAME);
+      SourceColumn column = getByName(MAIN_SOURCE_NAME);
+      assert(column != null);
       for (EditingTarget target : moveEditors)
       {
          column.addTab(
@@ -1326,6 +1321,13 @@ public class SourceColumnManager implements SourceExtendedTypeDetectedEvent.Hand
       return result;
    }
 
+   public void closeAllColumns()
+   {
+      columnList_.forEach((column) -> closeColumn(column.getName()));
+      Debug.logToConsole("closed all columns, new size: " + getSize());
+      assert getSize() == 0;
+   }
+
    public void closeColumn(String name)
    {
       SourceColumn column = findByName(name);
@@ -1334,7 +1336,7 @@ public class SourceColumnManager implements SourceExtendedTypeDetectedEvent.Hand
       if (column == activeColumn_)
          setActive("");
 
-      columnMap_.remove(name);
+      columnList_.remove(getByName(name));
    }
 
    public void ensureVisible(boolean newTabPending)
@@ -1399,7 +1401,7 @@ public class SourceColumnManager implements SourceExtendedTypeDetectedEvent.Hand
 
    public void openProjectDocs(final Session session, boolean mainColumn)
    {
-      if (mainColumn && activeColumn_ != columnMap_.get(MAIN_SOURCE_NAME))
+      if (mainColumn && activeColumn_ != getByName(MAIN_SOURCE_NAME))
          setActive(MAIN_SOURCE_NAME);
 
       JsArrayString openDocs = session.getSessionInfo().getProjectOpenDocs();
@@ -1461,9 +1463,9 @@ public class SourceColumnManager implements SourceExtendedTypeDetectedEvent.Hand
 
    private boolean hasDoc()
    {
-      for (Map.Entry<String, SourceColumn> column : columnMap_.entrySet())
+      for (SourceColumn column : columnList_)
       {
-         if (column.getValue().hasDoc())
+         if (column.hasDoc())
             return true;
       }
       return false;
@@ -1651,7 +1653,7 @@ public class SourceColumnManager implements SourceExtendedTypeDetectedEvent.Hand
 
    public void beforeShow()
    {
-      columnMap_.forEach((name, column) -> column.onBeforeShow());
+      columnList_.forEach((column) -> column.onBeforeShow());
    }
 
    public void beforeShow(String name)
@@ -1976,9 +1978,8 @@ public class SourceColumnManager implements SourceExtendedTypeDetectedEvent.Hand
    private boolean openFileAlreadyOpen(final FileSystemItem file,
                                        final ResultCallback<EditingTarget, ServerError> resultCallback)
    {
-      for (Map.Entry<String,SourceColumn> entry : columnMap_.entrySet())
+      for (SourceColumn column : columnList_)
       {
-         SourceColumn column = entry.getValue();
          // check to see if any local editors have the file open
          for (int i = 0; i < column.getEditors().size(); i++)
          {
@@ -2076,7 +2077,7 @@ public class SourceColumnManager implements SourceExtendedTypeDetectedEvent.Hand
    public ArrayList<UnsavedChangesTarget> getUnsavedChanges(int type, Set<String> ids)
    {
       ArrayList<UnsavedChangesTarget> targets = new ArrayList<>();
-      columnMap_.forEach((name, column) -> targets.addAll(column.getUnsavedEditors(type, ids)));
+      columnList_.forEach((column) -> targets.addAll(column.getUnsavedEditors(type, ids)));
       return targets;
    }
 
@@ -2274,13 +2275,33 @@ public class SourceColumnManager implements SourceExtendedTypeDetectedEvent.Hand
       }
    }
 
+   private SourceColumn getByName(String name)
+   {
+      for (SourceColumn column : columnList_)
+      {
+         if (StringUtil.equals(column.getName(), name))
+            return column;
+      }
+      return null;
+   }
+
+   private boolean contains(String name)
+   {
+     for (SourceColumn column : columnList_)
+     {
+        if (StringUtil.equals(column.getName(), name))
+           return true;
+     }
+     return false;
+   }
+
    private void cpsExecuteForEachEditor(ArrayList<EditingTarget> editors,
                                        final CPSEditingTargetCommand command)
    {
       cpsExecuteForEachEditor(editors, command, null);
    }
 
-   private class OpenFileEntry
+   private static class OpenFileEntry
    {
       public OpenFileEntry(FileSystemItem fileIn, TextFileType fileTypeIn,
             CommandWithArg<EditingTarget> executeIn)
@@ -2299,9 +2320,9 @@ public class SourceColumnManager implements SourceExtendedTypeDetectedEvent.Hand
 
    private boolean openingForSourceNavigation_ = false;
 
-   private final Queue<OpenFileEntry> openFileQueue_ = new LinkedList<OpenFileEntry>();
-   private final HashMap<String,SourceColumn> columnMap_ = new HashMap<>();
-   private HashSet<AppCommand> dynamicCommands_ = new HashSet<AppCommand>();
+   private final Queue<OpenFileEntry> openFileQueue_ = new LinkedList<>();
+   private final ArrayList<SourceColumn> columnList_ = new ArrayList<>();
+   private HashSet<AppCommand> dynamicCommands_ = new HashSet<>();
    private final SourceVimCommands vimCommands_;
 
    private final Commands commands_;

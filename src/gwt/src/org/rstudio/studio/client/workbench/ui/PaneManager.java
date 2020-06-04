@@ -830,10 +830,11 @@ public class PaneManager
       panesByName_ = new HashMap<>();
       panesByName_.put("Console", createConsole());
 
-      HashMap<String,SourceColumn> columns = sourceColumnManager_.getMap();
-      columns.forEach((name, column) -> {
-            panesByName_.put(name, createSource(name, column.asWidget()));
-      });
+      ArrayList<SourceColumn> columns = sourceColumnManager_.getColumnList();
+      for (SourceColumn column : columns)
+      {
+         panesByName_.put(column.getName(), createSource(column.getName(), column.asWidget()));
+      }
 
       Triad<LogicalWindow, WorkbenchTabPanel, MinimizedModuleTabLayoutPanel> ts1 = createTabSet(
             "TabSet1",
@@ -1191,10 +1192,22 @@ public class PaneManager
 
    public int closeAllAdditionalColumns()
    {
-      sourceColumnManager_.closeAllTabs(true, true);
+      sourceColumnManager_.closeAllColumns();
       additionalSourceCount_ = sourceColumnManager_.getSize() - 1;
       if (additionalSourceCount_ > 0)
          Debug.logWarning("Could not close all additional columns. Columns may contain open tabs.");
+
+      PaneConfig paneConfig = getCurrentConfig();
+      userPrefs_.panes().setGlobalValue(PaneConfig.create(
+         JsArrayUtil.copy(paneConfig.getQuadrants()),
+         paneConfig.getTabSet1(),
+         paneConfig.getTabSet2(),
+         paneConfig.getHiddenTabSet(),
+         paneConfig.getConsoleLeftOnTop(),
+         paneConfig.getConsoleRightOnTop(),
+         additionalSourceCount_).cast());
+      userPrefs_.writeUserPrefs();
+
       return additionalSourceCount_;
    }
 
