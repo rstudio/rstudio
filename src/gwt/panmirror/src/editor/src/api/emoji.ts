@@ -13,13 +13,15 @@
  *
  */
 
-// read emojies from json (https://github.com/jgm/emojis/blob/master/emoji.json)
-import kEmojisJson from './emoji.json';
+// read emojis from json (https://github.com/jgm/emojis/blob/master/emoji.json)
+import kEmojisJson from './emojis-all.json';
 const kEmojis = kEmojisJson as Emoji[];
 
 export interface Emoji {
   emoji: string;
   aliases: string[];
+  category: string;
+  description: string;
 }
 
 export function emojis() {

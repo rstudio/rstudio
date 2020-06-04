@@ -117,6 +117,64 @@ const excludedChars = [
   119259,119260,119261, // musical symbols
 ];
 
+const excludedEmoji = [
+  'smiling_face_with_tear',
+  'relaxed',
+  'disguised_face',
+  'pinched_fingers',
+  'anatomical_heart',
+  'lungs',
+  'ninja',
+  'people_hugging',
+  'bison',
+  'mammoth',
+  'beaver',
+  'dodo',
+  'feather',
+  'seal',
+  'beetle',
+  'cockroach',
+  'worm',
+  'fly',
+  'potted_plant',
+  'blueberries',
+  'olive',
+  'bell_pepper',
+  'flatbread',
+  'tamale',
+  'fondue',
+  'teapot',
+  'bubble_tea',
+  'rock',
+  'wood',
+  'hut',
+  'roller_skate',
+  'pickup_truck',
+  'magic_wand',
+  'nesting_dolls',
+  'pi_ata',
+  'sewing_needle',
+  'knot',
+  'thong_sandal',
+  'military_helmet',
+  'accordion',
+  'coin',
+  'boomerang',
+  'hook',
+  'screwdriver',
+  'ladder',
+  'carpentry_saw',
+  'elevator',
+  'mirror',
+  'window',
+  'plunger',
+  'toothbrush',
+  'bucket',
+  'mouse_trap',
+  'headstone',
+  'placard',
+];
+
 // Basic file paths to use when downloading and generating the file. These files will be cleaned up
 // upon completion.
 const workingDirectory = os.tmpdir();
@@ -131,21 +189,37 @@ const targetXmlFile = `${workingDirectory}/${targetXmlFileName}`;
 // version
 const unicodeDownloadUrl = `https://www.unicode.org/Public/UCD/latest/ucdxml/${targetFileName}.zip`;
 
+// The set of emoji + metadata used by Github
+const emojiDownloadUrl = 'https://raw.githubusercontent.com/github/gemoji/master/db/emoji.json';
+const emojiPath = './src/api/emojis-all.json';
+
+// The set of emoji that has markdown rendering in pandoc.
+import kPandocEmojis from './emojis-pandoc.json';
+
+
 // Remove any orphaned intermediary files
 cleanupFiles([targetXmlFile, targetZipFile], true);
 
+
 // The core sequence of steps for generating the symbols file
+heading("GENERATING SYMBOLS");
 downloadFile(unicodeDownloadUrl, targetZipFile)
   .then((zipFile: string) => unzipSingleZipFile(zipFile, targetXmlFileName, workingDirectory))
   .then((unzippedfile: string) => xmlToJson(unzippedfile))
   .then(jsonResult => jsonToSymbolGroups(jsonResult))
   .then(symbolGroups => symbolGroups.filter(blockGroup => blockGroup.symbols.length > 0))
   .then(symbolGroups => writeSymbolsFile(symbolGroups))
+  .then(()=>heading("GENERATING EMOJI"))
+  .then(() => downloadFile(emojiDownloadUrl, emojiPath))
+  .then((targetFile) => filterEmoji(targetFile)) 
   .catch((message: any) => {
     error(message);
     process.exit(1);
   })
   .finally(() => cleanupFiles([targetZipFile, targetXmlFile]));
+
+
+
 
 function parseBlocks(blockJson: any[]): Block[] {
   return blockJson
@@ -227,7 +301,7 @@ function cleanupFiles(files: string[], warn?: boolean) {
 }
 
 function downloadFile(url: string, targetFile: string): Promise<string> {
-  info('', 'Downloading file', unicodeDownloadUrl);
+  info('', 'Downloading file', url);
   const targetStream = fs.createWriteStream(targetFile);
   return new Promise((resolve, reject) => {
     https
@@ -332,6 +406,40 @@ function writeSymbolsFile(symbolGroups: Group[]) {
     info('done', '');
 }
 
+function filterEmoji(filePath: string) {
+  info('Writing emoji', filePath);
+  const allEmoji = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+
+  // Remove any emoji that don't render properly
+  const filteredEmoji: Array<{
+    emoji: string;
+    description: string;
+    category: string;
+    aliases: string[];
+    tags?: string[];
+    unicode_version?: string;
+    ios_version?: string;
+    skin_tones?: boolean;
+  }> = allEmoji.filter((emoji: any) => !excludedEmoji.includes(emoji.aliases[0]));
+
+  // Remove emoji metadata that we don't need
+  const thinnedEmoji = filteredEmoji.map(emoji => {
+    return {
+      emoji: emoji.emoji,
+      description: emoji.description,
+      category: emoji.category,
+      aliases: emoji.aliases,
+      skin_tones: emoji.skin_tones,
+      markdown: kPandocEmojis.find(pandocEmoji => pandocEmoji.emoji === emoji.emoji) !== undefined,
+    };
+  });
+
+  info(thinnedEmoji.length + ' emoji generated');
+  const finalJson = JSON.stringify(thinnedEmoji, null, 2);
+  fs.writeFileSync(filePath, finalJson);
+  info('done');
+}
+
 interface Group {
   name: string;
   symbols: Character[];
@@ -347,6 +455,14 @@ interface Character {
   name: string;
   value: string;
   codepoint: number;
+}
+
+function heading(heading: string) {
+  console.log('');
+  console.log('');
+  console.log('****************************************************************');
+  console.log(heading);
+  console.log('****************************************************************');
 }
 
 function info(...message: any[]) {

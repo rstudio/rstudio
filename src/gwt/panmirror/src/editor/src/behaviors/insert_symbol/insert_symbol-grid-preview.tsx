@@ -26,6 +26,14 @@ interface SymbolPreviewProps extends WidgetProps {
 }
 
 export const SymbolPreview = React.forwardRef<any, SymbolPreviewProps>((props, ref) => {
+
+  let previewText = '';
+  if (props.symbolCharacter.codepoint) {
+    previewText = 'U+' + props.symbolCharacter.codepoint.toString(16);
+  } else if (props.symbolCharacter.description) {
+    previewText = props.symbolCharacter.description;
+  }
+
   return (
     (
       <div
@@ -46,7 +54,7 @@ export const SymbolPreview = React.forwardRef<any, SymbolPreviewProps>((props, r
           {props.symbolCharacter.name}
         </div>
         <div className="pm-symbol-grid-symbol-preview-codepoint">
-          {props.symbolCharacter.codepoint ? 'U+' + props.symbolCharacter.codepoint.toString(16) : ''}
+          {previewText}
         </div>
       </div>
     )

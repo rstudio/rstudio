@@ -13,17 +13,13 @@
  *
  */
 
- // JJA
-// TODO: Multicharacter emoji aren't being handled properly- CLEAN UP IMPLEMENTATION
-// TODO: Discuss taking larger emoji file and what to do about that
-    // 330k, thinned to 253k, zips to 27k
+// JJA
+// Localization of category names
+// Are categories enough or should we support commonly used emojis?
 
 // Core - phase 1
-// TODO: Group Emoji
 // Common at the front? in a seprate section?
 
-
-// TODO: Filter/search all aliases?
 // TODO: emoji don't look centered in grid cell? Need fixed font?
 // TODO: Insert text node with emoji mark, not raw characters
 
@@ -48,7 +44,7 @@ import { EditorUI } from '../../api/ui';
 
 import { performInsertSymbol, InsertSymbolPlugin } from './insert_symbol-plugin';
 
-import kEmojisJson from '../../api/emoji.json';
+import kEmojisJson from '../../api/emojis-all.json';
 import { Emoji } from '../../api/emoji';
 import { SymbolDataProvider, SymbolCharacter } from './insert_symbol-dataprovider';
 
@@ -92,23 +88,40 @@ class EmojiSymbolDataProvider implements SymbolDataProvider {
 
   public getSymbols(groupName: string | undefined) {
     if (groupName === kCategoryAll || groupName === undefined) {
-      return kEmojis.map(emoji =>({ name: emoji.aliases[0], value: emoji.emoji}));
+      return kEmojis
+              .map(emoji => symbolForEmoji(emoji));
     }  else {
-      return kEmojis.filter(emoji => emoji.category === groupName)
-      .map(emoji =>({ name: emoji.aliases[0], value: emoji.emoji}));
+      return kEmojis
+              .filter(emoji => emoji.category === groupName)
+              .map(emoji => symbolForEmoji(emoji));
     }
   }
 
   public filterSymbols(filterText: string, symbols: SymbolCharacter[]): SymbolCharacter[] {
     const filteredSymbols = symbols.filter(symbol => {
-      // Search by alias
+      // Search by name
       if (symbol.name.includes(filterText)) {
         return true;
       }
+
+      // search each of the aliases
+      if (symbol.aliases && symbol.aliases.find(alias => alias.includes(filterText))) {
+        return true;
+      }
+
       return false;
     });
     return filteredSymbols;
   }
+}
+
+function symbolForEmoji(emoji: Emoji) : SymbolCharacter {
+  return ({ 
+    name: ':' + emoji.aliases[0] + ':', 
+    value: emoji.emoji,
+    aliases: emoji.aliases,
+    description: emoji.description
+  });
 }
 
 export default extension;

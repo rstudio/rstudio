@@ -29,4 +29,7 @@ export interface SymbolCharacter {
   name: string;
   value: string;
   codepoint?: number;
+
+  aliases?: string[];
+  description?: string;
 }
