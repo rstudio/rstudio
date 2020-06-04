@@ -94,6 +94,11 @@ private:
       CATCH_UNEXPECTED_ASYNC_CLIENT_EXCEPTION
    }
 
+   virtual std::string getDefaultHostHeader()
+   {
+      return "localhost";
+   }
+
    // detect when we've got the whole response and force a
    // response + close of the socket
    // note we do not do this if we are streaming chunked encoding
