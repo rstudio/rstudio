@@ -31,7 +31,7 @@ public class PanmirrorCommandPaletteItem extends BasePaletteItem<PanmirrorComman
    }
 
    @Override
-   public void invoke()
+   public void invoke(InvocationSource source)
    {
       cmd_.execute();
    }

@@ -29,6 +29,15 @@ import com.google.gwt.user.client.ui.IsWidget;
 public interface CommandPaletteItem extends IsWidget, HasHandlers
 {
    /**
+    * The methods for invoking an item (these can have different semantics)
+    */
+   public enum InvocationSource
+   {
+      Keyboard,
+      Mouse
+   };
+
+   /**
     * Indicate whether or not the item has been rendered
     * 
     * @return True if the item has been rendered (i.e. has an active widget)
@@ -38,7 +47,7 @@ public interface CommandPaletteItem extends IsWidget, HasHandlers
    /**
     * Invoke the entry (execute the command, etc.)
     */
-   public void invoke();
+   public void invoke(InvocationSource source);
    
    /**
     * Add a handler to be called when the palette item is invoked

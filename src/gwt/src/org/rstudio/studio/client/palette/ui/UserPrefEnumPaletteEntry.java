@@ -18,6 +18,7 @@ package org.rstudio.studio.client.palette.ui;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.dom.DomUtils;
 import org.rstudio.studio.client.palette.UserPrefPaletteItem;
+import org.rstudio.studio.client.palette.model.CommandPaletteItem.InvocationSource;
 import org.rstudio.studio.client.workbench.prefs.model.Prefs.EnumValue;
 
 import com.google.gwt.aria.client.Id;
@@ -87,7 +88,7 @@ public class UserPrefEnumPaletteEntry extends UserPrefPaletteEntry
    }
    
    @Override
-   public void invoke()
+   public void invoke(InvocationSource source)
    {
       DomUtils.setActive(selector_.getElement());
    }

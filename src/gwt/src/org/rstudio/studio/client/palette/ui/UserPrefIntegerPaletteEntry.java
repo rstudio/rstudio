@@ -17,6 +17,7 @@ package org.rstudio.studio.client.palette.ui;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.widget.NumericTextBox;
 import org.rstudio.studio.client.palette.UserPrefPaletteItem;
+import org.rstudio.studio.client.palette.model.CommandPaletteItem.InvocationSource;
 import org.rstudio.studio.client.workbench.prefs.model.Prefs.IntValue;
 
 import com.google.gwt.aria.client.Id;
@@ -41,7 +42,7 @@ public class UserPrefIntegerPaletteEntry extends UserPrefPaletteEntry
       label_ = new Label();
       label_.setText(val.getGlobalValue().toString());
       label_.addStyleName("rstudio-fixed-width-font");
-      label_.getElement().getStyle().setFontSize(8, Unit.PT);
+      label_.getElement().getStyle().setFontSize(9, Unit.PT);
       label_.getElement().getStyle().setMarginRight(8, Unit.PX);
       panel_.add(label_);
       
@@ -71,6 +72,7 @@ public class UserPrefIntegerPaletteEntry extends UserPrefPaletteEntry
       style.setFontSize(8, Unit.PT);
       style.setWidth(50, Unit.PX);
       style.setMarginRight(8, Unit.PX);
+      style.setMarginBottom(0, Unit.PX);
       editing_ = false;
       
       initialize();
@@ -85,7 +87,7 @@ public class UserPrefIntegerPaletteEntry extends UserPrefPaletteEntry
       return panel_;
    }
    
-   public void invoke()
+   public void invoke(InvocationSource source)
    {
       if (editing_)
       {

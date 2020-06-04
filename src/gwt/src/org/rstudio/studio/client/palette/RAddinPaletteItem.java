@@ -46,7 +46,7 @@ public class RAddinPaletteItem extends BasePaletteItem<RAddinCommandPaletteEntry
    }
 
    @Override
-   public void invoke()
+   public void invoke(InvocationSource source)
    {
       executor_.execute(addin_);
    }

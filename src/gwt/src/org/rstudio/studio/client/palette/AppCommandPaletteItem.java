@@ -48,7 +48,7 @@ public class AppCommandPaletteItem extends BasePaletteItem<AppCommandPaletteEntr
    }
 
    @Override
-   public void invoke()
+   public void invoke(InvocationSource source)
    {
       GlobalDisplay display = RStudioGinjector.INSTANCE.getGlobalDisplay();
       if (!command_.isVisible())

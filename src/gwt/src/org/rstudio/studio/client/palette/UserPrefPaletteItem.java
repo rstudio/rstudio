@@ -52,9 +52,9 @@ public class UserPrefPaletteItem extends BasePaletteItem<UserPrefPaletteEntry>
    }
 
    @Override
-   public void invoke()
+   public void invoke(InvocationSource source)
    {
-      widget_.invoke();
+      widget_.invoke(source);
       nudgeWriter();
    }
 

@@ -17,6 +17,7 @@ package org.rstudio.studio.client.palette.ui;
 import org.rstudio.core.client.widget.Toggle;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.palette.UserPrefPaletteItem;
+import org.rstudio.studio.client.palette.model.CommandPaletteItem.InvocationSource;
 import org.rstudio.studio.client.workbench.prefs.model.Prefs.BooleanValue;
 
 import com.google.gwt.aria.client.Id;
@@ -46,8 +47,15 @@ public class UserPrefBooleanPaletteEntry extends UserPrefPaletteEntry
    }
 
    @Override
-   public void invoke()
+   public void invoke(InvocationSource source)
    {
+      if (source == InvocationSource.Mouse)
+      {
+         // Ignore invoke via click as it's much too easy to trip the toggle
+         // switch accidentally with the mouse
+         return;
+      }
+
       boolean newValue = toggle_.getState() != Toggle.State.ON;
       BooleanValue pref = (BooleanValue)pref_;
       pref.setGlobalValue(newValue);

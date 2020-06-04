@@ -15,6 +15,7 @@
 package org.rstudio.studio.client.palette.ui;
 
 import org.rstudio.studio.client.palette.UserPrefPaletteItem;
+import org.rstudio.studio.client.palette.model.CommandPaletteItem.InvocationSource;
 import org.rstudio.studio.client.workbench.prefs.model.Prefs.PrefValue;
 
 public abstract class UserPrefPaletteEntry extends CommandPaletteEntry
@@ -62,7 +63,7 @@ public abstract class UserPrefPaletteEntry extends CommandPaletteEntry
       return false;
    }
    
-   abstract public void invoke();
+   abstract public void invoke(InvocationSource source);
 
    protected final PrefValue<?> pref_;
 }

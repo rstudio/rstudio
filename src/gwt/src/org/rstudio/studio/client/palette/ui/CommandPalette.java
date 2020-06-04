@@ -28,6 +28,7 @@ import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.AriaLiveStatusEvent.Severity;
 import org.rstudio.studio.client.palette.model.CommandPaletteEntrySource;
 import org.rstudio.studio.client.palette.model.CommandPaletteItem;
+import org.rstudio.studio.client.palette.model.CommandPaletteItem.InvocationSource;
 
 import com.google.gwt.aria.client.ExpandedValue;
 import com.google.gwt.aria.client.Id;
@@ -358,7 +359,7 @@ public class CommandPalette extends Composite
          {
             host_.dismiss();
          }
-         visible_.get(selected_).invoke();
+         visible_.get(selected_).invoke(InvocationSource.Keyboard);
       }
    }
    
@@ -460,7 +461,7 @@ public class CommandPalette extends Composite
                   {
                      host_.dismiss();
                   }
-                  evt.getItem().invoke();
+                  evt.getItem().invoke(InvocationSource.Mouse);
                }));
             }
          }
