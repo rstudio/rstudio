@@ -91,10 +91,10 @@ const extension: Extension = {
   },
 };
 
-export function reverseSmartQuotesExtension(marks: () => readonly PandocMark[]) {
+export function reverseSmartQuotesExtension(marks: readonly PandocMark[]) {
   return {
     appendTransaction: (schema: Schema) => {
-      const noInputRuleMarks = marks().filter(mark => mark.noInputRules).map(mark => schema.marks[mark.name]);
+      const noInputRuleMarks = marks.filter(mark => mark.noInputRules).map(mark => schema.marks[mark.name]);
 
       // detect add code steps
       const isAddMarkWithNoInputRules = (step: Step) => {

@@ -21,7 +21,7 @@ import { EditorView } from "prosemirror-view";
 import { ProsemirrorCommand, EditorCommandId, OmniCommand } from "../api/command";
 
 
-export function omniCommandExtension(omniCommands: () => readonly OmniCommand[]) {
+export function omniCommandExtension(omniCommands: readonly OmniCommand[]) {
   return {
     commands: () => {
       return [

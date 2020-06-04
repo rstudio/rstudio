@@ -203,16 +203,20 @@ export function initExtensions(
   manager.register([
     
     // bindings to 'Edit Attribute' command and UI adornment
-    attrEditExtension(pandocExtensions, () => manager.attrEditors()),
+    attrEditExtension(pandocExtensions, manager.attrEditors()),
     
     // application of some marks (e.g. code) should cuase reveral of smart quotes
-    reverseSmartQuotesExtension(() => manager.pandocMarks()),
+    reverseSmartQuotesExtension(manager.pandocMarks()),
 
     // generic command execution via 'Mod-/' or '/'
-    omniCommandExtension(() => manager.omniCommands()),
+    omniCommandExtension(manager.omniCommands()),
 
-    // completions (note must come at the end to pickup all registered completion handlers)
-    completionExtension(() => manager.completionHandlers(), events)
+  ]);
+
+  // completions are registered last b/c omniCommandExtension registers a completion handlers
+  manager.register([
+     // completions (note must come at the end to pickup all registered completion handlers)
+     completionExtension(manager.completionHandlers(), events)
   ]);
 
   // additional plugins derived from extensions
