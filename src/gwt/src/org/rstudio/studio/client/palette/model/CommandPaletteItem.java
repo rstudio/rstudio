@@ -14,6 +14,10 @@
  */
 package org.rstudio.studio.client.palette.model;
 
+import org.rstudio.studio.client.palette.events.PaletteItemInvokedEvent;
+
+import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.event.shared.HasHandlers;
 import com.google.gwt.user.client.ui.IsWidget;
 
 /**
@@ -22,13 +26,18 @@ import com.google.gwt.user.client.ui.IsWidget;
  * displayed; classes implementing this interface should create the widget on
  * demand in IsWidget rather than up front in their constructors.
  */
-public interface CommandPaletteItem extends IsWidget
+public interface CommandPaletteItem extends IsWidget, HasHandlers
 {
    /**
     * Invoke the entry (execute the command, etc.)
     */
    public void invoke();
    
+   /**
+    * Add a handler to be called when the palette item is invoked
+    */
+   HandlerRegistration addInvokeHandler(PaletteItemInvokedEvent.Handler handler);
+
    /**
     * Does this item match the given search keywords?
     * 

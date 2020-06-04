@@ -20,6 +20,7 @@ import java.util.List;
 
 import org.rstudio.core.client.DebouncedCommand;
 import org.rstudio.core.client.ElementIds;
+import org.rstudio.core.client.HandlerRegistrations;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.a11y.A11y;
 import org.rstudio.core.client.widget.AriaLiveStatusWidget;
@@ -85,6 +86,7 @@ public class CommandPalette extends Composite
       pageSize_ = 0;
       sources_ = sources;
       needles_ = new String[0];
+      registrations_ = new HandlerRegistrations();
       styles_.ensureInjected();
       
       Element searchBox = searchBox_.getElement();
@@ -131,6 +133,13 @@ public class CommandPalette extends Composite
             computePageSize();
          });
       }
+   }
+   
+   @Override
+   public void onDetach()
+   {
+      // Clean up event handlers
+      registrations_.removeHandler();
    }
 
    /**
@@ -267,7 +276,10 @@ public class CommandPalette extends Composite
       // Clear the command list and render marker in preparation for a re-render
       commandList_.clear();
       renderedItem_ = 0;
+      if (selected_ >= 0)
+         visible_.get(selected_).setSelected(false);
       visible_.clear();
+
       selected_ = -1;
       
       // Render the next page of command entries
@@ -403,7 +415,22 @@ public class CommandPalette extends Composite
             renderedSource_++;
          } while (items == null);
             
-         items_.addAll(items);
+         if (items != null)
+         {
+            // Initialize each item with an invocation handler
+            for (CommandPaletteItem item: items)
+            {
+               registrations_.add(item.addInvokeHandler((evt) ->
+               {
+                  if (evt.getItem().dismissOnInvoke())
+                  {
+                     host_.dismiss();
+                  }
+                  evt.getItem().invoke();
+               }));
+               items_.add(item);
+            }
+         }
       }
       
       // Set initial conditions for render loop
@@ -468,6 +495,7 @@ public class CommandPalette extends Composite
    private final List<CommandPaletteEntrySource> sources_;
    private final List<CommandPaletteItem> items_;
    private final List<CommandPaletteItem> visible_;
+   private final HandlerRegistrations registrations_;
    private int selected_;
    private String searchText_;
    private String[] needles_;

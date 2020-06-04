@@ -98,12 +98,6 @@ public abstract class CommandPaletteEntry extends Composite
       
       // Insert invoker
       invoker_.add(getInvoker());
-
-      // Invoke parent item on click
-      sinkEvents(Event.ONCLICK);
-      addHandler((evt) -> {
-         item_.invoke();
-      }, ClickEvent.getType());
    }
    
    /*

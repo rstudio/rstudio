@@ -22,12 +22,9 @@ import org.rstudio.core.client.command.AppCommand;
 import org.rstudio.core.client.command.KeySequence;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.GlobalDisplay;
-import org.rstudio.studio.client.palette.model.CommandPaletteItem;
 import org.rstudio.studio.client.palette.ui.AppCommandPaletteEntry;
 
-import com.google.gwt.user.client.ui.Widget;
-
-public class AppCommandPaletteItem implements CommandPaletteItem
+public class AppCommandPaletteItem extends BasePaletteItem<AppCommandPaletteEntry>
 {
    public AppCommandPaletteItem(AppCommand command, List<KeySequence> keys)
    {
@@ -45,13 +42,9 @@ public class AppCommandPaletteItem implements CommandPaletteItem
    }
 
    @Override
-   public Widget asWidget()
+   public AppCommandPaletteEntry createWidget()
    {
-      if (widget_ == null)
-      {
-         widget_ = new AppCommandPaletteEntry(command_, label_, keys_, this);
-      }
-      return widget_;
+      return new AppCommandPaletteEntry(command_, label_, keys_, this);
    }
 
    @Override
@@ -102,15 +95,7 @@ public class AppCommandPaletteItem implements CommandPaletteItem
    @Override
    public boolean matchesSearch(String[] keywords)
    {
-      String hay = label_.toLowerCase();
-      for (String needle: keywords)
-      {
-         if (!hay.contains(needle))
-         {
-            return false;
-         }
-      }
-      return true;
+      return super.labelMatchesSearch(label_, keywords);
    }
 
    @Override
@@ -129,5 +114,4 @@ public class AppCommandPaletteItem implements CommandPaletteItem
    private final AppCommand command_;
 
    private String label_;
-   private AppCommandPaletteEntry widget_;
 }

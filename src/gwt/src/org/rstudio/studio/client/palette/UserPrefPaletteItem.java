@@ -16,7 +16,6 @@ package org.rstudio.studio.client.palette;
 
 import org.rstudio.core.client.DebouncedCommand;
 import org.rstudio.studio.client.RStudioGinjector;
-import org.rstudio.studio.client.palette.model.CommandPaletteItem;
 import org.rstudio.studio.client.palette.ui.UserPrefBooleanPaletteEntry;
 import org.rstudio.studio.client.palette.ui.UserPrefEnumPaletteEntry;
 import org.rstudio.studio.client.palette.ui.UserPrefIntegerPaletteEntry;
@@ -26,9 +25,7 @@ import org.rstudio.studio.client.workbench.prefs.model.Prefs.EnumValue;
 import org.rstudio.studio.client.workbench.prefs.model.Prefs.IntValue;
 import org.rstudio.studio.client.workbench.prefs.model.Prefs.PrefValue;
 
-import com.google.gwt.user.client.ui.Widget;
-
-public class UserPrefPaletteItem implements CommandPaletteItem
+public class UserPrefPaletteItem extends BasePaletteItem<UserPrefPaletteEntry>
 {
    public UserPrefPaletteItem(PrefValue<?> val)
    {
@@ -36,25 +33,22 @@ public class UserPrefPaletteItem implements CommandPaletteItem
    }
 
    @Override
-   public Widget asWidget()
+   public UserPrefPaletteEntry createWidget()
    {
-      if (widget_ == null)
+      if (val_ instanceof BooleanValue)
       {
-         if (val_ instanceof BooleanValue)
-         {
-            widget_ = new UserPrefBooleanPaletteEntry((BooleanValue)val_, this);
-         }
-         else if (val_ instanceof EnumValue)
-         {
-            widget_ = new UserPrefEnumPaletteEntry((EnumValue)val_, this);
-         }
-         else if (val_ instanceof IntValue)
-         {
-            widget_ = new UserPrefIntegerPaletteEntry((IntValue)val_, this);
-         }
+         return new UserPrefBooleanPaletteEntry((BooleanValue)val_, this);
+      }
+      else if (val_ instanceof EnumValue)
+      {
+         return new UserPrefEnumPaletteEntry((EnumValue)val_, this);
+      }
+      else if (val_ instanceof IntValue)
+      {
+         return new UserPrefIntegerPaletteEntry((IntValue)val_, this);
       }
       
-      return widget_;
+      return null;
    }
 
    @Override
@@ -129,5 +123,4 @@ public class UserPrefPaletteItem implements CommandPaletteItem
    };
 
    private final PrefValue<?> val_;
-   private UserPrefPaletteEntry widget_;
 }

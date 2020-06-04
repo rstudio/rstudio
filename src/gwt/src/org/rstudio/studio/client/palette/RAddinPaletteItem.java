@@ -19,14 +19,11 @@ import java.util.List;
 
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.KeySequence;
-import org.rstudio.studio.client.palette.model.CommandPaletteItem;
 import org.rstudio.studio.client.palette.ui.RAddinCommandPaletteEntry;
 import org.rstudio.studio.client.workbench.addins.Addins.AddinExecutor;
 import org.rstudio.studio.client.workbench.addins.Addins.RAddin;
 
-import com.google.gwt.user.client.ui.Widget;
-
-public class RAddinPaletteItem implements CommandPaletteItem
+public class RAddinPaletteItem extends BasePaletteItem<RAddinCommandPaletteEntry>
 {
    public RAddinPaletteItem(RAddin addin, AddinExecutor executor, List<KeySequence> keys)
    {
@@ -43,14 +40,9 @@ public class RAddinPaletteItem implements CommandPaletteItem
    }
 
    @Override
-   public Widget asWidget()
+   public RAddinCommandPaletteEntry createWidget()
    {
-      if (widget_ == null)
-      {
-         widget_ = new RAddinCommandPaletteEntry(addin_, label_, keys_, this);
-      }
-      
-      return widget_;
+      return new RAddinCommandPaletteEntry(addin_, label_, keys_, this);
    }
 
    @Override
@@ -62,15 +54,7 @@ public class RAddinPaletteItem implements CommandPaletteItem
    @Override
    public boolean matchesSearch(String[] keywords)
    {
-      String hay = label_.toLowerCase();
-      for (String needle: keywords)
-      {
-         if (!hay.contains(needle))
-         {
-            return false;
-         }
-      }
-      return true;
+      return super.labelMatchesSearch(label_, keywords);
    }
 
    @Override

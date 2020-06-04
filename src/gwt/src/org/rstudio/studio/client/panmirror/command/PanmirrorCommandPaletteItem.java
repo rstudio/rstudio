@@ -15,11 +15,9 @@
 
 package org.rstudio.studio.client.panmirror.command;
 
-import org.rstudio.studio.client.palette.model.CommandPaletteItem;
+import org.rstudio.studio.client.palette.BasePaletteItem;
 
-import com.google.gwt.user.client.ui.Widget;
-
-public class PanmirrorCommandPaletteItem implements CommandPaletteItem
+public class PanmirrorCommandPaletteItem extends BasePaletteItem<PanmirrorCommandPaletteEntry>
 {
    public PanmirrorCommandPaletteItem(PanmirrorCommandUI cmd)
    {
@@ -27,14 +25,9 @@ public class PanmirrorCommandPaletteItem implements CommandPaletteItem
    }
    
    @Override
-   public Widget asWidget()
+   public PanmirrorCommandPaletteEntry createWidget()
    {
-      if (widget_ == null)
-      {
-         widget_ = new PanmirrorCommandPaletteEntry(cmd_, this);
-      }
-
-      return widget_;
+     return new PanmirrorCommandPaletteEntry(cmd_, this);
    }
 
    @Override
@@ -46,15 +39,7 @@ public class PanmirrorCommandPaletteItem implements CommandPaletteItem
    @Override
    public boolean matchesSearch(String[] keywords)
    {
-      String hay = widget_.getLabel();
-      for (String needle: keywords)
-      {
-         if (hay.contains(needle))
-         {
-            return true;
-         }
-      }
-      return false;
+      return super.labelMatchesSearch(cmd_.getFullMenuText(), keywords);
    }
 
    @Override
@@ -76,5 +61,4 @@ public class PanmirrorCommandPaletteItem implements CommandPaletteItem
    }
 
    private final PanmirrorCommandUI cmd_;
-   private PanmirrorCommandPaletteEntry widget_;
 }
