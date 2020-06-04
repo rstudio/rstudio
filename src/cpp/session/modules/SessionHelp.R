@@ -146,7 +146,7 @@ options(help_type = "html")
       namespace <- "base"
    else if (is.function(object))
    {
-      envString <- format.default(environment(object))[[1L]]
+      envString <- .rs.format(environment(object))[[1L]]
       
       # Strip out the irrelevant bits of the package name. We'd like
       # to just use 'regexpr' but its output is funky with older versions

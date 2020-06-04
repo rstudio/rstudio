@@ -1,5 +1,5 @@
 /*
- * ConsoleWriteInputHandler.java
+ * focus.ts
  *
  * Copyright (C) 2020 by RStudio, PBC
  *
@@ -12,11 +12,16 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-package org.rstudio.studio.client.workbench.views.console.events;
 
-import com.google.gwt.event.shared.EventHandler;
+export function isElementFocused(element: HTMLElement | null) : boolean {
+  if (element) {
+    return window.document.activeElement === element;
+  }
+  return false;
+}
 
-public interface ConsoleWriteInputHandler extends EventHandler
-{
-   void onConsoleWriteInput(ConsoleWriteInputEvent event);
+export function focusElement(element: HTMLElement | null ) {
+  if (element) {
+    element.focus();
+  }
 }

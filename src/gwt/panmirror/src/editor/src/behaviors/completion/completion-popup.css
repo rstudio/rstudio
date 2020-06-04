@@ -1,5 +1,6 @@
+
 /*
- * ConsoleInputHandler.java
+ * completion-popup.css
  *
  * Copyright (C) 2020 by RStudio, PBC
  *
@@ -12,11 +13,34 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-package org.rstudio.studio.client.workbench.views.console.events;
 
-import com.google.gwt.event.shared.EventHandler;
-
-public interface ConsoleInputHandler extends EventHandler
-{
-   void onConsoleInput(ConsoleInputEvent event);
+.pm-completion-popup {
+  padding: 0;
 }
+
+.pm-completion-list {
+  overflow-y: auto;
+}
+
+.pm-completion-list > table {
+  table-layout: fixed;
+  border-spacing: 0;
+  width: 100%;
+  padding: 4px;
+}
+
+.pm-completion-list > table td {
+  padding: 0 4px;
+}
+
+.pm-completion-item {
+  vertical-align: middle;
+  border: 1px solid transparent;
+}
+
+.pm-completion-item-text {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+

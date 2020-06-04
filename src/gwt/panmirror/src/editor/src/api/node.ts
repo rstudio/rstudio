@@ -130,8 +130,9 @@ export function nodeIsActive(state: EditorState, type: NodeType, attrs = {}) {
   return node.node.hasMarkup(type, attrs);
 }
 
-export function canInsertNode(state: EditorState, nodeType: NodeType) {
-  const $from = state.selection.$from;
+export function canInsertNode(context: EditorState | Selection, nodeType: NodeType) {
+  const selection = asSelection(context);
+  const $from = selection.$from;
   for (let d = $from.depth; d >= 0; d--) {
     const index = $from.index(d);
     if ($from.node(d).canReplaceWith(index, index, nodeType)) {
@@ -141,6 +142,11 @@ export function canInsertNode(state: EditorState, nodeType: NodeType) {
   return false;
 }
 
+export function canInsertTextNode(context: EditorState | Selection) {
+  const selection = asSelection(context);
+  return canInsertNode(selection, selection.$head.parent.type.schema.nodes.text);
+}
+  
 export function insertAndSelectNode(view: EditorView, node: ProsemirrorNode) {
   // create new transaction
   const tr = view.state.tr;
@@ -182,4 +188,8 @@ export function editingRootScrollContainerElement(view: EditorView) {
   } else {
     return undefined;
   }
+}
+
+function asSelection(context: EditorState | Selection) {
+  return context instanceof EditorState ? context.selection : context;
 }

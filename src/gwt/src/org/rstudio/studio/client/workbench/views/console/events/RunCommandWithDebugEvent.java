@@ -17,11 +17,9 @@ package org.rstudio.studio.client.workbench.views.console.events;
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 
-public class RunCommandWithDebugEvent 
-   extends GwtEvent<RunCommandWithDebugEvent.Handler>
+public class RunCommandWithDebugEvent extends GwtEvent<RunCommandWithDebugEvent.Handler>
 {
-   public static final GwtEvent.Type<RunCommandWithDebugEvent.Handler> TYPE =
-      new GwtEvent.Type<RunCommandWithDebugEvent.Handler>();
+   public static final GwtEvent.Type<Handler> TYPE = new GwtEvent.Type<>();
   
    public interface Handler extends EventHandler
    {
@@ -39,7 +37,7 @@ public class RunCommandWithDebugEvent
    }
          
    @Override
-   public Type<RunCommandWithDebugEvent.Handler> getAssociatedType()
+   public Type<Handler> getAssociatedType()
    {
       return TYPE;
    }

@@ -20,20 +20,22 @@ import { ResolvedPos } from "prosemirror-model";
 import debounce from 'lodash.debounce';
 import zenscroll from 'zenscroll';
 
-import { EditorUIMath } from "../../api/ui";
+import { EditorUI } from "../../api/ui";
 import { getMarkRange } from "../../api/mark";
-import { EditorEvents, EditorEvent } from "../../api/events";
+import { EditorEvents } from "../../api/events";
+import { ScrollEvent, ResizeEvent } from "../../api/event-types";
 import { applyStyles } from "../../api/css";
 import { editingRootNodeClosestToPos, editingRootNode } from "../../api/node";
 import { createPopup } from "../../api/widgets/widgets";
 
 const kMathPopupVerticalOffset = 10;
+const kMathPopupInputDebuounceMs = 250;
 
 const key = new PluginKey('math-preview');
 
 export class MathPreviewPlugin extends Plugin {
 
-  private readonly uiMath: EditorUIMath;
+  private readonly ui: EditorUI;
 
   private view: EditorView | null = null;
 
@@ -43,16 +45,16 @@ export class MathPreviewPlugin extends Plugin {
   private scrollUnsubscribe: VoidFunction;
   private resizeUnsubscribe: VoidFunction;
 
-  constructor(uiMath: EditorUIMath, events: EditorEvents) {
+  constructor(ui: EditorUI, events: EditorEvents) {
   
     super({
       key,
       view: () => {
         return {
-          update: (view: EditorView) => {
+          update: debounce((view: EditorView) => {
             this.view = view;
             this.updatePopup();
-          },
+          }, kMathPopupInputDebuounceMs, { leading: true, trailing: true }),
           destroy: () => {
             this.scrollUnsubscribe();
             this.resizeUnsubscribe();
@@ -69,18 +71,18 @@ export class MathPreviewPlugin extends Plugin {
               this.updatePopup(view.state.doc.resolve(pos.pos));
             }
             return false;
-          }, 250),
+          }, kMathPopupInputDebuounceMs),
         },
       },
     });
 
-    // save reference to uiMath
-    this.uiMath = uiMath;
+    // save reference to ui
+    this.ui = ui;
 
     // update position on scroll
     this.updatePopup = this.updatePopup.bind(this);
-    this.scrollUnsubscribe = events.subscribe(EditorEvent.Scroll, () => this.updatePopup());
-    this.resizeUnsubscribe = events.subscribe(EditorEvent.Resize,  () => this.updatePopup());
+    this.scrollUnsubscribe = events.subscribe(ScrollEvent, () => this.updatePopup());
+    this.resizeUnsubscribe = events.subscribe(ResizeEvent, () => this.updatePopup());
   }
 
   private updatePopup($mousePos?: ResolvedPos) {
@@ -113,6 +115,12 @@ export class MathPreviewPlugin extends Plugin {
       return;
     }
 
+    // bail if the user has this disabled
+    if (!this.ui.prefs.equationPreview()) {
+      this.closePopup();
+      return;
+    }
+
     // get the math text. bail if it's empty
     const inlineMath = state.doc.textBetween(range.from, range.to);
     if (inlineMath.match(/^\${1,2}\s*\${1,2}$/)) {
@@ -135,8 +143,8 @@ export class MathPreviewPlugin extends Plugin {
     }
 
     // typeset the math if we haven't already
-    if (inlineMath !== this.lastRenderedMath) {
-      this.uiMath.typeset!(this.popup!, inlineMath).then(error => {
+    if (inlineMath !== this.lastRenderedMath && this.popup) {
+      this.ui.math.typeset!(this.popup, inlineMath).then(error => {
         if (!error) {
           this.popup!.style.visibility = 'visible';
           this.lastRenderedMath = inlineMath; 

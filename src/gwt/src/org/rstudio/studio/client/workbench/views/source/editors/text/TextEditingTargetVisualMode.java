@@ -137,14 +137,6 @@ public class TextEditingTargetVisualMode implements CommandPaletteEntrySource
       releaseOnDismiss.add(prefs_.enableVisualMarkdownEditingMode().addValueChangeHandler((value) -> {
          view_.manageCommandUI();
       }));
-      
-      // changes to line wrapping prefs make us dirty
-      releaseOnDismiss.add(prefs_.visualMarkdownEditingWrapAuto().addValueChangeHandler((value) -> {
-         isDirty_ = true;
-      }));
-      releaseOnDismiss.add(prefs_.visualMarkdownEditingWrapColumn().addValueChangeHandler((value) -> {
-         isDirty_ = true;
-      }));
    } 
    
    private void initWidgets()

@@ -28,6 +28,7 @@ export interface EditorUI {
   execute: EditorUIExecute;
   math: EditorUIMath;
   context: EditorUIContext;
+  prefs: EditorUIPrefs;
   images: EditorUIImages;
 }
 
@@ -80,6 +81,10 @@ export interface EditorUIMath {
 export interface EditorDisplay {
   openURL: (url: string) => void;
   showContextMenu?: (items: EditorMenuItem[], clientX: number, clientY: number) => Promise<boolean>;
+}
+
+export interface EditorUIPrefs {
+  equationPreview: () => boolean;
 }
 
 export enum AlertType {

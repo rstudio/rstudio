@@ -28,6 +28,8 @@
 
 #include <core/system/System.hpp>
 
+#include <boost/bind.hpp>
+
 namespace rstudio {
 namespace core {
 namespace system {
