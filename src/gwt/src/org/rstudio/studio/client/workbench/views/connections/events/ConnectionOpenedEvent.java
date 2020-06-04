@@ -19,17 +19,17 @@ import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 
 public class ConnectionOpenedEvent extends GwtEvent<ConnectionOpenedEvent.Handler>
-{ 
+{
    public interface Handler extends EventHandler
    {
       void onConnectionOpened(ConnectionOpenedEvent event);
    }
-   
+
    public ConnectionOpenedEvent(Connection connection)
    {
       connection_ = connection;
    }
-   
+
    public Connection getConnection()
    {
       return connection_;
@@ -46,8 +46,8 @@ public class ConnectionOpenedEvent extends GwtEvent<ConnectionOpenedEvent.Handle
    {
       handler.onConnectionOpened(this);
    }
-   
+
    private final Connection connection_;
 
-   public static final Type<Handler> TYPE = new Type<Handler>();
+   public static final Type<Handler> TYPE = new Type<>();
 }
