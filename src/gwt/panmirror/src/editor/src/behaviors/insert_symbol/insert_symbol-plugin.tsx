@@ -25,12 +25,11 @@ import { canInsertNode } from '../../api/node';
 import { EditorUI } from '../../api/ui';
 
 import { InsertSymbolPopup } from './insert_symbol-popup';
-import {SymbolDataProvider} from './insert_symbol-dataprovider';
+import {SymbolDataProvider, SymbolCharacter} from './insert_symbol-dataprovider';
 
 import { ScrollEvent } from '../../api/event-types';
 
 const kMinimumPanelPaddingToEdgeOfView = 5;
-
 
 export const performInsertSymbol = (pluginKey: PluginKey<boolean>) => {
   return (state: EditorState, dispatch?: (tr: Transaction) => void, view?: EditorView) => {
@@ -86,7 +85,7 @@ export class InsertSymbolPlugin extends Plugin<boolean> {
   public showPopup(view: EditorView) {
     if (!this.popup) {
       const kHeight = 320;
-      const kWidth = 430;
+      const kWidth = 418;
 
       this.popup = window.document.createElement('div');
       this.popup.tabIndex = 0;
@@ -137,9 +136,8 @@ export class InsertSymbolPlugin extends Plugin<boolean> {
   }
 
   private insertSymbolPopup(view: EditorView, size: [number, number]) {
-    const insertText = (text: string) => {
-      const tr = view.state.tr;
-      tr.insertText(text);
+    const insertSymbol = (symbolCharacter: SymbolCharacter, searchTerm: string) => {
+      const tr = this.dataProvider.insertSymbolTransaction(symbolCharacter, searchTerm, view.state);
       view.dispatch(tr);
       view.focus();
     };
@@ -153,11 +151,12 @@ export class InsertSymbolPlugin extends Plugin<boolean> {
       <InsertSymbolPopup
         symbolDataProvider={this.dataProvider}
         onClose={closePopup}
-        onInsertText={insertText}
+        onInsertSymbol={insertSymbol}
         enabled={isEnabled(view.state)}
         size={size}
         searchImage={this.ui.images.search}
         searchPlaceholder={this.ui.context.translateText(this.dataProvider.filterPlaceholderHint)}
+        ui={this.ui}
       />
     );
   }

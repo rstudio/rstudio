@@ -118,6 +118,7 @@ const excludedChars = [
 ];
 
 const excludedEmoji = [
+  'frowning_face',
   'smiling_face_with_tear',
   'relaxed',
   'disguised_face',
@@ -457,12 +458,8 @@ interface Character {
   codepoint: number;
 }
 
-function heading(heading: string) {
-  console.log('');
-  console.log('');
-  console.log('****************************************************************');
-  console.log(heading);
-  console.log('****************************************************************');
+function heading(message: string) {
+  info('','','****************************************************************',message,'****************************************************************');
 }
 
 function info(...message: any[]) {

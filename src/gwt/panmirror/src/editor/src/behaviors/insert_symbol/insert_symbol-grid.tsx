@@ -24,6 +24,7 @@ import { SymbolPreview } from './insert_symbol-grid-preview';
 import { WidgetProps } from '../../api/widgets/react';
 
 import './insert_symbol-grid-styles.css';
+import { EditorUI } from '../../api/ui';
 
 interface CharacterGridProps extends WidgetProps {
   height: number;
@@ -33,6 +34,7 @@ interface CharacterGridProps extends WidgetProps {
   selectedIndex: number;
   onSelectionChanged: (selectedIndex: number) => void;
   onSelectionCommitted: VoidFunction;
+  ui: EditorUI;
 }
 
 const kPreviewHeight = 120;
@@ -169,6 +171,7 @@ const SymbolCharacterGrid = React.forwardRef<any, CharacterGridProps>((props, re
           height={kPreviewHeight}
           width={kPreviewWidth}
           symbolCharacter={selectedCharacter}
+          ui={props.ui}
         />
       )}
     </div>

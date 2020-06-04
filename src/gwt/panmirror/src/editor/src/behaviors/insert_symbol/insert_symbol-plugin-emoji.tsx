@@ -13,27 +13,10 @@
  *
  */
 
-// JJA
-// Localization of category names
-// Are categories enough or should we support commonly used emojis?
-
-// Core - phase 1
-// Common at the front? in a seprate section?
-
-// TODO: emoji don't look centered in grid cell? Need fixed font?
-// TODO: Insert text node with emoji mark, not raw characters
-
-// TODO: Find any strings and make sure they use translate
-// TODO: For symbol category names, what is the right way to localize the names (at what level should this happen)?
-
-// Skin tone, ensure gender represented appropriately
-// global option for skin tone, and a per document option (markdown writer option)
-// TODO: Skin tone - insert skin tone character after selected emoji for emoji that support it
-
 import { Schema } from 'prosemirror-model';
-import { PluginKey } from 'prosemirror-state';
-
+import { PluginKey, Transaction, EditorState } from 'prosemirror-state';
 import { ProsemirrorCommand, EditorCommandId } from '../../api/command';
+
 import { EditorEvents } from '../../api/events';
 import { Extension } from '../../api/extension';
 import { EditorFormat } from '../../api/format';
@@ -43,10 +26,10 @@ import { PandocCapabilities } from '../../api/pandoc_capabilities';
 import { EditorUI } from '../../api/ui';
 
 import { performInsertSymbol, InsertSymbolPlugin } from './insert_symbol-plugin';
+import { SymbolDataProvider, SymbolCharacter } from './insert_symbol-dataprovider';
 
 import kEmojisJson from '../../api/emojis-all.json';
-import { Emoji } from '../../api/emoji';
-import { SymbolDataProvider, SymbolCharacter } from './insert_symbol-dataprovider';
+import { Emoji, emojiFromChar } from '../../api/emoji';
 
 const key = new PluginKey<boolean>('insert-emoji');
 
@@ -68,14 +51,29 @@ const extension = (
   };
 };
 
-export const kCategoryAll = 'All';
-const kEmojis = kEmojisJson as Emoji[];
 
 class EmojiSymbolDataProvider implements SymbolDataProvider {
   
-  // TODO: use ui.translate call to translate
   public readonly filterPlaceholderHint = 'emoji name';
 
+  public insertSymbolTransaction(symbolCharacter: SymbolCharacter, searchTerm: string, state: EditorState) {
+    
+    const emoji = emojiFromChar(symbolCharacter.value);   
+    const tr = state.tr;
+    if (emoji && emoji.markdown) {
+      // Try to find an alias that matches the user's search term
+      const bestAlias = emoji.aliases.find(alias => alias.includes(searchTerm));
+      const mark = state.schema.marks.emoji.create({ emojihint: bestAlias || emoji.aliases[0]});
+      const text = state.schema.text(emoji.emoji, mark);
+      tr.replaceSelectionWith(text); 
+    } else {
+      // This doesn't appear to be an emoji or it doesn't have a markdown representation, 
+      // just insert the text
+      tr.insertText(symbolCharacter.value);
+    }
+    return tr;
+  }
+  
   public symbolGroupNames(): string[] {
     const categories: string[] = [];
     kEmojis.forEach(emoji => {
@@ -115,9 +113,11 @@ class EmojiSymbolDataProvider implements SymbolDataProvider {
   }
 }
 
+const kCategoryAll = 'All';
+const kEmojis = kEmojisJson as Emoji[];
 function symbolForEmoji(emoji: Emoji) : SymbolCharacter {
   return ({ 
-    name: ':' + emoji.aliases[0] + ':', 
+    name: `${emoji.markdown ? ':' + emoji.aliases[0] + ':' : emoji.emoji}`,
     value: emoji.emoji,
     aliases: emoji.aliases,
     description: emoji.description

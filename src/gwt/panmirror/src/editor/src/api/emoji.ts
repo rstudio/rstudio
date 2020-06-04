@@ -22,6 +22,8 @@ export interface Emoji {
   aliases: string[];
   category: string;
   description: string;
+  skin_tones: boolean;
+  markdown: boolean;
 }
 
 export function emojis() {

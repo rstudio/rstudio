@@ -13,11 +13,15 @@
  *
  */
 
+import { Transaction, EditorState } from "prosemirror-state";
+
 export interface SymbolDataProvider {
   symbolGroupNames(): string[];
   getSymbols(groupName: string | undefined): SymbolCharacter[];
   filterSymbols(filterText: string, symbols: SymbolCharacter[]): SymbolCharacter[];
   readonly filterPlaceholderHint: string;
+  
+  insertSymbolTransaction(symbolCharacter: SymbolCharacter, searchTerm: string, state: EditorState) : Transaction;
 }
 
 export interface SymbolCharacterGroup {

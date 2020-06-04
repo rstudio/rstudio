@@ -14,7 +14,7 @@
  */
 
 import { Schema } from 'prosemirror-model';
-import { PluginKey } from 'prosemirror-state';
+import { PluginKey, Transaction, EditorState } from 'prosemirror-state';
 
 import { ProsemirrorCommand, EditorCommandId } from '../../api/command';
 import { EditorEvents } from '../../api/events';
@@ -51,13 +51,17 @@ const extension = (
   };
 };
 
-export const kCategoryAll = 'All';
-
 class UnicodeSymbolDataProvider implements SymbolDataProvider {
   constructor() {
     this.symbolGroups = (untypedSymbolData as SymbolCharacterGroup[]).sort((a, b) => a.name.localeCompare(b.name));
   }
   private readonly symbolGroups: SymbolCharacterGroup[];
+
+  public insertSymbolTransaction(symbolCharacter: SymbolCharacter, searchTerm: string, state: EditorState) : Transaction {
+    const tr = state.tr;
+    tr.insertText(symbolCharacter.value);
+    return tr;
+  }
 
   public readonly filterPlaceholderHint = 'keyword or codepoint';
 
@@ -106,5 +110,6 @@ class UnicodeSymbolDataProvider implements SymbolDataProvider {
     return filteredSymbols;
   }
 }
+const kCategoryAll = 'All';
 
 export default extension;

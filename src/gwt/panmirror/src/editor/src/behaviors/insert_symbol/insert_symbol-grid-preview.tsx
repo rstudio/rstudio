@@ -16,6 +16,7 @@
 import { WidgetProps } from '../../api/widgets/react';
 import React from 'react';
 import { SymbolCharacter } from './insert_symbol-dataprovider';
+import { EditorUI } from '../../api/ui';
 
 interface SymbolPreviewProps extends WidgetProps {
   top: number;
@@ -23,6 +24,7 @@ interface SymbolPreviewProps extends WidgetProps {
   height: number;
   width: number;
   symbolCharacter: SymbolCharacter;
+  ui: EditorUI;
 }
 
 export const SymbolPreview = React.forwardRef<any, SymbolPreviewProps>((props, ref) => {
@@ -31,7 +33,7 @@ export const SymbolPreview = React.forwardRef<any, SymbolPreviewProps>((props, r
   if (props.symbolCharacter.codepoint) {
     previewText = 'U+' + props.symbolCharacter.codepoint.toString(16);
   } else if (props.symbolCharacter.description) {
-    previewText = props.symbolCharacter.description;
+    previewText = props.ui.context.translateText(props.symbolCharacter.description);
   }
 
   return (

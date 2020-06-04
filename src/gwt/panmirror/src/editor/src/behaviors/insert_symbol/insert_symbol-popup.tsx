@@ -15,7 +15,7 @@
 
 import { WidgetProps } from '../../api/widgets/react';
 import React, { ChangeEvent } from 'react';
-import { SymbolDataProvider } from './insert_symbol-dataprovider';
+import { SymbolDataProvider, SymbolCharacter } from './insert_symbol-dataprovider';
 import { isElementFocused, focusElement } from '../../api/focus';
 import { Popup } from '../../api/widgets/popup';
 import { TextInput } from '../../api/widgets/text';
@@ -23,14 +23,16 @@ import { SelectInput } from '../../api/widgets/select';
 import SymbolCharacterGrid, { newIndexForKeyboardEvent } from './insert_symbol-grid';
 
 import './insert_symbol-styles.css';
+import { EditorUI } from '../../api/ui';
 
 
 interface InsertSymbolPopupProps extends WidgetProps {
   symbolDataProvider: SymbolDataProvider;
   enabled: boolean;
   size: [number, number];
-  onInsertText: (text: string) => void;
+  onInsertSymbol: (symbolCharacter: SymbolCharacter, searchTerm?: string) => void;
   onClose: VoidFunction;
+  ui: EditorUI;
   searchImage?: string;
   searchPlaceholder? : string;
 }
@@ -48,7 +50,7 @@ export const InsertSymbolPopup: React.FC<InsertSymbolPopupProps> = props => {
 
   const gridHeight = popupHeight - 48;
   const gridWidth = popupWidth;
-  const kNumberOfcolumns = 12;
+  const kNumberOfcolumns = 11;
 
   const [filterText, setFilterText] = React.useState<string>('');
   const [selectedSymbolGroup, setSelectedSymbolGroup] = React.useState<string>();
@@ -82,7 +84,7 @@ export const InsertSymbolPopup: React.FC<InsertSymbolPopupProps> = props => {
 
   const options = props.symbolDataProvider.symbolGroupNames().map(name => (
     <option key={name} value={name}>
-      {name}
+      {props.ui.context.translateText(name)}
     </option>
   ));
 
@@ -140,7 +142,7 @@ export const InsertSymbolPopup: React.FC<InsertSymbolPopupProps> = props => {
 
   const handleSelectedSymbolCommitted = () => {
     if (filteredSymbols.length > selectedSymbolIndex) {
-      props.onInsertText(filteredSymbols[selectedSymbolIndex].value);
+      props.onInsertSymbol(filteredSymbols[selectedSymbolIndex], textRef.current?.value);
     }
   };
 
@@ -182,6 +184,7 @@ export const InsertSymbolPopup: React.FC<InsertSymbolPopupProps> = props => {
             width={gridWidth}
             numberOfColumns={kNumberOfcolumns}
             ref={gridRef}
+            ui={props.ui}
           />
           <div
             className="pm-popup-insert-symbol-no-matching pm-light-text-color"
