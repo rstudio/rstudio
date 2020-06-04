@@ -75,7 +75,6 @@ public class RAddinPaletteItem extends BasePaletteItem<RAddinCommandPaletteEntry
       widget_.setSelected(selected);
    }
    
-   private RAddinCommandPaletteEntry widget_;
    private String label_;
    
    private final RAddin addin_;

@@ -153,7 +153,10 @@ public class PanmirrorToolbarCommands implements CommandPaletteEntrySource
       List<CommandPaletteItem> items = new ArrayList<CommandPaletteItem>();
       for (PanmirrorCommandUI cmd: commandsUI_.values())
       {
-         items.add(new PanmirrorCommandPaletteItem(cmd));
+         if (cmd != null && cmd.isVisible())
+         {
+            items.add(new PanmirrorCommandPaletteItem(cmd));
+         }
       }
       return items;
    }

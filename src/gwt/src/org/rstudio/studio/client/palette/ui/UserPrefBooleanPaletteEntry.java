@@ -19,6 +19,8 @@ import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.palette.UserPrefPaletteItem;
 import org.rstudio.studio.client.workbench.prefs.model.Prefs.BooleanValue;
 
+import com.google.gwt.aria.client.Id;
+import com.google.gwt.aria.client.Roles;
 import com.google.gwt.user.client.ui.Widget;
 
 public class UserPrefBooleanPaletteEntry extends UserPrefPaletteEntry
@@ -36,6 +38,11 @@ public class UserPrefBooleanPaletteEntry extends UserPrefPaletteEntry
          Toggle.State.ON : Toggle.State.OFF, false);
 
       initialize();
+
+      // Establish link between the toggle switch and the name element for
+      // accessibility purposes (must be done post-init so that name_ has an ID)
+      Roles.getCheckboxRole().setAriaLabelledbyProperty(toggle_.getElement(), 
+            Id.of(name_.getElement()));
    }
 
    @Override

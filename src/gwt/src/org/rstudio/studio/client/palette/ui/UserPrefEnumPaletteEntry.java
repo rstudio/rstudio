@@ -14,16 +14,16 @@
  */
 package org.rstudio.studio.client.palette.ui;
 
-import java.util.ArrayList;
-import java.util.List;
 
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.dom.DomUtils;
-import org.rstudio.core.client.widget.SelectWidget;
 import org.rstudio.studio.client.palette.UserPrefPaletteItem;
 import org.rstudio.studio.client.workbench.prefs.model.Prefs.EnumValue;
 
+import com.google.gwt.aria.client.Id;
+import com.google.gwt.aria.client.Roles;
 import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.user.client.ui.ListBox;
 import com.google.gwt.user.client.ui.Widget;
 
 public class UserPrefEnumPaletteEntry extends UserPrefPaletteEntry
@@ -34,22 +34,29 @@ public class UserPrefEnumPaletteEntry extends UserPrefPaletteEntry
       val_ = val;
       prefItem_ = item;
       
+      selector_ = new ListBox();
+      selector_.setVisibleItemCount(1);
+
       // Create marginally more user friendly names for option values by
       // removing common separators and adding some casing
-      List<String> options = new ArrayList<String>();
-      for (String value: val.getAllowedValues())
+      String[] values = val.getAllowedValues();
+      for (String value: values)
       {
          String option = value.replace("-", " ");
          option = option.replace("_", " ");
          option = StringUtil.capitalizeAllWords(option);
-         options.add(option);
+         selector_.addItem(option, value);
       }
       
-      selector_ = new SelectWidget("", options.toArray(new String[0]),
-            val.getAllowedValues(), false /* is multiple */);
-            
       // Show the currently selected value
-      selector_.setValue(val.getGlobalValue());
+      for (int i = 0; i < values.length; i++)
+      {
+         if (StringUtil.equals(values[i], val_.getGlobalValue()))
+         {
+            selector_.setSelectedIndex(i);
+            break;
+         }
+      }
       
       // Adjust style for display
       selector_.getElement().getStyle().setMarginBottom(0, Unit.PX);
@@ -58,13 +65,19 @@ public class UserPrefEnumPaletteEntry extends UserPrefPaletteEntry
       selector_.addChangeHandler((evt) ->
       {
          // Change the preference to the new value
-         val_.setGlobalValue(selector_.getValue());
+         val_.setGlobalValue(selector_.getSelectedValue());
 
          // Save new state
          prefItem_.nudgeWriter();
       });
 
       initialize();
+
+      // Establish link between the selector and the name element for
+      // accessibility purposes
+      Roles.getOptionRole().setAriaLabelledbyProperty(selector_.getElement(),
+            Id.of(name_.getElement()));
+
    }
 
    @Override
@@ -79,7 +92,7 @@ public class UserPrefEnumPaletteEntry extends UserPrefPaletteEntry
       DomUtils.setActive(selector_.getElement());
    }
    
-   private SelectWidget selector_;
+   private ListBox selector_;
    private EnumValue val_;
    private final UserPrefPaletteItem prefItem_;
 }

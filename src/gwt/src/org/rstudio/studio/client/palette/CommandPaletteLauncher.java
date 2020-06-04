@@ -88,10 +88,10 @@ public class CommandPaletteLauncher implements CommandPalette.Host
    {
       // Extra sources (currently only the source tab)
       List<CommandPaletteEntrySource> sources = new ArrayList<CommandPaletteEntrySource>();
-      sources.add(pSource_.get());
       
       // Create sources
       sources.add(new AppCommandPaletteSource(ShortcutManager.INSTANCE, commands_));
+      sources.add(pSource_.get());
       sources.add(new RAddinPaletteSource(addins_.getRAddins(), ShortcutManager.INSTANCE));
       sources.add(new UserPrefPaletteSource(pPrefs_.get()));
 

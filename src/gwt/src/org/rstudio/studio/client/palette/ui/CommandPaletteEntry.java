@@ -22,12 +22,10 @@ import org.rstudio.studio.client.palette.model.CommandPaletteItem;
 import com.google.gwt.aria.client.Roles;
 import com.google.gwt.aria.client.SelectedValue;
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.HTMLPanel;
 import com.google.gwt.user.client.ui.Label;
@@ -69,9 +67,10 @@ public abstract class CommandPaletteEntry extends Composite
          // Assign a unique element ID (for accessibility tree). There's no need
          // to do this if there's no ID as we'll ultimately discard widgets
          // which don't have an addressable ID.
-         ElementIds.assignElementId(getElement(), ElementIds.COMMAND_ENTRY_PREFIX + 
-               "_" + getScope() + "_" +
-               ElementIds.idSafeString(id));
+         String base = ElementIds.COMMAND_ENTRY_PREFIX + getScope() + "_" +
+               ElementIds.idSafeString(id);
+         ElementIds.assignElementId(getElement(), base);
+         ElementIds.assignElementId(name_.getElement(), base + "_label");
       }
 
       // Apply command label

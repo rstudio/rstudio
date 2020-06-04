@@ -19,6 +19,8 @@ import org.rstudio.core.client.widget.NumericTextBox;
 import org.rstudio.studio.client.palette.UserPrefPaletteItem;
 import org.rstudio.studio.client.workbench.prefs.model.Prefs.IntValue;
 
+import com.google.gwt.aria.client.Id;
+import com.google.gwt.aria.client.Roles;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.KeyCodes;
@@ -69,10 +71,12 @@ public class UserPrefIntegerPaletteEntry extends UserPrefPaletteEntry
       style.setFontSize(8, Unit.PT);
       style.setWidth(50, Unit.PX);
       style.setMarginRight(8, Unit.PX);
-      
       editing_ = false;
-
+      
       initialize();
+      
+      Roles.getTextboxRole().setAriaLabelledbyProperty(text_.getElement(), 
+            Id.of(name_.getElement()));
    }
 
    @Override

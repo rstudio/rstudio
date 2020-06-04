@@ -31,6 +31,12 @@ public abstract class BasePaletteItem<T extends Widget> implements CommandPalett
    {
       handlers_ = new HandlerManager(this);
    }
+   
+   @Override
+   public boolean isRendered()
+   {
+      return widget_ != null;
+   }
 
    @Override
    public Widget asWidget()
@@ -41,12 +47,15 @@ public abstract class BasePaletteItem<T extends Widget> implements CommandPalett
          widget_ = createWidget();
          
          // Attach click-to-invoke handlers
-         widget_.sinkEvents(Event.ONCLICK);
-         widget_.addHandler((evt) ->
+         if (widget_ != null)
          {
-            fireEvent(new PaletteItemInvokedEvent(this));
-         }, 
-         ClickEvent.getType());
+            widget_.sinkEvents(Event.ONCLICK);
+            widget_.addHandler((evt) ->
+            {
+               fireEvent(new PaletteItemInvokedEvent(this));
+            }, 
+            ClickEvent.getType());
+         }
       }
       return widget_;
    }

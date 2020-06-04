@@ -90,7 +90,6 @@ public class CommandPalette extends Composite
       styles_.ensureInjected();
       
       Element searchBox = searchBox_.getElement();
-      searchBox.setAttribute("placeholder", "Search and run commands");
       searchBox.setAttribute("spellcheck", "false");
       searchBox.setAttribute("autocomplete", "off");
 
@@ -415,22 +414,7 @@ public class CommandPalette extends Composite
             renderedSource_++;
          } while (items == null);
             
-         if (items != null)
-         {
-            // Initialize each item with an invocation handler
-            for (CommandPaletteItem item: items)
-            {
-               registrations_.add(item.addInvokeHandler((evt) ->
-               {
-                  if (evt.getItem().dismissOnInvoke())
-                  {
-                     host_.dismiss();
-                  }
-                  evt.getItem().invoke();
-               }));
-               items_.add(item);
-            }
-         }
+         items_.addAll(items);
       }
       
       // Set initial conditions for render loop
@@ -446,6 +430,9 @@ public class CommandPalette extends Composite
          // have them
          if (item != null && (needles_.length == 0 || item.matchesSearch(needles_)))
          {
+            // Remember whether this item has been rendered
+            boolean isRendered = item.isRendered();
+            
             // Render the item to a widget (this is the expensive step)
             Widget widget = item.asWidget();
             if (widget != null)
@@ -461,6 +448,20 @@ public class CommandPalette extends Composite
                   selectNewCommand(0);
                }
                rendered++;
+            }
+            
+            // Attach an invocation handler if this is the first time we've
+            // rendered this item
+            if (!isRendered)
+            {
+               registrations_.add(item.addInvokeHandler((evt) ->
+               {
+                  if (evt.getItem().dismissOnInvoke())
+                  {
+                     host_.dismiss();
+                  }
+                  evt.getItem().invoke();
+               }));
             }
          }
          
@@ -502,8 +503,8 @@ public class CommandPalette extends Composite
    private boolean attached_;
    private int pageSize_;
    
-   private int renderedItem_;
-   private int renderedSource_ = 0;
+   private int renderedItem_; // The index of the last rendered item
+   private int renderedSource_ = 0; // The index of the last rendered data source
    private final int RENDER_PAGE_SIZE = 50;
 
    DebouncedCommand applyFilter_ = new DebouncedCommand(100)

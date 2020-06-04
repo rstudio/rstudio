@@ -70,7 +70,7 @@
 			<g:HTMLPanel styleName="{styles_.commandList}" ui:field="commandList_"></g:HTMLPanel>
 		</g:ScrollPanel>
 		<g:HTMLPanel styleName="ace_editor {styles_.noResults}" ui:field="noResults_" visible="false">
-			<g:Label text="No matching commands found."></g:Label>
+			<g:Label text="No results found."></g:Label>
 		</g:HTMLPanel>
 		<rw:AriaLiveStatusWidget ui:field="resultsCount_"></rw:AriaLiveStatusWidget>
 	</g:HTMLPanel>

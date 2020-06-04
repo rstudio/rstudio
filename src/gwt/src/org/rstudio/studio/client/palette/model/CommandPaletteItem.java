@@ -29,6 +29,13 @@ import com.google.gwt.user.client.ui.IsWidget;
 public interface CommandPaletteItem extends IsWidget, HasHandlers
 {
    /**
+    * Indicate whether or not the item has been rendered
+    * 
+    * @return True if the item has been rendered (i.e. has an active widget)
+    */
+   public boolean isRendered();
+
+   /**
     * Invoke the entry (execute the command, etc.)
     */
    public void invoke();
