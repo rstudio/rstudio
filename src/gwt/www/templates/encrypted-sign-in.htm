@@ -40,13 +40,15 @@ function verifyMe()
       showError('You must enter a password');
       return false;
    }
-   document.getElementById('username').disabled = true;
-   document.getElementById('password').disabled = true;
    document.getElementById('staySignedIn').disabled = true;
    document.getElementById('signinbutton').disabled = true;
    document.getElementById('signinbutton').classList.add('disabled');
    document.getElementById('spinner').classList.remove('signin-hidden');
    document.getElementById('progress-message').innerText = "Signing in";
+   setTimeout(function () {
+      document.getElementById('username').disabled = true;
+      document.getElementById('password').disabled = true;
+   }, 0);
    return true;
 }
 </script>
