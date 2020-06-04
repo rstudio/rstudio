@@ -13,7 +13,7 @@
  *
  */
 
-import { Fragment, Node as ProsemirrorNode } from 'prosemirror-model';
+import { Fragment } from 'prosemirror-model';
 
 export function fragmentText(fragment: Fragment) {
   let text = '';

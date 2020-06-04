@@ -52,7 +52,6 @@ import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.helper.StringStateValue;
 import org.rstudio.studio.client.workbench.views.BasePresenter;
 import org.rstudio.studio.client.workbench.views.console.events.ConsoleResetHistoryEvent;
-import org.rstudio.studio.client.workbench.views.console.events.ConsoleResetHistoryHandler;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
 import org.rstudio.studio.client.workbench.views.history.events.FetchCommandsEvent;
 import org.rstudio.studio.client.workbench.views.history.events.FetchCommandsHandler;
@@ -216,7 +215,7 @@ public class History extends BasePresenter implements SelectionCommitHandler<Voi
       view_.addFetchCommandsHandler(this);
 
       server_ = server;
-      events_.addHandler(ConsoleResetHistoryEvent.TYPE, new ConsoleResetHistoryHandler()
+      events_.addHandler(ConsoleResetHistoryEvent.TYPE, new ConsoleResetHistoryEvent.Handler()
       {
          @Override
          public void onConsoleResetHistory(ConsoleResetHistoryEvent event)

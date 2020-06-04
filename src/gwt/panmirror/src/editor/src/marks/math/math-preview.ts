@@ -22,12 +22,14 @@ import zenscroll from 'zenscroll';
 
 import { EditorUI } from "../../api/ui";
 import { getMarkRange } from "../../api/mark";
-import { EditorEvents, EditorEvent } from "../../api/events";
+import { EditorEvents } from "../../api/events";
+import { ScrollEvent, ResizeEvent } from "../../api/event-types";
 import { applyStyles } from "../../api/css";
 import { editingRootNodeClosestToPos, editingRootNode } from "../../api/node";
 import { createPopup } from "../../api/widgets/widgets";
 
 const kMathPopupVerticalOffset = 10;
+const kMathPopupInputDebuounceMs = 250;
 
 const key = new PluginKey('math-preview');
 
@@ -49,10 +51,10 @@ export class MathPreviewPlugin extends Plugin {
       key,
       view: () => {
         return {
-          update: (view: EditorView) => {
+          update: debounce((view: EditorView) => {
             this.view = view;
             this.updatePopup();
-          },
+          }, kMathPopupInputDebuounceMs, { leading: true, trailing: true }),
           destroy: () => {
             this.scrollUnsubscribe();
             this.resizeUnsubscribe();
@@ -69,7 +71,7 @@ export class MathPreviewPlugin extends Plugin {
               this.updatePopup(view.state.doc.resolve(pos.pos));
             }
             return false;
-          }, 250),
+          }, kMathPopupInputDebuounceMs),
         },
       },
     });
@@ -79,8 +81,8 @@ export class MathPreviewPlugin extends Plugin {
 
     // update position on scroll
     this.updatePopup = this.updatePopup.bind(this);
-    this.scrollUnsubscribe = events.subscribe(EditorEvent.Scroll, () => this.updatePopup());
-    this.resizeUnsubscribe = events.subscribe(EditorEvent.Resize,  () => this.updatePopup());
+    this.scrollUnsubscribe = events.subscribe(ScrollEvent, () => this.updatePopup());
+    this.resizeUnsubscribe = events.subscribe(ResizeEvent, () => this.updatePopup());
   }
 
   private updatePopup($mousePos?: ResolvedPos) {
@@ -141,8 +143,8 @@ export class MathPreviewPlugin extends Plugin {
     }
 
     // typeset the math if we haven't already
-    if (inlineMath !== this.lastRenderedMath) {
-      this.ui.math.typeset!(this.popup!, inlineMath).then(error => {
+    if (inlineMath !== this.lastRenderedMath && this.popup) {
+      this.ui.math.typeset!(this.popup, inlineMath).then(error => {
         if (!error) {
           this.popup!.style.visibility = 'visible';
           this.lastRenderedMath = inlineMath; 

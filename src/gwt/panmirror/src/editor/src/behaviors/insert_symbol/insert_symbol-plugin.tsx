@@ -20,13 +20,14 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 
 import { applyStyles } from '../../api/css';
-import { EditorEvents, EditorEvent } from '../../api/events';
+import { EditorEvents } from '../../api/events';
 import { canInsertNode } from '../../api/node';
 import { EditorUI } from '../../api/ui';
 
 import { InsertSymbolPopup } from './insert_symbol-popup';
 import {SymbolDataProvider} from './insert_symbol-dataprovider';
 
+import { ScrollEvent } from '../../api/event-types';
 
 const kMinimumPanelPaddingToEdgeOfView = 5;
 
@@ -76,7 +77,7 @@ export class InsertSymbolPlugin extends Plugin<boolean> {
     this.dataProvider = dataProvider;
     this.ui = ui;
     this.closePopup = this.closePopup.bind(this);
-    this.scrollUnsubscribe = events.subscribe(EditorEvent.Scroll, this.closePopup);
+    this.scrollUnsubscribe = events.subscribe(ScrollEvent, this.closePopup);
 
     this.focusChanged = this.focusChanged.bind(this);
     window.document.addEventListener('focusin', this.focusChanged);

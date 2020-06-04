@@ -27,7 +27,6 @@ import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.model.SessionInfo;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.views.console.events.WorkingDirChangedEvent;
-import org.rstudio.studio.client.workbench.views.console.events.WorkingDirChangedHandler;
 import org.rstudio.studio.client.workbench.views.vcs.git.model.GitState;
 
 import com.google.gwt.user.client.Timer;
@@ -51,7 +50,7 @@ public class WorkbenchContext
       currentWorkingDir_ = FileSystemItem.home();
       defaultFileDialogDir_ = FileSystemItem.home();
       eventBus.addHandler(WorkingDirChangedEvent.TYPE, 
-                          new WorkingDirChangedHandler() {
+                          new WorkingDirChangedEvent.Handler() {
          @Override
          public void onWorkingDirChanged(WorkingDirChangedEvent event)
          {

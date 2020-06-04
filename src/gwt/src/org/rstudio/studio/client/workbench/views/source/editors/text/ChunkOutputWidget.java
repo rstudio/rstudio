@@ -39,9 +39,7 @@ import org.rstudio.studio.client.rmarkdown.model.RmdChunkOutput;
 import org.rstudio.studio.client.rmarkdown.model.RmdChunkOutputUnit;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.workbench.views.console.events.ConsoleWriteErrorEvent;
-import org.rstudio.studio.client.workbench.views.console.events.ConsoleWriteErrorHandler;
 import org.rstudio.studio.client.workbench.views.console.events.ConsoleWriteOutputEvent;
-import org.rstudio.studio.client.workbench.views.console.events.ConsoleWriteOutputHandler;
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkOutputHost;
 import org.rstudio.studio.client.workbench.views.source.editors.text.rmd.ChunkOutputUi;
 
@@ -71,8 +69,8 @@ import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 
 public class ChunkOutputWidget extends Composite
-                               implements ConsoleWriteOutputHandler,
-                                          ConsoleWriteErrorHandler,
+                               implements ConsoleWriteOutputEvent.Handler,
+                                          ConsoleWriteErrorEvent.Handler,
                                           RestartStatusEvent.Handler,
                                           InterruptStatusEvent.Handler,
                                           ChunkOutputPresenter.Host

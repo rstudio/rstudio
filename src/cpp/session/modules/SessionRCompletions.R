@@ -589,7 +589,7 @@ assign(x = ".rs.acCompletionTypes",
 .rs.addFunction("resolveObjectFromFunctionCall", function(functionCall,
                                                           envir)
 {
-   string <- base::format.default(functionCall[[1]])[[1]]
+   string <- .rs.format(functionCall[[1]])[[1]]
    splat <- strsplit(string, ":{2,3}", perl = TRUE)[[1]]
    object <- NULL
    

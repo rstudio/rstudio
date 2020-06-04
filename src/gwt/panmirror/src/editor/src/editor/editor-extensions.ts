@@ -43,6 +43,7 @@ import { EditorEvents } from '../api/events';
 import { PandocCapabilities } from '../api/pandoc_capabilities';
 import { EditorFormat } from '../api/format';
 import { markInputRuleFilter } from '../api/input_rule';
+import { CompletionHandler } from '../api/completion';
 
 // required extensions (base non-customiziable pandoc nodes/marks + core behaviors)
 import nodeText from '../nodes/text';
@@ -93,7 +94,7 @@ import markSpan from '../marks/span';
 import markXRef from '../marks/xref';
 import markHTMLComment from '../marks/raw_inline/raw_html_comment';
 import markShortcode from '../marks/shortcode';
-import markEmoji from '../marks/emoji';
+import markEmoji from '../marks/emoji/emoji';
 
 // nodes
 import nodeFootnote from '../nodes/footnote/footnote';
@@ -109,6 +110,7 @@ import nodeShortcodeBlock from '../nodes/shortcode_block';
 // extension/plugin factories
 import { codeMirrorPlugins } from '../optional/codemirror/codemirror';
 import { attrEditExtension } from '../behaviors/attr_edit/attr_edit';
+import { completionExtension } from '../behaviors/completion/completion';
 
 export function initExtensions(
   format: EditorFormat,
@@ -199,6 +201,7 @@ export function initExtensions(
   manager.register([
     attrEditExtension(pandocExtensions, manager.attrEditors()),
     reverseSmartQuotesExtension(manager.pandocMarks()),
+    completionExtension(manager.completionHandlers(), events)
   ]);
 
   // additional plugins derived from extensions
@@ -366,6 +369,10 @@ export class ExtensionManager {
 
   public fixups(schema: Schema, view: EditorView): readonly FixupFn[] {
     return this.collect(extension => extension.fixups?.(schema, view));
+  }
+
+  public completionHandlers() : readonly CompletionHandler[] {
+    return this.collect(extension => extension.completionHandlers?.());
   }
 
   // NOTE: return value not readonly b/c it will be fed directly to a
