@@ -25,7 +25,7 @@ import { fragmentText } from '../api/fragment';
 import { FixupContext } from '../api/fixup';
 import { MarkTransaction } from '../api/transaction';
 import { mergedTextNodes } from '../api/text';
-import { emojis, emojiFromAlias, emojiFromChar } from '../api/emoji';
+import { emojis, emojiFromAlias, emojiFromChar, Emoji } from '../api/emoji';
 
 const kEmojiAttr = 0;
 const kEmojiContent = 1;
@@ -146,20 +146,37 @@ const extension = (): Extension | null => {
             parentNode.type.allowsMarkType(schema.marks.emoji),
           );
 
-          // TODO: This is mauling emoji that is inserted - why?
-
           textNodes.forEach(textNode => {
+            // Since emoji can be composed of multiple characters (including
+            // other emoji), we always need to prefer the longest match when inserting
+            // a mark for any given starting position.
+
+            // Find the possible emoji at each position in this text node
+            const possibleMarks = new Map<number, Array<{to: number, emoji: Emoji}>>();
+
             for (const emoji of emojis()) {
               const charLoc = textNode.text.indexOf(emoji.emoji);
               if (charLoc !== -1) {
                 const from = textNode.pos + charLoc;
                 const to = from + emoji.emoji.length;
-                if (!markTr.doc.rangeHasMark(from, to, schema.marks.emoji)) {
-                  const mark = schema.marks.emoji.create({ emojihint: emoji.aliases[0] });
-                  markTr.addMark(from, to, mark);
-                }
+                possibleMarks.set(
+                  from,
+                  (possibleMarks.get(from) || []).concat({to, emoji})
+                );
               }
             }
+
+            // For each position that has emoji, use the longest emoji match as the
+            // emoji to be marked. 
+            possibleMarks.forEach((possibleEmojis, markFrom) => {
+              const orderedEmojis = possibleEmojis.sort((a,b) => b.to - a.to);
+              const to = orderedEmojis[0].to;
+              const emoji = orderedEmojis[0].emoji;
+              if (!markTr.doc.rangeHasMark(markFrom, to, schema.marks.emoji)) {
+                const mark = schema.marks.emoji.create({ emojihint: emoji.aliases[0] });
+                markTr.addMark(markFrom, to, mark);
+              }
+            });
           });
 
           return tr;
