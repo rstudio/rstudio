@@ -87,6 +87,15 @@ Error enableCoreDumps()
    return Success();
 }
 
+std::string getEnvironmentVariable(const std::string& in_name)
+{
+   char* value = ::getenv(in_name.c_str());
+   if (value)
+      return std::string(value);
+
+   return std::string();
+}
+
 Error ignoreSignal(int in_signal)
 {
    struct sigaction sa;

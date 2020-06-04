@@ -56,6 +56,15 @@ namespace posix {
 Error enableCoreDumps();
 
 /**
+ * @brief Gets an environment variable from the system.
+ *
+ * @param in_name   The name of the environment variable.
+ *
+ * @return The value of the environment variable.
+ */
+std::string getEnvironmentVariable(const std::string& in_name);
+
+/**
  * @brief Ignores a particular signal for this process.
  *
  * @param in_signal     The signal to ignore.
