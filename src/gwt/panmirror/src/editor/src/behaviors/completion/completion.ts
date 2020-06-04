@@ -27,9 +27,9 @@ import { renderCompletionPopup, createCompletionPopup, destroyCompletionPopup } 
 import { canInsertNode } from '../../api/node';
 
 
-export function completionExtension(handlers: readonly CompletionHandler[], events: EditorEvents) {
+export function completionExtension(handlers: () => readonly CompletionHandler[], events: EditorEvents) {
   return {
-    plugins: () => [new CompletionPlugin(handlers, events)]
+    plugins: () => [new CompletionPlugin(handlers(), events)]
   };
 }
 

@@ -116,6 +116,17 @@ export enum EditorCommandId {
   RmdChunk = 'EBFD21FF-4A6E-4D88-A2E0-B38470B00BB9',
   ExecuteCurentRmdChunk = '31C799F3-EF18-4F3A-92E6-51F7A3193A1B',
   ExecuteCurrentPreviousRmdChunks = 'D3FDE96-0264-4364-ADFF-E87A75405B0B',
+
+  // omni
+  Omni = '12F96C13-38C1-4266-A0A1-E871D8C709FB'
+}
+
+// commands that appear in omni-command (/) 
+export interface OmniCommand {
+  id: EditorCommandId;
+  name: string;
+  description: string;
+  group: string; 
 }
 
 export interface EditorCommand {
@@ -126,6 +137,7 @@ export interface EditorCommand {
   readonly plural: () => number;
   readonly execute: () => void;
 }
+
 
 export class ProsemirrorCommand {
   public readonly id: EditorCommandId;
@@ -201,7 +213,7 @@ export class WrapCommand extends NodeCommand {
   }
 }
 
-export type CommandFn = (state: EditorState, dispatch?: (tr: Transaction<any>) => void, view?: EditorView) => boolean;
+export type CommandFn = (state: EditorState, dispatch?: (tr: Transaction) => void, view?: EditorView) => boolean;
 
 export function toggleList(listType: NodeType, itemType: NodeType): CommandFn {
   

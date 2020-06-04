@@ -18,7 +18,7 @@ import { Schema } from 'prosemirror-model';
 import { Plugin } from 'prosemirror-state';
 import { EditorView } from 'prosemirror-view';
 
-import { ProsemirrorCommand } from './command';
+import { ProsemirrorCommand, OmniCommand } from './command';
 import { PandocMark } from './mark';
 import { PandocNode } from './node';
 import { EditorUI } from './ui';
@@ -39,6 +39,7 @@ export interface Extension {
   baseKeys?: (schema: Schema) => readonly BaseKeyBinding[];
   inputRules?: (schema: Schema, markFilter: MarkInputRuleFilter) => readonly InputRule[];
   commands?: (schema: Schema, ui: EditorUI) => readonly ProsemirrorCommand[];
+  omniCommands?: () => readonly OmniCommand[];
   plugins?: (schema: Schema, ui: EditorUI) => readonly Plugin[];
   appendTransaction?: (schema: Schema) => readonly AppendTransactionHandler[];
   appendMarkTransaction?: (schema: Schema) => readonly AppendMarkTransactionHandler[];

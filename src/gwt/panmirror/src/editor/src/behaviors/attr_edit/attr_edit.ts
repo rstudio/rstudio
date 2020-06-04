@@ -27,13 +27,13 @@ import { hasFencedCodeBlocks } from '../../api/pandoc_format';
 
 export const kEditAttrShortcut = 'F4';
 
-export function attrEditExtension(pandocExtensions: PandocExtensions, editors: AttrEditOptions[]): Extension {
+export function attrEditExtension(pandocExtensions: PandocExtensions, editors: () => AttrEditOptions[]): Extension {
   const hasAttr = pandocAttrEnabled(pandocExtensions) || hasFencedCodeBlocks(pandocExtensions);
 
   return {
     commands: (_schema: Schema, ui: EditorUI) => {
       if (hasAttr) {
-        return [new AttrEditCommand(ui, editors)];
+        return [new AttrEditCommand(ui, editors())];
       } else {
         return [];
       }
@@ -41,7 +41,7 @@ export function attrEditExtension(pandocExtensions: PandocExtensions, editors: A
 
     plugins: (schema: Schema, ui: EditorUI) => {
       if (hasAttr) {
-        return [new AttrEditDecorationPlugin(ui, editors)];
+        return [new AttrEditDecorationPlugin(ui, editors())];
       } else {
         return [];
       }

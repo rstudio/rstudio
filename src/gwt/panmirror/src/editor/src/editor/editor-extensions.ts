@@ -20,7 +20,7 @@ import { EditorView } from 'prosemirror-view';
 
 import { EditorOptions } from '../api/options';
 import { EditorUI } from '../api/ui';
-import { ProsemirrorCommand } from '../api/command';
+import { ProsemirrorCommand, OmniCommand } from '../api/command';
 import { PandocMark } from '../api/mark';
 import { PandocNode, CodeViewOptions } from '../api/node';
 import { Extension, ExtensionFn } from '../api/extension';
@@ -110,6 +110,7 @@ import nodeShortcodeBlock from '../nodes/shortcode_block';
 import { codeMirrorPlugins } from '../optional/codemirror/codemirror';
 import { attrEditExtension } from '../behaviors/attr_edit/attr_edit';
 import { completionExtension } from '../behaviors/completion/completion';
+import { omniCommandExtension } from '../behaviors/omni_command';
 
 export function initExtensions(
   format: EditorFormat,
@@ -194,12 +195,24 @@ export function initExtensions(
     manager.register(extensions);
   }
 
-  // additional extensions dervied from other extensions
-  // (e.g. extensions that have registered attr editors)
+  
+
+  // additional extensions dervied from other extensions (e.g. extensions that have registered attr editors)
+  // note that all of these take a callback to access the manager -- this is so that if an extension earlier
+  // in the chain registers something the later extensions are able to see it 
   manager.register([
-    attrEditExtension(pandocExtensions, manager.attrEditors()),
-    reverseSmartQuotesExtension(manager.pandocMarks()),
-    completionExtension(manager.completionHandlers(), events)
+    
+    // bindings to 'Edit Attribute' command and UI adornment
+    attrEditExtension(pandocExtensions, () => manager.attrEditors()),
+    
+    // application of some marks (e.g. code) should cuase reveral of smart quotes
+    reverseSmartQuotesExtension(() => manager.pandocMarks()),
+
+    // generic command execution via 'Mod-/' or '/'
+    omniCommandExtension(() => manager.omniCommands()),
+
+    // completions (note must come at the end to pickup all registered completion handlers)
+    completionExtension(() => manager.completionHandlers(), events)
   ]);
 
   // additional plugins derived from extensions
@@ -331,6 +344,10 @@ export class ExtensionManager {
 
   public commands(schema: Schema, ui: EditorUI): readonly ProsemirrorCommand[] {
     return this.collect<ProsemirrorCommand>(extension => extension.commands?.(schema, ui));
+  }
+
+  public omniCommands() : readonly OmniCommand[] {
+    return this.collect(extension => extension.omniCommands?.());
   }
 
   public codeViews() {
