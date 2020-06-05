@@ -43,12 +43,12 @@ test_context("CryptoTests")
 
       // encrypt the data
       std::vector<unsigned char> encryptedData;
-      error = core::system::crypto::aesEncrypt(data, key, iv, &encryptedData);
+      error = core::system::crypto::aesEncrypt(data, key, iv, encryptedData);
       REQUIRE_FALSE(error);
 
       // decrypt the encrypted data
       std::vector<unsigned char> decryptedData;
-      error = core::system::crypto::aesDecrypt(encryptedData, key, iv, &decryptedData);
+      error = core::system::crypto::aesDecrypt(encryptedData, key, iv, decryptedData);
       REQUIRE_FALSE(error);
 
       // verify that the decryption gives us back the original data

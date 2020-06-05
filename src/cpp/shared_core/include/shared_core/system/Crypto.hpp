@@ -50,14 +50,36 @@ namespace crypto {
 Error getLastCryptoError(const ErrorLocation& in_location);
 
 /**
- * @brief Base-64 decodes a string.
+ * @brief AES decrypts the specified data using the specified initialization vector.
  *
- * @param in_data       The base-64 encoded data to be decoded.
- * @param out_decoded   The decoded data.
+ * @param in_data           The data to be decrypted.
+ * @param in_key            The key with which to decrypt the data.
+ * @param in_iv             The initialization vector that was used during encryption.
+ * @param out_decrypted     The decrypted data.
  *
- * @return Success if the data could be base-64 decoded; Error otherwise.
+ * @return Success if the data could be AES decrypted; Error otherwise.
  */
-Error base64Decode(const std::string in_data, std::vector<unsigned char>& out_decoded);
+Error aesDecrypt(
+   const std::vector<unsigned char>& in_data,
+   const std::vector<unsigned char>& in_key,
+   const std::vector<unsigned char>& in_iv,
+   std::vector<unsigned char>& out_decrypted);
+
+/**
+ * @brief AES encrypts the specified data using the specified initialization vector.
+ *
+ * @param in_data           The data to be encrypted.
+ * @param in_key            The key with which to encrypt the data.
+ * @param in_iv             The initialization vector to use during encryption.
+ * @param out_encrypted     The encrypted data.
+ *
+ * @return Success if the data could be AES encrypted; Error otherwise.
+ */
+Error aesEncrypt(
+   const std::vector<unsigned char>& in_data,
+   const std::vector<unsigned char>& in_key,
+   const std::vector<unsigned char>& in_iv,
+   std::vector<unsigned char>& out_encrypted);
 
 /**
  * @brief Base-64 decodes a string.
@@ -67,7 +89,17 @@ Error base64Decode(const std::string in_data, std::vector<unsigned char>& out_de
  *
  * @return Success if the data could be base-64 decoded; Error otherwise.
  */
-Error base64Decode(const std::string in_data, std::string& out_decoded);
+Error base64Decode(const std::string& in_data, std::vector<unsigned char>& out_decoded);
+
+/**
+ * @brief Base-64 decodes a string.
+ *
+ * @param in_data       The base-64 encoded data to be decoded.
+ * @param out_decoded   The decoded data.
+ *
+ * @return Success if the data could be base-64 decoded; Error otherwise.
+ */
+Error base64Decode(const std::string& in_data, std::string& out_decoded);
 
 /**
  * @brief Base 64 encodes a string.
@@ -89,6 +121,40 @@ Error base64Encode(const std::vector<unsigned char>& in_data, std::string& out_e
  * @return Success if the data could be base-64 encoded; Error otherwise.
  */
 Error base64Encode(const unsigned char* in_data, int in_length, std::string& out_encoded);
+
+/**
+ * @brief Base-64 decodes and then decrypts an AES encrypted string with the specified initialization vector, which is
+ *        also base-64 encoded.
+ *
+ * @param in_input          The base-64 encoded AES encrypted string.
+ * @param in_key            The key with which to decrypt the string.
+ * @param in_ivStr          The base-64 encrypted initialization vector.
+ * @param out_decrypted     The base-64 decoded and decrypted string.
+ *
+ * @return Success if in_input could be base-64 decoded and decrypted; Error otherwise.
+ */
+Error decryptAndBase64Decode(
+   const std::string& in_input,
+   const std::string& in_key,
+   const std::string& in_ivStr,
+   std::string& out_decrypted);
+
+/**
+ * @brief AES encrypts and then base-64 encodes the specified string using the given key. Also generates and base-64
+ *        encodes an initialization vector which is used in the encryption of the input.
+ *
+ * @param in_input          The string to encrypt and base-64 encode.
+ * @param in_key            The key with which to encrypt the string.
+ * @param out_iv            The generated base-64 encoded initialization vector.
+ * @param out_encrypted     The encrypted and base-64 encoded string.
+ *
+ * @return Success if the string could be encrypted and base-64 encoded; Error otherwise.
+ */
+Error encryptAndBase64Encode(
+   const std::string& in_input,
+   const std::string& in_key,
+   std::string& out_iv,
+   std::string& out_encrypted);
 
 /**
  * @brief Generates random bytes of the specified length.

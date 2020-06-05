@@ -43,7 +43,7 @@ set (SHARED_CORE_SOURCE_FILES
 set (SHARED_INCLUDE_DIRS
    include
    ${BOOST_INCLUDEDIR}
-   )
+   ${EXT_SOURCE_DIR})
 
 # UNIX specific
 if (UNIX)

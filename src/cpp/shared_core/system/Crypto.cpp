@@ -29,6 +29,8 @@
 
 #include <shared_core/system/Crypto.hpp>
 
+#include <gsl/gsl>
+
 #include <boost/noncopyable.hpp>
 
 #include <openssl/bio.h>
@@ -47,10 +49,14 @@ namespace crypto {
 
 namespace {
 
+// openssl encrypt/decrypt constants
+constexpr int s_encrypt = 1;
+constexpr int s_decrypt = 0;
+
 class BIOFreeAllScope : boost::noncopyable
 {
 public:
-   BIOFreeAllScope(BIO* pMem)
+   explicit BIOFreeAllScope(BIO* pMem)
       : pMem_(pMem)
    {
    }
@@ -96,9 +102,86 @@ Error getLastCryptoError(const ErrorLocation& in_location)
       in_location);
 }
 
+Error aesDecrypt(
+   const std::vector<unsigned char>& in_data,
+   const std::vector<unsigned char>& in_key,
+   const std::vector<unsigned char>& in_iv,
+   std::vector<unsigned char>& out_decrypted)
+{
+   out_decrypted.resize(in_data.size());
+   int outLen = 0;
+   int bytesDecrypted = 0;
+
+   EVP_CIPHER_CTX *ctx;
+   ctx = EVP_CIPHER_CTX_new();
+   EVP_CipherInit_ex(ctx, EVP_aes_128_cbc(), nullptr, &in_key[0], &in_iv[0], s_decrypt);
+
+   // perform the decryption
+   if(!EVP_CipherUpdate(ctx, &out_decrypted[0], &outLen, &in_data[0], gsl::narrow_cast<int>(in_data.size())))
+   {
+      EVP_CIPHER_CTX_free(ctx);
+      return getLastCryptoError(ERROR_LOCATION);
+   }
+   bytesDecrypted += outLen;
+
+   // perform final flush
+   if(!EVP_CipherFinal_ex(ctx, &out_decrypted[outLen], &outLen))
+   {
+      EVP_CIPHER_CTX_free(ctx);
+      return getLastCryptoError(ERROR_LOCATION);
+   }
+   bytesDecrypted += outLen;
+
+   EVP_CIPHER_CTX_free(ctx);
+
+   // resize the container to the amount of actual bytes decrypted (padding is removed)
+   out_decrypted.resize(bytesDecrypted);
+
+   return Success();
+}
+
+Error aesEncrypt(
+   const std::vector<unsigned char>& data,
+   const std::vector<unsigned char>& key,
+   const std::vector<unsigned char>& iv,
+   std::vector<unsigned char>& out_encrypted)
+{
+   // allow enough space in output buffer for additional block
+   out_encrypted.resize(data.size() + EVP_MAX_BLOCK_LENGTH);
+   int outlen = 0;
+   int bytesEncrypted = 0;
+
+   EVP_CIPHER_CTX *ctx;
+   ctx = EVP_CIPHER_CTX_new();
+   EVP_CipherInit_ex(ctx, EVP_aes_128_cbc(), nullptr, &key[0], &iv[0], s_encrypt);
+
+   // perform the encryption
+   if(!EVP_CipherUpdate(ctx, &out_encrypted[0], &outlen, &data[0], gsl::narrow_cast<int>(data.size())))
+   {
+      EVP_CIPHER_CTX_free(ctx);
+      return getLastCryptoError(ERROR_LOCATION);
+   }
+   bytesEncrypted += outlen;
+
+   // perform final flush including left-over padding
+   if(!EVP_CipherFinal_ex(ctx, &out_encrypted[outlen], &outlen))
+   {
+      EVP_CIPHER_CTX_free(ctx);
+      return getLastCryptoError(ERROR_LOCATION);
+   }
+   bytesEncrypted += outlen;
+
+   EVP_CIPHER_CTX_free(ctx);
+
+   // resize the container to the amount of actual bytes encrypted (including padding)
+   out_encrypted.resize(bytesEncrypted);
+
+   return Success();
+}
+
 Error base64Encode(const std::vector<unsigned char>& in_data, std::string& out_encoded)
 {
-   return base64Encode(&in_data[0], static_cast<int>(in_data.size()), out_encoded);
+   return base64Encode(&in_data[0], gsl::narrow_cast<int>(in_data.size()), out_encoded);
 }
 
 Error base64Encode(const unsigned char* in_data, int in_length, std::string& out_encoded)
@@ -139,7 +222,7 @@ Error base64Encode(const unsigned char* in_data, int in_length, std::string& out
 
    // read the memory stream
    std::vector<char> buffer(in_length * 2); // plenty more than len * 1.37 + padding
-   int bytesRead = ::BIO_read(pMem, &buffer[0], static_cast<int>(buffer.capacity()));
+   int bytesRead = ::BIO_read(pMem, &buffer[0], gsl::narrow_cast<int>(buffer.capacity()));
    if (bytesRead < 0 && ::ERR_get_error() != 0)
       return getLastCryptoError(ERROR_LOCATION);
 
@@ -151,8 +234,7 @@ Error base64Encode(const unsigned char* in_data, int in_length, std::string& out
    return Success();
 }
 
-
-Error base64Decode(const std::string in_data, std::vector<unsigned char>& out_decoded)
+Error base64Decode(const std::string& in_data, std::vector<unsigned char>& out_decoded)
 {
    // allocate b64 BIO
    BIO* pB64 = ::BIO_new(BIO_f_base64());
@@ -166,7 +248,7 @@ Error base64Decode(const std::string in_data, std::vector<unsigned char>& out_de
    BIOFreeAllScope freeB64Scope(pB64);
 
    // allocate buffer
-   BIO* pMem = BIO_new_mem_buf((void*)in_data.data(), static_cast<int>(in_data.length()));
+   BIO* pMem = BIO_new_mem_buf((void*)in_data.data(), gsl::narrow_cast<int>(in_data.length()));
    if (pMem == nullptr)
       return getLastCryptoError(ERROR_LOCATION);
 
@@ -178,7 +260,7 @@ Error base64Decode(const std::string in_data, std::vector<unsigned char>& out_de
    out_decoded.resize(in_data.length());
    int bytesRead = ::BIO_read(pB64,
                               &(out_decoded[0]),
-                              static_cast<int>(out_decoded.size()));
+                              gsl::narrow_cast<int>(out_decoded.size()));
    if (bytesRead < 0)
       return getLastCryptoError(ERROR_LOCATION);
 
@@ -187,7 +269,89 @@ Error base64Decode(const std::string in_data, std::vector<unsigned char>& out_de
 
    // return success
    return Success();
+}
 
+Error base64Decode(const std::string& in_data, std::string& out_decoded)
+{
+   std::vector<unsigned char> decoded;
+   Error error = base64Decode(in_data, decoded);
+   if (error)
+      return error;
+
+   out_decoded.reserve(decoded.size());
+   std::copy(decoded.begin(), decoded.end(), std::back_inserter(out_decoded));
+   return Success();
+}
+
+Error decryptAndBase64Decode(
+   const std::string& input,
+   const std::string& keyStr,
+   const std::string& ivStr,
+   std::string& out_decrypted)
+{
+   // copy key into vector
+   std::vector<unsigned char> key;
+   std::copy(keyStr.begin(), keyStr.end(), std::back_inserter(key));
+
+   // decode initialization vector
+   std::vector<unsigned char> iv;
+   Error error = core::system::crypto::base64Decode(ivStr, iv);
+   if (error)
+      return error;
+
+   // decode encrypted input
+   std::vector<unsigned char> decoded;
+   error = core::system::crypto::base64Decode(input, decoded);
+   if (error)
+      return error;
+
+   // decrypt decoded input
+   std::vector<unsigned char> decrypted;
+   error = core::system::crypto::aesDecrypt(decoded, key, iv, decrypted);
+   if (error)
+      return error;
+
+   // covert the decrypted bytes into the original string
+   out_decrypted.reserve(decrypted.size());
+   std::copy(decrypted.begin(), decrypted.end(), std::back_inserter(out_decrypted));
+
+   return Success();
+}
+
+
+Error encryptAndBase64Encode(
+   const std::string& input,
+   const std::string& keyStr,
+   std::string& out_iv,
+   std::string& out_encrypted)
+{
+   // copy data into vector
+   std::vector<unsigned char> data;
+   std::copy(input.begin(), input.end(), std::back_inserter(data));
+
+   // copy key into vector
+   std::vector<unsigned char> key;
+   std::copy(keyStr.begin(), keyStr.end(), std::back_inserter(key));
+
+   // create a random initialization vector for a little added security
+   std::vector<unsigned char> iv;
+   Error error = core::system::crypto::random(256, iv);
+   if (error)
+      return error;
+
+   // encrypt the input
+   std::vector<unsigned char> encrypted;
+   error = core::system::crypto::aesEncrypt(data, key, iv, encrypted);
+   if (error)
+      return error;
+
+   // base 64 encode the IV used for encryption
+   error = core::system::crypto::base64Encode(iv, out_iv);
+   if (error)
+      return error;
+
+   // base 64 encode encrypted result
+   return core::system::crypto::base64Encode(encrypted, out_encrypted);
 }
 
 Error random(uint32_t in_length, std::vector<unsigned char>& out_randomData)
