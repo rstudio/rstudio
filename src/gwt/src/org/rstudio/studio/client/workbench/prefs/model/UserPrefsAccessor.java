@@ -1030,7 +1030,11 @@ public class UserPrefsAccessor extends Prefs
     */
    public PrefValue<Boolean> highlightConsoleErrors()
    {
-      return bool("highlight_console_errors", true);
+      return bool(
+         "highlight_console_errors",
+         "Different color for error output in R console", 
+         "Whether to display error, warning, and message output in a different color.", 
+         true);
    }
 
    /**
@@ -3267,6 +3271,7 @@ public class UserPrefsAccessor extends Prefs
       prefs.add(foldStyle());
       prefs.add(saveBeforeSourcing());
       prefs.add(syntaxColorConsole());
+      prefs.add(highlightConsoleErrors());
       prefs.add(scrollPastEndOfDocument());
       prefs.add(highlightRFunctionCalls());
       prefs.add(consoleLineLengthLimit());

@@ -500,6 +500,7 @@
         "highlight_console_errors": {
             "type": "boolean",
             "default": true,
+            "title": "Different color for error output in R console",
             "description": "Whether to display error, warning, and message output in a different color."
         },
         "scroll_past_end_of_document": {
