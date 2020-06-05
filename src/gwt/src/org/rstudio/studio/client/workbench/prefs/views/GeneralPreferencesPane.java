@@ -283,10 +283,6 @@ public class GeneralPreferencesPane extends PreferencesPane
          advanced.add(checkboxPref(
                "Use debug error handler only when my code contains errors", 
                prefs_.handleErrorsInUserCodeOnly()));
-         advanced.add(spaced(checkboxPref(
-               "Automatically expand tracebacks in error inspector", 
-               prefs_.autoExpandErrorTracebacks(),
-               false /*defaultSpaced*/)));
       }
 
       if (Desktop.hasDesktopFrame())
@@ -353,10 +349,6 @@ public class GeneralPreferencesPane extends PreferencesPane
       lessSpaced(showLastDotValue_);
       advanced.add(showLastDotValue_);
 
-      advanced.add(spaced(checkboxPref(
-            "Double-click to select words in Console pane", 
-            prefs_.consoleDoubleClickSelect())));
-      
       String[] labels = {"7", "8", "9", "10", "11", "12", "13", "14", "16", "18", "24", "36"};
       String[] values = new String[labels.length];
       for (int i = 0; i < labels.length; i++)
