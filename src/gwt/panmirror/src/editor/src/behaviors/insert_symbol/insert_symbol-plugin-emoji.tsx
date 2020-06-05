@@ -14,7 +14,7 @@
  */
 
 import { Schema } from 'prosemirror-model';
-import { PluginKey, Transaction, EditorState } from 'prosemirror-state';
+import { PluginKey, EditorState } from 'prosemirror-state';
 import { ProsemirrorCommand, EditorCommandId } from '../../api/command';
 
 import { EditorEvents } from '../../api/events';
@@ -27,9 +27,7 @@ import { EditorUI } from '../../api/ui';
 
 import { performInsertSymbol, InsertSymbolPlugin } from './insert_symbol-plugin';
 import { SymbolDataProvider, SymbolCharacter } from './insert_symbol-dataprovider';
-
-import kEmojisJson from '../../api/emojis-all.json';
-import { Emoji, emojiFromChar } from '../../api/emoji';
+import { emojiCategories, emojis, EmojiWithSkinTone, emojiFromString, SkinTone } from '../../api/emoji';
 
 const key = new PluginKey<boolean>('insert-emoji');
 
@@ -46,26 +44,31 @@ const extension = (
       return [new ProsemirrorCommand(EditorCommandId.Emoji, [], performInsertSymbol(key))];
     },
     plugins: (_schema: Schema) => {
-      return [new InsertSymbolPlugin(key, new EmojiSymbolDataProvider(), ui, events)];
+      return [new InsertSymbolPlugin(key, new EmojiSymbolDataProvider(ui), ui, events)];
     },
   };
 };
 
 
-class EmojiSymbolDataProvider implements SymbolDataProvider {
+export class EmojiSymbolDataProvider implements SymbolDataProvider {
   
-  public readonly filterPlaceholderHint = 'emoji name';
+  public constructor(ui: EditorUI) {
+    this.ui = ui;
+  }
+  private readonly ui: EditorUI;
 
+  public readonly filterPlaceholderHint = 'emoji name';
+  
   public insertSymbolTransaction(symbolCharacter: SymbolCharacter, searchTerm: string, state: EditorState) {
     
-    const emoji = emojiFromChar(symbolCharacter.value);   
+    const emoji = emojiFromString(symbolCharacter.value, this.skinTone());   
     const tr = state.tr;
-    if (emoji && emoji.markdown) {
+    if (emoji) {
       // Try to find an alias that matches the user's search term
       const bestAlias = emoji.aliases.find(alias => alias.includes(searchTerm));
       const mark = state.schema.marks.emoji.create({ emojihint: bestAlias || emoji.aliases[0]});
-      const text = state.schema.text(emoji.emoji, mark);
-      tr.replaceSelectionWith(text); 
+      const text = state.schema.text(emoji.emojiWithSkinTone, [mark]);
+      tr.replaceSelectionWith(text, false); 
     } else {
       // This doesn't appear to be an emoji or it doesn't have a markdown representation, 
       // just insert the text
@@ -75,21 +78,15 @@ class EmojiSymbolDataProvider implements SymbolDataProvider {
   }
   
   public symbolGroupNames(): string[] {
-    const categories: string[] = [];
-    kEmojis.forEach(emoji => {
-      if (!categories.includes(emoji.category)) {
-        categories.push(emoji.category);
-    }
-    });
-    return [kCategoryAll, ...categories];
+    return [kCategoryAll, ...emojiCategories()];
   }
 
   public getSymbols(groupName: string | undefined) {
     if (groupName === kCategoryAll || groupName === undefined) {
-      return kEmojis
+      return emojis(this.skinTone())
               .map(emoji => symbolForEmoji(emoji));
     }  else {
-      return kEmojis
+      return emojis(this.skinTone())
               .filter(emoji => emoji.category === groupName)
               .map(emoji => symbolForEmoji(emoji));
     }
@@ -111,14 +108,17 @@ class EmojiSymbolDataProvider implements SymbolDataProvider {
     });
     return filteredSymbols;
   }
-}
+
+  private skinTone() : SkinTone {
+    return this.ui.prefs.emojiSkinTone();
+  }
+ }
 
 const kCategoryAll = 'All';
-const kEmojis = kEmojisJson as Emoji[];
-function symbolForEmoji(emoji: Emoji) : SymbolCharacter {
+function symbolForEmoji(emoji: EmojiWithSkinTone) : SymbolCharacter {
   return ({ 
-    name: `${emoji.markdown ? ':' + emoji.aliases[0] + ':' : emoji.emoji}`,
-    value: emoji.emoji,
+    name: `${emoji.markdown ? ':' + emoji.aliases[0] + ':' : emoji.emojiWithSkinTone}`,
+    value: emoji.emojiWithSkinTone,
     aliases: emoji.aliases,
     description: emoji.description
   });

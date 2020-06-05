@@ -30,7 +30,7 @@ interface InsertSymbolPopupProps extends WidgetProps {
   symbolDataProvider: SymbolDataProvider;
   enabled: boolean;
   size: [number, number];
-  onInsertSymbol: (symbolCharacter: SymbolCharacter, searchTerm?: string) => void;
+  onInsertSymbol: (symbolCharacter: SymbolCharacter, searchTerm: string) => void;
   onClose: VoidFunction;
   ui: EditorUI;
   searchImage?: string;
@@ -142,7 +142,7 @@ export const InsertSymbolPopup: React.FC<InsertSymbolPopupProps> = props => {
 
   const handleSelectedSymbolCommitted = () => {
     if (filteredSymbols.length > selectedSymbolIndex) {
-      props.onInsertSymbol(filteredSymbols[selectedSymbolIndex], textRef.current?.value);
+      props.onInsertSymbol(filteredSymbols[selectedSymbolIndex], textRef.current?.value || '');
     }
   };
 

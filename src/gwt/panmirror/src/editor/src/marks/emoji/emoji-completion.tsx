@@ -18,18 +18,21 @@ import { Node as ProsemirrorNode, Schema } from 'prosemirror-model';
 
 import React from 'react';
 
-import { CompletionHandler, CompletionResult } from "../../api/completion";
-import { Emoji, emojis } from "../../api/emoji";
+import { EditorUI } from '../../api/ui';
 
-export function emojiCompletionHandler() : CompletionHandler<Emoji> {
+import { CompletionHandler, CompletionResult } from "../../api/completion";
+import { emojis, EmojiWithSkinTone, SkinTone, emojiFromChar, emojiForAllSkinTones } from "../../api/emoji";
+import { getMarkRange } from '../../api/mark';
+
+export function emojiCompletionHandler(ui: EditorUI) : CompletionHandler<EmojiWithSkinTone> {
 
   return {
     
-    completions: emojiCompletions,
+    completions: emojiCompletions(ui),
 
-    replacement(schema: Schema, emoji: Emoji) : string | ProsemirrorNode {
+    replacement(schema: Schema, emoji: EmojiWithSkinTone) : string | ProsemirrorNode {
       const mark = schema.marks.emoji.create({ emojihint: emoji.aliases[0] });
-      return schema.text(emoji.emoji, [mark]);
+      return schema.text(emoji.emojiWithSkinTone, [mark]);
     },
 
     view: {
@@ -41,51 +44,144 @@ export function emojiCompletionHandler() : CompletionHandler<Emoji> {
   };
 }
 
+
 const kMaxEmojiCompletions = 20;
 const kEmojiCompletionRegEx = /(^|[^`]):(\w{2,})$/;
 
-function emojiCompletions(text: string, selection: Selection): CompletionResult<Emoji> | null {
+function emojiCompletions(ui: EditorUI) {
+  return (text: string, selection: Selection): CompletionResult<EmojiWithSkinTone> | null => {
   
-  // look for requisite text sequence
-  const match = text.match(kEmojiCompletionRegEx);
-  if (match) {
-
-    // determine insert position and prefix to search for
-    const prefix = match[2].toLowerCase();
-    const pos = selection.head - prefix.length - 1; // -1 for the leading :
-
-    // scan for completions that match the prefix (truncate as necessary)
-    const completions: Emoji[] = [];
-    for (const emoji of emojis()) {
-      const alias = emoji.aliases.find(a => a.startsWith(prefix));
-      if (alias) {
-        completions.push({
-          emoji: emoji.emoji,
-          aliases: [alias]
-        });
+    // look for requisite text sequence
+    const match = text.match(kEmojiCompletionRegEx);
+    if (match) {
+  
+      // determine insert position and prefix to search for
+      const prefix = match[2].toLowerCase();
+      const pos = selection.head - prefix.length - 1; // -1 for the leading :
+  
+      // scan for completions that match the prefix (truncate as necessary)
+      const completions: EmojiWithSkinTone[] = [];
+      for (const emoji of emojis(ui.prefs.emojiSkinTone())) {
+        const alias = emoji.aliases.find(a => a.startsWith(prefix));
+        if (alias) {
+          completions.push({
+            emoji: emoji.emoji,
+            aliases: [alias],
+            category: emoji.category,
+            description: emoji.description,
+            skin_tones: emoji.skin_tones,
+            markdown: emoji.markdown,
+            emojiWithSkinTone: emoji.emojiWithSkinTone,
+            skinTone: emoji.skinTone,
+          });
+        }
+        if (completions.length >= kMaxEmojiCompletions) {
+          break;
+        }
       }
-      if (completions.length >= kMaxEmojiCompletions) {
-        break;
-      }
+  
+      // return result
+      return { 
+        pos, 
+        completions: Promise.resolve(completions) 
+      };
+  
+    // no match
+    } else {
+      return null;
     }
-
-    // return result
-    return { 
-      pos, 
-      completions: Promise.resolve(completions) 
-    };
-
-  // no match
-  } else {
-    return null;
-  }
+  };
 }
 
-
-const EmojiView: React.FC<Emoji> = emoji => {
+const EmojiView: React.FC<EmojiWithSkinTone> = emoji => {
   return (
     <div className={'pm-completion-item-text'}>
-      {emoji.emoji}&nbsp;:{emoji.aliases[0]}:
+      {emoji.emojiWithSkinTone}&nbsp;:{emoji.aliases[0]}:
     </div>
   );
 };
+
+
+
+
+
+
+
+
+
+
+
+
+
+interface EmojiSkintonePref {
+  emoji: EmojiWithSkinTone;
+  skinTone: SkinTone;
+}
+
+export function emojiSkintonePreferenceCompletionHandler(ui: EditorUI) : CompletionHandler<EmojiWithSkinTone> {
+
+  return {
+    
+    completions: emojiSkintonePreferenceCompletions(ui),
+
+    replacement(schema: Schema, emoji: EmojiWithSkinTone) : string | ProsemirrorNode {
+
+      // Save this preference and use it in the future
+      ui.prefs.setEmojiSkinTone(emoji.skinTone);
+
+      // Emit the emoji of the correct skin tone
+      const mark = schema.marks.emoji.create({ emojihint: emoji.aliases[0]});
+      const text = schema.text(emoji.emojiWithSkinTone, [mark]);
+      return text;
+    },
+
+    view: {
+      component: EmojiSkintonePreferenceView,
+      key: pref => pref.skinTone,
+      width: 50
+    },
+
+  };
+}
+
+function emojiSkintonePreferenceCompletions(ui: EditorUI) {
+  return (text: string, selection: Selection, doc: ProsemirrorNode): CompletionResult<EmojiWithSkinTone> | null => {
+    
+    // The user has set a preference for skin tone
+    if (ui.prefs.emojiSkinTone() !== SkinTone.None) {
+      return null;
+    }
+    
+    const range = getMarkRange(doc.resolve(selection.head-1), doc.type.schema.marks.emoji);
+    if (!range) {
+      return null;
+    }
+    
+    const prefs = new Array<EmojiWithSkinTone>();
+    const emojiText = doc.textBetween(range.from, range.to);
+    const emoji = emojiFromChar(emojiText);
+    
+    // If this is an emoji that support skin tones
+    if (emoji && emoji.skin_tones) {
+      prefs.push(...emojiForAllSkinTones(emoji));
+    }
+
+    return {
+      pos: range.from,
+      completions: Promise.resolve(prefs)
+    };
+  };
+}
+
+const EmojiSkintonePreferenceView: React.FC<EmojiWithSkinTone> = emoji => {
+  return (
+    <div className={'pm-completion-item-text'}>
+      {emoji.emojiWithSkinTone}
+    </div>
+  );
+};
+
+
+
+
+

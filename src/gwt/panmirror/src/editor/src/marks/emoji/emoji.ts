@@ -18,20 +18,23 @@ import { InputRule } from 'prosemirror-inputrules';
 import { EditorState, Transaction } from 'prosemirror-state';
 
 import { Extension } from '../../api/extension';
-import { PandocOutput, PandocToken, PandocTokenType, ProsemirrorWriter } from '../../api/pandoc';
+import { PandocOutput, PandocToken, PandocTokenType, ProsemirrorWriter, PandocExtensions } from '../../api/pandoc';
 import { pandocAttrReadAST } from '../../api/pandoc_attr';
 import { fragmentText } from '../../api/fragment';
 
 import { FixupContext } from '../../api/fixup';
 import { MarkTransaction } from '../../api/transaction';
 import { mergedTextNodes } from '../../api/text';
-import { emojis, emojiFromAlias, emojiFromChar, Emoji } from '../../api/emoji';
-import { emojiCompletionHandler } from './emoji-completion';
+import { emojis, emojiFromAlias, emojiFromChar, emojiForAllSkinTones, EmojiWithSkinTone, emojiWithSkinTonePreference, emojiFromString } from '../../api/emoji';
+import { emojiCompletionHandler, emojiSkintonePreferenceCompletionHandler } from './emoji-completion';
+import { getMarkAttrs } from '../../api/mark';
+import { PandocCapabilities } from '../../api/pandoc_capabilities';
+import { EditorUI } from '../../api/ui';
 
 const kEmojiAttr = 0;
 const kEmojiContent = 1;
 
-const extension = (): Extension | null => {
+const extension = (_exts: PandocExtensions, _caps: PandocCapabilities, ui: EditorUI): Extension | null => {
   return {
     marks: [
       {
@@ -86,7 +89,7 @@ const extension = (): Extension | null => {
           writer: {
             priority: 16,
             write: (output: PandocOutput, mark: Mark, parent: Fragment) => {
-              // look for a matching emjoi
+              // look for a matching emoji
               const char = fragmentText(parent);
               const emoji = emojiFromChar(char);
               if (emoji) {
@@ -100,7 +103,7 @@ const extension = (): Extension | null => {
                   }
                   output.writeAttr('', ['emoji'], [['data-emoji', alias]]);
                   output.writeArray(() => {
-                    output.writeInlines(parent);
+                    output.writeText(emoji.emoji);
                   });
                 });
               } else {
@@ -115,15 +118,16 @@ const extension = (): Extension | null => {
     inputRules: () => {
       return [
         new InputRule(/(^|[^`]):(\w+):$/, (state: EditorState, match: string[], start: number, end: number) => {
-          const emjoiName = match[2];
-          const emoji = emojiFromAlias(emjoiName);
+          const emojiName = match[2];
+          const emoji = emojiFromAlias(emojiName);
           if (emoji) {
+            const emojiWithSkinTone = emojiWithSkinTonePreference(emoji, ui.prefs.emojiSkinTone());
             const schema = state.schema;
             const tr = state.tr;
             tr.delete(start + match[1].length, end);
-            const mark = schema.marks.emoji.create({ emojihint: emjoiName });
-            const text = schema.text(emoji.emoji, [mark]);
-            tr.replaceSelectionWith(text);
+            const mark = schema.marks.emoji.create({ emojihint: emojiName });
+            const text = schema.text(emojiWithSkinTone.emojiWithSkinTone, [mark]);
+            tr.replaceSelectionWith(text, false);
             return tr;
           } else {
             return null;
@@ -132,13 +136,14 @@ const extension = (): Extension | null => {
       ];
     },
 
-    completionHandlers: () => [emojiCompletionHandler()],
+    completionHandlers: () => [emojiCompletionHandler(ui), emojiSkintonePreferenceCompletionHandler(ui)],
 
     fixups: (schema: Schema) => {
+      
       return [
         (tr: Transaction, context: FixupContext) => {
-          // only apply on save
-          if (context !== FixupContext.Save) {
+          // only apply on save and load
+          if (![FixupContext.Save, FixupContext.Load].includes(context)) {
             return tr;
           }
 
@@ -149,37 +154,58 @@ const extension = (): Extension | null => {
             parentNode.type.allowsMarkType(schema.marks.emoji),
           );
 
+          
           textNodes.forEach(textNode => {
             // Since emoji can be composed of multiple characters (including
             // other emoji), we always need to prefer the longest match when inserting
             // a mark for any given starting position.
 
             // Find the possible emoji at each position in this text node
-            const possibleMarks = new Map<number, Array<{to: number, emoji: Emoji}>>();
-
-            for (const emoji of emojis()) {
-              const charLoc = textNode.text.indexOf(emoji.emoji);
-              if (charLoc !== -1) {
-                const from = textNode.pos + charLoc;
-                const to = from + emoji.emoji.length;
-                possibleMarks.set(
-                  from,
-                  (possibleMarks.get(from) || []).concat({to, emoji})
-                );
-              }
+            const possibleMarks = new Map<number, Array<{to: number, emoji: EmojiWithSkinTone}>>();
+            for (const emoji of emojis(ui.prefs.emojiSkinTone())) {
+              emojiForAllSkinTones(emoji).forEach(skinToneEmoji =>
+                {
+                  const charLoc = textNode.text.indexOf(skinToneEmoji.emojiWithSkinTone);
+                  if (charLoc !== -1) {
+                    const from = textNode.pos + charLoc;
+                    const to = from + skinToneEmoji.emojiWithSkinTone.length;
+                    possibleMarks.set(
+                      from,
+                      (possibleMarks.get(from) || []).concat({to, emoji: skinToneEmoji})
+                    );
+                  }
+                });
             }
 
             // For each position that has emoji, use the longest emoji match as the
             // emoji to be marked. 
             possibleMarks.forEach((possibleEmojis, markFrom) => {
+              
               const orderedEmojis = possibleEmojis.sort((a,b) => b.to - a.to);
               const to = orderedEmojis[0].to;
               const emoji = orderedEmojis[0].emoji;
-              if (!markTr.doc.rangeHasMark(markFrom, to, schema.marks.emoji)) {
-                const mark = schema.marks.emoji.create({ emojihint: emoji.aliases[0] });
-                markTr.addMark(markFrom, to, mark);
+
+              // remove any existing mark (preserving attribues if we do )
+              let existingAttrs: { [key: string]: any } | null = null;
+              if (markTr.doc.rangeHasMark(markFrom, to, schema.marks.emoji)) {
+                existingAttrs = getMarkAttrs(markTr.doc, { from: markFrom, to }, schema.marks.emoji );
+                markTr.removeMark(markFrom, to, schema.marks.emoji);
               }
-            });
+
+              // create a new mark
+              const mark = schema.marks.emoji.create({ 
+                emojihint: emoji.aliases[0],
+                ...existingAttrs
+              });
+
+              // on load we want to cover the entire span
+              if (context === FixupContext.Load) {
+                markTr.addMark(markFrom, to, mark);
+              // on save we just want the raw emjoi character(s)
+              } else if (context === FixupContext.Save) {
+                markTr.addMark(markFrom, markFrom + emoji.emoji.length, mark);
+              }
+            });          
           });
 
           return tr;
