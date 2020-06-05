@@ -28,6 +28,7 @@
 * Add option `www-url-path-prefix` to force a path on auth cookies (Pro #1608)
 * New Command Palette for searching and running build-in commands and add-ins (#5168)
 * Option to display Console error and message output in same color as regular output (#7029)
+* Moved console options to a new pane in Global Options (#7047)
 
 ### RStudio Server Pro
 
