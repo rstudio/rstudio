@@ -73,7 +73,6 @@ import {
   selectCurrent,
 } from '../behaviors/find';
 
-import { omniInsertExtension } from '../behaviors/omni_insert';
 import { completionExtension } from '../behaviors/completion/completion';
 
 import { PandocConverter } from '../pandoc/pandoc_converter';
@@ -88,6 +87,7 @@ import './styles/frame.css';
 import './styles/styles.css';
 import { ExtensionManager, initExtensions } from './editor-extensions';
 import { EditorEvents } from '../api/events';
+import { omniInsertCompletionHandler } from '../behaviors/omni_insert';
 
 
 export interface EditorCode {
@@ -316,12 +316,13 @@ export class Editor {
     // create schema
     this.schema = editorSchema(this.extensions);
 
-    // register more extensions that require the schema
-    // generic command execution via 'Mod-/' or '/' at beginning of a a paragraph
-    this.extensions.register([omniInsertExtension(this.extensions.omniInserters(this.schema, this.context.ui))]);
-
-    // completions (registered last b/c omniInsertExtension registers a completion handler)
-    this.extensions.register([completionExtension(this.extensions.completionHandlers(), this.events)]);
+    // register completion handlers (done in a separate step b/c omniInsertCompletionHandler
+    // requires access to the schema for creation)
+    const completionHandlers = [
+      ...this.extensions.completionHandlers(),
+      omniInsertCompletionHandler(this.extensions.omniInserters(this.schema, this.context.ui))
+    ];
+    this.extensions.register([completionExtension(completionHandlers, this.events)]);
 
     // create state
     this.state = EditorState.create({

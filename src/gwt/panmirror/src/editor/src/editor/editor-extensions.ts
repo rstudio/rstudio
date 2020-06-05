@@ -25,6 +25,7 @@ import { PandocMark } from '../api/mark';
 import { PandocNode, CodeViewOptions } from '../api/node';
 import { Extension, ExtensionFn } from '../api/extension';
 import { BaseKeyBinding } from '../api/basekeys';
+import { OmniInserter } from '../api/omni_insert';
 import { AppendTransactionHandler, AppendMarkTransactionHandler } from '../api/transaction';
 import { FixupFn } from '../api/fixup';
 import {
@@ -77,6 +78,7 @@ import beahviorCodeBlockInput from '../behaviors/code_block_input';
 import behaviorPasteText from '../behaviors/paste_text';
 import behaviorBottomPadding from '../behaviors/bottom_padding';
 import behaviorInsertSymbol from '../behaviors/insert_symbol/insert_symbol';
+import behaviorOmniInsert from '../behaviors/omni_insert';
 
 // marks
 import markStrikeout from '../marks/strikeout';
@@ -109,9 +111,6 @@ import nodeShortcodeBlock from '../nodes/shortcode_block';
 // extension/plugin factories
 import { codeMirrorPlugins } from '../optional/codemirror/codemirror';
 import { attrEditExtension } from '../behaviors/attr_edit/attr_edit';
-import { completionExtension } from '../behaviors/completion/completion';
-import { omniInsertExtension } from '../behaviors/omni_insert';
-import { OmniInserter } from '../api/omni_insert';
 
 export function initExtensions(
   format: EditorFormat,
@@ -161,6 +160,7 @@ export function initExtensions(
     behaviorPasteText,
     behaviorBottomPadding,
     behaviorInsertSymbol,
+    behaviorOmniInsert,
 
     // nodes
     nodeDiv,

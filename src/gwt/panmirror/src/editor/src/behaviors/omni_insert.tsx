@@ -1,6 +1,5 @@
-
 /*
- * omni_insert.ts
+ * omni_insert.tsx
  *
  * Copyright (C) 2020 by RStudio, PBC
  *
@@ -19,22 +18,18 @@ import { EditorView } from "prosemirror-view";
 
 import React from 'react';
 
-import { ProsemirrorCommand, EditorCommandId } from "../api/command";
-import { Extension } from "../api/extension";
 import { CompletionHandler, CompletionResult } from "../api/completion";
 import { OmniInserter } from "../api/omni_insert";
+import { ProsemirrorCommand, EditorCommandId } from "../api/command";
 
 
+// TODO: very first Esc key for omni insert is ignored
 
-export function omniInsertExtension(omniInserters: OmniInserter[]) : Extension {
-  return {
-    completionHandlers: () => [omniInsertCompletionHandler(omniInserters)],
-    commands: () => [new OmniInsertCommand()]
-  };
-}
+// TODO: do we really need the schema to build the list of omniInserters or 
+// do we just need one more level of callback?
 
 
-function omniInsertCompletionHandler(omniInserters: OmniInserter[]) : CompletionHandler<OmniInserter> {
+export function omniInsertCompletionHandler(omniInserters: OmniInserter[]) : CompletionHandler<OmniInserter> {
 
   return {
 
@@ -108,6 +103,10 @@ const OmniInserterView: React.FC<OmniInserter> = command => {
 };
 
 
+const extension = {
+  commands: () => [new OmniInsertCommand()]
+};
+
 class OmniInsertCommand extends ProsemirrorCommand {
   constructor() {
     super(EditorCommandId.OmniInsert, ['Mod-/'], (state: EditorState, dispatch?: (tr: Transaction) => void, view?: EditorView) => {
@@ -115,14 +114,13 @@ class OmniInsertCommand extends ProsemirrorCommand {
       if (dispatch) {
         // 
       }
-  
+
       return true;
     });
   }
-
 }
 
-
+export default extension;
 
 
 
