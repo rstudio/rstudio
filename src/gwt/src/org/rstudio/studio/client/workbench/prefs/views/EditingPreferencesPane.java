@@ -560,7 +560,7 @@ public class EditingPreferencesPane extends PreferencesPane
          autoSaveIdleMs_.setValue("1000");
       }
 
-      _initialHighlightConsoleErrors = prefs.highlightConsoleErrors().getValue();
+      initialHighlightConsoleErrors_ = prefs.highlightConsoleErrors().getValue();
    }
    
    @Override
@@ -599,9 +599,9 @@ public class EditingPreferencesPane extends PreferencesPane
       prefs_.autoSaveOnIdle().setGlobalValue(autoSaveOnIdle_.getValue());
       prefs_.autoSaveIdleMs().setGlobalValue(StringUtil.parseInt(autoSaveIdleMs_.getValue(), 1000));
       
-      if (prefs_.highlightConsoleErrors().getValue() != _initialHighlightConsoleErrors)
+      if (prefs_.highlightConsoleErrors().getValue() != initialHighlightConsoleErrors_)
       {
-         _initialHighlightConsoleErrors = prefs_.highlightConsoleErrors().getValue();
+         initialHighlightConsoleErrors_ = prefs_.highlightConsoleErrors().getValue();
          if (Desktop.isDesktop())
             restartRequirement.setDesktopRestartRequired(true);
          else
@@ -662,5 +662,5 @@ public class EditingPreferencesPane extends PreferencesPane
    private final SelectWidget autoSaveIdleMs_;
    private final TextBoxWithButton encoding_;
    private String encodingValue_;
-   private boolean _initialHighlightConsoleErrors;
+   private boolean initialHighlightConsoleErrors_;
 }
