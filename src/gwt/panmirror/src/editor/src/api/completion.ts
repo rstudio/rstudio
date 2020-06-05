@@ -13,8 +13,9 @@
  *
  */
 
-import { Selection, EditorState } from "prosemirror-state";
+import { Selection, EditorState, Transaction } from "prosemirror-state";
 import { Node as ProsemirrorNode, Schema  } from "prosemirror-model";
+import { EditorView } from "prosemirror-view";
 
 export interface CompletionResult<T = any> {
   pos: number;
@@ -26,9 +27,13 @@ export interface CompletionHandler<T = any> {
   // return a set of completions for the given context. text is the text before
   // before the cursor in the current node (but no more than 500 characters)
   completions(text: string, selection: Selection): CompletionResult | null;
-  
+
   // provide a completion replacement as a string or node
-  replacement(schema: Schema, completion: T) : string | ProsemirrorNode;
+  replacement?(schema: Schema, completion: T) : string | ProsemirrorNode;
+
+  // lower level replacement handler (can be passed null if the popup was dismissed,
+  // in that case the handler needs to remove the input)
+  replace?(view: EditorView, pos: number, completion: T | null) : void;
 
   // completion view
   view: {

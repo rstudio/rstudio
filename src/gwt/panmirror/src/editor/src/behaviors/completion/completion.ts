@@ -42,7 +42,10 @@ const key = new PluginKey<CompletionState>('completion');
 
 class CompletionPlugin extends Plugin<CompletionState> {
   
-  private readonly scrollUnsubscribe: VoidFunction;
+  // editor view
+  private view: EditorView | null = null;
+
+  // popup elemeent
   private readonly completionPopup: HTMLElement;
 
   // currently selected index and last set of completions are held as transient
@@ -54,6 +57,9 @@ class CompletionPlugin extends Plugin<CompletionState> {
   private version = 0;
   private completions: any[] = [];
   private selectedIndex = 0;
+
+  // events we need to unsubscribe from
+  private readonly scrollUnsubscribe: VoidFunction;
 
   constructor(handlers: readonly CompletionHandler[], events: EditorEvents) {
     super({
@@ -102,6 +108,9 @@ class CompletionPlugin extends Plugin<CompletionState> {
       
       view: () => ({
         update: (view: EditorView) => {
+
+          // set view
+          this.view = view;
           
           // clear completion state
           this.completions = [];
@@ -137,12 +146,11 @@ class CompletionPlugin extends Plugin<CompletionState> {
             if (this.completionsActive()) {
               switch(kbEvent.key) {
                 case 'Escape':
-                  this.hideCompletions();
+                  this.dismissCompletions();
                   handled = true;
                   break;
                 case 'Enter':
                   this.insertCompletion(view, this.selectedIndex);
-                  this.hideCompletions();
                   handled = true;
                   break;
                 case 'ArrowUp':
@@ -228,7 +236,6 @@ class CompletionPlugin extends Plugin<CompletionState> {
         selectedIndex: this.selectedIndex,
         onClick: (index: number) => {
           this.insertCompletion(view, index);
-          this.hideCompletions();
         },
         onHover: (index: number) => {
           this.selectedIndex = index;
@@ -248,26 +255,55 @@ class CompletionPlugin extends Plugin<CompletionState> {
     index = index || this.selectedIndex;
 
     const state = key.getState(view.state);
-    if (state?.handler) {
-
-      // create transaction
-      const tr = view.state.tr;
+    if (state && state.handler) {
         
-      // get replacement 
+      // perform replacement 
       const result = state.result!;
-      const replacement = state.handler.replacement(view.state.schema, this.completions[index]);
-      const node = replacement instanceof ProsemirrorNode ? replacement : view.state.schema.text(replacement);
 
-      // perform replacement
-      tr.setSelection(new TextSelection(tr.doc.resolve(result.pos), view.state.selection.$head));
-      tr.replaceSelectionWith(node, true);
-      setTextSelection(tr.selection.to)(tr);
-     
-      // dispach
-      view.dispatch(tr);
+      // check low level handler first
+      if (state.handler.replace) {
+
+        // execute replace
+        state.handler.replace(view, result.pos, this.completions[index]);
+    
+      // use higher level handler
+      } else if (state.handler.replacement) {
+
+        // get replacement from handler
+        const replacement = state.handler.replacement(view.state.schema, this.completions[index]);
+        const node = replacement instanceof ProsemirrorNode ? replacement : view.state.schema.text(replacement);
+
+        // perform replacement
+        const tr = view.state.tr;
+        tr.setSelection(new TextSelection(tr.doc.resolve(result.pos), view.state.selection.$head));
+        tr.replaceSelectionWith(node, true);
+        setTextSelection(tr.selection.to)(tr);
+        view.dispatch(tr);
+
+      }
+
+      // set focus
       view.focus();
-
     }
+
+    this.hideCompletions();
+
+  }
+
+  // explicit user dismiss of completion (e.g. Esc key)
+  private dismissCompletions() {
+    
+    // call lower-level replace on any active handler (w/ null). this gives
+    // them a chance to dismiss any artifacts that were explicitly inserted
+    // to trigger the handler (e.g. a cmd+/ for omni-insert)
+    if (this.view) {
+      const state = key.getState(this.view.state);
+      if (state?.result && state?.handler?.replace) {
+        state.handler.replace(this.view, state.result.pos, null);
+      }
+    }
+
+    this.hideCompletions();
   }
 
   private showCompletions(show: boolean) {

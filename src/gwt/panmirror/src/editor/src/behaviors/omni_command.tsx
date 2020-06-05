@@ -15,7 +15,6 @@
  *
  */
 
-import { Node as ProsemirrorNode, Schema } from 'prosemirror-model';
 import { EditorState, Transaction, Selection } from "prosemirror-state";
 import { EditorView } from "prosemirror-view";
 
@@ -25,6 +24,9 @@ import { ProsemirrorCommand, EditorCommandId, OmniCommand } from "../api/command
 import { Extension } from "../api/extension";
 import { CompletionHandler, CompletionResult } from "../api/completion";
 
+
+// TODO: rename to OmniInsert
+// TODO: mark and command in regular extension poll (schema)
 
 export function omniCommandExtension(omniCommands: OmniCommand[]) : Extension {
   return {
@@ -40,10 +42,31 @@ function omniCommandCompletionHandler(omniCommands: OmniCommand[]) : CompletionH
 
     completions: omniCommandCompletions(omniCommands),
 
-    replacement(schema: Schema, command: OmniCommand) : string | ProsemirrorNode {
-      
-      return 'foo';
+    replace(view: EditorView, pos: number, completion: OmniCommand | null) {
+
+      // helper to remove command text
+      const removeCommandText = () => {
+         const tr = view.state.tr;
+         tr.deleteRange(pos, view.state.selection.head);
+         view.dispatch(tr);
+      };
+
+      // execute command if provided
+      if (completion) {
+
+        // remove completion command text
+        removeCommandText();
+
+        completion.command(view.state, view.dispatch, view);
+      } else {
+
+        // TODO: remove text ONLY if it was inserted as a special artifact
+        // removeCommandText();
+
+      }
+
     },
+    
 
     view: {
       component: OmniCommandView,
@@ -55,7 +78,7 @@ function omniCommandCompletionHandler(omniCommands: OmniCommand[]) : CompletionH
 
 }
 
-const kOmniCommandRegex = /^\/([\w ]*)$/;
+const kOmniCommandRegex = /^\/([\w]*)$/;
 
 function omniCommandCompletions(omniCommands: OmniCommand[]) {
 
