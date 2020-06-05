@@ -78,7 +78,7 @@ import beahviorCodeBlockInput from '../behaviors/code_block_input';
 import behaviorPasteText from '../behaviors/paste_text';
 import behaviorBottomPadding from '../behaviors/bottom_padding';
 import behaviorInsertSymbol from '../behaviors/insert_symbol/insert_symbol';
-import behaviorOmniInsert from '../behaviors/omni_insert';
+import behaviorOmniInsert from '../behaviors/omni_insert/omni_insert';
 
 // marks
 import markStrikeout from '../marks/strikeout';

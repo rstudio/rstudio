@@ -13,19 +13,14 @@
  *
  */
 
-import { EditorState, Transaction, Selection } from "prosemirror-state";
+import { EditorState, Selection } from "prosemirror-state";
 import { EditorView } from "prosemirror-view";
 
 import React from 'react';
 
-import { OmniInserter } from "../api/omni_insert";
-import { CompletionHandler, CompletionResult } from "../api/completion";
-import { ProsemirrorCommand, EditorCommandId } from "../api/command";
-
-
-// TODO: do we really need the schema to build the list of omniInserters or 
-// do we just need one more level of callback?
-
+import { OmniInserter } from "../../api/omni_insert";
+import { CompletionHandler, CompletionResult } from "../../api/completion";
+import { markIsActive } from "../../api/mark";
 
 export function omniInsertCompletionHandler(omniInserters: OmniInserter[]) : CompletionHandler<OmniInserter> {
 
@@ -44,18 +39,14 @@ export function omniInsertCompletionHandler(omniInserters: OmniInserter[]) : Com
 
       // execute command if provided
       if (completion) {
-
-        // remove completion command text
         removeCommandText();
-
         completion.command(view.state, view.dispatch, view);
-      } else {
 
-        // TODO: remove text ONLY if it was inserted as a special artifact
-        // removeCommandText();
-
+      // if this is a dismiss of an omni_insert mark then the command
+      // isn't part of 'natural' typing into the document, so remove it
+      } else if (isOmniInsertCommandActive(view.state.selection)) {
+        removeCommandText();
       }
-
     },
     
 
@@ -69,7 +60,7 @@ export function omniInsertCompletionHandler(omniInserters: OmniInserter[]) : Com
 
 }
 
-const kOmniInsertRegex = /^\/([\w]*)$/;
+const kOmniInsertRegex = /\/([\w]*)$/;
 
 function omniInsertCompletions(omniInserters: OmniInserter[]) {
 
@@ -77,6 +68,14 @@ function omniInsertCompletions(omniInserters: OmniInserter[]) {
 
     const match = text.match(kOmniInsertRegex);
     if (match) {
+
+      // we need to either be at the beginning of our parent, OR the omni_insert mark needs
+      // to be active (that indicates that we entered omni insert mode via a user command)
+      const parent = selection.$head.parent;
+      if (match.index !== 0 && !isOmniInsertCommandActive(selection)) {
+        return null;
+      }
+
       const query = match[1];
       return {
         pos: selection.head - match[0].length,  
@@ -100,25 +99,11 @@ const OmniInserterView: React.FC<OmniInserter> = command => {
   );
 };
 
-
-const extension = {
-  commands: () => [new OmniInsertCommand()]
-};
-
-class OmniInsertCommand extends ProsemirrorCommand {
-  constructor() {
-    super(EditorCommandId.OmniInsert, ['Mod-/'], (state: EditorState, dispatch?: (tr: Transaction) => void, view?: EditorView) => {
-          
-      if (dispatch) {
-        // 
-      }
-
-      return true;
-    });
-  }
+function isOmniInsertCommandActive(selection: Selection) {
+  const schema = selection.$head.parent.type.schema;
+  return schema.marks.omni_insert.isInSet(selection.$head.marks());
 }
 
-export default extension;
 
 
 

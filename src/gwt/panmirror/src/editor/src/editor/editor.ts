@@ -87,7 +87,7 @@ import { editorSchema } from './editor-schema';
 import './styles/frame.css';
 import './styles/styles.css';
 import { ExtensionManager, initExtensions } from './editor-extensions';
-import { omniInsertCompletionHandler } from '../behaviors/omni_insert';
+import { omniInsertCompletionHandler } from '../behaviors/omni_insert/omni_insert-completion';
 
 
 export interface EditorCode {
