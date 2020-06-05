@@ -15,7 +15,7 @@
  */
 
 .pm-completion-popup {
-  padding: 0;
+  padding: 0 !important;
 }
 
 .pm-completion-list {

@@ -17,8 +17,7 @@
 
 import { CommandFn } from "./command";
 
-
-// commands that appear in omni-command (/) 
+// commands that appear in omni-insert (/) 
 export interface OmniInserter {
   id: string;
   name: string;

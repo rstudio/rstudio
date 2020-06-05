@@ -56,6 +56,7 @@ import { kPercentUnit } from '../api/css';
 import { EditorFormat } from '../api/format';
 import { diffChars, EditorChange } from '../api/change';
 import { markInputRuleFilter } from '../api/input_rule';
+import { EditorEvents } from '../api/events';
 
 import { getTitle, setTitle } from '../nodes/yaml_metadata/yaml_metadata-title';
 
@@ -86,7 +87,6 @@ import { editorSchema } from './editor-schema';
 import './styles/frame.css';
 import './styles/styles.css';
 import { ExtensionManager, initExtensions } from './editor-extensions';
-import { EditorEvents } from '../api/events';
 import { omniInsertCompletionHandler } from '../behaviors/omni_insert';
 
 

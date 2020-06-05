@@ -18,12 +18,10 @@ import { EditorView } from "prosemirror-view";
 
 import React from 'react';
 
-import { CompletionHandler, CompletionResult } from "../api/completion";
 import { OmniInserter } from "../api/omni_insert";
+import { CompletionHandler, CompletionResult } from "../api/completion";
 import { ProsemirrorCommand, EditorCommandId } from "../api/command";
 
-
-// TODO: very first Esc key for omni insert is ignored
 
 // TODO: do we really need the schema to build the list of omniInserters or 
 // do we just need one more level of callback?
