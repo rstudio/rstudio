@@ -270,14 +270,14 @@ bool addItemSize(const FilePath& item, boost::shared_ptr<uintmax_t> pTotal)
 }
 
 bool copySingleItem(const FilePath& from, const FilePath& to,
-                    const FilePath& path)
+                    const FilePath& path, bool overwrite)
 {
    std::string relativePath = path.getRelativePath(from);
    FilePath target = to.completePath(relativePath);
 
    Error error = path.isDirectory() ?
                  target.ensureDirectory() :
-                 path.copy(target);
+                 path.copy(target, overwrite);
    if (error)
       log::logError(error);
 
@@ -603,11 +603,14 @@ FilePath FilePath::completePath(const std::string& in_filePath) const
    }
 }
 
-Error FilePath::copy(const FilePath& in_targetPath) const
+Error FilePath::copy(const FilePath& in_targetPath, bool overwrite) const
 {
    try
    {
-      boost::filesystem::copy_file(m_impl->Path, in_targetPath.m_impl->Path);
+      boost::filesystem::copy_option::enum_type option = overwrite
+         ? boost::filesystem::copy_option::overwrite_if_exists
+         : boost::filesystem::copy_option::fail_if_exists;
+      boost::filesystem::copy_file(m_impl->Path, in_targetPath.m_impl->Path, option);
       return Success();
    }
    catch(const boost::filesystem::filesystem_error& e)
@@ -619,13 +622,13 @@ Error FilePath::copy(const FilePath& in_targetPath) const
    }
 }
 
-Error FilePath::copyDirectoryRecursive(const FilePath& in_targetPath) const
+Error FilePath::copyDirectoryRecursive(const FilePath& in_targetPath, bool overwrite) const
 {
    Error error = in_targetPath.ensureDirectory();
    if (error)
       return error;
 
-   return getChildrenRecursive(boost::bind(copySingleItem, *this, in_targetPath, _2));
+   return getChildrenRecursive(boost::bind(copySingleItem, *this, in_targetPath, _2, overwrite));
 }
 
 Error FilePath::createDirectory(const std::string& in_filePath) const
@@ -1084,7 +1087,7 @@ Error FilePath::makeCurrentPath(bool in_autoCreate) const
    }
 }
 
-Error FilePath::move(const FilePath& in_targetPath, MoveType in_type) const
+Error FilePath::move(const FilePath& in_targetPath, MoveType in_type, bool overwrite) const
 {
    try
    {
@@ -1098,7 +1101,7 @@ Error FilePath::move(const FilePath& in_targetPath, MoveType in_type) const
       {
          // this error implies that we're trying to move a file from one
          // device to another; in this case, fall back to copy/delete
-         return moveIndirect(in_targetPath);
+         return moveIndirect(in_targetPath, overwrite);
       }
       Error error(e.code(), ERROR_LOCATION);
       addErrorProperties(m_impl->Path, &error);
@@ -1107,7 +1110,7 @@ Error FilePath::move(const FilePath& in_targetPath, MoveType in_type) const
    }
 }
 
-Error FilePath::moveIndirect(const FilePath& in_targetPath) const
+Error FilePath::moveIndirect(const FilePath& in_targetPath, bool overwrite) const
 {
    // when target is a directory, moving has the effect of moving *into* the
    // directory (rather than *replacing* it); simulate that behavior here
@@ -1116,7 +1119,7 @@ Error FilePath::moveIndirect(const FilePath& in_targetPath) const
 
    // copy the file or directory to the new location
    Error error = isDirectory() ?
-                 copyDirectoryRecursive(target) : copy(target);
+                 copyDirectoryRecursive(target, overwrite) : copy(target, overwrite);
    if (error)
       return error;
 

@@ -29,6 +29,7 @@
 - Fixed install issue where service scripts would not be created if there was no /lib/systemd path (Pro #6710)
 - Fixed issue where an attempt to create more sessions than the license limit would fail with a generic error (Pro #1680)
 - Fixed issue where users could not save files in home directory if specified by UNC path (#6598)
+- Fixed issue where file upload would fail when the file already existed (#7015)
 
 ### RStudio Server Pro
 
