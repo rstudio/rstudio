@@ -69,6 +69,11 @@ class CompletionPlugin extends Plugin<CompletionState> {
         init: () => ({}),
         apply: (tr: Transaction)  => {
 
+          // if we don't have a view then bail
+          if (!this.view) {
+            return {};
+          }
+
           // selection only changes dismiss any active completion
           if (!tr.docChanged && tr.selectionSet) {
             return {};
