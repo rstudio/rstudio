@@ -1,17 +1,23 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
 	xmlns:g="urn:import:com.google.gwt.user.client.ui">
-	<ui:style field="styles_" type="org.rstudio.studio.client.application.ui.CommandPaletteEntry.Styles">
+	<ui:style field="styles_" type="org.rstudio.studio.client.palette.ui.CommandPaletteEntry.Styles">
 		@external editor_dark, gwt-Label;
+		@eval proportionalFont org.rstudio.core.client.theme.ThemeFonts.getProportionalFont();
 		
-		table.entry {
+		div.entry {
 			width: 100%;
+			font-family: proportionalFont;
 			font-size: 10pt;
 			padding-top: 6px;
 			padding-bottom: 6px;
-			padding-left: 15px;
+			padding-left: 10px;
 			padding-right: 6px;
 			position: relative;
+			display: flex;
+			flex-direction: row;
+			box-sizing: border-box;
+			cursor: pointer;
 		}
 		
 		table.entry, table.entry .gwt-Label {
@@ -66,16 +72,19 @@
 		.disabled .name {
 			opacity: 0.5;
 		}
+		
+		.name {
+			flex-grow: 1;
+		}
+		
+		.invoker {
+			text-align: right;
+		}
 	</ui:style>
-	<g:HorizontalPanel styleName="{styles_.entry}">
-		<g:cell horizontalAlignment="ALIGN_LEFT">
-			<g:HorizontalPanel>
-				<g:Label visible="false" styleName="{styles_.context}" ui:field="context_"></g:Label>
-				<g:Label styleName="{styles_.name}" ui:field="name_"></g:Label>
-			</g:HorizontalPanel>
-		</g:cell>
-		<g:cell horizontalAlignment="ALIGN_RIGHT">
-			<g:Label styleName="{styles_.shortcut} rstudio-fixed-width-font" ui:field="shortcut_"></g:Label>
-		</g:cell>
-	</g:HorizontalPanel>
+	<g:HTMLPanel styleName="{styles_.entry}">
+		<g:Label visible="false" styleName="{styles_.context}" ui:field="context_"></g:Label>
+		<g:Label styleName="{styles_.name}" ui:field="name_"></g:Label>
+		<g:HTMLPanel styleName="{styles_.invoker}" ui:field="invoker_">
+		</g:HTMLPanel>
+	</g:HTMLPanel>
 </ui:UiBinder> 

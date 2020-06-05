@@ -92,9 +92,9 @@ import org.rstudio.studio.client.common.satellite.Satellite;
 import org.rstudio.studio.client.events.GetEditorContextEvent;
 import org.rstudio.studio.client.events.ReplaceRangesEvent;
 import org.rstudio.studio.client.events.ReplaceRangesEvent.ReplacementData;
+import org.rstudio.studio.client.palette.model.CommandPaletteEntrySource;
+import org.rstudio.studio.client.palette.model.CommandPaletteItem;
 import org.rstudio.studio.client.events.SetSelectionRangesEvent;
-import org.rstudio.studio.client.application.ui.CommandPaletteEntry;
-import org.rstudio.studio.client.application.ui.CommandPaletteEntrySource;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
 import org.rstudio.studio.client.server.VoidServerRequestCallback;
@@ -631,9 +631,10 @@ public class Source implements InsertSourceHandler,
       }
    }
 
-   public List<CommandPaletteEntry> getCommandPaletteEntries()
+   @Override
+   public List<CommandPaletteItem> getCommandPaletteItems()
    {
-      return columnManager_.getCommandPaletteEntries();
+      return columnManager_.getCommandPaletteItems();
    }
 
    public SourceColumnManager getColumnManager()

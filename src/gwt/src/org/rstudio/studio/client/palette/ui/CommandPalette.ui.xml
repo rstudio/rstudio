@@ -2,7 +2,7 @@
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
 	xmlns:g="urn:import:com.google.gwt.user.client.ui"
 	xmlns:rw="urn:import:org.rstudio.core.client.widget">
-	<ui:style field="styles_" type="org.rstudio.studio.client.application.ui.CommandPalette.Styles">
+	<ui:style field="styles_" type="org.rstudio.studio.client.palette.ui.CommandPalette.Styles">
 		@eval proportionalFont org.rstudio.core.client.theme.ThemeFonts.getProportionalFont();
 		@external editor_dark, .gwt-Label;
 
@@ -12,7 +12,7 @@
 			border: 1px solid;
 			border-radius: 4px;
 			overflow: hidden;
-			box-shadow: 0px 0px 22px 0px rgba(0,0,0,0.75);
+			box-shadow: 0 15px 15px rgba(0, 0, 0, 0.26);
 			display: flex;
 			flex-direction: column;
 		}
@@ -23,14 +23,13 @@
 		
 		.searchBox {
 			width: 100%;
-			font-size: 14pt;
 			box-sizing: border-box;
-			padding: 10px;
+			padding: 5px;
 			border: 1px solid;
 		}
 		
 		.searchBar {
-			padding: 15px;
+			padding: 10px;
 			border-bottom: 1px solid;
 		}
 		
@@ -68,10 +67,10 @@
 			</g:TextBox>
 		</g:HTMLPanel>
 		<g:ScrollPanel ui:field="scroller_" styleName="ace_editor {styles_.commandPanel}">
-			<g:FlowPanel styleName="{styles_.commandList}" ui:field="commandList_"></g:FlowPanel>
+			<g:HTMLPanel styleName="{styles_.commandList}" ui:field="commandList_"></g:HTMLPanel>
 		</g:ScrollPanel>
 		<g:HTMLPanel styleName="ace_editor {styles_.noResults}" ui:field="noResults_" visible="false">
-			<g:Label text="No matching commands found."></g:Label>
+			<g:Label text="No results found."></g:Label>
 		</g:HTMLPanel>
 		<rw:AriaLiveStatusWidget ui:field="resultsCount_"></rw:AriaLiveStatusWidget>
 	</g:HTMLPanel>

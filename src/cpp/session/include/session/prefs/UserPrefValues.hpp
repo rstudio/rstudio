@@ -333,6 +333,14 @@ namespace prefs {
 #define kVisualMarkdownEditingMaxContentWidth "visual_markdown_editing_max_content_width"
 #define kVisualMarkdownEditingShowDocOutline "visual_markdown_editing_show_doc_outline"
 #define kVisualMarkdownEditingFontSizePoints "visual_markdown_editing_font_size_points"
+#define kEmojiSkintone "emoji_skintone"
+#define kEmojiSkintoneNone_ "(None)"
+#define kEmojiSkintoneDefault_ "(Default)"
+#define kEmojiSkintoneLight "Light"
+#define kEmojiSkintoneMediumLight "Medium-Light"
+#define kEmojiSkintoneMedium "Medium"
+#define kEmojiSkintoneMediumDark "Medium-Dark"
+#define kEmojiSkintoneDark "Dark"
 #define kDisabledAriaLiveAnnouncements "disabled_aria_live_announcements"
 #define kScreenreaderConsoleAnnounceLimit "screenreader_console_announce_limit"
 #define kFileMonitorIgnoredComponents "file_monitor_ignored_components"
@@ -362,7 +370,7 @@ public:
    core::Error setRunRprofileOnResume(bool val);
 
    /**
-    * Whether to save the workspace after the R session ends.
+    * Whether to save the workspace to an .Rdata file after the R session ends.
     */
    std::string saveWorkspace();
    core::Error setSaveWorkspace(std::string val);
@@ -716,7 +724,7 @@ public:
    core::Error setStripTrailingWhitespace(bool val);
 
    /**
-    * Whether to save the position of the cursor when a fille is closed, restore it when the file is opened.
+    * Whether to save the position of the cursor when a file is closed, restore it when the file is opened.
     */
    bool restoreSourceDocumentCursorPosition();
    core::Error setRestoreSourceDocumentCursorPosition(bool val);
@@ -1500,6 +1508,12 @@ public:
     */
    int visualMarkdownEditingFontSizePoints();
    core::Error setVisualMarkdownEditingFontSizePoints(int val);
+
+   /**
+    * Preferred emoji skintone
+    */
+   std::string emojiSkintone();
+   core::Error setEmojiSkintone(std::string val);
 
    /**
     * List of aria-live announcements to disable.

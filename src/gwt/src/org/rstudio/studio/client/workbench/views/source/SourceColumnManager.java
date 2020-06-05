@@ -38,8 +38,6 @@ import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
-import org.rstudio.studio.client.application.ui.CommandPaletteEntry;
-import org.rstudio.studio.client.application.ui.CommandPaletteEntrySource;
 import org.rstudio.studio.client.common.FilePathUtils;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.GlobalProgressDelayer;
@@ -48,6 +46,8 @@ import org.rstudio.studio.client.common.dependencies.DependencyManager;
 import org.rstudio.studio.client.common.filetypes.*;
 import org.rstudio.studio.client.common.synctex.Synctex;
 import org.rstudio.studio.client.events.GetEditorContextEvent;
+import org.rstudio.studio.client.palette.model.CommandPaletteEntrySource;
+import org.rstudio.studio.client.palette.model.CommandPaletteItem;
 import org.rstudio.studio.client.rmarkdown.model.RmdChosenTemplate;
 import org.rstudio.studio.client.rmarkdown.model.RmdFrontMatter;
 import org.rstudio.studio.client.rmarkdown.model.RmdOutputFormat;
@@ -91,8 +91,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 @Singleton
 public class SourceColumnManager implements SessionInitHandler,
-                                            SourceExtendedTypeDetectedEvent.Handler,
                                             CommandPaletteEntrySource,
+                                            SourceExtendedTypeDetectedEvent.Handler,
                                             DebugModeChangedEvent.Handler
 {
    public interface CPSEditingTargetCommand
@@ -367,14 +367,14 @@ public class SourceColumnManager implements SessionInitHandler,
       return hasActiveEditor() && activeColumn_.getActiveEditor() == editingTarget;
    }
 
-   // see if there are additional command pallette entries made available
+   // see if there are additional command pallette items made available
    // by the active editor
-   public List<CommandPaletteEntry> getCommandPaletteEntries()
+   public List<CommandPaletteItem> getCommandPaletteItems()
    {
       if (!hasActiveEditor())
          return null;
 
-      return activeColumn_.getActiveEditor().getCommandPaletteEntries();
+      return activeColumn_.getActiveEditor().getCommandPaletteItems();
    }
 
    public int getTabCount()
