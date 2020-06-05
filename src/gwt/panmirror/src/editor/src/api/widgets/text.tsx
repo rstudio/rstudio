@@ -42,7 +42,7 @@ export const TextInput = React.forwardRef<HTMLInputElement, TextInputProps>((pro
       <input
         type="text"
         placeholder={props.placeholder}
-        className={`pm-input-text pm-textinput-input ${props.className}`}
+        className={`pm-input-text pm-textinput-input pm-text-color pm-background-color ${props.className}`}
         style={style}
         onChange={props.onChange}
         onKeyDown={props.onKeyDown}

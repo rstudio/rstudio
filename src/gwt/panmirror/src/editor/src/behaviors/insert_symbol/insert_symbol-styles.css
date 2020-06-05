@@ -18,7 +18,6 @@
   text-align: center;
 }
 
-
 .pm-popup-insert-symbol-search-container {
   box-sizing: border-box;
   display: flex;
@@ -27,10 +26,12 @@
 
 .pm-popup-insert-symbol-search-textbox {
   margin-right: 10px;
+  height: 17px;
 }
 
 .pm-popup-insert-symbol-select-category {
   width: 100%;
+  height: 27px;
 }
 
 .pm-popup-insert-symbol-separator {
