@@ -1701,7 +1701,7 @@ public class TextEditingTarget implements
          docDisplay_.addOrUpdateBreakpoint(breakpoint);
       }
       
-      if (extendedType_.equals(SourceDocument.XT_RMARKDOWN))
+      if (extendedType_.startsWith(SourceDocument.XT_RMARKDOWN_PREFIX))
       {
          // populate the popup menu with a list of available formats
          updateRmdFormatList();
@@ -2911,7 +2911,7 @@ public class TextEditingTarget implements
          return;
 
       view_.adaptToExtendedFileType(extendedType);
-      if (extendedType == SourceDocument.XT_RMARKDOWN)
+      if (extendedType.startsWith(SourceDocument.XT_RMARKDOWN_PREFIX))
          updateRmdFormatList();
       extendedType_ = extendedType;
    }
@@ -5600,8 +5600,8 @@ public class TextEditingTarget implements
       extendedType = rmarkdownHelper_.detectExtendedType(docDisplay_.getCode(),
                                                          extendedType, 
                                                          fileType_);
-      
-      if (extendedType == SourceDocument.XT_RMARKDOWN)
+
+      if (extendedType.startsWith(SourceDocument.XT_RMARKDOWN_PREFIX))
       {
          renderRmd();
       }
