@@ -27,6 +27,8 @@
 - Fix auto-activation of JAWS screen reader virtual cursor in Console Output region (#6884)
 - Announce text of warnings bar via screen reader (#6963)
 - Fix issue where R_LIBS_SITE could be forcibly set empty, overriding the value in /etc/R/REnviron (#6982)
+- Fix sign out from the Admin Dashboard when behind a path-rewriting proxy (Pro #1709)
+- Fix "Login as user" from the Admin Dashboard when using Launcher sessions (Pro #1710)
 
 ### RStudio Server Pro
 
