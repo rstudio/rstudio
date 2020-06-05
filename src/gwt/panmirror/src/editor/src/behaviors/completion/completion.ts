@@ -19,7 +19,7 @@ import { EditorView } from 'prosemirror-view';
 
 import { setTextSelection } from 'prosemirror-utils';
 
-import { CompletionHandler, CompletionResult } from '../../api/completion';
+import { CompletionHandler, CompletionResult, selectionAllowsCompletions } from '../../api/completion';
 import { EditorEvents } from '../../api/events';
 import { ScrollEvent } from '../../api/event-types';
 
@@ -79,19 +79,8 @@ class CompletionPlugin extends Plugin<CompletionState> {
             return {};
           }
 
-          // non empty selections don't have completions
-          if (!tr.selection.empty) {
-            return {};
-          }
-
-          // must be able to insert text
-          const schema = tr.doc.type.schema;
-          if (!canInsertNode(tr.selection, schema.nodes.text)) {
-            return {};
-          }
-
-          // must not be in a code mark
-          if (!!schema.marks.code.isInSet(tr.storedMarks || tr.selection.$from.marks())) {
+          // check whether completions are valid here
+          if (!selectionAllowsCompletions(tr.selection)) {
             return {};
           }
           

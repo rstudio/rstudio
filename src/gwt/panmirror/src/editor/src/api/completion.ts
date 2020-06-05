@@ -13,9 +13,11 @@
  *
  */
 
-import { Selection, EditorState, Transaction } from "prosemirror-state";
+import { Selection, EditorState } from "prosemirror-state";
 import { Node as ProsemirrorNode, Schema  } from "prosemirror-model";
 import { EditorView } from "prosemirror-view";
+
+import { canInsertNode } from "./node";
 
 export interface CompletionResult<T = any> {
   pos: number;
@@ -54,4 +56,30 @@ export interface CompletionHandler<T = any> {
 }
 
 
+export function selectionAllowsCompletions(selection: Selection) {
 
+  const schema = selection.$head.parent.type.schema;
+
+   // non empty selections don't have completions
+   if (!selection.empty) {
+    return false;
+  }
+
+  // must be able to insert text
+  if (!canInsertNode(selection, schema.nodes.text)) {
+    return false;
+  }
+
+  // must not be in a code mark 
+  if (!!schema.marks.code.isInSet(selection.$from.marks())) {
+    return false;
+  }
+
+  // must not be in a code node
+  if (selection.$head.parent.type.spec.code) {
+    return false;
+  }
+
+  return true;
+
+}

@@ -21,6 +21,7 @@ import { CommandFn } from "./command";
 export interface OmniInserter {
   id: string;
   name: string;
+  keywords?: string[];
   description: string;
   group: string; 
   image: string;

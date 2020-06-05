@@ -20,7 +20,6 @@ import React from 'react';
 
 import { OmniInserter } from "../../api/omni_insert";
 import { CompletionHandler, CompletionResult } from "../../api/completion";
-import { markIsActive } from "../../api/mark";
 
 export function omniInsertCompletionHandler(omniInserters: OmniInserter[]) : CompletionHandler<OmniInserter> {
 
@@ -76,11 +75,26 @@ function omniInsertCompletions(omniInserters: OmniInserter[]) {
         return null;
       }
 
-      const query = match[1];
+      // capture query (note that no query returns all)
+      const query = match[1].toLowerCase();
+
       return {
         pos: selection.head - match[0].length,  
         completions: (state: EditorState) => {
-          return Promise.resolve(omniInserters);
+
+          // match contents of name or keywords (and verify the command is enabled)
+          const inserters = omniInserters
+            .filter(inserter => {
+              return query.length === 0 ||
+                     inserter.name.toLowerCase().indexOf(query) !== -1 ||
+                     inserter.keywords?.some(keyword => keyword.indexOf(query) !== -1);
+              })
+            .filter(inserter => {
+               return inserter.command(state);
+            });
+
+          // resolve prosmie
+          return Promise.resolve(inserters);
         }
       };
     } else {

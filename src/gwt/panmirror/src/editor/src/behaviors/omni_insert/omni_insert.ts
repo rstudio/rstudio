@@ -19,6 +19,7 @@ import { EditorView } from "prosemirror-view";
 
 import { PandocOutput } from "../../api/pandoc";
 import { ProsemirrorCommand, EditorCommandId } from "../../api/command";
+import { selectionAllowsCompletions } from "../../api/completion";
 
 const extension = {
 
@@ -55,9 +56,8 @@ class OmniInsertCommand extends ProsemirrorCommand {
   constructor() {
     super(EditorCommandId.OmniInsert, ['Mod-/'], (state: EditorState, dispatch?: (tr: Transaction) => void, view?: EditorView) => {
           
-      // requires empty selection
-      const selection = state.selection;
-      if (!selection.empty) {
+      // check whether selection allows completions
+      if (!selectionAllowsCompletions(state.selection)) {
         return false;
       }
 
