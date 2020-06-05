@@ -1341,7 +1341,9 @@ public class Source implements InsertSourceHandler,
          // If we can not determine the new column and the window has more than one column,
          // log a warning but continue to prevent the tab from being lost.
          final SourceColumn newDisplay = columnManager_.findByPosition(e.getXPos());
-         if (newDisplay == null && columnManager_.getSize() > 1)
+         if (newDisplay == null &&
+             e.getNewWindowId().equals(e.getOldWindowId()) &&
+             columnManager_.getSize() > 1)
             Debug.logWarning("Couldn't determine new window column for dragged document.");
 
          // the event doesn't contain the display info, so we add it now

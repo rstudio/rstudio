@@ -32,8 +32,19 @@ public class DocTabDragParams extends JavaScriptObject
         display_name: null
      };
    }-*/;
-   
-   public final native static DocTabDragParams create(String docId, 
+
+   public final native static DocTabDragParams create(String docId,
+                                                      SourcePosition position) /*-{
+       return {
+           doc_id         : docId,
+           tab_width      : 0,
+           cursor_offset  : 0,
+           source_position: position,
+           display_name   : ""
+       }
+   }-*/;
+
+   public final native static DocTabDragParams create(String docId,
          SourcePosition position, String displayName) /*-{
      return {
         doc_id         : docId,

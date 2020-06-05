@@ -183,6 +183,8 @@ public class PaneLayoutPreferencesPane extends PreferencesPane
       if (userPrefs.enableAdditionalColumns().getGlobalValue())
       {
          additionalColumnCount_ = userPrefs.panes().getGlobalValue().getAdditionalSourceColumns();
+         // !!! temporary debugging call
+         paneManager_.syncAdditionalColumnCount(additionalColumnCount_);
          addSource_ = new ImageButton("Add source", res_.iconAddSourcePane2x());
          addSource_.setVisible(true);
          add(addSource_);

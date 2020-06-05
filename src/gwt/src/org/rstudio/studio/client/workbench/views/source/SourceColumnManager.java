@@ -89,7 +89,8 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 @Singleton
-public class SourceColumnManager implements SourceExtendedTypeDetectedEvent.Handler,
+public class SourceColumnManager implements SessionInitHandler,
+                                            SourceExtendedTypeDetectedEvent.Handler,
                                             CommandPaletteEntrySource,
                                             DebugModeChangedEvent.Handler
 {
@@ -161,42 +162,7 @@ public class SourceColumnManager implements SourceExtendedTypeDetectedEvent.Hand
       events_.addHandler(SourceExtendedTypeDetectedEvent.TYPE, this);
       events_.addHandler(DebugModeChangedEvent.TYPE, this);
 
-      events_.addHandler(SessionInitEvent.TYPE, new SessionInitHandler()
-      {
-         public void onSessionInit(SessionInitEvent sie)
-         {
-            new JSObjectStateValue("source-column-manager",
-               "column-info",
-               ClientState.PERSISTENT,
-               session_.getSessionInfo().getClientState(),
-               false)
-            {
-               @Override
-               protected void onInit(JsObject value)
-               {
-                  if (value == null)
-                  {
-                     state_ = State.createState(JsUtil.toJsArrayString(getNames(false)));
-                     return;
-                  }
-                  state_ = value.cast();
-                  for (int i = 0; i < state_.getNames().length; i++)
-                  {
-                     String name = state_.getNames()[i];
-                     if (!StringUtil.equals(name, MAIN_SOURCE_NAME))
-                        add(name, false);
-                  }
-               }
-
-               @Override
-               protected JsObject getValue()
-               {
-                  JsObject object = state_.<JsObject>cast().clone();
-                  return object;
-               }
-            };
-         }
-      });
+      events_.addHandler(SessionInitEvent.TYPE,this);
 
       events_.addHandler(SourceFileSavedEvent.TYPE, new SourceFileSavedHandler()
       {
@@ -423,12 +389,12 @@ public class SourceColumnManager implements SourceExtendedTypeDetectedEvent.Hand
 
    public ArrayList<Widget> getWidgets(boolean excludeMain)
    {
-
       ArrayList<Widget> result = new ArrayList<Widget>();
-      columnMap_.forEach((name, column) -> {
-         if (!excludeMain || !StringUtil.equals(name, MAIN_SOURCE_NAME))
+      for (SourceColumn column : columnList_)
+      {
+         if (!excludeMain || !StringUtil.equals(column.getName(), MAIN_SOURCE_NAME))
             result.add(column.asWidget());
-      });
+      }
       return result;
    }
 
@@ -850,6 +816,46 @@ public class SourceColumnManager implements SourceExtendedTypeDetectedEvent.Hand
    }
 
    @Override
+   public void onSessionInit(SessionInitEvent event)
+   {
+      new JSObjectStateValue(
+         "source-column-manager",
+         "column-info",
+         ClientState.PROJECT_PERSISTENT,
+         session_.getSessionInfo().getClientState(),
+         false)
+      {
+         @Override
+         protected void onInit(JsObject value)
+         {
+            if (value == null)
+            {
+               state_ = State.createState(JsUtil.toJsArrayString(getNames(false)));
+               return;
+            }
+            state_ = value.cast();
+            for (int i = 0;
+                 i < state_.getNames().length && getSize()< state_.getNames().length;
+                 i++)
+            {
+               /*
+               String name = state_.getNames()[i];
+               if (!StringUtil.equals(name, MAIN_SOURCE_NAME))
+                  add(name, false);
+                */
+            }
+         }
+
+         @Override
+         protected JsObject getValue()
+         {
+            JsObject object = state_.<JsObject>cast().clone();
+            return object;
+         }
+      };
+   }
+
+   @Override
    public void onSourceExtendedTypeDetected(SourceExtendedTypeDetectedEvent e)
    {
       // set the extended type of the specified source file
@@ -1126,16 +1132,23 @@ public class SourceColumnManager implements SourceExtendedTypeDetectedEvent.Hand
    }
 
    // When dragging between columns/windows, we need to be specific about which column we're
-   // removing the document from as it may exist in more than one column.
+   // removing the document from as it may exist in more than one column. If the column is null,
+   // it is assumed that we are a satellite window and do now have multiple displays.
    public void disownDocOnDrag(String docId, SourceColumn column)
    {
+      if (column == null)
+      {
+         if (getSize() > 1)
+            Debug.logWarning("Warning: No column was provided to remove the doc from.");
+         column = getActive();
+      }
+
       column.cancelTabDrag();
-      column.closeDoc(docId);
    }
 
    public void selectTab(EditingTarget target)
    {
-      SourceColumn column = findByName(target.getId());
+      SourceColumn column = findByDocument(target.getId());
       column.ensureVisible(false);
       column.selectTab(target.asWidget());
    }
@@ -1330,7 +1343,7 @@ public class SourceColumnManager implements SourceExtendedTypeDetectedEvent.Hand
 
    public void closeColumn(String name)
    {
-      SourceColumn column = findByName(name);
+      SourceColumn column = getByName(name);
       if (column.getTabCount() > 0)
          return;
       if (column == activeColumn_)
@@ -1658,7 +1671,7 @@ public class SourceColumnManager implements SourceExtendedTypeDetectedEvent.Hand
 
    public void beforeShow(String name)
    {
-      SourceColumn column = findByName(name);
+      SourceColumn column = getByName(name);
       if (column == null)
       {
          Debug.logWarning("WARNING: Unknown column " + name);
