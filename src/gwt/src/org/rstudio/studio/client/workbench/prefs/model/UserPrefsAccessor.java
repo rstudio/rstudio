@@ -695,6 +695,14 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
+    * Whether to display error, warning, and message output in a different color.
+    */
+   public PrefValue<Boolean> highlightConsoleErrors()
+   {
+      return bool("highlight_console_errors", true);
+   }
+
+   /**
     * Whether to allow scrolling past the end of a file.
     */
    public PrefValue<Boolean> scrollPastEndOfDocument()
@@ -1969,6 +1977,8 @@ public class UserPrefsAccessor extends Prefs
          saveBeforeSourcing().setValue(layer, source.getBool("save_before_sourcing"));
       if (source.hasKey("syntax_color_console"))
          syntaxColorConsole().setValue(layer, source.getBool("syntax_color_console"));
+      if (source.hasKey("highlight_console_errors"))
+         highlightConsoleErrors().setValue(layer, source.getBool("highlight_console_errors"));
       if (source.hasKey("scroll_past_end_of_document"))
          scrollPastEndOfDocument().setValue(layer, source.getBool("scroll_past_end_of_document"));
       if (source.hasKey("highlight_r_function_calls"))

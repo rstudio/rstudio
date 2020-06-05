@@ -437,6 +437,11 @@
             "default": false,
             "description": "Whether to use syntax highlighting in the R console."
         },
+        "highlight_console_errors": {
+            "type": "boolean",
+            "default": true,
+            "description": "Whether to display error, warning, and message output in a different color."
+        },
         "scroll_past_end_of_document": {
             "type": "boolean",
             "default": false,

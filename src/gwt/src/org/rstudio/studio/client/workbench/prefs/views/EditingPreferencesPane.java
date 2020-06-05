@@ -44,6 +44,7 @@ import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.SelectWidget;
 import org.rstudio.core.client.widget.SmallButton;
 import org.rstudio.core.client.widget.TextBoxWithButton;
+import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.common.DiagnosticsHelpLink;
 import org.rstudio.studio.client.common.HelpLink;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
@@ -203,10 +204,11 @@ public class EditingPreferencesPane extends PreferencesPane
       displayPanel.add(checkboxPref("Show indent guides", prefs_.showIndentGuides()));
       displayPanel.add(checkboxPref("Blinking cursor", prefs_.blinkingCursor()));
       displayPanel.add(checkboxPref("Show syntax highlighting in console input", prefs_.syntaxColorConsole()));
+      displayPanel.add(checkboxPref("Different color for console error output (requires restart)",
+         prefs_.highlightConsoleErrors()));
       displayPanel.add(checkboxPref("Allow scroll past end of document", prefs_.scrollPastEndOfDocument()));
       displayPanel.add(checkboxPref("Allow drag and drop of text", prefs_.enableTextDrag()));
-      displayPanel.add(extraSpaced(checkboxPref("Highlight R function calls", 
-            prefs_.highlightRFunctionCalls(), false /*defaultSpace*/)));
+      displayPanel.add(checkboxPref("Highlight R function calls", prefs_.highlightRFunctionCalls()));
        
       foldMode_ = new SelectWidget(
             "Fold Style:",
@@ -557,6 +559,8 @@ public class EditingPreferencesPane extends PreferencesPane
       {
          autoSaveIdleMs_.setValue("1000");
       }
+
+      initialHighlightConsoleErrors_ = prefs.highlightConsoleErrors().getValue();
    }
    
    @Override
@@ -595,6 +599,14 @@ public class EditingPreferencesPane extends PreferencesPane
       prefs_.autoSaveOnIdle().setGlobalValue(autoSaveOnIdle_.getValue());
       prefs_.autoSaveIdleMs().setGlobalValue(StringUtil.parseInt(autoSaveIdleMs_.getValue(), 1000));
       
+      if (prefs_.highlightConsoleErrors().getValue() != initialHighlightConsoleErrors_)
+      {
+         initialHighlightConsoleErrors_ = prefs_.highlightConsoleErrors().getValue();
+         if (Desktop.isDesktop())
+            restartRequirement.setDesktopRestartRequired(true);
+         else
+            restartRequirement.setUiReloadRequired(true);
+      }
       return restartRequirement;
    }
  
@@ -650,4 +662,5 @@ public class EditingPreferencesPane extends PreferencesPane
    private final SelectWidget autoSaveIdleMs_;
    private final TextBoxWithButton encoding_;
    private String encodingValue_;
+   private boolean initialHighlightConsoleErrors_;
 }
