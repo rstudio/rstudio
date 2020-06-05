@@ -1142,7 +1142,7 @@ public class SourceColumnManager implements SessionInitHandler,
             Debug.logWarning("Warning: No column was provided to remove the doc from.");
          column = getActive();
       }
-
+      column.closeDoc(docId);
       column.cancelTabDrag();
    }
 

@@ -513,7 +513,14 @@ public class SourceColumn implements //BeforeShowHandler,
          manageCommands(false);
       });
 
-      target.addEnsureVisibleHandler(event -> selectTab(widget));
+      target.addEnsureVisibleHandler(new EnsureVisibleHandler()
+      {
+         @Override
+         public void onEnsureVisible(EnsureVisibleEvent event)
+         {
+            display_.selectTab(widget);
+         }
+      });
 
       target.addCloseHandler(voidCloseEvent -> closeTab(widget, false));
 
@@ -931,6 +938,7 @@ public class SourceColumn implements //BeforeShowHandler,
    public void newDoc(EditableFileType fileType,
                       ResultCallback<EditingTarget, ServerError> callback)
    {
+      ensureVisible(true);
       if (fileType instanceof TextFileType)
       {
          // This is a text file, so see if the user has defined a template for it.
