@@ -73,6 +73,9 @@ import {
   selectCurrent,
 } from '../behaviors/find';
 
+import { omniCommandExtension } from '../behaviors/omni_command';
+import { completionExtension } from '../behaviors/completion/completion';
+
 import { PandocConverter } from '../pandoc/pandoc_converter';
 
 import { defaultTheme, EditorTheme, applyTheme, applyPadding } from './editor-theme';
@@ -307,11 +310,18 @@ export class Editor {
     this.pandocFormat = pandocFormat;
     this.pandocCapabilities = pandocCapabilities;
 
-    // create extensions
+    // create core extensions
     this.extensions = this.initExtensions();
 
     // create schema
     this.schema = editorSchema(this.extensions);
+
+    // register more extensions that require the schema
+    // generic command execution via 'Mod-/' or '/' at beginning of a a paragraph
+    this.extensions.register([omniCommandExtension(this.extensions.omniCommands(this.schema, this.context.ui))]);
+
+    // completions (registered last b/c omniCommandExtension registers a completion handler)
+    this.extensions.register([completionExtension(this.extensions.completionHandlers(), this.events)]);
 
     // create state
     this.state = EditorState.create({

@@ -39,7 +39,7 @@ export interface Extension {
   baseKeys?: (schema: Schema) => readonly BaseKeyBinding[];
   inputRules?: (schema: Schema, markFilter: MarkInputRuleFilter) => readonly InputRule[];
   commands?: (schema: Schema, ui: EditorUI) => readonly ProsemirrorCommand[];
-  omniCommands?: () => readonly OmniCommand[];
+  omniCommands?: (schema: Schema, ui: EditorUI) => readonly OmniCommand[];
   plugins?: (schema: Schema, ui: EditorUI) => readonly Plugin[];
   appendTransaction?: (schema: Schema) => readonly AppendTransactionHandler[];
   appendMarkTransaction?: (schema: Schema) => readonly AppendMarkTransactionHandler[];

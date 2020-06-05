@@ -195,8 +195,6 @@ export function initExtensions(
     manager.register(extensions);
   }
 
-  
-
   // additional extensions dervied from other extensions (e.g. extensions that have registered attr editors)
   // note that all of these take a callback to access the manager -- this is so that if an extension earlier
   // in the chain registers something the later extensions are able to see it 
@@ -208,15 +206,6 @@ export function initExtensions(
     // application of some marks (e.g. code) should cuase reveral of smart quotes
     reverseSmartQuotesExtension(manager.pandocMarks()),
 
-    // generic command execution via 'Mod-/' or '/'
-    omniCommandExtension(manager.omniCommands()),
-
-  ]);
-
-  // completions are registered last b/c omniCommandExtension registers a completion handlers
-  manager.register([
-     // completions (note must come at the end to pickup all registered completion handlers)
-     completionExtension(manager.completionHandlers(), events)
   ]);
 
   // additional plugins derived from extensions
@@ -350,8 +339,8 @@ export class ExtensionManager {
     return this.collect<ProsemirrorCommand>(extension => extension.commands?.(schema, ui));
   }
 
-  public omniCommands() : readonly OmniCommand[] {
-    return this.collect(extension => extension.omniCommands?.());
+  public omniCommands(schema: Schema, ui: EditorUI) : readonly OmniCommand[] {
+    return this.collect(extension => extension.omniCommands?.(schema, ui));
   }
 
   public codeViews() {
