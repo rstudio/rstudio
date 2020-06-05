@@ -30,6 +30,8 @@
 - Fixed issue where an attempt to create more sessions than the license limit would fail with a generic error (Pro #1680)
 - Fixed issue where users could not save files in home directory if specified by UNC path (#6598)
 - Fixed issue where file upload would fail when the file already existed (#7015)
+- Fix sign out from the Admin Dashboard when behind a path-rewriting proxy (Pro #1709)
+- Fix "Login as user" from the Admin Dashboard when using Launcher sessions (Pro #1710)
 
 ### RStudio Server Pro
 
