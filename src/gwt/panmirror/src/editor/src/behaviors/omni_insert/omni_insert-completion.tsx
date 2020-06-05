@@ -108,7 +108,7 @@ function omniInsertCompletions(omniInserters: OmniInserter[]) {
 const OmniInserterView: React.FC<OmniInserter> = command => {
   return (
     <div className={'pm-completion-item-text'}>
-      {command.name}&nbsp;:{command.description}:
+      {command.name}&nbsp;{command.description}:
     </div>
   );
 };
