@@ -1,7 +1,6 @@
 
-
 /*
- * omni_command.ts
+ * omni_insert.ts
  *
  * Copyright (C) 2020 by RStudio, PBC
  *
@@ -20,29 +19,28 @@ import { EditorView } from "prosemirror-view";
 
 import React from 'react';
 
-import { ProsemirrorCommand, EditorCommandId, OmniCommand } from "../api/command";
+import { ProsemirrorCommand, EditorCommandId } from "../api/command";
 import { Extension } from "../api/extension";
 import { CompletionHandler, CompletionResult } from "../api/completion";
+import { OmniInserter } from "../api/omni_insert";
 
 
-// TODO: rename to OmniInsert
-// TODO: mark and command in regular extension poll (schema)
 
-export function omniCommandExtension(omniCommands: OmniCommand[]) : Extension {
+export function omniInsertExtension(omniInserters: OmniInserter[]) : Extension {
   return {
-    completionHandlers: () => [omniCommandCompletionHandler(omniCommands)],
-    commands: () => [new OmniCompletionCommand()]
+    completionHandlers: () => [omniInsertCompletionHandler(omniInserters)],
+    commands: () => [new OmniInsertCommand()]
   };
 }
 
 
-function omniCommandCompletionHandler(omniCommands: OmniCommand[]) : CompletionHandler<OmniCommand> {
+function omniInsertCompletionHandler(omniInserters: OmniInserter[]) : CompletionHandler<OmniInserter> {
 
   return {
 
-    completions: omniCommandCompletions(omniCommands),
+    completions: omniInsertCompletions(omniInserters),
 
-    replace(view: EditorView, pos: number, completion: OmniCommand | null) {
+    replace(view: EditorView, pos: number, completion: OmniInserter | null) {
 
       // helper to remove command text
       const removeCommandText = () => {
@@ -69,7 +67,7 @@ function omniCommandCompletionHandler(omniCommands: OmniCommand[]) : CompletionH
     
 
     view: {
-      component: OmniCommandView,
+      component: OmniInserterView,
       key: command => command.id,
       width: 200
     },
@@ -78,19 +76,19 @@ function omniCommandCompletionHandler(omniCommands: OmniCommand[]) : CompletionH
 
 }
 
-const kOmniCommandRegex = /^\/([\w]*)$/;
+const kOmniInsertRegex = /^\/([\w]*)$/;
 
-function omniCommandCompletions(omniCommands: OmniCommand[]) {
+function omniInsertCompletions(omniInserters: OmniInserter[]) {
 
-  return (text: string, selection: Selection): CompletionResult<OmniCommand> | null => {
+  return (text: string, selection: Selection): CompletionResult<OmniInserter> | null => {
 
-    const match = text.match(kOmniCommandRegex);
+    const match = text.match(kOmniInsertRegex);
     if (match) {
       const query = match[1];
       return {
         pos: selection.head - match[0].length,  
         completions: (state: EditorState) => {
-          return Promise.resolve(omniCommands);
+          return Promise.resolve(omniInserters);
         }
       };
     } else {
@@ -101,7 +99,7 @@ function omniCommandCompletions(omniCommands: OmniCommand[]) {
 
 }
 
-const OmniCommandView: React.FC<OmniCommand> = command => {
+const OmniInserterView: React.FC<OmniInserter> = command => {
   return (
     <div className={'pm-completion-item-text'}>
       {command.name}&nbsp;:{command.description}:
@@ -110,9 +108,9 @@ const OmniCommandView: React.FC<OmniCommand> = command => {
 };
 
 
-class OmniCompletionCommand extends ProsemirrorCommand {
+class OmniInsertCommand extends ProsemirrorCommand {
   constructor() {
-    super(EditorCommandId.Omni, ['Mod-/'], (state: EditorState, dispatch?: (tr: Transaction) => void, view?: EditorView) => {
+    super(EditorCommandId.OmniInsert, ['Mod-/'], (state: EditorState, dispatch?: (tr: Transaction) => void, view?: EditorView) => {
           
       if (dispatch) {
         // 

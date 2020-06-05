@@ -118,17 +118,7 @@ export enum EditorCommandId {
   ExecuteCurrentPreviousRmdChunks = 'D3FDE96-0264-4364-ADFF-E87A75405B0B',
 
   // omni
-  Omni = '12F96C13-38C1-4266-A0A1-E871D8C709FB'
-}
-
-// commands that appear in omni-command (/) 
-export interface OmniCommand {
-  id: string;
-  name: string;
-  description: string;
-  group: string; 
-  image: string;
-  command: CommandFn;
+  OmniInsert = '12F96C13-38C1-4266-A0A1-E871D8C709FB'
 }
 
 export interface EditorCommand {

@@ -19,15 +19,14 @@ import { EditorState } from 'prosemirror-state';
 import { findParentNode } from 'prosemirror-utils';
 
 import { PandocOutput, PandocToken, PandocTokenType, PandocExtensions } from '../api/pandoc';
-import { EditorCommandId, toggleBlockType, ProsemirrorCommand, OmniCommand } from '../api/command';
+import { EditorCommandId, toggleBlockType, ProsemirrorCommand } from '../api/command';
 import { Extension } from '../api/extension';
 import { pandocAttrSpec, pandocAttrParseDom, pandocAttrToDomAttr, pandocAttrReadAST } from '../api/pandoc_attr';
 import { uuidv4 } from '../api/util';
 import { PandocCapabilities } from '../api/pandoc_capabilities';
 import { EditorUI } from '../api/ui';
 import { EditorFormat } from '../api/format';
-import { stringify } from 'querystring';
-import { Editor } from '../editor/editor';
+import { OmniInserter } from '../api/omni_insert';
 
 const HEADING_LEVEL = 0;
 const HEADING_ATTR = 1;
@@ -139,12 +138,12 @@ const extension = (
       ];
     },
 
-    omniCommands: (schema: Schema,  ui: EditorUI) => {
+    omniInserters: (schema: Schema,  ui: EditorUI) => {
       return [
-        headingOmniCommand(schema, ui, EditorCommandId.Heading1, 1, ui.context.translateText('Top level heading')),
-        headingOmniCommand(schema, ui, EditorCommandId.Heading2, 2, ui.context.translateText('Section heading')),
-        headingOmniCommand(schema, ui, EditorCommandId.Heading3, 3, ui.context.translateText('Sub-section heading')),
-        headingOmniCommand(schema, ui, EditorCommandId.Heading4, 4, ui.context.translateText('Smaller heading'))
+        headingOmniInserter(schema, ui, EditorCommandId.Heading1, 1, ui.context.translateText('Top level heading')),
+        headingOmniInserter(schema, ui, EditorCommandId.Heading2, 2, ui.context.translateText('Section heading')),
+        headingOmniInserter(schema, ui, EditorCommandId.Heading3, 3, ui.context.translateText('Sub-section heading')),
+        headingOmniInserter(schema, ui, EditorCommandId.Heading4, 4, ui.context.translateText('Smaller heading'))
       ];
     },
 
@@ -182,13 +181,13 @@ class HeadingCommand extends ProsemirrorCommand {
   }
 }
 
-function headingOmniCommand(
+function headingOmniInserter(
   schema: Schema, 
   ui: EditorUI, 
   id: string,
   level: number, 
   description: string
-) : OmniCommand {
+) : OmniInserter {
   const kHeadingsGroup = ui.context.translateText('Headings');
   const kHeadingPrefix = ui.context.translateText('Heading ');
   return {

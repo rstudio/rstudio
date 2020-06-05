@@ -73,7 +73,7 @@ import {
   selectCurrent,
 } from '../behaviors/find';
 
-import { omniCommandExtension } from '../behaviors/omni_command';
+import { omniInsertExtension } from '../behaviors/omni_insert';
 import { completionExtension } from '../behaviors/completion/completion';
 
 import { PandocConverter } from '../pandoc/pandoc_converter';
@@ -318,9 +318,9 @@ export class Editor {
 
     // register more extensions that require the schema
     // generic command execution via 'Mod-/' or '/' at beginning of a a paragraph
-    this.extensions.register([omniCommandExtension(this.extensions.omniCommands(this.schema, this.context.ui))]);
+    this.extensions.register([omniInsertExtension(this.extensions.omniInserters(this.schema, this.context.ui))]);
 
-    // completions (registered last b/c omniCommandExtension registers a completion handler)
+    // completions (registered last b/c omniInsertExtension registers a completion handler)
     this.extensions.register([completionExtension(this.extensions.completionHandlers(), this.events)]);
 
     // create state

@@ -20,7 +20,7 @@ import { EditorView } from 'prosemirror-view';
 
 import { EditorOptions } from '../api/options';
 import { EditorUI } from '../api/ui';
-import { ProsemirrorCommand, OmniCommand } from '../api/command';
+import { ProsemirrorCommand } from '../api/command';
 import { PandocMark } from '../api/mark';
 import { PandocNode, CodeViewOptions } from '../api/node';
 import { Extension, ExtensionFn } from '../api/extension';
@@ -110,7 +110,8 @@ import nodeShortcodeBlock from '../nodes/shortcode_block';
 import { codeMirrorPlugins } from '../optional/codemirror/codemirror';
 import { attrEditExtension } from '../behaviors/attr_edit/attr_edit';
 import { completionExtension } from '../behaviors/completion/completion';
-import { omniCommandExtension } from '../behaviors/omni_command';
+import { omniInsertExtension } from '../behaviors/omni_insert';
+import { OmniInserter } from '../api/omni_insert';
 
 export function initExtensions(
   format: EditorFormat,
@@ -339,8 +340,8 @@ export class ExtensionManager {
     return this.collect<ProsemirrorCommand>(extension => extension.commands?.(schema, ui));
   }
 
-  public omniCommands(schema: Schema, ui: EditorUI) : OmniCommand[] {
-    return this.collect(extension => extension.omniCommands?.(schema, ui));
+  public omniInserters(schema: Schema, ui: EditorUI) : OmniInserter[] {
+    return this.collect(extension => extension.omniInserters?.(schema, ui));
   }
 
   public codeViews() {
