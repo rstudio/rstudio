@@ -19,13 +19,15 @@ import { EditorState } from 'prosemirror-state';
 import { findParentNode } from 'prosemirror-utils';
 
 import { PandocOutput, PandocToken, PandocTokenType, PandocExtensions } from '../api/pandoc';
-import { BlockCommand, EditorCommandId } from '../api/command';
+import { EditorCommandId, toggleBlockType, ProsemirrorCommand, OmniCommand } from '../api/command';
 import { Extension } from '../api/extension';
 import { pandocAttrSpec, pandocAttrParseDom, pandocAttrToDomAttr, pandocAttrReadAST } from '../api/pandoc_attr';
 import { uuidv4 } from '../api/util';
 import { PandocCapabilities } from '../api/pandoc_capabilities';
 import { EditorUI } from '../api/ui';
 import { EditorFormat } from '../api/format';
+import { stringify } from 'querystring';
+import { Editor } from '../editor/editor';
 
 const HEADING_LEVEL = 0;
 const HEADING_ATTR = 1;
@@ -56,12 +58,12 @@ const extension = (
           group: 'block',
           defining: true,
           parseDOM: [
-            { tag: 'h1', getAttrs: getHeadingAttrs(1, headingAttr) },
-            { tag: 'h2', getAttrs: getHeadingAttrs(2, headingAttr) },
-            { tag: 'h3', getAttrs: getHeadingAttrs(3, headingAttr) },
-            { tag: 'h4', getAttrs: getHeadingAttrs(4, headingAttr) },
-            { tag: 'h5', getAttrs: getHeadingAttrs(5, headingAttr) },
-            { tag: 'h6', getAttrs: getHeadingAttrs(6, headingAttr) },
+            { tag: 'h1', getAttrs: headingAttrs(1, headingAttr) },
+            { tag: 'h2', getAttrs: headingAttrs(2, headingAttr) },
+            { tag: 'h3', getAttrs: headingAttrs(3, headingAttr) },
+            { tag: 'h4', getAttrs: headingAttrs(4, headingAttr) },
+            { tag: 'h5', getAttrs: headingAttrs(5, headingAttr) },
+            { tag: 'h6', getAttrs: headingAttrs(6, headingAttr) },
           ],
           toDOM(node) {
             const attr = headingAttr ? pandocAttrToDomAttr(node.attrs) : {};
@@ -137,6 +139,15 @@ const extension = (
       ];
     },
 
+    omniCommands: (schema: Schema,  ui: EditorUI) => {
+      return [
+        headingOmniCommand(schema, ui, EditorCommandId.Heading1, 1, ui.context.translateText('Top level heading')),
+        headingOmniCommand(schema, ui, EditorCommandId.Heading2, 2, ui.context.translateText('Section heading')),
+        headingOmniCommand(schema, ui, EditorCommandId.Heading3, 3, ui.context.translateText('Sub-section heading')),
+        headingOmniCommand(schema, ui, EditorCommandId.Heading4, 4, ui.context.translateText('Smaller heading'))
+      ];
+    },
+
     inputRules: (schema: Schema) => {
       return [
         textblockTypeInputRule(
@@ -152,12 +163,14 @@ const extension = (
   };
 };
 
-class HeadingCommand extends BlockCommand {
+
+class HeadingCommand extends ProsemirrorCommand {
+
   public readonly nodeType: NodeType;
   public readonly level: number;
 
   constructor(schema: Schema, id: EditorCommandId, level: number) {
-    super(id, ['Mod-Alt-' + level], schema.nodes.heading, schema.nodes.paragraph, { level });
+    super(id, ['Mod-Alt-' + level], headingCommandFn(schema, level));
     this.nodeType = schema.nodes.heading;
     this.level = level;
   }
@@ -169,8 +182,32 @@ class HeadingCommand extends BlockCommand {
   }
 }
 
+function headingOmniCommand(
+  schema: Schema, 
+  ui: EditorUI, 
+  id: string,
+  level: number, 
+  description: string
+) : OmniCommand {
+  const kHeadingsGroup = ui.context.translateText('Headings');
+  const kHeadingPrefix = ui.context.translateText('Heading ');
+  return {
+    id,
+    name: `${kHeadingPrefix}${level}`,
+    description,
+    group: kHeadingsGroup,
+    image: '',
+    command: headingCommandFn(schema, level)
+  };
+}
+
+function headingCommandFn(schema: Schema, level: number) {
+  return toggleBlockType(schema.nodes.heading, schema.nodes.paragraph, { level });
+}
+
+
 // function for getting attrs
-function getHeadingAttrs(level: number, pandocAttrSupported: boolean) {
+function headingAttrs(level: number, pandocAttrSupported: boolean) {
   return (dom: Node | string) => {
     const el = dom as Element;
     return {

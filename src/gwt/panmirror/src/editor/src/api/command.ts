@@ -123,6 +123,7 @@ export enum EditorCommandId {
 
 // commands that appear in omni-command (/) 
 export interface OmniCommand {
+  id: string;
   name: string;
   description: string;
   group: string; 

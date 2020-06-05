@@ -72,7 +72,7 @@ function emojiCompletions(text: string, selection: Selection): CompletionResult<
     // return result
     return { 
       pos, 
-      completions: Promise.resolve(completions) 
+      completions: () => Promise.resolve(completions) 
     };
 
   // no match

@@ -339,7 +339,7 @@ export class ExtensionManager {
     return this.collect<ProsemirrorCommand>(extension => extension.commands?.(schema, ui));
   }
 
-  public omniCommands(schema: Schema, ui: EditorUI) : readonly OmniCommand[] {
+  public omniCommands(schema: Schema, ui: EditorUI) : OmniCommand[] {
     return this.collect(extension => extension.omniCommands?.(schema, ui));
   }
 

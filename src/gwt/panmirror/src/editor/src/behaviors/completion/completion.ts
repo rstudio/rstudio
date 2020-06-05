@@ -196,7 +196,7 @@ class CompletionPlugin extends Plugin<CompletionState> {
       const requestVersion = this.version;
 
       // request completions
-      return state.result!.completions.then(completions => {
+      return state.result!.completions(view.state).then(completions => {
 
         // if the version has incremented since the request then return false
         if (this.version !== requestVersion) {
