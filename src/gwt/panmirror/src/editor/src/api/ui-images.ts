@@ -20,4 +20,18 @@ export interface EditorUIImages {
   runchunk?: string;
   runprevchunks?: string;
   search?: string;
+  omni_insert?: {
+    heading1?: string;
+    heading1_dark?: string;
+    heading2?: string;
+    heading2_dark?: string;
+    heading3?: string;
+    heading3_dark?: string;
+    ordered_list?: string;
+    ordered_list_dark?: string;
+    bullet_list?: string;
+    bullet_list_dark?: string;
+    blockquote?: string;
+    blockquote_dark?: string;
+  };
 }
