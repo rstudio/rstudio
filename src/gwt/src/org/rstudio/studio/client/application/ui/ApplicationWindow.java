@@ -35,6 +35,7 @@ import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.application.ui.appended.ApplicationEndedPopupPanel;
 import org.rstudio.studio.client.application.ui.serializationprogress.ApplicationSerializationProgress;
 import org.rstudio.studio.client.common.GlobalDisplay;
+import org.rstudio.studio.client.palette.CommandPaletteLauncher;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 
 @Singleton

@@ -13,7 +13,7 @@
  *
  */
 
-package org.rstudio.studio.client.application.ui;
+package org.rstudio.studio.client.palette;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -22,14 +22,17 @@ import org.rstudio.core.client.command.CommandBinder;
 import org.rstudio.core.client.command.Handler;
 import org.rstudio.core.client.command.ShortcutManager;
 import org.rstudio.core.client.widget.ModalPopupPanel;
+import org.rstudio.studio.client.palette.model.CommandPaletteEntrySource;
+import org.rstudio.studio.client.palette.ui.CommandPalette;
 import org.rstudio.studio.client.workbench.addins.AddinsCommandManager;
 import org.rstudio.studio.client.workbench.commands.Commands;
+import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.views.source.Source;
 
 import com.google.gwt.aria.client.Roles;
-import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
+import com.google.gwt.user.client.Window;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.inject.Singleton;
@@ -42,60 +45,37 @@ public class CommandPaletteLauncher implements CommandPalette.Host
    
    private enum State
    {
-      Uninitialized,  // The panel has never been shown
-      Initializing,   // The panel is getting ready to show for the first time
-      Initialized     // The panel has been shown at least once and is fully initialized
+      Showing,        // The panel is currently showing
+      Hidden          // The panel is ready, but currently hidden
    }
    
    @Inject 
    public CommandPaletteLauncher(Commands commands,
          AddinsCommandManager addins,
          Provider<Source> pSource,
+         Provider<UserPrefs> pPrefs,
          Binder binder)
    {
       binder.bind(commands, this);
       addins_ = addins;
       commands_ = commands;
       pSource_ = pSource;
-      showing_ = false;
-      state_ = State.Uninitialized;
+      pPrefs_ = pPrefs;
+      state_ = State.Hidden;
    }
    
    @Handler
    public void onShowCommandPalette()
    {
       // If the palette is already showing, treat this as a hide.
-      if (showing_)
+      if (state_ == State.Showing)
       {
          dismiss();
          return;
       }
-
-      // extra sources (currently only the source tab)
-      List<CommandPaletteEntrySource> extraSources = new ArrayList<CommandPaletteEntrySource>();
-      extraSources.add(pSource_.get());
-      
-      // Create the command palette widget
-      palette_ = new CommandPalette(commands_, addins_.getRAddins(), extraSources,
-            ShortcutManager.INSTANCE, this);
-      
-      if (state_ == State.Initialized)
+      if (state_ == State.Hidden)
       {
-         // Already initialized; just show the panel
          createPanel();
-      }
-      else if (state_ == State.Uninitialized)
-      {
-         // Not yet initialized. The first load happens behind the browser event
-         // loop so that the CSS resources can be injected. We could fix this by
-         // eagerly injecting these when RStudio starts, but this way we don't
-         // pay any boot time penalty.
-         state_ = State.Initializing;
-         Scheduler.get().scheduleDeferred(() ->
-         {
-            state_ = State.Initialized;
-            createPanel();
-         });
       }
    }
    
@@ -106,13 +86,27 @@ public class CommandPaletteLauncher implements CommandPalette.Host
     */
    private void createPanel()
    {
-      showing_ = true;
+      // Extra sources (currently only the source tab)
+      List<CommandPaletteEntrySource> sources = new ArrayList<CommandPaletteEntrySource>();
+      
+      // Create sources
+      sources.add(new AppCommandPaletteSource(ShortcutManager.INSTANCE, commands_));
+      sources.add(pSource_.get());
+      sources.add(new RAddinPaletteSource(addins_.getRAddins(), ShortcutManager.INSTANCE));
+      sources.add(new UserPrefPaletteSource(pPrefs_.get()));
+
+      // Create the command palette widget
+      palette_ = new CommandPalette(sources, this);
+      
       panel_ = new ModalPopupPanel(
             true,  // Auto hide
             true,  // Modal
             false, // Glass (main window overlay)
             true   // Close on Esc
       );
+      
+      // Required for accessibility (see #6962)
+      panel_.getElement().setTabIndex(-1);
       
       // Copy classes from the root RStudio container onto this panel. This is
       // necessary so that we can properly inherit theme colors.
@@ -125,16 +119,20 @@ public class CommandPaletteLauncher implements CommandPalette.Host
       // Assign the appropriate ARIA role to this panel
       Element ele = panel_.getElement();
       Roles.getDialogRole().set(ele);
-      Roles.getDialogRole().setAriaLabelProperty(ele, "Search for commands");
+      Roles.getDialogRole().setAriaLabelProperty(ele, "Search commands and settings");
 
+      // Find the center of the screen
       panel_.add(palette_);
-      panel_.show();
-      panel_.center();
+      panel_.setPopupPositionAndShow((int x, int y) -> 
+      {
+         panel_.setPopupPosition(Window.getClientWidth() / 2 - 300, 50);
+      });
       
       // Set z-index above panel splitters (otherwise they overlap the popup)
       panel_.getElement().getStyle().setZIndex(250);
-
       palette_.focus();
+
+      state_ = State.Showing;
       
       // Free our reference to the panel when it closes
       panel_.addCloseHandler((evt) -> 
@@ -157,15 +155,15 @@ public class CommandPaletteLauncher implements CommandPalette.Host
    {
       palette_ = null;
       panel_ = null;
-      showing_ = false;
+      state_ = State.Hidden;
    }
    
    private ModalPopupPanel panel_;
    private CommandPalette palette_;
-   private boolean showing_;
    private State state_;
 
    private final Commands commands_;
    private final AddinsCommandManager addins_;
    private final Provider<Source> pSource_;
+   private final Provider<UserPrefs> pPrefs_;
 }

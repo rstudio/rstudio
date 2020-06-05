@@ -360,7 +360,7 @@ public:
    core::Error setRunRprofileOnResume(bool val);
 
    /**
-    * Whether to save the workspace after the R session ends.
+    * Whether to save the workspace to an .Rdata file after the R session ends.
     */
    std::string saveWorkspace();
    core::Error setSaveWorkspace(std::string val);
@@ -708,7 +708,7 @@ public:
    core::Error setStripTrailingWhitespace(bool val);
 
    /**
-    * Whether to save the position of the cursor when a fille is closed, restore it when the file is opened.
+    * Whether to save the position of the cursor when a file is closed, restore it when the file is opened.
     */
    bool restoreSourceDocumentCursorPosition();
    core::Error setRestoreSourceDocumentCursorPosition(bool val);

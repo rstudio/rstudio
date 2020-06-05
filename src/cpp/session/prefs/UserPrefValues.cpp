@@ -37,7 +37,7 @@ core::Error UserPrefValues::setRunRprofileOnResume(bool val)
 }
 
 /**
- * Whether to save the workspace after the R session ends.
+ * Whether to save the workspace to an .Rdata file after the R session ends.
  */
 std::string UserPrefValues::saveWorkspace()
 {
@@ -791,7 +791,7 @@ core::Error UserPrefValues::setStripTrailingWhitespace(bool val)
 }
 
 /**
- * Whether to save the position of the cursor when a fille is closed, restore it when the file is opened.
+ * Whether to save the position of the cursor when a file is closed, restore it when the file is opened.
  */
 bool UserPrefValues::restoreSourceDocumentCursorPosition()
 {
