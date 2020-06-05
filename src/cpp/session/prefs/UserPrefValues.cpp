@@ -2481,6 +2481,19 @@ core::Error UserPrefValues::setVisualMarkdownEditingFontSizePoints(int val)
 }
 
 /**
+ * Preferred emoji skintone
+ */
+std::string UserPrefValues::emojiSkintone()
+{
+   return readPref<std::string>("emoji_skintone");
+}
+
+core::Error UserPrefValues::setEmojiSkintone(std::string val)
+{
+   return writePref("emoji_skintone", val);
+}
+
+/**
  * List of aria-live announcements to disable.
  */
 core::json::Array UserPrefValues::disabledAriaLiveAnnouncements()
@@ -2763,6 +2776,7 @@ std::vector<std::string> UserPrefValues::allKeys()
       kVisualMarkdownEditingMaxContentWidth,
       kVisualMarkdownEditingShowDocOutline,
       kVisualMarkdownEditingFontSizePoints,
+      kEmojiSkintone,
       kDisabledAriaLiveAnnouncements,
       kScreenreaderConsoleAnnounceLimit,
       kFileMonitorIgnoredComponents,

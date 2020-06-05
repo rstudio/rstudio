@@ -46,5 +46,49 @@ public class PanmirrorUIPrefs {
                .equals(UserPrefsAccessor.LATEX_PREVIEW_ON_CURSOR_IDLE_NEVER);
    }
    
+   public double emojiSkinTone() 
+   {
+	   String emojiSkinTone = pUIPrefs_.get().emojiSkintone().getValue();
+	   if (emojiSkinTone.equals(UserPrefsAccessor.EMOJI_SKINTONE_DARK)) {
+		   return 0x1F3FF;
+	   } else if (emojiSkinTone.equals(UserPrefsAccessor.EMOJI_SKINTONE_MEDIUM_DARK)) {
+		   return 0x1F3FE;
+	   } else if (emojiSkinTone.equals(UserPrefsAccessor.EMOJI_SKINTONE_MEDIUM)) {
+		   return 0x1F3FD;
+	   } else if (emojiSkinTone.equals(UserPrefsAccessor.EMOJI_SKINTONE_MEDIUM_LIGHT)) {
+		   return 0x1F3FC;
+	   } else if (emojiSkinTone.equals(UserPrefsAccessor.EMOJI_SKINTONE_LIGHT)) {
+		   return 0x1F3FB;		   
+	   } else if (emojiSkinTone.equals(UserPrefsAccessor.EMOJI_SKINTONE_DEFAULT)) {
+		   return 0;
+	   } else if (emojiSkinTone.equals(UserPrefsAccessor.EMOJI_SKINTONE__NONE_)) {
+		   return -1;
+	   } else {
+		   return -1;
+	   }
+   }
+   
+   public void setEmojiSkinTone(double skinTone) 
+   {
+	   String skinToneStr = UserPrefsAccessor.EMOJI_SKINTONE__NONE_;
+	   if (skinTone == 0x1F3FF) {
+		   skinToneStr = UserPrefsAccessor.EMOJI_SKINTONE_DARK;
+	   } else if (skinTone == 0x1F3FE) {
+		   skinToneStr = UserPrefsAccessor.EMOJI_SKINTONE_MEDIUM_DARK;
+	   } else if (skinTone == 0x1F3FD) {
+		   skinToneStr = UserPrefsAccessor.EMOJI_SKINTONE_MEDIUM;
+	   } else if (skinTone == 0x1F3FC) {
+		   skinToneStr = UserPrefsAccessor.EMOJI_SKINTONE_MEDIUM_LIGHT;
+	   } else if (skinTone == 0x1F3FB) {
+		   skinToneStr = UserPrefsAccessor.EMOJI_SKINTONE_LIGHT;		   
+	   } else if (skinTone == 0) {
+		   skinToneStr = UserPrefsAccessor.EMOJI_SKINTONE_DEFAULT;
+	   } else if (skinTone == -1) {
+		   skinToneStr = UserPrefsAccessor.EMOJI_SKINTONE__NONE_;
+	   }
+
+	   pUIPrefs_.get().emojiSkintone().setGlobalValue(skinToneStr);
+   }
+   
    Provider<UserPrefs> pUIPrefs_;
 }

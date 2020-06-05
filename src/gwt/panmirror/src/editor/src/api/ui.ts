@@ -21,6 +21,7 @@ import { EditorUIImages } from './ui-images';
 
 import { kStyleAttrib } from './pandoc_attr';
 import { EditorRmdChunk } from './rmd';
+import { SkinTone } from './emoji';
 
 export interface EditorUI {
   dialogs: EditorDialogs;
@@ -85,6 +86,8 @@ export interface EditorDisplay {
 
 export interface EditorUIPrefs {
   equationPreview: () => boolean;
+  emojiSkinTone: () => SkinTone;
+  setEmojiSkinTone : (skinTone: SkinTone) => void;
 }
 
 export enum AlertType {

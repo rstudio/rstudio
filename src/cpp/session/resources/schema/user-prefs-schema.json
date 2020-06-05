@@ -1075,6 +1075,12 @@
           "default": 0,
           "description": "The default visual editing mode font size, in points"
         },
+        "emoji_skintone" : {
+          "type": "string",
+          "enum": ["(None)","Default", "Light", "Medium-Light", "Medium", "Medium-Dark", "Dark"],
+          "default": "(None)",
+          "description": "Preferred emoji skintone"
+        },
         "disabled_aria_live_announcements": {
             "type": "array",
             "items": {

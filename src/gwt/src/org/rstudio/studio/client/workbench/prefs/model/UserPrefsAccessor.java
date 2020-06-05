@@ -1764,6 +1764,22 @@ public class UserPrefsAccessor extends Prefs
    }
 
    /**
+    * Preferred emoji skintone
+    */
+   public PrefValue<String> emojiSkintone()
+   {
+      return string("emoji_skintone", "(None)");
+   }
+
+   public final static String EMOJI_SKINTONE__NONE_ = "(None)";
+   public final static String EMOJI_SKINTONE_DEFAULT = "Default";
+   public final static String EMOJI_SKINTONE_LIGHT = "Light";
+   public final static String EMOJI_SKINTONE_MEDIUM_LIGHT = "Medium-Light";
+   public final static String EMOJI_SKINTONE_MEDIUM = "Medium";
+   public final static String EMOJI_SKINTONE_MEDIUM_DARK = "Medium-Dark";
+   public final static String EMOJI_SKINTONE_DARK = "Dark";
+
+   /**
     * List of aria-live announcements to disable.
     */
    public PrefValue<JsArrayString> disabledAriaLiveAnnouncements()
@@ -2211,6 +2227,8 @@ public class UserPrefsAccessor extends Prefs
          visualMarkdownEditingShowDocOutline().setValue(layer, source.getBool("visual_markdown_editing_show_doc_outline"));
       if (source.hasKey("visual_markdown_editing_font_size_points"))
          visualMarkdownEditingFontSizePoints().setValue(layer, source.getInteger("visual_markdown_editing_font_size_points"));
+      if (source.hasKey("emoji_skintone"))
+         emojiSkintone().setValue(layer, source.getString("emoji_skintone"));
       if (source.hasKey("disabled_aria_live_announcements"))
          disabledAriaLiveAnnouncements().setValue(layer, source.getObject("disabled_aria_live_announcements"));
       if (source.hasKey("screenreader_console_announce_limit"))
