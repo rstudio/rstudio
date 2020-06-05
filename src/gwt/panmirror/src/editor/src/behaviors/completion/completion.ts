@@ -89,7 +89,7 @@ class CompletionPlugin extends Plugin<CompletionState> {
 
           // check for a handler that can provide completions at the current selection
           for (const handler of handlers) {
-            const result = handler.completions(textBefore, tr.selection);
+            const result = handler.completions(textBefore, tr.selection, tr.doc);
             if (result) {
               return { handler, result };
             }
@@ -260,7 +260,7 @@ class CompletionPlugin extends Plugin<CompletionState> {
 
       // perform replacement
       tr.setSelection(new TextSelection(tr.doc.resolve(result.pos), view.state.selection.$head));
-      tr.replaceSelectionWith(node, true);
+      tr.replaceSelectionWith(node, false); // TODO: JJA needs to look into this
       setTextSelection(tr.selection.to)(tr);
      
       // dispach

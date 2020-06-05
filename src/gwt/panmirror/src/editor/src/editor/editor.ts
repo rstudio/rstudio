@@ -824,11 +824,14 @@ export class Editor {
   }
 
   private async getMarkdownCode(doc: ProsemirrorNode, options: PandocWriterOptions) {
-    // apply layout fixups
-    this.applyFixups(FixupContext.Save);
+
+    // apply save fixups to a new transaction that we won't commit (b/c we don't
+    // want the fixups to affect the loaded editor state)
+    const tr = this.state.tr;
+    this.extensionFixups(tr, FixupContext.Save);
 
     // get code
-    return this.pandocConverter.fromProsemirror(doc, this.pandocFormat, options);
+    return this.pandocConverter.fromProsemirror(tr.doc, this.pandocFormat, options);
   }
 }
 
