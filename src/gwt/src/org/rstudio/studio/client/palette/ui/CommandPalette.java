@@ -156,11 +156,6 @@ public class CommandPalette extends Composite
             // Pressing ESC dismisses the host (removing the palette popup)
             host_.dismiss();
          }
-         else if (evt.getNativeKeyCode() == KeyCodes.KEY_ENTER)
-         {
-            // Enter runs the selected command
-            invokeSelection();
-         }
          else
          {
             // Just update the filter if the text has changed
@@ -188,6 +183,12 @@ public class CommandPalette extends Composite
             evt.preventDefault();
             return;
          }
+         else if (evt.getNativeKeyCode() == KeyCodes.KEY_ENTER)
+         {
+            // Enter runs the selected command
+            invokeSelection();
+         }
+
 
          // Ignore modified arrows so that e.g. Shift Up/Down to select the
          // contents of the textbox work as expected
