@@ -40,7 +40,7 @@ public class ConsolePreferencesPane extends PreferencesPane
       add(checkboxPref("Show syntax highlighting in console input", prefs_.syntaxColorConsole()));
       add(checkboxPref("Different color for error or message output (requires restart)", prefs_.highlightConsoleErrors()));
       NumericValueWidget limitLengthPref =
-         numericPref("Limit length of lines to:", prefs_.consoleLineLengthLimit());
+         numericPref("Limit output line length to:", prefs_.consoleLineLengthLimit());
       add(nudgeRightPlus(limitLengthPref));
 
       consoleColorMode_ = new SelectWidget(
@@ -60,18 +60,13 @@ public class ConsolePreferencesPane extends PreferencesPane
          false);
       add(consoleColorMode_);
 
-      // The error handler features require source references; if this R
-      // version doesn't support them, don't show these options. 
-      if (session.getSessionInfo().getHaveSrcrefAttribute())
-      {
-         Label debuggingLabel = headerLabel("Debugging");
-         spacedBefore(debuggingLabel);
-         add(debuggingLabel);
-         add(spaced(checkboxPref(
-            "Automatically expand tracebacks in error inspector",
-            prefs_.autoExpandErrorTracebacks(),
-            true /*defaultSpaced*/)));
-      }
+      Label debuggingLabel = headerLabel("Debugging");
+      spacedBefore(debuggingLabel);
+      add(debuggingLabel);
+      add(spaced(checkboxPref(
+         "Automatically expand tracebacks in error inspector",
+         prefs_.autoExpandErrorTracebacks(),
+         true /*defaultSpaced*/)));
 
       Label otherLabel = headerLabel("Other");
       spacedBefore(otherLabel);

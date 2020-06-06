@@ -1580,14 +1580,6 @@ public class TextEditingTarget implements
                      return;
                   }
                   
-                  // don't try to set breakpoints if the R version is too old
-                  if (!session_.getSessionInfo().getHaveSrcrefAttribute())
-                  {
-                     view_.showWarningBar("Editor breakpoints require R 2.14 " +
-                                          "or newer.");
-                     return;
-                  }
-                  
                   Position breakpointPosition = 
                         Position.create(event.getLineNumber() - 1, 1);
                   
