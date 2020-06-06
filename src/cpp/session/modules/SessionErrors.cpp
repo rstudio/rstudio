@@ -53,11 +53,6 @@ Error setErrHandler(const std::string& type, bool inMyCode,
    if (type == kErrorHandlerTypeCustom)
       return Success();
 
-   // this feature requires the source reference attribute; don't try to set
-   // the error handler if we don't have that.
-   if (!breakpoints::haveSrcrefAttribute())
-      return Success();
-
    Error error = r::exec::RFunction(
             ".rs.setErrorManagementType", type, inMyCode)
             .callUnsafe();

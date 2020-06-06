@@ -20,7 +20,7 @@ import com.google.gwt.resources.client.ImageResource;
 
 public interface PreferencesDialogResources extends ClientBundle
 {
-   public interface Styles extends CssResource
+   interface Styles extends CssResource
    {
       String panelContainer();
       String paneLayoutTable();
@@ -56,4 +56,6 @@ public interface PreferencesDialogResources extends ClientBundle
 
    @Source("iconAddSourcePane_2x.png")
    ImageResource iconAddSourcePane2x();
+   @Source("iconConsole_2x.png")
+   ImageResource iconConsole2x();
 }
