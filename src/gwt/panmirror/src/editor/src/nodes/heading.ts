@@ -218,7 +218,7 @@ function headingOmniInserter(
     name: `${kHeadingPrefix}${level}`,
     description,
     group: kHeadingsGroup,
-    image: dark => dark ? images[1] : images[0],
+    image: () => ui.prefs.darkMode() ? images[1] : images[0],
     command: headingCommandFn(schema, level)
   };
 }

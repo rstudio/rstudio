@@ -84,6 +84,7 @@ export interface EditorDisplay {
 }
 
 export interface EditorUIPrefs {
+  darkMode: () => boolean;
   equationPreview: () => boolean;
 }
 

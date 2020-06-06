@@ -45,7 +45,7 @@ export function inlineMathOmniInsert(schema: Schema, ui: EditorUI) : OmniInserte
     keywords: [ui.context.translateText('equation')],
     description: ui.context.translateText("Math included within a line or paragraph"),
     group: ui.context.translateText('Content'),
-    image: dark => dark ? ui.images.omni_insert?.math_inline_dark! : ui.images.omni_insert?.math_inline!,
+    image: () => ui.prefs.darkMode() ? ui.images.omni_insert?.math_inline_dark! : ui.images.omni_insert?.math_inline!,
     command: insertMathCommand(MathType.Inline, false)
   };
 }
@@ -57,7 +57,7 @@ export function displayMathOmniInsert(schema: Schema, ui: EditorUI, allowNewline
     keywords: [ui.context.translateText('equation')],
     description: ui.context.translateText("Math set apart from the main text"),
     group: ui.context.translateText('Content'),
-    image: dark => dark ? ui.images.omni_insert?.math_display_dark! : ui.images.omni_insert?.math_display!,
+    image: () => ui.prefs.darkMode() ? ui.images.omni_insert?.math_display_dark! : ui.images.omni_insert?.math_display!,
     command: insertMathCommand(MathType.Display, allowNewline)
   };
 }
