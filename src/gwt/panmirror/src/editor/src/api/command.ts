@@ -87,6 +87,7 @@ export enum EditorCommandId {
   TableAlignColumnDefault = '7860A9C1-60AF-40AD-9EB8-A10F6ADF25C5',
 
   // insert
+  OmniInsert = '12F96C13-38C1-4266-A0A1-E871D8C709FB',
   Link = '842FCB9A-CA61-4C5F-A0A0-43507B4B3FA9',
   RemoveLink = '072D2084-218D-4A34-AF1F-7E196AF684B2',
   Image = '808220A3-2B83-4CB6-BCC1-46565D54FA47',
@@ -117,9 +118,6 @@ export enum EditorCommandId {
   RmdChunk = 'EBFD21FF-4A6E-4D88-A2E0-B38470B00BB9',
   ExecuteCurentRmdChunk = '31C799F3-EF18-4F3A-92E6-51F7A3193A1B',
   ExecuteCurrentPreviousRmdChunks = 'D3FDE96-0264-4364-ADFF-E87A75405B0B',
-
-  // omni
-  OmniInsert = '12F96C13-38C1-4266-A0A1-E871D8C709FB'
 }
 
 export interface EditorCommand {
