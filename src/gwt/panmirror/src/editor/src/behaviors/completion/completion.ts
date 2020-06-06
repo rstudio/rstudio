@@ -270,14 +270,19 @@ class CompletionPlugin extends Plugin<CompletionState> {
 
         // get replacement from handler
         const replacement = state.handler.replacement(view.state.schema, this.completions[index]);
-        const node = replacement instanceof ProsemirrorNode ? replacement : view.state.schema.text(replacement);
+        if (replacement) {
 
-        // perform replacement
-        const tr = view.state.tr;
-        tr.setSelection(new TextSelection(tr.doc.resolve(result.pos), view.state.selection.$head));
-        tr.replaceSelectionWith(node, true);
-        setTextSelection(tr.selection.to)(tr);
-        view.dispatch(tr);
+          // ensure we have a node
+          const node = replacement instanceof ProsemirrorNode ? replacement : view.state.schema.text(replacement);
+
+          // perform replacement
+          const tr = view.state.tr;
+          tr.setSelection(new TextSelection(tr.doc.resolve(result.pos), view.state.selection.$head));
+          tr.replaceSelectionWith(node, true);
+          setTextSelection(tr.selection.to)(tr);
+          view.dispatch(tr);
+        }
+        
 
       }
 
@@ -297,8 +302,12 @@ class CompletionPlugin extends Plugin<CompletionState> {
     // to trigger the handler (e.g. a cmd+/ for omni-insert)
     if (this.view) {
       const state = key.getState(this.view.state);
-      if (state?.result && state?.handler?.replace) {
-        state.handler.replace(this.view, state.result.pos, null);
+      if (state?.result && state.handler) {
+        if (state.handler.replace) {
+          state.handler.replace(this.view, state.result.pos, null);
+        } else if (state.handler.replacement) {
+          state.handler.replacement(this.view.state.schema, null);
+        }
       }
     }
 

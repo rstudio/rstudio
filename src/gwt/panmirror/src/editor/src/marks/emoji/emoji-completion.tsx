@@ -27,9 +27,13 @@ export function emojiCompletionHandler() : CompletionHandler<Emoji> {
     
     completions: emojiCompletions,
 
-    replacement(schema: Schema, emoji: Emoji) : string | ProsemirrorNode {
-      const mark = schema.marks.emoji.create({ emojihint: emoji.aliases[0] });
-      return schema.text(emoji.emoji, [mark]);
+    replacement(schema: Schema, emoji: Emoji | null) : string | ProsemirrorNode | null {
+      if (emoji) {
+        const mark = schema.marks.emoji.create({ emojihint: emoji.aliases[0] });
+        return schema.text(emoji.emoji, [mark]);
+      } else {
+        return null;
+      }
     },
 
     view: {

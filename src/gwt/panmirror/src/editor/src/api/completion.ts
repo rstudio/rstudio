@@ -30,11 +30,10 @@ export interface CompletionHandler<T = any> {
   // before the cursor in the current node (but no more than 500 characters)
   completions(text: string, selection: Selection): CompletionResult | null;
 
-  // provide a completion replacement as a string or node
-  replacement?(schema: Schema, completion: T) : string | ProsemirrorNode;
+  // provide a completion replacement as a string or node (can be passed null if the popup was dismissed)
+  replacement?(schema: Schema, completion: T | null)  : string | ProsemirrorNode | null;
 
-  // lower level replacement handler (can be passed null if the popup was dismissed,
-  // in that case the handler needs to remove the input)
+  // lower level replacement handler (can be passed null if the popup was dismissed)
   replace?(view: EditorView, pos: number, completion: T | null) : void;
 
   // completion view
