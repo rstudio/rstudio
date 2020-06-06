@@ -106,7 +106,7 @@ public class PanmirrorToolbarCommands implements CommandPaletteEntrySource
       add(PanmirrorCommands.TableAlignColumnDefault, "Table Align Column:::Default");
      
       // insert
-      add(PanmirrorCommands.OmniInsert, "Omni Insert...");
+      add(PanmirrorCommands.OmniInsert, "Omni...");
       add(PanmirrorCommands.Link, "Link...", icons.LINK);
       add(PanmirrorCommands.RemoveLink, "Remove Link");
       add(PanmirrorCommands.Image, "Image...", icons.IMAGE);
