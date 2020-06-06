@@ -75,7 +75,6 @@ function omniInsertCompletions(omniInserters: OmniInserter[]) {
 
       // we need to either be at the beginning of our parent, OR the omni_insert mark needs
       // to be active (that indicates that we entered omni insert mode via a user command)
-      const parent = selection.$head.parent;
       if (match.index !== 0 && !isOmniInsertCommandActive(selection)) {
         return null;
       }
