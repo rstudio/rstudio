@@ -221,6 +221,10 @@ class CompletionPlugin extends Plugin<CompletionState> {
         this.renderCompletions(view);
 
       });
+    } else {
+
+      this.hideCompletionPopup();
+
     }
   }
 
@@ -252,10 +256,7 @@ class CompletionPlugin extends Plugin<CompletionState> {
       // render
       renderCompletionPopup(view, props, this.completionPopup);
 
-      return true;
-    } else {
-      return false;
-    }
+    } 
   }
 
   private insertCompletion(view: EditorView, index: number) {
