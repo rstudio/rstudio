@@ -45,7 +45,7 @@ class CompletionPlugin extends Plugin<CompletionState> {
   private view: EditorView | null = null;
 
   // popup elemeent
-  private completionPopup: HTMLElement | null;
+  private completionPopup: HTMLElement | null = null;
 
   // currently selected index and last set of completions are held as transient
   // state because they can't be derived from the document state (selectedIndex 
@@ -113,9 +113,6 @@ class CompletionPlugin extends Plugin<CompletionState> {
           // set view
           this.view = view;
           
-          // clear completion state
-          this.clearCompletions();
-
           // update completions
           this.updateCompletions(view);
         
@@ -191,9 +188,6 @@ class CompletionPlugin extends Plugin<CompletionState> {
       }
     });
 
-    // we start out with no completion popup
-    this.completionPopup = null;
-
     // hide completions when we scroll or the focus changes
     this.hideCompletionPopup = this.hideCompletionPopup.bind(this);
     this.scrollUnsubscribe = events.subscribe(ScrollEvent, this.hideCompletionPopup);
@@ -219,15 +213,16 @@ class CompletionPlugin extends Plugin<CompletionState> {
         }
          
         // save completions 
-        this.selectedIndex = 0;
-        this.completions = completions;
+        this.setCompletions(completions);
 
         // render them
         this.renderCompletions(view);
 
       });
+
     } else {
 
+      this.setCompletions([]);
       this.hideCompletionPopup();
 
     }
@@ -261,7 +256,12 @@ class CompletionPlugin extends Plugin<CompletionState> {
       // render
       renderCompletionPopup(view, props, this.completionPopup);
 
-    } 
+    } else {
+
+      // hide
+      this.hideCompletionPopup();
+    
+    }
   }
 
   private insertCompletion(view: EditorView, index: number) {
@@ -330,18 +330,20 @@ class CompletionPlugin extends Plugin<CompletionState> {
   }
 
   private hideCompletionPopup() {
-    this.clearCompletions();
-    destroyCompletionPopup(this.completionPopup);
-    this.completionPopup = null;
+    this.setCompletions([]);
+    if (this.completionPopup) {
+      destroyCompletionPopup(this.completionPopup);
+      this.completionPopup = null;
+    }
   }
 
   private completionsActive() {
     return !!this.completionPopup;
   }
 
-  private clearCompletions() {
+  private setCompletions(completions: any[]) {
+    this.completions = completions;
     this.selectedIndex = 0;
-    this.completions = [];
   }
 
   private completionPageSize() {

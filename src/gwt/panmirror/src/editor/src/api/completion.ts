@@ -64,8 +64,8 @@ export function selectionAllowsCompletions(selection: Selection) {
 
   const schema = selection.$head.parent.type.schema;
 
-   // non empty selections don't have completions
-   if (!selection.empty) {
+  // non empty selections don't have completions
+  if (!selection.empty) {
     return false;
   }
 

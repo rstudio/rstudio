@@ -53,11 +53,9 @@ export function renderCompletionPopup(view: EditorView, props: CompletionListPro
    ReactDOM.render(<CompletionPopup {...props} />, popup);
 }
 
-export function destroyCompletionPopup(popup: HTMLElement | null) {
-  if (popup) {
-    ReactDOM.unmountComponentAtNode(popup);
-    popup.remove();
-  }
+export function destroyCompletionPopup(popup: HTMLElement) {
+  ReactDOM.unmountComponentAtNode(popup);
+  popup.remove();
 }
 
 const CompletionPopup: React.FC<CompletionListProps> = props => {
