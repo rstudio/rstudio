@@ -87,6 +87,11 @@ class CompletionPlugin extends Plugin<CompletionState> {
           // calcluate text before cursor
           const textBefore = completionTextBeforeCursor(tr.selection);
 
+          // if there is no text then don't handle it
+          if (textBefore.length === 0) {
+            return {};
+          }
+
           // check for a handler that can provide completions at the current selection
           for (const handler of handlers) {
             const result = handler.completions(textBefore, tr.selection);
