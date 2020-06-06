@@ -81,6 +81,7 @@ import org.rstudio.studio.client.workbench.views.source.editors.text.TextEditing
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Position;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Range;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ace.Selection;
+import org.rstudio.studio.client.workbench.views.source.editors.text.events.EditingTargetSelectedEvent;
 import org.rstudio.studio.client.workbench.views.source.editors.text.ui.NewRMarkdownDialog;
 import org.rstudio.studio.client.workbench.views.source.events.*;
 import org.rstudio.studio.client.workbench.views.source.model.*;
@@ -163,6 +164,15 @@ public class SourceColumnManager implements SessionInitHandler,
       events_.addHandler(DebugModeChangedEvent.TYPE, this);
 
       events_.addHandler(SessionInitEvent.TYPE,this);
+
+      events_.addHandler(EditingTargetSelectedEvent.TYPE, new EditingTargetSelectedEvent.Handler()
+      {
+         @Override
+         public void onEditingTargetSelected(EditingTargetSelectedEvent event)
+         {
+            setActive(event.getTarget());
+         }
+      });
 
       events_.addHandler(SourceFileSavedEvent.TYPE, new SourceFileSavedHandler()
       {
@@ -267,7 +277,6 @@ public class SourceColumnManager implements SessionInitHandler,
          SourceColumn column = getByName(prevColumn);
          if (column == null)
             return;
-         column.setActiveEditor("");
          if (!hasActiveEditor())
          {
             Debug.logWarning("Setting to random editor.");
