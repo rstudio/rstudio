@@ -27,7 +27,7 @@ import { EditorUI } from '../../api/ui';
 
 import { performInsertSymbol, InsertSymbolPlugin } from './insert_symbol-plugin';
 import { SymbolDataProvider, SymbolCharacter } from './insert_symbol-dataprovider';
-import { emojiCategories, emojis, EmojiWithSkinTone, emojiFromString, SkinTone } from '../../api/emoji';
+import { emojiCategories, emojis, Emoji, emojiFromString, SkinTone } from '../../api/emoji';
 
 const key = new PluginKey<boolean>('insert-emoji');
 
@@ -67,7 +67,7 @@ export class EmojiSymbolDataProvider implements SymbolDataProvider {
       // Try to find an alias that matches the user's search term
       const bestAlias = emoji.aliases.find(alias => alias.includes(searchTerm));
       const mark = state.schema.marks.emoji.create({ emojihint: bestAlias || emoji.aliases[0]});
-      const text = state.schema.text(emoji.emojiWithSkinTone, [mark]);
+      const text = state.schema.text(emoji.emoji, [mark]);
       tr.replaceSelectionWith(text, false); 
     } else {
       // This doesn't appear to be an emoji or it doesn't have a markdown representation, 
@@ -115,10 +115,10 @@ export class EmojiSymbolDataProvider implements SymbolDataProvider {
  }
 
 const kCategoryAll = 'All';
-function symbolForEmoji(emoji: EmojiWithSkinTone) : SymbolCharacter {
+function symbolForEmoji(emoji: Emoji) : SymbolCharacter {
   return ({ 
-    name: `${emoji.markdown ? ':' + emoji.aliases[0] + ':' : emoji.emojiWithSkinTone}`,
-    value: emoji.emojiWithSkinTone,
+    name: `${emoji.hasMarkdownRepresentation ? ':' + emoji.aliases[0] + ':' : emoji.emoji}`,
+    value: emoji.emoji,
     aliases: emoji.aliases,
     description: emoji.description
   });

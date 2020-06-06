@@ -426,12 +426,12 @@ function filterEmoji(filePath: string) {
   // Remove emoji metadata that we don't need
   const thinnedEmoji = filteredEmoji.map(emoji => {
     return {
-      emoji: emoji.emoji,
+      emojiRaw: emoji.emoji,
       description: emoji.description,
       category: emoji.category,
       aliases: emoji.aliases,
-      skin_tones: emoji.skin_tones,
-      markdown: kPandocEmojis.find(pandocEmoji => pandocEmoji.emoji === emoji.emoji) !== undefined,
+      supportsSkinTone: emoji.skin_tones,
+      hasMarkdownRepresentation: kPandocEmojis.find(pandocEmoji => pandocEmoji.emoji === emoji.emoji) !== undefined,
     };
   });
 

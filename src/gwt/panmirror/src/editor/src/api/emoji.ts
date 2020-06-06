@@ -15,28 +15,40 @@
 
 // read emojis from json (https://github.com/jgm/emojis/blob/master/emoji.json)
 import kEmojisJson from './emojis-all.json';
-const kEmojis = kEmojisJson as Emoji[];
+const kEmojis = kEmojisJson as EmojiRaw[];
 
 // TODO: Some skin tone emoji don't render properly - create skincode exclusion list in generate-symbols
-// TODO: Rename
-// EmojiRaw
-export interface Emoji {
-  emoji: string; // emojiRaw
+
+// TODO: Appearance of preference completion handler
+// Preferred appearance
+// [] | [] [] [] [] []
+
+// TODO: Reuse the preference completion handler and trigger it when user clicks on emoji?
+// TODO: If user clicks on emoji, cycle through the available skin tones?
+// TODO: Add user preference in RStudio somewhere
+// 
+
+// A raw emoji which doesn't include skin tone information
+export interface EmojiRaw {
+  emojiRaw: string; 
   aliases: string[];
   category: string;
   description: string;
-  skin_tones: boolean;
-  markdown: boolean;
+  supportsSkinTone: boolean;
+  hasMarkdownRepresentation: boolean;
 }
 
-// Emoji
-export interface EmojiWithSkinTone extends Emoji {
-  emojiWithSkinTone: string;  // emoji
+// A complete emoji that may additional render skintone
+export interface Emoji extends EmojiRaw {
+  emoji: string;  
   skinTone: SkinTone;
 }
 
+// Skin tones that are permitted for emoji
+// None = user hasn't expressed a preference
+// Default = don't apply a skin tone (use yellow emoji)
 export enum SkinTone {
-  None = -1,
+  None = -1,  
   Default = 0,
   Light = 0x1F3FB,
   MediumLight = 0x1F3FC,
@@ -49,7 +61,7 @@ function hasSkinTone(skinTone: SkinTone): boolean {
   return skinTone !== SkinTone.None && skinTone !== SkinTone.Default;
 }
 
-export function emojis(skinTone: SkinTone) : EmojiWithSkinTone[] {
+export function emojis(skinTone: SkinTone) : Emoji[] {
   return kEmojis.map(emoji => emojiWithSkinTone(emoji, skinTone));
 }
 
@@ -63,21 +75,21 @@ export function emojiCategories() : string[] {
   return categories;
 }
 
-export function emojiFromString(emojiString: string, skinTone: SkinTone): EmojiWithSkinTone | undefined  {
-  return emojis(skinTone).find(em => em.emojiWithSkinTone === emojiString);   
+export function emojiFromString(emojiString: string, skinTone: SkinTone): Emoji | undefined  {
+  return emojis(skinTone).find(em => em.emoji === emojiString);   
 }
 
-export function emojiWithSkinTonePreference(emoji: Emoji, skinTone: SkinTone) : EmojiWithSkinTone {
+export function emojiWithSkinTonePreference(emoji: EmojiRaw, skinTone: SkinTone) : Emoji {
   return emojiWithSkinTone(emoji, skinTone);
 }
 
 // Find a matching non skin toned emoji for a given string
-export function emojiFromChar(emojiString: string): Emoji | undefined {
-  return kEmojis.find(emoji => emoji.emoji === emojiString);
+export function emojiFromChar(emojiString: string): EmojiRaw | undefined {
+  return kEmojis.find(emoji => emoji.emojiRaw === emojiString);
 }
 
 // Returns a non skin tonned emoji for a given alias.
-export function emojiFromAlias(emojiAlias: string): Emoji | undefined {
+export function emojiFromAlias(emojiAlias: string): EmojiRaw | undefined {
   for (const emoji of kEmojis) {
     if (emoji.aliases.includes(emojiAlias)) {
       return emoji;
@@ -88,8 +100,8 @@ export function emojiFromAlias(emojiAlias: string): Emoji | undefined {
 
 // Returns an array of skin toned emoji including the unskintoned emoji. If the emoji
 // doesn't support skin tones, this returns the original emoji.
-export function emojiForAllSkinTones(emoji: Emoji) : EmojiWithSkinTone[] {
-  if (emoji.skin_tones) {
+export function emojiForAllSkinTones(emoji: EmojiRaw) : Emoji[] {
+  if (emoji.supportsSkinTone) {
     return [
       emojiWithSkinTone(emoji, SkinTone.Default),
       emojiWithSkinTone(emoji, SkinTone.Light),
@@ -106,19 +118,19 @@ export function emojiForAllSkinTones(emoji: Emoji) : EmojiWithSkinTone[] {
 
 // Returns a skin toned version of the emoji, or the original emoji if it
 // doesn't support skin tones
-function emojiWithSkinTone(emoji: Emoji, skinTone: SkinTone ) : EmojiWithSkinTone {
-  if (!emoji.skin_tones) {
-    return {...emoji, emojiWithSkinTone: emoji.emoji, skinTone: SkinTone.Default};
+function emojiWithSkinTone(emoji: EmojiRaw, skinTone: SkinTone ) : Emoji {
+  if (!emoji.supportsSkinTone) {
+    return {...emoji, emoji: emoji.emojiRaw, skinTone: SkinTone.Default};
   }
 
-  const skinToneEmoji : EmojiWithSkinTone = {
-    emoji: emoji.emoji,
+  const skinToneEmoji : Emoji = {
+    emojiRaw: emoji.emojiRaw,
     aliases: emoji.aliases,
     category: emoji.category,
     description: emoji.description,
-    skin_tones: emoji.skin_tones,
-    markdown: emoji.markdown,
-    emojiWithSkinTone: emoji.emoji + characterForSkinTone(skinTone), // 
+    supportsSkinTone: emoji.supportsSkinTone,
+    hasMarkdownRepresentation: emoji.hasMarkdownRepresentation,
+    emoji: emoji.emojiRaw + characterForSkinTone(skinTone), // 
     skinTone,
   };
   return skinToneEmoji;

@@ -25,7 +25,7 @@ import { fragmentText } from '../../api/fragment';
 import { FixupContext } from '../../api/fixup';
 import { MarkTransaction } from '../../api/transaction';
 import { mergedTextNodes } from '../../api/text';
-import { emojis, emojiFromAlias, emojiFromChar, emojiForAllSkinTones, EmojiWithSkinTone, emojiWithSkinTonePreference, emojiFromString } from '../../api/emoji';
+import { emojis, emojiFromAlias, emojiFromChar, emojiForAllSkinTones, Emoji, emojiWithSkinTonePreference, emojiFromString } from '../../api/emoji';
 import { emojiCompletionHandler, emojiSkintonePreferenceCompletionHandler } from './emoji-completion';
 import { getMarkAttrs } from '../../api/mark';
 import { PandocCapabilities } from '../../api/pandoc_capabilities';
@@ -103,7 +103,7 @@ const extension = (_exts: PandocExtensions, _caps: PandocCapabilities, ui: Edito
                   }
                   output.writeAttr('', ['emoji'], [['data-emoji', alias]]);
                   output.writeArray(() => {
-                    output.writeText(emoji.emoji);
+                    output.writeText(emoji.emojiRaw);
                   });
                 });
               } else {
@@ -126,7 +126,7 @@ const extension = (_exts: PandocExtensions, _caps: PandocCapabilities, ui: Edito
             const tr = state.tr;
             tr.delete(start + match[1].length, end);
             const mark = schema.marks.emoji.create({ emojihint: emojiName });
-            const text = schema.text(emojiWithSkinTone.emojiWithSkinTone, [mark]);
+            const text = schema.text(emojiWithSkinTone.emoji, [mark]);
             tr.replaceSelectionWith(text, false);
             return tr;
           } else {
@@ -161,14 +161,14 @@ const extension = (_exts: PandocExtensions, _caps: PandocCapabilities, ui: Edito
             // a mark for any given starting position.
 
             // Find the possible emoji at each position in this text node
-            const possibleMarks = new Map<number, Array<{to: number, emoji: EmojiWithSkinTone}>>();
+            const possibleMarks = new Map<number, Array<{to: number, emoji: Emoji}>>();
             for (const emoji of emojis(ui.prefs.emojiSkinTone())) {
               emojiForAllSkinTones(emoji).forEach(skinToneEmoji =>
                 {
-                  const charLoc = textNode.text.indexOf(skinToneEmoji.emojiWithSkinTone);
+                  const charLoc = textNode.text.indexOf(skinToneEmoji.emoji);
                   if (charLoc !== -1) {
                     const from = textNode.pos + charLoc;
-                    const to = from + skinToneEmoji.emojiWithSkinTone.length;
+                    const to = from + skinToneEmoji.emoji.length;
                     possibleMarks.set(
                       from,
                       (possibleMarks.get(from) || []).concat({to, emoji: skinToneEmoji})
