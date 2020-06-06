@@ -112,14 +112,13 @@ class CompletionPlugin extends Plugin<CompletionState> {
           this.view = view;
           
           // clear completion state
-          this.completions = [];
-          this.selectedIndex = 0;
-
+          this.clearCompletions();
+         
           // increment version
           this.version++;
 
           // render and show completions if we have them
-          this.updateCompletions(view).then(this.showCompletions);
+          this.updateCompletions(view).then(this.showCompletionPopup);
         
         },
 
@@ -127,7 +126,7 @@ class CompletionPlugin extends Plugin<CompletionState> {
 
           // unsubscribe from events
           this.scrollUnsubscribe();
-          window.document.removeEventListener('focusin', this.hideCompletions);
+          window.document.removeEventListener('focusin', this.hideCompletionPopup);
 
           // tear down the popup
           destroyCompletionPopup(this.completionPopup);
@@ -179,17 +178,17 @@ class CompletionPlugin extends Plugin<CompletionState> {
     });
 
     // bind callback methods
-    this.showCompletions = this.showCompletions.bind(this);
-    this.hideCompletions = this.hideCompletions.bind(this);
+    this.showCompletionPopup = this.showCompletionPopup.bind(this);
+    this.hideCompletionPopup = this.hideCompletionPopup.bind(this);
    
     // hide completions when we scroll or the focus changes
-    this.scrollUnsubscribe = events.subscribe(ScrollEvent, this.hideCompletions);
-    window.document.addEventListener('focusin', this.hideCompletions);
+    this.scrollUnsubscribe = events.subscribe(ScrollEvent, this.hideCompletionPopup);
+    window.document.addEventListener('focusin', this.hideCompletionPopup);
 
     // create the popup, add it, and make it initially hidden
     this.completionPopup = createCompletionPopup();
     window.document.body.appendChild(this.completionPopup);
-    this.hideCompletions();
+    this.hideCompletionPopup();
   }
 
   private updateCompletions(view: EditorView) : Promise<boolean> {
@@ -211,6 +210,7 @@ class CompletionPlugin extends Plugin<CompletionState> {
         }
          
         // save completions 
+        this.selectedIndex = 0;
         this.completions = completions;
 
         // render them
@@ -290,7 +290,7 @@ class CompletionPlugin extends Plugin<CompletionState> {
       view.focus();
     }
 
-    this.hideCompletions();
+    this.hideCompletionPopup();
 
   }
 
@@ -311,19 +311,25 @@ class CompletionPlugin extends Plugin<CompletionState> {
       }
     }
 
-    this.hideCompletions();
+    this.hideCompletionPopup();
   }
 
-  private showCompletions(show: boolean) {
+  private showCompletionPopup(show: boolean) {
     this.completionPopup.style.display =  show ? '' : 'none';
   }
 
-  private hideCompletions() {
-    this.showCompletions(false);
+  private hideCompletionPopup() {
+    this.clearCompletions();
+    this.showCompletionPopup(false);
   }
 
   private completionsActive() {
     return this.completionPopup.style.display !== 'none';
+  }
+
+  private clearCompletions() {
+    this.selectedIndex = 0;
+    this.completions = [];
   }
 }
 

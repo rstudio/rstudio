@@ -81,11 +81,11 @@ const CompletionList: React.FC<CompletionListProps> = props => {
   useEffect(() => {
     const containerEl = containerRef.current;
     if (containerEl) {
-      const rows = containerEl.getElementsByTagName('td');
-      const selectedRow = rows.item(props.selectedIndex);
-      if (selectedRow) {
+      const rows = containerEl.getElementsByClassName('pm-completion-item-row');
+      const scrollToRow = rows.item(props.selectedIndex);
+      if (scrollToRow) {
         const scroller = zenscroll.createScroller(containerEl);
-        scroller.intoView(selectedRow);
+        scroller.intoView(scrollToRow as HTMLElement);
       }
     }
   }, [props.selectedIndex]);
@@ -112,6 +112,7 @@ const CompletionList: React.FC<CompletionListProps> = props => {
           return (
             <tr 
               key={key} 
+              className={'pm-completion-item-row'}
               style={ {lineHeight: itemHeight + 'px' }} 
               onClick={rowEventHandler(index, props.onClick)}
               onMouseEnter={rowEventHandler(index,props.onHover)}

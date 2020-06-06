@@ -57,7 +57,7 @@ function inlineMathOmniInsert(ui: EditorUI) : OmniInsert {
   return {
     name: ui.context.translateText("Inline Math"),
     keywords: [ui.context.translateText('equation')],
-    description: ui.context.translateText("Math included within a line or paragraph"),
+    description: ui.context.translateText("Math within a line or paragraph"),
     group: OmniInsertGroup.Content,
     image: () => ui.prefs.darkMode() ? ui.images.omni_insert?.math_inline_dark! : ui.images.omni_insert?.math_inline!,
   };

@@ -22,6 +22,8 @@ import React from 'react';
 import { OmniInserter } from "../../api/omni_insert";
 import { CompletionHandler, CompletionResult } from "../../api/completion";
 
+import './omni_insert-completion.css';
+
 export function omniInsertCompletionHandler(omniInserters: OmniInserter[]) : CompletionHandler<OmniInserter> {
 
   return {
@@ -53,7 +55,9 @@ export function omniInsertCompletionHandler(omniInserters: OmniInserter[]) : Com
     view: {
       component: OmniInserterView,
       key: command => command.id,
-      width: 200
+      width: 340,
+      itemHeight: 55,
+      maxVisible: 5
     },
 
   };
@@ -106,11 +110,21 @@ function omniInsertCompletions(omniInserters: OmniInserter[]) {
 
 }
 
-const OmniInserterView: React.FC<OmniInserter> = command => {
+const OmniInserterView: React.FC<OmniInserter> = inserter => {
   return (
-    <div className={'pm-completion-item-text'}>
-      {command.name}&nbsp;{command.description}:
-    </div>
+    <table className={'pm-omni-insert-completion'}>
+      <tbody>
+        <tr>
+          <td className={'pm-omni-insert-icon'}>
+            <img src={inserter.image()} />
+          </td>
+          <td>
+            <div className={'pm-omni-insert-name pm-completion-item-text'}>{inserter.name}</div>
+            <div className={'pm-omni-insert-description pm-completion-item-text'}>{inserter.description}</div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
   );
 };
 
