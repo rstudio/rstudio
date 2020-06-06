@@ -96,7 +96,7 @@ const SymbolCharacterGrid = React.forwardRef<any, CharacterGridProps>((props, re
   React.useEffect(() => {
     if (mayShowPreview) {
       updatePreviewPosition();
-      maybeShowPreview();
+      return maybeShowPreview();
     }
   }, [props.selectedIndex, mayShowPreview]);
 
@@ -116,6 +116,7 @@ const SymbolCharacterGrid = React.forwardRef<any, CharacterGridProps>((props, re
       previewTimer.current = window.setTimeout(() => {
         setShowPreview(true);
       }, kWaitToShowPreviewMs);
+      return () => { window.clearTimeout(previewTimer.current); };
     }
   }  
   const kWaitToShowPreviewMs = 750;
