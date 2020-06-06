@@ -26,13 +26,6 @@ import { Popup } from '../../api/widgets/popup';
 
 import './completion-popup.css';
 
-export function createCompletionPopup() : HTMLElement {
-  const popup = window.document.createElement('div');
-  popup.style.position = 'absolute';
-  popup.style.zIndex = '1000';
-  return popup;
-}
-
 export interface CompletionListProps {
   handler: CompletionHandler;
   pos: number;
@@ -40,6 +33,13 @@ export interface CompletionListProps {
   selectedIndex: number;
   onHover: (index: number) => void;
   onClick: (index: number) => void;
+}
+
+export function createCompletionPopup() : HTMLElement {
+  const popup = window.document.createElement('div');
+  popup.style.position = 'absolute';
+  popup.style.zIndex = '1000';
+  return popup;
 }
 
 export function renderCompletionPopup(view: EditorView, props: CompletionListProps, popup: HTMLElement) {
@@ -53,9 +53,11 @@ export function renderCompletionPopup(view: EditorView, props: CompletionListPro
    ReactDOM.render(<CompletionPopup {...props} />, popup);
 }
 
-export function destroyCompletionPopup(popup: HTMLElement) {
-  ReactDOM.unmountComponentAtNode(popup);
-  popup.remove();
+export function destroyCompletionPopup(popup: HTMLElement | null) {
+  if (popup) {
+    ReactDOM.unmountComponentAtNode(popup);
+    popup.remove();
+  }
 }
 
 const CompletionPopup: React.FC<CompletionListProps> = props => {

@@ -23,8 +23,7 @@ import { CompletionHandler, CompletionResult, selectionAllowsCompletions, kCompl
 import { EditorEvents } from '../../api/events';
 import { ScrollEvent } from '../../api/event-types';
 
-import { renderCompletionPopup, createCompletionPopup, destroyCompletionPopup } from './completion-popup';
-import { canInsertNode } from '../../api/node';
+import { createCompletionPopup, renderCompletionPopup, destroyCompletionPopup } from './completion-popup';
 
 
 export function completionExtension(handlers: readonly CompletionHandler[], events: EditorEvents) {
@@ -46,7 +45,7 @@ class CompletionPlugin extends Plugin<CompletionState> {
   private view: EditorView | null = null;
 
   // popup elemeent
-  private readonly completionPopup: HTMLElement;
+  private completionPopup: HTMLElement | null;
 
   // currently selected index and last set of completions are held as transient
   // state because they can't be derived from the document state (selectedIndex 
@@ -108,17 +107,17 @@ class CompletionPlugin extends Plugin<CompletionState> {
       view: () => ({
         update: (view: EditorView) => {
 
+          // increment version
+          this.version++;
+
           // set view
           this.view = view;
           
           // clear completion state
           this.clearCompletions();
-         
-          // increment version
-          this.version++;
 
-          // render and show completions if we have them
-          this.updateCompletions(view).then(this.showCompletionPopup);
+          // update completions
+          this.updateCompletions(view);
         
         },
 
@@ -129,7 +128,7 @@ class CompletionPlugin extends Plugin<CompletionState> {
           window.document.removeEventListener('focusin', this.hideCompletionPopup);
 
           // tear down the popup
-          destroyCompletionPopup(this.completionPopup);
+          this.hideCompletionPopup();
 
         },
       }),
@@ -187,21 +186,16 @@ class CompletionPlugin extends Plugin<CompletionState> {
       }
     });
 
-    // bind callback methods
-    this.showCompletionPopup = this.showCompletionPopup.bind(this);
-    this.hideCompletionPopup = this.hideCompletionPopup.bind(this);
-   
+    // we start out with no completion popup
+    this.completionPopup = null;
+
     // hide completions when we scroll or the focus changes
+    this.hideCompletionPopup = this.hideCompletionPopup.bind(this);
     this.scrollUnsubscribe = events.subscribe(ScrollEvent, this.hideCompletionPopup);
     window.document.addEventListener('focusin', this.hideCompletionPopup);
-
-    // create the popup, add it, and make it initially hidden
-    this.completionPopup = createCompletionPopup();
-    window.document.body.appendChild(this.completionPopup);
-    this.hideCompletionPopup();
   }
 
-  private updateCompletions(view: EditorView) : Promise<boolean> {
+  private updateCompletions(view: EditorView) {
 
     const state = key.getState(view.state);
     
@@ -224,12 +218,9 @@ class CompletionPlugin extends Plugin<CompletionState> {
         this.completions = completions;
 
         // render them
-        return this.renderCompletions(view);
+        this.renderCompletions(view);
 
       });
-     
-    } else {
-      return Promise.resolve(false);
     }
   }
 
@@ -251,7 +242,16 @@ class CompletionPlugin extends Plugin<CompletionState> {
           this.renderCompletions(view);
         }
       };
+      
+      // create the completion popup if we need to
+      if (this.completionPopup === null) {
+        this.completionPopup = createCompletionPopup();
+        window.document.body.appendChild(this.completionPopup);
+      }
+
+      // render
       renderCompletionPopup(view, props, this.completionPopup);
+
       return true;
     } else {
       return false;
@@ -293,7 +293,6 @@ class CompletionPlugin extends Plugin<CompletionState> {
           view.dispatch(tr);
         }
         
-
       }
 
       // set focus
@@ -324,17 +323,14 @@ class CompletionPlugin extends Plugin<CompletionState> {
     this.hideCompletionPopup();
   }
 
-  private showCompletionPopup(show: boolean) {
-    this.completionPopup.style.display =  show ? '' : 'none';
-  }
-
   private hideCompletionPopup() {
     this.clearCompletions();
-    this.showCompletionPopup(false);
+    destroyCompletionPopup(this.completionPopup);
+    this.completionPopup = null;
   }
 
   private completionsActive() {
-    return this.completionPopup.style.display !== 'none';
+    return !!this.completionPopup;
   }
 
   private clearCompletions() {
