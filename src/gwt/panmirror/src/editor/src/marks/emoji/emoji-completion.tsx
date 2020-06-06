@@ -48,7 +48,7 @@ export function emojiCompletionHandler() : CompletionHandler<Emoji> {
 const kMaxEmojiCompletions = 20;
 const kEmojiCompletionRegEx = /(^|[^`]):(\w{2,})$/;
 
-function emojiCompletions(text: string, selection: Selection): CompletionResult<Emoji> | null {
+function emojiCompletions(text: string, _doc: ProsemirrorNode, selection: Selection): CompletionResult<Emoji> | null {
   
   // look for requisite text sequence
   const match = text.match(kEmojiCompletionRegEx);

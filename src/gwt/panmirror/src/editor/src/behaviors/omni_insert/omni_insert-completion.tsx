@@ -13,7 +13,8 @@
  *
  */
 
-import { EditorState, Selection } from "prosemirror-state";
+import { Node as ProsemirrorNode } from "prosemirror-model";
+import { EditorState, Selection, } from "prosemirror-state";
 import { EditorView } from "prosemirror-view";
 
 import React from 'react';
@@ -63,7 +64,7 @@ const kOmniInsertRegex = /\/([\w]*)$/;
 
 function omniInsertCompletions(omniInserters: OmniInserter[]) {
 
-  return (text: string, selection: Selection): CompletionResult<OmniInserter> | null => {
+  return (text: string, doc: ProsemirrorNode, selection: Selection): CompletionResult<OmniInserter> | null => {
 
     const match = text.match(kOmniInsertRegex);
     if (match) {

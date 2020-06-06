@@ -94,7 +94,7 @@ class CompletionPlugin extends Plugin<CompletionState> {
 
           // check for a handler that can provide completions at the current selection
           for (const handler of handlers) {
-            const result = handler.completions(textBefore, tr.selection);
+            const result = handler.completions(textBefore, tr.doc, tr.selection);
             if (result) {
               return { handler, result };
             }
