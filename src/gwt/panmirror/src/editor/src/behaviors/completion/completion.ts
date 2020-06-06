@@ -153,7 +153,7 @@ class CompletionPlugin extends Plugin<CompletionState> {
                 case 'ArrowUp':
                   // allow arrow up from completion search
                   if (this.selectedIndex > 0) {
-                    this.selectedIndex = this.selectedIndex;
+                    this.selectedIndex = this.selectedIndex - 1;
                     this.renderCompletions(view);
                     handled = true;
                   } else {
