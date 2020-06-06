@@ -19,6 +19,11 @@ import { EditorView } from "prosemirror-view";
 
 import { canInsertNode } from "./node";
 
+
+export const kCompletionDefaultItemHeight = 22;
+export const kCompletionDefaultMaxVisible = 10;
+export const kCompletionDefaultWidth = 180;
+
 export interface CompletionResult<T = any> {
   pos: number;
   completions: (state: EditorState) => Promise<T[]>;

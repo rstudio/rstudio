@@ -19,7 +19,7 @@ import { EditorView } from 'prosemirror-view';
 
 import { setTextSelection } from 'prosemirror-utils';
 
-import { CompletionHandler, CompletionResult, selectionAllowsCompletions } from '../../api/completion';
+import { CompletionHandler, CompletionResult, selectionAllowsCompletions, kCompletionDefaultMaxVisible } from '../../api/completion';
 import { EditorEvents } from '../../api/events';
 import { ScrollEvent } from '../../api/event-types';
 
@@ -158,6 +158,16 @@ class CompletionPlugin extends Plugin<CompletionState> {
                   break;
                 case 'ArrowDown':
                   this.selectedIndex = Math.min(this.selectedIndex + 1, this.completions.length - 1);
+                  this.renderCompletions(view);
+                  handled = true;
+                  break;
+                case 'PageUp':
+                  this.selectedIndex = Math.max(this.selectedIndex - this.completionPageSize(), 0);
+                  this.renderCompletions(view);
+                  handled = true;
+                  break;
+                case 'PageDown':
+                  this.selectedIndex = Math.min(this.selectedIndex + this.completionPageSize(), this.completions.length - 1);
                   this.renderCompletions(view);
                   handled = true;
                   break;
@@ -330,6 +340,15 @@ class CompletionPlugin extends Plugin<CompletionState> {
   private clearCompletions() {
     this.selectedIndex = 0;
     this.completions = [];
+  }
+
+  private completionPageSize() {
+    if (this.view) {
+      const state = key.getState(this.view.state);
+      return state?.handler?.view.maxVisible || kCompletionDefaultMaxVisible;
+    } else {
+      return kCompletionDefaultMaxVisible;
+    }
   }
 }
 

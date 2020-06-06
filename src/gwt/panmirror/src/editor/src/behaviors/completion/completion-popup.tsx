@@ -21,7 +21,7 @@ import ReactDOM from 'react-dom';
 import zenscroll from 'zenscroll';
 
 import { applyStyles } from '../../api/css';
-import { CompletionHandler } from '../../api/completion';
+import { CompletionHandler, kCompletionDefaultItemHeight, kCompletionDefaultMaxVisible, kCompletionDefaultWidth } from '../../api/completion';
 import { Popup } from '../../api/widgets/popup';
 
 import './completion-popup.css';
@@ -66,13 +66,9 @@ const CompletionPopup: React.FC<CompletionListProps> = props => {
   );
 };
 
-const kDefaultItemHeight = 22;
-const kDefaultMaxVisible = 10;
-const kDefaultWidth = 180;
-
 const CompletionList: React.FC<CompletionListProps> = props => {
 
-  const { component, itemHeight = kDefaultItemHeight } = props.handler.view;
+  const { component, itemHeight = kCompletionDefaultItemHeight } = props.handler.view;
 
   const size = completionPopupSize(props);
 
@@ -135,8 +131,8 @@ function completionPopupSize(props: CompletionListProps) {
   const kCompletionsChrome = 8;
 
   // get view props (apply defaults)
-  let { itemHeight = kDefaultItemHeight } = props.handler.view;
-  const { maxVisible = kDefaultMaxVisible, width = kDefaultWidth } = props.handler.view;
+  let { itemHeight = kCompletionDefaultItemHeight } = props.handler.view;
+  const { maxVisible = kCompletionDefaultMaxVisible, width = kCompletionDefaultWidth } = props.handler.view;
 
   // add 2px for the border to item heights
   itemHeight += 2;
