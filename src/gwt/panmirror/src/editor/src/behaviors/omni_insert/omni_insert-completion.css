@@ -21,7 +21,12 @@
 }
 
 .pm-omni-insert-icon {
-  width: 48px;
+  width: 38px;
+}
+
+.pm-omni-insert-icon > img {
+  width: 38px;
+  height: 38px;
 }
 
 .pm-omni-insert-name {

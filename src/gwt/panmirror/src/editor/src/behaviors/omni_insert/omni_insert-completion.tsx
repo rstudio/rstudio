@@ -55,8 +55,8 @@ export function omniInsertCompletionHandler(omniInserters: OmniInserter[]) : Com
     view: {
       component: OmniInserterView,
       key: command => command.id,
-      width: 340,
-      itemHeight: 55,
+      width: 320,
+      itemHeight: 46,
       maxVisible: 5
     },
 
