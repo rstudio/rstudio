@@ -26,7 +26,7 @@ import { uuidv4 } from '../api/util';
 import { PandocCapabilities } from '../api/pandoc_capabilities';
 import { EditorUI } from '../api/ui';
 import { EditorFormat } from '../api/format';
-import { OmniInserter } from '../api/omni_insert';
+import { OmniInsert, OmniInsertGroup } from '../api/omni_insert';
 
 const HEADING_LEVEL = 0;
 const HEADING_ATTR = 1;
@@ -127,18 +127,16 @@ const extension = (
       },
     ],
 
-    commands: (schema: Schema) => {
+    commands: (schema: Schema, ui: EditorUI) => {
       return [
-        new HeadingCommand(schema, EditorCommandId.Heading1, 1),
-        new HeadingCommand(schema, EditorCommandId.Heading2, 2),
-        new HeadingCommand(schema, EditorCommandId.Heading3, 3),
-        new HeadingCommand(schema, EditorCommandId.Heading4, 4),
+        new HeadingCommand(schema, EditorCommandId.Heading1, 1, heading1OmniInsert(ui)),
+        new HeadingCommand(schema, EditorCommandId.Heading2, 2, heading2OmniInsert(ui)),
+        new HeadingCommand(schema, EditorCommandId.Heading3, 3, heading3OmniInsert(ui)),
+        new HeadingCommand(schema, EditorCommandId.Heading4, 4, heading4OmniInsert(ui)),
         new HeadingCommand(schema, EditorCommandId.Heading5, 5),
         new HeadingCommand(schema, EditorCommandId.Heading6, 6),
       ];
     },
-
-    omniInserters: headingOmniInserters,
 
     inputRules: (schema: Schema) => {
       return [
@@ -161,8 +159,8 @@ class HeadingCommand extends ProsemirrorCommand {
   public readonly nodeType: NodeType;
   public readonly level: number;
 
-  constructor(schema: Schema, id: EditorCommandId, level: number) {
-    super(id, ['Mod-Alt-' + level], headingCommandFn(schema, level));
+  constructor(schema: Schema, id: EditorCommandId, level: number, omniInsert?: OmniInsert) {
+    super(id, ['Mod-Alt-' + level], headingCommandFn(schema, level), omniInsert);
     this.nodeType = schema.nodes.heading;
     this.level = level;
   }
@@ -174,52 +172,51 @@ class HeadingCommand extends ProsemirrorCommand {
   }
 }
 
-function headingOmniInserters(schema: Schema,  ui: EditorUI) {
-  return [
-    headingOmniInserter(
-      schema, ui, 
-      EditorCommandId.Heading1, 1, 
-      ui.context.translateText('Top level heading'),
-      [ui.images.omni_insert?.heading1!, ui.images.omni_insert?.heading1_dark!]
-    ),
-    headingOmniInserter(
-      schema, ui, 
-      EditorCommandId.Heading2, 2, 
-      ui.context.translateText('Section heading'),
-      [ui.images.omni_insert?.heading2!, ui.images.omni_insert?.heading2_dark!]
-    ),
-    headingOmniInserter(
-      schema, ui, 
-      EditorCommandId.Heading3, 3, 
-      ui.context.translateText('Sub-section heading'),
-      [ui.images.omni_insert?.heading3!, ui.images.omni_insert?.heading3_dark!]
-    ),
-    headingOmniInserter(
-      schema, ui, 
-      EditorCommandId.Heading4, 4, 
-      ui.context.translateText('Smaller heading'),
-      [ui.images.omni_insert?.heading4!, ui.images.omni_insert?.heading4_dark!]
-    )
-  ];
+function heading1OmniInsert(ui: EditorUI) {
+  return headingOmniInsert(
+    ui,  1, 
+    ui.context.translateText('Top level heading'),
+    [ui.images.omni_insert?.heading1!, ui.images.omni_insert?.heading1_dark!]
+  );
 }
 
-function headingOmniInserter(
-  schema: Schema, 
+function heading2OmniInsert(ui: EditorUI) {
+  return headingOmniInsert(
+    ui,  2, 
+    ui.context.translateText('Section heading'),
+    [ui.images.omni_insert?.heading2!, ui.images.omni_insert?.heading2_dark!]
+  );
+}
+
+function heading3OmniInsert(ui: EditorUI) {
+  return headingOmniInsert(
+    ui, 3, 
+    ui.context.translateText('Sub-section heading'),
+    [ui.images.omni_insert?.heading3!, ui.images.omni_insert?.heading3_dark!]
+  );
+}
+
+function heading4OmniInsert(ui: EditorUI) {
+  return headingOmniInsert(
+    ui,  4, 
+    ui.context.translateText('Smaller heading'),
+    [ui.images.omni_insert?.heading4!, ui.images.omni_insert?.heading4_dark!]
+  );
+}
+
+
+function headingOmniInsert(
   ui: EditorUI, 
-  id: string,
   level: number, 
   description: string,
   images: [string, string]
-) : OmniInserter {
-  const kHeadingsGroup = ui.context.translateText('Headings');
-  const kHeadingPrefix = ui.context.translateText('Heading ');
+) : OmniInsert {
+  const kHeadingPrefix = ui.context.translateText('Heading');
   return {
-    id,
-    name: `${kHeadingPrefix}${level}`,
+    name: `${kHeadingPrefix} ${level}`,
     description,
-    group: kHeadingsGroup,
+    group: OmniInsertGroup.Headings,
     image: () => ui.prefs.darkMode() ? images[1] : images[0],
-    command: headingCommandFn(schema, level)
   };
 }
 

@@ -321,14 +321,11 @@ export class Editor {
     // create schema
     this.schema = editorSchema(this.extensions);
 
-    // register completion handlers (done in a separate step b/c omniInsertCompletionHandler
-    // requires access to the schema for creation)
-    const completionHandlers = [
-      ...this.extensions.completionHandlers(),
-      omniInsertCompletionHandler(this.extensions.omniInserters(this.schema, this.context.ui))
-    ];
-    this.extensions.register([completionExtension(completionHandlers, this.events)]);
-
+    // register completion handlers (done in a separate step b/c omni insert
+    // completion handlers require access to the initializezd commands that
+    // carry omni insert info)
+    this.registerCompletionExtension();
+    
     // create state
     this.state = EditorState.create({
       schema: this.schema,
@@ -687,6 +684,14 @@ export class Editor {
       this.pandocFormat.extensions,
       this.pandocCapabilities,
     );
+  }
+
+  private registerCompletionExtension() {
+    const completionHandlers = [
+      ...this.extensions.completionHandlers(),
+      omniInsertCompletionHandler(this.extensions.omniInserters(this.schema, this.context.ui))
+    ];
+    this.extensions.register([completionExtension(completionHandlers, this.events)]);
   }
 
   private createPlugins(): Plugin[] {

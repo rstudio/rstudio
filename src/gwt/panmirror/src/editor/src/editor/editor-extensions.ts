@@ -341,7 +341,18 @@ export class ExtensionManager {
   }
 
   public omniInserters(schema: Schema, ui: EditorUI) : OmniInserter[] {
-    return this.collect(extension => extension.omniInserters?.(schema, ui));
+    const omniInserters: OmniInserter[] = [];
+    const commands = this.commands(schema, ui);
+    commands.forEach(command => {
+      if (command.omniInsert) {
+        omniInserters.push({
+          ...command.omniInsert,
+          id: command.id,
+          command: command.execute
+        });
+      }
+    });
+    return omniInserters;
   }
 
   public codeViews() {

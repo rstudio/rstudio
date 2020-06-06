@@ -24,6 +24,7 @@ import { markIsActive } from './mark';
 import { canInsertNode, nodeIsActive } from './node';
 import { pandocAttrInSpec, pandocAttrAvailable, pandocAttrFrom } from './pandoc_attr';
 import { isList } from './list';
+import { OmniInsert } from './omni_insert';
 
 export enum EditorCommandId {
   // text editing
@@ -132,16 +133,20 @@ export interface EditorCommand {
 
 
 export class ProsemirrorCommand {
+
   public readonly id: EditorCommandId;
   public readonly keymap: readonly string[];
-  public readonly keepFocus: boolean;
   public readonly execute: CommandFn;
+  public readonly omniInsert?: OmniInsert;
+  public readonly keepFocus: boolean;
 
-  constructor(id: EditorCommandId, keymap: readonly string[], execute: CommandFn, keepFocus = true) {
+  constructor(id: EditorCommandId, keymap: readonly string[], execute: CommandFn, omniInsert?: OmniInsert)
+  constructor(id: EditorCommandId, keymap: readonly string[], execute: CommandFn, omniInsert?: OmniInsert, keepFocus?: boolean) {
     this.id = id;
     this.keymap = keymap;
-    this.keepFocus = keepFocus;
     this.execute = execute;
+    this.omniInsert = omniInsert;
+    this.keepFocus = true;
   }
 
   public isEnabled(state: EditorState): boolean {

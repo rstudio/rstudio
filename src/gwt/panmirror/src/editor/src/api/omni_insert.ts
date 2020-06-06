@@ -17,13 +17,22 @@
 
 import { CommandFn } from "./command";
 
-// commands that appear in omni-insert (/) 
-export interface OmniInserter {
-  id: string;
+// descriptive info for omni insert
+export interface OmniInsert {
   name: string;
   keywords?: string[];
   description: string;
-  group: string; 
+  group: OmniInsertGroup; 
   image: () => string;
+}
+
+// descriptive info + ability to identify/execute
+export interface OmniInserter extends OmniInsert {
+  id: string;
   command: CommandFn;
+}
+
+export enum OmniInsertGroup {
+  Headings = 'Headings',
+  Content = 'Content'
 }
