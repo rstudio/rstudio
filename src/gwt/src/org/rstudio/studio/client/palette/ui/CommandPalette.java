@@ -13,28 +13,22 @@
  *
  */
 
-package org.rstudio.studio.client.application.ui;
+package org.rstudio.studio.client.palette.ui;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
+import org.rstudio.core.client.DebouncedCommand;
 import org.rstudio.core.client.ElementIds;
+import org.rstudio.core.client.HandlerRegistrations;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.a11y.A11y;
-import org.rstudio.core.client.command.AppCommand;
-import org.rstudio.core.client.command.KeyMap;
-import org.rstudio.core.client.command.KeySequence;
-import org.rstudio.core.client.command.ShortcutManager;
-import org.rstudio.core.client.command.KeyMap.KeyMapType;
-import org.rstudio.core.client.js.JsUtil;
 import org.rstudio.core.client.widget.AriaLiveStatusWidget;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.AriaLiveStatusEvent.Severity;
-import org.rstudio.studio.client.workbench.addins.Addins.AddinExecutor;
-import org.rstudio.studio.client.workbench.addins.Addins.RAddin;
-import org.rstudio.studio.client.workbench.addins.Addins.RAddins;
-import org.rstudio.studio.client.workbench.commands.Commands;
+import org.rstudio.studio.client.palette.model.CommandPaletteEntrySource;
+import org.rstudio.studio.client.palette.model.CommandPaletteItem;
+import org.rstudio.studio.client.palette.model.CommandPaletteItem.InvocationSource;
 
 import com.google.gwt.aria.client.ExpandedValue;
 import com.google.gwt.aria.client.Id;
@@ -43,13 +37,10 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.event.dom.client.KeyCodes;
-import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
-import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.ui.Composite;
-import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.HTMLPanel;
 import com.google.gwt.user.client.ui.ScrollPanel;
 import com.google.gwt.user.client.ui.TextBox;
@@ -84,40 +75,36 @@ public class CommandPalette extends Composite
       String commandPanel();
    }
 
-   public CommandPalette(Commands commands, 
-                         RAddins addins, 
-                         List<CommandPaletteEntrySource> extraSources,
-                         ShortcutManager shortcuts, 
-                         Host host)
+   public CommandPalette(List<CommandPaletteEntrySource> sources, Host host)
    {
       initWidget(uiBinder.createAndBindUi(this));
 
-      entries_ = new ArrayList<>();
+      items_ = new ArrayList<>();
+      visible_ = new ArrayList<>();
       host_ = host;
-      shortcuts_ = shortcuts;
       selected_ = -1;
-      addins_ = addins;
-      commands_ = commands;
-      extraEntriesSource_ = CommandPaletteEntrySource.join(extraSources);
       attached_ = false;
       pageSize_ = 0;
+      sources_ = sources;
+      needles_ = new String[0];
+      registrations_ = new HandlerRegistrations();
       styles_.ensureInjected();
       
       Element searchBox = searchBox_.getElement();
-      searchBox.setAttribute("placeholder", "Search and run commands");
       searchBox.setAttribute("spellcheck", "false");
+      searchBox.setAttribute("autocomplete", "off");
 
       // Accessibility attributes: list box
       Element commandList = commandList_.getElement();
       ElementIds.assignElementId(commandList, ElementIds.COMMAND_PALETTE_LIST);
       Roles.getListboxRole().set(commandList);
-      Roles.getListboxRole().setAriaLabelProperty(commandList, "Matching commands");
+      Roles.getListboxRole().setAriaLabelProperty(commandList, "Matching commands and settings");
 
       // Accessibility attributes: search box
       ElementIds.assignElementId(searchBox_, ElementIds.COMMAND_PALETTE_SEARCH);
       Roles.getComboboxRole().setAriaOwnsProperty(searchBox, Id.of(commandList_.getElement()));
       Roles.getComboboxRole().set(searchBox);
-      Roles.getComboboxRole().setAriaLabelProperty(searchBox, "Search for and run a command");
+      Roles.getComboboxRole().setAriaLabelProperty(searchBox, "Search for commands and settings");
       Roles.getComboboxRole().setAriaExpandedState(searchBox, ExpandedValue.TRUE);
       A11y.setARIAAutocomplete(searchBox_, "list");
       
@@ -139,7 +126,7 @@ public class CommandPalette extends Composite
       // If we have already populated, compute the page size. Do this deferred
       // so that a render pass occurs (otherwise the page size computations will
       // take place with unrendered elements)
-      if (entries_.size() > 0)
+      if (commandList_.getWidgetCount() > 0)
       {
          Scheduler.get().scheduleDeferred(() ->
          {
@@ -147,82 +134,19 @@ public class CommandPalette extends Composite
          });
       }
    }
+   
+   @Override
+   public void onDetach()
+   {
+      // Clean up event handlers
+      registrations_.removeHandler();
+   }
 
    /**
     * Performs a one-time population of the palette with all available commands.
     */
    private void populate()
    {
-      // Add all of the application commands
-      KeyMap map = shortcuts_.getKeyMap(KeyMapType.APPLICATION);
-      Map<String, AppCommand> allCommands = commands_.getCommands();
-      for (String command: allCommands.keySet())
-      {
-         if (command.contains("Mru") || command.startsWith("mru") || 
-               command.contains("Dummy"))
-         {
-            // MRU entries and dummy commands should not appear in the palette
-            continue;
-         }
-         
-         // Ensure the command is visible. It'd be nice to show all commands in
-         // the palette for the purposes of examining key bindings, discovery,
-         // etc., but invisible commands are generally meaningless in the 
-         // current context.
-         AppCommand appCommand = allCommands.get(command);
-         if (!appCommand.isVisible())
-         {
-            continue;
-         }
-
-         // Look up the key binding for this command
-         List<KeySequence> keys = map.getBindings(command);
-         
-         // Create an application command entry
-         CommandPaletteEntry entry = new AppCommandPaletteEntry(appCommand, keys);
-         if (StringUtil.isNullOrEmpty(entry.getLabel()))
-         {
-            // Ignore app commands which have no label
-            continue;
-         }
-         entries_.add(entry);
-      }
-      
-      // Add all of the R addin commands
-      map = shortcuts_.getKeyMap(KeyMapType.ADDIN);
-      AddinExecutor executor = new AddinExecutor();
-      for (String addin: JsUtil.asIterable(addins_.keys()))
-      {
-         RAddin rAddin = addins_.get(addin);
-         
-         // Look up the key binding for this addin
-         List<KeySequence> keys = map.getBindings(rAddin.getId());
-         CommandPaletteEntry entry = new RAddinCommandPaletteEntry(rAddin, executor, keys);
-         if (StringUtil.isNullOrEmpty(entry.getLabel()))
-         {
-            // Ignore addin commands which have no label
-            continue;
-         }
-         entries_.add(entry);
-      }
-      
-      // add commands from additional sources
-      List<CommandPaletteEntry> extraEntries = extraEntriesSource_.getCommandPaletteEntries();
-      if (extraEntries != null)
-         entries_.addAll(extraEntries);
-      
-      // Invoke commands when they're clicked on
-      for (CommandPaletteEntry entry: entries_)
-      {
-         entry.sinkEvents(Event.ONCLICK);
-         entry.addHandler((evt) -> {
-            host_.dismiss();
-            entry.invoke();
-         }, ClickEvent.getType());
-         commandList_.add(entry);
-      }
-
-      
       // Handle most keystrokes on KeyUp so that the contents of the text box
       // have already been changed
       searchBox_.addKeyUpHandler((evt) ->
@@ -232,11 +156,6 @@ public class CommandPalette extends Composite
             // Pressing ESC dismisses the host (removing the palette popup)
             host_.dismiss();
          }
-         else if (evt.getNativeKeyCode() == KeyCodes.KEY_ENTER)
-         {
-            // Enter runs the selected command
-            invokeSelection();
-         }
          else
          {
             // Just update the filter if the text has changed
@@ -244,7 +163,8 @@ public class CommandPalette extends Composite
             if (!StringUtil.equals(searchText_, searchText))
             {
                searchText_ = searchText;
-               applyFilter();
+               needles_ = searchBox_.getText().toLowerCase().split("\\s+");
+               applyFilter_.nudge();
             }
          }
       });
@@ -263,6 +183,12 @@ public class CommandPalette extends Composite
             evt.preventDefault();
             return;
          }
+         else if (evt.getNativeKeyCode() == KeyCodes.KEY_ENTER)
+         {
+            // Enter runs the selected command
+            invokeSelection();
+         }
+
 
          // Ignore modified arrows so that e.g. Shift Up/Down to select the
          // contents of the textbox work as expected
@@ -296,6 +222,9 @@ public class CommandPalette extends Composite
          }
       });
       
+      // Render the first page of elements
+      renderNextPage();
+      
       // If we are already attached to the DOM at this point, compute the page
       // size for scrolling by pages. 
       if (attached_)
@@ -313,8 +242,9 @@ public class CommandPalette extends Composite
    private void computePageSize()
    {
       // Find the first visible entry (we can't measure an invisible one)
-      for (CommandPaletteEntry entry: entries_)
+      for (CommandPaletteItem item: items_)
       {
+         Widget entry = item.asWidget();
          if (entry.isVisible())
          {
             // Compute the page size: the total size of the scrolling area
@@ -344,44 +274,25 @@ public class CommandPalette extends Composite
     */
    private void applyFilter()
    {
-      int matches = 0;
+      // Clear the command list and render marker in preparation for a re-render
+      commandList_.clear();
+      renderedItem_ = 0;
+      if (selected_ >= 0)
+         visible_.get(selected_).setSelected(false);
+      visible_.clear();
 
-      // Split the search text into a series of lowercase words. This provides a
-      // kind of partial fuzzy matching, so that e.g., "new py" matches the command
-      // "Create a new Python script".
-      String[] needles = searchBox_.getText().toLowerCase().split("\\s+");
+      selected_ = -1;
       
-      for (CommandPaletteEntry entry: entries_)
-      {
-         String hay = entry.getLabel().toLowerCase();
-         boolean matched = true;
-         for (String needle: needles)
-         {
-            // The haystack doesn't have this needle, so this entry does not match.
-            if (!hay.contains(needle))
-            {
-               entry.setVisible(false);
-               matched = false;
-               break;
-            }
-         }
-
-         // We matched all needles, so highlight and show the entry.
-         if (matched)
-         {
-            entry.setSearchHighlight(needles);
-            entry.setVisible(true);
-            matches++;
-         }
-      }
-      
-      // If not searching for anything, then searching for everything.
-      if (needles.length == 0)
-      {
-         matches = entries_.size();
-      }
-      
-      updateSelection();
+      // Render the next page of command entries
+      renderNextPage();
+   }
+   
+   /**
+    * Runs when the render pass is completed.
+    */
+   private void completeRender()
+   {
+      int matches = commandList_.getWidgetCount();
       
       // Show "no results" message if appropriate
       if (matches == 0 && !noResults_.isVisible())
@@ -403,23 +314,6 @@ public class CommandPalette extends Composite
    }
    
    /**
-    * Selects the topmost search result in the palette
-    */
-   public void updateSelection()
-   {
-      for (int i = 0; i < entries_.size(); i++)
-      {
-         if (!entries_.get(i).isVisible())
-         {
-            continue;
-         }
-         
-         selectNewCommand(i);
-         break;
-      }
-   }
-   
-   /**
     * Changes the selected palette entry in response to user input.
     * 
     * @param units The number of units to move selection (negative to go
@@ -427,39 +321,23 @@ public class CommandPalette extends Composite
     */
    private void moveSelection(int units)
    {
-      // Select the first visible command in the given direction
-      CommandPaletteEntry candidate = null;
+      // Identify target element
+      int target = selected_ + units;
 
-      int direction = units / Math.abs(units);  // -1 (backwards) or 1 (forwards)
-      int consumed = 0; // Number of units consumed to goal
-      int target = 0;   // Target element to select
-      int pass = 1;     // Number of entries passed so far
-      int viable = -1;  // The last visited viable (selectable) entry
-      do
+      // Clip to boundaries of display
+      if (target < 0)
       {
-         target = selected_ + (direction * pass++);
-         if (target < 0 || target >= entries_.size())
-         {
-            // Request to navigate outside the boundaries of the palette
-            break;
-         }
-         candidate = entries_.get(target);
-
-         if (candidate.isVisible())
-         {
-            // This entry is visible, so it counts against our goal.
-            consumed += direction;
-            viable = target;
-         }
+         target = 0;
       }
-      while (consumed != units);
-      
-      // Select a viable entry if we found one; this may not be the desired
-      // element but will be as far as we could move (e.g. requested to move
-      // 20 units but had to stop at 15).
-      if (viable >= 0)
+      else if (target >= visible_.size())
       {
-         selectNewCommand(viable);
+         target = visible_.size() - 1;
+      }
+
+      // Select new command if we moved
+      if (target != selected_)
+      {
+         selectNewCommand(target);
       }
    }
    
@@ -469,7 +347,6 @@ public class CommandPalette extends Composite
    public void focus()
    {
       searchBox_.setFocus(true);
-      updateSelection();
    }
    
    /**
@@ -479,8 +356,11 @@ public class CommandPalette extends Composite
    {
       if (selected_ >= 0)
       {
-         host_.dismiss();
-         entries_.get(selected_).invoke();
+         if (visible_.get(selected_).dismissOnInvoke())
+         {
+            host_.dismiss();
+         }
+         visible_.get(selected_).invoke(InvocationSource.Keyboard);
       }
    }
    
@@ -498,33 +378,148 @@ public class CommandPalette extends Composite
       // Clear previous selection, if any
       if (selected_ >= 0)
       {
-         entries_.get(selected_).setSelected(false);
+         visible_.get(selected_).setSelected(false);
       }
       
       // Set new selection
       selected_ = target;
-      CommandPaletteEntry selected = entries_.get(selected_);
+      CommandPaletteItem selected = visible_.get(selected_);
       selected.setSelected(true);
-      selected.getElement().scrollIntoView();
+      selected.asWidget().getElement().scrollIntoView();
 
       // Update active descendant for accessibility
       Roles.getComboboxRole().setAriaActivedescendantProperty(
-            searchBox_.getElement(), Id.of(selected.getElement()));
+            searchBox_.getElement(), Id.of(selected.asWidget().getElement()));
+   }
+   
+   /**
+    * Renders the next page of search results from the command palette.
+    * 
+    * By far the slowest part of the command palette is the rendering of
+    * individual items into GWT widgets, so doing this all at once would cause
+    * the palette to take several seconds to appear. To make it performant, we
+    * render just a few widgets at a time, letting the browser do a render
+    * pass after each batch. 
+    */
+   private void renderNextPage()
+   {
+      // If we haven't already pulled items from all our sources and we have
+      // less than a page of data left, pull in data from the next source.
+      if (renderedSource_ < sources_.size() &&
+          items_.size() - renderedItem_ < RENDER_PAGE_SIZE)
+      {
+         // Read the next non-null data source
+         List<CommandPaletteItem> items = null;
+         do
+         {
+            items = sources_.get(renderedSource_).getCommandPaletteItems();
+            renderedSource_++;
+         } while (items == null);
+            
+         items_.addAll(items);
+      }
+      
+      // Set initial conditions for render loop
+      int rendered = 0;
+      int idx = renderedItem_;
+
+      // Main render loop; render items until we have rendered a full page
+      while (idx < items_.size() && rendered < RENDER_PAGE_SIZE)
+      {
+         CommandPaletteItem item = items_.get(idx);
+
+         // Render this item if non-null and matches the search keywords, if we
+         // have them
+         if (item != null && (needles_.length == 0 || item.matchesSearch(needles_)))
+         {
+            // Remember whether this item has been rendered
+            boolean isRendered = item.isRendered();
+            
+            // Render the item to a widget (this is the expensive step)
+            Widget widget = item.asWidget();
+            if (widget != null)
+            {
+               // Add and highlight the item
+               commandList_.add(item.asWidget());
+               visible_.add(item);
+               item.setSearchHighlight(needles_);
+               
+               // If we just added the first widget to the box, select it
+               if (visible_.size() == 1)
+               {
+                  selectNewCommand(0);
+               }
+               rendered++;
+            }
+            
+            // Attach an invocation handler if this is the first time we've
+            // rendered this item
+            if (!isRendered)
+            {
+               registrations_.add(item.addInvokeHandler((evt) ->
+               {
+                  if (evt.getItem().dismissOnInvoke())
+                  {
+                     host_.dismiss();
+                  }
+                  evt.getItem().invoke(InvocationSource.Mouse);
+               }));
+            }
+         }
+         
+         // Advance to next command palette item
+         idx++;
+      }
+      
+      // Save our place so we'll start rendering at the next page
+      renderedItem_ = idx;
+      
+      // If we didn't render everything, schedule another pass
+      if (renderedItem_ < items_.size() || renderedSource_ < sources_.size())
+      {
+         // Don't populate while user is typing as dumping more elements into
+         // the DOM is distracting (plus the additional elements will be
+         // discarded once the timer finishes running)
+         if (!applyFilter_.isRunning())
+         {
+            Scheduler.get().scheduleDeferred(() ->
+            {
+               renderNextPage();
+            });
+         }
+      }
+      else
+      {
+         completeRender();
+      }
    }
    
    private final Host host_;
-   private final ShortcutManager shortcuts_;
-   private final Commands commands_;
-   private final RAddins addins_;
-   private final CommandPaletteEntrySource extraEntriesSource_;
+   private final List<CommandPaletteEntrySource> sources_;
+   private final List<CommandPaletteItem> items_;
+   private final List<CommandPaletteItem> visible_;
+   private final HandlerRegistrations registrations_;
    private int selected_;
-   private List<CommandPaletteEntry> entries_;
    private String searchText_;
+   private String[] needles_;
    private boolean attached_;
    private int pageSize_;
+   
+   private int renderedItem_; // The index of the last rendered item
+   private int renderedSource_ = 0; // The index of the last rendered data source
+   private final int RENDER_PAGE_SIZE = 50;
+
+   DebouncedCommand applyFilter_ = new DebouncedCommand(100)
+   {
+      @Override
+      protected void execute()
+      {
+         applyFilter();
+      }
+   };
 
    @UiField public TextBox searchBox_;
-   @UiField public FlowPanel commandList_;
+   @UiField public HTMLPanel commandList_;
    @UiField AriaLiveStatusWidget resultsCount_;
    @UiField HTMLPanel noResults_;
    @UiField ScrollPanel scroller_;

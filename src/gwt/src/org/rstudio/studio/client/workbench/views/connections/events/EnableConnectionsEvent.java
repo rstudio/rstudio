@@ -18,16 +18,15 @@ import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 
 public class EnableConnectionsEvent extends GwtEvent<EnableConnectionsEvent.Handler>
-{  
+{
    public interface Handler extends EventHandler
    {
       void onEnableConnections(EnableConnectionsEvent event);
    }
-   
+
    public EnableConnectionsEvent()
    {
    }
-  
 
    @Override
    public Type<Handler> getAssociatedType()
@@ -41,5 +40,5 @@ public class EnableConnectionsEvent extends GwtEvent<EnableConnectionsEvent.Hand
       handler.onEnableConnections(this);
    }
 
-   public static final Type<Handler> TYPE = new Type<Handler>();
+   public static final Type<Handler> TYPE = new Type<>();
 }

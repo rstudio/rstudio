@@ -12,16 +12,12 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-package org.rstudio.studio.client.application.ui;
+package org.rstudio.studio.client.palette.ui;
 
-import java.util.List;
-
-import org.rstudio.core.client.BrowseCap;
 import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.SafeHtmlUtil;
 import org.rstudio.core.client.StringUtil;
-import org.rstudio.core.client.command.KeyCombination;
-import org.rstudio.core.client.command.KeySequence;
+import org.rstudio.studio.client.palette.model.CommandPaletteItem;
 
 import com.google.gwt.aria.client.Roles;
 import com.google.gwt.aria.client.SelectedValue;
@@ -31,6 +27,7 @@ import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.Composite;
+import com.google.gwt.user.client.ui.HTMLPanel;
 import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.Widget;
 
@@ -53,22 +50,13 @@ public abstract class CommandPaletteEntry extends Composite
       String disabled();
    }
 
-   public CommandPaletteEntry(List<KeySequence> keys)
+   public CommandPaletteEntry(CommandPaletteItem item)
    {
       initWidget(uiBinder.createAndBindUi(this));
-      keys_ = keys;
       selected_ = false;
-      
+      item_ = item;
       Roles.getOptionRole().set(getElement());
       Roles.getOptionRole().setAriaSelectedState(getElement(), SelectedValue.FALSE);
-   }
-
-   private void appendKey(SafeHtmlBuilder b, String key)
-   {
-      b.appendHtmlConstant("<span class=\"" + 
-             styles_.keyboard() + "\">");
-      b.appendHtmlConstant(key);
-      b.appendHtmlConstant("</span>");
    }
 
    public void initialize()
@@ -79,8 +67,10 @@ public abstract class CommandPaletteEntry extends Composite
          // Assign a unique element ID (for accessibility tree). There's no need
          // to do this if there's no ID as we'll ultimately discard widgets
          // which don't have an addressable ID.
-         ElementIds.assignElementId(getElement(), ElementIds.COMMAND_ENTRY_PREFIX + 
-               ElementIds.idSafeString(id));
+         String base = ElementIds.COMMAND_ENTRY_PREFIX + getScope() + "_" +
+               ElementIds.idSafeString(id);
+         ElementIds.assignElementId(getElement(), base);
+         ElementIds.assignElementId(name_.getElement(), base + "_label");
       }
 
       // Apply command label
@@ -93,33 +83,7 @@ public abstract class CommandPaletteEntry extends Composite
          Roles.getOptionRole().setAriaDisabledState(getElement(), true);
       }
 
-      SafeHtmlBuilder b = new SafeHtmlBuilder();
-      for (KeySequence k: keys_)
-      {
-         List<KeyCombination> combos = k.getData();
-         for (int i = 0; i < combos.size(); i++)
-         {
-            KeyCombination combo = combos.get(i);
-            if (combo.isCtrlPressed())
-               appendKey(b, "Ctrl");
-            if (combo.isAltPressed())
-               appendKey(b, "Alt");
-            if (combo.isShiftPressed())
-               appendKey(b, "Shift");
-            if (combo.isMetaPressed())
-               appendKey(b, BrowseCap.hasMetaKey() ? "&#8984;" : "Cmd");
-            appendKey(b, combo.key());
-            
-            // Is this a multi-key sequence?
-            if (i < (combos.size() - 1))
-            {
-               b.appendEscaped(",");
-            }
-         }
-         break;
-      }
-      shortcut_.getElement().setInnerSafeHtml(b.toSafeHtml());
-      
+      // Apply context
       String context = getContext();
       if (StringUtil.isNullOrEmpty(context))
       {
@@ -130,6 +94,9 @@ public abstract class CommandPaletteEntry extends Composite
          context_.getElement().setInnerHTML(context);
          context_.setVisible(true);
       }
+      
+      // Insert invoker
+      invoker_.add(getInvoker());
    }
    
    /*
@@ -173,17 +140,63 @@ public abstract class CommandPaletteEntry extends Composite
       }
    }
    
+   /**
+    * Get the label for the entry.
+    * 
+    * @return The entry's label.
+    */
    abstract public String getLabel();
-   abstract public void invoke();
+
+   /**
+    * Get the entry's ID.
+    * 
+    * @return A unique ID referring to the entry.
+    */
    abstract public String getId();
-   abstract public String getContext();
-   abstract public boolean enabled();
    
-   private final List<KeySequence> keys_;
+   /**
+    * Get the entry's scope. This is not displayed to users; it is a short
+    * alphanumeric string used to ensure IDs are unique across different kinds
+    * of entries which may have their own ID systems.
+    * 
+    * @return The entry's scope.
+    */
+   abstract public String getScope();
+
+   /**
+    * Get the entry's context. This is displayed to the user to help
+    * disambiguate similar-looking entries.
+    * 
+    * @return The entry's context.
+    */
+   abstract public String getContext();
+
+   /**
+    * Is the entry currently enabled?
+    * 
+    * @return Whether the entry is enabled.
+    */
+   abstract public boolean enabled();
+
+   /**
+    * Get a widget that can be used to invoke the entry.
+    * 
+    * @return A widget to invoke the entry.
+    */
+   abstract public Widget getInvoker();
+   
+   /**
+    * Dismiss after invoke?
+    * 
+    * @return Whether to dismiss the palette after invoking the entry.
+    */
+   abstract public boolean dismissOnInvoke();
+
    private boolean selected_;
+   protected final CommandPaletteItem item_;
 
    @UiField public Label context_;
    @UiField public Label name_;
-   @UiField public Label shortcut_;
+   @UiField public HTMLPanel invoker_;
    @UiField public Styles styles_;
 }

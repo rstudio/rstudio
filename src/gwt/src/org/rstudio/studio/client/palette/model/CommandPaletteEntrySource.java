@@ -1,5 +1,5 @@
 /*
- * ShowEditorHandler.java
+ * CommandPaletteEntrySource.java
  *
  * Copyright (C) 2020 by RStudio, PBC
  *
@@ -12,11 +12,16 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-package org.rstudio.studio.client.workbench.views.edit.events;
+package org.rstudio.studio.client.palette.model;
 
-import com.google.gwt.event.shared.EventHandler;
+import java.util.List;
 
-public interface ShowEditorHandler extends EventHandler
-{
-   void onShowEditor(ShowEditorEvent event);
+public interface CommandPaletteEntrySource
+{ 
+   /**
+    * A list of all of the elements to be rendered as entries in the palette.
+    * 
+    * @return A list of elements. 
+    */
+   List<CommandPaletteItem> getCommandPaletteItems();
 }

@@ -50,6 +50,11 @@ public abstract class DebouncedCommand
       suspended_ = false;
    }
    
+   public boolean isRunning()
+   {
+      return timer_.isRunning();
+   }
+   
    protected abstract void execute();
    
    private final Timer timer_;
