@@ -601,11 +601,6 @@ Error removeAllBreakpoints(const json::JsonRpcRequest&,
 
 } // anonymous namespace
 
-bool haveSrcrefAttribute()
-{
-   return true;
-}
-
 bool haveAdvancedStepCommands()
 {
    bool haveCommands = false;
