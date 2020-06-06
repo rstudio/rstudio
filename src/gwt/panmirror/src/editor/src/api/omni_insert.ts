@@ -24,6 +24,6 @@ export interface OmniInserter {
   keywords?: string[];
   description: string;
   group: string; 
-  image: string;
+  image: (dark: boolean) => string;
   command: CommandFn;
 }

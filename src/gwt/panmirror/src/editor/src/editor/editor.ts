@@ -268,13 +268,18 @@ export class Editor {
     };
 
     // provide context defaults
+    const defaultImages = defaultEditorUIImages();
     context = {
       ...context,
       ui: {
         ...context.ui,
         images: {
-          ...defaultEditorUIImages(),
+          ...defaultImages,
           ...context.ui.images,
+          omni_insert: {
+            ...defaultImages.omni_insert,
+            ...context.ui.images
+          }
         },
       },
     };

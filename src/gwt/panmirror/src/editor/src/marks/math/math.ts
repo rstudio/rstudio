@@ -29,7 +29,7 @@ import { kCodeText } from '../../api/code';
 import { MarkInputRuleFilter } from '../../api/input_rule';
 import { EditorEvents } from '../../api/events';
 
-import { InsertInlineMathCommand, InsertDisplayMathCommand, insertMath } from './math-commands';
+import { InsertInlineMathCommand, InsertDisplayMathCommand, insertMath, inlineMathOmniInsert, displayMathOmniInsert } from './math-commands';
 import { mathAppendMarkTransaction } from './math-transaction';
 import { mathHighlightPlugin } from './math-highlight';
 import { MathPreviewPlugin } from './math-preview';
@@ -239,6 +239,13 @@ const extension = (
 
     commands: (_schema: Schema) => {
       return [new InsertInlineMathCommand(), new InsertDisplayMathCommand(!singleLineDisplayMath)];
+    },
+
+    omniInserters: (schema: Schema) => {
+      return [
+        inlineMathOmniInsert(schema, ui), 
+        displayMathOmniInsert(schema, ui, !singleLineDisplayMath)
+      ];
     },
 
     appendMarkTransaction: (_schema: Schema) => {

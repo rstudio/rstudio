@@ -27,12 +27,19 @@ import heading2Image from './images/omni_insert/heading2.png';
 import heading2DarkImage from './images/omni_insert/heading2_dark.png';
 import heading3Image from './images/omni_insert/heading3.png';
 import heading3DarkImage from './images/omni_insert/heading3_dark.png';
+import heading4Image from './images/omni_insert/heading4.png';
+import heading4DarkImage from './images/omni_insert/heading4_dark.png';
 import bulletListImage from './images/omni_insert/bullet_list.png';
 import bulletListDarkImage from './images/omni_insert/bullet_list_dark.png';
 import orderedListImage from './images/omni_insert/ordered_list.png';
 import orderedListDarkImage from './images/omni_insert/ordered_list_dark.png';
 import blockquoteImage from './images/omni_insert/blockquote.png';
 import blockquoteDarkImage from './images/omni_insert/blockquote_dark.png';
+import mathInlineImage from './images/omni_insert/math_inline.png';
+import mathInlineDarkImage from './images/omni_insert/math_inline_dark.png';
+import mathDisplayImage from './images/omni_insert/math_display.png';
+import mathDisplayDarkImage from './images/omni_insert/math_display_dark.png';
+
 
 export function defaultEditorUIImages(): EditorUIImages {
   return {
@@ -49,12 +56,18 @@ export function defaultEditorUIImages(): EditorUIImages {
       heading2_dark: heading2DarkImage,
       heading3: heading3Image,
       heading3_dark: heading3DarkImage,
+      heading4: heading4Image,
+      heading4_dark: heading4DarkImage,
       bullet_list: bulletListImage,
       bullet_list_dark: bulletListDarkImage,
       ordered_list: orderedListImage,
       ordered_list_dark: orderedListDarkImage,
       blockquote: blockquoteImage,
-      blockquote_dark: blockquoteDarkImage 
-    }
+      blockquote_dark: blockquoteDarkImage,
+      math_inline: mathInlineImage,
+      math_inline_dark: mathInlineDarkImage,
+      math_display: mathDisplayImage,
+      math_display_dark: mathDisplayDarkImage,
+    },
   };
 }

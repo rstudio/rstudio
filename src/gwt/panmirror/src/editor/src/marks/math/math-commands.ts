@@ -21,6 +21,10 @@ import { ProsemirrorCommand, EditorCommandId } from '../../api/command';
 import { canInsertNode } from '../../api/node';
 
 import { MathType, delimiterForType } from './math';
+import { Schema } from 'prosemirror-model';
+import { OmniInserter } from '../../api/omni_insert';
+import { EditorUIImages } from '../../api/ui-images';
+import { EditorUI } from '../../api/ui';
 
 export class InsertInlineMathCommand extends ProsemirrorCommand {
   constructor() {
@@ -32,6 +36,30 @@ export class InsertDisplayMathCommand extends ProsemirrorCommand {
   constructor(allowNewline: boolean) {
     super(EditorCommandId.DisplayMath, [], insertMathCommand(MathType.Display, allowNewline));
   }
+}
+
+export function inlineMathOmniInsert(schema: Schema, ui: EditorUI) : OmniInserter {
+  return {
+    id: EditorCommandId.InlineMath,
+    name: ui.context.translateText("Inline Math"),
+    keywords: [ui.context.translateText('equation')],
+    description: ui.context.translateText("Math included within a line or paragraph"),
+    group: ui.context.translateText('Content'),
+    image: dark => dark ? ui.images.omni_insert?.math_inline_dark! : ui.images.omni_insert?.math_inline!,
+    command: insertMathCommand(MathType.Inline, false)
+  };
+}
+
+export function displayMathOmniInsert(schema: Schema, ui: EditorUI, allowNewline: boolean) : OmniInserter {
+  return {
+    id: EditorCommandId.DisplayMath,
+    name: ui.context.translateText("Display Math"),
+    keywords: [ui.context.translateText('equation')],
+    description: ui.context.translateText("Math set apart from the main text"),
+    group: ui.context.translateText('Content'),
+    image: dark => dark ? ui.images.omni_insert?.math_display_dark! : ui.images.omni_insert?.math_display!,
+    command: insertMathCommand(MathType.Display, allowNewline)
+  };
 }
 
 function insertMathCommand(type: MathType, allowNewline: boolean) {

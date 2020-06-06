@@ -27,11 +27,17 @@ export interface EditorUIImages {
     heading2_dark?: string;
     heading3?: string;
     heading3_dark?: string;
+    heading4?: string;
+    heading4_dark?: string;
     ordered_list?: string;
     ordered_list_dark?: string;
     bullet_list?: string;
     bullet_list_dark?: string;
     blockquote?: string;
     blockquote_dark?: string;
+    math_inline?: string;
+    math_inline_dark?: string;
+    math_display?: string;
+    math_display_dark?: string;
   };
 }

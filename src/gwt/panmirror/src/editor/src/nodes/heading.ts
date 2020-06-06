@@ -138,14 +138,7 @@ const extension = (
       ];
     },
 
-    omniInserters: (schema: Schema,  ui: EditorUI) => {
-      return [
-        headingOmniInserter(schema, ui, EditorCommandId.Heading1, 1, ui.context.translateText('Top level heading')),
-        headingOmniInserter(schema, ui, EditorCommandId.Heading2, 2, ui.context.translateText('Section heading')),
-        headingOmniInserter(schema, ui, EditorCommandId.Heading3, 3, ui.context.translateText('Sub-section heading')),
-        headingOmniInserter(schema, ui, EditorCommandId.Heading4, 4, ui.context.translateText('Smaller heading'))
-      ];
-    },
+    omniInserters: headingOmniInserters,
 
     inputRules: (schema: Schema) => {
       return [
@@ -181,12 +174,42 @@ class HeadingCommand extends ProsemirrorCommand {
   }
 }
 
+function headingOmniInserters(schema: Schema,  ui: EditorUI) {
+  return [
+    headingOmniInserter(
+      schema, ui, 
+      EditorCommandId.Heading1, 1, 
+      ui.context.translateText('Top level heading'),
+      [ui.images.omni_insert?.heading1!, ui.images.omni_insert?.heading1_dark!]
+    ),
+    headingOmniInserter(
+      schema, ui, 
+      EditorCommandId.Heading2, 2, 
+      ui.context.translateText('Section heading'),
+      [ui.images.omni_insert?.heading2!, ui.images.omni_insert?.heading2_dark!]
+    ),
+    headingOmniInserter(
+      schema, ui, 
+      EditorCommandId.Heading3, 3, 
+      ui.context.translateText('Sub-section heading'),
+      [ui.images.omni_insert?.heading3!, ui.images.omni_insert?.heading3_dark!]
+    ),
+    headingOmniInserter(
+      schema, ui, 
+      EditorCommandId.Heading4, 4, 
+      ui.context.translateText('Smaller heading'),
+      [ui.images.omni_insert?.heading4!, ui.images.omni_insert?.heading4_dark!]
+    )
+  ];
+}
+
 function headingOmniInserter(
   schema: Schema, 
   ui: EditorUI, 
   id: string,
   level: number, 
-  description: string
+  description: string,
+  images: [string, string]
 ) : OmniInserter {
   const kHeadingsGroup = ui.context.translateText('Headings');
   const kHeadingPrefix = ui.context.translateText('Heading ');
@@ -195,7 +218,7 @@ function headingOmniInserter(
     name: `${kHeadingPrefix}${level}`,
     description,
     group: kHeadingsGroup,
-    image: '',
+    image: dark => dark ? images[1] : images[0],
     command: headingCommandFn(schema, level)
   };
 }
