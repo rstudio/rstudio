@@ -29,7 +29,6 @@ const extension = {
       spec: {
         inclusive: true,
         noInputRules: true,
-        excludes: '_',
         parseDOM: [
           { tag: "span[class*='omni_insert']" },
         ],
