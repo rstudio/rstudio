@@ -37,10 +37,9 @@ export enum OmniInsertGroup {
   Content = 'Content'
 }
 
-const omniInsertGroupOrder = new Map<OmniInsertGroup, number>();
-omniInsertGroupOrder.set(OmniInsertGroup.Headings, 0);
-omniInsertGroupOrder.set(OmniInsertGroup.Math, 1);
-omniInsertGroupOrder.set(OmniInsertGroup.Content, 2);
+const omniInsertGroupOrder = new Map<string, number>(
+  Object.keys(OmniInsertGroup).map((key, index) => [key, index])
+);
 
 export function omniInsertGroupCompare(a: OmniInsert, b: OmniInsert) {
   return omniInsertGroupOrder.get(a.group)! - omniInsertGroupOrder.get(b.group)!;
