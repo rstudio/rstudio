@@ -238,7 +238,10 @@ const extension = (
     },
 
     commands: (_schema: Schema) => {
-      return [new InsertInlineMathCommand(), new InsertDisplayMathCommand(!singleLineDisplayMath)];
+      return [
+        new InsertInlineMathCommand(ui), 
+        new InsertDisplayMathCommand(ui, !singleLineDisplayMath)
+      ];
     },
 
     appendMarkTransaction: (_schema: Schema) => {

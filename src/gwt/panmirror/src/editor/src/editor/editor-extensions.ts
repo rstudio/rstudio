@@ -25,6 +25,7 @@ import { PandocMark } from '../api/mark';
 import { PandocNode, CodeViewOptions } from '../api/node';
 import { Extension, ExtensionFn } from '../api/extension';
 import { BaseKeyBinding } from '../api/basekeys';
+import { OmniInserter } from '../api/omni_insert';
 import { AppendTransactionHandler, AppendMarkTransactionHandler } from '../api/transaction';
 import { FixupFn } from '../api/fixup';
 import {
@@ -78,6 +79,7 @@ import behaviorPasteText from '../behaviors/paste_text';
 import behaviorBottomPadding from '../behaviors/bottom_padding';
 import behaviorInsertSymbol from '../behaviors/insert_symbol/insert_symbol-plugin-symbol';
 import behaviorInsertSymbolEmoji from '../behaviors/insert_symbol/insert_symbol-plugin-emoji';
+import behaviorOmniInsert from '../behaviors/omni_insert/omni_insert';
 
 // marks
 import markStrikeout from '../marks/strikeout';
@@ -110,7 +112,6 @@ import nodeShortcodeBlock from '../nodes/shortcode_block';
 // extension/plugin factories
 import { codeMirrorPlugins } from '../optional/codemirror/codemirror';
 import { attrEditExtension } from '../behaviors/attr_edit/attr_edit';
-import { completionExtension } from '../behaviors/completion/completion';
 
 export function initExtensions(
   format: EditorFormat,
@@ -161,6 +162,7 @@ export function initExtensions(
     behaviorBottomPadding,
     behaviorInsertSymbol,
     behaviorInsertSymbolEmoji,
+    behaviorOmniInsert,
 
     // nodes
     nodeDiv,
@@ -196,12 +198,17 @@ export function initExtensions(
     manager.register(extensions);
   }
 
-  // additional extensions dervied from other extensions
-  // (e.g. extensions that have registered attr editors)
+  // additional extensions dervied from other extensions (e.g. extensions that have registered attr editors)
+  // note that all of these take a callback to access the manager -- this is so that if an extension earlier
+  // in the chain registers something the later extensions are able to see it 
   manager.register([
+    
+    // bindings to 'Edit Attribute' command and UI adornment
     attrEditExtension(pandocExtensions, manager.attrEditors()),
+    
+    // application of some marks (e.g. code) should cuase reveral of smart quotes
     reverseSmartQuotesExtension(manager.pandocMarks()),
-    completionExtension(manager.completionHandlers(), events)
+
   ]);
 
   // additional plugins derived from extensions
@@ -333,6 +340,21 @@ export class ExtensionManager {
 
   public commands(schema: Schema, ui: EditorUI): readonly ProsemirrorCommand[] {
     return this.collect<ProsemirrorCommand>(extension => extension.commands?.(schema, ui));
+  }
+
+  public omniInserters(schema: Schema, ui: EditorUI) : OmniInserter[] {
+    const omniInserters: OmniInserter[] = [];
+    const commands = this.commands(schema, ui);
+    commands.forEach(command => {
+      if (command.omniInsert) {
+        omniInserters.push({
+          ...command.omniInsert,
+          id: command.id,
+          command: command.execute
+        });
+      }
+    });
+    return omniInserters;
   }
 
   public codeViews() {

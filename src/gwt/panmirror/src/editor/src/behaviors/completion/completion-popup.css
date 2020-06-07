@@ -15,7 +15,7 @@
  */
 
 .pm-completion-popup {
-  padding: 0;
+  padding: 0 !important;
 }
 
 .pm-completion-list {
@@ -36,6 +36,11 @@
 .pm-completion-item {
   vertical-align: middle;
   border: 1px solid transparent;
+}
+
+.pm-completion-no-results {
+  vertical-align: middle;
+  text-align: center;
 }
 
 .pm-completion-item-text {

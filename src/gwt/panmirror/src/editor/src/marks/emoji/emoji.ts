@@ -119,7 +119,7 @@ const extension = (_exts: PandocExtensions, _caps: PandocCapabilities, ui: Edito
       return [
         new InputRule(/(^|[^`]):(\w+):$/, (state: EditorState, match: string[], start: number, end: number) => {
           const emojiName = match[2];
-          const emoji = emojiFromAlias(emojiName);
+          const emoji = emojiFromAlias(emojiName.toLowerCase());
           if (emoji) {
             const emojiWithSkinTone = emojiWithSkinTonePreference(emoji, ui.prefs.emojiSkinTone());
             const schema = state.schema;

@@ -20,17 +20,17 @@ import com.google.gwt.event.shared.GwtEvent;
 public class ConsoleActivateEvent extends GwtEvent<ConsoleActivateEvent.Handler>
 {
    public static final Type<Handler> TYPE = new Type<>();
-  
+
    public interface Handler extends EventHandler
    {
       void onConsoleActivate(ConsoleActivateEvent event);
    }
-   
+
    public ConsoleActivateEvent(boolean focusWindow)
    {
       focusWindow_ = focusWindow;
    }
-   
+
    public boolean getFocusWindow()
    {
       return focusWindow_;
@@ -47,6 +47,6 @@ public class ConsoleActivateEvent extends GwtEvent<ConsoleActivateEvent.Handler>
    {
       handler.onConsoleActivate(this);
    }
-   
+
    private final boolean focusWindow_;
 }

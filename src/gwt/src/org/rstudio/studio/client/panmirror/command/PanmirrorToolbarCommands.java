@@ -19,8 +19,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
-import org.rstudio.studio.client.application.ui.CommandPaletteEntry;
-import org.rstudio.studio.client.application.ui.CommandPaletteEntrySource;
+import org.rstudio.studio.client.palette.model.CommandPaletteEntrySource;
+import org.rstudio.studio.client.palette.model.CommandPaletteItem;
 
 import com.google.gwt.aria.client.MenuitemRole;
 import com.google.gwt.aria.client.Roles;
@@ -73,7 +73,7 @@ public class PanmirrorToolbarCommands implements CommandPaletteEntrySource
       add(PanmirrorCommands.RawBlock, "Raw Block...");
       
       // chunk
-      add(PanmirrorCommands.RmdChunk, "Rmd Chunk", icons.RMD_CHUNK);
+      add(PanmirrorCommands.RmdChunk, "Rmd Chunk");
       add(PanmirrorCommands.ExecuteCurrentRmdChunk, "Run Current Chunk");
       add(PanmirrorCommands.ExecutePreviousRmdChunks, "Run All Chunks Above");
 
@@ -106,6 +106,7 @@ public class PanmirrorToolbarCommands implements CommandPaletteEntrySource
       add(PanmirrorCommands.TableAlignColumnDefault, "Table Align Column:::Default");
      
       // insert
+      add(PanmirrorCommands.OmniInsert, "Any...", icons.OMNI);
       add(PanmirrorCommands.Link, "Link...", icons.LINK);
       add(PanmirrorCommands.RemoveLink, "Remove Link");
       add(PanmirrorCommands.Image, "Image...", icons.IMAGE);
@@ -149,17 +150,20 @@ public class PanmirrorToolbarCommands implements CommandPaletteEntrySource
       }
    }
    
-   public List<CommandPaletteEntry> getCommandPaletteEntries()
+   @Override
+   public List<CommandPaletteItem> getCommandPaletteItems()
    {
-      List<CommandPaletteEntry> entries = new ArrayList<CommandPaletteEntry>();
-      for (PanmirrorCommandUI cmd : commandsUI_.values()) 
+      List<CommandPaletteItem> items = new ArrayList<CommandPaletteItem>();
+      for (PanmirrorCommandUI cmd: commandsUI_.values())
       {
-         if (cmd.isVisible())
-            entries.add(new PanmirrorCommandPaletteEntry(cmd));
+         if (cmd != null && cmd.isVisible())
+         {
+            items.add(new PanmirrorCommandPaletteItem(cmd));
+         }
       }
-      return entries;
+      return items;
    }
-   
+
    private void add(String id, String menuText)
    {
       add(id, menuText, Roles.getMenuitemRole());

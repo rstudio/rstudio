@@ -14,22 +14,22 @@
  */
 
 import { Node as ProsemirrorNode } from 'prosemirror-model';
-import { Plugin, PluginKey, Transaction, Selection, TextSelection,} from 'prosemirror-state';
+import { Plugin, PluginKey, Transaction, Selection, TextSelection, EditorState,} from 'prosemirror-state';
 import { EditorView } from 'prosemirror-view';
 
 import { setTextSelection } from 'prosemirror-utils';
 
-import { CompletionHandler, CompletionResult } from '../../api/completion';
+import { CompletionHandler, CompletionResult, selectionAllowsCompletions, kCompletionDefaultMaxVisible } from '../../api/completion';
 import { EditorEvents } from '../../api/events';
 import { ScrollEvent } from '../../api/event-types';
 
-import { renderCompletionPopup, createCompletionPopup, destroyCompletionPopup } from './completion-popup';
-import { canInsertNode } from '../../api/node';
+import { createCompletionPopup, renderCompletionPopup, destroyCompletionPopup } from './completion-popup';
+import { EditorUI } from '../../api/ui';
 
 
-export function completionExtension(handlers: readonly CompletionHandler[], events: EditorEvents) {
+export function completionExtension(handlers: readonly CompletionHandler[], ui: EditorUI, events: EditorEvents) {
   return {
-    plugins: () => [new CompletionPlugin(handlers, events)]
+    plugins: () => [new CompletionPlugin(handlers, ui, events)]
   };
 }
 
@@ -42,8 +42,14 @@ const key = new PluginKey<CompletionState>('completion');
 
 class CompletionPlugin extends Plugin<CompletionState> {
   
-  private readonly scrollUnsubscribe: VoidFunction;
-  private readonly completionPopup: HTMLElement;
+  // editor ui
+  private readonly ui: EditorUI;
+
+  // editor view
+  private view: EditorView | null = null;
+
+  // popup elemeent
+  private completionPopup: HTMLElement | null = null;
 
   // currently selected index and last set of completions are held as transient
   // state because they can't be derived from the document state (selectedIndex 
@@ -55,7 +61,10 @@ class CompletionPlugin extends Plugin<CompletionState> {
   private completions: any[] = [];
   private selectedIndex = 0;
 
-  constructor(handlers: readonly CompletionHandler[], events: EditorEvents) {
+  // events we need to unsubscribe from
+  private readonly scrollUnsubscribe: VoidFunction;
+
+  constructor(handlers: readonly CompletionHandler[], ui: EditorUI, events: EditorEvents) {
     super({
       key,
       state: {
@@ -63,33 +72,32 @@ class CompletionPlugin extends Plugin<CompletionState> {
         init: () => ({}),
         apply: (tr: Transaction)  => {
 
+          // if we don't have a view then bail
+          if (!this.view) {
+            return {};
+          }
+
           // selection only changes dismiss any active completion
           if (!tr.docChanged && tr.selectionSet) {
             return {};
           }
 
-          // non empty selections don't have completions
-          if (!tr.selection.empty) {
-            return {};
-          }
-
-          // must be able to insert text
-          const schema = tr.doc.type.schema;
-          if (!canInsertNode(tr.selection, schema.nodes.text)) {
-            return {};
-          }
-
-          // must not be in a code mark
-          if (!!schema.marks.code.isInSet(tr.storedMarks || tr.selection.$from.marks())) {
+          // check whether completions are valid here
+          if (!selectionAllowsCompletions(tr.selection)) {
             return {};
           }
           
           // calcluate text before cursor
           const textBefore = completionTextBeforeCursor(tr.selection);
 
+          // if there is no text then don't handle it
+          if (textBefore.length === 0) {
+            return {};
+          }
+
           // check for a handler that can provide completions at the current selection
           for (const handler of handlers) {
-            const result = handler.completions(textBefore, tr.selection, tr.doc);
+            const result = handler.completions(textBefore, tr.doc, tr.selection);
             if (result) {
               return { handler, result };
             }
@@ -102,16 +110,15 @@ class CompletionPlugin extends Plugin<CompletionState> {
       
       view: () => ({
         update: (view: EditorView) => {
-          
-          // clear completion state
-          this.completions = [];
-          this.selectedIndex = 0;
 
           // increment version
           this.version++;
 
-          // render and show completions if we have them
-          this.updateCompletions(view).then(this.showCompletions);
+          // set view
+          this.view = view;
+          
+          // update completions
+          this.updateCompletions(view);
         
         },
 
@@ -119,15 +126,21 @@ class CompletionPlugin extends Plugin<CompletionState> {
 
           // unsubscribe from events
           this.scrollUnsubscribe();
-          window.document.removeEventListener('focusin', this.hideCompletions);
+          window.document.removeEventListener('focusin', this.hideCompletionPopup);
 
           // tear down the popup
-          destroyCompletionPopup(this.completionPopup);
+          this.hideCompletionPopup();
 
         },
       }),
 
       props: {
+
+        decorations: (state: EditorState) => {
+          const pluginState = key.getState(state);
+          return pluginState?.result?.decorations;
+        },
+
         handleDOMEvents: {
           keydown: (view: EditorView, event: Event) => {
             const kbEvent = event as KeyboardEvent;
@@ -137,12 +150,11 @@ class CompletionPlugin extends Plugin<CompletionState> {
             if (this.completionsActive()) {
               switch(kbEvent.key) {
                 case 'Escape':
-                  this.hideCompletions();
+                  this.dismissCompletions();
                   handled = true;
                   break;
                 case 'Enter':
                   this.insertCompletion(view, this.selectedIndex);
-                  this.hideCompletions();
                   handled = true;
                   break;
                 case 'ArrowUp':
@@ -152,6 +164,16 @@ class CompletionPlugin extends Plugin<CompletionState> {
                   break;
                 case 'ArrowDown':
                   this.selectedIndex = Math.min(this.selectedIndex + 1, this.completions.length - 1);
+                  this.renderCompletions(view);
+                  handled = true;
+                  break;
+                case 'PageUp':
+                  this.selectedIndex = Math.max(this.selectedIndex - this.completionPageSize(), 0);
+                  this.renderCompletions(view);
+                  handled = true;
+                  break;
+                case 'PageDown':
+                  this.selectedIndex = Math.min(this.selectedIndex + this.completionPageSize(), this.completions.length - 1);
                   this.renderCompletions(view);
                   handled = true;
                   break;
@@ -171,21 +193,16 @@ class CompletionPlugin extends Plugin<CompletionState> {
       }
     });
 
-    // bind callback methods
-    this.showCompletions = this.showCompletions.bind(this);
-    this.hideCompletions = this.hideCompletions.bind(this);
-   
-    // hide completions when we scroll or the focus changes
-    this.scrollUnsubscribe = events.subscribe(ScrollEvent, this.hideCompletions);
-    window.document.addEventListener('focusin', this.hideCompletions);
+    // capture reference to ui
+    this.ui = ui;
 
-    // create the popup, add it, and make it initially hidden
-    this.completionPopup = createCompletionPopup();
-    window.document.body.appendChild(this.completionPopup);
-    this.hideCompletions();
+    // hide completions when we scroll or the focus changes
+    this.hideCompletionPopup = this.hideCompletionPopup.bind(this);
+    this.scrollUnsubscribe = events.subscribe(ScrollEvent, this.hideCompletionPopup);
+    window.document.addEventListener('focusin', this.hideCompletionPopup);
   }
 
-  private updateCompletions(view: EditorView) : Promise<boolean> {
+  private updateCompletions(view: EditorView) {
 
     const state = key.getState(view.state);
     
@@ -196,7 +213,7 @@ class CompletionPlugin extends Plugin<CompletionState> {
       const requestVersion = this.version;
 
       // request completions
-      return state.result!.completions.then(completions => {
+      return state.result!.completions(view.state).then(completions => {
 
         // if the version has incremented since the request then return false
         if (this.version !== requestVersion) {
@@ -204,15 +221,18 @@ class CompletionPlugin extends Plugin<CompletionState> {
         }
          
         // save completions 
-        this.completions = completions;
+        this.setCompletions(completions);
 
         // render them
-        return this.renderCompletions(view);
+        this.renderCompletions(view);
 
       });
-     
+
     } else {
-      return Promise.resolve(false);
+
+      this.setCompletions([]);
+      this.hideCompletionPopup();
+
     }
   }
 
@@ -220,25 +240,36 @@ class CompletionPlugin extends Plugin<CompletionState> {
 
     const state = key.getState(view.state);
 
-    if (state?.handler && this.completions.length > 0) {
+    if (state && state.handler && (this.completions.length > 0 || !state.handler.view.hideNoResults)) {
       const props = {
         handler: state.handler!,
         pos: state.result!.pos,
         completions: this.completions,
         selectedIndex: this.selectedIndex,
+        noResults: this.ui.context.translateText('No Results'),
         onClick: (index: number) => {
           this.insertCompletion(view, index);
-          this.hideCompletions();
         },
         onHover: (index: number) => {
           this.selectedIndex = index;
           this.renderCompletions(view);
         }
       };
+      
+      // create the completion popup if we need to
+      if (this.completionPopup === null) {
+        this.completionPopup = createCompletionPopup();
+        window.document.body.appendChild(this.completionPopup);
+      }
+
+      // render
       renderCompletionPopup(view, props, this.completionPopup);
-      return true;
+
     } else {
-      return false;
+
+      // hide
+      this.hideCompletionPopup();
+    
     }
   }
 
@@ -248,38 +279,89 @@ class CompletionPlugin extends Plugin<CompletionState> {
     index = index || this.selectedIndex;
 
     const state = key.getState(view.state);
-    if (state?.handler) {
-
-      // create transaction
-      const tr = view.state.tr;
+    if (state && state.handler) {
         
-      // get replacement 
+      // perform replacement 
       const result = state.result!;
-      const replacement = state.handler.replacement(view.state.schema, this.completions[index]);
-      const node = replacement instanceof ProsemirrorNode ? replacement : view.state.schema.text(replacement);
 
-      // perform replacement
-      tr.setSelection(new TextSelection(tr.doc.resolve(result.pos), view.state.selection.$head));
-      tr.replaceSelectionWith(node, false); // TODO: JJA needs to look into this
-      setTextSelection(tr.selection.to)(tr);
-     
-      // dispach
-      view.dispatch(tr);
+      // check low level handler first
+      if (state.handler.replace) {
+
+        // execute replace
+        state.handler.replace(view, result.pos, this.completions[index]);
+    
+      // use higher level handler
+      } else if (state.handler.replacement) {
+
+        // get replacement from handler
+        const replacement = state.handler.replacement(view.state.schema, this.completions[index]);
+        if (replacement) {
+
+          // ensure we have a node
+          const node = replacement instanceof ProsemirrorNode ? replacement : view.state.schema.text(replacement);
+
+          // perform replacement
+          const tr = view.state.tr;
+          tr.setSelection(new TextSelection(tr.doc.resolve(result.pos), view.state.selection.$head));
+          tr.replaceSelectionWith(node, true);
+          setTextSelection(tr.selection.to)(tr);
+          view.dispatch(tr);
+        }
+        
+      }
+
+      // set focus
       view.focus();
+    }
 
+    this.hideCompletionPopup();
+
+  }
+
+  // explicit user dismiss of completion (e.g. Esc key)
+  private dismissCompletions() {
+    
+    // call lower-level replace on any active handler (w/ null). this gives
+    // them a chance to dismiss any artifacts that were explicitly inserted
+    // to trigger the handler (e.g. a cmd+/ for omni-insert)
+    if (this.view) {
+      const state = key.getState(this.view.state);
+      if (state?.result && state.handler) {
+        if (state.handler.replace) {
+          state.handler.replace(this.view, state.result.pos, null);
+        } else if (state.handler.replacement) {
+          state.handler.replacement(this.view.state.schema, null);
+        }
+      }
+    }
+
+    this.hideCompletionPopup();
+  }
+
+  private hideCompletionPopup() {
+    this.setCompletions([]);
+    if (this.completionPopup) {
+      destroyCompletionPopup(this.completionPopup);
+      this.completionPopup = null;
     }
   }
 
-  private showCompletions(show: boolean) {
-    this.completionPopup.style.display =  show ? '' : 'none';
-  }
-
-  private hideCompletions() {
-    this.showCompletions(false);
-  }
-
   private completionsActive() {
-    return this.completionPopup.style.display !== 'none';
+    return !!this.completionPopup;
+  }
+
+  private setCompletions(completions: any[]) {
+    this.completions = completions;
+    this.selectedIndex = 0;
+  }
+
+  private completionPageSize() {
+    if (this.view) {
+      const state = key.getState(this.view.state);
+      return state?.handler?.view.maxVisible || kCompletionDefaultMaxVisible;
+    } else {
+      return kCompletionDefaultMaxVisible;
+    }
   }
 }
 

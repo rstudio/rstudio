@@ -99,6 +99,8 @@ function formatMenu(ui: EditorUI, commands: EditorCommand[]) {
 
 function insertMenu(ui: EditorUI, commands: EditorCommand[]) {
   return [
+    { command: EditorCommandId.OmniInsert },
+    { separator: true },
     { command: EditorCommandId.RmdChunk },
     { separator: true },
     { command: EditorCommandId.Image },

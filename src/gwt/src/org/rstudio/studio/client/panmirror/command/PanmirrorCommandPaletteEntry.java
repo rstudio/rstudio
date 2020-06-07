@@ -19,14 +19,14 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.rstudio.core.client.command.KeySequence;
-import org.rstudio.studio.client.application.ui.CommandPaletteEntry;
+import org.rstudio.studio.client.palette.ui.CommandPaletteCommand;
 
-public class PanmirrorCommandPaletteEntry extends CommandPaletteEntry
+public class PanmirrorCommandPaletteEntry extends CommandPaletteCommand
 {
-
-   public PanmirrorCommandPaletteEntry(PanmirrorCommandUI command)
+   public PanmirrorCommandPaletteEntry(PanmirrorCommandUI command, 
+                                       PanmirrorCommandPaletteItem item)
    {
-      super(keySequence(command));
+      super(keySequence(command), item);
       command_ = command;
       initialize();
    }
@@ -35,12 +35,6 @@ public class PanmirrorCommandPaletteEntry extends CommandPaletteEntry
    public String getLabel()
    {
       return command_.getFullMenuText();
-   }
-
-   @Override
-   public void invoke()
-   {
-      command_.execute();
    }
 
    @Override

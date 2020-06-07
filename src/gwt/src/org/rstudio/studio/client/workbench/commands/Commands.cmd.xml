@@ -838,7 +838,7 @@ well as menu structures (for main menu and popup menus).
          <shortcut refid="helpSearch" value="Ctrl+Alt+F1"/>
          <shortcut refid="helpBack" value="Shift+Alt+F2"/>
          <shortcut refid="helpForward" value="Shift+Alt+F3"/>
-         <shortcut refid="showCommandPalette" value="Ctrl+Shift+P" if="!(org.rstudio.core.client.BrowseCap.isFirefox() &amp;&amp; org.rstudio.core.client.BrowseCap.isWindows())" />
+         <shortcut refid="showCommandPalette" value="Cmd+Shift+P" if="!(org.rstudio.core.client.BrowseCap.isFirefox() &amp;&amp; org.rstudio.core.client.BrowseCap.isWindows())" />
          <shortcut refid="showCommandPalette" value="Ctrl+Alt+Shift+P" if="org.rstudio.core.client.BrowseCap.isFirefox() &amp;&amp; org.rstudio.core.client.BrowseCap.isWindows()" />
       </shortcutgroup>
       <shortcutgroup name="Console">
@@ -3464,6 +3464,7 @@ well as menu structures (for main menu and popup menus).
         desc="Open sources associated with the selection"/>
 
    <cmd id="profileCodeWithoutFocus"
+        label="Profile Current Line or Selection Without Focus"
         rebindable="false"/>
 
    <cmd id="openProfile"

@@ -214,7 +214,7 @@ public class RMarkdownPreferencesPane extends PreferencesPane
       
       // font size
       final String kDefault = "(Default)";
-      String[] labels = {kDefault, "7", "8", "9", "10", "11", "12", "13", "14"};
+      String[] labels = {kDefault, "8", "9", "10", "11", "12",};
       String[] values = new String[labels.length];
       for (int i = 0; i < labels.length; i++) 
       {

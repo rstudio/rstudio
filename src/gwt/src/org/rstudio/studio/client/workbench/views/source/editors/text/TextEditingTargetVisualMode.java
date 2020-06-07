@@ -35,8 +35,8 @@ import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.core.client.widget.images.ProgressImages;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
-import org.rstudio.studio.client.application.ui.CommandPaletteEntry;
-import org.rstudio.studio.client.application.ui.CommandPaletteEntrySource;
+import org.rstudio.studio.client.palette.model.CommandPaletteEntrySource;
+import org.rstudio.studio.client.palette.model.CommandPaletteItem;
 import org.rstudio.studio.client.panmirror.PanmirrorChanges;
 import org.rstudio.studio.client.panmirror.PanmirrorCode;
 import org.rstudio.studio.client.panmirror.PanmirrorContext;
@@ -484,12 +484,6 @@ public class TextEditingTargetVisualMode implements CommandPaletteEntrySource
       restoreDisabledForVisualMode();
    }
    
-   @Override
-   public List<CommandPaletteEntry> getCommandPaletteEntries()
-   {
-      return panmirror_.getCommandPaletteEntries();
-   }
-   
    public void executeChunk()
    {
       panmirror_.execCommand(PanmirrorCommands.ExecuteCurrentRmdChunk);
@@ -564,6 +558,13 @@ public class TextEditingTargetVisualMode implements CommandPaletteEntrySource
          saveLocationOnIdle_.suspend();
    }
   
+
+   @Override
+   public List<CommandPaletteItem> getCommandPaletteItems()
+   {
+      return panmirror_.getCommandPaletteItems();
+   }
+
    private void manageUI(boolean activate, boolean focus)
    {
       manageUI(activate, focus, () -> {});
@@ -1608,7 +1609,7 @@ public class TextEditingTargetVisualMode implements CommandPaletteEntrySource
   
    
    private static final String RMD_VISUAL_MODE_LOCATION = "rmdVisualModeLocation";   
-   private final static String[] kRmdChunkExecutionLangs = new String[] { "R", "Python" }; 
+   private final static String[] kRmdChunkExecutionLangs = new String[] { "R", "Python" };
 }
 
 

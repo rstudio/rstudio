@@ -1,5 +1,5 @@
 /*
- * AppCommandPaletteEntry.java
+ * AppCommandPaletteItem.java
  *
  * Copyright (C) 2020 by RStudio, PBC
  *
@@ -12,27 +12,24 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-package org.rstudio.studio.client.application.ui;
+package org.rstudio.studio.client.palette;
 
 import java.util.List;
 
 import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.StringUtil;
 import org.rstudio.core.client.command.AppCommand;
-import org.rstudio.core.client.command.AppCommand.Context;
+import org.rstudio.core.client.command.KeySequence;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.common.GlobalDisplay;
-import org.rstudio.core.client.command.KeySequence;
+import org.rstudio.studio.client.palette.ui.AppCommandPaletteEntry;
 
-/**
- * AppCommandPaletteEntry is a widget that represents an AppCommand in RStudio's
- * command palette.
- */
-public class AppCommandPaletteEntry extends CommandPaletteEntry
+public class AppCommandPaletteItem extends BasePaletteItem<AppCommandPaletteEntry>
 {
-   public AppCommandPaletteEntry(AppCommand command, List<KeySequence> keys)
+   public AppCommandPaletteItem(AppCommand command, List<KeySequence> keys)
    {
-      super(keys);
+      command_ = command;
+      keys_ = keys;
       label_ = command.getLabel();
       if (StringUtil.isNullOrEmpty(label_))
          label_ = command.getButtonLabel();
@@ -42,16 +39,16 @@ public class AppCommandPaletteEntry extends CommandPaletteEntry
          label_ = command.getMenuLabel(false);
       if (StringUtil.isNullOrEmpty(label_))
          label_ = "";
-      command_ = command;
-      initialize();
    }
-   
-   public String getLabel()
+
+   @Override
+   public AppCommandPaletteEntry createWidget()
    {
-      return label_;
+      return new AppCommandPaletteEntry(command_, label_, keys_, this);
    }
-   
-   public void invoke()
+
+   @Override
+   public void invoke(InvocationSource source)
    {
       GlobalDisplay display = RStudioGinjector.INSTANCE.getGlobalDisplay();
       if (!command_.isVisible())
@@ -59,7 +56,7 @@ public class AppCommandPaletteEntry extends CommandPaletteEntry
          // This isn't currently likely since we hide commands that aren't
          // visible.
          display.showErrorMessage("Command Not Available", 
-               "The command '" + getLabel() + "' is not currently available.");
+               "The command '" + label_ + "' is not currently available.");
       }
       else if (!command_.isEnabled() || !command_.hasCommandHandlers())
       {
@@ -67,7 +64,7 @@ public class AppCommandPaletteEntry extends CommandPaletteEntry
          // handlers as disabled (nothing will happen if we run them except a
          // runtime exception)
          display.showErrorMessage("Command Disabled", 
-               "The command '" + getLabel() + "' cannot be used right now. " +
+               "The command '" + label_ + "' cannot be used right now. " +
                "It may be unavailable in this project, file, or view.");
       }
       else
@@ -82,7 +79,7 @@ public class AppCommandPaletteEntry extends CommandPaletteEntry
          catch(Exception e)
          {
             display.showErrorMessage("Command Execution Failed", 
-                  "The command '" + getLabel() + "' could not be executed.\n\n" +
+                  "The command '" + label_ + "' could not be executed.\n\n" +
                   StringUtil.notNull(e.getMessage()));
             Debug.logException(e);
          }
@@ -90,38 +87,31 @@ public class AppCommandPaletteEntry extends CommandPaletteEntry
    }
    
    @Override
-   public String getId()
+   public boolean dismissOnInvoke()
    {
-      return command_.getId();
+      return true;
+   }
+   
+   @Override
+   public boolean matchesSearch(String[] keywords)
+   {
+      return super.labelMatchesSearch(label_, keywords);
    }
 
    @Override
-   public String getContext()
+   public void setSearchHighlight(String[] keywords)
    {
-      // Get the context of this command (e.g. "Workbench", "VCS", "Help")
-      Context context = command_.getContext();
-
-      // Most commands are "Workbench" commands (they aren't scoped to a
-      // particular feature and can be executed at any time.) To reduce visual
-      // clutter and repetitions, we don't show this context tag; all commands
-      // are implicitly global unless they have a more specific tag.
-      if (context == Context.Workbench)
-      {
-         return "";
-      }
-
-      return context.toString();
+      widget_.setSearchHighlight(keywords);
    }
 
    @Override
-   public boolean enabled()
+   public void setSelected(boolean selected)
    {
-      // Ensure the command is enabled *and* has handlers. Generally commands
-      // should become invisible or disabled when unavailable, but they also
-      // become unavailable when they have no listeners.
-      return command_.isEnabled() && command_.hasCommandHandlers();
+      widget_.setSelected(selected);
    }
+
+   private final List<KeySequence> keys_;
+   private final AppCommand command_;
 
    private String label_;
-   private final AppCommand command_;
 }

@@ -21,25 +21,28 @@ import ReactDOM from 'react-dom';
 import zenscroll from 'zenscroll';
 
 import { applyStyles } from '../../api/css';
-import { CompletionHandler } from '../../api/completion';
+import { CompletionHandler, kCompletionDefaultItemHeight, kCompletionDefaultMaxVisible, kCompletionDefaultWidth } from '../../api/completion';
 import { Popup } from '../../api/widgets/popup';
 
 import './completion-popup.css';
 
-export function createCompletionPopup() : HTMLElement {
-  const popup = window.document.createElement('div');
-  popup.style.position = 'absolute';
-  popup.style.zIndex = '1000';
-  return popup;
-}
+const kNoResultsHeight = 22;
 
 export interface CompletionListProps {
   handler: CompletionHandler;
   pos: number;
   completions: any[];
   selectedIndex: number;
+  noResults: string;
   onHover: (index: number) => void;
   onClick: (index: number) => void;
+}
+
+export function createCompletionPopup() : HTMLElement {
+  const popup = window.document.createElement('div');
+  popup.style.position = 'absolute';
+  popup.style.zIndex = '1000';
+  return popup;
 }
 
 export function renderCompletionPopup(view: EditorView, props: CompletionListProps, popup: HTMLElement) {
@@ -66,13 +69,9 @@ const CompletionPopup: React.FC<CompletionListProps> = props => {
   );
 };
 
-const kDefaultItemHeight = 22;
-const kDefaultMaxVisible = 10;
-const kDefaultWidth = 180;
-
 const CompletionList: React.FC<CompletionListProps> = props => {
 
-  const { component, itemHeight = kDefaultItemHeight } = props.handler.view;
+  const { component, itemHeight = kCompletionDefaultItemHeight } = props.handler.view;
 
   const size = completionPopupSize(props);
 
@@ -81,11 +80,11 @@ const CompletionList: React.FC<CompletionListProps> = props => {
   useEffect(() => {
     const containerEl = containerRef.current;
     if (containerEl) {
-      const rows = containerEl.getElementsByTagName('td');
-      const selectedRow = rows.item(props.selectedIndex);
-      if (selectedRow) {
+      const rows = containerEl.getElementsByClassName('pm-completion-item-row');
+      const scrollToRow = rows.item(props.selectedIndex);
+      if (scrollToRow) {
         const scroller = zenscroll.createScroller(containerEl);
-        scroller.intoView(selectedRow);
+        scroller.intoView(scrollToRow as HTMLElement);
       }
     }
   }, [props.selectedIndex]);
@@ -112,9 +111,10 @@ const CompletionList: React.FC<CompletionListProps> = props => {
           return (
             <tr 
               key={key} 
+              className={'pm-completion-item-row'}
               style={ {lineHeight: itemHeight + 'px' }} 
               onClick={rowEventHandler(index, props.onClick)}
-              onMouseEnter={rowEventHandler(index,props.onHover)}
+              onMouseMove={rowEventHandler(index,props.onHover)}
              >
               <td className={className} key={key}>
                 {item}
@@ -122,6 +122,16 @@ const CompletionList: React.FC<CompletionListProps> = props => {
             </tr>
           );
         })}
+        {props.completions.length === 0 ? 
+          <tr 
+            className={'pm-completion-no-results pm-placeholder-text-color'}
+            style={ {lineHeight: kNoResultsHeight + 'px' }} 
+          >
+            <td>
+              {props.noResults}
+            </td>
+          </tr>
+        : null}
       </tbody>
       </table>
     </div>
@@ -134,16 +144,18 @@ function completionPopupSize(props: CompletionListProps) {
   const kCompletionsChrome = 8;
 
   // get view props (apply defaults)
-  let { itemHeight = kDefaultItemHeight } = props.handler.view;
-  const { maxVisible = kDefaultMaxVisible, width = kDefaultWidth } = props.handler.view;
+  let { itemHeight = kCompletionDefaultItemHeight } = props.handler.view;
+  const { maxVisible = kCompletionDefaultMaxVisible, width = kCompletionDefaultWidth } = props.handler.view;
 
   // add 2px for the border to item heights
   itemHeight += 2;
 
-  return {
-    width,
-    height: (itemHeight * Math.min(maxVisible, props.completions.length)) + kCompletionsChrome
-  };
+  // compute height (subject it to a minimum require to display 'no results')
+  const height = Math.max((itemHeight * Math.min(maxVisible, props.completions.length)), kNoResultsHeight) 
+                 + kCompletionsChrome;
+
+  // return 
+  return { width, height };
 }
 
 function completionPopupPositionStyles(view: EditorView, pos: number, width: number, height: number) {

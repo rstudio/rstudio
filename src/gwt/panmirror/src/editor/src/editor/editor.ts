@@ -56,6 +56,7 @@ import { kPercentUnit } from '../api/css';
 import { EditorFormat } from '../api/format';
 import { diffChars, EditorChange } from '../api/change';
 import { markInputRuleFilter } from '../api/input_rule';
+import { EditorEvents } from '../api/events';
 
 import { getTitle, setTitle } from '../nodes/yaml_metadata/yaml_metadata-title';
 
@@ -73,6 +74,8 @@ import {
   selectCurrent,
 } from '../behaviors/find';
 
+import { completionExtension } from '../behaviors/completion/completion';
+
 import { PandocConverter } from '../pandoc/pandoc_converter';
 
 import { defaultTheme, EditorTheme, applyTheme, applyPadding } from './editor-theme';
@@ -84,7 +87,7 @@ import { editorSchema } from './editor-schema';
 import './styles/frame.css';
 import './styles/styles.css';
 import { ExtensionManager, initExtensions } from './editor-extensions';
-import { EditorEvents } from '../api/events';
+import { omniInsertCompletionHandler } from '../behaviors/omni_insert/omni_insert-completion';
 
 
 export interface EditorCode {
@@ -265,13 +268,18 @@ export class Editor {
     };
 
     // provide context defaults
+    const defaultImages = defaultEditorUIImages();
     context = {
       ...context,
       ui: {
         ...context.ui,
         images: {
-          ...defaultEditorUIImages(),
+          ...defaultImages,
           ...context.ui.images,
+          omni_insert: {
+            ...defaultImages.omni_insert,
+            ...context.ui.images
+          }
         },
       },
     };
@@ -307,12 +315,17 @@ export class Editor {
     this.pandocFormat = pandocFormat;
     this.pandocCapabilities = pandocCapabilities;
 
-    // create extensions
+    // create core extensions
     this.extensions = this.initExtensions();
 
     // create schema
     this.schema = editorSchema(this.extensions);
 
+    // register completion handlers (done in a separate step b/c omni insert
+    // completion handlers require access to the initializezd commands that
+    // carry omni insert info)
+    this.registerCompletionExtension();
+    
     // create state
     this.state = EditorState.create({
       schema: this.schema,
@@ -671,6 +684,17 @@ export class Editor {
       this.pandocFormat.extensions,
       this.pandocCapabilities,
     );
+  }
+
+  private registerCompletionExtension() {
+    const completionHandlers = [
+      ...this.extensions.completionHandlers(),
+      omniInsertCompletionHandler(
+        this.extensions.omniInserters(this.schema, this.context.ui), 
+        this.context.ui
+      )
+    ];
+    this.extensions.register([completionExtension(completionHandlers, this.context.ui, this.events)]);
   }
 
   private createPlugins(): Plugin[] {

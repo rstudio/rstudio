@@ -31,14 +31,19 @@ export function emojiCompletionHandler(ui: EditorUI) : CompletionHandler<Emoji> 
     
     completions: emojiCompletions(ui),
 
-    replacement(schema: Schema, emoji: Emoji) : string | ProsemirrorNode {
-      return nodeForEmoji(schema, emoji, emoji.aliases[0]);
+    replacement(schema: Schema, emoji: Emoji | null) : string | ProsemirrorNode | null {
+      if (emoji) {
+        return nodeForEmoji(schema, emoji, emoji.aliases[0]);
+      } else {
+        return null;
+      }
     },
 
     view: {
       component: EmojiView,
       key: emoji => emoji.emoji,
-      width: 200
+      width: 200,
+      hideNoResults: true
     },
 
   };
@@ -48,7 +53,8 @@ const kMaxEmojiCompletions = 20;
 const kEmojiCompletionRegEx = /(^|[^`]):(\w{2,})$/;
 
 function emojiCompletions(ui: EditorUI) {
-  return (text: string, selection: Selection): CompletionResult<Emoji> | null => {
+
+  return (text: string, _doc: ProsemirrorNode, selection: Selection): CompletionResult<Emoji> | null => {
   
     // look for requisite text sequence
     const match = text.match(kEmojiCompletionRegEx);
@@ -76,7 +82,7 @@ function emojiCompletions(ui: EditorUI) {
       // return result
       return { 
         pos, 
-        completions: Promise.resolve(completions) 
+        completions: () => Promise.resolve(completions) 
       };
   
     // no match
@@ -120,7 +126,7 @@ export function emojiSkintonePreferenceCompletionHandler(ui: EditorUI) : Complet
 }
 
 function emojiSkintonePreferenceCompletions(ui: EditorUI) {
-  return (text: string, selection: Selection, doc: ProsemirrorNode): CompletionResult<Emoji> | null => {
+  return (text: string, doc: ProsemirrorNode, selection: Selection): CompletionResult<Emoji> | null => {
     
     // The user has set a preference for skin tone
     if (ui.prefs.emojiSkinTone() !== SkinTone.None) {
@@ -143,7 +149,7 @@ function emojiSkintonePreferenceCompletions(ui: EditorUI) {
 
     return {
       pos: range.from,
-      completions: Promise.resolve(prefs)
+      completions: () => Promise.resolve(prefs)
     };
   };
 }

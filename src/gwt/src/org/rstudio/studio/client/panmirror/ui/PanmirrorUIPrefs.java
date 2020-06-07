@@ -20,6 +20,7 @@ package org.rstudio.studio.client.panmirror.ui;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefs;
 import org.rstudio.studio.client.workbench.prefs.model.UserPrefsAccessor;
+import org.rstudio.studio.client.workbench.prefs.model.UserState;
 
 import com.google.inject.Inject;
 import com.google.inject.Provider;
@@ -35,9 +36,16 @@ public class PanmirrorUIPrefs {
    }
 
    @Inject
-   void initialize(Provider<UserPrefs> pUIPrefs)
+   void initialize(Provider<UserPrefs> pUIPrefs, Provider<UserState> pUserState)
    {
       pUIPrefs_ = pUIPrefs;
+      pUserState_ = pUserState;
+   }
+   
+   
+   public Boolean darkMode()
+   {
+     return pUserState_.get().theme().getGlobalValue().getIsDark(); 
    }
    
    public Boolean equationPreview()
@@ -91,4 +99,5 @@ public class PanmirrorUIPrefs {
    }
    
    Provider<UserPrefs> pUIPrefs_;
+   Provider<UserState> pUserState_;
 }

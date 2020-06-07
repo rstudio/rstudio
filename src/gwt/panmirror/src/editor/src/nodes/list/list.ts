@@ -26,6 +26,7 @@ import { ListCapabilities } from '../../api/list';
 import { ProsemirrorCommand, EditorCommandId } from '../../api/command';
 import { PandocTokenType, PandocExtensions } from '../../api/pandoc';
 import { kPlatformMac } from '../../api/platform';
+import { OmniInsertGroup } from '../../api/omni_insert';
 
 import { ListCommand, TightListCommand, EditListPropertiesCommand, editListPropertiesCommandFn } from './list-commands';
 
@@ -265,12 +266,14 @@ const extension = (pandocExtensions: PandocExtensions): Extension => {
           kPlatformMac ? ['Shift-Mod-7'] : [],
           schema.nodes.bullet_list,
           schema.nodes.list_item,
+          bulletListOmniInsert(ui)
         ),
         new ListCommand(
           EditorCommandId.OrderedList,
           kPlatformMac ? ['Shift-Mod-8'] : [],
           schema.nodes.ordered_list,
           schema.nodes.list_item,
+          orderedListOmniInsert(ui)
         ),
         new ProsemirrorCommand(EditorCommandId.ListItemSink, ['Tab'], sinkListItem(schema.nodes.list_item)),
         new ProsemirrorCommand(EditorCommandId.ListItemLift, ['Shift-Tab'], liftListItem(schema.nodes.list_item)),
@@ -359,6 +362,24 @@ function typeToNumberStyle(type: string | null): ListNumberStyle {
     default:
       return ListNumberStyle.Decimal;
   }
+}
+
+function bulletListOmniInsert(ui: EditorUI) {
+  return {
+    name: ui.context.translateText('Bullet List'),
+    description: ui.context.translateText("List using bullets for items"),
+    group: OmniInsertGroup.Lists,
+    image: () => ui.prefs.darkMode() ? ui.images.omni_insert?.bullet_list_dark! : ui.images.omni_insert?.bullet_list!,
+  };
+}
+
+function orderedListOmniInsert(ui: EditorUI) {
+  return {
+    name: ui.context.translateText('Numbered List'),
+    description: ui.context.translateText("List using numbers for items"),
+    group: OmniInsertGroup.Lists,
+    image: () => ui.prefs.darkMode() ? ui.images.omni_insert?.ordered_list_dark! : ui.images.omni_insert?.ordered_list!,
+  };
 }
 
 export default extension;

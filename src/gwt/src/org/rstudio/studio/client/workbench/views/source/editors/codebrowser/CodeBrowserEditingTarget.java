@@ -39,7 +39,6 @@ import org.rstudio.core.client.events.EnsureHeightHandler;
 import org.rstudio.core.client.events.EnsureVisibleHandler;
 import org.rstudio.core.client.files.FileSystemContext;
 import org.rstudio.studio.client.application.events.EventBus;
-import org.rstudio.studio.client.application.ui.CommandPaletteEntry;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.ReadOnlyValue;
 import org.rstudio.studio.client.common.SimpleRequestCallback;
@@ -48,6 +47,7 @@ import org.rstudio.studio.client.common.filetypes.FileIcon;
 import org.rstudio.studio.client.common.filetypes.FileType;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.filetypes.TextFileType;
+import org.rstudio.studio.client.palette.model.CommandPaletteItem;
 import org.rstudio.studio.client.server.Void;
 import org.rstudio.studio.client.workbench.codesearch.model.SearchPathFunctionDefinition;
 import org.rstudio.studio.client.workbench.commands.Commands;
@@ -781,7 +781,7 @@ public class CodeBrowserEditingTarget implements EditingTarget
    }
    
    @Override
-   public List<CommandPaletteEntry> getCommandPaletteEntries()
+   public List<CommandPaletteItem> getCommandPaletteItems()
    {
       return null;
    }

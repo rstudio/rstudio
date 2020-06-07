@@ -13,22 +13,34 @@
  *
  */
 
-import { Selection } from "prosemirror-state";
+import { Selection, EditorState } from "prosemirror-state";
 import { Node as ProsemirrorNode, Schema  } from "prosemirror-model";
+import { EditorView, DecorationSet } from "prosemirror-view";
+
+import { canInsertNode } from "./node";
+
+
+export const kCompletionDefaultItemHeight = 22;
+export const kCompletionDefaultMaxVisible = 10;
+export const kCompletionDefaultWidth = 180;
 
 export interface CompletionResult<T = any> {
   pos: number;
-  completions: Promise<T[]>;
+  completions: (state: EditorState) => Promise<T[]>;
+  decorations?: DecorationSet;
 }
 
 export interface CompletionHandler<T = any> {
 
   // return a set of completions for the given context. text is the text before
   // before the cursor in the current node (but no more than 500 characters)
-  completions(text: string, selection: Selection, doc: ProsemirrorNode): CompletionResult | null;
-  
-  // provide a completion replacement as a string or node
-  replacement(schema: Schema, completion: T) : string | ProsemirrorNode;
+  completions(text: string, doc: ProsemirrorNode, selection: Selection): CompletionResult | null;
+
+  // provide a completion replacement as a string or node (can be passed null if the popup was dismissed)
+  replacement?(schema: Schema, completion: T | null)  : string | ProsemirrorNode | null;
+
+  // lower level replacement handler (can be passed null if the popup was dismissed)
+  replace?(view: EditorView, pos: number, completion: T | null) : void;
 
   // completion view
   view: {
@@ -45,8 +57,37 @@ export interface CompletionHandler<T = any> {
  
     // maximum number of visible items (defaults to 10)
     maxVisible?: number;
+
+    // hide 'no results' (default false)
+    hideNoResults?: boolean;
   };
 }
 
 
+export function selectionAllowsCompletions(selection: Selection) {
 
+  const schema = selection.$head.parent.type.schema;
+
+  // non empty selections don't have completions
+  if (!selection.empty) {
+    return false;
+  }
+
+  // must be able to insert text
+  if (!canInsertNode(selection, schema.nodes.text)) {
+    return false;
+  }
+
+  // must not be in a code mark 
+  if (!!schema.marks.code.isInSet(selection.$from.marks())) {
+    return false;
+  }
+
+  // must not be in a code node
+  if (selection.$head.parent.type.spec.code) {
+    return false;
+  }
+
+  return true;
+
+}

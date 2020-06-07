@@ -85,6 +85,7 @@ export interface EditorDisplay {
 }
 
 export interface EditorUIPrefs {
+  darkMode: () => boolean;
   equationPreview: () => boolean;
   emojiSkinTone: () => SkinTone;
   setEmojiSkinTone : (skinTone: SkinTone) => void;

@@ -21,10 +21,11 @@ import { NodeWithPos, findParentNode } from 'prosemirror-utils';
 import { NodeCommand, toggleList, ProsemirrorCommand, EditorCommandId } from '../../api/command';
 import { EditorUI, ListProps, ListType } from '../../api/ui';
 import { ListCapabilities, isList } from '../../api/list';
+import { OmniInsert } from '../../api/omni_insert';
 
 export class ListCommand extends NodeCommand {
-  constructor(id: EditorCommandId, keymap: string[], listType: NodeType, listItemType: NodeType) {
-    super(id, keymap, listType, {}, toggleList(listType, listItemType));
+  constructor(id: EditorCommandId, keymap: string[], listType: NodeType, listItemType: NodeType, omniInsert: OmniInsert) {
+    super(id, keymap, listType, {}, toggleList(listType, listItemType), omniInsert);
   }
 }
 

@@ -414,9 +414,6 @@ void handleClientInit(const boost::function<void()>& initFunction,
    sessionInfo["devtools_installed"] = module_context::isMinimumDevtoolsInstalled();
    sessionInfo["have_cairo_pdf"] = modules::plots::haveCairoPdf();
 
-   sessionInfo["have_srcref_attribute"] =
-         modules::breakpoints::haveSrcrefAttribute();
-
    // console history -- we do this at the end because
    // restoreBuildRestartContext may have reset it
    json::Array historyArray;
