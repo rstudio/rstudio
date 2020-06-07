@@ -144,7 +144,7 @@ export class ProsemirrorCommand {
     this.keymap = keymap;
     this.execute = execute;
     this.omniInsert = omniInsert;
-    this.keepFocus = keepFocus ? true : false;
+    this.keepFocus = !(keepFocus === false);
   }
 
   public isEnabled(state: EditorState): boolean {
