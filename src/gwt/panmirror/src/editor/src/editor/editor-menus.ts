@@ -102,6 +102,7 @@ function insertMenu(ui: EditorUI, commands: EditorCommand[]) {
     { command: EditorCommandId.OmniInsert },
     { separator: true },
     { command: EditorCommandId.RmdChunk },
+    { separator: true },
     { command: EditorCommandId.Image },
     { command: EditorCommandId.Link },
     { command: EditorCommandId.HorizontalRule },

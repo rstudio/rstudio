@@ -73,7 +73,7 @@ public class PanmirrorToolbarCommands implements CommandPaletteEntrySource
       add(PanmirrorCommands.RawBlock, "Raw Block...");
       
       // chunk
-      add(PanmirrorCommands.RmdChunk, "Rmd Chunk", icons.RMD_CHUNK);
+      add(PanmirrorCommands.RmdChunk, "Rmd Chunk");
       add(PanmirrorCommands.ExecuteCurrentRmdChunk, "Run Current Chunk");
       add(PanmirrorCommands.ExecutePreviousRmdChunks, "Run All Chunks Above");
 
@@ -106,7 +106,7 @@ public class PanmirrorToolbarCommands implements CommandPaletteEntrySource
       add(PanmirrorCommands.TableAlignColumnDefault, "Table Align Column:::Default");
      
       // insert
-      add(PanmirrorCommands.OmniInsert, "Omni...");
+      add(PanmirrorCommands.OmniInsert, "Any...", icons.OMNI);
       add(PanmirrorCommands.Link, "Link...", icons.LINK);
       add(PanmirrorCommands.RemoveLink, "Remove Link");
       add(PanmirrorCommands.Image, "Image...", icons.IMAGE);
