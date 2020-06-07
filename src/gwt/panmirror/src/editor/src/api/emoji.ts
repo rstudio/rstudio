@@ -17,17 +17,18 @@
 import kEmojisJson from './emojis-all.json';
 const kEmojis = kEmojisJson as EmojiRaw[];
 
-// TODO: Some skin tone emoji don't render properly - create skincode exclusion list in generate-symbols
-
+// PREFERENCE
 // TODO: Skin tone preference appears to be lost when reloading after a code change - do I need to flush or commit or something?
+// TODO: Add user preference in RStudio somewhere
 
+// APPEARANCE
 // TODO: Appearance of preference completion handler
 // Preferred appearance
 // [] | [] [] [] [] []
 
+// +1
 // TODO: Reuse the preference completion handler and trigger it when user clicks on emoji?
 // TODO: If user clicks on emoji, cycle through the available skin tones?
-// TODO: Add user preference in RStudio somewhere
 // 
 
 // A raw emoji which doesn't include skin tone information

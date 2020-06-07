@@ -176,6 +176,8 @@ const excludedEmoji = [
   'placard',
 ];
 
+// These emoji do support skintone, but the default font we use doesn't render
+// them properly.
 const skinToneUnsupportedEmoji = [
   'raised_hand_with_fingers_splayed',
   'v',
