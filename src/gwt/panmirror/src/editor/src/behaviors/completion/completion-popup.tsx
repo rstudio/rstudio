@@ -26,6 +26,8 @@ import { Popup } from '../../api/widgets/popup';
 
 import './completion-popup.css';
 
+const kNoResultsHeight = 22;
+
 export interface CompletionListProps {
   handler: CompletionHandler;
   pos: number;
@@ -119,6 +121,16 @@ const CompletionList: React.FC<CompletionListProps> = props => {
             </tr>
           );
         })}
+        {props.completions.length === 0 ? 
+          <tr 
+            className={'pm-completion-no-results pm-placeholder-text-color'}
+            style={ {lineHeight: kNoResultsHeight + 'px' }} 
+          >
+            <td>
+              No Results
+            </td>
+          </tr>
+        : null}
       </tbody>
       </table>
     </div>
@@ -137,10 +149,12 @@ function completionPopupSize(props: CompletionListProps) {
   // add 2px for the border to item heights
   itemHeight += 2;
 
-  return {
-    width,
-    height: (itemHeight * Math.min(maxVisible, props.completions.length)) + kCompletionsChrome
-  };
+  // compute height (subject it to a minimum require to display 'no results')
+  const height = Math.max((itemHeight * Math.min(maxVisible, props.completions.length)), kNoResultsHeight) 
+                 + kCompletionsChrome;
+
+  // return 
+  return { width, height };
 }
 
 function completionPopupPositionStyles(view: EditorView, pos: number, width: number, height: number) {

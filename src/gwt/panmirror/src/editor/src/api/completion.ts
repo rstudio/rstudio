@@ -57,6 +57,9 @@ export interface CompletionHandler<T = any> {
  
     // maximum number of visible items (defaults to 10)
     maxVisible?: number;
+
+    // hide 'no results' (default false)
+    hideNoResults?: boolean;
   };
 }
 

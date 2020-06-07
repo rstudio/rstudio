@@ -39,7 +39,8 @@ export function emojiCompletionHandler() : CompletionHandler<Emoji> {
     view: {
       component: EmojiView,
       key: emoji => emoji.emoji,
-      width: 200
+      width: 200,
+      hideNoResults: true
     },
 
   };

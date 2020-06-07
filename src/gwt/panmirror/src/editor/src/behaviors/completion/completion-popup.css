@@ -38,6 +38,11 @@
   border: 1px solid transparent;
 }
 
+.pm-completion-no-results {
+  vertical-align: middle;
+  text-align: center;
+}
+
 .pm-completion-item-text {
   white-space: nowrap;
   overflow: hidden;

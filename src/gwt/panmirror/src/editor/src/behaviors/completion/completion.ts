@@ -233,7 +233,7 @@ class CompletionPlugin extends Plugin<CompletionState> {
 
     const state = key.getState(view.state);
 
-    if (state?.handler && this.completions.length > 0) {
+    if (state && state.handler && (this.completions.length > 0 || !state.handler.view.hideNoResults)) {
       const props = {
         handler: state.handler!,
         pos: state.result!.pos,
