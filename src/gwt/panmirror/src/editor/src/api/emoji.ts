@@ -19,6 +19,8 @@ const kEmojis = kEmojisJson as EmojiRaw[];
 
 // TODO: Some skin tone emoji don't render properly - create skincode exclusion list in generate-symbols
 
+// TODO: Skin tone preference appears to be lost when reloading after a code change - do I need to flush or commit or something?
+
 // TODO: Appearance of preference completion handler
 // Preferred appearance
 // [] | [] [] [] [] []
