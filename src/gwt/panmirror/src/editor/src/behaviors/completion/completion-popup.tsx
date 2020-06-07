@@ -114,7 +114,7 @@ const CompletionList: React.FC<CompletionListProps> = props => {
               className={'pm-completion-item-row'}
               style={ {lineHeight: itemHeight + 'px' }} 
               onClick={rowEventHandler(index, props.onClick)}
-              onMouseEnter={rowEventHandler(index,props.onHover)}
+              onMouseMove={rowEventHandler(index,props.onHover)}
              >
               <td className={className} key={key}>
                 {item}
