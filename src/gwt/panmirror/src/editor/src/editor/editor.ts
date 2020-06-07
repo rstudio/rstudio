@@ -694,7 +694,7 @@ export class Editor {
         this.context.ui
       )
     ];
-    this.extensions.register([completionExtension(completionHandlers, this.events)]);
+    this.extensions.register([completionExtension(completionHandlers, this.context.ui, this.events)]);
   }
 
   private createPlugins(): Plugin[] {

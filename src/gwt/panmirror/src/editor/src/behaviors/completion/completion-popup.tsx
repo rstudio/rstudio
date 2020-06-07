@@ -33,6 +33,7 @@ export interface CompletionListProps {
   pos: number;
   completions: any[];
   selectedIndex: number;
+  noResults: string;
   onHover: (index: number) => void;
   onClick: (index: number) => void;
 }
@@ -127,7 +128,7 @@ const CompletionList: React.FC<CompletionListProps> = props => {
             style={ {lineHeight: kNoResultsHeight + 'px' }} 
           >
             <td>
-              No Results
+              {props.noResults}
             </td>
           </tr>
         : null}

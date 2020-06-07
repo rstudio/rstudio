@@ -24,11 +24,12 @@ import { EditorEvents } from '../../api/events';
 import { ScrollEvent } from '../../api/event-types';
 
 import { createCompletionPopup, renderCompletionPopup, destroyCompletionPopup } from './completion-popup';
+import { EditorUI } from '../../api/ui';
 
 
-export function completionExtension(handlers: readonly CompletionHandler[], events: EditorEvents) {
+export function completionExtension(handlers: readonly CompletionHandler[], ui: EditorUI, events: EditorEvents) {
   return {
-    plugins: () => [new CompletionPlugin(handlers, events)]
+    plugins: () => [new CompletionPlugin(handlers, ui, events)]
   };
 }
 
@@ -41,6 +42,9 @@ const key = new PluginKey<CompletionState>('completion');
 
 class CompletionPlugin extends Plugin<CompletionState> {
   
+  // editor ui
+  private readonly ui: EditorUI;
+
   // editor view
   private view: EditorView | null = null;
 
@@ -60,7 +64,7 @@ class CompletionPlugin extends Plugin<CompletionState> {
   // events we need to unsubscribe from
   private readonly scrollUnsubscribe: VoidFunction;
 
-  constructor(handlers: readonly CompletionHandler[], events: EditorEvents) {
+  constructor(handlers: readonly CompletionHandler[], ui: EditorUI, events: EditorEvents) {
     super({
       key,
       state: {
@@ -189,6 +193,9 @@ class CompletionPlugin extends Plugin<CompletionState> {
       }
     });
 
+    // capture reference to ui
+    this.ui = ui;
+
     // hide completions when we scroll or the focus changes
     this.hideCompletionPopup = this.hideCompletionPopup.bind(this);
     this.scrollUnsubscribe = events.subscribe(ScrollEvent, this.hideCompletionPopup);
@@ -239,6 +246,7 @@ class CompletionPlugin extends Plugin<CompletionState> {
         pos: state.result!.pos,
         completions: this.completions,
         selectedIndex: this.selectedIndex,
+        noResults: this.ui.context.translateText('No Results'),
         onClick: (index: number) => {
           this.insertCompletion(view, index);
         },
