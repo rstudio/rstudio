@@ -33,6 +33,8 @@ export interface OmniInserter extends OmniInsert {
 
 export enum OmniInsertGroup {
   Headings = 'Headings',
+  Lists = 'Lists',
+  Blocks = 'Blocks',
   Math = 'Math',
   Content = 'Content'
 }

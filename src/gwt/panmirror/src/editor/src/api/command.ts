@@ -24,7 +24,8 @@ import { markIsActive } from './mark';
 import { canInsertNode, nodeIsActive } from './node';
 import { pandocAttrInSpec, pandocAttrAvailable, pandocAttrFrom } from './pandoc_attr';
 import { isList } from './list';
-import { OmniInsert } from './omni_insert';
+import { OmniInsert, omniInsertPriorityCompare } from './omni_insert';
+import { omniInsertCompletionHandler } from '../behaviors/omni_insert/omni_insert-completion';
 
 export enum EditorCommandId {
   // text editing
@@ -179,8 +180,8 @@ export class NodeCommand extends ProsemirrorCommand {
   public readonly nodeType: NodeType;
   public readonly attrs: object;
 
-  constructor(id: EditorCommandId, keymap: string[], nodeType: NodeType, attrs: object, execute: CommandFn) {
-    super(id, keymap, execute);
+  constructor(id: EditorCommandId, keymap: string[], nodeType: NodeType, attrs: object, execute: CommandFn, omniInsert?: OmniInsert) {
+    super(id, keymap, execute, omniInsert);
     this.nodeType = nodeType;
     this.attrs = attrs;
   }
@@ -190,21 +191,15 @@ export class NodeCommand extends ProsemirrorCommand {
   }
 }
 
-export class ListCommand extends NodeCommand {
-  constructor(id: EditorCommandId, keymap: string[], listType: NodeType, listItemType: NodeType) {
-    super(id, keymap, listType, {}, toggleList(listType, listItemType));
-  }
-}
-
 export class BlockCommand extends NodeCommand {
-  constructor(id: EditorCommandId, keymap: string[], blockType: NodeType, toggleType: NodeType, attrs = {}) {
-    super(id, keymap, blockType, attrs, toggleBlockType(blockType, toggleType, attrs));
+  constructor(id: EditorCommandId, keymap: string[], blockType: NodeType, toggleType: NodeType, attrs = {}, omniInsert?: OmniInsert) {
+    super(id, keymap, blockType, attrs, toggleBlockType(blockType, toggleType, attrs), omniInsert);
   }
 }
 
 export class WrapCommand extends NodeCommand {
-  constructor(id: EditorCommandId, keymap: string[], wrapType: NodeType, attrs = {}) {
-    super(id, keymap, wrapType, attrs, toggleWrap(wrapType, attrs));
+  constructor(id: EditorCommandId, keymap: string[], wrapType: NodeType, attrs = {}, omniInsert?: OmniInsert) {
+    super(id, keymap, wrapType, attrs, toggleWrap(wrapType, attrs), omniInsert);
   }
 }
 
