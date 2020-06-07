@@ -116,7 +116,7 @@ const extension = (): Extension | null => {
       return [
         new InputRule(/(^|[^`]):(\w+):$/, (state: EditorState, match: string[], start: number, end: number) => {
           const emjoiName = match[2];
-          const emoji = emojiFromAlias(emjoiName);
+          const emoji = emojiFromAlias(emjoiName.toLowerCase());
           if (emoji) {
             const schema = state.schema;
             const tr = state.tr;
