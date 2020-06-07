@@ -15,7 +15,7 @@
 
 import { Selection, EditorState } from "prosemirror-state";
 import { Node as ProsemirrorNode, Schema  } from "prosemirror-model";
-import { EditorView } from "prosemirror-view";
+import { EditorView, DecorationSet } from "prosemirror-view";
 
 import { canInsertNode } from "./node";
 
@@ -27,6 +27,7 @@ export const kCompletionDefaultWidth = 180;
 export interface CompletionResult<T = any> {
   pos: number;
   completions: (state: EditorState) => Promise<T[]>;
+  decorations?: DecorationSet;
 }
 
 export interface CompletionHandler<T = any> {

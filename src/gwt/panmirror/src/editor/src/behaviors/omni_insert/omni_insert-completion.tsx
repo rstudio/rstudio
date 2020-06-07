@@ -15,7 +15,7 @@
 
 import { Node as ProsemirrorNode } from "prosemirror-model";
 import { EditorState, Selection, } from "prosemirror-state";
-import { EditorView } from "prosemirror-view";
+import { EditorView, DecorationSet, Decoration } from "prosemirror-view";
 
 import React from 'react';
 
@@ -23,12 +23,13 @@ import { OmniInserter } from "../../api/omni_insert";
 import { CompletionHandler, CompletionResult } from "../../api/completion";
 
 import './omni_insert-completion.css';
+import { EditorUI } from "../../api/ui";
 
-export function omniInsertCompletionHandler(omniInserters: OmniInserter[]) : CompletionHandler<OmniInserter> {
+export function omniInsertCompletionHandler(omniInserters: OmniInserter[], ui: EditorUI) : CompletionHandler<OmniInserter> {
 
   return {
 
-    completions: omniInsertCompletions(omniInserters),
+    completions: omniInsertCompletions(omniInserters, ui),
 
     replace(view: EditorView, pos: number, completion: OmniInserter | null) {
 
@@ -66,7 +67,7 @@ export function omniInsertCompletionHandler(omniInserters: OmniInserter[]) : Com
 
 const kOmniInsertRegex = /\/([\w]*)$/;
 
-function omniInsertCompletions(omniInserters: OmniInserter[]) {
+function omniInsertCompletions(omniInserters: OmniInserter[], ui: EditorUI) {
 
   return (text: string, doc: ProsemirrorNode, selection: Selection): CompletionResult<OmniInserter> | null => {
 
@@ -79,11 +80,16 @@ function omniInsertCompletions(omniInserters: OmniInserter[]) {
         return null;
       }
 
-      // capture query (note that no query returns all)
+      // capture query (note that no query returns all). 
       const query = match[1].toLowerCase();
-
+     
+      // return the completion handler
       return {
+        
+        // match at the /
         pos: selection.head - match[0].length,  
+
+        // look through registered onmi inserters for completions
         completions: (state: EditorState) => {
 
           // match contents of name or keywords (and verify the command is enabled)
@@ -99,7 +105,18 @@ function omniInsertCompletions(omniInserters: OmniInserter[]) {
 
           // resolve prosmie
           return Promise.resolve(inserters);
-        }
+        },
+
+        // search placehodler decorator if there is no query
+        decorations: query.length === 0 ? DecorationSet.create(doc, [Decoration.widget(
+          selection.head,
+          (view: EditorView, getPos: () => number) => {
+            const placeholder = window.document.createElement("span");
+            placeholder.classList.add('pm-placeholder-text-color');
+            placeholder.innerText = ui.context.translateText(' Type to search...');
+            return placeholder;
+          }
+        )]) : undefined
       };
     } else {
       return null;

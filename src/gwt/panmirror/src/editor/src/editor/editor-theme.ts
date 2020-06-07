@@ -29,6 +29,7 @@ export interface EditorTheme {
   gutterTextColor: string;
   textColor: string;
   lightTextColor: string;
+  placeholderTextColor: string;
   linkTextColor: string;
   surfaceWidgetTextColor: string;
   markupTextColor: string;
@@ -82,7 +83,8 @@ export function defaultTheme(): EditorTheme {
     textColor: 'black',
     surfaceWidgetTextColor: 'rgba(0,0,0,0.5)',
     lightTextColor: 'rgb(60, 76, 114)',
-    linkTextColor: ' #106ba3',
+    linkTextColor: '#106ba3',
+    placeholderTextColor: 'gray',
     markupTextColor: 'rgb(185, 6, 144)',
     findTextBackgroundColor: 'rgb(250, 250, 255)',
     findTextBorderColor: 'rgb(200, 200, 250)',
@@ -162,6 +164,9 @@ export function applyTheme(theme: EditorTheme) {
     .pm-light-text-color {
       color: ${theme.lightTextColor} !important;
     }
+    .pm-placeholder-text-color {
+      color: ${theme.placeholderTextColor} !important;
+    }
     .pm-link-text-color {
       color: ${theme.linkTextColor} !important;
     }
@@ -173,7 +178,6 @@ export function applyTheme(theme: EditorTheme) {
       background-color: ${theme.findTextBackgroundColor} !important;
       outline: 1px solid ${theme.findTextBorderColor} !important;
     }
-
     .pm-find-text-selected {
       background-color: ${theme.selectionColor} !important;
     }

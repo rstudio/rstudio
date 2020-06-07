@@ -689,7 +689,10 @@ export class Editor {
   private registerCompletionExtension() {
     const completionHandlers = [
       ...this.extensions.completionHandlers(),
-      omniInsertCompletionHandler(this.extensions.omniInserters(this.schema, this.context.ui))
+      omniInsertCompletionHandler(
+        this.extensions.omniInserters(this.schema, this.context.ui), 
+        this.context.ui
+      )
     ];
     this.extensions.register([completionExtension(completionHandlers, this.events)]);
   }

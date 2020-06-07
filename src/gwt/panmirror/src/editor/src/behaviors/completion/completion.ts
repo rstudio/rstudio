@@ -14,7 +14,7 @@
  */
 
 import { Node as ProsemirrorNode } from 'prosemirror-model';
-import { Plugin, PluginKey, Transaction, Selection, TextSelection,} from 'prosemirror-state';
+import { Plugin, PluginKey, Transaction, Selection, TextSelection, EditorState,} from 'prosemirror-state';
 import { EditorView } from 'prosemirror-view';
 
 import { setTextSelection } from 'prosemirror-utils';
@@ -131,6 +131,12 @@ class CompletionPlugin extends Plugin<CompletionState> {
       }),
 
       props: {
+
+        decorations: (state: EditorState) => {
+          const pluginState = key.getState(state);
+          return pluginState?.result?.decorations;
+        },
+
         handleDOMEvents: {
           keydown: (view: EditorView, event: Event) => {
             const kbEvent = event as KeyboardEvent;
