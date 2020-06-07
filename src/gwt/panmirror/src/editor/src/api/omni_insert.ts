@@ -21,6 +21,7 @@ export interface OmniInsert {
   keywords?: string[];
   description: string;
   group: OmniInsertGroup; 
+  priority?: number;
   image: () => string;
 }
 
@@ -32,5 +33,19 @@ export interface OmniInserter extends OmniInsert {
 
 export enum OmniInsertGroup {
   Headings = 'Headings',
+  Math = 'Math',
   Content = 'Content'
+}
+
+const omniInsertGroupOrder = new Map<OmniInsertGroup, number>();
+omniInsertGroupOrder.set(OmniInsertGroup.Headings, 0);
+omniInsertGroupOrder.set(OmniInsertGroup.Math, 1);
+omniInsertGroupOrder.set(OmniInsertGroup.Content, 2);
+
+export function omniInsertGroupCompare(a: OmniInsert, b: OmniInsert) {
+  return omniInsertGroupOrder.get(a.group)! - omniInsertGroupOrder.get(b.group)!;
+}
+
+export function omniInsertPriorityCompare(a: OmniInsert, b: OmniInsert) {
+  return (a.priority || 0) - (b.priority || 0);
 }

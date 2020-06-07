@@ -15,11 +15,13 @@
 
 import { Node as ProsemirrorNode } from "prosemirror-model";
 import { EditorState, Selection, } from "prosemirror-state";
-import { EditorView, DecorationSet, Decoration } from "prosemirror-view";
+import { EditorView, DecorationSet } from "prosemirror-view";
 
 import React from 'react';
 
-import { OmniInserter } from "../../api/omni_insert";
+import { firstBy } from 'thenby';
+
+import { OmniInserter, omniInsertGroupCompare, omniInsertPriorityCompare } from "../../api/omni_insert";
 import { CompletionHandler, CompletionResult } from "../../api/completion";
 
 import './omni_insert-completion.css';
@@ -109,7 +111,12 @@ function omniInsertCompletions(omniInserters: OmniInserter[], ui: EditorUI) {
               })
             .filter(inserter => {
                return inserter.command(state);
-            });
+            })
+            .sort(
+              firstBy(omniInsertGroupCompare)
+              .thenBy(omniInsertPriorityCompare, { direction: "desc" })
+              .thenBy("name")
+            );
 
           // resolve prosmie
           return Promise.resolve(inserters);
