@@ -27,6 +27,7 @@ import { PandocCapabilities } from '../api/pandoc_capabilities';
 import { EditorUI } from '../api/ui';
 import { EditorFormat } from '../api/format';
 import { OmniInsert, OmniInsertGroup } from '../api/omni_insert';
+import { emptyNodeplaceholderPlugin as emptyNodePlaceholderPlugin, emptyNodeplaceholderPlugin } from '../api/placeholder';
 
 const HEADING_LEVEL = 0;
 const HEADING_ATTR = 1;
@@ -150,6 +151,10 @@ const extension = (
         ),
       ];
     },
+
+    plugins: (schema: Schema, ui: EditorUI) => {
+      return [emptyHeadingPlaceholderPlugin(schema.nodes.heading, ui)];
+    }
   };
 };
 
@@ -211,13 +216,17 @@ function headingOmniInsert(
   description: string,
   images: [string, string]
 ) : OmniInsert {
-  const kHeadingPrefix = ui.context.translateText('Heading');
   return {
-    name: `${kHeadingPrefix} ${level}`,
+    name: headingName(ui, level),
     description,
     group: OmniInsertGroup.Headings,
     image: () => ui.prefs.darkMode() ? images[1] : images[0],
   };
+}
+
+function headingName(ui: EditorUI, level: number) {
+  const kHeadingPrefix = ui.context.translateText('Heading');
+  return `${kHeadingPrefix} ${level}`;
 }
 
 function headingCommandFn(schema: Schema, level: number) {
@@ -236,6 +245,11 @@ function headingAttrs(level: number, pandocAttrSupported: boolean) {
     };
   };
 }
+
+function emptyHeadingPlaceholderPlugin(nodeType: NodeType, ui: EditorUI) {
+  return emptyNodePlaceholderPlugin(nodeType, node => headingName(ui, node.attrs.level));
+}
+
 
 // write a bookdown (PART) H1 w/o spurious \
 function writeBookdownH1(output: PandocOutput, node: ProsemirrorNode) {

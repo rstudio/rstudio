@@ -24,6 +24,7 @@ import { CompletionHandler, CompletionResult } from "../../api/completion";
 
 import './omni_insert-completion.css';
 import { EditorUI } from "../../api/ui";
+import { placeholderDecoration } from "../../api/placeholder";
 
 export function omniInsertCompletionHandler(omniInserters: OmniInserter[], ui: EditorUI) : CompletionHandler<OmniInserter> {
 
@@ -82,6 +83,13 @@ function omniInsertCompletions(omniInserters: OmniInserter[], ui: EditorUI) {
 
       // capture query (note that no query returns all). 
       const query = match[1].toLowerCase();
+
+      // include a decoration if the query is empty
+      const decorations = query.length === 0 
+          ? DecorationSet.create(doc, 
+              [placeholderDecoration(selection.head, ui.context.translateText(' Type to search...'))]
+            )  
+          : undefined;
      
       // return the completion handler
       return {
@@ -108,15 +116,7 @@ function omniInsertCompletions(omniInserters: OmniInserter[], ui: EditorUI) {
         },
 
         // search placehodler decorator if there is no query
-        decorations: query.length === 0 ? DecorationSet.create(doc, [Decoration.widget(
-          selection.head,
-          (view: EditorView, getPos: () => number) => {
-            const placeholder = window.document.createElement("span");
-            placeholder.classList.add('pm-placeholder-text-color');
-            placeholder.innerText = ui.context.translateText(' Type to search...');
-            return placeholder;
-          }
-        )]) : undefined
+        decorations
       };
     } else {
       return null;
