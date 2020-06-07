@@ -23,6 +23,7 @@ import { EditorUI } from '../../api/ui';
 import { CompletionHandler, CompletionResult } from "../../api/completion";
 import { emojis, Emoji, SkinTone, emojiFromChar, emojiForAllSkinTones } from "../../api/emoji";
 import { getMarkRange } from '../../api/mark';
+import { nodeForEmoji } from './emoji';
 
 export function emojiCompletionHandler(ui: EditorUI) : CompletionHandler<Emoji> {
 
@@ -31,8 +32,7 @@ export function emojiCompletionHandler(ui: EditorUI) : CompletionHandler<Emoji> 
     completions: emojiCompletions(ui),
 
     replacement(schema: Schema, emoji: Emoji) : string | ProsemirrorNode {
-      const mark = schema.marks.emoji.create({ emojihint: emoji.aliases[0] });
-      return schema.text(emoji.emoji, [mark]);
+      return nodeForEmoji(schema, emoji, emoji.aliases[0]);
     },
 
     view: {
@@ -43,7 +43,6 @@ export function emojiCompletionHandler(ui: EditorUI) : CompletionHandler<Emoji> 
 
   };
 }
-
 
 const kMaxEmojiCompletions = 20;
 const kEmojiCompletionRegEx = /(^|[^`]):(\w{2,})$/;
@@ -108,9 +107,7 @@ export function emojiSkintonePreferenceCompletionHandler(ui: EditorUI) : Complet
       ui.prefs.setEmojiSkinTone(emoji.skinTone);
 
       // Emit the emoji of the correct skin tone
-      const mark = schema.marks.emoji.create({ emojihint: emoji.aliases[0]});
-      const text = schema.text(emoji.emoji, [mark]);
-      return text;
+      return nodeForEmoji(schema, emoji, emoji.aliases[0]);
     },
 
     view: {

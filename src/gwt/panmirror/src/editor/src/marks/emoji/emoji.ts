@@ -125,9 +125,7 @@ const extension = (_exts: PandocExtensions, _caps: PandocCapabilities, ui: Edito
             const schema = state.schema;
             const tr = state.tr;
             tr.delete(start + match[1].length, end);
-            const mark = schema.marks.emoji.create({ emojihint: emojiName });
-            const text = schema.text(emojiWithSkinTone.emoji, [mark]);
-            tr.replaceSelectionWith(text, false);
+            tr.replaceSelectionWith(nodeForEmoji(schema, emojiWithSkinTone, emojiName), false);
             return tr;
           } else {
             return null;
@@ -214,5 +212,10 @@ const extension = (_exts: PandocExtensions, _caps: PandocCapabilities, ui: Edito
     },
   };
 };
+
+export function nodeForEmoji(schema: Schema, emoji: Emoji, hint: string) : ProsemirrorNode {
+  const mark = schema.marks.emoji.create({ emojihint: hint });
+  return schema.text(emoji.emoji, [mark]);
+}
 
 export default extension;

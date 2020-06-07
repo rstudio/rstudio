@@ -28,6 +28,7 @@ import { EditorUI } from '../../api/ui';
 import { performInsertSymbol, InsertSymbolPlugin } from './insert_symbol-plugin';
 import { SymbolDataProvider, SymbolCharacter } from './insert_symbol-dataprovider';
 import { emojiCategories, emojis, Emoji, emojiFromString, SkinTone } from '../../api/emoji';
+import { nodeForEmoji } from '../../marks/emoji/emoji';
 
 const key = new PluginKey<boolean>('insert-emoji');
 
@@ -66,9 +67,7 @@ export class EmojiSymbolDataProvider implements SymbolDataProvider {
     if (emoji) {
       // Try to find an alias that matches the user's search term
       const bestAlias = emoji.aliases.find(alias => alias.includes(searchTerm));
-      const mark = state.schema.marks.emoji.create({ emojihint: bestAlias || emoji.aliases[0]});
-      const text = state.schema.text(emoji.emoji, [mark]);
-      tr.replaceSelectionWith(text, false); 
+      tr.replaceSelectionWith(nodeForEmoji(state.schema, emoji, bestAlias || emoji.aliases[0]));
     } else {
       // This doesn't appear to be an emoji or it doesn't have a markdown representation, 
       // just insert the text

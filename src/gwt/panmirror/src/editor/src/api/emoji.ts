@@ -29,7 +29,7 @@ const kEmojis = kEmojisJson as EmojiRaw[];
 // +1
 // TODO: Reuse the preference completion handler and trigger it when user clicks on emoji?
 // TODO: If user clicks on emoji, cycle through the available skin tones?
-// 
+
 
 // A raw emoji which doesn't include skin tone information
 export interface EmojiRaw {
