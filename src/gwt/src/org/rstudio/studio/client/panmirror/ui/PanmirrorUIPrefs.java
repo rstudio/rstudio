@@ -96,6 +96,7 @@ public class PanmirrorUIPrefs {
 	   }
 
 	   pUIPrefs_.get().emojiSkintone().setGlobalValue(skinToneStr);
+	   pUIPrefs_.get().writeUserPrefs();
    }
    
    Provider<UserPrefs> pUIPrefs_;
