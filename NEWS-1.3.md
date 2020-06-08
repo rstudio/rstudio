@@ -32,6 +32,9 @@
 - Fixed issue where file upload would fail when the file already existed (#7015)
 - Fix sign out from the Admin Dashboard when behind a path-rewriting proxy (Pro #1709)
 - Fix "Login as user" from the Admin Dashboard when using Launcher sessions (Pro #1710)
+- Fix issue with first esc keypress being ignored (#7045)
+- Fix issue with spellcheck not working with realtime turned off (#7068)
+- Fix error when some HTML comments are included in R Markdown documents (#6997)
 
 ### RStudio Server Pro
 

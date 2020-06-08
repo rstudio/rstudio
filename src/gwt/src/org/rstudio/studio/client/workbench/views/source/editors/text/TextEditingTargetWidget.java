@@ -1321,7 +1321,7 @@ public class TextEditingTargetWidget
    public void setIsNotebookFormat()
    {
       knitCommandText_ = "Preview";
-      knitDocumentButton_.setTitle("Preview the notebook " +
+      knitDocumentButton_.setTitle("Preview the notebook (" +
             DomUtils.htmlToText(
                   commands_.knitDocument().getShortcutPrettyHtml()) + ")");
       knitDocumentButton_.setText(knitCommandText_);
