@@ -44,25 +44,24 @@ public abstract class PreferencesDialogBase<T> extends ModalDialogBase
       super(Roles.getDialogRole());
       setText(caption);
       panes_ = panes;
-      
-      PreferencesDialogBaseResources res = 
-                                   PreferencesDialogBaseResources.INSTANCE;
-      
+
+      PreferencesDialogBaseResources res = PreferencesDialogBaseResources.INSTANCE;
+
       sectionChooser_ = new SectionChooser(caption);
-      
+
       ThemedButton okButton = new ThemedButton(
             "OK",
             clickEvent -> attemptSaveChanges(() -> closeDialog()));
       addOkButton(okButton, ElementIds.PREFERENCES_CONFIRM);
       addCancelButton();
-      
+
       if (showApplyButton)
       {
          addButton(new ThemedButton("Apply",
                                     clickEvent -> attemptSaveChanges()),
                                     ElementIds.DIALOG_APPLY_BUTTON);
       }
-      
+
       progressIndicator_ = addProgressIndicator(false);
       panel_ = new DockLayoutPanel(Unit.PX);
       panel_.setStyleName(panelContainerStyle);
@@ -110,7 +109,7 @@ public abstract class PreferencesDialogBase<T> extends ModalDialogBase
 
       sectionChooser_.select(0);
    }
-   
+
    public void initialize(T prefs)
    {
       for (PreferencesDialogPaneBase<T> pane : panes_)
@@ -118,12 +117,12 @@ public abstract class PreferencesDialogBase<T> extends ModalDialogBase
          pane.initialize(prefs);
       }
    }
-   
+
    public void activatePane(int index)
    {
       sectionChooser_.select(index);
    }
-   
+
    public void activatePane(Class<?> clazz)
    {
       for (int i = 0; i < panes_.length; i++)
@@ -135,7 +134,7 @@ public abstract class PreferencesDialogBase<T> extends ModalDialogBase
          }
       }
    }
-   
+
    private void setPaneVisibility(PreferencesDialogPaneBase<T> pane, boolean visible)
    {
       pane.setPaneVisible(visible);
@@ -151,7 +150,7 @@ public abstract class PreferencesDialogBase<T> extends ModalDialogBase
    {
       sectionChooser_.hideSection(index);
    }
-   
+
    protected void hidePane(Class<?> clazz)
    {
       for (int i = 0; i < panes_.length; i++)
@@ -163,12 +162,12 @@ public abstract class PreferencesDialogBase<T> extends ModalDialogBase
          }
       }
    }
-   
+
    protected void attemptSaveChanges()
    {
       attemptSaveChanges(null);
    }
-   
+
    private void attemptSaveChanges(final Operation onCompleted)
    {
       if (validate())
@@ -186,9 +185,9 @@ public abstract class PreferencesDialogBase<T> extends ModalDialogBase
          doSaveChanges(prefs, onCompleted, progressIndicator_, restartRequirement);
       }
    }
-   
+
    protected abstract T createEmptyPrefs();
-   
+
    protected abstract void doSaveChanges(T prefs,
                                          Operation onCompleted,
                                          ProgressIndicator progressIndicator,
@@ -218,7 +217,7 @@ public abstract class PreferencesDialogBase<T> extends ModalDialogBase
          onClosed.execute();
       });
    }
-   
+
    private boolean validate()
    {
       for (PreferencesDialogPaneBase<T> pane : panes_)
