@@ -71,7 +71,7 @@ const CompletionPopup: React.FC<CompletionListProps> = props => {
 
 const CompletionList: React.FC<CompletionListProps> = props => {
 
-  const { component, itemHeight = kCompletionDefaultItemHeight } = props.handler.view;
+  const { component, height = kCompletionDefaultItemHeight } = props.handler.view;
 
   const size = completionPopupSize(props);
 
@@ -112,7 +112,7 @@ const CompletionList: React.FC<CompletionListProps> = props => {
             <tr 
               key={key} 
               className={'pm-completion-item-row'}
-              style={ {lineHeight: itemHeight + 'px' }} 
+              style={ {lineHeight: height + 'px' }} 
               onClick={rowEventHandler(index, props.onClick)}
               onMouseMove={rowEventHandler(index,props.onHover)}
              >
@@ -144,8 +144,8 @@ function completionPopupSize(props: CompletionListProps) {
   const kCompletionsChrome = 8;
 
   // get view props (apply defaults)
-  let { itemHeight = kCompletionDefaultItemHeight } = props.handler.view;
-  const { maxVisible = kCompletionDefaultMaxVisible, width = kCompletionDefaultWidth } = props.handler.view;
+  let { height: itemHeight = kCompletionDefaultItemHeight } = props.handler.view;
+  const { maxVisible = kCompletionDefaultMaxVisible, width: width = kCompletionDefaultWidth } = props.handler.view;
 
   // add 2px for the border to item heights
   itemHeight += 2;

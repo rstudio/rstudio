@@ -49,11 +49,11 @@ export interface CompletionHandler<T = any> {
 
     key: (completion: T) => any;
 
-    // width of completion popup (defaults to 180)
+    // width of completion item (defaults to 180)
     width?: number;
 
-    // height for completion items (defaults to 22px)
-    itemHeight?: number;
+    // height of completion item (defaults to 22px)
+    height?: number;
  
     // maximum number of visible items (defaults to 10)
     maxVisible?: number;
