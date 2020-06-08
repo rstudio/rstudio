@@ -138,6 +138,7 @@ function verticalCompletions(props: CompletionListProps, itemHeight: number, ite
       <tr 
         key={key} 
         style={ {lineHeight: itemHeight + 'px' }} 
+        className={'pm-completion-item-row'}
         onClick={itemEventHandler(index, props.onClick)}
         onMouseMove={itemEventHandler(index,props.onHover)}
        >
