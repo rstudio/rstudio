@@ -164,19 +164,18 @@ function emojiSkintonePreferenceCompletions(ui: EditorUI) {
     if (!range) {
       return null;
     }
-    
-    const prefs = new Array<Emoji>();
+        
     const emojiText = doc.textBetween(range.from, range.to);
     const emoji = emojiFromChar(emojiText);
     
-    // If this is an emoji that support skin tones
-    if (emoji && emoji.supportsSkinTone) {
-      prefs.push(...emojiForAllSkinTones(emoji));
+    // If this is an emoji that doesn't support skin tones just return
+    if (!emoji?.supportsSkinTone) {
+      return null;
     }
 
     return {
       pos: range.from,
-      completions: () => Promise.resolve(prefs)
+      completions: () => Promise.resolve(emojiForAllSkinTones(emoji))
     };
   };
 }
