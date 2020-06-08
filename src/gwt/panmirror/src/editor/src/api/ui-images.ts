@@ -21,6 +21,7 @@ export interface EditorUIImages {
   runprevchunks?: string;
   search?: string;
   omni_insert?: {
+    generic?: string;
     heading1?: string;
     heading1_dark?: string;
     heading2?: string;
@@ -39,5 +40,31 @@ export interface EditorUIImages {
     math_inline_dark?: string;
     math_display?: string;
     math_display_dark?: string;
+    html_block?: string;
+    html_block_dark?: string;
+    line_block?: string;
+    line_block_dark?: string;
+    emoji?: string;
+    emoji_dark?: string;
+    comment?: string;
+    comment_dark?: string;
+    div?: string;
+    div_dark?: string;
+    footnote?: string;
+    footnote_dark?: string;
+    symbol?: string;
+    symbol_dark?: string;
+    table?: string;
+    table_dark?: string;
+    definition_list?: string;
+    definition_list_dark?: string;
+    horizontal_rule?: string;
+    horizontal_rule_dark?: string;
+    image?: string;
+    image_dark?: string;
+    link?: string;
+    link_dark?: string;
+    paragraph?: string;
+    paragraph_dark?: string;
   };
 }

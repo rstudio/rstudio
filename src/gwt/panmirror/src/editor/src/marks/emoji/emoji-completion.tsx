@@ -42,14 +42,16 @@ export function emojiCompletionHandler(ui: EditorUI) : CompletionHandler<Emoji> 
     view: {
       component: EmojiView,
       key: emoji => emoji.emoji,
-      width: 200,
+      width: 22,
+      horizontal: true,
+      horizontalItemWidths: [50],
       hideNoResults: true
     },
 
   };
 }
 
-const kMaxEmojiCompletions = 20;
+const kMaxEmojiCompletions = 5;
 const kEmojiCompletionRegEx = /(^|[^`]):(\w{2,})$/;
 
 function emojiCompletions(ui: EditorUI) {
