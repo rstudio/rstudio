@@ -128,15 +128,31 @@ export const InsertSymbolPopup: React.FC<InsertSymbolPopupProps> = props => {
         break;
     }
 
-    // Process grid keyboard event if the textbox is focused and has no value
-    if (isElementFocused(textRef.current) && textRef.current?.value.length === 0) {
-      const newIndex = newIndexForKeyboardEvent(event, selectedSymbolIndex, kNumberOfcolumns, symbols.length);
-      if (newIndex !== undefined && newIndex >= 0) {
-        setSelectedSymbolIndex(newIndex);
-        event.preventDefault();
+    if (textRef.current && isElementFocused(textRef.current)) {
+      if (textRef.current?.value.length > 0) {
+        const numberOfCharacters = textRef.current?.value.length;
+        const cursorPosition = textRef.current?.selectionStart;
+        if (cursorPosition === 0 && event.key === 'ArrowLeft') { 
+            processGridKeyboardEvent(event); // can handle left
+        } else if (cursorPosition === numberOfCharacters && event.key === 'ArrowRight') {  
+          processGridKeyboardEvent(event); // can handle right
+        } else if (event.key === 'ArrowUp' || event.key === 'ArrowDown' || event.key === 'PageUp' || event.key === 'PageDown') {
+          processGridKeyboardEvent(event);  // can always handle up / down, page up / down
+        }       
+      } else {
+        processGridKeyboardEvent(event);
       }
     }
   };
+
+  function processGridKeyboardEvent(event: React.KeyboardEvent) {
+    const newIndex = newIndexForKeyboardEvent(event, selectedSymbolIndex, kNumberOfcolumns, filteredSymbols.length);
+    console.log(newIndex);
+    if (newIndex !== undefined && newIndex >= 0) {
+      setSelectedSymbolIndex(newIndex);
+      event.preventDefault();
+    }
+  }
 
   const handleSelectedSymbolChanged = (symbolIndex: number) => {
     setSelectedSymbolIndex(symbolIndex);
