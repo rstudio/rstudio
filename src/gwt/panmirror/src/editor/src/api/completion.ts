@@ -54,8 +54,13 @@ export interface CompletionHandler<T = any> {
 
     // height of completion item (defaults to 22px)
     height?: number;
+
+    // use horizontal orientation (defaults to false)
+    horizontal?: boolean;
  
-    // maximum number of visible items (defaults to 10)
+    // maximum number of visible items (defaults to 10). note that
+    // this only applies to completion poupups w/ vertical orientation 
+    // (scrolling is not supported for horizontal orientation)
     maxVisible?: number;
 
     // hide 'no results' (default false)
