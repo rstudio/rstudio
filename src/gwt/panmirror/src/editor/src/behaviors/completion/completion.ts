@@ -308,7 +308,7 @@ class CompletionPlugin extends Plugin<CompletionState> {
           // perform replacement
           const tr = view.state.tr;
           tr.setSelection(new TextSelection(tr.doc.resolve(result.pos), view.state.selection.$head));
-          tr.replaceSelectionWith(node, true);
+          tr.replaceSelectionWith(node, false);
           setTextSelection(tr.selection.to)(tr);
           view.dispatch(tr);
         }
