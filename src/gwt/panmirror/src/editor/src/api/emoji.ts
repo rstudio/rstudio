@@ -17,20 +17,6 @@
 import kEmojisJson from './emojis-all.json';
 const kEmojis = kEmojisJson as EmojiRaw[];
 
-// PREFERENCE
-// TODO: Skin tone preference appears to be lost when reloading after a code change - do I need to flush or commit or something?
-// TODO: Add user preference in RStudio somewhere
-
-// APPEARANCE
-// TODO: Appearance of preference completion handler
-// Preferred appearance
-// [] | [] [] [] [] []
-
-// +1
-// TODO: Reuse the preference completion handler and trigger it when user clicks on emoji?
-// TODO: If user clicks on emoji, cycle through the available skin tones?
-
-
 // A raw emoji which doesn't include skin tone information
 export interface EmojiRaw {
   emojiRaw: string; 
