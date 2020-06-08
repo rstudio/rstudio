@@ -522,41 +522,50 @@ var PagedTable = function (pagedTable) {
       thead.innerHTML = "";
    };
 
+   var renderMetadata = function(){
+      // show metadata on top of header as long as we have > 1 entry (the first one is always just
+      // dimensions, which we are already displaying)
+      if (Object.keys(options.metadata).length < 1) 
+         return;
+
+      // ignore if we've already rendered
+      if (pagedTable.querySelector(".pagedtable-metacell") !== null)
+         return;
+
+      // create a column that spans the entire header space
+      metaheader = document.createElement("div");
+      var metacell = document.createElement("div");
+      metacell.className = "pagedtable-metacell";
+      metaheader.appendChild(metacell);
+
+      // create a small table cell inside that column to host the metadata
+      for (var metafield in options.metadata) {
+         if (options.metadata.hasOwnProperty(metafield)) {
+            var metadiv = document.createElement("div");
+
+            var field = document.createElement("span");
+            field.innerText = metafield + ":";
+            field.className = "pagedtable-metafield";
+            metadiv.appendChild(field);
+
+            var val = document.createElement("span");
+            val.innerText = options.metadata[metafield];
+            val.className = "pagedtable-metaval";
+            metadiv.appendChild(val);
+
+            metacell.appendChild(metadiv);
+         }
+      }
+
+      // insert the metadata above the table
+      var table = pagedTable.querySelectorAll("table")[0];
+      table.parentElement.insertBefore(metaheader, table);
+   };
+
    var renderHeader = function (clear) {
+      var fragment = document.createDocumentFragment();
       cachedPagedTableClientWidth = pagedTable.clientWidth;
 
-      var fragment = document.createDocumentFragment();
-
-      // show metadata on top of header as long as we have > 1 entry (the first one is always just
-      // dimensions, which we are already displaying
-      if (Object.keys(options.metadata).length > 1) {
-         // create a column that spans the entire header space
-         metaheader = document.createElement("tr");
-         var metacell = document.createElement("td");
-         metacell.className = "pagedtable-metacell";
-         metacell.setAttribute("colspan", columns.total);
-         metaheader.appendChild(metacell);
-
-         // create a small table cell inside that column to host the metadata
-         for (var metafield in options.metadata) {
-            if (options.metadata.hasOwnProperty(metafield)) {
-               var metadiv = document.createElement("div");
-
-               var field = document.createElement("span");
-               field.innerText = metafield + ":";
-               field.className = "pagedtable-metafield";
-               metadiv.appendChild(field);
-
-               var val = document.createElement("span");
-               val.innerText = options.metadata[metafield];
-               val.className = "pagedtable-metaval";
-               metadiv.appendChild(val);
-
-               metacell.appendChild(metadiv);
-            }
-         }
-         fragment.appendChild(metaheader);
-      }
       header = document.createElement("tr");
       fragment.appendChild(header);
 
@@ -606,7 +615,7 @@ var PagedTable = function (pagedTable) {
       if (columns.number + columns.visible < columns.total)
          header.appendChild(renderColumnNavigation(columns.visible, false));
 
-      if (typeof clear == "undefined" || clear) clearHeader();
+      if (typeof clear === "undefined" || clear) clearHeader();
       var thead = pagedTable.querySelectorAll("thead")[0];
       thead.appendChild(fragment);
    };
@@ -1112,6 +1121,7 @@ var PagedTable = function (pagedTable) {
       me.fitColumns(false);
 
       // render header/footer to measure height accurately
+      renderMetadata();
       renderHeader();
       renderFooter();
 
