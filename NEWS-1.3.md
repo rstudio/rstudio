@@ -32,6 +32,7 @@
 - Fixed issue where file upload would fail when the file already existed (#7015)
 - Fix sign out from the Admin Dashboard when behind a path-rewriting proxy (Pro #1709)
 - Fix "Login as user" from the Admin Dashboard when using Launcher sessions (Pro #1710)
+- Fix issue with first esc keypress being ignored (#7045)
 
 ### RStudio Server Pro
 
