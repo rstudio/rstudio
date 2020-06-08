@@ -39,16 +39,14 @@ export function emojiCompletionHandler() : CompletionHandler<Emoji> {
     view: {
       component: EmojiView,
       key: emoji => emoji.emoji,
-      width: 22,
-      horizontal: true,
-      horizontalItemWidths: [50],
+      width: 200,
       hideNoResults: true
     },
 
   };
 }
 
-const kMaxEmojiCompletions = 5;
+const kMaxEmojiCompletions = 20;
 const kEmojiCompletionRegEx = /(^|[^`]):(\w{2,})$/;
 
 function emojiCompletions(text: string, _doc: ProsemirrorNode, selection: Selection): CompletionResult<Emoji> | null {
@@ -92,7 +90,7 @@ function emojiCompletions(text: string, _doc: ProsemirrorNode, selection: Select
 const EmojiView: React.FC<Emoji> = emoji => {
   return (
     <div className={'pm-completion-item-text'}>
-      {emoji.emoji}
+      {emoji.emoji}&nbsp;:{emoji.aliases[0]}:
     </div>
   );
 };
