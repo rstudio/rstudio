@@ -13,11 +13,12 @@
  *
  */
 
- // JJA: order of imports (check other source files as well)
-import { WidgetProps } from '../../api/widgets/react';
 import React from 'react';
-import { SymbolCharacter } from './insert_symbol-dataprovider';
+ 
 import { EditorUI } from '../../api/ui';
+import { WidgetProps } from '../../api/widgets/react';
+
+import { SymbolCharacter } from './insert_symbol-dataprovider';
 
 interface SymbolPreviewProps extends WidgetProps {
   top: number;

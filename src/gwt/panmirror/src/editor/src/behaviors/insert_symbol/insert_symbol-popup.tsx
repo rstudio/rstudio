@@ -13,20 +13,19 @@
  *
  */
 
-import { WidgetProps } from '../../api/widgets/react';
 import React, { ChangeEvent } from 'react';
-import { SymbolDataProvider, SymbolCharacter } from './insert_symbol-dataprovider';
+
+import { EditorUI } from '../../api/ui';
 import { isElementFocused, focusElement } from '../../api/focus';
 import { Popup } from '../../api/widgets/popup';
-import { TextInput } from '../../api/widgets/text';
 import { SelectInput } from '../../api/widgets/select';
+import { TextInput } from '../../api/widgets/text';
+import { WidgetProps } from '../../api/widgets/react';
+
+import { SymbolDataProvider, SymbolCharacter } from './insert_symbol-dataprovider';
 import SymbolCharacterGrid, { newIndexForKeyboardEvent } from './insert_symbol-grid';
 
 import './insert_symbol-styles.css';
-
-// JJA: order of UI imports
-import { EditorUI } from '../../api/ui';
-
 
 interface InsertSymbolPopupProps extends WidgetProps {
   symbolDataProvider: SymbolDataProvider;

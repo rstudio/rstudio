@@ -18,17 +18,17 @@ import { PluginKey, EditorState } from 'prosemirror-state';
 import { ProsemirrorCommand, EditorCommandId } from '../../api/command';
 
 import { EditorEvents } from '../../api/events';
-import { Extension } from '../../api/extension';
 import { EditorFormat } from '../../api/format';
 import { EditorOptions } from '../../api/options';
+import { EditorUI } from '../../api/ui';
+import { emojiCategories, emojis, Emoji, emojiFromString, SkinTone } from '../../api/emoji';
+import { Extension } from '../../api/extension';
+import { nodeForEmoji } from '../../marks/emoji/emoji';
 import { PandocExtensions } from '../../api/pandoc';
 import { PandocCapabilities } from '../../api/pandoc_capabilities';
-import { EditorUI } from '../../api/ui';
 
 import { performInsertSymbol, InsertSymbolPlugin } from './insert_symbol-plugin';
 import { SymbolDataProvider, SymbolCharacter } from './insert_symbol-dataprovider';
-import { emojiCategories, emojis, Emoji, emojiFromString, SkinTone } from '../../api/emoji';
-import { nodeForEmoji } from '../../marks/emoji/emoji';
 
 const key = new PluginKey<boolean>('insert-emoji');
 

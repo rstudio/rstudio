@@ -18,13 +18,15 @@ import { FixedSizeGrid } from 'react-window';
 
 import debounce from 'lodash.debounce';
 
+import { EditorUI } from '../../api/ui';
+import { WidgetProps } from '../../api/widgets/react';
+
 import { CharacterGridCellItemData, SymbolCharacterCell } from './insert_symbol-grid-cell';
 import { SymbolCharacter } from './insert_symbol-dataprovider';
 import { SymbolPreview } from './insert_symbol-grid-preview';
-import { WidgetProps } from '../../api/widgets/react';
 
 import './insert_symbol-grid-styles.css';
-import { EditorUI } from '../../api/ui';
+
 
 interface CharacterGridProps extends WidgetProps {
   height: number;

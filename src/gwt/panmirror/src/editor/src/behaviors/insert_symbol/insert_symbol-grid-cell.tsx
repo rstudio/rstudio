@@ -13,10 +13,10 @@
  *
  */
 
-import { SymbolCharacter } from './insert_symbol-dataprovider';
-
 import React from 'react';
 import { GridChildComponentProps } from 'react-window';
+
+import { SymbolCharacter } from './insert_symbol-dataprovider';
 
 export interface CharacterGridCellItemData {
   symbolCharacters: SymbolCharacter[];

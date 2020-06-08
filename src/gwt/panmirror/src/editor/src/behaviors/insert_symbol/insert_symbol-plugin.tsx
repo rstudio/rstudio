@@ -13,7 +13,7 @@
  *
  */
 
- import { EditorState, Transaction, Plugin, PluginKey } from 'prosemirror-state';
+import { EditorState, Transaction, Plugin, PluginKey } from 'prosemirror-state';
 import { EditorView } from 'prosemirror-view';
 
 import React from 'react';
