@@ -140,6 +140,7 @@ function verticalCompletions(props: CompletionListProps, itemHeight: number, ite
       <tr 
         key={key} 
         style={ {lineHeight: itemHeight + 'px' }} 
+        className={'pm-completion-item-row'}
         onClick={itemEventHandler(index, props.onClick)}
         onMouseMove={itemEventHandler(index,props.onHover)}
        >
@@ -150,23 +151,25 @@ function verticalCompletions(props: CompletionListProps, itemHeight: number, ite
 }
 
 function horizontalCompletions(props: CompletionListProps, itemHeight: number, itemEventHandler: ItemEventHandler) {
+  const cellWidths = horizontalCellWidths(props);
   return (
     <tr style={ {lineHeight: itemHeight + 'px' } }>
        {props.completions.map((completion, index) => {
-          const { cell } = completionItemCell(props, completion, index, itemEventHandler);
+          const { cell } = completionItemCell(props, completion, index, cellWidths[index], itemEventHandler);
           return cell;
        })}
     </tr>
   );
 }
 
-function completionItemCell(props: CompletionListProps, completion: any, index: number, itemEventHandler?: ItemEventHandler) {
+function completionItemCell(props: CompletionListProps, completion: any, index: number, width?: number, itemEventHandler?: ItemEventHandler) {
   // need to provide key for both wrapper and item
   // https://stackoverflow.com/questions/28329382/understanding-unique-keys-for-array-children-in-react-js#answer-28329550
   const key = props.handler.view.key(completion);
   const item = React.createElement( props.handler.view.component, { ...completion, key });
   const className = 'pm-completion-item' + (index === props.selectedIndex ? ' pm-selected-list-item' : '');
   const cell = <td key={key} 
+                   style={width ? { width: width + 'px' } : undefined}
                    className={className}
                    onClick={itemEventHandler ? itemEventHandler(index, props.onClick) : undefined}
                    onMouseMove={itemEventHandler ? itemEventHandler(index, props.onHover) : undefined}
@@ -197,7 +200,7 @@ function completionPopupSize(props: CompletionListProps) {
 
   // get view props (apply defaults)
   let { height: itemHeight = kCompletionDefaultItemHeight } = props.handler.view;
-  const { maxVisible = kCompletionDefaultMaxVisible, width: width = kCompletionDefaultWidth } = props.handler.view;
+  const { maxVisible = kCompletionDefaultMaxVisible, width = kCompletionDefaultWidth } = props.handler.view;
 
   // add 2px for the border to item heights
   const kBorderPad = 2;
@@ -211,8 +214,16 @@ function completionPopupSize(props: CompletionListProps) {
   // complete based on horizontal vs. vertical
   if (props.handler.view.horizontal) {
 
+    // horizontal mode can provide explicit item widths
+    const kTablePadding = 8;
+    const kCellPadding = 8;
+    const kCellBorders = 2;
+    const totalWidth = horizontalCellWidths(props).reduce((total, current) => {
+      return total + (current + kCellPadding + kCellBorders);
+    }, 0) + kTablePadding;
+
     return {
-      width: (width+2) * props.completions.length,
+      width: totalWidth,
       height: headerHeight + itemHeight + kCompletionsChrome
     };
 
@@ -226,6 +237,17 @@ function completionPopupSize(props: CompletionListProps) {
     return { width, height };
   }
 
+}
+
+function horizontalCellWidths(props: CompletionListProps) {
+  const { width = kCompletionDefaultWidth } = props.handler.view;
+  return props.completions.map((_completion, index) => {
+    if (props.handler.view.horizontalItemWidths) {
+      return props.handler.view.horizontalItemWidths[index] || width;
+    } else {
+      return width;
+    }
+  });
 }
 
 function completionPopupPositionStyles(view: EditorView, pos: number, width: number, height: number) {

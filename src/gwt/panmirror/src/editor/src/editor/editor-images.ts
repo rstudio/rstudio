@@ -21,6 +21,8 @@ import removelinkImage from './images/removelink.png';
 import runchunkImage from './images/runchunk.png';
 import runprevchunksImage from './images/runprevchunks.png';
 import searchImage from './images/search.png';
+
+import omniInsertGenericImage from './images/omni_insert/generic.png';
 import heading1Image from './images/omni_insert/heading1.png';
 import heading1DarkImage from './images/omni_insert/heading1_dark.png';
 import heading2Image from './images/omni_insert/heading2.png';
@@ -39,7 +41,32 @@ import mathInlineImage from './images/omni_insert/math_inline.png';
 import mathInlineDarkImage from './images/omni_insert/math_inline_dark.png';
 import mathDisplayImage from './images/omni_insert/math_display.png';
 import mathDisplayDarkImage from './images/omni_insert/math_display_dark.png';
-
+import htmlBlockImage from './images/omni_insert/html_block.png';
+import htmlBlockDarkImage from './images/omni_insert/html_block_dark.png';
+import lineBlockImage from './images/omni_insert/line_block.png';
+import lineBlockDarkImage from './images/omni_insert/line_block_dark.png';
+import emojiImage from './images/omni_insert/emoji.png';
+import emojiDarkImage from './images/omni_insert/emoji_dark.png';
+import commentImage from './images/omni_insert/comment.png';
+import commentDarkImage from './images/omni_insert/comment_dark.png';
+import divImage from './images/omni_insert/div.png';
+import divDarkImage from './images/omni_insert/div_dark.png';
+import footnoteImage from './images/omni_insert/footnote.png';
+import footnoteDarkImage from './images/omni_insert/footnote_dark.png';
+import symbolImage from './images/omni_insert/symbol.png';
+import symbolDarkImage from './images/omni_insert/symbol_dark.png';
+import tableImage from './images/omni_insert/table.png';
+import tableDarkImage from './images/omni_insert/table_dark.png';
+import definitionListImage from './images/omni_insert/definition_list.png';
+import definitionListDarkImage from './images/omni_insert/definition_list_dark.png';
+import horizontalRuleImage from './images/omni_insert/horizontal_rule.png';
+import horizontalRuleDarkImage from './images/omni_insert/horizontal_rule_dark.png';
+import imgImage from './images/omni_insert/image.png';
+import imgDarkImage from './images/omni_insert/image_dark.png';
+import linkImage from './images/omni_insert/link.png';
+import linkDarkImage from './images/omni_insert/link_dark.png';
+import paragraphImage from './images/omni_insert/paragraph.png';
+import paragraphDarkImage from './images/omni_insert/paragraph_dark.png';
 
 export function defaultEditorUIImages(): EditorUIImages {
   return {
@@ -50,6 +77,7 @@ export function defaultEditorUIImages(): EditorUIImages {
     runprevchunks: runprevchunksImage,
     search: searchImage,
     omni_insert: {
+      generic: omniInsertGenericImage,
       heading1: heading1Image,
       heading1_dark: heading1DarkImage,
       heading2: heading2Image,
@@ -68,6 +96,32 @@ export function defaultEditorUIImages(): EditorUIImages {
       math_inline_dark: mathInlineDarkImage,
       math_display: mathDisplayImage,
       math_display_dark: mathDisplayDarkImage,
+      html_block: htmlBlockImage,
+      html_block_dark: htmlBlockDarkImage,
+      line_block: lineBlockImage,
+      line_block_dark: lineBlockDarkImage,
+      emoji: emojiImage,
+      emoji_dark: emojiDarkImage,
+      comment: commentImage,
+      comment_dark: commentDarkImage,
+      div: divImage,
+      div_dark: divDarkImage,
+      footnote: footnoteImage,
+      footnote_dark: footnoteDarkImage,
+      symbol: symbolImage,
+      symbol_dark: symbolDarkImage,
+      table: tableImage,
+      table_dark: tableDarkImage,
+      definition_list: definitionListImage,
+      definition_list_dark: definitionListDarkImage,
+      horizontal_rule: horizontalRuleImage,
+      horizontal_rule_dark: horizontalRuleDarkImage,
+      image: imgImage,
+      image_dark: imgDarkImage,
+      link: linkImage,
+      link_dark: linkDarkImage,
+      paragraph: paragraphImage,
+      paragraph_dark: paragraphDarkImage
     },
   };
 }

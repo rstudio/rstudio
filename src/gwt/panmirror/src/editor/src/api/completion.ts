@@ -56,14 +56,16 @@ export interface CompletionHandler<T = any> {
 
     key: (completion: T) => any;
 
-    // width of completion item (defaults to 180)
+    // width of completion item (defaults to 180).
     width?: number;
 
     // height of completion item (defaults to 22px)
     height?: number;
 
     // use horizontal orientation (defaults to false)
+    // (optionally provide a set of item widths)
     horizontal?: boolean;
+    horizontalItemWidths?: number[];
  
     // maximum number of visible items (defaults to 10). note that
     // this only applies to completion poupups w/ vertical orientation 
