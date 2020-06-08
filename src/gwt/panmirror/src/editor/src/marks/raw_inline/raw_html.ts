@@ -22,15 +22,12 @@ import { setTextSelection } from 'prosemirror-utils';
 
 import { PandocExtensions, PandocTokenType, PandocToken, ProsemirrorWriter, PandocOutput } from '../../api/pandoc';
 import { Extension } from '../../api/extension';
-import { isRawHTMLFormat, kHTMLFormat } from '../../api/raw';
-import { EditorUI } from '../../api/ui';
-import { EditorCommandId } from '../../api/command';
+import { isRawHTMLFormat } from '../../api/raw';
 import { PandocCapabilities } from '../../api/pandoc_capabilities';
 import { MarkInputRuleFilter } from '../../api/input_rule';
 
-import { kRawInlineFormat, kRawInlineContent, RawInlineCommand } from './raw_inline';
+import { kRawInlineFormat, kRawInlineContent } from './raw_inline';
 
-import { InsertHTMLCommentCommand } from './raw_html_comment';
 import { fancyQuotesToSimple } from '../../api/quote';
 const extension = (pandocExtensions: PandocExtensions, pandocCapabilities: PandocCapabilities): Extension | null => {
   return {
@@ -94,17 +91,6 @@ const extension = (pandocExtensions: PandocExtensions, pandocCapabilities: Pando
         },
       },
     ],
-
-    // insert command
-    commands: (schema: Schema, ui: EditorUI) => {
-      const commands = [new InsertHTMLCommentCommand(schema)];
-      if (pandocExtensions.raw_html) {
-        commands.push(
-          new RawInlineCommand(EditorCommandId.HTMLInline, kHTMLFormat, ui, pandocCapabilities.output_formats),
-        );
-      }
-      return commands;
-    },
 
     // input rules
     inputRules: (schema: Schema, filter: MarkInputRuleFilter) => {

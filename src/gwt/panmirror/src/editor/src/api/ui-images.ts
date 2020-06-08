@@ -66,5 +66,13 @@ export interface EditorUIImages {
     link_dark?: string;
     paragraph?: string;
     paragraph_dark?: string;
+    raw_block?: string;
+    raw_block_dark?: string;
+    raw_inline?: string;
+    raw_inline_dark?: string;
+    tex_block?: string;
+    tex_block_dark?: string;
+    yaml_block?: string;
+    yaml_block_dark?: string;
   };
 }

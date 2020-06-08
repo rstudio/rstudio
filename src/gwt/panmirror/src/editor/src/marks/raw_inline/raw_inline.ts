@@ -26,6 +26,7 @@ import { EditorUI, RawFormatProps } from '../../api/ui';
 import { canInsertNode } from '../../api/node';
 import { fragmentText } from '../../api/fragment';
 import { PandocCapabilities } from '../../api/pandoc_capabilities';
+import { OmniInsertGroup } from '../../api/omni_insert';
 
 export const kRawInlineFormat = 0;
 export const kRawInlineContent = 1;
@@ -145,7 +146,8 @@ export class RawInlineInsertCommand extends ProsemirrorCommand {
       }
 
       return true;
-    });
+    },
+    );
     this.markType = markType;
   }
 
@@ -210,6 +212,15 @@ export class RawInlineCommand extends ProsemirrorCommand {
       asyncInlineRaw();
 
       return true;
+    },  
+    {
+      name: ui.context.translateText('Raw Inline...'),
+      description: ui.context.translateText("Raw inline content"),
+      group: OmniInsertGroup.Content,
+      priority: 0,
+      image: () => ui.prefs.darkMode() 
+        ? ui.images.omni_insert?.raw_inline_dark! 
+        : ui.images.omni_insert?.raw_inline!
     });
   }
 }
