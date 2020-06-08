@@ -155,7 +155,9 @@ const extension = (
           description: ui.context.translateText("Raw TeX content"),
           group: OmniInsertGroup.Blocks,
           priority: 5,
-          image: () => ui.images.omni_insert?.generic!
+          image: () => ui.prefs.darkMode() 
+            ? ui.images.omni_insert?.tex_block_dark! 
+            : ui.images.omni_insert?.tex_block!
         }));
       }
 
@@ -233,7 +235,9 @@ class RawBlockCommand extends ProsemirrorCommand {
       description: ui.context.translateText("Raw content block"),
       group: OmniInsertGroup.Blocks,
       priority: 4,
-      image: () => ui.images.omni_insert?.generic!
+      image: () => ui.prefs.darkMode() 
+        ? ui.images.omni_insert?.raw_block_dark! 
+        : ui.images.omni_insert?.raw_block!
     });
   }
 }
