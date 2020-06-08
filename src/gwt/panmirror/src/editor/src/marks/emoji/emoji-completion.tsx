@@ -20,10 +20,14 @@ import React from 'react';
 
 import { EditorUI } from '../../api/ui';
 
-import { CompletionHandler, CompletionResult } from "../../api/completion";
+import { CompletionHandler, CompletionResult, CompletionHeaderProps } from "../../api/completion";
 import { emojis, Emoji, SkinTone, emojiFromChar, emojiForAllSkinTones } from "../../api/emoji";
 import { getMarkRange } from '../../api/mark';
 import { nodeForEmoji } from './emoji';
+
+import './emoji-completion.css';
+import { Editor } from '../../editor/editor';
+import { CompletionListProps } from '../../behaviors/completion/completion-popup';
 
 export function emojiCompletionHandler(ui: EditorUI) : CompletionHandler<Emoji> {
 
@@ -109,9 +113,6 @@ export function emojiSkintonePreferenceCompletionHandler(ui: EditorUI) : Complet
 
     replacement(schema: Schema, emoji: Emoji | null) : string | ProsemirrorNode | null {
 
-      // JJA: a null emoji means the user pressed 'Esc', we probably 
-      // want this to mean "use default" (so the prompt doesn't occur again)
-
       if (emoji) {
 
         // Save this preference and use it in the future
@@ -122,30 +123,34 @@ export function emojiSkintonePreferenceCompletionHandler(ui: EditorUI) : Complet
 
       } else {
         
-        return null;
+        // The user didn't select a skintoned emoji (e.g. pressed 'ESC'), so 
+        // just store Default and use that in the future
+        ui.prefs.setEmojiSkinTone(SkinTone.Default);
 
-      }
-     
+        return null;
+      }     
     },
 
     view: {
 
-      // JJA: implement header w/ "prompt" (may want this to also indicate that 
-      // this can be also be (re)set later in application preferences -- not 
-      // sure how you do that w/o getting too wordy)
       header: {
         component: EmojiSkintonePreferenceHeaderView,
-        height: 25
+        height: kHeaderHeight
       },
       
       component: EmojiSkintonePreferenceView,
       key: pref => pref.skinTone,
-      width: 50,
+      width: kCellWidth,
+      height: kCellWidth,
       horizontal: true
     },
 
   };
 }
+
+const kCellWidth = 40;
+const kHeaderHeight = 24;
+const kCellBorderAndPadding = 8;
 
 function emojiSkintonePreferenceCompletions(ui: EditorUI) {
   return (text: string, doc: ProsemirrorNode, selection: Selection): CompletionResult<Emoji> | null => {
@@ -182,9 +187,12 @@ const EmojiSkintonePreferenceHeaderView: React.FC<CompletionHeaderProps> = (prop
   );
 };
 
+// use outline to apply border as a separator
 const EmojiSkintonePreferenceView: React.FC<Emoji> = emoji => {
   return (
-    <div className={'pm-completion-item-text'}>
+    <div  
+      style={ { width: kCellWidth - kCellBorderAndPadding, } }
+      className='pm-completion-item-text pm-completion-emoji-cell'>
       {emoji.emoji}
     </div>
   );
