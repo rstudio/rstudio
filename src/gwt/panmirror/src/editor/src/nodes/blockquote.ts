@@ -65,6 +65,7 @@ function blockquoteOmniInsert(ui: EditorUI) {
     name: ui.context.translateText('Blockquote'),
     description: ui.context.translateText("Section quoted from another source"),
     group: OmniInsertGroup.Blocks,
+    priority: 8,
     image: () => ui.prefs.darkMode() ? ui.images.omni_insert?.blockquote_dark! : ui.images.omni_insert?.blockquote!,
   };
 }

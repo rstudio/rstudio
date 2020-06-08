@@ -31,6 +31,7 @@ import { PandocCapabilities } from '../../api/pandoc_capabilities';
 import { EditorFormat } from '../../api/format';
 import { EditorOptions } from '../../api/options';
 import { kHTMLCommentRegEx, isHTMLComment } from '../../api/html';
+import { OmniInsertGroup } from '../../api/omni_insert';
 
 import './raw_html_comment-styles.css';
 
@@ -131,13 +132,13 @@ const extension = (
 
     // insert command
     commands: (schema: Schema, ui: EditorUI) => {
-      return [new InsertHTMLCommentCommand(schema)];
+      return [new InsertHTMLCommentCommand(schema, ui)];
     },
   };
 };
 
 export class InsertHTMLCommentCommand extends ProsemirrorCommand {
-  constructor(schema: Schema) {
+  constructor(schema: Schema, ui: EditorUI) {
     super(EditorCommandId.HTMLComment, ['Shift-Mod-c'], (state: EditorState, dispatch?: (tr: Transaction) => void) => {
       // make sure we can insert a text node here
       if (!canInsertNode(state, schema.nodes.text)) {
@@ -181,6 +182,15 @@ export class InsertHTMLCommentCommand extends ProsemirrorCommand {
       }
 
       return true;
+    },
+    {
+      name: ui.context.translateText('Comment'),
+      description: ui.context.translateText("Editing comment"),
+      group: OmniInsertGroup.Content,
+      priority: 3,
+      image: () => ui.prefs.darkMode() 
+        ? ui.images.omni_insert?.comment_dark! 
+        : ui.images.omni_insert?.comment!,
     });
   }
 }

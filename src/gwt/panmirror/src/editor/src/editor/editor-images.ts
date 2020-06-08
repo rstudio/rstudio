@@ -67,6 +67,14 @@ import linkImage from './images/omni_insert/link.png';
 import linkDarkImage from './images/omni_insert/link_dark.png';
 import paragraphImage from './images/omni_insert/paragraph.png';
 import paragraphDarkImage from './images/omni_insert/paragraph_dark.png';
+import rawBlockImage from './images/omni_insert/raw_block.png';
+import rawBlockDarkImage from './images/omni_insert/raw_block_dark.png';
+import rawInlineImage from './images/omni_insert/raw_inline.png';
+import rawInlineDarkImage from './images/omni_insert/raw_inline_dark.png';
+import texBlockImage from './images/omni_insert/tex_block.png';
+import texBlockDarkImage from './images/omni_insert/tex_block_dark.png';
+import yamlBlockImage from './images/omni_insert/yaml_block.png';
+import yamlBlockDarkImage from './images/omni_insert/yaml_block_dark.png';
 
 export function defaultEditorUIImages(): EditorUIImages {
   return {
@@ -121,7 +129,15 @@ export function defaultEditorUIImages(): EditorUIImages {
       link: linkImage,
       link_dark: linkDarkImage,
       paragraph: paragraphImage,
-      paragraph_dark: paragraphDarkImage
+      paragraph_dark: paragraphDarkImage,
+      raw_block: rawBlockImage,
+      raw_block_dark: rawBlockDarkImage,
+      raw_inline: rawInlineImage,
+      raw_inline_dark: rawInlineDarkImage,
+      tex_block: texBlockImage,
+      tex_block_dark: texBlockDarkImage,
+      yaml_block: yamlBlockImage,
+      yaml_block_dark: yamlBlockDarkImage
     },
   };
 }
