@@ -88,6 +88,15 @@ const CompletionList: React.FC<CompletionListProps> = props => {
     }
   }, [props.selectedIndex]);
 
+   // item event handler
+   const itemEventHandler = (index: number, handler: (index: number) => void) => {
+    return (event: React.MouseEvent) => {
+      event.preventDefault();
+      event.stopPropagation();
+      handler(index);
+    };
+  };
+
   // completion source based on orientation
   const completions = props.handler.view.horizontal ? horizontalCompletions : verticalCompletions;
 
@@ -96,7 +105,7 @@ const CompletionList: React.FC<CompletionListProps> = props => {
       <table>
       {completionsHeader(props.handler)}
       <tbody>
-        {completions(props, itemHeight)}
+        {completions(props, itemHeight, itemEventHandler)}
         {props.completions.length === 0 ? completionsNoResults(props) : null}
       </tbody>
       </table>
@@ -119,16 +128,10 @@ function completionsHeader(handler: CompletionHandler) {
   }
 }
 
-function verticalCompletions(props: CompletionListProps, itemHeight: number) {
+type ItemEventHandler =  (index: number, handler: (index: number) => void) => (event: React.MouseEvent) => void;
 
-  // row event handler
-  const rowEventHandler = (index: number, handler: (index: number) => void) => {
-    return (event: React.MouseEvent) => {
-      event.preventDefault();
-      event.stopPropagation();
-      handler(index);
-    };
-  };
+function verticalCompletions(props: CompletionListProps, itemHeight: number, itemEventHandler: ItemEventHandler) {
+
 
   return (<> {props.completions.map((completion, index) => {
     const { key, cell } = completionItemCell(props, completion, index);
@@ -136,8 +139,8 @@ function verticalCompletions(props: CompletionListProps, itemHeight: number) {
       <tr 
         key={key} 
         style={ {lineHeight: itemHeight + 'px' }} 
-        onClick={rowEventHandler(index, props.onClick)}
-        onMouseMove={rowEventHandler(index,props.onHover)}
+        onClick={itemEventHandler(index, props.onClick)}
+        onMouseMove={itemEventHandler(index,props.onHover)}
        >
         {cell}
       </tr>
@@ -145,24 +148,30 @@ function verticalCompletions(props: CompletionListProps, itemHeight: number) {
   })}</>);
 }
 
-function horizontalCompletions(props: CompletionListProps, itemHeight: number) {
+function horizontalCompletions(props: CompletionListProps, itemHeight: number, itemEventHandler: ItemEventHandler) {
   return (
     <tr style={ {lineHeight: itemHeight + 'px' } }>
        {props.completions.map((completion, index) => {
-          const { cell } = completionItemCell(props, completion, index);
+          const { cell } = completionItemCell(props, completion, index, itemEventHandler);
           return cell;
        })}
     </tr>
   );
 }
 
-function completionItemCell(props: CompletionListProps, completion: any, index: number) {
+function completionItemCell(props: CompletionListProps, completion: any, index: number, itemEventHandler?: ItemEventHandler) {
   // need to provide key for both wrapper and item
   // https://stackoverflow.com/questions/28329382/understanding-unique-keys-for-array-children-in-react-js#answer-28329550
   const key = props.handler.view.key(completion);
   const item = React.createElement( props.handler.view.component, { ...completion, key });
   const className = 'pm-completion-item' + (index === props.selectedIndex ? ' pm-selected-list-item' : '');
-  const cell = <td key={key} className={className}>{item}</td>;
+  const cell = <td key={key} 
+                   className={className}
+                   onClick={itemEventHandler ? itemEventHandler(index, props.onClick) : undefined}
+                   onMouseMove={itemEventHandler ? itemEventHandler(index, props.onHover) : undefined}
+                >
+                  {item}
+                </td>;
   return { key, cell };
 }
 
