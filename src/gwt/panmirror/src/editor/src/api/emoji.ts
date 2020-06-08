@@ -14,6 +14,8 @@
  */
 
 // read emojis from json (https://github.com/jgm/emojis/blob/master/emoji.json)
+// JJA: are we getting these from a different source now or do we still use that file?
+//      (really just update the ccomment to acturately reflect the source(s))
 import kEmojisJson from './emojis-all.json';
 const kEmojis = kEmojisJson as EmojiRaw[];
 
@@ -70,6 +72,7 @@ export function emojis(skinTone: SkinTone) : Emoji[] {
 
 export function emojiCategories() : string[] {
   const categories: string[] = [];
+  // JJA: could this be done with a filter/map sequence instead?
   kEmojis.forEach(emoji => {
     if (!categories.includes(emoji.category)) {
       categories.push(emoji.category);
