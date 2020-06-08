@@ -107,19 +107,41 @@ export function emojiSkintonePreferenceCompletionHandler(ui: EditorUI) : Complet
     
     completions: emojiSkintonePreferenceCompletions(ui),
 
-    replacement(schema: Schema, emoji: Emoji) : string | ProsemirrorNode {
+    replacement(schema: Schema, emoji: Emoji | null) : string | ProsemirrorNode | null {
 
-      // Save this preference and use it in the future
-      ui.prefs.setEmojiSkinTone(emoji.skinTone);
+      // JJA: a null emoji means the user pressed 'Esc', we probably 
+      // want this to mean "use default" (so the prompt doesn't occur again)
 
-      // Emit the emoji of the correct skin tone
-      return nodeForEmoji(schema, emoji, emoji.aliases[0]);
+      if (emoji) {
+
+        // Save this preference and use it in the future
+        ui.prefs.setEmojiSkinTone(emoji.skinTone);
+
+        // Emit the emoji of the correct skin tone
+        return nodeForEmoji(schema, emoji, emoji.aliases[0]);
+
+      } else {
+        
+        return null;
+
+      }
+     
     },
 
     view: {
+
+      // JJA: implement header w/ "prompt" (may want this to also indicate that 
+      // this can be also be (re)set later in application preferences -- not 
+      // sure how you do that w/o getting too wordy)
+      header: {
+        component: EmojiSkintonePreferenceHeaderView,
+        height: 25
+      },
+      
       component: EmojiSkintonePreferenceView,
       key: pref => pref.skinTone,
-      width: 50
+      width: 50,
+      horizontal: true
     },
 
   };
@@ -153,6 +175,12 @@ function emojiSkintonePreferenceCompletions(ui: EditorUI) {
     };
   };
 }
+
+const EmojiSkintonePreferenceHeaderView: React.FC = () => {
+  return (
+    <span>Header</span>
+  );
+};
 
 const EmojiSkintonePreferenceView: React.FC<Emoji> = emoji => {
   return (
