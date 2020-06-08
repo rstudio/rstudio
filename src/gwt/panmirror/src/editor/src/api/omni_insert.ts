@@ -34,9 +34,11 @@ export interface OmniInserter extends OmniInsert {
 export enum OmniInsertGroup {
   Headings = 'Headings',
   Lists = 'Lists',
-  Blocks = 'Blocks',
+  Chunks = 'Chunks',
   Math = 'Math',
-  Content = 'Content'
+  References = 'References',
+  Content = 'Content',
+  Blocks = 'Blocks',
 }
 
 const omniInsertGroupOrder = new Map<string, number>(
