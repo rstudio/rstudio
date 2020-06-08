@@ -32,7 +32,7 @@ public class OptionsLoader
    public abstract static class Shim extends AsyncShim<OptionsLoader>
    {
       public abstract void showOptions();
-      public abstract void showOptions(Class<?> paneClass);
+      public abstract void showOptions(Class<?> paneClass, boolean showPaneChooser);
    }
 
    @Inject
@@ -51,15 +51,16 @@ public class OptionsLoader
 
    public void showOptions()
    {
-      showOptions(null);
+      showOptions(null, true);
    }
 
-   public void showOptions(final Class<?> paneClass)
+   public void showOptions(final Class<?> paneClass, boolean showPaneChooser)
    {
       PreferencesDialog prefDialog = pPrefDialog_.get();
       prefDialog.initialize(RStudioGinjector.INSTANCE.getUserPrefs());
       if (paneClass != null)
          prefDialog.activatePane(paneClass);
+      prefDialog.setShowPaneChooser(showPaneChooser);
       prefDialog.showModal();
 
       // if the user changes global sweave or latex options notify

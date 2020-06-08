@@ -61,6 +61,7 @@ public class PreferencesDialog extends PreferencesDialogBase<UserPrefs>
    {
       super("Options",
             res.styles().panelContainer(),
+            res.styles().panelContainerNoChooser(),
             true,
             new PreferencesPane[] {pR.get(),
                                    source,

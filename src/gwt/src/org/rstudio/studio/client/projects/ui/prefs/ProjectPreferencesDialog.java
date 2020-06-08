@@ -63,6 +63,7 @@ public class ProjectPreferencesDialog extends PreferencesDialogBase<RProjectOpti
    {
       super("Project Options",
             RES.styles().panelContainer(),
+            RES.styles().panelContainerNoChooser(),
             false,
             new ProjectPreferencesPane[] {general, editing, compilePdf, build,
                                           source, renv, sharing});

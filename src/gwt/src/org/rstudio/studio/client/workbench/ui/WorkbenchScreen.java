@@ -395,13 +395,13 @@ public class WorkbenchScreen extends Composite
    @Handler
    void onShowAccessibilityOptions()
    {
-      optionsLoader_.showOptions(AccessibilityPreferencesPane.class);
+      optionsLoader_.showOptions(AccessibilityPreferencesPane.class, false);
    }
 
    @Handler
    void onShowTerminalOptions()
    {
-      optionsLoader_.showOptions(TerminalPreferencesPane.class);
+      optionsLoader_.showOptions(TerminalPreferencesPane.class, true);
    }
 
    @Handler
