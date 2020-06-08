@@ -59,6 +59,7 @@ class CompletionPlugin extends Plugin<CompletionState> {
   // an update has occurred
   private version = 0;
   private completions: any[] = [];
+  private horizontal = false;
   private selectedIndex = 0;
 
   // events we need to unsubscribe from
@@ -147,6 +148,10 @@ class CompletionPlugin extends Plugin<CompletionState> {
 
             let handled = false;
 
+            // determine meaning of keys based on orientation
+            const forwardKey = this.horizontal ? 'ArrowRight' : 'ArrowDown';
+            const backwardKey = this.horizontal ? 'ArrowLeft' : 'ArrowUp';
+
             if (this.completionsActive()) {
               switch(kbEvent.key) {
                 case 'Escape':
@@ -157,12 +162,12 @@ class CompletionPlugin extends Plugin<CompletionState> {
                   this.insertCompletion(view, this.selectedIndex);
                   handled = true;
                   break;
-                case 'ArrowUp':
+                case backwardKey:
                   this.selectedIndex = Math.max(this.selectedIndex - 1, 0);
                   this.renderCompletions(view);
                   handled = true;
                   break;
-                case 'ArrowDown':
+                case forwardKey:
                   this.selectedIndex = Math.min(this.selectedIndex + 1, this.completions.length - 1);
                   this.renderCompletions(view);
                   handled = true;
@@ -221,7 +226,7 @@ class CompletionPlugin extends Plugin<CompletionState> {
         }
          
         // save completions 
-        this.setCompletions(completions);
+        this.setCompletions(completions, state.handler?.view.horizontal);
 
         // render them
         this.renderCompletions(view);
@@ -350,8 +355,9 @@ class CompletionPlugin extends Plugin<CompletionState> {
     return !!this.completionPopup;
   }
 
-  private setCompletions(completions: any[]) {
+  private setCompletions(completions: any[], horizontal = false) {
     this.completions = completions;
+    this.horizontal = !!horizontal;
     this.selectedIndex = 0;
   }
 

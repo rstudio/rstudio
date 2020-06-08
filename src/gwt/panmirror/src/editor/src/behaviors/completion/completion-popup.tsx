@@ -71,9 +71,8 @@ const CompletionPopup: React.FC<CompletionListProps> = props => {
 
 const CompletionList: React.FC<CompletionListProps> = props => {
 
-  const { component, itemHeight = kCompletionDefaultItemHeight } = props.handler.view;
-
   const size = completionPopupSize(props);
+  const itemHeight = props.handler.view.height || kCompletionDefaultItemHeight;
 
   // keep selected index in view
   const containerRef = React.useRef<HTMLDivElement>(null);
@@ -89,6 +88,39 @@ const CompletionList: React.FC<CompletionListProps> = props => {
     }
   }, [props.selectedIndex]);
 
+  // completion source based on orientation
+  const completions = props.handler.view.horizontal ? horizontalCompletions : verticalCompletions;
+
+  return (
+    <div ref={containerRef} className={'pm-completion-list'} style={{ width: size.width + 'px', height: size.height + 'px'}}>
+      <table>
+      {completionsHeader(props.handler)}
+      <tbody>
+        {completions(props, itemHeight)}
+        {props.completions.length === 0 ? completionsNoResults(props) : null}
+      </tbody>
+      </table>
+    </div>
+  );
+};
+
+function completionsHeader(handler: CompletionHandler) {
+  if (handler.view.header) {
+    const header =  React.createElement( handler.view.header.component);
+    return (
+      <thead>
+        <th style={ {lineHeight: handler.view.header.height + 'px' }} >
+          {header}
+        </th>
+      </thead>
+    );
+  } else {
+    return null;
+  }
+}
+
+function verticalCompletions(props: CompletionListProps, itemHeight: number) {
+
   // row event handler
   const rowEventHandler = (index: number, handler: (index: number) => void) => {
     return (event: React.MouseEvent) => {
@@ -98,45 +130,55 @@ const CompletionList: React.FC<CompletionListProps> = props => {
     };
   };
 
+  return (<> {props.completions.map((completion, index) => {
+    const { key, cell } = completionItemCell(props, completion, index);
+    return (
+      <tr 
+        key={key} 
+        style={ {lineHeight: itemHeight + 'px' }} 
+        onClick={rowEventHandler(index, props.onClick)}
+        onMouseMove={rowEventHandler(index,props.onHover)}
+       >
+        {cell}
+      </tr>
+    );
+  })}</>);
+}
+
+function horizontalCompletions(props: CompletionListProps, itemHeight: number) {
   return (
-    <div ref={containerRef} className={'pm-completion-list'} style={{ width: size.width + 'px', height: size.height + 'px'}}>
-      <table>
-      <tbody>
-        {props.completions.map((completion, index) => {
-          // need to provide key for both wrapper and item
-          // https://stackoverflow.com/questions/28329382/understanding-unique-keys-for-array-children-in-react-js#answer-28329550
-          const key = props.handler.view.key(completion);
-          const item = React.createElement(component, { ...completion, key });
-          const className = 'pm-completion-item' + (index === props.selectedIndex ? ' pm-selected-list-item' : '');
-          return (
-            <tr 
-              key={key} 
-              className={'pm-completion-item-row'}
-              style={ {lineHeight: itemHeight + 'px' }} 
-              onClick={rowEventHandler(index, props.onClick)}
-              onMouseMove={rowEventHandler(index,props.onHover)}
-             >
-              <td className={className} key={key}>
-                {item}
-              </td>
-            </tr>
-          );
-        })}
-        {props.completions.length === 0 ? 
-          <tr 
-            className={'pm-completion-no-results pm-placeholder-text-color'}
-            style={ {lineHeight: kNoResultsHeight + 'px' }} 
-          >
-            <td>
-              {props.noResults}
-            </td>
-          </tr>
-        : null}
-      </tbody>
-      </table>
-    </div>
+    <tr style={ {lineHeight: itemHeight + 'px' } }>
+       {props.completions.map((completion, index) => {
+          const { cell } = completionItemCell(props, completion, index);
+          return cell;
+       })}
+    </tr>
   );
-};
+}
+
+function completionItemCell(props: CompletionListProps, completion: any, index: number) {
+  // need to provide key for both wrapper and item
+  // https://stackoverflow.com/questions/28329382/understanding-unique-keys-for-array-children-in-react-js#answer-28329550
+  const key = props.handler.view.key(completion);
+  const item = React.createElement( props.handler.view.component, { ...completion, key });
+  const className = 'pm-completion-item' + (index === props.selectedIndex ? ' pm-selected-list-item' : '');
+  const cell = <td key={key} className={className}>{item}</td>;
+  return { key, cell };
+}
+
+function completionsNoResults(props: CompletionListProps) {
+  return (
+    <tr 
+      className={'pm-completion-no-results pm-placeholder-text-color'}
+      style={ {lineHeight: kNoResultsHeight + 'px' }} 
+    >
+      <td>
+        {props.noResults}
+      </td>
+    </tr>
+  );
+}
+
 
 function completionPopupSize(props: CompletionListProps) {
 
@@ -144,18 +186,36 @@ function completionPopupSize(props: CompletionListProps) {
   const kCompletionsChrome = 8;
 
   // get view props (apply defaults)
-  let { itemHeight = kCompletionDefaultItemHeight } = props.handler.view;
-  const { maxVisible = kCompletionDefaultMaxVisible, width = kCompletionDefaultWidth } = props.handler.view;
+  let { height: itemHeight = kCompletionDefaultItemHeight } = props.handler.view;
+  const { maxVisible = kCompletionDefaultMaxVisible, width: width = kCompletionDefaultWidth } = props.handler.view;
 
   // add 2px for the border to item heights
-  itemHeight += 2;
+  const kBorderPad = 2;
+  itemHeight += kBorderPad;
 
-  // compute height (subject it to a minimum require to display 'no results')
-  const height = Math.max((itemHeight * Math.min(maxVisible, props.completions.length)), kNoResultsHeight) 
-                 + kCompletionsChrome;
+  // compute header height
+  const headerHeight = props.handler.view.header 
+     ? props.handler.view.header.height + kBorderPad 
+     : 0;
 
-  // return 
-  return { width, height };
+  // complete based on horizontal vs. vertical
+  if (props.handler.view.horizontal) {
+
+    return {
+      width: (width+2) * props.completions.length,
+      height: headerHeight + itemHeight + kCompletionsChrome
+    };
+
+  } else {
+
+    // compute height (subject it to a minimum require to display 'no results')
+    const height = headerHeight + kCompletionsChrome +
+                   Math.max((itemHeight * Math.min(maxVisible, props.completions.length)), kNoResultsHeight);
+
+    // return 
+    return { width, height };
+  }
+
 }
 
 function completionPopupPositionStyles(view: EditorView, pos: number, width: number, height: number) {

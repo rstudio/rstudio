@@ -44,18 +44,26 @@ export interface CompletionHandler<T = any> {
 
   // completion view
   view: {
+    // optional header component (will go inside a <th>)
+    header?: { component: React.FC<T> | React.ComponentClass<T>, height: number };
+    
     // react compontent type for viewing the item
     component: React.FC<T> | React.ComponentClass<T>;
 
     key: (completion: T) => any;
 
-    // width of completion popup (defaults to 180)
+    // width of completion item (defaults to 180)
     width?: number;
 
-    // height for completion items (defaults to 22px)
-    itemHeight?: number;
+    // height of completion item (defaults to 22px)
+    height?: number;
+
+    // use horizontal orientation (defaults to false)
+    horizontal?: boolean;
  
-    // maximum number of visible items (defaults to 10)
+    // maximum number of visible items (defaults to 10). note that
+    // this only applies to completion poupups w/ vertical orientation 
+    // (scrolling is not supported for horizontal orientation)
     maxVisible?: number;
 
     // hide 'no results' (default false)

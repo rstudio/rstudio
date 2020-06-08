@@ -29,6 +29,10 @@
   padding: 4px;
 }
 
+.pm-completion-list > table > thead > th {
+  vertical-align: middle;
+}
+
 .pm-completion-list > table td {
   padding: 0 4px;
 }
