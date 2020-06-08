@@ -44,6 +44,9 @@ export interface CompletionHandler<T = any> {
 
   // completion view
   view: {
+    // optional header component (will go inside a <th>)
+    header?: { component: React.FC<T> | React.ComponentClass<T>, height: number };
+    
     // react compontent type for viewing the item
     component: React.FC<T> | React.ComponentClass<T>;
 

@@ -94,23 +94,30 @@ const CompletionList: React.FC<CompletionListProps> = props => {
   return (
     <div ref={containerRef} className={'pm-completion-list'} style={{ width: size.width + 'px', height: size.height + 'px'}}>
       <table>
+      {completionsHeader(props.handler)}
       <tbody>
         {completions(props, itemHeight)}
-        {props.completions.length === 0 ? 
-          <tr 
-            className={'pm-completion-no-results pm-placeholder-text-color'}
-            style={ {lineHeight: kNoResultsHeight + 'px' }} 
-          >
-            <td>
-              {props.noResults}
-            </td>
-          </tr>
-        : null}
+        {props.completions.length === 0 ? completionsNoResults(props) : null}
       </tbody>
       </table>
     </div>
   );
 };
+
+function completionsHeader(handler: CompletionHandler) {
+  if (handler.view.header) {
+    const header =  React.createElement( handler.view.header.component);
+    return (
+      <thead>
+        <th style={ {lineHeight: handler.view.header.height + 'px' }} >
+          {header}
+        </th>
+      </thead>
+    );
+  } else {
+    return null;
+  }
+}
 
 function verticalCompletions(props: CompletionListProps, itemHeight: number) {
 
@@ -159,6 +166,19 @@ function completionItemCell(props: CompletionListProps, completion: any, index: 
   return { key, cell };
 }
 
+function completionsNoResults(props: CompletionListProps) {
+  return (
+    <tr 
+      className={'pm-completion-no-results pm-placeholder-text-color'}
+      style={ {lineHeight: kNoResultsHeight + 'px' }} 
+    >
+      <td>
+        {props.noResults}
+      </td>
+    </tr>
+  );
+}
+
 
 function completionPopupSize(props: CompletionListProps) {
 
@@ -173,18 +193,24 @@ function completionPopupSize(props: CompletionListProps) {
   const kBorderPad = 2;
   itemHeight += kBorderPad;
 
+  // compute header height
+  const headerHeight = props.handler.view.header 
+     ? props.handler.view.header.height + kBorderPad 
+     : 0;
+
   // complete based on horizontal vs. vertical
   if (props.handler.view.horizontal) {
 
     return {
       width: (width+2) * props.completions.length,
-      height: itemHeight + kCompletionsChrome
+      height: headerHeight + itemHeight + kCompletionsChrome
     };
 
   } else {
+
     // compute height (subject it to a minimum require to display 'no results')
-    const height = Math.max((itemHeight * Math.min(maxVisible, props.completions.length)), kNoResultsHeight) 
-                   + kCompletionsChrome;
+    const height = headerHeight + kCompletionsChrome +
+                   Math.max((itemHeight * Math.min(maxVisible, props.completions.length)), kNoResultsHeight);
 
     // return 
     return { width, height };
