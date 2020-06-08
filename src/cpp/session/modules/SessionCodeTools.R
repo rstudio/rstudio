@@ -2157,18 +2157,24 @@
 
    discoveries <- new.env(parent = emptyenv())
 
-   # for R Markdown docs, scan the YAML header (requires the YAML package, a dependency of
-   # rmarkdown)
-   if (identical(extension, ".Rmd") && requireNamespace("yaml", quietly = TRUE))
+   # for R Markdown docs, scan the YAML header (requires the rmarkdown package and the yaml package,
+   # a dependency of rmarkdown)
+   if (identical(extension, ".Rmd") && 
+       requireNamespace("rmarkdown", quietly = TRUE) &&
+       requireNamespace("yaml", quietly = TRUE))
    {
-      # split document into sections based on the YAML header delimter
-      sections <- unlist(strsplit(contents, "---", fixed = TRUE))
-      if (length(sections) > 2)
+      # extract the front matter from the document; accepts a list of lines and returns a list with
+      # $front_matter and $body elements
+      partitions <- rmarkdown:::partition_yaml_front_matter(
+            strsplit(x = contents, split = "\n", fixed = TRUE)[[1]])
+
+      # did we find some front matter?
+      if (!is.null(partitions$front_matter))
       {
          front <- NULL
 
          tryCatch({
-            front <- yaml::read_yaml(text = sections[[2]])
+            front <- yaml::read_yaml(text = partitions$front_matter)
          }, error = function(e) {
             # ignore errors when reading YAML; it's very possible that the document's YAML will not
             # be correct at all times (e.g. during editing) 
