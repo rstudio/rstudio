@@ -23,6 +23,8 @@ import { SelectInput } from '../../api/widgets/select';
 import SymbolCharacterGrid, { newIndexForKeyboardEvent } from './insert_symbol-grid';
 
 import './insert_symbol-styles.css';
+
+// JJA: order of UI imports
 import { EditorUI } from '../../api/ui';
 
 
