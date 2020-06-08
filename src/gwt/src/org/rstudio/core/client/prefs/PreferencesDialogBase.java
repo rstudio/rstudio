@@ -38,12 +38,15 @@ public abstract class PreferencesDialogBase<T> extends ModalDialogBase
 {
    protected PreferencesDialogBase(String caption,
                                    String panelContainerStyle,
+                                   String panelContainerStyleNoChooser,
                                    boolean showApplyButton,
                                    PreferencesDialogPaneBase<T>[] panes)
    {
       super(Roles.getDialogRole());
       setText(caption);
       panes_ = panes;
+      panelContainerStyle_ = panelContainerStyle;
+      panelContainerStyleNoChooser_ = panelContainerStyleNoChooser;
 
       PreferencesDialogBaseResources res = PreferencesDialogBaseResources.INSTANCE;
 
@@ -64,7 +67,7 @@ public abstract class PreferencesDialogBase<T> extends ModalDialogBase
 
       progressIndicator_ = addProgressIndicator(false);
       panel_ = new DockLayoutPanel(Unit.PX);
-      panel_.setStyleName(panelContainerStyle);
+      panel_.setStyleName(panelContainerStyle_);
       container_ = new FlowPanel();
       container_.getElement().getStyle().setPaddingLeft(10, Unit.PX);
 
@@ -132,6 +135,21 @@ public abstract class PreferencesDialogBase<T> extends ModalDialogBase
             activatePane(i);
             break;
          }
+      }
+   }
+
+   public void setShowPaneChooser(boolean showPaneChooser)
+   {
+      panel_.setWidgetHidden(sectionChooser_, !showPaneChooser);
+      if (showPaneChooser)
+      {
+         panel_.removeStyleName(panelContainerStyleNoChooser_);
+         panel_.addStyleName(panelContainerStyle_);
+      }
+      else
+      {
+         panel_.removeStyleName(panelContainerStyle_);
+         panel_.addStyleName(panelContainerStyleNoChooser_);
       }
    }
 
@@ -232,4 +250,6 @@ public abstract class PreferencesDialogBase<T> extends ModalDialogBase
    private Integer currentIndex_;
    private final ProgressIndicator progressIndicator_;
    private final SectionChooser sectionChooser_;
+   private final String panelContainerStyle_;
+   private final String panelContainerStyleNoChooser_;
 }

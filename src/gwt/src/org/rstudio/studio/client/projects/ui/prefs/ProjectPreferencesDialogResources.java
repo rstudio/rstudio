@@ -24,6 +24,7 @@ public interface ProjectPreferencesDialogResources extends ClientBundle
    interface Styles extends CssResource
    {
       String panelContainer();
+      String panelContainerNoChooser();
       String buildToolsPanel();
       String workspaceGrid();
       String enableCodeIndexing();

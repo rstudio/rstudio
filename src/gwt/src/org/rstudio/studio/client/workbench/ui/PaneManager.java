@@ -558,7 +558,7 @@ public class PaneManager
    @Handler
    public void onPaneLayout()
    {
-      optionsLoader_.showOptions(PaneLayoutPreferencesPane.class);
+      optionsLoader_.showOptions(PaneLayoutPreferencesPane.class, true);
    }
 
    private <T> boolean equals(T lhs, T rhs)

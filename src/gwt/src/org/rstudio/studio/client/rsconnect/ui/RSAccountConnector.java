@@ -170,7 +170,7 @@ public class RSAccountConnector implements EnableRStudioConnectUIEvent.Handler
       }
       else
       {
-         optionsLoader_.showOptions(PublishingPreferencesPane.class);
+         optionsLoader_.showOptions(PublishingPreferencesPane.class, true);
       }
    }
 

@@ -825,13 +825,13 @@ public class Projects implements OpenProjectFileHandler,
    @Handler
    public void onProjectOptions()
    {
-      showProjectOptions(ProjectPreferencesDialog.GENERAL);
+      showProjectOptions(ProjectPreferencesDialog.GENERAL, true);
    }
 
    @Handler
    public void onProjectSweaveOptions()
    {
-      showProjectOptions(ProjectPreferencesDialog.SWEAVE);
+      showProjectOptions(ProjectPreferencesDialog.SWEAVE, true);
    }
 
    @Handler
@@ -849,7 +849,7 @@ public class Projects implements OpenProjectFileHandler,
       }
       else
       {
-         showProjectOptions(ProjectPreferencesDialog.BUILD);
+         showProjectOptions(ProjectPreferencesDialog.BUILD, true);
       }
    }
 
@@ -870,23 +870,23 @@ public class Projects implements OpenProjectFileHandler,
       }
       else
       {
-         showProjectOptions(ProjectPreferencesDialog.VCS);
+         showProjectOptions(ProjectPreferencesDialog.VCS, true);
       }
    }
 
    @Handler
    public void onPackratBootstrap()
    {
-      showProjectOptions(ProjectPreferencesDialog.RENV);
+      showProjectOptions(ProjectPreferencesDialog.RENV, true);
    }
 
    @Handler
    public void onPackratOptions()
    {
-      showProjectOptions(ProjectPreferencesDialog.RENV);
+      showProjectOptions(ProjectPreferencesDialog.RENV, true);
    }
 
-   public void showProjectOptions(final int initialPane)
+   public void showProjectOptions(final int initialPane, boolean showPaneChooser)
    {
       final ProgressIndicator indicator = globalDisplay_.getProgressIndicator(
                                                       "Error Reading Options");
@@ -902,6 +902,7 @@ public class Projects implements OpenProjectFileHandler,
             ProjectPreferencesDialog dlg = pPrefDialog_.get();
             dlg.initialize(options);
             dlg.activatePane(initialPane);
+            dlg.setShowPaneChooser(showPaneChooser);
             dlg.showModal();
          }});
    }
