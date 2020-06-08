@@ -50,7 +50,7 @@ public class PreferencesDialog extends PreferencesDialogBase<UserPrefs>
                             PaneLayoutPreferencesPane paneLayout,
                             PackagesPreferencesPane packages,
                             SourceControlPreferencesPane sourceControl,
-                            SpellingPreferencesPane spelling, 
+                            SpellingPreferencesPane spelling,
                             PublishingPreferencesPane publishing,
                             TerminalPreferencesPane terminal,
                             AccessibilityPreferencesPane accessibility,
@@ -59,19 +59,19 @@ public class PreferencesDialog extends PreferencesDialogBase<UserPrefs>
                             UserPrefs userPrefs,
                             UserState userState)
    {
-      super("Options", 
+      super("Options",
             res.styles().panelContainer(),
             true,
             new PreferencesPane[] {pR.get(),
-                                   source, 
+                                   source,
                                    console,
-                                   appearance, 
+                                   appearance,
                                    paneLayout,
                                    packages,
                                    rmarkdown,
                                    compilePdf,
                                    spelling,
-                                   sourceControl, 
+                                   sourceControl,
                                    publishing,
                                    terminal,
                                    accessibility});
@@ -80,19 +80,19 @@ public class PreferencesDialog extends PreferencesDialogBase<UserPrefs>
       state_ = userState;
       quit_ = quit;
       globalDisplay_ = globalDisplay;
-      
+
       if (!session.getSessionInfo().getAllowVcs())
          hidePane(SourceControlPreferencesPane.class);
-      
+
       if (!session.getSessionInfo().getAllowPublish())
          hidePane(PublishingPreferencesPane.class);
-      
+
       else if (!session.getSessionInfo().getAllowExternalPublish() &&
                !userState.enableRsconnectPublishUi().getValue())
       {
          hidePane(PublishingPreferencesPane.class);
       }
-      
+
       if (!session.getSessionInfo().getAllowShell())
       {
          hidePane(TerminalPreferencesPane.class);
@@ -106,7 +106,7 @@ public class PreferencesDialog extends PreferencesDialogBase<UserPrefs>
    {
       return RStudioGinjector.INSTANCE.getUserPrefs();
    }
-  
+
    @Override
    protected void doSaveChanges(final UserPrefs rPrefs,
                                 final Operation onCompleted,
@@ -139,12 +139,12 @@ public class PreferencesDialog extends PreferencesDialogBase<UserPrefs>
                progressIndicator.onError(error.getUserMessage());
             }
          });
-      
+
       // broadcast UI pref changes to satellites
       RStudioGinjector.INSTANCE.getSatelliteManager().dispatchCrossWindowEvent(
                      new UserPrefsChangedEvent(session_.getSessionInfo().getUserPrefLayer()));
    }
-  
+
    public static void ensureStylesInjected()
    {
       GWT.<PreferencesDialogResources>create(PreferencesDialogResources.class).styles().ensureInjected();
