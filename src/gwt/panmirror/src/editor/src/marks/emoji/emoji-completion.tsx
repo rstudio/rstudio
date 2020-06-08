@@ -176,9 +176,9 @@ function emojiSkintonePreferenceCompletions(ui: EditorUI) {
   };
 }
 
-const EmojiSkintonePreferenceHeaderView: React.FC = () => {
-  return (
-    <span>Header</span>
+const EmojiSkintonePreferenceHeaderView: React.FC<CompletionHeaderProps> = (props) => {
+  return (    
+    <span className={'pm-completion-emoji-cell-header'}>{props.ui.context.translateText('Choose preferred skin tone:')}</span>
   );
 };
 

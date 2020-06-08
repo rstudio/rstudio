@@ -18,7 +18,7 @@ import { Node as ProsemirrorNode, Schema  } from "prosemirror-model";
 import { EditorView, DecorationSet } from "prosemirror-view";
 
 import { canInsertNode } from "./node";
-
+import { EditorUI } from "./ui";
 
 export const kCompletionDefaultItemHeight = 22;
 export const kCompletionDefaultMaxVisible = 10;
@@ -28,6 +28,10 @@ export interface CompletionResult<T = any> {
   pos: number;
   completions: (state: EditorState) => Promise<T[]>;
   decorations?: DecorationSet;
+}
+
+export interface CompletionHeaderProps {
+  ui: EditorUI;
 }
 
 export interface CompletionHandler<T = any> {
@@ -45,7 +49,7 @@ export interface CompletionHandler<T = any> {
   // completion view
   view: {
     // optional header component (will go inside a <th>)
-    header?: { component: React.FC<T> | React.ComponentClass<T>, height: number };
+    header?: { component: React.FC<CompletionHeaderProps> | React.ComponentClass<CompletionHeaderProps>, height: number };
     
     // react compontent type for viewing the item
     component: React.FC<T> | React.ComponentClass<T>;

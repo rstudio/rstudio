@@ -258,7 +258,8 @@ class CompletionPlugin extends Plugin<CompletionState> {
         onHover: (index: number) => {
           this.selectedIndex = index;
           this.renderCompletions(view);
-        }
+        },
+        ui: this.ui
       };
       
       // create the completion popup if we need to

@@ -25,6 +25,7 @@ import { CompletionHandler, kCompletionDefaultItemHeight, kCompletionDefaultMaxV
 import { Popup } from '../../api/widgets/popup';
 
 import './completion-popup.css';
+import { EditorUI } from '../../api/ui';
 
 const kNoResultsHeight = 22;
 
@@ -36,6 +37,7 @@ export interface CompletionListProps {
   noResults: string;
   onHover: (index: number) => void;
   onClick: (index: number) => void;
+  ui: EditorUI;
 }
 
 export function createCompletionPopup() : HTMLElement {
@@ -103,7 +105,7 @@ const CompletionList: React.FC<CompletionListProps> = props => {
   return (
     <div ref={containerRef} className={'pm-completion-list'} style={{ width: size.width + 'px', height: size.height + 'px'}}>
       <table>
-      {completionsHeader(props.handler)}
+      {completionsHeader(props.handler, props.completions.length, props)}
       <tbody>
         {completions(props, itemHeight, itemEventHandler)}
         {props.completions.length === 0 ? completionsNoResults(props) : null}
@@ -113,12 +115,12 @@ const CompletionList: React.FC<CompletionListProps> = props => {
   );
 };
 
-function completionsHeader(handler: CompletionHandler) {
+function completionsHeader(handler: CompletionHandler, completionCount: number, props: CompletionListProps) {
   if (handler.view.header) {
-    const header =  React.createElement( handler.view.header.component);
+    const header =  React.createElement( handler.view.header.component, props);
     return (
       <thead>
-        <th style={ {lineHeight: handler.view.header.height + 'px' }} >
+        <th style={ {lineHeight: handler.view.header.height + 'px' }} colSpan={props.handler.view.horizontal ? completionCount : undefined}>
           {header}
         </th>
       </thead>
