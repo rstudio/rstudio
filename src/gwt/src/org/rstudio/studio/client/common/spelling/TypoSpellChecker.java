@@ -372,7 +372,8 @@ public class TypoSpellChecker
    {
       final String language = userPrefs_.spellingDictionaryLanguage().getValue();
 
-      if (!userPrefs_.realTimeSpellchecking().getValue() || typoLoaded_ && loadedDict_.equals(language))
+      // don't load a dictionary that's already loaded
+      if (typoLoaded_ && loadedDict_.equals(language))
          return;
 
       // See canRealtimeSpellcheckDict comment, temporary stop gap
