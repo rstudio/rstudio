@@ -19,7 +19,9 @@ export interface SymbolDataProvider {
   symbolGroupNames(): string[];
   getSymbols(groupName: string | undefined): SymbolCharacter[];
   filterSymbols(filterText: string, symbols: SymbolCharacter[]): SymbolCharacter[];
+  
   readonly filterPlaceholderHint: string;
+  symbolPreviewStyle: React.CSSProperties;
   
   insertSymbolTransaction(symbolCharacter: SymbolCharacter, searchTerm: string, state: EditorState) : Transaction;
 }
@@ -32,6 +34,7 @@ export interface SymbolCharacterGroup {
 export interface SymbolCharacter {
   name: string;
   value: string;
+  markdown?: string;
   codepoint?: number;
 
   aliases?: string[];

@@ -30,6 +30,7 @@ import { PandocCapabilities } from '../../api/pandoc_capabilities';
 import { performInsertSymbol, InsertSymbolPlugin } from './insert_symbol-plugin';
 import { SymbolDataProvider, SymbolCharacter } from './insert_symbol-dataprovider';
 
+
 const key = new PluginKey<boolean>('insert-emoji');
 
 const extension = (
@@ -59,6 +60,8 @@ export class EmojiSymbolDataProvider implements SymbolDataProvider {
   private readonly ui: EditorUI;
 
   public readonly filterPlaceholderHint = 'emoji name';
+
+  public readonly symbolPreviewStyle: React.CSSProperties = { fontSize: "36px" } as React.CSSProperties;
   
   public insertSymbolTransaction(symbolCharacter: SymbolCharacter, searchTerm: string, state: EditorState) {
     
@@ -116,8 +119,9 @@ export class EmojiSymbolDataProvider implements SymbolDataProvider {
 const kCategoryAll = 'All';
 function symbolForEmoji(emoji: Emoji) : SymbolCharacter {
   return ({ 
-    name: `${emoji.hasMarkdownRepresentation ? ':' + emoji.aliases[0] + ':' : emoji.emoji}`,
+    name: emoji.description,
     value: emoji.emoji,
+    markdown: emoji.hasMarkdownRepresentation ? `:${emoji.aliases[0]}:` : undefined,
     aliases: emoji.aliases,
     description: emoji.description
   });

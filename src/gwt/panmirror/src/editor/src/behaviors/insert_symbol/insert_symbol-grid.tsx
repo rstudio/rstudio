@@ -39,10 +39,7 @@ interface CharacterGridProps extends WidgetProps {
   ui: EditorUI;
 }
 
-const kPreviewHeight = 120;
-const kPreviewWidth = 140;
 const selectedItemClassName = 'pm-grid-item-selected';
-
 
 const SymbolCharacterGrid = React.forwardRef<any, CharacterGridProps>((props, ref) => {
 
@@ -63,15 +60,6 @@ const SymbolCharacterGrid = React.forwardRef<any, CharacterGridProps>((props, re
 
   React.useEffect(handleScroll, [props.selectedIndex]);
 
-  const handleMouseLeave = (event: React.MouseEvent) => {
-    setMayShowPreview(false);
-    setShowPreview(false);
-  };
-
-  const handleMouseEnter = (event: React.MouseEvent) => {
-    setMayShowPreview(true);
-  };
-
   const handleKeyDown = (event: React.KeyboardEvent) => {
     const newIndex = newIndexForKeyboardEvent(
       event,
@@ -82,74 +70,13 @@ const SymbolCharacterGrid = React.forwardRef<any, CharacterGridProps>((props, re
     if (newIndex !== undefined) {
       props.onSelectionChanged(newIndex);
       event.preventDefault();
-      setMayShowPreview(true);
     }
   };
 
-  const [previewPosition, setPreviewPosition] = React.useState<[number, number]>([0, 0]);
-  const [showPreview, setShowPreview] = React.useState<boolean>(false);
-  const [mayShowPreview, setMayShowPreview] = React.useState<boolean>(false);
-
-  const selectedCharacter = React.useMemo(() => {
-    if (props.selectedIndex < props.symbolCharacters.length) {
-      return props.symbolCharacters[props.selectedIndex];
-    }
-    return null;
-  }, [props.selectedIndex, props.symbolCharacters]);
-
-  React.useEffect(() => {
-    if (mayShowPreview) {
-      updatePreviewPosition();
-      return maybeShowPreview();
-    }
-  }, [props.selectedIndex, mayShowPreview]);
-
-  React.useEffect(() => {
-    if (props.symbolCharacters.length < 1) {
-      setShowPreview(false);
-    }
-  }, [props.symbolCharacters, props.selectedIndex]);
   
-  // Show the preview window after a short delay
-  function maybeShowPreview() {
-    if (previewTimer.current) {
-      window.clearTimeout(previewTimer.current);
-      previewTimer.current = undefined;
-    }
-    if (mayShowPreview && !showPreview) {
-      previewTimer.current = window.setTimeout(() => {
-        setShowPreview(true);
-      }, kWaitToShowPreviewMs);
-      return () => { window.clearTimeout(previewTimer.current); };
-    }
-  }  
-  const kWaitToShowPreviewMs = 750;
-  const previewTimer = React.useRef<number>();
-
-  const gridInnerRef = React.useRef<HTMLElement>();
-  function updatePreviewPosition() {
-    const selectedCells = gridInnerRef.current?.getElementsByClassName(selectedItemClassName);
-    if (selectedCells?.length === 1) {
-      const cellRect = selectedCells.item(0)?.getBoundingClientRect();
-      if (cellRect) {
-        let top = cellRect.bottom + 1;
-        if (top + kPreviewHeight > window.innerHeight) {
-          top = cellRect.top - kPreviewHeight - 1;
-        }
-        let left = cellRect.left + (cellRect.right - cellRect.left) / 2;
-        if (left + kPreviewWidth > window.innerWidth) {
-          left = left - kPreviewWidth;
-        }
-        setPreviewPosition([left, top]);
-      }
-    }
-  }
-
   return (
     <div
       onKeyDown={handleKeyDown}
-      onMouseLeave={handleMouseLeave}
-      onMouseEnter={handleMouseEnter}
       tabIndex={0}
       ref={ref}
     >
@@ -163,20 +90,9 @@ const SymbolCharacterGrid = React.forwardRef<any, CharacterGridProps>((props, re
         itemData={characterCellData}
         className="pm-symbol-grid"
         ref={gridRef}
-        innerRef={gridInnerRef}
       >
         {SymbolCharacterCell}
       </FixedSizeGrid>
-      {showPreview && selectedCharacter && (
-        <SymbolPreview
-          left={previewPosition[0]}
-          top={previewPosition[1]}
-          height={kPreviewHeight}
-          width={kPreviewWidth}
-          symbolCharacter={selectedCharacter}
-          ui={props.ui}
-        />
-      )}
     </div>
   );
 });

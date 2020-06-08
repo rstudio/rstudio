@@ -55,3 +55,39 @@
   left: 0; 
   right: 0;
 }
+
+.pm-popup-insert-symbol-preview-container {
+  box-sizing: border-box;
+  display: flex;
+  padding-left: 10px;
+  padding-right: 10px;
+  padding-top: 8px;
+  align-items: top;
+}
+
+.pm-popup-insert-symbol-preview-value {
+  font-size: 28px; 
+}
+
+.pm-popup-insert-symbol-preview-summary {
+  display: flex;
+  flex-direction: column;
+  padding-top: 4px;
+  padding-left: 8px;
+  align-items: left;
+}
+
+.pm-popup-insert-symbol-preview-name {
+  font-weight: normal;
+  font-size: 13px;
+  text-align: left;
+  text-transform: lowercase;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pm-popup-insert-symbol-preview-markdown {
+  font-weight: lighter;
+  font-size: 12px;
+  text-align: left;
+}

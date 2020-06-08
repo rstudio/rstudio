@@ -84,8 +84,8 @@ export class InsertSymbolPlugin extends Plugin<boolean> {
 
   public showPopup(view: EditorView) {
     if (!this.popup) {
-      const kHeight = 320;
-      const kWidth = 418;
+      const kHeight = 336;
+      const kWidth = 450;
 
       this.popup = window.document.createElement('div');
       this.popup.tabIndex = 0;

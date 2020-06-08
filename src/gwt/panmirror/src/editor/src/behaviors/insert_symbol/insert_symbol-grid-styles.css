@@ -22,7 +22,7 @@
 }
 
 .pm-symbol-grid-cell {
-  font-size: larger;
+  font-size: 20px;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -44,10 +44,6 @@
   justify-content: center;
   align-items: center;
   border: solid 2px;
-}
-
-.pm-symbol-grid-symbol-preview-symbol {
-  font-size: xx-large;
 }
 
 .pm-symbol-grid-symbol-preview-name {

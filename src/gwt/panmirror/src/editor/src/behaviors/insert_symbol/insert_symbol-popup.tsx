@@ -26,6 +26,7 @@ import { SymbolDataProvider, SymbolCharacter } from './insert_symbol-dataprovide
 import SymbolCharacterGrid, { newIndexForKeyboardEvent } from './insert_symbol-grid';
 
 import './insert_symbol-styles.css';
+import { SymbolPreview } from './insert_symbol-grid-preview';
 
 interface InsertSymbolPopupProps extends WidgetProps {
   symbolDataProvider: SymbolDataProvider;
@@ -49,7 +50,7 @@ export const InsertSymbolPopup: React.FC<InsertSymbolPopupProps> = props => {
   };
   const classNames = ['pm-popup-insert-symbol'].concat(props.classes || []);
 
-  const gridHeight = popupHeight - 48;
+  const gridHeight = popupHeight - 108;
   const gridWidth = popupWidth;
   const kNumberOfcolumns = 11;
 
@@ -194,6 +195,14 @@ export const InsertSymbolPopup: React.FC<InsertSymbolPopupProps> = props => {
             No matching symbols
           </div>
         </div>
+        <hr className="pm-popup-insert-symbol-separator pm-border-background-color" />
+        {filteredSymbols[selectedSymbolIndex] &&
+        <SymbolPreview
+          symbolCharacter={filteredSymbols[selectedSymbolIndex]}
+          symbolPreviewStyle={props.symbolDataProvider.symbolPreviewStyle}
+          ui={props.ui}
+          />
+        }
       </div>
     </Popup>
   );

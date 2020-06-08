@@ -65,6 +65,8 @@ class UnicodeSymbolDataProvider implements SymbolDataProvider {
 
   public readonly filterPlaceholderHint = 'keyword or codepoint';
 
+  public readonly symbolPreviewStyle: React.CSSProperties = { fontSize: "28px" } as React.CSSProperties;
+
   public symbolGroupNames(): string[] {
     return [kCategoryAll, ...this.symbolGroups.map(symbolGroup => symbolGroup.name)];
   }
