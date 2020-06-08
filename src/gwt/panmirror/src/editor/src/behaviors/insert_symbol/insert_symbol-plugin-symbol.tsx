@@ -25,6 +25,7 @@ import { PandocExtensions } from '../../api/pandoc';
 import { PandocCapabilities } from '../../api/pandoc_capabilities';
 import { EditorUI } from '../../api/ui';
 import { parseCodepoint } from '../../api/unicode';
+import { OmniInsertGroup } from '../../api/omni_insert';
 
 import { performInsertSymbol, InsertSymbolPlugin } from './insert_symbol-plugin';
 import { SymbolDataProvider, SymbolCharacterGroup, SymbolCharacter } from './insert_symbol-dataprovider';
@@ -43,13 +44,26 @@ const extension = (
 ): Extension => {
   return {
     commands: () => {
-      return [new ProsemirrorCommand(EditorCommandId.Symbol, [], performInsertSymbol(key))];
+      return [new ProsemirrorCommand(EditorCommandId.Symbol, [], performInsertSymbol(key), symbolOmniInsert(ui))];
     },
     plugins: (_schema: Schema) => {
       return [new InsertSymbolPlugin(key, new UnicodeSymbolDataProvider(), ui, events)];
     },
   };
 };
+
+function symbolOmniInsert(ui: EditorUI) {
+  return {
+    name: ui.context.translateText('Symbol...'),
+    description: ui.context.translateText("Unicode graphical symbol"),
+    group: OmniInsertGroup.Content,
+    priority: 6,
+    image: () => ui.prefs.darkMode() 
+      ? ui.images.omni_insert?.symbol_dark! 
+      : ui.images.omni_insert?.symbol!,
+  };
+}
+
 
 class UnicodeSymbolDataProvider implements SymbolDataProvider {
   constructor() {

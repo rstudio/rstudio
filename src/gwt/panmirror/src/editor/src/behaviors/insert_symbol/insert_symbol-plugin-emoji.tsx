@@ -26,10 +26,10 @@ import { Extension } from '../../api/extension';
 import { nodeForEmoji } from '../../marks/emoji/emoji';
 import { PandocExtensions } from '../../api/pandoc';
 import { PandocCapabilities } from '../../api/pandoc_capabilities';
+import { OmniInsertGroup } from '../../api/omni_insert';
 
 import { performInsertSymbol, InsertSymbolPlugin } from './insert_symbol-plugin';
 import { SymbolDataProvider, SymbolCharacter } from './insert_symbol-dataprovider';
-
 
 const key = new PluginKey<boolean>('insert-emoji');
 
@@ -43,13 +43,25 @@ const extension = (
 ): Extension => {
   return {
     commands: () => {
-      return [new ProsemirrorCommand(EditorCommandId.Emoji, [], performInsertSymbol(key))];
+      return [new ProsemirrorCommand(EditorCommandId.Emoji, [], performInsertSymbol(key), emojiOmniInsert(ui))];
     },
     plugins: (_schema: Schema) => {
       return [new InsertSymbolPlugin(key, new EmojiSymbolDataProvider(ui), ui, events)];
     },
   };
 };
+
+function emojiOmniInsert(ui: EditorUI) {
+  return {
+    name: ui.context.translateText('Emoji...'),
+    description: ui.context.translateText("Image expressing idea, emotion, etc."),
+    group: OmniInsertGroup.Content,
+    priority: 6,
+    image: () => ui.prefs.darkMode() 
+      ? ui.images.omni_insert?.emoji_dark! 
+      : ui.images.omni_insert?.emoji!,
+  };
+}
 
 
 export class EmojiSymbolDataProvider implements SymbolDataProvider {
