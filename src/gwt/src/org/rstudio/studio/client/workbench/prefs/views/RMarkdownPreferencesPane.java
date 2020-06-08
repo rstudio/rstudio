@@ -228,6 +228,23 @@ public class RMarkdownPreferencesPane extends PreferencesPane
          visualModeFontSize_.getListBox().setSelectedIndex(0);
       visualModeOptions.add(visualModeFontSize_);
       
+      visualModeOptions.add(headerLabel("Content"));
+      
+      String[] skinToneValues = {
+         UserPrefsAccessor.EMOJI_SKINTONE__NONE_,
+         UserPrefsAccessor.EMOJI_SKINTONE_DEFAULT,
+         UserPrefsAccessor.EMOJI_SKINTONE_LIGHT,
+         UserPrefsAccessor.EMOJI_SKINTONE_MEDIUM_LIGHT,
+         UserPrefsAccessor.EMOJI_SKINTONE_MEDIUM,
+         UserPrefsAccessor.EMOJI_SKINTONE_MEDIUM_DARK,
+         UserPrefsAccessor.EMOJI_SKINTONE_DARK
+      };
+      visualModeSkinTone_ = new SelectWidget("Preferred emjoi skin tone: ", skinToneValues, skinToneValues, false, true, false);
+      if (!visualModeSkinTone_.setValue(prefs_.emojiSkintone().getGlobalValue()))
+         visualModeSkinTone_.getListBox().setSelectedIndex(0);
+      mediumSpaced(visualModeSkinTone_);
+      visualModeOptions.add(visualModeSkinTone_);
+      
       
       visualModeOptions.add(headerLabel("Markdown"));
       
@@ -340,6 +357,9 @@ public class RMarkdownPreferencesPane extends PreferencesPane
       prefs_.visualMarkdownEditingReferencesLocation().setGlobalValue(
             visualModeReferences_.getValue());
       
+      prefs_.emojiSkintone().setGlobalValue(
+            visualModeSkinTone_.getValue());
+      
       if (knitWorkingDir_ != null)
       {
          prefs_.knitWorkingDir().setGlobalValue(
@@ -362,6 +382,7 @@ public class RMarkdownPreferencesPane extends PreferencesPane
    private final NumericValueWidget visualModeContentWidth_;
    private final NumericValueWidget visualModeWrapColumn_;
    private final SelectWidget visualModeReferences_;
+   private final SelectWidget visualModeSkinTone_;
   
    
    
