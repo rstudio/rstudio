@@ -39,6 +39,7 @@ import { isSingleLineHTML } from '../api/html';
 import { kHTMLFormat, kTexFormat, editRawBlockCommand, isRawHTMLFormat } from '../api/raw';
 import { isSingleLineTex } from '../api/tex';
 import { PandocCapabilities } from '../api/pandoc_capabilities';
+import { OmniInsert, OmniInsertGroup } from '../api/omni_insert';
 
 const extension = (
   pandocExtensions: PandocExtensions,
@@ -138,10 +139,24 @@ const extension = (
     commands: (schema: Schema) => {
       const commands: ProsemirrorCommand[] = [];
 
-      commands.push(new FormatRawBlockCommand(EditorCommandId.HTMLBlock, kHTMLFormat, schema.nodes.raw_block));
+      commands.push(new FormatRawBlockCommand(EditorCommandId.HTMLBlock, kHTMLFormat, schema.nodes.raw_block, {
+        name: ui.context.translateText('HTML Block'),
+        description: ui.context.translateText("Raw HTML content"),
+        group: OmniInsertGroup.Blocks,
+        priority: 6,
+        image: () => ui.prefs.darkMode() 
+          ? ui.images.omni_insert?.html_block_dark! 
+          : ui.images.omni_insert?.html_block!,
+      }));
 
       if (pandocExtensions.raw_tex) {
-        commands.push(new FormatRawBlockCommand(EditorCommandId.TexBlock, kTexFormat, schema.nodes.raw_block));
+        commands.push(new FormatRawBlockCommand(EditorCommandId.TexBlock, kTexFormat, schema.nodes.raw_block, {
+          name: ui.context.translateText('TeX Block'),
+          description: ui.context.translateText("Raw TeX content"),
+          group: OmniInsertGroup.Blocks,
+          priority: 5,
+          image: () => ui.images.omni_insert?.generic!
+        }));
       }
 
       if (rawAttribute) {
@@ -184,7 +199,7 @@ class FormatRawBlockCommand extends ProsemirrorCommand {
   private format: string;
   private nodeType: NodeType;
 
-  constructor(id: EditorCommandId, format: string, nodeType: NodeType) {
+  constructor(id: EditorCommandId, format: string, nodeType: NodeType, omniInsert?: OmniInsert) {
     super(id, [], (state: EditorState, dispatch?: (tr: Transaction<any>) => void, view?: EditorView) => {
       if (!this.isActive(state) && !setBlockType(this.nodeType, { format })(state)) {
         return false;
@@ -200,7 +215,7 @@ class FormatRawBlockCommand extends ProsemirrorCommand {
       }
 
       return true;
-    });
+    }, omniInsert);
     this.format = format;
     this.nodeType = nodeType;
   }
@@ -213,7 +228,13 @@ class FormatRawBlockCommand extends ProsemirrorCommand {
 // generic raw block command (shows dialog to allow choosing from among raw formats)
 class RawBlockCommand extends ProsemirrorCommand {
   constructor(ui: EditorUI, outputFormats: string[]) {
-    super(EditorCommandId.RawBlock, [], editRawBlockCommand(ui, outputFormats));
+    super(EditorCommandId.RawBlock, [], editRawBlockCommand(ui, outputFormats), {
+      name: ui.context.translateText('Raw Block...'),
+      description: ui.context.translateText("Raw content block"),
+      group: OmniInsertGroup.Blocks,
+      priority: 4,
+      image: () => ui.images.omni_insert?.generic!
+    });
   }
 }
 

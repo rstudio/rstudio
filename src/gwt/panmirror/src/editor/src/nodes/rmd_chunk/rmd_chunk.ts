@@ -31,6 +31,7 @@ import { EditorUI } from '../../api/ui';
 import { PandocCapabilities } from '../../api/pandoc_capabilities';
 import { EditorFormat, kBookdownDocType } from '../../api/format';
 import { rmdChunk, EditorRmdChunk } from '../../api/rmd';
+import { OmniInsertGroup } from '../../api/omni_insert';
 
 import { RmdChunkImagePreviewPlugin } from './rmd_chunk-image';
 import { ExecuteCurrentRmdChunkCommand, ExecutePreviousRmdChunksCommand } from './rmd_chunk-commands';
@@ -111,7 +112,7 @@ const extension = (
     ],
 
     commands: (_schema: Schema) => {
-      const commands = [new RmdChunkCommand()];
+      const commands = [new RmdChunkCommand(ui)];
       if (ui.execute.executeRmdChunk) {
         commands.push(new ExecuteCurrentRmdChunkCommand(ui), new ExecutePreviousRmdChunksCommand(ui));
       }
@@ -129,7 +130,7 @@ const extension = (
 };
 
 class RmdChunkCommand extends ProsemirrorCommand {
-  constructor() {
+  constructor(ui: EditorUI) {
     super(
       EditorCommandId.RmdChunk,
       ['Mod-Alt-i'],
@@ -175,6 +176,13 @@ class RmdChunkCommand extends ProsemirrorCommand {
 
         return true;
       },
+      {
+        name: ui.context.translateText('R Code Chunk'),
+        description: ui.context.translateText("Executable R code"),
+        group: OmniInsertGroup.Chunks,
+        priority: 10,
+        image: () => ui.images.omni_insert?.generic!
+      }
     );
   }
 }
