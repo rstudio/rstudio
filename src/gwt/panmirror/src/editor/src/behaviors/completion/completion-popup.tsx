@@ -132,8 +132,7 @@ type ItemEventHandler =  (index: number, handler: (index: number) => void) => (e
 
 function verticalCompletions(props: CompletionListProps, itemHeight: number, itemEventHandler: ItemEventHandler) {
 
-
-  return (<> {props.completions.map((completion, index) => {
+  return props.completions.map((completion, index) => {
     const { key, cell } = completionItemCell(props, completion, index);
     return (
       <tr 
@@ -145,7 +144,7 @@ function verticalCompletions(props: CompletionListProps, itemHeight: number, ite
         {cell}
       </tr>
     );
-  })}</>);
+  });
 }
 
 function horizontalCompletions(props: CompletionListProps, itemHeight: number, itemEventHandler: ItemEventHandler) {
