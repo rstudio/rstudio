@@ -67,7 +67,7 @@ public class PanmirrorUIPrefs {
 		   return 0x1F3FC;
 	   } else if (emojiSkinTone.equals(UserPrefsAccessor.EMOJI_SKINTONE_LIGHT)) {
 		   return 0x1F3FB;		   
-	   } else if (emojiSkinTone.equals(UserPrefsAccessor.EMOJI_SKINTONE_DEFAULT)) {
+	   } else if (emojiSkinTone.equals(UserPrefsAccessor.EMOJI_SKINTONE__DEFAULT_)) {
 		   return 0;
 	   } else if (emojiSkinTone.equals(UserPrefsAccessor.EMOJI_SKINTONE__NONE_)) {
 		   return -1;
@@ -90,7 +90,7 @@ public class PanmirrorUIPrefs {
 	   } else if (skinTone == 0x1F3FB) {
 		   skinToneStr = UserPrefsAccessor.EMOJI_SKINTONE_LIGHT;		   
 	   } else if (skinTone == 0) {
-		   skinToneStr = UserPrefsAccessor.EMOJI_SKINTONE_DEFAULT;
+		   skinToneStr = UserPrefsAccessor.EMOJI_SKINTONE__DEFAULT_;
 	   } else if (skinTone == -1) {
 		   skinToneStr = UserPrefsAccessor.EMOJI_SKINTONE__NONE_;
 	   }

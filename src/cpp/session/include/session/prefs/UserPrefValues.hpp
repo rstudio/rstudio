@@ -333,7 +333,7 @@ namespace prefs {
 #define kVisualMarkdownEditingFontSizePoints "visual_markdown_editing_font_size_points"
 #define kEmojiSkintone "emoji_skintone"
 #define kEmojiSkintoneNone_ "(None)"
-#define kEmojiSkintoneDefault "Default"
+#define kEmojiSkintoneDefault_ "(Default)"
 #define kEmojiSkintoneLight "Light"
 #define kEmojiSkintoneMediumLight "Medium-Light"
 #define kEmojiSkintoneMedium "Medium"

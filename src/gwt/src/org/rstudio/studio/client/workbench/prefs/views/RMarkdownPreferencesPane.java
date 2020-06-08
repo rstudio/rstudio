@@ -231,8 +231,7 @@ public class RMarkdownPreferencesPane extends PreferencesPane
       visualModeOptions.add(headerLabel("Content"));
       
       String[] skinToneValues = {
-         UserPrefsAccessor.EMOJI_SKINTONE__NONE_,
-         UserPrefsAccessor.EMOJI_SKINTONE_DEFAULT,
+         UserPrefsAccessor.EMOJI_SKINTONE__DEFAULT_,
          UserPrefsAccessor.EMOJI_SKINTONE_LIGHT,
          UserPrefsAccessor.EMOJI_SKINTONE_MEDIUM_LIGHT,
          UserPrefsAccessor.EMOJI_SKINTONE_MEDIUM,
@@ -242,6 +241,10 @@ public class RMarkdownPreferencesPane extends PreferencesPane
       visualModeSkinTone_ = new SelectWidget("Preferred emjoi skin tone: ", skinToneValues, skinToneValues, false, true, false);
       if (!visualModeSkinTone_.setValue(prefs_.emojiSkintone().getGlobalValue()))
          visualModeSkinTone_.getListBox().setSelectedIndex(0);
+      visualModeSkinTone_.addChangeHandler((event) -> {
+         skinToneChanged_ = true;
+      });
+      
       mediumSpaced(visualModeSkinTone_);
       visualModeOptions.add(visualModeSkinTone_);
       
@@ -357,8 +360,8 @@ public class RMarkdownPreferencesPane extends PreferencesPane
       prefs_.visualMarkdownEditingReferencesLocation().setGlobalValue(
             visualModeReferences_.getValue());
       
-      prefs_.emojiSkintone().setGlobalValue(
-            visualModeSkinTone_.getValue());
+      if (skinToneChanged_)
+         prefs_.emojiSkintone().setGlobalValue(visualModeSkinTone_.getValue());
       
       if (knitWorkingDir_ != null)
       {
@@ -383,6 +386,7 @@ public class RMarkdownPreferencesPane extends PreferencesPane
    private final NumericValueWidget visualModeWrapColumn_;
    private final SelectWidget visualModeReferences_;
    private final SelectWidget visualModeSkinTone_;
+   private boolean skinToneChanged_ = false;
   
    
    

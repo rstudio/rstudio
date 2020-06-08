@@ -2704,7 +2704,7 @@ public class UserPrefsAccessor extends Prefs
          "Preferred emoji skintone", 
          new String[] {
             EMOJI_SKINTONE__NONE_,
-            EMOJI_SKINTONE_DEFAULT,
+            EMOJI_SKINTONE__DEFAULT_,
             EMOJI_SKINTONE_LIGHT,
             EMOJI_SKINTONE_MEDIUM_LIGHT,
             EMOJI_SKINTONE_MEDIUM,
@@ -2715,7 +2715,7 @@ public class UserPrefsAccessor extends Prefs
    }
 
    public final static String EMOJI_SKINTONE__NONE_ = "(None)";
-   public final static String EMOJI_SKINTONE_DEFAULT = "Default";
+   public final static String EMOJI_SKINTONE__DEFAULT_ = "(Default)";
    public final static String EMOJI_SKINTONE_LIGHT = "Light";
    public final static String EMOJI_SKINTONE_MEDIUM_LIGHT = "Medium-Light";
    public final static String EMOJI_SKINTONE_MEDIUM = "Medium";

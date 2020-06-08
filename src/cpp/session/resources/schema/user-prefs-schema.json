@@ -1255,7 +1255,7 @@
         },
         "emoji_skintone" : {
           "type": "string",
-          "enum": ["(None)","Default", "Light", "Medium-Light", "Medium", "Medium-Dark", "Dark"],
+          "enum": ["(None)", "(Default)", "Light", "Medium-Light", "Medium", "Medium-Dark", "Dark"],
           "default": "(None)",
           "description": "Preferred emoji skintone"
         },
