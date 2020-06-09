@@ -14,11 +14,17 @@
  */
 package org.rstudio.studio.client.workbench.views.console.events;
 
+import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 
-public class ConsoleWritePromptEvent extends GwtEvent<ConsoleWritePromptHandler>
+public class ConsoleWritePromptEvent extends GwtEvent<ConsoleWritePromptEvent.Handler>
 {
-   public static final Type<ConsoleWritePromptHandler> TYPE = new Type<ConsoleWritePromptHandler>();
+   public static final Type<Handler> TYPE = new Type<>();
+
+   public interface Handler extends EventHandler
+   {
+      void onConsoleWritePrompt(ConsoleWritePromptEvent event);
+   }
 
    public ConsoleWritePromptEvent(String prompt)
    {
@@ -33,13 +39,13 @@ public class ConsoleWritePromptEvent extends GwtEvent<ConsoleWritePromptHandler>
    private String prompt_;
 
    @Override
-   public Type<ConsoleWritePromptHandler> getAssociatedType()
+   public Type<Handler> getAssociatedType()
    {
       return TYPE;
    }
 
    @Override
-   protected void dispatch(ConsoleWritePromptHandler handler)
+   protected void dispatch(Handler handler)
    {
       handler.onConsoleWritePrompt(this);
    }

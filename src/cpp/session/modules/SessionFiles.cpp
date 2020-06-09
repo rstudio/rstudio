@@ -633,7 +633,7 @@ Error completeUpload(const core::json::JsonRpcRequest& request,
          
          // move the source to the destination, falling back to a copy
          // if the move cannot be completed
-         Error copyError = uploadedTempFilePath.move(targetPath);
+         Error copyError = uploadedTempFilePath.move(targetPath, FilePath::MoveCrossDevice, true);
          if (copyError)
             return copyError;
       }

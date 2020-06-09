@@ -133,4 +133,5 @@ public class ProgressPanel extends Composite implements IsHideableWidget
    private final Label progressLabel_;
    private Timer timer_;
    private String message_;
+  
 }

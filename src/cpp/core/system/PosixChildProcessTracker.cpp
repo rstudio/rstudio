@@ -18,6 +18,7 @@
 #include <sys/wait.h>
 
 #include <boost/format.hpp>
+#include <boost/bind.hpp>
 
 namespace rstudio {
 namespace core {

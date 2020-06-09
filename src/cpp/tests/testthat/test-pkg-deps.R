@@ -109,3 +109,17 @@ test_that("R scripts do not get treated like R Markdown docs", {
    expect_equal(sort(packages), sort(c("ggplot2", "yaml")))
 })
 
+test_that("HTML comments are not treated like YAML delimiters", {
+   contents <- paste(
+      "",
+      "<!--- html comment --->",
+      "",
+      "```{r}",
+      "require(callr)",
+      "require(crayon)",
+      "```",
+      "", sep = "\n")
+   packages <- .rs.parsePackageDependencies(contents, ".Rmd")
+   expect_equal(sort(packages), sort(c("callr", "crayon")))
+})
+

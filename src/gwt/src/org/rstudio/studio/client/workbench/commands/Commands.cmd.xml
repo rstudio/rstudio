@@ -515,7 +515,11 @@ well as menu structures (for main menu and popup menus).
                <cmd refid="speakEditorLocation"/>
             </menu>
             <menu label="_Focus">
+               <cmd refid="activateSource"/>
+               <cmd refid="activateConsole"/>
                <cmd refid="focusConsoleOutputEnd"/>
+               <cmd refid="activateTerminal"/>
+               <cmd refid="activateHelp"/>
                <cmd refid="focusMainToolbar"/>
                <cmd refid="toggleTabKeyMovesFocus"/>
                </menu>
@@ -701,7 +705,7 @@ well as menu structures (for main menu and popup menus).
 
          <shortcut refid="activateSource" value="Ctrl+1"/>
          <shortcut refid="activateConsole" value="Ctrl+2"/>
-         <shortcut refid="activateTerminal" value="Alt+Shift+T"/>
+         <shortcut refid="activateTerminal" value="Alt+Shift+M"/>
          <shortcut refid="activateHelp" value="Ctrl+3"/>
          <shortcut refid="activateHistory" value="Ctrl+4"/>
          <shortcut refid="activateFiles" value="Ctrl+5"/>
@@ -743,7 +747,8 @@ well as menu structures (for main menu and popup menus).
          <shortcut refid="saveSourceDoc" value="Ctrl+S" disableModes="emacs"/>
          <shortcut refid="saveSourceDoc" value="Meta+S" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
          
-         <shortcut refid="saveAllSourceDocs" value="Cmd+Alt+S"/>
+         <shortcut refid="saveAllSourceDocs" value="Ctrl+Alt+S" if="!org.rstudio.core.client.BrowseCap.isMacintosh()"/>
+         <shortcut refid="saveAllSourceDocs" value="Meta+Alt+S" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
          
          <shortcut refid="newSourceDoc" value="Ctrl+X Ctrl+N" disableModes="default,vim,sublime"/>
          <shortcut refid="newSourceDoc" value="Cmd+Shift+N" if="!org.rstudio.core.client.BrowseCap.isChromeServer()" title="New R Script"/>
@@ -838,7 +843,7 @@ well as menu structures (for main menu and popup menus).
          <shortcut refid="helpSearch" value="Ctrl+Alt+F1"/>
          <shortcut refid="helpBack" value="Shift+Alt+F2"/>
          <shortcut refid="helpForward" value="Shift+Alt+F3"/>
-         <shortcut refid="showCommandPalette" value="Ctrl+Shift+P" if="!(org.rstudio.core.client.BrowseCap.isFirefox() &amp;&amp; org.rstudio.core.client.BrowseCap.isWindows())" />
+         <shortcut refid="showCommandPalette" value="Cmd+Shift+P" if="!(org.rstudio.core.client.BrowseCap.isFirefox() &amp;&amp; org.rstudio.core.client.BrowseCap.isWindows())" />
          <shortcut refid="showCommandPalette" value="Ctrl+Alt+Shift+P" if="org.rstudio.core.client.BrowseCap.isFirefox() &amp;&amp; org.rstudio.core.client.BrowseCap.isWindows()" />
       </shortcutgroup>
       <shortcutgroup name="Console">
@@ -861,15 +866,16 @@ well as menu structures (for main menu and popup menus).
          <shortcut refid="showViewMenu" value="Alt+Shift+V" if="!org.rstudio.core.client.BrowseCap.isMacintosh()"/>
          <shortcut refid="showPlotsMenu" value="Ctrl+Alt+P" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
          <shortcut refid="showPlotsMenu" value="Alt+Shift+P" if="!org.rstudio.core.client.BrowseCap.isMacintosh()"/>
-         <shortcut refid="showSessionMenu" value="Ctrl+Alt+Shift+S"/>
+         <shortcut refid="showSessionMenu" value="Ctrl+Alt+S" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
+         <shortcut refid="showSessionMenu" value="Alt+Shift+S" if="!org.rstudio.core.client.BrowseCap.isMacintosh()"/>
          <shortcut refid="showBuildMenu" value="Ctrl+Alt+B" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
          <shortcut refid="showBuildMenu" value="Alt+Shift+B" if="!org.rstudio.core.client.BrowseCap.isMacintosh()"/>
          <shortcut refid="showDebugMenu" value="Ctrl+Alt+U" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
          <shortcut refid="showDebugMenu" value="Alt+Shift+U" if="!org.rstudio.core.client.BrowseCap.isMacintosh()"/>
          <shortcut refid="showProfileMenu" value="Ctrl+Alt+O" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
          <shortcut refid="showProfileMenu" value="Alt+Shift+I" if="!org.rstudio.core.client.BrowseCap.isMacintosh()"/>
-         <shortcut refid="showToolsMenu" value="Ctrl+Alt+L" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
-         <shortcut refid="showToolsMenu" value="Alt+Shift+S" if="!org.rstudio.core.client.BrowseCap.isMacintosh()"/>
+         <shortcut refid="showToolsMenu" value="Ctrl+Alt+T" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
+         <shortcut refid="showToolsMenu" value="Alt+Shift+T" if="!org.rstudio.core.client.BrowseCap.isMacintosh()"/>
          <shortcut refid="showHelpMenu" value="Ctrl+Alt+H" if="org.rstudio.core.client.BrowseCap.isMacintosh()"/>
          <shortcut refid="showHelpMenu" value="Alt+Shift+H" if="!org.rstudio.core.client.BrowseCap.isMacintosh()"/>
       </shortcutgroup>
@@ -3464,6 +3470,7 @@ well as menu structures (for main menu and popup menus).
         desc="Open sources associated with the selection"/>
 
    <cmd id="profileCodeWithoutFocus"
+        label="Profile Current Line or Selection Without Focus"
         rebindable="false"/>
 
    <cmd id="openProfile"

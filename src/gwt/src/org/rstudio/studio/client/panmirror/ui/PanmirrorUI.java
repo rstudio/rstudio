@@ -31,12 +31,16 @@ public class PanmirrorUI
       this.context = context;
       this.display = display;
       this.execute = execute;
+      this.math = new PanmirrorUIMath();
+      this.prefs = new PanmirrorUIPrefs();
       this.dialogs = new PanmirrorDialogs(this.context);
    }
    
    public PanmirrorDialogs dialogs;
    public PanmirrorUIDisplay display;
    public PanmirrorUIExecute execute;
+   public PanmirrorUIMath math;
+   public PanmirrorUIPrefs prefs;
    public PanmirrorUIContext context;
    public JsObject images;
 }

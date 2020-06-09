@@ -26,7 +26,9 @@ export interface EditorUI {
   dialogs: EditorDialogs;
   display: EditorDisplay;
   execute: EditorUIExecute;
+  math: EditorUIMath;
   context: EditorUIContext;
+  prefs: EditorUIPrefs;
   images: EditorUIImages;
 }
 
@@ -72,9 +74,17 @@ export interface EditorUIExecute {
   executeRmdChunk?: (chunk: EditorRmdChunk) => void;
 }
 
+export interface EditorUIMath {
+  typeset?: (el: HTMLElement, text: string) => Promise<boolean>;
+}
+
 export interface EditorDisplay {
   openURL: (url: string) => void;
   showContextMenu?: (items: EditorMenuItem[], clientX: number, clientY: number) => Promise<boolean>;
+}
+
+export interface EditorUIPrefs {
+  equationPreview: () => boolean;
 }
 
 export enum AlertType {

@@ -29,7 +29,6 @@ import org.rstudio.studio.client.workbench.commands.Commands;
 import org.rstudio.studio.client.workbench.ui.DelayLoadTabShim;
 import org.rstudio.studio.client.workbench.ui.DelayLoadWorkbenchTab;
 import org.rstudio.studio.client.workbench.views.console.events.ConsolePromptEvent;
-import org.rstudio.studio.client.workbench.views.console.events.ConsolePromptHandler;
 import org.rstudio.studio.client.workbench.views.plots.events.LocatorEvent;
 import org.rstudio.studio.client.workbench.views.plots.events.LocatorHandler;
 import org.rstudio.studio.client.workbench.views.plots.events.PlotsChangedEvent;
@@ -43,7 +42,7 @@ public class PlotsTab extends DelayLoadWorkbenchTab<Plots>
    public interface Binder extends CommandBinder<Commands, PlotsShim> {}
 
    public abstract static class PlotsShim extends DelayLoadTabShim<Plots, PlotsTab>
-         implements PlotsChangedHandler, LocatorHandler, ConsolePromptHandler
+         implements PlotsChangedHandler, LocatorHandler, ConsolePromptEvent.Handler
    {
       boolean loaded = false;
       PlotsState delayLoadPlotsState;

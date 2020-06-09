@@ -190,7 +190,6 @@ public class EditingPreferencesPane extends PreferencesPane
       
       editingPanel.add(panel);
       
-      
       VerticalTabPanel displayPanel = new VerticalTabPanel(ElementIds.EDIT_DISPLAY_PREFS);
       displayPanel.add(headerLabel("General"));
       displayPanel.add(checkboxPref("Highlight selected word", prefs.highlightSelectedWord()));
@@ -202,11 +201,10 @@ public class EditingPreferencesPane extends PreferencesPane
       displayPanel.add(checkboxPref("Show whitespace characters", prefs_.showInvisibles()));
       displayPanel.add(checkboxPref("Show indent guides", prefs_.showIndentGuides()));
       displayPanel.add(checkboxPref("Blinking cursor", prefs_.blinkingCursor()));
-      displayPanel.add(checkboxPref("Show syntax highlighting in console input", prefs_.syntaxColorConsole()));
       displayPanel.add(checkboxPref("Allow scroll past end of document", prefs_.scrollPastEndOfDocument()));
       displayPanel.add(checkboxPref("Allow drag and drop of text", prefs_.enableTextDrag()));
-      displayPanel.add(extraSpaced(checkboxPref("Highlight R function calls", 
-            prefs_.highlightRFunctionCalls(), false /*defaultSpace*/)));
+      displayPanel.add(extraSpaced(checkboxPref("Highlight R function calls",
+         prefs_.highlightRFunctionCalls(), false /*defaultSpace*/)));
        
       foldMode_ = new SelectWidget(
             "Fold Style:",
@@ -223,28 +221,6 @@ public class EditingPreferencesPane extends PreferencesPane
             false);
       
       displayPanel.add(foldMode_);
-      
-      displayPanel.add(headerLabel("Console"));
-      NumericValueWidget limitLengthPref =
-            numericPref("Limit length of lines displayed in console to:", prefs_.consoleLineLengthLimit());
-      displayPanel.add(nudgeRightPlus(limitLengthPref));
-
-      consoleColorMode_ = new SelectWidget(
-            "ANSI Escape Codes:",
-            new String[] {
-                  "Show ANSI colors",
-                  "Remove ANSI codes",
-                  "Ignore ANSI codes (1.0 behavior)"
-            },
-            new String[] {
-                  UserPrefs.ANSI_CONSOLE_MODE_ON, 
-                  UserPrefs.ANSI_CONSOLE_MODE_STRIP,
-                  UserPrefs.ANSI_CONSOLE_MODE_OFF
-            },
-            false,
-            true,
-            false);
-      displayPanel.add(consoleColorMode_);
       
       VerticalTabPanel savePanel = new VerticalTabPanel(ElementIds.EDIT_SAVING_PREFS);
       
@@ -540,7 +516,6 @@ public class EditingPreferencesPane extends PreferencesPane
    protected void initialize(UserPrefs prefs)
    {
       lineEndings_.setValue(prefs.lineEndingConversion().getValue());
-      consoleColorMode_.setValue(prefs_.ansiConsoleMode().getValue());
       
       showCompletions_.setValue(prefs_.codeCompletion().getValue());
       showCompletionsOther_.setValue(prefs_.codeCompletionOther().getValue());
@@ -566,7 +541,6 @@ public class EditingPreferencesPane extends PreferencesPane
       
       // editing prefs
       prefs_.lineEndingConversion().setGlobalValue(lineEndings_.getValue());
-      prefs_.ansiConsoleMode().setGlobalValue(consoleColorMode_.getValue());
                       
       prefs_.defaultEncoding().setGlobalValue(encodingValue_);
       
@@ -643,7 +617,6 @@ public class EditingPreferencesPane extends PreferencesPane
    private final SelectWidget showCompletionsOther_;
    private final SelectWidget editorMode_;
    private final SelectWidget foldMode_;
-   private final SelectWidget consoleColorMode_;
    private final SelectWidget delimiterSurroundWidget_;
    private final SelectWidget executionBehavior_;
    private final SelectWidget autoSaveOnIdle_;

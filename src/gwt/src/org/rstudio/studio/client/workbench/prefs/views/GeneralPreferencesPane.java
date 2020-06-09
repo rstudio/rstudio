@@ -257,8 +257,7 @@ public class GeneralPreferencesPane extends PreferencesPane
              session_.getSessionInfo().getMultiSession())
          {
             Label homePageLabel = headerLabel("Home Page");
-            if (!firstHeader)
-               spacedBefore(homePageLabel);
+            spacedBefore(homePageLabel);
             advanced.add(homePageLabel);
             firstHeader = false;
          }
@@ -270,32 +269,23 @@ public class GeneralPreferencesPane extends PreferencesPane
          if (session_.getSessionInfo().getMultiSession())
             advanced.add(reuseSessionsForProjectLinks_);
       }
-      
-      // The error handler features require source references; if this R
-      // version doesn't support them, don't show these options. 
-      if (session_.getSessionInfo().getHaveSrcrefAttribute())
-      {
-         Label debuggingLabel = headerLabel("Debugging");
-         if (!firstHeader)
-            spacedBefore(debuggingLabel);
-         advanced.add(debuggingLabel);
-         firstHeader = false;
-         advanced.add(checkboxPref(
-               "Use debug error handler only when my code contains errors", 
-               prefs_.handleErrorsInUserCodeOnly()));
-         advanced.add(spaced(checkboxPref(
-               "Automatically expand tracebacks in error inspector", 
-               prefs_.autoExpandErrorTracebacks(),
-               false /*defaultSpaced*/)));
-      }
+
+     Label debuggingLabel = headerLabel("Debugging");
+     if (!firstHeader)
+     {
+        spacedBefore(debuggingLabel);
+        firstHeader = false;
+     }
+     advanced.add(debuggingLabel);
+     advanced.add(checkboxPref(
+           "Use debug error handler only when my code contains errors", 
+           prefs_.handleErrorsInUserCodeOnly()));
 
       if (Desktop.hasDesktopFrame())
       {
          Label osLabel = headerLabel("OS Integration");
-         if (!firstHeader)
-            spacedBefore(osLabel);
+         spacedBefore(osLabel);
          advanced.add(osLabel);
-         firstHeader = false;
          
          renderingEngineWidget_ = new SelectWidget("Rendering engine:", new String[] {});
          renderingEngineWidget_.addChoice("Auto-detect (recommended)", ENGINE_AUTO);
@@ -344,19 +334,13 @@ public class GeneralPreferencesPane extends PreferencesPane
       }
       
       Label otherLabel = headerLabel("Other");
-      if (!firstHeader)
-         spacedBefore(otherLabel);
+      spacedBefore(otherLabel);
       advanced.add(otherLabel);
-      firstHeader = false;
 
       showLastDotValue_ = new CheckBox("Show .Last.value in environment listing");
       lessSpaced(showLastDotValue_);
       advanced.add(showLastDotValue_);
 
-      advanced.add(spaced(checkboxPref(
-            "Double-click to select words in Console pane", 
-            prefs_.consoleDoubleClickSelect())));
-      
       String[] labels = {"7", "8", "9", "10", "11", "12", "13", "14", "16", "18", "24", "36"};
       String[] values = new String[labels.length];
       for (int i = 0; i < labels.length; i++)

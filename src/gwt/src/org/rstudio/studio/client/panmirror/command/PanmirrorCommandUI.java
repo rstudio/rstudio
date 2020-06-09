@@ -69,7 +69,7 @@ public class PanmirrorCommandUI implements ScheduledCommand
    
    public String getDesc()
    {
-      return menuText_;
+      return getFullMenuText();
    }
    
    public String getTooltip()

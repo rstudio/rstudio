@@ -35,8 +35,9 @@ import org.rstudio.core.client.widget.ToolbarButton;
 import org.rstudio.core.client.widget.images.ProgressImages;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.EventBus;
-import org.rstudio.studio.client.application.ui.CommandPaletteEntry;
-import org.rstudio.studio.client.application.ui.CommandPaletteEntrySource;
+import org.rstudio.studio.client.palette.model.CommandPaletteEntrySource;
+import org.rstudio.studio.client.palette.model.CommandPaletteItem;
+import org.rstudio.studio.client.palette.ui.CommandPaletteEntry;
 import org.rstudio.studio.client.panmirror.PanmirrorChanges;
 import org.rstudio.studio.client.panmirror.PanmirrorCode;
 import org.rstudio.studio.client.panmirror.PanmirrorContext;
@@ -47,6 +48,7 @@ import org.rstudio.studio.client.panmirror.PanmirrorSetMarkdownResult;
 import org.rstudio.studio.client.panmirror.PanmirrorWidget;
 import org.rstudio.studio.client.panmirror.PanmirrorWidget.FormatSource;
 import org.rstudio.studio.client.panmirror.PanmirrorWriterOptions;
+import org.rstudio.studio.client.panmirror.command.PanmirrorCommandUI;
 import org.rstudio.studio.client.panmirror.command.PanmirrorCommands;
 import org.rstudio.studio.client.panmirror.events.PanmirrorFocusEvent;
 import org.rstudio.studio.client.panmirror.events.PanmirrorStateChangeEvent;
@@ -134,14 +136,6 @@ public class TextEditingTargetVisualMode implements CommandPaletteEntrySource
       // sync to user pref changed
       releaseOnDismiss.add(prefs_.enableVisualMarkdownEditingMode().addValueChangeHandler((value) -> {
          view_.manageCommandUI();
-      }));
-      
-      // changes to line wrapping prefs make us dirty
-      releaseOnDismiss.add(prefs_.visualMarkdownEditingWrapAuto().addValueChangeHandler((value) -> {
-         isDirty_ = true;
-      }));
-      releaseOnDismiss.add(prefs_.visualMarkdownEditingWrapColumn().addValueChangeHandler((value) -> {
-         isDirty_ = true;
       }));
    } 
    
@@ -492,12 +486,6 @@ public class TextEditingTargetVisualMode implements CommandPaletteEntrySource
       restoreDisabledForVisualMode();
    }
    
-   @Override
-   public List<CommandPaletteEntry> getCommandPaletteEntries()
-   {
-      return panmirror_.getCommandPaletteEntries();
-   }
-   
    public void executeChunk()
    {
       panmirror_.execCommand(PanmirrorCommands.ExecuteCurrentRmdChunk);
@@ -572,6 +560,13 @@ public class TextEditingTargetVisualMode implements CommandPaletteEntrySource
          saveLocationOnIdle_.suspend();
    }
   
+
+   @Override
+   public List<CommandPaletteItem> getCommandPaletteItems()
+   {
+      return panmirror_.getCommandPaletteItems();
+   }
+
    private void manageUI(boolean activate, boolean focus)
    {
       manageUI(activate, focus, () -> {});
@@ -1616,7 +1611,7 @@ public class TextEditingTargetVisualMode implements CommandPaletteEntrySource
   
    
    private static final String RMD_VISUAL_MODE_LOCATION = "rmdVisualModeLocation";   
-   private final static String[] kRmdChunkExecutionLangs = new String[] { "R", "Python" }; 
+   private final static String[] kRmdChunkExecutionLangs = new String[] { "R", "Python" };
 }
 
 

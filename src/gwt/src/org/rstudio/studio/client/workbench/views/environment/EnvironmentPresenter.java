@@ -60,7 +60,6 @@ import org.rstudio.studio.client.workbench.model.helper.IntStateValue;
 import org.rstudio.studio.client.workbench.model.helper.JSObjectStateValue;
 import org.rstudio.studio.client.workbench.views.BasePresenter;
 import org.rstudio.studio.client.workbench.views.console.events.ConsoleWriteInputEvent;
-import org.rstudio.studio.client.workbench.views.console.events.ConsoleWriteInputHandler;
 import org.rstudio.studio.client.workbench.views.console.events.SendToConsoleEvent;
 
 import com.google.gwt.core.client.JsArray;
@@ -280,7 +279,7 @@ public class EnvironmentPresenter extends BasePresenter
       });
       
       eventBus.addHandler(ConsoleWriteInputEvent.TYPE,
-            new ConsoleWriteInputHandler()
+            new ConsoleWriteInputEvent.Handler()
       {
          @Override
          public void onConsoleWriteInput(ConsoleWriteInputEvent event)

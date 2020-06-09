@@ -33,8 +33,10 @@ import org.rstudio.core.client.widget.IsHideableWidget;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.events.ChangeFontSizeEvent;
 import org.rstudio.studio.client.application.events.EventBus;
-import org.rstudio.studio.client.application.ui.CommandPaletteEntry;
-import org.rstudio.studio.client.application.ui.CommandPaletteEntrySource;
+import org.rstudio.studio.client.palette.model.CommandPaletteEntrySource;
+import org.rstudio.studio.client.palette.model.CommandPaletteItem;
+import org.rstudio.studio.client.palette.ui.CommandPaletteEntry;
+import org.rstudio.studio.client.panmirror.command.PanmirrorCommandUI;
 import org.rstudio.studio.client.panmirror.command.PanmirrorMenuItem;
 import org.rstudio.studio.client.panmirror.command.PanmirrorToolbar;
 import org.rstudio.studio.client.panmirror.command.PanmirrorToolbarCommands;
@@ -454,13 +456,6 @@ public class PanmirrorWidget extends DockLayoutPanel implements
       return commands_.exec(id);
    }
    
-   @Override
-   public List<CommandPaletteEntry> getCommandPaletteEntries()
-   {
-      return commands_.getCommandPaletteEntries();
-   }
-   
-   
    public void navigate(String id)
    {
       editor_.navigate(id);
@@ -603,6 +598,12 @@ public class PanmirrorWidget extends DockLayoutPanel implements
          resizeEditor();
       }
    }
+
+   @Override
+   public List<CommandPaletteItem> getCommandPaletteItems()
+   {
+      return commands_.getCommandPaletteItems();
+   } 
    
    private void updateOutline()
    {
@@ -652,7 +653,7 @@ public class PanmirrorWidget extends DockLayoutPanel implements
    
    private final HandlerManager handlers_ = new HandlerManager(this);
    private final HandlerRegistrations registrations_ = new HandlerRegistrations();
-   private final ArrayList<JsVoidFunction> editorEventUnsubscribe_ = new ArrayList<JsVoidFunction>(); 
+   private final ArrayList<JsVoidFunction> editorEventUnsubscribe_ = new ArrayList<JsVoidFunction>();
 }
 
 

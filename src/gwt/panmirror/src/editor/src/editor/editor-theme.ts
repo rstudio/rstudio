@@ -168,12 +168,19 @@ export function applyTheme(theme: EditorTheme) {
     .pm-markup-text-color {
       color: ${theme.markupTextColor} !important;
     }
-    .pm-find-text {
+    .pm-find-text,
+    .pm-grid-item-selected {
       background-color: ${theme.findTextBackgroundColor} !important;
       outline: 1px solid ${theme.findTextBorderColor} !important;
     }
+
     .pm-find-text-selected {
       background-color: ${theme.selectionColor} !important;
+    }
+    .pm-selected-list-item {
+      background-color: ${theme.findTextBackgroundColor} !important;
+      border: 1px solid ${theme.findTextBorderColor} !important;
+      border-radius: 2px;
     }
     .pm-border-background-color {
       background-color: ${theme.borderBackgroundColor}!important;
@@ -194,7 +201,7 @@ export function applyTheme(theme: EditorTheme) {
       border-color: ${theme.markupTextColor} !important;
     }
     .pm-popup {
-      box-shadow: 0 1px 3px ${theme.paneBorderColor} !important;
+      box-shadow: 0 1px 4px ${theme.paneBorderColor} !important;
     }
     .pm-selected-node-outline-color,
     .ProseMirror-selectednode {
@@ -226,6 +233,9 @@ export function applyTheme(theme: EditorTheme) {
     .pm-proportional-font {
       font-family: ${theme.proportionalFont} !important;
       font-size: ${theme.proportionalFontSizePt}pt !important;
+    }
+    .pm-input-text {
+      border-color: ${theme.paneBorderColor};
     }
     .CodeMirror,
     .CodeMirror pre.CodeMirror-line, .CodeMirror pre.CodeMirror-line-like {

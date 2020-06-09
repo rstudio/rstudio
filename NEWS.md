@@ -27,6 +27,8 @@
 * New option to configure soft wrapping for R Markdown files, and command to change the soft wrap mode of the editor on the fly (#2341)
 * Add option `www-url-path-prefix` to force a path on auth cookies (Pro #1608)
 * New Command Palette for searching and running build-in commands and add-ins (#5168)
+* Option to display Console error and message output in same color as regular output (#7029)
+* Moved console options to a new pane in Global Options (#7047)
 
 ### RStudio Server Pro
 
@@ -38,6 +40,7 @@
 * New `load-balancer` option `verify-ssl-certs` for testing nodes with self-signed certificates when using SSL. (Pro #1504)
 * New `launcher-verify-ssl-certs` and `launcher-sessions-callback-verify-ssl-certs` options for testing with self-signed certificates when using SSL. (Pro #1504)
 * R sessions can now be renamed from within the session or the home page. (Pro #1572)
+* Project Sharing now works on Launcher sessions.
 
 ### Bugfixes
 

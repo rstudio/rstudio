@@ -27,6 +27,10 @@ import com.google.gwt.core.client.JsArrayString;
 import com.google.gwt.core.client.JsArray;
 import org.rstudio.core.client.JsArrayUtil;
 
+import java.util.ArrayList;
+import java.util.List;
+
+
 /**
  * Accessor class for user preferences.
  */ 

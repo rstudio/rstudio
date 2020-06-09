@@ -274,6 +274,7 @@ std::string assignOutputUrl(const std::string& outputFile)
    {
       std::string renderedPath;
       Error error = r::exec::RFunction(".rs.bookdown.renderedOutputPath")
+            .addParam(websiteDir.getAbsolutePath())
             .addParam(outputPath.getAbsolutePath())
             .callUtf8(&renderedPath);
       if (error)
