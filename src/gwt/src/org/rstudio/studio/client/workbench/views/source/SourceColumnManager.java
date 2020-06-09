@@ -158,7 +158,7 @@ public class SourceColumnManager implements SessionInitHandler,
 
       rmarkdown_ = new TextEditingTargetRMarkdownHelper();
       vimCommands_ = new SourceVimCommands();
-      state_ = null;
+      columnState_ = null;
       initDynamicCommands();
 
       events_.addHandler(SourceExtendedTypeDetectedEvent.TYPE, this);
@@ -251,7 +251,7 @@ public class SourceColumnManager implements SessionInitHandler,
          activeColumn_ = column;
 
       if (updateState)
-         state_ = State.createState(JsUtil.toJsArrayString(getNames(false)));
+         columnState_ = State.createState(JsUtil.toJsArrayString(getNames(false)));
       return column.getName();
    }
 
@@ -840,26 +840,31 @@ public class SourceColumnManager implements SessionInitHandler,
          {
             if (value == null)
             {
-               state_ = State.createState(JsUtil.toJsArrayString(getNames(false)));
+               columnState_ = State.createState(JsUtil.toJsArrayString(getNames(false)));
                return;
             }
-            state_ = value.cast();
+            columnState_ = value.cast();
+            ArrayList<String> names = getNames(false);
             for (int i = 0;
-                 i < state_.getNames().length && getSize()< state_.getNames().length;
+                 i < columnState_.getNames().length && getSize()< columnState_.getNames().length;
                  i++)
             {
-               /*
-               String name = state_.getNames()[i];
-               if (!StringUtil.equals(name, MAIN_SOURCE_NAME))
+               String name = columnState_.getNames()[i];
+               if (getByName(name) == null)
                   add(name, false);
-                */
+               else
+                  names.remove(name);
             }
          }
 
          @Override
          protected JsObject getValue()
          {
-            JsObject object = state_.<JsObject>cast().clone();
+            if (columnState_ != null)
+               return columnState_.cast();
+
+            columnState_ = State.createState(JsUtil.toJsArrayString(getNames(false)));
+            JsObject object = columnState_.<JsObject>cast().clone();
             return object;
          }
       };
@@ -2338,7 +2343,7 @@ public class SourceColumnManager implements SessionInitHandler,
       public final CommandWithArg<EditingTarget> executeOnSuccess;
    }
 
-   private State state_;
+   private State columnState_;
    private SourceColumn activeColumn_;
 
    private boolean openingForSourceNavigation_ = false;
