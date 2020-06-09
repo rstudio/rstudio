@@ -88,7 +88,7 @@ export interface EditorUIPrefs {
   darkMode: () => boolean;
   equationPreview: () => boolean;
   emojiSkinTone: () => SkinTone;
-  setEmojiSkinTone : (skinTone: SkinTone) => void;
+  setEmojiSkinTone: (skinTone: SkinTone) => void;
 }
 
 export enum AlertType {
@@ -121,10 +121,7 @@ export type CodeBlockEditorFn = (
   languages: string[],
 ) => Promise<CodeBlockEditResult | null>;
 
-export type ListEditorFn = (
-  list: ListProps,
-  capabilities: ListCapabilities,
-) => Promise<ListEditResult | null>;
+export type ListEditorFn = (list: ListProps, capabilities: ListCapabilities) => Promise<ListEditResult | null>;
 
 export type RawFormatEditorFn = (raw: RawFormatProps, outputFormats: string[]) => Promise<RawFormatResult | null>;
 
@@ -182,7 +179,7 @@ export type CodeBlockEditResult = CodeBlockProps;
 
 export enum ListType {
   Ordered = 'OrderedList',
-  Bullet = 'BulletList'
+  Bullet = 'BulletList',
 }
 
 export interface ListProps {

@@ -20,7 +20,6 @@ import { DecorationSet, Decoration, EditorView } from 'prosemirror-view';
 import { findParentNode } from 'prosemirror-utils';
 
 export function emptyNodeplaceholderPlugin(nodeType: NodeType, placeholder: (node: ProsemirrorNode) => string) {
-  
   const pluginKey = new PluginKey(nodeType.name + '-empty-placeholder');
 
   return new Plugin<DecorationSet>({
@@ -30,7 +29,6 @@ export function emptyNodeplaceholderPlugin(nodeType: NodeType, placeholder: (nod
         return DecorationSet.empty;
       },
       apply(tr: Transaction, set: DecorationSet, oldState: EditorState, newState: EditorState) {
-        
         // check for empty parent of our type
         const emptyNode = findParentNode(node => node.type === nodeType && node.childCount === 0)(tr.selection);
         if (emptyNode) {
@@ -50,13 +48,10 @@ export function emptyNodeplaceholderPlugin(nodeType: NodeType, placeholder: (nod
 }
 
 export function placeholderDecoration(pos: number, text: string) {
-  return Decoration.widget(
-    pos,
-    (_view: EditorView, _getPos: () => number) => {
-      const placeholder = window.document.createElement("span");
-      placeholder.classList.add('pm-placeholder-text-color');
-      placeholder.innerText = text;
-      return placeholder;
-    }
-  );
+  return Decoration.widget(pos, (_view: EditorView, _getPos: () => number) => {
+    const placeholder = window.document.createElement('span');
+    placeholder.classList.add('pm-placeholder-text-color');
+    placeholder.innerText = text;
+    return placeholder;
+  });
 }

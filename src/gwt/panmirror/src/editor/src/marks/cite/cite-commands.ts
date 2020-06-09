@@ -60,11 +60,11 @@ export class InsertCitationCommand extends ProsemirrorCommand {
       },
       {
         name: ui.context.translateText('Citation...'),
-        description: ui.context.translateText("Reference to a source"),
+        description: ui.context.translateText('Reference to a source'),
         group: OmniInsertGroup.References,
         priority: 1,
-        image: () => ui.images.omni_insert?.generic!
-      }
+        image: () => ui.images.omni_insert?.generic!,
+      },
     );
   }
 }

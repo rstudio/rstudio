@@ -44,7 +44,6 @@ export function setEditingLocation(
   outlineLocation?: EditingOutlineLocation,
   previousLocation?: EditingLocation,
 ) {
- 
   // get the current document outline
   const documentOutline = getDocumentOutline(view.state);
 
@@ -89,15 +88,11 @@ export function setEditingLocation(
 
   // do the restore
   if (docOutlineLocationNode) {
-
     restoreSelection(view, docOutlineLocationNode.pos);
     scrollToPos(view, docOutlineLocationNode.pos);
-  
   } else if (previousLocation) {
-
     restoreSelection(view, previousLocation.pos);
     bodyElement(view).scrollTop = previousLocation.scrollTop;
-
   }
 }
 

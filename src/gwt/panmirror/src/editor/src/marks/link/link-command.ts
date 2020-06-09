@@ -119,12 +119,10 @@ export function linkCommand(markType: MarkType, onEditLink: LinkEditorFn, capabi
 export function linkOmniInsert(ui: EditorUI) {
   return {
     name: ui.context.translateText('Link...'),
-    description: ui.context.translateText("Link to another location"),
+    description: ui.context.translateText('Link to another location'),
     group: OmniInsertGroup.Content,
     priority: 8,
-    image: () => ui.prefs.darkMode() 
-      ? ui.images.omni_insert?.link_dark! 
-      : ui.images.omni_insert?.link!,
+    image: () => (ui.prefs.darkMode() ? ui.images.omni_insert?.link_dark! : ui.images.omni_insert?.link!),
   };
 }
 

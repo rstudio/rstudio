@@ -18,7 +18,7 @@ const kEmojis = kEmojisJson as EmojiRaw[];
 
 // A raw emoji which doesn't include skin tone information
 export interface EmojiRaw {
-  emojiRaw: string; 
+  emojiRaw: string;
   aliases: string[];
   category: string;
   description: string;
@@ -28,7 +28,7 @@ export interface EmojiRaw {
 
 // A complete emoji that may additional render skintone
 export interface Emoji extends EmojiRaw {
-  emoji: string;  
+  emoji: string;
   skinTone: SkinTone;
 }
 
@@ -36,32 +36,34 @@ export interface Emoji extends EmojiRaw {
 // None = user hasn't expressed a preference
 // Default = don't apply a skin tone (use yellow emoji)
 export enum SkinTone {
-  None = -1,  
+  None = -1,
   Default = 0,
-  Light = 0x1F3FB,
-  MediumLight = 0x1F3FC,
-  Medium = 0x1F3FD,
-  MediumDark = 0x1F3FE,
-  Dark = 0x1F3FF
+  Light = 0x1f3fb,
+  MediumLight = 0x1f3fc,
+  Medium = 0x1f3fd,
+  MediumDark = 0x1f3fe,
+  Dark = 0x1f3ff,
 }
 
 function hasSkinTone(skinTone: SkinTone): boolean {
   return skinTone !== SkinTone.None && skinTone !== SkinTone.Default;
 }
 
-export function emojis(skinTone: SkinTone) : Emoji[] {
+export function emojis(skinTone: SkinTone): Emoji[] {
   return kEmojis.map(emoji => emojiWithSkinTone(emoji, skinTone));
 }
 
-export function emojiCategories() : string[] {
-  return kEmojis.map(emoji => emoji.category).filter((catgegory, index, categories) => categories.indexOf(catgegory) === index);
+export function emojiCategories(): string[] {
+  return kEmojis
+    .map(emoji => emoji.category)
+    .filter((catgegory, index, categories) => categories.indexOf(catgegory) === index);
 }
 
-export function emojiFromString(emojiString: string, skinTone: SkinTone): Emoji | undefined  {
-  return emojis(skinTone).find(em => em.emoji === emojiString);   
+export function emojiFromString(emojiString: string, skinTone: SkinTone): Emoji | undefined {
+  return emojis(skinTone).find(em => em.emoji === emojiString);
 }
 
-export function emojiWithSkinTonePreference(emoji: EmojiRaw, skinTone: SkinTone) : Emoji {
+export function emojiWithSkinTonePreference(emoji: EmojiRaw, skinTone: SkinTone): Emoji {
   return emojiWithSkinTone(emoji, skinTone);
 }
 
@@ -82,7 +84,7 @@ export function emojiFromAlias(emojiAlias: string): EmojiRaw | undefined {
 
 // Returns an array of skin toned emoji including the unskintoned emoji. If the emoji
 // doesn't support skin tones, this returns the original emoji.
-export function emojiForAllSkinTones(emoji: EmojiRaw) : Emoji[] {
+export function emojiForAllSkinTones(emoji: EmojiRaw): Emoji[] {
   if (emoji.supportsSkinTone) {
     return [
       emojiWithSkinTone(emoji, SkinTone.Default),
@@ -97,22 +99,21 @@ export function emojiForAllSkinTones(emoji: EmojiRaw) : Emoji[] {
   }
 }
 
-
 // Returns a skin toned version of the emoji, or the original emoji if it
 // doesn't support skin tones
-function emojiWithSkinTone(emoji: EmojiRaw, skinTone: SkinTone ) : Emoji {
+function emojiWithSkinTone(emoji: EmojiRaw, skinTone: SkinTone): Emoji {
   if (!emoji.supportsSkinTone) {
-    return {...emoji, emoji: emoji.emojiRaw, skinTone: SkinTone.Default};
+    return { ...emoji, emoji: emoji.emojiRaw, skinTone: SkinTone.Default };
   }
 
-  const skinToneEmoji : Emoji = {
+  const skinToneEmoji: Emoji = {
     emojiRaw: emoji.emojiRaw,
     aliases: emoji.aliases,
     category: emoji.category,
     description: emoji.description,
     supportsSkinTone: emoji.supportsSkinTone,
     hasMarkdownRepresentation: emoji.hasMarkdownRepresentation,
-    emoji: emoji.emojiRaw + characterForSkinTone(skinTone), // 
+    emoji: emoji.emojiRaw + characterForSkinTone(skinTone), //
     skinTone,
   };
   return skinToneEmoji;
@@ -120,6 +121,6 @@ function emojiWithSkinTone(emoji: EmojiRaw, skinTone: SkinTone ) : Emoji {
 
 // No skin tone returns an empty string, otherwise the skintone codepoint
 // is converted into a string
-function characterForSkinTone(skinTone: SkinTone) : string {
-  return (hasSkinTone(skinTone) ? String.fromCodePoint(skinTone) : '');
+function characterForSkinTone(skinTone: SkinTone): string {
+  return hasSkinTone(skinTone) ? String.fromCodePoint(skinTone) : '';
 }

@@ -55,15 +55,12 @@ const extension = (
 function symbolOmniInsert(ui: EditorUI) {
   return {
     name: ui.context.translateText('Symbol...'),
-    description: ui.context.translateText("Unicode graphical symbol"),
+    description: ui.context.translateText('Unicode graphical symbol'),
     group: OmniInsertGroup.Content,
     priority: 6,
-    image: () => ui.prefs.darkMode() 
-      ? ui.images.omni_insert?.symbol_dark! 
-      : ui.images.omni_insert?.symbol!,
+    image: () => (ui.prefs.darkMode() ? ui.images.omni_insert?.symbol_dark! : ui.images.omni_insert?.symbol!),
   };
 }
-
 
 class UnicodeSymbolDataProvider implements SymbolDataProvider {
   constructor() {
@@ -71,7 +68,11 @@ class UnicodeSymbolDataProvider implements SymbolDataProvider {
   }
   private readonly symbolGroups: SymbolCharacterGroup[];
 
-  public insertSymbolTransaction(symbolCharacter: SymbolCharacter, searchTerm: string, state: EditorState) : Transaction {
+  public insertSymbolTransaction(
+    symbolCharacter: SymbolCharacter,
+    searchTerm: string,
+    state: EditorState,
+  ): Transaction {
     const tr = state.tr;
     tr.insertText(symbolCharacter.value);
     return tr;
@@ -79,7 +80,7 @@ class UnicodeSymbolDataProvider implements SymbolDataProvider {
 
   public readonly filterPlaceholderHint = 'keyword or codepoint';
 
-  public readonly symbolPreviewStyle: React.CSSProperties = { fontSize: "28px" } as React.CSSProperties;
+  public readonly symbolPreviewStyle: React.CSSProperties = { fontSize: '28px' } as React.CSSProperties;
 
   public symbolGroupNames(): string[] {
     return [kCategoryAll, ...this.symbolGroups.map(symbolGroup => symbolGroup.name)];

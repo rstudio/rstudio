@@ -114,7 +114,7 @@ const extension = (
         new RcppChunkCommand(ui),
         new SQLChunkCommand(ui),
         new D3ChunkCommand(ui),
-        new StanChunkCommand(ui)
+        new StanChunkCommand(ui),
       ];
       if (ui.execute.executeRmdChunk) {
         commands.push(new ExecuteCurrentRmdChunkCommand(ui), new ExecutePreviousRmdChunksCommand(ui));
@@ -134,29 +134,24 @@ const extension = (
 
 class RmdChunkCommand extends ProsemirrorCommand {
   constructor(
-    ui: EditorUI, 
-    id: EditorCommandId, 
-    keymap: string[], 
+    ui: EditorUI,
+    id: EditorCommandId,
+    keymap: string[],
     priority: number,
     lang: string,
-    placeholder: string, 
+    placeholder: string,
     rowOffset = 1,
-    colOffset = 0, 
-    selectionOffset?: number 
+    colOffset = 0,
+    selectionOffset?: number,
   ) {
-    super(
-      id,
-      keymap,
-      insertRmdChunk(placeholder, rowOffset, colOffset),
-      {
-        name: `${lang} ${ui.context.translateText('Code Chunk')}`,
-        description: `${ui.context.translateText('Executable')} ${lang} ${ui.context.translateText('chunk')}`,
-        group: OmniInsertGroup.Chunks,
-        priority,
-        selectionOffset: selectionOffset || colOffset || placeholder.length,
-        image: () => ui.images.omni_insert?.generic!
-      }
-    );
+    super(id, keymap, insertRmdChunk(placeholder, rowOffset, colOffset), {
+      name: `${lang} ${ui.context.translateText('Code Chunk')}`,
+      description: `${ui.context.translateText('Executable')} ${lang} ${ui.context.translateText('chunk')}`,
+      group: OmniInsertGroup.Chunks,
+      priority,
+      selectionOffset: selectionOffset || colOffset || placeholder.length,
+      image: () => ui.images.omni_insert?.generic!,
+    });
   }
 }
 
@@ -168,40 +163,38 @@ class RChunkCommand extends RmdChunkCommand {
 
 class PythonChunkCommand extends RmdChunkCommand {
   constructor(ui: EditorUI) {
-    super(ui, EditorCommandId.PythonCodeChunk, [], 8 , 'Python', '{python}\n');
+    super(ui, EditorCommandId.PythonCodeChunk, [], 8, 'Python', '{python}\n');
   }
 }
 
 class BashChunkCommand extends RmdChunkCommand {
   constructor(ui: EditorUI) {
-    super(ui, EditorCommandId.BashCodeChunk, [], 7 , 'Bash', '{bash}\n');
+    super(ui, EditorCommandId.BashCodeChunk, [], 7, 'Bash', '{bash}\n');
   }
 }
 
 class RcppChunkCommand extends RmdChunkCommand {
   constructor(ui: EditorUI) {
-    super(ui, EditorCommandId.RcppCodeChunk, [], 6 , 'Rcpp', '{Rcpp}\n');
+    super(ui, EditorCommandId.RcppCodeChunk, [], 6, 'Rcpp', '{Rcpp}\n');
   }
 }
 
 class SQLChunkCommand extends RmdChunkCommand {
   constructor(ui: EditorUI) {
-    super(ui, EditorCommandId.SQLCodeChunk, [], 5 , 'SQL', '{sql connection=}\n', 0, 16);
+    super(ui, EditorCommandId.SQLCodeChunk, [], 5, 'SQL', '{sql connection=}\n', 0, 16);
   }
 }
 
 class D3ChunkCommand extends RmdChunkCommand {
   constructor(ui: EditorUI) {
-    super(ui, EditorCommandId.D3CodeChunk, [], 4 , 'D3', '{d3 data=}\n', 0, 9);
+    super(ui, EditorCommandId.D3CodeChunk, [], 4, 'D3', '{d3 data=}\n', 0, 9);
   }
 }
-
 
 class StanChunkCommand extends RmdChunkCommand {
   constructor(ui: EditorUI) {
-    super(ui, EditorCommandId.StanCodeChunk, [], 7 , 'Stan', '{stan output.var=}\n', 0, 17);
+    super(ui, EditorCommandId.StanCodeChunk, [], 7, 'Stan', '{stan output.var=}\n', 0, 17);
   }
 }
-
 
 export default extension;

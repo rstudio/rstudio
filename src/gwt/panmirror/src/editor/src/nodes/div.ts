@@ -104,18 +104,17 @@ const extension: Extension = {
   commands: (_schema: Schema, ui: EditorUI) => {
     return [
       // turn current block into a div
-      new DivCommand(EditorCommandId.Div, ui, true), 
-      
+      new DivCommand(EditorCommandId.Div, ui, true),
+
       // insert a div
       new DivCommand(EditorCommandId.InsertDiv, ui, false, {
         name: ui.context.translateText('Div...'),
-        description: ui.context.translateText("Block containing other content"),
+        description: ui.context.translateText('Block containing other content'),
         group: OmniInsertGroup.Blocks,
         priority: 1,
-        image: () => ui.prefs.darkMode() 
-          ? ui.images.omni_insert?.div_dark! 
-          : ui.images.omni_insert?.div!,
-      })];
+        image: () => (ui.prefs.darkMode() ? ui.images.omni_insert?.div_dark! : ui.images.omni_insert?.div!),
+      }),
+    ];
   },
 };
 

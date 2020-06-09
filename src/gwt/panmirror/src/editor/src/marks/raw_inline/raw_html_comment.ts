@@ -139,59 +139,61 @@ const extension = (
 
 export class InsertHTMLCommentCommand extends ProsemirrorCommand {
   constructor(schema: Schema, ui: EditorUI) {
-    super(EditorCommandId.HTMLComment, ['Shift-Mod-c'], (state: EditorState, dispatch?: (tr: Transaction) => void) => {
-      // make sure we can insert a text node here
-      if (!canInsertNode(state, schema.nodes.text)) {
-        return false;
-      }
-
-      // make sure we can apply this mark here
-      if (!toggleMark(schema.marks.raw_html)(state)) {
-        return false;
-      }
-
-      // make sure the end of the selection (where we will insert the comment)
-      // isn't already in a mark of this type
-      if (state.doc.rangeHasMark(state.selection.to, state.selection.to + 1, schema.marks.raw_html)) {
-        return false;
-      }
-
-      if (dispatch) {
-        const tr = state.tr;
-
-        // set the selection to the end of the current selection (comment 'on' the selection)
-        setTextSelection(tr.selection.to)(tr);
-
-        // if we have a character right before us then insert a space
-        const { parent, parentOffset } = tr.selection.$to;
-        const charBefore = parent.textContent.slice(parentOffset - 1, parentOffset);
-        if (charBefore.length && charBefore !== ' ') {
-          tr.insertText(' ');
+    super(
+      EditorCommandId.HTMLComment,
+      ['Shift-Mod-c'],
+      (state: EditorState, dispatch?: (tr: Transaction) => void) => {
+        // make sure we can insert a text node here
+        if (!canInsertNode(state, schema.nodes.text)) {
+          return false;
         }
 
-        // insert the comment
-        const comment = '<!--#  -->';
-        const mark = schema.marks.raw_html_comment.create({ editing: true });
-        tr.insert(tr.selection.to, schema.text(comment, [mark]));
+        // make sure we can apply this mark here
+        if (!toggleMark(schema.marks.raw_html)(state)) {
+          return false;
+        }
 
-        // set the selection to the middle of the comment
-        tr.setSelection(new TextSelection(tr.doc.resolve(tr.selection.to - (comment.length / 2 - 1))));
+        // make sure the end of the selection (where we will insert the comment)
+        // isn't already in a mark of this type
+        if (state.doc.rangeHasMark(state.selection.to, state.selection.to + 1, schema.marks.raw_html)) {
+          return false;
+        }
 
-        // dispatch
-        dispatch(tr);
-      }
+        if (dispatch) {
+          const tr = state.tr;
 
-      return true;
-    },
-    {
-      name: ui.context.translateText('Comment'),
-      description: ui.context.translateText("Editing comment"),
-      group: OmniInsertGroup.Content,
-      priority: 3,
-      image: () => ui.prefs.darkMode() 
-        ? ui.images.omni_insert?.comment_dark! 
-        : ui.images.omni_insert?.comment!,
-    });
+          // set the selection to the end of the current selection (comment 'on' the selection)
+          setTextSelection(tr.selection.to)(tr);
+
+          // if we have a character right before us then insert a space
+          const { parent, parentOffset } = tr.selection.$to;
+          const charBefore = parent.textContent.slice(parentOffset - 1, parentOffset);
+          if (charBefore.length && charBefore !== ' ') {
+            tr.insertText(' ');
+          }
+
+          // insert the comment
+          const comment = '<!--#  -->';
+          const mark = schema.marks.raw_html_comment.create({ editing: true });
+          tr.insert(tr.selection.to, schema.text(comment, [mark]));
+
+          // set the selection to the middle of the comment
+          tr.setSelection(new TextSelection(tr.doc.resolve(tr.selection.to - (comment.length / 2 - 1))));
+
+          // dispatch
+          dispatch(tr);
+        }
+
+        return true;
+      },
+      {
+        name: ui.context.translateText('Comment'),
+        description: ui.context.translateText('Editing comment'),
+        group: OmniInsertGroup.Content,
+        priority: 3,
+        image: () => (ui.prefs.darkMode() ? ui.images.omni_insert?.comment_dark! : ui.images.omni_insert?.comment!),
+      },
+    );
   }
 }
 

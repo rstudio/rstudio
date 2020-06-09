@@ -17,7 +17,13 @@ import { Node as ProsemirrorNode, NodeType } from 'prosemirror-model';
 import { EditorState, Transaction } from 'prosemirror-state';
 import { EditorView } from 'prosemirror-view';
 
-import { findParentNodeOfType, findChildrenByType, findChildren, findChildrenByMark, setTextSelection } from 'prosemirror-utils';
+import {
+  findParentNodeOfType,
+  findChildrenByType,
+  findChildren,
+  findChildrenByMark,
+  setTextSelection,
+} from 'prosemirror-utils';
 
 import { getMarkRange } from './mark';
 import { precedingListItemInsertPos, precedingListItemInsert } from './list';
@@ -33,11 +39,9 @@ export interface EditorRmdChunk {
 export type ExecuteRmdChunkFn = (chunk: EditorRmdChunk) => void;
 
 export function insertRmdChunk(chunkPlaceholder: string, rowOffset = 0, colOffset = 0) {
-  
-  return  (state: EditorState, dispatch?: (tr: Transaction) => void, view?: EditorView) => {
-    
+  return (state: EditorState, dispatch?: (tr: Transaction) => void, view?: EditorView) => {
     const schema = state.schema;
-    
+
     if (
       !toggleBlockType(schema.nodes.rmd_chunk, schema.nodes.paragraph)(state) &&
       !precedingListItemInsertPos(state.doc, state.selection)
@@ -60,7 +64,6 @@ export function insertRmdChunk(chunkPlaceholder: string, rowOffset = 0, colOffse
     }
 
     if (dispatch) {
-
       // compute offset
       const lines = chunkPlaceholder.split(/\r?\n/);
       const lineChars = lines.slice(0, rowOffset).reduce((count, line) => count + line.length + 1, 1);
@@ -78,15 +81,12 @@ export function insertRmdChunk(chunkPlaceholder: string, rowOffset = 0, colOffse
         const selPos = tr.mapping.map(state.selection.from) - rmdNode.nodeSize + offsetChars;
         setTextSelection(selPos)(tr);
       }
-  
+
       dispatch(tr);
-  
     }
 
     return true;
   };
-  
-  
 }
 
 export function activeRmdChunk(state: EditorState): EditorRmdChunk | null {

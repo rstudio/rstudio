@@ -24,7 +24,13 @@ import { ListCapabilities, isList } from '../../api/list';
 import { OmniInsert } from '../../api/omni_insert';
 
 export class ListCommand extends NodeCommand {
-  constructor(id: EditorCommandId, keymap: string[], listType: NodeType, listItemType: NodeType, omniInsert: OmniInsert) {
+  constructor(
+    id: EditorCommandId,
+    keymap: string[],
+    listType: NodeType,
+    listItemType: NodeType,
+    omniInsert: OmniInsert,
+  ) {
     super(id, keymap, listType, {}, toggleList(listType, listItemType), omniInsert);
   }
 }
@@ -35,7 +41,6 @@ export class TightListCommand extends ProsemirrorCommand {
       EditorCommandId.TightList,
       ['Mod-Alt-9'],
       (state: EditorState, dispatch?: (tr: Transaction) => void, view?: EditorView) => {
-      
         const parentList = findParentNode(isList)(state.selection);
         if (!parentList) {
           return false;
@@ -99,11 +104,7 @@ export function editListPropertiesCommandFn(ui: EditorUI, capabilities: ListCapa
 
 export class EditListPropertiesCommand extends ProsemirrorCommand {
   constructor(ui: EditorUI, capabilities: ListCapabilities) {
-    super(
-      EditorCommandId.EditListProperties,
-      [],
-      editListPropertiesCommandFn(ui, capabilities)
-    );
+    super(EditorCommandId.EditListProperties, [], editListPropertiesCommandFn(ui, capabilities));
   }
 }
 
@@ -115,13 +116,12 @@ async function editList(
   ui: EditorUI,
   capabilities: ListCapabilities,
 ): Promise<void> {
-
   // get list properties
   const schema = node.type.schema;
   const attrs = node.attrs;
   const props = {
     ...attrs,
-    type: node.type === schema.nodes.ordered_list ? ListType.Ordered : ListType.Bullet
+    type: node.type === schema.nodes.ordered_list ? ListType.Ordered : ListType.Bullet,
   } as ListProps;
 
   // edit list

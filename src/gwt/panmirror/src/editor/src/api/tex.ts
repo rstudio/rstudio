@@ -21,7 +21,6 @@ export function texLength(text: string) {
   let braceLevel = 0;
   let bracketLevel = 0;
 
-  
   let i;
   for (i = 0; i < text.length; i++) {
     // next character

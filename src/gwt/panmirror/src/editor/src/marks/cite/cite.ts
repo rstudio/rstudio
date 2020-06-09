@@ -81,7 +81,7 @@ const extension = (
             },
           ],
           toDOM(mark: Mark) {
-            return [ 'span', { class: 'cite-id pm-markup-text-color pm-fixedwidth-font' } ];
+            return ['span', { class: 'cite-id pm-markup-text-color pm-fixedwidth-font' }];
           },
         },
         pandoc: {

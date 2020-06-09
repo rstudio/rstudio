@@ -155,7 +155,7 @@ const extension = (pandocExtensions: PandocExtensions): Extension => {
           writer: writePandocBulletList(capabilities),
         },
 
-        attr_edit: listAttrEdit('bullet_list', capabilities)
+        attr_edit: listAttrEdit('bullet_list', capabilities),
       },
       {
         name: 'ordered_list',
@@ -236,7 +236,7 @@ const extension = (pandocExtensions: PandocExtensions): Extension => {
           writer: writePandocOrderedList(capabilities),
         },
 
-        attr_edit: listAttrEdit('ordered_list', capabilities)
+        attr_edit: listAttrEdit('ordered_list', capabilities),
       },
     ],
 
@@ -266,14 +266,14 @@ const extension = (pandocExtensions: PandocExtensions): Extension => {
           kPlatformMac ? ['Shift-Mod-7'] : [],
           schema.nodes.bullet_list,
           schema.nodes.list_item,
-          bulletListOmniInsert(ui)
+          bulletListOmniInsert(ui),
         ),
         new ListCommand(
           EditorCommandId.OrderedList,
           kPlatformMac ? ['Shift-Mod-8'] : [],
           schema.nodes.ordered_list,
           schema.nodes.list_item,
-          orderedListOmniInsert(ui)
+          orderedListOmniInsert(ui),
         ),
         new ProsemirrorCommand(EditorCommandId.ListItemSink, ['Tab'], sinkListItem(schema.nodes.list_item)),
         new ProsemirrorCommand(EditorCommandId.ListItemLift, ['Shift-Tab'], liftListItem(schema.nodes.list_item)),
@@ -323,7 +323,7 @@ function listAttrEdit(type: string, capabilities: ListCapabilities) {
     return {
       type: (schema: Schema) => schema.nodes[type],
       noDecorator: true,
-      editFn: (ui: EditorUI) => editListPropertiesCommandFn(ui, capabilities)
+      editFn: (ui: EditorUI) => editListPropertiesCommandFn(ui, capabilities),
     };
   };
 }
@@ -367,20 +367,21 @@ function typeToNumberStyle(type: string | null): ListNumberStyle {
 function bulletListOmniInsert(ui: EditorUI) {
   return {
     name: ui.context.translateText('Bullet List'),
-    description: ui.context.translateText("List using bullets for items"),
+    description: ui.context.translateText('List using bullets for items'),
     group: OmniInsertGroup.Lists,
     priority: 5,
-    image: () => ui.prefs.darkMode() ? ui.images.omni_insert?.bullet_list_dark! : ui.images.omni_insert?.bullet_list!,
+    image: () => (ui.prefs.darkMode() ? ui.images.omni_insert?.bullet_list_dark! : ui.images.omni_insert?.bullet_list!),
   };
 }
 
 function orderedListOmniInsert(ui: EditorUI) {
   return {
     name: ui.context.translateText('Numbered List'),
-    description: ui.context.translateText("List using numbers for items"),
+    description: ui.context.translateText('List using numbers for items'),
     group: OmniInsertGroup.Lists,
     priority: 4,
-    image: () => ui.prefs.darkMode() ? ui.images.omni_insert?.ordered_list_dark! : ui.images.omni_insert?.ordered_list!,
+    image: () =>
+      ui.prefs.darkMode() ? ui.images.omni_insert?.ordered_list_dark! : ui.images.omni_insert?.ordered_list!,
   };
 }
 

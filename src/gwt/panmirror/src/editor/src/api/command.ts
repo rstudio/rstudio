@@ -137,17 +137,21 @@ export interface EditorCommand {
   readonly execute: () => void;
 }
 
-
 export class ProsemirrorCommand {
-
   public readonly id: EditorCommandId;
   public readonly keymap: readonly string[];
   public readonly execute: CommandFn;
   public readonly omniInsert?: OmniInsert;
   public readonly keepFocus: boolean;
 
-  constructor(id: EditorCommandId, keymap: readonly string[], execute: CommandFn, omniInsert?: OmniInsert)
-  constructor(id: EditorCommandId, keymap: readonly string[], execute: CommandFn, omniInsert?: OmniInsert, keepFocus?: boolean) {
+  constructor(id: EditorCommandId, keymap: readonly string[], execute: CommandFn, omniInsert?: OmniInsert);
+  constructor(
+    id: EditorCommandId,
+    keymap: readonly string[],
+    execute: CommandFn,
+    omniInsert?: OmniInsert,
+    keepFocus?: boolean,
+  ) {
     this.id = id;
     this.keymap = keymap;
     this.execute = execute;
@@ -187,7 +191,14 @@ export class NodeCommand extends ProsemirrorCommand {
   public readonly nodeType: NodeType;
   public readonly attrs: object;
 
-  constructor(id: EditorCommandId, keymap: string[], nodeType: NodeType, attrs: object, execute: CommandFn, omniInsert?: OmniInsert) {
+  constructor(
+    id: EditorCommandId,
+    keymap: string[],
+    nodeType: NodeType,
+    attrs: object,
+    execute: CommandFn,
+    omniInsert?: OmniInsert,
+  ) {
     super(id, keymap, execute, omniInsert);
     this.nodeType = nodeType;
     this.attrs = attrs;
@@ -199,7 +210,14 @@ export class NodeCommand extends ProsemirrorCommand {
 }
 
 export class BlockCommand extends NodeCommand {
-  constructor(id: EditorCommandId, keymap: string[], blockType: NodeType, toggleType: NodeType, attrs = {}, omniInsert?: OmniInsert) {
+  constructor(
+    id: EditorCommandId,
+    keymap: string[],
+    blockType: NodeType,
+    toggleType: NodeType,
+    attrs = {},
+    omniInsert?: OmniInsert,
+  ) {
     super(id, keymap, blockType, attrs, toggleBlockType(blockType, toggleType, attrs), omniInsert);
   }
 }
@@ -213,7 +231,6 @@ export class WrapCommand extends NodeCommand {
 export type CommandFn = (state: EditorState, dispatch?: (tr: Transaction) => void, view?: EditorView) => boolean;
 
 export function toggleList(listType: NodeType, itemType: NodeType): CommandFn {
-  
   return (state: EditorState, dispatch?: (tr: Transaction<any>) => void, view?: EditorView) => {
     const { selection } = state;
     const { $from, $to } = selection;

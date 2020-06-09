@@ -122,4 +122,3 @@ export function createTextInput(widthChars: number, classes?: string[], style?: 
   input.style.width = widthChars + 'ch';
   return input;
 }
-

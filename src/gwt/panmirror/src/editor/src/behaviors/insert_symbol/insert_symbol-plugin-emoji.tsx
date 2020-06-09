@@ -57,17 +57,14 @@ const extension = (
 function emojiOmniInsert(ui: EditorUI) {
   return {
     name: ui.context.translateText('Emoji...'),
-    description: ui.context.translateText("Image expressing idea, emotion, etc."),
+    description: ui.context.translateText('Image expressing idea, emotion, etc.'),
     group: OmniInsertGroup.Content,
     priority: 6,
-    image: () => ui.prefs.darkMode() 
-      ? ui.images.omni_insert?.emoji_dark! 
-      : ui.images.omni_insert?.emoji!,
+    image: () => (ui.prefs.darkMode() ? ui.images.omni_insert?.emoji_dark! : ui.images.omni_insert?.emoji!),
   };
 }
 
 export class EmojiSymbolDataProvider implements SymbolDataProvider {
-  
   public constructor(ui: EditorUI) {
     this.ui = ui;
   }
@@ -75,38 +72,36 @@ export class EmojiSymbolDataProvider implements SymbolDataProvider {
 
   public readonly filterPlaceholderHint = 'emoji name';
 
-  public readonly symbolPreviewStyle: React.CSSProperties = { fontSize: "36px" } as React.CSSProperties;
+  public readonly symbolPreviewStyle: React.CSSProperties = { fontSize: '36px' } as React.CSSProperties;
 
   public symbolPreferencesPanel = SymbolEmojiPreferencesPanel;
-  
+
   public insertSymbolTransaction(symbolCharacter: SymbolCharacter, searchTerm: string, state: EditorState) {
-    
-    const emoji = emojiFromString(symbolCharacter.value, this.skinTone());   
+    const emoji = emojiFromString(symbolCharacter.value, this.skinTone());
     const tr = state.tr;
     if (emoji) {
       // Try to find an alias that matches the user's search term
       const bestAlias = emoji.aliases.find(alias => alias.includes(searchTerm));
       tr.replaceSelectionWith(nodeForEmoji(state.schema, emoji, bestAlias || emoji.aliases[0], false), false);
     } else {
-      // This doesn't appear to be an emoji or it doesn't have a markdown representation, 
+      // This doesn't appear to be an emoji or it doesn't have a markdown representation,
       // just insert the text
       tr.insertText(symbolCharacter.value);
     }
     return tr;
   }
-  
+
   public symbolGroupNames(): string[] {
     return [kCategoryAll, ...emojiCategories()];
   }
 
   public getSymbols(groupName: string | undefined) {
     if (groupName === kCategoryAll || groupName === undefined) {
+      return emojis(this.skinTone()).map(emoji => symbolForEmoji(emoji));
+    } else {
       return emojis(this.skinTone())
-              .map(emoji => symbolForEmoji(emoji));
-    }  else {
-      return emojis(this.skinTone())
-              .filter(emoji => emoji.category === groupName)
-              .map(emoji => symbolForEmoji(emoji));
+        .filter(emoji => emoji.category === groupName)
+        .map(emoji => symbolForEmoji(emoji));
     }
   }
 
@@ -127,20 +122,20 @@ export class EmojiSymbolDataProvider implements SymbolDataProvider {
     return filteredSymbols;
   }
 
-  private skinTone() : SkinTone {
+  private skinTone(): SkinTone {
     return this.ui.prefs.emojiSkinTone();
   }
- }
+}
 
 const kCategoryAll = 'All';
-function symbolForEmoji(emoji: Emoji) : SymbolCharacter {
-  return ({ 
+function symbolForEmoji(emoji: Emoji): SymbolCharacter {
+  return {
     name: emoji.description,
     value: emoji.emoji,
     markdown: emoji.hasMarkdownRepresentation ? `:${emoji.aliases[0]}:` : undefined,
     aliases: emoji.aliases,
-    description: emoji.description
-  });
+    description: emoji.description,
+  };
 }
 
 export default extension;

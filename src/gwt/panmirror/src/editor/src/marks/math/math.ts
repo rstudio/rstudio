@@ -57,7 +57,7 @@ const extension = (
   ui: EditorUI,
   format: EditorFormat,
   _options: EditorOptions,
-  events: EditorEvents
+  events: EditorEvents,
 ): Extension | null => {
   if (!pandocExtensions.tex_math_dollars) {
     return null;
@@ -238,10 +238,7 @@ const extension = (
     },
 
     commands: (_schema: Schema) => {
-      return [
-        new InsertInlineMathCommand(ui), 
-        new InsertDisplayMathCommand(ui, !singleLineDisplayMath)
-      ];
+      return [new InsertInlineMathCommand(ui), new InsertDisplayMathCommand(ui, !singleLineDisplayMath)];
     },
 
     appendMarkTransaction: (_schema: Schema) => {

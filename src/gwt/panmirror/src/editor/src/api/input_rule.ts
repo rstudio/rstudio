@@ -69,8 +69,7 @@ export function delimiterMarkInputRule(
 
     // otherwise we need custom logic to get mark placement/eliding right
   } else {
-    
-    // build regex 
+    // build regex
     const regexp = `(^|[^${prefixMask}])(?:${delim})(${contentPattern})(?:${delim})$`;
 
     // return rule

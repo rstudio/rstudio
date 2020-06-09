@@ -13,12 +13,12 @@
  *
  */
 
-import { Selection, EditorState } from "prosemirror-state";
-import { Node as ProsemirrorNode, Schema  } from "prosemirror-model";
-import { EditorView, DecorationSet } from "prosemirror-view";
+import { Selection, EditorState } from 'prosemirror-state';
+import { Node as ProsemirrorNode, Schema } from 'prosemirror-model';
+import { EditorView, DecorationSet } from 'prosemirror-view';
 
-import { canInsertNode } from "./node";
-import { EditorUI } from "./ui";
+import { canInsertNode } from './node';
+import { EditorUI } from './ui';
 
 export const kCompletionDefaultItemHeight = 22;
 export const kCompletionDefaultMaxVisible = 10;
@@ -35,22 +35,24 @@ export interface CompletionHeaderProps {
 }
 
 export interface CompletionHandler<T = any> {
-
   // return a set of completions for the given context. text is the text before
   // before the cursor in the current node (but no more than 500 characters)
   completions(text: string, doc: ProsemirrorNode, selection: Selection): CompletionResult | null;
 
   // provide a completion replacement as a string or node (can be passed null if the popup was dismissed)
-  replacement?(schema: Schema, completion: T | null)  : string | ProsemirrorNode | null;
+  replacement?(schema: Schema, completion: T | null): string | ProsemirrorNode | null;
 
   // lower level replacement handler (can be passed null if the popup was dismissed)
-  replace?(view: EditorView, pos: number, completion: T | null) : void;
+  replace?(view: EditorView, pos: number, completion: T | null): void;
 
   // completion view
   view: {
     // optional header component (will go inside a <th>)
-    header?: { component: React.FC<CompletionHeaderProps> | React.ComponentClass<CompletionHeaderProps>, height: number };
-    
+    header?: {
+      component: React.FC<CompletionHeaderProps> | React.ComponentClass<CompletionHeaderProps>;
+      height: number;
+    };
+
     // react compontent type for viewing the item
     component: React.FC<T> | React.ComponentClass<T>;
 
@@ -66,9 +68,9 @@ export interface CompletionHandler<T = any> {
     // (optionally provide a set of item widths)
     horizontal?: boolean;
     horizontalItemWidths?: number[];
- 
+
     // maximum number of visible items (defaults to 10). note that
-    // this only applies to completion poupups w/ vertical orientation 
+    // this only applies to completion poupups w/ vertical orientation
     // (scrolling is not supported for horizontal orientation)
     maxVisible?: number;
 
@@ -77,9 +79,7 @@ export interface CompletionHandler<T = any> {
   };
 }
 
-
 export function selectionAllowsCompletions(selection: Selection) {
-
   const schema = selection.$head.parent.type.schema;
 
   // non empty selections don't have completions
@@ -92,7 +92,7 @@ export function selectionAllowsCompletions(selection: Selection) {
     return false;
   }
 
-  // must not be in a code mark 
+  // must not be in a code mark
   if (!!schema.marks.code.isInSet(selection.$from.marks())) {
     return false;
   }
@@ -103,5 +103,4 @@ export function selectionAllowsCompletions(selection: Selection) {
   }
 
   return true;
-
 }

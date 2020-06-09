@@ -137,7 +137,7 @@ export function defaultEditorUIImages(): EditorUIImages {
       tex_block: texBlockImage,
       tex_block_dark: texBlockDarkImage,
       yaml_block: yamlBlockImage,
-      yaml_block_dark: yamlBlockDarkImage
+      yaml_block_dark: yamlBlockDarkImage,
     },
   };
 }

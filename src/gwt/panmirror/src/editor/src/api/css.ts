@@ -74,7 +74,6 @@ export function extractSizeStyles(keyvalues: Array<[string, string]> | undefined
   return newKeyvalues;
 }
 
-
 export function applyStyles(el: HTMLElement, classes?: string[], style?: { [key: string]: string }) {
   if (classes) {
     if (classes) {

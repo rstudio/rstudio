@@ -56,16 +56,15 @@ export class InsertDefinitionList extends ProsemirrorCommand {
         }
         return true;
       },
-      // omni insert 
+      // omni insert
       {
         name: ui.context.translateText('Definition List'),
-        description: ui.context.translateText("List with a definition for each item"),
+        description: ui.context.translateText('List with a definition for each item'),
         group: OmniInsertGroup.Lists,
         priority: 3,
-        image: () => ui.prefs.darkMode() 
-          ? ui.images.omni_insert?.definition_list_dark! 
-          : ui.images.omni_insert?.definition_list!,
-      }
+        image: () =>
+          ui.prefs.darkMode() ? ui.images.omni_insert?.definition_list_dark! : ui.images.omni_insert?.definition_list!,
+      },
     );
   }
 }

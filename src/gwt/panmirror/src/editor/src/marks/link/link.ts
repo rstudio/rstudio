@@ -154,7 +154,7 @@ const extension = (pandocExtensions: PandocExtensions, _caps: PandocCapabilities
           EditorCommandId.Link,
           ['Mod-k'],
           linkCommand(schema.marks.link, ui.dialogs.editLink, capabilities),
-          linkOmniInsert(ui)
+          linkOmniInsert(ui),
         ),
         new ProsemirrorCommand(EditorCommandId.RemoveLink, [], removeLinkCommand(schema.marks.link)),
       ];

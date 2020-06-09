@@ -50,13 +50,7 @@ export function scrollIntoView(
   }
 }
 
-export function scrollToPos(
-  view: EditorView, 
-  pos: number,
-  duration?: number,
-  offset?: number,
-  onDone?: VoidFunction,
-) {
+export function scrollToPos(view: EditorView, pos: number, duration?: number, offset?: number, onDone?: VoidFunction) {
   const node = view.nodeDOM(pos);
   if (node instanceof HTMLElement) {
     const editingRoot = editingRootNode(view.state.selection)!;

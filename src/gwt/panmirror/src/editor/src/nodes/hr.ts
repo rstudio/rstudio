@@ -52,7 +52,14 @@ const extension: Extension = {
   ],
 
   commands: (schema: Schema, ui: EditorUI) => {
-    return [new ProsemirrorCommand(EditorCommandId.HorizontalRule, [], insertNode(schema.nodes.horizontal_rule), hrOmniInsert(ui))];
+    return [
+      new ProsemirrorCommand(
+        EditorCommandId.HorizontalRule,
+        [],
+        insertNode(schema.nodes.horizontal_rule),
+        hrOmniInsert(ui),
+      ),
+    ];
   },
 
   inputRules: (_schema: Schema) => {
@@ -72,14 +79,13 @@ const extension: Extension = {
 };
 
 function hrOmniInsert(ui: EditorUI) {
-  return  {
+  return {
     name: ui.context.translateText('Horizontal Rule'),
-    description: ui.context.translateText("Line that spans across the page"),
+    description: ui.context.translateText('Line that spans across the page'),
     group: OmniInsertGroup.Content,
     priority: 1,
-    image: () => ui.prefs.darkMode() 
-      ? ui.images.omni_insert?.horizontal_rule_dark! 
-      : ui.images.omni_insert?.horizontal_rule!,
+    image: () =>
+      ui.prefs.darkMode() ? ui.images.omni_insert?.horizontal_rule_dark! : ui.images.omni_insert?.horizontal_rule!,
   };
 }
 

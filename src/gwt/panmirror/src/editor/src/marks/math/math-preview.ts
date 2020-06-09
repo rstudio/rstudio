@@ -13,20 +13,20 @@
  *
  */
 
-import { Plugin, PluginKey } from "prosemirror-state";
-import { EditorView } from "prosemirror-view";
-import { ResolvedPos } from "prosemirror-model";
+import { Plugin, PluginKey } from 'prosemirror-state';
+import { EditorView } from 'prosemirror-view';
+import { ResolvedPos } from 'prosemirror-model';
 
 import debounce from 'lodash.debounce';
 import zenscroll from 'zenscroll';
 
-import { EditorUI } from "../../api/ui";
-import { getMarkRange } from "../../api/mark";
-import { EditorEvents } from "../../api/events";
-import { ScrollEvent, ResizeEvent } from "../../api/event-types";
-import { applyStyles } from "../../api/css";
-import { editingRootNodeClosestToPos, editingRootNode } from "../../api/node";
-import { createPopup } from "../../api/widgets/widgets";
+import { EditorUI } from '../../api/ui';
+import { getMarkRange } from '../../api/mark';
+import { EditorEvents } from '../../api/events';
+import { ScrollEvent, ResizeEvent } from '../../api/event-types';
+import { applyStyles } from '../../api/css';
+import { editingRootNodeClosestToPos, editingRootNode } from '../../api/node';
+import { createPopup } from '../../api/widgets/widgets';
 
 const kMathPopupVerticalOffset = 10;
 const kMathPopupInputDebuounceMs = 250;
@@ -34,32 +34,34 @@ const kMathPopupInputDebuounceMs = 250;
 const key = new PluginKey('math-preview');
 
 export class MathPreviewPlugin extends Plugin {
-
   private readonly ui: EditorUI;
 
   private view: EditorView | null = null;
 
   private popup: HTMLElement | null = null;
   private lastRenderedMath: string | null = null;
-  
+
   private scrollUnsubscribe: VoidFunction;
   private resizeUnsubscribe: VoidFunction;
 
   constructor(ui: EditorUI, events: EditorEvents) {
-  
     super({
       key,
       view: () => {
         return {
-          update: debounce((view: EditorView) => {
-            this.view = view;
-            this.updatePopup();
-          }, kMathPopupInputDebuounceMs, { leading: true, trailing: true }),
+          update: debounce(
+            (view: EditorView) => {
+              this.view = view;
+              this.updatePopup();
+            },
+            kMathPopupInputDebuounceMs,
+            { leading: true, trailing: true },
+          ),
           destroy: () => {
             this.scrollUnsubscribe();
             this.resizeUnsubscribe();
             this.closePopup();
-          }
+          },
         };
       },
       props: {
@@ -86,7 +88,6 @@ export class MathPreviewPlugin extends Plugin {
   }
 
   private updatePopup($mousePos?: ResolvedPos) {
-
     // bail if we don't have a view
     if (!this.view) {
       return;
@@ -97,7 +98,7 @@ export class MathPreviewPlugin extends Plugin {
     const schema = state.schema;
 
     // determine math range
-    let range: false | { from: number, to: number } = false;
+    let range: false | { from: number; to: number } = false;
 
     // if a $pos was passed (e.g. for a mouse hover) then check that first
     if ($mousePos) {
@@ -126,7 +127,7 @@ export class MathPreviewPlugin extends Plugin {
     if (inlineMath.match(/^\${1,2}\s*\${1,2}$/)) {
       this.closePopup();
       return;
-    }    
+    }
 
     // get the position for the range
     const styles = popupPositionStyles(this.view, range);
@@ -135,9 +136,9 @@ export class MathPreviewPlugin extends Plugin {
     if (this.popup) {
       applyStyles(this.popup, [], styles);
     } else {
-      this.popup = createPopup(this.view, ['pm-math-preview'], undefined, { 
+      this.popup = createPopup(this.view, ['pm-math-preview'], undefined, {
         ...styles,
-        visibility: 'hidden'
+        visibility: 'hidden',
       });
       this.view.dom.parentNode?.appendChild(this.popup);
     }
@@ -147,7 +148,7 @@ export class MathPreviewPlugin extends Plugin {
       this.ui.math.typeset!(this.popup, inlineMath).then(error => {
         if (!error) {
           this.popup!.style.visibility = 'visible';
-          this.lastRenderedMath = inlineMath; 
+          this.lastRenderedMath = inlineMath;
           // autoscroll for non-mouse triggers
           if (!$mousePos && range) {
             this.autoscollPopup(range);
@@ -165,7 +166,7 @@ export class MathPreviewPlugin extends Plugin {
     }
   }
 
-  private autoscollPopup(mathRange: { from: number, to: number} ) {
+  private autoscollPopup(mathRange: { from: number; to: number }) {
     const editingRoot = editingRootNode(this.view!.state.selection);
     if (editingRoot) {
       const editorEl = this.view!.nodeDOM(editingRoot.pos) as HTMLElement;
@@ -183,18 +184,13 @@ export class MathPreviewPlugin extends Plugin {
   }
 }
 
-
-function popupPositionStyles(
-  view: EditorView, 
-  range: { from: number, to: number }
-) {
-
+function popupPositionStyles(view: EditorView, range: { from: number; to: number }) {
   // get coordinates for editor view (use to offset)
   const editorBox = (view.dom.parentNode! as HTMLElement).getBoundingClientRect();
- 
+
   // +1 to ensure beginning of line doesn't resolve as line before
   // (will subtract it back out below)
-  const rangeStartCoords = view.coordsAtPos(range.from + 1); 
+  const rangeStartCoords = view.coordsAtPos(range.from + 1);
   const rangeEndCoords = view.coordsAtPos(range.to);
 
   // default positions
@@ -216,5 +212,3 @@ function popupPositionStyles(
   // return position
   return { top, left };
 }
-
-

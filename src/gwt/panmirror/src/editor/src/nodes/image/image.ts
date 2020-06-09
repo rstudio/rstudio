@@ -53,7 +53,6 @@ import { posHasProhibitedFigureParent } from './figure';
 import { imageEventsPlugin } from './image-events';
 import { imageNodeViewPlugins } from './image-view';
 
-
 const TARGET_URL = 0;
 const TARGET_TITLE = 1;
 
@@ -112,8 +111,14 @@ const extension = (
     ],
 
     commands: (_schema: Schema) => {
-      return [new ProsemirrorCommand(EditorCommandId.Image, ['Shift-Mod-i'], 
-                                     imageCommand(ui, imageAttr), imageOmniInsert(ui))];
+      return [
+        new ProsemirrorCommand(
+          EditorCommandId.Image,
+          ['Shift-Mod-i'],
+          imageCommand(ui, imageAttr),
+          imageOmniInsert(ui),
+        ),
+      ];
     },
 
     plugins: (schema: Schema) => {
@@ -329,12 +334,10 @@ export function imageCommand(editorUI: EditorUI, imageAttributes: boolean) {
 function imageOmniInsert(ui: EditorUI) {
   return {
     name: ui.context.translateText('Image...'),
-    description: ui.context.translateText("Figure or inline image"),
+    description: ui.context.translateText('Figure or inline image'),
     group: OmniInsertGroup.Content,
     priority: 10,
-    image: () => ui.prefs.darkMode() 
-      ? ui.images.omni_insert?.image_dark! 
-      : ui.images.omni_insert?.image!,
+    image: () => (ui.prefs.darkMode() ? ui.images.omni_insert?.image_dark! : ui.images.omni_insert?.image!),
   };
 }
 

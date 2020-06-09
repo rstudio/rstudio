@@ -13,42 +13,41 @@
  *
  */
 
-import { Node as ProsemirrorNode } from "prosemirror-model";
-import { EditorState, Selection, } from "prosemirror-state";
-import { EditorView, DecorationSet } from "prosemirror-view";
+import { Node as ProsemirrorNode } from 'prosemirror-model';
+import { EditorState, Selection } from 'prosemirror-state';
+import { EditorView, DecorationSet } from 'prosemirror-view';
 
 import React from 'react';
 
 import { firstBy } from 'thenby';
 
-import { OmniInserter, omniInsertGroupCompare, omniInsertPriorityCompare } from "../../api/omni_insert";
-import { CompletionHandler, CompletionResult } from "../../api/completion";
+import { OmniInserter, omniInsertGroupCompare, omniInsertPriorityCompare } from '../../api/omni_insert';
+import { CompletionHandler, CompletionResult } from '../../api/completion';
 
 import './omni_insert-completion.css';
-import { EditorUI } from "../../api/ui";
-import { placeholderDecoration } from "../../api/placeholder";
-import { kAddToHistoryTransaction } from "../../api/transaction";
-import { setTextSelection } from "prosemirror-utils";
+import { EditorUI } from '../../api/ui';
+import { placeholderDecoration } from '../../api/placeholder';
+import { kAddToHistoryTransaction } from '../../api/transaction';
+import { setTextSelection } from 'prosemirror-utils';
 
-export function omniInsertCompletionHandler(omniInserters: OmniInserter[], ui: EditorUI) : CompletionHandler<OmniInserter> {
-
+export function omniInsertCompletionHandler(
+  omniInserters: OmniInserter[],
+  ui: EditorUI,
+): CompletionHandler<OmniInserter> {
   return {
-
     completions: omniInsertCompletions(omniInserters, ui),
 
     replace(view: EditorView, pos: number, completion: OmniInserter | null) {
-
       // helper to remove command text
       const removeCommandText = () => {
-         const tr = view.state.tr;
-         tr.deleteRange(pos, view.state.selection.head);
-         tr.setMeta(kAddToHistoryTransaction, false);
-         view.dispatch(tr);
+        const tr = view.state.tr;
+        tr.deleteRange(pos, view.state.selection.head);
+        tr.setMeta(kAddToHistoryTransaction, false);
+        view.dispatch(tr);
       };
 
       // execute command if provided
       if (completion) {
-
         // remove existing text
         removeCommandText();
 
@@ -62,76 +61,70 @@ export function omniInsertCompletionHandler(omniInserters: OmniInserter[], ui: E
           tr.setMeta(kAddToHistoryTransaction, false);
           view.dispatch(tr);
         }
-       
 
-      // if this is a dismiss of an omni_insert mark then the command
-      // isn't part of 'natural' typing into the document, so remove it
+        // if this is a dismiss of an omni_insert mark then the command
+        // isn't part of 'natural' typing into the document, so remove it
       } else if (isOmniInsertCommandActive(view.state.selection)) {
         removeCommandText();
       }
     },
-    
 
     view: {
       component: OmniInserterView,
       key: command => command.id,
       width: 320,
       height: 46,
-      maxVisible: 5
+      maxVisible: 5,
     },
-
   };
-
 }
 
 const kOmniInsertRegex = /\/([\w]*)$/;
 
 function omniInsertCompletions(omniInserters: OmniInserter[], ui: EditorUI) {
-
   return (text: string, doc: ProsemirrorNode, selection: Selection): CompletionResult<OmniInserter> | null => {
-
     const match = text.match(kOmniInsertRegex);
     if (match) {
-
       // we need to either be at the beginning of our parent, OR the omni_insert mark needs
       // to be active (that indicates that we entered omni insert mode via a user command)
       if (match.index !== 0 && !isOmniInsertCommandActive(selection)) {
         return null;
       }
 
-      // capture query (note that no query returns all). 
+      // capture query (note that no query returns all).
       const query = match[1].toLowerCase();
 
       // include a decoration if the query is empty
-      const decorations = query.length === 0 
-          ? DecorationSet.create(doc, 
-              [placeholderDecoration(selection.head, ui.context.translateText(' Type to search...'))]
-            )  
+      const decorations =
+        query.length === 0
+          ? DecorationSet.create(doc, [
+              placeholderDecoration(selection.head, ui.context.translateText(' Type to search...')),
+            ])
           : undefined;
-     
+
       // return the completion handler
       return {
-        
         // match at the /
-        pos: selection.head - match[0].length,  
+        pos: selection.head - match[0].length,
 
         // look through registered onmi inserters for completions
         completions: (state: EditorState) => {
-
           // match contents of name or keywords (and verify the command is enabled)
           const inserters = omniInserters
             .filter(inserter => {
-              return query.length === 0 ||
-                     inserter.name.toLowerCase().indexOf(query) !== -1 ||
-                     inserter.keywords?.some(keyword => keyword.indexOf(query) !== -1);
-              })
+              return (
+                query.length === 0 ||
+                inserter.name.toLowerCase().indexOf(query) !== -1 ||
+                inserter.keywords?.some(keyword => keyword.indexOf(query) !== -1)
+              );
+            })
             .filter(inserter => {
-               return inserter.command(state);
+              return inserter.command(state);
             })
             .sort(
               firstBy(omniInsertGroupCompare)
-              .thenBy(omniInsertPriorityCompare, { direction: "desc" })
-              .thenBy("name")
+                .thenBy(omniInsertPriorityCompare, { direction: 'desc' })
+                .thenBy('name'),
             );
 
           // resolve prosmie
@@ -139,14 +132,12 @@ function omniInsertCompletions(omniInserters: OmniInserter[], ui: EditorUI) {
         },
 
         // search placehodler decorator if there is no query
-        decorations
+        decorations,
       };
     } else {
       return null;
     }
-
   };
-
 }
 
 const OmniInserterView: React.FC<OmniInserter> = inserter => {
@@ -171,7 +162,3 @@ function isOmniInsertCommandActive(selection: Selection) {
   const schema = selection.$head.parent.type.schema;
   return schema.marks.omni_insert.isInSet(selection.$head.marks());
 }
-
-
-
-

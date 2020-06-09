@@ -102,23 +102,24 @@ function insertMenu(ui: EditorUI, commands: EditorCommand[]) {
     { command: EditorCommandId.OmniInsert },
     ...(haveAnyOf(commands, EditorCommandId.RCodeChunk, EditorCommandId.PythonCodeChunk)
       ? [
-        { separator: true },
-        {
-          subMenu: {
-            text: ui.context.translateText('Code Chunk'),
-            items: [
-              { command: EditorCommandId.RCodeChunk },
-              { separator: true },
-              { command: EditorCommandId.PythonCodeChunk },
-              { command: EditorCommandId.BashCodeChunk },
-              { command: EditorCommandId.RcppCodeChunk },
-              { command: EditorCommandId.SQLCodeChunk },
-              { command: EditorCommandId.D3CodeChunk },
-              { command: EditorCommandId.StanCodeChunk },
-            ],
+          { separator: true },
+          {
+            subMenu: {
+              text: ui.context.translateText('Code Chunk'),
+              items: [
+                { command: EditorCommandId.RCodeChunk },
+                { separator: true },
+                { command: EditorCommandId.PythonCodeChunk },
+                { command: EditorCommandId.BashCodeChunk },
+                { command: EditorCommandId.RcppCodeChunk },
+                { command: EditorCommandId.SQLCodeChunk },
+                { command: EditorCommandId.D3CodeChunk },
+                { command: EditorCommandId.StanCodeChunk },
+              ],
+            },
           },
-        },
-      ] : []),
+        ]
+      : []),
     { separator: true },
     { command: EditorCommandId.Image },
     { command: EditorCommandId.Link },
@@ -148,10 +149,7 @@ function insertMenu(ui: EditorUI, commands: EditorCommand[]) {
           {
             subMenu: {
               text: ui.context.translateText('Emoji & Symbol'),
-              items: [
-                { command: EditorCommandId.Emoji },
-                { command: EditorCommandId.Symbol }, 
-              ],
+              items: [{ command: EditorCommandId.Emoji }, { command: EditorCommandId.Symbol }],
             },
           },
         ]

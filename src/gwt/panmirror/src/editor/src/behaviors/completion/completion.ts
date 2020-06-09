@@ -14,22 +14,26 @@
  */
 
 import { Node as ProsemirrorNode, Mark } from 'prosemirror-model';
-import { Plugin, PluginKey, Transaction, Selection, TextSelection, EditorState,} from 'prosemirror-state';
+import { Plugin, PluginKey, Transaction, Selection, TextSelection, EditorState } from 'prosemirror-state';
 import { EditorView } from 'prosemirror-view';
 
 import { setTextSelection } from 'prosemirror-utils';
 
-import { CompletionHandler, CompletionResult, selectionAllowsCompletions, kCompletionDefaultMaxVisible } from '../../api/completion';
+import {
+  CompletionHandler,
+  CompletionResult,
+  selectionAllowsCompletions,
+  kCompletionDefaultMaxVisible,
+} from '../../api/completion';
 import { EditorEvents } from '../../api/events';
 import { ScrollEvent } from '../../api/event-types';
 
 import { createCompletionPopup, renderCompletionPopup, destroyCompletionPopup } from './completion-popup';
 import { EditorUI } from '../../api/ui';
 
-
 export function completionExtension(handlers: readonly CompletionHandler[], ui: EditorUI, events: EditorEvents) {
   return {
-    plugins: () => [new CompletionPlugin(handlers, ui, events)]
+    plugins: () => [new CompletionPlugin(handlers, ui, events)],
   };
 }
 
@@ -313,7 +317,6 @@ class CompletionPlugin extends Plugin<CompletionState> {
 
   // explicit user dismiss of completion (e.g. Esc key)
   private dismissCompletions() {
-
     // call lower-level replace on any active handler (w/ null). this gives
     // them a chance to dismiss any artifacts that were explicitly inserted
     // to trigger the handler (e.g. a cmd+/ for omni-insert)
@@ -359,15 +362,14 @@ class CompletionPlugin extends Plugin<CompletionState> {
   }
 }
 
-
 // extract the text before the cursor, dealing with block separators and
 // non-text leaf chracters (this is based on code in prosemirror-inputrules)
 function completionTextBeforeCursor(selection: Selection, maxLength = 500) {
   const { $head } = selection;
   return $head.parent.textBetween(
-    Math.max(0, $head.parentOffset - maxLength),  // start
-    $head.parentOffset,                           // end
-    undefined,                                    // block separator
-    "\ufffc"                                      // leaf char
-  );   
+    Math.max(0, $head.parentOffset - maxLength), // start
+    $head.parentOffset, // end
+    undefined, // block separator
+    '\ufffc', // leaf char
+  );
 }

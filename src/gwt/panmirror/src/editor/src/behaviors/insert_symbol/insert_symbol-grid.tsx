@@ -40,7 +40,6 @@ interface CharacterGridProps extends WidgetProps {
 const selectedItemClassName = 'pm-grid-item-selected';
 
 const SymbolCharacterGrid = React.forwardRef<any, CharacterGridProps>((props, ref) => {
-
   const columnWidth = Math.floor(props.width / props.numberOfColumns);
   const characterCellData: CharacterGridCellItemData = {
     symbolCharacters: props.symbolCharacters,
@@ -71,13 +70,8 @@ const SymbolCharacterGrid = React.forwardRef<any, CharacterGridProps>((props, re
     }
   };
 
-  
   return (
-    <div
-      onKeyDown={handleKeyDown}
-      tabIndex={0}
-      ref={ref}
-    >
+    <div onKeyDown={handleKeyDown} tabIndex={0} ref={ref}>
       <FixedSizeGrid
         columnCount={props.numberOfColumns}
         rowCount={Math.ceil(props.symbolCharacters.length / props.numberOfColumns)}
@@ -94,7 +88,6 @@ const SymbolCharacterGrid = React.forwardRef<any, CharacterGridProps>((props, re
     </div>
   );
 });
-
 
 function previous(currentIndex: number, numberOfColumns: number, numberOfCells: number): number {
   const newIndex = currentIndex - 1;

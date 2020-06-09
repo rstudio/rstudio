@@ -139,26 +139,28 @@ const extension = (
     commands: (schema: Schema) => {
       const commands: ProsemirrorCommand[] = [];
 
-      commands.push(new FormatRawBlockCommand(EditorCommandId.HTMLBlock, kHTMLFormat, schema.nodes.raw_block, {
-        name: ui.context.translateText('HTML Block'),
-        description: ui.context.translateText("Raw HTML content"),
-        group: OmniInsertGroup.Blocks,
-        priority: 6,
-        image: () => ui.prefs.darkMode() 
-          ? ui.images.omni_insert?.html_block_dark! 
-          : ui.images.omni_insert?.html_block!,
-      }));
+      commands.push(
+        new FormatRawBlockCommand(EditorCommandId.HTMLBlock, kHTMLFormat, schema.nodes.raw_block, {
+          name: ui.context.translateText('HTML Block'),
+          description: ui.context.translateText('Raw HTML content'),
+          group: OmniInsertGroup.Blocks,
+          priority: 6,
+          image: () =>
+            ui.prefs.darkMode() ? ui.images.omni_insert?.html_block_dark! : ui.images.omni_insert?.html_block!,
+        }),
+      );
 
       if (pandocExtensions.raw_tex) {
-        commands.push(new FormatRawBlockCommand(EditorCommandId.TexBlock, kTexFormat, schema.nodes.raw_block, {
-          name: ui.context.translateText('TeX Block'),
-          description: ui.context.translateText("Raw TeX content"),
-          group: OmniInsertGroup.Blocks,
-          priority: 5,
-          image: () => ui.prefs.darkMode() 
-            ? ui.images.omni_insert?.tex_block_dark! 
-            : ui.images.omni_insert?.tex_block!
-        }));
+        commands.push(
+          new FormatRawBlockCommand(EditorCommandId.TexBlock, kTexFormat, schema.nodes.raw_block, {
+            name: ui.context.translateText('TeX Block'),
+            description: ui.context.translateText('Raw TeX content'),
+            group: OmniInsertGroup.Blocks,
+            priority: 5,
+            image: () =>
+              ui.prefs.darkMode() ? ui.images.omni_insert?.tex_block_dark! : ui.images.omni_insert?.tex_block!,
+          }),
+        );
       }
 
       if (rawAttribute) {
@@ -202,22 +204,27 @@ class FormatRawBlockCommand extends ProsemirrorCommand {
   private nodeType: NodeType;
 
   constructor(id: EditorCommandId, format: string, nodeType: NodeType, omniInsert?: OmniInsert) {
-    super(id, [], (state: EditorState, dispatch?: (tr: Transaction<any>) => void, view?: EditorView) => {
-      if (!this.isActive(state) && !setBlockType(this.nodeType, { format })(state)) {
-        return false;
-      }
-
-      if (dispatch) {
-        const schema = state.schema;
-        if (this.isActive(state)) {
-          setBlockType(schema.nodes.paragraph)(state, dispatch);
-        } else {
-          setBlockType(this.nodeType, { format })(state, dispatch);
+    super(
+      id,
+      [],
+      (state: EditorState, dispatch?: (tr: Transaction<any>) => void, view?: EditorView) => {
+        if (!this.isActive(state) && !setBlockType(this.nodeType, { format })(state)) {
+          return false;
         }
-      }
 
-      return true;
-    }, omniInsert);
+        if (dispatch) {
+          const schema = state.schema;
+          if (this.isActive(state)) {
+            setBlockType(schema.nodes.paragraph)(state, dispatch);
+          } else {
+            setBlockType(this.nodeType, { format })(state, dispatch);
+          }
+        }
+
+        return true;
+      },
+      omniInsert,
+    );
     this.format = format;
     this.nodeType = nodeType;
   }
@@ -232,12 +239,10 @@ class RawBlockCommand extends ProsemirrorCommand {
   constructor(ui: EditorUI, outputFormats: string[]) {
     super(EditorCommandId.RawBlock, [], editRawBlockCommand(ui, outputFormats), {
       name: ui.context.translateText('Raw Block...'),
-      description: ui.context.translateText("Raw content block"),
+      description: ui.context.translateText('Raw content block'),
       group: OmniInsertGroup.Blocks,
       priority: 4,
-      image: () => ui.prefs.darkMode() 
-        ? ui.images.omni_insert?.raw_block_dark! 
-        : ui.images.omni_insert?.raw_block!
+      image: () => (ui.prefs.darkMode() ? ui.images.omni_insert?.raw_block_dark! : ui.images.omni_insert?.raw_block!),
     });
   }
 }

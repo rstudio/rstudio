@@ -133,13 +133,18 @@ const extension = (
 
 class CodeBlockFormatCommand extends ProsemirrorCommand {
   constructor(pandocExtensions: PandocExtensions, ui: EditorUI, languages: string[]) {
-    super(EditorCommandId.CodeBlockFormat, ['Shift-Mod-\\'], codeBlockFormatCommandFn(pandocExtensions, ui, languages), {
-      name: ui.context.translateText('Code Block...'),
-      description: ui.context.translateText("Source code display"),
-      group: OmniInsertGroup.Blocks,
-      priority: 7,
-      image: () => ui.images.omni_insert?.generic!
-    });
+    super(
+      EditorCommandId.CodeBlockFormat,
+      ['Shift-Mod-\\'],
+      codeBlockFormatCommandFn(pandocExtensions, ui, languages),
+      {
+        name: ui.context.translateText('Code Block...'),
+        description: ui.context.translateText('Source code display'),
+        group: OmniInsertGroup.Blocks,
+        priority: 7,
+        image: () => ui.images.omni_insert?.generic!,
+      },
+    );
   }
 }
 

@@ -121,12 +121,8 @@ const extension: Extension = {
   },
 
   plugins: (schema: Schema, ui: EditorUI) => {
-    return [
-      emptyNodeplaceholderPlugin(
-        schema.nodes.definition_list_term, 
-        () => ui.context.translateText('Term'))
-      ];
-  }
+    return [emptyNodeplaceholderPlugin(schema.nodes.definition_list_term, () => ui.context.translateText('Term'))];
+  },
 };
 
 export default extensionIfEnabled(extension, 'definition_lists');

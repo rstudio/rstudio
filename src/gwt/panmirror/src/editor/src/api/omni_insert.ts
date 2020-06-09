@@ -13,14 +13,14 @@
  *
  */
 
-import { CommandFn } from "./command";
+import { CommandFn } from './command';
 
 // descriptive info for omni insert
 export interface OmniInsert {
   name: string;
   keywords?: string[];
   description: string;
-  group: OmniInsertGroup; 
+  group: OmniInsertGroup;
   priority?: number;
   selectionOffset?: number;
   image: () => string;
@@ -42,9 +42,7 @@ export enum OmniInsertGroup {
   Blocks = 'Blocks',
 }
 
-const omniInsertGroupOrder = new Map<string, number>(
-  Object.keys(OmniInsertGroup).map((key, index) => [key, index])
-);
+const omniInsertGroupOrder = new Map<string, number>(Object.keys(OmniInsertGroup).map((key, index) => [key, index]));
 
 export function omniInsertGroupCompare(a: OmniInsert, b: OmniInsert) {
   return omniInsertGroupOrder.get(a.group)! - omniInsertGroupOrder.get(b.group)!;

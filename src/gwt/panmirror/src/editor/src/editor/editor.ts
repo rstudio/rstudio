@@ -31,7 +31,16 @@ import { PandocEngine, PandocWriterOptions } from '../api/pandoc';
 import { PandocCapabilities, getPandocCapabilities } from '../api/pandoc_capabilities';
 import { fragmentToHTML } from '../api/html';
 import { DOMEditorEvents, EventType, EventHandler } from '../api/events';
-import { ScrollEvent, UpdateEvent, OutlineChangeEvent, StateChangeEvent, ResizeEvent, LayoutEvent, FocusEvent, DispatchEvent } from '../api/event-types';
+import {
+  ScrollEvent,
+  UpdateEvent,
+  OutlineChangeEvent,
+  StateChangeEvent,
+  ResizeEvent,
+  LayoutEvent,
+  FocusEvent,
+  DispatchEvent,
+} from '../api/event-types';
 import {
   PandocFormat,
   resolvePandocFormat,
@@ -90,7 +99,6 @@ import { ExtensionManager, initExtensions } from './editor-extensions';
 import { omniInsertCompletionHandler } from '../behaviors/omni_insert/omni_insert-completion';
 import { omniInsertExtension } from '../behaviors/omni_insert/omni_insert';
 import { insertRmdChunk } from '../api/rmd';
-
 
 export interface EditorCode {
   code: string;
@@ -280,8 +288,8 @@ export class Editor {
           ...context.ui.images,
           omni_insert: {
             ...defaultImages.omni_insert,
-            ...context.ui.images
-          }
+            ...context.ui.images,
+          },
         },
       },
     };
@@ -327,7 +335,7 @@ export class Editor {
     // completion handlers require access to the initializezd commands that
     // carry omni insert info)
     this.registerCompletionExtension();
-    
+
     // create state
     this.state = EditorState.create({
       schema: this.schema,
@@ -405,8 +413,8 @@ export class Editor {
   }
 
   public subscribe<TDetail>(event: EventType<TDetail> | string, handler: EventHandler<TDetail>): VoidFunction {
-    if (typeof event === "string") {
-      return this.events.subscribe({eventName: event}, handler);
+    if (typeof event === 'string') {
+      return this.events.subscribe({ eventName: event }, handler);
     } else {
       return this.events.subscribe(event, handler);
     }
@@ -695,21 +703,14 @@ export class Editor {
   }
 
   private registerCompletionExtension() {
-
     // register omni insert extension
     const markFilter = markInputRuleFilter(this.schema, this.extensions.pandocMarks());
-    this.extensions.register([omniInsertExtension(
-      this.extensions.omniInserters(this.schema, this.context.ui),
-      markFilter,
-      this.context.ui
-    )]);
+    this.extensions.register([
+      omniInsertExtension(this.extensions.omniInserters(this.schema, this.context.ui), markFilter, this.context.ui),
+    ]);
 
     // register completion extension
-    this.extensions.register([completionExtension(
-      this.extensions.completionHandlers(), 
-      this.context.ui, 
-      this.events
-    )]);
+    this.extensions.register([completionExtension(this.extensions.completionHandlers(), this.context.ui, this.events)]);
   }
 
   private createPlugins(): Plugin[] {
@@ -863,7 +864,6 @@ export class Editor {
   }
 
   private async getMarkdownCode(doc: ProsemirrorNode, options: PandocWriterOptions) {
-
     // apply save fixups to a new transaction that we won't commit (b/c we don't
     // want the fixups to affect the loaded editor state)
     const tr = this.state.tr;

@@ -1,4 +1,3 @@
-
 /*
  * omni_insert.ts
  *
@@ -13,19 +12,19 @@
  * AGPL (http://www.gnu.org/licenses/agpl-3.0.txt) for more details.
  *
  */
-import { DOMOutputSpecArray, Mark, Fragment } from "prosemirror-model";
-import { EditorState, Transaction } from "prosemirror-state";
-import { EditorView } from "prosemirror-view";
+import { DOMOutputSpecArray, Mark, Fragment } from 'prosemirror-model';
+import { EditorState, Transaction } from 'prosemirror-state';
+import { EditorView } from 'prosemirror-view';
 
-import { PandocOutput } from "../../api/pandoc";
-import { ProsemirrorCommand, EditorCommandId } from "../../api/command";
-import { selectionAllowsCompletions } from "../../api/completion";
-import { OmniInserter } from "../../api/omni_insert";
-import { MarkInputRuleFilter } from "../../api/input_rule";
-import { EditorUI } from "../../api/ui";
+import { PandocOutput } from '../../api/pandoc';
+import { ProsemirrorCommand, EditorCommandId } from '../../api/command';
+import { selectionAllowsCompletions } from '../../api/completion';
+import { OmniInserter } from '../../api/omni_insert';
+import { MarkInputRuleFilter } from '../../api/input_rule';
+import { EditorUI } from '../../api/ui';
 
-import { omniInsertCompletionHandler } from "./omni_insert-completion";
-import { Extension } from "../../api/extension";
+import { omniInsertCompletionHandler } from './omni_insert-completion';
+import { Extension } from '../../api/extension';
 
 export function markOmniInsert() {
   return {
@@ -35,11 +34,9 @@ export function markOmniInsert() {
         spec: {
           inclusive: true,
           noInputRules: true,
-          parseDOM: [
-            { tag: "span[class*='omni_insert']" },
-          ],
-          toDOM() : DOMOutputSpecArray {
-            return [ 'span', { class: 'omni_insert' } ];
+          parseDOM: [{ tag: "span[class*='omni_insert']" }],
+          toDOM(): DOMOutputSpecArray {
+            return ['span', { class: 'omni_insert' }];
           },
         },
         pandoc: {
@@ -56,40 +53,43 @@ export function markOmniInsert() {
   };
 }
 
-export function omniInsertExtension(omniInserters: OmniInserter[], inputRuleFilter: MarkInputRuleFilter, ui: EditorUI) : Extension {
-  
+export function omniInsertExtension(
+  omniInserters: OmniInserter[],
+  inputRuleFilter: MarkInputRuleFilter,
+  ui: EditorUI,
+): Extension {
   return {
     commands: () => [new OmniInsertCommand(inputRuleFilter)],
-    completionHandlers: () => [omniInsertCompletionHandler(omniInserters, ui)]
+    completionHandlers: () => [omniInsertCompletionHandler(omniInserters, ui)],
   };
-
 }
 
 class OmniInsertCommand extends ProsemirrorCommand {
   constructor(markFilter: MarkInputRuleFilter) {
-    super(EditorCommandId.OmniInsert, ['Mod-/'], (state: EditorState, dispatch?: (tr: Transaction) => void, view?: EditorView) => {
-          
-      // check whether selection allows completions
-      if (!selectionAllowsCompletions(state.selection)) {
-        return false;
-      }
+    super(
+      EditorCommandId.OmniInsert,
+      ['Mod-/'],
+      (state: EditorState, dispatch?: (tr: Transaction) => void, view?: EditorView) => {
+        // check whether selection allows completions
+        if (!selectionAllowsCompletions(state.selection)) {
+          return false;
+        }
 
-      // check the mark filter
-      if (!markFilter(state)) {
-        return false;
-      }
+        // check the mark filter
+        if (!markFilter(state)) {
+          return false;
+        }
 
-      if (dispatch) {
-        const mark = state.schema.marks.omni_insert.create();
-        const node = state.schema.text('/', [mark]);
-        const tr = state.tr;
-        tr.replaceSelectionWith(node, false);
-        dispatch(tr);
-      }
+        if (dispatch) {
+          const mark = state.schema.marks.omni_insert.create();
+          const node = state.schema.text('/', [mark]);
+          const tr = state.tr;
+          tr.replaceSelectionWith(node, false);
+          dispatch(tr);
+        }
 
-      return true;
-    });
+        return true;
+      },
+    );
   }
 }
-
-

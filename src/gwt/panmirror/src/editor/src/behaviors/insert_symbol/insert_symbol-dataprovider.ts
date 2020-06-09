@@ -13,23 +13,23 @@
  *
  */
 
-import { Transaction, EditorState } from "prosemirror-state";
+import { Transaction, EditorState } from 'prosemirror-state';
 
-import { EditorUIPrefs, EditorUIContext } from "../../api/ui";
-import { WidgetProps } from "../../api/widgets/react";
+import { EditorUIPrefs, EditorUIContext } from '../../api/ui';
+import { WidgetProps } from '../../api/widgets/react';
 
-// The data provider is used by the insert symbol popup to render different types of 
+// The data provider is used by the insert symbol popup to render different types of
 // symbols (e.g. emoji versus symbol characters)
 export interface SymbolDataProvider {
   symbolGroupNames(): string[];
   getSymbols(groupName: string | undefined): SymbolCharacter[];
   filterSymbols(filterText: string, symbols: SymbolCharacter[]): SymbolCharacter[];
-  
+
   readonly filterPlaceholderHint: string;
   symbolPreviewStyle: React.CSSProperties;
   symbolPreferencesPanel?: React.FC<SymbolPreferencesProps>;
-  
-  insertSymbolTransaction(symbolCharacter: SymbolCharacter, searchTerm: string, state: EditorState) : Transaction;
+
+  insertSymbolTransaction(symbolCharacter: SymbolCharacter, searchTerm: string, state: EditorState): Transaction;
 }
 
 // A named group of symbols
@@ -49,7 +49,7 @@ export interface SymbolCharacter {
   description?: string;
 }
 
-// If the data provide implements a Preference Panel, these are the 
+// If the data provide implements a Preference Panel, these are the
 // properties that will be provided to the panel component
 export interface SymbolPreferencesProps extends WidgetProps {
   selectedSymbolIndex: number;
@@ -57,4 +57,3 @@ export interface SymbolPreferencesProps extends WidgetProps {
   prefs: EditorUIPrefs;
   onPreferencesChanged: VoidFunction;
 }
-

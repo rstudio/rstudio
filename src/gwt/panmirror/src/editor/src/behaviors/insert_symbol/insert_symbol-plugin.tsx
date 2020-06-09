@@ -25,7 +25,7 @@ import { canInsertNode } from '../../api/node';
 import { EditorUI } from '../../api/ui';
 
 import { InsertSymbolPopup } from './insert_symbol-popup';
-import {SymbolDataProvider, SymbolCharacter} from './insert_symbol-dataprovider';
+import { SymbolDataProvider, SymbolCharacter } from './insert_symbol-dataprovider';
 
 import { ScrollEvent } from '../../api/event-types';
 
@@ -36,7 +36,7 @@ export const performInsertSymbol = (pluginKey: PluginKey<boolean>) => {
     if (!isEnabled(state)) {
       return false;
     }
-  
+
     if (dispatch && view) {
       const plugin = pluginKey.get(state) as InsertSymbolPlugin;
       plugin.showPopup(view);
@@ -55,10 +55,7 @@ export class InsertSymbolPlugin extends Plugin<boolean> {
   private popup: HTMLElement | null = null;
   private dataProvider: SymbolDataProvider;
 
-  constructor(pluginKey: PluginKey<boolean>, 
-              dataProvider: SymbolDataProvider, 
-              ui: EditorUI, 
-              events: EditorEvents) {
+  constructor(pluginKey: PluginKey<boolean>, dataProvider: SymbolDataProvider, ui: EditorUI, events: EditorEvents) {
     super({
       key: pluginKey,
       view: () => ({
@@ -97,27 +94,33 @@ export class InsertSymbolPlugin extends Plugin<boolean> {
       window.document.body.appendChild(this.popup);
     }
   }
-  
+
   private panelPositionStylesForCurrentSelection(view: EditorView, height: number, width: number) {
     const selection = view.state.selection;
     const editorRect = view.dom.getBoundingClientRect();
-  
+
     const selectionCoords = view.coordsAtPos(selection.from);
-  
-    const maximumTopPosition = Math.min(selectionCoords.bottom, window.innerHeight - height - kMinimumPanelPaddingToEdgeOfView);
+
+    const maximumTopPosition = Math.min(
+      selectionCoords.bottom,
+      window.innerHeight - height - kMinimumPanelPaddingToEdgeOfView,
+    );
     const minimumTopPosition = editorRect.y;
     const popupTopPosition = Math.max(minimumTopPosition, maximumTopPosition);
-  
-    const maximumLeftPosition = Math.min(selectionCoords.right, window.innerWidth - width - kMinimumPanelPaddingToEdgeOfView);
+
+    const maximumLeftPosition = Math.min(
+      selectionCoords.right,
+      window.innerWidth - width - kMinimumPanelPaddingToEdgeOfView,
+    );
     const minimumLeftPosition = editorRect.x;
     const popupLeftPosition = Math.max(minimumLeftPosition, maximumLeftPosition);
 
     // styles we'll return
-    const styles = { 
+    const styles = {
       top: popupTopPosition + 'px',
       left: popupLeftPosition + 'px',
     };
-  
+
     return styles;
   }
 

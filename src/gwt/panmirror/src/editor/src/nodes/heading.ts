@@ -27,7 +27,10 @@ import { PandocCapabilities } from '../api/pandoc_capabilities';
 import { EditorUI } from '../api/ui';
 import { EditorFormat } from '../api/format';
 import { OmniInsert, OmniInsertGroup } from '../api/omni_insert';
-import { emptyNodeplaceholderPlugin as emptyNodePlaceholderPlugin, emptyNodeplaceholderPlugin } from '../api/placeholder';
+import {
+  emptyNodeplaceholderPlugin as emptyNodePlaceholderPlugin,
+  emptyNodeplaceholderPlugin,
+} from '../api/placeholder';
 
 const HEADING_LEVEL = 0;
 const HEADING_ATTR = 1;
@@ -154,13 +157,11 @@ const extension = (
 
     plugins: (schema: Schema, ui: EditorUI) => {
       return [emptyHeadingPlaceholderPlugin(schema.nodes.heading, ui)];
-    }
+    },
   };
 };
 
-
 class HeadingCommand extends ProsemirrorCommand {
-
   public readonly nodeType: NodeType;
   public readonly level: number;
 
@@ -178,49 +179,39 @@ class HeadingCommand extends ProsemirrorCommand {
 }
 
 function heading1OmniInsert(ui: EditorUI) {
-  return headingOmniInsert(
-    ui,  1, 
-    ui.context.translateText('Top level heading'),
-    [ui.images.omni_insert?.heading1!, ui.images.omni_insert?.heading1_dark!]
-  );
+  return headingOmniInsert(ui, 1, ui.context.translateText('Top level heading'), [
+    ui.images.omni_insert?.heading1!,
+    ui.images.omni_insert?.heading1_dark!,
+  ]);
 }
 
 function heading2OmniInsert(ui: EditorUI) {
-  return headingOmniInsert(
-    ui,  2, 
-    ui.context.translateText('Section heading'),
-    [ui.images.omni_insert?.heading2!, ui.images.omni_insert?.heading2_dark!]
-  );
+  return headingOmniInsert(ui, 2, ui.context.translateText('Section heading'), [
+    ui.images.omni_insert?.heading2!,
+    ui.images.omni_insert?.heading2_dark!,
+  ]);
 }
 
 function heading3OmniInsert(ui: EditorUI) {
-  return headingOmniInsert(
-    ui, 3, 
-    ui.context.translateText('Sub-section heading'),
-    [ui.images.omni_insert?.heading3!, ui.images.omni_insert?.heading3_dark!]
-  );
+  return headingOmniInsert(ui, 3, ui.context.translateText('Sub-section heading'), [
+    ui.images.omni_insert?.heading3!,
+    ui.images.omni_insert?.heading3_dark!,
+  ]);
 }
 
 function heading4OmniInsert(ui: EditorUI) {
-  return headingOmniInsert(
-    ui,  4, 
-    ui.context.translateText('Smaller heading'),
-    [ui.images.omni_insert?.heading4!, ui.images.omni_insert?.heading4_dark!]
-  );
+  return headingOmniInsert(ui, 4, ui.context.translateText('Smaller heading'), [
+    ui.images.omni_insert?.heading4!,
+    ui.images.omni_insert?.heading4_dark!,
+  ]);
 }
 
-
-function headingOmniInsert(
-  ui: EditorUI, 
-  level: number, 
-  description: string,
-  images: [string, string]
-) : OmniInsert {
+function headingOmniInsert(ui: EditorUI, level: number, description: string, images: [string, string]): OmniInsert {
   return {
     name: headingName(ui, level),
     description,
     group: OmniInsertGroup.Headings,
-    image: () => ui.prefs.darkMode() ? images[1] : images[0],
+    image: () => (ui.prefs.darkMode() ? images[1] : images[0]),
   };
 }
 
@@ -232,7 +223,6 @@ function headingName(ui: EditorUI, level: number) {
 function headingCommandFn(schema: Schema, level: number) {
   return toggleBlockType(schema.nodes.heading, schema.nodes.paragraph, { level });
 }
-
 
 // function for getting attrs
 function headingAttrs(level: number, pandocAttrSupported: boolean) {
@@ -249,7 +239,6 @@ function headingAttrs(level: number, pandocAttrSupported: boolean) {
 function emptyHeadingPlaceholderPlugin(nodeType: NodeType, ui: EditorUI) {
   return emptyNodePlaceholderPlugin(nodeType, node => headingName(ui, node.attrs.level));
 }
-
 
 // write a bookdown (PART) H1 w/o spurious \
 function writeBookdownH1(output: PandocOutput, node: ProsemirrorNode) {

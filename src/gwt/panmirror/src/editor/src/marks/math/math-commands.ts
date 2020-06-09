@@ -32,7 +32,12 @@ export class InsertInlineMathCommand extends ProsemirrorCommand {
 
 export class InsertDisplayMathCommand extends ProsemirrorCommand {
   constructor(ui: EditorUI, allowNewline: boolean) {
-    super(EditorCommandId.DisplayMath, [], insertMathCommand(MathType.Display, allowNewline), displayMathOmniInsert(ui));
+    super(
+      EditorCommandId.DisplayMath,
+      [],
+      insertMathCommand(MathType.Display, allowNewline),
+      displayMathOmniInsert(ui),
+    );
   }
 }
 
@@ -53,25 +58,26 @@ function insertMathCommand(type: MathType, allowNewline: boolean) {
   };
 }
 
-function inlineMathOmniInsert(ui: EditorUI) : OmniInsert {
+function inlineMathOmniInsert(ui: EditorUI): OmniInsert {
   return {
-    name: ui.context.translateText("Inline Math"),
+    name: ui.context.translateText('Inline Math'),
     keywords: [ui.context.translateText('equation')],
-    description: ui.context.translateText("Math within a line or paragraph"),
+    description: ui.context.translateText('Math within a line or paragraph'),
     group: OmniInsertGroup.Math,
     priority: 2,
-    image: () => ui.prefs.darkMode() ? ui.images.omni_insert?.math_inline_dark! : ui.images.omni_insert?.math_inline!,
+    image: () => (ui.prefs.darkMode() ? ui.images.omni_insert?.math_inline_dark! : ui.images.omni_insert?.math_inline!),
   };
 }
 
-function displayMathOmniInsert(ui: EditorUI) : OmniInsert {
+function displayMathOmniInsert(ui: EditorUI): OmniInsert {
   return {
-    name: ui.context.translateText("Display Math"),
+    name: ui.context.translateText('Display Math'),
     keywords: [ui.context.translateText('equation')],
-    description: ui.context.translateText("Math set apart from the main text"),
+    description: ui.context.translateText('Math set apart from the main text'),
     group: OmniInsertGroup.Math,
     priority: 1,
-    image: () => ui.prefs.darkMode() ? ui.images.omni_insert?.math_display_dark! : ui.images.omni_insert?.math_display!,
+    image: () =>
+      ui.prefs.darkMode() ? ui.images.omni_insert?.math_display_dark! : ui.images.omni_insert?.math_display!,
   };
 }
 

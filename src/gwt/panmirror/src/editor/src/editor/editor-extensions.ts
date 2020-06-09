@@ -190,7 +190,7 @@ export function initExtensions(
     markXRef,
     markShortcode,
     markEmoji,
-    markOmniInsert
+    markOmniInsert,
   ]);
 
   // register external extensions
@@ -200,15 +200,13 @@ export function initExtensions(
 
   // additional extensions dervied from other extensions (e.g. extensions that have registered attr editors)
   // note that all of these take a callback to access the manager -- this is so that if an extension earlier
-  // in the chain registers something the later extensions are able to see it 
+  // in the chain registers something the later extensions are able to see it
   manager.register([
-    
     // bindings to 'Edit Attribute' command and UI adornment
     attrEditExtension(pandocExtensions, manager.attrEditors()),
-    
+
     // application of some marks (e.g. code) should cuase reveral of smart quotes
     reverseSmartQuotesExtension(manager.pandocMarks()),
-
   ]);
 
   // additional plugins derived from extensions
@@ -342,7 +340,7 @@ export class ExtensionManager {
     return this.collect<ProsemirrorCommand>(extension => extension.commands?.(schema, ui));
   }
 
-  public omniInserters(schema: Schema, ui: EditorUI) : OmniInserter[] {
+  public omniInserters(schema: Schema, ui: EditorUI): OmniInserter[] {
     const omniInserters: OmniInserter[] = [];
     const commands = this.commands(schema, ui);
     commands.forEach(command => {
@@ -350,7 +348,7 @@ export class ExtensionManager {
         omniInserters.push({
           ...command.omniInsert,
           id: command.id,
-          command: command.execute
+          command: command.execute,
         });
       }
     });
@@ -393,7 +391,7 @@ export class ExtensionManager {
     return this.collect(extension => extension.fixups?.(schema, view));
   }
 
-  public completionHandlers() : readonly CompletionHandler[] {
+  public completionHandlers(): readonly CompletionHandler[] {
     return this.collect(extension => extension.completionHandlers?.());
   }
 

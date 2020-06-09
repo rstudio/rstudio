@@ -23,7 +23,6 @@ import { SymbolPreferencesProps } from './insert_symbol-dataprovider';
 import './insert_symbol-emoji-skintone.css';
 
 export const SymbolEmojiPreferencesPanel = React.forwardRef<any, SymbolPreferencesProps>((props, ref) => {
-  
   // The currently selected skin tone
   const [selectedSkinTone, setSelectedSkinTone] = React.useState<SkinTone>(props.prefs.emojiSkinTone());
 
@@ -95,13 +94,16 @@ export const SymbolEmojiPreferencesPanel = React.forwardRef<any, SymbolPreferenc
     return selectedSkinTone;
   }
 
-  function getCurrentSkinToneIndex() : number {
+  function getCurrentSkinToneIndex(): number {
     const index = previewEmojiWithSkinTones.findIndex(emoji => emoji.skinTone === selectedSkinTone);
     return Math.max(Math.min(index, previewEmojiWithSkinTones.length), 0);
   }
 
-  function skinToneSelectedClass(emoji: Emoji) : string {
-    if (selectedSkinTone === emoji.skinTone || selectedSkinTone === SkinTone.None && emoji.skinTone === SkinTone.Default) {
+  function skinToneSelectedClass(emoji: Emoji): string {
+    if (
+      selectedSkinTone === emoji.skinTone ||
+      (selectedSkinTone === SkinTone.None && emoji.skinTone === SkinTone.Default)
+    ) {
       return 'pm-emoji-skintone-picker-item-selected pm-input-button';
     }
     return '';
@@ -111,7 +113,6 @@ export const SymbolEmojiPreferencesPanel = React.forwardRef<any, SymbolPreferenc
     setSelectedSkinTone(skinTone);
     props.prefs.setEmojiSkinTone(skinTone);
     props.onPreferencesChanged();
-
   }
 
   const skinTonePicker = () => {
@@ -140,8 +141,12 @@ export const SymbolEmojiPreferencesPanel = React.forwardRef<any, SymbolPreferenc
   const currentSkinToneButton = () => {
     return (
       <TextButton
-        classes={['pm-emoji-skintone-picker-button','pm-light-text-color']}
-        title={selectedSkinTone === SkinTone.None ? props.context.translateText(`${previewEmoji.emoji} Skin tone`) : previewEmoji.emoji}
+        classes={['pm-emoji-skintone-picker-button', 'pm-light-text-color']}
+        title={
+          selectedSkinTone === SkinTone.None
+            ? props.context.translateText(`${previewEmoji.emoji} Skin tone`)
+            : previewEmoji.emoji
+        }
         onClick={handleButtonClick}
         tabIndex={-1}
       />

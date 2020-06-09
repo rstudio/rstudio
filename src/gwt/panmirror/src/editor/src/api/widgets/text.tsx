@@ -24,7 +24,7 @@ export interface TextInputProps extends WidgetProps {
   tabIndex?: number;
   className?: string;
   placeholder?: string;
-  iconAdornment? : string;
+  iconAdornment?: string;
   onChange?: ChangeEventHandler;
   onKeyDown?: KeyboardEventHandler<HTMLInputElement>;
   onKeyUp?: KeyboardEventHandler<HTMLInputElement>;

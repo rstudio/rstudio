@@ -103,12 +103,10 @@ export function insertTable(capabilities: TableCapabilities, ui: EditorUI) {
 export function insertTableOmniInsert(ui: EditorUI) {
   return {
     name: ui.context.translateText('Table'),
-    description: ui.context.translateText("Content in rows and columns"),
+    description: ui.context.translateText('Content in rows and columns'),
     group: OmniInsertGroup.Lists,
     priority: 1,
-    image: () => ui.prefs.darkMode() 
-      ? ui.images.omni_insert?.table_dark! 
-      : ui.images.omni_insert?.table!,
+    image: () => (ui.prefs.darkMode() ? ui.images.omni_insert?.table_dark! : ui.images.omni_insert?.table!),
   };
 }
 

@@ -107,14 +107,13 @@ class YamlMetadataCommand extends ProsemirrorCommand {
       },
       {
         name: ui.context.translateText('YAML'),
-        description: ui.context.translateText("YAML metadata block"),
+        description: ui.context.translateText('YAML metadata block'),
         group: OmniInsertGroup.Blocks,
         priority: 3,
         selectionOffset: 4,
-        image: () => ui.prefs.darkMode() 
-          ? ui.images.omni_insert?.yaml_block_dark! 
-          : ui.images.omni_insert?.yaml_block!
-      }
+        image: () =>
+          ui.prefs.darkMode() ? ui.images.omni_insert?.yaml_block_dark! : ui.images.omni_insert?.yaml_block!,
+      },
     );
   }
 }

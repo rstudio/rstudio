@@ -25,7 +25,15 @@ import { fragmentText } from '../../api/fragment';
 import { FixupContext } from '../../api/fixup';
 import { MarkTransaction } from '../../api/transaction';
 import { mergedTextNodes } from '../../api/text';
-import { emojis, emojiFromAlias, emojiFromChar, emojiForAllSkinTones, Emoji, emojiWithSkinTonePreference, emojiFromString } from '../../api/emoji';
+import {
+  emojis,
+  emojiFromAlias,
+  emojiFromChar,
+  emojiForAllSkinTones,
+  Emoji,
+  emojiWithSkinTonePreference,
+  emojiFromString,
+} from '../../api/emoji';
 import { emojiCompletionHandler, emojiSkintonePreferenceCompletionHandler } from './emoji-completion';
 import { getMarkAttrs } from '../../api/mark';
 import { PandocCapabilities } from '../../api/pandoc_capabilities';
@@ -53,7 +61,7 @@ const extension = (_exts: PandocExtensions, _caps: PandocCapabilities, ui: Edito
                 const el = dom as Element;
                 return {
                   emojihint: el.getAttribute('data-emojihint'),
-                  prompt: el.getAttribute('data-emojiprompt') || false
+                  prompt: el.getAttribute('data-emojiprompt') || false,
                 };
               },
             },
@@ -140,7 +148,6 @@ const extension = (_exts: PandocExtensions, _caps: PandocCapabilities, ui: Edito
     completionHandlers: () => [emojiCompletionHandler(ui), emojiSkintonePreferenceCompletionHandler(ui)],
 
     fixups: (schema: Schema) => {
-      
       return [
         (tr: Transaction, context: FixupContext) => {
           // only apply on save and load
@@ -155,58 +162,52 @@ const extension = (_exts: PandocExtensions, _caps: PandocCapabilities, ui: Edito
             parentNode.type.allowsMarkType(schema.marks.emoji),
           );
 
-          
           textNodes.forEach(textNode => {
             // Since emoji can be composed of multiple characters (including
             // other emoji), we always need to prefer the longest match when inserting
             // a mark for any given starting position.
 
             // Find the possible emoji at each position in this text node
-            const possibleMarks = new Map<number, Array<{to: number, emoji: Emoji}>>();
+            const possibleMarks = new Map<number, Array<{ to: number; emoji: Emoji }>>();
             for (const emoji of emojis(ui.prefs.emojiSkinTone())) {
-              emojiForAllSkinTones(emoji).forEach(skinToneEmoji =>
-                {
-                  const charLoc = textNode.text.indexOf(skinToneEmoji.emoji);
-                  if (charLoc !== -1) {
-                    const from = textNode.pos + charLoc;
-                    const to = from + skinToneEmoji.emoji.length;
-                    possibleMarks.set(
-                      from,
-                      (possibleMarks.get(from) || []).concat({to, emoji: skinToneEmoji})
-                    );
-                  }
-                });
+              emojiForAllSkinTones(emoji).forEach(skinToneEmoji => {
+                const charLoc = textNode.text.indexOf(skinToneEmoji.emoji);
+                if (charLoc !== -1) {
+                  const from = textNode.pos + charLoc;
+                  const to = from + skinToneEmoji.emoji.length;
+                  possibleMarks.set(from, (possibleMarks.get(from) || []).concat({ to, emoji: skinToneEmoji }));
+                }
+              });
             }
 
             // For each position that has emoji, use the longest emoji match as the
-            // emoji to be marked. 
+            // emoji to be marked.
             possibleMarks.forEach((possibleEmojis, markFrom) => {
-              
-              const orderedEmojis = possibleEmojis.sort((a,b) => b.to - a.to);
+              const orderedEmojis = possibleEmojis.sort((a, b) => b.to - a.to);
               const to = orderedEmojis[0].to;
               const emoji = orderedEmojis[0].emoji;
 
               // remove any existing mark (preserving attribues if we do )
               let existingAttrs: { [key: string]: any } | null = null;
               if (markTr.doc.rangeHasMark(markFrom, to, schema.marks.emoji)) {
-                existingAttrs = getMarkAttrs(markTr.doc, { from: markFrom, to }, schema.marks.emoji );
+                existingAttrs = getMarkAttrs(markTr.doc, { from: markFrom, to }, schema.marks.emoji);
                 markTr.removeMark(markFrom, to, schema.marks.emoji);
               }
 
               // create a new mark
-              const mark = schema.marks.emoji.create({ 
+              const mark = schema.marks.emoji.create({
                 emojihint: emoji.aliases[0],
-                ...existingAttrs
+                ...existingAttrs,
               });
 
               // on load we want to cover the entire span
               if (context === FixupContext.Load) {
                 markTr.addMark(markFrom, to, mark);
-              // on save we just want the raw emjoi character(s)
+                // on save we just want the raw emjoi character(s)
               } else if (context === FixupContext.Save) {
                 markTr.addMark(markFrom, markFrom + emoji.emoji.length, mark);
               }
-            });          
+            });
           });
 
           return tr;
@@ -216,7 +217,7 @@ const extension = (_exts: PandocExtensions, _caps: PandocCapabilities, ui: Edito
   };
 };
 
-export function nodeForEmoji(schema: Schema, emoji: Emoji, hint: string, prompt?: boolean) : ProsemirrorNode {
+export function nodeForEmoji(schema: Schema, emoji: Emoji, hint: string, prompt?: boolean): ProsemirrorNode {
   const mark = schema.marks.emoji.create({ emojihint: hint, prompt });
   return schema.text(emoji.emoji, [mark]);
 }
