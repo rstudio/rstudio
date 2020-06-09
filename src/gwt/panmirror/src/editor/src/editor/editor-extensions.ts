@@ -78,7 +78,7 @@ import beahviorCodeBlockInput from '../behaviors/code_block_input';
 import behaviorPasteText from '../behaviors/paste_text';
 import behaviorBottomPadding from '../behaviors/bottom_padding';
 import behaviorInsertSymbol from '../behaviors/insert_symbol/insert_symbol';
-import behaviorOmniInsert from '../behaviors/omni_insert/omni_insert';
+
 
 // marks
 import markStrikeout from '../marks/strikeout';
@@ -96,6 +96,7 @@ import markXRef from '../marks/xref';
 import markHTMLComment from '../marks/raw_inline/raw_html_comment';
 import markShortcode from '../marks/shortcode';
 import markEmoji from '../marks/emoji/emoji';
+import { markOmniInsert } from '../behaviors/omni_insert/omni_insert';
 
 // nodes
 import nodeFootnote from '../nodes/footnote/footnote';
@@ -160,7 +161,6 @@ export function initExtensions(
     behaviorPasteText,
     behaviorBottomPadding,
     behaviorInsertSymbol,
-    behaviorOmniInsert,
 
     // nodes
     nodeDiv,
@@ -189,6 +189,7 @@ export function initExtensions(
     markXRef,
     markShortcode,
     markEmoji,
+    markOmniInsert
   ]);
 
   // register external extensions

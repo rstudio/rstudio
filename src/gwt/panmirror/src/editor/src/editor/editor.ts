@@ -88,6 +88,7 @@ import './styles/frame.css';
 import './styles/styles.css';
 import { ExtensionManager, initExtensions } from './editor-extensions';
 import { omniInsertCompletionHandler } from '../behaviors/omni_insert/omni_insert-completion';
+import { omniInsertExtension } from '../behaviors/omni_insert/omni_insert';
 
 
 export interface EditorCode {
@@ -687,14 +688,21 @@ export class Editor {
   }
 
   private registerCompletionExtension() {
-    const completionHandlers = [
-      ...this.extensions.completionHandlers(),
-      omniInsertCompletionHandler(
-        this.extensions.omniInserters(this.schema, this.context.ui), 
-        this.context.ui
-      )
-    ];
-    this.extensions.register([completionExtension(completionHandlers, this.context.ui, this.events)]);
+
+    // register omni insert extension
+    const markFilter = markInputRuleFilter(this.schema, this.extensions.pandocMarks());
+    this.extensions.register([omniInsertExtension(
+      this.extensions.omniInserters(this.schema, this.context.ui),
+      markFilter,
+      this.context.ui
+    )]);
+
+    // register completion extension
+    this.extensions.register([completionExtension(
+      this.extensions.completionHandlers(), 
+      this.context.ui, 
+      this.events
+    )]);
   }
 
   private createPlugins(): Plugin[] {
