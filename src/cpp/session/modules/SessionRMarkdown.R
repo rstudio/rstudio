@@ -501,18 +501,24 @@
    normalizePath(subbin[[1]], mustWork = TRUE)
 })
 
-.rs.addFunction("bookdown.renderedOutputPath", function(outputPath)
+.rs.addFunction("bookdown.renderedOutputPath", function(websiteDir, outputPath)
 {
-   # if this is a PDF, use it directly
+   # set encoding
+   Encoding(websiteDir) <- "UTF-8"
+   Encoding(outputPath) <- "UTF-8"
+   
+   # if we have a PDF for this file, use it
    if (tools::file_ext(outputPath) == "pdf")
       return(outputPath)
    
-   # if we have an index, prefer using that
-   index <- file.path(dirname(outputPath), "index.html")
+   # if that fails, use root index file
+   # note that this gets remapped as appropriate to knitted posts; see:
+   # https://github.com/rstudio/rstudio/issues/6945
+   index <- file.path(websiteDir, "index.html")
    if (file.exists(index))
       return(index)
    
-   # otherwise, return the rendered path directly
-   # (typically necessary for self-contained books)
+   # default to using output file path
+   # (necessary for self-contained books, which may not have an index)
    outputPath
 })
