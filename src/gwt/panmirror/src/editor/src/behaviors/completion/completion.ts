@@ -313,7 +313,6 @@ class CompletionPlugin extends Plugin<CompletionState> {
 
   // explicit user dismiss of completion (e.g. Esc key)
   private dismissCompletions() {
-    this.hideCompletionPopup();
 
     // call lower-level replace on any active handler (w/ null). this gives
     // them a chance to dismiss any artifacts that were explicitly inserted
