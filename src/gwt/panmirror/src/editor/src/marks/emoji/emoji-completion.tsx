@@ -132,7 +132,6 @@ export function emojiSkintonePreferenceCompletionHandler(ui: EditorUI) : Complet
     },
 
     view: {
-
       header: {
         component: EmojiSkintonePreferenceHeaderView,
         height: kHeaderHeight
@@ -149,7 +148,7 @@ export function emojiSkintonePreferenceCompletionHandler(ui: EditorUI) : Complet
 }
 
 const kCellWidth = 40;
-const kHeaderHeight = 24;
+const kHeaderHeight = 16;
 const kCellBorderAndPadding = 8;
 
 function emojiSkintonePreferenceCompletions(ui: EditorUI) {
@@ -182,7 +181,7 @@ function emojiSkintonePreferenceCompletions(ui: EditorUI) {
 
 const EmojiSkintonePreferenceHeaderView: React.FC<CompletionHeaderProps> = (props) => {
   return (    
-    <span className={'pm-completion-emoji-cell-header'}>{props.ui.context.translateText('Choose preferred skin tone:')}</span>
+    <span className={'pm-completion-emoji-cell-header pm-light-text-color'}>{props.ui.context.translateText('Choose preferred skin tone:')}</span>
   );
 };
 
