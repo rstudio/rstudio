@@ -27,6 +27,7 @@ import { CompletionHandler, CompletionResult } from "../../api/completion";
 import './omni_insert-completion.css';
 import { EditorUI } from "../../api/ui";
 import { placeholderDecoration } from "../../api/placeholder";
+import { kAddToHistoryTransaction } from "../../api/transaction";
 
 export function omniInsertCompletionHandler(omniInserters: OmniInserter[], ui: EditorUI) : CompletionHandler<OmniInserter> {
 
@@ -40,6 +41,7 @@ export function omniInsertCompletionHandler(omniInserters: OmniInserter[], ui: E
       const removeCommandText = () => {
          const tr = view.state.tr;
          tr.deleteRange(pos, view.state.selection.head);
+         tr.setMeta(kAddToHistoryTransaction, false);
          view.dispatch(tr);
       };
 
