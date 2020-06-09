@@ -241,6 +241,10 @@ export function applyTheme(theme: EditorTheme) {
     .pm-input-text {
       border-color: ${theme.paneBorderColor};
     }
+    .pm-input-button {
+      border-color: ${theme.borderBackgroundColor};
+      background-color: ${theme.backgroundColor};
+    }
     .CodeMirror,
     .CodeMirror pre.CodeMirror-line, .CodeMirror pre.CodeMirror-line-like {
       font-family: ${theme.fixedWidthFont};

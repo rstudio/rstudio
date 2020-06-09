@@ -23,10 +23,8 @@ import { WidgetProps } from '../../api/widgets/react';
 
 import { CharacterGridCellItemData, SymbolCharacterCell } from './insert_symbol-grid-cell';
 import { SymbolCharacter } from './insert_symbol-dataprovider';
-import { SymbolPreview } from './insert_symbol-grid-preview';
 
 import './insert_symbol-grid-styles.css';
-
 
 interface CharacterGridProps extends WidgetProps {
   height: number;

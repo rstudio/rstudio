@@ -1,5 +1,5 @@
 /*
- * insert_symbol-grid-styles.css
+ * insert_symbol-emoji-skintone.css
  *
  * Copyright (C) 2020 by RStudio, PBC
  *
@@ -13,26 +13,36 @@
  *
  */
 
-.pm-symbol-grid-container {
+.pm-emoji-skintone-picker-container {
   display: flex;
-  justify-content: center;
-  align-items: center;
+  flex-direction: column;
+  align-items: right;
+}
+
+.pm-emoji-skintone-picker {
+  display: flex;
+}
+
+.pm-emoji-skintone-picker-item {
+  padding: 4px;
   cursor: pointer;
-  margin: 1px;
+  font-size: 13px;
 }
 
-.pm-symbol-grid-cell {
-  font-size: 20px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 100%;
-  width: 100%;
-  margin: 1px;
+.pm-emoji-skintone-picker-item-selected {
+  padding: 4px;
+  cursor: pointer;
+  border-style: solid;
+  border-width: 1px;
+  border-radius: 3px;
 }
 
-.pm-symbol-grid {
-  overflow: hidden;
-  display: flex;
-  justify-content: space-evenly;
+.pm-emoji-skintone-picker-label {
+  padding-top: 2px;
+  font-size: 10px;
+}
+
+.pm-emoji-skintone-picker-button {
+  padding: 4px;
+  font-size: 13px;
 }

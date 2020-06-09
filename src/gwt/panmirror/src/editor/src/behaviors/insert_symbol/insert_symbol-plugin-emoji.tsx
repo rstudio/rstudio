@@ -17,6 +17,8 @@ import { Schema } from 'prosemirror-model';
 import { PluginKey, EditorState } from 'prosemirror-state';
 import { ProsemirrorCommand, EditorCommandId } from '../../api/command';
 
+import React from 'react';
+
 import { EditorEvents } from '../../api/events';
 import { EditorFormat } from '../../api/format';
 import { EditorOptions } from '../../api/options';
@@ -24,12 +26,13 @@ import { EditorUI } from '../../api/ui';
 import { emojiCategories, emojis, Emoji, emojiFromString, SkinTone } from '../../api/emoji';
 import { Extension } from '../../api/extension';
 import { nodeForEmoji } from '../../marks/emoji/emoji';
+import { OmniInsertGroup } from '../../api/omni_insert';
 import { PandocExtensions } from '../../api/pandoc';
 import { PandocCapabilities } from '../../api/pandoc_capabilities';
-import { OmniInsertGroup } from '../../api/omni_insert';
 
 import { performInsertSymbol, InsertSymbolPlugin } from './insert_symbol-plugin';
 import { SymbolDataProvider, SymbolCharacter } from './insert_symbol-dataprovider';
+import { SymbolEmojiPreferencesPanel } from './insert_symbol-emoji-skintone';
 
 const key = new PluginKey<boolean>('insert-emoji');
 
@@ -63,7 +66,6 @@ function emojiOmniInsert(ui: EditorUI) {
   };
 }
 
-
 export class EmojiSymbolDataProvider implements SymbolDataProvider {
   
   public constructor(ui: EditorUI) {
@@ -74,6 +76,8 @@ export class EmojiSymbolDataProvider implements SymbolDataProvider {
   public readonly filterPlaceholderHint = 'emoji name';
 
   public readonly symbolPreviewStyle: React.CSSProperties = { fontSize: "36px" } as React.CSSProperties;
+
+  public symbolPreferencesPanel = SymbolEmojiPreferencesPanel;
   
   public insertSymbolTransaction(symbolCharacter: SymbolCharacter, searchTerm: string, state: EditorState) {
     

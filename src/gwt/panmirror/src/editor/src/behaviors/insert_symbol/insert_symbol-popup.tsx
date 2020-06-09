@@ -36,7 +36,7 @@ interface InsertSymbolPopupProps extends WidgetProps {
   onClose: VoidFunction;
   ui: EditorUI;
   searchImage?: string;
-  searchPlaceholder? : string;
+  searchPlaceholder?: string;
 }
 
 export const InsertSymbolPopup: React.FC<InsertSymbolPopupProps> = props => {
@@ -57,15 +57,16 @@ export const InsertSymbolPopup: React.FC<InsertSymbolPopupProps> = props => {
   const [filterText, setFilterText] = React.useState<string>('');
   const [selectedSymbolGroup, setSelectedSymbolGroup] = React.useState<string>();
   const [selectedSymbolIndex, setSelectedSymbolIndex] = React.useState<number>(0);
+  const [preferenceChanged, setPreferenceChanged] = React.useState<number>(0);
 
-  const symbols = React.useMemo(
-    () => props.symbolDataProvider.getSymbols(selectedSymbolGroup),
-    [selectedSymbolGroup]
-  ); 
-  const filteredSymbols = React.useMemo(
-    () => props.symbolDataProvider.filterSymbols(filterText, symbols),
-    [filterText, symbols]
-  );
+  const symbols = React.useMemo(() => props.symbolDataProvider.getSymbols(selectedSymbolGroup), [
+    selectedSymbolGroup,
+    preferenceChanged,
+  ]);
+  const filteredSymbols = React.useMemo(() => props.symbolDataProvider.filterSymbols(filterText, symbols), [
+    filterText,
+    symbols,
+  ]);
 
   // If the symbol list gets shorter than the selected index, move
   // selected cell into range
@@ -78,6 +79,7 @@ export const InsertSymbolPopup: React.FC<InsertSymbolPopupProps> = props => {
   const textRef = React.useRef<HTMLInputElement>(null);
   const selectRef = React.useRef<HTMLSelectElement>(null);
   const gridRef = React.useRef<HTMLDivElement>(null);
+  const preferenceRef = React.useRef<HTMLElement>(null);
 
   // Focus the first text box
   React.useEffect(() => {
@@ -101,6 +103,15 @@ export const InsertSymbolPopup: React.FC<InsertSymbolPopupProps> = props => {
   };
 
   const handleKeyboardEvent = (event: React.KeyboardEvent<HTMLElement>) => {
+    // The last element might be the preference panel, if a provider
+    // provides one
+    function lastElement(): React.RefObject<HTMLElement> {
+      if (preferenceRef.current !== null) {
+        return preferenceRef;
+      }
+      return gridRef;
+    }
+
     // Global Key Handling
     switch (event.key) {
       case 'Escape':
@@ -111,17 +122,19 @@ export const InsertSymbolPopup: React.FC<InsertSymbolPopupProps> = props => {
 
       case 'Tab':
         if (event.shiftKey && isElementFocused(textRef.current)) {
-          focusElement(gridRef.current);
+          focusElement(lastElement().current);
           event.preventDefault();
-        } else if (!event.shiftKey && isElementFocused(gridRef.current)) {
+        } else if (!event.shiftKey && isElementFocused(lastElement().current)) {
           focusElement(textRef.current);
           event.preventDefault();
         }
         break;
 
       case 'Enter':
-        handleSelectedSymbolCommitted();
-        event.preventDefault();
+        if (isElementFocused(textRef.current) || isElementFocused(gridRef.current)) {
+          handleSelectedSymbolCommitted();
+          event.preventDefault();
+        }
         break;
 
       case 'ArrowLeft':
@@ -130,17 +143,22 @@ export const InsertSymbolPopup: React.FC<InsertSymbolPopupProps> = props => {
       case 'ArrowDown':
       case 'PageUp':
       case 'PageDown':
-        if (!event.shiftKey && !event.altKey && !event.ctrlKey) {
-          const newIndex = newIndexForKeyboardEvent(event, selectedSymbolIndex, kNumberOfcolumns, filteredSymbols.length);
-          if (  newIndex !== undefined &&
-                newIndex >= 0 &&
-                newIndex !== selectedSymbolIndex) {
+        // If the text filter is focused, forward arrow keys to the grid. If other elements are focused
+        // they may need to handle arrow keys, so don't handle them in this case
+        if (isElementFocused(textRef.current) && !event.shiftKey && !event.altKey && !event.ctrlKey) {
+          const newIndex = newIndexForKeyboardEvent(
+            event,
+            selectedSymbolIndex,
+            kNumberOfcolumns,
+            filteredSymbols.length,
+          );
+          if (newIndex !== undefined && newIndex >= 0 && newIndex !== selectedSymbolIndex) {
             event.preventDefault();
             setSelectedSymbolIndex(newIndex);
-          }         
+          }
         }
         break;
-      default: 
+      default:
         break;
     }
   };
@@ -158,6 +176,22 @@ export const InsertSymbolPopup: React.FC<InsertSymbolPopupProps> = props => {
   const handleTextChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setFilterText(event?.target.value);
   };
+
+  const handlePreferencesChanged = () => {
+    setPreferenceChanged(preferenceChanged + 1);
+  };
+
+  const preferencesProps = {
+    selectedSymbolIndex,
+    context: props.ui.context,
+    prefs: props.ui.prefs,
+    onPreferencesChanged: handlePreferencesChanged,
+    ref: preferenceRef,
+  };
+
+  const preferencesPanel = props.symbolDataProvider.symbolPreferencesPanel
+    ? React.createElement(props.symbolDataProvider.symbolPreferencesPanel, preferencesProps)
+    : undefined;
 
   return (
     <Popup classes={classNames} style={style}>
@@ -203,13 +237,15 @@ export const InsertSymbolPopup: React.FC<InsertSymbolPopupProps> = props => {
           </div>
         </div>
         <hr className="pm-popup-insert-symbol-separator pm-border-background-color" />
-        {filteredSymbols[selectedSymbolIndex] &&
-        <SymbolPreview
-          symbolCharacter={filteredSymbols[selectedSymbolIndex]}
-          symbolPreviewStyle={props.symbolDataProvider.symbolPreviewStyle}
-          ui={props.ui}
-          />
-        }
+        {filteredSymbols[selectedSymbolIndex] && (
+          <SymbolPreview
+            symbolCharacter={filteredSymbols[selectedSymbolIndex]}
+            symbolPreviewStyle={props.symbolDataProvider.symbolPreviewStyle}
+            ui={props.ui}
+          >
+            {preferencesPanel}
+          </SymbolPreview>
+        )}
       </div>
     </Popup>
   );
