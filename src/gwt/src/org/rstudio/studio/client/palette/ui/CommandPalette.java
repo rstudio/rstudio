@@ -185,10 +185,13 @@ public class CommandPalette extends Composite
          }
          else if (evt.getNativeKeyCode() == KeyCodes.KEY_ENTER)
          {
-            // Enter runs the selected command
+            // Enter runs the selected command. Turn off default behavior so
+            // that the Enter key-up isn't handled by the IDE once the palette
+            // is dismissed.
+            evt.stopPropagation();
+            evt.preventDefault();
             invokeSelection();
          }
-
 
          // Ignore modified arrows so that e.g. Shift Up/Down to select the
          // contents of the textbox work as expected

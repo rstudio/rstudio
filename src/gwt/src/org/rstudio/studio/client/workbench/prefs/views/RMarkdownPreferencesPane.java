@@ -228,26 +228,6 @@ public class RMarkdownPreferencesPane extends PreferencesPane
          visualModeFontSize_.getListBox().setSelectedIndex(0);
       visualModeOptions.add(visualModeFontSize_);
       
-      visualModeOptions.add(headerLabel("Content"));
-      
-      String[] skinToneValues = {
-         UserPrefsAccessor.EMOJI_SKINTONE__DEFAULT_,
-         UserPrefsAccessor.EMOJI_SKINTONE_LIGHT,
-         UserPrefsAccessor.EMOJI_SKINTONE_MEDIUM_LIGHT,
-         UserPrefsAccessor.EMOJI_SKINTONE_MEDIUM,
-         UserPrefsAccessor.EMOJI_SKINTONE_MEDIUM_DARK,
-         UserPrefsAccessor.EMOJI_SKINTONE_DARK
-      };
-      visualModeSkinTone_ = new SelectWidget("Preferred emjoi skin tone: ", skinToneValues, skinToneValues, false, true, false);
-      if (!visualModeSkinTone_.setValue(prefs_.emojiSkintone().getGlobalValue()))
-         visualModeSkinTone_.getListBox().setSelectedIndex(0);
-      visualModeSkinTone_.addChangeHandler((event) -> {
-         skinToneChanged_ = true;
-      });
-      
-      mediumSpaced(visualModeSkinTone_);
-      visualModeOptions.add(visualModeSkinTone_);
-      
       
       visualModeOptions.add(headerLabel("Markdown"));
       
@@ -360,9 +340,6 @@ public class RMarkdownPreferencesPane extends PreferencesPane
       prefs_.visualMarkdownEditingReferencesLocation().setGlobalValue(
             visualModeReferences_.getValue());
       
-      if (skinToneChanged_)
-         prefs_.emojiSkintone().setGlobalValue(visualModeSkinTone_.getValue());
-      
       if (knitWorkingDir_ != null)
       {
          prefs_.knitWorkingDir().setGlobalValue(
@@ -384,10 +361,5 @@ public class RMarkdownPreferencesPane extends PreferencesPane
    private final SelectWidget visualModeFontSize_;
    private final NumericValueWidget visualModeContentWidth_;
    private final NumericValueWidget visualModeWrapColumn_;
-   private final SelectWidget visualModeReferences_;
-   private final SelectWidget visualModeSkinTone_;
-   private boolean skinToneChanged_ = false;
-  
-   
-   
+   private final SelectWidget visualModeReferences_;   
 }

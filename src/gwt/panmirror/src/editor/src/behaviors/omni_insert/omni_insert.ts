@@ -20,43 +20,62 @@ import { EditorView } from "prosemirror-view";
 import { PandocOutput } from "../../api/pandoc";
 import { ProsemirrorCommand, EditorCommandId } from "../../api/command";
 import { selectionAllowsCompletions } from "../../api/completion";
+import { OmniInserter } from "../../api/omni_insert";
+import { MarkInputRuleFilter } from "../../api/input_rule";
+import { EditorUI } from "../../api/ui";
 
-const extension = {
+import { omniInsertCompletionHandler } from "./omni_insert-completion";
+import { Extension } from "../../api/extension";
 
-  marks: [
-    {
-      name: 'omni_insert',
-      spec: {
-        inclusive: true,
-        noInputRules: true,
-        parseDOM: [
-          { tag: "span[class*='omni_insert']" },
-        ],
-        toDOM() : DOMOutputSpecArray {
-          return [ 'span', { class: 'omni_insert' } ];
+export function markOmniInsert() {
+  return {
+    marks: [
+      {
+        name: 'omni_insert',
+        spec: {
+          inclusive: true,
+          noInputRules: true,
+          parseDOM: [
+            { tag: "span[class*='omni_insert']" },
+          ],
+          toDOM() : DOMOutputSpecArray {
+            return [ 'span', { class: 'omni_insert' } ];
+          },
         },
-      },
-      pandoc: {
-        readers: [],
-        writer: {
-          priority: 30,
-          write: (output: PandocOutput, _mark: Mark, parent: Fragment) => {
-            output.writeInlines(parent);
+        pandoc: {
+          readers: [],
+          writer: {
+            priority: 30,
+            write: (output: PandocOutput, _mark: Mark, parent: Fragment) => {
+              output.writeInlines(parent);
+            },
           },
         },
       },
-    },
-  ],
+    ],
+  };
+}
 
-  commands: () => [new OmniInsertCommand()]
-};
+export function omniInsertExtension(omniInserters: OmniInserter[], inputRuleFilter: MarkInputRuleFilter, ui: EditorUI) : Extension {
+  
+  return {
+    commands: () => [new OmniInsertCommand(inputRuleFilter)],
+    completionHandlers: () => [omniInsertCompletionHandler(omniInserters, ui)]
+  };
+
+}
 
 class OmniInsertCommand extends ProsemirrorCommand {
-  constructor() {
+  constructor(markFilter: MarkInputRuleFilter) {
     super(EditorCommandId.OmniInsert, ['Mod-/'], (state: EditorState, dispatch?: (tr: Transaction) => void, view?: EditorView) => {
           
       // check whether selection allows completions
       if (!selectionAllowsCompletions(state.selection)) {
+        return false;
+      }
+
+      // check the mark filter
+      if (!markFilter(state)) {
         return false;
       }
 
@@ -73,5 +92,4 @@ class OmniInsertCommand extends ProsemirrorCommand {
   }
 }
 
-export default extension;
 

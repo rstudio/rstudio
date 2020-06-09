@@ -186,6 +186,10 @@ export function applyTheme(theme: EditorTheme) {
       border: 1px solid ${theme.findTextBorderColor} !important;
       border-radius: 2px;
     }
+    .pm-dark-mode .pm-selected-list-item {
+      background-color: ${theme.chunkBackgroundColor} !important;
+      border: 1px solid transparent !important;
+    }
     .pm-border-background-color {
       background-color: ${theme.borderBackgroundColor}!important;
     }
@@ -205,7 +209,7 @@ export function applyTheme(theme: EditorTheme) {
       border-color: ${theme.markupTextColor} !important;
     }
     .pm-popup {
-      box-shadow: 0 1px 4px ${theme.paneBorderColor} !important;
+      box-shadow: 0 1px 3px ${theme.blockBorderColor} !important;
     }
     .pm-selected-node-outline-color,
     .ProseMirror-selectednode {

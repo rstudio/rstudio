@@ -27,6 +27,8 @@ import { CompletionHandler, CompletionResult } from "../../api/completion";
 import './omni_insert-completion.css';
 import { EditorUI } from "../../api/ui";
 import { placeholderDecoration } from "../../api/placeholder";
+import { kAddToHistoryTransaction } from "../../api/transaction";
+import { setTextSelection } from "prosemirror-utils";
 
 export function omniInsertCompletionHandler(omniInserters: OmniInserter[], ui: EditorUI) : CompletionHandler<OmniInserter> {
 
@@ -40,13 +42,27 @@ export function omniInsertCompletionHandler(omniInserters: OmniInserter[], ui: E
       const removeCommandText = () => {
          const tr = view.state.tr;
          tr.deleteRange(pos, view.state.selection.head);
+         tr.setMeta(kAddToHistoryTransaction, false);
          view.dispatch(tr);
       };
 
       // execute command if provided
       if (completion) {
+
+        // remove existing text
         removeCommandText();
+
+        // execute the command
         completion.command(view.state, view.dispatch, view);
+
+        // perform any requested selection offset
+        if (completion.selectionOffset) {
+          const tr = view.state.tr;
+          setTextSelection(tr.selection.from + completion.selectionOffset)(tr);
+          tr.setMeta(kAddToHistoryTransaction, false);
+          view.dispatch(tr);
+        }
+       
 
       // if this is a dismiss of an omni_insert mark then the command
       // isn't part of 'natural' typing into the document, so remove it

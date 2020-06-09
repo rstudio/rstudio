@@ -181,6 +181,7 @@ class RmdChunkCommand extends ProsemirrorCommand {
         description: ui.context.translateText("Executable R code"),
         group: OmniInsertGroup.Chunks,
         priority: 10,
+        selectionOffset: 4,
         image: () => ui.images.omni_insert?.generic!
       }
     );
