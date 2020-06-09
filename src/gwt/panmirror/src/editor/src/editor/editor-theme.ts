@@ -186,6 +186,10 @@ export function applyTheme(theme: EditorTheme) {
       border: 1px solid ${theme.findTextBorderColor} !important;
       border-radius: 2px;
     }
+    .pm-dark-mode .pm-selected-list-item {
+      background-color: ${theme.chunkBackgroundColor} !important;
+      border: 1px solid transparent !important;
+    }
     .pm-border-background-color {
       background-color: ${theme.borderBackgroundColor}!important;
     }
