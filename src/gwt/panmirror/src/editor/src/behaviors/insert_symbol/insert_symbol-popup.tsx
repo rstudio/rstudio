@@ -124,38 +124,26 @@ export const InsertSymbolPopup: React.FC<InsertSymbolPopupProps> = props => {
         event.preventDefault();
         break;
 
+      case 'ArrowLeft':
+      case 'ArrowRight':
+      case 'ArrowUp':
+      case 'ArrowDown':
+      case 'PageUp':
+      case 'PageDown':
+        if (!event.shiftKey && !event.altKey && !event.ctrlKey) {
+          const newIndex = newIndexForKeyboardEvent(event, selectedSymbolIndex, kNumberOfcolumns, filteredSymbols.length);
+          if (  newIndex !== undefined &&
+                newIndex >= 0 &&
+                newIndex !== selectedSymbolIndex) {
+            event.preventDefault();
+            setSelectedSymbolIndex(newIndex);
+          }         
+        }
+        break;
       default: 
         break;
     }
-
-    if (textRef.current && isElementFocused(textRef.current)) {
-      if (textRef.current?.value.length > 0) {
-
-        // If the textbox is focused, figure out whether the grid can
-        // still take arrow / page events. If there is no text or the cursor
-        // is at the end of the input, we can handle arrows (see conditions).
-        const numberOfCharacters = textRef.current?.value.length;
-        const cursorPosition = textRef.current?.selectionStart;
-        if (cursorPosition === 0 && event.key === 'ArrowLeft') { 
-            processGridKeyboardEvent(event); // can handle left
-        } else if (cursorPosition === numberOfCharacters && event.key === 'ArrowRight') {  
-          processGridKeyboardEvent(event); // can handle right
-        } else if (event.key === 'ArrowUp' || event.key === 'ArrowDown' || event.key === 'PageUp' || event.key === 'PageDown') {
-          processGridKeyboardEvent(event);  // can always handle up / down, page up / down
-        }       
-      } else {
-        processGridKeyboardEvent(event);
-      }
-    }
   };
-
-  function processGridKeyboardEvent(event: React.KeyboardEvent) {
-    const newIndex = newIndexForKeyboardEvent(event, selectedSymbolIndex, kNumberOfcolumns, filteredSymbols.length);
-    if (newIndex !== undefined && newIndex >= 0) {
-      setSelectedSymbolIndex(newIndex);
-      event.preventDefault();
-    }
-  }
 
   const handleSelectedSymbolChanged = (symbolIndex: number) => {
     setSelectedSymbolIndex(symbolIndex);
