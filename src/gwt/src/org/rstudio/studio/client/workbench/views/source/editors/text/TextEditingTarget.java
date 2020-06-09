@@ -7019,7 +7019,8 @@ public class TextEditingTarget implements
       releaseOnDismiss.add(prefs.highlightWebLink().bind(
             new CommandWithArg<Boolean>() {
                public void execute(Boolean arg) {
-                  docDisplay.setHighlightWebLink(arg);
+                  //prefs.setHighlightWebLink(arg);
+		  prefs.writeUserPrefs();
                }}));
       releaseOnDismiss.add(prefs.showIndentGuides().bind(
             new CommandWithArg<Boolean>() {
