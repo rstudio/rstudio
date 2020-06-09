@@ -13,7 +13,7 @@
  *
  */
 
-import { Node as ProsemirrorNode } from 'prosemirror-model';
+import { Node as ProsemirrorNode, Mark } from 'prosemirror-model';
 import { Plugin, PluginKey, Transaction, Selection, TextSelection, EditorState,} from 'prosemirror-state';
 import { EditorView } from 'prosemirror-view';
 
@@ -303,15 +303,31 @@ class CompletionPlugin extends Plugin<CompletionState> {
         const replacement = state.handler.replacement(view.state.schema, this.completions[index]);
         if (replacement) {
 
+          // create transaction
+          const tr = view.state.tr;
+
           // ensure we have a node
           const node = replacement instanceof ProsemirrorNode ? replacement : view.state.schema.text(replacement);
 
-          // perform replacement
-          const tr = view.state.tr;
+          // combine it's marks w/ whatever is active at the selection
+          let marks = view.state.selection.$head.marks();
+          node.marks.forEach((mark: Mark) => {
+            marks = mark.addToSet(marks);
+          });
+
+          // propapate marks
+          marks.forEach(mark => tr.addMark(result.pos, view.state.selection.head, mark));
+
+          // set selection and replace it
           tr.setSelection(new TextSelection(tr.doc.resolve(result.pos), view.state.selection.$head));
-          tr.replaceSelectionWith(node, false);
+          tr.replaceSelectionWith(node, true);
+
+          // place cursor after the completion
           setTextSelection(tr.selection.to)(tr);
+
+          // dispatch
           view.dispatch(tr);
+
         }
         
       }
