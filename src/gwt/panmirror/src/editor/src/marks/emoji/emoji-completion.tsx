@@ -139,15 +139,15 @@ export function emojiSkintonePreferenceCompletionHandler(ui: EditorUI) : Complet
       key: pref => pref.skinTone,
       width: kCellWidth,
       height: kCellWidth,
-      horizontal: true
+      horizontal: true,
+      horizontalItemWidths: [55]
     },
 
   };
 }
 
 const kCellWidth = 40;
-const kHeaderHeight = 16;
-const kCellBorderAndPadding = 8;
+const kHeaderHeight = 20;
 
 function emojiSkintonePreferenceCompletions(ui: EditorUI) {
   return (text: string, doc: ProsemirrorNode, selection: Selection): CompletionResult<Emoji> | null => {
@@ -186,7 +186,7 @@ function emojiSkintonePreferenceCompletions(ui: EditorUI) {
 
 const EmojiSkintonePreferenceHeaderView: React.FC<CompletionHeaderProps> = (props) => {
   return (    
-    <span className={'pm-completion-emoji-cell-header pm-light-text-color'}>{props.ui.context.translateText('Choose preferred skin tone:')}</span>
+    <div className={'pm-completion-emoji-cell-header pm-light-text-color'}>{props.ui.context.translateText('Choose preferred skin tone:')}</div>
   );
 };
 
@@ -194,7 +194,6 @@ const EmojiSkintonePreferenceHeaderView: React.FC<CompletionHeaderProps> = (prop
 const EmojiSkintonePreferenceView: React.FC<Emoji> = emoji => {
   return (
     <div  
-      style={ { width: kCellWidth - kCellBorderAndPadding, } }
       className='pm-completion-item-text pm-completion-emoji-cell'>
       {emoji.emoji}
     </div>

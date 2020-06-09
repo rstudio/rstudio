@@ -176,7 +176,8 @@ export function applyTheme(theme: EditorTheme) {
     .pm-find-text,
     .pm-grid-item-selected {
       background-color: ${theme.findTextBackgroundColor} !important;
-      outline: 1px solid ${theme.findTextBorderColor} !important;
+      box-shadow: 0 0 0 1px ${theme.findTextBorderColor}; 
+      border-radius: 3px;
     }
     .pm-find-text-selected {
       background-color: ${theme.selectionColor} !important;
@@ -184,7 +185,7 @@ export function applyTheme(theme: EditorTheme) {
     .pm-selected-list-item {
       background-color: ${theme.findTextBackgroundColor} !important;
       border: 1px solid ${theme.findTextBorderColor} !important;
-      border-radius: 2px;
+      border-radius: 3px;
     }
     .pm-dark-mode .pm-selected-list-item {
       background-color: ${theme.chunkBackgroundColor} !important;
