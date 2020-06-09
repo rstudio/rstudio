@@ -107,7 +107,6 @@ public class TextEditingTargetChunks
    @Inject
    private void initialize(UserPrefs prefs, UserState state)
    {
-      initialized_ = true;
       prefs_ = prefs;
       state_ = state;
       dark_ = state.theme().getValue().getIsDark();
@@ -193,6 +192,7 @@ public class TextEditingTargetChunks
                toolbars_.remove(toolbar);
             }
          }
+         initialized_ = true;
       }
 
       if (currentScope != null)
