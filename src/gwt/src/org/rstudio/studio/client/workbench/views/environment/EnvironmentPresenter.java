@@ -438,7 +438,7 @@ public class EnvironmentPresenter extends BasePresenter
       consoleDispatcher_.saveFileAsThenExecuteCommand("Save Workspace As",
                                                       ".RData",
                                                       true,
-                                                      "save.image");
+                                                      "base::save.image");
    }
 
    void onLoadWorkspace()
