@@ -44,6 +44,7 @@ const extension = (_exts: PandocExtensions, _caps: PandocCapabilities, ui: Edito
           noInputRules: true,
           attrs: {
             emojihint: {},
+            prompt: { default: true },
           },
           parseDOM: [
             {
@@ -52,6 +53,7 @@ const extension = (_exts: PandocExtensions, _caps: PandocCapabilities, ui: Edito
                 const el = dom as Element;
                 return {
                   emojihint: el.getAttribute('data-emojihint'),
+                  prompt: el.getAttribute('data-emojiprompt') || false
                 };
               },
             },
@@ -63,6 +65,7 @@ const extension = (_exts: PandocExtensions, _caps: PandocCapabilities, ui: Edito
                 class: 'emoji',
                 title: ':' + mark.attrs.emojihint + ':',
                 'data-emojihint': mark.attrs.emojihint,
+                'data-emojiprompt': mark.attrs.prompt,
               },
             ];
           },
@@ -213,8 +216,8 @@ const extension = (_exts: PandocExtensions, _caps: PandocCapabilities, ui: Edito
   };
 };
 
-export function nodeForEmoji(schema: Schema, emoji: Emoji, hint: string) : ProsemirrorNode {
-  const mark = schema.marks.emoji.create({ emojihint: hint });
+export function nodeForEmoji(schema: Schema, emoji: Emoji, hint: string, prompt?: boolean) : ProsemirrorNode {
+  const mark = schema.marks.emoji.create({ emojihint: hint, prompt });
   return schema.text(emoji.emoji, [mark]);
 }
 

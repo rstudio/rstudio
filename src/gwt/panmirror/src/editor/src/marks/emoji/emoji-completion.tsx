@@ -22,12 +22,10 @@ import { EditorUI } from '../../api/ui';
 
 import { CompletionHandler, CompletionResult, CompletionHeaderProps } from "../../api/completion";
 import { emojis, Emoji, SkinTone, emojiFromChar, emojiForAllSkinTones } from "../../api/emoji";
-import { getMarkRange } from '../../api/mark';
+import { getMarkRange, getMarkAttrs } from '../../api/mark';
 import { nodeForEmoji } from './emoji';
 
 import './emoji-completion.css';
-import { Editor } from '../../editor/editor';
-import { CompletionListProps } from '../../behaviors/completion/completion-popup';
 
 export function emojiCompletionHandler(ui: EditorUI) : CompletionHandler<Emoji> {
 
@@ -163,8 +161,15 @@ function emojiSkintonePreferenceCompletions(ui: EditorUI) {
     if (!range) {
       return null;
     }
-        
+
     const emojiText = doc.textBetween(range.from, range.to);
+
+    // If an attribute to suppress the prompt was explicitly set, don't prompt 
+    // the user for a skin tone
+    const emojiAttrs = getMarkAttrs(doc, range, doc.type.schema.marks.emoji);
+    if (!emojiAttrs.prompt) {
+      return null;
+    }
     const emoji = emojiFromChar(emojiText);
     
     // If this is an emoji that doesn't support skin tones just return

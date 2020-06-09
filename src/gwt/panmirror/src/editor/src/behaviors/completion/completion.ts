@@ -320,7 +320,7 @@ class CompletionPlugin extends Plugin<CompletionState> {
 
           // set selection and replace it
           tr.setSelection(new TextSelection(tr.doc.resolve(result.pos), view.state.selection.$head));
-          tr.replaceSelectionWith(node, true);
+          tr.replaceSelectionWith(node, false);
 
           // place cursor after the completion
           setTextSelection(tr.selection.to)(tr);

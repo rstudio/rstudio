@@ -86,7 +86,7 @@ export class EmojiSymbolDataProvider implements SymbolDataProvider {
     if (emoji) {
       // Try to find an alias that matches the user's search term
       const bestAlias = emoji.aliases.find(alias => alias.includes(searchTerm));
-      tr.replaceSelectionWith(nodeForEmoji(state.schema, emoji, bestAlias || emoji.aliases[0]), false);
+      tr.replaceSelectionWith(nodeForEmoji(state.schema, emoji, bestAlias || emoji.aliases[0], false), false);
     } else {
       // This doesn't appear to be an emoji or it doesn't have a markdown representation, 
       // just insert the text
