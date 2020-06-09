@@ -41,7 +41,6 @@ interface CompletionState {
 const key = new PluginKey<CompletionState>('completion');
 
 class CompletionPlugin extends Plugin<CompletionState> {
-  
   // editor ui
   private readonly ui: EditorUI;
 
@@ -52,8 +51,8 @@ class CompletionPlugin extends Plugin<CompletionState> {
   private completionPopup: HTMLElement | null = null;
 
   // currently selected index and last set of completions are held as transient
-  // state because they can't be derived from the document state (selectedIndex 
-  // is derived from out of band user keyboard gestures and completions may 
+  // state because they can't be derived from the document state (selectedIndex
+  // is derived from out of band user keyboard gestures and completions may
   // have required fulfilling an external promise). also use a version counter
   // used to invalidate async completion requests that are fulfilled after
   // an update has occurred
@@ -69,10 +68,8 @@ class CompletionPlugin extends Plugin<CompletionState> {
     super({
       key,
       state: {
-
         init: () => ({}),
-        apply: (tr: Transaction)  => {
-
+        apply: (tr: Transaction) => {
           // if we don't have a view then bail
           if (!this.view) {
             return {};
@@ -87,7 +84,7 @@ class CompletionPlugin extends Plugin<CompletionState> {
           if (!selectionAllowsCompletions(tr.selection)) {
             return {};
           }
-          
+
           // calcluate text before cursor
           const textBefore = completionTextBeforeCursor(tr.selection);
 
@@ -106,37 +103,32 @@ class CompletionPlugin extends Plugin<CompletionState> {
 
           // no handler found
           return {};
-        }
+        },
       },
-      
+
       view: () => ({
         update: (view: EditorView) => {
-
           // increment version
           this.version++;
 
           // set view
           this.view = view;
-          
+
           // update completions
           this.updateCompletions(view);
-        
         },
 
         destroy: () => {
-
           // unsubscribe from events
           this.scrollUnsubscribe();
           window.document.removeEventListener('focusin', this.hideCompletionPopup);
 
           // tear down the popup
           this.hideCompletionPopup();
-
         },
       }),
 
       props: {
-
         decorations: (state: EditorState) => {
           const pluginState = key.getState(state);
           return pluginState?.result?.decorations;
@@ -153,7 +145,7 @@ class CompletionPlugin extends Plugin<CompletionState> {
             const backwardKey = this.horizontal ? 'ArrowLeft' : 'ArrowUp';
 
             if (this.completionsActive()) {
-              switch(kbEvent.key) {
+              switch (kbEvent.key) {
                 case 'Escape':
                   this.dismissCompletions();
                   handled = true;
@@ -178,13 +170,16 @@ class CompletionPlugin extends Plugin<CompletionState> {
                   handled = true;
                   break;
                 case 'PageDown':
-                  this.selectedIndex = Math.min(this.selectedIndex + this.completionPageSize(), this.completions.length - 1);
+                  this.selectedIndex = Math.min(
+                    this.selectedIndex + this.completionPageSize(),
+                    this.completions.length - 1,
+                  );
                   this.renderCompletions(view);
                   handled = true;
                   break;
               }
             }
-            
+
             // supress event if we handled it
             if (handled) {
               event.preventDefault();
@@ -193,9 +188,9 @@ class CompletionPlugin extends Plugin<CompletionState> {
 
             // return status
             return handled;
-          }
-        }
-      }
+          },
+        },
+      },
     });
 
     // capture reference to ui
@@ -208,41 +203,33 @@ class CompletionPlugin extends Plugin<CompletionState> {
   }
 
   private updateCompletions(view: EditorView) {
-
     const state = key.getState(view.state);
-    
+
     if (state?.handler) {
-  
       // track the request version to invalidate the result if an
       // update happens after it goes into flight
       const requestVersion = this.version;
 
       // request completions
       return state.result!.completions(view.state).then(completions => {
-
         // if the version has incremented since the request then return false
         if (this.version !== requestVersion) {
           return false;
         }
-         
-        // save completions 
+
+        // save completions
         this.setCompletions(completions, state.handler?.view.horizontal);
 
         // render them
         this.renderCompletions(view);
-
       });
-
     } else {
-
       this.setCompletions([]);
       this.hideCompletionPopup();
-
     }
   }
 
   private renderCompletions(view: EditorView) {
-
     const state = key.getState(view.state);
 
     if (state && state.handler && (this.completions.length > 0 || !state.handler.view.hideNoResults)) {
@@ -259,9 +246,9 @@ class CompletionPlugin extends Plugin<CompletionState> {
           this.selectedIndex = index;
           this.renderCompletions(view);
         },
-        ui: this.ui
+        ui: this.ui,
       };
-      
+
       // create the completion popup if we need to
       if (this.completionPopup === null) {
         this.completionPopup = createCompletionPopup();
@@ -270,39 +257,31 @@ class CompletionPlugin extends Plugin<CompletionState> {
 
       // render
       renderCompletionPopup(view, props, this.completionPopup);
-
     } else {
-
       // hide
       this.hideCompletionPopup();
-    
     }
   }
 
   private insertCompletion(view: EditorView, index: number) {
-
     // default index if not specified
     index = index || this.selectedIndex;
 
     const state = key.getState(view.state);
     if (state && state.handler) {
-        
-      // perform replacement 
+      // perform replacement
       const result = state.result!;
 
       // check low level handler first
       if (state.handler.replace) {
-
         // execute replace
         state.handler.replace(view, result.pos, this.completions[index]);
-    
-      // use higher level handler
-      } else if (state.handler.replacement) {
 
+        // use higher level handler
+      } else if (state.handler.replacement) {
         // get replacement from handler
         const replacement = state.handler.replacement(view.state.schema, this.completions[index]);
         if (replacement) {
-
           // create transaction
           const tr = view.state.tr;
 
@@ -310,39 +289,32 @@ class CompletionPlugin extends Plugin<CompletionState> {
           const node = replacement instanceof ProsemirrorNode ? replacement : view.state.schema.text(replacement);
 
           // combine it's marks w/ whatever is active at the selection
-          let marks = view.state.selection.$head.marks();
-          node.marks.forEach((mark: Mark) => {
-            marks = mark.addToSet(marks);
-          });
-
-          // propapate marks
-          marks.forEach(mark => tr.addMark(result.pos, view.state.selection.head, mark));
+          const marks = view.state.selection.$head.marks();
 
           // set selection and replace it
           tr.setSelection(new TextSelection(tr.doc.resolve(result.pos), view.state.selection.$head));
           tr.replaceSelectionWith(node, false);
+
+          // propapate marks
+          marks.forEach(mark => tr.addMark(result.pos, view.state.selection.to, mark));
 
           // place cursor after the completion
           setTextSelection(tr.selection.to)(tr);
 
           // dispatch
           view.dispatch(tr);
-
         }
-        
       }
-
       // set focus
       view.focus();
     }
-
     this.hideCompletionPopup();
-
   }
 
   // explicit user dismiss of completion (e.g. Esc key)
   private dismissCompletions() {
-    
+    this.hideCompletionPopup();
+
     // call lower-level replace on any active handler (w/ null). this gives
     // them a chance to dismiss any artifacts that were explicitly inserted
     // to trigger the handler (e.g. a cmd+/ for omni-insert)

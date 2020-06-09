@@ -64,8 +64,11 @@ export function destroyCompletionPopup(popup: HTMLElement) {
 }
 
 const CompletionPopup: React.FC<CompletionListProps> = props => {
+  // main completion popup + class + dark mode if appropriate
+  const classes = ['pm-completion-popup']
+    .concat(props.ui.prefs.darkMode() ? ['pm-dark-mode'] : []);
   return (
-    <Popup classes={['pm-completion-popup pm-dark-mode']}>
+    <Popup classes={classes}>
       <CompletionList {...props}/> 
     </Popup>
   );
