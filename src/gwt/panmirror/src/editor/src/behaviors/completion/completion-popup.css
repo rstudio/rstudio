@@ -33,7 +33,7 @@
   width: auto;
 }
 
-.pm-completion-list > table > thead > th {
+.pm-completion-list > table > thead > tr > th {
   vertical-align: middle;
 }
 

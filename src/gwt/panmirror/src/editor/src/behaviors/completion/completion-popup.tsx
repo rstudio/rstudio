@@ -126,9 +126,11 @@ function completionsHeader(handler: CompletionHandler, completionCount: number, 
     const header =  React.createElement( handler.view.header.component, props);
     return (
       <thead>
-        <th style={ {lineHeight: handler.view.header.height + 'px' }} colSpan={props.handler.view.horizontal ? completionCount : undefined}>
-          {header}
-        </th>
+        <tr>
+          <th style={ {lineHeight: handler.view.header.height + 'px' }} colSpan={props.handler.view.horizontal ? completionCount : undefined}>
+            {header}
+          </th>
+        </tr>
       </thead>
     );
   } else {
