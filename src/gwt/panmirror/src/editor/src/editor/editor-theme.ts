@@ -205,7 +205,7 @@ export function applyTheme(theme: EditorTheme) {
       border-color: ${theme.markupTextColor} !important;
     }
     .pm-popup {
-      box-shadow: 0 1px 4px ${theme.paneBorderColor} !important;
+      box-shadow: 0 1px 3px ${theme.blockBorderColor} !important;
     }
     .pm-selected-node-outline-color,
     .ProseMirror-selectednode {
