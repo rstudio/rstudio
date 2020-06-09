@@ -424,7 +424,6 @@ public class TextEditingTargetVisualMode implements CommandPaletteEntrySource
       
       // disable commands
       disableForVisualMode(
-        commands_.insertChunk(),
         commands_.jumpTo(),
         commands_.jumpToMatching(),
         commands_.showDiagnosticsActiveDocument(),
@@ -482,6 +481,11 @@ public class TextEditingTargetVisualMode implements CommandPaletteEntrySource
    public void unmanageCommands()
    {
       restoreDisabledForVisualMode();
+   }
+   
+   public void insertChunk(String chunkPlaceholder, int rowOffset, int colOffset)
+   {
+      panmirror_.insertChunk(chunkPlaceholder, rowOffset, colOffset);
    }
    
    public void executeChunk()

@@ -106,7 +106,13 @@ public class PanmirrorCommands
    public static final String RawBlock = "F5757992-4D33-45E6-86DC-F7D7B174B1EC";
    
    // chunk
-   public static final String RmdChunk = "EBFD21FF-4A6E-4D88-A2E0-B38470B00BB9";
+   public static final String RCodeChunk = "EBFD21FF-4A6E-4D88-A2E0-B38470B00BB9";
+   public static final String BashCodeChunk = "5FBB7283-E8AB-450C-9359-A4658CBCD136";
+   public static final String D3CodeChunk = "C73CA46C-B56F-40B6-AEFA-DDBB30CA8C08";
+   public static final String PythonCodeChunk = "42A7A138-421A-4DCF-8A88-FE2F8EC5B8F6";
+   public static final String RcppCodeChunk = "6BD2810B-6B20-4358-8AA4-74BBFFC92AC3";
+   public static final String SQLCodeChunk = "41D61FD2-B56B-48A7-99BC-2F60BC0D9F78";
+   public static final String StanCodeChunk = "65D33344-CBE9-438C-B337-A538F8D7FCE5";
    public static final String ExecuteCurrentRmdChunk = "31C799F3-EF18-4F3A-92E6-51F7A3193A1B";
    public static final String ExecutePreviousRmdChunks = "D3FDE96-0264-4364-ADFF-E87A75405B0B";
 }

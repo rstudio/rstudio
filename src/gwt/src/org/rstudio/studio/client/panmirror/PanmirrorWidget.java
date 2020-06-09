@@ -448,6 +448,11 @@ public class PanmirrorWidget extends DockLayoutPanel implements
    {
       setWidgetHidden(toolbar_, !show);
    }
+   
+   public void insertChunk(String chunkPlaceholder, int rowOffset, int colOffset)
+   {
+      editor_.insertChunk(chunkPlaceholder, rowOffset, colOffset);
+   }
   
    public boolean execCommand(String id)
    {

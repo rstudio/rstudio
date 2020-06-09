@@ -82,6 +82,8 @@ public class PanmirrorEditor
    
    public native void resize();
    
+   public native void insertChunk(String chunkPlaceholder, int rowOffset, int colOffset);
+   
    public native void navigate(String id);
 
    public native void applyTheme(PanmirrorTheme theme);
