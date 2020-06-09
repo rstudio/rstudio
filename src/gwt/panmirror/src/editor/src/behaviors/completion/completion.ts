@@ -310,24 +310,20 @@ class CompletionPlugin extends Plugin<CompletionState> {
           const node = replacement instanceof ProsemirrorNode ? replacement : view.state.schema.text(replacement);
 
           // combine it's marks w/ whatever is active at the selection
-          let marks = view.state.selection.$head.marks();
-          node.marks.forEach((mark: Mark) => {
-            marks = mark.addToSet(marks);
-          });
-
-          // propapate marks
-          marks.forEach(mark => tr.addMark(result.pos, view.state.selection.head, mark));
+          const marks = view.state.selection.$head.marks();
 
           // set selection and replace it
           tr.setSelection(new TextSelection(tr.doc.resolve(result.pos), view.state.selection.$head));
-          tr.replaceSelectionWith(node, true);
+          tr.replaceSelectionWith(node, false);
+
+          // propapate marks
+          marks.forEach(mark => tr.addMark(result.pos, view.state.selection.to, mark));
 
           // place cursor after the completion
           setTextSelection(tr.selection.to)(tr);
 
           // dispatch
           view.dispatch(tr);
-
         }
         
       }
