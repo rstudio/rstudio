@@ -102,8 +102,11 @@ const CompletionList: React.FC<CompletionListProps> = props => {
   // completion source based on orientation
   const completions = props.handler.view.horizontal ? horizontalCompletions : verticalCompletions;
 
+  const classes = ['pm-completion-list']
+    .concat(props.handler.view.horizontal ? ['pm-completion-list-horizontal'] : []);
+
   return (
-    <div ref={containerRef} className={'pm-completion-list'} style={{ width: size.width + 'px', height: size.height + 'px'}}>
+    <div ref={containerRef} className={classes.join(' ')} style={{ width: size.width + 'px', height: size.height + 'px'}}>
       <table>
       {completionsHeader(props.handler, props.completions.length, props)}
       <tbody>
