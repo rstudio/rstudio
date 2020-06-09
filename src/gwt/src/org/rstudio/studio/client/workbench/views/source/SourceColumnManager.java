@@ -158,6 +158,7 @@ public class SourceColumnManager implements SessionInitHandler,
 
       rmarkdown_ = new TextEditingTargetRMarkdownHelper();
       vimCommands_ = new SourceVimCommands();
+      state_ = null;
       initDynamicCommands();
 
       events_.addHandler(SourceExtendedTypeDetectedEvent.TYPE, this);
