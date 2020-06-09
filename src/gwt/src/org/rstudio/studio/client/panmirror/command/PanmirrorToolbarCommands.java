@@ -73,7 +73,13 @@ public class PanmirrorToolbarCommands implements CommandPaletteEntrySource
       add(PanmirrorCommands.RawBlock, "Raw Block...");
       
       // chunk
-      add(PanmirrorCommands.RmdChunk, "Rmd Chunk");
+      add(PanmirrorCommands.RCodeChunk, "R Code Chunk");
+      add(PanmirrorCommands.BashCodeChunk, "Bash Code Chunk");
+      add(PanmirrorCommands.D3CodeChunk, "D3 Code Chunk");
+      add(PanmirrorCommands.PythonCodeChunk, "Python Code Chunk");
+      add(PanmirrorCommands.RcppCodeChunk, "Rcpp Code Chunk");
+      add(PanmirrorCommands.SQLCodeChunk, "SQL Code Chunk");
+      add(PanmirrorCommands.StanCodeChunk, "Stan Code Chunk");
       add(PanmirrorCommands.ExecuteCurrentRmdChunk, "Run Current Chunk");
       add(PanmirrorCommands.ExecutePreviousRmdChunks, "Run All Chunks Above");
 

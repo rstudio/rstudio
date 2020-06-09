@@ -89,6 +89,7 @@ import './styles/styles.css';
 import { ExtensionManager, initExtensions } from './editor-extensions';
 import { omniInsertCompletionHandler } from '../behaviors/omni_insert/omni_insert-completion';
 import { omniInsertExtension } from '../behaviors/omni_insert/omni_insert';
+import { insertRmdChunk } from '../api/rmd';
 
 
 export interface EditorCode {
@@ -567,6 +568,12 @@ export class Editor {
 
   public blur() {
     (this.view.dom as HTMLElement).blur();
+  }
+
+  public insertChunk(chunkPlaceholder: string, rowOffset: number, colOffset: number) {
+    const insertCmd = insertRmdChunk(chunkPlaceholder, rowOffset, colOffset);
+    insertCmd(this.view.state, this.view.dispatch, this.view);
+    this.focus();
   }
 
   public navigate(id: string) {

@@ -754,7 +754,7 @@ public class TextEditingTargetWidget
       runLastButton_.setVisible(runButton_.isVisible() && !canExecuteChunks && !isScript);
       
       // show insertion options for various knitr engines in rmarkdown v2
-      insertChunkMenu_.setVisible(isRMarkdown2 && !visualRmdMode);
+      insertChunkMenu_.setVisible(isRMarkdown2);
       
       // otherwise just show the regular insert chunk button
       insertChunkButton_.setVisible(canExecuteChunks && !isRMarkdown2);
