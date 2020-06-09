@@ -221,7 +221,6 @@ public class UrlContentEditingTarget implements EditingTarget
 
    public void popoutDoc()
    {
-      Debug.logToConsole("popoutDoc in URL");
       globalDisplay_.openWindow(getContentUrl());
    }
    

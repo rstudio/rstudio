@@ -145,7 +145,6 @@ public class MainSplitPanel extends NotifyingSplitLayoutPanel
                                / state.getPanelWidth();
 
                   addEast(right_, pct * offsetWidth);
-                  for (Widget w : leftList_)
                   for (int i = 0; i < leftList_.size(); i++)
                   {
                      pct = (double)state.getSplitterPos()[i]

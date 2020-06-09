@@ -65,8 +65,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
 
-public class SourceColumn implements //BeforeShowHandler,
-                                     SelectionHandler<Integer>,
+public class SourceColumn implements SelectionHandler<Integer>,
                                      TabClosingHandler,
                                      TabCloseHandler,
                                      TabClosedHandler,
@@ -113,7 +112,6 @@ public class SourceColumn implements //BeforeShowHandler,
       display_ = display;
       manager_ = manager;
 
-      //display_.addBeforeShowHandler(this);
       display_.addSelectionHandler(this);
       display_.addTabClosingHandler(this);
       display_.addTabCloseHandler(this);
@@ -203,7 +201,7 @@ public class SourceColumn implements //BeforeShowHandler,
 
    public void closeAllLocalSourceDocs()
    {
-      // !!! implement this
+      // TODO
    }
 
    public int getTabCount()
@@ -1087,7 +1085,6 @@ public class SourceColumn implements //BeforeShowHandler,
 
       final String activeEditorId = activeEditor_.getId();
 
-      // !!! THIS NEEDS TO BE DONE IN SOURCE.JAVA
       if (editors_.get(event.getTabIndex()).getId() == activeEditorId)
       {
          // scan the source navigation history for an entry that can

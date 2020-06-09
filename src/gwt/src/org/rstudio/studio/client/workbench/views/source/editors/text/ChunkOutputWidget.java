@@ -18,7 +18,6 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
-import org.rstudio.core.client.Debug;
 import org.rstudio.core.client.ColorUtil;
 import org.rstudio.core.client.CommandWithArg;
 import org.rstudio.core.client.Size;
@@ -782,7 +781,6 @@ public class ChunkOutputWidget extends Composite
 
    private void popoutChunk()
    {
-      Debug.logToConsole("popoutChunk documentId_: " + documentId_ + " chunkId_: " + chunkId_);
       chunkWindowManager_.openChunkWindow(
          documentId_,
          chunkId_,
