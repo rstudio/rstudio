@@ -61,7 +61,6 @@ export const InsertSymbolPopup: React.FC<InsertSymbolPopupProps> = props => {
 
   const symbols = React.useMemo(() => props.symbolDataProvider.getSymbols(selectedSymbolGroup), [
     selectedSymbolGroup,
-    preferenceChanged,
     props.symbolDataProvider
   ]);
   const filteredSymbols = React.useMemo(() => props.symbolDataProvider.filterSymbols(filterText, symbols), [
