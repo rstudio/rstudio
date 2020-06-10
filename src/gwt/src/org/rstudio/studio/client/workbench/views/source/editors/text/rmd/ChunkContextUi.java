@@ -1,7 +1,7 @@
 /*
  * ChunkContextUi.java
  *
- * Copyright (C) 2009-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -132,7 +132,7 @@ public class ChunkContextUi implements ChunkContextToolbar.Host
          engine_ = engine;
          toolbar_.setEngine(engine);
       }
-      toolbar_.setLabelClass(getLabel(row));
+      toolbar_.setClassId(getLabel(row));
    }
 
    public void setRenderPass(int pass)
@@ -246,7 +246,7 @@ public class ChunkContextUi implements ChunkContextToolbar.Host
    {
       toolbar_ = new ChunkContextToolbar(this, dark_, !isSetup_, engine_);
       toolbar_.setHeight("0px"); 
-      toolbar_.setLabelClass(getLabel(row));
+      toolbar_.setClassId(getLabel(row));
       lineWidget_ = new PinnedLineWidget(
             ChunkContextToolbar.LINE_WIDGET_TYPE, target_.getDocDisplay(), 
             toolbar_, row, null, host_);

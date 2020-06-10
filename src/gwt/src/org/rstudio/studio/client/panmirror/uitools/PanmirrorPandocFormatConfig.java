@@ -1,7 +1,7 @@
 /*
  * PanmirrorPandocFormatConfig.java
  *
- * Copyright (C) 2009-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -25,6 +25,7 @@ public class PanmirrorPandocFormatConfig
    // editor behavior
    public String mode;
    public String extensions;
+   public String rmdExtensions;
    public String[] doctypes;
    
    // markdown writing
@@ -43,6 +44,7 @@ public class PanmirrorPandocFormatConfig
       String bDoctypes = b.doctypes != null ? String.join(",", b.doctypes) : "";
       return StringUtil.equals(a.mode, b.mode) &&
              StringUtil.equals(a.extensions, b.extensions) &&
+             StringUtil.equals(a.rmdExtensions, b.rmdExtensions) &&
              aDoctypes == bDoctypes;       
    }
    

@@ -1,7 +1,7 @@
 /*
  * PanmirrorHRefSelect.java
  *
- * Copyright (C) 2009-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -99,7 +99,10 @@ public class PanmirrorHRefSelect extends Composite implements CanFocus
    
    public void setHRef(int type, String href)
    {
-      if (type == PanmirrorLinkType.Heading && !capabilities_.headings) {
+      // screen out sets of extended types if our capabilities don't support them
+      if (type == PanmirrorLinkType.ID && (!capabilities_.attributes || targets_.ids.length == 0)) {
+         type = PanmirrorLinkType.URL;
+      } else if (type == PanmirrorLinkType.Heading && (!capabilities_.headings || targets_.headings.length == 0)) {
          type = PanmirrorLinkType.URL;
       }
       
@@ -111,7 +114,7 @@ public class PanmirrorHRefSelect extends Composite implements CanFocus
          href_.setText(href);
       }
       else if (getType() == PanmirrorLinkType.Heading)
-      {
+      {   
          for (int i = 0; i<targets_.headings.length; i++)
          {
             if (targets_.headings[i].text.equals(href))
@@ -119,6 +122,10 @@ public class PanmirrorHRefSelect extends Composite implements CanFocus
                headings_.setSelectedIndex(i);
                break;
             }
+         }
+         if (!headings_.getSelectedValue().equalsIgnoreCase(href)) {
+            headings_.addItem(href);
+            headings_.setSelectedIndex(headings_.getItemCount() - 1); 
          }
       }
       else if (getType() == PanmirrorLinkType.ID)
@@ -130,6 +137,10 @@ public class PanmirrorHRefSelect extends Composite implements CanFocus
                ids_.setSelectedIndex(i);
                break;
             }
+         }
+         if (!ids_.getSelectedValue().equalsIgnoreCase(href)) {
+            ids_.addItem(href);
+            ids_.setSelectedIndex(ids_.getItemCount() - 1); 
          }
       }  
    }

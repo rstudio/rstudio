@@ -1,7 +1,7 @@
 /*
  * MessageDisplay.java
  *
- * Copyright (C) 2009-19 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -19,7 +19,13 @@ import java.util.List;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.Focusable;
 
-import org.rstudio.core.client.widget.*;
+import org.rstudio.core.client.widget.CanFocus;
+import org.rstudio.core.client.widget.DialogBuilder;
+import org.rstudio.core.client.widget.FocusHelper;
+import org.rstudio.core.client.widget.Operation;
+import org.rstudio.core.client.widget.OperationWithInput;
+import org.rstudio.core.client.widget.ProgressOperation;
+import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.studio.client.common.GlobalDisplay;
 
 public abstract class MessageDisplay
@@ -30,22 +36,28 @@ public abstract class MessageDisplay
    public final static int MSG_ERROR = 3;
    public final static int MSG_QUESTION = 4;
    public final static int MSG_POPUP_BLOCKED = 0;
-   
+
    public final static int INPUT_REQUIRED_TEXT = 0;
    public final static int INPUT_OPTIONAL_TEXT = 1;
    public final static int INPUT_PASSWORD = 2;
    public final static int INPUT_NUMERIC = 3;
    public final static int INPUT_USERNAME = 4;
-   
+
    public static class PromptWithOptionResult
    {
       public String input;
       public boolean extraOption;
    }
-   
+
    public abstract void promptForText(String title,
                                       String label,
                                       String initialValue,
+                                      OperationWithInput<String> operation);
+
+   public abstract void promptForText(String title,
+                                      String label,
+                                      String initialValue,
+                                      boolean optional,
                                       OperationWithInput<String> operation);
 
    public abstract void promptForText(String title,
@@ -57,7 +69,7 @@ public abstract class MessageDisplay
                                       String label,
                                       String initialValue,
                                       ProgressOperationWithInput<String> operation);
-  
+
    public abstract void promptForText(String title,
                                       String label,
                                       String initialValue,
@@ -94,7 +106,7 @@ public abstract class MessageDisplay
                               okOperation,
                               cancelOperation);
    }
-   
+
    public abstract void promptForTextWithOption(
          String title,
          String label,
@@ -131,7 +143,7 @@ public abstract class MessageDisplay
             .addButton("OK", ElementIds.DIALOG_OK_BUTTON, dismissed)
             .showModal();
    }
-      
+
    public void showMessage(int type,
                            String caption,
                            String message,
@@ -152,13 +164,7 @@ public abstract class MessageDisplay
                            final Focusable focusAfter)
    {
       createDialog(type, caption, message)
-      .addButton("OK", ElementIds.DIALOG_OK_BUTTON, new Operation() {
-
-         public void execute()
-         {
-            FocusHelper.setFocusDeferred(focusAfter);
-         }
-      })
+      .addButton("OK", ElementIds.DIALOG_OK_BUTTON, () -> FocusHelper.setFocusDeferred(focusAfter))
       .showModal();
    }
 
@@ -168,13 +174,7 @@ public abstract class MessageDisplay
                            final CanFocus focusAfter)
    {
       createDialog(type, caption, message)
-      .addButton("OK", ElementIds.DIALOG_OK_BUTTON, new Operation() {
-
-         public void execute()
-         {
-            FocusHelper.setFocusDeferred(focusAfter);
-         }
-      })
+      .addButton("OK", ElementIds.DIALOG_OK_BUTTON, () -> FocusHelper.setFocusDeferred(focusAfter))
       .showModal();
    }
 
@@ -259,7 +259,7 @@ public abstract class MessageDisplay
                        "No",
                        yesIsDefault);
    }
-   
+
    public void showYesNoMessage(int type,
                                 String caption,
                                 String message,
@@ -278,7 +278,7 @@ public abstract class MessageDisplay
          dialog.addButton("Cancel", ElementIds.DIALOG_CANCEL_BUTTON);
       dialog.showModal();
    }
-   
+
    public void showGenericDialog(int type,
                                  String caption,
                                  String message,
@@ -326,7 +326,7 @@ public abstract class MessageDisplay
    {
       showMessage(MSG_ERROR, caption, message, focusAfter);
    }
-   
+
    public void showPopupBlockedMessage(Operation yesOperation)
    {
       showYesNoMessage(
@@ -341,19 +341,13 @@ public abstract class MessageDisplay
             "for " + Window.Location.getHostName() + ".",
             false,
             yesOperation,
-            new Operation()
-            {
-               public void execute()
-               {
-
-               }
-            },
+            () -> {},
             null,
             "Try Again",
             "Cancel",
             true);
    }
-   
+
    public void showNotYetImplemented()
    {
       showMessage(MSG_INFO, 

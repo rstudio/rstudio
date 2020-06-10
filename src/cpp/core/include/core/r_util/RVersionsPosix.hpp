@@ -1,7 +1,7 @@
 /*
  * RVersions.hpp
  *
- * Copyright (C) 2009-12 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -98,7 +98,11 @@ public:
    void setLibrary(const std::string& library)
    {
       library_ = library;
-      core::system::setenv(&environment_, "R_LIBS_SITE", library);
+
+      // only set R_LIBS_SITE env var if it is non-empty
+      // setting an empty site library will cause the default system configuration to be lost
+      if (!library.empty())
+         core::system::setenv(&environment_, "R_LIBS_SITE", library);
    }
 
    bool operator<(const RVersion& other) const

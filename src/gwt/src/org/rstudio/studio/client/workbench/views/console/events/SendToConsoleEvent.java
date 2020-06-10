@@ -1,7 +1,7 @@
 /*
  * SendToConsoleEvent.java
  *
- * Copyright (C) 2009-15 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,17 +14,21 @@
  */
 package org.rstudio.studio.client.workbench.views.console.events;
 
+import com.google.gwt.event.shared.EventHandler;
 import org.rstudio.core.client.js.JavaScriptSerializable;
 import org.rstudio.studio.client.application.events.CrossWindowEvent;
 
 import com.google.gwt.core.client.JavaScriptObject;
-import com.google.gwt.event.shared.GwtEvent;
 
 @JavaScriptSerializable
-public class SendToConsoleEvent extends CrossWindowEvent<SendToConsoleHandler>
+public class SendToConsoleEvent extends CrossWindowEvent<SendToConsoleEvent.Handler>
 {
-   public static final GwtEvent.Type<SendToConsoleHandler> TYPE =
-      new GwtEvent.Type<SendToConsoleHandler>();
+   public static final Type<Handler> TYPE = new Type<>();
+
+   public interface Handler extends EventHandler
+   {
+      void onSendToConsole(SendToConsoleEvent event);
+   }
    
    public static class Data extends JavaScriptObject
    {
@@ -143,13 +147,13 @@ public class SendToConsoleEvent extends CrossWindowEvent<SendToConsoleHandler>
    }
    
    @Override
-   public Type<SendToConsoleHandler> getAssociatedType()
+   public Type<Handler> getAssociatedType()
    {
       return TYPE;
    }
 
    @Override
-   protected void dispatch(SendToConsoleHandler sendToConsoleHandler)
+   protected void dispatch(Handler sendToConsoleHandler)
    {
       sendToConsoleHandler.onSendToConsole(this);
    }

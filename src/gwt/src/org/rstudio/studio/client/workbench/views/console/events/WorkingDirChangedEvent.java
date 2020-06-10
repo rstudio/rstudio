@@ -1,7 +1,7 @@
 /*
  * WorkingDirChangedEvent.java
  *
- * Copyright (C) 2009-12 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,13 +14,18 @@
  */
 package org.rstudio.studio.client.workbench.views.console.events;
 
+import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 
-public class WorkingDirChangedEvent extends GwtEvent<WorkingDirChangedHandler>
+public class WorkingDirChangedEvent extends GwtEvent<WorkingDirChangedEvent.Handler>
 {
-   public static final GwtEvent.Type<WorkingDirChangedHandler> TYPE =
-      new GwtEvent.Type<WorkingDirChangedHandler>();
-    
+   public static final Type<Handler> TYPE = new Type<>();
+
+   public interface Handler extends EventHandler
+   {
+      void onWorkingDirChanged(WorkingDirChangedEvent event);
+   }
+
    public WorkingDirChangedEvent(String path)
    {
       path_ = path;
@@ -32,13 +37,13 @@ public class WorkingDirChangedEvent extends GwtEvent<WorkingDirChangedHandler>
    }
    
    @Override
-   protected void dispatch(WorkingDirChangedHandler handler)
+   protected void dispatch(Handler handler)
    {
       handler.onWorkingDirChanged(this);
    }
 
    @Override
-   public GwtEvent.Type<WorkingDirChangedHandler> getAssociatedType()
+   public Type<Handler> getAssociatedType()
    {
       return TYPE;
    }

@@ -1,7 +1,7 @@
 #
 # SessionTests.R
 #
-# Copyright (C) 2009-19 by RStudio, PBC
+# Copyright (C) 2020 by RStudio, PBC
 #
 # Unless you have received this program directly from RStudio pursuant
 # to the terms of a commercial license agreement with RStudio, then
@@ -38,8 +38,10 @@
 
    # Find the Shiny app directory
    shinyDir <- dirname(testFile)
-   if (identical(basename(shinyDir), "shinytests")) {
-      # Newer versions of shinytest store tests in a "shinytests" folder
+   if (identical(basename(shinyDir), "shinytests") ||
+       identical(basename(shinyDir), "shinytest")) {
+      # Newer versions of shinytest store tests in a "shinytest" or "shinytests" folder (depending
+      # on version)
       shinyDir <- dirname(shinyDir)
    } 
    if (identical(basename(shinyDir), "tests")) {

@@ -57,7 +57,7 @@ public class PanmirrorCommands
    public static final String ListItemSplit = "19BBD87F-96D6-4276-B7B8-470652CF4106";
    public static final String ListItemCheck = "2F6DA9D8-EE57-418C-9459-50B6FD84137F";
    public static final String ListItemCheckToggle = "34D30F3D-8441-44AD-B75A-415DA8AC740B";
-   public static final String OrderedListEdit = "E006A68C-EA39-4954-91B9-DDB07D1CBDA2";
+   public static final String EditListProperties = "E006A68C-EA39-4954-91B9-DDB07D1CBDA2";
 
    // tables
    public static final String TableInsertTable = "FBE39613-2DAA-445D-9E92-E1EABFB33E2C";
@@ -91,6 +91,7 @@ public class PanmirrorCommands
    public static final String DefinitionList = "CFAB8F4D-3350-4398-9754-8DE0FB95167B";
    public static final String DefinitionTerm = "204D1A8F-8EE6-424A-8E69-99768C85B39E";
    public static final String DefinitionDescription = "F0738D83-8E11-4CB5-B958-390190A2D7DD";
+   public static final String Symbol = "1419765F-6E4A-4A4C-8670-D9E8578EA996";
    
    // raw
    public static final String TexInline = "CFE8E9E5-93BA-4FFA-9A77-BA7EFC373864";

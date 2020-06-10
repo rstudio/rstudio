@@ -1,7 +1,7 @@
 /*
  * NewConnectionWizardRequestCloseEvent.java
  *
- * Copyright (C) 2009-18 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -18,16 +18,15 @@ import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 
 public class NewConnectionWizardRequestCloseEvent extends GwtEvent<NewConnectionWizardRequestCloseEvent.Handler>
-{  
+{
    public interface Handler extends EventHandler
    {
       void onNewConnectionWizardRequestClose(NewConnectionWizardRequestCloseEvent event);
    }
-   
+
    public NewConnectionWizardRequestCloseEvent()
    {
    }
-  
 
    @Override
    public Type<Handler> getAssociatedType()
@@ -41,5 +40,5 @@ public class NewConnectionWizardRequestCloseEvent extends GwtEvent<NewConnection
       handler.onNewConnectionWizardRequestClose(this);
    }
 
-   public static final Type<Handler> TYPE = new Type<Handler>();
+   public static final Type<Handler> TYPE = new Type<>();
 }

@@ -1,7 +1,7 @@
 /*
  * decoration.ts
  *
- * Copyright (C) 2019-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -16,15 +16,13 @@
 import { ResolvedPos } from 'prosemirror-model';
 import { EditorView } from 'prosemirror-view';
 
-import React from 'react';
-
 import { editingRootNodeClosestToPos } from '../node';
 
 import { kPixelUnit } from '../css';
 
 export interface DecorationPosition {
   pos: number;
-  style: React.CSSProperties;
+  style: { [key: string]: string };
 }
 
 export function textRangePopupDecorationPosition(
@@ -58,7 +56,7 @@ export function textRangePopupDecorationPosition(
 
   // we need to compute whether the popup will be visible (horizontally), do
   // this by testing whether we have room for the max link width + controls/padding
-  let style: React.CSSProperties;
+  let style: { [key: string]: string };
   const positionRight = linkCoords.left + maxWidth > editingBox.right;
   if (positionRight) {
     const rightCoords = view.coordsAtPos(range.to);

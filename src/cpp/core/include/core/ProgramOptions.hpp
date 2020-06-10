@@ -1,7 +1,7 @@
 /*
  * ProgramOptions.hpp
  *
- * Copyright (C) 2009-19 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -92,6 +92,9 @@ inline ProgramStatus read(const OptionsDescription& optionsDescription,
    return read(optionsDescription, argc, argv, &help,
                allowUnregisteredConfigOptions, configFileHasPrecedence);
 }
+
+void reportError(const Error& error,
+                 const ErrorLocation& location);
 
 void reportError(const std::string& errorMessage,
                  const ErrorLocation& location);

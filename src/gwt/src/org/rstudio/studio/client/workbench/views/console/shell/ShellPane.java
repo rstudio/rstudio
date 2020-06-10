@@ -1,7 +1,7 @@
 /*
  * ShellPane.java
  *
- * Copyright (C) 2009-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -15,7 +15,6 @@
 package org.rstudio.studio.client.workbench.views.console.shell;
 
 import com.google.gwt.core.client.Scheduler;
-import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.user.client.ui.*;
 import com.google.inject.Inject;
 import org.rstudio.core.client.CommandWithArg;
@@ -34,7 +33,7 @@ public class ShellPane extends ShellWidget implements Shell.Display
       super(editor, uiPrefs, events, ariaLive, "Console Output");
 
       editor.setDisableOverwrite(true);
-      
+
       editor.setFileType(FileTypeRegistry.R, true);
       // Setting file type to R changes the wrap mode to false. We want it to
       // be true so that the console input can wrap.
@@ -50,15 +49,15 @@ public class ShellPane extends ShellWidget implements Shell.Display
             else
                inputWidget.addStyleName("nocolor");
          }
-      });    
-      
+      });
+
       uiPrefs.blinkingCursor().bind(new CommandWithArg<Boolean>()
       {
          public void execute(Boolean arg)
          {
             editor.setBlinkingCursor(arg);
          }
-      });  
+      });
    }
 
    @Override
@@ -75,15 +74,11 @@ public class ShellPane extends ShellWidget implements Shell.Display
    @Override
    public void onSelected()
    {
-      Scheduler.get().scheduleDeferred(new ScheduledCommand()
+      Scheduler.get().scheduleDeferred(() ->
       {
-         @Override
-         public void execute()
-         {
-            doOnLoad();
-            scrollPanel_.restoreScrollPosition();
-            input_.focus();
-         }
+         doOnLoad();
+         scrollPanel_.restoreScrollPosition();
+         input_.focus();
       });
    }
 }

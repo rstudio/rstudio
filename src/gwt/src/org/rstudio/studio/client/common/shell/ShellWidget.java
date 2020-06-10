@@ -1,7 +1,7 @@
 /*
  * ShellWidget.java
  *
- * Copyright (C) 2009-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -451,9 +451,11 @@ public class ShellWidget extends Composite implements ShellDisplay,
    
    private String getErrorClass()
    {
-      return styles_.error() + " " + 
-             AceTheme.getThemeErrorClass(
-                RStudioGinjector.INSTANCE.getUserState().theme().getValue().cast());
+      return styles_.error() + 
+         (prefs_.highlightConsoleErrors().getValue() ? 
+            " " + AceTheme.getThemeErrorClass(
+                RStudioGinjector.INSTANCE.getUserState().theme().getValue().cast()) : 
+            "");
    }
 
    /**

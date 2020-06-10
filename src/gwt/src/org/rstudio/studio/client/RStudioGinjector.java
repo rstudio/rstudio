@@ -1,7 +1,7 @@
 /*
  * RStudioGinjector.java
  *
- * Copyright (C) 2009-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -72,6 +72,7 @@ import org.rstudio.studio.client.panmirror.dialogs.PanmirrorEditRawDialog;
 import org.rstudio.studio.client.panmirror.outline.PanmirrorOutlineWidget;
 import org.rstudio.studio.client.panmirror.pandoc.PanmirrorPandocEngine;
 import org.rstudio.studio.client.panmirror.ui.PanmirrorUIDisplay;
+import org.rstudio.studio.client.panmirror.ui.PanmirrorUIPrefs;
 import org.rstudio.studio.client.plumber.PlumberAPI;
 import org.rstudio.studio.client.plumber.PlumberAPISatellite;
 import org.rstudio.studio.client.plumber.ui.PlumberViewerTypePopupMenu;
@@ -299,6 +300,7 @@ public interface RStudioGinjector extends Ginjector
    void injectMembers(PanmirrorOutlineWidget panmirrorOutlineWidget);
    void injectMembers(PanmirrorEditRawDialog panmirrorEditRawDialog);
    void injectMembers(PanmirrorUIDisplay panmirrorUIDisplay);
+   void injectMembers(PanmirrorUIPrefs panmirrorUIPrefs);
    void injectMembers(TextEditingTargetVisualMode textEditingTargetVisualMode);
    void injectMembers(OpenProjectDialog dialog);
    

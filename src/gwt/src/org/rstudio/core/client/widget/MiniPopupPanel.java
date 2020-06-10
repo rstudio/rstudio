@@ -1,7 +1,7 @@
 /*
  * MiniPopupPanel.java
  *
- * Copyright (C) 2009-12 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -86,6 +86,7 @@ public class MiniPopupPanel extends DecoratedPopupPanel
    public void show()
    {
       addDragHandler();
+      addEscHandler();
       super.show();
    }
    
@@ -93,27 +94,12 @@ public class MiniPopupPanel extends DecoratedPopupPanel
    public void hide()
    {
       removeDragHandler();
+      removeEscHandler();
       super.hide();
    }
    
    private void commonInit(boolean useStyleSheet)
    {
-      escapeHandler_ = Event.addNativePreviewHandler(new NativePreviewHandler()
-      {
-         @Override
-         public void onPreviewNativeEvent(NativePreviewEvent event)
-         {
-            if (event.getTypeInt() == Event.ONKEYDOWN &&
-                  event.getNativeEvent().getKeyCode() == KeyCodes.KEY_ESCAPE)
-            {
-               event.cancel();
-               escapeHandler_.removeHandler();
-               escapeHandler_ = null;
-               hide();
-            }
-         }
-      });
-      
       if (useStyleSheet)
       {
          addStyleName(RES.styles().popupPanel());
@@ -276,9 +262,36 @@ public class MiniPopupPanel extends DecoratedPopupPanel
    private void removeDragHandler()
    {
       if (dragHandler_ != null)
+      {
          dragHandler_.removeHandler();
+         dragHandler_ = null;
+      }
    }
-   
+
+   private void addEscHandler()
+   {
+      escapeHandler_ = Event.addNativePreviewHandler(nativePreviewEvent ->
+      {
+         if (nativePreviewEvent.getTypeInt() == Event.ONKEYDOWN &&
+            nativePreviewEvent.getNativeEvent().getKeyCode() == KeyCodes.KEY_ESCAPE)
+         {
+            nativePreviewEvent.cancel();
+            escapeHandler_.removeHandler();
+            escapeHandler_ = null;
+            hide();
+         }
+      });
+   }
+
+   private void removeEscHandler()
+   {
+      if (escapeHandler_ != null)
+      {
+         escapeHandler_.removeHandler();
+         escapeHandler_ = null;
+      }
+   }
+
    private int initialPopupLeft_ = 0;
    private int initialPopupTop_ = 0;
    

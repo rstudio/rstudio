@@ -1,7 +1,7 @@
 /*
  * SpellChecker.java
  *
- * Copyright (C) 2009-19 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -292,7 +292,7 @@ public class TypoSpellChecker
          }
          else
          {
-            if (typoNative_.check(word))
+            if (typoNative_.check(word) || checkCustomDicts(word))
             {
                spellCheckerResult.getCorrect().add(word);
             }
@@ -372,7 +372,7 @@ public class TypoSpellChecker
    {
       final String language = userPrefs_.spellingDictionaryLanguage().getValue();
 
-      if (!userPrefs_.realTimeSpellchecking().getValue() || typoLoaded_ && loadedDict_.equals(language))
+      if (typoLoaded_ && loadedDict_.equals(language))
          return;
 
       // See canRealtimeSpellcheckDict comment, temporary stop gap

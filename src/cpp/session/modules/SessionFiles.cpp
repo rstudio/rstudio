@@ -1,7 +1,7 @@
 /*
  * SessionFiles.cpp
  *
- * Copyright (C) 2009-19 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -633,7 +633,7 @@ Error completeUpload(const core::json::JsonRpcRequest& request,
          
          // move the source to the destination, falling back to a copy
          // if the move cannot be completed
-         Error copyError = uploadedTempFilePath.move(targetPath);
+         Error copyError = uploadedTempFilePath.move(targetPath, FilePath::MoveCrossDevice, true);
          if (copyError)
             return copyError;
       }

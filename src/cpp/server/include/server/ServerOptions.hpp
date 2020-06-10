@@ -1,7 +1,7 @@
 /*
  * ServerOptions.hpp
  *
- * Copyright (C) 2009-17 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -210,6 +210,11 @@ public:
       return authLoginPageHtml_;
    }
 
+   std::string authRdpLoginPageHtml()
+   {
+      return authRdpLoginPageHtml_;
+   }
+
    std::string authRequiredUserGroup()
    {
       return std::string(authRequiredUserGroup_.c_str());
@@ -335,6 +340,7 @@ private:
       setOverlayOption(name, core::safe_convert::numberToString(value));
    }
 
+   std::string rsessionExecutable() const;
 
 private:
    core::FilePath installPath_;
@@ -368,6 +374,7 @@ private:
    int authTimeoutMinutes_;
    bool authEncryptPassword_;
    std::string authLoginPageHtml_;
+   std::string authRdpLoginPageHtml_;
    std::string authRequiredUserGroup_;
    unsigned int authMinimumUserId_;
    std::string authPamHelperPath_;

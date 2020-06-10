@@ -3,7 +3,7 @@
 #
 # expired.htm
 #
-# Copyright (C) 2009-19 by RStudio, PBC
+# Copyright (C) 2020 by RStudio, PBC
 #
 # This program is licensed to you under the terms of version 3 of the
 # GNU Affero General Public License. This program is distributed WITHOUT
@@ -72,18 +72,20 @@ body, td {
 
 </head>
 <body>
-<h3 id="banner"><a href="http://www.rstudio.com"><img src="images/rstudio.png" width="78" height="24" title="RStudio" alt="RStudio"/></a></h3>
-
+<header role="banner">
+<h1 id="banner"><a href="http://www.rstudio.com"><img src="images/rstudio.png" width="78" height="24" alt="RStudio (links to external site)"/></a></h1>
+</header>
+<main role="main">
 <table id="border">
   <tr>
-    <td><img alt id="image" src="images/expired.png"/></td>
+    <td><img id="image" alt src="images/expired.png"/></td>
     <td>
       <h2 id="caption">RStudio Server License Expired</h2>
       <div id="detail">This version of RStudio Server has expired. Please <a href="http://www.rstudio.com">contact us</a> to obtain an up to date license.</div>
     </td>
   </tr>
 </table>
-
+</main>
 
 </body>
 

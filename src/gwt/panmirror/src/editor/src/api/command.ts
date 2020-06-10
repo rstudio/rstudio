@@ -1,7 +1,7 @@
 /*
  * command.ts
  *
- * Copyright (C) 2019-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -23,6 +23,7 @@ import { EditorView } from 'prosemirror-view';
 import { markIsActive } from './mark';
 import { canInsertNode, nodeIsActive } from './node';
 import { pandocAttrInSpec, pandocAttrAvailable, pandocAttrFrom } from './pandoc_attr';
+import { isList } from './list';
 
 export enum EditorCommandId {
   // text editing
@@ -64,7 +65,7 @@ export enum EditorCommandId {
   ListItemSplit = '19BBD87F-96D6-4276-B7B8-470652CF4106',
   ListItemCheck = '2F6DA9D8-EE57-418C-9459-50B6FD84137F',
   ListItemCheckToggle = '34D30F3D-8441-44AD-B75A-415DA8AC740B',
-  OrderedListEdit = 'E006A68C-EA39-4954-91B9-DDB07D1CBDA2',
+  EditListProperties = 'E006A68C-EA39-4954-91B9-DDB07D1CBDA2',
 
   // tables
   TableInsertTable = 'FBE39613-2DAA-445D-9E92-E1EABFB33E2C',
@@ -100,6 +101,7 @@ export enum EditorCommandId {
   DefinitionList = 'CFAB8F4D-3350-4398-9754-8DE0FB95167B',
   DefinitionTerm = '204D1A8F-8EE6-424A-8E69-99768C85B39E',
   DefinitionDescription = 'F0738D83-8E11-4CB5-B958-390190A2D7DD',
+  Symbol = '1419765F-6E4A-4A4C-8670-D9E8578EA996',
 
   // raw
   TexInline = 'CFE8E9E5-93BA-4FFA-9A77-BA7EFC373864',
@@ -113,7 +115,7 @@ export enum EditorCommandId {
   // chunk
   RmdChunk = 'EBFD21FF-4A6E-4D88-A2E0-B38470B00BB9',
   ExecuteCurentRmdChunk = '31C799F3-EF18-4F3A-92E6-51F7A3193A1B',
-  ExecuteCurrentPreviousRmdChunks = 'D3FDE96-0264-4364-ADFF-E87A75405B0B'
+  ExecuteCurrentPreviousRmdChunks = 'D3FDE96-0264-4364-ADFF-E87A75405B0B',
 }
 
 export interface EditorCommand {
@@ -202,11 +204,7 @@ export class WrapCommand extends NodeCommand {
 export type CommandFn = (state: EditorState, dispatch?: (tr: Transaction<any>) => void, view?: EditorView) => boolean;
 
 export function toggleList(listType: NodeType, itemType: NodeType): CommandFn {
-  function isList(node: ProsemirrorNode) {
-    const schema = node.type.schema;
-    return node.type === schema.nodes.bullet_list || node.type === schema.nodes.ordered_list;
-  }
-
+  
   return (state: EditorState, dispatch?: (tr: Transaction<any>) => void, view?: EditorView) => {
     const { selection } = state;
     const { $from, $to } = selection;
@@ -216,7 +214,7 @@ export function toggleList(listType: NodeType, itemType: NodeType): CommandFn {
       return false;
     }
 
-    const parentList = findParentNode(node => isList(node))(selection);
+    const parentList = findParentNode(isList)(selection);
 
     if (range.depth >= 1 && parentList && range.depth - parentList.depth <= 1) {
       if (isList(parentList.node) && listType.validContent(parentList.node.content)) {

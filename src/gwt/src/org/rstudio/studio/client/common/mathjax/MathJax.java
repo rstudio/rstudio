@@ -1,7 +1,7 @@
 /*
  * MathJax.java
  *
- * Copyright (C) 2009-18 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -52,7 +52,6 @@ import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.core.client.Scheduler.ScheduledCommand;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style.Unit;
-import com.google.gwt.dom.client.Style.Visibility;
 import com.google.gwt.event.dom.client.BlurEvent;
 import com.google.gwt.event.dom.client.BlurHandler;
 import com.google.gwt.event.logical.shared.AttachEvent;
@@ -217,7 +216,7 @@ public class MathJax
    
    public void renderLatex(final Range range,
                            final boolean background,
-                           final MathJaxTypesetCallback callback)
+                           final MathJaxTypeset.Callback callback)
    {
       MathJaxLoader.withMathJaxLoaded(new MathJaxLoader.Callback()
       {
@@ -241,7 +240,7 @@ public class MathJax
    
    private void renderLatexImpl(final Range range,
                                 final boolean background,
-                                final MathJaxTypesetCallback callback)
+                                final MathJaxTypeset.Callback callback)
    {
       String text = docDisplay_.getTextForRange(range);
       
@@ -287,7 +286,7 @@ public class MathJax
    
    private void renderLatexLineWidget(final Range range,
                                       final String text,
-                                      final MathJaxTypesetCallback callback)
+                                      final MathJaxTypeset.Callback callback)
    {
       // end a previous render session if necessary (e.g. if a popup is showing)
       endRender();
@@ -328,7 +327,7 @@ public class MathJax
    private void renderLatexLineWidget(LineWidget widget,
                                      final Range range,
                                      final String text,
-                                     final MathJaxTypesetCallback callback)
+                                     final MathJaxTypeset.Callback callback)
    {
       final Element el = DomUtils.getFirstElementWithClassName(
             widget.getElement(),
@@ -345,11 +344,16 @@ public class MathJax
          @Override
          public void execute()
          {
-            mathjaxTypeset(el, text, new MathJaxTypesetCallback()
+            MathJaxTypeset.typeset(el, text, new MathJaxTypeset.Callback()
             {
                @Override
                public void onMathJaxTypesetComplete(final boolean error)
                {
+                  // capture last rendered text
+                  if (!error)
+                     lastRenderedText_ = text;
+                  
+                  
                   // force expansion
                   withExpandedLineWidget(lineWidget, new CommandWithArg<Boolean>()
                   {
@@ -522,7 +526,7 @@ public class MathJax
    }
    
    private void renderPopup(final String text,
-                            final MathJaxTypesetCallback callback)
+                            final MathJaxTypeset.Callback callback)
    {
       // no need to re-render if text hasn't changed or is empty
       if (text == lastRenderedText_)
@@ -543,7 +547,7 @@ public class MathJax
       // just typeset
       if (popup_.isShowing())
       {
-         mathjaxTypeset(popup_.getContentElement(), text, callback);
+         MathJaxTypeset.typeset(popup_.getContentElement(), text, callback);
          return;
       }
       
@@ -552,12 +556,16 @@ public class MathJax
       popup_.show();
       
       // typeset and position after typesetting finished
-      mathjaxTypeset(popup_.getContentElement(), text, new MathJaxTypesetCallback()
+      MathJaxTypeset.typeset(popup_.getContentElement(), text, new MathJaxTypeset.Callback()
       {
          
          @Override
          public void onMathJaxTypesetComplete(boolean error)
          {
+            // capture last rendered text
+            if (!error)
+               lastRenderedText_ = text;
+            
             // re-position popup after render
             popup_.positionNearRange(docDisplay_, range_);
             popup_.show();
@@ -574,95 +582,7 @@ public class MathJax
       resetRenderState();
       popup_.hide();
    }
-   
-   private void onMathJaxTypesetCompleted(final Object mathjaxElObject,
-                                          final String text,
-                                          final boolean error,
-                                          final Object commandObject,
-                                          final int attempt)
-   {
-      final Element mathjaxEl = (Element) mathjaxElObject;
 
-      if (attempt < MAX_RENDER_ATTEMPTS)
-      {
-         // if mathjax displayed an error, try re-rendering once more
-         Element[] errorEls = DomUtils.getElementsByClassName(mathjaxEl, 
-               "MathJax_Error");
-         if (errorEls != null && errorEls.length > 0 &&
-             attempt < MAX_RENDER_ATTEMPTS)
-         {
-            // hide the error and retry in 25ms (experimentally this seems to
-            // produce a better shot at rendering successfully than an immediate
-            // or deferred retry)
-            mathjaxEl.getStyle().setVisibility(Visibility.HIDDEN);
-            new Timer()
-            {
-               @Override
-               public void run()
-               {
-                  mathjaxTypeset(mathjaxEl, text, commandObject, attempt + 1);
-               }
-            }.schedule(25);
-            return;
-         }
-      }
-      
-      // show whatever we've got (could be an error if we ran out of retries)
-      mathjaxEl.getStyle().setVisibility(Visibility.VISIBLE);
-      
-      // execute callback
-      if (commandObject != null && commandObject instanceof MathJaxTypesetCallback)
-      {
-         MathJaxTypesetCallback callback = (MathJaxTypesetCallback) commandObject;
-         callback.onMathJaxTypesetComplete(error);
-      }
-      
-      if (!error)
-      {
-         lastRenderedText_ = text;
-      }
-   }
-   
-   private final void mathjaxTypeset(Element el, String currentText)
-   {
-      mathjaxTypeset(el, currentText, null);
-   }
-
-   private final void mathjaxTypeset(Element el, String currentText, 
-         Object command)
-   {
-      mathjaxTypeset(el, currentText, command, 0);
-   }
-   
-   private final native void mathjaxTypeset(Element el,
-                                            String currentText,
-                                            Object command,
-                                            int attempt)
-   /*-{
-      var MathJax = $wnd.MathJax;
-      
-      // save last rendered text
-      var jax = MathJax.Hub.getAllJax(el)[0];
-      var lastRenderedText = jax && jax.originalText || "";
-      
-      // update text in element
-      el.innerText = currentText;
-      
-      // typeset element
-      var self = this;
-      MathJax.Hub.Queue($entry(function() {
-         MathJax.Hub.Typeset(el, $entry(function() {
-            // restore original typesetting on failure
-            jax = MathJax.Hub.getAllJax(el)[0];
-            var error = !!(jax && jax.texError);
-            if (error && lastRenderedText.length)
-               jax.Text(lastRenderedText);
-
-            // callback to GWT
-            self.@org.rstudio.studio.client.common.mathjax.MathJax::onMathJaxTypesetCompleted(Ljava/lang/Object;Ljava/lang/String;ZLjava/lang/Object;I)(el, currentText, error, command, attempt);
-         }));
-      }));
-   }-*/;
    
    private void beginCursorMonitoring()
    {
@@ -730,11 +650,6 @@ public class MathJax
    private Range range_;
    private HandlerRegistration cursorChangedHandler_;
    private String lastRenderedText_ = "";
-   
-   // sometimes MathJax fails to render initially but succeeds if asked to do so
-   // again; this is the maximum number of times we'll try to re-render the same
-   // text automatically before giving up
-   private static final int MAX_RENDER_ATTEMPTS = 2;
    
    public static final String LINE_WIDGET_TYPE = "mathjax-preview";
    public static final String MATHJAX_ROOT_CLASSNAME = "rstudio-mathjax-root";

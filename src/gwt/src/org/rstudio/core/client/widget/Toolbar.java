@@ -1,7 +1,7 @@
 /*
  * Toolbar.java
  *
- * Copyright (C) 2009-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -278,6 +278,14 @@ public class Toolbar extends Composite
    {
       addLeftWidget(widget);
       leftToolbarPanel_.setCellVerticalAlignment(widget, alignment);
+      invalidateSeparators();
+      return widget;
+   }
+   
+   public <TWidget extends Widget> TWidget insertWidget(TWidget widget, TWidget beforeWidget)
+   {
+      int beforeIndex = leftToolbarPanel_.getWidgetIndex(beforeWidget);
+      leftToolbarPanel_.insert(widget, beforeIndex);
       invalidateSeparators();
       return widget;
    }

@@ -1,7 +1,7 @@
 /*
  * ConsoleWriteInputEvent.java
  *
- * Copyright (C) 2009-12 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,13 +14,19 @@
  */
 package org.rstudio.studio.client.workbench.views.console.events;
 
+import com.google.gwt.event.shared.EventHandler;
 import org.rstudio.studio.client.workbench.views.console.model.ConsoleText;
 
 import com.google.gwt.event.shared.GwtEvent;
 
-public class ConsoleWriteInputEvent extends GwtEvent<ConsoleWriteInputHandler>
+public class ConsoleWriteInputEvent extends GwtEvent<ConsoleWriteInputEvent.Handler>
 {
-   public static final Type<ConsoleWriteInputHandler> TYPE = new Type<ConsoleWriteInputHandler>();
+   public static final Type<Handler> TYPE = new Type<>();
+   
+   public interface Handler extends EventHandler
+   {
+      void onConsoleWriteInput(ConsoleWriteInputEvent event);
+   }
 
    public ConsoleWriteInputEvent(ConsoleText text)
    {
@@ -40,13 +46,13 @@ public class ConsoleWriteInputEvent extends GwtEvent<ConsoleWriteInputHandler>
    private final ConsoleText text_;
 
    @Override
-   public Type<ConsoleWriteInputHandler> getAssociatedType()
+   public Type<Handler> getAssociatedType()
    {
       return TYPE;
    }
 
    @Override
-   protected void dispatch(ConsoleWriteInputHandler handler)
+   protected void dispatch(Handler handler)
    {
       handler.onConsoleWriteInput(this);
    }

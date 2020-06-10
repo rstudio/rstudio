@@ -1,7 +1,7 @@
 /*
  * AsyncClient.hpp
  *
- * Copyright (C) 2009-19 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -128,6 +128,11 @@ public:
       errorHandler_ = errorHandler;
       if (chunkHandler)
          chunkHandler_ = chunkHandler;
+
+      // if the host header is not already set, make sure we stamp a default one
+      // this is required by the http standard
+      if (request_.host().empty())
+         request_.setHost(getDefaultHostHeader());
 
       // connect and write request (implmented in a protocol
       // specific manner by subclassees)
@@ -313,7 +318,7 @@ protected:
 private:
 
    virtual void connectAndWriteRequest() = 0;
-
+   virtual std::string getDefaultHostHeader() = 0;
 
    bool retryConnectionIfRequired(const Error& connectionError,
                                   Error* pOtherError)

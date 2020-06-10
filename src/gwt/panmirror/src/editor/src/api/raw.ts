@@ -1,7 +1,7 @@
 /*
  * raw.ts
  *
- * Copyright (C) 2019-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -94,6 +94,6 @@ function createRawNode(schema: Schema, format: string) {
 function insertRawNode(tr: Transaction, format: string) {
   const schema = tr.doc.type.schema;
   const prevSel = tr.selection;
-  tr.replaceSelectionWith(createRawNode(schema, format));
+  tr.replaceSelectionWith(createRawNode(schema, format), false);
   setTextSelection(tr.mapping.map(prevSel.from), -1)(tr);
 }

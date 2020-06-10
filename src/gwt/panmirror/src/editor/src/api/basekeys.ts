@@ -1,7 +1,7 @@
 /*
  * basekeys.ts
  *
- * Copyright (C) 2019-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -26,7 +26,7 @@ import {
 } from 'prosemirror-commands';
 import { undoInputRule } from 'prosemirror-inputrules';
 import { keymap } from 'prosemirror-keymap';
-import { EditorState, Transaction } from 'prosemirror-state';
+import { EditorState, Transaction, Plugin } from 'prosemirror-state';
 
 import { CommandFn } from './command';
 
@@ -38,6 +38,10 @@ export enum BaseKey {
   Delete = 'Delete|Mod-Delete', // Use pipes to register multiple commands
   Tab = 'Tab',
   ShiftTab = 'Shift-Tab',
+  ArrowUp = 'Up|ArrowUp',
+  ArrowDown = 'Down|ArrowDown',
+  ArrowLeft = 'Left|ArrowLeft',
+  ArrowRight = 'Right|ArrowRight',
 }
 
 export interface BaseKeyBinding {
@@ -45,7 +49,7 @@ export interface BaseKeyBinding {
   command: CommandFn;
 }
 
-export function baseKeysPlugin(keys: readonly BaseKeyBinding[]) {
+export function baseKeysPlugin(keys: readonly BaseKeyBinding[]): Plugin {
   // collect all keys
   const pluginKeys = [
     // base enter key behaviors
@@ -96,8 +100,6 @@ export function baseKeysPlugin(keys: readonly BaseKeyBinding[]) {
   return keymap(bindings);
 }
 
-
 function ignoreKey(state: EditorState, dispatch?: (tr: Transaction) => void) {
   return true;
 }
-

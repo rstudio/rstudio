@@ -1,7 +1,7 @@
 /*
  * rmd_chunk-image.ts
  *
- * Copyright (C) 2019-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -74,7 +74,7 @@ function imagePreviewDecorations(state: EditorState, uiContext: EditorUIContext)
       // see if we can also find an out.width on the first line
       let width = '';
       const firstLine = rmdChunk.node.textContent.split(/\r?\n/)[0];
-      const widthMatch = firstLine.match(/^\s*[r|R][, ].*out\.width\s*=\s*([^ ,$]+)/);
+      const widthMatch = firstLine.match(/^\s*\{[r|R][, ].*out\.width\s*=\s*([^ ,$]+).*}/);
       if (widthMatch) {
         width = stripQuotes(widthMatch[1].trim());
         // revert if they are using out.width = NULL
@@ -82,6 +82,9 @@ function imagePreviewDecorations(state: EditorState, uiContext: EditorUIContext)
           width = '';
         }
       }
+
+      // see if we can find fig.align='center'
+      const alignCenter = !!firstLine.match(/^\s*\{[r|R][, ].*fig\.align\s*=\s*['"]?center['"]?/);
 
       const imagePath = match[3];
       const decoration = Decoration.widget(
@@ -93,6 +96,9 @@ function imagePreviewDecorations(state: EditorState, uiContext: EditorUIContext)
           container.classList.add('pm-image-preview');
           container.classList.add('pm-block-border-color');
           const img = window.document.createElement('img');
+          if (alignCenter) {
+            img.classList.add('pm-image-centered');
+          }
           img.src = uiContext.mapResourceToURL(imagePath);
           if (width) {
             img.setAttribute('width', width);
@@ -113,7 +119,7 @@ function imagePreviewDecorations(state: EditorState, uiContext: EditorUIContext)
           container.append(img);
           return container;
         },
-        { key: imagePath },
+        { key: imagePath + 'width:' + width + 'center:' + alignCenter },
       );
       decorations.push(decoration);
     }

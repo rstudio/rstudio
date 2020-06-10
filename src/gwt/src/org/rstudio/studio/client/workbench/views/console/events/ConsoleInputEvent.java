@@ -1,7 +1,7 @@
 /*
  * ConsoleInputEvent.java
  *
- * Copyright (C) 2009-12 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,13 +14,18 @@
  */
 package org.rstudio.studio.client.workbench.views.console.events;
 
+import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 
-public class ConsoleInputEvent extends GwtEvent<ConsoleInputHandler>
+public class ConsoleInputEvent extends GwtEvent<ConsoleInputEvent.Handler>
 {
-   public static final GwtEvent.Type<ConsoleInputHandler> TYPE =
-      new GwtEvent.Type<ConsoleInputHandler>();
-    
+   public static final Type<Handler> TYPE = new Type<>();
+
+   public interface Handler extends EventHandler
+   {
+      void onConsoleInput(ConsoleInputEvent event);
+   }
+
    public ConsoleInputEvent(String input, String console)
    {
       input_ = input;
@@ -38,13 +43,13 @@ public class ConsoleInputEvent extends GwtEvent<ConsoleInputHandler>
    }
    
    @Override
-   protected void dispatch(ConsoleInputHandler handler)
+   protected void dispatch(Handler handler)
    {
       handler.onConsoleInput(this);
    }
 
    @Override
-   public GwtEvent.Type<ConsoleInputHandler> getAssociatedType()
+   public Type<Handler> getAssociatedType()
    {
       return TYPE;
    }

@@ -1,7 +1,7 @@
 /*
  * image-view.ts
  *
- * Copyright (C) 2019-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -15,12 +15,13 @@
 
 import { Node as ProsemirrorNode } from 'prosemirror-model';
 import { NodeView, EditorView } from 'prosemirror-view';
-import { NodeSelection } from 'prosemirror-state';
+import { NodeSelection, PluginKey, Plugin } from 'prosemirror-state';
 
 import { EditorUI, ImageType } from '../../api/ui';
 import { PandocExtensions, imageAttributesAvailable } from '../../api/pandoc';
 import { isElementVisible } from '../../api/dom';
-import { EditorEvents, EditorEvent } from '../../api/events';
+import { EditorEvents } from '../../api/events';
+import { ResizeEvent } from '../../api/event-types';
 
 import { imageDialog } from './image-dialog';
 import {
@@ -34,7 +35,27 @@ import { imageDimensionsFromImg, imageContainerWidth } from './image-util';
 
 import './image-styles.css';
 
-export class ImageNodeView implements NodeView {
+export function imageNodeViewPlugins(
+  type: string,
+  ui: EditorUI,
+  events: EditorEvents,
+  pandocExtensions: PandocExtensions,
+): Plugin[] {
+  return [
+    new Plugin({
+      key: new PluginKey(`${type}-node-view`),
+      props: {
+        nodeViews: {
+          [type]: (node: ProsemirrorNode, view: EditorView, getPos: boolean | (() => number)) => {
+            return new ImageNodeView(node, view, getPos as () => number, ui, events, pandocExtensions);
+          },
+        },
+      },
+    }),
+  ];
+}
+
+class ImageNodeView implements NodeView {
   // ProseMirror context
   private readonly type: ImageType;
   private node: ProsemirrorNode;
@@ -173,7 +194,7 @@ export class ImageNodeView implements NodeView {
     this.updateSizeOnVisible();
 
     // update image size whenever the container is resized
-    this.unregisterOnResize = editorEvents.subscribe(EditorEvent.Resize, () => {
+    this.unregisterOnResize = editorEvents.subscribe(ResizeEvent, () => {
       this.updateImageSize();
     });
   }
@@ -190,6 +211,9 @@ export class ImageNodeView implements NodeView {
     if (this.contentDOM || !this.node.type.spec.draggable) {
       this.dom.draggable = true;
     }
+
+    // manage figcaption
+    this.manageFigcaption();
 
     // attach resize UI
     this.attachResizeUI();

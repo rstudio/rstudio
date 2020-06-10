@@ -1,7 +1,7 @@
 /*
  * ServerSessionProxy.cpp
  *
- * Copyright (C) 2009-18 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -24,6 +24,7 @@
 
 #include <boost/date_time/posix_time/posix_time.hpp>
 
+#include <boost/foreach.hpp>
 #include <boost/thread/mutex.hpp>
 #include <boost/thread/thread.hpp>
 #include <boost/thread/thread_time.hpp>
@@ -48,6 +49,7 @@
 #include <core/http/ChunkProxy.hpp>
 #include <core/http/FormProxy.hpp>
 #include <core/system/PosixSystem.hpp>
+#include <core/system/PosixGroup.hpp>
 #include <core/system/PosixUser.hpp>
 #include <core/r_util/RSessionContext.hpp>
 
@@ -215,10 +217,27 @@ void rewriteLocalhostAddressHeader(const std::string& headerName,
                                    bool ipv6,
                                    http::Response* pResponse)
 {
+   // represents the port identifier in the URL
+   std::string portId(port);
+
+   auto portNum = safe_convert::stringTo<int>(portId);
+   if (portNum)
+   {
+      // for numeric ports, use the port token to translate them to opaque identifiers
+      std::string portToken = originalRequest.cookieValue(kPortTokenCookie, options().wwwIFrameLegacyCookies());
+      if (portToken.empty())
+      {
+         // we'll try the default token if no token was supplied on the request
+         portToken = kDefaultPortToken;
+      }
+
+      portId = server_core::transformPort(portToken, *portNum);
+   }
+
    // get the address and the proxied address
    std::string address = pResponse->headerValue(headerName);
-   std::string proxiedAddress = "http://" + baseAddress + ":" + port;
-   std::string portPath = ipv6 ? ("/p6/" + port) : ("/p/" + port);
+   std::string proxiedAddress = "http://" + baseAddress + ":" + portId;
+   std::string portPath = ipv6 ? ("/p6/" + portId) : ("/p/" + portId);
 
    // relative address, just prepend port
    if (boost::algorithm::starts_with(address, "/"))
@@ -358,6 +377,13 @@ void handleLocalhostResponse(
    }
 }
 
+bool handleLicenseError(
+      boost::shared_ptr<http::AsyncConnection> ptrConnection,
+      const Error& error)
+{
+   return false;
+}
+
 void handleLocalhostError(
       boost::shared_ptr<core::http::AsyncConnection> ptrConnection,
       const Error& error)
@@ -368,6 +394,12 @@ void handleLocalhostError(
    {
       http::Response& response = ptrConnection->response();
       response.setStatusCode(http::status::ServiceUnavailable);
+      ptrConnection->writeResponse();
+      return;
+   }
+
+   if (handleLicenseError(ptrConnection, error))
+   {
       ptrConnection->writeResponse();
    }
    else
@@ -452,9 +484,13 @@ void handleContentError(
 
       ptrConnection->writeResponse();
    }
-   // otherwise just forward the error
+   else if (handleLicenseError(ptrConnection, error))
+   {
+      ptrConnection->writeResponse();
+   }
    else
    {
+      // otherwise just forward the error
       ptrConnection->writeError(error);
    }
 }
@@ -509,7 +545,7 @@ void handleRpcError(
       json::setJsonRpcError(Error(json::errc::ConnectionError, ERROR_LOCATION),
                             &(ptrConnection->response()));
    }
-   else
+   else if (!handleLicenseError(ptrConnection, error))
    {
       json::setJsonRpcError(Error(json::errc::TransmissionError, ERROR_LOCATION),
                            &(ptrConnection->response())) ;
@@ -547,7 +583,7 @@ void handleEventsError(
       json::setJsonRpcError(Error(json::errc::Unavailable, ERROR_LOCATION),
                            &(ptrConnection->response()));
    }
-   else
+   else if (!handleLicenseError(ptrConnection, error))
    {
       // log if not connection terminated
       logIfNotConnectionTerminated(error, ptrConnection->request());

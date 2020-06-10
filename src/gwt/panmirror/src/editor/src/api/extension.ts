@@ -1,7 +1,7 @@
 /*
  * extension.ts
  *
- * Copyright (C) 2019-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -31,6 +31,7 @@ import { EditorEvents } from './events';
 import { PandocCapabilities } from './pandoc_capabilities';
 import { EditorFormat } from './format';
 import { MarkInputRuleFilter } from './input_rule';
+import { CompletionHandler } from './completion';
 
 export interface Extension {
   marks?: PandocMark[];
@@ -42,6 +43,7 @@ export interface Extension {
   appendTransaction?: (schema: Schema) => readonly AppendTransactionHandler[];
   appendMarkTransaction?: (schema: Schema) => readonly AppendMarkTransactionHandler[];
   fixups?: (schema: Schema, view: EditorView) => Readonly<FixupFn[]>;
+  completionHandlers?: () => readonly CompletionHandler[];
 }
 
 // return an extension conditional on the active EditorOptions

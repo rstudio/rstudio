@@ -1,7 +1,7 @@
 /*
  * NewConnectionDialogUpdatedEvent.java
  *
- * Copyright (C) 2009-16 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -23,9 +23,9 @@ public class NewConnectionDialogUpdatedEvent extends GwtEvent<NewConnectionDialo
    public static class Data extends JavaScriptObject
    {
       protected Data()
-      {  
+      {
       }
-      
+
       public final native String getCode() /*-{
          return this.code;
       }-*/;
@@ -40,12 +40,12 @@ public class NewConnectionDialogUpdatedEvent extends GwtEvent<NewConnectionDialo
    {
       data_ = data;
    }
-   
+
    public String getCode()
    {
       return data_.getCode();
    }
-   
+
    @Override
    public Type<Handler> getAssociatedType()
    {
@@ -57,8 +57,8 @@ public class NewConnectionDialogUpdatedEvent extends GwtEvent<NewConnectionDialo
    {
       handler.onNewConnectionDialogUpdated(this);
    }
-   
+
    private final Data data_;
-  
-   public static final Type<Handler> TYPE = new Type<Handler>();
+
+   public static final Type<Handler> TYPE = new Type<>();
 }

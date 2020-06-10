@@ -1,7 +1,7 @@
 /*
  * TextEditingTargetWidget.java
  *
- * Copyright (C) 2009-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -1338,7 +1338,7 @@ public class TextEditingTargetWidget
    public void setIsNotebookFormat()
    {
       knitCommandText_ = "Preview";
-      knitDocumentButton_.setTitle("Preview the notebook " +
+      knitDocumentButton_.setTitle("Preview the notebook (" +
             DomUtils.htmlToText(
                   commands_.knitDocument().getShortcutPrettyHtml()) + ")");
       knitDocumentButton_.setText(knitCommandText_);
@@ -1522,6 +1522,12 @@ public class TextEditingTargetWidget
 
       sourceButton_.setTitle(sourceCommandDesc);
       sourceButton_.setText(sourceCommandText_);
+   }
+   
+   @Override
+   public void addVisualModeFindReplaceButton(ToolbarButton findReplaceButton)
+   {
+      toolbar_.insertWidget(findReplaceButton, findReplaceButton_);
    }
 
    public HandlerRegistration addEnsureVisibleHandler(EnsureVisibleHandler handler)
@@ -1738,6 +1744,7 @@ public class TextEditingTargetWidget
       } 
       
       private boolean activationPending_ = false;
+
    };
    
    private void syncWrapMode()

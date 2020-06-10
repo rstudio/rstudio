@@ -1,7 +1,7 @@
 #
 # ModuleTools.R
 #
-# Copyright (C) 2009-19 by RStudio, PBC
+# Copyright (C) 2020 by RStudio, PBC
 #
 # Unless you have received this program directly from RStudio pursuant
 # to the terms of a commercial license agreement with RStudio, then
@@ -40,9 +40,17 @@
    .Call("rs_logWarningMessage", message, PACKAGE = "(embedding)")
 })
 
+.rs.addFunction("format", function(object, ...)
+{
+   if (is.symbol(object))
+      as.character(object)
+   else
+      base::format.default(object, ...)
+})
+
 .rs.addFunction("getSignature", function(object)
 {
-   signature <- base::format.default(base::args(object))
+   signature <- .rs.format(base::args(object))
    length(signature) <- length(signature) - 1
    trimmed <- gsub("^\\s+", "", signature)
    paste(trimmed, collapse = "")

@@ -1,7 +1,7 @@
 /*
  * table-commands.ts
  *
- * Copyright (C) 2019-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -164,12 +164,34 @@ export function addRows(after: boolean) {
       return false;
     }
     if (dispatch) {
+      // add the rows
       let tr = state.tr;
       const rect = selectedRect(state);
       const rows = rect.bottom - rect.top;
       for (let i = 0; i < rows; i++) {
         tr = addRow(tr, rect, after ? rect.bottom : rect.top);
       }
+
+      // sync column alignments for table
+      const table = findParentNodeOfType(state.schema.nodes.table)(tr.selection);
+      if (table) {
+        const alignments = new Array<CssAlignment | null>(rect.map.width);
+        table.node.forEach((rowNode, rowOffset, rowIndex) => {
+          rowNode.forEach((cellNode, cellOffset, colIndex) => {
+            const cellPos = table.pos + 1 + rowOffset + 1 + cellOffset;
+            if (rowIndex === 0) {
+              const cell = tr.doc.nodeAt(cellPos);
+              alignments[colIndex] = cell?.attrs.align || null;
+            } else {
+              tr.setNodeMarkup(cellPos, cellNode.type, {
+                ...cellNode.attrs,
+                align: alignments[colIndex] || null,
+              });
+            }
+          });
+        });
+      }
+
       dispatch(tr);
     }
     return true;

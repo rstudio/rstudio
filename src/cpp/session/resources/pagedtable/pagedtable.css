@@ -161,12 +161,14 @@ a.pagedtable-index-current {
   opacity: 0.3;
 }
 
-td.pagedtable-metacell {
+div.pagedtable-metacell {
   padding-left: 0px;
   padding-bottom: 10px;
+  display: flex;
+  flex-direction: row;
 }
 
-td.pagedtable-metacell div {
+div.pagedtable-metacell div {
   display: inline-block;
   border: solid 1px #E9E9E9;
   border-radius: 3px;
@@ -176,7 +178,7 @@ td.pagedtable-metacell div {
   margin-right: 10px;
 }
 
-td.pagedtable-metacell .pagedtable-metafield {
+div.pagedtable-metacell .pagedtable-metafield {
   color: #999;
   padding-right: 4px;
 }

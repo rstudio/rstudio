@@ -6,6 +6,11 @@
    height: 500px;
 }
 
+.panelContainerNoChooser {
+   width: 448px;
+   height: 500px;
+}
+
 .sshKeyWidget {
    margin-top: 20px;
 }

@@ -1,7 +1,7 @@
 /*
  * list.ts
  *
- * Copyright (C) 2019-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -23,6 +23,11 @@ export interface ListCapabilities {
   fancy: boolean;
   example: boolean;
   order: boolean;
+}
+
+export function isList(node: ProsemirrorNode) {
+  const schema = node.type.schema;
+  return node.type === schema.nodes.bullet_list || node.type === schema.nodes.ordered_list;
 }
 
 export function precedingListItemInsertPos(doc: ProsemirrorNode, selection: Selection) {

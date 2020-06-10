@@ -1,7 +1,7 @@
 /*
  * ProfilerEditingTarget.java
  *
- * Copyright (C) 2009-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -46,7 +46,6 @@ import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.ProgressIndicator;
 import org.rstudio.core.client.widget.ProgressOperationWithInput;
 import org.rstudio.studio.client.application.events.EventBus;
-import org.rstudio.studio.client.application.ui.CommandPaletteEntry;
 import org.rstudio.studio.client.common.FileDialogs;
 import org.rstudio.studio.client.common.GlobalDisplay;
 import org.rstudio.studio.client.common.ReadOnlyValue;
@@ -57,6 +56,7 @@ import org.rstudio.studio.client.common.filetypes.FileType;
 import org.rstudio.studio.client.common.filetypes.FileTypeRegistry;
 import org.rstudio.studio.client.common.filetypes.ProfilerType;
 import org.rstudio.studio.client.common.filetypes.TextFileType;
+import org.rstudio.studio.client.palette.model.CommandPaletteItem;
 import org.rstudio.studio.client.rsconnect.model.PublishHtmlSource;
 import org.rstudio.studio.client.server.ServerError;
 import org.rstudio.studio.client.server.ServerRequestCallback;
@@ -382,12 +382,6 @@ public class ProfilerEditingTarget implements EditingTarget,
    {
    }
 
-   @Override
-   public List<CommandPaletteEntry> getCommandPaletteEntries()
-   {
-      return null;
-   }
-   
    @Override
    public void recordCurrentNavigationPosition()
    {
@@ -768,7 +762,13 @@ public class ProfilerEditingTarget implements EditingTarget,
          }
       };
    }
-   
+
+   @Override
+   public List<CommandPaletteItem> getCommandPaletteItems()
+   {
+      return null;
+   }
+
    private void onMessage(final String message,
                           final String file,
                           final String normPath,

@@ -1,7 +1,7 @@
 /*
  * rmd_chunk.ts
  *
- * Copyright (C) 2019-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -38,13 +38,12 @@ import { rmdChunkBlockCapsuleFilter } from './rmd_chunk-capsule';
 
 import './rmd_chunk-styles.css';
 
-
 const extension = (
   _pandocExtensions: PandocExtensions,
   _pandocCapabilities: PandocCapabilities,
   ui: EditorUI,
   format: EditorFormat,
-  options: EditorOptions
+  options: EditorOptions,
 ): Extension | null => {
   if (!format.rmdExtensions.codeChunks) {
     return null;
@@ -90,13 +89,12 @@ const extension = (
               return null;
             }
           },
-          executeRmdChunkFn: ui.execute.executeRmdChunk 
+          executeRmdChunkFn: ui.execute.executeRmdChunk
             ? (chunk: EditorRmdChunk) => ui.execute.executeRmdChunk!(chunk)
-            : undefined
+            : undefined,
         },
 
         pandoc: {
-
           blockCapsuleFilter: rmdChunkBlockCapsuleFilter(),
 
           writer: (output: PandocOutput, node: ProsemirrorNode) => {
@@ -115,10 +113,7 @@ const extension = (
     commands: (_schema: Schema) => {
       const commands = [new RmdChunkCommand()];
       if (ui.execute.executeRmdChunk) {
-        commands.push(
-          new ExecuteCurrentRmdChunkCommand(ui),
-          new ExecutePreviousRmdChunksCommand(ui)
-        );
+        commands.push(new ExecuteCurrentRmdChunkCommand(ui), new ExecutePreviousRmdChunksCommand(ui));
       }
       return commands;
     },

@@ -1,7 +1,7 @@
 /*
  * SessionReticulate.cpp
  *
- * Copyright (C) 2009-18 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -36,8 +36,14 @@ namespace reticulate {
 
 namespace {
 
+// has the Python session been initialized by reticulate yet?
+bool s_pythonInitialized = false;
+
 SEXP rs_reticulateInitialized()
 {
+   // set initialized flag
+   s_pythonInitialized = true;
+   
    // Python will register its own console control handler,
    // which also blocks signals from reaching any previously
    // defined handlers (including RStudio's own). re-initialize
@@ -56,6 +62,12 @@ void onDeferredInit(bool)
 }
 
 } // end anonymous namespace
+
+bool isPythonInitialized()
+{
+   return s_pythonInitialized;
+}
+
 bool isReplActive()
 {
    bool active = false;
@@ -82,5 +94,15 @@ Error initialize()
 
 } // end namespace reticulate
 } // end namespace modules
+
+namespace module_context {
+
+bool isPythonReplActive()
+{
+   return modules::reticulate::isReplActive();
+}
+
+} // end namespace module_context
+
 } // end namespace session
 } // end namespace rstudio

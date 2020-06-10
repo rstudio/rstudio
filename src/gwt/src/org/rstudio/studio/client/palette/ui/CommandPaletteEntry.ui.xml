@@ -1,0 +1,90 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+	xmlns:g="urn:import:com.google.gwt.user.client.ui">
+	<ui:style field="styles_" type="org.rstudio.studio.client.palette.ui.CommandPaletteEntry.Styles">
+		@external editor_dark, gwt-Label;
+		@eval proportionalFont org.rstudio.core.client.theme.ThemeFonts.getProportionalFont();
+		
+		div.entry {
+			width: 100%;
+			font-family: proportionalFont;
+			font-size: 10pt;
+			padding-top: 6px;
+			padding-bottom: 6px;
+			padding-left: 10px;
+			padding-right: 6px;
+			position: relative;
+			display: flex;
+			flex-direction: row;
+			box-sizing: border-box;
+			cursor: pointer;
+		}
+		
+		table.entry, table.entry .gwt-Label {
+			cursor: pointer;
+		}
+		
+		.entry:hover {
+			background-color: rgba(190, 190, 255, 0.2);
+		}
+		
+		.selected {
+			background-color: rgba(190, 190, 255, 0.4);
+		}
+		
+		.keyboard {
+			border: 1px solid #a0a0a0;
+			border-radius: 3px;
+			padding: 3px;
+			margin-left: 3px;
+			margin-right: 3px;
+			font-size: 8pt;
+		}
+		
+		.shortcut {
+			display: inline-block;
+			margin-left: -10px;
+		}
+		
+		.searchMatch {
+			font-weight: bold;
+			color: #000000;
+		}
+		
+		.editor_dark .searchMatch {
+			color: #ffffff;
+		}
+		
+		.context {
+			background-color: #e0e0e0;
+			font-size: 8pt;
+			margin-right: 5px;
+			padding: 3px;
+			border-radius: 4px;
+			padding-right: 5px;
+			padding-left: 5px;
+		}
+		
+		.editor_dark .context {
+			background-color: rgba(255, 255, 255, 0.1);
+		}
+		
+		.disabled .name {
+			opacity: 0.5;
+		}
+		
+		.name {
+			flex-grow: 1;
+		}
+		
+		.invoker {
+			text-align: right;
+		}
+	</ui:style>
+	<g:HTMLPanel styleName="{styles_.entry}">
+		<g:Label visible="false" styleName="{styles_.context}" ui:field="context_"></g:Label>
+		<g:Label styleName="{styles_.name}" ui:field="name_"></g:Label>
+		<g:HTMLPanel styleName="{styles_.invoker}" ui:field="invoker_">
+		</g:HTMLPanel>
+	</g:HTMLPanel>
+</ui:UiBinder> 

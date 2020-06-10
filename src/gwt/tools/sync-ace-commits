@@ -12,11 +12,15 @@ done
 
 # check out our copy of ace
 if [ ! -d rstudio-ace ]; then
-    git clone https://github.com/rstudio/rstudio-ace
+    git clone git@github.com:rstudio/rstudio-ace.git
+    cd rstudio-ace
+    git remote add upstream git@github.com:ajaxorg/ace.git
+    cd ..
 fi
 
 cd rstudio-ace
 git pull
+git checkout "${BRANCH}"
 git reset --hard "${BRANCH}"
 git submodule update --init --recursive --force
 npm install

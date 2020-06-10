@@ -1,7 +1,7 @@
 /*
  * XTermWidget.java
  *
- * Copyright (C) 2009-19 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -183,7 +183,7 @@ public class XTermWidget extends Widget
    {
    }
 
-   private Timer resizeTerminalLocal_ = new Timer()
+   private final Timer resizeTerminalLocal_ = new Timer()
    {
       @Override
       public void run()
@@ -192,6 +192,14 @@ public class XTermWidget extends Widget
          if (!terminalEmulatorLoaded())
          {
             resizeTerminalLocal_.schedule(RESIZE_DELAY);
+            return;
+         }
+
+         // if emulator became invisible since resize was issued, resizing may cause exceptions
+         if (!isVisible())
+         {
+            if (resizeTerminalRemote_.isRunning())
+               resizeTerminalRemote_.cancel();
             return;
          }
 
@@ -206,7 +214,7 @@ public class XTermWidget extends Widget
       }
    };
 
-   private Timer resizeTerminalRemote_ = new Timer()
+   private final Timer resizeTerminalRemote_ = new Timer()
    {
       @Override
       public void run()

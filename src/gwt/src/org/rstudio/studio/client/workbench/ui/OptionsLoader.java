@@ -1,7 +1,7 @@
 /*
  * OptionsLoader.java
  *
- * Copyright (C) 2009-12 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,14 +14,10 @@
  */
 package org.rstudio.studio.client.workbench.ui;
 
-import com.google.gwt.event.logical.shared.CloseEvent;
-import com.google.gwt.event.logical.shared.CloseHandler;
-import com.google.gwt.user.client.ui.PopupPanel;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import org.rstudio.core.client.AsyncShim;
 import org.rstudio.core.client.widget.MessageDialog;
-import org.rstudio.core.client.widget.Operation;
 import org.rstudio.studio.client.RStudioGinjector;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.common.GlobalDisplay;
@@ -36,9 +32,8 @@ public class OptionsLoader
    public abstract static class Shim extends AsyncShim<OptionsLoader>
    {
       public abstract void showOptions();
-      public abstract void showOptions(Class<?> paneClass);
+      public abstract void showOptions(Class<?> paneClass, boolean showPaneChooser);
    }
-
 
    @Inject
    OptionsLoader(GlobalDisplay globalDisplay,
@@ -53,86 +48,73 @@ public class OptionsLoader
       server_ = server;
       pPrefDialog_ = pPrefDialog;
    }
-   
+
    public void showOptions()
    {
-      showOptions(null);
+      showOptions(null, true);
    }
 
-   public void showOptions(final Class<?> paneClass)
+   public void showOptions(final Class<?> paneClass, boolean showPaneChooser)
    {
       PreferencesDialog prefDialog = pPrefDialog_.get();
       prefDialog.initialize(RStudioGinjector.INSTANCE.getUserPrefs());
       if (paneClass != null)
          prefDialog.activatePane(paneClass);
+      prefDialog.setShowPaneChooser(showPaneChooser);
       prefDialog.showModal();
-      
+
       // if the user changes global sweave or latex options notify
       // them if this results in the current project being out
       // of sync with the global settings
       new SweaveProjectOptionsNotifier(prefDialog);
-      
+
       // activate main window if we are in desktop mode (because on
       // the mac you can actually show prefs from a satellite window)
       if (Desktop.hasDesktopFrame())
          Desktop.getFrame().bringMainFrameToFront();
    }
 
-   
    private class SweaveProjectOptionsNotifier
    {
       public SweaveProjectOptionsNotifier(PreferencesDialog prefsDialog)
       {
-         previousRnwWeaveMethod_ = 
-                     uiPrefs_.defaultSweaveEngine().getGlobalValue();
-         previousLatexProgram_ = 
-                     uiPrefs_.defaultLatexProgram().getGlobalValue();
-         
-         prefsDialog.addCloseHandler(new CloseHandler<PopupPanel>() {
+         previousRnwWeaveMethod_ = uiPrefs_.defaultSweaveEngine().getGlobalValue();
+         previousLatexProgram_ = uiPrefs_.defaultLatexProgram().getGlobalValue();
 
-            @Override
-            public void onClose(CloseEvent<PopupPanel> event)
+         prefsDialog.addCloseHandler(popupPanelCloseEvent ->
+         {
+            boolean notified = notifyIfNecessary(
+                                 "weaving Rnw files",
+                                 previousRnwWeaveMethod_,
+                                 uiPrefs_.defaultSweaveEngine());
+
+            if (!notified)
             {
-               boolean notified = notifyIfNecessary(
-                                    "weaving Rnw files",
-                                    previousRnwWeaveMethod_,
-                                    uiPrefs_.defaultSweaveEngine());
-               
-               if (!notified)
-               {
-                  notifyIfNecessary("LaTeX typesetting",
-                                    previousLatexProgram_,
-                                    uiPrefs_.defaultLatexProgram());
-               }
+               notifyIfNecessary("LaTeX typesetting",
+                                 previousLatexProgram_,
+                                 uiPrefs_.defaultLatexProgram());
             }
-            
          });
       }
-      
+
       private boolean notifyIfNecessary(String valueName,
-                                        String previousValue, 
+                                        String previousValue,
                                         PrefValue<String> pref)
       {
          if (previousValue   != pref.getGlobalValue() &&
              pref.getValue() != pref.getGlobalValue())
          {
             globalDisplay_.showYesNoMessage(
-                  MessageDialog.WARNING, 
-                  "Project Option Unchanged", 
+                  MessageDialog.WARNING,
+                  "Project Option Unchanged",
                   "You changed the global option for " + valueName  + " to " +
                   pref.getGlobalValue() + ", however the current project is " +
                   "still configured to use " + pref.getValue() + ".\n\n" +
                   "Do you want to edit the options for the current " +
-                  "project as well?", 
-                  new Operation() {
-                     @Override
-                     public void execute()
-                     {
-                        commands_.projectSweaveOptions().execute();
-                     }
-                  }, 
+                  "project as well?",
+                  () -> commands_.projectSweaveOptions().execute(),
                   true);
-            
+
             return true;
          }
          else
@@ -140,11 +122,11 @@ public class OptionsLoader
             return false;
          }
       }
-      
+
       private final String previousRnwWeaveMethod_;
       private final String previousLatexProgram_;
    }
-   
+
    private final GlobalDisplay globalDisplay_;
    @SuppressWarnings("unused")
    private final WorkbenchServerOperations server_;

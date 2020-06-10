@@ -1,7 +1,7 @@
 /*
  * selection.ts
  *
- * Copyright (C) 2019-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -14,8 +14,12 @@
  */
 
 import { Selection, NodeSelection } from 'prosemirror-state';
-import { NodeWithPos } from 'prosemirror-utils';
 import { Schema } from 'prosemirror-model';
+import { EditorView } from 'prosemirror-view';
+
+import { NodeWithPos, setTextSelection } from 'prosemirror-utils';
+
+import { kAddToHistoryTransaction, kRestoreLocationTransaction } from './transaction';
 
 export function selectionIsWithin(selection: Selection, nodeWithPos: NodeWithPos) {
   const begin = nodeWithPos.pos + 1;
@@ -36,4 +40,12 @@ export function selectionIsImageNode(schema: Schema, selection: Selection) {
 export function selectionIsEmptyParagraph(schema: Schema, selection: Selection) {
   const { $head } = selection;
   return $head.parent.type === schema.nodes.paragraph && $head.parent.childCount === 0;
+}
+
+export function restoreSelection(view: EditorView, pos: number) {
+  const tr = view.state.tr;
+  setTextSelection(pos)(tr);
+  tr.setMeta(kAddToHistoryTransaction, false);
+  tr.setMeta(kRestoreLocationTransaction, true);
+  view.dispatch(tr);
 }

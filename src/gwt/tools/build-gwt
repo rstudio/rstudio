@@ -2,7 +2,7 @@
 set -e
 
 # Update this when updating to a new base GWT release
-GWT_VER=2.8.2
+GWT_VER=2.9.0
 
 # This script is intended to run from the rstudio/gwt/tools folder
 RUN_DIR=`pwd`
@@ -17,7 +17,7 @@ fi
 
 # Build GWT disto with custom version
 cd ${RUN_DIR}/gwt/gwt
-ant clean elemental dist -Dgwt.version="${GWT_VER}"
+ant clean dist -Dgwt.version="${GWT_VER}"
 
 GWT_ZIP=${RUN_DIR}/gwt/gwt/build/dist/gwt-${GWT_VER}.zip
 if [ ! -f ${GWT_ZIP} ]; then

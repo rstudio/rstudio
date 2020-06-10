@@ -1,7 +1,7 @@
 /*
  * Source.java
  *
- * Copyright (C) 2009-20 by RStudio, PBC
+ * Copyright (C) 2020 by RStudio, PBC
  *
  * Unless you have received this program directly from RStudio pursuant
  * to the terms of a commercial license agreement with RStudio, then
@@ -70,8 +70,6 @@ import org.rstudio.studio.client.application.AriaLiveService;
 import org.rstudio.studio.client.application.Desktop;
 import org.rstudio.studio.client.application.events.AriaLiveStatusEvent.Severity;
 import org.rstudio.studio.client.application.events.AriaLiveStatusEvent.Timing;
-import org.rstudio.studio.client.application.ui.CommandPaletteEntry;
-import org.rstudio.studio.client.application.ui.CommandPaletteEntrySource;
 import org.rstudio.studio.client.application.events.CrossWindowEvent;
 import org.rstudio.studio.client.application.events.EventBus;
 import org.rstudio.studio.client.common.FileDialogs;
@@ -100,6 +98,8 @@ import org.rstudio.studio.client.events.GetEditorContextEvent;
 import org.rstudio.studio.client.events.GetEditorContextEvent.DocumentSelection;
 import org.rstudio.studio.client.events.ReplaceRangesEvent;
 import org.rstudio.studio.client.events.ReplaceRangesEvent.ReplacementData;
+import org.rstudio.studio.client.palette.model.CommandPaletteEntrySource;
+import org.rstudio.studio.client.palette.model.CommandPaletteItem;
 import org.rstudio.studio.client.events.SetSelectionRangesEvent;
 import org.rstudio.studio.client.rmarkdown.model.RmdChosenTemplate;
 import org.rstudio.studio.client.rmarkdown.model.RmdFrontMatter;
@@ -778,12 +778,11 @@ public class Source implements InsertSourceHandler,
       }
    }
    
-   // see if there are additional command pallette entries made available
-   // the by the active editor
-   public List<CommandPaletteEntry> getCommandPaletteEntries()
+   @Override
+   public List<CommandPaletteItem> getCommandPaletteItems()
    {
       if (activeEditor_ != null) 
-         return activeEditor_.getCommandPaletteEntries();
+         return activeEditor_.getCommandPaletteItems();
       else
          return null;
    }
