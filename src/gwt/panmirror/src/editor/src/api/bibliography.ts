@@ -34,6 +34,7 @@ export interface BibliographySource {
   URL: string;
   title: string;
   author: BibliographyAuthor[];
+  html?: string;
 }
 
 export interface BibliographyAuthor {
