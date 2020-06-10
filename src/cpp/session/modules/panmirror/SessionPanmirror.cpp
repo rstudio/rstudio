@@ -54,6 +54,12 @@ std::string pandocCiteprocPath()
    return pandocBinary("pandoc-citeproc");
 }
 
+std::string resolvePandocInputFile(const std::string &file)
+{
+  const FilePath filePath = module_context::resolveAliasedPath(file);
+  return string_utils::utf8ToSystem(filePath.getAbsolutePath());
+}
+
 core::system::ProcessOptions pandocOptions()
 {
    core::system::ProcessOptions options;
@@ -237,7 +243,7 @@ void endJsonRequest(const json::JsonRpcFunctionContinuation& cont,
    json::JsonRpcResponse response;
    if (result.exitStatus == EXIT_SUCCESS)
    {
-      json::Object jsonValue;
+      json::Value jsonValue;
       if (readJsonValue(result.stdOut, &jsonValue, &response))
         response.setResult(jsonValue);
    }
@@ -431,6 +437,107 @@ void pandocListExtensions(const json::JsonRpcRequest& request,
 
 }
 
+std::string readCitationId(const json::Value& jsonValue)
+{
+   if (jsonValue.isObject())
+   {
+      std::string id;
+      Error error = json::readObject(jsonValue.getObject(), "id", id);
+      if (error)
+         LOG_ERROR(error);
+      return id;
+   }
+   return "";
+}
+
+void pandocBiblioCompleted(const json::Array& jsonCitations,
+                           const json::JsonRpcFunctionContinuation& cont,
+                           const core::system::ProcessResult& result)
+{
+   json::JsonRpcResponse response;
+
+   // read the html
+   if (result.exitStatus == EXIT_SUCCESS)
+   {
+      json::Object biblio;
+      biblio["sources"] = jsonCitations;
+      biblio["html"] = result.stdOut;
+      response.setResult(biblio);
+   }
+   else
+   {
+      setPandocErrorResponse(result, &response);
+   }
+
+   cont(Success(), &response);
+}
+
+
+void citeprocCompleted(const std::string& file,
+                       const std::string& csl,
+                       const json::JsonRpcFunctionContinuation& cont,
+                       const core::system::ProcessResult& result)
+{
+   json::JsonRpcResponse response;
+   if (result.exitStatus == EXIT_SUCCESS)
+   {
+      json::Array jsonCitations;
+      if (readJsonValue(result.stdOut, &jsonCitations, &response))
+      {
+         // get the ids
+         std::vector<std::string> ids;
+         std::transform(jsonCitations.begin(), jsonCitations.end(), std::back_inserter(ids), readCitationId);
+
+         // build a document to send to pandoc
+         std::vector<std::string> lines;
+         lines.push_back("---");
+         lines.push_back("bibliography: " + resolvePandocInputFile(file));
+         if (!csl.empty())
+            lines.push_back("csl: " + resolvePandocInputFile(csl));
+         if (ids.size() > 0)
+         {
+            lines.push_back("nocite: |");
+            std::string nocite = "  ";
+            for (std::vector<std::string>::size_type i = 0; i<ids.size(); i++)
+            {
+               const std::string& id = ids[i];
+               if (!id.empty())
+               {
+                  if (i>0)
+                    nocite += ", ";
+                  nocite += ("@" + id);
+               }
+            }
+            lines.push_back(nocite);
+         }
+         lines.push_back("---");
+         std::string doc = boost::algorithm::join(lines, "\n");
+
+         // run pandoc
+         std::vector<std::string> args;
+         args.push_back("--to");
+         args.push_back("html");
+         args.push_back("--filter");
+         args.push_back(pandocCiteprocPath());
+         Error error = runPandocAsync(args, doc, boost::bind(pandocBiblioCompleted, jsonCitations, cont, _1));
+         if (error)
+         {
+            setPandocErrorResponse(error, &response);
+            cont(Success(), &response);
+         }
+      }
+      else
+      {
+         cont(Success(), &response);
+      }
+   }
+   else
+   {
+      setPandocErrorResponse(result, &response);
+      cont(Success(), &response);
+   }
+}
+
 void pandocGetBibliography(const json::JsonRpcRequest& request,
                            const json::JsonRpcFunctionContinuation& cont)
 {
@@ -438,8 +545,8 @@ void pandocGetBibliography(const json::JsonRpcRequest& request,
    json::JsonRpcResponse response;
 
    // extract params
-   std::string file;
-   Error error = json::readParams(request.params, &file);
+   std::string file, csl;
+   Error error = json::readParams(request.params, &file, &csl);
    if (error)
    {
       setPandocErrorResponse(error, &response);
@@ -455,12 +562,11 @@ void pandocGetBibliography(const json::JsonRpcRequest& request,
 
    // run pandoc-citeproc
    core::system::ProcessResult result;
-   error = runPandocCiteprocAsync(args, "", boost::bind(endJsonRequest, cont, _1));
+   error = runPandocCiteprocAsync(args, "", boost::bind(citeprocCompleted, file, csl, cont, _1));
    if (error)
    {
       setPandocErrorResponse(error, &response);
       cont(Success(), &response);
-      return;
    }
 }
 

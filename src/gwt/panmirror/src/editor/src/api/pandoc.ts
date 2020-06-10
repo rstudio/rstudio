@@ -24,7 +24,7 @@ export interface PandocEngine {
   getCapabilities(): Promise<PandocCapabilitiesResult>;
   markdownToAst(markdown: string, format: string, options: string[]): Promise<PandocAst>;
   astToMarkdown(ast: PandocAst, format: string, options: string[]): Promise<string>;
-  getBibliography(file: string): Promise<Bibliography>;
+  getBibliography(file: string, csl: string | null): Promise<Bibliography>;
   listExtensions(format: string): Promise<string>;
 }
 
