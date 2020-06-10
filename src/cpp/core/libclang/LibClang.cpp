@@ -167,10 +167,19 @@ bool LibClang::load(EmbeddedLibrary embedded,
    if (!embedded.empty())
       embeddedVersion = embedded.libraryPath();
 
-   // build a list of clang versions to try (start with embedded)
+   // build a list of clang versions to try
    std::vector<std::string> versions;
+   
+   // add version from env var (mostly for debugging)
+   std::string envVersion = core::system::getenv("RSTUDIO_LIBCLANG_PATH");
+   if (!envVersion.empty())
+      versions.push_back(envVersion);
+   
+   // add embedded version
    if (!embeddedVersion.empty())
       versions.push_back(embeddedVersion);
+   
+   // add discovered system versions
    std::vector<std::string> sysVersions = systemClangVersions();
    versions.insert(versions.end(), sysVersions.begin(), sysVersions.end());
 
