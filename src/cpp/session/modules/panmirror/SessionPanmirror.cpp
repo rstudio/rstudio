@@ -217,10 +217,11 @@ void pandocAstToMarkdown(const json::JsonRpcRequest& request,
    }
 }
 
-bool readJsonValue(const std::string& output, json::Value* pVal, json::JsonRpcResponse* pResponse)
+template <typename T>
+bool readJsonValue(const std::string& output, T* pVal, json::JsonRpcResponse* pResponse)
 {
    using namespace json;
-   json::Value jsonValue;
+   T jsonValue;
    Error error = jsonValue.parse(output);
    if (error)
    {
@@ -230,6 +231,14 @@ bool readJsonValue(const std::string& output, json::Value* pVal, json::JsonRpcRe
       setPandocErrorResponse(parseError, pResponse);
       return false;
    }
+   else if (!isType<T>(jsonValue))
+   {
+      Error outputError(boost::system::errc::state_not_recoverable,
+                       "Unexpected JSON output from pandoc",
+                       ERROR_LOCATION);
+      setPandocErrorResponse(outputError, pResponse);
+      return false;
+   }
    else
    {
       *pVal = jsonValue;
@@ -237,15 +246,16 @@ bool readJsonValue(const std::string& output, json::Value* pVal, json::JsonRpcRe
    }
 }
 
-void endJsonRequest(const json::JsonRpcFunctionContinuation& cont,
-                    const core::system::ProcessResult& result)
+
+void endJsonObjectRequest(const json::JsonRpcFunctionContinuation& cont,
+                          const core::system::ProcessResult& result)
 {
    json::JsonRpcResponse response;
    if (result.exitStatus == EXIT_SUCCESS)
    {
-      json::Value jsonValue;
-      if (readJsonValue(result.stdOut, &jsonValue, &response))
-        response.setResult(jsonValue);
+      json::Object jsonObject;
+      if (readJsonValue(result.stdOut, &jsonObject, &response))
+        response.setResult(jsonObject);
    }
    else
    {
@@ -289,7 +299,7 @@ void pandocMarkdownToAst(const json::JsonRpcRequest& request,
 
    // run pandoc
    core::system::ProcessResult result;
-   error = runPandocAsync(args, markdown, boost::bind(endJsonRequest, cont, _1));
+   error = runPandocAsync(args, markdown, boost::bind(endJsonObjectRequest, cont, _1));
    if (error)
    {
       setPandocErrorResponse(error, &response);
