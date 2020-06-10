@@ -160,7 +160,8 @@ public class NumericValueWidget extends Composite
    @Override
    public void setElementId(String id)
    {
-      textBox_.getElement().setId(id);      
+      textBox_.getElement().setId(id);
+      textBoxLabel_.setFor(id);
    }
 
    private final SpanLabel textBoxLabel_;
