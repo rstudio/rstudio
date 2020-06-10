@@ -16,7 +16,6 @@
 
 package org.rstudio.studio.client.panmirror.dialogs;
 
-import org.rstudio.core.client.ElementIds;
 import org.rstudio.core.client.widget.ModalDialog;
 import org.rstudio.core.client.widget.OperationWithInput;
 import org.rstudio.core.client.widget.TextBoxWithCue;
@@ -40,9 +39,6 @@ public class PanmirrorInsertCitationDialog extends ModalDialog<PanmirrorInsertCi
       });
    
       mainWidget_ = GWT.<Binder>create(Binder.class).createAndBindUi(this);
-      
-      citationId_.getElement().setId(ElementIds.VISUAL_MD_CITATION_ID);
-      locator_.getElement().setId(ElementIds.VISUAL_MD_CITATION_LOCATOR);
    }
    
    @Override

@@ -4,6 +4,7 @@
    xmlns:rw="urn:import:org.rstudio.core.client.widget"
    xmlns:dialogs="urn:import:org.rstudio.studio.client.panmirror.dialogs">
    <ui:with field="res" type="org.rstudio.studio.client.panmirror.dialogs.PanmirrorDialogsResources" />
+   <ui:with field="ElementIds" type="org.rstudio.core.client.ElementIds"/>
    <ui:style>
       
       .column {
@@ -24,16 +25,16 @@
       <rw:LayoutGrid styleName="{res.styles.spaced}">
          <rw:row>
             <rw:customCell styleName="{style.column}">
-               <rw:NumericValueWidget label="Rows:" value="3" ui:field="rows_"></rw:NumericValueWidget>
+               <rw:NumericValueWidget elementId="{ElementIds.getVisualMdInsertTableRows}" label="Rows:" value="3" ui:field="rows_"/>
             </rw:customCell>
             <rw:customCell styleName="{style.column}">
-               <rw:NumericValueWidget label="Columns:" value="3" ui:field="columns_"></rw:NumericValueWidget>
+               <rw:NumericValueWidget elementId="{ElementIds.getVisualMdInsertTableColumns}" label="Columns:" value="3" ui:field="columns_"/>
             </rw:customCell>
          </rw:row>
       </rw:LayoutGrid>
     
-      <g:Label text="Caption:" ui:field="captionLabel_"></g:Label>
-      <rw:TextBoxWithCue cueText="(Optional)" styleName="{style.caption} {res.styles.spaced}" ui:field="caption_"></rw:TextBoxWithCue>
+      <rw:FormLabel for="{ElementIds.getVisualMdInsertTableCaption}" text="Caption:" ui:field="captionLabel_"></rw:FormLabel>
+      <rw:TextBoxWithCue elementId="{ElementIds.getVisualMdInsertTableCaption}" cueText="(Optional)" styleName="{style.caption} {res.styles.spaced}" ui:field="caption_"/>
           
       <g:cell><g:Label></g:Label></g:cell>  
           
