@@ -55,6 +55,7 @@ const extension = (
 function symbolOmniInsert(ui: EditorUI) {
   return {
     name: ui.context.translateText('Symbol...'),
+    keywords: ['unicode'],
     description: ui.context.translateText('Unicode graphical symbol'),
     group: OmniInsertGroup.Content,
     priority: 6,
