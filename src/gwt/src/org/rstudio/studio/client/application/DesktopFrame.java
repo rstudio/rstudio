@@ -110,7 +110,7 @@ public interface DesktopFrame extends JavaScriptPassthrough
                        String buttons,
                        int defaultButton,
                        int cancelButton,
-                       CommandWithArg<String> callback);
+                       CommandWithArg<Double> callback);
 
    void promptForText(String title,
                       String label,

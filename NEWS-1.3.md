@@ -35,6 +35,7 @@
 - Fix issue with first esc keypress being ignored (#7045)
 - Fix issue with spellcheck not working with realtime turned off (#7068)
 - Fix error when some HTML comments are included in R Markdown documents (#6997)
+- Fix issue where toolbar buttons were missing on initialization. (#7076)
 
 ### RStudio Server Pro
 
