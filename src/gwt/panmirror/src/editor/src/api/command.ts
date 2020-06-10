@@ -144,7 +144,6 @@ export class ProsemirrorCommand {
   public readonly omniInsert?: OmniInsert;
   public readonly keepFocus: boolean;
 
-  constructor(id: EditorCommandId, keymap: readonly string[], execute: CommandFn, omniInsert?: OmniInsert);
   constructor(
     id: EditorCommandId,
     keymap: readonly string[],
