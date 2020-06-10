@@ -77,6 +77,16 @@ public class PanmirrorPandocEngine {
          );
       });
    }
+   
+   public Promise<JavaScriptObject> getBibliography(String file)
+   {
+      return new Promise<JavaScriptObject>((ResolveCallbackFn<JavaScriptObject> resolve, RejectCallbackFn reject) -> {
+         server_.pandocGetBibliography(
+            file,
+            new PromiseServerRequestCallback<JavaScriptObject>(resolve, reject)
+         );
+      });
+   }
 
    public Promise<String> listExtensions(String format)
    {

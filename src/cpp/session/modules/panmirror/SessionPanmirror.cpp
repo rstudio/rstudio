@@ -33,15 +33,25 @@ namespace panmirror {
 
 namespace {
 
-std::string pandocPath()
+std::string pandocBinary(const std::string& binary)
 {
 #ifndef WIN32
-   std::string pandoc = "pandoc";
+   std::string target = binary;
 #else
-   std::string pandoc = "pandoc.exe";
+   std::string target = binary + ".exe";
 #endif
-  FilePath pandocPath = FilePath(core::system::getenv("RSTUDIO_PANDOC")).completeChildPath(pandoc);
+  FilePath pandocPath = FilePath(core::system::getenv("RSTUDIO_PANDOC")).completeChildPath(target);
   return string_utils::utf8ToSystem(pandocPath.getAbsolutePath());
+}
+
+std::string pandocPath()
+{
+   return pandocBinary("pandoc");
+}
+
+std::string pandocCiteprocPath()
+{
+   return pandocBinary("pandoc-citeproc");
 }
 
 core::system::ProcessOptions pandocOptions()
@@ -65,7 +75,8 @@ Error runPandoc(const std::vector<std::string>& args, const std::string& input, 
    );
 }
 
-Error runPandocAsync(const std::vector<std::string>& args,
+Error runAsync(const std::string& executablePath,
+                     const std::vector<std::string>& args,
                      const std::string&input,
                      const boost::function<void(const core::system::ProcessResult&)>& onCompleted)
 {
@@ -73,12 +84,26 @@ Error runPandocAsync(const std::vector<std::string>& args,
    options.terminateChildren = true;
 
    return module_context::processSupervisor().runProgram(
-      pandocPath(),
+      executablePath,
       args,
       input,
       pandocOptions(),
       onCompleted
    );
+}
+
+Error runPandocAsync(const std::vector<std::string>& args,
+                     const std::string&input,
+                     const boost::function<void(const core::system::ProcessResult&)>& onCompleted)
+{
+   return runAsync(pandocPath(), args, input, onCompleted);
+}
+
+Error runPandocCiteprocAsync(const std::vector<std::string>& args,
+                             const std::string&input,
+                             const boost::function<void(const core::system::ProcessResult&)>& onCompleted)
+{
+   return runAsync(pandocCiteprocPath(), args, input, onCompleted);
 }
 
 Error readOptionsParam(const json::Array& options, std::vector<std::string>* pOptions)
@@ -186,11 +211,11 @@ void pandocAstToMarkdown(const json::JsonRpcRequest& request,
    }
 }
 
-bool readJsonAst(const std::string& output, json::Object* pAst, json::JsonRpcResponse* pResponse)
+bool readJsonValue(const std::string& output, json::Value* pVal, json::JsonRpcResponse* pResponse)
 {
    using namespace json;
-   json::Value jsonAst;
-   Error error = jsonAst.parse(output);
+   json::Value jsonValue;
+   Error error = jsonValue.parse(output);
    if (error)
    {
       Error parseError(boost::system::errc::state_not_recoverable,
@@ -199,30 +224,22 @@ bool readJsonAst(const std::string& output, json::Object* pAst, json::JsonRpcRes
       setPandocErrorResponse(parseError, pResponse);
       return false;
    }
-   else if (!isType<json::Object>(jsonAst))
-   {
-      Error outputError(boost::system::errc::state_not_recoverable,
-                        "Unexpected JSON output from pandoc",
-                        ERROR_LOCATION);
-      setPandocErrorResponse(outputError, pResponse);
-      return false;
-   }
    else
    {
-      *pAst = jsonAst.getObject();
+      *pVal = jsonValue;
       return true;
    }
 }
 
-void endMarkdownToAst(const json::JsonRpcFunctionContinuation& cont,
-                      const core::system::ProcessResult& result)
+void endJsonRequest(const json::JsonRpcFunctionContinuation& cont,
+                    const core::system::ProcessResult& result)
 {
    json::JsonRpcResponse response;
    if (result.exitStatus == EXIT_SUCCESS)
    {
-      json::Object jsonAst;
-      if (readJsonAst(result.stdOut, &jsonAst, &response))
-        response.setResult(jsonAst);
+      json::Object jsonValue;
+      if (readJsonValue(result.stdOut, &jsonValue, &response))
+        response.setResult(jsonValue);
    }
    else
    {
@@ -266,7 +283,7 @@ void pandocMarkdownToAst(const json::JsonRpcRequest& request,
 
    // run pandoc
    core::system::ProcessResult result;
-   error = runPandocAsync(args, markdown, boost::bind(endMarkdownToAst, cont, _1));
+   error = runPandocAsync(args, markdown, boost::bind(endJsonRequest, cont, _1));
    if (error)
    {
       setPandocErrorResponse(error, &response);
@@ -344,7 +361,7 @@ void pandocGetCapabilities(const json::JsonRpcRequest&,
       return;
    }
    json::Object jsonAst;
-   if (!readJsonAst(apiOutput, &jsonAst, &response))
+   if (!readJsonValue(apiOutput, &jsonAst, &response))
    {
       cont(Success(), &response);
       return;
@@ -414,6 +431,39 @@ void pandocListExtensions(const json::JsonRpcRequest& request,
 
 }
 
+void pandocGetBibliography(const json::JsonRpcRequest& request,
+                           const json::JsonRpcFunctionContinuation& cont)
+{
+   // response object
+   json::JsonRpcResponse response;
+
+   // extract params
+   std::string file;
+   Error error = json::readParams(request.params, &file);
+   if (error)
+   {
+      setPandocErrorResponse(error, &response);
+      cont(Success(), &response);
+      return;
+   }
+
+   // build args
+   std::vector<std::string> args;
+   const FilePath filePath = module_context::resolveAliasedPath(file);
+   args.push_back(string_utils::utf8ToSystem(filePath.getAbsolutePath()));
+   args.push_back("--bib2json");
+
+   // run pandoc-citeproc
+   core::system::ProcessResult result;
+   error = runPandocCiteprocAsync(args, "", boost::bind(endJsonRequest, cont, _1));
+   if (error)
+   {
+      setPandocErrorResponse(error, &response);
+      cont(Success(), &response);
+      return;
+   }
+}
+
 
 
 } // end anonymous namespace
@@ -426,6 +476,7 @@ Error initialize()
       (boost::bind(module_context::registerAsyncRpcMethod, "pandoc_ast_to_markdown", pandocAstToMarkdown))
       (boost::bind(module_context::registerAsyncRpcMethod, "pandoc_markdown_to_ast", pandocMarkdownToAst))
       (boost::bind(module_context::registerAsyncRpcMethod, "pandoc_list_extensions", pandocListExtensions))
+      (boost::bind(module_context::registerAsyncRpcMethod, "pandoc_get_bibliography", pandocGetBibliography))
    ;
    return initBlock.execute();
 }
