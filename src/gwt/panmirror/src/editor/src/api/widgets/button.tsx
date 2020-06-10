@@ -64,3 +64,31 @@ export const ImageButton = React.forwardRef<HTMLButtonElement, ImageButtonProps>
     </button>
   );
 });
+
+export interface TextButtonProps extends WidgetProps {
+  title: string;
+  onClick?: () => void;
+  tabIndex?: number;
+}
+
+export const TextButton = React.forwardRef<HTMLButtonElement, TextButtonProps>((props: TextButtonProps, ref) => {
+  const className = ['pm-text-button', 'pm-input-button'].concat(props.classes || []).join(' ');
+  const onClick = (e: React.MouseEvent) => {
+    if (props.onClick) {
+      e.preventDefault();
+      props.onClick();
+    }
+  };
+  return (
+    <button
+      onClick={onClick}
+      type="button"
+      className={className}
+      style={props.style}
+      ref={ref}
+      tabIndex={props.tabIndex}
+    >
+      {props.title}
+    </button>
+  );
+});

@@ -22,15 +22,12 @@ import { setTextSelection } from 'prosemirror-utils';
 
 import { PandocExtensions, PandocTokenType, PandocToken, ProsemirrorWriter, PandocOutput } from '../../api/pandoc';
 import { Extension } from '../../api/extension';
-import { isRawHTMLFormat, kHTMLFormat } from '../../api/raw';
-import { EditorUI } from '../../api/ui';
-import { EditorCommandId } from '../../api/command';
+import { isRawHTMLFormat } from '../../api/raw';
 import { PandocCapabilities } from '../../api/pandoc_capabilities';
 import { MarkInputRuleFilter } from '../../api/input_rule';
 
-import { kRawInlineFormat, kRawInlineContent, RawInlineCommand } from './raw_inline';
+import { kRawInlineFormat, kRawInlineContent } from './raw_inline';
 
-import { InsertHTMLCommentCommand } from './raw_html_comment';
 import { fancyQuotesToSimple } from '../../api/quote';
 const extension = (pandocExtensions: PandocExtensions, pandocCapabilities: PandocCapabilities): Extension | null => {
   return {
@@ -64,14 +61,27 @@ const extension = (pandocExtensions: PandocExtensions, pandocCapabilities: Pando
                 const format = tok.c[kRawInlineFormat];
                 return isRawHTMLFormat(format);
               },
-              handler: (_schema: Schema) => {
+              handler: (schema: Schema) => {
                 return (writer: ProsemirrorWriter, tok: PandocToken) => {
-                  const text = tok.c[kRawInlineContent];
-                  writer.writeInlineHTML(text);
+                  const html = tok.c[kRawInlineContent];
+                  if (writer.hasInlineHTMLWriter(html)) {
+                    writer.writeInlineHTML(html);
+                  } else {
+                    writeInlneHTML(schema, html, writer);
+                  }
                 };
               },
             },
           ],
+
+          inlineHTMLReader: (schema: Schema, html: string, writer?: ProsemirrorWriter) => {
+            // always write single line html as inline
+            if (writer) {
+              writeInlneHTML(schema, html, writer);
+            }
+
+            return true;
+          },
           writer: {
             priority: 20,
             write: (output: PandocOutput, _mark: Mark, parent: Fragment) => {
@@ -81,17 +91,6 @@ const extension = (pandocExtensions: PandocExtensions, pandocCapabilities: Pando
         },
       },
     ],
-
-    // insert command
-    commands: (schema: Schema, ui: EditorUI) => {
-      const commands = [new InsertHTMLCommentCommand(schema)];
-      if (pandocExtensions.raw_html) {
-        commands.push(
-          new RawInlineCommand(EditorCommandId.HTMLInline, kHTMLFormat, ui, pandocCapabilities.output_formats),
-        );
-      }
-      return commands;
-    },
 
     // input rules
     inputRules: (schema: Schema, filter: MarkInputRuleFilter) => {
@@ -103,6 +102,13 @@ const extension = (pandocExtensions: PandocExtensions, pandocCapabilities: Pando
     },
   };
 };
+
+function writeInlneHTML(schema: Schema, html: string, writer: ProsemirrorWriter) {
+  const mark = schema.marks.raw_html.create();
+  writer.openMark(mark);
+  writer.writeText(html);
+  writer.closeMark(mark);
+}
 
 export function rawHtmlInputRule(schema: Schema, filter: MarkInputRuleFilter) {
   return new InputRule(/>$/, (state: EditorState, match: string[], start: number, end: number) => {
@@ -149,9 +155,9 @@ export function rawHtmlInputRule(schema: Schema, filter: MarkInputRuleFilter) {
 function tagInfo(text: string, endLoc: number) {
   const startLoc = tagStartLoc(text, endLoc);
   if (startLoc !== -1) {
-    // don't match if preceding character is a backtick 
+    // don't match if preceding character is a backtick
     // (user is attempting to write an html tag in code)
-    if (text.charAt(startLoc-1) === '`') {
+    if (text.charAt(startLoc - 1) === '`') {
       return null;
     }
     const tagText = text.substring(startLoc, endLoc + 1);

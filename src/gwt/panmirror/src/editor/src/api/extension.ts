@@ -31,6 +31,7 @@ import { EditorEvents } from './events';
 import { PandocCapabilities } from './pandoc_capabilities';
 import { EditorFormat } from './format';
 import { MarkInputRuleFilter } from './input_rule';
+import { CompletionHandler } from './completion';
 
 export interface Extension {
   marks?: PandocMark[];
@@ -42,6 +43,7 @@ export interface Extension {
   appendTransaction?: (schema: Schema) => readonly AppendTransactionHandler[];
   appendMarkTransaction?: (schema: Schema) => readonly AppendMarkTransactionHandler[];
   fixups?: (schema: Schema, view: EditorView) => Readonly<FixupFn[]>;
+  completionHandlers?: () => readonly CompletionHandler[];
 }
 
 // return an extension conditional on the active EditorOptions

@@ -23,6 +23,7 @@ public interface PreferencesDialogResources extends ClientBundle
    interface Styles extends CssResource
    {
       String panelContainer();
+      String panelContainerNoChooser();
       String paneLayoutTable();
       String themeChooser();
       String sshKeyWidget();

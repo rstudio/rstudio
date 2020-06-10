@@ -99,15 +99,35 @@ void updatePosition(std::wstring::const_iterator pos,
    }
 }
 
+Error tokenizeError(const std::string& reason, const ErrorLocation& location)
+{
+   Error error(boost::system::errc::invalid_argument, location);
+   error.addProperty("reason", reason);
+   return error;
+}
+
 } // anonymous namespace
 
 RToken RTokenizer::nextToken()
 {
   if (eol())
-     return RToken() ;
+     return RToken();
 
-  wchar_t c = peek() ;
+  wchar_t c = peek();
 
+  // check for raw string literals
+  if (c == L'r' || c == L'R')
+  {
+     wchar_t next = peek(1);
+     if (next == L'"' || next == L'\'')
+     {
+        RToken token;
+        Error error = matchRawStringLiteral(&token);
+        if (!error)
+           return token;
+     }
+  }
+  
   switch (c)
   {
   case L'(':
@@ -166,9 +186,10 @@ RToken RTokenizer::nextToken()
         return token;
      }
   }
+     
   case L'"':
   case L'\'':
-     return matchStringLiteral() ;
+     return matchStringLiteral();
   case L'`':
      return matchQuotedIdentifier();
   case L'#':
@@ -215,6 +236,113 @@ RToken RTokenizer::nextToken()
 RToken RTokenizer::matchWhitespace()
 {
    return consumeToken(RToken::WHITESPACE, tokenLength(tokenPatterns().WHITESPACE));
+}
+
+Error RTokenizer::matchRawStringLiteral(RToken* pToken)
+{
+   auto start = pos_;
+   
+   // consume leading 'r' or 'R'
+   wchar_t firstChar = eat();
+   if (!(firstChar == L'r' || firstChar == L'R'))
+   {
+      pos_ = start;
+      return tokenizeError(
+               "expected 'r' or 'R' at start of raw string literal",
+               ERROR_LOCATION);
+   }
+   
+   // consume quote character
+   wchar_t quoteChar = eat();
+   if (!(quoteChar == L'"' || quoteChar == L'\''))
+   {
+      pos_ = start;
+      return tokenizeError(
+               "expected quote character at start of raw string literal",
+               ERROR_LOCATION);
+   }
+   
+   // consume an optional number of hyphens
+   int hyphenCount = 0;
+   wchar_t ch = eat();
+   while (ch == L'-')
+   {
+      hyphenCount++;
+      ch = eat();
+   }
+   
+   // okay, we're now sitting on open parenthesis
+   wchar_t lhs = ch;
+   
+   // form right boundary character based on consumed parenthesis.
+   // if it wasn't a parenthesis, just look for the associated closing quote
+   wchar_t rhs;
+   if (lhs == L'(')
+   {
+      rhs = L')';
+   }
+   else if (lhs == L'{')
+   {
+      rhs = L'}';
+   }
+   else if (lhs == L'[')
+   {
+      rhs = L']';
+   }
+   else
+   {
+      pos_ = start;
+      return tokenizeError(
+               "expected opening bracket at start of raw string literal",
+               ERROR_LOCATION);
+   }
+   
+   // start searching for the end of the raw string
+   bool valid = false;
+   
+   while (true)
+   {
+      // i know, i know -- a label!? we use that here just because
+      // we need to 'break' out of a nested loop below, and just
+      // using a simple goto is cleaner than having e.g. an extra
+      // boolean flag tracking whether we should 'continue'
+      LOOP:
+      
+      if (eol())
+         break;
+      
+      // find the boundary character
+      wchar_t ch = eat();
+      if (ch != rhs)
+         goto LOOP;
+      
+      // consume hyphens
+      for (int i = 0; i < hyphenCount; i++)
+      {
+         ch = eat();
+         if (ch != L'-')
+            goto LOOP;
+      }
+      
+      // consume quote character
+      ch = eat();
+      if (ch != quoteChar)
+         goto LOOP;
+      
+      // we're at the end of the string; break out of the loop
+      valid = true;
+      break;
+   }
+   
+   // update position
+   std::size_t row = row_;
+   std::size_t column = column_;
+   updatePosition(start, pos_ - start, &row_, &column_);
+ 
+   // set token and return success
+   auto type = valid ? RToken::STRING : RToken::ERR;
+   *pToken = RToken(type, start, pos_, start - data_.begin(), row, column);
+   return Success();
 }
 
 RToken RTokenizer::matchStringLiteral()

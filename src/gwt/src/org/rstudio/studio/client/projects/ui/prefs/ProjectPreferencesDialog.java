@@ -45,7 +45,7 @@ public class ProjectPreferencesDialog extends PreferencesDialogBase<RProjectOpti
    public static final int VCS = 4;
    public static final int RENV = 5;
    public static final int SHARING = 6;
-   
+
    @Inject
    public ProjectPreferencesDialog(ProjectsServerOperations server,
                                    Provider<UserPrefs> pUIPrefs,
@@ -60,13 +60,14 @@ public class ProjectPreferencesDialog extends PreferencesDialogBase<RProjectOpti
                                    ProjectSharingPreferencesPane sharing,
                                    Provider<ApplicationQuit> pQuit,
                                    Provider<GlobalDisplay> pGlobalDisplay)
-   {      
+   {
       super("Project Options",
             RES.styles().panelContainer(),
+            RES.styles().panelContainerNoChooser(),
             false,
-            new ProjectPreferencesPane[] {general, editing, compilePdf, build, 
+            new ProjectPreferencesPane[] {general, editing, compilePdf, build,
                                           source, renv, sharing});
-           
+
       session_ = session;
       server_ = server;
       pUIPrefs_ = pUIPrefs;
@@ -74,43 +75,43 @@ public class ProjectPreferencesDialog extends PreferencesDialogBase<RProjectOpti
       pQuit_ = pQuit;
       pGlobalDisplay_ = pGlobalDisplay;
    }
-   
+
    @Override
    public void initialize(RProjectOptions options)
    {
       super.initialize(options);
-      
+
       renvOptions_ = options.getRenvOptions();
-      
+
       if (!session_.get().getSessionInfo().getAllowVcs())
          hidePane(VCS);
-      
+
       if (!session_.get().getSessionInfo().projectSupportsSharing())
          hidePane(SHARING);
    }
-   
+
    @Override
    protected RProjectOptions createEmptyPrefs()
    {
       return RProjectOptions.createEmpty();
    }
-   
-   
+
+
    @Override
    protected void doSaveChanges(final RProjectOptions options,
                                 final Operation onCompleted,
                                 final ProgressIndicator indicator,
                                 final RestartRequirement restartRequirement)
    {
-      
+
       server_.writeProjectOptions(
-          options, 
+          options,
           new ServerRequestCallback<Void>() {
              @Override
              public void onResponseReceived(Void response)
              {
                 indicator.onCompleted();
-                
+
                 // update project ui prefs
                 RProjectConfig config = options.getConfig();
                 UserPrefs uiPrefs = pUIPrefs_.get();
@@ -123,7 +124,7 @@ public class ProjectPreferencesDialog extends PreferencesDialogBase<RProjectOpti
                 uiPrefs.stripTrailingWhitespace().setProjectValue(
                                            config.getStripTrailingWhitespace());
                 uiPrefs.defaultEncoding().setProjectValue(
-                                           config.getEncoding()); 
+                                           config.getEncoding());
                 uiPrefs.defaultSweaveEngine().setProjectValue(
                                            config.getDefaultSweaveEngine());
                 uiPrefs.defaultLatexProgram().setProjectValue(
@@ -132,10 +133,10 @@ public class ProjectPreferencesDialog extends PreferencesDialogBase<RProjectOpti
                                            config.getRootDocument());
                 uiPrefs.useRoxygen().setProjectValue(
                                            config.hasPackageRoxygenize());
-                
+
                 // convert packrat option changes to console actions
                 emitRenvConsoleActions(options.getRenvOptions());
-                
+
                 if (onCompleted != null)
                    onCompleted.execute();
                 if (restartRequirement.getDesktopRestartRequired())
@@ -150,33 +151,33 @@ public class ProjectPreferencesDialog extends PreferencesDialogBase<RProjectOpti
                 indicator.onError(error.getUserMessage());
              }
           });
-      
+
    }
-   
+
    private void emitRenvConsoleActions(RProjectRenvOptions options)
    {
       if (options.useRenv == renvOptions_.useRenv)
          return;
-      
+
       String renvAction = options.useRenv
             ? "renv::activate()"
             : "renv::deactivate()";
-      
+
       pEventBus_.get().fireEvent(new SendToConsoleEvent(renvAction, true, true));
    }
-   
+
    private final Provider<Session> session_;
    private final ProjectsServerOperations server_;
    private final Provider<UserPrefs> pUIPrefs_;
    private final Provider<EventBus> pEventBus_;
    private final Provider<ApplicationQuit> pQuit_;
    private final Provider<GlobalDisplay> pGlobalDisplay_;
-   
+
    private RProjectRenvOptions renvOptions_;
-   
+
    private static final ProjectPreferencesDialogResources RES =
                                  ProjectPreferencesDialogResources.INSTANCE;
 
 
-  
+
 }

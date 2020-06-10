@@ -69,25 +69,8 @@ export function delimiterMarkInputRule(
 
     // otherwise we need custom logic to get mark placement/eliding right
   } else {
-    // validate that delim and mask are single characters (our logic for computing offsets
-    // below depends on this assumption)
-    const validateParam = (name: string, value: string) => {
-      // validate mask
-      function throwError() {
-        throw new Error(`${name} must be a single characater`);
-      }
-      if (value.startsWith('\\')) {
-        if (value.length !== 2) {
-          throwError();
-        }
-      } else if (value.length !== 1) {
-        throwError();
-      }
-    };
-    validateParam('delim', delim);
-
-    // build regex (this regex assumes that mask is one character)
-    const regexp = `(?:^|[^${prefixMask}])(?:${delim})(${contentPattern})(?:${delim})$`;
+    // build regex
+    const regexp = `(^|[^${prefixMask}])(?:${delim})(${contentPattern})(?:${delim})$`;
 
     // return rule
     return new InputRule(new RegExp(regexp), (state: EditorState, match: string[], start: number, end: number) => {
@@ -99,21 +82,19 @@ export function delimiterMarkInputRule(
       const tr = state.tr;
 
       // compute offset for mask (should be zero if this was the beginning of a line,
-      // in all other cases it would be 1). note we depend on the delimiter being
-      // of size 1 here (this is enforced above)
-      const kDelimSize = 1;
-      const maskOffset = match[0].length - match[1].length - kDelimSize * 2;
+      // in all other cases it would be the length of the any mask found).
+      const maskOffset = match[1].length;
 
       // position of text to be formatted
-      const textStart = start + match[0].indexOf(match[1]);
-      const textEnd = textStart + match[1].length;
+      const textStart = start + match[0].indexOf(match[2]);
+      const textEnd = textStart + match[2].length;
 
       // remove trailing markdown
       tr.delete(textEnd, end);
 
       // update start/end to reflect the leading mask which we want to leave alone
       start = start + maskOffset;
-      end = start + match[1].length;
+      end = start + match[2].length;
 
       // remove leading markdown
       tr.delete(start, textStart);

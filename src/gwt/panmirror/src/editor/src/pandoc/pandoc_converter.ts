@@ -25,6 +25,7 @@ import {
   PandocPostprocessorFn,
   PandocInlineHTMLReaderFn,
   PandocWriterOptions,
+  PandocTokensFilterFn,
 } from '../api/pandoc';
 
 import { haveTableCellsWithInlineRcode } from '../api/rmd';
@@ -48,6 +49,7 @@ export class PandocConverter {
   private readonly preprocessors: readonly PandocPreprocessorFn[];
   private readonly postprocessors: readonly PandocPostprocessorFn[];
   private readonly readers: readonly PandocTokenReader[];
+  private readonly tokensFilters: readonly PandocTokensFilterFn[];
   private readonly blockReaders: readonly PandocBlockReaderFn[];
   private readonly inlineHTMLReaders: readonly PandocInlineHTMLReaderFn[];
   private readonly blockCapsuleFilters: readonly PandocBlockCapsuleFilter[];
@@ -67,6 +69,7 @@ export class PandocConverter {
     this.preprocessors = extensions.pandocPreprocessors();
     this.postprocessors = extensions.pandocPostprocessors();
     this.readers = extensions.pandocReaders();
+    this.tokensFilters = extensions.pandocTokensFilters();
     this.blockReaders = extensions.pandocBlockReaders();
     this.inlineHTMLReaders = extensions.pandocInlineHTMLReaders();
     this.blockCapsuleFilters = extensions.pandocBlockCapsuleFilters();
@@ -97,6 +100,7 @@ export class PandocConverter {
       ast,
       this.schema,
       this.readers,
+      this.tokensFilters,
       this.blockReaders,
       this.inlineHTMLReaders,
       this.blockCapsuleFilters,

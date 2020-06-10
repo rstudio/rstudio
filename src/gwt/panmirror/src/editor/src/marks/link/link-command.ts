@@ -14,7 +14,7 @@
  */
 
 import { MarkType } from 'prosemirror-model';
-import { LinkEditorFn, LinkProps } from '../../api/ui';
+import { LinkEditorFn, LinkProps, EditorUI } from '../../api/ui';
 import { EditorState, Transaction, TextSelection } from 'prosemirror-state';
 import { EditorView } from 'prosemirror-view';
 import { findChildren } from 'prosemirror-utils';
@@ -22,6 +22,7 @@ import { findChildren } from 'prosemirror-utils';
 import { markIsActive, getMarkAttrs, getSelectionMarkRange, getMarkRange } from '../../api/mark';
 
 import { linkTargets, LinkCapabilities, LinkType } from '../../api/link';
+import { OmniInsertGroup } from '../../api/omni_insert';
 
 export function linkCommand(markType: MarkType, onEditLink: LinkEditorFn, capabilities: LinkCapabilities) {
   return (state: EditorState, dispatch?: (tr: Transaction<any>) => void, view?: EditorView) => {
@@ -112,6 +113,16 @@ export function linkCommand(markType: MarkType, onEditLink: LinkEditorFn, capabi
     asyncEditLink();
 
     return true;
+  };
+}
+
+export function linkOmniInsert(ui: EditorUI) {
+  return {
+    name: ui.context.translateText('Link...'),
+    description: ui.context.translateText('Link to another location'),
+    group: OmniInsertGroup.Content,
+    priority: 8,
+    image: () => (ui.prefs.darkMode() ? ui.images.omni_insert?.link_dark! : ui.images.omni_insert?.link!),
   };
 }
 

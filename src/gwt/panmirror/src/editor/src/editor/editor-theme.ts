@@ -29,6 +29,7 @@ export interface EditorTheme {
   gutterTextColor: string;
   textColor: string;
   lightTextColor: string;
+  placeholderTextColor: string;
   linkTextColor: string;
   surfaceWidgetTextColor: string;
   markupTextColor: string;
@@ -82,7 +83,8 @@ export function defaultTheme(): EditorTheme {
     textColor: 'black',
     surfaceWidgetTextColor: 'rgba(0,0,0,0.5)',
     lightTextColor: 'rgb(60, 76, 114)',
-    linkTextColor: ' #106ba3',
+    linkTextColor: '#106ba3',
+    placeholderTextColor: 'gray',
     markupTextColor: 'rgb(185, 6, 144)',
     findTextBackgroundColor: 'rgb(250, 250, 255)',
     findTextBorderColor: 'rgb(200, 200, 250)',
@@ -162,18 +164,32 @@ export function applyTheme(theme: EditorTheme) {
     .pm-light-text-color {
       color: ${theme.lightTextColor} !important;
     }
+    .pm-placeholder-text-color {
+      color: ${theme.placeholderTextColor} !important;
+    }
     .pm-link-text-color {
       color: ${theme.linkTextColor} !important;
     }
     .pm-markup-text-color {
       color: ${theme.markupTextColor} !important;
     }
-    .pm-find-text {
+    .pm-find-text,
+    .pm-grid-item-selected {
       background-color: ${theme.findTextBackgroundColor} !important;
-      outline: 1px solid ${theme.findTextBorderColor} !important;
+      box-shadow: 0 0 0 1px ${theme.findTextBorderColor}; 
+      border-radius: 3px;
     }
     .pm-find-text-selected {
       background-color: ${theme.selectionColor} !important;
+    }
+    .pm-selected-list-item {
+      background-color: ${theme.findTextBackgroundColor} !important;
+      border: 1px solid ${theme.findTextBorderColor} !important;
+      border-radius: 3px;
+    }
+    .pm-dark-mode .pm-selected-list-item {
+      background-color: ${theme.chunkBackgroundColor} !important;
+      border: 1px solid transparent !important;
     }
     .pm-border-background-color {
       background-color: ${theme.borderBackgroundColor}!important;
@@ -194,7 +210,7 @@ export function applyTheme(theme: EditorTheme) {
       border-color: ${theme.markupTextColor} !important;
     }
     .pm-popup {
-      box-shadow: 0 1px 3px ${theme.paneBorderColor} !important;
+      box-shadow: 0 1px 3px ${theme.blockBorderColor} !important;
     }
     .pm-selected-node-outline-color,
     .ProseMirror-selectednode {
@@ -226,6 +242,13 @@ export function applyTheme(theme: EditorTheme) {
     .pm-proportional-font {
       font-family: ${theme.proportionalFont} !important;
       font-size: ${theme.proportionalFontSizePt}pt !important;
+    }
+    .pm-input-text {
+      border-color: ${theme.paneBorderColor};
+    }
+    .pm-input-button {
+      border-color: ${theme.borderBackgroundColor};
+      background-color: ${theme.backgroundColor};
     }
     .CodeMirror,
     .CodeMirror pre.CodeMirror-line, .CodeMirror pre.CodeMirror-line-like {

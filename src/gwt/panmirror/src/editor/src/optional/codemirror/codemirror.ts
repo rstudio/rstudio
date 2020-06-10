@@ -13,7 +13,15 @@
  *
  */
 
-import { Plugin, PluginKey, TextSelection, EditorState, Transaction, Selection } from 'prosemirror-state';
+import {
+  Plugin,
+  PluginKey,
+  TextSelection,
+  EditorState,
+  Transaction,
+  Selection,
+  NodeSelection,
+} from 'prosemirror-state';
 import { Node as ProsemirrorNode } from 'prosemirror-model';
 import { EditorView, NodeView, Decoration } from 'prosemirror-view';
 import { undo, redo } from 'prosemirror-history';
@@ -356,10 +364,52 @@ class CodeBlockNodeView implements NodeView {
     ) {
       return CodeMirror.Pass;
     }
+
+    // ensure we are focused
     this.view.focus();
-    const targetPos = this.getPos() + (dir < 0 ? 0 : this.node.nodeSize);
-    const selection = Selection.near(this.view.state.doc.resolve(targetPos), dir);
-    this.view.dispatch(this.view.state.tr.setSelection(selection).scrollIntoView());
+
+    // get the current position
+    const $pos = this.view.state.doc.resolve(this.getPos());
+
+    // helpers to figure out if the previous or next nodes are selectable
+    const prevNodeSelectable = () => {
+      return $pos.nodeBefore && $pos.nodeBefore.type.spec.selectable;
+    };
+    const nextNodeSelectable = () => {
+      const nextNode = this.view.state.doc.nodeAt(this.getPos() + this.node.nodeSize);
+      return nextNode?.type.spec.selectable;
+    };
+
+    // see if we can get a new selection
+    const tr = this.view.state.tr;
+    let selection: Selection | undefined;
+
+    // if we are going backwards and the previous node can take node selections then select it
+    if (dir < 0 && prevNodeSelectable()) {
+      const prevNodePos = this.getPos() - $pos.nodeBefore!.nodeSize;
+      selection = NodeSelection.create(tr.doc, prevNodePos);
+
+      // if we are going forwards and the next node can take node selections then select it
+    } else if (dir >= 0 && nextNodeSelectable()) {
+      const nextNodePos = this.getPos() + this.node.nodeSize;
+      selection = NodeSelection.create(tr.doc, nextNodePos);
+
+      // otherwise use text selection handling (handles forward/backward text selections)
+    } else {
+      const targetPos = this.getPos() + (dir < 0 ? 0 : this.node.nodeSize);
+      const targetNode = this.view.state.doc.nodeAt(targetPos);
+      if (targetNode) {
+        selection = Selection.near(this.view.state.doc.resolve(targetPos), dir);
+      }
+    }
+
+    // set selection if we've got it
+    if (selection) {
+      tr.setSelection(selection).scrollIntoView();
+      this.view.dispatch(tr);
+    }
+
+    // set focus
     this.view.focus();
   }
 

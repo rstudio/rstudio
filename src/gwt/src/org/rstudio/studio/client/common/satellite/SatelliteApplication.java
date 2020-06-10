@@ -170,6 +170,7 @@ public class SatelliteApplication
    private SatelliteApplicationView view_;
    private Satellite satellite_;
    private Provider<AceThemes> pAceThemes_;
+   @SuppressWarnings("unused")
    private Provider<UserPrefs> pUserPrefs_;
    private ApplicationUncaughtExceptionHandler uncaughtExHandler_;
 }

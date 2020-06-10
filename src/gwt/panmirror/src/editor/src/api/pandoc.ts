@@ -208,11 +208,14 @@ export interface PandocTokenReader {
 export const kRawBlockFormat = 0;
 export const kRawBlockContent = 1;
 
+// filter sequences of tokens (e.g. for reducing some adjacent tokens to a single token)
+export type PandocTokensFilterFn = (tokens: PandocToken[], writer: ProsemirrorWriter) => PandocToken[];
+
 // special reader that gets a first shot at blocks (i.e. to convert a para w/ a single image into a figure)
 export type PandocBlockReaderFn = (schema: Schema, tok: PandocToken, writer: ProsemirrorWriter) => boolean;
 
 // reader that gets a first shot at inline html (e.g. image node parsing an <img> tag)
-export type PandocInlineHTMLReaderFn = (schema: Schema, html: string, writer: ProsemirrorWriter) => boolean;
+export type PandocInlineHTMLReaderFn = (schema: Schema, html: string, writer?: ProsemirrorWriter) => boolean;
 
 export interface ProsemirrorWriter {
   // open (then close) a node container
@@ -232,11 +235,12 @@ export interface ProsemirrorWriter {
   // add text to the current node using the current mark set
   writeText(text: string): void;
 
-  // write inlne html to the current node
-  writeInlineHTML(html: string): void;
-
   // write tokens into the current node
   writeTokens(tokens: PandocToken[]): void;
+
+  // see if any inline HTML readers want to handle this html
+  hasInlineHTMLWriter(html: string): boolean;
+  writeInlineHTML(html: string): void;
 
   // log an unrecoginzed token type
   logUnrecognized(token: string): void;

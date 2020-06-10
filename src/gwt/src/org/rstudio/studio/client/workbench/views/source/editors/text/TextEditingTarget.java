@@ -4814,6 +4814,24 @@ public class TextEditingTarget implements
    
    private void onInsertChunk(String chunkPlaceholder, int rowOffset, int colOffset)
    {
+      // allow visual mode to handle
+      if (visualMode_.isActivated()) 
+      {
+         // strip off the leading backticks (if rowOffset is 0 then adjust colOffset)
+         chunkPlaceholder = chunkPlaceholder.replaceFirst("```", "");
+         if (rowOffset == 0)
+            colOffset -= 3;
+         
+         // strip off the trailing backticks
+         chunkPlaceholder = chunkPlaceholder.replaceAll("\\n```\\n$", "");  
+         
+         // do the insert
+         visualMode_.insertChunk(chunkPlaceholder, rowOffset, colOffset);
+         
+         // all done!
+         return;
+      }
+      
       String sel = "";
       Range selRange = null;
       
@@ -4964,7 +4982,7 @@ public class TextEditingTarget implements
       if (notebook_ != null) {
          Scope setupScope = notebook_.getSetupChunkScope();
 
-         if (setupScope == null)
+         if (setupScope == null && !visualMode_.isActivated())
          {
             onInsertChunk("```{r setup}\nlibrary(r2d3)\n```\n\n```{d3 data=}\n\n```\n", 4, 12);
          }
@@ -7351,6 +7369,22 @@ public class TextEditingTarget implements
       return StringUtil.isNullOrEmpty(property)
             ? (getTextFileType().isRmd() && defaultValue)
             : Integer.parseInt(property) > 0;
+   }
+   
+   // similar to get but will write the default value if it's used
+   public boolean establishPreferredOutlineWidgetVisibility(boolean defaultValue)
+   {
+      String property = docUpdateSentinel_.getProperty(DOC_OUTLINE_VISIBLE);
+      if (!StringUtil.isNullOrEmpty(property)) 
+      {
+         return Integer.parseInt(property) > 0;
+      }
+      else
+      {
+         boolean visible = getTextFileType().isRmd() && defaultValue;
+         setPreferredOutlineWidgetVisibility(visible);
+         return visible;
+      }
    }
    
    public boolean isActiveDocument()

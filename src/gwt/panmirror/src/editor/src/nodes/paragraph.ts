@@ -19,6 +19,8 @@ import { BlockCommand, EditorCommandId, ProsemirrorCommand } from '../api/comman
 import { Extension } from '../api/extension';
 import { PandocOutput, PandocTokenType } from '../api/pandoc';
 import { insertParagraph } from '../api/paragraph';
+import { EditorUI } from '../api/ui';
+import { OmniInsertGroup } from '../api/omni_insert';
 
 const extension: Extension = {
   nodes: [
@@ -46,9 +48,23 @@ const extension: Extension = {
     },
   ],
 
-  commands: (schema: Schema) => {
+  commands: (schema: Schema, ui: EditorUI) => {
     return [
-      new BlockCommand(EditorCommandId.Paragraph, ['Mod-Alt-0'], schema.nodes.paragraph, schema.nodes.paragraph),
+      new BlockCommand(
+        EditorCommandId.Paragraph,
+        ['Mod-Alt-0'],
+        schema.nodes.paragraph,
+        schema.nodes.paragraph,
+        {},
+        {
+          name: ui.context.translateText('Paragraph'),
+          description: ui.context.translateText('Plain paragraph of text'),
+          group: OmniInsertGroup.Blocks,
+          priority: 10,
+          image: () =>
+            ui.prefs.darkMode() ? ui.images.omni_insert?.paragraph_dark! : ui.images.omni_insert?.paragraph!,
+        },
+      ),
       new InsertParagraphCommand(),
     ];
   },

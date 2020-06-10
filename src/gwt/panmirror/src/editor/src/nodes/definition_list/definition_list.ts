@@ -40,6 +40,7 @@ import {
 } from './definition_list-pandoc';
 
 import './definition_list-styles.css';
+import { emptyNodePlaceholderPlugin } from '../../api/placeholder';
 
 const extension: Extension = {
   nodes: [
@@ -117,6 +118,10 @@ const extension: Extension = {
 
   appendTransaction: (_schema: Schema) => {
     return [insertDefinitionListAppendTransaction()];
+  },
+
+  plugins: (schema: Schema, ui: EditorUI) => {
+    return [emptyNodePlaceholderPlugin(schema.nodes.definition_list_term, () => ui.context.translateText('Term'))];
   },
 };
 

@@ -75,7 +75,6 @@ public class PanmirrorToolbar extends SecondaryToolbar implements RequiresResize
       );
       
       insertWidgets_ = addWidgetGroup(
-         addLeftButton(PanmirrorCommands.RmdChunk),
          addLeftButton(PanmirrorCommands.Link),
          addLeftButton(PanmirrorCommands.Image),
          addLeftSeparator()

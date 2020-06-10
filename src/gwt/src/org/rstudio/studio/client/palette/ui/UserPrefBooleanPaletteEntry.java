@@ -38,6 +38,17 @@ public class UserPrefBooleanPaletteEntry extends UserPrefPaletteEntry
       toggle_.setState(initial ? 
          Toggle.State.ON : Toggle.State.OFF, false);
 
+      // Add handler to the toggle control to sync pref with toggle state
+      toggle_.addValueChangeHandler((state) ->
+      {
+         // Compute new value
+         boolean newValue = state.getValue() == Toggle.State.ON;
+         BooleanValue pref = (BooleanValue)pref_;
+         pref.setGlobalValue(newValue);
+
+         // Save new value
+         prefItem_.nudgeWriter();
+      });
       initialize();
 
       // Establish link between the toggle switch and the name element for
@@ -56,15 +67,11 @@ public class UserPrefBooleanPaletteEntry extends UserPrefPaletteEntry
          return;
       }
 
+      // Set new value (will trigger an event that causes the underlying pref to
+      // set)
       boolean newValue = toggle_.getState() != Toggle.State.ON;
-      BooleanValue pref = (BooleanValue)pref_;
-      pref.setGlobalValue(newValue);
-
       toggle_.setState(newValue ? Toggle.State.ON : Toggle.State.OFF,
          !RStudioGinjector.INSTANCE.getUserPrefs().reducedMotion().getValue());
-      
-      // Save new value
-      prefItem_.nudgeWriter();
    }
 
    @Override

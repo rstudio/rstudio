@@ -27,11 +27,20 @@ import { ProsemirrorCommand, CommandFn, EditorCommand } from '../api/command';
 import { findTopLevelBodyNodes } from '../api/node';
 import { EditorUI, attrPropsToInput, attrInputToProps, AttrProps, AttrEditInput } from '../api/ui';
 import { Extension } from '../api/extension';
-import { ExtensionManager, initExtensions } from './editor-extensions';
 import { PandocEngine, PandocWriterOptions } from '../api/pandoc';
 import { PandocCapabilities, getPandocCapabilities } from '../api/pandoc_capabilities';
 import { fragmentToHTML } from '../api/html';
-import { EditorEvent } from '../api/events';
+import { DOMEditorEvents, EventType, EventHandler } from '../api/events';
+import {
+  ScrollEvent,
+  UpdateEvent,
+  OutlineChangeEvent,
+  StateChangeEvent,
+  ResizeEvent,
+  LayoutEvent,
+  FocusEvent,
+  DispatchEvent,
+} from '../api/event-types';
 import {
   PandocFormat,
   resolvePandocFormat,
@@ -56,6 +65,8 @@ import { kPercentUnit } from '../api/css';
 import { EditorFormat } from '../api/format';
 import { diffChars, EditorChange } from '../api/change';
 import { markInputRuleFilter } from '../api/input_rule';
+import { EditorEvents } from '../api/events';
+import { insertRmdChunk } from '../api/rmd';
 
 import { getTitle, setTitle } from '../nodes/yaml_metadata/yaml_metadata-title';
 
@@ -73,16 +84,21 @@ import {
   selectCurrent,
 } from '../behaviors/find';
 
+import { omniInsertExtension } from '../behaviors/omni_insert/omni_insert';
+import { completionExtension } from '../behaviors/completion/completion';
+
 import { PandocConverter } from '../pandoc/pandoc_converter';
 
+import { ExtensionManager, initExtensions } from './editor-extensions';
 import { defaultTheme, EditorTheme, applyTheme, applyPadding } from './editor-theme';
 import { defaultEditorUIImages } from './editor-images';
 import { editorMenus, EditorMenus } from './editor-menus';
 import { editorSchema } from './editor-schema';
 
-// import styles
+// import styles before extensions so they can be overriden by extensions
 import './styles/frame.css';
 import './styles/styles.css';
+
 
 export interface EditorCode {
   code: string;
@@ -189,6 +205,7 @@ export class Editor {
   // core context passed from client
   private readonly parent: HTMLElement;
   private readonly context: EditorContext;
+  private readonly events: EditorEvents;
 
   // options (derived from defaults + config)
   private readonly options: EditorOptions;
@@ -219,9 +236,6 @@ export class Editor {
   // keep track of whether the last transaction was selection-only
   // (indicates that we should use a cursorSentinel when going to source mode)
   private lastTrSelectionOnly = false;
-
-  // event sinks
-  private readonly events: ReadonlyMap<string, Event>;
 
   // create the editor -- note that the markdown argument does not substitute for calling
   // setMarkdown, rather it's used to read the format comment to determine how to
@@ -264,13 +278,18 @@ export class Editor {
     };
 
     // provide context defaults
+    const defaultImages = defaultEditorUIImages();
     context = {
       ...context,
       ui: {
         ...context.ui,
         images: {
-          ...defaultEditorUIImages(),
+          ...defaultImages,
           ...context.ui.images,
+          omni_insert: {
+            ...defaultImages.omni_insert,
+            ...context.ui.images,
+          },
         },
       },
     };
@@ -298,6 +317,7 @@ export class Editor {
   ) {
     // initialize references
     this.parent = parent;
+    this.events = new DOMEditorEvents(parent);
     this.context = context;
     this.options = options;
     this.format = format;
@@ -305,14 +325,16 @@ export class Editor {
     this.pandocFormat = pandocFormat;
     this.pandocCapabilities = pandocCapabilities;
 
-    // initialize custom events
-    this.events = this.initEvents();
-
-    // create extensions
+    // create core extensions
     this.extensions = this.initExtensions();
 
     // create schema
     this.schema = editorSchema(this.extensions);
+
+    // register completion handlers (done in a separate step b/c omni insert
+    // completion handlers require access to the initializezd commands that
+    // carry omni insert info)
+    this.registerCompletionExtension();
 
     // create state
     this.state = EditorState.create({
@@ -375,7 +397,7 @@ export class Editor {
         () => {
           if (!ticking) {
             window.requestAnimationFrame(() => {
-              this.emitEvent(EditorEvent.Scroll);
+              this.emitEvent(ScrollEvent);
               ticking = false;
             });
             ticking = true;
@@ -390,15 +412,12 @@ export class Editor {
     this.view.destroy();
   }
 
-  public subscribe(event: EditorEvent, handler: VoidFunction): VoidFunction {
-    if (!this.events.has(event)) {
-      const valid = Array.from(this.events.keys()).join(', ');
-      throw new Error(`Unknown event ${event}. Valid events are ${valid}`);
+  public subscribe<TDetail>(event: EventType<TDetail> | string, handler: EventHandler<TDetail>): VoidFunction {
+    if (typeof event === 'string') {
+      return this.events.subscribe({ eventName: event }, handler);
+    } else {
+      return this.events.subscribe(event, handler);
     }
-    this.parent.addEventListener(event, handler);
-    return () => {
-      this.parent.removeEventListener(event, handler);
-    };
   }
 
   public setTitle(title: string) {
@@ -449,9 +468,9 @@ export class Editor {
 
     // notify listeners if requested
     if (emitUpdate) {
-      this.emitEvent(EditorEvent.Update);
-      this.emitEvent(EditorEvent.OutlineChange);
-      this.emitEvent(EditorEvent.SelectionChange);
+      this.emitEvent(UpdateEvent);
+      this.emitEvent(OutlineChangeEvent);
+      this.emitEvent(StateChangeEvent);
     }
 
     // return our current markdown representation (so the caller know what our
@@ -559,6 +578,12 @@ export class Editor {
     (this.view.dom as HTMLElement).blur();
   }
 
+  public insertChunk(chunkPlaceholder: string, rowOffset: number, colOffset: number) {
+    const insertCmd = insertRmdChunk(chunkPlaceholder, rowOffset, colOffset);
+    insertCmd(this.view.state, this.view.dispatch, this.view);
+    this.focus();
+  }
+
   public navigate(id: string) {
     navigateTo(this.view, node => id === node.attrs.navigation_id, false);
   }
@@ -566,7 +591,7 @@ export class Editor {
   public resize() {
     this.syncContentWidth();
     this.applyFixupsOnResize();
-    this.emitEvent(EditorEvent.Resize);
+    this.emitEvent(ResizeEvent);
   }
 
   public enableDevTools(initFn: (view: EditorView, stateClass: any) => void) {
@@ -640,42 +665,29 @@ export class Editor {
     this.state = this.state.apply(tr);
     this.view.updateState(this.state);
 
-    // notify listeners of selection change
-    this.emitEvent(EditorEvent.SelectionChange);
+    // notify listeners of state change
+    this.emitEvent(StateChangeEvent);
 
     // notify listeners of updates
     if (tr.docChanged || tr.storedMarksSet) {
       // fire updated (unless this was a fixup)
       if (!tr.getMeta(kFixupTransaction)) {
-        this.emitEvent(EditorEvent.Update);
+        this.emitEvent(UpdateEvent);
       }
 
       // fire outline changed if necessary
       if (getOutline(this.state) !== previousOutline) {
-        this.emitEvent(EditorEvent.OutlineChange);
+        this.emitEvent(OutlineChangeEvent);
       }
     }
 
-    this.emitEvent(EditorEvent.Layout);
+    this.emitEvent(DispatchEvent, tr);
+
+    this.emitEvent(LayoutEvent);
   }
 
-  private emitEvent(name: string) {
-    const event = this.events.get(name);
-    if (event) {
-      this.parent.dispatchEvent(event);
-    }
-  }
-
-  private initEvents(): ReadonlyMap<string, Event> {
-    const events = new Map<string, Event>();
-    events.set(EditorEvent.Update, new Event(EditorEvent.Update));
-    events.set(EditorEvent.OutlineChange, new Event(EditorEvent.OutlineChange));
-    events.set(EditorEvent.SelectionChange, new Event(EditorEvent.SelectionChange));
-    events.set(EditorEvent.Resize, new Event(EditorEvent.Resize));
-    events.set(EditorEvent.Layout, new Event(EditorEvent.Layout));
-    events.set(EditorEvent.Scroll, new Event(EditorEvent.Scroll));
-    events.set(EditorEvent.Focus, new Event(EditorEvent.Focus));
-    return events;
+  private emitEvent<TDetail>(eventType: EventType<TDetail>, detail?: TDetail) {
+    this.events.emit(eventType, detail);
   }
 
   private initExtensions() {
@@ -688,6 +700,17 @@ export class Editor {
       this.pandocFormat.extensions,
       this.pandocCapabilities,
     );
+  }
+
+  private registerCompletionExtension() {
+    // register omni insert extension
+    const markFilter = markInputRuleFilter(this.schema, this.extensions.pandocMarks());
+    this.extensions.register([
+      omniInsertExtension(this.extensions.omniInserters(this.schema, this.context.ui), markFilter, this.context.ui),
+    ]);
+
+    // register completion extension
+    this.extensions.register([completionExtension(this.extensions.completionHandlers(), this.context.ui, this.events)]);
   }
 
   private createPlugins(): Plugin[] {
@@ -738,7 +761,7 @@ export class Editor {
       props: {
         handleDOMEvents: {
           focus: (view: EditorView, event: Event) => {
-            this.emitEvent(EditorEvent.Focus);
+            this.emitEvent(FocusEvent);
             return false;
           },
         },
@@ -804,7 +827,7 @@ export class Editor {
     if (!docChanged) {
       // If applyFixupsOnResize returns true, then layout has already
       // been fired; if it hasn't, we must do so now
-      this.emitEvent(EditorEvent.Layout);
+      this.emitEvent(LayoutEvent);
     }
   }
 
@@ -841,11 +864,13 @@ export class Editor {
   }
 
   private async getMarkdownCode(doc: ProsemirrorNode, options: PandocWriterOptions) {
-    // apply layout fixups
-    this.applyFixups(FixupContext.Save);
+    // apply save fixups to a new transaction that we won't commit (b/c we don't
+    // want the fixups to affect the loaded editor state)
+    const tr = this.state.tr;
+    this.extensionFixups(tr, FixupContext.Save);
 
     // get code
-    return this.pandocConverter.fromProsemirror(doc, this.pandocFormat, options);
+    return this.pandocConverter.fromProsemirror(tr.doc, this.pandocFormat, options);
   }
 }
 

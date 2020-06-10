@@ -156,7 +156,9 @@ const extension = (
 
     baseKeys: figureKeys,
 
-    plugins: (_schema: Schema) => imageNodeViewPlugins('figure', ui, events, pandocExtensions),
+    plugins: (schema: Schema) => {
+      return [...imageNodeViewPlugins('figure', ui, events, pandocExtensions)];
+    },
   };
 };
 

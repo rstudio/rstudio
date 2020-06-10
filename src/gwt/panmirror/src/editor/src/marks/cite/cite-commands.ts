@@ -20,6 +20,7 @@ import { EditorView } from 'prosemirror-view';
 import { ProsemirrorCommand, EditorCommandId } from '../../api/command';
 import { canInsertNode } from '../../api/node';
 import { EditorUI } from '../../api/ui';
+import { OmniInsertGroup } from '../../api/omni_insert';
 
 export class InsertCitationCommand extends ProsemirrorCommand {
   constructor(ui: EditorUI) {
@@ -56,6 +57,13 @@ export class InsertCitationCommand extends ProsemirrorCommand {
         asyncInsertCitation();
 
         return true;
+      },
+      {
+        name: ui.context.translateText('Citation...'),
+        description: ui.context.translateText('Reference to a source'),
+        group: OmniInsertGroup.References,
+        priority: 1,
+        image: () => ui.images.omni_insert?.generic!,
       },
     );
   }

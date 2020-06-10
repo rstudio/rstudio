@@ -20,17 +20,17 @@ import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 
 public class ViewConnectionDatasetEvent extends GwtEvent<ViewConnectionDatasetEvent.Handler>
-{  
+{
    public interface Handler extends EventHandler
    {
       void onViewConnectionDataset(ViewConnectionDatasetEvent event);
    }
-   
+
    public ViewConnectionDatasetEvent(DatabaseObject dataset)
    {
       dataset_ = dataset;
    }
-   
+
    public DatabaseObject getDataset()
    {
       return dataset_;
@@ -47,8 +47,8 @@ public class ViewConnectionDatasetEvent extends GwtEvent<ViewConnectionDatasetEv
    {
       handler.onViewConnectionDataset(this);
    }
-   
+
    private final DatabaseObject dataset_;
 
-   public static final Type<Handler> TYPE = new Type<Handler>();
+   public static final Type<Handler> TYPE = new Type<>();
 }

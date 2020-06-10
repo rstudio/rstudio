@@ -30,10 +30,11 @@ import { matchPandocFormatComment } from '../../api/pandoc_format';
 import { PandocCapabilities } from '../../api/pandoc_capabilities';
 import { EditorFormat } from '../../api/format';
 import { EditorOptions } from '../../api/options';
+import { kHTMLCommentRegEx, isHTMLComment } from '../../api/html';
+import { OmniInsertGroup } from '../../api/omni_insert';
 
 import './raw_html_comment-styles.css';
 
-const kHTMLCommentRegEx = /(?:^|[^`])(<!--([\s\S]*?)-->)/;
 const kHTMLEditingCommentRegEx = /^<!--# ([\s\S]*?)-->$/;
 
 const extension = (
@@ -81,16 +82,20 @@ const extension = (
         },
         pandoc: {
           readers: [],
-          inlineHTMLReader: (schema: Schema, html: string, writer: ProsemirrorWriter) => {
-            if (html.match(kHTMLCommentRegEx)) {
+          inlineHTMLReader: (schema: Schema, html: string, writer?: ProsemirrorWriter) => {
+            const isComment = isHTMLComment(html);
+            if (!isComment) {
+              return false;
+            }
+
+            if (writer) {
               const mark = schema.marks.raw_html_comment.create(commentMarkAttribs(html));
               writer.openMark(mark);
               writer.writeText(html);
               writer.closeMark(mark);
-              return true;
-            } else {
-              return false;
             }
+
+            return isComment;
           },
           writer: {
             priority: 20,
@@ -117,7 +122,7 @@ const extension = (
               pos,
               kHTMLCommentMarkRegEx,
               markType,
-              match => commentMarkAttribs(match[0]),
+              match => commentMarkAttribs(match[1]),
               match => match[1],
             );
           },
@@ -127,57 +132,68 @@ const extension = (
 
     // insert command
     commands: (schema: Schema, ui: EditorUI) => {
-      return [new InsertHTMLCommentCommand(schema)];
+      return [new InsertHTMLCommentCommand(schema, ui)];
     },
   };
 };
 
 export class InsertHTMLCommentCommand extends ProsemirrorCommand {
-  constructor(schema: Schema) {
-    super(EditorCommandId.HTMLComment, ['Shift-Mod-c'], (state: EditorState, dispatch?: (tr: Transaction) => void) => {
-      // make sure we can insert a text node here
-      if (!canInsertNode(state, schema.nodes.text)) {
-        return false;
-      }
-
-      // make sure we can apply this mark here
-      if (!toggleMark(schema.marks.raw_html)(state)) {
-        return false;
-      }
-
-      // make sure the end of the selection (where we will insert the comment)
-      // isn't already in a mark of this type
-      if (state.doc.rangeHasMark(state.selection.to, state.selection.to + 1, schema.marks.raw_html)) {
-        return false;
-      }
-
-      if (dispatch) {
-        const tr = state.tr;
-
-        // set the selection to the end of the current selection (comment 'on' the selection)
-        setTextSelection(tr.selection.to)(tr);
-
-        // if we have a character right before us then insert a space
-        const { parent, parentOffset } = tr.selection.$to;
-        const charBefore = parent.textContent.slice(parentOffset - 1, parentOffset);
-        if (charBefore.length && charBefore !== ' ') {
-          tr.insertText(' ');
+  constructor(schema: Schema, ui: EditorUI) {
+    super(
+      EditorCommandId.HTMLComment,
+      ['Shift-Mod-c'],
+      (state: EditorState, dispatch?: (tr: Transaction) => void) => {
+        // make sure we can insert a text node here
+        if (!canInsertNode(state, schema.nodes.text)) {
+          return false;
         }
 
-        // insert the comment
-        const comment = '<!--#  -->';
-        const mark = schema.marks.raw_html_comment.create({ editing: true });
-        tr.insert(tr.selection.to, schema.text(comment, [mark]));
+        // make sure we can apply this mark here
+        if (!toggleMark(schema.marks.raw_html)(state)) {
+          return false;
+        }
 
-        // set the selection to the middle of the comment
-        tr.setSelection(new TextSelection(tr.doc.resolve(tr.selection.to - (comment.length / 2 - 1))));
+        // make sure the end of the selection (where we will insert the comment)
+        // isn't already in a mark of this type
+        if (state.doc.rangeHasMark(state.selection.to, state.selection.to + 1, schema.marks.raw_html)) {
+          return false;
+        }
 
-        // dispatch
-        dispatch(tr);
-      }
+        if (dispatch) {
+          const tr = state.tr;
 
-      return true;
-    });
+          // set the selection to the end of the current selection (comment 'on' the selection)
+          setTextSelection(tr.selection.to)(tr);
+
+          // if we have a character right before us then insert a space
+          const { parent, parentOffset } = tr.selection.$to;
+          const charBefore = parent.textContent.slice(parentOffset - 1, parentOffset);
+          if (charBefore.length && charBefore !== ' ') {
+            tr.insertText(' ');
+          }
+
+          // insert the comment
+          const comment = '<!--#  -->';
+          const mark = schema.marks.raw_html_comment.create({ editing: true });
+          tr.insert(tr.selection.to, schema.text(comment, [mark]));
+
+          // set the selection to the middle of the comment
+          tr.setSelection(new TextSelection(tr.doc.resolve(tr.selection.to - (comment.length / 2 - 1))));
+
+          // dispatch
+          dispatch(tr);
+        }
+
+        return true;
+      },
+      {
+        name: ui.context.translateText('Comment'),
+        description: ui.context.translateText('Editing comment'),
+        group: OmniInsertGroup.Content,
+        priority: 3,
+        image: () => (ui.prefs.darkMode() ? ui.images.omni_insert?.comment_dark! : ui.images.omni_insert?.comment!),
+      },
+    );
   }
 }
 

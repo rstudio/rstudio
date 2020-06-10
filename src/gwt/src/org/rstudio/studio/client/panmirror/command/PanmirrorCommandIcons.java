@@ -33,9 +33,9 @@ public class PanmirrorCommandIcons
    public final String CODE = "code";
    public final String IMAGE = "image";
    public final String ITALIC = "italic";
+   public final String OMNI = "omni";
    public final String LINK = "link";
    public final String NUMBERED_LIST = "numbered_list";
-   public final String RMD_CHUNK = "rmd_chunk";
    public final String TABLE = "table";
    public final String CLEAR_FORMATTING = "clear_formatting";
    public final String COMMENT = "comment";
@@ -53,10 +53,10 @@ public class PanmirrorCommandIcons
       icons_.put(IMAGE, res.image());
       icons_.put(ITALIC, res.italic());
       icons_.put(dm(ITALIC), res.italic_dm());
+      icons_.put(OMNI, res.omni());
       icons_.put(LINK, res.link());
       icons_.put(NUMBERED_LIST, res.numbered_list());
       icons_.put(dm(NUMBERED_LIST), res.numbered_list_dm());
-      icons_.put(RMD_CHUNK, res.rmd_chunk());
       icons_.put(TABLE, res.table());
       icons_.put(CLEAR_FORMATTING, res.clear_formatting());
       icons_.put(dm(CLEAR_FORMATTING), res.clear_formatting_dm());

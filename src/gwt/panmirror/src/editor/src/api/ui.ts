@@ -21,12 +21,15 @@ import { EditorUIImages } from './ui-images';
 
 import { kStyleAttrib } from './pandoc_attr';
 import { EditorRmdChunk } from './rmd';
+import { SkinTone } from './emoji';
 
 export interface EditorUI {
   dialogs: EditorDialogs;
   display: EditorDisplay;
   execute: EditorUIExecute;
+  math: EditorUIMath;
   context: EditorUIContext;
+  prefs: EditorUIPrefs;
   images: EditorUIImages;
 }
 
@@ -35,7 +38,7 @@ export interface EditorDialogs {
   editLink: LinkEditorFn;
   editImage: ImageEditorFn;
   editCodeBlock: CodeBlockEditorFn;
-  editOrderedList: OrderedListEditorFn;
+  editList: ListEditorFn;
   editAttr: AttrEditorFn;
   editSpan: AttrEditorFn;
   editDiv: DivAttrEditorFn;
@@ -72,9 +75,20 @@ export interface EditorUIExecute {
   executeRmdChunk?: (chunk: EditorRmdChunk) => void;
 }
 
+export interface EditorUIMath {
+  typeset?: (el: HTMLElement, text: string) => Promise<boolean>;
+}
+
 export interface EditorDisplay {
   openURL: (url: string) => void;
   showContextMenu?: (items: EditorMenuItem[], clientX: number, clientY: number) => Promise<boolean>;
+}
+
+export interface EditorUIPrefs {
+  darkMode: () => boolean;
+  equationPreview: () => boolean;
+  emojiSkinTone: () => SkinTone;
+  setEmojiSkinTone: (skinTone: SkinTone) => void;
 }
 
 export enum AlertType {
@@ -107,10 +121,7 @@ export type CodeBlockEditorFn = (
   languages: string[],
 ) => Promise<CodeBlockEditResult | null>;
 
-export type OrderedListEditorFn = (
-  list: OrderedListProps,
-  capabilities: ListCapabilities,
-) => Promise<OrderedListEditResult | null>;
+export type ListEditorFn = (list: ListProps, capabilities: ListCapabilities) => Promise<ListEditResult | null>;
 
 export type RawFormatEditorFn = (raw: RawFormatProps, outputFormats: string[]) => Promise<RawFormatResult | null>;
 
@@ -166,14 +177,20 @@ export interface CodeBlockProps extends AttrProps {
 
 export type CodeBlockEditResult = CodeBlockProps;
 
-export interface OrderedListProps {
+export enum ListType {
+  Ordered = 'OrderedList',
+  Bullet = 'BulletList',
+}
+
+export interface ListProps {
+  type: ListType;
   tight: boolean;
   order: number;
   number_style: string;
   number_delim: string;
 }
 
-export type OrderedListEditResult = OrderedListProps;
+export type ListEditResult = ListProps;
 
 export interface InsertTableResult {
   rows: number;

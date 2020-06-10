@@ -22,6 +22,7 @@ import { findParentNodeOfType, setTextSelection } from 'prosemirror-utils';
 import { canInsertNode } from '../../api/node';
 import { insertDefinitionList } from './definition_list-insert';
 import { EditorUI } from '../../api/ui';
+import { OmniInsertGroup } from '../../api/omni_insert';
 
 export class InsertDefinitionList extends ProsemirrorCommand {
   constructor(ui: EditorUI) {
@@ -54,6 +55,15 @@ export class InsertDefinitionList extends ProsemirrorCommand {
           dispatch(tr);
         }
         return true;
+      },
+      // omni insert
+      {
+        name: ui.context.translateText('Definition List'),
+        description: ui.context.translateText('List with a definition for each item'),
+        group: OmniInsertGroup.Lists,
+        priority: 3,
+        image: () =>
+          ui.prefs.darkMode() ? ui.images.omni_insert?.definition_list_dark! : ui.images.omni_insert?.definition_list!,
       },
     );
   }

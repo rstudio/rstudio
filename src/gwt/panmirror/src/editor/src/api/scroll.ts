@@ -18,7 +18,7 @@ import { findParentNodeOfTypeClosestToPos } from 'prosemirror-utils';
 
 import zenscroll from 'zenscroll';
 
-import { editingRootNodeClosestToPos } from './node';
+import { editingRootNodeClosestToPos, editingRootNode } from './node';
 
 export function scrollIntoView(
   view: EditorView,
@@ -46,6 +46,20 @@ export function scrollIntoView(
       } else {
         scroller.intoView(resultNode, duration, onDone);
       }
+    }
+  }
+}
+
+export function scrollToPos(view: EditorView, pos: number, duration?: number, offset?: number, onDone?: VoidFunction) {
+  const node = view.nodeDOM(pos);
+  if (node instanceof HTMLElement) {
+    const editingRoot = editingRootNode(view.state.selection)!;
+    const container = view.nodeDOM(editingRoot.pos) as HTMLElement;
+    const scroller = zenscroll.createScroller(container, duration, offset);
+    if (duration) {
+      scroller.to(node, duration, onDone);
+    } else {
+      scroller.to(node, 0, onDone);
     }
   }
 }

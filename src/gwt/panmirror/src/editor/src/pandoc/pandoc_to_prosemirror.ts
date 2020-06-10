@@ -22,6 +22,7 @@ import {
   ProsemirrorWriter,
   PandocBlockReaderFn,
   PandocInlineHTMLReaderFn,
+  PandocTokensFilterFn,
 } from '../api/pandoc';
 import { pandocAttrReadAST, kCodeBlockAttr, kCodeBlockText } from '../api/pandoc_attr';
 import {
@@ -37,16 +38,18 @@ export function pandocToProsemirror(
   ast: PandocAst,
   schema: Schema,
   readers: readonly PandocTokenReader[],
+  tokensFilters: readonly PandocTokensFilterFn[],
   blockReaders: readonly PandocBlockReaderFn[],
   inlineHTMLReaders: readonly PandocInlineHTMLReaderFn[],
   blockCapsuleFilters: readonly PandocBlockCapsuleFilter[],
 ): PandocToProsemirrorResult {
-  const parser = new Parser(schema, readers, blockReaders, inlineHTMLReaders, blockCapsuleFilters);
+  const parser = new Parser(schema, readers, tokensFilters, blockReaders, inlineHTMLReaders, blockCapsuleFilters);
   return parser.parse(ast);
 }
 
 class Parser {
   private readonly schema: Schema;
+  private readonly tokensFilters: readonly PandocTokensFilterFn[];
   private readonly inlineHTMLReaders: readonly PandocInlineHTMLReaderFn[];
   private readonly blockCapsuleFilters: readonly PandocBlockCapsuleFilter[];
   private readonly handlers: { [token: string]: ParserTokenHandlerCandidate[] };
@@ -54,13 +57,15 @@ class Parser {
   constructor(
     schema: Schema,
     readers: readonly PandocTokenReader[],
+    tokensFilters: readonly PandocTokensFilterFn[],
     blockReaders: readonly PandocBlockReaderFn[],
     inlineHTMLReaders: readonly PandocInlineHTMLReaderFn[],
     blockCapsuleFilters: readonly PandocBlockCapsuleFilter[],
   ) {
     this.schema = schema;
+    this.tokensFilters = tokensFilters;
     this.inlineHTMLReaders = inlineHTMLReaders;
-    // apply filters in reverse order
+    // apply block capsule filters in reverse order
     this.blockCapsuleFilters = blockCapsuleFilters.slice().reverse();
     this.handlers = this.createHandlers(readers, blockReaders);
   }
@@ -78,15 +83,16 @@ class Parser {
       openMark: state.openMark.bind(state),
       closeMark: state.closeMark.bind(state),
       writeText: state.writeText.bind(state),
+      hasInlineHTMLWriter(html: string) {
+        return parser.hasInlineHTMLWriter(html);
+      },
       writeInlineHTML(html: string) {
-        parser.writeInlineHTML(this, html);
+        return parser.writeInlineHTML(this, html);
       },
       writeTokens(tokens: PandocToken[]) {
         parser.writeTokens(this, tokens);
       },
-      logUnrecognized(type: string) {
-        state.logUnrecognized(type);
-      },
+      logUnrecognized: state.logUnrecognized.bind(state),
       isNodeOpen: state.isNodeOpen.bind(state),
     };
 
@@ -104,7 +110,14 @@ class Parser {
   }
 
   private writeTokens(writer: ProsemirrorWriter, tokens: PandocToken[]) {
-    tokens.forEach(tok => this.writeToken(writer, tok));
+    // pass through tokens filters
+    let targetTokens = tokens;
+    this.tokensFilters.forEach(filter => {
+      targetTokens = filter(targetTokens, writer);
+    });
+
+    // process tokens
+    targetTokens.forEach(tok => this.writeToken(writer, tok));
   }
 
   private writeToken(writer: ProsemirrorWriter, tok: PandocToken) {
@@ -144,19 +157,21 @@ class Parser {
     writer.logUnrecognized(tok.t);
   }
 
+  private hasInlineHTMLWriter(html: string) {
+    for (const reader of this.inlineHTMLReaders) {
+      if (reader(this.schema, html)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   private writeInlineHTML(writer: ProsemirrorWriter, html: string) {
-    // see if any of our readers want to take it
     for (const reader of this.inlineHTMLReaders) {
       if (reader(this.schema, html, writer)) {
         return;
       }
     }
-
-    // otherwise just write it
-    const mark = this.schema.marks.raw_html.create();
-    writer.openMark(mark);
-    writer.writeText(html);
-    writer.closeMark(mark);
   }
 
   // create parser token handler functions based on the passed readers

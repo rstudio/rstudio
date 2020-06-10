@@ -27,6 +27,7 @@ import { codeNodeSpec } from '../../api/code';
 import { selectionIsBodyTopLevel } from '../../api/selection';
 import { yamlMetadataTitlePlugin } from './yaml_metadata-title';
 import { yamlMetadataBlockCapsuleFilter } from './yaml_metadata-capsule';
+import { OmniInsertGroup } from '../../api/omni_insert';
 
 const extension: Extension = {
   nodes: [
@@ -67,14 +68,14 @@ const extension: Extension = {
   ],
 
   commands: (_schema: Schema, ui: EditorUI) => {
-    return [new YamlMetadataCommand()];
+    return [new YamlMetadataCommand(ui)];
   },
 
   plugins: () => [yamlMetadataTitlePlugin()],
 };
 
 class YamlMetadataCommand extends ProsemirrorCommand {
-  constructor() {
+  constructor(ui: EditorUI) {
     super(
       EditorCommandId.YamlMetadata,
       [],
@@ -103,6 +104,15 @@ class YamlMetadataCommand extends ProsemirrorCommand {
         }
 
         return true;
+      },
+      {
+        name: ui.context.translateText('YAML'),
+        description: ui.context.translateText('YAML metadata block'),
+        group: OmniInsertGroup.Blocks,
+        priority: 3,
+        selectionOffset: 4,
+        image: () =>
+          ui.prefs.darkMode() ? ui.images.omni_insert?.yaml_block_dark! : ui.images.omni_insert?.yaml_block!,
       },
     );
   }

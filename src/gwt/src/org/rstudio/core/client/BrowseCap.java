@@ -149,6 +149,18 @@ public class BrowseCap
       return isUserAgent("chromeframe");
    }
    
+   public static boolean isQtWebEngine()
+   {
+      return isUserAgent("qtwebengine");
+   }
+   
+   public static final native String qtWebEngineVersion()
+   /*-{
+      var pattern = new RegExp("QtWebEngine/([^\\s]+)", "i");
+      var match = navigator.userAgent.match(pattern)
+      return match[1] || "";
+   }-*/;
+   
    public static double devicePixelRatio() 
    {
       // TODO: validate that we can rely on browser to report even

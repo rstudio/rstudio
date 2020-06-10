@@ -114,6 +114,7 @@ public class CppCompletionPopupMenu extends ScrollableToolbarPopupMenu
          if (isSelectable())
             onSelected_.execute(completions_.get(index));
       }
+      
       hide();
    }
    

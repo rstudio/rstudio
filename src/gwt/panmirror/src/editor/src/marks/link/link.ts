@@ -29,7 +29,7 @@ import { EditorUI } from '../../api/ui';
 import { Extension } from '../../api/extension';
 import { PandocCapabilities } from '../../api/pandoc_capabilities';
 
-import { linkCommand, removeLinkCommand } from './link-command';
+import { linkCommand, removeLinkCommand, linkOmniInsert } from './link-command';
 import { linkInputRules, linkPasteHandler } from './link-auto';
 import { linkHeadingsPostprocessor, syncHeadingLinksAppendTransaction } from './link-headings';
 import { LinkPopupPlugin } from './link-popup';
@@ -154,6 +154,7 @@ const extension = (pandocExtensions: PandocExtensions, _caps: PandocCapabilities
           EditorCommandId.Link,
           ['Mod-k'],
           linkCommand(schema.marks.link, ui.dialogs.editLink, capabilities),
+          linkOmniInsert(ui),
         ),
         new ProsemirrorCommand(EditorCommandId.RemoveLink, [], removeLinkCommand(schema.marks.link)),
       ];

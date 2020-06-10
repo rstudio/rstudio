@@ -19,6 +19,8 @@ import { Node as ProsemirrorNode, Schema } from 'prosemirror-model';
 import { WrapCommand, EditorCommandId } from '../api/command';
 import { Extension } from '../api/extension';
 import { PandocOutput, PandocTokenType } from '../api/pandoc';
+import { EditorUI } from '../api/ui';
+import { OmniInsertGroup } from '../api/omni_insert';
 
 const extension: Extension = {
   nodes: [
@@ -49,13 +51,23 @@ const extension: Extension = {
     },
   ],
 
-  commands: (schema: Schema) => {
-    return [new WrapCommand(EditorCommandId.Blockquote, [], schema.nodes.blockquote)];
+  commands: (schema: Schema, ui: EditorUI) => {
+    return [new WrapCommand(EditorCommandId.Blockquote, [], schema.nodes.blockquote, {}, blockquoteOmniInsert(ui))];
   },
 
   inputRules: (schema: Schema) => {
     return [wrappingInputRule(/^\s*>\s$/, schema.nodes.blockquote)];
   },
 };
+
+function blockquoteOmniInsert(ui: EditorUI) {
+  return {
+    name: ui.context.translateText('Blockquote'),
+    description: ui.context.translateText('Section quoted from another source'),
+    group: OmniInsertGroup.Blocks,
+    priority: 8,
+    image: () => (ui.prefs.darkMode() ? ui.images.omni_insert?.blockquote_dark! : ui.images.omni_insert?.blockquote!),
+  };
+}
 
 export default extension;

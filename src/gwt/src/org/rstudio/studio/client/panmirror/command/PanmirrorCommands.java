@@ -16,6 +16,7 @@
 package org.rstudio.studio.client.panmirror.command;
 
 
+
 public class PanmirrorCommands
 {
    // text editing
@@ -47,6 +48,8 @@ public class PanmirrorCommands
    public static final String Span = "852CF3E3-8A2B-420D-BD95-F79C54118E7E";
    public static final String Div = "15EDB8F1-6015-4DA9-AE50-5987B24C1D96";
    public static final String InsertDiv = "ACA1521B-8875-4113-9D43-B47F0038B19F";
+   public static final String InsertSymbol = "1419765F-6E4A-4A4C-8670-D9E8578EA996";
+	 public static final String InsertEmoji = "F73896A2-02CC-4E5D-A596-78444A1D2A37";
 
    // lists
    public static final String BulletList = "D897FD2B-D6A4-44A7-A404-57B5251FBF64";
@@ -57,7 +60,7 @@ public class PanmirrorCommands
    public static final String ListItemSplit = "19BBD87F-96D6-4276-B7B8-470652CF4106";
    public static final String ListItemCheck = "2F6DA9D8-EE57-418C-9459-50B6FD84137F";
    public static final String ListItemCheckToggle = "34D30F3D-8441-44AD-B75A-415DA8AC740B";
-   public static final String OrderedListEdit = "E006A68C-EA39-4954-91B9-DDB07D1CBDA2";
+   public static final String EditListProperties = "E006A68C-EA39-4954-91B9-DDB07D1CBDA2";
 
    // tables
    public static final String TableInsertTable = "FBE39613-2DAA-445D-9E92-E1EABFB33E2C";
@@ -78,6 +81,7 @@ public class PanmirrorCommands
    public static final String TableAlignColumnDefault = "7860A9C1-60AF-40AD-9EB8-A10F6ADF25C5";
 
    // insert
+   public static final String OmniInsert = "12F96C13-38C1-4266-A0A1-E871D8C709FB";
    public static final String Link = "842FCB9A-CA61-4C5F-A0A0-43507B4B3FA9";
    public static final String RemoveLink = "072D2084-218D-4A34-AF1F-7E196AF684B2";
    public static final String Image = "808220A3-2B83-4CB6-BCC1-46565D54FA47";
@@ -91,6 +95,7 @@ public class PanmirrorCommands
    public static final String DefinitionList = "CFAB8F4D-3350-4398-9754-8DE0FB95167B";
    public static final String DefinitionTerm = "204D1A8F-8EE6-424A-8E69-99768C85B39E";
    public static final String DefinitionDescription = "F0738D83-8E11-4CB5-B958-390190A2D7DD";
+   public static final String Symbol = "1419765F-6E4A-4A4C-8670-D9E8578EA996";
    
    // raw
    public static final String TexInline = "CFE8E9E5-93BA-4FFA-9A77-BA7EFC373864";
@@ -104,7 +109,13 @@ public class PanmirrorCommands
    public static final String RawBlock = "F5757992-4D33-45E6-86DC-F7D7B174B1EC";
    
    // chunk
-   public static final String RmdChunk = "EBFD21FF-4A6E-4D88-A2E0-B38470B00BB9";
+   public static final String RCodeChunk = "EBFD21FF-4A6E-4D88-A2E0-B38470B00BB9";
+   public static final String BashCodeChunk = "5FBB7283-E8AB-450C-9359-A4658CBCD136";
+   public static final String D3CodeChunk = "C73CA46C-B56F-40B6-AEFA-DDBB30CA8C08";
+   public static final String PythonCodeChunk = "42A7A138-421A-4DCF-8A88-FE2F8EC5B8F6";
+   public static final String RcppCodeChunk = "6BD2810B-6B20-4358-8AA4-74BBFFC92AC3";
+   public static final String SQLCodeChunk = "41D61FD2-B56B-48A7-99BC-2F60BC0D9F78";
+   public static final String StanCodeChunk = "65D33344-CBE9-438C-B337-A538F8D7FCE5";
    public static final String ExecuteCurrentRmdChunk = "31C799F3-EF18-4F3A-92E6-51F7A3193A1B";
    public static final String ExecutePreviousRmdChunks = "D3FDE96-0264-4364-ADFF-E87A75405B0B";
 }

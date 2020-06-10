@@ -21,6 +21,8 @@ import { PandocOutput, PandocTokenType, PandocToken } from '../api/pandoc';
 import { EditorCommandId, WrapCommand } from '../api/command';
 
 import './line_block-styles.css';
+import { OmniInsertGroup } from '../api/omni_insert';
+import { EditorUI } from '../api/ui';
 
 const extension: Extension = {
   nodes: [
@@ -62,8 +64,23 @@ const extension: Extension = {
       },
     },
   ],
-  commands: (schema: Schema) => {
-    return [new WrapCommand(EditorCommandId.LineBlock, [], schema.nodes.line_block)];
+  commands: (schema: Schema, ui: EditorUI) => {
+    return [
+      new WrapCommand(
+        EditorCommandId.LineBlock,
+        [],
+        schema.nodes.line_block,
+        {},
+        {
+          name: ui.context.translateText('Line Block'),
+          description: ui.context.translateText('Preserve leading spaces and line breaks'),
+          group: OmniInsertGroup.Blocks,
+          priority: 2,
+          image: () =>
+            ui.prefs.darkMode() ? ui.images.omni_insert?.line_block_dark! : ui.images.omni_insert?.line_block!,
+        },
+      ),
+    ];
   },
 };
 

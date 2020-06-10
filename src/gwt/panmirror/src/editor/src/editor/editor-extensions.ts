@@ -25,6 +25,7 @@ import { PandocMark } from '../api/mark';
 import { PandocNode, CodeViewOptions } from '../api/node';
 import { Extension, ExtensionFn } from '../api/extension';
 import { BaseKeyBinding } from '../api/basekeys';
+import { OmniInserter } from '../api/omni_insert';
 import { AppendTransactionHandler, AppendMarkTransactionHandler } from '../api/transaction';
 import { FixupFn } from '../api/fixup';
 import {
@@ -36,12 +37,14 @@ import {
   PandocBlockReaderFn,
   PandocExtensions,
   PandocInlineHTMLReaderFn,
+  PandocTokensFilterFn,
 } from '../api/pandoc';
 import { PandocBlockCapsuleFilter } from '../api/pandoc_capsule';
 import { EditorEvents } from '../api/events';
 import { PandocCapabilities } from '../api/pandoc_capabilities';
 import { EditorFormat } from '../api/format';
 import { markInputRuleFilter } from '../api/input_rule';
+import { CompletionHandler } from '../api/completion';
 
 // required extensions (base non-customiziable pandoc nodes/marks + core behaviors)
 import nodeText from '../nodes/text';
@@ -74,6 +77,8 @@ import behaviorOutline from '../behaviors/outline';
 import beahviorCodeBlockInput from '../behaviors/code_block_input';
 import behaviorPasteText from '../behaviors/paste_text';
 import behaviorBottomPadding from '../behaviors/bottom_padding';
+import behaviorInsertSymbol from '../behaviors/insert_symbol/insert_symbol-plugin-symbol';
+import behaviorInsertSymbolEmoji from '../behaviors/insert_symbol/insert_symbol-plugin-emoji';
 
 // marks
 import markStrikeout from '../marks/strikeout';
@@ -90,7 +95,8 @@ import markSpan from '../marks/span';
 import markXRef from '../marks/xref';
 import markHTMLComment from '../marks/raw_inline/raw_html_comment';
 import markShortcode from '../marks/shortcode';
-import markEmoji from '../marks/emoji';
+import markEmoji from '../marks/emoji/emoji';
+import { markOmniInsert } from '../behaviors/omni_insert/omni_insert';
 
 // nodes
 import nodeFootnote from '../nodes/footnote/footnote';
@@ -154,6 +160,8 @@ export function initExtensions(
     beahviorCodeBlockInput,
     behaviorPasteText,
     behaviorBottomPadding,
+    behaviorInsertSymbol,
+    behaviorInsertSymbolEmoji,
 
     // nodes
     nodeDiv,
@@ -172,6 +180,7 @@ export function initExtensions(
     markSubscript,
     markSmallcaps,
     markQuoted,
+    markHTMLComment,
     markRawTex,
     markRawHTML,
     markRawInline,
@@ -179,9 +188,9 @@ export function initExtensions(
     markCite,
     markSpan,
     markXRef,
-    markHTMLComment,
     markShortcode,
     markEmoji,
+    markOmniInsert,
   ]);
 
   // register external extensions
@@ -189,10 +198,14 @@ export function initExtensions(
     manager.register(extensions);
   }
 
-  // additional extensions dervied from other extensions
-  // (e.g. extensions that have registered attr editors)
+  // additional extensions dervied from other extensions (e.g. extensions that have registered attr editors)
+  // note that all of these take a callback to access the manager -- this is so that if an extension earlier
+  // in the chain registers something the later extensions are able to see it
   manager.register([
+    // bindings to 'Edit Attribute' command and UI adornment
     attrEditExtension(pandocExtensions, manager.attrEditors()),
+
+    // application of some marks (e.g. code) should cuase reveral of smart quotes
     reverseSmartQuotesExtension(manager.pandocMarks()),
   ]);
 
@@ -277,6 +290,12 @@ export class ExtensionManager {
     return this.pandocReaders().flatMap(reader => (reader.postprocessor ? [reader.postprocessor] : []));
   }
 
+  public pandocTokensFilters(): readonly PandocTokensFilterFn[] {
+    return this.collectFrom({
+      node: node => [node.pandoc.tokensFilter],
+    });
+  }
+
   public pandocBlockReaders(): readonly PandocBlockReaderFn[] {
     return this.collectFrom({
       node: node => [node.pandoc.blockReader],
@@ -321,6 +340,21 @@ export class ExtensionManager {
     return this.collect<ProsemirrorCommand>(extension => extension.commands?.(schema, ui));
   }
 
+  public omniInserters(schema: Schema, ui: EditorUI): OmniInserter[] {
+    const omniInserters: OmniInserter[] = [];
+    const commands = this.commands(schema, ui);
+    commands.forEach(command => {
+      if (command.omniInsert) {
+        omniInserters.push({
+          ...command.omniInsert,
+          id: command.id,
+          command: command.execute,
+        });
+      }
+    });
+    return omniInserters;
+  }
+
   public codeViews() {
     const views: { [key: string]: CodeViewOptions } = {};
     this.pandocNodes().forEach((node: PandocNode) => {
@@ -355,6 +389,10 @@ export class ExtensionManager {
 
   public fixups(schema: Schema, view: EditorView): readonly FixupFn[] {
     return this.collect(extension => extension.fixups?.(schema, view));
+  }
+
+  public completionHandlers(): readonly CompletionHandler[] {
+    return this.collect(extension => extension.completionHandlers?.());
   }
 
   // NOTE: return value not readonly b/c it will be fed directly to a

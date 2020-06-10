@@ -31,6 +31,7 @@ import {
 import { PandocOutput, PandocTokenType, PandocToken } from '../api/pandoc';
 import { ProsemirrorCommand, EditorCommandId, toggleWrap } from '../api/command';
 import { EditorUI } from '../api/ui';
+import { OmniInsertGroup, OmniInsert } from '../api/omni_insert';
 
 import './div-styles.css';
 
@@ -101,7 +102,19 @@ const extension: Extension = {
   ],
 
   commands: (_schema: Schema, ui: EditorUI) => {
-    return [new DivCommand(EditorCommandId.Div, ui, true), new DivCommand(EditorCommandId.InsertDiv, ui, false)];
+    return [
+      // turn current block into a div
+      new DivCommand(EditorCommandId.Div, ui, true),
+
+      // insert a div
+      new DivCommand(EditorCommandId.InsertDiv, ui, false, {
+        name: ui.context.translateText('Div...'),
+        description: ui.context.translateText('Block containing other content'),
+        group: OmniInsertGroup.Blocks,
+        priority: 1,
+        image: () => (ui.prefs.darkMode() ? ui.images.omni_insert?.div_dark! : ui.images.omni_insert?.div!),
+      }),
+    ];
   },
 };
 
@@ -138,8 +151,8 @@ function divCommand(ui: EditorUI, allowEdit: boolean) {
 }
 
 class DivCommand extends ProsemirrorCommand {
-  constructor(id: EditorCommandId, ui: EditorUI, allowEdit: boolean) {
-    super(id, [], divCommand(ui, allowEdit));
+  constructor(id: EditorCommandId, ui: EditorUI, allowEdit: boolean, omniInsert?: OmniInsert) {
+    super(id, [], divCommand(ui, allowEdit), omniInsert);
   }
 }
 

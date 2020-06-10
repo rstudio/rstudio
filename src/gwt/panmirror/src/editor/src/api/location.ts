@@ -1,10 +1,9 @@
 import { Node as ProsemirrorNode } from 'prosemirror-model';
 import { EditorView } from 'prosemirror-view';
-import { setTextSelection, NodeWithPos, findChildrenByType } from 'prosemirror-utils';
+import { NodeWithPos, findChildrenByType } from 'prosemirror-utils';
 import { EditorState } from 'prosemirror-state';
 
 import { bodyElement } from './dom';
-import { kAddToHistoryTransaction, kRestoreLocationTransaction } from './transaction';
 import {
   EditorOutlineItemType,
   kYamlMetadataOutlineItenItem,
@@ -12,7 +11,8 @@ import {
   kRmdchunkOutlineItemType,
 } from './outline';
 import { findTopLevelBodyNodes } from './node';
-import { navigateToPosition } from './navigation';
+import { restoreSelection } from './selection';
+import { scrollToPos } from './scroll';
 
 export interface EditingLocation {
   pos: number;
@@ -42,9 +42,6 @@ export function setEditingLocation(
   outlineLocation?: EditingOutlineLocation,
   previousLocation?: EditingLocation,
 ) {
-  // default restorePos to the previous location
-  let restorePos = previousLocation ? previousLocation.pos : -1;
-
   // get the current document outline
   const documentOutline = getDocumentOutline(view.state);
 
@@ -82,28 +79,18 @@ export function setEditingLocation(
           }
         }
 
-        if (docOutlineLocationNode) {
-          restorePos = docOutlineLocationNode.pos;
-        }
-
         break;
       }
     }
   }
 
-  // if we have a restorePos set the selection
-  if (restorePos !== -1) {
-    // set selection
-    const tr = view.state.tr;
-    setTextSelection(restorePos)(tr)
-      .setMeta(kRestoreLocationTransaction, true)
-      .setMeta(kAddToHistoryTransaction, false);
-    view.dispatch(tr);
-  }
-
-  // if we have a target node then scroll to it
+  // do the restore
   if (docOutlineLocationNode) {
-    navigateToPosition(view, docOutlineLocationNode.pos, false);
+    restoreSelection(view, docOutlineLocationNode.pos);
+    scrollToPos(view, docOutlineLocationNode.pos);
+  } else if (previousLocation) {
+    restoreSelection(view, previousLocation.pos);
+    bodyElement(view).scrollTop = previousLocation.scrollTop;
   }
 }
 

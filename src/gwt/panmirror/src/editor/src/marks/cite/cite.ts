@@ -13,7 +13,7 @@
  *
  */
 
-import { Mark, Schema, Fragment, Node as ProsemirrorNode, DOMOutputSpecArray } from 'prosemirror-model';
+import { Mark, Schema, Fragment, Node as ProsemirrorNode } from 'prosemirror-model';
 import { InputRule } from 'prosemirror-inputrules';
 import { EditorState, TextSelection } from 'prosemirror-state';
 
@@ -80,8 +80,8 @@ const extension = (
               tag: "span[class*='cite-id']",
             },
           ],
-          toDOM(mark: Mark): DOMOutputSpecArray {
-            return { '0': 'span', '1': { class: 'cite-id pm-markup-text-color pm-fixedwidth-font' } };
+          toDOM(mark: Mark) {
+            return ['span', { class: 'cite-id pm-markup-text-color pm-fixedwidth-font' }];
           },
         },
         pandoc: {

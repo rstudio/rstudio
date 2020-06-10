@@ -21,9 +21,10 @@ import com.google.gwt.resources.client.ImageResource;
 
 public interface ProjectPreferencesDialogResources extends ClientBundle
 {
-   static interface Styles extends CssResource
+   interface Styles extends CssResource
    {
       String panelContainer();
+      String panelContainerNoChooser();
       String buildToolsPanel();
       String workspaceGrid();
       String enableCodeIndexing();
@@ -45,10 +46,10 @@ public interface ProjectPreferencesDialogResources extends ClientBundle
       String websiteOutputFormat();
       String infoLabel();
    }
-  
+
    @Source("ProjectPreferencesDialog.css")
    Styles styles();
-  
+
    @Source("iconBuild_2x.png")
    ImageResource iconBuild2x();
 
@@ -57,9 +58,9 @@ public interface ProjectPreferencesDialogResources extends ClientBundle
 
    @Source("iconRenv_2x.png")
    ImageResource iconRenv2x();
-   
+
    @Source("iconShare_2x.png")
    ImageResource iconShare2x();
-   
-   static ProjectPreferencesDialogResources INSTANCE = (ProjectPreferencesDialogResources)GWT.create(ProjectPreferencesDialogResources.class);
+
+   ProjectPreferencesDialogResources INSTANCE = GWT.create(ProjectPreferencesDialogResources.class);
 }

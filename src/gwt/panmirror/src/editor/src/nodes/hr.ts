@@ -21,6 +21,8 @@ import { EditorState } from 'prosemirror-state';
 import { ProsemirrorCommand, insertNode, EditorCommandId } from '../api/command';
 import { Extension } from '../api/extension';
 import { PandocOutput, PandocTokenType } from '../api/pandoc';
+import { EditorUI } from '../api/ui';
+import { OmniInsertGroup } from '../api/omni_insert';
 
 import './hr-styles.css';
 
@@ -49,8 +51,15 @@ const extension: Extension = {
     },
   ],
 
-  commands: (schema: Schema) => {
-    return [new ProsemirrorCommand(EditorCommandId.HorizontalRule, [], insertNode(schema.nodes.horizontal_rule))];
+  commands: (schema: Schema, ui: EditorUI) => {
+    return [
+      new ProsemirrorCommand(
+        EditorCommandId.HorizontalRule,
+        [],
+        insertNode(schema.nodes.horizontal_rule),
+        hrOmniInsert(ui),
+      ),
+    ];
   },
 
   inputRules: (_schema: Schema) => {
@@ -68,5 +77,16 @@ const extension: Extension = {
     ];
   },
 };
+
+function hrOmniInsert(ui: EditorUI) {
+  return {
+    name: ui.context.translateText('Horizontal Rule'),
+    description: ui.context.translateText('Line that spans across the page'),
+    group: OmniInsertGroup.Content,
+    priority: 1,
+    image: () =>
+      ui.prefs.darkMode() ? ui.images.omni_insert?.horizontal_rule_dark! : ui.images.omni_insert?.horizontal_rule!,
+  };
+}
 
 export default extension;

@@ -29,6 +29,8 @@ import { uuidv4 } from '../../api/util';
 import { PandocOutput, PandocTokenType, ProsemirrorWriter, PandocToken } from '../../api/pandoc';
 import { ProsemirrorCommand, EditorCommandId } from '../../api/command';
 import { canInsertNode } from '../../api/node';
+import { EditorUI } from '../../api/ui';
+import { OmniInsertGroup } from '../../api/omni_insert';
 
 import {
   footnoteEditorKeyDownHandler,
@@ -116,8 +118,10 @@ const extension: Extension = {
     ];
   },
 
-  commands: (_schema: Schema) => {
-    return [new ProsemirrorCommand(EditorCommandId.Footnote, ['Shift-Mod-F7'], footnoteCommandFn())];
+  commands: (_schema: Schema, ui: EditorUI) => {
+    return [
+      new ProsemirrorCommand(EditorCommandId.Footnote, ['Shift-Mod-F7'], footnoteCommandFn(), footnoteOmniInsert(ui)),
+    ];
   },
 };
 
@@ -152,6 +156,16 @@ function footnoteCommandFn() {
       dispatch(tr);
     }
     return true;
+  };
+}
+
+function footnoteOmniInsert(ui: EditorUI) {
+  return {
+    name: ui.context.translateText('Footnote'),
+    description: ui.context.translateText('Note placed at the bottom of the page'),
+    group: OmniInsertGroup.References,
+    priority: 2,
+    image: () => (ui.prefs.darkMode() ? ui.images.omni_insert?.footnote_dark! : ui.images.omni_insert?.footnote!),
   };
 }
 

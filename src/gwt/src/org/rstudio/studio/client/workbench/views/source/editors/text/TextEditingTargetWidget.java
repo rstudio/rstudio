@@ -754,7 +754,7 @@ public class TextEditingTargetWidget
       runLastButton_.setVisible(runButton_.isVisible() && !canExecuteChunks && !isScript);
       
       // show insertion options for various knitr engines in rmarkdown v2
-      insertChunkMenu_.setVisible(isRMarkdown2 && !visualRmdMode);
+      insertChunkMenu_.setVisible(isRMarkdown2);
       
       // otherwise just show the regular insert chunk button
       insertChunkButton_.setVisible(canExecuteChunks && !isRMarkdown2);
@@ -1321,7 +1321,7 @@ public class TextEditingTargetWidget
    public void setIsNotebookFormat()
    {
       knitCommandText_ = "Preview";
-      knitDocumentButton_.setTitle("Preview the notebook " +
+      knitDocumentButton_.setTitle("Preview the notebook (" +
             DomUtils.htmlToText(
                   commands_.knitDocument().getShortcutPrettyHtml()) + ")");
       knitDocumentButton_.setText(knitCommandText_);
@@ -1727,6 +1727,7 @@ public class TextEditingTargetWidget
       } 
       
       private boolean activationPending_ = false;
+
    };
    
    private void syncWrapMode()

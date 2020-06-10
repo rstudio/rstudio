@@ -24,7 +24,6 @@ import org.rstudio.studio.client.workbench.events.SessionInitEvent;
 import org.rstudio.studio.client.workbench.events.SessionInitHandler;
 import org.rstudio.studio.client.workbench.model.Session;
 import org.rstudio.studio.client.workbench.views.console.events.ConsolePromptEvent;
-import org.rstudio.studio.client.workbench.views.console.events.ConsolePromptHandler;
 import org.rstudio.studio.client.workbench.views.console.model.ConsoleServerOperations;
 
 import com.google.gwt.user.client.Command;
@@ -34,7 +33,7 @@ import com.google.inject.Singleton;
 @Singleton
 public class ConsoleLanguageTracker
       implements SessionInitHandler,
-                 ConsolePromptHandler
+                 ConsolePromptEvent.Handler
 {
    @Inject
    public ConsoleLanguageTracker(Session session,

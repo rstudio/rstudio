@@ -38,8 +38,10 @@
 
    # Find the Shiny app directory
    shinyDir <- dirname(testFile)
-   if (identical(basename(shinyDir), "shinytests")) {
-      # Newer versions of shinytest store tests in a "shinytests" folder
+   if (identical(basename(shinyDir), "shinytests") ||
+       identical(basename(shinyDir), "shinytest")) {
+      # Newer versions of shinytest store tests in a "shinytest" or "shinytests" folder (depending
+      # on version)
       shinyDir <- dirname(shinyDir)
    } 
    if (identical(basename(shinyDir), "tests")) {

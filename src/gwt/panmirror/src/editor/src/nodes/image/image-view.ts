@@ -20,7 +20,8 @@ import { NodeSelection, PluginKey, Plugin } from 'prosemirror-state';
 import { EditorUI, ImageType } from '../../api/ui';
 import { PandocExtensions, imageAttributesAvailable } from '../../api/pandoc';
 import { isElementVisible } from '../../api/dom';
-import { EditorEvents, EditorEvent } from '../../api/events';
+import { EditorEvents } from '../../api/events';
+import { ResizeEvent } from '../../api/event-types';
 
 import { imageDialog } from './image-dialog';
 import {
@@ -193,7 +194,7 @@ class ImageNodeView implements NodeView {
     this.updateSizeOnVisible();
 
     // update image size whenever the container is resized
-    this.unregisterOnResize = editorEvents.subscribe(EditorEvent.Resize, () => {
+    this.unregisterOnResize = editorEvents.subscribe(ResizeEvent, () => {
       this.updateImageSize();
     });
   }
